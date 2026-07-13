@@ -60,7 +60,9 @@ class Event
     has_paper_trail
 
     include PgSearch::Model
-    pg_search_scope :search_name, against: :name
+    pg_search_scope :search_name_or_email, against: :name, associated_against: {
+      user: :email
+    }
 
     include AASM
     include Contractable
@@ -186,9 +188,15 @@ class Event
       adult = <<~MSG.strip
         Hi #{user.first_name},
 
-        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). After careful consideration, we're unable to move forward with your application at this time. HCB is primarily focused on supporting projects run by teenagers.
+        Thank you so much for considering us to be your fiscal sponsor for [#{name}](#{Rails.application.routes.url_helpers.application_url(self)})!
 
-        If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
+        Although your nonprofit's mission sounds incredible, we are refocusing our fiscal sponsorship platform to solely work with teen-led (high school specifically) initiatives within our Hack Club community. Our parent nonprofit, Hack Club, was founded to create a technical community for high schoolers, and HCB is migrating toward a similar mission in order to realign with our parent organization.
+
+        While we tried to be a lifeline for groups outside of our normal mission, doing so caused us to drift away from our core focus of supporting teen-run orgs and to take on additional risk in areas we were less familiar with (teen-led STEM orgs are very different in nature from many others). Because of this, we've pulled back the reins and are working to refocus.
+
+        Unfortunately, this means that unless a group is run by teens and is part of our Hack Club community, we don't have the capacity to take them on. If it would be helpful for us to send over some other fiscal sponsors, we'd be more than happy to do so, but at this time we are unable to sponsor your organization.
+
+        Sorry again for the bad news, and please let us know if there is anything else we can do to help. You can reach us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or simply reply to this email.
 
         Best,
         The HCB Team
@@ -255,10 +263,10 @@ class Event
     end
 
     def contract_notify_hcb?
-      !teen_led?
+      !teen_led? || contract.reissue?
     end
 
-    def send_contract(reissue_signee_message: nil, reissue_cosigner_message: nil, **options)
+    def send_contract(reissue_signee_message: nil, reissue_cosigner_message: nil, reissue_of: nil, **options)
       if name.nil? || description.nil?
         raise StandardError.new("Cannot create a contract for application #{hashid}: missing name and/or description")
       end
@@ -269,19 +277,27 @@ class Event
 
       fs_contract = nil
       ActiveRecord::Base.transaction do
-        fs_contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos: false, external_template_id: Event::Plan::Standard.new.contract_docuseal_template_id, prefills: { "public_id" => public_id, "name" => name, "description" => description })
+        fs_contract = Contract::FiscalSponsorship.create!(
+          contractable: self,
+          include_videos: false,
+          external_template_id: Event::Plan::Standard.new.contract_docuseal_template_id,
+          prefills: { "public_id" => public_id, "name" => name, "description" => description },
+          reissue_of:
+        )
         fs_contract.parties.create!(user:, role: :signee)
         fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
       end
 
       fs_contract.send!(reissue_signee_message:, reissue_cosigner_message:)
-      fs_contract.party(:cosigner)&.notify unless reissue_signee_message.present? || reissue_cosigner_message.present?
+      fs_contract.party(:cosigner)&.notify unless reissue_of.present?
+
+      set_airtable_status("Documents sent") if reissue_of.present?
 
       fs_contract
     end
 
-    def response_time
-      teen_led? ? "2 business days" : "2 weeks"
+    def response_business_days
+      teen_led? ? 2 : 10
     end
 
     def status_color
@@ -347,6 +363,8 @@ class Event
           affiliation_copy.save!
         end
       end
+
+      set_airtable_status("Onboarded")
 
       schedule_airtable_sync
 
@@ -426,7 +444,7 @@ class Event
         self[field].nil? || self[field] == ""
       end
 
-      !missing_fields && !address_country.in?(DISALLOWED_COUNTRIES)
+      !missing_fields && !address_country.in?(DISALLOWED_COUNTRIES) && !(cosigner_email.present? && cosigner_email == user.email)
     end
 
     def user_ready_to_submit?
@@ -437,6 +455,17 @@ class Event
       end
 
       !missing_fields
+    end
+
+    def set_airtable_status(status)
+      airrecord = airtable_record
+
+      if airrecord.present?
+        airrecord["Status"] = status
+        airrecord.save
+      end
+    rescue => e
+      Rails.error.report(e)
     end
 
   end

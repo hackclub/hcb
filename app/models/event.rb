@@ -34,6 +34,8 @@
 #  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
 #  risk_level                                   :integer
 #  short_name                                   :string
+#  show_recent_donors                           :boolean          default(FALSE), not null
+#  show_top_donors                              :boolean          default(FALSE), not null
 #  slug                                         :text
 #  stripe_card_shipping_type                    :integer          default("standard"), not null
 #  website                                      :string
@@ -58,8 +60,6 @@
 #  fk_rails_...  (point_of_contact_id => users.id)
 #
 class Event < ApplicationRecord
-  self.ignored_columns += ["demo_mode_request_meeting_at"]
-
   MIN_WAITING_TIME_BETWEEN_FEES = 5.days
 
   include Hashid::Rails
@@ -108,7 +108,6 @@ class Event < ApplicationRecord
   scope :indexable, -> { where(is_public: true, is_indexable: true, demo_mode: false) }
   scope :omitted, -> { includes(:plan).where(plan: { type: Event::Plan.that(:omit_stats).collect(&:name) }) }
   scope :not_omitted, -> { includes(:plan).where.not(plan: { type: Event::Plan.that(:omit_stats).collect(&:name) }) }
-  scope :hidden, -> { where("hidden_at is not null") }
   scope :hidden, -> { where.not(hidden_at: nil) }
   scope :not_hidden, -> { where(hidden_at: nil) }
   scope :funded, -> {
@@ -129,6 +128,10 @@ class Event < ApplicationRecord
       .where("flipper_gates.feature_key = ? AND flipper_gates.key = ?", flag, "actors")
   }
 
+  # Following the convention of Module#ancestors https://apidock.com/ruby/Module/ancestors
+  # this returns the id of self as well as all the ancestors,
+  # in order from self->parent->grandparent->...
+  # We guarantee this order using SEARCH BREADTH FIRST https://www.postgresql.org/docs/current/queries-with.html#QUERIES-WITH-SEARCH
   def ancestor_ids
     [id] + Event.connection.execute(<<-SQL).map { |row| row["id"] }
       WITH RECURSIVE parent_events AS (
@@ -139,8 +142,8 @@ class Event < ApplicationRecord
         SELECT e.id, e.parent_id
         FROM events e
         INNER JOIN parent_events pe ON e.id = pe.parent_id
-      )
-      SELECT id FROM parent_events WHERE id != #{id};
+      ) SEARCH BREADTH FIRST BY id SET ordercol
+      SELECT id FROM parent_events WHERE id != #{id} ORDER BY ordercol;
     SQL
   end
 
@@ -159,8 +162,14 @@ class Event < ApplicationRecord
     SQL
   end
 
+  # Following the convention of Module#ancestors https://apidock.com/ruby/Module/ancestors
+  # this returns self as well as all the ancestors
   def ancestors
-    Event.where(id: ancestor_ids)
+    # array_position preserves the order from ancestor_ids; sanitize_sql_array parameterizes the ids so it's statically safe and passes brakeman.
+    fetched_ancestor_ids = ancestor_ids
+    Event.where(id: fetched_ancestor_ids).reorder(Arel.sql(
+                                                    Event.sanitize_sql_array(["array_position(ARRAY[?]::bigint[], events.id)", fetched_ancestor_ids])
+                                                  ))
   end
 
   def descendants
@@ -328,9 +337,12 @@ class Event < ApplicationRecord
 
   has_many :ach_transfers
   has_many :payment_recipients
+  has_many :payees
+  has_many :payments, through: :payees
+
   has_many :disbursements
-  has_many :incoming_disbursements, class_name: "Disbursement"
-  has_many :outgoing_disbursements, class_name: "Disbursement", foreign_key: :source_event_id
+  has_many :incoming_disbursements, class_name: "Disbursement::Incoming"
+  has_many :outgoing_disbursements, class_name: "Disbursement::Outgoing", foreign_key: :source_event_id
   has_many :donations
   has_many :donation_payouts, through: :donations, source: :payout
   has_many :recurring_donations
@@ -409,19 +421,19 @@ class Event < ApplicationRecord
 
   has_one_attached :donation_header_image
   validates :donation_header_image, content_type: [:png, :jpeg]
-  validates :donation_header_image, size: { less_than_or_equal_to: 8.megabytes }, if: -> { attachment_changes["donation_header_image"].present? }
+  validates :donation_header_image, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["donation_header_image"].present? }
 
   has_one_attached :background_image
   validates :background_image, content_type: [:png, :jpeg, :gif]
-  validates :background_image, size: { less_than_or_equal_to: 8.megabytes }, if: -> { attachment_changes["background_image"].present? }
+  validates :background_image, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["background_image"].present? }
 
   has_one_attached :logo
   validates :logo, content_type: [:png, :jpeg]
-  validates :logo, size: { less_than_or_equal_to: 5.megabytes }, if: -> { attachment_changes["logo"].present? }
+  validates :logo, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["logo"].present? }
 
   has_one_attached :stripe_card_logo
   validates :stripe_card_logo, content_type: [:png, :jpeg]
-  validates :stripe_card_logo, size: { less_than_or_equal_to: 5.megabytes }, if: -> { attachment_changes["stripe_card_logo"].present? }
+  validates :stripe_card_logo, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["stripe_card_logo"].present? }
 
   include HasMetrics
 
@@ -460,6 +472,10 @@ class Event < ApplicationRecord
 
   before_validation do
     build_plan(type: fallback_plan_class) if plan.nil?
+  end
+
+  after_update if: -> { can_front_balance_changed? } do
+    refresh_ledgers!
   end
 
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
@@ -564,6 +580,13 @@ class Event < ApplicationRecord
     # We're including only pending charges on emburse_cards so organizers have a conservative estimate of their balance
     pending_t = self.emburse_transactions.pending.where("amount < 0").sum(:amount)
     completed_t + pending_t
+  end
+
+  def refresh_ledgers!
+    ledger.refresh_all!
+    Ledger.where(card_grant: self.card_grants).find_each do |ledger|
+      ledger.refresh_all!
+    end
   end
 
   def total_raised
@@ -775,10 +798,6 @@ class Event < ApplicationRecord
     !engaged?
   end
 
-  def frozen?
-    Flipper.enabled?(:frozen, self)
-  end
-
   def revenue_fee
     configured = plan&.revenue_fee
     return configured if configured.present?
@@ -936,7 +955,23 @@ class Event < ApplicationRecord
   end
 
   def to_combobox_display
-    "#{name} (#{id})"
+    name
+  end
+
+  def onboarding_scheduling_link
+    return unless point_of_contact.present?
+
+    Rails.cache.fetch("scheduling_link_#{point_of_contact.id}", expires_in: 5.minutes) do
+      begin
+        OnboardersTable.all(filter: "{HCB ID} = #{point_of_contact.id}").first&.[]("Scheduling Link")
+      rescue
+        nil
+      end
+    end
+  end
+
+  def contracts_pending_on_hcb
+    contracts.sent.select { |c| c.parties.not_hcb.all?(&:signed?) }
   end
 
   private

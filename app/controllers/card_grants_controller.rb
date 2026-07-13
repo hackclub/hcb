@@ -36,6 +36,11 @@ class CardGrantsController < ApplicationController
     authorize @event, :card_grant_overview?
 
     @subledger = true
+
+    @per = params[:per] || 25
+    @table_only = true
+    @ledger = @event.ledger
+    @items = Ledger::Item.where(primary_mapping: Ledger::Mapping.where(ledger: Ledger.where(card_grant: @event.card_grants))).order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page]).per(@per)
   end
 
   def new
@@ -211,6 +216,11 @@ class CardGrantsController < ApplicationController
     @card = @card_grant.stripe_card
     @hcb_codes = @card_grant.visible_hcb_codes
 
+    @per = params[:per] || 25
+    @table_only = true
+    @ledger = @card_grant.ledger
+    @items = @card_grant.ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page]).per(@per)
+
     @show_card_details = params[:show_details] == "true"
 
     @frame = params[:frame].present?
@@ -242,6 +252,11 @@ class CardGrantsController < ApplicationController
 
   def activate
     authorize @card_grant
+
+    unless @card_grant.user.phone_number_verified?
+      settings_path = current_user == @card_grant.user ? my_settings_path : edit_user_path(@card_grant.user)
+      return redirect_to @card_grant, flash: { error: { "text" => "Please verify your phone number before activating your grant card.", "link_text" => "Go to settings", "link" => settings_path } }
+    end
 
     @card_grant.create_stripe_card(request.remote_ip)
 

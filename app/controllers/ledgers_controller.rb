@@ -15,10 +15,10 @@ class LedgersController < ApplicationController
     end
 
     begin
-      @items = Ledger::Query.new(query_hash).execute(ledgers: [@ledger]).order(date: :desc, id: :desc).page(params[:page])
+      @items = Ledger::Query.new(query_hash).execute(ledgers: [@ledger]).order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page])
     rescue Ledger::Query::Error => e
       flash.now[:error] = "Query error: #{e.message}"
-      @items = Ledger::Query.new({}).execute(ledgers: [@ledger]).order(date: :desc, id: :desc).page(params[:page])
+      @items = Ledger::Query.new({}).execute(ledgers: [@ledger]).order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page])
     end
   end
 

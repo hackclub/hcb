@@ -41,7 +41,7 @@ module UsersHelper
     }
 
 
-    if current_user&.events&.any? || current_user&.stripe_cards&.any?
+    if current_user&.events&.any? || current_user&.stripe_cards&.any? || current_user&.reimbursement_reports&.any?
       items << {
         name: "Receipts",
         path: my_inbox_path,
@@ -61,7 +61,17 @@ module UsersHelper
       selected: selected == :reimbursements
     }
 
-    if current_user&.jobs&.any?
+    if current_user&.payments_received&.any?
+      items << {
+        name: "Pay",
+        path: my_pay_path,
+        icon: "payment",
+        tooltip: "See payments made to you",
+        selected: selected == :pay
+      }
+    end
+
+    if current_user&.jobs&.any? # Deprecated
       items << {
         name: "Pay",
         path: my_payroll_path,
@@ -162,6 +172,17 @@ module UsersHelper
     image_tag(src, options.merge(loading: "lazy", alt:, width: size, height: size, class: klass))
   end
 
+  def avatar_for_email(email, **options)
+    user = User.find_by(email:)
+    if user
+      avatar_for(user, **options)
+    else
+      size = options[:size] || 24
+      src = gravatar_url(email, nil, nil, size * 2)
+      image_tag(src, options.merge(loading: "lazy", alt: "", class: ["rounded-full", "shrink-none", options[:class]].compact.join(" ")))
+    end
+  end
+
   def user_mention(user, default_name: "No User", click_to_mention: false, comment_mention: false, default_image: nil, **options)
     name = content_tag :span, (user&.initial_name || default_name)
     viewer = defined?(current_user) ? current_user : nil
@@ -195,18 +216,18 @@ module UsersHelper
                 avi + name
               end
 
-    if user && viewer&.auditor?
+    if user && viewer&.auditor? && !options[:disable_admin_menu]
       button = content_tag(
         :span,
         content,
         class: "*:align-middle menu__toggle menu__toggle--arrowless overflow-visible mention__menu-btn",
         data: {
           "menu-target": "toggle",
-          action: "contextmenu->menu#toggle click@document->menu#close keydown@document->menu#keydown"
+          action: "contextmenu->menu#toggle click->menu#toggle click@document->menu#close keydown@document->menu#keydown"
         },
       )
 
-      aria_label = [aria_label, "Right click for admin tools"].compact.join(" | ")
+      aria_label = [aria_label, "Click for admin tools"].compact.join(" | ")
 
       # Menu content items
       menu_items = safe_join([

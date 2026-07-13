@@ -68,6 +68,7 @@ class Donation < ApplicationRecord
   include AASM
   include Freezable
   include UsersHelper
+  include HasLedgerItem
 
   include HasStripeDashboardUrl
   has_stripe_dashboard_url "payments", :stripe_payment_intent_id
@@ -86,7 +87,7 @@ class Donation < ApplicationRecord
 
   before_save :trim_utm_referrer_fields
 
-  before_create :create_stripe_payment_intent, unless: -> { recurring? || in_person? }
+  before_create :create_stripe_payment_intent, unless: -> { recurring? }
   before_create :assign_unique_hash, unless: -> { recurring? }
 
   after_commit :send_notification
@@ -154,7 +155,7 @@ class Donation < ApplicationRecord
     end
 
     if in_person? && name.blank?
-      self.name = payment_intent.latest_charge.payment_method_details.card_present&.cardholder_name || "In-Person Donor"
+      self.name = payment_intent.latest_charge&.payment_method_details&.card_present&.cardholder_name || "In-Person Donor"
     end
 
     mark_in_transit if may_mark_in_transit? && status == "succeeded" # hacky
@@ -388,7 +389,7 @@ class Donation < ApplicationRecord
   end
 
   def create_payment_intent_attrs(customer)
-    {
+    attrs = {
       amount:,
       customer: customer.id,
       currency: "usd",
@@ -396,6 +397,13 @@ class Donation < ApplicationRecord
       statement_descriptor_suffix: StripeService::StatementDescriptor.format(event.short_name, as: :suffix),
       metadata: { 'donation': true, 'event_id': event.id }
     }
+
+    if in_person?
+      attrs[:payment_method_types] = ["card_present"]
+      attrs[:capture_method] = "automatic"
+    end
+
+    attrs
   end
 
   def create_stripe_payment_intent

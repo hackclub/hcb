@@ -17,6 +17,14 @@ class Ledger
       raise
     end
 
+    def hcb
+      @item = Ledger::Item.find_by_hashid!(params[:item_id])
+
+      authorize @item
+
+      redirect_to hcb_code_path(@item.hcb_code)
+    end
+
   end
 
 end
