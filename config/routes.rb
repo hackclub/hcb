@@ -1001,7 +1001,7 @@ Rails.application.routes.draw do
 
     resources :payments, only: [:new, :create]
     resources :contractors, only: [:new, :create, :show]
-    resources :contractor_invoices, only: [] do
+    resources :payroll_invoices, only: [], controller: "payroll/invoices" do
       member do
         post :approve
         post :reject
