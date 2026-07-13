@@ -2,7 +2,7 @@
 
 class Ledger
   class Query
-    PERMITTED_COLUMNS_MAP = %w[memo amount_cents date].index_by(&:to_s).freeze
+    PERMITTED_COLUMNS_MAP = { "memo" => "memo", "amount_cents" => "amount_cents", "date" => "datetime" }.freeze
 
     class Error < ArgumentError; end
 

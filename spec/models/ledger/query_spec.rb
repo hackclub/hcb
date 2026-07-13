@@ -24,8 +24,8 @@ RSpec.describe Ledger::Query, type: :model do
   # Ensure all items are created before each test
   before { [item_a, item_b, item_c, item_d, item_e, item_f, item_g] }
 
-  def create_mapped_item(**attrs)
-    item = create(:ledger_item, **attrs)
+  def create_mapped_item(date:, **attrs)
+    item = create(:ledger_item, datetime: date, **attrs)
     Ledger::Mapping.create(ledger: test_ledger, ledger_item: item, on_primary_ledger: true)
     item
   end
