@@ -94,7 +94,7 @@
           <% pending_signature = position.status == :onboarding %>
           <tr>
             <td>
-              <span class="badge bg-<%= pending_signature ? "warning" : position.status_color %>">
+              <span class="badge ml-0 bg-<%= pending_signature ? "warning" : position.status_color %>">
                 <%= pending_signature ? "Pending signature" : position.status_text %>
               </span>
             </td>
