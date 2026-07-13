@@ -37,6 +37,7 @@ class Contract
     attr_accessor :skip_pending_validation
 
     validates :role, uniqueness: { scope: :contract }
+    validate :role_permitted_for_contract_type
     validate :signee_is_user
     validate :contract_is_pending, on: :create, unless: :skip_pending_validation
     validate :email_cannot_change_after_sign
@@ -131,6 +132,14 @@ class Contract
 
     def docuseal_submission
       contract.docuseal_document["submitters"].select { |s| s["role"] == docuseal_role }[0]
+    end
+
+    def role_permitted_for_contract_type
+      return if contract.nil? || role.nil?
+
+      unless contract.permitted_roles.include?(role)
+        errors.add(:role, "#{role} is not a valid party for a #{contract.model_name.human.downcase}")
+      end
     end
 
     def signee_is_user

@@ -156,6 +156,13 @@ class Contract < ApplicationRecord
     raise NotImplementedError, "The #{self.class.name} model hasn't implemented it's own required roles"
   end
 
+  def permitted_roles
+    # This method should be overwritten in subclasses of Contract.
+    # It is the superset of roles this contract type can have; required_roles
+    # must be a subset of it.
+    raise NotImplementedError, "The #{self.class.name} model hasn't implemented it's own permitted roles"
+  end
+
   def send!(reissue_signee_message: nil, reissue_cosigner_message: nil)
     raise ArgumentError, "can only send contracts when pending" unless pending?
 

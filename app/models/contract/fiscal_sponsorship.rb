@@ -125,6 +125,10 @@ class Contract
       ["hcb", "signee"]
     end
 
+    def permitted_roles
+      ["hcb", "signee", "cosigner"]
+    end
+
     def pending_signee_information
       signee = party :signee
       cosigner = party :cosigner

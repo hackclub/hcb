@@ -94,6 +94,10 @@ class Contract
       ["hcb", "organizer", "contractor"]
     end
 
+    def permitted_roles
+      required_roles
+    end
+
     def notifiable_parties
       parties.not_hcb.where.not(role: :organizer)
     end
