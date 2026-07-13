@@ -84,7 +84,7 @@ module Payroll
       end
     end
 
-    def send_contract(organizer_user: nil, cosigner_email: nil, include_videos: false, reissue_signee_message: nil, reissue_cosigner_message: nil, reissue_of: nil)
+    def send_contract(organizer_user: nil, cosigner_email: nil, reissue_signee_message: nil, reissue_cosigner_message: nil, reissue_of: nil, **options)
       contract = nil
       organizer_user ||= reissue_of&.party(:organizer)&.user
       raise ArgumentError, "an organizer is required to send a payroll contract" if organizer_user.nil?
@@ -92,7 +92,7 @@ module Payroll
       ActiveRecord::Base.transaction do
         contract = Contract::PayrollPosition.create!(
           contractable: self,
-          include_videos:,
+          include_videos: false,
           external_template_id: Contract::PayrollPosition::DOCUSEAL_TEMPLATE_ID,
           prefills: {
             "public_id"   => payee.public_id,
@@ -115,9 +115,6 @@ module Payroll
       contract
     end
 
-    def on_contract_signed(contract)
-      mark_onboarding! if may_mark_onboarding?
-    end
 
     def on_contract_voided(contract)
       mark_rejected! if may_mark_rejected?

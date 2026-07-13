@@ -115,9 +115,7 @@ class Contract < ApplicationRecord
       transitions from: [:pending, :sent], to: :voided
       after do |reissuing = false|
         archive_on_docuseal!
-        unless reissuing
-          contractable.on_contract_voided(self)
-        end
+      contractable.on_contract_voided(self) unless reissuing
       end
     end
   end

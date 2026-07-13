@@ -2,12 +2,13 @@
 
 <% if @message.present? %>
   <p>
-    We couldn't finalize the payroll agreement with <%= @contract.prefills["payee_name"] %> for <%= @contract.event_name %> due to an issue:
+    We couldn't finalize the contractor agreement with <%= @contract.prefills["payee_name"] %> for <%= @contract.event_name %> due to an issue:
   </p>
   <blockquote><%= MarkdownService.instance.render @message %></blockquote>
 <% else %>
   <p>
-    We couldn't finalize the payroll agreement with <%= @contract.prefills["payee_name"] %> for <%= @contract.event_name %>.
+    We have reviewed the agreement you signed to contract <%= @contract.prefills["payee_name"] %> for <%= @contract.event_name %>. 
+    However, we could not finalize this agreement due to an issue.
   </p>
 <% end %>
 

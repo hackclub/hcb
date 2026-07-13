@@ -99,7 +99,7 @@ class Contract
     end
 
     def notifiable_parties
-      parties.not_hcb.where.not(role: :organizer)
+      parties.where(role: :contractor)
     end
 
     def pending_signee_information
@@ -121,7 +121,7 @@ class Contract
     private
 
     def document_name
-      "Payroll agreement with #{prefills["payee_name"]}"
+      "Contractor agreement with #{prefills["payee_name"]}"
     end
 
   end
