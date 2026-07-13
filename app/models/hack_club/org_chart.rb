@@ -130,8 +130,7 @@ module HackClub
     #                       never raises. For callers that must not break on a
     #                       stale key (flag-group checks).
     def self.to_user(key, on_missing: :raise)
-      user = case key
-             when /\A#{User.get_public_id_prefix}.*\Z/
+      user = if key.to_s.start_with?(User.get_public_id_prefix)
                User.find_by_public_id(key)
              else
                User.find_by(email: "#{key}@hackclub.com")
