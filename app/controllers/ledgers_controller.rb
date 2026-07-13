@@ -14,13 +14,12 @@ class LedgersController < ApplicationController
       end
     end
 
-    ledgers = [@ledger]
-
     @items = begin
-      Ledger::Query.new(query_hash).execute(ledgers:)
+      Ledger::Query.new(query_hash).execute(ledgers: [@ledger])
     rescue Ledger::Query::Error => e
       flash.now[:error] = "Query error: #{e.message}"
-      Ledger::Query.new({}).execute(ledgers:)
+
+      Ledger::Query.new({}).execute(ledgers: [@ledger])
     end.page(params[:page])
   end
 

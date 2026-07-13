@@ -3,12 +3,12 @@
 class Ledger
   class Query
     PERMITTED_COLUMNS_MAP = {
-      "memo" => "memo",
-      "amount_cents" => "amount_cents",
-      "date" => "datetime",
-      "receipt_required" => "receipt_required",
-      "receipt_count" => "receipt_count",
-      "transaction_type" => "linked_object_type",
+      "memo"                         => "memo",
+      "amount_cents"                 => "amount_cents",
+      "date"                         => "datetime",
+      "receipt_required"             => "receipt_required",
+      "receipt_count"                => "receipt_count",
+      "transaction_type"             => "linked_object_type",
       "marked_no_or_lost_receipt_at" => "marked_no_or_lost_receipt_at"
     }.freeze
 
@@ -30,7 +30,7 @@ class Ledger
         results = results.merge(Ledger::Item.joins(:ledger_mappings).where(ledger_mappings: { ledger_id: ledgers }).distinct)
       end
 
-      results
+      results.includes(:linked_object).order(datetime: :desc, created_at: :desc, id: :desc)
     end
 
     def self.sanitize_query(query_hash)
