@@ -16,9 +16,7 @@
 </ul>
 
 <p>
-  Review this invoice and approve or reject it from your contractors dashboard:
-  <br>
-  <%= link_to "Review this invoice on HCB", event_payroll_position_url(event_id: @event.slug, id: @position.id) %>
+  <%= link_to "Review this invoice on HCB", event_contractor_url(event_id: @event.slug, id: @position.id) %>
 </p>
 
 <p>
