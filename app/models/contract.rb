@@ -113,9 +113,9 @@ class Contract < ApplicationRecord
 
     event :mark_voided do
       transitions from: [:pending, :sent], to: :voided
-      after do |reissuing = false|
+      after do |options = {}|
         archive_on_docuseal!
-      contractable.on_contract_voided(self) unless reissuing
+        contractable.on_contract_voided(self) unless options[:reissuing]
       end
     end
   end
@@ -181,6 +181,11 @@ class Contract < ApplicationRecord
     event&.name || prefills["name"]
   end
 
+  def agreement_name
+    # Overridden in subclasses
+    "agreement"
+  end
+
   def redirect_path
     contractable.contract_redirect_path
   end
@@ -218,7 +223,8 @@ class Contract < ApplicationRecord
 
     document = Document.new(
       event:,
-      name: document_name
+      name: document_name,
+      category: document_category
     )
     contract_document = docuseal_document["documents"][0]
 
@@ -296,6 +302,10 @@ class Contract < ApplicationRecord
   # Overrideen in inherited classes
   def document_name
     "Contract with #{party(:signee).user.full_name}"
+  end
+
+  def document_category
+    :general
   end
 
   def reissue_of_is_voided

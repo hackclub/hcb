@@ -106,7 +106,7 @@ class Contract
     end
 
     def reminder_email_subject
-      "[Action Needed] Sign the agreement for #{contract.event_name} on HCB 📝"
+      "[Action Needed] Sign the #{contract.agreement_name} for #{contract.event_name} on HCB 📝"
     end
 
     # We may miss a webhook or load a page before we've received the webhook,

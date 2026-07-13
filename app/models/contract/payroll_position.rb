@@ -90,6 +90,10 @@ class Contract
       end
     end
 
+    def agreement_name
+      "contractor agreement"
+    end
+
     def required_roles
       ["hcb", "organizer", "contractor"]
     end
@@ -122,6 +126,10 @@ class Contract
 
     def document_name
       "Contractor agreement with #{prefills["payee_name"]}"
+    end
+
+    def document_category
+      :contracts
     end
 
   end

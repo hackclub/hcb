@@ -121,6 +121,10 @@ class Contract
       payload
     end
 
+    def agreement_name
+      "fiscal sponsorship agreement"
+    end
+
     def required_roles
       ["hcb", "signee"]
     end
