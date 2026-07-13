@@ -1,11 +1,6 @@
 # frozen_string_literal: true
 
 module Payroll
-  # Handles both sides of a Payroll::Invoice's lifecycle:
-  #   * the contractor submitting an invoice against their own position
-  #     (new/create, nested under /my/payroll_positions), and
-  #   * an organizer approving or rejecting a submitted invoice
-  #     (approve/reject, nested under the event's contractors area).
   class InvoicesController < ApplicationController
     include SetEvent
 
