@@ -1,6 +1,6 @@
 <%= turbo_frame_tag dom_id(@position, :invoice_form) do %>
   <p class="h5 leading-[1.25] muted mt0 mb3">
-    Invoice <strong><%= @position.event.name %></strong> for work on
+    Invoice <strong><%= @position.event.name %></strong> for your work as
     <strong><%= @position.title %></strong>.
   </p>
 
@@ -32,9 +32,9 @@
       <div class="flex justify-between items-start">
         <div>
           <%= form.label :description, "Notes" %>
-          <span class="muted block">Optional details for HCB</span>
+          <span class="muted block">Optional details for the organizer and HCB</span>
         </div>
-        <%= form.text_area :description, rows: 2, placeholder: "Anything HCB should know" %>
+        <%= form.text_area :description, rows: 2, placeholder: "Anything the organizer or HCB should know" %>
       </div>
 
       <div class="menu__divider my-0"></div>

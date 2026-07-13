@@ -56,7 +56,7 @@
     <% end %>
   <% end %>
 
-  <% unless @position.status == :completed %>
+  <% if @position.status == :onboarding %>
     <h3 class="eyebrow muted mt-4 mb-2">Onboarding checklist</h3>
     <div class="flex flex-col gap-2">
       <% @position.onboarding_checklist.each do |item| %>
@@ -151,13 +151,7 @@
                 <% if organizer_signed_in? %>
                   <%= link_to "", payment_path(payment),
                         class: "stretched-link",
-                        data: popovers_enabled? ? popover_data(
-                          title: "Payment of #{render_money payment.amount}",
-                          src: payment_path(payment),
-                          frame_id: payment.id,
-                          state_url: payment_path(payment),
-                          external_link: payment_path(payment)
-                        ) : { turbo_frame: "_top" } %>
+                        data: popovers_enabled? ? payment_popover_data(payment) : { turbo_frame: "_top" } %>
                 <% end %>
               </td>
             </tr>

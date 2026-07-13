@@ -194,6 +194,9 @@ class MyController < ApplicationController
                                              .order(created_at: :desc)
                                              .load
     @tax_form_required = @contractor_positions.any? && !@legal_entity.latest_tax_form&.completed?
+    @invoices = Payroll::Invoice.where(payroll_position: @contractor_positions)
+                                .includes(payroll_position: { payee: :event })
+                                .order(created_at: :desc)
   end
 
   def feed

@@ -56,6 +56,7 @@ class LegalEntity
       if default? && other_methods.none?
         legal_entity.payments.pending_legal_entity.each(&:on_default_payout_method_created)
       end
+      legal_entity.refresh_contractor_onboarding! if default?
     end
 
     # type-specific presentation lives on the detail record

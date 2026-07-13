@@ -81,7 +81,7 @@ module Payroll
       end
 
       event :mark_onboarded do
-        transitions from: :onboarding, to: :onboarded
+        transitions from: :onboarding, to: :onboarded, guard: :onboarding_complete?
       end
 
       event :mark_expired do
@@ -136,14 +136,47 @@ module Payroll
       legal_entity = payee.legal_entity
 
       [
-        { label: "Contract reviewed by HCB operations", complete: !under_review? && !rejected? },
-        { label: "Contract signed by contractor", complete: contracts.any?(&:signed?) },
-        { label: "W-9 / W-8BEN submitted", complete: legal_entity&.latest_tax_form&.completed? || false },
-        { label: "Payout method configured", complete: legal_entity&.default_payout_method.present? },
+        { key: :hcb_review, label: "Contract reviewed by HCB operations", complete: !under_review? && !rejected? },
+        { key: :contractor_signature, label: "Contract signed by contractor", complete: contract_signed_by?(:signee) },
+        { key: :organizer_signature, label: "Contract signed by organizer", complete: contract_signed_by?(:cosigner) },
+        { key: :tax_form, label: "W-9 / W-8BEN submitted", complete: legal_entity&.latest_tax_form&.completed? || false },
+        { key: :payout_method, label: "Payout method configured", complete: legal_entity&.default_payout_method.present? },
       ]
     end
 
+    # True once every onboarding step is done. Used both as the AASM guard for
+    # +mark_onboarded+ and to decide whether to advance the position.
+    def onboarding_complete?
+      onboarding_checklist.all? { |step| step[:complete] }
+    end
+
+    # The next step the contractor still needs to complete, or nil once done.
+    def next_onboarding_step
+      onboarding_checklist.find { |step| !step[:complete] }
+    end
+
+    # Advance an onboarding contractor to :onboarded once every step is
+    # complete. Invoked from callbacks whenever a step may have just finished
+    # (contract signed, tax form completed, payout method configured).
+    def refresh_onboarding_state!
+      mark_onboarded! if onboarding? && may_mark_onboarded?
+    end
+
+    # Contractable callbacks — re-check onboarding whenever a contract or one of
+    # its parties is signed.
+    def on_contract_signed(contract)
+      refresh_onboarding_state!
+    end
+
+    def on_contract_party_signed(party)
+      refresh_onboarding_state!
+    end
+
     private
+
+    def contract_signed_by?(role)
+      contracts.not_voided.any? { |contract| contract.party(role)&.signed? }
+    end
 
     def end_date_after_start_date
       return if start_date.blank? || end_date.blank?

@@ -80,4 +80,48 @@ RSpec.describe Payroll::Position, type: :model do
       expect(position).to be_valid
     end
   end
+
+  describe "onboarding" do
+    let(:position) { create(:payroll_position, aasm_state: :onboarding) }
+
+    describe "#onboarding_checklist" do
+      it "includes a step for the organizer signing the contract" do
+        labels = position.onboarding_checklist.map { |step| step[:label] }
+        expect(labels).to include("Contract signed by organizer")
+      end
+    end
+
+    describe "#mark_onboarded" do
+      it "cannot transition while an onboarding step is outstanding" do
+        allow(position).to receive(:onboarding_complete?).and_return(false)
+        expect(position.may_mark_onboarded?).to be(false)
+      end
+
+      it "transitions once every onboarding step is complete" do
+        allow(position).to receive(:onboarding_complete?).and_return(true)
+        expect { position.mark_onboarded! }.to change(position, :aasm_state).from("onboarding").to("onboarded")
+      end
+    end
+
+    describe "#refresh_onboarding_state!" do
+      it "advances an onboarding position to onboarded once complete" do
+        allow(position).to receive(:onboarding_complete?).and_return(true)
+        position.refresh_onboarding_state!
+        expect(position).to be_onboarded
+      end
+
+      it "is a no-op while a step is still outstanding" do
+        allow(position).to receive(:onboarding_complete?).and_return(false)
+        position.refresh_onboarding_state!
+        expect(position).to be_onboarding
+      end
+
+      it "does not advance a position that is still under review" do
+        under_review = create(:payroll_position)
+        allow(under_review).to receive(:onboarding_complete?).and_return(true)
+        under_review.refresh_onboarding_state!
+        expect(under_review).to be_under_review
+      end
+    end
+  end
 end

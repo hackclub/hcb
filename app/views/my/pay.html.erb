@@ -91,11 +91,14 @@
       </thead>
       <tbody>
         <% @contractor_positions.each do |position| %>
-          <% pending_signature = position.status == :onboarding %>
+          <% onboarding = position.status == :onboarding %>
+          <% next_step = position.next_onboarding_step if onboarding %>
+          <% legal_entity = position.payee.legal_entity %>
           <tr>
             <td>
-              <span class="badge ml-0 bg-<%= pending_signature ? "warning" : position.status_color %>">
-                <%= pending_signature ? "Pending signature" : position.status_text %>
+              <span class="badge ml-0 bg-<%= onboarding ? "warning" : position.status_color %>"
+                    <% if next_step %>title="Next step: <%= next_step[:label] %>"<% end %>>
+                <%= onboarding ? "Onboarding" : position.status_text %>
               </span>
             </td>
             <td><strong><%= position.event.name %></strong></td>
@@ -120,10 +123,20 @@
                     <%= render "application/loading_container", klass: "py-8" %>
                   <% end %>
                 </section>
-              <% elsif pending_signature %>
-                <%= link_to "#", class: "btn bg-warning nowrap" do %>
-                  <%= inline_icon "edit" %>
-                  Sign contract
+              <% elsif next_step %>
+                <% case next_step[:key] %>
+                <% when :tax_form %>
+                  <%= link_to tax_forms_path(legal_entity_id: legal_entity&.hashid), class: "btn bg-warning nowrap" do %>
+                    <%= inline_icon "docs" %>
+                    Complete tax form
+                  <% end %>
+                <% when :payout_method %>
+                  <%= link_to settings_payouts_path(legal_entity_id: legal_entity&.id), class: "btn bg-warning nowrap" do %>
+                    <%= inline_icon "bank-account" %>
+                    Configure payouts
+                  <% end %>
+                <% else %>
+                  <span class="muted nowrap"><%= next_step[:label] %></span>
                 <% end %>
               <% end %>
             </td>
@@ -132,6 +145,37 @@
       </tbody>
     </table>
   </article>
+
+  <% if @invoices.any? %>
+    <h2 class="mt-0 mb-2">Your invoices</h2>
+    <article class="table-container mb-4">
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Organization</th>
+            <th>Description</th>
+            <th class="text-right">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @invoices.each do |invoice| %>
+            <% state_color = invoice.approved? ? "success" : (invoice.rejected? ? "muted" : "warning") %>
+            <tr>
+              <td><span class="badge ml-0 bg-<%= state_color %>"><%= invoice.aasm_state.humanize %></span></td>
+              <td><%= format_date invoice.created_at %></td>
+              <td><strong><%= invoice.event.name %></strong></td>
+              <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
+                <%= invoice.name %>
+              </td>
+              <td class="text-right"><%= render_money invoice.amount_cents %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </article>
+  <% end %>
 
   <h2 class="mt-0 mb-2">Payment history</h2>
 <% end %>

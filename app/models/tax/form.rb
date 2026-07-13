@@ -87,6 +87,7 @@ module Tax
         transitions from: :sent, to: :completed
         after do
           legal_entity.payments.each(&:on_legal_entity_payable) if legal_entity.payable?
+          legal_entity.refresh_contractor_onboarding!
         end
       end
 
