@@ -77,7 +77,7 @@ module FlipperGroups
 
   def hcb_team_user_ids
     fetch_id_set("flipper_groups/hcb_team_user_ids/#{HackClub::OrgChart::DIGEST}") do
-      HackClub::OrgChart.user_ids.to_set
+      HackClub::OrgChart.user_ids(:melanie).to_set
     end
   end
 
