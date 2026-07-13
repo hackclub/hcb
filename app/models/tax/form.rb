@@ -69,6 +69,8 @@ module Tax
 
     scope :not_discarded, -> { where.not(aasm_state: :discarded) }
 
+    validate :tin_hash_cannot_change, on: :update
+
     after_update if: -> {
       taxbandits_status_previously_changed?(to: :completed) ||
         taxbandits_status_previously_changed?(to: :completed_and_tin_match_inprogress)
@@ -171,6 +173,12 @@ module Tax
     end
 
     private
+
+    def tin_hash_cannot_change
+      if tin_hash_changed? && tin_hash_was.present?
+        errors.add(:tin_hash, "cannot change once set")
+      end
+    end
 
     def send_using_taxbandits!
       response = TaxbanditsService.create_whcertificate(id: public_id, name: legal_entity.name)

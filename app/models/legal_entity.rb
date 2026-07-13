@@ -49,6 +49,7 @@ class LegalEntity < ApplicationRecord
   scope :not_archived, -> { where(archived_at: nil) }
 
   validate :managing_event_cannot_change, on: :update
+  validate :tin_hash_cannot_change, on: :update
 
   delegate :address_city, :address_country, :address_line1, :address_postal_code, :address_state, to: :latest_tax_form, allow_nil: true
 
@@ -100,6 +101,12 @@ class LegalEntity < ApplicationRecord
   def managing_event_cannot_change
     if managing_event_id_changed?
       errors.add(:managing_event_id, "cannot change once a legal entity is created")
+    end
+  end
+
+  def tin_hash_cannot_change
+    if tin_hash_changed? && tin_hash_was.present?
+      errors.add(:tin_hash, "cannot change once set")
     end
   end
 
