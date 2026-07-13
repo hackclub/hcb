@@ -3,6 +3,8 @@
 class PayeesController < ApplicationController
   include SetEvent
 
+  helper PayeeHelper
+
   before_action :set_event, only: [:index, :create, :update, :archive]
   before_action :set_payee, only: [:choose_legal_entity, :set_legal_entity]
 
