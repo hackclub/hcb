@@ -154,7 +154,7 @@ class Event
       end
 
       event :mark_rejected do
-        transitions from: [:submitted, :under_review, :approved], to: :rejected
+        transitions from: [:submitted, :under_review, :approved], to: :rejected, if: -> { event.nil? }
         after do |rejection_message|
           contract.mark_voided! if contract.present?
 
