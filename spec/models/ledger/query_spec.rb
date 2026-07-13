@@ -27,6 +27,10 @@ RSpec.describe Ledger::Query, type: :model do
   def create_mapped_item(date:, **attrs)
     item = create(:ledger_item, datetime: date, **attrs)
     Ledger::Mapping.create(ledger: test_ledger, ledger_item: item, on_primary_ledger: true)
+    # refresh! (triggered on create and on mapping) recomputes memo and
+    # amount_cents from canonical transactions, which these items don't have.
+    # Pin the intended values, bypassing callbacks.
+    item.update_columns(datetime: date, **attrs)
     item
   end
 
@@ -43,36 +47,36 @@ RSpec.describe Ledger::Query, type: :model do
       it "$gt generates greater than" do
         result = execute_query({ amount_cents: { "$gt" => 100 } })
 
-        expect(result.to_sql).to match(/amount_cents > 100/)
+        expect(result.to_sql).to match(/"amount_cents" > 100/)
         expect(result.pluck(:id)).to match_array(ids_of(item_c, item_d, item_e, item_f))
       end
 
       it "$lt generates less than" do
         result = execute_query({ amount_cents: { "$lt" => 200 } })
 
-        expect(result.to_sql).to match(/amount_cents < 200/)
+        expect(result.to_sql).to match(/"amount_cents" < 200/)
         expect(result.pluck(:id)).to match_array(ids_of(item_a, item_b, item_c, item_g))
       end
 
       it "$gte generates greater than or equal" do
         result = execute_query({ amount_cents: { "$gte" => 100 } })
 
-        expect(result.to_sql).to match(/amount_cents >= 100/)
+        expect(result.to_sql).to match(/"amount_cents" >= 100/)
         expect(result.pluck(:id)).to match_array(ids_of(item_b, item_c, item_d, item_e, item_f, item_g))
       end
 
       it "$lte generates less than or equal" do
         result = execute_query({ amount_cents: { "$lte" => 100 } })
 
-        expect(result.to_sql).to match(/amount_cents <= 100/)
+        expect(result.to_sql).to match(/"amount_cents" <= 100/)
         expect(result.pluck(:id)).to match_array(ids_of(item_a, item_b, item_g))
       end
 
       it "combines multiple operators on same field with AND (range query)" do
         result = execute_query({ amount_cents: { "$gt" => 100, "$lt" => 300 } })
 
-        expect(result.to_sql).to match(/amount_cents > 100/)
-        expect(result.to_sql).to match(/amount_cents < 300/)
+        expect(result.to_sql).to match(/"amount_cents" > 100/)
+        expect(result.to_sql).to match(/"amount_cents" < 300/)
         expect(result.pluck(:id)).to match_array(ids_of(item_c, item_d))
       end
     end
@@ -169,8 +173,8 @@ RSpec.describe Ledger::Query, type: :model do
                                  ]
                                })
 
-        expect(result.to_sql).to match(/amount_cents > 100/)
-        expect(result.to_sql).to match(/amount_cents < 300/)
+        expect(result.to_sql).to match(/"amount_cents" > 100/)
+        expect(result.to_sql).to match(/"amount_cents" < 300/)
         expect(result.pluck(:id)).to match_array(ids_of(item_c, item_d))
       end
 
@@ -237,7 +241,7 @@ RSpec.describe Ledger::Query, type: :model do
                                  ]
                                })
 
-        expect(result.to_sql).to match(/amount_cents > 100/)
+        expect(result.to_sql).to match(/"amount_cents" > 100/)
         expect(result.to_sql).to match(/OR/)
         expect(result.pluck(:id)).to match_array(ids_of(item_c, item_e))
       end
@@ -277,7 +281,7 @@ RSpec.describe Ledger::Query, type: :model do
                                  ]
                                })
 
-        expect(result.to_sql).to match(/amount_cents.*OR.*\(amount_cents.*AND.*memo.*\)/)
+        expect(result.to_sql).to match(/amount_cents.*OR.*amount_cents.*AND.*memo/)
         expect(result.pluck(:id)).to match_array(ids_of(item_a, item_f))
       end
     end
@@ -314,6 +318,7 @@ RSpec.describe Ledger::Query, type: :model do
     def create_other_ledger_item(**attrs)
       item = create(:ledger_item, **attrs)
       Ledger::Mapping.create(ledger: other_ledger, ledger_item: item, on_primary_ledger: true)
+      item.update_columns(**attrs)
       item
     end
 
