@@ -12,6 +12,7 @@ class ContractorsController < ApplicationController
     @can_review = ContractorPolicy.new(current_user, @event).review?
     @invoices = @contract.invoices.order(created_at: :desc)
     @payments = @contract.payee.payments.order(created_at: :desc)
+    render :show, layout: !@frame
   end
 
   def new
@@ -21,12 +22,12 @@ class ContractorsController < ApplicationController
   end
 
   def create
-    @payee = @event.payees.find_by_public_id!(contractor_params[:payee_id])
     authorize @event, policy_class: ContractorPolicy
 
+    @payee = @event.payees.find_by_public_id!(contractor_params[:payee_id])
     @contract = @payee.payroll_positions.build(
       title: contractor_params[:title],
-      rate_cents: (contractor_params[:rate].to_d * 100).round,
+      rate: contractor_params[:rate],
       start_date: contractor_params[:starts_on],
       end_date: contractor_params[:ends_on],
       description: contractor_params[:purpose]

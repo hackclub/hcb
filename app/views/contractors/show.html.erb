@@ -1,6 +1,8 @@
 <% title "#{@contract.display_name}'s contract" %>
 <% page_sm %>
-<%= render "events/nav", selected: :contractors %>
+<% unless @frame %>
+  <%= render "events/nav", selected: :contractors %>
+<% end %>
 
 <%= turbo_frame_tag "contractor_#{@contract.id}", target: "_top" do %>
   <article class="hcb-code">

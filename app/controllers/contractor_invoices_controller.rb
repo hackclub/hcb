@@ -5,18 +5,17 @@ class ContractorInvoicesController < ApplicationController
 
   before_action :set_event
   before_action :set_invoice
+  before_action :authorize_review
 
   def approve
-    authorize @event, :review?, policy_class: ContractorPolicy
-
     unless @invoice.submitted?
       flash[:error] = "This invoice has already been reviewed."
-      return redirect_to event_contractor_path(event_id: @event.slug, id: @invoice.payroll_position_id)
+      return redirect_to contractor_page
     end
 
     if @invoice.amount_cents > @event.balance_available_v2_cents
       flash[:error] = "Your organization doesn't have enough money to pay this invoice. Your balance is #{helpers.render_money(@event.balance_available_v2_cents)}."
-      return redirect_to event_contractor_path(event_id: @event.slug, id: @invoice.payroll_position_id)
+      return redirect_to contractor_page
     end
 
     ActiveRecord::Base.transaction do
@@ -32,12 +31,10 @@ class ContractorInvoicesController < ApplicationController
     end
 
     flash[:success] = "Invoice approved. Payment initiated."
-    redirect_to event_contractor_path(event_id: @event.slug, id: @invoice.payroll_position_id)
+    redirect_to contractor_page
   end
 
   def reject
-    authorize @event, :review?, policy_class: ContractorPolicy
-
     if @invoice.submitted?
       @invoice.mark_rejected!
       flash[:success] = "Invoice rejected."
@@ -45,7 +42,7 @@ class ContractorInvoicesController < ApplicationController
       flash[:error] = "This invoice has already been reviewed."
     end
 
-    redirect_to event_contractor_path(event_id: @event.slug, id: @invoice.payroll_position_id)
+    redirect_to contractor_page
   end
 
   private
@@ -55,6 +52,14 @@ class ContractorInvoicesController < ApplicationController
     @invoice = Payroll::Invoice.joins(payroll_position: :payee)
                                .where(payees: { event_id: @event.id })
                                .find(params[:id])
+  end
+
+  def authorize_review
+    authorize @event, :review?, policy_class: ContractorPolicy
+  end
+
+  def contractor_page
+    event_contractor_path(event_id: @event.slug, id: @invoice.payroll_position_id)
   end
 
 end

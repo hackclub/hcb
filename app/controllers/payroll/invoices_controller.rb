@@ -14,8 +14,8 @@ module Payroll
       @invoice = @position.invoices.build(
         name: invoice_params[:name],
         description: invoice_params[:description],
-        amount_cents: (invoice_params[:amount].to_d * 100).round,
-        currency: @position.currency
+        currency: @position.currency,
+        amount: invoice_params[:amount]
       )
       authorize @invoice
 
@@ -25,24 +25,22 @@ module Payroll
         return render :new, layout: false, status: :unprocessable_entity
       end
 
-      begin
-        ActiveRecord::Base.transaction do
-          @invoice.save!
-          ::ReceiptService::Create.new(
-            uploader: current_user,
-            attachments:,
-            upload_method: :transfer_create_page,
-            receiptable: @invoice
-          ).run!
-        end
-      rescue ActiveRecord::RecordInvalid => e
-        flash.now[:error] = e.message
-        return render :new, layout: false, status: :unprocessable_entity
+      ActiveRecord::Base.transaction do
+        @invoice.save!
+        ::ReceiptService::Create.new(
+          uploader: current_user,
+          attachments:,
+          upload_method: :transfer_create_page,
+          receiptable: @invoice
+        ).run!
       end
 
       Payroll::InvoiceMailer.with(invoice: @invoice).submitted.deliver_later
       flash[:success] = "Invoice submitted for review."
       redirect_to my_pay_path
+    rescue ActiveRecord::RecordInvalid => e
+      flash.now[:error] = e.message
+      render :new, layout: false, status: :unprocessable_entity
     end
 
     private

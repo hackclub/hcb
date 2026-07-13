@@ -886,7 +886,7 @@ class EventsController < ApplicationController
   def contractors
     authorize @event
 
-    @contractors = @event.payroll_positions.includes(payee: [:legal_entity, :payments]).order(created_at: :desc)
+    @contractors = @event.payroll_positions.includes(payee: :payments).order(created_at: :desc)
     @contractors = @contractors.search_recipient(params[:q]) if params[:q].present?
 
     counts_by_status = @contractors.to_a.group_by(&:status).transform_values(&:count)
