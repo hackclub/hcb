@@ -60,7 +60,8 @@ module Payroll
         return redirect_to contractor_page
       end
 
-      if @invoice.amount_cents > @event.balance_available_v2_cents
+      amount_usd_cents = MoneyService.convert_to_usd(@invoice.amount_cents, @invoice.currency)
+      if amount_usd_cents > @event.balance_available_v2_cents
         flash[:error] = "Your organization doesn't have enough money to pay this invoice. Your balance is #{helpers.render_money(@event.balance_available_v2_cents)}."
         return redirect_to contractor_page
       end
@@ -85,7 +86,7 @@ module Payroll
       authorize @invoice
 
       if @invoice.submitted?
-        @invoice.mark_rejected!
+        @invoice.mark_rejected!(current_user)
         flash[:success] = "Invoice rejected."
       else
         flash[:error] = "This invoice has already been reviewed."

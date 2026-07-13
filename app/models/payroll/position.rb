@@ -58,7 +58,7 @@ module Payroll
       Payroll::Position::ExpireJob.set(wait_until: end_date.end_of_day).perform_later(self)
     end
 
-    validates :title, :description, presence: true
+    validates :title, :description, :start_date, :end_date, presence: true
     validates :currency, inclusion: { in: Money::Currency.all.map(&:iso_code) }
     validate :end_date_after_start_date
     validate :start_date_within_set_lead_time
@@ -152,10 +152,14 @@ module Payroll
     end
 
     def start_date_within_set_lead_time
+      return if start_date.blank?
+
       errors.add(:start_date, "cannot be more than 6 months in the future") if start_date > MAX_START_LEAD_TIME.from_now.to_date
     end
 
     def duration_within_set_max
+      return if start_date.blank? || end_date.blank?
+
       errors.add(:end_date, "cannot be more than 1 year after the start date") if end_date > start_date + MAX_DURATION
     end
 

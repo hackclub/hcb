@@ -61,6 +61,9 @@ module Payroll
       end
 
       event :mark_rejected do
+        after do |reviewed_by|
+          update!(reviewed_by:)
+        end
         transitions from: :submitted, to: :rejected
       end
     end

@@ -192,6 +192,7 @@ class MyController < ApplicationController
                                              .where(payees: { email: current_user.email })
                                              .includes(payee: :event)
                                              .order(created_at: :desc)
+                                             .load
     @tax_form_required = @contractor_positions.any? && !@legal_entity.latest_tax_form&.completed?
   end
 
