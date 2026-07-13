@@ -159,13 +159,10 @@ class MyController < ApplicationController
   end
 
   def pay
-    if params[:legal_entity_id].present?
-      session[:legal_entity_id] = params[:legal_entity_id]
-      return redirect_to my_pay_path
-    end
-
     @legal_entities = current_user.legal_entities
-    @legal_entity = @legal_entities.find_by(id: session[:legal_entity_id]) || current_user.personal_legal_entity
+    @legal_entity = @legal_entities.find_by(id: params[:legal_entity_id] || session[:legal_entity_id]) || current_user.personal_legal_entity
+    session[:legal_entity_id] = @legal_entity.id
+
     @payout_method = @legal_entity.default_payout_method
 
     all_payments = @legal_entity.payments
@@ -190,6 +187,7 @@ class MyController < ApplicationController
 
     @contractor_positions = Payroll::Position.joins(payee: { legal_entity: :legal_entity_users })
                                              .where(legal_entity_users: { user_id: current_user.id })
+                                             .where(payees: { legal_entity_id: @legal_entity.id })
                                              .includes(payee: :event)
                                              .order(created_at: :desc)
                                              .load
