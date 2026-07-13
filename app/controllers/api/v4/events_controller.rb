@@ -10,6 +10,8 @@ module Api
         @events = current_user.events.not_hidden.includes(:users).order("organizer_positions.created_at DESC")
       end
 
+      require_oauth2_scope "organizations:read", :index
+
       def sub_organizations
         authorize @event, :sub_organizations_in_v4?
 

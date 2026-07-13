@@ -644,7 +644,7 @@ class HcbCode < ApplicationRecord
 
     return false if amount_cents >= 0
 
-    return false unless event&.plan&.rececipt_required?
+    return false unless event&.plan&.receipt_required?
 
     return true if [:card_charge, :card_force_capture, :ach, :check, :increase_check, :paypal_transfer, :wire, :wise_transfer].include?(type)
 
@@ -764,6 +764,10 @@ class HcbCode < ApplicationRecord
   end
 
   def update_custom_memo!(memo)
+    if ledger_item.present?
+      ledger_item.update_custom_memo!(memo)
+      return
+    end
     canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
     canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
   end

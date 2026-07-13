@@ -43,7 +43,7 @@ class Event
         Event::Plan.available_features - %w[card_grants unrestricted_disbursements front_disbursements]
       end
 
-      def rececipt_required?
+      def receipt_required?
         true
       end
 

@@ -3,6 +3,7 @@
 class PaymentPolicy < ApplicationPolicy
   def show?
     return true if user&.auditor?
+    return true if user.present? && record.legal_entity&.users&.exists?(id: user.id)
 
     user.present? && record.event.users.exists?(id: user.id)
   end
