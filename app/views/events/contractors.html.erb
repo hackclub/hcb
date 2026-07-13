@@ -105,8 +105,8 @@
               </td>
               <% if show_details %>
                 <td class="text-right">
-                  <% if contractor.total_paid_cents.positive? %>
-                    <%= render_money contractor.total_paid_cents %>
+                  <% if contractor.payee.total_paid_cents.positive? %>
+                    <%= render_money contractor.payee.total_paid_cents %>
                   <% else %>
                     <span class="muted">&mdash;</span>
                   <% end %>
