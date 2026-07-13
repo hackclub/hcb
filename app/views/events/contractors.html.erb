@@ -88,7 +88,7 @@
           <% @contractors.each do |contractor| %>
             <tr class="<%= "clickable" if show_details %>">
               <td>
-                <span class="badge bg-<%= contractor.status_color %>"><%= contractor.status_text %></span>
+                <span class="badge ml-0 bg-<%= contractor.status_color %>"><%= contractor.status_text %></span>
               </td>
               <td>
                 <strong><%= contractor.display_name %></strong>
