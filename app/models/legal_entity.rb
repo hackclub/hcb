@@ -90,9 +90,7 @@ class LegalEntity < ApplicationRecord
   end
 
   def latest_usable_tax_form
-    tax_forms.completed.order(completed_at: :desc, created_at: :desc).select do |form|
-      form.tin_hash == tin_hash
-    end.last
+    tax_forms.completed.order(completed_at: :desc, created_at: :desc).where(tin_hash:).last
   end
 
   delegate :masked_tin, to: :latest_usable_tax_form
