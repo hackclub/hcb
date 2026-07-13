@@ -97,7 +97,7 @@
           <tr>
             <td>
               <span class="badge ml-0 bg-<%= onboarding ? "warning" : position.status_color %>"
-                    <% if next_step %>title="Next step: <%= next_step[:label] %>"<% end %>>
+                    <% if next_step %> title="Next step: <%= next_step[:label] %>"<% end %>>
                 <%= onboarding ? "Onboarding" : position.status_text %>
               </span>
             </td>
