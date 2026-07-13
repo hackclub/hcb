@@ -30,6 +30,6 @@
     <% end %>
   </td>
   <td>
-    <%= link_to "View", auditor_signed_in? ? ledger_item_path(item) : ledger_item_hcb_path(item) %>
+    <%= link_to "View", auditor_signed_in? ? ledger_item_path(item) : ledger_item_hcb_path(item), data: { turbo: false } %>
   </td>
 </tr>
