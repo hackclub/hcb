@@ -22,11 +22,17 @@ module CardLocking
     # New engine: a ledger item was mapped. Fires on create/update/destroy (the
     # job is idempotent, so the extra fires are harmless); only primary-ledger,
     # negative card charges do any work.
+    #
+    # A ledger item groups the canonical transactions that share an HcbCode. Find
+    # the charge's Stripe-card canonical transaction and materialize its HcbCode
+    # (parity with the old-engine hook). This does not rely on the item -> hcb_code
+    # has_one, which depends on the ledger_item_id backfill.
     def on_ledger_item(ledger_item, on_primary:)
       item = ledger_item
-      return unless on_primary && item&.amount_cents&.negative? && item.stripe_cardholder.present?
+      return unless on_primary && item&.amount_cents&.negative?
 
-      hcb_code = item.hcb_code
+      ct = item.canonical_transactions.detect { |t| t.stripe_card.present? }
+      hcb_code = ct&.local_hcb_code
       MaterializeChargeJob.perform_later(hcb_code_id: hcb_code.id) if hcb_code
     end
   end
