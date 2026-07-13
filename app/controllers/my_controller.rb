@@ -160,7 +160,14 @@ class MyController < ApplicationController
 
   def pay
     @legal_entities = current_user.legal_entities
-    @legal_entity = @legal_entities.find_by(id: params[:legal_entity_id] || session[:legal_entity_id]) || current_user.personal_legal_entity
+
+    if params[:legal_entity_id].present?
+      selected = @legal_entities.find_by(id: params[:legal_entity_id])
+      session[:legal_entity_id] = selected.id.to_s if selected
+      return redirect_to my_pay_path
+    end
+
+    @legal_entity = @legal_entities.find_by(id: session[:legal_entity_id]) || current_user.personal_legal_entity
     session[:legal_entity_id] = @legal_entity.id
 
     @payout_method = @legal_entity.default_payout_method
