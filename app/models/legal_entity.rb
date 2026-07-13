@@ -37,35 +37,11 @@ class LegalEntity < ApplicationRecord
   # At most one default per entity is enforced by a partial unique index.
   has_one :default_payout_method, -> { where(default: true) }, class_name: "LegalEntity::PayoutMethod", inverse_of: :legal_entity
 
-  before_validation :normalize_address_country
-
-  # We store countries as ISO 3166-1 alpha-2 codes (e.g. "US", "CA", "GB"),
-  # matching the rest of our address fields and what we forward to Stripe.
-  validates :address_country, inclusion: {
-    in: ISO3166::Country.codes,
-    message: "is not a valid country"
-  }, allow_blank: true
-
-  # address_state is intentionally left free-text for now. To validate it
-  # strictly we'd check it against the country's ISO 3166-2 subdivisions
-  # (`ISO3166::Country[address_country].subdivisions.keys`, as StripeCardholder
-  # does), but that only works if the UI emits codes (a dependent dropdown),
-  # since codes are non-obvious (Japan's prefectures are numeric, etc.).
-  # Options when we're ready: (a) dependent subdivision dropdown + strict
-  # validation, (b) keep it free-text like Stripe's API, or (c) populate it
-  # from the W-9 / W-8BEN we'll already be collecting and skip asking twice.
-
   def complete?
     # Bypass until tax form is implemented
     # REQUIRED_COLUMNS.all? { |col| self[col].present? }
 
     true
-  end
-
-  private
-
-  def normalize_address_country
-    self.address_country = address_country&.strip&.upcase.presence
   end
 
 end
