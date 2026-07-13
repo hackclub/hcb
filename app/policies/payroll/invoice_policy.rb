@@ -29,9 +29,10 @@ module Payroll
       legal_entity.present? && legal_entity.users.exists?(id: user.id)
     end
 
-    # Reviewing (approving/rejecting) requires organizer permission on the event.
+    # Reviewing (approving/rejecting) an invoice is gated by the same permission
+    # as reviewing the underlying position.
     def reviewer?
-      EventPolicy.new(user, record.event).create_contractor?
+      Payroll::PositionPolicy.new(user, record.payroll_position).review?
     end
 
   end

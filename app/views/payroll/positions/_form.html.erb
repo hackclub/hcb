@@ -46,7 +46,7 @@
         <div class="menu__divider my-0"></div>
 
         <div class="flex justify-between items-center">
-          <div>
+          <div class="pr-2">
             <%= form.label :starts_on, "Duration" %>
             <span class="muted block">Up to <%= Payroll::Position::MAX_DURATION.inspect %>, starting within <%= Payroll::Position::MAX_START_LEAD_TIME.inspect %></span>
           </div>

@@ -8,7 +8,6 @@ module Payroll
       @event = @position.event
 
       managers = @event.organizer_contact_emails(only_managers: true)
-      return if managers.empty?
 
       mail(
         to: managers,

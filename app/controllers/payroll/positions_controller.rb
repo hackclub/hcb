@@ -8,7 +8,7 @@ module Payroll
 
     def show
       @position = @event.payroll_positions.find(params[:id])
-      authorize @event, policy_class: Payroll::PositionPolicy
+      authorize @position
       @frame = params[:frame].present?
       @can_review = Payroll::PositionPolicy.new(current_user, @event).review?
       @invoices = @position.invoices.order(created_at: :desc)
