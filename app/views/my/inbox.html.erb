@@ -11,7 +11,7 @@
 <% if Flipper.enabled?(:card_locking_2025_06_09, current_user) %>
   <%= render "application/callout", class: "mt-2", type: "info", title: "Card locking", badge: badge_for("Beta", class: "bg-muted") do %>
     <p class="my-0">
-      Every charge needs a receipt within 7 days. If any settled charge is still missing a receipt after that, your cards can be locked until you upload it. Below, "missing receipts" includes every payment type, but only overdue card charges can lock a card. Your cards are currently <strong><%= current_user.cards_locked? ? "locked" : "active" %></strong>.
+      Upload a receipt within <strong>7 days</strong> of every card charge. Miss it and your cards pause until you upload. Uploading unlocks them in seconds. Your cards are currently <strong class="<%= current_user.cards_locked? ? "error" : "success" %>"><%= current_user.cards_locked? ? "locked" : "active" %></strong>.
     </p>
   <% end %>
 <% end %>
