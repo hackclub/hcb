@@ -56,7 +56,9 @@
           Pick this if your TIN for <%= @legal_entity.name %> changed to <code class="whitespace-nowrap"><%= @legal_entity.mismatched_tax_form.masked_tin %></code>.
           You will no longer be able to receive payments through HCB to your old TIN (<code class="whitespace-nowrap"><%= @legal_entity.masked_tin %></code>).
         </li>
-      <% elsif @legal_entity.mismatched_tax_form.inferred_entity_type.to_s == "business" %>
+      <% end %>
+
+      <% if @legal_entity.mismatched_tax_form.inferred_entity_type.to_s == "business" %>
         <li>
           <strong>Create new legal entity</strong>:
           Pick this if you entered in information for a different legal entity than <%= @legal_entity.name %>.
@@ -74,9 +76,33 @@
     <div class="flex justify-start gap-5 items-center">
       <% if entity_type_matches %>
         <%= button_to "Switch to new TIN", switch_legal_entity_path(@legal_entity), class: "btn", params: { new_tax_form_id: @legal_entity.mismatched_tax_form.id } %>
-      <% elsif @legal_entity.mismatched_tax_form.inferred_entity_type.to_s == "business" %>
-        <%= button_to "Create new legal entity", create_from_tax_form_legal_entities_path, class: "btn", params: { new_tax_form_id: @legal_entity.mismatched_tax_form.id } %>
       <% end %>
+
+      <% if @legal_entity.mismatched_tax_form.inferred_entity_type.to_s == "business" %>
+        <%= link_to "Create new legal entity", "#", class: "btn", data: { behavior: "modal_trigger", modal: "create_new_le" } %>
+
+        <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="create_new_le">
+          <%= modal_header "Create new legal entity" %>
+
+          <p>
+            You're creating a new legal entity with TIN <code class="whitespace-nowrap"><%= @legal_entity.mismatched_tax_form.masked_tin %></code>.
+            You'll be able to receive information to both TINs, and pending payments will be switched to the new legal entity.
+          </p>
+
+          <%= form_with url: create_from_tax_form_legal_entities_path do |form| %>
+            <%= form.hidden_field :new_tax_form_id, value: @legal_entity.mismatched_tax_form.id %>
+            <%= form.hidden_field :old_le_id, value: @legal_entity.id %>
+
+            <div class="field">
+              <%= form.label :name, "New legal entity name" %>
+              <%= form.text_field :name %>
+            </div>
+
+            <%= form.submit "Create" %>
+          <% end %>
+        </section>
+      <% end %>
+
       <%= button_to "Discard last tax form", discard_tax_form_path(@legal_entity.mismatched_tax_form), class: "btn" %>
     </div>
   <% elsif @legal_entity.tin_banned? %>

@@ -25,7 +25,7 @@ class LegalEntitiesController < ApplicationController
       @legal_entity.archive!
 
       new_le = LegalEntity.create!(
-        name: params[:name],
+        name: @legal_entity.name,
         tin_hash: new_tax_form.tin_hash,
         entity_type: new_tax_form.inferred_entity_type,
         users: @legal_entity.users
@@ -33,21 +33,7 @@ class LegalEntitiesController < ApplicationController
 
       new_tax_form.update!(legal_entity: new_le)
 
-      @legal_entity.payments.pending_legal_entity.each do |payment|
-        next if payment.payee.archived?
-
-        new_payee = payment.event.payees.create!(
-          display_name: payment.payee.display_name,
-          email: payment.payee.email,
-          legal_entity: new_le
-        )
-
-        payment.payee.payments.pending_legal_entity.each do |payee_payment|
-          payee_payment.update!(payee: new_payee)
-        end
-
-        payment.payee.archive!
-      end
+      migrate_pending_payments(from_le: @legal_entity, to_le: new_le)
     end
 
     redirect_to legal_entity_path(new_le)
@@ -56,6 +42,9 @@ class LegalEntitiesController < ApplicationController
   def create_from_tax_form
     tax_form = Tax::Form.find(params[:new_tax_form_id])
     authorize tax_form, :create_legal_entity?
+
+    old_le = LegalEntity.find_by(id: params[:old_le_id])
+    authorize old_le, :switch? if old_le.present?
 
     new_le = nil
 
@@ -68,6 +57,8 @@ class LegalEntitiesController < ApplicationController
       )
 
       tax_form.update!(legal_entity: new_le)
+
+      migrate_pending_payments(from_le: old_le, to_le: new_le) if old_le.present?
     end
 
     redirect_to legal_entity_path(new_le)
@@ -77,6 +68,25 @@ class LegalEntitiesController < ApplicationController
 
   def set_legal_entity
     @legal_entity = LegalEntity.find_by_hashid!(params[:id])
+  end
+
+  def migrate_pending_payments(from_le:, to_le:)
+    from_le.payees.each do |payee|
+      next if payee.archived?
+      next if payee.payments.pending_legal_entity.none?
+
+      new_payee = payee.event.payees.create!(
+        display_name: payee.display_name,
+        email: payee.email,
+        legal_entity: to_le
+      )
+
+      payee.payments.pending_legal_entity.each do |payment|
+        payment.update!(payee: new_payee)
+      end
+
+      payee.archive!
+    end
   end
 
 end
