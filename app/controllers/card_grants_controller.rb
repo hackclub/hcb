@@ -36,6 +36,11 @@ class CardGrantsController < ApplicationController
     authorize @event, :card_grant_overview?
 
     @subledger = true
+
+    @per = params[:per] || 25
+    @table_only = true
+    @ledger = @event.ledger
+    @items = Ledger::Item.where(primary_mapping: Ledger::Mapping.where(ledger: Ledger.where(card_grant: @event.card_grants))).order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page]).per(@per)
   end
 
   def new
@@ -210,6 +215,11 @@ class CardGrantsController < ApplicationController
     @event = @card_grant.event
     @card = @card_grant.stripe_card
     @hcb_codes = @card_grant.visible_hcb_codes
+
+    @per = params[:per] || 25
+    @table_only = true
+    @ledger = @card_grant.ledger
+    @items = @card_grant.ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page]).per(@per)
 
     @show_card_details = params[:show_details] == "true"
 
