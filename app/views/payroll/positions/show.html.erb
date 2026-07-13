@@ -1,65 +1,65 @@
-<% title "#{@contract.display_name}'s contract" %>
+<% title "#{@position.display_name}'s contract" %>
 <% page_sm %>
 <% unless @frame %>
   <%= render "events/nav", selected: :contractors %>
 <% end %>
 
-<%= turbo_frame_tag "contractor_#{@contract.id}", target: "_top" do %>
+<%= turbo_frame_tag "contractor_#{@position.id}", target: "_top" do %>
   <article class="hcb-code">
     <h2 class="h2 mt0 border-none flex items-center justify-between hcb-code--heading mb-0" style="gap: 1ch">
       <span class="flex items-center py-3 gap-2 flex-grow">
         <span>
           <span class="regular muted">Contract with</span>
-          <%= @contract.display_name %>
+          <%= @position.display_name %>
         </span>
-        <span class="badge h4 bg-<%= @contract.status_color %> nowrap order-1"><%= @contract.status_text %></span>
+        <span class="badge h4 bg-<%= @position.status_color %> nowrap order-1"><%= @position.status_text %></span>
       </span>
     </h2>
 
     <section class="hcb-code--info">
       <p>
         <strong>Recipient</strong>
-        <%= @contract.display_name %>
+        <%= @position.display_name %>
       </p>
       <p>
         <strong>Email</strong>
-        <%= @contract.email %>
+        <%= @position.payee.email %>
       </p>
       <p>
         <strong>Rate</strong>
-        <%= "#{render_money @contract.rate_cents}/hr" %>
+        <%= "#{render_money @position.rate_cents}/hr" %>
       </p>
       <p>
         <strong>Period</strong>
-        <%= @contract.period_label %>
+        <%= @position.period_label %>
       </p>
       <p>
         <strong>Purpose</strong>
-        <%= @contract.description %>
+        <%= @position.description %>
       </p>
       <p>
         <strong>Total paid</strong>
-        <%= render_money @contract.total_paid_cents %>
+        <%= render_money @position.total_paid_cents %>
       </p>
-      <% if @contract.file.attached? %>
+      <% if @position.file.attached? %>
         <p>
           <strong>Agreement</strong>
-          <%= link_to "View attachment", url_for(@contract.file), data: { turbo_frame: "_top" } %>
+          <%= link_to "View attachment", url_for(@position.file), data: { turbo_frame: "_top" } %>
         </p>
       <% end %>
     </section>
   </article>
 
-  <% if @contract.status == :onboarding %>
+  <% if @position.status == :onboarding %>
     <%= render "application/callout", type: "info", title: "Onboarding in progress", class: "mt-4" do %>
-      <%= @contract.display_name %> needs to sign their contract and complete W-9/W-8BEN tax forms before payments can be processed.
+      <%= @position.display_name %> needs to sign their contract and complete W-9/W-8BEN tax forms before payments can be processed.
     <% end %>
   <% end %>
 
-  <% unless @contract.status == :completed %>
+  <% unless @position.status == :completed %>
     <h3 class="eyebrow muted mt-4 mb-2">Onboarding checklist</h3>
     <div class="flex flex-col gap-2">
-      <% @contract.onboarding_checklist.each do |item| %>
+      <% @position.onboarding_checklist.each do |item| %>
         <div class="card flex items-center justify-between py-3 mb-0">
           <span class="flex items-center gap-2">
             <%= inline_icon item[:complete] ? "check-circle-fill" : "important-fill",

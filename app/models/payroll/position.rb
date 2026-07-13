@@ -40,7 +40,7 @@ module Payroll
 
     pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }, using: { tsearch: { prefix: true, dictionary: "english" } }
 
-    delegate :display_name, :email, :total_paid_cents, to: :payee
+    delegate :display_name, :total_paid_cents, to: :payee
 
     has_many :invoices, class_name: "Payroll::Invoice", foreign_key: "payroll_position_id", inverse_of: :payroll_position, dependent: :destroy
     has_one :event, through: :payee
@@ -136,7 +136,7 @@ module Payroll
       legal_entity = payee.legal_entity
 
       [
-        { label: "Contract reviewed by HCB ops", complete: !under_review? && !rejected? },
+        { label: "Contract reviewed by HCB operations", complete: !under_review? && !rejected? },
         { label: "Contract signed by contractor", complete: contracts.any?(&:signed?) },
         { label: "W-9 / W-8BEN submitted", complete: legal_entity&.latest_tax_form&.completed? || false },
         { label: "Payout method configured", complete: legal_entity&.default_payout_method.present? },

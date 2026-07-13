@@ -24,7 +24,7 @@ module Payroll
         name: invoice_params[:name],
         description: invoice_params[:description],
         currency: @position.currency,
-        amount: invoice_params[:amount]
+        amount_cents: Monetize.parse(invoice_params[:amount], @position.currency).cents
       )
       authorize @invoice
 
@@ -44,7 +44,6 @@ module Payroll
         ).run!
       end
 
-      Payroll::InvoiceMailer.with(invoice: @invoice).submitted.deliver_later
       flash[:success] = "Invoice submitted for review."
       redirect_to my_pay_path
     rescue ActiveRecord::RecordInvalid => e
@@ -78,7 +77,7 @@ module Payroll
         @invoice.mark_approved!(current_user)
       end
 
-      flash[:success] = "Invoice approved. Payment initiated."
+      flash[:success] = "Invoice approved! #{helpers.possessive(@invoice.payroll_position.payee.display_name)} payment will be sent after HCB review."
       redirect_to contractor_page
     end
 
@@ -97,11 +96,11 @@ module Payroll
 
     private
 
-    # Positions belonging to the signed-in contractor (submit side).
+    # The position an invoice is being submitted against. Access (i.e. that the
+    # signed-in user belongs to the position's legal entity) is enforced by
+    # Payroll::InvoicePolicy when we authorize the built invoice.
     def set_position
-      @position = Payroll::Position.joins(:payee)
-                                   .where(payees: { email: current_user.email })
-                                   .find(params[:payroll_position_id])
+      @position = Payroll::Position.find(params[:payroll_position_id])
     end
 
     # Invoices belonging to one of this event's contractors (review side).
@@ -112,7 +111,7 @@ module Payroll
     end
 
     def contractor_page
-      event_contractor_path(event_id: @event.slug, id: @invoice.payroll_position_id)
+      event_payroll_position_path(event_id: @event.slug, id: @invoice.payroll_position_id)
     end
 
     def invoice_params

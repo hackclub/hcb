@@ -5,7 +5,7 @@
 <%= content_for :sidebar_footer do %>
   <%= render "application/callout", type: "info", title: "About contractor payments", class: "mt-2" do %>
     <ul class="m-0 pl-8">
-      <li>Contractor agreements require HCB ops review before processing.</li>
+      <li>Contractor agreements require HCB operations review before processing.</li>
       <li>The contractor will need to sign the contract and complete W-9/W-8BEN tax forms.</li>
     </ul>
   <% end %>
@@ -15,7 +15,7 @@
   <%= render "payees/recipient_section", event:, payee:, destination: "contractors",
         manual_title: "Manual", manual_subtitle: "Tax forms and payment details entered directly" %>
 
-  <%= form_with(url: event_contractors_path(event_id: event.slug), scope: :contractor, local: true) do |form| %>
+  <%= form_with(url: event_payroll_positions_path(event_id: event.slug), scope: :contractor, local: true) do |form| %>
     <%= form.hidden_field :payee_id, value: payee&.public_id %>
 
     <div data-scroll-seek-target="section">

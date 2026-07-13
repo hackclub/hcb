@@ -20,9 +20,13 @@ module Payroll
 
     private
 
-    # Only the contractor the position belongs to may submit invoices against it.
+    # Only a member of the legal entity the position's payee belongs to may
+    # submit invoices against it.
     def contractor?
-      user.present? && record.payroll_position.payee.email == user.email
+      return false if user.blank?
+
+      legal_entity = record.payroll_position.payee.legal_entity
+      legal_entity.present? && legal_entity.users.exists?(id: user.id)
     end
 
     # Reviewing (approving/rejecting) requires organizer permission on the event.

@@ -188,8 +188,8 @@ class MyController < ApplicationController
     ]
     @has_filter = params[:status].present?
 
-    @contractor_positions = Payroll::Position.joins(:payee)
-                                             .where(payees: { email: current_user.email })
+    @contractor_positions = Payroll::Position.joins(payee: { legal_entity: :legal_entity_users })
+                                             .where(legal_entity_users: { user_id: current_user.id })
                                              .includes(payee: :event)
                                              .order(created_at: :desc)
                                              .load

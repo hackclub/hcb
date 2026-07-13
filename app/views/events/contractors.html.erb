@@ -27,7 +27,7 @@
       }
     ] do %>
     <% if policy(@event).new_contractor? %>
-      <%= link_to new_event_contractor_path(event_id: @event.slug), class: "w-full btn bg-success" do %>
+      <%= link_to new_event_payroll_position_path(event_id: @event.slug), class: "w-full btn bg-success" do %>
         <%= inline_icon "send" %>
         Send
       <% end %>
@@ -41,7 +41,7 @@
     </span>
 
     <% if policy(@event).new_contractor? %>
-      <%= link_to new_event_contractor_path(event_id: @event.slug), class: "btn bg-success" do %>
+      <%= link_to new_event_payroll_position_path(event_id: @event.slug), class: "btn bg-success" do %>
         <%= inline_icon "send" %>
         Send
       <% end %>
@@ -93,7 +93,7 @@
               <td>
                 <strong><%= contractor.display_name %></strong>
                 <% if show_details %>
-                  <span class="muted block"><%= contractor.email %></span>
+                  <span class="muted block"><%= contractor.payee.email %></span>
                 <% end %>
               </td>
               <td><%= contractor.period_label %></td>
@@ -110,7 +110,7 @@
                   <% else %>
                     <span class="muted">&mdash;</span>
                   <% end %>
-                  <%= link_to "", event_contractor_path(event_id: @event.slug, id: contractor.id),
+                  <%= link_to "", event_payroll_position_path(event_id: @event.slug, id: contractor.id),
                         class: "stretched-link",
                         data: popovers_enabled? ? contractor_popover_data(contractor) : { turbo_frame: "_top" } %>
                 </td>

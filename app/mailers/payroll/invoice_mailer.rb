@@ -7,7 +7,7 @@ module Payroll
       @position = @invoice.payroll_position
       @event = @position.event
 
-      managers = @event.managers.map(&:email_address_with_name)
+      managers = @event.organizer_contact_emails(only_managers: true)
       return if managers.empty?
 
       mail(

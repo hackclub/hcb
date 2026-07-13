@@ -59,10 +59,10 @@ module PopoverHelper
   end
 
   def contractor_popover_data(contractor)
-    path = event_contractor_path(event_id: contractor.event.slug, id: contractor.id)
+    path = event_payroll_position_path(event_id: contractor.event.slug, id: contractor.id)
     popover_data(
       title: "#{contractor.display_name}'s contract",
-      src: event_contractor_path(event_id: contractor.event.slug, id: contractor.id, frame: true),
+      src: event_payroll_position_path(event_id: contractor.event.slug, id: contractor.id, frame: true),
       frame_id: "contractor_#{contractor.id}",
       state_url: path,
       external_link: path

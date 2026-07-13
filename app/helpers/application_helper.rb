@@ -479,15 +479,6 @@ module ApplicationHelper
               ])
   end
 
-  # Shared between contractors and payments
-  def new_recipient_transfer_path(destination, event, **opts)
-    if destination.to_s == "contractors"
-      new_event_contractor_path(event_id: event.slug, **opts)
-    else
-      new_event_payment_path(event_id: event.slug, **opts)
-    end
-  end
-
   def mobile_button_to(href, text:, icon:, **options)
     text_form_class = "#{options[:form_class]} hidden md:flex"
     icon_form_class = "#{options[:form_class]} flex md:hidden"

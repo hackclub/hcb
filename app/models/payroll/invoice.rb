@@ -48,6 +48,8 @@ module Payroll
     validates :currency, inclusion: { in: Money::Currency.all.map(&:iso_code) }
     validate :currency_matches_position
 
+    after_create_commit :notify_managers
+
     aasm timestamps: true do
       state :submitted, initial: true
       state :approved
@@ -77,6 +79,10 @@ module Payroll
     end
 
     private
+
+    def notify_managers
+      Payroll::InvoiceMailer.with(invoice: self).submitted.deliver_later
+    end
 
     def currency_matches_position
       return if currency == payroll_position.currency
