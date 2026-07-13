@@ -28,6 +28,14 @@ class CardCharge < ApplicationRecord
 
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
 
+  scope :on_card, ->(stripe_card) {
+    left_joins(:raw_pending_stripe_transaction, :raw_stripe_transactions)
+      .where(
+        "raw_pending_stripe_transactions.stripe_transaction->'card'->>'id' = :stripe_id OR raw_stripe_transactions.stripe_transaction->>'card' = :stripe_id",
+        stripe_id: stripe_card.stripe_id
+      )
+  }
+
   def stripe_card
     (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_card
   end
