@@ -124,11 +124,11 @@ module Tax
       mark_sent!
     end
 
-    def get_taxbandits_submission
+    def remote_taxbandits_submission
       TaxbanditsService.get_submission(public_id)
     end
 
-    def get_taxbandits_list_entry
+    def remote_taxbandits_list_entry
       TaxbanditsService.get_list_entry(public_id)
     end
 
@@ -144,7 +144,7 @@ module Tax
     end
 
     def inferred_entity_type
-      submission = get_taxbandits_submission
+      submission = remote_taxbandits_submission
       return if submission.nil?
 
       case submission["FormType"]
@@ -166,7 +166,7 @@ module Tax
     end
 
     def masked_tin
-      entry = get_taxbandits_list_entry
+      entry = remote_taxbandits_list_entry
       entry&.[]("TIN")
     end
 
@@ -180,7 +180,7 @@ module Tax
     end
 
     def import_taxbandits_data
-      submission = get_taxbandits_submission
+      submission = remote_taxbandits_submission
       return if submission.nil?
 
       submission_form_type = submission["FormType"]
