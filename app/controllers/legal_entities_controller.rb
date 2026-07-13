@@ -10,7 +10,7 @@ class LegalEntitiesController < ApplicationController
   def replace
     authorize @legal_entity
 
-    new_tax_form = Tax::Form.find(params[:new_tax_form_id])
+    new_tax_form = @legal_entity.tax_forms.find(params[:new_tax_form_id])
     authorize new_tax_form, :switch_legal_entity?
 
     if new_tax_form.inferred_entity_type.to_s != @legal_entity.entity_type
