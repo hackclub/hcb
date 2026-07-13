@@ -36,6 +36,11 @@ class CardGrantsController < ApplicationController
     authorize @event, :card_grant_overview?
 
     @subledger = true
+
+    @per = params[:per] || 25
+    @table_only = true
+    @ledger = @event.ledger
+    @items = Ledger::Item.where(primary_mapping: Ledger::Mapping.where(ledger: Ledger.where(card_grant: @event.card_grants))).page(params[:page]).per(@per)
   end
 
   def new
