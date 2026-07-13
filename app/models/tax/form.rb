@@ -220,6 +220,8 @@ module Tax
       tin = us_tin.presence || foreign_tin.presence
       tin_hash = Tax::IdentificationNumber::Hasher.hash_tin(tin)
 
+      # These diffeent address field names come from different
+      # object shapes depending on the type of tax form
       update!(
         form_type: submission_form_type[4..],
         tin_hash:,
