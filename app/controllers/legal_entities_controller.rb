@@ -71,7 +71,7 @@ class LegalEntitiesController < ApplicationController
   end
 
   def migrate_pending_payments(from_le:, to_le:)
-    from_le.payees.each do |payee|
+    from_le.payees.includes(:payments).find_each do |payee|
       next if payee.archived?
       next if payee.payments.pending_legal_entity.none?
 
