@@ -7,7 +7,7 @@ class LegalEntitiesController < ApplicationController
     authorize @legal_entity
   end
 
-  def switch
+  def replace
     authorize @legal_entity
 
     new_tax_form = Tax::Form.find(params[:new_tax_form_id])

@@ -75,7 +75,7 @@
 
     <div class="flex justify-start gap-5 items-center">
       <% if entity_type_matches %>
-        <%= button_to "Switch to new TIN", switch_legal_entity_path(@legal_entity), class: "btn", params: { new_tax_form_id: @legal_entity.mismatched_tax_form.id } %>
+        <%= button_to "Switch to new TIN", replace_legal_entity_path(@legal_entity), class: "btn", params: { new_tax_form_id: @legal_entity.mismatched_tax_form.id } %>
       <% end %>
 
       <% if @legal_entity.mismatched_tax_form.inferred_entity_type.to_s == "business" %>

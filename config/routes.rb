@@ -911,7 +911,7 @@ Rails.application.routes.draw do
     end
 
     member do
-      post "switch"
+      post "replace"
     end
   end
 

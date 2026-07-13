@@ -5,7 +5,7 @@ class LegalEntityPolicy < ApplicationPolicy
     user.auditor? || record.users.include?(user)
   end
 
-  def switch?
+  def replace?
     user.admin? || record.users.include?(user)
   end
 
