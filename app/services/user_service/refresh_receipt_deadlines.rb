@@ -16,9 +16,10 @@ module UserService
 
       trusted = @user.receipt_trusted?(now: @now)
       last_settled = @user.last_settled_charge_at
+      enforcement_start_date = CardLocking.enforcement_start_date(@user)
 
       outstanding_charges.find_each do |hcb_code|
-        hcb_code.materialize_card_locking!(now: @now, trusted:, last_settled_charge_at: last_settled)
+        hcb_code.materialize_card_locking!(now: @now, trusted:, last_settled_charge_at: last_settled, enforcement_start_date:)
       end
     end
 

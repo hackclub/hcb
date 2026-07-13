@@ -51,6 +51,25 @@ RSpec.describe HcbCode do
       expect(hcb_code.receipt_resolved_at).to be_nil
     end
 
+    it "sets no deadline for a cardholder in no rollout stage" do
+      Flipper.disable(:card_locking_enabled_on_07_14_2026, user)
+      hcb_code = create_settled_card_charge(user:, settled_at: 1.day.ago)
+
+      hcb_code.materialize_card_locking!(now:, trusted: false)
+
+      expect(hcb_code.receipt_settled_at).to be_within(1.second).of(1.day.ago)
+      expect(hcb_code.receipt_due_at).to be_nil
+    end
+
+    it "sets no deadline for a charge that settled before the cardholder's stage date" do
+      hcb_code = create_settled_card_charge(user:, settled_at: 1.day.ago)
+
+      # A stage that starts after this charge settled: no deadline, can't lock.
+      hcb_code.materialize_card_locking!(now:, trusted: false, enforcement_start_date: (now + 1.day).to_date)
+
+      expect(hcb_code.receipt_due_at).to be_nil
+    end
+
     it "slides receipt_due_at off the last settled charge when the cardholder is trusted" do
       hcb_code = create_settled_card_charge(user:, settled_at: 3.days.ago)
 

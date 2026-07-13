@@ -25,12 +25,10 @@ module UserService
         return
       end
 
-      # Dry run: never write a lock, but always allow unlocking. Record the
-      # would-be lock so we can measure the real population before enforcing.
-      if should_lock && !Flipper.enabled?(:card_locking_enforcement, @user)
-        report_dry_run_would_lock
-        should_lock = false
-      end
+      # Enforcement is staged per cardholder by CardLocking.enforcement_start_date:
+      # a charge only gets a deadline (and can be overdue here) once its cardholder
+      # is in a rollout stage. So should_lock is already false for anyone not yet
+      # enrolled; no separate dry-run gate is needed.
 
       # Row-locked compare-and-set: only writes on an actual transition, and
       # cannot clobber a concurrent unlock because cards_locked is re-read under
@@ -64,19 +62,6 @@ module UserService
     end
 
     private
-
-    def report_dry_run_would_lock
-      # Enforcement is off, so this path runs on every cron tick. Dedup on a
-      # daily-ish key so telemetry captures the would-be lock once per window
-      # (per transition), not once per tick.
-      key = "card_locking_dry_run:#{@user.id}"
-      return unless Rails.cache.write(key, true, expires_in: 25.hours, unless_exist: true)
-
-      Rails.error.report(
-        StandardError.new("card_locking_dry_run_would_lock"),
-        context: { user_id: @user.id }, handled: true, severity: :info
-      )
-    end
 
     def notify_locked(now:)
       CardLockingMailer.cards_locked(user: @user).deliver_later

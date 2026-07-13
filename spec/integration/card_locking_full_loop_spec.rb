@@ -8,7 +8,7 @@ RSpec.describe "Card locking, end to end", type: :model do
 
   before do
     Flipper.enable(:card_locking_2025_06_09, user)
-    Flipper.enable(:card_locking_enforcement, user)
+    # The stage flag (enforcement start 2026-07-14) comes from the shared context.
   end
 
   it "settles, sweeps a deadline, does not lock before it, locks after it via the cron, then unlocks on upload" do

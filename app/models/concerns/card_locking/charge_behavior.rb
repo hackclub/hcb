@@ -44,7 +44,7 @@ module CardLocking
           .left_outer_joins(:receipts)
           .where(receipts: { id: nil })
           .where(marked_no_or_lost_receipt_at: nil)
-          .where("canonical_transactions.created_at >= ?", Receipt::CARD_LOCKING_ENFORCEMENT_START_DATE.beginning_of_day)
+          .where("canonical_transactions.created_at >= ?", CardLocking::ENFORCEMENT_START_DATE.beginning_of_day)
       }
       # Charges past their deadline and still unresolved. Keys off the persisted
       # columns directly (not the receipts join) so the partial index on
@@ -88,7 +88,12 @@ module CardLocking
     # refund nets it to zero). receipt_resolved_at is frozen once set (never moved
     # here); the destroy callback resets it when a charge becomes unresolved.
     # Callers pass the user's trust state.
-    def materialize_card_locking!(now: Time.current, trusted: false, last_settled_charge_at: nil)
+    #
+    # enforcement_start_date is the cardholder's staged enforcement date (nil if
+    # they are not yet enrolled, so no deadline is set and the charge can't lock).
+    # Callers iterating a user's charges should resolve it once and pass it;
+    # otherwise it is resolved from this charge's own cardholder.
+    def materialize_card_locking!(now: Time.current, trusted: false, last_settled_charge_at: nil, enforcement_start_date: :unset)
       unless card_locking_chargeable? && receipt_required?
         clear_card_locking! if receipt_settled_at.present? || receipt_due_at.present? || receipt_resolved_at.present?
         return
@@ -96,9 +101,12 @@ module CardLocking
 
       settled_at = receipt_settled_at || card_locking_settled_at
       resolved_at = receipt_resolved_at || card_locking_resolved_at
+      if enforcement_start_date == :unset
+        enforcement_start_date = CardLocking.enforcement_start_date(stripe_card&.stripe_cardholder&.user)
+      end
 
       due_at =
-        if settled_at >= Receipt::CARD_LOCKING_ENFORCEMENT_START_DATE.beginning_of_day
+        if enforcement_start_date && settled_at >= enforcement_start_date.beginning_of_day
           CardLocking::Deadline.new(
             settled_at:, trusted:, last_settled_charge_at:, current_due_at: receipt_due_at, now:
           ).compute
