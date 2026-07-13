@@ -62,7 +62,7 @@
         <li>
           <strong>Create new legal entity</strong>:
           Pick this if you entered in information for a different legal entity than <%= @legal_entity.name %>.
-          You'll be able to receive information to both TINs, and pending payments will be switched to the new legal entity.
+          You'll be able to receive information to both TINs, and pending payments will be switched to the new legal entity with TIN <code class="whitespace-nowrap"><%= @legal_entity.mismatched_tax_form.masked_tin %></code>.
         </li>
       <% end %>
 
