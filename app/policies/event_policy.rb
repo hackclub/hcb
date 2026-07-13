@@ -168,8 +168,14 @@ class EventPolicy < ApplicationPolicy
   end
 
   def contractors?
-    # Gated to org members (not `show?`), since the contractors area exposes
-    # contractor PII, pay rates, and payment totals — same as employees?.
+    # The contractors list is visible in transparency mode (public events),
+    # but only shows status/name/period/purpose to the public. Sensitive
+    # details (email, rate, totals, invoices) are gated by contractor_details?.
+    Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && show?
+  end
+
+  def contractor_details?
+    # Contractor PII, pay rates, payment totals, and invoices — org members only.
     Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && auditor_or_reader?
   end
 

@@ -70,6 +70,7 @@
   </div>
 
   <% if @contractors.any? %>
+    <% show_details = policy(@event).contractor_details? %>
     <article class="table-container">
       <table>
         <thead>
@@ -77,39 +78,43 @@
             <th>Status</th>
             <th>Name</th>
             <th>Period</th>
-            <th>Rate</th>
+            <% if show_details %><th>Rate</th><% end %>
             <th>Purpose</th>
-            <th class="text-right">Total paid</th>
+            <% if show_details %><th class="text-right">Total paid</th><% end %>
           </tr>
         </thead>
 
         <tbody>
           <% @contractors.each do |contractor| %>
-            <tr class="<%= "clickable" if organizer_signed_in? %>">
+            <tr class="<%= "clickable" if show_details %>">
               <td>
                 <span class="badge bg-<%= contractor.status_color %>"><%= contractor.status_text %></span>
               </td>
               <td>
                 <strong><%= contractor.display_name %></strong>
-                <span class="muted block"><%= contractor.email %></span>
+                <% if show_details %>
+                  <span class="muted block"><%= contractor.email %></span>
+                <% end %>
               </td>
               <td><%= contractor.period_label %></td>
-              <td><%= "#{render_money_short(contractor.rate_cents)}/hr" %></td>
+              <% if show_details %>
+                <td><%= "#{render_money_short(contractor.rate_cents)}/hr" %></td>
+              <% end %>
               <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= contractor.description %>">
                 <%= contractor.description %>
               </td>
-              <td class="text-right">
-                <% if contractor.total_paid_cents.positive? %>
-                  <%= render_money contractor.total_paid_cents %>
-                <% else %>
-                  <span class="muted">&mdash;</span>
-                <% end %>
-                <% if organizer_signed_in? %>
+              <% if show_details %>
+                <td class="text-right">
+                  <% if contractor.total_paid_cents.positive? %>
+                    <%= render_money contractor.total_paid_cents %>
+                  <% else %>
+                    <span class="muted">&mdash;</span>
+                  <% end %>
                   <%= link_to "", event_contractor_path(event_id: @event.slug, id: contractor.id),
                         class: "stretched-link",
                         data: popovers_enabled? ? contractor_popover_data(contractor) : { turbo_frame: "_top" } %>
-                <% end %>
-              </td>
+                </td>
+              <% end %>
             </tr>
           <% end %>
         </tbody>

@@ -2,7 +2,8 @@
 
 class ContractorPolicy < ApplicationPolicy
   def show?
-    EventPolicy.new(user, record).contractors?
+    # Viewing a single contractor exposes rate, invoices, and payment history.
+    EventPolicy.new(user, record).contractor_details?
   end
 
   def new?
