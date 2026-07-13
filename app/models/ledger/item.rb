@@ -73,6 +73,22 @@ class Ledger
       declined: "declined"
     }
 
+    validates_presence_of :amount_cents, :memo, :datetime
+
+    normalizes :memo, with: ->(memo) { memo.strip.presence }
+    normalizes :system_memo, with: ->(system_memo) { system_memo.strip.presence }
+    normalizes :custom_memo, with: ->(custom_memo) { custom_memo.strip.presence }
+
+    monetize :amount_cents
+
+    after_create_commit :assign_linked_object!
+
+    # map! calls refresh!
+    after_create :map!
+    after_touch :map!
+
+    scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
+
     def status_text
       status.humanize
     end
@@ -97,22 +113,6 @@ class Ledger
         "badge m-0 pr-[6px] mr-2 bg-error"
       end
     end
-
-    validates_presence_of :amount_cents, :memo, :datetime
-
-    normalizes :memo, with: ->(memo) { memo.strip.presence }
-    normalizes :system_memo, with: ->(system_memo) { system_memo.strip.presence }
-    normalizes :custom_memo, with: ->(custom_memo) { custom_memo.strip.presence }
-
-    monetize :amount_cents
-
-    after_create_commit :assign_linked_object!
-
-    # map! calls refresh!
-    after_create :map!
-    after_touch :map!
-
-    scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
 
     # This is defined because the Receiptable concern overrides the receipt_required? method defined by ActiveRecord
     def receipt_required?
