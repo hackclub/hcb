@@ -35,4 +35,8 @@ class CanonicalPendingEventMapping < ApplicationRecord
     canonical_pending_transaction.local_hcb_code&.write_event_and_subledger_id(event, subledger)
   end
 
+  after_create do
+    canonical_pending_transaction.touch
+  end
+
 end
