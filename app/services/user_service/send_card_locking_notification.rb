@@ -17,6 +17,13 @@ module UserService
       # this too would nag a locked user with copy about keeping cards active.
       return if @user.cards_locked?
 
+      # Only nudge when at least one charge is actually approaching its deadline.
+      # A cardholder whose charges are all still fresh (a full week of runway)
+      # should not get a daily "you have receipts to upload" email; that trains
+      # them to ignore the warning that matters. The count below is still the whole
+      # outstanding pile, so they can clear all of it while they are here.
+      return unless @user.card_locking_has_approaching_charge?
+
       count = @user.card_locking_outstanding_count
       return if count.zero?
 

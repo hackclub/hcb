@@ -8,11 +8,12 @@ module CardLocking
     module_function
 
     # A receipt was created or updated. Materialize synchronously so the unlock
-    # job sees the resolution, then recompute the lock.
+    # job sees the resolution, then recompute the lock. notify_progress lets a
+    # still-locked cardholder hear that this upload landed but more remain.
     def on_receipt_upsert(receipt)
       charge = receipt.receiptable
       charge.materialize_card_locking! if charge.is_a?(HcbCode) && charge.card_locking_chargeable?
-      enqueue_unlock(receipt.user)
+      enqueue_unlock(receipt.user, notify_progress: true)
     end
 
     # A receipt was destroyed.
@@ -35,8 +36,15 @@ module CardLocking
       enqueue_unlock(charge.try(:author) || charge.try(:user))
     end
 
-    def enqueue_unlock(user)
-      User::UpdateCardLockingJob.perform_later(user:, unlock_only: true) if user.present?
+    def enqueue_unlock(user, notify_progress: false)
+      return unless user.present?
+
+      # High priority: a cardholder who just uploaded is often standing at a
+      # register waiting for the card to work, and the copy promises "seconds."
+      # Don't leave the unlock on the :low queue where a backlog can stall it.
+      User::UpdateCardLockingJob
+        .set(queue: :critical)
+        .perform_later(user:, unlock_only: true, notify_progress:)
     end
   end
 end

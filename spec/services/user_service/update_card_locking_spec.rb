@@ -46,6 +46,28 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
     }.not_to(change { user.reload.cards_locked? })
   end
 
+  it "confirms progress by SMS when an upload still leaves charges overdue" do
+    user.update!(cards_locked: true)
+    allow(user).to receive(:card_locking_has_overdue_charge?).and_return(true)
+    overdue = instance_double(ActiveRecord::Relation, exists?: true)
+    allow(overdue).to receive(:count).and_return(2)
+    allow(user).to receive(:card_locking_overdue_charges).and_return(overdue)
+
+    expect {
+      described_class.new(user:, unlock_only: true, notify_progress: true).run
+    }.to have_enqueued_job(CardLocking::SendSmsJob)
+    expect(user.reload.cards_locked?).to be(true)
+  end
+
+  it "stays silent on a plain unlock_only run that leaves charges overdue" do
+    user.update!(cards_locked: true)
+    allow(user).to receive(:card_locking_has_overdue_charge?).and_return(true)
+
+    expect {
+      described_class.new(user:, unlock_only: true).run
+    }.not_to have_enqueued_job(CardLocking::SendSmsJob)
+  end
+
   it "unlocks in unlock_only mode when nothing is overdue" do
     user.update!(cards_locked: true)
     allow(user).to receive(:card_locking_has_overdue_charge?).and_return(false)

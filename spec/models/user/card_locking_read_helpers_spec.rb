@@ -52,6 +52,29 @@ RSpec.describe User do
     end
   end
 
+  describe "#card_locking_has_approaching_charge?" do
+    it "is true when a charge is due within the warning lead time" do
+      hc = create_settled_card_charge(user:, settled_at: 5.days.ago)
+      hc.update!(receipt_due_at: 1.day.from_now, receipt_resolved_at: nil)
+
+      expect(user.card_locking_has_approaching_charge?(now:)).to eq(true)
+    end
+
+    it "is true when a charge is already overdue" do
+      hc = create_settled_card_charge(user:, settled_at: 8.days.ago)
+      hc.update!(receipt_due_at: 1.day.ago, receipt_resolved_at: nil)
+
+      expect(user.card_locking_has_approaching_charge?(now:)).to eq(true)
+    end
+
+    it "is false when the only outstanding charge is still fresh" do
+      hc = create_settled_card_charge(user:, settled_at: 1.hour.ago)
+      hc.update!(receipt_due_at: 6.days.from_now, receipt_resolved_at: nil)
+
+      expect(user.card_locking_has_approaching_charge?(now:)).to eq(false)
+    end
+  end
+
   describe "#card_locking_outstanding_charges and #card_locking_outstanding_count" do
     it "counts an outstanding (no receipt) settled charge" do
       create_settled_card_charge(user:, settled_at: 1.hour.ago)

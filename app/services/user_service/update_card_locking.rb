@@ -2,9 +2,10 @@
 
 module UserService
   class UpdateCardLocking
-    def initialize(user:, unlock_only: false)
+    def initialize(user:, unlock_only: false, notify_progress: false)
       @user = user
       @unlock_only = unlock_only
+      @notify_progress = notify_progress
     end
 
     def run
@@ -16,8 +17,13 @@ module UserService
       should_lock = @user.card_locking_suppressed?(now:) ? false : @user.card_locking_has_overdue_charge?(now:)
 
       # Uploading a receipt can only ever unlock. If a charge is still overdue,
-      # leave the lock exactly as it is (do NOT unlock with work outstanding).
-      return if @unlock_only && should_lock
+      # leave the lock exactly as it is (do NOT unlock with work outstanding), but
+      # tell a cardholder who just uploaded that it landed and more remain, so the
+      # "upload to unlock" promise does not appear to have done nothing.
+      if @unlock_only && should_lock
+        notify_still_locked(now:) if @notify_progress && @user.cards_locked?
+        return
+      end
 
       # Dry run: never write a lock, but always allow unlocking. Record the
       # would-be lock so we can measure the real population before enforcing.
@@ -87,6 +93,22 @@ module UserService
       noun = "receipt".pluralize(count)
       verb = count == 1 ? "is" : "are"
       "Your HCB cards are locked because #{count} #{noun} #{verb} overdue. Recurring charges will also fail until you upload. Upload to unlock in seconds at #{CardLocking.inbox_url}."
+    end
+
+    # A locked cardholder uploaded a receipt but still has overdue charges. Confirm
+    # the progress so the upload does not feel like it did nothing. SMS only (they
+    # just acted on their phone) and deduped so a burst of uploads does not spam.
+    def notify_still_locked(now:)
+      key = "card_locking_still_locked:#{@user.id}"
+      return unless Rails.cache.write(key, true, expires_in: 10.minutes, unless_exist: true)
+
+      count = @user.card_locking_overdue_charges(now:).count("hcb_codes.id")
+      return if count.zero?
+
+      noun = "receipt".pluralize(count)
+      verb = count == 1 ? "is" : "are"
+      pronoun = count == 1 ? "it" : "them"
+      send_sms("Thanks, that receipt is in. #{count} #{noun} #{verb} still overdue. Upload #{pronoun} to unlock your cards at #{CardLocking.inbox_url}.")
     end
 
     def send_sms(body)

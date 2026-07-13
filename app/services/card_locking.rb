@@ -18,6 +18,11 @@ module CardLocking
   # Trust is computed over charges settled within this window.
   TRUST_LOOKBACK = 6.months
 
+  # The pre-lock warning only fires when a charge is at least this close to its
+  # deadline, so a cardholder whose charges all still have a full week of runway
+  # is not nudged every day.
+  WARNING_LEAD_TIME = 48.hours
+
   # The Receipt Bin URL cardholders are sent to upload outstanding receipts.
   def self.inbox_url
     Rails.application.routes.url_helpers.my_inbox_url

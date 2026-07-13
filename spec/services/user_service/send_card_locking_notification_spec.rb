@@ -16,6 +16,9 @@ RSpec.describe UserService::SendCardLockingNotification, type: :service do
 
   before do
     Flipper.enable(:card_locking_2025_06_09, user)
+    # Default: a charge is approaching its deadline, so the warning is warranted.
+    # The gate itself is exercised with real charges below.
+    allow(user).to receive(:card_locking_has_approaching_charge?).and_return(true)
   end
 
   it "sends one pile warning per day when receipts are outstanding" do
@@ -29,6 +32,13 @@ RSpec.describe UserService::SendCardLockingNotification, type: :service do
     travel_to(26.hours.from_now) do
       expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
     end
+  end
+
+  it "does not send when no charge is approaching its deadline" do
+    allow(user).to receive(:card_locking_has_approaching_charge?).and_return(false)
+    allow(user).to receive(:card_locking_outstanding_count).and_return(4)
+
+    expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
   end
 
   it "does not send when nothing is outstanding" do

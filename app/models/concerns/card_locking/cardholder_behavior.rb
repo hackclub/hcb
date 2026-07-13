@@ -70,6 +70,12 @@ module CardLocking
       card_locking_overdue_charges(now:).exists?
     end
 
+    # Any outstanding charge within WARNING_LEAD_TIME of its deadline (or already
+    # past it). Gates the pre-lock warning so fresh charges don't trigger it.
+    def card_locking_has_approaching_charge?(now: Time.current)
+      card_locking_overdue_charges(now: now + CardLocking::WARNING_LEAD_TIME).exists?
+    end
+
     def card_locking_suppressed?(now: Time.current)
       card_locking_suppressed_until.present? && card_locking_suppressed_until > now
     end

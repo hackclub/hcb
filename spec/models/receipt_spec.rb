@@ -21,7 +21,7 @@ RSpec.describe Receipt, type: :model do
     # that locks someone's cards.
     it "re-evaluates card locking when a receipt is created" do
       expect { build_receipt(user:).save! }
-        .to have_enqueued_job(User::UpdateCardLockingJob).with(user:, unlock_only: true)
+        .to have_enqueued_job(User::UpdateCardLockingJob).with(user:, unlock_only: true, notify_progress: true)
     end
 
     it "re-evaluates card locking when a receipt is destroyed" do
@@ -29,7 +29,7 @@ RSpec.describe Receipt, type: :model do
       receipt.save!
 
       expect { receipt.destroy! }
-        .to have_enqueued_job(User::UpdateCardLockingJob).with(user:, unlock_only: true)
+        .to have_enqueued_job(User::UpdateCardLockingJob).with(user:, unlock_only: true, notify_progress: false)
     end
 
     it "does not enqueue anything for a receipt with no user" do
