@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
 # Cache flag reads through Rails.cache (shared Redis in prod/staging) instead of
-# hitting Postgres on every check. All writes go through Flipper, which busts the
-# cache immediately, so the TTL is only a backstop against a lost invalidation.
+# hitting Postgres on every check. This caches a feature's stored gate config
+# (its boolean/actor/percentage/group values); writes go through Flipper, which
+# busts the cache immediately, so the TTL is only a backstop against a lost
+# invalidation. Note this does NOT cache group *membership*: group gates are
+# evaluated live per check, and their freshness is governed separately by
+# FlipperGroups' own TTL (see app/lib/flipper_groups.rb), not by this cache.
 # We intentionally don't preload: several flags carry thousands of actor gates, so
 # loading every gate per request would cost more than the per-flag reads it saves.
 Flipper.configure do |config|
