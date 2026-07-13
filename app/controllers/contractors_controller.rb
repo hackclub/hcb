@@ -26,7 +26,7 @@ class ContractorsController < ApplicationController
 
     @contract = @payee.payroll_positions.build(
       title: contractor_params[:title],
-      rate_cents: (contractor_params[:rate].to_d * 100).to_i,
+      rate_cents: (contractor_params[:rate].to_d * 100).round,
       start_date: contractor_params[:starts_on],
       end_date: contractor_params[:ends_on],
       description: contractor_params[:purpose]

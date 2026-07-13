@@ -168,7 +168,9 @@ class EventPolicy < ApplicationPolicy
   end
 
   def contractors?
-    Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && show?
+    # Gated to org members (not `show?`), since the contractors area exposes
+    # contractor PII, pay rates, and payment totals — same as employees?.
+    Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && auditor_or_reader?
   end
 
   def new_contractor?

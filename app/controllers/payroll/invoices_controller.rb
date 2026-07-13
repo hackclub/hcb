@@ -14,7 +14,7 @@ module Payroll
       @invoice = @position.invoices.build(
         name: invoice_params[:name],
         description: invoice_params[:description],
-        amount_cents: (invoice_params[:amount].to_d * 100).to_i,
+        amount_cents: (invoice_params[:amount].to_d * 100).round,
         currency: @position.currency
       )
       authorize @invoice

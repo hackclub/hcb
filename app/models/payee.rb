@@ -53,7 +53,13 @@ class Payee < ApplicationRecord
   end
 
   def total_paid_cents
-    payments.where(aasm_state: "successful").sum(:amount_cents)
+    # Use the in-memory association when it's already loaded (e.g. the
+    # contractors index eager-loads payments) to avoid an N+1 of sum queries.
+    if payments.loaded?
+      payments.sum { |payment| payment.aasm_state == "successful" ? payment.amount_cents : 0 }
+    else
+      payments.where(aasm_state: "successful").sum(:amount_cents)
+    end
   end
 
   def managed?
