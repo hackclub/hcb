@@ -1,7 +1,7 @@
 <%# locals: (stripe_card:, hcb_codes:, ledger:, items:) %>
 
 <% if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user) %>
-  <%= render "ledgers/ledger", ledger: @ledger, items: @items %>
+  <%= render "ledgers/ledger", ledger:, items: %>
 <% else %>
   <% if hcb_codes.exists? %>
     <% subscriptions = StripeCardService::PredictSubscriptions.new(card: @card).run %>
