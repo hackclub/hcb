@@ -18,7 +18,7 @@
 #  fk_rails_...  (canonical_pending_transaction_id => canonical_pending_transactions.id)
 #
 class CanonicalPendingDeclinedMapping < ApplicationRecord
-  belongs_to :canonical_pending_transaction
+  belongs_to :canonical_pending_transaction, touch: true
 
   after_commit if: -> { canonical_pending_transaction.ledger_item.present? } do
     canonical_pending_transaction.ledger_item.map!

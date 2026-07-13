@@ -21,8 +21,8 @@
 #  fk_rails_...  (canonical_transaction_id => canonical_transactions.id)
 #
 class CanonicalPendingSettledMapping < ApplicationRecord
-  belongs_to :canonical_pending_transaction
-  belongs_to :canonical_transaction
+  belongs_to :canonical_pending_transaction, touch: true
+  belongs_to :canonical_transaction, touch: true
 
   after_create_commit do
     # Sometimes a Stripe merchant will capture after an authorization has been
