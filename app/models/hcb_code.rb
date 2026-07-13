@@ -63,7 +63,7 @@ class HcbCode < ApplicationRecord
   belongs_to :event, optional: true
   belongs_to :subledger, optional: true
 
-  belongs_to :ledger_item, class_name: "Ledger::Item", optional: true
+  belongs_to :ledger_item, class_name: "Ledger::Item", optional: true, touch: true
 
   # Card-locking scopes, columns, and the materializer. See the concern.
   include CardLocking::ChargeBehavior

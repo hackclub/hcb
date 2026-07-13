@@ -49,6 +49,10 @@ class Ledger
     belongs_to :linked_object, polymorphic: true, optional: true
     belongs_to :author, class_name: "User", optional: true
 
+    # TODO: THIS IS SO TEMPORARY REMOVE ASAP
+    has_many :comments, -> { order(:created_at) }, as: :commentable, inverse_of: :commentable, through: :hcb_code
+    has_many :receipts, as: :receiptable, after_add: :update_task_completion, after_remove: :update_task_completion, through: :hcb_code
+
     has_many :ledger_mappings, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
     has_one :primary_mapping, -> { where(on_primary_ledger: true) }, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
     has_one :primary_ledger, through: :primary_mapping, source: :ledger, class_name: "::Ledger"
@@ -100,20 +104,15 @@ class Ledger
     end
 
     def calculate_receipt_required
-      amount_cents < 0 && primary_ledger&.receipt_required? && transaction_type != "Disbursement::Outgoing"
+      amount_cents < 0 && primary_ledger&.receipt_required? && linked_object_type != "Disbursement::Outgoing"
     end
 
     def calculate_system_memo
-      # Ledger items created from a raw transaction (e.g. by
-      # CanonicalPendingTransaction's after_create) may not have a linked
-      # object yet. Return nil so refresh! keeps the existing memo.
-      return nil if linked_object.nil? && !["CheckDeposit", "RawPendingStripeTransaction", "RawStripeTransaction"].include?(transaction_type)
-
-      case transaction_type
+      case linked_object_type
       when "Invoice"
         "Invoice to #{linked_object.smart_memo}"
       when "Donation"
-        "Donation from #{linked_object.smart_memo}" # removed the logic for refunded donations b/c we dont want memo to change frequently
+        "Donation from #{linked_object.smart_memo}"
       when "AchTransfer"
         "ACH to #{linked_object.smart_memo}"
       when "Wire"
@@ -171,17 +170,12 @@ class Ledger
       when "CardCharge"
         network_id = linked_object.merchant_data&.dig("network_id")
         merchant_name = YellowPages::Merchant.lookup(network_id:).name if network_id.present?
-        merchant_name || linked_object.merchant_data&.dig("name") || "Card charge"
-      when "RawPendingStripeTransaction", "RawStripeTransaction"
-        # TODO: Remove this once RPSTs and RSTs are migrated to CardCharges
-        network_id = stripe_merchant&.dig("network_id")
-        merchant_name = YellowPages::Merchant.lookup(network_id:).name if network_id.present?
-        merchant_name || stripe_merchant&.dig("name") || "Card charge at unknown merchant"
+        merchant_name || linked_object.merchant_data&.dig("name") || "Card charge at unknown merchant"
       end
     end
 
     def calculate_author
-      case transaction_type
+      case linked_object_type
       when "AchTransfer"
         linked_object&.creator
       when "CheckDeposit"
@@ -206,10 +200,6 @@ class Ledger
         linked_object&.user
       when "CardCharge"
         linked_object&.stripe_cardholder&.user
-      when "RawPendingStripeTransaction"
-        stripe_cardholder&.user
-      when "RawStripeTransaction"
-        stripe_cardholder&.user
       end
     end
 
@@ -224,7 +214,7 @@ class Ledger
       association(:primary_mapping).reset
       association(:primary_ledger).reset
 
-      # THIS IS TEMPORARY REMOVE ASAP
+      # TODO: THIS IS TEMPORARY REMOVE ASAP
       self.linked_object = hcb_code&.linked_object unless linked_object.present?
 
       self.amount_cents = calculate_amount_cents
@@ -274,16 +264,6 @@ class Ledger
       :zero
     end
 
-    # TODO: get rid of this method once CardCharge is created as an LO
-    def stripe_cardholder
-      canonical_pending_transactions.first.try(:stripe_cardholder) || canonical_transactions.first.try(:stripe_cardholder)
-    end
-
-    # TODO: get rid of this method once CardCharge is created as an LO
-    def stripe_merchant
-      canonical_pending_transactions.first&.raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_data") || canonical_transactions.first&.transaction_source&.stripe_transaction&.[]("merchant_data")
-    end
-
     private
 
     def assign_linked_object!
@@ -298,13 +278,7 @@ class Ledger
       update!(linked_object:) if linked_object.present?
     end
 
-    # TODO: replace usages of this with linked_object_type once all LOs are created
-    def transaction_type
-      linked_object_type || raw_pending_transaction_type || raw_transaction_type
-    end
-
     def type_metadata
-      # TODO: Cache the transaction type for non-linked object ledger items
       {
         "Disbursement::Incoming": ["Incoming transfer", "door-enter"],
         "Disbursement::Outgoing": ["Outgoing transfer", "door-leave"],
@@ -322,18 +296,8 @@ class Ledger
         "Wire": ["Wire", "web"],
         "WiseTransfer": ["Wise transfer", "wise"],
         "StripeServiceFee": ["Stripe service fee", "cash"],
-        "CardCharge": ["Card charge", "card"],
-        "RawPendingStripeTransaction": ["Card charge", "card"],
-        "RawStripeTransaction": ["Card charge", "card"]
-      }[transaction_type&.to_sym] || ["Bank account transaction", "cash"]
-    end
-
-    def raw_pending_transaction_type
-      @raw_pending_transaction_type ||= canonical_pending_transactions.map(&:transaction_source_type).compact.first
-    end
-
-    def raw_transaction_type
-      @raw_transaction_type ||= canonical_transactions.map(&:transaction_source_type).compact.first
+        "CardCharge": ["Card charge", "card"]
+      }[linked_object_type&.to_sym] || ["Bank account transaction", "cash"]
     end
 
   end

@@ -1,8 +1,12 @@
 <%= turbo_frame_tag :card_grant_transaction_overview do %>
-  <%= turbo_frame_tag [dom_id(@event), :ledger], src: event_transactions_list_path(@event, subledger: @subledger), loading: :eager do %>
-    <%# i'd like to have this show to improve the loading experience eventually but the ledger and filter code needs to be refactored more %>
-    <%# <%= render partial: "events/filter" %>
+  <% if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user) %>
+    <%= render "ledgers/ledger", ledger: @ledger, items: @items %>
+  <% else %>
+    <%= turbo_frame_tag [dom_id(@event), :ledger], src: event_transactions_list_path(@event, subledger: @subledger), loading: :eager do %>
+      <%# I'd like to have this show to improve the loading experience eventually but the ledger and filter code needs to be refactored more %>
+      <%# <%= render partial: "events/filter" %>
 
-    <%= render "application/loading_container", klass: "mt-8" %>
+      <%= render "application/loading_container", klass: "mt-8" %>
+    <% end %>
   <% end %>
 <% end %>
