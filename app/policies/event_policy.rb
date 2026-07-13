@@ -176,7 +176,7 @@ class EventPolicy < ApplicationPolicy
 
   def contractor_details?
     # Contractor PII, pay rates, payment totals, and invoices — org members only.
-    Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && auditor_or_reader?
+    contractors? && auditor_or_reader?
   end
 
   def new_contractor?
