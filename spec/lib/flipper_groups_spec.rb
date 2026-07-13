@@ -55,6 +55,50 @@ RSpec.describe FlipperGroups do
     end
   end
 
+  describe ".hackclub_email?" do
+    it "is true for an @hackclub.com email" do
+      expect(described_class.hackclub_email?(create(:user, email: "person@hackclub.com"))).to be(true)
+    end
+
+    it "is true regardless of case" do
+      expect(described_class.hackclub_email?(create(:user, email: "Person@HackClub.com"))).to be(true)
+    end
+
+    it "is false for a subdomain of hackclub.com" do
+      expect(described_class.hackclub_email?(create(:user, email: "person@events.hackclub.com"))).to be(false)
+    end
+
+    it "is false for a non-hackclub.com email" do
+      expect(described_class.hackclub_email?(create(:user, email: "person@example.com"))).to be(false)
+    end
+
+    it "is false for a non-User actor" do
+      expect(described_class.hackclub_email?(create(:event))).to be(false)
+    end
+  end
+
+  describe ".admin_or_auditor?" do
+    it "is true for an admin" do
+      expect(described_class.admin_or_auditor?(create(:user, :make_admin))).to be(true)
+    end
+
+    it "is true for an auditor" do
+      expect(described_class.admin_or_auditor?(create(:user, access_level: :auditor))).to be(true)
+    end
+
+    it "is false for an admin who is pretending not to be an admin" do
+      expect(described_class.admin_or_auditor?(create(:user, :make_admin, pretend_is_not_admin: true))).to be(false)
+    end
+
+    it "is false for a normal user" do
+      expect(described_class.admin_or_auditor?(create(:user))).to be(false)
+    end
+
+    it "is false for a non-User actor" do
+      expect(described_class.admin_or_auditor?(create(:event))).to be(false)
+    end
+  end
+
   describe ".hq_descendant_user?" do
     let(:hq_root) { create(:event) }
 

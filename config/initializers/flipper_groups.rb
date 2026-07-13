@@ -10,5 +10,7 @@
 # Event actors.
 Flipper.register(:hcb_team)                    { |actor, _context| FlipperGroups.hcb_team?(actor.actor) }
 Flipper.register(:hcb_engineers)               { |actor, _context| FlipperGroups.hcb_engineer?(actor.actor) }
+Flipper.register(:hackclub_emails)             { |actor, _context| FlipperGroups.hackclub_email?(actor.actor) }
+Flipper.register(:admins_and_auditors)         { |actor, _context| FlipperGroups.admin_or_auditor?(actor.actor) }
 Flipper.register(:hq_descendant_users)         { |actor, _context| FlipperGroups.hq_descendant_user?(actor.actor) }
 Flipper.register(:hq_descendant_organizations) { |actor, _context| FlipperGroups.hq_descendant_organization?(actor.actor) }

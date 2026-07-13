@@ -35,6 +35,24 @@ module FlipperGroups
     in_set?(actor, User, hcb_engineer_user_ids)
   end
 
+  # Any user with an @hackclub.com email. Matched directly off the address (no
+  # cached id set needed), exact-domain only: subdomains like
+  # someone@events.hackclub.com are not included.
+  def hackclub_email?(actor)
+    return false unless actor.is_a?(User)
+
+    actor.email.to_s.downcase.end_with?("@hackclub.com")
+  end
+
+  # Any admin, superadmin, or auditor. auditor? already returns true for the admin
+  # and superadmin roles, and it honors the "pretend to be a normal user"
+  # preference, so an admin in pretend mode does not match.
+  def admin_or_auditor?(actor)
+    return false unless actor.is_a?(User)
+
+    actor.auditor?
+  end
+
   def hq_descendant_user?(actor)
     return false unless actor.is_a?(User)
     # Admins and auditors always qualify, ignoring an admin's "pretend to be a

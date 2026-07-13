@@ -29,6 +29,20 @@ RSpec.describe "flipper_groups initializer" do
     expect(gate(:hcb_engineers, outsider)).to be(false)
   end
 
+  it "gates a feature on the :hackclub_emails group" do
+    staff = create(:user, email: "staff@hackclub.com")
+
+    expect(gate(:hackclub_emails, staff)).to be(true)
+    expect(gate(:hackclub_emails, outsider)).to be(false)
+  end
+
+  it "gates a feature on the :admins_and_auditors group" do
+    auditor = create(:user, access_level: :auditor)
+
+    expect(gate(:admins_and_auditors, auditor)).to be(true)
+    expect(gate(:admins_and_auditors, outsider)).to be(false)
+  end
+
   it "gates a feature on the :hq_descendant_users group" do
     admin = create(:user, :make_admin)
 
