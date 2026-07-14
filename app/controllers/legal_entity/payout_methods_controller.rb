@@ -112,9 +112,6 @@ class LegalEntity
                         current_user&.personal_legal_entity
     end
 
-    # Admins may manage payout methods for any user (e.g. from a reimbursement
-    # report); everyone else is limited to entities they belong to. Per-action
-    # authorization still applies.
     def manageable_legal_entities
       current_user&.admin? ? LegalEntity.all : current_user&.legal_entities
     end
