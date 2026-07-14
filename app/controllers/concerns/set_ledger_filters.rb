@@ -28,8 +28,8 @@ module SetLedgerFilters
       @category = TransactionCategory.find_by(slug: params[:category])
 
       @ledger = @event.ledger
-      @ledgers = if @include_card_grant_ledgers
-                   Ledger.where(event: @event).or(Ledger.where(card_grant: @event.card_grants))
+      @ledgers = if @use_card_grant_ledgers
+                   Ledger.where(card_grant: @event.card_grants)
                  else
                    [@ledger]
                  end
@@ -86,8 +86,8 @@ module SetLedgerFilters
       if @type.present?
         linked_object_type = {
           "ach_transfer"           => { "$eq": "AchTransfer" },
-          "mailed_check"           => { "$or": [{ "$eq": "Check" }, { "$eq": "IncreaseCheck" }] },
-          "hcb_transfer"           => { "$or": [{ "$eq": "Disbursement::Outgoing" }, { "$eq": "Disbursement::Incoming" }] },
+          "mailed_check"           => { "$in": ["Check", "IncreaseCheck"] },
+          "hcb_transfer"           => { "$in": ["Disbursement::Outgoing", "Disbursement::Incoming"] },
           "card_charge"            => { "$eq": "CardCharge" },
           "check_deposit"          => { "$eq": "CheckDeposit" },
           "donation"               => { "$eq": "Donation" },
@@ -104,6 +104,7 @@ module SetLedgerFilters
 
       # To-do: add filtering for merchant and category
 
+      query << { status: { "$in": ["settled", "pending", "reversed"] } }
       Ledger::Query.new({ "$and": query })
     end
 
