@@ -385,11 +385,16 @@ RSpec.describe Ledger::Query, type: :model do
       expect(result.pluck(:id)).to match_array(ids_of(item_b, item_g, other_item))
     end
 
-    it "returns all items when ledgers is empty" do
+    it "returns no items when ledgers is empty" do
       result = described_class.new({ amount_cents: 100 }).execute(ledgers: [])
 
+      expect(result.pluck(:id)).to be_empty
+    end
+
+    it "queries across all ledgers only when all_ledgers is explicitly requested" do
+      result = described_class.new({ amount_cents: 100 }).execute(all_ledgers: true)
+
       expect(result.to_sql).not_to match(/ledger_mappings/)
-      # Will include items from any ledger (including test items and other_item)
       expect(result.pluck(:id)).to include(item_b.id, item_g.id, other_item.id)
     end
   end

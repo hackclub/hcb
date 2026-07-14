@@ -27,11 +27,17 @@ class Ledger
       # TODO: handle authorization
     end
 
-    # Expected to return an ActiveRecord::Relation of Ledger::Item
-    def execute(ledgers: [])
+    # Expected to return an ActiveRecord::Relation of Ledger::Item.
+    #
+    # Querying across every ledger must be opted into explicitly via
+    # all_ledgers: true (admin only). Otherwise results are always scoped to the
+    # given ledgers — an empty collection returns nothing, so a caller passing a
+    # dynamically-empty set (e.g. an event with no card grants) can never leak
+    # another organization's items.
+    def execute(ledgers: [], all_ledgers: false)
       results = apply_query(relation: Ledger::Item.all, query: @query_hash)
 
-      if ledgers.any?
+      unless all_ledgers
         # Scope via a subquery rather than joins(...).distinct: DISTINCT breaks
         # under Postgres when combined with our ORDER BY and a narrowed select
         # list (e.g. pluck) — ORDER BY expressions must appear in the select list.
