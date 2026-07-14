@@ -1,12 +1,12 @@
 <p>Hello,</p>
 
 <p>
-  <%= @position.display_name %> submitted an invoice to <%= @event.name %> for
+  <%= @position.payee.display_name %> submitted an invoice to <%= @event.name %> for
   <%= @invoice.amount.format(with_currency: true) %>.
 </p>
 
 <ul>
-  <li><strong>Contractor:</strong> <%= @position.display_name %> (<%= @position.payee.email %>)</li>
+  <li><strong>Contractor:</strong> <%= @position.payee.display_name %> (<%= @position.payee.email %>)</li>
   <li><strong>Position:</strong> <%= @position.title %></li>
   <li><strong>Description:</strong> <%= @invoice.name %></li>
   <% if @invoice.description.present? %>
@@ -16,7 +16,7 @@
 </ul>
 
 <p>
-  <%= link_to "Review this invoice on HCB", event_payroll_position_url(event_id: @event.slug, id: @position.id) %>
+  <%= link_to "Review this invoice on HCB", event_payroll_position_url(event_id: @event.slug, id: @position) %>
 </p>
 
 <p>

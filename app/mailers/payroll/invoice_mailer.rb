@@ -11,7 +11,7 @@ module Payroll
 
       mail(
         to: managers,
-        subject: "#{@position.display_name} submitted an invoice for #{@invoice.amount.format}",
+        subject: "#{@position.payee.display_name} submitted an invoice for #{@invoice.amount.format}",
         from: hcb_email_with_name_of(@event)
       )
     end

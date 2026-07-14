@@ -1,4 +1,4 @@
-<% title "#{@position.display_name}'s contract" %>
+<% title "#{@position.payee.display_name}'s contract" %>
 <% page_sm %>
 <% unless @frame %>
   <%= render "events/nav", selected: :contractors %>
@@ -10,7 +10,7 @@
       <span class="flex items-center py-3 gap-2 flex-grow">
         <span>
           <span class="regular muted">Contract with</span>
-          <%= @position.display_name %>
+          <%= @position.payee.display_name %>
         </span>
         <span class="badge h4 bg-<%= @position.status_color %> nowrap order-1"><%= @position.status_text %></span>
       </span>
@@ -19,7 +19,7 @@
     <section class="hcb-code--info">
       <p>
         <strong>Recipient</strong>
-        <%= @position.display_name %>
+        <%= @position.payee.display_name %>
       </p>
       <p>
         <strong>Email</strong>
@@ -52,7 +52,7 @@
 
   <% if @position.status == :onboarding %>
     <%= render "application/callout", type: "info", title: "Onboarding in progress", class: "mt-4" do %>
-      <%= @position.display_name %> needs to sign their contract and complete W-9/W-8BEN tax forms before payments can be processed.
+      <%= @position.payee.display_name %> needs to sign their contract and complete W-9/W-8BEN tax forms before payments can be processed.
     <% end %>
   <% end %>
 

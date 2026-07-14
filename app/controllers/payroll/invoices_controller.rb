@@ -34,7 +34,7 @@ module Payroll
         ::ReceiptService::Create.new(
           uploader: current_user,
           attachments:,
-          upload_method: :transfer_create_page,
+          upload_method: :contractor_invoice,
           receiptable: @invoice
         ).run!
       end
@@ -104,7 +104,7 @@ module Payroll
     end
 
     def contractor_page
-      event_payroll_position_path(event_id: @event.slug, id: @invoice.payroll_position_id)
+      event_payroll_position_path(event_id: @event.slug, id: @invoice.payroll_position)
     end
 
     def invoice_params

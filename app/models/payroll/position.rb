@@ -33,14 +33,14 @@ module Payroll
     include AASM
     include Contractable
     include PgSearch::Model
+    include Hashid::Rails
+    hashid_config salt: ""
 
     has_paper_trail
 
     belongs_to :payee
 
     pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }, using: { tsearch: { prefix: true, dictionary: "english" } }
-
-    delegate :display_name, to: :payee
 
     has_many :invoices, class_name: "Payroll::Invoice", foreign_key: "payroll_position_id", inverse_of: :payroll_position, dependent: :destroy
     has_one :event, through: :payee
@@ -137,8 +137,8 @@ module Payroll
 
       [
         { key: :hcb_review, label: "Contract reviewed by HCB operations", complete: !under_review? && !rejected? },
-        { key: :contractor_signature, label: "Contract signed by contractor", complete: contract_signed_by?(:signee) },
-        { key: :organizer_signature, label: "Contract signed by organizer", complete: contract_signed_by?(:cosigner) },
+        { key: :contractor_signature, label: "Contract signed by contractor", complete: contract_signed_by?(:contractor) },
+        { key: :organizer_signature, label: "Contract signed by organizer", complete: contract_signed_by?(:organizer) },
         { key: :tax_form, label: "W-9 / W-8BEN submitted", complete: legal_entity&.latest_tax_form&.completed? || false },
         { key: :payout_method, label: "Payout method configured", complete: legal_entity&.default_payout_method.present? },
       ]
