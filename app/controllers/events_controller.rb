@@ -1266,6 +1266,25 @@ class EventsController < ApplicationController
     query << { datetime: { "$lt": @end_date.to_date.next_day } } if @end_date.present?
 
     query << { author: { "$eq": @user.slug } } if @user.present?
+    
+    if @type.present?
+      linked_object_type = {
+        "ach_transfer" => { "$eq": "AchTransfer" },
+        "mailed_check" => { "$or": [{ "$eq": "Check" }, { "$eq": "IncreaseCheck" }] },
+        "hcb_transfer" => { "$or": [{ "$eq": "Disbursement::Outgoing" }, { "$eq": "Disbursement::Incoming" }] },
+        "card_charge" => { "$eq": "CardCharge" },
+        "check_deposit" => { "$eq": "CheckDeposit" },
+        "donation" => { "$eq": "Donation" },
+        "invoice" => { "$eq": "Invoice" },
+        "fiscal_sponsorship_fee" => { "$eq": "BankFee" },
+        "reimbursement" => { "$eq": "ReimbursementExpensePayout" },
+        "wire" => { "$eq": "Wire" },
+        "paypal_transfer" => { "$eq": "PaypalTransfer" },
+        "wise_transfer" => { "$eq": "WiseTransfer" }
+      }[@type]
+
+      query << { linked_object_type: }
+    end
 
     # To-do: add filtering for merchant and category
 
