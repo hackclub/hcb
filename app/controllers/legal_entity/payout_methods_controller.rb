@@ -10,7 +10,6 @@ class LegalEntity
       authorize LegalEntity::PayoutMethod.new(legal_entity:), :create?
 
       service = LegalEntity::PayoutMethodService::Update.new(
-        user: legal_entity_owner,
         legal_entity:,
         details_type: params.dig(:user, :payout_method_type),
         details_attrs: details_params_for(params.dig(:user, :payout_method_type)),
@@ -29,7 +28,6 @@ class LegalEntity
       authorize @payout_method
 
       service = LegalEntity::PayoutMethodService::Update.new(
-        user: legal_entity_owner,
         legal_entity: @payout_method.legal_entity,
         details_type: @payout_method.details_type,
         details_attrs: details_params_for(@payout_method.details_type),
@@ -114,17 +112,9 @@ class LegalEntity
                         current_user&.personal_legal_entity
     end
 
-    # The user whose payout method is being managed. Normally that's whoever is
-    # acting on an entity they belong to (self-service, personal or business).
-    # When an admin manages payouts on someone else's behalf (e.g. from a
-    # reimbursement report) they aren't a member, so fall back to the entity's
-    # user — unambiguous for personal entities, which is the only such case.
-    def legal_entity_owner
-      return current_user if current_user && legal_entity&.users&.include?(current_user)
-
-      legal_entity&.users&.first || current_user
-    end
-
+    # Admins may manage payout methods for any user (e.g. from a reimbursement
+    # report); everyone else is limited to entities they belong to. Per-action
+    # authorization still applies.
     def manageable_legal_entities
       current_user&.admin? ? LegalEntity.all : current_user&.legal_entities
     end
