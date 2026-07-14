@@ -1,9 +1,10 @@
 # frozen_string_literal: true
 
-# Adds a `set_ledger_filters` method to a controller. Requires `@event` to be
-# set. Set `@include_card_grant_ledgers` beforehand to also include the
-# event's card grant ledgers (e.g. for the grant overview) when determining
-# filterable users.
+# Adds `set_ledger_filters` and `ledger_query` methods to a controller.
+# Requires `@event` to be set. Set `@include_card_grant_ledgers` beforehand to
+# also include the event's card grant ledgers (e.g. for the grant overview) in
+# `@ledgers` and the filterable users. `ledger_query` builds a `Ledger::Query`
+# from the parsed filters; executing it is left to the controller.
 module SetLedgerFilters
   extend ActiveSupport::Concern
 
@@ -31,12 +32,13 @@ module SetLedgerFilters
       @direction = params[:direction].presence
       @category = TransactionCategory.find_by(slug: params[:category])
 
-      ledgers = if @include_card_grant_ledgers
-                  Ledger.where(event: @event).or(Ledger.where(card_grant: @event.card_grants))
-                else
-                  @event.ledger
-                end
-      author_ids = Ledger::Item.where(id: Ledger::Mapping.where(ledger: ledgers).select(:ledger_item_id)).select(:author_id)
+      @ledger = @event.ledger
+      @ledgers = if @include_card_grant_ledgers
+                   Ledger.where(event: @event).or(Ledger.where(card_grant: @event.card_grants))
+                 else
+                   [@ledger]
+                 end
+      author_ids = Ledger::Item.where(id: Ledger::Mapping.where(ledger: @ledgers).select(:ledger_item_id)).select(:author_id)
       @users = User.where(id: author_ids).or(User.where(id: @event.users.select(:id))).with_attached_profile_picture.order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
 
       if @merchant
@@ -50,6 +52,64 @@ module SetLedgerFilters
       if @ledger_filters_disabled && has_filters
         render plain: "Invalid parameters. Please try again", status: :bad_request
       end
+    end
+
+    def ledger_query
+      query = []
+
+      query << { memo: { "$search": params[:q] } } if params[:q].present?
+
+      if @direction.present? || @minimum_amount.present? || @maximum_amount.present?
+        if @direction == "revenue"
+          query << { amount_cents: { "$gt": 0 } }
+        elsif @direction == "expenses"
+          query << { amount_cents: { "$lt": 0 } }
+        end
+
+        if @minimum_amount.present?
+          query << { "$or": [{ amount_cents: { "$gte": @minimum_amount.cents } }, { amount_cents: { "$lte": -@minimum_amount.cents } }] }
+        end
+
+        if @maximum_amount.present?
+          # Multiple operators on one field are AND-combined: |amount| <= max
+          query << { amount_cents: { "$lte": @maximum_amount.cents, "$gte": -@maximum_amount.cents } }
+        end
+      end
+
+      if @missing_receipts
+        query << { receipt_count: { "$eq": 0 } }
+        query << { receipt_required: { "$eq": true } }
+        query << { marked_no_or_lost_receipt_at: { "$eq": nil } }
+      end
+
+      query << { datetime: { "$gte": @start_date.to_date } } if @start_date.present?
+      # Whole-day inclusive end bound, matching the old transactions page
+      query << { datetime: { "$lt": @end_date.to_date.next_day } } if @end_date.present?
+
+      query << { author: { "$eq": @user.slug } } if @user.present?
+
+      if @type.present?
+        linked_object_type = {
+          "ach_transfer"           => { "$eq": "AchTransfer" },
+          "mailed_check"           => { "$or": [{ "$eq": "Check" }, { "$eq": "IncreaseCheck" }] },
+          "hcb_transfer"           => { "$or": [{ "$eq": "Disbursement::Outgoing" }, { "$eq": "Disbursement::Incoming" }] },
+          "card_charge"            => { "$eq": "CardCharge" },
+          "check_deposit"          => { "$eq": "CheckDeposit" },
+          "donation"               => { "$eq": "Donation" },
+          "invoice"                => { "$eq": "Invoice" },
+          "fiscal_sponsorship_fee" => { "$eq": "BankFee" },
+          "reimbursement"          => { "$eq": "Reimbursement::ExpensePayout" },
+          "wire"                   => { "$eq": "Wire" },
+          "paypal_transfer"        => { "$eq": "PaypalTransfer" },
+          "wise_transfer"          => { "$eq": "WiseTransfer" }
+        }[@type]
+
+        query << { linked_object_type: }
+      end
+
+      # To-do: add filtering for merchant and category
+
+      Ledger::Query.new({ "$and": query })
     end
 
   end

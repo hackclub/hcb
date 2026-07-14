@@ -1235,61 +1235,7 @@ class EventsController < ApplicationController
     authorize @event
     @per = params[:per] || 25
 
-    query = []
-
-    query << { memo: { "$search": params[:q] } } if params[:q].present?
-
-    if @direction.present? || @minimum_amount.present? || @maximum_amount.present?
-      if @direction == "revenue"
-        query << { amount_cents: { "$gt": 0 } }
-      elsif @direction == "expenses"
-        query << { amount_cents: { "$lt": 0 } }
-      end
-
-      if @minimum_amount.present?
-        query << { "$or": [{ amount_cents: { "$gte": @minimum_amount.cents } }, { amount_cents: { "$lte": -@minimum_amount.cents } }] }
-      end
-
-      if @maximum_amount.present?
-        # Multiple operators on one field are AND-combined: |amount| <= max
-        query << { amount_cents: { "$lte": @maximum_amount.cents, "$gte": -@maximum_amount.cents } }
-      end
-    end
-
-    if @missing_receipts
-      query << { receipt_count: { "$eq": 0 } }
-      query << { receipt_required: { "$eq": true } }
-      query << { marked_no_or_lost_receipt_at: { "$eq": nil } }
-    end
-
-    query << { datetime: { "$gte": @start_date.to_date } } if @start_date.present?
-    # Whole-day inclusive end bound, matching the old transactions page
-    query << { datetime: { "$lt": @end_date.to_date.next_day } } if @end_date.present?
-
-    query << { author: { "$eq": @user.slug } } if @user.present?
-
-    if @type.present?
-      linked_object_type = {
-        "ach_transfer"           => { "$eq": "AchTransfer" },
-        "mailed_check"           => { "$or": [{ "$eq": "Check" }, { "$eq": "IncreaseCheck" }] },
-        "hcb_transfer"           => { "$or": [{ "$eq": "Disbursement::Outgoing" }, { "$eq": "Disbursement::Incoming" }] },
-        "card_charge"            => { "$eq": "CardCharge" },
-        "check_deposit"          => { "$eq": "CheckDeposit" },
-        "donation"               => { "$eq": "Donation" },
-        "invoice"                => { "$eq": "Invoice" },
-        "fiscal_sponsorship_fee" => { "$eq": "BankFee" },
-        "reimbursement"          => { "$eq": "Reimbursement::ExpensePayout" },
-        "wire"                   => { "$eq": "Wire" },
-        "paypal_transfer"        => { "$eq": "PaypalTransfer" },
-        "wise_transfer"          => { "$eq": "WiseTransfer" }
-      }[@type]
-
-      query << { linked_object_type: }
-    end
-
-    # To-do: add filtering for merchant and category
-
-    @items = Ledger::Query.new({ "$and": query }).execute(ledgers: [@ledger])
+    @items = ledger_query.execute(ledgers: @ledgers)
 
     @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id)) if @tag&.id.present?
 
