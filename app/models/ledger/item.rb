@@ -174,6 +174,10 @@ class Ledger
       end
     end
 
+    def fallback_memo
+      self.canonical_transactions.first&.try(:smart_memo).presence || self.canonical_pending_transactions.first&.try(:smart_memo).presence || "Transaction"
+    end
+
     def calculate_author
       case linked_object_type
       when "AchTransfer"
@@ -222,7 +226,7 @@ class Ledger
       self.receipt_required = calculate_receipt_required
       # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
       self.system_memo = calculate_system_memo
-      self.memo = self.custom_memo || self.system_memo || self.canonical_transactions.first&.memo || self.canonical_pending_transactions.first&.memo || "Transaction"
+      self.memo = self.custom_memo.presence || self.system_memo.presence || fallback_memo
 
       save!
     end
