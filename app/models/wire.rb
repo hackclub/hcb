@@ -48,13 +48,13 @@
 class Wire < ApplicationRecord
   has_paper_trail
   include HasPaperTrailHelpers
-  include HasLedgerItem
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :recipient_email]
   has_encrypted :account_number, :bic_code
   blind_index :account_number, :bic_code
 
+  has_one :ledger_item, as: :linked_object
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wire, required: false
   has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
 
