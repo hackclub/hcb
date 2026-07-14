@@ -30,7 +30,6 @@ module Reimbursement
   class PayoutHolding < ApplicationRecord
     include AASM
     include HasBookTransfer
-    include HasLedgerItem
 
     include Hashid::Rails
     hashid_config salt: ""
@@ -40,6 +39,7 @@ module Reimbursement
 
     has_paper_trail
 
+    has_one :ledger_item, as: :linked_object
     has_many :expense_payouts, class_name: "Reimbursement::ExpensePayout", foreign_key: "reimbursement_payout_holdings_id", inverse_of: :payout_holding
     belongs_to :report, foreign_key: "reimbursement_reports_id", inverse_of: :payout_holding
     belongs_to :ach_transfer, optional: true, inverse_of: :reimbursement_payout_holding

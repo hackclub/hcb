@@ -15,7 +15,6 @@
 class FeeRevenue < ApplicationRecord
   include AASM
   include HasBookTransfer
-  include HasLedgerItem
 
   include Hashid::Rails
   hashid_config salt: ""
@@ -23,6 +22,7 @@ class FeeRevenue < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :frv
 
+  has_one :ledger_item, as: :linked_object
   has_many :bank_fees
 
   include HasHcbCode
