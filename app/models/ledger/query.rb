@@ -37,7 +37,9 @@ class Ledger
     def execute(ledgers: [], all_ledgers: false)
       results = apply_query(relation: Ledger::Item.all, query: @query_hash)
 
-      unless all_ledgers
+      # Strict boolean: only a literal true opts out of scoping, so a caller that
+      # accidentally passes a truthy value (e.g. the string "false") fails closed.
+      unless all_ledgers == true
         # Scope via a subquery rather than joins(...).distinct: DISTINCT breaks
         # under Postgres when combined with our ORDER BY and a narrowed select
         # list (e.g. pluck) — ORDER BY expressions must appear in the select list.

@@ -407,6 +407,13 @@ RSpec.describe Ledger::Query, type: :model do
       expect(result.to_sql).not_to match(/ledger_mappings/)
       expect(result.pluck(:id)).to include(item_b.id, item_g.id, other_item.id)
     end
+
+    it "does not treat a truthy non-boolean all_ledgers as an opt-in to skip scoping" do
+      result = described_class.new({ amount_cents: 100 }).execute(all_ledgers: "false")
+
+      expect(result.to_sql).to match(/ledger_mappings/)
+      expect(result.pluck(:id)).to be_empty
+    end
   end
 
   describe "complex queries" do
