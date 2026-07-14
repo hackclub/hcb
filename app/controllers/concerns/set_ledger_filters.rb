@@ -104,6 +104,7 @@ module SetLedgerFilters
 
       # To-do: add filtering for merchant and category
 
+      query << { status: { "$or": [{ "$eq": "settled" }, { "$eq": "pending" }, { "$eq": "reversed" }] } }
       Ledger::Query.new({ "$and": query })
     end
 

@@ -10,6 +10,7 @@ class Ledger
       receipt_count
       linked_object_type
       marked_no_or_lost_receipt_at
+      status
       author
     ].index_by(&:itself).freeze
 
