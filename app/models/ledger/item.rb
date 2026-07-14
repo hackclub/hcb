@@ -39,6 +39,9 @@ class Ledger
   class Item < ApplicationRecord
     self.table_name = "ledger_items"
 
+    include PgSearch::Model
+    pg_search_scope :search_memo, against: [:memo], ranked_by: "ledger_items.datetime"
+
     include Hashid::Rails
     has_paper_trail
 

@@ -56,6 +56,8 @@
   <% end %>
 </section>
 
+<%= render partial: "application/admin_viewer", locals: { record: @item } %>
+
 <section class="my-5 flex flex-col gap-3">
   <% cts = 0 %>
   <% pts = 0 %>
