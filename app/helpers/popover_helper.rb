@@ -58,6 +58,17 @@ module PopoverHelper
     )
   end
 
+  def contractor_popover_data(contractor)
+    path = event_payroll_position_path(event_id: contractor.event.slug, id: contractor)
+    popover_data(
+      title: "#{contractor.payee.display_name}'s contract",
+      src: event_payroll_position_path(event_id: contractor.event.slug, id: contractor, frame: true),
+      frame_id: "contractor_#{contractor.id}",
+      state_url: path,
+      external_link: path
+    )
+  end
+
   def employee_popover_data(employee)
     popover_data(
       title: "#{employee.user.name}'s payroll",

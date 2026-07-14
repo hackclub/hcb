@@ -1,4 +1,4 @@
-<%# locals: (event:) %>
+<%# locals: (event:, destination: "payments") %>
 <%# The picker always opens in contractor mode; the manual-payee controller
     toggles to the manual path client-side via the enable/undo buttons. %>
 <% manual = false %>
@@ -6,7 +6,7 @@
 <div>
   <div data-payee-picker-target="defaultPanel" class="py-2">
     <% if event.payees.any? %>
-      <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id]) do %>
+      <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id], destination:) do %>
         <%= render "application/loading_container", klass: "py-8" %>
       <% end %>
     <% end %>
@@ -34,6 +34,7 @@
           submit to PayeesController on Continue. On the manual path this also creates a
           managed legal entity, then the page reloads with ?payee_id= selected. %>
       <%= form_with(url: event_payees_path(event_id: event.slug), local: true, id: "new-payee-form", html: { class: "contents" }) do %>
+        <%= hidden_field_tag :destination, destination %>
         <%= hidden_field_tag :manual, manual.to_s, data: { "manual-payee-target": "payeeFormManualField" } %>
       <% end %>
 

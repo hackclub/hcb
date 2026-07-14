@@ -86,6 +86,10 @@ Rails.application.routes.draw do
     get "payroll", to: "my#payroll", as: :my_payroll
     get "pay", to: "my#pay", as: :my_pay
 
+    resources :payroll_positions, only: [:new, :create, :show] do
+      resources :invoices, only: [:new, :create], controller: "payroll/invoices"
+    end
+
     get "feed", to: "my#feed", as: :my_feed
     get "inbox", to: "my#inbox", as: :my_inbox
     get "activities", to: "my#activities", as: :my_activities
@@ -1007,6 +1011,13 @@ Rails.application.routes.draw do
     get "payments", to: "events#payments"
 
     resources :payments, only: [:new, :create]
+    resources :payroll_positions, only: [:new, :create, :show], controller: "payroll/positions"
+    resources :payroll_invoices, only: [], controller: "payroll/invoices" do
+      member do
+        post :approve
+        post :reject
+      end
+    end
     resources :payees, only: [:index, :create, :update] do
       member do
         post :archive
@@ -1026,6 +1037,7 @@ Rails.application.routes.draw do
     get "promotions"
     get "reimbursements"
     get "employees"
+    get "contractors"
     get "sub_organizations"
     get "sub_organizations/new", to: "suborganizations#new", as: :new_sub_organization
     get "donations", to: "events#donation_overview", as: :donation_overview

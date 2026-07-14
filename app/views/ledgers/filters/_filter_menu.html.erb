@@ -16,7 +16,7 @@
           <button id="tags" data-tabs-target="btn" data-action="click->tabs#select">Tag</button>
         <% end %>
         <button id="user" data-tabs-target="btn" data-action="click->tabs#select">User</button>
-        <% unless @subledger %>
+        <% unless @use_card_grant_ledgers %>
           <button id="type" data-tabs-target="btn" data-action="click->tabs#select">Type</button>
         <% end %>
         <button id="date" data-tabs-target="btn" data-action="click->tabs#select">Date</button>
@@ -60,7 +60,7 @@
             </div>
           <% end %>
         </div>
-        <% unless @subledger %>
+        <% unless @use_card_grant_ledgers %>
           <div data-tabs-target="tab" id="type">
             <% ["ach_transfer", "card_charge", "check_deposit", "donation", "fiscal_sponsorship_fee", "hcb_transfer", "invoice", "mailed_check", "paypal_transfer", "refund", "reimbursement", "wire", "wise_transfer"].each do |type| %>
               <div class="flex items-center">
@@ -111,7 +111,7 @@
               <%= form.submit "Filter transactions" %>
             </div>
 
-            <% unless @subledger %>
+            <% unless @use_card_grant_ledgers %>
               <hr class="!border-muted !my-3">
               <div class="m-2">
                 <p class="bold mb-0 mt-2">Revenue or expenses?</p>

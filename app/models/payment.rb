@@ -38,6 +38,7 @@ class Payment < ApplicationRecord
   has_one :legal_entity, through: :payee
   has_many :attempts, -> { order(created_at: :desc) }, class_name: "Payment::Attempt", inverse_of: :payment
   has_one :successful_attempt, -> { successful }, class_name: "Payment::Attempt", inverse_of: :payment
+  has_one :payroll_invoice, class_name: "Payroll::Invoice", inverse_of: :payment, dependent: :nullify
 
   monetize :amount_cents, with_model_currency: :currency
 

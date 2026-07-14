@@ -56,7 +56,7 @@ module Reimbursement
     after_create do
       CanonicalPendingTransaction.create!(
         reimbursement_payout_holding: self,
-        event: Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING),
+        event:,
         amount_cents:,
         memo: hcb_code,
         date: created_at,
@@ -97,6 +97,10 @@ module Reimbursement
       if Reimbursement::PayoutHolding.where(reimbursement_reports_id:).excluding(self).any?
         errors.add(:base, "A reimbursement report can only have one payout holding.")
       end
+    end
+
+    def event
+      @event ||= Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
     end
 
     def payout_transfer
