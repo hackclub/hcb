@@ -13,24 +13,24 @@ RSpec.describe Ledger::Query, type: :model do
   # - Varying memos: "zero item", "alpha payment", "alpha refund", "beta refund", "beta payment", "gamma payment", "delta payment"
   # - Varying dates: spread across Jan-Mar 2024
   # Note: memo is required by validation, so we can't test null on memo directly
-  let(:item_a) { create_mapped_item(amount_cents: 0,   memo: "zero item",      date: Date.new(2024, 1, 1)) }
-  let(:item_b) { create_mapped_item(amount_cents: 100, memo: "alpha payment",  date: Date.new(2024, 1, 2)) }
-  let(:item_c) { create_mapped_item(amount_cents: 150, memo: "alpha refund",   date: Date.new(2024, 1, 3)) }
-  let(:item_d) { create_mapped_item(amount_cents: 200, memo: "beta refund",    date: Date.new(2024, 2, 1)) }
-  let(:item_e) { create_mapped_item(amount_cents: 300, memo: "beta payment",   date: Date.new(2024, 2, 15)) }
-  let(:item_f) { create_mapped_item(amount_cents: 500, memo: "gamma payment",  date: Date.new(2024, 3, 1)) }
-  let(:item_g) { create_mapped_item(amount_cents: 100, memo: "delta payment",  date: Date.new(2024, 3, 15)) }
+  let(:item_a) { create_mapped_item(amount_cents: 0,   memo: "zero item",      datetime: Date.new(2024, 1, 1)) }
+  let(:item_b) { create_mapped_item(amount_cents: 100, memo: "alpha payment",  datetime: Date.new(2024, 1, 2)) }
+  let(:item_c) { create_mapped_item(amount_cents: 150, memo: "alpha refund",   datetime: Date.new(2024, 1, 3)) }
+  let(:item_d) { create_mapped_item(amount_cents: 200, memo: "beta refund",    datetime: Date.new(2024, 2, 1)) }
+  let(:item_e) { create_mapped_item(amount_cents: 300, memo: "beta payment",   datetime: Date.new(2024, 2, 15)) }
+  let(:item_f) { create_mapped_item(amount_cents: 500, memo: "gamma payment",  datetime: Date.new(2024, 3, 1)) }
+  let(:item_g) { create_mapped_item(amount_cents: 100, memo: "delta payment",  datetime: Date.new(2024, 3, 15)) }
 
   # Ensure all items are created before each test
   before { [item_a, item_b, item_c, item_d, item_e, item_f, item_g] }
 
-  def create_mapped_item(date:, **attrs)
-    item = create(:ledger_item, datetime: date, **attrs)
+  def create_mapped_item(**attrs)
+    item = create(:ledger_item, **attrs)
     Ledger::Mapping.create(ledger: test_ledger, ledger_item: item, on_primary_ledger: true)
     # refresh! (triggered on create and on mapping) recomputes memo and
     # amount_cents from canonical transactions, which these items don't have.
     # Pin the intended values, bypassing callbacks.
-    item.update_columns(datetime: date, **attrs)
+    item.update_columns(**attrs)
     item
   end
 
@@ -144,7 +144,7 @@ RSpec.describe Ledger::Query, type: :model do
     end
 
     context "null handling (SQL generation only)" do
-      # Note: All permitted columns (memo, amount_cents, date) are required by model validation
+      # Note: All permitted columns (memo, amount_cents, datetime) are required by model validation
       # These tests verify correct SQL generation without record assertions
       it "implicit null generates IS NULL" do
         result = execute_query({ memo: nil })

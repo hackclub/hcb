@@ -2,15 +2,15 @@
 
 class Ledger
   class Query
-    PERMITTED_COLUMNS_MAP = {
-      "memo"                         => "memo",
-      "amount_cents"                 => "amount_cents",
-      "date"                         => "datetime",
-      "receipt_required"             => "receipt_required",
-      "receipt_count"                => "receipt_count",
-      "transaction_type"             => "linked_object_type",
-      "marked_no_or_lost_receipt_at" => "marked_no_or_lost_receipt_at"
-    }.freeze
+    PERMITTED_COLUMNS_MAP = %w[
+      memo
+      amount_cents
+      datetime
+      receipt_required
+      receipt_count
+      linked_object_type
+      marked_no_or_lost_receipt_at
+    ].index_by(&:itself).freeze
 
     class Error < ArgumentError; end
 
