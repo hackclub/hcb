@@ -5,6 +5,41 @@
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
   <%= render "settings_header", active: "previews" %>
   <section>
+    <% if Date.current < Date.new(2026, 8, 1) && Flipper.enabled?(:meow_2026_07_06, @user) %>
+      <% napping = Flipper.enabled?(:meow_nap_2026_07_07, @user) %>
+      <% disabled = !policy(@user).update? %>
+      <div class="card pb0 mb3" id="meow-nap">
+        <div class="card__banner card__banner--top flex justify-between items-center feature-generic">
+          <h3 class="h1 pt2 pb2 my0 color-black">🐱 meow</h3>
+          <% if napping %>
+            <%= button_to(
+                  "wake it up 🐱",
+                  disable_feature_path(feature: :meow_nap_2026_07_07, user_id: @user.id),
+                  data: { turbo: false },
+                  class: "btn bg-info",
+                  disabled:
+                ) %>
+          <% else %>
+            <%= button_to(
+                  "shhh 😾",
+                  enable_feature_path(feature: :meow_nap_2026_07_07, user_id: @user.id),
+                  data: { turbo: false },
+                  class: "btn bg-accent",
+                  disabled:
+                ) %>
+          <% end %>
+        </div>
+        <p class="m-0 mb-4">
+          <% if napping %>
+            the cat's taking a lil nap rn 😴 wake it up whenever you're ready for the chaos again.
+          <% else %>
+            ok the cat is being SO loud rn. need some peace? put it down for a nap and it'll stop meowing.
+          <% end %>
+          heads up: this whole easter egg is temporary and will disappear soon.
+        </p>
+      </div>
+    <% end %>
+
     <% admin_tool_if(!Flipper.enabled?(:transactions_background_2024_06_05, @user), "mb3") do %>
       <%= render partial: "features/preview", locals: {
             id: "minimalistic-ledger",

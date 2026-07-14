@@ -86,6 +86,96 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
     end
   end
 
+  describe "#create_transfer (key remapping / consolidation)" do
+    let(:event) { create(:event) }
+    let(:user)  { create(:user) }
+
+    let(:attrs) do
+      {
+        amount: 10_000,
+        memo: "m" * 60,
+        payment_for: "p" * 200,
+        recipient_name: "Jane Doe",
+        recipient_email: "jane@example.com",
+        currency: "USD",
+        user:,
+      }
+    end
+
+    context "Wire" do
+      let(:details) { build(:wire_payout_method_details, recipient_information: {}) }
+
+      it "maps :amount to :amount_cents and caps :payment_for at 140, keeping :memo/:user" do
+        wire = details.create_transfer(event, **attrs)
+
+        expect(wire).to be_a(Wire)
+        expect(wire.amount_cents).to eq(10_000)
+        expect(wire.payment_for.length).to eq(140)
+        expect(wire.memo).to eq("m" * 60)
+        expect(wire.user).to eq(user)
+        expect(wire.recipient_name).to eq("Jane Doe")
+      end
+    end
+
+    context "WiseTransfer" do
+      let(:details) { build(:wise_transfer_payout_method_details, currency: "GBP") }
+
+      it "maps :amount to :amount_cents and drops :memo/:currency (uses its own currency)" do
+        wise = details.create_transfer(event, **attrs)
+
+        expect(wise).to be_a(WiseTransfer)
+        expect(wise.amount_cents).to eq(10_000)
+        expect(wise.currency).to eq("GBP")
+        expect(wise.user).to eq(user)
+      end
+    end
+
+    context "AchTransfer" do
+      let(:details) { build(:ach_transfer_payout_method_details) }
+
+      before { allow(ColumnService).to receive(:get).and_return("full_name" => "Test Bank") }
+
+      it "maps :user to :creator, derives :bank_name, drops :memo, and has no currency" do
+        ach = details.create_transfer(event, **attrs)
+
+        expect(ach).to be_a(AchTransfer)
+        expect(ach.creator).to eq(user)
+        expect(ach.bank_name).to eq("Test Bank")
+        expect(ach.amount).to eq(10_000) # USD passthrough
+        expect(ach.routing_number).to eq("021000021")
+      end
+
+      it "ignores :currency and passes the amount through (ACH is USD-only)" do
+        ach = details.create_transfer(event, **attrs.merge(currency: "EUR"))
+
+        expect(ach.amount).to eq(10_000)
+      end
+    end
+
+    context "Check" do
+      let(:details) { build(:check_payout_method_details) }
+
+      it "truncates :memo to 40 chars and drops :currency" do
+        check = details.create_transfer(event, **attrs)
+
+        expect(check).to be_a(IncreaseCheck)
+        expect(check.memo.length).to eq(40)
+        expect(check.amount).to eq(10_000) # USD passthrough
+        expect(check.user).to eq(user)
+        expect(check.recipient_name).to eq("Jane Doe")
+      end
+    end
+
+    it "does not error when a method-irrelevant key is omitted" do
+      ach_details = build(:ach_transfer_payout_method_details)
+      allow(ColumnService).to receive(:get).and_return("full_name" => "Test Bank")
+
+      expect {
+        ach_details.create_transfer(event, amount: 500, payment_for: "x", recipient_name: "A", recipient_email: "a@b.co", user:)
+      }.not_to raise_error
+    end
+  end
+
   describe "supported / unsupported methods" do
     it "is supported when its type is not in UNSUPPORTED_METHODS" do
       payout_method = legal_entity.payout_methods.create!(details: build_ach)
@@ -111,6 +201,49 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
         expect(payout_method).not_to be_valid
         expect(payout_method.errors[:base].join).to include("Checks are paused.")
       end
+    end
+  end
+
+  describe "#locked_by_processing_reimbursement_report?" do
+    let(:user) { create(:user) }
+
+    def method_with_report_in(state)
+      pm = user.personal_legal_entity.payout_methods.create!(default: false, details: build_ach)
+      create(:reimbursement_report, user:, event: create(:event), aasm_state: state, legal_entity_payout_method: pm)
+      pm
+    end
+
+    it "is locked while a report using it is in-flight" do
+      %i[submitted reimbursement_requested reimbursement_approved].each do |state|
+        expect(method_with_report_in(state).locked_by_processing_reimbursement_report?).to be(true), "expected locked for #{state}"
+      end
+    end
+
+    it "is unlocked while the report is a draft or finished" do
+      %i[draft reimbursed rejected reversed].each do |state|
+        expect(method_with_report_in(state).locked_by_processing_reimbursement_report?).to be(false), "expected unlocked for #{state}"
+      end
+    end
+
+    it "is unlocked when no report uses it" do
+      pm = user.personal_legal_entity.payout_methods.create!(default: false, details: build_ach)
+      expect(pm.locked_by_processing_reimbursement_report?).to be(false)
+    end
+  end
+
+  describe "#locked_reimbursement_reports" do
+    let(:user) { create(:user) }
+    let(:pm) { user.personal_legal_entity.payout_methods.create!(default: false, details: build_ach) }
+
+    def report_in(state)
+      create(:reimbursement_report, user:, event: create(:event), aasm_state: state, legal_entity_payout_method: pm)
+    end
+
+    it "returns only the in-flight reports using the method" do
+      locking = %i[submitted reimbursement_requested reimbursement_approved].map { |s| report_in(s) }
+      %i[draft reimbursed rejected reversed].each { |s| report_in(s) }
+
+      expect(pm.locked_reimbursement_reports).to match_array(locking)
     end
   end
 end

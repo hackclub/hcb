@@ -337,9 +337,12 @@ class Event < ApplicationRecord
 
   has_many :ach_transfers
   has_many :payment_recipients
+  has_many :payees
+  has_many :payments, through: :payees
+
   has_many :disbursements
-  has_many :incoming_disbursements, class_name: "Disbursement"
-  has_many :outgoing_disbursements, class_name: "Disbursement", foreign_key: :source_event_id
+  has_many :incoming_disbursements, class_name: "Disbursement::Incoming"
+  has_many :outgoing_disbursements, class_name: "Disbursement::Outgoing", foreign_key: :source_event_id
   has_many :donations
   has_many :donation_payouts, through: :donations, source: :payout
   has_many :recurring_donations
@@ -471,6 +474,10 @@ class Event < ApplicationRecord
     build_plan(type: fallback_plan_class) if plan.nil?
   end
 
+  after_update if: -> { can_front_balance_changed? } do
+    refresh_ledgers!
+  end
+
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
   after_validation :move_friendly_id_error_to_slug
 
@@ -573,6 +580,13 @@ class Event < ApplicationRecord
     # We're including only pending charges on emburse_cards so organizers have a conservative estimate of their balance
     pending_t = self.emburse_transactions.pending.where("amount < 0").sum(:amount)
     completed_t + pending_t
+  end
+
+  def refresh_ledgers!
+    ledger.refresh_all!
+    Ledger.where(card_grant: self.card_grants).find_each do |ledger|
+      ledger.refresh_all!
+    end
   end
 
   def total_raised
@@ -782,10 +796,6 @@ class Event < ApplicationRecord
 
   def dormant?
     !engaged?
-  end
-
-  def frozen?
-    Flipper.enabled?(:frozen, self)
   end
 
   def revenue_fee

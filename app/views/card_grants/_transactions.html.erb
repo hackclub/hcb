@@ -1,30 +1,34 @@
-<%# locals: (hcb_codes: nil, is_public: false) %>
+<%# locals: (hcb_codes: nil, is_public: false, ledger:, items:) %>
 
 <h2 class="heading h2 leading-[1.5] mt2 ml0 pt1 pb1 pr2">Transactions on this card</h2>
-<% if hcb_codes&.any? %>
-  <%= render "application/merchant_not_allowed_callout", hcb_codes: %>
-  <div style="overflow-x: auto;" class="table-container">
-    <table>
-      <tbody data-behavior="transactions">
-        <% hcb_codes.each do |hcb_code| %>
-          <% if hcb_code.canonical_transactions.any? %>
-            <% if hcb_code.canonical_transactions.all? { |ct| ct.canonical_event_mapping&.subledger&.present? } %>
-              <%# passing in a HCB code allows for all CTs of a HCB code to show up as one ledger item
-                  but should only be done if all CTs are on the subledger. An example of when they're not
-                  is grant topups / withdrawals. %>
-              <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct: hcb_code, authorless: true, receipt_upload_button: !is_public, receipt_upload_button_disabled: !hcb_code.receipt_required?, show_tags: true } %>
-            <% else %>
-              <%= render partial: "canonical_transactions/canonical_transaction", collection: hcb_code.canonical_transactions.select { |ct| ct.canonical_event_mapping&.subledger&.present? }, as: :ct, locals: { authorless: true, receipt_upload_button: !is_public, receipt_upload_button_disabled: !hcb_code.receipt_required?, show_tags: true } %>
-            <% end %>
-          <% else %>
-            <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: hcb_code.canonical_pending_transactions.select { |pt| pt.canonical_pending_event_mapping&.subledger&.present? }, as: :pt, locals: { authorless: true, receipt_upload_button: !is_public, receipt_upload_button_disabled: !hcb_code.receipt_required?, show_tags: true } %>
-          <% end %>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
+<% if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user) %>
+  <%= render "ledgers/ledger", ledger: @ledger, items: @items %>
 <% else %>
-  <div class="mb-10">
-    <%= blankslate "No purchases yet." %>
-  </div>
+  <% if hcb_codes&.any? %>
+    <%= render "application/merchant_not_allowed_callout", hcb_codes: %>
+    <div style="overflow-x: auto;" class="table-container">
+      <table>
+        <tbody data-behavior="transactions">
+          <% hcb_codes.each do |hcb_code| %>
+            <% if hcb_code.canonical_transactions.any? %>
+              <% if hcb_code.canonical_transactions.all? { |ct| ct.canonical_event_mapping&.subledger&.present? } %>
+                <%# passing in an HCB code allows for all CTs of an HCB code to show up as one ledger item
+                    but should only be done if all CTs are on the subledger. An example of when they're not
+                    is grant topups / withdrawals. %>
+                <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct: hcb_code, authorless: true, receipt_upload_button: !is_public, receipt_upload_button_disabled: !hcb_code.receipt_required?, show_tags: true } %>
+              <% else %>
+                <%= render partial: "canonical_transactions/canonical_transaction", collection: hcb_code.canonical_transactions.select { |ct| ct.canonical_event_mapping&.subledger&.present? }, as: :ct, locals: { authorless: true, receipt_upload_button: !is_public, receipt_upload_button_disabled: !hcb_code.receipt_required?, show_tags: true } %>
+              <% end %>
+            <% else %>
+              <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: hcb_code.canonical_pending_transactions.select { |pt| pt.canonical_pending_event_mapping&.subledger&.present? }, as: :pt, locals: { authorless: true, receipt_upload_button: !is_public, receipt_upload_button_disabled: !hcb_code.receipt_required?, show_tags: true } %>
+            <% end %>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="mb-10">
+      <%= blankslate "No purchases yet." %>
+    </div>
+  <% end %>
 <% end %>

@@ -5,6 +5,7 @@
 # Table name: legal_entity_payout_methods
 #
 #  id              :bigint           not null, primary key
+#  archived        :boolean          default(FALSE), not null
 #  default         :boolean          default(FALSE), not null
 #  details_type    :string           not null
 #  created_at      :datetime         not null
@@ -35,17 +36,62 @@ class LegalEntity
     }.freeze
     SUPPORTED_METHODS = ALL_METHODS - UNSUPPORTED_METHODS.keys
 
+    # Lock payout method when in these states
+    LOCKING_REPORT_STATES = %w[submitted reimbursement_requested reimbursement_approved].freeze
+
     self.table_name = "legal_entity_payout_methods"
 
     belongs_to :legal_entity
     belongs_to :details, polymorphic: true, dependent: :destroy, autosave: true
+    has_many :reimbursement_reports, class_name: "Reimbursement::Report", foreign_key: :legal_entity_payout_method_id, inverse_of: :legal_entity_payout_method, dependent: :nullify
+    has_many :locked_reimbursement_reports, -> { where(aasm_state: LOCKING_REPORT_STATES) }, class_name: "Reimbursement::Report", foreign_key: :legal_entity_payout_method_id, inverse_of: :legal_entity_payout_method
 
     before_save :unset_other_defaults, if: -> { default? && will_save_change_to_default? }
 
+    scope :unarchived, -> { where(archived: false) }
+
     validate :details_must_be_supported
 
+    after_create do
+      if default? && other_methods.none?
+        legal_entity.payments.pending_legal_entity.each(&:on_default_payout_method_created)
+      end
+    end
+
     # type-specific presentation lives on the detail record
-    delegate :kind, :icon, :name, :human_kind, :title_kind, :currency, to: :details
+    delegate :kind, :icon, :name, :human_kind, :title_kind, :currency, :short_label, :detail_summary, to: :details
+
+    def self.details_class_for(type_name)
+      ALL_METHODS.find { |klass| klass.name == type_name }
+    end
+
+    # Permits and returns the type-specific detail attributes for `type_name`
+    # out of `params[:user][:payout_method_<kind>]`. Returns {} for an unknown
+    # or missing type.
+    def self.details_params_from(params, type_name)
+      details_class = details_class_for(type_name)
+      return {} unless details_class
+
+      key = :"payout_method_#{details_class.name.demodulize.underscore}"
+      params.require(:user).permit(key => details_class.permitted_attributes)[key] || {}
+    end
+
+    # Shared contract for `create_transfer(event, **attrs)` across every payout
+    # method. Each detail class pulls only the attributes its transfer type
+    # supports.
+    #
+    # Required (MUST be passed):
+    #   amount:          Integer — amount in cents
+    #   payment_for:     String  — description of the payment
+    #   recipient_name:  String
+    #   recipient_email: String
+    #   user:            User    — the user initiating the transfer
+    #   memo:            String  — required by Check and Wire; ignored by ACH and Wise
+    #
+    # Optional (MAY be passed):
+    #   send_email_notification:   Boolean — default false
+    #   company_entry_description: String  — ACH only
+    delegate :create_transfer, to: :details
 
     def self.unsupported?(details_class)
       UNSUPPORTED_METHODS.key?(details_class)
@@ -63,6 +109,18 @@ class LegalEntity
       self.class.unsupported_details(details.class)
     end
 
+    def error_messages
+      (errors.full_messages_for(:base) + (details&.errors&.full_messages || [])).uniq
+    end
+
+    def locked_by_processing_reimbursement_report?
+      locked_reimbursement_reports.any?
+    end
+
+    def archive!
+      update!(archived: true, default: false)
+    end
+
     private
 
     def details_must_be_supported
@@ -71,11 +129,12 @@ class LegalEntity
       end
     end
 
+    def other_methods
+      LegalEntity::PayoutMethod.where(legal_entity_id:).excluding(self)
+    end
+
     def unset_other_defaults
-      LegalEntity::PayoutMethod
-        .where(legal_entity_id:)
-        .excluding(self)
-        .update_all(default: false)
+      other_methods.update_all(default: false)
     end
 
   end

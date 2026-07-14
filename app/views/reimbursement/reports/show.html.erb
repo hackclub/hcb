@@ -170,7 +170,7 @@
   <% end %>
 <% end %>
 
-<% if @report.user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) && @report.payout_holding && @report.payout_holding.wise_transfer.nil? %>
+<% if @report.payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) && @report.payout_holding && @report.payout_holding.wise_transfer.nil? %>
   <% admin_tool("mt-4") do %>
     <h3 class="mt-0">Process Wise reimbursement</h3>
 
@@ -218,7 +218,7 @@
   <%= render partial: "reimbursement/reports/blankslate", locals: { report: @report } %>
 </div>
 
-<% if @report.user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) && @report.expenses.select { |e| e.type == Reimbursement::Expense::Fee.name }.empty? %>
+<% if @report.payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) && @report.expenses.select { |e| e.type == Reimbursement::Expense::Fee.name }.empty? %>
   <%= render "application/callout",
       type: "info",
       icon: "wise",
@@ -243,6 +243,10 @@
   <% end %>
 <% end %>
 
+<% if policy(@report).update_payout_method? %>
+  <%= render partial: "reimbursement/reports/payout_method_selector", locals: { report: @report } %>
+<% end %>
+
 <%= render partial: "reimbursement/reports/actions", locals: { report: @report, user: @user } %>
 
 <% admin_tool("mt-4 p-3") do %>
@@ -255,7 +259,7 @@
 
 <section data-behavior="modal" role="dialog" id="edit_payout" class="modal modal--scroll bg-snow">
   <%= modal_header "Add payout information" %>
-  <%= render "/users/payout_form", user: @report.user, report: @report %>
+  <%= render "users/payout_methods_list", user: @report.user, legal_entity: @report.user.personal_legal_entity %>
 </section>
 
 <section data-behavior="modal" role="dialog" id="wire_requirements" class="modal modal--scroll bg-snow">

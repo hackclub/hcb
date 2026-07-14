@@ -35,6 +35,7 @@ class PaypalTransfer < ApplicationRecord
 
   include AASM
   include Payoutable
+  include HasLedgerItem
 
   belongs_to :event
   belongs_to :user

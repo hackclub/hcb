@@ -114,23 +114,34 @@ module Reimbursement
     def update_currency
       authorize @report
 
-      old_currency = @report.currency
-      new_currency = @report.user.default_payout_method.currency
+      new_currency = @report.payout_method.currency
 
-      ActiveRecord::Base.transaction do
-        @report.update!(currency: new_currency)
-
-        @report.expenses.each do |expense|
-          fractional = Money.from_amount(expense.value, old_currency).cents
-          full = Money.from_cents(fractional, new_currency).amount
-
-          expense.update!(value: full)
-        end
-      end
+      @report.convert_report_currency!(new_currency)
 
       flash[:success] = "Report successfully updated to #{new_currency}."
     rescue ActiveRecord::RecordInvalid => e
       flash[:error] = e.message
+    end
+
+    def update_payout_method
+      authorize @report
+
+      begin
+        new_method = @report.user.personal_legal_entity.payout_methods.unarchived.find(params[:legal_entity_payout_method_id])
+
+        ActiveRecord::Base.transaction do
+          @report.update!(legal_entity_payout_method: new_method)
+          @report.convert_report_currency!(new_method.currency) if @report.mismatched_currency?
+        end
+
+        flash[:success] = "Payout method saved."
+      rescue ActiveRecord::RecordNotFound
+        flash[:error] = "Payout method not found."
+      rescue ActiveRecord::RecordInvalid => e
+        flash[:error] = e.message
+      end
+
+      redirect_to @report
     end
 
     def convert_to_wise_transfer
@@ -202,12 +213,8 @@ module Reimbursement
         end
 
         flash[:success] = {
-          text: "Your report has been submitted for review. When it's approved, you'll be reimbursed via #{@report.user.default_payout_method.name}.",
-          link: settings_payouts_path
+          text: "Your report has been submitted for review and your payout method can no longer be changed for this report. When it's approved, you'll be reimbursed via #{@report.payout_method.name}.",
         }
-        if @report.user.can_update_payout_method?
-          flash[:success][:link_text] = "If needed, you can still edit your payout settings."
-        end
       rescue => e
         flash[:error] = e.message
       end
@@ -304,7 +311,7 @@ module Reimbursement
           payout_holding.reload
           payout_holding.mark_settled!
         end
-        wise_payout_method = @report.user.default_payout_method&.details
+        wise_payout_method = @report.payout_method&.details
         wise_payout_method.update(wise_recipient_id: params[:wise_recipient_id])
         wise_transfer = clearinghouse.wise_transfers.create!(
           payment_for: "Reimbursement for #{@report.name}.",

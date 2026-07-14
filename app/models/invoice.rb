@@ -111,6 +111,7 @@ class Invoice < ApplicationRecord
 
   extend FriendlyId
   include AASM
+  include HasLedgerItem
 
   include Freezable
 
