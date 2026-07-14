@@ -12,6 +12,11 @@ class Ledger
       marked_no_or_lost_receipt_at
     ].index_by(&:itself).freeze
 
+    DATETIME_COLUMNS = %w[
+      datetime
+      marked_no_or_lost_receipt_at
+    ].freeze
+
     class Error < ArgumentError; end
 
     def initialize(query_hash)
@@ -121,7 +126,9 @@ class Ledger
       key = PERMITTED_COLUMNS_MAP[raw_key]
       raise Ledger::Query::Error.new("Invalid field name: #{raw_key}") unless key.present?
 
-      if operand.is_a?(Numeric)
+      operand = coerce_datetime_operand(operand) if DATETIME_COLUMNS.include?(key)
+
+      if operand.is_a?(Numeric) || operand.acts_like?(:date) || operand.acts_like?(:time)
         col = Ledger::Item.arel_table[key]
         case operator.to_s
         when "$gt"
@@ -153,6 +160,21 @@ class Ledger
         relation.where.not(key => operand)
       else
         raise Ledger::Query::Error.new("Unsupported comparison operator: #{operator}")
+      end
+    end
+
+    def coerce_datetime_operand(operand)
+      case operand
+      when Array
+        operand.map { |value| coerce_datetime_operand(value) }
+      when String
+        begin
+          Time.zone.iso8601(operand)
+        rescue ArgumentError
+          raise Ledger::Query::Error.new("Invalid ISO 8601 datetime: #{operand}")
+        end
+      else
+        operand
       end
     end
 

@@ -81,6 +81,34 @@ RSpec.describe Ledger::Query, type: :model do
       end
     end
 
+    context "datetime comparisons" do
+      # Item datetimes: a-c in Jan 2024, d-e in Feb, f-g in Mar. Boundaries sit
+      # between item days so time-zone offsets can't flip the results.
+      it "$gte with an ISO 8601 string" do
+        result = execute_query({ datetime: { "$gte" => "2024-01-20" } })
+
+        expect(result.pluck(:id)).to match_array(ids_of(item_d, item_e, item_f, item_g))
+      end
+
+      it "$lt with a Date object" do
+        result = execute_query({ datetime: { "$lt" => Date.new(2024, 1, 20) } })
+
+        expect(result.pluck(:id)).to match_array(ids_of(item_a, item_b, item_c))
+      end
+
+      it "combines bounds into a range" do
+        result = execute_query({ datetime: { "$gte" => "2024-01-20", "$lt" => "2024-03-10" } })
+
+        expect(result.pluck(:id)).to match_array(ids_of(item_d, item_e, item_f))
+      end
+
+      it "raises on a non-ISO 8601 string" do
+        expect {
+          execute_query({ datetime: { "$gte" => "not-a-date" } })
+        }.to raise_error(Ledger::Query::Error, /Invalid ISO 8601/)
+      end
+    end
+
     context "equality" do
       it "implicit equality" do
         result = execute_query({ amount_cents: 100 })

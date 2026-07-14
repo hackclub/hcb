@@ -1260,7 +1260,11 @@ class EventsController < ApplicationController
       query << { marked_no_or_lost_receipt_at: { "$eq": nil } }
     end
 
-    # To-do: add filtering for tag, user, date, category, and merchant
+    query << { datetime: { "$gte": @start_date.to_date } } if @start_date.present?
+    # Whole-day inclusive end bound, matching the old transactions page
+    query << { datetime: { "$lt": @end_date.to_date.next_day } } if @end_date.present?
+
+    # To-do: add filtering for tag, user, category, and merchant
 
     @items = Ledger::Query.new({ "$and": query }).execute(ledgers: [@ledger]).page(params[:page]).per(@per)
   rescue Pundit::NotAuthorizedError
