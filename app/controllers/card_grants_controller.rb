@@ -2,6 +2,7 @@
 
 class CardGrantsController < ApplicationController
   include SetEvent
+  include SetLedgerFilters
 
   skip_before_action :signed_in_user, only: [:index, :card_index, :transaction_index, :show, :spending]
   skip_after_action :verify_authorized, only: [:show, :spending]
@@ -37,10 +38,14 @@ class CardGrantsController < ApplicationController
 
     @subledger = true
 
+    @use_card_grant_ledgers = true
+    set_ledger_filters
     @per = params[:per] || 25
     @table_only = true
     @ledger = @event.ledger
-    @items = Ledger::Query.new({}).execute(ledgers: Ledger.where(card_grant: @event.card_grants)).page(params[:page]).per(@per)
+    @items = ledger_query.execute(ledgers: @ledgers)
+    @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id)) if @tag&.id.present?
+    @items = @items.page(params[:page]).per(@per)
   end
 
   def new

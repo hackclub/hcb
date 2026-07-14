@@ -10,6 +10,7 @@ class Ledger
       receipt_count
       linked_object_type
       marked_no_or_lost_receipt_at
+      status
       author
     ].index_by(&:itself).freeze
 
@@ -55,10 +56,17 @@ class Ledger
         results = results.where(id: Ledger::Mapping.where(ledger_id: ledgers).select(:ledger_item_id))
       end
 
+      # Pending items sort first regardless of datetime. A CASE (rather than
+      # ordering on a boolean expression) keeps NULL statuses — rows not yet
+      # backfilled — grouped with the non-pending items.
+      pending_first = Arel::Nodes::Case.new
+                                       .when(Ledger::Item.arel_table[:status].eq(Ledger::Item.statuses[:pending])).then(0)
+                                       .else(1)
+
       # preload, not includes: linked_object is polymorphic, so it can never be
       # JOINed — and includes makes pluck/count attempt exactly that join
       # (EagerLoadPolymorphicError).
-      results.order(datetime: :desc, created_at: :desc, id: :desc).preload(:linked_object)
+      results.order(pending_first.asc, datetime: :desc, created_at: :desc, id: :desc).preload(:linked_object)
     end
 
     def self.sanitize_query(query_hash)
