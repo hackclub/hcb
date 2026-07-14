@@ -16,7 +16,11 @@
   </td>
   <td class="nowrap">
     <span class="flex items-center justify-end">
-      <%= item.amount.format %>
+      <% if !organizer_signed_in? && item.likely_account_verification_related? %>
+        <%= redacted_amount %>
+      <% else %>
+        <%= item.amount.format %>
+      <% end %>
     </span>
   </td>
   <% admin_tool("", "td") do %>
