@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class LegalEntitiesController < ApplicationController
-  before_action :set_legal_entity, only: [:show, :switch]
+  before_action :set_legal_entity, only: [:show, :replace]
 
   def show
     authorize @legal_entity
