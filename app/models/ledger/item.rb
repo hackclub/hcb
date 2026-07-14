@@ -66,14 +66,14 @@ class Ledger
     has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
 
     enum :status, {
-      pending: "pending",
-      settled: "settled",
-      reversed: "reversed",
-      released: "released",
-      rejected: "rejected",
-      failed: "failed",
-      canceled: "canceled",
-      declined: "declined"
+      pending: "pending", # any CPTs contributing to balance
+      settled: "settled", # no CPTs contributing to balance or fronted incoming CPT with no CTs
+      reversed: "reversed", # sum of CTs is zero
+      released: "released", # uncaptured by Stripe (CardCharge only)
+      rejected: "rejected", # transfer rejected by ops
+      failed: "failed", # error
+      canceled: "canceled", # user canceled transfer (for IncreaseCheck this also includes transfers rejected by ops)
+      declined: "declined" # CPT has CPDM, no CPTs
     }
 
     validates_presence_of :amount_cents, :memo, :datetime
@@ -166,6 +166,7 @@ class Ledger
 
     def calculate_status
       return :pending if canonical_pending_transactions.unsettled.exists?
+      return :settled if canonical_transactions.none? && canonical_pending_transactions.fronted.revenue.any?
 
       if canonical_transactions.exists?
         return :pending if canonical_transactions.sum(:amount_cents) != amount_cents
@@ -176,7 +177,13 @@ class Ledger
 
       # A declined CPT and no CTs — determine why it never settled
       if canonical_pending_transactions.any?(&:declined?)
-        return :released if uncaptured_stripe_authorization?
+        case linked_object_type
+        when "CardCharge"
+          return :released if uncaptured_stripe_authorization?
+        when "IncreaseCheck" # Increase checks use the same state for users canceling and ops rejecting
+          return :canceled if linked_object.try(:rejected?) || linked_object.try(:increase_stopped?) || linked_object.try(:column_stopped?)
+        end
+
         return :rejected if linked_object.try(:rejected?)
         return :failed if linked_object.try(:failed?) || linked_object.try(:errored?)
         return :canceled if linked_object.try(:canceled?) || linked_object.try(:voided?) || linked_object.try(:void_v2?)
