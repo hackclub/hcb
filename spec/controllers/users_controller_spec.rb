@@ -94,6 +94,45 @@ RSpec.describe UsersController do
     end
   end
 
+  describe "#edit_admin card locking control" do
+    render_views
+
+    it "renders the suppress-card-locking control for an admin" do
+      admin_user = create(:user, :make_admin)
+      user = create(:user)
+      create_session(admin_user, verified: true)
+
+      get(:edit_admin, params: { id: user.id })
+
+      expect(response.body).to include(suppress_card_locking_user_path(user))
+    end
+
+    it "hides the suppress control from a non-admin auditor" do
+      auditor = create(:user, :make_auditor)
+      user = create(:user)
+      create_session(auditor, verified: true)
+
+      get(:edit_admin, params: { id: user.id })
+
+      # Positive assertions so the negative one is meaningful: the auditor does
+      # reach the page and see the card-locking status, just not the admin form.
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Cards are currently")
+      expect(response.body).not_to include(suppress_card_locking_user_path(user))
+    end
+
+    it "shows the current lock and suppression state" do
+      admin_user = create(:user, :make_admin)
+      user = create(:user, cards_locked: true, card_locking_suppressed_until: 5.hours.from_now)
+      create_session(admin_user, verified: true)
+
+      get(:edit_admin, params: { id: user.id })
+
+      expect(response.body).to include("locked")
+      expect(response.body).to include("Card locking is suppressed until")
+    end
+  end
+
   describe "#update" do
     render_views
 
