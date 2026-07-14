@@ -165,9 +165,10 @@ class Ledger
     end
 
     def calculate_status
-      return :pending if canonical_pending_transactions.unsettled.exists? || amount_cents != canonical_transactions.sum(:amount_cents)
+      return :pending if canonical_pending_transactions.unsettled.exists?
 
       if canonical_transactions.exists?
+        return :pending if canonical_transactions.sum(:amount_cents) != amount_cents
         return :reversed if canonical_transactions.sum(:amount_cents).zero?
 
         return :settled
