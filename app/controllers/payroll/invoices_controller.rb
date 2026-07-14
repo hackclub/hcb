@@ -100,9 +100,7 @@ module Payroll
 
     # Invoices belonging to one of this event's contractors (review side).
     def set_invoice
-      @invoice = Payroll::Invoice.joins(payroll_position: :payee)
-                                 .where(payees: { event_id: @event.id })
-                                 .find(params[:id])
+      @invoice = @event.payroll_invoices.find(params[:id])
     end
 
     def contractor_page

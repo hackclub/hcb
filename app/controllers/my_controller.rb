@@ -180,7 +180,7 @@ class MyController < ApplicationController
       canceled: all_payments.where(aasm_state: "rejected").sum(:amount_cents)
     }
 
-    @payments = all_payments.includes(:event, :payee, attempts: :payout).order(created_at: :desc)
+    @payments = all_payments.includes(:event, :payee, { payroll_invoice: { receipts: :file_attachment } }, attempts: :payout).order(created_at: :desc)
     @payments = @payments.search_purpose_and_event(params[:q]) if params[:q].present?
     @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
     @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
@@ -200,6 +200,7 @@ class MyController < ApplicationController
                                              .load
     @tax_form_required = @contractor_positions.any? && !@legal_entity.latest_tax_form&.completed?
     @invoices = Payroll::Invoice.where(payroll_position: @contractor_positions)
+                                .where.not(aasm_state: "approved")
                                 .includes(payroll_position: { payee: :event })
                                 .order(created_at: :desc)
   end

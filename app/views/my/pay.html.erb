@@ -147,7 +147,7 @@
   </article>
 
   <% if @invoices.any? %>
-    <h2 class="mt-0 mb-2">Your invoices</h2>
+    <h2 class="mt-0 mb-2">Pending invoices</h2>
     <article class="table-container mb-4">
       <table>
         <thead>
@@ -214,8 +214,12 @@
             </td>
             <td><%= format_date payment.created_at %></td>
             <td><%= payment.event.name %></td>
-            <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= payment.purpose %>">
-              <%= payment.purpose %>
+            <td style="max-width: 25ch;">
+              <div class="overflow-hidden truncate" title="<%= payment.purpose %>"><%= payment.purpose %></div>
+              <% invoice_receipt = payment.payroll_invoice&.receipts&.first %>
+              <% if invoice_receipt&.file&.attached? %>
+                <%= link_to "View invoice", url_for(invoice_receipt.file), class: "muted text-xs relative z-10", data: { turbo_frame: "_top" } %>
+              <% end %>
             </td>
             <td>
               <%= render_money payment.amount_cents %>
