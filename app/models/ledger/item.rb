@@ -104,7 +104,7 @@ class Ledger
     end
 
     def calculate_receipt_required
-      amount_cents < 0 && primary_ledger&.receipt_required? && linked_object_type != "Disbursement::Outgoing"
+      amount_cents < 0 && primary_ledger&.receipt_required? && linked_object_type.in?(["Disbursement::Outgoing", "Reimbursement::ExpensePayout"]) && author.present?
     end
 
     def calculate_system_memo
