@@ -114,7 +114,14 @@ class LegalEntity
                         current_user&.personal_legal_entity
     end
 
+    # The user whose payout method is being managed. Normally that's whoever is
+    # acting on an entity they belong to (self-service, personal or business).
+    # When an admin manages payouts on someone else's behalf (e.g. from a
+    # reimbursement report) they aren't a member, so fall back to the entity's
+    # user — unambiguous for personal entities, which is the only such case.
     def legal_entity_owner
+      return current_user if current_user && legal_entity&.users&.include?(current_user)
+
       legal_entity&.users&.first || current_user
     end
 
