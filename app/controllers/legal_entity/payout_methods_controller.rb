@@ -95,7 +95,7 @@ class LegalEntity
 
     def render_error_payout_settings(payout_method)
       @legal_entity = payout_method.legal_entity || legal_entity
-      @user = @legal_entity&.users&.first || current_user
+      @user = legal_entity&.users&.find_by(id: params[:user_id]) || current_user
       @payout_method = payout_method
       @legal_entities = @user.legal_entities
       flash.now[:error] = payout_method.error_messages.to_sentence
