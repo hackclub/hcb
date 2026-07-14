@@ -28,8 +28,8 @@ module SetLedgerFilters
       @category = TransactionCategory.find_by(slug: params[:category])
 
       @ledger = @event.ledger
-      @ledgers = if @include_card_grant_ledgers
-                   Ledger.where(event: @event).or(Ledger.where(card_grant: @event.card_grants))
+      @ledgers = if @use_card_grant_ledgers
+                   Ledger.where(card_grant: @event.card_grants)
                  else
                    [@ledger]
                  end
