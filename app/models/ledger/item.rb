@@ -16,6 +16,7 @@
 #  receipt_count                :integer          default(0), not null
 #  receipt_required             :boolean
 #  short_code                   :text
+#  status                       :string
 #  system_memo                  :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
@@ -64,6 +65,17 @@ class Ledger
     has_many :canonical_pending_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
 
+    enum :status, {
+      pending: "pending", # any CPTs contributing to balance
+      settled: "settled", # no CPTs contributing to balance or fronted incoming CPT with no CTs
+      reversed: "reversed", # sum of CTs is zero
+      released: "released", # uncaptured by Stripe (CardCharge only)
+      rejected: "rejected", # transfer rejected by ops
+      failed: "failed", # error
+      canceled: "canceled", # user canceled transfer (for IncreaseCheck this also includes transfers rejected by ops)
+      declined: "declined" # CPT has CPDM, no CPTs
+    }
+
     validates_presence_of :amount_cents, :memo, :datetime
 
     normalizes :memo, with: ->(memo) { memo.strip.presence }
@@ -79,6 +91,31 @@ class Ledger
     after_touch :map!
 
     scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
+
+    def status_text
+      status.humanize
+    end
+
+    def status_css
+      case status.to_sym
+      when :pending
+        "bg-transparent border border-dashed border-muted m0 mr1"
+      when :settled
+        nil
+      when :reversed
+        "bg-info m0 mr1"
+      when :released
+        "bg-info m0 mr1"
+      when :rejected
+        "badge m-0 pr-[6px] mr-2 bg-error"
+      when :failed
+        "badge m-0 pr-[6px] mr-2 bg-error"
+      when :canceled
+        "badge m-0 pr-[6px] mr-2 bg-error"
+      when :declined
+        "badge m-0 pr-[6px] mr-2 bg-error"
+      end
+    end
 
     # Substring identifiers (case-insensitive) in the memo that indicate an
     # account-verification micro-deposit. Most use "ACCTVERIFY"; a few companies
@@ -124,7 +161,38 @@ class Ledger
     end
 
     def calculate_receipt_required
-      amount_cents < 0 && primary_ledger&.receipt_required? && linked_object_type != "Disbursement::Outgoing"
+      amount_cents < 0 && primary_ledger&.receipt_required? && !linked_object_type.in?(["Disbursement::Outgoing", "Reimbursement::ExpensePayout", "StripeServiceFee", "BankFee"])
+    end
+
+    def calculate_status
+      return :settled if canonical_transactions.none? && canonical_pending_transactions.fronted.revenue.any?
+      return :pending if canonical_pending_transactions.unsettled.exists?
+
+      if canonical_transactions.exists?
+        return :pending if canonical_transactions.sum(:amount_cents) != amount_cents
+        return :reversed if canonical_transactions.sum(:amount_cents).zero?
+
+        return :settled
+      end
+
+      # A declined CPT and no CTs — determine why it never settled
+      if canonical_pending_transactions.any?(&:declined?)
+        case linked_object_type
+        when "CardCharge"
+          return :released if uncaptured_stripe_authorization?
+        when "IncreaseCheck" # Increase checks use the same state for users canceling and ops rejecting
+          return :canceled if linked_object.try(:rejected?) || linked_object.try(:increase_stopped?) || linked_object.try(:column_stopped?)
+        end
+
+        return :rejected if linked_object.try(:rejected?)
+        return :failed if linked_object.try(:failed?) || linked_object.try(:errored?)
+        return :canceled if linked_object.try(:canceled?) || linked_object.try(:voided?) || linked_object.try(:void_v2?)
+
+        return :declined
+      end
+
+      # Nothing has mapped to this item yet
+      :pending
     end
 
     def calculate_system_memo
@@ -194,6 +262,10 @@ class Ledger
       end
     end
 
+    def fallback_memo
+      self.canonical_transactions.first&.try(:smart_memo).presence || self.canonical_pending_transactions.first&.try(:smart_memo).presence || "Transaction"
+    end
+
     def calculate_author
       case linked_object_type
       when "AchTransfer"
@@ -240,9 +312,10 @@ class Ledger
       self.not_admin_only_comment_count = comments.not_admin_only.count
       self.receipt_count = receipts.count
       self.receipt_required = calculate_receipt_required
+      self.status = calculate_status
       # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
       self.system_memo = calculate_system_memo
-      self.memo = self.custom_memo || self.system_memo || self.canonical_transactions.first&.memo || self.canonical_pending_transactions.first&.memo || "Transaction"
+      self.memo = self.custom_memo.presence || self.system_memo.presence || fallback_memo
 
       save!
     end
@@ -282,6 +355,12 @@ class Ledger
     end
 
     private
+
+    # An approved Stripe authorization that never settled was released without
+    # capture, as opposed to being declined outright
+    def uncaptured_stripe_authorization?
+      canonical_pending_transactions.any? { |cpt| cpt.raw_pending_stripe_transaction&.stripe_transaction&.dig("approved") }
+    end
 
     def assign_linked_object!
       # Once a linked object is assigned, it should never be changed.

@@ -12,7 +12,8 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_10_000002) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_13_222948) do
+  create_schema "fivetran_metadata"
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1611,6 +1612,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_10_000002) do
     t.integer "receipt_count", default: 0, null: false
     t.boolean "receipt_required"
     t.text "short_code"
+    t.string "status"
     t.text "system_memo"
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"

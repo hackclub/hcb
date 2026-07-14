@@ -10,7 +10,6 @@ class LegalEntity
       authorize LegalEntity::PayoutMethod.new(legal_entity:), :create?
 
       service = LegalEntity::PayoutMethodService::Update.new(
-        user: current_user,
         legal_entity:,
         details_type: params.dig(:user, :payout_method_type),
         details_attrs: details_params_for(params.dig(:user, :payout_method_type)),
@@ -29,7 +28,6 @@ class LegalEntity
       authorize @payout_method
 
       service = LegalEntity::PayoutMethodService::Update.new(
-        user: current_user,
         legal_entity: @payout_method.legal_entity,
         details_type: @payout_method.details_type,
         details_attrs: details_params_for(@payout_method.details_type),
@@ -96,10 +94,10 @@ class LegalEntity
     end
 
     def render_error_payout_settings(payout_method)
-      @user = current_user
-      @payout_method = payout_method
-      @legal_entities = current_user.legal_entities
       @legal_entity = payout_method.legal_entity || legal_entity
+      @user = legal_entity&.users&.find_by(id: params[:user_id]) || current_user
+      @payout_method = payout_method
+      @legal_entities = @user.legal_entities
       flash.now[:error] = payout_method.error_messages.to_sentence
 
       # `edit_payout` lives under `users/`, but this controller isn't namespaced
@@ -110,12 +108,16 @@ class LegalEntity
 
     def legal_entity
       @legal_entity ||= @payout_method&.legal_entity ||
-                        current_user&.legal_entities&.find_by(id: params[:legal_entity_id]) ||
+                        manageable_legal_entities&.find_by(id: params[:legal_entity_id]) ||
                         current_user&.personal_legal_entity
     end
 
+    def manageable_legal_entities
+      current_user&.admin? ? LegalEntity.all : current_user&.legal_entities
+    end
+
     def set_payout_method
-      scope = LegalEntity::PayoutMethod.unarchived.where(legal_entity: current_user&.legal_entities)
+      scope = LegalEntity::PayoutMethod.unarchived.where(legal_entity: manageable_legal_entities)
       @payout_method = scope.find_by(id: params[:id])
       return if @payout_method
 

@@ -409,7 +409,6 @@ class UsersController < ApplicationController
       payout_ok = true
       if payout_method_type.present?
         payout_update = LegalEntity::PayoutMethodService::Update.new(
-          user: @user,
           legal_entity: @legal_entity,
           details_type: payout_method_type,
           details_attrs: payout_method_details_params

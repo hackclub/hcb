@@ -99,6 +99,9 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   scope :safe, -> { where("date >= '2021-01-01'") } # older pending transactions don't yet all map up because of older processes (especially around invoices)
 
+  scope :revenue, -> { where("amount_cents > 0") }
+  scope :expense, -> { where("amount_cents < 0") }
+
   scope :stripe, -> { where("raw_pending_stripe_transaction_id is not null") }
   scope :incoming, -> { where(CanonicalPendingTransaction.arel_table[:amount_cents].gt(0)) }
   scope :outgoing, -> { where(CanonicalPendingTransaction.arel_table[:amount_cents].lt(0)) }
@@ -135,6 +138,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   scope :bank_fee_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::BANK_FEE_CODE}%'") }
   scope :fronted, -> { where(fronted: true) }
   scope :not_fronted, -> { where(fronted: false) }
+  scope :declined, -> { joins(:canonical_pending_declined_mapping) }
   scope :not_declined, -> { includes(:canonical_pending_declined_mapping).where(canonical_pending_declined_mapping: { canonical_pending_transaction_id: nil }) }
   scope :not_waived, -> { where(fee_waived: false) }
   scope :included_in_stats, -> {
