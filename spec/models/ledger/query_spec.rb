@@ -155,6 +155,21 @@ RSpec.describe Ledger::Query, type: :model do
       end
     end
 
+    context "string comparisons" do
+      it "$gt compares strings lexicographically" do
+        result = execute_query({ memo: { "$gt" => "delta payment" } })
+
+        # Only "gamma payment" and "zero item" sort after "delta payment".
+        expect(result.pluck(:id)).to match_array(ids_of(item_f, item_a))
+      end
+
+      it "$lte compares strings lexicographically" do
+        result = execute_query({ memo: { "$lte" => "alpha refund" } })
+
+        expect(result.pluck(:id)).to match_array(ids_of(item_b, item_c))
+      end
+    end
+
     context "array operators" do
       it "$in generates IN clause" do
         result = execute_query({ amount_cents: { "$in" => [100, 300] } })
@@ -256,21 +271,48 @@ RSpec.describe Ledger::Query, type: :model do
       end
     end
 
-    context "$not" do
+    context "$nor" do
       it "negates a string condition" do
-        result = execute_query({ "$not" => { memo: "beta refund" } })
+        result = execute_query({ "$nor" => [{ memo: "beta refund" }] })
 
         expect(result.to_sql).to match(/NOT/)
         # All items except item_d (which has memo "beta refund")
         expect(result.pluck(:id)).to match_array(ids_of(item_a, item_b, item_c, item_e, item_f, item_g))
       end
 
-      it "negates a numeric condition" do
-        result = execute_query({ "$not" => { amount_cents: 100 } })
+      it "negates the union of its conditions" do
+        result = execute_query({ "$nor" => [{ amount_cents: 0 }, { amount_cents: 500 }] })
 
-        expect(result.to_sql).to match(/NOT/)
-        # All items except item_b and item_g (which have amount_cents = 100)
-        expect(result.pluck(:id)).to match_array(ids_of(item_a, item_c, item_d, item_e, item_f))
+        # NOT (amount = 0 OR amount = 500): all items except item_a and item_f
+        expect(result.pluck(:id)).to match_array(ids_of(item_b, item_c, item_d, item_e, item_g))
+      end
+
+      it "raises when given a hash instead of an array" do
+        expect { execute_query({ "$nor" => { amount_cents: 100 } }) }.to raise_error(Ledger::Query::Error, /\$nor.*array/i)
+      end
+    end
+
+    context "field-level $not" do
+      it "negates an inner operator expression" do
+        result = execute_query({ amount_cents: { "$not" => { "$gt" => 100 } } })
+
+        # NOT (amount > 100): amount <= 100 → item_a, item_b, item_g
+        expect(result.pluck(:id)).to match_array(ids_of(item_a, item_b, item_g))
+      end
+
+      it "matches NULL rows, mirroring MongoDB" do
+        item_b.update_columns(linked_object_type: "Invoice")
+
+        result = execute_query({ linked_object_type: { "$not" => { "$eq" => "Invoice" } } })
+
+        # NOT (type = Invoice): every item except item_b, including the NULL-typed rows
+        expect(result.pluck(:id)).to match_array(ids_of(item_a, item_c, item_d, item_e, item_f, item_g))
+      end
+    end
+
+    context "top-level $not (removed in favor of $nor)" do
+      it "is no longer a supported logical operator" do
+        expect { execute_query({ "$not" => { amount_cents: 100 } }) }.to raise_error(Ledger::Query::Error, /Unsupported logical operator/)
       end
     end
 
@@ -392,6 +434,30 @@ RSpec.describe Ledger::Query, type: :model do
       query = { amount_cents: [100, 300] }
       expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /array/i)
     end
+
+    it "raises with a clear message when $in is given a non-array operand" do
+      query = { amount_cents: { "$in" => 5 } }
+      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /\$in.*array/i)
+    end
+
+    it "rejects a query nested beyond the depth limit" do
+      query = { amount_cents: 1 }
+      25.times { query = { "$and" => [query] } }
+
+      expect { described_class.new(query) }.to raise_error(Ledger::Query::Error, /deep|nesting/i)
+    end
+
+    it "rejects a query with too many conditions" do
+      query = { "$or" => Array.new(250) { |i| { amount_cents: i } } }
+
+      expect { described_class.new(query) }.to raise_error(Ledger::Query::Error, /too many|conditions/i)
+    end
+
+    it "rejects an oversized array operand (e.g. a huge $in list)" do
+      query = { amount_cents: { "$in" => (1..2000).to_a } }
+
+      expect { described_class.new(query) }.to raise_error(Ledger::Query::Error, /array|too large|elements/i)
+    end
   end
 
   describe "ledger scoping" do
@@ -458,12 +524,12 @@ RSpec.describe Ledger::Query, type: :model do
       expect(result.pluck(:id)).to match_array(ids_of(item_b, item_e, item_f, item_g))
     end
 
-    it "combines $not with $and" do
+    it "combines $nor with $and" do
       # NOT(amount = 100) AND memo IS NOT NULL
       # Since all memos are non-null, this effectively just excludes items with amount_cents = 100
       result = execute_query({
                                "$and" => [
-                                 { "$not" => { amount_cents: 100 } },
+                                 { "$nor" => [{ amount_cents: 100 }] },
                                  { memo: { "$ne" => nil } }
                                ]
                              })
@@ -472,12 +538,12 @@ RSpec.describe Ledger::Query, type: :model do
       expect(result.pluck(:id)).to match_array(ids_of(item_a, item_c, item_d, item_e, item_f))
     end
 
-    it "handles $or with $not" do
+    it "handles $or with $nor" do
       # amount = 0 OR NOT(memo = 'gamma payment')
       result = execute_query({
                                "$or" => [
                                  { amount_cents: 0 },
-                                 { "$not" => { memo: "gamma payment" } }
+                                 { "$nor" => [{ memo: "gamma payment" }] }
                                ]
                              })
 
