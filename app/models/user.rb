@@ -666,11 +666,6 @@ class User < ApplicationRecord
     Payment.pending_legal_entity.joins(:payee).where(payee: { email:, legal_entity: nil })
   end
 
-  # Contractor positions that still need this user to finish onboarding before
-  # they can be paid. Surfaced as an action card on the home page.
-  #
-  # Matches positions the user reaches either through the payee's legal entity,
-  # or — before the payee has claimed a legal entity — by the payee's email.
   def onboarding_contractor_positions
     Payroll::Position.where(aasm_state: :onboarding)
                      .left_joins(payee: { legal_entity: :legal_entity_users })
