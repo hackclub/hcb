@@ -44,7 +44,7 @@ module ReceiptService
       end
 
       response = conn.post("/v1/chat/completions", {
-                             model: "gpt-4o",
+                             model: "gpt-5.6-luna",
                              messages: [
                                {
                                  role: "system",

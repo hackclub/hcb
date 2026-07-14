@@ -167,6 +167,7 @@ class CanonicalPendingTransaction < ApplicationRecord
       ActiveRecord::Base.transaction do
         li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
         update!(ledger_item: li)
+        li.map!
       end
     end
   end
