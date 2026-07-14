@@ -34,7 +34,6 @@ class CheckDeposit < ApplicationRecord
   include Hashid::Rails
   hashid_config salt: ""
 
-  include HasLedgerItem
   include PublicIdentifiable
   set_public_id_prefix :cdp
 
@@ -49,6 +48,7 @@ class CheckDeposit < ApplicationRecord
 
   monetize :amount_cents
 
+  has_one :ledger_item, as: :linked_object
   belongs_to :event
   belongs_to :created_by, class_name: "User"
   has_one :canonical_pending_transaction

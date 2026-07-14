@@ -26,7 +26,6 @@ class Disbursement
     extend ActiveSupport::Concern
 
     included do
-      include HasLedgerItem
       include PgSearch::Model
       pg_search_scope :search_name, against: [:name]
 
@@ -36,6 +35,7 @@ class Disbursement
       scope :reviewing_or_processing, -> { where(aasm_state: [:reviewing, :pending, :in_transit]) }
 
       # Associations
+      has_one :ledger_item, as: :linked_object
       belongs_to :destination_event, foreign_key: "event_id", class_name: "Event", inverse_of: "incoming_disbursements"
       belongs_to :source_event, class_name: "Event", inverse_of: "outgoing_disbursements"
       belongs_to :destination_subledger, class_name: "Subledger", optional: true
