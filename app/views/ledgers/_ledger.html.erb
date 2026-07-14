@@ -32,12 +32,16 @@
 
   <h2>Ledger Items</h2>
 
-  <div class="flex items-center mb2 flex-col sm:flex-row">
-    <div class="flex-grow">
-      <%= page_entries_info items, entry_name: "item" %>
+  <% if defined?(filter) %>
+    <%= filter %>
+  <% else %>
+    <div class="flex items-center mb2 flex-col sm:flex-row">
+      <div class="flex-grow">
+        <%= page_entries_info items, entry_name: "item" %>
+      </div>
+      <%= paginate items %>
     </div>
-    <%= paginate items %>
-  </div>
+  <% end %>
 <% end %>
 
 <% if items.any? %>

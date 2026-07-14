@@ -30,7 +30,7 @@ class Ledger
         results = results.merge(Ledger::Item.joins(:ledger_mappings).where(ledger_mappings: { ledger_id: ledgers }).distinct)
       end
 
-      results.includes(:linked_object).order(datetime: :desc, created_at: :desc, id: :desc)
+      results.order(datetime: :desc, created_at: :desc, id: :desc).includes(:linked_object)
     end
 
     def self.sanitize_query(query_hash)
@@ -63,7 +63,8 @@ class Ledger
             sub_relation ||= Ledger::Item.none
 
             if context == "and"
-              relation = relation.merge(sub_relation)
+              # merge would replace, not AND, existing conditions on the same column
+              relation = relation.and(sub_relation)
             else
               relation = relation.or(sub_relation)
             end
@@ -133,6 +134,10 @@ class Ledger
         when "$nin"
           return relation.where.not(key => operand)
         end
+      end
+
+      if operator.to_s == "$search" && key == "memo"
+        return relation.where(id: Ledger::Item.search_memo(operand).select(:id))
       end
 
       case operator.to_s

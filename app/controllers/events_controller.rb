@@ -8,7 +8,7 @@ class EventsController < ApplicationController
 
   include Rails::Pagination
   before_action :set_event, except: [:index]
-  before_action :set_transaction_filters, only: [:transactions, :transactions_list]
+  before_action :set_transaction_filters, only: [:transactions, :transactions_list, :ledger]
   before_action except: [:show, :index] do
     render_back_to_tour @organizer_position, :welcome, event_path(@event)
   end
@@ -1232,9 +1232,37 @@ class EventsController < ApplicationController
   def ledger
     authorize @event
     @per = params[:per] || 25
-
     @ledger = @event.ledger
-    @items = Ledger::Query.new({}).execute(ledgers: [@ledger]).page(params[:page]).per(@per)
+
+    query = []
+
+    query = { memo: { "$search": params[:q] } } if params[:q].present?
+
+    if @direction.present? || @minimum_amount.present? || @maximum_amount.present?
+      if @direction == "revenue"
+        query << { amount_cents: { "$gt": 0 } }
+      elsif @direction == "expenses"
+        query << { amount_cents: { "$lt": 0 } }
+      end
+
+      if @minimum_amount.present?
+        query << { "$or": [{ amount_cents: { "$gte": @minimum_amount.to_f * 100 }}, { amount_cents: { "$lte": -@minimum_amount.to_f * 100 } }] }
+      end
+
+      if @maximum_amount.present?
+        query << { "$and": { amount_cents: { "$lte": @maximum_amount.to_f * 100, "$gte": -@maximum_amount.to_f * 100 } } }
+      end
+    end
+
+    if @missing_receipts
+      query << { receipt_count: { "$eq": 0 } }
+      query << { receipt_required: { "$eq": true } }
+      query << { marked_no_or_lost_receipt_at: { "$eq": nil } }
+    end
+
+    # To-do: add filtering for tag, user, date, category, and merchant
+
+    @items = Ledger::Query.new({ "$and": query }).execute(ledgers: [@ledger]).page(params[:page]).per(@per)
   rescue Pundit::NotAuthorizedError
     return head :not_found
   end

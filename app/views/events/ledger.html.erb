@@ -6,4 +6,4 @@
   HCB is working on a faster ledger to improve your experience. This ledger is a work-in-progress and may not have full parity with the existing transactions page. For the most accurate amounts, please refer to the existing transactions page or click into individual transactions to see their details.
 <% end %>
 
-<%= render "ledgers/ledger", ledger: @ledger, items: @items %>
+<%= render "ledgers/ledger", ledger: @ledger, items: @items, filter: capture { render partial: "ledgers/filters/filter" } %>

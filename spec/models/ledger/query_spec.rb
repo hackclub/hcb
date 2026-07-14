@@ -246,6 +246,25 @@ RSpec.describe Ledger::Query, type: :model do
         expect(result.pluck(:id)).to match_array(ids_of(item_c, item_e))
       end
 
+      it "$and containing $or on the same column" do
+        # amount < 300 AND (amount <= 0 OR amount >= 200)
+        # Regression: Relation#merge replaces same-column conditions instead of
+        # ANDing them, which silently dropped the outer amount condition.
+        result = execute_query({
+                                 "$and" => [
+                                   { amount_cents: { "$lt" => 300 } },
+                                   { "$or" => [
+                                     { amount_cents: { "$lte" => 0 } },
+                                     { amount_cents: { "$gte" => 200 } }
+                                   ]
+}
+                                 ]
+                               })
+
+        expect(result.to_sql).to match(/"amount_cents" < 300/)
+        expect(result.pluck(:id)).to match_array(ids_of(item_a, item_d))
+      end
+
       it "$or containing $and" do
         # (amount >= 100 AND amount <= 100) OR (amount >= 300 AND amount <= 300)
         # Effectively: amount = 100 OR amount = 300
