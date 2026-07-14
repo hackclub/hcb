@@ -664,6 +664,9 @@ const initPayoutMethodToggles = function () {
             wirePayoutMethodInputs.slideUp()
       }
     )
+    $(document).on('change', '[name="user[payout_method_type]"]', e => {
+      if (e.target.checked) BK.s('payout_method_name_input').slideDown()
+    })
   }
 }
 

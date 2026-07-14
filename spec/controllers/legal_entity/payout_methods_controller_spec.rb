@@ -27,6 +27,18 @@ RSpec.describe LegalEntity::PayoutMethodsController do
              })
       end.to change { legal_entity.reload.payout_methods.count }.by(1)
     end
+
+    it "stores the user-provided nickname" do
+      post(:create, params: {
+             user: {
+               payout_method_type: "LegalEntity::PayoutMethod::AchTransfer",
+               payout_method_name: "My Chase Bank Account",
+               payout_method_ach_transfer: { account_number: "12345678", routing_number: "021000021" }
+             }
+           })
+
+      expect(legal_entity.reload.payout_methods.last.name).to eq("My Chase Bank Account")
+    end
   end
 
   describe "#update" do
@@ -45,6 +57,23 @@ RSpec.describe LegalEntity::PayoutMethodsController do
       new_pm = legal_entity.reload.default_payout_method
       expect(new_pm).not_to eq(pm)
       expect(new_pm.details.account_number).to eq("99999999")
+    end
+
+    it "updates only the nickname when ACH numbers come back masked, keeping the real values" do
+      pm = legal_entity.payout_methods.create!(default: true, details: ach(account: "12345678"), name: "Old name")
+
+      patch(:update, params: {
+              id: pm.id,
+              user: {
+                payout_method_name: "My Chase Bank Account",
+                payout_method_ach_transfer: { account_number: "••••5678", routing_number: "•••••0021" }
+              }
+            })
+
+      new_pm = legal_entity.reload.default_payout_method
+      expect(new_pm.name).to eq("My Chase Bank Account")
+      expect(new_pm.details.account_number).to eq("12345678")
+      expect(new_pm.details.routing_number).to eq("021000021")
     end
 
     it "blocks editing a method while a report using it is in-flight" do
