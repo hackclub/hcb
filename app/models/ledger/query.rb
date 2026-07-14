@@ -195,17 +195,6 @@ class Ledger
         end
       end
 
-      if operand.is_a?(String) && key == "author"
-        case operator.to_s
-        when "$eq"
-          return relation.where(author: User.where(slug: operand))
-        when "$ne"
-          return relation.where.not(author: User.where(slug: operand))
-        else
-          raise Ledger::Query::Error.new("Unsupported comparison operator for author: #{operator}")
-        end
-      end
-
       col = Ledger::Item.arel_table[key]
 
       # Dispatch on the operator first, then validate the operand for that
