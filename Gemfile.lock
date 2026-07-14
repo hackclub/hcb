@@ -966,6 +966,7 @@ DEPENDENCIES
   appsignal
   audits1984
   awesome_print
+  aws-sdk-kms
   aws-sdk-s3
   bcrypt (~> 3.1.22)
   blazer
