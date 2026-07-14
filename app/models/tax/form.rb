@@ -37,6 +37,8 @@ module Tax
     include Hashid::Rails
     include PublicIdentifiable
 
+    class ImportError < StandardError; end
+
     set_public_id_prefix :tfm
     acts_as_paranoid
     has_paper_trail
@@ -242,6 +244,13 @@ module Tax
         address_postal_code: address["PostalCd"] || address["ZipCd"],
         address_country: address["Country"]
       )
+    rescue => e
+      # The raw submission, form_data, and TIN are all in scope here, so a raised
+      # error's message/backtrace/cause could carry an SSN. Sever the cause and
+      # re-raise something that names only the form (never the PII), so nothing
+      # sensitive can reach Rails logs or AppSignal. cause: nil mirrors the same
+      # defense in Tax::IdentificationNumber::Hasher#hash_tin.
+      raise ImportError, "failed to import TaxBandits data for #{public_id} (#{e.class})", cause: nil
     end
 
   end
