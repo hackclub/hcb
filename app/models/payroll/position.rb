@@ -95,7 +95,6 @@ module Payroll
           include_videos: false,
           external_template_id: Contract::PayrollPosition::DOCUSEAL_TEMPLATE_ID,
           prefills: {
-            "public_id"   => payee.public_id,
             "payee_name"  => payee.display_name,
             "title"       => title,
             "description" => description,
