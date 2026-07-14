@@ -53,7 +53,7 @@ class LegalEntity < ApplicationRecord
 
   delegate :address_city, :address_country, :address_line1, :address_postal_code, :address_state, to: :latest_tax_form, allow_nil: true
 
-  def tax_identification_number = Tax::IdentificationNumber.new(tin_hash:)
+  def tax_identification_number = Tax::IdentificationNumber.new(tin_hash:, legal_entity: self)
 
   def managed?
     managing_event_id.present?
