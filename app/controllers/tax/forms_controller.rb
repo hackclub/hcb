@@ -56,7 +56,7 @@ module Tax
     private
 
     def set_form
-      @form = Tax::Form.find_by_hashid(params[:id])
+      @form = Tax::Form.find_by_hashid!(params[:id])
       @legal_entity = @form.legal_entity
     end
 
