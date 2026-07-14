@@ -169,6 +169,15 @@ module Payroll
 
     def on_contract_party_signed(party)
       refresh_onboarding_state!
+
+      # The contractor is only invited to sign once HCB has signed
+      if party.hcb?
+        contractor = party.contract.party(:contractor)
+        return if contractor.nil? || contractor.signed?
+
+        contractor.notify
+        contractor.schedule_reminders
+      end
     end
 
     def send_contract(organizer_user: nil, cosigner_email: nil, reissue_messages: {}, reissue_of: nil, **options)
@@ -208,6 +217,12 @@ module Payroll
 
     def contract_redirect_path
       Rails.application.routes.url_helpers.my_payroll_path
+    end
+
+    # The contractor isn't emailed when the contract is sent; they're notified
+    # only once HCB signs
+    def contract_notify_when_sent
+      false
     end
 
     def contract_notify_hcb?

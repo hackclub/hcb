@@ -1001,7 +1001,11 @@ Rails.application.routes.draw do
     get "payments", to: "events#payments"
 
     resources :payments, only: [:new, :create]
-    resources :payroll_positions, only: [:new, :create, :show], controller: "payroll/positions"
+    resources :payroll_positions, only: [:new, :create, :show, :edit, :update], controller: "payroll/positions" do
+      member do
+        get :contract
+      end
+    end
     resources :payroll_invoices, only: [], controller: "payroll/invoices" do
       member do
         post :approve

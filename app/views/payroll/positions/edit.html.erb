@@ -1,6 +1,6 @@
-<% title "Invite a contractor" %>
-<% subtitle "From #{@event.name}" %>
-<% @back_url = event_contractors_path(event_id: @event.slug) %>
+<% title "Edit contract details" %>
+<% subtitle "For #{@position.display_name}" %>
+<% @back_url = contract_event_payroll_position_path(event_id: @event.slug, id: @position.id) %>
 
 <% content_for :table_of_contents do %>
   <%= render "events/transfers/step_item", number: 1, label: "Recipient" %>
@@ -8,4 +8,4 @@
   <%= render "events/transfers/step_item", number: 3, label: "Sign & invite", seek: false, current: false %>
 <% end %>
 
-<%= render "payroll/positions/form", event: @event, payee: @payee %>
+<%= render "payroll/positions/form", event: @event, payee: @position.payee, position: @position %>

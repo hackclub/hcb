@@ -18,6 +18,12 @@ module Payroll
       event_policy.contractors? && event_policy.create_transfer?
     end
 
+    # Editing the position and signing its contract during the invite flow
+    # require the same permission as creating a contractor.
+    alias_method :edit?, :create?
+    alias_method :update?, :create?
+    alias_method :contract?, :create?
+
     # Approving/rejecting an invoice requires the same permission as creating a
     # contractor.
     def review?

@@ -1,0 +1,39 @@
+<% title "Sign contract" %>
+<% subtitle "For #{@position.display_name}" %>
+<% @back_url = event_contractors_path(event_id: @event.slug) %>
+
+<% content_for :table_of_contents do %>
+  <%= render "events/transfers/step_item", number: 1, label: "Recipient", seek: false, current: false %>
+  <%= render "events/transfers/step_item", number: 2, label: "Contract details", seek: false, current: false %>
+  <%= render "events/transfers/step_item", number: 3, label: "Sign & invite", seek: false, current: true %>
+<% end %>
+
+<% if @organizer_party.pending? %>
+  <script src="https://cdn.docuseal.com/js/form.js"></script>
+
+  <div data-controller="contract">
+    <%= render partial: "contract/parties/docuseal_embed", locals: { party: @organizer_party } %>
+
+    <p class="muted text-sm mb-6 -mt-4">
+      Once HCB signs, we'll invite <%= @position.display_name %> to sign and complete onboarding.
+    </p>
+
+    <%= form_with url: event_contractors_path(event_id: @event.slug), method: :get do |form| %>
+      <%= form.submit "Invite contractor", class: "gap-2 btn w-full bg-blue", disabled: true, data: { "contract-target": "button" } %>
+    <% end %>
+  </div>
+
+  <%= link_to edit_event_payroll_position_path(event_id: @event.slug, id: @position.id),
+        class: "btn btn--ghost w-full mt-2",
+        data: { "turbo-confirm": "Changing the details will void this contract and generate a new one to sign. Continue?" } do %>
+    <%= inline_icon "edit" %>
+    Change details
+  <% end %>
+
+<% else %>
+  <%= render "application/callout", type: "success", title: "You've signed this contract" do %>
+    <p class="my-0">HCB will sign, then we'll invite <%= @position.display_name %> to sign and complete onboarding.</p>
+  <% end %>
+
+  <%= link_to "Invite contractor", event_contractors_path(event_id: @event.slug), class: "gap-2 btn w-full bg-blue mt-2" %>
+<% end %>
