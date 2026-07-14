@@ -11,6 +11,8 @@ class CardGrantsController < ApplicationController
 
   def index
     authorize @event, :card_grant_overview?
+
+    @table_columns = CARD_GRANT_COLUMNS
   end
 
   def card_index
@@ -23,13 +25,36 @@ class CardGrantsController < ApplicationController
     card_grants_page = (params[:page] || 1).to_i
     card_grants_per_page = (params[:per] || 20).to_i
 
-    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger).order(
-      Arel.sql("card_grant_pre_authorizations.aasm_state='fraudulent' DESC"),
-      "card_grants.created_at DESC"
-    )
+    fraud_last = Arel.sql("card_grant_pre_authorizations.aasm_state='fraudulent' DESC")
+
+    @card_grants = @event.card_grants
+                         .includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger)
+                         .order(
+                           fraud_last
+                           "card_grants.created_at DESC"
+                         )
+    @table_columns = CARD_GRANT_COLUMNS
+
     # we allow searching by purpose but sometimes the purpose shown in the table is actually the memo
     @card_grants = @card_grants.search_for(params[:q]) if params[:q].present?
-    @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
+
+    if params[:sort] == "balance" && organizer_signed_in?
+      direction = params[:direction] == "asc" ? :asc : :desc
+      sorted_card_grants = @card_grants.to_a.sort_by { |card_grant| card_grant.balance.cents }
+      sorted_card_grants.reverse! if direction == :desc
+
+      @paginated_card_grants = Kaminari.paginate_array(sorted_card_grants)
+                                       .page(card_grants_page)
+                                       .per(card_grants_per_page)
+    else
+      @paginated_card_grants = helpers.sorted_relation(
+        @card_grants.reorder(nil),
+        CARD_GRANT_COLUMNS.reject { |column| column[:key] == "balance" },
+        sort: [params[:sort], params[:direction]]
+      )
+                                      .page(card_grants_page)
+                                      .per(card_grants_per_page)
+    end
   end
 
   def transaction_index
@@ -338,5 +363,15 @@ class CardGrantsController < ApplicationController
     @card_grant = CardGrant.find_by_hashid!(params.require(:id))
     @event = @card_grant.event
   end
+
+  CARD_GRANT_COLUMNS = [
+    { key: "status", sortable: false },
+    { key: "created_at", display: "Date", default: true },
+    { key: "user_name", display: "To", column: "users.name", join: :user, sortable: false },
+    { key: "purpose", display: "For" },
+    { key: "amount_cents", display: "Amount" },
+    { key: "balance", right: true }
+  ].freeze
+  private_constant :CARD_GRANT_COLUMNS
 
 end
