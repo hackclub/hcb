@@ -353,6 +353,16 @@ RSpec.describe Ledger::Query, type: :model do
       query = { invalid_column: 100 }
       expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /Invalid field name/)
     end
+
+    it "raises when $and is given a hash instead of an array" do
+      query = { "$and" => { amount_cents: { "$lte" => 100 } } }
+      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /\$and.*array/i)
+    end
+
+    it "raises when $or is given a hash instead of an array" do
+      query = { "$or" => { amount_cents: 100 } }
+      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /\$or.*array/i)
+    end
   end
 
   describe "ledger scoping" do

@@ -66,10 +66,14 @@ class Ledger
 
           case operator
           when "and"
+            raise Ledger::Query::Error.new("$#{operator} must be an array") unless value.is_a?(Array)
+
             value.each do |sub_query|
               relation = apply_query(relation:, query: sub_query)
             end
           when "or"
+            raise Ledger::Query::Error.new("$#{operator} must be an array") unless value.is_a?(Array)
+
             sub_relation = nil
 
             value.each do |sub_query|

@@ -1246,11 +1246,12 @@ class EventsController < ApplicationController
       end
 
       if @minimum_amount.present?
-        query << { "$or": [{ amount_cents: { "$gte": @minimum_amount.to_f * 100 } }, { amount_cents: { "$lte": -@minimum_amount.to_f * 100 } }] }
+        query << { "$or": [{ amount_cents: { "$gte": @minimum_amount.cents } }, { amount_cents: { "$lte": -@minimum_amount.cents } }] }
       end
 
       if @maximum_amount.present?
-        query << { "$and": { amount_cents: { "$lte": @maximum_amount.to_f * 100, "$gte": -@maximum_amount.to_f * 100 } } }
+        # Multiple operators on one field are AND-combined: |amount| <= max
+        query << { amount_cents: { "$lte": @maximum_amount.cents, "$gte": -@maximum_amount.cents } }
       end
     end
 
