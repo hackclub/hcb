@@ -7,7 +7,7 @@
   <blockquote><%= MarkdownService.instance.render @message %></blockquote>
 <% else %>
   <p>
-    We have reviewed the agreement you signed to contract <%= @contract.prefills["payee_name"] %> for <%= @contract.event_name %>. 
+    We have reviewed the agreement you signed to contract <%= @contract.prefills["payee_name"] %> for <%= @contract.event_name %>.
     However, we could not finalize this agreement due to an issue.
   </p>
 <% end %>
