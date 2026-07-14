@@ -5,8 +5,22 @@ class LedgersController < ApplicationController
     @ledger = Ledger.find_by_hashid!(params[:id])
     authorize @ledger
 
-    # TODO: Replace with Ledger::Query
-    @items = @ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page])
+    query_hash = {}
+    if auditor_signed_in? && params[:query].present?
+      begin
+        query_hash = JSON.parse(params[:query])
+      rescue JSON::ParserError => e
+        flash.now[:error] = "Invalid query JSON: #{e.message}"
+      end
+    end
+
+    @items = begin
+      Ledger::Query.new(query_hash).execute(ledgers: [@ledger])
+    rescue Ledger::Query::Error => e
+      flash.now[:error] = "Query error: #{e.message}"
+
+      Ledger::Query.new({}).execute(ledgers: [@ledger])
+    end.page(params[:page])
   end
 
 end

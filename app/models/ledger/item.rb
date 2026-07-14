@@ -39,6 +39,9 @@ class Ledger
   class Item < ApplicationRecord
     self.table_name = "ledger_items"
 
+    include PgSearch::Model
+    pg_search_scope :search_memo, against: [:memo], ranked_by: "ledger_items.datetime"
+
     include Hashid::Rails
     has_paper_trail
 
@@ -76,6 +79,23 @@ class Ledger
     after_touch :map!
 
     scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
+
+    # Substring identifiers (case-insensitive) in the memo that indicate an
+    # account-verification micro-deposit. Most use "ACCTVERIFY"; a few companies
+    # use other variants. Mirrors CanonicalTransaction#likely_account_verification_related?.
+    ACCOUNT_VERIFICATION_MEMO_MATCHES = %w[acctverify verify validation sdv-vrfy amts:].freeze
+
+    # Account-verification micro-deposit amounts prove ownership of a linked
+    # external account, so they're redacted from non-organizer (transparency)
+    # viewers, matching the legacy transactions page. These arrive as raw bank
+    # transactions (no linked object) — the Ledger-native equivalent of the
+    # legacy HCB-000- code, avoiding a dependency on the old transaction engine.
+    def likely_account_verification_related?
+      return false unless amount_cents.abs < 100
+      return false unless linked_object_type.nil?
+
+      ACCOUNT_VERIFICATION_MEMO_MATCHES.any? { |s| memo.downcase.include?(s) }
+    end
 
     # This is defined because the Receiptable concern overrides the receipt_required? method defined by ActiveRecord
     def receipt_required?
