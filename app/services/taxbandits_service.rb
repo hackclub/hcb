@@ -28,12 +28,12 @@ class TaxbanditsService
   end
 
   def self.get_submission(form_id)
-    Rails.logger.info("TaxBandits: get_submission for PayeeRef=#{form_id}")
+    Rails.logger.info("TaxBandits: get_submission for PayeeRef=#{form_id} by current_user_id=#{Current.user&.id || "nil"}")
     taxbandits_client.get("WhCertificate/Get?PayeeRef=#{form_id}").body
   end
 
   def self.get_list_entry(form_id)
-    Rails.logger.info("TaxBandits: get_list_entry for PayeeRef=#{form_id}")
+    Rails.logger.info("TaxBandits: get_list_entry for PayeeRef=#{form_id} by current_user_id=#{Current.user&.id || "nil"}")
     submissions = taxbandits_client.get("WhCertificate/List?PayeeRef=#{form_id}").body
 
     submissions["WhcertificateRecords"].first
