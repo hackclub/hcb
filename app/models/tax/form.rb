@@ -169,7 +169,17 @@ module Tax
 
     def masked_tin
       entry = remote_taxbandits_list_entry
-      entry&.[]("TIN")
+      tin = entry&.[]("TIN")
+
+      # TaxBandits usually masks the TIN for us; trust it if it's actually masked
+      return tin if tin.present? && tin.count("Xx") >= 3
+
+      # Otherwise (an unmasked TIN, or only an FTIN is available), mask it ourselves
+      raw = tin.presence || entry&.[]("FTIN")
+      return if raw.blank?
+      return "X" * raw.length if raw.length <= 4
+
+      raw.slice(-4, 4).rjust(raw.length, "X")
     end
 
     private
