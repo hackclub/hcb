@@ -27,7 +27,10 @@ class Ledger
       results = apply_query(relation: Ledger::Item.all, query: @query_hash)
 
       if ledgers.any?
-        results = results.merge(Ledger::Item.joins(:ledger_mappings).where(ledger_mappings: { ledger_id: ledgers }).distinct)
+        # Scope via a subquery rather than joins(...).distinct: DISTINCT breaks
+        # under Postgres when combined with our ORDER BY and a narrowed select
+        # list (e.g. pluck) — ORDER BY expressions must appear in the select list.
+        results = results.where(id: Ledger::Mapping.where(ledger_id: ledgers).select(:ledger_item_id))
       end
 
       # preload, not includes: linked_object is polymorphic, so it can never be
