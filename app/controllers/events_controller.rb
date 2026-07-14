@@ -1265,9 +1265,15 @@ class EventsController < ApplicationController
     # Whole-day inclusive end bound, matching the old transactions page
     query << { datetime: { "$lt": @end_date.to_date.next_day } } if @end_date.present?
 
-    # To-do: add filtering for tag, user, category, and merchant
+    query << { author: { "$eq": @user.slug } } if @user.present?
 
-    @items = Ledger::Query.new({ "$and": query }).execute(ledgers: [@ledger]).page(params[:page]).per(@per)
+    # To-do: add filtering for merchant and category
+
+    @items = Ledger::Query.new({ "$and": query }).execute(ledgers: [@ledger])
+
+    @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag_id).select(:hcb_code_id)).select(:ledger_item_id)) if @tag_id.present?
+    
+    @items = @items.page(params[:page]).per(@per)
   rescue Pundit::NotAuthorizedError
     return head :not_found
   end

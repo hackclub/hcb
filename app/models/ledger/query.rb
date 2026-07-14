@@ -10,6 +10,7 @@ class Ledger
       receipt_count
       linked_object_type
       marked_no_or_lost_receipt_at
+      author
     ].index_by(&:itself).freeze
 
     DATETIME_COLUMNS = %w[
@@ -182,6 +183,28 @@ class Ledger
       raise Ledger::Query::Error.new("Invalid field name: #{raw_key}") unless key.present?
 
       operand = coerce_datetime_operand(operand) if DATETIME_COLUMNS.include?(key)
+
+      if operand.is_a?(String) && key == "author"
+        case operator.to_s
+        when "$eq"
+          return relation.where(author: User.where(slug: operand))
+        when "$ne"
+          return relation.where.not(author: User.where(slug: operand))
+        else
+          raise Ledger::Query::Error.new("Unsupported comparison operator for author: #{operator}")
+        end
+      end
+
+      if operand.is_a?(String) && key == "author"
+        case operator.to_s
+        when "$eq"
+          return relation.where(author: User.where(slug: operand))
+        when "$ne"
+          return relation.where.not(author: User.where(slug: operand))
+        else
+          raise Ledger::Query::Error.new("Unsupported comparison operator for author: #{operator}")
+        end
+      end
 
       col = Ledger::Item.arel_table[key]
 
