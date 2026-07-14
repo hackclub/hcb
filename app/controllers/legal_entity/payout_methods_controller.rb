@@ -14,6 +14,7 @@ class LegalEntity
         legal_entity:,
         details_type: params.dig(:user, :payout_method_type),
         details_attrs: details_params_for(params.dig(:user, :payout_method_type)),
+        name: params.dig(:user, :payout_method_name),
         make_default: legal_entity.payout_methods.unarchived.none?
       )
 
@@ -33,6 +34,7 @@ class LegalEntity
         legal_entity: @payout_method.legal_entity,
         details_type: @payout_method.details_type,
         details_attrs: details_params_for(@payout_method.details_type),
+        name: params.dig(:user, :payout_method_name),
         make_default: @payout_method.default?,
         replacing: @payout_method
       )

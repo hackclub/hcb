@@ -42,6 +42,57 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       expect(default.details.routing_number).to eq("021000021")
     end
 
+    it "stores a trimmed user-provided name and ignores a blank one" do
+      named = described_class.new(
+        user:,
+        details_type: "LegalEntity::PayoutMethod::AchTransfer",
+        details_attrs: valid_ach_attrs,
+        name: "  My Chase Bank Account  "
+      )
+      expect(named.run).to be(true)
+      expect(named.payout_method.name).to eq("My Chase Bank Account")
+
+      unnamed = described_class.new(
+        user:,
+        details_type: "LegalEntity::PayoutMethod::AchTransfer",
+        details_attrs: valid_ach_attrs,
+        name: "   "
+      )
+      expect(unnamed.run).to be(true)
+      expect(unnamed.payout_method.name).to be_nil
+    end
+
+    it "keeps the existing ACH numbers when they come back masked (e.g. a nickname-only edit)" do
+      existing = seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
+
+      service = described_class.new(
+        user:,
+        details_type: "LegalEntity::PayoutMethod::AchTransfer",
+        details_attrs: { account_number: "••••5678", routing_number: "•••••0021" },
+        name: "My Chase Bank Account",
+        replacing: existing
+      )
+
+      expect(service.run).to be(true)
+      expect(service.payout_method.name).to eq("My Chase Bank Account")
+      expect(service.payout_method.details.account_number).to eq("12345678")
+      expect(service.payout_method.details.routing_number).to eq("021000021")
+    end
+
+    it "updates the ACH numbers when the user actually re-enters them" do
+      existing = seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
+
+      service = described_class.new(
+        user:,
+        details_type: "LegalEntity::PayoutMethod::AchTransfer",
+        details_attrs: { account_number: "87654321", routing_number: "021000021" },
+        replacing: existing
+      )
+
+      expect(service.run).to be(true)
+      expect(service.payout_method.details.account_number).to eq("87654321")
+    end
+
     it "replaces the existing default and unsets the previous one" do
       old = seed_default(LegalEntity::PayoutMethod::Check.new(
                            address_line1: "1 Main St", address_city: "New York",
