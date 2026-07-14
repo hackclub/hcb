@@ -165,7 +165,8 @@ module Tax
       when "FormW8EXP"
         :business
       else
-        raise ArgumentError, "unknown tax form type"
+        Rails.error.unexpected("unknown tax form type #{submission["FormType"]}")
+        raise ArgumentError, "unknown tax form type #{submission["FormType"]}"
       end
     end
 
