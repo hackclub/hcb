@@ -34,7 +34,6 @@ module Payroll
     include Contractable
     include PgSearch::Model
     include Hashid::Rails
-    hashid_config salt: ""
 
     has_paper_trail
 
