@@ -1,0 +1,6 @@
+<% current_user ||= local_assigns[:p][:current_user] %>
+
+<%= render layout: "/public_activity/common", locals: { activity:, current_user:, hide_owner: true } do %>
+  A <%= render_money activity.trackable.amount_money %> bank fee was charged
+  to <%= link_to activity.trackable.event.name, activity.trackable.event %>
+<% end %>
