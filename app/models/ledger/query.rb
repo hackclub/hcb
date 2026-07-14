@@ -67,7 +67,7 @@ class Ledger
 
             if context == "and"
               # merge would replace, not AND, existing conditions on the same column
-              relation = relation.and(sub_relation)
+              relation = relation.merge(sub_relation)
             else
               relation = relation.or(sub_relation)
             end
