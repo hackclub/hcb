@@ -40,7 +40,8 @@ module Tax
 
       def self.mac(message)
         if kms_key_id.present?
-          kms_client.generate_mac(key_id: kms_key_id, message:, mac_algorithm: MAC_ALGORITHM).mac
+          hashed_message = Digest::SHA256.hexdigest(message)
+          kms_client.generate_mac(key_id: kms_key_id, message: hashed_message, mac_algorithm: MAC_ALGORITHM).mac
         elsif Rails.env.production?
           raise HashingError, "AWS KMS is not configured; refusing to fingerprint a TIN"
         else
