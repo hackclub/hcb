@@ -27,22 +27,25 @@ class TaxbanditsService
     response.body
   end
 
-  def self.get_submission(form_id)
-    Rails.logger.info("TaxBandits: get_submission for PayeeRef=#{form_id} by current_user_id=#{Current.user&.id || "nil"}")
-    taxbandits_client.get("WhCertificate/Get?PayeeRef=#{form_id}").body
+  # Returns the full, unmasked TIN. Only Tax::Form#import_taxbandits_data may call
+  # this, and only to fingerprint the TIN; nothing else in HCB may touch it.
+  def self.get_submission(payee_ref)
+    Rails.logger.info("TaxBandits: get_submission for PayeeRef=#{payee_ref} by current_user_id=#{Current.user&.id || "nil"}")
+    taxbandits_client.get("WhCertificate/Get?PayeeRef=#{payee_ref}").body
   end
 
-  def self.get_list_entry(form_id)
-    Rails.logger.info("TaxBandits: get_list_entry for PayeeRef=#{form_id} by current_user_id=#{Current.user&.id || "nil"}")
-    submissions = taxbandits_client.get("WhCertificate/List?PayeeRef=#{form_id}").body
+  # Returns the TIN already masked by TaxBandits.
+  def self.get_list_entry(payee_ref)
+    Rails.logger.info("TaxBandits: get_list_entry for PayeeRef=#{payee_ref} by current_user_id=#{Current.user&.id || "nil"}")
+    submissions = taxbandits_client.get("WhCertificate/List?PayeeRef=#{payee_ref}").body
 
-    submissions["WhcertificateRecords"].first
+    submissions["WhcertificateRecords"]&.first
   end
 
-  def self.get_status(form_id)
-    statuses = taxbandits_client.get("WhCertificate/Status?PayeeRef=#{form_id}").body
+  def self.get_status(payee_ref)
+    statuses = taxbandits_client.get("WhCertificate/Status?PayeeRef=#{payee_ref}").body
 
-    statuses["Status"].first
+    statuses["Status"]&.first
   end
 
   def self.taxbandits_client

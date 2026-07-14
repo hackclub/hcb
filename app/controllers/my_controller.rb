@@ -198,7 +198,7 @@ class MyController < ApplicationController
                                              .includes(payee: :event)
                                              .order(created_at: :desc)
                                              .load
-    @tax_form_required = @contractor_positions.any? && !@legal_entity.latest_tax_form&.completed?
+    @tax_form_required = @contractor_positions.any? && !@legal_entity.completed_tax_form?
     # Approved invoices are represented by their payment in the history table
     # below, so only surface invoices still awaiting review here to avoid
     # duplicating information.

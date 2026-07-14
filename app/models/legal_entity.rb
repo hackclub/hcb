@@ -17,6 +17,7 @@
 # Indexes
 #
 #  index_legal_entities_on_managing_event_id  (managing_event_id)
+#  index_legal_entities_on_tin_hash           (tin_hash)
 #
 class LegalEntity < ApplicationRecord
   self.ignored_columns += ["address_city", "address_country", "address_line1", "address_line2", "address_postal_code", "address_state"]
@@ -68,10 +69,29 @@ class LegalEntity < ApplicationRecord
                      .find_each(&:refresh_onboarding_state!)
   end
 
+  # Deliberately the latest *completed* form, not latest_tax_form. A pending form
+  # has a NULL completed_at, which Postgres sorts first on a DESC order, so
+  # latest_tax_form becomes the new form the moment a payee starts one. Keying
+  # payability off that would strand every pending payment of anyone who took us up
+  # on "start a new tax form". A newly submitted TIN only blocks payouts once it
+  # completes and turns out to disagree, which is what mismatched_tax_form catches.
   def payable?
-    latest_tax_form&.completed? && mismatched_tax_form.nil? &&
-      (latest_tax_form.taxbandits_tin_match_success? || !tax_identification_number.predicted_to_be_over_threshold?) &&
+    form = latest_completed_tax_form
+
+    form.present? && mismatched_tax_form.nil? &&
+      (form.taxbandits_tin_match_success? || !tax_identification_number.predicted_to_be_over_threshold?) &&
       !tin_banned? && !archived?
+  end
+
+  def latest_completed_tax_form
+    @latest_completed_tax_form ||= tax_forms.completed.order(completed_at: :desc, created_at: :desc).first
+  end
+
+  # Whether tax info has ever been completed. Distinct from latest_tax_form, which
+  # a freshly started (still pending) form outranks, so it must drive the UI's
+  # "you're set up" state or starting a new form would look like losing the old one.
+  def completed_tax_form?
+    latest_completed_tax_form.present?
   end
 
   def send_tax_form!
@@ -87,8 +107,18 @@ class LegalEntity < ApplicationRecord
     person? ? "Personal" : (name.presence || "Business")
   end
 
+  # A completed form whose TIN is not the TIN this entity is already identified by.
+  # Only forms that actually carry a fingerprint can mismatch: a pending form, a
+  # failed one, and every form that predates TIN import all have a nil tin_hash,
+  # and treating those as a mismatch would make the entity unpayable for no reason.
   def mismatched_tax_form
-    tax_forms.not_discarded.reject { |form| form.tin_hash == tin_hash }.last
+    return nil if tin_hash.nil?
+
+    @mismatched_tax_form ||= tax_forms.not_discarded
+                                      .completed
+                                      .where.not(tin_hash: [nil, tin_hash])
+                                      .order(completed_at: :desc, created_at: :desc)
+                                      .first
   end
 
   def archive!
@@ -100,10 +130,10 @@ class LegalEntity < ApplicationRecord
   end
 
   def latest_usable_tax_form
-    tax_forms.completed.order(completed_at: :desc, created_at: :desc).where(tin_hash:).last
+    tax_forms.completed.where(tin_hash:).order(completed_at: :desc, created_at: :desc).first
   end
 
-  delegate :masked_tin, to: :latest_usable_tax_form
+  delegate :masked_tin, to: :latest_usable_tax_form, allow_nil: true
 
   private
 

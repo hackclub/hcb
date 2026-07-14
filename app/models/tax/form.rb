@@ -14,14 +14,17 @@
 #  address_state                  :string
 #  completed_at                   :datetime
 #  deleted_at                     :datetime
+#  entity_type                    :string
 #  external_service               :string           not null
 #  failed_at                      :datetime
 #  form_type                      :string
+#  payee_ref                      :string
 #  sent_at                        :datetime
 #  signing_url                    :string
 #  taxbandits_status              :string
 #  taxbandits_tin_matching_status :string
 #  tin_hash                       :string
+#  tin_type                       :string
 #  created_at                     :datetime         not null
 #  updated_at                     :datetime         not null
 #  external_id                    :string
@@ -30,6 +33,7 @@
 # Indexes
 #
 #  index_tax_forms_on_legal_entity_id  (legal_entity_id)
+#  index_tax_forms_on_tin_hash         (tin_hash)
 #
 module Tax
   class Form < ApplicationRecord
@@ -47,6 +51,7 @@ module Tax
 
     enum :form_type, { W8BEN: "W8BEN", W9: "W9", W8BENE: "W8BENE", W8ECI: "W8ECI", W8IMY: "W8IMY", W8EXP: "W8EXP" }
     enum :external_service, { manual: "manual", taxbandits: "taxbandits" }, prefix: :sent_with
+    enum :entity_type, { person: "person", business: "business" }, prefix: :entity
 
     # https://developer.taxbandits.com/docs/whcertificate/status/
     enum :taxbandits_status, %w[
@@ -73,6 +78,11 @@ module Tax
 
     validate :tin_hash_cannot_change, on: :update
 
+    # The certificate stays registered under the entity the form was created on, so
+    # freeze that ref before the form is moved to a new entity (a TIN switch), or
+    # payee_ref would re-derive from the new entity and stop matching TaxBandits.
+    before_update :freeze_payee_ref, if: -> { legal_entity_id_changed? && self[:payee_ref].blank? }
+
     after_update if: -> {
       taxbandits_status_previously_changed?(to: :completed) ||
         taxbandits_status_previously_changed?(to: :completed_and_tin_match_inprogress)
@@ -81,7 +91,11 @@ module Tax
     end
 
     after_update if: -> { tin_hash_previously_changed?(from: nil) } do
-      legal_entity.update!(tin_hash:) if legal_entity.tin_hash.nil?
+      # Locked: a legal entity's TIN can never change once set, and two forms
+      # completing concurrently would otherwise both see a nil hash and race.
+      legal_entity.with_lock do
+        legal_entity.update!(tin_hash:) if legal_entity.tin_hash.nil?
+      end
     end
 
     aasm timestamps: true do
@@ -129,16 +143,18 @@ module Tax
       mark_sent!
     end
 
-    def remote_taxbandits_submission
-      TaxbanditsService.get_submission(public_id)
-    end
-
-    def remote_taxbandits_list_entry
-      TaxbanditsService.get_list_entry(public_id)
+    # The PayeeRef this form's certificate is registered under at TaxBandits.
+    # Forms sent before tax forms carried their own ref were registered under the
+    # legal entity's public id, so fall back to that rather than orphaning them.
+    def payee_ref
+      self[:payee_ref].presence || legal_entity.public_id
     end
 
     def sync_with_taxbandits
-      response = TaxbanditsService.get_status(public_id)
+      # A manually entered form has no certificate at TaxBandits to sync against.
+      return unless sent_with_taxbandits?
+
+      response = TaxbanditsService.get_status(payee_ref)
 
       if response.present?
         update!(
@@ -148,45 +164,46 @@ module Tax
       end
     end
 
-    def inferred_entity_type
-      submission = remote_taxbandits_submission
-      return if submission.nil?
+    # Only the last four digits, and only ever shown to the payee themselves.
+    # Read from TaxBandits' List endpoint (which masks the TIN for us) so that HCB
+    # never stores even a partial TIN.
+    #
+    # A manually entered form has no TaxBandits certificate to read from, so it has
+    # no maskable TIN. Callers must handle nil.
+    def masked_tin
+      return nil unless sent_with_taxbandits?
+      return @masked_tin if defined?(@masked_tin)
 
-      case submission["FormType"]
-      when "FormW9"
-        submission["FormW9"]["FormData"]["TINType"] == "SSN" ? :person : :business
-      when "FormW8BEN"
-        :person
-      when "FormW8BENE"
-        :business
-      when "FormW8ECI"
-        submission["FormW8ECI"]["FormData"]["EntityType"] == "INDIVIDUAL" ? :person : :business
-      when "FormW8IMY"
-        :business
-      when "FormW8EXP"
-        :business
-      else
-        Rails.error.unexpected("unknown tax form type #{submission["FormType"]}")
-        raise ArgumentError, "unknown tax form type #{submission["FormType"]}"
+      @masked_tin = begin
+        entry = TaxbanditsService.get_list_entry(payee_ref)
+        tin = entry&.[]("TIN")
+
+        if tin.present? && tin.count("Xx") >= 3
+          # TaxBandits usually masks the TIN for us; trust it if it's actually masked
+          tin
+        else
+          # Otherwise (an unmasked TIN, or only an FTIN is available), mask it ourselves
+          raw = tin.presence || entry&.[]("FTIN")
+
+          if raw.blank?
+            nil
+          elsif raw.length <= 4
+            "X" * raw.length
+          else
+            raw.slice(-4, 4).rjust(raw.length, "X")
+          end
+        end
       end
     end
 
-    def masked_tin
-      entry = remote_taxbandits_list_entry
-      tin = entry&.[]("TIN")
-
-      # TaxBandits usually masks the TIN for us; trust it if it's actually masked
-      return tin if tin.present? && tin.count("Xx") >= 3
-
-      # Otherwise (an unmasked TIN, or only an FTIN is available), mask it ourselves
-      raw = tin.presence || entry&.[]("FTIN")
-      return if raw.blank?
-      return "X" * raw.length if raw.length <= 4
-
-      raw.slice(-4, 4).rjust(raw.length, "X")
-    end
-
     private
+
+    # WhCertificate/Get returns the payee's full, unmasked TIN. Nothing outside
+    # import_taxbandits_data may call it, and what it derives (entity type, TIN
+    # type, address) is persisted so that no page render ever needs it again.
+    def remote_taxbandits_submission
+      TaxbanditsService.get_submission(payee_ref)
+    end
 
     def tin_hash_cannot_change
       if tin_hash_changed? && tin_hash_was.present?
@@ -194,10 +211,14 @@ module Tax
       end
     end
 
+    def freeze_payee_ref
+      self.payee_ref = LegalEntity.find(legal_entity_id_was).public_id
+    end
+
     def send_using_taxbandits!
       response = TaxbanditsService.create_whcertificate(id: public_id, name: legal_entity.name)
 
-      update!(external_service: :taxbandits, signing_url: response["Url"], external_id: response["SubmissionId"])
+      update!(external_service: :taxbandits, payee_ref: public_id, signing_url: response["Url"], external_id: response["SubmissionId"])
       sync_with_taxbandits
     end
 
@@ -210,6 +231,8 @@ module Tax
 
       return if form_data.blank?
 
+      # These different address field names come from different
+      # object shapes depending on the type of tax form
       address = case submission_form_type
                 when "FormW9"
                   form_data["Address"]
@@ -231,13 +254,22 @@ module Tax
                             when "FormW8BENE", "FormW8IMY", "FormW8EXP"
                               [form_data.dig("Part1", "USTIN"), form_data.dig("Part1", "ForeignTIN")]
                             end
-      tin = us_tin.presence || foreign_tin.presence
-      tin_hash = Tax::IdentificationNumber::Hasher.hash_tin(tin)
 
-      # These diffeent address field names come from different
-      # object shapes depending on the type of tax form
+      entity_type = entity_type_from(submission_form_type, form_data)
+      tin, tin_type, country = identify_tin(us_tin, foreign_tin, entity_type, submission_form_type, form_data)
+
+      # Only fingerprint when we have both a TIN and the space it belongs to. A
+      # foreign filer whose country of residence we can't determine is left with a
+      # nil hash (un-deduped, same as a TIN-less W-8) rather than fingerprinted into
+      # a guessed bucket, which would risk merging two unrelated taxpayers.
+      tin_hash = if tin.present? && country.present?
+                   Tax::IdentificationNumber::Hasher.hash_tin(tin, tin_type:, country:)
+                 end
+
       update!(
         form_type: submission_form_type[4..],
+        entity_type:,
+        tin_type:,
         tin_hash:,
         address_line1: address["Address1"],
         address_line2: address["Address2"],
@@ -253,6 +285,62 @@ module Tax
       # sensitive can reach Rails logs or AppSignal. cause: nil mirrors the same
       # defense in Tax::IdentificationNumber::Hasher#hash_tin.
       raise ImportError, "failed to import TaxBandits data for #{public_id} (#{e.class})", cause: nil
+    end
+
+    def entity_type_from(submission_form_type, form_data)
+      case submission_form_type
+      when "FormW9"
+        form_data["TINType"] == "SSN" ? :person : :business
+      when "FormW8BEN"
+        :person
+      when "FormW8ECI"
+        form_data["EntityType"] == "INDIVIDUAL" ? :person : :business
+      when "FormW8BENE", "FormW8IMY", "FormW8EXP"
+        :business
+      else
+        raise ArgumentError, "unknown tax form type #{submission_form_type}"
+      end
+    end
+
+    # A US TIN is preferred over a foreign one: it is what the IRS reports against,
+    # and it is the only identifier that lets us recognise the same taxpayer across
+    # a W-9 and a W-8. The namespace has to describe the *TIN*, not the form, or the
+    # same person filing both would fingerprint to two different taxpayers.
+    def identify_tin(us_tin, foreign_tin, entity_type, submission_form_type, form_data)
+      if us_tin.present?
+        [us_tin, Tax::IdentificationNumber::Hasher.tin_type_for(entity_type:), "US"]
+      else
+        # A foreign TIN is only unique within its issuing country, so the country of
+        # tax residence is part of the taxpayer's identity here. It must be the
+        # permanent-residence country, never the mailing address, which can change
+        # between filings and would split one taxpayer across two fingerprints.
+        [foreign_tin,
+         Tax::IdentificationNumber::Hasher.tin_type_for(entity_type:, foreign: true),
+         residence_country_for(submission_form_type, form_data)]
+      end
+    end
+
+    # The country whose tax authority issued the foreign TIN. Read from the W-8's
+    # permanent-residence / country-of-organization fields, falling back through the
+    # plausible TaxBandits key names. Returns nil (rather than a guess) when none is
+    # present, so the caller skips fingerprinting instead of bucketing by mail.
+    def residence_country_for(submission_form_type, form_data)
+      candidates = case submission_form_type
+                   when "FormW8BEN", "FormW8ECI"
+                     [form_data.dig("PermanentAddress", "Country"),
+                      form_data.dig("PermanentAdd", "Country"),
+                      form_data["CitizenOfCountry"],
+                      form_data["Country"]]
+                   when "FormW8BENE", "FormW8IMY", "FormW8EXP"
+                     [form_data.dig("Part1", "PermanentAdd", "Country"),
+                      form_data.dig("Part1", "PermanentAddress", "Country"),
+                      form_data.dig("Part1", "CountryOfOrganization"),
+                      form_data.dig("Part1", "Country")]
+                   else
+                     []
+                   end
+
+      candidates.map { |value| value.to_s.strip.presence }.compact.first
     end
 
   end

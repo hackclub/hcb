@@ -22,7 +22,7 @@ module Tax
 
       if @legal_entity.mismatched_tax_form.present?
         flash[:error] = "Pick an option before starting a new tax form"
-        redirect_to legal_entity_path(@form.legal_entity)
+        redirect_to legal_entity_path(@legal_entity)
         return
       end
 

@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_13_222948) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_14_120100) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1661,6 +1661,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_13_222948) do
     t.string "tin_hash"
     t.datetime "updated_at", null: false
     t.index ["managing_event_id"], name: "index_legal_entities_on_managing_event_id"
+    t.index ["tin_hash"], name: "index_legal_entities_on_tin_hash"
   end
 
   create_table "legal_entity_payout_methods", force: :cascade do |t|
@@ -2596,18 +2597,22 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_13_222948) do
     t.datetime "completed_at"
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
+    t.string "entity_type"
     t.string "external_id"
     t.string "external_service", null: false
     t.datetime "failed_at"
     t.string "form_type"
     t.bigint "legal_entity_id", null: false
+    t.string "payee_ref"
     t.datetime "sent_at"
     t.string "signing_url"
     t.string "taxbandits_status"
     t.string "taxbandits_tin_matching_status"
     t.string "tin_hash"
+    t.string "tin_type"
     t.datetime "updated_at", null: false
     t.index ["legal_entity_id"], name: "index_tax_forms_on_legal_entity_id"
+    t.index ["tin_hash"], name: "index_tax_forms_on_tin_hash"
   end
 
   create_table "tours", force: :cascade do |t|
