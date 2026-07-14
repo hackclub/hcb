@@ -172,10 +172,57 @@ module Payroll
       refresh_onboarding_state!
     end
 
+    def send_contract(organizer_user: nil, cosigner_email: nil, reissue_messages: {}, reissue_of: nil, **options)
+      contract = nil
+      organizer_user ||= reissue_of&.party(:organizer)&.user
+      raise ArgumentError, "an organizer is required to send a payroll contract" if organizer_user.nil?
+
+      ActiveRecord::Base.transaction do
+        contract = Contract::PayrollPosition.create!(
+          contractable: self,
+          include_videos: false,
+          external_template_id: Contract::PayrollPosition::DOCUSEAL_TEMPLATE_ID,
+          prefills: {
+            "payee_name"  => payee.display_name,
+            "title"       => title,
+            "description" => description,
+            "rate"        => rate.format,
+            "start_date"  => start_date.to_fs(:long),
+            "end_date"    => end_date.to_fs(:long),
+            "documents"   => (file.attached? ? [{ "name" => file.blob.filename.to_s, "file" => Rails.application.routes.url_helpers.rails_blob_url(file) }] : nil)
+          }.compact,
+          reissue_of:
+        )
+        contract.parties.create!(user: organizer_user, role: :organizer)
+        contract.parties.create!(user: contractor_user, external_email: payee.email, role: :contractor)
+      end
+
+      contract.send!(reissue_messages:)
+
+      contract
+    end
+
+
+    def on_contract_voided(contract)
+      mark_rejected! if may_mark_rejected?
+    end
+
+    def contract_redirect_path
+      Rails.application.routes.url_helpers.my_payroll_path
+    end
+
+    def contract_notify_hcb?
+      false
+    end
+
     private
 
     def contract_signed_by?(role)
       contracts.not_voided.any? { |contract| contract.party(role)&.signed? }
+    end
+
+    def contractor_user
+      User.find_by(email: payee.email)
     end
 
     def end_date_after_start_date
