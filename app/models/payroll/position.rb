@@ -84,7 +84,7 @@ module Payroll
       end
     end
 
-    def send_contract(organizer_user: nil, cosigner_email: nil, reissue_signee_message: nil, reissue_cosigner_message: nil, reissue_of: nil, **options)
+    def send_contract(organizer_user: nil, cosigner_email: nil, reissue_messages: {}, reissue_of: nil, **options)
       contract = nil
       organizer_user ||= reissue_of&.party(:organizer)&.user
       raise ArgumentError, "an organizer is required to send a payroll contract" if organizer_user.nil?
@@ -109,7 +109,7 @@ module Payroll
         contract.parties.create!(user: contractor_user, external_email: payee.email, role: :contractor)
       end
 
-      contract.send!(reissue_signee_message:, reissue_cosigner_message:)
+      contract.send!(reissue_messages:)
 
       contract
     end

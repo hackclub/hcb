@@ -90,12 +90,11 @@ class Contract < ApplicationRecord
 
     event :mark_sent do
       transitions from: :pending, to: :sent
-      after_commit do |reissue_signee_message = nil, reissue_cosigner_message = nil|
-        if reissue_signee_message.present? || reissue_cosigner_message.present?
-          party(:signee)&.notify_reissued(message: reissue_signee_message)
-          party(:contractor)&.notify_reissued(message: reissue_signee_message)
-          party(:organizer)&.notify_reissued(message: reissue_signee_message)
-          party(:cosigner)&.notify_reissued(message: reissue_cosigner_message)
+      after_commit do |reissue_messages = {}|
+        if reissue_messages.values.any?(&:present?)
+          reissue_messages.each do |role, message|
+            party(role)&.notify_reissued(message:) if message.present?
+          end
         elsif contractable.contract_notify_when_sent
           notifiable_parties.each(&:notify)
         end
@@ -161,7 +160,7 @@ class Contract < ApplicationRecord
     raise NotImplementedError, "The #{self.class.name} model hasn't implemented it's own permitted roles"
   end
 
-  def send!(reissue_signee_message: nil, reissue_cosigner_message: nil)
+  def send!(reissue_messages: {})
     raise ArgumentError, "can only send contracts when pending" unless pending?
 
     existing_roles = parties.map(&:role)
@@ -170,7 +169,7 @@ class Contract < ApplicationRecord
 
     send_using_docuseal! unless sent_with_manual?
 
-    mark_sent!(reissue_signee_message, reissue_cosigner_message)
+    mark_sent!(reissue_messages)
   end
 
   def event
