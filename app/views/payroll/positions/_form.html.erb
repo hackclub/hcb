@@ -11,12 +11,13 @@
   <% end %>
 <% end %>
 
-<div data-controller="payee-picker">
+<div data-controller="payee-picker manual-payee">
   <%= render "payees/recipient_section", event:, payee:, destination: "contractors",
         manual_title: "Manual", manual_subtitle: "Tax forms and payment details entered directly" %>
 
   <%= form_with(url: event_payroll_positions_path(event_id: event.slug), scope: :contractor, local: true) do |form| %>
     <%= form.hidden_field :payee_id, value: payee&.public_id %>
+    <%= hidden_field_tag "manual", (payee&.managed? || false).to_s, data: { "manual-payee-target": "manualField" } %>
 
     <div data-scroll-seek-target="section">
       <h3 class="mb-2">Contract details</h3>
