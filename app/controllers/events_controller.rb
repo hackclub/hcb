@@ -1271,7 +1271,7 @@ class EventsController < ApplicationController
 
     @items = Ledger::Query.new({ "$and": query }).execute(ledgers: [@ledger])
 
-    @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag_id).select(:hcb_code_id)).select(:ledger_item_id)) if @tag_id.present?
+    @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id)) if @tag&.id.present?
 
     @items = @items.page(params[:page]).per(@per)
   rescue Pundit::NotAuthorizedError
