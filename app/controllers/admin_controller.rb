@@ -380,6 +380,21 @@ class AdminController < Admin::BaseController
     @canonical_transactions = relation.page(@page).per(@per).order(date: :desc)
   end
 
+  def ledger_items
+    @page = params[:page] || 1
+    @per = params[:per] || 100
+    @amount = params[:amount].presence
+
+    relation = Ledger::Item.where.missing(:primary_mapping)
+
+    relation = relation.where(amount_cents: @amount.to_i).or(relation.where(amount_cents: -@amount.to_i)) if @amount
+
+    @count = relation.count
+
+    @ledger_items = relation.includes(:hcb_code, :canonical_transactions, :canonical_pending_transactions)
+                            .page(@page).per(@per).order(datetime: :desc)
+  end
+
   def event_search
     @q = params[:q].presence
     @events = if @q.present?

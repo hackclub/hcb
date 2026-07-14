@@ -476,7 +476,7 @@ class Event < ApplicationRecord
   end
 
   after_update if: -> { can_front_balance_changed? } do
-    ledger.refresh_all!
+    refresh_ledgers!
   end
 
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
@@ -581,6 +581,13 @@ class Event < ApplicationRecord
     # We're including only pending charges on emburse_cards so organizers have a conservative estimate of their balance
     pending_t = self.emburse_transactions.pending.where("amount < 0").sum(:amount)
     completed_t + pending_t
+  end
+
+  def refresh_ledgers!
+    ledger.refresh_all!
+    Ledger.where(card_grant: self.card_grants).find_each do |ledger|
+      ledger.refresh_all!
+    end
   end
 
   def total_raised
