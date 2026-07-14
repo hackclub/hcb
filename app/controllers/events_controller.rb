@@ -1277,7 +1277,7 @@ class EventsController < ApplicationController
         "donation" => { "$eq": "Donation" },
         "invoice" => { "$eq": "Invoice" },
         "fiscal_sponsorship_fee" => { "$eq": "BankFee" },
-        "reimbursement" => { "$eq": "ReimbursementExpensePayout" },
+        "reimbursement" => { "$eq": "Reimbursement::ExpensePayout" },
         "wire" => { "$eq": "Wire" },
         "paypal_transfer" => { "$eq": "PaypalTransfer" },
         "wise_transfer" => { "$eq": "WiseTransfer" }
