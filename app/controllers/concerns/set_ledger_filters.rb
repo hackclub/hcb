@@ -1,10 +1,5 @@
 # frozen_string_literal: true
 
-# Adds `set_ledger_filters` and `ledger_query` methods to a controller.
-# Requires `@event` to be set. Set `@include_card_grant_ledgers` beforehand to
-# also include the event's card grant ledgers (e.g. for the grant overview) in
-# `@ledgers` and the filterable users. `ledger_query` builds a `Ledger::Query`
-# from the parsed filters; executing it is left to the controller.
 module SetLedgerFilters
   extend ActiveSupport::Concern
 
