@@ -5,13 +5,13 @@ module Reimbursement
     class Nightly
       def run
         Reimbursement::ExpensePayout.pending.find_each(batch_size: 100) do |expense_payout|
-          next if expense_payout.expense.report.user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
+          next if expense_payout.expense.report.payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
 
           Reimbursement::ExpensePayoutService::ProcessSingle.new(expense_payout_id: expense_payout.id).run
         end
 
         Reimbursement::PayoutHolding.pending.find_each(batch_size: 100) do |payout_holding|
-          next if payout_holding.report.user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
+          next if payout_holding.report.payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
 
           Reimbursement::PayoutHoldingService::ProcessSingle.new(payout_holding_id: payout_holding.id).run
         end
@@ -23,7 +23,7 @@ module Reimbursement
         end
 
         Reimbursement::PayoutHolding.in_transit.find_each(batch_size: 100) do |payout_holding|
-          next if payout_holding.report.user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
+          next if payout_holding.report.payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
 
           if payout_holding.canonical_transactions.any? || payout_holding.canonical_pending_transaction.present?
             payout_holding.mark_settled!

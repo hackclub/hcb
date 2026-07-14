@@ -16,9 +16,9 @@ class TransactionsController < ApplicationController
     begin
       # DEPRECATED
       @transaction = Transaction.with_deleted.find(params[:id])
-      @event = @transaction.event
-
       authorize @transaction
+
+      @event = @transaction.event
 
       render :show_deprecated
     rescue ActiveRecord::RecordNotFound => e

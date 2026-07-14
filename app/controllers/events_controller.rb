@@ -8,7 +8,7 @@ class EventsController < ApplicationController
 
   include Rails::Pagination
   before_action :set_event, except: [:index]
-  before_action :set_transaction_filters, only: [:transactions, :ledger]
+  before_action :set_transaction_filters, only: [:transactions, :transactions_list, :ledger]
   before_action except: [:show, :index] do
     render_back_to_tour @organizer_position, :welcome, event_path(@event)
   end
@@ -166,7 +166,7 @@ class EventsController < ApplicationController
     end
   end
 
-  def ledger
+  def transactions_list
     begin
       authorize @event
     rescue Pundit::NotAuthorizedError
@@ -642,11 +642,103 @@ class EventsController < ApplicationController
 
   end
 
-  def transfers
+  def payments
     authorize @event
+    params[:q] ||= params[:search]
 
     # The search query name was historically `search`. It has since been renamed
     # to `q`. This following line retains backwards compatibility.
+    @payments = @event.payments.includes(:payee)
+    @ach_transfers = @event.ach_transfers.where(payment_attempt: nil)
+    @paypal_transfers = @event.paypal_transfers
+    @wires = @event.wires.where(payment_attempt: nil)
+    @wise_transfers = @event.wise_transfers.where(payment_attempt: nil)
+    @checks = @event.checks.includes(:lob_address)
+    @increase_checks = @event.increase_checks.where(payment_attempt: nil)
+    @disbursements = @event.outgoing_disbursements.includes(:destination_event)
+
+    @disbursements = @disbursements.not_card_grant_related
+
+    @stats = {
+      deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.deposited.sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.map(&:usd_amount_cents).compact.sum + @wise_transfers.deposited.map(&:usd_amount_cents_or_quoted).compact.sum + @payments.where(aasm_state: "successful").sum(:amount_cents),
+      in_transit: @ach_transfers.in_transit.sum(:amount) + @checks.in_transit_or_in_transit_and_processed.sum(:amount) + @increase_checks.in_transit.sum(:amount) + @disbursements.reviewing_or_processing.sum(:amount) + @paypal_transfers.approved.or(@paypal_transfers.pending).sum(:amount_cents) + @wires.approved.or(@wires.pending).map(&:usd_amount_cents).compact.sum + @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent).map(&:usd_amount_cents_or_quoted).compact.sum + @payments.where(aasm_state: %w[pending_legal_entity under_review sent]).sum(:amount_cents),
+      canceled: @ach_transfers.rejected.sum(:amount) + @checks.canceled.sum(:amount) + @increase_checks.canceled.sum(:amount) + @disbursements.rejected.sum(:amount) + @paypal_transfers.rejected.sum(:amount_cents) + @wires.rejected.map(&:usd_amount_cents).compact.sum + @wise_transfers.rejected.or(@wise_transfers.failed).map(&:usd_amount_cents_or_quoted).compact.sum + @payments.where(aasm_state: "rejected").sum(:amount_cents)
+    }
+
+    # Support legacy filter param for backward compatibility
+    params[:status] ||= params[:filter] if params[:filter].present? && params[:status].blank?
+
+    # Apply status filter
+    @ach_transfers = @ach_transfers.in_transit if params[:status] == "in_transit"
+    @ach_transfers = @ach_transfers.deposited if params[:status] == "deposited"
+    @ach_transfers = @ach_transfers.rejected if params[:status] == "canceled"
+    @ach_transfers = @ach_transfers.search_recipient(params[:q]) if params[:q].present?
+
+    @checks = @checks.in_transit_or_in_transit_and_processed if params[:status] == "in_transit"
+    @checks = @checks.deposited if params[:status] == "deposited"
+    @checks = @checks.canceled if params[:status] == "canceled"
+    @checks = @checks.search_recipient(params[:q]) if params[:q].present?
+
+    @increase_checks = @increase_checks.in_transit if params[:status] == "in_transit"
+    @increase_checks = @increase_checks.deposited if params[:status] == "deposited"
+    @increase_checks = @increase_checks.canceled if params[:status] == "canceled"
+    @increase_checks = @increase_checks.search_recipient(params[:q]) if params[:q].present?
+
+    @disbursements = @disbursements.reviewing_or_processing if params[:status] == "in_transit"
+    @disbursements = @disbursements.fulfilled if params[:status] == "deposited"
+    @disbursements = @disbursements.rejected if params[:status] == "canceled"
+    @disbursements = @disbursements.search_name(params[:q]) if params[:q].present?
+
+    @paypal_transfers = @paypal_transfers.approved.or(@paypal_transfers.pending) if params[:status] == "in_transit"
+    @paypal_transfers = @paypal_transfers.deposited if params[:status] == "deposited"
+    @paypal_transfers = @paypal_transfers.rejected if params[:status] == "canceled"
+    @paypal_transfers = @paypal_transfers.search_recipient(params[:q]) if params[:q].present?
+
+    @wires = @wires.approved.or(@wires.pending) if params[:status] == "in_transit"
+    @wires = @wires.deposited if params[:status] == "deposited"
+    @wires = @wires.rejected if params[:status] == "canceled"
+    @wires = @wires.search_recipient(params[:q]) if params[:q].present?
+
+    @wise_transfers = @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent) if params[:status] == "in_transit"
+    @wise_transfers = @wise_transfers.deposited if params[:status] == "deposited"
+    @wise_transfers = @wise_transfers.rejected.or(@wise_transfers.failed) if params[:status] == "canceled"
+    @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
+
+    @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
+    @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
+    @payments = @payments.where(aasm_state: "rejected") if params[:status] == "canceled"
+    @payments = @payments.search_recipient(params[:q]) if params[:q].present?
+
+    # Apply transfer type filter
+    all_transfers = [@increase_checks, @checks, @ach_transfers, @disbursements, @paypal_transfers, @wires, @wise_transfers, @payments]
+
+    case params[:transfer_type]
+    when "ach"
+      all_transfers = [@ach_transfers]
+    when "mailed_check"
+      all_transfers = [@increase_checks, @checks]
+    when "wise_transfer"
+      all_transfers = [@wise_transfers]
+    when "wire_transfer"
+      all_transfers = [@wires]
+    when "hcb_transfer"
+      all_transfers = [@disbursements]
+    when "paypal"
+      all_transfers = [@paypal_transfers]
+    when "payment"
+      all_transfers = [@payments]
+    end
+
+    @transfers = Kaminari.paginate_array(all_transfers.flatten.sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(params[:per] || 100)
+
+    @filter_options = transfer_filter_options
+    helpers.validate_filter_options(@filter_options, params)
+    @has_filter = helpers.check_filters?(@filter_options, params)
+  end
+
+  def transfers
+    authorize @event
+
     params[:q] ||= params[:search]
 
     @ach_transfers = @event.ach_transfers
@@ -741,7 +833,7 @@ class EventsController < ApplicationController
     @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && !@event.demo_mode? && @event.plan.promotions_enabled?
 
     # I'm so sorry, this is awful & temporary
-    @is_argosy = @event.plan.is_a?(Event::Plan::Argosy2025)
+    @is_argosy = @event.plan.is_a?(Event::Plan::Argosy2025) || @event.plan.is_a?(Event::Plan::Argosy2026)
   end
 
   def reimbursements
@@ -1137,11 +1229,72 @@ class EventsController < ApplicationController
     redirect_to event_path(@event)
   end
 
-  def books
+  def ledger
     authorize @event
-
+    @per = params[:per] || 25
     @ledger = @event.ledger
-    @items = @ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page])
+
+    query = []
+
+    query << { memo: { "$search": params[:q] } } if params[:q].present?
+
+    if @direction.present? || @minimum_amount.present? || @maximum_amount.present?
+      if @direction == "revenue"
+        query << { amount_cents: { "$gt": 0 } }
+      elsif @direction == "expenses"
+        query << { amount_cents: { "$lt": 0 } }
+      end
+
+      if @minimum_amount.present?
+        query << { "$or": [{ amount_cents: { "$gte": @minimum_amount.cents } }, { amount_cents: { "$lte": -@minimum_amount.cents } }] }
+      end
+
+      if @maximum_amount.present?
+        # Multiple operators on one field are AND-combined: |amount| <= max
+        query << { amount_cents: { "$lte": @maximum_amount.cents, "$gte": -@maximum_amount.cents } }
+      end
+    end
+
+    if @missing_receipts
+      query << { receipt_count: { "$eq": 0 } }
+      query << { receipt_required: { "$eq": true } }
+      query << { marked_no_or_lost_receipt_at: { "$eq": nil } }
+    end
+
+    query << { datetime: { "$gte": @start_date.to_date } } if @start_date.present?
+    # Whole-day inclusive end bound, matching the old transactions page
+    query << { datetime: { "$lt": @end_date.to_date.next_day } } if @end_date.present?
+
+    query << { author: { "$eq": @user.slug } } if @user.present?
+
+    if @type.present?
+      linked_object_type = {
+        "ach_transfer"           => { "$eq": "AchTransfer" },
+        "mailed_check"           => { "$or": [{ "$eq": "Check" }, { "$eq": "IncreaseCheck" }] },
+        "hcb_transfer"           => { "$or": [{ "$eq": "Disbursement::Outgoing" }, { "$eq": "Disbursement::Incoming" }] },
+        "card_charge"            => { "$eq": "CardCharge" },
+        "check_deposit"          => { "$eq": "CheckDeposit" },
+        "donation"               => { "$eq": "Donation" },
+        "invoice"                => { "$eq": "Invoice" },
+        "fiscal_sponsorship_fee" => { "$eq": "BankFee" },
+        "reimbursement"          => { "$eq": "Reimbursement::ExpensePayout" },
+        "wire"                   => { "$eq": "Wire" },
+        "paypal_transfer"        => { "$eq": "PaypalTransfer" },
+        "wise_transfer"          => { "$eq": "WiseTransfer" }
+      }[@type]
+
+      query << { linked_object_type: }
+    end
+
+    # To-do: add filtering for merchant and category
+
+    @items = Ledger::Query.new({ "$and": query }).execute(ledgers: [@ledger])
+
+    @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id)) if @tag&.id.present?
+
+    @items = @items.page(params[:page]).per(@per)
+  rescue Pundit::NotAuthorizedError
+    return head :not_found
   end
 
   private

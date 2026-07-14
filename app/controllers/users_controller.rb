@@ -150,6 +150,10 @@ class UsersController < ApplicationController
 
   def edit_payout
     authorize @user
+
+    @legal_entities = @user.legal_entities
+    @legal_entity = @legal_entities.find_by(id: params[:legal_entity_id] || session[:legal_entity_id]) || @user.personal_legal_entity
+    session[:legal_entity_id] = @legal_entity.id
   end
 
   def edit_featurepreviews
@@ -330,7 +334,6 @@ class UsersController < ApplicationController
     @user.assign_attributes(user_params)
 
     payout_method_type = params.dig(:user, :payout_method_type)
-    update_payout_method = payout_method_type.present? && @user.can_update_payout_method?
 
     if @user.use_two_factor_authentication_changed?
       return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
@@ -384,13 +387,19 @@ class UsersController < ApplicationController
       return redirect_back_or_to edit_user_path(@user)
     end
 
+    if payout_method_type.present?
+      @legal_entity = @user.legal_entities.find_by(id: params[:legal_entity_id]) || @user.personal_legal_entity
+      session[:legal_entity_id] = @legal_entity.id if params[:legal_entity_id].present?
+    end
+
     payout_update = nil
     saved = ActiveRecord::Base.transaction do
       user_ok = @user.save
       payout_ok = true
-      if update_payout_method
+      if payout_method_type.present?
         payout_update = LegalEntity::PayoutMethodService::Update.new(
           user: @user,
+          legal_entity: @legal_entity,
           details_type: payout_method_type,
           details_attrs: payout_method_details_params
         )
@@ -432,6 +441,8 @@ class UsersController < ApplicationController
 
       if payout_update&.error_messages&.any?
         flash.now[:error] = payout_update.error_messages.to_sentence
+        @legal_entity ||= @user.personal_legal_entity
+        @legal_entities = @user.legal_entities
         render :edit_payout, status: :unprocessable_entity
         return
       end
@@ -554,49 +565,17 @@ class UsersController < ApplicationController
 
 
   def payout_method_details_params
-    return {} unless @user.can_update_payout_method?
+    details_class = LegalEntity::PayoutMethod.details_class_for(params.dig(:user, :payout_method_type))
+    return {} unless details_class
 
-    permitted =
-      case params.dig(:user, :payout_method_type)
-      when LegalEntity::PayoutMethod::Check.name
-        params.require(:user).permit(payout_method_attributes: [
-                                       :address_line1,
-                                       :address_line2,
-                                       :address_city,
-                                       :address_state,
-                                       :address_postal_code,
-                                       :address_country
-                                     ])[:payout_method_attributes]
-      when LegalEntity::PayoutMethod::Wire.name
-        params.require(:user).permit(payout_method_wire: [
-          :address_line1,
-          :address_line2,
-          :address_city,
-          :address_state,
-          :address_postal_code,
-          :recipient_country,
-          :recipient_name,
-          :bic_code,
-          :account_number
-        ] + LegalEntity::PayoutMethod::Wire.recipient_information_accessors)[:payout_method_wire]
-      when LegalEntity::PayoutMethod::WiseTransfer.name
-        params.require(:user).permit(payout_method_wise_transfer: [
-          :address_line1,
-          :address_line2,
-          :address_city,
-          :address_state,
-          :address_postal_code,
-          :recipient_country,
-          :currency,
-        ] + LegalEntity::PayoutMethod::WiseTransfer.recipient_information_accessors)[:payout_method_wise_transfer]
-      when LegalEntity::PayoutMethod::AchTransfer.name
-        params.require(:user).permit(payout_method_attributes: [
-                                       :account_number,
-                                       :routing_number
-                                     ])[:payout_method_attributes]
+    key =
+      case details_class.name
+      when LegalEntity::PayoutMethod::Wire.name then :payout_method_wire
+      when LegalEntity::PayoutMethod::WiseTransfer.name then :payout_method_wise_transfer
+      else :payout_method_attributes
       end
 
-    permitted || {}
+    params.require(:user).permit(key => details_class.permitted_attributes)[key] || {}
   end
 
 end

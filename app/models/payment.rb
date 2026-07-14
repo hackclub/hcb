@@ -25,6 +25,8 @@
 #
 class Payment < ApplicationRecord
   include AASM
+  include Hashid::Rails
+  include PgSearch::Model
   include Receiptable
   include Commentable
   has_paper_trail
@@ -34,10 +36,16 @@ class Payment < ApplicationRecord
 
   has_one :event, through: :payee
   has_one :legal_entity, through: :payee
-  has_many :attempts, class_name: "Payment::Attempt"
+  has_many :attempts, -> { order(created_at: :desc) }, class_name: "Payment::Attempt", inverse_of: :payment
   has_one :successful_attempt, -> { successful }, class_name: "Payment::Attempt", inverse_of: :payment
 
   monetize :amount_cents, with_model_currency: :currency
+
+  pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }
+  pg_search_scope :search_purpose_and_event, against: [:purpose], associated_against: { event: [:name] }
+
+  scope :successful_or_sent, -> { where(aasm_state: ["successful", "sent"]) }
+  scope :pending_or_under_review, -> { where(aasm_state: ["pending_legal_entity", "under_review"]) }
 
   aasm timestamps: true do
     state :pending_legal_entity, initial: true # We're waiting on the LE to complete tasks before payment can be sent
@@ -67,9 +75,9 @@ class Payment < ApplicationRecord
   end
 
   after_create do
-    if legal_entity.complete? && legal_entity.default_payout_method.present?
+    if legal_entity&.payable? && legal_entity.default_payout_method.present?
       create_payment_attempt!
-    elsif legal_entity.complete?
+    elsif legal_entity&.payable?
       PaymentMailer.with(payment: self, initial: true).missing_payout_method.deliver_later
     else
       PaymentMailer.with(payment: self).missing_tax_information.deliver_later
@@ -80,8 +88,32 @@ class Payment < ApplicationRecord
     create_payment_attempt!
   end
 
+  def payout
+    attempts.first&.payout
+  end
+
+  def popover_path
+    Rails.application.routes.url_helpers.payment_path(id: hashid, frame: true)
+  end
+
   def estimate_usd_amount_cents
     MoneyService.convert_to_usd(amount_cents, currency)
+  end
+
+  def on_legal_entity_assigned
+    on_legal_entity_payable if legal_entity.payable?
+  end
+
+  def on_legal_entity_payable
+    if legal_entity.default_payout_method.present?
+      create_payment_attempt!
+    else
+      PaymentMailer.with(payment: self, initial: false).missing_payout_method.deliver_later
+    end
+  end
+
+  def on_default_payout_method_created
+    create_payment_attempt! if legal_entity.payable?
   end
 
   def receipt_required?
@@ -90,6 +122,26 @@ class Payment < ApplicationRecord
 
   def marked_no_or_lost_receipt_at
     nil
+  end
+
+
+  def state_color
+    return "warning" if ["under_review", "pending_legal_entity"].include?(aasm_state)
+    return "success" if aasm_state == "successful"
+    return "error" if aasm_state == "rejected"
+
+    "muted"
+  end
+
+  def state_text
+    return "Awaiting recipient" if pending_legal_entity?
+    return "Processing" if under_review?
+
+    return aasm_state.humanize
+  end
+
+  def memo
+    "Payment to #{payee.display_name} for #{purpose}"
   end
 
   private

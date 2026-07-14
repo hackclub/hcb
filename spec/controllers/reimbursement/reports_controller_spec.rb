@@ -186,4 +186,91 @@ RSpec.describe Reimbursement::ReportsController do
       end
     end
   end
+
+  describe "#update_payout_method" do
+    def ach(account: "12345678")
+      LegalEntity::PayoutMethod::AchTransfer.new(account_number: account, routing_number: "021000021")
+    end
+
+    it "changes a draft report's payout method to one of the user's methods" do
+      user = create(:user)
+      default_pm = user.personal_legal_entity.payout_methods.create!(default: true, details: ach)
+      other_pm = user.personal_legal_entity.payout_methods.create!(default: false, details: ach(account: "99999999"))
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft)
+      expect(report.legal_entity_payout_method).to eq(default_pm)
+
+      create_session(user, verified: true)
+
+      post(:update_payout_method, params: { report_id: report.id, legal_entity_payout_method_id: other_pm.id })
+
+      expect(report.reload.legal_entity_payout_method).to eq(other_pm)
+    end
+
+    it "converts the report and its expenses when switching to a different-currency method" do
+      stub_request(:get, /api\.column\.com\/institutions/)
+        .to_return(status: 200, body: { country_code: "GB" }.to_json, headers: { "Content-Type" => "application/json" })
+
+      user = create(:user)
+      user.personal_legal_entity.payout_methods.create!(default: true, details: ach)
+      wise = user.personal_legal_entity.payout_methods.create!(
+        default: false,
+        details: LegalEntity::PayoutMethod::WiseTransfer.new(
+          address_line1: "1 Main St", address_city: "London", address_state: "England",
+          address_postal_code: "SW1A 1AA", recipient_country: 1, currency: "GBP"
+        )
+      )
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft)
+
+      create_session(user, verified: true)
+
+      post(:update_payout_method, params: { report_id: report.id, legal_entity_payout_method_id: wise.id })
+
+      expect(report.reload.currency).to eq("GBP")
+      expect(report.legal_entity_payout_method).to eq(wise)
+    end
+
+    it "refuses to assign a payout method belonging to another user" do
+      user = create(:user)
+      own_pm = user.personal_legal_entity.payout_methods.create!(default: true, details: ach)
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft)
+
+      stranger = create(:user)
+      stranger_pm = stranger.personal_legal_entity.payout_methods.create!(default: true, details: ach)
+
+      create_session(user, verified: true)
+
+      post(:update_payout_method, params: { report_id: report.id, legal_entity_payout_method_id: stranger_pm.id })
+
+      expect(flash[:error]).to eq("Payout method not found.")
+      expect(report.reload.legal_entity_payout_method).to eq(own_pm)
+    end
+
+    it "refuses to assign an archived payout method" do
+      user = create(:user)
+      default_pm = user.personal_legal_entity.payout_methods.create!(default: true, details: ach)
+      archived = user.personal_legal_entity.payout_methods.create!(default: false, archived: true, details: ach(account: "99999999"))
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft)
+
+      create_session(user, verified: true)
+
+      post(:update_payout_method, params: { report_id: report.id, legal_entity_payout_method_id: archived.id })
+
+      expect(flash[:error]).to eq("Payout method not found.")
+      expect(report.reload.legal_entity_payout_method).to eq(default_pm)
+    end
+
+    it "is not authorized once the report is no longer a draft" do
+      user = create(:user)
+      default_pm = user.personal_legal_entity.payout_methods.create!(default: true, details: ach)
+      other_pm = user.personal_legal_entity.payout_methods.create!(default: false, details: ach(account: "99999999"))
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :submitted)
+
+      create_session(user, verified: true)
+
+      post(:update_payout_method, params: { report_id: report.id, legal_entity_payout_method_id: other_pm.id })
+
+      expect(flash[:error]).to match(/not authorized/i)
+      expect(report.reload.legal_entity_payout_method).to eq(default_pm)
+    end
+  end
 end

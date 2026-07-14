@@ -61,7 +61,17 @@ module UsersHelper
       selected: selected == :reimbursements
     }
 
-    if current_user&.jobs&.any?
+    if current_user&.payments_received&.any?
+      items << {
+        name: "Pay",
+        path: my_pay_path,
+        icon: "payment",
+        tooltip: "See payments made to you",
+        selected: selected == :pay
+      }
+    end
+
+    if current_user&.jobs&.any? # Deprecated
       items << {
         name: "Pay",
         path: my_payroll_path,
@@ -160,6 +170,17 @@ module UsersHelper
     options[:data] = (options[:data] || {}).merge(behavior: "mention", mention_value: "@#{user.email}") if click_to_mention && user
 
     image_tag(src, options.merge(loading: "lazy", alt:, width: size, height: size, class: klass))
+  end
+
+  def avatar_for_email(email, **options)
+    user = User.find_by(email:)
+    if user
+      avatar_for(user, **options)
+    else
+      size = options[:size] || 24
+      src = gravatar_url(email, nil, nil, size * 2)
+      image_tag(src, options.merge(loading: "lazy", alt: "", class: ["rounded-full", "shrink-none", options[:class]].compact.join(" ")))
+    end
   end
 
   def user_mention(user, default_name: "No User", click_to_mention: false, comment_mention: false, default_image: nil, **options)

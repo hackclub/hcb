@@ -106,6 +106,7 @@ class User < ApplicationRecord
   has_many :api_tokens
   has_many :email_updates, class_name: "User::EmailUpdate", inverse_of: :user
   has_many :email_updates_created, class_name: "User::EmailUpdate", inverse_of: :updated_by
+  has_many :ledger_items, class_name: "Ledger::Item", inverse_of: :author
 
   has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :affiliable, as: :affiliable
   accepts_nested_attributes_for :affiliations
@@ -181,6 +182,8 @@ class User < ApplicationRecord
   has_one :person_legal_entity_user, -> { where(legal_entity_id: LegalEntity.where(entity_type: :person).select(:id)) }, class_name: "LegalEntityUser", inverse_of: :user
   has_one :personal_legal_entity, through: :person_legal_entity_user, source: :legal_entity
   has_one :default_payout_method, through: :personal_legal_entity
+
+  has_many :payments_received, through: :legal_entities, source: :payments
 
   has_encrypted :birthday, type: :date
 
@@ -281,8 +284,11 @@ class User < ApplicationRecord
   # a auditor is an admin who can only view things.
   # auditor? takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
-  def auditor?
-    ["auditor", "admin", "superadmin"].include?(self.access_level) && !self.pretend_is_not_admin
+  def auditor?(override_pretend: false)
+    has_auditor_role = ["auditor", "admin", "superadmin"].include?(self.access_level)
+    return has_auditor_role if override_pretend
+
+    has_auditor_role && !self.pretend_is_not_admin
   end
 
   # admin? by default, takes into account an admin user's preference
@@ -582,14 +588,6 @@ class User < ApplicationRecord
     admin_override_pretend? && !use_two_factor_authentication
   end
 
-  def can_update_payout_method?
-    return true if default_payout_method&.details.nil?
-    return true unless default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
-    return false if reimbursement_reports.reimbursement_requested.any?
-    return false if reimbursement_reports.joins(:payout_holding).where({ payout_holding: { aasm_state: :pending } }).any?
-
-    true
-  end
 
   def managed_active_teenagers_count
     User.active_teenager.joins(organizer_positions: :event).where(events: { id: managed_events }).distinct.count
@@ -658,6 +656,14 @@ class User < ApplicationRecord
 
   def unverified?
     !verified?
+  end
+
+  def pending_payments_received
+    payments_received.pending_legal_entity + unassociated_payments_received
+  end
+
+  def unassociated_payments_received
+    Payment.pending_legal_entity.joins(:payee).where(payee: { email:, legal_entity: nil })
   end
 
   private
