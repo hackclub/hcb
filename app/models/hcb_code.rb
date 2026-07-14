@@ -58,7 +58,7 @@ class HcbCode < ApplicationRecord
   belongs_to :event, optional: true
   belongs_to :subledger, optional: true
 
-  belongs_to :ledger_item, class_name: "Ledger::Item", optional: true
+  belongs_to :ledger_item, class_name: "Ledger::Item", optional: true, touch: true
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }
   scope :mapped, -> { where.not(event_id: nil).or(where.not(subledger_id: nil)) }

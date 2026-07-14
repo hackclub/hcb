@@ -39,6 +39,9 @@ class Ledger
   class Item < ApplicationRecord
     self.table_name = "ledger_items"
 
+    include PgSearch::Model
+    pg_search_scope :search_memo, against: [:memo], ranked_by: "ledger_items.datetime"
+
     include Hashid::Rails
     has_paper_trail
 
@@ -48,6 +51,10 @@ class Ledger
     has_one :hcb_code, class_name: "HcbCode", required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     belongs_to :linked_object, polymorphic: true, optional: true
     belongs_to :author, class_name: "User", optional: true
+
+    # TODO: THIS IS SO TEMPORARY REMOVE ASAP
+    has_many :comments, -> { order(:created_at) }, as: :commentable, inverse_of: :commentable, through: :hcb_code
+    has_many :receipts, as: :receiptable, after_add: :update_task_completion, after_remove: :update_task_completion, through: :hcb_code
 
     has_many :ledger_mappings, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
     has_one :primary_mapping, -> { where(on_primary_ledger: true) }, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
@@ -72,6 +79,23 @@ class Ledger
     after_touch :map!
 
     scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
+
+    # Substring identifiers (case-insensitive) in the memo that indicate an
+    # account-verification micro-deposit. Most use "ACCTVERIFY"; a few companies
+    # use other variants. Mirrors CanonicalTransaction#likely_account_verification_related?.
+    ACCOUNT_VERIFICATION_MEMO_MATCHES = %w[acctverify verify validation sdv-vrfy amts:].freeze
+
+    # Account-verification micro-deposit amounts prove ownership of a linked
+    # external account, so they're redacted from non-organizer (transparency)
+    # viewers, matching the legacy transactions page. These arrive as raw bank
+    # transactions (no linked object) — the Ledger-native equivalent of the
+    # legacy HCB-000- code, avoiding a dependency on the old transaction engine.
+    def likely_account_verification_related?
+      return false unless amount_cents.abs < 100
+      return false unless linked_object_type.nil?
+
+      ACCOUNT_VERIFICATION_MEMO_MATCHES.any? { |s| memo.downcase.include?(s) }
+    end
 
     # This is defined because the Receiptable concern overrides the receipt_required? method defined by ActiveRecord
     def receipt_required?
@@ -104,16 +128,11 @@ class Ledger
     end
 
     def calculate_system_memo
-      # Ledger items created from a raw transaction (e.g. by
-      # CanonicalPendingTransaction's after_create) may not have a linked
-      # object yet. Return nil so refresh! keeps the existing memo.
-      return nil if linked_object.nil? && linked_object_type != "CheckDeposit"
-
       case linked_object_type
       when "Invoice"
         "Invoice to #{linked_object.smart_memo}"
       when "Donation"
-        "Donation from #{linked_object.smart_memo}" # removed the logic for refunded donations b/c we dont want memo to change frequently
+        "Donation from #{linked_object.smart_memo}"
       when "AchTransfer"
         "ACH to #{linked_object.smart_memo}"
       when "Wire"
@@ -215,9 +234,6 @@ class Ledger
       association(:primary_mapping).reset
       association(:primary_ledger).reset
 
-      # THIS IS TEMPORARY REMOVE ASAP
-      self.linked_object = hcb_code&.linked_object unless linked_object.present?
-
       self.amount_cents = calculate_amount_cents
       self.author = calculate_author
       self.comment_count = comments.count
@@ -263,16 +279,6 @@ class Ledger
       return :negative if amount_cents.negative?
 
       :zero
-    end
-
-    # TODO: get rid of this method once CardCharge is created as an LO
-    def stripe_cardholder
-      canonical_pending_transactions.first.try(:stripe_cardholder) || canonical_transactions.first.try(:stripe_cardholder)
-    end
-
-    # TODO: get rid of this method once CardCharge is created as an LO
-    def stripe_merchant
-      canonical_pending_transactions.first&.raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_data") || canonical_transactions.first&.transaction_source&.stripe_transaction&.[]("merchant_data")
     end
 
     private
