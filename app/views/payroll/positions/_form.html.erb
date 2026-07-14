@@ -16,7 +16,7 @@
         manual_title: "Manual", manual_subtitle: "Tax forms and payment details entered directly" %>
 
   <%= form_with(url: event_payroll_positions_path(event_id: event.slug), scope: :contractor, local: true) do |form| %>
-    <%= form.hidden_field :payee_id, value: payee&.public_id %>
+    <%= form.hidden_field :payee_id, value: payee&.hashid %>
     <%= hidden_field_tag "manual", (payee&.managed? || false).to_s, data: { "manual-payee-target": "manualField" } %>
 
     <div data-scroll-seek-target="section">

@@ -15,7 +15,7 @@ class PaymentsController < ApplicationController
   def new
     authorize @event, policy_class: PaymentPolicy
     @payment = Payment.new
-    @payee = @event.payees.not_archived.find_by_public_id(params[:payee_id]) if params[:payee_id].present?
+    @payee = @event.payees.not_archived.find_by_hashid(params[:payee_id]) if params[:payee_id].present?
     @recent_payments = @payee.payments.order(created_at: :desc).limit(5) if @payee
     render layout: "transfer"
   end
@@ -23,7 +23,7 @@ class PaymentsController < ApplicationController
   def create
     authorize @event, policy_class: PaymentPolicy
 
-    @payee = @event.payees.not_archived.find_by_public_id!(payment_params[:payee_id])
+    @payee = @event.payees.not_archived.find_by_hashid!(payment_params[:payee_id])
     @legal_entity = @payee.legal_entity
     @payment = Payment.new(payment_params.except(:payee_id, :file).merge(creator: current_user, payee: @payee, currency: "USD"))
 

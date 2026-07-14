@@ -18,14 +18,14 @@ module Payroll
 
     def new
       authorize @event, policy_class: Payroll::PositionPolicy
-      @payee = @event.payees.not_archived.find_by_public_id(params[:payee_id]) if params[:payee_id].present?
+      @payee = @event.payees.not_archived.find_by_hashid(params[:payee_id]) if params[:payee_id].present?
       render layout: "transfer"
     end
 
     def create
       authorize @event, policy_class: Payroll::PositionPolicy
 
-      @payee = @event.payees.not_archived.find_by_public_id!(position_params[:payee_id])
+      @payee = @event.payees.not_archived.find_by_hashid!(position_params[:payee_id])
       @position = @payee.payroll_positions.build(
         title: position_params[:title],
         rate_cents: Monetize.parse(position_params[:rate]).cents,
