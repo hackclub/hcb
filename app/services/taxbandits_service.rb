@@ -52,6 +52,7 @@ class TaxbanditsService
         faraday.response :raise_error
         faraday.adapter Faraday.default_adapter
         faraday.headers["Authorization"] = "Bearer #{taxbandits_access_token}"
+        faraday.headers["Referer"] = Credentials.fetch(:TAXBANDITS, :DOMAIN_ID)
         faraday.headers["Content-Type"] = "application/json"
       end
     end
