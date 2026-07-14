@@ -189,6 +189,25 @@ RSpec.describe Ledger::Query, type: :model do
         expect(result.to_sql).to match(/"memo" IS NOT NULL/)
       end
     end
+
+    context "$ne / $nin on a nullable column (MongoDB null semantics)" do
+      # linked_object_type is nullable and NULL for every shared item. MongoDB's
+      # $ne/$nin match documents where the field is missing/null, unlike a bare
+      # SQL != / NOT IN, which drops NULL rows.
+      before { item_b.update_columns(linked_object_type: "Invoice") }
+
+      it "$ne includes rows where the column is NULL" do
+        result = execute_query({ linked_object_type: { "$ne" => "Invoice" } })
+
+        expect(result.pluck(:id)).to match_array(ids_of(item_a, item_c, item_d, item_e, item_f, item_g))
+      end
+
+      it "$nin includes rows where the column is NULL" do
+        result = execute_query({ linked_object_type: { "$nin" => ["Invoice"] } })
+
+        expect(result.pluck(:id)).to match_array(ids_of(item_a, item_c, item_d, item_e, item_f, item_g))
+      end
+    end
   end
 
   describe "logical operators" do
@@ -362,6 +381,16 @@ RSpec.describe Ledger::Query, type: :model do
     it "raises when $or is given a hash instead of an array" do
       query = { "$or" => { amount_cents: 100 } }
       expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /\$or.*array/i)
+    end
+
+    it "raises on an array operand for $eq (use $in for membership)" do
+      query = { amount_cents: { "$eq" => [100, 300] } }
+      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /array/i)
+    end
+
+    it "raises on an array operand for implicit equality" do
+      query = { amount_cents: [100, 300] }
+      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /array/i)
     end
   end
 

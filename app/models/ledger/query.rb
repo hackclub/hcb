@@ -157,7 +157,10 @@ class Ledger
         when "$in"
           return relation.where(key => operand)
         when "$nin"
-          return relation.where.not(key => operand)
+          # NOT IN drops NULL rows; MongoDB's $nin matches them, so re-include.
+          return relation.where.not(key => operand).or(relation.where(key => nil))
+        else
+          raise Ledger::Query::Error.new("#{operator} does not support array operands (use $in / $nin)")
         end
       end
 
@@ -169,7 +172,12 @@ class Ledger
       when "$eq"
         relation.where(key => operand)
       when "$ne"
-        relation.where.not(key => operand)
+        if operand.nil?
+          relation.where.not(key => nil)
+        else
+          # != drops NULL rows; MongoDB's $ne matches them, so re-include.
+          relation.where.not(key => operand).or(relation.where(key => nil))
+        end
       else
         raise Ledger::Query::Error.new("Unsupported comparison operator: #{operator}")
       end
