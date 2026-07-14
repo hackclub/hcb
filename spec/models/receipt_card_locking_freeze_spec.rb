@@ -13,7 +13,7 @@ RSpec.describe Receipt, type: :model do
   describe "freezing receipt_resolved_at" do
     it "freezes receipt_resolved_at when a receipt is attached to a chargeable, due charge" do
       hc = create_settled_card_charge(user:, settled_at: 5.days.ago)
-      hc.update!(receipt_settled_at: 5.days.ago, receipt_due_at: 5.days.ago + 7.days)
+      hc.update!(card_charge_settled_at: 5.days.ago, receipt_due_at: 5.days.ago + 7.days)
 
       attach_receipt(hc, uploaded_by: user)
 
@@ -22,7 +22,7 @@ RSpec.describe Receipt, type: :model do
 
     it "freezes receipt_resolved_at at the mark time when marked no/lost after the deadline" do
       hc = create_settled_card_charge(user:, settled_at: 12.days.ago)
-      hc.update!(receipt_settled_at: 12.days.ago, receipt_due_at: 12.days.ago + 7.days)
+      hc.update!(card_charge_settled_at: 12.days.ago, receipt_due_at: 12.days.ago + 7.days)
 
       hc.no_or_lost_receipt!
 
@@ -31,7 +31,7 @@ RSpec.describe Receipt, type: :model do
 
     it "resets receipt_resolved_at to nil when the last receipt is destroyed" do
       hc = create_settled_card_charge(user:, settled_at: 5.days.ago)
-      hc.update!(receipt_settled_at: 5.days.ago, receipt_due_at: 5.days.ago + 7.days)
+      hc.update!(card_charge_settled_at: 5.days.ago, receipt_due_at: 5.days.ago + 7.days)
       receipt = attach_receipt(hc, uploaded_by: user)
       expect(hc.reload.receipt_resolved_at).to be_present
 
@@ -48,7 +48,7 @@ RSpec.describe Receipt, type: :model do
 
     it "unlocks the card on the receipt-upload path when the last overdue charge is resolved" do
       hc = create_settled_card_charge(user:, settled_at: 10.days.ago)
-      hc.update!(receipt_settled_at: 10.days.ago, receipt_due_at: 1.day.ago) # overdue
+      hc.update!(card_charge_settled_at: 10.days.ago, receipt_due_at: 1.day.ago) # overdue
       user.update!(cards_locked: true)
 
       perform_enqueued_jobs(only: User::UpdateCardLockingJob) { attach_receipt(hc, uploaded_by: user) }
@@ -58,9 +58,9 @@ RSpec.describe Receipt, type: :model do
 
     it "does NOT unlock while another charge is still overdue" do
       overdue = create_settled_card_charge(user:, settled_at: 12.days.ago)
-      overdue.update!(receipt_settled_at: 12.days.ago, receipt_due_at: 2.days.ago)
+      overdue.update!(card_charge_settled_at: 12.days.ago, receipt_due_at: 2.days.ago)
       target = create_settled_card_charge(user:, settled_at: 11.days.ago)
-      target.update!(receipt_settled_at: 11.days.ago, receipt_due_at: 1.day.ago)
+      target.update!(card_charge_settled_at: 11.days.ago, receipt_due_at: 1.day.ago)
       user.update!(cards_locked: true)
 
       perform_enqueued_jobs(only: User::UpdateCardLockingJob) { attach_receipt(target, uploaded_by: user) }
@@ -72,7 +72,7 @@ RSpec.describe Receipt, type: :model do
   describe "immutability of a resolved receipt_resolved_at" do
     it "leaves receipt_resolved_at unchanged across re-materialization and the sweep" do
       hc = create_settled_card_charge(user:, settled_at: 5.days.ago)
-      hc.update!(receipt_settled_at: 5.days.ago, receipt_due_at: 5.days.ago + 7.days)
+      hc.update!(card_charge_settled_at: 5.days.ago, receipt_due_at: 5.days.ago + 7.days)
       attach_receipt(hc, uploaded_by: user)
       resolved_at = hc.reload.receipt_resolved_at
       expect(resolved_at).to be_present

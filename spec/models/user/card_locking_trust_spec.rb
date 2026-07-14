@@ -67,7 +67,7 @@ RSpec.describe User, type: :model do
   end
 
   describe "#last_settled_charge_at" do
-    it "returns the max receipt_settled_at across the cardholder's charges" do
+    it "returns the max card_charge_settled_at across the cardholder's charges" do
       create_settled_card_charge(user:, settled_at: 20.days.ago, uploaded_at: 19.days.ago)
       create_settled_card_charge(user:, settled_at: 5.days.ago, uploaded_at: 4.days.ago)
       materialize_all

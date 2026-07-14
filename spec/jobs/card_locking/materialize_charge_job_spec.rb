@@ -13,7 +13,7 @@ RSpec.describe CardLocking::MaterializeChargeJob do
     described_class.perform_now(hcb_code_id: hc.id)
 
     hc.reload
-    expect(hc.receipt_settled_at).to be_present
+    expect(hc.card_charge_settled_at).to be_present
     expect(hc.receipt_due_at).to be_present
   end
 

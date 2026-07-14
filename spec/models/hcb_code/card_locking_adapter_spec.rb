@@ -41,12 +41,12 @@ RSpec.describe HcbCode do
   end
 
   describe "#materialize_card_locking!" do
-    it "sets receipt_settled_at and receipt_due_at on a fresh untrusted charge" do
+    it "sets card_charge_settled_at and receipt_due_at on a fresh untrusted charge" do
       hcb_code = create_settled_card_charge(user:, settled_at: 1.day.ago)
 
       hcb_code.materialize_card_locking!(now:, trusted: false)
 
-      expect(hcb_code.receipt_settled_at).to be_within(1.second).of(1.day.ago)
+      expect(hcb_code.card_charge_settled_at).to be_within(1.second).of(1.day.ago)
       expect(hcb_code.receipt_due_at).to be_within(1.second).of(1.day.ago + 7.days)
       expect(hcb_code.receipt_resolved_at).to be_nil
     end
@@ -57,7 +57,7 @@ RSpec.describe HcbCode do
 
       hcb_code.materialize_card_locking!(now:, trusted: false)
 
-      expect(hcb_code.receipt_settled_at).to be_within(1.second).of(1.day.ago)
+      expect(hcb_code.card_charge_settled_at).to be_within(1.second).of(1.day.ago)
       expect(hcb_code.receipt_due_at).to be_nil
     end
 
@@ -86,16 +86,16 @@ RSpec.describe HcbCode do
       expect(hcb_code.receipt_resolved_at).to be_within(1.second).of(2.days.ago)
     end
 
-    it "does not move receipt_settled_at or receipt_resolved_at on repeated calls" do
+    it "does not move card_charge_settled_at or receipt_resolved_at on repeated calls" do
       hcb_code = create_settled_card_charge(user:, settled_at: 5.days.ago, uploaded_at: 2.days.ago)
       hcb_code.materialize_card_locking!(now:, trusted: false)
 
-      settled_at = hcb_code.receipt_settled_at
+      settled_at = hcb_code.card_charge_settled_at
       resolved_at = hcb_code.receipt_resolved_at
 
       hcb_code.materialize_card_locking!(now:, trusted: true, last_settled_charge_at: now - 1.hour)
 
-      expect(hcb_code.receipt_settled_at).to eq(settled_at)
+      expect(hcb_code.card_charge_settled_at).to eq(settled_at)
       expect(hcb_code.receipt_resolved_at).to eq(resolved_at)
     end
 
@@ -105,18 +105,18 @@ RSpec.describe HcbCode do
 
       hcb_code.materialize_card_locking!(now:, trusted: false)
 
-      expect(hcb_code.receipt_settled_at).to be_within(1.second).of(pre_enforcement_settled_at)
+      expect(hcb_code.card_charge_settled_at).to be_within(1.second).of(pre_enforcement_settled_at)
       expect(hcb_code.receipt_due_at).to be_nil
     end
 
     it "clears all three columns when the charge stops being receipt-required" do
       hcb_code = create_settled_card_charge(user:, settled_at: 5.days.ago)
-      hcb_code.update!(receipt_settled_at: 5.days.ago, receipt_due_at: 2.days.from_now, receipt_resolved_at: 1.day.ago)
+      hcb_code.update!(card_charge_settled_at: 5.days.ago, receipt_due_at: 2.days.from_now, receipt_resolved_at: 1.day.ago)
       allow(hcb_code).to receive(:receipt_required?).and_return(false)
 
       hcb_code.materialize_card_locking!(now:, trusted: false)
 
-      expect(hcb_code.receipt_settled_at).to be_nil
+      expect(hcb_code.card_charge_settled_at).to be_nil
       expect(hcb_code.receipt_due_at).to be_nil
       expect(hcb_code.receipt_resolved_at).to be_nil
     end

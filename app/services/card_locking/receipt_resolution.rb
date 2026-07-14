@@ -13,7 +13,7 @@ module CardLocking
     def on_receipt_upsert(receipt)
       charge = receipt.receiptable
       charge.materialize_card_locking! if charge.is_a?(HcbCode) && charge.card_locking_chargeable?
-      enqueue_unlock(receipt.user, notify_progress: true)
+      enqueue_unlock(cardholder_for(charge), notify_progress: true)
     end
 
     # A receipt was destroyed.
@@ -27,13 +27,27 @@ module CardLocking
       if charge.is_a?(HcbCode) && charge.card_locking_chargeable? && !charge.card_locking_resolved?
         charge.update_columns(receipt_resolved_at: nil)
       end
-      enqueue_unlock(receipt.user)
+      enqueue_unlock(cardholder_for(charge))
     end
 
     # A charge was marked as having no/lost receipt (also a resolution).
     def on_no_or_lost_receipt(charge)
       charge.materialize_card_locking! if charge.is_a?(HcbCode) && charge.card_locking_chargeable?
-      enqueue_unlock(charge.try(:author) || charge.try(:user))
+      enqueue_unlock(cardholder_for(charge))
+    end
+
+    # The cardholder whose cards lock is always the person on the charge, never
+    # the person who uploaded the receipt: an org teammate may upload it, or an
+    # unauthenticated email-link upload has no user at all (receipt.user is
+    # nullable). Resolve through the Stripe card association (the reliable path
+    # materialize_card_locking! also uses), not HcbCode#author, whose cardholder
+    # lookup keys off a stripe_transaction JSON field that is not always present.
+    # A non-card-charge receiptable has no cardholder, so this is nil and
+    # enqueue_unlock is a no-op.
+    def cardholder_for(charge)
+      return unless charge.is_a?(HcbCode)
+
+      charge.stripe_card&.stripe_cardholder&.user
     end
 
     def enqueue_unlock(user, notify_progress: false)

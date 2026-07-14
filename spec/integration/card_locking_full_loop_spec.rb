@@ -20,7 +20,7 @@ RSpec.describe "Card locking, end to end", type: :model do
       charge = create_settled_card_charge(user:, settled_at: Time.current)
       UserService::RefreshReceiptDeadlines.new(user:).run
       charge.reload
-      expect(charge.receipt_settled_at).to be_within(1.second).of(Time.current)
+      expect(charge.card_charge_settled_at).to be_within(1.second).of(Time.current)
       expect(charge.receipt_due_at).to be_within(1.second).of(Time.current + 7.days)
     end
 

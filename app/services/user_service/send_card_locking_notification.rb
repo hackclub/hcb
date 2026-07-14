@@ -27,8 +27,12 @@ module UserService
       count = @user.card_locking_outstanding_count
       return if count.zero?
 
+      # The recurring job runs every few minutes; this dedup key is the only thing
+      # that makes the digest daily. TTL is under 24h on purpose: at 23h the send
+      # time drifts a little earlier each day, guaranteeing one per calendar date.
+      # A 24h+ TTL drifts later instead and can skip a date entirely.
       key = "card_locking_digest:#{@user.id}"
-      return unless Rails.cache.write(key, true, expires_in: 25.hours, unless_exist: true)
+      return unless Rails.cache.write(key, true, expires_in: 23.hours, unless_exist: true)
 
       deliver(count:, key:)
     end
@@ -43,12 +47,12 @@ module UserService
       Rails.cache.delete(key)
       raise
     else
-      CardLocking::SendSmsJob.perform_later(user_id: @user.id, body: sms_message(count))
+      User::SendSmsJob.perform_later(user_id: @user.id, body: sms_message(count))
     end
 
     def sms_message(count)
       noun = "receipt".pluralize(count)
-      "You have #{count} #{noun} to upload. Cards that fall behind get locked. Upload them at #{CardLocking.inbox_url}."
+      "You have #{count} #{noun} to upload. Your cards will lock until you do. Upload at #{CardLocking.inbox_url}."
     end
 
   end

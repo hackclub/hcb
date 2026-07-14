@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module UserService
-  # Maintains receipt_settled_at / receipt_due_at on a cardholder's outstanding
+  # Maintains card_charge_settled_at / receipt_due_at on a cardholder's outstanding
   # charges. Idempotent; safe to run every few minutes. The slide advances as new
   # charges settle; the shortening floor (inside CardLocking::Deadline) protects
   # the pile when trust is lost.

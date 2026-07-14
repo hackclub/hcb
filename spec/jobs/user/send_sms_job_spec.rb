@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe CardLocking::SendSmsJob do
+RSpec.describe User::SendSmsJob do
   # `phone_number_verified` is force-reset to false whenever `phone_number` changes
   # (see User#on_phone_number_update), so it must be set in a separate update.
   let(:user) do

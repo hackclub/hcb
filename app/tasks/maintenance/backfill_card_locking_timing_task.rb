@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Maintenance
-  # Populates persisted card-locking timing (receipt_settled_at / receipt_due_at /
+  # Populates persisted card-locking timing (card_charge_settled_at / receipt_due_at /
   # receipt_resolved_at) for every existing relevant charge, via the idempotent
   # materializer. receipt_due_at is set only for charges settled on or after the
   # enforcement start date; older charges get settled/resolved timing (so they

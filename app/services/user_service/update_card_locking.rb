@@ -80,9 +80,10 @@ module UserService
       "Your HCB cards are locked because #{count} #{noun} #{verb} overdue. Recurring charges will also fail until you upload. Upload to unlock in seconds at #{CardLocking.inbox_url}."
     end
 
-    # A locked cardholder uploaded a receipt but still has overdue charges. Confirm
-    # the progress so the upload does not feel like it did nothing. SMS only (they
-    # just acted on their phone) and deduped so a burst of uploads does not spam.
+    # A receipt landed for a still-locked cardholder (uploaded by them or a
+    # teammate on their behalf) but overdue charges remain. Confirm the progress to
+    # the cardholder so the upload does not look like it did nothing. SMS only, and
+    # deduped so a burst of uploads does not spam.
     def notify_still_locked(now:)
       key = "card_locking_still_locked:#{@user.id}"
       return unless Rails.cache.write(key, true, expires_in: 10.minutes, unless_exist: true)
@@ -97,7 +98,7 @@ module UserService
     end
 
     def send_sms(body)
-      CardLocking::SendSmsJob.perform_later(user_id: @user.id, body:)
+      User::SendSmsJob.perform_later(user_id: @user.id, body:)
     end
 
   end

@@ -9,6 +9,6 @@ class AddCardLockingReceiptTimingIndexes < ActiveRecord::Migration[8.0]
               where: "receipt_due_at IS NOT NULL AND receipt_resolved_at IS NULL",
               name: "index_hcb_codes_on_open_receipt_due_at",
               algorithm: :concurrently
-    add_index :hcb_codes, :receipt_settled_at, algorithm: :concurrently
+    add_index :hcb_codes, :card_charge_settled_at, algorithm: :concurrently
   end
 end

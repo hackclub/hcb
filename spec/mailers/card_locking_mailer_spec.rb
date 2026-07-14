@@ -10,7 +10,7 @@ RSpec.describe CardLockingMailer, type: :mailer do
   describe "#cards_locked" do
     it "names the overdue count and avoids countdown/violation language" do
       hcb_code = create_settled_card_charge(user:, settled_at: 10.days.ago)
-      hcb_code.update!(receipt_settled_at: 10.days.ago, receipt_due_at: 1.day.ago)
+      hcb_code.update!(card_charge_settled_at: 10.days.ago, receipt_due_at: 1.day.ago)
 
       mail = described_class.cards_locked(user:)
 

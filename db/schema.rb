@@ -1425,7 +1425,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_10_000002) do
     t.datetime "marked_no_or_lost_receipt_at", precision: nil
     t.datetime "receipt_due_at"
     t.datetime "receipt_resolved_at"
-    t.datetime "receipt_settled_at"
+    t.datetime "card_charge_settled_at"
     t.text "short_code"
     t.bigint "subledger_id"
     t.datetime "updated_at", null: false
@@ -1433,7 +1433,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_10_000002) do
     t.index ["hcb_code"], name: "index_hcb_codes_on_hcb_code", unique: true
     t.index ["ledger_item_id"], name: "index_hcb_codes_on_ledger_item_id"
     t.index ["receipt_due_at"], name: "index_hcb_codes_on_open_receipt_due_at", where: "((receipt_due_at IS NOT NULL) AND (receipt_resolved_at IS NULL))"
-    t.index ["receipt_settled_at"], name: "index_hcb_codes_on_receipt_settled_at"
+    t.index ["card_charge_settled_at"], name: "index_hcb_codes_on_card_charge_settled_at"
     t.index ["short_code"], name: "index_hcb_codes_on_short_code", unique: true
     t.check_constraint "short_code = upper(short_code)", name: "constraint_hcb_codes_on_short_code_to_uppercase"
   end

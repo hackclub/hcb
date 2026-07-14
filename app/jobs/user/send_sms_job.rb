@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module CardLocking
+class User
   class SendSmsJob < ApplicationJob
     queue_as :low
 
@@ -12,4 +12,5 @@ module CardLocking
     end
 
   end
+
 end

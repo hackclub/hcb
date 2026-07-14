@@ -82,7 +82,7 @@ module CardLocking
       card_locking_resolved_at.present?
     end
 
-    # The single writer of receipt_settled_at / receipt_resolved_at /
+    # The single writer of card_charge_settled_at / receipt_resolved_at /
     # receipt_due_at. Idempotent. Only populates columns for a receipt-required
     # settled card charge, and clears them if the charge stops being one (e.g. a
     # refund nets it to zero). receipt_resolved_at is frozen once set (never moved
@@ -95,11 +95,11 @@ module CardLocking
     # otherwise it is resolved from this charge's own cardholder.
     def materialize_card_locking!(now: Time.current, trusted: false, last_settled_charge_at: nil, enforcement_start_date: :unset)
       unless card_locking_chargeable? && receipt_required?
-        clear_card_locking! if receipt_settled_at.present? || receipt_due_at.present? || receipt_resolved_at.present?
+        clear_card_locking! if card_charge_settled_at.present? || receipt_due_at.present? || receipt_resolved_at.present?
         return
       end
 
-      settled_at = receipt_settled_at || card_locking_settled_at
+      settled_at = card_charge_settled_at || card_locking_settled_at
       resolved_at = receipt_resolved_at || card_locking_resolved_at
       if enforcement_start_date == :unset
         enforcement_start_date = CardLocking.enforcement_start_date(stripe_card&.stripe_cardholder&.user)
@@ -112,13 +112,13 @@ module CardLocking
           ).compute
         end
 
-      return if receipt_settled_at == settled_at && receipt_resolved_at == resolved_at && receipt_due_at == due_at
+      return if card_charge_settled_at == settled_at && receipt_resolved_at == resolved_at && receipt_due_at == due_at
 
-      update_columns(receipt_settled_at: settled_at, receipt_resolved_at: resolved_at, receipt_due_at: due_at)
+      update_columns(card_charge_settled_at: settled_at, receipt_resolved_at: resolved_at, receipt_due_at: due_at)
     end
 
     def clear_card_locking!
-      update_columns(receipt_settled_at: nil, receipt_due_at: nil, receipt_resolved_at: nil)
+      update_columns(card_charge_settled_at: nil, receipt_due_at: nil, receipt_resolved_at: nil)
     end
   end
 end

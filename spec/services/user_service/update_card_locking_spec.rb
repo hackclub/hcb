@@ -16,7 +16,7 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
       described_class.new(user:).run
     }.to change { user.reload.cards_locked? }.from(false).to(true)
      .and have_enqueued_mail(CardLockingMailer, :cards_locked)
-     .and have_enqueued_job(CardLocking::SendSmsJob)
+     .and have_enqueued_job(User::SendSmsJob)
   end
 
   it "always unlocks when nothing is overdue" do
@@ -45,7 +45,7 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
 
     expect {
       described_class.new(user:, unlock_only: true, notify_progress: true).run
-    }.to have_enqueued_job(CardLocking::SendSmsJob)
+    }.to have_enqueued_job(User::SendSmsJob)
     expect(user.reload.cards_locked?).to be(true)
   end
 
@@ -55,7 +55,7 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
 
     expect {
       described_class.new(user:, unlock_only: true).run
-    }.not_to have_enqueued_job(CardLocking::SendSmsJob)
+    }.not_to have_enqueued_job(User::SendSmsJob)
   end
 
   it "unlocks in unlock_only mode when nothing is overdue" do

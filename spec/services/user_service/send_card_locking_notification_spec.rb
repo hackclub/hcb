@@ -25,13 +25,35 @@ RSpec.describe UserService::SendCardLockingNotification, type: :service do
     allow(user).to receive(:card_locking_outstanding_count).and_return(4)
 
     expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
-    expect(CardLocking::SendSmsJob).to have_been_enqueued
+    expect(User::SendSmsJob).to have_been_enqueued
 
     expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
 
     travel_to(26.hours.from_now) do
       expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
     end
+  end
+
+  it "sends the digest again the next day rather than skipping a day" do
+    allow(user).to receive(:card_locking_outstanding_count).and_return(4)
+    service.run
+
+    # The dedup key (not the cron) enforces the daily cadence, so it must have
+    # expired by the ~24h mark or the cardholder silently skips a calendar day.
+    # The TTL is deliberately under 24h so the send drifts earlier, never later.
+    travel_to(24.hours.from_now) do
+      expect { service.run }.to have_enqueued_mail(CardLockingMailer, :warning).once
+    end
+  end
+
+  it "warns that the cardholder's cards will lock, not individual cards" do
+    allow(user).to receive(:card_locking_outstanding_count).and_return(2)
+
+    service.run
+
+    expect(User::SendSmsJob).to have_been_enqueued.with(
+      user_id: user.id, body: a_string_matching(/your cards/i)
+    )
   end
 
   it "does not send when no charge is approaching its deadline" do
@@ -70,6 +92,6 @@ RSpec.describe UserService::SendCardLockingNotification, type: :service do
     allow(user).to receive(:card_locking_outstanding_count).and_return(4)
 
     expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
-    expect(CardLocking::SendSmsJob).not_to have_been_enqueued
+    expect(User::SendSmsJob).not_to have_been_enqueued
   end
 end
