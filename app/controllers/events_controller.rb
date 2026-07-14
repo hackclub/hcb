@@ -1236,7 +1236,7 @@ class EventsController < ApplicationController
 
     query = []
 
-    query = { memo: { "$search": params[:q] } } if params[:q].present?
+    query << { memo: { "$search": params[:q] } } if params[:q].present?
 
     if @direction.present? || @minimum_amount.present? || @maximum_amount.present?
       if @direction == "revenue"
