@@ -179,14 +179,6 @@ class EventPolicy < ApplicationPolicy
     contractors? && auditor_or_reader?
   end
 
-  def new_contractor?
-    contractors? && new_transfer?
-  end
-
-  def create_contractor?
-    contractors? && create_transfer?
-  end
-
   def new_payment?
     payments? && new_transfer?
   end
