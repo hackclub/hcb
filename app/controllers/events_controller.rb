@@ -1246,7 +1246,7 @@ class EventsController < ApplicationController
       end
 
       if @minimum_amount.present?
-        query << { "$or": [{ amount_cents: { "$gte": @minimum_amount.to_f * 100 }}, { amount_cents: { "$lte": -@minimum_amount.to_f * 100 } }] }
+        query << { "$or": [{ amount_cents: { "$gte": @minimum_amount.to_f * 100 } }, { amount_cents: { "$lte": -@minimum_amount.to_f * 100 } }] }
       end
 
       if @maximum_amount.present?

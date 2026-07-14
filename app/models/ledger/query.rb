@@ -30,7 +30,10 @@ class Ledger
         results = results.merge(Ledger::Item.joins(:ledger_mappings).where(ledger_mappings: { ledger_id: ledgers }).distinct)
       end
 
-      results.order(datetime: :desc, created_at: :desc, id: :desc).includes(:linked_object)
+      # preload, not includes: linked_object is polymorphic, so it can never be
+      # JOINed — and includes makes pluck/count attempt exactly that join
+      # (EagerLoadPolymorphicError).
+      results.order(datetime: :desc, created_at: :desc, id: :desc).preload(:linked_object)
     end
 
     def self.sanitize_query(query_hash)
