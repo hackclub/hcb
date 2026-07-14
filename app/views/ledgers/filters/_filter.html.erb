@@ -10,25 +10,6 @@
 
   <%= render partial: "ledgers/filters/filter_menu" unless filter_applied || @ledger_filters_disabled %>
 
-  <% if @event.canonical_transactions.any? && !@subledger %>
-    <div data-controller="menu" data-menu-placement-value="bottom-end" class="-mb-1">
-      <button
-        type="button"
-        class="tooltipped tooltipped--s pop menu__toggle menu__toggle--arrowless overflow-visible"
-        aria-label="Export transactions"
-        data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
-        data-menu-target="toggle">
-        <%= inline_icon "download", size: 28 %>
-      </button>
-      <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
-        <%= link_to "All transactions (CSV)", transactions_exports_path(event: @event, format: :csv), target: :_blank %>
-        <%= link_to "All transactions (JSON)", transactions_exports_path(event: @event, format: :json), target: :_blank %>
-        <%= link_to "All transactions (Ledger)", transactions_exports_path(event: @event, format: :ledger), target: :_blank %>
-        <%= link_to "Monthly statements", event_statements_path(@event) %>
-      </div>
-    </div>
-  <% end %>
-
   <% admin_tool "overflow-hidden" do %>
     <div data-controller="menu" data-menu-placement-value="bottom-end" data-menu-append-to-value="turbo-frame#<%= dom_id(@event) %>_ledger" class="-mb-1">
       <button
