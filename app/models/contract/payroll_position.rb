@@ -37,7 +37,7 @@
 class Contract
   class PayrollPosition < Contract
     # TODO: set the real DocuSeal template id for payroll agreements.
-    DOCUSEAL_TEMPLATE_ID = 4934030
+    DOCUSEAL_TEMPLATE_ID = 4983902
 
     after_update_commit :create_document!, if: -> { event.present? && sent_with_docuseal? && aasm_state_previously_changed?(to: "signed") }
 
