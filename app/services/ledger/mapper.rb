@@ -6,6 +6,7 @@ class Ledger
 
     def initialize(ledger_item:)
       @ledger_item = ledger_item
+      @ledger_item.reload
     end
 
     def run

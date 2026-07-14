@@ -71,7 +71,6 @@ class PaymentsController < ApplicationController
     return if @legal_entity.default_payout_method && details_attrs.values.any? { |value| value.to_s.include?("•") }
 
     LegalEntity::PayoutMethodService::Update.new(
-      user: current_user,
       legal_entity: @legal_entity,
       details_type: type,
       details_attrs:,

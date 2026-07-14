@@ -28,7 +28,7 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
 
     it "creates the chosen method as the user's default when none exists" do
       service = described_class.new(
-        user:,
+        legal_entity: user.personal_legal_entity,
         details_type: "LegalEntity::PayoutMethod::AchTransfer",
         details_attrs: valid_ach_attrs
       )
@@ -49,7 +49,7 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
                          ))
 
       service = described_class.new(
-        user:,
+        legal_entity: user.personal_legal_entity,
         details_type: "LegalEntity::PayoutMethod::AchTransfer",
         details_attrs: valid_ach_attrs
       )
@@ -62,7 +62,7 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
 
     it "fails without persisting when the type is not a supported payout method" do
       service = described_class.new(
-        user:,
+        legal_entity: user.personal_legal_entity,
         details_type: "User::PayoutMethod::AchTransfer",
         details_attrs: valid_ach_attrs
       )
@@ -79,7 +79,7 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       allow(User).to receive(:new).and_call_original
 
       service = described_class.new(
-        user:,
+        legal_entity: user.personal_legal_entity,
         details_type: "User",
         details_attrs: valid_ach_attrs
       )
@@ -91,7 +91,7 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
 
     it "surfaces detail validation errors without persisting" do
       service = described_class.new(
-        user:,
+        legal_entity: user.personal_legal_entity,
         details_type: "LegalEntity::PayoutMethod::AchTransfer",
         details_attrs: { account_number: "12345678", routing_number: "nope" }
       )
@@ -107,7 +107,7 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       expect(report.legal_entity_payout_method).to be_present
 
       service = described_class.new(
-        user:,
+        legal_entity: user.personal_legal_entity,
         details_type: "LegalEntity::PayoutMethod::WiseTransfer",
         details_attrs: valid_wise_attrs
       )
@@ -126,7 +126,7 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
                                               }])
 
       service = described_class.new(
-        user:,
+        legal_entity: user.personal_legal_entity,
         details_type: "LegalEntity::PayoutMethod::AchTransfer",
         details_attrs: valid_ach_attrs,
         replacing: old_pm
@@ -163,7 +163,7 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       end
 
       described_class.new(
-        user:,
+        legal_entity: user.personal_legal_entity,
         details_type: "LegalEntity::PayoutMethod::AchTransfer",
         details_attrs: valid_ach_attrs,
         replacing: replaced_default
@@ -181,7 +181,7 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       old_pm = report.legal_entity_payout_method
 
       service = described_class.new(
-        user:,
+        legal_entity: user.personal_legal_entity,
         details_type: "LegalEntity::PayoutMethod::AchTransfer",
         details_attrs: valid_ach_attrs,
         replacing: old_pm
@@ -212,7 +212,7 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       on_other.update_columns(legal_entity_payout_method_id: other_method.id)
 
       described_class.new(
-        user:,
+        legal_entity: user.personal_legal_entity,
         details_type: "LegalEntity::PayoutMethod::AchTransfer",
         details_attrs: valid_ach_attrs,
         replacing: replaced_default
@@ -230,7 +230,7 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       old_pm = report.legal_entity_payout_method
 
       described_class.new(
-        user:,
+        legal_entity: user.personal_legal_entity,
         details_type: "LegalEntity::PayoutMethod::AchTransfer",
         details_attrs: valid_ach_attrs
       ).run
@@ -249,7 +249,7 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       old = seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
 
       service = described_class.new(
-        user:,
+        legal_entity: user.personal_legal_entity,
         details_type: "LegalEntity::PayoutMethod::AchTransfer",
         details_attrs: { account_number: "99999999", routing_number: "021000021" },
         make_default: old.default?,
@@ -273,7 +273,7 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       old = seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
 
       described_class.new(
-        user:,
+        legal_entity: user.personal_legal_entity,
         details_type: "LegalEntity::PayoutMethod::AchTransfer",
         details_attrs: valid_ach_attrs,
         make_default: old.default?,
@@ -290,7 +290,7 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       expect(report.legal_entity_payout_method).to eq(old)
 
       described_class.new(
-        user:,
+        legal_entity: user.personal_legal_entity,
         details_type: "LegalEntity::PayoutMethod::AchTransfer",
         details_attrs: valid_ach_attrs,
         make_default: old.default?,
@@ -305,7 +305,7 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
   describe "#run!" do
     it "raises ActiveRecord::RecordInvalid when the update is invalid" do
       service = described_class.new(
-        user:,
+        legal_entity: user.personal_legal_entity,
         details_type: "LegalEntity::PayoutMethod::AchTransfer",
         details_attrs: { account_number: "12345678", routing_number: "nope" }
       )
