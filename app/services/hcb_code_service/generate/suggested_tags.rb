@@ -39,7 +39,7 @@ module HcbCodeService
         end
 
         response = conn.post("/v1/chat/completions", {
-                               model:"gpt-5.6-luna",
+                               model: "gpt-5.6-luna",
                                messages: [
                                  {
                                    role: "system",
