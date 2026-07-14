@@ -1,0 +1,22 @@
+<p>Hello,</p>
+
+<p>
+  <%= @event.name %> is looking to onboard you as a contractor through HCB.
+</p>
+
+<p>
+  In order to get paid, we need your tax information and a payout method if not already configured.
+  Please <%= link_to "sign in to complete your onboarding", choose_legal_entity_payee_url(@payee) %>.
+</p>
+
+<p>
+  If you have any questions, please contact <%= @event.name %>.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
+
+<p><i class="muted"><%= @event.name %> is fiscally sponsored by The Hack Foundation (d.b.a. HCB), a 501(c)(3) nonprofit (EIN: 81-2908499).</i></p>

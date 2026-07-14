@@ -154,15 +154,17 @@ module Payroll
       onboarding_checklist.find { |step| !step[:complete] }
     end
 
-    # Advance an onboarding contractor to :onboarded once every step is
-    # complete. Invoked from callbacks whenever a step may have just finished
-    # (contract signed, tax form completed, payout method configured).
+    # Whether the contractor still needs to sign in to HCB to provide tax info
+    # and/or a payout method (the onboarding steps that live on the legal entity).
+    def payment_setup_incomplete?
+      legal_entity = payee.legal_entity
+      !(legal_entity&.payable? && legal_entity.default_payout_method.present?)
+    end
+
     def refresh_onboarding_state!
       mark_onboarded! if onboarding? && may_mark_onboarded?
     end
 
-    # Contractable callbacks — re-check onboarding whenever a contract or one of
-    # its parties is signed.
     def on_contract_signed(contract)
       refresh_onboarding_state!
     end
@@ -172,11 +174,16 @@ module Payroll
 
       # The contractor is only invited to sign once HCB has signed
       if party.hcb?
+        # HCB signing is the "reviewed by HCB operations" step, so begin onboarding.
+        mark_onboarding! if may_mark_onboarding?
+
         contractor = party.contract.party(:contractor)
         return if contractor.nil? || contractor.signed?
 
         contractor.notify
         contractor.schedule_reminders
+
+        Payroll::PositionMailer.with(position: self).onboarding.deliver_later if payment_setup_incomplete?
       end
     end
 
