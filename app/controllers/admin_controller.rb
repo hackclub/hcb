@@ -384,8 +384,19 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = params[:per] || 100
     @amount = params[:amount].presence
+    @q = params[:q].presence
+    @unmapped = params[:unmapped] != "0"
 
-    relation = Ledger::Item.where.missing(:primary_mapping)
+    relation = if @q
+                 Ledger::Item.where(id: @q)
+                             .or(Ledger::Item.where(short_code: @q))
+                             .or(Ledger::Item.where(id: HcbCode.where(hcb_code: @q).select(:ledger_item_id)))
+                             .or(Ledger::Item.where(id: Ledger::Item.search_memo(@q).select(:id)))
+               else
+                 Ledger::Item.all
+               end
+
+    relation = relation.where.missing(:primary_mapping) if @unmapped.present? && @q.blank?
 
     relation = relation.where(amount_cents: @amount.to_i).or(relation.where(amount_cents: -@amount.to_i)) if @amount
 

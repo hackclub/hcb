@@ -208,6 +208,8 @@ class User < ApplicationRecord
 
   after_update :update_draft_applications, if: -> { birthday_previously_changed? }
 
+  after_update :update_legal_entity_name, if: -> { full_name_previously_changed? }
+
   before_update :set_default_seasonal_theme
 
   validates_presence_of :full_name, if: -> { full_name_in_database.present? }
@@ -680,7 +682,7 @@ class User < ApplicationRecord
   private
 
   def create_legal_entity
-    legal_entities.create!(entity_type: :person)
+    legal_entities.create!(entity_type: :person, name: full_name)
   end
 
   def auditors_must_be_verified
@@ -781,6 +783,10 @@ class User < ApplicationRecord
 
   def update_draft_applications
     applications.draft.each { |application| application.update!(teen_led: is_teenager?) }
+  end
+
+  def update_legal_entity_name
+    personal_legal_entity.update!(name: full_name)
   end
 
   def should_sync_teenager_columns?

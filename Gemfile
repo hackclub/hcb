@@ -239,3 +239,5 @@ gem "intercom-rails"
 gem "hotwire_combobox"
 
 gem "maintenance_tasks", "~> 2.14"
+
+gem "aws-sdk-kms"
