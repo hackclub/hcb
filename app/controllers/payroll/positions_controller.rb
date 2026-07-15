@@ -16,6 +16,9 @@ module Payroll
       @can_review = Payroll::PositionPolicy.new(current_user, @event).review?
       @invoices = @position.invoices.order(created_at: :desc)
       @payments = @position.payee.payments.order(created_at: :desc)
+
+      @position.contract&.party(:organizer)&.sync_with_docuseal
+
       render :show, layout: !@frame
     end
 
@@ -23,8 +26,8 @@ module Payroll
       @position = Payroll::Position.find_by_hashid!(params[:id])
       authorize @position
 
-      @contract = @position.contracts.not_voided.order(created_at: :desc).first
-      @contractor_party = @contract&.party(:contractor)
+      @contractor_party = @position.contract&.party(:contractor)
+      @contractor_party.sync_with_docuseal
     end
 
     def new

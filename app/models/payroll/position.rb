@@ -46,6 +46,7 @@ module Payroll
     has_many :invoices, class_name: "Payroll::Invoice", foreign_key: "payroll_position_id", inverse_of: :payroll_position, dependent: :destroy
     has_one :event, through: :payee
     has_one :contract_event, through: :payee, source: :event # a requirement of Contractable
+    has_one :contract, ->{ where.not(aasm_state: :voided) }, inverse_of: :contractable, as: :contractable
 
     has_one_attached :file
     validates :file, size: { less_than_or_equal_to: 25.megabytes }, content_type: [:pdf], if: -> { attachment_changes["file"].present? }
