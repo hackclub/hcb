@@ -1,0 +1,36 @@
+<p>Hello,</p>
+
+<p>
+  You've been added as a contractor for <strong><%= @event.name %></strong>
+  (<%= @position.title %>). Before <%= @event.name %> can pay you, we need a
+  couple more things from you.
+</p>
+
+<% days_left = 90 - @reminder_day.to_i %>
+<% if days_left > 0 %>
+  <p>
+    Contractors have <strong>90 days</strong> to accept a payment —
+    you have about <strong><%= days_left %> <%= "day".pluralize(days_left) %></strong> left
+    to finish the steps below.
+  </p>
+<% end %>
+
+<p>Still outstanding:</p>
+<ul>
+  <% if @tax_incomplete %>
+    <li>Submit your tax information (W-9 / W-8BEN)</li>
+  <% end %>
+  <% if @payout_incomplete %>
+    <li>Configure your payout method</li>
+  <% end %>
+</ul>
+
+<p>
+  <%= link_to "Finish onboarding on HCB", my_pay_url %>
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
