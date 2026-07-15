@@ -6,7 +6,7 @@ module Payroll
 
     CONTRACT_RELEVANT_ATTRIBUTES = %w[title rate_cents start_date end_date description].freeze
 
-    before_action :set_event
+    before_action :set_event, except: [:welcome]
     before_action :set_position, only: [:edit, :update, :contract]
 
     def show
@@ -17,6 +17,14 @@ module Payroll
       @invoices = @position.invoices.order(created_at: :desc)
       @payments = @position.payee.payments.order(created_at: :desc)
       render :show, layout: !@frame
+    end
+
+    def welcome
+      @position = Payroll::Position.find_by_hashid!(params[:id])
+      authorize @position, :welcome?
+
+      @contract = @position.contracts.not_voided.order(created_at: :desc).first
+      @contractor_party = @contract&.party(:contractor)
     end
 
     def new
