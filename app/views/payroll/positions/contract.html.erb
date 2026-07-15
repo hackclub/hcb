@@ -19,7 +19,7 @@
         Once HCB signs, we'll invite <%= @position.display_name %> to sign and complete onboarding.
       </p>
 
-      <%= form_with url: event_contractors_path(event_id: @event.slug), method: :get do |form| %>
+      <%= form_with url: event_payroll_position_path(event_id: @event.slug, id: @position.id), method: :get do |form| %>
         <%= form.submit "Invite contractor", class: "gap-2 btn w-full bg-blue", disabled: true, data: { "contract-target": "button" } %>
       <% end %>
     </div>
