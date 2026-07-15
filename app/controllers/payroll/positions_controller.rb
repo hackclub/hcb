@@ -21,7 +21,7 @@ module Payroll
 
     def welcome
       @position = Payroll::Position.find_by_hashid!(params[:id])
-      authorize @position, :welcome?
+      authorize @position
 
       @contract = @position.contracts.not_voided.order(created_at: :desc).first
       @contractor_party = @contract&.party(:contractor)
