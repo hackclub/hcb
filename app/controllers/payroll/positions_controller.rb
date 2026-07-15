@@ -22,7 +22,7 @@ module Payroll
       render :show, layout: !@frame
     end
 
-    def welcome
+    def onboarding
       @position = Payroll::Position.find_by_hashid!(params[:id])
       authorize @position
 

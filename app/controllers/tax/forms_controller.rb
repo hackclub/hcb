@@ -39,7 +39,7 @@ module Tax
 
       if @form.completed?
         if (onboarding_payroll_position = @form.legal_entity.payroll_positions.onboarding.last).present?
-          redirect_to payroll_position_path(onboarding_payroll_position)
+          redirect_to onboarding_payroll_position_path(onboarding_payroll_position)
         else
           redirect_to legal_entity_path(@form.legal_entity)
         end
