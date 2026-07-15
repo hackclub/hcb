@@ -50,7 +50,7 @@ class Ledger
           return event
         end
 
-        if (event = ct.try(:linked_object_v2))
+        if (event = ct.linked_object_v2.try(:event))
           return event
         end
 
