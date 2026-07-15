@@ -342,9 +342,53 @@ class Ledger
       type_metadata.first
     end
 
-    # TODO: add support for card charge icons
     def icon
-      type_metadata.last
+      case linked_object_type
+      when "Invoice"
+        "payment-docs"
+      when "Donation"
+        "support"
+      when "AchTransfer"
+        "payment-transfer"
+      when "Wire"
+        "web"
+      when "PaypalTransfer"
+        "paypal"
+      when "WiseTransfer"
+        "wise"
+      when "Check"
+        "email"
+      when "IncreaseCheck"
+        "email"
+      when "CheckDeposit"
+        "cheque"
+      when "Disbursement::Outgoing"
+        if linked_object.card_grant.present?
+          "bag"
+        else
+          "door-leave"
+        end
+      when "Disbursement::Incoming"
+        if linked_object.card_grant.present?
+          "bag"
+        else
+          "door-enter"
+        end
+      when "StripeServiceFee"
+        "cash" # TODO: find unique icon
+      when "BankFee"
+        "bank-icon"
+      when "FeeRevenue"
+        "bank-icon"
+      when "Reimbursement::PayoutHolding"
+        "reimbursement"
+      when "Reimbursement::ExpensePayout"
+        "reimbursement"
+      when "CardCharge"
+        linked_object.icon
+      else
+        "cash"
+      end
     end
 
     def sign

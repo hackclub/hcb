@@ -1,7 +1,11 @@
 <tr class="transaction transaction--<%= item.sign %>">
   <td class="transaction__icon">
     <div class="tooltipped tooltipped--e" aria-label="<%= item.humanized_type %>">
-      <%= inline_icon item.icon, size: 32 %>
+      <% if item.icon.is_a?(YellowPages::Merchant) %>
+        <%= merchant_icon(item.icon, size: 32) %>
+      <% else %>
+        <%= inline_icon(item.icon, size: 32) %>
+      <% end %>
     </div>
   </td>
   <td><%= item.datetime.strftime("%b %e, %Y") %></td>
