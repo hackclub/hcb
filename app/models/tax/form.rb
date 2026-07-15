@@ -18,7 +18,6 @@
 #  external_service               :string           not null
 #  failed_at                      :datetime
 #  form_type                      :string
-#  payee_ref                      :string
 #  sent_at                        :datetime
 #  signing_url                    :string
 #  taxbandits_status              :string
@@ -77,11 +76,6 @@ module Tax
     scope :not_discarded, -> { where.not(aasm_state: :discarded) }
 
     validate :tin_hash_cannot_change, on: :update
-
-    # The certificate stays registered under the entity the form was created on, so
-    # freeze that ref before the form is moved to a new entity (a TIN switch), or
-    # payee_ref would re-derive from the new entity and stop matching TaxBandits.
-    before_update :freeze_payee_ref, if: -> { legal_entity_id_changed? && self[:payee_ref].blank? }
 
     after_update if: -> {
       taxbandits_status_previously_changed?(to: :completed) ||
@@ -143,18 +137,11 @@ module Tax
       mark_sent!
     end
 
-    # The PayeeRef this form's certificate is registered under at TaxBandits.
-    # Forms sent before tax forms carried their own ref were registered under the
-    # legal entity's public id, so fall back to that rather than orphaning them.
-    def payee_ref
-      self[:payee_ref].presence || legal_entity.public_id
-    end
-
     def sync_with_taxbandits
       # A manually entered form has no certificate at TaxBandits to sync against.
       return unless sent_with_taxbandits?
 
-      response = TaxbanditsService.get_status(payee_ref)
+      response = TaxbanditsService.get_status(public_id)
 
       if response.present?
         update!(
@@ -175,7 +162,7 @@ module Tax
       return @masked_tin if defined?(@masked_tin)
 
       @masked_tin = begin
-        entry = TaxbanditsService.get_list_entry(payee_ref)
+        entry = TaxbanditsService.get_list_entry(public_id)
         tin = entry&.[]("TIN")
 
         if tin.present? && tin.count("Xx") >= 3
@@ -202,7 +189,7 @@ module Tax
     # import_taxbandits_data may call it, and what it derives (entity type, TIN
     # type, address) is persisted so that no page render ever needs it again.
     def remote_taxbandits_submission
-      TaxbanditsService.get_submission(payee_ref)
+      TaxbanditsService.get_submission(public_id)
     end
 
     def tin_hash_cannot_change
@@ -211,14 +198,10 @@ module Tax
       end
     end
 
-    def freeze_payee_ref
-      self.payee_ref = LegalEntity.find(legal_entity_id_was).public_id
-    end
-
     def send_using_taxbandits!
       response = TaxbanditsService.create_whcertificate(id: public_id, name: legal_entity.name)
 
-      update!(external_service: :taxbandits, payee_ref: public_id, signing_url: response["Url"], external_id: response["SubmissionId"])
+      update!(external_service: :taxbandits, signing_url: response["Url"], external_id: response["SubmissionId"])
       sync_with_taxbandits
     end
 

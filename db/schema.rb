@@ -2603,7 +2603,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_14_120100) do
     t.datetime "failed_at"
     t.string "form_type"
     t.bigint "legal_entity_id", null: false
-    t.string "payee_ref"
     t.datetime "sent_at"
     t.string "signing_url"
     t.string "taxbandits_status"

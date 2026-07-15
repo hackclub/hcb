@@ -173,29 +173,6 @@ RSpec.describe Tax::Form, type: :model do
     end
   end
 
-  describe "#payee_ref" do
-    it "uses the form's own public id once one has been recorded" do
-      form = create(:tax_form, :completed, legal_entity:, payee_ref: "tfm_abc")
-
-      expect(form.payee_ref).to eq("tfm_abc")
-    end
-
-    it "falls back to the legal entity's public id for forms registered before the switch" do
-      form = create(:tax_form, :completed, legal_entity:, payee_ref: nil)
-
-      expect(form.payee_ref).to eq(legal_entity.public_id)
-    end
-
-    it "freezes the ref to the original entity when the form is moved to a new one" do
-      original = create(:legal_entity, :person)
-      form = create(:tax_form, :completed, legal_entity: original, payee_ref: nil)
-
-      form.update!(legal_entity: create(:legal_entity, :person))
-
-      expect(form.reload.payee_ref).to eq(original.public_id)
-    end
-  end
-
   describe "TIN immutability" do
     it "refuses to change a fingerprint once it is set" do
       form = create(:tax_form, :completed, legal_entity:, tin_hash: "abc")
