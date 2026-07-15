@@ -344,6 +344,12 @@ class CanonicalPendingTransaction < ApplicationRecord
     nil
   end
 
+  def fee_revenue
+    return linked_object if linked_object.is_a?(FeeRevenue)
+
+    nil
+  end
+
   def donation
     return linked_object if linked_object.is_a?(Donation)
 
