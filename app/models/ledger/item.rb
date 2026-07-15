@@ -362,7 +362,7 @@ class Ledger
         "email"
       when "CheckDeposit"
         "cheque"
-      when "Disbursement::Outgoing"
+      when "Disbursement::Outgoing" # TODO: support for special appearance icons
         if linked_object.card_grant.present?
           "bag"
         else
