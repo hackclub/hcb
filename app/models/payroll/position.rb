@@ -156,11 +156,12 @@ module Payroll
       onboarding_checklist.find { |step| !step[:complete] }
     end
 
-    # Whether the contractor still needs to sign in to HCB to provide tax info
-    # and/or a payout method (the onboarding steps that live on the legal entity).
-    def payment_setup_incomplete?
-      legal_entity = payee.legal_entity
-      !(legal_entity&.payable? && legal_entity.default_payout_method.present?)
+    def tax_info_needed?
+      !payee.legal_entity&.payable?
+    end
+
+    def payout_method_needed?
+      payee.legal_entity&.default_payout_method.blank?
     end
 
     def refresh_onboarding_state!
@@ -243,6 +244,12 @@ module Payroll
       false
     end
 
+    def notify_mailer_for(party)
+      return super unless party.contractor?
+
+      Payroll::PositionMailer.with(position: self, party:).onboarding.deliver_later
+    end
+
     private
 
     # Notifying/scheduling reminders for the contractor is best-effort: this
@@ -253,8 +260,6 @@ module Payroll
     def notify_contractor_of_onboarding(contractor)
       contractor.notify
       contractor.schedule_reminders
-
-      Payroll::PositionMailer.with(position: self).onboarding.deliver_later if payment_setup_incomplete?
     rescue => e
       Rails.error.report(e, context: { payroll_position_id: id })
     end

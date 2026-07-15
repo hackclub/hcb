@@ -202,7 +202,7 @@ RSpec.describe Payroll::Position, type: :model do
       contract = position.send_contract(organizer_user: organizer)
       hcb_party = contract.party(:hcb)
 
-      expect { hcb_party.mark_signed! }.to have_enqueued_mail(Contract::PartyMailer, :notify)
+      expect { hcb_party.mark_signed! }.to have_enqueued_mail(Payroll::PositionMailer, :onboarding)
     end
 
     it "schedules signing reminders for the contractor once HCB signs" do

@@ -26,7 +26,8 @@ RSpec.describe Payroll::PositionMailer, type: :mailer do
     end
 
     it "sets reply_to to the event's managers and the position's creator" do
-      mail = described_class.with(position:).onboarding
+      party = position.contracts.first.party(:contractor)
+      mail = described_class.with(position:, party:).onboarding
 
       expect(mail.reply_to).to include("manager@example.invalid", "creator@example.invalid")
     end

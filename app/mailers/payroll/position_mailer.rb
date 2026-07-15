@@ -4,6 +4,7 @@ module Payroll
   class PositionMailer < ApplicationMailer
     def onboarding
       @position = params[:position]
+      @party = params[:party]
       @payee = @position.payee
       @event = @position.event
       legal_entity = @payee.legal_entity
