@@ -1,5 +1,5 @@
 <%= turbo_frame_tag :card_grant_transaction_overview do %>
-  <% if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user) %>
+  <% if Flipper.enabled?(:new_ledger_2026_06_30, @event) %>
     <%= render "ledgers/ledger", ledger: @ledger, items: @items, filter: capture { render partial: "ledgers/filters/filter" } %>
   <% else %>
     <%= turbo_frame_tag [dom_id(@event), :ledger], src: event_transactions_list_path(@event, subledger: @subledger), loading: :eager do %>

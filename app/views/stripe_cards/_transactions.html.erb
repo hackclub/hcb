@@ -1,6 +1,6 @@
 <%# locals: (stripe_card:, hcb_codes:, ledger:, items:) %>
 
-<% if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user) %>
+<% if Flipper.enabled?(:new_ledger_2026_06_30, @event) %>
   <%= render "ledgers/ledger", ledger:, items: %>
 <% else %>
   <% if hcb_codes.exists? %>
