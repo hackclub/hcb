@@ -1178,7 +1178,7 @@ class EventsController < ApplicationController
       },
       "fiscal_sponsorship_fee" => {
         "settled" => ->(t) { t.local_hcb_code.fee_revenue? || t.fee_payment? },
-        "pending" => ->(t) { t.raw_pending_bank_fee_transaction_id }
+        "pending" => ->(t) { t.raw_pending_bank_fee_transaction_id || t.raw_pending_fee_revenue_transaction_id }
       },
       "reimbursement"          => {
         "settled" => ->(t) { t.local_hcb_code.reimbursement_expense_payout? },

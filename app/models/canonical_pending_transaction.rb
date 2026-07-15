@@ -21,6 +21,7 @@
 #  raw_pending_bank_fee_transaction_id              :bigint
 #  raw_pending_column_transaction_id                :bigint
 #  raw_pending_donation_transaction_id              :bigint
+#  raw_pending_fee_revenue_transaction_id           :bigint
 #  raw_pending_incoming_disbursement_transaction_id :bigint
 #  raw_pending_invoice_transaction_id               :bigint
 #  raw_pending_outgoing_ach_transaction_id          :bigint
@@ -44,6 +45,7 @@
 #  index_canonical_pending_transactions_on_wise_transfer_id         (wise_transfer_id)
 #  index_canonical_pending_txs_on_raw_pending_bank_fee_tx_id        (raw_pending_bank_fee_transaction_id)
 #  index_canonical_pending_txs_on_raw_pending_donation_tx_id        (raw_pending_donation_transaction_id)
+#  index_canonical_pending_txs_on_raw_pending_fee_revenue_tx_id     (raw_pending_fee_revenue_transaction_id) UNIQUE
 #  index_canonical_pending_txs_on_raw_pending_invoice_tx_id         (raw_pending_invoice_transaction_id)
 #  index_canonical_pending_txs_on_raw_pending_outgoing_ach_tx_id    (raw_pending_outgoing_ach_transaction_id)
 #  index_canonical_pending_txs_on_raw_pending_outgoing_check_tx_id  (raw_pending_outgoing_check_transaction_id)
@@ -76,6 +78,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :raw_pending_donation_transaction, optional: true
   belongs_to :raw_pending_invoice_transaction, optional: true
   belongs_to :raw_pending_bank_fee_transaction, optional: true
+  belongs_to :raw_pending_fee_revenue_transaction, optional: true
   belongs_to :raw_pending_column_transaction, optional: true
   belongs_to :raw_pending_incoming_disbursement_transaction, optional: true
   belongs_to :raw_pending_outgoing_disbursement_transaction, optional: true
@@ -114,6 +117,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   scope :donation, -> { where("raw_pending_donation_transaction_id is not null") }
   scope :invoice, -> { where("raw_pending_invoice_transaction_id is not null") }
   scope :bank_fee, -> { where("raw_pending_bank_fee_transaction_id is not null") }
+  scope :fee_revenue, -> { where("raw_pending_fee_revenue_transaction_id is not null") }
   scope :incoming_disbursement, -> { where("raw_pending_incoming_disbursement_transaction_id is not null") }
   scope :outgoing_disbursement, -> { where("raw_pending_outgoing_disbursement_transaction_id is not null") }
   scope :reimbursement_expense_payout, -> { where.not(reimbursement_expense_payout_id: nil) }
@@ -282,6 +286,7 @@ class CanonicalPendingTransaction < ApplicationRecord
     return raw_pending_donation_transaction.donation if raw_pending_donation_transaction
     return raw_pending_invoice_transaction.invoice if raw_pending_invoice_transaction
     return raw_pending_bank_fee_transaction.bank_fee if raw_pending_bank_fee_transaction
+    return raw_pending_fee_revenue_transaction.fee_revenue if raw_pending_fee_revenue_transaction
     return raw_pending_incoming_disbursement_transaction.incoming_disbursement if raw_pending_incoming_disbursement_transaction
     return raw_pending_outgoing_disbursement_transaction.outgoing_disbursement if raw_pending_outgoing_disbursement_transaction
     return raw_pending_stripe_transaction.card_charge if raw_pending_stripe_transaction
@@ -335,6 +340,12 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   def bank_fee
     return linked_object if linked_object.is_a?(BankFee)
+
+    nil
+  end
+
+  def fee_revenue
+    return linked_object if linked_object.is_a?(FeeRevenue)
 
     nil
   end
@@ -442,6 +453,7 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   def transaction_source_type
     types = %w[RawPendingBankFeeTransaction RawPendingColumnTransaction RawPendingDonationTransaction
+               RawPendingFeeRevenueTransaction
                RawPendingIncomingDisbursementTransaction RawPendingInvoiceTransaction
                RawPendingOutgoingAchTransaction RawPendingOutgoingCheckTransaction
                RawPendingOutgoingDisbursementTransaction RawPendingStripeTransaction

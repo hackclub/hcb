@@ -70,6 +70,10 @@ class HcbCode < ApplicationRecord
 
   after_create :write_event_and_subledger_id
 
+  after_update if: -> { marked_no_or_lost_receipt_at_changed? && ledger_item.present? } do
+    ledger_item.update!(marked_no_or_lost_receipt_at: self.marked_no_or_lost_receipt_at)
+  end
+
   delegate :likely_account_verification_related?, :fee_payment?, to: :ct, allow_nil: true
 
   validates :hcb_code, format: { with: /\AHCB-\d{3}-\S+\z/ }

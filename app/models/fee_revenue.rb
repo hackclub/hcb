@@ -25,6 +25,8 @@ class FeeRevenue < ApplicationRecord
   has_one :ledger_item, as: :linked_object
   has_many :bank_fees
 
+  scope :in_transit_or_pending, -> { where(aasm_state: ["pending", "in_transit"]) }
+
   include HasHcbCode
   has_hcb_code ::TransactionGroupingEngine::Calculate::HcbCode::FEE_REVENUE_CODE, eager_create: true
 
@@ -44,6 +46,14 @@ class FeeRevenue < ApplicationRecord
 
   def canonical_transaction
     @canonical_transaction ||= CanonicalTransaction.find_by(hcb_code:)
+  end
+
+  def canonical_pending_transaction
+    @canonical_pending_transaction ||= raw_pending_fee_revenue_transaction&.canonical_pending_transaction
+  end
+
+  def raw_pending_fee_revenue_transaction
+    @raw_pending_fee_revenue_transaction ||= ::RawPendingFeeRevenueTransaction.find_by(fee_revenue_transaction_id: id.to_s)
   end
 
 end

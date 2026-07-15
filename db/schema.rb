@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_13_222948) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_14_205401) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -395,6 +395,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_13_222948) do
     t.bigint "raw_pending_bank_fee_transaction_id"
     t.bigint "raw_pending_column_transaction_id"
     t.bigint "raw_pending_donation_transaction_id"
+    t.bigint "raw_pending_fee_revenue_transaction_id"
     t.bigint "raw_pending_incoming_disbursement_transaction_id"
     t.bigint "raw_pending_invoice_transaction_id"
     t.bigint "raw_pending_outgoing_ach_transaction_id"
@@ -415,6 +416,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_13_222948) do
     t.index ["raw_pending_column_transaction_id"], name: "idx_on_raw_pending_column_transaction_id_ceea9a99e1", unique: true
     t.index ["raw_pending_column_transaction_id"], name: "index_canonical_pending_txs_on_rpct_id"
     t.index ["raw_pending_donation_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_donation_tx_id"
+    t.index ["raw_pending_fee_revenue_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_fee_revenue_tx_id", unique: true
     t.index ["raw_pending_incoming_disbursement_transaction_id"], name: "index_cpts_on_raw_pending_incoming_disbursement_transaction_id"
     t.index ["raw_pending_invoice_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_invoice_tx_id"
     t.index ["raw_pending_outgoing_ach_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_outgoing_ach_tx_id"
@@ -1606,6 +1608,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_13_222948) do
     t.integer "receipt_count", default: 0, null: false
     t.boolean "receipt_required"
     t.text "short_code"
+    t.integer "special_appearance"
     t.string "status"
     t.text "system_memo"
     t.datetime "updated_at", null: false
@@ -2149,6 +2152,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_13_222948) do
     t.string "donation_transaction_id"
     t.string "state"
     t.datetime "updated_at", null: false
+  end
+
+  create_table "raw_pending_fee_revenue_transactions", force: :cascade do |t|
+    t.integer "amount_cents", null: false
+    t.datetime "created_at", null: false
+    t.date "date_posted", null: false
+    t.string "fee_revenue_transaction_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["fee_revenue_transaction_id"], name: "index_raw_pending_fee_revenue_txs_on_fee_revenue_tx_id", unique: true
   end
 
   create_table "raw_pending_incoming_disbursement_transactions", force: :cascade do |t|
