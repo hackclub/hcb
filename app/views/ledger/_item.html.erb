@@ -2,7 +2,7 @@
   <td class="transaction__icon">
     <div class="tooltipped tooltipped--e" aria-label="<%= item.humanized_type %>">
       <% if item.icon.is_a?(YellowPages::Merchant) %>
-        <%= merchant_icon(item.icon, size: 32) %>
+        <%= merchant_icon(item.icon, style: "height: 1.2em") %>
       <% else %>
         <%= inline_icon(item.icon, size: 32) %>
       <% end %>
