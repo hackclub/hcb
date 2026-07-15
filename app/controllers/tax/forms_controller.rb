@@ -20,7 +20,7 @@ module Tax
       @legal_entity = LegalEntity.find_by_hashid(params[:legal_entity_id])
       authorize @legal_entity, policy_class: Tax::FormPolicy
 
-      if @legal_entity.mismatched_tax_form.present?
+      if @legal_entity.mismatched_tax_form.present? || @legal_entity.entity_type_mismatched_tax_form.present?
         flash[:error] = "Pick an option before starting a new tax form"
         redirect_to legal_entity_path(@legal_entity)
         return

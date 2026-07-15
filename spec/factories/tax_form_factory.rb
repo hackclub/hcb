@@ -22,7 +22,10 @@ FactoryBot.define do
       completed_at { Time.current }
       external_id { "sub_#{SecureRandom.hex(4)}" }
       form_type { :W9 }
-      entity_type { :person }
+      # Match the legal entity by default: a completed form of the wrong entity type
+      # is a filing mistake that makes the entity unpayable. Override explicitly to
+      # exercise that path.
+      entity_type { legal_entity.entity_type }
     end
   end
 end

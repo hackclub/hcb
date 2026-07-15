@@ -87,8 +87,15 @@ module Tax
     after_update if: -> { tin_hash_previously_changed?(from: nil) } do
       # Locked: a legal entity's TIN can never change once set, and two forms
       # completing concurrently would otherwise both see a nil hash and race.
+      #
+      # A form whose entity type disagrees with the legal entity's is a filing
+      # mistake (e.g. a W-8BEN-E against a personal LE); it must not claim the
+      # entity's TIN identity. Left un-adopted, entity_type_mismatched_tax_form
+      # flags it and the payee is prompted to discard it.
       legal_entity.with_lock do
-        legal_entity.update!(tin_hash:) if legal_entity.tin_hash.nil?
+        if legal_entity.tin_hash.nil? && entity_type == legal_entity.entity_type
+          legal_entity.update!(tin_hash:)
+        end
       end
     end
 

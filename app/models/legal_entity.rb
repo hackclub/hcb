@@ -36,7 +36,7 @@ class LegalEntity < ApplicationRecord
   has_many :users, through: :legal_entity_users
 
   has_many :tax_forms, class_name: "Tax::Form"
-  has_one :latest_tax_form, -> { order(completed_at: :desc, created_at: :desc) }, inverse_of: :legal_entity, class_name: "Tax::Form"
+  has_one :latest_tax_form, -> { where.not(aasm_state: :discarded).order(completed_at: :desc, created_at: :desc) }, inverse_of: :legal_entity, class_name: "Tax::Form"
 
   has_many :payees
   has_many :payments, through: :payees
@@ -78,7 +78,7 @@ class LegalEntity < ApplicationRecord
   def payable?
     form = latest_completed_tax_form
 
-    form.present? && mismatched_tax_form.nil? &&
+    form.present? && mismatched_tax_form.nil? && entity_type_mismatched_tax_form.nil? &&
       (form.taxbandits_tin_match_success? || !tax_identification_number.predicted_to_be_over_threshold?) &&
       !tin_banned? && !archived?
   end
@@ -119,6 +119,20 @@ class LegalEntity < ApplicationRecord
                                       .where.not(tin_hash: [nil, tin_hash])
                                       .order(completed_at: :desc, created_at: :desc)
                                       .first
+  end
+
+  # A completed, non-discarded form whose entity type disagrees with this entity's.
+  # entity_type is fixed when the legal entity is created (a personal LE for a user,
+  # a business payee created manually), so a form of the wrong type — a W-8BEN-E
+  # filed against a personal legal entity, say — is a filing mistake that can never
+  # identify it, and it blocks payability until the payee discards it. Forms that
+  # predate entity-type import carry a nil entity_type and are ignored.
+  def entity_type_mismatched_tax_form
+    @entity_type_mismatched_tax_form ||= tax_forms.not_discarded
+                                                  .completed
+                                                  .where.not(entity_type: [nil, entity_type])
+                                                  .order(completed_at: :desc, created_at: :desc)
+                                                  .first
   end
 
   def archive!

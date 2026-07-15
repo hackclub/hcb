@@ -108,6 +108,46 @@ RSpec.describe LegalEntity, type: :model do
 
       expect(entity.reload).not_to be_payable
     end
+
+    it "is not payable when the only completed form is for a different entity type" do
+      entity = create(:legal_entity, :person, tin_hash: "abc")
+      create(:tax_form, :completed, legal_entity: entity, tin_hash: "abc",
+                                    entity_type: :business,
+                                    taxbandits_tin_matching_status: :success)
+
+      expect(entity.reload).not_to be_payable
+    end
+  end
+
+  describe "#entity_type_mismatched_tax_form" do
+    it "returns a completed form whose entity type differs from the entity's" do
+      entity = create(:legal_entity, :person)
+      other = create(:tax_form, :completed, legal_entity: entity, entity_type: :business)
+
+      expect(entity.entity_type_mismatched_tax_form).to eq(other)
+    end
+
+    it "ignores a form of the same entity type" do
+      entity = create(:legal_entity, :person)
+      create(:tax_form, :completed, legal_entity: entity, entity_type: :person)
+
+      expect(entity.entity_type_mismatched_tax_form).to be_nil
+    end
+
+    it "ignores a form that predates entity-type import" do
+      entity = create(:legal_entity, :person)
+      create(:tax_form, :completed, legal_entity: entity, entity_type: nil)
+
+      expect(entity.entity_type_mismatched_tax_form).to be_nil
+    end
+
+    it "ignores a discarded form" do
+      entity = create(:legal_entity, :person)
+      create(:tax_form, :completed, legal_entity: entity, entity_type: :business,
+                                    aasm_state: :discarded)
+
+      expect(entity.entity_type_mismatched_tax_form).to be_nil
+    end
   end
 
   describe "#completed_tax_form?" do

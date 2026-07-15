@@ -61,6 +61,18 @@ RSpec.describe Tax::Form, type: :model do
       expect(legal_entity.reload.tin_hash).to eq(form.reload.tin_hash)
     end
 
+    it "does not let a form of the wrong entity type claim the legal entity's TIN" do
+      # A business W-9 filed against a personal legal entity: the fingerprint lands
+      # on the form, but must not become the personal entity's identity.
+      allow(TaxbanditsService).to receive(:get_submission).and_return(w9_submission(tin_type: "EIN"))
+
+      form.mark_completed!
+
+      expect(form.reload.tin_hash).to be_present
+      expect(legal_entity.reload.tin_hash).to be_nil
+      expect(legal_entity).not_to be_payable
+    end
+
     it "fingerprints the same taxpayer identically across two forms" do
       form.mark_completed!
 
