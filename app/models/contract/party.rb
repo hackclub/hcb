@@ -32,11 +32,12 @@ class Contract
     belongs_to :user, optional: true
     belongs_to :contract, optional: false
 
-    enum :role, { signee: "signee", cosigner: "cosigner", hcb: "hcb" }
+    enum :role, { signee: "signee", cosigner: "cosigner", hcb: "hcb", organizer: "organizer", contractor: "contractor" }
 
     attr_accessor :skip_pending_validation
 
     validates :role, uniqueness: { scope: :contract }
+    validate :role_permitted_for_contract_type
     validate :signee_is_user
     validate :contract_is_pending, on: :create, unless: :skip_pending_validation
     validate :email_cannot_change_after_sign
@@ -81,6 +82,10 @@ class Contract
         "Cosigner"
       when "hcb"
         "HCB"
+      when "organizer"
+        "Organizer"
+      when "contractor"
+        "Contractor"
       else
         raise "Unexpected role"
       end
@@ -101,7 +106,7 @@ class Contract
     end
 
     def reminder_email_subject
-      "[Action Needed] Sign the fiscal sponsorship agremeent for #{contract.event_name} on HCB 📝"
+      "[Action Needed] Sign the #{contract.agreement_name} for #{contract.event_name} on HCB 📝"
     end
 
     # We may miss a webhook or load a page before we've received the webhook,
@@ -127,6 +132,14 @@ class Contract
 
     def docuseal_submission
       contract.docuseal_document["submitters"].select { |s| s["role"] == docuseal_role }[0]
+    end
+
+    def role_permitted_for_contract_type
+      return if contract.nil? || role.nil?
+
+      unless contract.permitted_roles.include?(role)
+        errors.add(:role, "#{role} is not a valid party for a #{contract.model_name.human.downcase}")
+      end
     end
 
     def signee_is_user

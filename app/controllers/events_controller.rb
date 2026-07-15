@@ -5,9 +5,11 @@ class EventsController < ApplicationController
   DONATIONS_PER_PAGE = 25
 
   include SetEvent
+  include SetLedgerFilters
 
   include Rails::Pagination
   before_action :set_event, except: [:index]
+  before_action :set_ledger_filters, only: [:ledger]
   before_action :set_transaction_filters, only: [:transactions, :transactions_list]
   before_action except: [:show, :index] do
     render_back_to_tour @organizer_position, :welcome, event_path(@event)
@@ -883,6 +885,21 @@ class EventsController < ApplicationController
     @employees = @employees.search(params[:q]) if params[:q].present?
   end
 
+  def contractors
+    authorize @event
+
+    @contractors = @event.payroll_positions.includes(:event, payee: :payments).order(created_at: :desc)
+
+    counts_by_status = @contractors.to_a.group_by(&:status).transform_values(&:count)
+    @stats = {
+      active: counts_by_status[:active] || 0,
+      onboarding: counts_by_status[:onboarding] || 0,
+      completed: counts_by_status[:completed] || 0,
+    }
+
+    @contractors = @contractors.search_recipient(params[:q]) if params[:q].present?
+  end
+
   def sub_organizations
     authorize @event
 
@@ -1233,8 +1250,11 @@ class EventsController < ApplicationController
     authorize @event
     @per = params[:per] || 25
 
-    @ledger = @event.ledger
-    @items = @ledger.items.includes(:canonical_transactions, :canonical_pending_transactions, :linked_object).order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page]).per(@per)
+    @items = ledger_query.execute(ledgers: @ledgers)
+
+    @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id)) if @tag&.id.present?
+
+    @items = @items.page(params[:page]).per(@per)
   rescue Pundit::NotAuthorizedError
     return head :not_found
   end
@@ -1435,12 +1455,6 @@ class EventsController < ApplicationController
       merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
 
       @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
-    end
-
-    @ledger_filters_disabled = !signed_in?
-    has_filters = @tag || @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @missing_receipts || @merchant || @direction || @category
-    if @ledger_filters_disabled && has_filters
-      render plain: "Invalid parameters. Please try again", status: :bad_request
     end
   end
 

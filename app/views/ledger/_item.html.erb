@@ -5,15 +5,25 @@
     </div>
   </td>
   <td><%= item.datetime.strftime("%b %e, %Y") %></td>
-  <td class="transaction__memo">
-    <%= truncate(item.memo, length: 50) %>
-  </td>
-  <td>
-    <%= list_badge_for item.receipts.size, "receipt", "payment-docs", optional: item.receipt_optional?, required: item.missing_receipt? %>
+  <td class="transaction__memo transaction__memo--fluid">
+    <% if item.status.present? && !item.settled? && !item.reversed? %>
+      <%= badge_for item.status_text, class: item.status_css %>
+    <% end %>
+    <%= item.memo %>
   </td>
   <td class="nowrap">
     <span class="flex items-center justify-end">
-      <%= item.amount.format %>
+      <%= list_badge_for auditor_signed_in? ? item.comment_count : item.not_admin_only_comment_count, "comment", "post", optional: true %>
+      <%= list_badge_for item.receipt_count, "receipt", "payment-docs", optional: item.receipt_optional?, required: item.missing_receipt? %>
+    </span>
+  </td>
+  <td class="nowrap">
+    <span class="flex items-center justify-end">
+      <% if !organizer_signed_in? && item.likely_account_verification_related? %>
+        <%= redacted_amount %>
+      <% else %>
+        <%= item.amount.format %>
+      <% end %>
     </span>
   </td>
   <% admin_tool("", "td") do %>
@@ -27,6 +37,6 @@
     <% end %>
   </td>
   <td>
-    <%= link_to "View", auditor_signed_in? ? ledger_item_path(item) : ledger_item_hcb_path(item) %>
+    <%= link_to "View", auditor_signed_in? ? ledger_item_path(item) : ledger_item_hcb_path(item), data: { turbo: false } %>
   </td>
 </tr>

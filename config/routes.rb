@@ -84,6 +84,11 @@ Rails.application.routes.draw do
     get "settings/integrations", to: "users#edit_integrations"
     get "settings/admin", to: "users#edit_admin"
     get "payroll", to: "my#payroll", as: :my_payroll
+    get "pay", to: "my#pay", as: :my_pay
+
+    resources :payroll_positions, only: [:new, :create, :show] do
+      resources :invoices, only: [:new, :create], controller: "payroll/invoices"
+    end
 
     get "feed", to: "my#feed", as: :my_feed
     get "inbox", to: "my#inbox", as: :my_inbox
@@ -258,6 +263,7 @@ Rails.application.routes.draw do
       get "raw_intrafi_transactions", to: "admin#raw_intrafi_transactions"
       post "raw_intrafi_transactions_import", to: "admin#raw_intrafi_transactions_import"
       get "ledger", to: "admin#ledger"
+      get "ledger_items", to: "admin#ledger_items"
       get "event_search", to: "admin#event_search"
       get "user_search", to: "admin#user_search"
       get "stripe_cards", to: "admin#stripe_cards"
@@ -788,6 +794,7 @@ Rails.application.routes.draw do
         resources :checks, only: [:index, :create, :show]
         resources :sponsors, only: [:index, :show, :create]
         resources :check_deposits, only: [:index, :show, :create]
+        resources :wires, only: [:index, :show, :create]
         resources :ach_transfers, only: [:create]
 
         resources :comments, only: [:index, :create]
@@ -896,6 +903,30 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :payees, only: [] do
+    member do
+      get "choose_legal_entity"
+      post "set_legal_entity"
+    end
+  end
+
+  resources :legal_entities, only: [:show] do
+    collection do
+      post "create_from_tax_form"
+    end
+
+    member do
+      post "replace"
+    end
+  end
+
+  resources :tax_forms, only: [:show, :create], controller: "tax/forms" do
+    member do
+      post "sync"
+      post "discard"
+    end
+  end
+
   scope module: :event do
     get "apply", to: "applications#apply"
 
@@ -980,7 +1011,18 @@ Rails.application.routes.draw do
     get "payments", to: "events#payments"
 
     resources :payments, only: [:new, :create]
-    resources :payees, only: [:index, :create]
+    resources :payroll_positions, only: [:new, :create, :show], controller: "payroll/positions"
+    resources :payroll_invoices, only: [], controller: "payroll/invoices" do
+      member do
+        post :approve
+        post :reject
+      end
+    end
+    resources :payees, only: [:index, :create, :update] do
+      member do
+        post :archive
+      end
+    end
 
     get "async_balance"
     get "async_sub_organization_balance"
@@ -995,6 +1037,7 @@ Rails.application.routes.draw do
     get "promotions"
     get "reimbursements"
     get "employees"
+    get "contractors"
     get "sub_organizations"
     get "sub_organizations/new", to: "suborganizations#new", as: :new_sub_organization
     get "donations", to: "events#donation_overview", as: :donation_overview

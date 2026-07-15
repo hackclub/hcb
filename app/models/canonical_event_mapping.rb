@@ -28,7 +28,7 @@
 class CanonicalEventMapping < ApplicationRecord
   broadcasts_refreshes_to ->(mapping) { [mapping.event, :transactions] }
 
-  belongs_to :canonical_transaction
+  belongs_to :canonical_transaction, touch: true
   belongs_to :event
   belongs_to :subledger, optional: true
   belongs_to :user, optional: true

@@ -41,11 +41,17 @@ class Ledger < ApplicationRecord
   monetize def balance_cents = items.sum(:amount_cents)
 
   def can_front_balance?
-    event&.can_front_balance? || false
+    event&.can_front_balance? || card_grant&.event&.can_front_balance? || false
   end
 
   def receipt_required?
     event&.plan&.receipt_required? || card_grant&.event&.plan&.receipt_required?
+  end
+
+  def refresh_all!
+    items.find_each do |item|
+      item.refresh!
+    end
   end
 
   private

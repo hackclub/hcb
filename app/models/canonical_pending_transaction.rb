@@ -99,6 +99,9 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   scope :safe, -> { where("date >= '2021-01-01'") } # older pending transactions don't yet all map up because of older processes (especially around invoices)
 
+  scope :revenue, -> { where("amount_cents > 0") }
+  scope :expense, -> { where("amount_cents < 0") }
+
   scope :stripe, -> { where("raw_pending_stripe_transaction_id is not null") }
   scope :incoming, -> { where(CanonicalPendingTransaction.arel_table[:amount_cents].gt(0)) }
   scope :outgoing, -> { where(CanonicalPendingTransaction.arel_table[:amount_cents].lt(0)) }
@@ -135,6 +138,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   scope :bank_fee_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::BANK_FEE_CODE}%'") }
   scope :fronted, -> { where(fronted: true) }
   scope :not_fronted, -> { where(fronted: false) }
+  scope :declined, -> { joins(:canonical_pending_declined_mapping) }
   scope :not_declined, -> { includes(:canonical_pending_declined_mapping).where(canonical_pending_declined_mapping: { canonical_pending_transaction_id: nil }) }
   scope :not_waived, -> { where(fee_waived: false) }
   scope :included_in_stats, -> {
@@ -163,8 +167,11 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   after_create_commit unless: -> { ledger_item.present? } do
     safely do
-      li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
-      update(ledger_item: li)
+      ActiveRecord::Base.transaction do
+        li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        update!(ledger_item: li)
+        li.map!
+      end
     end
   end
 
@@ -277,6 +284,7 @@ class CanonicalPendingTransaction < ApplicationRecord
     return raw_pending_bank_fee_transaction.bank_fee if raw_pending_bank_fee_transaction
     return raw_pending_incoming_disbursement_transaction.incoming_disbursement if raw_pending_incoming_disbursement_transaction
     return raw_pending_outgoing_disbursement_transaction.outgoing_disbursement if raw_pending_outgoing_disbursement_transaction
+    return raw_pending_stripe_transaction.card_charge if raw_pending_stripe_transaction
     return increase_check if increase_check
     return paypal_transfer if paypal_transfer
     return wire if wire

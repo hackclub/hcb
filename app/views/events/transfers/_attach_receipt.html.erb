@@ -1,8 +1,12 @@
+<%# locals: (form:, disabled: false, label: "Attach a receipt or invoice", hint: nil, accept: "image/*,image/heic,.pdf", required: Flipper.enabled?(:payments_contractors_refresh_2026_06_26)) %>
+
 <div class="md:flex items-center justify-between gap-4">
   <div class="flex-1">
-    <%= form.label :file, "Attach a receipt or invoice", class: "font-semibold" %>
+    <%= form.label :file, label, class: "font-semibold" %>
     <span class="muted">
-      <% if Flipper.enabled?(:payments_contractors_refresh_2026_06_26) %>
+      <% if hint %>
+        <%= hint %>
+      <% elsif Flipper.enabled?(:payments_contractors_refresh_2026_06_26) %>
         Required for record-keeping
       <% else %>
         Required for reimbursements / goods & services payments.
@@ -16,8 +20,8 @@
     <%= form.file_field :file,
         multiple: true,
         include_hidden: false,
-        required: Flipper.enabled?(:payments_contractors_refresh_2026_06_26),
-        accept: "image/*,image/heic,.pdf",
+        required: required,
+        accept: accept,
         data: {
           "file-drop-target"   => "fileInput",
           "file-upload-target" => "input"

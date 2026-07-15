@@ -10,7 +10,7 @@ class LegalEntity
       authorize LegalEntity::PayoutMethod.new(legal_entity:), :create?
 
       service = LegalEntity::PayoutMethodService::Update.new(
-        user: current_user,
+        legal_entity:,
         details_type: params.dig(:user, :payout_method_type),
         details_attrs: details_params_for(params.dig(:user, :payout_method_type)),
         make_default: legal_entity.payout_methods.unarchived.none?
@@ -28,7 +28,7 @@ class LegalEntity
       authorize @payout_method
 
       service = LegalEntity::PayoutMethodService::Update.new(
-        user: current_user,
+        legal_entity: @payout_method.legal_entity,
         details_type: @payout_method.details_type,
         details_attrs: details_params_for(@payout_method.details_type),
         make_default: @payout_method.default?,
@@ -94,8 +94,10 @@ class LegalEntity
     end
 
     def render_error_payout_settings(payout_method)
-      @user = current_user
+      @legal_entity = payout_method.legal_entity || legal_entity
+      @user = legal_entity&.users&.find_by(id: params[:user_id]) || current_user
       @payout_method = payout_method
+      @legal_entities = @user.legal_entities
       flash.now[:error] = payout_method.error_messages.to_sentence
 
       # `edit_payout` lives under `users/`, but this controller isn't namespaced
@@ -105,11 +107,18 @@ class LegalEntity
     end
 
     def legal_entity
-      current_user&.personal_legal_entity
+      @legal_entity ||= @payout_method&.legal_entity ||
+                        manageable_legal_entities&.find_by(id: params[:legal_entity_id]) ||
+                        current_user&.personal_legal_entity
+    end
+
+    def manageable_legal_entities
+      current_user&.admin? ? LegalEntity.all : current_user&.legal_entities
     end
 
     def set_payout_method
-      @payout_method = legal_entity&.payout_methods&.unarchived&.find_by(id: params[:id])
+      scope = LegalEntity::PayoutMethod.unarchived.where(legal_entity: manageable_legal_entities)
+      @payout_method = scope.find_by(id: params[:id])
       return if @payout_method
 
       skip_authorization
@@ -118,25 +127,7 @@ class LegalEntity
     end
 
     def details_params_for(type_name)
-      attributes =
-        case type_name
-        when LegalEntity::PayoutMethod::Check.name
-          [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country]
-        when LegalEntity::PayoutMethod::AchTransfer.name
-          [:account_number, :routing_number]
-        when LegalEntity::PayoutMethod::Wire.name
-          [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code,
-           :recipient_country, :recipient_name, :bic_code, :account_number] +
-          LegalEntity::PayoutMethod::Wire.recipient_information_accessors
-        when LegalEntity::PayoutMethod::WiseTransfer.name
-          [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code,
-           :recipient_country, :currency] +
-          LegalEntity::PayoutMethod::WiseTransfer.recipient_information_accessors
-        end
-      return {} unless attributes
-
-      key = :"payout_method_#{type_name.demodulize.underscore}"
-      params.require(:user).permit(key => attributes)[key] || {}
+      LegalEntity::PayoutMethod.details_params_from(params, type_name)
     end
 
   end

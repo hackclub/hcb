@@ -1,42 +1,45 @@
-<section class="details mb-4">
-  <div>
-    <strong>Type</strong>
-    <span><%= ledger.primary? ? "Primary Ledger" : "Non-Primary Ledger" %></span>
-  </div>
+<%# locals: (ledger:, items:, table_only: true, filter: nil) %>
 
-  <% if ledger.event %>
+<% unless table_only %>
+  <section class="details mb-4">
     <div>
-      <strong>Event</strong>
-      <span><%= link_to ledger.event.name, event_path(ledger.event) %></span>
+      <strong>Type</strong>
+      <span><%= ledger.primary? ? "Primary Ledger" : "Non-Primary Ledger" %></span>
     </div>
-  <% end %>
 
-  <% if ledger.card_grant %>
+    <% if ledger.event %>
+      <div>
+        <strong>Event</strong>
+        <span><%= link_to ledger.event.name, event_path(ledger.event) %></span>
+      </div>
+    <% end %>
+
+    <% if ledger.card_grant %>
+      <div>
+        <strong>Card Grant</strong>
+        <span><%= link_to ledger.card_grant.name, card_grant_path(ledger.card_grant) %></span>
+      </div>
+    <% end %>
+
     <div>
-      <strong>Card Grant</strong>
-      <span><%= link_to ledger.card_grant.name, card_grant_path(ledger.card_grant) %></span>
+      <strong>Balance</strong>
+      <span><%= ledger.balance.format %></span>
     </div>
-  <% end %>
+  </section>
 
-  <div>
-    <strong>Balance</strong>
-    <span><%= ledger.balance.format %></span>
+  <h2>Ledger Items</h2>
+
+  <div class="flex items-center mb2 flex-col sm:flex-row">
+    <div class="flex-grow">
+      <%= page_entries_info items, entry_name: "item" %>
+    </div>
+    <%= paginate items %>
   </div>
+<% end %>
 
-  <div>
-    <strong>Total Items</strong>
-    <span><%= items.total_count %></span>
-  </div>
-</section>
-
-<h2>Ledger Items</h2>
-
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info items, entry_name: "item" %>
-  </div>
-  <%= paginate items %>
-</div>
+<% if defined?(filter) %>
+  <%= filter %>
+<% end %>
 
 <% if items.any? %>
   <div class="table-container">
