@@ -88,11 +88,11 @@ module Payroll
       attachment = Array(position_params[:file]).compact_blank.first
       @position.file.attach(attachment) if attachment
 
+      will_void_contract = contract_terms_changed?(attachment_changed: attachment.present?)
+      authorize @position, :void_pending_contract? if will_void_contract
+
       if @position.save
-        # Only void (and reissue) the in-flight contract if something that
-        # actually appears on it changed — a no-op edit shouldn't force
-        # everyone to re-sign.
-        void_pending_contract! if contract_terms_changed?(attachment_changed: attachment.present?)
+        void_pending_contract! if will_void_contract
 
         if send_contract_for_position!
           redirect_to contract_event_payroll_position_path(event_id: @event.slug, id: @position.id)
@@ -113,7 +113,7 @@ module Payroll
     end
 
     def contract_terms_changed?(attachment_changed:)
-      attachment_changed || (@position.saved_changes.keys & CONTRACT_RELEVANT_ATTRIBUTES).any?
+      attachment_changed || (@position.changes.keys & CONTRACT_RELEVANT_ATTRIBUTES).any?
     end
 
     # At most one non-voided contract exists per position (enforced by

@@ -34,6 +34,10 @@ module Payroll
     # permission as creating a contractor.
     alias_method :contract?, :create?
 
+    def void_pending_contract?
+      user&.admin? && update?
+    end
+
     # Approving/rejecting an invoice requires the same permission as creating a
     # contractor.
     def review?
