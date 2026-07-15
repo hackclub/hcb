@@ -22,7 +22,7 @@ class FeeRevenue < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :frv
 
-  has_one :ledger_item, as: :linked_object
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   has_one :raw_pending_fee_revenue_transaction
   has_many :bank_fees
 
