@@ -164,7 +164,9 @@ class EventPolicy < ApplicationPolicy
   end
 
   def payments?
-    Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && show? && record.plan.transfers_enabled?
+    # Payments (and creating payees) move money, so they're limited to
+    # managers/admins — members and readers can't access the page or add payees.
+    Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && admin_or_manager? && record.plan.transfers_enabled?
   end
 
   def contractors?
