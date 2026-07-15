@@ -347,7 +347,11 @@ class Ledger
       when "Invoice"
         "payment-docs"
       when "Donation"
-        "support"
+        if linked_object.recurring?
+          "support-recurring"
+        else
+          "support"
+        end
       when "AchTransfer"
         "payment-transfer"
       when "Wire"
