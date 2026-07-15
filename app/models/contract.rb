@@ -289,7 +289,13 @@ class Contract < ApplicationRecord
   end
 
   def archive_on_docuseal!
+    return if external_id.blank?
+
     docuseal_client.delete("/submissions/#{external_id}")
+  rescue Faraday::Error => e
+    # Voiding is authoritative in our own DB; a failure to archive the remote
+    # submission shouldn't block the void or crash the caller.
+    Rails.error.report(e, context: { contract_id: id })
   end
 
   def one_non_void_contract

@@ -39,6 +39,8 @@ module Payroll
 
     belongs_to :payee
 
+    delegate :display_name, to: :payee
+
     pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }, using: { tsearch: { prefix: true, dictionary: "english" } }
 
     has_many :invoices, class_name: "Payroll::Invoice", foreign_key: "payroll_position_id", inverse_of: :payroll_position, dependent: :destroy
@@ -180,10 +182,7 @@ module Payroll
         contractor = party.contract.party(:contractor)
         return if contractor.nil? || contractor.signed?
 
-        contractor.notify
-        contractor.schedule_reminders
-
-        Payroll::PositionMailer.with(position: self).onboarding.deliver_later if payment_setup_incomplete?
+        notify_contractor_of_onboarding(contractor)
       end
     end
 
@@ -212,7 +211,15 @@ module Payroll
         contract.parties.create!(user: contractor_user, external_email: payee.email, role: :contractor)
       end
 
-      contract.send!(reissue_messages:)
+      begin
+        contract.send!(reissue_messages:)
+      rescue Faraday::Error
+        # The contract row is already committed; void it (skipping the
+        # on_contract_voided callback) so it doesn't linger as a broken,
+        # un-sendable "pending" contract blocking future retries.
+        contract.mark_voided!(reissuing: true) if contract.may_mark_voided?
+        raise
+      end
 
       contract
     end
@@ -237,6 +244,20 @@ module Payroll
     end
 
     private
+
+    # Notifying/scheduling reminders for the contractor is best-effort: this
+    # runs from inside the DocuSeal webhook's transaction (via
+    # Contract::Party#mark_signed! → Contract#on_party_signed), so a job
+    # enqueue failure here must not roll back the signature that already
+    # happened on DocuSeal's side.
+    def notify_contractor_of_onboarding(contractor)
+      contractor.notify
+      contractor.schedule_reminders
+
+      Payroll::PositionMailer.with(position: self).onboarding.deliver_later if payment_setup_incomplete?
+    rescue => e
+      Rails.error.report(e, context: { payroll_position_id: id })
+    end
 
     def contract_signed_by?(role)
       contracts.not_voided.any? { |contract| contract.party(role)&.signed? }
