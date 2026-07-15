@@ -130,7 +130,7 @@ class LegalEntity < ApplicationRecord
   end
 
   def latest_usable_tax_form
-    tax_forms.completed.where(tin_hash:).order(completed_at: :desc, created_at: :desc).first
+    @latest_usable_tax_form ||= tax_forms.completed.where(tin_hash:).order(completed_at: :desc, created_at: :desc).first
   end
 
   delegate :masked_tin, to: :latest_usable_tax_form, allow_nil: true

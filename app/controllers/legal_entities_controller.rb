@@ -99,7 +99,7 @@ class LegalEntitiesController < ApplicationController
   # and that payment has to move off an entity we're about to archive or it can
   # never be sent.
   def migrate_pending_payments(from_le:, to_le:, archive_remaining_payees: false)
-    from_le.payees.includes(:payments).find_each do |payee|
+    from_le.payees.find_each do |payee|
       pending = payee.payments.pending_legal_entity.to_a
 
       if pending.any?
@@ -110,7 +110,15 @@ class LegalEntitiesController < ApplicationController
                       legal_entity: to_le
                     )
 
-        pending.each { |payment| payment.update!(payee: new_payee) }
+        # Re-point each payment at the new payee and then re-run the payability
+        # check: these have been waiting in pending_legal_entity, and moving them
+        # onto an already-payable entity is exactly the moment they can proceed.
+        # on_legal_entity_assigned no-ops unless the new entity is payable, so a
+        # not-yet-payable target leaves them pending, as before.
+        pending.each do |payment|
+          payment.update!(payee: new_payee)
+          payment.on_legal_entity_assigned
+        end
       end
 
       # When the old entity is being archived, every payee still pointing at it has
