@@ -50,6 +50,10 @@ class Ledger
           return event
         end
 
+        if (event = ct.try(:linked_object_v2))
+          return event
+        end
+
         # Fallback, see if any linked objects have an event.
         if (event = ct.linked_object.try(:event))
           return event
