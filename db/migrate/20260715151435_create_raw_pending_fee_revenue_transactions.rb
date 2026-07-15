@@ -1,4 +1,6 @@
 class CreateRawPendingFeeRevenueTransactions < ActiveRecord::Migration[8.0]
+  disable_ddl_transaction!
+
   def change
     create_table :raw_pending_fee_revenue_transactions do |t|
       t.integer :amount_cents
@@ -8,6 +10,6 @@ class CreateRawPendingFeeRevenueTransactions < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_reference :canonical_pending_transactions, :raw_pending_fee_revenue_transaction, null: true, foreign_key: true, index: { name: "index_canonical_pending_txs_on_raw_pending_fee_revenue_tx_id" }
+    add_reference :canonical_pending_transactions, :raw_pending_fee_revenue_transaction, null: true, index: { name: "index_canonical_pending_txs_on_raw_pending_fee_revenue_tx_id", algorithm: :concurrently }
   end
 end
