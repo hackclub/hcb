@@ -86,7 +86,7 @@ Rails.application.routes.draw do
     get "payroll", to: "my#payroll", as: :my_payroll
     get "pay", to: "my#pay", as: :my_pay
 
-    resources :payroll_positions do
+    resources :payroll_positions, only: [] do
       resources :invoices, only: [:new, :create], controller: "payroll/invoices"
     end
     get "payroll_positions/:id", to: "payroll/positions#onboarding", as: :onboarding_payroll_position

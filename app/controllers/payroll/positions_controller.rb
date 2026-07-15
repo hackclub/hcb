@@ -6,7 +6,7 @@ module Payroll
 
     CONTRACT_RELEVANT_ATTRIBUTES = %w[title rate_cents start_date end_date description].freeze
 
-    before_action :set_event, except: [:welcome]
+    before_action :set_event, except: [:onboarding]
     before_action :set_position, only: [:edit, :update, :contract]
 
     def show
