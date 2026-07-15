@@ -52,10 +52,6 @@ module Payroll
 
     MAX_DURATION = 1.year
     MAX_START_LEAD_TIME = 6.months
-
-    # Contractors have 90 days to accept a payment, so we nudge them to finish
-    # their tax + payout onboarding on this schedule (days after being invited),
-    # mirroring the event application reminder flow.
     ONBOARDING_REMINDER_DAYS = [1, 2, 7, 14, 80, 85, 89].freeze
 
     after_create_commit do
