@@ -50,8 +50,14 @@
         <span class="<%= "muted" unless item[:complete] %>"><%= item[:label] %></span>
       </span>
 
-      <% if !item[:complete] && [:tax_form, :payout_method].include?(item[:key]) %>
+      <% if !item[:complete] && item[:key] == :tax_form %>
         <%= link_to "Complete", choose_legal_entity_payee_path(@position.payee), class: "btn bg-success" %>
+      <% elsif !item[:complete] && item[:key] == :payout_method %>
+        <% if tax_form_complete %>
+          <%= link_to "Complete", choose_legal_entity_payee_path(@position.payee), class: "btn bg-success" %>
+        <% else %>
+          <span class="badge bg-muted">Complete your tax info first</span>
+        <% end %>
       <% elsif !item[:complete] && item[:key] == :contractor_signature && @contractor_party.present? %>
         <% if tax_form_complete %>
           <%= link_to "Sign contract", contract_party_path(@contractor_party), class: "btn bg-success" %>
