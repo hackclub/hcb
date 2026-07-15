@@ -39,7 +39,7 @@ module Payroll
 
     belongs_to :payee
 
-    delegate :display_name, to: :payee
+    delegate :display_name, to: :payee, prefix: true
 
     pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }, using: { tsearch: { prefix: true, dictionary: "english" } }
 

@@ -1,5 +1,5 @@
 <% title "Edit contract details" %>
-<% subtitle "For #{@position.display_name}" %>
+<% subtitle "For #{@position.payee_display_name}" %>
 <% @back_url = contract_event_payroll_position_path(event_id: @event.slug, id: @position.id) %>
 
 <% content_for :table_of_contents do %>

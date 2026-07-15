@@ -1,5 +1,5 @@
 <% title "Sign contract" %>
-<% subtitle "For #{@position.display_name}" %>
+<% subtitle "For #{@position.payee_display_name}" %>
 <% @back_url = event_contractors_path(event_id: @event.slug) %>
 
 <% content_for :table_of_contents do %>
@@ -16,7 +16,7 @@
       <%= render partial: "contract/parties/docuseal_embed", locals: { party: @organizer_party } %>
 
       <p class="muted text-sm mb-6 -mt-4">
-        Once HCB signs, we'll invite <%= @position.display_name %> to sign and complete onboarding.
+        Once HCB signs, we'll invite <%= @position.payee_display_name %> to sign and complete onboarding.
       </p>
 
       <%= form_with url: event_payroll_position_path(event_id: @event.slug, id: @position.id), method: :get do |form| %>
@@ -38,7 +38,7 @@
 
 <% else %>
   <%= render "application/callout", type: "success", title: "You've signed this contract" do %>
-    <p class="my-0">HCB will sign, then we'll invite <%= @position.display_name %> to sign and complete onboarding.</p>
+    <p class="my-0">HCB will sign, then we'll invite <%= @position.payee_display_name %> to sign and complete onboarding.</p>
   <% end %>
 
   <%= link_to "Invite contractor", event_contractors_path(event_id: @event.slug), class: "gap-2 btn w-full bg-blue mt-2" %>
