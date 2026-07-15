@@ -75,7 +75,7 @@ module StripeAuthorizationService
             return decline_with_reason!("cash_withdrawals_not_allowed")
           end
 
-          if amount_cents > 500_00
+          if amount_cents > 500_00 && !Flipper.enabled?(:allow_large_cash_withdrawals_2026_07_15, card.user)
             return decline_with_reason!("exceeds_approval_amount_limit")
           end
         end
