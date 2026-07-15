@@ -1,20 +1,12 @@
 <p>Hello,</p>
 
 <p>
-  <%= @event.name %> is looking to onboard you as a contractor through HCB!
+  <%= @event.name %> is looking to onboard you as a contractor for the <%= @position.title %> position!
 </p>
 
 <p>
-  <%= link_to "Click here", contract_party_url(@party) %> to review and sign your contractor agreement.
+  <%= link_to "Click here", payroll_position_url(@position) %> to review your position, sign your contractor agreement, and complete your onboarding.
 </p>
-
-<% missing_setup_steps = [("your tax information" if @position.tax_info_needed?), ("a payout method" if @position.payout_method_needed?)].compact %>
-<% if missing_setup_steps.any? %>
-  <p>
-    In order to get paid, we also need <%= missing_setup_steps.to_sentence %>.
-    Please <%= link_to "sign in to complete your onboarding", choose_legal_entity_payee_url(@payee) %>.
-  </p>
-<% end %>
 
 <p>
   If you have any questions, please contact <%= @event.name %>.

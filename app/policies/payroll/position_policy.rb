@@ -51,6 +51,10 @@ module Payroll
       create?
     end
 
+    def welcome?
+      user&.admin? || record.payee.legal_entity&.users&.include?(user) || user&.email == record.payee.email
+    end
+
     private
 
     def event_policy
