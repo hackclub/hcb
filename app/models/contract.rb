@@ -21,11 +21,13 @@
 #  document_id          :bigint
 #  external_id          :string
 #  external_template_id :string
+#  reissue_of_id        :bigint
 #
 # Indexes
 #
-#  index_contracts_on_contractable  (contractable_type,contractable_id)
-#  index_contracts_on_document_id   (document_id)
+#  index_contracts_on_contractable   (contractable_type,contractable_id)
+#  index_contracts_on_document_id    (document_id)
+#  index_contracts_on_reissue_of_id  (reissue_of_id)
 #
 # Foreign Keys
 #
@@ -49,6 +51,9 @@ class Contract < ApplicationRecord
   belongs_to :document, optional: true
   belongs_to :contractable, polymorphic: true
 
+  belongs_to :reissue_of, optional: true, class_name: "Contract"
+  has_one :reissued_contract, foreign_key: :reissue_of_id, inverse_of: :reissue_of, class_name: "Contract"
+
   has_one :organizer_position, required: false, foreign_key: :fiscal_sponsorship_contract_id, inverse_of: :fiscal_sponsorship_contract
   has_many :parties, dependent: :destroy
 
@@ -57,6 +62,8 @@ class Contract < ApplicationRecord
   validates_email_format_of :cosigner_email, allow_nil: true, allow_blank: true
   normalizes :cosigner_email, with: ->(cosigner_email) { cosigner_email.strip.downcase }
   validates :cosigner_email, nondisposable: true, on: :create
+
+  validate :reissue_of_is_voided
 
   # Always create HCB's party on all contracts
   # Contracts for subevents can be issued by non-admins, so fallback to system user in those cases
@@ -83,15 +90,16 @@ class Contract < ApplicationRecord
 
     event :mark_sent do
       transitions from: :pending, to: :sent
-      after_commit do |reissue_signee_message = nil, reissue_cosigner_message = nil|
-        if reissue_signee_message.present? || reissue_cosigner_message.present?
-          party(:signee).notify_reissued(message: reissue_signee_message)
-          party(:cosigner).notify_reissued(message: reissue_cosigner_message) if party(:cosigner).present?
+      after_commit do |reissue_messages = {}|
+        if reissue_messages.values.any?(&:present?)
+          reissue_messages.each do |role, message|
+            party(role)&.notify_reissued(message:) if message.present?
+          end
         elsif contractable.contract_notify_when_sent
-          parties.not_hcb.each(&:notify)
+          notifiable_parties.each(&:notify)
         end
 
-        parties.not_hcb.each(&:schedule_reminders)
+        notifiable_parties.each(&:schedule_reminders)
       end
     end
 
@@ -104,9 +112,9 @@ class Contract < ApplicationRecord
 
     event :mark_voided do
       transitions from: [:pending, :sent], to: :voided
-      after do
+      after do |options = {}|
         archive_on_docuseal!
-        contractable.on_contract_voided(self)
+        contractable.on_contract_voided(self) unless options[:reissuing]
       end
     end
   end
@@ -145,7 +153,14 @@ class Contract < ApplicationRecord
     raise NotImplementedError, "The #{self.class.name} model hasn't implemented it's own required roles"
   end
 
-  def send!(reissue_signee_message: nil, reissue_cosigner_message: nil)
+  def permitted_roles
+    # This method should be overwritten in subclasses of Contract.
+    # It is the superset of roles this contract type can have; required_roles
+    # must be a subset of it.
+    raise NotImplementedError, "The #{self.class.name} model hasn't implemented it's own permitted roles"
+  end
+
+  def send!(reissue_messages: {})
     raise ArgumentError, "can only send contracts when pending" unless pending?
 
     existing_roles = parties.map(&:role)
@@ -154,7 +169,7 @@ class Contract < ApplicationRecord
 
     send_using_docuseal! unless sent_with_manual?
 
-    mark_sent!(reissue_signee_message, reissue_cosigner_message)
+    mark_sent!(reissue_messages)
   end
 
   def event
@@ -165,12 +180,21 @@ class Contract < ApplicationRecord
     event&.name || prefills["name"]
   end
 
+  def agreement_name
+    # Overridden in subclasses
+    "agreement"
+  end
+
   def redirect_path
     contractable.contract_redirect_path
   end
 
   def party(role)
     parties.find_by(role:)
+  end
+
+  def notifiable_parties
+    parties.not_hcb
   end
 
   def on_party_signed(party)
@@ -198,7 +222,8 @@ class Contract < ApplicationRecord
 
     document = Document.new(
       event:,
-      name: document_name
+      name: document_name,
+      category: document_category
     )
     contract_document = docuseal_document["documents"][0]
 
@@ -216,6 +241,14 @@ class Contract < ApplicationRecord
     update!(document:)
   end
 
+  def reissue?
+    reissue_of_id.present?
+  end
+
+  def inline_documents?
+    prefills&.dig("documents").present?
+  end
+
   private
 
   def docuseal_client
@@ -231,11 +264,16 @@ class Contract < ApplicationRecord
   end
 
   def send_using_docuseal!
-    response = docuseal_client.post("/submissions") do |req|
+    # /submissions/pdf combines our template with inline documents versus
+    # the standard /submissions
+    endpoint = inline_documents? ? "/submissions/pdf" : "/submissions"
+
+    response = docuseal_client.post(endpoint) do |req|
       req.body = payload.to_json
     end
 
-    update(external_service: :docuseal, external_id: response.body.first["submission_id"])
+    external_id = inline_documents? ? response.body["id"] : response.body.first["submission_id"]
+    update(external_service: :docuseal, external_id:)
 
     submitters = docuseal_document["submitters"]
 
@@ -263,6 +301,16 @@ class Contract < ApplicationRecord
   # Overrideen in inherited classes
   def document_name
     "Contract with #{party(:signee).user.full_name}"
+  end
+
+  def document_category
+    :general
+  end
+
+  def reissue_of_is_voided
+    if reissue_of.present? && !reissue_of.voided?
+      errors.add(:reissue_of, "must be voided")
+    end
   end
 
 end

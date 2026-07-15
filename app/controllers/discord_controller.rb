@@ -35,13 +35,13 @@ class DiscordController < ApplicationController
 
   def interaction_webhook
     case params[:type]
-    when 1 # PING
-      return render json: { type: 1 } # PONG
-    when 2 # application command
+    when Discordrb::Interaction::TYPES[:ping]
+      return render json: { type: Discordrb::Interaction::CALLBACK_TYPES[:pong] }
+    when Discordrb::Interaction::TYPES[:command]
       ephemeral = ::Discord::RegisterCommandsJob.command(params.dig(:data, :name))&.dig(:meta, :ephemeral) || false
-      render json: { type: 5, data: { flags: ephemeral ? 1 << 6 : 0 } } # Acknowledge interaction & will edit response later
+      render json: { type: Discordrb::Interaction::CALLBACK_TYPES[:deferred_message], data: { flags: ephemeral ? Discord::Support::EPHEMERAL_MESSAGE_FLAG : 0 } } # Acknowledge interaction & will edit response later
       ::Discord::HandleInteractionJob.perform_later(params.to_unsafe_h, responded: true)
-    when 3, 5 # message component, modal submit
+    when Discordrb::Interaction::TYPES[:component], Discordrb::Interaction::TYPES[:modal_submit]
       render json: ::Discord::HandleInteractionJob.perform_now(params.to_unsafe_h, responded: false)
     else
       Rails.error.unexpected "🚨 Unknown payload received from Discord on interaction webhook: #{params.inspect}"

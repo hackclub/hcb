@@ -1,0 +1,203 @@
+<% title "Payments for #{@event.name}" %>
+<% page_md %>
+<%= render "events/nav", selected: :payments %>
+
+<% if @transfers.empty? && organizer_signed_in? && !params[:q].present? && !params[:status].present? && !params[:transfer_type].present? %>
+  <%= render "events/one_pager",
+    title: "Payments",
+    screenshots: {
+      light: "https://user-cdn.hackclub-assets.com/019c3c78-d39e-7433-8ff7-5d30be89ada7/hcb.hackclub.com_hq_transfers%20(1).png",
+      dark: "https://user-cdn.hackclub-assets.com/019c3c78-a1f5-7107-b798-63ace68178d7/hcb.hackclub.com_hq_transfers.png",
+    },
+    hints: [
+      {
+        icon: "payment-transfer",
+        title: "Send money where it needs to go",
+        description: "Use payments to pay vendors, reimburse organizers, and send funds to partners directly from your event account."
+      },
+      {
+        icon: "receipt",
+        title: "Keep clean records",
+        description: "Each transfer is tracked with amounts, recipients, and notes so you always know where your event's money is going."
+      },
+      {
+        icon: "up-caret",
+        title: "Support your event's operations",
+        description: "Cover prizes, travel, supplies, and other expenses quickly and securely by sending transfers instead of handling cash."
+      }
+    ] do %>
+    <% content_for :caption do %>
+      <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/transfers" target="_blank" class="underline">how we do transfers on HQ!</a></span>
+    <% end %>
+
+    <% if policy(@event).new_transfer? %>
+      <%= link_to new_event_payment_path(event_id: @event.slug), class: "w-full btn bg-success" do %>
+        <%= inline_icon "payment-transfer" %>
+        Send
+      <% end %>
+    <% end %>
+
+  <% end %>
+
+<% else %>
+  <h1 class="heading border-0 mb-0">
+    <span class="flex items-center">
+      Payments
+      <%= badge_for @transfers.total_count, class: "bg-muted" %>
+    </span>
+
+    <% if policy(@event).new_payment? %>
+      <%= link_to new_event_payment_path(event_id: @event.slug), class: "btn bg-success" do %>
+        <%= inline_icon "payment-transfer" %>
+        Send
+      <% end %>
+    <% end %>
+  </h1>
+
+  <div class="statset mb-4">
+    <div class="stat">
+      <span class="stat__label">Total</span>
+      <span class="stat__value"><%= render_money_amount @stats[:deposited] %></span>
+    </div>
+    <div class="stat stat--small">
+      <span class="stat__label">On the way</span>
+      <span class="stat__value"><%= render_money_amount @stats[:in_transit] %></span>
+    </div>
+    <div class="stat stat--small">
+      <span class="stat__label">Canceled</span>
+      <span class="stat__value"><%= render_money_amount @stats[:canceled] %></span>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
+    <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+      <%= render "events/filters/search", form: %>
+    <% end %>
+
+    <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
+  </div>
+
+  <%= render "events/filters/bar", filters: @filter_options if @has_filter %>
+
+  <% if @transfers.any? %>
+    <article class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th><%# icon %></th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>To</th>
+            <th>For</th>
+            <th class="text-right">Amount</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <% @transfers.each do |d| %>
+            <% transfer_popover_title = d.is_a?(Payment) ? "Payment of #{render_money(d.amount)}" : "Transfer of #{render_money(d.local_hcb_code.amount_cents_by_event(@event).abs)}" %>
+            <tr class="<%= "clickable" if organizer_signed_in? %>">
+              <td class="transaction__icon">
+                <% if d.is_a?(Check) || d.is_a?(IncreaseCheck) %>
+                  <span class="tooltipped tooltipped--e inline-block" aria-label="Mailed check">
+                    <%= inline_icon "email" %>
+                  </span>
+                <% elsif d.is_a?(AchTransfer) %>
+                  <span class="tooltipped tooltipped--e inline-block" aria-label="ACH transfer">
+                    <%= inline_icon "bank-account" %>
+                  </span>
+                <% elsif d.is_a?(PaypalTransfer) %>
+                  <span class="tooltipped tooltipped--e inline-block" aria-label="PayPal transfer">
+                    <%= inline_icon "paypal" %>
+                  </span>
+                <% elsif d.is_a?(Wire) %>
+                  <span class="tooltipped tooltipped--e inline-block" aria-label="International wire">
+                    <%= inline_icon "web" %>
+                  </span>
+                <% elsif d.is_a?(WiseTransfer) %>
+                  <span class="tooltipped tooltipped--e inline-block" aria-label="Wise transfer">
+                    <%= inline_icon "wise" %>
+                  </span>
+                <% else %>
+                  <span class="tooltipped tooltipped--e inline-block" aria-label="HCB transfer">
+                    <%= inline_icon "door-leave" %>
+                  </span>
+                <% end %>
+              </td>
+              <td>
+                <span class="ml0 badge bg-<%= d.try(:state) || d.state_color %>"><%= d.state_text&.capitalize %></span>
+              </td>
+              <td>
+                <%= format_date d.created_at %>
+              </td>
+              <td style="max-width: 15ch" class="overflow-hidden truncate" title="<%= d.try(:name) || d.try(:purpose) %>">
+                <% if d.is_a?(Disbursement::Outgoing) %>
+                  <strong>
+                    <% if d.destination_event.is_public? || organizer_signed_in?(d.destination_event) %>
+                      <%= link_to d.destination_event.name, d.destination_event, style: "z-index:1;pointer-events:auto" %>
+                    <% else %>
+                      <%= d.destination_event.name %>
+                    <% end %>
+                  </strong>
+                <% else %>
+                  <%= d.try(:name) || d.payee.display_name %>
+                <% end %>
+              </td>
+              <td style="max-width: 25ch;" class="overflow-hidden truncate">
+                <% if d.is_a?(Disbursement::Outgoing) %>
+                  <%= d.name %>
+                <% else %>
+                  <%= d.try(:payment_for) || d.try(:purpose) %>
+                <% end %>
+              </td>
+              <td style="text-align: right;">
+                <% case d %>
+                <% when Wire %>
+                  <%= render_money(d.local_hcb_code.amount_cents.abs) %>
+                <% when WiseTransfer %>
+                  <% ledger_amount = capture do %>
+                    <%= render_money(d.local_hcb_code.amount_cents.abs) %>
+                  <% end %>
+
+                  <% if d.currency == "USD" %>
+                    <%= ledger_amount %>
+                  <% else %>
+                    <% fx_tooltip = d.amount.format(with_currency: true) %>
+                    <span class="tooltipped tooltipped--w inline-block" aria-label="<%= fx_tooltip %>">
+                      <%= ledger_amount %>
+                    </span>
+                  <% end %>
+                <% when Disbursement::Outgoing %>
+                  <%= render_money(-d.amount) %>
+                <% else %>
+                  <%= render_money(d.amount) %>
+                <% end %>
+
+                <% if organizer_signed_in? %>
+                  <% if d.is_a?(Payment) %>
+                    <%= link_to "", payment_path(d),
+                                  class: "stretched-link",
+                                  data: popovers_enabled? && transfer_popover_title ? popover_data(
+                                    title: transfer_popover_title,
+                                    src: payment_path(d),
+                                    frame_id: "payment_#{d.id}",
+                                    state_url: payment_path(d),
+                                    external_link: payment_path(d)
+                                  ) : nil %>
+                  <%# the link below can be changed back to `d.local_hcb_code.hashid` after hcb_codes are converted into proper associations and are preloaded in the controller %>
+                  <% elsif (local_hcb_code = d.try(:local_hcb_code)).present? %>
+                    <%= link_to "", hcb_code_url(d.hcb_code), class: "stretched-link", data: popovers_enabled? && transfer_popover_title ? popover_data(title: transfer_popover_title, src: local_hcb_code.popover_path, frame_id: local_hcb_code.public_id, state_url: hcb_code_url(d.hcb_code), external_link: hcb_code_url(d.hcb_code)) : nil %>
+                  <% end %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </article>
+
+    <%= paginate @transfers %>
+  <% else %>
+    <%= blankslate "No payments yet" %>
+  <% end %>
+<% end %>

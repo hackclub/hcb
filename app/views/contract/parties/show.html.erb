@@ -16,7 +16,7 @@
             <%= link_to "Go to associated invite (#{@contract.contractable.id})", organizer_position_invite_path(@contract.contractable), class: "btn w-full" %>
           <% end %>
 
-          <%= button_to "Void", void_contract_path(@contract), method: :post, class: "btn bg-error", data: { "turbo-confirm": "Are you sure you want to void this contract?" } %>
+          <%= button_to "Void", void_contract_path(@contract), method: :post, class: "btn bg-error", data: { "turbo-confirm": "Are you sure you want to void this contract?", "turbo-confirm-danger": true } %>
           <button class="btn bg-light-warning" data-behavior="modal_trigger" data-modal="reissue_modal">Reissue</button>
         </div>
 
@@ -41,7 +41,19 @@
         <% end %>
       </div>
     <% else %>
-      <%= render partial: "contract_faq" %>
+      <div class="flex flex-col max-h-full gap-4">
+        <% if @party.signee? %>
+          <%= render "application/callout", title: "Watch the onboarding videos", type: "warning", class: "my-0 flex-shrink-0" do %>
+            <p class="my-0">
+              If you haven't had an onboarding meeting, please watch:
+              <a href="https://www.youtube.com/watch?v=Ucz-QT2GPOk" target="_blank">HCB Onboarding (#1): Introduction</a> and
+              <a href="https://www.youtube.com/watch?v=LMh9FCm8iIE" target="_blank">HCB Onboarding (#2): Rules & Regulations</a>.
+            </p>
+          <% end %>
+        <% end %>
+
+        <%= render partial: "contract_faq" %>
+      </div>
     <% end %>
   </div>
 </div>
@@ -52,26 +64,14 @@
     <p>Use this if the signee or cosigner has made an error in filling out the contract.</p>
     <p>
       This will void the existing contract and resend a new contract along with the messages you provide.
-      <% if @contract.party(:cosigner).present? %>
-        You must provide a message for the signee, cosigner, or both.
-      <% end %>
+      You must provide a message for at least one party.
     </p>
 
     <%= form_with url: reissue_contract_path(@contract) do |form| %>
-      <div class="field">
-        <%= form.label :signee_message, "Signee message" %>
-        <%= form.text_area :signee_message, placeholder: "Leave blank if the signee does not need to make any changes", rows: 2, required: @contract.party(:cosigner).nil?, data: { behavior: "no_autosize" } %>
-        <p class="h5 muted mt0 mb1">
-          <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", target: "_blank", class: "flex items-center" do %>
-            <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported
-          <% end %>
-        </p>
-      </div>
-
-      <% if @contract.party(:cosigner).present? %>
+      <% @contract.parties.not_hcb.each do |party| %>
         <div class="field">
-          <%= form.label :cosigner_message, "Cosigner message" %>
-          <%= form.text_area :cosigner_message, placeholder: "Leave blank if the cosigner does not need to make any changes", rows: 2, data: { behavior: "no_autosize" } %>
+          <%= form.label "reissue_messages[#{party.role}]", "#{party.role.titleize} message" %>
+          <%= form.text_area "reissue_messages[#{party.role}]", placeholder: "Leave blank if the #{party.role} does not need to make any changes", rows: 2, data: { behavior: "no_autosize" } %>
           <p class="h5 muted mt0 mb1">
             <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", target: "_blank", class: "flex items-center" do %>
               <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported

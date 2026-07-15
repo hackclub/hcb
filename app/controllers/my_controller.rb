@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :feed] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :pay, :feed] # do not force pundit
   skip_before_action :signed_in_user, only: [:cards, :reimbursements]
   before_action :signed_in_or_unverified_user, only: [:cards, :reimbursements]
   before_action :set_reimbursement_reports, only: [:reimbursements, :reimbursements_icon]
@@ -144,7 +144,7 @@ class MyController < ApplicationController
 
     @reports = @reports.search(params[:q]) if params[:q].present?
 
-    @payout_method = current_user.payout_method
+    @payout_method = current_user.default_payout_method&.details
   end
 
   def reimbursements_icon
@@ -155,7 +155,57 @@ class MyController < ApplicationController
 
   def payroll
     @jobs = current_user.jobs
-    @payout_method = current_user.payout_method
+    @payout_method = current_user.default_payout_method&.details
+  end
+
+  def pay
+    @legal_entities = current_user.legal_entities
+
+    if params[:legal_entity_id].present?
+      selected = @legal_entities.find_by(id: params[:legal_entity_id])
+      session[:legal_entity_id] = selected.id.to_s if selected
+      return redirect_to my_pay_path
+    end
+
+    @legal_entity = @legal_entities.find_by(id: session[:legal_entity_id]) || current_user.personal_legal_entity
+    session[:legal_entity_id] = @legal_entity.id
+
+    @payout_method = @legal_entity.default_payout_method
+
+    all_payments = @legal_entity.payments
+
+    @stats = {
+      deposited: all_payments.where(aasm_state: "successful").sum(:amount_cents),
+      in_transit: all_payments.where(aasm_state: %w[pending_legal_entity under_review sent]).sum(:amount_cents),
+      canceled: all_payments.where(aasm_state: "rejected").sum(:amount_cents)
+    }
+
+    @payments = all_payments.includes(:event, :payee, { payroll_invoice: { receipts: :file_attachment } }, attempts: :payout).order(created_at: :desc)
+    @payments = @payments.search_purpose_and_event(params[:q]) if params[:q].present?
+    @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
+    @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
+    @payments = @payments.where(aasm_state: "rejected") if params[:status] == "canceled"
+    @payments = @payments.page(params[:page] || 1).per(params[:per] || 10)
+
+    @filter_options = [
+      { key: "status", label: "Status", type: "select", options: %w[deposited in_transit canceled] }
+    ]
+    @has_filter = params[:status].present?
+
+    @contractor_positions = Payroll::Position.joins(payee: { legal_entity: :legal_entity_users })
+                                             .where(legal_entity_users: { user_id: current_user.id })
+                                             .where(payees: { legal_entity_id: @legal_entity.id })
+                                             .includes(payee: :event)
+                                             .order(created_at: :desc)
+                                             .load
+    @tax_form_required = @contractor_positions.any? && !@legal_entity.completed_tax_form?
+    # Approved invoices are represented by their payment in the history table
+    # below, so only surface invoices still awaiting review here to avoid
+    # duplicating information.
+    @invoices = Payroll::Invoice.where(payroll_position: @contractor_positions)
+                                .where(aasm_state: "submitted")
+                                .includes(payroll_position: { payee: :event })
+                                .order(created_at: :desc)
   end
 
   def feed

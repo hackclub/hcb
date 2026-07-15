@@ -1,0 +1,91 @@
+# frozen_string_literal: true
+
+# == Schema Information
+#
+# Table name: payees
+#
+#  id              :bigint           not null, primary key
+#  archived_at     :datetime
+#  display_name    :string           not null
+#  email           :string           not null
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  event_id        :bigint           not null
+#  legal_entity_id :bigint
+#
+# Indexes
+#
+#  index_payees_on_archived_at                   (archived_at)
+#  index_payees_on_event_id                      (event_id)
+#  index_payees_on_legal_entity_id               (legal_entity_id)
+#  index_payees_on_legal_entity_id_and_event_id  (legal_entity_id,event_id) UNIQUE
+#
+class Payee < ApplicationRecord
+  include PgSearch::Model
+
+  include Hashid::Rails
+
+  include PublicIdentifiable
+  set_public_id_prefix :pye
+
+  belongs_to :event
+  belongs_to :legal_entity, optional: true
+
+  has_many :payments
+  has_many :payroll_positions, class_name: "Payroll::Position"
+
+  validates_uniqueness_of :legal_entity_id, scope: [:event_id], allow_nil: true
+
+  validate :managed_legal_entity_constraints
+
+  scope :not_archived, -> { where(archived_at: nil) }
+
+  pg_search_scope :search, against: [:display_name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }
+
+  after_update do
+    if legal_entity_id_previously_changed?(from: nil)
+      payments.pending_legal_entity.each(&:on_legal_entity_assigned)
+    end
+  end
+
+  def search_avatar
+    User.find_by(email:)
+  end
+
+  def total_paid_cents
+    # Use the in-memory association when it's already loaded (e.g. the
+    # contractors index eager-loads payments) to avoid an N+1 of sum queries.
+    if payments.loaded?
+      payments.sum { |payment| payment.aasm_state == "successful" ? payment.amount_cents : 0 }
+    else
+      payments.where(aasm_state: "successful").sum(:amount_cents)
+    end
+  end
+
+  def managed?
+    legal_entity&.managing_event_id.present?
+  end
+
+  def archive!
+    update!(archived_at: Time.current)
+  end
+
+  def archived?
+    archived_at.present?
+  end
+
+  private
+
+  def managed_legal_entity_constraints
+    return unless managed?
+
+    if event_id != legal_entity.managing_event_id
+      errors.add(:event, "must be the event managing this legal entity")
+    end
+
+    if legal_entity.payees.where.not(id:).exists?
+      errors.add(:legal_entity, "is managed and can only have one payee")
+    end
+  end
+
+end

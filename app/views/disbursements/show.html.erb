@@ -117,7 +117,7 @@
 
     <% if @disbursement.pending? %>
       <% admin_tool("mt2") do %>
-        <%= link_to "Mark fulfilled", disbursement_mark_fulfilled_path(@disbursement), method: :post, class: "btn bg-success", data: { confirm: "WOAH THERE! This will prevent HCB from auto-fulfilling this disbursement. I hope you know what you're doing!" } %>
+        <%= link_to "Mark fulfilled", disbursement_mark_fulfilled_path(@disbursement), data: { turbo_method: :post, turbo_confirm: "WOAH THERE! This will prevent HCB from auto-fulfilling this disbursement. I hope you know what you're doing!" }, class: "btn bg-success" %>
         <%= link_to "Reject", disbursement_reject_path(@disbursement), method: :post, class: "btn bg-error" %>
       <% end %>
     <% end %>

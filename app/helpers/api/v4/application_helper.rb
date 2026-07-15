@@ -5,6 +5,8 @@ module Api
     module ApplicationHelper
       include UsersHelper # for `profile_picture_for`
       include StripeAuthorizationsHelper
+      include AdminScopeCheckable
+      include ::ApplicationHelper
 
       attr_reader :current_user, :current_token
 
@@ -18,25 +20,6 @@ module Api
       def pagination_metadata(json)
         json.total_count @total_count
         json.has_more @has_more
-      end
-
-      def paginate_cursor(list, &block)
-        limit = params[:limit]&.to_i || 25
-        return render json: { error: "invalid_operation", messages: ["Limit is capped at 100. '#{params[:limit]}' is invalid."] }, status: :bad_request if limit > 100
-
-        start_index = if params[:after]
-                        index = list.index { |item| block.call(item) == params[:after] }
-                        return render json: { error: "invalid_operation", messages: ["After parameter '#{params[:after]}' not found"] }, status: :bad_request if index.nil?
-
-                        index + 1
-                      else
-                        0
-                      end
-
-        paged = Kaminari.paginate_array(list).page(1).per(limit).padding(start_index)
-        @total_count = paged.total_count
-        @has_more = paged.next_page.present?
-        paged.to_a
       end
 
       def transaction_amount(tx, event: nil)
@@ -100,7 +83,7 @@ module Api
       end
 
       def expand_pii(override_if: false)
-        yield if (current_token&.scopes&.include?("pii") && current_user&.admin?) || override_if
+        yield if (current_token&.scopes&.include?("pii") && can_admin?(:write)) || override_if
       end
 
     end

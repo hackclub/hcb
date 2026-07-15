@@ -65,8 +65,8 @@ gem "active_storage_validations", "3.0.1" # file validations
 gem "validates_email_format_of" # email address validations
 gem "phonelib" # phone number validations
 
-gem "money-rails"
-gem "monetize"
+gem "money-rails", "~> 3.0.0"
+gem "monetize", "~> 2.0.0"
 gem "rounding"
 
 gem "business_time"
@@ -90,6 +90,7 @@ gem "api-pagination"
 
 gem "flipper" # feature flags
 gem "flipper-active_record"
+gem "flipper-active_support_cache_store" # caches flag reads via Rails.cache
 gem "flipper-ui"
 
 gem "pundit" # implements authorization policies
@@ -238,3 +239,5 @@ gem "intercom-rails"
 gem "hotwire_combobox"
 
 gem "maintenance_tasks", "~> 2.14"
+
+gem "aws-sdk-kms"
