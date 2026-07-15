@@ -8,6 +8,7 @@
 #  archived        :boolean          default(FALSE), not null
 #  default         :boolean          default(FALSE), not null
 #  details_type    :string           not null
+#  name            :string
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  details_id      :bigint           not null
