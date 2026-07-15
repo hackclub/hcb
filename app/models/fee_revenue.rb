@@ -49,7 +49,7 @@ class FeeRevenue < ApplicationRecord
   end
 
   def event
-    ::EventMappingEngine::EventIds::HACK_CLUB_BANK
+    Event.find(::EventMappingEngine::EventIds::HACK_CLUB_BANK)
   end
 
   private
