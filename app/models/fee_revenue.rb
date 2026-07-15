@@ -62,7 +62,7 @@ class FeeRevenue < ApplicationRecord
 
     canonical_pending_transaction = CanonicalPendingTransaction.create!(
       date: rpfrt.date,
-      amount_cents: rpfrt.amount_cents
+      amount_cents: rpfrt.amount_cents,
       raw_pending_fee_revenue_transaction: rpfrt
     )
 
