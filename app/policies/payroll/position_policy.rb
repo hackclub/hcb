@@ -34,8 +34,15 @@ module Payroll
     # permission as creating a contractor.
     alias_method :contract?, :create?
 
+    # This intentionally diverges from ContractPolicy#void?/#reissue?, which
+    # gate voiding a contract behind user&.admin? (a system-wide power). Here,
+    # any org member who can already edit the position can also void/reissue
+    # its own in-flight contract: it's the same edit permission, scoped to
+    # the caller's own event, and only ever reaches a pending/sent contract
+    # (contract_fully_signed? already blocks update? once it's fully
+    # executed) — never a contract HCB has legally countersigned.
     def void_pending_contract?
-      user&.admin? && update?
+      update?
     end
 
     # Approving/rejecting an invoice requires the same permission as creating a
