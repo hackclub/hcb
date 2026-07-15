@@ -367,13 +367,13 @@ class Ledger
       when "CheckDeposit"
         "cheque"
       when "Disbursement::Outgoing" # TODO: support for special appearance icons
-        if linked_object.card_grant_id.present?
+        if linked_object.card_grant.present?
           "bag"
         else
           "door-leave"
         end
       when "Disbursement::Incoming"
-        if linked_object.card_grant_id.present?
+        if linked_object.card_grant.present?
           "bag"
         else
           "door-enter"
