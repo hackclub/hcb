@@ -76,6 +76,7 @@ class TaxbanditsService
         conn.response :json
         conn.response :raise_error
         conn.headers["Authentication"] = signature
+        conn.headers["Referer"] = Credentials.fetch(:TAXBANDITS, :DOMAIN_ID)
         conn.adapter Faraday.default_adapter
       end.get("/v2/tbsauth")
 
