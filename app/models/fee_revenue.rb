@@ -28,6 +28,8 @@ class FeeRevenue < ApplicationRecord
   include HasHcbCode
   has_hcb_code ::TransactionGroupingEngine::Calculate::HcbCode::FEE_REVENUE_CODE, eager_create: true
 
+  after_create_commit :create_canonical_pending_transaction
+
   aasm do
     state :pending, initial: true
     state :in_transit
@@ -44,6 +46,37 @@ class FeeRevenue < ApplicationRecord
 
   def canonical_transaction
     @canonical_transaction ||= CanonicalTransaction.find_by(hcb_code:)
+  end
+
+  def event
+    ::EventMappingEngine::EventIds::HACK_CLUB_BANK
+  end
+
+  private
+
+  def create_canonical_pending_transaction
+    rpfrt = create_raw_pending_fee_revenue_transaction!(
+      date_posted: self.end,
+      amount_cents:
+    )
+
+    canonical_pending_transaction = CanonicalPendingTransaction.create!(
+      date: rpfrt.date,
+      amount_cents: rpfrt.amount_cents
+      raw_pending_fee_revenue_transaction: rpfrt
+    )
+
+    TransactionCategoryService
+      .new(model: canonical_pending_transaction)
+      .set!(
+        slug: "hcb-revenue",
+        assignment_strategy: :automatic
+      )
+
+    CanonicalPendingEventMapping.create!(
+      event:,
+      canonical_pending_transaction:
+    )
   end
 
 end
