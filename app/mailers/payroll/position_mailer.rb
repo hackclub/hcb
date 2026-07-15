@@ -15,7 +15,17 @@ module Payroll
                    end
 
       mail to: recipients,
-           subject: "[Action Required] Complete your onboarding to get paid as a contractor for #{@event.name}"
+           subject: "[Action Required] Complete your onboarding to get paid as a contractor for #{@event.name}",
+           reply_to: reply_to_addresses
+    end
+
+    private
+
+    def reply_to_addresses
+      manager_emails = @event.organizer_positions.where(role: :manager).includes(:user).map { |op| op.user.email_address_with_name }
+      creator_email = @position.contracts.not_voided.first&.party(:organizer)&.user&.email_address_with_name
+
+      [*manager_emails, creator_email].compact.uniq
     end
 
   end
