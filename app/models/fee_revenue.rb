@@ -29,7 +29,7 @@ class FeeRevenue < ApplicationRecord
   include HasHcbCode
   has_hcb_code ::TransactionGroupingEngine::Calculate::HcbCode::FEE_REVENUE_CODE, eager_create: true
 
-  after_create_commit :create_canonical_pending_transaction
+  after_create :create_canonical_pending_transaction
 
   aasm do
     state :pending, initial: true
