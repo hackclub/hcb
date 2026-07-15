@@ -153,9 +153,6 @@ module Payroll
       onboarding_checklist.all? { |step| step[:complete] }
     end
 
-    # Whether the contractor still owes tax and/or payout information. Gates the
-    # scheduled onboarding reminder emails so we stop nudging once they're done
-    # (or the position is no longer active).
     def onboarding_reminders_pending?
       return false unless under_review? || onboarding?
 
