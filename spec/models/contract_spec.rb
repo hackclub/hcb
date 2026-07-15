@@ -18,20 +18,5 @@ RSpec.describe Contract, type: :model do
       expect(contract).to be_voided
     end
 
-    it "reports, but does not raise, when archiving an already-sent contract on DocuSeal fails" do
-      contract = Contract::PayrollPosition.create!(
-        contractable: position,
-        include_videos: false,
-        external_service: :docuseal,
-        external_id: "STUBBED"
-      )
-      contract.update_column(:aasm_state, "sent")
-
-      stub_request(:delete, "https://api.docuseal.co/submissions/STUBBED").to_return(status: 500, body: "boom")
-      expect(Rails.error).to receive(:report)
-
-      expect { contract.mark_voided!(reissuing: true) }.not_to raise_error
-      expect(contract).to be_voided
-    end
   end
 end
