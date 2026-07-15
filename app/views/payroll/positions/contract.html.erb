@@ -9,19 +9,25 @@
 <% end %>
 
 <% if @organizer_party.pending? %>
-  <script src="https://cdn.docuseal.com/js/form.js"></script>
+  <% if @can_sign_as_organizer %>
+    <script src="https://cdn.docuseal.com/js/form.js"></script>
 
-  <div data-controller="contract">
-    <%= render partial: "contract/parties/docuseal_embed", locals: { party: @organizer_party } %>
+    <div data-controller="contract">
+      <%= render partial: "contract/parties/docuseal_embed", locals: { party: @organizer_party } %>
 
-    <p class="muted text-sm mb-6 -mt-4">
-      Once HCB signs, we'll invite <%= @position.display_name %> to sign and complete onboarding.
-    </p>
+      <p class="muted text-sm mb-6 -mt-4">
+        Once HCB signs, we'll invite <%= @position.display_name %> to sign and complete onboarding.
+      </p>
 
-    <%= form_with url: event_contractors_path(event_id: @event.slug), method: :get do |form| %>
-      <%= form.submit "Invite contractor", class: "gap-2 btn w-full bg-blue", disabled: true, data: { "contract-target": "button" } %>
+      <%= form_with url: event_contractors_path(event_id: @event.slug), method: :get do |form| %>
+        <%= form.submit "Invite contractor", class: "gap-2 btn w-full bg-blue", disabled: true, data: { "contract-target": "button" } %>
+      <% end %>
+    </div>
+  <% else %>
+    <%= render "application/callout", type: "info", title: "Waiting on #{@organizer_party.user&.name} to sign" do %>
+      <p class="my-0"><%= @organizer_party.user&.name %> started this invite and needs to sign the contract before it can continue.</p>
     <% end %>
-  </div>
+  <% end %>
 
   <%= link_to edit_event_payroll_position_path(event_id: @event.slug, id: @position.id),
         class: "btn btn--ghost w-full mt-2",

@@ -4,6 +4,8 @@ module Payroll
   class PositionsController < ApplicationController
     include SetEvent
 
+    CONTRACT_RELEVANT_ATTRIBUTES = %w[title rate_cents start_date end_date description].freeze
+
     before_action :set_event
     before_action :set_position, only: [:edit, :update, :contract]
 
@@ -39,18 +41,31 @@ module Payroll
       end
 
       if @position.save
-        redirect_to contract_event_payroll_position_path(event_id: @event.slug, id: @position.id)
+        if send_contract_for_position!
+          redirect_to contract_event_payroll_position_path(event_id: @event.slug, id: @position.id)
+        else
+          redirect_to edit_event_payroll_position_path(event_id: @event.slug, id: @position.id)
+        end
       else
         flash[:error] = @position.errors.full_messages.to_sentence
         render :new, layout: "transfer", status: :unprocessable_entity
       end
     end
 
+    # Display-only: never creates or sends a contract as a side effect of a
+    # GET, so this action stays safe (idempotent, no external calls). Sending
+    # happens from #create/#update instead.
     def contract
       authorize @position
       @contract = @position.contracts.not_voided.order(created_at: :desc).first
-      @contract ||= @position.send_contract(organizer_user: current_user)
+
+      if @contract.nil?
+        flash[:error] = "We couldn't send this contract for signing. Please review the details and save again to retry."
+        redirect_to edit_event_payroll_position_path(event_id: @event.slug, id: @position.id) and return
+      end
+
       @organizer_party = @contract.party(:organizer)
+      @can_sign_as_organizer = @organizer_party.user_id == current_user.id
       render layout: "transfer"
     end
 
@@ -70,13 +85,20 @@ module Payroll
         end_date: position_params[:ends_on],
         description: position_params[:purpose]
       )
-      if (attachment = Array(position_params[:file]).compact_blank.first)
-        @position.file.attach(attachment)
-      end
+      attachment = Array(position_params[:file]).compact_blank.first
+      @position.file.attach(attachment) if attachment
 
       if @position.save
-        void_pending_contracts!
-        redirect_to contract_event_payroll_position_path(event_id: @event.slug, id: @position.id)
+        # Only void (and reissue) the in-flight contract if something that
+        # actually appears on it changed — a no-op edit shouldn't force
+        # everyone to re-sign.
+        void_pending_contract! if contract_terms_changed?(attachment_changed: attachment.present?)
+
+        if send_contract_for_position!
+          redirect_to contract_event_payroll_position_path(event_id: @event.slug, id: @position.id)
+        else
+          redirect_to edit_event_payroll_position_path(event_id: @event.slug, id: @position.id)
+        end
       else
         @payee = @position.payee
         flash[:error] = @position.errors.full_messages.to_sentence
@@ -90,10 +112,35 @@ module Payroll
       @position = @event.payroll_positions.find(params[:id])
     end
 
-    def void_pending_contracts!
-      @position.contracts.where(aasm_state: [:pending, :sent]).find_each do |contract|
-        contract.mark_voided!(reissuing: true)
-      end
+    def contract_terms_changed?(attachment_changed:)
+      attachment_changed || (@position.saved_changes.keys & CONTRACT_RELEVANT_ATTRIBUTES).any?
+    end
+
+    # At most one non-voided contract exists per position (enforced by
+    # Contract#one_non_void_contract), so there's only ever one to void here.
+    def void_pending_contract!
+      contract = @position.contracts.where(aasm_state: [:pending, :sent]).first
+      contract&.tap { |c| c.mark_voided!(reissuing: true) }
+    end
+
+    # Ensures the position has an active (not-voided) contract, returning
+    # whether one exists afterwards. No-ops (returns true) if one already
+    # exists (e.g. an edit that didn't change contract-relevant fields), so
+    # this is safe to call unconditionally after save — it also doubles as
+    # the retry path if a previous send attempt failed. Looking up the
+    # unlinked voided contract (rather than requiring the caller to pass one
+    # in) means a retry after a failed send still reissues off the right
+    # contract, even across separate requests.
+    def send_contract_for_position!
+      return true if @position.contracts.not_voided.exists?
+
+      reissue_of = @position.contracts.where(aasm_state: :voided).where.missing(:reissued_contract).order(created_at: :desc).first
+      @position.send_contract(organizer_user: current_user, reissue_of:)
+      true
+    rescue Faraday::Error => e
+      Rails.error.report(e, context: { payroll_position_id: @position.id })
+      flash[:error] = "We couldn't send this contract for signing right now. Please try again in a moment."
+      false
     end
 
     def position_params

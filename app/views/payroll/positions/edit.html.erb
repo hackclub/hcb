@@ -3,8 +3,8 @@
 <% @back_url = contract_event_payroll_position_path(event_id: @event.slug, id: @position.id) %>
 
 <% content_for :table_of_contents do %>
-  <%= render "events/transfers/step_item", number: 1, label: "Recipient" %>
-  <%= render "events/transfers/step_item", number: 2, label: "Contract details" %>
+  <%= render "events/transfers/step_item", number: 1, label: "Recipient", seek: false, current: false %>
+  <%= render "events/transfers/step_item", number: 2, label: "Contract details", seek: false, current: true %>
   <%= render "events/transfers/step_item", number: 3, label: "Sign & invite", seek: false, current: false %>
 <% end %>
 
