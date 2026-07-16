@@ -174,22 +174,14 @@ module Payroll
     end
 
     def on_contract_party_signed(party)
-      # The generic "notify HCB once every other party has signed" logic
-      # (Contract#on_party_signed) never fires for us: the contractor is only
-      # invited to sign *after* HCB does, so `parties.not_hcb.all?(&:signed?)`
-      # can never be true before HCB's turn. Notify HCB ourselves as soon as
-      # the organizer — the only party required to sign before HCB — has.
       if party.organizer?
         hcb_party = party.contract.party(:hcb)
         notify_hcb_of_review(hcb_party) if hcb_party.present? && !hcb_party.signed?
       end
 
-      # HCB ops review the contract by signing it: HCB's signature is what
-      # moves the position out of review and into onboarding.
       if party.hcb?
         mark_onboarding! if may_mark_onboarding?
 
-        # The contractor is only invited to sign once HCB has signed
         contractor = party.contract.party(:contractor)
         notify_contractor_of_onboarding(contractor) if contractor.present? && !contractor.signed?
       end
@@ -274,9 +266,6 @@ module Payroll
       Rails.error.report(e, context: { payroll_position_id: id })
     end
 
-    # Same best-effort reasoning as notify_contractor_of_onboarding: this runs
-    # from inside the party's own signing transaction, so a mailer/job failure
-    # here must not roll back the organizer's signature.
     def notify_hcb_of_review(hcb_party)
       hcb_party.notify
       hcb_party.schedule_reminders
