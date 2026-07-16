@@ -38,12 +38,13 @@ module VisibleStatable
 
       internal_states = visible_state_mapping.keys.select { |internal| resolve_visible_state(internal, context) == state_sym }
 
+      masked = false
       if aasm.states.map(&:name).include?(state_sym)
         masked = visible_state_mapping.key?(state_sym) && resolve_visible_state(state_sym, context) != state_sym
         internal_states |= [state_sym] unless masked
       end
 
-      internal_states = [state_sym] if internal_states.empty?
+      internal_states = [state_sym] if internal_states.empty? && !masked
 
       where(aasm_state: internal_states)
     end
