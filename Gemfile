@@ -90,6 +90,7 @@ gem "api-pagination"
 
 gem "flipper" # feature flags
 gem "flipper-active_record"
+gem "flipper-active_support_cache_store" # caches flag reads via Rails.cache
 gem "flipper-ui"
 
 gem "pundit" # implements authorization policies
@@ -238,3 +239,5 @@ gem "intercom-rails"
 gem "hotwire_combobox"
 
 gem "maintenance_tasks", "~> 2.14"
+
+gem "aws-sdk-kms"

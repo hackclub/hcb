@@ -30,7 +30,7 @@ module OneTimeJobs
 
           item = Ledger::Item.find_or_create_by!(short_code: hcb_code.short_code) do |li|
             li.amount_cents = hcb_code.amount_cents
-            li.memo = hcb_code.memo
+            li.memo = "MEMO PLACEHOLDER FROM BACKFILL"
             li.datetime = hcb_code.date || hcb_code.created_at
             li.marked_no_or_lost_receipt_at = hcb_code.marked_no_or_lost_receipt_at
           end
@@ -43,9 +43,13 @@ module OneTimeJobs
           hcb_code.canonical_pending_transactions.update_all(ledger_item_id: item.id)
 
           item.reload
-          item.write_amount_cents!
           hcb_code.update!(ledger_item: item)
-          item.update!(linked_object: hcb_code.linked_object) unless hcb_code.linked_object.nil?
+          item.send(:assign_linked_object!)
+          if hcb_code.custom_memo.present?
+            item.update_custom_memo!(hcb_code.custom_memo)
+          else
+            item.refresh!
+          end
         end
       end
     end

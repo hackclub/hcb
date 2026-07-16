@@ -59,7 +59,6 @@ class IncreaseCheck < ApplicationRecord
   include Payoutable
   include Freezable
   include HasPaymentRecipient
-  include HasLedgerItem
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
@@ -128,6 +127,7 @@ class IncreaseCheck < ApplicationRecord
     "Wyoming"          => "WY"
   }.freeze
 
+  has_one :ledger_item, as: :linked_object
   belongs_to :event
   belongs_to :user, optional: true
 

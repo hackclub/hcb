@@ -2,6 +2,7 @@
 
 class CardGrantsController < ApplicationController
   include SetEvent
+  include SetLedgerFilters
 
   skip_before_action :signed_in_user, only: [:index, :card_index, :transaction_index, :show, :spending]
   skip_after_action :verify_authorized, only: [:show, :spending]
@@ -36,6 +37,15 @@ class CardGrantsController < ApplicationController
     authorize @event, :card_grant_overview?
 
     @subledger = true
+
+    @use_card_grant_ledgers = true
+    set_ledger_filters
+    @per = params[:per] || 25
+    @table_only = true
+    @ledger = @event.ledger
+    @items = ledger_query.execute(ledgers: @ledgers)
+    @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id)) if @tag&.id.present?
+    @items = @items.page(params[:page]).per(@per)
   end
 
   def new
@@ -211,6 +221,11 @@ class CardGrantsController < ApplicationController
     @card = @card_grant.stripe_card
     @hcb_codes = @card_grant.visible_hcb_codes
 
+    @per = params[:per] || 25
+    @table_only = true
+    @ledger = @card_grant.ledger
+    @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).page(params[:page]).per(@per)
+
     @show_card_details = params[:show_details] == "true"
 
     @frame = params[:frame].present?
@@ -228,6 +243,11 @@ class CardGrantsController < ApplicationController
     @event = @card_grant.event
     @card = @card_grant.stripe_card
     @hcb_codes = @card&.local_hcb_codes
+
+    @per = params[:per] || 25
+    @table_only = true
+    @ledger = @card_grant.ledger
+    @items = @card_grant.ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page]).per(@per)
 
     @frame = params[:frame].present?
     @force_no_popover = @frame

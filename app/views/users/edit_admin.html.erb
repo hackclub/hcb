@@ -77,6 +77,30 @@
     </h3>
   <% end %>
 
+  <% admin_tool "p-3" do %>
+    <h3 class="mb2 mt1">Card locking</h3>
+    <section>
+      <p>
+        Cards are currently
+        <strong class="<%= @user.cards_locked? ? "error" : "success" %>"><%= @user.cards_locked? ? "locked" : "active" %></strong>.
+      </p>
+      <% if @user.card_locking_suppressed? %>
+        <p>Card locking is suppressed until <%= format_datetime @user.card_locking_suppressed_until %>.</p>
+      <% end %>
+      <% if admin_signed_in? %>
+        <%= form_with url: suppress_card_locking_user_path(@user), method: :post, data: { turbo_frame: "_top" } do |form| %>
+          <div class="field">
+            <%= form.label :hours, "Suppress card locking for (hours)" %>
+            <%= form.number_field :hours, value: 24, min: 1, max: 720 %>
+          </div>
+          <div class="actions flex">
+            <%= form.submit "Suppress card locking", data: { turbo_confirm: "Pause card locking for this user and unlock their cards now?" } %>
+          </div>
+        <% end %>
+      <% end %>
+    </section>
+  <% end %>
+
   <%= turbo_frame_tag :admin_details, src: admin_details_user_path(@user), loading: :lazy do %>
     <% admin_tool "p-3" do %>
       <p>Loading user details</p>

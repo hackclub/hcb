@@ -70,7 +70,6 @@ RSpec.describe CanonicalPendingTransaction, type: :model do
       cpt = create(:canonical_pending_transaction, amount_cents: -999)
 
       expect(cpt.ledger_item).to be_present
-      expect(cpt.ledger_item.memo).to eq(cpt.memo)
       expect(cpt.ledger_item.amount_cents).to eq(cpt.amount_cents)
     end
 

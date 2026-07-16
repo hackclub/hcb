@@ -53,6 +53,10 @@ class UserPolicy < ApplicationPolicy
     user.auditor? || record == user
   end
 
+  def pay?
+    user.auditor? || record == user
+  end
+
   def edit_notifications?
     user.auditor? || record == user
   end
@@ -155,6 +159,10 @@ class UserPolicy < ApplicationPolicy
 
   def toggle_pretend_is_not_admin?
     user.auditor? || (record == user && user.admin_override_pretend?)
+  end
+
+  def suppress_card_locking?
+    user.admin?
   end
 
 end
