@@ -13,9 +13,13 @@ module Api
         @tags = @event.tags.order(created_at: :desc)
       end
 
+      require_oauth2_scope("tags:read", :index)
+
       def show
         authorize @tag
       end
+
+      require_oauth2_scope("tags:read", :show)
 
       def create
         @tag = @event.tags.build(params.permit(:label, :color, :emoji))
@@ -24,11 +28,15 @@ module Api
         render :show, status: :created
       end
 
+      require_oauth2_scope("tags:write", :create)
+
       def destroy
         authorize @tag
         @tag.destroy!
         render json: { message: "Tag successfully deleted" }, status: :ok
       end
+
+      require_oauth2_scope("tags:write", :destroy)
 
       private
 
