@@ -1,13 +1,15 @@
 # frozen_string_literal: true
 
 class PayeePolicy < ApplicationPolicy
+  # The payee picker only exists inside the new-payment flow, so it carries
+  # the same permission as that page.
   def index?
-    EventPolicy.new(user, record).new_payment?
+    EventPolicy.new(user, record).create_payment?
   end
 
   def create?
     # Creating a payee moves money, so it's limited to managers/admins even
-    # though the payments page itself is viewable by readers.
+    # though the payments list itself is viewable by readers.
     EventPolicy.new(user, record.event).create_payment?
   end
 

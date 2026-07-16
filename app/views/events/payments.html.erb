@@ -30,7 +30,7 @@
       <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/hq/transfers" target="_blank" class="underline">how we do transfers on HQ!</a></span>
     <% end %>
 
-    <% if policy(@event).new_transfer? %>
+    <% if policy(@event).create_payment? %>
       <%= link_to new_event_payment_path(event_id: @event.slug), class: "w-full btn bg-success" do %>
         <%= inline_icon "payment-transfer" %>
         Send
@@ -46,7 +46,7 @@
       <%= badge_for @transfers.total_count, class: "bg-muted" %>
     </span>
 
-    <% if policy(@event).new_payment? %>
+    <% if policy(@event).create_payment? %>
       <%= link_to new_event_payment_path(event_id: @event.slug), class: "btn bg-success" do %>
         <%= inline_icon "payment-transfer" %>
         Send

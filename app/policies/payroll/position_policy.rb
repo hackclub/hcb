@@ -8,10 +8,10 @@ module Payroll
       event_policy.contractor_details?
     end
 
-    # Inviting a contractor is starting a transfer against an event with the
-    # contractors feature enabled.
+    # The invite page is part of starting a transfer, so it's gated like
+    # create — readers can view the contractors list, but not this page.
     def new?
-      event_policy.contractors? && event_policy.new_transfer?
+      create?
     end
 
     def create?

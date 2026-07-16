@@ -8,8 +8,10 @@ class PaymentPolicy < ApplicationPolicy
     user.present? && record.event.users.exists?(id: user.id)
   end
 
+  # The new-payment form is part of moving money, so it's gated like create —
+  # readers can view the payments list, but not this page.
   def new?
-    EventPolicy.new(user, record).new_payment?
+    create?
   end
 
   def create?
