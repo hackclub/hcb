@@ -7,6 +7,7 @@
 #  id                            :bigint           not null, primary key
 #  access_level                  :integer          default("user"), not null
 #  birthday_ciphertext           :text
+#  card_locking_suppressed_until :datetime
 #  cards_locked                  :boolean          default(FALSE), not null
 #  charge_notifications          :integer          default("email_and_sms"), not null
 #  comment_notifications         :integer          default("all_threads"), not null
@@ -61,6 +62,9 @@ class User < ApplicationRecord
 
   include ApplicationHelper
   prepend MemoWise
+
+  # Card-locking lock decision, trust, and outstanding/overdue queries. See the concern.
+  include CardLocking::CardholderBehavior
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| record }, recipient: proc { |controller, record| record }, only: [:create, :update]
@@ -184,6 +188,7 @@ class User < ApplicationRecord
   has_one :default_payout_method, through: :personal_legal_entity
 
   has_many :payments_received, through: :legal_entities, source: :payments
+  has_many :payroll_positions, through: :legal_entities
 
   has_encrypted :birthday, type: :date
 

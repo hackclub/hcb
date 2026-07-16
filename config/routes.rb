@@ -86,9 +86,10 @@ Rails.application.routes.draw do
     get "payroll", to: "my#payroll", as: :my_payroll
     get "pay", to: "my#pay", as: :my_pay
 
-    resources :payroll_positions, only: [:new, :create, :show] do
+    resources :payroll_positions, only: [] do
       resources :invoices, only: [:new, :create], controller: "payroll/invoices"
     end
+    get "payroll_positions/:id", to: "payroll/positions#onboarding", as: :onboarding_payroll_position
 
     get "feed", to: "my#feed", as: :my_feed
     get "inbox", to: "my#inbox", as: :my_inbox
@@ -178,6 +179,8 @@ Rails.application.routes.draw do
 
       post "impersonate"
       post "unimpersonate"
+
+      post "suppress_card_locking", to: "users#suppress_card_locking"
     end
     post "delete_profile_picture", to: "users#delete_profile_picture"
     post "generate_totp"
@@ -1011,7 +1014,11 @@ Rails.application.routes.draw do
     get "payments", to: "events#payments"
 
     resources :payments, only: [:new, :create]
-    resources :payroll_positions, only: [:new, :create, :show], controller: "payroll/positions"
+    resources :payroll_positions, only: [:new, :create, :show, :edit, :update], controller: "payroll/positions" do
+      member do
+        get :contract
+      end
+    end
     resources :payroll_invoices, only: [], controller: "payroll/invoices" do
       member do
         post :approve

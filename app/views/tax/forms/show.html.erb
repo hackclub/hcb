@@ -7,4 +7,4 @@
   class="border-0 relative min-h-[75vh] w-full rounded-md">
 </iframe>
 
-<%= button_to "Done", sync_tax_form_path(@form), class: "btn w-full mt-5" %>
+<%= button_to "Done", sync_tax_form_path(@form), data: { turbo: false }, class: "btn w-full mt-5" %>

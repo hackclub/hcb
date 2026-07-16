@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_15_151435) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_16_000000) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1420,17 +1420,22 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_15_151435) do
   end
 
   create_table "hcb_codes", force: :cascade do |t|
+    t.datetime "card_charge_settled_at"
     t.datetime "created_at", null: false
     t.bigint "event_id"
     t.text "hcb_code", null: false
     t.bigint "ledger_item_id"
     t.datetime "marked_no_or_lost_receipt_at", precision: nil
+    t.datetime "receipt_due_at"
+    t.datetime "receipt_resolved_at"
     t.text "short_code"
     t.bigint "subledger_id"
     t.datetime "updated_at", null: false
+    t.index ["card_charge_settled_at"], name: "index_hcb_codes_on_card_charge_settled_at"
     t.index ["event_id"], name: "index_hcb_codes_on_event_id"
     t.index ["hcb_code"], name: "index_hcb_codes_on_hcb_code", unique: true
     t.index ["ledger_item_id"], name: "index_hcb_codes_on_ledger_item_id"
+    t.index ["receipt_due_at"], name: "index_hcb_codes_on_open_receipt_due_at", where: "((receipt_due_at IS NOT NULL) AND (receipt_resolved_at IS NULL))"
     t.index ["short_code"], name: "index_hcb_codes_on_short_code", unique: true
     t.check_constraint "short_code = upper(short_code)", name: "constraint_hcb_codes_on_short_code_to_uppercase"
   end
@@ -1617,6 +1622,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_15_151435) do
     t.index ["id"], name: "index_ledger_items_on_receipt_missing", where: "(receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))"
     t.index ["linked_object_type", "linked_object_id"], name: "index_ledger_items_on_linked_object"
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
+    t.index ["status"], name: "index_ledger_items_on_status"
   end
 
   create_table "ledger_mappings", force: :cascade do |t|
@@ -2247,6 +2253,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_15_151435) do
     t.string "unique_bank_identifier", null: false
     t.datetime "updated_at", null: false
     t.index "(((stripe_transaction -> 'card'::text) ->> 'id'::text))", name: "index_raw_stripe_transactions_on_card_id_text", using: :hash
+    t.index "((stripe_transaction ->> 'card'::text))", name: "index_raw_stripe_transactions_on_card"
     t.index ["stripe_authorization_id"], name: "index_raw_stripe_transactions_on_stripe_authorization_id"
   end
 
@@ -2857,6 +2864,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_15_151435) do
   create_table "users", force: :cascade do |t|
     t.integer "access_level", default: 0, null: false
     t.text "birthday_ciphertext"
+    t.datetime "card_locking_suppressed_until"
     t.boolean "cards_locked", default: false, null: false
     t.integer "charge_notifications", default: 0, null: false
     t.integer "comment_notifications", default: 0, null: false
