@@ -1,0 +1,24 @@
+<p>Hello,</p>
+
+<p>
+  You still need to finish onboarding before <%= @event.name %> can pay you for the <%= @position.title %> position.
+  <% if @next_step.present? %>
+    Your next step is: <strong><%= @next_step[:label] %></strong>.
+  <% end %>
+</p>
+
+<p>
+  <%= link_to "Click here", onboarding_payroll_position_url(@position) %> to review your position and complete any remaining steps, including submitting your tax form (W-9 / W-8BEN) and configuring your payout method.
+</p>
+
+<p>
+  If you have any questions, please contact <%= @event.name %>.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
+
+<p><i class="muted"><%= @event.name %> is fiscally sponsored by The Hack Foundation (d.b.a. HCB), a 501(c)(3) nonprofit (EIN: 81-2908499).</i></p>

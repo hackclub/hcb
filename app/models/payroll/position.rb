@@ -56,6 +56,10 @@ module Payroll
     MAX_DURATION = 1.year
     MAX_START_LEAD_TIME = 6.months
 
+    CONTRACTOR_ONBOARDING_STEPS = %i[tax_form contractor_signature payout_method].freeze
+
+    ONBOARDING_REMINDER_SCHEDULE = { 1 => 1.day, 2 => 2.days, 3 => 7.days, 4 => 14.days }.freeze
+
     after_create_commit do
       Payroll::Position::ExpireJob.set(wait_until: end_date.end_of_day).perform_later(self)
     end
@@ -155,6 +159,12 @@ module Payroll
     # The next step the contractor still needs to complete, or nil once done.
     def next_onboarding_step
       onboarding_checklist.find { |step| !step[:complete] }
+    end
+
+    def contractor_onboarding_incomplete?
+      onboarding_checklist.any? do |step|
+        CONTRACTOR_ONBOARDING_STEPS.include?(step[:key]) && !step[:complete]
+      end
     end
 
     def tax_info_needed?
@@ -261,8 +271,19 @@ module Payroll
     def notify_contractor_of_onboarding(contractor)
       contractor.notify
       contractor.schedule_reminders
+      schedule_onboarding_reminders
     rescue => e
       Rails.error.report(e, context: { payroll_position_id: id })
+    end
+
+    # Nudge the contractor to finish their onboarding steps (tax form, payout
+    # method, etc.) on the same cadence as the org application flow. Only
+    # unmanaged contractors handle these steps themselves, so the job re-checks
+    # +payee.managed?+ and whether anything is still outstanding at send time.
+    def schedule_onboarding_reminders
+      ONBOARDING_REMINDER_SCHEDULE.each do |reminder_number, wait|
+        Payroll::Position::OnboardingReminderJob.set(wait:).perform_later(self, reminder_number)
+      end
     end
 
     def contract_signed_by?(role)
