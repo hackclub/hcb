@@ -39,6 +39,7 @@ class Ledger < ApplicationRecord
   has_many :items, through: :mappings, source: :ledger_item, class_name: "Ledger::Item"
 
   monetize def balance_cents = items.sum(:amount_cents)
+  monetize def available_balance_cents = items.sum(:amount_cents) - fronted_fee_balance_cents
 
   def can_front_balance?
     event&.can_front_balance? || card_grant&.event&.can_front_balance? || false
@@ -52,6 +53,42 @@ class Ledger < ApplicationRecord
     items.find_each do |item|
       item.refresh!
     end
+  end
+
+  def fronted_fee_balance_cents
+    return nil if event.nil?
+      
+    feed_fronted_pts = canonical_pending_transactions
+                       .incoming
+                       .fronted
+                       .not_waived
+                       .not_declined
+
+    feed_fronted_balance = sum_fronted_amount(feed_fronted_pts)
+
+    (event.fees.sum(:amount_cents_as_decimal) - total_fee_payments_cents + (feed_fronted_balance * BigDecimal(event.revenue_fee))).ceil
+  end
+
+  def total_fee_payments_cents
+    @total_fee_payments_cents ||=
+      begin
+        paid = canonical_transactions.includes(:fee).where(fee: { reason: "HACK CLUB FEE" }).sum(:amount_cents)
+        in_transit = canonical_pending_transactions.bank_fee.unsettled.sum(:amount_cents)
+
+        (paid + in_transit) * -1
+      end
+  end
+
+  def sum_fronted_amount(pts)
+    pt_sum_by_ledger_item = pts.group(:ledger_item).sum(:amount_cents)
+    ledger_items = pt_sum_by_ledger_item.keys
+
+    ct_sum_by_ledger_item = canonical_transactions.where(ledger_item: ledger_items)
+                                               .group(:ledger_item)
+                                               .sum(:amount_cents)
+
+    pt_sum_by_ledger_item.reduce 0 do |sum, (ledger_item, pt_sum)|
+      sum + [pt_sum - (ct_sum_by_ledger_item[ledger_item] || 0), 0].max
   end
 
   private

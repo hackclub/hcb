@@ -1,3 +1,5 @@
+<%# locals: (ledger:) %>
+
 <tr class="transaction transaction--negative muted">
   <td class="transaction__icon transaction__fee_icon">
     <div class="tooltipped tooltipped--e" aria-label="Fiscal sponsorship fee">
@@ -12,7 +14,7 @@
   <td class="nowrap"></td>
   <td class="nowrap">
     <span class="flex items-center justify-end">
-      <%= render_money(-1 * @event.fronted_fee_balance_v2_cents) %>
+      <%= render_money(-1 * ledger.fronted_fee_balance_cents) %>
     </span>
   </td>
   <% admin_tool("", "td") do %>
