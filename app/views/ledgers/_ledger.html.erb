@@ -1,6 +1,6 @@
-<%# locals: (ledger:, items:, table_only: true, filter: nil) %>
+<%# locals: (ledger: nil, items:, table_only: true, filter: nil, show_fee: false) %>
 
-<% unless table_only %>
+<% if !table_only && ledger.present? %>
   <section class="details mb-4">
     <div>
       <strong>Type</strong>
@@ -59,6 +59,7 @@
         </tr>
       </thead>
       <tbody>
+        <%= render partial: "ledgers/pending_fee_transaction", locals: { ledger: } if show_fee && ledger.present? %>
         <%= render partial: "ledger/item", collection: items, as: :item %>
       </tbody>
     </table>

@@ -1,5 +1,6 @@
-<%# locals: (event:, payee: nil) %>
+<%# locals: (event:, payee: nil, position: nil) %>
 
+<% editing = position&.persisted? %>
 <% disabled = !policy(event).create_transfer? %>
 
 <%= content_for :sidebar_footer do %>
@@ -12,10 +13,24 @@
 <% end %>
 
 <div data-controller="payee-picker manual-payee">
-  <%= render "payees/recipient_section", event:, payee:, destination: "contractors",
-        manual_title: "Manual", manual_subtitle: "Tax forms and payment details entered directly" %>
+  <% if editing %>
+    <div data-scroll-seek-target="section">
+      <h3 class="mb-2">Recipient</h3>
+      <div class="card mb-4 flex gap-3 items-center">
+        <%= avatar_for_email payee.email, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
+        <div>
+          <p class="font-bold text-lg m-0"><%= payee.display_name %></p>
+          <p class="muted text-sm m-0"><%= payee.email %></p>
+        </div>
+      </div>
+    </div>
+  <% else %>
+    <%= render "payees/recipient_section", event:, payee:, destination: "contractors",
+          manual_title: "Manual", manual_subtitle: "Tax forms and payment details entered directly" %>
+  <% end %>
 
-  <%= form_with(url: event_payroll_positions_path(event_id: event.slug), scope: :contractor, local: true) do |form| %>
+  <% form_url = editing ? event_payroll_position_path(event_id: event.slug, id: position.id) : event_payroll_positions_path(event_id: event.slug) %>
+  <%= form_with(url: form_url, method: editing ? :patch : :post, scope: :contractor, local: true) do |form| %>
     <%= form.hidden_field :payee_id, value: payee&.hashid %>
     <%= hidden_field_tag "manual", (payee&.managed? || false).to_s, data: { "manual-payee-target": "manualField" } %>
 
@@ -27,7 +42,7 @@
             <%= form.label :title, "Title" %>
             <span class="muted block">A short name for this position</span>
           </div>
-          <%= form.text_field :title, placeholder: "e.g. Software Engineer", required: true, disabled:, class: "w-full max-w-[260px]" %>
+          <%= form.text_field :title, value: position&.title, placeholder: "e.g. Software Engineer", required: true, disabled:, class: "w-full max-w-[260px]" %>
         </div>
 
         <div class="menu__divider my-0"></div>
@@ -39,7 +54,7 @@
           </div>
           <div class="input flex gap-2 items-center py-0 max-w-[150px]">
             <span class="bold muted">$</span>
-            <%= form.number_field :rate, placeholder: "25.00", step: 0.01, min: 0.01, required: true, disabled:, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+            <%= form.number_field :rate, value: position&.rate&.to_f, placeholder: "25.00", step: 0.01, min: 0.01, required: true, disabled:, class: "!p-0 !border-none !shadow-none min-h-auto" %>
             <span class="bold muted">/hr</span>
           </div>
         </div>
@@ -52,10 +67,10 @@
             <span class="muted block">Up to <%= Payroll::Position::MAX_DURATION.inspect %>, starting within <%= Payroll::Position::MAX_START_LEAD_TIME.inspect %></span>
           </div>
           <div class="flex items-center gap-2">
-            <%= form.date_field :starts_on, required: true, disabled:,
+            <%= form.date_field :starts_on, value: position&.start_date, required: true, disabled:,
                   max: (Date.current + Payroll::Position::MAX_START_LEAD_TIME).iso8601 %>
             <span class="muted">to</span>
-            <%= form.date_field :ends_on, required: true, disabled: %>
+            <%= form.date_field :ends_on, value: position&.end_date, required: true, disabled: %>
           </div>
         </div>
 
@@ -66,10 +81,17 @@
             <%= form.label :purpose, "Purpose" %>
             <span class="muted block">Describe the scope of work</span>
           </div>
-          <%= form.text_field :purpose, placeholder: "e.g. Build & maintain the registration site", required: true, disabled:, class: "w-full max-w-[260px]" %>
+          <%= form.text_field :purpose, value: position&.description, placeholder: "e.g. Build & maintain the registration site", required: true, disabled:, class: "w-full max-w-[260px]" %>
         </div>
 
         <div class="menu__divider my-0"></div>
+
+        <% if editing && position.file.attached? %>
+          <p class="muted text-sm m-0">
+            Current attachment:
+            <%= link_to position.file.blob.filename, url_for(position.file), target: "_blank", class: "font-medium" %>. Uploading a new file replaces it.
+          </p>
+        <% end %>
 
         <%= render "events/transfers/attach_receipt", form:, disabled:, required: false, accept: ".pdf,application/pdf",
               label: "Attachment (optional)", hint: "Attach a statement of work or agreement (PDF)" %>
@@ -77,8 +99,13 @@
     </div>
 
     <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>
-      Invite contractor
-      <%= inline_icon "send" %>
+      <% if editing %>
+        Save changes
+        <%= inline_icon "checkmark" %>
+      <% else %>
+        Continue
+        <%= inline_icon "view-forward" %>
+      <% end %>
     </button>
   <% end %>
 </div>
