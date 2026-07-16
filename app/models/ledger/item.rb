@@ -180,7 +180,7 @@ class Ledger
       end
 
       # A declined CPT and no CTs — determine why it never settled
-      if canonical_pending_transactions.any?(&:declined?)
+      if CanonicalPendingDeclinedMapping.where(canonical_pending_transaction: canonical_pending_transactions).any?
         case linked_object_type
         when "CardCharge"
           return :released if uncaptured_stripe_authorization?
