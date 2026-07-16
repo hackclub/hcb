@@ -7,7 +7,7 @@ module Payroll
       @reminder_day = params[:reminder_day]
       @event = @position.event
       @legal_entity = @position.payee.legal_entity
-      @tax_incomplete = !@legal_entity&.latest_tax_form&.completed?
+      @tax_incomplete = !@legal_entity&.completed_tax_form?
       @payout_incomplete = @legal_entity&.default_payout_method.blank?
 
       mail(
