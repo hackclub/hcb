@@ -5,8 +5,6 @@ class Payment
     queue_as :low
     discard_on ActiveJob::DeserializationError
 
-    # reminder_day isn't used to send the email; it distinguishes the scheduled
-    # jobs from each other in the queue.
     def perform(payment, reminder_day)
       return unless payment.awaiting_recipient_onboarding?
 
