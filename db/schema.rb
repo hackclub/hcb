@@ -2025,6 +2025,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_16_000000) do
     t.index ["user_id"], name: "index_paypal_transfers_on_user_id"
   end
 
+  create_table "payroll_contracts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.date "ends_on", null: false
+    t.integer "hourly_rate_cents", null: false
+    t.bigint "payee_id", null: false
+    t.string "purpose", null: false
+    t.date "starts_on", null: false
+    t.datetime "updated_at", null: false
+    t.index ["payee_id"], name: "index_payroll_contracts_on_payee_id"
+  end
+
   create_table "payroll_invoices", force: :cascade do |t|
     t.string "aasm_state", null: false
     t.integer "amount_cents", null: false
@@ -3153,6 +3164,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_16_000000) do
   add_foreign_key "payment_recipients", "events"
   add_foreign_key "paypal_transfers", "events"
   add_foreign_key "paypal_transfers", "users"
+  add_foreign_key "payroll_contracts", "payees"
   add_foreign_key "payroll_invoices", "payments"
   add_foreign_key "payroll_invoices", "payroll_positions"
   add_foreign_key "payroll_invoices", "users", column: "reviewed_by_id"

@@ -359,7 +359,6 @@ Rails.application.routes.draw do
     end
     resources :payments, only: [:index]
     resources :payroll_positions, only: [:index] do
-      post "approve", on: :member
       post "reject", on: :member
     end
     resources :legal_entities, only: [:index]

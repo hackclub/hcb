@@ -17,6 +17,11 @@ class Contract
         end
       end
 
+      # The DocuSeal webhook may not have landed yet (or, in dev, may never
+      # land at all — it can't reach localhost) by the time this page loads,
+      # so reconcile directly with DocuSeal rather than relying on it alone.
+      @party.sync_with_docuseal if @party.pending? && @contract.sent_with_docuseal?
+
       if @party.signed? && !(@contract.contractable.is_a?(Event::Application) && @party.hcb?)
         redirect_to completed_contract_party_path(@party)
         return
@@ -42,6 +47,11 @@ class Contract
 
     def completed
       authorize @party
+      # This is where DocuSeal's embedded form redirects to right after the
+      # signature completes, so this is the most important place to catch up
+      # — the webhook is often still in flight when the browser lands here.
+      @party.sync_with_docuseal if @party.pending? && @contract.sent_with_docuseal?
+
       if (@party.signee? && @contract.signed?) || @party.contractor?
         case @contract.contractable
         when Event::Application
