@@ -61,7 +61,7 @@ RSpec.describe FeeRevenue, type: :model do
     # code encoded in its memo (HCB-<short_code>). It should land on the very
     # same ledger item as the pending transaction created on FeeRevenue create.
     let(:canonical_transaction) do
-      create(:canonical_transaction, memo: "HCB-#{fee_revenue.ledger_item.short_code}")
+      create(:canonical_transaction, memo: "HCB-#{fee_revenue.local_hcb_code.short_code}")
     end
 
     it "shares one ledger item between the pending and settled transactions" do
