@@ -48,7 +48,7 @@ class Payment < ApplicationRecord
   scope :successful_or_sent, -> { where(aasm_state: ["successful", "sent"]) }
   scope :pending_or_under_review, -> { where(aasm_state: ["pending_legal_entity", "under_review"]) }
 
-  ACCEPTANCE_REMINDER_DAYS = [1, 2, 7, 14, 80, 85, 89].freeze
+  ACCEPTANCE_REMINDER_DAYS = [1, 2, 7, 14, 30, 60, 80, 85, 89].freeze
 
   aasm timestamps: true do
     state :pending_legal_entity, initial: true # We're waiting on the LE to complete tasks before payment can be sent
