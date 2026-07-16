@@ -8,10 +8,10 @@ module Payroll
       event_policy.contractor_details?
     end
 
-    # Inviting a contractor moves money (and creates a payee), so — like
-    # payments — it's limited to managers/admins, matching create?.
+    # Inviting a contractor is starting a transfer against an event with the
+    # contractors feature enabled.
     def new?
-      create?
+      event_policy.contractors? && event_policy.new_transfer?
     end
 
     def create?
