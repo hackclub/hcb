@@ -16,6 +16,13 @@ class PaymentMailer < ApplicationMailer
     mail to: @recipients, subject: "Your payment for \"#{@payment.purpose}\" is on the way!"
   end
 
+  def acceptance_reminder
+    @reminder_day = params[:reminder_day]
+    @tax_incomplete = !@payment.legal_entity&.payable?
+    @payout_incomplete = @payment.legal_entity&.default_payout_method.blank?
+    mail to: @recipients, subject: "[Action Required] Finish setup to receive your payment for \"#{@payment.purpose}\" from #{@payment.event.name}"
+  end
+
   private
 
   def initial_subject

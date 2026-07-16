@@ -52,13 +52,9 @@ module Payroll
 
     MAX_DURATION = 1.year
     MAX_START_LEAD_TIME = 6.months
-    ONBOARDING_REMINDER_DAYS = [1, 2, 7, 14, 80, 85, 89].freeze
 
     after_create_commit do
       Payroll::Position::ExpireJob.set(wait_until: end_date.end_of_day).perform_later(self)
-      ONBOARDING_REMINDER_DAYS.each do |days|
-        Payroll::Position::OnboardingReminderJob.set(wait: days.days).perform_later(self, days)
-      end
     end
 
     validates :title, :description, :start_date, :end_date, presence: true
@@ -151,16 +147,6 @@ module Payroll
     # +mark_onboarded+ and to decide whether to advance the position.
     def onboarding_complete?
       onboarding_checklist.all? { |step| step[:complete] }
-    end
-
-    def onboarding_reminders_pending?
-      return false unless under_review? || onboarding?
-
-      legal_entity = payee.legal_entity
-      tax_incomplete = !legal_entity&.latest_tax_form&.completed?
-      payout_incomplete = legal_entity&.default_payout_method.blank?
-
-      tax_incomplete || payout_incomplete
     end
 
     # The next step the contractor still needs to complete, or nil once done.
