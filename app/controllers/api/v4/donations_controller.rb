@@ -24,7 +24,7 @@ module Api
 
         @donations = paginate_cursor(donations.to_a, &:public_id)
 
-        if expand?(:stats)
+        if @expand.include?(:stats)
           @total_cents = @event.donations.not_pending.succeeded_and_not_refunded.sum(:amount)
         end
       end
