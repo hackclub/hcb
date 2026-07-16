@@ -96,7 +96,7 @@
   <ul class="grid grid--wide mb-12 pb-2">
     <% current_user.onboarding_contractor_positions.each do |position| %>
       <% next_step = position.next_onboarding_step %>
-      <%= link_to my_pay_path(legal_entity_id: position.payee.legal_entity_id) do %>
+      <%= link_to onboarding_payroll_position_url(position) do %>
         <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
           <span>
             <%= status_badge "warning" %>
