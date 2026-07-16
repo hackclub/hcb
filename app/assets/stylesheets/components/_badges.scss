@@ -43,6 +43,9 @@
     background-color: rgba(map-get($palette, pending), 0.125);
     color: map-get($palette, pending);
   }
+  &.badge--pending {
+    line-height: 0;
+  }
   &.bg-warning {
     background-color: rgba(map-get($palette, warning), 0.125);
     color: map-get($palette, warning);
