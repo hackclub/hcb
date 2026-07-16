@@ -38,6 +38,9 @@ class Ledger < ApplicationRecord
   has_many :mappings, class_name: "Ledger::Mapping"
   has_many :items, through: :mappings, source: :ledger_item, class_name: "Ledger::Item"
 
+  has_many :canonical_transactions, through: :items
+  has_many :canonical_pending_transactions, through: :items
+
   monetize def balance_cents = items.sum(:amount_cents)
   monetize def available_balance_cents = items.sum(:amount_cents) - fronted_fee_balance_cents
 
@@ -57,7 +60,7 @@ class Ledger < ApplicationRecord
 
   def fronted_fee_balance_cents
     return nil if event.nil?
-      
+
     feed_fronted_pts = canonical_pending_transactions
                        .incoming
                        .fronted
@@ -84,11 +87,12 @@ class Ledger < ApplicationRecord
     ledger_items = pt_sum_by_ledger_item.keys
 
     ct_sum_by_ledger_item = canonical_transactions.where(ledger_item: ledger_items)
-                                               .group(:ledger_item)
-                                               .sum(:amount_cents)
+                                                  .group(:ledger_item)
+                                                  .sum(:amount_cents)
 
     pt_sum_by_ledger_item.reduce 0 do |sum, (ledger_item, pt_sum)|
       sum + [pt_sum - (ct_sum_by_ledger_item[ledger_item] || 0), 0].max
+    end
   end
 
   private
