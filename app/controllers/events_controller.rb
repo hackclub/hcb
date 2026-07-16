@@ -741,6 +741,10 @@ class EventsController < ApplicationController
   def transfers
     authorize @event
 
+    if Flipper.enabled?(:payments_contractors_refresh_2026_06_26, @event)
+      redirect_to event_payments_path(@event)
+    end
+
     params[:q] ||= params[:search]
 
     @ach_transfers = @event.ach_transfers
