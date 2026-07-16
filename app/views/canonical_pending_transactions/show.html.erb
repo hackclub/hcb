@@ -33,7 +33,6 @@
   <%= render partial: "application/admin_viewer", locals: { record: cpsm } %>
 <% end %>
 
-
 <% if @canonical_pending_transaction.stripe_auth_dashboard_url %>
   <% admin_tool("mt1") do %>
     <%= link_to "View on Stripe", @canonical_pending_transaction.stripe_auth_dashboard_url, class: "btn bg-accent" %>
