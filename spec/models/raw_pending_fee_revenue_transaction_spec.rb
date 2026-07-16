@@ -3,17 +3,21 @@
 require "rails_helper"
 
 RSpec.describe RawPendingFeeRevenueTransaction, type: :model do
-  # A raw pending fee revenue transaction is always created by its FeeRevenue
-  # (it requires one via belongs_to), so we source it that way rather than
-  # through a dedicated factory. The mapping needs the Hack Club Bank event.
-  let!(:hack_club_bank) { create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK) }
+  # A raw pending fee revenue transaction requires a FeeRevenue (belongs_to), so
+  # we build it through one rather than a dedicated factory — the same way
+  # FeeRevenueService::CreateCanonicalPendingTransaction does.
   let(:fee_revenue) do
     create(:fee_revenue,
            amount_cents: 12_34,
            start: Date.current.beginning_of_month,
            end: Date.current.end_of_month)
   end
-  let(:raw_pending_fee_revenue_transaction) { fee_revenue.raw_pending_fee_revenue_transaction }
+  let(:raw_pending_fee_revenue_transaction) do
+    fee_revenue.create_raw_pending_fee_revenue_transaction!(
+      date_posted: fee_revenue.end,
+      amount_cents: fee_revenue.amount_cents
+    )
+  end
 
   it "is valid" do
     expect(raw_pending_fee_revenue_transaction).to be_valid

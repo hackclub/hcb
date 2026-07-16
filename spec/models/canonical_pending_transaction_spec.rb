@@ -88,7 +88,7 @@ RSpec.describe CanonicalPendingTransaction, type: :model do
     let!(:hack_club_bank) { create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK) }
     let(:fee_revenue) { create(:fee_revenue) }
     let(:canonical_pending_transaction) do
-      fee_revenue.raw_pending_fee_revenue_transaction.reload.canonical_pending_transaction
+      FeeRevenueService::CreateCanonicalPendingTransaction.new(fee_revenue_id: fee_revenue.id).run
     end
 
     it "is reachable through the raw_pending_fee_revenue_transaction association" do
