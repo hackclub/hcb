@@ -59,7 +59,7 @@ class Ledger < ApplicationRecord
   end
 
   def fronted_fee_balance_cents
-    return nil if event.nil?
+    return 0 if event.nil?
 
     feed_fronted_pts = canonical_pending_transactions
                        .incoming
