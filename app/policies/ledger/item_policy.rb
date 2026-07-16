@@ -11,6 +11,8 @@ class Ledger
       end
     end
 
+    alias_method :hcb?, :show?
+
   end
 
 end

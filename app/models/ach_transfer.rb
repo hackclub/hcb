@@ -68,7 +68,7 @@ class AchTransfer < ApplicationRecord
   include AASM
   include Commentable
   include Payoutable
-  include Payment
+  include HasPaymentRecipient
   include Freezable
 
   def payment_recipient_attributes
@@ -81,6 +81,7 @@ class AchTransfer < ApplicationRecord
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
+  has_one :ledger_item, as: :linked_object
   belongs_to :creator, class_name: "User", optional: true
   belongs_to :processor, class_name: "User", optional: true
   belongs_to :event
@@ -122,6 +123,7 @@ class AchTransfer < ApplicationRecord
   has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :ach_transfer, required: false
+  has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
 
   has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
   has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction
@@ -146,6 +148,7 @@ class AchTransfer < ApplicationRecord
       after do
         AchTransferMailer.with(ach_transfer: self).notify_recipient.deliver_later if self.send_email_notification
         employee_payment.mark_paid! if employee_payment.present?
+        payment_attempt.mark_sent! if payment_attempt.present?
       end
       transitions from: [:pending, :deposited, :scheduled], to: :in_transit
     end
@@ -156,12 +159,16 @@ class AchTransfer < ApplicationRecord
         update!(processor: processed_by) if processed_by.present?
         create_activity(key: "ach_transfer.rejected", owner: processed_by)
         employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
+        payment_attempt&.mark_rejected!
       end
       transitions from: [:pending, :scheduled], to: :rejected
     end
 
     event :mark_deposited do
       transitions from: :in_transit, to: :deposited
+      after do
+        payment_attempt&.mark_successful!
+      end
     end
 
     event :mark_scheduled do
@@ -175,6 +182,8 @@ class AchTransfer < ApplicationRecord
           reimbursement_payout_holding.mark_failed!
         elsif employee_payment.present?
           employee_payment.mark_failed!(reason:)
+        elsif payment_attempt.present?
+          payment_attempt.mark_failed!(reason:)
         else
           AchTransferMailer.with(ach_transfer: self, reason:).notify_failed.deliver_later
         end

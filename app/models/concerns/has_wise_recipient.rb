@@ -24,7 +24,7 @@ module HasWiseRecipient
     def self.information_required_for(currency)
       fields = []
 
-      if self == User::PayoutMethod::WiseTransfer
+      if self == User::PayoutMethod::WiseTransfer || self == LegalEntity::PayoutMethod::WiseTransfer
         fields << {
           type: :text_field,
           key: "account_holder",
@@ -41,7 +41,7 @@ module HasWiseRecipient
         }
       end
 
-      if currency.in?(%w[AED BGN CHF CZK DKK EGP EUR GBP GEL HUF ILS NOK PKR PLN RON SEK TRY UAH])
+      if currency.in?(%w[AED BGN CHF CZK DKK EGP EUR GBP GEL HUF ILS NOK PKR PLN RON SEK TRY UAH TND])
         fields << { type: :text_field, key: "account_number", placeholder: "TR330006100519786457841326", label: "IBAN" }
       elsif currency.in?(%w[HKD NGN NPR NZD PHP SGD THB])
         fields << ACCOUNT_NUMBER_FIELD
@@ -141,6 +141,6 @@ module HasWiseRecipient
 
   ACCOUNT_NUMBER_FIELD = { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number" }.freeze
 
-  AVAILABLE_CURRENCIES = %w[AED ARS AUD BGN BRL CAD CHF CLP CNY COP CZK DKK EGP EUR GBP GEL HKD HUF IDR ILS JPY KES KRW LKR MAD MXN MYR NGN NOK NPR NZD PHP PKR PLN RON SEK SGD THB TRY UAH UYU VND ZAR].freeze
+  AVAILABLE_CURRENCIES = %w[AED ARS AUD BGN BRL CAD CHF CLP CNY COP CZK DKK EGP EUR GBP GEL HKD HUF IDR ILS JPY KES KRW LKR MAD MXN MYR NGN NOK NPR NZD PHP PKR PLN RON SEK SGD THB TND TRY UAH UYU VND ZAR].freeze
 
 end
