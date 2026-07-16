@@ -96,12 +96,13 @@ class AdminMailer < ApplicationMailer
     )
   end
 
-  def balance_anomalies(anomalous_events:)
+  def balance_anomalies(anomalous_events:, anomalous_card_grants:)
     @anomalous_events = anomalous_events
+    @anomalous_card_grants = anomalous_card_grants
 
     mail(
       to: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"],
-      subject: "#{anomalous_events.length} events have balance anomalies"
+      subject: "#{anomalous_events.length + anomalous_card_grants.length} ledgers have balance anomalies"
     )
   end
 
