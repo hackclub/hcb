@@ -96,7 +96,7 @@ class MyController < ApplicationController
 
   def inbox
     @count = current_user.transactions_missing_receipt.count
-    @locking_count = current_user.transactions_missing_receipt(from: Receipt::CARD_LOCKING_START_DATE, to: 24.hours.ago).count
+    @locking_count = current_user.card_locking_overdue_charges.count
 
     hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
 
@@ -198,7 +198,7 @@ class MyController < ApplicationController
                                              .includes(payee: :event)
                                              .order(created_at: :desc)
                                              .load
-    @tax_form_required = @contractor_positions.any? && !@legal_entity.latest_tax_form&.completed?
+    @tax_form_required = @contractor_positions.any? && !@legal_entity.completed_tax_form?
     # Approved invoices are represented by their payment in the history table
     # below, so only surface invoices still awaiting review here to avoid
     # duplicating information.

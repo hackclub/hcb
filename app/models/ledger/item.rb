@@ -31,6 +31,7 @@
 #  index_ledger_items_on_linked_object    (linked_object_type,linked_object_id)
 #  index_ledger_items_on_receipt_missing  (id) WHERE (receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))
 #  index_ledger_items_on_short_code       (short_code) UNIQUE
+#  index_ledger_items_on_status           (status)
 #
 # Foreign Keys
 #
@@ -165,18 +166,22 @@ class Ledger
     end
 
     def calculate_status
-      return :settled if canonical_transactions.none? && canonical_pending_transactions.fronted.revenue.any?
+      @ct_sum ||= canonical_transactions.sum(:amount_cents)
+      return :settled if linked_object_type == "Reimbursement::ExpensePayout"
+      return :settled if linked_object_type == "Disbursement::Outgoing" && linked_object.counterparty.canonical_pending_transactions.fronted.any?
+      return :settled if linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) && linked_object.approved_at.present? && !linked_object.rejected? && !linked_object.errored?
+      return :settled if canonical_transactions.none? && canonical_pending_transactions.fronted.not_declined.revenue.any? && primary_ledger&.can_front_balance?
       return :pending if canonical_pending_transactions.unsettled.exists?
 
       if canonical_transactions.exists?
-        return :pending if canonical_transactions.sum(:amount_cents) != amount_cents
-        return :reversed if canonical_transactions.sum(:amount_cents).zero?
+        return :pending if @ct_sum != amount_cents
+        return :reversed if @ct_sum.zero?
 
         return :settled
       end
 
       # A declined CPT and no CTs — determine why it never settled
-      if canonical_pending_transactions.any?(&:declined?)
+      if CanonicalPendingDeclinedMapping.where(canonical_pending_transaction: canonical_pending_transactions).exists?
         case linked_object_type
         when "CardCharge"
           return :released if uncaptured_stripe_authorization?
@@ -342,9 +347,57 @@ class Ledger
       type_metadata.first
     end
 
-    # TODO: add support for card charge icons
     def icon
-      type_metadata.last
+      case linked_object_type
+      when "Invoice"
+        "payment-docs"
+      when "Donation"
+        if linked_object.recurring?
+          "support-recurring"
+        else
+          "support"
+        end
+      when "AchTransfer"
+        "payment-transfer"
+      when "Wire"
+        "web"
+      when "PaypalTransfer"
+        "paypal"
+      when "WiseTransfer"
+        "wise"
+      when "Check"
+        "email"
+      when "IncreaseCheck"
+        "email"
+      when "CheckDeposit"
+        "cheque"
+      when "Disbursement::Outgoing" # TODO: support for special appearance icons
+        if linked_object.card_grant.present?
+          "bag"
+        else
+          "door-leave"
+        end
+      when "Disbursement::Incoming"
+        if linked_object.card_grant.present?
+          "bag"
+        else
+          "door-enter"
+        end
+      when "StripeServiceFee"
+        "cash" # TODO: find unique icon
+      when "BankFee"
+        "bank-icon"
+      when "FeeRevenue"
+        "bank-icon"
+      when "Reimbursement::PayoutHolding"
+        "reimbursement"
+      when "Reimbursement::ExpensePayout"
+        "reimbursement"
+      when "CardCharge"
+        linked_object.icon
+      else
+        "cash"
+      end
     end
 
     def sign

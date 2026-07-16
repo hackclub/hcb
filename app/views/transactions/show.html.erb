@@ -5,16 +5,29 @@
 
 <% if @transaction&.local_hcb_code %>
   <% admin_tool("mt3") do %>
-    <p>
-      <strong>HCB Code:</strong>
-      <span>
-        <%= link_to @transaction.hcb_code, @transaction.local_hcb_code %>
-      </span>
-    </p>
+    <section class="details">
+      <p>
+        <strong>HCB Code:</strong>
+        <span>
+          <%= link_to @transaction.hcb_code, @transaction.local_hcb_code %>
+        </span>
+      </p>
+      <p>
+        <strong>Ledger Item:</strong>
+        <span>
+          <% if @transaction.ledger_item.present? %>
+            <%= link_to @transaction.ledger_item.hashid, ledger_item_path(@transaction.ledger_item) %>
+          <% else %>
+            <span class="text-red">No Ledger Item</span>
+          <% end %>
+        </span>
+      </p>
+    </section>
   <% end %>
 <% end %>
 
 <%= render partial: "application/admin_viewer", locals: { record: @transaction } %>
+<%= render partial: "application/admin_viewer", locals: { record: @transaction.canonical_event_mapping } if @transaction.canonical_event_mapping.present? %>
 
 <% if @transaction.stripe_auth_dashboard_url %>
   <% admin_tool("mt1") do %>

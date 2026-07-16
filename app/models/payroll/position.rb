@@ -39,11 +39,14 @@ module Payroll
 
     belongs_to :payee
 
+    delegate :display_name, to: :payee, prefix: true
+
     pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }, using: { tsearch: { prefix: true, dictionary: "english" } }
 
     has_many :invoices, class_name: "Payroll::Invoice", foreign_key: "payroll_position_id", inverse_of: :payroll_position, dependent: :destroy
     has_one :event, through: :payee
     has_one :contract_event, through: :payee, source: :event # a requirement of Contractable
+    has_one :contract, ->{ where.not(aasm_state: :voided) }, inverse_of: :contractable, as: :contractable
 
     has_one_attached :file
     validates :file, size: { less_than_or_equal_to: 25.megabytes }, content_type: [:pdf], if: -> { attachment_changes["file"].present? }
@@ -135,10 +138,10 @@ module Payroll
       legal_entity = payee.legal_entity
 
       [
-        { key: :hcb_review, label: "Contract reviewed by HCB operations", complete: !under_review? && !rejected? },
-        { key: :contractor_signature, label: "Contract signed by contractor", complete: contract_signed_by?(:contractor) },
         { key: :organizer_signature, label: "Contract signed by organizer", complete: contract_signed_by?(:organizer) },
+        { key: :hcb_review, label: "Contract reviewed by HCB operations", complete: !under_review? && !rejected? },
         { key: :tax_form, label: "W-9 / W-8BEN submitted", complete: legal_entity&.latest_tax_form&.completed? || false },
+        { key: :contractor_signature, label: "Contract signed by contractor", complete: contract_signed_by?(:contractor) },
         { key: :payout_method, label: "Payout method configured", complete: legal_entity&.default_payout_method.present? },
       ]
     end
@@ -154,21 +157,35 @@ module Payroll
       onboarding_checklist.find { |step| !step[:complete] }
     end
 
-    # Advance an onboarding contractor to :onboarded once every step is
-    # complete. Invoked from callbacks whenever a step may have just finished
-    # (contract signed, tax form completed, payout method configured).
+    def tax_info_needed?
+      !payee.legal_entity&.payable?
+    end
+
+    def payout_method_needed?
+      payee.legal_entity&.default_payout_method.blank?
+    end
+
     def refresh_onboarding_state!
       mark_onboarded! if onboarding? && may_mark_onboarded?
     end
 
-    # Contractable callbacks — re-check onboarding whenever a contract or one of
-    # its parties is signed.
     def on_contract_signed(contract)
       refresh_onboarding_state!
     end
 
     def on_contract_party_signed(party)
       refresh_onboarding_state!
+
+      # The contractor is only invited to sign once HCB has signed
+      if party.hcb?
+        # HCB signing is the "reviewed by HCB operations" step, so begin onboarding.
+        mark_onboarding! if may_mark_onboarding?
+
+        contractor = party.contract.party(:contractor)
+        return if contractor.nil? || contractor.signed?
+
+        notify_contractor_of_onboarding(contractor)
+      end
     end
 
     def send_contract(organizer_user: nil, cosigner_email: nil, reissue_messages: {}, reissue_of: nil, **options)
@@ -196,7 +213,15 @@ module Payroll
         contract.parties.create!(user: contractor_user, external_email: payee.email, role: :contractor)
       end
 
-      contract.send!(reissue_messages:)
+      begin
+        contract.send!(reissue_messages:)
+      rescue Faraday::Error
+        # The contract row is already committed; void it (skipping the
+        # on_contract_voided callback) so it doesn't linger as a broken,
+        # un-sendable "pending" contract blocking future retries.
+        contract.mark_voided!(reissuing: true) if contract.may_mark_voided?
+        raise
+      end
 
       contract
     end
@@ -210,11 +235,35 @@ module Payroll
       Rails.application.routes.url_helpers.my_payroll_path
     end
 
+    # The contractor isn't emailed when the contract is sent; they're notified
+    # only once HCB signs
+    def contract_notify_when_sent
+      false
+    end
+
     def contract_notify_hcb?
       false
     end
 
+    def notify_mailer_for(party)
+      return super unless party.contractor?
+
+      Payroll::PositionMailer.with(position: self, party:).onboarding.deliver_later
+    end
+
     private
+
+    # Notifying/scheduling reminders for the contractor is best-effort: this
+    # runs from inside the DocuSeal webhook's transaction (via
+    # Contract::Party#mark_signed! → Contract#on_party_signed), so a job
+    # enqueue failure here must not roll back the signature that already
+    # happened on DocuSeal's side.
+    def notify_contractor_of_onboarding(contractor)
+      contractor.notify
+      contractor.schedule_reminders
+    rescue => e
+      Rails.error.report(e, context: { payroll_position_id: id })
+    end
 
     def contract_signed_by?(role)
       contracts.not_voided.any? { |contract| contract.party(role)&.signed? }

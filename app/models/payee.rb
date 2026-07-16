@@ -70,6 +70,10 @@ class Payee < ApplicationRecord
     update!(archived_at: Time.current)
   end
 
+  def archived?
+    archived_at.present?
+  end
+
   private
 
   def managed_legal_entity_constraints

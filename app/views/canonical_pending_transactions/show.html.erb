@@ -5,16 +5,29 @@
 
 <% if @canonical_pending_transaction&.local_hcb_code %>
   <% admin_tool("mt3") do %>
-    <p>
-      <strong>HCB Code:</strong>
-      <span>
-        <%= link_to @canonical_pending_transaction.hcb_code, @canonical_pending_transaction.local_hcb_code %>
-      </span>
-    </p>
+    <section class="details">
+      <p>
+        <strong>HCB Code:</strong>
+        <span>
+          <%= link_to @canonical_pending_transaction.hcb_code, @canonical_pending_transaction.local_hcb_code %>
+        </span>
+      </p>
+      <p>
+        <strong>Ledger Item:</strong>
+        <span>
+          <% if @canonical_pending_transaction.ledger_item.present? %>
+            <%= link_to @canonical_pending_transaction.ledger_item.hashid, ledger_item_path(@canonical_pending_transaction.ledger_item) %>
+          <% else %>
+            <span class="text-red">No Ledger Item</span>
+          <% end %>
+        </span>
+      </p>
+    </section>
   <% end %>
 <% end %>
 
 <%= render partial: "application/admin_viewer", locals: { record: @canonical_pending_transaction } %>
+<%= render partial: "application/admin_viewer", locals: { record: @canonical_pending_transaction.canonical_pending_event_mapping } if @canonical_pending_transaction.canonical_pending_event_mapping.present? %>
 <%= render partial: "application/admin_viewer", locals: { record: @canonical_pending_transaction.canonical_pending_declined_mapping } if @canonical_pending_transaction.canonical_pending_declined_mapping.present? %>
 <% @canonical_pending_transaction.canonical_pending_settled_mappings.find_each do |cpsm| %>
   <%= render partial: "application/admin_viewer", locals: { record: cpsm } %>
