@@ -325,26 +325,34 @@ module Admin
             count: ->{ Tax::Form.count },
             count_type: :records
           ),
-          make_item(
-            name: "Employees",
-            path: employees_admin_index_path,
-            count: ->{ Employee.onboarding.count },
-            count_type: :tasks
-          ),
-          make_item(
-            name: "Payments",
-            path: employee_payments_admin_index_path,
-            count: ->{ Employee::Payment.paid.count },
-            count_type: :records
-          ),
-          make_item(
-            name: "W9s",
-            path: admin_w9s_path,
-            count: ->{ W9.count },
-            count_type: :records
-          )
+          *legacy_payroll_items
         ]
       )
+    end
+
+    def legacy_payroll_items
+      return [] unless Flipper.enabled?(:payments_contractors_refresh_2026_06_26)
+
+      [
+        make_item(
+          name: "Employees",
+          path: employees_admin_index_path,
+          count: ->{ Employee.onboarding.count },
+          count_type: :tasks
+        ),
+        make_item(
+          name: "Payments",
+          path: employee_payments_admin_index_path,
+          count: ->{ Employee::Payment.paid.count },
+          count_type: :records
+        ),
+        make_item(
+          name: "W9s",
+          path: admin_w9s_path,
+          count: ->{ W9.count },
+          count_type: :records
+        )
+      ]
     end
 
     def misc

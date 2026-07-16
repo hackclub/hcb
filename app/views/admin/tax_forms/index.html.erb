@@ -21,6 +21,7 @@
   <thead>
     <tr>
       <th class="w-32">Date</th>
+      <th>ID</th>
       <th>Legal entity</th>
       <th>Form</th>
       <th>Service</th>
@@ -28,13 +29,13 @@
       <th>TaxBandits status</th>
       <th>TIN match</th>
       <th class="w-32">Completed</th>
-      <th class="w-24">Actions</th>
     </tr>
   </thead>
   <tbody>
     <% @tax_forms.each do |form| %>
       <tr>
         <td><%= form.created_at.strftime("%Y-%m-%d") %></td>
+        <td><code><%= form.hashid %></code></td>
         <td><%= link_to form.legal_entity.name || form.legal_entity.display_name, legal_entity_path(form.legal_entity) %></td>
         <td><%= form.form_type || "—" %></td>
         <td><%= form.external_service.humanize %></td>
@@ -42,12 +43,6 @@
         <td><%= form.taxbandits_status&.humanize || "—" %></td>
         <td><%= form.taxbandits_tin_matching_status&.humanize || "—" %></td>
         <td><%= form.completed_at&.strftime("%Y-%m-%d") || "—" %></td>
-        <td>
-          <%= link_to "View", tax_form_path(form) %>
-          <% if form.sent_with_taxbandits? && !form.discarded? %>
-            <%= link_to "Sync", sync_tax_form_path(form), data: { turbo_method: :post } %>
-          <% end %>
-        </td>
       </tr>
     <% end %>
   </tbody>
