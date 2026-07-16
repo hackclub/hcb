@@ -165,12 +165,15 @@ class Ledger
     end
 
     def calculate_status
-      return :settled if canonical_transactions.none? && canonical_pending_transactions.fronted.revenue.any?
+      @ct_sum ||= canonical_transactions.sum(:amount_cents)
+      return :settled if linked_object_type == "Reimbursement::ExpensePayout"
+      return :settled if linked_object_type == "Disbursement::Outgoing" && (linked_object.counterparty.canonical_pending_transactions.fronted.any? || linked_object.approved_at.present?)
+      return :settled if canonical_transactions.none? && canonical_pending_transactions.fronted.not_declined.revenue.any? && primary_ledger.can_front_balance?
       return :pending if canonical_pending_transactions.unsettled.exists?
 
       if canonical_transactions.exists?
-        return :pending if canonical_transactions.sum(:amount_cents) != amount_cents
-        return :reversed if canonical_transactions.sum(:amount_cents).zero?
+        return :pending if @ct_sum != amount_cents
+        return :reversed if @ct_sum.zero?
 
         return :settled
       end
