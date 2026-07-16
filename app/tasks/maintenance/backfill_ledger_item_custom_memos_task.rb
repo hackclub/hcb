@@ -3,7 +3,7 @@
 module Maintenance
   class BackfillLedgerItemCustomMemosTask < MaintenanceTasks::Task
     def collection
-      Ledger::Item.all
+      Ledger::Item.where(id: CanonicalTransaction.where.not(custom_memo: nil).select(:ledger_item_id)).or(Ledger::Item.where(id: CanonicalPendingTransaction.where.not(custom_memo: nil).select(:ledger_item_id)))
     end
 
     def process(ledger_item)
