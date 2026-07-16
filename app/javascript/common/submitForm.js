@@ -5,15 +5,12 @@ import csrf, { csrfParam } from './csrf'
  *
  * @param {string} url
  * @param {Object} params
- * @param {Object} options
- * @param {boolean} options.turbo - set to false to bypass Turbo Drive (default: true)
  */
-export default function submitForm(url, params, { turbo = true } = {}) {
+export default function submitForm(url, params) {
   const form = document.createElement('form')
   form.action = url
   form.method = 'POST'
   form.style.display = 'none'
-  if (!turbo) form.dataset.turbo = 'false'
 
   params[csrfParam()] = csrf()
 

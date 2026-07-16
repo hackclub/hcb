@@ -77,8 +77,7 @@ export default class extends Controller {
           credential: JSON.stringify(credential),
           method: 'webauthn',
           ...(await this.fingerprint()),
-        },
-        { turbo: false }
+        }
       )
     } catch (e) {
       if (e.message == "User doesn't have WebAuthn enabled") {

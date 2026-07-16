@@ -17,7 +17,7 @@
     Please enter one of the backup codes you generated previously.
   </p>
 
-  <%= form_tag complete_login_path(@login), data: { turbo: false } do %>
+  <%= form_tag complete_login_path(@login) do %>
     <%= text_field :backup_code, "", placeholder: "Enter your backup code", name: "backup_code", class: "!max-w-full w-max", required: true, autofocus: true %>
     <%= invisible_captcha :remember_me %>
     <%= hidden_field_tag :method, :backup_code %>
