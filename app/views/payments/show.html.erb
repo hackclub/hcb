@@ -63,6 +63,19 @@
         </p>
       <% end %>
     </section>
+
+    <% if @payment.may_mark_canceled? %>
+      <div class="card__banner card__darker border-top overflow-hidden flex items-center g2">
+        <% cancel_button = button_to "Cancel payment", cancel_payment_path(@payment), class: "btn bg-error #{"disabled" unless policy(@payment).cancel?}" %>
+        <% if policy(@payment).cancel? %>
+          <%= cancel_button %>
+        <% else %>
+          <div class="tooltipped tooltipped--e w-fit" aria-label="Only managers can cancel payments!">
+            <%= cancel_button %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
   </article>
 
   <% if @payment.aasm_state == "pending_legal_entity" %>
