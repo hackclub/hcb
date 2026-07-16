@@ -1,6 +1,7 @@
 <%# locals: (ledger:) %>
 
 <% if ledger.fronted_fee_balance_cents > 0 && @direction != "revenue" %>
+  <%# @direction != revenue is in case the user has a revenue-only filter applied %>
   <tr class="transaction transaction--negative muted">
     <td class="transaction__icon transaction__fee_icon">
       <div class="tooltipped tooltipped--e" aria-label="Fiscal sponsorship fee">
