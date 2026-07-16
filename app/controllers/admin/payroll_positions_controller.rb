@@ -18,9 +18,6 @@ module Admin
       @positions = relation.order(Arel.sql("CASE WHEN aasm_state = 'under_review' THEN 0 ELSE 1 END, created_at DESC")).page(@page).per(@per)
     end
 
-    # There is no "approve" action here: HCB approves a contractor by signing
-    # their contract as HCB (see Payroll::Position#on_contract_party_signed),
-    # from the contract's own signing page.
     def reject
       position = Payroll::Position.find(params[:id])
       position.mark_rejected!
