@@ -1,0 +1,48 @@
+<%= turbo_frame_tag dom_id(@position, :invoice_form) do %>
+  <p class="h5 leading-[1.25] muted mt0 mb3">
+    Invoice <strong><%= @position.event.name %></strong> for your work as
+    <strong><%= @position.title %></strong>.
+  </p>
+
+  <%= form_with(model: @invoice, url: payroll_position_invoices_path(@position), scope: :payroll_invoice, local: true) do |form| %>
+    <div class="card mb-4 flex flex-col gap-3">
+      <div class="flex justify-between items-center">
+        <div>
+          <%= form.label :name, "Description" %>
+          <span class="muted block">What is this invoice for?</span>
+        </div>
+        <%= form.text_field :name, placeholder: "e.g. Engineering hours (Jun 1–15)", required: true %>
+      </div>
+
+      <div class="menu__divider my-0"></div>
+
+      <div class="flex justify-between items-center">
+        <div>
+          <%= form.label :amount, "Amount" %>
+          <span class="muted block">Total to invoice at <%= "#{render_money_short(@position.rate_cents)}/hr" %></span>
+        </div>
+        <div class="input flex gap-2 items-center py-0 max-w-[150px]">
+          <span class="bold muted">$</span>
+          <%= form.number_field :amount, placeholder: "1700.00", step: 0.01, min: 0.01, required: true, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+        </div>
+      </div>
+
+      <div class="menu__divider my-0"></div>
+
+      <div class="flex justify-between items-start">
+        <div>
+          <%= form.label :description, "Notes" %>
+          <span class="muted block">Optional details</span>
+        </div>
+        <%= form.text_area :description, rows: 2, placeholder: "Anything the organizer or HCB should know" %>
+      </div>
+
+      <div class="menu__divider my-0"></div>
+
+      <%= render "events/transfers/attach_receipt", form:, required: true,
+            label: "Invoice or timesheet", hint: "Attach an invoice, timesheet, or other supporting document" %>
+    </div>
+
+    <%= form.submit "Submit invoice", class: "btn bg-success w-full" %>
+  <% end %>
+<% end %>

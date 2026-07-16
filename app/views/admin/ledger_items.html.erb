@@ -1,0 +1,59 @@
+<% title "Unmapped Ledger Items" %>
+
+<%= form_with local: true, url: ledger_items_admin_index_path, method: :get, class: "card overflow-visible" do |form| %>
+  <div class="flex flex-col sm:flex-row items-center mt-1 gap-2">
+    <%= form.text_field :amount, value: params[:amount], placeholder: "Amount (¢)", class: "!max-w-full sm:!max-w-[200px]" %>
+    <%= form.text_field :q, value: params[:q], placeholder: "Search", class: "!max-w-full sm:!max-w-[200px]" %>
+    <%= form.check_box :unmapped, checked: @unmapped, class: "mr-2" %>
+    <%= form.label :unmapped, "Unmapped", class: "mr-4" %>
+    <%= form.submit "Search", class: "shrink-0 sm:ml-auto" %>
+  </div>
+<% end %>
+
+<div class="flex items-center mb2 flex-col sm:flex-row">
+  <div class="flex-grow">
+    <%= page_entries_info @ledger_items, entry_name: "ledger items" %>
+  </div>
+  <%= paginate @ledger_items %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th class="w-32">ID</th>
+      <th class="w-32">Date</th>
+      <th>Memo</th>
+      <th class="w-40">Type</th>
+      <th class="w-24">Amount</th>
+      <th class="w-16">CTs</th>
+      <th class="w-16">CPTs</th>
+      <th class="w-24">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @ledger_items.each do |ledger_item| %>
+      <tr>
+        <td><%= ledger_item.id %></td>
+        <td><%= ledger_item.datetime.to_date %></td>
+        <td><%= link_to ledger_item.memo, ledger_item_path(ledger_item) %></td>
+        <td><%= ledger_item.humanized_type %></td>
+        <td class="nowrap"><%= ledger_item.amount.format %></td>
+        <td><%= ledger_item.canonical_transactions.size %></td>
+        <td><%= ledger_item.canonical_pending_transactions.size %></td>
+        <td>
+          <%= link_to "View", ledger_item_path(ledger_item) %>
+          <% if ledger_item.hcb_code.present? %>
+            <br>
+            <%= link_to "HCB Code", hcb_code_path(ledger_item.hcb_code) %>
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<% if @ledger_items.empty? %>
+  <%= blankslate "No unmapped ledger items" %>
+<% end %>
+
+<%= paginate @ledger_items %>
