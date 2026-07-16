@@ -4,7 +4,6 @@ module Api
   module V4
     class OrganizerPositionsController < ApplicationController
       include SetEvent
-      include ApplicationHelper
 
       before_action :set_api_event, only: [:index]
       before_action :set_organizer_position, only: [:removal_request]

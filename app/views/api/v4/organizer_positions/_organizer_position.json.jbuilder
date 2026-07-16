@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# locals: (organizer_position:)
+# locals: (json:, organizer_position:)
 
 object_shape(json, organizer_position) do
   json.role organizer_position.role
