@@ -11,7 +11,7 @@
   font-weight: 500;
   letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;
-  line-height: 1.125;
+  line-height: 0;
   margin-left: 1rem;
   padding: 0.25rem 0.625rem;
 
@@ -42,9 +42,6 @@
   &.bg-pending {
     background-color: rgba(map-get($palette, pending), 0.125);
     color: map-get($palette, pending);
-  }
-  &.badge--pending {
-    line-height: 0;
   }
   &.bg-warning {
     background-color: rgba(map-get($palette, warning), 0.125);
