@@ -351,6 +351,10 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   def stripe_service_fee
     return linked_object if linked_object.is_a?(StripeServiceFee)
+
+    nil
+  end
+
   def fee_revenue
     return linked_object if linked_object.is_a?(FeeRevenue)
 
