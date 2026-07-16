@@ -337,6 +337,12 @@ class CanonicalTransaction < ApplicationRecord
     nil
   end
 
+  def stripe_service_fee
+    return linked_object if linked_object.is_a?(StripeServiceFee)
+
+    nil
+  end
+
   def reimbursement_expense_payout
     return linked_object if linked_object.is_a?(Reimbursement::ExpensePayout)
 

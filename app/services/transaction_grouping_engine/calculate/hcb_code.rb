@@ -48,6 +48,7 @@ module TransactionGroupingEngine
         return short_code_hcb_code if has_short_code?
         return invoice_hcb_code if invoice
         return bank_fee_hcb_code if bank_fee
+        return stripe_service_fee_hcb_code if stripe_service_fee
         return donation_hcb_code if donation
         return ach_transfer_hcb_code if ach_transfer
         return check_hcb_code if check
@@ -95,6 +96,18 @@ module TransactionGroupingEngine
 
       def bank_fee
         @bank_fee ||= @ct_or_cp.bank_fee
+      end
+
+      def stripe_service_fee_hcb_code
+        [
+          HCB_CODE,
+          STRIPE_SERVICE_FEE_CODE,
+          stripe_service_fee.id
+        ].join(SEPARATOR)
+      end
+
+      def stripe_service_fee
+        @stripe_service_fee ||= @ct_or_cp.stripe_service_fee
       end
 
       def donation_hcb_code

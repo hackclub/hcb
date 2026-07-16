@@ -84,6 +84,35 @@ RSpec.describe CanonicalPendingTransaction, type: :model do
     end
   end
 
+  describe "stripe service fee" do
+    let!(:hack_club_bank) { create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK) }
+
+    before do
+      stub_request(:post, "https://api.stripe.com/v1/topups")
+        .to_return(status: 200, body: { id: "tu_1" }.to_json, headers: {})
+    end
+
+    let(:stripe_service_fee) { create(:stripe_service_fee) }
+    let(:canonical_pending_transaction) do
+      StripeServiceFeeService::CreateCanonicalPendingTransaction.new(stripe_service_fee_id: stripe_service_fee.id).run
+    end
+
+    it "is reachable through the raw_pending_stripe_service_fee_transaction association" do
+      expect(canonical_pending_transaction.raw_pending_stripe_service_fee_transaction)
+        .to eq(stripe_service_fee.raw_pending_stripe_service_fee_transaction)
+    end
+
+    it "is returned by the .stripe_service_fee scope" do
+      expect(CanonicalPendingTransaction.stripe_service_fee).to include(canonical_pending_transaction)
+    end
+
+    it "excludes transactions with no raw pending stripe service fee transaction from the scope" do
+      unrelated = create(:canonical_pending_transaction)
+
+      expect(CanonicalPendingTransaction.stripe_service_fee).not_to include(unrelated)
+    end
+  end
+
   describe "#search_memo" do
     context "when the memo is a partial match for the search query" do
       it "still finds the transaction" do

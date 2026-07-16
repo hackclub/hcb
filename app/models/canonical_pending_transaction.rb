@@ -79,6 +79,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :raw_pending_column_transaction, optional: true
   belongs_to :raw_pending_incoming_disbursement_transaction, optional: true
   belongs_to :raw_pending_outgoing_disbursement_transaction, optional: true
+  belongs_to :raw_pending_stripe_service_fee_transaction, optional: true
   belongs_to :increase_check, optional: true
   belongs_to :paypal_transfer, optional: true
   belongs_to :wire, optional: true
@@ -114,6 +115,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   scope :donation, -> { where("raw_pending_donation_transaction_id is not null") }
   scope :invoice, -> { where("raw_pending_invoice_transaction_id is not null") }
   scope :bank_fee, -> { where("raw_pending_bank_fee_transaction_id is not null") }
+  scope :stripe_service_fee, -> { where("raw_pending_stripe_service_fee_transaction_id is not null") }
   scope :incoming_disbursement, -> { where("raw_pending_incoming_disbursement_transaction_id is not null") }
   scope :outgoing_disbursement, -> { where("raw_pending_outgoing_disbursement_transaction_id is not null") }
   scope :reimbursement_expense_payout, -> { where.not(reimbursement_expense_payout_id: nil) }
@@ -285,6 +287,7 @@ class CanonicalPendingTransaction < ApplicationRecord
     return raw_pending_incoming_disbursement_transaction.incoming_disbursement if raw_pending_incoming_disbursement_transaction
     return raw_pending_outgoing_disbursement_transaction.outgoing_disbursement if raw_pending_outgoing_disbursement_transaction
     return raw_pending_stripe_transaction.card_charge if raw_pending_stripe_transaction
+    return raw_pending_stripe_service_fee_transaction.stripe_service_fee if raw_pending_stripe_service_fee_transaction
     return increase_check if increase_check
     return paypal_transfer if paypal_transfer
     return wire if wire
@@ -335,6 +338,12 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   def bank_fee
     return linked_object if linked_object.is_a?(BankFee)
+
+    nil
+  end
+
+  def stripe_service_fee
+    return linked_object if linked_object.is_a?(StripeServiceFee)
 
     nil
   end
