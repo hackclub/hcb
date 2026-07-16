@@ -45,11 +45,8 @@ module OneTimeJobs
           item.reload
           hcb_code.update!(ledger_item: item)
           item.send(:assign_linked_object!)
-          if hcb_code.custom_memo.present?
-            item.update_custom_memo!(hcb_code.custom_memo)
-          else
-            item.refresh!
-          end
+          item.custom_memo = item.hcb_code.custom_memo if item.hcb_code&.custom_memo.present?
+          item.refresh!
         end
       end
     end
