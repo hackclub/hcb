@@ -14,7 +14,7 @@ module Api
 
         donations = @event.donations.not_pending.order(created_at: :desc)
 
-        donations = donations.filter_by_visible_state(params[:status], event: @event) if params[:status].present?
+        donations = donations.filter_by_visible_state(params[:status], context: @event) if params[:status].present?
 
         @donations = paginate_cursor(donations.to_a, &:public_id)
 
