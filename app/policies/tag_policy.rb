@@ -6,7 +6,7 @@ class TagPolicy < ApplicationPolicy
   end
 
   def create?
-    member?
+    OrganizerPosition.role_at_least?(user, record, :member)
   end
 
   def update?
