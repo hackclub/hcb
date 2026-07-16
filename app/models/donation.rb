@@ -67,7 +67,7 @@ class Donation < ApplicationRecord
 
   include AASM
   include VisibleStatable
-  set_visible_state_mapping(in_transit: :deposited)
+  set_visible_state_mapping(in_transit: ->(event) { event&.can_front_balance? ? :deposited : :in_transit })
 
   include Freezable
   include UsersHelper

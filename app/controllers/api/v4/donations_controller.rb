@@ -14,13 +14,7 @@ module Api
 
         donations = @event.donations.not_pending.order(created_at: :desc)
 
-        if params[:status].present?
-          donations = if params[:status] == "deposited" && !@event.can_front_balance?
-                        donations.where(aasm_state: :deposited)
-                      else
-                        donations.filter_by_visible_state(params[:status])
-                      end
-        end
+        donations = donations.filter_by_visible_state(params[:status], event: @event) if params[:status].present?
 
         @donations = paginate_cursor(donations.to_a, &:public_id)
 
