@@ -50,6 +50,22 @@
     </section>
   </article>
 
+  <% if @position.under_review? %>
+    <% hcb_party = @position.contracts.not_voided.order(created_at: :desc).first&.party(:hcb) %>
+    <% admin_tool("mt-4 flex items-center justify-between") do %>
+      <span>This contract is awaiting HCB review. It's approved by signing it as HCB.</span>
+      <span class="flex gap-2">
+        <% if hcb_party&.pending? %>
+          <%= link_to "Review & sign contract", contract_party_path(hcb_party), class: "btn bg-success", data: { turbo_frame: "_top" } %>
+        <% else %>
+          <%# No contract has been issued (or HCB already signed) — allow a manual approval. %>
+          <%= button_to "Approve without contract", approve_admin_payroll_position_path(@position), class: "btn bg-success", data: { turbo_frame: "_top", turbo_confirm: "No contract to sign — approve this contractor anyway?" } %>
+        <% end %>
+        <%= button_to "Reject", reject_admin_payroll_position_path(@position), class: "btn bg-muted", data: { turbo_frame: "_top", turbo_confirm: "Reject this contractor?" } %>
+      </span>
+    <% end %>
+  <% end %>
+
   <% if @position.status == :onboarding %>
     <%= render "application/callout", type: "info", title: "Onboarding in progress", class: "mt-4" do %>
       <%= @position.payee.display_name %> needs to sign their contract and complete W-9/W-8BEN tax forms before payments can be processed.

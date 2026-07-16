@@ -1,0 +1,48 @@
+<% title "Contractor Payments" %>
+
+<%= form_with local: true, class: "card overflow-visible flex items-center", url: admin_payments_path, method: :get do |form| %>
+  <%= form.text_field :q, value: @q, placeholder: "Search by recipient name or email", class: "flex-grow" %>
+  <%= form.select :state,
+                  options_for_select(Payment.aasm.states.map { |s| [s.human_name, s.name.to_s] }, @state),
+                  { include_blank: "All states" } %>
+  <%= form.submit "Filter" %>
+<% end %>
+
+<div class="flex items-center mb2 flex-col sm:flex-row">
+  <div class="flex-grow">
+    <%= page_entries_info @payments, entry_name: "payments" %>
+  </div>
+  <%= paginate @payments %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th class="w-32">Date</th>
+      <th>Organization</th>
+      <th>Recipient</th>
+      <th>Purpose</th>
+      <th class="w-32">Amount</th>
+      <th>Status</th>
+      <th class="w-24">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @payments.each do |payment| %>
+      <tr class="<%= "admin-bg-pending" if payment.under_review? %>">
+        <td><%= payment.created_at.strftime("%Y-%m-%d") %></td>
+        <td><%= link_to payment.event.name, payment.event %></td>
+        <td>
+          <%= payment.payee.display_name %>
+          <div class="muted h5"><%= payment.payee.email %></div>
+        </td>
+        <td><%= payment.purpose %></td>
+        <td><%= payment.amount.format %></td>
+        <td><span class="badge ml-0 bg-<%= payment.state_color %>"><%= payment.state_text %></span></td>
+        <td><%= link_to "View", payment_path(payment) %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @payments %>

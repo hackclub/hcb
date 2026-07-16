@@ -168,6 +168,9 @@ module Payroll
     end
 
     def on_contract_party_signed(party)
+      # HCB ops review the contract by signing it: HCB's signature is what
+      # moves the position out of review and into onboarding.
+      mark_onboarding! if party.hcb? && may_mark_onboarding?
       refresh_onboarding_state!
     end
 

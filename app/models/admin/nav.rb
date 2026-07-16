@@ -302,6 +302,30 @@ module Admin
         name: "Payroll",
         items: [
           make_item(
+            name: "Contractors",
+            path: admin_payroll_positions_path,
+            count: ->{ Payroll::Position.under_review.count },
+            count_type: :tasks
+          ),
+          make_item(
+            name: "Contractor Payments",
+            path: admin_payments_path,
+            count: ->{ Payment.under_review.count },
+            count_type: :tasks
+          ),
+          make_item(
+            name: "Legal Entities",
+            path: admin_legal_entities_path,
+            count: ->{ LegalEntity.count },
+            count_type: :records
+          ),
+          make_item(
+            name: "Tax Forms",
+            path: admin_tax_forms_path,
+            count: ->{ Tax::Form.count },
+            count_type: :records
+          ),
+          make_item(
             name: "Employees",
             path: employees_admin_index_path,
             count: ->{ Employee.onboarding.count },

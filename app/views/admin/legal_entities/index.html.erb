@@ -1,0 +1,64 @@
+<% title "Legal Entities" %>
+
+<%= form_with local: true, class: "card overflow-visible flex items-center", url: admin_legal_entities_path, method: :get do |form| %>
+  <%= form.text_field :q, value: @q, placeholder: "Search by name or user email", class: "flex-grow" %>
+  <%= form.select :entity_type,
+                  options_for_select([%w[Person person], %w[Business business]], @entity_type),
+                  { include_blank: "All types" } %>
+  <%= form.select :filter,
+                  options_for_select([%w[Managed managed], %w[Archived archived]], params[:filter]),
+                  { include_blank: "All entities" } %>
+  <%= form.submit "Filter" %>
+<% end %>
+
+<div class="flex items-center mb2 flex-col sm:flex-row">
+  <div class="flex-grow">
+    <%= page_entries_info @legal_entities, entry_name: "legal entities" %>
+  </div>
+  <%= paginate @legal_entities %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th class="w-32">Date</th>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Users / Managing org</th>
+      <th class="w-32">TIN</th><%# presence only — masked TINs are payee-visible, not admin-visible %>
+      <th>Payable?</th>
+      <th class="w-24">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @legal_entities.each do |legal_entity| %>
+      <tr>
+        <td><%= legal_entity.created_at.strftime("%Y-%m-%d") %></td>
+        <td>
+          <%= legal_entity.name || legal_entity.display_name %>
+          <% if legal_entity.archived? %><span class="badge bg-muted">Archived</span><% end %>
+          <% if legal_entity.tin_banned? %><span class="badge bg-error">Banned</span><% end %>
+        </td>
+        <td><%= legal_entity.entity_type&.humanize %></td>
+        <td>
+          <% if legal_entity.managed? %>
+            Managed by <%= link_to legal_entity.managing_event.name, legal_entity.managing_event %>
+          <% else %>
+            <%= legal_entity.users.map(&:email).to_sentence.presence || "—" %>
+          <% end %>
+        </td>
+        <td><%= legal_entity.tin_hash.present? ? "On file" : "—" %></td>
+        <td>
+          <% if legal_entity.payable? %>
+            <span class="badge ml-0 bg-success">Yes</span>
+          <% else %>
+            <span class="badge ml-0 bg-warning">No</span>
+          <% end %>
+        </td>
+        <td><%= link_to "View", legal_entity_path(legal_entity) %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @legal_entities %>
