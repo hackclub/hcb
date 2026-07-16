@@ -80,7 +80,7 @@ class MyController < ApplicationController
   end
 
   def missing_receipts_icon
-    count = current_user.transactions_missing_receipt.count
+    count = Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user) ? current_user.ledger_items_missing_receipt.count : current_user.transactions_missing_receipt.count
 
     emojis = {
       "🤡": 300,
