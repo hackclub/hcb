@@ -6,6 +6,7 @@ class Ledger
 
     def initialize(ledger_item:)
       @ledger_item = ledger_item
+      @ledger_item.reload
     end
 
     def run
@@ -46,6 +47,10 @@ class Ledger
 
         # Map transactions on Stripe cards.
         if ct.raw_stripe_transaction.present? && (event = ct.raw_stripe_transaction.likely_event)
+          return event
+        end
+
+        if (event = ct.linked_object_v2.try(:event))
           return event
         end
 

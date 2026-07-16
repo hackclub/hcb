@@ -28,6 +28,14 @@ class CardCharge < ApplicationRecord
 
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
 
+  scope :on_card, ->(stripe_card) {
+    left_joins(:raw_pending_stripe_transaction, :raw_stripe_transactions)
+      .where(
+        "raw_pending_stripe_transactions.stripe_transaction->'card'->>'id' = :stripe_id OR raw_stripe_transactions.stripe_transaction->>'card' = :stripe_id",
+        stripe_id: stripe_card.stripe_id
+      )
+  }
+
   def stripe_card
     (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_card
   end
@@ -42,6 +50,24 @@ class CardCharge < ApplicationRecord
 
   def merchant_currency
     (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("merchant_currency")
+  end
+
+  def icon
+    merchant = YellowPages::Merchant.lookup(network_id: merchant_data["network_id"])
+    category = merchant_data["category"]
+    categorised_category = BreakdownEngine::Categorizer.new(category).run
+
+    if merchant.icon.present?
+      merchant
+    elsif %w[passenger_railways railroads commuter_transport_and_ferries].include?(category)
+      "train"
+    elsif categorised_category == "Food"
+      "food"
+    elsif categorised_category == "Apparel"
+      "shirt"
+    else
+      "card"
+    end
   end
 
   # Finds the charge for a Stripe authorization ID (iauth_...), whether it was

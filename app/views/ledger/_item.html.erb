@@ -1,11 +1,18 @@
 <tr class="transaction transaction--<%= item.sign %>">
   <td class="transaction__icon">
     <div class="tooltipped tooltipped--e" aria-label="<%= item.humanized_type %>">
-      <%= inline_icon item.icon, size: 32 %>
+      <% if item.icon.is_a?(YellowPages::Merchant) %>
+        <%= merchant_icon(item.icon, style: "height: 1.2em") %>
+      <% else %>
+        <%= inline_icon(item.icon, size: 32) %>
+      <% end %>
     </div>
   </td>
   <td><%= item.datetime.strftime("%b %e, %Y") %></td>
   <td class="transaction__memo transaction__memo--fluid">
+    <% if item.status.present? && !item.settled? %>
+      <%= badge_for item.status_text, class: item.status_css %>
+    <% end %>
     <%= item.memo %>
   </td>
   <td class="nowrap">
@@ -16,7 +23,11 @@
   </td>
   <td class="nowrap">
     <span class="flex items-center justify-end">
-      <%= item.amount.format %>
+      <% if !organizer_signed_in? && item.likely_account_verification_related? %>
+        <%= redacted_amount %>
+      <% else %>
+        <%= item.amount.format %>
+      <% end %>
     </span>
   </td>
   <% admin_tool("", "td") do %>
@@ -30,6 +41,6 @@
     <% end %>
   </td>
   <td>
-    <%= link_to "View", auditor_signed_in? ? ledger_item_path(item) : ledger_item_hcb_path(item) %>
+    <%= link_to "View", auditor_signed_in? ? ledger_item_path(item) : ledger_item_hcb_path(item), data: { turbo: false } %>
   </td>
 </tr>

@@ -150,7 +150,7 @@ module EventsHelper
       tooltip: "Send & transfer money",
       icon: "payment-transfer",
       symbol: :transfers,
-      available_proc: ->(event) { policy(event).transfers? }
+      available_proc: ->(event) { policy(event).transfers? && !Flipper.enabled?(:payments_contractors_refresh_2026_06_26, event) }
     },
     {
       name: "Payments",
@@ -172,11 +172,12 @@ module EventsHelper
     },
     {
       name: "Contractors",
-      path_proc: ->(event_id) { event_employees_path(event_id:) },
+      path_proc: ->(event_id) { event_contractors_path(event_id:) },
       tooltip: "Manage payroll",
       icon: "person-badge",
-      symbol: :payroll,
-      available_proc: ->(event) { policy(event).employees? }
+      symbol: :contractors,
+      beta: true,
+      available_proc: ->(event) { policy(event).contractors? }
     },
     {
       section: "",
