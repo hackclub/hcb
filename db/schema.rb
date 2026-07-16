@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_14_120100) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_16_000000) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1620,6 +1620,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_14_120100) do
     t.index ["id"], name: "index_ledger_items_on_receipt_missing", where: "(receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))"
     t.index ["linked_object_type", "linked_object_id"], name: "index_ledger_items_on_linked_object"
     t.index ["short_code"], name: "index_ledger_items_on_short_code", unique: true
+    t.index ["status"], name: "index_ledger_items_on_status"
   end
 
   create_table "ledger_mappings", force: :cascade do |t|

@@ -1,0 +1,24 @@
+<%# locals: (ledger:) %>
+
+<tr class="transaction transaction--negative muted">
+  <td class="transaction__icon transaction__fee_icon">
+    <div class="tooltipped tooltipped--e" aria-label="Fiscal sponsorship fee">
+      <%= inline_icon "bank-icon", size: 32 %>
+    </div>
+  </td>
+  <td><%= format_date Time.now %></td>
+  <td class="transaction__memo transaction__memo--fluid">
+    <%= badge_for "Pending", class: "bg-transparent border border-dashed border-muted m0 mr1" %>
+    Fiscal sponsorship
+  </td>
+  <td class="nowrap"></td>
+  <td class="nowrap">
+    <span class="flex items-center justify-end">
+      <%= render_money(-1 * ledger.fronted_fee_balance_cents) %>
+    </span>
+  </td>
+  <% admin_tool("", "td") do %>
+  <% end %>
+  <td></td>
+  <td></td>
+</tr>
