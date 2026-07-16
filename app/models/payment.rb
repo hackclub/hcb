@@ -153,8 +153,14 @@ class Payment < ApplicationRecord
 
   # Whether we're still waiting on the recipient to complete tax and/or payout
   # information before this payment can be sent. Gates the acceptance reminders.
+  # Managed legal entities are excluded: the organizer entered the recipient's
+  # details themselves, the entity has no users to email, and there's nothing
+  # for the recipient to complete.
   def awaiting_recipient_onboarding?
-    pending_legal_entity? && (!legal_entity&.payable? || legal_entity.default_payout_method.blank?)
+    return false unless pending_legal_entity?
+    return false if legal_entity&.managed?
+
+    !legal_entity&.payable? || legal_entity.default_payout_method.blank?
   end
 
   private
