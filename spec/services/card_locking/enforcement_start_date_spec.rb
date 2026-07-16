@@ -16,7 +16,7 @@ RSpec.describe "CardLocking.enforcement_start_date" do
   it "is 2026-07-14 for a cardholder in the first stage" do
     Flipper.enable(:card_locking_enabled_on_07_17_2026, user)
 
-    expect(CardLocking.enforcement_start_date(user)).to eq(Date.new(2026, 7, 14))
+    expect(CardLocking.enforcement_start_date(user)).to eq(Date.new(2026, 7, 17))
   end
 
   it "is 2026-07-28 for a cardholder in the second stage" do
@@ -29,6 +29,6 @@ RSpec.describe "CardLocking.enforcement_start_date" do
     Flipper.enable(:card_locking_enabled_on_07_17_2026, user)
     Flipper.enable(:card_locking_enabled_on_07_28_2026, user)
 
-    expect(CardLocking.enforcement_start_date(user)).to eq(Date.new(2026, 7, 14))
+    expect(CardLocking.enforcement_start_date(user)).to eq(Date.new(2026, 7, 17))
   end
 end
