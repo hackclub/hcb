@@ -12,8 +12,8 @@ module Admin
             id: event.id,
             slug: event.slug,
             name: event.name,
-            balance_v2_cents: event.fronted_fee_balance_v2_cents,
-            ledger_balance_cents: event.ledger.fronted_fee_balance_cents
+            fronted_fee_balance_v2_cents: event.fronted_fee_balance_v2_cents,
+            fronted_fee_balance_cents: event.ledger.fronted_fee_balance_cents
           }
           puts "Found anomaly on #{event.id}"
         end
