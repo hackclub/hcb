@@ -395,6 +395,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_16_000000) do
     t.bigint "raw_pending_bank_fee_transaction_id"
     t.bigint "raw_pending_column_transaction_id"
     t.bigint "raw_pending_donation_transaction_id"
+    t.bigint "raw_pending_fee_revenue_transaction_id"
     t.bigint "raw_pending_incoming_disbursement_transaction_id"
     t.bigint "raw_pending_invoice_transaction_id"
     t.bigint "raw_pending_outgoing_ach_transaction_id"
@@ -415,6 +416,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_16_000000) do
     t.index ["raw_pending_column_transaction_id"], name: "idx_on_raw_pending_column_transaction_id_ceea9a99e1", unique: true
     t.index ["raw_pending_column_transaction_id"], name: "index_canonical_pending_txs_on_rpct_id"
     t.index ["raw_pending_donation_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_donation_tx_id"
+    t.index ["raw_pending_fee_revenue_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_fee_revenue_tx_id"
     t.index ["raw_pending_incoming_disbursement_transaction_id"], name: "index_cpts_on_raw_pending_incoming_disbursement_transaction_id"
     t.index ["raw_pending_invoice_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_invoice_tx_id"
     t.index ["raw_pending_outgoing_ach_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_outgoing_ach_tx_id"
@@ -2159,6 +2161,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_16_000000) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "raw_pending_fee_revenue_transactions", force: :cascade do |t|
+    t.integer "amount_cents"
+    t.datetime "created_at", null: false
+    t.date "date_posted"
+    t.bigint "fee_revenue_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["fee_revenue_id"], name: "index_raw_pending_fee_revenue_transactions_on_fee_revenue_id"
+  end
+
   create_table "raw_pending_incoming_disbursement_transactions", force: :cascade do |t|
     t.integer "amount_cents"
     t.datetime "created_at", null: false
@@ -3148,6 +3159,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_16_000000) do
   add_foreign_key "payroll_positions", "payees"
   add_foreign_key "raffles", "raffles", column: "referring_raffle_id", validate: false
   add_foreign_key "raffles", "users"
+  add_foreign_key "raw_pending_fee_revenue_transactions", "fee_revenues"
   add_foreign_key "raw_pending_incoming_disbursement_transactions", "disbursements"
   add_foreign_key "raw_pending_outgoing_disbursement_transactions", "disbursements"
   add_foreign_key "receipts", "users"
