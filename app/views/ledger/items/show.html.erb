@@ -57,6 +57,8 @@
 </section>
 
 <%= render partial: "application/admin_viewer", locals: { record: @item } %>
+<%= render partial: "application/admin_viewer", locals: { record: @item.primary_mapping } if @item.primary_mapping.present? %>
+<%= render partial: "application/admin_viewer", locals: { record: @item.primary_ledger } if @item.primary_ledger.present? %>
 
 <section class="my-5 flex flex-col gap-3">
   <% cts = 0 %>
