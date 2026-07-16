@@ -6,14 +6,6 @@
   need a few details from you before we can send it.
 </p>
 
-<% days_left = 90 - @reminder_day.to_i %>
-<% if days_left > 0 %>
-  <p>
-    You have <strong>90 days</strong> to accept this payment —
-    about <strong><%= days_left %> <%= "day".pluralize(days_left) %></strong> left.
-  </p>
-<% end %>
-
 <p>Still needed:</p>
 <ul>
   <% if @tax_incomplete %>
