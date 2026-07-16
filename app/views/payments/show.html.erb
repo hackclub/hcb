@@ -25,6 +25,12 @@
         <strong>Initiated at</strong>
         <%= format_datetime @payment.created_at %>
       </div>
+      <% if (version = @payment.versions.where_object_changes_to(aasm_state: :canceled).last).present? %>
+        <% admin_tool("", "div") do %>
+          <strong>Canceled by</strong>
+          <%= user_mention version.whodunnit.present? ? User.find(version.whodunnit) : nil %>
+        <% end %>
+      <% end %>
     </section>
 
     <section class="hcb-code--info">
