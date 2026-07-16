@@ -4,7 +4,6 @@ module Api
   module V4
     class DonationsController < ApplicationController
       include SetEvent
-      include ApplicationHelper
 
       before_action :set_api_event, only: [:index, :create]
       before_action :set_donation, only: [:payment_intent]
@@ -15,7 +14,13 @@ module Api
 
         donations = @event.donations.not_pending.order(created_at: :desc)
 
-        donations = donations.filter_by_visible_state(params[:status]) if params[:status].present?
+        if params[:status].present?
+          donations = if params[:status] == "deposited" && !@event.can_front_balance?
+                        donations.where(aasm_state: :deposited)
+                      else
+                        donations.filter_by_visible_state(params[:status])
+                      end
+        end
 
         @donations = paginate_cursor(donations.to_a, &:public_id)
 
