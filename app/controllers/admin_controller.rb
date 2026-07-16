@@ -571,6 +571,58 @@ class AdminController < Admin::BaseController
 
   end
 
+  def payments
+    @page = params[:page] || 1
+    @per = params[:per] || 20
+    @q = params[:q].presence
+    @amount = params[:amount].presence
+    @pending = params[:pending] == "1" ? true : nil
+    @start_date = params[:start_date].presence
+    @end_date = params[:end_date].presence
+
+    @event_id = params[:event_id].presence
+
+    if @event_id
+      @event = Event.find(@event_id)
+
+      relation = @event.payments
+    else
+      relation = Payment.all
+    end
+
+    relation = relation.includes(:payee, :event, :creator, attempts: :payout)
+
+    relation = relation.search_recipient(@q) if @q
+
+    if @amount
+      amount_cents = (@amount.to_f * 100).to_i.abs
+      relation = relation.where(amount_cents:)
+    end
+
+    relation = relation.pending_or_under_review if @pending
+
+    begin
+      if @start_date.present?
+        start_date = Date.strptime(@start_date, "%Y-%m-%d")
+        relation = relation.where("payments.created_at >= ?", start_date.beginning_of_day)
+      end
+      if @end_date.present?
+        end_date = Date.strptime(@end_date, "%Y-%m-%d")
+        relation = relation.where("payments.created_at <= ?", end_date.end_of_day)
+      end
+    rescue Date::Error
+      flash.now[:error] = "Invalid date."
+      @start_date = @end_date = nil
+    end
+
+    @count = relation.count
+    @payments = relation.page(@page).per(@per).order(
+      Arel.sql("payments.aasm_state = 'under_review' DESC"),
+      "payments.created_at desc"
+    )
+
+  end
+
   def stripe_card_personalization_designs
     @page = params[:page] || 1
     @per = params[:per] || 20

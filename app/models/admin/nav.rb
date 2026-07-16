@@ -160,6 +160,12 @@ module Admin
             path: reimbursements_admin_index_path,
             count: ->{ Reimbursement::Report.reimbursement_requested.count },
             count_type: :tasks
+          ),
+          make_item(
+            name: "Payments",
+            path: payments_admin_index_path,
+            count: ->{ Payment.pending_or_under_review.count },
+            count_type: :tasks
           )
         ]
       )

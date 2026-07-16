@@ -1,0 +1,63 @@
+<% title "Payments" %>
+
+<%= form_with local: true, class: "card overflow-visible", url: payments_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-col sm:flex-row items-center gap-2">
+    <%= render "events/filters/search", form: %>
+    <%= form.number_field :amount, placeholder: "Amount", step: "0.01", value: @amount, class: "!max-w-full !min-w-full sm:!min-w-40" %>
+    <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
+    <%= render "admin/date_range_filter", start_date: @start_date, end_date: @end_date %>
+  </div>
+  <div class="flex items-center mt-2 gap-4 flex-wrap">
+    <%= form.label :pending do %>
+      <%= form.check_box :pending, checked: @pending %> Pending
+    <% end %>
+    <%= form.submit "Search", class: "ml-auto" %>
+  </div>
+<% end %>
+
+<div class="flex items-center mb2 flex-col sm:flex-row">
+  <div class="flex-grow">
+    <%= page_entries_info @payments, entry_name: "payment" %>
+  </div>
+  <%= paginate @payments %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Date</th>
+      <th>Recipient</th>
+      <th>Purpose</th>
+      <th>Amount</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @payments.each do |payment| %>
+      <tr class="<%= "admin-bg-pending" if payment.pending_legal_entity? || payment.under_review? %>">
+        <td><%= payment.id %></td>
+        <td><%= payment.created_at.strftime("%Y-%m-%d") %></td>
+        <td>
+          <%= link_to payment_path(payment) do %>
+            <%= payment.event&.name&.upcase %>: <%= payment.payee.display_name.upcase %>
+          <% end %>
+        </td>
+        <td><%= payment.purpose %></td>
+        <td><%= render_money_amount(payment.amount) %></td>
+        <td>
+          <span class="badge bg-<%= payment.state_color %>"><%= payment.state_text %></span>
+        </td>
+        <td>
+          <%= link_to "View", payment_path(payment) %>
+          <% if payment.payout.present? %>
+            <%= link_to "Payout", hcb_code_path(payment.payout.local_hcb_code) %>
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @payments %>
