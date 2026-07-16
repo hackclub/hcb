@@ -52,6 +52,24 @@ class CardCharge < ApplicationRecord
     (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("merchant_currency")
   end
 
+  def icon
+    merchant = YellowPages::Merchant.lookup(network_id: merchant_data["network_id"])
+    category = merchant_data["category"]
+    categorised_category = BreakdownEngine::Categorizer.new(category).run
+
+    if merchant.icon.present?
+      merchant
+    elsif %w[passenger_railways railroads commuter_transport_and_ferries].include?(category)
+      "train"
+    elsif categorised_category == "Food"
+      "food"
+    elsif categorised_category == "Apparel"
+      "shirt"
+    else
+      "card"
+    end
+  end
+
   # Finds the charge for a Stripe authorization ID (iauth_...), whether it was
   # first seen as an authorization or as a settled transaction.
   def self.find_by_stripe_authorization_id(stripe_authorization_id)

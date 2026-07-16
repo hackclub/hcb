@@ -67,12 +67,6 @@
   <% end %>
 
   <% if @position.status == :onboarding %>
-    <%= render "application/callout", type: "info", title: "Onboarding in progress", class: "mt-4" do %>
-      <%= @position.payee.display_name %> needs to sign their contract and complete W-9/W-8BEN tax forms before payments can be processed.
-    <% end %>
-  <% end %>
-
-  <% if @position.status == :onboarding %>
     <h3 class="eyebrow muted mt-4 mb-2">Onboarding checklist</h3>
     <div class="flex flex-col gap-2">
       <% @position.onboarding_checklist.each do |item| %>

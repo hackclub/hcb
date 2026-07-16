@@ -150,7 +150,7 @@ module EventsHelper
       tooltip: "Send & transfer money",
       icon: "payment-transfer",
       symbol: :transfers,
-      available_proc: ->(event) { policy(event).transfers? }
+      available_proc: ->(event) { policy(event).transfers? && !Flipper.enabled?(:payments_contractors_refresh_2026_06_26, event) }
     },
     {
       name: "Payments",

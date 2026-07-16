@@ -1,12 +1,16 @@
 <tr class="transaction transaction--<%= item.sign %>">
   <td class="transaction__icon">
     <div class="tooltipped tooltipped--e" aria-label="<%= item.humanized_type %>">
-      <%= inline_icon item.icon, size: 32 %>
+      <% if item.icon.is_a?(YellowPages::Merchant) %>
+        <%= merchant_icon(item.icon, style: "height: 1.2em") %>
+      <% else %>
+        <%= inline_icon(item.icon, size: 32) %>
+      <% end %>
     </div>
   </td>
   <td><%= item.datetime.strftime("%b %e, %Y") %></td>
   <td class="transaction__memo transaction__memo--fluid">
-    <% if item.status.present? && !item.settled? && !item.reversed? %>
+    <% if item.status.present? && !item.settled? %>
       <%= badge_for item.status_text, class: item.status_css %>
     <% end %>
     <%= item.memo %>

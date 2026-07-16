@@ -40,6 +40,7 @@ class LegalEntity < ApplicationRecord
 
   has_many :payees
   has_many :payments, through: :payees
+  has_many :payroll_positions, through: :payees
 
   has_many :payout_methods, class_name: "LegalEntity::PayoutMethod"
   # At most one default per entity is enforced by a partial unique index.
