@@ -19,7 +19,7 @@
 #
 class StripeServiceFee < ApplicationRecord
   belongs_to :stripe_topup, optional: true
-  has_one :ledger_item, as: :linked_object
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
 
   after_create_commit do
     topup = StripeTopup.create(

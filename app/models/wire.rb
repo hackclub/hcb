@@ -54,7 +54,7 @@ class Wire < ApplicationRecord
   has_encrypted :account_number, :bic_code
   blind_index :account_number, :bic_code
 
-  has_one :ledger_item, as: :linked_object
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wire, required: false
   has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
 
