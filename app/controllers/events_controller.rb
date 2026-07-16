@@ -743,6 +743,7 @@ class EventsController < ApplicationController
 
     if Flipper.enabled?(:payments_contractors_refresh_2026_06_26, @event)
       redirect_to event_payments_path(@event)
+      return
     end
 
     params[:q] ||= params[:search]
