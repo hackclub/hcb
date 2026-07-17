@@ -146,7 +146,7 @@ RSpec.describe WiresController do
         params: {
           id: wire.id,
           wire: {
-            currency: "EUR",
+            currency: "CAD",
             amount: "600",
           }
         }
@@ -155,9 +155,9 @@ RSpec.describe WiresController do
       expect(response).to redirect_to(wire_process_admin_path(wire))
 
       wire.reload
-      expect(wire.currency).to eq("EUR")
+      expect(wire.currency).to eq("CAD")
       expect(wire.amount_cents).to eq(600_00)
-      expect(wire.canonical_pending_transaction.reload.amount_cents).to eq(-MoneyService.convert_to_usd(600_00, "EUR"))
+      expect(wire.canonical_pending_transaction.reload.amount_cents).to eq(-MoneyService.convert_to_usd(600_00, "CAD"))
     end
 
     it "is not allowed for non-admins" do
