@@ -746,7 +746,7 @@ Rails.application.routes.draw do
 
           resources :disbursements, path: "transfers", only: [:create]
 
-          resources :donations, path: "donations", only: [:index, :create] do
+          resources :donations, path: "donations", only: [:create] do
             member do
               post "payment_intent"
             end
@@ -767,6 +767,8 @@ Rails.application.routes.draw do
             post "mark_no_receipt"
           end
         end
+
+        resources :donations, only: [:index, :show]
 
         resources :tags, only: [:index, :show, :create, :destroy]
 
