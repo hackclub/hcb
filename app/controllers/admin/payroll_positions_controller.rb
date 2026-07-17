@@ -14,7 +14,6 @@ module Admin
       @state = params[:state].presence
       relation = relation.where(aasm_state: @state) if @state
 
-      @count = relation.count
       @positions = relation.order(Arel.sql("CASE WHEN aasm_state = 'under_review' THEN 0 ELSE 1 END, created_at DESC")).page(@page).per(@per)
     end
 
