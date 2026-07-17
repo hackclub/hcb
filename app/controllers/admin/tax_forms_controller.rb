@@ -19,7 +19,6 @@ module Admin
       @form_type = params[:form_type].presence
       relation = relation.where(form_type: @form_type) if @form_type
 
-      @count = relation.count
       @tax_forms = relation.order(created_at: :desc).page(@page).per(@per)
     end
 
