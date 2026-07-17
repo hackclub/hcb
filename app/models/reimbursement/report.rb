@@ -115,7 +115,7 @@ module Reimbursement
       state :reversed
 
       event :mark_submitted do
-        transitions from: [:draft, :reimbursement_requested], to: :submitted, guard: :may_mark_submitted?
+        transitions from: [:draft, :reimbursement_requested], to: :submitted, guard: :submission_requirements_met?
         after do
           if team_review_required?
             ReimbursementMailer.with(report: self).review_requested.deliver_later
@@ -416,24 +416,22 @@ module Reimbursement
       end
     end
 
-    def may_mark_submitted?
-      submission_requirements.empty?
-    end
+    def submission_requirements_met?
+      errors.clear
 
-    def submission_requirements
-      messages = []
-      messages << "Your account is not fully set up" if user.onboarding?
-      messages << "Report must belong to an organization" unless event.present?
-      messages << "Report has no expenses" unless expenses.any?
-      messages << "One or more expenses are missing receipts" if missing_receipts?
-      messages << "One or more expenses have a zero amount" if expenses.any? { |e| e.amount.zero? }
-      messages << "Report amount exceeds the maximum allowed" if exceeds_maximum_amount?
-      messages << "Report amount is below the minimum required" if event.present? && below_minimum_amount?
-      messages << "Currency does not match your payout method" if mismatched_currency?
-      messages << "Your payout method is not set up" unless user.payout_method.present?
-      messages << "Your payout method is not supported" if !payout_method_allowed?
-      messages << "Organization finances are currently frozen" if event&.financially_frozen?
-      messages
+      errors.add(:base, "Your account is not fully set up") if user.onboarding?
+      errors.add(:base, "Report must belong to an organization") unless event.present?
+      errors.add(:base, "Report has no expenses") unless expenses.any?
+      errors.add(:base, "One or more expenses are missing receipts") if missing_receipts?
+      errors.add(:base, "One or more expenses have a zero amount") if expenses.any? { |e| e.amount.zero? }
+      errors.add(:base, "Report amount exceeds the maximum allowed") if exceeds_maximum_amount?
+      errors.add(:base, "Report amount is below the minimum required") if event.present? && below_minimum_amount?
+      errors.add(:base, "Currency does not match your payout method") if mismatched_currency?
+      errors.add(:base, "Your payout method is not set up") unless user.payout_method.present?
+      errors.add(:base, "Your payout method is not supported") unless payout_method_allowed?
+      errors.add(:base, "Organization finances are currently frozen") if event&.financially_frozen?
+
+      errors.empty?
     end
 
     private

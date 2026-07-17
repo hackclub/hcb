@@ -209,7 +209,7 @@ module Reimbursement
           flash[:success][:link_text] = "If needed, you can still edit your payout settings."
         end
       rescue AASM::InvalidTransition
-        flash[:error] = @report.submission_requirements.to_sentence
+        flash[:error] = @report.errors.full_messages.to_sentence
       end
 
       redirect_to @report
