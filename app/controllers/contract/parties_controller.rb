@@ -17,8 +17,6 @@ class Contract
         end
       end
 
-      @party.sync_with_docuseal if @party.pending? && @contract.sent_with_docuseal?
-
       if @party.signed? && !(@contract.contractable.is_a?(Event::Application) && @party.hcb?)
         redirect_to completed_contract_party_path(@party)
         return
@@ -44,8 +42,6 @@ class Contract
 
     def completed
       authorize @party
-      @party.sync_with_docuseal if @party.pending? && @contract.sent_with_docuseal?
-
       if (@party.signee? && @contract.signed?) || @party.contractor?
         case @contract.contractable
         when Event::Application
