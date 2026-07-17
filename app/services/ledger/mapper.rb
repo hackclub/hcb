@@ -38,8 +38,6 @@ class Ledger
     # Also covers ACH transfers, wires, etc. which are sent using this number.
     def event_from_canonical_transactions
       @ledger_item.canonical_transactions.each do |ct|
-        next unless ct.raw_column_transaction
-
         column_account_number = Column::AccountNumber.find_by(
           column_id: ct.raw_column_transaction.column_transaction["account_number_id"]
         )
