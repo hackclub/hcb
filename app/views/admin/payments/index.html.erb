@@ -1,11 +1,13 @@
 <% title "Contractor Payments" %>
 
-<%= form_with local: true, class: "card overflow-visible flex items-center", url: admin_payments_path, method: :get do |form| %>
-  <%= form.text_field :q, value: @q, placeholder: "Search by recipient name or email", class: "flex-grow" %>
-  <%= form.select :state,
-                  options_for_select(Payment.aasm.states.map { |s| [s.human_name, s.name.to_s] }, @state),
-                  { include_blank: "All states" } %>
-  <%= form.submit "Filter" %>
+<%= form_with local: true, class: "card", url: admin_payments_path, method: :get do |form| %>
+  <div class="flex flex-col sm:flex-row items-center gap-2">
+    <%= render "events/filters/search", form: %>
+    <%= form.select :state, Payment.aasm.states_for_select, { include_blank: "All states", selected: @state } %>
+  </div>
+  <div class="flex items-center mt-2">
+    <%= form.submit "Search", class: "ml-auto" %>
+  </div>
 <% end %>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">
