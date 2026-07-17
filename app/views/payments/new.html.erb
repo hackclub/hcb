@@ -13,6 +13,12 @@
   </div>
 <% end %>
 
+<% content_for :sidebar_footer do %>
+  <% admin_tool("mt-6") do %>
+    <%= link_to "Send transfer manually", "#", class: "btn", data: { behavior: "modal_trigger", modal: "send_transfer" } %>
+  <% end %>
+<% end %>
+
 <% if @recent_payments&.any? %>
   <% content_for :sidebar_footer do %>
     <div class="mt-6">
