@@ -54,6 +54,25 @@
       </span>
     <% end %>
   <% end %>
+  <% if @item.event.present? %>
+    <% admin_tool do %>
+      <strong>
+        Event
+      </strong>
+      <span>
+        <%= link_to @item.event.name, event_path(@item.event), target: :_blank %> (<%= @item.event.id %>)
+      </span>
+    <% end %>
+  <% elsif @item.card_grant.present? %>
+    <% admin_tool do %>
+      <strong>
+        Card Grant
+      </strong>
+      <span>
+        <%= link_to "Grant to #{@item.card_grant.name}", card_grant_path(@item.card_grant), target: :_blank %> (<%= @item.card_grant.id %>)
+      </span>
+    <% end %>
+  <% end %>
 </section>
 
 <%= render partial: "application/admin_viewer", locals: { record: @item } %>
