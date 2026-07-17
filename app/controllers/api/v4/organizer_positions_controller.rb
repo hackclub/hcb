@@ -9,7 +9,7 @@ module Api
       before_action :set_organizer_position, only: [:removal_request]
 
       def index
-        authorize @event, :index_in_v4?
+        authorize @event, :show_in_v4?
         positions = @event.organizer_positions.includes(:user).order(created_at: :desc).to_a
         @organizer_positions = paginate_cursor(positions, &:public_id)
       end
