@@ -233,6 +233,12 @@
             <%= form.label :wise_id, "Wise ID / URL", class: "bold mb1" %> <br>
             <%= form.text_field :wise_id, class: "w-[400px]", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", disabled: @wise_transfer.usd_amount_cents.nil?, onpaste: "var urlPrefix = 'https://wise.com/transactions/activities/by-resource/TRANSFER/'; var clipboardData = event.clipboardData.getData('Text'); clipboardData.startsWith(urlPrefix) ? (event.preventDefault(), event.target.value = clipboardData.substring(urlPrefix.length)) : null" %>
           </div>
+          <% if @wise_transfer.payment.present? %>
+            <div class="mb-2">
+              <%= form.check_box :tax_reportable, checked: @wise_transfer.payment.tax_reportable %>
+              <%= form.label :tax_reportable, "Tax reportable?", class: "bold ml-2" %>
+            </div>
+          <% end %>
           <%= form.submit "💸 Mark transfer as sent", disabled: @wise_transfer.usd_amount_cents.nil?, class: "mb-0" %>
         <% end %>
 

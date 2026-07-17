@@ -45,6 +45,7 @@ class WiresController < ApplicationController
 
     ensure_admin_may_approve!(@wire, amount_cents: @wire.usd_amount_cents)
     @wire.mark_approved!
+    @wire.payment&.update!(tax_reportable: ActiveModel::Type::Boolean.new.cast(params[:tax_reportable]))
 
     redirect_to wire_process_admin_path(@wire), flash: { success: "Thanks for sending that wire." }
 
@@ -73,6 +74,7 @@ class WiresController < ApplicationController
 
     ensure_admin_may_approve!(@wire, amount_cents: @wire.usd_amount_cents)
     @wire.send_wire!
+    @wire.payment&.update!(tax_reportable: ActiveModel::Type::Boolean.new.cast(params[:tax_reportable]))
 
     if params[:charge_fee] == "1"
       disbursement = DisbursementService::Create.new(

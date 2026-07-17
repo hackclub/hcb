@@ -179,6 +179,12 @@
 
         <div class="flex flex-row gap-2 items-center justify-start">
           <%= form_with(model: false, local: true, url: ach_approve_admin_path(@ach_transfer), method: :post) do |form| %>
+            <% if @ach_transfer.payment.present? %>
+              <div class="field mb-2">
+                <%= form.check_box :tax_reportable, checked: @ach_transfer.payment.tax_reportable %>
+                <%= form.label :tax_reportable, "Tax reportable?", class: "bold ml-2" %>
+              </div>
+            <% end %>
             <%= form.submit "#{verb} ACH transfer", data: { turbo_confirm: "Are you sure? Once an ACH transfer is sent, it cannot be un-sent." } %>
             <% if @ach_transfer.scheduled_on.present? %>
               <br>
@@ -188,6 +194,12 @@
 
           <% unless @ach_transfer.scheduled_on.present? %>
             <%= form_with(model: false, local: true, url: ach_send_realtime_admin_path(@ach_transfer), method: :post) do |form| %>
+              <% if @ach_transfer.payment.present? %>
+                <div class="field mb-2">
+                  <%= form.check_box :tax_reportable, checked: @ach_transfer.payment.tax_reportable %>
+                  <%= form.label :tax_reportable, "Tax reportable?", class: "bold ml-2" %>
+                </div>
+              <% end %>
               <%= form.submit "⚡ Send in realtime", data: { turbo_confirm: "Are you sure? Once a realtime transfer is sent, it cannot be un-sent. Realtime transfers incur a $1 fee from Column, that will be covered by HCB." } %>
             <% end %>
           <% end %>

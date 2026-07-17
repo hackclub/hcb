@@ -75,6 +75,7 @@ class WiseTransfersController < ApplicationController
 
     begin
       @wise_transfer.mark_sent!
+      @wise_transfer.payment&.update!(tax_reportable: ActiveModel::Type::Boolean.new.cast(params.dig(:wise_transfer, :tax_reportable)))
       flash[:success] = "Marked as sent."
     rescue ActiveRecord::RecordInvalid => e
       flash[:error] = e.record.errors.full_messages.to_sentence
