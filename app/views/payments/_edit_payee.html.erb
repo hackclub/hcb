@@ -1,11 +1,13 @@
 <%# locals: (event:, payee:) %>
 
-<% cancel_path = params[:selected].present? ? new_event_payment_path(event_id: event.slug, payee_id: payee.hashid) : new_event_payment_path(event_id: event.slug) %>
+<% destination = params[:destination].presence || "payments" %>
+<% cancel_path = params[:selected].present? ? new_recipient_transfer_path(destination, event, payee_id: payee.hashid) : new_recipient_transfer_path(destination, event) %>
 
 <div data-scroll-seek-target="section">
   <h3 class="mb-2">Edit recipient</h3>
   <div class="card mb-4">
     <%= form_with(model: payee, url: event_payee_path(event_id: event.slug, id: payee.hashid), method: :patch, local: true) do |form| %>
+      <%= hidden_field_tag :destination, destination %>
       <div class="flex flex-col gap-3">
         <div>
           <%= form.label :display_name, "Name" %>
