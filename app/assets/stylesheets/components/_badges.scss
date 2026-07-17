@@ -11,9 +11,15 @@
   font-weight: 500;
   letter-spacing: 0.01em;
   font-variant-numeric: tabular-nums;
-  line-height: 0;
+  line-height: 1.125;
   margin-left: 1rem;
   padding: 0.25rem 0.625rem;
+
+  // Only badges rendered within a ledger item (see ledger/_item) should
+  // collapse their line-height; keep global badges at the base value above.
+  &.badge--ledger-item {
+    line-height: 0;
+  }
 
   &.bg-success {
     background-color: rgba(map-get($palette, success), 0.125);
