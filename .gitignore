@@ -21,6 +21,13 @@
 /node_modules
 /yarn-error.log
 
+# This project uses yarn; cssbundling-rails 1.4.2/1.4.3 treats yarn.lock as a
+# bun lockfile, so it runs `bun install` and generates bun.lock on machines
+# that have bun installed. Fixed upstream, should be gone in the release after
+# 1.4.3: https://github.com/rails/cssbundling-rails/pull/172
+/bun.lock
+/bun.lockb
+
 /public/assets
 .byebug_history
 
