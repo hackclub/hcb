@@ -103,7 +103,19 @@
 
       <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
         <h3 class="mb-2">Tax information</h3>
-        <div class="card mb-4 p-20"></div>
+
+        <div class="card mb-4 p-4">
+          <div>
+            <%= form.label :tax_reportable do %>
+              <%= form.check_box :tax_reportable %>
+              Tax reportable?
+              <span class="info tooltipped tooltipped--e h-5" aria-label="lorem ipsum">
+                <%= inline_icon "info", size: 20 %>
+              </span>
+            <% end %>
+          </div>
+
+        </div>
       </div>
 
       <div data-scroll-seek-target="section">

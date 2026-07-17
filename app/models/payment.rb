@@ -12,6 +12,7 @@
 #  rejected_at     :datetime
 #  sent_at         :datetime
 #  successful_at   :datetime
+#  tax_reportable  :boolean          default(TRUE), not null
 #  under_review_at :datetime
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
