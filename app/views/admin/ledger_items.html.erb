@@ -6,6 +6,8 @@
     <%= form.text_field :q, value: params[:q], placeholder: "Search", class: "!max-w-full sm:!max-w-[200px]" %>
     <%= form.check_box :unmapped, checked: @unmapped, class: "mr-2" %>
     <%= form.label :unmapped, "Unmapped", class: "mr-4" %>
+    <%= form.check_box :nonzero, checked: @nonzero, class: "mr-2" %>
+    <%= form.label :nonzero, "Non-Zero", class: "mr-4" %>
     <%= form.submit "Search", class: "shrink-0 sm:ml-auto" %>
   </div>
 <% end %>
