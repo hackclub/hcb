@@ -55,7 +55,7 @@
       <% if @position.contract.present? %>
         <span>This contract is awaiting HCB review. Reviewing it means signing it as HCB.</span>
         <span class="flex gap-2">
-          <%= link_to "Review & sign contract", contract_party_path(@position.contract.party(:hcb)), class: "btn bg-success", data: { turbo_frame: "_top" } %>
+          <%= link_to "Review & sign contract", contract_party_path(@position.contract.party(:hcb)), class: "btn bg-success nowrap", data: { turbo_frame: "_top" } %>
           <%= button_to "Reject", reject_admin_payroll_position_path(@position), class: "btn bg-muted", data: { turbo_frame: "_top", turbo_confirm: "Reject this contractor?" } %>
         </span>
       <% else %>

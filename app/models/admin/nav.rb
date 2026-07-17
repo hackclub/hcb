@@ -160,6 +160,12 @@ module Admin
             path: reimbursements_admin_index_path,
             count: ->{ Reimbursement::Report.reimbursement_requested.count },
             count_type: :tasks
+          ),
+          make_item(
+            name: "Contractor Payments",
+            path: admin_payments_path,
+            count: ->{ Payment.under_review.count },
+            count_type: :tasks
           )
         ]
       )
@@ -308,12 +314,6 @@ module Admin
             count_type: :tasks
           ),
           make_item(
-            name: "Contractor Payments",
-            path: admin_payments_path,
-            count: ->{ Payment.under_review.count },
-            count_type: :tasks
-          ),
-          make_item(
             name: "Legal Entities",
             path: admin_legal_entities_path,
             count: ->{ LegalEntity.count },
@@ -324,35 +324,9 @@ module Admin
             path: admin_tax_forms_path,
             count: ->{ Tax::Form.count },
             count_type: :records
-          ),
-          *legacy_payroll_items
+          )
         ]
       )
-    end
-
-    def legacy_payroll_items
-      return [] if Flipper.enabled?(:payments_contractors_refresh_2026_06_26)
-
-      [
-        make_item(
-          name: "Employees",
-          path: employees_admin_index_path,
-          count: ->{ Employee.onboarding.count },
-          count_type: :tasks
-        ),
-        make_item(
-          name: "Payments",
-          path: employee_payments_admin_index_path,
-          count: ->{ Employee::Payment.paid.count },
-          count_type: :records
-        ),
-        make_item(
-          name: "W9s",
-          path: admin_w9s_path,
-          count: ->{ W9.count },
-          count_type: :records
-        )
-      ]
     end
 
     def misc

@@ -4,7 +4,12 @@
   <div class="flex flex-col sm:flex-row items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= form.select :entity_type, [%w[Person person], %w[Business business]], { include_blank: "All types", selected: @entity_type } %>
-    <%= form.select :filter, [%w[Managed managed], %w[Archived archived]], { include_blank: "All entities", selected: params[:filter] } %>
+    <label class="flex items-center gap-1 nowrap">
+      <%= form.check_box :managed, checked: @managed %> Managed
+    </label>
+    <label class="flex items-center gap-1 nowrap">
+      <%= form.check_box :archived, checked: @archived %> Archived
+    </label>
   </div>
   <div class="flex items-center mt-2">
     <%= form.submit "Search", class: "ml-auto" %>
