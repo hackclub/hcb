@@ -3,6 +3,8 @@
 <h1>Payment information for <%= @legal_entity.name %></h1>
 
 <% show_tin = policy(@legal_entity).show_masked_tin? %>
+<% tax_form_required = @legal_entity.tax_form_required? %>
+<% payable = @legal_entity.payable?(requires_tax_form: tax_form_required) %>
 
 <% if @legal_entity.archived? %>
   <% own_active_entities = current_user.legal_entities.reject(&:archived?) if @legal_entity.users.include?(current_user) %>
@@ -18,31 +20,37 @@
   <% else %>
     <p>This legal entity has been archived.</p>
   <% end %>
-<% elsif @legal_entity.completed_tax_form? %>
+<% elsif @legal_entity.tin_banned? %>
+  <p>
+    <%= @legal_entity.person? ? "You have" : "#{@legal_entity.name.presence || "Business"} has" %>
+    been banned from receiving payments from organizations on HCB.
+  </p>
+<% elsif payable %>
   <% completed_tax_form = @legal_entity.latest_completed_tax_form %>
-  <% if @legal_entity.payable? %>
-    <% if @legal_entity.default_payout_method.present? %>
-      <p>
-        You're all set! <%= @legal_entity.person? ? "You" : (@legal_entity.name.presence || "Business") %>
-        can now receive payments from any organization on HCB.
-        <% if (under_review_count = @legal_entity.payments.under_review.count) > 0 %>
-          Once your <%= "payment".pluralize(under_review_count) %> <%= under_review_count == 1 ? "is" : "are" %>
-          approved by HCB, we'll send <%= under_review_count == 1 ? "it" : "them" %> using your default payout method.
-        <% end %>
-        If you'd like, review your payout methods.
-      </p>
 
-      <p>You can see all of your payments in the <%= link_to "Pay tab", my_pay_path(legal_entity_id: @legal_entity.id) %>.</p>
-    <% else %>
-      <p>
-        You're almost there - just add a payout method below!
-      </p>
-    <% end %>
+  <% if @legal_entity.default_payout_method.present? %>
+    <p>
+      You're all set! <%= @legal_entity.person? ? "You" : (@legal_entity.name.presence || "Business") %>
+      can now receive payments from any organization on HCB.
+      <% if (under_review_count = @legal_entity.payments.under_review.count) > 0 %>
+        Once your <%= "payment".pluralize(under_review_count) %> <%= under_review_count == 1 ? "is" : "are" %>
+        approved by HCB, we'll send <%= under_review_count == 1 ? "it" : "them" %> using your default payout method.
+      <% end %>
+      If you'd like, review your payout methods.
+    </p>
 
-    <%= render "users/payout_methods_list", user: current_user, legal_entity: @legal_entity %>
+    <p>You can see all of your payments in the <%= link_to "Pay tab", my_pay_path(legal_entity_id: @legal_entity.id) %>.</p>
+  <% else %>
+    <p>
+      You're almost there - just add a payout method below!
+    </p>
+  <% end %>
 
-    <hr>
+  <%= render "users/payout_methods_list", user: current_user, legal_entity: @legal_entity %>
 
+  <hr>
+
+  <% if completed_tax_form.present? %>
     <p>
       You last submitted a tax form for this legal entity on <%= format_date completed_tax_form.completed_at %>
       with TIN <%= masked_tin_tag completed_tax_form, viewable: show_tin %>.
@@ -50,112 +58,113 @@
     </p>
 
     <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
-  <% elsif (mismatched = @legal_entity.mismatched_tax_form || @legal_entity.entity_type_mismatched_tax_form).present? %>
-    <% previous_tax_form = @legal_entity.latest_usable_tax_form %>
-
-    <% if previous_tax_form.present? %>
-      <p>
-        You submitted a W8/W9 with a different TIN (SSN, EIN, or foreign TIN) than your previous
-        tax form for this legal entity (<%= masked_tin_tag previous_tax_form, viewable: show_tin %>).
-        Choose an option to continue:
-      </p>
-    <% else %>
-      <p>
-        The tax form you submitted is for a <%= mismatched.entity_type %>, but
-        <%= @legal_entity.person? ? "this is your personal legal entity" : "#{@legal_entity.name.presence || "this"} is a business legal entity" %>.
-        Choose an option to continue:
-      </p>
-    <% end %>
-
-    <% entity_type_matches = mismatched.entity_type == @legal_entity.entity_type %>
-
-    <ul>
-      <% if entity_type_matches %>
-        <li>
-          <strong>Switch to new TIN</strong>:
-          Pick this if your TIN for <%= @legal_entity.name %> changed to <%= masked_tin_tag mismatched, viewable: show_tin %>.
-          You will no longer be able to receive payments through HCB to your old TIN
-          (<%= masked_tin_tag previous_tax_form, viewable: show_tin %>).
-          Your payout methods will move over, and payments you've already been sent stay under your old TIN.
-        </li>
-      <% end %>
-
-      <% if mismatched.entity_business? %>
-        <li>
-          <strong>Create new legal entity</strong>:
-          Pick this if you entered in information for a different legal entity than <%= @legal_entity.name %>.
-          You'll be able to receive payments under both TINs, and payments that haven't been sent yet will move
-          to the new legal entity with TIN <%= masked_tin_tag mismatched, viewable: show_tin %>.
-        </li>
-      <% end %>
-
-      <li>
-        <strong>Discard last tax form</strong>:
-        Pick this if you made a mistake on your last tax form.
-        You'll then be able to submit a corrected tax form.
-      </li>
-    </ul>
-
-    <div class="flex justify-start gap-5 items-center">
-      <% if entity_type_matches %>
-        <%= button_to "Switch to new TIN", replace_legal_entity_path(@legal_entity), class: "btn", params: { new_tax_form_id: mismatched.hashid } %>
-      <% end %>
-
-      <% if mismatched.entity_business? %>
-        <%= link_to "Create new legal entity", "#", class: "btn", data: { behavior: "modal_trigger", modal: "create_new_le" } %>
-
-        <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="create_new_le">
-          <%= modal_header "Create new legal entity" %>
-
-          <p>
-            You're creating a new legal entity with TIN <%= masked_tin_tag mismatched, viewable: show_tin %>.
-            You'll be able to receive payments under both TINs, and payments that haven't been sent yet will move
-            to the new legal entity.
-          </p>
-
-          <%= form_with url: create_from_tax_form_legal_entities_path do |form| %>
-            <%= form.hidden_field :new_tax_form_id, value: mismatched.hashid %>
-            <%= form.hidden_field :old_le_id, value: @legal_entity.hashid %>
-
-            <div class="field">
-              <%= form.label :name, "New legal entity name" %>
-              <%= form.text_field :name %>
-            </div>
-
-            <%= form.submit "Create" %>
-          <% end %>
-        </section>
-      <% end %>
-
-      <%= button_to "Discard last tax form", discard_tax_form_path(mismatched), class: "btn" %>
-    </div>
-  <% elsif @legal_entity.tin_banned? %>
+  <% else %>
     <p>
-      <%= @legal_entity.person? ? "You have" : "#{@legal_entity.name.presence || "Business"} has" %>
-      been banned from receiving payments from organizations on HCB.
+      <%= @legal_entity.person? ? "You don't" : "#{@legal_entity.name.presence || "Business"} doesn't" %>
+      need to submit tax information right now &mdash; none of <%= @legal_entity.person? ? "your" : "its" %> pending payments
+      require it. We'll ask <%= @legal_entity.person? ? "you" : "them" %> if that changes.
+    </p>
+  <% end %>
+<% elsif @legal_entity.completed_tax_form? && (mismatched = @legal_entity.mismatched_tax_form || @legal_entity.entity_type_mismatched_tax_form).present? %>
+  <% previous_tax_form = @legal_entity.latest_usable_tax_form %>
+
+  <% if previous_tax_form.present? %>
+    <p>
+      You submitted a W8/W9 with a different TIN (SSN, EIN, or foreign TIN) than your previous
+      tax form for this legal entity (<%= masked_tin_tag previous_tax_form, viewable: show_tin %>).
+      Choose an option to continue:
     </p>
   <% else %>
     <p>
-      Your submission for <%= @legal_entity.person? ? "your" : "#{@legal_entity.name.presence || "Business"}'s" %>
-      tax information is invalid.
+      The tax form you submitted is for a <%= mismatched.entity_type %>, but
+      <%= @legal_entity.person? ? "this is your personal legal entity" : "#{@legal_entity.name.presence || "this"} is a business legal entity" %>.
+      Choose an option to continue:
     </p>
-
-    <%= button_to "Start tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
   <% end %>
-<% elsif @legal_entity.latest_tax_form.nil? || @legal_entity.latest_tax_form.failed? %>
+
+  <% entity_type_matches = mismatched.entity_type == @legal_entity.entity_type %>
+
+  <ul>
+    <% if entity_type_matches %>
+      <li>
+        <strong>Switch to new TIN</strong>:
+        Pick this if your TIN for <%= @legal_entity.name %> changed to <%= masked_tin_tag mismatched, viewable: show_tin %>.
+        You will no longer be able to receive payments through HCB to your old TIN
+        (<%= masked_tin_tag previous_tax_form, viewable: show_tin %>).
+        Your payout methods will move over, and payments you've already been sent stay under your old TIN.
+      </li>
+    <% end %>
+
+    <% if mismatched.entity_business? %>
+      <li>
+        <strong>Create new legal entity</strong>:
+        Pick this if you entered in information for a different legal entity than <%= @legal_entity.name %>.
+        You'll be able to receive payments under both TINs, and payments that haven't been sent yet will move
+        to the new legal entity with TIN <%= masked_tin_tag mismatched, viewable: show_tin %>.
+      </li>
+    <% end %>
+
+    <li>
+      <strong>Discard last tax form</strong>:
+      Pick this if you made a mistake on your last tax form.
+      You'll then be able to submit a corrected tax form.
+    </li>
+  </ul>
+
+  <div class="flex justify-start gap-5 items-center">
+    <% if entity_type_matches %>
+      <%= button_to "Switch to new TIN", replace_legal_entity_path(@legal_entity), class: "btn", params: { new_tax_form_id: mismatched.hashid } %>
+    <% end %>
+
+    <% if mismatched.entity_business? %>
+      <%= link_to "Create new legal entity", "#", class: "btn", data: { behavior: "modal_trigger", modal: "create_new_le" } %>
+
+      <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="create_new_le">
+        <%= modal_header "Create new legal entity" %>
+
+        <p>
+          You're creating a new legal entity with TIN <%= masked_tin_tag mismatched, viewable: show_tin %>.
+          You'll be able to receive payments under both TINs, and payments that haven't been sent yet will move
+          to the new legal entity.
+        </p>
+
+        <%= form_with url: create_from_tax_form_legal_entities_path do |form| %>
+          <%= form.hidden_field :new_tax_form_id, value: mismatched.hashid %>
+          <%= form.hidden_field :old_le_id, value: @legal_entity.hashid %>
+
+          <div class="field">
+            <%= form.label :name, "New legal entity name" %>
+            <%= form.text_field :name %>
+          </div>
+
+          <%= form.submit "Create" %>
+        <% end %>
+      </section>
+    <% end %>
+
+    <%= button_to "Discard last tax form", discard_tax_form_path(mismatched), class: "btn" %>
+  </div>
+<% elsif @legal_entity.completed_tax_form? %>
   <p>
-    Before <%= @legal_entity.person? ? "you" : (@legal_entity.name.presence || "Business") %>
-    can receive any payments, we'll need your tax information. This information is stored
-    securely and used to send you tax forms at the end of the year if your total payments
-    exceed IRS reporting requirements.
+    Your submission for <%= @legal_entity.person? ? "your" : "#{@legal_entity.name.presence || "Business"}'s" %>
+    tax information is invalid.
   </p>
 
   <%= button_to "Start tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
-<% else %>
+<% elsif @legal_entity.latest_tax_form.present? && !@legal_entity.latest_tax_form.failed? %>
   <p>
     Finish filling in <%= @legal_entity.person? ? "your" : "#{@legal_entity.name.presence || "Business"}'s" %>
     tax information before you can receive payments from organizations on HCB.
   </p>
 
   <%= link_to "Go to tax form", tax_form_path(@legal_entity.latest_tax_form), class: "btn" %>
+<% else %>
+  <p>
+    Before <%= @legal_entity.person? ? "you" : (@legal_entity.name.presence || "Business") %>
+    can receive <%= @legal_entity.person? ? "this payment" : "it" %>, we'll need your tax information. This information is stored
+    securely and used to send you tax forms at the end of the year if your total payments
+    exceed IRS reporting requirements.
+  </p>
+
+  <%= button_to "Start tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
 <% end %>

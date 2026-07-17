@@ -93,6 +93,10 @@ class LegalEntity < ApplicationRecord
     @latest_completed_tax_form ||= tax_forms.completed.order(completed_at: :desc, created_at: :desc).first
   end
 
+  def tax_form_required?
+    payments.pending_legal_entity.any?(&:requires_tax_form?) || payroll_positions.onboarding.exists?
+  end
+
   # Whether tax info has ever been completed. Distinct from latest_tax_form, which
   # a freshly started (still pending) form outranks, so it must drive the UI's
   # "you're set up" state or starting a new form would look like losing the old one.

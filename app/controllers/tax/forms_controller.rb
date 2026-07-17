@@ -30,6 +30,12 @@ module Tax
         return
       end
 
+      unless @legal_entity.tax_form_required?
+        flash[:error] = "You don't need to submit a tax form right now"
+        redirect_to legal_entity_path(@legal_entity)
+        return
+      end
+
       tax_form = @legal_entity.tax_forms.create!(external_service: :taxbandits)
       tax_form.send!
 
