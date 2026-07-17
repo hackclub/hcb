@@ -172,13 +172,7 @@ class Ledger
       return :settled if canonical_pending_transactions.fronted.not_declined.revenue.any? && primary_ledger&.can_front_balance?
       return :pending if canonical_pending_transactions.unsettled.exists?
 
-      if canonical_transactions.exists?
-        return :reversed if canonical_transactions.sum(:amount_cents).zero?
-
-        return :settled
-      end
-
-      # A declined CPT and no CTs — determine why it never settled
+      # A declined CPT — determine why it never settled (may have CTs)
       if CanonicalPendingDeclinedMapping.where(canonical_pending_transaction: canonical_pending_transactions).exists?
         case linked_object_type
         when "CardCharge"
@@ -192,6 +186,10 @@ class Ledger
         return :canceled if linked_object.try(:canceled?) || linked_object.try(:voided?) || linked_object.try(:void_v2?)
 
         return :declined
+      elsif canonical_transactions.exists?
+        return :reversed if canonical_transactions.sum(:amount_cents).zero?
+
+        return :settled
       end
 
       # Nothing has mapped to this item yet
