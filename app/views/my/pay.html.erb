@@ -77,7 +77,7 @@
   <% end %>
 
   <h2 class="mt-0 mb-2">Your contracts</h2>
-  <div class="grid gap-3 mb-4" style="grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));">
+  <div class="grid gap-3 mb-4" style="grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr));">
     <% @contractor_positions.each do |position| %>
       <% onboarding = position.status == :onboarding %>
       <% next_step = position.next_onboarding_step if onboarding %>
