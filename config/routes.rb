@@ -656,7 +656,11 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :payments, only: [:show], concerns: :commentable
+  resources :payments, only: [:show], concerns: :commentable do
+    member do
+      post "cancel"
+    end
+  end
 
   get "brand_guidelines", to: redirect("branding")
   get "mobile", to: "static_pages#mobile"
@@ -747,7 +751,7 @@ Rails.application.routes.draw do
           end
 
           resources :disbursements, path: "transfers", only: [:create]
-
+          # TODO: shallow route these (breaking change)
           resources :donations, path: "donations", only: [:create] do
             member do
               post "payment_intent"
@@ -769,6 +773,8 @@ Rails.application.routes.draw do
             post "mark_no_receipt"
           end
         end
+
+        resources :donations, only: [:index, :show]
 
         resources :tags, only: [:index, :show, :create, :destroy]
 
