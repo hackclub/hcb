@@ -23,7 +23,6 @@ module Admin
         relation = relation.where.not(archived_at: nil)
       end
 
-      @count = relation.count
       @legal_entities = relation.order(created_at: :desc).page(@page).per(@per)
     end
 
