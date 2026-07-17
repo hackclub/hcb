@@ -35,7 +35,6 @@ class OrganizerPosition < ApplicationRecord
   include OrganizerPosition::HasSpending
 
   include Hashid::Rails
-  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :opn
