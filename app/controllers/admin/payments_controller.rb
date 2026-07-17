@@ -14,7 +14,6 @@ module Admin
       @state = params[:state].presence
       relation = relation.where(aasm_state: @state) if @state
 
-      @count = relation.count
       @payments = relation.order(created_at: :desc).page(@page).per(@per)
     end
 
