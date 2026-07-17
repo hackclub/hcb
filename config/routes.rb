@@ -797,6 +797,7 @@ Rails.application.routes.draw do
           end
         end
 
+        resources :recurring_donations, only: [:index, :show]
         resources :invoices, only: [:index, :show, :create]
         resources :checks, only: [:index, :create, :show]
         resources :sponsors, only: [:index, :show, :create]
