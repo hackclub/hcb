@@ -331,7 +331,7 @@ module Admin
     end
 
     def legacy_payroll_items
-      return [] unless Flipper.enabled?(:payments_contractors_refresh_2026_06_26)
+      return [] if Flipper.enabled?(:payments_contractors_refresh_2026_06_26)
 
       [
         make_item(
