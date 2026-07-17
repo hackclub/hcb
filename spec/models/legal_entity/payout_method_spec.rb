@@ -120,11 +120,13 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
     context "WiseTransfer" do
       let(:details) { build(:wise_transfer_payout_method_details, currency: "GBP") }
 
-      it "maps :amount to :amount_cents and drops :memo/:currency (uses its own currency)" do
+      it "converts the USD amount into its own currency, dropping :memo" do
+        allow(MoneyService).to receive(:convert_from_usd).with(10_000, "GBP").and_return(7_500)
+
         wise = details.create_transfer(event, **attrs)
 
         expect(wise).to be_a(WiseTransfer)
-        expect(wise.amount_cents).to eq(10_000)
+        expect(wise.amount_cents).to eq(7_500)
         expect(wise.currency).to eq("GBP")
         expect(wise.user).to eq(user)
       end
