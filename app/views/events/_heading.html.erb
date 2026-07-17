@@ -1,4 +1,4 @@
-<%# locals: (event:, event_follow: nil) %>
+<%# locals: (event:, event_follow: nil, new_ledger_active: false) %>
 
 <h1 class="flex items-center gap-4 border-b-0 mb-0 flex-wrap gap-y-2">
   <%= yield %>
@@ -12,6 +12,20 @@
   <% end %>
 
   <div class="flex items-center gap-2">
+    <% if organizer_signed_in? %>
+      <% if new_ledger_active %>
+        <%= link_to event_transactions_path(event, apply_flipper: true), class: "btn flex items-center" do %>
+          <%= inline_icon "back" %>
+          Go back to the old ledger
+        <% end %>
+      <% else %>
+        <%= link_to event_ledger_path(event, apply_flipper: true), class: "btn flex items-center" do %>
+          <%= inline_icon "wand-stars" %>
+          Preview the new ledger
+        <% end %>
+      <% end %>
+    <% end %>
+
     <%= render "events/follow_button", event:, event_follow: %>
     <%= render "events/donations/button", event: %>
   </div>

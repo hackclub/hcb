@@ -71,20 +71,11 @@ module EventsHelper
     },
     {
       name: "Transactions",
-      path_proc: ->(event_id) { event_transactions_path(event_id:) },
+      path_proc: ->(event_id) { ((op = OrganizerPosition.find_by(event_id: event_id, user: current_user)).present? && Flipper.enabled?(:new_ledger_2026_07_17, op) ? event_ledger_path(event_id:) : event_transactions_path(event_id:)) },
       tooltip: "View detailed ledger",
       icon: "bank-account",
       symbol: :transactions,
       available_proc: ->(event) { policy(event).transactions? }
-    },
-    {
-      name: "Ledger",
-      path_proc: ->(event_id) { event_ledger_path(event_id:) },
-      tooltip: "Preview the new ledger",
-      icon: "card-list",
-      symbol: :ledger,
-      available_proc: ->(event) { policy(event).ledger? },
-      beta: true
     },
     {
       name: "Account numbers",
