@@ -745,7 +745,7 @@ Rails.application.routes.draw do
           end
 
           resources :disbursements, path: "transfers", only: [:create]
-
+          # TODO: shallow route these (breaking change)
           resources :donations, path: "donations", only: [:create] do
             member do
               post "payment_intent"
