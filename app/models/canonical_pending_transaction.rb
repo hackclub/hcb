@@ -21,11 +21,13 @@
 #  raw_pending_bank_fee_transaction_id              :bigint
 #  raw_pending_column_transaction_id                :bigint
 #  raw_pending_donation_transaction_id              :bigint
+#  raw_pending_fee_revenue_transaction_id           :bigint
 #  raw_pending_incoming_disbursement_transaction_id :bigint
 #  raw_pending_invoice_transaction_id               :bigint
 #  raw_pending_outgoing_ach_transaction_id          :bigint
 #  raw_pending_outgoing_check_transaction_id        :bigint
 #  raw_pending_outgoing_disbursement_transaction_id :bigint
+#  raw_pending_stripe_service_fee_transaction_id    :bigint
 #  raw_pending_stripe_transaction_id                :bigint
 #  reimbursement_expense_payout_id                  :bigint
 #  reimbursement_payout_holding_id                  :bigint
@@ -44,6 +46,7 @@
 #  index_canonical_pending_transactions_on_wise_transfer_id         (wise_transfer_id)
 #  index_canonical_pending_txs_on_raw_pending_bank_fee_tx_id        (raw_pending_bank_fee_transaction_id)
 #  index_canonical_pending_txs_on_raw_pending_donation_tx_id        (raw_pending_donation_transaction_id)
+#  index_canonical_pending_txs_on_raw_pending_fee_revenue_tx_id     (raw_pending_fee_revenue_transaction_id)
 #  index_canonical_pending_txs_on_raw_pending_invoice_tx_id         (raw_pending_invoice_transaction_id)
 #  index_canonical_pending_txs_on_raw_pending_outgoing_ach_tx_id    (raw_pending_outgoing_ach_transaction_id)
 #  index_canonical_pending_txs_on_raw_pending_outgoing_check_tx_id  (raw_pending_outgoing_check_transaction_id)
@@ -53,6 +56,7 @@
 #  index_canonical_pending_txs_on_rpct_id                           (raw_pending_column_transaction_id)
 #  index_cpts_on_raw_pending_incoming_disbursement_transaction_id   (raw_pending_incoming_disbursement_transaction_id)
 #  index_cpts_on_raw_pending_outgoing_disbursement_transaction_id   (raw_pending_outgoing_disbursement_transaction_id)
+#  index_cpts_on_raw_pending_stripe_service_fee_tx_id               (raw_pending_stripe_service_fee_transaction_id)
 #
 # Foreign Keys
 #
@@ -79,6 +83,8 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :raw_pending_column_transaction, optional: true
   belongs_to :raw_pending_incoming_disbursement_transaction, optional: true
   belongs_to :raw_pending_outgoing_disbursement_transaction, optional: true
+  belongs_to :raw_pending_stripe_service_fee_transaction, optional: true
+  belongs_to :raw_pending_fee_revenue_transaction, optional: true
   belongs_to :increase_check, optional: true
   belongs_to :paypal_transfer, optional: true
   belongs_to :wire, optional: true
@@ -99,6 +105,9 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   scope :safe, -> { where("date >= '2021-01-01'") } # older pending transactions don't yet all map up because of older processes (especially around invoices)
 
+  scope :revenue, -> { where("amount_cents > 0") }
+  scope :expense, -> { where("amount_cents < 0") }
+
   scope :stripe, -> { where("raw_pending_stripe_transaction_id is not null") }
   scope :incoming, -> { where(CanonicalPendingTransaction.arel_table[:amount_cents].gt(0)) }
   scope :outgoing, -> { where(CanonicalPendingTransaction.arel_table[:amount_cents].lt(0)) }
@@ -111,6 +120,8 @@ class CanonicalPendingTransaction < ApplicationRecord
   scope :donation, -> { where("raw_pending_donation_transaction_id is not null") }
   scope :invoice, -> { where("raw_pending_invoice_transaction_id is not null") }
   scope :bank_fee, -> { where("raw_pending_bank_fee_transaction_id is not null") }
+  scope :stripe_service_fee, -> { where("raw_pending_stripe_service_fee_transaction_id is not null") }
+  scope :fee_revenue, -> { where("raw_pending_fee_revenue_transaction_id is not null") }
   scope :incoming_disbursement, -> { where("raw_pending_incoming_disbursement_transaction_id is not null") }
   scope :outgoing_disbursement, -> { where("raw_pending_outgoing_disbursement_transaction_id is not null") }
   scope :reimbursement_expense_payout, -> { where.not(reimbursement_expense_payout_id: nil) }
@@ -135,6 +146,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   scope :bank_fee_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::BANK_FEE_CODE}%'") }
   scope :fronted, -> { where(fronted: true) }
   scope :not_fronted, -> { where(fronted: false) }
+  scope :declined, -> { joins(:canonical_pending_declined_mapping) }
   scope :not_declined, -> { includes(:canonical_pending_declined_mapping).where(canonical_pending_declined_mapping: { canonical_pending_transaction_id: nil }) }
   scope :not_waived, -> { where(fee_waived: false) }
   scope :included_in_stats, -> {
@@ -159,23 +171,26 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   attr_writer :stripe_cardholder
 
-  belongs_to :ledger_item, optional: true, class_name: "Ledger::Item"
+  belongs_to :ledger_item, optional: true, class_name: "Ledger::Item", touch: true
 
   after_create_commit unless: -> { ledger_item.present? } do
     safely do
-      li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
-      update(ledger_item: li)
+      ActiveRecord::Base.transaction do
+        li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        update!(ledger_item: li)
+        li.map!
+      end
     end
   end
 
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
-    ledger_item.write_amount_cents!
+    ledger_item.refresh!
   end
 
   after_commit if: -> { previous_changes.key?("ledger_item_id") } do
     old_ledger_item_id = previous_changes["ledger_item_id"].first
-    Ledger::Item.find(old_ledger_item_id).write_amount_cents! if old_ledger_item_id.present?
+    Ledger::Item.find(old_ledger_item_id).refresh! if old_ledger_item_id.present?
   end
 
   def pending_expired?
@@ -277,6 +292,9 @@ class CanonicalPendingTransaction < ApplicationRecord
     return raw_pending_bank_fee_transaction.bank_fee if raw_pending_bank_fee_transaction
     return raw_pending_incoming_disbursement_transaction.incoming_disbursement if raw_pending_incoming_disbursement_transaction
     return raw_pending_outgoing_disbursement_transaction.outgoing_disbursement if raw_pending_outgoing_disbursement_transaction
+    return raw_pending_stripe_transaction.card_charge if raw_pending_stripe_transaction
+    return raw_pending_stripe_service_fee_transaction.stripe_service_fee if raw_pending_stripe_service_fee_transaction
+    return raw_pending_fee_revenue_transaction.fee_revenue if raw_pending_fee_revenue_transaction
     return increase_check if increase_check
     return paypal_transfer if paypal_transfer
     return wire if wire
@@ -327,6 +345,18 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   def bank_fee
     return linked_object if linked_object.is_a?(BankFee)
+
+    nil
+  end
+
+  def stripe_service_fee
+    return linked_object if linked_object.is_a?(StripeServiceFee)
+
+    nil
+  end
+
+  def fee_revenue
+    return linked_object if linked_object.is_a?(FeeRevenue)
 
     nil
   end
@@ -430,6 +460,21 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   def column_transaction_id
     raw_pending_column_transaction&.column_id
+  end
+
+  def transaction_source_type
+    types = %w[RawPendingBankFeeTransaction RawPendingColumnTransaction RawPendingDonationTransaction
+               RawPendingIncomingDisbursementTransaction RawPendingInvoiceTransaction
+               RawPendingOutgoingAchTransaction RawPendingOutgoingCheckTransaction
+               RawPendingOutgoingDisbursementTransaction RawPendingStripeTransaction
+               ReimbursementExpensePayout ReimbursementPayoutHolding CheckDeposit
+               IncreaseCheck PaypalTransfer Wire WiseTransfer]
+
+    types.each do |type|
+      return type if send("#{type.underscore}_id").present?
+    end
+
+    nil
   end
 
   private

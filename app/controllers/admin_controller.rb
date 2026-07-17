@@ -380,6 +380,32 @@ class AdminController < Admin::BaseController
     @canonical_transactions = relation.page(@page).per(@per).order(date: :desc)
   end
 
+  def ledger_items
+    @page = params[:page] || 1
+    @per = params[:per] || 100
+    @amount = params[:amount].presence
+    @q = params[:q].presence
+    @unmapped = params[:unmapped] != "0"
+
+    relation = if @q
+                 Ledger::Item.where(id: @q)
+                             .or(Ledger::Item.where(short_code: @q))
+                             .or(Ledger::Item.where(id: HcbCode.where(hcb_code: @q).select(:ledger_item_id)))
+                             .or(Ledger::Item.where(id: Ledger::Item.search_memo(@q).select(:id)))
+               else
+                 Ledger::Item.all
+               end
+
+    relation = relation.where.missing(:primary_mapping) if @unmapped.present? && @q.blank?
+
+    relation = relation.where(amount_cents: @amount.to_i).or(relation.where(amount_cents: -@amount.to_i)) if @amount
+
+    @count = relation.count
+
+    @ledger_items = relation.includes(:hcb_code, :canonical_transactions, :canonical_pending_transactions)
+                            .page(@page).per(@per).order(datetime: :desc)
+  end
+
   def event_search
     @q = params[:q].presence
     @events = if @q.present?
@@ -1231,9 +1257,8 @@ class AdminController < Admin::BaseController
 
     safely do
       ledger = Ledger.find_or_create_by!(primary: true, event_id: params[:event_id])
-      Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: @canonical_transaction.ledger_item) do |mapping|
-        mapping.on_primary_ledger = true
-      end
+
+      Ledger::Mapping.map_primary!(ledger:, ledger_item: @canonical_transaction.ledger_item, mapped_by: current_user)
     end
 
     redirect_to transaction_admin_path(@canonical_transaction)
@@ -1255,9 +1280,8 @@ class AdminController < Admin::BaseController
 
           safely do
             ledger = Ledger.find_or_create_by!(primary: true, event_id: params[:event_id])
-            Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: @canonical_transaction.ledger_item) do |mapping|
-              mapping.on_primary_ledger = true
-            end
+
+            Ledger::Mapping.map_primary!(ledger:, ledger_item: @canonical_transaction.ledger_item, mapped_by: current_user)
           end
         rescue => e
           return redirect_to ledger_admin_index_path, flash: { error: e.message }
@@ -1279,9 +1303,8 @@ class AdminController < Admin::BaseController
 
       safely do
         ledger = Ledger.find_or_create_by!(primary: true, event_id: paypal_transfer.event.id)
-        Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: canonical_transaction.ledger_item) do |mapping|
-          mapping.on_primary_ledger = true
-        end
+
+        Ledger::Mapping.map_primary!(ledger:, ledger_item: canonical_transaction.ledger_item, mapped_by: current_user)
       end
 
       CanonicalPendingTransactionService::Unsettle.new(canonical_pending_transaction: paypal_transfer.canonical_pending_transaction).run
@@ -1313,9 +1336,8 @@ class AdminController < Admin::BaseController
 
       safely do
         ledger = Ledger.find_or_create_by!(primary: true, event_id: wire.event.id)
-        Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: canonical_transaction.ledger_item) do |mapping|
-          mapping.on_primary_ledger = true
-        end
+
+        Ledger::Mapping.map_primary!(ledger:, ledger_item: canonical_transaction.ledger_item, mapped_by: current_user)
       end
 
       CanonicalPendingTransactionService::Settle.new(
@@ -1345,9 +1367,8 @@ class AdminController < Admin::BaseController
 
       safely do
         ledger = Ledger.find_or_create_by!(primary: true, event_id: wise_transfer.event.id)
-        Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: canonical_transaction.ledger_item) do |mapping|
-          mapping.on_primary_ledger = true
-        end
+
+        Ledger::Mapping.map_primary!(ledger:, ledger_item: li, mapped_by: current_user)
       end
 
       CanonicalPendingTransactionService::Settle.new(

@@ -59,6 +59,7 @@ class WiseTransfer < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :wse
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
   belongs_to :user
   has_paper_trail
@@ -124,7 +125,7 @@ class WiseTransfer < ApplicationRecord
     event :mark_rejected do
       after do
         canonical_pending_transaction.decline!
-        payment_attempt&.mark_rejected!
+        payment_attempt.mark_rejected! if payment_attempt&.may_mark_rejected?
       end
       transitions from: [:pending, :approved], to: :rejected
     end
@@ -259,6 +260,14 @@ class WiseTransfer < ApplicationRecord
     return nil unless wise_recipient_id.present?
 
     "https://wise.com/recipients/#{CGI.escape(wise_recipient_id)}"
+  end
+
+  def can_cancel?
+    pending?
+  end
+
+  def cancel!
+    mark_rejected!
   end
 
   private

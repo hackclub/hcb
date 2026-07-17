@@ -24,18 +24,60 @@
     <strong>
       Date
     </strong>
-    <div>
+    <span>
       <%= @item.datetime.strftime("%b %e, %Y") %>
+    </span>
   </div>
   <div>
     <strong>
       HCB Code
     </strong>
-    <div>
+    <span>
       <%= link_to @item.hcb_code.hcb_code, hcb_code_path(@item.hcb_code), target: :_blank %>
-    </div>
+    </span>
   </div>
+  <% if @item.linked_object.present? %>
+    <% admin_tool do %>
+      <strong>
+        Linked Object Type
+      </strong>
+      <span>
+        <%= @item.linked_object_type %>
+      </span>
+    <% end %>
+    <% admin_tool do %>
+      <strong>
+        Linked Object ID
+      </strong>
+      <span>
+        <%= @item.linked_object_id %>
+      </span>
+    <% end %>
+  <% end %>
+  <% if (event = @item.primary_ledger&.event).present? %>
+    <% admin_tool do %>
+      <strong>
+        Event
+      </strong>
+      <span>
+        <%= link_to event.name, event_path(event), target: :_blank %> (<%= event.id %>)
+      </span>
+    <% end %>
+  <% elsif (card_grant = @item.primary_ledger&.card_grant).present? %>
+    <% admin_tool do %>
+      <strong>
+        Card Grant
+      </strong>
+      <span>
+        <%= link_to "Grant to #{card_grant.name}", card_grant_path(card_grant), target: :_blank %> (<%= card_grant.id %>)
+      </span>
+    <% end %>
+  <% end %>
 </section>
+
+<%= render partial: "application/admin_viewer", locals: { record: @item } %>
+<%= render partial: "application/admin_viewer", locals: { record: @item.primary_mapping } if @item.primary_mapping.present? %>
+<%= render partial: "application/admin_viewer", locals: { record: @item.primary_ledger } if @item.primary_ledger.present? %>
 
 <section class="my-5 flex flex-col gap-3">
   <% cts = 0 %>
@@ -120,20 +162,17 @@
   <% end %>
 </section>
 
-<%= render "comments/list", comments: @item.comments %>
-<%= render "comments/form", commentable: @item %>
-
-<ul class="grid grid--medium-narrow text-left w-100 mt-4 receipts_list">
-  <%= render partial: "receipts/receipt", collection: @item.receipts.with_attached_file.includes(:user).order(created_at: :asc), as: :receipt, locals: { show_delete_button: true, link_to_file: true } %>
-</ul>
-
+<%= render "receipts/list_v2", hcb_code: @item, frame: false, transaction_show_receipt_button: true, transaction_show_author_img: true %>
 <%= render partial: "receipts/form_v3", locals: {
-      receiptable: @receiptable = @item,
+      receiptable: @item,
       enable_linking: true,
       upload_method: "transaction_page",
       include_spacing: true,
       turbo: true
     } %>
+
+<%= render "comments/list", comments: @item.comments %>
+<%= render "comments/form", commentable: @item %>
 
 <% admin_tool("p-2 my-3") do %>
   <h3 class="my-2">Quickly go to</h3>

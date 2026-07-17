@@ -7,6 +7,7 @@
 #  id                            :bigint           not null, primary key
 #  access_level                  :integer          default("user"), not null
 #  birthday_ciphertext           :text
+#  card_locking_suppressed_until :datetime
 #  cards_locked                  :boolean          default(FALSE), not null
 #  charge_notifications          :integer          default("email_and_sms"), not null
 #  comment_notifications         :integer          default("all_threads"), not null
@@ -62,6 +63,9 @@ class User < ApplicationRecord
   include ApplicationHelper
   prepend MemoWise
 
+  # Card-locking lock decision, trust, and outstanding/overdue queries. See the concern.
+  include CardLocking::CardholderBehavior
+
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| record }, recipient: proc { |controller, record| record }, only: [:create, :update]
 
@@ -106,6 +110,7 @@ class User < ApplicationRecord
   has_many :api_tokens
   has_many :email_updates, class_name: "User::EmailUpdate", inverse_of: :user
   has_many :email_updates_created, class_name: "User::EmailUpdate", inverse_of: :updated_by
+  has_many :ledger_items, class_name: "Ledger::Item", inverse_of: :author
 
   has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :affiliable, as: :affiliable
   accepts_nested_attributes_for :affiliations
@@ -182,6 +187,9 @@ class User < ApplicationRecord
   has_one :personal_legal_entity, through: :person_legal_entity_user, source: :legal_entity
   has_one :default_payout_method, through: :personal_legal_entity
 
+  has_many :payments_received, through: :legal_entities, source: :payments
+  has_many :payroll_positions, through: :legal_entities
+
   has_encrypted :birthday, type: :date
 
   include HasMetrics
@@ -204,6 +212,8 @@ class User < ApplicationRecord
   after_update :queue_sync_with_loops_job, if: :verified?
 
   after_update :update_draft_applications, if: -> { birthday_previously_changed? }
+
+  after_update :update_legal_entity_name, if: -> { full_name_previously_changed? }
 
   before_update :set_default_seasonal_theme
 
@@ -655,10 +665,29 @@ class User < ApplicationRecord
     !verified?
   end
 
+  def pending_payments_received
+    payments_received.pending_legal_entity + unassociated_payments_received
+  end
+
+  def unassociated_payments_received
+    Payment.pending_legal_entity.joins(:payee).where(payee: { email:, legal_entity: nil })
+  end
+
+  def onboarding_contractor_positions
+    Payroll::Position.where(aasm_state: :onboarding)
+                     .left_joins(payee: { legal_entity: :legal_entity_users })
+                     .where(
+                       "legal_entity_users.user_id = :uid OR (payees.legal_entity_id IS NULL AND payees.email = :email)",
+                       uid: id, email:
+                     )
+                     .includes(payee: :event)
+                     .distinct
+  end
+
   private
 
   def create_legal_entity
-    legal_entities.create!(entity_type: :person)
+    legal_entities.create!(entity_type: :person, name: full_name)
   end
 
   def auditors_must_be_verified
@@ -759,6 +788,10 @@ class User < ApplicationRecord
 
   def update_draft_applications
     applications.draft.each { |application| application.update!(teen_led: is_teenager?) }
+  end
+
+  def update_legal_entity_name
+    personal_legal_entity.update!(name: full_name)
   end
 
   def should_sync_teenager_columns?

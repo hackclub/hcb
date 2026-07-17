@@ -31,7 +31,7 @@ class EventPolicy < ApplicationPolicy
   alias_method :transaction_heatmap?, :show?
 
   alias_method :transactions?, :show?
-  alias_method :ledger?, :transactions?
+  alias_method :transactions_list?, :transactions?
   alias_method :merchants_filter?, :transactions?
 
   def toggle_hidden?
@@ -160,11 +160,23 @@ class EventPolicy < ApplicationPolicy
   end
 
   def transfers?
-    !Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && show? && record.plan.transfers_enabled?
+    show? && record.plan.transfers_enabled?
   end
 
   def payments?
     Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && show? && record.plan.transfers_enabled?
+  end
+
+  def contractors?
+    # The contractors list is visible in transparency mode (public events),
+    # but only shows status/name/period/purpose to the public. Sensitive
+    # details (email, rate, totals, invoices) are gated by contractor_details?.
+    Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && show? && record.plan.transfers_enabled?
+  end
+
+  def contractor_details?
+    # Contractor PII, pay rates, payment totals, and invoices — org members only.
+    contractors? && auditor_or_reader?
   end
 
   def new_payment?
@@ -275,8 +287,8 @@ class EventPolicy < ApplicationPolicy
     signee?
   end
 
-  def books?
-    auditor?
+  def ledger?
+    auditor? || (Flipper.enabled?(:new_ledger_2026_06_30, record) && reader?)
   end
 
   alias hide_onboarding_message? request_call?

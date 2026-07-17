@@ -30,7 +30,7 @@ class Comment < ApplicationRecord
 
   set_public_id_prefix :cmt
 
-  belongs_to :commentable, polymorphic: true
+  belongs_to :commentable, polymorphic: true, touch: true
   belongs_to :user
 
   has_many_attached :files
