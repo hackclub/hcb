@@ -54,6 +54,7 @@ gem "lockbox" # encrypt sensitive data
 gem "blind_index" # needed to query and/or guarantee uniqueness for encrypted fields with lockbox
 
 gem "aasm" # state machine
+gem "after_commit_everywhere", "~> 1.0" # makes AASM :after_commit callbacks safe from race conditions and redundant calls
 
 gem "paper_trail", "~> 16.0.0" # track changes to models
 gem "acts_as_paranoid", "~> 0.11.0" # enables soft deletions
