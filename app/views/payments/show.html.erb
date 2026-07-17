@@ -85,9 +85,16 @@
   </article>
 
   <% if @payment.aasm_state == "pending_legal_entity" %>
-    <%= render "application/callout", type: "info", title: "Tax information required", class: "mt-4" do %>
-      <% days_remaining = [90 - (Date.current - @payment.created_at.to_date).to_i, 0].max %>
-      <%= @payment.payee.display_name %> has <%= pluralize(days_remaining, "day") %> left to provide their tax information until this payment is canceled. We've sent them an email with instructions.
+    <% if @payment.requires_tax_form? %>
+      <%= render "application/callout", type: "info", title: "Tax information required", class: "mt-4" do %>
+        <% days_remaining = [90 - (Date.current - @payment.created_at.to_date).to_i, 0].max %>
+        <%= @payment.payee.display_name %> has <%= pluralize(days_remaining, "day") %> left to provide their tax information until this payment is canceled. We've sent them an email with instructions.
+      <% end %>
+    <% else %>
+      <%= render "application/callout", type: "info", title: "Payee setup required", class: "mt-4" do %>
+        This payment doesn't require tax paperwork, so <%= @payment.payee.display_name %> won't need to submit tax information for it —
+        they still need to finish setting up their account to receive it. We've sent them an email with instructions.
+      <% end %>
     <% end %>
   <% end %>
 

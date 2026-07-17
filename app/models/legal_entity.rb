@@ -76,12 +76,17 @@ class LegalEntity < ApplicationRecord
   # payability off that would strand every pending payment of anyone who took us up
   # on "start a new tax form". A newly submitted TIN only blocks payouts once it
   # completes and turns out to disagree, which is what mismatched_tax_form catches.
-  def payable?
+  # requires_tax_form: false skips the tax-paperwork checks (used for payments
+  # that are not tax reportable, or too small to require one) while still
+  # enforcing the unconditional blockers below.
+  def payable?(requires_tax_form: true)
+    return false if tin_banned? || archived?
+    return true unless requires_tax_form
+
     form = latest_completed_tax_form
 
     form.present? && mismatched_tax_form.nil? && entity_type_mismatched_tax_form.nil? &&
-      (form.taxbandits_tin_match_success? || !tax_identification_number.predicted_to_be_over_threshold?) &&
-      !tin_banned? && !archived?
+      (form.taxbandits_tin_match_success? || !tax_identification_number.predicted_to_be_over_threshold?)
   end
 
   def latest_completed_tax_form

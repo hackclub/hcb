@@ -42,7 +42,7 @@
       </p>
     <% else %>
       <p class="muted mt-3 text-center text-sm <%= "hidden" if controller_name == "payments" && @payee.nil? %>">
-        Your transfer will be reviewed on the next business day <% if @payee && !@payee.managed? %><br><strong>after <%= @payee.display_name %> has submitted their tax information</strong><% end %>
+        Your transfer will be reviewed on the next business day <% if @payee && !@payee.managed? %><br><strong>after <%= @payee.display_name %> has submitted their tax information</strong>, if it's required for this payment<% end %>
       </p>
     <% end %>
   </div>

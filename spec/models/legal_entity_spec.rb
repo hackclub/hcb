@@ -117,6 +117,27 @@ RSpec.describe LegalEntity, type: :model do
 
       expect(entity.reload).not_to be_payable
     end
+
+    context "when requires_tax_form: false" do
+      it "is payable without any tax form at all" do
+        entity = create(:legal_entity)
+
+        expect(entity.payable?(requires_tax_form: false)).to be true
+      end
+
+      it "is still not payable when tin banned" do
+        entity = create(:legal_entity)
+        allow(entity).to receive(:tin_banned?).and_return(true)
+
+        expect(entity.payable?(requires_tax_form: false)).to be false
+      end
+
+      it "is still not payable when archived" do
+        entity = create(:legal_entity, archived_at: Time.current)
+
+        expect(entity.payable?(requires_tax_form: false)).to be false
+      end
+    end
   end
 
   describe "#entity_type_mismatched_tax_form" do

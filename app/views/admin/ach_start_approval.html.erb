@@ -177,6 +177,13 @@
               ) %>
         </div>
 
+        <% if @ach_transfer.payment.present? %>
+          <small class="muted block mb-2">
+            Tax reportable payments count toward the payee's taxable income. Payments that aren't tax
+            reportable, or are under $500, won't require the payee to submit a tax form before being paid.
+          </small>
+        <% end %>
+
         <div class="flex flex-row gap-2 items-center justify-start">
           <%= form_with(model: false, local: true, url: ach_approve_admin_path(@ach_transfer), method: :post) do |form| %>
             <% if @ach_transfer.payment.present? %>

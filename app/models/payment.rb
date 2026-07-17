@@ -25,6 +25,8 @@
 #  index_payments_on_payee_id    (payee_id)
 #
 class Payment < ApplicationRecord
+  TAX_FORM_MINIMUM_CENTS = 500_00
+
   include AASM
   include Hashid::Rails
   include PgSearch::Model
@@ -86,9 +88,11 @@ class Payment < ApplicationRecord
   end
 
   after_create do
-    if legal_entity&.payable? && legal_entity.default_payout_method.present?
+    payable = legal_entity&.payable?(requires_tax_form: requires_tax_form?)
+
+    if payable && legal_entity.default_payout_method.present?
       create_payment_attempt!
-    elsif legal_entity&.payable?
+    elsif payable
       PaymentMailer.with(payment: self, initial: true).missing_payout_method.deliver_later
     else
       PaymentMailer.with(payment: self).missing_tax_information.deliver_later
@@ -111,8 +115,14 @@ class Payment < ApplicationRecord
     MoneyService.convert_to_usd(amount_cents, currency)
   end
 
+  # Payments that aren't tax reportable, or too small to move the needle,
+  # don't need to wait on the payee's tax paperwork.
+  def requires_tax_form?
+    tax_reportable? && estimate_usd_amount_cents >= TAX_FORM_MINIMUM_CENTS
+  end
+
   def on_legal_entity_assigned
-    on_legal_entity_payable if legal_entity.payable?
+    on_legal_entity_payable if legal_entity.payable?(requires_tax_form: requires_tax_form?)
   end
 
   def on_legal_entity_payable
@@ -124,7 +134,7 @@ class Payment < ApplicationRecord
   end
 
   def on_default_payout_method_created
-    create_payment_attempt! if legal_entity.payable?
+    create_payment_attempt! if legal_entity.payable?(requires_tax_form: requires_tax_form?)
   end
 
   def receipt_required?

@@ -141,6 +141,13 @@
               ) %>
         </div>
 
+        <% if @wire.payment.present? %>
+          <small class="muted block mb-2">
+            Tax reportable payments count toward the payee's taxable income. Payments that aren't tax
+            reportable, or are under $500, won't require the payee to submit a tax form before being paid.
+          </small>
+        <% end %>
+
         <%= form_with(model: false, local: true, url: send_wire_path(@wire), method: :post, class: "mb-0") do |form| %>
           <div class="field mb-2">
             <%= form.check_box :charge_fee %>

@@ -154,7 +154,7 @@ class Payment
     end
 
     def legal_entity_payable
-      unless legal_entity.payable?
+      unless legal_entity.payable?(requires_tax_form: payment.requires_tax_form?)
         errors.add(:legal_entity, "must be payable")
       end
     end

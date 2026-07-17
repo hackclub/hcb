@@ -98,6 +98,13 @@
               ) %>
         </div>
 
+        <% if @check.payment.present? %>
+          <small class="muted block mb-2">
+            Tax reportable payments count toward the payee's taxable income. Payments that aren't tax
+            reportable, or are under $500, won't require the payee to submit a tax form before being paid.
+          </small>
+        <% end %>
+
         <%= form_with(model: false, local: true, url: approve_increase_check_path(@check), method: :post) do |form| %>
           <% if @check.payment.present? %>
             <div class="field mb-2">

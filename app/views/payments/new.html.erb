@@ -8,8 +8,8 @@
   <div class="contents <%= "visibility-hidden" if @payee.nil? %>">
     <%= render "events/transfers/step_item", number: 2, label: "Payment details" %>
     <%= render "events/transfers/step_item", number: 3, label: "Payout method", hidden: !manual, data: { "payout-step": "" } %>
-    <%= render "events/transfers/step_item", number: 4, label: "Tax information", hidden: !manual, data: { "payout-step": "" } %>
-    <%= render "events/transfers/step_item", number: manual ? 5 : 3, label: "Receipt" %>
+    <%= render "events/transfers/step_item", number: manual ? 4 : 3, label: "Tax information" %>
+    <%= render "events/transfers/step_item", number: manual ? 5 : 4, label: "Receipt" %>
   </div>
 <% end %>
 

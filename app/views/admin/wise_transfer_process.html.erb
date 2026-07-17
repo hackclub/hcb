@@ -238,6 +238,10 @@
               <%= form.check_box :tax_reportable, checked: @wise_transfer.payment.tax_reportable %>
               <%= form.label :tax_reportable, "Tax reportable?", class: "bold ml-2" %>
             </div>
+            <small class="muted block mb-2">
+              Tax reportable payments count toward the payee's taxable income. Payments that aren't tax
+              reportable, or are under $500, won't require the payee to submit a tax form before being paid.
+            </small>
           <% end %>
           <%= form.submit "💸 Mark transfer as sent", disabled: @wise_transfer.usd_amount_cents.nil?, class: "mb-0" %>
         <% end %>
