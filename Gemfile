@@ -6,7 +6,7 @@ ruby file: ".ruby-version"
 
 gem "dotenv-rails", groups: [:development, :test]
 
-gem "rails", "~> 8.0"
+gem "rails", "~> 8.1"
 
 gem "puma", "~> 6.6" # app server
 
@@ -56,7 +56,7 @@ gem "blind_index" # needed to query and/or guarantee uniqueness for encrypted fi
 gem "aasm" # state machine
 
 gem "paper_trail", "~> 16.0.0" # track changes to models
-gem "acts_as_paranoid", "~> 0.10.3" # enables soft deletions
+gem "acts_as_paranoid", "~> 0.11.0" # enables soft deletions
 
 gem "friendly_id", "~> 5.6.0" # slugs
 gem "hashid-rails", "~> 1.0" # obfuscate IDs in URLs
