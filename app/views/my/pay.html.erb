@@ -102,11 +102,11 @@
           </span>
         </div>
 
-        <p class="overflow-hidden truncate mb-4" title="<%= position.description %>">
+        <p class="overflow-hidden truncate mt-2 mb-4" title="<%= position.description %>">
           <%= position.description %>
         </p>
 
-        <div class="mt-auto pt-3" style="border-top: 1px solid rgba(200, 200, 200, 0.3);">
+        <div class="mt-auto">
           <% if position.status == :active %>
             <%= link_to "#", class: "btn bg-success w-full justify-center", data: { behavior: "modal_trigger", modal: dom_id(position, :submit_invoice) } do %>
               <%= inline_icon "cloud-upload" %>
