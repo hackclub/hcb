@@ -150,7 +150,7 @@ module Users
     rescue ActiveRecord::RecordInvalid => e
       flash[:error] = e.message
 
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
 
     def macbook_qr_code
