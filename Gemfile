@@ -56,7 +56,7 @@ gem "blind_index" # needed to query and/or guarantee uniqueness for encrypted fi
 gem "aasm" # state machine
 gem "after_commit_everywhere", "~> 1.0" # makes AASM :after_commit callbacks safe from race conditions and redundant calls
 
-gem "paper_trail", "~> 16.0.0" # track changes to models
+gem "paper_trail", "~> 17.0.0" # track changes to models
 gem "acts_as_paranoid", "~> 0.11.0" # enables soft deletions
 
 gem "friendly_id", "~> 5.6.0" # slugs

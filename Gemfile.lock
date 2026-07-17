@@ -601,8 +601,8 @@ GEM
       ffi
     os (1.1.4)
     ostruct (0.6.3)
-    paper_trail (16.0.0)
-      activerecord (>= 6.1)
+    paper_trail (17.0.0)
+      activerecord (>= 7.1)
       request_store (~> 1.4)
     parallel (1.27.0)
     parser (3.3.9.0)
@@ -1043,7 +1043,7 @@ DEPENDENCIES
   money-rails (~> 3.0.0)
   namae
   nondisposable
-  paper_trail (~> 16.0.0)
+  paper_trail (~> 17.0.0)
   pg (>= 0.18, < 2.0)
   pg_query (>= 2)
   pg_search
