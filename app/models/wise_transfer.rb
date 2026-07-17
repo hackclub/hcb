@@ -59,7 +59,7 @@ class WiseTransfer < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :wse
 
-  has_one :ledger_item, as: :linked_object
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
   belongs_to :user
   has_paper_trail

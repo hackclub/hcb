@@ -127,7 +127,7 @@ class IncreaseCheck < ApplicationRecord
     "Wyoming"          => "WY"
   }.freeze
 
-  has_one :ledger_item, as: :linked_object
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
   belongs_to :user, optional: true
 
