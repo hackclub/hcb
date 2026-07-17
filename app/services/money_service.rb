@@ -19,10 +19,17 @@ module MoneyService
     end
   end
 
-  def self.convert_from_usd(usd_amount_cents, currency)
+  def self.convert_from_usd_wise(usd_amount_cents, currency)
     return usd_amount_cents if currency == "USD"
 
     money = Money.from_cents(usd_amount_cents, "USD")
     WiseTransfer.convert_usd_to_local(money, currency).cents
+  end
+
+  def self.convert_to_usd_wise(amount_cents, currency)
+    return amount_cents if currency == "USD"
+
+    money = Money.from_cents(amount_cents, currency)
+    WiseTransfer.generate_detailed_quote(money)[:without_fees_usd_amount].cents
   end
 end

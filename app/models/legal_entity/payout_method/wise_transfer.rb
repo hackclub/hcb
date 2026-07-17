@@ -56,8 +56,8 @@ class LegalEntity
 
       # See LegalEntity::PayoutMethod for the shared `create_transfer` contract.
       def create_transfer(event, amount:, payment_for:, recipient_name:, recipient_email:, user:, currency: "USD", bank_name: nil, **)
-        usd_amount_cents = MoneyService.convert_to_usd(amount, currency)
-        local_amount_cents = MoneyService.convert_from_usd(usd_amount_cents, self.currency)
+        usd_amount_cents = MoneyService.convert_to_usd_wise(amount, currency)
+        local_amount_cents = MoneyService.convert_from_usd_wise(usd_amount_cents, self.currency)
 
         event.wise_transfers.build(
           address_line1:,
