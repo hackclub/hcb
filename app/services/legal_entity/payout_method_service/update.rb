@@ -51,8 +51,16 @@ class LegalEntity
       def build_payout_method
         details_class = LegalEntity::PayoutMethod.details_class_for(@details_type)
         pm = LegalEntity::PayoutMethod.new(legal_entity: @legal_entity, default: @make_default)
-        pm.details = details_class.new(@details_attrs) if details_class
+        pm.details = details_class.new(preserved_ach_attrs || @details_attrs) if details_class
         pm
+      end
+
+      def preserved_ach_attrs
+        old = @replacing&.details
+        return unless old.is_a?(LegalEntity::PayoutMethod::AchTransfer)
+        return unless [@details_attrs[:account_number], @details_attrs[:routing_number]].none? { _1.to_s.match?(/\A\d+\z/) }
+
+        @details_attrs.to_h.merge(account_number: old.account_number, routing_number: old.routing_number)
       end
 
       def apply_business_rules
