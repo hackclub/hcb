@@ -48,6 +48,16 @@
     <span class="muted">This is to help HCB keep record of our transactions.</span>
   </div>
 
+  <div class="field">
+    <%= form.label :amount, "Currency & amount" %>
+    <div class="flex items-center gap-2">
+      <div style="width: 72px">
+        <%= form.select :currency, Wire::AVAILABLE_CURRENCIES, {}, { required: true, disabled: } %>
+      </div>
+      <%= form.number_field :amount, placeholder: "500.00", step: 0.01, required: true, disabled:, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
+    </div>
+  </div>
+
   <%= render partial: "wires/account_details", locals: { form:, disabled:, required: true } %>
 
   <%= render partial: "wires/country_specific_details", locals: { form:, disabled:, required: true } %>
