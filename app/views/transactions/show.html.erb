@@ -34,7 +34,6 @@
   </section>
 <% end %>
 
-
 <%= render partial: "application/admin_viewer", locals: { record: @transaction } %>
 <%= render partial: "application/admin_viewer", locals: { record: @transaction.canonical_event_mapping } if @transaction.canonical_event_mapping.present? %>
 

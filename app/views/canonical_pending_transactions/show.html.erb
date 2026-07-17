@@ -28,7 +28,6 @@
   </section>
 <% end %>
 
-
 <%= render partial: "application/admin_viewer", locals: { record: @canonical_pending_transaction } %>
 <%= render partial: "application/admin_viewer", locals: { record: @canonical_pending_transaction.canonical_pending_event_mapping } if @canonical_pending_transaction.canonical_pending_event_mapping.present? %>
 <%= render partial: "application/admin_viewer", locals: { record: @canonical_pending_transaction.canonical_pending_declined_mapping } if @canonical_pending_transaction.canonical_pending_declined_mapping.present? %>
