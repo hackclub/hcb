@@ -174,19 +174,18 @@ module Payroll
     end
 
     def on_contract_party_signed(party)
-      if party.organizer?
-        hcb_party = party.contract.party(:hcb)
-        notify_hcb_of_review(hcb_party) if hcb_party.present? && !hcb_party.signed?
-      end
+      refresh_onboarding_state!
 
+      # The contractor is only invited to sign once HCB has signed
       if party.hcb?
+        # HCB signing is the "reviewed by HCB operations" step, so begin onboarding.
         mark_onboarding! if may_mark_onboarding?
 
         contractor = party.contract.party(:contractor)
-        notify_contractor_of_onboarding(contractor) if contractor.present? && !contractor.signed?
-      end
+        return if contractor.nil? || contractor.signed?
 
-      refresh_onboarding_state!
+        notify_contractor_of_onboarding(contractor)
+      end
     end
 
     def send_contract(organizer_user: nil, cosigner_email: nil, reissue_messages: {}, reissue_of: nil, **options)
@@ -262,13 +261,6 @@ module Payroll
     def notify_contractor_of_onboarding(contractor)
       contractor.notify
       contractor.schedule_reminders
-    rescue => e
-      Rails.error.report(e, context: { payroll_position_id: id })
-    end
-
-    def notify_hcb_of_review(hcb_party)
-      hcb_party.notify
-      hcb_party.schedule_reminders
     rescue => e
       Rails.error.report(e, context: { payroll_position_id: id })
     end
