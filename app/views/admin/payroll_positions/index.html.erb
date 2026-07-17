@@ -44,7 +44,7 @@
         <td><%= position.period_label %></td>
         <td><span class="badge ml-0 bg-<%= position.under_review? ? "warning" : position.status_color %>"><%= position.under_review? ? "Under review" : position.status_text %></span></td>
         <td>
-          <%= link_to position.under_review? ? "Review" : "View", event_payroll_position_path(event_id: position.event.slug, id: position.hashid), data: { turbo: false } %>
+          <%= link_to position.under_review? ? "Review" : "View", event_payroll_position_path(event_id: position.event.slug, id: position), data: { turbo: false } %>
         </td>
       </tr>
     <% end %>
