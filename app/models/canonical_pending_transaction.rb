@@ -21,6 +21,7 @@
 #  raw_pending_bank_fee_transaction_id              :bigint
 #  raw_pending_column_transaction_id                :bigint
 #  raw_pending_donation_transaction_id              :bigint
+#  raw_pending_fee_reimbursement_transaction_id     :bigint
 #  raw_pending_fee_revenue_transaction_id           :bigint
 #  raw_pending_incoming_disbursement_transaction_id :bigint
 #  raw_pending_invoice_transaction_id               :bigint
@@ -54,6 +55,7 @@
 #  index_canonical_pending_txs_on_reimbursement_expense_payout_id   (reimbursement_expense_payout_id)
 #  index_canonical_pending_txs_on_reimbursement_payout_holding_id   (reimbursement_payout_holding_id)
 #  index_canonical_pending_txs_on_rpct_id                           (raw_pending_column_transaction_id)
+#  index_cpts_on_raw_pending_fee_reimbursement_tx_id                (raw_pending_fee_reimbursement_transaction_id)
 #  index_cpts_on_raw_pending_incoming_disbursement_transaction_id   (raw_pending_incoming_disbursement_transaction_id)
 #  index_cpts_on_raw_pending_outgoing_disbursement_transaction_id   (raw_pending_outgoing_disbursement_transaction_id)
 #  index_cpts_on_raw_pending_stripe_service_fee_tx_id               (raw_pending_stripe_service_fee_transaction_id)
