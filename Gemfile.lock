@@ -114,6 +114,9 @@ GEM
       prism
     addressable (2.9.0)
       public_suffix (>= 2.0.2, < 8.0)
+    after_commit_everywhere (1.6.0)
+      activerecord (>= 4.2)
+      activesupport
     ahoy_email (3.0.0)
       actionmailer (>= 7.1)
       addressable (>= 2.8)
@@ -961,6 +964,7 @@ DEPENDENCIES
   activejob-traffic_control
   acts_as_paranoid (~> 0.11.0)
   actual_db_schema
+  after_commit_everywhere (~> 1.0)
   ahoy_email (~> 3.0)
   ahoy_matey
   airrecord (~> 1.0)
