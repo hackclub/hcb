@@ -12,7 +12,7 @@ RSpec.describe LegalEntity::PayoutMethod::WiseTransfer, type: :model do
   describe "#create_transfer" do
     # $332 in a payment must be paid out as its AED-equivalent, not 332 AED.
     it "converts the USD payment amount into the recipient's local currency" do
-      allow(MoneyService).to receive(:convert_from_usd).with(332_00, "AED").and_return(1_218_44)
+      allow(MoneyService).to receive(:convert_from_usd_wise).with(332_00, "AED").and_return(1_218_44)
 
       transfer = payout_method.create_transfer(
         event,
