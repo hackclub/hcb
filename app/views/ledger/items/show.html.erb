@@ -54,7 +54,7 @@
       </span>
     <% end %>
   <% end %>
-  <% if (event = @item.primary_ledger.event).present? %>
+  <% if (event = @item.primary_ledger&.event).present? %>
     <% admin_tool do %>
       <strong>
         Event
@@ -63,7 +63,7 @@
         <%= link_to event.name, event_path(event), target: :_blank %> (<%= event.id %>)
       </span>
     <% end %>
-  <% elsif (card_grant = @item.primary_ledger.card_grant).present? %>
+  <% elsif (card_grant = @item.primary_ledger&.card_grant).present? %>
     <% admin_tool do %>
       <strong>
         Card Grant
