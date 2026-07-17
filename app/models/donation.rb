@@ -66,6 +66,10 @@ class Donation < ApplicationRecord
   set_public_id_prefix :don
 
   include AASM
+  include VisibleStatable
+  set_visible_state_context { |donation| donation.event }
+  set_visible_state_mapping(in_transit: ->(event) { event&.can_front_balance? ? :deposited : :in_transit })
+
   include Freezable
   include UsersHelper
 
