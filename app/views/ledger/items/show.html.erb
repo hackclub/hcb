@@ -54,22 +54,22 @@
       </span>
     <% end %>
   <% end %>
-  <% if @item.event.present? %>
+  <% if (event = @item.primary_ledger.event).present? %>
     <% admin_tool do %>
       <strong>
         Event
       </strong>
       <span>
-        <%= link_to @item.event.name, event_path(@item.event), target: :_blank %> (<%= @item.event.id %>)
+        <%= link_to event.name, event_path(event), target: :_blank %> (<%= event.id %>)
       </span>
     <% end %>
-  <% elsif @item.card_grant.present? %>
+  <% elsif (card_grant = @item.primary_ledger.card_grant).present? %>
     <% admin_tool do %>
       <strong>
         Card Grant
       </strong>
       <span>
-        <%= link_to "Grant to #{@item.card_grant.name}", card_grant_path(@item.card_grant), target: :_blank %> (<%= @item.card_grant.id %>)
+        <%= link_to "Grant to #{card_grant.name}", card_grant_path(card_grant), target: :_blank %> (<%= card_grant.id %>)
       </span>
     <% end %>
   <% end %>
