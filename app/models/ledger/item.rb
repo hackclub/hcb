@@ -31,6 +31,7 @@
 #  index_ledger_items_on_linked_object    (linked_object_type,linked_object_id)
 #  index_ledger_items_on_receipt_missing  (id) WHERE (receipt_required AND (marked_no_or_lost_receipt_at IS NULL) AND (receipt_count = 0))
 #  index_ledger_items_on_short_code       (short_code) UNIQUE
+#  index_ledger_items_on_status           (status)
 #
 # Foreign Keys
 #
@@ -165,18 +166,20 @@ class Ledger
     end
 
     def calculate_status
-      return :settled if canonical_transactions.none? && canonical_pending_transactions.fronted.revenue.any?
+      return :settled if linked_object_type == "Reimbursement::ExpensePayout"
+      return :settled if linked_object_type == "Disbursement::Outgoing" && linked_object.counterparty.canonical_pending_transactions.fronted.any?
+      return :settled if linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) && linked_object.approved_at.present? && !linked_object.rejected? && !linked_object.errored?
+      return :settled if canonical_pending_transactions.fronted.not_declined.revenue.any? && primary_ledger&.can_front_balance?
       return :pending if canonical_pending_transactions.unsettled.exists?
 
       if canonical_transactions.exists?
-        return :pending if canonical_transactions.sum(:amount_cents) != amount_cents
         return :reversed if canonical_transactions.sum(:amount_cents).zero?
 
         return :settled
       end
 
       # A declined CPT and no CTs — determine why it never settled
-      if canonical_pending_transactions.any?(&:declined?)
+      if CanonicalPendingDeclinedMapping.where(canonical_pending_transaction: canonical_pending_transactions).exists?
         case linked_object_type
         when "CardCharge"
           return :released if uncaptured_stripe_authorization?

@@ -651,12 +651,12 @@ class EventsController < ApplicationController
     # The search query name was historically `search`. It has since been renamed
     # to `q`. This following line retains backwards compatibility.
     @payments = @event.payments.includes(:payee)
-    @ach_transfers = @event.ach_transfers.where(payment_attempt: nil)
+    @ach_transfers = @event.ach_transfers.where.missing(:payment_attempt)
     @paypal_transfers = @event.paypal_transfers
-    @wires = @event.wires.where(payment_attempt: nil)
-    @wise_transfers = @event.wise_transfers.where(payment_attempt: nil)
+    @wires = @event.wires.where.missing(:payment_attempt)
+    @wise_transfers = @event.wise_transfers.where.missing(:payment_attempt)
     @checks = @event.checks.includes(:lob_address)
-    @increase_checks = @event.increase_checks.where(payment_attempt: nil)
+    @increase_checks = @event.increase_checks.where.missing(:payment_attempt)
     @disbursements = @event.outgoing_disbursements.includes(:destination_event)
 
     @disbursements = @disbursements.not_card_grant_related
@@ -740,6 +740,11 @@ class EventsController < ApplicationController
 
   def transfers
     authorize @event
+
+    if Flipper.enabled?(:payments_contractors_refresh_2026_06_26, @event)
+      redirect_to event_payments_path(@event)
+      return
+    end
 
     params[:q] ||= params[:search]
 

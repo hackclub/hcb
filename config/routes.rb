@@ -650,7 +650,11 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :payments, only: [:show], concerns: :commentable
+  resources :payments, only: [:show], concerns: :commentable do
+    member do
+      post "cancel"
+    end
+  end
 
   get "brand_guidelines", to: redirect("branding")
   get "mobile", to: "static_pages#mobile"
@@ -742,7 +746,7 @@ Rails.application.routes.draw do
 
           resources :disbursements, path: "transfers", only: [:create]
 
-          resources :donations, path: "donations", only: [:create] do
+          resources :donations, path: "donations", only: [:index, :create] do
             member do
               post "payment_intent"
             end
