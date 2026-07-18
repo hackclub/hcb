@@ -61,21 +61,24 @@ class Ledger < ApplicationRecord
   def fronted_fee_balance_cents
     return 0 if event.nil?
 
-    feed_fronted_pts = canonical_pending_transactions
-                       .incoming
-                       .fronted
-                       .not_waived
-                       .not_declined
+    @fronted_fee_balance_cents ||=
+      begin
+        feed_fronted_pts = canonical_pending_transactions
+                           .incoming
+                           .fronted
+                           .not_waived
+                           .not_declined
 
-    feed_fronted_balance = sum_fronted_amount(feed_fronted_pts)
+        feed_fronted_balance = sum_fronted_amount(feed_fronted_pts)
 
-    (event.fees.sum(:amount_cents_as_decimal) - total_fee_payments_cents + (feed_fronted_balance * BigDecimal(event.revenue_fee))).ceil
+        (event.fees.sum(:amount_cents_as_decimal) - total_fee_payments_cents + (feed_fronted_balance * BigDecimal(event.revenue_fee))).ceil
+      end
   end
 
   def total_fee_payments_cents
     @total_fee_payments_cents ||=
       begin
-        paid = canonical_transactions.includes(:fee).where(fee: { reason: "HACK CLUB FEE" }).sum(:amount_cents)
+        paid = canonical_transactions.joins(:fee).where(fee: { reason: "HACK CLUB FEE" }).sum(:amount_cents)
         in_transit = canonical_pending_transactions.bank_fee.unsettled.sum(:amount_cents)
 
         (paid + in_transit) * -1
@@ -83,15 +86,17 @@ class Ledger < ApplicationRecord
   end
 
   def sum_fronted_amount(pts)
-    pt_sum_by_ledger_item = pts.group(:ledger_item).sum(:amount_cents)
-    ledger_items = pt_sum_by_ledger_item.keys
+    # Group by the FK column, not the association: grouping by an association
+    # makes ActiveRecord issue an extra query to hydrate full records as hash keys.
+    pt_sum_by_ledger_item_id = pts.group(:ledger_item_id).sum(:amount_cents)
+    ledger_item_ids = pt_sum_by_ledger_item_id.keys
 
-    ct_sum_by_ledger_item = canonical_transactions.where(ledger_item: ledger_items)
-                                                  .group(:ledger_item)
-                                                  .sum(:amount_cents)
+    ct_sum_by_ledger_item_id = canonical_transactions.where(ledger_item_id: ledger_item_ids)
+                                                     .group(:ledger_item_id)
+                                                     .sum(:amount_cents)
 
-    pt_sum_by_ledger_item.reduce 0 do |sum, (ledger_item, pt_sum)|
-      sum + [pt_sum - (ct_sum_by_ledger_item[ledger_item] || 0), 0].max
+    pt_sum_by_ledger_item_id.reduce 0 do |sum, (ledger_item_id, pt_sum)|
+      sum + [pt_sum - (ct_sum_by_ledger_item_id[ledger_item_id] || 0), 0].max
     end
   end
 
