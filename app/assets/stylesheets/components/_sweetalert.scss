@@ -48,6 +48,17 @@
     background-color: transparent;
   }
 
+  .swal-content {
+    input {
+      color: inherit;
+      background: transparent;
+      border: 1px solid rgba(150, 150, 150, 0.4);
+      border-radius: var(--radius-md, 6px);
+      padding: 8px 12px;
+      width: 100%;
+    }
+  }
+
   .swal-button {
     @extend .btn;
   }
