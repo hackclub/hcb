@@ -16,12 +16,12 @@
       <% if new_ledger_active %>
         <%= link_to event_transactions_path(event, apply_flipper: true), class: "btn flex items-center" do %>
           <%= inline_icon "back" %>
-          Go back to the old ledger
+          Go back to the classic ledger
         <% end %>
       <% else %>
         <%= link_to event_ledger_path(event, apply_flipper: true), class: "btn flex items-center" do %>
           <%= inline_icon "wand-stars" %>
-          Preview the new ledger
+          Try the new ledger
         <% end %>
       <% end %>
     <% end %>
