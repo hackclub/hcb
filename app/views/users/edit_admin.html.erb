@@ -44,9 +44,16 @@
             <%= link_to "Impersonate", impersonate_user_path(@user.id), data: { turbo_confirm: "Are you sure?", turbo_method: :post } unless current_session&.impersonated? %>
           </p>
 
-          <div class="field field--checkbox">
-            <%= form.label :locked, "Lock user from signing into HCB" %>
-            <%= form.check_box :locked, checked: @user.locked?, disabled: !admin_signed_in? %>
+          <div data-controller="locked-reason" data-locked-reason-originally-locked-value="<%= @user.locked? %>">
+            <div class="field field--checkbox">
+              <%= form.label :locked, "Lock user from signing into HCB" %>
+              <%= form.check_box :locked, { checked: @user.locked?, disabled: !admin_signed_in?, data: { locked_reason_target: "checkbox", action: "change->locked-reason#toggle" } } %>
+            </div>
+
+            <div class="field field--text-field" data-locked-reason-target="reason">
+              <%= form.label :locked_reason, "Reason for Locking User" %>
+              <%= form.text_field :locked_reason %>
+            </div>
           </div>
 
           <div class="field field--checkbox">
