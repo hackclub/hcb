@@ -129,6 +129,75 @@ RSpec.describe EventsController do
 
       expect(response).to have_http_status(:ok)
     end
+
+    it "resolves @merchant_name from a card charge's pending transaction" do
+      # Creating a RawPendingStripeTransaction auto-creates its CardCharge
+      # (RawPendingStripeTransaction#link_card_charge!), so use that rather
+      # than creating a second CardCharge for the same transaction.
+      raw_pending = create(:raw_pending_stripe_transaction, stripe_transaction: { "merchant_data" => { "name" => "merchant 1", "network_id" => "555000111" } })
+      item = create(:ledger_item, linked_object: raw_pending.card_charge)
+      Ledger::Mapping.create!(ledger: event.ledger, ledger_item: item, on_primary_ledger: true)
+
+      get(:ledger, params: { event_id: event.slug, merchant: "555000111" })
+
+      expect(response).to have_http_status(:ok)
+      expect(controller.instance_variable_get(:@merchant_name)).to eq("Merchant 1")
+    end
+
+    it "falls back to a generic name when the merchant isn't found on this ledger" do
+      get(:ledger, params: { event_id: event.slug, merchant: "000000000" })
+
+      expect(controller.instance_variable_get(:@merchant_name)).to eq("Merchant 000000000")
+    end
+  end
+
+  describe "#merchants_filter" do
+    let(:admin) { create(:user, :make_admin) }
+    let(:event) { create(:event) }
+
+    before { create_session(admin, verified: true) }
+
+    def create_card_charge_item(ledger, network_id:, name:, settled: false)
+      raw_pending = create(:raw_pending_stripe_transaction, stripe_transaction: { "merchant_data" => { "name" => name, "network_id" => network_id } })
+      card_charge = raw_pending.card_charge
+      if settled
+        # Creating a RawStripeTransaction with a matching stripe_authorization_id
+        # auto-links it to the existing card charge (RawStripeTransaction#link_card_charge!).
+        # Uses the factory's own card/cardholder defaults (Ledger::Item#refresh!
+        # resolves the item's author through them) and only overrides merchant_data.
+        rst = create(:raw_stripe_transaction, stripe_authorization_id: raw_pending.stripe_transaction_id)
+        rst.update_columns(stripe_transaction: rst.stripe_transaction.merge("merchant_data" => { "name" => name, "network_id" => network_id }))
+      end
+      item = create(:ledger_item, linked_object: card_charge)
+      Ledger::Mapping.create!(ledger:, ledger_item: item, on_primary_ledger: true)
+      item
+    end
+
+    it "lists distinct merchants with a count, from both settled and pending card charges" do
+      create_card_charge_item(event.ledger, network_id: "111", name: "bakery", settled: true)
+      create_card_charge_item(event.ledger, network_id: "111", name: "bakery", settled: true)
+      create_card_charge_item(event.ledger, network_id: "222", name: "bookstore", settled: false)
+
+      get(:merchants_filter, params: { event_id: event.slug })
+
+      merchants = controller.instance_variable_get(:@merchants)
+      expect(merchants).to match_array([
+                                         { id: "111", name: "Bakery", count: 2 },
+                                         { id: "222", name: "Bookstore", count: 1 },
+                                       ])
+    end
+
+    it "does not include another event's ledger in the merchant list" do
+      create_card_charge_item(event.ledger, network_id: "111", name: "bakery")
+
+      other_event = create(:event)
+      create_card_charge_item(other_event.ledger, network_id: "999", name: "other org's merchant")
+
+      get(:merchants_filter, params: { event_id: event.slug })
+
+      merchants = controller.instance_variable_get(:@merchants)
+      expect(merchants.map { |m| m[:id] }).to contain_exactly("111")
+    end
   end
 
   describe "#payments" do

@@ -37,7 +37,7 @@ module SetLedgerFilters
       @users = User.where(id: author_ids).or(User.where(id: @event.users.select(:id))).with_attached_profile_picture.order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
 
       if @merchant
-        merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
+        merchant = ledger_merchants(@ledgers).find { |merchant| merchant[:id] == @merchant }
 
         @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
       end
@@ -106,6 +106,64 @@ module SetLedgerFilters
 
       query << { status: { "$in": [nil, "settled", "pending", "reversed"] } } # TODO: add not null validation and remove nil status from here
       Ledger::Query.new({ "$and": query })
+    end
+
+    # Distinct merchants for the given ledgers' CardCharge items, with a
+    # transaction count per merchant. Scoped to Ledger::Item so this only
+    # reflects card charges that are actually mapped onto these ledgers.
+    #
+    # Merchant data lives in a JSONB blob on the underlying raw Stripe
+    # transaction; pulling the whole blob per charge (e.g. via
+    # `card_charge.merchant_data`, which loads full `RawStripeTransaction`/
+    # `RawPendingStripeTransaction` records) is the expensive part at this
+    # volume, not the merchant lookup itself. Extracting just the
+    # `merchant_data` key with the `->` operator keeps the query and the
+    # amount of data pulled back small.
+    def ledger_merchants(ledgers)
+      card_charge_ids = Ledger::Item.where(
+        linked_object_type: "CardCharge",
+        id: Ledger::Mapping.where(ledger: ledgers).select(:ledger_item_id)
+      ).pluck(:linked_object_id)
+      return [] if card_charge_ids.empty?
+
+      merchant_data_by_charge_id = {}
+
+      # A card charge's `merchant_data` prefers its latest settled
+      # RawStripeTransaction, falling back to its RawPendingStripeTransaction
+      # (mirrors CardCharge#merchant_data's `raw_stripe_transactions.last ||
+      # raw_pending_stripe_transaction`).
+      last_settled_transaction_id_by_charge_id = CardChargeRawStripeTransaction
+                                                 .where(card_charge_id: card_charge_ids)
+                                                 .group(:card_charge_id)
+                                                 .maximum(:raw_stripe_transaction_id)
+
+      if last_settled_transaction_id_by_charge_id.present?
+        charge_id_by_transaction_id = last_settled_transaction_id_by_charge_id.invert
+        RawStripeTransaction.where(id: last_settled_transaction_id_by_charge_id.values)
+                            .pluck(:id, Arel.sql("stripe_transaction -> 'merchant_data'"))
+                            .each do |transaction_id, merchant_data|
+          next if merchant_data.blank?
+
+          merchant_data_by_charge_id[charge_id_by_transaction_id[transaction_id]] = merchant_data
+        end
+      end
+
+      pending_only_charge_ids = card_charge_ids - merchant_data_by_charge_id.keys
+      if pending_only_charge_ids.present?
+        CardCharge.where(id: pending_only_charge_ids)
+                  .joins(:raw_pending_stripe_transaction)
+                  .pluck(:id, Arel.sql("raw_pending_stripe_transactions.stripe_transaction -> 'merchant_data'"))
+                  .each do |charge_id, merchant_data|
+          next if merchant_data.blank?
+
+          merchant_data_by_charge_id[charge_id] = merchant_data
+        end
+      end
+
+      merchant_data_by_charge_id.values.group_by { |merchant_data| merchant_data["network_id"] }.map do |network_id, group|
+        yellow_pages_merchant = YellowPages::Merchant.lookup(network_id:)
+        { id: network_id, name: yellow_pages_merchant.name || group.first["name"].titleize, count: group.size }
+      end
     end
 
   end
