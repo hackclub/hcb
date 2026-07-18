@@ -573,6 +573,16 @@ RSpec.describe Ledger::Query, type: :model do
                             "Ledger::Query's default sort has no supporting index (Postgres had to fall back to " \
                             "sorting even with sequential scans/sorts penalized):\n\n#{plan}"
 
+        # The absence of a Sort node above only means "no supporting index"
+        # given an ORDER BY is actually present. On its own it can't tell
+        # "correctly ordered by an index" apart from "not ordered at all" -
+        # if execute()'s .order(...) were ever dropped, there'd be no Sort
+        # node either, and the check above would pass despite the real
+        # regression (unordered, unindexed results). Assert the index is
+        # actually the thing satisfying the order to close that gap.
+        expect(plan).to match(/Index( Only)? Scan using index_ledger_items_on_default_sort/),
+                        "Expected the default-sort index to back the query's ORDER BY:\n\n#{plan}"
+
         raise ActiveRecord::Rollback
       end
     end
