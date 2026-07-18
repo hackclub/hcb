@@ -66,7 +66,16 @@ class Ledger
       # preload, not includes: linked_object is polymorphic, so it can never be
       # JOINed — and includes makes pluck/count attempt exactly that join
       # (EagerLoadPolymorphicError).
-      results.order(pending_first.asc, datetime: :desc, created_at: :desc, id: :desc).preload(:linked_object)
+      #
+      # The nested associations here aren't used by this class — they're what
+      # app/views/ledger/_item.html.erb touches through linked_object (via
+      # Ledger::Item#icon) for a Disbursement, Donation, or CardCharge row.
+      # Preloading them here, once, avoids an N+1 on every render of that
+      # partial; Rails preloads each association only on the linked_object
+      # records whose class actually has it, so this is safe even though no
+      # single row has all four.
+      results.order(pending_first.asc, datetime: :desc, created_at: :desc, id: :desc)
+             .preload(:author, linked_object: [:card_grant, :recurring_donation, :raw_stripe_transactions, :raw_pending_stripe_transaction])
     end
 
     def self.sanitize_query(query_hash)

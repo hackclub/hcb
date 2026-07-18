@@ -551,4 +551,37 @@ RSpec.describe Ledger::Query, type: :model do
       expect(result.pluck(:id)).to match_array(ids_of(item_a, item_b, item_c, item_d, item_e, item_g))
     end
   end
+
+  describe "preloading" do
+    def query_count(&block)
+      count = 0
+      callback = ->(*, payload) { count += 1 unless payload[:name] == "SCHEMA" }
+      ActiveSupport::Notifications.subscribed(callback, "sql.active_record", &block)
+      count
+    end
+
+    it "preloads author and linked_object's nested associations so rendering a page doesn't N+1" do
+      author = create(:user)
+      raw_pending = create(:raw_pending_stripe_transaction)
+      card_charge_item = create(:ledger_item, linked_object: raw_pending.card_charge, datetime: Time.current)
+      card_charge_item.update_columns(author_id: author.id)
+      Ledger::Mapping.create!(ledger: test_ledger, ledger_item: card_charge_item, on_primary_ledger: true)
+
+      # execute_query({}) also returns this describe block's shared item_a..item_g
+      # fixtures (mapped onto the same test_ledger in the top-level `before`
+      # hook); only the CardCharge item is relevant to this assertion.
+      result = execute_query({}).to_a
+      reloaded_card_charge_item = result.find { |item| item.id == card_charge_item.id }
+
+      query_count_during_access = query_count do
+        reloaded_card_charge_item.author&.name
+        # icon (app/models/ledger/item.rb) touches these associations for a
+        # CardCharge row; each should already be preloaded.
+        reloaded_card_charge_item.linked_object.raw_stripe_transactions.to_a
+        reloaded_card_charge_item.linked_object.raw_pending_stripe_transaction
+      end
+
+      expect(query_count_during_access).to eq(0)
+    end
+  end
 end
