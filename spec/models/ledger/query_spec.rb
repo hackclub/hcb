@@ -551,4 +551,30 @@ RSpec.describe Ledger::Query, type: :model do
       expect(result.pluck(:id)).to match_array(ids_of(item_a, item_b, item_c, item_d, item_e, item_g))
     end
   end
+
+  describe "default sort index" do
+    it "has an index that can satisfy the default sort without a separate Sort step" do
+      # A tiny table like this test's fixtures would use a sequential scan
+      # regardless of any index, so disable that (and explicit sorting) to
+      # force Postgres to reveal whether an index-based plan is even
+      # possible. If the default ORDER BY in Ledger::Query#execute ever
+      # changes, this fails until a matching index is added/updated for it -
+      # otherwise every ledger page load pays to sort its entire result set
+      # before returning the first page.
+      ActiveRecord::Base.transaction do
+        connection = ActiveRecord::Base.connection
+        connection.execute("SET LOCAL enable_seqscan = off")
+        connection.execute("SET LOCAL enable_sort = off")
+
+        sql = execute_query({}).page(1).per(25).to_sql
+        plan = connection.execute("EXPLAIN #{sql}").pluck("QUERY PLAN").join("\n")
+
+        expect(plan).not_to match(/\bSort\b/),
+                            "Ledger::Query's default sort has no supporting index (Postgres had to fall back to " \
+                            "sorting even with sequential scans/sorts penalized):\n\n#{plan}"
+
+        raise ActiveRecord::Rollback
+      end
+    end
+  end
 end
