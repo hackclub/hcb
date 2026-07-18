@@ -18,6 +18,8 @@
 #
 #  index_fees_on_canonical_event_mapping_id  (canonical_event_mapping_id)
 #  index_fees_on_event_id                    (event_id)
+#  index_fees_on_event_id_include_amount     (event_id)
+#  index_fees_on_reason                      (reason)
 #
 # Foreign Keys
 #

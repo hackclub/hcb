@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_16_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_17_220000) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1233,6 +1233,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_16_120000) do
     t.datetime "updated_at", null: false
     t.index ["canonical_event_mapping_id"], name: "index_fees_on_canonical_event_mapping_id"
     t.index ["event_id"], name: "index_fees_on_event_id"
+    t.index ["event_id"], name: "index_fees_on_event_id_include_amount", include: ["amount_cents_as_decimal"]
+    t.index ["reason"], name: "index_fees_on_reason"
   end
 
   create_table "flipper_features", force: :cascade do |t|
