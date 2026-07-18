@@ -45,15 +45,21 @@ class Ledger
     # dynamically-empty set (e.g. an event with no card grants) can never leak
     # another organization's items.
     def execute(ledgers: [], all_ledgers: false)
-      results = apply_query(relation: Ledger::Item.all, query: @query_hash)
-
       # Strict boolean: only a literal true opts out of scoping, so a caller that
       # accidentally passes a truthy value (e.g. the string "false") fails closed.
-      unless all_ledgers == true
+      # Stashed on the instance (rather than threaded through every apply_*
+      # method) so apply_partial_predicate's $search branch can scope its own
+      # subquery to the same ledgers instead of searching every ledger's items.
+      @ledger_scope_ids = ledgers
+      @ledger_scope_all = (all_ledgers == true)
+
+      results = apply_query(relation: Ledger::Item.all, query: @query_hash)
+
+      unless @ledger_scope_all
         # Scope via a subquery rather than joins(...).distinct: DISTINCT breaks
         # under Postgres when combined with our ORDER BY and a narrowed select
         # list (e.g. pluck) — ORDER BY expressions must appear in the select list.
-        results = results.where(id: Ledger::Mapping.where(ledger_id: ledgers).select(:ledger_item_id))
+        results = results.where(id: Ledger::Mapping.where(ledger_id: @ledger_scope_ids).select(:ledger_item_id))
       end
 
       # Pending items sort first regardless of datetime. A CASE (rather than
@@ -256,7 +262,12 @@ class Ledger
         # full-text search, supported only on the memo column.
         raise Ledger::Query::Error.new("$search is only supported on the memo field") unless key == "memo"
 
-        relation.where(id: Ledger::Item.search_memo(operand).select(:id))
+        matches = Ledger::Item.search_memo(operand)
+        # Scope the search itself to the same ledgers as the overall query,
+        # rather than full-text searching every ledger's items — mirrors the
+        # scoping applied to `results` in execute().
+        matches = matches.where(id: Ledger::Mapping.where(ledger_id: @ledger_scope_ids).select(:ledger_item_id)) unless @ledger_scope_all
+        relation.where(id: matches.select(:id))
       else
         raise Ledger::Query::Error.new("Unsupported comparison operator: #{operator}")
       end
