@@ -42,11 +42,7 @@ async function showTypeToConfirm(
   })
   if (typed?.trim() !== phrase) {
     if (typed !== null) {
-      await swal(
-        'Not confirmed',
-        'What you typed did not match.',
-        'error'
-      )
+      await swal('Not confirmed', 'What you typed did not match.', 'error')
     }
     return false
   }
