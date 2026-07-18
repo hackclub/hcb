@@ -41,6 +41,28 @@ RSpec.describe User, type: :model do
       user.update(full_name: "Turing Alan")
       expect(user).to be_valid
     end
+
+    it "rejects users under 13" do
+      user = build(:user, birthday: 12.years.ago)
+      expect(user).not_to be_valid
+      expect(user.errors[:birthday]).to include("must be at least 13 years old")
+    end
+
+    it "allows users exactly 13" do
+      user = build(:user, birthday: 13.years.ago)
+      expect(user).to be_valid
+    end
+
+    it "rejects users over 125" do
+      user = build(:user, birthday: 126.years.ago)
+      expect(user).not_to be_valid
+      expect(user.errors[:birthday]).to include("must be less than 125 years old")
+    end
+
+    it "allows users exactly 125" do
+      user = build(:user, birthday: 125.years.ago)
+      expect(user).to be_valid
+    end
   end
 
   context "when full_name is removed" do

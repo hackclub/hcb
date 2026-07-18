@@ -234,6 +234,8 @@ class User < ApplicationRecord
 
   validates :preferred_name, length: { maximum: 30 }
 
+  validate :age_in_range?, if: -> { new_record? || will_save_change_to_birthday? }
+
   validates(:session_validity_preference, presence: true, inclusion: { in: SessionsHelper::SESSION_DURATION_OPTIONS.values })
 
   validate :profile_picture_format
@@ -472,6 +474,16 @@ class User < ApplicationRecord
 
   def age
     age_on(Date.current)
+  end
+
+  def age_in_range?
+    return unless birthday.present?
+
+    if age < 13
+      errors.add(:birthday, "must be at least 13 years old")
+    elsif age > 125
+      errors.add(:birthday, "must be less than 125 years old")
+    end
   end
 
   def is_teenager?
