@@ -395,6 +395,19 @@ RSpec.describe Ledger::Query, type: :model do
     end
   end
 
+  describe "$search" do
+    it "matches items by memo full-text search" do
+      result = execute_query({ memo: { "$search" => "alpha" } })
+
+      expect(result.pluck(:id)).to match_array(ids_of(item_b, item_c))
+    end
+
+    it "raises when $search is used on a field other than memo" do
+      query = { amount_cents: { "$search" => "100" } }
+      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /\$search is only supported on the memo field/)
+    end
+  end
+
   describe "error handling" do
     it "raises on unsupported logical operator" do
       query = { "$xor" => [{ amount_cents: 100 }] }
@@ -508,6 +521,34 @@ RSpec.describe Ledger::Query, type: :model do
 
       expect(result.to_sql).to match(/ledger_mappings/)
       expect(result.pluck(:id)).to be_empty
+    end
+
+    it "only returns matches from the requested ledger when combined with $search" do
+      other_payment_item = create_other_ledger_item(amount_cents: 400, memo: "other payment")
+
+      result = execute_query({ memo: { "$search" => "payment" } })
+
+      expect(result.pluck(:id)).to match_array(ids_of(item_b, item_e, item_f, item_g))
+      expect(result.pluck(:id)).not_to include(other_payment_item.id)
+    end
+
+    it "includes $search matches from every requested ledger when multiple are given" do
+      other_payment_item = create_other_ledger_item(amount_cents: 400, memo: "other payment")
+
+      result = described_class.new({ memo: { "$search" => "payment" } }).execute(ledgers: [test_ledger.id, other_ledger.id])
+
+      expect(result.pluck(:id)).to match_array(ids_of(item_b, item_e, item_f, item_g, other_payment_item))
+    end
+
+    it "scopes the $search subquery itself to the requested ledgers, not just the final result" do
+      # The $search subquery is a separate query.rb code path from every other
+      # predicate (it wraps pg_search's own scope rather than a plain `where`),
+      # so it needs its own assertion that the ledger scope reaches it: a
+      # `FROM "ledger_mappings"` subquery for the search itself, plus one for
+      # the outer result set — not just the outer one alone.
+      result = execute_query({ memo: { "$search" => "payment" } })
+
+      expect(result.to_sql.scan(/FROM "ledger_mappings"/).count).to eq(2)
     end
   end
 
