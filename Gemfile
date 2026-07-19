@@ -162,8 +162,6 @@ group :development, :test do
   gem "pry-rails", require: ENV["EXCLUDE_PRY"] != "true"
 end
 
-gem "query_count"
-
 gem "rack-mini-profiler", "~> 3.3"
 gem "stackprof" # used by `rack-mini-profiler` to provide flamegraphs
 
