@@ -113,6 +113,8 @@ RSpec.describe EventsController do
   end
 
   describe "#ledger" do
+    render_views
+
     let(:admin) { create(:user, :make_admin) }
     let(:event) { create(:event) }
 
@@ -130,7 +132,7 @@ RSpec.describe EventsController do
       expect(response).to have_http_status(:ok)
     end
 
-    it "resolves @merchant_name from a card charge's pending transaction" do
+    it "shows the merchant name in the active-filter badge, resolved from a card charge's pending transaction" do
       # Creating a RawPendingStripeTransaction auto-creates its CardCharge
       # (RawPendingStripeTransaction#link_card_charge!), so use that rather
       # than creating a second CardCharge for the same transaction.
@@ -141,17 +143,19 @@ RSpec.describe EventsController do
       get(:ledger, params: { event_id: event.slug, merchant: "555000111" })
 
       expect(response).to have_http_status(:ok)
-      expect(controller.instance_variable_get(:@merchant_name)).to eq("Merchant 1")
+      expect(response.body).to include("Merchant 1")
     end
 
-    it "falls back to a generic name when the merchant isn't found on this ledger" do
+    it "falls back to a generic badge label when the merchant isn't found on this ledger" do
       get(:ledger, params: { event_id: event.slug, merchant: "000000000" })
 
-      expect(controller.instance_variable_get(:@merchant_name)).to eq("Merchant 000000000")
+      expect(response.body).to include("Merchant 000000000")
     end
   end
 
   describe "#merchants_filter" do
+    render_views
+
     let(:admin) { create(:user, :make_admin) }
     let(:event) { create(:event) }
 
@@ -173,14 +177,26 @@ RSpec.describe EventsController do
       item
     end
 
-    it "lists distinct merchants with a count, from both settled and pending card charges" do
+    it "lists distinct merchants from both settled and pending card charges, most-transacted first" do
       create_card_charge_item(event.ledger, network_id: "111", name: "bakery", settled: true)
       create_card_charge_item(event.ledger, network_id: "111", name: "bakery", settled: true)
       create_card_charge_item(event.ledger, network_id: "222", name: "bookstore", settled: false)
 
       get(:merchants_filter, params: { event_id: event.slug })
 
-      merchants = controller.instance_variable_get(:@merchants)
+      expect(response.body).to include("Bakery")
+      expect(response.body).to include("Bookstore")
+      # Bakery has 2 matching card charges vs. Bookstore's 1, so it renders first.
+      expect(response.body.index("Bakery")).to be < response.body.index("Bookstore")
+    end
+
+    it "counts each merchant's card charges" do
+      create_card_charge_item(event.ledger, network_id: "111", name: "bakery", settled: true)
+      create_card_charge_item(event.ledger, network_id: "111", name: "bakery", settled: true)
+      create_card_charge_item(event.ledger, network_id: "222", name: "bookstore", settled: false)
+
+      merchants = controller.send(:ledger_merchants, [event.ledger])
+
       expect(merchants).to match_array([
                                          { id: "111", name: "Bakery", count: 2 },
                                          { id: "222", name: "Bookstore", count: 1 },
@@ -195,8 +211,8 @@ RSpec.describe EventsController do
 
       get(:merchants_filter, params: { event_id: event.slug })
 
-      merchants = controller.instance_variable_get(:@merchants)
-      expect(merchants.map { |m| m[:id] }).to contain_exactly("111")
+      expect(response.body).to include("Bakery")
+      expect(response.body).not_to match(/other org/i)
     end
   end
 
