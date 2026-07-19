@@ -553,13 +553,6 @@ RSpec.describe Ledger::Query, type: :model do
   end
 
   describe "preloading" do
-    def query_count(&block)
-      count = 0
-      callback = ->(*, payload) { count += 1 unless payload[:name] == "SCHEMA" }
-      ActiveSupport::Notifications.subscribed(callback, "sql.active_record", &block)
-      count
-    end
-
     it "preloads author and linked_object's nested associations so rendering a page doesn't N+1" do
       author = create(:user)
       raw_pending = create(:raw_pending_stripe_transaction)
@@ -573,15 +566,14 @@ RSpec.describe Ledger::Query, type: :model do
       result = execute_query({}).to_a
       reloaded_card_charge_item = result.find { |item| item.id == card_charge_item.id }
 
-      query_count_during_access = query_count do
-        reloaded_card_charge_item.author&.name
-        # icon (app/models/ledger/item.rb) touches these associations for a
-        # CardCharge row; each should already be preloaded.
-        reloaded_card_charge_item.linked_object.raw_stripe_transactions.to_a
-        reloaded_card_charge_item.linked_object.raw_pending_stripe_transaction
-      end
+      QueryCount::Counter.reset_counter
+      reloaded_card_charge_item.author&.name
+      # icon (app/models/ledger/item.rb) touches these associations for a
+      # CardCharge row; each should already be preloaded.
+      reloaded_card_charge_item.linked_object.raw_stripe_transactions.to_a
+      reloaded_card_charge_item.linked_object.raw_pending_stripe_transaction
 
-      expect(query_count_during_access).to eq(0)
+      expect(QueryCount::Counter.counter).to eq(0)
     end
   end
 end
