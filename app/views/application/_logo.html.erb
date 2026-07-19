@@ -68,8 +68,8 @@
           <br>
         <% end %>
         <% unless Rails.env.production? %>
-          <% @sql_count = QueryCount::Counter.counter %>
-          <% @sql_cached_count = QueryCount::Counter.counter_cache %>
+          <% @sql_cached_count = ActiveRecord::RuntimeRegistry.cached_queries_count %>
+          <% @sql_count = ActiveRecord::RuntimeRegistry.queries_count - @sql_cached_count %>
           Used <%= @sql_count %> unique SQL <%= "query".pluralize @sql_count %> (+<%= @sql_cached_count %> cached).
           <br>
           Running on Rails <%= Rails::VERSION::STRING %> with Ruby <%= RUBY_VERSION %>.
