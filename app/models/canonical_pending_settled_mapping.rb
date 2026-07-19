@@ -12,8 +12,8 @@
 #
 # Indexes
 #
-#  index_cpsm_on_cpt_id  (canonical_pending_transaction_id) UNIQUE
-#  index_cpsm_on_ct_id   (canonical_transaction_id) UNIQUE
+#  idx_on_canonical_pending_transaction_id_d803a74980  (canonical_pending_transaction_id)
+#  idx_on_canonical_transaction_id_b8c2c28a37          (canonical_transaction_id)
 #
 # Foreign Keys
 #

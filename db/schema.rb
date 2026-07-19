@@ -376,8 +376,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_19_120002) do
     t.bigint "canonical_transaction_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["canonical_pending_transaction_id"], name: "index_cpsm_on_cpt_id", unique: true
-    t.index ["canonical_transaction_id"], name: "index_cpsm_on_ct_id", unique: true
+    t.index ["canonical_pending_transaction_id"], name: "idx_on_canonical_pending_transaction_id_d803a74980"
+    t.index ["canonical_transaction_id"], name: "idx_on_canonical_transaction_id_b8c2c28a37"
   end
 
   create_table "canonical_pending_transactions", force: :cascade do |t|
