@@ -167,10 +167,10 @@ class EventsController < ApplicationController
       flash.delete(:popover)
     end
 
-    if organizer_signed_in? && (op = OrganizerPosition.find_by(event_id: @event.id, user: current_user)).present?
+    if signed_in?
       if params[:apply_flipper] == "true"
-        Flipper.disable_actor(:new_ledger_2026_07_17, op)
-      elsif Flipper.enabled?(:new_ledger_2026_07_17, op)
+        Flipper.disable_actor(:new_ledger_2026_07_17, current_user)
+      elsif Flipper.enabled?(:new_ledger_2026_07_17, current_user)
         redirect_to event_ledger_path(@event) and return
       end
     end
@@ -1269,10 +1269,10 @@ class EventsController < ApplicationController
 
     @items = @items.page(params[:page]).per(@per)
 
-    if organizer_signed_in? && (op = OrganizerPosition.find_by(event_id: @event.id, user: current_user)).present?
+    if signed_in?
       if params[:apply_flipper] == "true"
-        Flipper.enable_actor(:new_ledger_2026_07_17, op)
-      elsif !Flipper.enabled?(:new_ledger_2026_07_17, op)
+        Flipper.enable_actor(:new_ledger_2026_07_17, current_user)
+      elsif !Flipper.enabled?(:new_ledger_2026_07_17, current_user)
         redirect_to event_transactions_path(@event) and return
       end
     end
