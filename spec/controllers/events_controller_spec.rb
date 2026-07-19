@@ -122,6 +122,8 @@ RSpec.describe EventsController do
     # raised Ledger::Query::Error inside the action (only Pundit was rescued),
     # 500ing the page. Amount-range filtering itself is covered in the query spec.
     it "accepts the maximum_amount filter without raising" do
+      Flipper.enable_actor(:new_ledger_2026_07_17, admin)
+
       item = create(:ledger_item, amount_cents: 100, datetime: Time.current)
       Ledger::Mapping.create!(ledger: event.ledger, ledger_item: item, on_primary_ledger: true)
 
