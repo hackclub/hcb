@@ -566,14 +566,17 @@ RSpec.describe Ledger::Query, type: :model do
       result = execute_query({}).to_a
       reloaded_card_charge_item = result.find { |item| item.id == card_charge_item.id }
 
-      QueryCount::Counter.reset_counter
-      reloaded_card_charge_item.author&.name
-      # icon (app/models/ledger/item.rb) touches these associations for a
-      # CardCharge row; each should already be preloaded.
-      reloaded_card_charge_item.linked_object.raw_stripe_transactions.to_a
-      reloaded_card_charge_item.linked_object.raw_pending_stripe_transaction
-
-      expect(QueryCount::Counter.counter).to eq(0)
+      # Covers the CardCharge branch of the preload (a has_many-through plus a
+      # belongs_to). Disbursement's :card_grant and Donation's
+      # :recurring_donation go through the same preload directive in
+      # execute() but aren't separately exercised here.
+      expect {
+        reloaded_card_charge_item.author&.name
+        # icon (app/models/ledger/item.rb) touches these associations for a
+        # CardCharge row; each should already be preloaded.
+        reloaded_card_charge_item.linked_object.raw_stripe_transactions.to_a
+        reloaded_card_charge_item.linked_object.raw_pending_stripe_transaction
+      }.not_to make_database_queries
     end
   end
 end
