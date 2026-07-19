@@ -71,7 +71,7 @@ module EventsHelper
     },
     {
       name: "Transactions",
-      path_proc: ->(event_id) { (Flipper.enabled?(:new_ledger_2026_07_17, current_user) ? event_ledger_path(event_id:) : event_transactions_path(event_id:)) },
+      path_proc: ->(event_id) { (organizer_signed_in? && Flipper.enabled?(:new_ledger_2026_07_17, current_user) ? event_ledger_path(event_id:) : event_transactions_path(event_id:)) },
       tooltip: "View detailed ledger",
       icon: "bank-account",
       symbol: :transactions,
