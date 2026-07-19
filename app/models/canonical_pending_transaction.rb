@@ -96,9 +96,9 @@ class CanonicalPendingTransaction < ApplicationRecord
   has_one :canonical_pending_event_mapping
   has_one :event, through: :canonical_pending_event_mapping
   has_one :subledger, through: :canonical_pending_event_mapping
-  has_many :canonical_pending_settled_mappings
-  has_many :canonical_transactions, through: :canonical_pending_settled_mappings
   has_one :canonical_pending_declined_mapping
+  has_one :canonical_pending_settled_mapping
+  has_one :canonical_transaction, through: :canonical_pending_settled_mapping
   has_one :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code", class_name: "HcbCode"
 
   monetize :amount_cents
@@ -129,8 +129,8 @@ class CanonicalPendingTransaction < ApplicationRecord
   scope :unmapped, -> { includes(:canonical_pending_event_mapping).where(canonical_pending_event_mappings: { canonical_pending_transaction_id: nil }) }
   scope :mapped, -> { includes(:canonical_pending_event_mapping).where.not(canonical_pending_event_mappings: { canonical_pending_transaction_id: nil }) }
   scope :unsettled, -> {
-    includes(:canonical_pending_settled_mappings)
-      .where(canonical_pending_settled_mappings: { canonical_pending_transaction_id: nil })
+    includes(:canonical_pending_settled_mapping)
+      .where(canonical_pending_settled_mapping: { canonical_pending_transaction_id: nil })
       .includes(:canonical_pending_declined_mapping)
       .where(canonical_pending_declined_mapping: { canonical_pending_transaction_id: nil })
   }
@@ -202,7 +202,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   end
 
   def settled?
-    @settled ||= canonical_pending_settled_mappings.present?
+    @settled ||= canonical_pending_settled_mapping.present?
   end
 
   def decline!
