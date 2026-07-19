@@ -12,7 +12,7 @@
   <% end %>
 
   <div class="flex items-center gap-2">
-    <% if signed_in? %>
+    <% if organizer_signed_in? %>
       <% if new_ledger_active %>
         <%= link_to event_transactions_path(event, apply_flipper: true), class: "btn flex items-center" do %>
           <%= inline_icon "back" %>

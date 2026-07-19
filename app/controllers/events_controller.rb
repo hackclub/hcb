@@ -167,7 +167,7 @@ class EventsController < ApplicationController
       flash.delete(:popover)
     end
 
-    if signed_in?
+    if organizer_signed_in?
       if params[:apply_flipper] == "true"
         Flipper.disable_actor(:new_ledger_2026_07_17, current_user)
       elsif Flipper.enabled?(:new_ledger_2026_07_17, current_user)
@@ -1269,7 +1269,7 @@ class EventsController < ApplicationController
 
     @items = @items.page(params[:page]).per(@per)
 
-    if signed_in?
+    if organizer_signed_in?
       if params[:apply_flipper] == "true"
         Flipper.enable_actor(:new_ledger_2026_07_17, current_user)
       elsif !Flipper.enabled?(:new_ledger_2026_07_17, current_user)
