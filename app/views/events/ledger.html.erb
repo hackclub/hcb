@@ -2,7 +2,7 @@
 
 <%= render "events/nav", selected: :transactions %>
 
-<%= render "events/heading", event: @event, new_ledger_active: true do %>
+<%= render "events/heading", event: @event, new_ledger_active: true, show_ledger_toggle: true do %>
   <span class="flex-grow">Transactions</span>
 <% end %>
 
