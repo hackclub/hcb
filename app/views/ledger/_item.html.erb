@@ -13,7 +13,7 @@
     <% if item.status.present? && !item.settled? %>
       <%= badge_for item.status_text, class: item.status_css %>
     <% end %>
-    <%= link_to item.memo, auditor_signed_in? ? ledger_item_path(item) : ledger_item_hcb_path(item),
+    <%= link_to item.memo, ledger_item_path(item),
                 data: popovers_enabled? ? ledger_item_popover_data(item) : { turbo: false } %>
   </td>
   <td class="nowrap">

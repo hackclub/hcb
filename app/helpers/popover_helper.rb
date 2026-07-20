@@ -41,8 +41,8 @@ module PopoverHelper
       title: item.hcb_code.pretty_title(show_event_name: false, show_amount: true),
       src: item.hcb_code.popover_path,
       frame_id: item.hcb_code.public_id,
-      state_url: auditor_signed_in? ? ledger_item_path(item) : hcb_code_path(item.hcb_code),
-      external_link: auditor_signed_in? ? ledger_item_path(item) : url_for(item.hcb_code)
+      state_url: ledger_item_path(item),
+      external_link: ledger_item_path(item)
     )
   end
 
