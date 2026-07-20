@@ -6,7 +6,7 @@
 
 <div>
   <div data-payee-picker-target="defaultPanel" class="py-2" <%= "hidden" if prefilled %>>
-    <% if event.payees.any? || event.payment_recipients.unscope(:includes, :order).exists? || event.ach_transfers.exists? || event.increase_checks.exists? || event.wires.exists? %>
+    <% if event.payees.any? || event.payment_recipients.merge(PaymentRecipient.unscoped).exists? || event.ach_transfers.exists? || event.increase_checks.exists? || event.wires.exists? %>
       <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id], destination:) do %>
         <%= render "application/loading_container", klass: "py-8" %>
       <% end %>
