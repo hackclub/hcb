@@ -166,7 +166,7 @@ class Ledger
     end
 
     def calculate_status
-      return :settled if linked_object_type == "Reimbursement::ExpensePayout"
+      return :settled if linked_object_type.in?(["Reimbursement::ExpensePayout", "BankFee"])
       return :settled if linked_object_type == "Disbursement::Outgoing" && linked_object.counterparty.canonical_pending_transactions.fronted.any?
       return :settled if linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) && linked_object.transferred_at.present? && !linked_object.rejected? && !linked_object.errored?
       return :settled if canonical_pending_transactions.fronted.not_declined.revenue.any? && primary_ledger&.can_front_balance?
@@ -342,7 +342,44 @@ class Ledger
     end
 
     def humanized_type
-      type_metadata.first
+      case linked_object_type
+      when "Invoice"
+        "Invoice"
+      when "Donation"
+        "Donation"
+      when "AchTransfer"
+        "Outgoing ACH"
+      when "Wire"
+        "Wire"
+      when "PaypalTransfer"
+        "PayPal transfer"
+      when "WiseTransfer"
+        "Wise transfer"
+      when "Check"
+        "Mailed check"
+      when "IncreaseCheck"
+        "Mailed check"
+      when "CheckDeposit"
+        "Check deposit"
+      when "Disbursement::Outgoing"
+        "Outgoing transfer"
+      when "Disbursement::Incoming"
+        "Incoming transfer"
+      when "StripeServiceFee"
+        "Stripe service fee"
+      when "BankFee"
+        "Fiscal sponsorship fee"
+      when "FeeRevenue"
+        "Fee revenue"
+      when "Reimbursement::PayoutHolding"
+        "Reimbursement payout holding"
+      when "Reimbursement::ExpensePayout"
+        "Reimbursement"
+      when "CardCharge"
+        "Card charge"
+      else
+        "Bank account transaction"
+      end
     end
 
     def icon
@@ -423,28 +460,6 @@ class Ledger
       linked_object = (canonical_pending_transactions.order(date: :asc).map(&:linked_object) + canonical_transactions.order(date: :asc).map(&:linked_object_v2)).compact.first
 
       update!(linked_object:) if linked_object.present?
-    end
-
-    def type_metadata
-      {
-        "Disbursement::Incoming": ["Incoming transfer", "door-enter"],
-        "Disbursement::Outgoing": ["Outgoing transfer", "door-leave"],
-        "Reimbursement::ExpensePayout": ["Reimbursement", "reimbursement"],
-        "Reimbursement::PayoutHolding": ["Reimbursement payout holding", "reimbursement"],
-        "AchTransfer": ["Outgoing ACH", "payment-transfer"],
-        "BankFee": ["Fiscal sponsorship fee", "bank-icon"],
-        "Check": ["Mailed check", "email"],
-        "IncreaseCheck": ["Mailed check", "email"],
-        "CheckDeposit": ["Check deposit", "cheque"],
-        "Donation": ["Donation", "support"],
-        "FeeRevenue": ["Fee revenue", "bank-icon"],
-        "Invoice": ["Invoice", "payment-docs"],
-        "PaypalTransfer": ["PayPal transfer", "paypal"],
-        "Wire": ["Wire", "web"],
-        "WiseTransfer": ["Wise transfer", "wise"],
-        "StripeServiceFee": ["Stripe service fee", "cash"],
-        "CardCharge": ["Card charge", "card"]
-      }[linked_object_type&.to_sym] || ["Bank account transaction", "cash"]
     end
 
   end
