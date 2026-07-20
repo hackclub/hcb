@@ -235,6 +235,9 @@ class EventPolicy < ApplicationPolicy
     show? && record.approved? && record.plan.donations_enabled? && record.donation_page_enabled?
   end
 
+  alias donations? donation_overview?
+  alias recurring_donations? donation_overview?
+
   def donation_page?
     record.approved? && record.plan.donations_enabled? && record.donation_page_enabled?
   end

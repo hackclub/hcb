@@ -1,0 +1,53 @@
+<%= turbo_frame_tag :donations_donations_overview do %>
+  <% if @donations.size > 0 %>
+    <article class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Date</th>
+            <th>From</th>
+            <th class="text-right">Amount</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <% @donations.each do |d| %>
+            <tr class="clickable">
+              <td>
+                <span class="ml0 badge bg-<%= d.state %>"><%= d.state_text %></span>
+              </td>
+              <td>
+                <%= format_date d.created_at %>
+              </td>
+              <td class="flex items-center">
+                <% if d.is_a? Donation %>
+                  <%= d.name(show_anonymous: organizer_signed_in?) %>
+                <% else %>
+                  <%= d.name %>
+                <% end %>
+                <% if d.recurring? %>
+                  <div class="line-height-0 ml1 tooltipped tooltipped--n" aria-label="Monthly donor"><%= inline_icon "support-recurring", size: 24, class: "muted" %></div>
+                <% end %>
+                <% if d.in_person? %>
+                  <div class="line-height-0 ml1 tooltipped tooltipped--n" aria-label="In-person donor"><%= inline_icon "card", size: 24, class: "muted" %></div>
+                <% end %>
+                <% if d.anonymous? %>
+                  <div class="line-height-0 ml1 tooltipped tooltipped--n" aria-label="Anonymous donor"><%= inline_icon "private-fill", size: 24, class: "muted" %></div>
+                <% end %>
+              </td>
+              <td style="text-align: right;">
+                <%= render_money(d.amount) %>
+                <%= link_to "", hcb_code_url(d.hcb_code), class: "stretched-link", data: popovers_enabled? && popover_data(title: "#{d.name} donated #{render_money(d.amount)}", src: d.local_hcb_code.popover_path, frame_id: d.local_hcb_code.public_id, state_url: hcb_code_url(d.local_hcb_code.hashid), external_link: hcb_code_url(d.local_hcb_code.hashid), state_title: "#{d.name} donated #{render_money(d.amount)}") if organizer_signed_in? %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </article>
+
+    <%= paginate @donations %>
+  <% else %>
+    <%= blankslate "No donations yet" %>
+  <% end %>
+<% end %>
