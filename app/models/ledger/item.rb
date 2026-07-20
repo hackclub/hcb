@@ -408,7 +408,7 @@ class Ledger
     # An approved Stripe authorization that never settled was released without
     # capture, as opposed to being declined outright
     def uncaptured_stripe_authorization?
-      canonical_pending_transactions.any? { |cpt| cpt.raw_pending_stripe_transaction&.stripe_transaction&.dig("approved") }
+      canonical_transactions.none? && canonical_pending_transactions.any? { |cpt| cpt.raw_pending_stripe_transaction&.stripe_transaction&.dig("approved") }
     end
 
     def assign_linked_object!
