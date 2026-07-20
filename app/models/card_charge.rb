@@ -114,11 +114,8 @@ class CardCharge < ApplicationRecord
   end
 
   def set_merchant_data
-    self.merchant_network_id ||= raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_data", "network_id") ||
-                                 raw_stripe_transactions.map { |rst| rst.stripe_transaction&.dig("merchant_data", "network_id") }.compact.first
-
-    self.merchant_category ||= raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_data", "category") ||
-                               raw_stripe_transactions.map { |rst| rst.stripe_transaction&.dig("merchant_data", "category") }.compact.first
+    self.merchant_network_id ||= merchant_data&.[]("network_id")
+    self.merchant_category ||= merchant_data&.[]("category")
   end
 
 end
