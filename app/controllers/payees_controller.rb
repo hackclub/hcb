@@ -17,6 +17,16 @@ class PayeesController < ApplicationController
     selected = all.find_by_hashid(params[:payee_id]) if params[:payee_id].present?
     @payees = [selected, *payees.to_a].compact.uniq.first(15)
 
+    previous = @event.payment_recipients
+                     .unscope(:includes, :order)
+                     .where.not(email: [nil, ""])
+                     .where.not(email: @event.payees.select(:email))
+    if params[:q].present?
+      q = "%#{PaymentRecipient.sanitize_sql_like(params[:q])}%"
+      previous = previous.where("name ILIKE :q OR email ILIKE :q", q:)
+    end
+    @previous_recipients = previous.order(created_at: :desc).first(25).uniq(&:email).first(5)
+
     render layout: false
   end
 

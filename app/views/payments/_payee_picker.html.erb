@@ -2,10 +2,11 @@
 <%# The picker always opens in contractor mode; the manual-payee controller
     toggles to the manual path client-side via the enable/undo buttons. %>
 <% manual = false %>
+<% prefilled = params[:payee_name].present? || params[:payee_email].present? %>
 
 <div>
-  <div data-payee-picker-target="defaultPanel" class="py-2">
-    <% if event.payees.any? %>
+  <div data-payee-picker-target="defaultPanel" class="py-2" <%= "hidden" if prefilled %>>
+    <% if event.payees.any? || event.payment_recipients.unscope(:includes, :order).exists? %>
       <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id], destination:) do %>
         <%= render "application/loading_container", klass: "py-8" %>
       <% end %>
@@ -36,7 +37,7 @@
     <% end %>
   </div>
 
-  <div data-payee-picker-target="addingPanel" hidden>
+  <div data-payee-picker-target="addingPanel" <%= "hidden" unless prefilled %>>
     <div class="px-4 py-3">
       <button type="button" class="btn mb-3" data-action="payee-picker#hideAdding">
         <%= inline_icon "view-back" %>

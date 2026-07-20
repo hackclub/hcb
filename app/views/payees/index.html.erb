@@ -52,7 +52,22 @@
           <% end %>
         </div>
       <% end %>
-    <% elsif params[:q].present? %>
+    <% end %>
+    <% if @previous_recipients.any? %>
+      <p class="text-xs muted eyebrow px-4 pt-3 pb-1 mb-0 border-t">Previously paid</p>
+      <% @previous_recipients.each do |recipient| %>
+        <div class="btn btn--list-item border-t rounded-none relative">
+          <%= link_to "", new_recipient_transfer_path(destination, @event, payee_name: recipient.name, payee_email: recipient.email), class: "absolute inset-0", data: { turbo_frame: "_top" }, "aria-label": "Select #{recipient.name}" %>
+          <%= avatar_for_email recipient.email, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
+          <div class="flex-1 min-w-0">
+            <p class="font-medium truncate"><%= recipient.name %></p>
+            <p class="text-sm muted truncate"><%= recipient.email %></p>
+          </div>
+          <span class="badge bg-muted shrink-0">Previously paid</span>
+        </div>
+      <% end %>
+    <% end %>
+    <% if @payees.empty? && @previous_recipients.empty? && params[:q].present? %>
       <div class="px-4">
         <%= blankslate "No results for \"#{params[:q]}\"", class: "py-5 text-sm mb-2" %>
       </div>
