@@ -106,7 +106,7 @@ html[data-dark='true'] {
     // absolutely-positioned overlay extends the clickable area above and below
     // while staying out of layout flow.
     &::after {
-      content: "";
+      content: '';
       position: absolute;
       inset: -0.25rem 0;
     }
