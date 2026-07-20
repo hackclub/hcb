@@ -71,7 +71,7 @@ module EventsHelper
     },
     {
       name: "Transactions",
-      path_proc: ->(event_id) { event_transactions_path(event_id:) },
+      path_proc: ->(event_id) { (organizer_signed_in? && Flipper.enabled?(:new_ledger_2026_07_17, current_user) ? event_ledger_path(event_id:) : event_transactions_path(event_id:)) },
       tooltip: "View detailed ledger",
       icon: "bank-account",
       symbol: :transactions,
@@ -141,7 +141,16 @@ module EventsHelper
       tooltip: "Send & transfer money",
       icon: "payment-transfer",
       symbol: :transfers,
-      available_proc: ->(event) { policy(event).transfers? }
+      available_proc: ->(event) { policy(event).transfers? && !Flipper.enabled?(:payments_contractors_refresh_2026_06_26, event) }
+    },
+    {
+      name: "Payments",
+      path_proc: ->(event_id) { event_payments_path(event_id:) },
+      tooltip: "Send & transfer money",
+      icon: "payment-transfer",
+      symbol: :payments,
+      beta: true,
+      available_proc: ->(event) { policy(event).payments? }
     },
     {
       name: "Reimbursements",
@@ -154,11 +163,12 @@ module EventsHelper
     },
     {
       name: "Contractors",
-      path_proc: ->(event_id) { event_employees_path(event_id:) },
+      path_proc: ->(event_id) { event_contractors_path(event_id:) },
       tooltip: "Manage payroll",
       icon: "person-badge",
-      symbol: :payroll,
-      available_proc: ->(event) { policy(event).employees? }
+      symbol: :contractors,
+      beta: true,
+      available_proc: ->(event) { policy(event).contractors? }
     },
     {
       section: "",
@@ -319,7 +329,7 @@ module EventsHelper
     end
   end
 
-  def dock_item(name, url = nil, icon: nil, tooltip: nil, async_badge: nil, disabled: false, selected: false, admin: false, **options)
+  def dock_item(name, url = nil, icon: nil, tooltip: nil, async_badge: nil, disabled: false, selected: false, admin: false, beta: false, **options)
     icon_tag = icon.present? ? inline_icon(icon, size: 32) : nil
     badge_tag = async_badge.present? ? turbo_frame_tag(async_badge, src: async_badge, data: { controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }) : nil
 
@@ -333,6 +343,7 @@ module EventsHelper
     children = []
     children << icon_wrapper if icon_wrapper
     children << tag.span(name, class: "dock__item-label")
+    children << tag.span("BETA", class: "badge bg-info text-xs ml-3") if beta
     children = safe_join(children)
 
     if admin && !auditor_signed_in?
@@ -367,7 +378,7 @@ module EventsHelper
 
   def transaction_memo(tx)
     # needed to handle mock data in playground mode
-    if tx.local_hcb_code.method(:memo).parameters.size == 0
+    if tx.local_hcb_code.method(:memo).parameters.empty?
       tx.local_hcb_code.memo
     else
       tx.local_hcb_code.memo(event: @event)

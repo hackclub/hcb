@@ -23,6 +23,10 @@
 class Event
   class Plan
     class SpendOnly < Standard
+      def revenue_fee
+        0.00
+      end
+
       def label
         "spend-only"
       end

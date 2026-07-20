@@ -90,6 +90,7 @@ gem "api-pagination"
 
 gem "flipper" # feature flags
 gem "flipper-active_record"
+gem "flipper-active_support_cache_store" # caches flag reads via Rails.cache
 gem "flipper-ui"
 
 gem "pundit" # implements authorization policies
@@ -160,8 +161,6 @@ group :development, :test do
   gem "pry-byebug", require: ENV["EXCLUDE_PRY"] != "true"
   gem "pry-rails", require: ENV["EXCLUDE_PRY"] != "true"
 end
-
-gem "query_count"
 
 gem "rack-mini-profiler", "~> 3.3"
 gem "stackprof" # used by `rack-mini-profiler` to provide flamegraphs
@@ -238,3 +237,5 @@ gem "intercom-rails"
 gem "hotwire_combobox"
 
 gem "maintenance_tasks", "~> 2.14"
+
+gem "aws-sdk-kms"

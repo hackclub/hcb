@@ -42,6 +42,10 @@ transaction_grouping_engine_nightly_job:
   cron: "*/5 * * * *" # run every 5 minutes
   class: "TransactionGroupingEngine::NightlyJob"
 
+money_printer_stats_job:
+  cron: "*/15 * * * *" # run every 15 minutes
+  class: "MoneyPrinterStatsJob"
+
 sync_payouts_job:
   cron: "0,30 * * * *" # run every 30 minutes
   class: "SyncPayoutsJob"
@@ -99,6 +103,10 @@ payroll_nightly_job:
   cron: "*/5 * * * *" # run every 5 minutes
   class: "Payroll::NightlyJob"
 
+payroll_position_expire_nightly_job:
+  cron: "0 0 * * *" # run every 1 day
+  class: "Payroll::Position::ExpireNightlyJob"
+
 bank_fee_nightly_job:
   cron: "*/30 2-23 * * *" # run every 30 minutes
   class: "BankFee::NightlyJob"
@@ -143,6 +151,18 @@ calculate_stats_metric:
 calculate_subjects_metrics:
   cron: "0 */12 * * *" # run twice a day
   class: "Metric::CalculateSubjectsJob"
+
+detect_logical_transaction_anomalies:
+  cron: "0 * * * *" # run every 1 hour
+  class: "Admin::DetectLogicalTransactionAnomaliesJob"
+
+detect_balance_anomalies:
+  cron: "0 7 * * *" # run every 1 day
+  class: "Admin::DetectBalanceAnomaliesJob"
+
+detect_fee_anomalies:
+  cron: "0 7 * * *" # run every 1 day
+  class: "Admin::DetectFeeAnomaliesJob"
 
 ledger_audit_weekly_job:
   cron: "0 0 * * MON" # run first day of each week

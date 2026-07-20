@@ -30,11 +30,11 @@ module PendingTransactionEngine
       end
 
       def invoice?
-        @invoice ||= raw_pending_invoice_transaction.present?
+        @invoice ||= raw_pending_invoice_transaction&.invoice.present?
       end
 
       def donation?
-        @donation ||= raw_pending_donation_transaction.present?
+        @donation ||= raw_pending_donation_transaction&.donation.present?
       end
 
       def raw_pending_outgoing_check_transaction

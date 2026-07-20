@@ -39,6 +39,7 @@ module Reimbursement
 
     has_paper_trail
 
+    has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
     has_many :expense_payouts, class_name: "Reimbursement::ExpensePayout", foreign_key: "reimbursement_payout_holdings_id", inverse_of: :payout_holding
     belongs_to :report, foreign_key: "reimbursement_reports_id", inverse_of: :payout_holding
     belongs_to :ach_transfer, optional: true, inverse_of: :reimbursement_payout_holding
@@ -55,7 +56,7 @@ module Reimbursement
     after_create do
       CanonicalPendingTransaction.create!(
         reimbursement_payout_holding: self,
-        event: Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING),
+        event:,
         amount_cents:,
         memo: hcb_code,
         date: created_at,
@@ -98,6 +99,10 @@ module Reimbursement
       end
     end
 
+    def event
+      @event ||= Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
+    end
+
     def payout_transfer
       ach_transfer || increase_check || paypal_transfer || wire || wise_transfer
     end
@@ -114,7 +119,12 @@ module Reimbursement
 
         mark_reversed!
 
-        canonical_pending_transaction.decline!
+        # This is the created_at of the first payout holding that had a CPT
+        if self.created_at <= DateTime.parse("2024-08-09 00:45:12.992236000 UTC +00:00")
+          canonical_pending_transaction&.decline!
+        else
+          canonical_pending_transaction.decline!
+        end
 
         # these are reversed because this is reverse!
         sender_bank_account_id = ColumnService::Accounts.id_of(book_transfer_receiving_account)
