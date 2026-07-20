@@ -36,6 +36,8 @@ class CardCharge < ApplicationRecord
       )
   }
 
+  before_create :set_merchant_data
+
   def stripe_card
     (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_card
   end
@@ -107,6 +109,14 @@ class CardCharge < ApplicationRecord
     raw_stripe_transaction.association(:card_charge).reset
 
     charge
+  end
+
+  def set_merchant_data
+    self.merchant_network_id ||= raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_data", "network_id") ||
+                                raw_stripe_transactions.map { |rst| rst.stripe_transaction&.dig("merchant_data", "network_id") }.compact.first
+
+    self.merchant_category ||= raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_data", "category") ||
+                              raw_stripe_transactions.map { |rst| rst.stripe_transaction&.dig("merchant_data", "category") }.compact.first
   end
 
 end
