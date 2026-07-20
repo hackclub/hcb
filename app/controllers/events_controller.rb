@@ -1349,20 +1349,6 @@ class EventsController < ApplicationController
       :plan,
       :financially_frozen,
       {
-        card_grant_setting_attributes: [
-          :merchant_lock,
-          :category_lock,
-          :keyword_lock,
-          :invite_message,
-          :banned_merchants,
-          :banned_categories,
-          :expiration_preference,
-          :reimbursement_conversions_enabled,
-          :pre_authorization_required,
-          :block_suspected_fraud,
-          :support_message,
-          :support_url
-        ],
         config_attributes: [
           :id,
           :anonymous_donations,
@@ -1414,20 +1400,6 @@ class EventsController < ApplicationController
       :website,
       :background_image,
       :stripe_card_logo,
-      card_grant_setting_attributes: [
-        :merchant_lock,
-        :category_lock,
-        :keyword_lock,
-        :invite_message,
-        :banned_merchants,
-        :banned_categories,
-        :expiration_preference,
-        :reimbursement_conversions_enabled,
-        :pre_authorization_required,
-        :block_suspected_fraud,
-        :support_message,
-        :support_url
-      ],
       config_attributes: [
         :id,
         :anonymous_donations,
