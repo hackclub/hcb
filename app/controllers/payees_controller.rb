@@ -19,22 +19,30 @@ class PayeesController < ApplicationController
 
     like = "%#{PaymentRecipient.sanitize_sql_like(params[:q].to_s)}%" if params[:q].present?
 
-    legacy = @event.payment_recipients.unscope(:includes, :order)
+    legacy = PaymentRecipient.unscoped.where(event: @event)
     legacy = legacy.where("name ILIKE :q OR email ILIKE :q", q: like) if like
-    candidates = legacy.order(created_at: :desc).limit(25).pluck(:name, :email)
+    candidates = legacy.order(created_at: :desc).limit(25).pluck(:created_at, :name, :email)
 
     [@event.ach_transfers, @event.increase_checks, @event.wires].each do |scope|
       scope = scope.where("recipient_name ILIKE :q OR recipient_email ILIKE :q", q: like) if like
-      candidates += scope.order(created_at: :desc).limit(25).pluck(:recipient_name, :recipient_email)
+      candidates += scope.order(created_at: :desc).limit(25).pluck(:created_at, :recipient_name, :recipient_email)
     end
 
-    payee_emails = @event.payees.pluck(:email).compact.map(&:downcase)
+    candidate_emails = candidates.map { |_, _, email| email&.downcase }.compact.uniq
+    payee_emails = if candidate_emails.any?
+                     @event.payees.where("LOWER(email) IN (?)", candidate_emails).pluck(Arel.sql("LOWER(email)"))
+                   else
+                     []
+                   end
+
     @previous_recipients = candidates
-                           .reject { |name, email| name.blank? || email.blank? }
-                           .uniq { |_, email| email.downcase }
-                           .reject { |_, email| payee_emails.include?(email.downcase) }
+                           .reject { |_, name, email| name.blank? || email.blank? }
+                           .sort_by { |created_at, _, _| created_at }
+                           .reverse
+                           .uniq { |_, _, email| email.downcase }
+                           .reject { |_, _, email| payee_emails.include?(email.downcase) }
                            .first(5)
-                           .map { |name, email| { name:, email: } }
+                           .map { |_, name, email| { name:, email: } }
 
     render layout: false
   end
