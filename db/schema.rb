@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_16_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_18_150000) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1618,6 +1618,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_16_120000) do
     t.string "status"
     t.text "system_memo"
     t.datetime "updated_at", null: false
+    t.index "(\nCASE\n    WHEN ((status)::text = 'pending'::text) THEN 0\n    ELSE 1\nEND), datetime DESC, created_at DESC, id DESC", name: "index_ledger_items_on_default_sort"
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
     t.index ["author_id"], name: "index_ledger_items_on_author_id"
     t.index ["datetime"], name: "index_ledger_items_on_datetime"
