@@ -386,6 +386,7 @@ class AdminController < Admin::BaseController
     @amount = params[:amount].presence
     @q = params[:q].presence
     @unmapped = params[:unmapped] != "0"
+    @nonzero = params[:nonzero] == "1" ? true : nil
 
     relation = if @q
                  Ledger::Item.where(id: @q)
@@ -399,6 +400,7 @@ class AdminController < Admin::BaseController
     relation = relation.where.missing(:primary_mapping) if @unmapped.present? && @q.blank?
 
     relation = relation.where(amount_cents: @amount.to_i).or(relation.where(amount_cents: -@amount.to_i)) if @amount
+    relation = relation.where.not(amount_cents: 0) if @nonzero.present? && @q.blank?
 
     @count = relation.count
 

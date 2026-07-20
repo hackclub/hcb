@@ -32,6 +32,7 @@ object_shape(json, event, object_name: "organization") do
     json.swift_bic_code event.bic_code
   end
 
+  # TODO: Remove users field once migration to /api/v4/organizer_positions is done
   if expand?(:users)
     json.users event.organizer_positions.includes(:user).order(created_at: :desc) do |op|
       json.partial! "api/v4/users/user", user: op.user, show_email: shares_org_with?(op.user)

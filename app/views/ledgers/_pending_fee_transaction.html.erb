@@ -1,6 +1,6 @@
 <%# locals: (ledger:) %>
 
-<% if ledger.fronted_fee_balance_cents > 0 && @direction != "revenue" %>
+<% if params[:page] == 1 && @direction != "revenue" && ledger.event_id.present? && ledger.event.revenue_fee > 0 && ledger.fronted_fee_balance_cents > 0 %>
   <%# @direction != revenue is in case the user has a revenue-only filter applied %>
   <tr class="transaction transaction--negative muted">
     <td class="transaction__icon transaction__fee_icon">

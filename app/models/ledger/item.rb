@@ -168,30 +168,30 @@ class Ledger
     def calculate_status
       return :settled if linked_object_type == "Reimbursement::ExpensePayout"
       return :settled if linked_object_type == "Disbursement::Outgoing" && linked_object.counterparty.canonical_pending_transactions.fronted.any?
-      return :settled if linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) && linked_object.approved_at.present? && !linked_object.rejected? && !linked_object.errored?
+      return :settled if linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) && linked_object.transferred_at.present? && !linked_object.rejected? && !linked_object.errored?
       return :settled if canonical_pending_transactions.fronted.not_declined.revenue.any? && primary_ledger&.can_front_balance?
       return :pending if canonical_pending_transactions.unsettled.exists?
 
-      if canonical_transactions.exists?
+      case linked_object_type
+      when "CardCharge"
+        return :released if uncaptured_stripe_authorization?
+
+        return :settled
+      when "IncreaseCheck" # Increase checks use the same state for users canceling and ops rejecting
+        return :canceled if linked_object.try(:rejected?) || linked_object.try(:increase_stopped?) || linked_object.try(:column_stopped?)
+      end
+
+      return :rejected if linked_object.try(:rejected?)
+      return :failed if linked_object.try(:failed?) || linked_object.try(:errored?)
+      return :canceled if linked_object.try(:canceled?) || linked_object.try(:voided?) || linked_object.try(:void_v2?)
+
+      # A declined CPT — determine why it never settled (may have CTs)
+      if CanonicalPendingDeclinedMapping.where(canonical_pending_transaction: canonical_pending_transactions).exists?
+        return :declined
+      elsif canonical_transactions.exists?
         return :reversed if canonical_transactions.sum(:amount_cents).zero?
 
         return :settled
-      end
-
-      # A declined CPT and no CTs — determine why it never settled
-      if CanonicalPendingDeclinedMapping.where(canonical_pending_transaction: canonical_pending_transactions).exists?
-        case linked_object_type
-        when "CardCharge"
-          return :released if uncaptured_stripe_authorization?
-        when "IncreaseCheck" # Increase checks use the same state for users canceling and ops rejecting
-          return :canceled if linked_object.try(:rejected?) || linked_object.try(:increase_stopped?) || linked_object.try(:column_stopped?)
-        end
-
-        return :rejected if linked_object.try(:rejected?)
-        return :failed if linked_object.try(:failed?) || linked_object.try(:errored?)
-        return :canceled if linked_object.try(:canceled?) || linked_object.try(:voided?) || linked_object.try(:void_v2?)
-
-        return :declined
       end
 
       # Nothing has mapped to this item yet
@@ -410,7 +410,7 @@ class Ledger
     # An approved Stripe authorization that never settled was released without
     # capture, as opposed to being declined outright
     def uncaptured_stripe_authorization?
-      canonical_pending_transactions.any? { |cpt| cpt.raw_pending_stripe_transaction&.stripe_transaction&.dig("approved") }
+      canonical_transactions.none? && canonical_pending_transactions.any? { |cpt| cpt.raw_pending_stripe_transaction&.stripe_transaction&.dig("approved") }
     end
 
     def assign_linked_object!
