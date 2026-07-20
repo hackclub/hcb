@@ -31,7 +31,7 @@ If the authorisation expires (the merchant doesn’t explicitly void it but they
 
 Eventually the authorisation will continue being updated until the `amount` is 0.
 
-Alright, so what does it mean for the merchant to “capture” an authorisation? Essentially it’s when a merchant confirms they intend to charge this customer and provide a final amount. When the authorisation is captured, Stripe creates a “transaction” and sets the status of the authorisation to closed. I wrote about how we import Stripe transactions in “How a transaction gets mapped to an event and a HCB code on HCB.” That guide describes how the [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb) I described above becomes a [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb).
+Alright, so what does it mean for the merchant to “capture” an authorisation? Essentially it’s when a merchant confirms they intend to charge this customer and provide a final amount. When the authorisation is captured, Stripe creates a “transaction” and sets the status of the authorisation to closed. I wrote about how we import Stripe transactions in “How a transaction gets mapped to an event and an HCB code on HCB.” That guide describes how the [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb) I described above becomes a [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb).
 
 Capturing has a couple of edge cases:
 

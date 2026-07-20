@@ -226,11 +226,21 @@ class OrganizerPositionInvite < ApplicationRecord
     is_signee
   end
 
-  def send_contract(cosigner_email: nil, include_videos: false, reissue_signee_message: nil, reissue_cosigner_message: nil)
+  def send_contract(cosigner_email: nil, include_videos: false, reissue_messages: {}, reissue_of: nil)
     fs_contract = nil
 
     ActiveRecord::Base.transaction do
-      fs_contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos:, external_template_id: event.plan.contract_docuseal_template_id, prefills: { "public_id" => event.public_id, "name" => event.name, "description" => event.airtable_record&.[]("Tell us about your event") })
+      fs_contract = Contract::FiscalSponsorship.create!(
+        contractable: self,
+        include_videos:,
+        external_template_id: event.plan.contract_docuseal_template_id,
+        prefills: {
+          "public_id"   => event.public_id,
+          "name"        => event.name,
+          "description" => event.airtable_record&.[]("Tell us about your event")
+        },
+        reissue_of:
+      )
       fs_contract.parties.create!(user:, role: :signee)
       fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
 
@@ -238,7 +248,7 @@ class OrganizerPositionInvite < ApplicationRecord
       organizer_position&.update(is_signee: true, fiscal_sponsorship_contract: fs_contract)
     end
 
-    fs_contract.send!(reissue_signee_message:, reissue_cosigner_message:)
+    fs_contract.send!(reissue_messages:)
 
     fs_contract
   end

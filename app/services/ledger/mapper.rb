@@ -2,22 +2,18 @@
 
 class Ledger
   class Mapper
+    SYSTEM = :__system__
+
     def initialize(ledger_item:)
       @ledger_item = ledger_item
+      @ledger_item.reload
     end
 
     def run
-      if card_grant = calculate_card_grant
-        ledger = Ledger.find_or_create_by!(primary: true, card_grant:)
-      elsif event = calculate_event
-        ledger = Ledger.find_or_create_by!(primary: true, event:)
-      else
-        return nil
-      end
+      return if @ledger_item.primary_mapping&.mapped_by_human?
+      return if (ledger = calculate_ledger).nil?
 
-      Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: @ledger_item) do |mapping|
-        mapping.on_primary_ledger = true
-      end
+      Ledger::Mapping.map_primary!(ledger:, ledger_item: @ledger_item, mapped_by: SYSTEM)
     end
 
     private
@@ -30,19 +26,31 @@ class Ledger
         event_from_canonical_pending_transactions
     end
 
+    def calculate_ledger
+      if card_grant = calculate_card_grant
+        Ledger.find_or_create_by!(primary: true, card_grant:)
+      elsif event = calculate_event
+        Ledger.find_or_create_by!(primary: true, event:)
+      end
+    end
+
     # Transactions sent to an organisation's unique Column account number.
     # Also covers ACH transfers, wires, etc. which are sent using this number.
     def event_from_canonical_transactions
       @ledger_item.canonical_transactions.each do |ct|
-        next unless ct.raw_column_transaction
-
-        column_account_number = Column::AccountNumber.find_by(
-          column_id: ct.raw_column_transaction.column_transaction["account_number_id"]
-        )
-        return column_account_number.event if column_account_number
+        if ct.raw_column_transaction.present?
+          column_account_number = Column::AccountNumber.find_by(
+            column_id: ct.raw_column_transaction.column_transaction["account_number_id"]
+          )
+          return column_account_number.event if column_account_number
+        end
 
         # Map transactions on Stripe cards.
         if ct.raw_stripe_transaction.present? && (event = ct.raw_stripe_transaction.likely_event)
+          return event
+        end
+
+        if (event = ct.linked_object_v2.try(:event))
           return event
         end
 
