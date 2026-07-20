@@ -745,8 +745,8 @@ Rails.application.routes.draw do
           end
 
           resources :disbursements, path: "transfers", only: [:create]
-
-          resources :donations, path: "donations", only: [:index, :create] do
+          # TODO: shallow route these (breaking change)
+          resources :donations, path: "donations", only: [:create] do
             member do
               post "payment_intent"
             end
@@ -762,11 +762,19 @@ Rails.application.routes.draw do
           end
         end
 
+        resources :organizer_positions, only: [:index] do
+          member do
+            post "removal_request"
+          end
+        end
+
         resources :transactions, only: [:show] do
           member do
             post "mark_no_receipt"
           end
         end
+
+        resources :donations, only: [:index, :show]
 
         resources :tags, only: [:index, :show, :create, :destroy]
 

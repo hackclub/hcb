@@ -3,27 +3,35 @@
 
 <%= render "events/nav" if @event %>
 
-<% if @transaction&.local_hcb_code %>
-  <% admin_tool("mt3") do %>
-    <section class="details">
-      <p>
-        <strong>HCB Code:</strong>
-        <span>
+<% admin_tool("mt3") do %>
+  <section class="details">
+    <p>
+      <strong>HCB Code:</strong>
+      <span>
+        <% if @transaction.local_hcb_code.present? %>
           <%= link_to @transaction.hcb_code, @transaction.local_hcb_code %>
-        </span>
-      </p>
-      <p>
-        <strong>Ledger Item:</strong>
-        <span>
-          <% if @transaction.ledger_item.present? %>
-            <%= link_to @transaction.ledger_item.hashid, ledger_item_path(@transaction.ledger_item) %>
-          <% else %>
-            <span class="text-red">No Ledger Item</span>
-          <% end %>
-        </span>
-      </p>
-    </section>
-  <% end %>
+        <% else %>
+          <span class="text-red">No HCB Code</span>
+        <% end %>
+      </span>
+    </p>
+    <p>
+      <strong>Ledger Item:</strong>
+      <span>
+        <% if @transaction.ledger_item.present? %>
+          <%= link_to @transaction.ledger_item.hashid, ledger_item_path(@transaction.ledger_item) %>
+        <% else %>
+          <span class="text-red">No Ledger Item</span>
+        <% end %>
+      </span>
+    </p>
+    <p>
+      <strong>Admin Page:</strong>
+      <span>
+        <%= link_to "CT #{@transaction.id}", transaction_admin_path(@transaction) %>
+      </span>
+    </p>
+  </section>
 <% end %>
 
 <%= render partial: "application/admin_viewer", locals: { record: @transaction } %>

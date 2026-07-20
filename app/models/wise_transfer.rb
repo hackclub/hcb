@@ -197,18 +197,32 @@ class WiseTransfer < ApplicationRecord
     aasm_state.humanize
   end
 
-  def self.generate_detailed_quote(initial_local_amount)
-    conn = Faraday.new url: "https://api.wise.com" do |f|
+  def self.quote_connection
+    Faraday.new url: "https://api.wise.com" do |f|
       f.request :json
       f.response :raise_error
       f.response :json
     end
+  end
 
-    response = conn.post("/v3/quotes", {
-                           sourceCurrency: "USD",
-                           targetCurrency: initial_local_amount.currency.to_s,
-                           targetAmount: initial_local_amount.amount
-                         })
+  def self.convert_usd_to_local(usd_amount, target_currency)
+    return Money.from_cents(usd_amount.cents, target_currency) if target_currency == "USD"
+
+    response = quote_connection.post("/v3/quotes", {
+                                       sourceCurrency: "USD",
+                                       targetCurrency: target_currency,
+                                       sourceAmount: usd_amount.amount
+                                     })
+
+    Money.from_amount(usd_amount.amount * response.body["rate"], target_currency)
+  end
+
+  def self.generate_detailed_quote(initial_local_amount)
+    response = quote_connection.post("/v3/quotes", {
+                                       sourceCurrency: "USD",
+                                       targetCurrency: initial_local_amount.currency.to_s,
+                                       targetAmount: initial_local_amount.amount
+                                     })
 
     payment_option = response.body["paymentOptions"].first
     price_after_all_fees = Money.from_amount(payment_option["sourceAmount"], "USD")

@@ -166,6 +166,14 @@ class EventsController < ApplicationController
       @popover = flash[:popover]
       flash.delete(:popover)
     end
+
+    if organizer_signed_in?
+      if params[:apply_flipper] == "true"
+        Flipper.disable_actor(:new_ledger_2026_07_17, current_user)
+      elsif Flipper.enabled?(:new_ledger_2026_07_17, current_user)
+        redirect_to event_ledger_path(@event) and return
+      end
+    end
   end
 
   def transactions_list
@@ -1260,6 +1268,14 @@ class EventsController < ApplicationController
     @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id)) if @tag&.id.present?
 
     @items = @items.page(params[:page]).per(@per)
+
+    if organizer_signed_in?
+      if params[:apply_flipper] == "true"
+        Flipper.enable_actor(:new_ledger_2026_07_17, current_user)
+      elsif !Flipper.enabled?(:new_ledger_2026_07_17, current_user)
+        redirect_to event_transactions_path(@event) and return
+      end
+    end
   rescue Pundit::NotAuthorizedError
     return head :not_found
   end
