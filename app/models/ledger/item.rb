@@ -175,6 +175,8 @@ class Ledger
       case linked_object_type
       when "CardCharge"
         return :released if uncaptured_stripe_authorization?
+
+        return :settled
       when "IncreaseCheck" # Increase checks use the same state for users canceling and ops rejecting
         return :canceled if linked_object.try(:rejected?) || linked_object.try(:increase_stopped?) || linked_object.try(:column_stopped?)
       end
