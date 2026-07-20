@@ -16,6 +16,7 @@
 #  receipt_count                :integer          default(0), not null
 #  receipt_required             :boolean
 #  short_code                   :text
+#  special_appearance           :integer
 #  status                       :string
 #  system_memo                  :text
 #  created_at                   :datetime         not null
@@ -65,17 +66,6 @@ class Ledger
     has_many :canonical_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :canonical_pending_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
-
-    enum :status, {
-      pending: "pending", # any CPTs contributing to balance
-      settled: "settled", # no CPTs contributing to balance or fronted incoming CPT with no CTs
-      reversed: "reversed", # sum of CTs is zero
-      released: "released", # uncaptured by Stripe (CardCharge only)
-      rejected: "rejected", # transfer rejected by ops
-      failed: "failed", # error
-      canceled: "canceled", # user canceled transfer (for IncreaseCheck this also includes transfers rejected by ops)
-      declined: "declined" # CPT has CPDM, no CPTs
-    }
 
     validates_presence_of :amount_cents, :memo, :datetime
 

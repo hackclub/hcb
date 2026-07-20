@@ -1616,6 +1616,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_16_120000) do
     t.boolean "receipt_required"
     t.text "short_code"
     t.string "status"
+    t.integer "special_appearance"
     t.text "system_memo"
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
