@@ -6,7 +6,7 @@
 
 <div>
   <div data-payee-picker-target="defaultPanel" class="py-2" <%= "hidden" if prefilled %>>
-    <% if event.payees.any? || event.payment_recipients.unscope(:includes, :order).exists? %>
+    <% if event.payees.any? || event.payment_recipients.unscope(:includes, :order).exists? || event.ach_transfers.exists? || event.increase_checks.exists? || event.wires.exists? %>
       <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id], destination:) do %>
         <%= render "application/loading_container", klass: "py-8" %>
       <% end %>
@@ -73,6 +73,13 @@
               form: "new-payee-form",
               data: { "manual-payee-target": "entityTypeInput" } %>
         </div>
+
+        <% if prefilled && params[:legacy].present? %>
+          <%= render "application/callout", type: "info", title: "You've paid this recipient before", class: "mt-0 mb-0" do %>
+            They were paid through HCB's legacy transfer system, which collected taxes manually.
+            Payments now collect it automatically so HCB can handle taxes more efficiently.
+          <% end %>
+        <% end %>
 
         <div data-manual-payee-target="defaultBanner" <%= "hidden" if manual %>>
           <%= render "application/callout", type: "info", title: "HCB will email the recipient", class: "mt-0 mb-0" do %>
