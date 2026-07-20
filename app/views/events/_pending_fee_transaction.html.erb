@@ -1,4 +1,4 @@
-<% if params[:page] == 1 && !@subledger && @direction != "revenue" && @event.fronted_fee_balance_v2_cents > 0 %>
+<% if params[:page] == 1 && !@subledger && @direction != "revenue" && @event.revenue_fee > 0 && @event.fronted_fee_balance_v2_cents > 0 %>
   <tr class="transaction <%= "transaction--negative" unless current_user && Flipper.enabled?(:transactions_background_2024_06_05, current_user) %> muted">
     <td class="transaction__icon transaction__fee_icon tooltipped tooltipped--e" aria-label="Fiscal sponsorship fee">
       <%= inline_icon "bank-icon" %>
