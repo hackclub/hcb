@@ -17,15 +17,24 @@ class PayeesController < ApplicationController
     selected = all.find_by_hashid(params[:payee_id]) if params[:payee_id].present?
     @payees = [selected, *payees.to_a].compact.uniq.first(15)
 
-    previous = @event.payment_recipients
-                     .unscope(:includes, :order)
-                     .where.not(email: [nil, ""])
-                     .where.not(email: @event.payees.select(:email))
-    if params[:q].present?
-      q = "%#{PaymentRecipient.sanitize_sql_like(params[:q])}%"
-      previous = previous.where("name ILIKE :q OR email ILIKE :q", q:)
+    like = "%#{PaymentRecipient.sanitize_sql_like(params[:q].to_s)}%" if params[:q].present?
+
+    legacy = @event.payment_recipients.unscope(:includes, :order)
+    legacy = legacy.where("name ILIKE :q OR email ILIKE :q", q: like) if like
+    candidates = legacy.order(created_at: :desc).limit(25).pluck(:name, :email)
+
+    [@event.ach_transfers, @event.increase_checks, @event.wires].each do |scope|
+      scope = scope.where("recipient_name ILIKE :q OR recipient_email ILIKE :q", q: like) if like
+      candidates += scope.order(created_at: :desc).limit(25).pluck(:recipient_name, :recipient_email)
     end
-    @previous_recipients = previous.order(created_at: :desc).first(25).uniq(&:email).first(5)
+
+    payee_emails = @event.payees.pluck(:email).compact.map(&:downcase)
+    @previous_recipients = candidates
+                           .reject { |name, email| name.blank? || email.blank? }
+                           .uniq { |_, email| email.downcase }
+                           .reject { |_, email| payee_emails.include?(email.downcase) }
+                           .first(5)
+                           .map { |name, email| { name:, email: } }
 
     render layout: false
   end
