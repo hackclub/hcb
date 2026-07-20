@@ -89,7 +89,14 @@ class CardCharge < ApplicationRecord
 
       existing
     else
-      create!(raw_pending_stripe_transaction:)
+      charge = create!(raw_pending_stripe_transaction:)
+
+      # set_merchant_data reads raw_stripe_transactions in a before_create hook,
+      # which caches the (empty) collection on this instance. Reset it so the
+      # charge picks up transactions that settle onto it later.
+      charge.association(:raw_stripe_transactions).reset
+
+      charge
     end
   end
 
