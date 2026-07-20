@@ -1266,6 +1266,12 @@ class EventsController < ApplicationController
     @items = ledger_query.execute(ledgers: @ledgers)
 
     @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id)) if @tag&.id.present?
+    if @category.present?
+      categorized_cts = @category.canonical_transactions.where(ledger_item: @items).select(:ledger_item_id)
+      categorized_cpts = @category.canonical_pending_transactions.where(ledger_item: @items).select(:ledger_item_id)
+      @items = @items.where(id: categorized_cts).or(@items.where(id: categorized_cpts))
+    end
+
 
     @items = @items.page(params[:page]).per(@per)
 
