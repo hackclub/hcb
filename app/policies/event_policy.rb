@@ -288,7 +288,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def ledger?
-    auditor? || (Flipper.enabled?(:new_ledger_2026_06_30, record) && reader?)
+    auditor? || (reader? && (Flipper.enabled?(:new_ledger_2026_06_30, record) || Flipper.enabled?(:new_ledger_2026_07_17, user)))
   end
 
   alias hide_onboarding_message? request_call?
