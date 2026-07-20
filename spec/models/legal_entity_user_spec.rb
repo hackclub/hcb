@@ -52,7 +52,7 @@ RSpec.describe LegalEntityUser, type: :model do
           duplicate = build(:legal_entity_user, legal_entity: second_person_entity, user:)
 
           expect(duplicate).not_to be_valid
-          expect(duplicate.errors[:base]).to include("Users can only have one person legal entity")
+          expect(duplicate.errors[:base]).to include("Users can only have one non-archived personal legal entity")
         end
       end
 

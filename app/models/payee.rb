@@ -32,6 +32,7 @@ class Payee < ApplicationRecord
   belongs_to :legal_entity, optional: true
 
   has_many :payments
+  has_many :payroll_positions, class_name: "Payroll::Position"
 
   validates_uniqueness_of :legal_entity_id, scope: [:event_id], allow_nil: true
 
@@ -51,12 +52,26 @@ class Payee < ApplicationRecord
     User.find_by(email:)
   end
 
+  def total_paid_cents
+    # Use the in-memory association when it's already loaded (e.g. the
+    # contractors index eager-loads payments) to avoid an N+1 of sum queries.
+    if payments.loaded?
+      payments.sum { |payment| payment.aasm_state == "successful" ? payment.amount_cents : 0 }
+    else
+      payments.where(aasm_state: "successful").sum(:amount_cents)
+    end
+  end
+
   def managed?
     legal_entity&.managing_event_id.present?
   end
 
   def archive!
     update!(archived_at: Time.current)
+  end
+
+  def archived?
+    archived_at.present?
   end
 
   private

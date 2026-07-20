@@ -1,5 +1,8 @@
+<% destination = params[:destination].presence || "payments" %>
+
 <%= turbo_frame_tag :payee_results do %>
   <%= form_with(url: event_payees_path(event_id: @event.slug), method: :get, class: "px-4 pb-2 pt-1", data: { turbo_frame: "payee_results_list", controller: "form" }) do |form| %>
+    <%= hidden_field_tag :destination, destination %>
     <%= form.hidden_field :payee_id, value: params[:payee_id] %>
     <div class="input input-group max-w-none mt-1">
       <%= inline_icon "search" %>
@@ -11,7 +14,7 @@
     <% if @payees.any? %>
       <% @payees.each do |payee| %>
         <div class="btn btn--list-item border-t rounded-none relative">
-          <%= link_to "", new_event_payment_path(event_id: @event.slug, payee_id: payee.public_id), class: "absolute inset-0", data: { turbo_frame: "_top" }, "aria-label": "Select #{payee.display_name}" %>
+          <%= link_to "", new_recipient_transfer_path(destination, @event, payee_id: payee.hashid), class: "absolute inset-0", data: { turbo_frame: "_top" }, "aria-label": "Select #{payee.display_name}" %>
           <%= avatar_for_email payee.email, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
           <div class="flex-1 min-w-0">
             <p class="font-medium truncate"><%= payee.display_name %></p>
@@ -22,7 +25,7 @@
           <% if payee.managed? %>
             <span class="badge bg-muted shrink-0">Managed</span>
           <% end %>
-          <% if params[:payee_id].to_s == payee.public_id %>
+          <% if params[:payee_id].to_s == payee.hashid %>
             <%= inline_icon "check-thin", class: "success shrink-0" %>
           <% end %>
 
@@ -33,13 +36,13 @@
                     data: { turbo: false, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
               <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
                 <% if policy(payee).update? %>
-                  <%= link_to new_event_payment_path(event_id: @event.slug, payee_id: payee.public_id, edit_payee: true), class: "flex items-center", data: { turbo_frame: "_top" } do %>
+                  <%= link_to new_event_payment_path(event_id: @event.slug, payee_id: payee.hashid, edit_payee: true), class: "flex items-center", data: { turbo_frame: "_top" } do %>
                     <%= inline_icon "edit", size: 24 %>
                     Edit recipient
                   <% end %>
                 <% end %>
                 <% if policy(payee).archive? %>
-                  <%= link_to archive_event_payee_path(event_id: @event.slug, id: payee.public_id), class: "flex items-center", data: { turbo_method: :post, turbo_frame: "_top", turbo_confirm: "Archive #{payee.display_name}? They'll be hidden from the recipient list." } do %>
+                  <%= link_to archive_event_payee_path(event_id: @event.slug, id: payee.hashid), class: "flex items-center", data: { turbo_method: :post, turbo_frame: "_top", turbo_confirm: "Archive #{payee.display_name}? They'll be hidden from the recipient list." } do %>
                     <%= inline_icon "delete", size: 24 %>
                     Archive recipient
                   <% end %>

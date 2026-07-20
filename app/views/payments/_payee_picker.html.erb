@@ -1,4 +1,4 @@
-<%# locals: (event:) %>
+<%# locals: (event:, destination: "payments") %>
 <%# The picker always opens in contractor mode; the manual-payee controller
     toggles to the manual path client-side via the enable/undo buttons. %>
 <% manual = false %>
@@ -6,7 +6,7 @@
 <div>
   <div data-payee-picker-target="defaultPanel" class="py-2">
     <% if event.payees.any? %>
-      <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id]) do %>
+      <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id], destination:) do %>
         <%= render "application/loading_container", klass: "py-8" %>
       <% end %>
     <% end %>
@@ -21,6 +21,19 @@
       </div>
       <%= inline_icon "view-forward", class: "ml-auto muted" %>
     </a>
+
+    <% if destination == "payments" %>
+      <%= link_to new_disbursement_path(source_event_id: event.slug), class: "btn btn--list-item border-t rounded-none w-full", data: { turbo_frame: "_top" } do %>
+        <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
+          <%= inline_icon "bank-account", size: 18 %>
+        </div>
+        <div class="text-left">
+          <p class="font-medium">HCB transfer</p>
+          <p class="text-sm muted">Send money to another HCB organization</p>
+        </div>
+        <%= inline_icon "view-forward", class: "ml-auto muted" %>
+      <% end %>
+    <% end %>
   </div>
 
   <div data-payee-picker-target="addingPanel" hidden>
@@ -34,6 +47,7 @@
           submit to PayeesController on Continue. On the manual path this also creates a
           managed legal entity, then the page reloads with ?payee_id= selected. %>
       <%= form_with(url: event_payees_path(event_id: event.slug), local: true, id: "new-payee-form", html: { class: "contents" }) do %>
+        <%= hidden_field_tag :destination, destination %>
         <%= hidden_field_tag :manual, manual.to_s, data: { "manual-payee-target": "payeeFormManualField" } %>
       <% end %>
 

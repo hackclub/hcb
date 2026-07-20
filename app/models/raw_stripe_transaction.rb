@@ -16,6 +16,7 @@
 #
 # Indexes
 #
+#  index_raw_stripe_transactions_on_card                     (((stripe_transaction ->> 'card'::text)))
 #  index_raw_stripe_transactions_on_card_id_text             ((((stripe_transaction -> 'card'::text) ->> 'id'::text))) USING hash
 #  index_raw_stripe_transactions_on_stripe_authorization_id  (stripe_authorization_id)
 #
