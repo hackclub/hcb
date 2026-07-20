@@ -5,8 +5,10 @@
 # Table name: card_charges
 #
 #  id                                :bigint           not null, primary key
+#  merchant_category                 :string
 #  created_at                        :datetime         not null
 #  updated_at                        :datetime         not null
+#  merchant_network_id               :string
 #  raw_pending_stripe_transaction_id :bigint
 #
 # Indexes
