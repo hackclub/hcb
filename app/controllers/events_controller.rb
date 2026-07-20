@@ -148,6 +148,10 @@ class EventsController < ApplicationController
     render partial: "events/home/users_chart", locals: { users: @users, timeframe: params[:timeframe], event: @event }
   end
 
+  def stats
+    authorize @event
+  end
+
   def transactions
     maybe_pending_invite = OrganizerPositionInvite.pending.find_by(user: current_user, event: @event)
 
@@ -1266,6 +1270,12 @@ class EventsController < ApplicationController
     @items = ledger_query.execute(ledgers: @ledgers)
 
     @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id)) if @tag&.id.present?
+    if @category.present?
+      categorized_cts = @category.canonical_transactions.where(ledger_item: @items).select(:ledger_item_id)
+      categorized_cpts = @category.canonical_pending_transactions.where(ledger_item: @items).select(:ledger_item_id)
+      @items = @items.where(id: categorized_cts).or(@items.where(id: categorized_cpts))
+    end
+
 
     @items = @items.page(params[:page]).per(@per)
 
