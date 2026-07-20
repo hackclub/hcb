@@ -32,7 +32,8 @@ class UsersController < ApplicationController
     :edit_admin, :admin_details, :admin_details_ach_transfers, :admin_details_check_deposits,
     :admin_details_disbursements, :admin_details_emburse_cards, :admin_details_increase_checks,
     :admin_details_invoices, :admin_details_lob_checks, :admin_details_missing_receipts,
-    :admin_details_reimbursement_reports, :admin_details_stripe_cards, :admin_details_stripe_transactions
+    :admin_details_reimbursement_reports, :admin_details_stripe_cards, :admin_details_stripe_transactions,
+    :suppress_card_locking
   ]
   wrap_parameters format: :url_encoded_form
 
@@ -325,6 +326,16 @@ class UsersController < ApplicationController
                                   .page(params[:page] || 1).per(params[:per] || 10)
   end
 
+  def suppress_card_locking
+    authorize @user
+
+    hours = params.fetch(:hours, 24).to_i.clamp(1, 720)
+    @user.update!(card_locking_suppressed_until: hours.hours.from_now)
+    User::UpdateCardLockingJob.perform_later(user: @user)
+
+    redirect_back_or_to admin_user_path(@user), flash: { success: "Card locking suppressed for #{hours}h." }
+  end
+
   def update
     return_to = params[:return_to]
     @states = ISO3166::Country.new("US").subdivisions.values.map { |s| [s.translations["en"], s.code] }
@@ -398,7 +409,6 @@ class UsersController < ApplicationController
       payout_ok = true
       if payout_method_type.present?
         payout_update = LegalEntity::PayoutMethodService::Update.new(
-          user: @user,
           legal_entity: @legal_entity,
           details_type: payout_method_type,
           details_attrs: payout_method_details_params

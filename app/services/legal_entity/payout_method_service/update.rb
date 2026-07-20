@@ -2,22 +2,21 @@
 
 class LegalEntity
   module PayoutMethodService
-    # Builds, validates, and persists the default payout method for a user's
-    # legal entity (their personal legal entity by default, or another legal
-    # entity they belong to). Encapsulates the business rules that previously lived
-    # across User#build_default_payout_method, User#valid_payout_method, and
-    # the UsersController#update transaction.
+    # Builds, validates, and persists a payout method for a given legal entity
+    # (a user's personal legal entity, or another entity they belong to).
+    # Encapsulates the business rules that previously lived across
+    # User#build_default_payout_method, User#valid_payout_method, and the
+    # UsersController#update transaction.
     #
     # On failure, #run returns false and the (unsaved) payout method, exposed
     # via #payout_method, carries the relevant errors.
     class Update
       attr_reader :payout_method
 
-      def initialize(user:, details_type:, details_attrs: {}, legal_entity: nil, make_default: true, replacing: nil)
-        @user = user
+      def initialize(legal_entity:, details_type:, details_attrs: {}, make_default: true, replacing: nil)
+        @legal_entity = legal_entity
         @details_type = details_type
         @details_attrs = details_attrs || {}
-        @legal_entity = legal_entity || user.personal_legal_entity
         @make_default = make_default
         @replacing = replacing
       end
@@ -52,8 +51,16 @@ class LegalEntity
       def build_payout_method
         details_class = LegalEntity::PayoutMethod.details_class_for(@details_type)
         pm = LegalEntity::PayoutMethod.new(legal_entity: @legal_entity, default: @make_default)
-        pm.details = details_class.new(@details_attrs) if details_class
+        pm.details = details_class.new(preserved_ach_attrs || @details_attrs) if details_class
         pm
+      end
+
+      def preserved_ach_attrs
+        old = @replacing&.details
+        return unless old.is_a?(LegalEntity::PayoutMethod::AchTransfer)
+        return unless [@details_attrs[:account_number], @details_attrs[:routing_number]].none? { _1.to_s.match?(/\A\d+\z/) }
+
+        @details_attrs.to_h.merge(account_number: old.account_number, routing_number: old.routing_number)
       end
 
       def apply_business_rules
@@ -63,7 +70,9 @@ class LegalEntity
       end
 
       def repoint_failed_and_draft_reports(replaced_method)
-        on_replaced_method = @user.reimbursement_reports.where(legal_entity_payout_method_id: replaced_method&.id)
+        on_replaced_method = Reimbursement::Report
+                             .where(user: @legal_entity.users)
+                             .where(legal_entity_payout_method_id: replaced_method&.id)
 
         failed = on_replaced_method.joins(:payout_holding).where(reimbursement_payout_holdings: { aasm_state: :failed })
         draft = on_replaced_method.where(aasm_state: :draft)

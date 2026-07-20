@@ -58,6 +58,19 @@ RSpec.describe MyController do
     end
   end
 
+  describe "GET #inbox" do
+    render_views(false)
+
+    it "sets @locking_count from card_locking_overdue_charges" do
+      user = sign_in_verified
+
+      get :inbox
+
+      expect(response).to have_http_status(:ok)
+      expect(controller.instance_variable_get(:@locking_count)).to eq(user.card_locking_overdue_charges.count)
+    end
+  end
+
   describe "GET #pay" do
     it "renders even when the user has not received any payments" do
       sign_in_verified

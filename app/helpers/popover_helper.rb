@@ -36,6 +36,16 @@ module PopoverHelper
     )
   end
 
+  def ledger_item_popover_data(item)
+    popover_data(
+      title: item.hcb_code.pretty_title(show_event_name: false, show_amount: true),
+      src: item.hcb_code.popover_path,
+      frame_id: item.hcb_code.public_id,
+      state_url: ledger_item_path(item),
+      external_link: ledger_item_path(item)
+    )
+  end
+
   def card_grant_popover_data(card_grant, hcb_code:, event: nil, state_title: nil)
     popover_data(
       title: hcb_code.pretty_title(show_event_name: false, show_amount: true, event: event),
@@ -55,6 +65,17 @@ module PopoverHelper
       state_url: url_for(stripe_card),
       external_link: url_for(stripe_card),
       size: "sm"
+    )
+  end
+
+  def contractor_popover_data(contractor)
+    path = event_payroll_position_path(event_id: contractor.event.slug, id: contractor)
+    popover_data(
+      title: "#{contractor.payee.display_name}'s contract",
+      src: event_payroll_position_path(event_id: contractor.event.slug, id: contractor, frame: true),
+      frame_id: "contractor_#{contractor.id}",
+      state_url: path,
+      external_link: path
     )
   end
 

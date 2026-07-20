@@ -1,0 +1,84 @@
+<% title "Welcome to #{@position.event.name}" %>
+<% page_sm %>
+<%= render "users/nav" %>
+
+<h1 class="heading border-0 mb-0">Welcome, <%= @position.payee.display_name %>!</h1>
+<p class="muted mt-0">
+  <%= @position.event.name %> is onboarding you as a contractor through HCB.
+</p>
+
+<article class="hcb-code">
+  <h2 class="h2 mt0 border-none flex items-center justify-between hcb-code--heading mb-0" style="gap: 1ch">
+    <span class="flex items-center py-3 gap-2 flex-grow">
+      <%= @position.title %>
+      <span class="badge h4 bg-<%= @position.status_color %> nowrap order-1"><%= @position.status_text %></span>
+    </span>
+  </h2>
+
+  <section class="hcb-code--info">
+    <p>
+      <strong>Rate</strong>
+      <%= "#{render_money @position.rate_cents}/hr" %>
+    </p>
+    <p>
+      <strong>Period</strong>
+      <%= @position.period_label %>
+    </p>
+    <p>
+      <strong>Purpose</strong>
+      <%= @position.description %>
+    </p>
+    <% if @position.file.attached? %>
+      <p>
+        <strong>Agreement</strong>
+        <%= link_to "View attachment", url_for(@position.file) %>
+      </p>
+    <% end %>
+  </section>
+</article>
+
+<% checklist = @position.onboarding_checklist %>
+<% tax_form_complete = checklist.find { |item| item[:key] == :tax_form }[:complete] %>
+
+<h3 class="eyebrow muted mt-4 mb-2">Onboarding checklist</h3>
+<div class="flex flex-col gap-2">
+  <% checklist.each do |item| %>
+    <div class="card flex items-center justify-between py-3 mb-0">
+      <span class="flex items-center gap-2">
+        <%= inline_icon item[:complete] ? "check-circle-fill" : "important-fill",
+              size: 24, class: item[:complete] ? "text-green" : "text-orange" %>
+        <span class="<%= "muted" unless item[:complete] %>"><%= item[:label] %></span>
+      </span>
+
+      <% if !item[:complete] && item[:key] == :tax_form %>
+        <%= link_to "Complete", choose_legal_entity_payee_path(@position.payee), class: "btn bg-success" %>
+      <% elsif !item[:complete] && item[:key] == :payout_method %>
+        <% if tax_form_complete %>
+          <%= link_to "Complete", choose_legal_entity_payee_path(@position.payee), class: "btn bg-success" %>
+        <% else %>
+          <span class="badge bg-muted">Complete your tax info first</span>
+        <% end %>
+      <% elsif !item[:complete] && item[:key] == :contractor_signature && @contractor_party.present? %>
+        <% if tax_form_complete %>
+          <%= link_to "Sign contract", contract_party_path(@contractor_party), class: "btn bg-success" %>
+        <% else %>
+          <span class="badge bg-muted">Complete your tax info first</span>
+        <% end %>
+      <% else %>
+        <span class="badge bg-<%= item[:complete] ? "success" : "warning" %>">
+          <%= item[:complete] ? "Done" : "Pending" %>
+        </span>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<% if @position.onboarding_complete? %>
+  <%= render "application/callout", type: "success", title: "You're all set!", class: "mt-4" do %>
+    Your onboarding is complete. <%= @position.event.name %> can now pay you for this position.
+  <% end %>
+<% end %>
+
+<p class="mt-4">
+  If you have any questions, please contact <%= @position.event.name %>.
+</p>

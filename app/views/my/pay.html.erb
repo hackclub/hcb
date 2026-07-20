@@ -59,6 +59,127 @@
   </div>
 </div>
 
+<% if @contractor_positions.any? %>
+  <% if @tax_form_required %>
+    <div class="card border b--warning warning flex items-center justify-between gap-4 p-4 mb-4">
+      <span class="flex items-center gap-2">
+        <%= inline_icon "important", size: 32, class: "shrink-0" %>
+        <span>
+          <strong>Action required:</strong>
+          You haven't submitted your tax information yet. HCB requires this before releasing any payments.
+        </span>
+      </span>
+      <%= link_to tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "bold nowrap flex items-center gap-1" do %>
+        Complete tax form
+        <%= inline_icon "view-forward" %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <h2 class="mt-0 mb-2">Your contracts</h2>
+  <article class="table-container mb-4">
+    <table>
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Organization</th>
+          <th>Period</th>
+          <th>Rate</th>
+          <th>Purpose</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @contractor_positions.each do |position| %>
+          <% onboarding = position.status == :onboarding %>
+          <% next_step = position.next_onboarding_step if onboarding %>
+          <% legal_entity = position.payee.legal_entity %>
+          <tr>
+            <td>
+              <span class="badge ml-0 bg-<%= onboarding ? "warning" : position.status_color %>"
+                    <% if next_step %> title="Next step: <%= next_step[:label] %>"<% end %>>
+                <%= onboarding ? "Onboarding" : position.status_text %>
+              </span>
+            </td>
+            <td><strong><%= position.event.name %></strong></td>
+            <td><%= position.period_label %></td>
+            <td><%= "#{render_money_short(position.rate_cents)}/hr" %></td>
+            <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= position.description %>">
+              <%= position.description %>
+            </td>
+            <td class="text-right">
+              <% if position.status == :active %>
+                <%= link_to "#", class: "btn bg-success nowrap", data: { behavior: "modal_trigger", modal: dom_id(position, :submit_invoice) } do %>
+                  <%= inline_icon "cloud-upload" %>
+                  Submit invoice
+                <% end %>
+
+                <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog"
+                  id="<%= dom_id(position, :submit_invoice) %>"
+                  data-controller="turbo-frame-modal"
+                  data-action="turbo:submit-end->turbo-frame-modal#submitEnd">
+                  <%= modal_header "Submit an invoice" %>
+                  <%= turbo_frame_tag dom_id(position, :invoice_form), src: new_payroll_position_invoice_path(position), loading: :lazy do %>
+                    <%= render "application/loading_container", klass: "py-8" %>
+                  <% end %>
+                </section>
+              <% elsif next_step %>
+                <% case next_step[:key] %>
+                <% when :tax_form %>
+                  <%= link_to tax_forms_path(legal_entity_id: legal_entity&.hashid), class: "btn bg-warning nowrap" do %>
+                    <%= inline_icon "docs" %>
+                    Complete tax form
+                  <% end %>
+                <% when :payout_method %>
+                  <%= link_to settings_payouts_path(legal_entity_id: legal_entity&.id), class: "btn bg-warning nowrap" do %>
+                    <%= inline_icon "bank-account" %>
+                    Configure payouts
+                  <% end %>
+                <% else %>
+                  <span class="muted nowrap"><%= next_step[:label] %></span>
+                <% end %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </article>
+
+  <% if @invoices.any? %>
+    <h2 class="mt-0 mb-2">Pending invoices</h2>
+    <article class="table-container mb-4">
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Organization</th>
+            <th>Description</th>
+            <th class="text-right">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @invoices.each do |invoice| %>
+            <% state_color = invoice.approved? ? "success" : (invoice.rejected? ? "muted" : "warning") %>
+            <tr>
+              <td><span class="badge ml-0 bg-<%= state_color %>"><%= invoice.aasm_state.humanize %></span></td>
+              <td><%= format_date invoice.created_at %></td>
+              <td><strong><%= invoice.event.name %></strong></td>
+              <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
+                <%= invoice.name %>
+              </td>
+              <td class="text-right"><%= render_money invoice.amount_cents %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </article>
+  <% end %>
+
+  <h2 class="mt-0 mb-2">Payment history</h2>
+<% end %>
+
 <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
   <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
     <%= render "events/filters/search", form: %>
@@ -93,8 +214,12 @@
             </td>
             <td><%= format_date payment.created_at %></td>
             <td><%= payment.event.name %></td>
-            <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= payment.purpose %>">
-              <%= payment.purpose %>
+            <td style="max-width: 25ch;">
+              <div class="overflow-hidden truncate" title="<%= payment.purpose %>"><%= payment.purpose %></div>
+              <% invoice_receipt = payment.payroll_invoice&.receipts&.first %>
+              <% if invoice_receipt&.file&.attached? %>
+                <%= link_to "View invoice", url_for(invoice_receipt.file), class: "muted text-xs relative z-10", data: { turbo_frame: "_top" } %>
+              <% end %>
             </td>
             <td>
               <%= render_money payment.amount_cents %>

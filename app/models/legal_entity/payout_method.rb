@@ -55,6 +55,7 @@ class LegalEntity
     after_create do
       if default? && other_methods.none?
         legal_entity.payments.pending_legal_entity.each(&:on_default_payout_method_created)
+        legal_entity.refresh_contractor_onboarding!
       end
     end
 

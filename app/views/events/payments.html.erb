@@ -118,6 +118,10 @@
                   <span class="tooltipped tooltipped--e inline-block" aria-label="Wise transfer">
                     <%= inline_icon "wise" %>
                   </span>
+                <% elsif d.is_a?(Payment) %>
+                  <span class="tooltipped tooltipped--e inline-block" aria-label="Payment">
+                    <%= inline_icon "payment" %>
+                  </span>
                 <% else %>
                   <span class="tooltipped tooltipped--e inline-block" aria-label="HCB transfer">
                     <%= inline_icon "door-leave" %>
