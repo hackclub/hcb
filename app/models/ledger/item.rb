@@ -377,6 +377,8 @@ class Ledger
         "Reimbursement"
       when "CardCharge"
         "Card charge"
+      else
+        "Bank account transaction"
       end
     end
 
