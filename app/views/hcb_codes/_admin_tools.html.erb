@@ -27,7 +27,7 @@
                 .to_a,
             t_transaction: @hcb_code.ach_transfer&.t_transaction
           }
-      ) %>
+        ) %>
     </div>
   <% end %>
   <%= render partial: "application/admin_viewer", locals: { record: @hcb_code } %>
