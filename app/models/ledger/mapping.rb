@@ -58,7 +58,6 @@ class Ledger
       raise ArgumentError, "mapped_by must be present" if mapped_by.nil?
 
       mapped_by = nil if mapped_by == Ledger::Mapper::SYSTEM
-      
       if mapped_by.present? && ledger.nil?
         Ledger::Mapping.find_by(ledger_item:, on_primary_ledger: true)&.destroy! and return
       end
