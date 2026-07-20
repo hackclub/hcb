@@ -19,12 +19,8 @@ module PendingEventMappingEngine
 
       private
 
-      def canonical_transactions
-        @canonical_pending_transaction.canonical_transactions
-      end
-
       def canonical_transaction
-        canonical_transactions.first
+        @canonical_pending_transaction.canonical_transaction
       end
 
       def canonical_transaction_is_prior_to_the_pending_transaction?
