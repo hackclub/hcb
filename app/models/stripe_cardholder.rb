@@ -22,8 +22,8 @@
 #
 # Indexes
 #
-#  index_stripe_cardholders_on_stripe_id  (stripe_id)
-#  index_stripe_cardholders_on_user_id    (user_id)
+#  index_stripe_cardholders_on_stripe_id  (stripe_id) UNIQUE
+#  index_stripe_cardholders_on_user_id    (user_id) UNIQUE
 #
 # Foreign Keys
 #
@@ -43,6 +43,7 @@ class StripeCardholder < ApplicationRecord
   alias_method :transactions, :stripe_authorizations
 
   validates_uniqueness_of :stripe_id
+  validates :user, uniqueness: true
 
   validates :stripe_billing_address_line1, presence: true, on: :update
   validates :stripe_billing_address_city, presence: true, on: :update
