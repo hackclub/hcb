@@ -9,11 +9,12 @@
     </div>
   </td>
   <td><%= item.datetime.strftime("%b %e, %Y") %></td>
-  <td class="transaction__memo transaction__memo--fluid tooltipped tooltipped--s" aria-label="<%= item.memo %>">
+  <td class="transaction__memo transaction__memo--fluid">
     <% if item.status.present? && !item.settled? %>
       <%= badge_for item.status_text, class: item.status_css %>
     <% end %>
-    <%= item.memo %>
+    <%= link_to item.memo, auditor_signed_in? ? ledger_item_path(item) : ledger_item_hcb_path(item),
+                data: popovers_enabled? ? ledger_item_popover_data(item) : { turbo: false } %>
   </td>
   <td class="nowrap">
     <span class="flex items-center justify-end">
@@ -39,8 +40,5 @@
         <%= avatar_for item.author, class: "align-middle author", cached: true %>
       </div>
     <% end %>
-  </td>
-  <td>
-    <%= link_to "View", auditor_signed_in? ? ledger_item_path(item) : ledger_item_hcb_path(item), data: { turbo: false } %>
   </td>
 </tr>

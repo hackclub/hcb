@@ -36,6 +36,16 @@ module PopoverHelper
     )
   end
 
+  def ledger_item_popover_data(item)
+    popover_data(
+      title: item.hcb_code.pretty_title(show_event_name: false, show_amount: true),
+      src: item.hcb_code.popover_path,
+      frame_id: item.hcb_code.public_id,
+      state_url: auditor_signed_in? ? ledger_item_path(item) : hcb_code_path(item.hcb_code),
+      external_link: auditor_signed_in? ? ledger_item_path(item) : url_for(item.hcb_code)
+    )
+  end
+
   def card_grant_popover_data(card_grant, hcb_code:, event: nil, state_title: nil)
     popover_data(
       title: hcb_code.pretty_title(show_event_name: false, show_amount: true, event: event),
