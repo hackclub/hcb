@@ -12,22 +12,22 @@
         </tr>
       </table>
       <%= render(
-                 partial: "transactions_table",
-                 locals: {
-                   canonical_transactions:
-                     @hcb_code
-                       .canonical_pending_transactions
-                       .preload(:category)
-                       .strict_loading,
-                   canonical_pending_transactions:
-                     @hcb_code
-                       .canonical_transactions
-                       .preload(:category)
-                       .strict_loading
-                       .to_a,
-                   t_transaction: @hcb_code.ach_transfer&.t_transaction
-                 }
-        ) %>
+            partial: "transactions_table",
+            locals: {
+              canonical_transactions:
+                @hcb_code
+                  .canonical_pending_transactions
+                  .preload(:category)
+                  .strict_loading,
+              canonical_pending_transactions:
+                @hcb_code
+                  .canonical_transactions
+                  .preload(:category)
+                  .strict_loading
+                  .to_a,
+              t_transaction: @hcb_code.ach_transfer&.t_transaction
+            }
+          ) %>
     </div>
   <% end %>
   <%= render partial: "application/admin_viewer", locals: { record: @hcb_code } %>
