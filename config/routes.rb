@@ -991,6 +991,7 @@ Rails.application.routes.draw do
     get "transactions"
     get "transactions_list"
     get "ledger"
+    get "stats"
     get "merchants_filter"
     put "toggle_hidden"
     post "claim_point_of_contact"
