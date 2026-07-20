@@ -21,7 +21,7 @@ RSpec.describe CanonicalPendingTransactionService::Settle do
 
     canonical_pending_settled_mapping = CanonicalPendingSettledMapping.last
     expect(canonical_transaction.canonical_pending_settled_mapping).to eq(canonical_pending_settled_mapping)
-    expect(canonical_pending_transaction.canonical_pending_settled_mapping).to eq([canonical_pending_settled_mapping])
+    expect(canonical_pending_transaction.canonical_pending_settled_mapping).to eq(canonical_pending_settled_mapping)
   end
 
   context "when canonical_pending_transaction has a custom_memo" do
