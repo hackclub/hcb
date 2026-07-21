@@ -24,8 +24,6 @@ export default class extends Controller {
     this.closeAll()
     $(row.querySelector('[data-payout-methods-panel]')).slideDown(200)
     row.querySelector('[data-pm-actions]').classList.add('is-editing')
-    const form = row.querySelector('[data-payout-methods-panel] form')
-    if (form) form.dataset.pmSnapshot = this.serialize(form)
   }
 
   cancelRow(event) {
@@ -40,10 +38,6 @@ export default class extends Controller {
     const row = event.currentTarget.closest('[data-payout-methods-row]')
     const form = row.querySelector('[data-payout-methods-panel] form')
     if (!form) return
-    if (form.dataset.pmSnapshot === this.serialize(form)) {
-      this.cancelRow(event)
-      return
-    }
     form.requestSubmit()
   }
 
@@ -72,9 +66,5 @@ export default class extends Controller {
     return panel
       .closest('[data-payout-methods-row]')
       ?.querySelector('[data-pm-actions]')
-  }
-
-  serialize(form) {
-    return new URLSearchParams(new FormData(form)).toString()
   }
 }

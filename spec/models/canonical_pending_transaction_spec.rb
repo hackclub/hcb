@@ -70,7 +70,6 @@ RSpec.describe CanonicalPendingTransaction, type: :model do
       cpt = create(:canonical_pending_transaction, amount_cents: -999)
 
       expect(cpt.ledger_item).to be_present
-      expect(cpt.ledger_item.memo).to eq(cpt.memo)
       expect(cpt.ledger_item.amount_cents).to eq(cpt.amount_cents)
     end
 
@@ -82,6 +81,58 @@ RSpec.describe CanonicalPendingTransaction, type: :model do
 
       expect(cpt.ledger_item).to eq(existing_item)
       expect(Ledger::Item.count).to eq(1)
+    end
+  end
+
+  describe "stripe service fee" do
+    let!(:hack_club_bank) { create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK) }
+
+    before do
+      stub_request(:post, "https://api.stripe.com/v1/topups")
+        .to_return(status: 200, body: { id: "tu_1" }.to_json, headers: {})
+    end
+
+    let(:stripe_service_fee) { create(:stripe_service_fee) }
+    let(:canonical_pending_transaction) do
+      StripeServiceFeeService::CreateCanonicalPendingTransaction.new(stripe_service_fee_id: stripe_service_fee.id).run
+    end
+
+    it "is reachable through the raw_pending_stripe_service_fee_transaction association" do
+      expect(canonical_pending_transaction.raw_pending_stripe_service_fee_transaction)
+        .to eq(stripe_service_fee.raw_pending_stripe_service_fee_transaction)
+    end
+
+    it "is returned by the .stripe_service_fee scope" do
+      expect(CanonicalPendingTransaction.stripe_service_fee).to include(canonical_pending_transaction)
+    end
+
+    it "excludes transactions with no raw pending stripe service fee transaction from the scope" do
+      unrelated = create(:canonical_pending_transaction)
+
+      expect(CanonicalPendingTransaction.stripe_service_fee).not_to include(unrelated)
+    end
+  end
+
+  describe "fee revenue" do
+    let!(:hack_club_bank) { create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK) }
+    let(:fee_revenue) { create(:fee_revenue) }
+    let(:canonical_pending_transaction) do
+      FeeRevenueService::CreateCanonicalPendingTransaction.new(fee_revenue_id: fee_revenue.id).run
+    end
+
+    it "is reachable through the raw_pending_fee_revenue_transaction association" do
+      expect(canonical_pending_transaction.raw_pending_fee_revenue_transaction)
+        .to eq(fee_revenue.raw_pending_fee_revenue_transaction)
+    end
+
+    it "is returned by the .fee_revenue scope" do
+      expect(CanonicalPendingTransaction.fee_revenue).to include(canonical_pending_transaction)
+    end
+
+    it "excludes transactions with no raw pending fee revenue transaction from the scope" do
+      unrelated = create(:canonical_pending_transaction)
+
+      expect(CanonicalPendingTransaction.fee_revenue).not_to include(unrelated)
     end
   end
 

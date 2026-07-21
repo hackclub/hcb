@@ -1,0 +1,26 @@
+<%# locals: (event:, payee:) %>
+
+<% cancel_path = params[:selected].present? ? new_event_payment_path(event_id: event.slug, payee_id: payee.hashid) : new_event_payment_path(event_id: event.slug) %>
+
+<div data-scroll-seek-target="section">
+  <h3 class="mb-2">Edit recipient</h3>
+  <div class="card mb-4">
+    <%= form_with(model: payee, url: event_payee_path(event_id: event.slug, id: payee.hashid), method: :patch, local: true) do |form| %>
+      <div class="flex flex-col gap-3">
+        <div>
+          <%= form.label :display_name, "Name" %>
+          <%= form.text_field :display_name, value: payee.display_name, class: "!max-w-full", required: true %>
+        </div>
+        <div>
+          <%= form.label :email, "Email" %>
+          <%= form.email_field :email, value: payee.email, class: "!max-w-full", required: true %>
+        </div>
+      </div>
+
+      <div class="flex gap-2 mt-4">
+        <%= link_to "Cancel", cancel_path, class: "btn", data: { turbo_frame: "_top" } %>
+        <%= form.submit "Save changes", class: "btn bg-blue" %>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -1,9 +1,38 @@
 <% title "Transactions for #{@event.name}" %>
 
-<%= render "events/nav", selected: :ledger %>
+<%= render "events/nav", selected: :transactions %>
 
-<%= render "callout", type: "info", title: "You're previewing the new ledger", footer: :questions, class: "mt-0" do %>
-  HCB is working on a faster ledger to improve your experience. This ledger is a work-in-progress and may not have full parity with the existing transactions page. For the most accurate amounts, please refer to the existing transactions page or click into individual transactions to see their details.
+<%= render "events/heading", event: @event, new_ledger_active: true, show_ledger_toggle: true do %>
+  <span class="flex-grow">Transactions</span>
 <% end %>
 
-<%= render "ledgers/ledger", ledger: @ledger, items: @items %>
+<%= turbo_frame_tag "event_stats", src: event_stats_path(@event) do %>
+  <div class="statset mb-2">
+    <div class="stat">
+      <span class="stat__label">Account balance</span>
+      <span class="stat__value stat__value--no-space">
+        —
+      </span>
+    </div>
+
+    <div class="stat stat--small">
+      <span class="stat__label">Total revenue</span>
+      <span class="stat__value stat__value--no-space">
+        —
+      </span>
+    </div>
+
+    <div class="stat stat--small">
+      <span class="stat__label">Total expenses</span>
+      <span class="stat__value stat__value--no-space">
+        —
+      </span>
+    </div>
+  </div>
+<% end %>
+
+<%= render "callout", type: "info", title: "You're previewing the new ledger", footer: :questions, class: "mt-0" do %>
+  HCB is working on a faster ledger to improve your experience. If you have any feedback, send it our way!
+<% end %>
+
+<%= render "ledgers/ledger", ledger: @ledger, items: @items, table_only: true, filter: capture { render partial: "ledgers/filters/filter" }, show_fee: true %>

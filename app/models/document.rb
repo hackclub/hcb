@@ -55,7 +55,8 @@ class Document < ApplicationRecord
     general: 0,
     nonprofit_status: 1,
     tax_exemption: 2,
-    forms: 3
+    forms: 3,
+    contracts: 4
   }
 
   aasm timestamps: true do
