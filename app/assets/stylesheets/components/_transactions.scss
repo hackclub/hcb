@@ -98,10 +98,6 @@ html[data-dark='true'] {
     color: inherit;
     text-decoration: none;
 
-    &:hover {
-      text-decoration: underline;
-    }
-
     // Enlarge the vertical touch target without affecting row height: an
     // absolutely-positioned overlay extends the clickable area above and below
     // while staying out of layout flow.
@@ -109,6 +105,7 @@ html[data-dark='true'] {
       content: '';
       position: absolute;
       inset: -0.25rem 0;
+      
     }
   }
 

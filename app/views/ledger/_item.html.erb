@@ -12,10 +12,10 @@
   <td class="transaction__memo transaction__memo--fluid">
     <div>
       <div class="flex-auto">
-        <div class="tooltipped tooltipped--s" aria-label="<%= item.memo %>" style="overflow: hidden; text-overflow: ellipsis;">
-          <% if item.status.present? && !item.settled? %>
-            <%= badge_for item.status_text, class: item.status_css %>
-          <% end %>
+        <% if item.status.present? && !item.settled? %>
+          <%= badge_for item.status_text, class: item.status_css %>
+        <% end %>
+        <div class="tooltipped tooltipped--s" aria-label="<%= item.memo %>" style="display: inline-block; max-width: 100%; vertical-align: top; overflow: hidden; text-overflow: ellipsis;">
           <%= link_to item.memo, ledger_item_path(item),
                       data: popovers_enabled? ? ledger_item_popover_data(item) : { turbo: false } %>
         </div>
