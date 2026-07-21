@@ -63,7 +63,11 @@ module Payroll
     end
 
     def rate_suffix
-      rate_unit == "hour" ? "/hr" : " per #{rate_unit}"
+      case rate_unit
+      when "hour" then "/hr"
+      when FIXED_RATE_UNIT then " (fixed)"
+      else " per #{rate_unit}"
+      end
     end
 
     def rate_label

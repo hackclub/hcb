@@ -36,7 +36,7 @@
 
 class Contract
   class PayrollPosition < Contract
-    DOCUSEAL_TEMPLATE_ID = 4983902
+    DOCUSEAL_TEMPLATE_ID = 5023480
 
     after_update_commit :create_document!, if: -> { event.present? && sent_with_docuseal? && aasm_state_previously_changed?(to: "signed") }
 
