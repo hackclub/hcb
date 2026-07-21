@@ -1277,7 +1277,7 @@ class EventsController < ApplicationController
     end
 
 
-    @items = @items.page(params[:page]).per(@per)
+    @items = @items.page(params[:page]).per(@per).preload(:tags, hcb_code: { event: :tags })
 
     if organizer_signed_in?
       if params[:apply_flipper] == "true"
