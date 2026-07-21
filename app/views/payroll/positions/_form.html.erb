@@ -50,12 +50,19 @@
         <div class="flex justify-between items-center">
           <div>
             <%= form.label :rate, "Rate" %>
-            <span class="muted block">Hourly rate for this contractor</span>
+            <span class="muted block">What they're paid, and per what &mdash; use &ldquo;contract&rdquo; for a fixed amount</span>
           </div>
-          <div class="input flex gap-2 items-center py-0 max-w-[150px]">
-            <span class="bold muted">$</span>
-            <%= form.number_field :rate, value: position&.rate&.to_f, placeholder: "25.00", step: 0.01, min: 0.01, required: true, disabled:, class: "!p-0 !border-none !shadow-none min-h-auto" %>
-            <span class="bold muted">/hr</span>
+          <div class="flex items-center gap-2">
+            <div class="input flex gap-2 items-center py-0 max-w-[130px]">
+              <span class="bold muted">$</span>
+              <%= form.number_field :rate, value: position&.rate&.to_f, placeholder: "25.00", step: 0.01, min: 0.01, required: true, disabled:, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+            </div>
+            <span class="bold muted">per</span>
+            <%= form.text_field :rate_unit, value: position&.rate_unit, placeholder: "hour", required: true, disabled:, maxlength: 30, list: "contractor_rate_units", class: "max-w-[110px]" %>
+            <datalist id="contractor_rate_units">
+              <option value="hour">Paid per hour worked</option>
+              <option value="contract">Fixed amount for whole contract</option>
+            </datalist>
           </div>
         </div>
 
