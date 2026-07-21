@@ -21,7 +21,7 @@
           <%= form.label :amount, "Amount" %>
           <span class="muted block">
             <% if @position.fixed_rate? %>
-              Your contract's fixed amount is <%= render_money_short(@position.rate_cents) %>
+              This contract has a fixed amount of <%= render_money_short(@position.rate_cents) %>
             <% else %>
               Total to invoice at <%= "#{render_money_short(@position.rate_cents)}#{@position.rate_suffix}" %>
             <% end %>
