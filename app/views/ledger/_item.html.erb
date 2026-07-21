@@ -12,7 +12,7 @@
   <td class="transaction__memo transaction__memo--fluid">
     <div>
       <div class="flex-auto">
-        <div style="overflow: hidden; text-overflow: ellipsis;">
+        <div class="tooltipped tooltipped--s" aria-label="<%= item.memo %>" style="overflow: hidden; text-overflow: ellipsis;">
           <% if item.status.present? && !item.settled? %>
             <%= badge_for item.status_text, class: item.status_css %>
           <% end %>
