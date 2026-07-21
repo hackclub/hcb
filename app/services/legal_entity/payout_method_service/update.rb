@@ -26,13 +26,11 @@ class LegalEntity
         apply_business_rules
         return false if @payout_method.errors.any?
 
-        replaced_method = @replacing
-
         # autosave: true on :details saves the detail record and the payout
         # method together, atomically, even inside the controller's transaction.
         saved = @payout_method.save
         if saved
-          repoint_failed_and_draft_reports(replaced_method) if @replacing || @make_default
+          repoint_failed_and_draft_reports if @replacing || @make_default
           @replacing.archive! if @replacing && @replacing != @payout_method
         end
         saved
