@@ -10,17 +10,11 @@ require "rails_helper"
 #   light-mode only — the funder audience doesn't need dark mode, so it's deferred.
 # - Unlike the rest of the app (which sends a noindex X-Robots-Tag), this page is
 #   *deliberately* indexable — it's public marketing meant to be found in search.
-# - During rollout the whole page sits behind :funders_landing_page. Visitors without the
-#   flag get a 404 (not a 403/redirect) so the unreleased page is indistinguishable from one
-#   that doesn't exist.
 # - "HCB by Hack Club": Hack Club (legally The Hack Foundation) is the 501(c)(3); HCB is the
 #   platform it operates. The page never claims HCB itself is the charity.
 RSpec.describe "Funders landing page", type: :request do
-  # Most examples assume the rollout flag is on; the gating examples flip it off explicitly.
-  before { Flipper.enable(MarketingController::FUNDERS_FLAG) }
-
   describe "GET /for/funders" do
-    it "renders for signed-out visitors when the flag is enabled" do
+    it "renders for signed-out visitors" do
       get funders_path
 
       expect(response).to have_http_status(:ok)
@@ -68,23 +62,12 @@ RSpec.describe "Funders landing page", type: :request do
       expect(response.body).to include("Dashboard")
       expect(response.body).not_to include(">Log in<")
     end
-
-    # Before launch the page must be invisible to the public — a 404 (not a redirect or 403)
-    # so its existence isn't leaked.
-    it "404s when the funders flag is disabled" do
-      Flipper.disable(MarketingController::FUNDERS_FLAG)
-
-      get funders_path
-
-      expect(response).to have_http_status(:not_found)
-      expect(response.body).not_to include("Deploy your capital as grants")
-    end
   end
 
-  # The "Funders on HCB" testimonials block has its OWN flag, separate from the page flag.
-  # The Mitchell Hashimoto quote is adapted from public material and still pending sign-off —
-  # so the page can ship publicly while this section stays hidden until the quote is approved,
-  # then it's flipped on without a deploy. (The Argosy story lives in its own ungated section.)
+  # The "Funders on HCB" testimonials block is gated behind its own flag. The Mitchell
+  # Hashimoto quote is adapted from public material and still pending sign-off — so the page
+  # stays public while this section is hidden until the quote is approved, then it's flipped
+  # on without a deploy. (The Argosy story now ships ungated in its own section.)
   describe "Funders on HCB testimonials section" do
     it "is hidden by default so the page can launch before the quotes are approved" do
       get funders_path
@@ -112,21 +95,48 @@ RSpec.describe "Funders landing page", type: :request do
     end
   end
 
-  # The Argosy Foundation case study is gated separately so it can be held back until cleared.
   describe "Argosy case study" do
-    it "is hidden by default" do
-      get funders_path
-
-      expect(response.body).not_to include("Case study")
-    end
-
-    it "appears once :funders_landing_argosy is enabled" do
-      Flipper.enable(MarketingController::ARGOSY_FLAG)
-
+    it "shows the Argosy Foundation case study" do
       get funders_path
 
       expect(response.body).to include("Case study")
       expect(response.body).to include("Argosy Foundation")
+    end
+  end
+
+  # The HCB vs. private-foundation vs. DAF comparison table. Its detail rows ship EXPANDED
+  # in the server HTML and are collapsed by the funders-compare Stimulus controller, so the
+  # evidence-rich copy and IRS sources are present for AI crawlers and no-JS visitors (this
+  # page is deliberately indexable). AI crawlers don't run JS, so any content that only
+  # appeared after client-side rendering would be invisible to them.
+  describe "comparison table" do
+    before { Flipper.enable(MarketingController::COMPARISON_FAQ_FLAG) }
+
+    it "renders the funder-facing comparison rows" do
+      get funders_path
+
+      expect(response.body).to include("Practical minimum to be worth it")
+      expect(response.body).to include("Back office")
+      expect(response.body).to include("Mandatory annual payout")
+      expect(response.body).to include("Layered fees")
+    end
+
+    # The AI-SEO premise: the detail copy and cited sources must be in the raw HTML, and
+    # expanded by default — the controller collapses them only once JS is running.
+    it "server-renders the expandable detail copy and IRS sources, expanded by default" do
+      get funders_path
+
+      expect(response.body).to include("expenditure responsibility")
+      expect(response.body).to include("1.39% excise tax on net investment income")
+      expect(response.body).to include("irs.gov")
+      expect(response.body).to include('aria-expanded="true"')
+    end
+
+    # Answer-first interceptor line that doubles as a citable passage for AI engines.
+    it "shows the answer-first interceptor caption" do
+      get funders_path
+
+      expect(response.body).to include("Fund a charitable project tax-deductibly from day one")
     end
   end
 
@@ -167,11 +177,73 @@ RSpec.describe "Funders landing page", type: :request do
         post funder_inquiry_path, params: { email: "bot@example.com", subtitle: "i am a bot" }
       end.not_to have_enqueued_mail(FunderInquiryMailer, :inquiry)
     end
+  end
 
-    it "404s when the funders flag is disabled" do
-      Flipper.disable(MarketingController::FUNDERS_FLAG)
+  # The short "Common questions" teaser on the main page links to the dedicated FAQ subpage.
+  describe "FAQ teaser on the funders page" do
+    before { Flipper.enable(MarketingController::COMPARISON_FAQ_FLAG) }
 
-      post funder_inquiry_path, params: { email: "funder@example.com" }
+    it "shows the common-questions teaser and a link to the full FAQ" do
+      get funders_path
+
+      expect(response.body).to include("Common questions")
+      expect(response.body).to include("How is HCB different from a donor-advised fund?")
+      expect(response.body).to include(funders_faq_path)
+    end
+  end
+
+  # The dedicated funder FAQ subpage: fully server-rendered, grouped Q&A with FAQPage structured
+  # data, and deliberately indexable like the main funders page.
+  describe "GET /for/funders/faq" do
+    before { Flipper.enable(MarketingController::COMPARISON_FAQ_FLAG) }
+
+    it "renders grouped questions and answers, server-side" do
+      get funders_faq_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Funder questions, answered")
+      expect(response.body).to include("How do I accept tax-deductible donations for a project that isn't a 501(c)(3)?")
+      expect(response.body).to include("Through fiscal sponsorship.")
+      expect(response.body).to include("Tax and deductibility") # a topic heading
+    end
+
+    it "emits FAQPage structured data covering the questions" do
+      get funders_faq_path
+
+      expect(response.body).to include('"@type":"FAQPage"')
+      expect(response.body).to include("Do donor-advised funds have a payout requirement?")
+    end
+
+    it "is indexable (does not set a noindex X-Robots-Tag)" do
+      get funders_faq_path
+
+      expect(response.headers["X-Robots-Tag"]).to be_blank
+    end
+
+    it "cross-links related questions to their stable id anchor" do
+      get funders_faq_path
+
+      expect(response.body).to include('class="mk-meta__link"')
+      expect(response.body).to include('href="#fiscal-sponsorship"')
+      expect(response.body).to include('id="fiscal-sponsorship"') # the link target exists
+    end
+  end
+
+  # The funders_landing_comparison_faq flag gates all of the above: with it off, the page falls
+  # back to the original static comparison table, the FAQ teaser is hidden, and the subpage 404s.
+  describe "with the funders_landing_comparison_faq flag off" do
+    before { Flipper.disable(MarketingController::COMPARISON_FAQ_FLAG) }
+
+    it "falls back to the original static comparison table and hides the FAQ teaser" do
+      get funders_path
+
+      expect(response.body).to include("Fund brand-new initiatives") # original row label
+      expect(response.body).not_to include("Practical minimum to be worth it") # new table only
+      expect(response.body).not_to include("Common questions") # FAQ teaser hidden
+    end
+
+    it "404s the FAQ subpage" do
+      get funders_faq_path
 
       expect(response).to have_http_status(:not_found)
     end

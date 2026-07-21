@@ -136,10 +136,23 @@
   text-overflow: ellipsis;
   margin-top: 0;
   cursor: pointer;
+
+  &:hover {
+    filter: brightness(0.95);
+
+    &:active {
+      filter: brightness(0.9);
+    }
+  }
 }
 
 .hw-combobox__option--blank {
   border-bottom: var(--hw-border-width--slim) solid var(--hw-border-color);
+}
+
+.hw-combobox__option:has([data-disabled-option]) {
+  pointer-events: none;
+  cursor: default;
 }
 
 .hw-combobox__option:hover,

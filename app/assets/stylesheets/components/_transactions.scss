@@ -93,6 +93,25 @@ html[data-dark='true'] {
     align-items: center;
   }
 
+  a {
+    position: relative;
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    // Enlarge the vertical touch target without affecting row height: an
+    // absolutely-positioned overlay extends the clickable area above and below
+    // while staying out of layout flow.
+    &::after {
+      content: '';
+      position: absolute;
+      inset: -0.25rem 0;
+    }
+  }
+
   span:not(.badge):not(.list-badge):first-of-type {
     max-width: 100%;
     overflow: hidden;
@@ -126,6 +145,16 @@ html[data-dark='true'] {
   .suggested_tag {
     max-width: 0px;
   }
+}
+
+// Fills the remaining table width and truncates with an ellipsis instead of
+// widening the table (max-width: 0 keeps the content from sizing the cell)
+.transaction__memo--fluid {
+  width: 100%;
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .transaction:hover .add-tag-badge,

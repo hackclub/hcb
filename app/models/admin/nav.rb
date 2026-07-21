@@ -159,12 +159,6 @@ module Admin
             count_type: :tasks
           ),
           make_item(
-            name: "PayPal Transfers",
-            path: paypal_transfers_admin_index_path,
-            count: ->{ PaypalTransfer.pending.count },
-            count_type: :tasks
-          ),
-          make_item(
             name: "Wires",
             path: wires_admin_index_path,
             count: ->{ Wire.pending.count },
