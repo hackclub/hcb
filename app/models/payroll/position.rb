@@ -54,9 +54,6 @@ module Payroll
 
     monetize :rate_cents, with_model_currency: :currency
 
-    # What the rate is charged per: "hour" for classic hourly work, any other
-    # unit of output ("article", "deliverable", ...), or FIXED_RATE_UNIT for a
-    # single fixed amount covering the whole contract.
     FIXED_RATE_UNIT = "contract"
 
     normalizes :rate_unit, with: ->(unit) { unit.strip.downcase.singularize }
@@ -65,8 +62,6 @@ module Payroll
       rate_unit == FIXED_RATE_UNIT
     end
 
-    # Suffix rendered after the money amount wherever the rate is shown,
-    # e.g. "$35.00/hr" or "$500.00 per contract".
     def rate_suffix
       rate_unit == "hour" ? "/hr" : " per #{rate_unit}"
     end
