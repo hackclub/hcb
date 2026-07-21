@@ -32,7 +32,7 @@
             <div class="flex items-center gap-3 mb-2 pt-4">
               <%= render "application/logo" %>
               <span class="-mx-1.5 text-xl opacity-40">/</span>
-              <span class="text-xl font-bold">Admin</span>
+              <span class="text-xl font-bold">HCB Admin</span>
             </div>
 
             <div data-controller="nav-search">
@@ -61,7 +61,7 @@
                 <% end %>
               </div>
 
-              <hr class="my-2 border-gray-200 dark:border-neutral-700" />
+              <hr class="my-2 border-gray-200 dark:border-neutral-700" data-nav-search-target="extraLinksDivider" />
 
               <%= turbo_frame_tag "admin_nav", src: nav_admin_index_path(title:), target: "_top", class: "w-100", data: { "nav-search-target": "frame" } do %>
                 <%= render partial: "admin/nav", locals: { nav:, skeleton: true } %>

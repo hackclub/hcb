@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = ['input', 'frame', 'extraLinks']
+  static targets = ['input', 'frame', 'extraLinks', 'extraLinksDivider']
 
   connect() {
     this.handleGlobalKeydown = this.handleGlobalKeydown.bind(this)
@@ -42,11 +42,14 @@ export default class extends Controller {
   filter() {
     const query = this.inputTarget.value.trim().toLowerCase()
 
+    let anyExtraLinkVisible = false
     this.extraLinksTarget.querySelectorAll('a.dock__item').forEach(item => {
       const matches =
         query === '' || item.textContent.trim().toLowerCase().includes(query)
       item.classList.toggle('hidden', !matches)
+      if (matches) anyExtraLinkVisible = true
     })
+    this.extraLinksDividerTarget.classList.toggle('hidden', !anyExtraLinkVisible)
 
     this.frameTarget.querySelectorAll('details.dock').forEach(detail => {
       let anyVisible = false
