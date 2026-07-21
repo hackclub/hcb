@@ -93,7 +93,7 @@ module Payroll
       @position.assign_attributes(
         title: position_params[:title],
         rate_cents: Monetize.parse(position_params[:rate]).cents,
-        rate_unit: position_params[:rate_unit].presence || "hour",
+        rate_unit: position_params[:rate_unit].presence || @position.rate_unit,
         start_date: position_params[:starts_on],
         end_date: position_params[:ends_on],
         description: position_params[:purpose]
