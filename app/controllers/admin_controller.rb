@@ -1270,12 +1270,10 @@ class AdminController < Admin::BaseController
 
   def set_event_multiple_transactions
     ActiveRecord::Base.transaction do
-      params.each do |key, value|
-        next unless value == "1" && CanonicalTransaction.find(key)
-
+      CanonicalTransaction.where(id: params.select { |_, v| v == "1" }.keys).pluck(:id).each do |id|
         begin
           @canonical_transaction = ::CanonicalTransactionService::SetEvent.new(
-            canonical_transaction_id: key,
+            canonical_transaction_id: id,
             event_id: params[:event_id],
             user: current_user
           ).run
@@ -1509,7 +1507,7 @@ class AdminController < Admin::BaseController
   def hq_receipts
     @page = params[:page] || 1
     @per = params[:per] || 20
-    @users = User.where(id: Event.omitted.includes(:users).flat_map(&:users).map(&:id)).page(@page).per(@per).order(created_at: :desc)
+    @users = User.where(id: OrganizerPosition.where(event_id: Event.omitted.select(:id)).select(:user_id)).page(@page).per(@per).order(created_at: :desc)
 
   end
 
@@ -1641,7 +1639,7 @@ class AdminController < Admin::BaseController
   end
 
   def new_teenagers_leaderboard
-    @link_creators = User.where(id: Referral::Link.select(:creator_id).map(&:creator_id).uniq).includes(:referral_links)
+    @link_creators = User.where(id: Referral::Link.select(:creator_id)).includes(:referral_links)
   end
 
   def contracts
