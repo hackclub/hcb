@@ -69,13 +69,11 @@ class LegalEntity
         end
       end
 
-      def repoint_failed_and_draft_reports(replaced_method)
-        on_replaced_method = Reimbursement::Report
-                             .where(user: @legal_entity.users)
-                             .where(legal_entity_payout_method_id: replaced_method&.id)
+      def repoint_failed_and_draft_reports
+        reports = Reimbursement::Report.where(user: @legal_entity.users)
 
-        failed = on_replaced_method.joins(:payout_holding).where(reimbursement_payout_holdings: { aasm_state: :failed })
-        draft = on_replaced_method.where(aasm_state: :draft)
+        failed = reports.joins(:payout_holding).where(reimbursement_payout_holdings: { aasm_state: :failed })
+        draft = reports.where(aasm_state: :draft)
 
         # update! runs validations and records the change in paper_trail; each
         # is wrapped in safely so a single report that can't be repointed is
@@ -83,8 +81,11 @@ class LegalEntity
         # payout-method change or the other repoints.
         (failed + draft).each do |report|
           safely do
-            report.update!(legal_entity_payout_method: @payout_method)
-            report.convert_report_currency!(@payout_method.currency) if report.mismatched_currency?
+            ActiveRecord::Base.transaction do
+              report.update!(legal_entity_payout_method: @payout_method)
+              report.convert_report_currency!(@payout_method.currency) if report.mismatched_currency?
+              report.payout_holding.mark_settled! if report.payout_holding&.failed?
+            end
           end
         end
       end
