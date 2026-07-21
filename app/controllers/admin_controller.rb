@@ -1652,7 +1652,7 @@ class AdminController < Admin::BaseController
     @status = params[:status].presence
     @service = params[:service].presence
 
-    @contracts = Contract.all.includes(:document, :contractable, parties: :user)
+    @contracts = Contract.all.includes(:document, { contractable: :event }, parties: :user)
     @contracts = @contracts.where(type: @type) if @type
     @contracts = @contracts.where(aasm_state: @status) if @status
     @contracts = @contracts.where(external_service: @service) if @service
