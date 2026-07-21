@@ -16,10 +16,10 @@ module Admin
       @entity_type = params[:entity_type].presence
       relation = relation.where(entity_type: @entity_type) if @entity_type
 
-      @managed = params[:managed].present?
+      @managed = params[:managed] == "1"
       relation = relation.managed if @managed
 
-      @archived = params[:archived].present?
+      @archived = params[:archived] == "1"
       relation = relation.where.not(archived_at: nil) if @archived
 
       @legal_entities = relation.order(created_at: :desc).page(@page).per(@per)
