@@ -23,10 +23,9 @@ class Export
   module Event
     module Transactions
       class Ledger < Export
-        store_accessor :parameters, :event_id, :public_only
-        def async?
-          event.canonical_transactions.size > 300
-        end
+        include Filterable
+
+        store_accessor :parameters, :event_id, :public_only, :tag_id, :user_id, :transaction_type, :direction, :minimum_amount, :maximum_amount, :missing_receipts, :category_slug, :merchant_id, :start_date, :end_date, :search
 
         def label
           "Ledger export for #{event.name}"
@@ -42,7 +41,7 @@ class Export
 
         def content
           journal = ::LedgerJournal::Journal.new
-          event.canonical_transactions.order("date desc").each do |ct|
+          transactions.each do |ct|
             clean_amount = public_only && ct.likely_account_verification_related? ? 0 : ct.amount_cents
 
             if ct.amount_cents <= 0
