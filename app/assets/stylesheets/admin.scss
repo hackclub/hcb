@@ -215,14 +215,6 @@ samp {
   min-width: 0;
 }
 
-.admin-menu-content {
-  min-width: calc(100vw / 6);
-
-  a:hover {
-    background-color: rgba(200, 200, 200, 0.3);
-  }
-}
-
 .table-footer {
   background-color: rgba(200, 200, 200, 0.2);
   padding: 0 20px;

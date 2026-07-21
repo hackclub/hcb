@@ -6,80 +6,83 @@
     <%= stylesheet_link_tag "admin", media: "all", "data-turbo-track": "reload" %>
     <%= javascript_include_tag "admin", "data-turbo-track": "reload", defer: true %>
   </head>
-  <body class="overflow-x-hidden min-h-screen flex flex-col max-w-[100vw]">
+  <body class="bg-snow overflow-x-hidden min-h-screen max-w-[100vw]">
     <a class="skip-to-main" href="#main">Skip to main content</a>
     <% title = yield(:title) if content_for?(:title) %>
     <% nav = Admin::Nav.new(page_title: title) %>
 
-    <nav class="flex flex-col shadow-lg sticky top-0 backdrop-blur-lg z-10 bg-white/80 dark:!bg-[rgba(0,0,0,0.8)]">
-      <div class="p-6 pl-5 pb-2 flex items-center w-full gap-2">
-        <%= render "application/logo" %>
+    <main class="app flex flex-col lg:flex-row gap-0 w-full">
+      <div data-controller="sidebar">
+        <button
+          class="fixed top-4 pop left-4 z-10 lg:hidden backdrop-blur-xl"
+          data-action="click->sidebar#open"
+          aria-label="Open navigation"
+          aria-controls="sidebar"
+          aria-expanded="false"
+          data-sidebar-target="toggle">
+          <%= inline_icon "menu" %>
+        </button>
+        <div
+          data-sidebar-target="overlay"
+          class="sidebar--overlay lg:hidden overlay--hidden"
+          data-action="click->sidebar#close">
+        </div>
+        <aside class="sidebar select-none" id="sidebar" data-sidebar-target="sidebar">
+          <div class="sidebar--scroll-container">
+            <div class="flex items-center gap-3 mb-2 pt-4">
+              <%= render "application/logo" %>
+              <span class="-mx-1.5 text-xl opacity-40">/</span>
+              <span class="text-xl font-bold">Admin</span>
+            </div>
 
-        <span class="text-xl font-bold ml-1 hidden sm:inline-block">HCB Admin</span>
-        <span style="color: var(--hcb-link-2); font-weight: 200;">/</span>
+            <div data-controller="nav-search">
+              <div class="input input-group max-w-none h-[36px]" tabindex="0">
+                <%= inline_icon "search" %>
+                <input
+                  type="text"
+                  class="bg-transparent"
+                  placeholder="⇧+/ to search"
+                  data-nav-search-target="input"
+                  data-action="input->nav-search#filter keydown->nav-search#handleKeydown" />
+              </div>
 
-        <% if title %>
-          <% if nav.active_section&.name %>
-          <span class="truncate max-w-[50px] sm:max-w-[100px] md:max-w-[200px] lg:max-w-[300px] xl:max-w-[400px]">
-            <%= nav.active_section&.name %>
-          </span>
-          <span style="color: var(--hcb-link-2); font-weight: 200;">/</span>
-          <% end %>
-          <span class="truncate max-w-[50px] sm:max-w-[100px] md:max-w-[200px] lg:max-w-[300px] xl:max-w-[400px]">
-            <%= title %>
-          </span>
-        <% else %>
-          <b class="truncate max-w-[50px] sm:max-w-[100px] md:max-w-[200px] lg:max-w-[300px] xl:max-w-[400px]">
-            <%= current_user.access_level.capitalize %>
-          </b>
-        <% end %>
+              <div class="dock flex mt-2" data-nav-search-target="extraLinks">
+                <%= link_to flipper_path, class: "dock__item" do %>
+                  <%= inline_icon "flag", size: 32, style: "padding: 0" %>
+                  <span class="flex-grow">Feature Flags</span>
+                <% end %>
+                <%= link_to blazer_path, class: "dock__item" do %>
+                  <%= inline_icon "terminal", size: 32, style: "padding: 0" %>
+                  <span class="flex-grow">Queries</span>
+                <% end %>
+                <%= link_to my_inbox_path, class: "dock__item" do %>
+                  <%= inline_icon "receipt", size: 32, style: "padding: 0" %>
+                  <span class="flex-grow">Receipts</span>
+                <% end %>
+              </div>
 
-        <div class="flex-1 gap-1 flex justify-end items-center">
-          <%= link_to flipper_path, 'aria-label': "Open Flipper feature flags", class: "menu__action w-8 h-8 justify-center tooltipped" do %>
-            <%= inline_icon "flag", size: home_action_size %>
-          <% end %>
-          <%= link_to blazer_path, 'aria-label': "Open Blazer queries", class: "menu__action w-8 h-8 justify-center tooltipped" do %>
-            <%= inline_icon "terminal", size: home_action_size %>
-          <% end %>
-          <div class="w-0.5 h-7 bg-gray-200 mx-2 rounded-full"></div>
+              <hr class="my-2 border-gray-200 dark:border-neutral-700" />
 
-          <div data-controller="menu">
-            <a
-              href="javascript:void(0)"
-              class="menu__action w-8 h-8 justify-center"
-              data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
-              data-menu-target="toggle">
-              <%= inline_icon "moon", size: 28 %>
-            </a>
-            <div data-controller="dark-mode-toggle" class="menu__content menu__content--compact menu__content--2 p-2 -mt-2" data-menu-target="content" style="z-index: 999;">
-              <%= render "application/theme_toggle" %>
+              <%= turbo_frame_tag "admin_nav", src: nav_admin_index_path(title:), target: "_top", class: "w-100", data: { "nav-search-target": "frame" } do %>
+                <%= render partial: "admin/nav", locals: { nav:, skeleton: true } %>
+              <% end %>
             </div>
           </div>
-          <%= render partial: "application/blog_widget" %>
-          <%= link_to my_inbox_path, 'aria-label': "View transactions awaiting receipts", class: "menu__action w-8 h-8 justify-center" do %>
-            <%= inline_icon "receipt", size: home_action_size %>
-          <% end %>
-          <%= button_to logout_users_path, method: :delete, id: "admin-logout-button", 'aria-label': "Sign out", class: "menu__action w-8 h-8 justify-center" do %>
-            <%= inline_icon "door-leave", size: home_action_size %>
-          <% end %>
+          <div class="flex h-[1px] w-full bg-gray-200 dark:bg-neutral-700"></div>
+          <%= render "application/user_menu" %>
+        </aside>
+      </div>
+
+      <article class="flex-1 pt-16 lg:pt-0 lg:pl-72 w-[100%] m-0 bg-snow dark:bg-dark min-h-screen">
+        <%= render(partial: "admin/flash") %>
+        <div id="main" class="p-4 md:p-7 w-full overflow-x-auto">
+          <div class="flex w-full mb-2 items-center gap-2">
+            <h2 class="flex-1"><%= title %></h2>
+            <%= yield(:admin_actions) %>
+          </div>
+          <%= yield %>
         </div>
-      </div>
-
-      <%= turbo_frame_tag "admin_nav", src: nav_admin_index_path(title:), class: "w-100" do %>
-        <%= render partial: "admin/nav", locals: { nav:, skeleton: true } %>
-      <% end %>
-    </nav>
-
-    <%= render(partial: "admin/flash") %>
-
-    <div id="main" class="bg-snow dark:bg-dark flex-1 w-[100vw] overflow-x-auto overflow-y-auto" style="padding: 2rem; margin: 0 auto">
-      <div class="flex w-full mb-2 items-center gap-2">
-        <h2 class="flex-1"><%= title %></h2>
-        <%= yield(:admin_actions) %>
-      </div>
-      <%= yield %>
-    </div>
-
-    <%= render "application/command_bar" %>
+      </article>
+    </main>
   </body>
 </html>

@@ -7,11 +7,12 @@ module Admin
 
     class Section
       prepend MemoWise
-      attr_reader(:name, :items)
+      attr_reader(:name, :items, :icon)
 
-      def initialize(name:, items:)
+      def initialize(name:, items:, icon: nil)
         @name = name
         @items = items
+        @icon = icon
       end
 
       def active?
@@ -19,6 +20,12 @@ module Admin
       end
 
       memo_wise(:active?)
+
+      def path
+        items.find { |item| !item.divider? }&.path
+      end
+
+      memo_wise(:path)
 
       def task_sum
         items.sum { |item| item.task_count? ? item.count : 0 }
@@ -139,6 +146,7 @@ module Admin
     def spending
       Section.new(
         name: "Spending",
+        icon: "payment-transfer",
         items: [
           make_item(
             name: "ACH Transfers",
@@ -183,6 +191,7 @@ module Admin
     def ledger
       Section.new(
         name: "Ledger",
+        icon: "transactions",
         items: [
           make_item(
             name: "Ledger",
@@ -233,6 +242,7 @@ module Admin
     def incoming_money
       Section.new(
         name: "Incoming Money",
+        icon: "payment",
         items: [
           make_item(
             name: "Donations",
@@ -271,6 +281,7 @@ module Admin
     def organizations
       Section.new(
         name: "Organizations",
+        icon: "explore",
         items: [
           make_item(
             name: "Applications (HCB)",
@@ -315,6 +326,7 @@ module Admin
     def payroll
       Section.new(
         name: "Payroll",
+        icon: "person-badge",
         items: [
           make_item(
             name: "Employees",
@@ -341,6 +353,7 @@ module Admin
     def misc
       Section.new(
         name: "Misc",
+        icon: "more",
         items: [
           make_divider(name: "Cards"),
           make_item(
