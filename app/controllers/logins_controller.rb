@@ -32,7 +32,10 @@ class LoginsController < ApplicationController
 
     @user = User.create_with(creation_method: @login.for_application? ? :application_form : :login).find_or_create_by!(email: params[:email])
 
-    current_session.referral_attributions.each do |attribution|
+    # An anonymous visitor only has a session if they arrived via a referral
+    # link (see Referral::LinksController#show). No session means no clicks to
+    # attribute, so there is nothing to transfer.
+    current_session&.referral_attributions&.each do |attribution|
       attribution.update!(user: @user)
     end
 

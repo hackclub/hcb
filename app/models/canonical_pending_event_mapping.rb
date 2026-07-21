@@ -13,9 +13,10 @@
 #
 # Indexes
 #
-#  index_canonical_pending_event_map_on_canonical_pending_tx_id  (canonical_pending_transaction_id)
+#  index_canonical_pending_event_map_on_canonical_pending_tx_id  (canonical_pending_transaction_id) UNIQUE
 #  index_canonical_pending_event_mappings_on_event_id            (event_id)
 #  index_canonical_pending_event_mappings_on_subledger_id        (subledger_id)
+#  index_cpem_event_id_cpt_id_uniqueness                         (event_id,canonical_pending_transaction_id) UNIQUE
 #
 # Foreign Keys
 #
