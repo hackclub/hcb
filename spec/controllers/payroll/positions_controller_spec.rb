@@ -64,7 +64,7 @@ RSpec.describe Payroll::PositionsController do
 
       position = event.payroll_positions.last
       expect(position).to be_fixed_rate
-      expect(position.rate_label).to eq("$25.00 per contract")
+      expect(position.rate_label).to eq("$25.00 (fixed)")
     end
 
     it "normalizes custom rate units and renders them in the rate label" do
