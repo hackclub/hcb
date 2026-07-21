@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = ['input', 'frame']
+  static targets = ['input', 'frame', 'extraLinks']
 
   connect() {
     this.handleGlobalKeydown = this.handleGlobalKeydown.bind(this)
@@ -13,11 +13,20 @@ export default class extends Controller {
   }
 
   handleGlobalKeydown(event) {
-    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f') {
+    if (event.key === '?' && !this.isTyping(event.target)) {
       event.preventDefault()
       this.inputTarget.focus()
       this.inputTarget.select()
     }
+  }
+
+  isTyping(target) {
+    return (
+      target.tagName === 'INPUT' ||
+      target.tagName === 'TEXTAREA' ||
+      target.tagName === 'SELECT' ||
+      target.isContentEditable
+    )
   }
 
   handleKeydown(event) {
@@ -33,15 +42,41 @@ export default class extends Controller {
   filter() {
     const query = this.inputTarget.value.trim().toLowerCase()
 
+    this.extraLinksTarget.querySelectorAll('a.dock__item').forEach(item => {
+      const matches =
+        query === '' || item.textContent.trim().toLowerCase().includes(query)
+      item.classList.toggle('hidden', !matches)
+    })
+
     this.frameTarget.querySelectorAll('details.dock').forEach(detail => {
       let anyVisible = false
+      let currentDivider = null
+      let dividerHasVisibleItem = false
 
-      detail.querySelectorAll(':scope > a.dock__item').forEach(item => {
+      Array.from(detail.children).forEach(child => {
+        if (child.matches('span.dock__section')) {
+          if (currentDivider) {
+            currentDivider.classList.toggle('hidden', !dividerHasVisibleItem)
+          }
+          currentDivider = child
+          dividerHasVisibleItem = false
+          return
+        }
+
+        if (!child.matches('a.dock__item')) return
+
         const matches =
-          query === '' || item.textContent.trim().toLowerCase().includes(query)
-        item.classList.toggle('hidden', !matches)
-        if (matches) anyVisible = true
+          query === '' || child.textContent.trim().toLowerCase().includes(query)
+        child.classList.toggle('hidden', !matches)
+        if (matches) {
+          anyVisible = true
+          dividerHasVisibleItem = true
+        }
       })
+
+      if (currentDivider) {
+        currentDivider.classList.toggle('hidden', !dividerHasVisibleItem)
+      }
 
       if (query === '') {
         detail.classList.remove('hidden')
