@@ -15,7 +15,7 @@ module StripeServiceFeeService
       ActiveRecord::Base.transaction do
         rpssft = stripe_service_fee.create_raw_pending_stripe_service_fee_transaction!(
           date_posted: stripe_service_fee.created_at.to_date,
-          amount_cents: stripe_service_fee.amount_cents
+          amount_cents: -stripe_service_fee.amount_cents
         )
 
         canonical_pending_transaction = CanonicalPendingTransaction.create!(
