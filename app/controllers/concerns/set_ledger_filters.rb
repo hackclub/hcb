@@ -102,8 +102,6 @@ module SetLedgerFilters
         query << { linked_object_type: }
       end
 
-      # TODO: add filtering for merchant and category
-
       query << { status: { "$in": [nil, "settled", "pending", "reversed"] } } # TODO: add not null validation and remove nil status from here
       Ledger::Query.new({ "$and": query })
     end

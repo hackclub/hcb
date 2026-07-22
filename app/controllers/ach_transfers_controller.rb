@@ -67,7 +67,7 @@ class AchTransfersController < ApplicationController
       end
       redirect_to event_transfers_path(@event), flash: { success: "ACH transfer successfully submitted." }
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
