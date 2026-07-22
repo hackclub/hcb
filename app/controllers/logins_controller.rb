@@ -32,7 +32,10 @@ class LoginsController < ApplicationController
 
     @user = User.create_with(creation_method: @login.for_application? ? :application_form : :login).find_or_create_by!(email: params[:email])
 
-    current_session.referral_attributions.each do |attribution|
+    # An anonymous visitor only has a session if they arrived via a referral
+    # link (see Referral::LinksController#show). No session means no clicks to
+    # attribute, so there is nothing to transfer.
+    current_session&.referral_attributions&.each do |attribution|
       attribution.update!(user: @user)
     end
 
@@ -74,7 +77,7 @@ class LoginsController < ApplicationController
       return redirect_to auth_users_path
     end
 
-    render status: :unprocessable_entity
+    render status: :unprocessable_content
   end
 
   # post to request sms login code
@@ -86,12 +89,12 @@ class LoginsController < ApplicationController
       return redirect_to auth_users_path
     end
 
-    render status: :unprocessable_entity
+    render status: :unprocessable_content
   end
 
   # get to see totp page
   def totp
-    render status: :unprocessable_entity
+    render status: :unprocessable_content
   end
 
   def complete
@@ -119,7 +122,7 @@ class LoginsController < ApplicationController
 
       unless ok
         flash.now[:error] = service.errors.full_messages.to_sentence
-        render(:sms, status: :unprocessable_entity)
+        render(:sms, status: :unprocessable_content)
         return
       end
     when "email"
@@ -130,7 +133,7 @@ class LoginsController < ApplicationController
 
       unless ok
         flash.now[:error] = service.errors.full_messages.to_sentence
-        render(:email, status: :unprocessable_entity)
+        render(:email, status: :unprocessable_content)
         return
       end
     when "totp"

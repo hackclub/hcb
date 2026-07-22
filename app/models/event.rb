@@ -876,8 +876,12 @@ class Event < ApplicationRecord
     !plan.is_a?(Event::Plan::SalaryAccount)
   end
 
-  def eligible_for_disabling_transparency?
-    !parent&.is_public?
+  def forced_transparency?
+    # `plan` is built by a later `before_validation` callback, so it can still
+    # be nil the first time this runs on a new record.
+    return false unless plan&.forces_transparency?
+
+    parent&.is_public? || false
   end
 
   def eligible_for_indexing?
@@ -1027,7 +1031,7 @@ class Event < ApplicationRecord
       self.is_indexable = false
     end
 
-    unless eligible_for_disabling_transparency?
+    if forced_transparency?
       self.is_public = true
     end
 

@@ -120,7 +120,7 @@ Rails.application.configure do
   }
   Rails.application.routes.default_url_options[:host] = Credentials.fetch(:LIVE_URL_HOST)
 
-  # Specify outgoing SMTP server. Remember to add smtp/* credentials via rails credentials:edit.
+  # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
   # config.action_mailer.smtp_settings = {
   #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
   #   password: Rails.application.credentials.dig(:smtp, :password),

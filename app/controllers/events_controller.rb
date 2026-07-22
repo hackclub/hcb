@@ -401,7 +401,7 @@ class EventsController < ApplicationController
           redirect_back_or_to edit_event_path(@event.slug)
         end
       else
-        render :edit, status: :unprocessable_entity
+        render :edit, status: :unprocessable_content
       end
     rescue Errors::InvalidStripeCardLogoError => e
       flash[:error] = e.message
@@ -1142,7 +1142,7 @@ class EventsController < ApplicationController
       redirect_to event_path(@event)
       @event.set_airtable_status("Onboarded")
     else
-      render :activation_flow, status: :unprocessable_entity
+      render :activation_flow, status: :unprocessable_content
     end
   end
 
@@ -1269,15 +1269,22 @@ class EventsController < ApplicationController
 
     @items = ledger_query.execute(ledgers: @ledgers)
 
-    @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id)) if @tag&.id.present?
+    # TODO: move these to Ledger::Query
+    if @tag.present?
+      @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id))
+    end
+
     if @category.present?
       categorized_cts = @category.canonical_transactions.where(ledger_item: @items).select(:ledger_item_id)
       categorized_cpts = @category.canonical_pending_transactions.where(ledger_item: @items).select(:ledger_item_id)
       @items = @items.where(id: categorized_cts).or(@items.where(id: categorized_cpts))
     end
 
+    if @merchant.present?
+      @items = @items.where(linked_object_type: "CardCharge", linked_object_id: CardCharge.where(merchant_network_id: @merchant).select(:id))
+    end
 
-    @items = @items.page(params[:page]).per(@per)
+    @items = @items.page(params[:page]).per(@per).preload(:tags, hcb_code: { event: :tags })
 
     if organizer_signed_in?
       if params[:apply_flipper] == "true"
