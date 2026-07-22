@@ -16,6 +16,7 @@
 #  receipt_count                :integer          default(0), not null
 #  receipt_required             :boolean
 #  short_code                   :text
+#  special_appearance           :integer
 #  status                       :string
 #  system_memo                  :text
 #  created_at                   :datetime         not null

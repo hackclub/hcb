@@ -1618,6 +1618,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_20_210532) do
     t.integer "receipt_count", default: 0, null: false
     t.boolean "receipt_required"
     t.text "short_code"
+    t.integer "special_appearance"
     t.string "status"
     t.text "system_memo"
     t.datetime "updated_at", null: false
