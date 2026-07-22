@@ -10,8 +10,10 @@
     New from Airtable
   <% end %>
 
-  <%= link_to params.to_unsafe_h.merge(format: :csv) do %>
-    <button type="button" class="btn bg-muted" <%= "disabled" if @events.total_count == 0 %>>Export <%= pluralize @events.total_count, "record" %></button>
+  <% if @events.total_count.positive? %>
+    <%= link_to "Export #{pluralize(@events.total_count, \"record\")}", params.to_unsafe_h.merge(format: :csv), class: "btn bg-muted" %>
+  <% else %>
+    <button type="button" class="btn bg-muted" disabled>Export <%= pluralize(@events.total_count, "record") %></button>
   <% end %>
 <% end %>
 
