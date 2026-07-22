@@ -34,6 +34,57 @@ Nondisposable.configure do |config|
     msn.com
     aol.com
     rambler.ua
+    dropoffs.org
+    meikeya.com
+    luckfeed.com
+    kywa.uk
+    tormails.com
+    besteya.com
+    diarshop.com
+    rapplo.com
+    lasttea.com
+    suahi.com
+    gicont.com
+    tempbox.app
+    prvsv.com
+    bagss.store
+    xhseeds.com
+    tempforward.com
+    twothird.org
+    mailbank.org
+    wutcloud.com
+    weebox.org
+    niggawatt.org
+    mailwarrior.info
+    cockbit.org
+    pucann.org
+    holeass.com
+    otona.uk
+    longbiba.org
+    2mails1box.info
+    gaylordmail.com
+    bitdelivery.org
+    tvtmall.com
+    sanszero.com
+    sesedm.com
+    senione.com
+    pngk.uk
+    rancord.com
+    paviri.com
+    rlvpn.site
+    alexx.buzz
+    luca.surf
+    kenji.quest
+    kaim.buzz
+    worldwides.help
+    nina.christmas
+    benn.mom
+    splindor.com
+    tivogo.com
+    bezill.com
+    codoteam.com
+    rightbliss.beauty
+    silesia.life
   ].freeze
 
   # https://www.okta.com/blog/threat-intelligence/opportunistic-sms-pumping-attacks-target-customer-sign-up-pages/
@@ -72,13 +123,31 @@ Nondisposable.configure do |config|
     writemeplz.net
   ].freeze
 
+  # Unambiguous typos of major providers (gmail.com, icloud.com,
+  # hackclub.com, protonmail.com). Nobody can legitimately own these as a
+  # real mailbox, so blocking is zero-cost and helps real users catch their
+  # own typo on signup. Also found in SMS pumping fraud.
+  typo_domains = %w[
+    gmail.con
+    gmail.co
+    gamil.com
+    icloud.con
+    gmil.com
+    hackclub.co
+    gmail.ocm
+    gmail.ckm
+    gmail.cok
+    gmail.xom
+    gmali.com
+    gamail.com
+    gmail.cpom
+    gmail.cokm
+    gmail.fom
+    protonmail.con
+  ].freeze
+
   # Add custom domains you want to be considered as disposable
-  config.additional_domains = hcb_sourced_domains + okta_sourced_domains + [
-    # Project people who mistype gmail.com, but these were also found in SMS pumping fraud
-    "gmail.con",
-    "gmail.co",
-    "gamil.com"
-  ]
+  config.additional_domains = hcb_sourced_domains + okta_sourced_domains + typo_domains
 
   # Exclude domains that are considered disposable but you want to allow anyways
   # config.excluded_domains = ["false-positive-domain.com"]
