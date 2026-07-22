@@ -15,6 +15,22 @@ RSpec.describe User, type: :model do
     expect(user).to be_admin
   end
 
+  describe "nondisposable email validation" do
+    it "suggests the real domain for a known typo domain" do
+      user = build(:user, email: "someone@gmail.con")
+
+      expect(user).to_not be_valid
+      expect(user.errors[:email]).to eq(["looks like a typo. Did you mean someone@gmail.com?"])
+    end
+
+    it "uses the generic message for a non-typo disposable domain" do
+      user = build(:user, email: "someone@tormails.com")
+
+      expect(user).to_not be_valid
+      expect(user.errors[:email]).to eq(["provider is unsupported. Please try with another email address."])
+    end
+  end
+
   context "birthday validations" do
     it "fails validation when birthday is removed" do
       user = create(:user, full_name: "Caleb Denio")

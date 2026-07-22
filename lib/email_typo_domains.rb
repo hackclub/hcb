@@ -20,6 +20,6 @@ module EmailTypoDomains
   ALL = TYPO_TO_REAL.keys.freeze
 
   def self.suggestion_for(email)
-    TYPO_TO_REAL[email.to_s.split("@").last]
+    TYPO_TO_REAL[email.to_s.split("@").last&.strip&.downcase]
   end
 end
