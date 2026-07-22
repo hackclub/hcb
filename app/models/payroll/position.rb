@@ -56,7 +56,7 @@ module Payroll
 
     FIXED_RATE_UNIT = "contract"
 
-    normalizes :rate_unit, with: ->(unit) { unit.strip.downcase.singularize }
+    normalizes :rate_unit, with: ->(unit) { unit&.strip&.downcase&.singularize }
 
     def fixed_rate?
       rate_unit == FIXED_RATE_UNIT
