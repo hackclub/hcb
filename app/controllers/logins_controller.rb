@@ -45,6 +45,9 @@ class LoginsController < ApplicationController
     cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
 
     continue_login(preference: login_preference || :email)
+  rescue ActiveRecord::RecordInvalid => e
+    flash[:error] = e.record.errors.full_messages.to_sentence
+    return redirect_to auth_users_path
   rescue => e
     flash[:error] = e.message
     return redirect_to auth_users_path
