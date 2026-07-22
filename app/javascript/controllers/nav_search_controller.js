@@ -49,7 +49,10 @@ export default class extends Controller {
       item.classList.toggle('hidden', !matches)
       if (matches) anyExtraLinkVisible = true
     })
-    this.extraLinksDividerTarget.classList.toggle('hidden', !anyExtraLinkVisible)
+    this.extraLinksDividerTarget.classList.toggle(
+      'hidden',
+      !anyExtraLinkVisible
+    )
 
     this.frameTarget.querySelectorAll('details.dock').forEach(detail => {
       let anyVisible = false

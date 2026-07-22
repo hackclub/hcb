@@ -43,7 +43,7 @@
                   class="bg-transparent"
                   placeholder="⇧+/ to search"
                   data-nav-search-target="input"
-                  data-action="input->nav-search#filter keydown->nav-search#handleKeydown" />
+                  data-action="input->nav-search#filter keydown->nav-search#handleKeydown">
               </div>
 
               <div class="dock flex mt-2" data-nav-search-target="extraLinks">
@@ -61,7 +61,7 @@
                 <% end %>
               </div>
 
-              <hr class="my-2 border-gray-200 dark:border-neutral-700" data-nav-search-target="extraLinksDivider" />
+              <hr class="my-2 border-gray-200 dark:border-neutral-700" data-nav-search-target="extraLinksDivider">
 
               <%= turbo_frame_tag "admin_nav", src: nav_admin_index_path(title:), target: "_top", class: "w-100", data: { "nav-search-target": "frame" } do %>
                 <%= render partial: "admin/nav", locals: { nav:, skeleton: true } %>
