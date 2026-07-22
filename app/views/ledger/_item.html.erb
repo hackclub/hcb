@@ -9,7 +9,7 @@
     </div>
   </td>
   <td><%= item.datetime.strftime("%b %e, %Y") %></td>
-  <td class="transaction__memo transaction__memo--fluid">
+  <td class="transaction__memo transaction__memo--fluid<%= " transaction__memo--pending" if item.pending? %>">
     <div>
       <div class="flex-auto flex items-center" style="gap: 1ch; min-width: 0;">
         <% if item.status.present? && !item.settled? %>

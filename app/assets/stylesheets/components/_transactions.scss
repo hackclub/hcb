@@ -147,6 +147,12 @@ html[data-dark='true'] {
   }
 }
 
+// Grey out the memo for pending transactions. The memo link uses
+// `color: inherit`, so setting the cell's color muted greys it in both themes.
+.transaction__memo--pending {
+  color: map-get($palette, muted);
+}
+
 // Fills the remaining table width and truncates with an ellipsis instead of
 // widening the table (max-width: 0 keeps the content from sizing the cell)
 .transaction__memo--fluid {
