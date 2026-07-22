@@ -162,7 +162,7 @@ module Admin
             count_type: :tasks
           ),
           make_item(
-            name: "Contractor Payments",
+            name: "Payments",
             path: admin_payments_path,
             count: ->{ Payment.under_review.count },
             count_type: :tasks
