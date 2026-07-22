@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+# Referenced below during Rails boot, before Zeitwerk's lazy `lib/`
+# autoloading is reliably available, so it's required explicitly.
+require_relative "../../lib/email_typo_domains"
+
 Nondisposable.configure do |config|
   # Customize the error message if needed
   config.error_message = "provider is unsupported. Please try with another email address."
@@ -123,31 +127,14 @@ Nondisposable.configure do |config|
     writemeplz.net
   ].freeze
 
-  # Unambiguous typos of major providers (gmail.com, icloud.com,
-  # hackclub.com, protonmail.com). Nobody can legitimately own these as a
-  # real mailbox, so blocking is zero-cost and helps real users catch their
-  # own typo on signup. Also found in SMS pumping fraud.
-  typo_domains = %w[
-    gmail.con
-    gmail.co
-    gamil.com
-    icloud.con
-    gmil.com
-    hackclub.co
-    gmail.ocm
-    gmail.ckm
-    gmail.cok
-    gmail.xom
-    gmali.com
-    gamail.com
-    gmail.cpom
-    gmail.cokm
-    gmail.fom
-    protonmail.con
-  ].freeze
+  # Unambiguous typos of major providers, defined in lib/email_typo_domains.rb
+  # (also used by User to suggest the real domain on signup). Nobody can
+  # legitimately own these as a real mailbox, so blocking is zero-cost and
+  # helps real users catch their own typo on signup. Also found in SMS
+  # pumping fraud.
 
   # Add custom domains you want to be considered as disposable
-  config.additional_domains = hcb_sourced_domains + okta_sourced_domains + typo_domains
+  config.additional_domains = hcb_sourced_domains + okta_sourced_domains + EmailTypoDomains::ALL
 
   # Exclude domains that are considered disposable but you want to allow anyways
   # config.excluded_domains = ["false-positive-domain.com"]
