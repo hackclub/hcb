@@ -75,6 +75,10 @@
 }
 
 html[data-dark='true'] {
+  .transaction__memo a {
+    color: inherit;
+  }
+
   .transaction--frc {
     color: $white;
 
@@ -105,7 +109,7 @@ html[data-dark='true'] {
       content: '';
       position: absolute;
       inset: -0.25rem 0;
-      
+
     }
   }
 
