@@ -382,6 +382,16 @@ class Ledger
       end
     end
 
+    def pretty_title
+      amount_preposition = ["Donation", "Disbursement::Outgoing", "Disbursement::Incoming", "CardCharge", "BankFee"].include?(linked_object_type) ? "of" : "for"
+
+      amount_preposition = "refunded" if linked_object_type == "CardCharge" && amount_cents.positive?
+
+      type_label = linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) ? "HCB transfer" : humanized_type
+
+      "#{type_label} #{amount_preposition} #{ApplicationController.helpers.render_money(amount_cents.abs)}"
+    end
+
     def icon
       case linked_object_type
       when "Invoice"
