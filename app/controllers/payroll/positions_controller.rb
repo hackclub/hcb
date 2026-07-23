@@ -60,7 +60,7 @@ module Payroll
         end
       else
         flash[:error] = @position.errors.full_messages.to_sentence
-        render :new, layout: "transfer", status: :unprocessable_entity
+        render :new, layout: "transfer", status: :unprocessable_content
       end
     end
 
@@ -115,7 +115,7 @@ module Payroll
       else
         @payee = @position.payee
         flash[:error] = @position.errors.full_messages.to_sentence
-        render :edit, layout: "transfer", status: :unprocessable_entity
+        render :edit, layout: "transfer", status: :unprocessable_content
       end
     end
 

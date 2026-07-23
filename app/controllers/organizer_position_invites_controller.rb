@@ -38,7 +38,7 @@ class OrganizerPositionInvitesController < ApplicationController
       flash[:success] = "Invite successfully sent to #{user_email}"
       redirect_to event_team_path @invite.event
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 

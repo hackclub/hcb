@@ -103,7 +103,7 @@ class LegalEntity
       # `edit_payout` lives under `users/`, but this controller isn't namespaced
       # under Users, so Rails won't find the template without the extra prefix.
       lookup_context.prefixes.unshift("users")
-      render template: "users/edit_payout", status: :unprocessable_entity
+      render template: "users/edit_payout", status: :unprocessable_content
     end
 
     def legal_entity
