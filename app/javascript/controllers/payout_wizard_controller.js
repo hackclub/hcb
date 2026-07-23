@@ -57,6 +57,10 @@ export default class extends Controller {
     },
   ]
 
+  static values = {
+    collapsible: { type: Boolean, default: true },
+  }
+
   static answerToPayoutMethod = {
     'ACH transfer': 'LegalEntity::PayoutMethod::AchTransfer',
     'Mailed check': 'LegalEntity::PayoutMethod::Check',
@@ -65,58 +69,54 @@ export default class extends Controller {
   }
 
   connect() {
-    // If a method is already selected on load, start collapsed.
-    if (this.checkedRadio()) this.collapseOptions()
+    // If a method is already selected on load, start collapsed. Otherwise the
+    // picker is the "first page" and the detail fields should stay hidden.
+    if (this.collapsibleValue && this.checkedRadio()) {
+      this.collapseOptions()
+    } else {
+      this.hideDetailSections()
+    }
   }
 
   checkedRadio() {
     return this.optionsTarget.querySelector('input[type="radio"]:checked')
   }
 
-  radioLabel(radio) {
-    // The visible card is the label bound to this radio.
-    return (
-      this.optionsTarget.querySelector(`label[for="${radio.id}"]`) ||
-      radio.nextElementSibling
-    )
+  // The payout-method detail input blocks rendered as siblings of the picker.
+  detailSections() {
+    const root = this.element.parentElement || document
+    return root.querySelectorAll('[data-behavior$="payout_method_inputs"]')
+  }
+
+  hideDetailSections = () => {
+    this.detailSections().forEach(section => {
+      section.style.display = 'none'
+    })
   }
 
   onSelect = () => {
-    if (this.checkedRadio()) this.collapseOptions()
+    if (this.collapsibleValue && this.checkedRadio()) this.collapseOptions()
   }
 
-  // Hide the unselected cards, leaving just the chosen one plus a "Change" link.
+  // Hide the whole picker once a method is chosen, leaving just the detail
+  // fields below plus a "Change payout method" back link.
   collapseOptions = () => {
-    const checked = this.checkedRadio()
-    if (!checked) return
+    if (!this.checkedRadio()) return
 
-    this.optionsTarget
-      .querySelectorAll('input[type="radio"]')
-      .forEach(radio => {
-        const label = this.radioLabel(radio)
-        if (label) label.hidden = radio !== checked
-      })
-
-    this.optionsTarget.style.gridTemplateColumns = '1fr'
-    this.optionsTarget.style.maxWidth = 'none'
+    this.optionsTarget.hidden = true
     if (this.hasLegendTarget) this.legendTarget.hidden = true
     this.helpTarget.hidden = true
     this.changeTarget.hidden = false
   }
 
-  // Reveal all cards again so the user can pick a different method.
+  // Reveal the picker again so the user can pick a different method. The detail
+  // fields are hidden until a method is committed again.
   showOptions = () => {
-    this.optionsTarget
-      .querySelectorAll('input[type="radio"]')
-      .forEach(radio => {
-        const label = this.radioLabel(radio)
-        if (label) label.hidden = false
-      })
-
-    this.optionsTarget.style.gridTemplateColumns = ''
+    this.optionsTarget.hidden = false
     if (this.hasLegendTarget) this.legendTarget.hidden = false
     this.helpTarget.hidden = false
     this.changeTarget.hidden = true
+    this.hideDetailSections()
   }
 
   showWizard = () => {

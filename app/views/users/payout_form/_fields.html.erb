@@ -1,10 +1,15 @@
-<%# locals: (form:, user:, payout_method:, editing: nil, embedded: false, title: "How would you like to be reimbursed?") %>
+<%# locals: (form:, user:, payout_method:, editing: nil, embedded: false, collapsible: true, title: "How would you like to be reimbursed?") %>
 <% selected_type = payout_method&.class&.name %>
 <% pm_is = ->(klass) { payout_method.instance_of?(klass) } %>
 <% detail_for = ->(klass) { pm_is.call(klass) ? payout_method : klass.new } %>
 <% unless editing %>
-  <div data-controller="payout-wizard">
+  <div data-controller="payout-wizard" data-payout-wizard-collapsible-value="<%= collapsible %>">
     <div data-payout-wizard-target="home">
+      <a class="no-underline text-xs inline-flex items-center -ml-2 mb-3" href="javascript:void(0)" data-payout-wizard-target="change" data-action="click->payout-wizard#showOptions" hidden>
+        <%= inline_icon "view-back" %>
+        Change payout method
+      </a>
+
       <fieldset class="m0 p0">
         <legend class="heading h3 pb2 bold" data-payout-wizard-target="legend"><%= title %></legend>
         <div class="field field--options mb-0" style="max-width: none;" data-payout-wizard-target="options" data-action="change->payout-wizard#onSelect">
@@ -22,10 +27,6 @@
 
       <a class="payout-wizard__help block w-full text-center no-underline muted text-sm mt-4 pt-3" style="border-top: 1px solid var(--smoke);" href="javascript:void(0)" data-payout-wizard-target="help" data-action="click->payout-wizard#showWizard">
         Which method should I use? <strong style="color: var(--info);">Help me decide &rarr;</strong>
-      </a>
-
-      <a class="block w-full text-center no-underline muted text-sm mt-3" href="javascript:void(0)" data-payout-wizard-target="change" data-action="click->payout-wizard#showOptions" hidden>
-        <strong style="color: var(--info);">&larr; Change payout method</strong>
       </a>
     </div>
 
