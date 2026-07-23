@@ -74,9 +74,6 @@ class CardGrant < ApplicationRecord
 
   enum :status, { active: 0, canceled: 1, expired: 2 }, default: :active
 
-  # These columns are NOT NULL with DB defaults, but new records should start as
-  # nil so `apply_acceptance_method_defaults` can inherit the event's
-  # CardGrantSetting defaults instead of always falling back to the schema value.
   attribute :allow_stripe_card, :boolean, default: nil
   attribute :allow_reimbursement_report, :boolean, default: nil
 
@@ -137,8 +134,6 @@ class CardGrant < ApplicationRecord
     if suspected_fraud?
       "error"
     elsif reimbursement_report.present?
-      # Accepting a grant as a reimbursement cancels it and opens a report, so
-      # this must be checked before the canceled?/expired? branch below.
       "success"
     elsif canceled? || expired?
       "muted"
@@ -155,8 +150,6 @@ class CardGrant < ApplicationRecord
     if suspected_fraud?
       "Fraudulent"
     elsif reimbursement_report.present?
-      # See #state: reimbursement acceptance cancels the grant, so this branch
-      # must come before canceled?/expired?.
       "Active"
     elsif canceled?
       "Canceled"
