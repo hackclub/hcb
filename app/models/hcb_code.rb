@@ -772,6 +772,25 @@ class HcbCode < ApplicationRecord
 
   def write_event_and_subledger_id(event = events.first, subledger = subledgers.first)
     update(event_id: event&.id, subledger_id: subledger&.id)
+
+    mapped_event_ids = canonical_pending_transactions
+      .joins(:canonical_pending_event_mapping)
+      .distinct
+      .pluck("canonical_pending_event_mappings.event_id")
+      .concat(
+        canonical_transactions
+          .joins(:canonical_event_mapping)
+          .distinct
+          .pluck("canonical_event_mappings.event_id")
+      )
+      .push(event&.id)
+      .compact
+      .uniq
+
+    hcb_code_tags
+      .joins(:tag)
+      .where.not(tags: { event_id: mapped_event_ids })
+      .find_each(&:destroy)
   end
 
   def update_custom_memo!(memo)
