@@ -95,7 +95,7 @@ RSpec.describe CardGrantsController do
       )
 
       expect(event.card_grants).to be_empty
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(flash[:error]).to eq("Purpose is too long (maximum is 30 characters)")
     end
 
@@ -118,7 +118,7 @@ RSpec.describe CardGrantsController do
       )
 
       expect(event.card_grants).to be_empty
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(flash[:error]).to eq("You don't have enough money to make this disbursement.")
     end
   end

@@ -1,0 +1,50 @@
+<% title "Payments" %>
+
+<%= form_with local: true, class: "card", url: admin_payments_path, method: :get do |form| %>
+  <div class="flex flex-col sm:flex-row items-center gap-2">
+    <%= render "events/filters/search", form: %>
+    <%= form.select :state, Payment.aasm.states_for_select, { include_blank: "All states", selected: @state } %>
+  </div>
+  <div class="flex items-center mt-2">
+    <%= form.submit "Search", class: "ml-auto" %>
+  </div>
+<% end %>
+
+<div class="flex items-center mb2 flex-col sm:flex-row">
+  <div class="flex-grow">
+    <%= page_entries_info @payments, entry_name: "payments" %>
+  </div>
+  <%= paginate @payments %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th class="w-32">Date</th>
+      <th>Organization</th>
+      <th>Recipient</th>
+      <th>Purpose</th>
+      <th class="w-32">Amount</th>
+      <th>Status</th>
+      <th class="w-24">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @payments.each do |payment| %>
+      <tr class="<%= "admin-bg-pending" if payment.under_review? %>">
+        <td><%= payment.created_at.strftime("%Y-%m-%d") %></td>
+        <td><%= link_to payment.event.name, payment.event %></td>
+        <td>
+          <%= payment.payee.display_name %>
+          <div class="muted h5"><%= payment.payee.email %></div>
+        </td>
+        <td><%= payment.purpose %></td>
+        <td><%= payment.amount.format %></td>
+        <td><span class="badge ml-0 bg-<%= payment.state_color %>"><%= payment.state_text %></span></td>
+        <td><%= link_to "View", payment_path(payment) %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @payments %>

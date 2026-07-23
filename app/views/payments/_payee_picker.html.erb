@@ -21,6 +21,19 @@
       </div>
       <%= inline_icon "view-forward", class: "ml-auto muted" %>
     </a>
+
+    <% if destination == "payments" %>
+      <%= link_to new_disbursement_path(source_event_id: event.slug), class: "btn btn--list-item border-t rounded-none w-full", data: { turbo_frame: "_top" } do %>
+        <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
+          <%= inline_icon "bank-account", size: 18 %>
+        </div>
+        <div class="text-left">
+          <p class="font-medium">HCB transfer</p>
+          <p class="text-sm muted">Send money to another HCB organization</p>
+        </div>
+        <%= inline_icon "view-forward", class: "ml-auto muted" %>
+      <% end %>
+    <% end %>
   </div>
 
   <div data-payee-picker-target="addingPanel" hidden>

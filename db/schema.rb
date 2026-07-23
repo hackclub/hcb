@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_16_000000) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_20_210532) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -336,7 +336,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_16_000000) do
     t.bigint "subledger_id"
     t.datetime "updated_at", null: false
     t.bigint "user_id"
-    t.index ["canonical_transaction_id"], name: "index_canonical_event_mappings_on_canonical_transaction_id"
+    t.index ["canonical_transaction_id"], name: "index_canonical_event_mappings_on_canonical_transaction_id", unique: true
     t.index ["event_id", "canonical_transaction_id"], name: "index_cem_event_id_canonical_transaction_id_uniqueness", unique: true
     t.index ["event_id"], name: "index_canonical_event_mappings_on_event_id"
     t.index ["subledger_id"], name: "index_canonical_event_mappings_on_subledger_id"
@@ -365,7 +365,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_16_000000) do
     t.bigint "event_id", null: false
     t.bigint "subledger_id"
     t.datetime "updated_at", null: false
-    t.index ["canonical_pending_transaction_id"], name: "index_canonical_pending_event_map_on_canonical_pending_tx_id"
+    t.index ["canonical_pending_transaction_id"], name: "index_canonical_pending_event_map_on_canonical_pending_tx_id", unique: true
+    t.index ["event_id", "canonical_pending_transaction_id"], name: "index_cpem_event_id_cpt_id_uniqueness", unique: true
     t.index ["event_id"], name: "index_canonical_pending_event_mappings_on_event_id"
     t.index ["subledger_id"], name: "index_canonical_pending_event_mappings_on_subledger_id"
   end
@@ -401,6 +402,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_16_000000) do
     t.bigint "raw_pending_outgoing_ach_transaction_id"
     t.bigint "raw_pending_outgoing_check_transaction_id"
     t.bigint "raw_pending_outgoing_disbursement_transaction_id"
+    t.bigint "raw_pending_stripe_service_fee_transaction_id"
     t.bigint "raw_pending_stripe_transaction_id"
     t.bigint "reimbursement_expense_payout_id"
     t.bigint "reimbursement_payout_holding_id"
@@ -422,6 +424,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_16_000000) do
     t.index ["raw_pending_outgoing_ach_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_outgoing_ach_tx_id"
     t.index ["raw_pending_outgoing_check_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_outgoing_check_tx_id"
     t.index ["raw_pending_outgoing_disbursement_transaction_id"], name: "index_cpts_on_raw_pending_outgoing_disbursement_transaction_id"
+    t.index ["raw_pending_stripe_service_fee_transaction_id"], name: "index_cpts_on_raw_pending_stripe_service_fee_tx_id"
     t.index ["raw_pending_stripe_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_stripe_tx_id"
     t.index ["reimbursement_expense_payout_id"], name: "index_canonical_pending_txs_on_reimbursement_expense_payout_id"
     t.index ["reimbursement_payout_holding_id"], name: "index_canonical_pending_txs_on_reimbursement_payout_holding_id"
@@ -459,6 +462,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_16_000000) do
 
   create_table "card_charges", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.string "merchant_category"
+    t.string "merchant_network_id"
     t.bigint "raw_pending_stripe_transaction_id"
     t.datetime "updated_at", null: false
     t.index ["raw_pending_stripe_transaction_id"], name: "index_card_charges_on_raw_pending_stripe_transaction_id", unique: true
@@ -2217,6 +2222,15 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_16_000000) do
     t.index ["disbursement_id"], name: "index_rpodts_on_disbursement_id"
   end
 
+  create_table "raw_pending_stripe_service_fee_transactions", force: :cascade do |t|
+    t.integer "amount_cents"
+    t.datetime "created_at", null: false
+    t.date "date_posted"
+    t.bigint "stripe_service_fee_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["stripe_service_fee_id"], name: "index_rp_stripe_service_fee_txs_on_stripe_service_fee_id"
+  end
+
   create_table "raw_pending_stripe_transactions", force: :cascade do |t|
     t.integer "amount_cents"
     t.datetime "created_at", null: false
@@ -3162,6 +3176,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_16_000000) do
   add_foreign_key "raw_pending_fee_revenue_transactions", "fee_revenues"
   add_foreign_key "raw_pending_incoming_disbursement_transactions", "disbursements"
   add_foreign_key "raw_pending_outgoing_disbursement_transactions", "disbursements"
+  add_foreign_key "raw_pending_stripe_service_fee_transactions", "stripe_service_fees"
   add_foreign_key "receipts", "users"
   add_foreign_key "recurring_donations", "events"
   add_foreign_key "referral_attributions", "referral_links"
