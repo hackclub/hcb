@@ -18,4 +18,9 @@ export default [
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
   pluginJs.configs.recommended,
   pluginReact.configs.flat.recommended,
+  {
+    rules: {
+      'no-alert': 'error',
+    },
+  },
 ]

@@ -1,0 +1,126 @@
+<% title "Contractors for #{@event.name}" %>
+<% page_md %>
+<%= render "events/nav", selected: :contractors %>
+
+<% if @contractors.empty? && organizer_signed_in? && !params[:q].present? %>
+  <%= render "events/one_pager",
+    title: "Contractors",
+    screenshots: {
+      light: "https://cdn.hackclub.com/019f623d-fab8-73d3-8ca6-78100fb6c981/image.png",
+      dark: "https://cdn.hackclub.com/019f623d-f81a-7d21-a8ee-5ab25859bf69/image.png",
+    },
+    hints: [
+      {
+        icon: "payment-transfer",
+        title: "Pay the people who power your event",
+        description: "Bring on contractors to handle engineering, design, content, and more — then pay them directly from your event account."
+      },
+      {
+        icon: "receipt",
+        title: "Collect tax forms automatically",
+        description: "Contractors sign their contract and complete W-9/W-8BEN forms during onboarding, so your records stay clean."
+      },
+      {
+        icon: "list",
+        title: "Track every engagement",
+        description: "See each contractor's rate, contract period, purpose, and total paid to date, all in one place."
+      }
+    ] do %>
+    <% if Payroll::PositionPolicy.new(current_user, @event).new? %>
+      <%= link_to new_event_payroll_position_path(event_id: @event.slug), class: "w-full btn bg-success" do %>
+        <%= inline_icon "send" %>
+        New contractor
+      <% end %>
+    <% end %>
+  <% end %>
+<% else %>
+  <h1 class="heading border-0 mb-0">
+    <span class="flex items-center">
+      Contractors
+      <%= badge_for @contractors.length, class: "bg-muted" %>
+    </span>
+
+    <% if Payroll::PositionPolicy.new(current_user, @event).new? %>
+      <%= link_to new_event_payroll_position_path(event_id: @event.slug), class: "btn bg-success" do %>
+        <%= inline_icon "send" %>
+        New contractor
+      <% end %>
+    <% end %>
+  </h1>
+
+  <div class="statset mb-4">
+    <div class="stat stat--plain">
+      <span class="stat__label">Active</span>
+      <span class="stat__value"><%= @stats[:active] %></span>
+    </div>
+    <div class="stat stat--plain">
+      <span class="stat__label">Onboarding in progress</span>
+      <span class="stat__value"><%= @stats[:onboarding] %></span>
+    </div>
+    <div class="stat stat--plain">
+      <span class="stat__label">Completed</span>
+      <span class="stat__value"><%= @stats[:completed] %></span>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
+    <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+      <%= render "events/filters/search", form: %>
+    <% end %>
+  </div>
+
+  <% if @contractors.any? %>
+    <% show_details = policy(@event).contractor_details? %>
+    <article class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Name</th>
+            <th>Period</th>
+            <% if show_details %><th>Rate</th><% end %>
+            <th>Purpose</th>
+            <% if show_details %><th class="text-right">Total paid</th><% end %>
+          </tr>
+        </thead>
+
+        <tbody>
+          <% @contractors.each do |contractor| %>
+            <tr class="<%= "clickable" if show_details %>">
+              <td>
+                <span class="badge ml-0 bg-<%= contractor.status_color %>"><%= contractor.status_text %></span>
+              </td>
+              <td>
+                <strong><%= contractor.payee.display_name %></strong>
+                <% if show_details %>
+                  <span class="muted block"><%= contractor.payee.email %></span>
+                <% end %>
+              </td>
+              <td><%= contractor.period_label %></td>
+              <% if show_details %>
+                <td><%= "#{render_money_short(contractor.rate_cents)}/hr" %></td>
+              <% end %>
+              <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= contractor.description %>">
+                <%= contractor.description %>
+              </td>
+              <% if show_details %>
+                <td class="text-right">
+                  <% if contractor.payee.total_paid_cents.positive? %>
+                    <%= render_money contractor.payee.total_paid_cents %>
+                  <% else %>
+                    <span class="muted">&mdash;</span>
+                  <% end %>
+                  <%= link_to "", event_payroll_position_path(event_id: @event.slug, id: contractor),
+                        class: "stretched-link",
+                        data: popovers_enabled? ? contractor_popover_data(contractor) : { turbo_frame: "_top" } %>
+                </td>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </article>
+  <% else %>
+    <%= blankslate "No contractors found" %>
+  <% end %>
+<% end %>

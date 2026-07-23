@@ -20,9 +20,11 @@
   <li>Your <%= link_to "announcements page", event_announcement_overview_url(@event) %> will always be visible.</li>
 </ul>
 
+<% if @can_disable_transparency %>
 <p>
   Managers can disable transparency mode at any time in <%= link_to "your organization settings", edit_event_url(@event) %>.
 </p>
+<% end %>
 
 <p>
   Additionally, managers can enable monthly announcements in <%= link_to "your organization settings", edit_event_url(@event) %>.

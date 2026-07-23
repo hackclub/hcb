@@ -45,6 +45,29 @@
       "note": "Content is never updated directly by user and always rendered on the server"
     },
     {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "1d3b6e20ef6fa701ececbdaf3aad261500d76fbce2d86e84a1a8f27d84db04e9",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/controllers/disbursements_controller.rb",
+      "line": 84,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "Arel.sql(\"array_position(ARRAY[#{current_user.organizer_positions.reorder(:sort_index => :asc).pluck(:event_id).map(&:to_i).join(\", \")}]::bigint[], events.id) NULLS LAST\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "DisbursementsController",
+        "method": "event_search"
+      },
+      "user_input": "current_user.organizer_positions.reorder(:sort_index => :asc)",
+      "confidence": "High",
+      "cwe_id": [
+        89
+      ],
+      "note": ""
+    },
+    {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
       "fingerprint": "24b4bbb940906be890c8fca79f53e06131392c6b52417b1b280fbf1f554b55e5",
@@ -59,7 +82,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "wise_transfer_process",
-          "line": 751,
+          "line": 852,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/wise_transfer_process",
@@ -113,30 +136,6 @@
       "note": "It generates a link to a stripe resource based on the model name and the id in 'has_stripe_dashboard_url.rb' which both should be safe."
     },
     {
-      "warning_type": "Denial of Service",
-      "warning_code": 76,
-      "fingerprint": "33fd4663b98a1d3c429121aff4c7300b51235ad04569ab3f07ef5f30de9a9292",
-      "check_name": "RegexDoS",
-      "message": "Model attribute used in regular expression",
-      "file": "app/jobs/user/subordinate_summary_job.rb",
-      "line": 91,
-      "link": "https://brakemanscanner.org/docs/warning_types/denial_of_service/",
-      "code": "/\\A#{User.get_public_id_prefix}.*\\Z/",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "User::SubordinateSummaryJob",
-        "method": "s(:self).to_user"
-      },
-      "user_input": "User.get_public_id_prefix",
-      "confidence": "Medium",
-      "cwe_id": [
-        20,
-        185
-      ],
-      "note": "User.get_public_id_prefix calls a class method that returns :usr so this is safe"
-    },
-    {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
       "fingerprint": "41118d19fb5e498f2b4ac5a7b8a9cddca6f3e089ced5eebdcf598a1a4ff9bad7",
@@ -177,7 +176,7 @@
       "check_name": "Redirect",
       "message": "Possible unprotected redirect",
       "file": "app/controllers/referral/links_controller.rb",
-      "line": 23,
+      "line": 18,
       "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
       "code": "redirect_to((Referral::Link.find_by(:slug => params[:id]).program.redirect_to or root_path), :allow_other_host => true)",
       "render_path": null,
@@ -200,7 +199,7 @@
       "check_name": "LinkToHref",
       "message": "Potentially unsafe model attribute in `link_to` href",
       "file": "app/views/admin/contracts.html.erb",
-      "line": 64,
+      "line": 68,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
       "code": "link_to(\"DocuSeal\", (Unresolved Model).new.docuseal_submission_url)",
       "render_path": [
@@ -208,7 +207,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "contracts",
-          "line": 1475,
+          "line": 1636,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/contracts",
@@ -242,7 +241,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "wise_transfer_process",
-          "line": 751,
+          "line": 852,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/wise_transfer_process",
@@ -276,7 +275,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "wise_transfer_process",
-          "line": 751,
+          "line": 852,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/wise_transfer_process",
@@ -310,7 +309,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "google_workspace_process",
-          "line": 1047,
+          "line": 1171,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/google_workspace_process",
@@ -328,6 +327,28 @@
         79
       ],
       "note": "Domain is validated to not have a javascript: url scheme & dns_check_url is injecting that domain in a https url."
+    },
+    {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 4,
+      "fingerprint": "9d0250d9ac9f2db54434d7a0a1fe5c34aa4edc236cd92def76d77b6bec2a7b44",
+      "check_name": "LinkToHref",
+      "message": "Unsafe parameter value in `link_to` href",
+      "file": "app/views/kaminari/_paginator.html.erb",
+      "line": 24,
+      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
+      "code": "link_to(\"#{n} per page\", url_for((request.query_parameters or {}).merge(\"per\" => n, \"page\" => 1, :only_path => true)), :class => (\"menu__action #{\"menu__action--active\" if (n == per_page)}\"), :aria => ({ :current => ((n == per_page) ? (\"true\") : (nil)) }), :data => ({ :turbo_frame => request.headers[\"Turbo-Frame\"].presence }))",
+      "render_path": null,
+      "location": {
+        "type": "template",
+        "template": "kaminari/_paginator"
+      },
+      "user_input": "request.query_parameters",
+      "confidence": "High",
+      "cwe_id": [
+        79
+      ],
+      "note": ""
     },
     {
       "warning_type": "Cross-Site Scripting",
@@ -378,7 +399,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "invoice_process",
-          "line": 975,
+          "line": 1099,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/invoice_process",
@@ -510,7 +531,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "invoice_process",
-          "line": 975,
+          "line": 1099,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/invoice_process",
@@ -578,7 +599,7 @@
           "type": "controller",
           "class": "AdminController",
           "method": "google_workspace_process",
-          "line": 1047,
+          "line": 1171,
           "file": "app/controllers/admin_controller.rb",
           "rendered": {
             "name": "admin/google_workspace_process",
@@ -621,6 +642,6 @@
       "note": ""
     }
   ],
-  "updated": "2026-03-21 00:38:52 -0700",
+  "updated": "2026-06-22 12:31:41 -0400",
   "brakeman_version": "6.2.2"
 }

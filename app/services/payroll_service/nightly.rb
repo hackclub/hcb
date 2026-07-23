@@ -6,21 +6,23 @@ module PayrollService
       Employee::Payment.approved.find_each(batch_size: 100) do |payment|
         next if payment.payout.present?
 
-        case payment.employee.user.payout_method
-        when User::PayoutMethod::Check
+        payout_method = payment.employee.user.default_payout_method&.details
+
+        case payout_method
+        when LegalEntity::PayoutMethod::Check
           safely do
             check = payment.employee.event.increase_checks.build(
               memo: "Payment for \"#{payment.title}\"."[0...40],
               amount: payment.amount_cents,
               payment_for: "Payment for \"#{payment.title}\".",
               recipient_name: payment.employee.user.full_name,
-              address_line1: payment.employee.user.payout_method.address_line1,
-              address_line2: payment.employee.user.payout_method.address_line2,
-              address_city: payment.employee.user.payout_method.address_city,
-              address_state: payment.employee.user.payout_method.address_state,
+              address_line1: payout_method.address_line1,
+              address_line2: payout_method.address_line2,
+              address_city: payout_method.address_city,
+              address_state: payout_method.address_state,
               recipient_email: payment.employee.user.email,
               send_email_notification: false,
-              address_zip: payment.employee.user.payout_method.address_postal_code,
+              address_zip: payout_method.address_postal_code,
               user: User.system_user
             )
 
@@ -38,7 +40,7 @@ module PayrollService
 
             check.send_check! if payment.previously_paid?
           end
-        when User::PayoutMethod::AchTransfer
+        when LegalEntity::PayoutMethod::AchTransfer
           safely do
             ach_transfer = payment.employee.event.ach_transfers.build(
               amount: payment.amount_cents,
@@ -46,9 +48,9 @@ module PayrollService
               recipient_name: payment.employee.user.full_name,
               recipient_email: payment.employee.user.email,
               send_email_notification: false,
-              routing_number: payment.employee.user.payout_method.routing_number,
-              account_number: payment.employee.user.payout_method.account_number,
-              bank_name: (ColumnService.get("/institutions/#{payment.employee.user.payout_method.routing_number}")["full_name"] rescue "Bank Account"),
+              routing_number: payout_method.routing_number,
+              account_number: payout_method.account_number,
+              bank_name: (ColumnService.get("/institutions/#{payout_method.routing_number}")["full_name"] rescue "Bank Account"),
               creator: User.system_user,
               company_entry_description: "SALARY",
             )
@@ -73,26 +75,6 @@ module PayrollService
                 payment.mark_failed!
               end
             end
-          end
-        when User::PayoutMethod::PaypalTransfer
-          safely do
-            paypal_transfer = payment.employee.event.paypal_transfers.build(
-              amount_cents: payment.amount_cents,
-              payment_for: "Payment for \"#{payment.title}\".",
-              memo: "Payment for \"#{payment.title}\".",
-              recipient_email: payment.employee.user.payout_method.recipient_email,
-              recipient_name: payment.employee.user.name,
-              user: User.system_user
-            )
-            paypal_transfer.save!
-            payment.payout = paypal_transfer
-            payment.save!
-            ::ReceiptService::Create.new(
-              uploader: payment.employee.user,
-              attachments: [payment.invoice.file.blob],
-              upload_method: :employee_payment,
-              receiptable: paypal_transfer.local_hcb_code
-            ).run!
           end
         else
           raise ArgumentError, "🚨⚠️ unsupported payout method!"
