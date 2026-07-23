@@ -176,7 +176,7 @@ module Reimbursement
         end
         redirect_to @report
       else
-        render :edit, status: :unprocessable_entity
+        render :edit, status: :unprocessable_content
       end
     end
 

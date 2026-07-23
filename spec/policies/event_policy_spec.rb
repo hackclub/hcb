@@ -3,6 +3,49 @@
 require "rails_helper"
 
 RSpec.describe EventPolicy, type: :policy do
+  describe "#sub_organizations?" do
+    let(:event) { create(:event, is_public: true) }
+
+    subject { described_class.new(nil, event).sub_organizations? }
+
+    context "when the only sub-organization is private" do
+      before { create(:event, parent: event, is_public: false) }
+
+      it { is_expected.to eq(false) }
+    end
+
+    context "when the only sub-organization is hidden" do
+      before { create(:event, parent: event, is_public: true, hidden_at: Time.current) }
+
+      it { is_expected.to eq(false) }
+    end
+
+    context "when a transparent sub-organization exists" do
+      before { create(:event, parent: event, is_public: true) }
+
+      it { is_expected.to eq(true) }
+    end
+
+    context "when the only sub-organization has been deleted" do
+      before { create(:event, parent: event, is_public: true).destroy }
+
+      it { is_expected.to eq(false) }
+    end
+
+    context "as an organizer of an organization whose roster is entirely private" do
+      let(:organizer) { create(:user) }
+
+      subject { described_class.new(organizer, event).sub_organizations? }
+
+      before do
+        create(:organizer_position, user: organizer, event:)
+        create(:event, parent: event, is_public: false)
+      end
+
+      it { is_expected.to eq(true) }
+    end
+  end
+
   describe "#create_sub_organization?" do
     let(:event) { create(:event) }
     let(:user) { create(:user) }

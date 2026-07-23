@@ -93,6 +93,58 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe "#forced_transparency?" do
+    let(:public_parent) { create(:event, is_public: true) }
+    let(:private_parent) { create(:event, is_public: false) }
+
+    it "is true for an Argosy event under a transparent parent" do
+      event = create(:event, parent: public_parent, plan_type: Event::Plan::Argosy2025)
+
+      expect(event.forced_transparency?).to eq(true)
+    end
+
+    it "is false for an Argosy event under a non-transparent parent" do
+      event = create(:event, parent: private_parent, plan_type: Event::Plan::Argosy2026)
+
+      expect(event.forced_transparency?).to eq(false)
+    end
+
+    it "is false for an Argosy event with no parent" do
+      event = create(:event, plan_type: Event::Plan::Argosy2026)
+
+      expect(event.forced_transparency?).to eq(false)
+    end
+
+    it "is false for a non-Argosy event under a transparent parent" do
+      event = create(:event, parent: public_parent, plan_type: Event::Plan::FeeWaived)
+
+      expect(event.forced_transparency?).to eq(false)
+    end
+  end
+
+  describe "transparency enforcement" do
+    it "forces transparency on an Argosy event under a transparent parent" do
+      parent = create(:event, is_public: true)
+      event = create(:event, parent:, is_public: false, plan_type: Event::Plan::Argosy2025)
+
+      expect(event.is_public).to eq(true)
+    end
+
+    it "leaves a non-Argosy event under a transparent parent alone" do
+      parent = create(:event, is_public: true)
+      event = create(:event, parent:, is_public: false)
+
+      expect(event.is_public).to eq(false)
+    end
+
+    it "removes transparency from an event that is ineligible for it" do
+      event = create(:event, is_public: true, plan_type: Event::Plan::SalaryAccount)
+
+      expect(event.is_public).to eq(false)
+      expect(event.is_indexable).to eq(false)
+    end
+  end
+
   describe "#ancestor_ids" do
     it "returns ids ordered from self to root" do
       root = create(:event)
@@ -124,6 +176,105 @@ RSpec.describe Event, type: :model do
       op_grandchild = create(:organizer_position, event: grandchild)
 
       expect(grandchild.ancestor_organizer_positions).to match_array([op_grandchild, op_child, op_root])
+    end
+  end
+
+  describe "#visible_descendant_ids" do
+    let(:root) { create(:event, is_public: true) }
+    let!(:transparent_child) { create(:event, parent: root, is_public: true) }
+    let!(:private_child) { create(:event, parent: root, is_public: false) }
+
+    it "omits private descendants, and their subtrees, from a signed out visitor" do
+      create(:event, parent: private_child, is_public: true)
+
+      expect(root.visible_descendant_ids(nil)).to eq([transparent_child.id])
+    end
+
+    it "omits hidden descendants, and their subtrees, from a signed out visitor" do
+      hidden_child = create(:event, parent: root, is_public: true, hidden_at: Time.current)
+      create(:event, parent: hidden_child, is_public: true)
+
+      expect(root.visible_descendant_ids(nil)).to eq([transparent_child.id])
+    end
+
+    it "omits private descendants from a user with no organizer positions" do
+      expect(root.visible_descendant_ids(create(:user))).to eq([transparent_child.id])
+    end
+
+    it "includes transparent events nested under transparent events" do
+      grandchild = create(:event, parent: transparent_child, is_public: true)
+
+      expect(root.visible_descendant_ids(nil)).to match_array([transparent_child.id, grandchild.id])
+    end
+
+    it "includes private descendants for an admin" do
+      admin = create(:user, :make_admin)
+
+      expect(root.visible_descendant_ids(admin)).to match_array([transparent_child.id, private_child.id])
+    end
+
+    it "includes private and hidden descendants for a reader on the root" do
+      user = create(:user)
+      create(:organizer_position, event: root, user:, role: :reader)
+      hidden_child = create(:event, parent: root, is_public: true, hidden_at: Time.current)
+
+      expect(root.visible_descendant_ids(user)).to match_array(
+        [transparent_child.id, private_child.id, hidden_child.id]
+      )
+    end
+
+    it "includes a private descendant, and its subtree, for a user who organizes only it" do
+      user = create(:user)
+      create(:organizer_position, event: private_child, user:, role: :reader)
+      grandchild = create(:event, parent: private_child, is_public: false)
+
+      expect(root.visible_descendant_ids(user)).to match_array(
+        [transparent_child.id, private_child.id, grandchild.id]
+      )
+    end
+  end
+
+  # EventPolicy#sub_organizations? asks this whether the page has anything on
+  # it, so it has to agree with #visible_descendant_ids about who sees what.
+  # Each example below asserts both, so a rule that drifts apart in one of them
+  # fails here.
+  describe "#visible_subevents" do
+    let(:root) { create(:event, is_public: true) }
+
+    it "is empty for a signed out visitor when only a private subtree exists", :aggregate_failures do
+      private_child = create(:event, parent: root, is_public: false)
+      create(:event, parent: private_child, is_public: true)
+
+      expect(root.visible_subevents(nil)).to be_empty
+      expect(root.visible_descendant_ids(nil)).to be_empty
+    end
+
+    it "is empty for a signed out visitor when only a hidden subtree exists", :aggregate_failures do
+      hidden_child = create(:event, parent: root, is_public: true, hidden_at: Time.current)
+      create(:event, parent: hidden_child, is_public: true)
+
+      expect(root.visible_subevents(nil)).to be_empty
+      expect(root.visible_descendant_ids(nil)).to be_empty
+    end
+
+    it "is empty when the only sub-organization has been deleted", :aggregate_failures do
+      create(:event, parent: root, is_public: true).destroy
+
+      expect(root.visible_subevents(nil)).to be_empty
+      expect(Event.where(id: root.visible_descendant_ids(nil))).to be_empty
+    end
+
+    it "is empty for a user with no organizer positions on a private roster" do
+      create(:event, parent: root, is_public: false)
+
+      expect(root.visible_subevents(create(:user))).to be_empty
+    end
+
+    it "returns the transparent sub-organizations" do
+      transparent_child = create(:event, parent: root, is_public: true)
+      create(:event, parent: root, is_public: false)
+
+      expect(root.visible_subevents(nil)).to eq([transparent_child])
     end
   end
 
