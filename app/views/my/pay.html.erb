@@ -123,6 +123,7 @@
               <% end %>
             </section>
           <% elsif next_step %>
+            <% contractor_party = position.contract&.party(:contractor) if next_step[:key] == :contractor_signature %>
             <% case next_step[:key] %>
             <% when :tax_form %>
               <%= link_to tax_forms_path(legal_entity_id: legal_entity&.hashid), class: "btn bg-warning w-full justify-center" do %>
@@ -134,8 +135,23 @@
                 <%= inline_icon "bank-account" %>
                 Configure payouts
               <% end %>
+            <% when :contractor_signature %>
+              <% if contractor_party %>
+                <%= link_to contract_party_path(contractor_party), class: "btn bg-warning w-full justify-center" do %>
+                  <%= inline_icon "form-sign" %>
+                  Sign contract
+                <% end %>
+              <% else %>
+                <span class="muted flex items-center justify-center gap-1">
+                  <%= inline_icon "clock", size: 20 %>
+                  Next step: <%= next_step[:label] %>
+                </span>
+              <% end %>
             <% else %>
-              <span class="muted nowrap"><%= next_step[:label] %></span>
+              <span class="muted flex items-center justify-center gap-1">
+                <%= inline_icon "clock", size: 20 %>
+                Next step: <%= next_step[:label] %>
+              </span>
             <% end %>
           <% end %>
         </div>
