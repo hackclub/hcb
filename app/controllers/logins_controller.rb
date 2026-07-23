@@ -45,6 +45,9 @@ class LoginsController < ApplicationController
     cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
 
     continue_login(preference: login_preference || :email)
+  rescue ActiveRecord::RecordInvalid => e
+    flash[:error] = e.record.errors.full_messages.to_sentence
+    return redirect_to auth_users_path
   rescue => e
     flash[:error] = e.message
     return redirect_to auth_users_path
@@ -77,7 +80,7 @@ class LoginsController < ApplicationController
       return redirect_to auth_users_path
     end
 
-    render status: :unprocessable_entity
+    render status: :unprocessable_content
   end
 
   # post to request sms login code
@@ -89,12 +92,12 @@ class LoginsController < ApplicationController
       return redirect_to auth_users_path
     end
 
-    render status: :unprocessable_entity
+    render status: :unprocessable_content
   end
 
   # get to see totp page
   def totp
-    render status: :unprocessable_entity
+    render status: :unprocessable_content
   end
 
   def complete
@@ -122,7 +125,7 @@ class LoginsController < ApplicationController
 
       unless ok
         flash.now[:error] = service.errors.full_messages.to_sentence
-        render(:sms, status: :unprocessable_entity)
+        render(:sms, status: :unprocessable_content)
         return
       end
     when "email"
@@ -133,7 +136,7 @@ class LoginsController < ApplicationController
 
       unless ok
         flash.now[:error] = service.errors.full_messages.to_sentence
-        render(:email, status: :unprocessable_entity)
+        render(:email, status: :unprocessable_content)
         return
       end
     when "totp"

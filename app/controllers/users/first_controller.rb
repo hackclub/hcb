@@ -151,9 +151,9 @@ module Users
 
       redirect_to choose_login_preference_login_path(@login)
     rescue ActiveRecord::RecordInvalid => e
-      flash[:error] = e.message
+      flash.now[:error] = e.record.errors.full_messages.to_sentence
 
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
 
     def macbook_qr_code
