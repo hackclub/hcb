@@ -70,13 +70,12 @@ class Disbursement
     alias_method :counterparty_subledger, :source_subledger
     alias_method :transaction_category, :destination_transaction_category
 
-    # These need to be updated later to not use HCB code
     def canonical_transactions
-      @canonical_transactions ||= CanonicalTransaction.where(hcb_code: incoming_hcb_code)
+      @canonical_transactions ||= CanonicalTransaction.where(ledger_item: Ledger::Item.find_by(linked_object: self))
     end
 
     def canonical_pending_transactions
-      @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(hcb_code: incoming_hcb_code)
+      @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(ledger_item: Ledger::Item.find_by(linked_object: self))
     end
 
   end
