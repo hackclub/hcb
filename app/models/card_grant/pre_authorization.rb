@@ -79,6 +79,10 @@ class CardGrant
           card_grant.cancel!(rejected_by)
         end
       end
+
+      event :mark_resubmit_requested do
+        transitions from: :fraudulent, to: :draft
+      end
     end
 
     def status_badge_type(organizer: false)

@@ -22,6 +22,10 @@ class CardGrant
       user&.admin? || manager_in_event?
     end
 
+    def organizer_request_resubmit?
+      user&.admin? || manager_in_event?
+    end
+
     private
 
     def user_in_event?
