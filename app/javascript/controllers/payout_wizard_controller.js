@@ -69,8 +69,6 @@ export default class extends Controller {
   }
 
   connect() {
-    // If a method is already selected on load, start collapsed. Otherwise the
-    // picker is the "first page" and the detail fields should stay hidden.
     if (this.collapsibleValue && this.checkedRadio()) {
       this.collapseOptions()
     } else {
@@ -82,7 +80,6 @@ export default class extends Controller {
     return this.optionsTarget.querySelector('input[type="radio"]:checked')
   }
 
-  // The payout-method detail input blocks rendered as siblings of the picker.
   detailSections() {
     const root = this.element.parentElement || document
     return root.querySelectorAll('[data-behavior$="payout_method_inputs"]')
@@ -98,8 +95,6 @@ export default class extends Controller {
     if (this.collapsibleValue && this.checkedRadio()) this.collapseOptions()
   }
 
-  // Hide the whole picker once a method is chosen, leaving just the detail
-  // fields below plus a "Change payout method" back link.
   collapseOptions = () => {
     if (!this.checkedRadio()) return
 
@@ -110,7 +105,6 @@ export default class extends Controller {
   }
 
   // Reveal the picker again so the user can pick a different method. The detail
-  // fields are hidden until a method is committed again.
   showOptions = () => {
     this.optionsTarget.hidden = false
     if (this.hasLegendTarget) this.legendTarget.hidden = false
