@@ -54,10 +54,9 @@ export default class extends Controller {
         const balanceByDate = Object.fromEntries(entries)
 
         for (const date in balanceByDate) {
-          const value =
-            date == today
-              ? this.availableValue
-              : parseFloat(balanceByDate[date])
+          const raw = parseFloat(balanceByDate[date])
+          const feeAdjusted = Math.round(raw * 0.93)
+          const value = date == today ? this.availableValue : feeAdjusted
 
           const mostRecentDate = balances[balances.length - 1]?.date
           const range = getDates(new Date(date), new Date(mostRecentDate))
