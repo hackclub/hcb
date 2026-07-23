@@ -8,7 +8,7 @@ RSpec.describe AdminController do
 
   describe "#bookkeeping" do
     it "renders the bookkeeping lookup with a React on Rails mount" do
-      sign_in(create(:user, :make_admin))
+      create_session(create(:user, :make_admin), verified: true)
 
       get(:bookkeeping)
       document = Nokogiri::HTML(response.body)

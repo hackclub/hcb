@@ -733,7 +733,7 @@ GEM
       execjs
       railties (>= 3.2)
       tilt
-    react_on_rails (17.0.0.rc.1)
+    react_on_rails (17.0.0)
       addressable
       connection_pool
       execjs (~> 2.5)
@@ -1082,7 +1082,7 @@ DEPENDENCIES
   rack-timeout
   rails (~> 8.1)
   react-rails
-  react_on_rails (= 17.0.0.rc.1)
+  react_on_rails (= 17.0.0)
   redcarpet
   redis (~> 5.4)
   relaxed-rubocop
