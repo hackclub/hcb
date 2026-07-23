@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class AdminController < Admin::BaseController
+  helper ReactOnRailsMigrationHelper
+
   def nav
     @nav = Admin::Nav.new(page_title: params[:title])
 
