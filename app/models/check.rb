@@ -57,7 +57,7 @@ class Check < ApplicationRecord
   include PgSearch::Model
   pg_search_scope :search_recipient, associated_against: { lob_address: :name, event: :name }, against: [:memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "checks.created_at"
 
-  has_one :ledger_item, as: :linked_object
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :creator, class_name: "User"
   belongs_to :lob_address
   has_one :event, through: :lob_address

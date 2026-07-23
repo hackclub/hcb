@@ -14,8 +14,21 @@ module MoneyService
       return eu_bank.exchange(amount_cents, currency, "USD").cents
     else
       # we fallback to Wise for currency conversion when we can't get it from the EU Central Bank
-      money = Money.from_cents(amount_cents, currency)
-      return WiseTransfer.generate_detailed_quote(money)[:without_fees_usd_amount].cents
+      return convert_to_usd_wise(amount_cents, currency)
     end
+  end
+
+  def self.convert_from_usd_wise(usd_amount_cents, currency)
+    return usd_amount_cents if currency == "USD"
+
+    money = Money.from_cents(usd_amount_cents, "USD")
+    WiseTransfer.convert_usd_to_local(money, currency).cents
+  end
+
+  def self.convert_to_usd_wise(amount_cents, currency)
+    return amount_cents if currency == "USD"
+
+    money = Money.from_cents(amount_cents, currency)
+    WiseTransfer.generate_detailed_quote(money)[:without_fees_usd_amount].cents
   end
 end

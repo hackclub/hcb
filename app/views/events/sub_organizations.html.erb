@@ -50,12 +50,21 @@
 <%= render "events/filters/bar", filters: @filter_options if @has_filter %>
 
 <% if @sub_organizations.any? %>
-  <ul class="grid grid--medium-narrow text-left w-100 mt0">
+  <ul id="sub_organizations" class="grid grid--medium-narrow text-left w-100 mt0">
     <%= render partial: "events/event_card", collection: @sub_organizations, as: :event, locals: { show_scoped_tags: true } %>
   </ul>
   <%= paginate @sub_organizations %>
-<% else %>
+<% elsif @hidden_sub_organizations.none? %>
   <%= blankslate "No sub-organizations yet" %>
+<% end %>
+
+<% if @hidden_sub_organizations.any? %>
+  <details id="hidden_sub_organizations" class="w-full text-left">
+    <summary><h4 class="inline-block pb-0 border-none muted">Hidden sub-organizations</h4></summary>
+    <ul class="grid grid--medium-narrow text-left mt0">
+      <%= render partial: "events/event_card", collection: @hidden_sub_organizations, as: :event, locals: { show_scoped_tags: true } %>
+    </ul>
+  </details>
 <% end %>
 
 <% if policy(@event).create_sub_organization? %>

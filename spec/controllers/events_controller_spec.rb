@@ -5,6 +5,25 @@ require "rails_helper"
 RSpec.describe EventsController do
   include SessionSupport
 
+  # The graph's node list is inlined as a JSON Stimulus value on the page.
+  def graph_node_names(body)
+    attribute = Nokogiri::HTML5(body)
+                        .at_css("[data-controller='sub-organizations-graph']")
+                        .attr("data-sub-organizations-graph-nodes-value")
+
+    JSON.parse(attribute).pluck("name")
+  end
+
+  def money(cents)
+    ApplicationController.helpers.render_money_amount(cents)
+  end
+
+  def sign_in_organizer_of(event)
+    organizer = create(:user)
+    create(:organizer_position, user: organizer, event:)
+    create_session(organizer, verified: true)
+  end
+
   describe "#index" do
     before do
       # This is required since creating event configs creates a monthly announcement for the event authored by the system user
@@ -118,16 +137,80 @@ RSpec.describe EventsController do
 
     before { create_session(admin, verified: true) }
 
-    # The maximum_amount filter used to compile to a malformed `$and` query that
-    # raised Ledger::Query::Error inside the action (only Pundit was rescued),
-    # 500ing the page. Amount-range filtering itself is covered in the query spec.
-    it "accepts the maximum_amount filter without raising" do
-      item = create(:ledger_item, amount_cents: 100, datetime: Time.current)
-      Ledger::Mapping.create!(ledger: event.ledger, ledger_item: item, on_primary_ledger: true)
+    context "when the organizer has opted into the new ledger" do
+      before { Flipper.enable_actor(:new_ledger_2026_07_17, admin) }
 
-      get(:ledger, params: { event_id: event.slug, maximum_amount: 500 })
+      it "renders the new ledger" do
+        get(:ledger, params: { event_id: event.slug })
 
-      expect(response).to have_http_status(:ok)
+        expect(response).to have_http_status(:ok)
+      end
+
+      # The maximum_amount filter used to compile to a malformed `$and` query
+      # that raised Ledger::Query::Error inside the action (only Pundit was
+      # rescued), 500ing the page. Amount-range filtering itself is covered in
+      # the query spec.
+      it "accepts the maximum_amount filter without raising" do
+        item = create(:ledger_item, amount_cents: 100, datetime: Time.current)
+        Ledger::Mapping.create!(ledger: event.ledger, ledger_item: item, on_primary_ledger: true)
+
+        get(:ledger, params: { event_id: event.slug, maximum_amount: 500 })
+
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
+    context "when the organizer has not opted into the new ledger" do
+      it "redirects to the classic transactions page" do
+        get(:ledger, params: { event_id: event.slug })
+
+        expect(response).to redirect_to(event_transactions_path(event))
+      end
+    end
+
+    context "with apply_flipper=true" do
+      it "opts the organizer into the new ledger and renders it" do
+        get(:ledger, params: { event_id: event.slug, apply_flipper: "true" })
+
+        expect(Flipper.enabled?(:new_ledger_2026_07_17, admin)).to be(true)
+        expect(response).to have_http_status(:ok)
+      end
+    end
+  end
+
+  describe "#transactions" do
+    let(:admin) { create(:user, :make_admin) }
+    let(:event) { create(:event) }
+
+    before { create_session(admin, verified: true) }
+
+    context "when the organizer has opted into the new ledger" do
+      before { Flipper.enable_actor(:new_ledger_2026_07_17, admin) }
+
+      it "redirects to the new ledger" do
+        get(:transactions, params: { event_id: event.slug })
+
+        expect(response).to redirect_to(event_ledger_path(event))
+      end
+    end
+
+    context "when the organizer has not opted into the new ledger" do
+      it "renders the classic transactions page" do
+        get(:transactions, params: { event_id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
+    context "with apply_flipper=true" do
+      before { Flipper.enable_actor(:new_ledger_2026_07_17, admin) }
+
+      it "opts the organizer out of the new ledger and renders the classic page" do
+        get(:transactions, params: { event_id: event.slug, apply_flipper: "true" })
+
+        expect(Flipper.enabled?(:new_ledger_2026_07_17, admin)).to be(false)
+        expect(response).to have_http_status(:ok)
+      end
     end
   end
 
@@ -151,4 +234,150 @@ RSpec.describe EventsController do
       expect(response.body).to include("Receiving Organization")
     end
   end
+
+  describe "#sub_organizations" do
+    render_views
+
+    let(:parent) { create(:event, is_public: true, name: "Parent Organization") }
+    let!(:transparent_sub) do
+      create(:event, parent:, is_public: true, name: "Transparent Subsidiary", slug: "transparent-subsidiary")
+    end
+    let!(:private_sub) do
+      create(:event, parent:, is_public: false, name: "Private Subsidiary", slug: "private-subsidiary")
+    end
+
+    context "as a signed out visitor" do
+      # The private card's lazy balance frame is what redirected signed out
+      # visitors to the login page: it 302s, and Turbo turns the resulting
+      # missing frame into a full page visit.
+      it "lists only transparent sub-organizations, and loads balances for only those", :aggregate_failures do
+        get(:sub_organizations, params: { event_id: parent.slug })
+
+        expect(response.body).to include("Transparent Subsidiary")
+        expect(response.body).not_to include("Private Subsidiary")
+        expect(response.body).to include(event_async_balance_path(transparent_sub))
+        expect(response.body).not_to include(event_async_balance_path(private_sub))
+      end
+
+      it "omits private sub-organizations from the graph nodes" do
+        get(:sub_organizations, params: { event_id: parent.slug })
+
+        expect(graph_node_names(response.body)).to match_array(["Parent Organization", "Transparent Subsidiary"])
+      end
+
+      it "excludes private sub-organizations from the CSV export", :aggregate_failures do
+        get(:sub_organizations, params: { event_id: parent.slug }, format: :csv)
+
+        expect(response.body).to include("Transparent Subsidiary")
+        expect(response.body).not_to include("Private Subsidiary")
+      end
+    end
+
+    context "with a hidden sub-organization" do
+      let!(:hidden_sub) do
+        create(:event, parent:, is_public: true, name: "Hidden Subsidiary", hidden_at: Time.current)
+      end
+
+      it "hides it from a signed out visitor" do
+        get(:sub_organizations, params: { event_id: parent.slug })
+
+        expect(response.body).not_to include("Hidden Subsidiary")
+      end
+
+      context "as an organizer" do
+        before { sign_in_organizer_of(parent) }
+
+        it "sets it aside in a collapsed section rather than the main list", :aggregate_failures do
+          get(:sub_organizations, params: { event_id: parent.slug })
+
+          document = Nokogiri::HTML5(response.body)
+          hidden_section = document.at_css("details#hidden_sub_organizations")
+          main_list = document.at_css("ul#sub_organizations")
+
+          expect(hidden_section.text).to include("Hidden Subsidiary")
+          expect(main_list.text).not_to include("Hidden Subsidiary")
+          expect(main_list.text).to include("Transparent Subsidiary")
+        end
+
+        it "omits it from the graph" do
+          get(:sub_organizations, params: { event_id: parent.slug })
+
+          expect(graph_node_names(response.body)).not_to include("Hidden Subsidiary")
+        end
+      end
+    end
+
+    context "as an organizer of the parent organization" do
+      it "lists every sub-organization", :aggregate_failures do
+        sign_in_organizer_of(parent)
+
+        get(:sub_organizations, params: { event_id: parent.slug })
+
+        expect(response.body).to include("Transparent Subsidiary")
+        expect(response.body).to include("Private Subsidiary")
+      end
+    end
+  end
+
+  describe "#async_sub_organizations_graph" do
+    let(:parent) { create(:event, is_public: true) }
+    let!(:transparent_sub) { create(:event, parent:, is_public: true) }
+    let!(:private_sub) { create(:event, parent:, is_public: false) }
+
+    it "omits private sub-organizations from a signed out visitor" do
+      get(:async_sub_organizations_graph, params: { event_id: parent.slug })
+
+      expect(response.parsed_body.pluck("id")).to match_array([parent.id, transparent_sub.id])
+    end
+
+    it "includes private sub-organizations for an organizer of the parent" do
+      sign_in_organizer_of(parent)
+
+      get(:async_sub_organizations_graph, params: { event_id: parent.slug })
+
+      expect(response.parsed_body.pluck("id")).to match_array([parent.id, transparent_sub.id, private_sub.id])
+    end
+
+    # The cache entry is shared by every viewer, so filtering has to happen on
+    # the way out rather than being baked into what was cached.
+    it "filters private sub-organizations out of a cache entry that holds them" do
+      store = ActiveSupport::Cache::MemoryStore.new
+      allow(Rails).to receive(:cache).and_return(store)
+      store.write("sub_organizations_graph_#{parent.id}", [parent, transparent_sub, private_sub].map do |event|
+        { id: event.id, balance_cents: 500, card_count: 3 }
+      end)
+
+      get(:async_sub_organizations_graph, params: { event_id: parent.slug })
+
+      expect(response.parsed_body.pluck("id")).to match_array([parent.id, transparent_sub.id])
+    end
+  end
+
+  describe "#async_sub_organization_balance" do
+    render_views
+
+    let(:parent) { create(:event, is_public: true) }
+    let!(:transparent_sub) { create(:event, :with_positive_balance, parent:, is_public: true) }
+    let!(:private_sub) { create(:event, :with_positive_balance, parent:, is_public: false) }
+
+    it "sums only transparent sub-organizations for a signed out visitor", :aggregate_failures do
+      get(:async_sub_organization_balance, params: { event_id: parent.slug })
+
+      expect(response.body).to include(money(transparent_sub.balance_available_v2_cents))
+      expect(response.body).not_to include(
+        money(transparent_sub.balance_available_v2_cents + private_sub.balance_available_v2_cents)
+      )
+    end
+
+    it "sums every sub-organization for an organizer of the parent" do
+      sign_in_organizer_of(parent)
+
+      get(:async_sub_organization_balance, params: { event_id: parent.slug })
+
+      expect(response.body).to include(
+        money(transparent_sub.balance_available_v2_cents + private_sub.balance_available_v2_cents)
+      )
+    end
+  end
+
 end

@@ -45,5 +45,10 @@ module Contractable
       # This method can be overwritten in specific classes to disable sending HCB's notification when all other parties have signed
       true
     end
+
+    def notify_mailer_for(party)
+      # This method can be overwritten in specific classes to customize how a party is notified
+      Contract::PartyMailer.with(party:).notify.deliver_later
+    end
   end
 end

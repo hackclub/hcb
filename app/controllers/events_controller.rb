@@ -148,6 +148,10 @@ class EventsController < ApplicationController
     render partial: "events/home/users_chart", locals: { users: @users, timeframe: params[:timeframe], event: @event }
   end
 
+  def stats
+    authorize @event
+  end
+
   def transactions
     maybe_pending_invite = OrganizerPositionInvite.pending.find_by(user: current_user, event: @event)
 
@@ -165,6 +169,14 @@ class EventsController < ApplicationController
     if flash[:popover]
       @popover = flash[:popover]
       flash.delete(:popover)
+    end
+
+    if organizer_signed_in?
+      if params[:apply_flipper] == "true"
+        Flipper.disable_actor(:new_ledger_2026_07_17, current_user)
+      elsif Flipper.enabled?(:new_ledger_2026_07_17, current_user)
+        redirect_to event_ledger_path(@event) and return
+      end
     end
   end
 
@@ -389,7 +401,7 @@ class EventsController < ApplicationController
           redirect_back_or_to edit_event_path(@event.slug)
         end
       else
-        render :edit, status: :unprocessable_entity
+        render :edit, status: :unprocessable_content
       end
     rescue Errors::InvalidStripeCardLogoError => e
       flash[:error] = e.message
@@ -545,7 +557,11 @@ class EventsController < ApplicationController
         }
       }
     end
-    render json: data
+
+    # The cached entry covers every descendant and is shared across viewers, so
+    # drop the sub-organizations this one isn't allowed to see before rendering.
+    visible_ids = visible_descendant_ids.to_set << @event.id
+    render json: data.select { |row| visible_ids.include?(row[:id]) }
   end
 
   def account_number
@@ -651,12 +667,12 @@ class EventsController < ApplicationController
     # The search query name was historically `search`. It has since been renamed
     # to `q`. This following line retains backwards compatibility.
     @payments = @event.payments.includes(:payee)
-    @ach_transfers = @event.ach_transfers.where(payment_attempt: nil)
+    @ach_transfers = @event.ach_transfers.where.missing(:payment_attempt)
     @paypal_transfers = @event.paypal_transfers
-    @wires = @event.wires.where(payment_attempt: nil)
-    @wise_transfers = @event.wise_transfers.where(payment_attempt: nil)
+    @wires = @event.wires.where.missing(:payment_attempt)
+    @wise_transfers = @event.wise_transfers.where.missing(:payment_attempt)
     @checks = @event.checks.includes(:lob_address)
-    @increase_checks = @event.increase_checks.where(payment_attempt: nil)
+    @increase_checks = @event.increase_checks.where.missing(:payment_attempt)
     @disbursements = @event.outgoing_disbursements.includes(:destination_event)
 
     @disbursements = @disbursements.not_card_grant_related
@@ -740,6 +756,11 @@ class EventsController < ApplicationController
 
   def transfers
     authorize @event
+
+    if Flipper.enabled?(:payments_contractors_refresh_2026_06_26, @event)
+      redirect_to event_payments_path(@event)
+      return
+    end
 
     params[:q] ||= params[:search]
 
@@ -905,8 +926,14 @@ class EventsController < ApplicationController
 
     respond_to do |format|
       format.html do
-        @sub_organizations = filtered_sub_organizations.page(params[:page]).per(params[:per] || 24)
-        @all_events = [@event] + @event.descendants.order(:name).select(:name, :parent_id, :slug, :id).to_a
+        sub_organizations = filtered_sub_organizations
+        # Hidden organizations are set aside in their own collapsed section,
+        # matching how the organization index treats them.
+        @sub_organizations = sub_organizations.not_hidden.page(params[:page]).per(params[:per] || 24)
+        @hidden_sub_organizations = sub_organizations.hidden.to_a
+        # The graph renders only nodes reachable from the root, so leaving a
+        # hidden organization out keeps everything under it off the graph too.
+        @all_events = [@event] + Event.where(id: visible_descendant_ids).not_hidden.order(:name).select(:name, :parent_id, :slug, :id).to_a
       end
 
       # CSV export intentionally does not consider filters
@@ -917,7 +944,7 @@ class EventsController < ApplicationController
           # robust, immutable identifier compared to slugs.
           csv << %w[ID Name Slug Balance Tags]
 
-          @event.subevents.includes(:scoped_tags).find_each do |e|
+          @event.subevents.where(id: visible_descendant_ids).includes(:scoped_tags).find_each do |e|
             tags_for_parent = e.scoped_tags.select { |tag| tag.parent_event_id == e.parent_id }
             csv << [e.public_id, e.name, e.slug, e.balance_v2_cents / 100.0, tags_for_parent.map(&:name).join(", ")].map { |value| SafeCsv.sanitize(value) }
           end
@@ -1125,7 +1152,7 @@ class EventsController < ApplicationController
       redirect_to event_path(@event)
       @event.set_airtable_status("Onboarded")
     else
-      render :activation_flow, status: :unprocessable_entity
+      render :activation_flow, status: :unprocessable_content
     end
   end
 
@@ -1252,9 +1279,30 @@ class EventsController < ApplicationController
 
     @items = ledger_query.execute(ledgers: @ledgers)
 
-    @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id)) if @tag&.id.present?
+    # TODO: move these to Ledger::Query
+    if @tag.present?
+      @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id))
+    end
 
-    @items = @items.page(params[:page]).per(@per)
+    if @category.present?
+      categorized_cts = @category.canonical_transactions.where(ledger_item: @items).select(:ledger_item_id)
+      categorized_cpts = @category.canonical_pending_transactions.where(ledger_item: @items).select(:ledger_item_id)
+      @items = @items.where(id: categorized_cts).or(@items.where(id: categorized_cpts))
+    end
+
+    if @merchant.present?
+      @items = @items.where(linked_object_type: "CardCharge", linked_object_id: CardCharge.where(merchant_network_id: @merchant).select(:id))
+    end
+
+    @items = @items.page(params[:page]).per(@per).preload(:tags, hcb_code: { event: :tags })
+
+    if organizer_signed_in?
+      if params[:apply_flipper] == "true"
+        Flipper.enable_actor(:new_ledger_2026_07_17, current_user)
+      elsif !Flipper.enabled?(:new_ledger_2026_07_17, current_user)
+        redirect_to event_transactions_path(@event) and return
+      end
+    end
   rescue Pundit::NotAuthorizedError
     return head :not_found
   end
@@ -1270,11 +1318,16 @@ class EventsController < ApplicationController
     params_hash.delete(:hidden)
   end
 
-  def filtered_sub_organizations(sub_organizations = @event.subevents)
+  # Memoized across the several surfaces of this page that need it.
+  def visible_descendant_ids
+    @visible_descendant_ids ||= @event.visible_descendant_ids(current_user)
+  end
+
+  def filtered_sub_organizations
     search = params[:q] || params[:search]
     scoped_tag = Event::ScopedTag.find_by(name: params[:tag])
 
-    relation = sub_organizations.includes(:scoped_tags, :parent, logo_attachment: :blob, background_image_attachment: :blob, organizer_positions: :user)
+    relation = @event.subevents.where(id: visible_descendant_ids).includes(:scoped_tags, :parent, logo_attachment: :blob, background_image_attachment: :blob, organizer_positions: :user)
     relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
     relation = relation.joins(:scoped_tags).where("event_scoped_tags.id = #{scoped_tag.id}") if scoped_tag.present?
     relation = relation.order(created_at: :desc)

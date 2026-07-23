@@ -7,6 +7,7 @@
 #  id                            :bigint           not null, primary key
 #  access_level                  :integer          default("user"), not null
 #  birthday_ciphertext           :text
+#  card_locking_suppressed_until :datetime
 #  cards_locked                  :boolean          default(FALSE), not null
 #  charge_notifications          :integer          default("email_and_sms"), not null
 #  comment_notifications         :integer          default("all_threads"), not null
@@ -61,6 +62,9 @@ class User < ApplicationRecord
 
   include ApplicationHelper
   prepend MemoWise
+
+  # Card-locking lock decision, trust, and outstanding/overdue queries. See the concern.
+  include CardLocking::CardholderBehavior
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| record }, recipient: proc { |controller, record| record }, only: [:create, :update]
@@ -184,6 +188,7 @@ class User < ApplicationRecord
   has_one :default_payout_method, through: :personal_legal_entity
 
   has_many :payments_received, through: :legal_entities, source: :payments
+  has_many :payroll_positions, through: :legal_entities
 
   has_encrypted :birthday, type: :date
 
@@ -223,7 +228,11 @@ class User < ApplicationRecord
   validates :email, uniqueness: true, presence: true
   validates_email_format_of :email
   normalizes :email, with: ->(email) { email.strip.downcase }
-  validates :email, nondisposable: true, on: :create
+  EMAIL_TYPO_MESSAGE = lambda do |user, _|
+    fix = EmailTypoDomains.suggestion_for(user.email)
+    fix ? "looks like a typo. Did you mean #{user.email.sub(/@.+/, "@#{fix}")}?" : Nondisposable.configuration.error_message
+  end
+  validates :email, nondisposable: { message: EMAIL_TYPO_MESSAGE }, on: :create
 
   validates :phone_number, phone: { allow_blank: true }
 

@@ -30,6 +30,14 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
     expect(service.run).to be(true)
   end
 
+  it "declines when the cardholder's cards are locked and the event's plan is card-lockable" do
+    create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+    stripe_card.user.update!(cards_locked: true)
+
+    expect(service.run).to be(false)
+    expect(service.declined_reason).to eq("user_cards_locked")
+  end
+
   context "forbidden merchants" do
     let(:stripe_authorization) do
       build(

@@ -1,70 +1,72 @@
-<%# locals: (ledger:, items:, table_only: true, filter: nil) %>
+<%# locals: (ledger: nil, items:, table_only: true, filter: nil, show_fee: false) %>
 
-<% unless table_only %>
-  <section class="details mb-4">
-    <div>
-      <strong>Type</strong>
-      <span><%= ledger.primary? ? "Primary Ledger" : "Non-Primary Ledger" %></span>
-    </div>
-
-    <% if ledger.event %>
+<%= turbo_frame_tag dom_id(ledger) do %>
+  <% if !table_only && ledger.present? %>
+    <section class="details mb-4">
       <div>
-        <strong>Event</strong>
-        <span><%= link_to ledger.event.name, event_path(ledger.event) %></span>
+        <strong>Type</strong>
+        <span><%= ledger.primary? ? "Primary Ledger" : "Non-Primary Ledger" %></span>
       </div>
-    <% end %>
 
-    <% if ledger.card_grant %>
+      <% if ledger.event %>
+        <div>
+          <strong>Event</strong>
+          <span><%= link_to ledger.event.name, event_path(ledger.event) %></span>
+        </div>
+      <% end %>
+
+      <% if ledger.card_grant %>
+        <div>
+          <strong>Card Grant</strong>
+          <span><%= link_to ledger.card_grant.name, card_grant_path(ledger.card_grant) %></span>
+        </div>
+      <% end %>
+
       <div>
-        <strong>Card Grant</strong>
-        <span><%= link_to ledger.card_grant.name, card_grant_path(ledger.card_grant) %></span>
+        <strong>Balance</strong>
+        <span><%= ledger.balance.format %></span>
       </div>
-    <% end %>
+    </section>
 
-    <div>
-      <strong>Balance</strong>
-      <span><%= ledger.balance.format %></span>
+    <h2>Ledger Items</h2>
+
+    <div class="flex items-center mb2 flex-col sm:flex-row">
+      <div class="flex-grow">
+        <%= page_entries_info items, entry_name: "item" %>
+      </div>
+      <%= paginate items %>
     </div>
-  </section>
+  <% end %>
 
-  <h2>Ledger Items</h2>
+  <% if defined?(filter) %>
+    <%= filter %>
+  <% end %>
 
-  <div class="flex items-center mb2 flex-col sm:flex-row">
-    <div class="flex-grow">
-      <%= page_entries_info items, entry_name: "item" %>
+  <% if items.any? %>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th><%# icon %></th>
+            <th>Date</th>
+            <th>Memo</th>
+            <th><%# receipt count %></th>
+            <th class="text-right">Amount</th>
+            <% admin_tool("", "th") do %>
+              Short Code
+            <% end %>
+            <th><%# user avatar %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <%= render partial: "ledgers/pending_fee_transaction", locals: { ledger: } if show_fee && ledger.present? %>
+          <%= render partial: "ledger/item", collection: items, as: :item %>
+        </tbody>
+      </table>
     </div>
+
     <%= paginate items %>
-  </div>
-<% end %>
-
-<% if defined?(filter) %>
-  <%= filter %>
-<% end %>
-
-<% if items.any? %>
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th><%# icon %></th>
-          <th>Date</th>
-          <th>Memo</th>
-          <th><%# receipt count %></th>
-          <th class="text-right">Amount</th>
-          <% admin_tool("", "th") do %>
-            Short Code
-          <% end %>
-          <th><%# user avatar %></th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <%= render partial: "ledger/item", collection: items, as: :item %>
-      </tbody>
-    </table>
-  </div>
-
-  <%= paginate items %>
-<% else %>
-  <%= blankslate "This ledger has no items yet" %>
+  <% else %>
+    <%= blankslate "This ledger has no items yet" %>
+  <% end %>
 <% end %>
