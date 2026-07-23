@@ -280,9 +280,9 @@ class CardGrantsController < ApplicationController
   def accept_as_reimbursement
     authorize @card_grant
 
-    report = @card_grant.with_lock do
-      Reimbursement::Report.find_by(card_grant_id: @card_grant.id) || @card_grant.convert_to_reimbursement_report!
-    end
+report = @card_grant.with_lock do
+  @card_grant.reimbursement_report || @card_grant.convert_to_reimbursement_report!
+end
 
     redirect_to report, flash: { success: "Successfully opened a reimbursement report for your grant." }
   rescue ArgumentError => e
