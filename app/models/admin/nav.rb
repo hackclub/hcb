@@ -183,6 +183,12 @@ module Admin
             path: reimbursements_admin_index_path,
             count: ->{ Reimbursement::Report.reimbursement_requested.count },
             count_type: :tasks
+          ),
+          make_item(
+            name: "Payments",
+            path: admin_payments_path,
+            count: ->{ Payment.under_review.count },
+            count_type: :tasks
           )
         ]
       )
@@ -329,21 +335,21 @@ module Admin
         icon: "person-badge",
         items: [
           make_item(
-            name: "Employees",
-            path: employees_admin_index_path,
-            count: ->{ Employee.onboarding.count },
+            name: "Contractors",
+            path: admin_payroll_positions_path,
+            count: ->{ Payroll::Position.under_review.count },
             count_type: :tasks
           ),
           make_item(
-            name: "Payments",
-            path: employee_payments_admin_index_path,
-            count: ->{ Employee::Payment.paid.count },
+            name: "Legal Entities",
+            path: admin_legal_entities_path,
+            count: ->{ LegalEntity.count },
             count_type: :records
           ),
           make_item(
-            name: "W9s",
-            path: admin_w9s_path,
-            count: ->{ W9.count },
+            name: "Tax Forms",
+            path: admin_tax_forms_path,
+            count: ->{ Tax::Form.count },
             count_type: :records
           )
         ]
