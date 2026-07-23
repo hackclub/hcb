@@ -147,6 +147,7 @@ group :test do
   gem "factory_bot_rails" # Test data
   gem "simplecov", require: false # Code coverage
   gem "webmock"
+  gem "db-query-matchers" # RSpec matchers for asserting SQL query counts (N+1 regression tests)
 end
 
 group :development, :test do
