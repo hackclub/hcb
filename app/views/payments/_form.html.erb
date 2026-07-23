@@ -96,7 +96,7 @@
           </details>
         <% else %>
           <div class="card mb-4 flex flex-col gap-3">
-            <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method, title: "Select a payout method" %>
+            <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method %>
           </div>
         <% end %>
       </div>

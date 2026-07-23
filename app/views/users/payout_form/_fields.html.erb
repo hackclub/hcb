@@ -3,20 +3,81 @@
 <% pm_is = ->(klass) { payout_method.instance_of?(klass) } %>
 <% detail_for = ->(klass) { pm_is.call(klass) ? payout_method : klass.new } %>
 <% unless editing %>
-  <fieldset>
-    <legend class="heading h3 pb2 bold"><%= title %></legend>
-    <div class="field field--options mb-4" style="max-width: none;">
-      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::AchTransfer, title: "ACH transfer", description: "United States", icon: "payment-transfer", checked: selected_type == LegalEntity::PayoutMethod::AchTransfer.name %>
+  <div data-controller="payout-wizard">
+    <div data-payout-wizard-target="home">
+      <fieldset class="m0 p0">
+        <legend class="heading h3 pb2 bold" data-payout-wizard-target="legend"><%= title %></legend>
+        <div class="field field--options mb-0" style="max-width: none;" data-payout-wizard-target="options" data-action="change->payout-wizard#onSelect">
+          <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::AchTransfer, title: "ACH transfer", description: "United States", icon: "payment-transfer", checked: selected_type == LegalEntity::PayoutMethod::AchTransfer.name %>
 
-      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::Check, title: "Mailed check", description: "United States", icon: "email", checked: selected_type == LegalEntity::PayoutMethod::Check.name %>
+          <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::Check, title: "Mailed check", description: "United States", icon: "email", checked: selected_type == LegalEntity::PayoutMethod::Check.name %>
 
-      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::WiseTransfer, title: "Wise transfer", description: "International", icon: "wise", checked: selected_type == LegalEntity::PayoutMethod::WiseTransfer.name %>
+          <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::WiseTransfer, title: "Wise transfer", description: "International", icon: "wise", checked: selected_type == LegalEntity::PayoutMethod::WiseTransfer.name %>
 
-      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::Wire, title: "Wire transfer", description: "International", icon: "web", checked: selected_type == LegalEntity::PayoutMethod::Wire.name do %>
-        <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
-      <% end %>
+          <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::Wire, title: "Wire transfer", description: "International", icon: "web", checked: selected_type == LegalEntity::PayoutMethod::Wire.name do %>
+            <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
+          <% end %>
+        </div>
+      </fieldset>
+
+      <a class="payout-wizard__help block w-full text-center no-underline muted text-sm mt-4 pt-3" style="border-top: 1px solid var(--smoke);" href="javascript:void(0)" data-payout-wizard-target="help" data-action="click->payout-wizard#showWizard">
+        Which method should I use? <strong style="color: var(--info);">Help me decide &rarr;</strong>
+      </a>
+
+      <a class="block w-full text-center no-underline muted text-sm mt-3" href="javascript:void(0)" data-payout-wizard-target="change" data-action="click->payout-wizard#showOptions" hidden>
+        <strong style="color: var(--info);">&larr; Change payout method</strong>
+      </a>
     </div>
-  </fieldset>
+
+    <div data-payout-wizard-target="wizard" hidden>
+      <a class="no-underline text-xs inline-flex items-center -ml-2" href="javascript:void(0)" data-action="click->payout-wizard#hideWizard">
+        <%= inline_icon "view-back" %>
+        Exit
+      </a>
+      <p class="eyebrow mb-0">Help me decide</p>
+      <h3 class="mt-2 font-bold mb-4" data-payout-wizard-target="question"></h3>
+      <div class="flex gap-2">
+        <button type="button" class="btn shadow-none" data-payout-wizard-target="yes" data-action="click->payout-wizard#yesClickHandler">
+          Yes
+          <%= inline_icon "check-thin", style: "margin-right: -5px;margin-left: 5px" %>
+        </button>
+        <button type="button" class="btn shadow-none" data-payout-wizard-target="no" data-action="click->payout-wizard#noClickHandler">
+          No
+          <%= inline_icon "view-close", style: "margin-right: -5px;margin-left: 5px" %>
+        </button>
+      </div>
+    </div>
+
+    <div data-payout-wizard-target="answer" hidden>
+      <a class="no-underline text-xs inline-flex items-center -ml-2" href="javascript:void(0)" data-action="click->payout-wizard#hideWizard">
+        <%= inline_icon "view-back" %>
+        Exit
+      </a>
+      <p class="eyebrow pt-0 mb-0">Our recommendation</p>
+      <h3 class="mt-2 font-bold mb-2 capitalize" data-payout-wizard-target="answerText"></h3>
+      <div style="font-weight: normal" class="mb-4" data-payout-wizard-target="wiseAnswerNote">
+        <strong>Note:</strong>
+        Wise does <strong>not</strong> support these currencies:
+        <ul>
+          <% WiseTransfer.unsupported_currencies_supported_by_wire.excluding("USD").each do |currency_code| %>
+            <li><%= currency_code %></li>
+          <% end %>
+        </ul>
+        If you need to send to one of these currencies, <strong>please select "International wire" instead.</strong>
+      </div>
+      <a href="#" data-payout-wizard-target="learnMore" class="mb-3 inline-block no-underline" target="_blank">Learn more &rarr;</a>
+      <div class="flex gap-2">
+        <button type="button" class="btn bg-primary shadow-none" data-payout-wizard-target="answerCTA" data-action="click->payout-wizard#showAnswer">
+          Let's do it!
+          <%= inline_icon "view-forward", style: "margin-right: -5px;margin-left: 5px" %>
+        </button>
+        <button type="button" class="btn bg-muted shadow-none" data-action="click->payout-wizard#reset">
+          Reset
+          <%= inline_icon "view-reload", style: "margin-right: -5px;margin-left: 5px" %>
+        </button>
+      </div>
+    </div>
+  </div>
 <% end %>
 
 <section data-behavior="check_payout_method_inputs" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::Check) %>">
