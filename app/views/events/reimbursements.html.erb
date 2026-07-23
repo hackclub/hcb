@@ -27,6 +27,10 @@
       <span class="stat__value"><%= render_money_amount(@reimbursed) %></span>
     </div>
     <div class="stat stat--small">
+      <span class="stat__label">Unpaid</span>
+      <span class="stat__value"><%= render_money_amount(@unpaid) %></span>
+    </div>
+    <div class="stat stat--small">
       <span class="stat__label">Pending</span>
       <span class="stat__value"><%= render_money_amount(@pending) %></span>
     </div>
