@@ -9,37 +9,45 @@
       <%= badge_for @stripe_cards.active.count + @emburse_cards.count, class: "bg-muted" %>
     </span>
     <div class="flex ml-auto gap-3 items-center -mt-3">
-      <%= render partial: "my/cards_filter_menu" unless @filter_applied %>
       <button class="btn bg-success mb-1" data-behavior="modal_trigger" data-modal="order_card" <%= "disabled" if current_user.events.not_demo_mode.where.not(id: current_user.reader_events).none? %>>
         <%= inline_icon "card-add" %>
         Order a card
       </button>
     </div>
   </h1>
-  <% if @filter_applied %>
-    <div class="flex items-center filter-menu">
+  <div class="flex items-center gap-2 mt-2">
+    <%= form_with(model: false, local: true, method: :get, class: "flex-1") do |form| %>
+      <%= hidden_field_tag :status, @status if @status %>
+      <%= hidden_field_tag :type, @type if @type %>
+      <%= render "events/filters/search", form: %>
+    <% end %>
+    <% if @filter_applied %>
       <%= render partial: "my/cards_filter_menu" %>
-      <%= link_to nil, class: "-ml-2 pop muted tooltipped tooltipped--s", aria: { label: "Clear filters" }, data: { turbo_prefetch: "false" } do %>
+      <%= link_to upsert_query_params("status" => nil, "type" => nil, "q" => nil), class: "pop muted tooltipped tooltipped--s", aria: { label: "Clear filters" }, data: { turbo_prefetch: "false" } do %>
         <%= inline_icon "view-close", size: 28 %>
       <% end %>
-      <div class="filter-menu__chips">
-        <% if @status %>
-          <div class="badge badge-large bg-muted">
-            <%= @status.humanize %>
-            <%= link_to upsert_query_params("status" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
-              <%= inline_icon "view-close", size: 20 %>
-            <% end %>
-          </div>
-        <% end %>
-        <% if @type %>
-          <div class="badge badge-large bg-muted">
-            <%= @type.humanize %>
-            <%= link_to upsert_query_params("type" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
-              <%= inline_icon "view-close", size: 20 %>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
+    <% else %>
+      <%= render partial: "my/cards_filter_menu" %>
+    <% end %>
+  </div>
+  <% if @filter_applied %>
+    <div class="filter-menu__chips mt-1">
+      <% if @status %>
+        <div class="badge badge-large bg-muted">
+          <%= @status.humanize %>
+          <%= link_to upsert_query_params("status" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+            <%= inline_icon "view-close", size: 20 %>
+          <% end %>
+        </div>
+      <% end %>
+      <% if @type %>
+        <div class="badge badge-large bg-muted">
+          <%= @type.humanize %>
+          <%= link_to upsert_query_params("type" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
+            <%= inline_icon "view-close", size: 20 %>
+          <% end %>
+        </div>
+      <% end %>
     </div>
   <% end %>
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="order_card">
@@ -47,10 +55,32 @@
     <%= render "stripe_cards/form", stripe_card: StripeCard.new %>
   </section>
   <%= turbo_frame_tag :my_cards_shipping, src: my_cards_shipping_path, target: "_top" %>
-  <% if @stripe_cards.any? %>
-    <article class="mixed-grid grid--spacious">
-      <%= render @stripe_cards, headless: true, show_purpose: true %>
-    </article>
+  <% preview_count = 3 %>
+  <% if @cards_by_event.any? %>
+    <% @cards_by_event.each do |event, cards| %>
+      <section class="mt-3">
+        <div class="flex items-center gap-2">
+          <%= link_to event_cards_overview_path(event_id: event.slug), class: "flex items-center gap-2 text-decoration-none text-inherit flex-1 min-w-0 h3" do %>
+            <% if event.logo.attached? %>
+              <%= image_tag event.logo, height: 24, width: 24, class: "rounded flex-shrink-0" %>
+            <% end %>
+            <span class="eyebrow truncate"><%= event.name %></span>
+            <%= badge_for cards.count, class: "bg-muted flex-shrink-0 mx-0" %>
+            <div class="menu__divider flex-1 ml-2"></div>
+          <% end %>
+        </div>
+        <article class="mixed-grid grid--spacious">
+          <%= render cards.first(preview_count), headless: true, show_purpose: true %>
+        </article>
+        <% if cards.count > preview_count %>
+          <div class="flex">
+            <%= link_to event_cards_overview_path(event_id: event.slug, user: current_user.slug), class: "btn ml-auto" do %>
+              +<%= cards.count - preview_count %> more
+            <% end %>
+          </div>
+        <% end %>
+      </section>
+    <% end %>
   <% else %>
     <%= blankslate "No cards found!" %>
   <% end %>
