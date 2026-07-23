@@ -70,7 +70,7 @@ class MyController < ApplicationController
   end
 
   def missing_receipts_list
-    @missing = current_user.transactions_missing_receipt
+    @missing = Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user) ? current_user.ledger_items_missing_receipt : current_user.transactions_missing_receipt
 
     if @missing.any?
       render :missing_receipts_list, layout: !request.xhr?
@@ -80,7 +80,7 @@ class MyController < ApplicationController
   end
 
   def missing_receipts_icon
-    count = current_user.transactions_missing_receipt.count
+    count = Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user) ? current_user.ledger_items_missing_receipt.count : current_user.transactions_missing_receipt.count
 
     emojis = {
       "🤡": 300,
@@ -95,8 +95,8 @@ class MyController < ApplicationController
   end
 
   def inbox
-    @count = current_user.transactions_missing_receipt.count
-    @locking_count = current_user.card_locking_overdue_charges.count
+    @count = Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user) ? current_user.ledger_items_missing_receipt.count : current_user.transactions_missing_receipt.count
+    @locking_count = current_user.card_locking_overdue_charges.count # TODO: migrate card locking to new transaction engine
 
     hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
 

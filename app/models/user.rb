@@ -450,6 +450,13 @@ class User < ApplicationRecord
     transactions_missing_receipt(from:, to:).size
   end
 
+  def ledger_items_missing_receipt(from: nil, to: nil)
+    user_ledger_items = Ledger::Item.where(author: user, linked_object_type: "CardCharge").missing_receipt
+    user_ledger_items = user_ledger_items.where("datetime >= ?", from) if from
+    user_ledger_items = user_ledger_items.where("datetime <= ?", to) if to
+    user_ledger_items.order(created_at: :desc)
+  end
+
   def email_address_with_name(full_name: false)
     display_name = full_name ? (self.full_name.presence || name) : name
     ActionMailer::Base.email_address_with_name(email, display_name)

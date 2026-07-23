@@ -22,7 +22,7 @@
     <p class="h5 muted mt0 mb1">
       Message photos from your phone.
     </p>
-    <div class="relative block mt-auto flex gap-2" data-controller="clipboard" data-clipboard-text-value="+1-864-548-4225">
+    <div class="relative mt-auto flex gap-2" data-controller="clipboard" data-clipboard-text-value="+1-864-548-4225">
       <input id="sms_number" type="tel" value="+1-864-548-4225" readonly style="cursor: text;" class="fit select-all">
       <button
         type="button"
@@ -69,7 +69,7 @@
 
 <ul class="grid grid--medium-narrow text-left w-100 mt0" id="receipts_list">
   <% @receipts.each do |receipt| %>
-    <li class="flex grid flex-col justify-between h-100 mx-auto" id="receipt_<%= receipt.id %>">
+    <li class="flex flex-col justify-between h-100 mx-auto" id="receipt_<%= receipt.id %>">
       <%= render partial: "receipts/receipt", locals: { receipt:, show_delete_button: true, show_reimbursements_button: true, link_to_file: true, turbo_for_deletion: true } %>
     </li>
   <% end %>
