@@ -93,6 +93,92 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe "#forced_transparency?" do
+    let(:public_parent) { create(:event, is_public: true) }
+    let(:private_parent) { create(:event, is_public: false) }
+
+    it "is true for an Argosy event under a transparent parent" do
+      event = create(:event, parent: public_parent, plan_type: Event::Plan::Argosy2025)
+
+      expect(event.forced_transparency?).to eq(true)
+    end
+
+    it "is false for an Argosy event under a non-transparent parent" do
+      event = create(:event, parent: private_parent, plan_type: Event::Plan::Argosy2026)
+
+      expect(event.forced_transparency?).to eq(false)
+    end
+
+    it "is false for an Argosy event with no parent" do
+      event = create(:event, plan_type: Event::Plan::Argosy2026)
+
+      expect(event.forced_transparency?).to eq(false)
+    end
+
+    it "is false for a non-Argosy event under a transparent parent" do
+      event = create(:event, parent: public_parent, plan_type: Event::Plan::FeeWaived)
+
+      expect(event.forced_transparency?).to eq(false)
+    end
+  end
+
+  describe "transparency enforcement" do
+    it "forces transparency on an Argosy event under a transparent parent" do
+      parent = create(:event, is_public: true)
+      event = create(:event, parent:, is_public: false, plan_type: Event::Plan::Argosy2025)
+
+      expect(event.is_public).to eq(true)
+    end
+
+    it "leaves a non-Argosy event under a transparent parent alone" do
+      parent = create(:event, is_public: true)
+      event = create(:event, parent:, is_public: false)
+
+      expect(event.is_public).to eq(false)
+    end
+
+    it "removes transparency from an event that is ineligible for it" do
+      event = create(:event, is_public: true, plan_type: Event::Plan::SalaryAccount)
+
+      expect(event.is_public).to eq(false)
+      expect(event.is_indexable).to eq(false)
+    end
+  end
+
+  describe "#ancestor_ids" do
+    it "returns ids ordered from self to root" do
+      root = create(:event)
+      child = create(:event, parent: root)
+      grandchild = create(:event, parent: child)
+
+      expect(grandchild.ancestor_ids).to eq([grandchild.id, child.id, root.id])
+    end
+  end
+
+  describe "#ancestors" do
+    it "returns events ordered from self to root" do
+      root = create(:event)
+      child = create(:event, parent: root)
+      grandchild = create(:event, parent: child)
+
+      expect(grandchild.ancestors.to_a).to eq([grandchild, child, root])
+    end
+  end
+
+  describe "#ancestor_organizer_positions" do
+    it "returns positions on self and all ancestors" do
+      root = create(:event)
+      child = create(:event, parent: root)
+      grandchild = create(:event, parent: child)
+
+      op_root = create(:organizer_position, event: root)
+      op_child = create(:organizer_position, event: child)
+      op_grandchild = create(:organizer_position, event: grandchild)
+
+      expect(grandchild.ancestor_organizer_positions).to match_array([op_grandchild, op_child, op_root])
+    end
+  end
+
   describe "#plan" do
     it "uses the parent event's subevent plan by default" do
       parent = create(:event)

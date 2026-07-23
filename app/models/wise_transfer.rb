@@ -5,7 +5,7 @@
 # Table name: wise_transfers
 #
 #  id                               :bigint           not null, primary key
-#  aasm_state                       :string
+#  aasm_state                       :string           not null
 #  address_city                     :string
 #  address_line1                    :string
 #  address_line2                    :string
@@ -59,6 +59,7 @@ class WiseTransfer < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :wse
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
   belongs_to :user
   has_paper_trail
@@ -67,6 +68,7 @@ class WiseTransfer < ApplicationRecord
   has_one :canonical_pending_transaction
 
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wise_transfer, required: false
+  has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
 
   monetize :amount_cents, as: "amount", with_model_currency: :currency
   monetize :usd_amount_cents, as: "usd_amount", allow_nil: true
@@ -123,6 +125,7 @@ class WiseTransfer < ApplicationRecord
     event :mark_rejected do
       after do
         canonical_pending_transaction.decline!
+        payment_attempt.mark_rejected! if payment_attempt&.may_mark_rejected?
       end
       transitions from: [:pending, :approved], to: :rejected
     end
@@ -130,18 +133,27 @@ class WiseTransfer < ApplicationRecord
     event :mark_sent do
       after do
         canonical_pending_transaction.update(amount_cents: -usd_amount_cents)
+        payment_attempt.mark_sent! if payment_attempt.present?
       end
       transitions from: [:approved], to: :sent
     end
 
     event :mark_deposited do
       transitions from: :sent, to: :deposited
+      after do
+        payment_attempt&.mark_successful!
+      end
     end
 
     event :mark_failed do
       transitions from: [:pending, :approved, :sent, :approved], to: :failed
       after do |reason = nil|
-        WiseTransferMailer.with(wise_transfer: self, reason:).notify_failed.deliver_later
+        if payment_attempt.present?
+          payment_attempt.mark_failed!(reason:)
+        else
+          WiseTransferMailer.with(wise_transfer: self, reason:).notify_failed.deliver_later
+        end
+
         update(return_reason: reason)
         canonical_pending_transaction.decline!
       end
@@ -166,11 +178,11 @@ class WiseTransfer < ApplicationRecord
 
   def status_color
     if pending?
-      :warning
+      :muted
     elsif approved?
       :blue
     elsif sent?
-      :purple
+      :blue
     elsif rejected? || failed?
       :error
     elsif deposited?
@@ -185,25 +197,39 @@ class WiseTransfer < ApplicationRecord
     aasm_state.humanize
   end
 
-  def self.generate_detailed_quote(initial_local_amount)
-    conn = Faraday.new url: "https://api.wise.com" do |f|
+  def self.quote_connection
+    Faraday.new url: "https://api.wise.com" do |f|
       f.request :json
       f.response :raise_error
       f.response :json
     end
+  end
 
-    response = conn.post("/v3/quotes", {
-                           sourceCurrency: "USD",
-                           targetCurrency: initial_local_amount.currency_as_string,
-                           targetAmount: initial_local_amount.dollars
-                         })
+  def self.convert_usd_to_local(usd_amount, target_currency)
+    return Money.from_cents(usd_amount.cents, target_currency) if target_currency == "USD"
+
+    response = quote_connection.post("/v3/quotes", {
+                                       sourceCurrency: "USD",
+                                       targetCurrency: target_currency,
+                                       sourceAmount: usd_amount.amount
+                                     })
+
+    Money.from_amount(usd_amount.amount * response.body["rate"], target_currency)
+  end
+
+  def self.generate_detailed_quote(initial_local_amount)
+    response = quote_connection.post("/v3/quotes", {
+                                       sourceCurrency: "USD",
+                                       targetCurrency: initial_local_amount.currency.to_s,
+                                       targetAmount: initial_local_amount.amount
+                                     })
 
     payment_option = response.body["paymentOptions"].first
-    price_after_all_fees = Money.from_dollars(payment_option["sourceAmount"], "USD")
+    price_after_all_fees = Money.from_amount(payment_option["sourceAmount"], "USD")
     fees = payment_option["price"]["items"]
 
-    pay_in_fee = Money.from_dollars(fees.find { |fee| fee["type"] == "PAYIN" }["value"]["amount"], "USD")
-    unadjusted_fee_total = fees.sum { |fee| Money.from_dollars(fee["value"]["amount"], "USD") }
+    pay_in_fee = Money.from_amount(fees.find { |fee| fee["type"] == "PAYIN" }["value"]["amount"], "USD")
+    unadjusted_fee_total = fees.sum { |fee| Money.from_amount(fee["value"]["amount"], "USD") }
 
     without_fees_usd_amount = price_after_all_fees - unadjusted_fee_total
 
@@ -248,6 +274,14 @@ class WiseTransfer < ApplicationRecord
     return nil unless wise_recipient_id.present?
 
     "https://wise.com/recipients/#{CGI.escape(wise_recipient_id)}"
+  end
+
+  def can_cancel?
+    pending?
+  end
+
+  def cancel!
+    mark_rejected!
   end
 
   private

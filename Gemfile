@@ -6,7 +6,7 @@ ruby file: ".ruby-version"
 
 gem "dotenv-rails", groups: [:development, :test]
 
-gem "rails", "~> 8.0"
+gem "rails", "~> 8.1"
 
 gem "puma", "~> 6.6" # app server
 
@@ -54,9 +54,10 @@ gem "lockbox" # encrypt sensitive data
 gem "blind_index" # needed to query and/or guarantee uniqueness for encrypted fields with lockbox
 
 gem "aasm" # state machine
+gem "after_commit_everywhere", "~> 1.0" # makes AASM :after_commit callbacks safe from race conditions and redundant calls
 
-gem "paper_trail", "~> 16.0.0" # track changes to models
-gem "acts_as_paranoid", "~> 0.10.3" # enables soft deletions
+gem "paper_trail", "~> 17.0.0" # track changes to models
+gem "acts_as_paranoid", "~> 0.11.0" # enables soft deletions
 
 gem "friendly_id", "~> 5.6.0" # slugs
 gem "hashid-rails", "~> 1.0" # obfuscate IDs in URLs
@@ -65,8 +66,8 @@ gem "active_storage_validations", "3.0.1" # file validations
 gem "validates_email_format_of" # email address validations
 gem "phonelib" # phone number validations
 
-gem "money-rails"
-gem "monetize"
+gem "money-rails", "~> 3.0.0"
+gem "monetize", "~> 2.0.0"
 gem "rounding"
 
 gem "business_time"
@@ -90,6 +91,7 @@ gem "api-pagination"
 
 gem "flipper" # feature flags
 gem "flipper-active_record"
+gem "flipper-active_support_cache_store" # caches flag reads via Rails.cache
 gem "flipper-ui"
 
 gem "pundit" # implements authorization policies
@@ -160,8 +162,6 @@ group :development, :test do
   gem "pry-byebug", require: ENV["EXCLUDE_PRY"] != "true"
   gem "pry-rails", require: ENV["EXCLUDE_PRY"] != "true"
 end
-
-gem "query_count"
 
 gem "rack-mini-profiler", "~> 3.3"
 gem "stackprof" # used by `rack-mini-profiler` to provide flamegraphs
@@ -238,3 +238,5 @@ gem "intercom-rails"
 gem "hotwire_combobox"
 
 gem "maintenance_tasks", "~> 2.14"
+
+gem "aws-sdk-kms"

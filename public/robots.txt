@@ -12,3 +12,5 @@ Disallow: /
 
 User-agent: *
 Allow: /
+
+Sitemap: https://hcb.hackclub.com/sitemap.xml

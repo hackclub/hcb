@@ -5,6 +5,13 @@ class Ledger
     def show
       @item = Ledger::Item.find_by_hashid!(params[:id])
 
+      # Non-auditors see the user-facing HCB code page rather than the raw
+      # ledger item. hcb_codes#show performs its own authorization.
+      unless auditor_signed_in?
+        skip_authorization
+        return redirect_to hcb_code_path(@item.hcb_code)
+      end
+
       authorize @item
     rescue ActiveRecord::RecordNotFound
       # Maintain backward compatibility for old v1 transaction engine URLs. They
@@ -15,6 +22,14 @@ class Ledger
       end
 
       raise
+    end
+
+    def hcb
+      @item = Ledger::Item.find_by_hashid!(params[:item_id])
+
+      authorize @item
+
+      redirect_to hcb_code_path(@item.hcb_code)
     end
 
   end

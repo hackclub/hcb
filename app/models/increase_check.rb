@@ -5,7 +5,7 @@
 # Table name: increase_checks
 #
 #  id                      :bigint           not null, primary key
-#  aasm_state              :string
+#  aasm_state              :string           not null
 #  address_city            :string
 #  address_line1           :string
 #  address_line2           :string
@@ -58,7 +58,7 @@ class IncreaseCheck < ApplicationRecord
   include AASM
   include Payoutable
   include Freezable
-  include Payment
+  include HasPaymentRecipient
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
@@ -127,6 +127,7 @@ class IncreaseCheck < ApplicationRecord
     "Wyoming"          => "WY"
   }.freeze
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
   belongs_to :user, optional: true
 
@@ -137,14 +138,31 @@ class IncreaseCheck < ApplicationRecord
   has_one :canonical_pending_transaction
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :increase_check, required: false
+  has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
 
   after_create do
     create_canonical_pending_transaction!(event:, amount_cents: -amount, memo: "OUTGOING CHECK", date: created_at)
   end
 
-  after_update if: -> { column_status_previously_changed?(to: "stopped") || column_status_previously_changed?(to: "rejected") } do
+  after_update if: -> { column_status_previously_changed?(to: "stopped") } do
+    canonical_pending_transaction.decline!
+
+    if reimbursement_payout_holding.present?
+      reimbursement_payout_holding.mark_failed!
+    elsif payment_attempt.present?
+      payment_attempt.mark_failed!
+    else
+      IncreaseCheckMailer.with(check: self).notify_stopped.deliver_later if self.send_email_notification
+    end
+  end
+
+  after_update if: -> { column_status_previously_changed?(to: "rejected") } do
     canonical_pending_transaction.decline!
     reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
+  end
+
+  after_update if: -> { column_status_previously_changed?(to: "settled") } do
+    payment_attempt&.mark_successful!
   end
 
   aasm timestamps: true, whiny_persistence: true do
@@ -166,6 +184,7 @@ class IncreaseCheck < ApplicationRecord
       after_commit do
         IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later if self.send_email_notification
         employee_payment.mark_paid! if employee_payment.present?
+        payment_attempt.mark_sent! if payment_attempt.present?
       end
     end
 
@@ -174,6 +193,7 @@ class IncreaseCheck < ApplicationRecord
         canonical_pending_transaction.decline!
         create_activity(key: "increase_check.rejected")
         employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
+        payment_attempt.mark_rejected! if payment_attempt&.may_mark_rejected?
       end
       transitions from: :pending, to: :rejected
     end
@@ -316,6 +336,18 @@ class IncreaseCheck < ApplicationRecord
     send_column!
 
     mark_approved!
+  end
+
+  def can_cancel?
+    pending? || (approved && can_stop?)
+  end
+
+  def cancel!
+    if pending?
+      mark_rejected!
+    elsif approved?
+      stop!
+    end
   end
 
   # https://column.com/docs/api/#check-transfer/stop
