@@ -65,7 +65,7 @@ class EventMailer < ApplicationMailer
   end
 
   def transparency_mode_enabled
-    @can_disable_transparency = @event.eligible_for_disabling_transparency?
+    @can_disable_transparency = !@event.forced_transparency?
     mail to: @emails, subject: "#{@event.name} has enabled transparency mode"
   end
 
