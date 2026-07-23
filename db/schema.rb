@@ -12,9 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_20_210532) do
-  create_schema "google_sheets"
-
+ActiveRecord::Schema[8.1].define(version: 2026_07_21_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -2062,6 +2060,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_20_210532) do
     t.datetime "onboarding_at"
     t.bigint "payee_id", null: false
     t.integer "rate_cents", default: 0, null: false
+    t.string "rate_unit", default: "hour", null: false
     t.datetime "rejected_at"
     t.date "start_date", null: false
     t.datetime "terminated_at"
