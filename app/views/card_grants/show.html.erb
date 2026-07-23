@@ -70,7 +70,7 @@
 </div>
 
 <% unless @card_grant.user == current_user && @card_grant.pending_invite? %>
-  <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes } %>
+  <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes, ledger: @ledger, items: @items } %>
 <% end %>
 
 <% if policy(@card_grant.comments.build).create? %>

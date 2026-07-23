@@ -1,0 +1,174 @@
+<% title "#{@position.payee.display_name}'s contract" %>
+<% page_sm %>
+<% unless @frame %>
+  <%= render "events/nav", selected: :contractors %>
+<% end %>
+
+<%= turbo_frame_tag "contractor_#{@position.id}", target: "_top" do %>
+  <article class="hcb-code">
+    <h2 class="h2 mt0 border-none flex items-center justify-between hcb-code--heading mb-0" style="gap: 1ch">
+      <span class="flex items-center py-3 gap-2 flex-grow">
+        <span>
+          <span class="regular muted">Contract with</span>
+          <%= @position.payee.display_name %>
+        </span>
+        <span class="badge h4 bg-<%= @position.status_color %> nowrap order-1"><%= @position.status_text %></span>
+      </span>
+    </h2>
+
+    <section class="hcb-code--info">
+      <p>
+        <strong>Recipient</strong>
+        <%= @position.payee.display_name %>
+      </p>
+      <p>
+        <strong>Email</strong>
+        <%= @position.payee.email %>
+      </p>
+      <p>
+        <strong>Rate</strong>
+        <%= "#{render_money @position.rate_cents}/hr" %>
+      </p>
+      <p>
+        <strong>Period</strong>
+        <%= @position.period_label %>
+      </p>
+      <p>
+        <strong>Purpose</strong>
+        <%= @position.description %>
+      </p>
+      <p>
+        <strong>Total paid</strong>
+        <%= render_money @position.payee.total_paid_cents %>
+      </p>
+      <% if @position.file.attached? %>
+        <p>
+          <strong>Agreement</strong>
+          <%= link_to "View attachment", url_for(@position.file), data: { turbo_frame: "_top" } %>
+        </p>
+      <% end %>
+    </section>
+  </article>
+
+  <% if @position.under_review? %>
+    <% admin_tool("mt-4 flex items-center justify-between") do %>
+      <% if @position.contract.present? %>
+        <span>This contract is awaiting HCB review. Reviewing it means signing it as HCB.</span>
+        <span class="flex gap-2">
+          <%= link_to "Review", contract_party_path(@position.contract.party(:hcb)), class: "btn bg-success nowrap", data: { turbo_frame: "_top" } %>
+          <%= button_to "Reject", reject_admin_payroll_position_path(@position), class: "btn bg-muted", data: { turbo_frame: "_top", turbo_confirm: "Reject this contractor?" } %>
+        </span>
+      <% else %>
+        <span>No contract has been sent for this contractor yet — the organizer needs to retry sending it from the edit page before HCB can review it.</span>
+        <%= button_to "Reject", reject_admin_payroll_position_path(@position), class: "btn bg-muted", data: { turbo_frame: "_top", turbo_confirm: "Reject this contractor?" } %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <% if @position.status == :onboarding %>
+    <h3 class="eyebrow muted mt-4 mb-2">Onboarding checklist</h3>
+    <div class="flex flex-col gap-2">
+      <% @position.onboarding_checklist.each do |item| %>
+        <div class="card flex items-center justify-between py-3 mb-0">
+          <span class="flex items-center gap-2">
+            <%= inline_icon item[:complete] ? "check-circle-fill" : "important-fill",
+                  size: 24, class: item[:complete] ? "text-green" : "text-orange" %>
+            <span class="<%= "muted" unless item[:complete] %>"><%= item[:label] %></span>
+          </span>
+          <span class="badge bg-<%= item[:complete] ? "success" : "warning" %>">
+            <%= item[:complete] ? "Done" : "Pending" %>
+          </span>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <h3 class="mt-4 mb-2">Invoices</h3>
+  <% if @invoices.any? %>
+    <article class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Description</th>
+            <th>Attachment</th>
+            <th class="text-right">Amount</th>
+            <% if @can_review %><th></th><% end %>
+          </tr>
+        </thead>
+        <tbody>
+          <% @invoices.each do |invoice| %>
+            <% state_color = invoice.approved? ? "success" : (invoice.rejected? ? "muted" : "warning") %>
+            <tr>
+              <td><span class="badge bg-<%= state_color %>"><%= invoice.aasm_state.humanize %></span></td>
+              <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
+                <%= invoice.name %>
+              </td>
+              <td>
+                <% if invoice.receipts.any? %>
+                  <div class="receipts_list flex gap-2">
+                    <%= render partial: "receipts/receipt", collection: invoice.receipts.with_attached_file.includes(:user), as: :receipt, locals: { size: 48, hide_info: true, link_to_file: true } %>
+                  </div>
+                <% else %>
+                  <span class="muted">&mdash;</span>
+                <% end %>
+              </td>
+              <td class="text-right"><%= render_money invoice.amount_cents %></td>
+              <% if @can_review %>
+                <td class="text-right">
+                  <% if invoice.submitted? %>
+                    <div class="flex gap-2 justify-end">
+                      <%= button_to "Approve", approve_event_payroll_invoice_path(event_id: @event.slug, id: invoice.id), class: "btn bg-success", data: { turbo_frame: "_top" } %>
+                      <%= button_to "Reject", reject_event_payroll_invoice_path(event_id: @event.slug, id: invoice.id), class: "btn bg-muted", data: { turbo_frame: "_top", turbo_confirm: "Reject this invoice?" } %>
+                    </div>
+                  <% end %>
+                </td>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </article>
+  <% else %>
+    <%= blankslate "No invoices yet" %>
+  <% end %>
+
+  <h3 class="mt-4 mb-2">Payments</h3>
+  <% if @payments.any? %>
+    <article class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Purpose</th>
+            <th class="text-right">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @payments.each do |payment| %>
+            <tr class="<%= "clickable" if organizer_signed_in? %>">
+              <td>
+                <span class="badge bg-<%= payment.state_color %>"><%= payment.state_text %></span>
+              </td>
+              <td><%= format_date payment.created_at %></td>
+              <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= payment.purpose %>">
+                <%= payment.purpose %>
+              </td>
+              <td class="text-right">
+                <%= render_money payment.amount %>
+                <% if organizer_signed_in? %>
+                  <%= link_to "", payment_path(payment),
+                        class: "stretched-link",
+                        data: popovers_enabled? ? payment_popover_data(payment) : { turbo_frame: "_top" } %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </article>
+  <% else %>
+    <%= blankslate "No payments yet" %>
+  <% end %>
+<% end %>

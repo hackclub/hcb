@@ -1,0 +1,204 @@
+<% content_for :title, "The HCB Money Printer" %>
+<% content_for :head do %>
+  <style>
+    .money-printer-page { margin: 0; }
+    .mp {
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(1rem, 4vh, 2.5rem);
+      padding: clamp(1.5rem, 5vw, 4rem) 1.25rem;
+      background: #0b0b10;
+      color: #f4f4f6;
+      font-feature-settings: "tnum" 1;
+      text-align: center;
+      overflow: hidden;
+    }
+    .mp--printing { background: radial-gradient(120% 120% at 50% 0%, #0f2417 0%, #0b0b10 60%); }
+    .mp--shredding { background: radial-gradient(120% 120% at 50% 0%, #2a0f12 0%, #0b0b10 60%); }
+    .mp__eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: clamp(0.7rem, 1.6vw, 0.85rem);
+      color: #9aa0ad;
+      margin: 0;
+    }
+    .mp__figure {
+      font-size: clamp(1.75rem, 11vw, 8rem);
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+      margin: 0;
+      max-width: 100%;
+    }
+    .mp--printing .mp__figure { color: #3ddc84; }
+    .mp--shredding .mp__figure { color: #ff5d6c; }
+    .mp__caption { font-size: clamp(1rem, 3vw, 1.6rem); margin: 0; color: #cfd3db; }
+    .mp__converter { margin: 0; min-height: 1.4em; font-size: clamp(0.95rem, 2.4vw, 1.25rem); color: #aeb4c0; transition: opacity 0.38s ease; overflow-wrap: anywhere; }
+    .mp__stats { display: flex; flex-wrap: wrap; gap: clamp(1rem, 4vw, 3rem); justify-content: center; }
+    .mp__stat { display: flex; flex-direction: column; gap: 0.2rem; }
+    .mp__stat-value { font-size: clamp(1.1rem, 3vw, 1.6rem); font-weight: 700; font-variant-numeric: tabular-nums; }
+    .mp__stat-label { font-size: 0.8rem; color: #9aa0ad; text-transform: uppercase; letter-spacing: 0.1em; }
+    .mp__board { width: min(40rem, 100%); text-align: left; }
+    .mp__board h2 { font-size: 1rem; color: #9aa0ad; text-transform: uppercase; letter-spacing: 0.1em; }
+    .mp__row { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: 0.55rem 0; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+    .mp__row > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+    .mp__row a { color: inherit; text-decoration: none; border-bottom: 1px solid rgba(255, 255, 255, 0.25); }
+    .mp__row-delta { font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+    .mp__row-delta--pos { color: #3ddc84; }
+    .mp__row-delta--neg { color: #ff5d6c; }
+    .mp__meta { font-size: 0.8rem; color: #777d8a; }
+    .mp__redacted { color: #6b7280; letter-spacing: 0.12em; font-size: 0.92em; }
+    .mp__warming .mp__figure { color: #cfd3db; }
+
+    /* Keep page content above the ambient layer. */
+    .mp > :not(.mp__ambient) { position: relative; z-index: 1; }
+
+    /* Ambient floating money / shredded confetti. */
+    .mp__ambient { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+    .mp__bill {
+      position: absolute;
+      bottom: -12%;
+      opacity: 0;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+      animation-name: mp-float-up;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+      will-change: transform, opacity;
+    }
+    .mp--shredding .mp__bill { bottom: auto; top: -12%; animation-name: mp-fall-down; }
+    @keyframes mp-float-up {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+      12% { opacity: 0.8; }
+      88% { opacity: 0.8; }
+      100% { transform: translateY(-118vh) rotate(240deg); opacity: 0; }
+    }
+    @keyframes mp-fall-down {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+      12% { opacity: 0.8; }
+      88% { opacity: 0.8; }
+      100% { transform: translateY(118vh) rotate(240deg); opacity: 0; }
+    }
+
+    /* Printer chugging away. */
+    .mp__printer { font-size: clamp(1.6rem, 4.5vw, 2.6rem); line-height: 1; animation: mp-shake 0.34s linear infinite; }
+    @keyframes mp-shake {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(-1.5px, 1px) rotate(-2.5deg); }
+      50% { transform: translate(1.5px, -1px) rotate(2.5deg); }
+      75% { transform: translate(-1px, 0) rotate(-1.5deg); }
+    }
+
+    /* Headline glow breathing. */
+    .mp--printing .mp__figure { animation: mp-glow-green 2.6s ease-in-out infinite; }
+    .mp--shredding .mp__figure { animation: mp-glow-red 2.6s ease-in-out infinite; }
+    @keyframes mp-glow-green {
+      0%, 100% { text-shadow: 0 0 0 rgba(61, 220, 132, 0); }
+      50% { text-shadow: 0 0 40px rgba(61, 220, 132, 0.45); }
+    }
+    @keyframes mp-glow-red {
+      0%, 100% { text-shadow: 0 0 0 rgba(255, 93, 108, 0); }
+      50% { text-shadow: 0 0 40px rgba(255, 93, 108, 0.45); }
+    }
+
+    /* Rotating gen-z ticker. */
+    .mp__ticker {
+      min-height: 1.5em;
+      margin: 0;
+      font-size: clamp(1.05rem, 3vw, 1.7rem);
+      font-weight: 700;
+      transition: opacity 0.38s ease;
+      overflow-wrap: anywhere;
+    }
+    .mp--printing .mp__ticker { color: #7ef0ab; }
+    .mp--shredding .mp__ticker { color: #ff8a95; }
+    .mp--jammed .mp__ticker { color: #cfd3db; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .mp * { animation: none !important; transition: none !important; }
+    }
+  </style>
+<% end %>
+
+<%= render "layouts/meow" %>
+
+<% if @warming_up %>
+  <div class="mp mp__warming"
+       data-controller="money-printer"
+       data-money-printer-warming-value="true">
+    <p class="mp__eyebrow">The HCB money printer</p>
+    <p class="mp__figure" data-money-printer-target="counter">$ _ _ _</p>
+    <p class="mp__caption">Warming up the printer. This page will refresh in a moment.</p>
+  </div>
+<% else %>
+  <% bill_emoji = @mode == "shredding" ? "💸" : "💵" %>
+  <% seed_phrase = { "printing" => "money printer go brrr 💸", "shredding" => "we're so cooked 💀", "jammed" => "perfectly balanced. no notes." }[@mode] %>
+  <div class="mp mp--<%= @mode %>"
+       data-controller="money-printer"
+       data-money-printer-net-delta-value="<%= @stats[:net_delta_cents] %>"
+       data-money-printer-mode-value="<%= @mode %>">
+    <% unless @mode == "jammed" %>
+      <div class="mp__ambient" aria-hidden="true">
+        <% [[6, 0.0, 7.6, 1.7], [14, 1.4, 9.0, 1.1], [23, 0.7, 8.2, 2.1], [33, 2.3, 7.0, 1.3], [42, 1.0, 9.6, 1.6], [52, 3.1, 8.0, 1.0], [61, 0.4, 7.4, 2.0], [70, 2.0, 9.2, 1.2], [79, 1.1, 8.6, 1.7], [88, 2.7, 7.2, 1.4], [95, 0.9, 9.8, 1.1], [18, 3.6, 8.8, 1.9]].each do |left, delay, dur, size| %>
+          <span class="mp__bill" style="left: <%= left %>%; animation-delay: <%= delay %>s; animation-duration: <%= dur %>s; font-size: <%= size %>rem;"><%= bill_emoji %></span>
+        <% end %>
+      </div>
+    <% end %>
+
+    <p class="mp__eyebrow">The HCB money printer</p>
+    <div class="mp__printer" aria-hidden="true">🖨️</div>
+    <p class="mp__figure" data-money-printer-target="counter"><%= render_money(@stats[:net_delta_cents].abs) %></p>
+    <p class="mp__ticker" data-money-printer-target="ticker"><%= seed_phrase %></p>
+
+    <p class="mp__caption">
+      <% case @mode %>
+      <% when "printing" %>
+        That's how much money we've printed out of thin air. Go brrr.
+      <% when "shredding" %>
+        That's how much money we've fed to the shredder.
+      <% else %>
+        The printer is jammed. In a good way. The engines agree.
+      <% end %>
+    </p>
+
+    <% unless @mode == "jammed" %>
+      <p class="mp__converter" data-money-printer-target="equivalent">crunching the receipts…</p>
+    <% end %>
+
+    <div class="mp__stats">
+      <div class="mp__stat">
+        <span class="mp__stat-value"><%= number_with_precision(@accuracy, precision: 1) %>%</span>
+        <span class="mp__stat-label">engine honesty</span>
+      </div>
+      <div class="mp__stat">
+        <span class="mp__stat-value"><%= number_with_delimiter(@stats[:matching_orgs]) %> / <%= number_with_delimiter(@stats[:total_orgs]) %></span>
+        <span class="mp__stat-label">organizations agree</span>
+      </div>
+    </div>
+
+    <% if @stats[:leaderboard].any? %>
+      <div class="mp__board">
+        <h2>Worst offenders</h2>
+        <% @stats[:leaderboard].each do |row| %>
+          <div class="mp__row">
+            <span>
+              <% if @reveal_identities %>
+                <%= link_to row[:name], event_path(row[:slug]) %>
+              <% else %>
+                <span class="mp__redacted">REDACTED</span>
+              <% end %>
+            </span>
+            <span class="mp__row-delta <%= row[:delta_cents].positive? ? "mp__row-delta--pos" : "mp__row-delta--neg" %>">
+              <%= row[:delta_cents].positive? ? "+" : "-" %><%= render_money(row[:delta_cents].abs) %>
+            </span>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <p class="mp__meta">Last counted <%= time_ago_in_words(@stats[:computed_at]) %> ago.</p>
+  </div>
+<% end %>

@@ -36,7 +36,7 @@
   </div>
 <% end %>
 
-<% if current_user.card_grants.not_activated.size > 0 %>
+<% if current_user.card_grants.not_activated.any? %>
   <h2 class="user-home-section mb-2">Pending grant invitations</h2>
   <ul class="grid grid-cols-1 text-left w-full mt-2">
     <% current_user.card_grants.not_activated.each do |grant| %>
@@ -60,7 +60,7 @@
   </ul>
 <% end %>
 
-<% if current_user.card_grants.activated.size > 0 %>
+<% if current_user.card_grants.activated.any? %>
   <h2 class="user-home-section">Your grants</h2>
 
   <div class="mixed-grid grid--spacious">
@@ -71,6 +71,42 @@
       <div></div>
     <% end %>
   </div>
+<% end %>
+
+<% if current_user.pending_payments_received.any? %>
+  <h2 class="user-home-section">Payments to you</h2>
+
+  <ul class="grid grid--wide mb-12 pb-2">
+    <% current_user.pending_payments_received.each do |payment| %>
+      <%= link_to payment.pending_legal_entity? ? choose_legal_entity_payee_path(payment.payee) : payment_path(payment) do %>
+        <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
+          <span>
+            <%= status_badge "info" %>
+            <strong><%= payment.amount.format(with_currency: true) %> from <%= payment.event.name %> for "<%= payment.purpose %>"</strong>
+          </span>
+        </li>
+      <% end %>
+    <% end %>
+  </ul>
+<% end %>
+
+<% if current_user.onboarding_contractor_positions.any? %>
+  <h2 class="user-home-section">Finish your contractor onboarding</h2>
+
+  <ul class="grid grid--wide mb-12 pb-2">
+    <% current_user.onboarding_contractor_positions.each do |position| %>
+      <% next_step = position.next_onboarding_step %>
+      <%= link_to onboarding_payroll_position_url(position) do %>
+        <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
+          <span>
+            <%= status_badge "warning" %>
+            <strong><%= position.title %> at <%= position.event.name %></strong>
+            <% if next_step %><span class="muted">— next: <%= next_step[:label] %></span><% end %>
+          </span>
+        </li>
+      <% end %>
+    <% end %>
+  </ul>
 <% end %>
 
 <main class="flex flex-col items-center text-center pb-8">

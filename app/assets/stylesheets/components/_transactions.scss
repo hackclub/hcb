@@ -75,6 +75,10 @@
 }
 
 html[data-dark='true'] {
+  .transaction__memo a {
+    color: inherit;
+  }
+
   .transaction--frc {
     color: $white;
 
@@ -91,6 +95,21 @@ html[data-dark='true'] {
   > div {
     display: flex;
     align-items: center;
+  }
+
+  a {
+    position: relative;
+    color: inherit;
+    text-decoration: none;
+
+    // Enlarge the vertical touch target without affecting row height: an
+    // absolutely-positioned overlay extends the clickable area above and below
+    // while staying out of layout flow.
+    &::after {
+      content: '';
+      position: absolute;
+      inset: -0.25rem 0;
+    }
   }
 
   span:not(.badge):not(.list-badge):first-of-type {
@@ -126,6 +145,22 @@ html[data-dark='true'] {
   .suggested_tag {
     max-width: 0px;
   }
+}
+
+// Grey out the memo for pending transactions. The memo link uses
+// `color: inherit`, so setting the cell's color muted greys it in both themes.
+.transaction__memo--pending {
+  color: map-get($palette, muted);
+}
+
+// Fills the remaining table width and truncates with an ellipsis instead of
+// widening the table (max-width: 0 keeps the content from sizing the cell)
+.transaction__memo--fluid {
+  width: 100%;
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .transaction:hover .add-tag-badge,

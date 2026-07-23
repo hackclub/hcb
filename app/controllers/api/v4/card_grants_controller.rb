@@ -22,7 +22,7 @@ module Api
       def create
         sent_by = current_user
 
-        if current_user.admin? && params.key?(:sent_by_email)
+        if can_admin?(:write) && params.key?(:sent_by_email)
           found_user = User.find_by(email: params[:sent_by_email])
 
           if found_user.nil?
@@ -62,7 +62,7 @@ module Api
 
           render(
             json: { error: "invalid_operation", messages: },
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
           return
         end

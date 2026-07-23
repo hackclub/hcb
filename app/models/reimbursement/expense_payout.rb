@@ -37,6 +37,7 @@ module Reimbursement
     include PublicIdentifiable
     set_public_id_prefix :rep
 
+    has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
     belongs_to :event
     belongs_to :expense, foreign_key: "reimbursement_expenses_id", inverse_of: :expense_payout
     belongs_to :payout_holding, optional: true, foreign_key: "reimbursement_payout_holdings_id", inverse_of: :expense_payouts
