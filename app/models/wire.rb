@@ -96,6 +96,12 @@ class Wire < ApplicationRecord
     )
   end
 
+  after_update do
+    if (saved_change_to_amount_cents? || saved_change_to_currency?) && canonical_pending_transaction&.unsettled?
+      canonical_pending_transaction.update!(amount_cents: -1 * MoneyService.convert_to_usd(amount_cents, currency))
+    end
+  end
+
   validates_presence_of :memo, :payment_for, :recipient_name, :recipient_email
   validates_email_format_of :recipient_email, if: :recipient_email_changed?
   normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
