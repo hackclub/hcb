@@ -190,4 +190,54 @@ RSpec.describe CardGrantsController do
       expect(card_grant.reload.balance).to eq(Money.new(12_34, :usd))
     end
   end
+
+  describe "#accept_as_reimbursement" do
+    def setup_grant(overrides = {})
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:card_grant_setting, event:)
+      create(
+        :card_grant,
+        { event:, amount_cents: 10_00, allow_reimbursement_report: true }.merge(overrides)
+      )
+    end
+
+    it "opens a reimbursement report and redirects to it" do
+      card_grant = setup_grant
+      allow_any_instance_of(StripeCard).to receive(:cancel!)
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+      create_session(card_grant.user, verified: true)
+
+      expect do
+        post(:accept_as_reimbursement, params: { id: card_grant.hashid })
+      end.to change(Reimbursement::Report, :count).by(1)
+
+      report = card_grant.reload.reimbursement_report
+      expect(report).to be_present
+      expect(response).to redirect_to(report)
+      expect(flash[:success]).to eq("Successfully opened a reimbursement report for your grant.")
+    end
+
+    it "reuses an existing reimbursement report instead of creating a new one" do
+      card_grant = setup_grant
+      existing = create(:reimbursement_report, event: card_grant.event, user: card_grant.user, card_grant:)
+      create_session(card_grant.user, verified: true)
+
+      expect do
+        post(:accept_as_reimbursement, params: { id: card_grant.hashid })
+      end.not_to change(Reimbursement::Report, :count)
+
+      expect(response).to redirect_to(existing)
+    end
+
+    it "does not authorize acceptance when reimbursement reports are disabled" do
+      card_grant = setup_grant(allow_stripe_card: true, allow_reimbursement_report: false)
+      create_session(card_grant.user, verified: true)
+
+      expect do
+        post(:accept_as_reimbursement, params: { id: card_grant.hashid })
+      end.not_to change(Reimbursement::Report, :count)
+
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+    end
+  end
 end
