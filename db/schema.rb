@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_16_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_20_210532) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -336,7 +336,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_16_120000) do
     t.bigint "subledger_id"
     t.datetime "updated_at", null: false
     t.bigint "user_id"
-    t.index ["canonical_transaction_id"], name: "index_canonical_event_mappings_on_canonical_transaction_id"
+    t.index ["canonical_transaction_id"], name: "index_canonical_event_mappings_on_canonical_transaction_id", unique: true
     t.index ["event_id", "canonical_transaction_id"], name: "index_cem_event_id_canonical_transaction_id_uniqueness", unique: true
     t.index ["event_id"], name: "index_canonical_event_mappings_on_event_id"
     t.index ["subledger_id"], name: "index_canonical_event_mappings_on_subledger_id"
@@ -365,7 +365,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_16_120000) do
     t.bigint "event_id", null: false
     t.bigint "subledger_id"
     t.datetime "updated_at", null: false
-    t.index ["canonical_pending_transaction_id"], name: "index_canonical_pending_event_map_on_canonical_pending_tx_id"
+    t.index ["canonical_pending_transaction_id"], name: "index_canonical_pending_event_map_on_canonical_pending_tx_id", unique: true
+    t.index ["event_id", "canonical_pending_transaction_id"], name: "index_cpem_event_id_cpt_id_uniqueness", unique: true
     t.index ["event_id"], name: "index_canonical_pending_event_mappings_on_event_id"
     t.index ["subledger_id"], name: "index_canonical_pending_event_mappings_on_subledger_id"
   end
@@ -461,6 +462,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_16_120000) do
 
   create_table "card_charges", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.string "merchant_category"
+    t.string "merchant_network_id"
     t.bigint "raw_pending_stripe_transaction_id"
     t.datetime "updated_at", null: false
     t.index ["raw_pending_stripe_transaction_id"], name: "index_card_charges_on_raw_pending_stripe_transaction_id", unique: true
