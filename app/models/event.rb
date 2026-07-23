@@ -552,6 +552,8 @@ class Event < ApplicationRecord
     end
   end
 
+  after_update_commit :cascade_transparency_to_subevents, if: -> { is_public_previously_changed? && is_public? }
+
   # We can't do this through a normal dependent: :destroy since ActiveRecord does not support deleting records through indirect has_many associations
   # https://github.com/rails/rails/commit/05bcb8cecc8573f28ad080839233b4bb9ace07be
   after_destroy_commit do
@@ -1079,6 +1081,15 @@ class Event < ApplicationRecord
 
   def move_friendly_id_error_to_slug
     errors.add :slug, *errors.delete(:friendly_id) if errors[:friendly_id].present?
+  end
+
+  def cascade_transparency_to_subevents
+    # When this event becomes transparent, its subevents must become transparent too
+    # (enforced by enforce_transparency_eligibility). Update them now instead of waiting
+    # for each subevent's next save. Each subevent update recurses to its own subevents.
+    subevents.not_transparent.find_each do |subevent|
+      subevent.update!(is_public: true)
+    end
   end
 
   def enforce_transparency_eligibility
