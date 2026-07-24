@@ -33,7 +33,21 @@ module FeeReimbursementService
 
           fee_reimbursement.update!(stripe_topup_id: topup.id, processed_at: Time.now)
         end
+
+        create_canonical_pending_transaction(fee_reimbursement)
       end
+
+      # Backstop: catch any already-processed reimbursements that still lack a
+      # pending transaction (idempotent — no-ops for ones that already have one).
+      FeeReimbursement.pending.find_each(batch_size: 100) do |fee_reimbursement|
+        create_canonical_pending_transaction(fee_reimbursement)
+      end
+    end
+
+    def create_canonical_pending_transaction(fee_reimbursement)
+      ::FeeReimbursementService::CreateCanonicalPendingTransaction.new(fee_reimbursement_id: fee_reimbursement.id).run
+    rescue => e
+      Rails.error.report(e)
     end
 
     def hcb_code

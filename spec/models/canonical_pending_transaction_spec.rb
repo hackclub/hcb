@@ -136,6 +136,29 @@ RSpec.describe CanonicalPendingTransaction, type: :model do
     end
   end
 
+  describe "fee reimbursement" do
+    let!(:hack_club_bank) { create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK) }
+    let(:fee_reimbursement) { create(:fee_reimbursement, amount: 12_34) }
+    let(:canonical_pending_transaction) do
+      FeeReimbursementService::CreateCanonicalPendingTransaction.new(fee_reimbursement_id: fee_reimbursement.id).run
+    end
+
+    it "is reachable through the raw_pending_fee_reimbursement_transaction association" do
+      expect(canonical_pending_transaction.raw_pending_fee_reimbursement_transaction)
+        .to eq(fee_reimbursement.raw_pending_fee_reimbursement_transaction)
+    end
+
+    it "is returned by the .fee_reimbursement scope" do
+      expect(CanonicalPendingTransaction.fee_reimbursement).to include(canonical_pending_transaction)
+    end
+
+    it "excludes transactions with no raw pending fee reimbursement transaction from the scope" do
+      unrelated = create(:canonical_pending_transaction)
+
+      expect(CanonicalPendingTransaction.fee_reimbursement).not_to include(unrelated)
+    end
+  end
+
   describe "#search_memo" do
     context "when the memo is a partial match for the search query" do
       it "still finds the transaction" do
