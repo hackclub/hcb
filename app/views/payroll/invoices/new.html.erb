@@ -1,7 +1,8 @@
 <%= turbo_frame_tag dom_id(@position, :invoice_form) do %>
-  <p class="h5 leading-[1.25] muted mt0 mb3">
+  <p class="h5 leading-[1.25] muted mt0 mb-3">
     Invoice <strong><%= @position.event.name %></strong> for your work as
-    <strong><%= @position.title %></strong>.
+    <strong><%= @position.title %></strong>.<br>
+    Need an invoice? <%= link_to "Use our template", "https://docuseal.com/d/LJuTkqCU3MKDoT", target: "_blank" %>!
   </p>
 
   <%= form_with(model: @invoice, url: payroll_position_invoices_path(@position), scope: :payroll_invoice, local: true) do |form| %>
