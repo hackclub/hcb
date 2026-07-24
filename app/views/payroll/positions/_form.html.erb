@@ -1,5 +1,9 @@
 <%# locals: (event:, payee: nil, position: nil) %>
 
+<% if payee && params[:edit_payee].present? && policy(payee).update? %>
+  <%= render "payments/edit_payee", event:, payee: %>
+<% else %>
+
 <% editing = position&.persisted? %>
 <% disabled = !policy(event).create_transfer? %>
 
@@ -109,3 +113,4 @@
     </button>
   <% end %>
 </div>
+<% end %>
