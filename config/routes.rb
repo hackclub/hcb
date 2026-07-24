@@ -817,6 +817,13 @@ Rails.application.routes.draw do
         resources :check_deposits, only: [:index, :show, :create]
         resources :wires, only: [:index, :show, :create]
         resources :ach_transfers, only: [:create]
+        resources :reimbursement_reports, controller: "reimbursement/reports", only: [:index, :show, :create, :update, :destroy] do
+          member do
+            post :submit
+            post :draft
+          end
+        end
+        resources :reimbursement_expenses, controller: "reimbursement/expenses", only: [:index, :show, :create, :update, :destroy]
 
         resources :comments, only: [:index, :create]
 
