@@ -59,5 +59,6 @@ module EventService
     def like
       @like ||= "%#{ActiveRecord::Base.sanitize_sql_like(@query)}%" if @query
     end
+
   end
 end
