@@ -1,22 +1,16 @@
 import { Controller } from '@hotwired/stimulus'
 
-// Mirrors transfer_form_controller's "Help me decide" wizard, but instead of
-// navigating to a transfer page it selects the matching payout method radio.
 export default class extends Controller {
   static targets = [
-    // Slides
     'home',
     'wizard',
     'answer',
-    // Home slide collapse targets
     'legend',
     'options',
     'help',
-    // Wizard slide question targets
     'question',
     'yes',
     'no',
-    // Wizard slide answer targets
     'answerText',
     'answerCTA',
     'learnMore',
@@ -79,9 +73,6 @@ export default class extends Controller {
     this.sync()
   }
 
-  // Single source of truth for what's visible. When a method is selected (and the
-  // picker is collapsible) we hide the picker list, reveal that method's detail
-  // form, and show the back button. Otherwise the picker is shown for choosing.
   sync = () => {
     if (this.collapsibleValue) {
       if (this.checkedRadio()) {
@@ -140,7 +131,6 @@ export default class extends Controller {
     this.helpTarget.hidden = true
   }
 
-  // Reveal the full picker again so the user can pick a different method.
   showOptions = () => {
     this.optionsTarget.classList.remove('payout-options--collapsed')
     if (this.hasLegendTarget) this.legendTarget.hidden = false
