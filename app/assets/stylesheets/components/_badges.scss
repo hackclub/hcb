@@ -15,6 +15,12 @@
   margin-left: 1rem;
   padding: 0.25rem 0.625rem;
 
+  // Only badges rendered within a ledger item (see ledger/_item) should
+  // collapse their line-height; keep global badges at the base value above.
+  &.badge--ledger-item {
+    line-height: 0;
+  }
+
   &.bg-success {
     background-color: rgba(map-get($palette, success), 0.125);
     color: map-get($palette, success-dark);
