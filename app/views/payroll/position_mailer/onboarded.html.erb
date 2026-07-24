@@ -1,0 +1,18 @@
+<p>Hello,</p>
+
+<p>
+  <%= @position.payee.display_name %> has completed their onboarding to
+  become a contractor for <%= @position.event.name %>!
+</p>
+
+<p>
+  <%= @position.payee.display_name %> will now be able to start
+  submitting invoices for review. You can
+  <%= link_to "view this contractor's information, invoices, and payment history on HCB", event_payroll_position_url(@position.event, @position) %>.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
