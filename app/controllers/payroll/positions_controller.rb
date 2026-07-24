@@ -4,7 +4,7 @@ module Payroll
   class PositionsController < ApplicationController
     include SetEvent
 
-    CONTRACT_RELEVANT_ATTRIBUTES = %w[title rate_cents start_date end_date description].freeze
+    CONTRACT_RELEVANT_ATTRIBUTES = %w[title rate_cents rate_unit start_date end_date description].freeze
 
     before_action :set_event, except: [:onboarding]
     before_action :set_position, only: [:edit, :update, :contract]
@@ -43,6 +43,7 @@ module Payroll
       @position = @payee.payroll_positions.build(
         title: position_params[:title],
         rate_cents: Monetize.parse(position_params[:rate]).cents,
+        rate_unit: position_params[:rate_unit].presence || "hour",
         start_date: position_params[:starts_on],
         end_date: position_params[:ends_on],
         description: position_params[:purpose]
@@ -92,6 +93,7 @@ module Payroll
       @position.assign_attributes(
         title: position_params[:title],
         rate_cents: Monetize.parse(position_params[:rate]).cents,
+        rate_unit: position_params[:rate_unit].presence || @position.rate_unit,
         start_date: position_params[:starts_on],
         end_date: position_params[:ends_on],
         description: position_params[:purpose]
@@ -155,7 +157,7 @@ module Payroll
     end
 
     def position_params
-      params.require(:contractor).permit(:title, :rate, :starts_on, :ends_on, :purpose, :payee_id, file: [])
+      params.require(:contractor).permit(:title, :rate, :rate_unit, :starts_on, :ends_on, :purpose, :payee_id, file: [])
     end
 
   end

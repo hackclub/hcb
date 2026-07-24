@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_20_210532) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_21_120000) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -2058,6 +2058,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_20_210532) do
     t.datetime "onboarding_at"
     t.bigint "payee_id", null: false
     t.integer "rate_cents", default: 0, null: false
+    t.string "rate_unit", default: "hour", null: false
     t.datetime "rejected_at"
     t.date "start_date", null: false
     t.datetime "terminated_at"

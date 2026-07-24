@@ -19,11 +19,17 @@
       <div class="flex justify-between items-center">
         <div>
           <%= form.label :amount, "Amount" %>
-          <span class="muted block">Total to invoice at <%= "#{render_money_short(@position.rate_cents)}/hr" %></span>
+          <span class="muted block">
+            <% if @position.fixed_rate? %>
+              This contract has a fixed amount of <%= render_money_short(@position.rate_cents) %>
+            <% else %>
+              Total to invoice at <%= "#{render_money_short(@position.rate_cents)}#{@position.rate_suffix}" %>
+            <% end %>
+          </span>
         </div>
         <div class="input flex gap-2 items-center py-0 max-w-[150px]">
           <span class="bold muted">$</span>
-          <%= form.number_field :amount, placeholder: "1700.00", step: 0.01, min: 0.01, required: true, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+          <%= form.number_field :amount, placeholder: "1700.00", step: 0.01, min: 0.01, required: true, value: (@position.rate.to_f if @position.fixed_rate?), class: "!p-0 !border-none !shadow-none min-h-auto" %>
         </div>
       </div>
 

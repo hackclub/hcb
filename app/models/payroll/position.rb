@@ -12,6 +12,7 @@
 #  onboarded_at  :datetime
 #  onboarding_at :datetime
 #  rate_cents    :integer          default(0), not null
+#  rate_unit     :string           default("hour"), not null
 #  rejected_at   :datetime
 #  start_date    :date             not null
 #  terminated_at :datetime
@@ -53,6 +54,26 @@ module Payroll
 
     monetize :rate_cents, with_model_currency: :currency
 
+    FIXED_RATE_UNIT = "contract"
+
+    normalizes :rate_unit, with: ->(unit) { unit&.strip&.downcase&.singularize }
+
+    def fixed_rate?
+      rate_unit == FIXED_RATE_UNIT
+    end
+
+    def rate_suffix
+      case rate_unit
+      when "hour" then "/hr"
+      when FIXED_RATE_UNIT then " (fixed)"
+      else " per #{rate_unit}"
+      end
+    end
+
+    def rate_label
+      "#{rate.format}#{rate_suffix}"
+    end
+
     MAX_DURATION = 1.year
     MAX_START_LEAD_TIME = 6.months
 
@@ -61,6 +82,7 @@ module Payroll
     end
 
     validates :title, :description, :start_date, :end_date, presence: true
+    validates :rate_unit, presence: true, length: { maximum: 30 }
     validates :currency, inclusion: { in: Money::Currency.all.map(&:iso_code) }
     validate :end_date_after_start_date
     validate :start_date_within_set_lead_time
@@ -202,7 +224,7 @@ module Payroll
             "payee_name"  => payee.display_name,
             "title"       => title,
             "description" => description,
-            "rate"        => rate.format,
+            "rate"        => rate_label,
             "start_date"  => start_date.to_fs(:long),
             "end_date"    => end_date.to_fs(:long),
             "documents"   => (file.attached? ? [{ "name" => file.blob.filename.to_s, "file" => Rails.application.routes.url_helpers.rails_blob_url(file) }] : nil)

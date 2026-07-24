@@ -103,7 +103,7 @@
             </td>
             <td><strong><%= position.event.name %></strong></td>
             <td><%= position.period_label %></td>
-            <td><%= "#{render_money_short(position.rate_cents)}/hr" %></td>
+            <td><%= "#{render_money_short(position.rate_cents)}#{position.rate_suffix}" %></td>
             <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= position.description %>">
               <%= position.description %>
             </td>
