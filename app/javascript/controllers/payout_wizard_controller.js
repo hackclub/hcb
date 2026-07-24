@@ -9,8 +9,6 @@ export default class extends Controller {
     'options',
     'help',
     'question',
-    'yes',
-    'no',
     'answerText',
     'answerCTA',
     'learnMore',
@@ -62,7 +60,8 @@ export default class extends Controller {
   }
 
   static payoutMethodToSection = {
-    'LegalEntity::PayoutMethod::AchTransfer': 'ach_transfer_payout_method_inputs',
+    'LegalEntity::PayoutMethod::AchTransfer':
+      'ach_transfer_payout_method_inputs',
     'LegalEntity::PayoutMethod::Check': 'check_payout_method_inputs',
     'LegalEntity::PayoutMethod::Wire': 'wire_payout_method_inputs',
     'LegalEntity::PayoutMethod::WiseTransfer':

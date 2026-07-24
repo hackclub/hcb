@@ -40,11 +40,11 @@
       <p class="eyebrow mb-0">Help me decide</p>
       <h3 class="mt-2 font-bold mb-4" data-payout-wizard-target="question"></h3>
       <div class="flex gap-2">
-        <button type="button" class="btn bg-blue" data-payout-wizard-target="yes" data-action="click->payout-wizard#yesClickHandler">
+        <button type="button" class="btn bg-blue" data-action="click->payout-wizard#yesClickHandler">
           Yes
           <%= inline_icon "check-thin", style: "margin-right: -5px;margin-left: 5px" %>
         </button>
-        <button type="button" class="btn bg-blue" data-payout-wizard-target="no" data-action="click->payout-wizard#noClickHandler">
+        <button type="button" class="btn bg-blue" data-action="click->payout-wizard#noClickHandler">
           No
           <%= inline_icon "view-close", style: "margin-right: -5px;margin-left: 5px" %>
         </button>
