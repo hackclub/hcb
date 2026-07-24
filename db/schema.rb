@@ -500,6 +500,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_20_210532) do
     t.boolean "pre_authorization_required", default: false, null: false
     t.boolean "reimbursement_conversions_enabled", default: true, null: false
     t.string "support_message"
+    t.string "support_slack_url"
     t.string "support_url"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_card_grant_settings_on_event_id", unique: true

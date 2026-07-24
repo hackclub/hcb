@@ -1393,7 +1393,8 @@ class EventsController < ApplicationController
           :pre_authorization_required,
           :block_suspected_fraud,
           :support_message,
-          :support_url
+          :support_url,
+          :support_slack_url
         ],
         config_attributes: [
           :id,
@@ -1458,7 +1459,8 @@ class EventsController < ApplicationController
         :pre_authorization_required,
         :block_suspected_fraud,
         :support_message,
-        :support_url
+        :support_url,
+        :support_slack_url
       ],
       config_attributes: [
         :id,
