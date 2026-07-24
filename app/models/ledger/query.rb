@@ -66,7 +66,8 @@ class Ledger
       # preload, not includes: linked_object is polymorphic, so it can never be
       # JOINed — and includes makes pluck/count attempt exactly that join
       # (EagerLoadPolymorphicError).
-      results.order(pending_first.asc, datetime: :desc, created_at: :desc, id: :desc).preload(:linked_object)
+      results.order(pending_first.asc, datetime: :desc, created_at: :desc, id: :desc)
+             .preload(:hcb_code, :author, linked_object: [:card_grant, :recurring_donation])
     end
 
     def self.sanitize_query(query_hash)
