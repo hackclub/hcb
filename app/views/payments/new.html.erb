@@ -13,10 +13,6 @@
   </div>
 <% end %>
 
-<% content_for :sidebar_footer do %>
-  <%= render "events/transfers/modal" %>
-<% end %>
-
 <% if @recent_payments&.any? %>
   <% content_for :sidebar_footer do %>
     <div class="mt-6">

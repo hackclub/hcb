@@ -17,32 +17,7 @@ class PayeesController < ApplicationController
     selected = all.find_by_hashid(params[:payee_id]) if params[:payee_id].present?
     @payees = [selected, *payees.to_a].compact.uniq.first(15)
 
-    like = "%#{PaymentRecipient.sanitize_sql_like(params[:q].to_s)}%" if params[:q].present?
-
-    legacy = PaymentRecipient.unscoped.where(event: @event)
-    legacy = legacy.where("name ILIKE :q OR email ILIKE :q", q: like) if like
-    candidates = legacy.order(created_at: :desc).limit(25).pluck(:created_at, :name, :email)
-
-    [@event.ach_transfers, @event.increase_checks, @event.wires].each do |scope|
-      scope = scope.where("recipient_name ILIKE :q OR recipient_email ILIKE :q", q: like) if like
-      candidates += scope.order(created_at: :desc).limit(25).pluck(:created_at, :recipient_name, :recipient_email)
-    end
-
-    candidate_emails = candidates.map { |_, _, email| email&.downcase }.compact.uniq
-    payee_emails = if candidate_emails.any?
-                     @event.payees.where("LOWER(email) IN (?)", candidate_emails).pluck(Arel.sql("LOWER(email)"))
-                   else
-                     []
-                   end
-
-    @previous_recipients = candidates
-                           .reject { |_, name, email| name.blank? || email.blank? }
-                           .sort_by { |created_at, _, _| created_at }
-                           .reverse
-                           .uniq { |_, _, email| email.downcase }
-                           .reject { |_, _, email| payee_emails.include?(email.downcase) }
-                           .first(5)
-                           .map { |_, name, email| { name:, email: } }
+    @previous_recipients = EventService::PreviousRecipients.new(@event, query: params[:q]).list
 
     render layout: false
   end
