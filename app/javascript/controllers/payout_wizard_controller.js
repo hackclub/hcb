@@ -67,8 +67,6 @@ export default class extends Controller {
     'Wise transfer': 'LegalEntity::PayoutMethod::WiseTransfer',
   }
 
-  // Maps a payout method radio value to the detail input section that should be
-  // revealed when it's selected.
   static payoutMethodToSection = {
     'LegalEntity::PayoutMethod::AchTransfer': 'ach_transfer_payout_method_inputs',
     'LegalEntity::PayoutMethod::Check': 'check_payout_method_inputs',
