@@ -6,7 +6,7 @@ class PayeePolicy < ApplicationPolicy
   end
 
   def create?
-    EventPolicy.new(user, record.event).new_payment?
+    EventPolicy.new(user, record.event).create_payment?
   end
 
   def update?

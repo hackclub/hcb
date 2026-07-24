@@ -1,0 +1,29 @@
+<p>Hello,</p>
+
+<p>
+  You're being paid <%= @payment.amount.format(with_currency: true) %> for
+  <i>"<%= @payment.purpose %>"</i> from <%= @payment.event.name %>, but we still
+  need a few details from you before we can send it.
+</p>
+
+<p>Still needed:</p>
+<ul>
+  <% if @tax_incomplete %>
+    <li><%= link_to "Submit your tax information", choose_legal_entity_payee_url(@payment.payee) %></li>
+  <% end %>
+  <% if @payout_incomplete && @payment.legal_entity.present? %>
+    <li><%= link_to "Configure your payout method", legal_entity_url(@payment.legal_entity) %></li>
+  <% end %>
+</ul>
+
+<p>
+  If you have any questions about this payment, please contact <%= @payment.event.name %>.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
+
+<p><i class="muted"><%= @payment.event.name %> is fiscally sponsored by The Hack Foundation (d.b.a. HCB), a 501(c)(3) nonprofit (EIN: 81-2908499).</i></p>

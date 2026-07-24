@@ -49,6 +49,8 @@ class Payment < ApplicationRecord
   scope :successful_or_sent, -> { where(aasm_state: ["successful", "sent"]) }
   scope :pending_or_under_review, -> { where(aasm_state: ["pending_legal_entity", "under_review"]) }
 
+  ACCEPTANCE_REMINDER_DAYS = [1, 2, 7, 14, 30, 60, 80, 85, 89].freeze
+
   aasm timestamps: true do
     state :pending_legal_entity, initial: true # We're waiting on the LE to complete tasks before payment can be sent
     state :under_review # HCB reviewing the underlying transfer
@@ -92,6 +94,10 @@ class Payment < ApplicationRecord
     else
       PaymentMailer.with(payment: self).missing_tax_information.deliver_later
     end
+  end
+
+  after_create_commit do
+    schedule_acceptance_reminders if awaiting_recipient_onboarding?
   end
 
   def retry!
@@ -154,7 +160,25 @@ class Payment < ApplicationRecord
     "Payment to #{payee.display_name} for #{purpose}"
   end
 
+  # Whether we're still waiting on the recipient to complete tax and/or payout
+  # information before this payment can be sent. Gates the acceptance reminders.
+  # Managed legal entities are excluded: the organizer entered the recipient's
+  # details themselves, the entity has no users to email, and there's nothing
+  # for the recipient to complete.
+  def awaiting_recipient_onboarding?
+    return false unless pending_legal_entity?
+    return false if legal_entity&.managed?
+
+    !legal_entity&.payable? || legal_entity.default_payout_method.blank?
+  end
+
   private
+
+  def schedule_acceptance_reminders
+    ACCEPTANCE_REMINDER_DAYS.each do |days|
+      Payment::AcceptanceReminderJob.set(wait: days.days).perform_later(self, days)
+    end
+  end
 
   def create_payment_attempt!
     self.with_lock do
