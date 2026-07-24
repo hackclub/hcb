@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module EventService
   class PreviousRecipients
     RESULT_LIMIT = 7
