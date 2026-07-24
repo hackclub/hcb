@@ -73,7 +73,7 @@ export default class extends Controller {
     this.sync()
   }
 
-  sync = () => {
+  sync() {
     if (this.collapsibleValue) {
       if (this.checkedRadio()) {
         this.collapseOptions()
@@ -95,9 +95,7 @@ export default class extends Controller {
     return root.querySelectorAll('[data-behavior$="payout_method_inputs"]')
   }
 
-  // Show only the detail section matching the selected payout method, hiding the
-  // rest. Replaces the old jQuery slideUp/slideDown toggles in ui.js.
-  syncDetailSections = () => {
+  syncDetailSections() {
     const radio = this.checkedRadio()
     const selected = radio
       ? this.constructor.payoutMethodToSection[radio.value]
@@ -110,20 +108,18 @@ export default class extends Controller {
     })
   }
 
-  hideDetailSections = () => {
+  hideDetailSections() {
     this.detailSections().forEach(section => {
       section.style.display = ''
       section.classList.add('hidden')
     })
   }
 
-  onSelect = () => {
+  onSelect() {
     this.sync()
   }
 
-  // Collapse the picker down to just the selected option, whose checkmark is
-  // swapped for a "Change" button via the collapsed modifier (see _forms.scss).
-  collapseOptions = () => {
+  collapseOptions() {
     if (!this.checkedRadio()) return
 
     this.optionsTarget.classList.add('payout-options--collapsed')
@@ -131,27 +127,27 @@ export default class extends Controller {
     this.helpTarget.hidden = true
   }
 
-  showOptions = () => {
+  showOptions() {
     this.optionsTarget.classList.remove('payout-options--collapsed')
     if (this.hasLegendTarget) this.legendTarget.hidden = false
     this.helpTarget.hidden = false
     this.hideDetailSections()
   }
 
-  showWizard = () => {
+  showWizard() {
     this.homeTarget.hidden = true
     this.answerTarget.hidden = true
     this.wizardTarget.hidden = false
     this.renderQuestion(1)
   }
 
-  hideWizard = () => {
+  hideWizard() {
     this.homeTarget.hidden = false
     this.answerTarget.hidden = true
     this.wizardTarget.hidden = true
   }
 
-  reset = () => {
+  reset() {
     this.hideWizard()
     this.showWizard()
   }
