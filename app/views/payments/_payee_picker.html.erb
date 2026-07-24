@@ -76,8 +76,8 @@
 
         <% if prefilled && params[:legacy].present? %>
           <%= render "application/callout", type: "info", title: "You've paid this recipient before", class: "mt-0 mb-0" do %>
-            They were paid through HCB's legacy transfer system, which collected taxes manually.
-            Payments now collect it automatically so HCB can handle taxes more efficiently.
+            They were paid through HCB's legacy transfer system, which collected taxe information manually.
+            Payments now collect it automatically so HCB can handle filings on your behalf more efficiently
           <% end %>
         <% end %>
 
