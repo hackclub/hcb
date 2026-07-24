@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_20_210532) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_22_000001) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -462,8 +462,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_20_210532) do
 
   create_table "card_charges", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.string "merchant_category"
-    t.string "merchant_network_id"
+    t.string "merchant_category", null: false
+    t.string "merchant_network_id", null: false
     t.bigint "raw_pending_stripe_transaction_id"
     t.datetime "updated_at", null: false
     t.index ["raw_pending_stripe_transaction_id"], name: "index_card_charges_on_raw_pending_stripe_transaction_id", unique: true
