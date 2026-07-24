@@ -250,13 +250,14 @@ RSpec.describe CardGrantService::BulkCreate do
 
         initial_count = CardGrant.count
 
-        expect {
-          described_class.new(
-            event:,
-            csv_file: csv_file_from_content(csv_content),
-            sent_by:
-          ).run
-        }.to raise_error(ActiveRecord::RecordInvalid, /Amount cents is too big/)
+        result = described_class.new(
+          event:,
+          csv_file: csv_file_from_content(csv_content),
+          sent_by:
+        ).run
+
+        expect(result.success?).to be false
+        expect(result.errors).to include(match(/Amount cents is too big/))
 
         expect(CardGrant.count).to eq(initial_count)
       end
