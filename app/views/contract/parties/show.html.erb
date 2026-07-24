@@ -18,27 +18,34 @@
             <%= link_to "Go to associated invite (#{@contract.contractable.id})", organizer_position_invite_path(@contract.contractable), class: "btn w-full" %>
           <% end %>
 
-          <%= button_to "Void", void_contract_path(@contract), method: :post, class: "btn bg-error", data: { "turbo-confirm": "Are you sure you want to void this contract?", "turbo-confirm-danger": true } %>
-          <button class="btn bg-light-warning" data-behavior="modal_trigger" data-modal="reissue_modal">Reissue</button>
+          <% if @contract.may_mark_voided? %>
+            <%= button_to "Void", void_contract_path(@contract), method: :post, class: "btn bg-error", data: { "turbo-confirm": "Are you sure you want to void this contract?", "turbo-confirm-danger": true } %>
+            <button class="btn bg-light-warning" data-behavior="modal_trigger" data-modal="reissue_modal">Reissue</button>
+          <% end %>
         </div>
 
         <% if @contract.contractable.is_a?(Event::Application) %>
-          <%= form_with url: admin_activate_application_path(@contract.contractable), method: :post do |form| %>
-            <div class="field">
-              <%= form.label "Tags" %>
-              <%= form.select :tags, options_for_select(EventTag::Tags::ALL, selected: @contract.contractable.default_tags), multiple: true, size: EventTag::Tags::ALL.size %>
-            </div>
+          <% if @contract.contractable.event.present? %>
+            <p>This application has already been activated.</p>
+            <%= link_to "Go to event", @contract.contractable.event, class: "btn w-full" %>
+          <% else %>
+            <%= form_with url: admin_activate_application_path(@contract.contractable), method: :post do |form| %>
+              <div class="field">
+                <%= form.label "Tags" %>
+                <%= form.select :tags, options_for_select(EventTag::Tags::ALL, selected: @contract.contractable.default_tags), multiple: true, size: EventTag::Tags::ALL.size %>
+              </div>
 
-            <div class="field">
-              <%= form.label :risk_level %>
-              <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" }, { required: true } %>
-            </div>
+              <div class="field">
+                <%= form.label :risk_level %>
+                <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" }, { required: true } %>
+              </div>
 
-            <% if @party.pending? %>
-              <p>Sign the contract before activating the organization</p>
+              <% if @party.pending? %>
+                <p>Sign the contract before activating the organization</p>
+              <% end %>
+
+              <%= form.submit "Activate", class: "btn bg-success w-full", disabled: @party.pending?, data: { "contract-target": "button" } %>
             <% end %>
-
-            <%= form.submit "Activate", class: "btn bg-success w-full", disabled: @party.pending?, data: { "contract-target": "button" } %>
           <% end %>
         <% end %>
       </div>
