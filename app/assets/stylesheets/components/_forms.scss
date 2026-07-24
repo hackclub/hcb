@@ -106,7 +106,7 @@ select {
     [data-file-upload-target='preview'].active {
       border-top-right-radius: 0 !important;
       border-bottom-right-radius: 0 !important;
-      background-color: rgba(map-get($palette, muted), 0.25);
+      background-color: rgba(map-get($palette, muted), 0.1);
     }
 
     & [data-file-upload-target='clear'] {
@@ -429,6 +429,193 @@ legend {
     box-shadow:
       0 0 0 1px var(--bg-color),
       0 0 0 3px map-get($palette, info);
+  }
+}
+
+// Payout method picker — a vertical list of selectable rows.
+.payout-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+
+  input,
+  .field_with_errors:has(> input) {
+    display: none;
+  }
+
+  &__group {
+    font-size: 0.75rem;
+    margin-bottom: 0 !important;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+}
+
+.payout-option {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  background-color: var(--card-bg);
+  box-shadow: inset 0 0 0 1px map-get($palette, smoke);
+  transition:
+    box-shadow 0.12s ease,
+    background-color 0.12s ease;
+
+  &:hover {
+    box-shadow: inset 0 0 0 1px map-get($palette, info);
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: map-get($palette, info);
+    background-color: rgba(map-get($palette, accent), 0.125);
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: map-get($palette, black);
+
+    html[data-dark='true'] & {
+      color: map-get($palette, white);
+    }
+  }
+
+  &__tag {
+    font-size: 0.6875rem;
+    font-weight: 600;
+  }
+
+  &__desc {
+    font-size: 0.8125rem;
+    color: $muted;
+  }
+
+  &__check {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: auto;
+    color: map-get($palette, info);
+    opacity: 0;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  input:checked + & {
+    background-color: rgba(map-get($palette, info), 0.06);
+    &:not(.payout-options--collapsed .payout-option) {
+      box-shadow: inset 0 0 0 2px map-get($palette, info);
+    }
+
+    .payout-option__check {
+      opacity: 1;
+    }
+  }
+
+  &__change {
+    display: none;
+    flex-shrink: 0;
+    margin-left: auto;
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  input:disabled + & {
+    opacity: 0.55;
+    cursor: default;
+    pointer-events: none;
+  }
+}
+
+.payout-options--collapsed {
+  width: auto;
+  margin: -1rem -1rem 0;
+
+  .payout-options__group,
+  input:not(:checked) + .payout-option {
+    display: none;
+  }
+
+  .payout-option {
+    cursor: default;
+    padding: 1rem 1.25rem;
+    border-radius: 0;
+    border-top-left-radius: var(--radius-lg);
+    border-top-right-radius: var(--radius-lg);
+    border-bottom: 1px solid map-get($palette, smoke);
+    background-color: rgba(map-get($palette, smoke), 0.06);
+
+    &:hover {
+      box-shadow: none;
+    }
+  }
+
+  .payout-option__check {
+    display: none;
+  }
+
+  .payout-option__change {
+    display: flex;
+  }
+}
+
+// Explanatory note shown under the selected method, above its detail fields.
+.payout-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  margin: 0.875rem 0 1.5rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: var(--radius-md);
+  background-color: rgba(map-get($palette, muted), 0.06);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: $muted;
+
+  svg {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-top: 0.125rem;
+    color: map-get($palette, info);
+  }
+
+  a {
+    font-weight: 600;
   }
 }
 

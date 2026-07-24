@@ -12,7 +12,6 @@ export default class extends Controller {
     'legend',
     'options',
     'help',
-    'change',
     // Wizard slide question targets
     'question',
     'yes',
@@ -68,11 +67,33 @@ export default class extends Controller {
     'Wise transfer': 'LegalEntity::PayoutMethod::WiseTransfer',
   }
 
+  // Maps a payout method radio value to the detail input section that should be
+  // revealed when it's selected.
+  static payoutMethodToSection = {
+    'LegalEntity::PayoutMethod::AchTransfer': 'ach_transfer_payout_method_inputs',
+    'LegalEntity::PayoutMethod::Check': 'check_payout_method_inputs',
+    'LegalEntity::PayoutMethod::Wire': 'wire_payout_method_inputs',
+    'LegalEntity::PayoutMethod::WiseTransfer':
+      'wise_transfer_payout_method_inputs',
+  }
+
   connect() {
-    if (this.collapsibleValue && this.checkedRadio()) {
-      this.collapseOptions()
+    this.sync()
+  }
+
+  // Single source of truth for what's visible. When a method is selected (and the
+  // picker is collapsible) we hide the picker list, reveal that method's detail
+  // form, and show the back button. Otherwise the picker is shown for choosing.
+  sync = () => {
+    if (this.collapsibleValue) {
+      if (this.checkedRadio()) {
+        this.collapseOptions()
+        this.syncDetailSections()
+      } else {
+        this.showOptions()
+      }
     } else {
-      this.hideDetailSections()
+      this.syncDetailSections()
     }
   }
 
@@ -85,31 +106,47 @@ export default class extends Controller {
     return root.querySelectorAll('[data-behavior$="payout_method_inputs"]')
   }
 
+  // Show only the detail section matching the selected payout method, hiding the
+  // rest. Replaces the old jQuery slideUp/slideDown toggles in ui.js.
+  syncDetailSections = () => {
+    const radio = this.checkedRadio()
+    const selected = radio
+      ? this.constructor.payoutMethodToSection[radio.value]
+      : null
+
+    this.detailSections().forEach(section => {
+      const match = section.dataset.behavior === selected
+      section.style.display = ''
+      section.classList.toggle('hidden', !match)
+    })
+  }
+
   hideDetailSections = () => {
     this.detailSections().forEach(section => {
-      section.style.display = 'none'
+      section.style.display = ''
+      section.classList.add('hidden')
     })
   }
 
   onSelect = () => {
-    if (this.collapsibleValue && this.checkedRadio()) this.collapseOptions()
+    this.sync()
   }
 
+  // Collapse the picker down to just the selected option, whose checkmark is
+  // swapped for a "Change" button via the collapsed modifier (see _forms.scss).
   collapseOptions = () => {
     if (!this.checkedRadio()) return
 
-    this.optionsTarget.hidden = true
+    this.optionsTarget.classList.add('payout-options--collapsed')
     if (this.hasLegendTarget) this.legendTarget.hidden = true
     this.helpTarget.hidden = true
-    this.changeTarget.hidden = false
   }
 
-  // Reveal the picker again so the user can pick a different method. The detail
+  // Reveal the full picker again so the user can pick a different method.
   showOptions = () => {
-    this.optionsTarget.hidden = false
+    this.optionsTarget.classList.remove('payout-options--collapsed')
     if (this.hasLegendTarget) this.legendTarget.hidden = false
     this.helpTarget.hidden = false
-    this.changeTarget.hidden = true
     this.hideDetailSections()
   }
 
