@@ -52,8 +52,8 @@
       <%= form.hidden_field :payee_id, value: payee&.hashid %>
       <%= hidden_field_tag "manual", manual.to_s, data: { "manual-payee-target": "manualField" } %>
 
-      <div id="payment-details" data-scroll-seek-target="section">
-        <h3 class="mb-2">Payment details</h3>
+      <div id="details" data-scroll-seek-target="section">
+        <h3 class="mb-2">Details</h3>
         <div class="card mb-4 flex flex-col gap-3">
           <div class="flex justify-between items-center">
             <%= form.label :amount, "Amount" %>
@@ -74,7 +74,7 @@
       </div>
 
       <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
-        <h3 class="mb-2">Payout method</h3>
+        <h3 class="mb-2">Method</h3>
         <div class="card mb-4 flex flex-col gap-3">
           <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method, collapsible: true, title: nil %>
         </div>

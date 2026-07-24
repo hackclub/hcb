@@ -116,8 +116,8 @@
       </div>
 
       <div class="field flex-auto">
-        <%= form.label :address_country, "Country" %>
-        <%= form.text_field :address_country, value: "United States", disabled: true %>
+        <%= form.label :address_country, "Country", class: "opacity-50" %>
+        <%= form.text_field :address_country, value: "United States", disabled: true, class: "opacity-50" %>
       </div>
     </div>
 
@@ -228,7 +228,7 @@
       <%= form.label :routing_number, "Routing number" %>
       <%= form.text_field :routing_number,
                           placeholder: "123456789",
-                          class: "fs-mask !ml-auto !max-w-xs",
+                          class: "fs-mask !ml-auto !max-w-[150px]",
                           "@focus": "toggle()",
                           "@blur": "toggle()",
                           "x-model": "routingNumber",
@@ -241,7 +241,7 @@
       <%= form.label :account_number, "Account number" %>
       <%= form.text_field :account_number,
                           placeholder: "0913338883",
-                          class: "fs-mask !ml-auto !max-w-xs",
+                          class: "fs-mask !ml-auto !max-w-[150px]",
                           "@focus": "toggle()",
                           "@blur": "toggle()",
                           "x-model": "accountNumber",
