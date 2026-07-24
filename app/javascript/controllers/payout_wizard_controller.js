@@ -77,7 +77,6 @@ export default class extends Controller {
     this.sync()
   }
 
-
   sync() {
     if (!this.collapsibleValue) {
       this.syncDetailSections()
