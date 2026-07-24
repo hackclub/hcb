@@ -3,7 +3,11 @@
 require "rails_helper"
 
 RSpec.describe EventService::PreviousRecipients, type: :service do
-  let(:event) { create(:event) }
+  let(:event) do
+    event = create(:event)
+    create(:canonical_pending_transaction, amount_cents: 1_000_000, event:, fronted: true)
+    event
+  end
 
   describe "#list" do
     it "surfaces recipients paid through legacy transfers" do
@@ -54,6 +58,7 @@ RSpec.describe EventService::PreviousRecipients, type: :service do
 
     it "ignores recipients from other events" do
       other_event = create(:event)
+      create(:canonical_pending_transaction, amount_cents: 1_000_000, event: other_event, fronted: true)
       create(:ach_transfer, event: other_event, recipient_name: "Stranger", recipient_email: "stranger@hackclub.com")
 
       expect(described_class.new(event).list).to be_empty
