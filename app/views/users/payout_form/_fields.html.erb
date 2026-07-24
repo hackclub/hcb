@@ -92,13 +92,13 @@
 
     <div class="flex flex-col sm:flex-row gap-2 mb-2 justify-between">
       <%= form.label :address_line1, "Street address" %>
-      <div class="flex-1 flex gap-2 flex-col max-w-sm">
+      <div class="flex-1 flex gap-2 sm:flex-col sm:max-w-sm">
         <%= form.text_field :address_line1, class: "!max-w-full", placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:line1] %>
         <%= form.text_field :address_line2, class: "!max-w-full", placeholder: "(Building / Apartment / Room)" %>
       </div>
     </div>
 
-    <div class="grid grid--split">
+    <div class="grid grid-cols-2">
       <div class="field flex-auto">
         <%= form.label :address_city, "City" %>
         <%= form.text_field :address_city, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:city] %>
@@ -109,7 +109,7 @@
       </div>
     </div>
 
-    <div class="grid grid--split">
+    <div class="grid grid-cols-2">
       <div class="field flex-auto">
         <%= form.label :postal_code %>
         <%= form.text_field :address_postal_code, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:postal_code] %>
