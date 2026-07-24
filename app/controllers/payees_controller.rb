@@ -35,6 +35,8 @@ class PayeesController < ApplicationController
           entity_type: manual_payee_entity_type,
           name: params[:name]
         )
+
+        prefill_legacy_payout_method(payee.legal_entity) if params[:legacy].present?
       end
 
       payee.save!
@@ -105,6 +107,17 @@ class PayeesController < ApplicationController
 
   def set_payee
     @payee = Payee.find_by_hashid!(params[:id])
+  end
+
+  # When an organizer submits payout info on behalf of a legacy recipient, HCB
+  # already has the method it last paid them with. Rebuild it as the default
+  # payout method so the form is pre-filled. Best-effort: if the reconstructed
+  # method is incomplete/invalid, we skip it rather than blocking payee creation.
+  def prefill_legacy_payout_method(legal_entity)
+    details = EventService::LegacyPayoutMethod.new(@event, name: params[:name], email: params[:email]).details
+    return unless details
+
+    legal_entity.payout_methods.build(default: true, details:).save
   end
 
   def manual_payee_entity_type

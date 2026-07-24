@@ -50,6 +50,9 @@
       <%= form_with(url: event_payees_path(event_id: event.slug), local: true, id: "new-payee-form", html: { class: "contents" }) do %>
         <%= hidden_field_tag :destination, destination %>
         <%= hidden_field_tag :manual, manual.to_s, data: { "manual-payee-target": "payeeFormManualField" } %>
+        <% if params[:legacy].present? %>
+          <%= hidden_field_tag :legacy, "true" %>
+        <% end %>
       <% end %>
 
       <div class="flex flex-col gap-3">
