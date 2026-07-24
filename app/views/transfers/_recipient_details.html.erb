@@ -1,7 +1,7 @@
 <%# locals: (form:, disabled:, required: true, show_us: false) %>
 
 <%= form.label :address_line1, "Street address" %>
-<div class="grid grid--split gap-2">
+<div class="grid grid-cols-2 gap-2">
   <div class="field flex-auto">
     <%= form.text_field :address_line1, class: "flex-1", placeholder: "Phase II, Udyog Vihar", required:, disabled: %>
   </div>

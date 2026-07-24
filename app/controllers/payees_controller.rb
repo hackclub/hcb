@@ -17,6 +17,8 @@ class PayeesController < ApplicationController
     selected = all.find_by_hashid(params[:payee_id]) if params[:payee_id].present?
     @payees = [selected, *payees.to_a].compact.uniq.first(15)
 
+    @previous_recipients = EventService::PreviousRecipients.new(@event, query: params[:q]).list
+
     render layout: false
   end
 

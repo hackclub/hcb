@@ -2,10 +2,11 @@
 <%# The picker always opens in contractor mode; the manual-payee controller
     toggles to the manual path client-side via the enable/undo buttons. %>
 <% manual = false %>
+<% prefilled = params[:payee_name].present? || params[:payee_email].present? %>
 
 <div>
-  <div data-payee-picker-target="defaultPanel" class="py-2">
-    <% if event.payees.any? %>
+  <div data-payee-picker-target="defaultPanel" class="py-2" <%= "hidden" if prefilled %>>
+    <% if event.payees.any? || EventService::PreviousRecipients.new(event).exists? %>
       <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id], destination:) do %>
         <%= render "application/loading_container", klass: "py-8" %>
       <% end %>
@@ -36,7 +37,7 @@
     <% end %>
   </div>
 
-  <div data-payee-picker-target="addingPanel" hidden>
+  <div data-payee-picker-target="addingPanel" <%= "hidden" unless prefilled %>>
     <div class="px-4 py-3">
       <button type="button" class="btn mb-3" data-action="payee-picker#hideAdding">
         <%= inline_icon "view-back" %>
@@ -72,6 +73,13 @@
               form: "new-payee-form",
               data: { "manual-payee-target": "entityTypeInput" } %>
         </div>
+
+        <% if prefilled && params[:legacy].present? %>
+          <%= render "application/callout", type: "info", title: "You've paid this recipient before", class: "mt-0 mb-0" do %>
+            They were paid through HCB's legacy transfer system, which collected taxe information manually.
+            Payments now collect it automatically so HCB can handle filings on your behalf more efficiently
+          <% end %>
+        <% end %>
 
         <div data-manual-payee-target="defaultBanner" <%= "hidden" if manual %>>
           <%= render "application/callout", type: "info", title: "HCB will email the recipient", class: "mt-0 mb-0" do %>

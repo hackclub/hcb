@@ -1,40 +1,104 @@
-<%# locals: (form:, user:, payout_method:, editing: nil, embedded: false, title: "How would you like to be reimbursed?") %>
+<%# locals: (form:, user:, payout_method:, editing: nil, embedded: false, collapsible: true, title: "How would you like to be reimbursed?") %>
 <% selected_type = payout_method&.class&.name %>
 <% pm_is = ->(klass) { payout_method.instance_of?(klass) } %>
 <% detail_for = ->(klass) { pm_is.call(klass) ? payout_method : klass.new } %>
 <% unless editing %>
-  <fieldset>
-    <legend class="heading h3 pb2 bold"><%= title %></legend>
-    <div class="field field--options mb-4" style="max-width: none;">
-      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::AchTransfer, title: "ACH transfer", description: "United States", icon: "payment-transfer", checked: selected_type == LegalEntity::PayoutMethod::AchTransfer.name %>
+  <div data-controller="payout-wizard" data-payout-wizard-collapsible-value="<%= collapsible %>">
+    <div data-payout-wizard-target="home">
 
-      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::Check, title: "Mailed check", description: "United States", icon: "email", checked: selected_type == LegalEntity::PayoutMethod::Check.name %>
+      <fieldset class="m0 p0">
+        <% if title.present? %>
+          <legend class="heading h3 pb2 bold" data-payout-wizard-target="legend"><%= title %></legend>
+        <% end %>
+        <div class="payout-options mb-0" data-payout-wizard-target="options" data-action="change->payout-wizard#onSelect click->payout-wizard#onSelect">
+          <p class="eyebrow payout-options__group">United States</p>
 
-      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::WiseTransfer, title: "Wise transfer", description: "International", icon: "wise", checked: selected_type == LegalEntity::PayoutMethod::WiseTransfer.name %>
+          <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::AchTransfer, title: "ACH transfer", description: "1–3 business days", icon: "payment-transfer", checked: selected_type == LegalEntity::PayoutMethod::AchTransfer.name %>
 
-      <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::Wire, title: "Wire transfer", description: "International", icon: "web", checked: selected_type == LegalEntity::PayoutMethod::Wire.name do %>
-        <div class="badge badge--corner bg-info m1 mt0" style="width: fit-content;">$500 minimum</div>
-      <% end %>
+          <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::Check, title: "Mailed check", description: "10–12 business days", icon: "email", checked: selected_type == LegalEntity::PayoutMethod::Check.name %>
+
+          <p class="eyebrow payout-options__group">International</p>
+
+          <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::WiseTransfer, title: "Wise transfer", description: "100+ countries", icon: "wise", checked: selected_type == LegalEntity::PayoutMethod::WiseTransfer.name %>
+
+          <%= render "users/payout_form/option", form:, model: LegalEntity::PayoutMethod::Wire, title: "Wire transfer", description: "1–5 business days", icon: "web", checked: selected_type == LegalEntity::PayoutMethod::Wire.name do %>
+            <span class="badge bg-info payout-option__tag ml-0">$500 min</span>
+          <% end %>
+        </div>
+      </fieldset>
+
+      <a class="payout-wizard__help block w-full text-center no-underline muted text-sm pt-3" href="javascript:void(0)" data-payout-wizard-target="help" data-action="click->payout-wizard#showWizard">
+        Which method should I use? <strong>Help me decide &rarr;</strong>
+      </a>
     </div>
-  </fieldset>
+
+    <div data-payout-wizard-target="wizard" hidden>
+      <a class="no-underline text-xs inline-flex items-center -ml-2" href="javascript:void(0)" data-action="click->payout-wizard#hideWizard">
+        <%= inline_icon "view-back" %>
+        Exit
+      </a>
+      <p class="eyebrow mb-0">Help me decide</p>
+      <h3 class="mt-2 font-bold mb-4" data-payout-wizard-target="question"></h3>
+      <div class="flex gap-2">
+        <button type="button" class="btn bg-blue" data-action="click->payout-wizard#yesClickHandler">
+          Yes
+          <%= inline_icon "check-thin", style: "margin-right: -5px;margin-left: 5px" %>
+        </button>
+        <button type="button" class="btn bg-blue" data-action="click->payout-wizard#noClickHandler">
+          No
+          <%= inline_icon "view-close", style: "margin-right: -5px;margin-left: 5px" %>
+        </button>
+      </div>
+    </div>
+
+    <div data-payout-wizard-target="answer" hidden>
+      <a class="no-underline text-xs inline-flex items-center -ml-2" href="javascript:void(0)" data-action="click->payout-wizard#hideWizard">
+        <%= inline_icon "view-back" %>
+        Exit
+      </a>
+      <p class="eyebrow pt-0 mb-0">Our recommendation</p>
+      <h3 class="mt-2 font-bold mb-2 capitalize" data-payout-wizard-target="answerText"></h3>
+      <div style="font-weight: normal" class="mb-4" data-payout-wizard-target="wiseAnswerNote">
+        <strong>Note:</strong>
+        Wise does <strong>not</strong> support these currencies:
+        <ul>
+          <% WiseTransfer.unsupported_currencies_supported_by_wire.excluding("USD").each do |currency_code| %>
+            <li><%= currency_code %></li>
+          <% end %>
+        </ul>
+        If you need to send to one of these currencies, <strong>please select "International wire" instead.</strong>
+      </div>
+      <a href="#" data-payout-wizard-target="learnMore" class="mb-3 inline-block no-underline" target="_blank">Learn more &rarr;</a>
+      <div class="flex gap-2">
+        <button type="button" class="btn bg-primary shadow-none" data-payout-wizard-target="answerCTA" data-action="click->payout-wizard#showAnswer">
+          Let's do it!
+          <%= inline_icon "view-forward", style: "margin-right: -5px;margin-left: 5px" %>
+        </button>
+        <button type="button" class="btn bg-muted shadow-none" data-action="click->payout-wizard#reset">
+          Reset
+          <%= inline_icon "view-reload", style: "margin-right: -5px;margin-left: 5px" %>
+        </button>
+      </div>
+    </div>
+  </div>
 <% end %>
 
 <section data-behavior="check_payout_method_inputs" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::Check) %>">
   <%= form.fields_for :payout_method_check, detail_for.call(LegalEntity::PayoutMethod::Check) do |form| %>
-    <p class="muted mt-2 mb-5">
-      Mailed checks can take between 10 and 12 business days to arrive. Checks can only be sent to addresses in the United States. Checks must be deposited within <strong>180 days</strong> of issuance.
+    <p class="payout-note">
+      <%= inline_icon "info" %>
+      <span>Checks can only be sent to addresses in the United States, and must be deposited within <strong>180 days</strong> of issuance.</span>
     </p>
 
-    <div class="field">
+    <div class="flex flex-col sm:flex-row gap-2 mb-2 justify-between">
       <%= form.label :address_line1, "Street address" %>
-      <%= form.text_field :address_line1, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:line1] %>
+      <div class="flex-1 flex gap-2 sm:flex-col sm:max-w-sm">
+        <%= form.text_field :address_line1, class: "!max-w-full", placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:line1] %>
+        <%= form.text_field :address_line2, class: "!max-w-full", placeholder: "(Building / Apartment / Room)" %>
+      </div>
     </div>
 
-    <div class="field">
-      <%= form.text_field :address_line2, placeholder: "(Building / Apartment / Room)" %>
-    </div>
-
-    <div class="grid grid--split">
+    <div class="grid grid-cols-2">
       <div class="field flex-auto">
         <%= form.label :address_city, "City" %>
         <%= form.text_field :address_city, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:city] %>
@@ -45,15 +109,15 @@
       </div>
     </div>
 
-    <div class="grid grid--split">
+    <div class="grid grid-cols-2">
       <div class="field flex-auto">
         <%= form.label :postal_code %>
         <%= form.text_field :address_postal_code, placeholder: StripeCardholder::DEFAULT_BILLING_ADDRESS[:postal_code] %>
       </div>
 
       <div class="field flex-auto">
-        <%= form.label :address_country, "Country" %>
-        <%= form.text_field :address_country, value: "United States", disabled: true %>
+        <%= form.label :address_country, "Country", class: "opacity-50" %>
+        <%= form.text_field :address_country, value: "United States", disabled: true, class: "opacity-50" %>
       </div>
     </div>
 
@@ -67,18 +131,22 @@
 
 <section data-behavior="wire_payout_method_inputs" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::Wire) %>">
   <%= form.fields_for :payout_method_wire, detail_for.call(LegalEntity::PayoutMethod::Wire) do |form| %>
-    <p class="muted mt-2 mb-5">
-      International wire transfers can take between 1 and 5 business days to arrive in your account. HCB does not charge fees for transfers, but your financial institution may choose to charge fees to receive wire transfers.
+    <p class="payout-note">
+      <%= inline_icon "info" %>
+      <span>HCB doesn't charge fees for wire transfers, but your financial institution may charge a fee to receive them.</span>
     </p>
 
     <%= render partial: "transfers/recipient_details", locals: { form:, disabled: false, required: false } %>
 
-    <div class="field">
-      <%= form.label :recipient_name, "Name on account" %>
+    <div class="flex flex-col sm:flex-row gap-2 mb-2 justify-between items-center">
+      <div>
+        <%= form.label :recipient_name, "Name on account" %>
+        <p class="muted text-sm mt-1 mb-0">If the name on the bank account differs from your legal name on HCB.</p>
+      </div>
       <%= form.text_field :recipient_name,
           required: false,
-          placeholder: user.full_name %>
-      <span class="muted">If the name on the bank account differs from your legal name on HCB.</span>
+          placeholder: user.full_name,
+          class: "!max-w-full sm:!max-w-[260px] !ml-auto" %>
     </div>
 
     <%= render partial: "wires/account_details", locals: { form:, disabled: false, required: false, account_number_field_name: :account_number } %>
@@ -95,9 +163,12 @@
 
 <section data-behavior="wise_transfer_payout_method_inputs" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::WiseTransfer) %>" x-data="{ currency: <%= payout_method.try(:currency) ? "'#{payout_method.currency}'" : "null" %>, amount: null, account_type: <%= payout_method.try(:account_type) ? "'#{payout_method.account_type}'" : "null" %>, use_same_email_for_interac: <%= payout_method.try(:use_same_email_for_interac) ? "'#{payout_method.use_same_email_for_interac}'" : "false" %>, email: null }">
   <%= form.fields_for :payout_method_wise_transfer, detail_for.call(LegalEntity::PayoutMethod::WiseTransfer) do |form| %>
-    <p class="muted mt-2 mb-5">
-      We've integrated Wise into HCB to offer international reimbursements to over 100 countries. HCB never charges fees on reimbursements, however Wise will charge processing fees to the organization reimbursing you. An account with Wise is not required; funds will be sent directly via a local bank transfer.
-      <%= link_to "Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise" %>
+    <p class="payout-note">
+      <%= inline_icon "info" %>
+      <span>
+        We've integrated Wise to offer international reimbursements to 100+ countries. HCB never charges fees, but Wise charges processing fees to the organization reimbursing you. No Wise account is required — funds arrive via a local bank transfer.
+        <%= link_to "Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise" %>
+      </span>
     </p>
 
     <%= render partial: "transfers/recipient_details", locals: { form:, disabled: false, required: false } %>
@@ -145,18 +216,19 @@
     }
   }">
   <%= form.fields_for :payout_method_ach_transfer, ach || LegalEntity::PayoutMethod::AchTransfer.new do |form| %>
-    <p class="muted mt-2 mb-5">
-      ACH transfers can take between 1 and 3 business days to arrive in your bank account. They're the fastest option for receiving reimbursements in the United States but are not supported internationally.
+    <p class="payout-note">
+      <%= inline_icon "info" %>
+      <span>ACH transfers are the fastest option for reimbursements in the United States, but aren't supported internationally.</span>
     </p>
 
     <div
-      class="field"
+      class="flex items-center mb-2"
       data-controller="external-validation"
       data-external-validation-url-value="<%= validate_routing_number_ach_transfers_path %>">
-      <%= form.label :routing_number, "Bank routing number" %>
+      <%= form.label :routing_number, "Routing number" %>
       <%= form.text_field :routing_number,
                           placeholder: "123456789",
-                          class: "fs-mask",
+                          class: "fs-mask !ml-auto !max-w-[150px]",
                           "@focus": "toggle()",
                           "@blur": "toggle()",
                           "x-model": "routingNumber",
@@ -165,11 +237,11 @@
       <span class="muted" data-external-validation-target="hint"></span>
     </div>
 
-    <div class="field">
-      <%= form.label :account_number, "Bank account number" %>
+    <div class="flex items-center">
+      <%= form.label :account_number, "Account number" %>
       <%= form.text_field :account_number,
                           placeholder: "0913338883",
-                          class: "fs-mask",
+                          class: "fs-mask !ml-auto !max-w-[150px]",
                           "@focus": "toggle()",
                           "@blur": "toggle()",
                           "x-model": "accountNumber",
