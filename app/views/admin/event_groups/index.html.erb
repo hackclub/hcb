@@ -2,9 +2,10 @@
 
 <%= form_for([:admin, @event_group]) do |f| %>
   <%= f.text_field(:name, required: true, placeholder: "Name") %>
-  <%= f.submit %>
+  <%= f.submit class: "btn btn-default" %>
 <% end %>
 
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -70,3 +71,4 @@
     <% end %>
   </tbody>
 </table>
+</div>

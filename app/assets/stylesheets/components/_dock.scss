@@ -27,7 +27,7 @@ details.dock {
 
   @media (min-width: 48em) {
     &[open] {
-      padding-bottom: 2rem;
+      padding-bottom: 0.5rem;
     }
   }
 
@@ -62,6 +62,10 @@ summary.dock__item {
 
 .drawer-chevron {
   transition: transform 0.125s;
+}
+
+details.dock.hidden {
+  display: none;
 }
 
 .dock__section {
