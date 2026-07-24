@@ -146,7 +146,7 @@
       <%= form.text_field :recipient_name,
           required: false,
           placeholder: user.full_name,
-          class: "!max-w-[260px]" %>
+          class: "!max-w-full sm:!max-w-[260px] !ml-auto" %>
     </div>
 
     <%= render partial: "wires/account_details", locals: { form:, disabled: false, required: false, account_number_field_name: :account_number } %>
