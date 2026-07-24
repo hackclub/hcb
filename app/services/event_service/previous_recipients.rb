@@ -3,7 +3,7 @@
 module EventService
   class PreviousRecipients
     RESULT_LIMIT = 7
-    CANDIDATES_PER_SOURCE = 28  # how many max candidates to load from each source (ach checks etc)
+    CANDIDATES_PER_SOURCE = 28 # how many max candidates to load from each source (ach checks etc)
 
     Recipient = Data.define(:created_at, :name, :email)
     Source    = Data.define(:model, :name_column, :email_column)
@@ -26,10 +26,10 @@ module EventService
 
     def list
       @list ||= candidates
-        .sort_by(&:created_at).reverse
-        .uniq { |recipient| recipient.email.downcase }
-        .first(RESULT_LIMIT)
-        .map { |recipient| { name: recipient.name, email: recipient.email } }
+                .sort_by(&:created_at).reverse
+                .uniq { |recipient| recipient.email.downcase }
+                .first(RESULT_LIMIT)
+                .map { |recipient| { name: recipient.name, email: recipient.email } }
     end
 
     private
@@ -74,5 +74,6 @@ module EventService
     def like
       @like ||= "%#{ActiveRecord::Base.sanitize_sql_like(@query)}%"
     end
+
   end
 end
