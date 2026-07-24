@@ -193,6 +193,11 @@ clear_old_user_sessions:
   class: "User::Session::ClearOldUserSessionsJob"
   queue: low
 
+delete_anonymous_user_sessions:
+  cron: "20 * * * *" # run every 1 hour
+  class: "User::Session::DeleteAnonymousSessionsJob"
+  queue: low
+
 card_grant_expiration_job:
   cron: "0 0 * * *" # run every 1 day
   class: "CardGrant::ExpirationJob"

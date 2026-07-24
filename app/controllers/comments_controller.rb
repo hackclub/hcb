@@ -21,7 +21,7 @@ class CommentsController < ApplicationController
       # url_from validates the URL is internal to prevent open redirect vulnerabilities
       redirect_back_or_to url_from(params[:comment][:return_to]) || @commentable
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -44,7 +44,7 @@ class CommentsController < ApplicationController
       redirect_to @comment.commentable.is_a?(Event) ? edit_event_path(@comment.commentable, tab: :admin) : @comment.commentable
     else
       @commentable = @comment.commentable
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

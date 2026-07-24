@@ -33,8 +33,16 @@ module SetLedgerFilters
                  else
                    [@ledger]
                  end
-      author_ids = Ledger::Item.where(id: Ledger::Mapping.where(ledger: @ledgers).select(:ledger_item_id)).select(:author_id)
-      @users = User.where(id: author_ids).or(User.where(id: @event.users.select(:id))).with_attached_profile_picture.order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+
+      author_ids = Ledger::Item
+                   .where(id: Ledger::Mapping.where(ledger: @ledgers).select(:ledger_item_id))
+                   .where.not(author_id: nil)
+                   .distinct
+                   .select(:author_id)
+      organizer_ids = @event.users.select(:id)
+      @users = User.where("users.id IN (#{author_ids.to_sql} UNION #{organizer_ids.to_sql})")
+                   .with_attached_profile_picture
+                   .order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
 
       if @merchant
         merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
@@ -101,8 +109,6 @@ module SetLedgerFilters
 
         query << { linked_object_type: }
       end
-
-      # TODO: add filtering for merchant and category
 
       query << { status: { "$in": [nil, "settled", "pending", "reversed"] } } # TODO: add not null validation and remove nil status from here
       Ledger::Query.new({ "$and": query })

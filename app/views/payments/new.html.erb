@@ -14,9 +14,8 @@
 <% end %>
 
 <% content_for :sidebar_footer do %>
-  <% admin_tool("mt-6") do %>
-    <%= link_to "Send transfer manually", "#", class: "btn", data: { behavior: "modal_trigger", modal: "send_transfer" } %>
-  <% end %>
+  <%= render "events/transfers/modal" %>
+  <%= link_to "Send transfer manually", "#", class: "btn mt2", data: { behavior: "modal_trigger", modal: "send_transfer" } %>
 <% end %>
 
 <% if @recent_payments&.any? %>
