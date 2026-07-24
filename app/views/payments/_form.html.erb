@@ -7,6 +7,7 @@
 <% disabled = !policy(event).create_transfer? %>
 <% manual = payee&.managed? %>
 <% existing_payout_method = payee&.legal_entity&.default_payout_method if manual %>
+<% payout_methods = payee.legal_entity.payout_methods.unarchived.includes(:details).order(created_at: :desc).to_a if manual %>
 
 <div data-controller="payee-picker payout-toggle manual-payee" data-action="manual-payee:changed->payout-toggle#update">
   <div data-scroll-seek-target="section">
@@ -76,7 +77,34 @@
       <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
         <h3 class="mb-2">Method</h3>
         <div class="card mb-4 flex flex-col gap-3">
-          <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method, collapsible: true, title: nil %>
+          <% if payout_methods && payout_methods.size > 1 %>
+            <div x-data="{ selected: '<%= payout_methods.first.id %>' }">
+              <%= render "application/callout", type: "info", title: "You've paid this recipient in multiple ways before", class: "mt-0 mb-0" do %>
+                Choose which payout method to use for this payment, or enter a different one.
+              <% end %>
+
+              <div class="flex flex-col gap-2 mt-3">
+                <% payout_methods.each do |pm| %>
+                  <label class="flex items-center gap-2 cursor-pointer border rounded-lg px-3 py-2">
+                    <%= radio_button_tag :selected_payout_method_id, pm.id, false, class: "shrink-0", "x-model": "selected" %>
+                    <%= inline_icon pm.icon, size: 24, class: "muted" %>
+                    <span class="font-medium"><%= pm.short_label %></span>
+                  </label>
+                <% end %>
+                <label class="flex items-center gap-2 cursor-pointer border rounded-lg px-3 py-2">
+                  <%= radio_button_tag :selected_payout_method_id, "", false, class: "shrink-0", "x-model": "selected" %>
+                  <%= inline_icon "plus", size: 24, class: "muted" %>
+                  <span class="font-medium">Enter a different payout method</span>
+                </label>
+              </div>
+
+              <div class="mt-3" x-show="selected === ''" x-cloak>
+                <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: nil, collapsible: true, title: nil %>
+              </div>
+            </div>
+          <% else %>
+            <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method, collapsible: true, title: nil %>
+          <% end %>
         </div>
       </div>
 

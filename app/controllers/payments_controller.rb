@@ -38,9 +38,13 @@ class PaymentsController < ApplicationController
     end
 
     ActiveRecord::Base.transaction do
-      # On the manual path the payee has a managed legal entity (created on the
-      # recipient step); the payout method the organizer entered is saved here.
-      build_payout_method if @legal_entity&.managed?
+      if @legal_entity&.managed?
+        if params[:selected_payout_method_id].present?
+          select_payout_method(params[:selected_payout_method_id])
+        else
+          build_payout_method
+        end
+      end
 
       @payment.save!
 
@@ -69,6 +73,16 @@ class PaymentsController < ApplicationController
   end
 
   private
+
+  # Marks one of the legal entity's existing payout methods as the default so
+  # the payment goes out via it. Scoped to the entity's own methods so a forged
+  # id can't select someone else's.
+  def select_payout_method(payout_method_id)
+    payout_method = @legal_entity.payout_methods.unarchived.find_by(id: payout_method_id)
+    return unless payout_method
+
+    payout_method.update!(default: true) unless payout_method.default?
+  end
 
   def build_payout_method
     type = params.dig(:user, :payout_method_type).presence

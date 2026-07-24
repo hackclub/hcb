@@ -9,8 +9,8 @@ RSpec.describe EventService::LegacyPayoutMethod, type: :service do
     event
   end
 
-  def details_for(name: "Orpheus", email: "orpheus@hackclub.com")
-    described_class.new(event, name:, email:).details
+  def details_for(email: "orpheus@hackclub.com")
+    described_class.new(event, email:).details
   end
 
   it "returns nil when the recipient has no legacy transfers" do
@@ -43,12 +43,55 @@ RSpec.describe EventService::LegacyPayoutMethod, type: :service do
     expect(details_for).to be_nil
   end
 
-  it "uses the recipient's most recent transfer" do
+  it "uses the recipient's most recent transfer of a given method" do
     create(:ach_transfer, event:, recipient_name: "Orpheus", recipient_email: "orpheus@hackclub.com",
                           account_number: "111111111", routing_number: "110000000", created_at: 3.days.ago)
     create(:ach_transfer, event:, recipient_name: "Orpheus", recipient_email: "orpheus@hackclub.com",
                           account_number: "222222222", routing_number: "110000000", created_at: 1.day.ago)
 
     expect(details_for.account_number).to eq("222222222")
+  end
+
+  describe "#details_list" do
+    def list_for(email: "orpheus@hackclub.com")
+      described_class.new(event, email:).details_list
+    end
+
+    it "is empty when the recipient has no legacy transfers" do
+      expect(list_for).to eq([])
+    end
+
+    it "returns one method per type the recipient was paid with, most recent first" do
+      create(:ach_transfer, event:, recipient_name: "Orpheus", recipient_email: "orpheus@hackclub.com",
+                            created_at: 3.days.ago)
+      IncreaseCheck.create!(event:, user: create(:user), amount: 5_00, memo: "Potions", payment_for: "Potions",
+                            recipient_name: "Orpheus", recipient_email: "orpheus@hackclub.com",
+                            address_line1: "8557 Villa La Jolla Dr", address_line2: "", address_city: "La Jolla",
+                            address_state: "CA", address_zip: "92037", created_at: 1.day.ago)
+
+      list = list_for
+
+      expect(list.map(&:class)).to eq([LegalEntity::PayoutMethod::Check, LegalEntity::PayoutMethod::AchTransfer])
+    end
+
+    it "matches on email even when the recipient name differs across transfers" do
+      create(:ach_transfer, event:, recipient_name: "Orpheus", recipient_email: "orpheus@hackclub.com",
+                            created_at: 3.days.ago)
+      IncreaseCheck.create!(event:, user: create(:user), amount: 5_00, memo: "Potions", payment_for: "Potions",
+                            recipient_name: "Orpheus the Dinosaur", recipient_email: "orpheus@hackclub.com",
+                            address_line1: "8557 Villa La Jolla Dr", address_line2: "", address_city: "La Jolla",
+                            address_state: "CA", address_zip: "92037", created_at: 1.day.ago)
+
+      expect(list_for.map(&:class)).to contain_exactly(
+        LegalEntity::PayoutMethod::Check, LegalEntity::PayoutMethod::AchTransfer
+      )
+    end
+
+    it "collapses multiple transfers of the same type into one method" do
+      create(:ach_transfer, event:, recipient_name: "Orpheus", recipient_email: "orpheus@hackclub.com")
+      create(:ach_transfer, event:, recipient_name: "Orpheus", recipient_email: "orpheus@hackclub.com")
+
+      expect(list_for.map(&:class)).to eq([LegalEntity::PayoutMethod::AchTransfer])
+    end
   end
 end

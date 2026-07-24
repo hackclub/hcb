@@ -15,30 +15,34 @@ module EventService
       Wire          => :wire_details,
     }.freeze
 
-    def initialize(event, name:, email:)
+    # Matched on email only: a recipient is keyed by their email, and the same
+    # person may have been paid under slightly different names across transfers.
+    def initialize(event, email:)
       @event = event
-      @name = name.to_s.strip
       @email = email.to_s.strip.downcase
     end
 
     # Returns an unsaved LegalEntity::PayoutMethod::* details record built from
     # the recipient's most recent legacy transfer, or nil if none matches.
     def details
-      return nil if @email.blank?
+      details_list.first
+    end
 
-      transfer, builder = latest_transfer
-      return nil unless transfer
+    # Returns one unsaved LegalEntity::PayoutMethod::* details record per method
+    # type the recipient was previously paid with (each built from the most
+    # recent transfer of that type), ordered most-recently-used first. Empty if
+    # none matches.
+    def details_list
+      return [] if @email.blank?
 
-      send(builder, transfer)
+      SOURCES
+        .filter_map { |model, builder| record = latest_for(model); [record, builder] if record }
+        .sort_by { |record, _builder| record.created_at }
+        .reverse
+        .map { |record, builder| send(builder, record) }
     end
 
     private
-
-    def latest_transfer
-      SOURCES
-        .filter_map { |model, builder| record = latest_for(model); [record, builder] if record }
-        .max_by { |record, _builder| record.created_at }
-    end
 
     def latest_for(model)
       table = model.arel_table
@@ -46,7 +50,6 @@ module EventService
       model.unscoped
            .where(event: @event)
            .where(lower(table[:recipient_email]).eq(@email))
-           .where(table[:recipient_name].eq(@name))
            .order(created_at: :desc)
            .first
     end
