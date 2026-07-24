@@ -15,6 +15,10 @@ export default class extends Controller {
     'wiseAnswerNote',
   ]
 
+  static values = {
+    collapsible: { type: Boolean, default: true },
+  }
+
   static questions = [
     {
       id: 1,
@@ -48,41 +52,48 @@ export default class extends Controller {
     },
   ]
 
-  static values = {
-    collapsible: { type: Boolean, default: true },
+  static payoutMethods = {
+    'ACH transfer': {
+      className: 'LegalEntity::PayoutMethod::AchTransfer',
+      section: 'ach_transfer_payout_method_inputs',
+    },
+    'Mailed check': {
+      className: 'LegalEntity::PayoutMethod::Check',
+      section: 'check_payout_method_inputs',
+    },
+    'International wire': {
+      className: 'LegalEntity::PayoutMethod::Wire',
+      section: 'wire_payout_method_inputs',
+    },
+    'Wise transfer': {
+      className: 'LegalEntity::PayoutMethod::WiseTransfer',
+      section: 'wise_transfer_payout_method_inputs',
+    },
   }
 
-  static answerToPayoutMethod = {
-    'ACH transfer': 'LegalEntity::PayoutMethod::AchTransfer',
-    'Mailed check': 'LegalEntity::PayoutMethod::Check',
-    'International wire': 'LegalEntity::PayoutMethod::Wire',
-    'Wise transfer': 'LegalEntity::PayoutMethod::WiseTransfer',
-  }
-
-  static payoutMethodToSection = {
-    'LegalEntity::PayoutMethod::AchTransfer':
-      'ach_transfer_payout_method_inputs',
-    'LegalEntity::PayoutMethod::Check': 'check_payout_method_inputs',
-    'LegalEntity::PayoutMethod::Wire': 'wire_payout_method_inputs',
-    'LegalEntity::PayoutMethod::WiseTransfer':
-      'wise_transfer_payout_method_inputs',
-  }
+  static WISE_TRANSFER = 'Wise transfer'
 
   connect() {
     this.sync()
   }
 
+
   sync() {
-    if (this.collapsibleValue) {
-      if (this.checkedRadio()) {
-        this.collapseOptions()
-        this.syncDetailSections()
-      } else {
-        this.showOptions()
-      }
-    } else {
+    if (!this.collapsibleValue) {
       this.syncDetailSections()
+      return
     }
+
+    if (this.checkedRadio()) {
+      this.collapseOptions()
+      this.syncDetailSections()
+    } else {
+      this.showOptions()
+    }
+  }
+
+  onSelect() {
+    this.sync()
   }
 
   checkedRadio() {
@@ -96,14 +107,14 @@ export default class extends Controller {
 
   syncDetailSections() {
     const radio = this.checkedRadio()
-    const selected = radio
-      ? this.constructor.payoutMethodToSection[radio.value]
-      : null
+    const selectedSection = radio ? this.sectionFor(radio.value) : null
 
     this.detailSections().forEach(section => {
-      const match = section.dataset.behavior === selected
       section.style.display = ''
-      section.classList.toggle('hidden', !match)
+      section.classList.toggle(
+        'hidden',
+        section.dataset.behavior !== selectedSection
+      )
     })
   }
 
@@ -112,10 +123,6 @@ export default class extends Controller {
       section.style.display = ''
       section.classList.add('hidden')
     })
-  }
-
-  onSelect() {
-    this.sync()
   }
 
   collapseOptions() {
@@ -137,7 +144,7 @@ export default class extends Controller {
     this.homeTarget.hidden = true
     this.answerTarget.hidden = true
     this.wizardTarget.hidden = false
-    this.renderQuestion(1)
+    this.renderStep(1)
   }
 
   hideWizard() {
@@ -151,41 +158,58 @@ export default class extends Controller {
     this.showWizard()
   }
 
-  renderQuestion = payload => {
-    if (typeof payload === 'number') {
-      const question = this.constructor.questions.find(q => q.id === payload)
-      this.questionTarget.innerHTML = question.question
+  yesClickHandler = () => this.advance('yes')
+  noClickHandler = () => this.advance('no')
 
-      this.yesClickHandler = () => this.renderQuestion(question.yes)
-      this.noClickHandler = () => this.renderQuestion(question.no)
+  advance(choice) {
+    this.renderStep(this.currentQuestion[choice])
+  }
+
+  renderStep(step) {
+    if (typeof step === 'number') {
+      this.renderQuestion(step)
     } else {
-      this.answerTextTarget.innerHTML = payload.type
-      this.answerCTATarget.dataset.answer = payload.type
-      this.learnMoreTarget.href = payload.link
-
-      this.answerTarget.hidden = false
-      this.wizardTarget.hidden = true
-
-      this.wiseAnswerNoteTarget.hidden = payload.type !== 'Wise transfer'
+      this.renderRecommendation(step)
     }
   }
 
-  yesClickHandler = () => {}
-  noClickHandler = () => {}
+  renderQuestion(id) {
+    this.currentQuestion = this.constructor.questions.find(q => q.id === id)
+    this.questionTarget.innerHTML = this.currentQuestion.question
+  }
 
-  showAnswer = event => {
-    const answer = event.target.dataset.answer
-    const payoutMethod = this.constructor.answerToPayoutMethod[answer]
+  renderRecommendation(answer) {
+    this.answerTextTarget.innerHTML = answer.type
+    this.answerCTATarget.dataset.answer = answer.type
+    this.learnMoreTarget.href = answer.link
+    this.wiseAnswerNoteTarget.hidden =
+      answer.type !== this.constructor.WISE_TRANSFER
 
-    const radio = this.element.querySelector(
-      `input[type="radio"][value="${payoutMethod}"]`
-    )
+    this.wizardTarget.hidden = true
+    this.answerTarget.hidden = false
+  }
 
+  showAnswer(event) {
+    const className = this.classNameFor(event.target.dataset.answer)
     this.hideWizard()
 
+    const radio = this.element.querySelector(
+      `input[type="radio"][value="${className}"]`
+    )
     if (radio && !radio.disabled) {
       radio.checked = true
       radio.dispatchEvent(new Event('change', { bubbles: true }))
     }
+  }
+
+  classNameFor(label) {
+    return this.constructor.payoutMethods[label]?.className
+  }
+
+  sectionFor(className) {
+    const method = Object.values(this.constructor.payoutMethods).find(
+      m => m.className === className
+    )
+    return method?.section
   }
 }
