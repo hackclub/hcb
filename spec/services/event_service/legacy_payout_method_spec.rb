@@ -94,4 +94,29 @@ RSpec.describe EventService::LegacyPayoutMethod, type: :service do
       expect(list_for.map(&:class)).to eq([LegalEntity::PayoutMethod::AchTransfer])
     end
   end
+
+  describe "#apply_to" do
+    it "persists all reconstructed methods, defaulting the most recent" do
+      create(:ach_transfer, event:, recipient_name: "Orpheus", recipient_email: "orpheus@hackclub.com",
+                            created_at: 3.days.ago)
+      IncreaseCheck.create!(event:, user: create(:user), amount: 5_00, memo: "Potions", payment_for: "Potions",
+                            recipient_name: "Orpheus", recipient_email: "orpheus@hackclub.com",
+                            address_line1: "8557 Villa La Jolla Dr", address_line2: "", address_city: "La Jolla",
+                            address_state: "CA", address_zip: "92037", created_at: 1.day.ago)
+      legal_entity = create(:legal_entity)
+
+      count = described_class.new(event, email: "orpheus@hackclub.com").apply_to(legal_entity)
+
+      expect(count).to eq(2)
+      expect(legal_entity.payout_methods.count).to eq(2)
+      expect(legal_entity.default_payout_method.details).to be_a(LegalEntity::PayoutMethod::Check)
+    end
+
+    it "returns 0 and persists nothing when there are no legacy transfers" do
+      legal_entity = create(:legal_entity)
+
+      expect(described_class.new(event, email: "nobody@hackclub.com").apply_to(legal_entity)).to eq(0)
+      expect(legal_entity.payout_methods).to be_empty
+    end
+  end
 end

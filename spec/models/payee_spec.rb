@@ -38,4 +38,43 @@ RSpec.describe Payee, type: :model do
       end
     end
   end
+
+  describe "seeding legacy payout methods when the recipient links an entity" do
+    let(:event) do
+      event = create(:event)
+      create(:canonical_pending_transaction, amount_cents: 1_000_000, event:, fronted: true)
+      event
+    end
+
+    before do
+      create(:ach_transfer, event:, recipient_name: "Orpheus", recipient_email: "orpheus@hackclub.com",
+                            account_number: "123456789", routing_number: "110000000")
+    end
+
+    it "seeds the reconstructed method onto the newly linked entity" do
+      payee = create(:payee, event:, legal_entity: nil, email: "orpheus@hackclub.com")
+      le = create(:legal_entity)
+
+      expect { payee.update!(legal_entity: le) }.to change { le.payout_methods.count }.by(1)
+      expect(le.default_payout_method.details).to be_a(LegalEntity::PayoutMethod::AchTransfer)
+    end
+
+    it "does not seed when no legacy transfer matches the recipient's email" do
+      payee = create(:payee, event:, legal_entity: nil, email: "someone-else@hackclub.com")
+      le = create(:legal_entity)
+
+      expect { payee.update!(legal_entity: le) }.not_to(change { le.payout_methods.count })
+    end
+
+    it "does not clobber payout methods the recipient already set up" do
+      payee = create(:payee, event:, legal_entity: nil, email: "orpheus@hackclub.com")
+      le = create(:legal_entity)
+      le.payout_methods.create!(default: true, details: LegalEntity::PayoutMethod::Check.new(
+        address_line1: "1 Infinite Loop", address_city: "Cupertino", address_state: "CA",
+        address_postal_code: "95014", address_country: "US"
+      ))
+
+      expect { payee.update!(legal_entity: le) }.not_to(change { le.payout_methods.count })
+    end
+  end
 end

@@ -28,6 +28,16 @@ module EventService
         .map { |record, builder| send(builder, record) }
     end
 
+    def apply_to(legal_entity)
+      default_set = false
+
+      details_list.count do |details|
+        saved = legal_entity.payout_methods.build(default: !default_set, details:).save
+        default_set ||= saved
+        saved
+      end
+    end
+
     private
 
     def latest_for(model)

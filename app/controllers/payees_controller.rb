@@ -36,7 +36,11 @@ class PayeesController < ApplicationController
           name: params[:name]
         )
 
-        prefill_legacy_payout_methods(payee.legal_entity) if params[:legacy].present?
+        # Managed path: seed the reconstructed methods now, onto the org-managed
+        # entity. On the recipient-owned path there's no entity yet, so seeding
+        # is deferred to Payee#seed_legacy_payout_methods when the recipient
+        # links their own entity during onboarding.
+        EventService::LegacyPayoutMethod.new(@event, email: params[:email]).apply_to(payee.legal_entity) if params[:legacy].present?
       end
 
       payee.save!
@@ -107,17 +111,6 @@ class PayeesController < ApplicationController
 
   def set_payee
     @payee = Payee.find_by_hashid!(params[:id])
-  end
-
-  def prefill_legacy_payout_methods(legal_entity)
-    default_set = false
-
-    EventService::LegacyPayoutMethod.new(@event, email: params[:email])
-                                    .details_list
-                                    .each do |details|
-      saved = legal_entity.payout_methods.build(default: !default_set, details:).save
-      default_set ||= saved
-    end
   end
 
   def manual_payee_entity_type

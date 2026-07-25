@@ -77,16 +77,16 @@
               data: { "manual-payee-target": "entityTypeInput" } %>
         </div>
 
-        <% if prefilled && params[:legacy].present? %>
-          <%= render "application/callout", type: "info", title: "You've paid this recipient before", class: "mt-0 mb-0" do %>
-            They were paid through HCB's legacy transfer system, which collected tax information manually.
-            Payments now collect it automatically so HCB can handle filings on your behalf more efficiently
-          <% end %>
-        <% end %>
-
         <div data-manual-payee-target="defaultBanner" <%= "hidden" if manual %>>
-          <%= render "application/callout", type: "info", title: "HCB will email the recipient", class: "mt-0 mb-0" do %>
-            They'll be asked to submit their tax information and configure their payout method before receiving the payment.
+          <% if prefilled && params[:legacy].present? %>
+            <%= render "application/callout", type: "info", title: "You've paid this recipient before", class: "mt-0 mb-0" do %>
+              HCB already has their payout method on file, so when they onboard they'll only need to submit
+              their tax information. They can update the payout method if it's changed.
+            <% end %>
+          <% else %>
+            <%= render "application/callout", type: "info", title: "HCB will email the recipient", class: "mt-0 mb-0" do %>
+              They'll be asked to submit their tax information and configure their payout method before receiving the payment.
+            <% end %>
           <% end %>
         </div>
 
