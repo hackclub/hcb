@@ -74,9 +74,6 @@ class PaymentsController < ApplicationController
 
   private
 
-  # Marks one of the legal entity's existing payout methods as the default so
-  # the payment goes out via it. Scoped to the entity's own methods so a forged
-  # id can't select someone else's.
   def select_payout_method(payout_method_id)
     payout_method = @legal_entity.payout_methods.unarchived.find_by(id: payout_method_id)
     return unless payout_method
@@ -90,7 +87,6 @@ class PaymentsController < ApplicationController
 
     details_attrs = LegalEntity::PayoutMethod.details_params_from(params, type)
 
-    # ACH methods pre-fills existing payout details with masked values (ex ••••1234)
     return if @legal_entity.default_payout_method && details_attrs.values.any? { |value| value.to_s.include?("•") }
 
     LegalEntity::PayoutMethodService::Update.new(
