@@ -582,7 +582,7 @@ legend {
     border-top-left-radius: var(--radius-lg);
     border-top-right-radius: var(--radius-lg);
     border-bottom: 1px solid map-get($palette, smoke);
-    [data-dark="true"] & {
+    [data-dark='true'] & {
       border-bottom: 1px solid rgba(map-get($palette, white), 0.1);
     }
     background-color: rgba(map-get($palette, smoke), 0.1) !important;
