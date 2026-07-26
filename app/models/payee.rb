@@ -4,15 +4,14 @@
 #
 # Table name: payees
 #
-#  id                   :bigint           not null, primary key
-#  archived_at          :datetime
-#  display_name         :string           not null
-#  email                :string           not null
-#  from_legacy_transfer :boolean          default(FALSE), not null
-#  created_at           :datetime         not null
-#  updated_at           :datetime         not null
-#  event_id             :bigint           not null
-#  legal_entity_id      :bigint
+#  id              :bigint           not null, primary key
+#  archived_at     :datetime
+#  display_name    :string           not null
+#  email           :string           not null
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  event_id        :bigint           not null
+#  legal_entity_id :bigint
 #
 # Indexes
 #
