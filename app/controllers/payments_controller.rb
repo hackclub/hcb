@@ -76,6 +76,7 @@ class PaymentsController < ApplicationController
 
   def select_payout_method(payout_method_id)
     payout_method = @legal_entity.payout_methods.unarchived.find_by(id: payout_method_id)
+    # ACH methods pre-fills existing payout details with masked values (ex ••••1234)
     return unless payout_method
 
     payout_method.update!(default: true) unless payout_method.default?
