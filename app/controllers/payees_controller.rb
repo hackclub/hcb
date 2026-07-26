@@ -36,10 +36,7 @@ class PayeesController < ApplicationController
           name: params[:name]
         )
 
-        # Managed path: seed the reconstructed methods now, onto the org-managed
-        # entity. On the recipient-owned path there's no entity yet, so seeding
-        # is deferred to Payee#seed_legacy_payout_methods when the recipient
-        # links their own entity during onboarding.
+        # assign legacy payout methods is associated w/ email address
         EventService::LegacyPayoutMethod.new(@event, email: params[:email]).apply_to(payee.legal_entity) if params[:legacy].present?
       end
 
