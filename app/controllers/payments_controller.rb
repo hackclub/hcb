@@ -85,9 +85,9 @@ class PaymentsController < ApplicationController
     type = params.dig(:user, :payout_method_type).presence
     return unless LegalEntity::PayoutMethod.details_class_for(type)
 
-    # ACH methods pre-fills existing payout details with masked values (ex ••••1234)
     details_attrs = LegalEntity::PayoutMethod.details_params_from(params, type)
 
+    # ACH methods pre-fills existing payout details with masked values (ex ••••1234)
     return if @legal_entity.default_payout_method && details_attrs.values.any? { |value| value.to_s.include?("•") }
 
     LegalEntity::PayoutMethodService::Update.new(
