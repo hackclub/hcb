@@ -1480,6 +1480,9 @@ class EventsController < ApplicationController
     # to `q`. This following line retains backwards compatibility.
     params[:q] ||= params[:search]
 
+    reject_disabled_filters
+    return if performed?
+
     if params[:tag]
       @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
     end
