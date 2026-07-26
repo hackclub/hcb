@@ -8,6 +8,7 @@
 #  archived_at          :datetime
 #  display_name         :string           not null
 #  email                :string           not null
+#  from_legacy_transfer :boolean          default(FALSE), not null
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
 #  event_id             :bigint           not null

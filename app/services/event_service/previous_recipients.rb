@@ -23,10 +23,10 @@ module EventService
 
     def list
       @list ||= candidates
-        .sort_by(&:first).reverse
-        .uniq { |_created_at, _name, email| email.downcase }
-        .first(RESULT_LIMIT)
-        .map { |_created_at, name, email| { name:, email: } }
+                .sort_by(&:first).reverse
+                .uniq { |_created_at, _name, email| email.downcase }
+                .first(RESULT_LIMIT)
+                .map { |_created_at, name, email| { name:, email: } }
     end
 
     private
@@ -70,5 +70,6 @@ module EventService
     def like
       @like ||= "%#{ActiveRecord::Base.sanitize_sql_like(@query)}%"
     end
+
   end
 end
