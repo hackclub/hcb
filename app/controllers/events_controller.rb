@@ -224,7 +224,7 @@ class EventsController < ApplicationController
     @pending_transactions = type_results[:pending_transactions]
 
     page = (params[:page] || 1).to_i
-    per_page = (params[:per] || TRANSACTIONS_PER_PAGE).to_i
+    per_page = (params[:per] || TRANSACTIONS_PER_PAGE).to_i.clamp(1, 200)
 
     @transactions = Kaminari.paginate_array(@all_transactions).page(page).per(per_page)
     TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: @transactions, event: @event).run!
@@ -1275,7 +1275,7 @@ class EventsController < ApplicationController
 
   def ledger
     authorize @event
-    @per = params[:per] || 25
+    @per = (params[:per] || 25).to_i.clamp(1, 200)
 
     @items = ledger_query.execute(ledgers: @ledgers)
 
