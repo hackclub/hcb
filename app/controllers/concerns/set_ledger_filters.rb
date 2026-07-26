@@ -3,13 +3,38 @@
 module SetLedgerFilters
   extend ActiveSupport::Concern
 
+  # Params that narrow a ledger. `q` is excluded because the search box renders
+  # outside the filter menu; `subledger` because it picks which ledger to show
+  # rather than filtering one.
+  FILTER_PARAMS = %i[
+    tag user type start end minimum_amount maximum_amount
+    missing_receipts merchant direction category
+  ].freeze
+
   included do
     private
+
+    # Filtering is what makes a transparent organization expensive to read
+    # anonymously: every combination is a separate, uncacheable trip through the
+    # transaction engines. Anonymous readers get the unfiltered page.
+    #
+    # Runs before the filters are resolved, because resolving them is most of the
+    # cost: `Event#merchants` alone loads every transaction for the organization.
+    def reject_disabled_filters
+      @ledger_filters_disabled = !signed_in?
+      return unless @ledger_filters_disabled
+      return if FILTER_PARAMS.none? { |name| params[name].present? }
+
+      render plain: "Invalid parameters. Please try again", status: :bad_request
+    end
 
     def set_ledger_filters
       # The search query name was historically `search`. It has since been renamed
       # to `q`. This following line retains backwards compatibility.
       params[:q] ||= params[:search]
+
+      reject_disabled_filters
+      return if performed?
 
       if params[:tag]
         @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
@@ -48,12 +73,6 @@ module SetLedgerFilters
         merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
 
         @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
-      end
-
-      @ledger_filters_disabled = !signed_in?
-      has_filters = @tag || @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @missing_receipts || @merchant || @direction || @category
-      if @ledger_filters_disabled && has_filters
-        render plain: "Invalid parameters. Please try again", status: :bad_request
       end
     end
 
