@@ -466,6 +466,9 @@ legend {
   background-color: var(--card-bg);
   &:not(.payout-options--collapsed .payout-option) {
     box-shadow: inset 0 0 0 1px map-get($palette, smoke);
+    [data-dark='true'] & {
+      box-shadow: inset 0 0 0 1px rgba(map-get($palette, white), 0.1);
+    }
   }
 
   transition:
@@ -579,6 +582,9 @@ legend {
     border-top-left-radius: var(--radius-lg);
     border-top-right-radius: var(--radius-lg);
     border-bottom: 1px solid map-get($palette, smoke);
+    [data-dark="true"] & {
+      border-bottom: 1px solid rgba(map-get($palette, white), 0.1);
+    }
     background-color: rgba(map-get($palette, smoke), 0.1) !important;
 
     &:hover {
