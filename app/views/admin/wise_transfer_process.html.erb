@@ -234,10 +234,11 @@
             <%= form.text_field :wise_id, class: "w-[400px]", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", disabled: @wise_transfer.usd_amount_cents.nil?, onpaste: "var urlPrefix = 'https://wise.com/transactions/activities/by-resource/TRANSFER/'; var clipboardData = event.clipboardData.getData('Text'); clipboardData.startsWith(urlPrefix) ? (event.preventDefault(), event.target.value = clipboardData.substring(urlPrefix.length)) : null" %>
           </div>
           <% if @wise_transfer.payment.present? %>
-            <div class="mb-2">
+            <div class="field mb-2 flex">
               <%= form.check_box :tax_reportable, checked: @wise_transfer.payment.tax_reportable %>
               <%= form.label :tax_reportable, "Tax reportable?", class: "bold ml-2" %>
             </div>
+
             <small class="muted block mb-2">
               Tax reportable payments count toward the payee's taxable income. Payments that aren't tax
               reportable, or are under $500, won't require the payee to submit a tax form before being paid.
