@@ -37,7 +37,7 @@ class DocumentsController < ApplicationController
       flash[:success] = "Document successfully added"
       redirect_to @document
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -64,7 +64,7 @@ class DocumentsController < ApplicationController
       flash[:success] = "Document successfully updated"
       redirect_to @document
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
