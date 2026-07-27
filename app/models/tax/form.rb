@@ -84,6 +84,10 @@ module Tax
       mark_completed! if may_mark_completed?
     end
 
+    after_update if: -> { taxbandits_tin_matching_status_previously_changed?(to: :success) } do
+      legal_entity.refresh_pending_contractors_payments!
+    end
+
     after_update if: -> { tin_hash_previously_changed?(from: nil) } do
       # Locked: a legal entity's TIN can never change once set, and two forms
       # completing concurrently would otherwise both see a nil hash and race.
@@ -115,8 +119,7 @@ module Tax
         after do
           import_taxbandits_data if sent_with_taxbandits?
 
-          legal_entity.payments.each(&:on_legal_entity_payable) if legal_entity.payable?
-          legal_entity.refresh_contractor_onboarding!
+          legal_entity.refresh_pending_contractors_payments!
         end
       end
 
