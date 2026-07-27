@@ -1,6 +1,6 @@
 <%= turbo_frame_tag :card_grant_transaction_overview do %>
   <% if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user) %>
-    <%= render "ledgers/ledger", ledger: @ledger, items: @items %>
+    <%= render "ledgers/ledger", ledger: @ledger, items: @items, filter: capture { render partial: "ledgers/filters/filter" } %>
   <% else %>
     <%= turbo_frame_tag [dom_id(@event), :ledger], src: event_transactions_list_path(@event, subledger: @subledger), loading: :eager do %>
       <%# I'd like to have this show to improve the loading experience eventually but the ledger and filter code needs to be refactored more %>

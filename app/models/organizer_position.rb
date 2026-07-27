@@ -34,6 +34,11 @@ class OrganizerPosition < ApplicationRecord
   include OrganizerPosition::HasRole
   include OrganizerPosition::HasSpending
 
+  include Hashid::Rails
+
+  include PublicIdentifiable
+  set_public_id_prefix :opn
+
   scope :not_hidden, -> { where(event: { hidden_at: nil }) }
 
   belongs_to :user

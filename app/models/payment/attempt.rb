@@ -54,6 +54,7 @@ class Payment
       state :sent
       state :successful
       state :failed
+      state :canceled
 
       event :mark_under_review do
         transitions from: :pending, to: :under_review, if: -> { payout.present? }
@@ -88,6 +89,13 @@ class Payment
         transitions from: :under_review, to: :rejected
         after do
           payment.mark_rejected!
+        end
+      end
+
+      event :mark_canceled do
+        transitions from: [:pending, :under_review, :sent], to: :canceled, if: -> { payout.nil? || payout&.can_cancel? }
+        after do
+          payout&.cancel!
         end
       end
     end
@@ -134,8 +142,8 @@ class Payment
     end
 
     def terminal_states_freeze_attempt
-      if (failed? || successful? || rejected?) && !aasm_state_changed?
-        errors.add(:base, "failed, successful, or rejected payment attempts cannot be updated")
+      if (failed? || successful? || rejected? || canceled?) && !aasm_state_changed?
+        errors.add(:base, "failed, successful, rejected, or canceled payment attempts cannot be updated")
       end
     end
 

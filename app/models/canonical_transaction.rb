@@ -337,6 +337,18 @@ class CanonicalTransaction < ApplicationRecord
     nil
   end
 
+  def stripe_service_fee
+    return linked_object if linked_object.is_a?(StripeServiceFee)
+
+    nil
+  end
+
+  def fee_revenue
+    return linked_object if linked_object.is_a?(FeeRevenue)
+
+    nil
+  end
+
   def reimbursement_expense_payout
     return linked_object if linked_object.is_a?(Reimbursement::ExpensePayout)
 
@@ -482,6 +494,7 @@ class CanonicalTransaction < ApplicationRecord
 
         li = calculated_ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
         update!(ledger_item: li)
+        li.map!
       end
     end
   end

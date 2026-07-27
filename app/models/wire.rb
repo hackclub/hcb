@@ -48,13 +48,13 @@
 class Wire < ApplicationRecord
   has_paper_trail
   include HasPaperTrailHelpers
-  include HasLedgerItem
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :recipient_email]
   has_encrypted :account_number, :bic_code
   blind_index :account_number, :bic_code
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wire, required: false
   has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
 
@@ -124,7 +124,7 @@ class Wire < ApplicationRecord
     event :mark_rejected do
       after do
         canonical_pending_transaction.decline!
-        payment_attempt&.mark_rejected!
+        payment_attempt.mark_rejected! if payment_attempt&.may_mark_rejected?
         create_activity(key: "wire.rejected")
       end
       transitions from: [:pending, :approved], to: :rejected
@@ -239,6 +239,14 @@ class Wire < ApplicationRecord
     self.column_id = column_wire_transfer["id"]
     mark_approved
     save!
+  end
+
+  def can_cancel?
+    pending?
+  end
+
+  def cancel!
+    mark_rejected!
   end
 
   def column_wire_details

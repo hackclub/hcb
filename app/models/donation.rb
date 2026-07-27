@@ -66,9 +66,12 @@ class Donation < ApplicationRecord
   set_public_id_prefix :don
 
   include AASM
+  include VisibleStatable
+  set_visible_state_context { |donation| donation.event }
+  set_visible_state_mapping(in_transit: ->(event) { event&.can_front_balance? ? :deposited : :in_transit })
+
   include Freezable
   include UsersHelper
-  include HasLedgerItem
 
   include HasStripeDashboardUrl
   has_stripe_dashboard_url "payments", :stripe_payment_intent_id
@@ -79,6 +82,7 @@ class Donation < ApplicationRecord
   include PgSearch::Model
   pg_search_scope :search_name, against: [:name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "donations.created_at"
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
   belongs_to :fee_reimbursement, optional: true
   belongs_to :payout, class_name: "DonationPayout", optional: true

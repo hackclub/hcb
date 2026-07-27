@@ -1,11 +1,11 @@
 <%# locals: (event:, payee:) %>
 
-<% cancel_path = params[:selected].present? ? new_event_payment_path(event_id: event.slug, payee_id: payee.public_id) : new_event_payment_path(event_id: event.slug) %>
+<% cancel_path = params[:selected].present? ? new_event_payment_path(event_id: event.slug, payee_id: payee.hashid) : new_event_payment_path(event_id: event.slug) %>
 
 <div data-scroll-seek-target="section">
   <h3 class="mb-2">Edit recipient</h3>
   <div class="card mb-4">
-    <%= form_with(model: payee, url: event_payee_path(event_id: event.slug, id: payee.public_id), method: :patch, local: true) do |form| %>
+    <%= form_with(model: payee, url: event_payee_path(event_id: event.slug, id: payee.hashid), method: :patch, local: true) do |form| %>
       <div class="flex flex-col gap-3">
         <div>
           <%= form.label :display_name, "Name" %>
