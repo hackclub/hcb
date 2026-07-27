@@ -62,7 +62,7 @@ module Api
 
           render(
             json: { error: "invalid_operation", messages: },
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
           return
         end

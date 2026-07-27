@@ -31,7 +31,7 @@
     <%= form.email_field :email, placeholder: "Running this project yourself? Use #{current_user.email}", value: params[:email] %>
   </div>
 
-  <% unless event.plan.is_a?(Event::Plan::HackClubAffiliate) %>
+  <% unless event.config.subevent_plan.constantize <= Event::Plan::HackClubAffiliate %>
     <div class="field">
       <%= form.label :cosigner_email, "Co-signer email", class: "bold" %>
       <%= form.email_field :cosigner_email, placeholder: "Include this if the organizer is under 18", value: params[:cosigner_email] %>

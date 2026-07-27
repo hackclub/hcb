@@ -42,12 +42,14 @@ class Contract
 
     def completed
       authorize @party
-
-      if @party.signee? && @contract.signed?
-        if @contract.contractable.is_a?(Event::Application)
+      if (@party.signee? && @contract.signed?) || @party.contractor?
+        case @contract.contractable
+        when Event::Application
           redirect_to application_path(@contract.contractable)
-        elsif @contract.contractable.is_a?(OrganizerPositionInvite)
+        when OrganizerPositionInvite
           redirect_to organizer_position_invite_path(@contract.contractable)
+        when Payroll::Position
+          redirect_to onboarding_payroll_position_path(@contract.contractable)
         end
 
         return

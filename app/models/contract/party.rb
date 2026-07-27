@@ -63,7 +63,7 @@ class Contract
     end
 
     def notify
-      Contract::PartyMailer.with(party: self).notify.deliver_later
+      contract.contractable.notify_mailer_for(self)
     end
 
     def notify_reissued(message: nil)

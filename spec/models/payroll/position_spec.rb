@@ -124,4 +124,103 @@ RSpec.describe Payroll::Position, type: :model do
       end
     end
   end
+
+  describe "#send_contract" do
+    let(:payee) { create(:payee) }
+    let(:position) { create(:payroll_position, payee:) }
+    let(:organizer) { create(:user) }
+
+    before do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+    end
+
+    def stub_docuseal_create(submission_id: "STUBBED")
+      stub_request(:post, "https://api.docuseal.co/submissions")
+        .to_return(status: 201, body: [{ submission_id: }].to_json, headers: { content_type: "application/json" })
+    end
+
+    def stub_docuseal_fetch(submission_id: "STUBBED")
+      stub_request(:get, "https://api.docuseal.co/submissions/#{submission_id}")
+        .to_return(
+          status: 200,
+          body: { submitters: [{ role: "HCB", slug: "hcb-slug" }, { role: "Organizer", slug: "organizer-slug" }, { role: "Contractor", slug: "contractor-slug" }] }.to_json,
+          headers: { content_type: "application/json" }
+        )
+    end
+
+    it "creates and sends a contract to DocuSeal" do
+      stub_docuseal_create
+      stub_docuseal_fetch
+
+      contract = position.send_contract(organizer_user: organizer)
+
+      expect(contract).to be_sent
+      expect(contract.party(:organizer).user).to eq(organizer)
+    end
+
+    it "voids the newly created contract and re-raises when DocuSeal is unreachable" do
+      stub_request(:post, "https://api.docuseal.co/submissions").to_return(status: 500, body: "boom")
+
+      expect { position.send_contract(organizer_user: organizer) }.to raise_error(Faraday::Error)
+
+      contract = position.contracts.sole
+      expect(contract).to be_voided
+    end
+
+    it "does not leave a stuck contract blocking a subsequent retry" do
+      stub_request(:post, "https://api.docuseal.co/submissions").to_return(status: 500, body: "boom")
+      expect { position.send_contract(organizer_user: organizer) }.to raise_error(Faraday::Error)
+      expect(position.contracts.not_voided).to be_empty
+
+      stub_request(:post, "https://api.docuseal.co/submissions").to_return(status: 201, body: [{ submission_id: "RETRY" }].to_json, headers: { content_type: "application/json" })
+      stub_docuseal_fetch(submission_id: "RETRY")
+
+      contract = position.send_contract(organizer_user: organizer)
+      expect(contract).to be_sent
+    end
+  end
+
+  describe "#on_contract_party_signed" do
+    let(:payee) { create(:payee) }
+    let(:position) { create(:payroll_position, payee:) }
+    let(:organizer) { create(:user) }
+
+    before do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+
+      stub_request(:post, "https://api.docuseal.co/submissions")
+        .to_return(status: 201, body: [{ submission_id: "STUBBED" }].to_json, headers: { content_type: "application/json" })
+      stub_request(:get, "https://api.docuseal.co/submissions/STUBBED")
+        .to_return(
+          status: 200,
+          body: { submitters: [{ role: "HCB", slug: "hcb-slug" }, { role: "Organizer", slug: "organizer-slug" }, { role: "Contractor", slug: "contractor-slug" }] }.to_json,
+          headers: { content_type: "application/json" }
+        )
+    end
+
+    it "emails the contractor once HCB signs" do
+      contract = position.send_contract(organizer_user: organizer)
+      hcb_party = contract.party(:hcb)
+
+      expect { hcb_party.mark_signed! }.to have_enqueued_mail(Payroll::PositionMailer, :onboarding)
+    end
+
+    it "schedules signing reminders for the contractor once HCB signs" do
+      contract = position.send_contract(organizer_user: organizer)
+      hcb_party = contract.party(:hcb)
+
+      expect { hcb_party.mark_signed! }.to have_enqueued_job(Contract::Party::ReminderJob).at_least(:once)
+    end
+
+    it "reports, but does not raise or roll back the signature, when notifying the contractor fails" do
+      contract = position.send_contract(organizer_user: organizer)
+      hcb_party = contract.party(:hcb)
+
+      allow_any_instance_of(Contract::Party).to receive(:notify).and_raise(StandardError, "queue backend down")
+      expect(Rails.error).to receive(:report)
+
+      expect { hcb_party.mark_signed! }.not_to raise_error
+      expect(hcb_party.reload).to be_signed
+    end
+  end
 end

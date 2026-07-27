@@ -44,6 +44,8 @@
             <%= link_to "Invite to #{contract.contractable.event.name}", organizer_position_invite_path(contract.contractable) %>
           <% elsif contract.contractable.is_a?(Event::Application) %>
             <%= link_to "Application for #{contract.contractable.name}", application_path(contract.contractable) %>
+          <% elsif contract.contractable.is_a?(Payroll::Position) %>
+            <%= link_to "Contractor position for #{contract.contractable.event.name}", event_payroll_position_path(contract.contractable.event, contract.contractable) %>
           <% end %>
         </td>
         <td><%= contract.aasm_state %></td>

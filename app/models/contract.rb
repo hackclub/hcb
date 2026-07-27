@@ -95,11 +95,11 @@ class Contract < ApplicationRecord
           reissue_messages.each do |role, message|
             party(role)&.notify_reissued(message:) if message.present?
           end
+          notifiable_parties.each(&:schedule_reminders)
         elsif contractable.contract_notify_when_sent
           notifiable_parties.each(&:notify)
+          notifiable_parties.each(&:schedule_reminders)
         end
-
-        notifiable_parties.each(&:schedule_reminders)
       end
     end
 
@@ -289,6 +289,8 @@ class Contract < ApplicationRecord
   end
 
   def archive_on_docuseal!
+    return if external_id.blank?
+
     docuseal_client.delete("/submissions/#{external_id}")
   end
 

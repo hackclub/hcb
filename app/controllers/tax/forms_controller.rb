@@ -10,9 +10,13 @@ module Tax
       @form.sync_with_taxbandits
 
       if @form.completed?
-        flash[:success] = "This form has been completed"
-        redirect_to legal_entity_path(@form.legal_entity)
-        return
+        if pending_payroll_position.present?
+          redirect_to onboarding_payroll_position_path(pending_payroll_position)
+        else
+          flash[:success] = "This form has been completed"
+          redirect_to legal_entity_path(@form.legal_entity)
+          return
+        end
       end
     end
 
@@ -38,7 +42,11 @@ module Tax
       @form.sync_with_taxbandits
 
       if @form.completed?
-        redirect_to legal_entity_path(@form.legal_entity)
+        if pending_payroll_position.present?
+          redirect_to onboarding_payroll_position_path(pending_payroll_position)
+        else
+          redirect_to legal_entity_path(@form.legal_entity)
+        end
       else
         flash[:error] = "Complete the form before continuing"
         redirect_back_or_to tax_form_path(@form)
@@ -58,6 +66,10 @@ module Tax
     def set_form
       @form = Tax::Form.find_by_hashid!(params[:id])
       @legal_entity = @form.legal_entity
+    end
+
+    def pending_payroll_position
+      @pending_payroll_position ||= @form.legal_entity.payroll_positions.onboarding.last
     end
 
   end

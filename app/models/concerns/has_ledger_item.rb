@@ -4,6 +4,6 @@ module HasLedgerItem
   extend ActiveSupport::Concern
 
   included do
-    has_one :ledger_item, as: :linked_object
+    has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   end
 end

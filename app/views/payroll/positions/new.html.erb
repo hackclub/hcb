@@ -5,6 +5,7 @@
 <% content_for :table_of_contents do %>
   <%= render "events/transfers/step_item", number: 1, label: "Recipient" %>
   <%= render "events/transfers/step_item", number: 2, label: "Contract details" %>
+  <%= render "events/transfers/step_item", number: 3, label: "Sign & invite", seek: false, current: false %>
 <% end %>
 
 <%= render "payroll/positions/form", event: @event, payee: @payee %>
