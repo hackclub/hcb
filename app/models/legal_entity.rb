@@ -62,8 +62,8 @@ class LegalEntity < ApplicationRecord
   end
 
   # Re-check onboarding for any of this entity's contractor positions that are
-  # mid-onboarding. Called when a step that lives on the legal entity (tax form,
-  # payout method) completes.
+  # mid-onboarding and payments that are pending. Called when a step that lives
+  # on the legal entity (tax form, payout method) completes.
   def refresh_pending_contractors_payments!
     payments.each(&:on_legal_entity_payable) if payable?
 
