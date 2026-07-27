@@ -30,7 +30,7 @@ module Tax
         return
       end
 
-      unless @legal_entity.tax_form_required?
+      unless @legal_entity.tax_form_required? || @legal_entity.completed_tax_form?
         flash[:error] = "You don't need to submit a tax form right now"
         redirect_to legal_entity_path(@legal_entity)
         return
