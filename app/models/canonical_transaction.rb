@@ -145,6 +145,7 @@ class CanonicalTransaction < ApplicationRecord
   after_commit if: -> { previous_changes.key?("ledger_item_id") } do
     old_ledger_item_id = previous_changes["ledger_item_id"].first
     Ledger::Item.find(old_ledger_item_id).refresh! if old_ledger_item_id.present?
+    settle_cpt!
   end
 
   after_create :write_hcb_code
@@ -496,6 +497,12 @@ class CanonicalTransaction < ApplicationRecord
         update!(ledger_item: li)
         li.map!
       end
+    end
+  end
+
+  def settle_cpt!
+    if ledger_item.present? && ledger_item.canonical_pending_transactions.unsettled.count == 1
+      CanonicalPendingSettledMapping.create!(canonical_pending_transaction_id: ledger_item.canonical_pending_transactions.first, canonical_transaction_id: self.id)
     end
   end
 
