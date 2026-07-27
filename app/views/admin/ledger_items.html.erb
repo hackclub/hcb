@@ -1,4 +1,4 @@
-<% title "Unmapped Ledger Items" %>
+<% title "Ledger Items" %>
 
 <%= form_with local: true, url: ledger_items_admin_index_path, method: :get, class: "card overflow-visible" do |form| %>
   <div class="flex flex-col sm:flex-row items-center mt-1 gap-2">
@@ -55,7 +55,7 @@
 </table>
 
 <% if @ledger_items.empty? %>
-  <%= blankslate "No unmapped ledger items" %>
+  <%= blankslate "No ledger items" %>
 <% end %>
 
 <%= paginate @ledger_items %>
