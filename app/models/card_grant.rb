@@ -5,6 +5,8 @@
 # Table name: card_grants
 #
 #  id                         :bigint           not null, primary key
+#  allow_reimbursement_report :boolean          default(NULL), not null
+#  allow_stripe_card          :boolean          default(NULL), not null
 #  amount_cents               :integer
 #  banned_categories          :string
 #  banned_merchants           :string
@@ -72,11 +74,15 @@ class CardGrant < ApplicationRecord
 
   enum :status, { active: 0, canceled: 1, expired: 2 }, default: :active
 
+  attribute :allow_stripe_card, :boolean, default: nil
+  attribute :allow_reimbursement_report, :boolean, default: nil
+
   has_one :pre_authorization
   has_one :reimbursement_report, class_name: "Reimbursement::Report"
   after_create :create_pre_authorization!, if: :pre_authorization_required?
 
   before_validation :create_card_grant_setting, on: :create
+  before_validation :apply_acceptance_method_defaults, on: :create
   before_create :create_user
   before_create :create_subledger
   before_create :set_defaults
@@ -103,6 +109,13 @@ class CardGrant < ApplicationRecord
 
   validates_presence_of :amount_cents, :email
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, on: :create, integer_column: true
+  validate :at_least_one_acceptance_method, on: :create
+
+  def at_least_one_acceptance_method
+    unless allow_stripe_card? || allow_reimbursement_report?
+      errors.add(:base, "At least one acceptance method (virtual card or reimbursement report) must be enabled")
+    end
+  end
 
   MAXIMUM_PURPOSE_LENGTH = 30
   validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
@@ -120,6 +133,8 @@ class CardGrant < ApplicationRecord
   def state
     if suspected_fraud?
       "error"
+    elsif reimbursement_report.present?
+      "success"
     elsif canceled? || expired?
       "muted"
     elsif pending_invite?
@@ -134,6 +149,8 @@ class CardGrant < ApplicationRecord
   def state_text
     if suspected_fraud?
       "Fraudulent"
+    elsif reimbursement_report.present?
+      "Active"
     elsif canceled?
       "Canceled"
     elsif expired?
@@ -161,7 +178,7 @@ class CardGrant < ApplicationRecord
   end
 
   def pending_invite?
-    stripe_card.nil?
+    stripe_card.nil? && reimbursement_report.nil?
   end
 
   def topup!(amount_cents:, topped_up_by: sent_by)
@@ -376,6 +393,11 @@ class CardGrant < ApplicationRecord
     if self.invite_message.nil?
       self.invite_message = setting.invite_message
     end
+  end
+
+  def apply_acceptance_method_defaults
+    self.allow_stripe_card = setting.allow_stripe_card if self.allow_stripe_card.nil?
+    self.allow_reimbursement_report = setting.allow_reimbursement_report if self.allow_reimbursement_report.nil?
   end
 
 end

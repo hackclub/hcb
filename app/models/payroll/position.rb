@@ -12,6 +12,7 @@
 #  onboarded_at  :datetime
 #  onboarding_at :datetime
 #  rate_cents    :integer          default(0), not null
+#  rate_unit     :string           default("hour"), not null
 #  rejected_at   :datetime
 #  start_date    :date             not null
 #  terminated_at :datetime
