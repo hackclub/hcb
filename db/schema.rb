@@ -12,9 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_20_210532) do
-  create_schema "google_sheets"
-
+ActiveRecord::Schema[8.1].define(version: 2026_07_20_210532) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -3172,7 +3170,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_20_210532) do
   add_foreign_key "payroll_invoices", "payroll_positions"
   add_foreign_key "payroll_invoices", "users", column: "reviewed_by_id"
   add_foreign_key "payroll_positions", "payees"
-  add_foreign_key "raffles", "raffles", column: "referring_raffle_id", validate: false
+  add_foreign_key "raffles", "raffles", column: "referring_raffle_id"
   add_foreign_key "raffles", "users"
   add_foreign_key "raw_pending_fee_revenue_transactions", "fee_revenues"
   add_foreign_key "raw_pending_incoming_disbursement_transactions", "disbursements"
