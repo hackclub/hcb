@@ -66,7 +66,8 @@ module Payroll
           creator: current_user,
           amount_cents: @invoice.amount_cents,
           currency: @invoice.currency,
-          purpose: @invoice.name
+          purpose: @invoice.name,
+          tax_reportable: true
         )
         @invoice.update!(payment:)
         @invoice.mark_approved!(current_user)
