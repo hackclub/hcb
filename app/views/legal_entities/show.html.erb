@@ -48,9 +48,9 @@
 
   <%= render "users/payout_methods_list", user: current_user, legal_entity: @legal_entity %>
 
-  <hr>
-
   <% if completed_tax_form.present? %>
+    <hr>
+
     <p>
       You last submitted a tax form for this legal entity on <%= format_date completed_tax_form.completed_at %>
       with TIN <%= masked_tin_tag completed_tax_form, viewable: show_tin %>.
@@ -58,12 +58,6 @@
     </p>
 
     <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
-  <% else %>
-    <p>
-      <%= @legal_entity.person? ? "You don't" : "#{@legal_entity.name.presence || "Business"} doesn't" %>
-      need to submit tax information right now &mdash; none of <%= @legal_entity.person? ? "your" : "its" %> pending payments
-      require it. We'll ask <%= @legal_entity.person? ? "you" : "them" %> if that changes.
-    </p>
   <% end %>
 <% elsif @legal_entity.completed_tax_form? && (mismatched = @legal_entity.mismatched_tax_form || @legal_entity.entity_type_mismatched_tax_form).present? %>
   <% previous_tax_form = @legal_entity.latest_usable_tax_form %>
