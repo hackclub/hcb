@@ -19,8 +19,8 @@
 #
 class StripeServiceFee < ApplicationRecord
   belongs_to :stripe_topup, optional: true
-
-  include HasLedgerItem
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
+  has_one :raw_pending_stripe_service_fee_transaction
 
   after_create_commit do
     topup = StripeTopup.create(
@@ -45,6 +45,10 @@ class StripeServiceFee < ApplicationRecord
 
   def local_hcb_code
     HcbCode.find_or_create_by(hcb_code:)
+  end
+
+  def event
+    Event.find(::EventMappingEngine::EventIds::HACK_CLUB_BANK)
   end
 
 end

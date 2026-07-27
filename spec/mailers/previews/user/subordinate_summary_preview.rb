@@ -3,7 +3,7 @@
 class User
   class SubordinateSummaryPreview < ActionMailer::Preview
     def weekly
-      manager, subordinates = User::SubordinateSummaryJob.org_layers.first
+      manager, subordinates = HackClub::OrgChart.layers.first
       User::SubordinateSummaryMailer.weekly(manager:, subordinates:)
     end
 

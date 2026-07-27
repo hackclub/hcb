@@ -14,7 +14,7 @@ class PayeesController < ApplicationController
     payees = params[:q].present? ? all.search(params[:q]) : all
     payees = payees.order(created_at: :desc).limit(15)
 
-    selected = all.find_by_public_id(params[:payee_id]) if params[:payee_id].present?
+    selected = all.find_by_hashid(params[:payee_id]) if params[:payee_id].present?
     @payees = [selected, *payees.to_a].compact.uniq.first(15)
 
     render layout: false
@@ -37,28 +37,28 @@ class PayeesController < ApplicationController
 
       payee.save!
 
-      redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.public_id)
+      redirect_to helpers.new_recipient_transfer_path(params[:destination], @event, payee_id: payee.hashid)
     end
   rescue ActiveRecord::RecordInvalid, InvalidManualPayeeEntityType => e
     flash[:error] = e.message
-    redirect_to new_event_payment_path(event_id: @event.slug)
+    redirect_to helpers.new_recipient_transfer_path(params[:destination], @event)
   end
 
   def update
-    payee = @event.payees.not_archived.find_by_public_id!(params[:id])
+    payee = @event.payees.not_archived.find_by_hashid!(params[:id])
     authorize payee
 
     if payee.update(payee_params)
       flash[:success] = "Recipient updated."
-      redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.public_id)
+      redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.hashid)
     else
       flash[:error] = payee.errors.full_messages.to_sentence
-      redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.public_id, edit_payee: true)
+      redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.hashid, edit_payee: true)
     end
   end
 
   def archive
-    payee = @event.payees.not_archived.find_by_public_id!(params[:id])
+    payee = @event.payees.not_archived.find_by_hashid!(params[:id])
     authorize payee
 
     payee.archive!

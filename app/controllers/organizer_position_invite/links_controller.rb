@@ -59,7 +59,7 @@ class OrganizerPositionInvite
           }
         end
       else
-        render :new, status: :unprocessable_entity
+        render :new, status: :unprocessable_content
       end
     end
 
@@ -82,7 +82,7 @@ class OrganizerPositionInvite
           format.html { redirect_to event_team_path(event: @event), flash: { error: "Failed to deactivate invite link." } }
           format.turbo_stream {
             flash.now[:error] = "Failed to deactivate invite link."
-            render turbo_stream: turbo_stream.replace("invite_links_section", partial: "events/invite_links_section", locals: { event: @event, invite_links: @invite_links }), status: :unprocessable_entity
+            render turbo_stream: turbo_stream.replace("invite_links_section", partial: "events/invite_links_section", locals: { event: @event, invite_links: @invite_links }), status: :unprocessable_content
           }
         end
       end

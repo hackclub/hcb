@@ -15,7 +15,6 @@
 class FeeRevenue < ApplicationRecord
   include AASM
   include HasBookTransfer
-  include HasLedgerItem
 
   include Hashid::Rails
   hashid_config salt: ""
@@ -23,6 +22,8 @@ class FeeRevenue < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :frv
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
+  has_one :raw_pending_fee_revenue_transaction
   has_many :bank_fees
 
   include HasHcbCode
@@ -44,6 +45,10 @@ class FeeRevenue < ApplicationRecord
 
   def canonical_transaction
     @canonical_transaction ||= CanonicalTransaction.find_by(hcb_code:)
+  end
+
+  def event
+    Event.find(::EventMappingEngine::EventIds::HACK_CLUB_BANK)
   end
 
 end

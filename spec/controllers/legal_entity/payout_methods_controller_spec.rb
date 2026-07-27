@@ -27,6 +27,26 @@ RSpec.describe LegalEntity::PayoutMethodsController do
              })
       end.to change { legal_entity.reload.payout_methods.count }.by(1)
     end
+
+    context "when an admin adds a payout method for another user" do
+      let(:admin) { create(:user, :make_admin) }
+
+      before { create_session(admin, verified: true) }
+
+      it "adds the method to the target user's entity, not the admin's" do
+        expect do
+          post(:create, params: {
+                 legal_entity_id: legal_entity.id,
+                 user: {
+                   payout_method_type: "LegalEntity::PayoutMethod::AchTransfer",
+                   payout_method_ach_transfer: { account_number: "12345678", routing_number: "021000021" }
+                 }
+               })
+        end.to change { legal_entity.reload.payout_methods.count }.by(1)
+
+        expect(admin.personal_legal_entity.reload.payout_methods.count).to eq(0)
+      end
+    end
   end
 
   describe "#update" do

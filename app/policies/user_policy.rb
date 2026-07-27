@@ -161,4 +161,8 @@ class UserPolicy < ApplicationPolicy
     user.auditor? || (record == user && user.admin_override_pretend?)
   end
 
+  def suppress_card_locking?
+    user.admin?
+  end
+
 end
