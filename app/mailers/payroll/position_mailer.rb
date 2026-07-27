@@ -20,6 +20,13 @@ module Payroll
            reply_to: reply_to_addresses
     end
 
+    def onboarded
+      @position = params[:position]
+
+      mail to: @position.event.organizer_contact_emails(only_managers: true),
+           subject: "#{@position.payee.display_name} has been onboarded as a contractor for #{@position.event.name}"
+    end
+
     private
 
     def reply_to_addresses

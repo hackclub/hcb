@@ -40,6 +40,8 @@ class CardGrantsController < ApplicationController
 
     @use_card_grant_ledgers = true
     set_ledger_filters
+    return if performed?
+
     @per = params[:per] || 25
     @table_only = true
     @ledger = @event.ledger
