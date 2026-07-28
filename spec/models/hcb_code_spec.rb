@@ -373,4 +373,35 @@ RSpec.describe HcbCode, type: :model do
       end
     end
   end
+
+  describe "syncing marked_no_or_lost_receipt_at to the ledger item" do
+    let(:ledger_item) { create(:ledger_item) }
+    let(:hcb_code) { create(:hcb_code, ledger_item:) }
+
+    it "mirrors the mark onto the ledger item" do
+      hcb_code.no_or_lost_receipt!
+
+      expect(ledger_item.reload.marked_no_or_lost_receipt_at).to be_within(1.second).of(hcb_code.marked_no_or_lost_receipt_at)
+    end
+
+    it "mirrors the mark being cleared (e.g. when a receipt is attached)" do
+      hcb_code.no_or_lost_receipt!
+      hcb_code.update!(marked_no_or_lost_receipt_at: nil)
+
+      expect(ledger_item.reload.marked_no_or_lost_receipt_at).to be_nil
+    end
+
+    it "leaves the ledger item alone when nothing about the mark changed" do
+      hcb_code.no_or_lost_receipt!
+      ledger_item.reload
+
+      expect { hcb_code.update!(receipt_due_at: 3.days.from_now) }.not_to(change { ledger_item.reload.marked_no_or_lost_receipt_at })
+    end
+
+    it "does nothing when the hcb code has no ledger item" do
+      hcb_code = create(:hcb_code)
+
+      expect { hcb_code.no_or_lost_receipt! }.not_to raise_error
+    end
+  end
 end

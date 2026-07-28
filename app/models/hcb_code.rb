@@ -78,6 +78,12 @@ class HcbCode < ApplicationRecord
 
   after_create :write_event_and_subledger_id
 
+  # No/lost receipt marks are still written to the HCB code (by `no_or_lost_receipt!`
+  # and by attaching/removing a receipt), but the ledger item keeps its own copy for
+  # `Ledger::Item#missing_receipt?` and the ledger filters, so mirror the change over.
+  # TODO: this is temporary syncing logic to the ledger item. HCB codes long term should not write to ledger items.
+  after_save_commit :sync_marked_no_or_lost_receipt_at_to_ledger_item, if: :marked_no_or_lost_receipt_at_previously_changed?
+
   delegate :likely_account_verification_related?, :fee_payment?, to: :ct, allow_nil: true
 
   validates :hcb_code, format: { with: /\AHCB-\d{3}-\S+\z/ }
@@ -781,6 +787,13 @@ class HcbCode < ApplicationRecord
     end
     canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
     canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
+  end
+
+  def sync_marked_no_or_lost_receipt_at_to_ledger_item
+    return if ledger_item.nil?
+    return if ledger_item.marked_no_or_lost_receipt_at == marked_no_or_lost_receipt_at
+
+    ledger_item.update!(marked_no_or_lost_receipt_at:)
   end
 
 end
