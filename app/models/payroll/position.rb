@@ -84,6 +84,9 @@ module Payroll
 
       event :mark_onboarded do
         transitions from: :onboarding, to: :onboarded, guard: :onboarding_complete?
+        after do
+          Payroll::PositionMailer.with(position: self).onboarded.deliver_later
+        end
       end
 
       event :mark_expired do
