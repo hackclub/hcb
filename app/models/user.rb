@@ -190,6 +190,8 @@ class User < ApplicationRecord
   has_many :payments_received, through: :legal_entities, source: :payments
   has_many :payroll_positions, through: :legal_entities
 
+  has_many :managing_payroll_positions, class_name: "Payroll::Position", inverse_of: :manager
+
   has_encrypted :birthday, type: :date
 
   include HasMetrics
