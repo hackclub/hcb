@@ -90,14 +90,14 @@ module Payroll
     def update
       authorize @position
 
-      @position.assign_attributes(
+      @position.assign_attributes({
         title: position_params[:title],
         rate_cents: Monetize.parse(position_params[:rate]).cents,
         rate_unit: position_params[:rate_unit].presence,
         start_date: position_params[:starts_on],
         end_date: position_params[:ends_on],
         description: position_params[:purpose]
-      )
+      }.compact)
       attachment = Array(position_params[:file]).compact_blank.first
       @position.file.attach(attachment) if attachment
 
