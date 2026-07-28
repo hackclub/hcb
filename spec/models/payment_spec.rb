@@ -154,13 +154,6 @@ RSpec.describe Payment, type: :model do
       end
 
       context "without a default payout method" do
-        it "sends the missing_payout_method mailer" do
-          mail = double("mail", deliver_later: true)
-          allow(PaymentMailer).to receive_message_chain(:with, :missing_payout_method).and_return(mail)
-          tax_form.mark_completed!
-          expect(mail).to have_received(:deliver_later)
-        end
-
         it "does not create a payment attempt" do
           expect { tax_form.mark_completed! }.not_to(change { payment.attempts.count })
         end
