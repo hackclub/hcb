@@ -111,7 +111,7 @@
 
             <small class="muted block mb-2">
               Tax reportable payments count toward the payee's taxable income. Payments that aren't tax
-              reportable, or are under $500, won't require the payee to submit a tax form before being paid.
+              reportable, or are under <%= render_money Tax::REPORTING_THRESHOLD_1099 %>, won't require the payee to submit a tax form before being paid.
             </small>
           <% end %>
           <%= form.submit "💸 Approve and send check", data: { turbo_confirm: "Are you sure you want to send this check?" } %>

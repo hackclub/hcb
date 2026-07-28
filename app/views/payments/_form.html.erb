@@ -114,7 +114,7 @@
               </span>
             <% end %>
             <span class="muted text-sm block mt-1">
-              Payments that aren't tax reportable, or are under $500, won't require the payee to submit a tax form before being paid.
+              Payments that aren't tax reportable, or are under <%= render_money Tax::REPORTING_THRESHOLD_1099 %>, won't require a tax form to be submitted before payment.
             </span>
           </div>
         </div>

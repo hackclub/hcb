@@ -241,7 +241,7 @@
 
             <small class="muted block mb-2">
               Tax reportable payments count toward the payee's taxable income. Payments that aren't tax
-              reportable, or are under $500, won't require the payee to submit a tax form before being paid.
+              reportable, or are under <%= render_money Tax::REPORTING_THRESHOLD_1099 %>, won't require the payee to submit a tax form before being paid.
             </small>
           <% end %>
           <%= form.submit "💸 Mark transfer as sent", disabled: @wise_transfer.usd_amount_cents.nil?, class: "mb-0" %>

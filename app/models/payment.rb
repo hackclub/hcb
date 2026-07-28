@@ -25,8 +25,6 @@
 #  index_payments_on_payee_id    (payee_id)
 #
 class Payment < ApplicationRecord
-  TAX_FORM_MINIMUM_CENTS = 500_00
-
   include AASM
   include Hashid::Rails
   include PgSearch::Model
@@ -118,7 +116,7 @@ class Payment < ApplicationRecord
   # Payments that aren't tax reportable, or too small to move the needle,
   # don't need to wait on the payee's tax paperwork.
   def requires_tax_form?
-    tax_reportable? && estimate_usd_amount_cents >= TAX_FORM_MINIMUM_CENTS
+    tax_reportable? && estimate_usd_amount_cents >= Tax::REPORTING_THRESHOLD_1099
   end
 
   def on_legal_entity_assigned
