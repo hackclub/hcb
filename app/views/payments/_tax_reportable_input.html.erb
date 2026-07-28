@@ -1,0 +1,13 @@
+<%# locals: (form:, tax_reportable: true) %>
+
+<div class="field mb-2 flex">
+  <%= form.label :tax_reportable do %>
+    <%= form.check_box :tax_reportable, checked: tax_reportable %>
+    This payment is tax reportable
+  <% end %>
+</div>
+
+<small class="muted block mb-2">
+  Payments are tax reportable if they are for services (not goods) and the recipient isn't a corporation, unless the payment is for attorney or medical services.
+  Payments that aren't tax reportable, or are under <%= render_money Tax::REPORTING_THRESHOLD_1099 %>, won't require the payee to submit a tax form before being paid.
+</small>

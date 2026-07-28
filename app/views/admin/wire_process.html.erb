@@ -147,15 +147,7 @@
             <%= form.label :charge_fee, "Charge #{@wire.event.name} $25 to cover transfer fee?", class: "bold ml-2" %>
           </div>
           <% if @wire.payment.present? %>
-            <div class="field mb-2 flex">
-              <%= form.check_box :tax_reportable, checked: @wire.payment.tax_reportable %>
-              <%= form.label :tax_reportable, "Tax reportable?", class: "bold ml-2" %>
-            </div>
-
-            <small class="muted block mb-2">
-              Tax reportable payments count toward the payee's taxable income. Payments that aren't tax
-              reportable, or are under <%= render_money Tax::REPORTING_THRESHOLD_1099 %>, won't require the payee to submit a tax form before being paid.
-            </small>
+            <%= render partial: "payments/tax_reportable_input", locals: { form:, tax_reportable: @wire.payment.tax_reportable } %>
           <% end %>
           <%= form.submit "💸 Approve and automatically send transfer", data: { turbo_confirm: "This will automatically send the wire. You don't need to send it manually!" }, class: "mb-0" %>
         <% end %>

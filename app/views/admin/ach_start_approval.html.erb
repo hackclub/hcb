@@ -180,15 +180,7 @@
         <div class="flex flex-row gap-2 items-center justify-start">
           <%= form_with(model: false, local: true, url: ach_approve_admin_path(@ach_transfer), method: :post) do |form| %>
             <% if @ach_transfer.payment.present? %>
-              <div class="field mb-2 flex">
-                <%= form.check_box :tax_reportable, checked: @ach_transfer.payment.tax_reportable %>
-                <%= form.label :tax_reportable, "Tax reportable?", class: "bold ml-2" %>
-              </div>
-
-              <small class="muted block mb-2">
-                Tax reportable payments count toward the payee's taxable income. Payments that aren't tax
-                reportable, or are under <%= render_money Tax::REPORTING_THRESHOLD_1099 %>, won't require the payee to submit a tax form before being paid.
-              </small>
+              <%= render partial: "payments/tax_reportable_input", locals: { form:, tax_reportable: @ach_transfer.payment.tax_reportable } %>
             <% end %>
             <%= form.submit "#{verb} ACH transfer", data: { turbo_confirm: "Are you sure? Once an ACH transfer is sent, it cannot be un-sent." } %>
             <% if @ach_transfer.scheduled_on.present? %>
