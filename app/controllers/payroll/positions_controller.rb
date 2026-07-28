@@ -94,7 +94,8 @@ module Payroll
         rate_cents: Monetize.parse(position_params[:rate]).cents,
         start_date: position_params[:starts_on],
         end_date: position_params[:ends_on],
-        description: position_params[:purpose]
+        description: position_params[:purpose],
+        manager_id: position_params[:manager_id]
       )
       attachment = Array(position_params[:file]).compact_blank.first
       @position.file.attach(attachment) if attachment
@@ -155,7 +156,7 @@ module Payroll
     end
 
     def position_params
-      params.require(:contractor).permit(:title, :rate, :starts_on, :ends_on, :purpose, :payee_id, file: [])
+      params.require(:contractor).permit(:title, :rate, :starts_on, :ends_on, :purpose, :payee_id, :manager_id, file: [])
     end
 
   end

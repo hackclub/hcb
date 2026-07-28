@@ -18,11 +18,13 @@
 #  title         :text             not null
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
+#  manager_id    :bigint
 #  payee_id      :bigint           not null
 #
 # Indexes
 #
-#  index_payroll_positions_on_payee_id  (payee_id)
+#  index_payroll_positions_on_manager_id  (manager_id)
+#  index_payroll_positions_on_payee_id    (payee_id)
 #
 # Foreign Keys
 #
@@ -38,6 +40,7 @@ module Payroll
     has_paper_trail
 
     belongs_to :payee
+    belongs_to :manager, optional: true, class_name: "User"
 
     delegate :display_name, to: :payee, prefix: true
 

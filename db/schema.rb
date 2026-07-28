@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_20_210532) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_28_183843) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -2052,6 +2052,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_210532) do
     t.string "currency", default: "USD", null: false
     t.text "description", null: false
     t.date "end_date", null: false
+    t.bigint "manager_id"
     t.datetime "onboarded_at"
     t.datetime "onboarding_at"
     t.bigint "payee_id", null: false
@@ -2061,6 +2062,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_210532) do
     t.datetime "terminated_at"
     t.text "title", null: false
     t.datetime "updated_at", null: false
+    t.index ["manager_id"], name: "index_payroll_positions_on_manager_id"
     t.index ["payee_id"], name: "index_payroll_positions_on_payee_id"
   end
 
@@ -3169,7 +3171,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_210532) do
   add_foreign_key "payroll_invoices", "payroll_positions"
   add_foreign_key "payroll_invoices", "users", column: "reviewed_by_id"
   add_foreign_key "payroll_positions", "payees"
-  add_foreign_key "raffles", "raffles", column: "referring_raffle_id", validate: false
+  add_foreign_key "raffles", "raffles", column: "referring_raffle_id"
   add_foreign_key "raffles", "users"
   add_foreign_key "raw_pending_fee_revenue_transactions", "fee_revenues"
   add_foreign_key "raw_pending_incoming_disbursement_transactions", "disbursements"
