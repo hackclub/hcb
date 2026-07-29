@@ -27,7 +27,7 @@
         <% if @contract.contractable.is_a?(Event::Application) %>
           <% if @contract.contractable.event.present? %>
             <p>This application has already been activated.</p>
-            <%= link_to "Go to event", @contract.contractable.event, class: "btn w-full" %>
+            <%= link_to "Go to organization", @contract.contractable.event, class: "btn w-full" %>
           <% else %>
             <%= form_with url: admin_activate_application_path(@contract.contractable), method: :post do |form| %>
               <div class="field">
