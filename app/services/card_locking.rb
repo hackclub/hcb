@@ -27,7 +27,7 @@ module CardLocking
   # cardholder is in. Bounds candidate discovery and the outstanding pile, and is
   # the single enforcement date the feature collapses to once the staged rollout
   # below finishes (see enforcement_start_date).
-  ENFORCEMENT_START_DATE = Date.new(2026, 7, 14)
+  ENFORCEMENT_START_DATE = Date.new(2026, 7, 17)
 
   # Staged rollout of enforcement. A cardholder's charges become lockable on the
   # date of the first stage flag they carry; a cardholder in no stage is never
@@ -37,7 +37,7 @@ module CardLocking
   # enforcement_start_date, have callers use ENFORCEMENT_START_DATE directly, and
   # remove the Flipper flags. To add a stage, add a row (keep earliest first).
   ENFORCEMENT_STAGES = [
-    [:card_locking_enabled_on_07_14_2026, Date.new(2026, 7, 14)],
+    [:card_locking_enabled_on_07_17_2026, Date.new(2026, 7, 17)],
     [:card_locking_enabled_on_07_28_2026, Date.new(2026, 7, 28)],
   ].freeze
 

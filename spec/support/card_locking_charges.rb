@@ -8,7 +8,7 @@ RSpec.shared_context "card locking charges" do
   # 2026-07-14) so materialize sets deadlines. Specs exercising pre-enforcement
   # settle charges before that date; specs exercising a non-enrolled cardholder
   # disable this flag.
-  before { Flipper.enable(:card_locking_enabled_on_07_14_2026, user) }
+  before { Flipper.enable(:card_locking_enabled_on_07_17_2026, user) }
 
   # Attach at the correct time so the resolution callback (added later) freezes
   # against the right timestamp. Do NOT attach-then-backdate.

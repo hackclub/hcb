@@ -48,7 +48,7 @@ class CheckDeposit < ApplicationRecord
 
   monetize :amount_cents
 
-  has_one :ledger_item, as: :linked_object
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
   belongs_to :created_by, class_name: "User"
   has_one :canonical_pending_transaction

@@ -1,0 +1,7 @@
+These events have discrepancies in their balances between the old and new transaction engine:
+
+<% @anomalous_events.each do |anomaly| %>
+  <h2><%= link_to anomaly[:name], event_url(anomaly[:slug]) %> (<%= anomaly[:id] %>)</h2>
+  <p><%= link_to "OLD Event#fronted_fee_balance_v2_cents:", event_transactions_url(anomaly[:slug]) %> <%= anomaly[:fronted_fee_balance_v2_cents] %></p>
+  <p><%= link_to "Ledger#fronted_fee_balance_cents:", event_ledger_url(anomaly[:slug]) %> <%= anomaly[:fronted_fee_balance_cents] %></p>
+<% end %>

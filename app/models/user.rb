@@ -228,7 +228,11 @@ class User < ApplicationRecord
   validates :email, uniqueness: true, presence: true
   validates_email_format_of :email
   normalizes :email, with: ->(email) { email.strip.downcase }
-  validates :email, nondisposable: true, on: :create
+  EMAIL_TYPO_MESSAGE = lambda do |user, _|
+    fix = EmailTypoDomains.suggestion_for(user.email)
+    fix ? "looks like a typo. Did you mean #{user.email.sub(/@.+/, "@#{fix}")}?" : Nondisposable.configuration.error_message
+  end
+  validates :email, nondisposable: { message: EMAIL_TYPO_MESSAGE }, on: :create
 
   validates :phone_number, phone: { allow_blank: true }
 
