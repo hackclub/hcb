@@ -1,0 +1,92 @@
+<%# locals: (user:, payout_method:, open: false, locking_reports: []) %>
+<% details = payout_method.details %>
+<% locked = locking_reports.any? %>
+<% locked_modal_id = "locked_reports_#{payout_method.id}" %>
+
+<div class="payout-methods__row" data-payout-methods-row>
+  <div class="flex items-center" style="gap: 14px; padding: 16px 20px;">
+    <div class="payout-methods__icon flex items-center justify-center flex-shrink-0"
+         style="width: 40px; height: 40px; border-radius: 10px;">
+      <%= inline_icon payout_method.icon, size: details.is_a?(LegalEntity::PayoutMethod::AchTransfer) ? 24 : 20 %>
+    </div>
+
+    <div class="flex-auto" style="min-width: 0;">
+      <div class="flex items-center">
+        <strong><%= payout_method.title_kind %></strong>
+        <% if payout_method.default? %>
+          <span class="badge bg-success" style="font-size: 11px;">Default</span>
+        <% end %>
+      </div>
+      <div class="muted" style="font-size: 13px; margin-top: 2px;">
+        <%= payout_method.detail_summary %>
+      </div>
+    </div>
+
+    <div class="flex items-center flex-shrink-0" style="gap: 8px;" data-pm-actions>
+      <% if locked %>
+        <button type="button" class="btn btn-small tooltipped tooltipped--n flex items-center justify-center"
+                aria-label="Can't be edited while <%= pluralize(locking_reports.size, "reimbursement") %> using it <%= locking_reports.one? ? "is" : "are" %> being processed. Click to view."
+                data-behavior="modal_trigger" data-modal="<%= locked_modal_id %>">
+          <%= inline_icon "private", size: 18, class: "!m-0" %>
+        </button>
+      <% else %>
+        <button type="button" class="btn btn-small pm-edit" data-action="payout-methods#editRow">Edit</button>
+        <button type="button" class="btn btn-small bg-success pm-save" data-action="payout-methods#saveRow">Save</button>
+        <button type="button" class="btn btn-small pm-cancel" data-action="payout-methods#cancelRow">Cancel</button>
+      <% end %>
+    </div>
+
+    <% unless locked && payout_method.default? %>
+      <div data-controller="menu" data-menu-placement-value="bottom-end" class="flex-shrink-0">
+        <%= pop_icon_to "more", "#", icon_size: 22,
+            class: "align-middle muted", "aria-label": "More options",
+            data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
+        <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
+          <% unless payout_method.default? %>
+            <%= link_to set_default_payout_method_path(payout_method), class: "flex items-center", data: { turbo_method: :patch, turbo_frame: "_top" } do %>
+              <%= inline_icon "star-fill", size: 24 %>
+              Set as default
+            <% end %>
+          <% end %>
+          <% unless locked %>
+            <% if payout_method.default? %>
+              <span class="flex items-center muted tooltipped tooltipped--w" aria-label="Set another payout method as default before removing this one.">
+                <%= inline_icon "delete", size: 24 %>
+                Remove
+              </span>
+            <% else %>
+              <%= link_to archive_payout_method_path(payout_method), class: "flex items-center error", data: { turbo_method: :patch, turbo_frame: "_top", turbo_confirm: "Remove this payout method?" } do %>
+                <%= inline_icon "delete", size: 24 %>
+                Remove
+              <% end %>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <% if locked %>
+    <section data-behavior="modal" role="dialog" id="<%= locked_modal_id %>" class="modal modal--scroll bg-snow">
+      <%= modal_header "Reimbursements in progress" %>
+      <p class="muted mt0 mb3">
+        This payout method can't be edited or removed while
+        <%= pluralize(locking_reports.size, "reimbursement") %> using it
+        <%= locking_reports.one? ? "is" : "are" %> being processed.
+      </p>
+      <% locking_reports.each do |report| %>
+        <%= link_to reimbursement_report_path(report), class: "card flex items-center justify-between mb2", data: { turbo_frame: "_top" } do %>
+          <span style="min-width: 0;">
+            <strong><%= report.name %></strong>
+            <% if report.event %><span class="muted block h5 mt0"><%= report.event.name %></span><% end %>
+          </span>
+          <span class="badge bg-<%= report.status_color %> flex-shrink-0 tooltipped tooltipped--w" aria-label="<%= report.status_description %>"><%= report.status_text %></span>
+        <% end %>
+      <% end %>
+    </section>
+  <% else %>
+    <div data-payout-methods-panel data-open="<%= open %>" style="padding: 0 20px 20px;<%= " display: none;" unless open %>">
+      <%= render "users/payout_form/form", user:, editing: payout_method %>
+    </div>
+  <% end %>
+</div>

@@ -30,6 +30,16 @@
   </div>
 </div>
 
+<% if @all_events.length > 1 %>
+  <div class="card my-3 p-0 relative" style="overflow-x: auto;">
+    <div
+      data-controller="sub-organizations-graph"
+      data-sub-organizations-graph-nodes-value="<%= @all_events.map { |e| { id: e.id, name: e.name, parentId: e.parent_id, href: e.id == @event.id ? event_sub_organizations_path(@event) : event_path(e), isRoot: e.id == @event.id } }.to_json %>"
+      data-sub-organizations-graph-src-value="<%= event_async_sub_organizations_graph_path(@event) %>"
+    ></div>
+  </div>
+<% end %>
+
 <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
   <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
     <%= render "events/filters/search", form: %>
@@ -40,12 +50,21 @@
 <%= render "events/filters/bar", filters: @filter_options if @has_filter %>
 
 <% if @sub_organizations.any? %>
-  <ul class="grid grid--medium-narrow text-left w-100 mt0">
+  <ul id="sub_organizations" class="grid grid--medium-narrow text-left w-100 mt0">
     <%= render partial: "events/event_card", collection: @sub_organizations, as: :event, locals: { show_scoped_tags: true } %>
   </ul>
   <%= paginate @sub_organizations %>
-<% else %>
+<% elsif @hidden_sub_organizations.none? %>
   <%= blankslate "No sub-organizations yet" %>
+<% end %>
+
+<% if @hidden_sub_organizations.any? %>
+  <details id="hidden_sub_organizations" class="w-full text-left">
+    <summary><h4 class="inline-block pb-0 border-none muted">Hidden sub-organizations</h4></summary>
+    <ul class="grid grid--medium-narrow text-left mt0">
+      <%= render partial: "events/event_card", collection: @hidden_sub_organizations, as: :event, locals: { show_scoped_tags: true } %>
+    </ul>
+  </details>
 <% end %>
 
 <% if policy(@event).create_sub_organization? %>

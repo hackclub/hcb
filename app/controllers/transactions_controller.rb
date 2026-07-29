@@ -16,9 +16,9 @@ class TransactionsController < ApplicationController
     begin
       # DEPRECATED
       @transaction = Transaction.with_deleted.find(params[:id])
-      @event = @transaction.event
-
       authorize @transaction
+
+      @event = @transaction.event
 
       render :show_deprecated
     rescue ActiveRecord::RecordNotFound => e
@@ -85,7 +85,7 @@ class TransactionsController < ApplicationController
 
         redirect_to @transaction
       else
-        render :edit, status: :unprocessable_entity
+        render :edit, status: :unprocessable_content
       end
     end
   end

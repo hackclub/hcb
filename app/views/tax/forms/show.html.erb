@@ -1,0 +1,10 @@
+<% title "Tax form for #{@legal_entity.name}" %>
+
+<h1>Tax form for <%= @legal_entity.name %></h1>
+
+<iframe
+  src="<%= @form.signing_url %>"
+  class="border-0 relative min-h-[75vh] w-full rounded-md">
+</iframe>
+
+<%= button_to "Done", sync_tax_form_path(@form), data: { turbo: false }, class: "btn w-full mt-5" %>

@@ -2781,6 +2781,11 @@ d3-selection@2, d3-selection@^2.0.0:
   resolved "https://registry.yarnpkg.com/d3-selection/-/d3-selection-2.0.0.tgz#94a11638ea2141b7565f883780dabc7ef6a61066"
   integrity sha512-XoGGqhLUN/W14NmaqcO/bb1nqjDAw5WtSYb2X8wiuQWvSZUsUVYsOSkOybUrNvcBjaywBdYPy03eXHMXjk9nZA==
 
+d3-selection@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/d3-selection/-/d3-selection-3.0.0.tgz#c25338207efa72cc5b9bd1458a1a41901f1e1b31"
+  integrity sha512-fmTRWbNMmsmWq6xJV8D19U/gw/bwrHfNXxrIN+HfZgnzqTHp9jOmKMhsTUjXOJnZOdZY9Q28y4yebKzqDKlxlQ==
+
 d3-shape@^3.1.0:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/d3-shape/-/d3-shape-3.2.0.tgz#a1a839cbd9ba45f28674c69d7f855bcf91dfc6a5"

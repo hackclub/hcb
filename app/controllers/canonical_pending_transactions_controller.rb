@@ -7,6 +7,8 @@ class CanonicalPendingTransactionsController < ApplicationController
     @canonical_pending_transaction = CanonicalPendingTransaction.find(params[:id])
     authorize @canonical_pending_transaction
 
+    @event = @canonical_pending_transaction.event
+
     # Comments
     @hcb_code = HcbCode.find_or_create_by(hcb_code: @canonical_pending_transaction.hcb_code)
   end
