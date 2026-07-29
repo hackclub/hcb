@@ -1275,7 +1275,7 @@ class EventsController < ApplicationController
 
   def ledger
     authorize @event
-    @per = (params[:per] || 25).to_i.clamp(1, 200)
+    @per = (params[:per] || 100).to_i.clamp(1, 200)
 
     @items = ledger_query.execute(ledgers: @ledgers)
 

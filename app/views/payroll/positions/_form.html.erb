@@ -47,21 +47,44 @@
 
         <div class="menu__divider my-0"></div>
 
-        <div class="flex justify-between items-center">
-          <div>
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4" data-controller="rate-type" data-rate-type-fixed-unit-value="<%= Payroll::Position::FIXED_RATE_UNIT %>">
+          <div class="pr-2">
             <%= form.label :rate, "Rate" %>
-            <span class="muted block">Hourly rate for this contractor</span>
+            <span class="muted block">How the contractor is paid</span>
           </div>
-          <div class="input flex gap-2 items-center py-0 max-w-[150px]">
-            <span class="bold muted">$</span>
-            <%= form.number_field :rate, value: position&.rate&.to_f, placeholder: "25.00", step: 0.01, min: 0.01, required: true, disabled:, class: "!p-0 !border-none !shadow-none min-h-auto" %>
-            <span class="bold muted">/hr</span>
+
+          <div class="flex flex-col items-end gap-2">
+            <div class="inline-flex gap-0.5 p-0.5 rounded-lg bg-black/5 dark:bg-white/10">
+              <%= radio_button_tag "rate_type", "recurring", !position&.fixed_rate?, disabled:, class: "peer/recurring hidden", data: { action: "change->rate-type#update" } %>
+              <%= label_tag "rate_type_recurring", "Recurring", class: "m-0 cursor-pointer select-none rounded-md px-3 py-1 text-sm font-medium muted transition-colors hover:muted peer-checked/recurring:bg-blue peer-checked/recurring:text-white peer-checked/recurring:shadow-sm" %>
+
+              <%= radio_button_tag "rate_type", "fixed", position&.fixed_rate?, disabled:, class: "peer/fixed hidden", data: { action: "change->rate-type#update" } %>
+              <%= label_tag "rate_type_fixed", "Fixed", class: "m-0 cursor-pointer select-none rounded-md px-3 py-1 text-sm font-medium muted transition-colors peer-checked/fixed:bg-blue peer-checked/fixed:text-white peer-checked/fixed:shadow-sm" %>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <div class="input flex gap-2 items-center py-0 max-w-[130px]">
+                <span class="bold muted">$</span>
+                <%= form.number_field :rate, value: position&.rate&.to_f, placeholder: "25.00", step: 0.01, min: 0.01, required: true, disabled:, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+              </div>
+
+              <span class="flex items-center gap-2" data-rate-type-target="recurring">
+                <span class="bold muted">per</span>
+                <%= form.text_field :rate_unit, value: (position&.fixed_rate? ? nil : position&.rate_unit.presence) || "hour", placeholder: "hour", required: true, disabled:, maxlength: 30, list: "contractor_rate_units", aria: { label: "Rate unit" }, data: { "rate-type-target": "unitField" }, class: "!max-w-[95px]" %>
+                <datalist id="contractor_rate_units">
+                  <option value="hour">Paid per hour worked</option>
+                  <option value="week">Paid per week worked</option>
+                  <option value="month">Paid per month worked</option>
+                </datalist>
+              </span>
+              <span class="muted whitespace-nowrap" data-rate-type-target="fixed" hidden>/ whole contract</span>
+            </div>
           </div>
         </div>
 
         <div class="menu__divider my-0"></div>
 
-        <div class="flex justify-between items-center">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
           <div class="pr-5">
             <%= form.label :starts_on, "Duration" %>
             <span class="muted block">Up to <%= Payroll::Position::MAX_DURATION.inspect %>, starting within <%= Payroll::Position::MAX_START_LEAD_TIME.inspect %></span>
@@ -76,7 +99,7 @@
 
         <div class="menu__divider my-0"></div>
 
-        <div class="flex justify-between items-center gap-4">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
           <div class="pr-2">
             <%= form.label :purpose, "Purpose" %>
             <span class="muted block">Describe the scope of work</span>
