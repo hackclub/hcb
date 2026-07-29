@@ -222,11 +222,11 @@ RSpec.describe Payroll::Position, type: :model do
       expect { hcb_party.mark_signed! }.to have_enqueued_mail(Payroll::PositionMailer, :onboarding)
     end
 
-    it "schedules signing reminders for the contractor once HCB signs" do
+    it "does not schedule contract-specific signing reminders for the contractor once HCB signs" do
       contract = position.send_contract(organizer_user: organizer)
       hcb_party = contract.party(:hcb)
 
-      expect { hcb_party.mark_signed! }.to have_enqueued_job(Contract::Party::ReminderJob).at_least(:once)
+      expect { hcb_party.mark_signed! }.not_to have_enqueued_job(Contract::Party::ReminderJob)
     end
 
     it "schedules onboarding reminders for the contractor once HCB signs" do

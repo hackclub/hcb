@@ -298,7 +298,6 @@ module Payroll
 
     def notify_contractor_of_onboarding(contractor)
       contractor.notify
-      contractor.schedule_reminders
       schedule_onboarding_reminders
     rescue => e
       Rails.error.report(e, context: { payroll_position_id: id })
