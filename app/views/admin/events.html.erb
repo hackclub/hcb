@@ -17,11 +17,11 @@
   <% end %>
 <% end %>
 
-<%= form_with local: true, class: "card overflow-visible", url: events_admin_index_path, method: :get do |form| %>
-  <%= render "events/filters/search", form: %>
-  <div class="block mt-2">
-    <%= render partial: "admin/events_filter", locals: { form: } %>
+<%= form_with local: true, class: "card admin-filters", url: events_admin_index_path, method: :get do |form| %>
+  <div class="admin-filters__row">
+    <%= render "events/filters/search", form: %>
   </div>
+  <%= render "admin/events_filter", form: %>
 <% end %>
 
 <details class="card mt-2">

@@ -1,0 +1,5 @@
+<%# locals: (form:, name:, label:, choices:, options: {}, html_options: {}) %>
+<label class="filter-field">
+  <span class="filter-field__label"><%= label %></span>
+  <%= form.select name, choices, options, html_options %>
+</label>

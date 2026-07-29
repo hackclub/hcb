@@ -1,9 +1,9 @@
 <% title "Payments" %>
 
-<%= form_with method: :get, class: "card" do |form| %>
-  <div class="flex items-center gap-2">
+<%= form_with method: :get, class: "card admin-filters" do |form| %>
+  <div class="admin-filters__row">
     <%= render "events/filters/search", form: %>
-    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
+    <%= render "admin/filters/actions", form: %>
   </div>
 <% end %>
 

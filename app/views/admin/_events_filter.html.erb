@@ -1,96 +1,73 @@
-<div class="flex flex-wrap gap-2">
-  <%= form.label :transparent do %>
-    Transparent
-    <%= form.select :transparent, [["Both", "both"], ["Not transparent", "not_transparent"], ["Transparent", "transparent"]], selected: @transparent %>
-  <% end %>
-  <%= form.label :omitted do %>
-    Omitted
-    <%= form.select :omitted, [["Both", "both"], ["Not omitted", "not_omitted"], ["Omitted", "omitted"]], selected: @omitted %>
-  <% end %>
-  <%= form.label :demo_mode do %>
-    Demo
-    <%= form.select :demo_mode, [["Both", "both"], ["Full", "full"], ["Demo", "demo"]], selected: @demo_mode %>
+<%# locals: (form:, actions: true) %>
+<div class="admin-filters__grid">
+  <%= render "admin/filters/select", form:, name: :transparent, label: "Transparent",
+        choices: [["Both", "both"], ["Not transparent", "not_transparent"], ["Transparent", "transparent"]],
+        options: { selected: @transparent } %>
+
+  <%= render "admin/filters/select", form:, name: :omitted, label: "Omitted",
+        choices: [["Both", "both"], ["Not omitted", "not_omitted"], ["Omitted", "omitted"]],
+        options: { selected: @omitted } %>
+
+  <%= render "admin/filters/select", form:, name: :demo_mode, label: "Demo",
+        choices: [["Both", "both"], ["Full", "full"], ["Demo", "demo"]],
+        options: { selected: @demo_mode } %>
+
+  <%= render "admin/filters/select", form:, name: :active, label: "Active",
+        choices: [["Both", "both"], ["Inactive", "inactive"], ["Active", "active"]],
+        options: { selected: @active } %>
+
+  <%= render "admin/filters/select", form:, name: :hidden, label: "Hidden",
+        choices: [["Both", "both"], ["Not hidden", "not_hidden"], ["Hidden", "hidden"]],
+        options: { selected: @hidden } %>
+
+  <%= render "admin/filters/select", form:, name: :funded, label: "Funded",
+        choices: [["Both", "both"], ["Not funded", "not_funded"], ["Funded", "funded"]],
+        options: { selected: @funded } %>
+
+  <%= render "admin/filters/select", form:, name: :organized_by, label: "Organized by",
+        choices: [["Anyone", "anyone"], ["Teenagers", "teenagers"], ["Hack Clubbers", "hack_clubbers"], ["Adults", "adults"]],
+        options: { selected: @organized_by } %>
+
+  <%= render "admin/filters/select", form:, name: :country, label: "Country",
+        choices: { 'Outside US': 9999 }.merge(Event.countries),
+        options: { include_blank: "All", selected: @country } %>
+
+  <%= render layout: "admin/filters/field", locals: { label: "Point of contact" } do %>
+    <%= combobox_tag :point_of_contact_id, user_search_admin_index_path, placeholder: "Anyone", value: @point_of_contact&.to_combobox_display %>
   <% end %>
 
-  <%= form.label :active do %>
-    Active
-    <%= form.select :active, [["Both", "both"], ["Inactive", "inactive"], ["Active", "active"]], selected: @active %>
-  <% end %>
-
-  <%= form.label :hidden do %>
-    Hidden
-    <%= form.select :hidden, [["Both", "both"], ["Not hidden", "not_hidden"], ["Hidden", "hidden"]], selected: @hidden %>
-  <% end %>
-
-  <%= form.label :funded do %>
-    Funded
-    <%= form.select :funded, [["Both", "both"], ["Not funded", "not_funded"], ["Funded", "funded"]], selected: @funded %>
-  <% end %>
-
-  <%= form.label :organized_by do %>
-    Organized by
-    <%= form.select :organized_by, [["Anyone", "anyone"], ["Teenagers", "teenagers"], ["Hack Clubbers", "hack_clubbers"], ["Adults", "adults"]], selected: @organized_by %>
-  <% end %>
-
-  <%= form.label :country do %>
-    Country
-    <%= form.select :country, { 'Outside US': 9999 }.merge(Event.countries), { include_blank: "all", selected: @country } %>
-  <% end %>
-
-  <%= form.label :point_of_contact_id do %>
-    <span style="text-wrap: nowrap;">POC</span>
-    <%= combobox_tag :point_of_contact_id, user_search_admin_index_path, placeholder: "all", class: "!max-w-full !min-w-full", value: @point_of_contact&.to_combobox_display %>
-  <% end %>
-
-  <%= form.label :activity_since do %>
-    Activity since
+  <%= render layout: "admin/filters/field", locals: { label: "Activity since" } do %>
     <%= form.date_field :activity_since, value: @activity_since_date %>
   <% end %>
 
-  <%= form.label :plan do %>
-    Current plan
-    <%= form.select :plan, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, { include_blank: "all", selected: @plan } %>
-  <% end %>
+  <%= render "admin/filters/select", form:, name: :plan, label: "Current plan",
+        choices: Event::Plan.available_plans.map { |p| [p.new.label, p.name] },
+        options: { include_blank: "All", selected: @plan } %>
 
-  <%= form.label :sort_by do %>
-    Sort by
-    <%= form.select :sort_by, [["Balance ascending", "balance_asc"], ["Balance descending", "balance_desc"], ["Date descending", "date_desc"]], selected: @sort_by %>
-  <% end %>
+  <%= render "admin/filters/select", form:, name: :tagged_with, label: "Tagged with",
+        choices: EventTag.all.map { |t| [t.full_name, t.id] },
+        options: { include_blank: "Anything", selected: @tagged_with } %>
 
-  <%= form.label :tagged_with do %>
-    <span style="text-wrap: nowrap;">Tagged with</span>
-    <%= form.select :tagged_with, EventTag.all.map { |t| [t.full_name, t.id] }, { include_blank: "anything", selected: @tagged_with } %>
-  <% end %>
+  <%= render "admin/filters/select", form:, name: :risk_level, label: "Risk level",
+        choices: Event.risk_levels.map { |k, v| [k.humanize.capitalize, v] }.append(%w[Unset unset]),
+        options: { include_blank: "Any", selected: @risk_level } %>
 
-  <%= form.label :risk_level do %>
-    <span style="text-wrap: nowrap;">Risk level</span>
-    <%= form.select :risk_level, Event.risk_levels.map { |k, v| [k.humanize.capitalize, v] }.append(%w[Unset unset]), { include_blank: "any", selected: @risk_level } %>
-  <% end %>
-
+  <%= render "admin/filters/select", form:, name: :sort_by, label: "Sort by",
+        choices: [["Balance ascending", "balance_asc"], ["Balance descending", "balance_desc"], ["Date descending", "date_desc"]],
+        options: { selected: @sort_by } %>
 </div>
 
-<fieldset style="display: flex; flex-wrap: wrap; gap: 4px 16px; border: 1px lightgray solid; border-radius: 0.2rem; padding: 0.6rem; padding-top: 0.3rem; margin-right: 0.5rem; margin-top: 8px;">
-  <legend style="padding: 0px 8px">State:</legend>
-  <%= form.label :pending do %>
-    <%= form.check_box :pending, checked: @pending %>
-    Pending
-  <% end %>
-  <%= form.label :unapproved do %>
-    <%= form.check_box :unapproved, checked: @unapproved %>
-    Unapproved
-  <% end %>
-  <%= form.label :approved do %>
-    <%= form.check_box :approved, checked: @approved %>
-    Approved
-  <% end %>
-  <%= form.label :rejected do %>
-    <%= form.check_box :rejected, checked: @rejected %>
-    Rejected
-  <% end %>
-  <%= form.label :engaged do %>
-    <%= form.check_box :engaged, checked: @engaged %>
-    Engaged (Only)
-  <% end %>
-</fieldset>
+<div class="admin-filters__row">
+  <div class="admin-filters__group">
+    <span class="admin-filters__group-label">State</span>
+    <%= render "admin/filters/toggle", form:, name: :pending, label: "Pending", checked: @pending %>
+    <%= render "admin/filters/toggle", form:, name: :unapproved, label: "Unapproved", checked: @unapproved %>
+    <%= render "admin/filters/toggle", form:, name: :approved, label: "Approved", checked: @approved %>
+    <%= render "admin/filters/toggle", form:, name: :rejected, label: "Rejected", checked: @rejected %>
+    <%= render "admin/filters/toggle", form:, name: :engaged, label: "Engaged only", checked: @engaged %>
+  </div>
 
-<%= form.submit "Search", class: "mt-2 mr-1 btn bg-info" %>
+  <% if actions %>
+    <%= render "admin/filters/actions", form: %>
+  <% end %>
+</div>

@@ -1,11 +1,9 @@
 <% title "Checks" %>
 
-<%= form_with local: true, class: "card overflow-visible", url: increase_checks_admin_index_path, method: :get do |form| %>
-  <div class="flex items-center mt-2 gap-4 flex-wrap">
-    <%= form.label :exclude_reimbursements do %>
-      <%= form.check_box :exclude_reimbursements, checked: @exclude_reimbursements %> Exclude Reimbursements
-    <% end %>
-    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
+<%= form_with local: true, class: "card admin-filters", url: increase_checks_admin_index_path, method: :get do |form| %>
+  <div class="admin-filters__row">
+    <%= render "admin/filters/toggle", form:, name: :exclude_reimbursements, label: "Exclude reimbursements", checked: @exclude_reimbursements %>
+    <%= render "admin/filters/actions", form: %>
   </div>
 <% end %>
 

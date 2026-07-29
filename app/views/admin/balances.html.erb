@@ -1,36 +1,32 @@
 <% title "Organization Balances" %>
 
-<%= form_with local: true, action: :balances, method: :get, data: { "turbo": "false" } do |form| %>
-  <div class="inline-block">
-    <%= form.text_field :q, value: params[:q], style: "vertical-align: top;", placeholder: "Search" %>
-    <%= render partial: "admin/events_filter", locals: { form: } %>
-    <br><br>
-
-    <div style="display: flex; justify-content: space-between; align-items: center; column-gap: 0.5rem;">
-      <div>
-        <%= form.label :start_date do %>
-          <b>Start Date</b>
-          <%= form.date_field :start_date, class: "fit mr1", style: "width: min-content", value: @start_date %>
-        <% end %>
-        <%= form.label :end_date do %>
-          <b>End Date</b>
-          <%= form.date_field :end_date, class: "fit", style: "width: min-content", value: @end_date %>
-        <% end %>
-      </div>
-
-      <div>
-        <span class='mr1'>
-          <b>
-            EXPORT
-          </b>
-        </span>
-        <%= button_tag("CSV", value: "csv", name: "format", disable_with: false, formtarget: "_blank", class: "btn btn-default") %>
-        <%= button_tag("JSON", value: "json", name: "format", disable_with: false, formtarget: "_blank", class: "btn btn-default") %>
-        <%= button_tag("CSV (breakdown)", value: "true", name: "monthly_breakdown", type: "submit", formaction: "/admin/balances.csv", disable_with: false, formtarget: "_blank", class: "btn btn-default") %>
-      </div>
-    </div>
+<%= form_with local: true, action: :balances, method: :get, class: "card admin-filters", data: { "turbo": "false" } do |form| %>
+  <div class="admin-filters__row">
+    <%= render "events/filters/search", form: %>
   </div>
 
+  <%= render "admin/events_filter", form:, actions: false %>
+
+  <div class="admin-filters__grid">
+    <%= render layout: "admin/filters/field", locals: { label: "Start date" } do %>
+      <%= form.date_field :start_date, value: @start_date %>
+    <% end %>
+    <%= render layout: "admin/filters/field", locals: { label: "End date" } do %>
+      <%= form.date_field :end_date, value: @end_date %>
+    <% end %>
+  </div>
+
+  <div class="admin-filters__row">
+    <div class="admin-filters__actions">
+      <% if request.query_parameters.except("page").any? %>
+        <%= link_to "Clear", request.path, class: "admin-filters__clear" %>
+      <% end %>
+      <%= button_tag("Export CSV", value: "csv", name: "format", disable_with: false, formtarget: "_blank", class: "btn") %>
+      <%= button_tag("Export JSON", value: "json", name: "format", disable_with: false, formtarget: "_blank", class: "btn") %>
+      <%= button_tag("Export CSV (breakdown)", value: "true", name: "monthly_breakdown", type: "submit", formaction: "/admin/balances.csv", disable_with: false, formtarget: "_blank", class: "btn") %>
+      <%= form.submit "Search", class: "btn bg-info" %>
+    </div>
+  </div>
 <% end %>
 
 <p><%= pluralize(@count, "result") %></p>

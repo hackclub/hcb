@@ -1,18 +1,14 @@
 <% title "Legal Entities" %>
 
-<%= form_with local: true, class: "card", url: admin_legal_entities_path, method: :get do |form| %>
-  <div class="flex flex-col sm:flex-row items-center gap-2">
+<%= form_with local: true, class: "card admin-filters", url: admin_legal_entities_path, method: :get do |form| %>
+  <div class="admin-filters__row">
     <%= render "events/filters/search", form: %>
     <%= form.select :entity_type, [%w[Person person], %w[Business business]], { include_blank: "All types", selected: @entity_type } %>
-    <label class="flex items-center gap-1 nowrap">
-      <%= form.check_box :managed, checked: @managed %> Managed
-    </label>
-    <label class="flex items-center gap-1 nowrap">
-      <%= form.check_box :archived, checked: @archived %> Archived
-    </label>
   </div>
-  <div class="flex items-center mt-2">
-    <%= form.submit "Search", class: "ml-auto" %>
+  <div class="admin-filters__row">
+    <%= render "admin/filters/toggle", form:, name: :managed, label: "Managed", checked: @managed %>
+    <%= render "admin/filters/toggle", form:, name: :archived, label: "Archived", checked: @archived %>
+    <%= render "admin/filters/actions", form: %>
   </div>
 <% end %>
 

@@ -4,9 +4,11 @@
   <%= link_to "New Raw Transaction", raw_transaction_new_admin_index_path, class: "btn bg-primary" %>
 <% end %>
 
-<%= form_with local: true, class: "card overflow-visible", url: raw_transactions_admin_index_path, method: :get do |form| %>
-  <%= form.collection_select(:unique_bank_identifier, HashedTransaction.distinct(:unique_bank_identifier).where("unique_bank_identifier is not null").order("unique_bank_identifier asc").pluck(:unique_bank_identifier), :to_s, :to_s, { include_blank: "Select Bank Account", selected: @unique_bank_identifier }, { width: 250, class: "mb-2", style: "max-width: 250px" }) %>
-  <%= form.submit "Search", class: "btn bg-info" %>
+<%= form_with local: true, class: "card admin-filters", url: raw_transactions_admin_index_path, method: :get do |form| %>
+  <div class="admin-filters__row">
+    <%= form.collection_select(:unique_bank_identifier, HashedTransaction.distinct(:unique_bank_identifier).where("unique_bank_identifier is not null").order("unique_bank_identifier asc").pluck(:unique_bank_identifier), :to_s, :to_s, { include_blank: "All bank accounts", selected: @unique_bank_identifier }) %>
+    <%= render "admin/filters/actions", form: %>
+  </div>
 <% end %>
 
 <div class="table-container">

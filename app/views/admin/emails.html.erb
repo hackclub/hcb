@@ -1,13 +1,11 @@
 <% title "Emails" %>
 
-<%= form_with local: true, class: "card", url: emails_admin_index_path, method: :get do |form| %>
-  <div class="flex flex-col sm:flex-row items-center gap-2">
+<%= form_with local: true, class: "card admin-filters", url: emails_admin_index_path, method: :get do |form| %>
+  <div class="admin-filters__row">
     <%= render "events/filters/search", form: %>
     <%= form.text_field :to, value: params[:to], placeholder: "Email address (to)" %>
     <%= form.text_field :user_id, value: params[:user_id], placeholder: "User ID" %>
-  </div>
-  <div class="flex items-center mt-2">
-    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
+    <%= render "admin/filters/actions", form: %>
   </div>
 <% end %>
 

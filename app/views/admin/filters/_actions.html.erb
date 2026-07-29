@@ -1,0 +1,15 @@
+<%# locals: (form:, label: "Search", export_count: nil, export_params: nil) %>
+<div class="admin-filters__actions">
+  <% if request.query_parameters.except("page").any? %>
+    <%= link_to "Clear", request.path, class: "admin-filters__clear" %>
+  <% end %>
+
+  <% unless export_count.nil? %>
+    <%= link_to (export_params || params.to_unsafe_h).merge(format: :csv), class: "btn #{"disabled" if export_count.zero?}" do %>
+      <%= inline_icon "download", size: 20 %>
+      Export <%= pluralize export_count, "record" %>
+    <% end %>
+  <% end %>
+
+  <%= form.submit label, class: "btn bg-info" %>
+</div>

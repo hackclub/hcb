@@ -1,9 +1,9 @@
 <% title "Stripe cards" %>
 
-<%= form_with method: :get, class: "card" do |form| %>
-  <div class="flex items-center gap-2">
-    <%= form.text_field :q, value: @q, placeholder: "Search", class: "!max-w-full w-full" %>
-    <%= form.submit "Search", class: "btn bg-info ml-auto" %>
+<%= form_with method: :get, class: "card admin-filters" do |form| %>
+  <div class="admin-filters__row">
+    <%= render "events/filters/search", form: %>
+    <%= render "admin/filters/actions", form: %>
   </div>
 <% end %>
 
