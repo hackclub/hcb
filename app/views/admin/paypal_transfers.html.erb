@@ -34,7 +34,7 @@
         <td><%= paypal_transfer.aasm.human_state %></td>
         <td>
           <div class="flex items-center gap-2">
-            <%= pop_icon_to "external", hcb_code_path(paypal_transfer.hcb_code), "aria-label": "View" %>
+            <%= pop_icon_to "external", hcb_code_path(paypal_transfer.hcb_code), "aria-label": "View", data: admin_popover_data_for(paypal_transfer) %>
             <%= link_to "Process", paypal_transfer_process_admin_path(paypal_transfer), class: "btn" %>
           </div>
         </td>

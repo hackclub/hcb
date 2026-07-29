@@ -41,7 +41,7 @@
         <td><%= payment.purpose %></td>
         <td><%= payment.amount.format %></td>
         <td><span class="badge ml-0 bg-<%= payment.state_color %>"><%= payment.state_text %></span></td>
-        <td><%= link_to "View", payment_path(payment) %></td>
+        <td><%= link_to "View", payment_path(payment), data: admin_popover_data_for(payment) %></td>
       </tr>
     <% end %>
   </tbody>

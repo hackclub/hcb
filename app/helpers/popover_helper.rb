@@ -98,4 +98,47 @@ module PopoverHelper
       external_link: payment_path(payment)
     )
   end
+
+  def legal_entity_popover_data(legal_entity)
+    popover_data(
+      title: "Payment information for #{legal_entity.name.presence || legal_entity.display_name}",
+      src: legal_entity_path(legal_entity, frame: true),
+      frame_id: "legal_entity_#{legal_entity.hashid}",
+      state_url: legal_entity_path(legal_entity),
+      external_link: legal_entity_path(legal_entity)
+    )
+  end
+
+  # Admin pages are only reachable by admins, so popovers are always available
+  # there — no feature flag needed.
+  def admin_popovers_enabled?
+    current_user&.admin?
+  end
+
+  # Returns the popover data attributes for a record, or an empty hash when the
+  # record can't be shown in a popover. Designed to be spread into `link_to` /
+  # `pop_icon_to` calls in admin views:
+  #
+  #   link_to ct.memo, transaction_path(ct), data: admin_popover_data_for(ct)
+  def admin_popover_data_for(record)
+    return {} unless admin_popovers_enabled? && record
+
+    case record
+    when ::StripeCard
+      return stripe_card_popover_data(record)
+    when ::Employee
+      return employee_popover_data(record)
+    when ::Payment
+      return payment_popover_data(record)
+    when ::Ledger::Item
+      return record.hcb_code.present? ? ledger_item_popover_data(record) : {}
+    when ::LegalEntity
+      return legal_entity_popover_data(record)
+    end
+
+    hcb_code = record.is_a?(::HcbCode) ? record : record.try(:local_hcb_code)
+    return {} if hcb_code.blank?
+
+    hcb_code_popover_data(hcb_code)
+  end
 end

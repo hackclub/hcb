@@ -39,7 +39,7 @@
         </td>
         <td>
           <% if cpt.event %>
-            <%= link_to cpt.memo, cpt.local_hcb_code %>
+            <%= link_to cpt.memo, cpt.local_hcb_code, data: admin_popover_data_for(cpt) %>
           <% else %>
             <%= cpt.memo %>
           <% end %>

@@ -37,7 +37,7 @@
       <tr>
         <td><%= ledger_item.id %></td>
         <td><%= ledger_item.datetime.to_date %></td>
-        <td><%= link_to ledger_item.memo, ledger_item_path(ledger_item) %></td>
+        <td><%= link_to ledger_item.memo, ledger_item_path(ledger_item), data: admin_popover_data_for(ledger_item) %></td>
         <td><%= ledger_item.humanized_type %></td>
         <td class="nowrap"><%= ledger_item.amount.format %></td>
         <td><%= ledger_item.canonical_transactions.size %></td>
@@ -46,7 +46,7 @@
           <%= link_to "View", ledger_item_path(ledger_item) %>
           <% if ledger_item.hcb_code.present? %>
             <br>
-            <%= link_to "HCB Code", hcb_code_path(ledger_item.hcb_code) %>
+            <%= link_to "HCB Code", hcb_code_path(ledger_item.hcb_code), data: admin_popover_data_for(ledger_item.hcb_code) %>
           <% end %>
         </td>
       </tr>

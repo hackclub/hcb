@@ -53,7 +53,7 @@
           <% end %>
         </td>
         <td>
-          <%= link_to invoice_path(invoice) do %>
+          <%= link_to invoice_path(invoice), data: admin_popover_data_for(invoice) do %>
             <%= invoice.event.name.upcase %>: <%= invoice.sponsor.name %>
           <% end %>
         </td>

@@ -15,7 +15,7 @@
     <td class="text-right">HCB Code:</td>
     <td>
       <% if @disbursement.local_hcb_code %>
-        <%= link_to(@disbursement.outgoing_hcb_code, hcb_code_path(@disbursement.local_hcb_code)) %>
+        <%= link_to(@disbursement.outgoing_hcb_code, hcb_code_path(@disbursement.local_hcb_code), data: admin_popover_data_for(@disbursement)) %>
       <% end %>
     </td>
   </tr>
@@ -74,6 +74,7 @@
       locals: {
         canonical_transactions: @disbursement.transactions_helper.settled_source,
         canonical_pending_transactions: @disbursement.transactions_helper.pending_source,
+        popovers: true,
       }
     ) %>
 
@@ -119,6 +120,7 @@
         locals: {
           canonical_transactions: @disbursement.transactions_helper.settled_destination,
           canonical_pending_transactions: @disbursement.transactions_helper.pending_destination,
+          popovers: true,
         }
       ) %>
 <% end %>

@@ -35,7 +35,7 @@
     </tr>
     <tr>
       <th>HCB Code</th>
-      <td><%= link_to @canonical_transaction.hcb_code, hcb_code_path(@canonical_transaction.local_hcb_code) %></td>
+      <td><%= link_to @canonical_transaction.hcb_code, hcb_code_path(@canonical_transaction.local_hcb_code), data: admin_popover_data_for(@canonical_transaction) %></td>
     </tr>
     <tr>
       <th>MappedBy</th>

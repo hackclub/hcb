@@ -36,7 +36,7 @@
         <td><%= ach.id %></td>
         <td><%= ach.created_at.strftime("%Y-%m-%d") %></td>
         <td>
-          <%= link_to ach_transfer_path(ach) do %>
+          <%= link_to ach_transfer_path(ach), data: admin_popover_data_for(ach) do %>
             <%= ach.event.name.upcase %>: <%= ach.recipient_name.upcase %>
           <% end %>
         </td>

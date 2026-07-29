@@ -49,7 +49,7 @@
             <span>⚠️ (Overdue)</span>
           <% end %>
         </td>
-        <td><%= link_to hcb_code.memo, url_for(hcb_code) %></td>
+        <td><%= link_to hcb_code.memo, url_for(hcb_code), data: admin_popover_data_for(hcb_code) %></td>
         <td><%= link_to hcb_code.event&.name, hcb_code.event %></td>
         <td>
           <% if hcb_code.stripe_card? && hcb_code.card&.user %>

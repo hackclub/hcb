@@ -60,7 +60,7 @@
           </td>
           <td><%= ct.id %></td>
           <td><%= ct.date %></td>
-          <td><%= link_to ct.memo, transaction_path(ct) %></td>
+          <td><%= link_to ct.memo, transaction_path(ct), data: admin_popover_data_for(ct) %></td>
           <td><%= ct.bank_account_name %></td>
           <td class="nowrap"><%= ct.amount.format %></td>
           <td><%= ct.hcb_code %></td>

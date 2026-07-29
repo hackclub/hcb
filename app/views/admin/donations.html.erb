@@ -56,7 +56,7 @@
           <% end %>
         </td>
         <td>
-          <%= link_to donation_path(donation) do %>
+          <%= link_to donation_path(donation), data: admin_popover_data_for(donation) do %>
             <%= donation.event.name.upcase %>: <%= donation.name(show_anonymous: true) %>
           <% end %>
         </td>

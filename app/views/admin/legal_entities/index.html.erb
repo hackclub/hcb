@@ -60,7 +60,7 @@
             <span class="badge ml-0 bg-warning">No</span>
           <% end %>
         </td>
-        <td><%= link_to "View", legal_entity_path(legal_entity) %></td>
+        <td><%= link_to "View", legal_entity_path(legal_entity), data: admin_popover_data_for(legal_entity) %></td>
       </tr>
     <% end %>
   </tbody>
