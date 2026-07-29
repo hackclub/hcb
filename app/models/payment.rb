@@ -49,6 +49,8 @@ class Payment < ApplicationRecord
   scope :successful_or_sent, -> { where(aasm_state: ["successful", "sent"]) }
   scope :pending_or_under_review, -> { where(aasm_state: ["pending_legal_entity", "under_review"]) }
 
+  ACCEPTANCE_REMINDER_DAYS = [1, 2, 7, 14, 30, 60, 80, 85, 89].freeze
+
   aasm timestamps: true do
     state :pending_legal_entity, initial: true # We're waiting on the LE to complete tasks before payment can be sent
     state :under_review # HCB reviewing the underlying transfer
@@ -88,10 +90,14 @@ class Payment < ApplicationRecord
     if legal_entity&.payable? && legal_entity.default_payout_method.present?
       create_payment_attempt!
     elsif legal_entity&.payable?
-      PaymentMailer.with(payment: self, initial: true).missing_payout_method.deliver_later
+      PaymentMailer.with(payment: self).missing_payout_method.deliver_later
     else
       PaymentMailer.with(payment: self).missing_tax_information.deliver_later
     end
+  end
+
+  after_create_commit do
+    schedule_acceptance_reminders if awaiting_recipient_onboarding?
   end
 
   def retry!
@@ -110,20 +116,17 @@ class Payment < ApplicationRecord
     MoneyService.convert_to_usd(amount_cents, currency)
   end
 
-  def on_legal_entity_assigned
-    on_legal_entity_payable if legal_entity.payable?
-  end
+  # Idempotent: safe to call any number of times, from any code path that
+  # touches the associated legal entity (tax form completion, payout method
+  # creation, payee reassignment). Only ever creates a payment attempt —
+  # never sends mail, so repeated calls can't spam a recipient with reminders.
+  def refresh_legal_entity_state!
+    return unless pending_legal_entity?
+    return unless legal_entity&.payable?
+    return if legal_entity.default_payout_method.nil?
+    return unless attempts.all?(&:failed?)
 
-  def on_legal_entity_payable
-    if legal_entity.default_payout_method.present?
-      create_payment_attempt!
-    else
-      PaymentMailer.with(payment: self, initial: false).missing_payout_method.deliver_later
-    end
-  end
-
-  def on_default_payout_method_created
-    create_payment_attempt! if legal_entity.payable?
+    create_payment_attempt!
   end
 
   def receipt_required?
@@ -154,7 +157,20 @@ class Payment < ApplicationRecord
     "Payment to #{payee.display_name} for #{purpose}"
   end
 
+  def awaiting_recipient_onboarding?
+    return false unless pending_legal_entity?
+    return false if legal_entity&.managed?
+
+    !legal_entity&.payable? || legal_entity.default_payout_method.blank?
+  end
+
   private
+
+  def schedule_acceptance_reminders
+    ACCEPTANCE_REMINDER_DAYS.each do |days|
+      Payment::AcceptanceReminderJob.set(wait: days.days).perform_later(self)
+    end
+  end
 
   def create_payment_attempt!
     self.with_lock do

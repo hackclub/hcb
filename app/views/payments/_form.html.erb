@@ -4,9 +4,14 @@
   <%= render "payments/edit_payee", event:, payee: %>
 <% else %>
 
-<% disabled = !policy(event).create_transfer? %>
+<% disabled = !policy(event).create_payment? %>
 <% manual = payee&.managed? %>
+
 <% existing_payout_method = payee&.legal_entity&.default_payout_method if manual %>
+
+<% if disabled %>
+  <%= render partial: "events/unauthorized_callout", locals: { action: "send payments" } %>
+<% end %>
 
 <div data-controller="payee-picker payout-toggle manual-payee" data-action="manual-payee:changed->payout-toggle#update">
   <div data-scroll-seek-target="section">
@@ -37,6 +42,8 @@
           </div>
         </div>
 
+      <% elsif disabled %>
+        <p class="muted px-5 py-4 m0">You don't have permission to send payments from this organization.</p>
       <% else %>
 
         <%= render "payments/payee_picker", event: %>
