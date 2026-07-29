@@ -26,6 +26,7 @@ module FeeReimbursementService
           memo: rpfrt.memo,
           raw_pending_fee_reimbursement_transaction: rpfrt
         )
+        # Creating the CPT automatically creates a Ledger::Item and auto-maps it
 
         TransactionCategoryService
           .new(model: canonical_pending_transaction)
