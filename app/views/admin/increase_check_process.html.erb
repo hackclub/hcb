@@ -4,7 +4,8 @@
     Back to checks
   <% end %>
 
-  <%= link_to hcb_code_path(@check.hcb_code), class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
+  <% transaction_popover = admin_popover_data_for(@check) %>
+  <%= link_to hcb_code_path(@check.hcb_code), class: "btn btn-small bg-muted flex-shrink-0", target: ("_blank" if transaction_popover.empty?), data: transaction_popover do %>
     <%= inline_icon "payment-transfer" %>
     View transaction (<%= pluralize(@check.local_hcb_code.comments.count, "comment") %>)
   <% end %>

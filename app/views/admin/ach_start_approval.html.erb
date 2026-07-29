@@ -4,7 +4,8 @@
     Back to ACHs
   <% end %>
 
-  <%= link_to hcb_code_path(@ach_transfer.hcb_code), class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
+  <% transaction_popover = admin_popover_data_for(@ach_transfer) %>
+  <%= link_to hcb_code_path(@ach_transfer.hcb_code), class: "btn btn-small bg-muted flex-shrink-0", target: ("_blank" if transaction_popover.empty?), data: transaction_popover do %>
     <%= inline_icon "payment-transfer" %>
     View transaction (<%= pluralize(@ach_transfer.local_hcb_code.comments.count, "comment") %>)
   <% end %>
