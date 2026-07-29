@@ -88,7 +88,7 @@ class Payment < ApplicationRecord
     if legal_entity&.payable? && legal_entity.default_payout_method.present?
       create_payment_attempt!
     elsif legal_entity&.payable?
-      PaymentMailer.with(payment: self, initial: true).missing_payout_method.deliver_later
+      PaymentMailer.with(payment: self).missing_payout_method.deliver_later
     else
       PaymentMailer.with(payment: self).missing_tax_information.deliver_later
     end
@@ -110,20 +110,17 @@ class Payment < ApplicationRecord
     MoneyService.convert_to_usd(amount_cents, currency)
   end
 
-  def on_legal_entity_assigned
-    on_legal_entity_payable if legal_entity.payable?
-  end
+  # Idempotent: safe to call any number of times, from any code path that
+  # touches the associated legal entity (tax form completion, payout method
+  # creation, payee reassignment). Only ever creates a payment attempt —
+  # never sends mail, so repeated calls can't spam a recipient with reminders.
+  def refresh_legal_entity_state!
+    return unless pending_legal_entity?
+    return unless legal_entity&.payable?
+    return if legal_entity.default_payout_method.nil?
+    return unless attempts.all?(&:failed?)
 
-  def on_legal_entity_payable
-    if legal_entity.default_payout_method.present?
-      create_payment_attempt!
-    else
-      PaymentMailer.with(payment: self, initial: false).missing_payout_method.deliver_later
-    end
-  end
-
-  def on_default_payout_method_created
-    create_payment_attempt! if legal_entity.payable?
+    create_payment_attempt!
   end
 
   def receipt_required?

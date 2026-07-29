@@ -57,7 +57,7 @@ class Contract
               { name: "Description", default_value: prefills["description"], readonly: true },
               { name: "Start Date", default_value: prefills["start_date"], readonly: true },
               { name: "End Date", default_value: prefills["end_date"], readonly: true },
-              { name: "Hourly Rate", default_value: prefills["rate"], readonly: true },
+              { name: "Rate", default_value: prefills["rate"], readonly: true },
             ]
           },
           {

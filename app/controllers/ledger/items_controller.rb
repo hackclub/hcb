@@ -5,9 +5,9 @@ class Ledger
     def show
       @item = Ledger::Item.find_by_hashid!(params[:id])
 
-      # Non-auditors see the user-facing HCB code page rather than the raw
+      # Non-engineers see the user-facing HCB code page rather than the raw
       # ledger item. hcb_codes#show performs its own authorization.
-      unless auditor_signed_in?
+      unless FlipperGroups.hcb_engineer?(current_user)
         skip_authorization
         return redirect_to hcb_code_path(@item.hcb_code)
       end
