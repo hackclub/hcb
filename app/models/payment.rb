@@ -167,7 +167,7 @@ class Payment < ApplicationRecord
 
   def schedule_acceptance_reminders
     ACCEPTANCE_REMINDER_DAYS.each do |days|
-      Payment::AcceptanceReminderJob.set(wait: days.days).perform_later(self, days)
+      Payment::AcceptanceReminderJob.set(wait: days.days).perform_later(self)
     end
   end
 

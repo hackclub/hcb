@@ -58,7 +58,8 @@ module Payroll
 
     CONTRACTOR_ONBOARDING_STEPS = %i[tax_form contractor_signature payout_method].freeze
 
-    ONBOARDING_REMINDER_SCHEDULE = { 1 => 1.day, 2 => 2.days, 3 => 7.days, 4 => 14.days }.freeze
+    ONBOARDING_REMINDER_DAYS = [1, 2, 7, 14].freeze
+    ONBOARDING_REMINDER_INTERVAL_DAYS = 14
 
     after_create_commit do
       Payroll::Position::ExpireJob.set(wait_until: end_date.end_of_day).perform_later(self)
@@ -144,7 +145,7 @@ module Payroll
       [
         { key: :organizer_signature, label: "Contract signed by organizer", complete: contract_signed_by?(:organizer) },
         { key: :hcb_review, label: "Contract reviewed by HCB operations", complete: !under_review? && !rejected? },
-        { key: :tax_form, label: "W-9 / W-8BEN submitted", complete: legal_entity&.latest_tax_form&.completed? || false },
+        { key: :tax_form, label: "W-9 / W-8BEN submitted", complete: legal_entity&.completed_tax_form? || false },
         { key: :contractor_signature, label: "Contract signed by contractor", complete: contract_signed_by?(:contractor) },
         { key: :payout_method, label: "Payout method configured", complete: legal_entity&.default_payout_method.present? },
       ]
@@ -165,6 +166,13 @@ module Payroll
       onboarding_checklist.any? do |step|
         CONTRACTOR_ONBOARDING_STEPS.include?(step[:key]) && !step[:complete]
       end
+    end
+
+    def onboarding_reminder_days
+      days_remaining = (end_date - Date.current).to_i
+      days = ONBOARDING_REMINDER_DAYS.dup
+      days << days.last + ONBOARDING_REMINDER_INTERVAL_DAYS while days.last + ONBOARDING_REMINDER_INTERVAL_DAYS < days_remaining
+      days.select { |day| day < days_remaining }
     end
 
     def tax_info_needed?
@@ -263,11 +271,6 @@ module Payroll
 
     private
 
-    # Notifying/scheduling reminders for the contractor is best-effort: this
-    # runs from inside the DocuSeal webhook's transaction (via
-    # Contract::Party#mark_signed! → Contract#on_party_signed), so a job
-    # enqueue failure here must not roll back the signature that already
-    # happened on DocuSeal's side.
     def notify_contractor_of_onboarding(contractor)
       contractor.notify
       contractor.schedule_reminders
@@ -276,13 +279,9 @@ module Payroll
       Rails.error.report(e, context: { payroll_position_id: id })
     end
 
-    # Nudge the contractor to finish their onboarding steps (tax form, payout
-    # method, etc.) on the same cadence as the org application flow. Only
-    # unmanaged contractors handle these steps themselves, so the job re-checks
-    # +payee.managed?+ and whether anything is still outstanding at send time.
     def schedule_onboarding_reminders
-      ONBOARDING_REMINDER_SCHEDULE.each do |reminder_number, wait|
-        Payroll::Position::OnboardingReminderJob.set(wait:).perform_later(self, reminder_number)
+      onboarding_reminder_days.each do |days|
+        Payroll::Position::OnboardingReminderJob.set(wait: days.days).perform_later(self)
       end
     end
 

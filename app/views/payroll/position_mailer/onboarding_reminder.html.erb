@@ -5,10 +5,12 @@
   <% if @next_step.present? %>
     Your next step is: <strong><%= @next_step[:label] %></strong>.
   <% end %>
+  This position runs through <strong><%= @position.end_date.to_fs(:long) %></strong>. You'll need to
+  finish onboarding before then to be paid.
 </p>
 
 <p>
-  <%= link_to "Click here", onboarding_payroll_position_url(@position) %> to review your position and complete any remaining steps, including submitting your tax form (W-9 / W-8BEN) and configuring your payout method.
+  <%= link_to "Click here", onboarding_payroll_position_url(@position) %> to review your position and complete any remaining steps.
 </p>
 
 <p>

@@ -2,7 +2,7 @@
 
 class PayeePolicy < ApplicationPolicy
   def index?
-    EventPolicy.new(user, record).new_payment?
+    EventPolicy.new(user, record).create_payment?
   end
 
   def create?

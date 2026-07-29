@@ -5,7 +5,7 @@ class Payment
     queue_as :low
     discard_on ActiveJob::DeserializationError
 
-    def perform(payment, reminder_day)
+    def perform(payment)
       return unless payment.awaiting_recipient_onboarding?
 
       PaymentMailer.with(payment:).acceptance_reminder.deliver_later

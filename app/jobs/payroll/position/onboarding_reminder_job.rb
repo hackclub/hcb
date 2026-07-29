@@ -6,7 +6,7 @@ module Payroll
       queue_as :low
       discard_on ActiveJob::DeserializationError
 
-      def perform(position, reminder_number)
+      def perform(position)
         # Managed contractors have their onboarding handled by the org, so they
         # don't get these nudges.
         return if position.payee.managed?
@@ -14,7 +14,7 @@ module Payroll
         # Stop once they've finished (or the position is no longer onboarding).
         return unless position.onboarding? && position.contractor_onboarding_incomplete?
 
-        Payroll::PositionMailer.with(position:, reminder_number:).onboarding_reminder.deliver_later
+        Payroll::PositionMailer.with(position:).onboarding_reminder.deliver_later
       end
 
     end

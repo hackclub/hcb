@@ -15,7 +15,6 @@ module Payroll
 
     def onboarding_reminder
       @position = params[:position]
-      @reminder_number = params[:reminder_number]
       @payee = @position.payee
       @event = @position.event
       @next_step = @position.next_onboarding_step
