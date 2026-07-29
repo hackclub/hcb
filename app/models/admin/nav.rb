@@ -135,11 +135,14 @@ module Admin
       )
     end
 
-    def make_item(name:, **properties)
+    # `match_title` lets an item carry a short sidebar label while still
+    # highlighting for a longer page title (e.g. "New Teenagers" under the
+    # Leaderboards divider vs. "New Teenagers Leaderboard").
+    def make_item(name:, match_title: name, **properties)
       Item.new(
         name:,
         **properties,
-        active: normalize_string(name) == normalized_page_title
+        active: normalize_string(match_title) == normalized_page_title
       )
     end
 
@@ -441,12 +444,14 @@ module Admin
 
           make_item(
             name: "Active Teenagers",
+            match_title: "Active Teenagers Leaderboard",
             path: active_teenagers_leaderboard_admin_index_path,
             count: ->{ User.active_teenager.count },
             count_type: :records,
           ),
           make_item(
             name: "New Teenagers",
+            match_title: "New Teenagers Leaderboard",
             path: new_teenagers_leaderboard_admin_index_path,
             count: ->{ 0 }, # I think this would be expensive to calculate
             count_type: :records,

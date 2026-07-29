@@ -12,13 +12,7 @@
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @ledger_items, entry_name: "ledger items" %>
-  </div>
-  <%= paginate @ledger_items %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -58,4 +52,10 @@
   <%= blankslate "No unmapped ledger items" %>
 <% end %>
 
-<%= paginate @ledger_items %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @ledger_items, entry_name: "ledger items" %>
+  </div>
+  <%= paginate @ledger_items %>
+</div>
+</div>

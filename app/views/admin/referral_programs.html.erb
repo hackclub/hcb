@@ -1,71 +1,95 @@
 <% title "Referral Programs" %>
 
-<ul>
-  <% @referral_programs.each do |program| %>
-    <li>
-      <div class="flex flex-col items-start justify-start border w-100 mb-0">
-        <div class="flex flex-row items-center p-4 gap-8 border-bottom w-100 mb-0">
-          <div class="flex flex-col">
-            <h5 class="m-0 p-0"><%= program.name %></h5>
-            <small class="text-muted"><%= program.created_at.strftime("%Y-%m-%d") %> • Created by <%= program.creator.name %></small>
-            <small class="text-muted">Redirects to: <%= link_to(program.redirect_to.presence || root_url) %></small>
-          </div>
-          <div class="flex flex-row gap-2 justify-between m-0">
-            <span class="m-0"><%= pluralize(program.attributions.size, "click") %> • <%= pluralize(program.users.size, "user") %> • <%= pluralize(program.new_users.size, "new user") %></span>
-          </div>
+<%= form_with model: false, local: true, url: referral_program_create_admin_index_path, class: "card overflow-visible" do |form| %>
+  <div class="flex flex-col sm:flex-row items-start gap-3">
+    <label class="flex-grow w-full mb-0">
+      <b>Program name</b>
+      <%= form.text_field :name, placeholder: "Program Name", required: true, class: "!max-w-full w-full" %>
+    </label>
+    <label class="flex-grow w-full mb-0">
+      <b>Redirect to (optional)</b>
+      <%= form.text_field :redirect_to, placeholder: "https://hcb.hackclub.com/", class: "!max-w-full w-full" %>
+    </label>
+  </div>
+  <div class="flex items-center mt-2">
+    <%= form.submit "Create program", class: "btn bg-success ml-auto" %>
+  </div>
+<% end %>
 
-          <div class="flex-grow"></div>
-
-          <div class="flex flex-row gap-2">
-            <%= link_to "View users", users_admin_index_path(referral_program_id: program.id), class: "btn btn-default" %>
-            <button data-behavior="modal_trigger" data-modal="referral_program_<%= program.id %>" class="btn bg-warning">Create link</button>
-          </div>
-        </div>
-        <div class="flex flex-col items-center p-4 gap-3 w-100 mb-0">
-          <% program.links.each do |link| %>
-            <div class="flex flex-row items-center justify-between w-100">
-              <small><%= link.name %> • <span class="text-muted">Created by <%= link.creator.name %></span></small>
-              <small>
-                <%= link_to referral_link_url(link.slug), referral_link_url(link.slug) %> • <%= pluralize(link.attributions.count, "attribution") %>
+<% if @referral_programs.empty? %>
+  <%= blankslate "No referral programs yet" %>
+<% else %>
+  <ul class="list-reset flex flex-col gap-3 mt-3">
+    <% @referral_programs.each do |program| %>
+      <li>
+        <div class="card p-0">
+          <div class="flex flex-col md:flex-row md:items-center gap-4 p-4">
+            <div class="flex flex-col min-w-0">
+              <h3 class="m-0 p-0 truncate"><%= program.name %></h3>
+              <small class="muted">
+                <%= program.created_at.strftime("%Y-%m-%d") %> • Created by <%= program.creator.name %>
+              </small>
+              <% redirect_url = program.redirect_to.presence || root_url %>
+              <small class="muted truncate">
+                Redirects to <%= link_to redirect_url, redirect_url, target: "_blank", rel: "noopener" %>
               </small>
             </div>
+
+            <div class="flex flex-wrap items-center gap-2 md:ml-auto">
+              <span class="badge bg-muted ml-0"><%= pluralize(program.attributions.size, "click") %></span>
+              <span class="badge bg-muted ml-0"><%= pluralize(program.users.size, "user") %></span>
+              <span class="badge bg-muted ml-0"><%= pluralize(program.new_users.size, "new user") %></span>
+            </div>
+
+            <div class="flex flex-row gap-2 shrink-0">
+              <%= link_to "View users", users_admin_index_path(referral_program_id: program.id), class: "btn btn-small bg-muted" %>
+              <button data-behavior="modal_trigger" data-modal="referral_program_<%= program.id %>" class="btn btn-small bg-info">Create link</button>
+            </div>
+          </div>
+
+          <% if program.links.any? %>
+            <table class="table--autosize w-full m-0">
+              <thead>
+                <tr>
+                  <th>Link</th>
+                  <th>URL</th>
+                  <th class="w-32">Attributions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% program.links.each do |link| %>
+                  <tr>
+                    <td>
+                      <%= link.name %>
+                      <div class="muted h5">Created by <%= link.creator.name %></div>
+                    </td>
+                    <td><%= link_to referral_link_url(link.slug), referral_link_url(link.slug) %></td>
+                    <td><%= pluralize(link.attributions.count, "attribution") %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          <% else %>
+            <p class="muted px-4 pb-4 m-0"><small>No links yet.</small></p>
           <% end %>
         </div>
-      </div>
-    </li>
+      </li>
 
-    <section data-behavior="modal" id="referral_program_<%= program.id %>" class="modal" role="dialog">
-      <div class="modal__content">
-        <header class="modal__header">
-          <h2 class="modal__title">Create referral link for <%= program.name %></h2>
-          <button class="btn modal__close" data-behavior="modal_close" aria-label="Close modal">&times;</button>
-        </header>
-        <div class="modal__body">
-          <%= form_with model: false, local: true, url: referral_link_create_admin_index_path(program_id: program.id) do |form| %>
-            <fieldset>
-              <legend>Create a referral link</legend>
-              <%= form.label :name, "Link name" %>
-              <%= form.text_field :name, placeholder: "Reddit Post", required: true, class: "w-100" %>
-              <br>
-              <%= form.label :slug, "Custom slug (optional)" %>
-              <%= form.text_field :slug, placeholder: "my-custom-slug", class: "w-100" %>
-              <br>
-              <%= form.submit "Create link", class: "btn bg-success" %>
-            </fieldset>
-          <% end %>
-        </div>
-      </div>
-    </section>
-  <% end %>
-</ul>
+      <section data-behavior="modal" id="referral_program_<%= program.id %>" class="modal modal--scroll bg-snow" role="dialog">
+        <%= modal_header "Create referral link for #{program.name}" %>
 
-<%= form_with model: false, local: true, url: referral_program_create_admin_index_path, class: "flex flex-row gap-2" do |form| %>
-  <fieldset>
-    <legend>Create a referral program</legend>
-    <%= form.label :name, "Program name" %>
-    <%= form.text_field :name, placeholder: "Program Name", required: true, class: "w-100" %>
-    <%= form.label :redirect_to, "Redirect to (optional)" %>
-    <%= form.text_field :redirect_to, placeholder: "https://hcb.hackclub.com/", class: "w-100" %>
-    <%= form.submit "Create", class: "btn bg-success" %>
-  </fieldset>
+        <%= form_with model: false, local: true, url: referral_link_create_admin_index_path(program_id: program.id) do |form| %>
+          <label class="w-full">
+            <b>Link name</b>
+            <%= form.text_field :name, placeholder: "Reddit Post", required: true, class: "!max-w-full w-full" %>
+          </label>
+          <label class="w-full mt-2">
+            <b>Custom slug (optional)</b>
+            <%= form.text_field :slug, placeholder: "my-custom-slug", class: "!max-w-full w-full" %>
+          </label>
+          <%= form.submit "Create link", class: "btn bg-success mt-3" %>
+        <% end %>
+      </section>
+    <% end %>
+  </ul>
 <% end %>

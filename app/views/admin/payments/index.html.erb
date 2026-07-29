@@ -10,13 +10,7 @@
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @payments, entry_name: "payments" %>
-  </div>
-  <%= paginate @payments %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -47,4 +41,10 @@
   </tbody>
 </table>
 
-<%= paginate @payments %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @payments, entry_name: "payments" %>
+  </div>
+  <%= paginate @payments %>
+</div>
+</div>
