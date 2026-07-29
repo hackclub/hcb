@@ -26,9 +26,10 @@
     <%= link_to my_inbox_path, target: "_blank", class: "btn btn--primary mr2" do %>
       Manage receipts
     <% end %>
-      <%= form.submit "Add to transaction", class: "btn bg-success", data: {
-            "receipt-select-target" => "confirm"
-          }, disabled: true %>
+
+    <%= form.submit "Add to transaction", class: "btn bg-success", data: {
+          "receipt-select-target" => "confirm"
+        }, disabled: true %>
 
     <%# TODO: Replace dynamically with the right receiptable, since not just transactions are supported %>
   </footer>
