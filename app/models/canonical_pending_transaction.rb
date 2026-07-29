@@ -173,15 +173,7 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   belongs_to :ledger_item, optional: true, class_name: "Ledger::Item", touch: true
 
-  after_create_commit unless: -> { ledger_item.present? } do
-    safely do
-      ActiveRecord::Base.transaction do
-        li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
-        update!(ledger_item: li)
-        li.map!
-      end
-    end
-  end
+  after_create_commit :assign_ledger_item, unless: -> { ledger_item.present? }
 
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
@@ -478,6 +470,16 @@ class CanonicalPendingTransaction < ApplicationRecord
   end
 
   private
+
+  def assign_ledger_item
+    safely do
+      ActiveRecord::Base.transaction do
+        li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        update!(ledger_item: li)
+        li.map!
+      end
+    end
+  end
 
   def write_hcb_code
     safely do
