@@ -2,8 +2,8 @@
 
 module Maintenance
   # Mirrors HcbCode#marked_no_or_lost_receipt_at onto its Ledger::Item for
-  # transactions marked (or unmarked) before HcbCode started syncing the change
-  # itself. Ledger items keep their own copy for Ledger::Item#missing_receipt?
+  # transactions marked before Receiptable#no_or_lost_receipt! started marking
+  # both sides. Ledger items keep their own copy for Ledger::Item#missing_receipt?
   # and the ledger filters, so a stale copy shows a resolved transaction as
   # missing a receipt (or vice versa).
   #
@@ -16,7 +16,7 @@ module Maintenance
     end
 
     def process(hcb_code)
-      hcb_code.sync_marked_no_or_lost_receipt_at_to_ledger_item
+      hcb_code.sync_no_or_lost_receipt!
     end
 
     private
