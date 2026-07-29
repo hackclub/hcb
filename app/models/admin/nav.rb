@@ -41,6 +41,16 @@ module Admin
 
     end
 
+    class Group
+      attr_reader(:name, :sections)
+
+      def initialize(name:, sections:)
+        @name = name
+        @sections = sections
+      end
+
+    end
+
     class Item
       attr_reader(:name, :path)
 
@@ -83,29 +93,42 @@ module Admin
       @page_title = page_title
     end
 
-    def sections
+    def groups
       [
-        spending,
-        ledger,
-        incoming_money,
-        organizations,
-        payroll,
-        misc
+        Group.new(
+          name: "Money",
+          sections: [
+            incoming_money,
+            spending,
+            ledger,
+            cards,
+            financials
+          ]
+        ),
+        Group.new(
+          name: "Organizations & People",
+          sections: [
+            organizations,
+            payroll,
+            users,
+            documents,
+            leaderboards
+          ]
+        )
       ]
     end
 
-    def section_names
-      [
-        "Spending",
-        "Ledger",
-        "Incoming Money",
-        "Organizations",
-        "Payroll",
-        "Misc"
-      ]
+    memo_wise(:groups)
+
+    def sections
+      groups.flat_map(&:sections)
     end
 
     memo_wise(:sections)
+
+    def section_names
+      sections.map(&:name)
+    end
 
     def active_section
       sections.find(&:active?)
@@ -149,7 +172,7 @@ module Admin
     def spending
       Section.new(
         name: "Spending",
-        icon: "payment-transfer",
+        icon: "door-leave",
         items: [
           make_item(
             name: "ACH Transfers",
@@ -200,7 +223,7 @@ module Admin
     def ledger
       Section.new(
         name: "Ledger",
-        icon: "transactions",
+        icon: "card-list",
         items: [
           make_item(
             name: "Ledger",
@@ -250,8 +273,8 @@ module Admin
 
     def incoming_money
       Section.new(
-        name: "Incoming Money",
-        icon: "payment",
+        name: "Incoming",
+        icon: "door-enter",
         items: [
           make_item(
             name: "Donations",
@@ -290,7 +313,7 @@ module Admin
     def organizations
       Section.new(
         name: "Organizations",
-        icon: "explore",
+        icon: "event-check",
         items: [
           make_item(
             name: "Applications (HCB)",
@@ -302,6 +325,12 @@ module Admin
             name: "Organizations",
             path: events_admin_index_path,
             count: ->{ Event.approved.count },
+            count_type: :records
+          ),
+          make_item(
+            name: "Event Groups",
+            path: admin_event_groups_path,
+            count: ->{ Event::Group.count },
             count_type: :records
           ),
           make_item(
@@ -359,12 +388,11 @@ module Admin
       )
     end
 
-    def misc
+    def cards
       Section.new(
-        name: "Misc",
-        icon: "more",
+        name: "Cards",
+        icon: "card",
         items: [
-          make_divider(name: "Cards"),
           make_item(
             name: "Stripe Cards",
             path: stripe_cards_admin_index_path,
@@ -376,8 +404,16 @@ module Admin
             path: stripe_card_personalization_designs_admin_index_path,
             count: ->{ StripeCard::PersonalizationDesign.count },
             count_type: :records
-          ),
-          make_divider(name: "Documents"),
+          )
+        ]
+      )
+    end
+
+    def documents
+      Section.new(
+        name: "Documents",
+        icon: "docs",
+        items: [
           make_item(
             name: "Common Documents",
             path: common_documents_path,
@@ -389,14 +425,16 @@ module Admin
             path: contracts_admin_index_path,
             count: ->{ Contract.count },
             count_type: :records
-          ),
-          make_divider(name: "Events and Financials"),
-          make_item(
-            name: "Event Groups",
-            path: admin_event_groups_path,
-            count: ->{ Event::Group.count },
-            count_type: :records,
-          ),
+          )
+        ]
+      )
+    end
+
+    def financials
+      Section.new(
+        name: "Financials",
+        icon: "bank-account",
+        items: [
           make_item(
             name: "Bank Accounts",
             path: bank_accounts_admin_index_path,
@@ -420,8 +458,16 @@ module Admin
             path: admin_column_statements_path,
             count: ->{ Column::Statement.count },
             count_type: :records
-          ),
-          make_divider(name: "User management"),
+          )
+        ]
+      )
+    end
+
+    def users
+      Section.new(
+        name: "Users",
+        icon: "people-2",
+        items: [
           make_item(
             name: "Users",
             path: users_admin_index_path,
@@ -439,9 +485,16 @@ module Admin
             path: referral_programs_admin_index_path,
             count: ->{ Referral::Program.count },
             count_type: :records
-          ),
-          make_divider(name: "Leaderboards"),
+          )
+        ]
+      )
+    end
 
+    def leaderboards
+      Section.new(
+        name: "Leaderboards",
+        icon: "leader",
+        items: [
           make_item(
             name: "Active Teenagers",
             match_title: "Active Teenagers Leaderboard",

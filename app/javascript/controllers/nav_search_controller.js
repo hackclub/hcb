@@ -100,5 +100,28 @@ export default class extends Controller {
         detail.classList.add('hidden')
       }
     })
+
+    // hide a group's eyebrow header when every section under it is filtered out
+    let currentGroupHeader = null
+    let groupHasVisibleSection = false
+    const flushGroupHeader = () => {
+      if (currentGroupHeader) {
+        currentGroupHeader.classList.toggle('hidden', !groupHasVisibleSection)
+      }
+    }
+
+    this.frameTarget
+      .querySelectorAll('[data-nav-group-header], details.dock')
+      .forEach(node => {
+        if (node.hasAttribute('data-nav-group-header')) {
+          flushGroupHeader()
+          currentGroupHeader = node
+          groupHasVisibleSection = false
+        } else if (!node.classList.contains('hidden')) {
+          groupHasVisibleSection = true
+        }
+      })
+
+    flushGroupHeader()
   }
 }

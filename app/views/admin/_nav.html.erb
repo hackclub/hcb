@@ -1,37 +1,41 @@
 <%# locals: (nav:, skeleton: false) %>
 
 <nav class="dock flex font-medium">
-  <% nav.sections.each do |section| %>
-    <details class="dock" <%= "open" if section.active? %>>
-      <summary class="dock__item">
-        <%= inline_icon section.icon, size: 32, style: "padding: 0" %>
-        <%= link_to section.name, section.path, class: "flex-grow", style: "color: inherit; text-decoration: none;" %>
-        <% if skeleton %>
-          <span class="badge bg-muted h-fit invisible">0</span>
-        <% else %>
-          <span class="badge <%= section.task_sum > 0 ? "bg-success" : "bg-muted" %> h-fit">
-            <%= section.task_sum > 0 ? section.task_sum : section.counter_sum %>
-          </span>
-        <% end %>
-        <%= inline_icon "up-caret-small", class: "drawer-chevron fill-muted" %>
-      </summary>
+  <% nav.groups.each do |group| %>
+    <span class="mx-1 dock__section" data-nav-group-header><%= group.name %></span>
 
-      <% section.items.each do |item| %>
-        <% if item.divider? %>
-          <span class="dock__section" style="margin-left: 36px"><%= item.name %></span>
-        <% else %>
-          <%= link_to item.path, class: "dock__item", 'aria-current': item.active? ? "page" : "false" do %>
-            <span class="dock__item-label flex-grow"><%= item.name %></span>
-            <% if skeleton %>
-              <span class="badge bg-muted h-fit ml-auto invisible">0</span>
-            <% else %>
-              <span class="badge <%= item.task_count? && item.count > 0 ? "bg-success" : "bg-muted" %> h-fit ml-auto">
-                <%= item.count %>
-              </span>
+    <% group.sections.each do |section| %>
+      <details class="dock" <%= "open" if section.active? %>>
+        <summary class="dock__item">
+          <%= inline_icon section.icon, size: 32, style: "padding: 0" %>
+          <span class="flex-grow"><%= section.name %></span>
+          <% if skeleton %>
+            <span class="badge bg-muted h-fit invisible">0</span>
+          <% else %>
+            <span class="badge <%= section.task_sum > 0 ? "bg-success" : "bg-muted" %> h-fit">
+              <%= section.task_sum > 0 ? section.task_sum : section.counter_sum %>
+            </span>
+          <% end %>
+          <%= inline_icon "up-caret-small", class: "drawer-chevron fill-muted" %>
+        </summary>
+
+        <% section.items.each do |item| %>
+          <% if item.divider? %>
+            <span class="dock__section" style="margin-left: 36px"><%= item.name %></span>
+          <% else %>
+            <%= link_to item.path, class: "dock__item", 'aria-current': item.active? ? "page" : "false" do %>
+              <span class="dock__item-label flex-grow"><%= item.name %></span>
+              <% if skeleton %>
+                <span class="badge bg-muted h-fit ml-auto invisible">0</span>
+              <% else %>
+                <span class="badge <%= item.task_count? && item.count > 0 ? "bg-success" : "bg-muted" %> h-fit ml-auto">
+                  <%= item.count %>
+                </span>
+              <% end %>
             <% end %>
           <% end %>
         <% end %>
-      <% end %>
-    </details>
+      </details>
+    <% end %>
   <% end %>
 </nav>
