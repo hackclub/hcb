@@ -1,15 +1,23 @@
 <% title "Create an organization from Airtable" %>
 
-<h1>Create an organization from Airtable</h1>
+<% content_for(:admin_actions) do %>
+  <%= link_to "Create manually", event_new_admin_index_path, class: "btn" %>
+<% end %>
 
-<%= form_with(model: false, local: true, url: event_create_from_airtable_admin_index_path) do |form| %>
-  <p>
-    <%= form.label :airtable_record_id, "Airtable Record ID" %>
-    <br>
-    <%= form.text_field :airtable_record_id, placeholder: "Airtable Record ID", value: params[:airtable_record_id], required: true %>
-  </p>
+<%= form_with(model: false, local: true, url: event_create_from_airtable_admin_index_path, class: "admin-form") do |form| %>
+  <section class="card admin-form__section">
+    <div class="field">
+      <%= form.label :airtable_record_id, "Airtable record ID" %>
+      <span class="admin-form__hint">
+        From the applications table. The name, country and tags come from the record, and the
+        Airtable row is updated with the new HCB account URL.
+      </span>
+      <%= form.text_field :airtable_record_id, placeholder: "recXXXXXXXXXXXXXX", value: params[:airtable_record_id], required: true, autofocus: true %>
+    </div>
+  </section>
 
-  <p>
-    <%= form.submit "Create organization", class: "btn bg-success" %>
-  </p>
+  <div class="admin-form__footer">
+    <%= button_tag "Create organization", name: nil, class: "btn bg-success" %>
+    <%= link_to "Cancel", events_admin_index_path, class: "admin-form__cancel" %>
+  </div>
 <% end %>

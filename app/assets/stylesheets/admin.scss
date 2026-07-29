@@ -216,7 +216,7 @@ samp {
 //   .admin-filters__group     a labelled cluster of related toggles
 //   .admin-filters__actions   trailing action cluster (clear / export / search)
 //   .filter-field             a control with an eyebrow label above it
-//   .filter-toggle            a checkbox rendered as a pill
+//   .checkbox-pill            a checkbox rendered as a pill
 $filter-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3.25' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
 
 .admin-filters {
@@ -383,7 +383,7 @@ $filter-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'
   }
 }
 
-.filter-toggle {
+.checkbox-pill {
   display: inline-flex;
   align-items: center;
   height: 30px;
@@ -447,6 +447,140 @@ $filter-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'
 
   &:has(input:focus-visible) {
     box-shadow: 0 0 0 3px rgba(51, 142, 218, 0.3);
+  }
+}
+
+// Admin create/edit forms.
+//
+// One readable column of sectioned cards, so a long form scans as a handful of
+// steps instead of an undifferentiated stack of inputs:
+//
+//   .admin-form            the form; caps the column width
+//   .admin-form__section   a titled card of related fields
+//   .admin-form__grid      side-by-side fields inside a section
+//   .admin-form__hint      muted help text under a label
+//   .admin-form__option    a boolean rendered as a titled, describable row
+//   .admin-form__footer    the submit row
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 46rem;
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    overflow: visible;
+  }
+
+  &__title {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    opacity: 0.55;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 0.875rem 1rem;
+  }
+
+  &__hint {
+    display: block;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    opacity: 0.6;
+  }
+
+  &__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  &__cancel {
+    color: var(--muted);
+    font-weight: 500;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+      color: var(--info);
+    }
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3125rem;
+    margin-bottom: 0;
+    min-width: 0;
+  }
+
+  label {
+    color: inherit;
+    font-weight: 600;
+  }
+
+  // Text-like controls fill their field; the global 24rem cap would otherwise
+  // leave a ragged right edge inside the section cards.
+  input:not([type='checkbox'], [type='radio'], [type='submit']),
+  select,
+  textarea,
+  .input {
+    width: 100%;
+    max-width: none;
+  }
+
+  // A unit sitting inside the field's border, e.g. the `$` on a money input.
+  &__prefix {
+    flex-shrink: 0;
+    padding-left: 0.25rem;
+    font-weight: 600;
+    opacity: 0.5;
+    user-select: none;
+  }
+
+  &__option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-border);
+    cursor: pointer;
+    transition: 0.125s ease-in-out;
+    transition-property: background-color, box-shadow;
+
+    &:hover {
+      background-color: rgba(200, 200, 200, 0.12);
+    }
+
+    &:has(input:checked) {
+      background-color: rgba(51, 142, 218, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(51, 142, 218, 0.4);
+    }
+
+    &:has(input:focus-visible) {
+      box-shadow: 0 0 0 3px rgba(51, 142, 218, 0.3);
+    }
+
+    input[type='checkbox'] {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      margin-top: 0.1875rem;
+    }
+
+    strong {
+      display: block;
+      font-weight: 600;
+      line-height: 1.3;
+    }
   }
 }
 

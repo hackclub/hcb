@@ -6,7 +6,7 @@
 
 <%= form_with local: true, class: "card admin-filters", url: raw_transactions_admin_index_path, method: :get do |form| %>
   <div class="admin-filters__row">
-    <%= form.collection_select(:unique_bank_identifier, HashedTransaction.distinct(:unique_bank_identifier).where("unique_bank_identifier is not null").order("unique_bank_identifier asc").pluck(:unique_bank_identifier), :to_s, :to_s, { include_blank: "All bank accounts", selected: @unique_bank_identifier }) %>
+    <%= form.collection_select(:unique_bank_identifier, @bank_identifiers, :to_s, :to_s, { include_blank: "All bank accounts", selected: @unique_bank_identifier }) %>
     <%= render "admin/filters/actions", form: %>
   </div>
 <% end %>

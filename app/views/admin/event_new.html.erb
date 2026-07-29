@@ -1,69 +1,129 @@
 <% title "Create an organization" %>
 
-<h1>Create an organization</h1>
+<% content_for(:admin_actions) do %>
+  <%= link_to event_new_from_airtable_admin_index_path, class: "btn" do %>
+    Create from Airtable
+  <% end %>
+<% end %>
 
-<%= form_with(local: true, url: event_create_admin_index_path) do |form| %>
-  <fieldset>
-    <legend>Organization</legend>
-    <p>
-      <%= form.label :name, "Name (required)" %>
-      <br>
-      <%= form.text_field :name, placeholder: "Organization Name", value: params[:name], required: true %>
-    </p>
+<%= form_with(local: true, url: event_create_admin_index_path, class: "admin-form") do |form| %>
+  <section class="card admin-form__section">
+    <h3 class="admin-form__title">Organization</h3>
 
-    <p>
-      <%= form.label :organizer_email, "Organizer's Email Address" %>
-      <br>
-      <%= form.email_field :organizer_email, placeholder: "Email Address", value: params[:organizer_email], required: false %>
-    </p>
-
-    <%= render "organizer_position_invites/admin_signee_check", form: form, default_selected: true %>
-
-    <p>
-      <%= form.label :country %>
-      <br>
-      <%= form.collection_select :country, Event.countries_for_select, :first, :last, selected: params[:country] %>
-    </p>
-
-    <div class="field mb2">
-      <%= form.label :plan, "Assign a plan" %>
-      <br>
-      <%= form.select(:plan, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, selected: params[:plan]) %>
+    <div class="field">
+      <%= form.label :name, "Name" %>
+      <%= form.text_field :name, placeholder: "Hack Club Bank", value: params[:name], required: true, autofocus: true %>
     </div>
 
-    <div class="field mb2">
-      <%= form.label :tags, "Organization Tags" %>
-      <br>
-      <%= form.select(:tags, EventTag::Tags::ALL.map { |tag| [tag.to_s.titleize, tag] }, selected: params[:tags], multiple: true) %>
+    <div class="admin-form__grid">
+      <div class="field">
+        <%= form.label :country %>
+        <%= form.collection_select :country, Event.countries_for_select, :first, :last, selected: params[:country] %>
+      </div>
+
+      <div class="field">
+        <%= form.label :plan, "Plan" %>
+        <%= form.select(:plan, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, selected: params[:plan]) %>
+      </div>
     </div>
 
     <div class="field">
-      <%= form.label :point_of_contact_id, "Point of contact" %>
-      <%= form.collection_select :point_of_contact_id, User.admin.all, :id, :email, selected: @current_user.id %>
+      <%= form.label :tags, "Tags" %>
+      <span class="admin-form__hint">Optional. Used for reporting and partner filtering.</span>
+      <%# Mirrors what a multi-select would send, so `tags` is always present. %>
+      <%= hidden_field_tag "tags[]", "", id: nil %>
+      <div class="flex flex-wrap gap-2 mt-1">
+        <% EventTag::Tags::ALL.each do |tag| %>
+          <label class="checkbox-pill">
+            <%= check_box_tag "tags[]", tag, Array(params[:tags]).include?(tag), id: nil %>
+            <%= tag %>
+          </label>
+        <% end %>
+      </div>
+    </div>
+  </section>
+
+  <section class="card admin-form__section" data-controller="form-hide-field" data-form-hide-field-condition-value="false">
+    <h3 class="admin-form__title">Organizer</h3>
+
+    <div class="field">
+      <%= form.label :organizer_email, "Email address" %>
+      <span class="admin-form__hint">Leave blank to create the organization without inviting anyone.</span>
+      <%= form.email_field :organizer_email, placeholder: "orpheus@hackclub.com", value: params[:organizer_email] %>
     </div>
 
-    <p>
+    <div class="admin-form__grid">
+      <div class="field">
+        <%= form.label :is_signee, "Contract" %>
+        <%= form.select :is_signee,
+              [["📃 Will sign the contract", "true"], ["❌ Won't sign the contract", "false"]],
+              { selected: "true" },
+              { required: true, data: { form_hide_field_target: "select", action: "form-hide-field#toggle" } } %>
+      </div>
+
+      <div class="field" data-form-hide-field-target="field">
+        <%= form.label :cosigner_email, "Cosigner email" %>
+        <%= form.email_field :cosigner_email, placeholder: "Required if the organizer is under 18" %>
+      </div>
+    </div>
+
+    <label class="admin-form__option">
+      <%= form.check_box :include_videos %>
+      <span>
+        <strong>Include onboarding videos</strong>
+        <span class="admin-form__hint">Sends the getting-started videos along with the contract.</span>
+      </span>
+    </label>
+  </section>
+
+  <section class="card admin-form__section">
+    <h3 class="admin-form__title">Internal</h3>
+
+    <div class="admin-form__grid">
+      <div class="field">
+        <%= form.label :point_of_contact_id, "Point of contact" %>
+        <%= form.collection_select :point_of_contact_id, User.admin.all, :id, :email, selected: @current_user.id %>
+      </div>
+
+      <div class="field">
+        <%= form.label :risk_level, "Risk level" %>
+        <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Unset" }, selected: params[:risk_level] %>
+      </div>
+    </div>
+  </section>
+
+  <section class="card admin-form__section">
+    <h3 class="admin-form__title">Settings</h3>
+
+    <label class="admin-form__option">
       <%= form.check_box :is_public, { checked: true } %>
-      <%= form.label :is_public, "Make public/transparent?" %>
-    </p>
+      <span>
+        <strong>Transparent</strong>
+        <span class="admin-form__hint">Publishes the organization's ledger on its public page.</span>
+      </span>
+    </label>
 
-    <p>
+    <label class="admin-form__option">
       <%= form.check_box :approved, { checked: true } %>
-      <%= form.label :approved, "Approved?" %>
-    </p>
+      <span>
+        <strong>Approved</strong>
+        <span class="admin-form__hint">Unapproved organizations can't move money.</span>
+      </span>
+    </label>
 
-    <p>
+    <label class="admin-form__option">
       <%= form.check_box :demo_mode %>
-      <%= form.label :demo_mode, "Playground Mode?" %>
+      <span>
+        <strong>Playground mode</strong>
+        <span class="admin-form__hint">For trying HCB out. No real money, and the organization can be upgraded later.</span>
+      </span>
+    </label>
+  </section>
 
-    <p>
-      <%= form.label :risk_level %>
-      <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" }, selected: params[:risk_level] %>
-    </p>
-
-  </fieldset>
-
-  <p>
-    <%= form.submit "Create organization", class: "btn bg-success" %>
-  </p>
+  <div class="admin-form__footer">
+    <%# button_tag, not form.submit: `.bg-success` ties on specificity with the
+        dark-mode `input[type=submit]` rule and loses on source order. %>
+    <%= button_tag "Create organization", name: nil, class: "btn bg-success" %>
+    <%= link_to "Cancel", events_admin_index_path, class: "admin-form__cancel" %>
+  </div>
 <% end %>
