@@ -122,35 +122,43 @@ RSpec.describe "Card grant bulk creation -> new ledger mapping", type: :model do
     end
   end
 
-  # ---- The bug: a transient failure in an un-`safely` post-commit callback. ----
-  # We force grant #1's send_email (an after_create_commit that does I/O) to raise
-  # once, simulating a real transient mail-queue / Turbo-broadcast hiccup during
-  # the commit-callback burst. Because grant #1's CardGrant row commits before its
-  # own CPTs and before every later grant, this raise (in the shared transaction)
-  # aborts the whole remaining callback chain.
-  describe "when a post-commit callback raises transiently during the batch" do
-    before do
-      allow_any_instance_of(CardGrant).to receive(:send_email) do |cg|
-        raise "simulated transient after_commit failure (mail/broadcast)" if cg.email == "grant-1@example.com"
+  # ---- The bug: ANY exception thrown during the shared-transaction commit. ----
+  # The injection point (grant #1's send_email) is arbitrary and NOT a claim about
+  # which prod callback raises — it's just a convenient place to throw, before
+  # grant #1's own CPTs and before every later grant, during the commit-callback
+  # burst. What matters is the exception CLASS: we inject the two error types
+  # AppSignal actually recorded for this window (a non-unique violation, and a
+  # request timeout) to show both produce the exact prod symptom, and only in the
+  # shared-transaction path. (A real Rack::Timeout is thrown asynchronously at an
+  # arbitrary line; raising it here synchronously is a stand-in for that.)
+  [
+    ActiveRecord::RecordNotUnique.new("simulated non-unique violation"),
+    Timeout::Error.new("simulated request timeout"),
+  ].each do |injected_error|
+    describe "when a #{injected_error.class} is raised mid-batch (as AppSignal logged)" do
+      before do
+        allow_any_instance_of(CardGrant).to receive(:send_email) do |cg|
+          raise injected_error if cg.email == "grant-1@example.com"
+        end
       end
-    end
 
-    # EXPECTED PASS: per-grant transactions isolate the blast radius to grant #1;
-    # grants #2..N still map correctly.
-    context "creating grants one at a time (single-grant path)" do
-      it "still maps every later grant correctly" do
-        grants = create_one_at_a_time
-        grants.drop(1).each { |g| expect_correct_ledger_mapping(g) }
+      # EXPECTED PASS: per-grant transactions isolate the blast radius to grant #1;
+      # grants #2..N still map correctly.
+      context "creating grants one at a time (single-grant path)" do
+        it "still maps every later grant correctly" do
+          grants = create_one_at_a_time
+          grants.drop(1).each { |g| expect_correct_ledger_mapping(g) }
+        end
       end
-    end
 
-    # EXPECTED FAIL: one shared transaction means grant #1's raise skips the
-    # after_commit callbacks of grants #2..N too, leaving their legs orphaned
-    # (CPT.ledger_item_id NULL, items unmapped) — exactly the prod symptom.
-    context "creating grants in one shared transaction (bulk CSV path)" do
-      it "leaves later grants correctly mapped" do
-        grants = create_in_one_shared_transaction
-        grants.drop(1).each { |g| expect_correct_ledger_mapping(g) }
+      # EXPECTED FAIL: one shared transaction means grant #1's raise skips the
+      # after_commit callbacks of grants #2..N too, leaving their legs orphaned
+      # (CPT.ledger_item_id NULL, items unmapped) — exactly the prod symptom.
+      context "creating grants in one shared transaction (bulk CSV path)" do
+        it "leaves later grants correctly mapped" do
+          grants = create_in_one_shared_transaction
+          grants.drop(1).each { |g| expect_correct_ledger_mapping(g) }
+        end
       end
     end
   end
