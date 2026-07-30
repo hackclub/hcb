@@ -57,5 +57,17 @@ FactoryBot.define do
         }
       end
     end
+
+    # A merchant whose category is forbidden but whose network ID is allowlisted.
+    trait :allowlisted_network_id do
+      merchant_data do
+        {
+          category: "non_fi_money_orders",
+          category_code: "6051",
+          network_id: "088011245800",
+          name: "AlipayHK"
+        }
+      end
+    end
   end
 end

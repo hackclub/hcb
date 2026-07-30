@@ -38,12 +38,6 @@ module StaticPagesHelper
 
   def airtable_info
     {
-      onboard_id: {
-        id: "app4Bs8Tjwvk5qcD4",
-        table: "Verifications%20-%20Depreciated",
-        query: { filterByFormula: "Status='Pending'" },
-        destination: "https://airtable.com/app4Bs8Tjwvk5qcD4/tblVZwB8QMUSDAd41/viwJ15CT6VHCZ0UZ4"
-      },
       bank_applications: {
         id: "apppALh5FEOKkhjLR",
         table: "Events",
@@ -110,23 +104,12 @@ module StaticPagesHelper
         query: { filterByFormula: "{Verification Status}='Unknown'" },
         destination: "https://airtable.com/appre1xwKlj49p0d4/tbl2Q2aCWqyBGi9mj/viwVYhUQYyNJOi0EH"
       },
-      boba: {
-        id: "app05mIKwNPO2l1vT",
-        table: "Event%20Codes",
-        query: { filterByFormula: "Status='Under Review'" },
-        destination: "https://airtable.com/app05mIKwNPO2l1vT/tblcIuVemD63IbBuY/viw1Zo5lX8e7t2Vzu"
-      },
       marketing_shipment_request: {
         id: "appK53aN0fz3sgJ4w",
         table: "tblvSJMqoXnQyN7co",
         destination: "https://airtable.com/appK53aN0fz3sgJ4w/tblvSJMqoXnQyN7co/viwk107ZoZqAsFfRS"
       }
     }
-  end
-
-  def apply_form_url(user = current_user, **query_params)
-    query_params = { userEmail: user.email, firstName: user.first_name, lastName: user.last_name, userPhone: user.phone_number, userBirthday: user.birthday&.year, utm_source: "hcb", utm_medium: "web" }.merge(query_params) # allow method arguments to override default.
-    "https://hackclub.com/fiscal-sponsorship/apply/?#{URI.encode_www_form(query_params.compact)}"
   end
 
   def render_permissions(permissions, depth = 0)

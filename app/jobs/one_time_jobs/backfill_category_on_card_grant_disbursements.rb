@@ -4,7 +4,7 @@ module OneTimeJobs
   class BackfillCategoryOnCardGrantDisbursements < ApplicationJob
     def perform
       disbursements = Disbursement.where.not(source_subledger_id: nil, destination_subledger_id: nil)
-      slug = "grants-stipends"
+      slug = "grants"
       category = TransactionCategory.find_or_create_by!(slug:)
 
       disbursements.where(source_transaction_category: nil).update(source_transaction_category: category)

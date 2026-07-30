@@ -43,8 +43,9 @@
     <div class="justify-center flex flex-col sm:flex-row w-full gap-2">
       <% if @card_grant.stripe_card %>
         <div class="sm:max-w-[300px]">
-          <%= render "stripe_cards/stripe_card", stripe_card: @card_grant.stripe_card, headless: true %>
-          <div class="-mt-2"></div>
+          <div class="<%= "scale-[0.98] transition-transform hover:scale-1 mb-2" if @card_grant.canceled? %>">
+            <%= render "stripe_cards/stripe_card", stripe_card: @card_grant.stripe_card, headless: true %>
+          </div>
           <%= render partial: "card_grants/balance", locals: { card_grant: @card_grant } %>
           <%= render partial: "card_grants/canceled_warning", locals: { card_grant: @card_grant } %>
           <%= render partial: "card_grants/actions", locals: { card_grant: @card_grant } %>
@@ -69,7 +70,7 @@
 </div>
 
 <% unless @card_grant.user == current_user && @card_grant.pending_invite? %>
-  <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes } %>
+  <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes, ledger: @ledger, items: @items } %>
 <% end %>
 
 <% if policy(@card_grant.comments.build).create? %>

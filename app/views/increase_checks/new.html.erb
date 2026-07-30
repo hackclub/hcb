@@ -113,7 +113,7 @@
                   <span class="muted ml1"><%= payment_recipient.address_city %>, <%= payment_recipient.address_state %></span>
                 </button>
                 <%= link_to event_payment_recipient_path(@event, payment_recipient),
-                  data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to remove this payment recipient?" } do %>
+                  data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to remove this payment recipient?", turbo_confirm_danger: true } do %>
                   <%= inline_icon "view-close", size: 24, class: "align-middle" %>
                 <% end %>
               </div>

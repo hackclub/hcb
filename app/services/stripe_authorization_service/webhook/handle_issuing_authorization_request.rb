@@ -57,13 +57,13 @@ module StripeAuthorizationService
       def approve?
         return decline_with_reason!("event_frozen") if event.financially_frozen?
 
-        if forbidden_merchant? && !card.user&.admin?
+        if forbidden_merchant? && !card.user&.admin? && !Flipper.enabled?(:allowlist_for_blocked_merchants, card.user)
           AdminMailer
             .with(stripe_card: card, merchant_category:)
             .blocked_authorization
             .deliver_later
 
-          return decline_with_reason!("merchant_not_allowed")
+          return decline_with_reason!("merchant_not_allowed_globally")
         end
 
         return decline_with_reason!("merchant_not_allowed") unless merchant_allowed?
@@ -75,7 +75,7 @@ module StripeAuthorizationService
             return decline_with_reason!("cash_withdrawals_not_allowed")
           end
 
-          if amount_cents > 500_00
+          if amount_cents > 500_00 && !Flipper.enabled?(:allow_large_cash_withdrawals_2026_07_15, card.user)
             return decline_with_reason!("exceeds_approval_amount_limit")
           end
         end
@@ -109,8 +109,11 @@ module StripeAuthorizationService
       end
 
       def forbidden_merchant?
-        StripeAuthorizationService::FORBIDDEN_MERCHANT_CATEGORIES.include?(merchant_category) ||
-          StripeAuthorizationService::FORBIDDEN_MERCHANT_NETWORK_IDS.include?(merchant_network_id)
+        # Explicitly blocked network IDs (e.g. fraud) can never be allowlisted.
+        return true if StripeAuthorizationService::FORBIDDEN_MERCHANT_NETWORK_IDS.include?(merchant_network_id)
+
+        StripeAuthorizationService::FORBIDDEN_MERCHANT_CATEGORIES.include?(merchant_category) &&
+          StripeAuthorizationService::ALLOWLISTED_MERCHANT_NETWORK_IDS.exclude?(merchant_network_id)
       end
 
       def merchant_allowed?

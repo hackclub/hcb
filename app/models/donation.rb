@@ -66,6 +66,10 @@ class Donation < ApplicationRecord
   set_public_id_prefix :don
 
   include AASM
+  include VisibleStatable
+  set_visible_state_context { |donation| donation.event }
+  set_visible_state_mapping(in_transit: ->(event) { event&.can_front_balance? ? :deposited : :in_transit })
+
   include Freezable
   include UsersHelper
 
@@ -78,6 +82,7 @@ class Donation < ApplicationRecord
   include PgSearch::Model
   pg_search_scope :search_name, against: [:name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "donations.created_at"
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
   belongs_to :fee_reimbursement, optional: true
   belongs_to :payout, class_name: "DonationPayout", optional: true
@@ -86,7 +91,7 @@ class Donation < ApplicationRecord
 
   before_save :trim_utm_referrer_fields
 
-  before_create :create_stripe_payment_intent, unless: -> { recurring? || in_person? }
+  before_create :create_stripe_payment_intent, unless: -> { recurring? }
   before_create :assign_unique_hash, unless: -> { recurring? }
 
   after_commit :send_notification
@@ -154,7 +159,7 @@ class Donation < ApplicationRecord
     end
 
     if in_person? && name.blank?
-      self.name = payment_intent.latest_charge.payment_method_details.card_present&.cardholder_name || "In-Person Donor"
+      self.name = payment_intent.latest_charge&.payment_method_details&.card_present&.cardholder_name || "In-Person Donor"
     end
 
     mark_in_transit if may_mark_in_transit? && status == "succeeded" # hacky
@@ -388,7 +393,7 @@ class Donation < ApplicationRecord
   end
 
   def create_payment_intent_attrs(customer)
-    {
+    attrs = {
       amount:,
       customer: customer.id,
       currency: "usd",
@@ -396,6 +401,13 @@ class Donation < ApplicationRecord
       statement_descriptor_suffix: StripeService::StatementDescriptor.format(event.short_name, as: :suffix),
       metadata: { 'donation': true, 'event_id': event.id }
     }
+
+    if in_person?
+      attrs[:payment_method_types] = ["card_present"]
+      attrs[:capture_method] = "automatic"
+    end
+
+    attrs
   end
 
   def create_stripe_payment_intent
