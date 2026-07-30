@@ -221,7 +221,7 @@ module PendingEventMappingEngine
     end
 
     def settle_canonical_pending_fee_reimbursement!
-      CanonicalPendingTransaction.unsettled.fee_revenue.find_each(batch_size: 100) do |cpt|
+      CanonicalPendingTransaction.unsettled.fee_reimbursement.find_each(batch_size: 100) do |cpt|
         if (ct = cpt.local_hcb_code.ct)
           CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: ct)
         end
