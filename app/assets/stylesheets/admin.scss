@@ -615,15 +615,27 @@ $filter-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'
     min-width: 0;
   }
 
+  // The hero, and anything too wide for a column (transaction tables), run the
+  // full width of the grid.
+  &__hero,
+  &__full {
+    @media (min-width: 64em) {
+      grid-column: 1 / -1;
+    }
+  }
+
   &__hero {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
     gap: 0.5rem 0.75rem;
+  }
 
-    @media (min-width: 64em) {
-      grid-column: 1 / -1;
-    }
+  &__full {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 0;
   }
 
   &__amount {
@@ -689,6 +701,29 @@ $filter-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
+  }
+
+  // The state pipeline on the Wise screen: every state, current one highlighted.
+  &__states {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+
+    .badge {
+      margin: 0;
+    }
+  }
+
+  &__steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0;
+    padding-left: 1.25rem;
+
+    li {
+      margin: 0;
+    }
   }
 }
 

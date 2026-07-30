@@ -180,6 +180,19 @@
   }
 }
 
+// Secondary context above a popover's title — the organization, on admin pages.
+.modal__subtitle {
+  margin: 0 0 0.125rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: map-get($palette, muted);
+
+  &:empty {
+    display: none;
+  }
+}
+
 .modal__close {
   float: right;
   width: 32px;

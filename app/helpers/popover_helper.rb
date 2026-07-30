@@ -9,12 +9,13 @@ module PopoverHelper
   #
   # Usage in views:
   #   link_to "Label", href, data: popover_data(title: "...", src: "/path", ...)
-  def popover_data(title:, src:, frame_id:, state_url:, external_link: nil, state_title: nil, size: nil)
+  def popover_data(title:, src:, frame_id:, state_url:, external_link: nil, state_title: nil, size: nil, subtitle: nil)
     {
       turbo_frame: "_top",
       behavior: "modal_trigger",
       modal: "shared_popover",
       popover_title: title,
+      popover_subtitle: subtitle,
       popover_src: src,
       popover_frame_id: frame_id,
       popover_state_url: state_url,
@@ -124,6 +125,7 @@ module PopoverHelper
 
     popover_data(
       title: "#{label} ##{transfer.id} · #{admin_process_amount(transfer)}",
+      subtitle: admin_popover_subtitle(transfer),
       src: path,
       frame_id: admin_process_frame_id(transfer),
       state_url: path,
@@ -187,22 +189,30 @@ module PopoverHelper
   def admin_popover_data_for(record)
     return {} unless admin_popovers_enabled? && record
 
-    case record
-    when ::StripeCard
-      return stripe_card_popover_data(record)
-    when ::Employee
-      return employee_popover_data(record)
-    when ::Payment
-      return payment_popover_data(record)
-    when ::Ledger::Item
-      return record.hcb_code.present? ? ledger_item_popover_data(record) : {}
-    when ::LegalEntity
-      return legal_entity_popover_data(record)
-    end
+    data =
+      case record
+      when ::StripeCard then stripe_card_popover_data(record)
+      when ::Employee then employee_popover_data(record)
+      when ::Payment then payment_popover_data(record)
+      when ::Ledger::Item then record.hcb_code.present? ? ledger_item_popover_data(record) : {}
+      when ::LegalEntity then legal_entity_popover_data(record)
+      else
+        hcb_code = record.is_a?(::HcbCode) ? record : record.try(:local_hcb_code)
+        hcb_code.present? ? hcb_code_popover_data(hcb_code) : {}
+      end
 
-    hcb_code = record.is_a?(::HcbCode) ? record : record.try(:local_hcb_code)
-    return {} if hcb_code.blank?
+    return data if data.empty?
 
-    hcb_code_popover_data(hcb_code)
+    data.merge(popover_subtitle: admin_popover_subtitle(record)).compact
+  end
+
+  # Admin tables span every organization, so name it above the popover's title.
+  # The user-facing titles leave the org out on purpose — you already know which
+  # org you're looking at — and appending it there would just wrap.
+  def admin_popover_subtitle(record)
+    event = record.try(:event)
+    return if event&.name.blank?
+
+    event.name
   end
 end

@@ -35,6 +35,17 @@ RSpec.describe PopoverHelper, type: :helper do
       end
     end
 
+    it "names the organization as a subtitle, keeping the title short" do
+      event = build_stubbed(:event, name: "ExpensiCon 2023 (Non-Transparent Event)")
+      transfer = AchTransfer.new(id: 7, amount: 12_345)
+      allow(transfer).to receive(:event).and_return(event)
+
+      data = helper.admin_process_popover_data(transfer)
+
+      expect(data[:popover_title]).to eq("ACH transfer #7 · $123.45")
+      expect(data[:popover_subtitle]).to eq("ExpensiCon 2023 (Non-Transparent Event)")
+    end
+
     it "returns nothing for a record with no process screen" do
       expect(helper.admin_process_popover_data(Event.new(id: 1))).to eq({})
     end
@@ -43,6 +54,34 @@ RSpec.describe PopoverHelper, type: :helper do
       allow(helper).to receive(:admin_popovers_enabled?).and_return(false)
 
       expect(helper.admin_process_popover_data(AchTransfer.new(id: 7, amount: 1))).to eq({})
+    end
+  end
+
+  describe "#admin_popover_data_for" do
+    before { allow(helper).to receive(:admin_popovers_enabled?).and_return(true) }
+
+    it "adds the organization without touching the user-facing title" do
+      event = build_stubbed(:event, name: "ExpensiCon 2023")
+      hcb_code = HcbCode.new(hcb_code: "HCB-100-1")
+      allow(helper).to receive(:hcb_code_popover_data).with(hcb_code)
+                                                      .and_return({ popover_title: "Donation of $5.00" })
+      allow(hcb_code).to receive(:event).and_return(event)
+
+      data = helper.admin_popover_data_for(hcb_code)
+
+      expect(data[:popover_title]).to eq("Donation of $5.00")
+      expect(data[:popover_subtitle]).to eq("ExpensiCon 2023")
+    end
+
+    it "omits the subtitle for records with no organization" do
+      legal_entity = LegalEntity.new(id: 3)
+      allow(helper).to receive(:legal_entity_popover_data).with(legal_entity)
+                                                          .and_return({ popover_title: "Payment information for Orpheus" })
+
+      data = helper.admin_popover_data_for(legal_entity)
+
+      expect(data[:popover_title]).to eq("Payment information for Orpheus")
+      expect(data).not_to have_key(:popover_subtitle)
     end
   end
 end

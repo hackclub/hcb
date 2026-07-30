@@ -2,7 +2,6 @@
 
 <% transfer = @ach_transfer %>
 <% hcb_code = transfer.local_hcb_code %>
-<% receipts = hcb_code.receipts.order(created_at: :asc) %>
 <% state, state_badge = if transfer.pending?
                           ["Pending review", "bg-pending"]
                         elsif transfer.rejected?
@@ -82,20 +81,7 @@
         </dl>
       </section>
 
-      <% if receipts.any? %>
-        <section class="card admin-form__section">
-          <h3 class="admin-form__title">Receipts</h3>
-
-          <% if receipts.any?(&:extracted_incorrect_amount_cents?) %>
-            <p class="warning bold m0">⚠️ Check these closely — we suspect their amounts don't match.</p>
-          <% end %>
-          <% if receipts.any?(&:duplicated?) %>
-            <p class="warning bold m0">⚠️ We suspect one or more of these receipts has been used before.</p>
-          <% end %>
-
-          <div><%= render partial: "receipts/receipt", collection: receipts, as: :receipt, locals: { link_to_file: true } %></div>
-        </section>
-      <% end %>
+      <%= render "admin/review_receipts", hcb_code: %>
     </div>
 
     <div class="admin-review__column">
@@ -131,22 +117,7 @@
           <% end %>
         </section>
 
-        <section class="card admin-form__section">
-          <h3 class="admin-form__title">Reject</h3>
-
-          <%= form_with(model: false, local: true, url: ach_reject_admin_path(transfer), method: :post, class: "admin-form__section", data: { turbo_frame: "_top" }) do |form| %>
-            <div class="field">
-              <%= form.label :comment, "Reason" %>
-              <span class="admin-form__hint">Shared with the organizer, so explain why. Markdown supported.</span>
-              <%= form.text_area :comment, rows: 3 %>
-            </div>
-
-            <div>
-              <%= button_tag "Reject transfer", name: nil, class: "btn btn--destroy",
-                    data: { turbo_confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why.", turbo_confirm_danger: true } %>
-            </div>
-          <% end %>
-        </section>
+        <%= render "admin/review_reject", url: ach_reject_admin_path(transfer) %>
       <% else %>
         <section class="card admin-form__section">
           <p class="m0">
