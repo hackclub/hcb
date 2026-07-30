@@ -56,6 +56,39 @@ RSpec.describe AchTransfer, type: :model do
     end
   end
 
+  describe "payment_for validation" do
+    it "allows a payment_for of 255 characters" do
+      ach_transfer = build(:ach_transfer, event:, payment_for: "a" * 255)
+
+      expect(ach_transfer).to be_valid
+    end
+
+    it "rejects a payment_for longer than 255 characters" do
+      ach_transfer = build(:ach_transfer, event:, payment_for: "a" * 256)
+
+      expect(ach_transfer).not_to be_valid
+      expect(ach_transfer.errors[:payment_for]).to include("is too long (maximum is 255 characters)")
+    end
+
+    it "rejects a payment_for that is changed to be longer than 255 characters" do
+      ach_transfer.update(payment_for: "a" * 256)
+
+      expect(ach_transfer.errors[:payment_for]).to include("is too long (maximum is 255 characters)")
+    end
+
+    it "allows saving an existing record whose payment_for is already too long" do
+      ach_transfer.update_column(:payment_for, "a" * 256)
+
+      expect(ach_transfer.reload.update(recipient_name: "Fiona Hackworth")).to be true
+    end
+
+    it "allows transitioning an existing record whose payment_for is already too long" do
+      ach_transfer.update_column(:payment_for, "a" * 256)
+
+      expect { ach_transfer.reload.mark_rejected! }.to change(ach_transfer, :aasm_state).to("rejected")
+    end
+  end
+
   describe "invoiced_at validation" do
     it "allows invoiced_at to be nil" do
       ach_transfer = build(:ach_transfer, event:, invoiced_at: nil)

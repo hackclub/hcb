@@ -52,6 +52,8 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class AchTransfer < ApplicationRecord
+  PAYMENT_FOR_MAX_LENGTH = 255
+
   has_paper_trail skip: [:account_number, :routing_index] # ciphertext columns will still be tracked
   has_encrypted :account_number
   blind_index :account_number
@@ -105,6 +107,7 @@ class AchTransfer < ApplicationRecord
       errors.add(:base, "You don't have enough money to send this transfer! Your balance is #{(event.balance_available_v2_cents / 100).to_money.format}.")
     end
   end
+  validates :payment_for, length: { maximum: PAYMENT_FOR_MAX_LENGTH }, if: :payment_for_changed?
   validates :company_entry_description, length: { maximum: 10 }, allow_blank: true
   validates :company_name, length: { maximum: 16 }, allow_blank: true
   # validates :invoiced_at, presence: true, on: :create

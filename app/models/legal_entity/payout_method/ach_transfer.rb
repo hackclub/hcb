@@ -70,7 +70,7 @@ class LegalEntity
           creator: user,
           amount:,
           bank_name:,
-          payment_for:,
+          payment_for: payment_for&.slice(0...::AchTransfer::PAYMENT_FOR_MAX_LENGTH),
           recipient_name:,
           recipient_email:,
           company_entry_description:,

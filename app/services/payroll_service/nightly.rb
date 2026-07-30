@@ -44,7 +44,7 @@ module PayrollService
           safely do
             ach_transfer = payment.employee.event.ach_transfers.build(
               amount: payment.amount_cents,
-              payment_for: "Payment for \"#{payment.title}\".",
+              payment_for: "Payment for \"#{payment.title}\"."[0...AchTransfer::PAYMENT_FOR_MAX_LENGTH],
               recipient_name: payment.employee.user.full_name,
               recipient_email: payment.employee.user.email,
               send_email_notification: false,
