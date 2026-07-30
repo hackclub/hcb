@@ -18,6 +18,7 @@ RSpec.describe PopoverHelper, type: :helper do
       [PaypalTransfer, "PayPal transfer", "paypal_transfer_process_7", "paypal_transfer_process", { amount_cents: 12_345 }],
       [IncreaseCheck, "Check", "increase_check_process_7", "increase_check_process", usd],
       [Disbursement, "Transfer", "disbursement_process_7", "disbursement_process", usd],
+      [Invoice, "Invoice", "invoice_process_7", "invoice_process", { item_amount: 12_345 }],
     ].each do |klass, label, frame_id, route_segment, attrs|
       it "points the popover at #{klass.name}'s process screen" do
         data = helper.admin_process_popover_data(klass.new(id: 7, **attrs))
