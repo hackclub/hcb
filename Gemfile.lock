@@ -562,7 +562,7 @@ GEM
       monetize (~> 2.0)
       money (~> 7.0)
       railties (>= 7.0)
-    msgpack (1.8.0)
+    msgpack (1.8.2)
     multi_json (1.17.0)
     multipart-post (2.4.1)
     mustermann (3.0.4)
@@ -805,8 +805,9 @@ GEM
       rubocop-ast (>= 1.38.0, < 2.0)
     ruby-limiter (2.3.0)
     ruby-progressbar (1.13.0)
-    ruby-vips (2.1.4)
+    ruby-vips (2.3.0)
       ffi (~> 1.12)
+      logger
     ruby2_keywords (0.0.5)
     rubyzip (2.4.1)
     safely_block (0.5.0)
@@ -950,7 +951,7 @@ GEM
       nkf
       rubyzip (>= 2.4.0, < 4.0)
     xxhash (0.7.0)
-    yard (0.9.42)
+    yard (0.9.44)
     yard-solargraph (0.1.0)
       yard (~> 0.9)
     zeitwerk (2.8.2)
