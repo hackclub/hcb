@@ -36,9 +36,15 @@
   </div>
   <div class="flex-1 md:pt-3 sm:mb-24">
     <%= yield %>
-    <p class="muted mt-3 text-center text-sm <%= "hidden" if controller_name == "payments" && @payee.nil? %>">
-      Your transfer will be reviewed on the next business day <% if @payee && !@payee.managed? %><br><strong>after <%= @payee.display_name %> has submitted their tax information</strong><% end %>
-    </p>
+    <% if controller_path == "payroll/positions" %>
+      <p class="muted mt-3 text-center text-sm">
+        We'll email the contractor to sign their contract and complete onboarding. Payments can't be sent until that's done.
+      </p>
+    <% else %>
+      <p class="muted mt-3 text-center text-sm <%= "hidden" if controller_name == "payments" && @payee.nil? %>">
+        Your transfer will be reviewed on the next business day <% if @payee && !@payee.managed? %><br><strong>after <%= @payee.display_name %> has submitted their tax information</strong><% end %>
+      </p>
+    <% end %>
   </div>
 </div>
 

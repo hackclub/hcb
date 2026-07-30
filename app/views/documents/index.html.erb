@@ -67,6 +67,12 @@
       <%= render partial: "documents/document", collection: @active_documents&.forms %>
       <%= render partial: "documents/document", collection: @active_common_documents.forms %>
     </div>
+
+    <h3>Contracts</h3>
+    <div class="grid grid-cols-3 gap-4">
+      <%= render partial: "documents/document", collection: @active_documents&.contracts %>
+      <%= render partial: "documents/document", collection: @active_common_documents.contracts %>
+    </div>
   </div>
 </ul>
 

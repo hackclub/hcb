@@ -96,7 +96,7 @@ class MyController < ApplicationController
 
   def inbox
     @count = current_user.transactions_missing_receipt.count
-    @locking_count = current_user.transactions_missing_receipt(from: Receipt::CARD_LOCKING_START_DATE, to: 24.hours.ago).count
+    @locking_count = current_user.card_locking_overdue_charges.count
 
     hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
 
@@ -159,13 +159,17 @@ class MyController < ApplicationController
   end
 
   def pay
+    @legal_entities = current_user.legal_entities
+
     if params[:legal_entity_id].present?
-      session[:legal_entity_id] = params[:legal_entity_id]
+      selected = @legal_entities.find_by(id: params[:legal_entity_id])
+      session[:legal_entity_id] = selected.id.to_s if selected
       return redirect_to my_pay_path
     end
 
-    @legal_entities = current_user.legal_entities
     @legal_entity = @legal_entities.find_by(id: session[:legal_entity_id]) || current_user.personal_legal_entity
+    session[:legal_entity_id] = @legal_entity.id
+
     @payout_method = @legal_entity.default_payout_method
 
     all_payments = @legal_entity.payments
@@ -176,7 +180,7 @@ class MyController < ApplicationController
       canceled: all_payments.where(aasm_state: "rejected").sum(:amount_cents)
     }
 
-    @payments = all_payments.includes(:event, :payee, attempts: :payout).order(created_at: :desc)
+    @payments = all_payments.includes(:event, :payee, { payroll_invoice: { receipts: :file_attachment } }, attempts: :payout).order(created_at: :desc)
     @payments = @payments.search_purpose_and_event(params[:q]) if params[:q].present?
     @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
     @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
@@ -187,6 +191,21 @@ class MyController < ApplicationController
       { key: "status", label: "Status", type: "select", options: %w[deposited in_transit canceled] }
     ]
     @has_filter = params[:status].present?
+
+    @contractor_positions = Payroll::Position.joins(payee: { legal_entity: :legal_entity_users })
+                                             .where(legal_entity_users: { user_id: current_user.id })
+                                             .where(payees: { legal_entity_id: @legal_entity.id })
+                                             .includes(payee: :event)
+                                             .order(created_at: :desc)
+                                             .load
+    @tax_form_required = @contractor_positions.any? && !@legal_entity.completed_tax_form?
+    # Approved invoices are represented by their payment in the history table
+    # below, so only surface invoices still awaiting review here to avoid
+    # duplicating information.
+    @invoices = Payroll::Invoice.where(payroll_position: @contractor_positions)
+                                .where(aasm_state: "submitted")
+                                .includes(payroll_position: { payee: :event })
+                                .order(created_at: :desc)
   end
 
   def feed

@@ -30,7 +30,7 @@ module OneTimeJobs
 
           item = Ledger::Item.find_or_create_by!(short_code: hcb_code.short_code) do |li|
             li.amount_cents = hcb_code.amount_cents
-            li.memo = hcb_code.memo # removing this line breaks everything???
+            li.memo = "MEMO PLACEHOLDER FROM BACKFILL"
             li.datetime = hcb_code.date || hcb_code.created_at
             li.marked_no_or_lost_receipt_at = hcb_code.marked_no_or_lost_receipt_at
           end
@@ -45,11 +45,8 @@ module OneTimeJobs
           item.reload
           hcb_code.update!(ledger_item: item)
           item.send(:assign_linked_object!)
-          if hcb_code.custom_memo.present?
-            item.update_custom_memo!(hcb_code.custom_memo)
-          else
-            item.refresh!
-          end
+          item.custom_memo = hcb_code.custom_memo if hcb_code.custom_memo.present?
+          item.refresh!
         end
       end
     end

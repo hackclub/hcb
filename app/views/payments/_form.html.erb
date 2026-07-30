@@ -4,9 +4,14 @@
   <%= render "payments/edit_payee", event:, payee: %>
 <% else %>
 
-<% disabled = !policy(event).create_transfer? %>
+<% disabled = !policy(event).create_payment? %>
 <% manual = payee&.managed? %>
+
 <% existing_payout_method = payee&.legal_entity&.default_payout_method if manual %>
+
+<% if disabled %>
+  <%= render partial: "events/unauthorized_callout", locals: { action: "send payments" } %>
+<% end %>
 
 <div data-controller="payee-picker payout-toggle manual-payee" data-action="manual-payee:changed->payout-toggle#update">
   <div data-scroll-seek-target="section">
@@ -31,12 +36,14 @@
           </div>
           <div class="flex items-center gap-2 ml-auto shrink-0">
             <% if policy(payee).update? %>
-              <%= link_to "Edit", new_event_payment_path(event_id: event.slug, payee_id: payee.public_id, edit_payee: true, selected: true), class: "btn text-sm", data: { turbo_frame: "_top" } %>
+              <%= link_to "Edit", new_event_payment_path(event_id: event.slug, payee_id: payee.hashid, edit_payee: true, selected: true), class: "btn text-sm", data: { turbo_frame: "_top" } %>
             <% end %>
             <%= pop_icon_to "down-caret", new_event_payment_path(event_id: event.slug), data: { turbo_frame: "_top" } %>
           </div>
         </div>
 
+      <% elsif disabled %>
+        <p class="muted px-5 py-4 m0">You don't have permission to send payments from this organization.</p>
       <% else %>
 
         <%= render "payments/payee_picker", event: %>
@@ -49,7 +56,7 @@
     <%= form_with(model: payment, url: event_payments_path(event_id: event.slug), local: true) do |form| %>
       <%= form_errors(payment, "Payment", "We couldn't submit this payment") %>
 
-      <%= form.hidden_field :payee_id, value: payee&.public_id %>
+      <%= form.hidden_field :payee_id, value: payee&.hashid %>
       <%= hidden_field_tag "manual", manual.to_s, data: { "manual-payee-target": "manualField" } %>
 
       <div id="payment-details" data-scroll-seek-target="section">

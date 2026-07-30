@@ -88,6 +88,7 @@ class StripeCardsController < ApplicationController
     @per = params[:per] || 25
     @table_only = true
     @ledger = @card.card_grant&.ledger || @event.ledger
+    # TODO: Swap this out for Ledger::Query once Stripe cards have their own non-primary ledgers
     @items = @ledger.items
                     .includes(:canonical_transactions, :canonical_pending_transactions, :linked_object)
                     .where(linked_object_type: "CardCharge", linked_object_id: CardCharge.on_card(@card).select(:id))

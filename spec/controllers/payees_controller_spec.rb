@@ -32,7 +32,7 @@ RSpec.describe PayeesController do
         expect(payee.legal_entity.managing_event).to eq(event)
         expect(payee.legal_entity.entity_type).to eq("person")
         expect(response).to redirect_to(
-          new_event_payment_path(event_id: event.slug, payee_id: payee.public_id)
+          new_event_payment_path(event_id: event.slug, payee_id: payee.hashid)
         )
       end
 
@@ -66,7 +66,7 @@ RSpec.describe PayeesController do
         payee = event.payees.last
         expect(payee.legal_entity).to be_nil
         expect(response).to redirect_to(
-          new_event_payment_path(event_id: event.slug, payee_id: payee.public_id)
+          new_event_payment_path(event_id: event.slug, payee_id: payee.hashid)
         )
       end
     end
