@@ -118,6 +118,10 @@
                   <span class="tooltipped tooltipped--e inline-block" aria-label="Wise transfer">
                     <%= inline_icon "wise" %>
                   </span>
+                <% elsif d.is_a?(Payment) %>
+                  <span class="tooltipped tooltipped--e inline-block" aria-label="Payment">
+                    <%= inline_icon "payment" %>
+                  </span>
                 <% else %>
                   <span class="tooltipped tooltipped--e inline-block" aria-label="HCB transfer">
                     <%= inline_icon "door-leave" %>
@@ -180,7 +184,7 @@
                                   data: popovers_enabled? && transfer_popover_title ? popover_data(
                                     title: transfer_popover_title,
                                     src: payment_path(d),
-                                    frame_id: d.id,
+                                    frame_id: "payment_#{d.id}",
                                     state_url: payment_path(d),
                                     external_link: payment_path(d)
                                   ) : nil %>

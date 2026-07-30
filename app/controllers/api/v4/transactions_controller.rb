@@ -56,7 +56,7 @@ module Api
         end
       end
 
-      require_oauth2_scope "ledgers:read", :show
+      require_oauth2_scope "ledgers:read", :show # maybe this should be transactions:read
 
       def missing_receipt
         user_hcb_code_ids = current_user.stripe_cards.flat_map { |card| card.local_hcb_codes.pluck(:id) }
@@ -95,6 +95,8 @@ module Api
 
         render "show"
       end
+
+      require_oauth2_scope "transactions:write", :update
 
       def memo_suggestions
         @hcb_code = authorize HcbCode.find_by_public_id(params[:id]), :update?

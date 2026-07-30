@@ -11,7 +11,7 @@ class MailboxAddressesController < ApplicationController
     if @mailbox_address.save
       redirect_to @mailbox_address
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 

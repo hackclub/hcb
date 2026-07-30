@@ -176,6 +176,62 @@ class Event < ApplicationRecord
     Event.where(id: descendant_ids)
   end
 
+  # The direct sub-organizations `user` may see. #visible_descendant_ids walks
+  # down from exactly this set, so it comes back empty whenever this does, which
+  # is the cheap way to ask whether there is anything to show.
+  def visible_subevents(user)
+    return subevents if user&.auditor?
+
+    organized_ids = user ? OrganizerPosition.reader_access.where(user:).pluck(:event_id) : []
+    return subevents if organized_ids.any? && organized_ids.intersect?(ancestor_ids)
+
+    subevents.where(is_public: true, hidden_at: nil).or(subevents.where(id: organized_ids))
+  end
+
+  # The descendants `user` is allowed to see, mirroring EventPolicy#show?
+  # (`is_public || auditor_or_reader?`, where reader access is inherited from
+  # any ancestor). Hidden events are treated as private, matching how every
+  # other organization list treats `not_hidden`.
+  #
+  # Traversal stops at an event the user cannot see, so a transparent event
+  # nested under a private one stays hidden too. Surfacing it would reveal that
+  # the private organization exists.
+  #
+  # Like #descendant_ids, these ids skip the paranoid scope, so read them back
+  # through ActiveRecord to drop any that are soft deleted.
+  def visible_descendant_ids(user)
+    return descendant_ids if user&.auditor?
+
+    # Equivalent to OrganizerPosition.role_at_least?(user, self, :reader), reusing
+    # the positions already fetched rather than querying for them again.
+    organized_ids = user ? OrganizerPosition.reader_access.where(user:).pluck(:event_id) : []
+    return descendant_ids if organized_ids.any? && organized_ids.intersect?(ancestor_ids)
+
+    # Guard the empty case rather than let sanitize_sql_array render it, since it
+    # turns [] into NULL and `e.id = ANY(ARRAY[NULL])` would make `unlocked` NULL.
+    organized =
+      if organized_ids.any?
+        Event.sanitize_sql_array(["e.id = ANY(ARRAY[?]::bigint[])", organized_ids])
+      else
+        "FALSE"
+      end
+    transparent = "(e.is_public AND e.hidden_at IS NULL)"
+
+    Event.connection.execute(<<-SQL).map { |row| row["id"] }
+      WITH RECURSIVE child_events AS (
+        SELECT e.id, e.parent_id, #{organized} AS unlocked
+        FROM events e
+        WHERE e.parent_id = #{id} AND (#{transparent} OR #{organized})
+        UNION ALL
+        SELECT e.id, e.parent_id, (ce.unlocked OR #{organized})
+        FROM events e
+        INNER JOIN child_events ce ON e.parent_id = ce.id
+        WHERE #{transparent} OR #{organized} OR ce.unlocked
+      )
+      SELECT id FROM child_events;
+    SQL
+  end
+
   belongs_to :parent, class_name: "Event", optional: true
   has_many :subevents, class_name: "Event", foreign_key: "parent_id"
 
@@ -339,6 +395,8 @@ class Event < ApplicationRecord
   has_many :payment_recipients
   has_many :payees
   has_many :payments, through: :payees
+  has_many :payroll_positions, through: :payees, class_name: "Payroll::Position"
+  has_many :payroll_invoices, through: :payroll_positions, source: :invoices, class_name: "Payroll::Invoice"
 
   has_many :disbursements
   has_many :incoming_disbursements, class_name: "Disbursement::Incoming"
@@ -474,6 +532,10 @@ class Event < ApplicationRecord
     build_plan(type: fallback_plan_class) if plan.nil?
   end
 
+  after_update if: -> { can_front_balance_changed? } do
+    refresh_ledgers!
+  end
+
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
   after_validation :move_friendly_id_error_to_slug
 
@@ -576,6 +638,13 @@ class Event < ApplicationRecord
     # We're including only pending charges on emburse_cards so organizers have a conservative estimate of their balance
     pending_t = self.emburse_transactions.pending.where("amount < 0").sum(:amount)
     completed_t + pending_t
+  end
+
+  def refresh_ledgers!
+    ledger.refresh_all!
+    Ledger.where(card_grant: self.card_grants).find_each do |ledger|
+      ledger.refresh_all!
+    end
   end
 
   def total_raised
@@ -787,10 +856,6 @@ class Event < ApplicationRecord
     !engaged?
   end
 
-  def frozen?
-    Flipper.enabled?(:frozen, self)
-  end
-
   def revenue_fee
     configured = plan&.revenue_fee
     return configured if configured.present?
@@ -867,8 +932,12 @@ class Event < ApplicationRecord
     !plan.is_a?(Event::Plan::SalaryAccount)
   end
 
-  def eligible_for_disabling_transparency?
-    !parent&.is_public?
+  def forced_transparency?
+    # `plan` is built by a later `before_validation` callback, so it can still
+    # be nil the first time this runs on a new record.
+    return false unless plan&.forces_transparency?
+
+    parent&.is_public? || false
   end
 
   def eligible_for_indexing?
@@ -1018,7 +1087,7 @@ class Event < ApplicationRecord
       self.is_indexable = false
     end
 
-    unless eligible_for_disabling_transparency?
+    if forced_transparency?
       self.is_public = true
     end
 
