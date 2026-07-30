@@ -48,7 +48,6 @@ module PendingEventMappingEngine
 
       settle_canonical_pending_stripe_service_fee!
       settle_canonical_pending_fee_revenue!
-      settle_canonical_pending_fee_reimbursement!
 
       true
     end
@@ -214,14 +213,6 @@ module PendingEventMappingEngine
 
     def settle_canonical_pending_fee_revenue!
       CanonicalPendingTransaction.unsettled.fee_revenue.find_each(batch_size: 100) do |cpt|
-        if (ct = cpt.local_hcb_code.ct)
-          CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: ct)
-        end
-      end
-    end
-
-    def settle_canonical_pending_fee_reimbursement!
-      CanonicalPendingTransaction.unsettled.fee_reimbursement.find_each(batch_size: 100) do |cpt|
         if (ct = cpt.local_hcb_code.ct)
           CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: ct)
         end
