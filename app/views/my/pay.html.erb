@@ -98,7 +98,7 @@
           </span>
           <span class="muted flex items-center gap-1">
             <%= inline_icon "cash", size: 20 %>
-            <%= "#{render_money_short(position.rate_cents)}/hr" %>
+            <%= "#{render_money_short(position.rate_cents)}#{position.rate_suffix}" %>
           </span>
         </div>
 
