@@ -28,7 +28,7 @@
       <%= @item.datetime.strftime("%b %e, %Y") %>
     </span>
   </div>
-  <% if @item.hcb_code %>
+  <% if @item.hcb_code.present? %>
     <div>
       <strong>
         HCB Code
