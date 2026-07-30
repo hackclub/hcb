@@ -16,6 +16,7 @@
 #  receipt_count                :integer          default(0), not null
 #  receipt_required             :boolean
 #  short_code                   :text
+#  special_appearance           :string
 #  status                       :string
 #  system_memo                  :text
 #  created_at                   :datetime         not null
@@ -77,6 +78,9 @@ class Ledger
       canceled: "canceled", # user canceled transfer (for IncreaseCheck this also includes transfers rejected by ops)
       declined: "declined" # CPT has CPDM, no CPTs
     }
+
+    # Reads and writes as a Ledger::Item::SpecialAppearance; stored as its key.
+    attribute :special_appearance, Ledger::Item::SpecialAppearance::Type.new
 
     validates_presence_of :amount_cents, :memo, :datetime
 
@@ -198,6 +202,10 @@ class Ledger
     end
 
     def calculate_system_memo
+      # A custom memo still wins over this, via `refresh!` — but only over the
+      # memo. An item the user has renamed keeps its icon and row styling.
+      return special_appearance.memo if special_appearance
+
       case linked_object_type
       when "Invoice"
         "Invoice to #{linked_object.smart_memo}"
@@ -315,6 +323,11 @@ class Ledger
       self.receipt_count = receipts.count
       self.receipt_required = calculate_receipt_required
       self.status = calculate_status
+      # Write-once: an appearance is decided from the linked object the first time
+      # one exists, then read from the column forever after. `||=` (rather than a
+      # plain assignment) means an item whose linked object arrives late still
+      # picks one up, without ever re-deciding a decided item.
+      self.special_appearance ||= Ledger::Item::SpecialAppearance.for(linked_object)
       # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
       self.system_memo = calculate_system_memo
       self.memo = self.custom_memo.presence || self.system_memo.presence || fallback_memo
@@ -392,6 +405,8 @@ class Ledger
     end
 
     def icon
+      return special_appearance.icon if special_appearance
+
       case linked_object_type
       when "Invoice"
         "payment-docs"
@@ -415,7 +430,7 @@ class Ledger
         "email"
       when "CheckDeposit"
         "cheque"
-      when "Disbursement::Outgoing" # TODO: support for special appearance icons
+      when "Disbursement::Outgoing"
         if linked_object.card_grant.present?
           "bag"
         else

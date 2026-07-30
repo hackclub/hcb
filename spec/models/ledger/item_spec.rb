@@ -430,4 +430,63 @@ RSpec.describe Ledger::Item, type: :model do
       end
     end
   end
+
+  describe "special appearances" do
+    # The grant funds are fixed-id events that the seeds create, so find rather
+    # than create when one is already there.
+    let(:hackathon_grant_fund) do
+      Event.find_by(id: EventMappingEngine::EventIds::HACKATHON_GRANT_FUND) ||
+        create(:event, id: EventMappingEngine::EventIds::HACKATHON_GRANT_FUND)
+    end
+    let(:appearance) { Ledger::Item::SpecialAppearance.find(:hackathon_grant) }
+    let(:grant) { create(:disbursement, source_event: hackathon_grant_fund).incoming_disbursement }
+
+    it "reads the column as an appearance and stores it as the appearance's key" do
+      item = create(:ledger_item, special_appearance: :hackathon_grant)
+
+      expect(item.reload.special_appearance).to be(appearance)
+      expect(item.special_appearance_for_database).to eq("hackathon_grant")
+      expect(Ledger::Item.where(special_appearance: :hackathon_grant)).to include(item)
+    end
+
+    it "resolves a key it no longer recognizes to nil rather than raising" do
+      item = create(:ledger_item)
+      item.update_column(:special_appearance, "a_grant_that_never_existed")
+
+      expect(item.reload.special_appearance).to be_nil
+    end
+
+    it "assigns the appearance from the linked object, and applies its memo and icon" do
+      item = create(:ledger_item, linked_object: grant)
+      item.refresh!
+
+      expect(item.reload.special_appearance).to be(appearance)
+      expect(item.system_memo).to eq(appearance.memo)
+      expect(item.memo).to eq(appearance.memo)
+      expect(item.icon).to eq(appearance.icon)
+    end
+
+    it "keeps the appearance when the user renames the transaction, overriding only the memo" do
+      item = create(:ledger_item, linked_object: grant)
+      item.update_custom_memo!("Parts for the robot")
+
+      expect(item.reload.memo).to eq("Parts for the robot")
+      expect(item.special_appearance).to be(appearance)
+      expect(item.icon).to eq(appearance.icon)
+    end
+
+    it "leaves an item with no qualifying linked object alone" do
+      item = create(:ledger_item, linked_object: create(:disbursement).incoming_disbursement)
+      item.refresh!
+
+      expect(item.reload.special_appearance).to be_nil
+    end
+
+    it "never re-decides an appearance once one is set" do
+      item = create(:ledger_item, special_appearance: :gene_haas_grant, linked_object: grant)
+      item.refresh!
+
+      expect(item.reload.special_appearance.key).to eq("gene_haas_grant")
+    end
+  end
 end
