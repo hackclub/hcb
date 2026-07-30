@@ -445,7 +445,7 @@ class UsersController < ApplicationController
 
       if @user.stripe_cardholder&.errors&.any?
         flash.now[:error] = @user.stripe_cardholder.errors.first.full_message
-        render :edit_address, status: :unprocessable_entity
+        render :edit_address, status: :unprocessable_content
         return
       end
 
@@ -453,11 +453,11 @@ class UsersController < ApplicationController
         flash.now[:error] = payout_update.error_messages.to_sentence
         @legal_entity ||= @user.personal_legal_entity
         @legal_entities = @user.legal_entities
-        render :edit_payout, status: :unprocessable_entity
+        render :edit_payout, status: :unprocessable_content
         return
       end
 
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   rescue Errors::StripeInvalidNameError => e
     redirect_back_or_to edit_user_path(@user), flash: { error: e.message }
@@ -481,7 +481,7 @@ class UsersController < ApplicationController
     # redirect_to edit_user_path(current_user)
     render json: { message: "started verification successfully" }, status: :ok
   rescue UserService::EnrollSmsAuth::SMSEnrollmentError => e
-    render json: { error: e.message }, status: :unprocessable_entity
+    render json: { error: e.message }, status: :unprocessable_content
   end
 
   def complete_sms_auth_verification
@@ -498,7 +498,7 @@ class UsersController < ApplicationController
     # redirect_to edit_user_path(current_user)
     render json: { error: "invalid login code" }, status: :forbidden
   rescue UserService::EnrollSmsAuth::SMSEnrollmentError => e
-    render json: { error: e.message }, status: :unprocessable_entity
+    render json: { error: e.message }, status: :unprocessable_content
   end
 
   def toggle_sms_auth

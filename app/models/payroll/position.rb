@@ -12,6 +12,7 @@
 #  onboarded_at  :datetime
 #  onboarding_at :datetime
 #  rate_cents    :integer          default(0), not null
+#  rate_unit     :string           default("hour"), not null
 #  rejected_at   :datetime
 #  start_date    :date             not null
 #  terminated_at :datetime
@@ -53,14 +54,40 @@ module Payroll
 
     monetize :rate_cents, with_model_currency: :currency
 
+    FIXED_RATE_UNIT = "contract"
+
+    normalizes :rate_unit, with: ->(unit) { unit&.strip&.downcase&.singularize }
+
+    def fixed_rate?
+      rate_unit == FIXED_RATE_UNIT
+    end
+
+    def rate_suffix
+      case rate_unit
+      when "hour" then "/hr"
+      when FIXED_RATE_UNIT then " (fixed)"
+      else " per #{rate_unit}"
+      end
+    end
+
+    def rate_label
+      "#{rate.format}#{rate_suffix}"
+    end
+
     MAX_DURATION = 1.year
     MAX_START_LEAD_TIME = 6.months
+
+    CONTRACTOR_ONBOARDING_STEPS = %i[tax_form contractor_signature payout_method].freeze
+
+    ONBOARDING_REMINDER_DAYS = [1, 2, 7, 14].freeze
+    ONBOARDING_REMINDER_INTERVAL_DAYS = 14
 
     after_create_commit do
       Payroll::Position::ExpireJob.set(wait_until: end_date.end_of_day).perform_later(self)
     end
 
     validates :title, :description, :start_date, :end_date, presence: true
+    validates :rate_unit, presence: true, length: { maximum: 30 }
     validates :currency, inclusion: { in: Money::Currency.all.map(&:iso_code) }
     validate :end_date_after_start_date
     validate :start_date_within_set_lead_time
@@ -84,6 +111,9 @@ module Payroll
 
       event :mark_onboarded do
         transitions from: :onboarding, to: :onboarded, guard: :onboarding_complete?
+        after do
+          Payroll::PositionMailer.with(position: self).onboarded.deliver_later
+        end
       end
 
       event :mark_expired do
@@ -140,7 +170,7 @@ module Payroll
       [
         { key: :organizer_signature, label: "Contract signed by organizer", complete: contract_signed_by?(:organizer) },
         { key: :hcb_review, label: "Contract reviewed by HCB operations", complete: !under_review? && !rejected? },
-        { key: :tax_form, label: "W-9 / W-8BEN submitted", complete: legal_entity&.latest_tax_form&.completed? || false },
+        { key: :tax_form, label: "W-9 / W-8BEN submitted", complete: legal_entity&.completed_tax_form? || false },
         { key: :contractor_signature, label: "Contract signed by contractor", complete: contract_signed_by?(:contractor) },
         { key: :payout_method, label: "Payout method configured", complete: legal_entity&.default_payout_method.present? },
       ]
@@ -155,6 +185,19 @@ module Payroll
     # The next step the contractor still needs to complete, or nil once done.
     def next_onboarding_step
       onboarding_checklist.find { |step| !step[:complete] }
+    end
+
+    def contractor_onboarding_incomplete?
+      onboarding_checklist.any? do |step|
+        CONTRACTOR_ONBOARDING_STEPS.include?(step[:key]) && !step[:complete]
+      end
+    end
+
+    def onboarding_reminder_days
+      days_remaining = (end_date - Date.current).to_i
+      days = ONBOARDING_REMINDER_DAYS.dup
+      days << days.last + ONBOARDING_REMINDER_INTERVAL_DAYS while days.last + ONBOARDING_REMINDER_INTERVAL_DAYS < days_remaining
+      days.select { |day| day < days_remaining }
     end
 
     def tax_info_needed?
@@ -202,7 +245,7 @@ module Payroll
             "payee_name"  => payee.display_name,
             "title"       => title,
             "description" => description,
-            "rate"        => rate.format,
+            "rate"        => rate_label,
             "start_date"  => start_date.to_fs(:long),
             "end_date"    => end_date.to_fs(:long),
             "documents"   => (file.attached? ? [{ "name" => file.blob.filename.to_s, "file" => Rails.application.routes.url_helpers.rails_blob_url(file) }] : nil)
@@ -253,16 +296,17 @@ module Payroll
 
     private
 
-    # Notifying/scheduling reminders for the contractor is best-effort: this
-    # runs from inside the DocuSeal webhook's transaction (via
-    # Contract::Party#mark_signed! → Contract#on_party_signed), so a job
-    # enqueue failure here must not roll back the signature that already
-    # happened on DocuSeal's side.
     def notify_contractor_of_onboarding(contractor)
       contractor.notify
-      contractor.schedule_reminders
+      schedule_onboarding_reminders
     rescue => e
       Rails.error.report(e, context: { payroll_position_id: id })
+    end
+
+    def schedule_onboarding_reminders
+      onboarding_reminder_days.each do |days|
+        Payroll::Position::OnboardingReminderJob.set(wait: days.days).perform_later(self)
+      end
     end
 
     def contract_signed_by?(role)
