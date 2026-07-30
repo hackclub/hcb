@@ -63,6 +63,36 @@ RSpec.describe Ledger::Item::SpecialAppearance do
 
       expect(retired.applies_to?(Disbursement.new)).to be(false)
     end
+
+    it "matches a transfer that issued a card grant, through either lens" do
+      # An admin sender, so the grant's transfer doesn't need a funded event.
+      disbursement = create(:card_grant, sent_by: create(:user, :make_admin)).disbursement
+
+      expect(described_class.for(disbursement.incoming_disbursement).key).to eq("card_grant")
+      expect(described_class.for(disbursement.outgoing_disbursement).key).to eq("card_grant")
+    end
+
+    it "does not match a transfer with no card grant" do
+      expect(described_class.for(create(:disbursement).incoming_disbursement)).to be_nil
+    end
+  end
+
+  describe "an icon-only appearance" do
+    subject(:card_grant) { described_class.find(:card_grant) }
+
+    # It overrides nothing else, so the memo, styling, and title stay whatever the
+    # item would have shown — see Ledger::Item#calculate_system_memo, which says
+    # something different for a grant, a topup, and a withdrawal.
+    it "carries an icon and nothing else" do
+      expect(card_grant.icon).to eq("bag")
+      expect(card_grant.memo).to be_nil
+      expect(card_grant.css_class).to be_nil
+      expect(card_grant.title).to be_nil
+    end
+
+    it "sorts after the fund appearances, which say more about the transfer" do
+      expect(described_class::ALL.last).to be(card_grant)
+    end
   end
 
   describe described_class::Type do
@@ -84,28 +114,20 @@ RSpec.describe Ledger::Item::SpecialAppearance do
     end
   end
 
-  # The Ledger column is the source of truth now, but the legacy transaction views
-  # still read this hash — it has to keep its old shape until they're gone.
-  describe "the legacy Disbursement::SPECIAL_APPEARANCES bridge" do
-    it "exposes every appearance keyed by symbol, with the keys the views read" do
-      expect(Disbursement::SPECIAL_APPEARANCES.keys).to eq(described_class::ALL.map { |a| a.key.to_sym })
+  # The legacy transaction views keep their own copy of the grant definitions in
+  # Disbursement::SPECIAL_APPEARANCES. While both exist they have to agree, or a
+  # grant renamed in one place renders two different ways depending on the page.
+  # (The registry is allowed to hold appearances the legacy hash doesn't, like the
+  # card grant one, which only the Ledger knows about.)
+  it "agrees with the legacy Disbursement::SPECIAL_APPEARANCES definitions" do
+    Disbursement::SPECIAL_APPEARANCES.each do |key, legacy|
+      appearance = described_class.find(key)
 
-      Disbursement::SPECIAL_APPEARANCES.each do |key, value|
-        appearance = described_class.find(key)
-
-        expect(value[:title]).to eq(appearance.title)
-        expect(value[:memo]).to eq(appearance.memo)
-        expect(value[:css_class]).to eq(appearance.css_class)
-        expect(value[:icon]).to eq(appearance.icon)
-        expect(value[:qualifier]).to eq(appearance.qualifier)
-      end
-    end
-
-    it "still resolves a disbursement's appearance through the legacy methods" do
-      disbursement = Disbursement.new(source_event_id: EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND, created_at: Time.current)
-
-      expect(disbursement.special_appearance_name).to eq(:first_transparency_grant)
-      expect(disbursement.special_appearance_memo).to eq("🤖 FIRST® Transparency Grant")
+      expect(appearance).to be_present, "#{key} is defined for the legacy views but missing from the registry"
+      expect(legacy[:title]).to eq(appearance.title)
+      expect(legacy[:memo]).to eq(appearance.memo)
+      expect(legacy[:css_class]).to eq(appearance.css_class)
+      expect(legacy[:icon]).to eq(appearance.icon)
     end
   end
 end

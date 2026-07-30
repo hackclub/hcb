@@ -488,5 +488,61 @@ RSpec.describe Ledger::Item, type: :model do
 
       expect(item.reload.special_appearance.key).to eq("gene_haas_grant")
     end
+
+    describe "a card grant transfer" do
+      # The card grant creates its own disbursement, which is the one that carries
+      # the grant (`disbursement.card_grant`). An admin sender, so that transfer
+      # doesn't need a funded event.
+      let(:card_grant) { create(:card_grant, sent_by: create(:user, :make_admin)) }
+      let(:item) do
+        i = create(:ledger_item, linked_object: card_grant.disbursement.outgoing_disbursement)
+        i.refresh!
+        i.reload
+      end
+
+      # Captures application SQL (ignoring schema + transaction-control statements)
+      # run inside the block, so a code path can be asserted to issue no queries.
+      def application_sql_in
+        statements = []
+        subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |*args|
+          payload = ActiveSupport::Notifications::Event.new(*args).payload
+          next if payload[:name] == "SCHEMA"
+          next if payload[:sql] =~ /\A\s*(BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE)/i
+
+          statements << payload[:sql]
+        end
+
+        yield
+
+        statements
+      ensure
+        ActiveSupport::Notifications.unsubscribe(subscriber)
+      end
+
+      it "takes its icon from the appearance" do
+        expect(item.special_appearance.key).to eq("card_grant")
+        expect(item.icon).to eq("bag")
+      end
+
+      # The whole point of the appearance: rendering a row no longer loads the
+      # linked object's card grant just to pick an icon.
+      it "picks that icon without querying" do
+        item # resolve the let before measuring
+
+        expect(application_sql_in { item.icon }).to be_empty
+      end
+
+      it "still describes itself with the memo for its kind of grant transfer" do
+        expect(item.memo).to eq("Grant to #{card_grant.user.name}")
+      end
+    end
+
+    it "falls back to the transfer icons when there is no appearance" do
+      outgoing = create(:ledger_item, linked_object: create(:disbursement).outgoing_disbursement)
+      incoming = create(:ledger_item, linked_object: create(:disbursement).incoming_disbursement)
+
+      expect(outgoing.icon).to eq("door-leave")
+      expect(incoming.icon).to eq("door-enter")
+    end
   end
 end

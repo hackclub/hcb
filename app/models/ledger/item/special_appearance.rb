@@ -13,16 +13,25 @@ class Ledger
     # This registry is APPEND-ONLY: a key that has ever been written to the column
     # must stay here, or historical items lose their appearance. To stop applying
     # one to new items, drop its `qualifier` rather than deleting the entry.
+    #
+    # Every attribute but the key is optional, and each one an appearance leaves
+    # out falls back to how the item would have looked anyway — so an appearance
+    # can override just the icon, or just the memo.
+    #
+    # The legacy transaction views read their own copy of the grant definitions
+    # from Disbursement::SPECIAL_APPEARANCES; that hash goes away with them.
     class SpecialAppearance
-      attr_reader :key, :title, :memo, :css_class, :icon, :qualifier
+      attr_reader :key, :title, :memo, :css_class, :icon, :funds, :since, :qualifier
 
-      def initialize(key:, title:, memo:, css_class:, icon:, qualifier: nil)
+      def initialize(key:, title: nil, memo: nil, css_class: nil, icon: nil, funds: [], since: nil, qualifier: nil)
         @key = key.to_s
         @title = title
         @memo = memo
         @css_class = css_class
         @icon = icon
-        @qualifier = qualifier
+        @funds = funds.freeze
+        @since = since
+        @qualifier = qualifier || self.class.fund_qualifier(funds, since)
 
         freeze
       end
@@ -41,14 +50,18 @@ class Ledger
         key
       end
 
-      # Every appearance so far keys off the fund a transfer came from, so the
-      # type guard lives here instead of being repeated in each qualifier.
+      # Most appearances mark transfers out of a particular fund, so they declare
+      # `funds:` (and optionally `since:`) instead of writing a qualifier. Keeping
+      # the fund ids as data, not just as a closure, is what lets the backfill find
+      # the items that need one — see the maintenance task.
       #
-      # The guard is on Disbursement::Shared, not Disbursement: a ledger item's
+      # The type guard is on Disbursement::Shared, not Disbursement: a ledger item's
       # linked object is always a Disbursement::Incoming/Outgoing lens, and those
       # descend from Disbursement::Base rather than Disbursement. Shared is the one
       # thing all three have in common.
-      def self.from_fund(*event_ids, since: nil)
+      def self.fund_qualifier(event_ids, since)
+        return nil if event_ids.empty?
+
         lambda do |object|
           next false unless object.is_a?(Disbursement::Shared)
           next false unless object.source_event_id.in?(event_ids)
@@ -65,7 +78,7 @@ class Ledger
           memo: "💰 Hackathon grant from Hack Club",
           css_class: "transaction--fancy",
           icon: "purse",
-          qualifier: from_fund(EventMappingEngine::EventIds::HACKATHON_GRANT_FUND)
+          funds: [EventMappingEngine::EventIds::HACKATHON_GRANT_FUND]
         ),
         new(
           key: :winter_hardware_wonderland,
@@ -73,7 +86,7 @@ class Ledger
           memo: "❄️ Winter Hardware Wonderland Grant",
           css_class: "transaction--icy",
           icon: "freeze",
-          qualifier: from_fund(EventMappingEngine::EventIds::WINTER_HARDWARE_WONDERLAND_GRANT_FUND)
+          funds: [EventMappingEngine::EventIds::WINTER_HARDWARE_WONDERLAND_GRANT_FUND]
         ),
         new(
           key: :argosy_grant_2024,
@@ -81,7 +94,8 @@ class Ledger
           memo: "🤖 Argosy Foundation Rookie / Hardship Grant",
           css_class: "transaction--fancy",
           icon: "sam",
-          qualifier: from_fund(EventMappingEngine::EventIds::ARGOSY_GRANT_FUND, EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025, since: Date.new(2024, 9, 1))
+          funds: [EventMappingEngine::EventIds::ARGOSY_GRANT_FUND, EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025],
+          since: Date.new(2024, 9, 1)
         ),
         new(
           key: :first_transparency_grant,
@@ -89,7 +103,7 @@ class Ledger
           memo: "🤖 FIRST® Transparency Grant",
           css_class: "transaction--frc",
           icon: "sam",
-          qualifier: from_fund(EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND)
+          funds: [EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND]
         ),
         new(
           key: :gene_haas_grant,
@@ -97,7 +111,19 @@ class Ledger
           memo: "Gene Haas Grant",
           css_class: "transaction--genehaas",
           icon: "sam",
-          qualifier: from_fund(EventMappingEngine::EventIds::GENE_HAAS_GRANT_FUND)
+          funds: [EventMappingEngine::EventIds::GENE_HAAS_GRANT_FUND]
+        ),
+        # Icon only — the memo still comes from Ledger::Item#calculate_system_memo,
+        # which says something different for a grant, a topup, and a withdrawal.
+        # This exists so rendering a row doesn't have to load the card grant just
+        # to pick an icon; the lookup happens once, when the appearance is decided.
+        #
+        # Last in the list: a fund appearance is the more meaningful of the two if
+        # a transfer ever qualifies for both.
+        new(
+          key: :card_grant,
+          icon: "bag",
+          qualifier: ->(object) { object.is_a?(Disbursement::Shared) && object.card_grant.present? }
         )
       ].freeze
 
@@ -111,6 +137,12 @@ class Ledger
 
       def self.keys
         BY_KEY.keys
+      end
+
+      # Every fund that earns an appearance, for narrowing a query down to the
+      # transfers that might have one.
+      def self.fund_event_ids
+        ALL.flat_map(&:funds).uniq
       end
 
       # The appearance a linked object earns, if any. Only called when assigning.

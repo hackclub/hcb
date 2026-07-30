@@ -204,7 +204,7 @@ class Ledger
     def calculate_system_memo
       # A custom memo still wins over this, via `refresh!` — but only over the
       # memo. An item the user has renamed keeps its icon and row styling.
-      return special_appearance.memo if special_appearance
+      return special_appearance.memo if special_appearance&.memo
 
       case linked_object_type
       when "Invoice"
@@ -405,13 +405,15 @@ class Ledger
     end
 
     def icon
-      return special_appearance.icon if special_appearance
+      # Card grants get their icon from here too, so this branch is what keeps
+      # rendering a row from loading the linked object's card grant.
+      return special_appearance.icon if special_appearance&.icon
 
       case linked_object_type
       when "Invoice"
         "payment-docs"
       when "Donation"
-        if linked_object.recurring?
+        if linked_object.recurring_donation_id.present?
           "support-recurring"
         else
           "support"
@@ -431,17 +433,9 @@ class Ledger
       when "CheckDeposit"
         "cheque"
       when "Disbursement::Outgoing"
-        if linked_object.card_grant.present?
-          "bag"
-        else
-          "door-leave"
-        end
+        "door-leave"
       when "Disbursement::Incoming"
-        if linked_object.card_grant.present?
-          "bag"
-        else
-          "door-enter"
-        end
+        "door-enter"
       when "StripeServiceFee"
         "cash" # TODO: find unique icon
       when "BankFee"

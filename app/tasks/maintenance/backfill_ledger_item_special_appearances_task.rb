@@ -1,30 +1,44 @@
 # frozen_string_literal: true
 
 module Maintenance
-  # Backfills `ledger_items.special_appearance` from the memo — the only place the
-  # appearance was ever recorded before the column existed, since it was computed
-  # on read from the disbursement's source fund.
+  # Backfills `ledger_items.special_appearance` for items that predate the column.
   #
-  # This is a one-time bridge: once an item has the column set, `Ledger::Item`
-  # regenerates the same memo *from* the appearance on every refresh, so the two
-  # can't drift. New items get the column from the qualifiers instead.
+  # There's nothing on the item itself to read an appearance off of: the memo isn't
+  # a record of one, because `Ledger::Item#refresh!` regenerates the memo from
+  # `calculate_system_memo` every time — so a fund transfer's memo says "Transfer
+  # from Hackathon Grant Fund" until the column is set, at which point it becomes
+  # the appearance's memo. The appearance has to come back from the same place a
+  # new item's does: the linked object.
+  #
+  # This is a one-time bridge; new items get the column on their first refresh.
   class BackfillLedgerItemSpecialAppearancesTask < MaintenanceTasks::Task
-    MEMOS = Ledger::Item::SpecialAppearance::ALL.index_by(&:memo).freeze
+    DISBURSEMENT_TYPES = ["Disbursement::Incoming", "Disbursement::Outgoing"].freeze
 
     def collection
-      # `custom_memo: nil` guards against a user who happened to rename a
-      # transaction to exactly one of these strings: their item would otherwise be
-      # given an appearance it never had.
-      Ledger::Item.where(special_appearance: nil, custom_memo: nil, memo: MEMOS.keys)
+      # Narrow to the transfers that could earn an appearance — out of a fund, or
+      # carrying a card grant. `process` is the authority on which one applies (an
+      # Argosy transfer from before the 2024 cutoff, say, earns none).
+      candidates = Disbursement.where(source_event_id: Ledger::Item::SpecialAppearance.fund_event_ids)
+                               .or(Disbursement.where(id: CardGrant.where.not(disbursement_id: nil).select(:disbursement_id)))
+
+      Ledger::Item.where(
+        special_appearance: nil,
+        linked_object_type: DISBURSEMENT_TYPES,
+        linked_object_id: candidates.select(:id)
+      )
     end
 
     def process(item)
-      appearance = MEMOS[item.memo]
-      return unless appearance
+      return unless Ledger::Item::SpecialAppearance.for(item.linked_object)
 
-      # update_column, not update!: this is cosmetic, so it's not worth a
-      # paper_trail version or a bumped updated_at on every affected item.
-      item.update_column(:special_appearance, appearance.key)
+      # refresh! is what assigns the column — write-once, from the linked object —
+      # and then regenerates the memo from it. Writing the column directly instead
+      # would leave a fund transfer showing its old "Transfer from ..." memo until
+      # something else happened to refresh the item.
+      #
+      # No paper_trail version per row: this is a cosmetic bulk fix, not a change
+      # anyone will want to audit.
+      PaperTrail.request(enabled: false) { item.refresh! }
     end
 
   end
