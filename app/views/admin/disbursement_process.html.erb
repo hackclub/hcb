@@ -14,7 +14,7 @@
     <td class="text-right">HCB Code:</td>
     <td>
       <% if @disbursement.local_hcb_code %>
-        <%= link_to(@disbursement.hcb_code, hcb_code_path(@disbursement.local_hcb_code)) %>
+        <%= link_to(@disbursement.outgoing_hcb_code, hcb_code_path(@disbursement.local_hcb_code)) %>
       <% end %>
     </td>
   </tr>
@@ -133,7 +133,7 @@
     </div>
     <%= form.submit "Reject disbursement",
       class: "admin-bg-orange",
-      data: { confirm: "Are you sure you want to reject this disbursement?" } %>
+      data: { turbo_confirm: "Are you sure you want to reject this disbursement?", turbo_confirm_danger: true } %>
   <% end %>
 <% else %>
   <p>This is a human review check.</p>
@@ -154,6 +154,6 @@
     </div>
     <%= form.submit "Reject disbursement",
       class: "admin-bg-orange",
-      data: { confirm: "Are you sure you want to reject this disbursement?" } %>
+      data: { turbo_confirm: "Are you sure you want to reject this disbursement?", turbo_confirm_danger: true } %>
   <% end %>
 <% end %>

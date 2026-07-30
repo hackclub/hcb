@@ -83,6 +83,18 @@ class StripeCardsController < ApplicationController
                       .includes(canonical_pending_transactions: [:raw_pending_stripe_transaction], canonical_transactions: :transaction_source)
                       .page(params[:page]).per(params[:per] || 25)
 
+    # Grant cards (viewable here by auditors) keep their charges on the card
+    # grant's ledger rather than the event's.
+    @per = params[:per] || 25
+    @table_only = true
+    @ledger = @card.card_grant&.ledger || @event.ledger
+    # TODO: Swap this out for Ledger::Query once Stripe cards have their own non-primary ledgers
+    @items = @ledger.items
+                    .includes(:canonical_transactions, :canonical_pending_transactions, :linked_object)
+                    .where(linked_object_type: "CardCharge", linked_object_id: CardCharge.on_card(@card).select(:id))
+                    .order(datetime: :desc, created_at: :desc, id: :desc)
+                    .page(params[:page]).per(@per)
+
     if params[:frame] == "true" && turbo_frame_request?
       @frame = true
       @force_no_popover = true
@@ -110,6 +122,7 @@ class StripeCardsController < ApplicationController
 
     return redirect_back fallback_location: event_cards_new_path(event), flash: { error: "Birthday is required" } if current_user.birthday.nil?
     return redirect_back fallback_location: event_cards_new_path(event), flash: { error: "Invalid country" } unless sc[:stripe_shipping_address_country] == "US"
+    return redirect_back fallback_location: event_cards_new_path(event), flash: { error: "A verified phone number is required to issue a card. Please verify your phone number in your settings." } unless current_user.phone_number_verified?
 
     new_card = ::StripeCardService::Create.new(
       current_user:,

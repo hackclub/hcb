@@ -135,6 +135,7 @@
                           data: {
                             turbo_method: :post,
                             turbo_confirm: "Are you sure you want to deny this join request?",
+                            turbo_confirm_danger: true,
                           },
                           'aria-label': "Deny",
                           disabled: !policy(invite_request).deny? %>

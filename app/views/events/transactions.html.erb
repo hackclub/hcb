@@ -27,7 +27,7 @@
 
 <%= render "events/nav", selected: :transactions %>
 
-<%= render "events/heading", event: @event, event_follow: @event_follow do %>
+<%= render "events/heading", event: @event, event_follow: @event_follow, show_ledger_toggle: true do %>
   <span class="flex-grow">Transactions</span>
 <% end %>
 
@@ -64,7 +64,7 @@
 <%= render "events/public_message" %>
 <main data-controller="transactions" class="mt-2">
   <%= render "events/pinned_transactions" %>
-  <%= turbo_frame_tag [dom_id(@event), :ledger], src: event_ledger_path(@event, request.query_parameters) do %>
+  <%= turbo_frame_tag [dom_id(@event), :ledger], src: event_transactions_list_path(@event, request.query_parameters) do %>
     <%= render "application/loading_container", klass: "mt-8" %>
   <% end %>
 </main>

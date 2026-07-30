@@ -10,6 +10,7 @@ module StripeCardholderService
 
     def run
       raise ArgumentError, "not permitted under spend only plan" if event.unapproved?
+      raise ArgumentError, "phone number must be verified before creating a cardholder" unless @current_user.phone_number_verified?
 
       ActiveRecord::Base.transaction do
         stripe_cardholder = ::StripeCardholder.create!(attrs)

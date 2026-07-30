@@ -5,7 +5,7 @@
 # Table name: metrics
 #
 #  id            :bigint           not null, primary key
-#  aasm_state    :string
+#  aasm_state    :string           not null
 #  canceled_at   :datetime
 #  completed_at  :datetime
 #  failed_at     :datetime

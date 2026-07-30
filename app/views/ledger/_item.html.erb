@@ -1,10 +1,56 @@
-<tr>
-  <td><%= item.hashid %></td>
-  <td><%= item.date.strftime("%b %e, %Y") %></td>
-  <td><%= truncate(item.memo, length: 80) %></td>
-  <td class="nowrap"><%= item.amount.format %></td>
-  <td><%= item.short_code %></td>
+<tr class="transaction transaction--<%= item.sign %>">
+  <td class="transaction__icon">
+    <div class="tooltipped tooltipped--e" aria-label="<%= item.humanized_type %>">
+      <% if item.icon.is_a?(YellowPages::Merchant) %>
+        <%= merchant_icon(item.icon, style: "height: 1.2em") %>
+      <% else %>
+        <%= inline_icon(item.icon, size: 32) %>
+      <% end %>
+    </div>
+  </td>
+  <td><%= item.datetime.strftime("%b %e, %Y") %></td>
+  <td class="transaction__memo transaction__memo--fluid<%= " transaction__memo--pending" if item.pending? %>">
+    <div>
+      <div class="flex-auto flex flex-wrap items-center gap-y-1 gap-x-[1ch] min-w-0">
+        <div class="flex items-center gap-[1ch] min-w-0">
+          <% if item.status.present? && !item.settled? %>
+            <%= badge_for item.status_text, class: item.status_css %>
+          <% end %>
+          <div class="tooltipped tooltipped--s min-w-0 overflow-hidden text-ellipsis" aria-label="<%= item.memo %>">
+            <%= link_to item.memo, ledger_item_path(item),
+                        data: popovers_enabled? ? ledger_item_popover_data(item) : { turbo: false } %>
+          </div>
+        </div>
+
+        <%= render "ledger/items/tags", item: %>
+      </div>
+
+      <%= render "ledger/items/tag_menu", item: %>
+    </div>
+  </td>
+  <td class="nowrap">
+    <span class="flex items-center justify-end">
+      <%= list_badge_for auditor_signed_in? ? item.comment_count : item.not_admin_only_comment_count, "comment", "post", optional: true %>
+      <%= list_badge_for item.receipt_count, "receipt", "payment-docs", optional: item.receipt_optional?, required: item.missing_receipt? %>
+    </span>
+  </td>
+  <td class="nowrap">
+    <span class="flex items-center justify-end">
+      <% if !organizer_signed_in? && item.likely_account_verification_related? %>
+        <%= redacted_amount %>
+      <% else %>
+        <%= item.amount.format %>
+      <% end %>
+    </span>
+  </td>
+  <% admin_tool("", "td") do %>
+    <%= item.short_code %>
+  <% end %>
   <td>
-    <%= link_to "View", ledger_item_path(item) %>
+    <% if item.author.present? %>
+      <div class="flex items-center justify-center tooltipped tooltipped--w" aria-label="<%= item.author.name %>">
+        <%= avatar_for item.author, class: "align-middle author", cached: true %>
+      </div>
+    <% end %>
   </td>
 </tr>
