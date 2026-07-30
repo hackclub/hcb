@@ -1,0 +1,98 @@
+name: Dependabot auto-merge
+
+# `.github/dependabot.yml` only controls when Dependabot *opens* PRs — it has no
+# auto-merge setting. Merging them is done here: we read the update's metadata,
+# check it against the policy below, and hand qualifying PRs to GitHub's native
+# auto-merge. Auto-merge waits for every required check and branch protection
+# rule before merging, so nothing here bypasses CI or review requirements.
+on: pull_request
+
+# Dependabot-triggered runs get a read-only GITHUB_TOKEN by default. Grant back
+# exactly what approving and queueing a merge needs, and nothing else.
+permissions:
+  contents: write # queue the merge
+  pull-requests: write # approve, and flip on auto-merge
+
+jobs:
+  auto-merge:
+    name: Auto-merge
+    runs-on: ubuntu-latest
+    # Only ever act on PRs Dependabot itself opened. This workflow never checks
+    # out the PR's code, so there's nothing untrusted to execute.
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Apply auto-merge policy
+        id: policy
+        env:
+          ECOSYSTEM: ${{ steps.metadata.outputs.package-ecosystem }}
+          DEPENDENCY_TYPE: ${{ steps.metadata.outputs.dependency-type }}
+          UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
+          DEPENDENCY_NAMES: ${{ steps.metadata.outputs.dependency-names }}
+        run: |
+          # Semver level of the update: patch, minor, or major. For a grouped
+          # PR these describe the *largest* change in the group, so a group
+          # containing one major bump is held back in its entirety.
+          level="${UPDATE_TYPE#version-update:semver-}"
+
+          # The policy. Everything not matched here is left for a human.
+          case "$ECOSYSTEM" in
+            github-actions | github_actions)
+              # Workflow-only blast radius: nothing here ships to production.
+              allowed="patch minor" ;;
+            *)
+              case "$DEPENDENCY_TYPE" in
+                # Dev/test gems and devDependencies — a bad one breaks CI
+                # loudly rather than production quietly.
+                direct:development) allowed="patch minor" ;;
+                # Runtime dependencies, direct or transitive. Patches only;
+                # minors and majors get read by a person.
+                *) allowed="patch" ;;
+              esac ;;
+          esac
+
+          if [[ " $allowed " == *" $level "* ]]; then
+            echo "merge=true" >> "$GITHUB_OUTPUT"
+            verdict="✅ Auto-merging"
+          else
+            echo "merge=false" >> "$GITHUB_OUTPUT"
+            verdict="⏸️ Left for manual review (policy allows: ${allowed// /, })"
+          fi
+
+          # Always leave a trail — "why didn't this auto-merge?" is the usual
+          # question, and the answer should be one click away.
+          {
+            echo "### $verdict"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Dependencies | \`${DEPENDENCY_NAMES}\` |"
+            echo "| Ecosystem | \`${ECOSYSTEM}\` |"
+            echo "| Dependency type | \`${DEPENDENCY_TYPE}\` |"
+            echo "| Update type | \`${level}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # A bot approval satisfies a plain "require N approvals" rule. It does
+      # *not* satisfy "require review from Code Owners" — those PRs will sit in
+      # auto-merge until a code owner approves, which is the intended behaviour.
+      - name: Approve
+        if: steps.policy.outputs.merge == 'true'
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh pr review --approve "$PR_URL"
+
+      - name: Enable auto-merge
+        if: steps.policy.outputs.merge == 'true'
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # `main` is squash-merged, so match that. Requires "Allow auto-merge"
+        # under Settings → General → Pull Requests; without it this step fails
+        # rather than silently doing nothing.
+        run: gh pr merge --auto --squash "$PR_URL"
