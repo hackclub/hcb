@@ -36,20 +36,7 @@
   </div>
 <% end %>
 
-<% if current_user.card_grants.activated.size > 0 %>
-  <h2 class="user-home-section">Your grants</h2>
-
-  <div class="mixed-grid grid--spacious">
-    <% current_user.card_grants.includes(:stripe_card).activated.each do |grant| %>
-      <%= render "stripe_cards/stripe_card", stripe_card: grant.stripe_card, headless: true, show_purpose: true, href: card_grant_path(grant) %>
-    <% end %>
-    <% if current_user.card_grants.activated.size.odd? %>
-      <div></div>
-    <% end %>
-  </div>
-<% end %>
-
-<% if current_user.card_grants.not_activated.size > 0 %>
+<% if current_user.card_grants.not_activated.any? %>
   <h2 class="user-home-section mb-2">Pending grant invitations</h2>
   <ul class="grid grid-cols-1 text-left w-full mt-2">
     <% current_user.card_grants.not_activated.each do |grant| %>
@@ -73,63 +60,57 @@
   </ul>
 <% end %>
 
+<% if current_user.card_grants.activated.any? %>
+  <h2 class="user-home-section">Your grants</h2>
+
+  <div class="mixed-grid grid--spacious">
+    <% current_user.card_grants.includes(:stripe_card).activated.each do |grant| %>
+      <%= render "stripe_cards/stripe_card", stripe_card: grant.stripe_card, headless: true, show_purpose: true, href: card_grant_path(grant) %>
+    <% end %>
+    <% if current_user.card_grants.activated.size.odd? %>
+      <div></div>
+    <% end %>
+  </div>
+<% end %>
+
+<% if current_user.pending_payments_received.any? %>
+  <h2 class="user-home-section">Payments to you</h2>
+
+  <ul class="grid grid--wide mb-12 pb-2">
+    <% current_user.pending_payments_received.each do |payment| %>
+      <%= link_to payment.pending_legal_entity? ? choose_legal_entity_payee_path(payment.payee) : payment_path(payment) do %>
+        <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
+          <span>
+            <%= status_badge "info" %>
+            <strong><%= payment.amount.format(with_currency: true) %> from <%= payment.event.name %> for "<%= payment.purpose %>"</strong>
+          </span>
+        </li>
+      <% end %>
+    <% end %>
+  </ul>
+<% end %>
+
+<% if current_user.onboarding_contractor_positions.any? %>
+  <h2 class="user-home-section">Finish your contractor onboarding</h2>
+
+  <ul class="grid grid--wide mb-12 pb-2">
+    <% current_user.onboarding_contractor_positions.each do |position| %>
+      <% next_step = position.next_onboarding_step %>
+      <%= link_to onboarding_payroll_position_url(position) do %>
+        <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
+          <span>
+            <%= status_badge "warning" %>
+            <strong><%= position.title %> at <%= position.event.name %></strong>
+            <% if next_step %><span class="muted">— next: <%= next_step[:label] %></span><% end %>
+          </span>
+        </li>
+      <% end %>
+    <% end %>
+  </ul>
+<% end %>
+
 <main class="flex flex-col items-center text-center pb-8">
   <% if signed_in? %>
-    <h2 class="user-home-section mb-2 flex items-center w-full">
-      <span>Your organizations</span>
-      <% if @show_event_reorder_tip && @events.any? %>
-        <% if @events.size > 1 %>
-          <%= link_to "https://blog.hcb.hackclub.com/posts/re-order-your-homepage-247413", class: "muted flex items-center justify-end h6 ml-auto", target: "_blank" do %>
-            <%= inline_icon "hand-pointer-solid", size: 18, class: "mr1" %> Drag to reorder
-          <% end %>
-        <% end %>
-      <% end %>
-    </h2>
-
-    <% if @events.any? %>
-      <ul
-        class="grid grid--medium-narrow text-left w-100 mt0"
-        data-controller="sortable event-sort"
-        data-sortable-append-to-value="body"
-        data-event-sort-organizer-positions-value="<%= @organizer_positions.pluck(:id).to_json %>"
-        data-action="sortable:stop->event-sort#sort">
-
-        <%= render partial: "events/event_card", collection: @events.not_hidden, as: :event %>
-
-        <%= link_to Flipper.enabled?(:applications_2026_02_04) ? apply_path : apply_form_url(utm_campaign: "hcb-new-event", utm_content: "returning-organizer") do %>
-          <li class="card card--hover bold font-brand flex items-center justify-center align-center h-full" style="max-width: calc(100vw - 2rem)">
-            <div class="center">
-              <div class="pop success mx-auto flex mb-1">
-                <%= inline_icon "plus", size: 28 %>
-              </div>
-              New organization
-            </div>
-          </li>
-        <% end %>
-      </ul>
-    <% end %>
-
-    <% if @events.hidden.any? %>
-      <details class="w-full text-left">
-        <summary><h4 class="inline-block pb-0 border-none muted">Hidden organizations</h4></summary>
-        <ul class="grid grid--medium-narrow text-left mt-0">
-          <%= render partial: "events/event_card", collection: @events.hidden, as: :event %>
-        </ul>
-      </details>
-    <% end %>
-
-    <% if @events.empty? %>
-      <div class="center mt0 mb0 pt4 pb4 slate bold h3 mx-auto rounded-lg border flex flex-col w-full items-center justify-center">
-        <span>
-          You aren't a part of an organization yet, looking to start one?
-        </span>
-        <%= link_to Flipper.enabled?(:applications_2026_02_04) ? apply_path : apply_form_url(utm_campaign: "hcb-new-event", utm_content: "first-time"), class: "btn bg-success mt2" do %>
-          <%= inline_icon "plus" %>
-          New organization
-        <% end %>
-      </div>
-    <% end %>
-
     <% if @invites.any? %>
       <h2 class="w-full text-left mt-8 pb-0 border-none h2 pl-0 ml-0">Pending organization invitations</h2>
       <ul class="grid grid--narrow text-left w-full mt-2">
@@ -161,6 +142,7 @@
                 data: {
                   turbo_method: :post,
                   turbo_confirm: "Are you sure you want to cancel this join request?",
+                  turbo_confirm_danger: true,
                 },
                 'aria-label': "Cancel",
                 disabled: !policy(invite_request).deny? %>
@@ -168,6 +150,61 @@
           </li>
         <% end %>
       </ul>
+    <% end %>
+
+    <h2 class="user-home-section mb-2 flex items-center w-full">
+      <span>Your organizations</span>
+      <% if @show_event_reorder_tip && @events.any? %>
+        <% if @events.size > 1 %>
+          <%= link_to "https://blog.hcb.hackclub.com/posts/re-order-your-homepage-247413", class: "muted flex items-center justify-end h6 ml-auto", target: "_blank" do %>
+            <%= inline_icon "hand-pointer-solid", size: 18, class: "mr1" %> Drag to reorder
+          <% end %>
+        <% end %>
+      <% end %>
+    </h2>
+
+    <% if @events.any? %>
+      <ul
+        class="grid grid--medium-narrow text-left w-100 mt0"
+        data-controller="sortable event-sort"
+        data-sortable-append-to-value="body"
+        data-event-sort-organizer-positions-value="<%= @organizer_positions.pluck(:id).to_json %>"
+        data-action="sortable:stop->event-sort#sort">
+
+        <%= render partial: "events/event_card", collection: @events.not_hidden, as: :event %>
+
+        <%= link_to apply_path do %>
+          <li class="card card--hover bold font-brand flex items-center justify-center align-center h-full" style="max-width: calc(100vw - 2rem)">
+            <div class="center">
+              <div class="pop success mx-auto flex mb-1">
+                <%= inline_icon "plus", size: 28 %>
+              </div>
+              New organization
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <% if @events.hidden.any? %>
+      <details class="w-full text-left">
+        <summary><h4 class="inline-block pb-0 border-none muted">Hidden organizations</h4></summary>
+        <ul class="grid grid--medium-narrow text-left mt-0">
+          <%= render partial: "events/event_card", collection: @events.hidden, as: :event %>
+        </ul>
+      </details>
+    <% end %>
+
+    <% if @events.empty? %>
+      <div class="center mt0 mb0 pt4 pb4 slate bold h3 mx-auto rounded-lg border flex flex-col w-full items-center justify-center">
+        <span>
+          You aren't a part of an organization yet, looking to start one?
+        </span>
+        <%= link_to apply_path, class: "btn bg-success mt2" do %>
+          <%= inline_icon "plus" %>
+          New organization
+        <% end %>
+      </div>
     <% end %>
 
     <%= render "static_pages/index/teenager_raffle" %>
@@ -194,19 +231,9 @@
     <% if valid_contracts.any? %>
       <h2 class="w-full text-left mt-4 pb-0 border-none">Pending forms</h2>
       <p class="text-left my0 w-100 muted">Forms are sent to your HCB email, currently set to <%= mail_to current_user.email %>.</p>
-      <ul class="grid grid--narrow grid-cols-1 text-left w-full mt-2">
-        <% valid_contracts.each do |contract| %>
-          <%= link_to contract_party_path(contract.party(:signee)), target: "_blank" do %>
-            <li class="card card--item flex" style="gap: 4.5px; align-items: baseline">
-              <%= status_badge "info" %>
-              <strong>Fiscal sponsorship agreement for <%= contract.event_name %></strong>
-              <small class="muted flex-grow" style="margin-left: 3.5px">
-                sent <%= time_ago_in_words contract.created_at %> ago
-              </small>
-            </li>
-          <% end %>
-        <% end %>
-      </ul>
+      <div class="grid grid--narrow grid-cols-1 text-left w-full mt-2">
+        <%= render partial: "contracts/contract", collection: valid_contracts, as: :contract %>
+      </div>
     <% end %>
   <% end %>
 

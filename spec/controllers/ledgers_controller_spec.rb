@@ -9,7 +9,7 @@ RSpec.describe LedgersController, type: :controller do
   let(:event) { create(:event) }
   let(:ledger) { event.ledger }
 
-  before { sign_in admin }
+  before { create_session(admin, verified: true) }
 
   describe "GET #show" do
     it "returns success" do

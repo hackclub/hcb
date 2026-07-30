@@ -5,7 +5,7 @@
 # Table name: invoices
 #
 #  id                                                           :bigint           not null, primary key
-#  aasm_state                                                   :string
+#  aasm_state                                                   :string           not null
 #  amount_due                                                   :bigint
 #  amount_paid                                                  :bigint
 #  amount_remaining                                             :bigint
@@ -100,6 +100,9 @@ class Invoice < ApplicationRecord
   has_paper_trail skip: [:payment_method_ach_credit_transfer_account_number] # ciphertext columns will still be tracked
   has_encrypted :payment_method_ach_credit_transfer_account_number
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   set_public_id_prefix :inv
 
@@ -135,6 +138,7 @@ class Invoice < ApplicationRecord
   # (ex. for $0.10).
   class NoAssociatedStripeCharge < StandardError; end
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :sponsor
   accepts_nested_attributes_for :sponsor
   has_one :event, through: :sponsor
@@ -148,7 +152,7 @@ class Invoice < ApplicationRecord
 
   has_one :personal_transaction, class_name: "HcbCode::PersonalTransaction", required: false
   has_one_attached :manually_marked_as_paid_attachment
-  validates :manually_marked_as_paid_attachment, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["manually_marked_as_paid_attachment0"].present? }
+  validates :manually_marked_as_paid_attachment, size: { less_than_or_equal_to: 20.megabytes }, if: -> { attachment_changes["manually_marked_as_paid_attachment"].present? }
 
   aasm timestamps: true do
     state :open_v2, initial: true

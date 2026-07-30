@@ -1,15 +1,11 @@
 [
   {
-    "relation": [
-      "delegate_permission/common.handle_all_urls",
-      "delegate_permission/common.get_login_creds"
-    ],
+    "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
       "package_name": "com.hackclub.hcb",
       "sha256_cert_fingerprints": [
-        "B1:AE:39:1C:B2:40:A7:91:5C:B2:2E:9C:0F:5D:09:24:DF:AF:67:AD:D7:CC:2A:D2:8C:73:2B:95:97:06:17:90",
-        "2E:D9:14:9C:7F:5E:68:3C:27:87:74:F8:B2:A0:F6:1A:CA:7C:4E:19:80:45:C7:4F:E5:74:0F:27:17:DC:09:C3"
+        "B1:AE:39:1C:B2:40:A7:91:5C:B2:2E:9C:0F:5D:09:24:DF:AF:67:AD:D7:CC:2A:D2:8C:73:2B:95:97:06:17:90"
       ]
     }
   }

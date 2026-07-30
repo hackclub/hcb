@@ -10,6 +10,7 @@ Rails.application.routes.draw do
 
   constraints AdminConstraint do
     mount Sidekiq::Web => "/sidekiq"
+    mount MaintenanceTasks::Engine, at: "/maintenance_tasks"
     mount Flipper::UI.app(Flipper), at: "flipper", as: "flipper"
     mount PgHero::Engine, at: "pghero"
   end
@@ -50,6 +51,7 @@ Rails.application.routes.draw do
   get "project_stats", to: "stats#project_stats"
   get "bookkeeping", to: "admin#bookkeeping"
   get "stripe_charge_lookup", to: "static_pages#stripe_charge_lookup"
+  get "money-printer", to: "money_printer#index", as: :money_printer
 
   resources :raffles, only: [:new, :create]
 
@@ -70,12 +72,24 @@ Rails.application.routes.draw do
     get "settings", to: "users#edit", as: :my_settings
     get "settings/address", to: "users#edit_address"
     get "settings/payouts", to: "users#edit_payout"
+    resources :payout_methods, only: [:create, :update], controller: "legal_entity/payout_methods", path: "settings/payouts/methods" do
+      member do
+        patch :set_default
+        patch :archive
+      end
+    end
     get "settings/previews", to: "users#edit_featurepreviews"
     get "settings/security", to: "users#edit_security"
     get "settings/notifications", to: "users#edit_notifications"
     get "settings/integrations", to: "users#edit_integrations"
     get "settings/admin", to: "users#edit_admin"
     get "payroll", to: "my#payroll", as: :my_payroll
+    get "pay", to: "my#pay", as: :my_pay
+
+    resources :payroll_positions, only: [] do
+      resources :invoices, only: [:new, :create], controller: "payroll/invoices"
+    end
+    get "payroll_positions/:id", to: "payroll/positions#onboarding", as: :onboarding_payroll_position
 
     get "feed", to: "my#feed", as: :my_feed
     get "inbox", to: "my#inbox", as: :my_inbox
@@ -149,12 +163,24 @@ Rails.application.routes.draw do
       get "integrations", to: "users#edit_integrations"
       get "admin", to: "users#edit_admin"
       get "admin_details", to: "users#admin_details"
+      get "admin_details_ach_transfers", to: "users#admin_details_ach_transfers"
+      get "admin_details_check_deposits", to: "users#admin_details_check_deposits"
+      get "admin_details_disbursements", to: "users#admin_details_disbursements"
+      get "admin_details_emburse_cards", to: "users#admin_details_emburse_cards"
+      get "admin_details_increase_checks", to: "users#admin_details_increase_checks"
+      get "admin_details_invoices", to: "users#admin_details_invoices"
+      get "admin_details_lob_checks", to: "users#admin_details_lob_checks"
+      get "admin_details_missing_receipts", to: "users#admin_details_missing_receipts"
+      get "admin_details_reimbursement_reports", to: "users#admin_details_reimbursement_reports"
+      get "admin_details_stripe_cards", to: "users#admin_details_stripe_cards"
       get "admin_details_stripe_transactions", to: "users#admin_details_stripe_transactions"
 
       delete "logout_all", to: "users#logout_all"
 
       post "impersonate"
       post "unimpersonate"
+
+      post "suppress_card_locking", to: "users#suppress_card_locking"
     end
     post "delete_profile_picture", to: "users#delete_profile_picture"
     post "generate_totp"
@@ -177,6 +203,19 @@ Rails.application.routes.draw do
         get "data"
       end
     end
+
+    resources "first", only: [:index, :create] do
+      collection do
+        get "welcome", to: "first#new"
+        get "team", to: "first#team"
+        post "verify_email", to: "first#verify_email"
+        post "request_org_invite", to: "first#request_org_invite"
+        delete "sign_out", to: "first#sign_out"
+        get "macbook_qr_code"
+      end
+    end
+
+
     resources :email_updates, only: [] do
       collection do
         get "verify"
@@ -196,11 +235,15 @@ Rails.application.routes.draw do
       post "login_preference", to: "logins#set_login_preference", as: :set_login_preference
 
       # Request a login code
-      post "login_code"
+      post "email"
+      post "sms"
 
       # TOTP
       get "totp"
       post "totp"
+
+      get "security_key"
+      post "security_key"
 
       get "backup_code"
       post "backup_code"
@@ -223,6 +266,9 @@ Rails.application.routes.draw do
       get "raw_intrafi_transactions", to: "admin#raw_intrafi_transactions"
       post "raw_intrafi_transactions_import", to: "admin#raw_intrafi_transactions_import"
       get "ledger", to: "admin#ledger"
+      get "ledger_items", to: "admin#ledger_items"
+      get "event_search", to: "admin#event_search"
+      get "user_search", to: "admin#user_search"
       get "stripe_cards", to: "admin#stripe_cards"
       get "pending_ledger", to: "admin#pending_ledger"
       get "ach", to: "admin#ach"
@@ -311,6 +357,12 @@ Rails.application.routes.draw do
       post "submit", on: :member
       post "reject", on: :member
     end
+    resources :payments, only: [:index]
+    resources :payroll_positions, only: [:index] do
+      post "reject", on: :member
+    end
+    resources :legal_entities, only: [:index]
+    resources :tax_forms, only: [:index]
     resources :column_statements, only: :index do
       get "bank_account_summary_report"
     end
@@ -429,6 +481,7 @@ Rails.application.routes.draw do
     member do
       post "approve"
       post "reject"
+      post "stop"
     end
   end
 
@@ -472,7 +525,10 @@ Rails.application.routes.draw do
     get "confirmation", to: "ach_transfers#transfer_confirmation_letter"
   end
 
-  resources :disbursements, only: [:new, :create, :show, :edit, :update] do
+  resources :disbursements, only: [:new, :create, :show, :edit, :update], concerns: :commentable do
+    collection do
+      get :event_search
+    end
     post "mark_fulfilled"
     post "reject"
     post "cancel"
@@ -561,6 +617,7 @@ Rails.application.routes.draw do
       post "reject"
       post "submit"
       post "update_currency"
+      post "update_payout_method"
       post "draft"
       get "wise_transfer_quote"
       get "wise_transfer_breakdown"
@@ -581,7 +638,9 @@ Rails.application.routes.draw do
 
   resources :ledgers, only: [:show]
   scope module: :ledger, as: :ledger do
-    resources :items, path: "transactions", only: [:show]
+    resources :items, path: "transactions", only: [:show] do
+      get "hcb"
+    end
   end
   resources :ledger_items, only: [], path: "transactions", concerns: :commentable
 
@@ -597,6 +656,12 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :payments, only: [:show], concerns: :commentable do
+    member do
+      post "cancel"
+    end
+  end
+
   get "brand_guidelines", to: redirect("branding")
   get "mobile", to: "static_pages#mobile"
   get "branding", to: "static_pages#branding"
@@ -606,6 +671,12 @@ Rails.application.routes.draw do
   get "roles", to: "static_pages#roles"
   get "admin_tools", to: "static_pages#admin_tools"
   get "audit", to: "admin#audit"
+
+  # Marketing landing pages. Public, server-rendered, largely static. Built so future
+  # audience pages slot in under the same /for/* prefix and reuse the marketing layout.
+  get "for/funders", to: "marketing#funders", as: :funders
+  get "for/funders/faq", to: "marketing#funders_faq", as: :funders_faq
+  post "for/funders/inquiry", to: "marketing#funder_inquiry", as: :funder_inquiry
 
   resources :emburse_card_requests, path: "emburse_card_requests", except: [:new, :create] do
     collection do
@@ -657,7 +728,6 @@ Rails.application.routes.draw do
 
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
-          get :beacon_config
           get :intercom_token, to: "intercom#token"
         end
 
@@ -670,13 +740,10 @@ Rails.application.routes.draw do
         resources :events, path: "organizations", only: [:show] do
           resources :stripe_cards, path: "cards", only: [:index]
           resources :card_grants, only: [:index, :create]
-          resources :invoices, only: [:index]
-          resources :sponsors, only: [:index]
           resources :organizer_position_invites, path: "invitations", only: [:index, :create, :destroy]
-          resources :tags, only: [:index]
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]
-            resources :comments, only: [:index, :create]
+            resources :comments, only: [:index, :create] # Deprecated (will be removed in the future): use shallow route
 
             member do
               get "memo_suggestions"
@@ -684,10 +751,9 @@ Rails.application.routes.draw do
           end
 
           resources :disbursements, path: "transfers", only: [:create]
-          resources :ach_transfers, only: [:create]
-
+          # TODO: shallow route these (breaking change)
           resources :donations, path: "donations", only: [:create] do
-            collection do
+            member do
               post "payment_intent"
             end
           end
@@ -702,11 +768,22 @@ Rails.application.routes.draw do
           end
         end
 
+        resources :organizer_positions, only: [:index] do
+          member do
+            post "removal_request"
+          end
+        end
+
         resources :transactions, only: [:show] do
           member do
             post "mark_no_receipt"
           end
         end
+
+        resources :donations, only: [:index, :show]
+
+        resources :tags, only: [:index, :show, :create, :destroy]
+
         resources :receipts, only: [:create, :index, :destroy]
 
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
@@ -734,10 +811,14 @@ Rails.application.routes.draw do
           end
         end
 
-        resources :invoices, only: [:show, :create]
+        resources :invoices, only: [:index, :show, :create]
         resources :checks, only: [:index, :create, :show]
-        resources :sponsors, only: [:show, :create]
+        resources :sponsors, only: [:index, :show, :create]
         resources :check_deposits, only: [:index, :show, :create]
+        resources :wires, only: [:index, :show, :create]
+        resources :ach_transfers, only: [:create]
+
+        resources :comments, only: [:index, :create]
 
         get "stripe_terminal_connection_token", to: "stripe_terminal#connection_token"
 
@@ -746,8 +827,6 @@ Rails.application.routes.draw do
     end
   end
 
-  post "api/v1/users/find", to: "api#user_find"
-  post "api/v1/events/create_demo", to: "api#create_demo_event"
   get "api/current_user", to: "api#the_current_user"
   get "api/flags", to: "api#flags"
 
@@ -755,6 +834,7 @@ Rails.application.routes.draw do
   post "stripe/webhook", to: "stripe#webhook"
   post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
+  post "taxbandits/webhook", to: "taxbandits#webhook"
 
   post "discord/event_webhook", to: "discord#event_webhook"
   post "discord/interaction_webhook", to: "discord#interaction_webhook"
@@ -845,6 +925,30 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :payees, only: [] do
+    member do
+      get "choose_legal_entity"
+      post "set_legal_entity"
+    end
+  end
+
+  resources :legal_entities, only: [:show] do
+    collection do
+      post "create_from_tax_form"
+    end
+
+    member do
+      post "replace"
+    end
+  end
+
+  resources :tax_forms, only: [:show, :create], controller: "tax/forms" do
+    member do
+      post "sync"
+      post "discard"
+    end
+  end
+
   scope module: :event do
     get "apply", to: "applications#apply"
 
@@ -856,6 +960,7 @@ Rails.application.routes.draw do
       member do
         get "personal_info"
         get "project_info"
+        get "videos"
         get "agreement"
         get "review"
         get "submission"
@@ -868,6 +973,7 @@ Rails.application.routes.draw do
         post "admin_reject"
         post "admin_activate"
         post "resend_to_cosigner"
+        post "mark_videos_watched"
       end
     end
   end
@@ -890,7 +996,9 @@ Rails.application.routes.draw do
 
     get "edit", to: redirect("/%{event_id}/settings")
     get "transactions"
+    get "transactions_list"
     get "ledger"
+    get "stats"
     get "merchants_filter"
     put "toggle_hidden"
     post "claim_point_of_contact"
@@ -923,17 +1031,40 @@ Rails.application.routes.draw do
 
     get "transfers/new", to: "events#new_transfer"
 
+    get "payments", to: "events#payments"
+
+    resources :payments, only: [:new, :create]
+    resources :payroll_positions, only: [:new, :create, :show, :edit, :update], controller: "payroll/positions" do
+      member do
+        get :contract
+      end
+    end
+    resources :payroll_invoices, only: [], controller: "payroll/invoices" do
+      member do
+        post :approve
+        post :reject
+      end
+    end
+    resources :payees, only: [:index, :create, :update] do
+      member do
+        post :archive
+      end
+    end
+
     get "async_balance"
     get "async_sub_organization_balance"
+    get "async_sub_organizations_graph"
     get "reimbursements_pending_review_icon"
 
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)
     get "transfers"
+    get "payments"
     get "statements"
     get "statement_of_activity"
     get "promotions"
     get "reimbursements"
     get "employees"
+    get "contractors"
     get "sub_organizations"
     get "sub_organizations/new", to: "suborganizations#new", as: :new_sub_organization
     get "donations", to: "events#donation_overview", as: :donation_overview
@@ -1034,6 +1165,9 @@ Rails.application.routes.draw do
       post "validate_slug"
       get "termination"
       post "permit_merchant"
+      post "request_call"
+      post "hide_onboarding_message"
+      get "sub_organizations/check_name", to: "events#check_sub_organization_name", as: :check_sub_organization_name
 
       get "settings(/:tab)", to: "events#edit", as: :edit
     end

@@ -54,6 +54,8 @@
 #
 class StripeCard < ApplicationRecord
   include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   include Freezable
   set_public_id_prefix :crd

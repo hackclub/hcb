@@ -5,7 +5,7 @@
 # Table name: employee_payments
 #
 #  id             :bigint           not null, primary key
-#  aasm_state     :string
+#  aasm_state     :string           not null
 #  amount_cents   :integer          default(0), not null
 #  approved_at    :datetime
 #  description    :text

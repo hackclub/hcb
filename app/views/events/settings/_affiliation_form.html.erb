@@ -75,7 +75,12 @@
 </template>
 
 <template x-if="type == 'hack_club'">
-  <p class="p-0 text-sm">Select this only if you're a local Hack Club chapter. If you're running an official project for Hack Club HQ, don't use this application form.</p>
+  <p class="p-0 text-sm">
+    Select this only if you're a local Hack Club chapter.
+    <% if affiliation.affiliable.is_a?(Event::Application) %>
+      If you're running an official project for Hack Club HQ, don't use this application form.
+    <% end %>
+  </p>
 </template>
 <template x-if="type == 'hack_club'">
   <div class="field">

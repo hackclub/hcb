@@ -1,0 +1,9 @@
+<%# locals: (contract:) %>
+
+<%= link_to contract_party_path(contract.party(:signee)), target: "_blank", class: "card card--item flex gap-4 items-baseline" do %>
+  <%= status_badge "info" %>
+  <strong class="dark:text-white text-black">Fiscal sponsorship agreement for <%= contract.event_name %></strong>
+  <small class="muted flex-grow" style="margin-left: 3.5px">
+    sent <%= time_ago_in_words contract.created_at %> ago
+  </small>
+<% end %>

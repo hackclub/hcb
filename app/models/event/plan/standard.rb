@@ -5,7 +5,7 @@
 # Table name: event_plans
 #
 #  id          :bigint           not null, primary key
-#  aasm_state  :string
+#  aasm_state  :string           not null
 #  inactive_at :datetime
 #  type        :string
 #  created_at  :datetime         not null
@@ -43,7 +43,7 @@ class Event
         Event::Plan.available_features - %w[card_grants unrestricted_disbursements front_disbursements]
       end
 
-      def receipts_required?
+      def receipt_required?
         true
       end
 

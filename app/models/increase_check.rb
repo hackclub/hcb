@@ -5,7 +5,7 @@
 # Table name: increase_checks
 #
 #  id                      :bigint           not null, primary key
-#  aasm_state              :string
+#  aasm_state              :string           not null
 #  address_city            :string
 #  address_line1           :string
 #  address_line2           :string
@@ -37,15 +37,18 @@
 #  index_increase_checks_on_column_id             (column_id) UNIQUE
 #  index_increase_checks_on_event_id              (event_id)
 #  index_increase_checks_on_payment_recipient_id  (payment_recipient_id)
+#  index_increase_checks_on_reissued_for_id       (reissued_for_id)
 #  index_increase_checks_on_transaction_id        ((((increase_object -> 'deposit'::text) ->> 'transaction_id'::text)))
 #  index_increase_checks_on_user_id               (user_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)
+#  fk_rails_...  (reissued_for_id => increase_checks.id)
 #  fk_rails_...  (user_id => users.id)
 #
 class IncreaseCheck < ApplicationRecord
+  self.ignored_columns += ["reissued_for_id"]
   # [@garyhtou] `IncreaseCheck` superseded `Check` starting March 2023.
   # On January 2024, we switched check printing & mailing services from
   # Increase to Column. This model, although still named `IncreaseCheck`, now
@@ -55,13 +58,16 @@ class IncreaseCheck < ApplicationRecord
   include AASM
   include Payoutable
   include Freezable
-  include Payment
+  include HasPaymentRecipient
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+
+  include Hashid::Rails
+  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :ick
@@ -121,6 +127,7 @@ class IncreaseCheck < ApplicationRecord
     "Wyoming"          => "WY"
   }.freeze
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
   belongs_to :user, optional: true
 
@@ -131,6 +138,7 @@ class IncreaseCheck < ApplicationRecord
   has_one :canonical_pending_transaction
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :increase_check, required: false
+  has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
 
   after_create do
     create_canonical_pending_transaction!(event:, amount_cents: -amount, memo: "OUTGOING CHECK", date: created_at)
@@ -138,6 +146,23 @@ class IncreaseCheck < ApplicationRecord
 
   after_update if: -> { column_status_previously_changed?(to: "stopped") } do
     canonical_pending_transaction.decline!
+
+    if reimbursement_payout_holding.present?
+      reimbursement_payout_holding.mark_failed!
+    elsif payment_attempt.present?
+      payment_attempt.mark_failed!
+    else
+      IncreaseCheckMailer.with(check: self).notify_stopped.deliver_later if self.send_email_notification
+    end
+  end
+
+  after_update if: -> { column_status_previously_changed?(to: "rejected") } do
+    canonical_pending_transaction.decline!
+    reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
+  end
+
+  after_update if: -> { column_status_previously_changed?(to: "settled") } do
+    payment_attempt&.mark_successful!
   end
 
   aasm timestamps: true, whiny_persistence: true do
@@ -159,6 +184,7 @@ class IncreaseCheck < ApplicationRecord
       after_commit do
         IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later if self.send_email_notification
         employee_payment.mark_paid! if employee_payment.present?
+        payment_attempt.mark_sent! if payment_attempt.present?
       end
     end
 
@@ -167,6 +193,7 @@ class IncreaseCheck < ApplicationRecord
         canonical_pending_transaction.decline!
         create_activity(key: "increase_check.rejected")
         employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
+        payment_attempt.mark_rejected! if payment_attempt&.may_mark_rejected?
       end
       transitions from: :pending, to: :rejected
     end
@@ -180,7 +207,7 @@ class IncreaseCheck < ApplicationRecord
   validates :address_state, inclusion: { in: US_STATES.values, message: "This isn't a valid US state!", allow_blank: true }
   validates :address_zip, format: { with: /\A\d{5}(?:[-\s]\d{4})?\z/, message: "This isn't a valid ZIP code." }
 
-  validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }, allow_nil: true
+  validates_email_format_of :recipient_email, allow_nil: true, if: :recipient_email_changed?
   validates_presence_of :recipient_email, on: :create
   normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
@@ -257,13 +284,11 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def state
-    if column?
-      :info
-    elsif pending?
+    if pending?
       :muted
-    elsif rejected? || increase_canceled? || increase_stopped? || increase_returned? || increase_rejected?
+    elsif rejected? || increase_canceled? || increase_stopped? || increase_returned? || increase_rejected? || column_pending_stop? || column_stopped? || column_rejected?
       :error
-    elsif increase_deposited?
+    elsif increase_deposited? || column_settled?
       :success
     else
       :info
@@ -313,22 +338,34 @@ class IncreaseCheck < ApplicationRecord
     mark_approved!
   end
 
-  def reissue!
-    return unless column_id.present? && (column_issued? || column_stopped?)
+  def can_cancel?
+    pending? || (approved && can_stop?)
+  end
 
-    stopped_id = column_id
+  def cancel!
+    if pending?
+      mark_rejected!
+    elsif approved?
+      stop!
+    end
+  end
 
-    ColumnService.post("/transfers/checks/#{stopped_id}/stop-payment", idempotency_key: "stop_#{stopped_id}") unless column_stopped?
+  # https://column.com/docs/api/#check-transfer/stop
+  def can_stop?
+    column_issued? || column_manual_review?
+  end
+
+  def stop!
+    raise ArgumentError, "Check must have a column id" if column_id.nil?
+    raise ArgumentError, "Check must be in issued or manual_review status" if !can_stop?
+
+    column_check = ColumnService.post("/transfers/checks/#{column_id}/stop-payment", idempotency_key: "stop_#{column_id}")
 
     update!(
-      column_id: nil,
-      column_object: nil,
-      check_number: nil,
-      column_status: nil,
-      column_delivery_status: nil,
+      column_object: column_check,
+      column_status: column_check["status"],
+      column_delivery_status: column_check["delivery_status"],
     )
-
-    send_column!("reissue_#{stopped_id}")
   end
 
   private

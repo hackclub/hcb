@@ -4,7 +4,7 @@
   <div class="md:max-w-[800px] w-full space-y-8 pb-5">
     <div class="flex flex-col mt-2">
       <span class="badge bg-<%= @application.status_color %> m-0 w-max">
-        <%= @application.aasm_state.humanize %>
+        <%= @application.archived? ? "Archived" : @application.aasm_state.humanize %>
       </span>
 
       <h2 class="text-4xl mt-2">
@@ -12,12 +12,22 @@
       </h2>
 
       <p class="m-0 text-lg muted">
-        Submitted on <%= local_time(@application.submitted_at, "%B %e") %> at <%= local_time(@application.submitted_at, "%l:%M%P") %>
+        <% if @application.submitted_at? %>
+          Submitted on <%= local_time(@application.submitted_at, "%B %e") %> at <%= local_time(@application.submitted_at, "%l:%M%P") %>
+        <% else %>
+          This application is still a draft
+        <% end %>
 
         <% if @application.approved_at? %>
           <br>Approved on <%= local_time(@application.approved_at, "%B %e") %> at <%= local_time(@application.approved_at, "%l:%M%P") %>
-        <% elsif @application.rejected_at? %>
+        <% end %>
+
+        <% if @application.rejected_at? %>
           <br>Rejected on <%= local_time(@application.rejected_at, "%B %e") %> at <%= local_time(@application.rejected_at, "%l:%M%P") %>
+        <% end %>
+
+        <% if @application.archived_at? %>
+          <br>Archived on <%= local_time(@application.archived_at, "%B %e") %> at <%= local_time(@application.archived_at, "%l:%M%P") %>
         <% end %>
       </p>
     </div>
@@ -43,11 +53,29 @@
             <p>
               <strong>Contract status</strong>
               <span>
-                <% if @application.contract.parties.not_hcb.all?(&:signed?) %>
+                <% if @application.contract.signed? %>
+                  Signed by all parties
+                <% elsif @application.contract.parties.not_hcb.all?(&:signed?) %>
                   Ready for HCB signature
                 <% else %>
                   Waiting on <%= @application.contract.parties.not_hcb.pending.map(&:role).to_sentence %>
                 <% end %>
+              </span>
+            </p>
+          <% end %>
+          <% if (whodunnit = @application.versions.where_object_changes_to(aasm_state: :approved).last&.whodunnit) %>
+            <p>
+              <strong>Approved by</strong>
+              <span>
+                <%= user_mention User.find(whodunnit) %>
+              </span>
+            </p>
+          <% end %>
+          <% if (whodunnit = @application.versions.where_object_changes_to(aasm_state: :rejected).last&.whodunnit) %>
+            <p>
+              <strong>Rejected by</strong>
+              <span>
+                <%= user_mention User.find(whodunnit) %>
               </span>
             </p>
           <% end %>
@@ -63,7 +91,11 @@
 </div>
 
 <% content_for :footer do %>
-  <%= link_to "← Back", application_path(@application), class: "btn bg-muted" %>
+  <div class="flex gap-4">
+    <%= link_to "← Back", application_path(@application), class: "btn bg-muted" %>
+    <%= mobile_button_to archive_application_path(@application), text: "Archive application", icon: "delete", class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?" } %>
+  </div>
+
   <div class="flex items-center justify-end gap-4">
     <% admin_tool do %>
       <%= link_to "View in Airtable", airtable_application_path(@application), class: "btn bg-blue", target: "_blank" %>

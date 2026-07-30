@@ -21,8 +21,8 @@ class Contract
         redirect_to completed_contract_party_path(@party)
         return
       elsif @contract.voided?
-        flash[:error] = "This contract has been voided."
-        redirect_to @contract.redirect_path
+        @contracts = signed_in? ? current_user.contracts.sent.select { |contract| contract.party(:signee).present? } : []
+        render "contract/parties/voided"
         return
       elsif @contract.pending?
         flash[:error] = "This contract has not been sent yet. Try again later."
@@ -42,9 +42,16 @@ class Contract
 
     def completed
       authorize @party
+      if (@party.signee? && @contract.signed?) || @party.contractor?
+        case @contract.contractable
+        when Event::Application
+          redirect_to application_path(@contract.contractable)
+        when OrganizerPositionInvite
+          redirect_to organizer_position_invite_path(@contract.contractable)
+        when Payroll::Position
+          redirect_to onboarding_payroll_position_path(@contract.contractable)
+        end
 
-      if @party.signee? && @contract.signed?
-        redirect_to @contract.contractable
         return
       end
 

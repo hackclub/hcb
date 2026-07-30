@@ -11,7 +11,7 @@ RSpec.describe CardGrantsController do
       user = create(:user)
       event = create(:event)
       create(:organizer_position, user:, event:)
-      sign_in(user)
+      create_session(user, verified: true)
 
       expect(event.card_grant_setting).to be_nil
 
@@ -25,7 +25,7 @@ RSpec.describe CardGrantsController do
       user = create(:user)
       event = create(:event)
       create(:organizer_position, user:, event:)
-      sign_in(user)
+      create_session(user, verified: true)
 
       expect(event.card_grant_setting).to be_nil
 
@@ -56,7 +56,7 @@ RSpec.describe CardGrantsController do
       event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
       create(:card_grant_setting, event:)
       create(:organizer_position, user:, event:)
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(
         :create,
@@ -81,7 +81,7 @@ RSpec.describe CardGrantsController do
       event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
       create(:card_grant_setting, event:)
       create(:organizer_position, user:, event:)
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(
         :create,
@@ -95,7 +95,7 @@ RSpec.describe CardGrantsController do
       )
 
       expect(event.card_grants).to be_empty
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(flash[:error]).to eq("Purpose is too long (maximum is 30 characters)")
     end
 
@@ -104,7 +104,7 @@ RSpec.describe CardGrantsController do
       event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
       create(:card_grant_setting, event:)
       create(:organizer_position, user:, event:)
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(
         :create,
@@ -118,7 +118,7 @@ RSpec.describe CardGrantsController do
       )
 
       expect(event.card_grants).to be_empty
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(flash[:error]).to eq("You don't have enough money to make this disbursement.")
     end
   end
@@ -128,7 +128,7 @@ RSpec.describe CardGrantsController do
       user = create(:user)
       event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
       create(:organizer_position, user:, event:)
-      sign_in(user)
+      create_session(user, verified: true)
 
       card_grant = create(
         :card_grant,
@@ -164,7 +164,7 @@ RSpec.describe CardGrantsController do
       user = create(:user)
       event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
       create(:organizer_position, user:, event:)
-      sign_in(user)
+      create_session(user, verified: true)
 
       card_grant = create(
         :card_grant,

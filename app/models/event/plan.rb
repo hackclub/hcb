@@ -5,7 +5,7 @@
 # Table name: event_plans
 #
 #  id          :bigint           not null, primary key
-#  aasm_state  :string
+#  aasm_state  :string           not null
 #  inactive_at :datetime
 #  type        :string
 #  created_at  :datetime         not null
@@ -57,6 +57,12 @@ class Event
 
     def default_values
       {}
+    end
+
+    # Organizations on plans that force transparency can't opt out of it while
+    # their parent organization is transparent.
+    def forces_transparency?
+      false
     end
 
     def was_backfilled?

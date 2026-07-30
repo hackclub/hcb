@@ -1,37 +1,24 @@
-<% if signed_in? %>
-  <div data-controller="menu" data-menu-placement-value="top-end">
-    <% routing = begin
-         Rails.application.routes.recognize_path(request.original_fullpath, method: request.env["REQUEST_METHOD"])
-       rescue
-         {}
-       end %>
 
-    <% url_params = {
-         url: "#{request.base_url}#{request.original_fullpath}",
-         location: "#{routing[:controller]}##{routing[:action]} #{routing[:id]}".strip,
-         user_id: current_user&.id
-       } %>
+<div data-controller="menu" data-menu-placement-value="top-end">
+  <a
+    type="button"
+    class="w-8 h-8 relative menu__action muted tooltipped tooltipped--n p-0 justify-center"
+    aria-label="Get help"
+    id="intercom-trigger">
+    <%= inline_icon "question-mark", size: 18, style: "width:18px" %>
+  </a>
+</div>
+<script>
+  const intercomTrigger = document.getElementById('intercom-trigger');
 
-    <a
-      type="button"
-      class="w-8 h-8 relative menu__action muted tooltipped tooltipped--n p-0 justify-center"
-      aria-label="Get help"
-      id="intercom-trigger">
-      <%= inline_icon "question-mark", size: 18, style: "width:18px" %>
-    </a>
-  </div>
-  <script>
-    const helpIcon = document.getElementById('help-icon');
-
-    if(document.documentElement.clientWidth >= 1024)
-    window.addEventListener("load", () => {
-      window.Beacon('config', {
-        display: {
-          position: 'left',
-          horizontalOffset: helpIcon.getBoundingClientRect().left,
-          verticalOffset: document.documentElement.clientHeight - helpIcon.getBoundingClientRect().bottom + 25,
-        }
-      });
-    })
-  </script>
-<% end %>
+  if(document.documentElement.clientWidth >= 1024)
+  window.addEventListener("load", () => {
+    window.Beacon('config', {
+      display: {
+        position: 'left',
+        horizontalOffset: intercomTrigger.getBoundingClientRect().left,
+        verticalOffset: document.documentElement.clientHeight - intercomTrigger.getBoundingClientRect().bottom + 25,
+      }
+    });
+  })
+</script>

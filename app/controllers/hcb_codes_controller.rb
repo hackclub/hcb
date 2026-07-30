@@ -3,8 +3,8 @@
 class HcbCodesController < ApplicationController
   include TagsHelper
 
-  skip_before_action :signed_in_user, only: [:receipt, :attach_receipt, :receipt_status, :show]
-  skip_after_action :verify_authorized, only: [:receipt, :receipt_status]
+  skip_before_action :signed_in_user, only: [:attach_receipt, :receipt_status, :show]
+  skip_after_action :verify_authorized, only: [:receipt_status]
 
   def show
     @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
@@ -90,7 +90,7 @@ class HcbCodesController < ApplicationController
     authorize @hcb_code
 
     if params[:inline].present?
-      return render partial: "hcb_codes/memo", locals: { hcb_code: @hcb_code, form: true, prepended_to_memo: params[:prepended_to_memo], location: params[:location], ledger_instance: params[:ledger_instance] }
+      return render partial: "hcb_codes/memo/memo", locals: { hcb_code: @hcb_code, form: true, prepended_to_memo: params[:prepended_to_memo], location: params[:location], ledger_instance: params[:ledger_instance] }
     end
 
     @frame = turbo_frame_request?
@@ -133,7 +133,7 @@ class HcbCodesController < ApplicationController
     @hcb_code.update_custom_memo!(hcb_code_params[:memo])
 
     if params[:hcb_code][:inline].present?
-      return render partial: "hcb_codes/memo", locals: { hcb_code: @hcb_code, form: false, prepended_to_memo: params[:hcb_code][:prepended_to_memo], location: params[:hcb_code][:location], ledger_instance: params[:hcb_code][:ledger_instance], renamed: true }
+      return render partial: "hcb_codes/memo/memo", locals: { hcb_code: @hcb_code, form: false, prepended_to_memo: params[:hcb_code][:prepended_to_memo], location: params[:hcb_code][:location], ledger_instance: params[:hcb_code][:ledger_instance], renamed: true }
     end
 
     if @hcb_code.card_grant?

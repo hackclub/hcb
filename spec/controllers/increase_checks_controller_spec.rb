@@ -6,6 +6,75 @@ RSpec.describe IncreaseChecksController do
   include SessionSupport
   render_views
 
+  def build_check_attributes(overrides = {})
+    {
+      amount: 100_00,
+      memo: "Test memo",
+      payment_for: "Snacks",
+      recipient_name: "Orpheus",
+      recipient_email: "orpheus@example.com",
+      address_line1: "15 Falls Rd.",
+      address_line2: "",
+      address_city: "Shelburne",
+      address_state: "VT",
+      address_zip: "05482",
+    }.merge(overrides)
+  end
+
+  describe "stop" do
+    it "stops a stoppable check" do
+      user = create(:user)
+      event = create(:event, :with_positive_balance)
+      create(:organizer_position, user:, event:)
+      check = event.increase_checks.create!(
+        build_check_attributes(column_id: "col_test123", column_status: "issued")
+      )
+
+      create_session(user, verified: true)
+
+      allow(ColumnService).to receive(:post)
+        .with("/transfers/checks/col_test123/stop-payment", idempotency_key: "stop_col_test123")
+        .and_return({ "status" => "stopped", "delivery_status" => "failed" })
+
+      post(:stop, params: { id: check.id })
+
+      expect(response).to redirect_to(hcb_code_path(check.local_hcb_code))
+      expect(check.reload.column_status).to eq("stopped")
+    end
+
+    it "denies users without transfer permissions" do
+      user = create(:user)
+      event = create(:event, :with_positive_balance)
+      # no organizer position — user has no access to the event
+      check = event.increase_checks.create!(
+        build_check_attributes(column_id: "col_test456", column_status: "issued")
+      )
+
+      create_session(user, verified: true)
+
+      post(:stop, params: { id: check.id })
+
+      expect(response).to redirect_to(root_path)
+      expect(flash[:error]).to be_present
+    end
+
+    it "denies stopping a check that is not in a stoppable state" do
+      user = create(:user)
+      event = create(:event, :with_positive_balance)
+      create(:organizer_position, user:, event:)
+      check = event.increase_checks.create!(
+        build_check_attributes(column_id: "col_test789", column_status: "pending_deposit")
+      )
+
+      create_session(user, verified: true)
+
+      post(:stop, params: { id: check.id })
+
+      expect(response).to redirect_to(root_path)
+      expect(flash[:error]).to be_present
+    end
+  end
+
   describe "create" do
     def increase_check_params
       {
@@ -28,7 +97,7 @@ RSpec.describe IncreaseChecksController do
       event = create(:event, :with_positive_balance)
       create(:organizer_position, user:, event:)
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(
         :create,
@@ -60,7 +129,7 @@ RSpec.describe IncreaseChecksController do
       event = create(:event, :with_positive_balance)
       create(:organizer_position, user:, event:)
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       travel(3.hours)
 

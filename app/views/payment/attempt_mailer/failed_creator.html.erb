@@ -1,0 +1,17 @@
+<p>Hello <%= @creator.name %>,</p>
+
+<p>
+  Your payment of <%= @payment.amount.format(with_currency: true) %> to
+  <%= @payment.payee.display_name %> for <i>"<%= @payment.purpose %>"</i> failed to send.
+</p>
+
+<p>
+  <%= @payment.payee.display_name %> has been notified of the failure
+  and how to retry the payment.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>

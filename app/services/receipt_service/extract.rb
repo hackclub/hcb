@@ -44,7 +44,7 @@ module ReceiptService
       end
 
       response = conn.post("/v1/chat/completions", {
-                             model: "gpt-4o",
+                             model: "gpt-5.6-luna",
                              messages: [
                                {
                                  role: "system",
@@ -98,7 +98,7 @@ module ReceiptService
           [hcb_code, "ai_memo"],
           action: :replace,
           target: "ai_memo",
-          partial: "hcb_codes/ai_memo",
+          partial: "hcb_codes/memo/ai",
           locals: { hcb_code: }
         )
       end

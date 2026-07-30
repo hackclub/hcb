@@ -18,7 +18,7 @@
 
       <div class="field">
         <%= form.label :expiration_at, "Expires on" %>
-        <%= form.date_field :expiration_at, value: card_grant.default_expiration_at %>
+        <%= form.date_field :expiration_at, value: card_grant.default_expiration_at, disabled: %>
       </div>
 
       <div class="field">
@@ -77,6 +77,8 @@
 
     </div>
   </div>
+
+  <%= render "card_grants/policy_callout" %>
 
   <footer class="modal__action-row pt1 flex items-center justify-between sticky bottom-0 <% if defined?(@popover) && @popover %>mt2" style="border-top: none;<% end %>">
     <% if @event.card_grant_setting.present? %>

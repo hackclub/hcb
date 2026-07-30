@@ -7,7 +7,7 @@ module StaticPageService
     end
 
     def redirect_to_first_event?
-      !auditor? && events.count == 1 && invites.count == 0
+      !auditor? && events.count == 1 && invites.none?
     end
 
     def events

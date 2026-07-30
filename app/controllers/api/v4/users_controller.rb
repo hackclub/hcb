@@ -3,14 +3,15 @@
 module Api
   module V4
     class UsersController < ApplicationController
-      skip_after_action :verify_authorized, only: [:available_icons, :beacon_config, :revoke]
-      before_action :require_admin!, only: [:show, :by_email]
-      before_action :require_trusted_oauth_app!, only: [:beacon_config]
+      skip_after_action :verify_authorized, only: [:available_icons, :revoke]
+      before_action -> { require_admin_scope!(:read) }, only: [:show, :by_email]
 
       def me
         @user = authorize current_user, :show?
         render :show
       end
+
+      require_oauth2_scope "users:read", :me
 
       def revoke
         @current_token.update(revoked_at: Time.now)
@@ -25,6 +26,8 @@ module Api
         @user = User.find_by_public_id!(params[:id])
         authorize @user
       end
+
+      require_oauth2_scope "users:read", :show
 
       def by_email
         @user = User.find_by!(email: params[:email])
@@ -51,12 +54,6 @@ module Api
 
 
         render json: icons.compact_blank
-      end
-
-      def beacon_config
-        render json: {
-          signature: OpenSSL::HMAC.hexdigest("sha256", Credentials.fetch(:HELPSCOUT, :BEACON_SECRET_KEY), current_user.email)
-        }
       end
 
     end

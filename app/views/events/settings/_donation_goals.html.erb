@@ -12,10 +12,13 @@
       <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
         <%= form.label :donation_goal_enabled do %>
           <%= form.check_box :donation_goal_enabled,
-            data: { action: "change->accordion#toggle", accordion_target: "checkbox" },
+            data: {
+              action: "change->accordion#toggle#{event.donation_goal ? " change->confirm#request" : ""}",
+              accordion_target: "checkbox",
+              **(event.donation_goal ? { controller: "confirm", confirm_message_value: "Remove donation goal?", confirm_confirm_text_value: "Remove" } : {})
+            },
             disabled:,
             checked: event.donation_goal.present?,
-            onchange: event.donation_goal && "!this.checked && (!confirm('Remove donation goal?') ? (this.checked = true) : this.closest('form').requestSubmit())",
             switch: true %>
           <span class="slider"></span>
         <% end %>
@@ -33,8 +36,12 @@
                   <%= local_time event.donation_goal.tracking_since %>.
                 </strong>
                 <% if organizer_signed_in?(as: :manager) %>
-                  <label class="inline underline color-inherit cursor-pointer">
-                    <input type="checkbox" name="reset_donation_goal" class="hidden" onclick="if(confirm('Are you sure you want to reset the goal\'s start date to the current time?')) this.closest('form').requestSubmit();">
+                  <label class="inline underline color-inherit cursor-pointer"
+                    data-controller="confirm"
+                    data-action="click->confirm#request"
+                    data-confirm-message-value="Are you sure you want to reset the goal's start date to the current time?"
+                    data-confirm-confirm-text-value="Reset">
+                    <input type="checkbox" name="reset_donation_goal" class="hidden">
                     Reset
                   </label>
                 <% end %>

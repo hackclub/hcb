@@ -15,16 +15,37 @@
         <div data-controller="dark-mode-toggle" class="menu__content menu__content--compact menu__content--2 p-2 mt-2 h5" data-menu-target="content" style="z-index: 999;">
           <%= render partial: "application/theme_toggle" %>
           <hr>
-          <% if signed_in? %>
-            <p class="muted font-medium h5 pl-2 p-1 m0">Account</p>
-            <%= link_to my_settings_path do %>
-              <%= inline_icon "settings", style: "width:30px;height:30px;margin-left:-5px;margin-right:-2px" %>
-              Settings
-            <% end %>
-            <%= link_to logout_users_path, method: :delete do %>
-              <%= inline_icon "door-leave", size: 23 %>
-              Sign out
-            <% end %>
+          <p class="muted font-medium h5 pl-2 p-1 m0">Account</p>
+          <%= link_to my_settings_path do %>
+            <%= inline_icon "settings", style: "width:30px;height:30px;margin-left:-5px;margin-right:-2px" %>
+            Settings
+          <% end %>
+          <%= link_to logout_users_path, method: :delete do %>
+            <%= inline_icon "door-leave", size: 23 %>
+            Sign out
+          <% end %>
+        </div>
+      <% elsif signed_in?(allow_unverified: true) %>
+        <button
+          data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+          data-menu-target="toggle"
+          class="dock__item user-menu-trigger max-w-full !shadow-none lg:ml-2">
+          <%= avatar_for current_user(allow_unverified: true), size: 28 %>
+          <div class="text-left flex-1 truncate block" style="flex:1;overflow: hidden;">
+            <span class="truncate"><%= current_user(allow_unverified: true).name %></span>
+            <span class="text-xs -mt-0.5 block opacity-60 truncate" style="font-weight: 400"><%= current_user(allow_unverified: true).email %></span>
+          </div>
+        </button>
+        <div data-controller="dark-mode-toggle" class="menu__content menu__content--compact menu__content--2 p-2 mt-2 h5" data-menu-target="content" style="z-index: 999;">
+          <%= render partial: "application/theme_toggle" %>
+          <p class="muted font-medium h5 pl-2 p-1 m0">Account</p>
+          <%= link_to verify_email_first_index_path, method: :post do %>
+            <%= inline_icon "email-exclamation", style: "width:30px;height:30px;margin-left:-5px;margin-right:-2px" %>
+            Verify your email
+          <% end %>
+          <%= link_to sign_out_first_index_path, method: :delete do %>
+            <%= inline_icon "door-leave", size: 23 %>
+            Sign out
           <% end %>
         </div>
       <% else %>
@@ -39,7 +60,7 @@
 
     <div class="flex items-center mr-1.5">
       <%= render "application/support_button" unless @no_app_shell %>
-      <% if signed_in? %>
+      <% if signed_in?(allow_unverified: true) %>
         <%= render partial: "application/blog_widget" %>
       <% end %>
     </div>

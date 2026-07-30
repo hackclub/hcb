@@ -2,7 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :cards %>
 <% @show_card_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? && !@event.demo_mode %>
-<% if @event.stripe_cards.any? || !organizer_signed_in? %>
+<% if @event.stripe_cards.any? || !organizer_signed_in? || @has_filter %>
   <% if current_user.try(:full_name).try(:blank?) %>
     <h1 class="heading">
       <span class="flex items-center">
@@ -19,7 +19,7 @@
       </span>
 
       <div class="flex items-center gap-2">
-        <%= render "events/filter_cards_menu" unless @has_filter %>
+        <%= render "events/filters/filter_cards_menu" unless @has_filter %>
         <%= pop_icon_to @view == "list" ? "grid" : "list",
                         "?view=#{@view == 'list' ? 'grid' : 'list'}#{"&q=#{@q}" if @q}#{"&status=#{@status}" if @status}" %>
         <% if organizer_signed_in?(as: :member) %>
@@ -31,7 +31,7 @@
       </div>
     </h1>
 
-    <%= render "events/filter_cards" if @has_filter %>
+    <%= render "events/filters/filter_cards" if @has_filter %>
 
     <% if control = @organizer_position&.active_spending_control %>
       <% title = control.balance_cents.zero? ? "You are not authorized to spend any money at the moment." : "You currently have a spending limit of #{render_money control.balance_cents}" %>
@@ -86,10 +86,10 @@
 <% else %>
  <%= render "events/one_pager",
     title: "Cards",
-    support_article: "https://help.hcb.hackclub.com/en/articles/13356182-how-do-i-spend-my-money-on-hcb-and-use-hcb-cards",
+    support_article: "https://help.hcb.hackclub.com/en/articles/15410084-how-do-i-spend-money-on-hcb",
     screenshots: {
-      light: "https://user-cdn.hackclub-assets.com/019c3c72-e7a5-7cf8-b207-f03b9071a748/hcb.hackclub.com_hq_cards%20(1).png",
-      dark: "https://cdn.hackclub.com/019c3c73-25d9-79b3-b1ae-08bc8e7cb88b/hcb.hackclub.com_hq_cards.png"
+      light: "https://cdn.hackclub.com/019eb7bb-a291-7fe9-a78f-4656eaa80629/file-cb800d0bbd987c998a23ae387d7ebaa4.png",
+      dark: "https://cdn.hackclub.com/019eb7bb-a001-7bde-a802-612f6c523c69/image.png",
     },
     hints: [
       {

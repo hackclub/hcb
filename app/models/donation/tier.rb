@@ -26,11 +26,12 @@
 class Donation
   class Tier < ApplicationRecord
     include Hashid::Rails
+    hashid_config salt: ""
 
     belongs_to :event
 
     validates :name, :amount_cents, presence: true
-    validates :amount_cents, numericality: { only_integer: true, greater_than: 0 }
+    validates :amount_cents, numericality: { only_integer: true, greater_than: 0 }, integer_column: true
     validate :maximum_tiers_limit
     validate :amount_is_whole_dollar
 

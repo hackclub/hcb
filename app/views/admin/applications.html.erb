@@ -1,16 +1,18 @@
 <% title "Applications (HCB)" %>
 
-<%= form_with local: true, url: applications_admin_index_path, method: :get do |form| %>
-  <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
+<%= form_with local: true, class: "card", url: applications_admin_index_path, method: :get do |form| %>
+  <%= render "events/filters/search", form: %>
 
-  <div class="mb-1">
-    <%= form.label :include_archived do %>
-      <%= form.check_box :include_archived, checked: @include_archived %>
-      Include archived
-    <% end %>
+  <div class="flex flex-col sm:flex-row items-center gap-2 mt-2">
+    <div>
+        <%= form.label :include_archived do %>
+        <%= form.check_box :include_archived, checked: @include_archived %>
+        Include archived
+        <% end %>
+    </div>
+
+    <%= form.submit "Search", class: "ml-auto" %>
   </div>
-
-  <%= form.submit "Search" %>
 <% end %>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">

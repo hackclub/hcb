@@ -3,6 +3,9 @@
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 require "spec_helper"
 ENV["RAILS_ENV"] ||= "test"
+# Set before Rails boots so the Rack::TwilioWebhookAuthentication middleware
+# (initialized in config/initializers/twilio.rb) uses a known auth token.
+ENV["TWILIO__AUTH_TOKEN"] ||= "test_twilio_auth_token"
 require File.expand_path("../config/environment", __dir__)
 # PaperTrail helper to make it easier to use PaperTrail in specs
 require "paper_trail/frameworks/rspec"

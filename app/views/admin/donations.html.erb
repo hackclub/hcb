@@ -1,35 +1,30 @@
 <% title "Donations" %>
 
-<%= form_with local: true, url: donations_admin_index_path, method: :get do |form| %>
-  <%= form.text_field :q, value: params[:q], placeholder: "Search" %>
-  <%= form.text_field :ip_address, value: params[:ip_address], placeholder: "IP Address" %>
-  <%= form.text_field :user_agent, value: params[:user_agent], placeholder: "User Agent" %>
-  <%= form.collection_select(:event_id, Event.reorder(Event::CUSTOM_SORT), :id, :admin_dropdown_description, { include_blank: "Select An Event", selected: @event_id }, { width: 250, style: "max-width: 250px" }) %>
-
-  <fieldset>
+<%= form_with local: true, class: "card overflow-visible", url: donations_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-col sm:flex-row items-center gap-2">
+    <%= render "events/filters/search", form: %>
+    <%= form.text_field :ip_address, value: params[:ip_address], placeholder: "IP Address" %>
+    <%= form.text_field :user_agent, value: params[:user_agent], placeholder: "User Agent" %>
+    <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
+  </div>
+  <div class="flex items-center mt-2 gap-4 flex-wrap">
     <%= form.label :deposited do %>
-      <%= form.check_box :deposited, checked: @deposited %>
-      Deposited
+      <%= form.check_box :deposited, checked: @deposited %> Deposited
     <% end %>
     <%= form.label :in_transit do %>
-      <%= form.check_box :in_transit, checked: @in_transit, class: "ml1" %>
-      In Transit
+      <%= form.check_box :in_transit, checked: @in_transit %> In Transit
     <% end %>
     <%= form.label :failed do %>
-      <%= form.check_box :failed, checked: @failed, class: "ml1" %>
-      Failed
+      <%= form.check_box :failed, checked: @failed %> Failed
     <% end %>
     <%= form.label :missing_payout do %>
-      <%= form.check_box :missing_payout, checked: @missing_payout, class: "ml1" %>
-      Missing Payout
+      <%= form.check_box :missing_payout, checked: @missing_payout %> Missing Payout
     <% end %>
     <%= form.label :missing_fee_reimbursement do %>
-      <%= form.check_box :missing_fee_reimbursement, checked: @missing_fee_reimbursement, class: "ml1" %>
-      Missing FeeReimbursement
+      <%= form.check_box :missing_fee_reimbursement, checked: @missing_fee_reimbursement %> Missing FeeReimbursement
     <% end %>
-  </fieldset>
-
-  <%= form.submit "Search" %>
+    <%= form.submit "Search", class: "ml-auto" %>
+  </div>
 <% end %>
 
 <div class="flex items-center mb2 flex-col sm:flex-row">

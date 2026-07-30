@@ -57,6 +57,7 @@ const loadModals = element => {
       e.preventDefault()
       e.stopPropagation()
     }
+    document.dispatchEvent(new CustomEvent('hcb:close-menus'))
     if ($(this).data('modal') === 'shared_popover') {
       populateSharedPopover(this)
     }
@@ -608,7 +609,6 @@ const initPayoutMethodToggles = function () {
   if (
     BK.thereIs('check_payout_method_inputs') &&
     BK.thereIs('ach_transfer_payout_method_inputs') &&
-    BK.thereIs('paypal_transfer_payout_method_inputs') &&
     BK.thereIs('wire_payout_method_inputs') &&
     BK.thereIs('wise_transfer_payout_method_inputs')
   ) {
@@ -616,56 +616,38 @@ const initPayoutMethodToggles = function () {
     const achTransferPayoutMethodInputs = BK.s(
       'ach_transfer_payout_method_inputs'
     )
-    const paypalTransferPayoutMethodInputs = BK.s(
-      'paypal_transfer_payout_method_inputs'
-    )
     const wirePayoutMethodInputs = BK.s('wire_payout_method_inputs')
     const wiseTransferPayoutMethodInputs = BK.s(
       'wise_transfer_payout_method_inputs'
     )
     $(document).on(
       'change',
-      '#user_payout_method_type_userpayoutmethodcheck',
+      '#user_payout_method_type_legalentitypayoutmethodcheck',
       e => {
         if (e.target.checked)
           checkPayoutMethodInputs.slideDown() &&
             achTransferPayoutMethodInputs.slideUp() &&
-            paypalTransferPayoutMethodInputs.slideUp() &&
             wirePayoutMethodInputs.slideUp() &&
             wiseTransferPayoutMethodInputs.slideUp()
       }
     )
     $(document).on(
       'change',
-      '#user_payout_method_type_userpayoutmethodachtransfer',
+      '#user_payout_method_type_legalentitypayoutmethodachtransfer',
       e => {
         if (e.target.checked)
           achTransferPayoutMethodInputs.slideDown() &&
             checkPayoutMethodInputs.slideUp() &&
-            paypalTransferPayoutMethodInputs.slideUp() &&
             wirePayoutMethodInputs.slideUp() &&
             wiseTransferPayoutMethodInputs.slideUp()
       }
     )
     $(document).on(
       'change',
-      '#user_payout_method_type_userpayoutmethodpaypaltransfer',
+      '#user_payout_method_type_legalentitypayoutmethodwire',
       e => {
         if (e.target.checked)
-          paypalTransferPayoutMethodInputs.slideDown() &&
-            checkPayoutMethodInputs.slideUp() &&
-            achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp() &&
-            wiseTransferPayoutMethodInputs.slideUp()
-      }
-    )
-    $(document).on(
-      'change',
-      '#user_payout_method_type_userpayoutmethodwire',
-      e => {
-        if (e.target.checked)
-          paypalTransferPayoutMethodInputs.slideUp() &&
-            checkPayoutMethodInputs.slideUp() &&
+          checkPayoutMethodInputs.slideUp() &&
             achTransferPayoutMethodInputs.slideUp() &&
             wirePayoutMethodInputs.slideDown() &&
             wiseTransferPayoutMethodInputs.slideUp()
@@ -673,16 +655,18 @@ const initPayoutMethodToggles = function () {
     )
     $(document).on(
       'change',
-      '#user_payout_method_type_userpayoutmethodwisetransfer',
+      '#user_payout_method_type_legalentitypayoutmethodwisetransfer',
       e => {
         if (e.target.checked)
           wiseTransferPayoutMethodInputs.slideDown() &&
             checkPayoutMethodInputs.slideUp() &&
             achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp() &&
-            paypalTransferPayoutMethodInputs.slideUp()
+            wirePayoutMethodInputs.slideUp()
       }
     )
+    $(document).on('change', '[name="user[payout_method_type]"]', e => {
+      if (e.target.checked) BK.s('payout_method_name_input').slideDown()
+    })
   }
 }
 
@@ -859,3 +843,28 @@ if (navigator.setAppBadge) {
     }
   })
 }
+
+function updateScrollFadeClasses(el) {
+  if (el.scrollHeight > el.clientHeight) {
+    const isScrolledToBottom =
+      el.scrollHeight < el.clientHeight + el.scrollTop + 1
+    const isScrolledToTop = isScrolledToBottom ? false : el.scrollTop === 0
+    el.classList.toggle('is-bottom-overflowing', !isScrolledToBottom)
+    el.classList.toggle('is-top-overflowing', !isScrolledToTop)
+  }
+}
+
+function attachScrollFadeListeners() {
+  document.querySelectorAll('.scroll-fade').forEach(scrollable => {
+    scrollable.addEventListener('scroll', e => {
+      const el = e.currentTarget
+      updateScrollFadeClasses(el)
+    })
+
+    updateScrollFadeClasses(scrollable)
+  })
+}
+
+$(document).on('turbo:load', attachScrollFadeListeners)
+$(document).on('turbo:frame-load', attachScrollFadeListeners)
+$(document).on('turbo:after-stream-render', attachScrollFadeListeners)
