@@ -34,6 +34,7 @@ const populateSharedPopover = trigger => {
   }
 
   popover.classList.toggle('modal--popover--sm', size === 'sm')
+  popover.classList.toggle('modal--popover--lg', size === 'lg')
 
   const body = document.getElementById('shared_popover_body')
   if (body) {
@@ -818,6 +819,7 @@ $(document).on($.modal.AFTER_CLOSE, function (event, modal) {
     if (popoverEl && popoverEl.classList) {
       popoverEl.classList.remove('modal--popover--receipt-expanded')
       popoverEl.classList.remove('modal--popover--sm')
+      popoverEl.classList.remove('modal--popover--lg')
     }
   }
 })

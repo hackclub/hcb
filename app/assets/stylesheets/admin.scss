@@ -601,11 +601,29 @@ $filter-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'
   flex-direction: column;
   gap: 1rem;
 
+  // Once there's room, details sit beside the actions rather than above them.
+  @media (min-width: 64em) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 22rem);
+    align-items: start;
+  }
+
+  &__column {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 0;
+  }
+
   &__hero {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
     gap: 0.5rem 0.75rem;
+
+    @media (min-width: 64em) {
+      grid-column: 1 / -1;
+    }
   }
 
   &__amount {

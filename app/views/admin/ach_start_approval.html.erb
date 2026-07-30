@@ -33,127 +33,131 @@
       <% end %>
     </div>
 
-    <section class="card admin-form__section">
-      <h3 class="admin-form__title">Transfer</h3>
-
-      <dl class="admin-review__facts m0">
-        <% organization = safe_join([link_to(transfer.event.name, transfer.event, target: "_top"), tag.span("balance #{render_money transfer.event.balance_available_v2_cents}", class: "muted")], " · ") %>
-        <%= render "admin/review_fact", label: "Organization", value: organization %>
-
-        <% if transfer.creator %>
-          <%= render "admin/review_fact", label: "Submitted by", value: user_mention(transfer.creator) %>
-        <% end %>
-
-        <%= render "admin/review_fact", label: "Payee", value: transfer.recipient_name, copy: transfer.recipient_name %>
-
-        <% if transfer.recipient_tel.present? %>
-          <%= render "admin/review_fact", label: "Payee phone", value: transfer.recipient_tel, copy: transfer.recipient_tel %>
-        <% end %>
-
-        <%= render "admin/review_fact", label: "Payment for", value: transfer.payment_for %>
-
-        <% if transfer.invoiced_at.present? %>
-          <%= render "admin/review_fact", label: "Invoice date", value: transfer.invoiced_at.strftime("%B %-d, %Y") %>
-        <% end %>
-
-        <%= render "admin/review_fact", label: "Bank", value: transfer.bank_name %>
-        <%= render "admin/review_fact", label: "Account number", value: transfer.account_number, copy: transfer.account_number, fs_exclude: true %>
-        <%= render "admin/review_fact", label: "Routing number", value: transfer.routing_number, copy: transfer.routing_number, fs_exclude: true %>
-
-        <%# safe_join, not interpolation: format_datetime returns a <time> tag. %>
-        <% speed = [transfer.same_day? ? "💨 Same-day" : "⌛ Standard"] %>
-        <% if transfer.pending? %>
-          <%# button_to, not a data-turbo-method link: this only POSTs if Turbo
-              intercepts the click, and a plain GET has no matching route. %>
-          <% speed << button_to("toggle", toggle_speed_ach_transfer_path(transfer), method: :post, form_class: "inline", class: "link-button") %>
-          <% speed << tag.span(safe_join(["arrives ", format_datetime(transfer.estimated_arrival)]), class: "muted") %>
-        <% end %>
-        <%= render "admin/review_fact", label: "Speed", value: safe_join(speed, " · ") %>
-
-        <% if transfer.employee_payment.present? %>
-          <%= render "admin/review_fact", label: "Employee", value: transfer.employee_payment.employee.user.full_name %>
-          <%= render "admin/review_fact", label: "Employee org", value: transfer.employee_payment.employee.event.name %>
-        <% end %>
-
-        <% if transfer.processor %>
-          <%= render "admin/review_fact", label: "Processed by", value: user_mention(transfer.processor) %>
-        <% end %>
-      </dl>
-    </section>
-
-    <% if receipts.any? %>
+    <div class="admin-review__column">
       <section class="card admin-form__section">
-        <h3 class="admin-form__title">Receipts</h3>
+        <h3 class="admin-form__title">Transfer</h3>
 
-        <% if receipts.any?(&:extracted_incorrect_amount_cents?) %>
-          <p class="warning bold m0">⚠️ Check these closely — we suspect their amounts don't match.</p>
-        <% end %>
-        <% if receipts.any?(&:duplicated?) %>
-          <p class="warning bold m0">⚠️ We suspect one or more of these receipts has been used before.</p>
-        <% end %>
+        <dl class="admin-review__facts m0">
+          <% organization = safe_join([link_to(transfer.event.name, transfer.event, target: "_top"), tag.span("balance #{render_money transfer.event.balance_available_v2_cents}", class: "muted")], " · ") %>
+          <%= render "admin/review_fact", label: "Organization", value: organization %>
 
-        <div><%= render partial: "receipts/receipt", collection: receipts, as: :receipt, locals: { link_to_file: true } %></div>
-      </section>
-    <% end %>
-
-    <% if transfer.pending? %>
-      <% verb = transfer.scheduled_on.present? ? "Approve" : "Send" %>
-
-      <section class="card admin-form__section">
-        <h3 class="admin-form__title"><%= verb %></h3>
-
-        <div class="field">
-          <label class="bold">Transaction category</label>
-          <%= render partial: "hcb_codes/transaction_category_form", locals: { model: hcb_code.ct || hcb_code.pt } %>
-        </div>
-
-        <div class="admin-review__actions">
-          <%= form_with(model: false, local: true, url: ach_approve_admin_path(transfer), method: :post, class: "contents", data: { turbo_frame: "_top" }) do %>
-            <%= button_tag "#{verb} transfer", name: nil, class: "btn bg-success",
-                  data: { turbo_confirm: "Are you sure? Once an ACH transfer is sent, it cannot be un-sent." } %>
+          <% if transfer.creator %>
+            <%= render "admin/review_fact", label: "Submitted by", value: user_mention(transfer.creator) %>
           <% end %>
 
-          <% unless transfer.scheduled_on.present? %>
-            <%= form_with(model: false, local: true, url: ach_send_realtime_admin_path(transfer), method: :post, class: "contents", data: { turbo_frame: "_top" }) do %>
-              <%= button_tag "⚡ Send in realtime", name: nil, class: "btn btn-default",
-                    data: { turbo_confirm: "Are you sure? Once a realtime transfer is sent, it cannot be un-sent. Realtime transfers incur a $1 fee from Column, that will be covered by HCB." } %>
-            <% end %>
-          <% end %>
-        </div>
+          <%= render "admin/review_fact", label: "Payee", value: transfer.recipient_name, copy: transfer.recipient_name %>
 
-        <% if transfer.scheduled_on.present? %>
-          <span class="admin-form__hint">
-            Once approved, this transfer sends automatically on <%= transfer.scheduled_on.strftime("%B %-d, %Y") %>.
-          </span>
-        <% end %>
+          <% if transfer.recipient_tel.present? %>
+            <%= render "admin/review_fact", label: "Payee phone", value: transfer.recipient_tel, copy: transfer.recipient_tel %>
+          <% end %>
+
+          <%= render "admin/review_fact", label: "Payment for", value: transfer.payment_for %>
+
+          <% if transfer.invoiced_at.present? %>
+            <%= render "admin/review_fact", label: "Invoice date", value: transfer.invoiced_at.strftime("%B %-d, %Y") %>
+          <% end %>
+
+          <%= render "admin/review_fact", label: "Bank", value: transfer.bank_name %>
+          <%= render "admin/review_fact", label: "Account number", value: transfer.account_number, copy: transfer.account_number, fs_exclude: true %>
+          <%= render "admin/review_fact", label: "Routing number", value: transfer.routing_number, copy: transfer.routing_number, fs_exclude: true %>
+
+          <%# safe_join, not interpolation: format_datetime returns a <time> tag. %>
+          <% speed = [transfer.same_day? ? "💨 Same-day" : "⌛ Standard"] %>
+          <% if transfer.pending? %>
+            <%# button_to, not a data-turbo-method link: this only POSTs if Turbo
+                intercepts the click, and a plain GET has no matching route. %>
+            <% speed << button_to("toggle", toggle_speed_ach_transfer_path(transfer), method: :post, form_class: "inline", class: "link-button") %>
+            <% speed << tag.span(safe_join(["arrives ", format_datetime(transfer.estimated_arrival)]), class: "muted") %>
+          <% end %>
+          <%= render "admin/review_fact", label: "Speed", value: safe_join(speed, " · ") %>
+
+          <% if transfer.employee_payment.present? %>
+            <%= render "admin/review_fact", label: "Employee", value: transfer.employee_payment.employee.user.full_name %>
+            <%= render "admin/review_fact", label: "Employee org", value: transfer.employee_payment.employee.event.name %>
+          <% end %>
+
+          <% if transfer.processor %>
+            <%= render "admin/review_fact", label: "Processed by", value: user_mention(transfer.processor) %>
+          <% end %>
+        </dl>
       </section>
 
-      <section class="card admin-form__section">
-        <h3 class="admin-form__title">Reject</h3>
+      <% if receipts.any? %>
+        <section class="card admin-form__section">
+          <h3 class="admin-form__title">Receipts</h3>
 
-        <%= form_with(model: false, local: true, url: ach_reject_admin_path(transfer), method: :post, class: "admin-form__section", data: { turbo_frame: "_top" }) do |form| %>
+          <% if receipts.any?(&:extracted_incorrect_amount_cents?) %>
+            <p class="warning bold m0">⚠️ Check these closely — we suspect their amounts don't match.</p>
+          <% end %>
+          <% if receipts.any?(&:duplicated?) %>
+            <p class="warning bold m0">⚠️ We suspect one or more of these receipts has been used before.</p>
+          <% end %>
+
+          <div><%= render partial: "receipts/receipt", collection: receipts, as: :receipt, locals: { link_to_file: true } %></div>
+        </section>
+      <% end %>
+    </div>
+
+    <div class="admin-review__column">
+      <% if transfer.pending? %>
+        <% verb = transfer.scheduled_on.present? ? "Approve" : "Send" %>
+
+        <section class="card admin-form__section">
+          <h3 class="admin-form__title"><%= verb %></h3>
+
           <div class="field">
-            <%= form.label :comment, "Reason" %>
-            <span class="admin-form__hint">Shared with the organizer, so explain why. Markdown supported.</span>
-            <%= form.text_area :comment, rows: 3 %>
+            <label class="bold">Transaction category</label>
+            <%= render partial: "hcb_codes/transaction_category_form", locals: { model: hcb_code.ct || hcb_code.pt } %>
           </div>
 
-          <div>
-            <%= button_tag "Reject transfer", name: nil, class: "btn btn--destroy",
-                  data: { turbo_confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why.", turbo_confirm_danger: true } %>
+          <div class="admin-review__actions">
+            <%= form_with(model: false, local: true, url: ach_approve_admin_path(transfer), method: :post, class: "contents", data: { turbo_frame: "_top" }) do %>
+              <%= button_tag "#{verb} transfer", name: nil, class: "btn bg-success",
+                    data: { turbo_confirm: "Are you sure? Once an ACH transfer is sent, it cannot be un-sent." } %>
+            <% end %>
+
+            <% unless transfer.scheduled_on.present? %>
+              <%= form_with(model: false, local: true, url: ach_send_realtime_admin_path(transfer), method: :post, class: "contents", data: { turbo_frame: "_top" }) do %>
+                <%= button_tag "⚡ Send in realtime", name: nil, class: "btn btn-default",
+                      data: { turbo_confirm: "Are you sure? Once a realtime transfer is sent, it cannot be un-sent. Realtime transfers incur a $1 fee from Column, that will be covered by HCB." } %>
+              <% end %>
+            <% end %>
           </div>
-        <% end %>
-      </section>
-    <% else %>
-      <section class="card admin-form__section">
-        <p class="m0">
-          <% if transfer.rejected? %>
-            This transfer was rejected — it can't be approved.
-          <% else %>
-            This transfer has already been sent — it can't be approved or rejected.
+
+          <% if transfer.scheduled_on.present? %>
+            <span class="admin-form__hint">
+              Once approved, this transfer sends automatically on <%= transfer.scheduled_on.strftime("%B %-d, %Y") %>.
+            </span>
           <% end %>
-        </p>
-      </section>
-    <% end %>
+        </section>
+
+        <section class="card admin-form__section">
+          <h3 class="admin-form__title">Reject</h3>
+
+          <%= form_with(model: false, local: true, url: ach_reject_admin_path(transfer), method: :post, class: "admin-form__section", data: { turbo_frame: "_top" }) do |form| %>
+            <div class="field">
+              <%= form.label :comment, "Reason" %>
+              <span class="admin-form__hint">Shared with the organizer, so explain why. Markdown supported.</span>
+              <%= form.text_area :comment, rows: 3 %>
+            </div>
+
+            <div>
+              <%= button_tag "Reject transfer", name: nil, class: "btn btn--destroy",
+                    data: { turbo_confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why.", turbo_confirm_danger: true } %>
+            </div>
+          <% end %>
+        </section>
+      <% else %>
+        <section class="card admin-form__section">
+          <p class="m0">
+            <% if transfer.rejected? %>
+              This transfer was rejected — it can't be approved.
+            <% else %>
+              This transfer has already been sent — it can't be approved or rejected.
+            <% end %>
+          </p>
+        </section>
+      <% end %>
+    </div>
   </div>
 <% end %>

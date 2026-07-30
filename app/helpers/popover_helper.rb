@@ -127,7 +127,8 @@ module PopoverHelper
       src: path,
       frame_id: admin_process_frame_id(transfer),
       state_url: path,
-      external_link: path
+      external_link: path,
+      size: "lg"
     )
   end
 

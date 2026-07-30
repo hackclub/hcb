@@ -54,6 +54,11 @@
       max-width: 500px;
     }
 
+    // Admin process screens put details and actions side by side.
+    &.modal--popover--lg {
+      max-width: 1100px;
+    }
+
     @media (min-width: 48em) {
       height: calc(100dvh - 24px);
       border-radius: var(--radius-xl);
