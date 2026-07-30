@@ -62,7 +62,7 @@ RSpec.describe LoginsController do
         get(:email, params: { id: login.hashid })
       }.to send_email(to: user.email)
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("Email code")
       expect(response.body).to include("We just sent a login code")
     end
@@ -81,7 +81,7 @@ RSpec.describe LoginsController do
 
       get(:sms, params: { id: login.hashid })
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("SMS code")
       expect(response.body).to include("We just sent a login code")
     end
@@ -145,7 +145,7 @@ RSpec.describe LoginsController do
             }
           )
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           expect(response.body).to include("Invalid login code")
         end
 
@@ -199,7 +199,7 @@ RSpec.describe LoginsController do
             }
           )
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           expect(response.body).to include("Invalid login code")
         end
 
