@@ -4,7 +4,7 @@
 
 <p>
   In order to process this payment, we need your tax information.
-  Please fill out your information to complete this step!
+  Please <%= link_to "fill out your information", choose_legal_entity_payee_url(@payment.payee) %> to complete this step!
 </p>
 
 <p>

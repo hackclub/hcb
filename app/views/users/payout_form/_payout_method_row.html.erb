@@ -1,4 +1,4 @@
-<%# locals: (payout_method:, open: false, locking_reports: []) %>
+<%# locals: (user:, payout_method:, open: false, locking_reports: []) %>
 <% details = payout_method.details %>
 <% locked = locking_reports.any? %>
 <% locked_modal_id = "locked_reports_#{payout_method.id}" %>
@@ -12,13 +12,13 @@
 
     <div class="flex-auto" style="min-width: 0;">
       <div class="flex items-center">
-        <strong><%= payout_method.title_kind %></strong>
+        <strong><%= payout_method.display_name %></strong>
         <% if payout_method.default? %>
           <span class="badge bg-success" style="font-size: 11px;">Default</span>
         <% end %>
       </div>
       <div class="muted" style="font-size: 13px; margin-top: 2px;">
-        <%= payout_method.detail_summary %>
+        <%= payout_method.name.present? ? "#{payout_method.title_kind} · #{payout_method.detail_summary}" : payout_method.detail_summary %>
       </div>
     </div>
 
@@ -86,7 +86,7 @@
     </section>
   <% else %>
     <div data-payout-methods-panel data-open="<%= open %>" style="padding: 0 20px 20px;<%= " display: none;" unless open %>">
-      <%= render "users/payout_form/managed_form", user: current_user, editing: payout_method %>
+      <%= render "users/payout_form/form", user:, editing: payout_method %>
     </div>
   <% end %>
 </div>

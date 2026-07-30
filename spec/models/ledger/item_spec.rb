@@ -394,4 +394,40 @@ RSpec.describe Ledger::Item, type: :model do
       expect(item.custom_memo).to eq("Custom memo")
     end
   end
+
+  describe "account verification detection" do
+    # Pins memo/amount/linked_object_type past the refresh! callbacks (which
+    # recompute them from canonical transactions these items don't have),
+    # mirroring the shared ledger specs. A null linked_object_type marks a raw
+    # bank transaction, which is what account-verification micro-deposits are.
+    def acctverify_item(memo:, amount_cents:, linked_object_type: nil)
+      item = create(:ledger_item)
+      item.update_columns(memo:, amount_cents:, linked_object_type:)
+      item.reload
+    end
+
+    describe "#likely_account_verification_related?" do
+      it "is true for a sub-$1 raw bank transaction whose memo names a verification" do
+        expect(acctverify_item(memo: "ACCTVERIFY deposit", amount_cents: 12)).to be_likely_account_verification_related
+      end
+
+      it "matches the other known memo variants case-insensitively" do
+        ["sdv-vrfy", "AMTS: 0.12", "validation", "verify"].each do |memo|
+          expect(acctverify_item(memo:, amount_cents: -12)).to be_likely_account_verification_related
+        end
+      end
+
+      it "is false when the amount is $1 or more" do
+        expect(acctverify_item(memo: "ACCTVERIFY deposit", amount_cents: 100)).not_to be_likely_account_verification_related
+      end
+
+      it "is false when the transaction has a linked object" do
+        expect(acctverify_item(memo: "ACCTVERIFY deposit", amount_cents: 12, linked_object_type: "Invoice")).not_to be_likely_account_verification_related
+      end
+
+      it "is false when the memo does not name a verification" do
+        expect(acctverify_item(memo: "Coffee", amount_cents: 12)).not_to be_likely_account_verification_related
+      end
+    end
+  end
 end

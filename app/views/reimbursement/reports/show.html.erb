@@ -259,7 +259,7 @@
 
 <section data-behavior="modal" role="dialog" id="edit_payout" class="modal modal--scroll bg-snow">
   <%= modal_header "Add payout information" %>
-  <%= render "/users/payout_form", user: @report.user, report: @report %>
+  <%= render "users/payout_methods_list", user: @report.user, legal_entity: @report.user.personal_legal_entity %>
 </section>
 
 <section data-behavior="modal" role="dialog" id="wire_requirements" class="modal modal--scroll bg-snow">

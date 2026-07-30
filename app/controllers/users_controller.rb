@@ -32,7 +32,8 @@ class UsersController < ApplicationController
     :edit_admin, :admin_details, :admin_details_ach_transfers, :admin_details_check_deposits,
     :admin_details_disbursements, :admin_details_emburse_cards, :admin_details_increase_checks,
     :admin_details_invoices, :admin_details_lob_checks, :admin_details_missing_receipts,
-    :admin_details_reimbursement_reports, :admin_details_stripe_cards, :admin_details_stripe_transactions
+    :admin_details_reimbursement_reports, :admin_details_stripe_cards, :admin_details_stripe_transactions,
+    :suppress_card_locking
   ]
   wrap_parameters format: :url_encoded_form
 
@@ -325,6 +326,16 @@ class UsersController < ApplicationController
                                   .page(params[:page] || 1).per(params[:per] || 10)
   end
 
+  def suppress_card_locking
+    authorize @user
+
+    hours = params.fetch(:hours, 24).to_i.clamp(1, 720)
+    @user.update!(card_locking_suppressed_until: hours.hours.from_now)
+    User::UpdateCardLockingJob.perform_later(user: @user)
+
+    redirect_back_or_to admin_user_path(@user), flash: { success: "Card locking suppressed for #{hours}h." }
+  end
+
   def update
     return_to = params[:return_to]
     @states = ISO3166::Country.new("US").subdivisions.values.map { |s| [s.translations["en"], s.code] }
@@ -398,7 +409,6 @@ class UsersController < ApplicationController
       payout_ok = true
       if payout_method_type.present?
         payout_update = LegalEntity::PayoutMethodService::Update.new(
-          user: @user,
           legal_entity: @legal_entity,
           details_type: payout_method_type,
           details_attrs: payout_method_details_params
@@ -435,7 +445,7 @@ class UsersController < ApplicationController
 
       if @user.stripe_cardholder&.errors&.any?
         flash.now[:error] = @user.stripe_cardholder.errors.first.full_message
-        render :edit_address, status: :unprocessable_entity
+        render :edit_address, status: :unprocessable_content
         return
       end
 
@@ -443,11 +453,11 @@ class UsersController < ApplicationController
         flash.now[:error] = payout_update.error_messages.to_sentence
         @legal_entity ||= @user.personal_legal_entity
         @legal_entities = @user.legal_entities
-        render :edit_payout, status: :unprocessable_entity
+        render :edit_payout, status: :unprocessable_content
         return
       end
 
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   rescue Errors::StripeInvalidNameError => e
     redirect_back_or_to edit_user_path(@user), flash: { error: e.message }
@@ -471,7 +481,7 @@ class UsersController < ApplicationController
     # redirect_to edit_user_path(current_user)
     render json: { message: "started verification successfully" }, status: :ok
   rescue UserService::EnrollSmsAuth::SMSEnrollmentError => e
-    render json: { error: e.message }, status: :unprocessable_entity
+    render json: { error: e.message }, status: :unprocessable_content
   end
 
   def complete_sms_auth_verification
@@ -488,7 +498,7 @@ class UsersController < ApplicationController
     # redirect_to edit_user_path(current_user)
     render json: { error: "invalid login code" }, status: :forbidden
   rescue UserService::EnrollSmsAuth::SMSEnrollmentError => e
-    render json: { error: e.message }, status: :unprocessable_entity
+    render json: { error: e.message }, status: :unprocessable_content
   end
 
   def toggle_sms_auth
@@ -565,47 +575,17 @@ class UsersController < ApplicationController
 
 
   def payout_method_details_params
-    permitted =
-      case params.dig(:user, :payout_method_type)
-      when LegalEntity::PayoutMethod::Check.name
-        params.require(:user).permit(payout_method_attributes: [
-                                       :address_line1,
-                                       :address_line2,
-                                       :address_city,
-                                       :address_state,
-                                       :address_postal_code,
-                                       :address_country
-                                     ])[:payout_method_attributes]
-      when LegalEntity::PayoutMethod::Wire.name
-        params.require(:user).permit(payout_method_wire: [
-          :address_line1,
-          :address_line2,
-          :address_city,
-          :address_state,
-          :address_postal_code,
-          :recipient_country,
-          :recipient_name,
-          :bic_code,
-          :account_number
-        ] + LegalEntity::PayoutMethod::Wire.recipient_information_accessors)[:payout_method_wire]
-      when LegalEntity::PayoutMethod::WiseTransfer.name
-        params.require(:user).permit(payout_method_wise_transfer: [
-          :address_line1,
-          :address_line2,
-          :address_city,
-          :address_state,
-          :address_postal_code,
-          :recipient_country,
-          :currency,
-        ] + LegalEntity::PayoutMethod::WiseTransfer.recipient_information_accessors)[:payout_method_wise_transfer]
-      when LegalEntity::PayoutMethod::AchTransfer.name
-        params.require(:user).permit(payout_method_attributes: [
-                                       :account_number,
-                                       :routing_number
-                                     ])[:payout_method_attributes]
+    details_class = LegalEntity::PayoutMethod.details_class_for(params.dig(:user, :payout_method_type))
+    return {} unless details_class
+
+    key =
+      case details_class.name
+      when LegalEntity::PayoutMethod::Wire.name then :payout_method_wire
+      when LegalEntity::PayoutMethod::WiseTransfer.name then :payout_method_wise_transfer
+      else :payout_method_attributes
       end
 
-    permitted || {}
+    params.require(:user).permit(key => details_class.permitted_attributes)[key] || {}
   end
 
 end

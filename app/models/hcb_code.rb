@@ -5,8 +5,11 @@
 # Table name: hcb_codes
 #
 #  id                           :bigint           not null, primary key
+#  card_charge_settled_at       :datetime
 #  hcb_code                     :text             not null
 #  marked_no_or_lost_receipt_at :datetime
+#  receipt_due_at               :datetime
+#  receipt_resolved_at          :datetime
 #  short_code                   :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
@@ -16,10 +19,12 @@
 #
 # Indexes
 #
-#  index_hcb_codes_on_event_id        (event_id)
-#  index_hcb_codes_on_hcb_code        (hcb_code) UNIQUE
-#  index_hcb_codes_on_ledger_item_id  (ledger_item_id)
-#  index_hcb_codes_on_short_code      (short_code) UNIQUE
+#  index_hcb_codes_on_card_charge_settled_at  (card_charge_settled_at)
+#  index_hcb_codes_on_event_id                (event_id)
+#  index_hcb_codes_on_hcb_code                (hcb_code) UNIQUE
+#  index_hcb_codes_on_ledger_item_id          (ledger_item_id)
+#  index_hcb_codes_on_open_receipt_due_at     (receipt_due_at) WHERE ((receipt_due_at IS NOT NULL) AND (receipt_resolved_at IS NULL))
+#  index_hcb_codes_on_short_code              (short_code) UNIQUE
 #
 # Foreign Keys
 #
@@ -58,7 +63,10 @@ class HcbCode < ApplicationRecord
   belongs_to :event, optional: true
   belongs_to :subledger, optional: true
 
-  belongs_to :ledger_item, class_name: "Ledger::Item", optional: true
+  belongs_to :ledger_item, class_name: "Ledger::Item", optional: true, touch: true
+
+  # Card-locking scopes, columns, and the materializer. See the concern.
+  include CardLocking::ChargeBehavior
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }
   scope :mapped, -> { where.not(event_id: nil).or(where.not(subledger_id: nil)) }
@@ -165,14 +173,17 @@ class HcbCode < ApplicationRecord
   end
 
   def amount_cents
-    @amount_cents ||= begin
-      return canonical_transactions.sum(:amount_cents) if canonical_transactions.any?
-
-      # ACH transfers that haven't been sent don't have any CPTs
-      return -ach_transfer.amount if ach_transfer?
-
-      canonical_pending_transactions.sum(:amount_cents)
-    end
+    @amount_cents ||=
+      if canonical_transactions.any?
+        # Sum in memory when the association is already loaded. Card locking reads
+        # this for every one of a user's card charges at once, and a `SUM` per HCB
+        # code adds up.
+        canonical_transactions.loaded? ? canonical_transactions.sum(&:amount_cents) : canonical_transactions.sum(:amount_cents)
+      elsif ach_transfer? # ACH transfers that haven't been sent don't have any CPTs
+        -ach_transfer.amount
+      else
+        canonical_pending_transactions.sum(:amount_cents)
+      end
   end
 
   # this replicates our balance calculation

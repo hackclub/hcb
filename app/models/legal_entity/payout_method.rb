@@ -8,6 +8,7 @@
 #  archived        :boolean          default(FALSE), not null
 #  default         :boolean          default(FALSE), not null
 #  details_type    :string           not null
+#  name            :string
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  details_id      :bigint           not null
@@ -50,10 +51,37 @@ class LegalEntity
 
     scope :unarchived, -> { where(archived: false) }
 
+    validates :name, length: { maximum: 100 }, allow_blank: true
+
     validate :details_must_be_supported
 
+    after_create do
+      if default? && other_methods.none?
+        legal_entity.refresh_pending_contractors_payments!
+      end
+    end
+
     # type-specific presentation lives on the detail record
-    delegate :kind, :icon, :name, :human_kind, :title_kind, :currency, :short_label, :detail_summary, to: :details
+    delegate :kind, :icon, :human_kind, :title_kind, :currency, :short_label, :detail_summary, to: :details
+
+    def display_name
+      name.presence || title_kind
+    end
+
+    def self.details_class_for(type_name)
+      ALL_METHODS.find { |klass| klass.name == type_name }
+    end
+
+    # Permits and returns the type-specific detail attributes for `type_name`
+    # out of `params[:user][:payout_method_<kind>]`. Returns {} for an unknown
+    # or missing type.
+    def self.details_params_from(params, type_name)
+      details_class = details_class_for(type_name)
+      return {} unless details_class
+
+      key = :"payout_method_#{details_class.name.demodulize.underscore}"
+      params.require(:user).permit(key => details_class.permitted_attributes)[key] || {}
+    end
 
     # Shared contract for `create_transfer(event, **attrs)` across every payout
     # method. Each detail class pulls only the attributes its transfer type
@@ -108,11 +136,12 @@ class LegalEntity
       end
     end
 
+    def other_methods
+      LegalEntity::PayoutMethod.where(legal_entity_id:).excluding(self)
+    end
+
     def unset_other_defaults
-      LegalEntity::PayoutMethod
-        .where(legal_entity_id:)
-        .excluding(self)
-        .update_all(default: false)
+      other_methods.update_all(default: false)
     end
 
   end

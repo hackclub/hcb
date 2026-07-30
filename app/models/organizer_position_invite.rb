@@ -226,7 +226,7 @@ class OrganizerPositionInvite < ApplicationRecord
     is_signee
   end
 
-  def send_contract(cosigner_email: nil, include_videos: false, reissue_signee_message: nil, reissue_cosigner_message: nil, reissue_of: nil)
+  def send_contract(cosigner_email: nil, include_videos: false, reissue_messages: {}, reissue_of: nil)
     fs_contract = nil
 
     ActiveRecord::Base.transaction do
@@ -248,7 +248,7 @@ class OrganizerPositionInvite < ApplicationRecord
       organizer_position&.update(is_signee: true, fiscal_sponsorship_contract: fs_contract)
     end
 
-    fs_contract.send!(reissue_signee_message:, reissue_cosigner_message:)
+    fs_contract.send!(reissue_messages:)
 
     fs_contract
   end

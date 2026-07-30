@@ -132,7 +132,7 @@
         <div class="field">
           <%= form.select(
                 :parent_id,
-                Event.order(name: :asc, id: :asc).where.not(id: event.id).map { |event| [event.name, event.id] },
+                Event.reorder(name: :asc, id: :asc).where.not(id: event.id).map { |event| [event.name, event.id] },
                 include_blank: "None"
               ) %>
         </div>
