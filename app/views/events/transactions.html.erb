@@ -27,7 +27,7 @@
 
 <%= render "events/nav", selected: :transactions %>
 
-<%= render "events/heading", event: @event, event_follow: @event_follow do %>
+<%= render "events/heading", event: @event, event_follow: @event_follow, show_ledger_toggle: true do %>
   <span class="flex-grow">Transactions</span>
 <% end %>
 

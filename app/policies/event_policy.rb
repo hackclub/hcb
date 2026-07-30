@@ -33,6 +33,7 @@ class EventPolicy < ApplicationPolicy
   alias_method :transactions?, :show?
   alias_method :transactions_list?, :transactions?
   alias_method :merchants_filter?, :transactions?
+  alias_method :stats?, :show?
 
   def toggle_hidden?
     user&.admin?
@@ -216,7 +217,10 @@ class EventPolicy < ApplicationPolicy
   end
 
   def sub_organizations?
-    (is_public || auditor_or_reader?) && (record.subevents_enabled? || record.subevents.any?)
+    # Gating on the sub-organizations this viewer may see, rather than on all of
+    # them: a page that exists only for organizations with a private roster
+    # gives away that the roster is there.
+    (is_public || auditor_or_reader?) && (record.subevents_enabled? || record.visible_subevents(user).exists?)
   end
 
   alias async_sub_organizations_graph? sub_organizations?
@@ -288,7 +292,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def ledger?
-    auditor? || (Flipper.enabled?(:new_ledger_2026_06_30, record) && reader?)
+    auditor? || (reader? && (Flipper.enabled?(:new_ledger_2026_06_30, record) || Flipper.enabled?(:new_ledger_2026_07_17, user)))
   end
 
   alias hide_onboarding_message? request_call?

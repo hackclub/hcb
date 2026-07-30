@@ -40,6 +40,8 @@ class CardGrantsController < ApplicationController
 
     @use_card_grant_ledgers = true
     set_ledger_filters
+    return if performed?
+
     @per = params[:per] || 25
     @table_only = true
     @ledger = @event.ledger
@@ -83,7 +85,7 @@ class CardGrantsController < ApplicationController
         raise e
       end
 
-      render(:new, status: :unprocessable_entity)
+      render(:new, status: :unprocessable_content)
       return
     end
 
@@ -100,7 +102,7 @@ class CardGrantsController < ApplicationController
 
     unless params[:csv_file].present?
       flash[:error] = "Please select a CSV file to upload"
-      render :bulk_upload_form, status: :unprocessable_entity
+      render :bulk_upload_form, status: :unprocessable_content
       return
     end
 
@@ -115,11 +117,11 @@ class CardGrantsController < ApplicationController
       redirect_to event_card_grant_overview_path(@event)
     else
       flash.now[:error] = result.errors.join(". ")
-      render :bulk_upload_form, status: :unprocessable_entity
+      render :bulk_upload_form, status: :unprocessable_content
     end
   rescue DisbursementService::Create::UserError => e
     flash.now[:error] = e.message
-    render :bulk_upload_form, status: :unprocessable_entity
+    render :bulk_upload_form, status: :unprocessable_content
   end
 
   def bulk_upload_template
