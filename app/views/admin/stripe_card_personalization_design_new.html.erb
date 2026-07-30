@@ -1,41 +1,41 @@
-<% title "Create an card design" %>
+<% title "Create a card design" %>
 
-<h1>Create a new card design</h1>
+<% content_for(:admin_actions) do %>
+  <%= link_to "All card designs", stripe_card_personalization_designs_admin_index_path, class: "btn" %>
+<% end %>
 
-<%= form_with(model: false, local: true, url: stripe_card_personalization_design_create_admin_index_path, data: {
-                turbo: "false",
-              }) do |form| %>
-  <fieldset>
-    <legend>Card design</legend>
-    <p>
-      <%= form.label :name, "Name" %>
-      <br>
-      <%= form.text_field :name, placeholder: "HCB Sapphire Platinum X Preferred 0% Cashback Rewards Card", style: "width: 500px; max-width: 80vw;", required: true %>
-    </p>
-
-    <p>
-      <%= form.label :color %>
-      <br>
-      <%= form.select :color, {
-            "⚪ US Visa Credit White" => :white,
-            "⚫ US Visa Credit Black" => :black
-          } %>
-    </p>
+<%= form_with(model: false, local: true, url: stripe_card_personalization_design_create_admin_index_path, class: "admin-form", data: { turbo: "false" }) do |form| %>
+  <section class="card admin-form__section">
+    <h3 class="admin-form__title">Card design</h3>
 
     <div class="field">
-      <%= form.label :logo, "Logo" %>
+      <%= form.label :name %>
+      <%= form.text_field :name, placeholder: "HCB Sapphire Platinum X Preferred 0% Cashback Rewards Card", value: params[:name], required: true, autofocus: true %>
+    </div>
+
+    <div class="field">
+      <%= form.label :color, "Card colour" %>
+      <%= form.select :color, { "⚪ US Visa Credit White" => :white, "⚫ US Visa Credit Black" => :black }, { selected: params[:color] } %>
+    </div>
+
+    <div class="field">
+      <%= form.label :logo %>
+      <span class="admin-form__hint">
+        Per Stripe's guidelines: a .png under 512kb, legible at 1000&times;200px, and a binary
+        (no grayscale) black logo on a white background.
+      </span>
       <div class="field--image-upload" data-controller="image-upload-preview">
         <%= form.label :logo, "Click to upload PNG logo", data: { image_upload_preview_target: "preview" } %>
         <%= form.file_field :logo, accept: "image/png", required: true, data: { action: "image-upload-preview#set" } %>
       </div>
     </div>
+  </section>
 
-    <small>As per Stripe's guidelines, please ensure logo is .png format, no larger than 512kb, with a legible size of 1000px by 200px binary image containing a black logo on a white background with no grayscale.</small>
-
-  </fieldset>
-
-  <p>
-    <%= form.submit "Create design", class: "btn bg-success mr1" %>
-    By default, new card designs are private, but this can be changed later.
-  </p>
+  <div class="admin-form__footer">
+    <%= button_tag "Create design", name: nil, class: "btn bg-success" %>
+    <%= link_to "Cancel", stripe_card_personalization_designs_admin_index_path, class: "admin-form__cancel" %>
+    <span class="admin-form__hint">
+      New designs start out private. You can make one public from the designs list.
+    </span>
+  </div>
 <% end %>

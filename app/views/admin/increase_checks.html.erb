@@ -31,7 +31,7 @@
         <td><%= check.aasm.human_state %><%= " - #{check.increase_status&.humanize}" if check.approved? %></td>
         <td>
           <div class="flex items-center gap-2">
-            <%= link_to "Process", increase_check_process_admin_path(check), class: "btn" %>
+            <%= link_to "Process", increase_check_process_admin_path(check), class: "btn", data: admin_process_popover_data(check) %>
             <%= pop_icon_to "external", hcb_code_path(check.hcb_code), "aria-label": "View", data: admin_popover_data_for(check) %>
           </div>
         </td>

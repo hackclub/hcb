@@ -99,6 +99,69 @@ module PopoverHelper
     )
   end
 
+  # The admin "Process" screens. Each one renders itself as a bare turbo frame
+  # when requested inside the popover (see `render(layout: !turbo_frame_request?)`),
+  # and still works as a full page — which is what the popover's pop-out link
+  # goes to.
+  ADMIN_PROCESS_LABELS = {
+    "AchTransfer"    => "ACH transfer",
+    "Wire"           => "Wire",
+    "WiseTransfer"   => "Wise transfer",
+    "PaypalTransfer" => "PayPal transfer",
+    "IncreaseCheck"  => "Check",
+    "Disbursement"   => "Transfer",
+    "Invoice"        => "Invoice",
+  }.freeze
+  private_constant :ADMIN_PROCESS_LABELS
+
+  def admin_process_popover_data(transfer)
+    return {} unless admin_popovers_enabled?
+
+    label = ADMIN_PROCESS_LABELS[transfer.class.name]
+    return {} if label.nil?
+
+    path = admin_process_path(transfer)
+
+    popover_data(
+      title: "#{label} ##{transfer.id} · #{admin_process_amount(transfer)}",
+      src: path,
+      frame_id: admin_process_frame_id(transfer),
+      state_url: path,
+      external_link: path
+    )
+  end
+
+  # Wires and Wise transfers carry their own currency; everything else is USD.
+  # Mirrors how the index tables format these amounts.
+  def admin_process_amount(record)
+    case record
+    when ::Wire, ::WiseTransfer
+      Money.from_cents(record.amount_cents, record.currency).format
+    when ::Invoice
+      render_money(record.item_amount)
+    else
+      render_money(record.amount)
+    end
+  end
+
+  # Also used by the process views themselves, so the frame they render always
+  # matches the one the popover creates for it.
+  def admin_process_frame_id(transfer)
+    "#{transfer.class.name.underscore}_process_#{transfer.id}"
+  end
+
+  def admin_process_path(transfer)
+    case transfer
+    when ::AchTransfer then ach_start_approval_admin_path(transfer)
+    when ::Wire then wire_process_admin_path(transfer)
+    when ::WiseTransfer then wise_transfer_process_admin_path(transfer)
+    when ::PaypalTransfer then paypal_transfer_process_admin_path(transfer)
+    when ::IncreaseCheck then increase_check_process_admin_path(transfer)
+    when ::Disbursement then disbursement_process_admin_path(transfer)
+    when ::Invoice then invoice_process_admin_path(transfer)
+    end
+  end
+
   def legal_entity_popover_data(legal_entity)
     popover_data(
       title: "Payment information for #{legal_entity.name.presence || legal_entity.display_name}",

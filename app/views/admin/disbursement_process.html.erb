@@ -1,165 +1,167 @@
-<%= link_to disbursements_admin_index_path, class: "btn btn-small bg-muted" do %>
-  <%= inline_icon "view-back" %>
-  Back to disbursements
-<% end %>
+<%= turbo_frame_tag(admin_process_frame_id(@disbursement)) do %>
+  <%= link_to disbursements_admin_index_path, class: "btn btn-small bg-muted" do %>
+    <%= inline_icon "view-back" %>
+    Back to disbursements
+  <% end %>
 
-<h1>Process Disbursement #<%= @disbursement.id %></h1>
-<p><small>Current Status: <%= @disbursement.state_text %></small></p>
+  <% title "Transfer ##{@disbursement.id}" %>
+  <p><small>Current Status: <%= @disbursement.state_text %></small></p>
 
-<h3>Disbursement Details</h3>
-
-<div class="table-container">
-<table class="table--autosize">
-  <tbody>
-  <tr>
-    <td class="text-right">HCB Code:</td>
-    <td>
-      <% if @disbursement.local_hcb_code %>
-        <%= link_to(@disbursement.outgoing_hcb_code, hcb_code_path(@disbursement.local_hcb_code), data: admin_popover_data_for(@disbursement)) %>
-      <% end %>
-    </td>
-  </tr>
-  <tr>
-    <td class="text-right">From:</td>
-    <td>
-      <%= link_to(@disbursement.source_event.name, event_path(@disbursement.source_event)) %>
-      <%= "(❄️ ⚠️ CURRENTLY FINANCIALLY FROZEN)" if @disbursement.source_event.financially_frozen? %>
-    </td>
-  </tr>
-  <tr>
-    <td class="text-right">To:</td>
-    <td>
-      <%= link_to(@disbursement.destination_event.name, event_path(@disbursement.destination_event)) %>
-      <%= "(❄️ ⚠️ CURRENTLY FINANCIALLY FROZEN)" if @disbursement.destination_event.financially_frozen? %>
-    </td>
-  </tr>
-  <tr>
-    <td class="text-right">Amount:</td>
-    <td><%= render_money @disbursement.amount %></td>
-  </tr>
-  <tr>
-    <td class="text-right">Memo:</td>
-    <td><%= @disbursement.name %></td>
-  </tr>
-  <tr>
-    <td class="text-right">Requested by:</td>
-    <td><%= user_mention @disbursement.requested_by %></td>
-  </tr>
-  <tr>
-    <td class="text-right">
-      <% if @disbursement.rejected? %>
-        Rejected by:
-      <% else %>
-        Fulfilled by:
-      <% end %>
-    </td>
-    <td>
-      <% if @disbursement.fulfilled_by.nil? %>
-        N/A <span class="muted italic">(This could be you!✨)</span>
-      <% else %>
-        <div>
-          <%= user_mention @disbursement.fulfilled_by %>
-        </div>
-      <% end %>
-    </td>
-  </tr>
-  </tbody>
-</table>
-</div>
-
-<h4>Source transactions</h4>
-
-<%= render(
-      partial: "hcb_codes/transactions_table",
-      locals: {
-        canonical_transactions: @disbursement.transactions_helper.settled_source,
-        canonical_pending_transactions: @disbursement.transactions_helper.pending_source,
-        popovers: true,
-      }
-    ) %>
-
-<h4>Destination transactions</h4>
-
-<% if @disbursement.transactions_helper.settled_destination.empty? && @disbursement.transactions_helper.pending_destination.empty? %>
-  <p>Destination transactions for this disbursement have not been created yet. Once created, they will have the following properties:</p>
+  <h3>Disbursement Details</h3>
 
   <div class="table-container">
   <table class="table--autosize">
+    <tbody>
     <tr>
-      <td class="text-right">
-        Category:
-      </td>
+      <td class="text-right">HCB Code:</td>
       <td>
-        <%= form_for(
-              @disbursement,
-              url: disbursement_set_transaction_categories_path(@disbursement),
-              method: :post,
-              data: { controller: "form" },
-              html: { class: "m-0" }
-            ) do |f| %>
-
-          <%= select_tag(
-                f.field_name(:destination_transaction_category_slug),
-                options_for_select(
-                  TransactionCategory::Definition::ALL.map { |_, d| [d.label, d.slug] },
-                  @disbursement.destination_transaction_category&.slug,
-                ),
-                include_blank: "None",
-                data: { action: "change->form#submit" },
-                class: "m-0"
-              ) %>
+        <% if @disbursement.local_hcb_code %>
+          <%= link_to(@disbursement.outgoing_hcb_code, hcb_code_path(@disbursement.local_hcb_code), data: admin_popover_data_for(@disbursement)) %>
         <% end %>
       </td>
     </tr>
+    <tr>
+      <td class="text-right">From:</td>
+      <td>
+        <%= link_to(@disbursement.source_event.name, event_path(@disbursement.source_event)) %>
+        <%= "(❄️ ⚠️ CURRENTLY FINANCIALLY FROZEN)" if @disbursement.source_event.financially_frozen? %>
+      </td>
+    </tr>
+    <tr>
+      <td class="text-right">To:</td>
+      <td>
+        <%= link_to(@disbursement.destination_event.name, event_path(@disbursement.destination_event)) %>
+        <%= "(❄️ ⚠️ CURRENTLY FINANCIALLY FROZEN)" if @disbursement.destination_event.financially_frozen? %>
+      </td>
+    </tr>
+    <tr>
+      <td class="text-right">Amount:</td>
+      <td><%= render_money @disbursement.amount %></td>
+    </tr>
+    <tr>
+      <td class="text-right">Memo:</td>
+      <td><%= @disbursement.name %></td>
+    </tr>
+    <tr>
+      <td class="text-right">Requested by:</td>
+      <td><%= user_mention @disbursement.requested_by %></td>
+    </tr>
+    <tr>
+      <td class="text-right">
+        <% if @disbursement.rejected? %>
+          Rejected by:
+        <% else %>
+          Fulfilled by:
+        <% end %>
+      </td>
+      <td>
+        <% if @disbursement.fulfilled_by.nil? %>
+          N/A <span class="muted italic">(This could be you!✨)</span>
+        <% else %>
+          <div>
+            <%= user_mention @disbursement.fulfilled_by %>
+          </div>
+        <% end %>
+      </td>
+    </tr>
+    </tbody>
   </table>
   </div>
 
-<% else %>
+  <h4>Source transactions</h4>
+
   <%= render(
         partial: "hcb_codes/transactions_table",
         locals: {
-          canonical_transactions: @disbursement.transactions_helper.settled_destination,
-          canonical_pending_transactions: @disbursement.transactions_helper.pending_destination,
+          canonical_transactions: @disbursement.transactions_helper.settled_source,
+          canonical_pending_transactions: @disbursement.transactions_helper.pending_source,
           popovers: true,
         }
       ) %>
-<% end %>
 
-<hr class="mt4">
+  <h4>Destination transactions</h4>
 
-<h3>Instructions</h3>
+  <% if @disbursement.transactions_helper.settled_destination.empty? && @disbursement.transactions_helper.pending_destination.empty? %>
+    <p>Destination transactions for this disbursement have not been created yet. Once created, they will have the following properties:</p>
 
-<% if @disbursement.rejected? %>
-  <p>Nothing more to do here. ✨</p>
-<% elsif @disbursement.pending? %>
-  <%= form_with(model: false, local: true, url: disbursement_reject_admin_path(@disbursement), method: :post) do |form| %>
-    <div class="field">
-      <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
-      <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
+    <div class="table-container">
+    <table class="table--autosize">
+      <tr>
+        <td class="text-right">
+          Category:
+        </td>
+        <td>
+          <%= form_for(
+                @disbursement,
+                url: disbursement_set_transaction_categories_path(@disbursement),
+                method: :post,
+                data: { controller: "form" },
+                html: { class: "m-0" }
+              ) do |f| %>
+
+            <%= select_tag(
+                  f.field_name(:destination_transaction_category_slug),
+                  options_for_select(
+                    TransactionCategory::Definition::ALL.map { |_, d| [d.label, d.slug] },
+                    @disbursement.destination_transaction_category&.slug,
+                  ),
+                  include_blank: "None",
+                  data: { action: "change->form#submit" },
+                  class: "m-0"
+                ) %>
+          <% end %>
+        </td>
+      </tr>
+    </table>
     </div>
-    <%= form.submit "Reject disbursement",
-      class: "btn btn--destroy",
-      data: { turbo_confirm: "Are you sure you want to reject this disbursement?", turbo_confirm_danger: true } %>
-  <% end %>
-<% else %>
-  <p>This is a human review check.</p>
 
-  <% if @disbursement.scheduled_on.present? %>
-    <br>
-    <small>When approved, this disbursement will automatically send on <%= @disbursement.scheduled_on.strftime("%Y-%m-%d") %>.</small>
-  <% end %>
-
-  <%= form_with(model: false, local: true, url: disbursement_approve_admin_path(@disbursement), method: :post) do |form| %>
-    <%= form.submit "Approve disbursement", class: "btn bg-success" %>
+  <% else %>
+    <%= render(
+          partial: "hcb_codes/transactions_table",
+          locals: {
+            canonical_transactions: @disbursement.transactions_helper.settled_destination,
+            canonical_pending_transactions: @disbursement.transactions_helper.pending_destination,
+            popovers: true,
+          }
+        ) %>
   <% end %>
 
-  <%= form_with(model: false, local: true, url: disbursement_reject_admin_path(@disbursement), method: :post) do |form| %>
-    <div class="field">
-      <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
-      <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
-    </div>
-    <%= form.submit "Reject disbursement",
-      class: "btn btn--destroy",
-      data: { turbo_confirm: "Are you sure you want to reject this disbursement?", turbo_confirm_danger: true } %>
+  <hr class="mt4">
+
+  <h3>Instructions</h3>
+
+  <% if @disbursement.rejected? %>
+    <p>Nothing more to do here. ✨</p>
+  <% elsif @disbursement.pending? %>
+    <%= form_with(model: false, local: true, url: disbursement_reject_admin_path(@disbursement), method: :post) do |form| %>
+      <div class="field">
+        <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
+        <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
+      </div>
+      <%= form.submit "Reject disbursement",
+        class: "btn btn--destroy",
+        data: { turbo_confirm: "Are you sure you want to reject this disbursement?", turbo_confirm_danger: true } %>
+    <% end %>
+  <% else %>
+    <p>This is a human review check.</p>
+
+    <% if @disbursement.scheduled_on.present? %>
+      <br>
+      <small>When approved, this disbursement will automatically send on <%= @disbursement.scheduled_on.strftime("%Y-%m-%d") %>.</small>
+    <% end %>
+
+    <%= form_with(model: false, local: true, url: disbursement_approve_admin_path(@disbursement), method: :post) do |form| %>
+      <%= form.submit "Approve disbursement", class: "btn bg-success" %>
+    <% end %>
+
+    <%= form_with(model: false, local: true, url: disbursement_reject_admin_path(@disbursement), method: :post) do |form| %>
+      <div class="field">
+        <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
+        <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
+      </div>
+      <%= form.submit "Reject disbursement",
+        class: "btn btn--destroy",
+        data: { turbo_confirm: "Are you sure you want to reject this disbursement?", turbo_confirm_danger: true } %>
+    <% end %>
   <% end %>
 <% end %>
