@@ -5,10 +5,12 @@ class EventsController < ApplicationController
   DONATIONS_PER_PAGE = 25
 
   include SetEvent
+  include SetLedgerFilters
 
   include Rails::Pagination
   before_action :set_event, except: [:index]
-  before_action :set_transaction_filters, only: [:transactions, :ledger]
+  before_action :set_ledger_filters, only: [:ledger]
+  before_action :set_transaction_filters, only: [:transactions, :transactions_list]
   before_action except: [:show, :index] do
     render_back_to_tour @organizer_position, :welcome, event_path(@event)
   end
@@ -146,6 +148,10 @@ class EventsController < ApplicationController
     render partial: "events/home/users_chart", locals: { users: @users, timeframe: params[:timeframe], event: @event }
   end
 
+  def stats
+    authorize @event
+  end
+
   def transactions
     maybe_pending_invite = OrganizerPositionInvite.pending.find_by(user: current_user, event: @event)
 
@@ -164,9 +170,17 @@ class EventsController < ApplicationController
       @popover = flash[:popover]
       flash.delete(:popover)
     end
+
+    if organizer_signed_in?
+      if params[:apply_flipper] == "true"
+        Flipper.disable_actor(:new_ledger_2026_07_17, current_user)
+      elsif Flipper.enabled?(:new_ledger_2026_07_17, current_user)
+        redirect_to event_ledger_path(@event) and return
+      end
+    end
   end
 
-  def ledger
+  def transactions_list
     begin
       authorize @event
     rescue Pundit::NotAuthorizedError
@@ -210,7 +224,7 @@ class EventsController < ApplicationController
     @pending_transactions = type_results[:pending_transactions]
 
     page = (params[:page] || 1).to_i
-    per_page = (params[:per] || TRANSACTIONS_PER_PAGE).to_i
+    per_page = (params[:per] || TRANSACTIONS_PER_PAGE).to_i.clamp(1, 200)
 
     @transactions = Kaminari.paginate_array(@all_transactions).page(page).per(per_page)
     TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: @transactions, event: @event).run!
@@ -387,7 +401,7 @@ class EventsController < ApplicationController
           redirect_back_or_to edit_event_path(@event.slug)
         end
       else
-        render :edit, status: :unprocessable_entity
+        render :edit, status: :unprocessable_content
       end
     rescue Errors::InvalidStripeCardLogoError => e
       flash[:error] = e.message
@@ -543,7 +557,11 @@ class EventsController < ApplicationController
         }
       }
     end
-    render json: data
+
+    # The cached entry covers every descendant and is shared across viewers, so
+    # drop the sub-organizations this one isn't allowed to see before rendering.
+    visible_ids = visible_descendant_ids.to_set << @event.id
+    render json: data.select { |row| visible_ids.include?(row[:id]) }
   end
 
   def account_number
@@ -648,20 +666,21 @@ class EventsController < ApplicationController
 
     # The search query name was historically `search`. It has since been renamed
     # to `q`. This following line retains backwards compatibility.
-    @ach_transfers = @event.ach_transfers
+    @payments = @event.payments.includes(:payee)
+    @ach_transfers = @event.ach_transfers.where.missing(:payment_attempt)
     @paypal_transfers = @event.paypal_transfers
-    @wires = @event.wires
-    @wise_transfers = @event.wise_transfers
+    @wires = @event.wires.where.missing(:payment_attempt)
+    @wise_transfers = @event.wise_transfers.where.missing(:payment_attempt)
     @checks = @event.checks.includes(:lob_address)
-    @increase_checks = @event.increase_checks
+    @increase_checks = @event.increase_checks.where.missing(:payment_attempt)
     @disbursements = @event.outgoing_disbursements.includes(:destination_event)
 
     @disbursements = @disbursements.not_card_grant_related
 
     @stats = {
-      deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.deposited.sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.map(&:usd_amount_cents).compact.sum + @wise_transfers.deposited.map(&:usd_amount_cents_or_quoted).compact.sum,
-      in_transit: @ach_transfers.in_transit.sum(:amount) + @checks.in_transit_or_in_transit_and_processed.sum(:amount) + @increase_checks.in_transit.sum(:amount) + @disbursements.reviewing_or_processing.sum(:amount) + @paypal_transfers.approved.or(@paypal_transfers.pending).sum(:amount_cents) + @wires.approved.or(@wires.pending).map(&:usd_amount_cents).compact.sum + @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent).map(&:usd_amount_cents_or_quoted).compact.sum,
-      canceled: @ach_transfers.rejected.sum(:amount) + @checks.canceled.sum(:amount) + @increase_checks.canceled.sum(:amount) + @disbursements.rejected.sum(:amount) + @paypal_transfers.rejected.sum(:amount_cents) + @wires.rejected.map(&:usd_amount_cents).compact.sum + @wise_transfers.rejected.or(@wise_transfers.failed).map(&:usd_amount_cents_or_quoted).compact.sum
+      deposited: @ach_transfers.deposited.sum(:amount) + @checks.deposited.sum(:amount) + @increase_checks.deposited.sum(:amount) + @disbursements.fulfilled.pluck(:amount).sum + @paypal_transfers.deposited.sum(:amount_cents) + @wires.deposited.map(&:usd_amount_cents).compact.sum + @wise_transfers.deposited.map(&:usd_amount_cents_or_quoted).compact.sum + @payments.where(aasm_state: "successful").sum(:amount_cents),
+      in_transit: @ach_transfers.in_transit.sum(:amount) + @checks.in_transit_or_in_transit_and_processed.sum(:amount) + @increase_checks.in_transit.sum(:amount) + @disbursements.reviewing_or_processing.sum(:amount) + @paypal_transfers.approved.or(@paypal_transfers.pending).sum(:amount_cents) + @wires.approved.or(@wires.pending).map(&:usd_amount_cents).compact.sum + @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent).map(&:usd_amount_cents_or_quoted).compact.sum + @payments.where(aasm_state: %w[pending_legal_entity under_review sent]).sum(:amount_cents),
+      canceled: @ach_transfers.rejected.sum(:amount) + @checks.canceled.sum(:amount) + @increase_checks.canceled.sum(:amount) + @disbursements.rejected.sum(:amount) + @paypal_transfers.rejected.sum(:amount_cents) + @wires.rejected.map(&:usd_amount_cents).compact.sum + @wise_transfers.rejected.or(@wise_transfers.failed).map(&:usd_amount_cents_or_quoted).compact.sum + @payments.where(aasm_state: "rejected").sum(:amount_cents)
     }
 
     # Support legacy filter param for backward compatibility
@@ -703,8 +722,13 @@ class EventsController < ApplicationController
     @wise_transfers = @wise_transfers.rejected.or(@wise_transfers.failed) if params[:status] == "canceled"
     @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
 
+    @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
+    @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
+    @payments = @payments.where(aasm_state: "rejected") if params[:status] == "canceled"
+    @payments = @payments.search_recipient(params[:q]) if params[:q].present?
+
     # Apply transfer type filter
-    all_transfers = [@increase_checks, @checks, @ach_transfers, @disbursements, @paypal_transfers, @wires, @wise_transfers]
+    all_transfers = [@increase_checks, @checks, @ach_transfers, @disbursements, @paypal_transfers, @wires, @wise_transfers, @payments]
 
     case params[:transfer_type]
     when "ach"
@@ -719,6 +743,8 @@ class EventsController < ApplicationController
       all_transfers = [@disbursements]
     when "paypal"
       all_transfers = [@paypal_transfers]
+    when "payment"
+      all_transfers = [@payments]
     end
 
     @transfers = Kaminari.paginate_array(all_transfers.flatten.sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(params[:per] || 100)
@@ -730,6 +756,11 @@ class EventsController < ApplicationController
 
   def transfers
     authorize @event
+
+    if Flipper.enabled?(:payments_contractors_refresh_2026_06_26, @event)
+      redirect_to event_payments_path(@event)
+      return
+    end
 
     params[:q] ||= params[:search]
 
@@ -875,13 +906,34 @@ class EventsController < ApplicationController
     @employees = @employees.search(params[:q]) if params[:q].present?
   end
 
+  def contractors
+    authorize @event
+
+    @contractors = @event.payroll_positions.includes(:event, payee: :payments).order(created_at: :desc)
+
+    counts_by_status = @contractors.to_a.group_by(&:status).transform_values(&:count)
+    @stats = {
+      active: counts_by_status[:active] || 0,
+      onboarding: counts_by_status[:onboarding] || 0,
+      completed: counts_by_status[:completed] || 0,
+    }
+
+    @contractors = @contractors.search_recipient(params[:q]) if params[:q].present?
+  end
+
   def sub_organizations
     authorize @event
 
     respond_to do |format|
       format.html do
-        @sub_organizations = filtered_sub_organizations.page(params[:page]).per(params[:per] || 24)
-        @all_events = [@event] + @event.descendants.order(:name).select(:name, :parent_id, :slug, :id).to_a
+        sub_organizations = filtered_sub_organizations
+        # Hidden organizations are set aside in their own collapsed section,
+        # matching how the organization index treats them.
+        @sub_organizations = sub_organizations.not_hidden.page(params[:page]).per(params[:per] || 24)
+        @hidden_sub_organizations = sub_organizations.hidden.to_a
+        # The graph renders only nodes reachable from the root, so leaving a
+        # hidden organization out keeps everything under it off the graph too.
+        @all_events = [@event] + Event.where(id: visible_descendant_ids).not_hidden.order(:name).select(:name, :parent_id, :slug, :id).to_a
       end
 
       # CSV export intentionally does not consider filters
@@ -892,7 +944,7 @@ class EventsController < ApplicationController
           # robust, immutable identifier compared to slugs.
           csv << %w[ID Name Slug Balance Tags]
 
-          @event.subevents.includes(:scoped_tags).find_each do |e|
+          @event.subevents.where(id: visible_descendant_ids).includes(:scoped_tags).find_each do |e|
             tags_for_parent = e.scoped_tags.select { |tag| tag.parent_event_id == e.parent_id }
             csv << [e.public_id, e.name, e.slug, e.balance_v2_cents / 100.0, tags_for_parent.map(&:name).join(", ")].map { |value| SafeCsv.sanitize(value) }
           end
@@ -1100,7 +1152,7 @@ class EventsController < ApplicationController
       redirect_to event_path(@event)
       @event.set_airtable_status("Onboarded")
     else
-      render :activation_flow, status: :unprocessable_entity
+      render :activation_flow, status: :unprocessable_content
     end
   end
 
@@ -1221,18 +1273,38 @@ class EventsController < ApplicationController
     redirect_to event_path(@event)
   end
 
-  def books
+  def ledger
     authorize @event
+    @per = (params[:per] || 100).to_i.clamp(1, 200)
 
-    @ledger = @event.ledger
-    @items = @ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page])
-  end
+    @items = ledger_query.execute(ledgers: @ledgers)
 
-  def finances
-    authorize @event
+    # TODO: move these to Ledger::Query
+    if @tag.present?
+      @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id))
+    end
 
-    @ledger = @event.ledger
-    @items = @ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page])
+    if @category.present?
+      categorized_cts = @category.canonical_transactions.where(ledger_item: @items).select(:ledger_item_id)
+      categorized_cpts = @category.canonical_pending_transactions.where(ledger_item: @items).select(:ledger_item_id)
+      @items = @items.where(id: categorized_cts).or(@items.where(id: categorized_cpts))
+    end
+
+    if @merchant.present?
+      @items = @items.where(linked_object_type: "CardCharge", linked_object_id: CardCharge.where(merchant_network_id: @merchant).select(:id))
+    end
+
+    @items = @items.page(params[:page]).per(@per).preload(:tags, hcb_code: { event: :tags })
+
+    if organizer_signed_in?
+      if params[:apply_flipper] == "true"
+        Flipper.enable_actor(:new_ledger_2026_07_17, current_user)
+      elsif !Flipper.enabled?(:new_ledger_2026_07_17, current_user)
+        redirect_to event_transactions_path(@event) and return
+      end
+    end
+  rescue Pundit::NotAuthorizedError
+    return head :not_found
   end
 
   private
@@ -1246,11 +1318,16 @@ class EventsController < ApplicationController
     params_hash.delete(:hidden)
   end
 
-  def filtered_sub_organizations(sub_organizations = @event.subevents)
+  # Memoized across the several surfaces of this page that need it.
+  def visible_descendant_ids
+    @visible_descendant_ids ||= @event.visible_descendant_ids(current_user)
+  end
+
+  def filtered_sub_organizations
     search = params[:q] || params[:search]
     scoped_tag = Event::ScopedTag.find_by(name: params[:tag])
 
-    relation = sub_organizations.includes(:scoped_tags, :parent, logo_attachment: :blob, background_image_attachment: :blob, organizer_positions: :user)
+    relation = @event.subevents.where(id: visible_descendant_ids).includes(:scoped_tags, :parent, logo_attachment: :blob, background_image_attachment: :blob, organizer_positions: :user)
     relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
     relation = relation.joins(:scoped_tags).where("event_scoped_tags.id = #{scoped_tag.id}") if scoped_tag.present?
     relation = relation.order(created_at: :desc)
@@ -1403,6 +1480,9 @@ class EventsController < ApplicationController
     # to `q`. This following line retains backwards compatibility.
     params[:q] ||= params[:search]
 
+    reject_disabled_filters
+    return if performed?
+
     if params[:tag]
       @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
     end
@@ -1431,12 +1511,6 @@ class EventsController < ApplicationController
       merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
 
       @merchant_name = merchant.present? ? merchant[:name] : "Merchant #{@merchant}"
-    end
-
-    @ledger_filters_disabled = !signed_in?
-    has_filters = @tag || @user || @type || @start_date || @end_date || @minimum_amount || @maximum_amount || @missing_receipts || @merchant || @direction || @category
-    if @ledger_filters_disabled && has_filters
-      render plain: "Invalid parameters. Please try again", status: :bad_request
     end
   end
 

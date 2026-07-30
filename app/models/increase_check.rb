@@ -127,6 +127,7 @@ class IncreaseCheck < ApplicationRecord
     "Wyoming"          => "WY"
   }.freeze
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
   belongs_to :user, optional: true
 
@@ -192,7 +193,7 @@ class IncreaseCheck < ApplicationRecord
         canonical_pending_transaction.decline!
         create_activity(key: "increase_check.rejected")
         employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
-        payment_attempt&.mark_rejected!
+        payment_attempt.mark_rejected! if payment_attempt&.may_mark_rejected?
       end
       transitions from: :pending, to: :rejected
     end
@@ -335,6 +336,18 @@ class IncreaseCheck < ApplicationRecord
     send_column!
 
     mark_approved!
+  end
+
+  def can_cancel?
+    pending? || (approved && can_stop?)
+  end
+
+  def cancel!
+    if pending?
+      mark_rejected!
+    elsif approved?
+      stop!
+    end
   end
 
   # https://column.com/docs/api/#check-transfer/stop

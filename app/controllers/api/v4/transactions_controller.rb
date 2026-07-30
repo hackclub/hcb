@@ -56,7 +56,7 @@ module Api
         end
       end
 
-      require_oauth2_scope "ledgers:read", :show
+      require_oauth2_scope "ledgers:read", :show # maybe this should be transactions:read
 
       def missing_receipt
         user_hcb_code_ids = current_user.stripe_cards.flat_map { |card| card.local_hcb_codes.pluck(:id) }
@@ -75,12 +75,28 @@ module Api
       def update
         @hcb_code = authorize HcbCode.find_by_public_id(params[:id])
 
-        if params.key? :memo
-          @hcb_code.update_custom_memo!(params[:memo])
+        ActiveRecord::Base.transaction do
+          if params.key? :memo
+            @hcb_code.update_custom_memo!(params[:memo])
+          end
+
+          if params.key? :tag_ids
+            tags = Array(params[:tag_ids]).map { |id| Tag.find_by_public_id!(id) }
+
+            tags.each do |tag|
+              authorize tag, :toggle_tag?
+              raise Pundit::NotAuthorizedError unless @hcb_code.events.include?(tag.event)
+            end
+
+            @hcb_code.tags = tags
+            @hcb_code.save!
+          end
         end
 
         render "show"
       end
+
+      require_oauth2_scope "transactions:write", :update
 
       def memo_suggestions
         @hcb_code = authorize HcbCode.find_by_public_id(params[:id]), :update?

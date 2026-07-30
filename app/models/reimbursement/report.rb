@@ -257,6 +257,10 @@ module Reimbursement
       !draft?
     end
 
+    def can_change_payout_method?
+      draft?
+    end
+
     def unlockable?
       submitted? || reimbursement_requested?
     end
@@ -342,6 +346,21 @@ module Reimbursement
 
     def mismatched_currency?
       payout_method.present? && currency != payout_method.currency
+    end
+
+    def convert_report_currency!(new_currency)
+      old_currency = currency
+
+      ActiveRecord::Base.transaction do
+        update!(currency: new_currency)
+
+        expenses.each do |expense|
+          fractional = Money.from_amount(expense.value, old_currency).cents
+          full = Money.from_cents(fractional, new_currency).amount
+
+          expense.update!(value: full)
+        end
+      end
     end
 
     def exceeds_maximum_amount?

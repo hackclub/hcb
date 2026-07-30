@@ -42,7 +42,7 @@ class CanonicalPendingSettledMapping < ApplicationRecord
 
   after_commit if: -> { canonical_pending_transaction.ledger_item.present? } do
     canonical_pending_transaction.ledger_item.map!
-    canonical_pending_transaction.ledger_item.write_amount_cents!
+    canonical_pending_transaction.ledger_item.refresh!
   end
 
 end

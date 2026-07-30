@@ -13,8 +13,10 @@ module Maintenance
         raise ArgumentError, "LE missing for User #{user.id}"
       end
 
-      details_class = user.payout_method_type.sub(/\AUser::/, "LegalEntity::").safe_constantize
-      return unless LegalEntity::PayoutMethod::ALL_METHODS.include?(details_class)
+      details_class = LegalEntity::PayoutMethod.details_class_for(
+        user.payout_method_type.sub(/\AUser::/, "LegalEntity::")
+      )
+      return unless details_class
 
       details = details_class.find_by(id: user.payout_method_id)
       return unless details
