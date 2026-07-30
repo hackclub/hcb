@@ -16,7 +16,7 @@
 #  receipt_count                :integer          default(0), not null
 #  receipt_required             :boolean
 #  short_code                   :text
-#  status                       :string
+#  status                       :string           default("settled"), not null
 #  system_memo                  :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
@@ -78,7 +78,7 @@ class Ledger
       declined: "declined" # CPT has CPDM, no CPTs
     }
 
-    validates_presence_of :amount_cents, :memo, :datetime
+    validates_presence_of :amount_cents, :memo, :datetime, :status
 
     normalizes :memo, with: ->(memo) { memo.strip.presence }
     normalizes :system_memo, with: ->(system_memo) { system_memo.strip.presence }
@@ -194,7 +194,7 @@ class Ledger
       end
 
       # Nothing has mapped to this item yet
-      :pending
+      :settled
     end
 
     def calculate_system_memo
