@@ -98,7 +98,7 @@
               </td>
               <td><%= contractor.period_label %></td>
               <% if show_details %>
-                <td><%= "#{render_money_short(contractor.rate_cents)}/hr" %></td>
+                <td><%= "#{render_money_short(contractor.rate_cents)}#{contractor.rate_suffix}" %></td>
               <% end %>
               <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= contractor.description %>">
                 <%= contractor.description %>

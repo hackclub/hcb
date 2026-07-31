@@ -23,7 +23,7 @@ module Api
 
       def create
         @tag = @event.tags.build(params.permit(:label, :color, :emoji))
-        authorize @tag
+        authorize @event, policy_class: TagPolicy
         @tag.save!
         render :show, status: :created
       end

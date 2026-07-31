@@ -36,7 +36,7 @@ class PaypalTransfer < ApplicationRecord
   include AASM
   include Payoutable
 
-  has_one :ledger_item, as: :linked_object
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
   belongs_to :user
 
