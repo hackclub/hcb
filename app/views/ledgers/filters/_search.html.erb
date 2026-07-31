@@ -1,13 +1,16 @@
 <%# locals: (form: nil, param: :q) %>
 
-<div class="input input-group max-w-none h-[36px]" tabindex="0">
+<div class="input input-group max-w-none h-[36px]" tabindex="0" data-controller="search-submit">
   <%= inline_icon "search" %>
-  <%= form.text_field :q, placeholder: "Type / to search...", class: "bg-transparent", data: { behavior: "search" }, value: params[:q] %>
+  <%= form.text_field :q, placeholder: "Type / to search...", class: "bg-transparent", data: { behavior: "search", search_submit_target: "input", action: "input->search-submit#toggle" }, value: params[:q] %>
   <% if params[:q].present? %>
     <%= link_to upsert_query_params(q: nil), class: "pop muted w-7 h-7 tooltipped tooltipped--s", "aria-label": "Clear search" do %>
       <%= inline_icon "view-close", size: 24 %>
     <% end %>
   <% end %>
+  <button type="submit" class="pop muted w-7 h-7 tooltipped tooltipped--s display-none -mr-1" aria-label="Search" data-search-submit-target="button">
+    <%= inline_icon "enter", size: 24 %>
+  </button>
   <% if form.nil? %>
     <% params.except(:q, :controller, :action).each do |key, value| %>
       <%= hidden_field_tag key, value %>

@@ -380,4 +380,39 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#transactions_list" do
+    let(:event) { create(:event, is_public: true) }
+
+    it "serves the unfiltered list to an anonymous reader" do
+      get(:transactions_list, params: { event_id: event.slug })
+
+      expect(response).to have_http_status(:success)
+    end
+
+    it "rejects a filter from an anonymous reader before reaching the transaction engines" do
+      expect(TransactionGroupingEngine::Transaction::All).not_to receive(:new)
+      expect(PendingTransactionEngine::PendingTransaction::All).not_to receive(:new)
+
+      get(:transactions_list, params: { event_id: event.slug, direction: "revenue" })
+
+      expect(response).to have_http_status(:bad_request)
+    end
+
+    it "rejects every filter param from an anonymous reader" do
+      SetLedgerFilters::FILTER_PARAMS.each do |param|
+        get(:transactions_list, params: { event_id: event.slug, param => "x" })
+
+        expect(response).to have_http_status(:bad_request), "expected #{param} to be rejected"
+      end
+    end
+
+    it "allows a filter from a signed-in organizer" do
+      sign_in_organizer_of(event)
+
+      get(:transactions_list, params: { event_id: event.slug, direction: "revenue" })
+
+      expect(response).to have_http_status(:success)
+    end
+  end
+
 end
