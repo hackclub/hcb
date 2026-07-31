@@ -21,7 +21,7 @@ class StripeCardMailer < ApplicationMailer
 
   def virtual_card_ordered
     @delivery_reason = "you ordered a virtual HCB card for #{@event.name}."
-    
+
     mail to: @recipient,
          subject: "New virtual HCB card (ending in #{@card.last4}) for #{@event.name}"
   end

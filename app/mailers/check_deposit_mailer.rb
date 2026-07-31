@@ -2,7 +2,7 @@
 
 class CheckDepositMailer < ApplicationMailer
   before_action :set_delivery_reason
-  
+
   def rejected
     @check_deposit = params[:check_deposit]
 
