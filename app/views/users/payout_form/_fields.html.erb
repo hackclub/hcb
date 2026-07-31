@@ -19,6 +19,12 @@
   </fieldset>
 <% end %>
 
+<div class="field <%= "hidden" unless editing || selected_type.present? %>" data-behavior="payout_method_name_input">
+  <%= form.label :payout_method_name, "Nickname (optional)" %>
+  <%= form.text_field :payout_method_name, value: editing&.name, placeholder: "e.g. My Chase Bank Account", maxlength: 100 %>
+  <span class="muted">Give this method a name to tell it apart from your others.</span>
+</div>
+
 <section data-behavior="check_payout_method_inputs" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::Check) %>">
   <%= form.fields_for :payout_method_check, detail_for.call(LegalEntity::PayoutMethod::Check) do |form| %>
     <p class="muted mt-2 mb-5">

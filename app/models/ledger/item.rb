@@ -11,7 +11,6 @@
 #  ct_count                     :integer          default(0), not null
 #  custom_memo                  :text
 #  datetime                     :datetime         not null
-#  linked_object_type           :string
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
 #  not_admin_only_comment_count :integer          default(0), not null
@@ -24,6 +23,7 @@
 #  updated_at                   :datetime         not null
 #  author_id                    :bigint
 #  linked_object_id             :bigint
+#  linked_object_type           :string
 #
 # Indexes
 #
