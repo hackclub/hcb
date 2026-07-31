@@ -113,13 +113,6 @@ class Ledger
           icon: "sam",
           funds: [EventMappingEngine::EventIds::GENE_HAAS_GRANT_FUND]
         ),
-        # Icon only — the memo still comes from Ledger::Item#calculate_system_memo,
-        # which says something different for a grant, a topup, and a withdrawal.
-        # This exists so rendering a row doesn't have to load the card grant just
-        # to pick an icon; the lookup happens once, when the appearance is decided.
-        #
-        # Last in the list: a fund appearance is the more meaningful of the two if
-        # a transfer ever qualifies for both.
         new(
           key: :card_grant,
           icon: "bag",
