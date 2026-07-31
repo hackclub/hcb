@@ -375,7 +375,7 @@ class Ledger
       when "Reimbursement::ExpensePayout"
         "Reimbursement"
       when "CardCharge"
-        "Card charge"
+        YellowPages::Merchant.lookup(network_id: linked_object.merchant_network_id || "").name.presence || "Card charge"
       else
         "Bank account transaction"
       end
