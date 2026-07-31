@@ -45,7 +45,7 @@
 :root_dir:
 - ''
 :routes: false
-:show_check_constraints: false
+:show_check_constraints: true
 :show_complete_foreign_keys: false
 :show_enums: false
 :show_exclusion_constraints: false

@@ -30,6 +30,10 @@
 #
 #  fk_rails_...  (ledger_item_id => ledger_items.id) ON DELETE => nullify
 #
+# Check Constraints
+#
+#  constraint_hcb_codes_on_short_code_to_uppercase  (short_code = upper(short_code))
+#
 class HcbCode < ApplicationRecord
   has_paper_trail
 
