@@ -7,8 +7,8 @@ module Maintenance
     end
 
     def process(ledger_item)
-      ledger_item.ct_count = ledger_item.canonical_transactions.count
-      ledger_item.cpt_count = ledger_item.canonical_pending_transactions.count
+      ledger_item.ct_count = ledger_item.canonical_transactions.size
+      ledger_item.cpt_count = ledger_item.canonical_pending_transactions.size
       ledger_item.save!
     end
 
