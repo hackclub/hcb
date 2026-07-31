@@ -32,10 +32,10 @@ class Contract
       @contract = @party.contract
     end
 
-  end
+    def set_delivery_reason
+      @delivery_reason = "you are a party to an HCB contract."
+    end
 
-  def set_delivery_reason
-    @delivery_reason = "you are a party to an HCB contract."
   end
 
 end
