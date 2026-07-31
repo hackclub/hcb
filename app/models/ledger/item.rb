@@ -16,7 +16,7 @@
 #  receipt_count                :integer          default(0), not null
 #  receipt_required             :boolean
 #  short_code                   :text
-#  status                       :string           default("settled"), not null
+#  status                       :string           default("pending"), not null
 #  system_memo                  :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
@@ -194,7 +194,7 @@ class Ledger
       end
 
       # Nothing has mapped to this item yet
-      :settled
+      :pending
     end
 
     def calculate_system_memo

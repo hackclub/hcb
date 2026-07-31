@@ -115,8 +115,8 @@ RSpec.describe Ledger::Item, type: :model do
       expect(item.errors[:status]).to include("can't be blank")
     end
 
-    it "defaults status to settled" do
-      expect(Ledger::Item.new.status).to eq("settled")
+    it "defaults status to pending" do
+      expect(Ledger::Item.new.status).to eq("pending")
     end
 
     describe "primary_ledger association" do
