@@ -23,6 +23,6 @@
 %>
 
 <% if (partial_name = linked_object_partials[ledger_item.linked_object_type]) %>
-  <%= render partial: "ledger/items/linked_objects/#{partial_name}", locals: { linked_object: ledger_item.linked_object } %>
+  <%= render partial: "ledger/items/linked_objects/#{partial_name}", locals: { ledger_item: } %>
 <% end %>
   
