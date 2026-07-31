@@ -82,7 +82,30 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
 
       expect(payout_method.kind).to eq("ach_transfer")
       expect(payout_method.currency).to eq("USD")
-      expect(payout_method.name).to eq("an ACH transfer")
+      expect(payout_method.title_kind).to eq("ACH Transfer")
+    end
+  end
+
+  describe "#name / #display_name" do
+    it "stores a user-provided name" do
+      payout_method = legal_entity.payout_methods.create!(details: build_ach, name: "My Chase Bank Account")
+
+      expect(payout_method.name).to eq("My Chase Bank Account")
+      expect(payout_method.display_name).to eq("My Chase Bank Account")
+    end
+
+    it "falls back to the method type when unnamed" do
+      payout_method = legal_entity.payout_methods.create!(details: build_ach)
+
+      expect(payout_method.name).to be_nil
+      expect(payout_method.display_name).to eq("ACH Transfer")
+    end
+
+    it "rejects names longer than 100 characters" do
+      payout_method = legal_entity.payout_methods.new(details: build_ach, name: "a" * 101)
+
+      expect(payout_method).not_to be_valid
+      expect(payout_method.errors[:name]).to be_present
     end
   end
 
