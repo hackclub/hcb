@@ -8,7 +8,7 @@
 #  deleted_at                     :datetime
 #  first_time                     :boolean          default(TRUE)
 #  is_signee                      :boolean          default(FALSE)
-#  role                           :integer          default("manager"), not null
+#  role                           :integer          default(100), not null
 #  sort_index                     :integer
 #  created_at                     :datetime         not null
 #  updated_at                     :datetime         not null

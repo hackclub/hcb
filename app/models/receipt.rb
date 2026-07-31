@@ -18,7 +18,7 @@
 #  suggested_memo                  :string
 #  textual_content_bidx            :string
 #  textual_content_ciphertext      :text
-#  textual_content_source          :integer          default("pdf_text")
+#  textual_content_source          :integer          default(0)
 #  upload_method                   :integer
 #  created_at                      :datetime         not null
 #  updated_at                      :datetime         not null

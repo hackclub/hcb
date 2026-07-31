@@ -5,7 +5,7 @@
 # Table name: comments
 #
 #  id                 :bigint           not null, primary key
-#  action             :integer          default("commented"), not null
+#  action             :integer          default(0), not null
 #  admin_only         :boolean          default(FALSE), not null
 #  commentable_type   :string
 #  content_ciphertext :text
