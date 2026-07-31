@@ -104,6 +104,13 @@ export default class extends Controller {
     return root.querySelectorAll('[data-behavior$="payout_method_inputs"]')
   }
 
+  // The nickname field is a sibling of the detail sections; it only makes sense
+  // once a method is picked, so it follows them in and out of view.
+  nameField() {
+    const root = this.element.parentElement || document
+    return root.querySelector('[data-behavior="payout_method_name_input"]')
+  }
+
   syncDetailSections() {
     const radio = this.checkedRadio()
     const selectedSection = radio ? this.sectionFor(radio.value) : null
@@ -115,6 +122,8 @@ export default class extends Controller {
         section.dataset.behavior !== selectedSection
       )
     })
+
+    this.toggleNameField(Boolean(radio))
   }
 
   hideDetailSections() {
@@ -122,6 +131,16 @@ export default class extends Controller {
       section.style.display = ''
       section.classList.add('hidden')
     })
+
+    this.toggleNameField(false)
+  }
+
+  toggleNameField(visible) {
+    const field = this.nameField()
+    if (!field) return
+
+    field.style.display = ''
+    field.classList.toggle('hidden', !visible)
   }
 
   collapseOptions() {

@@ -52,8 +52,7 @@
           <% end %>
         </div>
       <% end %>
-    <% end %>
-    <% if @payees.empty? && params[:q].present? %>
+    <% elsif params[:q].present? %>
       <div class="px-4">
         <%= blankslate "No results for \"#{params[:q]}\"", class: "py-5 text-sm mb-2" %>
       </div>
