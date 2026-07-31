@@ -455,7 +455,7 @@ class User < ApplicationRecord
   end
 
   def ledger_items_missing_receipt(from: nil, to: nil)
-    user_ledger_items = Ledger::Item.where(author: user, linked_object_type: "CardCharge").missing_receipt
+    user_ledger_items = ledger_items.where(linked_object_type: "CardCharge").missing_receipt
     user_ledger_items = user_ledger_items.where("datetime >= ?", from) if from
     user_ledger_items = user_ledger_items.where("datetime <= ?", to) if to
     user_ledger_items.order(created_at: :desc)
