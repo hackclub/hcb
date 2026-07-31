@@ -430,4 +430,93 @@ RSpec.describe Ledger::Item, type: :model do
       end
     end
   end
+
+  describe "#calculate_status" do
+    def item_with(linked_object:)
+      item = Ledger::Item.new(amount_cents: 1000, memo: "Test", datetime: Time.current, linked_object:)
+      item.save(validate: false)
+      item
+    end
+
+    describe "Reimbursement::ExpensePayout" do
+      let(:expense_payout) do
+        expense = create(:reimbursement_expense, memo: "Test expense")
+        payout = Reimbursement::ExpensePayout.new(event: expense.report.event, expense:, amount_cents: -1000)
+        payout.save!(validate: false)
+        payout
+      end
+
+      it "is settled while its (fronted) CPT exists and no CT has landed yet" do
+        item = item_with(linked_object: expense_payout)
+        create(:canonical_pending_transaction, ledger_item_id: item.id, amount_cents: -1000, fronted: true)
+
+        expect(item.calculate_status).to eq(:settled)
+      end
+
+      it "is declined, not settled, when its CPT is declined before any CT lands" do
+        item = item_with(linked_object: expense_payout)
+        cpt = create(:canonical_pending_transaction, ledger_item_id: item.id, amount_cents: -1000, fronted: true)
+        cpt.decline!
+
+        expect(item.calculate_status).to eq(:declined)
+      end
+
+      it "is reversed, not declined, once the payout has been reversed after settling" do
+        expense_payout.update_column(:aasm_state, "reversed")
+
+        item = item_with(linked_object: expense_payout)
+        cpt = create(:canonical_pending_transaction, ledger_item_id: item.id, amount_cents: -1000, fronted: true)
+        cpt.decline!
+        create(:canonical_transaction, ledger_item_id: item.id, amount_cents: -1000)
+
+        expect(item.calculate_status).to eq(:reversed)
+      end
+    end
+
+    describe "Reimbursement::PayoutHolding" do
+      let(:payout_holding) do
+        report = create(:reimbursement_report)
+        holding = Reimbursement::PayoutHolding.new(report:, amount_cents: 1000)
+        holding.save!(validate: false)
+        holding
+      end
+
+      it "is reversed, not declined, once the holding has been reversed after settling" do
+        payout_holding.update_column(:aasm_state, "reversed")
+
+        item = item_with(linked_object: payout_holding)
+        cpt = create(:canonical_pending_transaction, ledger_item_id: item.id, amount_cents: 1000, fronted: true)
+        cpt.decline!
+        create(:canonical_transaction, ledger_item_id: item.id, amount_cents: 1000)
+
+        expect(item.calculate_status).to eq(:reversed)
+      end
+    end
+
+    describe "Disbursement" do
+      it "is settled once in transit, even when pending_at (approved_at) was never recorded" do
+        disbursement = create(:disbursement, aasm_state: "in_transit", pending_at: nil, in_transit_at: Time.current)
+
+        item = item_with(linked_object: disbursement.outgoing_disbursement)
+
+        expect(item.calculate_status).to eq(:settled)
+      end
+
+      it "is rejected, not canceled, when rejected before ever being approved or put in transit" do
+        disbursement = create(:disbursement, aasm_state: "rejected", rejected_at: Time.current, pending_at: nil, in_transit_at: nil)
+
+        item = item_with(linked_object: disbursement.outgoing_disbursement)
+
+        expect(item.calculate_status).to eq(:rejected)
+      end
+
+      it "is canceled when rejected after having been approved" do
+        disbursement = create(:disbursement, aasm_state: "rejected", rejected_at: Time.current, pending_at: 1.day.ago, in_transit_at: nil)
+
+        item = item_with(linked_object: disbursement.outgoing_disbursement)
+
+        expect(item.calculate_status).to eq(:canceled)
+      end
+    end
+  end
 end
