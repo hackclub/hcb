@@ -3,11 +3,6 @@
 class AdminMailerPreview < ActionMailer::Preview
   delegate :reminders, to: :AdminMailer
 
-  def weekly_ysws_event_summary
-    @events = Event.last(3)
-    AdminMailer.with(events: @events).weekly_ysws_event_summary
-  end
-
   def blocked_authorization
     AdminMailer
       .with(
@@ -27,7 +22,7 @@ class AdminMailerPreview < ActionMailer::Preview
   end
 
   def logical_transaction_anomalies
-    AdminMailer.logical_transaction_anomalies(hcb_codes: HcbCode.where(event_id: 2).where.not(ledger_item_id: nil))
+    AdminMailer.logical_transaction_anomalies(hcb_codes: HcbCode.where(event_id: 2))
   end
 
 end

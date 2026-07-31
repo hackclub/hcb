@@ -15,6 +15,22 @@ RSpec.describe User, type: :model do
     expect(user).to be_admin
   end
 
+  describe "nondisposable email validation" do
+    it "suggests the real domain for a known typo domain" do
+      user = build(:user, email: "someone@gmail.con")
+
+      expect(user).to_not be_valid
+      expect(user.errors[:email]).to eq(["looks like a typo. Did you mean someone@gmail.com?"])
+    end
+
+    it "uses the generic message for a non-typo disposable domain" do
+      user = build(:user, email: "someone@tormails.com")
+
+      expect(user).to_not be_valid
+      expect(user.errors[:email]).to eq(["provider is unsupported. Please try with another email address."])
+    end
+  end
+
   context "birthday validations" do
     it "fails validation when birthday is removed" do
       user = create(:user, full_name: "Caleb Denio")
@@ -479,6 +495,55 @@ RSpec.describe User, type: :model do
         expect {
           user.update!(full_name: "New Name")
         }.not_to have_enqueued_mail(User::SecurityMailer, :security_configuration_changed)
+      end
+    end
+  end
+
+  describe "payout methods" do
+    let(:user) { create(:user) }
+
+    def build_ach
+      LegalEntity::PayoutMethod::AchTransfer.new(account_number: "12345678", routing_number: "021000021")
+    end
+
+    describe "#personal_legal_entity" do
+      it "returns the user's person-type legal entity" do
+        expect(user.personal_legal_entity).to be_present
+        expect(user.personal_legal_entity).to be_person
+      end
+
+      it "returns the person entity, never a business entity the user also belongs to" do
+        business = create(:legal_entity, :business)
+        user.legal_entity_users.create!(legal_entity: business)
+
+        expect(user.reload.personal_legal_entity).to be_person
+        expect(user.personal_legal_entity).not_to eq(business)
+      end
+    end
+
+    describe "#person_legal_entity_user" do
+      it "returns the join row for the person-type legal entity" do
+        create(:legal_entity, :business).tap { |b| user.legal_entity_users.create!(legal_entity: b) }
+
+        expect(user.reload.person_legal_entity_user).to eq(
+          user.legal_entity_users.find_by(legal_entity: user.personal_legal_entity)
+        )
+        expect(user.person_legal_entity_user.legal_entity).to be_person
+      end
+    end
+
+    describe "#default_payout_method" do
+      it "is nil when no default payout method exists" do
+        expect(user.default_payout_method).to be_nil
+        expect(user.default_payout_method&.details).to be_nil
+      end
+
+      it "returns the person entity's default payout method and its details" do
+        pm = user.personal_legal_entity.payout_methods.create!(default: true, details: build_ach)
+
+        expect(user.default_payout_method).to eq(pm)
+        expect(user.default_payout_method.details).to eq(pm.details)
+        expect(user.default_payout_method.details).to be_a(LegalEntity::PayoutMethod::AchTransfer)
       end
     end
   end

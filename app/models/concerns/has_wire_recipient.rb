@@ -232,12 +232,21 @@ module HasWireRecipient
       }[country] || "ICCP"
     end
 
+    def self.payment_purpose_code_for(country)
+      # Add exceptions
+      "IVPT"
+    end
+
     def self.reimbursement_remittance_info_for(country)
       {
         "PK": "Reimbursement of expenses made for a nonprofit. Recipient is a volunteer.",
       }[country] || "Reimbursement of expenses made for a nonprofit."
     end
 
+    def self.payment_remittance_info_for(country)
+      # Edit for each country
+      "Payment of invoice"
+    end
 
     store_accessor :recipient_information, *self.recipient_information_accessors
   end

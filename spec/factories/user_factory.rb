@@ -10,5 +10,9 @@ FactoryBot.define do
     trait :make_admin do
       access_level { :admin }
     end
+
+    trait :make_auditor do
+      access_level { :auditor }
+    end
   end
 end
