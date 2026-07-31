@@ -312,8 +312,8 @@ class Ledger
 
       self.amount_cents = calculate_amount_cents
       self.author = calculate_author
-      self.ct_count = canonical_transactions.count
-      self.cpt_count = canonical_pending_transactions.count
+      self.ct_count = canonical_transactions.size
+      self.cpt_count = canonical_pending_transactions.size
       self.comment_count = comments.count
       self.not_admin_only_comment_count = comments.not_admin_only.count
       self.receipt_count = receipts.count
