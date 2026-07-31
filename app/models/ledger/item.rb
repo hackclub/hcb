@@ -7,6 +7,8 @@
 #  id                           :bigint           not null, primary key
 #  amount_cents                 :integer          not null
 #  comment_count                :integer          default(0), not null
+#  cpt_count                    :integer          default(0), not null
+#  ct_count                     :integer          default(0), not null
 #  custom_memo                  :text
 #  datetime                     :datetime         not null
 #  linked_object_type           :string
@@ -310,6 +312,8 @@ class Ledger
 
       self.amount_cents = calculate_amount_cents
       self.author = calculate_author
+      self.ct_count = canonical_transactions.count
+      self.cpt_count = canonical_pending_transactions.count
       self.comment_count = comments.count
       self.not_admin_only_comment_count = comments.not_admin_only.count
       self.receipt_count = receipts.count

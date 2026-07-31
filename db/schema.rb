@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_21_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_31_160241) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1607,7 +1607,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_21_120000) do
     t.integer "amount_cents", null: false
     t.bigint "author_id"
     t.integer "comment_count", default: 0, null: false
+    t.integer "cpt_count", default: 0, null: false
     t.datetime "created_at", null: false
+    t.integer "ct_count", default: 0, null: false
     t.text "custom_memo"
     t.datetime "datetime", null: false
     t.bigint "linked_object_id"
