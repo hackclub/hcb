@@ -45,7 +45,7 @@ class HcbCodeMailer < ApplicationMailer
   private
 
   def set_delivery_reason
-    @delivery_reason = "you tried to email a receipt to an HCB transaction-specific upload address"
+    @delivery_reason = "you tried to email a receipt to an HCB transaction-specific upload address."
   end
 
 end
