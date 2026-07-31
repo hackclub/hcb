@@ -176,7 +176,7 @@ class Ledger
 
       case linked_object_type
       when "CardCharge"
-        return :released if uncaptured_stripe_authorization?
+        return :released if canonical_transactions.none? && canonical_pending_transactions.any? { |cpt| cpt.raw_pending_stripe_transaction&.stripe_transaction&.dig("approved") }
       when "IncreaseCheck" # Increase checks use the same state for users canceling and ops rejecting
         return :canceled if linked_object.rejected? || linked_object.increase_stopped? || linked_object.column_stopped?
       when "Disbursement::Outgoing", "Disbursement::Incoming"
@@ -456,12 +456,6 @@ class Ledger
     end
 
     private
-
-    # An approved Stripe authorization that never settled was released without
-    # capture, as opposed to being declined outright
-    def uncaptured_stripe_authorization?
-      canonical_transactions.none? && canonical_pending_transactions.any? { |cpt| cpt.raw_pending_stripe_transaction&.stripe_transaction&.dig("approved") }
-    end
 
     def assign_linked_object!
       # Once a linked object is assigned, it should never be changed.
