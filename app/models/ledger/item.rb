@@ -314,9 +314,9 @@ class Ledger
       self.author = calculate_author
       self.ct_count = canonical_transactions.size
       self.cpt_count = canonical_pending_transactions.size
-      self.comment_count = comments.count
-      self.not_admin_only_comment_count = comments.not_admin_only.count
-      self.receipt_count = receipts.count
+      self.comment_count = comments.size
+      self.not_admin_only_comment_count = comments.not_admin_only.size
+      self.receipt_count = receipts.size
       self.receipt_required = calculate_receipt_required
       self.status = calculate_status
       # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
