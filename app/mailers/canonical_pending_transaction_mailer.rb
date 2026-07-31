@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class CanonicalPendingTransactionMailer < ApplicationMailer
-  before_action { @delivery_reason = "you are the recipient of a check from #{@check.event.name}." }
+  before_action { @delivery_reason = "you spent funds with an HCB Visa® Commercial card and are required to upload receipts for all funds spent. #{stripe_issuing_disclosure}" }
 
   def notify_approved
     @cpt = CanonicalPendingTransaction.find(params[:canonical_pending_transaction_id])

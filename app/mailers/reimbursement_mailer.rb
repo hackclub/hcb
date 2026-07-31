@@ -1,35 +1,27 @@
 # frozen_string_literal: true
 
 class ReimbursementMailer < ApplicationMailer
+  before_action { @report = params[:report] || params[:reimbursement_payout_holding]&.report }
   before_action(only: [:invitation, :reminder]) { @delivery_reason = "you were invited to submit a reimbursement report for #{@report.event.name}." }
   before_action(except: [:invitation, :reminder, :review_requested]) { @delivery_reason = "you submitted a reimbursement report for #{@report.event.name}." }
 
   def invitation
-    @report = params[:report]
-
     mail to: @report.user.email_address_with_name, subject: "Get reimbursed by #{@report.event.name} for #{@report.name}", from: hcb_email_with_name_of(@report.event), reply_to: @report.user == @report.inviter ? nil : @report.inviter&.email_address_with_name
   end
 
   def reimbursement_approved
-    @report = params[:report]
-
     mail to: @report.user.email_address_with_name, subject: "[Reimbursements] Approved: #{@report.name}", from: hcb_email_with_name_of(@report.event)
   end
 
   def rejected
-    @report = params[:report]
-
     mail to: @report.user.email_address_with_name, subject: "[Reimbursements] Rejected: #{@report.name}", from: hcb_email_with_name_of(@report.event)
   end
 
   def reminder
-    @report = params[:report]
-
     mail to: @report.user.email_address_with_name, subject: "[Reimbursements] Reminder: submit #{@report.name} for review", from: hcb_email_with_name_of(@report.event)
   end
 
   def review_requested
-    @report = params[:report]
     @delivery_reason = "you are a manager on #{@report.event.name}."
 
     if @report.reviewer.present?
@@ -42,38 +34,28 @@ class ReimbursementMailer < ApplicationMailer
   end
 
   def ach_failed
-    @payout_holding = params[:reimbursement_payout_holding]
-    @report = @payout_holding.report
     @reason = params[:reason]
 
     mail subject: "[Reimbursements] ACH transfer for #{@report.name} failed to send", to: @report.user.email_address_with_name
   end
 
   def wire_failed
-    @payout_holding = params[:reimbursement_payout_holding]
-    @report = @payout_holding.report
     @reason = params[:reason]
 
     mail subject: "[Reimbursements] Wire transfer for #{@report.name} failed to send", to: @report.user.email_address_with_name
   end
 
   def paypal_transfer_failed
-    @payout_holding = params[:reimbursement_payout_holding]
-    @report = @payout_holding.report
-
     mail subject: "[Reimbursements] PayPal transfer for #{@report.name} failed to send", to: @report.user.email_address_with_name
   end
 
   def check_failed
-    @payout_holding = params[:reimbursement_payout_holding]
-    @report = @payout_holding.report
     @reason = params[:reason]
 
     mail subject: "[Reimbursements] Mailed check for #{@report.name} failed to send", to: @report.user.email_address_with_name
   end
 
   def expenses_approved
-    @report = params[:report]
     @expenses = params[:expenses]
 
     mail subject: "[Reimbursements] Expenses approved for #{@report.name}", to: @report.user.email_address_with_name

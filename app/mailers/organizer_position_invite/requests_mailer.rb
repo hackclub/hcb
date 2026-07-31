@@ -6,7 +6,7 @@ class OrganizerPositionInvite
 
     def created
       @emails = @request.link.event.organizer_contact_emails(only_managers: true)
-      @delivery_reason = "you are a manager of #{request.link.event.name}."
+      @delivery_reason = "you are a manager of #{@request.link.event.name}."
 
       mail to: @emails, subject: "#{@request.requester.name} has requested to join #{@request.link.event.name}"
     end
