@@ -44,11 +44,11 @@ module Api
       end
 
       # Returns a related object as either expanded or as an "_id" reference
-      def expand_association(json, key, record, partial:, as:)
+      def expand_association(json, key, record, partial:, as:, locals: {})
         if expand?(key)
           if record.present?
             json.set!(key) do
-              json.partial! partial, locals: { as => record }
+              json.partial! partial, locals: { as => record }.merge(locals)
             end
           else
             json.set!(key, nil)

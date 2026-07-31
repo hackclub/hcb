@@ -5,7 +5,7 @@
 # Table name: stripe_cardholders
 #
 #  id                                 :bigint           not null, primary key
-#  cardholder_type                    :integer          default("individual"), not null
+#  cardholder_type                    :integer          default(0), not null
 #  stripe_billing_address_city        :text
 #  stripe_billing_address_country     :text
 #  stripe_billing_address_line1       :text

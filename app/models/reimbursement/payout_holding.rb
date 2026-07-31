@@ -39,6 +39,7 @@ module Reimbursement
 
     has_paper_trail
 
+    has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
     has_many :expense_payouts, class_name: "Reimbursement::ExpensePayout", foreign_key: "reimbursement_payout_holdings_id", inverse_of: :payout_holding
     belongs_to :report, foreign_key: "reimbursement_reports_id", inverse_of: :payout_holding
     belongs_to :ach_transfer, optional: true, inverse_of: :reimbursement_payout_holding
@@ -55,7 +56,7 @@ module Reimbursement
     after_create do
       CanonicalPendingTransaction.create!(
         reimbursement_payout_holding: self,
-        event: Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING),
+        event:,
         amount_cents:,
         memo: hcb_code,
         date: created_at,
@@ -96,6 +97,10 @@ module Reimbursement
       if Reimbursement::PayoutHolding.where(reimbursement_reports_id:).excluding(self).any?
         errors.add(:base, "A reimbursement report can only have one payout holding.")
       end
+    end
+
+    def event
+      @event ||= Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
     end
 
     def payout_transfer

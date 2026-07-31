@@ -3,6 +3,8 @@
 require "rails_helper"
 
 RSpec.describe Ledger::Item, type: :model do
+  include DonationSupport
+
   describe "associations" do
     it "has many ledger_mappings" do
       item = Ledger::Item.new
@@ -318,17 +320,114 @@ RSpec.describe Ledger::Item, type: :model do
     end
   end
 
-  describe "#write_amount_cents!" do
-    it "updates amount_cents from calculate_amount_cents" do
+  describe "#refresh!" do
+    it "updates amount_cents from calculate_amount_cents and updates receipt_required from calculate_receipt_required" do
+      # The primary ledger's plan requires receipts, so a negative amount makes
+      # the item's receipt_required.
+      primary_ledger = create(:event).ledger
+
       item = Ledger::Item.new(amount_cents: 999, memo: "Test", datetime: Time.current)
       item.save(validate: false)
 
+      Ledger::Mapping.create!(
+        ledger: primary_ledger,
+        ledger_item: item,
+        on_primary_ledger: true
+      )
+
       create(:canonical_transaction, amount_cents: -500, ledger_item_id: item.id)
 
-      item.write_amount_cents!
+      item.refresh!
       item.reload
 
       expect(item.amount_cents).to eq(-500)
+      expect(item.receipt_required).to eq(true)
+    end
+
+    it "overrides the system memo with the custom memo in the memo column" do
+      stub_donation_payment_intent_creation
+      donation = create(:donation)
+
+      item = Ledger::Item.new(
+        amount_cents: 1000,
+        memo: "Initial",
+        datetime: Time.current,
+        linked_object: donation
+      )
+      item.save(validate: false)
+
+      item.refresh!
+      item.reload
+
+      # Without a custom memo, the memo column falls back to the system memo
+      expect(item.system_memo).to eq("Donation from #{donation.smart_memo}")
+      expect(item.memo).to eq(item.system_memo)
+
+      item.update!(custom_memo: "Custom memo")
+      item.refresh!
+      item.reload
+
+      expect(item.system_memo).to eq("Donation from #{donation.smart_memo}")
+      expect(item.memo).to eq("Custom memo")
+    end
+
+    it "normalizes a blank custom memo to nil so the memo falls back to the system memo" do
+      stub_donation_payment_intent_creation
+      donation = create(:donation)
+
+      item = Ledger::Item.new(
+        amount_cents: 1000,
+        memo: "Initial",
+        datetime: Time.current,
+        linked_object: donation
+      )
+      item.save(validate: false)
+
+      item.update!(custom_memo: "  ")
+      item.refresh!
+      item.reload
+
+      expect(item.custom_memo).to be_nil
+      expect(item.memo).to eq(item.system_memo)
+
+      item.update!(custom_memo: "  Custom memo  ")
+      expect(item.custom_memo).to eq("Custom memo")
+    end
+  end
+
+  describe "account verification detection" do
+    # Pins memo/amount/linked_object_type past the refresh! callbacks (which
+    # recompute them from canonical transactions these items don't have),
+    # mirroring the shared ledger specs. A null linked_object_type marks a raw
+    # bank transaction, which is what account-verification micro-deposits are.
+    def acctverify_item(memo:, amount_cents:, linked_object_type: nil)
+      item = create(:ledger_item)
+      item.update_columns(memo:, amount_cents:, linked_object_type:)
+      item.reload
+    end
+
+    describe "#likely_account_verification_related?" do
+      it "is true for a sub-$1 raw bank transaction whose memo names a verification" do
+        expect(acctverify_item(memo: "ACCTVERIFY deposit", amount_cents: 12)).to be_likely_account_verification_related
+      end
+
+      it "matches the other known memo variants case-insensitively" do
+        ["sdv-vrfy", "AMTS: 0.12", "validation", "verify"].each do |memo|
+          expect(acctverify_item(memo:, amount_cents: -12)).to be_likely_account_verification_related
+        end
+      end
+
+      it "is false when the amount is $1 or more" do
+        expect(acctverify_item(memo: "ACCTVERIFY deposit", amount_cents: 100)).not_to be_likely_account_verification_related
+      end
+
+      it "is false when the transaction has a linked object" do
+        expect(acctverify_item(memo: "ACCTVERIFY deposit", amount_cents: 12, linked_object_type: "Invoice")).not_to be_likely_account_verification_related
+      end
+
+      it "is false when the memo does not name a verification" do
+        expect(acctverify_item(memo: "Coffee", amount_cents: 12)).not_to be_likely_account_verification_related
+      end
     end
   end
 end
