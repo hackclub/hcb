@@ -94,7 +94,7 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
       {
         amount: 10_000,
         memo: "m" * 60,
-        payment_for: "p" * 200,
+        payment_for: "p" * 300,
         recipient_name: "Jane Doe",
         recipient_email: "jane@example.com",
         currency: "USD",
@@ -151,6 +151,12 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
         ach = details.create_transfer(event, **attrs.merge(currency: "EUR"))
 
         expect(ach.amount).to eq(10_000)
+      end
+
+      it "caps :payment_for at 255" do
+        ach = details.create_transfer(event, **attrs)
+
+        expect(ach.payment_for.length).to eq(255)
       end
     end
 

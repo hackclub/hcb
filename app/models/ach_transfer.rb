@@ -52,7 +52,18 @@
 #  fk_rails_...  (event_id => events.id)
 #
 class AchTransfer < ApplicationRecord
+  # Column caps the ACH transfer `description` field at 255 characters.
+  # https://docs.column.com/api/ach-transfer/create-an-ach-transfer/
   PAYMENT_FOR_MAX_LENGTH = 255
+
+  # Transfers built by HCB itself describe themselves using text with no length
+  # limit of its own (a report's name, a payment's title). Those descriptions
+  # get shortened rather than failing validation, which would leave a payout
+  # stuck. Records predating the validation are exempt from it, so this is also
+  # applied when handing a description to Column.
+  def self.truncate_payment_for(payment_for)
+    payment_for&.truncate(PAYMENT_FOR_MAX_LENGTH)
+  end
 
   has_paper_trail skip: [:account_number, :routing_index] # ciphertext columns will still be tracked
   has_encrypted :account_number
@@ -233,7 +244,7 @@ class AchTransfer < ApplicationRecord
       },
       company_name:,
       company_entry_description:,
-      description: payment_for,
+      description: AchTransfer.truncate_payment_for(payment_for),
       account_number_id:,
       same_day:,
     }.compact_blank)
@@ -260,7 +271,7 @@ class AchTransfer < ApplicationRecord
       amount:,
       currency_code: "USD",
       counterparty_id: column_counterparty["id"],
-      description: payment_for,
+      description: AchTransfer.truncate_payment_for(payment_for),
       account_number_id:,
     }.compact_blank)
 

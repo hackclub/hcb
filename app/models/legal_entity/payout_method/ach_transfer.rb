@@ -70,7 +70,9 @@ class LegalEntity
           creator: user,
           amount:,
           bank_name:,
-          payment_for: payment_for&.slice(0...::AchTransfer::PAYMENT_FOR_MAX_LENGTH),
+          # `::AchTransfer` is the top-level model; an unqualified reference
+          # would resolve to this class.
+          payment_for: ::AchTransfer.truncate_payment_for(payment_for),
           recipient_name:,
           recipient_email:,
           company_entry_description:,

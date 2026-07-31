@@ -71,9 +71,10 @@ RSpec.describe AchTransfer, type: :model do
     end
 
     it "rejects a payment_for that is changed to be longer than 255 characters" do
-      ach_transfer.update(payment_for: "a" * 256)
+      expect(ach_transfer.update(payment_for: "a" * 256)).to be false
 
       expect(ach_transfer.errors[:payment_for]).to include("is too long (maximum is 255 characters)")
+      expect(ach_transfer.reload.payment_for).to be_nil
     end
 
     it "allows saving an existing record whose payment_for is already too long" do
@@ -86,6 +87,50 @@ RSpec.describe AchTransfer, type: :model do
       ach_transfer.update_column(:payment_for, "a" * 256)
 
       expect { ach_transfer.reload.mark_rejected! }.to change(ach_transfer, :aasm_state).to("rejected")
+    end
+  end
+
+  describe ".truncate_payment_for" do
+    it "shortens text that exceeds the limit" do
+      truncated = described_class.truncate_payment_for("a" * 5_000)
+
+      expect(truncated.length).to eq(255)
+    end
+
+    it "produces text that satisfies the payment_for validation" do
+      ach_transfer = build(:ach_transfer, event:, payment_for: described_class.truncate_payment_for("a" * 5_000))
+      ach_transfer.validate
+
+      expect(ach_transfer.errors[:payment_for]).to be_empty
+    end
+
+    it "leaves text within the limit untouched" do
+      expect(described_class.truncate_payment_for("Shipment of potions")).to eq("Shipment of potions")
+    end
+
+    it "accepts nil" do
+      expect(described_class.truncate_payment_for(nil)).to be_nil
+    end
+  end
+
+  describe "#send_ach_transfer!" do
+    before do
+      allow(ColumnService).to receive(:post).with(/\/account-numbers\z/, anything).and_return(
+        { "id" => "acno_1234", "account_number" => "1234", "routing_number" => "1234", "bic" => "1234" }
+      )
+      allow(ColumnService).to receive(:post).with("/transfers/ach", anything).and_return({ "id" => "acht_1234" })
+    end
+
+    # Records predating the length validation are exempt from it, so the
+    # description has to be trimmed here too or Column rejects the transfer.
+    it "truncates an existing over-long payment_for before sending it to Column" do
+      ach_transfer.update_column(:payment_for, "a" * 300)
+
+      ach_transfer.reload.send_ach_transfer!
+
+      expect(ColumnService).to have_received(:post).with(
+        "/transfers/ach", hash_including(description: AchTransfer.truncate_payment_for("a" * 300))
+      )
     end
   end
 
