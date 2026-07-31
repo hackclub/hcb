@@ -168,8 +168,8 @@ class Ledger
 
     def calculate_status
       return :settled if linked_object_type.in?(["Reimbursement::ExpensePayout", "BankFee"])
-      return :settled if linked_object_type == "Disbursement::Outgoing" && linked_object.counterparty.canonical_pending_transactions.fronted.any?
-      return :settled if linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) && linked_object.transferred_at.present? && !linked_object.rejected? && !linked_object.errored?
+      return :settled if linked_object_type == "Disbursement::Outgoing" && linked_object.counterparty.canonical_pending_transactions.fronted.not_declined.any?
+      return :settled if linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) && linked_object.approved_at.present? && !linked_object.rejected? && !linked_object.errored?
       return :settled if canonical_pending_transactions.fronted.not_declined.revenue.any? && primary_ledger&.can_front_balance?
       return :pending if canonical_pending_transactions.unsettled.exists?
 
@@ -177,7 +177,9 @@ class Ledger
       when "CardCharge"
         return :released if uncaptured_stripe_authorization?
       when "IncreaseCheck" # Increase checks use the same state for users canceling and ops rejecting
-        return :canceled if linked_object.try(:rejected?) || linked_object.try(:increase_stopped?) || linked_object.try(:column_stopped?)
+        return :canceled if linked_object.rejected? || linked_object.increase_stopped? || linked_object.column_stopped?
+      when "Disbursement::Outgoing", "Disbursement::Incoming"
+        return :canceled if linked_object.rejected? && linked_object.approved_at.present?
       end
 
       return :rejected if linked_object.try(:rejected?)
