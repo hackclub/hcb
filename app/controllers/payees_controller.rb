@@ -17,8 +17,6 @@ class PayeesController < ApplicationController
     selected = all.find_by_hashid(params[:payee_id]) if params[:payee_id].present?
     @payees = [selected, *payees.to_a].compact.uniq.first(15)
 
-    @previous_recipients = EventService::PreviousRecipients.new(@event, query: params[:q]).list
-
     render layout: false
   end
 
@@ -36,8 +34,11 @@ class PayeesController < ApplicationController
           name: params[:name]
         )
 
-        # assign legacy payout methods is associated w/ email address
-        EventService::LegacyPayoutMethod.new(@event, email: params[:email]).apply_to(payee.legal_entity) if params[:legacy].present?
+        # The organizer is entering payout details on the recipient's behalf, so
+        # prefill anything we can reconstruct from transfers this organization
+        # already sent to the same email address. Safe here (and only here): the
+        # legal entity is managed by the event, which already had these details.
+        EventService::LegacyPayoutMethod.new(@event, email: params[:email]).apply_to(payee.legal_entity)
       end
 
       payee.save!

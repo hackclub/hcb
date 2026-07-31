@@ -13,6 +13,15 @@
   </div>
 <% end %>
 
+<%# Kept for admins until the new payment flow covers everything the legacy
+    transfer forms do. %>
+<% if admin_signed_in? %>
+  <% content_for :sidebar_footer do %>
+    <%= render "events/transfers/modal" %>
+    <%= link_to "Send transfer manually", "#", class: "btn mt2", data: { behavior: "modal_trigger", modal: "send_transfer" } %>
+  <% end %>
+<% end %>
+
 <% if @recent_payments&.any? %>
   <% content_for :sidebar_footer do %>
     <div class="mt-6">

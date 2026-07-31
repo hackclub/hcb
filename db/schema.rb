@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_20_210532) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_31_000000) do
   create_schema "google_sheets"
 
   # These are extensions that must be enabled in order to support this database
@@ -1961,6 +1961,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_20_210532) do
     t.string "display_name", null: false
     t.string "email", null: false
     t.bigint "event_id", null: false
+    t.datetime "imported_at"
     t.bigint "legal_entity_id"
     t.datetime "updated_at", null: false
     t.index ["archived_at"], name: "index_payees_on_archived_at"

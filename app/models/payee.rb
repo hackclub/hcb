@@ -8,6 +8,7 @@
 #  archived_at     :datetime
 #  display_name    :string           not null
 #  email           :string           not null
+#  imported_at     :datetime
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  event_id        :bigint           not null
@@ -44,7 +45,6 @@ class Payee < ApplicationRecord
 
   after_update do
     if legal_entity_id_previously_changed?(from: nil)
-      seed_legacy_payout_methods
       payments.pending_legal_entity.each(&:on_legal_entity_assigned)
     end
   end
@@ -67,6 +67,13 @@ class Payee < ApplicationRecord
     legal_entity&.managing_event_id.present?
   end
 
+  # Carried over from the legacy transfer system by
+  # Maintenance::ImportPaymentRecipientsToPayeesTask. Only the name and email
+  # came across; the recipient still has to onboard before they can be paid.
+  def imported?
+    imported_at.present?
+  end
+
   def archive!
     update!(archived_at: Time.current)
   end
@@ -76,12 +83,6 @@ class Payee < ApplicationRecord
   end
 
   private
-
-  def seed_legacy_payout_methods
-    return if legal_entity.nil? || legal_entity.payout_methods.exists?
-
-    EventService::LegacyPayoutMethod.new(event, email:).apply_to(legal_entity)
-  end
 
   def managed_legal_entity_constraints
     return unless managed?
