@@ -70,7 +70,12 @@ class MyController < ApplicationController
   end
 
   def missing_receipts_list
-    @missing = Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user) ? current_user.ledger_items_missing_receipt : current_user.transactions_missing_receipt
+
+    @missing = if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
+                 current_user.ledger_items_missing_receipt.page(params[:page]).per((params[:per] || 100).to_i.clamp(1, 200))
+               else
+                 current_user.transactions_missing_receipt
+               end
 
     if @missing.any?
       render :missing_receipts_list, layout: !request.xhr?
