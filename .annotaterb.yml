@@ -19,7 +19,7 @@
 :format_rdoc: false
 :format_yard: false
 :frozen: false
-:grouped_polymorphic: false
+:grouped_polymorphic: true
 :hide_default_column_types: 'json,jsonb,hstore'
 :hide_limit_column_types: 'integer,bigint,boolean'
 :ignore_columns: 

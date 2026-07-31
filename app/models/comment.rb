@@ -7,13 +7,13 @@
 #  id                 :bigint           not null, primary key
 #  action             :integer          default(0), not null
 #  admin_only         :boolean          default(FALSE), not null
-#  commentable_type   :string
 #  content_ciphertext :text
 #  deleted_at         :datetime
 #  has_untracked_edit :boolean          default(FALSE), not null
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
 #  commentable_id     :bigint
+#  commentable_type   :string
 #  user_id            :bigint
 #
 # Indexes
