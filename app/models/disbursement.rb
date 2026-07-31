@@ -136,17 +136,42 @@ class Disbursement < ApplicationRecord
   scope :scheduled_for_today, -> { scheduled.where(scheduled_on: ..Date.today) }
   scope :not_scheduled, -> { where(scheduled_on: nil) }
 
-  # The definitions live on Ledger::Item::SpecialAppearance, since that's where
-  # they're persisted (`ledger_items.special_appearance`). This hash is only the
-  # shape the legacy transaction views still expect — delete it with them.
-  SPECIAL_APPEARANCES = Ledger::Item::SpecialAppearance::ALL.to_h { |appearance|
-    [appearance.key.to_sym, {
-      title: appearance.title,
-      memo: appearance.memo,
-      css_class: appearance.css_class,
-      icon: appearance.icon,
-      qualifier: appearance.qualifier
-    }.freeze]
+  SPECIAL_APPEARANCES = {
+    hackathon_grant: {
+      title: "Hackathon grant",
+      memo: "💰 Hackathon grant from Hack Club",
+      css_class: "transaction--fancy",
+      icon: "purse",
+      qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::HACKATHON_GRANT_FUND }
+    },
+    winter_hardware_wonderland: {
+      title: "Winter Hardware Wonderland grant",
+      memo: "❄️ Winter Hardware Wonderland Grant",
+      css_class: "transaction--icy",
+      icon: "freeze",
+      qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::WINTER_HARDWARE_WONDERLAND_GRANT_FUND }
+    },
+    argosy_grant_2024: {
+      title: "Grant from the Argosy Foundation",
+      memo: "🤖 Argosy Foundation Rookie / Hardship Grant",
+      css_class: "transaction--fancy",
+      icon: "sam",
+      qualifier: ->(d) { d.source_event_id.in?([EventMappingEngine::EventIds::ARGOSY_GRANT_FUND, EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025]) && d.created_at > Date.new(2024, 9, 1) }
+    },
+    first_transparency_grant: {
+      title: "FIRST® Transparency grant",
+      memo: "🤖 FIRST® Transparency Grant",
+      css_class: "transaction--frc",
+      icon: "sam",
+      qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND }
+    },
+    gene_haas_grant: {
+      title: "Grant from Gene Haas",
+      memo: "Gene Haas Grant",
+      css_class: "transaction--genehaas",
+      icon: "sam",
+      qualifier: ->(d) { d.source_event_id == EventMappingEngine::EventIds::GENE_HAAS_GRANT_FUND }
+    }
   }.freeze
 
   include PublicActivity::Model
