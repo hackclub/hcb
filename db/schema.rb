@@ -1684,6 +1684,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_30_222837) do
     t.bigint "details_id", null: false
     t.string "details_type", null: false
     t.bigint "legal_entity_id", null: false
+    t.string "name"
     t.datetime "updated_at", null: false
     t.index ["details_type", "details_id"], name: "index_legal_entity_payout_methods_on_details", unique: true
     t.index ["legal_entity_id"], name: "index_le_payout_methods_one_default_per_entity", unique: true, where: "(\"default\" = true)"

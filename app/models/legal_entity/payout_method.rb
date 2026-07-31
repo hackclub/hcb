@@ -8,6 +8,7 @@
 #  archived        :boolean          default(FALSE), not null
 #  default         :boolean          default(FALSE), not null
 #  details_type    :string           not null
+#  name            :string
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  details_id      :bigint           not null
@@ -50,6 +51,8 @@ class LegalEntity
 
     scope :unarchived, -> { where(archived: false) }
 
+    validates :name, length: { maximum: 100 }, allow_blank: true
+
     validate :details_must_be_supported
 
     after_create do
@@ -59,7 +62,11 @@ class LegalEntity
     end
 
     # type-specific presentation lives on the detail record
-    delegate :kind, :icon, :name, :human_kind, :title_kind, :currency, :short_label, :detail_summary, to: :details
+    delegate :kind, :icon, :human_kind, :title_kind, :currency, :short_label, :detail_summary, to: :details
+
+    def display_name
+      name.presence || title_kind
+    end
 
     def self.details_class_for(type_name)
       ALL_METHODS.find { |klass| klass.name == type_name }
