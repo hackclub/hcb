@@ -11,7 +11,8 @@ module Maintenance
     end
 
     def process(card_charge)
-      card_charge.update!(stripe_card_id: card_charge.stripe_card&.id)
+      card_charge.set_stripe_card
+      card_charge.save!
     end
 
   end
