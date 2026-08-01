@@ -57,7 +57,7 @@ class CardCharge < ApplicationRecord
   end
 
   def icon
-    merchant = YellowPages::Merchant.lookup(network_id: merchant_network_id)
+    merchant = YellowPages::Merchant.lookup(network_id: merchant_network_id || "")
     categorised_category = BreakdownEngine::Categorizer.new(merchant_category).run
 
     if merchant.icon.present?

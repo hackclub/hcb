@@ -9,15 +9,17 @@
     </div>
   </td>
   <td><%= item.datetime.strftime("%b %e, %Y") %></td>
-  <td class="transaction__memo transaction__memo--fluid">
+  <td class="transaction__memo transaction__memo--fluid<%= " transaction__memo--pending" if item.pending? %>">
     <div>
-      <div class="flex-auto">
-        <div class="tooltipped tooltipped--s" aria-label="<%= item.memo %>" style="overflow: hidden; text-overflow: ellipsis;">
+      <div class="flex-auto flex flex-wrap items-center gap-y-1 gap-x-[1ch] min-w-0">
+        <div class="flex items-center gap-[1ch] min-w-0">
           <% if item.status.present? && !item.settled? %>
             <%= badge_for item.status_text, class: item.status_css %>
           <% end %>
-          <%= link_to item.memo, ledger_item_path(item),
-                      data: popovers_enabled? ? ledger_item_popover_data(item) : { turbo: false } %>
+          <div class="tooltipped tooltipped--s min-w-0 overflow-hidden text-ellipsis" aria-label="<%= item.memo %>">
+            <%= link_to item.memo, ledger_item_path(item),
+                        data: popovers_enabled? ? ledger_item_popover_data(item) : { turbo: false } %>
+          </div>
         </div>
 
         <%= render "ledger/items/tags", item: %>

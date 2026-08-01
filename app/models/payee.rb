@@ -44,7 +44,7 @@ class Payee < ApplicationRecord
 
   after_update do
     if legal_entity_id_previously_changed?(from: nil)
-      payments.pending_legal_entity.each(&:on_legal_entity_assigned)
+      legal_entity.refresh_pending_contractors_payments!
     end
   end
 

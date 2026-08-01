@@ -7,9 +7,10 @@
 #  id                           :bigint           not null, primary key
 #  amount_cents                 :integer          not null
 #  comment_count                :integer          default(0), not null
+#  cpt_count                    :integer          default(0), not null
+#  ct_count                     :integer          default(0), not null
 #  custom_memo                  :text
 #  datetime                     :datetime         not null
-#  linked_object_type           :string
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
 #  not_admin_only_comment_count :integer          default(0), not null
@@ -22,6 +23,7 @@
 #  updated_at                   :datetime         not null
 #  author_id                    :bigint
 #  linked_object_id             :bigint
+#  linked_object_type           :string
 #
 # Indexes
 #
@@ -176,8 +178,6 @@ class Ledger
       case linked_object_type
       when "CardCharge"
         return :released if uncaptured_stripe_authorization?
-
-        return :settled
       when "IncreaseCheck" # Increase checks use the same state for users canceling and ops rejecting
         return :canceled if linked_object.try(:rejected?) || linked_object.try(:increase_stopped?) || linked_object.try(:column_stopped?)
       end
@@ -312,9 +312,11 @@ class Ledger
 
       self.amount_cents = calculate_amount_cents
       self.author = calculate_author
-      self.comment_count = comments.count
-      self.not_admin_only_comment_count = comments.not_admin_only.count
-      self.receipt_count = receipts.count
+      self.ct_count = canonical_transactions.size
+      self.cpt_count = canonical_pending_transactions.size
+      self.comment_count = comments.size
+      self.not_admin_only_comment_count = comments.not_admin_only.size
+      self.receipt_count = receipts.size
       self.receipt_required = calculate_receipt_required
       self.status = calculate_status
       # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
@@ -381,6 +383,16 @@ class Ledger
       else
         "Bank account transaction"
       end
+    end
+
+    def pretty_title
+      amount_preposition = ["Donation", "Disbursement::Outgoing", "Disbursement::Incoming", "CardCharge", "BankFee"].include?(linked_object_type) ? "of" : "for"
+
+      amount_preposition = "refunded" if linked_object_type == "CardCharge" && amount_cents.positive?
+
+      type_label = linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) ? "HCB transfer" : humanized_type
+
+      "#{type_label} #{amount_preposition} #{ApplicationController.helpers.render_money(amount_cents.abs)}"
     end
 
     def icon
