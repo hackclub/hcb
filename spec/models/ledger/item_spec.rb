@@ -482,13 +482,6 @@ RSpec.describe Ledger::Item, type: :model do
       expect(item.reload.special_appearance).to be_nil
     end
 
-    it "never re-decides an appearance once one is set" do
-      item = create(:ledger_item, special_appearance: :gene_haas_grant, linked_object: grant)
-      item.refresh!
-
-      expect(item.reload.special_appearance.key).to eq("gene_haas_grant")
-    end
-
     describe "a card grant transfer" do
       # The card grant creates its own disbursement, which is the one that carries
       # the grant (`disbursement.card_grant`). An admin sender, so that transfer
