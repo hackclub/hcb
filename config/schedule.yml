@@ -157,11 +157,11 @@ detect_logical_transaction_anomalies:
   class: "Admin::DetectLogicalTransactionAnomaliesJob"
 
 detect_balance_anomalies:
-  cron: "0 7 * * *" # run every 1 day
+  cron: "12 7 * * *" # run every 1 day
   class: "Admin::DetectBalanceAnomaliesJob"
 
 detect_fee_anomalies:
-  cron: "0 7 * * *" # run every 1 day
+  cron: "48 7 * * *" # run every 1 day
   class: "Admin::DetectFeeAnomaliesJob"
 
 ledger_audit_weekly_job:
@@ -169,7 +169,7 @@ ledger_audit_weekly_job:
   class: "Admin::LedgerAudit::GenerateJob"
 
 send_admin_reminders_job:
-  cron: "0 7 * * *" # run at 7am UTC each morning
+  cron: "24 7 * * *" # run at 7am UTC each morning
   class: "SendAdminRemindersJob"
 
 gauge_online_user_count_job:
@@ -181,11 +181,11 @@ user_subordinate_summary_job:
   class: "User::SubordinateSummaryJob"
 
 user_sync_to_loops_job:
-  cron: "0 7 * * *" # run every 1 day
+  cron: "33 7 * * *" # run every 1 day
   class: "User::SyncToLoopsJob"
 
 update_teenager_column_job:
-  cron: "0 7 * * *" # run every 1 day
+  cron: "41 7 * * *" # run every 1 day
   class: "User::UpdateTeenagerColumnJob"
 
 clear_old_user_sessions:
