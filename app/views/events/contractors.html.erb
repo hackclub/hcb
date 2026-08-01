@@ -12,18 +12,18 @@
     hints: [
       {
         icon: "payment-transfer",
-        title: "Pay the people who power your event",
-        description: "Bring on contractors to handle engineering, design, content, and more — then pay them directly from your event account."
+        title: "Pay the people who power your work",
+        description: "Bring on contractors to handle engineering, design, content, and more"
       },
       {
         icon: "receipt",
-        title: "Collect tax forms automatically",
-        description: "Contractors sign their contract and complete W-9/W-8BEN forms during onboarding, so your records stay clean."
+        title: "Collect tax forms up front",
+        description: "Contractors sign their contract and complete W-9/W-8BEN forms during onboarding, so you're ready when it's time to file 1099s"
       },
       {
         icon: "list",
-        title: "Track every engagement",
-        description: "See each contractor's rate, contract period, purpose, and total paid to date, all in one place."
+        title: "Track every contract",
+        description: "See each contractor's rate, contract period, purpose, and total paid to date, all in one place"
       }
     ] do %>
     <% if Payroll::PositionPolicy.new(current_user, @event).new? %>
