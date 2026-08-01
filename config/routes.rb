@@ -998,6 +998,7 @@ Rails.application.routes.draw do
     get "transactions"
     get "transactions_list"
     get "ledger"
+    post "toggle_new_ledger"
     get "stats"
     get "merchants_filter"
     put "toggle_hidden"

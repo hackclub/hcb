@@ -1085,6 +1085,7 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = params[:per] || 20
     @q = params[:q].presence
+    @number = params[:number].presence
     @open = params[:open] == "1" ? true : nil
     @paid = params[:paid] == "1" ? true : nil
     @missing_payout = params[:missing_payout] == "1" ? true : nil
@@ -1111,6 +1112,8 @@ class AdminController < Admin::BaseController
         relation = relation.search_description(@q)
       end
     end
+
+    relation = relation.where(number: @number) if @number
 
     relation = relation.open_v2 if @open
     relation = relation.paid_v2 if @paid

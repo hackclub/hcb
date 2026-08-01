@@ -65,6 +65,10 @@
 #  fk_rails_...  (ledger_item_id => ledger_items.id)
 #  fk_rails_...  (raw_pending_stripe_transaction_id => raw_pending_stripe_transactions.id)
 #
+# Check Constraints
+#
+#  canonical_pending_transactions_fronted_null  (fronted IS NOT NULL)
+#
 class CanonicalPendingTransaction < ApplicationRecord
   has_paper_trail
 
