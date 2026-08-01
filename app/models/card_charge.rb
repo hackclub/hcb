@@ -132,7 +132,7 @@ class CardCharge < ApplicationRecord
   end
 
   def set_stripe_card
-    self.stripe_card_id ||= stripe_card&.id
+    self.stripe_card_id ||= (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_card&.id
   end
 
 end
