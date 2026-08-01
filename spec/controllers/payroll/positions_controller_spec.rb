@@ -193,6 +193,61 @@ RSpec.describe Payroll::PositionsController do
     end
   end
 
+  describe "GET #show" do
+    render_views
+
+    let(:position) { create(:payroll_position, payee:) }
+
+    before do
+      stub_docuseal_create
+      stub_docuseal_fetch
+      position.send_contract(organizer_user: user)
+    end
+
+    it "links back to the signing page while the organizer still hasn't signed" do
+      get :show, params: { event_id: event.slug, id: position.id }
+
+      expect(response.body).to include(contract_event_payroll_position_path(event_id: event.slug, id: position.id))
+    end
+
+    it "names who each onboarding step is waiting on" do
+      get :show, params: { event_id: event.slug, id: position.id }
+
+      expect(response.body).to include("HCB operations")
+      expect(response.body).to include(payee.display_name)
+    end
+  end
+
+  describe "GET #onboarding" do
+    render_views
+
+    let(:contractor) { create(:user, email: payee.email) }
+    let(:position) { create(:payroll_position, payee:) }
+
+    before do
+      stub_docuseal_create
+      stub_docuseal_fetch
+      position.send_contract(organizer_user: user)
+      create_session(contractor, verified: true)
+    end
+
+    it "waits on the organizer before offering the contractor anything to sign" do
+      get :onboarding, params: { id: position.hashid }
+
+      expect(response.body).to include("Waiting on")
+      expect(response.body).not_to include("Sign contract")
+    end
+
+    it "offers the tax form once it's the contractor's turn" do
+      position.contracts.sole.party(:organizer).mark_signed!
+      position.contracts.sole.party(:hcb)&.mark_signed!
+
+      get :onboarding, params: { id: position.hashid }
+
+      expect(response.body).to include("Add tax info")
+    end
+  end
+
   describe "GET #contract" do
     render_views
 
