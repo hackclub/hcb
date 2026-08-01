@@ -404,7 +404,7 @@ class AdminController < Admin::BaseController
 
     @count = relation.count
 
-    @ledger_items = relation.includes(:hcb_code, :canonical_transactions, :canonical_pending_transactions)
+    @ledger_items = relation.includes(:hcb_code)
                             .page(@page).per(@per).order(datetime: :desc)
   end
 
