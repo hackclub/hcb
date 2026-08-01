@@ -1,12 +1,4 @@
 <%# locals: (position:, perspective:, contractor_party: nil) %>
-<%#
-  Renders onboarding as an ordered flow — each step unblocks the next — rather
-  than an unordered task list, and names who each step is waiting on.
-
-  `perspective` is who's looking: :organizer on the event-facing contractor
-  page, :contractor on the contractor's own onboarding page. Steps owned by the
-  viewer get an action button; everything else reads as "waiting on <someone>".
-%>
 
 <% checklist = position.onboarding_checklist %>
 <% current_key = position.next_onboarding_step&.dig(:key) %>
@@ -26,7 +18,6 @@
                     else "HCB operations"
                     end %>
 
-    <%# Steps that sit outside the sequence get split off from it. %>
     <li class="onboarding-flow__step onboarding-flow__step--<%= state %> <%= "onboarding-flow__step--unordered" if unordered %>">
       <span class="onboarding-flow__marker">
         <% if step[:complete] %>
@@ -39,7 +30,6 @@
       <div class="onboarding-flow__body">
         <span class="onboarding-flow__label"><%= step[:label] %></span>
         <p class="onboarding-flow__hint">
-          <%# Who owns the step leads the line, so it's read before the detail. %>
           <span class="onboarding-flow__owner <%= "onboarding-flow__owner--mine" if mine %>"><%= owner_name %></span>
           <%= step[:hint] %>
         </p>
@@ -61,8 +51,6 @@
             <% end %>
           <% end %>
         <% elsif actionable && perspective == :organizer && step[:key] == :organizer_signature %>
-          <%# Without this, an organizer who leaves the signing page mid-flow has
-              no way back to it and onboarding stalls indefinitely. %>
           <%= link_to "Sign contract",
                 contract_event_payroll_position_path(event_id: event.slug, id: position.id),
                 class: "btn btn-small bg-info nowrap", data: { turbo_frame: "_top" } %>
@@ -71,8 +59,6 @@
             Waiting on <%= mine ? "you" : owner_name %>
           </span>
         <% end %>
-        <%# Steps that aren't in play yet say nothing — the numbering already
-            makes it clear they come later. %>
       </div>
     </li>
   <% end %>
