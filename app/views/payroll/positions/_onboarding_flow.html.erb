@@ -18,14 +18,16 @@
     <% current = step[:key] == current_key %>
     <% state = step[:complete] ? "complete" : (current ? "current" : "upcoming") %>
     <% mine = step[:owner] == perspective %>
-    <% actionable = mine && (current || Payroll::Position::UNORDERED_ONBOARDING_STEPS.include?(step[:key])) %>
+    <% unordered = Payroll::Position::UNORDERED_ONBOARDING_STEPS.include?(step[:key]) %>
+    <% actionable = mine && (current || unordered) %>
     <% owner_name = case step[:owner]
                     when :organizer then mine ? "You" : organizer_name
                     when :contractor then mine ? "You" : position.payee.display_name
                     else "HCB operations"
                     end %>
 
-    <li class="onboarding-flow__step onboarding-flow__step--<%= state %>">
+    <%# Steps that sit outside the sequence get split off from it. %>
+    <li class="onboarding-flow__step onboarding-flow__step--<%= state %> <%= "onboarding-flow__step--unordered" if unordered %>">
       <span class="onboarding-flow__marker">
         <% if step[:complete] %>
           <%= inline_icon "checkmark", size: 18 %>

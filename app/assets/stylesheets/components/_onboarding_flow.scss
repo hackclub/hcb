@@ -25,6 +25,15 @@
   &--current {
     background-color: rgba(map-get($palette, info), 0.07);
   }
+
+  // Steps that aren't gated on the ones before them sit below a divider, so
+  // the numbered sequence above reads as the actual chain.
+  &--unordered {
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(map-get($palette, muted), 0.2);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+  }
 }
 
 .onboarding-flow__marker {
