@@ -465,8 +465,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_31_160241) do
     t.string "merchant_category"
     t.string "merchant_network_id"
     t.bigint "raw_pending_stripe_transaction_id"
+    t.bigint "stripe_card_id"
     t.datetime "updated_at", null: false
     t.index ["raw_pending_stripe_transaction_id"], name: "index_card_charges_on_raw_pending_stripe_transaction_id", unique: true
+    t.index ["stripe_card_id"], name: "index_card_charges_on_stripe_card_id"
   end
 
   create_table "card_grant_pre_authorizations", force: :cascade do |t|
@@ -3054,6 +3056,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_31_160241) do
   add_foreign_key "card_charge_raw_stripe_transactions", "card_charges", on_delete: :cascade
   add_foreign_key "card_charge_raw_stripe_transactions", "raw_stripe_transactions", on_delete: :cascade
   add_foreign_key "card_charges", "raw_pending_stripe_transactions", on_delete: :nullify
+  add_foreign_key "card_charges", "stripe_cards"
   add_foreign_key "card_grant_pre_authorizations", "card_grants"
   add_foreign_key "card_grant_settings", "events"
   add_foreign_key "card_grants", "events"
