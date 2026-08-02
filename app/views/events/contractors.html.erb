@@ -6,24 +6,24 @@
   <%= render "events/one_pager",
     title: "Contractors",
     screenshots: {
-      light: "https://cdn.hackclub.com/019f623d-fab8-73d3-8ca6-78100fb6c981/image.png",
-      dark: "https://cdn.hackclub.com/019f623d-f81a-7d21-a8ee-5ab25859bf69/image.png",
+      light: "https://cdn.hackclub.com/019fbc30-c49b-7e2b-9659-6cf835ddde74/image.png",
+      dark: "https://cdn.hackclub.com/019fbc30-c694-7cf1-8c15-44dd84737c65/file-d148aa32d36ab666c459f44680cd9b8f.png",
     },
     hints: [
       {
         icon: "payment-transfer",
-        title: "Pay the people who power your event",
-        description: "Bring on contractors to handle engineering, design, content, and more — then pay them directly from your event account."
+        title: "Pay the people who power your work",
+        description: "Bring on contractors to handle engineering, event planning, content, and more"
       },
       {
         icon: "receipt",
         title: "Collect tax forms automatically",
-        description: "Contractors sign their contract and complete W-9/W-8BEN forms during onboarding, so your records stay clean."
+        description: "Contractors sign their contract and complete W-9/W-8BEN forms during onboarding, so you don't need to worry about any of it. HCB handles it all."
       },
       {
         icon: "list",
-        title: "Track every engagement",
-        description: "See each contractor's rate, contract period, purpose, and total paid to date, all in one place."
+        title: "Track every contract",
+        description: "See each contractor's rate, contract period, purpose, and total paid to date, all in one place"
       }
     ] do %>
     <% if Payroll::PositionPolicy.new(current_user, @event).new? %>
