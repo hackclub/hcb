@@ -12,6 +12,10 @@
   <% end %>
 <% end %>
 
+<% if disabled %>
+  <%= render partial: "events/unauthorized_callout", locals: { action: editing ? "edit this contractor" : "invite a contractor" } %>
+<% end %>
+
 <div data-controller="payee-picker manual-payee">
   <% if editing %>
     <div data-scroll-seek-target="section">
