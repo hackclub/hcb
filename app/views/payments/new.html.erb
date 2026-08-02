@@ -13,8 +13,6 @@
   </div>
 <% end %>
 
-<%# Kept for admins until the new payment flow covers everything the legacy
-    transfer forms do. %>
 <% if admin_signed_in? %>
   <% content_for :sidebar_footer do %>
     <%= render "events/transfers/modal" %>
