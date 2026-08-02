@@ -34,10 +34,6 @@ class PayeesController < ApplicationController
           name: params[:name]
         )
 
-        # The organizer is entering payout details on the recipient's behalf, so
-        # prefill anything we can reconstruct from transfers this organization
-        # already sent to the same email address. Safe here (and only here): the
-        # legal entity is managed by the event, which already had these details.
         EventService::LegacyPayoutMethod.new(@event, email: params[:email]).apply_to(payee.legal_entity)
       end
 
