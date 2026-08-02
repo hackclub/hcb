@@ -13,10 +13,10 @@
   </div>
 <% end %>
 
-<% if admin_signed_in? %>
-  <% content_for :sidebar_footer do %>
+<% content_for :sidebar_footer do %>
+  <% admin_tool("mt-2") do %>
     <%= render "events/transfers/modal" %>
-    <%= link_to "Send transfer manually", "#", class: "btn mt2", data: { behavior: "modal_trigger", modal: "send_transfer" } %>
+    <%= link_to "Send transfer manually", "#", class: "btn w-full", data: { behavior: "modal_trigger", modal: "send_transfer" } %>
   <% end %>
 <% end %>
 
