@@ -19,8 +19,7 @@
 <%# if @can_transfer is nil, assume we can transfer %>
 <% can_transfer = @can_transfer != false %>
 <% steps = content_for?(:table_of_contents) && can_transfer %>
-<% ooo = can_transfer %>
-<% sidebar = steps || ooo || content_for?(:sidebar_footer) %>
+<% sidebar = steps || can_transfer || content_for?(:sidebar_footer) %>
 
 <div
   class="flex flex-col md:flex-row max-w-5xl lg:px-8 mx-auto w-full <%= steps ? "mt-40" : "mt-28" %> md:mt-20 gap-5"
@@ -40,7 +39,7 @@
         <% if content_for?(:sidebar_footer) %>
           <%= yield :sidebar_footer %>
         <% end %>
-        <%= render "application/ooo_callout", resource: "transfer", financial: true if ooo %>
+        <%= render "application/ooo_callout", resource: "transfer", financial: true if can_transfer %>
       </div>
     </div>
   <% end %>
