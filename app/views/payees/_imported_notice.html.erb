@@ -1,7 +1,4 @@
 <%# locals: (payee:) %>
-<%# Shown once an organizer picks a recipient carried over from the old transfer
-    system. Their old payout details didn't come with them, so set expectations
-    that the recipient has to onboard before the money moves. %>
 
 <%= render "application/callout", type: "info", title: "You've paid #{payee.display_name} before",
       class: local_assigns[:class] do %>

@@ -58,9 +58,6 @@ RSpec.describe Payee, type: :model do
       event
     end
 
-    # We can't trust that whoever typed the recipient's email address into a
-    # legacy transfer also owns those bank accounts, so an unmanaged entity never
-    # inherits payout methods by email match — the recipient enters their own.
     it "does not seed payout methods from legacy transfers to the same email" do
       create(:ach_transfer, event:, recipient_name: "Orpheus", recipient_email: "orpheus@hackclub.com",
                             account_number: "123456789", routing_number: "110000000")

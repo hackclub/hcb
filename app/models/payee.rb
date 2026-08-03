@@ -67,9 +67,6 @@ class Payee < ApplicationRecord
     legal_entity&.managing_event_id.present?
   end
 
-  # Carried over from the legacy transfer system by
-  # Maintenance::ImportPaymentRecipientsToPayeesTask. Only the name and email
-  # came across; the recipient still has to onboard before they can be paid.
   def imported?
     imported_at.present?
   end
