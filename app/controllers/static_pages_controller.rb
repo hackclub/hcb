@@ -126,7 +126,7 @@ class StaticPagesController < ApplicationController
           "View a payment": :reader,
           "View the organization's recipients": :manager,
           "Add a recipient": :manager,
-          "Edit or archive a recipient": :member,
+          "Edit or archive a recipient": :manager,
           _preface: "For paying people & vendors"
         },
         _preface: "As a general rule, only managers can create/modify financial transfers"
