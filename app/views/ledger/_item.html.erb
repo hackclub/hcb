@@ -1,6 +1,7 @@
 <tr class="transaction transaction--<%= item.sign %>">
   <td class="transaction__icon">
-    <div class="tooltipped tooltipped--e" aria-label="<%= YellowPages::Merchant.lookup(network_id: item.linked_object&.try(:merchant_network_id) || "").name.presence || item.humanized_type %>">
+    <% merchant_name = YellowPages::Merchant.lookup(network_id: item.linked_object.merchant_network_id || "").name if item.linked_object.is_a?(CardCharge) %>
+    <div class="tooltipped tooltipped--e" aria-label="<%= merchant_name.presence || item.humanized_type %>">
       <% if item.icon.is_a?(YellowPages::Merchant) %>
         <%= merchant_icon(item.icon, style: "height: 1.2em") %>
       <% else %>
