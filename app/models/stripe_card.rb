@@ -92,6 +92,7 @@ class StripeCard < ApplicationRecord
   alias_method :cardholder, :stripe_cardholder
   has_one :user, through: :stripe_cardholder
   has_many :stripe_authorizations
+  has_many :card_charges
   alias_method :authorizations, :stripe_authorizations
   alias_method :transactions, :stripe_authorizations
   alias_attribute :platinum, :is_platinum_april_fools_2023
