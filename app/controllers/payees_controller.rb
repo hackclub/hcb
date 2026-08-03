@@ -31,8 +31,7 @@ class PayeesController < ApplicationController
         payee.legal_entity = LegalEntity.create!(
           managing_event: @event,
           entity_type: manual_payee_entity_type,
-          name: params[:name],
-          is_corporation: params[:is_corporation]
+          name: params[:name]
         )
       end
 
