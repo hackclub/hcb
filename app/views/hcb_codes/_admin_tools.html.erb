@@ -1,41 +1,34 @@
 <%= turbo_frame_tag "#{@hcb_code.public_id}:admin_tools", target: "_top" do %>
-  <% admin_tool("mt3") do %>
-  <div class="overflow-x-auto mb3 max-w-full">
-    <table class="mb2">
-      <tr>
-        <th>HCB CODE</th>
-        <th>OBJECT</th>
-      </tr>
-      <tr>
-        <td><%= @hcb_code.hcb_code %></td>
-
-        <td>
-          <% if @hcb_code.ach_transfer? && @hcb_code.ach_transfer.present? %>
-            <%= link_to "ACH TRANSFER #{@hcb_code.ach_transfer.id}", @hcb_code.ach_transfer %>
-          <% else %>
-            N/A
-          <% end %>
-        </td>
-
-      </tr>
-    </table>
-    <%= render(
-          partial: "transactions_table",
-          locals: {
-            canonical_transactions:
-              @hcb_code
-                .canonical_pending_transactions
-                .preload(:category)
-                .strict_loading,
-            canonical_pending_transactions:
-              @hcb_code
-                .canonical_transactions
-                .preload(:category)
-                .strict_loading
-                .to_a,
-            t_transaction: @hcb_code.ach_transfer&.t_transaction
-          }
-        ) %>
+  <% admin_tool("mt3 pb1") do %>
+    <div class="overflow-x-auto mb3 max-w-full">
+      <table class="mb2">
+        <tr>
+          <th>HCB CODE</th>
+          <% if @hcb_code.ledger_item.present? %><th class="w-full">LEDGER ITEM</th><% end %>
+        </tr>
+        <tr>
+          <td><%= @hcb_code.hcb_code %></td>
+          <% if @hcb_code.ledger_item.present? %><td><%= link_to @hcb_code.ledger_item.hashid, ledger_item_path(@hcb_code.ledger_item) %></td><% end %>
+        </tr>
+      </table>
+      <%= render(
+            partial: "transactions_table",
+            locals: {
+              canonical_transactions:
+                @hcb_code
+                  .canonical_pending_transactions
+                  .preload(:category)
+                  .strict_loading,
+              canonical_pending_transactions:
+                @hcb_code
+                  .canonical_transactions
+                  .preload(:category)
+                  .strict_loading
+                  .to_a,
+              t_transaction: @hcb_code.ach_transfer&.t_transaction
+            }
+          ) %>
     </div>
   <% end %>
+  <%= render partial: "application/admin_viewer", locals: { record: @hcb_code } %>
 <% end %>

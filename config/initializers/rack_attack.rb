@@ -175,16 +175,33 @@ class Rack::Attack
     end
   end
 
-  throttle("/hq/transactions/ip", limit: 25, period: 1.minute) do |req|
-    if req.path.start_with?("/hq/transactions") && req.cookies[:session_token].nil?
-      req.ip
-    end
+  # Reading an organization's transactions runs the transaction engines, which
+  # cost seconds per request, and a transparent organization can be read without
+  # signing in. The page and its Turbo frame are each requested directly, so both
+  # need covering.
+  ledger_path = %r{
+    \A/
+    (?!admin/)                    # `req/ip` above exempts /admin
+    [^/]+/                        # organization slug
+    (transactions_list | transactions | ledger)
+    (\.[^/]*)?                    # `(.:format)` reaches the same action
+    /?\z
+  }x
+
+  # Presence only: the cookie is encrypted, and verifying it would mean a database
+  # lookup ahead of Rails. A forged value falls through to the wider throttle
+  # below, which is why that one exists.
+  #
+  # `Rack::Request#cookies` is string-keyed; a symbol reads as nil every time and
+  # throttles signed-in organizers too.
+  throttle("transparency/ledger/ip", limit: 25, period: 1.minute) do |req|
+    req.ip if req.path.match?(ledger_path) && req.cookies["session_token"].nil?
   end
 
-  throttle("/hq/ledger/ip", limit: 30, period: 1.minute) do |req|
-    if req.path.start_with?("/hq/ledger") && req.cookies[:session_token].nil?
-      req.ip
-    end
+  # Set far above what clicking through pages reaches, so it only catches
+  # automation sending an unverified `session_token`.
+  throttle("ledger/ip", limit: 100, period: 1.minute) do |req|
+    req.ip if req.path.match?(ledger_path)
   end
 
   # Lockout IP addresses that are hammering your donation page.

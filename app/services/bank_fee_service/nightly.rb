@@ -21,6 +21,14 @@ module BankFeeService
         end
 
         FeeRevenue.pending.find_each(batch_size: 100) do |fee_revenue|
+          # Backstop: create the pending transaction for any fee revenue that
+          # didn't get one at creation time (idempotent — no-ops if present).
+          begin
+            ::FeeRevenueService::CreateCanonicalPendingTransaction.new(fee_revenue_id: fee_revenue.id).run
+          rescue => e
+            Rails.error.report(e)
+          end
+
           if fee_revenue.book_transfer_to?(:fs_operating)
             ::FeeRevenueService::ProcessSingle.new(fee_revenue_id: fee_revenue.id).run
           else
