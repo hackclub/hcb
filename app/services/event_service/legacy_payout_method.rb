@@ -17,7 +17,8 @@ module EventService
       details_list.first
     end
 
-    # none matches.
+    # One reconstructed payout method per type the recipient was paid with,
+    # most recent first. Empty when the recipient has no legacy transfers.
     def details_list
       return [] if @email.blank?
 
