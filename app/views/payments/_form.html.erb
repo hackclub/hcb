@@ -5,7 +5,7 @@
 <% else %>
 
 <% disabled = !policy(event).create_payment? %>
-<% @unauthorized = disabled %>
+<% @can_transfer = !disabled %>
 <% manual = payee&.managed? %>
 
 <% existing_payout_method = payee&.legal_entity&.default_payout_method if manual %>

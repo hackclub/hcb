@@ -2,7 +2,7 @@
 
 <% editing = position&.persisted? %>
 <% disabled = !policy(event).create_transfer? %>
-<% @unauthorized = disabled %>
+<% @can_transfer = !disabled %>
 
 <% if disabled %>
   <%= render partial: "events/unauthorized_callout", locals: { action: editing ? "edit this contractor" : "invite a contractor" } %>

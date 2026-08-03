@@ -16,8 +16,9 @@
   </div>
 </nav>
 
-<% steps = content_for?(:table_of_contents) && !@unauthorized %>
-<% ooo = !@unauthorized %>
+<% can_transfer = @can_transfer != false %>
+<% steps = content_for?(:table_of_contents) && can_transfer %>
+<% ooo = can_transfer %>
 <% sidebar = steps || ooo || content_for?(:sidebar_footer) %>
 
 <div
@@ -45,7 +46,7 @@
   <div class="flex-1 md:pt-3 sm:mb-24">
     <%= render "application/flash", klass: "mb-2" unless sidebar %>
     <%= yield %>
-    <% unless @unauthorized %>
+    <% if can_transfer %>
       <% if controller_path == "payroll/positions" %>
         <p class="muted mt-3 text-center text-sm">
           We'll email the contractor to sign their contract and complete onboarding. Payments can't be sent until that's done.
