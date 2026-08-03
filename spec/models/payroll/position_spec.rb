@@ -91,6 +91,23 @@ RSpec.describe Payroll::Position, type: :model do
       end
     end
 
+    describe "#onboarding_reminder_days" do
+      it "nudges frequently at first, then every two weeks" do
+        position = build(:payroll_position, start_date: Date.current, end_date: Date.current + 60.days)
+        expect(position.onboarding_reminder_days).to eq([1, 2, 7, 14, 28, 42, 56])
+      end
+
+      it "stops at the position's end date rather than a fixed deadline" do
+        position = build(:payroll_position, start_date: Date.current, end_date: Date.current + 10.days)
+        expect(position.onboarding_reminder_days).to eq([1, 2, 7])
+      end
+
+      it "schedules nothing for a position that ends today" do
+        position = build(:payroll_position, start_date: Date.current - 2.months, end_date: Date.current)
+        expect(position.onboarding_reminder_days).to be_empty
+      end
+    end
+
     describe "#mark_onboarded" do
       it "cannot transition while an onboarding step is outstanding" do
         allow(position).to receive(:onboarding_complete?).and_return(false)
@@ -205,11 +222,20 @@ RSpec.describe Payroll::Position, type: :model do
       expect { hcb_party.mark_signed! }.to have_enqueued_mail(Payroll::PositionMailer, :onboarding)
     end
 
-    it "schedules signing reminders for the contractor once HCB signs" do
+    it "does not schedule contract-specific signing reminders for the contractor once HCB signs" do
       contract = position.send_contract(organizer_user: organizer)
       hcb_party = contract.party(:hcb)
 
-      expect { hcb_party.mark_signed! }.to have_enqueued_job(Contract::Party::ReminderJob).at_least(:once)
+      expect { hcb_party.mark_signed! }.not_to have_enqueued_job(Contract::Party::ReminderJob)
+    end
+
+    it "schedules onboarding reminders for the contractor once HCB signs" do
+      contract = position.send_contract(organizer_user: organizer)
+      hcb_party = contract.party(:hcb)
+
+      expect { hcb_party.mark_signed! }
+        .to have_enqueued_job(Payroll::Position::OnboardingReminderJob)
+        .exactly(position.onboarding_reminder_days.count).times
     end
 
     it "reports, but does not raise or roll back the signature, when notifying the contractor fails" do
