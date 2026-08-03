@@ -36,13 +36,13 @@
                     data: { turbo: false, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
               <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
                 <% if policy(payee).update? %>
-                  <%= link_to new_event_payment_path(event_id: @event.slug, payee_id: payee.hashid, edit_payee: true), class: "flex items-center", data: { turbo_frame: "_top" } do %>
+                  <%= link_to new_recipient_transfer_path(destination, @event, payee_id: payee.hashid, edit_payee: true), class: "flex items-center", data: { turbo_frame: "_top" } do %>
                     <%= inline_icon "edit", size: 24 %>
                     Edit recipient
                   <% end %>
                 <% end %>
                 <% if policy(payee).archive? %>
-                  <%= link_to archive_event_payee_path(event_id: @event.slug, id: payee.hashid), class: "flex items-center", data: { turbo_method: :post, turbo_frame: "_top", turbo_confirm: "Archive #{payee.display_name}? They'll be hidden from the recipient list." } do %>
+                  <%= link_to archive_event_payee_path(event_id: @event.slug, id: payee.hashid, destination:), class: "flex items-center", data: { turbo_method: :post, turbo_frame: "_top", turbo_confirm: "Archive #{payee.display_name}? They'll be hidden from the recipient list." } do %>
                     <%= inline_icon "delete", size: 24 %>
                     Archive recipient
                   <% end %>
