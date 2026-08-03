@@ -16,6 +16,7 @@
   </div>
 </nav>
 
+<%# if can_transfer is nil, assume we can transfer %>
 <% can_transfer = @can_transfer != false %>
 <% steps = content_for?(:table_of_contents) && can_transfer %>
 <% ooo = can_transfer %>
