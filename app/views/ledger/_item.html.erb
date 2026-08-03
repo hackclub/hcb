@@ -14,7 +14,7 @@
       <div class="flex-auto flex flex-wrap items-center gap-y-1 gap-x-[1ch] min-w-0">
         <div class="flex items-center gap-[1ch] min-w-0">
           <% if item.status.present? && !item.settled? %>
-            <%= badge_for item.status_text, class: item.status_css %>
+            <%= badge_for item.status_text, class: "badge--ledger-item #{item.status_css}" %>
           <% end %>
           <div class="tooltipped tooltipped--s min-w-0 overflow-hidden text-ellipsis" aria-label="<%= item.memo %>">
             <%= link_to item.memo, ledger_item_path(item),
