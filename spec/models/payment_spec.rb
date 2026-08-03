@@ -154,14 +154,9 @@ RSpec.describe Payment, type: :model do
   end
 
   describe "#requires_tax_form?" do
-    it "is true for a tax reportable payment at or above $500" do
-      payment = build(:payment, amount_cents: 500_00, tax_reportable: true)
+    it "is true for a tax reportable payment, regardless of amount" do
+      payment = build(:payment, amount_cents: 1_00, tax_reportable: true)
       expect(payment.requires_tax_form?).to be true
-    end
-
-    it "is false for a payment below $500" do
-      payment = build(:payment, amount_cents: 499_99, tax_reportable: true)
-      expect(payment.requires_tax_form?).to be false
     end
 
     it "is false for a payment that isn't tax reportable, regardless of amount" do

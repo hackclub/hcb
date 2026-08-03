@@ -113,10 +113,9 @@ class Payment < ApplicationRecord
     MoneyService.convert_to_usd(amount_cents, currency)
   end
 
-  # Payments that aren't tax reportable, or too small to move the needle,
-  # don't need to wait on the payee's tax paperwork.
+  # Payments that aren't tax reportable don't need to wait on the payee's tax paperwork.
   def requires_tax_form?
-    tax_reportable? && estimate_usd_amount_cents >= Tax::REPORTING_THRESHOLD_1099
+    tax_reportable?
   end
 
   def on_legal_entity_assigned
