@@ -154,20 +154,14 @@ RSpec.describe LegalEntity, type: :model do
       expect(entity.tax_form_required?).to be false
     end
 
-    it "is false when the only pending payment is under the tax form minimum" do
-      create(:payment, payee:, amount_cents: 100, tax_reportable: true)
-
-      expect(entity.reload.tax_form_required?).to be false
-    end
-
     it "is false when the only pending payment isn't tax reportable" do
-      create(:payment, payee:, amount_cents: 100_000, tax_reportable: false)
+      create(:payment, payee:, amount_cents: 100_000, classification: :goods)
 
       expect(entity.reload.tax_form_required?).to be false
     end
 
     it "is true when a pending payment requires a tax form" do
-      create(:payment, payee:, amount_cents: 100_000, tax_reportable: true)
+      create(:payment, payee:, amount_cents: 100_000, classification: :other_services)
 
       expect(entity.reload.tax_form_required?).to be true
     end

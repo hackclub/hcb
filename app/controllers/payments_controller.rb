@@ -26,10 +26,6 @@ class PaymentsController < ApplicationController
     @payee = @event.payees.not_archived.find_by_hashid!(payment_params[:payee_id])
     @legal_entity = @payee.legal_entity
     payment_attrs = payment_params.except(:payee_id, :file)
-    # tax_reportable is only settable here on the manual flow, where the organizer
-    # entered the payee's (managed) legal entity themselves. For a real payee, only
-    # an HCB admin can override it, from the approval screen.
-    payment_attrs = payment_attrs.except(:tax_reportable) unless @legal_entity&.managed?
     @payment = Payment.new(payment_attrs.merge(creator: current_user, payee: @payee, currency: "USD"))
 
     if payment_params[:file].blank?
@@ -93,7 +89,7 @@ class PaymentsController < ApplicationController
   end
 
   def payment_params
-    params.require(:payment).permit(:amount, :purpose, :payee_id, :tax_reportable, file: [])
+    params.require(:payment).permit(:amount, :purpose, :payee_id, :classification, file: [])
   end
 
   def set_payment

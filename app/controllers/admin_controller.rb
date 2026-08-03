@@ -631,7 +631,7 @@ class AdminController < Admin::BaseController
     return unless enforce_sudo_mode
 
     ach_transfer.approve!(current_user)
-    ach_transfer.payment&.update!(tax_reportable: ActiveModel::Type::Boolean.new.cast(params[:tax_reportable]))
+    ach_transfer.payment&.update!(classification: params[:classification])
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success" }
   rescue Faraday::Error => e
@@ -645,7 +645,7 @@ class AdminController < Admin::BaseController
     return unless enforce_sudo_mode
 
     ach_transfer.approve!(current_user, send_realtime: true)
-    ach_transfer.payment&.update!(tax_reportable: ActiveModel::Type::Boolean.new.cast(params[:tax_reportable]))
+    ach_transfer.payment&.update!(classification: params[:classification])
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success - sent in realtime" }
   rescue Faraday::Error => e

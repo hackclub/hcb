@@ -1,0 +1,6 @@
+<%# locals: (form:, classification: nil) %>
+
+<div class="field mb-2 flex">
+  <%= form.label :classification %>
+  <%= form.select :classification, Payment.classifications.keys %>
+</div>

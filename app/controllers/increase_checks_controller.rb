@@ -47,7 +47,7 @@ class IncreaseChecksController < ApplicationController
 
     ensure_admin_may_approve!(@check, amount_cents: @check.amount)
     @check.send_check!
-    @check.payment&.update!(tax_reportable: ActiveModel::Type::Boolean.new.cast(params[:tax_reportable]))
+    @check.payment&.update!(classification: params[:classification])
 
     redirect_to increase_check_process_admin_path(@check), flash: { success: "Check has been sent!" }
 

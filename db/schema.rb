@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_20_210532) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_03_174434) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1998,6 +1998,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_210532) do
   create_table "payments", force: :cascade do |t|
     t.string "aasm_state", null: false
     t.integer "amount_cents", null: false
+    t.string "classification", default: "other_services", null: false
     t.datetime "created_at", null: false
     t.bigint "creator_id", null: false
     t.string "currency", null: false
@@ -2006,7 +2007,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_210532) do
     t.datetime "rejected_at"
     t.datetime "sent_at"
     t.datetime "successful_at"
-    t.boolean "tax_reportable", default: true, null: false
     t.datetime "under_review_at"
     t.datetime "updated_at", null: false
     t.index ["creator_id"], name: "index_payments_on_creator_id"

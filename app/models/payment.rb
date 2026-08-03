@@ -7,12 +7,12 @@
 #  id              :bigint           not null, primary key
 #  aasm_state      :string           not null
 #  amount_cents    :integer          not null
+#  classification  :string           default("other_services"), not null
 #  currency        :string           not null
 #  purpose         :string           not null
 #  rejected_at     :datetime
 #  sent_at         :datetime
 #  successful_at   :datetime
-#  tax_reportable  :boolean          default(TRUE), not null
 #  under_review_at :datetime
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
@@ -43,6 +43,8 @@ class Payment < ApplicationRecord
   has_one :payroll_invoice, class_name: "Payroll::Invoice", inverse_of: :payment, dependent: :nullify
 
   monetize :amount_cents, with_model_currency: :currency
+
+  enum :classification, { goods: "goods", attorney_or_medical_services: "attorney_or_medical_services", other_services: "other_services" }, prefix: :for
 
   pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }
   pg_search_scope :search_purpose_and_event, against: [:purpose], associated_against: { event: [:name] }
@@ -115,7 +117,7 @@ class Payment < ApplicationRecord
 
   # Payments that aren't tax reportable don't need to wait on the payee's tax paperwork.
   def requires_tax_form?
-    tax_reportable?
+    !(payee.legal_entity&.corporation? && !for_attorney_or_medical_services?) && !for_goods?
   end
 
   def on_legal_entity_assigned

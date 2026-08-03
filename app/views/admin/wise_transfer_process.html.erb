@@ -234,7 +234,7 @@
             <%= form.text_field :wise_id, class: "w-[400px]", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", disabled: @wise_transfer.usd_amount_cents.nil?, onpaste: "var urlPrefix = 'https://wise.com/transactions/activities/by-resource/TRANSFER/'; var clipboardData = event.clipboardData.getData('Text'); clipboardData.startsWith(urlPrefix) ? (event.preventDefault(), event.target.value = clipboardData.substring(urlPrefix.length)) : null" %>
           </div>
           <% if @wise_transfer.payment.present? %>
-            <%= render partial: "payments/tax_reportable_input", locals: { form:, tax_reportable: @wise_transfer.payment.tax_reportable } %>
+            <%= render partial: "payments/classification_input", locals: { form:, classification: @wise_transfer.payment.classification } %>
           <% end %>
           <%= form.submit "💸 Mark transfer as sent", disabled: @wise_transfer.usd_amount_cents.nil?, class: "mb-0" %>
         <% end %>
