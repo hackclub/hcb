@@ -30,7 +30,7 @@
   <% end %>
 
   <% form_url = editing ? event_payroll_position_path(event_id: event.slug, id: position.id) : event_payroll_positions_path(event_id: event.slug) %>
-  <%= form_with(url: form_url, method: editing ? :patch : :post, scope: :contractor, local: true) do |form| %>
+  <%= form_with(url: form_url, method: editing ? :patch : :post, scope: :contractor, local: true, class: ("hidden" unless payee)) do |form| %>
     <%= form.hidden_field :payee_id, value: payee&.hashid %>
     <%= hidden_field_tag "manual", (payee&.managed? || false).to_s, data: { "manual-payee-target": "manualField" } %>
 

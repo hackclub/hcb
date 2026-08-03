@@ -7,6 +7,8 @@
 #  id                           :bigint           not null, primary key
 #  amount_cents                 :integer          not null
 #  comment_count                :integer          default(0), not null
+#  cpt_count                    :integer          default(0), not null
+#  ct_count                     :integer          default(0), not null
 #  custom_memo                  :text
 #  datetime                     :datetime         not null
 #  marked_no_or_lost_receipt_at :datetime
@@ -15,7 +17,7 @@
 #  receipt_count                :integer          default(0), not null
 #  receipt_required             :boolean
 #  short_code                   :text
-#  status                       :string
+#  status                       :string           default("pending"), not null
 #  system_memo                  :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
@@ -78,7 +80,7 @@ class Ledger
       declined: "declined" # CPT has CPDM, no CPTs
     }
 
-    validates_presence_of :amount_cents, :memo, :datetime
+    validates_presence_of :amount_cents, :memo, :datetime, :status
 
     normalizes :memo, with: ->(memo) { memo.strip.presence }
     normalizes :system_memo, with: ->(system_memo) { system_memo.strip.presence }
@@ -317,9 +319,11 @@ class Ledger
 
       self.amount_cents = calculate_amount_cents
       self.author = calculate_author
-      self.comment_count = comments.count
-      self.not_admin_only_comment_count = comments.not_admin_only.count
-      self.receipt_count = receipts.count
+      self.ct_count = canonical_transactions.size
+      self.cpt_count = canonical_pending_transactions.size
+      self.comment_count = comments.size
+      self.not_admin_only_comment_count = comments.not_admin_only.size
+      self.receipt_count = receipts.size
       self.receipt_required = calculate_receipt_required
       self.status = calculate_status
       # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh

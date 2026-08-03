@@ -1,6 +1,6 @@
 <tr class="transaction transaction--<%= item.sign %>">
   <td class="transaction__icon">
-    <div class="tooltipped tooltipped--e" aria-label="<%= item.humanized_type %>">
+    <div class="tooltipped tooltipped--e" aria-label="<%= YellowPages::Merchant.lookup(network_id: item.linked_object&.merchant_network_id || "").name.presence || item.humanized_type %>">
       <% if item.icon.is_a?(YellowPages::Merchant) %>
         <%= merchant_icon(item.icon, style: "height: 1.2em") %>
       <% else %>
@@ -13,7 +13,7 @@
     <div>
       <div class="flex-auto flex flex-wrap items-center gap-y-1 gap-x-[1ch] min-w-0">
         <div class="flex items-center gap-[1ch] min-w-0">
-          <% if item.status.present? && !item.settled? %>
+          <% unless item.settled? %>
             <%= badge_for item.status_text, class: item.status_css %>
           <% end %>
           <div class="tooltipped tooltipped--s min-w-0 overflow-hidden text-ellipsis" aria-label="<%= item.memo %>">
