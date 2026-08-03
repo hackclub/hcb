@@ -78,21 +78,21 @@ class OrganizerPositionDeletionRequestsController < ApplicationController
   def assign
     authorize OrganizerPositionDeletionRequest
     @opdr.update!(assignee: current_user)
-    flash[:success] = "Removal request assigned to you."
+    flash[:success] = "OPDR assigned to you."
     redirect_to @opdr
   end
 
   def unassign
     authorize @opdr
     @opdr.update!(assignee: current_user)
-    flash[:success] = "Removal request assigned to you."
+    flash[:success] = "OPDR assigned to you."
     redirect_to @opdr
   end
 
   def unassign
     authorize @opdr
     @opdr.update!(assignee: nil)
-    flash[:success] = "Removal request unassigned."
+    flash[:success] = "OPDR unassigned."
     redirect_to @opdr
   end
 
