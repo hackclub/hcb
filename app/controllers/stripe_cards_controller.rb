@@ -91,7 +91,7 @@ class StripeCardsController < ApplicationController
     # TODO: Swap this out for Ledger::Query once Stripe cards have their own non-primary ledgers
     @items = @ledger.items
                     .includes(:canonical_transactions, :canonical_pending_transactions, :linked_object)
-                    .where(linked_object_type: "CardCharge", linked_object_id: CardCharge.on_card(@card).select(:id))
+                    .where(linked_object_type: "CardCharge", linked_object_id: @card.card_charges.select(:id))
                     .order(datetime: :desc, created_at: :desc, id: :desc)
                     .page(params[:page]).per(@per)
 
