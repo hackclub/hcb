@@ -66,7 +66,8 @@
               options_for_select([
                                    ["Select type", ""],
                                    ["An individual", "person"],
-                                   ["A business or organization", "business"]
+                                   ["An unincorporated business", "business"],
+                                   ["A corporation", "corporation"]
                                  ], params[:payee_entity_type]),
               required: manual,
               form: "new-payee-form",

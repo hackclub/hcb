@@ -30,7 +30,7 @@ class LegalEntity < ApplicationRecord
   # if a payment was sent by manually inputting details
   belongs_to :managing_event, class_name: "Event", optional: true
 
-  enum :entity_type, { person: "person", business: "business" }
+  enum :entity_type, { person: "person", business: "business", corporation: "corporation" }
 
   has_many :legal_entity_users
   has_many :users, through: :legal_entity_users

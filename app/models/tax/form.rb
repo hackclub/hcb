@@ -280,7 +280,13 @@ module Tax
     def entity_type_from(submission_form_type, form_data)
       case submission_form_type
       when "FormW9"
-        form_data["TINType"] == "SSN" ? :person : :business
+        if form_data["FederalTaxClassification"].include?("corporation")
+          :corporation
+        elsif form_data["TINType"] == "SSN"
+          :person
+        else
+          :business
+        end
       when "FormW8BEN"
         :person
       when "FormW8ECI"
