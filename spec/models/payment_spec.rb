@@ -136,7 +136,7 @@ RSpec.describe Payment, type: :model do
       end
 
       it "does not create an attempt when the payment requires a tax form" do
-        payment = build(:payment, payee:, amount_cents: 100_000, classification: :other_services)
+        payment = build(:payment, payee:, amount_cents: 100_000, classification: :general_services)
         stub_conditionally_payable_legal_entity(payment, payout_method:)
         payment.save!
 
@@ -147,7 +147,7 @@ RSpec.describe Payment, type: :model do
 
   describe "#requires_tax_form?" do
     it "is true for a tax reportable payment, regardless of amount" do
-      payment = build(:payment, amount_cents: 1_00, classification: :other_services)
+      payment = build(:payment, amount_cents: 1_00, classification: :general_services)
       expect(payment.requires_tax_form?).to be true
     end
 

@@ -70,6 +70,12 @@
             <span class="muted mb-1 block">Helps HCB keep a record of this transaction.</span>
             <%= form.text_field :purpose, class: "!max-w-full", placeholder: "Shipment of potions", required: true, disabled: %>
           </div>
+
+          <div class="field">
+            <%= form.label :classification %>
+            <span class="muted mb-1 block">Used for tax purposes.</span>
+            <%= form.select :classification, Payment.classifications.map { |k, v| [k.humanize, v] }, { selected: "general_services" }, class: "!max-w-full" %>
+          </div>
         </div>
       </div>
 
@@ -104,9 +110,7 @@
       <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
         <h3 class="mb-2">Tax information</h3>
 
-        <div class="card mb-4 p-4">
-          <%= render partial: "payments/classification_input", locals: { form: } %>
-        </div>
+        <p>TODO</p>
       </div>
 
       <div data-scroll-seek-target="section">

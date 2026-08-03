@@ -27,7 +27,7 @@ RSpec.describe Tax::FormsController do
       legal_entity = authorized_legal_entity
       payee = create(:payee, legal_entity:)
       allow(PaymentMailer).to receive(:with).and_return(double.as_null_object)
-      create(:payment, payee:, amount_cents: 100_000, classification: :other_services)
+      create(:payment, payee:, amount_cents: 100_000, classification: :general_services)
 
       expect {
         post :create, params: { legal_entity_id: legal_entity.hashid }

@@ -67,7 +67,7 @@ module Payroll
           amount_cents: @invoice.amount_cents,
           currency: @invoice.currency,
           purpose: @invoice.name,
-          classification: :other_services
+          classification: :general_services
         )
         @invoice.update!(payment:)
         @invoice.mark_approved!(current_user)

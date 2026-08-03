@@ -161,7 +161,7 @@ RSpec.describe LegalEntity, type: :model do
     end
 
     it "is true when a pending payment requires a tax form" do
-      create(:payment, payee:, amount_cents: 100_000, classification: :other_services)
+      create(:payment, payee:, amount_cents: 100_000, classification: :general_services)
 
       expect(entity.reload.tax_form_required?).to be true
     end

@@ -7,7 +7,7 @@
 #  id              :bigint           not null, primary key
 #  aasm_state      :string           not null
 #  amount_cents    :integer          not null
-#  classification  :string           default("other_services"), not null
+#  classification  :string           default("general_services"), not null
 #  currency        :string           not null
 #  purpose         :string           not null
 #  rejected_at     :datetime
@@ -44,7 +44,7 @@ class Payment < ApplicationRecord
 
   monetize :amount_cents, with_model_currency: :currency
 
-  enum :classification, { goods: "goods", attorney_or_medical_services: "attorney_or_medical_services", other_services: "other_services" }, prefix: :for
+  enum :classification, { goods: "goods", attorney_or_medical_services: "attorney_or_medical_services", general_services: "general_services" }, prefix: :for
 
   pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }
   pg_search_scope :search_purpose_and_event, against: [:purpose], associated_against: { event: [:name] }
