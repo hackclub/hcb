@@ -5,12 +5,12 @@
 # Table name: users
 #
 #  id                            :bigint           not null, primary key
-#  access_level                  :integer          default("user"), not null
+#  access_level                  :integer          default(0), not null
 #  birthday_ciphertext           :text
 #  card_locking_suppressed_until :datetime
 #  cards_locked                  :boolean          default(FALSE), not null
-#  charge_notifications          :integer          default("email_and_sms"), not null
-#  comment_notifications         :integer          default("all_threads"), not null
+#  charge_notifications          :integer          default(0), not null
+#  comment_notifications         :integer          default(0), not null
 #  creation_method               :integer
 #  email                         :text             not null
 #  full_name                     :string
@@ -18,12 +18,11 @@
 #  locked_at                     :datetime
 #  monthly_donation_summary      :boolean          default(TRUE)
 #  monthly_follower_summary      :boolean          default(TRUE)
-#  payout_method_type            :string
 #  phone_number                  :text
 #  phone_number_verified         :boolean          default(FALSE)
 #  preferred_name                :string
 #  pretend_is_not_admin          :boolean          default(FALSE), not null
-#  receipt_report_option         :integer          default("weekly"), not null
+#  receipt_report_option         :integer          default(0), not null
 #  running_balance_enabled       :boolean          default(FALSE), not null
 #  seasonal_themes_enabled       :boolean          default(TRUE), not null
 #  session_validity_preference   :integer          default(259200), not null
@@ -38,6 +37,7 @@
 #  updated_at                    :datetime         not null
 #  discord_id                    :string
 #  payout_method_id              :bigint
+#  payout_method_type            :string
 #  webauthn_id                   :string
 #
 # Indexes

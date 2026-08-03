@@ -18,7 +18,7 @@
 #  one_time_use               :boolean
 #  pre_authorization_required :boolean          default(FALSE), not null
 #  purpose                    :string
-#  status                     :integer          default("active"), not null
+#  status                     :integer          default(0), not null
 #  created_at                 :datetime         not null
 #  updated_at                 :datetime         not null
 #  disbursement_id            :bigint

@@ -37,7 +37,7 @@
 #  show_recent_donors                           :boolean          default(FALSE), not null
 #  show_top_donors                              :boolean          default(FALSE), not null
 #  slug                                         :text
-#  stripe_card_shipping_type                    :integer          default("standard"), not null
+#  stripe_card_shipping_type                    :integer          default(0), not null
 #  website                                      :string
 #  created_at                                   :datetime         not null
 #  updated_at                                   :datetime         not null

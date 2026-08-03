@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_30_210250) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_31_160241) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -465,8 +465,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_30_210250) do
     t.string "merchant_category"
     t.string "merchant_network_id"
     t.bigint "raw_pending_stripe_transaction_id"
+    t.bigint "stripe_card_id"
     t.datetime "updated_at", null: false
     t.index ["raw_pending_stripe_transaction_id"], name: "index_card_charges_on_raw_pending_stripe_transaction_id", unique: true
+    t.index ["stripe_card_id"], name: "index_card_charges_on_stripe_card_id"
   end
 
   create_table "card_grant_pre_authorizations", force: :cascade do |t|
@@ -1607,7 +1609,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_30_210250) do
     t.integer "amount_cents", null: false
     t.bigint "author_id"
     t.integer "comment_count", default: 0, null: false
+    t.integer "cpt_count", default: 0, null: false
     t.datetime "created_at", null: false
+    t.integer "ct_count", default: 0, null: false
     t.text "custom_memo"
     t.datetime "datetime", null: false
     t.bigint "linked_object_id"
@@ -1619,7 +1623,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_30_210250) do
     t.boolean "receipt_required"
     t.text "short_code"
     t.string "special_appearance"
-    t.string "status"
+    t.string "status", default: "pending", null: false
     t.text "system_memo"
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
@@ -3053,6 +3057,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_30_210250) do
   add_foreign_key "card_charge_raw_stripe_transactions", "card_charges", on_delete: :cascade
   add_foreign_key "card_charge_raw_stripe_transactions", "raw_stripe_transactions", on_delete: :cascade
   add_foreign_key "card_charges", "raw_pending_stripe_transactions", on_delete: :nullify
+  add_foreign_key "card_charges", "stripe_cards"
   add_foreign_key "card_grant_pre_authorizations", "card_grants"
   add_foreign_key "card_grant_settings", "events"
   add_foreign_key "card_grants", "events"
