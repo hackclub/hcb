@@ -167,11 +167,14 @@ class Ledger
     end
 
     def calculate_status
-      return :settled if linked_object_type == "BankFee"
-      return :settled if linked_object_type == "Reimbursement::ExpensePayout" && canonical_pending_transactions.not_declined.exists? && canonical_transactions.none?
-      return :settled if linked_object_type == "Disbursement::Outgoing" && linked_object.counterparty.canonical_pending_transactions.fronted.not_declined.any?
-      return :settled if linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) && linked_object.transferred_at.present? && !linked_object.rejected? && !linked_object.errored?
-      return :settled if canonical_pending_transactions.fronted.not_declined.revenue.any? && primary_ledger&.can_front_balance?
+      unless canonical_pending_transactions.declined.any?
+        return :settled if linked_object_type == "BankFee"
+        return :settled if linked_object_type == "Reimbursement::ExpensePayout" && canonical_pending_transactions.exists? && canonical_transactions.none?
+        return :settled if linked_object_type == "Disbursement::Outgoing" && linked_object.counterparty.canonical_pending_transactions.fronted.any?
+        return :settled if linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) && linked_object.transferred_at.present? && !linked_object.rejected? && !linked_object.errored?
+        return :settled if canonical_pending_transactions.fronted.revenue.any? && primary_ledger&.can_front_balance?
+      end
+
       return :pending if canonical_pending_transactions.unsettled.exists?
 
       case linked_object_type
