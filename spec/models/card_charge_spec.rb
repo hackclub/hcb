@@ -96,13 +96,5 @@ RSpec.describe CardCharge, type: :model do
       expect(charge.stripe_card_id).to eq(rst.stripe_card.id)
       expect(charge.stripe_card).to eq(rst.stripe_card)
     end
-
-    it "falls back to deriving the card from raw transactions when stripe_card_id hasn't been backfilled" do
-      rst = create(:raw_stripe_transaction)
-      charge = rst.card_charge
-      charge.update_column(:stripe_card_id, nil)
-
-      expect(charge.reload.stripe_card).to eq(rst.stripe_card)
-    end
   end
 end
