@@ -10,7 +10,10 @@ module Reimbursement
     skip_before_action :signed_in_user, only: [:show, :start, :create, :finished]
     skip_after_action :verify_authorized, only: [:start, :finished]
 
-    invisible_captcha only: [:create], honeypot: :subtitle
+    # Opted out of the timestamp check: this form has not been checked for
+    # multi-step flows that would consume the session token. See
+    # config/initializers/invisible_captcha.rb.
+    invisible_captcha only: [:create], honeypot: :subtitle, timestamp_enabled: false
 
     # POST /reimbursement_reports
     def create

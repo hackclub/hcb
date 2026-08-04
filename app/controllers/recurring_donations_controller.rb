@@ -10,7 +10,10 @@ class RecurringDonationsController < ApplicationController
   skip_before_action :signed_in_user
   skip_before_action :redirect_to_onboarding
 
-  invisible_captcha only: [:create], honeypot: :subtitle
+  # Opted out of the timestamp check: this form has not been checked for
+  # multi-step flows that would consume the session token. See
+  # config/initializers/invisible_captcha.rb.
+  invisible_captcha only: [:create], honeypot: :subtitle, timestamp_enabled: false
 
   def create
     params[:recurring_donation][:amount] = Monetize.parse(params[:recurring_donation][:amount]).cents
