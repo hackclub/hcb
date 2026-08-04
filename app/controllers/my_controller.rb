@@ -99,29 +99,55 @@ class MyController < ApplicationController
   end
 
   def inbox
-    @count = Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user) ? current_user.ledger_items_missing_receipt.count : current_user.transactions_missing_receipt.count
-    @locking_count = current_user.card_locking_overdue_charges.count # TODO: migrate card locking to new transaction engine
+    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
+      @count = current_user.ledger_items_missing_receipt.count
+      @locking_count = 0
 
-    hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
+      ledger_item_ids_missing_receipt = current_user.ledger_item_ids_missing_receipt
 
-    @time_based_sorting = hcb_code_ids_missing_receipt.count > (params[:per] || 15).to_i
+      @time_based_sorting = ledger_item_ids_missing_receipt.count > (params[:per] || 15).to_i
 
-    hcb_codes_missing_receipt = HcbCode.where(id: hcb_code_ids_missing_receipt)
-                                       .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction) # HcbCode#card uses CT and PT
-                                       .index_by(&:id).slice(*hcb_code_ids_missing_receipt).values
+      ledger_items_missing_receipt = Ledger::Item.where(id: ledger_item_ids_missing_receipt)
+                                                 .index_by(&:id).slice(*ledger_item_ids_missing_receipt).values
 
-    if @time_based_sorting
-      hcb_codes_missing_receipt = hcb_codes_missing_receipt.sort_by(&:created_at).reverse
-    end
+      if @time_based_sorting
+        ledger_items_missing_receipt = ledger_items_missing_receipt.sort_by(&:datetime).reverse
+      end
 
-    @hcb_codes = Kaminari.paginate_array(hcb_codes_missing_receipt)
-                         .page(params[:page]).per(params[:per] || 15)
+      @ledger_items = Kaminari.paginate_array(ledger_items_missing_receipt)
+                              .page(params[:page]).per(params[:per] || 15)
 
-    unless @time_based_sorting
-      @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }.transform_values { |v| v.sort_by(&:created_at).reverse }
-      @cards = GlobalID::Locator.locate_many(@card_hcb_codes.keys, includes: :event)
-                                # Order cards by created_at, newest first
-                                .sort_by(&:created_at).reverse!
+      unless @time_based_sorting
+        @card_ledger_items = @ledger_items.group_by { |item| item.linked_object.stripe_card.to_global_id.to_s }.transform_values { |item| item.sort_by(&:datetime).reverse }
+        @cards = GlobalID::Locator.locate_many(@card_ledger_items.keys, includes: :event)
+                                  # Order cards by created_at, newest first
+                                  .sort_by(&:created_at).reverse!
+      end
+    else
+      @count = current_user.transactions_missing_receipt.count
+      @locking_count = current_user.card_locking_overdue_charges.count # TODO: migrate card locking to new transaction engine
+
+      hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
+
+      @time_based_sorting = hcb_code_ids_missing_receipt.count > (params[:per] || 15).to_i
+
+      hcb_codes_missing_receipt = HcbCode.where(id: hcb_code_ids_missing_receipt)
+                                         .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction) # HcbCode#card uses CT and PT
+                                         .index_by(&:id).slice(*hcb_code_ids_missing_receipt).values
+
+      if @time_based_sorting
+        hcb_codes_missing_receipt = hcb_codes_missing_receipt.sort_by(&:created_at).reverse
+      end
+
+      @hcb_codes = Kaminari.paginate_array(hcb_codes_missing_receipt)
+                           .page(params[:page]).per(params[:per] || 15)
+
+      unless @time_based_sorting
+        @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }.transform_values { |v| v.sort_by(&:created_at).reverse }
+        @cards = GlobalID::Locator.locate_many(@card_hcb_codes.keys, includes: :event)
+                                  # Order cards by created_at, newest first
+                                  .sort_by(&:created_at).reverse!
+      end
     end
 
     @mailbox_address = current_user.active_mailbox_address
