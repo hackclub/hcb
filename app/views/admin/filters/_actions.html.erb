@@ -5,7 +5,8 @@
   <% end %>
 
   <% unless export_count.nil? %>
-    <%= link_to (export_params || params.to_unsafe_h).merge(format: :csv), class: "btn #{"disabled" if export_count.zero?}" do %>
+    <% export_query = (export_params&.to_h || request.query_parameters).except("format", "page").to_query %>
+    <%= link_to "#{url_for(format: :csv, only_path: true)}?#{export_query}", class: "btn #{"disabled" if export_count.zero?}" do %>
       <%= inline_icon "download", size: 20 %>
       Export <%= pluralize export_count, "record" %>
     <% end %>
