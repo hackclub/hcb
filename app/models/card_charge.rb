@@ -34,22 +34,8 @@ class CardCharge < ApplicationRecord
 
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
 
-  scope :on_card, ->(stripe_card) {
-    left_joins(:raw_pending_stripe_transaction, :raw_stripe_transactions)
-      .where(
-        "raw_pending_stripe_transactions.stripe_transaction->'card'->>'id' = :stripe_id OR raw_stripe_transactions.stripe_transaction->>'card' = :stripe_id",
-        stripe_id: stripe_card.stripe_id
-      )
-  }
-
   before_create :set_merchant_data
   before_create :set_stripe_card
-
-  # TODO: remove the fallback lookup once stripe_card_id has been backfilled
-  # on all existing rows; new charges get it set by set_stripe_card.
-  def stripe_card
-    super || (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_card
-  end
 
   def stripe_cardholder
     stripe_card&.stripe_cardholder
