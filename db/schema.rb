@@ -1622,7 +1622,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_31_170000) do
     t.integer "receipt_count", default: 0, null: false
     t.boolean "receipt_required"
     t.text "short_code"
-    t.string "status"
+    t.string "status", default: "pending", null: false
     t.text "system_memo"
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
@@ -1849,6 +1849,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_31_170000) do
   end
 
   create_table "organizer_position_deletion_requests", force: :cascade do |t|
+    t.bigint "assignee_id"
     t.datetime "closed_at", precision: nil
     t.bigint "closed_by_id"
     t.datetime "created_at", precision: nil, null: false
@@ -1861,6 +1862,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_31_170000) do
     t.boolean "subject_has_outstanding_transactions_stripe", default: false, null: false
     t.bigint "submitted_by_id", null: false
     t.datetime "updated_at", precision: nil, null: false
+    t.index ["assignee_id"], name: "index_organizer_position_deletion_requests_on_assignee_id"
     t.index ["closed_by_id"], name: "index_organizer_position_deletion_requests_on_closed_by_id"
     t.index ["organizer_position_id"], name: "index_organizer_deletion_requests_on_organizer_position_id"
     t.index ["submitted_by_id"], name: "index_organizer_position_deletion_requests_on_submitted_by_id"
@@ -3188,7 +3190,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_31_170000) do
   add_foreign_key "payroll_invoices", "payroll_positions"
   add_foreign_key "payroll_invoices", "users", column: "reviewed_by_id"
   add_foreign_key "payroll_positions", "payees"
-  add_foreign_key "raffles", "raffles", column: "referring_raffle_id", validate: false
+  add_foreign_key "raffles", "raffles", column: "referring_raffle_id"
   add_foreign_key "raffles", "users"
   add_foreign_key "raw_pending_fee_reimbursement_transactions", "fee_reimbursements"
   add_foreign_key "raw_pending_fee_revenue_transactions", "fee_revenues"

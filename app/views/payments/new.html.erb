@@ -13,10 +13,10 @@
   </div>
 <% end %>
 
-<% content_for :sidebar_footer do %>
-  <% admin_tool("mt-2") do %>
+<% if policy(@event).create_payment? %>
+  <% content_for :sidebar_footer do %>
     <%= render "events/transfers/modal" %>
-    <%= link_to "Send transfer manually", "#", class: "btn w-full", data: { behavior: "modal_trigger", modal: "send_transfer" } %>
+    <%= link_to "Send transfer manually", "#", class: "btn w-full mt-2", data: { behavior: "modal_trigger", modal: "send_transfer" } %>
   <% end %>
 <% end %>
 

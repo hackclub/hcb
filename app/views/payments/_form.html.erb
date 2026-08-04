@@ -5,6 +5,7 @@
 <% else %>
 
 <% disabled = !policy(event).create_payment? %>
+<% @can_transfer = !disabled %>
 <% manual = payee&.managed? %>
 
 <% existing_payout_method = payee&.legal_entity&.default_payout_method if manual %>
@@ -15,6 +16,7 @@
 <% end %>
 
 <div data-controller="payee-picker payout-toggle manual-payee" data-action="manual-payee:changed->payout-toggle#update">
+  <% unless disabled && payee.nil? %>
   <div data-scroll-seek-target="section">
     <h3 class="mb-2">Recipient</h3>
     <div class="card mb-4 p-0 overflow-hidden">
@@ -43,8 +45,6 @@
           </div>
         </div>
 
-      <% elsif disabled %>
-        <p class="muted px-5 py-4 m0">You don't have permission to send payments from this organization.</p>
       <% else %>
 
         <%= render "payments/payee_picker", event: %>
@@ -56,6 +56,7 @@
       <%= render "payees/imported_notice", payee:, class: "mt-0 mb-4" %>
     <% end %>
   </div>
+  <% end %>
 
   <div class="<%= "hidden" unless payee %>">
     <%= form_with(model: payment, url: event_payments_path(event_id: event.slug), local: true) do |form| %>

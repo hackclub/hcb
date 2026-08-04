@@ -14,6 +14,11 @@
 
     <div class="details">
       <p>
+        <strong>Assignee</strong>
+        <%= @opdr.assignee.present? ? user_mention(@opdr.assignee) : "None" %>
+      </p>
+
+      <p>
         <strong>Organization</strong>
         <%= link_to @opdr.event.name, event_path(@opdr.event) %>
       </p>
@@ -104,42 +109,52 @@
       </p>
     <% end %>
 
-    <% if @opdr.organizer_position.deleted_at.nil? && @opdr.status == :under_review %>
-      <%= link_to "Delete organizer ⚠️☣☠",
-                  organizer_path(@opdr.organizer_position.id),
-                  method: :delete,
-                  data: {
-                    turbo_confirm: "You are about to remove " \
-                                   "#{@opdr.organizer_position.user.initial_name} " \
-                                   "from #{@opdr.event.name}. This has PERMANENT " \
-                                   "consequences (e.g. canceled cards). " \
-                                   "#{"⚠️ They are the last signee for this organization! " \
-                                     "This organization will be left with NO SIGNEES! ⚠️ " if @opdr.organizer_last_signee?}" \
-                                   "Are you sure you want to do this?",
-                    turbo_confirm_danger: true
-                  },
-                  class: "btn bg-error mr1" %>
-    <% elsif @opdr.status == :organizer_deleted %>
-      <p><strong>Organizer is marked as deleted by </strong><%= user_mention @opdr.closed_by %></p>
-    <% elsif @opdr.status == :closed %>
-      <p><strong>OPDR is marked as closed by </strong><%= user_mention @opdr.closed_by %></p>
-    <% end %>
+    <div class="flex gap-3">
+      <% if @opdr.organizer_position.deleted_at.nil? && (@opdr.under_review? || @opdr.assigned?) %>
+        <%= link_to "Delete organizer ⚠️☣☠",
+                    organizer_path(@opdr.organizer_position.id),
+                    method: :delete,
+                    data: {
+                      turbo_confirm: "You are about to remove " \
+                              "#{@opdr.organizer_position.user.initial_name} " \
+                              "from #{@opdr.event.name}. This has PERMANENT " \
+                              "consequences (e.g. canceled cards). " \
+                              "#{"⚠️ They are the last signee for this organization! " \
+                                "This organization will be left with NO SIGNEES! ⚠️ " if @opdr.organizer_last_signee?}" \
+                              "Are you sure you want to do this?",
+                      turbo_confirm_danger: true
+                    },
+                    class: "btn bg-error" %>
+      <% elsif @opdr.status == :organizer_deleted %>
+        <p><strong>Organizer is marked as deleted by </strong><%= user_mention @opdr.closed_by %></p>
+      <% elsif @opdr.status == :closed %>
+        <p><strong>OPDR is marked as closed by </strong><%= user_mention @opdr.closed_by %></p>
+      <% end %>
 
-    <% if @opdr.under_review? %>
-      <%= link_to "Close request",
-                  organizer_position_deletion_request_close_path(@opdr.id),
-                  data: {
-                    turbo_method: :post,
-                    turbo_confirm: "This will mark the request as processed. " \
-                                   "Only continue if no follow-up is needed for this request."
-                  },
-                  class: "btn bg-accent" %>
-    <% elsif @opdr.organizer_position.deleted_at.nil? %>
-      <%= link_to "Open request",
-                  organizer_position_deletion_request_open_path(@opdr.id),
-                  data: { turbo_method: :post, turbo_confirm: "This will re-open the request." },
-                  class: "btn bg-info" %>
-    <% end %>
+      <% if @opdr.under_review? || @opdr.assigned? %>
+        <%= link_to "Close request",
+                    organizer_position_deletion_request_close_path(@opdr.id),
+                    data: {
+                      turbo_method: :post,
+                      turbo_confirm: "This will mark the request as processed. " \
+                                "Only continue if no follow-up is needed for this request."
+                    },
+                    class: "btn bg-accent" %>
+      <% elsif @opdr.organizer_position.deleted_at.nil? %>
+        <%= link_to "Open request",
+                    organizer_position_deletion_request_open_path(@opdr.id),
+                    data: { turbo_method: :post, turbo_confirm: "This will re-open the request." },
+                    class: "btn bg-info" %>
+      <% end %>
+
+      <% unless @opdr.assignee == current_user %>
+        <%= button_to "Assign myself", organizer_position_deletion_request_assign_path(@opdr), class: "btn" %>
+      <% end %>
+
+      <% if @opdr.assignee.present? %>
+        <%= button_to "Unassign", organizer_position_deletion_request_unassign_path(@opdr), class: "btn" %>
+      <% end %>
+    </div>
   </article>
 </div>
 
