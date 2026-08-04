@@ -12,6 +12,11 @@ class Ledger
         return redirect_to hcb_code_path(@item.hcb_code)
       end
 
+      if params[:show_details] == "true" && @item.linked_object_type == "AchTransfer"
+        # ahoy.track "ACH details shown", hcb_code_id: @hcb_code.id
+        @show_ach_details = true
+      end
+
       authorize @item
     rescue ActiveRecord::RecordNotFound
       # Maintain backward compatibility for old v1 transaction engine URLs. They
