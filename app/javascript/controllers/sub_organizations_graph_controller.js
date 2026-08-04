@@ -4,8 +4,10 @@ import { select } from 'd3-selection'
 const NODE_W = 210
 const NODE_H = 50
 const ROOT_H = 36
-const MIN_H_GAP = 60
-const V_GAP = 8
+// Vertical distance between depth levels, and horizontal distance between
+// sibling subtrees.
+const LEVEL_GAP = 48
+const SIBLING_GAP = 24
 const PADDING = 24
 // Any node with more than this many children is collapsed behind a
 // "+N organizations" node until the viewer expands it. This keeps the graph
@@ -289,30 +291,10 @@ export default class extends Controller {
     return (dollars < 0 ? '-$' : '$') + formatted
   }
 
-  // Tree layout for nested hierarchies (and flat lists)
+  // Tree layout for nested hierarchies (and flat lists). Depth runs top to
+  // bottom; siblings are laid out left to right, with each parent centred over
+  // its children.
   renderTree(nodes, root, childrenOf, containerWidth, markerId) {
-    const leafCount = {}
-    const countLeaves = node => {
-      const children = childrenOf[node.id]
-      leafCount[node.id] =
-        children.length === 0
-          ? 1
-          : children.reduce((s, c) => s + countLeaves(c), 0)
-      return leafCount[node.id]
-    }
-    countLeaves(root)
-
-    const yTops = {}
-    const assignY = (node, top) => {
-      yTops[node.id] = top
-      let cursor = top
-      childrenOf[node.id].forEach(child => {
-        assignY(child, cursor)
-        cursor += leafCount[child.id] * (NODE_H + V_GAP)
-      })
-    }
-    assignY(root, PADDING)
-
     const depths = {}
     const assignDepth = (node, depth) => {
       depths[node.id] = depth
@@ -322,31 +304,51 @@ export default class extends Controller {
 
     const maxDepth =
       Object.values(depths).length > 0 ? Math.max(...Object.values(depths)) : 0
-    const minWidth =
-      (maxDepth + 1) * (NODE_W + MIN_H_GAP) - MIN_H_GAP + 2 * PADDING
-    const svgWidth = Math.max(minWidth, containerWidth)
-    const svgHeight =
-      leafCount[root.id] * (NODE_H + V_GAP) - V_GAP + 2 * PADDING
-    const hGap =
-      maxDepth > 0
-        ? (svgWidth - 2 * PADDING - (maxDepth + 1) * NODE_W) / maxDepth
-        : MIN_H_GAP
+
+    // Top edge of each depth level. Only the root row uses the shorter pill
+    // height.
+    const rowTops = [PADDING]
+    for (let d = 1; d <= maxDepth; d++)
+      rowTops[d] = rowTops[d - 1] + (d === 1 ? ROOT_H : NODE_H) + LEVEL_GAP
+
+    const xLefts = {}
+    let cursor = PADDING
+    const assignX = node => {
+      const children = childrenOf[node.id]
+      if (!children.length) {
+        xLefts[node.id] = cursor
+        cursor += NODE_W + SIBLING_GAP
+        return
+      }
+      children.forEach(assignX)
+      const first = xLefts[children[0].id]
+      const last = xLefts[children[children.length - 1].id]
+      xLefts[node.id] = (first + last) / 2
+    }
+    assignX(root)
+
+    const treeWidth = cursor - SIBLING_GAP + PADDING
+    const svgWidth = Math.max(treeWidth, containerWidth)
+    const svgHeight = rowTops[maxDepth] + NODE_H + PADDING
+    // Centre the tree when it's narrower than the container.
+    const xOffset = Math.max(0, (svgWidth - treeWidth) / 2)
+    const xOf = id => xLefts[id] + xOffset
 
     const svg = this.createSvg(svgWidth, svgHeight, markerId)
 
     nodes.forEach(node => {
       const children = childrenOf[node.id]
       if (!children.length) return
-      const ex = PADDING + depths[node.id] * (NODE_W + hGap) + NODE_W
-      const ey = yTops[node.id] + (node.isRoot ? ROOT_H : NODE_H) / 2
+      const ex = xOf(node.id) + NODE_W / 2
+      const ey = rowTops[depths[node.id]] + (node.isRoot ? ROOT_H : NODE_H)
       children.forEach(child => {
         svg
           .append('line')
           .attr('class', 'edge')
           .attr('x1', ex)
           .attr('y1', ey)
-          .attr('x2', PADDING + depths[child.id] * (NODE_W + hGap))
-          .attr('y2', yTops[child.id] + NODE_H / 2)
+          .attr('x2', xOf(child.id) + NODE_W / 2)
+          .attr('y2', rowTops[depths[child.id]])
           .attr('stroke-width', 1.5)
           .attr('marker-end', `url(#${markerId})`)
       })
@@ -356,8 +358,8 @@ export default class extends Controller {
       this.drawNode(
         svg,
         node,
-        PADDING + depths[node.id] * (NODE_W + hGap),
-        yTops[node.id],
+        xOf(node.id),
+        rowTops[depths[node.id]],
         node.isRoot
       )
     )

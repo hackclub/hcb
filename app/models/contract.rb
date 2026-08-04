@@ -264,28 +264,7 @@ class Contract < ApplicationRecord
   end
 
   def send_using_docuseal!
-    # /submissions/pdf combines our template with inline documents versus
-    # the standard /submissions
-    endpoint = inline_documents? ? "/submissions/pdf" : "/submissions"
 
-    response = docuseal_client.post(endpoint) do |req|
-      req.body = payload.to_json
-    end
-
-    external_id = inline_documents? ? response.body["id"] : response.body.first["submission_id"]
-    update(external_service: :docuseal, external_id:)
-
-    submitters = docuseal_document["submitters"]
-
-    parties.each do |party|
-      slug = submitters.select { |s| s["role"] == party.docuseal_role }&.[](0)&.[]("slug")
-
-      if slug.present?
-        party.update!(external_id: slug)
-      else
-        Rails.error.unexpected("Contract Party (#{party.id}) role and/or slug missing in DocuSeal.")
-      end
-    end
   end
 
   def archive_on_docuseal!
