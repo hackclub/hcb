@@ -33,6 +33,8 @@ class PayeesController < ApplicationController
           entity_type: manual_payee_entity_type,
           name: params[:name]
         )
+
+        EventService::LegacyPayoutMethod.new(@event, email: params[:email]).apply_to(payee.legal_entity)
       end
 
       payee.save!

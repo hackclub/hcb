@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_31_160241) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_31_170000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1968,6 +1968,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_31_160241) do
     t.string "display_name", null: false
     t.string "email", null: false
     t.bigint "event_id", null: false
+    t.datetime "imported_at"
     t.bigint "legal_entity_id"
     t.datetime "updated_at", null: false
     t.index ["archived_at"], name: "index_payees_on_archived_at"

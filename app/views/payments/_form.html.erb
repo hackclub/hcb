@@ -9,6 +9,7 @@
 <% manual = payee&.managed? %>
 
 <% existing_payout_method = payee&.legal_entity&.default_payout_method if manual %>
+<% payout_methods = payee.legal_entity.payout_methods.unarchived.includes(:details).order(created_at: :desc).to_a if manual %>
 
 <% if disabled %>
   <%= render partial: "events/unauthorized_callout", locals: { action: "send payments" } %>
@@ -50,6 +51,10 @@
 
       <% end %>
     </div>
+
+    <% if payee&.imported? && payee.legal_entity.nil? %>
+      <%= render "payees/imported_notice", payee:, class: "mt-0 mb-4" %>
+    <% end %>
   </div>
   <% end %>
 
@@ -60,8 +65,8 @@
       <%= form.hidden_field :payee_id, value: payee&.hashid %>
       <%= hidden_field_tag "manual", manual.to_s, data: { "manual-payee-target": "manualField" } %>
 
-      <div id="payment-details" data-scroll-seek-target="section">
-        <h3 class="mb-2">Payment details</h3>
+      <div id="details" data-scroll-seek-target="section">
+        <h3 class="mb-2">Details</h3>
         <div class="card mb-4 flex flex-col gap-3">
           <div class="flex justify-between items-center">
             <%= form.label :amount, "Amount" %>
@@ -83,35 +88,43 @@
 
       <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
         <h3 class="mb-2">Payout method</h3>
-        <% if existing_payout_method %>
-          <details class="card mb-4 p-0 overflow-hidden">
-            <summary class="flex items-center gap-3 px-5 py-4 cursor-pointer list-none select-none">
-              <div class="payout-methods__icon flex items-center justify-center shrink-0" style="width: 40px; height: 40px; border-radius: 10px;">
-                <%= inline_icon existing_payout_method.icon, size: 20 %>
+        <div class="card mb-4 flex flex-col gap-3">
+          <% if payout_methods && payout_methods.size > 1 %>
+            <div x-data="{ selected: '<%= payout_methods.first.id %>' }">
+              <%= render "application/callout", type: "info", title: "You've paid this recipient in multiple ways before", class: "mt-0 mb-0" do %>
+                Choose which payout method to use for this payment, or enter a different one.
+              <% end %>
+
+              <div class="flex flex-col gap-2 mt-3">
+                <% payout_methods.each do |pm| %>
+                  <label class="flex items-center gap-2 cursor-pointer border rounded-lg px-3 py-2">
+                    <%= radio_button_tag :selected_payout_method_id, pm.id, false, class: "shrink-0", "x-model": "selected" %>
+                    <%= inline_icon pm.icon, size: 24, class: "muted" %>
+                    <span class="font-medium"><%= pm.short_label %></span>
+                  </label>
+                <% end %>
+                <label class="flex items-center gap-2 cursor-pointer border rounded-lg px-3 py-2 mb-4">
+                  <%= radio_button_tag :selected_payout_method_id, "", false, class: "shrink-0", "x-model": "selected" %>
+                  <%= inline_icon "plus", size: 24, class: "muted" %>
+                  <span class="font-medium">Enter a different payout method</span>
+                </label>
               </div>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                  <strong><%= existing_payout_method.title_kind %></strong>
-                </div>
-                <p class="muted text-sm m-0"><%= existing_payout_method.detail_summary %></p>
+
+              <div class="mt-3" x-show="selected === ''" x-cloak>
+                <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: nil, collapsible: true, title: nil %>
               </div>
-              <span class="muted ml-auto shrink-0 text-sm">Edit</span>
-            </summary>
-            <div class="menu__divider my-0"></div>
-            <div class="p-5">
-              <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method, title: "Select a payout method" %>
             </div>
-          </details>
-        <% else %>
-          <div class="card mb-4 flex flex-col gap-3">
-            <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method, title: "Select a payout method" %>
-          </div>
-        <% end %>
+          <% else %>
+            <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method, collapsible: true, title: nil %>
+          <% end %>
+        </div>
       </div>
 
       <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
         <h3 class="mb-2">Tax information</h3>
-        <div class="card mb-4 p-20"></div>
+        <div class="card mb-4 p-20 text-center">
+          <p class="muted">Coming soon</p>
+        </div>
       </div>
 
       <div data-scroll-seek-target="section">

@@ -1,4 +1,4 @@
-<%# locals: (user:, legal_entity: nil, editing: nil, creating: nil, attempted: nil, embedded: false, title: nil) %>
+<%# locals: (user:, legal_entity: nil, editing: nil, creating: nil, attempted: nil, embedded: false, collapsible: true, title: nil) %>
 <% payout_method = editing ? editing.details : attempted&.details %>
 <% country_init = payout_method.is_a?(LegalEntity::PayoutMethod::Wire) ? "'#{payout_method.recipient_country}'" : "null" %>
 <% form_class = "no-error-styling" %>
@@ -6,7 +6,7 @@
 <% if embedded %>
   <div class="<%= form_class %>" x-data="{ country: <%= country_init %> }">
     <%= fields_for :user, user do |form| %>
-      <%= render "users/payout_form/fields", form:, user:, payout_method:, editing:, embedded: true, title: %>
+      <%= render "users/payout_form/fields", form:, user:, payout_method:, editing:, embedded: true, collapsible:, title: %>
     <% end %>
   </div>
 <% else %>
@@ -18,6 +18,6 @@
     <% if creating && legal_entity %>
       <%= hidden_field_tag :legal_entity_id, legal_entity.id %>
     <% end %>
-    <%= render "users/payout_form/fields", form:, user:, payout_method:, editing:, embedded: false, title: %>
+    <%= render "users/payout_form/fields", form:, user:, payout_method:, editing:, embedded: false, collapsible:, title: %>
   <% end %>
 <% end %>
