@@ -7,21 +7,23 @@
 #  id                           :bigint           not null, primary key
 #  amount_cents                 :integer          not null
 #  comment_count                :integer          default(0), not null
+#  cpt_count                    :integer          default(0), not null
+#  ct_count                     :integer          default(0), not null
 #  custom_memo                  :text
 #  datetime                     :datetime         not null
-#  linked_object_type           :string
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
 #  not_admin_only_comment_count :integer          default(0), not null
 #  receipt_count                :integer          default(0), not null
 #  receipt_required             :boolean
 #  short_code                   :text
-#  status                       :string
+#  status                       :string           default("pending"), not null
 #  system_memo                  :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
 #  author_id                    :bigint
 #  linked_object_id             :bigint
+#  linked_object_type           :string
 #
 # Indexes
 #
@@ -78,7 +80,7 @@ class Ledger
       declined: "declined" # CPT has CPDM, no CPTs
     }
 
-    validates_presence_of :amount_cents, :memo, :datetime
+    validates_presence_of :amount_cents, :memo, :datetime, :status
 
     normalizes :memo, with: ->(memo) { memo.strip.presence }
     normalizes :system_memo, with: ->(system_memo) { system_memo.strip.presence }
@@ -167,22 +169,29 @@ class Ledger
     end
 
     def calculate_status
-      return :settled if linked_object_type.in?(["Reimbursement::ExpensePayout", "BankFee"])
-      return :settled if linked_object_type == "Disbursement::Outgoing" && linked_object.counterparty.canonical_pending_transactions.fronted.any?
-      return :settled if linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) && linked_object.transferred_at.present? && !linked_object.rejected? && !linked_object.errored?
-      return :settled if canonical_pending_transactions.fronted.not_declined.revenue.any? && primary_ledger&.can_front_balance?
+      unless canonical_pending_transactions.declined.any?
+        return :settled if linked_object_type == "BankFee"
+        return :settled if linked_object_type == "Reimbursement::ExpensePayout" && canonical_pending_transactions.exists? && canonical_transactions.none?
+        return :settled if linked_object_type == "Disbursement::Outgoing" && linked_object.counterparty.canonical_pending_transactions.fronted.any?
+        return :settled if linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) && linked_object.transferred_at.present? && !linked_object.rejected? && !linked_object.errored?
+        return :settled if canonical_pending_transactions.fronted.revenue.any? && primary_ledger&.can_front_balance?
+      end
+
       return :pending if canonical_pending_transactions.unsettled.exists?
 
       case linked_object_type
       when "CardCharge"
-        return :released if uncaptured_stripe_authorization?
+        return :released if canonical_transactions.none? && canonical_pending_transactions.any? { |cpt| cpt.raw_pending_stripe_transaction&.stripe_transaction&.dig("approved") }
       when "IncreaseCheck" # Increase checks use the same state for users canceling and ops rejecting
-        return :canceled if linked_object.try(:rejected?) || linked_object.try(:increase_stopped?) || linked_object.try(:column_stopped?)
+        return :canceled if linked_object.rejected? || linked_object.increase_stopped? || linked_object.column_stopped?
+      when "Disbursement::Outgoing", "Disbursement::Incoming"
+        return :canceled if linked_object.rejected? && linked_object.transferred_at.present?
       end
 
       return :rejected if linked_object.try(:rejected?)
       return :failed if linked_object.try(:failed?) || linked_object.try(:errored?)
       return :canceled if linked_object.try(:canceled?) || linked_object.try(:voided?) || linked_object.try(:void_v2?)
+      return :reversed if linked_object.try(:reversed?)
 
       # A declined CPT — determine why it never settled (may have CTs)
       if CanonicalPendingDeclinedMapping.where(canonical_pending_transaction: canonical_pending_transactions).exists?
@@ -310,9 +319,11 @@ class Ledger
 
       self.amount_cents = calculate_amount_cents
       self.author = calculate_author
-      self.comment_count = comments.count
-      self.not_admin_only_comment_count = comments.not_admin_only.count
-      self.receipt_count = receipts.count
+      self.ct_count = canonical_transactions.size
+      self.cpt_count = canonical_pending_transactions.size
+      self.comment_count = comments.size
+      self.not_admin_only_comment_count = comments.not_admin_only.size
+      self.receipt_count = receipts.size
       self.receipt_required = calculate_receipt_required
       self.status = calculate_status
       # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
@@ -452,12 +463,6 @@ class Ledger
     end
 
     private
-
-    # An approved Stripe authorization that never settled was released without
-    # capture, as opposed to being declined outright
-    def uncaptured_stripe_authorization?
-      canonical_transactions.none? && canonical_pending_transactions.any? { |cpt| cpt.raw_pending_stripe_transaction&.stripe_transaction&.dig("approved") }
-    end
 
     def assign_linked_object!
       # Once a linked object is assigned, it should never be changed.

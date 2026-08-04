@@ -3,6 +3,9 @@
 <%= form_with local: true, class: "card admin-filters", url: invoices_admin_index_path, method: :get do |form| %>
   <div class="admin-filters__row">
     <%= render "events/filters/search", form: %>
+    <%= render layout: "admin/filters/field", locals: { label: "Stripe invoice number" } do %>
+      <%= form.text_field :number, value: params[:number], placeholder: "Stripe Invoice Number" %>
+    <% end %>
     <%= render "admin/filters/event", event: @event %>
   </div>
   <div class="admin-filters__row">

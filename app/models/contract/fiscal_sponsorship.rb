@@ -6,7 +6,6 @@
 #
 #  id                   :bigint           not null, primary key
 #  aasm_state           :string           not null
-#  contractable_type    :string
 #  cosigner_email       :string
 #  deleted_at           :datetime
 #  external_service     :integer
@@ -18,6 +17,7 @@
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
 #  contractable_id      :bigint
+#  contractable_type    :string
 #  document_id          :bigint
 #  external_id          :string
 #  external_template_id :string
