@@ -2,15 +2,22 @@
 
 <% editing = position&.persisted? %>
 <% disabled = !policy(event).create_transfer? %>
+<% @can_transfer = !disabled %>
 
-<%= content_for :sidebar_footer do %>
-  <%= render "application/callout", type: "info", title: "About contractor payments", class: "mt-2" do %>
-    <ul class="m-0 pl-8">
-      <li>Contractor agreements require HCB operations review before processing.</li>
-      <li>The contractor will need to sign the contract and complete W-9/W-8BEN tax forms.</li>
-    </ul>
+<% if disabled %>
+  <%= render partial: "events/unauthorized_callout", locals: { action: editing ? "edit this contractor" : "invite a contractor" } %>
+<% else %>
+  <%= content_for :sidebar_footer do %>
+    <%= render "application/callout", type: "info", title: "About contractor payments", class: "mt-2" do %>
+      <ul class="m-0 pl-8">
+        <li>Contractor agreements require HCB operations review before processing.</li>
+        <li>The contractor will need to sign the contract and complete W-9/W-8BEN tax forms.</li>
+      </ul>
+    <% end %>
   <% end %>
 <% end %>
+
+<% unless disabled && payee.nil? %>
 
 <div data-controller="payee-picker manual-payee">
   <% if editing %>
@@ -30,7 +37,7 @@
   <% end %>
 
   <% form_url = editing ? event_payroll_position_path(event_id: event.slug, id: position.id) : event_payroll_positions_path(event_id: event.slug) %>
-  <%= form_with(url: form_url, method: editing ? :patch : :post, scope: :contractor, local: true) do |form| %>
+  <%= form_with(url: form_url, method: editing ? :patch : :post, scope: :contractor, local: true, class: ("hidden" unless payee)) do |form| %>
     <%= form.hidden_field :payee_id, value: payee&.hashid %>
     <%= hidden_field_tag "manual", (payee&.managed? || false).to_s, data: { "manual-payee-target": "manualField" } %>
 
@@ -132,3 +139,5 @@
     </button>
   <% end %>
 </div>
+
+<% end %>
