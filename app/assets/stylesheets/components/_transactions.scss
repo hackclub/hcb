@@ -206,14 +206,6 @@ html[data-dark='true'] {
   }
 }
 
-.transaction__fee_icon {
-  svg {
-    height: 18px;
-    width: 18px;
-    margin-left: 3px;
-  }
-}
-
 .transaction:has(.renamed) {
   animation: highlight 2s;
 }

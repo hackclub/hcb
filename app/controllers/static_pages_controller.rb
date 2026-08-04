@@ -120,7 +120,22 @@ class StaticPagesController < ApplicationController
           "Cancel an HCB Transfer": :manager,
           "View an HCB Transfer": :reader
         },
+        Payments: {
+          "Send a payment": :manager,
+          "Cancel a payment": :manager,
+          "View a payment": :reader,
+          "View the organization's recipients": :manager,
+          "Add a recipient": :manager,
+          "Edit or archive a recipient": :manager,
+          _preface: "For paying people & vendors"
+        },
         _preface: "As a general rule, only managers can create/modify financial transfers"
+      },
+      Contractors: {
+        "View the list of contractors": :reader,
+        "View a contractor's details, rate, and invoices": :reader,
+        "Invite a contractor": :manager,
+        "Approve or reject a contractor's invoice": :manager,
       },
       Cards: {
         "Order a card": :member,
