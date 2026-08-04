@@ -34,35 +34,26 @@
               <span class="text-xl font-bold">HCB Admin</span>
             </div>
 
-            <div data-controller="nav-search">
-              <div class="input input-group max-w-none h-[36px]">
-                <input
-                  type="text"
-                  class="bg-transparent"
-                  placeholder="⇧+/ to search"
-                  data-nav-search-target="input"
-                  data-action="input->nav-search#filter keydown->nav-search#handleKeydown">
-              </div>
+            <div class="dock flex mt-4">
+              <%= link_to admin_index_path, class: "dock__item", 'aria-current': current_page?(admin_index_path) ? "page" : "false" do %>
+                <%= inline_icon "home", size: 32, style: "padding: 0" %>
+                <span class="flex-grow">Home</span>
+              <% end %>
+            </div>
 
-              <div class="dock flex mt-2" data-nav-search-target="extraLinks">
-                <%= link_to flipper_path, class: "dock__item" do %>
-                  <%= inline_icon "flag", size: 32, style: "padding: 0" %>
-                  <span class="flex-grow">Feature Flags</span>
-                <% end %>
-                <%= link_to blazer_path, class: "dock__item" do %>
-                  <%= inline_icon "terminal", size: 32, style: "padding: 0" %>
-                  <span class="flex-grow">Queries</span>
-                <% end %>
-                <%= link_to my_inbox_path, class: "dock__item" do %>
-                  <%= inline_icon "receipt", size: 32, style: "padding: 0" %>
-                  <span class="flex-grow">Receipts</span>
-                <% end %>
-              </div>
+            <%= turbo_frame_tag "admin_nav", src: nav_admin_index_path(title:), target: "_top", class: "w-100" do %>
+              <%= render partial: "admin/nav", locals: { nav:, skeleton: true } %>
+            <% end %>
 
-              <hr class="my-2 border-gray-200 dark:border-neutral-700" data-nav-search-target="extraLinksDivider">
-
-              <%= turbo_frame_tag "admin_nav", src: nav_admin_index_path(title:), target: "_top", class: "w-100", data: { "nav-search-target": "frame" } do %>
-                <%= render partial: "admin/nav", locals: { nav:, skeleton: true } %>
+            <div class="dock flex">
+              <span class="mx-1 dock__section" data-nav-group-header>Resources</span>
+              <%= link_to flipper_path, class: "dock__item" do %>
+                <%= inline_icon "flag", size: 32, style: "padding: 0" %>
+                <span class="flex-grow">Feature Flags</span>
+              <% end %>
+              <%= link_to blazer_path, class: "dock__item" do %>
+                <%= inline_icon "terminal", size: 32, style: "padding: 0" %>
+                <span class="flex-grow">Queries</span>
               <% end %>
             </div>
           </div>

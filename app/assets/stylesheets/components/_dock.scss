@@ -79,6 +79,18 @@ details.dock.hidden {
   &:empty {
     display: none;
   }
+
+  // Group eyebrow headings get a divider rule beneath them; in-section
+  // sub-labels (no `data-nav-group-header`) do not.
+  &[data-nav-group-header] {
+    // Span the full nav width (matching the item hover background) while
+    // keeping the label aligned: swap the `mx-1` margins for padding.
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0 0.25rem 0.5rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid map-get($palette, smoke);
+  }
 }
 
 .dock__item {

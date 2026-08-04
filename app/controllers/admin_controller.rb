@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class AdminController < Admin::BaseController
+  def index
+    
+  end
+
   def nav
     @nav = Admin::Nav.new(page_title: params[:title])
 
