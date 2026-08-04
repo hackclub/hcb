@@ -66,10 +66,12 @@
         <%= render(partial: "admin/flash") %>
         <%# This column scrolls horizontally itself, so tables don't need the viewport cap. %>
         <div id="main" class="p-4 md:p-7 w-full overflow-x-auto space-y-4 [--table-max-width:none]">
-          <div class="flex w-full mb-2 items-center gap-2">
-            <h2 class="flex-1"><%= title %></h2>
-            <%= yield(:admin_actions) %>
-          </div>
+          <% if title.present? || content_for?(:admin_actions) %>
+            <div class="flex w-full mb-2 items-center gap-2">
+              <h2 class="flex-1"><%= title %></h2>
+              <%= yield(:admin_actions) %>
+            </div>
+          <% end %>
           <%= yield %>
         </div>
       </article>

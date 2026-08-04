@@ -2,7 +2,34 @@
 
 class AdminController < Admin::BaseController
   def index
-    
+    today = Date.current
+    start_date = today - 29.days
+    days = (start_date..today).to_a
+
+    stats = CanonicalTransaction.included_in_stats.where(date: start_date..today)
+    raised_by_day = stats.revenue.group("canonical_transactions.date").sum(:amount_cents)
+    spent_by_day = stats.expense.group("canonical_transactions.date").sum(:amount_cents)
+
+    # Amounts are signed (incoming positive, outgoing negative); expose spending
+    # as a positive magnitude for display, matching Event#total_spent_cents.
+    @raised_series = days.map { |date| { date: date.iso8601, value: raised_by_day[date].to_i } }
+    @spent_series = days.map { |date| { date: date.iso8601, value: spent_by_day[date].to_i.abs } }
+
+    @raised_today = raised_by_day[today].to_i
+    @spent_today = spent_by_day[today].to_i.abs
+
+    # Distinct teenagers with a non-impersonated session seen on each day.
+    active_teens_by_day = User::Session.not_impersonated
+                                       .joins(:user)
+                                       .where(users: { teenager: true })
+                                       .where(last_seen_at: start_date.beginning_of_day..today.end_of_day)
+                                       .group("date(user_sessions.last_seen_at)")
+                                       .distinct
+                                       .count(:user_id)
+    @active_teens_series = days.map { |date| { date: date.iso8601, value: active_teens_by_day[date].to_i } }
+    @active_teens_today = active_teens_by_day[today].to_i
+
+    @activities = PublicActivity::Activity.all.order(created_at: :desc).first(8)
   end
 
   def nav
