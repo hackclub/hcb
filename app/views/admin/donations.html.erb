@@ -1,13 +1,13 @@
 <% title "Donations" %>
 
-<%= form_with local: true, class: "card admin-filters", url: donations_admin_index_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: donations_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= form.text_field :ip_address, value: params[:ip_address], placeholder: "IP Address" %>
     <%= form.text_field :user_agent, value: params[:user_agent], placeholder: "User Agent" %>
     <%= render "admin/filters/event", event: @event %>
   </div>
-  <div class="admin-filters__row">
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "admin/filters/toggle", form:, name: :deposited, label: "Deposited", checked: @deposited %>
     <%= render "admin/filters/toggle", form:, name: :in_transit, label: "In transit", checked: @in_transit %>
     <%= render "admin/filters/toggle", form:, name: :failed, label: "Failed", checked: @failed %>
@@ -37,7 +37,7 @@
   </thead>
   <tbody>
     <% @donations.each do |donation| %>
-      <tr class="<%= "admin-bg-transit" if donation.in_transit? %>">
+      <tr class="<%= "shade-cyan" if donation.in_transit? %>">
         <td><%= donation.id %></td>
         <td>
           <%= donation.created_at.strftime("%Y-%m-%d") %>

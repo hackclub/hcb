@@ -1,7 +1,7 @@
 <% title "Payments" %>
 
-<%= form_with local: true, class: "card admin-filters", url: admin_payments_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: admin_payments_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= form.select :state, Payment.aasm.states_for_select, { include_blank: "All states", selected: @state } %>
     <%= render "admin/filters/actions", form: %>
@@ -23,7 +23,7 @@
   </thead>
   <tbody>
     <% @payments.each do |payment| %>
-      <tr class="<%= "admin-bg-pending" if payment.under_review? %>">
+      <tr class="<%= "shade-yellow" if payment.under_review? %>">
         <td><%= payment.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= link_to payment.event.name, payment.event %></td>
         <td>

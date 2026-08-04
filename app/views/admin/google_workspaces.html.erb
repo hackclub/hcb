@@ -1,11 +1,11 @@
 <% title "Google Workspaces" %>
 
-<%= form_with local: true, class: "card admin-filters", url: google_workspaces_admin_index_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: google_workspaces_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= render "admin/filters/event", event: @event %>
   </div>
-  <div class="admin-filters__row">
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "admin/filters/toggle", form:, name: :needs_ops_review, label: "Needs ops review", checked: @needs_ops_review %>
     <%= render "admin/filters/toggle", form:, name: :configuring, label: "Configuring", checked: @configuring %>
     <%= render "admin/filters/toggle", form:, name: :verification_error, label: "Verification error", checked: @verification_error %>
@@ -35,7 +35,7 @@
   </thead>
   <tbody>
     <% @g_suites.each do |g_suite| %>
-      <tr class="<%= "admin-bg-red;" if g_suite.deleted_at.present? %> <%= "admin-bg-pending" if g_suite.needs_ops_review? %>">
+      <tr class="<%= "shade-red" if g_suite.deleted_at.present? %> <%= "shade-yellow" if g_suite.needs_ops_review? %>">
         <td><%= g_suite.id %></td>
         <td><%= g_suite.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= link_to "#{g_suite.event.name.upcase}: #{g_suite.domain}", event_g_suite_overview_path(event_id: g_suite.event.slug) %></td>

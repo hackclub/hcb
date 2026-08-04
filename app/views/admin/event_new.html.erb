@@ -6,16 +6,16 @@
   <% end %>
 <% end %>
 
-<%= form_with(local: true, url: event_create_admin_index_path, class: "admin-form") do |form| %>
-  <section class="card admin-form__section">
-    <h3 class="admin-form__title">Organization</h3>
+<%= form_with(local: true, url: event_create_admin_index_path, class: "fields flex flex-col gap-4 max-w-[46rem]") do |form| %>
+  <section class="card flex flex-col gap-3.5 overflow-visible">
+    <h3 class="eyebrow m-0">Organization</h3>
 
     <div class="field">
       <%= form.label :name, "Name" %>
       <%= form.text_field :name, placeholder: "Hack Club Bank", value: params[:name], required: true, autofocus: true %>
     </div>
 
-    <div class="admin-form__grid">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(13rem,1fr))] gap-x-4 gap-y-3.5">
       <div class="field">
         <%= form.label :country %>
         <%= form.collection_select :country, Event.countries_for_select, :first, :last, selected: params[:country] %>
@@ -29,7 +29,7 @@
 
     <div class="field">
       <%= form.label :tags, "Tags" %>
-      <span class="admin-form__hint">Optional. Used for reporting and partner filtering.</span>
+      <span class="block text-[0.8125rem] leading-snug opacity-60">Optional. Used for reporting and partner filtering.</span>
       <%# Mirrors what a multi-select would send, so `tags` is always present. %>
       <%= hidden_field_tag "tags[]", "", id: nil %>
       <div class="flex flex-wrap gap-2 mt-1">
@@ -43,16 +43,16 @@
     </div>
   </section>
 
-  <section class="card admin-form__section" data-controller="form-hide-field" data-form-hide-field-condition-value="false">
-    <h3 class="admin-form__title">Organizer</h3>
+  <section class="card flex flex-col gap-3.5 overflow-visible" data-controller="form-hide-field" data-form-hide-field-condition-value="false">
+    <h3 class="eyebrow m-0">Organizer</h3>
 
     <div class="field">
       <%= form.label :organizer_email, "Email address" %>
-      <span class="admin-form__hint">Leave blank to create the organization without inviting anyone.</span>
+      <span class="block text-[0.8125rem] leading-snug opacity-60">Leave blank to create the organization without inviting anyone.</span>
       <%= form.email_field :organizer_email, placeholder: "orpheus@hackclub.com", value: params[:organizer_email] %>
     </div>
 
-    <div class="admin-form__grid">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(13rem,1fr))] gap-x-4 gap-y-3.5">
       <div class="field">
         <%= form.label :is_signee, "Contract" %>
         <%= form.select :is_signee,
@@ -67,19 +67,19 @@
       </div>
     </div>
 
-    <label class="admin-form__option">
+    <label class="checkbox-card">
       <%= form.check_box :include_videos %>
       <span>
         <strong>Include onboarding videos</strong>
-        <span class="admin-form__hint">Sends the getting-started videos along with the contract.</span>
+        <span class="block text-[0.8125rem] leading-snug opacity-60">Sends the getting-started videos along with the contract.</span>
       </span>
     </label>
   </section>
 
-  <section class="card admin-form__section">
-    <h3 class="admin-form__title">Internal</h3>
+  <section class="card flex flex-col gap-3.5 overflow-visible">
+    <h3 class="eyebrow m-0">Internal</h3>
 
-    <div class="admin-form__grid">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(13rem,1fr))] gap-x-4 gap-y-3.5">
       <div class="field">
         <%= form.label :point_of_contact_id, "Point of contact" %>
         <%= form.collection_select :point_of_contact_id, User.admin.all, :id, :email, selected: @current_user.id %>
@@ -92,38 +92,38 @@
     </div>
   </section>
 
-  <section class="card admin-form__section">
-    <h3 class="admin-form__title">Settings</h3>
+  <section class="card flex flex-col gap-3.5 overflow-visible">
+    <h3 class="eyebrow m-0">Settings</h3>
 
-    <label class="admin-form__option">
+    <label class="checkbox-card">
       <%= form.check_box :is_public, { checked: true } %>
       <span>
         <strong>Transparent</strong>
-        <span class="admin-form__hint">Publishes the organization's ledger on its public page.</span>
+        <span class="block text-[0.8125rem] leading-snug opacity-60">Publishes the organization's ledger on its public page.</span>
       </span>
     </label>
 
-    <label class="admin-form__option">
+    <label class="checkbox-card">
       <%= form.check_box :approved, { checked: true } %>
       <span>
         <strong>Approved</strong>
-        <span class="admin-form__hint">Unapproved organizations can't move money.</span>
+        <span class="block text-[0.8125rem] leading-snug opacity-60">Unapproved organizations can't move money.</span>
       </span>
     </label>
 
-    <label class="admin-form__option">
+    <label class="checkbox-card">
       <%= form.check_box :demo_mode %>
       <span>
         <strong>Playground mode</strong>
-        <span class="admin-form__hint">For trying HCB out. No real money, and the organization can be upgraded later.</span>
+        <span class="block text-[0.8125rem] leading-snug opacity-60">For trying HCB out. No real money, and the organization can be upgraded later.</span>
       </span>
     </label>
   </section>
 
-  <div class="admin-form__footer">
+  <div class="flex flex-wrap items-center gap-3">
     <%# button_tag, not form.submit: `.bg-success` ties on specificity with the
         dark-mode `input[type=submit]` rule and loses on source order. %>
     <%= button_tag "Create organization", name: nil, class: "btn bg-success" %>
-    <%= link_to "Cancel", events_admin_index_path, class: "admin-form__cancel" %>
+    <%= link_to "Cancel", events_admin_index_path, class: "font-medium text-muted no-underline hover:text-blue focus:text-blue" %>
   </div>
 <% end %>

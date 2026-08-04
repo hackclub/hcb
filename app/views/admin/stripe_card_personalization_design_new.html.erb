@@ -4,9 +4,9 @@
   <%= link_to "All card designs", stripe_card_personalization_designs_admin_index_path, class: "btn" %>
 <% end %>
 
-<%= form_with(model: false, local: true, url: stripe_card_personalization_design_create_admin_index_path, class: "admin-form", data: { turbo: "false" }) do |form| %>
-  <section class="card admin-form__section">
-    <h3 class="admin-form__title">Card design</h3>
+<%= form_with(model: false, local: true, url: stripe_card_personalization_design_create_admin_index_path, class: "fields flex flex-col gap-4 max-w-[46rem]", data: { turbo: "false" }) do |form| %>
+  <section class="card flex flex-col gap-3.5 overflow-visible">
+    <h3 class="eyebrow m-0">Card design</h3>
 
     <div class="field">
       <%= form.label :name %>
@@ -20,7 +20,7 @@
 
     <div class="field">
       <%= form.label :logo %>
-      <span class="admin-form__hint">
+      <span class="block text-[0.8125rem] leading-snug opacity-60">
         Per Stripe's guidelines: a .png under 512kb, legible at 1000&times;200px, and a binary
         (no grayscale) black logo on a white background.
       </span>
@@ -31,10 +31,10 @@
     </div>
   </section>
 
-  <div class="admin-form__footer">
+  <div class="flex flex-wrap items-center gap-3">
     <%= button_tag "Create design", name: nil, class: "btn bg-success" %>
-    <%= link_to "Cancel", stripe_card_personalization_designs_admin_index_path, class: "admin-form__cancel" %>
-    <span class="admin-form__hint">
+    <%= link_to "Cancel", stripe_card_personalization_designs_admin_index_path, class: "font-medium text-muted no-underline hover:text-blue focus:text-blue" %>
+    <span class="block text-[0.8125rem] leading-snug opacity-60">
       New designs start out private. You can make one public from the designs list.
     </span>
   </div>

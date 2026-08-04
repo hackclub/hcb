@@ -11,9 +11,9 @@
                         end %>
 
 <%= turbo_frame_tag(admin_process_frame_id(transfer)) do %>
-  <div class="admin-review">
-    <div class="admin-review__hero">
-      <span class="admin-review__amount"><%= render_money transfer.amount %></span>
+  <div class="fields flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
+    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2 lg:col-span-full">
+      <span class="text-[1.75rem] font-bold leading-[1.1] tabular-nums"><%= render_money transfer.amount %></span>
       <span class="badge <%= state_badge %> ml-0"><%= state %></span>
       <% if transfer.event.balance_available_v2_cents.negative? %>
         <span class="badge bg-error ml-0">⚠️ Negative org balance</span>
@@ -26,11 +26,11 @@
       <% end %>
     </div>
 
-    <div class="admin-review__column">
-      <section class="card admin-form__section">
-        <h3 class="admin-form__title">Transfer</h3>
+    <div class="flex flex-col gap-4 min-w-0">
+      <section class="card flex flex-col gap-3.5 overflow-visible">
+        <h3 class="eyebrow m-0">Transfer</h3>
 
-        <dl class="admin-review__facts m0">
+        <div class="details m0">
           <% organization = safe_join([link_to(transfer.event.name, transfer.event, target: "_top"), tag.span("balance #{render_money transfer.event.balance_available_v2_cents}", class: "muted")], " · ") %>
           <%= render "admin/review_fact", label: "Organization", value: organization %>
           <%= render "admin/review_fact", label: "Payee", value: transfer.recipient_name, copy: transfer.recipient_name %>
@@ -48,22 +48,22 @@
             <%= render "admin/review_fact", label: "Employee", value: transfer.employee_payment.employee.user.name %>
             <%= render "admin/review_fact", label: "Employee org", value: transfer.employee_payment.employee.event.name %>
           <% end %>
-        </dl>
+        </div>
       </section>
 
       <%= render "admin/review_receipts", hcb_code: %>
     </div>
 
-    <div class="admin-review__column">
+    <div class="flex flex-col gap-4 min-w-0">
       <% if transfer.may_mark_approved? %>
-        <section class="card admin-form__section">
-          <h3 class="admin-form__title">Send</h3>
+        <section class="card flex flex-col gap-3.5 overflow-visible">
+          <h3 class="eyebrow m-0">Send</h3>
 
-          <span class="admin-form__hint">
+          <span class="block text-[0.8125rem] leading-snug opacity-60">
             HCB doesn't send PayPal transfers programmatically — send it yourself, then record it here.
           </span>
 
-          <div class="admin-review__actions">
+          <div class="flex flex-wrap items-center gap-2">
             <%= button_to "💸 Approve and send", approve_paypal_transfer_path(transfer), method: :post, class: "btn bg-success", form_class: "contents",
                   data: { turbo_frame: "_top", turbo_confirm: "Have you manually sent this transfer? HCB doesn't programmatically send PayPal transfers." } %>
           </div>
@@ -75,9 +75,9 @@
       <% end %>
 
       <% if transfer.may_mark_failed? %>
-        <section class="card admin-form__section">
-          <h3 class="admin-form__title">Failed</h3>
-          <span class="admin-form__hint">Use this if PayPal rejected or returned the payment.</span>
+        <section class="card flex flex-col gap-3.5 overflow-visible">
+          <h3 class="eyebrow m-0">Failed</h3>
+          <span class="block text-[0.8125rem] leading-snug opacity-60">Use this if PayPal rejected or returned the payment.</span>
 
           <div>
             <%= button_to "Mark as failed", mark_failed_paypal_transfer_path(transfer), class: "btn btn--destroy", form_class: "contents", data: { turbo_frame: "_top" } %>
@@ -86,7 +86,7 @@
       <% end %>
 
       <% unless transfer.may_mark_approved? || transfer.may_mark_rejected? || transfer.may_mark_failed? %>
-        <section class="card admin-form__section">
+        <section class="card flex flex-col gap-3.5 overflow-visible">
           <p class="m0">
             This transfer is <strong><%= transfer.aasm.current_state.to_s.humanize(capitalize: false) %></strong> — there's nothing to process.
           </p>

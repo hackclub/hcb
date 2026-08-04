@@ -7,13 +7,13 @@
   <% end %>
 <% end %>
 
-<%= form_with local: true, class: "card admin-filters", url: disbursements_admin_index_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: disbursements_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= render "admin/filters/event", event: @event %>
     <%= render "admin/date_range_filter", start_date: @start_date, end_date: @end_date %>
   </div>
-  <div class="admin-filters__row">
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "admin/filters/toggle", form:, name: :reviewing, label: "Reviewing", checked: @reviewing %>
     <%= render "admin/filters/toggle", form:, name: :pending, label: "Pending", checked: @pending %>
     <%= render "admin/filters/toggle", form:, name: :processing, label: "Processing", checked: @processing %>
@@ -35,7 +35,7 @@
   </thead>
   <tbody>
     <% @disbursements.each do |disbursement| %>
-      <tr class="<%= "admin-bg-transit" if disbursement.pending? %><%= "admin-bg-pending" if disbursement.reviewing? %>">
+      <tr class="<%= "shade-cyan" if disbursement.pending? %><%= "shade-yellow" if disbursement.reviewing? %>">
         <td><%= disbursement.id %></td>
         <td><%= disbursement.created_at.strftime("%Y-%m-%d") %></td>
         <td>

@@ -586,7 +586,9 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
 
 @layer base {
   pre,
-  code {
+  code,
+  kbd,
+  samp {
     @apply font-mono;
   }
 }

@@ -1,13 +1,13 @@
 <% title "Ledger" %>
 
-<%= form_with local: true, url: ledger_admin_index_path, method: :get, class: "card admin-filters" do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, url: ledger_admin_index_path, method: :get, class: "card filter-form flex flex-col gap-2.5 p-3" do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= form.text_field :amount, value: params[:amount], placeholder: "Amount (¢)" %>
     <%= render "admin/filters/user", user: @user %>
     <%= render "admin/filters/event", event: @event %>
   </div>
-  <div class="admin-filters__row">
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "admin/filters/toggle", form:, name: :unmapped, label: "Unmapped", checked: @unmapped %>
     <%= render "admin/filters/toggle", form:, name: :exclude_top_ups, label: "Exclude top ups", checked: @exclude_top_ups %>
     <%= render "admin/filters/toggle", form:, name: :exclude_spending, label: "Exclude spending", checked: @exclude_spending %>
@@ -34,7 +34,7 @@
     </thead>
     <tbody>
       <% @canonical_transactions.each do |ct| %>
-        <tr class="<%= "admin-bg-pending" unless ct.canonical_event_mapping || !ct.local_hcb_code.unknown? || ct.memo.include?("BUSBILLPAY") %>">
+        <tr class="<%= "shade-yellow" unless ct.canonical_event_mapping || !ct.local_hcb_code.unknown? || ct.memo.include?("BUSBILLPAY") %>">
           <td>
             <%= form.check_box ct.id %>
           </td>

@@ -1,7 +1,7 @@
 <% title "HCB Fees" %>
 
-<%= form_with local: true, class: "card admin-filters", url: bank_fees_admin_index_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: bank_fees_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "admin/filters/event", event: @event %>
     <%= render "admin/filters/actions", form: %>
   </div>

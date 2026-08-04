@@ -1,7 +1,7 @@
 <% title "Employees" %>
 
-<%= form_with method: :get, class: "card admin-filters" do |form| %>
-  <div class="admin-filters__row">
+<%= form_with method: :get, class: "card filter-form flex flex-col gap-2.5 p-3" do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= render "admin/filters/actions", form: %>
   </div>
@@ -19,7 +19,7 @@
   </thead>
   <tbody>
     <% @employees.each do |employee| %>
-      <tr class="<%= "admin-bg-pending" if employee.onboarding? %>">
+      <tr class="<%= "shade-yellow" if employee.onboarding? %>">
         <td><%= link_to employee.user.name, edit_user_path(employee.user) %> (<%= employee.user.email %>)</td>
         <td><%= link_to employee.event.name, employee.event %></td>
         <td><%= employee.aasm_state.humanize %></td>

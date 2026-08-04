@@ -1,12 +1,12 @@
 <% title "Checks" %>
 
-<%= form_with local: true, class: "card admin-filters", url: checks_admin_index_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: checks_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= render "admin/filters/event", event: @event %>
     <%= render "admin/date_range_filter", start_date: @start_date, end_date: @end_date %>
   </div>
-  <div class="admin-filters__row">
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "admin/filters/toggle", form:, name: :in_transit, label: "In transit", checked: @in_transit %>
     <%= render "admin/filters/actions", form: %>
   </div>
@@ -28,7 +28,7 @@
   </thead>
   <tbody>
     <% @checks.each do |check| %>
-      <tr class="<%= "admin-bg-pending" if check.in_transit? %> <%= "admin-bg-transit" if check.in_transit_and_processed? %>">
+      <tr class="<%= "shade-yellow" if check.in_transit? %> <%= "shade-cyan" if check.in_transit_and_processed? %>">
         <td><%= check.id %></td>
         <td>
           <%= check.created_at.strftime("%Y-%m-%d") %>

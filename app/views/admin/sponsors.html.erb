@@ -1,11 +1,11 @@
 <% title "Sponsors" %>
 
-<%= form_with local: true, class: "card admin-filters", url: sponsors_admin_index_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: sponsors_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= render "admin/filters/event", event: @event %>
   </div>
-  <div class="admin-filters__row">
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "admin/filters/toggle", form:, name: :open, label: "Open", checked: @open %>
     <%= render "admin/filters/actions", form: %>
   </div>

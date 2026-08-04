@@ -1,3 +1,97 @@
+// A GET form of filter controls, laid out as a toolbar.
+//
+// The layout itself is done with utilities in the markup; what lives here is
+// the descendant normalisation utilities can't express — every control onto one
+// height and onto content-driven widths, so a row reads as a toolbar rather
+// than a stack of full-width fields.
+.filter-form {
+  --filter-height: 36px;
+
+  overflow: visible;
+  margin-bottom: 1rem;
+
+  input[type='text'],
+  input[type='search'],
+  input[type='number'],
+  input[type='date'],
+  select,
+  .input,
+  .hw-combobox__main__wrapper,
+  .btn,
+  input[type='submit'] {
+    height: var(--filter-height);
+    min-height: var(--filter-height);
+    font-size: 0.875rem;
+  }
+
+  input[type='text'],
+  input[type='number'],
+  input[type='date'],
+  select {
+    flex: 0 1 auto;
+    width: auto;
+    min-width: 9.5rem;
+    max-width: 16rem;
+  }
+
+  select {
+    padding-right: 1.75rem;
+  }
+
+  // The free-text search is the one control that absorbs the leftover space.
+  .input-group {
+    flex: 1 1 14rem;
+    min-width: 11rem;
+    max-width: 28rem;
+
+    input {
+      width: 100%;
+      min-width: 0;
+      max-width: none;
+      height: auto;
+      min-height: 0;
+    }
+  }
+
+  .hw-combobox {
+    flex: 0 1 18rem;
+    width: 18rem;
+    min-width: 0;
+  }
+
+  .hw-combobox__main__wrapper {
+    width: 100%;
+    max-width: none;
+  }
+
+  .hw-combobox__input {
+    width: 100%;
+    min-width: 0;
+    font-size: 0.875rem;
+  }
+
+  // A labelled grid, for pages with many selects. Controls fill their cell here
+  // instead of self-sizing.
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+    gap: 0.625rem 0.75rem;
+    align-items: end;
+
+    input[type='text'],
+    input[type='number'],
+    input[type='date'],
+    select,
+    .input,
+    .hw-combobox {
+      width: 100%;
+      max-width: none;
+      min-width: 0;
+      flex: none;
+    }
+  }
+}
+
 .filterbar {
   box-shadow: var(--shadow-border);
   border-radius: var(--radius-md);

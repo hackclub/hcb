@@ -17,8 +17,8 @@
   <% end %>
 <% end %>
 
-<%= form_with local: true, class: "card admin-filters", url: events_admin_index_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: events_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
   </div>
   <%= render "admin/events_filter", form: %>
@@ -57,7 +57,7 @@
   </thead>
   <tbody>
     <% @events.each do |event| %>
-      <tr class="<%= "admin-bg-pending" if event.pending? || event.unapproved? || event.demo_mode? %> <%= "admin-bg-orange" if event.omit_stats? %>">
+      <tr class="<%= "shade-yellow" if event.pending? || event.unapproved? || event.demo_mode? %> <%= "shade-orange" if event.omit_stats? %>">
         <td><%= event.id %></td>
         <% if event.activated_at? %>
           <td title="Demo org created on <%= event.created_at.strftime("%Y-%m-%d") %> (<%= distance_of_time_in_words(event.created_at, event.activated_at) %> earlier)">

@@ -1,10 +1,10 @@
 <% title "Recurring Donations" %>
 
-<%= form_with local: true, class: "card admin-filters", url: recurring_donations_admin_index_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: recurring_donations_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "admin/filters/event", event: @event %>
   </div>
-  <div class="admin-filters__row">
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "admin/filters/toggle", form:, name: :active, label: "Active", checked: @active %>
     <%= render "admin/filters/toggle", form:, name: :canceled, label: "Canceled", checked: @canceled %>
     <%= render "admin/filters/actions", form: %>
@@ -27,7 +27,7 @@
   </thead>
   <tbody>
     <% @donations.each do |donation| %>
-      <tr class="<%= "admin-bg-transit" if donation.active? %>">
+      <tr class="<%= "shade-cyan" if donation.active? %>">
         <td><%= donation.id %></td>
         <td><%= donation.created_at.strftime("%Y-%m-%d") %></td>
         <td>

@@ -1,5 +1,5 @@
 <%# locals: (form:, actions: true) %>
-<div class="admin-filters__grid">
+<div class="filter-form__grid">
   <%= render "admin/filters/select", form:, name: :transparent, label: "Transparent",
         choices: [["Both", "both"], ["Not transparent", "not_transparent"], ["Transparent", "transparent"]],
         options: { selected: @transparent } %>
@@ -57,9 +57,9 @@
         options: { selected: @sort_by } %>
 </div>
 
-<div class="admin-filters__row">
-  <div class="admin-filters__group">
-    <span class="admin-filters__group-label">State</span>
+<div class="flex flex-wrap items-center gap-2">
+  <div class="flex flex-wrap items-center gap-x-2 gap-y-1.5 py-1.5 px-2 rounded-md shadow-border bg-[rgba(200,200,200,0.08)]">
+    <span class="eyebrow m-0 pl-0.5 opacity-55">State</span>
     <%= render "admin/filters/toggle", form:, name: :pending, label: "Pending", checked: @pending %>
     <%= render "admin/filters/toggle", form:, name: :unapproved, label: "Unapproved", checked: @unapproved %>
     <%= render "admin/filters/toggle", form:, name: :approved, label: "Approved", checked: @approved %>

@@ -1,10 +1,10 @@
 <% title "Applications (HCB)" %>
 
-<%= form_with local: true, class: "card admin-filters", url: applications_admin_index_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: applications_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
   </div>
-  <div class="admin-filters__row">
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "admin/filters/toggle", form:, name: :include_archived, label: "Include archived", checked: @include_archived %>
     <%= render "admin/filters/actions", form: %>
   </div>
@@ -24,7 +24,7 @@
   </thead>
   <tbody>
     <% @applications.each do |application| %>
-      <tr class="<%= "admin-bg-pending" if application.submitted? %> <%= "admin-bg-transit" if application.approved? %>">
+      <tr class="<%= "shade-yellow" if application.submitted? %> <%= "shade-cyan" if application.approved? %>">
         <td><%= application.id %></td>
         <td><%= application.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= application.name %></td>

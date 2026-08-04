@@ -1,14 +1,14 @@
 <% title "Invoices" %>
 
-<%= form_with local: true, class: "card admin-filters", url: invoices_admin_index_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: invoices_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= render layout: "admin/filters/field", locals: { label: "Stripe invoice number" } do %>
       <%= form.text_field :number, value: params[:number], placeholder: "Stripe Invoice Number" %>
     <% end %>
     <%= render "admin/filters/event", event: @event %>
   </div>
-  <div class="admin-filters__row">
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "admin/filters/toggle", form:, name: :open, label: "Open", checked: @open %>
     <%= render "admin/filters/toggle", form:, name: :paid, label: "Paid", checked: @paid %>
     <%= render "admin/filters/toggle", form:, name: :missing_payout, label: "Missing payout", checked: @missing_payout %>
@@ -35,7 +35,7 @@
   </thead>
   <tbody>
     <% @invoices.each do |invoice| %>
-      <tr class="<%= "admin-bg-pending" if invoice.open? %>">
+      <tr class="<%= "shade-yellow" if invoice.open? %>">
         <td><%= invoice.id %></td>
         <td>
           <%= invoice.created_at.strftime("%Y-%m-%d") %>

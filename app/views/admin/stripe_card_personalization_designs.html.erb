@@ -16,12 +16,12 @@
 
 <h2>All Designs</h2>
 
-<%= form_with local: true, class: "card admin-filters", url: stripe_card_personalization_designs_admin_index_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: stripe_card_personalization_designs_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= render "admin/filters/event", event: @event %>
   </div>
-  <div class="admin-filters__row">
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "admin/filters/toggle", form:, name: :pending, label: "Awaiting Stripe approval", checked: @pending %>
     <%= render "admin/filters/toggle", form:, name: :unlisted, label: "Unlisted designs", checked: @unlisted %>
     <%= render "admin/filters/actions", form: %>
@@ -42,7 +42,7 @@
   </thead>
   <tbody>
     <% @designs.each do |design| %>
-      <tr class="<%= "admin-bg-pending" if design.under_review? %>">
+      <tr class="<%= "shade-yellow" if design.under_review? %>">
         <td><%= design.id %></td>
         <td><%= design.created_at.strftime("%Y-%m-%d") %></td>
         <td>

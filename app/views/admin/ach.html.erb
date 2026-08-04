@@ -1,12 +1,12 @@
 <% title "ACH Transfers" %>
 
-<%= form_with local: true, class: "card admin-filters", url: ach_admin_index_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: ach_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= render "admin/filters/event", event: @event %>
     <%= render "admin/date_range_filter", start_date: @start_date, end_date: @end_date %>
   </div>
-  <div class="admin-filters__row">
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "admin/filters/toggle", form:, name: :pending, label: "Pending", checked: @pending %>
     <%= render "admin/filters/toggle", form:, name: :exclude_reimbursements, label: "Exclude reimbursements", checked: @exclude_reimbursements %>
     <%= render "admin/filters/actions", form: %>
@@ -28,7 +28,7 @@
   </thead>
   <tbody>
     <% @ach_transfers.each do |ach| %>
-      <tr class="<%= "admin-bg-pending" if ach.pending? %> <%= "admin-bg-transit" if ach.in_transit? %>">
+      <tr class="<%= "shade-yellow" if ach.pending? %> <%= "shade-cyan" if ach.in_transit? %>">
         <td><%= ach.id %></td>
         <td><%= ach.created_at.strftime("%Y-%m-%d") %></td>
         <td>

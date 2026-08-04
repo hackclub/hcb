@@ -3,7 +3,6 @@
   <head>
     <%= render "layouts/head", title_suffix: "HCB Admin", admin: true %>
     <%= stylesheet_link_tag "application", media: "all", "data-turbo-track": "reload" %>
-    <%= stylesheet_link_tag "admin", media: "all", "data-turbo-track": "reload" %>
     <%= javascript_include_tag "admin", "data-turbo-track": "reload", defer: true %>
   </head>
   <body class="bg-snow overflow-x-hidden min-h-screen max-w-[100vw]">
@@ -74,7 +73,8 @@
 
       <article class="flex-1 pt-16 lg:pt-0 lg:pl-72 w-[100%] m-0 bg-snow dark:bg-dark min-h-screen">
         <%= render(partial: "admin/flash") %>
-        <div id="main" class="p-4 md:p-7 w-full overflow-x-auto">
+        <%# This column scrolls horizontally itself, so tables don't need the viewport cap. %>
+        <div id="main" class="p-4 md:p-7 w-full overflow-x-auto space-y-4 [--table-max-width:none]">
           <div class="flex w-full mb-2 items-center gap-2">
             <h2 class="flex-1"><%= title %></h2>
             <%= yield(:admin_actions) %>

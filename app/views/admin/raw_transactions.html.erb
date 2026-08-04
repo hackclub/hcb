@@ -4,8 +4,8 @@
   <%= link_to "New Raw Transaction", raw_transaction_new_admin_index_path, class: "btn bg-primary" %>
 <% end %>
 
-<%= form_with local: true, class: "card admin-filters", url: raw_transactions_admin_index_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: raw_transactions_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= form.collection_select(:unique_bank_identifier, @bank_identifiers, :to_s, :to_s, { include_blank: "All bank accounts", selected: @unique_bank_identifier }) %>
     <%= render "admin/filters/actions", form: %>
   </div>
@@ -25,7 +25,7 @@
   </thead>
   <tbody>
     <% @raw_transactions.each do |rt| %>
-      <tr class="<%= "admin-bg-pending" unless rt.hashed_transactions.present? %>">
+      <tr class="<%= "shade-yellow" unless rt.hashed_transactions.present? %>">
         <td><%= rt.id %></td>
         <td><%= rt.unique_bank_identifier %></td>
         <td><%= rt.date_posted %></td>

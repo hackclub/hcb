@@ -11,9 +11,9 @@
                         end %>
 
 <%= turbo_frame_tag(admin_process_frame_id(check)) do %>
-  <div class="admin-review">
-    <div class="admin-review__hero">
-      <span class="admin-review__amount"><%= render_money check.amount %></span>
+  <div class="fields flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
+    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2 lg:col-span-full">
+      <span class="text-[1.75rem] font-bold leading-[1.1] tabular-nums"><%= render_money check.amount %></span>
       <span class="badge <%= state_badge %> ml-0"><%= state %></span>
       <% if check.event.balance_available_v2_cents.negative? %>
         <span class="badge bg-error ml-0">⚠️ Negative org balance</span>
@@ -29,11 +29,11 @@
       <% end %>
     </div>
 
-    <div class="admin-review__column">
-      <section class="card admin-form__section">
-        <h3 class="admin-form__title">Check</h3>
+    <div class="flex flex-col gap-4 min-w-0">
+      <section class="card flex flex-col gap-3.5 overflow-visible">
+        <h3 class="eyebrow m-0">Check</h3>
 
-        <dl class="admin-review__facts m0">
+        <div class="details m0">
           <% organization = safe_join([link_to(check.event.name, check.event, target: "_top"), tag.span("balance #{render_money check.event.balance_available_v2_cents}", class: "muted")], " · ") %>
           <%= render "admin/review_fact", label: "Organization", value: organization %>
           <%= render "admin/review_fact", label: "Payee", value: check.recipient_name, copy: check.recipient_name %>
@@ -46,23 +46,23 @@
             <%= render "admin/review_fact", label: "Employee", value: check.employee_payment.employee.user.name %>
             <%= render "admin/review_fact", label: "Employee org", value: check.employee_payment.employee.event.name %>
           <% end %>
-        </dl>
+        </div>
       </section>
 
       <%= render "admin/review_receipts", hcb_code: %>
     </div>
 
-    <div class="admin-review__column">
+    <div class="flex flex-col gap-4 min-w-0">
       <% if check.pending? %>
-        <section class="card admin-form__section">
-          <h3 class="admin-form__title">Approve</h3>
+        <section class="card flex flex-col gap-3.5 overflow-visible">
+          <h3 class="eyebrow m-0">Approve</h3>
 
           <div class="field">
             <label class="bold">Transaction category</label>
             <%= render partial: "hcb_codes/transaction_category_form", locals: { model: hcb_code.ct || hcb_code.pt } %>
           </div>
 
-          <div class="admin-review__actions">
+          <div class="flex flex-wrap items-center gap-2">
             <%= button_to "💸 Approve and send", approve_increase_check_path(check), method: :post,
                   form_class: "contents", class: "btn bg-success",
                   data: { turbo_frame: "_top", turbo_confirm: "Are you sure you want to send this check?" } %>
@@ -71,7 +71,7 @@
 
         <%= render "admin/review_reject", url: reject_increase_check_path(check), noun: "check" %>
       <% else %>
-        <section class="card admin-form__section">
+        <section class="card flex flex-col gap-3.5 overflow-visible">
           <p class="m0">
             This check has been <strong><%= check.aasm.current_state.to_s.humanize(capitalize: false) %></strong> — there's nothing to process.
           </p>

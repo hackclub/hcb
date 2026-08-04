@@ -1,11 +1,11 @@
 <% title "Reimbursements" %>
 
-<%= form_with local: true, class: "card admin-filters", url: reimbursements_admin_index_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: reimbursements_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= render "admin/filters/event", event: @event %>
   </div>
-  <div class="admin-filters__row">
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "admin/filters/toggle", form:, name: :pending, label: "Awaiting review", checked: @pending %>
     <%= render "admin/filters/toggle", form:, name: :failed, label: "Payout holding failed", checked: @failed %>
     <%= render "admin/filters/actions", form: %>
@@ -28,7 +28,7 @@
   </thead>
   <tbody>
     <% @reports.each do |report| %>
-      <tr class="<%= "admin-bg-pending" if report.reimbursement_requested? %> <%= "admin-bg-orange" if report.id.in?(@unprocessed_wise_report_ids) %> <%= "admin-bg-warning" if report.payout_holding&.failed? %>">
+      <tr class="<%= "shade-yellow" if report.reimbursement_requested? %> <%= "shade-orange" if report.id.in?(@unprocessed_wise_report_ids) %> <%= "shade-red" if report.payout_holding&.failed? %>">
         <td class="w-16"><%= report.id %></td>
         <td class="w-32"><%= report.created_at.strftime("%Y-%m-%d") %></td>
         <td>

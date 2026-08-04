@@ -1,11 +1,11 @@
 <% title "Ledger Items" %>
 
-<%= form_with local: true, url: ledger_items_admin_index_path, method: :get, class: "card admin-filters" do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, url: ledger_items_admin_index_path, method: :get, class: "card filter-form flex flex-col gap-2.5 p-3" do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= form.text_field :amount, value: params[:amount], placeholder: "Amount (¢)" %>
   </div>
-  <div class="admin-filters__row">
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "admin/filters/toggle", form:, name: :unmapped, label: "Unmapped", checked: @unmapped %>
     <%= render "admin/filters/toggle", form:, name: :nonzero, label: "Non-zero", checked: @nonzero %>
     <%= render "admin/filters/actions", form: %>

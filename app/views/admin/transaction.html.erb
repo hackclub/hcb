@@ -3,7 +3,7 @@
 <h1>Transaction <%= @canonical_transaction.id %></h1>
 
 <div class="table-container">
-<table class="<%= "admin-bg-pending" unless @canonical_transaction.canonical_event_mapping %>">
+<table class="<%= "shade-yellow" unless @canonical_transaction.canonical_event_mapping %>">
   <tbody>
     <tr>
       <th>ID</th>
@@ -83,7 +83,7 @@
     </tr>
   </thead>
   <tbody>
-    <tr class="<%= "admin-bg-pending" unless @canonical_transaction.canonical_event_mapping %>">
+    <tr class="<%= "shade-yellow" unless @canonical_transaction.canonical_event_mapping %>">
       <td>
         <div class="flex flex-row gap-2">
           <%= form_with model: false, local: true, url: set_event_path(@canonical_transaction), method: :post do |form| %>

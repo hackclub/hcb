@@ -1,11 +1,11 @@
 <% title "Pending Ledger" %>
 
-<%= form_with local: true, class: "card admin-filters", url: pending_ledger_admin_index_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: pending_ledger_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= render "admin/filters/event", event: @event %>
   </div>
-  <div class="admin-filters__row">
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "admin/filters/toggle", form:, name: :unsettled, label: "Unsettled", checked: @unsettled %>
     <%= render "admin/filters/actions", form: %>
   </div>
@@ -27,7 +27,7 @@
   </thead>
   <tbody>
     <% @canonical_pending_transactions.each do |cpt| %>
-      <tr class="<%= "admin-bg-pending" if cpt.unsettled? %>">
+      <tr class="<%= "shade-yellow" if cpt.unsettled? %>">
         <td><%= cpt.id %></td>
         <td>
           <%= cpt.date %>

@@ -1,5 +1,5 @@
 <%# locals: (form:, name:, label:, choices:, options: {}, html_options: {}) %>
-<label class="filter-field">
-  <span class="filter-field__label"><%= label %></span>
+<label class="flex flex-col gap-1 min-w-0 text-inherit">
+  <span class="eyebrow m-0 block leading-none whitespace-nowrap overflow-hidden text-ellipsis"><%= label %></span>
   <%= form.select name, choices, options, html_options %>
 </label>

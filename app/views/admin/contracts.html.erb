@@ -1,7 +1,7 @@
 <% title "Contracts" %>
 
-<%= form_with local: true, class: "card admin-filters", url: contracts_admin_index_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: contracts_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= form.select :type, Contract.subclasses.map { |subclass| [subclass.name.demodulize.underscore.humanize, subclass.name] }, { include_blank: "All contract types", selected: @type } %>
     <%= form.select :status, Contract.aasm.states_for_select, { include_blank: "All statuses", selected: @status } %>
@@ -27,7 +27,7 @@
   </thead>
   <tbody>
     <% @contracts.each do |contract| %>
-      <tr class="<%= "admin-bg-pending" if contract.sent? && contract.parties.not_hcb.all?(&:signed?) && contract.party(:hcb)&.pending? %> <%= "admin-bg-transit" if contract.signed? %>">
+      <tr class="<%= "shade-yellow" if contract.sent? && contract.parties.not_hcb.all?(&:signed?) && contract.party(:hcb)&.pending? %> <%= "shade-cyan" if contract.signed? %>">
         <td><%= contract.id %></td>
         <td><%= contract.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= contract.class.name.demodulize.underscore.humanize %></td>

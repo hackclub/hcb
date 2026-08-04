@@ -2,16 +2,16 @@
     already-safe markup (a link_to, a safe_join, …). Pass `copy` to offer the
     value on the clipboard. %>
 <%# locals: (label:, value:, copy: nil, fs_exclude: false) %>
-<dt><%= label %></dt>
-<dd class="<%= "fs-exclude" if fs_exclude %>">
-  <span class="min-w-0"><%= value %></span>
+<div class="details__row <%= "fs-exclude" if fs_exclude %>">
+  <strong><%= label %></strong>
+  <span class="min-w-0 break-words"><%= value %></span>
   <% if copy.present? %>
-    <span class="admin-review__copy tooltipped tooltipped--n"
-          aria-label="Copy <%= label.to_s.downcase %>"
-          data-controller="clipboard"
-          data-clipboard-text-value="<%= copy %>"
-          data-action="click->clipboard#copy">
-      <%= inline_icon "copy" %>
-    </span>
+    <div class="right muted pointer tooltipped tooltipped--n"
+         aria-label="Copy <%= label.to_s.downcase %>"
+         data-controller="clipboard"
+         data-clipboard-text-value="<%= copy %>"
+         data-action="click->clipboard#copy">
+      <%= inline_icon "copy", size: 20 %>
+    </div>
   <% end %>
-</dd>
+</div>

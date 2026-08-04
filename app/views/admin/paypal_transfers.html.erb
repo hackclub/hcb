@@ -1,7 +1,7 @@
 <% title "PayPal Transfers" %>
 
-<%= form_with local: true, class: "card admin-filters", url: paypal_transfers_admin_index_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: paypal_transfers_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= render "admin/filters/event", event: @event %>
     <%= render "admin/filters/actions", form: %>
@@ -23,7 +23,7 @@
   </thead>
   <tbody>
     <% @paypal_transfers.each do |paypal_transfer| %>
-      <tr class="<%= "admin-bg-pending" if paypal_transfer.pending? %>">
+      <tr class="<%= "shade-yellow" if paypal_transfer.pending? %>">
         <td><%= paypal_transfer.id %></td>
         <td><%= paypal_transfer.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= paypal_transfer.event.name %></td>

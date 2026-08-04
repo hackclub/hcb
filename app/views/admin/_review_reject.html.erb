@@ -1,12 +1,12 @@
 <%# The reject-with-a-reason card shared by the admin process screens. %>
 <%# locals: (url:, noun: "transfer") %>
-<section class="card admin-form__section">
-  <h3 class="admin-form__title">Reject</h3>
+<section class="card flex flex-col gap-3.5 overflow-visible">
+  <h3 class="eyebrow m-0">Reject</h3>
 
-  <%= form_with(model: false, local: true, url:, method: :post, class: "admin-form__section", data: { turbo_frame: "_top" }) do |form| %>
+  <%= form_with(model: false, local: true, url:, method: :post, class: "flex flex-col gap-3.5 overflow-visible", data: { turbo_frame: "_top" }) do |form| %>
     <div class="field">
       <%= form.label :comment, "Reason" %>
-      <span class="admin-form__hint">Shared with the organizer, so explain why. Markdown supported.</span>
+      <span class="block text-[0.8125rem] leading-snug opacity-60">Shared with the organizer, so explain why. Markdown supported.</span>
       <%= form.text_area :comment, rows: 3 %>
     </div>
 

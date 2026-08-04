@@ -1,7 +1,7 @@
 <% title "Checks" %>
 
-<%= form_with local: true, class: "card admin-filters", url: increase_checks_admin_index_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: increase_checks_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "admin/filters/toggle", form:, name: :exclude_reimbursements, label: "Exclude reimbursements", checked: @exclude_reimbursements %>
     <%= render "admin/filters/actions", form: %>
   </div>
@@ -22,7 +22,7 @@
   </thead>
   <tbody>
     <% @checks.each do |check| %>
-      <tr class="<%= "admin-bg-pending" if check.pending? %>">
+      <tr class="<%= "shade-yellow" if check.pending? %>">
         <td><%= check.id %></td>
         <td><%= check.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= check.event.name %></td>

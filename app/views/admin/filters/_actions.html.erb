@@ -1,7 +1,7 @@
 <%# locals: (form:, label: "Search", export_count: nil, export_params: nil) %>
-<div class="admin-filters__actions">
+<div class="flex flex-wrap items-center gap-2 ml-auto">
   <% if request.query_parameters.except("page").any? %>
-    <%= link_to "Clear", request.path, class: "admin-filters__clear" %>
+    <%= link_to "Clear", request.path, class: "font-medium text-sm text-muted no-underline hover:text-blue focus:text-blue" %>
   <% end %>
 
   <% unless export_count.nil? %>

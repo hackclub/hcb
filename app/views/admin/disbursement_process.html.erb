@@ -5,9 +5,9 @@
 <% state_badge = disbursement.rejected? ? "bg-error" : (disbursement.reviewing? ? "bg-pending" : "bg-muted") %>
 
 <%= turbo_frame_tag(admin_process_frame_id(disbursement)) do %>
-  <div class="admin-review">
-    <div class="admin-review__hero">
-      <span class="admin-review__amount"><%= render_money disbursement.amount %></span>
+  <div class="fields flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
+    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2 lg:col-span-full">
+      <span class="text-[1.75rem] font-bold leading-[1.1] tabular-nums"><%= render_money disbursement.amount %></span>
       <span class="badge <%= state_badge %> ml-0"><%= disbursement.state_text %></span>
       <span class="flex-grow"></span>
       <% if disbursement.local_hcb_code %>
@@ -18,11 +18,11 @@
       <% end %>
     </div>
 
-    <div class="admin-review__column">
-      <section class="card admin-form__section">
-        <h3 class="admin-form__title">Transfer</h3>
+    <div class="flex flex-col gap-4 min-w-0">
+      <section class="card flex flex-col gap-3.5 overflow-visible">
+        <h3 class="eyebrow m-0">Transfer</h3>
 
-        <dl class="admin-review__facts m0">
+        <div class="details m0">
           <% from = link_to(disbursement.source_event.name, disbursement.source_event, target: "_top") %>
           <% from += tag.span(" ❄️ frozen", class: "warning bold") if disbursement.source_event.financially_frozen? %>
           <%= render "admin/review_fact", label: "From", value: from %>
@@ -36,29 +36,29 @@
 
           <% fulfiller = disbursement.fulfilled_by ? user_mention(disbursement.fulfilled_by) : tag.span("Nobody yet — this could be you! ✨", class: "muted") %>
           <%= render "admin/review_fact", label: (disbursement.rejected? ? "Rejected by" : "Fulfilled by"), value: fulfiller %>
-        </dl>
+        </div>
       </section>
     </div>
 
-    <div class="admin-review__column">
+    <div class="flex flex-col gap-4 min-w-0">
       <% if disbursement.rejected? %>
-        <section class="card admin-form__section">
+        <section class="card flex flex-col gap-3.5 overflow-visible">
           <p class="m0">This transfer was rejected — there's nothing to process.</p>
         </section>
       <% elsif disbursement.pending? %>
         <%= render "admin/review_reject", url: disbursement_reject_admin_path(disbursement) %>
       <% else %>
-        <section class="card admin-form__section">
-          <h3 class="admin-form__title">Approve</h3>
+        <section class="card flex flex-col gap-3.5 overflow-visible">
+          <h3 class="eyebrow m-0">Approve</h3>
 
-          <span class="admin-form__hint">
+          <span class="block text-[0.8125rem] leading-snug opacity-60">
             This transfer is held for human review.
             <% if disbursement.scheduled_on.present? %>
               Once approved, it sends automatically on <%= disbursement.scheduled_on.strftime("%B %-d, %Y") %>.
             <% end %>
           </span>
 
-          <div class="admin-review__actions">
+          <div class="flex flex-wrap items-center gap-2">
             <%= form_with(model: false, local: true, url: disbursement_approve_admin_path(disbursement), method: :post, class: "contents", data: { turbo_frame: "_top" }) do %>
               <%= button_tag "Approve transfer", name: nil, class: "btn bg-success" %>
             <% end %>
@@ -69,17 +69,17 @@
       <% end %>
     </div>
 
-    <div class="admin-review__full">
-      <section class="card admin-form__section">
-        <h3 class="admin-form__title">Source transactions</h3>
+    <div class="flex flex-col gap-4 min-w-0 lg:col-span-full">
+      <section class="card flex flex-col gap-3.5 overflow-visible">
+        <h3 class="eyebrow m-0">Source transactions</h3>
         <%= render "hcb_codes/transactions_table", canonical_transactions: transactions.settled_source, canonical_pending_transactions: transactions.pending_source, popovers: true %>
       </section>
 
-      <section class="card admin-form__section">
-        <h3 class="admin-form__title">Destination transactions</h3>
+      <section class="card flex flex-col gap-3.5 overflow-visible">
+        <h3 class="eyebrow m-0">Destination transactions</h3>
 
         <% if transactions.settled_destination.empty? && transactions.pending_destination.empty? %>
-          <span class="admin-form__hint">Not created yet. When they are, they'll use this category:</span>
+          <span class="block text-[0.8125rem] leading-snug opacity-60">Not created yet. When they are, they'll use this category:</span>
 
           <%= form_for(disbursement, url: disbursement_set_transaction_categories_path(disbursement), method: :post, data: { controller: "form" }, html: { class: "m-0" }) do |f| %>
             <% categories = TransactionCategory::Definition::ALL.map { |_, d| [d.label, d.slug] } %>

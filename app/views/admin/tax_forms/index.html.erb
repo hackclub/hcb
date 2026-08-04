@@ -1,7 +1,7 @@
 <% title "Tax Forms" %>
 
-<%= form_with local: true, class: "card admin-filters", url: admin_tax_forms_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: admin_tax_forms_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= form.select :state, Tax::Form.aasm.states_for_select, { include_blank: "All states", selected: @state } %>
     <%= form.select :form_type, Tax::Form.form_types.keys, { include_blank: "All form types", selected: @form_type } %>

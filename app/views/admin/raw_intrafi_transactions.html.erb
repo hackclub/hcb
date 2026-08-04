@@ -29,7 +29,7 @@
   </thead>
   <tbody>
     <% @raw_intrafi_transactions.each do |rt| %>
-      <tr class="<%= "admin-bg-transit" if rt.id.in?(@imported) %>">
+      <tr class="<%= "shade-cyan" if rt.id.in?(@imported) %>">
         <td><%= rt.id %></td>
         <td><%= rt.date_posted %></td>
         <td><%= rt.created_at.to_date %></td>

@@ -3,8 +3,8 @@
 <% receipts = hcb_code.receipts.order(created_at: :asc) %>
 
 <% if receipts.any? %>
-  <section class="card admin-form__section">
-    <h3 class="admin-form__title">Receipts</h3>
+  <section class="card flex flex-col gap-3.5 overflow-visible">
+    <h3 class="eyebrow m-0">Receipts</h3>
 
     <% if receipts.any?(&:extracted_incorrect_amount_cents?) %>
       <p class="warning bold m0">⚠️ Check these closely — we suspect their amounts don't match.</p>

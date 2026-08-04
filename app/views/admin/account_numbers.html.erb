@@ -1,7 +1,7 @@
 <% title "Account Numbers" %>
 
-<%= form_with method: :get, class: "card admin-filters" do |form| %>
-  <div class="admin-filters__row">
+<%= form_with method: :get, class: "card filter-form flex flex-col gap-2.5 p-3" do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= render "admin/filters/event", event: @event %>
     <%= form.select :account_number_type, [["All", "0"], ["Deposit only", "1"], ["Spend + Deposit", "2"]], selected: @account_number_type %>

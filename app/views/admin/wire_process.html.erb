@@ -11,9 +11,9 @@
                         end %>
 
 <%= turbo_frame_tag(admin_process_frame_id(wire)) do %>
-  <div class="admin-review">
-    <div class="admin-review__hero">
-      <span class="admin-review__amount"><%= Money.from_cents(wire.amount_cents, wire.currency).format %></span>
+  <div class="fields flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
+    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2 lg:col-span-full">
+      <span class="text-[1.75rem] font-bold leading-[1.1] tabular-nums"><%= Money.from_cents(wire.amount_cents, wire.currency).format %></span>
       <span class="badge <%= state_badge %> ml-0"><%= state %></span>
       <% if wire.event.balance_available_v2_cents.negative? %>
         <span class="badge bg-error ml-0">⚠️ Negative org balance</span>
@@ -35,11 +35,11 @@
       <% end %>
     </div>
 
-    <div class="admin-review__column">
-      <section class="card admin-form__section">
-        <h3 class="admin-form__title">Transfer</h3>
+    <div class="flex flex-col gap-4 min-w-0">
+      <section class="card flex flex-col gap-3.5 overflow-visible">
+        <h3 class="eyebrow m-0">Transfer</h3>
 
-        <dl class="admin-review__facts m0">
+        <div class="details m0">
           <% organization = safe_join([link_to(wire.event.name, wire.event, target: "_top"), tag.span("balance #{render_money wire.event.balance_available_v2_cents}", class: "muted")], " · ") %>
           <%= render "admin/review_fact", label: "Organization", value: organization %>
           <%= render "admin/review_fact", label: "Payee", value: wire.recipient_name, copy: wire.recipient_name %>
@@ -47,13 +47,13 @@
           <%= render "admin/review_fact", label: "Payment for", value: wire.payment_for %>
           <%= render "admin/review_fact", label: "Memo", value: wire.memo %>
           <%= render "admin/review_fact", label: "Requested", value: format_datetime(wire.created_at) %>
-        </dl>
+        </div>
       </section>
 
-      <section class="card admin-form__section">
-        <h3 class="admin-form__title">Bank details</h3>
+      <section class="card flex flex-col gap-3.5 overflow-visible">
+        <h3 class="eyebrow m-0">Bank details</h3>
 
-        <dl class="admin-review__facts m0">
+        <div class="details m0">
           <%= render "admin/review_fact", label: "BIC / SWIFT", value: wire.bic_code, copy: wire.bic_code, fs_exclude: true %>
           <%= render "admin/review_fact", label: "Account number", value: wire.account_number, copy: wire.account_number, fs_exclude: true %>
           <%= render "admin/review_fact", label: "Currency", value: wire.currency %>
@@ -66,7 +66,7 @@
               <%= render "admin/review_fact", label: key.humanize, value: value, copy: value %>
             <% end %>
           <% end %>
-        </dl>
+        </div>
 
         <div>
           <%= button_to "Edit wire", edit_wire_path(wire), method: :get, class: "btn btn-default", form_class: "contents", data: { turbo_frame: "_top" } %>
@@ -76,22 +76,22 @@
       <%= render "admin/review_receipts", hcb_code: %>
     </div>
 
-    <div class="admin-review__column">
+    <div class="flex flex-col gap-4 min-w-0">
       <% if wire.pending? %>
-        <section class="card admin-form__section">
-          <h3 class="admin-form__title">Send</h3>
+        <section class="card flex flex-col gap-3.5 overflow-visible">
+          <h3 class="eyebrow m-0">Send</h3>
 
           <div class="field">
             <label class="bold">Transaction category</label>
             <%= render partial: "hcb_codes/transaction_category_form", locals: { model: hcb_code.ct || hcb_code.pt } %>
           </div>
 
-          <%= form_with(model: false, local: true, url: send_wire_path(wire), method: :post, class: "admin-form__section", data: { turbo_frame: "_top" }) do |form| %>
-            <label class="admin-form__option">
+          <%= form_with(model: false, local: true, url: send_wire_path(wire), method: :post, class: "flex flex-col gap-3.5 overflow-visible", data: { turbo_frame: "_top" }) do |form| %>
+            <label class="checkbox-card">
               <%= form.check_box :charge_fee %>
               <span>
                 <strong>Charge a $25 transfer fee</strong>
-                <span class="admin-form__hint">Billed to <%= wire.event.name %>.</span>
+                <span class="block text-[0.8125rem] leading-snug opacity-60">Billed to <%= wire.event.name %>.</span>
               </span>
             </label>
 
@@ -101,7 +101,7 @@
             </div>
           <% end %>
 
-          <span class="admin-form__hint">Already sent it yourself? Record it instead:</span>
+          <span class="block text-[0.8125rem] leading-snug opacity-60">Already sent it yourself? Record it instead:</span>
 
           <div>
             <%= button_to "🔧 Approve as manually sent", approve_wire_path(wire), method: :post, class: "btn bg-warning", form_class: "contents",
@@ -111,7 +111,7 @@
 
         <%= render "admin/review_reject", url: reject_wire_path(wire), noun: "wire" %>
       <% else %>
-        <section class="card admin-form__section">
+        <section class="card flex flex-col gap-3.5 overflow-visible">
           <p class="m0">
             This wire <%= wire.failed? ? "" : "is " %><strong><%= wire.aasm.current_state.to_s.humanize(capitalize: false) %></strong><% if wire.failed? %><%= wire.return_reason.presence ? ": #{wire.return_reason}" : " for an unknown reason" %><% end %>.
           </p>

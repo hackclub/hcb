@@ -2,9 +2,9 @@
 
 <% invoice = @invoice %>
 <%= turbo_frame_tag(admin_process_frame_id(invoice)) do %>
-  <div class="admin-review">
-    <div class="admin-review__hero">
-      <span class="admin-review__amount"><%= render_money invoice.item_amount %></span>
+  <div class="fields flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
+    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2 lg:col-span-full">
+      <span class="text-[1.75rem] font-bold leading-[1.1] tabular-nums"><%= render_money invoice.item_amount %></span>
       <span class="badge <%= invoice_state_badge(invoice) %> ml-0"><%= invoice.state_text %></span>
       <span class="flex-grow"></span>
       <%= link_to invoice.hosted_invoice_url, class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
@@ -17,10 +17,10 @@
       <% end %>
     </div>
 
-    <section class="card admin-form__section">
-      <h3 class="admin-form__title">Invoice</h3>
+    <section class="card flex flex-col gap-3.5 overflow-visible">
+      <h3 class="eyebrow m-0">Invoice</h3>
 
-      <dl class="admin-review__facts m0">
+      <div class="details m0">
         <%= render "admin/review_fact", label: "Number", value: invoice.number, copy: invoice.number %>
         <%= render "admin/review_fact", label: "Organization", value: link_to(invoice.event.name, invoice.event, target: "_top") %>
         <%= render "admin/review_fact", label: "Sponsor", value: invoice.sponsor.name %>
@@ -35,14 +35,14 @@
         <%= render "admin/review_fact", label: "Memo", value: invoice.memo %>
         <%= render "admin/review_fact", label: "Stripe ID", value: invoice.stripe_invoice_id, copy: invoice.stripe_invoice_id %>
         <%= render "admin/review_fact", label: "PDF", value: link_to("Download", invoice.invoice_pdf, target: "_blank") %>
-      </dl>
+      </div>
     </section>
 
     <% if invoice.open? %>
-      <section class="card admin-form__section">
-        <h3 class="admin-form__title">Mark as paid</h3>
+      <section class="card flex flex-col gap-3.5 overflow-visible">
+        <h3 class="eyebrow m-0">Mark as paid</h3>
 
-        <span class="admin-form__hint">
+        <span class="block text-[0.8125rem] leading-snug opacity-60">
           Use this when the sponsor paid by check, or by another method that isn't wired into our
           Stripe integration.
         </span>
@@ -54,16 +54,16 @@
           </p>
         </div>
 
-        <%= form_with(model: false, local: true, url: invoice_mark_paid_admin_path(invoice.id), method: :post, class: "admin-form__section", data: { turbo_frame: "_top" }) do |form| %>
+        <%= form_with(model: false, local: true, url: invoice_mark_paid_admin_path(invoice.id), method: :post, class: "flex flex-col gap-3.5 overflow-visible", data: { turbo_frame: "_top" }) do |form| %>
           <div class="field">
             <%= form.label :reason, "Reason" %>
-            <span class="admin-form__hint">How was this invoice actually paid?</span>
+            <span class="block text-[0.8125rem] leading-snug opacity-60">How was this invoice actually paid?</span>
             <%= form.text_field :reason, placeholder: "Paid by check #1234, deposited Jul 22", required: true %>
           </div>
 
           <div class="field">
             <%= form.label :attachment, "Supporting file" %>
-            <span class="admin-form__hint">Optional — a PDF or image of the check, ACH, or wire.</span>
+            <span class="block text-[0.8125rem] leading-snug opacity-60">Optional — a PDF or image of the check, ACH, or wire.</span>
             <%= form.file_field :attachment %>
           </div>
 
@@ -74,7 +74,7 @@
         <% end %>
       </section>
     <% else %>
-      <section class="card admin-form__section">
+      <section class="card flex flex-col gap-3.5 overflow-visible">
         <p class="m0">
           This invoice is <strong><%= invoice.state_text.downcase %></strong> — there's nothing to process.
         </p>

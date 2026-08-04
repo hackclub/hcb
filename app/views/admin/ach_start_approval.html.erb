@@ -11,9 +11,9 @@
                         end %>
 
 <%= turbo_frame_tag(admin_process_frame_id(transfer)) do %>
-  <div class="admin-review">
-    <div class="admin-review__hero">
-      <span class="admin-review__amount"><%= render_money transfer.amount %></span>
+  <div class="fields flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
+    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2 lg:col-span-full">
+      <span class="text-[1.75rem] font-bold leading-[1.1] tabular-nums"><%= render_money transfer.amount %></span>
       <span class="badge <%= state_badge %> ml-0"><%= state %></span>
       <% if transfer.event.balance_available_v2_cents.negative? %>
         <span class="badge bg-error ml-0">⚠️ Negative org balance</span>
@@ -32,11 +32,11 @@
       <% end %>
     </div>
 
-    <div class="admin-review__column">
-      <section class="card admin-form__section">
-        <h3 class="admin-form__title">Transfer</h3>
+    <div class="flex flex-col gap-4 min-w-0">
+      <section class="card flex flex-col gap-3.5 overflow-visible">
+        <h3 class="eyebrow m-0">Transfer</h3>
 
-        <dl class="admin-review__facts m0">
+        <div class="details m0">
           <% organization = safe_join([link_to(transfer.event.name, transfer.event, target: "_top"), tag.span("balance #{render_money transfer.event.balance_available_v2_cents}", class: "muted")], " · ") %>
           <%= render "admin/review_fact", label: "Organization", value: organization %>
 
@@ -78,25 +78,25 @@
           <% if transfer.processor %>
             <%= render "admin/review_fact", label: "Processed by", value: user_mention(transfer.processor) %>
           <% end %>
-        </dl>
+        </div>
       </section>
 
       <%= render "admin/review_receipts", hcb_code: %>
     </div>
 
-    <div class="admin-review__column">
+    <div class="flex flex-col gap-4 min-w-0">
       <% if transfer.pending? %>
         <% verb = transfer.scheduled_on.present? ? "Approve" : "Send" %>
 
-        <section class="card admin-form__section">
-          <h3 class="admin-form__title"><%= verb %></h3>
+        <section class="card flex flex-col gap-3.5 overflow-visible">
+          <h3 class="eyebrow m-0"><%= verb %></h3>
 
           <div class="field">
             <label class="bold">Transaction category</label>
             <%= render partial: "hcb_codes/transaction_category_form", locals: { model: hcb_code.ct || hcb_code.pt } %>
           </div>
 
-          <div class="admin-review__actions">
+          <div class="flex flex-wrap items-center gap-2">
             <%= form_with(model: false, local: true, url: ach_approve_admin_path(transfer), method: :post, class: "contents", data: { turbo_frame: "_top" }) do %>
               <%= button_tag "#{verb} transfer", name: nil, class: "btn bg-success",
                     data: { turbo_confirm: "Are you sure? Once an ACH transfer is sent, it cannot be un-sent." } %>
@@ -111,7 +111,7 @@
           </div>
 
           <% if transfer.scheduled_on.present? %>
-            <span class="admin-form__hint">
+            <span class="block text-[0.8125rem] leading-snug opacity-60">
               Once approved, this transfer sends automatically on <%= transfer.scheduled_on.strftime("%B %-d, %Y") %>.
             </span>
           <% end %>
@@ -119,7 +119,7 @@
 
         <%= render "admin/review_reject", url: ach_reject_admin_path(transfer) %>
       <% else %>
-        <section class="card admin-form__section">
+        <section class="card flex flex-col gap-3.5 overflow-visible">
           <p class="m0">
             <% if transfer.rejected? %>
               This transfer was rejected — it can't be approved.

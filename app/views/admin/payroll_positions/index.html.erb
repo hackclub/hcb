@@ -1,7 +1,7 @@
 <% title "Contractors" %>
 
-<%= form_with local: true, class: "card admin-filters", url: admin_payroll_positions_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: admin_payroll_positions_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= form.select :state, Payroll::Position.aasm.states_for_select, { include_blank: "All states", selected: @state } %>
     <%= render "admin/filters/actions", form: %>
@@ -24,7 +24,7 @@
   </thead>
   <tbody>
     <% @positions.each do |position| %>
-      <tr class="<%= "admin-bg-pending" if position.under_review? %>">
+      <tr class="<%= "shade-yellow" if position.under_review? %>">
         <td><%= position.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= link_to position.event.name, position.event %></td>
         <td>

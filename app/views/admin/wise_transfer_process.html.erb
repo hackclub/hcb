@@ -5,9 +5,9 @@
 <% approver = transfer.last_user_change_to(aasm_state: :approved) %>
 
 <%= turbo_frame_tag(admin_process_frame_id(transfer)) do %>
-  <div class="admin-review">
-    <div class="admin-review__hero">
-      <span class="admin-review__amount"><%= Money.from_cents(transfer.amount_cents, transfer.currency).format %></span>
+  <div class="fields flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
+    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2 lg:col-span-full">
+      <span class="text-[1.75rem] font-bold leading-[1.1] tabular-nums"><%= Money.from_cents(transfer.amount_cents, transfer.currency).format %></span>
       <% if transfer.event.balance_available_v2_cents.negative? %>
         <span class="badge bg-error ml-0">⚠️ Negative org balance</span>
       <% end %>
@@ -26,19 +26,19 @@
       <% end %>
     </div>
 
-    <div class="admin-review__full">
-      <div class="admin-review__states">
+    <div class="flex flex-col gap-4 min-w-0 lg:col-span-full">
+      <div class="flex flex-wrap gap-1.5 [&>.badge]:m-0">
         <% WiseTransfer.aasm.states.map(&:default_display_name).each do |state| %>
           <span class="badge h4 <%= state.downcase == transfer.aasm_state ? "bg-#{transfer.status_color}" : "bg-transparent text-slate border-solid border-[0.5px] border-smoke" %>"><%= state.humanize %></span>
         <% end %>
       </div>
     </div>
 
-    <div class="admin-review__column">
-      <section class="card admin-form__section">
-        <h3 class="admin-form__title">Transfer</h3>
+    <div class="flex flex-col gap-4 min-w-0">
+      <section class="card flex flex-col gap-3.5 overflow-visible">
+        <h3 class="eyebrow m-0">Transfer</h3>
 
-        <dl class="admin-review__facts m0">
+        <div class="details m0">
           <% organization = safe_join([link_to(transfer.event.name, transfer.event, target: "_top"), tag.span("balance #{render_money transfer.event.balance_available_v2_cents}", class: "muted")], " · ") %>
           <%= render "admin/review_fact", label: "Organization", value: organization %>
           <%= render "admin/review_fact", label: "Payment for", value: transfer.payment_for %>
@@ -57,13 +57,13 @@
           <% if transfer.wise_id.present? %>
             <%= render "admin/review_fact", label: "Wise ID", value: link_to(transfer.wise_id, transfer.wise_url, target: "_blank"), copy: transfer.wise_id %>
           <% end %>
-        </dl>
+        </div>
       </section>
 
-      <section class="card admin-form__section">
-        <h3 class="admin-form__title">Recipient</h3>
+      <section class="card flex flex-col gap-3.5 overflow-visible">
+        <h3 class="eyebrow m-0">Recipient</h3>
 
-        <dl class="admin-review__facts m0">
+        <div class="details m0">
           <% payee = transfer.recipient_name %>
           <% payee = safe_join([payee, link_to("view on Wise", transfer.wise_recipient_url, target: "_blank")], " · ") if transfer.wise_recipient_url %>
           <%= render "admin/review_fact", label: "Payee", value: payee, copy: transfer.recipient_name %>
@@ -78,38 +78,38 @@
               <%= render "admin/review_fact", label: key.humanize, value: value, copy: value, fs_exclude: true %>
             <% end %>
           <% end %>
-        </dl>
+        </div>
       </section>
 
       <%= render "admin/review_receipts", hcb_code: %>
     </div>
 
-    <div class="admin-review__column">
+    <div class="flex flex-col gap-4 min-w-0">
       <% if transfer.pending? %>
-        <section class="card admin-form__section">
-          <h3 class="admin-form__title">Approve</h3>
+        <section class="card flex flex-col gap-3.5 overflow-visible">
+          <h3 class="eyebrow m-0">Approve</h3>
 
-          <span class="admin-form__hint">
+          <span class="block text-[0.8125rem] leading-snug opacity-60">
             You're only checking the transfer's purpose and documentation here — the balance check
             happens after approval.
           </span>
 
-          <div class="admin-review__actions">
+          <div class="flex flex-wrap items-center gap-2">
             <%= button_to "💸 Approve and self-assign", approve_wise_transfer_path(transfer), method: :post, class: "btn bg-success", form_class: "contents", data: { turbo_frame: "_top" } %>
           </div>
         </section>
 
         <%= render "admin/review_reject", url: reject_wise_transfer_path(transfer) %>
       <% elsif transfer.approved? %>
-        <section class="card admin-form__section">
-          <h3 class="admin-form__title">Metadata</h3>
+        <section class="card flex flex-col gap-3.5 overflow-visible">
+          <h3 class="eyebrow m-0">Metadata</h3>
 
           <div class="field">
             <label class="bold">Transaction category</label>
             <%= render partial: "hcb_codes/transaction_category_form", locals: { model: hcb_code.ct || hcb_code.pt } %>
           </div>
 
-          <%= form_with(model: transfer, local: true, url: wise_transfer_path(transfer), method: :patch, class: "admin-form__section", data: { turbo_frame: "_top" }) do |form| %>
+          <%= form_with(model: transfer, local: true, url: wise_transfer_path(transfer), method: :patch, class: "flex flex-col gap-3.5 overflow-visible", data: { turbo_frame: "_top" }) do |form| %>
             <div class="field">
               <%= form.label :wise_recipient_id, "Wise recipient ID" %>
               <%= form.text_field :wise_recipient_id, placeholder: "https://wise.com/recipients/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" %>
@@ -119,14 +119,14 @@
           <% end %>
         </section>
 
-        <section class="card admin-form__section" x-data="{ amount: null, pending_amount: <%= transfer.quoted_usd_amount_cents %>, balance: <%= transfer.event.balance_available_v2_cents %> }">
-          <h3 class="admin-form__title">Send</h3>
+        <section class="card flex flex-col gap-3.5 overflow-visible" x-data="{ amount: null, pending_amount: <%= transfer.quoted_usd_amount_cents %>, balance: <%= transfer.event.balance_available_v2_cents %> }">
+          <h3 class="eyebrow m-0">Send</h3>
 
-          <%= form_with(model: transfer, local: true, url: wise_transfer_path(transfer), method: :patch, class: "admin-form__section", data: { turbo_frame: "_top" }) do |form| %>
+          <%= form_with(model: transfer, local: true, url: wise_transfer_path(transfer), method: :patch, class: "flex flex-col gap-3.5 overflow-visible", data: { turbo_frame: "_top" }) do |form| %>
             <div class="field">
               <%= form.label :usd_amount, "Amount (USD)" %>
               <div class="input input-group">
-                <span class="admin-form__prefix">$</span>
+                <span class="shrink-0 pl-1 font-bold opacity-50 select-none">$</span>
                 <%= form.number_field :usd_amount, placeholder: "500.00", step: 0.01, required: true, class: "bg-transparent", "@change": "amount = +$event.target.value * 100", "@keyup": "amount = +$event.target.value * 100", data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
               </div>
             </div>
@@ -142,11 +142,11 @@
 
             <div>
               <%= button_tag "🏦 Update amount", name: nil, class: "btn btn-default" %>
-              <span class="admin-form__hint">Updates the pending amount.</span>
+              <span class="block text-[0.8125rem] leading-snug opacity-60">Updates the pending amount.</span>
             </div>
           <% end %>
 
-          <%= form_with(model: transfer, local: true, url: mark_sent_wise_transfer_path(transfer), method: :post, class: "admin-form__section", data: { turbo_frame: "_top" }) do |form| %>
+          <%= form_with(model: transfer, local: true, url: mark_sent_wise_transfer_path(transfer), method: :post, class: "flex flex-col gap-3.5 overflow-visible", data: { turbo_frame: "_top" }) do |form| %>
             <div class="field">
               <%= form.label :wise_id, "Wise ID / URL" %>
               <%= form.text_field :wise_id, placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", disabled: transfer.usd_amount_cents.nil?, onpaste: "var urlPrefix = 'https://wise.com/transactions/activities/by-resource/TRANSFER/'; var clipboardData = event.clipboardData.getData('Text'); clipboardData.startsWith(urlPrefix) ? (event.preventDefault(), event.target.value = clipboardData.substring(urlPrefix.length)) : null" %>
@@ -158,7 +158,7 @@
 
         <%= render "admin/review_reject", url: reject_wise_transfer_path(transfer) %>
       <% else %>
-        <section class="card admin-form__section">
+        <section class="card flex flex-col gap-3.5 overflow-visible">
           <p class="m0">
             This transfer <%= transfer.failed? ? "" : "is " %><strong><%= transfer.aasm.current_state.to_s.humanize(capitalize: false) %></strong><% if transfer.failed? %><%= transfer.return_reason.presence ? ": #{transfer.return_reason}" : " for an unknown reason" %><% end %>.
           </p>
@@ -166,13 +166,13 @@
       <% end %>
 
       <% if transfer.may_mark_failed? %>
-        <section class="card admin-form__section">
-          <h3 class="admin-form__title">Fail</h3>
+        <section class="card flex flex-col gap-3.5 overflow-visible">
+          <h3 class="eyebrow m-0">Fail</h3>
 
-          <%= form_with(model: false, local: true, url: mark_failed_wise_transfer_path(transfer), method: :post, class: "admin-form__section", data: { turbo_frame: "_top" }) do |form| %>
+          <%= form_with(model: false, local: true, url: mark_failed_wise_transfer_path(transfer), method: :post, class: "flex flex-col gap-3.5 overflow-visible", data: { turbo_frame: "_top" }) do |form| %>
             <div class="field">
               <%= form.label :reason, "Failure reason" %>
-              <span class="admin-form__hint">Markdown supported.</span>
+              <span class="block text-[0.8125rem] leading-snug opacity-60">Markdown supported.</span>
               <%= form.text_area :reason, rows: 3 %>
             </div>
 
@@ -184,11 +184,11 @@
       <% end %>
     </div>
 
-    <div class="admin-review__full">
-      <section class="card admin-form__section">
-        <h3 class="admin-form__title">How to send a Wise transfer</h3>
+    <div class="flex flex-col gap-4 min-w-0 lg:col-span-full">
+      <section class="card flex flex-col gap-3.5 overflow-visible">
+        <h3 class="eyebrow m-0">How to send a Wise transfer</h3>
 
-        <ol class="admin-review__steps">
+        <ol class="flex flex-col gap-2 m-0 pl-5">
           <li>Approve and self-assign, so nobody else processes it at the same time.</li>
           <li>Enter the transfer in Wise, then update the USD amount here to run the balance check.</li>
           <li>Complete the transfer in Wise and paste the Wise transfer ID back in.</li>

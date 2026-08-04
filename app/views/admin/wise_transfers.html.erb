@@ -1,13 +1,13 @@
 <% title "Wise Transfers" %>
 
-<%= form_with local: true, class: "card admin-filters", url: wise_transfers_admin_index_path, method: :get do |form| %>
-  <div class="admin-filters__row">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: wise_transfers_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
     <%= render "admin/filters/event", event: @event %>
     <%= form.collection_select(:status, WiseTransfer.aasm.states, :name, :human_name, { include_blank: "All statuses", selected: @status }) %>
     <%= render "admin/date_range_filter", start_date: @start_date, end_date: @end_date %>
   </div>
-  <div class="admin-filters__row">
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "admin/filters/toggle", form:, name: :exclude_reimbursements, label: "Exclude reimbursements", checked: @exclude_reimbursements %>
     <%= render "admin/filters/actions", form: %>
   </div>
@@ -28,7 +28,7 @@
   </thead>
   <tbody>
     <% @wise_transfers.each do |wise_transfer| %>
-      <tr class="<%= "admin-bg-pending" if wise_transfer.pending? %> <%= "admin-bg-transit" if wise_transfer.approved? %>">
+      <tr class="<%= "shade-yellow" if wise_transfer.pending? %> <%= "shade-cyan" if wise_transfer.approved? %>">
         <td><%= wise_transfer.id %></td>
         <td><%= wise_transfer.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= wise_transfer.event.name %></td>
