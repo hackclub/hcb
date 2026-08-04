@@ -18,7 +18,7 @@
   <section class="hcb-code--info">
     <p>
       <strong>Rate</strong>
-      <%= "#{render_money @position.rate_cents}/hr" %>
+      <%= "#{render_money @position.rate_cents}#{@position.rate_suffix}" %>
     </p>
     <p>
       <strong>Period</strong>

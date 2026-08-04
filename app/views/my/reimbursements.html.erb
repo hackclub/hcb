@@ -26,6 +26,13 @@
           <%= inline_icon "plus" %>
           Start report
         <% end %>
+      <% else %>
+        <span class="tooltipped tooltipped--n tooltipped--xl inline-block" aria-label="You aren't a member of any HCB organization, so you'll need to be invited to start a reimbursement report.">
+          <button class="!ml-0 btn bg-success" disabled>
+            <%= inline_icon "plus" %>
+            Start report
+          </button>
+        </span>
       <% end %>
     </div>
   </h1>

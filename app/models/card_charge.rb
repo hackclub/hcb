@@ -5,17 +5,22 @@
 # Table name: card_charges
 #
 #  id                                :bigint           not null, primary key
+#  merchant_category                 :string
 #  created_at                        :datetime         not null
 #  updated_at                        :datetime         not null
+#  merchant_network_id               :string
 #  raw_pending_stripe_transaction_id :bigint
+#  stripe_card_id                    :bigint
 #
 # Indexes
 #
 #  index_card_charges_on_raw_pending_stripe_transaction_id  (raw_pending_stripe_transaction_id) UNIQUE
+#  index_card_charges_on_stripe_card_id                     (stripe_card_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (raw_pending_stripe_transaction_id => raw_pending_stripe_transactions.id) ON DELETE => nullify
+#  fk_rails_...  (stripe_card_id => stripe_cards.id)
 #
 # Raw objects are matched to their charge purely by Stripe IDs: a
 # RawPendingStripeTransaction's `stripe_transaction_id` and a
@@ -23,22 +28,14 @@
 # authorization ID (iauth_...).
 class CardCharge < ApplicationRecord
   belongs_to :raw_pending_stripe_transaction, optional: true
+  belongs_to :stripe_card, optional: true
   has_many :card_charge_raw_stripe_transactions, dependent: :destroy
   has_many :raw_stripe_transactions, through: :card_charge_raw_stripe_transactions
 
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
 
-  scope :on_card, ->(stripe_card) {
-    left_joins(:raw_pending_stripe_transaction, :raw_stripe_transactions)
-      .where(
-        "raw_pending_stripe_transactions.stripe_transaction->'card'->>'id' = :stripe_id OR raw_stripe_transactions.stripe_transaction->>'card' = :stripe_id",
-        stripe_id: stripe_card.stripe_id
-      )
-  }
-
-  def stripe_card
-    (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_card
-  end
+  before_create :set_merchant_data
+  before_create :set_stripe_card
 
   def stripe_cardholder
     stripe_card&.stripe_cardholder
@@ -53,13 +50,12 @@ class CardCharge < ApplicationRecord
   end
 
   def icon
-    merchant = YellowPages::Merchant.lookup(network_id: merchant_data["network_id"])
-    category = merchant_data["category"]
-    categorised_category = BreakdownEngine::Categorizer.new(category).run
+    merchant = YellowPages::Merchant.lookup(network_id: merchant_network_id || "")
+    categorised_category = BreakdownEngine::Categorizer.new(merchant_category).run
 
     if merchant.icon.present?
       merchant
-    elsif %w[passenger_railways railroads commuter_transport_and_ferries].include?(category)
+    elsif %w[passenger_railways railroads commuter_transport_and_ferries].include?(merchant_category)
       "train"
     elsif categorised_category == "Food"
       "food"
@@ -85,7 +81,14 @@ class CardCharge < ApplicationRecord
 
       existing
     else
-      create!(raw_pending_stripe_transaction:)
+      charge = create!(raw_pending_stripe_transaction:)
+
+      # set_merchant_data reads raw_stripe_transactions in a before_create hook,
+      # which caches the (empty) collection on this instance. Reset it so the
+      # charge picks up transactions that settle onto it later.
+      charge.association(:raw_stripe_transactions).reset
+
+      charge
     end
   end
 
@@ -107,6 +110,15 @@ class CardCharge < ApplicationRecord
     raw_stripe_transaction.association(:card_charge).reset
 
     charge
+  end
+
+  def set_merchant_data
+    self.merchant_network_id ||= merchant_data&.[]("network_id")
+    self.merchant_category ||= merchant_data&.[]("category")
+  end
+
+  def set_stripe_card
+    self.stripe_card_id ||= (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_card&.id
   end
 
 end
