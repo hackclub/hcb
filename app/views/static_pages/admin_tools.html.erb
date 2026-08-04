@@ -98,9 +98,9 @@
         <ul class="grid text-left w-100 pt-2" id="old-card-grid">
           <%= card_to "YSWS verification", link_to_airtable_task(:you_ship_we_ship), async_badge: :pending_you_ship_we_ship_airtable %>
           <%= card_to "PVSA", link_to_airtable_task(:pvsa), async_badge: :pending_pvsa_airtable %>
-          <%= card_to "Organizations (old)", events_path %>
+          <%= card_to "Organizations", events_path, id: "card-organizations-old" %>
           <%= card_to "Negative organizations", negative_events_path %>
-          <%= card_to "Sponsors (old)", sponsors_path %>
+          <%= card_to "Sponsors", sponsors_path, id: "card-sponsors-old" %>
           <%= card_to "Google Workspace accounts", g_suite_accounts_path %>
           <%= card_to "Bookkeeping", bookkeeping_path %>
           <%= card_to "Emburse cards", emburse_cards_path %>
@@ -108,7 +108,7 @@
           <%= card_to "Emburse transactions", emburse_transactions_path %>
           <%= card_to "Search by user", admin_search_path %>
           <%= card_to "Knowledgebase", "https://hack.af/hcb-knowledgebase" %>
-          <%= card_to "Bank accounts (old)", bank_accounts_path %>
+          <%= card_to "Bank accounts", bank_accounts_path, id: "card-bank-accounts-old" %>
           <%= card_to "Setup HCB", new_bank_account_path %>
           <%= card_to "Bank accounts", bank_accounts_admin_index_path, badge: BankAccount.failing.count %>
           <%= card_to "HCB codes", hcb_codes_admin_index_path %>
