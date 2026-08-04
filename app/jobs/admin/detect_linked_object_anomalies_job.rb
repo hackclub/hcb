@@ -13,7 +13,7 @@ module Admin
             hashid: item.hashid,
             memo: item.memo,
             hcb_code_lo_type: item.hcb_code.linked_object.class.name,
-            hcb_code_lo_id: item.hcb_code.linked_object.id,
+            hcb_code_lo_id: item.hcb_code.linked_object&.id,
             ledger_item_lo_type: item.linked_object_type,
             ledger_item_lo_id: item.linked_object_id
           }
