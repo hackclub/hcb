@@ -25,7 +25,7 @@ RSpec.describe StripeServiceFeeService::CreateCanonicalPendingTransaction, type:
       rpssft = stripe_service_fee.reload.raw_pending_stripe_service_fee_transaction
 
       expect(rpssft).to be_present
-      expect(rpssft.amount_cents).to eq(stripe_service_fee.amount_cents)
+      expect(rpssft.amount_cents).to eq(-stripe_service_fee.amount_cents)
       expect(rpssft.date_posted).to eq(stripe_service_fee.created_at.to_date)
     end
 
@@ -33,7 +33,7 @@ RSpec.describe StripeServiceFeeService::CreateCanonicalPendingTransaction, type:
       canonical_pending_transaction = run
 
       expect(canonical_pending_transaction).to be_present
-      expect(canonical_pending_transaction.amount_cents).to eq(stripe_service_fee.amount_cents)
+      expect(canonical_pending_transaction.amount_cents).to eq(-stripe_service_fee.amount_cents)
       expect(canonical_pending_transaction.raw_pending_stripe_service_fee_transaction)
         .to eq(stripe_service_fee.reload.raw_pending_stripe_service_fee_transaction)
     end

@@ -23,18 +23,23 @@ class PaymentsController < ApplicationController
   def create
     authorize @event, policy_class: PaymentPolicy
 
-    @payee = @event.payees.not_archived.find_by_hashid!(payment_params[:payee_id])
-    @legal_entity = @payee.legal_entity
+    @payee = @event.payees.not_archived.find_by_hashid(payment_params[:payee_id])
+    @legal_entity = @payee&.legal_entity
     @payment = Payment.new(payment_params.except(:payee_id, :file).merge(creator: current_user, payee: @payee, currency: "USD"))
+
+    if @payee.nil?
+      flash.now[:error] = "Please choose a recipient for this payment."
+      return render :new, layout: "transfer", status: :unprocessable_content
+    end
 
     if payment_params[:file].blank?
       flash.now[:error] = "Please attach a receipt or invoice for this payment."
-      return render :new, layout: "transfer", status: :unprocessable_entity
+      return render :new, layout: "transfer", status: :unprocessable_content
     end
 
     if @payment.amount_cents > @event.balance_available_v2_cents
       flash.now[:error] = "Your organization doesn't have enough money to send this payment! Your balance is #{helpers.render_money(@event.balance_available_v2_cents)}."
-      return render :new, layout: "transfer", status: :unprocessable_entity
+      return render :new, layout: "transfer", status: :unprocessable_content
     end
 
     ActiveRecord::Base.transaction do
@@ -56,7 +61,7 @@ class PaymentsController < ApplicationController
     redirect_to payment_path(@payment)
   rescue ActiveRecord::RecordInvalid => e
     flash.now[:error] = e.message
-    render :new, layout: "transfer", status: :unprocessable_entity
+    render :new, layout: "transfer", status: :unprocessable_content
   end
 
   def cancel

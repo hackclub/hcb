@@ -78,6 +78,8 @@
     </div>
   </div>
 
+  <%= render "card_grants/policy_callout" %>
+
   <footer class="modal__action-row pt1 flex items-center justify-between sticky bottom-0 <% if defined?(@popover) && @popover %>mt2" style="border-top: none;<% end %>">
     <% if @event.card_grant_setting.present? %>
       <%= link_to edit_event_path(@event, tab: "card_grants"), data: { turbo_frame: "_top" }, class: "btn btn--primary mr2" do %>

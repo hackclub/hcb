@@ -396,22 +396,24 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   &.badge::before {
     border-radius: 99px;
   }
-}
 
-.admin-tools::before {
-  content: '';
-  border-radius: 0.5rem;
-  border: 2px dotted rgba(map-get($palette, warning), 0.3);
-  inset: 0px;
-  &:not(td) {
+  &::before {
+    content: '';
+    border-radius: 0.5rem;
+    border: 2px dotted rgba(map-get($palette, warning), 0.3);
+    inset: 0px;
+    background: rgba(map-get($palette, pending), 0.08);
+    position: absolute;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  &:not(td)::before {
     top: -2.5px;
     right: -2.5px;
     bottom: -2.5px;
     left: -2.5px;
   }
-  background: rgba(map-get($palette, pending), 0.08);
-  position: absolute;
-  pointer-events: none;
 }
 
 .dev-tools {
