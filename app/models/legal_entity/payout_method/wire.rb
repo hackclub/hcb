@@ -30,6 +30,12 @@ class LegalEntity
 
       include HasWireRecipient
 
+      def self.permitted_attributes
+        [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code,
+         :recipient_country, :recipient_name, :bic_code, :account_number] +
+          recipient_information_accessors
+      end
+
       def kind
         "international_wire"
       end
@@ -54,8 +60,44 @@ class LegalEntity
         "international wire to account ending in ••••#{account_number.to_s.last(4)}"
       end
 
+      def short_label
+        last4 = account_number.to_s.last(4) if account_number.to_s.size >= 8
+        last4.present? ? "Wire (••••#{last4})" : "Wire"
+      end
+
+      def detail_summary
+        last4 = account_number.to_s.last(4) if account_number.to_s.size >= 8
+        last4.present? ? "Account ••••#{last4}" : "Wire transfer"
+      end
+
       def currency
         "USD"
+      end
+
+      # See LegalEntity::PayoutMethod for the shared `create_transfer` contract.
+      def create_transfer(event, amount:, payment_for:, recipient_email:, user:, recipient_name:, memo:, send_email_notification: false, **)
+        event.wires.build(
+          address_line1:,
+          address_line2:,
+          address_city:,
+          address_state:,
+          address_postal_code:,
+          recipient_country:,
+          account_number:,
+          bic_code:,
+          recipient_information: recipient_information.merge({
+                                                               purpose_code: Wire.reimbursement_purpose_code_for(recipient_country),
+                                                               remittance_info: Wire.reimbursement_remittance_info_for(recipient_country),
+                                                             }),
+          amount_cents: amount,
+          recipient_name: self.recipient_name.presence || recipient_name,
+          recipient_email:,
+          payment_for: payment_for&.slice(0...140),
+          memo:,
+          user:,
+          currency:,
+          send_email_notification:,
+        )
       end
 
     end

@@ -5,12 +5,12 @@
 # Table name: event_affiliations
 #
 #  id              :bigint           not null, primary key
-#  affiliable_type :string           not null
 #  metadata        :jsonb            not null
 #  name            :string           not null
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  affiliable_id   :bigint           not null
+#  affiliable_type :string           not null
 #
 # Indexes
 #

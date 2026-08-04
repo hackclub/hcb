@@ -168,9 +168,6 @@
     <%= blankslate "No donations yet" %>
   <% end %>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <%= javascript_include_tag "donation_qr_codes.js" %>
-
   <% if organizer_signed_in? %>
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="donation_settings">
       <%= modal_header("Settings", external_link: edit_event_path(@event, tab: "donations")) %>

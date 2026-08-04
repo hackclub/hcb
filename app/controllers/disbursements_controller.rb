@@ -89,20 +89,20 @@ class DisbursementsController < ApplicationController
     events = base.reorder(*order_clauses).limit(25).to_a
 
     options = events.map do |e|
+      disabled_message = nil
       disabled_message = "Insufficient balance" if sending && !admin_signed_in? && e.balance_available <= 0
       disabled_message = "HCB transfers disabled" if sending && !policy(e).create_transfer?
 
-
-      right = disabled_message || helpers.render_money_short(e.balance_available)
-      attrs = disabled_message ? { data: { disabled_option: "" } } : {}
       name_label = admin_signed_in? ? "#{e.name} (#{e.id})" : e.name
-      content = helpers.content_tag(:div, class: "flex flex-col w-full #{disabled_message ? "opacity-50" : ""}", **attrs) do
-        helpers.content_tag(:span, name_label, style: "white-space:normal") + helpers.content_tag(:span, right, class: "text-sm muted")
-      end
-      { value: e.public_id, display: e.name, content: content }
+      {
+        value: e.public_id,
+        label: name_label,
+        sublabel: disabled_message || helpers.render_money_short(e.balance_available),
+        disabled: disabled_message.present?
+      }
     end
 
-    render turbo_stream: helpers.async_combobox_options(options)
+    render json: options
   end
 
   def create

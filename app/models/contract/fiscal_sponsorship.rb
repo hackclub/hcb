@@ -6,7 +6,6 @@
 #
 #  id                   :bigint           not null, primary key
 #  aasm_state           :string           not null
-#  contractable_type    :string
 #  cosigner_email       :string
 #  deleted_at           :datetime
 #  external_service     :integer
@@ -18,6 +17,7 @@
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
 #  contractable_id      :bigint
+#  contractable_type    :string
 #  document_id          :bigint
 #  external_id          :string
 #  external_template_id :string
@@ -121,8 +121,16 @@ class Contract
       payload
     end
 
+    def agreement_name
+      "fiscal sponsorship agreement"
+    end
+
     def required_roles
       ["hcb", "signee"]
+    end
+
+    def permitted_roles
+      ["hcb", "signee", "cosigner"]
     end
 
     def pending_signee_information

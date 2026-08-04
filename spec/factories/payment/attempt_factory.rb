@@ -12,6 +12,7 @@ FactoryBot.define do
     # integration tests, not unit tests. Override with :real_transfer when needed.
     after(:build) do |attempt|
       allow(attempt).to receive(:create_transfer!)
+      allow(attempt).to receive(:legal_entity_payable)
     end
 
     trait :pending do
