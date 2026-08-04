@@ -56,9 +56,7 @@ class Ledger
         results = results.where(id: Ledger::Mapping.where(ledger_id: ledgers).select(:ledger_item_id))
       end
 
-      # Pending items sort first regardless of datetime. A CASE (rather than
-      # ordering on a boolean expression) keeps NULL statuses — rows not yet
-      # backfilled — grouped with the non-pending items.
+      # Pending items sort first regardless of datetime.
       pending_first = Arel::Nodes::Case.new
                                        .when(Ledger::Item.arel_table[:status].eq(Ledger::Item.statuses[:pending])).then(0)
                                        .else(1)

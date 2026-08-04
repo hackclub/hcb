@@ -424,6 +424,8 @@ Rails.application.routes.draw do
   resources :organizer_position_deletion_requests, only: [:index, :show, :create], concerns: :commentable do
     post "close"
     post "open"
+    post "assign"
+    post "unassign"
   end
 
   resources :g_suite_accounts, only: [:index, :create, :update, :edit, :destroy], path: "g_suite_accounts" do
@@ -998,6 +1000,7 @@ Rails.application.routes.draw do
     get "transactions"
     get "transactions_list"
     get "ledger"
+    post "toggle_new_ledger"
     get "stats"
     get "merchants_filter"
     put "toggle_hidden"
