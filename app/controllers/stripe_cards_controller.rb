@@ -77,7 +77,9 @@ class StripeCardsController < ApplicationController
     end
 
     @show_card_details = params[:show_details] == "true"
-    @event = @card.event
+    # `Event` is paranoid, so `@card.event` is nil when the org has been deleted.
+    # Only auditors can reach that page (`role_at_least?` is false without an event).
+    @event = @card.event || Event.with_deleted.find_by(id: @card.event_id)
 
     @hcb_codes = @card.local_hcb_codes
                       .includes(canonical_pending_transactions: [:raw_pending_stripe_transaction], canonical_transactions: :transaction_source)
