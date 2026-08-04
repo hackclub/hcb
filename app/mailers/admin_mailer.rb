@@ -126,6 +126,15 @@ class AdminMailer < ApplicationMailer
     )
   end
 
+  def linked_object_anomalies(anomalous_items:)
+    @anomalous_items = anomalous_items
+
+    mail(
+      to: "admin@bank.engineering",
+      subject: "#{anomalous_items.length} items have linked object anomalies"
+    )
+  end
+
   private
 
   def engineers
