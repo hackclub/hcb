@@ -311,7 +311,7 @@ class CardGrant < ApplicationRecord
   end
 
   def default_expiration_at
-    (created_at || Time.current) + CardGrantSetting.expiration_preferences[card_grant_setting&.expiration_preference || "1 year"].days
+    (created_at || Time.current) + CardGrantSetting.expiration_preferences[card_grant_setting&.expiration_preference || "90 days"].days
   end
 
   def last_time_change_to(...)
