@@ -10,10 +10,12 @@ module Reimbursement
     skip_before_action :signed_in_user, only: [:show, :start, :create, :finished]
     skip_after_action :verify_authorized, only: [:start, :finished]
 
-    # Opted out of the timestamp check: this form has not been checked for
-    # multi-step flows that would consume the session token. See
-    # config/initializers/invisible_captcha.rb.
-    invisible_captcha only: [:create], honeypot: :subtitle, timestamp_enabled: false
+    # `create` is reachable without a session whenever the organization has
+    # turned on its public reimbursement page, and it creates a User, so it
+    # takes the timestamp check like the other public forms. Safe here because
+    # the public form on `start` is the only thing that posts to it, in one
+    # step, so nothing consumes the session token in between.
+    invisible_captcha only: [:create], honeypot: :subtitle
 
     # POST /reimbursement_reports
     def create
