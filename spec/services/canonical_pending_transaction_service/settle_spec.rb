@@ -24,6 +24,23 @@ RSpec.describe CanonicalPendingTransactionService::Settle do
     expect(canonical_pending_transaction.canonical_pending_settled_mappings).to eq([canonical_pending_settled_mapping])
   end
 
+  context "when the canonical_pending_transaction is already settled" do
+    let(:other_canonical_transaction) { create(:canonical_transaction) }
+
+    it "does not create a second canonical_pending_settled_mapping" do
+      described_class.new(
+        canonical_transaction: other_canonical_transaction,
+        canonical_pending_transaction:
+      ).run!
+
+      expect {
+        service.run!
+      }.to_not change(CanonicalPendingSettledMapping, :count)
+
+      expect(canonical_pending_transaction.reload.canonical_transactions).to eq([other_canonical_transaction])
+    end
+  end
+
   context "when canonical_pending_transaction has a custom_memo" do
     let(:canonical_pending_transaction) { create(:canonical_pending_transaction, custom_memo: "I am a custom memo") }
 

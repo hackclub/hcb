@@ -15,10 +15,9 @@ RSpec.describe CanonicalPendingTransactionService::Unsettle do
   }
 
   it "deletes all associated canonical_pending_settled_mappings" do
-    create_list(:canonical_pending_settled_mapping, 2,
-                canonical_pending_transaction:,
-                canonical_transaction: )
-
+    create(:canonical_pending_settled_mapping,
+           canonical_pending_transaction:,
+           canonical_transaction: )
 
     service.run
     expect(CanonicalPendingSettledMapping.exists?).to eq(false)

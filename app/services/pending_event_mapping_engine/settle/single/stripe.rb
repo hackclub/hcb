@@ -9,6 +9,13 @@ module PendingEventMappingEngine
         end
 
         def run
+          # Refunds share the authorization id of the original charge they're
+          # refunding, so they'd otherwise resolve to the same CPT as the
+          # charge and settle it a second time (to the refund's CT instead of
+          # the charge's CT). A CPT should only ever settle to the original
+          # charge.
+          return if @canonical_transaction.stripe_refund?
+
           raw_pending_stripe_transaction = RawPendingStripeTransaction.find_by(stripe_transaction_id: @canonical_transaction.raw_stripe_transaction.stripe_authorization_id)
           return if raw_pending_stripe_transaction.nil?
 

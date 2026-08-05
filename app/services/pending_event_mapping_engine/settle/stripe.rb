@@ -9,7 +9,11 @@ module PendingEventMappingEngine
 
           raw_stripe_transactions = RawStripeTransaction.where(stripe_authorization_id:)
 
-          raw_stripe_transactions.each do |rst|
+          # Refunds share the authorization id of the original charge, so
+          # they'd otherwise resolve to the same CPT as the charge and settle
+          # it a second time (to the refund's CT instead of the charge's CT).
+          # A CPT should only ever settle to the original charge.
+          raw_stripe_transactions.reject(&:refund?).each do |rst|
             # 1. lookup canonical
             rst.hashed_transactions.each do |ht|
               ct = ht.canonical_transaction

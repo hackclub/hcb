@@ -8,6 +8,11 @@ module CanonicalPendingTransactionService
     end
 
     def run!
+      # A CPT should only ever settle to a single CT. Without this guard, two
+      # callers racing (e.g. the real-time and nightly settle paths) could
+      # each create a mapping for the same CPT to two different CTs.
+      return false if @canonical_pending_transaction.settled?
+
       ActiveRecord::Base.transaction do
         CanonicalPendingSettledMapping.create!(
           canonical_transaction: @canonical_transaction,
@@ -33,6 +38,10 @@ module CanonicalPendingTransactionService
           SpendingControlService.check_low_balance(spending_control, @canonical_transaction.local_hcb_code)
         end
       end
+    rescue ActiveRecord::RecordNotUnique
+      # Lost the race to another caller settling the same CPT (or the same CT
+      # settling twice) concurrently.
+      false
     end
 
     private
