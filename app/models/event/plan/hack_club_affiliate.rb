@@ -59,6 +59,12 @@ class Event
         2838847
       end
 
+      # Hack Club's own projects aren't fiscally sponsored by Hack Club; this
+      # template is a plain contract.
+      def contract_name
+        "contract"
+      end
+
       def contract_skip_prefills
         {
           "Contract Signee" => ["Telephone", "Email", "The Project"],
