@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_31_160241) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_04_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -374,8 +374,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_31_160241) do
     t.bigint "canonical_transaction_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["canonical_pending_transaction_id"], name: "index_canonical_pending_settled_map_on_canonical_pending_tx_id"
-    t.index ["canonical_transaction_id"], name: "index_canonical_pending_settled_mappings_on_canonical_tx_id"
+    t.index ["canonical_pending_transaction_id"], name: "index_cpsm_on_cpt_id", unique: true
+    t.index ["canonical_transaction_id"], name: "index_cpsm_on_ct_id", unique: true
   end
 
   create_table "canonical_pending_transactions", force: :cascade do |t|

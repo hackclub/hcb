@@ -431,6 +431,10 @@ class HcbCode < ApplicationRecord
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_FORCE_CAPTURE_CODE
   end
 
+  def card_charge?
+    stripe_card? || stripe_force_capture?
+  end
+
   def stripe_service_fee?
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_SERVICE_FEE_CODE
   end
@@ -526,6 +530,12 @@ class HcbCode < ApplicationRecord
     @stripe_service_fee ||= StripeServiceFee.find_by(id: hcb_i2) if stripe_service_fee?
   end
 
+  def card_charge
+    return nil unless card_charge?
+
+    @card_charge ||= raw_stripe_transaction&.card_charge || pt&.raw_pending_stripe_transaction&.card_charge
+  end
+
   def check_deposit?
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::CHECK_DEPOSIT_CODE
   end
@@ -618,7 +628,8 @@ class HcbCode < ApplicationRecord
       check_deposit || outgoing_disbursement ||
       incoming_disbursement || bank_fee ||
       fee_revenue || reimbursement_expense_payout ||
-      reimbursement_payout_holding || stripe_service_fee
+      reimbursement_payout_holding || stripe_service_fee ||
+      card_charge
   end
 
   # The `:receipt_required` scope determines the type of
