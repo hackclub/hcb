@@ -2,7 +2,6 @@
 <%# The picker always opens in contractor mode; the manual-payee controller
     toggles to the manual path client-side via the enable/undo buttons. %>
 <% manual = false %>
-<% manual_allowed = Flipper.enabled?(:manual_payees_2026_08_05, event) %>
 
 <div>
   <div data-payee-picker-target="defaultPanel" class="py-2">
@@ -89,7 +88,7 @@
           <button type="button" class="btn bg-blue w-full gap-2 mt-3" data-action="manual-payee#continue">
             Continue <%= inline_icon "view-forward" %>
           </button>
-          <% if manual_allowed %>
+          <% if Flipper.enabled?(:manual_payees_2026_08_05, event) %>
             <button type="button" class="!shadow-none btn w-full text-sm font-[500] mt-1" data-manual-payee-target="enableButton" data-action="manual-payee#enable" <%= "hidden" if manual %>>
               I want to submit tax and payout information on behalf of the recipient
             </button>
