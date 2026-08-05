@@ -159,23 +159,6 @@ RSpec.describe EventsController do
         expect(response).to have_http_status(:ok)
       end
     end
-
-    context "when the organizer has not opted into the new ledger" do
-      it "redirects to the classic transactions page" do
-        get(:ledger, params: { event_id: event.slug })
-
-        expect(response).to redirect_to(event_transactions_path(event))
-      end
-    end
-
-    context "with apply_flipper=true" do
-      it "opts the organizer into the new ledger and renders it" do
-        get(:ledger, params: { event_id: event.slug, apply_flipper: "true" })
-
-        expect(Flipper.enabled?(:new_ledger_2026_07_17, admin)).to be(true)
-        expect(response).to have_http_status(:ok)
-      end
-    end
   end
 
   describe "#transactions" do
@@ -184,31 +167,10 @@ RSpec.describe EventsController do
 
     before { create_session(admin, verified: true) }
 
-    context "when the organizer has opted into the new ledger" do
-      before { Flipper.enable_actor(:new_ledger_2026_07_17, admin) }
-
-      it "redirects to the new ledger" do
-        get(:transactions, params: { event_id: event.slug })
-
-        expect(response).to redirect_to(event_ledger_path(event))
-      end
-    end
-
     context "when the organizer has not opted into the new ledger" do
       it "renders the classic transactions page" do
         get(:transactions, params: { event_id: event.slug })
 
-        expect(response).to have_http_status(:ok)
-      end
-    end
-
-    context "with apply_flipper=true" do
-      before { Flipper.enable_actor(:new_ledger_2026_07_17, admin) }
-
-      it "opts the organizer out of the new ledger and renders the classic page" do
-        get(:transactions, params: { event_id: event.slug, apply_flipper: "true" })
-
-        expect(Flipper.enabled?(:new_ledger_2026_07_17, admin)).to be(false)
         expect(response).to have_http_status(:ok)
       end
     end
@@ -377,6 +339,41 @@ RSpec.describe EventsController do
       expect(response.body).to include(
         money(transparent_sub.balance_available_v2_cents + private_sub.balance_available_v2_cents)
       )
+    end
+  end
+
+  describe "#transactions_list" do
+    let(:event) { create(:event, is_public: true) }
+
+    it "serves the unfiltered list to an anonymous reader" do
+      get(:transactions_list, params: { event_id: event.slug })
+
+      expect(response).to have_http_status(:success)
+    end
+
+    it "rejects a filter from an anonymous reader before reaching the transaction engines" do
+      expect(TransactionGroupingEngine::Transaction::All).not_to receive(:new)
+      expect(PendingTransactionEngine::PendingTransaction::All).not_to receive(:new)
+
+      get(:transactions_list, params: { event_id: event.slug, direction: "revenue" })
+
+      expect(response).to have_http_status(:bad_request)
+    end
+
+    it "rejects every filter param from an anonymous reader" do
+      SetLedgerFilters::FILTER_PARAMS.each do |param|
+        get(:transactions_list, params: { event_id: event.slug, param => "x" })
+
+        expect(response).to have_http_status(:bad_request), "expected #{param} to be rejected"
+      end
+    end
+
+    it "allows a filter from a signed-in organizer" do
+      sign_in_organizer_of(event)
+
+      get(:transactions_list, params: { event_id: event.slug, direction: "revenue" })
+
+      expect(response).to have_http_status(:success)
     end
   end
 

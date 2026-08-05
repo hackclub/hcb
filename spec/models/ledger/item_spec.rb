@@ -109,6 +109,16 @@ RSpec.describe Ledger::Item, type: :model do
       expect(item.errors[:datetime]).to include("can't be blank")
     end
 
+    it "requires status" do
+      item = Ledger::Item.new(amount_cents: 1000, memo: "Test", datetime: Time.current, status: nil)
+      expect(item).not_to be_valid
+      expect(item.errors[:status]).to include("can't be blank")
+    end
+
+    it "defaults status to pending" do
+      expect(Ledger::Item.new.status).to eq("pending")
+    end
+
     describe "primary_ledger association" do
       it "can be created without a primary_ledger" do
         item = Ledger::Item.new(

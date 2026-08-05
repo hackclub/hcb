@@ -10,7 +10,7 @@ module CanonicalPendingTransactionService
       return unless settled?
 
       ActiveRecord::Base.transaction do
-        canonical_pending_settled_mappings.destroy_all
+        canonical_pending_settled_mapping.destroy
 
         ach_transfer.mark_in_transit! if ach_transfer&.deposited? # only change deposited. otherwise already in rejected state or in_transit
       end
@@ -26,8 +26,8 @@ module CanonicalPendingTransactionService
       @canonical_pending_transaction.raw_pending_outgoing_ach_transaction
     end
 
-    def canonical_pending_settled_mappings
-      @canonical_pending_transaction.canonical_pending_settled_mappings
+    def canonical_pending_settled_mapping
+      @canonical_pending_transaction.canonical_pending_settled_mapping
     end
 
     def settled?
