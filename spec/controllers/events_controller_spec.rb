@@ -159,23 +159,6 @@ RSpec.describe EventsController do
         expect(response).to have_http_status(:ok)
       end
     end
-
-    context "when the organizer has not opted into the new ledger" do
-      it "redirects to the classic transactions page" do
-        get(:ledger, params: { event_id: event.slug })
-
-        expect(response).to redirect_to(event_transactions_path(event))
-      end
-    end
-
-    context "with apply_flipper=true" do
-      it "opts the organizer into the new ledger and renders it" do
-        get(:ledger, params: { event_id: event.slug, apply_flipper: "true" })
-
-        expect(Flipper.enabled?(:new_ledger_2026_07_17, admin)).to be(true)
-        expect(response).to have_http_status(:ok)
-      end
-    end
   end
 
   describe "#transactions" do
@@ -184,31 +167,10 @@ RSpec.describe EventsController do
 
     before { create_session(admin, verified: true) }
 
-    context "when the organizer has opted into the new ledger" do
-      before { Flipper.enable_actor(:new_ledger_2026_07_17, admin) }
-
-      it "redirects to the new ledger" do
-        get(:transactions, params: { event_id: event.slug })
-
-        expect(response).to redirect_to(event_ledger_path(event))
-      end
-    end
-
     context "when the organizer has not opted into the new ledger" do
       it "renders the classic transactions page" do
         get(:transactions, params: { event_id: event.slug })
 
-        expect(response).to have_http_status(:ok)
-      end
-    end
-
-    context "with apply_flipper=true" do
-      before { Flipper.enable_actor(:new_ledger_2026_07_17, admin) }
-
-      it "opts the organizer out of the new ledger and renders the classic page" do
-        get(:transactions, params: { event_id: event.slug, apply_flipper: "true" })
-
-        expect(Flipper.enabled?(:new_ledger_2026_07_17, admin)).to be(false)
         expect(response).to have_http_status(:ok)
       end
     end
@@ -240,10 +202,10 @@ RSpec.describe EventsController do
 
     let(:parent) { create(:event, is_public: true, name: "Parent Organization") }
     let!(:transparent_sub) do
-      create(:event, parent:, is_public: true, name: "Transparent Subsidiary", slug: "transparent-subsidiary")
+      create(:event, parent:, is_public: true, name: "Transparent Sub-organization", slug: "transparent-sub-organization")
     end
     let!(:private_sub) do
-      create(:event, parent:, is_public: false, name: "Private Subsidiary", slug: "private-subsidiary")
+      create(:event, parent:, is_public: false, name: "Private Sub-organization", slug: "private-sub-organization")
     end
 
     context "as a signed out visitor" do
@@ -253,8 +215,8 @@ RSpec.describe EventsController do
       it "lists only transparent sub-organizations, and loads balances for only those", :aggregate_failures do
         get(:sub_organizations, params: { event_id: parent.slug })
 
-        expect(response.body).to include("Transparent Subsidiary")
-        expect(response.body).not_to include("Private Subsidiary")
+        expect(response.body).to include("Transparent Sub-organization")
+        expect(response.body).not_to include("Private Sub-organization")
         expect(response.body).to include(event_async_balance_path(transparent_sub))
         expect(response.body).not_to include(event_async_balance_path(private_sub))
       end
@@ -262,26 +224,26 @@ RSpec.describe EventsController do
       it "omits private sub-organizations from the graph nodes" do
         get(:sub_organizations, params: { event_id: parent.slug })
 
-        expect(graph_node_names(response.body)).to match_array(["Parent Organization", "Transparent Subsidiary"])
+        expect(graph_node_names(response.body)).to match_array(["Parent Organization", "Transparent Sub-organization"])
       end
 
       it "excludes private sub-organizations from the CSV export", :aggregate_failures do
         get(:sub_organizations, params: { event_id: parent.slug }, format: :csv)
 
-        expect(response.body).to include("Transparent Subsidiary")
-        expect(response.body).not_to include("Private Subsidiary")
+        expect(response.body).to include("Transparent Sub-organization")
+        expect(response.body).not_to include("Private Sub-organization")
       end
     end
 
     context "with a hidden sub-organization" do
       let!(:hidden_sub) do
-        create(:event, parent:, is_public: true, name: "Hidden Subsidiary", hidden_at: Time.current)
+        create(:event, parent:, is_public: true, name: "Hidden Sub-organization", hidden_at: Time.current)
       end
 
       it "hides it from a signed out visitor" do
         get(:sub_organizations, params: { event_id: parent.slug })
 
-        expect(response.body).not_to include("Hidden Subsidiary")
+        expect(response.body).not_to include("Hidden Sub-organization")
       end
 
       context "as an organizer" do
@@ -294,15 +256,15 @@ RSpec.describe EventsController do
           hidden_section = document.at_css("details#hidden_sub_organizations")
           main_list = document.at_css("ul#sub_organizations")
 
-          expect(hidden_section.text).to include("Hidden Subsidiary")
-          expect(main_list.text).not_to include("Hidden Subsidiary")
-          expect(main_list.text).to include("Transparent Subsidiary")
+          expect(hidden_section.text).to include("Hidden Sub-organization")
+          expect(main_list.text).not_to include("Hidden Sub-organization")
+          expect(main_list.text).to include("Transparent Sub-organization")
         end
 
         it "omits it from the graph" do
           get(:sub_organizations, params: { event_id: parent.slug })
 
-          expect(graph_node_names(response.body)).not_to include("Hidden Subsidiary")
+          expect(graph_node_names(response.body)).not_to include("Hidden Sub-organization")
         end
       end
     end
@@ -313,8 +275,8 @@ RSpec.describe EventsController do
 
         get(:sub_organizations, params: { event_id: parent.slug })
 
-        expect(response.body).to include("Transparent Subsidiary")
-        expect(response.body).to include("Private Subsidiary")
+        expect(response.body).to include("Transparent Sub-organization")
+        expect(response.body).to include("Private Sub-organization")
       end
     end
   end
@@ -377,6 +339,41 @@ RSpec.describe EventsController do
       expect(response.body).to include(
         money(transparent_sub.balance_available_v2_cents + private_sub.balance_available_v2_cents)
       )
+    end
+  end
+
+  describe "#transactions_list" do
+    let(:event) { create(:event, is_public: true) }
+
+    it "serves the unfiltered list to an anonymous reader" do
+      get(:transactions_list, params: { event_id: event.slug })
+
+      expect(response).to have_http_status(:success)
+    end
+
+    it "rejects a filter from an anonymous reader before reaching the transaction engines" do
+      expect(TransactionGroupingEngine::Transaction::All).not_to receive(:new)
+      expect(PendingTransactionEngine::PendingTransaction::All).not_to receive(:new)
+
+      get(:transactions_list, params: { event_id: event.slug, direction: "revenue" })
+
+      expect(response).to have_http_status(:bad_request)
+    end
+
+    it "rejects every filter param from an anonymous reader" do
+      SetLedgerFilters::FILTER_PARAMS.each do |param|
+        get(:transactions_list, params: { event_id: event.slug, param => "x" })
+
+        expect(response).to have_http_status(:bad_request), "expected #{param} to be rejected"
+      end
+    end
+
+    it "allows a filter from a signed-in organizer" do
+      sign_in_organizer_of(event)
+
+      get(:transactions_list, params: { event_id: event.slug, direction: "revenue" })
+
+      expect(response).to have_http_status(:success)
     end
   end
 

@@ -11,11 +11,11 @@
 #  friendly_memo           :text
 #  hcb_code                :text
 #  memo                    :text             not null
-#  transaction_source_type :string
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
 #  ledger_item_id          :bigint
 #  transaction_source_id   :bigint
+#  transaction_source_type :string
 #
 # Indexes
 #
@@ -40,8 +40,8 @@ class CanonicalTransaction < ApplicationRecord
 
   scope :unmapped, -> { includes(:canonical_event_mapping).where(canonical_event_mappings: { canonical_transaction_id: nil }) }
   scope :mapped, -> { includes(:canonical_event_mapping).where.not(canonical_event_mappings: { canonical_transaction_id: nil }) }
-  scope :missing_pending, -> { includes(:canonical_pending_settled_mapping).where(canonical_pending_settled_mappings: { canonical_transaction_id: nil }) }
-  scope :has_pending, -> { includes(:canonical_pending_settled_mapping).where.not(canonical_pending_settled_mappings: { canonical_transaction_id: nil }) }
+  scope :missing_pending, -> { includes(:canonical_pending_settled_mapping).where(canonical_pending_settled_mapping: { canonical_transaction_id: nil }) }
+  scope :has_pending, -> { includes(:canonical_pending_settled_mapping).where.not(canonical_pending_settled_mapping: { canonical_transaction_id: nil }) }
   scope :missing_hcb_code, -> { where(hcb_code: nil) }
   scope :missing_or_unknown_hcb_code, -> { where("hcb_code is null or hcb_code ilike 'HCB-000%'") }
   scope :invoice_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE}%'") }

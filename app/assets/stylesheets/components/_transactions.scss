@@ -113,6 +113,7 @@ html[data-dark='true'] {
       content: '';
       position: absolute;
       inset: -0.25rem 0;
+      pointer-events: none;
     }
   }
 
@@ -202,14 +203,6 @@ html[data-dark='true'] {
     }
 
     margin: 0;
-  }
-}
-
-.transaction__fee_icon {
-  svg {
-    height: 18px;
-    width: 18px;
-    margin-left: 3px;
   }
 }
 
