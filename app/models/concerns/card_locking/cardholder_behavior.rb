@@ -10,6 +10,14 @@ module CardLocking
   module CardholderBehavior
     extend ActiveSupport::Concern
 
+    included do
+      # Model-level (not service-level) so it catches every writer of
+      # cards_locked, not just UserService::UpdateCardLocking -- an
+      # engineering-alert verification signal is only useful if it can't be
+      # bypassed by a future call site or a console fix.
+      after_update_commit :send_card_locking_engineering_alert, if: :saved_change_to_cards_locked?
+    end
+
     class_methods do
       def card_locking_candidates
         candidate_user_ids = HcbCode.card_locking_candidates.select("DISTINCT stripe_cardholders.user_id")
@@ -109,6 +117,25 @@ module CardLocking
 
     def card_locking_outstanding_count
       card_locking_outstanding_charges.count
+    end
+
+    private
+
+    def send_card_locking_engineering_alert
+      # Captured now (at the transition), not left for the mailer to query
+      # later inside its async job -- the mailer needs to describe this
+      # transition, not whatever state exists whenever the job dequeues.
+      suppressed = card_locking_suppressed?
+
+      if cards_locked?
+        EngineeringAlertMailer.cards_locked(
+          user: self, overdue_count: card_locking_overdue_charges.count, suppressed:
+        ).deliver_later
+      else
+        EngineeringAlertMailer.cards_unlocked(
+          user: self, remaining_overdue_count: card_locking_overdue_charges.count, suppressed:
+        ).deliver_later
+      end
     end
   end
 end

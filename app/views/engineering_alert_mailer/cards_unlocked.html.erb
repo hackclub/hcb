@@ -1,0 +1,11 @@
+<p>
+  <%= link_to(admin_user_url(@user)) do %>
+    <%= @user.name %> (<%= @user.email %>)
+  <% end %> just had their cards unlocked.
+</p>
+<% if @suppressed %>
+  <p>Card locking is currently suppressed by an admin for this user. This unlock may be from suppression rather than receipts being resolved.</p>
+<% end %>
+<% if @remaining_overdue_count.positive? %>
+  <p><strong>Warning:</strong> <%= @remaining_overdue_count %> overdue <%= "receipt".pluralize(@remaining_overdue_count) %> still remain despite this unlock. This may indicate a bug.</p>
+<% end %>
