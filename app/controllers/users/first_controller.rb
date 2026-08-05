@@ -3,10 +3,12 @@
 module Users
   class FirstController < ApplicationController
     include UsersHelper
+    include FormProvenance
 
     skip_after_action :verify_authorized
     skip_before_action :signed_in_user
     invisible_captcha only: [:create], honeypot: :remember_me
+    require_rendered_form :first_signup, only: [:create]
 
     def index
       return redirect_to welcome_first_index_path unless signed_in?(allow_unverified: true) && current_user(allow_unverified: true).affiliations.any?
@@ -83,6 +85,8 @@ module Users
 
     def new
       return redirect_to first_index_path if signed_in?(allow_unverified: true) && current_user(allow_unverified: true).affiliations.any?
+
+      record_rendered_form :first_signup
 
       @referral_link_slug = Referral::Link.find_by(slug: params[:referral])&.slug if params[:referral].present?
       @user_referral = params[:referred_by] if params[:referred_by].present?

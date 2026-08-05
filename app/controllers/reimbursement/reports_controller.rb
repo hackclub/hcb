@@ -3,6 +3,7 @@
 module Reimbursement
   class ReportsController < ApplicationController
     include SetEvent
+    include FormProvenance
     include Admin::TransferApprovable
 
     before_action :set_report_user_and_event, except: [:create, :quick_expense, :start, :finished]
@@ -16,10 +17,19 @@ module Reimbursement
     # the public form on `start` is the only thing that posts to it, in one
     # step, so nothing consumes the session token in between.
     invisible_captcha only: [:create], honeypot: :subtitle
+    require_rendered_form :reimbursement_report, only: [:create]
 
     # POST /reimbursement_reports
     def create
       @event = Event.find(report_params[:event_id])
+
+      # Authorize before creating the user, not after. ReportPolicy#create?
+      # reads only the event and the signed in user, never the report's own
+      # user, so it can run against an empty report. Creating the user first
+      # meant a denied request still left a User row behind, for any event id,
+      # whether or not the organization had a public reimbursement page.
+      authorize @event.reimbursement_reports.build, :create?
+
       user = User.create_with(creation_method: :reimbursement_report).find_or_create_by!(email: report_params[:email])
       @report = @event.reimbursement_reports.build(report_params.except(:email, :receipt_id, :value).merge(user:, inviter: organizer_signed_in? ? current_user : nil, currency: user.default_payout_method&.currency || "USD"))
 
@@ -114,6 +124,8 @@ module Reimbursement
       unless @event.public_reimbursement_page_available?
         return not_found
       end
+
+      record_rendered_form :reimbursement_report
     end
 
     def update_currency
