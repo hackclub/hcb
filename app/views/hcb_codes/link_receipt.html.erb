@@ -1,6 +1,6 @@
 <%= form_with url: link_receipts_path, method: :post, data: {
       controller: "receipt-select"
-} do |form| %>
+    } do |form| %>
   <% if @receipts.empty? %>
     <%= blankslate "Receipt Bin is empty." %>
   <% else %>
@@ -26,10 +26,11 @@
     <%= link_to my_inbox_path, target: "_blank", class: "btn btn--primary mr2" do %>
       Manage receipts
     <% end %>
+
     <%= form.submit "Add to transaction", class: "btn bg-success", data: {
           "receipt-select-target" => "confirm"
-    }, disabled: true %>
-    
+        }, disabled: true %>
+
     <%# TODO: Replace dynamically with the right receiptable, since not just transactions are supported %>
   </footer>
 

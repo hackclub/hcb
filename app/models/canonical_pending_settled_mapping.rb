@@ -12,8 +12,8 @@
 #
 # Indexes
 #
-#  index_canonical_pending_settled_map_on_canonical_pending_tx_id  (canonical_pending_transaction_id)
-#  index_canonical_pending_settled_mappings_on_canonical_tx_id     (canonical_transaction_id)
+#  index_cpsm_on_cpt_id  (canonical_pending_transaction_id) UNIQUE
+#  index_cpsm_on_ct_id   (canonical_transaction_id) UNIQUE
 #
 # Foreign Keys
 #

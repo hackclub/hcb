@@ -10,14 +10,17 @@
 #  updated_at                        :datetime         not null
 #  merchant_network_id               :string
 #  raw_pending_stripe_transaction_id :bigint
+#  stripe_card_id                    :bigint
 #
 # Indexes
 #
 #  index_card_charges_on_raw_pending_stripe_transaction_id  (raw_pending_stripe_transaction_id) UNIQUE
+#  index_card_charges_on_stripe_card_id                     (stripe_card_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (raw_pending_stripe_transaction_id => raw_pending_stripe_transactions.id) ON DELETE => nullify
+#  fk_rails_...  (stripe_card_id => stripe_cards.id)
 #
 # Raw objects are matched to their charge purely by Stripe IDs: a
 # RawPendingStripeTransaction's `stripe_transaction_id` and a
@@ -25,24 +28,14 @@
 # authorization ID (iauth_...).
 class CardCharge < ApplicationRecord
   belongs_to :raw_pending_stripe_transaction, optional: true
+  belongs_to :stripe_card, optional: true
   has_many :card_charge_raw_stripe_transactions, dependent: :destroy
   has_many :raw_stripe_transactions, through: :card_charge_raw_stripe_transactions
 
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
 
-  scope :on_card, ->(stripe_card) {
-    left_joins(:raw_pending_stripe_transaction, :raw_stripe_transactions)
-      .where(
-        "raw_pending_stripe_transactions.stripe_transaction->'card'->>'id' = :stripe_id OR raw_stripe_transactions.stripe_transaction->>'card' = :stripe_id",
-        stripe_id: stripe_card.stripe_id
-      )
-  }
-
   before_create :set_merchant_data
-
-  def stripe_card
-    (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_card
-  end
+  before_create :set_stripe_card
 
   def stripe_cardholder
     stripe_card&.stripe_cardholder
@@ -122,6 +115,10 @@ class CardCharge < ApplicationRecord
   def set_merchant_data
     self.merchant_network_id ||= merchant_data&.[]("network_id")
     self.merchant_category ||= merchant_data&.[]("category")
+  end
+
+  def set_stripe_card
+    self.stripe_card_id ||= (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_card&.id
   end
 
 end

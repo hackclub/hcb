@@ -21,6 +21,7 @@
 #  raw_pending_bank_fee_transaction_id              :bigint
 #  raw_pending_column_transaction_id                :bigint
 #  raw_pending_donation_transaction_id              :bigint
+#  raw_pending_fee_reimbursement_transaction_id     :bigint
 #  raw_pending_fee_revenue_transaction_id           :bigint
 #  raw_pending_incoming_disbursement_transaction_id :bigint
 #  raw_pending_invoice_transaction_id               :bigint
@@ -54,6 +55,7 @@
 #  index_canonical_pending_txs_on_reimbursement_expense_payout_id   (reimbursement_expense_payout_id)
 #  index_canonical_pending_txs_on_reimbursement_payout_holding_id   (reimbursement_payout_holding_id)
 #  index_canonical_pending_txs_on_rpct_id                           (raw_pending_column_transaction_id)
+#  index_cpts_on_raw_pending_fee_reimbursement_tx_id                (raw_pending_fee_reimbursement_transaction_id)
 #  index_cpts_on_raw_pending_incoming_disbursement_transaction_id   (raw_pending_incoming_disbursement_transaction_id)
 #  index_cpts_on_raw_pending_outgoing_disbursement_transaction_id   (raw_pending_outgoing_disbursement_transaction_id)
 #  index_cpts_on_raw_pending_stripe_service_fee_tx_id               (raw_pending_stripe_service_fee_transaction_id)
@@ -62,6 +64,10 @@
 #
 #  fk_rails_...  (ledger_item_id => ledger_items.id)
 #  fk_rails_...  (raw_pending_stripe_transaction_id => raw_pending_stripe_transactions.id)
+#
+# Check Constraints
+#
+#  canonical_pending_transactions_fronted_null  (fronted IS NOT NULL)
 #
 class CanonicalPendingTransaction < ApplicationRecord
   has_paper_trail
@@ -85,6 +91,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :raw_pending_outgoing_disbursement_transaction, optional: true
   belongs_to :raw_pending_stripe_service_fee_transaction, optional: true
   belongs_to :raw_pending_fee_revenue_transaction, optional: true
+  belongs_to :raw_pending_fee_reimbursement_transaction, optional: true
   belongs_to :increase_check, optional: true
   belongs_to :paypal_transfer, optional: true
   belongs_to :wire, optional: true
@@ -96,9 +103,9 @@ class CanonicalPendingTransaction < ApplicationRecord
   has_one :canonical_pending_event_mapping
   has_one :event, through: :canonical_pending_event_mapping
   has_one :subledger, through: :canonical_pending_event_mapping
-  has_many :canonical_pending_settled_mappings
-  has_many :canonical_transactions, through: :canonical_pending_settled_mappings
   has_one :canonical_pending_declined_mapping
+  has_one :canonical_pending_settled_mapping
+  has_one :canonical_transaction, through: :canonical_pending_settled_mapping
   has_one :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code", class_name: "HcbCode"
 
   monetize :amount_cents
@@ -122,6 +129,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   scope :bank_fee, -> { where("raw_pending_bank_fee_transaction_id is not null") }
   scope :stripe_service_fee, -> { where("raw_pending_stripe_service_fee_transaction_id is not null") }
   scope :fee_revenue, -> { where("raw_pending_fee_revenue_transaction_id is not null") }
+  scope :fee_reimbursement, -> { where("raw_pending_fee_reimbursement_transaction_id is not null") }
   scope :incoming_disbursement, -> { where("raw_pending_incoming_disbursement_transaction_id is not null") }
   scope :outgoing_disbursement, -> { where("raw_pending_outgoing_disbursement_transaction_id is not null") }
   scope :reimbursement_expense_payout, -> { where.not(reimbursement_expense_payout_id: nil) }
@@ -129,8 +137,8 @@ class CanonicalPendingTransaction < ApplicationRecord
   scope :unmapped, -> { includes(:canonical_pending_event_mapping).where(canonical_pending_event_mappings: { canonical_pending_transaction_id: nil }) }
   scope :mapped, -> { includes(:canonical_pending_event_mapping).where.not(canonical_pending_event_mappings: { canonical_pending_transaction_id: nil }) }
   scope :unsettled, -> {
-    includes(:canonical_pending_settled_mappings)
-      .where(canonical_pending_settled_mappings: { canonical_pending_transaction_id: nil })
+    includes(:canonical_pending_settled_mapping)
+      .where(canonical_pending_settled_mapping: { canonical_pending_transaction_id: nil })
       .includes(:canonical_pending_declined_mapping)
       .where(canonical_pending_declined_mapping: { canonical_pending_transaction_id: nil })
   }
@@ -173,15 +181,7 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   belongs_to :ledger_item, optional: true, class_name: "Ledger::Item", touch: true
 
-  after_create_commit unless: -> { ledger_item.present? } do
-    safely do
-      ActiveRecord::Base.transaction do
-        li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
-        update!(ledger_item: li)
-        li.map!
-      end
-    end
-  end
+  after_create_commit :assign_ledger_item, unless: -> { ledger_item.present? }
 
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
@@ -202,7 +202,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   end
 
   def settled?
-    @settled ||= canonical_pending_settled_mappings.present?
+    @settled ||= canonical_pending_settled_mapping.present?
   end
 
   def decline!
@@ -478,6 +478,16 @@ class CanonicalPendingTransaction < ApplicationRecord
   end
 
   private
+
+  def assign_ledger_item
+    safely do
+      ActiveRecord::Base.transaction do
+        li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        update!(ledger_item: li)
+        li.map!
+      end
+    end
+  end
 
   def write_hcb_code
     safely do

@@ -1,9 +1,9 @@
 <%# locals: (ledger:) %>
 
-<% if params[:page] == 1 && @direction != "revenue" && ledger.event_id.present? && ledger.event.revenue_fee > 0 && ledger.fronted_fee_balance_cents > 0 %>
+<% if params[:page].to_i <= 1 && @direction != "revenue" && ledger.event_id.present? && ledger.event.revenue_fee > 0 && ledger.fronted_fee_balance_cents > 0 %>
   <%# @direction != revenue is in case the user has a revenue-only filter applied %>
   <tr class="transaction transaction--negative muted">
-    <td class="transaction__icon transaction__fee_icon">
+    <td class="transaction__icon">
       <div class="tooltipped tooltipped--e" aria-label="Fiscal sponsorship fee">
         <%= inline_icon "bank-icon", size: 32 %>
       </div>
