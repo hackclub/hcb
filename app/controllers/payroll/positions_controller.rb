@@ -96,6 +96,11 @@ module Payroll
 
     def update
       authorize @position
+      @payee = @position.payee
+
+      new_email = Payee.normalize_value_for(:email, position_params[:email].presence)
+      email_changing = new_email.present? && new_email != @payee.email
+      authorize @payee, :update_email? if email_changing
 
       @position.assign_attributes({
         title: position_params[:title],
@@ -111,8 +116,20 @@ module Payroll
       will_void_contract = contract_terms_changed?(attachment_changed: attachment.present?)
       authorize @position, :void_pending_contract? if will_void_contract
 
-      if @position.save
+      @payee.email = new_email if email_changing
+
+      saved = false
+      ActiveRecord::Base.transaction do
+        saved = (!email_changing || @payee.save) && @position.save
+        raise ActiveRecord::Rollback unless saved
+      end
+
+      if saved
         void_pending_contract! if will_void_contract
+
+        # A voided contract is replaced below, and the replacement is built from
+        # the payee's current email, so there's nothing left to re-address.
+        flash[:success] = repoint_message if email_changing && !will_void_contract
 
         if send_contract_for_position!
           redirect_to contract_event_payroll_position_path(event_id: @event.slug, id: @position.id)
@@ -120,8 +137,7 @@ module Payroll
           redirect_to edit_event_payroll_position_path(event_id: @event.slug, id: @position.id)
         end
       else
-        @payee = @position.payee
-        flash[:error] = @position.errors.full_messages.to_sentence
+        flash[:error] = (@position.errors.full_messages + @payee.errors.full_messages).to_sentence
         render :edit, layout: "transfer", status: :unprocessable_content
       end
     end
@@ -139,8 +155,14 @@ module Payroll
     # At most one non-voided contract exists per position (enforced by
     # Contract#one_non_void_contract), so there's only ever one to void here.
     def void_pending_contract!
-      contract = @position.contracts.where(aasm_state: [:pending, :sent]).first
-      contract&.tap { |c| c.mark_voided!(reissuing: true) }
+      @position.in_flight_contract&.tap { |c| c.mark_voided!(reissuing: true) }
+    end
+
+    def repoint_message
+      case @position.repoint_contractor_invite!
+      when :resent then "Contractor updated. Their agreement has been re-sent to #{@payee.email}."
+      else "Contractor updated."
+      end
     end
 
     # Ensures the position has an active (not-voided) contract, returning
@@ -164,7 +186,7 @@ module Payroll
     end
 
     def position_params
-      params.require(:contractor).permit(:title, :rate, :rate_unit, :starts_on, :ends_on, :purpose, :payee_id, file: [])
+      params.require(:contractor).permit(:title, :rate, :rate_unit, :starts_on, :ends_on, :purpose, :payee_id, :email, file: [])
     end
 
   end

@@ -28,6 +28,8 @@ class Payee < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :pye
 
+  has_paper_trail
+
   belongs_to :event
   belongs_to :legal_entity, optional: true
 
@@ -35,6 +37,10 @@ class Payee < ApplicationRecord
   has_many :payroll_positions, class_name: "Payroll::Position"
 
   validates_uniqueness_of :legal_entity_id, scope: [:event_id], allow_nil: true
+
+  normalizes :email, with: ->(email) { email.strip.downcase }
+  validates :email, presence: true
+  validates_email_format_of :email, if: :email_changed?
 
   validate :managed_legal_entity_constraints
 
@@ -64,6 +70,18 @@ class Payee < ApplicationRecord
 
   def managed?
     legal_entity&.managing_event_id.present?
+  end
+
+  # A managed payee's email is only ever a notification address, since the
+  # organization owns the legal entity. Otherwise the email is how an outside
+  # person is invited to claim this payee, so it's editable only until they
+  # have: linking a legal entity attaches their tax forms and payout method,
+  # and re-pointing the invite after that would hand their onboarding to
+  # whatever address the organizer typed.
+  def email_editable?
+    return true if managed?
+
+    legal_entity_id.nil? && payments.successful_or_sent.none?
   end
 
   def archive!

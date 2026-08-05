@@ -191,6 +191,194 @@ RSpec.describe Payroll::PositionsController do
       expect(position.reload.title).not_to eq("New title")
       expect(position.rate_cents).to eq(2500)
     end
+
+    describe "changing the recipient's email" do
+      # Unclaimed (no legal entity): the contractor hasn't attached their
+      # identity yet, which is the only window the email is editable in.
+      let(:payee) { create(:payee, event:, email: "old@example.com", legal_entity: nil) }
+
+      def unchanged_terms
+        { title: position.title, rate: "25.00", starts_on: position.start_date, ends_on: position.end_date, purpose: position.description }
+      end
+
+      it "re-addresses the existing contract instead of voiding it" do
+        original_contract = position.contracts.sole
+
+        patch :update, params: {
+          event_id: event.slug,
+          id: position.id,
+          contractor: unchanged_terms.merge(email: "Preferred@Example.com")
+        }
+
+        expect(payee.reload.email).to eq("preferred@example.com")
+        expect(position.contracts.reload.sole).to eq(original_contract)
+        expect(original_contract.reload).not_to be_voided
+        expect(original_contract.party(:contractor).email).to eq("preferred@example.com")
+      end
+
+      it "re-sends the agreement and says so when HCB has already countersigned" do
+        position.contracts.sole.party(:hcb).mark_signed!
+
+        expect do
+          patch :update, params: {
+            event_id: event.slug,
+            id: position.id,
+            contractor: unchanged_terms.merge(email: "preferred@example.com")
+          }
+        end.to have_enqueued_mail(Payroll::PositionMailer, :onboarding)
+
+        expect(flash[:success]).to eq("Contractor updated. Their agreement has been re-sent to preferred@example.com.")
+      end
+
+      it "leaves the contract alone when the submitted email is unchanged" do
+        original_contract = position.contracts.sole
+
+        patch :update, params: {
+          event_id: event.slug,
+          id: position.id,
+          contractor: unchanged_terms.merge(email: payee.email.upcase)
+        }
+
+        expect(position.contracts.reload.sole).to eq(original_contract)
+        expect(original_contract.reload).not_to be_voided
+        expect(flash[:success]).to be_nil
+      end
+
+      it "rejects a malformed email and leaves both records untouched" do
+        original_contract = position.contracts.sole
+        previous_email = payee.email
+
+        patch :update, params: {
+          event_id: event.slug,
+          id: position.id,
+          contractor: unchanged_terms.merge(email: "nope", purpose: "Something else")
+        }
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(flash[:error]).to be_present
+        expect(payee.reload.email).to eq(previous_email)
+        expect(position.reload.description).not_to eq("Something else")
+        expect(original_contract.reload).not_to be_voided
+      end
+
+      it "is forbidden once a payment has been sent to an unmanaged recipient" do
+        previous_email = payee.email
+        create(:payment, :sent, payee:)
+
+        patch :update, params: {
+          event_id: event.slug,
+          id: position.id,
+          contractor: unchanged_terms.merge(email: "preferred@example.com")
+        }
+
+        expect(flash[:error]).to eq("You are not authorized to perform this action.")
+        expect(payee.reload.email).to eq(previous_email)
+        expect(position.contracts.sole.party(:contractor).email).to eq(previous_email)
+      end
+
+      it "is forbidden once the recipient has claimed the payee with a legal entity" do
+        previous_email = payee.email
+        payee.update!(legal_entity: create(:legal_entity))
+
+        patch :update, params: {
+          event_id: event.slug,
+          id: position.id,
+          contractor: unchanged_terms.merge(email: "preferred@example.com")
+        }
+
+        expect(flash[:error]).to eq("You are not authorized to perform this action.")
+        expect(payee.reload.email).to eq(previous_email)
+      end
+
+      it "is forbidden for an org member who can edit terms but is not a manager" do
+        member = create(:user)
+        create(:organizer_position, user: member, event:, role: :member)
+        create_session(member, verified: true)
+        previous_email = payee.email
+
+        patch :update, params: {
+          event_id: event.slug,
+          id: position.id,
+          contractor: unchanged_terms.merge(email: "preferred@example.com")
+        }
+
+        expect(payee.reload.email).to eq(previous_email)
+      end
+
+      it "still allows the change for a managed recipient with sent payments" do
+        payee.update!(legal_entity: create(:legal_entity, managing_event: event))
+        create(:payment, :sent, payee:)
+
+        patch :update, params: {
+          event_id: event.slug,
+          id: position.id,
+          contractor: unchanged_terms.merge(email: "preferred@example.com")
+        }
+
+        expect(payee.reload.email).to eq("preferred@example.com")
+      end
+
+      it "records who changed the email", versioning: true do
+        patch :update, params: {
+          event_id: event.slug,
+          id: position.id,
+          contractor: unchanged_terms.merge(email: "preferred@example.com")
+        }
+
+        version = payee.reload.versions.last
+        expect(version.whodunnit).to eq(user.id.to_s)
+        expect(version.changeset["email"]).to eq(["old@example.com", "preferred@example.com"])
+      end
+    end
+  end
+
+  describe "GET #edit" do
+    render_views
+
+    let(:payee) { create(:payee, event:, legal_entity: nil) }
+    let(:position) { create(:payroll_position, payee:) }
+
+    before do
+      stub_docuseal_create
+      stub_docuseal_fetch
+      position.send_contract(organizer_user: user)
+    end
+
+    it "offers the recipient's email for editing, saying it re-sends the agreement" do
+      get :edit, params: { event_id: event.slug, id: position.id }
+
+      expect(response.body).to include("contractor[email]")
+      expect(response.body).to include("re-sends the agreement")
+    end
+
+    it "shows the email read-only once a payment has been sent" do
+      create(:payment, :sent, payee:)
+
+      get :edit, params: { event_id: event.slug, id: position.id }
+
+      expect(response.body).not_to include("contractor[email]")
+      expect(response.body).to include(payee.email)
+    end
+
+    it "shows the email read-only once the recipient has claimed the payee" do
+      payee.update!(legal_entity: create(:legal_entity))
+
+      get :edit, params: { event_id: event.slug, id: position.id }
+
+      expect(response.body).not_to include("contractor[email]")
+    end
+  end
+
+  describe "GET #show" do
+    render_views
+
+    let(:position) { create(:payroll_position, payee:) }
+
+    it "links to the edit page" do
+      get :show, params: { event_id: event.slug, id: position.id }
+
+      expect(response.body).to include(edit_event_payroll_position_path(event_id: event.slug, id: position.id))
+    end
   end
 
   describe "GET #contract" do

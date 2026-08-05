@@ -72,4 +72,68 @@ RSpec.describe PayeesController do
     end
   end
 
+  describe "PATCH #update" do
+    let(:user) { create(:user) }
+    let(:event) { create(:event, organizers: [user]) }
+    let(:payee) { create(:payee, event:, email: "old@example.com", legal_entity: nil) }
+
+    before do
+      Flipper.enable(:payments_contractors_refresh_2026_06_26, event)
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+      create_session(user, verified: true)
+    end
+
+    it "updates the email when no payment has been sent" do
+      patch :update, params: { event_id: event.slug, id: payee.hashid, payee: { display_name: payee.display_name, email: "new@example.com" } }
+
+      expect(payee.reload.email).to eq("new@example.com")
+      expect(flash[:success]).to eq("Recipient updated.")
+    end
+
+    it "re-addresses an in-flight contractor agreement to the new email" do
+      stub_request(:post, "https://api.docuseal.co/submissions")
+        .to_return(status: 201, body: [{ submission_id: "STUBBED" }].to_json, headers: { content_type: "application/json" })
+      stub_request(:get, "https://api.docuseal.co/submissions/STUBBED")
+        .to_return(status: 200, body: { submitters: [{ role: "HCB", slug: "h" }, { role: "Organizer", slug: "o" }, { role: "Contractor", slug: "c" }] }.to_json, headers: { content_type: "application/json" })
+
+      position = create(:payroll_position, payee:)
+      contract = position.send_contract(organizer_user: user)
+      contract.party(:hcb).mark_signed!
+
+      patch :update, params: { event_id: event.slug, id: payee.hashid, payee: { display_name: payee.display_name, email: "new@example.com" } }
+
+      expect(contract.reload).to be_sent
+      expect(position.contracts.reload.sole).to eq(contract)
+      expect(contract.party(:contractor).email).to eq("new@example.com")
+      expect(flash[:success]).to include("re-sent to new@example.com")
+    end
+
+    it "refuses the email change once the recipient has claimed the payee" do
+      payee.update!(legal_entity: create(:legal_entity))
+
+      patch :update, params: { event_id: event.slug, id: payee.hashid, payee: { display_name: payee.display_name, email: "new@example.com" } }
+
+      expect(payee.reload.email).to eq("old@example.com")
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+    end
+
+    it "refuses the email change once a payment has been sent" do
+      create(:payment, :sent, payee:)
+
+      patch :update, params: { event_id: event.slug, id: payee.hashid, payee: { display_name: payee.display_name, email: "new@example.com" } }
+
+      expect(payee.reload.email).to eq("old@example.com")
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+    end
+
+    it "still allows renaming a recipient whose email is locked" do
+      create(:payment, :sent, payee:)
+
+      patch :update, params: { event_id: event.slug, id: payee.hashid, payee: { display_name: "Renamed", email: payee.email } }
+
+      expect(payee.reload.display_name).to eq("Renamed")
+      expect(flash[:success]).to eq("Recipient updated.")
+    end
+  end
+
 end

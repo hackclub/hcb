@@ -14,6 +14,14 @@
         </span>
         <span class="badge h4 bg-<%= @position.status_color %> nowrap order-1"><%= @position.status_text %></span>
       </span>
+
+      <% if policy(@position).edit? %>
+        <%= link_to edit_event_payroll_position_path(event_id: @event.slug, id: @position.id),
+              class: "btn bg-muted text-sm nowrap order-2", data: { turbo_frame: "_top" } do %>
+          <%= inline_icon "edit" %>
+          Edit
+        <% end %>
+      <% end %>
     </h2>
 
     <section class="hcb-code--info">

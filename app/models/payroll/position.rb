@@ -270,6 +270,39 @@ module Payroll
     end
 
 
+    def in_flight_contract
+      contracts.where(aasm_state: [:pending, :sent]).order(created_at: :desc).first
+    end
+
+    # Re-addresses the in-flight agreement to the payee's current email. The
+    # DocuSeal signing link is a per-submitter slug rather than an email-gated
+    # URL, and we send every invite ourselves (submissions are created with
+    # send_email: false), so nothing has to be voided or re-signed — the party
+    # just has to point somewhere new before we mail the link again.
+    #
+    # Returns :resent when the contractor was re-emailed, :updated when the
+    # invite was re-addressed but the contractor hasn't been invited yet (HCB
+    # countersigns first), or nil when there was nothing to re-address.
+    def repoint_contractor_invite!
+      contract = in_flight_contract
+      party = contract&.party(:contractor)
+      return nil if party.nil? || party.signed?
+
+      party.update!(user: contractor_user, external_email: payee.email)
+
+      # Before HCB countersigns, the contractor has never been mailed the link;
+      # sending it now would jump ahead of the review step.
+      return :updated unless contract.party(:hcb)&.signed?
+
+      begin
+        party.notify
+      rescue => e
+        Rails.error.report(e, context: { payroll_position_id: id })
+      end
+
+      :resent
+    end
+
     def on_contract_voided(contract)
       mark_rejected! if may_mark_rejected?
     end

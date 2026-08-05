@@ -13,6 +13,10 @@ class PayeePolicy < ApplicationPolicy
     manager?
   end
 
+  def update_email?
+    update? && record.email_editable?
+  end
+
   def archive?
     manager?
   end

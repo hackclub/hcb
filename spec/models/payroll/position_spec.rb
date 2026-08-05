@@ -249,4 +249,106 @@ RSpec.describe Payroll::Position, type: :model do
       expect(hcb_party.reload).to be_signed
     end
   end
+
+  describe "#repoint_contractor_invite!" do
+    let(:payee) { create(:payee, email: "old@example.com", legal_entity: nil) }
+    let(:position) { create(:payroll_position, payee:) }
+    let(:organizer) { create(:user) }
+
+    before do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+
+      stub_request(:post, "https://api.docuseal.co/submissions")
+        .to_return(status: 201, body: [{ submission_id: "STUBBED" }].to_json, headers: { content_type: "application/json" })
+      stub_request(:get, "https://api.docuseal.co/submissions/STUBBED")
+        .to_return(
+          status: 200,
+          body: { submitters: [{ role: "HCB", slug: "hcb-slug" }, { role: "Organizer", slug: "organizer-slug" }, { role: "Contractor", slug: "contractor-slug" }] }.to_json,
+          headers: { content_type: "application/json" }
+        )
+    end
+
+    it "returns nil when there is no contract in flight" do
+      expect(position.repoint_contractor_invite!).to be_nil
+    end
+
+    it "re-addresses the invite without emailing before HCB has countersigned" do
+      contract = position.send_contract(organizer_user: organizer)
+      payee.update!(email: "new@example.com")
+
+      expect { expect(position.repoint_contractor_invite!).to eq(:updated) }
+        .not_to have_enqueued_mail(Payroll::PositionMailer, :onboarding)
+
+      expect(contract.party(:contractor).reload.email).to eq("new@example.com")
+    end
+
+    it "re-sends the agreement once HCB has countersigned" do
+      contract = position.send_contract(organizer_user: organizer)
+      contract.party(:hcb).mark_signed!
+      payee.update!(email: "new@example.com")
+
+      expect { expect(position.repoint_contractor_invite!).to eq(:resent) }
+        .to have_enqueued_mail(Payroll::PositionMailer, :onboarding)
+
+      expect(contract.party(:contractor).reload.email).to eq("new@example.com")
+    end
+
+    it "keeps the same contract, signatures and signing link" do
+      contract = position.send_contract(organizer_user: organizer)
+      contract.party(:organizer).mark_signed!
+      contract.party(:hcb).mark_signed!
+      signing_url = contract.party(:contractor).docuseal_signature_url
+      payee.update!(email: "new@example.com")
+
+      position.repoint_contractor_invite!
+
+      expect(position.in_flight_contract).to eq(contract)
+      expect(contract.reload).to be_sent
+      expect(contract.party(:organizer)).to be_signed
+      expect(contract.party(:hcb)).to be_signed
+      expect(contract.party(:contractor).docuseal_signature_url).to eq(signing_url)
+    end
+
+    it "leaves the position's state and HCB review status untouched" do
+      contract = position.send_contract(organizer_user: organizer)
+      contract.party(:hcb).mark_signed!
+      payee.update!(email: "new@example.com")
+
+      position.repoint_contractor_invite!
+
+      expect(position.reload).to be_onboarding
+      expect(position.onboarding_checklist.find { |s| s[:key] == :hcb_review }[:complete]).to eq(true)
+    end
+
+    it "links the party to the HCB user owning the new email, so only they can sign" do
+      contract = position.send_contract(organizer_user: organizer)
+      new_user = create(:user, email: "new@example.com")
+      payee.update!(email: "new@example.com")
+
+      position.repoint_contractor_invite!
+
+      expect(contract.party(:contractor).reload.user).to eq(new_user)
+    end
+
+    it "refuses to re-address an invite the contractor has already signed" do
+      contract = position.send_contract(organizer_user: organizer)
+      contract.party(:contractor).mark_signed!
+      payee.update!(email: "new@example.com")
+
+      expect(position.repoint_contractor_invite!).to be_nil
+      expect(contract.party(:contractor).reload.email).to eq("old@example.com")
+    end
+
+    it "does not lose the re-addressing when the notification fails" do
+      contract = position.send_contract(organizer_user: organizer)
+      contract.party(:hcb).mark_signed!
+      payee.update!(email: "new@example.com")
+
+      allow_any_instance_of(Contract::Party).to receive(:notify).and_raise(StandardError, "queue backend down")
+      expect(Rails.error).to receive(:report)
+
+      expect { position.repoint_contractor_invite! }.not_to raise_error
+      expect(contract.party(:contractor).reload.email).to eq("new@example.com")
+    end
+  end
 end

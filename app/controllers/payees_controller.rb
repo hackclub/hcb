@@ -48,8 +48,22 @@ class PayeesController < ApplicationController
     payee = @event.payees.not_archived.find_by_hashid!(params[:id])
     authorize payee
 
-    if payee.update(payee_params)
-      flash[:success] = "Recipient updated."
+    attributes = payee_params
+    if attributes[:email].present? && Payee.normalize_value_for(:email, attributes[:email]) != payee.email
+      authorize payee, :update_email?
+      email_changing = true
+    end
+
+    if payee.update(attributes)
+      # Any agreement still collecting signatures was addressed to the old email,
+      # so re-address it to the new one.
+      results = email_changing ? payee.payroll_positions.filter_map(&:repoint_contractor_invite!) : []
+
+      flash[:success] = if results.include?(:resent)
+                          "Recipient updated. Their contractor agreement has been re-sent to #{payee.email}."
+                        else
+                          "Recipient updated."
+                        end
       redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.hashid)
     else
       flash[:error] = payee.errors.full_messages.to_sentence

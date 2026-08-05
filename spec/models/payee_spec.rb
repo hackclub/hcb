@@ -37,5 +37,71 @@ RSpec.describe Payee, type: :model do
         expect(payee).to be_valid
       end
     end
+
+    describe "email" do
+      it "normalizes case and surrounding whitespace" do
+        payee = create(:payee, email: "  Contractor@Example.COM ")
+        expect(payee.email).to eq("contractor@example.com")
+      end
+
+      it "rejects a malformed email when it changes" do
+        payee = create(:payee)
+        payee.email = "not-an-email"
+
+        expect(payee).not_to be_valid
+        expect(payee.errors[:email]).to be_present
+      end
+
+      it "still allows other attributes to be updated on a row with a malformed email" do
+        payee = create(:payee)
+        payee.update_column(:email, "legacy-garbage")
+
+        expect(payee.update(display_name: "Renamed")).to eq(true)
+      end
+    end
+  end
+
+  describe "#email_editable?" do
+    let(:event) { create(:event) }
+
+    it "is true for an unclaimed recipient with no payments" do
+      expect(create(:payee, event:, legal_entity: nil).email_editable?).to eq(true)
+    end
+
+    it "is true while payments are still waiting on the recipient to claim it" do
+      payee = create(:payee, event:, legal_entity: nil)
+      create(:payment, :pending_legal_entity, payee:)
+      create(:payment, :under_review, payee:)
+
+      expect(payee.email_editable?).to eq(true)
+    end
+
+    it "is false once the recipient has claimed it by linking a legal entity" do
+      payee = create(:payee, event:, legal_entity: create(:legal_entity))
+
+      expect(payee.email_editable?).to eq(false)
+    end
+
+    it "is false once a payment has been sent" do
+      payee = create(:payee, event:, legal_entity: nil)
+      create(:payment, :sent, payee:)
+
+      expect(payee.email_editable?).to eq(false)
+    end
+
+    it "is false once a payment has succeeded" do
+      payee = create(:payee, event:, legal_entity: nil)
+      create(:payment, :successful, payee:)
+
+      expect(payee.email_editable?).to eq(false)
+    end
+
+    it "is true for a managed recipient even after payments have been sent" do
+      payee = create(:payee, event:, legal_entity: create(:legal_entity, managing_event: event))
+      create(:payment, :successful, payee:)
+
+      expect(payee).to be_managed
+      expect(payee.email_editable?).to eq(true)
+    end
   end
 end

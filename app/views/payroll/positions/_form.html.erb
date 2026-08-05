@@ -20,18 +20,7 @@
 <% unless disabled && payee.nil? %>
 
 <div data-controller="payee-picker manual-payee">
-  <% if editing %>
-    <div data-scroll-seek-target="section">
-      <h3 class="mb-2">Recipient</h3>
-      <div class="card mb-4 flex gap-3 items-center">
-        <%= avatar_for_email payee.email, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
-        <div>
-          <p class="font-bold text-lg m-0"><%= payee.display_name %></p>
-          <p class="muted text-sm m-0"><%= payee.email %></p>
-        </div>
-      </div>
-    </div>
-  <% else %>
+  <% unless editing %>
     <%= render "payees/recipient_section", event:, payee:, destination: "contractors",
           manual_title: "Manual", manual_subtitle: "Tax forms and payment details entered directly" %>
   <% end %>
@@ -40,6 +29,41 @@
   <%= form_with(url: form_url, method: editing ? :patch : :post, scope: :contractor, local: true, class: ("hidden" unless payee)) do |form| %>
     <%= form.hidden_field :payee_id, value: payee&.hashid %>
     <%= hidden_field_tag "manual", (payee&.managed? || false).to_s, data: { "manual-payee-target": "manualField" } %>
+
+    <% if editing %>
+      <% can_edit_email = policy(payee).update_email? %>
+      <div data-scroll-seek-target="section">
+        <h3 class="mb-2">Recipient</h3>
+        <div class="card mb-4 flex flex-col gap-3">
+          <div class="flex gap-3 items-center">
+            <%= avatar_for_email payee.email, size: 40, class: "rounded-full w-10 h-10 shrink-0" %>
+            <div>
+              <p class="font-bold text-lg m-0"><%= payee.display_name %></p>
+              <% unless can_edit_email %>
+                <p class="muted text-sm m-0"><%= payee.email %></p>
+              <% end %>
+            </div>
+          </div>
+
+          <% if can_edit_email %>
+            <div class="menu__divider my-0"></div>
+
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+              <div class="pr-2">
+                <%= form.label :email, "Email" %>
+                <span class="muted block">
+                  Where the agreement and onboarding steps are sent
+                  <% if position.in_flight_contract.present? %>
+                    — changing it re-sends the agreement to the new address
+                  <% end %>
+                </span>
+              </div>
+              <%= form.email_field :email, value: payee.email, required: true, disabled:, class: "w-full max-w-[260px]" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
 
     <div data-scroll-seek-target="section">
       <h3 class="mb-2">Contract details</h3>
