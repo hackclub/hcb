@@ -10,7 +10,7 @@ class DowncasePayeeEmails < ActiveRecord::Migration[8.1]
   end
 
   def down
-    # Irreversible: the original casing isn't recoverable.
+    # irreversible
   end
 
 end
