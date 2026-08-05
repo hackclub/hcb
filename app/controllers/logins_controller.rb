@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class LoginsController < ApplicationController
+  include FormProvenance
+
   skip_before_action :signed_in_user, except: [:reauthenticate]
   skip_after_action :verify_authorized
   before_action :set_login, except: [:new, :create, :reauthenticate]
@@ -8,6 +10,7 @@ class LoginsController < ApplicationController
   # `create` is the endpoint that turns an email address into a User, so it
   # takes the timestamp check: the form has to have been rendered first.
   invisible_captcha only: [:create], honeypot: :remember_me
+  require_rendered_form :login, only: [:create]
 
   # `complete` opts out. The check consumes the session token, and the WebAuthn
   # path (logins/new -> create -> choose_login_preference -> security_key ->
@@ -26,6 +29,8 @@ class LoginsController < ApplicationController
 
   # view to log in
   def new
+    record_rendered_form :login
+
     render "users/logout" if current_user
 
     referral_link_id = Referral::Link.find_by(slug: params[:referral])&.slug if params[:referral].present?

@@ -2,6 +2,7 @@
 
 class ExportsController < ApplicationController
   include SetEvent
+  include FormProvenance
   before_action :set_event, only: [:transactions, :reimbursements]
   skip_before_action :signed_in_user
   skip_after_action :verify_authorized, only: :collect_email
@@ -13,6 +14,9 @@ class ExportsController < ApplicationController
   invisible_captcha only: [:transactions],
                     honeypot: :remember_me,
                     if: -> { params[:email].present? }
+  require_rendered_form :export_email,
+                        only: [:transactions],
+                        if: -> { params[:email].present? }
 
   def transactions
     authorize @event, :show?
@@ -131,6 +135,8 @@ class ExportsController < ApplicationController
     end
     @event_slug = params[:event_slug]
     @file_extension = params[:file_extension]
+
+    record_rendered_form :export_email
   end
 
   private
