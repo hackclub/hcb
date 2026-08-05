@@ -130,7 +130,7 @@ class AdminMailer < ApplicationMailer
     @anomalous_items = anomalous_items
 
     mail(
-      to: "admin@bank.engineering",
+      to: engineers,
       subject: "#{anomalous_items.length} items have linked object anomalies"
     )
   end
