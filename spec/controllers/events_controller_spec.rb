@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rails_helper"
+require "csv"
 
 RSpec.describe EventsController do
   include SessionSupport
@@ -232,6 +233,18 @@ RSpec.describe EventsController do
 
         expect(response.body).to include("Transparent Subsidiary")
         expect(response.body).not_to include("Private Subsidiary")
+      end
+
+      it "exports the whole subtree with each row's parent, so the tree can be rebuilt", :aggregate_failures do
+        grandchild = create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild")
+
+        get(:sub_organizations, params: { event_id: parent.slug }, format: :csv)
+
+        rows = CSV.parse(response.body, headers: true).index_by { |row| row["Name"] }
+        expect(rows.keys).to match_array(["Transparent Subsidiary", "Transparent Grandchild"])
+        expect(rows["Transparent Subsidiary"]["Parent ID"]).to eq(parent.public_id)
+        expect(rows["Transparent Grandchild"]["ID"]).to eq(grandchild.public_id)
+        expect(rows["Transparent Grandchild"]["Parent ID"]).to eq(transparent_sub.public_id)
       end
     end
 
