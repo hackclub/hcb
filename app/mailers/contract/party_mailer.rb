@@ -24,6 +24,12 @@ class Contract
            template_name: "remind_#{@party.role}"
     end
 
+    def operations_update
+      mail to: @party.email,
+           subject: @party.operations_update_email_subject,
+           template_name: "operations_update_#{@party.role}"
+    end
+
     private
 
     def set_party

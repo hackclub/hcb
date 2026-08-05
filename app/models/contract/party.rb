@@ -109,6 +109,10 @@ class Contract
       "[Action Needed] Sign the #{contract.agreement_name} for #{contract.event_name} on HCB 📝"
     end
 
+    def operations_update_email_subject
+      "[Update] #{contract.event_name}'s #{contract.agreement_name} still isn't signed 📝"
+    end
+
     # We may miss a webhook or load a page before we've received the webhook,
     # so we can manually sync the party with this method!
     def sync_with_docuseal
