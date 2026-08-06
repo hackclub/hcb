@@ -3,8 +3,6 @@
 require "rails_helper"
 
 RSpec.describe ReceiptsHelper, type: :helper do
-  # The receipt inbox groups outstanding charges with these, so a bucket that
-  # drifts silently reorders (or mislabels) the page rather than blowing up.
   let(:now) { Time.zone.parse("2026-08-06 14:00:00") }
 
   def charge(due_at)

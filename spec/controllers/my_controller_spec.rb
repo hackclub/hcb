@@ -77,19 +77,19 @@ RSpec.describe MyController do
 
       before do
         travel_to(now)
-        # The deadline UI is gated on the same flag as the card locking callout
-        # that explains it; the shared context only enables the enforcement stage
-        # that materializes receipt_due_at.
+        # The shared context only enables the enforcement stage flag; the
+        # deadline UI is gated on the callout flag as well.
         Flipper.enable(:card_locking_2025_06_09, user)
         sign_in_verified(user)
       end
 
+      after { travel_back }
+
       def ivar(name) = controller.instance_variable_get(:"@#{name}")
 
       # The shared context's charges are force captures (HCB-601), which
-      # HcbCode.receipt_required excludes — so they never reach the inbox. Build a
-      # regular authorized card charge (HCB-600) instead, which needs an
-      # "authorization" on the raw transaction's Stripe payload.
+      # HcbCode.receipt_required excludes from the inbox. Build a regular
+      # authorized card charge (HCB-600) instead.
       def create_inbox_charge(receipt_due_at:, settled_at: 2.days.ago, amount_cents: -10_00)
         cardholder = user.stripe_cardholder || create(:stripe_cardholder, user:)
         card = (@inbox_card ||= create(:stripe_card, :with_stripe_id, stripe_cardholder: cardholder, event:))
@@ -104,8 +104,7 @@ RSpec.describe MyController do
             "authorization" => "iauth_#{SecureRandom.hex(6)}",
             "amount"        => -amount_cents,
             "cardholder"    => cardholder.id,
-            # network_id matters: rendering a row looks the merchant up, and a nil
-            # id trips the missing-merchant reporter rather than rendering an icon.
+            # A nil network_id trips the missing-merchant reporter when rendering.
             "merchant_data" => { "name" => "Test Merchant", "category" => "bakeries", "network_id" => "1234567890" },
           },
           created_at: settled_at, updated_at: settled_at, date_posted: settled_at.to_date
@@ -119,9 +118,6 @@ RSpec.describe MyController do
         canonical_transaction.local_hcb_code.reload.tap { |hcb_code| hcb_code.update!(receipt_due_at:) }
       end
 
-      # Only cardholders inside the card locking rollout have deadlines at all, so
-      # grouping by due date has to earn its place rather than being the default
-      # everywhere — otherwise most users get one meaningless "No deadline" pile.
       it "falls back to card grouping when nothing outstanding has a deadline" do
         create_inbox_charge(receipt_due_at: nil)
 
@@ -140,10 +136,8 @@ RSpec.describe MyController do
         expect(ivar(:grouping)).to eq("card")
       end
 
-      # Card sections are cut from the current page, so on a pile spanning several
-      # pages they'd repeat a card's header on every page and split its charges
-      # across them. A flat newest-first list is the honest fallback — and it's
-      # what this page did before due date grouping existed.
+      # Card sections are built from the current page, so a multi-page pile
+      # would split a card's charges across pages; a flat list is the fallback.
       it "falls back to a flat list when an undated pile spans more than one page" do
         2.times { create_inbox_charge(receipt_due_at: nil) }
 
@@ -163,10 +157,8 @@ RSpec.describe MyController do
         expect(ivar(:grouping)).to eq("card")
       end
 
-      # receipt_due_at is materialized off the enforcement stage flags, which are a
-      # separate axis from the flag gating the callout that explains what a
-      # deadline is (and gating the lock itself). Surfacing deadlines without it
-      # would threaten a consequence that can't happen, unexplained.
+      # The enforcement stage flags that materialize receipt_due_at are a
+      # separate axis from the flag gating the callout that explains deadlines.
       it "keeps deadlines hidden from cardholders outside the card locking flag" do
         Flipper.disable(:card_locking_2025_06_09, user)
         create_inbox_charge(receipt_due_at: 1.day.from_now)
@@ -195,6 +187,26 @@ RSpec.describe MyController do
 
         expect(ivar(:grouping)).to eq("card")
         expect(ivar(:due_date_groups)).to be_nil
+      end
+
+      # Card sections can't span pages, so a multi-page pile swaps the card
+      # option out for a flat list — inside the due date rollout too.
+      it "offers a flat list instead of card sections when a dated pile spans pages" do
+        2.times { create_inbox_charge(receipt_due_at: 1.day.from_now) }
+
+        get :inbox, params: { per: 1, group: "flat" }
+
+        expect(ivar(:alternate_grouping)).to eq("flat")
+        expect(ivar(:grouping)).to eq("flat")
+        expect(ivar(:cards)).to be_nil
+      end
+
+      it "ignores a card grouping request when the pile spans pages" do
+        2.times { create_inbox_charge(receipt_due_at: 1.day.from_now) }
+
+        get :inbox, params: { per: 1, group: "card" }
+
+        expect(ivar(:grouping)).to eq("due_date")
       end
 
       it "falls back to the default rather than trusting an unknown grouping" do
@@ -251,14 +263,28 @@ RSpec.describe MyController do
 
           expect(response).to have_http_status(:ok)
           expect(response.body).not_to include("By due date")
-          # No section header to carry the org — under card grouping the same
-          # pile renders without this — so each row carries its own.
+          # No section header to carry the org, so each row carries its own.
           expect(response.body).to include("transaction__event")
+        end
+
+        it "offers a newest-first tab instead of cards when the pile spans pages" do
+          2.times { create_inbox_charge(receipt_due_at: 1.day.from_now) }
+
+          get :inbox, params: { per: 1 }
+
+          expect(response.body).to include("By due date", "Newest first")
+          expect(response.body).not_to include("By card")
+        end
+
+        it "labels a group that spills onto other pages with the on-page count" do
+          2.times { create_inbox_charge(receipt_due_at: 1.day.ago) }
+
+          get :inbox, params: { per: 1 }
+
+          expect(response.body).to include("1 of 2 transactions")
         end
       end
 
-      # The header badge counts the whole group; taking it off the page would
-      # under-report any group that spills onto the next one.
       it "counts a group across every page, not just the page being shown" do
         2.times { create_inbox_charge(receipt_due_at: 1.day.ago) }
 

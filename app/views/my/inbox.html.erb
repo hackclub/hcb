@@ -85,13 +85,11 @@
   <% end %>
 </h2>
 
-<%# Only worth offering the choice when the user actually has receipt deadlines;
-    otherwise the controller pins the grouping to cards. %>
 <% if @count > 0 && @groupable_by_due_date %>
   <ul class="tab-container mt-0 mb2">
-    <% { "due_date" => "By due date", "card" => "By card" }.each do |grouping, label| %>
+    <% { "due_date" => "By due date", "card" => "By card", "flat" => "Newest first" }.slice("due_date", @alternate_grouping).each do |grouping, label| %>
       <%= settings_tab active: @grouping == grouping do %>
-        <%# Switching how the page is grouped invalidates the page number, so drop it. %>
+        <%# Switching the grouping invalidates the page number, so drop it. %>
         <%= link_to label,
                     my_inbox_path(request.query_parameters.except("page", "group").merge("group" => grouping)),
                     data: { turbo: true, turbo_action: "advance" } %>
@@ -110,8 +108,10 @@
           <%= receipt_due_group_label(group, now: @now) %>
         </span>
 
-        <%# The whole group, not just the part of it on this page. %>
-        <%= badge_for pluralize(@due_date_group_counts[group], "transaction"), class: style[:badge_class] %>
+        <%# When a group spills onto other pages, say so rather than repeating
+            the same total above a partial list. %>
+        <% total = @due_date_group_counts[group] %>
+        <%= badge_for hcb_codes.size == total ? pluralize(total, "transaction") : "#{hcb_codes.size} of #{total} transactions", class: style[:badge_class] %>
       </h2>
 
       <%= render "my/missing_receipt_transactions", hcb_codes:, show_event_name: true %>
@@ -134,7 +134,6 @@
     </section>
   <% end %>
 <% else %>
-  <%# No headers to group under, so the rows go into one newest-first table. %>
   <section class="mb3 card p0 receipt-card">
     <%= render "my/missing_receipt_transactions", hcb_codes: @hcb_codes, show_event_name: true %>
   </section>

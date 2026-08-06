@@ -152,9 +152,8 @@ html[data-dark='true'] {
   }
 }
 
-// The organization a transaction belongs to, sitting under its memo when rows
-// from several orgs are mixed into one table. Long org names truncate rather
-// than widening the memo column.
+// The organization a transaction belongs to, shown under its memo when rows
+// from several orgs share one table. Long org names truncate.
 .transaction__event {
   overflow: hidden;
   text-overflow: ellipsis;

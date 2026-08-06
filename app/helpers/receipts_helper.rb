@@ -1,14 +1,9 @@
 # frozen_string_literal: true
 
 module ReceiptsHelper
-  # Buckets a charge that is missing a receipt by when its receipt is due.
-  #
-  # Everything already past its deadline collapses into a single `:overdue`
-  # bucket — the exact day it went overdue isn't actionable, it's all equally
-  # urgent. Everything else buckets by the calendar day it is due on. Charges
-  # with no deadline at all — cardholders who aren't under card-locking
-  # enforcement yet, so `receipt_due_at` was never materialized — get their own
-  # trailing `:none` bucket rather than a made-up date.
+  # Buckets a charge that is missing a receipt by when its receipt is due:
+  # a single :overdue bucket, then one bucket per calendar day, then :none for
+  # charges that never had a deadline (cardholders outside enforcement).
   def receipt_due_group(hcb_code, now: Time.current)
     due_at = hcb_code.receipt_due_at
 
@@ -40,8 +35,7 @@ module ReceiptsHelper
     end
   end
 
-  # How a group's header renders. Kept here rather than in the view so urgency is
-  # only derived once and the icon/colour pairing lives next to the buckets.
+  # Icon and badge classes for a group's header.
   def receipt_due_group_style(group, now: Time.current)
     case receipt_due_group_urgency(group, now:)
     when :overdue then { icon: "important-fill", icon_class: "error", badge_class: "bg-error" }
