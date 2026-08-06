@@ -301,12 +301,24 @@ class EventsController < ApplicationController
     if @event.parent
       ops = @event.ancestor_organizer_positions.includes(:user)
       users = ops.map(&:user).uniq
+      # Someone with their own position here is already in the team list below,
+      # so only mention them if the role they inherit from an ancestor outranks
+      # it. Otherwise the list would advertise an inherited role that is weaker
+      # than the one that actually applies to them.
+      direct_roles = @event.organizer_positions.pluck(:user_id, :role).to_h
 
       access_levels = users.filter_map do |user|
-        access_level = user.access_level_for(@event, ops)
-        next if access_level[:access_level] == :direct
+        inherited_op = ops.reject { |op| op.event_id == @event.id }
+                          .select { |op| op.user_id == user.id }
+                          .max_by { |op| OrganizerPosition.roles[op.role] }
+        next if inherited_op.nil?
 
-        [user, access_level[:role]]
+        inherited_role = inherited_op.role
+
+        direct_role = direct_roles[user.id]
+        next if direct_role && OrganizerPosition.roles[direct_role] >= OrganizerPosition.roles[inherited_role]
+
+        [user, inherited_role]
       end.sort_by { |_, role| role }.to_h
 
       @indirect_access = access_levels
