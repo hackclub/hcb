@@ -11,7 +11,7 @@
 #
 # Indexes
 #
-#  index_ledger_item_pins_on_ledger_item_id  (ledger_item_id)
+#  index_ledger_item_pins_on_ledger_item_id  (ledger_item_id) UNIQUE
 #
 # Foreign Keys
 #
@@ -24,6 +24,7 @@ class Ledger
 
       belongs_to :ledger_item, class_name: "Ledger::Item"
 
+      validates :ledger_item_id, uniqueness: true
       validate :validate_max_pins_for_event, on: :create
       validate :validate_pinnable, on: :create
 
