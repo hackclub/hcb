@@ -41,6 +41,7 @@ class Ledger < ApplicationRecord
 
   has_many :mappings, class_name: "Ledger::Mapping"
   has_many :items, through: :mappings, source: :ledger_item, class_name: "Ledger::Item"
+  has_many :item_pins, through: :items, source: :pin, class_name: "Ledger::Item::Pin"
 
   has_many :canonical_transactions, through: :items
   has_many :canonical_pending_transactions, through: :items

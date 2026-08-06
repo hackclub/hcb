@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_05_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_06_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1605,6 +1605,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_120000) do
     t.index ["voided_by_id"], name: "index_invoices_on_voided_by_id"
   end
 
+  create_table "ledger_item_pins", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "ledger_item_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ledger_item_id"], name: "index_ledger_item_pins_on_ledger_item_id"
+  end
+
   create_table "ledger_items", force: :cascade do |t|
     t.integer "amount_cents", null: false
     t.bigint "author_id"
@@ -3152,6 +3159,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_120000) do
   add_foreign_key "invoices", "users", column: "creator_id"
   add_foreign_key "invoices", "users", column: "manually_marked_as_paid_user_id"
   add_foreign_key "invoices", "users", column: "voided_by_id"
+  add_foreign_key "ledger_item_pins", "ledger_items"
   add_foreign_key "ledger_items", "users", column: "author_id"
   add_foreign_key "ledger_mappings", "ledger_items"
   add_foreign_key "ledger_mappings", "ledgers"

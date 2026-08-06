@@ -53,6 +53,7 @@ class Ledger
     include Receiptable
 
     has_one :hcb_code, class_name: "HcbCode", required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
+    has_one :pin, class_name: "Ledger::Item::Pin", inverse_of: :ledger_item
     belongs_to :linked_object, polymorphic: true, optional: true
     belongs_to :author, class_name: "User", optional: true
 
@@ -460,6 +461,10 @@ class Ledger
       return :negative if amount_cents.negative?
 
       :zero
+    end
+
+    def pinnable?
+      (ct_count > 0 || cpt_count > 0) && primary_ledger&.event.present?
     end
 
     private
