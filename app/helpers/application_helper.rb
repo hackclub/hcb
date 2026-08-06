@@ -15,6 +15,7 @@ module ApplicationHelper
   include LogoHelper
   include OrganizerPosition::Spending::AllowancesHelper
   include PopoverHelper
+  include ReceiptsHelper
   include SeasonalHelper
   include SessionsHelper
   include StaticPagesHelper

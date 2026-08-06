@@ -94,26 +94,56 @@ class MyController < ApplicationController
     render :missing_receipts_icon, layout: false
   end
 
+  # How the receipt inbox's outstanding transactions are grouped.
+  INBOX_GROUPINGS = %w[due_date card].freeze
+
   def inbox
     @count = current_user.transactions_missing_receipt.count
     @locking_count = current_user.card_locking_overdue_charges.count
+    @now = Time.current
 
     hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
-
-    @time_based_sorting = hcb_code_ids_missing_receipt.count > (params[:per] || 15).to_i
 
     hcb_codes_missing_receipt = HcbCode.where(id: hcb_code_ids_missing_receipt)
                                        .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction) # HcbCode#card uses CT and PT
                                        .index_by(&:id).slice(*hcb_code_ids_missing_receipt).values
 
-    if @time_based_sorting
-      hcb_codes_missing_receipt = hcb_codes_missing_receipt.sort_by(&:created_at).reverse
+    # Only cardholders inside the card locking rollout have deadlines at all
+    # (CardLocking.enforcement_start_date), and even for them anything that
+    # settled pre-enforcement — or isn't a card charge — has none. Without at
+    # least one deadline every row would collapse into a single "No deadline"
+    # pile, which is strictly worse than grouping by card, so don't offer the
+    # grouping at all until there's something to group.
+    @groupable_by_due_date = hcb_codes_missing_receipt.any? { |hcb_code| hcb_code.receipt_due_at.present? }
+    @grouping = @groupable_by_due_date ? (params[:group].presence_in(INBOX_GROUPINGS) || "due_date") : "card"
+
+    hcb_codes_missing_receipt =
+      if @grouping == "due_date"
+        # Soonest deadline first, so the charges that can lock a card lead the
+        # page. Charges with no deadline sort last, newest first.
+        hcb_codes_missing_receipt.sort_by do |hcb_code|
+          hcb_code.receipt_due_at ? [0, hcb_code.receipt_due_at.to_i] : [1, -hcb_code.created_at.to_i]
+        end
+      else
+        hcb_codes_missing_receipt.sort_by(&:created_at).reverse
+      end
+
+    if @grouping == "due_date"
+      # Counted over the whole outstanding pile rather than the current page, so
+      # a group spanning several pages still reports its real size.
+      @due_date_group_counts = hcb_codes_missing_receipt.group_by { |hcb_code| helpers.receipt_due_group(hcb_code, now: @now) }
+                                                        .transform_values(&:count)
     end
 
     @hcb_codes = Kaminari.paginate_array(hcb_codes_missing_receipt)
                          .page(params[:page]).per(params[:per] || 15)
 
-    unless @time_based_sorting
+    if @grouping == "due_date"
+      # @hcb_codes is already in due date order, so group_by preserves it.
+      @due_date_groups = @hcb_codes.group_by { |hcb_code| helpers.receipt_due_group(hcb_code, now: @now) }
+    else
+      # Grouped over this page only, so every page still gets its card headers
+      # however many outstanding charges there are.
       @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }.transform_values { |v| v.sort_by(&:created_at).reverse }
       @cards = GlobalID::Locator.locate_many(@card_hcb_codes.keys, includes: :event)
                                 # Order cards by created_at, newest first
