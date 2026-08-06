@@ -19,7 +19,7 @@ module Maintenance
       # Narrow to the transfers that could earn an appearance — out of a fund, or
       # carrying a card grant. `process` is the authority on which one applies (an
       # Argosy transfer from before the 2024 cutoff, say, earns none).
-      candidates = Disbursement.where(source_event_id: Ledger::Item::SpecialAppearance.fund_event_ids)
+      candidates = Disbursement.where(source_event_id: EVENT_IDS)
                                .or(Disbursement.where(id: CardGrant.where.not(disbursement_id: nil).select(:disbursement_id)))
 
       Ledger::Item.where(
