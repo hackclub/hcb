@@ -241,8 +241,8 @@ RSpec.describe EventsController do
         get(:sub_organizations, params: { event_id: parent.slug }, format: :csv)
 
         rows = CSV.parse(response.body, headers: true).index_by { |row| row["Name"] }
-        expect(rows.keys).to match_array(["Transparent Subsidiary", "Transparent Grandchild"])
-        expect(rows["Transparent Subsidiary"]["Parent ID"]).to eq(parent.public_id)
+        expect(rows.keys).to match_array(["Transparent Sub-organization", "Transparent Grandchild"])
+        expect(rows["Transparent Sub-organization"]["Parent ID"]).to eq(parent.public_id)
         expect(rows["Transparent Grandchild"]["ID"]).to eq(grandchild.public_id)
         expect(rows["Transparent Grandchild"]["Parent ID"]).to eq(transparent_sub.public_id)
       end
