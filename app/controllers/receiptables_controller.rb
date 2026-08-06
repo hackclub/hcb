@@ -5,23 +5,25 @@ class ReceiptablesController < ApplicationController
   # signing in. Marking no/lost receipt from that page shouldn't either.
   skip_before_action :signed_in_user, only: :mark_no_or_lost
   before_action :set_receiptable
-  skip_after_action :verify_authorized # do not force pundit
 
   def mark_no_or_lost
-    authorize @receiptable, policy_class: ReceiptablePolicy unless from_signed_link?
+    # Always run the policy, even for the signed link, so that Pundit's
+    # `verify_authorized` can stay on: an action that forgets to authorize now
+    # fails loudly rather than silently allowing the request through.
+    begin
+      authorize @receiptable, policy_class: ReceiptablePolicy
+    rescue Pundit::NotAuthorizedError
+      raise unless from_signed_link?
+    end
 
     if @receiptable.no_or_lost_receipt!
       flash[:success] = "Marked no/lost receipt on that transaction."
+      # Signed link visitors can't view the transaction itself, so send them
+      # back where they came from, reusing the secret they arrived with.
+      redirect_to from_signed_link? ? attach_receipt_hcb_code_path(@receiptable, s: params[:s]) : @receiptable
     else
       flash[:error] = "Failed to mark that transaction as no/lost receipt."
-    end
-
-    if from_signed_link?
-      # Reuse the secret they arrived with, so they land back on the page they
-      # started from and see the "Marked no/lost receipt" banner.
-      redirect_to attach_receipt_hcb_code_path(id: @receiptable.hashid, s: params[:s])
-    else
-      redirect_to @receiptable
+      redirect_back(fallback_location: @receiptable)
     end
   end
 
