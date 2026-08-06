@@ -14,8 +14,8 @@
 # Indexes
 #
 #  index_hcb_code_pins_on_event_id            (event_id)
-#  index_hcb_code_pins_on_hcb_code_id         (hcb_code_id) UNIQUE
-#  index_hcb_code_pins_on_ledger_item_pin_id  (ledger_item_pin_id) UNIQUE
+#  index_hcb_code_pins_on_hcb_code_id         (hcb_code_id)
+#  index_hcb_code_pins_on_ledger_item_pin_id  (ledger_item_pin_id)
 #
 # Foreign Keys
 #
