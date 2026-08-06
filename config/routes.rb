@@ -820,7 +820,7 @@ Rails.application.routes.draw do
         resources :wires, only: [:index, :show, :create]
         resources :ach_transfers, only: [:create]
 
-        resources :comments, only: [:index, :create]
+        resources :comments, only: [:index, :create, :update]
 
         get "stripe_terminal_connection_token", to: "stripe_terminal#connection_token"
 
