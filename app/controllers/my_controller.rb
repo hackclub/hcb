@@ -114,13 +114,21 @@ class MyController < ApplicationController
                                        .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction) # HcbCode#card uses CT and PT
                                        .index_by(&:id).slice(*hcb_code_ids_missing_receipt).values
 
-    # Only cardholders inside the card locking rollout have deadlines at all
-    # (CardLocking.enforcement_start_date), and even for them anything that
-    # settled pre-enforcement — or isn't a card charge — has none. Without at
-    # least one deadline every row would collapse into a single "No deadline"
-    # pile, which is strictly worse than grouping by card, so don't offer the
-    # grouping at all until there's something to group.
-    @groupable_by_due_date = hcb_codes_missing_receipt.any? { |hcb_code| hcb_code.receipt_due_at.present? }
+    # Deadlines are only surfaced to cardholders the rest of the page explains
+    # them to: :card_locking_2025_06_09 gates the "your cards pause" callout and
+    # the overdue count above, and UserService::UpdateCardLocking won't lock a
+    # card without it. That flag is a separate axis from the enforcement stages
+    # that materialize receipt_due_at (CardLocking::ENFORCEMENT_STAGES), so
+    # without this check a cardholder could see charges flagged overdue in red
+    # with nothing on the page saying what a deadline is — and no lock behind it.
+    #
+    # Even inside the flag, anything that settled pre-enforcement — or isn't a
+    # card charge — has no deadline. Without at least one, every row would
+    # collapse into a single "No deadline" pile, which is strictly worse than
+    # grouping by card, so don't offer the grouping until there's something to
+    # group.
+    @groupable_by_due_date = Flipper.enabled?(:card_locking_2025_06_09, current_user) &&
+                             hcb_codes_missing_receipt.any? { |hcb_code| hcb_code.receipt_due_at.present? }
     @grouping =
       if @groupable_by_due_date
         params[:group].presence_in(INBOX_GROUPINGS) || "due_date"

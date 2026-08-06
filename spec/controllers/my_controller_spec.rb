@@ -77,6 +77,10 @@ RSpec.describe MyController do
 
       before do
         travel_to(now)
+        # The deadline UI is gated on the same flag as the card locking callout
+        # that explains it; the shared context only enables the enforcement stage
+        # that materializes receipt_due_at.
+        Flipper.enable(:card_locking_2025_06_09, user)
         sign_in_verified(user)
       end
 
@@ -157,6 +161,21 @@ RSpec.describe MyController do
         get :inbox, params: { per: 5 }
 
         expect(ivar(:grouping)).to eq("card")
+      end
+
+      # receipt_due_at is materialized off the enforcement stage flags, which are a
+      # separate axis from the flag gating the callout that explains what a
+      # deadline is (and gating the lock itself). Surfacing deadlines without it
+      # would threaten a consequence that can't happen, unexplained.
+      it "keeps deadlines hidden from cardholders outside the card locking flag" do
+        Flipper.disable(:card_locking_2025_06_09, user)
+        create_inbox_charge(receipt_due_at: 1.day.from_now)
+
+        get :inbox
+
+        expect(ivar(:groupable_by_due_date)).to eq(false)
+        expect(ivar(:grouping)).to eq("card")
+        expect(ivar(:due_date_groups)).to be_nil
       end
 
       it "defaults to due date grouping once something has a deadline" do
