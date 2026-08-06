@@ -68,7 +68,6 @@ class Contract
       return if event.nil? || user.nil?
 
       # find_by does not order on its own, and a user can hold a party on more
-      # than one of an organization's open contracts, so order it ourselves.
       parties = where(contract: event.contracts.sent).order(:id)
 
       parties.not_hcb.find_by(user:) || (parties.hcb.first if user.admin?)
