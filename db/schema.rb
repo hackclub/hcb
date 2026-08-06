@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_06_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_06_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1414,8 +1414,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_140000) do
     t.bigint "ledger_item_pin_id"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_hcb_code_pins_on_event_id"
-    t.index ["hcb_code_id"], name: "index_hcb_code_pins_on_hcb_code_id"
-    t.index ["ledger_item_pin_id"], name: "index_hcb_code_pins_on_ledger_item_pin_id"
+    t.index ["hcb_code_id"], name: "index_hcb_code_pins_on_hcb_code_id", unique: true
+    t.index ["ledger_item_pin_id"], name: "index_hcb_code_pins_on_ledger_item_pin_id", unique: true
   end
 
   create_table "hcb_code_tag_suggestions", force: :cascade do |t|
