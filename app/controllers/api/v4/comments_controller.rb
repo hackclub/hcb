@@ -34,7 +34,7 @@ module Api
       def update
         @comment = authorize Comment.find_by_public_id!(params[:id])
 
-        @comment.update!(params.permit(:content, :admin_only, :file))
+        @comment.update!(params.permit(:content, :admin_only))
 
         render "show"
       end
