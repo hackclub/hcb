@@ -55,6 +55,16 @@ RSpec.describe ReceiptablesController do
       expect(flash[:error]).to eq("You are not authorized to perform this action.")
     end
 
+    it "refuses a signed out user on a charge whose cardholder doesn't resolve" do
+      allow(HcbCode).to receive(:find).and_return(hcb_code)
+      allow(hcb_code).to receive_messages(stripe_card?: true, stripe_cardholder: nil)
+
+      post(:mark_no_or_lost, params: base_params, as: :html)
+
+      expect(hcb_code.reload).not_to be_no_or_lost_receipt
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+    end
+
     it "refuses a signed out user without a valid secret" do
       post(:mark_no_or_lost, params: base_params.merge(s: "not-a-real-secret"), as: :html)
 
