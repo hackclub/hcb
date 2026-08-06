@@ -87,7 +87,7 @@
 
 <% if @time_based_sorting %>
   <section class="mb3 card p0 receipt-card">
-    <%= render "my/missing_receipt_transactions", hcb_codes: @hcb_codes %>
+    <%= render "my/missing_receipt_transactions", hcb_codes: @hcb_codes, show_event_name: true %>
   </section>
 <% else %>
   <% @cards.each do |card| %>
@@ -101,6 +101,7 @@
         <% end %>
       </h2>
 
+      <%# The org is already in this section's header, so it isn't repeated per row. %>
       <%= render "my/missing_receipt_transactions", hcb_codes: @card_hcb_codes[card.to_global_id.to_s] %>
     </section>
   <% end %>
