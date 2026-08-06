@@ -1036,7 +1036,9 @@ class Event < ApplicationRecord
     contracts.sent.select { |c| c.parties.not_hcb.all?(&:signed?) }
   end
 
-  # The contract standing between this organization and activation, if any.
+  # The oldest contract standing between this organization and activation, if
+  # any. An organization can have more than one open at a time, since contracts
+  # hang off individual signee invites rather than off the organization.
   def contract_pending_signature
     contracts.not_voided.where.not(aasm_state: :signed).first
   end
