@@ -122,6 +122,13 @@ class Contract
     end
 
     def agreement_name
+      # Hack Club's own projects aren't fiscally sponsored by Hack Club, so the
+      # template they sign is a plain contract rather than a fiscal sponsorship
+      # agreement. The template is the only thing that tells the two apart —
+      # both kinds are Contract::FiscalSponsorship records.
+      hack_club_template = Event::Plan::HackClubAffiliate.new.contract_docuseal_template_id
+      return "contract" if external_template_id.to_s == hack_club_template.to_s
+
       "fiscal sponsorship agreement"
     end
 

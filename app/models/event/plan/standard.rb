@@ -87,13 +87,6 @@ class Event
         487784
       end
 
-      # What organizations on this plan sign to get activated. Plans that use a
-      # template other than the fiscal sponsorship agreement should override
-      # this so we don't call it something it isn't.
-      def contract_name
-        "fiscal sponsorship contract"
-      end
-
       def contract_skip_prefills
         {}
       end

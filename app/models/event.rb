@@ -1036,6 +1036,11 @@ class Event < ApplicationRecord
     contracts.sent.select { |c| c.parties.not_hcb.all?(&:signed?) }
   end
 
+  # The contract standing between this organization and activation, if any.
+  def contract_pending_signature
+    contracts.not_voided.where.not(aasm_state: :signed).first
+  end
+
   # The party on one of this organization's sent contracts that a user is
   # allowed to open — their own, or HCB's if they're an admin.
   def contract_party_for(user)
