@@ -11,7 +11,7 @@
   <td><%= item.datetime.strftime("%b %e, %Y") %></td>
   <td class="transaction__memo transaction__memo--fluid<%= " transaction__memo--pending" if item.pending? %>">
     <div>
-      <div class="flex-auto flex flex-wrap items-center gap-y-1 gap-x-[1ch] min-w-0">
+      <div class="flex-auto">
         <div class="flex items-center gap-[1ch] min-w-0">
           <% unless item.settled? %>
             <%= badge_for item.status_text, class: item.status_css %>
@@ -26,13 +26,10 @@
       </div>
 
       <%= render "ledger/items/tag_menu", item: %>
-    </div>
-  </td>
-  <td class="nowrap">
-    <span class="flex items-center justify-end">
+
       <%= list_badge_for auditor_signed_in? ? item.comment_count : item.not_admin_only_comment_count, "comment", "post", optional: true %>
       <%= list_badge_for item.receipt_count, "receipt", "payment-docs", optional: item.receipt_optional?, required: item.missing_receipt? %>
-    </span>
+    </div>
   </td>
   <td class="nowrap">
     <span class="flex items-center justify-end">
@@ -43,9 +40,6 @@
       <% end %>
     </span>
   </td>
-  <% admin_tool("", "td") do %>
-    <%= item.short_code %>
-  <% end %>
   <td>
     <% if item.author.present? %>
       <div class="flex items-center justify-center tooltipped tooltipped--w" aria-label="<%= item.author.name %>">
