@@ -21,17 +21,15 @@ class Ledger
     # The legacy transaction views read their own copy of the grant definitions
     # from Disbursement::SPECIAL_APPEARANCES; that hash goes away with them.
     class SpecialAppearance
-      attr_reader :key, :title, :memo, :css_class, :icon, :funds, :since, :qualifier
+      attr_reader :key, :title, :memo, :css_class, :icon, :qualifier
 
-      def initialize(key:, title: nil, memo: nil, css_class: nil, icon: nil, funds: [], since: nil, qualifier: nil)
+      def initialize(key:, title: nil, memo: nil, css_class: nil, icon: nil, qualifier: nil)
         @key = key.to_s
         @title = title
         @memo = memo
         @css_class = css_class
         @icon = icon
-        @funds = funds.freeze
-        @since = since
-        @qualifier = qualifier || self.class.fund_qualifier(funds, since)
+        @qualifier = qualifier
 
         freeze
       end
@@ -50,16 +48,14 @@ class Ledger
         key
       end
 
-      # Most appearances mark transfers out of a particular fund, so they declare
-      # `funds:` (and optionally `since:`) instead of writing a qualifier. Keeping
-      # the fund ids as data, not just as a closure, is what lets the backfill find
-      # the items that need one — see the maintenance task.
+      # Most appearances mark transfers out of a particular fund, so they pass
+      # `funds` (and optionally `since`) instead of writing their own qualifier. 
       #
       # The type guard is on Disbursement::Shared, not Disbursement: a ledger item's
       # linked object is always a Disbursement::Incoming/Outgoing lens, and those
       # descend from Disbursement::Base rather than Disbursement. Shared is the one
       # thing all three have in common.
-      def self.fund_qualifier(event_ids, since)
+      def self.fund_qualifier(event_ids, since = nil)
         return nil if event_ids.empty?
 
         lambda do |object|
@@ -78,7 +74,7 @@ class Ledger
           memo: "💰 Hackathon grant from Hack Club",
           css_class: "transaction--fancy",
           icon: "purse",
-          funds: [EventMappingEngine::EventIds::HACKATHON_GRANT_FUND]
+          qualifier: fund_qualifier([EventMappingEngine::EventIds::HACKATHON_GRANT_FUND])
         ),
         new(
           key: :winter_hardware_wonderland,
@@ -86,7 +82,7 @@ class Ledger
           memo: "❄️ Winter Hardware Wonderland Grant",
           css_class: "transaction--icy",
           icon: "freeze",
-          funds: [EventMappingEngine::EventIds::WINTER_HARDWARE_WONDERLAND_GRANT_FUND]
+          qualifier: fund_qualifier([EventMappingEngine::EventIds::WINTER_HARDWARE_WONDERLAND_GRANT_FUND])
         ),
         new(
           key: :argosy_grant_2024,
@@ -94,8 +90,7 @@ class Ledger
           memo: "🤖 Argosy Foundation Rookie / Hardship Grant",
           css_class: "transaction--fancy",
           icon: "sam",
-          funds: [EventMappingEngine::EventIds::ARGOSY_GRANT_FUND, EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025],
-          since: Date.new(2024, 9, 1)
+          qualifier: fund_qualifier([EventMappingEngine::EventIds::ARGOSY_GRANT_FUND, EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025], Date.new(2024, 9, 1))
         ),
         new(
           key: :first_transparency_grant,
@@ -103,7 +98,7 @@ class Ledger
           memo: "🤖 FIRST® Transparency Grant",
           css_class: "transaction--frc",
           icon: "sam",
-          funds: [EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND]
+          qualifier: fund_qualifier([EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND])
         ),
         new(
           key: :gene_haas_grant,
@@ -111,7 +106,7 @@ class Ledger
           memo: "Gene Haas Grant",
           css_class: "transaction--genehaas",
           icon: "sam",
-          funds: [EventMappingEngine::EventIds::GENE_HAAS_GRANT_FUND]
+          qualifier: fund_qualifier([EventMappingEngine::EventIds::GENE_HAAS_GRANT_FUND])
         ),
         new(
           key: :card_grant,
@@ -130,12 +125,6 @@ class Ledger
 
       def self.keys
         BY_KEY.keys
-      end
-
-      # Every fund that earns an appearance, for narrowing a query down to the
-      # transfers that might have one.
-      def self.fund_event_ids
-        ALL.flat_map(&:funds).uniq
       end
 
       # The appearance a linked object earns, if any. Only called when assigning.
