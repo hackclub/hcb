@@ -34,6 +34,8 @@ class Payee < ApplicationRecord
   has_many :payments
   has_many :payroll_positions, class_name: "Payroll::Position"
 
+  normalizes :email, with: ->(email) { email.strip.downcase }
+
   validates_uniqueness_of :legal_entity_id, scope: [:event_id], allow_nil: true
 
   validate :managed_legal_entity_constraints
