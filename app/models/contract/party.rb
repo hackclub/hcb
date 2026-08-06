@@ -58,6 +58,16 @@ class Contract
       end
     end
 
+    # The party a user is allowed to open on one of an organization's sent
+    # contracts — their own, or HCB's if they're an admin.
+    def self.for(event:, user:)
+      return if event.nil? || user.nil?
+
+      parties = where(contract: event.contracts.sent)
+
+      parties.not_hcb.find_by(user:) || (parties.hcb.first if user.admin?)
+    end
+
     def email
       user&.email || external_email
     end

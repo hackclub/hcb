@@ -1041,16 +1041,6 @@ class Event < ApplicationRecord
     contracts.not_voided.where.not(aasm_state: :signed).first
   end
 
-  # The party on one of this organization's sent contracts that a user is
-  # allowed to open — their own, or HCB's if they're an admin.
-  def contract_party_for(user)
-    return if user.blank?
-
-    parties = Contract::Party.where(contract: contracts.sent)
-
-    parties.not_hcb.find_by(user:) || (parties.hcb.first if user.admin?)
-  end
-
   private
 
   def point_of_contact_is_admin

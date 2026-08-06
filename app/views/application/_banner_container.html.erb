@@ -38,7 +38,7 @@
         </div>
       </div>
     <% elsif @event&.contracts&.any? && @event&.contracts&.signed&.none? %>
-      <% contract_party = @event.contract_party_for(current_user) %>
+      <% contract_party = Contract::Party.for(event: @event, user: current_user) %>
       <% agreement_name = (@event.contract_pending_signature || @event.contracts.first).agreement_name %>
       <div class="w-full dev-banner dev-banner--info no-underline">
         <div class="flex flex-col md:flex-row gap-y-2 gap-x-6 py-6 items-center justify-center">
