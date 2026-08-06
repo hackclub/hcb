@@ -8,8 +8,15 @@ class ReceiptablesController < ApplicationController
     authorize @receiptable, policy_class: ReceiptablePolicy
 
     if @receiptable.no_or_lost_receipt!
-      flash[:success] = "Marked no/lost receipt on that transaction."
-      redirect_to @receiptable
+      @hcb_code = @receiptable if @receiptable.is_a?(HcbCode)
+      @ledger_instance = params[:ledger_instance]
+      respond_to do |format|
+        format.turbo_stream
+        format.html do
+          flash[:success] = "Marked no/lost receipt on that transaction."
+          redirect_to @receiptable
+        end
+      end
     else
       flash[:error] = "Failed to mark that transaction as no/lost receipt."
       redirect_back(fallback_location: @receiptable)
