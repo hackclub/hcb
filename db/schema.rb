@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_06_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_06_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1411,9 +1411,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_120000) do
     t.datetime "created_at", null: false
     t.bigint "event_id"
     t.bigint "hcb_code_id"
+    t.bigint "ledger_item_pin_id"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_hcb_code_pins_on_event_id"
     t.index ["hcb_code_id"], name: "index_hcb_code_pins_on_hcb_code_id"
+    t.index ["ledger_item_pin_id"], name: "index_hcb_code_pins_on_ledger_item_pin_id"
   end
 
   create_table "hcb_code_tag_suggestions", force: :cascade do |t|
@@ -1609,7 +1611,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_120000) do
     t.datetime "created_at", null: false
     t.bigint "ledger_item_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["ledger_item_id"], name: "index_ledger_item_pins_on_ledger_item_id"
+    t.index ["ledger_item_id"], name: "index_ledger_item_pins_on_ledger_item_id", unique: true
   end
 
   create_table "ledger_items", force: :cascade do |t|
@@ -3145,6 +3147,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_120000) do
   add_foreign_key "hcb_code_personal_transactions", "users", column: "reporter_id"
   add_foreign_key "hcb_code_pins", "events"
   add_foreign_key "hcb_code_pins", "hcb_codes"
+  add_foreign_key "hcb_code_pins", "ledger_item_pins"
   add_foreign_key "hcb_code_tag_suggestions", "hcb_codes"
   add_foreign_key "hcb_code_tag_suggestions", "tags"
   add_foreign_key "hcb_codes", "ledger_items", on_delete: :nullify
