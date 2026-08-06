@@ -31,14 +31,7 @@ module Maintenance
     def process(item)
       return unless Ledger::Item::SpecialAppearance.for(item.linked_object)
 
-      # refresh! is what assigns the column — write-once, from the linked object —
-      # and then regenerates the memo from it. Writing the column directly instead
-      # would leave a fund transfer showing its old "Transfer from ..." memo until
-      # something else happened to refresh the item.
-      #
-      # No paper_trail version per row: this is a cosmetic bulk fix, not a change
-      # anyone will want to audit.
-      PaperTrail.request(enabled: false) { item.refresh! }
+      item.refresh!
     end
 
   end
