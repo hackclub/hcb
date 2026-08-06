@@ -136,6 +136,29 @@ RSpec.describe MyController do
         expect(ivar(:grouping)).to eq("card")
       end
 
+      # Card sections are cut from the current page, so on a pile spanning several
+      # pages they'd repeat a card's header on every page and split its charges
+      # across them. A flat newest-first list is the honest fallback — and it's
+      # what this page did before due date grouping existed.
+      it "falls back to a flat list when an undated pile spans more than one page" do
+        2.times { create_inbox_charge(receipt_due_at: nil) }
+
+        get :inbox, params: { per: 1 }
+
+        expect(ivar(:groupable_by_due_date)).to eq(false)
+        expect(ivar(:grouping)).to eq("flat")
+        expect(ivar(:cards)).to be_nil
+        expect(ivar(:hcb_codes).size).to eq(1)
+      end
+
+      it "still groups an undated pile by card when it fits on one page" do
+        2.times { create_inbox_charge(receipt_due_at: nil) }
+
+        get :inbox, params: { per: 5 }
+
+        expect(ivar(:grouping)).to eq("card")
+      end
+
       it "defaults to due date grouping once something has a deadline" do
         create_inbox_charge(receipt_due_at: 1.day.from_now)
 
@@ -200,6 +223,18 @@ RSpec.describe MyController do
           expect(response.body).not_to include("By due date")
           # The org lives in the card section header instead, not on every row.
           expect(response.body).not_to include("transaction__event")
+        end
+
+        it "renders one headerless table when it falls back to a flat list" do
+          2.times { create_inbox_charge(receipt_due_at: nil) }
+
+          get :inbox, params: { per: 1 }
+
+          expect(response).to have_http_status(:ok)
+          expect(response.body).not_to include("By due date")
+          # No section header to carry the org — under card grouping the same
+          # pile renders without this — so each row carries its own.
+          expect(response.body).to include("transaction__event")
         end
       end
 

@@ -94,13 +94,19 @@ class MyController < ApplicationController
     render :missing_receipts_icon, layout: false
   end
 
-  # How the receipt inbox's outstanding transactions are grouped.
+  # How the receipt inbox's outstanding transactions are grouped. "flat" is a
+  # fallback the controller picks, never something a user can ask for.
   INBOX_GROUPINGS = %w[due_date card].freeze
 
   def inbox
     @count = current_user.transactions_missing_receipt.count
     @locking_count = current_user.card_locking_overdue_charges.count
     @now = Time.current
+    # Resolved once because the grouping fallback below needs to know whether the
+    # pile spans more than one page. Kaminari swaps its own default in for a
+    # non-positive :per, so do the same rather than let the two disagree.
+    per = (params[:per] || 15).to_i
+    per = Kaminari.config.default_per_page unless per.positive?
 
     hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
 
@@ -115,7 +121,18 @@ class MyController < ApplicationController
     # pile, which is strictly worse than grouping by card, so don't offer the
     # grouping at all until there's something to group.
     @groupable_by_due_date = hcb_codes_missing_receipt.any? { |hcb_code| hcb_code.receipt_due_at.present? }
-    @grouping = @groupable_by_due_date ? (params[:group].presence_in(INBOX_GROUPINGS) || "due_date") : "card"
+    @grouping =
+      if @groupable_by_due_date
+        params[:group].presence_in(INBOX_GROUPINGS) || "due_date"
+      elsif hcb_codes_missing_receipt.size > per
+        # Card sections are built from the current page, so on a pile that spans
+        # several pages they would split one card's charges across pages and
+        # repeat its header on each. A flat, newest-first list paginates
+        # honestly instead.
+        "flat"
+      else
+        "card"
+      end
 
     hcb_codes_missing_receipt =
       if @grouping == "due_date"
@@ -136,12 +153,12 @@ class MyController < ApplicationController
     end
 
     @hcb_codes = Kaminari.paginate_array(hcb_codes_missing_receipt)
-                         .page(params[:page]).per(params[:per] || 15)
+                         .page(params[:page]).per(per)
 
     if @grouping == "due_date"
       # @hcb_codes is already in due date order, so group_by preserves it.
       @due_date_groups = @hcb_codes.group_by { |hcb_code| helpers.receipt_due_group(hcb_code, now: @now) }
-    else
+    elsif @grouping == "card"
       # Grouped over this page only, so every page still gets its card headers
       # however many outstanding charges there are.
       @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }.transform_values { |v| v.sort_by(&:created_at).reverse }
