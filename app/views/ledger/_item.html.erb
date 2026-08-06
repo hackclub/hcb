@@ -40,9 +40,6 @@
       <% end %>
     </span>
   </td>
-  <% admin_tool("", "td") do %>
-    <%= item.short_code %>
-  <% end %>
   <td>
     <% if item.author.present? %>
       <div class="flex items-center justify-center tooltipped tooltipped--w" aria-label="<%= item.author.name %>">
