@@ -17,7 +17,7 @@
   <section class="card__banner secondary border-top">
     <p class="my0 italic">
       <% if ledger_item.amount_cents.negative? %>
-        HCB is charging <strong><%= number_to_percentage(ledger_item.ledger.event.revenue_fee * 100, significant: true, strip_insignificant_zeros: true) %></strong> of revenue.
+        HCB is charging <strong><%= number_to_percentage(ledger_item.primary_ledger.event.revenue_fee * 100, significant: true, strip_insignificant_zeros: true) %></strong> of revenue.
       <% else %>
         This is a credit for fees previously charged by HCB.
       <% end %>

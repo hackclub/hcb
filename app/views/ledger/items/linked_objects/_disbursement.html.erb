@@ -135,7 +135,7 @@
     <% end %>
   </section>
 
-  <% if ledger_item.ledger.event.can_front_balance? %>
+  <% if ledger_item.primary_ledger.event.can_front_balance? %>
     <section class="ledger-item--footer">
       <% if disbursement.may_mark_rejected? %>
         <% admin_tool "w-fit" do %>
