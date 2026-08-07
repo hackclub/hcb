@@ -299,19 +299,18 @@ class EventsController < ApplicationController
     @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(params[:per] || (@view == "list" ? 20 : 10))
 
     if @event.parent
-      ops = @event.ancestor_organizer_positions.includes(:user)
-      users = ops.map(&:user).uniq
-      direct_roles = @event.organizer_positions.pluck(:user_id, :role).to_h
+      # `ancestor_organizer_positions` covers this organization as well as its
+      # ancestors, so both halves come from the one query. The avatars are
+      # preloaded because every user here is rendered as a `user_mention`.
+      ops = @event.ancestor_organizer_positions.includes(user: { profile_picture_attachment: :blob })
+      direct_ops, ancestor_ops = ops.partition { |op| op.event_id == @event.id }
+      direct_roles = direct_ops.to_h { |op| [op.user_id, op.role] }
 
-      access_levels = users.filter_map do |user|
-        ancestor_ops = ops.reject { |op| op.event_id == @event.id }
-                          .select { |op| op.user_id == user.id }
-        next if ancestor_ops.empty?
-
+      @indirect_access = ancestor_ops.group_by(&:user).filter_map do |user, user_ops|
         # Inheriting from an ancestor is all-or-nothing (see
         # OrganizerPosition.role_at_least?): managers inherit their full role,
         # everyone else only inherits read access.
-        inherited_role = ancestor_ops.any?(&:manager?) ? "manager" : "reader"
+        inherited_role = user_ops.any?(&:manager?) ? "manager" : "reader"
 
         # Someone with their own position here is already in the team list
         # below, so only mention them when what they inherit outranks it.
@@ -319,9 +318,7 @@ class EventsController < ApplicationController
         next if direct_role && OrganizerPosition.roles[direct_role] >= OrganizerPosition.roles[inherited_role]
 
         [user, inherited_role]
-      end.sort_by { |_, role| role }.to_h
-
-      @indirect_access = access_levels
+      end.sort_by { |user, role| [-OrganizerPosition.roles[role], user.name.to_s] }.to_h
     end
 
     @invites = @event.organizer_position_invites.pending.includes(:sender)

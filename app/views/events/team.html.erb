@@ -35,7 +35,7 @@
 <% if @event.parent.present? %>
   <%# The icons are wrapped rather than placed directly in the <summary> because
       `summary > svg` picks up padding from the dock styles. %>
-  <details class="card border b--info p-0 mt3 mb3">
+  <details id="parent_organization_access" class="card border b--info p-0 mt3 mb3">
     <summary class="px-4 py-3 list-none">
       <div class="flex items-center gap-2">
         <span class="info line-height-0"><%= inline_icon "leader", size: 24 %></span>
@@ -45,7 +45,7 @@
     </summary>
 
     <div class="border-top b--muted px-4 py-3">
-      <p class="mt0">Because <%= @event.name %> is a sub-organization of <%= @event.parent.name %>, its team has access here too &mdash; managers can manage this organization, while members and readers can only view it.</p>
+      <p class="mt0">Because <%= @event.name %> is a sub-organization of <%= @event.parent.name %>, the <%= @event.parent.name %> team has access here too. Their managers can manage this organization, while their members and readers can only view it.</p>
 
       <% if @indirect_access.present? %>
         <div class="grid">
