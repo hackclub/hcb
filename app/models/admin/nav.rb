@@ -132,6 +132,12 @@ module Admin
             count_type: :tasks
           ),
           make_item(
+            name: "HCB Fees",
+            path: bank_fees_admin_index_path,
+            count: BankFee.in_transit_or_confirmed.count,
+            count_type: :records
+          ),
+          make_item(
             name: "Checks",
             path: increase_checks_admin_index_path,
             count: ->{ IncreaseCheck.pending.count },
