@@ -65,9 +65,7 @@ module Api
           hcb_code.events.any? { |event| hcb_code.missing_receipt?(event) }
         end.map(&:id)
 
-        @hcb_codes = HcbCode.where(id: hcb_codes_missing_ids).order(created_at: :desc)
-
-        @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
+        @hcb_codes = paginate_relation(HcbCode.where(id: hcb_codes_missing_ids))
       end
 
       require_oauth2_scope "ledgers:read", :missing_receipt
