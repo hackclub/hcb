@@ -51,6 +51,27 @@ RSpec.describe CanonicalPendingTransactionService::Settle do
     end
   end
 
+  # Several settle paths pair a pending transaction with a still-ungrouped
+  # HCB-000 canonical transaction (see PendingEventMappingEngine::Settle::Donation
+  # and AdminController#set_wire, which regroup the CT *after* settling), so the
+  # two HCB codes routinely differ. The canonical transaction is handed over to
+  # the pending transaction's ledger item, which lives in the other group.
+  context "when the two HCB codes differ" do
+    let(:canonical_pending_transaction) { create(:canonical_pending_transaction, custom_memo: "Plushie order") }
+    let(:canonical_transaction) { create(:canonical_transaction, custom_memo: nil) }
+
+    it "should carry the custom_memo onto the ledger item the transaction is handed to" do
+      expect(canonical_transaction.hcb_code).not_to eq(canonical_pending_transaction.hcb_code)
+      destination = canonical_pending_transaction.reload.ledger_item
+
+      service.run!
+
+      expect(canonical_transaction.reload.custom_memo).to eq("Plushie order")
+      expect(canonical_transaction.ledger_item).to eq(destination)
+      expect(destination.reload.custom_memo).to eq("Plushie order")
+    end
+  end
+
   # Settling hands the canonical transaction over to the pending transaction's
   # ledger item (see CanonicalPendingSettledMapping), so that item is the one
   # the memo has to survive on.
@@ -78,14 +99,17 @@ RSpec.describe CanonicalPendingTransactionService::Settle do
     # Settling must never write a nil memo through HcbCode#update_custom_memo!,
     # which would clear the memo on every record in the group — including the
     # ledger item's copy, which is the value the ledger renders.
+    # The canonical transaction's own column is left nil so the pre-existing
+    # `custom_memo.nil?` guard does not short-circuit — only the ledger item
+    # carries the memo, which is the state a legacy rename leaves behind.
     it "should not clear a memo the organizer already set" do
-      canonical_transaction.local_hcb_code.update_custom_memo!("Renamed by an organizer")
       ledger_item = canonical_transaction.reload.ledger_item
+      ledger_item.update_columns(custom_memo: "Renamed by an organizer", memo: "Renamed by an organizer")
 
       service.run!
 
-      expect(canonical_transaction.reload.custom_memo).to eq("Renamed by an organizer")
       expect(ledger_item.reload.custom_memo).to eq("Renamed by an organizer")
+      expect(ledger_item.memo).to eq("Renamed by an organizer")
     end
   end
 

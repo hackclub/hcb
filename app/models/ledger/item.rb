@@ -335,16 +335,23 @@ class Ledger
 
     def update_custom_memo!(memo)
       # TODO: remove CT and CPT updates because they are HCB code specific
-      ActiveRecord::Base.transaction do
-        # This item's own transactions, keyed by `ledger_item_id`. Renaming a
-        # whole HCB code group goes through HcbCode#update_custom_memo!, which
-        # keys by the HCB code instead — the two sets can diverge.
-        canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
-        canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
-        update!(custom_memo: memo)
-      end
+      # This item's own transactions, keyed by `ledger_item_id`. Renaming a whole
+      # HCB code group goes through HcbCode#update_custom_memo!, which keys by the
+      # HCB code instead — the two sets can diverge.
+      cts = canonical_transactions.to_a
+      cpts = canonical_pending_transactions.to_a
 
-      refresh!
+      # Every write below cascades into `map!` and `refresh!` for each record, so
+      # don't pay for a rename that wouldn't change anything.
+      return if custom_memo == memo && [*cts, *cpts].all? { |record| record.custom_memo == memo }
+
+      ActiveRecord::Base.transaction do
+        cts.each { |ct| ct.update!(custom_memo: memo) }
+        cpts.each { |cpt| cpt.update!(custom_memo: memo) }
+        update!(custom_memo: memo)
+
+        refresh!
+      end
     end
 
     def map!

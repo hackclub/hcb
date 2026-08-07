@@ -21,10 +21,14 @@ module StripeCardService
     #   Check out HcbCode#memo for more info on how this work.
     def rename_canonical_transaction
       stripe_issuing_card_canonical_transactions_to_rename.find_each(batch_size: 100) do |canonical_transaction|
-        # `without_custom_memo` only filters on the canonical transaction, so an
-        # organizer's rename that so far only reached the ledger item would be
-        # overwritten by this default memo.
-        next if canonical_transaction.ledger_item&.custom_memo.present?
+        # Renaming writes the whole HCB code group, while `without_custom_memo`
+        # only filters on this one transaction. Skip the group entirely if anything
+        # in it already carries an organizer's memo — this default would erase it.
+        # `HcbCode#custom_memo` only reads the first transaction, so check them all.
+        hcb_code = canonical_transaction.local_hcb_code
+        next if hcb_code&.canonical_transactions&.with_custom_memo&.exists? ||
+                hcb_code&.canonical_pending_transactions&.with_custom_memo&.exists? ||
+                canonical_transaction.ledger_item&.custom_memo.present?
 
         # `custom_memo` is mirrored onto the transaction's ledger item, which
         # caches its `memo` from that copy. `HcbCode#update_custom_memo!` is the
@@ -33,8 +37,10 @@ module StripeCardService
         #
         # `safely` keeps one unrenameable transaction from aborting the nightly.
         safely do
-          if (hcb_code = canonical_transaction.local_hcb_code)
+          if hcb_code
             hcb_code.update_custom_memo!(CARD_FEE_MEMO)
+          elsif (ledger_item = canonical_transaction.ledger_item)
+            ledger_item.update_custom_memo!(CARD_FEE_MEMO)
           else
             canonical_transaction.update!(custom_memo: CARD_FEE_MEMO)
           end

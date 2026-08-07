@@ -20,7 +20,9 @@
     <%= form.label :custom_memo do %>
       <strong>Custom memo</strong>
     <% end %>
-    <%= form.text_field :custom_memo, list: "custom-memos", placeholder: @canonical_transaction.smart_memo, autofocus: true, class: "fit" %>
+    <%# Renaming writes the whole HCB code group, so show the group's memo — this
+        transaction's own column may never have been written. %>
+    <%= form.text_field :custom_memo, value: @canonical_transaction.local_hcb_code&.custom_memo || @canonical_transaction.custom_memo, list: "custom-memos", placeholder: @canonical_transaction.smart_memo, autofocus: true, class: "fit" %>
     <datalist id='custom-memos'>
       <%= @suggested_memos.each do |s_memo| %>
         <option><%= s_memo %></option>

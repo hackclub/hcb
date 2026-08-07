@@ -34,6 +34,22 @@ RSpec.describe CanonicalPendingTransactionsController do
       expect(cpt.ledger_item.reload.custom_memo).to be_nil
     end
 
+    # The rename form prefills from the group's memo, so a pending transaction
+    # whose own column was never written (renamed before the group write existed)
+    # must not submit a blank field and erase the settled transaction's memo.
+    it "does not clear a memo that only the settled transaction carries" do
+      user = create(:user, :make_admin)
+      cpt = create(:canonical_pending_transaction, amount_cents: -1000)
+      ct = create(:canonical_transaction)
+      ct.update_column(:hcb_code, cpt.hcb_code)
+      ct.update_column(:custom_memo, "Organizer's careful memo")
+      create_session(user, verified: true)
+
+      get(:edit, params: { id: cpt.id })
+
+      expect(response.body).to include("Organizer&#39;s careful memo")
+    end
+
     it "still updates the admin-only attributes" do
       user = create(:user, :make_admin)
       cpt = create(:canonical_pending_transaction, fronted: false)

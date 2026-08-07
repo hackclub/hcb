@@ -793,19 +793,24 @@ class HcbCode < ApplicationRecord
   # *and* on their ledger items, which cache `memo` from their own copy. Writing
   # only one side leaves the other rendering a stale memo, so write them all.
   def update_custom_memo!(memo)
+    cts = canonical_transactions.to_a
+    cpts = canonical_pending_transactions.to_a
     # `hcb_codes.ledger_item_id` is only back-linked when the transaction engine
     # *creates* the item; a transaction that adopted an existing one leaves it
     # null, so resolve through the transactions as well.
-    ledger_item_ids = [ledger_item_id, *canonical_transactions.pluck(:ledger_item_id), *canonical_pending_transactions.pluck(:ledger_item_id)].compact.uniq
+    ledger_item_ids = [ledger_item_id, *cts.map(&:ledger_item_id), *cpts.map(&:ledger_item_id)].compact.uniq
     ledger_items = Ledger::Item.where(id: ledger_item_ids).to_a
 
-    ActiveRecord::Base.transaction do
-      canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
-      canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
-      ledger_items.each { |item| item.update!(custom_memo: memo) }
-    end
+    # Every write below cascades into `Ledger::Item#map!` and `#refresh!` for each
+    # record, so don't pay for a rename that wouldn't change anything.
+    return if [*cts, *cpts, *ledger_items].all? { |record| record.custom_memo == memo }
 
-    ledger_items.each(&:refresh!)
+    ActiveRecord::Base.transaction do
+      cts.each { |ct| ct.update!(custom_memo: memo) }
+      cpts.each { |cpt| cpt.update!(custom_memo: memo) }
+      ledger_items.each { |item| item.update!(custom_memo: memo) }
+      ledger_items.each(&:refresh!)
+    end
   end
 
 end

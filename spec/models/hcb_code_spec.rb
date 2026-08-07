@@ -386,8 +386,10 @@ RSpec.describe HcbCode, type: :model do
 
       expect(first.reload.custom_memo).to eq("Snacks at Shelburne Market")
       expect(second.reload.custom_memo).to eq("Snacks at Shelburne Market")
-      expect(first.ledger_item.reload.memo).to eq("Snacks at Shelburne Market")
-      expect(second.ledger_item.reload.memo).to eq("Snacks at Shelburne Market")
+      # Assert `custom_memo`, not `memo` — `fallback_memo` reads the canonical
+      # transaction's memo, so `memo` looks right even when the item is desynced.
+      expect(first.ledger_item.reload.custom_memo).to eq("Snacks at Shelburne Market")
+      expect(second.ledger_item.reload.custom_memo).to eq("Snacks at Shelburne Market")
     end
 
     # A transaction whose ledger item was never assigned (the assignment runs in

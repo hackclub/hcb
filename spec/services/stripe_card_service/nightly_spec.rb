@@ -23,6 +23,21 @@ RSpec.describe StripeCardService::Nightly, type: :service do
       expect(ledger_item.memo).to eq("💳 New user card fee")
     end
 
+    # Renaming goes through the whole HCB code group, so a fee transaction that
+    # shares a group with an organizer-renamed transaction must be left alone
+    # rather than stamping the default memo over it.
+    it "leaves a group alone when a sibling transaction carries an organizer's memo" do
+      sibling = create(:canonical_transaction)
+      sibling.update_column(:hcb_code, canonical_transaction.hcb_code)
+      # Renamed before this group write existed, so the fee transaction next to it
+      # is still `without_custom_memo` and the nightly still picks it up.
+      sibling.update_column(:custom_memo, "Organizer's name for this")
+
+      described_class.new.run
+
+      expect(sibling.reload.custom_memo).to eq("Organizer's name for this")
+    end
+
     it "leaves an already renamed transaction alone" do
       canonical_transaction.local_hcb_code.update_custom_memo!("Renamed by an organizer")
 
