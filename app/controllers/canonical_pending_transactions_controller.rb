@@ -27,7 +27,25 @@ class CanonicalPendingTransactionsController < ApplicationController
 
     authorize @canonical_pending_transaction
 
-    @canonical_pending_transaction.update!(canonical_pending_transaction_params)
+    attributes = canonical_pending_transaction_params
+    renamed = attributes.key?(:custom_memo)
+    custom_memo = attributes.delete(:custom_memo).presence
+
+    ActiveRecord::Base.transaction do
+      @canonical_pending_transaction.update!(attributes) unless attributes.empty?
+
+      next unless renamed
+
+      # `custom_memo` is mirrored onto the transaction's ledger item, which caches
+      # its `memo` from that copy. `HcbCode#update_custom_memo!` is the only writer
+      # that keeps both sides in sync. Transactions missing an HCB code still have
+      # nowhere else to write to.
+      if (hcb_code = @canonical_pending_transaction.local_hcb_code)
+        hcb_code.update_custom_memo!(custom_memo)
+      else
+        @canonical_pending_transaction.update!(custom_memo:)
+      end
+    end
 
     unless params[:no_flash]
       flash[:success] = "Updated pending transaction"

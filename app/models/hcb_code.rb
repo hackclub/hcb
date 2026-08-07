@@ -790,10 +790,19 @@ class HcbCode < ApplicationRecord
   end
 
   def update_custom_memo!(memo)
-    if ledger_item.present?
-      ledger_item.update_custom_memo!(memo)
+    # `hcb_codes.ledger_item_id` is only back-linked when the transaction engine
+    # *creates* the item; a transaction that adopted an existing item leaves it
+    # null. Resolving through the transactions as well means a rename still
+    # reaches the ledger item — otherwise it writes the canonical transactions
+    # only and `Ledger::Item#memo` keeps its old value.
+    ledger_item_ids = [ledger_item_id, *canonical_transactions.pluck(:ledger_item_id), *canonical_pending_transactions.pluck(:ledger_item_id)].compact.uniq
+    ledger_items = Ledger::Item.where(id: ledger_item_ids)
+
+    if ledger_items.any?
+      ledger_items.each { |item| item.update_custom_memo!(memo) }
       return
     end
+
     canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
     canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
   end

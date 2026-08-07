@@ -35,6 +35,45 @@ RSpec.describe CanonicalPendingTransactionService::Settle do
 
         expect(canonical_transaction.reload.custom_memo).to eq(canonical_pending_transaction.custom_memo)
       end
+
+    end
+  end
+
+  # Settling hands the canonical transaction over to the pending transaction's
+  # ledger item (see CanonicalPendingSettledMapping), so that item is the one
+  # the memo has to survive on.
+  context "when the pending transaction was renamed through its HCB code" do
+    let(:canonical_pending_transaction) { create(:canonical_pending_transaction, custom_memo: nil) }
+    let(:canonical_transaction) { create(:canonical_transaction, custom_memo: nil) }
+
+    it "should carry the custom_memo onto the ledger item the settled transaction joins" do
+      canonical_pending_transaction.local_hcb_code.update_custom_memo!("I am a custom memo")
+      canonical_pending_transaction.reload
+
+      service.run!
+
+      canonical_transaction.reload
+      expect(canonical_transaction.custom_memo).to eq("I am a custom memo")
+      expect(canonical_transaction.ledger_item.reload.custom_memo).to eq("I am a custom memo")
+      expect(canonical_transaction.ledger_item.memo).to eq("I am a custom memo")
+    end
+  end
+
+  context "when canonical_pending_transaction has no custom_memo" do
+    let(:canonical_pending_transaction) { create(:canonical_pending_transaction, custom_memo: nil) }
+    let(:canonical_transaction) { create(:canonical_transaction, custom_memo: nil) }
+
+    # Settling must never write a nil memo through HcbCode#update_custom_memo!,
+    # which would clear the memo on every record in the group — including the
+    # ledger item's copy, which is the value the ledger renders.
+    it "should not clear a memo the organizer already set" do
+      canonical_transaction.local_hcb_code.update_custom_memo!("Renamed by an organizer")
+      ledger_item = canonical_transaction.reload.ledger_item
+
+      service.run!
+
+      expect(canonical_transaction.reload.custom_memo).to eq("Renamed by an organizer")
+      expect(ledger_item.reload.custom_memo).to eq("Renamed by an organizer")
     end
 
     context "when canonical_transaction has a custom_memo" do

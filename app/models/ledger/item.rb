@@ -336,10 +336,12 @@ class Ledger
     def update_custom_memo!(memo)
       # TODO: remove CT and CPT updates because they are HCB code specific
       ActiveRecord::Base.transaction do
-        if hcb_code.present?
-          hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
-          hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
-        end
+        # `canonical_transactions` (keyed by `ledger_item_id`) and
+        # `hcb_code.canonical_transactions` (keyed by the HCB code) can diverge,
+        # and the HCB code is missing entirely when it was never back-linked to
+        # this item. Write the union so neither side keeps a stale memo.
+        (canonical_transactions.to_a | hcb_code&.canonical_transactions.to_a).each { |ct| ct.update!(custom_memo: memo) }
+        (canonical_pending_transactions.to_a | hcb_code&.canonical_pending_transactions.to_a).each { |cpt| cpt.update!(custom_memo: memo) }
         update!(custom_memo: memo)
       end
 

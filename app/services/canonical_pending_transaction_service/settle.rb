@@ -14,9 +14,18 @@ module CanonicalPendingTransactionService
           canonical_pending_transaction: @canonical_pending_transaction
         )
 
-        if @canonical_transaction.custom_memo.nil?
-          @canonical_transaction.custom_memo = @canonical_pending_transaction.custom_memo
-          @canonical_transaction.save!
+        # Only copy a memo that exists — routing a nil through
+        # `update_custom_memo!` would clear the memo on every record in the group,
+        # including the ledger item's.
+        if @canonical_transaction.custom_memo.nil? && @canonical_pending_transaction.custom_memo.present?
+          # `custom_memo` is mirrored onto the transaction's ledger item, which
+          # caches its `memo` from that copy. `HcbCode#update_custom_memo!` is the
+          # only writer that keeps both sides in sync.
+          if (hcb_code = @canonical_transaction.local_hcb_code)
+            hcb_code.update_custom_memo!(@canonical_pending_transaction.custom_memo)
+          else
+            @canonical_transaction.update!(custom_memo: @canonical_pending_transaction.custom_memo)
+          end
         end
 
         sync_transaction_category!
