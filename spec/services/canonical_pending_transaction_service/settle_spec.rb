@@ -35,7 +35,19 @@ RSpec.describe CanonicalPendingTransactionService::Settle do
 
         expect(canonical_transaction.reload.custom_memo).to eq(canonical_pending_transaction.custom_memo)
       end
+    end
 
+    context "when canonical_transaction has a custom_memo" do
+      let(:canonical_transaction) { create(:canonical_transaction, custom_memo: "I am a different custom memo") }
+
+      it "should keep the canonical_transaction's custom_memo" do
+        initial_custom_memo = canonical_transaction.custom_memo
+
+        service.run!
+
+        expect(canonical_transaction.reload.custom_memo).to eq(initial_custom_memo)
+        expect(canonical_transaction.custom_memo).to_not eq(canonical_pending_transaction.custom_memo)
+      end
     end
   end
 
@@ -74,19 +86,6 @@ RSpec.describe CanonicalPendingTransactionService::Settle do
 
       expect(canonical_transaction.reload.custom_memo).to eq("Renamed by an organizer")
       expect(ledger_item.reload.custom_memo).to eq("Renamed by an organizer")
-    end
-
-    context "when canonical_transaction has a custom_memo" do
-      let(:canonical_transaction) { create(:canonical_transaction, custom_memo: "I am a different custom memo") }
-
-      it "should keep the canonical_transaction's custom_memo" do
-        initial_custom_memo = canonical_transaction.custom_memo
-
-        service.run!
-
-        expect(canonical_transaction.reload.custom_memo).to eq(initial_custom_memo)
-        expect(canonical_transaction.custom_memo).to_not eq(canonical_pending_transaction.custom_memo)
-      end
     end
   end
 

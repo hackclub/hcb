@@ -390,6 +390,25 @@ RSpec.describe HcbCode, type: :model do
       expect(second.ledger_item.reload.memo).to eq("Snacks at Shelburne Market")
     end
 
+    # A transaction whose ledger item was never assigned (the assignment runs in
+    # an `after_create_commit` wrapped in `safely`) must still be renamed — it is
+    # the only copy of the memo it has.
+    it "writes transactions that have no ledger item alongside those that do" do
+      with_item = create(:canonical_transaction)
+      without_item = create(:canonical_transaction)
+      without_item.update_column(:hcb_code, with_item.hcb_code)
+      without_item.update_column(:ledger_item_id, nil)
+      # Neither the HCB code nor this transaction can reach the ledger item, so
+      # only `with_item` leads to it.
+      with_item.local_hcb_code.update_columns(ledger_item_id: nil)
+
+      with_item.local_hcb_code.reload.update_custom_memo!("Snacks at Shelburne Market")
+
+      expect(with_item.reload.custom_memo).to eq("Snacks at Shelburne Market")
+      expect(without_item.reload.custom_memo).to eq("Snacks at Shelburne Market")
+      expect(with_item.ledger_item.reload.custom_memo).to eq("Snacks at Shelburne Market")
+    end
+
     # `hcb_codes.ledger_item_id` is only back-linked when the transaction engine
     # creates the item, so it can be null while the transactions still point at
     # one. The rename has to find the item through them.

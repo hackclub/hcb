@@ -33,7 +33,11 @@ module StripeCardService
         #
         # `safely` keeps one unrenameable transaction from aborting the nightly.
         safely do
-          canonical_transaction.local_hcb_code.update_custom_memo!(CARD_FEE_MEMO)
+          if (hcb_code = canonical_transaction.local_hcb_code)
+            hcb_code.update_custom_memo!(CARD_FEE_MEMO)
+          else
+            canonical_transaction.update!(custom_memo: CARD_FEE_MEMO)
+          end
         end
       end
     end
