@@ -6,6 +6,13 @@ RSpec.describe CanonicalPendingTransactionService::Settle do
   let(:canonical_pending_transaction) { create(:canonical_pending_transaction) }
   let(:canonical_transaction) { create(:canonical_transaction) }
 
+  # Both tables number their `HCB-000-<id>` codes off their own sequence, so a
+  # canonical transaction and a pending transaction collide whenever the two
+  # sequences line up — which they do on a fresh database. A memo carrying an
+  # `HCB-<short code>` groups the transaction under that code instead, keeping the
+  # two records in genuinely separate groups no matter what the sequences hold.
+  let(:settled_hcb_code) { HcbCode.create!(hcb_code: "HCB-000-settled") }
+
   let(:service) {
     CanonicalPendingTransactionService::Settle.new(
       canonical_transaction:,
@@ -58,7 +65,7 @@ RSpec.describe CanonicalPendingTransactionService::Settle do
   # the pending transaction's ledger item, which lives in the other group.
   context "when the two HCB codes differ" do
     let(:canonical_pending_transaction) { create(:canonical_pending_transaction, custom_memo: "Plushie order") }
-    let(:canonical_transaction) { create(:canonical_transaction, custom_memo: nil) }
+    let(:canonical_transaction) { create(:canonical_transaction, custom_memo: nil, memo: "PLUSHIE STORE HCB-#{settled_hcb_code.short_code}") }
 
     it "should carry the custom_memo onto the ledger item the transaction is handed to" do
       expect(canonical_transaction.hcb_code).not_to eq(canonical_pending_transaction.hcb_code)
@@ -77,7 +84,7 @@ RSpec.describe CanonicalPendingTransactionService::Settle do
   # the memo has to survive on.
   context "when the pending transaction was renamed through its HCB code" do
     let(:canonical_pending_transaction) { create(:canonical_pending_transaction, custom_memo: nil) }
-    let(:canonical_transaction) { create(:canonical_transaction, custom_memo: nil) }
+    let(:canonical_transaction) { create(:canonical_transaction, custom_memo: nil, memo: "PLUSHIE STORE HCB-#{settled_hcb_code.short_code}") }
 
     it "should carry the custom_memo onto the ledger item the settled transaction joins" do
       canonical_pending_transaction.local_hcb_code.update_custom_memo!("I am a custom memo")
