@@ -500,7 +500,7 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   def calculated_ledger_item
-    @calculated_ledger_item ||= Ledger::Item.find_by(short_code:) || linked_object_v2&.ledger_item
+    @calculated_ledger_item ||= Ledger::Item.find_by(short_code:) || linked_object_v2&.ledger_item || local_hcb_code&.ledger_item
   end
 
   def hashed_transaction
