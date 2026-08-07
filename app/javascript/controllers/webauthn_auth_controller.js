@@ -69,6 +69,12 @@ export default class extends Controller {
 
       this.storeLoginEmail(loginEmail)
 
+      // Without a login id we post to the collection route, which has no
+      // persisted login to read `return_to` off of, so send it along.
+      const returnTo = this.authFormTarget.querySelector(
+        'input[name="login[return_to]"]'
+      )?.value
+
       submitForm(
         this.loginIdValue
           ? `/logins/${this.loginIdValue}/complete`
@@ -76,6 +82,7 @@ export default class extends Controller {
         {
           credential: JSON.stringify(credential),
           method: 'webauthn',
+          ...(returnTo ? { return_to: returnTo } : {}),
           ...(await this.fingerprint()),
         }
       )

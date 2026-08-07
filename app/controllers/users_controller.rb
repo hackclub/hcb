@@ -4,7 +4,9 @@ class UsersController < ApplicationController
   # `unimpersonate` is gated by its own `current_session&.impersonated?` guard,
   # and must remain reachable from impersonated sessions whose `verified` flag
   # mirrors an unverified target — otherwise the admin is locked out.
-  skip_before_action :signed_in_user, only: [:webauthn_options, :unimpersonate]
+  # `logout` doubles as the "cancel" and "switch accounts" action on the login
+  # pages, where there's no session yet, and signing out without one is a no-op.
+  skip_before_action :signed_in_user, only: [:webauthn_options, :unimpersonate, :logout]
   skip_before_action :redirect_to_onboarding, only: [:edit, :update, :logout, :unimpersonate]
   skip_after_action :verify_authorized, only: [:show,
                                                :revoke_oauth_application,
@@ -92,7 +94,11 @@ class UsersController < ApplicationController
 
   def logout
     sign_out
-    redirect_to root_path
+
+    # Signing out is how you switch accounts part-way through a login, so send
+    # people back to the login page with the page they were heading to intact.
+    return_to = url_from(params[:return_to])
+    redirect_to return_to.present? ? auth_users_path(return_to:) : root_path
   end
 
   def logout_all
@@ -337,7 +343,7 @@ class UsersController < ApplicationController
   end
 
   def update
-    return_to = params[:return_to]
+    return_to = url_from(params[:return_to])
     @states = ISO3166::Country.new("US").subdivisions.values.map { |s| [s.translations["en"], s.code] }
     @user = User.friendly.find(params[:id])
     authorize @user
@@ -438,7 +444,13 @@ class UsersController < ApplicationController
 
         ::StripeCardholderService::Update.new(current_user: @user).run
 
-        redirect_back_or_to edit_user_path(@user)
+        # The login flow sends users here when they're missing a phone number,
+        # so honor `return_to` before falling back to where they came from.
+        if return_to.present?
+          redirect_to(return_to)
+        else
+          redirect_back_or_to edit_user_path(@user)
+        end
       end
     else
       set_onboarding
