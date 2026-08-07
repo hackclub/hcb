@@ -49,7 +49,7 @@ class Ledger
       end
 
       # Most appearances mark transfers out of a particular fund, so they pass
-      # `funds` (and optionally `since`) instead of writing their own qualifier. 
+      # `funds` (and optionally `since`) instead of writing their own qualifier.
       #
       # The type guard is on Disbursement::Shared, not Disbursement: a ledger item's
       # linked object is always a Disbursement::Incoming/Outgoing lens, and those
