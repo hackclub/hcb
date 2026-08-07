@@ -259,6 +259,91 @@ RSpec.describe UsersController do
       expect(flash.to_h["error"]).to include(reason)
       expect(user.reload.default_payout_method).to be_nil
     end
+
+    context "when locking a user" do
+      let(:admin_user) { create(:user, :make_admin) }
+      let(:target_user) { create(:user, full_name: "Jane Doe", preferred_name: "Jane") }
+
+      before { create_session(admin_user, verified: true) }
+
+      it "creates a comment with the lock reason" do
+        patch(
+          :update,
+          params: {
+            id: target_user.id,
+            user: { locked: "1", locked_reason: "Spam account" }
+          }
+        )
+
+        expect(target_user.reload.locked?).to eq(true)
+
+        comment = Comment.last
+        expect(comment.commentable).to eq(target_user)
+        expect(comment.admin_only).to eq(true)
+        expect(comment.user_id).to eq(admin_user.id)
+        expect(comment.content).to eq("Locked Jane : For - Spam account")
+      end
+
+      it "creates an unlock comment when unlocking" do
+        target_user.lock!
+
+        patch(
+          :update,
+          params: {
+            id: target_user.id,
+            user: { locked: "0", locked_reason: "" }
+          }
+        )
+
+        expect(target_user.reload.locked?).to eq(false)
+
+        comment = Comment.last
+        expect(comment.commentable).to eq(target_user)
+        expect(comment.admin_only).to eq(true)
+        expect(comment.content).to include("Unlocked")
+      end
+
+      it "requires a lock reason" do
+        patch(
+          :update,
+          params: {
+            id: target_user.id,
+            user: { locked: "1", locked_reason: "" }
+          }
+        )
+
+        expect(flash[:error]).to eq("To lock this user, provide a reason")
+        expect(target_user.reload.locked?).to eq(false)
+      end
+
+      it "prevents admins from locking themselves" do
+        patch(
+          :update,
+          params: {
+            id: admin_user.id,
+            user: { locked: "1", locked_reason: "Testing" }
+          }
+        )
+
+        expect(flash[:error]).to eq("As much as you might desire to, you cannot lock yourself out.")
+        expect(admin_user.reload.locked?).to eq(false)
+      end
+
+      it "prevents regular admins from locking other admins" do
+        other_admin = create(:user, :make_admin, full_name: "Other Admin")
+
+        patch(
+          :update,
+          params: {
+            id: other_admin.id,
+            user: { locked: "1", locked_reason: "Testing" }
+          }
+        )
+
+        expect(flash[:error]).to eq("Only superadmins can lock or unlock admins.")
+        expect(other_admin.reload.locked?).to eq(false)
+      end
+    end
   end
 
   describe "settings access for unverified users" do
