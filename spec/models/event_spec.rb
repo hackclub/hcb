@@ -318,4 +318,45 @@ RSpec.describe Event, type: :model do
       expect(event.ledger).to be_a(Ledger)
     end
   end
+
+  describe "#contract_pending_signature" do
+    let(:event) { create(:event) }
+
+    before do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+    end
+
+    def build_contract
+      invite = create(:organizer_position_invite, event:, user: create(:user))
+
+      Contract::FiscalSponsorship.create!(contractable: invite, include_videos: false)
+    end
+
+    it "returns a contract that still needs signing" do
+      contract = build_contract
+
+      expect(event.contract_pending_signature).to eq contract
+    end
+
+    it "returns nothing once the contract is signed" do
+      build_contract.update_column(:aasm_state, "signed")
+
+      expect(event.contract_pending_signature).to be_nil
+    end
+
+    # The inactive organization banner keys off this, so a voided contract must
+    # not leave an organization being told to sign something that no longer exists.
+    it "returns nothing once the contract is voided" do
+      build_contract.update_column(:aasm_state, "voided")
+
+      expect(event.contract_pending_signature).to be_nil
+    end
+
+    it "returns the oldest of several open contracts" do
+      first = build_contract
+      build_contract
+
+      expect(event.contract_pending_signature).to eq first
+    end
+  end
 end

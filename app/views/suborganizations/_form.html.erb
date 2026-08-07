@@ -3,7 +3,7 @@
 <%= form_with(url: event_create_sub_organization_path(event.slug), method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full", "x-data" => "{ scoped_tags: [], query: '' }" }) do |form| %>
   <div class="card border b--info mt2 mb2 container--sm mx-auto">
     <p class="mt0 mb0">
-      Sub-organizations are subsidiaries of your organization. All members
+      Sub-organizations are separate organizations nested under <%= event.name %>. All members
       of <%= event.name %> can access and view sub-organizations<% unless Flipper.enabled?(:member_subevent_creation, event) %>, but only
       managers can create and edit them<% end %>.
     </p>
