@@ -21,7 +21,7 @@ class PayeesController < ApplicationController
   end
 
   def create
-    manual = params[:manual] == "true"
+    manual = params[:manual] == "true" && Flipper.enabled?(:manual_payees_2026_08_05, @event)
 
     payee = @event.payees.build(display_name: params[:name], email: params[:email])
     authorize payee
