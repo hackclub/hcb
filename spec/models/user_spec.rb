@@ -29,6 +29,28 @@ RSpec.describe User, type: :model do
       expect(user).to_not be_valid
       expect(user.errors[:email]).to eq(["provider is unsupported. Please try with another email address."])
     end
+
+    it "suggests gmail.com for googlemail.com, which aliases the same mailbox" do
+      user = build(:user, email: "someone@googlemail.com")
+
+      expect(user).to_not be_valid
+      expect(user.errors[:email]).to eq(["looks like a typo. Did you mean someone@gmail.com?"])
+    end
+
+    it "only blocks disposable domains on create, leaving existing accounts usable" do
+      user = create(:user, email: "someone@gmail.com")
+      user.update_column(:email, "someone@googlemail.com")
+
+      expect(user.reload).to be_valid
+    end
+
+    it "allows major providers and school domains" do
+      %w[gmail.com hackclub.com outlook.com icloud.com student.hbuhsd.edu].each do |domain|
+        user = build(:user, email: "someone@#{domain}")
+
+        expect(user).to be_valid, "expected #{domain} to be allowed"
+      end
+    end
   end
 
   context "birthday validations" do

@@ -180,9 +180,9 @@ class WiseTransfer < ApplicationRecord
     if pending?
       :muted
     elsif approved?
-      :blue
+      :info
     elsif sent?
-      :blue
+      :info
     elsif rejected? || failed?
       :error
     elsif deposited?

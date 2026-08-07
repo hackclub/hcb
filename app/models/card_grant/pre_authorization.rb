@@ -123,6 +123,8 @@ class CardGrant
         valid_purchase // a boolean value indicating whether the purchase is a valid use of funds based on the purpose provided. This should be true or false.
         fraud_rating // a number between 1 and 10, where 1 is very likely to be valid and 10 is very likely to be fraudulent.
 
+        Ensure your entire response is valid JSON. Do not include any additional text or commentary outside of the JSON object; nor wrap it with a code block.
+
         Please make sure that both the product URL and screenshots are in line with the instructions provided to the user. If there isn't enough information, or these 3 fields are not all aligned, you should reject the purchase as fraudulent. #{"The purpose of the grant is '#{card_grant.purpose}'." if card_grant.purpose.present?} Here are the instructions provided to the user:
 
         #{card_grant.instructions.presence || "No specific instructions were provided."}
