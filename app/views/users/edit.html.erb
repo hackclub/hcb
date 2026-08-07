@@ -66,6 +66,9 @@
                   <%= inline_icon "info", size: 18 %>
                 </div>
               </div>
+              <p class="h5 muted mt0 mb1">
+                You must be 13 years or older.
+              </p>
               <div class="flex gap-2 onboarding">
                 <%= form.date_select :birthday,
                                      { start_year: Date.today.year,
@@ -168,7 +171,7 @@
         <div class="field">
           <%= form.label :birthday %>
           <p class="h5 muted mt0 mb1">
-            Used for card issuing.
+            Used for card issuing. You must be 13 years or older.
           </p>
           <div class="flex items-center space-x-1">
             <%= form.date_select :birthday,
