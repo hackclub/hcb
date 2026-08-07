@@ -1,0 +1,34 @@
+<%# locals: (form:, disabled: false, label: "Attach a receipt or invoice", hint: nil, accept: "image/*,image/heic,.pdf", required: Flipper.enabled?(:payments_contractors_refresh_2026_06_26)) %>
+
+<div class="md:flex items-center justify-between gap-4">
+  <div class="flex-1">
+    <%= form.label :file, label, class: "font-semibold" %>
+    <span class="muted">
+      <% if hint %>
+        <%= hint %>
+      <% elsif Flipper.enabled?(:payments_contractors_refresh_2026_06_26) %>
+        Required for record-keeping<br>
+        Need an invoice? <%= link_to "Use our template", "https://docuseal.com/d/LJuTkqCU3MKDoT", target: "_blank" %>
+      <% else %>
+        Required for reimbursements / goods & services payments.
+      <% end %>
+    </span>
+  </div>
+
+  <div
+    data-controller="file-upload file-drop form"
+    data-action="dragover@window->file-drop#dragover drop@window->file-drop#drop dragenter@window->file-drop#dragenter dragleave@window->file-drop#dragleave">
+    <%= form.file_field :file,
+        multiple: true,
+        include_hidden: false,
+        required: required,
+        accept: accept,
+        data: {
+          "file-drop-target"   => "fileInput",
+          "file-upload-target" => "input"
+        },
+        disabled: %>
+    <button data-file-upload-target="preview" type="button"></button>
+    <div data-file-upload-target="clear"></div>
+  </div>
+</div>

@@ -1,0 +1,103 @@
+# frozen_string_literal: true
+
+# == Schema Information
+#
+# Table name: ledger_mappings
+#
+#  id                :bigint           not null, primary key
+#  on_primary_ledger :boolean          not null
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#  ledger_id         :bigint           not null
+#  ledger_item_id    :bigint           not null
+#  mapped_by_id      :bigint
+#
+# Indexes
+#
+#  index_ledger_mappings_on_ledger_and_item      (ledger_id,ledger_item_id) UNIQUE
+#  index_ledger_mappings_on_ledger_id            (ledger_id)
+#  index_ledger_mappings_on_ledger_item_id       (ledger_item_id)
+#  index_ledger_mappings_on_mapped_by_id         (mapped_by_id)
+#  index_ledger_mappings_unique_item_on_primary  (ledger_item_id) UNIQUE WHERE (on_primary_ledger = true)
+#
+# Foreign Keys
+#
+#  fk_ledger_mappings_primary_match  ([ledger_id, on_primary_ledger] => ledgers[id, primary])
+#  fk_rails_...                      (ledger_id => ledgers.id)
+#  fk_rails_...                      (ledger_item_id => ledger_items.id)
+#  fk_rails_...                      (mapped_by_id => users.id)
+#
+class Ledger
+  class Mapping < ApplicationRecord
+    self.table_name = "ledger_mappings"
+
+    has_paper_trail
+
+    belongs_to :ledger, class_name: "::Ledger"
+    belongs_to :ledger_item, class_name: "Ledger::Item"
+
+    belongs_to :mapped_by, class_name: "User", optional: true
+
+    scope :mapped_by_human, -> { where.not(mapped_by: nil) }
+    scope :mapped_by_system, -> { where(mapped_by: nil) }
+
+    validates :ledger_item_id, uniqueness: { scope: :ledger_id, message: "is already mapped to this ledger" }
+    validates :ledger_item_id, uniqueness: { conditions: -> { where(on_primary_ledger: true) }, message: "is already mapped on a primary ledger" }, if: :on_primary_ledger?
+    validate :on_primary_ledger_matches_ledger_primary
+
+    after_commit do
+      ledger_item.refresh!
+    end
+
+    # Plain after_commit (create/update/destroy), matching this file's other hooks.
+    after_commit { CardLocking::Settlement.on_ledger_item(ledger_item, on_primary: on_primary_ledger) }
+
+    def self.map_primary!(ledger:, ledger_item:, mapped_by:)
+      # Mapping to a new primary ledger will _remove_ any existing primary mapping.
+      # It always attempts to reuse the existing primary mapping to preserve a paper trail.
+      raise ArgumentError, "mapped_by must be present" if mapped_by.nil?
+
+      mapped_by = nil if mapped_by == Ledger::Mapper::SYSTEM
+      if mapped_by.present? && ledger.nil?
+        Ledger::Mapping.find_by(ledger_item:, on_primary_ledger: true)&.destroy! and return
+      end
+
+      Ledger::Mapping.find_or_initialize_by(ledger_item:, on_primary_ledger: true).tap do |mapping|
+        mapping.ledger = ledger
+        mapping.mapped_by = mapped_by
+        mapping.save!
+      end
+    end
+
+    def self.map_non_primary!(ledger:, ledger_item:, mapped_by:)
+      # Mapping to a non-primary ledger will always idempotently create the mapping.
+      # This will never delete or override a mapping to a non-primary (or primary) ledger.
+      raise ArgumentError, "mapped_by must be present" if mapped_by.nil?
+
+      mapped_by = nil if mapped_by == Ledger::Mapper::SYSTEM
+
+      Ledger::Mapping.find_or_initialize_by(ledger:, ledger_item:, on_primary_ledger: false).tap do |mapping|
+        mapping.mapped_by = mapped_by
+        mapping.save!
+      end
+    end
+
+    def mapped_by_human? = mapped_by.present?
+
+    private
+
+    def on_primary_ledger_matches_ledger_primary
+      # IMPORTANT: The composite foreign key fk_ledger_mappings_primary_match
+      # enforces that on_primary_ledger matches ledger.primary at the database
+      # level. It works by creating a FK on (ledger_id, on_primary_ledger) that
+      # references (id, primary) in the ledgers table. This ensures the
+      # combination of values must exist in ledgers, which means on_primary_ledger
+      # MUST equal ledger.primary.
+      if on_primary_ledger? != ledger.primary?
+        errors.add(:on_primary_ledger, "must match ledger's primary status")
+      end
+    end
+
+  end
+
+end

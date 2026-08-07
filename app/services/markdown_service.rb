@@ -2,6 +2,7 @@
 
 class MarkdownService
   include Singleton
+  include ActionView::Helpers::SanitizeHelper
 
   class MarkdownRenderer < Redcarpet::Render::HTML
     include ApplicationHelper # for render_money helper
@@ -148,6 +149,13 @@ class MarkdownService
     end
 
   end
+
+  def render(content, current_user: nil, record: nil, location: nil)
+    md_renderer = renderer(current_user:, record:, location:)
+    sanitize(md_renderer.render(content), scrubber: MarkdownScrubber.new)
+  end
+
+  private
 
   def renderer(current_user: nil, record: nil, location: nil)
     markdown_renderer = MarkdownRenderer.new(hard_wrap: true, filter_html: true)

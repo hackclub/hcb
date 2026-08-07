@@ -7,13 +7,23 @@
   <% admin_tool "p-3" do %>
     <h3 class="mb2 mt1">User info</h3>
     <section>
-      Updating <%= user_mention @user %>'s profile that was created on <%= @user.created_at.strftime("%B %d, %Y at %I:%M %P") %>
+      <p>
+        <%= user_mention @user %>'s profile was created on <%= @user.created_at.strftime("%B %d, %Y at %I:%M %P") %>
+      </p>
+      <% if @user.locked? %>
+        <p>Locked by <%= user_mention @user.locked_by %> on <%= format_date @user.locked_at %></p>
+      <% end %>
       <p>
         <strong>User ID:</strong> <%= @user.id %> (<%= @user.public_id %>)
       </p>
       <p>
         <strong>Email:</strong> <%= mail_to @user.email %>
       </p>
+      <% if @user.stripe_cardholder.present? %>
+        <p>
+          <%= link_to "View cardholder on Stripe", @user.stripe_cardholder.stripe_dashboard_url, class: "btn" %>
+        </p>
+      <% end %>
     </section>
   <% end %>
 
@@ -67,6 +77,30 @@
     </h3>
   <% end %>
 
+  <% admin_tool "p-3" do %>
+    <h3 class="mb2 mt1">Card locking</h3>
+    <section>
+      <p>
+        Cards are currently
+        <strong class="<%= @user.cards_locked? ? "error" : "success" %>"><%= @user.cards_locked? ? "locked" : "active" %></strong>.
+      </p>
+      <% if @user.card_locking_suppressed? %>
+        <p>Card locking is suppressed until <%= format_datetime @user.card_locking_suppressed_until %>.</p>
+      <% end %>
+      <% if admin_signed_in? %>
+        <%= form_with url: suppress_card_locking_user_path(@user), method: :post, data: { turbo_frame: "_top" } do |form| %>
+          <div class="field">
+            <%= form.label :hours, "Suppress card locking for (hours)" %>
+            <%= form.number_field :hours, value: 24, min: 1, max: 720 %>
+          </div>
+          <div class="actions flex">
+            <%= form.submit "Suppress card locking", data: { turbo_confirm: "Pause card locking for this user and unlock their cards now?" } %>
+          </div>
+        <% end %>
+      <% end %>
+    </section>
+  <% end %>
+
   <%= turbo_frame_tag :admin_details, src: admin_details_user_path(@user), loading: :lazy do %>
     <% admin_tool "p-3" do %>
       <p>Loading user details</p>
@@ -74,6 +108,7 @@
   <% end %>
 
   <% admin_tool "p-3" do %>
+    <h3 class="mb2 mt1">Comments</h3>
     <%= render "comments/list", comments: @user.comments, show_blankslate: true %>
     <%= render "comments/form", commentable: @user, admin_only: true %>
   <% end %>

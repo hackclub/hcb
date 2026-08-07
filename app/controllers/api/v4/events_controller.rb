@@ -10,6 +10,8 @@ module Api
         @events = current_user.events.not_hidden.includes(:users).order("organizer_positions.created_at DESC")
       end
 
+      require_oauth2_scope "organizations:read", :index
+
       def sub_organizations
         authorize @event, :sub_organizations_in_v4?
 
@@ -23,7 +25,7 @@ module Api
         authorize parent_event, :create_sub_organization?
 
         # Use the current user as POC if they're an admin, otherwise use the system user (bank@hackclub.com)
-        poc_id = current_user.admin? ? current_user.id : User.system_user.id
+        poc_id = can_admin?(:write) ? current_user.id : User.system_user.id
 
         @event = ::EventService::Create.new(
           name: params[:name],
@@ -55,6 +57,22 @@ module Api
       end
 
       require_oauth2_scope "event_followers", :followers
+
+      def balance_by_date
+        authorize @event, :show_in_v4?
+
+        balance_by_date = Rails.cache.fetch("balance_by_date_#{@event.id}", expires_in: 5.minutes) do
+          ::TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).running_balance_by_date
+        end
+
+        balance_by_date = balance_by_date.dup
+        balance_by_date[Date.today] = @event.balance_v2_cents
+
+        start_date = [@event.created_at.to_date, 1.year.ago.to_date].max
+        @balance_series = balance_by_date.sort.filter_map { |date, amount| { date: date.to_s, amount: } if date >= start_date }
+      end
+
+      require_oauth2_scope "organizations:read", :balance_by_date
 
       private
 

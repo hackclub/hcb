@@ -6,12 +6,17 @@ module Api
       extend ActiveSupport::Concern
 
       included do
+        # Rails searches rescue_from handlers in reverse definition order
+        rescue_from ActiveRecord::ActiveRecordError do
+          render json: { error: "internal_error", messages: ["Internal database error"] }, status: :internal_server_error
+        end
+
         rescue_from Pundit::NotAuthorizedError do
           render json: { error: "not_authorized" }, status: :forbidden
         end
 
         rescue_from ActiveRecord::RecordNotFound do |e|
-          render json: { error: "resource_not_found", message: ("Couldn't locate that #{e.model.constantize.model_name.human}." if e.model) }.compact_blank, status: :not_found
+          render json: { error: "resource_not_found", messages: [("Couldn't locate that #{e.model.constantize.model_name.human}." if e.model)] }.compact_blank, status: :not_found
         end
 
         rescue_from ActiveRecord::RecordInvalid do |e|
@@ -37,10 +42,6 @@ module Api
 
         rescue_from ActiveRecord::ConnectionNotEstablished, ActiveRecord::DatabaseConnectionError do
           render json: { error: "service_unavailable", messages: ["Database unavailable"] }, status: :service_unavailable
-        end
-
-        rescue_from ActiveRecord::ActiveRecordError do
-          render json: { error: "internal_error", messages: ["Internal database error"] }, status: :internal_server_error
         end
       end
     end

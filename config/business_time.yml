@@ -1,0 +1,69 @@
+business_time:
+  # we are in UTC
+  beginning_of_workday: 2:00 pm
+  end_of_workday: 10:00 pm
+  # https://www.federalreserve.gov/aboutthefed/k8.htm
+  holidays:
+    - January 1, 2026
+    - January 1, 2027
+    - January 1, 2028 # Saturday, banks open on preceding Friday
+    - January 1, 2029
+    - January 1, 2030
+    - January 19, 2026
+    - January 18, 2027
+    - January 17, 2028
+    - January 15, 2029
+    - January 21, 2030
+    - February 16, 2026
+    - February 15, 2027
+    - February 21, 2028
+    - February 19, 2029
+    - February 18, 2030
+    - May 25, 2026
+    - May 31, 2027
+    - May 29, 2028
+    - May 28, 2029
+    - May 27, 2030
+    - June 19, 2026
+    - June 19, 2027 # Saturday, banks open on preceding Friday
+    - June 19, 2028
+    - June 19, 2029
+    - June 19, 2030
+    - July 4, 2026 # Saturday, banks open on preceding Friday
+    - July 4, 2027 # Sunday, banks are closed on following Monday
+    - July 5, 2027 # Monday, not holiday but Federal Reserve is closed
+    - July 4, 2028
+    - July 4, 2029
+    - July 4, 2030
+    - September 7, 2026
+    - September 6, 2027
+    - September 4, 2028
+    - September 3, 2029
+    - September 2, 2030
+    - October 12, 2026
+    - October 11, 2027
+    - October 9, 2028
+    - October 8, 2029
+    - October 14, 2030
+    - November 11, 2026
+    - November 11, 2027
+    - November 11, 2028 # Saturday, banks open on preceding Friday
+    - November 11, 2029 # Sunday, banks are closed on following Monday
+    - November 12, 2029 # Monday, not holiday but Federal Reserve is closed
+    - November 11, 2030
+    - November 26, 2026
+    - November 25, 2027
+    - November 23, 2028
+    - November 22, 2029
+    - November 28, 2030
+    - December 25, 2026
+    - December 25, 2027 # Saturday, banks open on preceding Friday
+    - December 25, 2028
+    - December 25, 2029
+    - December 25, 2030
+  work_week:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri

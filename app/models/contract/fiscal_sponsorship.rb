@@ -6,7 +6,6 @@
 #
 #  id                   :bigint           not null, primary key
 #  aasm_state           :string           not null
-#  contractable_type    :string
 #  cosigner_email       :string
 #  deleted_at           :datetime
 #  external_service     :integer
@@ -18,14 +17,17 @@
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
 #  contractable_id      :bigint
+#  contractable_type    :string
 #  document_id          :bigint
 #  external_id          :string
 #  external_template_id :string
+#  reissue_of_id        :bigint
 #
 # Indexes
 #
-#  index_contracts_on_contractable  (contractable_type,contractable_id)
-#  index_contracts_on_document_id   (document_id)
+#  index_contracts_on_contractable   (contractable_type,contractable_id)
+#  index_contracts_on_document_id    (document_id)
+#  index_contracts_on_reissue_of_id  (reissue_of_id)
 #
 # Foreign Keys
 #
@@ -34,33 +36,14 @@
 
 class Contract
   class FiscalSponsorship < Contract
-    after_update_commit if: ->{ sent_with_docuseal? && aasm_state_previously_changed?(to: "signed") } do
-      document = Document.new(
-        event:,
-        name: "Fiscal sponsorship agreement with #{party(:signee).user.full_name}"
-      )
-      contract_document = docuseal_document["documents"][0]
-
-      response = Faraday.get(contract_document["url"]) do |req|
-        req.headers["X-Auth-Token"] = Credentials.fetch(:DOCUSEAL)
-      end
-
-      document.file.attach(
-        io: StringIO.new(response.body),
-        filename: "#{contract_document["name"]}.pdf"
-      )
-
-      document.user = party(:hcb).user
-      document.save!
-      update!(document:)
-    end
+    after_update_commit :create_document!, if: ->{ event.present? && sent_with_docuseal? && aasm_state_previously_changed?(to: "signed") }
 
     def payload
       signee = party :signee
       cosigner = party :cosigner
       hcb = party :hcb
 
-      {
+      payload = {
         template_id: external_template_id,
         send_email: false,
         order: "preserved",
@@ -88,6 +71,11 @@ class Contract
                 name: "Organization",
                 default_value: prefills["name"],
                 readonly: true
+              },
+              {
+                name: "The Project",
+                default_value: prefills["description"],
+                readonly: false
               }
             ]
           },
@@ -111,20 +99,51 @@ class Contract
                 name: "Signature",
                 default_value: ActionController::Base.helpers.asset_url("zach_signature.png", host: "https://hcb.hackclub.com"),
                 readonly: false
-              },
-              {
-                name: "The Project",
-                default_value: prefills["description"],
-                readonly: false
               }
             ]
           }
         ].compact
       }
+
+      if contractable.is_a?(OrganizerPositionInvite)
+        skip_prefills = contractable.event.plan.contract_skip_prefills
+        payload[:submitters] = payload[:submitters].map do |submitter|
+          skip_prefill_party = skip_prefills.find { |role, list| role == submitter[:role] }&.second
+          next submitter if skip_prefill_party.nil?
+
+          submitter[:fields] = submitter[:fields].reject do |field|
+            skip_prefill_party.include? field[:name]
+          end
+          submitter
+        end
+      end
+
+      payload
+    end
+
+    # Hack Club's own projects aren't fiscally sponsored by Hack Club, so they
+    # sign a plain contract rather than a fiscal sponsorship agreement. Both are
+    # Contract::FiscalSponsorship records, so the DocuSeal template is the only
+    # thing that tells them apart. It also stays accurate for contracts that were
+    # already issued when the organization's plan changes.
+    #
+    # Once contracts belong to a Contract::Template record, that template should
+    # carry its own name and this whole comparison can go away.
+    def agreement_name
+      hack_club_template = Event::Plan::HackClubAffiliate.new.contract_docuseal_template_id
+
+      # external_template_id is a string column, but plans return integers.
+      return "contract" if external_template_id.to_s == hack_club_template.to_s
+
+      "fiscal sponsorship agreement"
     end
 
     def required_roles
       ["hcb", "signee"]
+    end
+
+    def permitted_roles
+      ["hcb", "signee", "cosigner"]
     end
 
     def pending_signee_information
@@ -141,6 +160,12 @@ class Contract
       else
         nil
       end
+    end
+
+    private
+
+    def document_name
+      "Fiscal sponsorship agreement with #{party(:signee).user.full_name}"
     end
 
   end

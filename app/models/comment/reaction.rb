@@ -5,6 +5,7 @@
 # Table name: comment_reactions
 #
 #  id         :bigint           not null, primary key
+#  deleted_at :datetime
 #  emoji      :string           not null
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
@@ -14,6 +15,7 @@
 # Indexes
 #
 #  index_comment_reactions_on_comment_id  (comment_id)
+#  index_comment_reactions_on_deleted_at  (deleted_at)
 #  index_comment_reactions_on_emoji       (emoji)
 #  index_comment_reactions_on_reactor_id  (reactor_id)
 #
@@ -24,6 +26,8 @@
 #
 class Comment
   class Reaction < ApplicationRecord
+    acts_as_paranoid
+
     belongs_to :comment
     belongs_to :reactor, class_name: "User"
 

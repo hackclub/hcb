@@ -1,22 +1,24 @@
 <% title "Thanks for signing the HCB agreement" %>
 
-<h2>Thank you for signing the HCB agreement!</h2>
+<div class="card mt-4">
+  <h2>Thank you for signing the HCB agreement!</h2>
 
-<% if @party.cosigner? %>
-  <p>
-    You've signed your part! Your child will hear back from us soon once we process the agreement.
-  </p>
-
-  <p>
-    Questions? <%= help_message %>
-  </p>
-<% elsif @party.signee? %>
-  <% if @contract.party(:cosigner).nil? || @contract.party(:cosigner).signed? %>
-    <p>The HCB team will finalize the agreement and activate your project within one business day.</p>
-  <% else %>
+  <% if @party.cosigner? %>
     <p>
-      Your cosigner still needs to sign the agreement that we sent to their email (<%= @contract.party(:cosigner).email %>).
-      Once they sign, you'll be able to start your new project!
+      You've signed your part! Your child will hear back from us soon once we process the agreement.
     </p>
+
+    <p>
+      Questions? <%= help_message %>
+    </p>
+  <% elsif @party.signee? %>
+    <% if @contract.party(:cosigner).nil? || @contract.party(:cosigner).signed? %>
+      <p>The HCB team will finalize the agreement and activate your project within one business day.</p>
+    <% else %>
+      <p>
+        Your cosigner still needs to sign the agreement that we sent to their email (<%= @contract.party(:cosigner).email %>).
+        Once they sign, you'll be able to start your new project!
+      </p>
+    <% end %>
   <% end %>
-<% end %>
+</div>

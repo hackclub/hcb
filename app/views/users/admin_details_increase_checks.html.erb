@@ -1,0 +1,28 @@
+<%= turbo_frame_tag :admin_details_increase_checks do %>
+  <h3 class="mb2 mt1">Increase checks</h3>
+  <% if @increase_checks.present? %>
+    <table>
+      <tr>
+        <th>Payment for</th>
+        <th>Memo</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Approved at</th>
+        <th></th>
+      </tr>
+      <% @increase_checks.each do |check| %>
+        <tr>
+          <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis;"><%= check.payment_for %></td>
+          <td><%= check.memo %></td>
+          <td><%= render_money check.amount %></td>
+          <td><%= check.aasm_state %></td>
+          <td><%= check.approved_at %></td>
+          <td><%= link_to "View", hcb_code_path(check.hcb_code), data: { turbo_frame: "_top" } %></td>
+        </tr>
+      <% end %>
+    </table>
+    <%= paginate @increase_checks %>
+  <% else %>
+    <%= blankslate "No increase checks" %>
+  <% end %>
+<% end %>

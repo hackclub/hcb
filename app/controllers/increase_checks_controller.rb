@@ -5,12 +5,14 @@ class IncreaseChecksController < ApplicationController
   include Admin::TransferApprovable
 
   before_action :set_event, only: %i[new create]
-  before_action :set_check, only: %i[approve reject]
+  before_action :set_check, only: %i[approve reject stop]
 
   def new
     @check = @event.increase_checks.build
 
     authorize @check
+
+    render layout: "transfer"
   end
 
   def create
@@ -35,7 +37,7 @@ class IncreaseChecksController < ApplicationController
       end
       redirect_to url_for(@check.local_hcb_code), flash: { success: "Your check has been sent!" }
     else
-      render "new", status: :unprocessable_entity
+      render "new", status: :unprocessable_content
     end
   end
 
@@ -49,7 +51,7 @@ class IncreaseChecksController < ApplicationController
     redirect_to increase_check_process_admin_path(@check), flash: { success: "Check has been sent!" }
 
   rescue Faraday::Error => e
-    redirect_to increase_check_process_admin_path(@check), flash: { error: "Something went wrong: #{e.response_body["message"]}" }
+    redirect_to increase_check_process_admin_path(@check), flash: { error: "Something went wrong: #{ColumnService.error_to_admin_message(e)}" }
   rescue => e
     redirect_to increase_check_process_admin_path(@check), flash: { error: e }
   end
@@ -62,6 +64,14 @@ class IncreaseChecksController < ApplicationController
     @check.mark_rejected!
 
     redirect_back_or_to increase_check_process_admin_path(@check), flash: { success: "Check has been canceled." }
+  end
+
+  def stop
+    authorize @check
+
+    @check.stop!
+
+    redirect_back_or_to url_for(@check.local_hcb_code), flash: { success: "Check has been stopped." }
   end
 
   private

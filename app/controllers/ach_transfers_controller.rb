@@ -43,6 +43,7 @@ class AchTransfersController < ApplicationController
   def new
     @ach_transfer = AchTransfer.new(event: @event)
     authorize @ach_transfer
+    render layout: "transfer"
   end
 
   # POST /ach_transfers
@@ -66,7 +67,7 @@ class AchTransfersController < ApplicationController
       end
       redirect_to event_transfers_path(@event), flash: { success: "ACH transfer successfully submitted." }
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 

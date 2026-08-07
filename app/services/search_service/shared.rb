@@ -64,7 +64,7 @@ module SearchService
           "subtypes"   => {
             "ach_transfer"           => ->(t) { t.local_hcb_code.ach_transfer? },
             "mailed_check"           => ->(t) { t.local_hcb_code.check? || t.local_hcb_code.increase_check? },
-            "account_transfer"       => ->(t) { t.local_hcb_code.disbursement? },
+            "account_transfer"       => ->(t) { t.local_hcb_code.outgoing_disbursement? || t.local_hcb_code.incoming_disbursement? },
             "card_charge"            => ->(t) { t.raw_stripe_transaction },
             "check_deposit"          => ->(t) { t.local_hcb_code.check_deposit? },
             "donation"               => ->(t) { t.local_hcb_code.donation? },

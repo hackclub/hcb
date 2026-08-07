@@ -4,8 +4,9 @@ module PendingTransactionEngine
   module CanonicalPendingTransactionService
     module ImportSingle
       class IncomingDisbursement
-        def initialize(raw_pending_incoming_disbursement_transaction:)
+        def initialize(raw_pending_incoming_disbursement_transaction:, category_assignment_strategy: "manual")
           @rpidt = raw_pending_incoming_disbursement_transaction
+          @category_assignment_strategy = category_assignment_strategy
         end
 
         def run
@@ -23,7 +24,7 @@ module PendingTransactionEngine
                 .new(model: cpt)
                 .set!(
                   slug: @rpidt.disbursement.destination_transaction_category.slug,
-                  assignment_strategy: "manual"
+                  assignment_strategy: @category_assignment_strategy
                 )
             end
 

@@ -31,6 +31,7 @@
 !.env*example
 
 latest.dump*
+*.dump
 
 .DS_Store
 
@@ -55,3 +56,6 @@ yarn-debug.log*
 
 # Code coverage report
 /coverage
+
+# AI
+.claude/

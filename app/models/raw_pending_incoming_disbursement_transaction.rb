@@ -34,6 +34,8 @@ class RawPendingIncomingDisbursementTransaction < ApplicationRecord
     "Incoming transfer"
   end
 
+  delegate :incoming_disbursement, to: :disbursement
+
   def likely_event_id
     @likely_event_id ||= disbursement.destination_event.id
   end

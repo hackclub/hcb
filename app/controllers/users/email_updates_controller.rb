@@ -32,7 +32,7 @@ module Users
       if @request.confirmed?
         return redirect_to root_path, flash: { success: "We've updated your email address to #{@request.user.email}." }
       else
-        return redirect_to root_path, flash: { success: "Verified; please check your old email's inbox (#{@request.replacement}) to authorize this change." }
+        return redirect_to root_path, flash: { success: "Verified; please check your old email's inbox (#{@request.original}) to authorize this change." }
       end
     rescue ActiveRecord::RecordNotFound => e
       flash[:error] = "This authorization token has expired, please request another."

@@ -6,7 +6,7 @@
 #
 #  id                                    :bigint           not null, primary key
 #  canceled_at                           :datetime
-#  card_type                             :integer          default("virtual"), not null
+#  card_type                             :integer          default(0), not null
 #  cash_withdrawal_enabled               :boolean          default(FALSE)
 #  initially_activated                   :boolean          default(FALSE), not null
 #  is_platinum_april_fools_2023          :boolean
@@ -44,7 +44,7 @@
 #  index_stripe_cards_on_replacement_for_id    (replacement_for_id)
 #  index_stripe_cards_on_stripe_cardholder_id  (stripe_cardholder_id)
 #  index_stripe_cards_on_stripe_id             (stripe_id) UNIQUE
-#  index_stripe_cards_on_subledger_id          (subledger_id)
+#  index_stripe_cards_on_subledger_id          (subledger_id) UNIQUE
 #
 # Foreign Keys
 #
@@ -54,6 +54,8 @@
 #
 class StripeCard < ApplicationRecord
   include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
   include Freezable
   set_public_id_prefix :crd
@@ -64,6 +66,7 @@ class StripeCard < ApplicationRecord
   has_paper_trail
 
   validate :within_card_limit, on: :create
+  validates :subledger, uniqueness: true, allow_nil: true
 
   after_create_commit :notify_user, unless: :skip_notify_user
 
@@ -89,6 +92,7 @@ class StripeCard < ApplicationRecord
   alias_method :cardholder, :stripe_cardholder
   has_one :user, through: :stripe_cardholder
   has_many :stripe_authorizations
+  has_many :card_charges
   alias_method :authorizations, :stripe_authorizations
   alias_method :transactions, :stripe_authorizations
   alias_attribute :platinum, :is_platinum_april_fools_2023

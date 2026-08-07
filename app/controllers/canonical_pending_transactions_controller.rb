@@ -7,6 +7,8 @@ class CanonicalPendingTransactionsController < ApplicationController
     @canonical_pending_transaction = CanonicalPendingTransaction.find(params[:id])
     authorize @canonical_pending_transaction
 
+    @event = @canonical_pending_transaction.event
+
     # Comments
     @hcb_code = HcbCode.find_or_create_by(hcb_code: @canonical_pending_transaction.hcb_code)
   end
@@ -30,7 +32,7 @@ class CanonicalPendingTransactionsController < ApplicationController
     unless params[:no_flash]
       flash[:success] = "Updated pending transaction"
     end
-    redirect_to params[:redirect_to] || @canonical_pending_transaction.local_hcb_code
+    redirect_to url_from(params[:redirect_to]) || @canonical_pending_transaction.local_hcb_code
   end
 
 

@@ -1,9 +1,10 @@
 <%# locals: (report:) %>
 
 <% user = report.user %>
-<% payout_method = user.payout_method %>
+<% payout_method = report.payout_method&.details %>
+<% payout_method_name = report.payout_method&.name %>
 
-<h3 class="mt-0">Payout Information</h3>
+<h3 class="mt-0">Payout information</h3>
 
 <% if payout_method.nil? %>
   <p class="muted">No payout method configured</p>
@@ -14,16 +15,26 @@
         <td>Payout method:</td>
         <td><%= payout_method.title_kind %></td>
       </tr>
+      <% if payout_method_name.present? %>
+        <tr>
+          <td>Nickname:</td>
+          <td><%= payout_method_name %></td>
+        </tr>
+      <% end %>
       <tr>
         <td>Recipient:</td>
         <td><%= user.name %></td>
+      </tr>
+      <tr>
+        <td>Name on account:</td>
+        <td><%= payout_method.try(:account_holder).presence || user.full_name %></td>
       </tr>
       <tr>
         <td>Email:</td>
         <td><%= user.email %></td>
       </tr>
 
-      <% if payout_method.is_a?(User::PayoutMethod::AchTransfer) %>
+      <% if payout_method.is_a?(LegalEntity::PayoutMethod::AchTransfer) %>
         <tr>
           <td>Routing number:</td>
           <td><%= payout_method.routing_number %></td>
@@ -33,7 +44,7 @@
           <td><%= payout_method.account_number %></td>
         </tr>
 
-      <% elsif payout_method.is_a?(User::PayoutMethod::Check) %>
+      <% elsif payout_method.is_a?(LegalEntity::PayoutMethod::Check) %>
         <tr>
           <td>Address (Line 1):</td>
           <td><%= payout_method.address_line1 %></td>
@@ -61,7 +72,7 @@
           <td><%= payout_method.address_country %></td>
         </tr>
 
-      <% elsif payout_method.is_a?(User::PayoutMethod::Wire) %>
+      <% elsif payout_method.is_a?(LegalEntity::PayoutMethod::Wire) %>
         <tr>
           <td>Currency:</td>
           <td><%= payout_method.currency %></td>
@@ -109,17 +120,11 @@
           <% end %>
         <% end %>
 
-      <% elsif payout_method.is_a?(User::PayoutMethod::WiseTransfer) %>
+      <% elsif payout_method.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
         <tr>
           <td>Currency:</td>
           <td><%= payout_method.currency %></td>
         </tr>
-        <% if payout_method.recipient_information["account_holder"].present? %>
-          <tr>
-            <td>Name on account:</td>
-            <td><%= payout_method.recipient_information["account_holder"] %></td>
-          </tr>
-        <% end %>
         <% if payout_method.bank_name.present? %>
           <tr>
             <td>Bank name:</td>

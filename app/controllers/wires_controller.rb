@@ -11,6 +11,8 @@ class WiresController < ApplicationController
     @wire = @event.wires.build
 
     authorize @wire
+
+    render layout: "transfer"
   end
 
   def create
@@ -33,7 +35,7 @@ class WiresController < ApplicationController
       end
       redirect_to url_for(@wire.local_hcb_code), flash: { success: "Your wire has been sent!" }
     else
-      render "new", status: :unprocessable_entity
+      render "new", status: :unprocessable_content
     end
   end
 
@@ -88,7 +90,7 @@ class WiresController < ApplicationController
     redirect_to wire_process_admin_path(@wire), flash: { success: "Thanks for approving that wire." }
 
   rescue Faraday::Error => e
-    redirect_to wire_process_admin_path(@wire), flash: { error: "Something went wrong: #{e.response_body["message"]}" }
+    redirect_to wire_process_admin_path(@wire), flash: { error: "Something went wrong: #{ColumnService.error_to_admin_message(e)}" }
   rescue => e
     redirect_to wire_process_admin_path(@wire), flash: { error: e.message }
   end

@@ -2,7 +2,16 @@
 
 <tr class="<%= item.is_a?(OrganizerPosition::Spending::Control::Allowance) && item.amount_cents.positive? ? "transaction--positive" : "transaction--negative" %>">
   <td><%= format_date(spending_item_created_date(item)) %></td>
-  <td style="max-width: 400px; overflow: hidden; text-overflow: elipsis;"><%= item.memo %></td>
+  <td style="max-width: 400px; overflow: hidden; text-overflow: elipsis;">
+    <% if item.is_a?(HcbCode) %>
+      <%= link_to url_for(item), data: hcb_code_popover_data(item, event: @event, transaction_show_receipt_button: false, transaction_show_author_img: false) do %>
+        <%= item.memo %>
+      <% end %>
+    <% else %>
+      <%= item.memo %>
+    <% end %>
+  </td>
+
   <td class="flex items-center g1">
     <%= avatar_for item_user %>
     <%= item_user.name %>

@@ -180,7 +180,7 @@ Internally, we use [Doppler](https://www.doppler.com/) to manage our credentials
 
 ### Production data
 
-We've transitioned to using development keys and seed data in development, but historically we have used production keys and data on development machines. We do not recommend rolling back to using production data & keys in development, but if absolutely necessary a HCB engineer can take the following steps:
+We've transitioned to using development keys and seed data in development, but historically we have used production keys and data on development machines. We do not recommend rolling back to using production data & keys in development, but if absolutely necessary an HCB engineer can take the following steps:
 
 - Use a `DOPPLER_TOKEN` with development access, this can be generated [here](https://dashboard.doppler.com/workplace/2818669764d639172564/projects/hcb/configs/development/access).
 
@@ -208,18 +208,4 @@ pg_restore --verbose --clean --no-acl --no-owner -h localhost -U postgres -d ban
 
 ## Getting an OAuth token
 
-There are two different ways you can accomplish the first step of getting an OAuth token, either using a webpage, or the terminal depending on your preference. Both described here use the `authorization_code` grant type, but HCB also supports the `device_code` grant type. See the [device grant gem docs](https://github.com/exop-group/doorkeeper-device_authorization_grant#usage) for instructions on how to use this flow, keeping in mind that HCB uses a scope of `api/v4/oauth` instead of just `oauth`.
-
-1. Go to [localhost:3000/api/v4/oauth/applications](http://localhost:3000/api/v4/oauth/applications). Press "New Application" and then set the name to anything of your choosing, the redirect URI to [`http://localhost:3000/`](http://localhost:3000/), and scopes to `read write`. For the purposes of this guide, you should leave confidential checked (see more context [here](oauth.net/2/client-types)). Press "Submit" and then save the info on the new page that appears and press "Authorize."
-
-2. Open the rails console by running `bin/rails c`. Then, run `app = Doorkeeper::Application.create(name: "tester", redirect_uri: "http://localhost:3000/", scopes: ["read", "write"], confidential: false)` inside the console and save the output (you will need this later). After this, open `http://localhost:3000/api/v4/oauth/authorize?client_id=<UID>&redirect_uri=http://localhost:3000/&response_type=code&scope=read write`.
-
-Press the button to approve access on the page, then copy the code that appears in the address bar after being redirected. Now, send a POST request to [`http://localhost:3000/api/v4/oauth/token`](http://localhost:3000/api/v4/oauth/token) with a content type of `application/x-www-form-urlencoded` (you can use a tool like [Postman](https://www.postman.com/) to do this!). The request body fields are as follows:
-```
-grant_type=authorization_code
-code=<CODE>
-client_id=<UID>
-client_secret=<SECRET>
-redirect_uri=http://localhost:3000/
-```
-This request will return your OAuth access token. It can then be passed into future API requests in the Authorization header. Ex. `Authorization: Bearer <ACCESS TOKEN>`
+See the [v4 API Standards — Authentication](./v4-api/standards.md#authentication) section for full instructions on creating an OAuth application and obtaining an access token.

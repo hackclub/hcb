@@ -19,3 +19,10 @@ updates:
       day: "wednesday"
       time: "10:00"
       timezone: "America/New_York"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "10:00"
+      timezone: "America/New_York"

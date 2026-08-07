@@ -61,7 +61,7 @@ class Export
         end
 
         def row(rr)
-          ::CSV::Row.new(
+          SafeCsv::Row.new(
             headers,
             [
               rr.created_at,
@@ -75,7 +75,7 @@ class Export
         end
 
         def header
-          ::CSV::Row.new(headers, headers, true)
+          SafeCsv::Row.new(headers, headers, true)
         end
 
         def headers

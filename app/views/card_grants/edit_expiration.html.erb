@@ -1,0 +1,21 @@
+<turbo-frame id="edit_<%= @card_grant.id %>" autoscroll data-autoscroll-behavior="smooth">
+  <%= render "card_grants/edit_nav", active: "expiration" %>
+
+  <div class="flex gap-3">
+    <div>
+      <%= form_with(model: @card_grant, id: "card_grant_edit_form") do |form| %>
+        <div class="field">
+          <%= form.label :expiration_at, "Expires on" %>
+
+          <div class="flex gap-3 items-stretch">
+            <%= form.date_field :expiration_at, value: @card_grant.expiration_at, disabled: !policy(@card_grant).update? %>
+          </div>
+        </div>
+
+        <div class="actions">
+          <%= form.submit("Save", data: { turbo: true, turbo_frame: "_top" }, disabled: !policy(@card_grant).update?) %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</turbo-frame>

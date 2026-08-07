@@ -1,0 +1,20 @@
+<p>Hello,</p>
+
+<%= render partial: "initial_message", locals: { payment: @payment } %>
+
+<p>
+  In order to process this payment, we need your tax information.
+  Please <%= link_to "fill out your information", choose_legal_entity_payee_url(@payment.payee) %> to complete this step!
+</p>
+
+<p>
+  If you have any questions about this payment, please contact <%= @payment.event.name %>.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
+
+<p><i class="muted"><%= @payment.event.name %> is fiscally sponsored by The Hack Foundation (d.b.a. HCB), a 501(c)(3) nonprofit (EIN: 81-2908499).</i></p>

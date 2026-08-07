@@ -10,7 +10,7 @@ RSpec.describe FeaturesController do
     it "requires sudo mode to disable sudo mode" do
       user = create(:user)
       Flipper.enable(:sudo_mode_2015_07_21, user)
-      sign_in(user)
+      create_session(user, verified: true)
 
       travel(3.hours)
 

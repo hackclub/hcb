@@ -7,7 +7,7 @@ module StaticPageService
     end
 
     def redirect_to_first_event?
-      !auditor? && events.count == 1 && invites.count == 0
+      !auditor? && events.count == 1 && invites.none?
     end
 
     def events
@@ -24,6 +24,10 @@ module StaticPageService
 
     def invite_requests
       @current_user.organizer_position_invite_requests.pending
+    end
+
+    def applications
+      @current_user.applications.active
     end
 
     # Counts

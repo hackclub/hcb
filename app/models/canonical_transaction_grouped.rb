@@ -130,6 +130,7 @@ class CanonicalTransactionGrouped
   end
 
   def disbursement
+    Rails.application.deprecators[:hcb].warn "CanonicalTransactionGrouped#disbursement accessed"
     Disbursement.find(hcb_i2)
   end
 

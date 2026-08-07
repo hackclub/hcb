@@ -1,0 +1,6 @@
+<%# locals: (event:) %>
+<div x-show="country === 'US'" style="display:none">
+  <%= render "application/callout", type: "error", class: "my-2", title: "Use ACH for domestic US transfers" do %>
+    <p class="mt0 mb0">Domestic wires are not supported for transfers within the United States. You should <%= link_to "send an ACH transfer instead", new_event_ach_transfer_path(event) %>. They're the standard way to send money between banks in the US.</p>
+  <% end %>
+</div>

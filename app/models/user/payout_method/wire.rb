@@ -16,6 +16,7 @@
 #  bic_code_ciphertext       :string           not null
 #  recipient_country         :integer
 #  recipient_information     :jsonb
+#  recipient_name            :string
 #  created_at                :datetime         not null
 #  updated_at                :datetime         not null
 #

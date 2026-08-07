@@ -122,7 +122,7 @@ module CardGrantService
       email = get_field(row, header_mapping, "email")&.strip
       if email.blank?
         errors << "Row #{line_number}: email is required"
-      elsif !email.match?(URI::MailTo::EMAIL_REGEXP)
+      elsif ValidatesEmailFormatOf.validate_email_format(email).present?
         errors << "Row #{line_number}: '#{email}' is not a valid email address"
       end
 

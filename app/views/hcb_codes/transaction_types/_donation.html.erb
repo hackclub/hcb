@@ -1,0 +1,272 @@
+<% @donation = @hcb_code.donation %>
+
+<% instance = @hcb_code.hashid %>
+
+<%= render partial: "application/admin_viewer", locals: { record: @donation } %>
+<%= render partial: "application/admin_viewer", locals: { record: @donation.payout } unless @donation.payout.nil? %>
+
+<% admin_tool("mt1") do %>
+  <%= link_to "View on Stripe", @donation.stripe_dashboard_url, class: "btn bg-accent" %>
+  <% unless @donation.refunded? %>
+    <button class="btn bg-error" data-behavior="modal_trigger" data-modal="refund">Issue refund</button>
+  <% end %>
+  <%= link_to "View recurring donation", recurring_donation_path(@donation.recurring_donation.url_hash), class: "btn bg-success" if @donation.recurring? %>
+<% end %>
+
+<% if admin_signed_in? %>
+  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="refund">
+    <%= modal_header "Issue refund" %>
+    <%= form_with url: refund_donation_path(@donation) do |form| %>
+      <div class="field">
+        <%= form.label :amount, "Amount to refund" %>
+        <%= form.number_field :amount,
+                              value: ("%.2f" % (@donation.amount.to_f / 100)),
+                              placeholder: ("%.2f" % (@donation.amount.to_f / 100)),
+                              min: 1,
+                              max: @donation.amount.to_f / 100,
+                              step: 0.01,
+                              autofocus: true,
+                              data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
+      </div>
+      <%= form.submit "Refund donation", class: "bg-error" %>
+    <% end %>
+  </section>
+<% end %>
+
+<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="update">
+  <%= modal_header "Edit donor's details" %>
+  <%= form_with model: @donation do |form| %>
+    <div class="field mb2">
+      <%= form.label :name, "Donor's name" %>
+      <%= form.text_field :name, value: @donation.name(show_anonymous: true), placeholder: "John Smith", required: true, autofocus: true, autocomplete: "off" %>
+    </div>
+    <div class="field field--checkbox mb2">
+      <%= form.check_box :anonymous, style: "margin-left: 0;" %>
+      <%= form.label :anonymous, "Make this donation anonymous.", style: "display: inline; flex-grow: 1;" %>
+    </div>
+    <%= form.submit "Edit donor" %>
+  <% end %>
+</section>
+
+<article class="hcb-code">
+  <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
+    <span>
+      <%= @donation.name(show_anonymous: organizer_signed_in?) %>
+      <% if @donation.anonymous? %>
+        <div class="line-height-0 mx-1 tooltipped tooltipped--s inline align-bottom" style="margin: 0 2px;" aria-label="Anonymous donor"><%= inline_icon "private-fill", size: 24, class: "muted" %></div>
+      <% end %>
+      <% if @donation.in_person? %>
+        <div class="line-height-0 mx-1 tooltipped tooltipped--s inline align-bottom" style="margin: 0 2px;" aria-label="In-person donor"><%= inline_icon "card", size: 24, class: "muted" %></div>
+      <% end %>
+      <span class="regular muted"> donated </span>
+      <span class="regular"><%= render_money @donation.amount_received %></span>
+      <% if @donation.refunded? %>
+        <span class="regular muted">and was later refunded</span>
+      <% end %>
+    </span>
+
+    <span class="badge h4 bg-<%= @donation.state %> nowrap order-1">
+      <%= @donation.state_text %>
+      <%= inline_icon @donation.state_icon, size: 20 if @donation.state_icon %>
+    </span>
+  <% end %>
+
+  <section class="hcb-code--details">
+    <% if @donation.payment_method_type == 'card' %>
+      <div data-behavior="modal_trigger" data-modal="payment_details" class="pointer" tabindex="0">
+        <strong>
+          <%# Nested tag to avoid flexbox-induced full-width strong leading to icon on right edge on mobile %>
+          <span class="inline-flex items-start relative" style="padding-right: 28px;">
+            Payment method
+            <%= inline_icon "external", size: 24, class: "muted ml1 absolute right-0", 'aria-label': "Icon indicating click for more" %>
+          </span>
+        </strong>
+        <span class="inline-flex">
+          <%= donation_payment_method_mention %>
+        </span>
+      </div>
+    <% else %>
+      <div>
+        <strong>Payment method</strong>
+        <span class="inline-flex">
+          <%= donation_payment_method_mention %>
+        </span>
+      </div>
+    <% end %>
+    <div>
+      <strong>Donated at</strong>
+      <%= format_datetime @donation.donated_at %>
+    </div>
+    <% if @donation.collected_by.present? %>
+      <div>
+        <strong>Collected by</strong>
+        <%= user_mention @donation.collected_by %>
+      </div>
+    <% end %>
+    <% admin_tool("hcb-code--details-admin-tool") do %>
+      <%= donation_payout_datetime %>
+    <% end %>
+  </section>
+  <section class="hcb-code--info">
+    <% if @donation.email.present? %>
+      <p>
+        <strong>Donor email</strong>
+        <% if organizer_signed_in? %>
+          <%= mail_to @donation.email, @donation.email.downcase %>
+        <% else %>
+          <strong>Sign in to view</strong>
+        <% end %>
+      </p>
+    <% end %>
+    <p>
+      <strong>Amount</strong>
+      +<%= render_money @donation.amount %>
+    </p>
+    <% if @donation.message.present? %>
+    <p>
+      <strong>Message</strong>
+      <%= @donation.message %>
+    </p>
+    <% end %>
+    <p>
+      <strong><%= donation_fee_type(@donation) %></strong>
+      -<%= donation_payment_processor_fee(true, @donation) %>
+    </p>
+    <p>
+      <strong>Processing fee refund</strong>
+      <span>
+        +<%= donation_payment_processor_fee(true, @donation) %>
+        <span class="muted">
+          <% "Pending " unless @donation&.fee_reimbursement&.t_transaction %>
+          (<%= link_to "learn more", "https://blog.hcb.hackclub.com/posts/were-making-payment-processing-fees-disappear-101088" %>)
+        </span>
+      </span>
+    </p>
+    <% if [@donation.referrer, @donation.utm_source, @donation.utm_medium, @donation.utm_campaign, @donation.utm_term, @donation.utm_content].any?(&:present?) %>
+      <p>
+        <strong>Referrer</strong>
+
+        <action data-behavior="modal_trigger" data-modal="referrer_details_<%= instance %>" class="pointer" tabindex="0">
+          <span class="inline-flex">
+              <% if @donation.referrer_favicon_url.present? %>
+                <img src="<%= @donation.referrer_favicon_url %>" height="24" width="24" class="mr-2 rounded-lg" alt="Icon indicating referrer">
+              <% end %>
+              <%= @donation.referrer_domain || @donation.referrer || "Unknown" %>
+
+            <%= inline_icon "external", size: 24, class: "muted", 'aria-label': "Icon indicating click for more" %>
+          </span>
+        </action>
+      </p>
+    <% end %>
+    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
+  </section>
+
+  <% unless @donation.deposited? %>
+    <section class="card__banner card__darker secondary border-top">
+      <p class="my0 italic">
+        <% if @hcb_code.fee_waived? %>
+          Fees were waived on this transaction — enjoy!
+        <% end %>
+        Incoming donations are immediately reflected in your account balance.
+      </p>
+    </section>
+  <% end %>
+  <% if @donation.deposited? && @hcb_code.fee_waived? %>
+    <section class="card__banner card__darker secondary border-top">
+      <p class="my0 italic">
+        Fees were waived on this transaction — enjoy!
+      </p>
+    </section>
+  <% end %>
+
+</article>
+
+<% if @donation.payment_method_type == 'card' %>
+  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="payment_details">
+    <%= modal_header "Payment details" + content_tag(:span, "", class: "pl2") + donation_payment_method_mention(@donation, class: "h3 font-sans regular") %>
+
+    <article class="details-horiz">
+      <div class="details">
+        <p>
+          <strong>Payment type</strong>
+          <%= @donation.payment_method_card_funding.humanize.capitalize %>
+        </p>
+        <p>
+          <strong>Brand</strong>
+          <%= @donation.payment_method_card_brand.humanize.capitalize %>
+        </p>
+        <p>
+          <strong>Expiration</strong>
+          <% if organizer_signed_in? %>
+            <%= @donation.payment_method_card_exp_month.to_s.rjust(2, "0") %> / <%= @donation.payment_method_card_exp_year %>
+          <% else %>
+            MM / YYYY (Sign in to view)
+          <% end %>
+        </p>
+      </div>
+      <div class="mt1 md-mt0">
+        <p class="details__simulated">
+          <%= donation_card_country_mention %>
+          <span>Payment country</span>
+        </p>
+        <p class="details__simulated">
+          <%= donation_card_check_badge "cvc" %>
+          <span>CVC check</span>
+        </p>
+        <p class="details__simulated">
+          <%= donation_card_check_badge "address_postal_code" %>
+          <span>Zip check</span>
+        </p>
+      </div>
+    </article>
+  </section>
+<% end %>
+
+<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="referrer_details_<%= instance %>">
+  <% header = capture do %>
+    <% if @donation.referrer_favicon_url.present? %>
+      <img src="<%= @donation.referrer_favicon_url %>" height="36" width="36" class="mr-2 rounded-lg align-bottom" alt="Icon indicating referrer">
+    <% end %>
+    <%= @donation.referrer_domain || @donation.referrer || "Referrer and UTM parameters" %>
+  <% end %>
+
+  <%= modal_header header %>
+
+  <% none = capture do %>
+    <span class="muted">Unknown</span>
+  <% end %>
+
+  <div class="details mb2">
+    <p>
+      <strong>Referrer</strong>
+      <%= @donation.referrer.presence || capture do %>
+        <span class="muted">Unknown</span>
+      <% end %>
+    </p>
+    <p>
+      <strong>UTM source</strong>
+      <%= @donation.utm_source.presence || none %>
+    </p>
+    <p>
+      <strong>UTM medium</strong>
+      <%= @donation.utm_medium.presence || none %>
+    </p>
+    <p>
+      <strong>UTM campaign</strong>
+      <%= @donation.utm_campaign.presence || none %>
+    </p>
+    <p>
+      <strong>UTM term</strong>
+      <%= @donation.utm_term.presence || none %>
+    </p>
+    <p>
+      <strong>UTM content</strong>
+      <%= @donation.utm_content.presence || none %>
+    </p>
+  </div>
+  <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0;">
+    <p class="my0 muted">
+      Referrer and UTM information are used to understand the source of donations. This data is provided by the donor's browser and may not be accurate.
+    </p>
+  </article>
+</section>

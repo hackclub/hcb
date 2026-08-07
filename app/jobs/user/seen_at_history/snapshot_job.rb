@@ -15,7 +15,7 @@ class User
             user_id: u.id,
             period_start_at: period_start,
             period_end_at: period_end,
-            teenager: u.teenager?
+            teenager: u.is_teenager?
           }
         end
       end

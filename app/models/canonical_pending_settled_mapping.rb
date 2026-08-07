@@ -36,6 +36,13 @@ class CanonicalPendingSettledMapping < ApplicationRecord
       canonical_pending_transaction.canonical_pending_declined_mapping.destroy!
       Rails.error.unexpected "CPT ##{canonical_pending_transaction.id} had both a decline and a settle mapping. The decline mapping was destroyed."
     end
+
+    canonical_transaction.update(ledger_item: canonical_pending_transaction.ledger_item)
+  end
+
+  after_commit if: -> { canonical_pending_transaction.ledger_item.present? } do
+    canonical_pending_transaction.ledger_item.map!
+    canonical_pending_transaction.ledger_item.refresh!
   end
 
 end

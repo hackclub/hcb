@@ -1,0 +1,16 @@
+<%# locals: (recent_donors:) %>
+<% unless recent_donors.empty? %>
+  <div class="card">
+    <h2 class="mt-0">Recent donors</h2>
+
+    <% recent_donors.each do |donor| %>
+      <div class="card shadow-none bg-gray-100 dark:!bg-neutral-800 mt-2 flex items-center gap-3 py-2">
+        <div>
+          <span class="text-sm font-medium truncate"><%= donor.name %></span>
+          <span class="text-xs text-gray-400 block mb-1"><%= time_ago_in_words(donor.donated_at) %> ago</span>
+        </div>
+        <span class="text-sm ml-auto shrink-0"><%= render_money(donor.amount) %></span>
+      </div>
+    <% end %>
+  </div>
+<% end %>
