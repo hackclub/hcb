@@ -77,19 +77,21 @@ class CardGrant < ApplicationRecord
   after_create :create_pre_authorization!, if: :pre_authorization_required?
 
   before_validation :create_card_grant_setting, on: :create
+
+  before_validation do
+    self.expiration_at ||= default_expiration_at
+  end
+
   before_create :create_user
   before_create :create_subledger
   before_create :set_defaults
   after_create :transfer_money
   after_create_commit :send_email
 
-  before_create do
-    self.expiration_at ||= default_expiration_at
-  end
-
   validates :disbursement, uniqueness: true, allow_nil: true
   validates :stripe_card, uniqueness: true, allow_nil: true
   validates :subledger, uniqueness: true, allow_nil: true
+  validates :expiration_at, comparison: { less_than_or_equal_to: -> { 3.years.from_now.to_date } }
 
   validates_email_format_of :email, if: :email_changed?
   normalizes :email, with: ->(email) { email.presence&.strip&.downcase }
