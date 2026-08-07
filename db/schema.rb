@@ -1625,6 +1625,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_120000) do
     t.string "status", default: "pending", null: false
     t.text "system_memo"
     t.datetime "updated_at", null: false
+    t.index "to_tsvector('simple'::regconfig, COALESCE(memo, ''::text))", name: "index_ledger_items_on_memo_tsvector", using: :gin
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
     t.index ["author_id"], name: "index_ledger_items_on_author_id"
     t.index ["datetime"], name: "index_ledger_items_on_datetime"
