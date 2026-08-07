@@ -30,6 +30,8 @@ module Reimbursement
                   wire.send_wire!
                 rescue
                   wire.mark_rejected!
+                  payout_holding.wire = wire
+                  payout_holding.save!
                   payout_holding.mark_failed!
                   reason = "There was an error creating the wire transfer."
                   reason = wire.errors.full_messages.join(", ") if wire.errors.any?
@@ -63,6 +65,8 @@ module Reimbursement
                   payout_holding.mark_sent!
                 rescue Faraday::Error => e
                   check.mark_rejected!
+                  payout_holding.increase_check = check
+                  payout_holding.save!
                   payout_holding.mark_failed!
                   message = e.response_body&.dig("message") || e.message
                   ReimbursementMailer.with(
@@ -89,6 +93,8 @@ module Reimbursement
                   ach_transfer.approve!(User.system_user)
                 rescue
                   ach_transfer.mark_rejected!(User.system_user)
+                  payout_holding.ach_transfer = ach_transfer
+                  payout_holding.save!
                   payout_holding.mark_failed!
                   ReimbursementMailer.with(
                     reimbursement_payout_holding: payout_holding,
