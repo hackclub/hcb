@@ -65,7 +65,7 @@ class Ledger
       # JOINed — and includes makes pluck/count attempt exactly that join
       # (EagerLoadPolymorphicError).
       results.order(pending_first.asc, datetime: :desc, created_at: :desc, id: :desc)
-             .preload(:hcb_code, :author, linked_object: [:card_grant, :recurring_donation])
+             .preload(:hcb_code, :author, :linked_object)
     end
 
     def self.sanitize_query(query_hash)

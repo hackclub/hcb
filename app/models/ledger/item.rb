@@ -17,6 +17,7 @@
 #  receipt_count                :integer          default(0), not null
 #  receipt_required             :boolean
 #  short_code                   :text
+#  special_appearance           :string
 #  status                       :string           default("pending"), not null
 #  system_memo                  :text
 #  created_at                   :datetime         not null
@@ -79,6 +80,8 @@ class Ledger
       canceled: "canceled", # user canceled transfer (for IncreaseCheck this also includes transfers rejected by ops)
       declined: "declined" # CPT has CPDM, no CPTs
     }
+
+    attribute :special_appearance, Ledger::Item::SpecialAppearance::Type.new
 
     validates_presence_of :amount_cents, :memo, :datetime, :status
 
@@ -207,6 +210,8 @@ class Ledger
     end
 
     def calculate_system_memo
+      return special_appearance.memo if special_appearance&.memo
+
       case linked_object_type
       when "Invoice"
         "Invoice to #{linked_object.smart_memo}"
@@ -326,6 +331,7 @@ class Ledger
       self.receipt_count = receipts.size
       self.receipt_required = calculate_receipt_required
       self.status = calculate_status
+      self.special_appearance = Ledger::Item::SpecialAppearance.for(linked_object)
       # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
       self.system_memo = calculate_system_memo
       self.memo = self.custom_memo.presence || self.system_memo.presence || fallback_memo
@@ -403,11 +409,13 @@ class Ledger
     end
 
     def icon
+      return special_appearance.icon if special_appearance&.icon
+
       case linked_object_type
       when "Invoice"
         "payment-docs"
       when "Donation"
-        if linked_object.recurring?
+        if linked_object.recurring_donation_id.present?
           "support-recurring"
         else
           "support"
@@ -426,18 +434,10 @@ class Ledger
         "email"
       when "CheckDeposit"
         "cheque"
-      when "Disbursement::Outgoing" # TODO: support for special appearance icons
-        if linked_object.card_grant.present?
-          "bag"
-        else
-          "door-leave"
-        end
+      when "Disbursement::Outgoing"
+        "door-leave"
       when "Disbursement::Incoming"
-        if linked_object.card_grant.present?
-          "bag"
-        else
-          "door-enter"
-        end
+        "door-enter"
       when "StripeServiceFee"
         "cash" # TODO: find unique icon
       when "BankFee"
