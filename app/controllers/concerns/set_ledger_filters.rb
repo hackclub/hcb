@@ -8,7 +8,7 @@ module SetLedgerFilters
   # rather than filtering one.
   FILTER_PARAMS = %i[
     tag user type start end minimum_amount maximum_amount
-    missing_receipts merchant direction category
+    missing_receipts lost_receipts merchant direction category
   ].freeze
 
   included do
@@ -48,6 +48,7 @@ module SetLedgerFilters
       @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
       @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
       @missing_receipts = params[:missing_receipts].present?
+      @lost_receipts = params[:lost_receipts].present?
       @merchant = params[:merchant].presence
       @direction = params[:direction].presence
       @category = TransactionCategory.find_by(slug: params[:category])
@@ -103,6 +104,8 @@ module SetLedgerFilters
         query << { receipt_required: { "$eq": true } }
         query << { marked_no_or_lost_receipt_at: { "$eq": nil } }
       end
+
+      query << { marked_no_or_lost_receipt_at: { "$ne": nil } } if @lost_receipts
 
       query << { datetime: { "$gte": @start_date.to_date } } if @start_date.present?
       # Whole-day inclusive end bound, matching the old transactions page
