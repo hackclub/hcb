@@ -13,7 +13,7 @@ class CommentMailer < ApplicationMailer
     # - @sampoder
     return if @comment.user == User.system_user
 
-    return unless @comment.content || @comment.file
+    return unless @comment.content || @comment.has_attached_file?
 
     mail_settings = {
       bcc: @commentable.comment_recipients_for(@comment),
