@@ -24,6 +24,15 @@ RSpec.describe EventsController do
     create_session(organizer, verified: true)
   end
 
+  # XLSX files are zip archives; cell text lives in the shared strings table.
+  def xlsx_entry(body, entry)
+    Zip::File.open_buffer(StringIO.new(body)).read(entry)
+  end
+
+  def xlsx_strings(body)
+    Nokogiri::XML(xlsx_entry(body, "xl/sharedStrings.xml")).css("si").map(&:text)
+  end
+
   describe "#index" do
     before do
       # This is required since creating event configs creates a monthly announcement for the event authored by the system user
@@ -233,6 +242,14 @@ RSpec.describe EventsController do
         expect(response.body).to include("Transparent Subsidiary")
         expect(response.body).not_to include("Private Subsidiary")
       end
+
+      it "excludes private sub-organizations from the XLSX export", :aggregate_failures do
+        get(:sub_organizations, params: { event_id: parent.slug }, format: :xlsx)
+
+        strings = xlsx_strings(response.body)
+        expect(strings).to include("Transparent Subsidiary")
+        expect(strings).not_to include("Private Subsidiary")
+      end
     end
 
     context "with a hidden sub-organization" do
@@ -277,6 +294,20 @@ RSpec.describe EventsController do
 
         expect(response.body).to include("Transparent Subsidiary")
         expect(response.body).to include("Private Subsidiary")
+      end
+
+      it "renders every descendant as a collapsible tree in the XLSX export", :aggregate_failures do
+        nested = create(:event, parent: transparent_sub, is_public: true, name: "Nested Subsidiary")
+        sign_in_organizer_of(parent)
+
+        get(:sub_organizations, params: { event_id: parent.slug }, format: :xlsx)
+
+        strings = xlsx_strings(response.body)
+        expect(strings).to include("Transparent Subsidiary", "Private Subsidiary")
+        # Nested descendants are indented under their parent...
+        expect(strings).to include("    #{nested.name}")
+        # ...and grouped so Excel renders them collapsible.
+        expect(xlsx_entry(response.body, "xl/worksheets/sheet1.xml")).to include('outlineLevel="1"')
       end
     end
   end
