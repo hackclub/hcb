@@ -373,4 +373,58 @@ RSpec.describe HcbCode, type: :model do
       end
     end
   end
+
+  describe "#update_custom_memo!" do
+    # `custom_memo` is stored on every canonical (pending) transaction in the
+    # group *and* on their ledger items, which cache `memo` from their own copy.
+    it "writes every canonical transaction in the group and their ledger items" do
+      first = create(:canonical_transaction)
+      second = create(:canonical_transaction)
+      second.update_column(:hcb_code, first.hcb_code)
+
+      first.local_hcb_code.update_custom_memo!("Snacks at Shelburne Market")
+
+      expect(first.reload.custom_memo).to eq("Snacks at Shelburne Market")
+      expect(second.reload.custom_memo).to eq("Snacks at Shelburne Market")
+      # Assert `custom_memo`, not `memo` — `fallback_memo` reads the canonical
+      # transaction's memo, so `memo` looks right even when the item is desynced.
+      expect(first.ledger_item.reload.custom_memo).to eq("Snacks at Shelburne Market")
+      expect(second.ledger_item.reload.custom_memo).to eq("Snacks at Shelburne Market")
+    end
+
+    # A transaction whose ledger item was never assigned (the assignment runs in
+    # an `after_create_commit` wrapped in `safely`) must still be renamed — it is
+    # the only copy of the memo it has.
+    it "writes transactions that have no ledger item alongside those that do" do
+      with_item = create(:canonical_transaction)
+      without_item = create(:canonical_transaction)
+      without_item.update_column(:hcb_code, with_item.hcb_code)
+      without_item.update_column(:ledger_item_id, nil)
+      # Neither the HCB code nor this transaction can reach the ledger item, so
+      # only `with_item` leads to it.
+      with_item.local_hcb_code.update_columns(ledger_item_id: nil)
+
+      with_item.local_hcb_code.reload.update_custom_memo!("Snacks at Shelburne Market")
+
+      expect(with_item.reload.custom_memo).to eq("Snacks at Shelburne Market")
+      expect(without_item.reload.custom_memo).to eq("Snacks at Shelburne Market")
+      expect(with_item.ledger_item.reload.custom_memo).to eq("Snacks at Shelburne Market")
+    end
+
+    # `hcb_codes.ledger_item_id` is only back-linked when the transaction engine
+    # creates the item, so it can be null while the transactions still point at
+    # one. The rename has to find the item through them.
+    it "reaches the ledger item when the HCB code is not back-linked to it" do
+      canonical_transaction = create(:canonical_transaction)
+      ledger_item = canonical_transaction.reload.ledger_item
+      hcb_code = canonical_transaction.local_hcb_code
+      hcb_code.update_columns(ledger_item_id: nil)
+
+      hcb_code.reload.update_custom_memo!("Snacks at Shelburne Market")
+
+      expect(canonical_transaction.reload.custom_memo).to eq("Snacks at Shelburne Market")
+      expect(ledger_item.reload.custom_memo).to eq("Snacks at Shelburne Market")
+      expect(ledger_item.memo).to eq("Snacks at Shelburne Market")
+    end
+  end
 end

@@ -26,7 +26,23 @@ class CanonicalTransactionsController < ApplicationController
 
     authorize @canonical_transaction
 
-    @canonical_transaction.update!(params.require(:canonical_transaction).permit(:custom_memo))
+    attributes = params.require(:canonical_transaction).permit(:custom_memo)
+
+    if attributes.key?(:custom_memo)
+      custom_memo = attributes[:custom_memo].presence
+
+      # `custom_memo` is mirrored onto the transaction's ledger item, which caches
+      # its `memo` from that copy. `HcbCode#update_custom_memo!` is the only writer
+      # that keeps both sides in sync; fall back to the ledger item, and only write
+      # the column directly when the transaction has neither.
+      if (hcb_code = @canonical_transaction.local_hcb_code)
+        hcb_code.update_custom_memo!(custom_memo)
+      elsif (ledger_item = @canonical_transaction.ledger_item)
+        ledger_item.update_custom_memo!(custom_memo)
+      else
+        @canonical_transaction.update!(custom_memo:)
+      end
+    end
 
     unless params[:no_flash]
       flash[:success] = "Renamed transaction"
