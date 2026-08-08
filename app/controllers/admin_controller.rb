@@ -55,6 +55,17 @@ class AdminController < Admin::BaseController
                            elsif @canonical_transaction.amount_cents.abs >= 5_000_00 # $5k
                              "Are you really really sure you want to map this transaction? 🤔 it seems like a big one :)"
                            end
+
+    # If this transaction was already mapped a while ago, remapping it annoys Sierra's accounting system.
+
+    if @canonical_transaction.canonical_event_mapping.present? &&
+       @canonical_transaction.canonical_event_mapping.created_at < 12.hours.ago
+      @stale_remap = true
+      @remap_confirm_msg = "⚠️ This transaction was already mapped to \"#{@canonical_transaction.event&.name}\" #{helpers.time_ago_in_words(@canonical_transaction.canonical_event_mapping.created_at)} ago. Remapping it now may disrupt our accounting. Are you absolutely sure you want to remap this transaction?"
+      @remap_confirm_phrase = "REMAP #{@canonical_transaction.id}"
+      @remap_after_message = "Please contact Sierra and the HCB Ops team right away to let them know you remapped transaction ##{@canonical_transaction.id}."
+      @remap_warning_tooltip = "This transaction was already mapped #{helpers.time_ago_in_words(@canonical_transaction.canonical_event_mapping.created_at)} ago — remapping it requires extra confirmation."
+    end
   end
 
   def events
