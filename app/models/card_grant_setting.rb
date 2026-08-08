@@ -16,6 +16,7 @@
 #  pre_authorization_required        :boolean          default(FALSE), not null
 #  reimbursement_conversions_enabled :boolean          default(TRUE), not null
 #  support_message                   :string
+#  support_slack_url                 :string
 #  support_url                       :string
 #  created_at                        :datetime         not null
 #  updated_at                        :datetime         not null
@@ -51,9 +52,9 @@ class CardGrantSetting < ApplicationRecord
   }, prefix: :expires_after
 
   def slack_support?
-    return false unless support_url.present?
+    return false unless support_slack_url.present?
 
-    URI.parse(support_url)&.host&.end_with?(".slack.com") || false
+    URI.parse(support_slack_url)&.host&.end_with?(".slack.com") || false
   rescue URI::InvalidURIError, ArgumentError
     false
   end
