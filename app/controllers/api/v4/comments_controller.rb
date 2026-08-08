@@ -34,7 +34,11 @@ module Api
       def update
         @comment = authorize Comment.find_by_public_id!(params[:id])
 
-        @comment.update!(params.permit(:content, :admin_only))
+        @comment.assign_attributes(params.permit(:content, :admin_only))
+
+        authorize @comment, :set_admin_only? if @comment.admin_only?
+
+        @comment.save!
 
         render "show"
       end
