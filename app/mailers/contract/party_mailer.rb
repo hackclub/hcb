@@ -24,12 +24,6 @@ class Contract
            template_name: "remind_#{@party.role}"
     end
 
-    def human_follow_up
-      mail to: @party.email,
-           subject: @party.human_follow_up_email_subject,
-           template_name: "human_follow_up_#{@party.role}"
-    end
-
     private
 
     def set_party

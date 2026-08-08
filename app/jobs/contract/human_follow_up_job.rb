@@ -11,10 +11,7 @@ class Contract
     def perform(contract)
       return unless contract.sent?
 
-      party = contract.party(:hcb)
-      return if party.nil?
-
-      Contract::PartyMailer.with(party:).human_follow_up.deliver_later
+      ContractMailer.with(contract:).human_follow_up.deliver_later
     end
 
   end
