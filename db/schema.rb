@@ -462,8 +462,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_120000) do
 
   create_table "card_charges", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.string "merchant_category"
-    t.string "merchant_network_id"
+    t.string "merchant_category", null: false
+    t.string "merchant_network_id", null: false
     t.bigint "raw_pending_stripe_transaction_id"
     t.bigint "stripe_card_id"
     t.datetime "updated_at", null: false
