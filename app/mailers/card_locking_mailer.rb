@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class CardLockingMailer < ApplicationMailer
+  before_action :set_delivery_reason
+
   def cards_locked(user:)
     @user = user
     @hcb_codes = user.card_locking_overdue_charges.to_a
@@ -20,6 +22,12 @@ class CardLockingMailer < ApplicationMailer
     @count = @hcb_codes.size
     @show_org = user.events.size > 1
     mail to: user.email, subject: "You have #{@count} receipt#{'s' unless @count == 1} to upload"
+  end
+
+  private
+
+  def set_delivery_reason
+    @delivery_reason = "you spent funds with an HCB Visa® Commercial card and are required to upload receipts for all funds spent. #{stripe_issuing_disclosure}"
   end
 
 end

@@ -7,6 +7,7 @@ class ExportMailer < ApplicationMailer
     @content = content
     @email = email
     @label = label
+    @delivery_reason = "you requested an export from HCB that we needed time to process."
     # Once file sizes become large, we'll need to upload to S3 and provide a
     # download link. However, we are not at that point just yet.
     attachments[@filename] = { mime_type:, content: }

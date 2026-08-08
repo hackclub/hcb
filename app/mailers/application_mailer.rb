@@ -62,6 +62,10 @@ class ApplicationMailer < ActionMailer::Base
     end
   end
 
+  def stripe_issuing_disclosure
+    "HCB Visa® Commercial cards are powered by Stripe and issued by Celtic Bank."
+  end
+
   protected
 
   def hcb_email_with_name_of(object)
