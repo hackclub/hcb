@@ -52,10 +52,11 @@ module Payroll
     end
 
     def onboarding?
-      return true if user&.auditor?
+      return false if user.nil?
+      return true if user.auditor?
       return true if record.payee.legal_entity&.users&.include?(user)
 
-      user&.email.present? && user.email.casecmp?(record.payee.email.to_s)
+      user.email == record.payee.email
     end
 
     private
