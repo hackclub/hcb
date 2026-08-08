@@ -583,22 +583,6 @@ class User < ApplicationRecord
     BackupCodeMailer.with(user_id: id).backup_codes_disabled.deliver_now
   end
 
-  def access_level_for(event, organizer_positions)
-    role = nil
-    access_level = nil
-    user_ops = organizer_positions.select { |op| op.user == self }
-    return nil if user_ops.empty?
-
-    user_ops.each do |op|
-      if role.nil? || OrganizerPosition.roles[op.role] > OrganizerPosition.roles[role]
-        role = op.role
-        access_level = op.event == event ? :direct : :indirect
-      end
-    end
-
-    { role:, access_level: }
-  end
-
   def needs_to_enable_2fa?
     admin_override_pretend? && !use_two_factor_authentication
   end
