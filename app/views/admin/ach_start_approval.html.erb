@@ -1,229 +1,134 @@
-<div class="flex flex-row items-center justify-start gap-4">
-  <%= link_to ach_admin_index_path, class: "btn btn-small bg-muted" do %>
-    <%= inline_icon "view-back" %>
-    Back to ACHs
-  <% end %>
+<% title "ACH transfer ##{@ach_transfer.id}" %>
 
-  <%= link_to hcb_code_path(@ach_transfer.hcb_code), class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
-    <%= inline_icon "payment-transfer" %>
-    View transaction (<%= pluralize(@ach_transfer.local_hcb_code.comments.count, "comment") %>)
-  <% end %>
+<% transfer = @ach_transfer %>
+<% hcb_code = transfer.local_hcb_code %>
+<% state, state_badge = if transfer.pending?
+                          ["Pending review", "bg-pending"]
+                        elsif transfer.rejected?
+                          ["Rejected", "bg-error"]
+                        else
+                          [transfer.aasm_state.to_s.humanize, "bg-muted"]
+                        end %>
 
-  <div class="flex-grow"></div>
+<%= turbo_frame_tag(admin_process_frame_id(transfer)) do %>
+  <div class="fields flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
+    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2 lg:col-span-full">
+      <span class="text-[1.75rem] font-bold leading-[1.1] tabular-nums"><%= render_money transfer.amount %></span>
+      <span class="badge <%= state_badge %> ml-0"><%= state %></span>
+      <% if transfer.event.balance_available_v2_cents.negative? %>
+        <span class="badge bg-error ml-0">⚠️ Negative org balance</span>
+      <% end %>
+      <span class="flex-grow"></span>
+      <% if transfer.column_id.present? %>
+        <%= link_to("https://dashboard.column.com/app/transfers/edit/ach/#{transfer.column_id}", class: "btn btn-small bg-none !bg-[#4575CD] hover:saturate-[125%] transition-all !text-white flex-shrink-0", target: "_blank") do %>
+          <%= inline_icon "column" %>
+          Column
+        <% end %>
+      <% end %>
+      <% transaction_popover = admin_popover_data_for(transfer) %>
+      <%= link_to hcb_code_path(transfer.hcb_code), class: "btn btn-small bg-muted flex-shrink-0", target: ("_blank" if transaction_popover.empty?), data: transaction_popover do %>
+        <%= inline_icon "payment-transfer" %>
+        Transaction (<%= pluralize(hcb_code.comments.count, "comment") %>)
+      <% end %>
+    </div>
 
-  <% if @ach_transfer.column_id.present? %>
-    <%= link_to("https://dashboard.column.com/app/transfers/edit/ach/#{@ach_transfer.column_id}", class: "btn btn-small bg-none !bg-[#4575CD] hover:saturate-[125%] transition-all !text-white flex-shrink-0", target: "_blank") do %>
-      <%= inline_icon "column" %>
-      Open Column (<%= @ach_transfer.column_id %>)
-    <% end %>
-  <% end %>
-</div>
+    <div class="flex flex-col gap-4 min-w-0">
+      <section class="card flex flex-col gap-3.5 overflow-visible">
+        <h3 class="eyebrow m-0">Transfer</h3>
 
-<h1>Process ACH Transfer #<%= @ach_transfer.id %></h1>
-<p><small>Current Status: <%= @ach_transfer.aasm_state %></small></p>
+        <div class="details m0">
+          <% organization = safe_join([link_to(transfer.event.name, transfer.event, target: "_top"), tag.span("balance #{render_money transfer.event.balance_available_v2_cents}", class: "muted")], " · ") %>
+          <%= render "admin/review_fact", label: "Organization", value: organization %>
 
-<hr>
-
-<div class="grid grid-cols-1 lg:grid-cols-2">
-  <div>
-    <h3>Transfer Details</h3>
-
-    <%= turbo_frame_tag "admin_ach_#{@ach_transfer.id}" do %>
-      <table class="table--autosize">
-        <tbody>
-          <% if @ach_transfer.creator %>
-            <tr>
-              <td style="text-align: right;">Submitted by</td>
-              <td colspan="2" style="width: 300px">
-                <%= user_mention(@ach_transfer.creator) %>
-              </td>
-            </tr>
-          <% end %>
-          <tr>
-            <td style="text-align: right;">Organization</td>
-            <td colspan="2" style="width: 300px">
-              <%= link_to @ach_transfer.event.name, @ach_transfer.event %>
-            </td>
-          </tr>
-          <tr>
-            <td style="text-align: right;">ACH speed:</td>
-            <td colspan="2" style="width: 300px">
-              <%= @ach_transfer.same_day? ? "💨 Same-day" : "⌛ Standard" %>
-              <% if @ach_transfer.pending? %>
-                (<%= link_to "toggle", toggle_speed_ach_transfer_path(@ach_transfer), data: { turbo_method: :post } %>)
-              <% end %>
-            </td>
-          </tr>
-          <% if @ach_transfer.pending? %>
-            <tr>
-              <td colspan="3" class="center">
-                Estimated to arrive <%= format_datetime(@ach_transfer.estimated_arrival) %>
-              </td>
-            </tr>
-          <% end %>
-          <tr>
-            <td style="text-align: right;">Payee Name</td>
-            <td><%= @ach_transfer.recipient_name %></td>
-            <td>
-              <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= @ach_transfer.recipient_name.to_json %>);">
-                copy
-              </span>
-            </td>
-          </tr>
-          <% if @ach_transfer.recipient_tel.present? %>
-            <tr>
-              <td style="text-align: right;">Payee Phone Number</td>
-              <td><%= @ach_transfer.recipient_tel %></td>
-              <td>
-                <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= @ach_transfer.recipient_tel.to_json %>);">
-                  copy
-                </span>
-              </td>
-            </tr>
-          <% end %>
-          <tr>
-            <td style="text-align: right;">Payment for</td>
-            <td><%= @ach_transfer.payment_for %></td>
-          </tr>
-          <% if @ach_transfer.invoiced_at.present? %>
-            <tr>
-              <td style="text-align: right;">Invoice date:</td>
-              <td><%= @ach_transfer.invoiced_at.strftime("%B %-d, %Y") %></td>
-            </tr>
-          <% end %>
-          <tr>
-            <td style="text-align: right;">Bank Name:</td>
-            <td><%= @ach_transfer.bank_name %></td>
-          </tr>
-          <tr class="fs-exclude">
-            <td style="text-align: right;">Account Number:</td>
-            <td><%= @ach_transfer.account_number %></td>
-            <td>
-              <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= @ach_transfer.account_number.to_json %>);">
-                copy
-              </span>
-            </td>
-          </tr>
-          <tr class="fs-exclude">
-            <td style="text-align: right;">Routing Number:</td>
-            <td><%= @ach_transfer.routing_number %></td>
-            <td>
-              <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= @ach_transfer.routing_number.to_json %>);">
-                copy
-              </span>
-            </td>
-          </tr>
-          <tr>
-            <td style="text-align: right;">Amount</td>
-            <td><%= render_money_amount @ach_transfer.amount %></td>
-            <td>
-              <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= render_money_amount(@ach_transfer.amount).to_json %>);">
-                copy
-              </span>
-            </td>
-          </tr>
-          <tr>
-            <td style="text-align: right;">Organization balance:</td>
-            <td>
-              <%= render_money @ach_transfer.event.balance_available_v2_cents %>
-              <% if @ach_transfer.event.balance_available_v2_cents < 0 %>
-                <span class="ml1 badge bg-error">⚠️ Negative balance</span>
-              <% end %>
-            </td>
-          </tr>
-          <% if @ach_transfer.employee_payment.present? %>
-            <tr>
-              <td style="text-align: right;">Employee:</td>
-              <td><%= @ach_transfer.employee_payment.employee.user.full_name %></td>
-            </tr>
-            <tr>
-              <td style="text-align: right;">Event:</td>
-              <td><%= @ach_transfer.employee_payment.employee.event.name %></td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    <% end %>
-
-    <% if @ach_transfer.local_hcb_code.receipts.any? { |r| r.extracted_incorrect_amount_cents? } %>
-      <div class="warning bold mb2">
-        ⚠️ Please check these receipts closely, we suspect that their amounts don't match
-      </div>
-    <% end %>
-
-    <% if @ach_transfer.local_hcb_code.receipts.any? { |r| r.duplicated? } %>
-      <div class="warning bold mb2">
-        ⚠️ We suspect that one or more of these receipts have been used before
-      </div>
-    <% end %>
-
-    <%= render partial: "receipts/receipt", collection: @ach_transfer.local_hcb_code.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true } %>
-  </div>
-
-  <div>
-    <h3>Process</h3>
-
-    <% if @ach_transfer.pending? %>
-      <fieldset class="px-6 py-3">
-        <% verb = @ach_transfer.scheduled_on.present? ? "Approve" : "Send" %>
-        <legend class="py-0 px-2"><%= verb %></legend>
-
-        <div class="field mb-3">
-          <label class="bold mb1">Transaction category</label>
-          <br>
-          <%= render(
-                partial: "hcb_codes/transaction_category_form",
-                locals: { model: @ach_transfer.local_hcb_code.ct || @ach_transfer.local_hcb_code.pt }
-              ) %>
-        </div>
-
-        <div class="flex flex-row gap-2 items-center justify-start">
-          <%= form_with(model: false, local: true, url: ach_approve_admin_path(@ach_transfer), method: :post) do |form| %>
-            <%= form.submit "#{verb} ACH transfer", data: { turbo_confirm: "Are you sure? Once an ACH transfer is sent, it cannot be un-sent." } %>
-            <% if @ach_transfer.scheduled_on.present? %>
-              <br>
-              <small>Once approved, this ACH transfer will automatically send on <%= @ach_transfer.scheduled_on.strftime("%Y-%m-%d") %>.</small>
-            <% end %>
+          <% if transfer.creator %>
+            <%= render "admin/review_fact", label: "Submitted by", value: user_mention(transfer.creator) %>
           <% end %>
 
-          <% unless @ach_transfer.scheduled_on.present? %>
-            <%= form_with(model: false, local: true, url: ach_send_realtime_admin_path(@ach_transfer), method: :post) do |form| %>
-              <%= form.submit "⚡ Send in realtime", data: { turbo_confirm: "Are you sure? Once a realtime transfer is sent, it cannot be un-sent. Realtime transfers incur a $1 fee from Column, that will be covered by HCB." } %>
-            <% end %>
+          <%= render "admin/review_fact", label: "Payee", value: transfer.recipient_name, copy: transfer.recipient_name %>
+
+          <% if transfer.recipient_tel.present? %>
+            <%= render "admin/review_fact", label: "Payee phone", value: transfer.recipient_tel, copy: transfer.recipient_tel %>
+          <% end %>
+
+          <%= render "admin/review_fact", label: "Payment for", value: transfer.payment_for %>
+
+          <% if transfer.invoiced_at.present? %>
+            <%= render "admin/review_fact", label: "Invoice date", value: transfer.invoiced_at.strftime("%B %-d, %Y") %>
+          <% end %>
+
+          <%= render "admin/review_fact", label: "Bank", value: transfer.bank_name %>
+          <%= render "admin/review_fact", label: "Account number", value: transfer.account_number, copy: transfer.account_number, fs_exclude: true %>
+          <%= render "admin/review_fact", label: "Routing number", value: transfer.routing_number, copy: transfer.routing_number, fs_exclude: true %>
+
+          <%# safe_join, not interpolation: format_datetime returns a <time> tag. %>
+          <% speed = [transfer.same_day? ? "💨 Same-day" : "⌛ Standard"] %>
+          <% if transfer.pending? %>
+            <%# button_to, not a data-turbo-method link: this only POSTs if Turbo
+                intercepts the click, and a plain GET has no matching route. %>
+            <% speed << button_to("toggle", toggle_speed_ach_transfer_path(transfer), method: :post, form_class: "inline", class: "link-button") %>
+            <% speed << tag.span(safe_join(["arrives ", format_datetime(transfer.estimated_arrival)]), class: "muted") %>
+          <% end %>
+          <%= render "admin/review_fact", label: "Speed", value: safe_join(speed, " · ") %>
+
+          <% if transfer.employee_payment.present? %>
+            <%= render "admin/review_fact", label: "Employee", value: transfer.employee_payment.employee.user.full_name %>
+            <%= render "admin/review_fact", label: "Employee org", value: transfer.employee_payment.employee.event.name %>
+          <% end %>
+
+          <% if transfer.processor %>
+            <%= render "admin/review_fact", label: "Processed by", value: user_mention(transfer.processor) %>
           <% end %>
         </div>
-      </fieldset>
+      </section>
 
-      <fieldset class="px-6 py-3">
-        <legend class="py-0 px-2">Reject</legend>
+      <%= render "admin/review_receipts", hcb_code: %>
+    </div>
 
-        <%= form_with(model: false, local: true, url: ach_reject_admin_path(@ach_transfer), method: :post) do |form| %>
-          <small class="mb-5 mt-0 block">This requires you to communicate to the organizer about the reason why.</small>
+    <div class="flex flex-col gap-4 min-w-0">
+      <% if transfer.pending? %>
+        <% verb = transfer.scheduled_on.present? ? "Approve" : "Send" %>
+
+        <section class="card flex flex-col gap-3.5 overflow-visible">
+          <h3 class="eyebrow m-0"><%= verb %></h3>
 
           <div class="field">
-            <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
-            <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
+            <label class="bold">Transaction category</label>
+            <%= render partial: "hcb_codes/transaction_category_form", locals: { model: hcb_code.ct || hcb_code.pt } %>
           </div>
 
-          <%= form.submit "Reject", data: { turbo_confirm: "Mark as rejected? This requires you to communicate to the organizer about the reason why.", turbo_confirm_danger: true } %>
-        <% end %>
-      </fieldset>
-    <% elsif @ach_transfer.rejected? %>
-      <p><strong>This ACH transfer has been rejected.</strong></p>
-    <% else %>
-      <p><strong>ACH Transfer already sent — cannot approve nor reject.</strong></p>
-    <% end %>
+          <div class="flex flex-wrap items-center gap-2">
+            <%= form_with(model: false, local: true, url: ach_approve_admin_path(transfer), method: :post, class: "contents", data: { turbo_frame: "_top" }) do %>
+              <%= button_tag "#{verb} transfer", name: nil, class: "btn bg-success",
+                    data: { turbo_confirm: "Are you sure? Once an ACH transfer is sent, it cannot be un-sent." } %>
+            <% end %>
 
-    <% if @ach_transfer.processor %>
-      <p>
-        Processed by:
-        <span>
-          <%= avatar_for @ach_transfer.processor, style: "margin: 0; vertical-align: bottom" %>
-          <%= inline_icon "admin-badge", size: 20, style: "vertical-align: middle; margin: -0.2rem -0.3rem 0 -0.3rem;" if @ach_transfer.processor.auditor? %>
-          <span><%= @ach_transfer.processor.initial_name %></span>
-        </span>
-      </p>
-    <% end %>
+            <% unless transfer.scheduled_on.present? %>
+              <%= form_with(model: false, local: true, url: ach_send_realtime_admin_path(transfer), method: :post, class: "contents", data: { turbo_frame: "_top" }) do %>
+                <%= button_tag "⚡ Send in realtime", name: nil, class: "btn btn-default",
+                      data: { turbo_confirm: "Are you sure? Once a realtime transfer is sent, it cannot be un-sent. Realtime transfers incur a $1 fee from Column, that will be covered by HCB." } %>
+              <% end %>
+            <% end %>
+          </div>
 
+          <% if transfer.scheduled_on.present? %>
+            <span class="block text-[0.8125rem] leading-snug opacity-60">
+              Once approved, this transfer sends automatically on <%= transfer.scheduled_on.strftime("%B %-d, %Y") %>.
+            </span>
+          <% end %>
+        </section>
+
+        <%= render "admin/review_reject", url: ach_reject_admin_path(transfer) %>
+      <% else %>
+        <section class="card flex flex-col gap-3.5 overflow-visible">
+          <p class="m0">
+            <% if transfer.rejected? %>
+              This transfer was rejected — it can't be approved.
+            <% else %>
+              This transfer has already been sent — it can't be approved or rejected.
+            <% end %>
+          </p>
+        </section>
+      <% end %>
+    </div>
   </div>
-</div>
+<% end %>

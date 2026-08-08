@@ -1,14 +1,12 @@
-<div id="flash-container">
+<div id="flash-container" class="fixed bottom-0 right-0 z-[999999] flex w-[50ch] max-w-full flex-col overflow-hidden">
   <% flash.to_h.except("imported_transactions", "file").each do |key, value| %>
     <article
       role="alertdialog"
-      class="flash flash--<%= key %>"
+      class="flash flash--toast <%= key %> m-4 mt-0 flex items-center gap-2 shadow-lg"
       data-controller="admin-flash"
       data-turbo-temporary>
-      <div class="flash--content"><%= value %></div>
-      <button class="flash--close-button" data-action="click->admin-flash#dismiss:prevent">
-        <%= inline_icon("view-close", size: 20, class: "pointer flash--close") %>
-      </button>
+      <div class="min-w-0 flex-1 break-words hyphens-auto"><%= value %></div>
+      <%= inline_icon "view-close", size: 24, class: "pointer shrink-none", "data-action": "click->admin-flash#dismiss" %>
     </article>
   <% end %>
 </div>

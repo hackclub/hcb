@@ -1,49 +1,23 @@
 <% title "Ledger" %>
 
-<%= form_with local: true, url: ledger_admin_index_path, method: :get, class: "card overflow-visible" do |form| %>
-  <div class="flex flex-col sm:flex-row items-center mt-1 gap-2">
+<%= form_with local: true, url: ledger_admin_index_path, method: :get, class: "card filter-form flex flex-col gap-2.5 p-3" do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
-    <%= form.text_field :amount, value: params[:amount], placeholder: "Amount (¢)", class: "!max-w-full sm:!max-w-[200px]" %>
-    <div class="flex flex-col sm:flex-row shrink-0 gap-2 -mt-1 w-full sm:w-[unset]">
-        <%= combobox_tag :user_id, user_search_admin_index_path, placeholder: "User", class: "!max-w-full !min-w-full sm:!min-w-56", value: @user&.to_combobox_display %>
-        <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-56", value: @event&.to_combobox_display %>
-    </div>
+    <%= form.text_field :amount, value: params[:amount], placeholder: "Amount (¢)" %>
+    <%= render "admin/filters/user", user: @user %>
+    <%= render "admin/filters/event", event: @event %>
   </div>
-
-  <div class="flex items-center mt-2 gap-4 flex-wrap">
-    <fieldset class="flex gap-4 items-center">
-        <%= form.label :unmapped do %>
-        <%= form.check_box :unmapped, checked: @unmapped %>
-        Unmapped
-        <% end %>
-
-        <%= form.label :exclude_top_ups do %>
-        <%= form.check_box :exclude_top_ups, checked: @exclude_top_ups %>
-        Exclude Top Ups
-        <% end %>
-
-        <%= form.label :exclude_spending do %>
-        <%= form.check_box :exclude_spending, checked: @exclude_spending %>
-        Exclude Spending
-        <% end %>
-
-        <%= form.label :mapped_by_human do %>
-        <%= form.check_box :mapped_by_human, checked: @mapped_by_human %>
-        Mapped by Human
-        <% end %>
-    </fieldset>
-    <%= form.submit "Search", class: "ml-auto" %>
+  <div class="flex flex-wrap items-center gap-2">
+    <%= render "admin/filters/toggle", form:, name: :unmapped, label: "Unmapped", checked: @unmapped %>
+    <%= render "admin/filters/toggle", form:, name: :exclude_top_ups, label: "Exclude top ups", checked: @exclude_top_ups %>
+    <%= render "admin/filters/toggle", form:, name: :exclude_spending, label: "Exclude spending", checked: @exclude_spending %>
+    <%= render "admin/filters/toggle", form:, name: :mapped_by_human, label: "Mapped by human", checked: @mapped_by_human %>
+    <%= render "admin/filters/actions", form: %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @canonical_transactions, entry_name: "transactions" %>
-  </div>
-  <%= paginate @canonical_transactions %>
-</div>
-
 <%= form_with local: true, url: set_event_multiple_transactions_path, method: :post do |form| %>
+  <div class="table-container">
   <table>
     <thead>
       <tr>
@@ -60,20 +34,20 @@
     </thead>
     <tbody>
       <% @canonical_transactions.each do |ct| %>
-        <tr class="<%= "admin-bg-pending" unless ct.canonical_event_mapping || !ct.local_hcb_code.unknown? || ct.memo.include?("BUSBILLPAY") %>">
+        <tr class="<%= "shade-yellow" unless ct.canonical_event_mapping || !ct.local_hcb_code.unknown? || ct.memo.include?("BUSBILLPAY") %>">
           <td>
             <%= form.check_box ct.id %>
           </td>
           <td><%= ct.id %></td>
           <td><%= ct.date %></td>
-          <td><%= link_to ct.memo, transaction_path(ct) %></td>
+          <td><%= link_to ct.memo, transaction_path(ct), data: admin_popover_data_for(ct) %></td>
           <td><%= ct.bank_account_name %></td>
           <td class="nowrap"><%= ct.amount.format %></td>
           <td><%= ct.hcb_code %></td>
           <td><%= link_to ct.canonical_event_mapping.event.id, ct.canonical_event_mapping.event if ct.canonical_event_mapping.try(:event) %></td>
           <td>
-            <%= link_to "Process", transaction_admin_path(ct) unless ct.event.present? %>
-            <%= link_to "View", transaction_admin_path(ct) if ct.event.present? %>
+            <%= link_to "Process", transaction_admin_path(ct), class: "btn" unless ct.event.present? %>
+            <%= pop_icon_to "external", transaction_admin_path(ct), "aria-label": "View" if ct.event.present? %>
             <% if !ct.event.present? && ct.memo.include?("BUSBILLPAY") %>
               <br>
               🕐 This ACH should auto-map within 24 hours
@@ -88,15 +62,20 @@
       <% end %>
     </tbody>
   </table>
-
   <% if @canonical_transactions.empty? %>
     <%= blankslate "No transactions match your search parameters" %>
   <% end %>
 
+  <div class="table-footer">
+    <div class="flex-grow">
+      <%= page_entries_info @canonical_transactions, entry_name: "transactions" %>
+    </div>
+    <%= paginate @canonical_transactions %>
+  </div>
+  </div>
+
   <div class="flex mt-2 gap-2 items-center justify-end">
       <%= combobox_tag "event_id", event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !w-56" %>
-      <%= form.submit "Bulk Map to Event", "data-turbo-confirm": "Are you sure you want to bulk map these transactions?" %>
+      <%= form.submit "Bulk Map to Event", "data-turbo-confirm": "Are you sure you want to bulk map these transactions?", class: "btn bg-success" %>
   </div>
 <% end %>
-
-<%= paginate @canonical_transactions %>

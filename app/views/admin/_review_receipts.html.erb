@@ -1,0 +1,18 @@
+<%# The receipts attached to a transfer, with the checks we run over them. %>
+<%# locals: (hcb_code:) %>
+<% receipts = hcb_code.receipts.order(created_at: :asc) %>
+
+<% if receipts.any? %>
+  <section class="card flex flex-col gap-3.5 overflow-visible">
+    <h3 class="eyebrow m-0">Receipts</h3>
+
+    <% if receipts.any?(&:extracted_incorrect_amount_cents?) %>
+      <p class="warning bold m0">⚠️ Check these closely — we suspect their amounts don't match.</p>
+    <% end %>
+    <% if receipts.any?(&:duplicated?) %>
+      <p class="warning bold m0">⚠️ We suspect one or more of these receipts has been used before.</p>
+    <% end %>
+
+    <div><%= render partial: "receipts/receipt", collection: receipts, as: :receipt, locals: { link_to_file: true } %></div>
+  </section>
+<% end %>

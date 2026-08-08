@@ -1,26 +1,19 @@
 <% title "Common documents" %>
-<% page_md %>
 
-<h1 class="heading">
-  <span class="flex items-center flex-auto">
-    Common documents
-  </span>
-</h1>
-
-<p>
-  Common documents are shared documents that appear for every event
-  that does not otherwise have event-specific documents uploaded for them.
-  Common docs appear under "documents" for those events.
-</p>
-
-<div class="flex justify-center items-center">
+<% content_for(:admin_actions) do %>
   <% admin_tool("w-fit") do %>
     <%= link_to "Upload a common document",
     new_document_path,
     class: "btn bg-success my0",
     disabled: !admin_signed_in? %>
   <% end %>
-</div>
+<% end %>
+
+<p>
+  Common documents are shared documents that appear for every event
+  that does not otherwise have event-specific documents uploaded for them.
+  Common docs appear under "documents" for those events.
+</p>
 
 <ul class="grid">
   <%= render @active_documents %>

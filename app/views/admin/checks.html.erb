@@ -1,26 +1,18 @@
 <% title "Checks" %>
 
-<%= form_with local: true, class: "card overflow-visible", url: checks_admin_index_path, method: :get do |form| %>
-  <div class="flex flex-col sm:flex-row items-center gap-2">
-    <%= form.text_field :q, value: params[:q], placeholder: "Search", class: "!max-w-full w-full" %>
-    <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: checks_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
+    <%= render "events/filters/search", form: %>
+    <%= render "admin/filters/event", event: @event %>
     <%= render "admin/date_range_filter", start_date: @start_date, end_date: @end_date %>
   </div>
-  <div class="flex items-center mt-2 gap-4 flex-wrap">
-    <%= form.label :in_transit do %>
-      <%= form.check_box :in_transit, checked: @in_transit %> In Transit
-    <% end %>
-    <%= form.submit "Search", class: "ml-auto" %>
+  <div class="flex flex-wrap items-center gap-2">
+    <%= render "admin/filters/toggle", form:, name: :in_transit, label: "In transit", checked: @in_transit %>
+    <%= render "admin/filters/actions", form: %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @checks, entry_name: "check" %>
-  </div>
-  <%= paginate @checks %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -36,7 +28,7 @@
   </thead>
   <tbody>
     <% @checks.each do |check| %>
-      <tr class="<%= "admin-bg-pending" if check.in_transit? %> <%= "admin-bg-transit" if check.in_transit_and_processed? %>">
+      <tr class="<%= "shade-yellow" if check.in_transit? %> <%= "shade-cyan" if check.in_transit_and_processed? %>">
         <td><%= check.id %></td>
         <td>
           <%= check.created_at.strftime("%Y-%m-%d") %>
@@ -50,11 +42,17 @@
         <td><%= render_money_amount(check.amount) %></td>
         <td><%= check.aasm_state.upcase %></td>
         <td>
-          <%= link_to "View", check_path(check) %>
+          <%= pop_icon_to "external", check_path(check), "aria-label": "View", data: admin_popover_data_for(check) %>
         </td>
       </tr>
     <% end %>
   </tbody>
 </table>
 
-<%= paginate @checks %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @checks, entry_name: "check" %>
+  </div>
+  <%= paginate @checks %>
+</div>
+</div>

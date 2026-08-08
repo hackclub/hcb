@@ -16,29 +16,19 @@
 
 <h2>All Designs</h2>
 
-<%= form_with local: true, class: "card overflow-visible", url: stripe_card_personalization_designs_admin_index_path, method: :get do |form| %>
-  <div class="flex flex-col sm:flex-row items-center gap-2">
-    <%= form.text_field :q, value: params[:q], placeholder: "Search", class: "!max-w-full w-full" %>
-    <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: stripe_card_personalization_designs_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
+    <%= render "events/filters/search", form: %>
+    <%= render "admin/filters/event", event: @event %>
   </div>
-  <div class="flex items-center mt-2 gap-4 flex-wrap">
-    <%= form.label :pending, class: "mt2 mb2" do %>
-      <%= form.check_box :pending, checked: @pending %> Awaiting Stripe Approval
-    <% end %>
-    <%= form.label :unlisted, class: "mt2 mb2" do %>
-      <%= form.check_box :unlisted, checked: @unlisted %> Unlisted designs
-    <% end %>
-    <%= form.submit "Search", class: "ml-auto" %>
+  <div class="flex flex-wrap items-center gap-2">
+    <%= render "admin/filters/toggle", form:, name: :pending, label: "Awaiting Stripe approval", checked: @pending %>
+    <%= render "admin/filters/toggle", form:, name: :unlisted, label: "Unlisted designs", checked: @unlisted %>
+    <%= render "admin/filters/actions", form: %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @designs, entry_name: "event design" %>
-  </div>
-  <%= paginate @designs %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -52,7 +42,7 @@
   </thead>
   <tbody>
     <% @designs.each do |design| %>
-      <tr class="<%= "admin-bg-pending" if design.under_review? %>">
+      <tr class="<%= "shade-yellow" if design.under_review? %>">
         <td><%= design.id %></td>
         <td><%= design.created_at.strftime("%Y-%m-%d") %></td>
         <td>
@@ -89,4 +79,11 @@
   </tbody>
 </table>
 
-<%= paginate @designs %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @designs, entry_name: "event design" %>
+  </div>
+  <%= paginate @designs %>
+</div>
+
+</div>

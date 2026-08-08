@@ -1,25 +1,17 @@
 <% title "Pending Ledger" %>
 
-<%= form_with local: true, class: "card overflow-visible", url: pending_ledger_admin_index_path, method: :get do |form| %>
-    <div class="flex flex-col sm:flex-row items-center gap-2">
-        <%= render "events/filters/search", form: %>
-        <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
-    </div>
-    <div class="flex items-center mt-2 gap-4 flex-wrap">
-        <%= form.label :unsettled do %>
-            <%= form.check_box :unsettled, checked: @unsettled %> Unsettled
-        <% end %>
-        <%= form.submit "Search", class: "ml-auto" %>
-    </div>
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: pending_ledger_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
+    <%= render "events/filters/search", form: %>
+    <%= render "admin/filters/event", event: @event %>
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    <%= render "admin/filters/toggle", form:, name: :unsettled, label: "Unsettled", checked: @unsettled %>
+    <%= render "admin/filters/actions", form: %>
+  </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @canonical_pending_transactions, entry_name: "transactions" %>
-  </div>
-  <%= paginate @canonical_pending_transactions %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -35,7 +27,7 @@
   </thead>
   <tbody>
     <% @canonical_pending_transactions.each do |cpt| %>
-      <tr class="<%= "admin-bg-pending" if cpt.unsettled? %>">
+      <tr class="<%= "shade-yellow" if cpt.unsettled? %>">
         <td><%= cpt.id %></td>
         <td>
           <%= cpt.date %>
@@ -45,7 +37,7 @@
         </td>
         <td>
           <% if cpt.event %>
-            <%= link_to cpt.memo, cpt.local_hcb_code %>
+            <%= link_to cpt.memo, cpt.local_hcb_code, data: admin_popover_data_for(cpt) %>
           <% else %>
             <%= cpt.memo %>
           <% end %>
@@ -68,4 +60,11 @@
   </tbody>
 </table>
 
-<%= paginate @canonical_pending_transactions %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @canonical_pending_transactions, entry_name: "transactions" %>
+  </div>
+  <%= paginate @canonical_pending_transactions %>
+</div>
+
+</div>

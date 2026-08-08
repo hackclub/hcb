@@ -1,22 +1,14 @@
 <% title "PayPal Transfers" %>
 
-<%= form_with local: true, class: "card overflow-visible", url: paypal_transfers_admin_index_path, method: :get do |form| %>
-  <div class="flex flex-col sm:flex-row items-center gap-2">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: paypal_transfers_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
-    <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
-  </div>
-  <div class="flex items-center mt-2">
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= render "admin/filters/event", event: @event %>
+    <%= render "admin/filters/actions", form: %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @paypal_transfers, entry_name: "transfers" %>
-  </div>
-  <%= paginate @paypal_transfers %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -31,7 +23,7 @@
   </thead>
   <tbody>
     <% @paypal_transfers.each do |paypal_transfer| %>
-      <tr class="<%= "admin-bg-pending" if paypal_transfer.pending? %>">
+      <tr class="<%= "shade-yellow" if paypal_transfer.pending? %>">
         <td><%= paypal_transfer.id %></td>
         <td><%= paypal_transfer.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= paypal_transfer.event.name %></td>
@@ -39,12 +31,21 @@
         <td><%= render_money(paypal_transfer.amount) %></td>
         <td><%= paypal_transfer.aasm.human_state %></td>
         <td>
-          <%= link_to "View", hcb_code_path(paypal_transfer.hcb_code) %>
-          <%= link_to "Process", paypal_transfer_process_admin_path(paypal_transfer) %>
+          <div class="flex items-center gap-2">
+            <%= pop_icon_to "external", hcb_code_path(paypal_transfer.hcb_code), "aria-label": "View", data: admin_popover_data_for(paypal_transfer) %>
+            <%= link_to "Process", paypal_transfer_process_admin_path(paypal_transfer), class: "btn", data: admin_process_popover_data(paypal_transfer) %>
+          </div>
         </td>
       </tr>
     <% end %>
   </tbody>
 </table>
 
-<%= paginate @paypal_transfers %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @paypal_transfers, entry_name: "transfers" %>
+  </div>
+  <%= paginate @paypal_transfers %>
+</div>
+
+</div>

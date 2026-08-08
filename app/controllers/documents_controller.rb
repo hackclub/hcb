@@ -7,9 +7,13 @@ class DocumentsController < ApplicationController
   before_action :set_document, except: [:common_index, :index, :new, :create, :fiscal_sponsorship_letter, :verification_letter]
   skip_after_action :verify_authorized, only: [:index]
 
+  # Reached from the admin nav (Misc → Documents), and only viewable by
+  # auditors, so it renders inside the admin shell rather than the app layout.
   def common_index
     authorize @active_documents = Document.common.active
     authorize @archived_documents = Document.common.archived
+
+    render layout: "admin"
   end
 
   def index

@@ -88,8 +88,9 @@
           <button type="button" class="btn bg-blue w-full gap-2 mt-3" data-action="manual-payee#continue">
             Continue <%= inline_icon "view-forward" %>
           </button>
-          <button type="button" class="!shadow-none btn w-full text-sm font-[500] mt-1" data-manual-payee-target="enableButton" data-action="manual-payee#enable" <%= "hidden" if manual %>>
-            I want to submit tax and payout information on behalf of the recipient
+          <%# The manual path is temporarily disabled; the button stays visible to signal it's on the way. %>
+          <button type="button" class="!shadow-none btn w-full text-sm font-[500] mt-1" data-manual-payee-target="enableButton" disabled <%= "hidden" if manual %>>
+            Submitting tax and payout information on behalf of the recipient — coming soon
           </button>
           <button type="button" class="!shadow-none btn w-full text-sm mt-1" data-manual-payee-target="undoButton" data-action="manual-payee#undo" <%= "hidden" unless manual %>>
             I'll have the recipient fill this out instead
