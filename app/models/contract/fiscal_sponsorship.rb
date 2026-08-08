@@ -36,10 +36,10 @@
 
 class Contract
   class FiscalSponsorship < Contract
-    OPERATIONS_UPDATE_AFTER = 1.month
+    HUMAN_FOLLOW_UP_AFTER = 1.month
 
     after_update_commit :create_document!, if: ->{ event.present? && sent_with_docuseal? && aasm_state_previously_changed?(to: "signed") }
-    after_update_commit :schedule_operations_update, if: ->{ aasm_state_previously_changed?(to: "sent") }
+    after_update_commit :schedule_human_follow_up, if: ->{ aasm_state_previously_changed?(to: "sent") }
 
     def payload
       signee = party :signee
@@ -128,8 +128,8 @@ class Contract
       "fiscal sponsorship agreement"
     end
 
-    def schedule_operations_update
-      Contract::OperationsUpdateJob.set(wait: OPERATIONS_UPDATE_AFTER).perform_later(self)
+    def schedule_human_follow_up
+      Contract::HumanFollowUpJob.set(wait: HUMAN_FOLLOW_UP_AFTER).perform_later(self)
     end
 
     def required_roles

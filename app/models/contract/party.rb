@@ -109,7 +109,7 @@ class Contract
       "[Action Needed] Sign the #{contract.agreement_name} for #{contract.event_name} on HCB 📝"
     end
 
-    def operations_update_email_subject
+    def human_follow_up_email_subject
       "[Update] #{contract.event_name}'s #{contract.agreement_name} still isn't signed 📝"
     end
 
