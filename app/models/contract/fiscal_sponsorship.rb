@@ -36,7 +36,10 @@
 
 class Contract
   class FiscalSponsorship < Contract
+    HUMAN_FOLLOW_UP_AFTER = 1.month
+
     after_update_commit :create_document!, if: ->{ event.present? && sent_with_docuseal? && aasm_state_previously_changed?(to: "signed") }
+    after_update_commit :schedule_human_follow_up, if: ->{ aasm_state_previously_changed?(to: "sent") }
 
     def payload
       signee = party :signee
@@ -136,6 +139,10 @@ class Contract
       return "contract" if external_template_id.to_s == hack_club_template.to_s
 
       "fiscal sponsorship agreement"
+    end
+
+    def schedule_human_follow_up
+      Contract::HumanFollowUpJob.set(wait: HUMAN_FOLLOW_UP_AFTER).perform_later(self)
     end
 
     def required_roles
