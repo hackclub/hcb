@@ -37,7 +37,7 @@
 #  show_recent_donors                           :boolean          default(FALSE), not null
 #  show_top_donors                              :boolean          default(FALSE), not null
 #  slug                                         :text
-#  stripe_card_shipping_type                    :integer          default("standard"), not null
+#  stripe_card_shipping_type                    :integer          default(0), not null
 #  website                                      :string
 #  created_at                                   :datetime         not null
 #  updated_at                                   :datetime         not null
@@ -174,6 +174,62 @@ class Event < ApplicationRecord
 
   def descendants
     Event.where(id: descendant_ids)
+  end
+
+  # The direct sub-organizations `user` may see. #visible_descendant_ids walks
+  # down from exactly this set, so it comes back empty whenever this does, which
+  # is the cheap way to ask whether there is anything to show.
+  def visible_subevents(user)
+    return subevents if user&.auditor?
+
+    organized_ids = user ? OrganizerPosition.reader_access.where(user:).pluck(:event_id) : []
+    return subevents if organized_ids.any? && organized_ids.intersect?(ancestor_ids)
+
+    subevents.where(is_public: true, hidden_at: nil).or(subevents.where(id: organized_ids))
+  end
+
+  # The descendants `user` is allowed to see, mirroring EventPolicy#show?
+  # (`is_public || auditor_or_reader?`, where reader access is inherited from
+  # any ancestor). Hidden events are treated as private, matching how every
+  # other organization list treats `not_hidden`.
+  #
+  # Traversal stops at an event the user cannot see, so a transparent event
+  # nested under a private one stays hidden too. Surfacing it would reveal that
+  # the private organization exists.
+  #
+  # Like #descendant_ids, these ids skip the paranoid scope, so read them back
+  # through ActiveRecord to drop any that are soft deleted.
+  def visible_descendant_ids(user)
+    return descendant_ids if user&.auditor?
+
+    # Equivalent to OrganizerPosition.role_at_least?(user, self, :reader), reusing
+    # the positions already fetched rather than querying for them again.
+    organized_ids = user ? OrganizerPosition.reader_access.where(user:).pluck(:event_id) : []
+    return descendant_ids if organized_ids.any? && organized_ids.intersect?(ancestor_ids)
+
+    # Guard the empty case rather than let sanitize_sql_array render it, since it
+    # turns [] into NULL and `e.id = ANY(ARRAY[NULL])` would make `unlocked` NULL.
+    organized =
+      if organized_ids.any?
+        Event.sanitize_sql_array(["e.id = ANY(ARRAY[?]::bigint[])", organized_ids])
+      else
+        "FALSE"
+      end
+    transparent = "(e.is_public AND e.hidden_at IS NULL)"
+
+    Event.connection.execute(<<-SQL).map { |row| row["id"] }
+      WITH RECURSIVE child_events AS (
+        SELECT e.id, e.parent_id, #{organized} AS unlocked
+        FROM events e
+        WHERE e.parent_id = #{id} AND (#{transparent} OR #{organized})
+        UNION ALL
+        SELECT e.id, e.parent_id, (ce.unlocked OR #{organized})
+        FROM events e
+        INNER JOIN child_events ce ON e.parent_id = ce.id
+        WHERE #{transparent} OR #{organized} OR ce.unlocked
+      )
+      SELECT id FROM child_events;
+    SQL
   end
 
   belongs_to :parent, class_name: "Event", optional: true
@@ -978,6 +1034,13 @@ class Event < ApplicationRecord
 
   def contracts_pending_on_hcb
     contracts.sent.select { |c| c.parties.not_hcb.all?(&:signed?) }
+  end
+
+  # The oldest contract standing between this organization and activation, if
+  # any. An organization can have more than one open at a time, since contracts
+  # hang off individual signee invites rather than off the organization.
+  def contract_pending_signature
+    contracts.not_voided.where.not(aasm_state: :signed).first
   end
 
   private
