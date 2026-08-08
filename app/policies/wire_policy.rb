@@ -26,11 +26,11 @@ class WirePolicy < ApplicationPolicy
   end
 
   def edit?
-    user&.admin?
+    user&.admin? && record.pending?
   end
 
   def update?
-    user&.admin?
+    user&.admin? && record.pending?
   end
 
   private
