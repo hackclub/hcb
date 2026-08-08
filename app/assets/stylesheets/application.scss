@@ -753,6 +753,38 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
 }
 
 .hcb-suborg-graph {
+  // Cards move by transform; boxes and connectors by their geometry. Keep the
+  // duration in step with MOTION_MS in sub_organizations_graph_controller.js.
+  $motion: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+
+  .suborg-node {
+    transition:
+      transform $motion,
+      opacity $motion;
+  }
+  .group-rect,
+  .edge-line {
+    transition:
+      x $motion,
+      y $motion,
+      width $motion,
+      height $motion,
+      opacity $motion;
+  }
+  // Entering elements fade up from nothing, leaving ones fade out in place.
+  .is-entering,
+  .is-leaving {
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .suborg-node,
+    .group-rect,
+    .edge-line {
+      transition: none;
+    }
+  }
+
   .node-rect {
     fill: #fff;
     stroke: #ddd;
@@ -762,8 +794,41 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   }
   .root-rect {
     fill: #ec3750;
-    stroke: #c0392b;
+    stroke: none;
     transition: fill 0.15s;
+  }
+  // Children that wrap onto more than one line are boxed together.
+  .group-rect {
+    fill: rgba(0, 0, 0, 0.022);
+    stroke: rgba(0, 0, 0, 0.06);
+    stroke-width: 1;
+  }
+  // Pill on a node's bottom edge: how many sub-organizations it holds, and the
+  // control that opens them.
+  .toggle-rect {
+    fill: #fff;
+    stroke: #ddd;
+    transition:
+      fill 0.15s,
+      stroke 0.15s;
+  }
+  .toggle-text {
+    fill: #666;
+    font-size: 11px;
+    font-weight: 600;
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+  }
+  .node-toggle {
+    &:hover .toggle-rect {
+      fill: #ec3750;
+      stroke: #ec3750;
+    }
+    &:hover .toggle-text {
+      fill: #fff;
+    }
   }
   .node-text {
     fill: #000;
@@ -776,7 +841,7 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   }
   .root-text {
     fill: #fff;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     font-family:
       system-ui,
@@ -791,11 +856,8 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
       -apple-system,
       sans-serif;
   }
-  .edge {
-    stroke: #aaa;
-  }
-  .arrow-head {
-    fill: #aaa;
+  .edge-line {
+    fill: #c9c9c9;
   }
   a {
     outline: none;
@@ -822,30 +884,6 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
     }
   }
 
-  .more-rect {
-    fill: transparent;
-    stroke: #ccc;
-    stroke-dasharray: 5 3;
-    transition:
-      fill 0.15s,
-      stroke 0.15s;
-  }
-  .more-text {
-    fill: #999;
-    font-size: 15px;
-    font-family:
-      system-ui,
-      -apple-system,
-      sans-serif;
-  }
-  .more-node:hover .more-rect {
-    fill: #f5f5f5;
-    stroke: #aaa;
-  }
-  .more-node:hover .more-text {
-    fill: #555;
-  }
-
   [data-dark='true'] & {
     .node-rect {
       fill: #2a2a2f;
@@ -857,24 +895,19 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
     .node-meta {
       fill: #999;
     }
-    .edge {
-      stroke: #555;
-    }
-    .arrow-head {
+    .edge-line {
       fill: #555;
     }
-    .more-rect {
-      stroke: #555;
+    .group-rect {
+      fill: rgba(255, 255, 255, 0.03);
+      stroke: rgba(255, 255, 255, 0.08);
     }
-    .more-text {
-      fill: #777;
+    .toggle-rect {
+      fill: #2a2a2f;
+      stroke: #444;
     }
-    .more-node:hover .more-rect {
-      fill: #333;
-      stroke: #777;
-    }
-    .more-node:hover .more-text {
-      fill: #bbb;
+    .toggle-text {
+      fill: #aaa;
     }
     a {
       &:hover .node-rect {
