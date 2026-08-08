@@ -1,0 +1,24 @@
+<%# locals: (ledger_item:) %>
+
+<% linked_object_partials = {
+     "Invoice"                      => "invoice",
+     "Donation"                     => "donation",
+     "AchTransfer"                  => "ach_transfer",
+     "Wire"                         => "wire",
+     "PaypalTransfer"               => "paypal_transfer",
+     "WiseTransfer"                 => "wise_transfer",
+     "Check"                        => "check",
+     "IncreaseCheck"                => "increase_check",
+     "CheckDeposit"                 => "check_deposit",
+     "Disbursement::Outgoing"       => "disbursement",
+     "Disbursement::Incoming"       => "disbursement",
+     "StripeServiceFee"             => "stripe_service_fee",
+     "BankFee"                      => "bank_fee",
+     "FeeRevenue"                   => "fee_revenue",
+     "Reimbursement::PayoutHolding" => "reimbursement_payout_holding",
+     "Reimbursement::ExpensePayout" => "reimbursement_expense_payout",
+     "CardCharge"                   => "card_charge"
+   } %>
+
+<% partial_name = linked_object_partials.fetch(ledger_item.linked_object_type, "unknown") %>
+<%= render partial: "ledger/items/linked_objects/#{partial_name}", locals: { ledger_item: } %>
