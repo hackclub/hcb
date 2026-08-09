@@ -20,9 +20,6 @@ module DonationPageSetup
 
     tax_deductible = params[:goods].nil? || params[:goods] == "0"
 
-    @tiers = event.donation_tiers.where(published: true)
-    @show_tiers = event.donation_tiers_enabled? && @tiers.any?
-
     @donation = Donation.new(
       name: params[:name] || (organizer_signed_in? ? nil : current_user&.name),
       email: params[:email] || (organizer_signed_in? ? nil : current_user&.email),
@@ -42,7 +39,6 @@ module DonationPageSetup
     )
 
     @monthly = params[:monthly].present? || (params[:tier_id].present? && params[:tier_id] != "custom")
-    @skip_layout_og_tags = true
 
     if @monthly
       @recurring_donation = event.recurring_donations.build(
@@ -55,8 +51,22 @@ module DonationPageSetup
       )
     end
 
-    @placeholder_amount = "%.2f" % (DonationService::SuggestedAmount.new(event, monthly: @monthly).run / 100.0)
+    prepare_donation_page!(event:)
 
     true
+  end
+
+  def prepare_donation_page!(event:)
+    @skip_layout_og_tags = true
+
+    @tiers = event.donation_tiers.where(published: true)
+    @show_tiers = event.donation_tiers_enabled? && @tiers.any?
+
+    @placeholder_amount = "%.2f" % (DonationService::SuggestedAmount.new(event, monthly: @monthly).run / 100.0)
+
+    donors = DonationService::Donors.new(event) if params[:tier_id].blank?
+
+    @top_donors = donors && event.show_top_donors ? donors.top : []
+    @recent_donors = donors && event.show_recent_donors ? donors.recent : []
   end
 end

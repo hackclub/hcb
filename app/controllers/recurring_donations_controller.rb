@@ -2,6 +2,7 @@
 
 class RecurringDonationsController < ApplicationController
   include SetEvent
+  include DonationPageSetup
 
   before_action :set_event, only: [:create, :pay, :finished]
   before_action :set_recurring_donation_by_hashid, only: [:pay, :finished]
@@ -31,6 +32,7 @@ class RecurringDonationsController < ApplicationController
       redirect_to pay_event_recurring_donation_path(@event, @recurring_donation)
     else
       @monthly = true
+      prepare_donation_page!(event: @event)
       render "donations/start_donation", status: :unprocessable_content
     end
   end
