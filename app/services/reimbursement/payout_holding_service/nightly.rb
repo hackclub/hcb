@@ -63,7 +63,7 @@ module Reimbursement
                   payout_holding.increase_check = check
                   payout_holding.save!
                   payout_holding.mark_sent!
-                rescue Faraday::Error => e
+                rescue
                   check.mark_rejected!
                   payout_holding.increase_check = check
                   payout_holding.save!
