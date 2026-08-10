@@ -1,9 +1,9 @@
 <%# locals: (ledger_item:) %>
 
-<% check = ledger_item.linked_object %>
-
 <link href="https://fonts.googleapis.com/css?family=Damion" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css?family=Space+Mono" rel="stylesheet">
+
+<% check = ledger_item.linked_object %>
 
 <%= render "increase_checks/paper_check",
       check_number: check.check_number&.to_s,
