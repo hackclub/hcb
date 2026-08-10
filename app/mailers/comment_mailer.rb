@@ -4,6 +4,7 @@ class CommentMailer < ApplicationMailer
   def notification
     @comment = params[:comment]
     @commentable = @comment.commentable
+    @delivery_reason = "you are part of a comment thread on HCB."
 
     return if @commentable.comment_recipients_for(@comment).empty?
 
@@ -27,6 +28,7 @@ class CommentMailer < ApplicationMailer
   end
 
   def bounce_missing_comment
+    @delivery_reason = "you tried to reply to a comment thread via email."
     mail subject: @inbound_mail&.mail&.subject || "Unknown comment", to: @inbound_mail&.mail&.from&.first
   end
 

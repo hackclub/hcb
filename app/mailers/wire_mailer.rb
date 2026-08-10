@@ -3,6 +3,7 @@
 class WireMailer < ApplicationMailer
   def notify_recipient
     @wire = params[:wire]
+    @delivery_reason = "you are the recipient of a wire transfer from #{@wire.event.name}."
 
     mail to: @wire.recipient_email,
          subject: "Your wire transfer from #{@wire.event.name} has been sent",

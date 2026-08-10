@@ -4,6 +4,7 @@ class ReceiptBinMailer < ApplicationMailer
   before_action { @inbound_mail = params[:mail] }
   before_action { @reply_to = params[:reply_to] }
   before_action { @to = params[:to] || @inbound_mail&.mail&.from&.first }
+  before_action { @delivery_reason = "you tried to email a receipt to an HCB user's receipt bin." }
 
   default to: -> { @to },
           reply_to: -> { @reply_to },
