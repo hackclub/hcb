@@ -7,7 +7,7 @@ class Ledger
 
       # Non-engineers see the user-facing HCB code page rather than the raw
       # ledger item. hcb_codes#show performs its own authorization.
-      unless FlipperGroups.hcb_engineer?(current_user)
+      unless FlipperGroups.hcb_engineer?(current_user) || Rails.env.development?
         skip_authorization
         return redirect_to hcb_code_path(@item.hcb_code)
       end
