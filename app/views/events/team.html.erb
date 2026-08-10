@@ -45,7 +45,7 @@
     </summary>
 
     <div class="border-top b--muted px-4 py-3">
-      <p class="mt0">Because <%= @event.name %> is a sub-organization of <%= @event.parent.name %>, the <%= @event.parent.name %> team has access here too. Their managers can manage this organization, while their members and readers can only view it.</p>
+      <p class="mt0">Because <%= @event.name %> is a sub-organization of <%= @event.parent.name %>, the <%= @event.parent.name %> team has access here too.</p>
 
       <% if @indirect_access.present? %>
         <div class="grid">
