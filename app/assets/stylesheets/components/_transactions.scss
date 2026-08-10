@@ -173,6 +173,10 @@ html[data-dark='true'] {
   visibility: visible;
 }
 
+.transaction:not(:hover) .add-tag-badge {
+  width: 1px;
+}
+
 .transaction:hover .suggested_tag,
 .suggested_tag[aria-expanded='true'] {
   max-width: 125px;
