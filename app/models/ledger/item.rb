@@ -53,7 +53,7 @@ class Ledger
     include Receiptable
 
     has_one :hcb_code, class_name: "HcbCode", required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
-    belongs_to :linked_object, polymorphic: true, optional: true
+    belongs_to :linked_object, polymorphic: true, optional: true, inverse_of: :ledger_item
     belongs_to :author, class_name: "User", optional: true
 
     # TODO: THIS IS SO TEMPORARY REMOVE ASAP
