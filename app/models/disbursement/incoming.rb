@@ -70,14 +70,6 @@ class Disbursement
     alias_method :counterparty_subledger, :source_subledger
     alias_method :transaction_category, :destination_transaction_category
 
-    def canonical_transactions
-      @canonical_transactions ||= CanonicalTransaction.where(ledger_item: Ledger::Item.find_by(linked_object: self))
-    end
-
-    def canonical_pending_transactions
-      @canonical_pending_transactions ||= ::CanonicalPendingTransaction.where(ledger_item: Ledger::Item.find_by(linked_object: self))
-    end
-
   end
 
 end

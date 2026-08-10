@@ -73,6 +73,10 @@ class Disbursement
         approved_at || in_transit_at
       end
 
+      # TODO: add an inverse
+      has_many :canonical_transactions, through: :ledger_item
+      has_many :canonical_pending_transactions, through: :ledger_item
+
       def fee_waived?
         !should_charge_fee?
       end
