@@ -33,18 +33,23 @@ module CardLocking
   # date of the first stage flag they carry; a cardholder in no stage is never
   # enforced (their charges never get a deadline, so their cards never lock).
   #
-  # The 07_28 row is inert: its date now precedes ENFORCEMENT_START_DATE, so the
-  # floor above already excludes every charge it could have covered. It is kept
-  # only so the flag keeps resolving for anyone still carrying it, and the list is
-  # no longer earliest-first: a cardholder in both stages resolves to the 08_11
-  # date by list order. Enrolling everyone on the 08_11 flag makes that moot.
+  # Every stage now carries ENFORCEMENT_START_DATE. The floor above already excludes
+  # every charge the earlier stages could have covered, so their original dates no
+  # longer mean anything and list order cannot matter.
+  #
+  # The earlier rows stay listed because each is still load-bearing for
+  # *enrollment*, not for its date: a cardholder carrying only an earlier flag is
+  # enforced from ENFORCEMENT_START_DATE, and deleting their row would resolve them
+  # to nil and silently stop their cards from ever locking. Do not drop a row until
+  # the whole feature is un-flagged.
   #
   # RIP-OUT: when the rollout is done, delete ENFORCEMENT_STAGES and
   # enforcement_start_date, have callers use ENFORCEMENT_START_DATE directly, and
   # remove the Flipper flags. To add a stage, add a row (keep earliest first).
   ENFORCEMENT_STAGES = [
-    [:card_locking_enabled_on_08_11_2026, Date.new(2026, 8, 11)],
-    [:card_locking_enabled_on_07_28_2026, Date.new(2026, 7, 28)],
+    [:card_locking_enabled_on_08_11_2026, ENFORCEMENT_START_DATE],
+    [:card_locking_enabled_on_07_28_2026, ENFORCEMENT_START_DATE],
+    [:card_locking_enabled_on_07_17_2026, ENFORCEMENT_START_DATE],
   ].freeze
 
   # The date on or after which this cardholder's charges can lock their cards, or

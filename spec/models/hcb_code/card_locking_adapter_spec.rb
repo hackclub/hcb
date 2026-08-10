@@ -52,7 +52,7 @@ RSpec.describe HcbCode do
     end
 
     it "sets no deadline for a cardholder in no rollout stage" do
-      Flipper.disable(:card_locking_enabled_on_08_11_2026, user)
+      CardLocking::ENFORCEMENT_STAGES.map(&:first).each { |flag| Flipper.disable(flag, user) }
       hcb_code = create_settled_card_charge(user:, settled_at: 1.day.ago)
 
       hcb_code.materialize_card_locking!(now:, trusted: false)
