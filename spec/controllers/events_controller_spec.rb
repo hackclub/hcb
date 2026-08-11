@@ -328,6 +328,99 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#team" do
+    render_views
+
+    let(:parent) { create(:event, name: "Parent Organization") }
+    let(:event) { create(:event, parent:, name: "Sub Organization") }
+
+    before { sign_in_organizer_of(event) }
+
+    # The callout's list, as { user's displayed name => the role it credits them with }.
+    def indirect_access
+      get(:team, params: { event_id: event.slug })
+
+      Nokogiri::HTML5(response.body).css("#parent_organization_access .grid > span").to_h do |row|
+        [row.at_css(".mention").text.squish, row.text.include?("can manage") ? "manager" : "reader"]
+      end
+    end
+
+    it "collapses the parent organization callout by default", :aggregate_failures do
+      get(:team, params: { event_id: event.slug })
+
+      callout = Nokogiri::HTML5(response.body).at_css("details#parent_organization_access")
+      expect(callout.text).to include("The team behind Parent Organization also has access to Sub Organization")
+      expect(callout.attributes).not_to have_key("open")
+    end
+
+    it "grants a reader on the parent read access here" do
+      reader = create(:user)
+      create(:organizer_position, user: reader, event: parent, role: :reader)
+
+      expect(indirect_access).to eq({ reader.initial_name => "reader" })
+    end
+
+    # A member of the parent only inherits read access here, so their own
+    # member position is the higher of the two and already appears in the
+    # team list.
+    it "grants a member on the parent only read access here" do
+      member = create(:user)
+      create(:organizer_position, user: member, event: parent, role: :member)
+
+      expect(indirect_access).to eq({ member.initial_name => "reader" })
+    end
+
+    it "grants a manager on the parent full management here" do
+      manager = create(:user)
+      create(:organizer_position, user: manager, event: parent, role: :manager)
+
+      expect(indirect_access).to eq({ manager.initial_name => "manager" })
+    end
+
+    it "takes the highest role when the user holds positions on several ancestors" do
+      grandparent = create(:event)
+      parent.update!(parent: grandparent)
+      user = create(:user)
+      create(:organizer_position, user:, event: parent, role: :reader)
+      create(:organizer_position, user:, event: grandparent, role: :manager)
+
+      expect(indirect_access).to eq({ user.initial_name => "manager" })
+    end
+
+    it "omits a user whose position here already matches what they inherit" do
+      user = create(:user)
+      create(:organizer_position, user:, event: parent, role: :reader)
+      create(:organizer_position, user:, event:, role: :reader)
+
+      expect(indirect_access).to eq({})
+    end
+
+    it "omits a user whose position here outranks what they inherit" do
+      user = create(:user)
+      create(:organizer_position, user:, event: parent, role: :member)
+      create(:organizer_position, user:, event:, role: :member)
+
+      expect(indirect_access).to eq({})
+    end
+
+    it "keeps a user whose inherited role outranks their position here" do
+      user = create(:user)
+      create(:organizer_position, user:, event: parent, role: :manager)
+      create(:organizer_position, user:, event:, role: :member)
+
+      expect(indirect_access).to eq({ user.initial_name => "manager" })
+    end
+
+    it "lists managers before readers" do
+      reader = create(:user, full_name: "Aaron Reader")
+      manager = create(:user, full_name: "Zoe Manager")
+      create(:organizer_position, user: reader, event: parent, role: :reader)
+      create(:organizer_position, user: manager, event: parent, role: :manager)
+
+      expect(indirect_access.keys).to eq([manager.initial_name, reader.initial_name])
+    end
+  end
+
   describe "#async_sub_organization_balance" do
     render_views
 
