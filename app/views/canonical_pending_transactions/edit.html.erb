@@ -1,10 +1,10 @@
-<% title "Rename transaction for #{@canonical_pending_transaction.amount}" %>
+<% title "Edit transaction for #{@canonical_pending_transaction.amount}" %>
 <% page_sm %>
 
 <%= render "events/nav" if @event %>
 
 <h1 class="h1">
-  Rename <%= render_money @canonical_pending_transaction.amount_cents %> <%= @canonical_pending_transaction.fee_payment? ? "fee payment" : "transaction" %>
+  Edit <%= render_money @canonical_pending_transaction.amount_cents %> <%= @canonical_pending_transaction.fee_payment? ? "fee payment" : "transaction" %>
 </h1>
 
 <% admin_tool("mb1") do %>
@@ -31,6 +31,6 @@
   <% end %>
 
   <div class="actions">
-    <%= form.submit "Rename", disabled: !current_user %>
+    <%= form.submit "Save", disabled: !current_user %>
   </div>
 <% end %>
