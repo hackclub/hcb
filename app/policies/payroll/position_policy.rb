@@ -30,6 +30,8 @@ module Payroll
       edit?
     end
 
+    alias_method :terminate?, :create?
+
     # Signing its contract during the invite flow requires the same
     # permission as creating a contractor.
     alias_method :contract?, :create?

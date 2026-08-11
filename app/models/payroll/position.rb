@@ -131,8 +131,10 @@ module Payroll
         :active
       when :under_review, :onboarding
         :onboarding
-      when :expired, :terminated, :rejected
+      when :expired
         :completed
+      else
+        aasm_state.to_sym
       end
     end
 
