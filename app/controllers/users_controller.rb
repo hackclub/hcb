@@ -566,6 +566,10 @@ class UsersController < ApplicationController
       }
     end
 
+    if admin_signed_in?
+      attributes << :phone_number_verification_bypassed
+    end
+
     if superadmin_signed_in?
       attributes << :access_level
     end

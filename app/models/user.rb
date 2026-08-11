@@ -396,6 +396,14 @@ class User < ApplicationRecord
     !seasonal_themes_enabled?
   end
 
+  # Whether this user is allowed to issue Stripe Cards and activate card grants.
+  # Admins can grant `phone_number_verification_bypassed` to unblock a user who
+  # can't complete SMS verification; it deliberately leaves the number itself
+  # unverified.
+  def phone_number_verified_or_bypassed?
+    phone_number_verified? || phone_number_verification_bypassed?
+  end
+
   def locked?
     locked_at.present?
   end

@@ -10,8 +10,7 @@ module StripeCardholderService
 
     def run
       raise ArgumentError, "not permitted under spend only plan" if event.unapproved?
-
-      # raise ArgumentError, "phone number must be verified before creating a cardholder" unless @current_user.phone_number_verified?
+      raise ArgumentError, "phone number must be verified before creating a cardholder" unless @current_user.phone_number_verified_or_bypassed?
 
       ActiveRecord::Base.transaction do
         stripe_cardholder = ::StripeCardholder.create!(attrs)
@@ -62,8 +61,10 @@ module StripeCardholderService
       @current_user.email
     end
 
+    # Mirrors `User#update_stripe_cardholder`: only verified numbers are synced
+    # to Stripe, so a user with a bypass gets a cardholder without a phone.
     def phone_number
-      @current_user.phone_number
+      @current_user.phone_number if @current_user.phone_number_verified?
     end
 
     def name
