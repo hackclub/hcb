@@ -99,15 +99,11 @@ module CardLocking
     end
 
     # All outstanding (unresolved) charges this cardholder can actually be locked
-    # for. This is what the pre-lock warning counts and lists, so it is bounded by
-    # the cardholder's OWN stage date, not by the global floor inside
-    # card_locking_candidates: a cardholder enrolled in a later stage still has
-    # candidates from before it, and those can never lock them. Counting those
-    # would tell a cardholder that receipts they do not owe will lock their cards.
-    #
-    # The bound mirrors materialize_card_locking!'s own predicate rather than
-    # testing receipt_due_at, so the pile does not depend on the materialize job
-    # having drained the queue yet.
+    # for, which is what the pre-lock warning counts and lists. Bounded by their
+    # OWN stage date, not the global floor inside card_locking_candidates: a
+    # cardholder enrolled in a later stage still has candidates from before it that
+    # can never lock them. Mirrors materialize_card_locking!'s predicate rather
+    # than testing receipt_due_at, so the pile does not wait on that job's queue.
     def card_locking_outstanding_charges
       return HcbCode.none unless stripe_cardholder
 

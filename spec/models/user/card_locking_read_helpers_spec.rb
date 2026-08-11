@@ -90,9 +90,8 @@ RSpec.describe User do
       expect(user.card_locking_outstanding_count).to eq(0)
     end
 
-    # The pile drives the pre-lock warning's count and its list of transactions.
-    # A charge that settled before this cardholder's stage can never lock them, so
-    # counting it would warn them about receipts they do not owe.
+    # The pile drives the pre-lock warning's count and transaction list, so a
+    # charge that can never lock this cardholder must not appear in it.
     it "excludes a charge that settled before this cardholder's rollout stage" do
       create_settled_card_charge(user:, settled_at: Time.zone.parse("2026-07-20 12:00:00"))
 

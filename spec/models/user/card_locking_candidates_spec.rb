@@ -30,14 +30,16 @@ RSpec.describe User, ".card_locking_candidates", type: :model do
     expect(candidate_ids).not_to include(user.id)
   end
 
-  it "includes a user whose outstanding charge settled on the enforcement floor" do
-    create_settled_card_charge(user:, settled_at: CardLocking::ENFORCEMENT_START_DATE.beginning_of_day)
+  # Absolute dates: deriving the settle time from ENFORCEMENT_START_DATE would
+  # assert X >= X and float with the constant, catching no floor move.
+  it "includes a user whose outstanding charge settled on 2026-07-17, the first enforced day" do
+    create_settled_card_charge(user:, settled_at: Time.zone.parse("2026-07-17 00:00:00"))
 
     expect(candidate_ids).to include(user.id)
   end
 
-  it "excludes an unlocked user whose only outstanding charge settled before the enforcement floor" do
-    create_settled_card_charge(user:, settled_at: CardLocking::ENFORCEMENT_START_DATE.beginning_of_day - 1.second)
+  it "excludes an unlocked user whose only outstanding charge settled on 2026-07-16" do
+    create_settled_card_charge(user:, settled_at: Time.zone.parse("2026-07-16 23:59:59"))
 
     expect(candidate_ids).not_to include(user.id)
   end

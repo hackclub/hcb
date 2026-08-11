@@ -4,10 +4,12 @@ RSpec.shared_context "card locking charges" do
   let(:user) { create(:user) }
   let(:event) { create(:event, plan_type: Event::Plan::Standard) }
 
-  # Enroll the cardholder in the general rollout stage (enforcement start
-  # 2026-08-11) so materialize sets deadlines. Specs exercising pre-enforcement
-  # settle charges before that date; specs exercising a non-enrolled cardholder
-  # disable every CardLocking::ENFORCEMENT_STAGES flag.
+  # Enroll in the general rollout stage so materialize sets deadlines. Two dates
+  # are in play: this cardholder's stage date (2026-08-11, gating whether a charge
+  # gets a deadline) and the global floor (2026-07-17, gating candidate discovery).
+  # Specs exercising a non-enrolled cardholder disable every ENFORCEMENT_STAGES
+  # flag. The master flag (:card_locking_2025_06_09) is NOT enabled here; specs
+  # driving UserService::UpdateCardLocking must enable it or it returns early.
   before { Flipper.enable(:card_locking_enabled_on_08_11_2026, user) }
 
   # Attach at the correct time so the resolution callback (added later) freezes

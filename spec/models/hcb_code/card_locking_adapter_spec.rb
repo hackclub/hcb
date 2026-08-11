@@ -61,9 +61,8 @@ RSpec.describe HcbCode do
       expect(hcb_code.receipt_due_at).to be_nil
     end
 
-    # A cardholder enforced since 07_17 holds the 08_11 flag too once the general
-    # stage is switched on for everyone. Their July charges must keep their
-    # deadlines: earliest-wins resolves them to 07_17, not to the newer stage.
+    # Earliest-wins: a cardholder enforced since 07_17 who gains the 08_11 flag
+    # keeps their July deadlines rather than resolving to the newer stage.
     it "keeps a July deadline for a cardholder who holds both the 07_17 and 08_11 stage flags" do
       Flipper.enable(:card_locking_enabled_on_07_17_2026, user)
       settled_at = Time.zone.parse("2026-07-20 12:00:00")
@@ -76,6 +75,44 @@ RSpec.describe HcbCode do
 
     it "sets no deadline on a July charge for a cardholder only in the 08_11 stage" do
       hcb_code = create_settled_card_charge(user:, settled_at: Time.zone.parse("2026-07-20 12:00:00"))
+
+      hcb_code.materialize_card_locking!(now:, trusted: false)
+
+      expect(hcb_code.receipt_due_at).to be_nil
+    end
+
+    # Inclusive from the stage date's first instant. Absolute times, so these pin
+    # the comparison rather than floating with the stage date.
+    it "sets a deadline on a charge that settled at the first instant of the 08_11 stage" do
+      settled_at = Time.zone.parse("2026-08-11 00:00:00")
+      hcb_code = create_settled_card_charge(user:, settled_at:)
+
+      hcb_code.materialize_card_locking!(now:, trusted: false)
+
+      expect(hcb_code.receipt_due_at).to be_within(1.second).of(settled_at + 7.days)
+    end
+
+    it "sets no deadline on a charge that settled the instant before the 08_11 stage" do
+      hcb_code = create_settled_card_charge(user:, settled_at: Time.zone.parse("2026-08-10 23:59:59"))
+
+      hcb_code.materialize_card_locking!(now:, trusted: false)
+
+      expect(hcb_code.receipt_due_at).to be_nil
+    end
+
+    it "sets a deadline on a charge that settled at the first instant of the 07_17 stage" do
+      Flipper.enable(:card_locking_enabled_on_07_17_2026, user)
+      settled_at = Time.zone.parse("2026-07-17 00:00:00")
+      hcb_code = create_settled_card_charge(user:, settled_at:)
+
+      hcb_code.materialize_card_locking!(now:, trusted: false)
+
+      expect(hcb_code.receipt_due_at).to be_within(1.second).of(settled_at + 7.days)
+    end
+
+    it "sets no deadline on a charge that settled the instant before the 07_17 stage" do
+      Flipper.enable(:card_locking_enabled_on_07_17_2026, user)
+      hcb_code = create_settled_card_charge(user:, settled_at: Time.zone.parse("2026-07-16 23:59:59"))
 
       hcb_code.materialize_card_locking!(now:, trusted: false)
 

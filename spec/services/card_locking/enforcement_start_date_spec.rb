@@ -25,9 +25,8 @@ RSpec.describe "CardLocking.enforcement_start_date" do
     expect(CardLocking.enforcement_start_date(user)).to eq(Date.new(2026, 8, 11))
   end
 
-  # Switching a later stage on for everyone hands its flag to cardholders who are
-  # already enforced under an earlier one. They must keep the earlier date, or
-  # their existing deadlines and locks silently reset.
+  # Switching a later stage on for everyone hands its flag to already-enforced
+  # cardholders; keeping the earlier date is what stops their locks resetting.
   it "keeps the earlier date for a cardholder who gains a later stage's flag" do
     Flipper.enable(:card_locking_enabled_on_07_17_2026, user)
     Flipper.enable(:card_locking_enabled_on_08_11_2026, user)
@@ -35,10 +34,10 @@ RSpec.describe "CardLocking.enforcement_start_date" do
     expect(CardLocking.enforcement_start_date(user)).to eq(Date.new(2026, 7, 17))
   end
 
-  # The global floor bounds candidate discovery for every cardholder at once.
-  # Moving it forward drops already-enforced charges out of card_locking_candidates,
-  # so it stays pinned to the first stage HCB ever enforced.
-  it "floors enforcement at 2026-07-17 for every cardholder" do
+  # A literal, not ENFORCEMENT_STAGES.values.min, which is what the constant is
+  # derived from and would assert nothing. Catches a repointed or deleted earliest
+  # stage; the consequence is covered in spec/integration/card_locking_rollout_day_spec.rb.
+  it "pins the global enforcement floor to 2026-07-17" do
     expect(CardLocking::ENFORCEMENT_START_DATE).to eq(Date.new(2026, 7, 17))
   end
 end

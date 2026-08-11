@@ -25,42 +25,27 @@ module CardLocking
 
   # Staged rollout of enforcement. A cardholder's charges become lockable on the
   # earliest stage date they hold a flag for; a cardholder in no stage is never
-  # enforced (their charges never get a deadline, so their cards never lock).
+  # enforced. Earliest-wins is what leaves an already-enforced cardholder untouched
+  # when a later stage is switched on for everyone.
   #
-  # Earliest-wins is what leaves an already-enforced cardholder untouched when a
-  # later stage is switched on for everyone: they end up holding both flags and
-  # keep their original date, so their existing deadlines and locks do not move.
+  # Adding a stage is just a new entry. Repointing one later, disabling one on an
+  # enforced cardholder, or deleting the earliest entry all push that cardholder's
+  # date forward, and the next sweep then wipes their deadlines, unlocks their
+  # cards, and mails them that their cards work again.
   #
-  # For the same reason, never repoint an existing stage at a later date, and never
-  # disable a stage flag on a cardholder who is already enforced under it. Either
-  # one moves them to a later date (or to nil), which makes the next sweep rewrite
-  # their deadlines to nil, empty their overdue set, unlock their cards, and mail
-  # and text them that their cards work again.
-  #
-  # Adding a stage is just a new entry; order does not matter. NEVER delete the
-  # earliest entry while stages exist: ENFORCEMENT_START_DATE is derived from it,
-  # so removing it advances the global floor and retroactively un-enforces every
-  # charge between the old and new earliest dates.
-  #
-  # RIP-OUT: when the rollout is done, first re-pin ENFORCEMENT_START_DATE to the
-  # literal Date.new(2026, 7, 17) so it no longer reads this hash, then delete
-  # ENFORCEMENT_STAGES and enforcement_start_date, have callers use
+  # RIP-OUT: re-pin ENFORCEMENT_START_DATE to the literal Date.new(2026, 7, 17)
+  # first, then delete this hash and enforcement_start_date, have callers use
   # ENFORCEMENT_START_DATE directly, and remove the Flipper flags.
   ENFORCEMENT_STAGES = {
     card_locking_enabled_on_07_17_2026: Date.new(2026, 7, 17),
     card_locking_enabled_on_08_11_2026: Date.new(2026, 8, 11),
   }.freeze
 
-  # Charges that settled before this date can never lock a card, whatever stage a
-  # cardholder is in. Bounds candidate discovery and the outstanding pile, and is
-  # the single enforcement date the feature collapses to once the staged rollout
-  # above finishes (see enforcement_start_date).
-  #
-  # It is a floor across *all* stages, so it is derived from the earliest stage
-  # rather than written by hand: a later stage can never push it forward. Pushing
-  # it forward would drop every earlier-stage charge out of card_locking_candidates,
-  # unlocking cardholders who are already being enforced and emptying their
-  # outstanding pile. Currently 2026-07-17.
+  # Charges settled before this can never lock a card, whatever stage a cardholder
+  # is in; it bounds candidate discovery and the outstanding pile. Derived from the
+  # earliest stage so a later one can never push it forward, which would drop
+  # earlier-stage charges out of card_locking_candidates and unlock cardholders
+  # already being enforced.
   ENFORCEMENT_START_DATE = ENFORCEMENT_STAGES.values.min
 
   # The date on or after which this cardholder's charges can lock their cards, or
