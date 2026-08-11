@@ -405,6 +405,8 @@ class Ledger
     end
 
     def calculate_system_memo
+      return special_appearance.memo if special_appearance&.memo
+
       case linked_object_type
       when "Invoice"
         "Invoice to #{linked_object.smart_memo}"
