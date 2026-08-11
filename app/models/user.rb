@@ -401,7 +401,9 @@ class User < ApplicationRecord
   end
 
   def locked_by
-    User.find_by(id: self.versions.where_object_changes_from(locked_at: nil).last.whodunnit)
+    # find(nil) returns ActiveRecord::RecordNotFound
+    # find_by(id: nil) returns nil
+    User.find_by(id: self.versions.where_object_changes_from(locked_at: nil).last&.whodunnit)
   end
 
   def lock!
