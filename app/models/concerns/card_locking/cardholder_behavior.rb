@@ -98,12 +98,25 @@ module CardLocking
              .distinct
     end
 
-    # All outstanding (unresolved, enforcement-era) charges for this cardholder.
+    # All outstanding (unresolved) charges this cardholder can actually be locked
+    # for. This is what the pre-lock warning counts and lists, so it is bounded by
+    # the cardholder's OWN stage date, not by the global floor inside
+    # card_locking_candidates: a cardholder enrolled in a later stage still has
+    # candidates from before it, and those can never lock them. Counting those
+    # would tell a cardholder that receipts they do not owe will lock their cards.
+    #
+    # The bound mirrors materialize_card_locking!'s own predicate rather than
+    # testing receipt_due_at, so the pile does not depend on the materialize job
+    # having drained the queue yet.
     def card_locking_outstanding_charges
       return HcbCode.none unless stripe_cardholder
 
+      enforcement_start_date = CardLocking.enforcement_start_date(self)
+      return HcbCode.none unless enforcement_start_date
+
       HcbCode.card_locking_candidates
              .where(stripe_cardholders: { user_id: id })
+             .where("canonical_transactions.created_at >= ?", enforcement_start_date.beginning_of_day)
              .distinct
     end
 

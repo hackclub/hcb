@@ -89,5 +89,28 @@ RSpec.describe User do
       expect(user.card_locking_outstanding_charges.count).to eq(0)
       expect(user.card_locking_outstanding_count).to eq(0)
     end
+
+    # The pile drives the pre-lock warning's count and its list of transactions.
+    # A charge that settled before this cardholder's stage can never lock them, so
+    # counting it would warn them about receipts they do not owe.
+    it "excludes a charge that settled before this cardholder's rollout stage" do
+      create_settled_card_charge(user:, settled_at: Time.zone.parse("2026-07-20 12:00:00"))
+
+      expect(user.card_locking_outstanding_count).to eq(0)
+    end
+
+    it "includes that same charge for a cardholder whose stage began before it" do
+      Flipper.enable(:card_locking_enabled_on_07_17_2026, user)
+      create_settled_card_charge(user:, settled_at: Time.zone.parse("2026-07-20 12:00:00"))
+
+      expect(user.card_locking_outstanding_count).to eq(1)
+    end
+
+    it "is empty for a cardholder in no rollout stage" do
+      CardLocking::ENFORCEMENT_STAGES.each_key { |flag| Flipper.disable(flag, user) }
+      create_settled_card_charge(user:, settled_at: 1.hour.ago)
+
+      expect(user.card_locking_outstanding_count).to eq(0)
+    end
   end
 end

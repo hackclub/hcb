@@ -30,11 +30,22 @@ module CardLocking
   # Earliest-wins is what leaves an already-enforced cardholder untouched when a
   # later stage is switched on for everyone: they end up holding both flags and
   # keep their original date, so their existing deadlines and locks do not move.
-  # Never repoint an existing stage at a later date for the same reason.
   #
-  # RIP-OUT: when the rollout is done, delete ENFORCEMENT_STAGES and
-  # enforcement_start_date, have callers use ENFORCEMENT_START_DATE directly, and
-  # remove the Flipper flags. To add a stage, add an entry (order does not matter).
+  # For the same reason, never repoint an existing stage at a later date, and never
+  # disable a stage flag on a cardholder who is already enforced under it. Either
+  # one moves them to a later date (or to nil), which makes the next sweep rewrite
+  # their deadlines to nil, empty their overdue set, unlock their cards, and mail
+  # and text them that their cards work again.
+  #
+  # Adding a stage is just a new entry; order does not matter. NEVER delete the
+  # earliest entry while stages exist: ENFORCEMENT_START_DATE is derived from it,
+  # so removing it advances the global floor and retroactively un-enforces every
+  # charge between the old and new earliest dates.
+  #
+  # RIP-OUT: when the rollout is done, first re-pin ENFORCEMENT_START_DATE to the
+  # literal Date.new(2026, 7, 17) so it no longer reads this hash, then delete
+  # ENFORCEMENT_STAGES and enforcement_start_date, have callers use
+  # ENFORCEMENT_START_DATE directly, and remove the Flipper flags.
   ENFORCEMENT_STAGES = {
     card_locking_enabled_on_07_17_2026: Date.new(2026, 7, 17),
     card_locking_enabled_on_08_11_2026: Date.new(2026, 8, 11),
