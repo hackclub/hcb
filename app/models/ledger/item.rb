@@ -203,6 +203,8 @@ class Ledger
     end
 
     def humanized_type
+      return "Card grant" if special_appearance == "card_grant"
+
       case linked_object_type
       when "Invoice"
         "Invoice"
