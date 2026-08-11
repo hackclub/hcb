@@ -9,10 +9,6 @@ class CanonicalTransactionPolicy < ApplicationPolicy
     admin_or_teammember
   end
 
-  def set_custom_memo?
-    admin_or_teammember
-  end
-
   def set_category?
     user&.admin?
   end

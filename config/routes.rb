@@ -592,7 +592,6 @@ Rails.application.routes.draw do
       post "waive_fee"
       post "unwaive_fee"
       post "mark_bank_fee"
-      post "set_custom_memo"
       post "set_category"
     end
   end

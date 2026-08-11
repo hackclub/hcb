@@ -20,14 +20,6 @@ class CanonicalTransactionsController < ApplicationController
     @event = @canonical_transaction.event
   end
 
-  def set_custom_memo
-    @canonical_transaction = CanonicalTransaction.find(params[:id])
-
-    authorize @canonical_transaction
-
-    redirect_to url_from(params[:redirect_to]) || @canonical_transaction.local_hcb_code
-  end
-
   def set_category
     @canonical_transaction = CanonicalTransaction.find(params[:id])
 
