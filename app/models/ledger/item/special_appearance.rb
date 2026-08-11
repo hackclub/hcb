@@ -36,10 +36,16 @@ class Ledger
         key
       end
 
-      def self.fund_qualifier(event_ids)
+      def self.fund_qualifier(event_ids, since = nil)
         return nil if event_ids.empty?
 
-        ->(linked_object) { linked_object.is_a?(Disbursement::Shared) && linked_object.source_event_id.in?(event_ids) }
+        lambda do |linked_object|
+          next false unless linked_object.is_a?(Disbursement::Shared)
+          next false unless linked_object.source_event_id.in?(event_ids)
+          next false if since && linked_object.created_at <= since
+
+          true
+        end
       end
 
       ALL = [
@@ -65,7 +71,7 @@ class Ledger
           memo: "🤖 Argosy Foundation Rookie / Hardship Grant",
           css_class: "transaction--fancy",
           icon: "sam",
-          qualifier: fund_qualifier([EventMappingEngine::EventIds::ARGOSY_GRANT_FUND, EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025])
+          qualifier: fund_qualifier([EventMappingEngine::EventIds::ARGOSY_GRANT_FUND, EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025], Date.new(2024, 9, 1))
         ),
         new(
           key: :first_transparency_grant,

@@ -44,6 +44,14 @@ RSpec.describe Ledger::Item::SpecialAppearance do
       expect(described_class.find_by_linked_object(nil)).to be_nil
     end
 
+    it "honors an appearance's cutoff date" do
+      before_cutoff = Disbursement.new(source_event_id: ids::ARGOSY_GRANT_FUND, created_at: Time.zone.local(2024, 8, 31))
+      after_cutoff = Disbursement.new(source_event_id: ids::ARGOSY_GRANT_FUND, created_at: Time.zone.local(2024, 9, 2))
+
+      expect(described_class.find_by_linked_object(before_cutoff)).to be_nil
+      expect(described_class.find_by_linked_object(after_cutoff).key).to eq("argosy_grant_2024")
+    end
+
     it "matches every fund an appearance names" do
       disbursement = Disbursement.new(source_event_id: ids::ARGOSY_GRANT_FUND_2025, created_at: Time.zone.local(2025, 3, 1))
 
