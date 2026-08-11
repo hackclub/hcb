@@ -4,7 +4,7 @@ RSpec.shared_context "card locking charges" do
   let(:user) { create(:user) }
   let(:event) { create(:event, plan_type: Event::Plan::Standard) }
 
-  # Enroll the cardholder in the current rollout stage (enforcement start
+  # Enroll the cardholder in the general rollout stage (enforcement start
   # 2026-08-11) so materialize sets deadlines. Specs exercising pre-enforcement
   # settle charges before that date; specs exercising a non-enrolled cardholder
   # disable every CardLocking::ENFORCEMENT_STAGES flag.

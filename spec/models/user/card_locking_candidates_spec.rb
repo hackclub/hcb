@@ -30,6 +30,18 @@ RSpec.describe User, ".card_locking_candidates", type: :model do
     expect(candidate_ids).not_to include(user.id)
   end
 
+  it "includes a user whose outstanding charge settled on the enforcement floor" do
+    create_settled_card_charge(user:, settled_at: CardLocking::ENFORCEMENT_START_DATE.beginning_of_day)
+
+    expect(candidate_ids).to include(user.id)
+  end
+
+  it "excludes an unlocked user whose only outstanding charge settled before the enforcement floor" do
+    create_settled_card_charge(user:, settled_at: CardLocking::ENFORCEMENT_START_DATE.beginning_of_day - 1.second)
+
+    expect(candidate_ids).not_to include(user.id)
+  end
+
   it "excludes a user whose only outstanding charge is on a SalaryAccount-plan event" do
     create_settled_card_charge(user:, settled_at: 4.days.ago, charge_event: create(:event, plan_type: Event::Plan::SalaryAccount))
 

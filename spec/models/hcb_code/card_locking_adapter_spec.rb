@@ -52,12 +52,33 @@ RSpec.describe HcbCode do
     end
 
     it "sets no deadline for a cardholder in no rollout stage" do
-      CardLocking::ENFORCEMENT_STAGES.map(&:first).each { |flag| Flipper.disable(flag, user) }
+      CardLocking::ENFORCEMENT_STAGES.each_key { |flag| Flipper.disable(flag, user) }
       hcb_code = create_settled_card_charge(user:, settled_at: 1.day.ago)
 
       hcb_code.materialize_card_locking!(now:, trusted: false)
 
       expect(hcb_code.card_charge_settled_at).to be_within(1.second).of(1.day.ago)
+      expect(hcb_code.receipt_due_at).to be_nil
+    end
+
+    # A cardholder enforced since 07_17 holds the 08_11 flag too once the general
+    # stage is switched on for everyone. Their July charges must keep their
+    # deadlines: earliest-wins resolves them to 07_17, not to the newer stage.
+    it "keeps a July deadline for a cardholder who holds both the 07_17 and 08_11 stage flags" do
+      Flipper.enable(:card_locking_enabled_on_07_17_2026, user)
+      settled_at = Time.zone.parse("2026-07-20 12:00:00")
+      hcb_code = create_settled_card_charge(user:, settled_at:)
+
+      hcb_code.materialize_card_locking!(now:, trusted: false)
+
+      expect(hcb_code.receipt_due_at).to be_within(1.second).of(settled_at + 7.days)
+    end
+
+    it "sets no deadline on a July charge for a cardholder only in the 08_11 stage" do
+      hcb_code = create_settled_card_charge(user:, settled_at: Time.zone.parse("2026-07-20 12:00:00"))
+
+      hcb_code.materialize_card_locking!(now:, trusted: false)
+
       expect(hcb_code.receipt_due_at).to be_nil
     end
 
