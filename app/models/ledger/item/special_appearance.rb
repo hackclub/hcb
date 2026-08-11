@@ -2,21 +2,11 @@
 
 class Ledger
   class Item
-    # A cosmetic treatment for a ledger item — a nicer memo, icon, row styling,
-    # and title for items belonging to a specific grant program.
+    # This registry is APPEND-ONLY: a key that has ever been written to the
+    # column must stay here, or historical items lose their appearance.
     #
-    # An item's appearance is decided once, from its linked object, and persisted
-    # to `ledger_items.special_appearance` as the appearance's key. Everything
-    # that *reads* an appearance reads that column; the qualifiers below only run
-    # when assigning one, so they never cost anything on a page render.
-    #
-    # This registry is APPEND-ONLY: a key that has ever been written to the column
-    # must stay here, or historical items lose their appearance. To stop applying
-    # one to new items, drop its `qualifier` rather than deleting the entry.
-    #
-    # Every attribute but the key is optional, and each one an appearance leaves
-    # out falls back to how the item would have looked anyway — so an appearance
-    # can override just the icon, or just the memo.
+    # Every attribute but the key is optional, and each one an appearance
+    # leaves out falls back to how the item would have looked anyway.
     #
     # The legacy transaction views read their own copy of the grant definitions
     # from Disbursement::SPECIAL_APPEARANCES; that hash goes away with them.
@@ -34,27 +24,18 @@ class Ledger
         freeze
       end
 
-      # An appearance without a qualifier is retired: still rendered for items
-      # already carrying it, never assigned to a new one.
       def applies_to?(object)
         qualifier.present? && qualifier.call(object)
       end
 
       # Anything serializing the attribute wants the key, not the object's
-      # innards — most importantly paper_trail, which would otherwise write the
+      # attributes — most importantly paper_trail, which would otherwise write the
       # whole appearance (and an empty hash for its lambda) into every version's
       # object_changes.
       def as_json(*)
         key
       end
 
-      # Most appearances mark transfers out of a particular fund, so they pass
-      # `funds` (and optionally `since`) instead of writing their own qualifier.
-      #
-      # The type guard is on Disbursement::Shared, not Disbursement: a ledger item's
-      # linked object is always a Disbursement::Incoming/Outgoing lens, and those
-      # descend from Disbursement::Base rather than Disbursement. Shared is the one
-      # thing all three have in common.
       def self.fund_qualifier(event_ids, since = nil)
         return nil if event_ids.empty?
 
