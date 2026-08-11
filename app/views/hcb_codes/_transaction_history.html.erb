@@ -1,7 +1,7 @@
 <h2 class="mt-0">Transaction history</h2>
 
 <% if @hcb_code.canonical_transactions.exists? %>
-  <article class="table-container">
+  <article class="table-container mb-2">
     <table>
       <thead>
         <tr>
@@ -28,5 +28,5 @@
     </table>
   </article>
 <% else %>
-  <%= blankslate "No settled transactions yet" %>
+  <%= blankslate "No settled transactions yet", class: "mb-2" %>
 <% end %>
