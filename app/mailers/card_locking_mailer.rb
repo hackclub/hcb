@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class CardLockingMailer < ApplicationMailer
+  helper :hcb_code # for attach_receipt_url, so recipients can upload receipts without signing in
+
   def cards_locked(user:)
     @user = user
     @hcb_codes = user.card_locking_overdue_charges.to_a
