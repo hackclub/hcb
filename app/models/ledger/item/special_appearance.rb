@@ -93,7 +93,11 @@ class Ledger
         new(
           key: :card_grant,
           icon: "bag",
-          qualifier: ->(linked_object) { linked_object.is_a?(Disbursement::Shared) && linked_object.card_grant.present? }
+          qualifier: lambda { |linked_object|
+            next false unless linked_object.is_a?(Disbursement::Shared)
+
+            linked_object.source_subledger&.card_grant.present? || linked_object.destination_subledger&.card_grant.present?
+          }
         )
       ].freeze
 

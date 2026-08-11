@@ -72,6 +72,22 @@ RSpec.describe Ledger::Item::SpecialAppearance do
       expect(described_class.find_by_linked_object(disbursement.outgoing_disbursement).key).to eq("card_grant")
     end
 
+    it "matches a topup or withdrawal, not just the disbursement that created the grant" do
+      # Topups/withdrawals are separate disbursements tied to the grant's subledger,
+      # not to card_grants.disbursement_id, so they don't show up via `#card_grant`.
+      card_grant = create(:card_grant, sent_by: create(:user, :make_admin))
+
+      card_grant.topup!(amount_cents: 500)
+      topup = card_grant.topup_disbursements.last
+      expect(described_class.find_by_linked_object(topup.incoming_disbursement).key).to eq("card_grant")
+      expect(described_class.find_by_linked_object(topup.outgoing_disbursement).key).to eq("card_grant")
+
+      card_grant.withdraw!(amount_cents: 500)
+      withdrawal = card_grant.withdrawal_disbursements.last
+      expect(described_class.find_by_linked_object(withdrawal.incoming_disbursement).key).to eq("card_grant")
+      expect(described_class.find_by_linked_object(withdrawal.outgoing_disbursement).key).to eq("card_grant")
+    end
+
     it "does not match a transfer with no card grant" do
       expect(described_class.find_by_linked_object(create(:disbursement).incoming_disbursement)).to be_nil
     end
