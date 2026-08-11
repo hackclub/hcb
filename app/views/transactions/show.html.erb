@@ -150,7 +150,6 @@
         <%= link_to "[unwaive fee]", unwaive_fee_canonical_transaction_url(@transaction), method: :post if @transaction.fee&.revenue_waived? %>
       <% end %>
     <% end %>
-
   </section>
 
   <% if @transaction&.disbursement %>
@@ -163,7 +162,6 @@
       </p>
     <% end %>
   <% end %>
-
 </article>
 
 <% if @hcb_code %>
