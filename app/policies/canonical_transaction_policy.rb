@@ -5,10 +5,6 @@ class CanonicalTransactionPolicy < ApplicationPolicy
     auditor_or_teammember
   end
 
-  def edit?
-    admin_or_teammember
-  end
-
   def set_category?
     user&.admin?
   end

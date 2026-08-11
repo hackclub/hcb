@@ -49,11 +49,6 @@
     <span class="h2 regular">
       <%= @canonical_pending_transaction.amount %>
     </span>
-    <% admin_tool do %>
-      <%= pop_icon_to "edit",
-          edit_canonical_pending_transaction_path(@canonical_pending_transaction),
-          class: "tooltipped tooltipped--w", "aria-label": "Edit pending transaction" %>
-    <% end %>
   </h1>
 
   <div class="flex items-center mb2">

@@ -12,14 +12,6 @@ class CanonicalTransactionsController < ApplicationController
     redirect_to transaction_url(params[:id])
   end
 
-  def edit
-    @canonical_transaction = CanonicalTransaction.find(params[:id])
-
-    authorize @canonical_transaction
-
-    @event = @canonical_transaction.event
-  end
-
   def set_category
     @canonical_transaction = CanonicalTransaction.find(params[:id])
 
