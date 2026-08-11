@@ -31,6 +31,10 @@ class Event
         "Used for living expense reimbursement. Has access to all standard features (except perks); and receipts are not required."
       end
 
+      def features
+        super + %w[unrestricted_disbursements]
+      end
+
       def omit_stats
         true
       end
