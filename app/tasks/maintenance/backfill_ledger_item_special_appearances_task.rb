@@ -30,7 +30,7 @@ module Maintenance
     end
 
     def process(item)
-      return unless Ledger::Item::SpecialAppearance.for(item.linked_object)
+      return unless Ledger::Item::SpecialAppearance.find_by_linked_object(item.linked_object)
 
       item.refresh!
     end

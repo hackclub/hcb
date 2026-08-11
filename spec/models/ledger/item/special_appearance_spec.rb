@@ -5,24 +5,24 @@ require "rails_helper"
 RSpec.describe Ledger::Item::SpecialAppearance do
   let(:ids) { EventMappingEngine::EventIds }
 
-  describe ".find" do
+  describe ".find_by_key" do
     it "resolves a key, as either a string or a symbol" do
-      expect(described_class.find("hackathon_grant").title).to eq("Hackathon grant")
-      expect(described_class.find(:hackathon_grant)).to be(described_class.find("hackathon_grant"))
+      expect(described_class.find_by_key("hackathon_grant").title).to eq("Hackathon grant")
+      expect(described_class.find_by_key(:hackathon_grant)).to be(described_class.find_by_key("hackathon_grant"))
     end
 
     it "resolves an unknown or blank key to nil rather than raising" do
-      expect(described_class.find("a_grant_that_never_existed")).to be_nil
-      expect(described_class.find(nil)).to be_nil
-      expect(described_class.find("")).to be_nil
+      expect(described_class.find_by_key("a_grant_that_never_existed")).to be_nil
+      expect(described_class.find_by_key(nil)).to be_nil
+      expect(described_class.find_by_key("")).to be_nil
     end
   end
 
-  describe ".for" do
+  describe ".find_by_linked_object" do
     it "matches a transfer out of the appearance's fund" do
       disbursement = Disbursement.new(source_event_id: ids::HACKATHON_GRANT_FUND, created_at: Time.current)
 
-      expect(described_class.for(disbursement).key).to eq("hackathon_grant")
+      expect(described_class.find_by_linked_object(disbursement).key).to eq("hackathon_grant")
     end
 
     # A ledger item's linked object is always one of the lenses, and they descend
@@ -31,31 +31,31 @@ RSpec.describe Ledger::Item::SpecialAppearance do
     it "matches through both the incoming and outgoing lens" do
       disbursement = Disbursement.new(source_event_id: ids::GENE_HAAS_GRANT_FUND, created_at: Time.current)
 
-      expect(described_class.for(disbursement.becomes(Disbursement::Incoming)).key).to eq("gene_haas_grant")
-      expect(described_class.for(disbursement.becomes(Disbursement::Outgoing)).key).to eq("gene_haas_grant")
+      expect(described_class.find_by_linked_object(disbursement.becomes(Disbursement::Incoming)).key).to eq("gene_haas_grant")
+      expect(described_class.find_by_linked_object(disbursement.becomes(Disbursement::Outgoing)).key).to eq("gene_haas_grant")
     end
 
     it "does not match a transfer out of an unrelated event" do
-      expect(described_class.for(Disbursement.new(source_event_id: 1, created_at: Time.current))).to be_nil
+      expect(described_class.find_by_linked_object(Disbursement.new(source_event_id: 1, created_at: Time.current))).to be_nil
     end
 
     it "does not match a non-disbursement, or nothing at all" do
-      expect(described_class.for(CardCharge.new)).to be_nil
-      expect(described_class.for(nil)).to be_nil
+      expect(described_class.find_by_linked_object(CardCharge.new)).to be_nil
+      expect(described_class.find_by_linked_object(nil)).to be_nil
     end
 
     it "honors an appearance's cutoff date" do
       before_cutoff = Disbursement.new(source_event_id: ids::ARGOSY_GRANT_FUND, created_at: Time.zone.local(2024, 8, 31))
       after_cutoff = Disbursement.new(source_event_id: ids::ARGOSY_GRANT_FUND, created_at: Time.zone.local(2024, 9, 2))
 
-      expect(described_class.for(before_cutoff)).to be_nil
-      expect(described_class.for(after_cutoff).key).to eq("argosy_grant_2024")
+      expect(described_class.find_by_linked_object(before_cutoff)).to be_nil
+      expect(described_class.find_by_linked_object(after_cutoff).key).to eq("argosy_grant_2024")
     end
 
     it "matches every fund an appearance names" do
       disbursement = Disbursement.new(source_event_id: ids::ARGOSY_GRANT_FUND_2025, created_at: Time.zone.local(2025, 3, 1))
 
-      expect(described_class.for(disbursement).key).to eq("argosy_grant_2024")
+      expect(described_class.find_by_linked_object(disbursement).key).to eq("argosy_grant_2024")
     end
 
     it "never assigns a retired appearance (one with no qualifier)" do
@@ -68,17 +68,17 @@ RSpec.describe Ledger::Item::SpecialAppearance do
       # An admin sender, so the grant's transfer doesn't need a funded event.
       disbursement = create(:card_grant, sent_by: create(:user, :make_admin)).disbursement
 
-      expect(described_class.for(disbursement.incoming_disbursement).key).to eq("card_grant")
-      expect(described_class.for(disbursement.outgoing_disbursement).key).to eq("card_grant")
+      expect(described_class.find_by_linked_object(disbursement.incoming_disbursement).key).to eq("card_grant")
+      expect(described_class.find_by_linked_object(disbursement.outgoing_disbursement).key).to eq("card_grant")
     end
 
     it "does not match a transfer with no card grant" do
-      expect(described_class.for(create(:disbursement).incoming_disbursement)).to be_nil
+      expect(described_class.find_by_linked_object(create(:disbursement).incoming_disbursement)).to be_nil
     end
   end
 
   describe "an icon-only appearance" do
-    subject(:card_grant) { described_class.find(:card_grant) }
+    subject(:card_grant) { described_class.find_by_key(:card_grant) }
 
     # It overrides nothing else, so the memo, styling, and title stay whatever the
     # item would have shown — see Ledger::Item#calculate_system_memo, which says
@@ -99,7 +99,7 @@ RSpec.describe Ledger::Item::SpecialAppearance do
     subject(:type) { described_class.new }
 
     it "casts a key to an appearance and serializes it back" do
-      appearance = Ledger::Item::SpecialAppearance.find(:gene_haas_grant)
+      appearance = Ledger::Item::SpecialAppearance.find_by_key(:gene_haas_grant)
 
       expect(type.cast("gene_haas_grant")).to be(appearance)
       expect(type.serialize("gene_haas_grant")).to eq("gene_haas_grant")
@@ -121,7 +121,7 @@ RSpec.describe Ledger::Item::SpecialAppearance do
   # card grant one, which only the Ledger knows about.)
   it "agrees with the legacy Disbursement::SPECIAL_APPEARANCES definitions" do
     Disbursement::SPECIAL_APPEARANCES.each do |key, legacy|
-      appearance = described_class.find(key)
+      appearance = described_class.find_by_key(key)
 
       expect(appearance).to be_present, "#{key} is defined for the legacy views but missing from the registry"
       expect(legacy[:title]).to eq(appearance.title)

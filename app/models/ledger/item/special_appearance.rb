@@ -24,8 +24,8 @@ class Ledger
         freeze
       end
 
-      def applies_to?(object)
-        qualifier.present? && qualifier.call(object)
+      def applies_to?(linked_object)
+        qualifier.present? && qualifier.call(linked_object)
       end
 
       # Anything serializing the attribute wants the key, not the object's
@@ -39,10 +39,10 @@ class Ledger
       def self.fund_qualifier(event_ids, since = nil)
         return nil if event_ids.empty?
 
-        lambda do |object|
-          next false unless object.is_a?(Disbursement::Shared)
-          next false unless object.source_event_id.in?(event_ids)
-          next false if since && object.created_at <= since
+        lambda do |linked_object|
+          next false unless linked_object.is_a?(Disbursement::Shared)
+          next false unless linked_object.source_event_id.in?(event_ids)
+          next false if since && linked_object.created_at <= since
 
           true
         end
@@ -92,27 +92,26 @@ class Ledger
         new(
           key: :card_grant,
           icon: "bag",
-          qualifier: ->(object) { object.is_a?(Disbursement::Shared) && object.card_grant.present? }
+          qualifier: ->(linked_object) { linked_object.is_a?(Disbursement::Shared) && linked_object.card_grant.present? }
         )
       ].freeze
 
       BY_KEY = ALL.index_by(&:key).freeze
 
-      # Unknown keys resolve to nil rather than raising: a row written by a newer
-      # deploy (or by hand) should render plainly, not break the whole ledger.
-      def self.find(key)
-        key.present? ? BY_KEY[key.to_s] : nil
-      end
-
       def self.keys
         BY_KEY.keys
       end
 
-      # The appearance a linked object earns, if any. Only called when assigning.
-      def self.for(object)
-        return nil if object.nil?
+      # Unknown keys resolve to nil rather than raising: a row written by a newer
+      # deploy (or by hand) should render plainly, not break the whole ledger.
+      def self.find_by_key(key)
+        BY_KEY[key.to_s.presence]
+      end
 
-        ALL.find { |appearance| appearance.applies_to?(object) }
+      def self.find_by_linked_object(linked_object)
+        return nil if linked_object.nil?
+
+        ALL.find { |appearance| appearance.applies_to?(linked_object) }
       end
 
       # Casts the `special_appearance` string column to a SpecialAppearance and
@@ -124,7 +123,7 @@ class Ledger
         end
 
         def cast(value)
-          value.is_a?(SpecialAppearance) ? value : SpecialAppearance.find(value)
+          value.is_a?(SpecialAppearance) ? value : SpecialAppearance.find_by_key(value)
         end
 
         def serialize(value)

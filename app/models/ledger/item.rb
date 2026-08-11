@@ -177,7 +177,7 @@ class Ledger
       self.author = calculate_author
       self.receipt_required = calculate_receipt_required
       self.status = calculate_status
-      self.special_appearance = Ledger::Item::SpecialAppearance.for(linked_object)
+      self.special_appearance = calculate_special_appearance
       self.system_memo = calculate_system_memo # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
       self.memo = self.custom_memo.presence || self.system_memo.presence || fallback_memo
 
@@ -402,6 +402,10 @@ class Ledger
 
       # Nothing has mapped to this item yet
       :pending
+    end
+
+    def calculate_special_appearance
+      SpecialAppearance.find_by_linked_object(linked_object)
     end
 
     def calculate_system_memo
