@@ -16,19 +16,6 @@
 <pre class="bg-smoke mt0"><%= organizer_signed_in? ? @canonical_pending_transaction.friendly_memo : "REDACTED– SIGN IN TO REVEAL" %></pre>
 
 <%= form_with(model: @canonical_pending_transaction) do |form| %>
-  <div class="field">
-    <%= form.label :custom_memo, "Custom Memo" %>
-    <%= form.text_field :custom_memo, list: "custom-memos", placeholder: @canonical_pending_transaction.smart_memo, autofocus: true %>
-    <datalist id='custom-memos'>
-      <%= @suggested_memos.each do |s_memo| %>
-        <option><%= s_memo %></option>
-      <% end %>
-    </datalist>
-    <span class="muted block h5">
-      Give this transaction a more descriptive memo to improve your records.
-    </span>
-  </div>
-
   <% admin_tool do %>
     <div class="field field--checkbox">
       <%= form.check_box :fronted %>

@@ -60,11 +60,6 @@
         <%= @transaction.display_name %>
       </span>
     </p>
-
-    <%= pop_icon_to "edit",
-      edit_canonical_transaction_path(@transaction),
-      disabled: !organizer_signed_in?,
-      class: "right tooltipped tooltipped--w", "aria-label": "Rename transaction" if organizer_signed_in?(as: :member) %>
   </div>
 
   <section class="details">

@@ -16,21 +16,6 @@
 <pre class="bg-smoke mt0"><%= organizer_signed_in? ? @canonical_transaction.less_smart_memo : "REDACTED– SIGN IN TO REVEAL" %></pre>
 
 <%= form_with(model: @canonical_transaction, url: set_custom_memo_canonical_transaction_path(@canonical_transaction), method: :post, local: true) do |form| %>
-  <div class="field">
-    <%= form.label :custom_memo do %>
-      <strong>Custom memo</strong>
-    <% end %>
-    <%= form.text_field :custom_memo, list: "custom-memos", placeholder: @canonical_transaction.smart_memo, autofocus: true, class: "fit" %>
-    <datalist id='custom-memos'>
-      <%= @suggested_memos.each do |s_memo| %>
-        <option><%= s_memo %></option>
-      <% end %>
-    </datalist>
-    <span class="muted block h5">
-      Give this transaction a more descriptive memo to improve your records.
-    </span>
-  </div>
-
   <div class="actions">
     <%= form.submit "Rename", disabled: !current_user %>
   </div>
