@@ -131,6 +131,8 @@ module Payroll
 
       @position.mark_terminated!
 
+      flash[:success] = "Contractor position successfully terminated"
+
       redirect_to event_payroll_position_path(event: @event, payroll_position: @position)
     end
 
