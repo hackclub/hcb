@@ -13,7 +13,7 @@ module Maintenance
   # This is a one-time bridge; new items get the column on their first refresh.
   class BackfillLedgerItemSpecialAppearancesTask < MaintenanceTasks::Task
     DISBURSEMENT_TYPES = ["Disbursement::Incoming", "Disbursement::Outgoing"].freeze
-    EVENT_IDS = [EventMappingEngine::EventIds::HACKATHON_GRANT_FUND, EventMappingEngine::EventIds::WINTER_HARDWARE_WONDERLAND_GRANT_FUND, EventMappingEngine::EventIds::ARGOSY_GRANT_FUND, EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025, EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND, EventMappingEngine::EventIds::GENE_HAAS_GRANT_FUND]
+    EVENT_IDS = [EventMappingEngine::EventIds::HACKATHON_GRANT_FUND, EventMappingEngine::EventIds::WINTER_HARDWARE_WONDERLAND_GRANT_FUND, EventMappingEngine::EventIds::ARGOSY_GRANT_FUND, EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025, EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND, EventMappingEngine::EventIds::GENE_HAAS_GRANT_FUND].freeze
 
     def collection
       # Narrow to the transfers that could earn an appearance — out of a fund, or
