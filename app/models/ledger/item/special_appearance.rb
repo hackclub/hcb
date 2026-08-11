@@ -71,6 +71,7 @@ class Ledger
           memo: "🤖 Argosy Foundation Rookie / Hardship Grant",
           css_class: "transaction--fancy",
           icon: "sam",
+          # the same organization was used for multiple years. prior years didn't have this appearance.
           qualifier: fund_qualifier([EventMappingEngine::EventIds::ARGOSY_GRANT_FUND, EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025], Date.new(2024, 9, 1))
         ),
         new(
