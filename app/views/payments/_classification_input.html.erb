@@ -2,5 +2,5 @@
 
 <div class="field mb-2">
   <%= form.label :classification %>
-  <%= form.select :classification, options_for_select(Payment.classifications.map { |k, v| [k.humanize, v] }) %>
+  <%= form.select :classification, options_for_select(Payment.classifications.map { |k, v| [k.humanize, v] }, selected: classification) %>
 </div>

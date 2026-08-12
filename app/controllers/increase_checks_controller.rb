@@ -46,10 +46,18 @@ class IncreaseChecksController < ApplicationController
     return unless enforce_sudo_mode
 
     ensure_admin_may_approve!(@check, amount_cents: @check.amount)
-    @check.send_check!
+
     @check.payment&.update!(classification: params[:classification])
 
-    redirect_to increase_check_process_admin_path(@check), flash: { success: "Check has been sent!" }
+    if @check.payment.nil? || @check.payment.legal_entity.payable?(requires_tax_form: @check.payment.requires_tax_form?)
+      @check.send_check!
+
+      redirect_to increase_check_process_admin_path(@check), flash: { success: "Check has been sent!" }
+    else
+      @check.payment.request_tax_form!
+
+      redirect_to increase_check_process_admin_path(@check), flash: { error: "Tax information was missing for this payment and has been requested" }
+    end
 
   rescue Faraday::Error => e
     redirect_to increase_check_process_admin_path(@check), flash: { error: "Something went wrong: #{ColumnService.error_to_admin_message(e)}" }

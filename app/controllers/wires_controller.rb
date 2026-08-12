@@ -44,10 +44,18 @@ class WiresController < ApplicationController
     return unless enforce_sudo_mode
 
     ensure_admin_may_approve!(@wire, amount_cents: @wire.usd_amount_cents)
-    @wire.mark_approved!
+
     @wire.payment&.update!(classification: params[:classification])
 
-    redirect_to wire_process_admin_path(@wire), flash: { success: "Thanks for sending that wire." }
+    if @wire.payment.nil? || @wire.payment.legal_entity.payable?(requires_tax_form: @wire.payment.requires_tax_form?)
+      @wire.mark_approved!
+
+      redirect_to wire_process_admin_path(@wire), flash: { success: "Thanks for sending that wire." }
+    else
+      @wire.payment.request_tax_form!
+
+      redirect_to wire_process_admin_path(@wire), flash: { error: "Tax information was missing for this payment and has been requested" }
+    end
 
   rescue => e
     redirect_to wire_process_admin_path(@wire), flash: { error: e.message }

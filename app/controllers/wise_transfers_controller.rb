@@ -74,9 +74,17 @@ class WiseTransfersController < ApplicationController
     @wise_transfer.assign_attributes(wise_transfer_params)
 
     begin
-      @wise_transfer.mark_sent!
       @wise_transfer.payment&.update!(classification: params.dig(:wise_transfer, :classification))
-      flash[:success] = "Marked as sent."
+
+      if @wise_transfer.payment.nil? || @wise_transfer.payment.legal_entity.payable?(requires_tax_form: @wise_transfer.payment.requires_tax_form?)
+        @wise_transfer.mark_sent!
+
+        flash[:success] = "Marked as sent."
+      else
+        @wise_transfer.payment.request_tax_form!
+
+        flash[:error] = "Tax information was missing for this payment and has been requested"
+      end
     rescue ActiveRecord::RecordInvalid => e
       flash[:error] = e.record.errors.full_messages.to_sentence
     end

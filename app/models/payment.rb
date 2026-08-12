@@ -39,7 +39,7 @@ class Payment < ApplicationRecord
   has_one :legal_entity, through: :payee
   has_many :attempts, -> { order(created_at: :desc) }, class_name: "Payment::Attempt", inverse_of: :payment
   has_one :successful_attempt, -> { successful }, class_name: "Payment::Attempt", inverse_of: :payment
-  has_one :current_attempt, -> { not_failed }, class_name: "Payment::Attempt", inverse_of: :payment
+  has_one :current_attempt, -> { active }, class_name: "Payment::Attempt", inverse_of: :payment
   has_one :payroll_invoice, class_name: "Payroll::Invoice", inverse_of: :payment, dependent: :nullify
 
   monetize :amount_cents, with_model_currency: :currency
@@ -64,6 +64,13 @@ class Payment < ApplicationRecord
 
     event :mark_under_review do
       transitions from: [:pending_legal_entity, :sent], to: :under_review
+    end
+
+    event :mark_pending_legal_entity do
+      transitions from: :under_review, to: :pending_legal_entity
+      after do
+        PaymentMailer.with(payment: self).missing_tax_information.deliver_later
+      end
     end
 
     event :mark_sent do
@@ -132,9 +139,9 @@ class Payment < ApplicationRecord
   # never sends mail, so repeated calls can't spam a recipient with reminders.
   def refresh_legal_entity_state!
     return unless pending_legal_entity?
-    return unless legal_entity&.payable?
+    return unless legal_entity&.payable?(requires_tax_form: requires_tax_form?)
     return if legal_entity.default_payout_method.nil?
-    return unless attempts.all?(&:failed?)
+    return if attempts.any?(&:active?)
 
     create_payment_attempt!
   end
@@ -174,6 +181,11 @@ class Payment < ApplicationRecord
     !legal_entity&.payable? || legal_entity.default_payout_method.blank?
   end
 
+  def request_tax_form!
+    mark_pending_legal_entity!
+    current_attempt&.payout&.mark_rejected!
+  end
+
   private
 
   def schedule_acceptance_reminders
@@ -185,7 +197,7 @@ class Payment < ApplicationRecord
   def create_payment_attempt!
     self.with_lock do
       raise ArgumentError, "this payment was rejected" if rejected?
-      raise ArgumentError, "all attempts must have failed" unless attempts.all?(&:failed?)
+      raise ArgumentError, "all attempts must be failed, rejected, or canceled" if attempts.any?(&:active?)
       raise ArgumentError, "there is no default payout method" if legal_entity.default_payout_method.nil?
 
       attempts.create!(payout_method: legal_entity.default_payout_method)
