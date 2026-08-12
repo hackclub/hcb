@@ -22,6 +22,10 @@ class PayeesController < ApplicationController
 
   def create
     manual = params[:manual] == "true"
+    if manual && !Flipper.enabled?(:manual_payees_2026_08_05, @event)
+      flash[:error] = "Please try again."
+      redirect_to helpers.new_recipient_transfer_path(params[:destination], @event)
+    end
 
     payee = @event.payees.build(display_name: params[:name], email: params[:email])
     authorize payee

@@ -35,7 +35,7 @@ class Disbursement
       scope :reviewing_or_processing, -> { where(aasm_state: [:reviewing, :pending, :in_transit]) }
 
       # Associations
-      has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
+      has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object, inverse_of: :linked_object
       belongs_to :destination_event, foreign_key: "event_id", class_name: "Event", inverse_of: "incoming_disbursements"
       belongs_to :source_event, class_name: "Event", inverse_of: "outgoing_disbursements"
       belongs_to :destination_subledger, class_name: "Subledger", optional: true
@@ -48,6 +48,9 @@ class Disbursement
       belongs_to :requested_by, class_name: "User", optional: true
 
       has_one :card_grant, foreign_key: :disbursement_id, inverse_of: :disbursement, required: false
+
+      has_many :canonical_transactions, through: :ledger_item
+      has_many :canonical_pending_transactions, through: :ledger_item
 
       # AASM
       include AASM
