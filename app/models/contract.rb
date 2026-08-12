@@ -245,6 +245,12 @@ class Contract < ApplicationRecord
     reissue_of_id.present?
   end
 
+  def owned_by?(user)
+    return false if user.nil?
+
+    parties.where(role: [:signee, :organizer]).exists?(user:)
+  end
+
   def inline_documents?
     prefills&.dig("documents").present?
   end

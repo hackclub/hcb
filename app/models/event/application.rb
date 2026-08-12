@@ -317,8 +317,8 @@ class Event
 
     def check_cosigner_update
       if contract.present? && cosigner_email_previously_changed?
-        contract.mark_voided!
-        send_contract
+        contract.mark_voided!(reissuing: true)
+        send_contract(reissue_of: contract)
       end
     end
 

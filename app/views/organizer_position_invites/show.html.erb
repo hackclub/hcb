@@ -39,5 +39,30 @@
       <% disabled = @invite.contract.present? && !@invite.contract.signed? %>
       <p class="tooltipped my-0" aria-label="<%= "The contract must be signed before you can accept this invite" if disabled %>"><%= link_to "Accept invitation", organizer_position_invite_accept_path(@invite), method: :post, class: "btn bg-success #{"pointer-events-none" if disabled}", disabled: %></p>
     <% end %>
+
+    <% if @invite.contract&.party(:cosigner)&.pending? && policy(@invite).resend_to_cosigner? %>
+      <button class="btn bg-muted" data-behavior="modal_trigger" data-modal="cosigner_agreement">Manage cosigner's agreement</button>
+    <% end %>
   </div>
 </main>
+
+<% if @invite.contract&.party(:cosigner)&.pending? && policy(@invite).resend_to_cosigner? %>
+  <section data-behavior="modal" role="dialog" id="cosigner_agreement" class="modal modal--scroll">
+    <%= modal_header "Manage cosigner's agreement" %>
+    <p>
+      The fiscal sponsorship agreement has been sent to <span class="font-bold"><%= @invite.contract.party(:cosigner).email %></span> for them to sign.
+      You can change your cosigner's email here, or resend it to the same address.
+      <% if @invite.contract.party(:signee).signed? %>
+        <span class="font-bold">If you change the email, you'll need to sign the agreement again.</span>
+      <% end %>
+    </p>
+
+    <%= form_with url: resend_to_cosigner_organizer_position_invite_path(@invite), method: :post do |form| %>
+      <%= label_tag :cosigner_email do %>
+        Cosigner email <span class="text-primary">*</span>
+      <% end %>
+      <%= email_field_tag :cosigner_email, @invite.contract.party(:cosigner).email, required: true, placeholder: "orpheus@hackclub.com" %>
+      <%= form.submit "Resend cosigner's agreement", class: "btn mt-2" %>
+    <% end %>
+  </section>
+<% end %>
