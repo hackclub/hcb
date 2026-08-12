@@ -283,7 +283,7 @@ module Tax
     def entity_type_from(submission_form_type, form_data)
       case submission_form_type
       when "FormW9"
-        if form_data["FederalTaxClassification"].include?("corporation")
+        if form_data["FederalTaxClassification"].downcase.include?("corporation")
           :corporation
         elsif form_data["TINType"] == "SSN"
           :person
