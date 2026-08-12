@@ -17,6 +17,7 @@
 #  receipt_count                :integer          default(0), not null
 #  receipt_required             :boolean
 #  short_code                   :text
+#  special_appearance           :string
 #  status                       :string           default("pending"), not null
 #  system_memo                  :text
 #  created_at                   :datetime         not null
@@ -79,6 +80,8 @@ class Ledger
       canceled: "canceled", # user canceled transfer (for IncreaseCheck this also includes transfers rejected by ops)
       declined: "declined" # CPT has CPDM, no CPTs
     }
+
+    attribute :special_appearance, Ledger::Item::SpecialAppearance::Type.new
 
     validates_presence_of :amount_cents, :memo, :datetime, :status
 
@@ -174,6 +177,7 @@ class Ledger
       self.author = calculate_author
       self.receipt_required = calculate_receipt_required
       self.status = calculate_status
+      self.special_appearance = calculate_special_appearance
       self.system_memo = calculate_system_memo # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
       self.memo = self.custom_memo.presence || self.system_memo.presence || fallback_memo
 
@@ -199,6 +203,8 @@ class Ledger
     end
 
     def humanized_type
+      return "Card grant" if special_appearance&.key == "card_grant"
+
       case linked_object_type
       when "Invoice"
         "Invoice"
@@ -250,6 +256,8 @@ class Ledger
     end
 
     def icon
+      return special_appearance.icon if special_appearance&.icon
+
       case linked_object_type
       when "Invoice"
         "payment-docs"
@@ -273,18 +281,10 @@ class Ledger
         "email"
       when "CheckDeposit"
         "cheque"
-      when "Disbursement::Outgoing" # TODO: support for special appearance icons
-        if linked_object.card_grant.present?
-          "bag"
-        else
-          "door-leave"
-        end
+      when "Disbursement::Outgoing"
+        "door-leave"
       when "Disbursement::Incoming"
-        if linked_object.card_grant.present?
-          "bag"
-        else
-          "door-enter"
-        end
+        "door-enter"
       when "StripeServiceFee"
         "cash" # TODO: find unique icon
       when "BankFee"
@@ -406,7 +406,13 @@ class Ledger
       :pending
     end
 
+    def calculate_special_appearance
+      SpecialAppearance.find_by_linked_object(linked_object)
+    end
+
     def calculate_system_memo
+      return special_appearance.memo if special_appearance&.memo
+
       case linked_object_type
       when "Invoice"
         "Invoice to #{linked_object.smart_memo}"

@@ -161,7 +161,7 @@ class Disbursement
         return nil if canonical_pending_transactions.with_custom_memo.any? || canonical_transactions.with_custom_memo.any?
 
         Disbursement::SPECIAL_APPEARANCES.each do |key, value|
-          return key if value[:qualifier].call(self)
+          return key if value[:qualifier]&.call(self)
         end
 
         nil
