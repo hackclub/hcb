@@ -80,6 +80,7 @@
 <%= render partial: "application/admin_viewer", locals: { record: @item } %>
 <%= render partial: "application/admin_viewer", locals: { record: @item.primary_mapping } if @item.primary_mapping.present? %>
 <%= render partial: "application/admin_viewer", locals: { record: @item.primary_ledger } if @item.primary_ledger.present? %>
+<%= render partial: "application/admin_viewer", locals: { record: @item.linked_object } if @item.linked_object.present? %>
 
 <%= render partial: "ledger/items/transactions", locals: { ledger_item: @item } %>
 
