@@ -19,24 +19,30 @@ RSpec.describe Ledger::Item::SpecialAppearance do
   end
 
   describe ".find_by_linked_object" do
-    it "matches a transfer out of the appearance's fund" do
+    it "matches the incoming leg of a transfer out of the appearance's fund" do
       disbursement = Disbursement.new(source_event_id: ids::HACKATHON_GRANT_FUND, created_at: Time.current)
 
-      expect(described_class.find_by_linked_object(disbursement).key).to eq("hackathon_grant")
+      expect(described_class.find_by_linked_object(disbursement.incoming_disbursement).key).to eq("hackathon_grant")
     end
 
     # A ledger item's linked object is always one of the lenses, and they descend
     # from Disbursement::Base rather than Disbursement — so a type guard on
     # Disbursement would match nothing that actually reaches this code.
-    it "matches through both the incoming and outgoing lens" do
+    #
+    # Only the incoming lens qualifies: the fund's own ledger sees the outgoing
+    # leg of every grant it pays out, and that side shouldn't take on the
+    # recipient-facing appearance meant for the grant showing up in their ledger.
+    it "matches through the incoming lens only, not the outgoing one" do
       disbursement = Disbursement.new(source_event_id: ids::GENE_HAAS_GRANT_FUND, created_at: Time.current)
 
       expect(described_class.find_by_linked_object(disbursement.becomes(Disbursement::Incoming)).key).to eq("gene_haas_grant")
-      expect(described_class.find_by_linked_object(disbursement.becomes(Disbursement::Outgoing)).key).to eq("gene_haas_grant")
+      expect(described_class.find_by_linked_object(disbursement.becomes(Disbursement::Outgoing))).to be_nil
     end
 
     it "does not match a transfer out of an unrelated event" do
-      expect(described_class.find_by_linked_object(Disbursement.new(source_event_id: 1, created_at: Time.current))).to be_nil
+      disbursement = Disbursement.new(source_event_id: 1, created_at: Time.current)
+
+      expect(described_class.find_by_linked_object(disbursement.incoming_disbursement)).to be_nil
     end
 
     it "does not match a non-disbursement, or nothing at all" do
@@ -48,14 +54,14 @@ RSpec.describe Ledger::Item::SpecialAppearance do
       before_cutoff = Disbursement.new(source_event_id: ids::ARGOSY_GRANT_FUND, created_at: Time.zone.local(2024, 8, 31))
       after_cutoff = Disbursement.new(source_event_id: ids::ARGOSY_GRANT_FUND, created_at: Time.zone.local(2024, 9, 2))
 
-      expect(described_class.find_by_linked_object(before_cutoff)).to be_nil
-      expect(described_class.find_by_linked_object(after_cutoff).key).to eq("argosy_grant_2024")
+      expect(described_class.find_by_linked_object(before_cutoff.incoming_disbursement)).to be_nil
+      expect(described_class.find_by_linked_object(after_cutoff.incoming_disbursement).key).to eq("argosy_grant_2024")
     end
 
     it "matches every fund an appearance names" do
       disbursement = Disbursement.new(source_event_id: ids::ARGOSY_GRANT_FUND_2025, created_at: Time.zone.local(2025, 3, 1))
 
-      expect(described_class.find_by_linked_object(disbursement).key).to eq("argosy_grant_2024")
+      expect(described_class.find_by_linked_object(disbursement.incoming_disbursement).key).to eq("argosy_grant_2024")
     end
 
     it "never assigns a retired appearance (one with no qualifier)" do
