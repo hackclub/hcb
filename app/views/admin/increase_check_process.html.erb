@@ -98,10 +98,6 @@
               ) %>
         </div>
 
-        <% if @check.payment.present? %>
-
-        <% end %>
-
         <%= form_with(model: false, local: true, url: approve_increase_check_path(@check), method: :post) do |form| %>
           <% if @check.payment.present? %>
             <%= render partial: "payments/classification_input", locals: { form:, classification: @check.payment.classification } %>
