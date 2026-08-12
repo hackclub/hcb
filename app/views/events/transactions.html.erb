@@ -27,7 +27,7 @@
 
 <%= render "events/nav", selected: :transactions %>
 
-<%= render "events/heading", event: @event, event_follow: @event_follow do %>
+<%= render "events/heading", event: @event, event_follow: @event_follow, show_ledger_toggle: true do %>
   <span class="flex-grow">Transactions</span>
 <% end %>
 
@@ -37,12 +37,13 @@
     <%# this event has a fee credit (owes negative fees) %>
     <% if @event.fee_balance_v2_cents < 0 %>
       <span class="stat__value stat__value--no-space"><%= render_money_amount @event.balance_v2_cents %></span>
-      <span class="self-end" style="font-size: 10px;">+$<%= render_money_amount @event.fee_balance_v2_cents.abs %>
-        fee credit</span>
+      <span class="self-end" style="font-size: 10px;">
+        +$<%= render_money_amount @event.fee_balance_v2_cents.abs %> fee credit
+      </span>
     <% else %>
-    <span class="stat__value stat__value--no-space">
-      <%= render_money_amount(@event.balance_available_v2_cents) %>
-    </span>
+      <span class="stat__value stat__value--no-space">
+        <%= render_money_amount(@event.balance_available_v2_cents) %>
+      </span>
     <% end %>
   </div>
 

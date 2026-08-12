@@ -6,7 +6,6 @@
 #
 #  id                   :bigint           not null, primary key
 #  aasm_state           :string           not null
-#  contractable_type    :string
 #  cosigner_email       :string
 #  deleted_at           :datetime
 #  external_service     :integer
@@ -18,6 +17,7 @@
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
 #  contractable_id      :bigint
+#  contractable_type    :string
 #  document_id          :bigint
 #  external_id          :string
 #  external_template_id :string
@@ -121,7 +121,20 @@ class Contract
       payload
     end
 
+    # Hack Club's own projects aren't fiscally sponsored by Hack Club, so they
+    # sign a plain contract rather than a fiscal sponsorship agreement. Both are
+    # Contract::FiscalSponsorship records, so the DocuSeal template is the only
+    # thing that tells them apart. It also stays accurate for contracts that were
+    # already issued when the organization's plan changes.
+    #
+    # Once contracts belong to a Contract::Template record, that template should
+    # carry its own name and this whole comparison can go away.
     def agreement_name
+      hack_club_template = Event::Plan::HackClubAffiliate.new.contract_docuseal_template_id
+
+      # external_template_id is a string column, but plans return integers.
+      return "contract" if external_template_id.to_s == hack_club_template.to_s
+
       "fiscal sponsorship agreement"
     end
 

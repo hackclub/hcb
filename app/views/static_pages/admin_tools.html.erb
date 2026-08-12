@@ -81,14 +81,14 @@
         <%= card_to "Bank fees", bank_fees_admin_index_path, badge: BankFee.in_transit_or_pending.count %>
         <%= card_to "Fee revenues", fee_revenues_admin_index_path %>
         <%= card_to "Ledger audits", admin_ledger_audits_path, badge: Admin::LedgerAudit.pending.count %>
-        <%= render partial: "static_pages/card", locals: { task_path: balances_admin_index_path, human_name: "Organization balances" } %>
-        <%= render partial: "static_pages/card", locals: { task_path: blazer_path, human_name: "Blazer" } %>
+        <%= card_to "Organization balances", balances_admin_index_path %>
+        <%= card_to "Blazer", blazer_path %>
         <%= card_to "Column statements", admin_column_statements_path %>
       </ul>
       <h2>Other</h2>
       <ul class="grid text-left w-100 mt0" id="other-grid">
-        <%= render partial: "static_pages/card", locals: { task_path: common_documents_path, human_name: "Common docs" } %>
-        <%= render partial: "static_pages/card", locals: { task_path: flipper_path, human_name: "Flipper" } %>
+        <%= card_to "Common docs", common_documents_path %>
+        <%= card_to "Flipper", flipper_path %>
         <%= card_to "Pending ledger", pending_ledger_admin_index_path, badge: CanonicalPendingTransaction.unsettled.count %>
         <%= card_to "Account numbers", account_numbers_admin_index_path, badge: Column::AccountNumber.count, subtle_badge: true %>
         <%= card_to "Recurring donations", recurring_donations_admin_index_path, badge: RecurringDonation.active.count %>
@@ -98,18 +98,18 @@
         <ul class="grid text-left w-100 pt-2" id="old-card-grid">
           <%= card_to "YSWS verification", link_to_airtable_task(:you_ship_we_ship), async_badge: :pending_you_ship_we_ship_airtable %>
           <%= card_to "PVSA", link_to_airtable_task(:pvsa), async_badge: :pending_pvsa_airtable %>
-          <%= render partial: "static_pages/card", locals: { task_path: events_path, human_name: "Organizations" } %>
-          <%= render partial: "static_pages/card", locals: { task_path: negative_events_path, human_name: "Negative organizations" } %>
-          <%= render partial: "static_pages/card", locals: { task_path: sponsors_path, human_name: "Sponsors" } %>
-          <%= render partial: "static_pages/card", locals: { task_path: g_suite_accounts_path, human_name: "Google Workspace accounts" } %>
+          <%= card_to "Organizations", events_path, id: "card-organizations-old" %>
+          <%= card_to "Negative organizations", negative_events_path %>
+          <%= card_to "Sponsors", sponsors_path, id: "card-sponsors-old" %>
+          <%= card_to "Google Workspace accounts", g_suite_accounts_path %>
           <%= card_to "Bookkeeping", bookkeeping_path %>
           <%= card_to "Emburse cards", emburse_cards_path %>
           <%= card_to "Emburse card requests", emburse_card_requests_path %>
           <%= card_to "Emburse transactions", emburse_transactions_path %>
-          <%= render partial: "static_pages/card", locals: { task_path: admin_search_path, human_name: "Search by user" } %>
-          <%= render partial: "static_pages/card", locals: { task_path: "https://hack.af/hcb-knowledgebase", human_name: "Knowledgebase" } %>
-          <%= render partial: "static_pages/card", locals: { task_path: bank_accounts_path, human_name: "Bank accounts" } %>
-          <%= render partial: "static_pages/card", locals: { task_path: new_bank_account_path, human_name: "Setup HCB" } %>
+          <%= card_to "Search by user", admin_search_path %>
+          <%= card_to "Knowledgebase", "https://hack.af/hcb-knowledgebase" %>
+          <%= card_to "Bank accounts", bank_accounts_path, id: "card-bank-accounts-old" %>
+          <%= card_to "Setup HCB", new_bank_account_path %>
           <%= card_to "Bank accounts", bank_accounts_admin_index_path, badge: BankAccount.failing.count %>
           <%= card_to "HCB codes", hcb_codes_admin_index_path %>
           <%= card_to "Raw transactions", raw_transactions_admin_index_path, badge: RawCsvTransaction.unhashed.count %>

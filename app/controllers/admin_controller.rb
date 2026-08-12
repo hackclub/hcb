@@ -386,6 +386,7 @@ class AdminController < Admin::BaseController
     @amount = params[:amount].presence
     @q = params[:q].presence
     @unmapped = params[:unmapped] != "0"
+    @nonzero = params[:nonzero] == "1" ? true : nil
 
     relation = if @q
                  Ledger::Item.where(id: @q)
@@ -399,10 +400,11 @@ class AdminController < Admin::BaseController
     relation = relation.where.missing(:primary_mapping) if @unmapped.present? && @q.blank?
 
     relation = relation.where(amount_cents: @amount.to_i).or(relation.where(amount_cents: -@amount.to_i)) if @amount
+    relation = relation.where.not(amount_cents: 0) if @nonzero.present? && @q.blank?
 
     @count = relation.count
 
-    @ledger_items = relation.includes(:hcb_code, :canonical_transactions, :canonical_pending_transactions)
+    @ledger_items = relation.includes(:hcb_code)
                             .page(@page).per(@per).order(datetime: :desc)
   end
 
@@ -1083,6 +1085,7 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = params[:per] || 20
     @q = params[:q].presence
+    @number = params[:number].presence
     @open = params[:open] == "1" ? true : nil
     @paid = params[:paid] == "1" ? true : nil
     @missing_payout = params[:missing_payout] == "1" ? true : nil
@@ -1109,6 +1112,8 @@ class AdminController < Admin::BaseController
         relation = relation.search_description(@q)
       end
     end
+
+    relation = relation.where(number: @number) if @number
 
     relation = relation.open_v2 if @open
     relation = relation.paid_v2 if @paid

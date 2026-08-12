@@ -357,6 +357,12 @@ Rails.application.routes.draw do
       post "submit", on: :member
       post "reject", on: :member
     end
+    resources :payments, only: [:index]
+    resources :payroll_positions, only: [:index] do
+      post "reject", on: :member
+    end
+    resources :legal_entities, only: [:index]
+    resources :tax_forms, only: [:index]
     resources :column_statements, only: :index do
       get "bank_account_summary_report"
     end
@@ -418,6 +424,8 @@ Rails.application.routes.draw do
   resources :organizer_position_deletion_requests, only: [:index, :show, :create], concerns: :commentable do
     post "close"
     post "open"
+    post "assign"
+    post "unassign"
   end
 
   resources :g_suite_accounts, only: [:index, :create, :update, :edit, :destroy], path: "g_suite_accounts" do
@@ -573,18 +581,17 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :canonical_pending_transactions, only: [:show, :edit, :update] do
+  resources :canonical_pending_transactions, only: [:show, :update] do
     member do
       post "set_category"
     end
   end
 
-  resources :canonical_transactions, only: [:show, :edit] do
+  resources :canonical_transactions, only: [:show] do
     member do
       post "waive_fee"
       post "unwaive_fee"
       post "mark_bank_fee"
-      post "set_custom_memo"
       post "set_category"
     end
   end
@@ -650,7 +657,11 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :payments, only: [:show], concerns: :commentable
+  resources :payments, only: [:show], concerns: :commentable do
+    member do
+      post "cancel"
+    end
+  end
 
   get "brand_guidelines", to: redirect("branding")
   get "mobile", to: "static_pages#mobile"
@@ -741,7 +752,7 @@ Rails.application.routes.draw do
           end
 
           resources :disbursements, path: "transfers", only: [:create]
-
+          # TODO: shallow route these (breaking change)
           resources :donations, path: "donations", only: [:create] do
             member do
               post "payment_intent"
@@ -758,11 +769,19 @@ Rails.application.routes.draw do
           end
         end
 
+        resources :organizer_positions, only: [:index] do
+          member do
+            post "removal_request"
+          end
+        end
+
         resources :transactions, only: [:show] do
           member do
             post "mark_no_receipt"
           end
         end
+
+        resources :donations, only: [:index, :show]
 
         resources :tags, only: [:index, :show, :create, :destroy]
 
@@ -816,6 +835,7 @@ Rails.application.routes.draw do
   post "stripe/webhook", to: "stripe#webhook"
   post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
+  post "taxbandits/webhook", to: "taxbandits#webhook"
 
   post "discord/event_webhook", to: "discord#event_webhook"
   post "discord/interaction_webhook", to: "discord#interaction_webhook"
@@ -979,6 +999,8 @@ Rails.application.routes.draw do
     get "transactions"
     get "transactions_list"
     get "ledger"
+    post "toggle_new_ledger"
+    get "stats"
     get "merchants_filter"
     put "toggle_hidden"
     post "claim_point_of_contact"

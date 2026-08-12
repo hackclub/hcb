@@ -5,12 +5,12 @@
 # Table name: users
 #
 #  id                            :bigint           not null, primary key
-#  access_level                  :integer          default("user"), not null
+#  access_level                  :integer          default(0), not null
 #  birthday_ciphertext           :text
 #  card_locking_suppressed_until :datetime
 #  cards_locked                  :boolean          default(FALSE), not null
-#  charge_notifications          :integer          default("email_and_sms"), not null
-#  comment_notifications         :integer          default("all_threads"), not null
+#  charge_notifications          :integer          default(0), not null
+#  comment_notifications         :integer          default(0), not null
 #  creation_method               :integer
 #  email                         :text             not null
 #  full_name                     :string
@@ -18,12 +18,11 @@
 #  locked_at                     :datetime
 #  monthly_donation_summary      :boolean          default(TRUE)
 #  monthly_follower_summary      :boolean          default(TRUE)
-#  payout_method_type            :string
 #  phone_number                  :text
 #  phone_number_verified         :boolean          default(FALSE)
 #  preferred_name                :string
 #  pretend_is_not_admin          :boolean          default(FALSE), not null
-#  receipt_report_option         :integer          default("weekly"), not null
+#  receipt_report_option         :integer          default(0), not null
 #  running_balance_enabled       :boolean          default(FALSE), not null
 #  seasonal_themes_enabled       :boolean          default(TRUE), not null
 #  session_validity_preference   :integer          default(259200), not null
@@ -38,6 +37,7 @@
 #  updated_at                    :datetime         not null
 #  discord_id                    :string
 #  payout_method_id              :bigint
+#  payout_method_type            :string
 #  webauthn_id                   :string
 #
 # Indexes
@@ -222,17 +222,25 @@ class User < ApplicationRecord
 
   validates :full_name, format: {
     with: /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,'-]+ [a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,' -]+\z/,
-    message: "must contain your first and last name, and can't contain special characters.", allow_blank: true,
+    message: "must contain your first and last name, and only contain characters in the latin alphabet.", allow_blank: true,
   }
 
   validates :email, uniqueness: true, presence: true
   validates_email_format_of :email
   normalizes :email, with: ->(email) { email.strip.downcase }
-  validates :email, nondisposable: true, on: :create
+  EMAIL_TYPO_MESSAGE = lambda do |user, _|
+    fix = EmailTypoDomains.suggestion_for(user.email)
+    fix ? "looks like a typo. Did you mean #{user.email.sub(/@.+/, "@#{fix}")}?" : Nondisposable.configuration.error_message
+  end
+  validates :email, nondisposable: { message: EMAIL_TYPO_MESSAGE }, on: :create
 
   validates :phone_number, phone: { allow_blank: true }
 
   validates :preferred_name, length: { maximum: 30 }
+  validates :preferred_name, format: {
+    with: /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,' -]+\z/,
+    message: "must only contain characters in the latin alphabet.", allow_blank: true,
+  }, if: :preferred_name_changed?
 
   validates(:session_validity_preference, presence: true, inclusion: { in: SessionsHelper::SESSION_DURATION_OPTIONS.values })
 
@@ -393,7 +401,9 @@ class User < ApplicationRecord
   end
 
   def locked_by
-    User.find_by(id: self.versions.where_object_changes_from(locked_at: nil).last.whodunnit)
+    # find(nil) returns ActiveRecord::RecordNotFound
+    # find_by(id: nil) returns nil
+    User.find_by(id: self.versions.where_object_changes_from(locked_at: nil).last&.whodunnit)
   end
 
   def lock!
@@ -573,22 +583,6 @@ class User < ApplicationRecord
       backup_codes.active.map(&:mark_discarded!)
     end
     BackupCodeMailer.with(user_id: id).backup_codes_disabled.deliver_now
-  end
-
-  def access_level_for(event, organizer_positions)
-    role = nil
-    access_level = nil
-    user_ops = organizer_positions.select { |op| op.user == self }
-    return nil if user_ops.empty?
-
-    user_ops.each do |op|
-      if role.nil? || OrganizerPosition.roles[op.role] > OrganizerPosition.roles[role]
-        role = op.role
-        access_level = op.event == event ? :direct : :indirect
-      end
-    end
-
-    { role:, access_level: }
   end
 
   def needs_to_enable_2fa?
