@@ -262,7 +262,7 @@ class Ledger
       when "Invoice"
         "payment-docs"
       when "Donation"
-        if linked_object.recurring_donation_id.present?
+        if linked_object.recurring?
           "support-recurring"
         else
           "support"
