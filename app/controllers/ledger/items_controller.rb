@@ -17,6 +17,12 @@ class Ledger
         @show_ach_details = true
       end
 
+      if params[:frame]
+        @frame = true
+      else
+        @frame = false
+      end
+
       authorize @item
     rescue ActiveRecord::RecordNotFound
       # Maintain backward compatibility for old v1 transaction engine URLs. They

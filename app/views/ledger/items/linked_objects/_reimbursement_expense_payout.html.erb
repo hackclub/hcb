@@ -1,1 +1,49 @@
 <%# locals: (ledger_item:) %>
+
+<% expense = ledger_item.linked_object.expense %>
+
+<article class="ledger-item">
+  <%= render "hcb_codes/heading", hcb_code: ledger_item.hcb_code, render_memo: true %>
+
+  <section class="ledger-item--details">
+    <div>
+      <strong>Date</strong>
+      <%= format_date ledger_item.datetime %>
+    </div>
+    <div>
+      <strong>Type</strong>
+      <% if expense.is_fee? %>
+        Wise transfer fee
+      <% else %>
+        Reimbursed expense
+      <% end %>
+    </div>
+  </section>
+  <section class="ledger-item--info">
+    <p>
+      <strong>Associated report</strong>
+      <%= link_to expense.report.name, expense.report, data: { turbo_frame: "_top" } %>
+    </p>
+    <% if expense.description.present? %>
+      <p>
+        <strong>Description</strong>
+        <%= expense.description %>
+      </p>
+    <% end %>
+  </section>
+
+  <% if expense.is_fee? %>
+    <section class="card__banner relative bg-[#9FE870] dark:text-[#9FE870] text-[#163300] dark:bg-[#163300] flex flex-row items-center justify-start gap-4 mt-0 md:gap-2">
+      <%= inline_icon "wise", size: 16 %>
+      <div class="flex md:flex-row flex-col items-start justify-start gap-1 flex-grow">
+        Wise imposes fees for processing reimbursements
+        <span class="md:flex-grow"></span>
+        <%= link_to "Learn more about Wise transfers on HCB →", "https://help.hcb.hackclub.com/article/65-wise", class: "dark:!text-[#9FE870] !text-[#163300] bold no-underline after:content-[''] after:top-0 after:left-0 after:bottom-0 after:right-0 after:z-index-1 after:absolute", target: "_blank" %>
+      </div>
+    </section>
+  <% end %>
+</article>
+
+<div class="mb4">
+  <%= render partial: "receipts/receipt", collection: expense.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true, popover: @frame ? "HcbCode:#{ledger_item.hcb_code.hashid}" : nil } %>
+</div>
