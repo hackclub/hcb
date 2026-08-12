@@ -260,8 +260,8 @@ RSpec.describe EventsController do
         get(:sub_organizations, params: { event_id: parent.slug }, format: :xlsx)
 
         strings = xlsx_strings(response.body)
-        expect(strings).to include("Transparent Subsidiary")
-        expect(strings).not_to include("Private Subsidiary")
+        expect(strings).to include("Transparent Sub-organization")
+        expect(strings).not_to include("Private Sub-organization")
       end
     end
 
@@ -310,13 +310,13 @@ RSpec.describe EventsController do
       end
 
       it "renders every descendant as a collapsible tree in the XLSX export", :aggregate_failures do
-        nested = create(:event, parent: transparent_sub, is_public: true, name: "Nested Subsidiary")
+        nested = create(:event, parent: transparent_sub, is_public: true, name: "Nested Sub-organization")
         sign_in_organizer_of(parent)
 
         get(:sub_organizations, params: { event_id: parent.slug }, format: :xlsx)
 
         strings = xlsx_strings(response.body)
-        expect(strings).to include("Transparent Subsidiary", "Private Subsidiary")
+        expect(strings).to include("Transparent Sub-organization", "Private Sub-organization")
         # Nested descendants are indented under their parent...
         expect(strings).to include("    #{nested.name}")
         # ...and grouped so Excel renders them collapsible.
