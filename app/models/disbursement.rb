@@ -221,11 +221,11 @@ class Disbursement < ApplicationRecord
   end
 
   def canonical_transactions
-    @canonical_transactions ||= Disbursement::Outgoing.new(self).canonical_transactions.or(Disbursement::Incoming.new(self).canonical_transactions)
+    @canonical_transactions ||= CanonicalTransaction.where(ledger_item_id: ledger_item_ids)
   end
 
   def canonical_pending_transactions
-    @canonical_pending_transactions ||= Disbursement::Outgoing.new(self).canonical_pending_transactions.or(Disbursement::Incoming.new(self).canonical_pending_transactions)
+    @canonical_pending_transactions ||= CanonicalPendingTransaction.where(ledger_item_id: ledger_item_ids)
   end
 
   def transactions_helper
@@ -268,6 +268,10 @@ class Disbursement < ApplicationRecord
   end
 
   private
+
+  def ledger_item_ids
+    Ledger::Item.where(linked_object_type: ["Disbursement::Outgoing", "Disbursement::Incoming"], linked_object_id: id).select(:id)
+  end
 
   def events_are_different
     self.errors.add(:event, "must be different than source event") if event_id == source_event_id && destination_subledger_id == source_subledger_id
