@@ -96,6 +96,7 @@ class Ledger
           qualifier: lambda { |linked_object|
             next false unless linked_object.is_a?(Disbursement::Shared)
 
+            # TODO: add source_ledger and destination_ledger to disbursement and replace these
             linked_object.source_subledger&.card_grant.present? || linked_object.destination_subledger&.card_grant.present?
           }
         )
