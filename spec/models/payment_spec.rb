@@ -300,7 +300,7 @@ RSpec.describe Payment, type: :model do
       before { create(:payment_attempt, payment:, aasm_state: "pending") }
 
       it "raises ArgumentError" do
-        expect { payment.retry! }.to raise_error(ArgumentError, /all attempts must have failed/)
+        expect { payment.retry! }.to raise_error(ArgumentError, /all attempts must be failed, rejected, or canceled/)
       end
     end
 
