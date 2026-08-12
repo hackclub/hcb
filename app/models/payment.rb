@@ -139,7 +139,7 @@ class Payment < ApplicationRecord
 
 
   def state_color
-    return "warning" if ["under_review", "pending_legal_entity"].include?(aasm_state)
+    return "info" if ["under_review", "pending_legal_entity"].include?(aasm_state)
     return "success" if aasm_state == "successful"
     return "error" if aasm_state == "rejected"
 

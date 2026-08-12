@@ -238,7 +238,7 @@ class User < ApplicationRecord
 
   validates :preferred_name, length: { maximum: 30 }
   validates :preferred_name, format: {
-    with: /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,'-]+\z/,
+    with: /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,' -]+\z/,
     message: "must only contain characters in the latin alphabet.", allow_blank: true,
   }, if: :preferred_name_changed?
 
@@ -401,7 +401,9 @@ class User < ApplicationRecord
   end
 
   def locked_by
-    User.find_by(id: self.versions.where_object_changes_from(locked_at: nil).last.whodunnit)
+    # find(nil) returns ActiveRecord::RecordNotFound
+    # find_by(id: nil) returns nil
+    User.find_by(id: self.versions.where_object_changes_from(locked_at: nil).last&.whodunnit)
   end
 
   def lock!
@@ -581,22 +583,6 @@ class User < ApplicationRecord
       backup_codes.active.map(&:mark_discarded!)
     end
     BackupCodeMailer.with(user_id: id).backup_codes_disabled.deliver_now
-  end
-
-  def access_level_for(event, organizer_positions)
-    role = nil
-    access_level = nil
-    user_ops = organizer_positions.select { |op| op.user == self }
-    return nil if user_ops.empty?
-
-    user_ops.each do |op|
-      if role.nil? || OrganizerPosition.roles[op.role] > OrganizerPosition.roles[role]
-        role = op.role
-        access_level = op.event == event ? :direct : :indirect
-      end
-    end
-
-    { role:, access_level: }
   end
 
   def needs_to_enable_2fa?
