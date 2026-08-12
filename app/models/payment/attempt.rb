@@ -8,13 +8,13 @@
 #  aasm_state       :string           not null
 #  deleted_at       :datetime
 #  failed_at        :datetime
-#  payout_type      :string
 #  sent_at          :datetime
 #  created_at       :datetime         not null
 #  updated_at       :datetime         not null
 #  payment_id       :bigint           not null
 #  payout_id        :bigint
 #  payout_method_id :bigint           not null
+#  payout_type      :string
 #
 # Indexes
 #

@@ -37,7 +37,7 @@
 #  show_recent_donors                           :boolean          default(FALSE), not null
 #  show_top_donors                              :boolean          default(FALSE), not null
 #  slug                                         :text
-#  stripe_card_shipping_type                    :integer          default("standard"), not null
+#  stripe_card_shipping_type                    :integer          default(0), not null
 #  website                                      :string
 #  created_at                                   :datetime         not null
 #  updated_at                                   :datetime         not null
@@ -1034,6 +1034,13 @@ class Event < ApplicationRecord
 
   def contracts_pending_on_hcb
     contracts.sent.select { |c| c.parties.not_hcb.all?(&:signed?) }
+  end
+
+  # The oldest contract standing between this organization and activation, if
+  # any. An organization can have more than one open at a time, since contracts
+  # hang off individual signee invites rather than off the organization.
+  def contract_pending_signature
+    contracts.not_voided.where.not(aasm_state: :signed).first
   end
 
   private

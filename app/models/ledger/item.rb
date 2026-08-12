@@ -7,21 +7,23 @@
 #  id                           :bigint           not null, primary key
 #  amount_cents                 :integer          not null
 #  comment_count                :integer          default(0), not null
+#  cpt_count                    :integer          default(0), not null
+#  ct_count                     :integer          default(0), not null
 #  custom_memo                  :text
 #  datetime                     :datetime         not null
-#  linked_object_type           :string
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
 #  not_admin_only_comment_count :integer          default(0), not null
 #  receipt_count                :integer          default(0), not null
 #  receipt_required             :boolean
 #  short_code                   :text
-#  status                       :string
+#  status                       :string           default("pending"), not null
 #  system_memo                  :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
 #  author_id                    :bigint
 #  linked_object_id             :bigint
+#  linked_object_type           :string
 #
 # Indexes
 #
@@ -51,7 +53,7 @@ class Ledger
     include Receiptable
 
     has_one :hcb_code, class_name: "HcbCode", required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
-    belongs_to :linked_object, polymorphic: true, optional: true
+    belongs_to :linked_object, polymorphic: true, optional: true, inverse_of: :ledger_item
     belongs_to :author, class_name: "User", optional: true
 
     # TODO: THIS IS SO TEMPORARY REMOVE ASAP
@@ -78,7 +80,7 @@ class Ledger
       declined: "declined" # CPT has CPDM, no CPTs
     }
 
-    validates_presence_of :amount_cents, :memo, :datetime
+    validates_presence_of :amount_cents, :memo, :datetime, :status
 
     normalizes :memo, with: ->(memo) { memo.strip.presence }
     normalizes :system_memo, with: ->(system_memo) { system_memo.strip.presence }
@@ -150,155 +152,6 @@ class Ledger
       receipt_required? && marked_no_or_lost_receipt_at.nil? && receipt_count == 0
     end
 
-    def calculate_amount_cents
-      amount_cents = canonical_transactions.sum(:amount_cents)
-      amount_cents += canonical_pending_transactions.outgoing.unsettled.sum(:amount_cents)
-      if primary_ledger&.can_front_balance?
-        fronted_pt_sum = canonical_pending_transactions.incoming.fronted.not_declined.sum(:amount_cents)
-        settled_ct_sum = [canonical_transactions.sum(:amount_cents), 0].max
-        amount_cents += [fronted_pt_sum - settled_ct_sum, 0].max
-      end
-
-      amount_cents
-    end
-
-    def calculate_receipt_required
-      amount_cents < 0 && primary_ledger&.receipt_required? && !linked_object_type.in?(["Disbursement::Outgoing", "Reimbursement::ExpensePayout", "StripeServiceFee", "BankFee"])
-    end
-
-    def calculate_status
-      return :settled if linked_object_type.in?(["Reimbursement::ExpensePayout", "BankFee"])
-      return :settled if linked_object_type == "Disbursement::Outgoing" && linked_object.counterparty.canonical_pending_transactions.fronted.any?
-      return :settled if linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) && linked_object.transferred_at.present? && !linked_object.rejected? && !linked_object.errored?
-      return :settled if canonical_pending_transactions.fronted.not_declined.revenue.any? && primary_ledger&.can_front_balance?
-      return :pending if canonical_pending_transactions.unsettled.exists?
-
-      case linked_object_type
-      when "CardCharge"
-        return :released if uncaptured_stripe_authorization?
-
-        return :settled
-      when "IncreaseCheck" # Increase checks use the same state for users canceling and ops rejecting
-        return :canceled if linked_object.try(:rejected?) || linked_object.try(:increase_stopped?) || linked_object.try(:column_stopped?)
-      end
-
-      return :rejected if linked_object.try(:rejected?)
-      return :failed if linked_object.try(:failed?) || linked_object.try(:errored?)
-      return :canceled if linked_object.try(:canceled?) || linked_object.try(:voided?) || linked_object.try(:void_v2?)
-
-      # A declined CPT — determine why it never settled (may have CTs)
-      if CanonicalPendingDeclinedMapping.where(canonical_pending_transaction: canonical_pending_transactions).exists?
-        return :declined
-      elsif canonical_transactions.exists?
-        return :reversed if canonical_transactions.sum(:amount_cents).zero?
-
-        return :settled
-      end
-
-      # Nothing has mapped to this item yet
-      :pending
-    end
-
-    def calculate_system_memo
-      case linked_object_type
-      when "Invoice"
-        "Invoice to #{linked_object.smart_memo}"
-      when "Donation"
-        "Donation from #{linked_object.smart_memo}"
-      when "AchTransfer"
-        "ACH to #{linked_object.smart_memo}"
-      when "Wire"
-        "Wire to #{linked_object.recipient_name}"
-      when "PaypalTransfer"
-        "PayPal to #{linked_object.recipient_name}"
-      when "WiseTransfer"
-        "Wise to #{linked_object.recipient_name}"
-      when "Check"
-        "Check to #{linked_object.smart_memo}"
-      when "IncreaseCheck"
-        "Check to #{linked_object.recipient_name}"
-      when "CheckDeposit"
-        "Check deposit"
-      when "Disbursement::Outgoing"
-        if linked_object.card_grant.present?
-          "Grant to #{linked_object.card_grant.user.name}"
-        elsif linked_object.destination_subledger.present?
-          "Topup of grant to #{linked_object.destination_subledger.card_grant.user.name}"
-        elsif linked_object.source_subledger.present? && linked_object.source_subledger.card_grant.active?
-          "Withdrawal from grant to #{linked_object.source_subledger.card_grant.user.name}"
-        elsif linked_object.source_subledger.present? && !linked_object.source_subledger.card_grant.active?
-          "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.source_subledger.card_grant.user.name}"
-        else
-          "Transfer to #{linked_object.destination_event.name}"
-        end
-      when "Disbursement::Incoming"
-        if linked_object.source_subledger.present? && linked_object.source_subledger.card_grant.active?
-          "Withdrawal from grant to #{linked_object.source_subledger.card_grant.user.name}"
-        elsif linked_object.source_subledger.present? && !linked_object.source_subledger.card_grant.active?
-          "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.source_subledger.card_grant.user.name}"
-        elsif linked_object.card_grant.present?
-          "Grant to #{linked_object.card_grant.user.name}"
-        elsif linked_object.destination_subledger.present?
-          "Topup of grant to #{linked_object.destination_subledger.card_grant.user.name}"
-        else
-          "Transfer from #{linked_object.source_event.name}"
-        end
-      when "StripeServiceFee"
-        linked_object.stripe_description
-      when "BankFee"
-        if linked_object.amount_cents.negative? && linked_object.fee_revenue.present?
-          return "Fiscal sponsorship fee for #{linked_object.fee_revenue.start.strftime("%-m/%-d")} to #{linked_object.fee_revenue.end.strftime("%-m/%-d")}"
-        elsif linked_object.amount_cents.negative?
-          return "Fiscal sponsorship"
-        else
-          return "Fiscal sponsorship fee credit"
-        end
-      when "FeeRevenue"
-        "Fee revenue for #{linked_object.start.strftime("%-m/%-d")} to #{linked_object.end.strftime("%-m/%-d")}"
-      when "Reimbursement::PayoutHolding"
-        "Payout holding for reimbursement report #{linked_object.report.hashid}"
-      when "Reimbursement::ExpensePayout"
-        linked_object.expense.memo
-      when "CardCharge"
-        network_id = linked_object.merchant_data&.dig("network_id")
-        merchant_name = YellowPages::Merchant.lookup(network_id:).name if network_id.present?
-        merchant_name || linked_object.merchant_data&.dig("name") || "Card charge at unknown merchant"
-      end
-    end
-
-    def fallback_memo
-      self.canonical_transactions.first&.try(:smart_memo).presence || self.canonical_pending_transactions.first&.try(:smart_memo).presence || "Transaction"
-    end
-
-    def calculate_author
-      case linked_object_type
-      when "AchTransfer"
-        linked_object&.creator
-      when "CheckDeposit"
-        linked_object&.created_by
-      when "Check"
-        linked_object&.creator
-      when "IncreaseCheck"
-        linked_object&.user
-      when "Disbursement::Outgoing"
-        linked_object&.requested_by
-      when "Disbursement::Incoming"
-        linked_object&.requested_by
-      when "Reimbursement::ExpensePayout"
-        linked_object&.expense&.report&.user
-      when "PaypalTransfer"
-        linked_object&.user
-      when "Donation"
-        linked_object&.collected_by if linked_object&.in_person?
-      when "Wire"
-        linked_object&.user
-      when "WiseTransfer"
-        linked_object&.user
-      when "CardCharge"
-        linked_object&.stripe_cardholder&.user
-      end
-    end
-
     # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
     # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
     # refresh! should not update any non-caching columns
@@ -310,18 +163,26 @@ class Ledger
       association(:primary_mapping).reset
       association(:primary_ledger).reset
 
+      # Counter caches
+      self.ct_count = canonical_transactions.size
+      self.cpt_count = canonical_pending_transactions.size
+      self.comment_count = comments.size
+      self.not_admin_only_comment_count = comments.not_admin_only.size
+      self.receipt_count = receipts.size
+
       self.amount_cents = calculate_amount_cents
       self.author = calculate_author
-      self.comment_count = comments.count
-      self.not_admin_only_comment_count = comments.not_admin_only.count
-      self.receipt_count = receipts.count
       self.receipt_required = calculate_receipt_required
       self.status = calculate_status
-      # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
-      self.system_memo = calculate_system_memo
+      self.system_memo = calculate_system_memo # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
       self.memo = self.custom_memo.presence || self.system_memo.presence || fallback_memo
 
       save!
+    end
+
+    def map!
+      Ledger::Mapper.new(ledger_item: self).run
+      refresh!
     end
 
     def update_custom_memo!(memo)
@@ -334,11 +195,6 @@ class Ledger
         update!(custom_memo: memo)
       end
 
-      refresh!
-    end
-
-    def map!
-      Ledger::Mapper.new(ledger_item: self).run
       refresh!
     end
 
@@ -455,12 +311,6 @@ class Ledger
 
     private
 
-    # An approved Stripe authorization that never settled was released without
-    # capture, as opposed to being declined outright
-    def uncaptured_stripe_authorization?
-      canonical_transactions.none? && canonical_pending_transactions.any? { |cpt| cpt.raw_pending_stripe_transaction&.stripe_transaction&.dig("approved") }
-    end
-
     def assign_linked_object!
       # Once a linked object is assigned, it should never be changed.
       # In the event of a merger of ledger items (e.g. mapping a CT to an LI with an existing CPT),
@@ -471,6 +321,160 @@ class Ledger
       linked_object = (canonical_pending_transactions.order(date: :asc).map(&:linked_object) + canonical_transactions.order(date: :asc).map(&:linked_object_v2)).compact.first
 
       update!(linked_object:) if linked_object.present?
+    end
+
+    def calculate_amount_cents
+      amount_cents = canonical_transactions.sum(:amount_cents)
+      amount_cents += canonical_pending_transactions.outgoing.unsettled.sum(:amount_cents)
+      if primary_ledger&.can_front_balance?
+        fronted_pt_sum = canonical_pending_transactions.incoming.fronted.not_declined.sum(:amount_cents)
+        settled_ct_sum = [canonical_transactions.sum(:amount_cents), 0].max
+        amount_cents += [fronted_pt_sum - settled_ct_sum, 0].max
+      end
+
+      amount_cents
+    end
+
+    def calculate_author
+      case linked_object_type
+      when "AchTransfer"
+        linked_object&.creator
+      when "CheckDeposit"
+        linked_object&.created_by
+      when "Check"
+        linked_object&.creator
+      when "IncreaseCheck"
+        linked_object&.user
+      when "Disbursement::Outgoing"
+        linked_object&.requested_by
+      when "Disbursement::Incoming"
+        linked_object&.requested_by
+      when "Reimbursement::ExpensePayout"
+        linked_object&.expense&.report&.user
+      when "PaypalTransfer"
+        linked_object&.user
+      when "Donation"
+        linked_object&.collected_by if linked_object&.in_person?
+      when "Wire"
+        linked_object&.user
+      when "WiseTransfer"
+        linked_object&.user
+      when "CardCharge"
+        linked_object&.stripe_cardholder&.user
+      end
+    end
+
+    def calculate_receipt_required
+      amount_cents < 0 && primary_ledger&.receipt_required? && !linked_object_type.in?(["Disbursement::Outgoing", "Reimbursement::ExpensePayout", "StripeServiceFee", "BankFee"])
+    end
+
+    def calculate_status
+      unless canonical_pending_transactions.declined.any?
+        return :settled if linked_object_type == "BankFee"
+        return :settled if linked_object_type == "Reimbursement::ExpensePayout" && canonical_pending_transactions.exists? && canonical_transactions.none?
+        return :settled if linked_object_type == "Disbursement::Outgoing" && linked_object.counterparty.canonical_pending_transactions.fronted.any?
+        return :settled if linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) && linked_object.transferred_at.present? && !linked_object.rejected? && !linked_object.errored?
+        return :settled if canonical_pending_transactions.fronted.revenue.any? && primary_ledger&.can_front_balance?
+      end
+
+      return :pending if canonical_pending_transactions.unsettled.exists?
+
+      case linked_object_type
+      when "CardCharge"
+        return :released if canonical_transactions.none? && canonical_pending_transactions.any? { |cpt| cpt.raw_pending_stripe_transaction&.stripe_transaction&.dig("approved") }
+      when "IncreaseCheck" # Increase checks use the same state for users canceling and ops rejecting
+        return :canceled if linked_object.rejected? || linked_object.increase_stopped? || linked_object.column_stopped?
+      when "Disbursement::Outgoing", "Disbursement::Incoming"
+        return :canceled if linked_object.rejected? && linked_object.transferred_at.present?
+      end
+
+      return :rejected if linked_object.try(:rejected?)
+      return :failed if linked_object.try(:failed?) || linked_object.try(:errored?)
+      return :canceled if linked_object.try(:canceled?) || linked_object.try(:voided?) || linked_object.try(:void_v2?)
+      return :reversed if linked_object.try(:reversed?)
+
+      # A declined CPT — determine why it never settled (may have CTs)
+      if CanonicalPendingDeclinedMapping.where(canonical_pending_transaction: canonical_pending_transactions).exists?
+        return :declined
+      elsif canonical_transactions.exists?
+        return :reversed if canonical_transactions.sum(:amount_cents).zero?
+
+        return :settled
+      end
+
+      # Nothing has mapped to this item yet
+      :pending
+    end
+
+    def calculate_system_memo
+      case linked_object_type
+      when "Invoice"
+        "Invoice to #{linked_object.smart_memo}"
+      when "Donation"
+        "Donation from #{linked_object.smart_memo}"
+      when "AchTransfer"
+        "ACH to #{linked_object.smart_memo}"
+      when "Wire"
+        "Wire to #{linked_object.recipient_name}"
+      when "PaypalTransfer"
+        "PayPal to #{linked_object.recipient_name}"
+      when "WiseTransfer"
+        "Wise to #{linked_object.recipient_name}"
+      when "Check"
+        "Check to #{linked_object.smart_memo}"
+      when "IncreaseCheck"
+        "Check to #{linked_object.recipient_name}"
+      when "CheckDeposit"
+        "Check deposit"
+      when "Disbursement::Outgoing"
+        if linked_object.card_grant.present?
+          "Grant to #{linked_object.card_grant.user.name}"
+        elsif linked_object.destination_subledger.present?
+          "Topup of grant to #{linked_object.destination_subledger.card_grant.user.name}"
+        elsif linked_object.source_subledger.present? && linked_object.source_subledger.card_grant.active?
+          "Withdrawal from grant to #{linked_object.source_subledger.card_grant.user.name}"
+        elsif linked_object.source_subledger.present? && !linked_object.source_subledger.card_grant.active?
+          "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.source_subledger.card_grant.user.name}"
+        else
+          "Transfer to #{linked_object.destination_event.name}"
+        end
+      when "Disbursement::Incoming"
+        if linked_object.source_subledger.present? && linked_object.source_subledger.card_grant.active?
+          "Withdrawal from grant to #{linked_object.source_subledger.card_grant.user.name}"
+        elsif linked_object.source_subledger.present? && !linked_object.source_subledger.card_grant.active?
+          "Return of funds from #{linked_object.source_subledger.card_grant.expired? ? "expired" : "canceled"} grant to #{linked_object.source_subledger.card_grant.user.name}"
+        elsif linked_object.card_grant.present?
+          "Grant to #{linked_object.card_grant.user.name}"
+        elsif linked_object.destination_subledger.present?
+          "Topup of grant to #{linked_object.destination_subledger.card_grant.user.name}"
+        else
+          "Transfer from #{linked_object.source_event.name}"
+        end
+      when "StripeServiceFee"
+        linked_object.stripe_description
+      when "BankFee"
+        if linked_object.amount_cents.negative? && linked_object.fee_revenue.present?
+          return "Fiscal sponsorship fee for #{linked_object.fee_revenue.start.strftime("%-m/%-d")} to #{linked_object.fee_revenue.end.strftime("%-m/%-d")}"
+        elsif linked_object.amount_cents.negative?
+          return "Fiscal sponsorship"
+        else
+          return "Fiscal sponsorship fee credit"
+        end
+      when "FeeRevenue"
+        "Fee revenue for #{linked_object.start.strftime("%-m/%-d")} to #{linked_object.end.strftime("%-m/%-d")}"
+      when "Reimbursement::PayoutHolding"
+        "Payout holding for reimbursement report #{linked_object.report.hashid}"
+      when "Reimbursement::ExpensePayout"
+        linked_object.expense.memo
+      when "CardCharge"
+        network_id = linked_object.merchant_data&.dig("network_id")
+        merchant_name = YellowPages::Merchant.lookup(network_id:).name if network_id.present?
+        merchant_name || linked_object.merchant_data&.dig("name") || "Card charge at unknown merchant"
+      end
+    end
+
+    def fallback_memo
+      self.canonical_transactions.first&.try(:smart_memo).presence || self.canonical_pending_transactions.first&.try(:smart_memo).presence || "Transaction"
     end
 
   end

@@ -28,14 +28,16 @@
       <%= @item.datetime.strftime("%b %e, %Y") %>
     </span>
   </div>
-  <div>
-    <strong>
-      HCB Code
-    </strong>
-    <span>
-      <%= link_to @item.hcb_code.hcb_code, hcb_code_path(@item.hcb_code), target: :_blank %>
-    </span>
-  </div>
+  <% if @item.hcb_code.present? %>
+    <div>
+      <strong>
+        HCB Code
+      </strong>
+      <span>
+        <%= link_to @item.hcb_code.hcb_code, hcb_code_path(@item.hcb_code), target: :_blank %>
+      </span>
+    </div>
+  <% end %>
   <% if @item.linked_object.present? %>
     <% admin_tool do %>
       <strong>

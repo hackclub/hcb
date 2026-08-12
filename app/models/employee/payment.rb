@@ -9,7 +9,6 @@
 #  amount_cents   :integer          default(0), not null
 #  approved_at    :datetime
 #  description    :text
-#  payout_type    :string
 #  rejected_at    :datetime
 #  review_message :text
 #  title          :text             not null
@@ -17,6 +16,7 @@
 #  updated_at     :datetime         not null
 #  employee_id    :bigint           not null
 #  payout_id      :bigint
+#  payout_type    :string
 #  reviewed_by_id :bigint
 #
 # Indexes

@@ -11,11 +11,11 @@
 #  friendly_memo           :text
 #  hcb_code                :text
 #  memo                    :text             not null
-#  transaction_source_type :string
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
 #  ledger_item_id          :bigint
 #  transaction_source_id   :bigint
+#  transaction_source_type :string
 #
 # Indexes
 #
@@ -52,8 +52,8 @@ class CanonicalTransaction < ApplicationRecord
   scope :outgoing_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE}%'") }
   scope :incoming_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE}%'") }
   scope :stripe_card_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_CARD_CODE}%'") }
-  scope :with_custom_memo, -> { where("custom_memo is not null") }
-  scope :without_custom_memo, -> { where("custom_memo is null") }
+  scope :with_custom_memo, -> { where.not(custom_memo: nil) }
+  scope :without_custom_memo, -> { where(custom_memo: nil) }
   scope :with_short_code, -> { where("memo ~ '.*HCB-\\w{5}.*'") }
 
   scope :revenue, -> { where("amount_cents > 0") }

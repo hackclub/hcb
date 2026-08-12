@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rails_helper"
+require "csv"
 
 RSpec.describe EventsController do
   include SessionSupport
@@ -159,23 +160,6 @@ RSpec.describe EventsController do
         expect(response).to have_http_status(:ok)
       end
     end
-
-    context "when the organizer has not opted into the new ledger" do
-      it "redirects to the classic transactions page" do
-        get(:ledger, params: { event_id: event.slug })
-
-        expect(response).to redirect_to(event_transactions_path(event))
-      end
-    end
-
-    context "with apply_flipper=true" do
-      it "opts the organizer into the new ledger and renders it" do
-        get(:ledger, params: { event_id: event.slug, apply_flipper: "true" })
-
-        expect(Flipper.enabled?(:new_ledger_2026_07_17, admin)).to be(true)
-        expect(response).to have_http_status(:ok)
-      end
-    end
   end
 
   describe "#transactions" do
@@ -184,31 +168,10 @@ RSpec.describe EventsController do
 
     before { create_session(admin, verified: true) }
 
-    context "when the organizer has opted into the new ledger" do
-      before { Flipper.enable_actor(:new_ledger_2026_07_17, admin) }
-
-      it "redirects to the new ledger" do
-        get(:transactions, params: { event_id: event.slug })
-
-        expect(response).to redirect_to(event_ledger_path(event))
-      end
-    end
-
     context "when the organizer has not opted into the new ledger" do
       it "renders the classic transactions page" do
         get(:transactions, params: { event_id: event.slug })
 
-        expect(response).to have_http_status(:ok)
-      end
-    end
-
-    context "with apply_flipper=true" do
-      before { Flipper.enable_actor(:new_ledger_2026_07_17, admin) }
-
-      it "opts the organizer out of the new ledger and renders the classic page" do
-        get(:transactions, params: { event_id: event.slug, apply_flipper: "true" })
-
-        expect(Flipper.enabled?(:new_ledger_2026_07_17, admin)).to be(false)
         expect(response).to have_http_status(:ok)
       end
     end
@@ -240,10 +203,10 @@ RSpec.describe EventsController do
 
     let(:parent) { create(:event, is_public: true, name: "Parent Organization") }
     let!(:transparent_sub) do
-      create(:event, parent:, is_public: true, name: "Transparent Subsidiary", slug: "transparent-subsidiary")
+      create(:event, parent:, is_public: true, name: "Transparent Sub-organization", slug: "transparent-sub-organization")
     end
     let!(:private_sub) do
-      create(:event, parent:, is_public: false, name: "Private Subsidiary", slug: "private-subsidiary")
+      create(:event, parent:, is_public: false, name: "Private Sub-organization", slug: "private-sub-organization")
     end
 
     context "as a signed out visitor" do
@@ -253,8 +216,8 @@ RSpec.describe EventsController do
       it "lists only transparent sub-organizations, and loads balances for only those", :aggregate_failures do
         get(:sub_organizations, params: { event_id: parent.slug })
 
-        expect(response.body).to include("Transparent Subsidiary")
-        expect(response.body).not_to include("Private Subsidiary")
+        expect(response.body).to include("Transparent Sub-organization")
+        expect(response.body).not_to include("Private Sub-organization")
         expect(response.body).to include(event_async_balance_path(transparent_sub))
         expect(response.body).not_to include(event_async_balance_path(private_sub))
       end
@@ -262,26 +225,38 @@ RSpec.describe EventsController do
       it "omits private sub-organizations from the graph nodes" do
         get(:sub_organizations, params: { event_id: parent.slug })
 
-        expect(graph_node_names(response.body)).to match_array(["Parent Organization", "Transparent Subsidiary"])
+        expect(graph_node_names(response.body)).to match_array(["Parent Organization", "Transparent Sub-organization"])
       end
 
       it "excludes private sub-organizations from the CSV export", :aggregate_failures do
         get(:sub_organizations, params: { event_id: parent.slug }, format: :csv)
 
-        expect(response.body).to include("Transparent Subsidiary")
-        expect(response.body).not_to include("Private Subsidiary")
+        expect(response.body).to include("Transparent Sub-organization")
+        expect(response.body).not_to include("Private Sub-organization")
+      end
+
+      it "exports the whole subtree with each row's parent, so the tree can be rebuilt", :aggregate_failures do
+        grandchild = create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild")
+
+        get(:sub_organizations, params: { event_id: parent.slug }, format: :csv)
+
+        rows = CSV.parse(response.body, headers: true).index_by { |row| row["Name"] }
+        expect(rows.keys).to match_array(["Transparent Sub-organization", "Transparent Grandchild"])
+        expect(rows["Transparent Sub-organization"]["Parent ID"]).to eq(parent.public_id)
+        expect(rows["Transparent Grandchild"]["ID"]).to eq(grandchild.public_id)
+        expect(rows["Transparent Grandchild"]["Parent ID"]).to eq(transparent_sub.public_id)
       end
     end
 
     context "with a hidden sub-organization" do
       let!(:hidden_sub) do
-        create(:event, parent:, is_public: true, name: "Hidden Subsidiary", hidden_at: Time.current)
+        create(:event, parent:, is_public: true, name: "Hidden Sub-organization", hidden_at: Time.current)
       end
 
       it "hides it from a signed out visitor" do
         get(:sub_organizations, params: { event_id: parent.slug })
 
-        expect(response.body).not_to include("Hidden Subsidiary")
+        expect(response.body).not_to include("Hidden Sub-organization")
       end
 
       context "as an organizer" do
@@ -294,15 +269,15 @@ RSpec.describe EventsController do
           hidden_section = document.at_css("details#hidden_sub_organizations")
           main_list = document.at_css("ul#sub_organizations")
 
-          expect(hidden_section.text).to include("Hidden Subsidiary")
-          expect(main_list.text).not_to include("Hidden Subsidiary")
-          expect(main_list.text).to include("Transparent Subsidiary")
+          expect(hidden_section.text).to include("Hidden Sub-organization")
+          expect(main_list.text).not_to include("Hidden Sub-organization")
+          expect(main_list.text).to include("Transparent Sub-organization")
         end
 
         it "omits it from the graph" do
           get(:sub_organizations, params: { event_id: parent.slug })
 
-          expect(graph_node_names(response.body)).not_to include("Hidden Subsidiary")
+          expect(graph_node_names(response.body)).not_to include("Hidden Sub-organization")
         end
       end
     end
@@ -313,8 +288,8 @@ RSpec.describe EventsController do
 
         get(:sub_organizations, params: { event_id: parent.slug })
 
-        expect(response.body).to include("Transparent Subsidiary")
-        expect(response.body).to include("Private Subsidiary")
+        expect(response.body).to include("Transparent Sub-organization")
+        expect(response.body).to include("Private Sub-organization")
       end
     end
   end
@@ -350,6 +325,99 @@ RSpec.describe EventsController do
       get(:async_sub_organizations_graph, params: { event_id: parent.slug })
 
       expect(response.parsed_body.pluck("id")).to match_array([parent.id, transparent_sub.id])
+    end
+  end
+
+  describe "#team" do
+    render_views
+
+    let(:parent) { create(:event, name: "Parent Organization") }
+    let(:event) { create(:event, parent:, name: "Sub Organization") }
+
+    before { sign_in_organizer_of(event) }
+
+    # The callout's list, as { user's displayed name => the role it credits them with }.
+    def indirect_access
+      get(:team, params: { event_id: event.slug })
+
+      Nokogiri::HTML5(response.body).css("#parent_organization_access .grid > span").to_h do |row|
+        [row.at_css(".mention").text.squish, row.text.include?("can manage") ? "manager" : "reader"]
+      end
+    end
+
+    it "collapses the parent organization callout by default", :aggregate_failures do
+      get(:team, params: { event_id: event.slug })
+
+      callout = Nokogiri::HTML5(response.body).at_css("details#parent_organization_access")
+      expect(callout.text).to include("The team behind Parent Organization also has access to Sub Organization")
+      expect(callout.attributes).not_to have_key("open")
+    end
+
+    it "grants a reader on the parent read access here" do
+      reader = create(:user)
+      create(:organizer_position, user: reader, event: parent, role: :reader)
+
+      expect(indirect_access).to eq({ reader.initial_name => "reader" })
+    end
+
+    # A member of the parent only inherits read access here, so their own
+    # member position is the higher of the two and already appears in the
+    # team list.
+    it "grants a member on the parent only read access here" do
+      member = create(:user)
+      create(:organizer_position, user: member, event: parent, role: :member)
+
+      expect(indirect_access).to eq({ member.initial_name => "reader" })
+    end
+
+    it "grants a manager on the parent full management here" do
+      manager = create(:user)
+      create(:organizer_position, user: manager, event: parent, role: :manager)
+
+      expect(indirect_access).to eq({ manager.initial_name => "manager" })
+    end
+
+    it "takes the highest role when the user holds positions on several ancestors" do
+      grandparent = create(:event)
+      parent.update!(parent: grandparent)
+      user = create(:user)
+      create(:organizer_position, user:, event: parent, role: :reader)
+      create(:organizer_position, user:, event: grandparent, role: :manager)
+
+      expect(indirect_access).to eq({ user.initial_name => "manager" })
+    end
+
+    it "omits a user whose position here already matches what they inherit" do
+      user = create(:user)
+      create(:organizer_position, user:, event: parent, role: :reader)
+      create(:organizer_position, user:, event:, role: :reader)
+
+      expect(indirect_access).to eq({})
+    end
+
+    it "omits a user whose position here outranks what they inherit" do
+      user = create(:user)
+      create(:organizer_position, user:, event: parent, role: :member)
+      create(:organizer_position, user:, event:, role: :member)
+
+      expect(indirect_access).to eq({})
+    end
+
+    it "keeps a user whose inherited role outranks their position here" do
+      user = create(:user)
+      create(:organizer_position, user:, event: parent, role: :manager)
+      create(:organizer_position, user:, event:, role: :member)
+
+      expect(indirect_access).to eq({ user.initial_name => "manager" })
+    end
+
+    it "lists managers before readers" do
+      reader = create(:user, full_name: "Aaron Reader")
+      manager = create(:user, full_name: "Zoe Manager")
+      create(:organizer_position, user: reader, event: parent, role: :reader)
+      create(:organizer_position, user: manager, event: parent, role: :manager)
+
+      expect(indirect_access.keys).to eq([manager.initial_name, reader.initial_name])
     end
   end
 

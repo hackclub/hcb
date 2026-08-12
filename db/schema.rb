@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_03_174434) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_05_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -394,6 +394,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_174434) do
     t.bigint "raw_pending_bank_fee_transaction_id"
     t.bigint "raw_pending_column_transaction_id"
     t.bigint "raw_pending_donation_transaction_id"
+    t.bigint "raw_pending_fee_reimbursement_transaction_id"
     t.bigint "raw_pending_fee_revenue_transaction_id"
     t.bigint "raw_pending_incoming_disbursement_transaction_id"
     t.bigint "raw_pending_invoice_transaction_id"
@@ -416,6 +417,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_174434) do
     t.index ["raw_pending_column_transaction_id"], name: "idx_on_raw_pending_column_transaction_id_ceea9a99e1", unique: true
     t.index ["raw_pending_column_transaction_id"], name: "index_canonical_pending_txs_on_rpct_id"
     t.index ["raw_pending_donation_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_donation_tx_id"
+    t.index ["raw_pending_fee_reimbursement_transaction_id"], name: "index_cpts_on_raw_pending_fee_reimbursement_tx_id"
     t.index ["raw_pending_fee_revenue_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_fee_revenue_tx_id"
     t.index ["raw_pending_incoming_disbursement_transaction_id"], name: "index_cpts_on_raw_pending_incoming_disbursement_transaction_id"
     t.index ["raw_pending_invoice_transaction_id"], name: "index_canonical_pending_txs_on_raw_pending_invoice_tx_id"
@@ -463,8 +465,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_174434) do
     t.string "merchant_category"
     t.string "merchant_network_id"
     t.bigint "raw_pending_stripe_transaction_id"
+    t.bigint "stripe_card_id"
     t.datetime "updated_at", null: false
     t.index ["raw_pending_stripe_transaction_id"], name: "index_card_charges_on_raw_pending_stripe_transaction_id", unique: true
+    t.index ["stripe_card_id"], name: "index_card_charges_on_stripe_card_id"
   end
 
   create_table "card_grant_pre_authorizations", force: :cascade do |t|
@@ -1605,7 +1609,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_174434) do
     t.integer "amount_cents", null: false
     t.bigint "author_id"
     t.integer "comment_count", default: 0, null: false
+    t.integer "cpt_count", default: 0, null: false
     t.datetime "created_at", null: false
+    t.integer "ct_count", default: 0, null: false
     t.text "custom_memo"
     t.datetime "datetime", null: false
     t.bigint "linked_object_id"
@@ -1616,7 +1622,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_174434) do
     t.integer "receipt_count", default: 0, null: false
     t.boolean "receipt_required"
     t.text "short_code"
-    t.string "status"
+    t.string "status", default: "pending", null: false
     t.text "system_memo"
     t.datetime "updated_at", null: false
     t.index ["amount_cents"], name: "index_ledger_items_on_amount_cents"
@@ -1682,6 +1688,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_174434) do
     t.bigint "details_id", null: false
     t.string "details_type", null: false
     t.bigint "legal_entity_id", null: false
+    t.string "name"
     t.datetime "updated_at", null: false
     t.index ["details_type", "details_id"], name: "index_legal_entity_payout_methods_on_details", unique: true
     t.index ["legal_entity_id"], name: "index_le_payout_methods_one_default_per_entity", unique: true, where: "(\"default\" = true)"
@@ -1842,6 +1849,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_174434) do
   end
 
   create_table "organizer_position_deletion_requests", force: :cascade do |t|
+    t.bigint "assignee_id"
     t.datetime "closed_at", precision: nil
     t.bigint "closed_by_id"
     t.datetime "created_at", precision: nil, null: false
@@ -1854,6 +1862,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_174434) do
     t.boolean "subject_has_outstanding_transactions_stripe", default: false, null: false
     t.bigint "submitted_by_id", null: false
     t.datetime "updated_at", precision: nil, null: false
+    t.index ["assignee_id"], name: "index_organizer_position_deletion_requests_on_assignee_id"
     t.index ["closed_by_id"], name: "index_organizer_position_deletion_requests_on_closed_by_id"
     t.index ["organizer_position_id"], name: "index_organizer_deletion_requests_on_organizer_position_id"
     t.index ["submitted_by_id"], name: "index_organizer_position_deletion_requests_on_submitted_by_id"
@@ -2057,6 +2066,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_174434) do
     t.datetime "onboarding_at"
     t.bigint "payee_id", null: false
     t.integer "rate_cents", default: 0, null: false
+    t.string "rate_unit", default: "hour", null: false
     t.datetime "rejected_at"
     t.date "start_date", null: false
     t.datetime "terminated_at"
@@ -2163,6 +2173,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_174434) do
     t.string "donation_transaction_id"
     t.string "state"
     t.datetime "updated_at", null: false
+  end
+
+  create_table "raw_pending_fee_reimbursement_transactions", force: :cascade do |t|
+    t.integer "amount_cents"
+    t.datetime "created_at", null: false
+    t.date "date_posted"
+    t.bigint "fee_reimbursement_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["fee_reimbursement_id"], name: "index_rp_fee_reimbursement_txs_on_fee_reimbursement_id"
   end
 
   create_table "raw_pending_fee_revenue_transactions", force: :cascade do |t|
@@ -3040,6 +3059,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_174434) do
   add_foreign_key "card_charge_raw_stripe_transactions", "card_charges", on_delete: :cascade
   add_foreign_key "card_charge_raw_stripe_transactions", "raw_stripe_transactions", on_delete: :cascade
   add_foreign_key "card_charges", "raw_pending_stripe_transactions", on_delete: :nullify
+  add_foreign_key "card_charges", "stripe_cards"
   add_foreign_key "card_grant_pre_authorizations", "card_grants"
   add_foreign_key "card_grant_settings", "events"
   add_foreign_key "card_grants", "events"
@@ -3172,6 +3192,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_03_174434) do
   add_foreign_key "payroll_positions", "payees"
   add_foreign_key "raffles", "raffles", column: "referring_raffle_id"
   add_foreign_key "raffles", "users"
+  add_foreign_key "raw_pending_fee_reimbursement_transactions", "fee_reimbursements"
   add_foreign_key "raw_pending_fee_revenue_transactions", "fee_revenues"
   add_foreign_key "raw_pending_incoming_disbursement_transactions", "disbursements"
   add_foreign_key "raw_pending_outgoing_disbursement_transactions", "disbursements"
