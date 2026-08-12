@@ -90,15 +90,11 @@
     <div class="muted">Back image</div>
   </div>
 
-  <%# if check_deposit.pending? || @hcb_code.fee_waived? %>
   <% if check_deposit.pending? %>
     <section class="ledger-item--footer">
       <% if check_deposit.pending? %>
         Checks may take up to 2 weeks to deposit.
       <% end %>
-      <%# if @hcb_code.fee_waived? %>
-        <!-- Fees were waived on this transaction — enjoy! -->
-      <%# end %>
     </section>
   <% end %>
 </article>
