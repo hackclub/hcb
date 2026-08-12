@@ -17,7 +17,7 @@ export default class extends Controller {
 
   #update() {
     if (!this.hasSeparatorTarget || !this.hasTailTarget) return
-    
+
     const separator = this.separatorTarget.getBoundingClientRect()
     const tail = this.tailTarget.getBoundingClientRect()
 
