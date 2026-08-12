@@ -631,6 +631,7 @@ class AdminController < Admin::BaseController
   def ach_approve
     ach_transfer = AchTransfer.find(params[:id])
     return unless enforce_sudo_mode
+
     ensure_admin_may_approve!(ach_transfer, amount_cents: ach_transfer.amount)
 
     ach_transfer.approve!(current_user)
@@ -645,6 +646,7 @@ class AdminController < Admin::BaseController
   def ach_send_realtime
     ach_transfer = AchTransfer.find(params[:id])
     return unless enforce_sudo_mode
+
     ensure_admin_may_approve!(ach_transfer, amount_cents: ach_transfer.amount)
 
     ach_transfer.approve!(current_user, send_realtime: true)
