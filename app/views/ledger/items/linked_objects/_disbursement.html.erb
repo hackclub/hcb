@@ -110,12 +110,10 @@
         <strong>From</strong>
         <%= link_to_if EventPolicy.new(current_user, source).show?, source.name, source, target: "_top" %>
       </p>
-
       <p>
         <strong>To</strong>
         <%= link_to_if EventPolicy.new(current_user, destination).show?, destination.name, destination, target: "_top" %>
       </p>
-
     <% end %>
 
     <p>
