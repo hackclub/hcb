@@ -110,6 +110,7 @@ RSpec.describe OrganizerPositionInvitesController do
 
     before do
       allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+      allow(ApplicationsTable).to receive(:all).and_return([])
 
       stub_request(:post, "https://api.docuseal.co/submissions")
         .to_return(
