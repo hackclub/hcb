@@ -45,6 +45,7 @@ RSpec.describe Ledger::Item::SpecialAppearance do
       expect(described_class.find_by_linked_object(disbursement.incoming_disbursement)).to be_nil
     end
 
+    # Non-disbursements may have special appearances in the future in which case this test would be updated.
     it "does not match a non-disbursement, or nothing at all" do
       expect(described_class.find_by_linked_object(CardCharge.new)).to be_nil
       expect(described_class.find_by_linked_object(nil)).to be_nil
