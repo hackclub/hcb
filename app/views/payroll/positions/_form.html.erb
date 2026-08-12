@@ -1,9 +1,8 @@
 <%# locals: (event:, payee: nil, position: nil) %>
 
 <% if payee && params[:edit_payee].present? && policy(payee).update? %>
-  <%= render "payments/edit_payee", event:, payee: %>
+  <%= render "payees/edit_section", event:, payee:, destination: "contractors", selected: params[:selected] %>
 <% else %>
-
   <% editing = position&.persisted? %>
   <% disabled = !policy(event).create_transfer? %>
   <% @can_transfer = !disabled %>

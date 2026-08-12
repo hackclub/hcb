@@ -1,7 +1,7 @@
 <%# locals: (event:, payment:, payee: nil) %>
 
 <% if payee && params[:edit_payee].present? && policy(payee).update? %>
-  <%= render "payments/edit_payee", event:, payee: %>
+  <%= render "payees/edit_section", event:, payee:, destination: "payments", selected: params[:selected] %>
 <% else %>
 
 <% disabled = !policy(event).create_payment? %>
