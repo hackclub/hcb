@@ -19,4 +19,32 @@ RSpec.describe Contract, type: :model do
     end
 
   end
+
+  describe "#owned_by?" do
+    let(:payee) { create(:payee) }
+    let(:position) { create(:payroll_position, payee:) }
+    let(:organizer) { create(:user) }
+    let(:other_user) { create(:user) }
+
+    let!(:contract) do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+
+      Contract::PayrollPosition.create!(contractable: position, include_videos: false).tap do |c|
+        c.parties.create!(user: organizer, role: :organizer)
+        c.parties.create!(external_email: payee.email, role: :contractor)
+      end
+    end
+
+    it "is true for the contract's signee/organizer party" do
+      expect(contract.owned_by?(organizer)).to eq(true)
+    end
+
+    it "is false for an unrelated user" do
+      expect(contract.owned_by?(other_user)).to eq(false)
+    end
+
+    it "is false for nil" do
+      expect(contract.owned_by?(nil)).to eq(false)
+    end
+  end
 end

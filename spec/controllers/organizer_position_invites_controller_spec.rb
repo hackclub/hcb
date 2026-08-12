@@ -103,4 +103,74 @@ RSpec.describe OrganizerPositionInvitesController do
       expect(contract.party(:signee)&.external_id).to eq("STUBBED")
     end
   end
+
+  describe "#resend_to_cosigner" do
+    let(:event) { create(:event) }
+    let(:invite) { create(:organizer_position_invite, event:) }
+
+    before do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+
+      stub_request(:post, "https://api.docuseal.co/submissions")
+        .to_return(
+          status: 201,
+          body: [{ submission_id: "STUBBED" }].to_json,
+          headers: { content_type: "application/json" }
+        )
+      stub_request(:get, "https://api.docuseal.co/submissions/STUBBED")
+        .to_return(
+          status: 200,
+          body: { submitters: [{ role: "HCB", slug: "STUBBED" }, { role: "Contract Signee", slug: "STUBBED" }, { role: "Cosigner", slug: "STUBBED" }] }.to_json,
+          headers: { content_type: "application/json" }
+        )
+
+      invite.send_contract(cosigner_email: "old-cosigner@hackclub.com", include_videos: false)
+    end
+
+    it "resends to the same email without voiding the contract" do
+      create_session(invite.user, verified: true)
+      original_contract = invite.contract
+
+      post :resend_to_cosigner, params: { id: invite.to_param, cosigner_email: "old-cosigner@hackclub.com" }
+
+      expect(flash[:success]).to eq("Resent agreement to cosigner")
+      expect(original_contract.reload).to be_sent
+      expect(invite.reload.contract).to eq(original_contract)
+    end
+
+    it "voids and reissues the contract when the cosigner email changes" do
+      create_session(invite.user, verified: true)
+      original_contract = invite.contract
+
+      post :resend_to_cosigner, params: { id: invite.to_param, cosigner_email: "new-cosigner@hackclub.com" }
+
+      expect(flash[:success]).to eq("Resent agreement to cosigner")
+      expect(original_contract.reload).to be_voided
+
+      new_contract = invite.reload.contract
+      expect(new_contract).not_to eq(original_contract)
+      expect(new_contract.reissue_of).to eq(original_contract)
+      expect(new_contract.party(:cosigner).email).to eq("new-cosigner@hackclub.com")
+    end
+
+    it "rejects the invitee's own email as the cosigner email" do
+      create_session(invite.user, verified: true)
+
+      post :resend_to_cosigner, params: { id: invite.to_param, cosigner_email: invite.user.email }
+
+      expect(flash[:error]).to eq("You cannot use your own email as the cosigner's email")
+      expect(invite.reload.contract).to be_sent
+    end
+
+    it "denies an unrelated, non-admin user" do
+      other_user = create(:user)
+      create_session(other_user, verified: true)
+      original_contract = invite.contract
+
+      post :resend_to_cosigner, params: { id: invite.to_param, cosigner_email: "new-cosigner@hackclub.com" }
+
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+      expect(original_contract.reload).to be_sent
+    end
+  end
 end

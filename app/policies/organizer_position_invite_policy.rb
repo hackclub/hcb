@@ -45,6 +45,12 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
     user&.admin?
   end
 
+  def resend_to_cosigner?
+    return false if record.contract&.party(:cosigner).nil?
+
+    record.contract.party(:cosigner).pending? && (record.user == user || user&.admin?)
+  end
+
   private
 
   def admin_or_manager?
