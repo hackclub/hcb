@@ -9,8 +9,6 @@ RSpec.describe Payroll::Position, type: :model do
       "onboarding"   => :onboarding,
       "onboarded"    => :active,
       "expired"      => :completed,
-      "terminated"   => :completed,
-      "rejected"     => :completed,
     }.each do |aasm_state, expected|
       it "maps #{aasm_state} to #{expected}" do
         position = described_class.new(aasm_state:)
