@@ -40,7 +40,7 @@ class Ledger
         return nil if event_ids.empty?
 
         lambda do |linked_object|
-          next false unless linked_object.is_a?(Disbursement::Shared)
+          next false unless linked_object.is_a?(Disbursement::Incoming)
           next false unless linked_object.source_event_id.in?(event_ids)
           next false if since && linked_object.created_at <= since
 
@@ -94,7 +94,7 @@ class Ledger
           key: :card_grant,
           icon: "bag",
           qualifier: lambda { |linked_object|
-            next false unless linked_object.is_a?(Disbursement::Shared)
+            next false unless linked_object.class.in?([Disbursement::Outgoing, Disbursement::Incoming])
 
             # TODO: add source_ledger and destination_ledger to disbursement and replace these
             linked_object.source_subledger&.card_grant.present? || linked_object.destination_subledger&.card_grant.present?

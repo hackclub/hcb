@@ -2,7 +2,7 @@
 
 module Maintenance
   class BackfillLedgerItemSpecialAppearancesTask < MaintenanceTasks::Task
-    DISBURSEMENT_TYPES = ["Disbursement::Incoming", "Disbursement::Outgoing"].freeze
+    DISBURSEMENT_TYPES = ["Disbursement::Incoming"].freeze
     EVENT_IDS = [EventMappingEngine::EventIds::HACKATHON_GRANT_FUND, EventMappingEngine::EventIds::WINTER_HARDWARE_WONDERLAND_GRANT_FUND, EventMappingEngine::EventIds::ARGOSY_GRANT_FUND, EventMappingEngine::EventIds::ARGOSY_GRANT_FUND_2025, EventMappingEngine::EventIds::FIRST_TRANSPARENCY_GRANT_FUND, EventMappingEngine::EventIds::GENE_HAAS_GRANT_FUND].freeze
 
     def collection
