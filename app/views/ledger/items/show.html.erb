@@ -41,18 +41,10 @@
   <% if @item.linked_object.present? %>
     <% admin_tool do %>
       <strong>
-        Linked Object Type
+        Linked Object
       </strong>
       <span>
-        <%= @item.linked_object_type %>
-      </span>
-    <% end %>
-    <% admin_tool do %>
-      <strong>
-        Linked Object ID
-      </strong>
-      <span>
-        <%= @item.linked_object_id %>
+        <%= @item.linked_object_type %> (<%= @item.linked_object_id %>)
       </span>
     <% end %>
   <% end %>
