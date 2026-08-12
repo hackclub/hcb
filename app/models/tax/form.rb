@@ -50,7 +50,7 @@ module Tax
 
     enum :form_type, { W8BEN: "W8BEN", W9: "W9", W8BENE: "W8BENE", W8ECI: "W8ECI", W8IMY: "W8IMY", W8EXP: "W8EXP" }
     enum :external_service, { manual: "manual", taxbandits: "taxbandits" }, prefix: :sent_with
-    enum :entity_type, { person: "person", business: "business" }, prefix: :entity
+    enum :entity_type, { person: "person", business: "business", corporation: "corporation" }, prefix: :entity
 
     # https://developer.taxbandits.com/docs/whcertificate/status/
     enum :taxbandits_status, %w[
@@ -283,7 +283,7 @@ module Tax
     def entity_type_from(submission_form_type, form_data)
       case submission_form_type
       when "FormW9"
-        if form_data["FederalTaxClassification"].downcase.include?("corporation")
+        if form_data["FederalTaxClassification"]&.downcase&.include?("corporation")
           :corporation
         elsif form_data["TINType"] == "SSN"
           :person
