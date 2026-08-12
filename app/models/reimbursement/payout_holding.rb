@@ -114,7 +114,7 @@ module Reimbursement
       raise ArgumentError, "PayPal transfer must have been rejected" unless paypal_transfer.nil? || paypal_transfer.rejected?
       raise ArgumentError, "a check must have been rejected / stopped" unless increase_check.nil? || increase_check.column_rejected? || increase_check.column_stopped?
       raise ArgumentError, "a wire must have been rejected / failed" unless wire.nil? || wire.rejected? || wire.failed?
-      raise ArgumentError, "a wise transfer must have been rejected / failed" unless wise_transfer.nil? || wise_transfer.rejected? || wise_transfer.failed?
+      raise ArgumentError, "a Wise transfer must have been rejected / failed" unless wise_transfer.nil? || wise_transfer.rejected? || wise_transfer.failed?
       raise ArgumentError, "must have settled expense payouts" unless expense_payouts.all? { |ep| ep.settled? }
 
       ActiveRecord::Base.transaction do
