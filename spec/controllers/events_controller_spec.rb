@@ -25,6 +25,15 @@ RSpec.describe EventsController do
     create_session(organizer, verified: true)
   end
 
+  # XLSX files are zip archives; cell text lives in the shared strings table.
+  def xlsx_entry(body, entry)
+    Zip::File.open_buffer(StringIO.new(body)).read(entry)
+  end
+
+  def xlsx_strings(body)
+    Nokogiri::XML(xlsx_entry(body, "xl/sharedStrings.xml")).css("si").map(&:text)
+  end
+
   describe "#index" do
     before do
       # This is required since creating event configs creates a monthly announcement for the event authored by the system user
@@ -246,6 +255,14 @@ RSpec.describe EventsController do
         expect(rows["Transparent Grandchild"]["ID"]).to eq(grandchild.public_id)
         expect(rows["Transparent Grandchild"]["Parent ID"]).to eq(transparent_sub.public_id)
       end
+
+      it "excludes private sub-organizations from the XLSX export", :aggregate_failures do
+        get(:sub_organizations, params: { event_id: parent.slug }, format: :xlsx)
+
+        strings = xlsx_strings(response.body)
+        expect(strings).to include("Transparent Sub-organization")
+        expect(strings).not_to include("Private Sub-organization")
+      end
     end
 
     context "with a hidden sub-organization" do
@@ -290,6 +307,20 @@ RSpec.describe EventsController do
 
         expect(response.body).to include("Transparent Sub-organization")
         expect(response.body).to include("Private Sub-organization")
+      end
+
+      it "renders every descendant as a collapsible tree in the XLSX export", :aggregate_failures do
+        nested = create(:event, parent: transparent_sub, is_public: true, name: "Nested Sub-organization")
+        sign_in_organizer_of(parent)
+
+        get(:sub_organizations, params: { event_id: parent.slug }, format: :xlsx)
+
+        strings = xlsx_strings(response.body)
+        expect(strings).to include("Transparent Sub-organization", "Private Sub-organization")
+        # Nested descendants are indented under their parent...
+        expect(strings).to include("    #{nested.name}")
+        # ...and grouped so Excel renders them collapsible.
+        expect(xlsx_entry(response.body, "xl/worksheets/sheet1.xml")).to include('outlineLevel="1"')
       end
     end
   end

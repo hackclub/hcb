@@ -9,9 +9,20 @@
 <h1 class="heading flex items-center gap-2 flex-col sm:flex-row border-0 mb-0">
   <span class="flex-grow">Sub-organizations</span>
   <div class="flex items-center gap-2">
-    <%= pop_icon_to "download",
-                    { format: :csv },
-                    class: "tooltipped tooltipped--w", "aria-label": "Download all as CSV" %>
+    <div data-controller="menu" data-menu-placement-value="bottom-end">
+      <button
+        type="button"
+        aria-label="Download"
+        class="tooltipped tooltipped--w pop menu__toggle menu__toggle--arrowless overflow-visible"
+        data-menu-target="toggle"
+        data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
+        <%= inline_icon "download", size: 28 %>
+      </button>
+      <div class="menu__content menu__content--2 h5" data-menu-target="content">
+        <%= link_to "Download as CSV", { format: :csv }, target: :_blank %>
+        <%= link_to "Download tree as Excel", { format: :xlsx }, target: :_blank %>
+      </div>
+    </div>
     <%= link_to event_new_sub_organization_path(@event), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" }, disabled: !policy(@event).create_sub_organization? do %>
       <%= inline_icon "plus" %>
       Create a sub-organization
