@@ -30,9 +30,11 @@ RSpec.describe Disbursement, type: :model do
   # side-effects (fronting / declining) operate on the canonical pending transactions,
   # so create both legs directly to actually exercise them.
   def create_canonical_pending_transactions(disbursement)
-    outgoing = create(:canonical_pending_transaction, amount_cents: -disbursement.amount)
+    outgoing_li = create(:ledger_item, linked_object: disbursement.outgoing_disbursement)
+    outgoing = create(:canonical_pending_transaction, amount_cents: -disbursement.amount, ledger_item: outgoing_li)
     outgoing.update_column(:hcb_code, disbursement.outgoing_hcb_code)
-    incoming = create(:canonical_pending_transaction, amount_cents: disbursement.amount)
+    incoming_li = create(:ledger_item, linked_object: disbursement.incoming_disbursement)
+    incoming = create(:canonical_pending_transaction, amount_cents: disbursement.amount, ledger_item: incoming_li)
     incoming.update_column(:hcb_code, disbursement.incoming_hcb_code)
     [outgoing, incoming]
   end
@@ -468,11 +470,11 @@ RSpec.describe Disbursement, type: :model do
     end
 
     describe "#canonical_transactions" do
-      it "returns CTs with matching hcb_code" do
-        ct1 = create(:canonical_transaction)
-        ct1.update_column(:hcb_code, disbursement.outgoing_hcb_code)
-        ct2 = create(:canonical_transaction)
-        ct2.update_column(:hcb_code, disbursement.outgoing_hcb_code)
+      it "returns CTs linked via either leg's ledger item" do
+        outgoing_li = create(:ledger_item, linked_object: disbursement.outgoing_disbursement)
+        incoming_li = create(:ledger_item, linked_object: disbursement.incoming_disbursement)
+        ct1 = create(:canonical_transaction, ledger_item: outgoing_li)
+        ct2 = create(:canonical_transaction, ledger_item: incoming_li)
         create(:canonical_transaction) # unrelated CT
 
         # Clear memoization
@@ -486,20 +488,17 @@ RSpec.describe Disbursement, type: :model do
     end
 
     describe "#canonical_pending_transactions" do
-      it "returns CPTs with matching hcb_code" do
-        # Create CPTs manually and set their hcb_code after creation
-        cpt1 = create(:canonical_pending_transaction, amount_cents: -disbursement.amount)
-        cpt1.update_column(:hcb_code, disbursement.outgoing_hcb_code)
-        cpt2 = create(:canonical_pending_transaction, amount_cents: disbursement.amount)
-        cpt2.update_column(:hcb_code, disbursement.outgoing_hcb_code)
+      it "returns CPTs linked via either leg's ledger item" do
+        outgoing_li = create(:ledger_item, linked_object: disbursement.outgoing_disbursement)
+        incoming_li = create(:ledger_item, linked_object: disbursement.incoming_disbursement)
+        cpt1 = create(:canonical_pending_transaction, amount_cents: -disbursement.amount, ledger_item: outgoing_li)
+        cpt2 = create(:canonical_pending_transaction, amount_cents: disbursement.amount, ledger_item: incoming_li)
 
         # Clear memoization
         disbursement.instance_variable_set(:@canonical_pending_transactions, nil)
         cpts = disbursement.canonical_pending_transactions
         expect(cpts.count).to eq(2)
-        cpts.each do |cpt|
-          expect(cpt.hcb_code).to eq(disbursement.outgoing_hcb_code)
-        end
+        expect(cpts.map(&:ledger_item)).to contain_exactly(outgoing_li, incoming_li)
       end
     end
 
