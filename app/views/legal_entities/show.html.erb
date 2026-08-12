@@ -134,13 +134,26 @@
       <%= @legal_entity.person? ? "You have" : "#{@legal_entity.name.presence || "Business"} has" %>
       been banned from receiving payments from organizations on HCB.
     </p>
-  <% else %>
+  <% elsif @legal_entity.latest_completed_tax_form.taxbandits_tin_match_failed? %>
     <p>
       Your submission for <%= @legal_entity.person? ? "your" : "#{@legal_entity.name.presence || "Business"}'s" %>
       tax information is invalid.
     </p>
 
     <%= button_to "Start tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
+  <% else %>
+    <p>
+      Your submission for <%= @legal_entity.person? ? "your" : "#{@legal_entity.name.presence || "Business"}'s" %>
+      tax information is pending verification.
+    </p>
+
+    <p>
+      While we process your submission, <%= @legal_entity.default_payout_method.present? ? "review your" : "add a" %>
+      payout method below. Once your submission is verified<%= " and you have added a payout method" unless @legal_entity.default_payout_method.present? %>,
+      you'll be able to receive payments from any organization on HCB.
+    </p>
+
+    <%= render "users/payout_methods_list", user: current_user, legal_entity: @legal_entity %>
   <% end %>
 <% elsif @legal_entity.latest_tax_form.nil? || @legal_entity.latest_tax_form.failed? %>
   <p>
