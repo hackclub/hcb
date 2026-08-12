@@ -124,6 +124,8 @@ RSpec.describe OrganizerPositionInvitesController do
           body: { submitters: [{ role: "HCB", slug: "STUBBED" }, { role: "Contract Signee", slug: "STUBBED" }, { role: "Cosigner", slug: "STUBBED" }] }.to_json,
           headers: { content_type: "application/json" }
         )
+      stub_request(:delete, "https://api.docuseal.co/submissions/STUBBED")
+        .to_return(status: 200, body: "", headers: { content_type: "application/json" })
 
       invite.send_contract(cosigner_email: "old-cosigner@hackclub.com", include_videos: false)
     end
