@@ -7,8 +7,8 @@ module Maintenance
   #
   # It exists because the two rollout flags cover different populations. The stage
   # flag has been materializing deadlines for a whole group of cardholders, while
-  # card_locking_2025_06_09 (which gates locking AND every notification) was on for
-  # a much smaller set. Cardholders in the gap have had deadlines quietly going
+  # the kill switch (which gates locking AND every notification) was on for a much
+  # smaller set. Cardholders in the gap have had deadlines quietly going
   # overdue for weeks without a single email or SMS, some of them across dozens of
   # charges. Opening the master gate would lock all of them at once, with the lock
   # notice as their first contact with the feature.
@@ -17,7 +17,7 @@ module Maintenance
   # enforced and have had the notifications, so granting grace would unlock them,
   # mail them that their cards work again, and re-lock them GRACE later.
   #
-  # Run this BEFORE enabling card_locking_2025_06_09 globally. Idempotent in the
+  # Run this BEFORE enabling the kill switch globally. Idempotent in the
   # sense that a second run only re-grants grace to whoever is still overdue, but
   # it is meant to run once, immediately before the flag flip.
   class GrantCardLockingRolloutGraceTask < MaintenanceTasks::Task

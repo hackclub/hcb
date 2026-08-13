@@ -15,7 +15,7 @@ RSpec.describe UserService::SendCardLockingNotification, type: :service do
   end
 
   before do
-    Flipper.enable(:card_locking_2025_06_09, user)
+    Flipper.enable(:card_locking)
     # Default: a charge is approaching its deadline, so the warning is warranted.
     # The gate itself is exercised with real charges below.
     allow(user).to receive(:card_locking_has_approaching_charge?).and_return(true)
@@ -81,7 +81,7 @@ RSpec.describe UserService::SendCardLockingNotification, type: :service do
   end
 
   it "is a no-op when the feature flag is disabled for the user" do
-    Flipper.disable(:card_locking_2025_06_09, user)
+    Flipper.disable(:card_locking)
     allow(user).to receive(:card_locking_outstanding_count).and_return(4)
 
     expect { service.run }.not_to have_enqueued_mail(CardLockingMailer, :warning)
