@@ -289,7 +289,7 @@ class EventsController < ApplicationController
 
     @all_positions = @event.organizer_positions
                            .joins(:user)
-    @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.email ILIKE :query" : "users.full_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
+    @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.preferred_name ILIKE :query OR users.email ILIKE :query" : "users.preferred_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
                                    .order(created_at: :desc)
     if @filter == "active_teenagers"
       @all_positions = @all_positions.select { |op| op.user.is_teenager? && op.user.active? } # select if user is a teenager and active (stole from the other code ;))
@@ -299,17 +299,26 @@ class EventsController < ApplicationController
     @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(params[:per] || (@view == "list" ? 20 : 10))
 
     if @event.parent
-      ops = @event.ancestor_organizer_positions.includes(:user)
-      users = ops.map(&:user).uniq
+      # `ancestor_organizer_positions` covers this organization as well as its
+      # ancestors, so both halves come from the one query. The avatars are
+      # preloaded because every user here is rendered as a `user_mention`.
+      ops = @event.ancestor_organizer_positions.includes(user: { profile_picture_attachment: :blob })
+      direct_ops, ancestor_ops = ops.partition { |op| op.event_id == @event.id }
+      direct_roles = direct_ops.to_h { |op| [op.user_id, op.role] }
 
-      access_levels = users.filter_map do |user|
-        access_level = user.access_level_for(@event, ops)
-        next if access_level[:access_level] == :direct
+      @indirect_access = ancestor_ops.group_by(&:user).filter_map do |user, user_ops|
+        # Inheriting from an ancestor is all-or-nothing (see
+        # OrganizerPosition.role_at_least?): managers inherit their full role,
+        # everyone else only inherits read access.
+        inherited_role = user_ops.any?(&:manager?) ? "manager" : "reader"
 
-        [user, access_level[:role]]
-      end.sort_by { |_, role| role }.to_h
+        # Someone with their own position here is already in the team list
+        # below, so only mention them when what they inherit outranks it.
+        direct_role = direct_roles[user.id]
+        next if direct_role && OrganizerPosition.roles[direct_role] >= OrganizerPosition.roles[inherited_role]
 
-      @indirect_access = access_levels
+        [user, inherited_role]
+      end.sort_by { |user, role| [-OrganizerPosition.roles[role], user.name.to_s] }.to_h
     end
 
     @invites = @event.organizer_position_invites.pending.includes(:sender)
@@ -946,6 +955,18 @@ class EventsController < ApplicationController
         end
 
         send_data csv, filename: "#{@event.name}'s sub-organizations.csv", type: "text/csv", disposition: :attachment
+      end
+
+      # Like the CSV, the XLSX export intentionally does not consider filters.
+      # Unlike the CSV, it includes every visible descendant (not just direct
+      # sub-organizations), rendered as a collapsible tree via row grouping.
+      format.xlsx do
+        send_data(
+          Event::SubOrganizationsExport.new(@event, descendant_ids: visible_descendant_ids).xlsx,
+          filename: "#{@event.name}'s sub-organizations.xlsx",
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          disposition: :attachment
+        )
       end
     end
 

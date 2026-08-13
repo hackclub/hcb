@@ -166,7 +166,7 @@ class CanonicalPendingTransaction < ApplicationRecord
       }
     )
   }
-  scope :with_custom_memo, -> { where("custom_memo is not null") }
+  scope :with_custom_memo, -> { where.not(custom_memo: nil) }
 
   scope :pending_expired, -> { unsettled.where(created_at: ..5.days.ago) }
 

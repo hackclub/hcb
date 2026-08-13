@@ -25,6 +25,15 @@ RSpec.describe EventsController do
     create_session(organizer, verified: true)
   end
 
+  # XLSX files are zip archives; cell text lives in the shared strings table.
+  def xlsx_entry(body, entry)
+    Zip::File.open_buffer(StringIO.new(body)).read(entry)
+  end
+
+  def xlsx_strings(body)
+    Nokogiri::XML(xlsx_entry(body, "xl/sharedStrings.xml")).css("si").map(&:text)
+  end
+
   describe "#index" do
     before do
       # This is required since creating event configs creates a monthly announcement for the event authored by the system user
@@ -177,6 +186,26 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#edit" do
+    render_views
+
+    # Creating, editing and deleting tags are member-level server side, so the
+    # settings tab shouldn't present them as manager-only.
+    it "lets a member manage tags from the settings tab" do
+      member = create(:user)
+      event = create(:event)
+      create(:organizer_position, user: member, event:, role: :member)
+      event.tags.create!(label: "Snacks", color: "muted", emoji: "🍕")
+      create_session(member, verified: true)
+
+      get(:edit, params: { id: event.slug, tab: "tags" })
+      page = Nokogiri::HTML5(response.body)
+
+      expect(page.css("#tags_settings input[name='label'][disabled]")).to be_empty
+      expect(page.css("#tags_settings a[disabled]")).to be_empty
+    end
+  end
+
   describe "#payments" do
     render_views
 
@@ -246,6 +275,14 @@ RSpec.describe EventsController do
         expect(rows["Transparent Grandchild"]["ID"]).to eq(grandchild.public_id)
         expect(rows["Transparent Grandchild"]["Parent ID"]).to eq(transparent_sub.public_id)
       end
+
+      it "excludes private sub-organizations from the XLSX export", :aggregate_failures do
+        get(:sub_organizations, params: { event_id: parent.slug }, format: :xlsx)
+
+        strings = xlsx_strings(response.body)
+        expect(strings).to include("Transparent Sub-organization")
+        expect(strings).not_to include("Private Sub-organization")
+      end
     end
 
     context "with a hidden sub-organization" do
@@ -291,6 +328,20 @@ RSpec.describe EventsController do
         expect(response.body).to include("Transparent Sub-organization")
         expect(response.body).to include("Private Sub-organization")
       end
+
+      it "renders every descendant as a collapsible tree in the XLSX export", :aggregate_failures do
+        nested = create(:event, parent: transparent_sub, is_public: true, name: "Nested Sub-organization")
+        sign_in_organizer_of(parent)
+
+        get(:sub_organizations, params: { event_id: parent.slug }, format: :xlsx)
+
+        strings = xlsx_strings(response.body)
+        expect(strings).to include("Transparent Sub-organization", "Private Sub-organization")
+        # Nested descendants are indented under their parent...
+        expect(strings).to include("    #{nested.name}")
+        # ...and grouped so Excel renders them collapsible.
+        expect(xlsx_entry(response.body, "xl/worksheets/sheet1.xml")).to include('outlineLevel="1"')
+      end
     end
   end
 
@@ -325,6 +376,99 @@ RSpec.describe EventsController do
       get(:async_sub_organizations_graph, params: { event_id: parent.slug })
 
       expect(response.parsed_body.pluck("id")).to match_array([parent.id, transparent_sub.id])
+    end
+  end
+
+  describe "#team" do
+    render_views
+
+    let(:parent) { create(:event, name: "Parent Organization") }
+    let(:event) { create(:event, parent:, name: "Sub Organization") }
+
+    before { sign_in_organizer_of(event) }
+
+    # The callout's list, as { user's displayed name => the role it credits them with }.
+    def indirect_access
+      get(:team, params: { event_id: event.slug })
+
+      Nokogiri::HTML5(response.body).css("#parent_organization_access .grid > span").to_h do |row|
+        [row.at_css(".mention").text.squish, row.text.include?("can manage") ? "manager" : "reader"]
+      end
+    end
+
+    it "collapses the parent organization callout by default", :aggregate_failures do
+      get(:team, params: { event_id: event.slug })
+
+      callout = Nokogiri::HTML5(response.body).at_css("details#parent_organization_access")
+      expect(callout.text).to include("The team behind Parent Organization also has access to Sub Organization")
+      expect(callout.attributes).not_to have_key("open")
+    end
+
+    it "grants a reader on the parent read access here" do
+      reader = create(:user)
+      create(:organizer_position, user: reader, event: parent, role: :reader)
+
+      expect(indirect_access).to eq({ reader.initial_name => "reader" })
+    end
+
+    # A member of the parent only inherits read access here, so their own
+    # member position is the higher of the two and already appears in the
+    # team list.
+    it "grants a member on the parent only read access here" do
+      member = create(:user)
+      create(:organizer_position, user: member, event: parent, role: :member)
+
+      expect(indirect_access).to eq({ member.initial_name => "reader" })
+    end
+
+    it "grants a manager on the parent full management here" do
+      manager = create(:user)
+      create(:organizer_position, user: manager, event: parent, role: :manager)
+
+      expect(indirect_access).to eq({ manager.initial_name => "manager" })
+    end
+
+    it "takes the highest role when the user holds positions on several ancestors" do
+      grandparent = create(:event)
+      parent.update!(parent: grandparent)
+      user = create(:user)
+      create(:organizer_position, user:, event: parent, role: :reader)
+      create(:organizer_position, user:, event: grandparent, role: :manager)
+
+      expect(indirect_access).to eq({ user.initial_name => "manager" })
+    end
+
+    it "omits a user whose position here already matches what they inherit" do
+      user = create(:user)
+      create(:organizer_position, user:, event: parent, role: :reader)
+      create(:organizer_position, user:, event:, role: :reader)
+
+      expect(indirect_access).to eq({})
+    end
+
+    it "omits a user whose position here outranks what they inherit" do
+      user = create(:user)
+      create(:organizer_position, user:, event: parent, role: :member)
+      create(:organizer_position, user:, event:, role: :member)
+
+      expect(indirect_access).to eq({})
+    end
+
+    it "keeps a user whose inherited role outranks their position here" do
+      user = create(:user)
+      create(:organizer_position, user:, event: parent, role: :manager)
+      create(:organizer_position, user:, event:, role: :member)
+
+      expect(indirect_access).to eq({ user.initial_name => "manager" })
+    end
+
+    it "lists managers before readers" do
+      reader = create(:user, full_name: "Aaron Reader")
+      manager = create(:user, full_name: "Zoe Manager")
+      create(:organizer_position, user: reader, event: parent, role: :reader)
+      create(:organizer_position, user: manager, event: parent, role: :manager)
+
+      expect(indirect_access.keys).to eq([manager.initial_name, reader.initial_name])
     end
   end
 
