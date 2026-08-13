@@ -115,21 +115,28 @@ RSpec.describe "GET /admin/emails", type: :request do
       expect(response.body).to include("LoginCodeMailer#send_code")
     end
 
-    it "does not link an auditor to the restricted contents" do
+    it "explains the restriction to an auditor instead of loading the contents" do
       sign_in_as(create(:user, :make_auditor))
 
       get "/admin/emails"
 
-      expect(listed_ids).not_to include(sensitive.id)
+      # The row still opens a modal, otherwise the explanation below would be
+      # unreachable, but that modal must not request the email itself.
+      expect(listed_ids).to include(sensitive.id)
+      expect(response.body).to include("ask a superadmin")
+      expect(response.body).not_to include("action=email&amp;message_id=#{sensitive.id}")
+      expect(response.body).not_to include("/admin/email?message_id=#{sensitive.id}")
     end
 
-    it "shows the subject to a superadmin" do
+    it "shows the subject to a superadmin and loads the contents" do
       sign_in_as(create(:user, access_level: :superadmin))
 
       get "/admin/emails"
 
       expect(response.body).to include(code)
       expect(listed_ids).to include(sensitive.id)
+      # Pins the frame URL that the auditor example above asserts is absent.
+      expect(response.body).to include("/admin/email?message_id=#{sensitive.id}")
     end
 
     it "excludes sensitive messages from search for an auditor" do
@@ -140,10 +147,13 @@ RSpec.describe "GET /admin/emails", type: :request do
       expect(response.body).not_to include("LoginCodeMailer#send_code")
     end
 
+    # Uses the same query as the auditor example above. Without this, that one
+    # would pass even if the search exclusion were deleted, since nothing would
+    # prove the code is a term pg_search matches on in the first place.
     it "includes sensitive messages in search for a superadmin" do
       sign_in_as(create(:user, access_level: :superadmin))
 
-      get "/admin/emails", params: { q: "Login Code" }
+      get "/admin/emails", params: { q: code }
 
       expect(response.body).to include(code)
     end

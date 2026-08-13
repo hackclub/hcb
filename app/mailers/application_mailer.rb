@@ -53,6 +53,10 @@ class ApplicationMailer < ActionMailer::Base
   #
   # Takes the same `only:`/`except:`/`if:`/`unless:` filters as `has_history`.
   def self.has_sensitive_contents(**options)
+    # `has_history` merges `extra` wholesale, so a caller-supplied `extra` would
+    # replace the flag and silently turn this declaration into a no-op.
+    raise ArgumentError, "has_sensitive_contents does not accept :extra" if options.key?(:extra)
+
     has_history(extra: { sensitive: true }, **options)
   end
 
