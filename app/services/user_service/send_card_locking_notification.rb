@@ -10,7 +10,7 @@ module UserService
 
     def run
       return unless @user.present?
-      return unless Flipper.enabled?(:card_locking_2025_06_09, @user)
+      return unless CardLocking.enabled?
 
       # This is a PRE-lock nudge only. Once cards are locked, the cards_locked
       # email/SMS plus the persistent banner/inbox already cover it; sending
