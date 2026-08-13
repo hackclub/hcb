@@ -700,7 +700,7 @@ class User < ApplicationRecord
     Payroll::Position.where(aasm_state: :onboarding)
                      .left_joins(payee: { legal_entity: :legal_entity_users })
                      .where(
-                       "legal_entity_users.user_id = :uid OR (payees.legal_entity_id IS NULL AND payees.email = :email)",
+                       "legal_entity_users.user_id = :uid OR ((payees.legal_entity_id IS NULL OR legal_entities.managing_event_id IS NOT NULL) AND payees.email = :email)",
                        uid: id, email:
                      )
                      .includes(payee: :event)
