@@ -77,9 +77,23 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
     expect { described_class.new(user:).run }.not_to(change { user.reload.cards_locked? })
   end
 
-  it "is a no-op when the master flag is disabled" do
+  it "does not lock an overdue cardholder when the feature is disabled" do
     Flipper.disable(:card_locking_2025_06_09, user)
     allow(user).to receive(:card_locking_has_overdue_charge?).and_return(true)
     expect { described_class.new(user:).run }.not_to(change { user.reload.cards_locked? })
+  end
+
+  # The kill switch releases locked cardholders rather than freezing them. Were it
+  # an early return, switching the feature off would leave them locked with no way
+  # to unlock by uploading.
+  it "unlocks an already-locked cardholder when the feature is disabled" do
+    user.update!(cards_locked: true)
+    Flipper.disable(:card_locking_2025_06_09, user)
+    allow(user).to receive(:card_locking_has_overdue_charge?).and_return(true)
+
+    expect {
+      described_class.new(user:).run
+    }.to change { user.reload.cards_locked? }.from(true).to(false)
+     .and have_enqueued_mail(CardLockingMailer, :cards_unlocked)
   end
 end

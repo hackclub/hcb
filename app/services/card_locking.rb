@@ -27,27 +27,39 @@ module CardLocking
   # cardholder is in. Bounds candidate discovery and the outstanding pile, and is
   # the single enforcement date the feature collapses to once the staged rollout
   # below finishes (see enforcement_start_date).
+  #
+  # It is a floor across *all* stages, so it must never be advanced to a later
+  # stage's date. Doing so drops every earlier-stage charge out of
+  # HcbCode.card_locking_candidates, which the lock decision, the sweep and the
+  # outstanding pile all read through: the next sweep unlocks cardholders who are
+  # already being enforced and mails them that their cards work again.
   ENFORCEMENT_START_DATE = Date.new(2026, 7, 17)
 
   # Staged rollout of enforcement. A cardholder's charges become lockable on the
-  # date of the first stage flag they carry; a cardholder in no stage is never
+  # earliest stage date they hold a flag for; a cardholder in no stage is never
   # enforced (their charges never get a deadline, so their cards never lock).
+  #
+  # Earliest-wins is what leaves an already-enforced cardholder untouched when a
+  # later stage is switched on for everyone: they end up holding both flags and
+  # keep their original date, so their deadlines and locks do not move. For the
+  # same reason, never repoint an existing stage at a later date, never disable a
+  # stage on an enforced cardholder, and never delete the earliest entry.
   #
   # RIP-OUT: when the rollout is done, delete ENFORCEMENT_STAGES and
   # enforcement_start_date, have callers use ENFORCEMENT_START_DATE directly, and
-  # remove the Flipper flags. To add a stage, add a row (keep earliest first).
-  ENFORCEMENT_STAGES = [
-    [:card_locking_enabled_on_07_17_2026, Date.new(2026, 7, 17)],
-    [:card_locking_enabled_on_07_28_2026, Date.new(2026, 7, 28)],
-  ].freeze
+  # remove the Flipper flags. To add a stage, add an entry (order does not matter).
+  ENFORCEMENT_STAGES = {
+    card_locking_enabled_on_07_17_2026: Date.new(2026, 7, 17),
+    card_locking_enabled_on_07_28_2026: Date.new(2026, 7, 28),
+    card_locking_enabled_on_08_11_2026: Date.new(2026, 8, 11),
+  }.freeze
 
   # The date on or after which this cardholder's charges can lock their cards, or
   # nil if they are not yet in any rollout stage.
   def self.enforcement_start_date(user)
     return nil unless user
 
-    ENFORCEMENT_STAGES.each { |flag, date| return date if Flipper.enabled?(flag, user) }
-    nil
+    ENFORCEMENT_STAGES.filter_map { |flag, date| date if Flipper.enabled?(flag, user) }.min
   end
 
   # The Receipt Bin URL cardholders are sent to upload outstanding receipts.

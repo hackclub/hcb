@@ -9,7 +9,7 @@
 </h1>
 
 <% if Flipper.enabled?(:card_locking_2025_06_09, current_user) %>
-  <%= render "application/callout", class: "mt-2", type: "info", title: "Card locking", badge: badge_for("Beta", class: "bg-muted") do %>
+  <%= render "application/callout", class: "mt-2", type: "info", title: "Card locking" do %>
     <p class="my-0">
       Upload a receipt within <strong>7 days</strong> of every card charge. Miss it and your cards pause until you upload. Uploading unlocks them in seconds. Your cards are currently <strong class="<%= current_user.cards_locked? ? "error" : "success" %>"><%= current_user.cards_locked? ? "locked" : "active" %></strong>.
     </p>
