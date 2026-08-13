@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class GSuiteAccountMailer < ApplicationMailer
+  # `verify` carries no password, so it stays visible.
+  has_sensitive_contents only: [:notify_user_of_activation, :notify_user_of_reset]
+
   def verify
     @recipient = params[:recipient]
 

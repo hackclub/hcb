@@ -2,6 +2,8 @@
 
 class User
   class EmailUpdateMailer < ApplicationMailer
+    has_sensitive_contents
+
     def authorization(request)
       @request = request
 

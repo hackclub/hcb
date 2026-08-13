@@ -149,6 +149,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_003730) do
   create_table "ahoy_messages", force: :cascade do |t|
     t.text "content"
     t.string "mailer"
+    t.boolean "sensitive", default: false, null: false
     t.datetime "sent_at"
     t.text "subject"
     t.string "to"
