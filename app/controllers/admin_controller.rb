@@ -3,6 +3,8 @@
 class AdminController < Admin::BaseController
   include Admin::TransferApprovable
 
+  before_action :set_restrictable_email, only: [:email, :email_html]
+
   def nav
     @nav = Admin::Nav.new(page_title: params[:title])
 
@@ -1551,17 +1553,11 @@ class AdminController < Admin::BaseController
   end
 
   def email
-    @message = Ahoy::Message.find(params[:message_id])
-    return if deny_restricted_email!(@message)
   end
 
   def email_html
-    @message_id = params[:message_id]
-    message = Ahoy::Message.find(@message_id)
-    return if deny_restricted_email!(message)
-
     respond_to do |format|
-      format.html { render html: message.html_content.html_safe } # rubocop:disable Rails/OutputSafety
+      format.html { render html: @message.html_content.html_safe } # rubocop:disable Rails/OutputSafety
     end
   end
 
@@ -1685,6 +1681,12 @@ class AdminController < Admin::BaseController
 
   private
 
+  def set_restrictable_email
+    @message = Ahoy::Message.find(params[:message_id])
+
+    head :forbidden if restricted_email?(@message)
+  end
+
   # Emails whose contents are secrets (login codes, passwords, tokens) are
   # readable only by superadmins. `superadmin_signed_in?` is used rather than
   # `current_user.superadmin?` because it also rejects impersonated sessions.
@@ -1692,14 +1694,6 @@ class AdminController < Admin::BaseController
     message.sensitive? && !superadmin_signed_in?
   end
   helper_method :restricted_email?
-
-  # Returns true once it has rendered a denial, meaning the caller must return.
-  def deny_restricted_email!(message)
-    return false unless restricted_email?(message)
-
-    head :forbidden
-    true
-  end
 
   def cache_event_metric(metric_name, &block)
     @event = Event.friendly.find(params[:id])

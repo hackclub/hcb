@@ -34,11 +34,13 @@
         <td><%= msg.sent_at.strftime("%Y-%m-%d") %></td>
         <td>
           <% if restricted_email?(msg) %>
-            <%# The subject can be the secret itself; login codes are in it. %>
-            <span class="muted flex items-center" style="gap: 0.25rem;">
+            <%# The subject can be the secret itself; login codes are in it. The
+                mailer and action stand in as a hint at what the email was. %>
+            <%= link_to "#", class: "muted flex items-center gap-1",
+              data: { behavior: "modal_trigger", modal: "message_#{msg.id}" } do %>
               <%= inline_icon "private", size: 20 %>
               <code><%= msg.mailer %></code>
-            </span>
+            <% end %>
           <% else %>
             <%= link_to "#",
               data: { behavior: "modal_trigger", modal: "message_#{msg.id}" } do %>
