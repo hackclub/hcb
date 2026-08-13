@@ -1,4 +1,4 @@
-<%# locals: (item:, tag_picker_event: nil) %>
+<%# locals: (item:, tag_picker_event: nil, taggable_codes: nil) %>
 
 <%#
   Adapter between the ledger item view and the tag store. The item view delegates
@@ -6,15 +6,17 @@
   event lives in this partial so a future migration only touches it.
 
   Only the trigger is per row; `ledgers/_tag_picker` holds the options. A row
-  whose HCB code doesn't belong to `tag_picker_event` gets no trigger, because
-  the picker it would open holds another organization's tags.
+  whose HCB code isn't mapped to `tag_picker_event` gets no trigger, because the
+  picker it would open holds another organization's tags. `taggable_codes` is
+  that membership resolved for the whole table, since asking each row costs two
+  queries per row.
 
-  That membership check also stands in for `HcbCodePolicy#toggle_tag?`:
-  `tag_picker_event` is only set for a member of that event, so a code carrying
-  it already satisfies the policy. The server re-authorizes every toggle.
+  It also stands in for `HcbCodePolicy#toggle_tag?`: `tag_picker_event` is only
+  set for a member of that event, so a code mapped to it already satisfies the
+  policy. The server re-authorizes every toggle regardless.
 %>
 <% hcb_code = item.hcb_code %>
-<% if tag_picker_event.present? && hcb_code.present? && hcb_code.events.include?(tag_picker_event) %>
+<% if tag_picker_event.present? && hcb_code.present? && taggable_codes&.include?(hcb_code.hcb_code) %>
   <button
     type="button"
     class="list-badge add-tag-badge !mx-0 menu__toggle menu__toggle--arrowless"

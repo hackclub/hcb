@@ -1,4 +1,4 @@
-<%# locals: (item:, show_author: true, tag_picker_event: nil) %>
+<%# locals: (item:, show_author: true, tag_picker_event: nil, taggable_codes: nil) %>
 
 <tr class="transaction transaction--<%= item.sign %> <%= item.special_appearance&.css_class %>">
   <td class="transaction__icon">
@@ -27,7 +27,7 @@
         <%= render "ledger/items/tags", item: %>
       </div>
 
-      <%= render "ledger/items/tag_trigger", item:, tag_picker_event: %>
+      <%= render "ledger/items/tag_trigger", item:, tag_picker_event:, taggable_codes: %>
 
       <%= list_badge_for auditor_signed_in? ? item.comment_count : item.not_admin_only_comment_count, "comment", "post", optional: true %>
       <%= list_badge_for item.receipt_count, "receipt", "payment-docs", optional: item.receipt_optional?, required: item.missing_receipt? %>

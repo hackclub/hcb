@@ -17,4 +17,26 @@ module TagsHelper
 
     event if organizer_signed_in?(event, as: :member)
   end
+
+  # Which of `hcb_codes` are mapped to `event`, as a set of HCB code strings.
+  #
+  # This answers per row what `HcbCode#events.include?(event)` would, but for the
+  # whole table in two queries rather than two per row. The associations are keyed
+  # on the `hcb_code` string rather than the id.
+  def hcb_codes_mapped_to(event, hcb_codes)
+    codes = hcb_codes.compact.map(&:hcb_code).uniq
+    return Set.new if codes.empty? || event.nil?
+
+    settled = CanonicalTransaction.where(hcb_code: codes)
+                                  .joins(:canonical_event_mapping)
+                                  .where(canonical_event_mappings: { event_id: event.id })
+                                  .pluck(:hcb_code)
+
+    pending = CanonicalPendingTransaction.where(hcb_code: codes)
+                                         .joins(:canonical_pending_event_mapping)
+                                         .where(canonical_pending_event_mappings: { event_id: event.id })
+                                         .pluck(:hcb_code)
+
+    Set.new(settled).merge(pending)
+  end
 end

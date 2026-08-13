@@ -47,6 +47,9 @@
   <% end %>
 
   <% if items.load.any? %>
+    <%# Resolved for the whole table; asking per row is two queries per row. %>
+    <% taggable_codes = tag_picker_event ? hcb_codes_mapped_to(tag_picker_event, items.map(&:hcb_code)) : Set.new %>
+
     <div class="table-container">
       <table>
         <thead>
@@ -60,7 +63,7 @@
         </thead>
         <tbody>
           <%= render partial: "ledgers/pending_fee_transaction", locals: { ledger: } if show_fee && ledger.present? %>
-          <%= render partial: "ledger/item", locals: { show_author:, tag_picker_event: }, collection: items, as: :item %>
+          <%= render partial: "ledger/item", locals: { show_author:, tag_picker_event:, taggable_codes: }, collection: items, as: :item %>
         </tbody>
       </table>
     </div>
