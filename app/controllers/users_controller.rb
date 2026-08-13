@@ -539,6 +539,7 @@ class UsersController < ApplicationController
       :birthday,
       :profile_picture,
       :seasonal_themes_enabled,
+      :timezone,
       # admin
       :pretend_is_not_admin,
       # security

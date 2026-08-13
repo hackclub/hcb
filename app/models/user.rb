@@ -30,6 +30,7 @@
 #  slug                          :string
 #  subscribed_to_loops_at        :datetime
 #  teenager                      :boolean
+#  timezone                      :string
 #  use_sms_auth                  :boolean          default(FALSE)
 #  use_two_factor_authentication :boolean          default(FALSE)
 #  verified                      :boolean          default(FALSE), not null
@@ -244,6 +245,15 @@ class User < ApplicationRecord
 
   validates(:session_validity_preference, presence: true, inclusion: { in: SessionsHelper::SESSION_DURATION_OPTIONS.values })
 
+  # Blank collapses to nil so that "cleared the preference" and "never set one"
+  # stay the same state. Anything we cannot resolve is left alone for the
+  # validation below to reject, rather than silently thrown away.
+  normalizes :timezone, with: ->(timezone) { timezone.presence && (User.selectable_timezone_name(timezone) || timezone) }
+  validates :timezone, inclusion: {
+    in: ->(_user) { ActiveSupport::TimeZone.all.map(&:name) },
+    message: "isn't recognized.",
+  }, allow_nil: true
+
   validate :profile_picture_format
 
   validate(:admins_cannot_disable_2fa, on: :update)
@@ -364,6 +374,57 @@ class User < ApplicationRecord
   def initials
     words = name.split(/[^[[:word:]]]+/)
     words.any? ? words.map(&:first).join.upcase : name
+  end
+
+  DEFAULT_TIMEZONE = ActiveSupport::TimeZone["America/New_York"]
+  TIMEZONE_SESSION_SAMPLE = 20
+
+  # The timezone every other part of HCB should ask for. An explicit preference
+  # always wins; otherwise fall back to a guess, and finally to the default.
+  def resolved_timezone
+    (timezone && ActiveSupport::TimeZone[timezone]) || assumed_timezone
+  end
+
+  def assumed_timezone
+    inferred_timezone || DEFAULT_TIMEZONE
+  end
+
+  # Infers a timezone from sessions, whose timezone the browser reports at
+  # sign-in. A guess, only ever for presenting a time back to the user. Never
+  # compute a deadline from it.
+  #
+  # Takes the most common value across recent sessions rather than the latest, so
+  # a trip does not repoint someone's timezone for a fortnight after they get
+  # home. Ties go to the more recent. A VPN needs no handling: the browser reads
+  # this from the operating system, not from the IP address, so tunnelling through
+  # another country does not change it.
+  #
+  # Most values are IANA names, but some browsers report things ActiveSupport
+  # cannot resolve ("Etc/Unknown", "UTC+480", bare offsets). Those are skipped in
+  # favour of the next best candidate. Returns nil when nothing usable was
+  # reported, so callers can tell a real guess apart from the default.
+  def inferred_timezone
+    reported = user_sessions.where.not(timezone: [nil, ""])
+                            .order(Arel.sql("COALESCE(last_seen_at, created_at) DESC"))
+                            .limit(TIMEZONE_SESSION_SAMPLE)
+                            .pluck(:timezone)
+
+    reported.tally
+            .sort_by { |zone, count| [-count, reported.index(zone)] }
+            .each { |zone, _count| return ActiveSupport::TimeZone[zone] || next }
+
+    nil
+  end
+
+  # ActiveSupport::TimeZone resolves both IANA identifiers ("America/New_York")
+  # and Rails' friendlier names ("Eastern Time (US & Canada)"), but the picker
+  # only offers the latter. Storing anything else would leave the select unable to
+  # show a saved choice back to the user, so translate where an equivalent exists.
+  def self.selectable_timezone_name(zone)
+    zone = ActiveSupport::TimeZone[zone.to_s] unless zone.is_a?(ActiveSupport::TimeZone)
+    return nil if zone.nil?
+
+    ActiveSupport::TimeZone.all.find { |selectable| selectable.tzinfo == zone.tzinfo }&.name
   end
 
   # gary@hackclub.com → g***y@hackclub.com
