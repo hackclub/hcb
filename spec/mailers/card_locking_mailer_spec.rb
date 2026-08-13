@@ -35,8 +35,7 @@ RSpec.describe CardLockingMailer, type: :mailer do
     end
 
     # No sessions on this cardholder, so the deadline renders in the default zone
-    # rather than UTC. Getting this wrong shows someone a time hours off the one
-    # their cards actually lock at.
+    # rather than UTC.
     it "renders the deadline in the cardholder's assumed timezone" do
       hcb_code = create_settled_card_charge(user:, settled_at: 10.days.ago)
       hcb_code.update!(card_charge_settled_at: 10.days.ago, receipt_due_at: 1.day.ago)
