@@ -1680,11 +1680,14 @@ class AdminController < Admin::BaseController
   # Emails whose contents are secrets (login codes, passwords, tokens) are
   # readable only by superadmins. `superadmin_signed_in?` is used rather than
   # `current_user.superadmin?` because it also rejects impersonated sessions.
-  #
+  def restricted_email?(message)
+    message.sensitive? && !superadmin_signed_in?
+  end
+  helper_method :restricted_email?
+
   # Returns true once it has rendered a denial, meaning the caller must return.
   def deny_restricted_email!(message)
-    return false unless message.sensitive?
-    return false if superadmin_signed_in?
+    return false unless restricted_email?(message)
 
     head :forbidden
     true
