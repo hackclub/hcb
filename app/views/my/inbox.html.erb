@@ -8,10 +8,15 @@
   </span>
 </h1>
 
-<% if Flipper.enabled?(:card_locking_2025_06_09, current_user) %>
-  <%= render "application/callout", class: "mt-2", type: "info", title: "Card locking", badge: badge_for("Beta", class: "bg-muted") do %>
+<% if CardLocking.enabled? %>
+  <%= render "application/callout", class: "mt-2", type: "info", title: "Card locking" do %>
     <p class="my-0">
-      Upload a receipt within <strong>7 days</strong> of every card charge. Miss it and your cards pause until you upload. Uploading unlocks them in seconds. Your cards are currently <strong class="<%= current_user.cards_locked? ? "error" : "success" %>"><%= current_user.cards_locked? ? "locked" : "active" %></strong>.
+      Upload a receipt within <strong>7 days</strong> of every card charge. Miss it and your cards <strong>will lock</strong> until you upload.
+      <% if current_user.cards_locked? %>
+        Your cards are currently <strong class="error">locked</strong>. Uploading a receipt will unlock them in seconds.
+      <% else %>
+        Your cards are currently <strong class="success">active</strong>.
+      <% end %>
     </p>
   <% end %>
 <% end %>
@@ -77,7 +82,7 @@
 
 <h2 class="flex items-center mb2">
   Transactions
-  <% if Flipper.enabled?(:card_locking_2025_06_09, current_user) %>
+  <% if CardLocking.enabled? %>
     <%= badge_for(pluralize(@count, "missing receipt")) %>
     <%= badge_for(pluralize(@locking_count, "overdue receipt")) %>
   <% else %>

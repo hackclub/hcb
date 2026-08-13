@@ -1,4 +1,4 @@
-<%# locals: (ledger: nil, items:, table_only: true, filter: nil, show_fee: false) %>
+<%# locals: (ledger: nil, items:, table_only: true, filter: nil, show_fee: false, show_author: true) %>
 
 <%= turbo_frame_tag dom_id(ledger) do %>
   <% if !table_only && ledger.present? %>
@@ -51,12 +51,12 @@
             <th>Date</th>
             <th>Memo</th>
             <th class="text-right">Amount</th>
-            <th><%# user avatar %></th>
+            <% if show_author %><th><%# user avatar %></th><% end %>
           </tr>
         </thead>
         <tbody>
           <%= render partial: "ledgers/pending_fee_transaction", locals: { ledger: } if show_fee && ledger.present? %>
-          <%= render partial: "ledger/item", collection: items, as: :item %>
+          <%= render partial: "ledger/item", locals: { show_author: }, collection: items, as: :item %>
         </tbody>
       </table>
     </div>
