@@ -14,13 +14,12 @@ module UserService
 
       now = Time.current
 
-      # card_locking_2025_06_09 is the feature kill switch, and it unlocks rather
-      # than freezes: as an early return it would strand already-locked cardholders
-      # with no way to unlock by uploading, so switching the feature off during an
-      # incident would deepen it. Folded into should_lock, disabling the flag
-      # releases them on the next sweep, which reaches every locked cardholder via
-      # User.card_locking_candidates.
-      should_lock = Flipper.enabled?(:card_locking_2025_06_09, @user) && @user.cards_should_lock?(now:)
+      # The kill switch unlocks rather than freezes: as an early return it would
+      # strand already-locked cardholders with no way to unlock by uploading, so
+      # switching the feature off during an incident would deepen it. Folded into
+      # should_lock, disabling it releases them on the next sweep, which reaches
+      # every locked cardholder via User.card_locking_candidates.
+      should_lock = CardLocking.enabled? && @user.cards_should_lock?(now:)
 
       # Uploading a receipt can only ever unlock. If a charge is still overdue,
       # leave the lock exactly as it is (do NOT unlock with work outstanding), but

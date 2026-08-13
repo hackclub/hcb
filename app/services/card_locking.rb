@@ -35,6 +35,20 @@ module CardLocking
   # already being enforced and mails them that their cards work again.
   ENFORCEMENT_START_DATE = Date.new(2026, 7, 17)
 
+  # The feature kill switch, and the only Flipper flag card locking should end up
+  # with. Global rather than per-actor: per-cardholder exemption is a separate
+  # concern already served by users.card_locking_suppressed_until, which is
+  # auditable and time-boxed where a flag actor is neither.
+  #
+  # Disabling it stops new locks AND releases existing ones (see
+  # UserService::UpdateCardLocking). It deliberately does not gate deadline
+  # materialization: deadlines keep being maintained while the feature is off,
+  # which is harmless because nothing reads them for a lock decision, and clearing
+  # them would lose the state the feature resumes from.
+  def self.enabled?
+    Flipper.enabled?(:card_locking)
+  end
+
   # Staged rollout of enforcement. A cardholder's charges become lockable on the
   # earliest stage date they hold a flag for; a cardholder in no stage is never
   # enforced (their charges never get a deadline, so their cards never lock).
@@ -50,7 +64,6 @@ module CardLocking
   # remove the Flipper flags. To add a stage, add an entry (order does not matter).
   ENFORCEMENT_STAGES = {
     card_locking_enabled_on_07_17_2026: Date.new(2026, 7, 17),
-    card_locking_enabled_on_07_28_2026: Date.new(2026, 7, 28),
     card_locking_enabled_on_08_11_2026: Date.new(2026, 8, 11),
   }.freeze
 

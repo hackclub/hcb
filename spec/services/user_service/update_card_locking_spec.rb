@@ -6,7 +6,7 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
   let(:user) { create(:user) }
 
   before do
-    Flipper.enable(:card_locking_2025_06_09, user)
+    Flipper.enable(:card_locking)
   end
 
   it "locks and notifies when a charge is overdue" do
@@ -78,7 +78,7 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
   end
 
   it "does not lock an overdue cardholder when the feature is disabled" do
-    Flipper.disable(:card_locking_2025_06_09, user)
+    Flipper.disable(:card_locking)
     allow(user).to receive(:card_locking_has_overdue_charge?).and_return(true)
     expect { described_class.new(user:).run }.not_to(change { user.reload.cards_locked? })
   end
@@ -88,7 +88,7 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
   # to unlock by uploading.
   it "unlocks an already-locked cardholder when the feature is disabled" do
     user.update!(cards_locked: true)
-    Flipper.disable(:card_locking_2025_06_09, user)
+    Flipper.disable(:card_locking)
     allow(user).to receive(:card_locking_has_overdue_charge?).and_return(true)
 
     expect {
