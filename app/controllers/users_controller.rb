@@ -298,10 +298,14 @@ class UsersController < ApplicationController
   def admin_details_missing_receipts
     authorize @user
 
-    # TODO: add change here in receipt bin PR
-    @hcb_codes_missing_receipts = @user.transactions_missing_receipt
-                                       .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
-                                       .page(params[:page] || 1).per(params[:per] || 10)
+    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
+      @ledger_items_missing_receipts = @user.ledger_items_missing_receipt
+                                            .page(params[:page] || 1).per(params[:per] || 10)
+    else
+      @hcb_codes_missing_receipts = @user.transactions_missing_receipt
+                                         .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
+                                         .page(params[:page] || 1).per(params[:per] || 10)
+    end
   end
 
   def admin_details_reimbursement_reports
