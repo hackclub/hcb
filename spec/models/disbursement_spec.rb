@@ -707,20 +707,20 @@ RSpec.describe Disbursement, type: :model do
 
     describe "signed-leg transaction separation" do
       it "routes the positive leg to the incoming lens and the negative leg to the outgoing lens" do
-        incoming_ct = create(:canonical_transaction, amount_cents: disbursement.amount)
-        incoming_ct.update_column(:hcb_code, disbursement.incoming_hcb_code)
-        outgoing_ct = create(:canonical_transaction, amount_cents: -disbursement.amount)
-        outgoing_ct.update_column(:hcb_code, disbursement.outgoing_hcb_code)
+        incoming_li = create(:ledger_item, linked_object: disbursement.incoming_disbursement)
+        outgoing_li = create(:ledger_item, linked_object: disbursement.outgoing_disbursement)
+        incoming_ct = create(:canonical_transaction, amount_cents: disbursement.amount, ledger_item: incoming_li)
+        outgoing_ct = create(:canonical_transaction, amount_cents: -disbursement.amount, ledger_item: outgoing_li)
 
         expect(disbursement.incoming_disbursement.canonical_transactions).to contain_exactly(incoming_ct)
         expect(disbursement.outgoing_disbursement.canonical_transactions).to contain_exactly(outgoing_ct)
       end
 
-      it "scopes pending transactions to each leg's own hcb_code" do
-        incoming_cpt = create(:canonical_pending_transaction, amount_cents: disbursement.amount)
-        incoming_cpt.update_column(:hcb_code, disbursement.incoming_hcb_code)
-        outgoing_cpt = create(:canonical_pending_transaction, amount_cents: -disbursement.amount)
-        outgoing_cpt.update_column(:hcb_code, disbursement.outgoing_hcb_code)
+      it "scopes pending transactions to each leg's own ledger item" do
+        incoming_li = create(:ledger_item, linked_object: disbursement.incoming_disbursement)
+        outgoing_li = create(:ledger_item, linked_object: disbursement.outgoing_disbursement)
+        incoming_cpt = create(:canonical_pending_transaction, amount_cents: disbursement.amount, ledger_item: incoming_li)
+        outgoing_cpt = create(:canonical_pending_transaction, amount_cents: -disbursement.amount, ledger_item: outgoing_li)
 
         expect(disbursement.incoming_disbursement.canonical_pending_transactions).to contain_exactly(incoming_cpt)
         expect(disbursement.outgoing_disbursement.canonical_pending_transactions).to contain_exactly(outgoing_cpt)

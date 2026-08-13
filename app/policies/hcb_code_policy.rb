@@ -49,8 +49,11 @@ class HcbCodePolicy < ApplicationPolicy
     gte_member_in_events?
   end
 
+  # `user` is nil for signed out requests, and a charge whose cardholder can't
+  # be resolved has a nil owner, so without the first clause the two compare
+  # equal and an anonymous request is treated as the purchaser.
   def user_made_purchase?
-    record.stripe_card? && record.stripe_cardholder&.user == user
+    user.present? && record.stripe_card? && record.stripe_cardholder&.user == user
   end
 
   alias receiptable_upload? user_made_purchase?

@@ -66,6 +66,7 @@
       right: 0;
       bottom: 0;
       opacity: 0.1;
+      pointer-events: none;
       background-image: url('frc-background.png');
       background-size: 24em;
       background-position: center;
@@ -173,6 +174,10 @@ html[data-dark='true'] {
   visibility: visible;
 }
 
+.transaction:not(:hover) .add-tag-badge {
+  width: 1px;
+}
+
 .transaction:hover .suggested_tag,
 .suggested_tag[aria-expanded='true'] {
   max-width: 125px;
@@ -203,14 +208,6 @@ html[data-dark='true'] {
     }
 
     margin: 0;
-  }
-}
-
-.transaction__fee_icon {
-  svg {
-    height: 18px;
-    width: 18px;
-    margin-left: 3px;
   }
 }
 

@@ -424,6 +424,8 @@ Rails.application.routes.draw do
   resources :organizer_position_deletion_requests, only: [:index, :show, :create], concerns: :commentable do
     post "close"
     post "open"
+    post "assign"
+    post "unassign"
   end
 
   resources :g_suite_accounts, only: [:index, :create, :update, :edit, :destroy], path: "g_suite_accounts" do
@@ -579,18 +581,17 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :canonical_pending_transactions, only: [:show, :edit, :update] do
+  resources :canonical_pending_transactions, only: [:show, :update] do
     member do
       post "set_category"
     end
   end
 
-  resources :canonical_transactions, only: [:show, :edit] do
+  resources :canonical_transactions, only: [:show] do
     member do
       post "waive_fee"
       post "unwaive_fee"
       post "mark_bank_fee"
-      post "set_custom_memo"
       post "set_category"
     end
   end

@@ -129,7 +129,7 @@ module SetLedgerFilters
         query << { linked_object_type: }
       end
 
-      query << { status: { "$in": [nil, "settled", "pending", "reversed"] } } # TODO: add not null validation and remove nil status from here
+      query << { status: { "$in": ["settled", "pending", "reversed"] } }
       Ledger::Query.new({ "$and": query })
     end
 
