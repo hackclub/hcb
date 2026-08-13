@@ -96,9 +96,7 @@
       <div class="table-container">
         <table>
           <tbody data-behavior="transactions">
-            <% @ledger_items.each do |item| %>
-              <%= render partial: "ledger/item", locals: { item: } %>
-            <% end %>
+            <%= render "ledgers/ledger", items: @ledger_items, show_author: false %>
           </tbody>
         </table>
       </div>
@@ -118,9 +116,7 @@
         <div class="table-container">
           <table>
             <tbody data-behavior="transactions">
-              <% @card_ledger_items[card.to_global_id.to_s].each do |item| %>
-                <%= render partial: "ledger/item", locals: { item: } %>
-              <% end %>
+              <%= render "ledgers/ledger", items: @card_ledger_items[card.to_global_id.to_s], show_author: false %>
             </tbody>
           </table>
         </div>
