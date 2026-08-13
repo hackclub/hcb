@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_31_160241) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_05_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1622,6 +1622,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_31_160241) do
     t.integer "receipt_count", default: 0, null: false
     t.boolean "receipt_required"
     t.text "short_code"
+    t.string "special_appearance"
     t.string "status", default: "pending", null: false
     t.text "system_memo"
     t.datetime "updated_at", null: false

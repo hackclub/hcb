@@ -238,7 +238,7 @@ class User < ApplicationRecord
 
   validates :preferred_name, length: { maximum: 30 }
   validates :preferred_name, format: {
-    with: /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,'-]+\z/,
+    with: /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,' -]+\z/,
     message: "must only contain characters in the latin alphabet.", allow_blank: true,
   }, if: :preferred_name_changed?
 
@@ -366,6 +366,35 @@ class User < ApplicationRecord
     words.any? ? words.map(&:first).join.upcase : name
   end
 
+  # HCB stores no timezone preference, so this infers one from sessions, whose
+  # timezone the browser reports at sign-in. A guess, only ever for presenting a
+  # time back to the user. Never compute a deadline from it.
+  #
+  # Takes the most common value across recent sessions rather than the latest, so
+  # a trip does not repoint someone's timezone for a fortnight after they get
+  # home. Ties go to the more recent. A VPN needs no handling: the browser reads
+  # this from the operating system, not from the IP address, so tunnelling through
+  # another country does not change it.
+  #
+  # Most values are IANA names, but some browsers report things ActiveSupport
+  # cannot resolve ("Etc/Unknown", "UTC+480", bare offsets). Those are skipped in
+  # favour of the next best candidate rather than falling straight to the default.
+  DEFAULT_TIMEZONE = ActiveSupport::TimeZone["America/New_York"]
+  TIMEZONE_SESSION_SAMPLE = 20
+
+  def assumed_timezone
+    reported = user_sessions.where.not(timezone: [nil, ""])
+                            .order(Arel.sql("COALESCE(last_seen_at, created_at) DESC"))
+                            .limit(TIMEZONE_SESSION_SAMPLE)
+                            .pluck(:timezone)
+
+    reported.tally
+            .sort_by { |zone, count| [-count, reported.index(zone)] }
+            .each { |zone, _count| return ActiveSupport::TimeZone[zone] || next }
+
+    DEFAULT_TIMEZONE
+  end
+
   # gary@hackclub.com → g***y@hackclub.com
   # gt@hackclub.com → g*@hackclub.com
   # g@hackclub.com → g@hackclub.com
@@ -401,7 +430,9 @@ class User < ApplicationRecord
   end
 
   def locked_by
-    User.find_by(id: self.versions.where_object_changes_from(locked_at: nil).last.whodunnit)
+    # find(nil) returns ActiveRecord::RecordNotFound
+    # find_by(id: nil) returns nil
+    User.find_by(id: self.versions.where_object_changes_from(locked_at: nil).last&.whodunnit)
   end
 
   def lock!
@@ -594,22 +625,6 @@ class User < ApplicationRecord
       backup_codes.active.map(&:mark_discarded!)
     end
     BackupCodeMailer.with(user_id: id).backup_codes_disabled.deliver_now
-  end
-
-  def access_level_for(event, organizer_positions)
-    role = nil
-    access_level = nil
-    user_ops = organizer_positions.select { |op| op.user == self }
-    return nil if user_ops.empty?
-
-    user_ops.each do |op|
-      if role.nil? || OrganizerPosition.roles[op.role] > OrganizerPosition.roles[role]
-        role = op.role
-        access_level = op.event == event ? :direct : :indirect
-      end
-    end
-
-    { role:, access_level: }
   end
 
   def needs_to_enable_2fa?
