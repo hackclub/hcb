@@ -309,8 +309,13 @@ class Ledger
       :zero
     end
 
-    private
-
+    # Public so CanonicalTransaction/CanonicalPendingTransaction#assign_ledger_item can
+    # call it synchronously right after creating this ledger item, instead of relying
+    # solely on the `after_create_commit :assign_linked_object!` callback above (which
+    # wouldn't fire until the enclosing transaction commits — too late for callers like
+    # Disbursement#mark_approved! that query `linked_object` earlier in that same
+    # transaction). That callback stays as a defensive fallback for any other creation
+    # path; this method is idempotent either way (see the early return below).
     def assign_linked_object!
       # Once a linked object is assigned, it should never be changed.
       # In the event of a merger of ledger items (e.g. mapping a CT to an LI with an existing CPT),
@@ -322,6 +327,8 @@ class Ledger
 
       update!(linked_object:) if linked_object.present?
     end
+
+    private
 
     def calculate_amount_cents
       amount_cents = canonical_transactions.sum(:amount_cents)
