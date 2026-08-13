@@ -106,6 +106,32 @@ RSpec.describe "GET /admin/emails", type: :request do
       expect(response).to have_http_status(:forbidden)
     end
 
+    it "hides the subject from an auditor and names the mailer instead" do
+      sign_in_as(create(:user, :make_auditor))
+
+      get "/admin/emails"
+
+      expect(response.body).not_to include(code)
+      expect(response.body).to include("LoginCodeMailer#send_code")
+    end
+
+    it "does not link an auditor to the restricted contents" do
+      sign_in_as(create(:user, :make_auditor))
+
+      get "/admin/emails"
+
+      expect(listed_ids).not_to include(sensitive.id)
+    end
+
+    it "shows the subject to a superadmin" do
+      sign_in_as(create(:user, access_level: :superadmin))
+
+      get "/admin/emails"
+
+      expect(response.body).to include(code)
+      expect(listed_ids).to include(sensitive.id)
+    end
+
     it "still serves a non-sensitive message to an auditor" do
       ordinary = Ahoy::Message.create!(
         subject: "Upload a receipt",
