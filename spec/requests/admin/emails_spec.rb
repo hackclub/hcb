@@ -132,6 +132,31 @@ RSpec.describe "GET /admin/emails", type: :request do
       expect(listed_ids).to include(sensitive.id)
     end
 
+    it "excludes sensitive messages from search for an auditor" do
+      sign_in_as(create(:user, :make_auditor))
+
+      get "/admin/emails", params: { q: code }
+
+      expect(response.body).not_to include("LoginCodeMailer#send_code")
+    end
+
+    it "includes sensitive messages in search for a superadmin" do
+      sign_in_as(create(:user, access_level: :superadmin))
+
+      get "/admin/emails", params: { q: "Login Code" }
+
+      expect(response.body).to include(code)
+    end
+
+    it "still lists sensitive messages when an auditor filters by recipient" do
+      sensitive.update!(to: "someone@example.invalid")
+      sign_in_as(create(:user, :make_auditor))
+
+      get "/admin/emails", params: { to: "someone@example.invalid" }
+
+      expect(response.body).to include("LoginCodeMailer#send_code")
+    end
+
     it "still serves a non-sensitive message to an auditor" do
       ordinary = Ahoy::Message.create!(
         subject: "Upload a receipt",

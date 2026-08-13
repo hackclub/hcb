@@ -1577,7 +1577,15 @@ class AdminController < Admin::BaseController
     messages = Ahoy::Message.all
     messages = messages.where(user: User.find(@user_id)) if @user_id.present?
     messages = messages.where(to: @to) if @to
-    messages = messages.search_subject(@q) if @q
+    if @q
+      # `subject` is stored in plaintext and is what pg_search matches against.
+      # A sensitive subject can contain the secret itself (login codes are in
+      # the subject line), so without this a non-superadmin could confirm a live
+      # code from the result count alone. These rows stay in the unfiltered and
+      # user/recipient filtered listings.
+      messages = messages.where(sensitive: false) unless superadmin_signed_in?
+      messages = messages.search_subject(@q)
+    end
 
     @count = messages.count
 
