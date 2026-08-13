@@ -135,6 +135,8 @@ class CanonicalTransaction < ApplicationRecord
                             end
   end
 
+  after_create_commit :assign_ledger_item, unless: -> { ledger_item.present? }
+
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
     ledger_item.refresh!
@@ -146,13 +148,6 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   after_create :write_hcb_code
-  # Must run synchronously (`after_create`, not `after_create_commit`): callers like
-  # Disbursement#canonical_transactions query by `ledger_item_id` right after creating
-  # a CT, often still inside the same transaction (e.g. Disbursement#mark_approved!),
-  # so a commit-time callback would run too late to be visible to them. Must also be
-  # registered after `write_hcb_code` above, since `assign_ledger_item` reads
-  # `local_hcb_code`, which resolves off the `hcb_code` column that callback writes.
-  after_create :assign_ledger_item, unless: -> { ledger_item.present? }
   after_create_commit :write_system_event
   after_create_commit do
     if likely_stripe_card_transaction?
@@ -499,11 +494,6 @@ class CanonicalTransaction < ApplicationRecord
 
         li = calculated_ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
         update!(ledger_item: li)
-        # `li` may have just been created above, in which case `Ledger::Item`'s own
-        # `assign_linked_object!` (an `after_create_commit`) hasn't run yet and won't
-        # until this transaction commits. Call it now so `li.linked_object` is set
-        # synchronously, before this method returns, no matter which leg gets here first.
-        li.assign_linked_object!
         li.map!
       end
     end
