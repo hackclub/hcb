@@ -219,6 +219,15 @@
           </div>
         </div>
 
+        <div class="field">
+          <%= form.label :timezone %>
+          <p class="h5 muted mt0 mb1">
+            Emails from HCB show times in this timezone. Pages on the website always use whichever
+            timezone your browser is in right now.
+          </p>
+          <%= form.time_zone_select :timezone, nil, { include_blank: "Detect automatically" }, { disabled: } %>
+        </div>
+
         <fieldset>
           <legend class="medium">Share usage data with HCB</legend>
           <p class="h5 muted mt-0 mb-3">

@@ -133,6 +133,20 @@ RSpec.describe UsersController do
     end
   end
 
+  describe "#edit" do
+    render_views
+
+    it "offers a timezone picker that starts on automatic detection" do
+      user = create(:user)
+      create_session(user, verified: true)
+
+      get(:edit, params: { id: user.id })
+
+      expect(response.body).to include("Detect automatically")
+      expect(response.body).to include("Pacific Time (US &amp; Canada)")
+    end
+  end
+
   describe "#update" do
     render_views
 
@@ -258,6 +272,27 @@ RSpec.describe UsersController do
       expect(response).to have_http_status(:unprocessable_content)
       expect(flash.to_h["error"]).to include(reason)
       expect(user.reload.default_payout_method).to be_nil
+    end
+
+    it "saves the chosen timezone" do
+      user = create(:user)
+      create_session(user, verified: true)
+
+      patch(:update, params: { id: user.id, user: { timezone: "Pacific Time (US & Canada)" } })
+
+      expect(response).to have_http_status(:found)
+      expect(user.reload.timezone).to eq("Pacific Time (US & Canada)")
+      expect(user.resolved_timezone.tzinfo.identifier).to eq("America/Los_Angeles")
+    end
+
+    it "clears the timezone back to the inferred guess when left blank" do
+      user = create(:user, timezone: "Pacific Time (US & Canada)")
+      create_session(user, verified: true)
+
+      patch(:update, params: { id: user.id, user: { timezone: "" } })
+
+      expect(response).to have_http_status(:found)
+      expect(user.reload.timezone).to be_nil
     end
   end
 
