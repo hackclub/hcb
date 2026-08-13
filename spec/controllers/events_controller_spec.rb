@@ -168,6 +168,45 @@ RSpec.describe EventsController do
 
         expect(response).to have_http_status(:ok)
       end
+
+      context "with the tag menu rendered" do
+        render_views
+
+        # Gives the ledger item an HCB code that really belongs to the event, so
+        # `hcb_code.events` includes it and the row qualifies for a trigger.
+        def add_transaction_to(event)
+          item = create(:ledger_item, datetime: Time.current)
+          canonical_transaction = create(:canonical_transaction)
+          create(:canonical_event_mapping, canonical_transaction:, event:)
+          canonical_transaction.local_hcb_code.update!(ledger_item: item)
+          Ledger::Mapping.create!(ledger: event.ledger, ledger_item: item, on_primary_ledger: true)
+        end
+
+        before { 3.times { |i| event.tags.create!(label: "Tag #{i}", color: "muted", emoji: "🏦") } }
+
+        it "renders one tag picker for the whole table rather than one per row" do
+          2.times { add_transaction_to(event) }
+
+          get(:ledger, params: { event_id: event.slug })
+          page = Nokogiri::HTML5(response.body)
+
+          expect(page.css("tr.transaction").count).to eq(2)
+          expect(page.css(".add-tag-badge[data-hcb-code]").count).to eq(2)
+          expect(page.css("[data-ledger-tag-picker-target='content']").count).to eq(1)
+          expect(page.css("[data-ledger-tag-picker-target='content'] [data-tag-id]").count).to eq(3)
+        end
+
+        it "offers no tag picker to a user who is not a member of the organization" do
+          add_transaction_to(event)
+          create_session(create(:user), verified: true)
+
+          get(:ledger, params: { event_id: event.slug })
+          page = Nokogiri::HTML5(response.body)
+
+          expect(page.css("[data-ledger-tag-picker-target='content']")).to be_empty
+          expect(page.css(".add-tag-badge[data-hcb-code]")).to be_empty
+        end
+      end
     end
   end
 
