@@ -10,6 +10,11 @@ module Pinnable
 
     validate :validate_pinnable, if: :pinned?
     validate :validate_max_pins_for_event, if: -> { pinned? && will_save_change_to_pinned_at? }
+    validate :validate_pinned_on_primary_ledger, if: :pinned?
+
+    # A remapped item is no longer the same event's transaction, so any existing
+    # pin (which is scoped to the event it was pinned under) shouldn't carry over.
+    before_save :unpin_on_remap
   end
 
   def pinned? = pinned_at.present?
@@ -42,5 +47,13 @@ module Pinnable
     if count > MAX_PINS_PER_EVENT
       errors.add(:base, "You can only pin up to four transactions.")
     end
+  end
+
+  def validate_pinned_on_primary_ledger
+    errors.add(:base, "Only the primary mapping for a ledger item can be pinned.") unless on_primary_ledger?
+  end
+
+  def unpin_on_remap
+    self.pinned_at = nil if pinned? && will_save_change_to_ledger_id?
   end
 end

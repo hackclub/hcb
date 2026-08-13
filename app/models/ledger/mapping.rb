@@ -51,11 +51,6 @@ class Ledger
     validates :ledger_item_id, uniqueness: { scope: :ledger_id, message: "is already mapped to this ledger" }
     validates :ledger_item_id, uniqueness: { conditions: -> { where(on_primary_ledger: true) }, message: "is already mapped on a primary ledger" }, if: :on_primary_ledger?
     validate :on_primary_ledger_matches_ledger_primary
-    validate :validate_pinned_on_primary_ledger, if: :pinned?
-
-    # A remapped item is no longer the same event's transaction, so any existing
-    # pin (which is scoped to the event it was pinned under) shouldn't carry over.
-    before_save :unpin_on_remap
 
     after_commit do
       ledger_item.refresh!
@@ -108,14 +103,6 @@ class Ledger
       if on_primary_ledger? != ledger.primary?
         errors.add(:on_primary_ledger, "must match ledger's primary status")
       end
-    end
-
-    def validate_pinned_on_primary_ledger
-      errors.add(:base, "Only the primary mapping for a ledger item can be pinned.") unless on_primary_ledger?
-    end
-
-    def unpin_on_remap
-      self.pinned_at = nil if pinned? && will_save_change_to_ledger_id?
     end
 
   end

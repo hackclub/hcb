@@ -1,4 +1,4 @@
-<% is_pinned = hcb_code.ledger_item&.primary_mapping&.pinned? %>
+<% is_pinned = hcb_code.ledger_item&.pinned? %>
 <% pinnable = hcb_code.ledger_item&.pinnable? %>
 <% flagable = (hcb_code.stripe_card? || hcb_code.stripe_force_capture?) && hcb_code.stripe_card.present? && !hcb_code.personal_transaction.present? %>
 <% open_invoice = hcb_code.invoice? && hcb_code.invoice.open_v2? %>
