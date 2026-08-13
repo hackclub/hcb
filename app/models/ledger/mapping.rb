@@ -15,11 +15,12 @@
 #
 # Indexes
 #
-#  index_ledger_mappings_on_ledger_and_item      (ledger_id,ledger_item_id) UNIQUE
-#  index_ledger_mappings_on_ledger_id            (ledger_id)
-#  index_ledger_mappings_on_ledger_item_id       (ledger_item_id)
-#  index_ledger_mappings_on_mapped_by_id         (mapped_by_id)
-#  index_ledger_mappings_unique_item_on_primary  (ledger_item_id) UNIQUE WHERE (on_primary_ledger = true)
+#  index_ledger_mappings_on_ledger_and_item          (ledger_id,ledger_item_id) UNIQUE
+#  index_ledger_mappings_on_ledger_id                (ledger_id)
+#  index_ledger_mappings_on_ledger_id_and_pinned_at  (ledger_id,pinned_at)
+#  index_ledger_mappings_on_ledger_item_id           (ledger_item_id)
+#  index_ledger_mappings_on_mapped_by_id             (mapped_by_id)
+#  index_ledger_mappings_unique_item_on_primary      (ledger_item_id) UNIQUE WHERE (on_primary_ledger = true)
 #
 # Foreign Keys
 #
