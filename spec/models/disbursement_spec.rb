@@ -491,8 +491,8 @@ RSpec.describe Disbursement, type: :model do
       it "returns CPTs linked via either leg's ledger item" do
         outgoing_li = create(:ledger_item, linked_object: disbursement.outgoing_disbursement)
         incoming_li = create(:ledger_item, linked_object: disbursement.incoming_disbursement)
-        cpt1 = create(:canonical_pending_transaction, amount_cents: -disbursement.amount, ledger_item: outgoing_li)
-        cpt2 = create(:canonical_pending_transaction, amount_cents: disbursement.amount, ledger_item: incoming_li)
+        create(:canonical_pending_transaction, amount_cents: -disbursement.amount, ledger_item: outgoing_li)
+        create(:canonical_pending_transaction, amount_cents: disbursement.amount, ledger_item: incoming_li)
 
         # Clear memoization
         disbursement.instance_variable_set(:@canonical_pending_transactions, nil)
