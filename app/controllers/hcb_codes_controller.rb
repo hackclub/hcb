@@ -105,19 +105,15 @@ class HcbCodesController < ApplicationController
     authorize @hcb_code
     authorize @event
 
-    # Handle unpinning
-    if (@pin = @hcb_code.ledger_item&.pin)
-      @pin.destroy
-      flash[:success] = "Unpinned transaction from #{@event.name}"
-      redirect_back fallback_location: @event and return
-    end
+    mapping = @hcb_code.ledger_item&.primary_mapping
 
-    # Handle pinning
-    @pin = Ledger::Item::Pin.new(ledger_item: @hcb_code.ledger_item)
-    if @pin.save
+    if mapping&.pinned?
+      mapping.unpin
+      flash[:success] = "Unpinned transaction from #{@event.name}"
+    elsif mapping&.pin
       flash[:success] = "Transaction pinned!"
     else
-      flash[:error] = @pin.errors.full_messages.to_sentence
+      flash[:error] = mapping&.errors&.full_messages&.to_sentence || "At the moment, this transaction can't be pinned."
     end
 
     redirect_back fallback_location: @event

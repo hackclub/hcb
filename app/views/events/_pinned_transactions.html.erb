@@ -1,8 +1,8 @@
 <% @show_popovers = popovers_enabled? && organizer_signed_in? %>
-<% hcb_code = pin.ledger_item.hcb_code %>
 <% if @event.pinned_ledger_items.any? %>
   <div class="flex gap-4 my-2 pinned__container">
-    <% @event.pinned_ledger_items.each do |pin| %>
+    <% @event.pinned_ledger_items.each do |ledger_item| %>
+      <% hcb_code = ledger_item.hcb_code %>
       <%= link_to organizer_signed_in? ? hcb_code : "#", data: @show_popovers ? hcb_code_popover_data(hcb_code.local_hcb_code) : {}, class: "pinned__transaction relative card card-outlined flex flex-col black" do %>
         <% if organizer_signed_in? %>
           <%= form_for(
