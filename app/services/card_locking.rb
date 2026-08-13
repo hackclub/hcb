@@ -75,6 +75,14 @@ module CardLocking
     ENFORCEMENT_STAGES.filter_map { |flag, date| date if Flipper.enabled?(flag, user) }.min
   end
 
+  # A deadline as it appears in cardholder-facing copy, in the cardholder's own
+  # timezone (see User#time_zone, inferred from their last session). The zone
+  # abbreviation is kept because the inference can be wrong, and a labelled time
+  # someone can sanity-check beats a bare one they cannot.
+  def self.format_deadline(time, zone)
+    time.in_time_zone(zone).strftime("%b %-d at %-l:%M %p %Z")
+  end
+
   # The Receipt Bin URL cardholders are sent to upload outstanding receipts.
   def self.inbox_url
     Rails.application.routes.url_helpers.my_inbox_url

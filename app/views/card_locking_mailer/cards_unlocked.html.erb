@@ -1,2 +1,18 @@
-<p>Your HCB cards work again.</p>
-<p>Keep uploading every receipt within 7 days of the charge, or your cards will lock again. Manage your receipts on the HCB <%= link_to "receipts page", my_inbox_url %>.</p>
+<% if @suppressed_until %>
+  <p>
+    The HCB team has made a one time exception for you, so your cards work again until <strong><%= CardLocking.format_deadline(@suppressed_until, @timezone) %></strong>.
+  </p>
+  <% if @count > 0 %>
+    <p>
+      Upload your overdue <%= "receipt".pluralize(@count) %> before the exception ends, or your cards will lock again. <%= @count == 1 ? "This receipt is" : "These #{@count} receipts are" %> still missing:
+    </p>
+    <%= render "transactions_table", hcb_codes: @hcb_codes, show_org: @show_org %>
+  <% else %>
+    <p>
+      Keep uploading every receipt within 7 days of the charge. Manage your receipts on the HCB <%= link_to "Receipt Bin", my_inbox_url %>.
+    </p>
+  <% end %>
+<% else %>
+  <p>Your HCB cards work again.</p>
+  <p>Keep uploading every receipt within 7 days of the charge, or your cards will lock again. Manage your receipts on the HCB <%= link_to "receipts page", my_inbox_url %>.</p>
+<% end %>

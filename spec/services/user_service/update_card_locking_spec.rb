@@ -77,6 +77,20 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
     expect { described_class.new(user:).run }.not_to(change { user.reload.cards_locked? })
   end
 
+  # A suppression unlock is temporary and the receipts are still overdue, so the
+  # notification has to carry the expiry rather than the plain "cards work again".
+  it "tells a cardholder unlocked by suppression when the exception ends" do
+    user.update!(cards_locked: true, card_locking_suppressed_until: 24.hours.from_now)
+    allow(user).to receive(:card_locking_has_overdue_charge?).and_return(true)
+    allow(user).to receive(:card_locking_overdue_charges).and_return(HcbCode.none)
+
+    expect {
+      described_class.new(user:).run
+    }.to change { user.reload.cards_locked? }.from(true).to(false)
+     .and have_enqueued_mail(CardLockingMailer, :cards_unlocked)
+     .with(a_hash_including(suppressed_until: be_present))
+  end
+
   it "does not lock an overdue cardholder when the feature is disabled" do
     Flipper.disable(:card_locking)
     allow(user).to receive(:card_locking_has_overdue_charge?).and_return(true)
