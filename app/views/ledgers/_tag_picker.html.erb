@@ -1,8 +1,8 @@
 <%# locals: (event:) %>
 
-<%# The single tag picker shared by every row; see ledger_tag_menu_controller. %>
+<%# The single tag picker shared by every row; see ledger_tag_picker_controller. %>
 <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm"
-     data-ledger-tag-menu-target="content"
+     data-ledger-tag-picker-target="content"
      style="display: none; position: fixed;">
   <% event.tags.each do |tag| %>
     <div class="flex items-center">
@@ -10,7 +10,7 @@
         type="button"
         class="menu__action flex-auto"
         data-tag-id="<%= tag.id %>"
-        data-action="ledger-tag-menu#toggleTag">
+        data-action="ledger-tag-picker#toggleTag">
         <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
         <%= tag.label %>
         <span data-check></span>
@@ -26,7 +26,7 @@
 
   <%# The modal this opens is rendered by `events/nav`, which is keyed to @event. %>
   <% if @event == event && OrganizerPosition.role_at_least?(current_user, @event, :member) %>
-    <%= link_to "#", class: "menu__input", data: { behavior: "modal_trigger", modal: "create_tag", action: "ledger-tag-menu#stampCreateTag" } do %>
+    <%= link_to "#", class: "menu__input", data: { behavior: "modal_trigger", modal: "create_tag", action: "ledger-tag-picker#stampCreateTag" } do %>
       <%= inline_icon "plus", size: 15 %>
       Create tag
     <% end %>

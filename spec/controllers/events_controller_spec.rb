@@ -192,8 +192,8 @@ RSpec.describe EventsController do
 
           expect(page.css("tr.transaction").count).to eq(2)
           expect(page.css(".add-tag-badge[data-hcb-code]").count).to eq(2)
-          expect(page.css("[data-ledger-tag-menu-target='content']").count).to eq(1)
-          expect(page.css("[data-ledger-tag-menu-target='content'] [data-tag-id]").count).to eq(3)
+          expect(page.css("[data-ledger-tag-picker-target='content']").count).to eq(1)
+          expect(page.css("[data-ledger-tag-picker-target='content'] [data-tag-id]").count).to eq(3)
         end
 
         it "offers no tag picker to a user who is not a member of the organization" do
@@ -203,7 +203,7 @@ RSpec.describe EventsController do
           get(:ledger, params: { event_id: event.slug })
           page = Nokogiri::HTML5(response.body)
 
-          expect(page.css("[data-ledger-tag-menu-target='content']")).to be_empty
+          expect(page.css("[data-ledger-tag-picker-target='content']")).to be_empty
           expect(page.css(".add-tag-badge[data-hcb-code]")).to be_empty
         end
       end
