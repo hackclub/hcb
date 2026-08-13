@@ -186,6 +186,26 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#edit" do
+    render_views
+
+    # Creating, editing and deleting tags are member-level server side, so the
+    # settings tab shouldn't present them as manager-only.
+    it "lets a member manage tags from the settings tab" do
+      member = create(:user)
+      event = create(:event)
+      create(:organizer_position, user: member, event:, role: :member)
+      event.tags.create!(label: "Snacks", color: "muted", emoji: "🍕")
+      create_session(member, verified: true)
+
+      get(:edit, params: { id: event.slug, tab: "tags" })
+      page = Nokogiri::HTML5(response.body)
+
+      expect(page.css("#tags_settings input[name='label'][disabled]")).to be_empty
+      expect(page.css("#tags_settings a[disabled]")).to be_empty
+    end
+  end
+
   describe "#payments" do
     render_views
 
