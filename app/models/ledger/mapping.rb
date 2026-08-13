@@ -43,6 +43,7 @@ class Ledger
     belongs_to :mapped_by, class_name: "User", optional: true
 
     delegate :event, to: :ledger
+    delegate :card_grant, to: :ledger
 
     scope :mapped_by_human, -> { where.not(mapped_by: nil) }
     scope :mapped_by_system, -> { where(mapped_by: nil) }

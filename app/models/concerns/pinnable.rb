@@ -1,11 +1,5 @@
 # frozen_string_literal: true
 
-# Lets a model be "pinned" to highlight it (e.g. at the top of a transaction
-# list), capped at four pins per event.
-#
-# The including model must have a `pinned_at :datetime` column and implement:
-#   #event       - the event a pin is scoped to, used to enforce the per-event cap
-#   #ledger_item - the underlying item whose `pinnable?` gates whether pinning is allowed
 module Pinnable
   extend ActiveSupport::Concern
 
