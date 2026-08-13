@@ -1,6 +1,10 @@
 <%# locals: (ledger: nil, items:, table_only: true, filter: nil, show_fee: false, show_author: true) %>
 
-<%= turbo_frame_tag dom_id(ledger) do %>
+<%# The tag picker is shared by every row, so it hangs off the frame that holds
+    them all rather than off any one row. %>
+<% tag_menu_event = taggable_event(@event || ledger&.event) %>
+
+<%= turbo_frame_tag dom_id(ledger), data: { controller: "ledger-tag-menu", action: "click@document->ledger-tag-menu#close keydown@document->ledger-tag-menu#keydown" } do %>
   <% if !table_only && ledger.present? %>
     <section class="details mb-4">
       <div>
@@ -56,10 +60,12 @@
         </thead>
         <tbody>
           <%= render partial: "ledgers/pending_fee_transaction", locals: { ledger: } if show_fee && ledger.present? %>
-          <%= render partial: "ledger/item", locals: { show_author: }, collection: items, as: :item %>
+          <%= render partial: "ledger/item", locals: { show_author:, tag_menu_event: }, collection: items, as: :item %>
         </tbody>
       </table>
     </div>
+
+    <%= render partial: "ledgers/tag_menu", locals: { event: tag_menu_event } if tag_menu_event %>
 
     <%= paginate items %>
   <% else %>
