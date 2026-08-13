@@ -21,25 +21,29 @@
 <% elsif @legal_entity.completed_tax_form? %>
   <% completed_tax_form = @legal_entity.latest_completed_tax_form %>
   <% if @legal_entity.payable? %>
-    <% if @legal_entity.default_payout_method.present? %>
-      <p>
-        You're all set! <%= @legal_entity.person? ? "You" : (@legal_entity.name.presence || "Business") %>
-        can now receive payments from any organization on HCB.
-        <% if (under_review_count = @legal_entity.payments.under_review.count) > 0 %>
-          Once your <%= "payment".pluralize(under_review_count) %> <%= under_review_count == 1 ? "is" : "are" %>
-          approved by HCB, we'll send <%= under_review_count == 1 ? "it" : "them" %> using your default payout method.
-        <% end %>
-        If you'd like, review your payout methods.
-      </p>
-
-      <p>You can see all of your payments in the <%= link_to "Pay tab", my_pay_path(legal_entity_id: @legal_entity.id) %>.</p>
+    <% if @legal_entity.managed? %>
+      <p>This legal entity's payout information is managed by <%= @legal_entity.managing_event.name %>.</p>
     <% else %>
-      <p>
-        You're almost there - just add a payout method below!
-      </p>
-    <% end %>
+      <% if @legal_entity.default_payout_method.present? %>
+        <p>
+          You're all set! <%= @legal_entity.person? ? "You" : (@legal_entity.name.presence || "Business") %>
+          can now receive payments from any organization on HCB.
+          <% if (under_review_count = @legal_entity.payments.under_review.count) > 0 %>
+            Once your <%= "payment".pluralize(under_review_count) %> <%= under_review_count == 1 ? "is" : "are" %>
+            approved by HCB, we'll send <%= under_review_count == 1 ? "it" : "them" %> using your default payout method.
+          <% end %>
+          If you'd like, review your payout methods.
+        </p>
 
-    <%= render "users/payout_methods_list", user: current_user, legal_entity: @legal_entity %>
+        <p>You can see all of your payments in the <%= link_to "Pay tab", my_pay_path(legal_entity_id: @legal_entity.id) %>.</p>
+      <% else %>
+        <p>
+          You're almost there - just add a payout method below!
+        </p>
+      <% end %>
+
+      <%= render "users/payout_methods_list", user: current_user, legal_entity: @legal_entity %>
+    <% end %>
 
     <hr>
 
@@ -147,13 +151,17 @@
       tax information is pending verification.
     </p>
 
-    <p>
-      While we process your submission, <%= @legal_entity.default_payout_method.present? ? "review your" : "add a" %>
-      payout method below. Once your submission is verified<%= " and you have added a payout method" unless @legal_entity.default_payout_method.present? %>,
-      you'll be able to receive payments from any organization on HCB.
-    </p>
+    <% if @legal_entity.managed? %>
+      <p>Once your submission is verified, you'll be able to receive payments from any organization on HCB.
+    <% else %>
+      <p>
+        While we process your submission, <%= @legal_entity.default_payout_method.present? ? "review your" : "add a" %>
+        payout method below. Once your submission is verified<%= " and you have added a payout method" unless @legal_entity.default_payout_method.present? %>,
+        you'll be able to receive payments from any organization on HCB.
+      </p>
 
-    <%= render "users/payout_methods_list", user: current_user, legal_entity: @legal_entity %>
+      <%= render "users/payout_methods_list", user: current_user, legal_entity: @legal_entity %>
+    <% end %>
   <% end %>
 <% elsif @legal_entity.latest_tax_form.nil? || @legal_entity.latest_tax_form.failed? %>
   <p>
