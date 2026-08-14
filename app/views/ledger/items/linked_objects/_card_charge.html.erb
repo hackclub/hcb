@@ -156,7 +156,7 @@
                 <%= copy_to_clipboard(card_charge.stripe_merchant_data["network_id"], class: "w-fit", tooltip_direction: "e") %>
               </p>
             </div>
-            <%= link_to "See all transactions at #{humanized_merchant_name card_charge.stripe_merchant_data}", event_transactions_path(@event, merchant: card_charge.stripe_merchant_data["network_id"]) %>
+            <%= link_to "See all transactions at #{humanized_merchant_name card_charge.stripe_merchant_data}", event_transactions_path(ledger_item.primary_mapping.ledger.event, merchant: card_charge.stripe_merchant_data["network_id"]) %>
             <p class="muted">
               Details are provided by the merchant and not guaranteed to be correct.
             </p>
@@ -186,28 +186,28 @@
                 <%= card_charge.raw_pending_stripe_transaction.stripe_transaction["authorization_method"].humanize %>
                 <%= inline_icon "down-caret", size: 24, class: "muted flip-when-open", 'aria-label': "Icon indicating click for more" %>
               </summary>
-              <% @verification_data = card_charge.raw_pending_stripe_transaction.stripe_transaction["verification_data"] %>
+              <% verification_data = card_charge.raw_pending_stripe_transaction.stripe_transaction["verification_data"] %>
 
               <article class="details-horiz mt2 mb1">
 
                 <div class="mt1 md-mt0" style="width: 100%;">
                   <p class="details__simulated">
-                    <%= stripe_verification_check_badge "address_line1" %>
+                    <%= stripe_verification_check_badge "address_line1", verification_data %>
                     <span>Address check</span>
                   </p>
                   <p class="details__simulated">
-                    <%= stripe_verification_check_badge "address_postal_code" %>
+                    <%= stripe_verification_check_badge "address_postal_code", verification_data %>
                     <span>ZIP check</span>
                   </p>
                 </div>
 
                 <div class="mt1 md-mt0" style="width: 100%;">
                   <p class="details__simulated">
-                    <%= stripe_verification_check_badge "expiry" %>
+                    <%= stripe_verification_check_badge "expiry", verification_data %>
                     <span>Expiry check</span>
                   </p>
                   <p class="details__simulated">
-                    <%= stripe_verification_check_badge "cvc" %>
+                    <%= stripe_verification_check_badge "cvc", verification_data %>
                     <span>CVC check</span>
                   </p>
                 </div>
@@ -308,7 +308,7 @@
           <%= copy_to_clipboard(card_charge.stripe_merchant_data["network_id"], class: "w-fit", tooltip_direction: "e") %>
         </p>
       </div>
-      <%= link_to "See all transactions at #{humanized_merchant_name card_charge.stripe_merchant_data}", event_transactions_path(@event, merchant: card_charge.stripe_merchant_data["network_id"]) %>
+      <%= link_to "See all transactions at #{humanized_merchant_name card_charge.stripe_merchant_data}", event_transactions_path(ledger_item.primary_mapping.ledger.event, merchant: card_charge.stripe_merchant_data["network_id"]) %>
       <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0.5rem;">
         <p class="my0 muted">
           Details are provided by the merchant and not guaranteed to be correct.
@@ -330,7 +330,7 @@
   <% if organizer_signed_in? && ledger_item.cpt_count > 0 %>
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="verification_details_<%= instance %>">
       <%= modal_header "Charge details" %>
-      <% @verification_data = card_charge.raw_pending_stripe_transaction.stripe_transaction["verification_data"] %>
+      <% verification_data = card_charge.raw_pending_stripe_transaction.stripe_transaction["verification_data"] %>
 
       <article class="details-horiz">
         <div class="mt1 md-mt0" style="width: 100%;">
@@ -350,22 +350,22 @@
 
         <div class="mt1 md-mt0" style="width: 100%;">
           <p class="details__simulated">
-            <%= stripe_verification_check_badge "address_line1" %>
+            <%= stripe_verification_check_badge "address_line1", verification_data %>
             <span>Address check</span>
           </p>
           <p class="details__simulated">
-            <%= stripe_verification_check_badge "address_postal_code" %>
+            <%= stripe_verification_check_badge "address_postal_code", verification_data %>
             <span>ZIP check</span>
           </p>
         </div>
 
         <div class="mt1 md-mt0" style="width: 100%;">
           <p class="details__simulated">
-            <%= stripe_verification_check_badge "expiry" %>
+            <%= stripe_verification_check_badge "expiry", verification_data %>
             <span>Expiry check</span>
           </p>
           <p class="details__simulated">
-            <%= stripe_verification_check_badge "cvc" %>
+            <%= stripe_verification_check_badge "cvc", verification_data %>
             <span>CVC check</span>
           </p>
         </div>
