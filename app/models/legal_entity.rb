@@ -92,9 +92,10 @@ class LegalEntity < ApplicationRecord
     return true unless requires_tax_form
 
     form = latest_completed_tax_form
+    requires_verification = form&.form_type == "W9" && tax_identification_number.predicted_to_be_over_threshold?
 
     form.present? && mismatched_tax_form.nil? && entity_type_mismatched_tax_form.nil? &&
-      (form.taxbandits_tin_match_success? || !tax_identification_number.predicted_to_be_over_threshold?)
+      (form.taxbandits_tin_match_success? || !requires_verification)
   end
 
   def latest_completed_tax_form

@@ -2,6 +2,7 @@
 
 class AdminController < Admin::BaseController
   include Admin::PaymentApprovable
+  include Admin::TransferApprovable
 
   def nav
     @nav = Admin::Nav.new(page_title: params[:title])
@@ -633,6 +634,7 @@ class AdminController < Admin::BaseController
     return unless enforce_sudo_mode
 
     ensure_legal_entity_payable!(ach_transfer, classification: params[:classification])
+    ensure_admin_may_approve!(ach_transfer, amount_cents: ach_transfer.amount)
 
     ach_transfer.approve!(current_user)
 
@@ -648,6 +650,7 @@ class AdminController < Admin::BaseController
     return unless enforce_sudo_mode
 
     ensure_legal_entity_payable!(ach_transfer, classification: params[:classification])
+    ensure_admin_may_approve!(ach_transfer, amount_cents: ach_transfer.amount)
 
     ach_transfer.approve!(current_user, send_realtime: true)
 
@@ -1576,7 +1579,9 @@ class AdminController < Admin::BaseController
 
     @count = messages.count
 
-    @messages = messages.page(@page).per(@per).order(sent_at: :desc)
+    # `reorder` because `search_subject` (pg_search) orders by relevance rank,
+    # which would otherwise take precedence over `sent_at`.
+    @messages = messages.reorder(sent_at: :desc).page(@page).per(@per)
   end
 
   def unknown_merchants

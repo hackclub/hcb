@@ -1,6 +1,6 @@
 <%# locals: (item:, show_author: true) %>
 
-<tr class="transaction transaction--<%= item.sign %>">
+<tr class="transaction transaction--<%= item.sign %> <%= item.special_appearance&.css_class %>">
   <td class="transaction__icon">
     <div class="tooltipped tooltipped--e" aria-label="<%= item.humanized_type %>">
       <% if item.icon.is_a?(YellowPages::Merchant) %>

@@ -956,6 +956,18 @@ class EventsController < ApplicationController
 
         send_data csv, filename: "#{@event.name}'s sub-organizations.csv", type: "text/csv", disposition: :attachment
       end
+
+      # Like the CSV, the XLSX export intentionally does not consider filters.
+      # Unlike the CSV, it includes every visible descendant (not just direct
+      # sub-organizations), rendered as a collapsible tree via row grouping.
+      format.xlsx do
+        send_data(
+          Event::SubOrganizationsExport.new(@event, descendant_ids: visible_descendant_ids).xlsx,
+          filename: "#{@event.name}'s sub-organizations.xlsx",
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          disposition: :attachment
+        )
+      end
     end
 
   end

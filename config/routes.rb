@@ -1039,6 +1039,7 @@ Rails.application.routes.draw do
     resources :payroll_positions, only: [:new, :create, :show, :edit, :update], controller: "payroll/positions" do
       member do
         get :contract
+        post :terminate
       end
     end
     resources :payroll_invoices, only: [], controller: "payroll/invoices" do

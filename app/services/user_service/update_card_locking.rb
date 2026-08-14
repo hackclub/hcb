@@ -10,11 +10,16 @@ module UserService
 
     def run
       return unless @user.present?
-      return unless Flipper.enabled?(:card_locking_2025_06_09, @user)
       return if @unlock_only && !@user.cards_locked?
 
       now = Time.current
-      should_lock = @user.card_locking_suppressed?(now:) ? false : @user.card_locking_has_overdue_charge?(now:)
+
+      # The kill switch unlocks rather than freezes: as an early return it would
+      # strand already-locked cardholders with no way to unlock by uploading, so
+      # switching the feature off during an incident would deepen it. Folded into
+      # should_lock, disabling it releases them on the next sweep, which reaches
+      # every locked cardholder via User.card_locking_candidates.
+      should_lock = CardLocking.enabled? && @user.cards_should_lock?(now:)
 
       # Uploading a receipt can only ever unlock. If a charge is still overdue,
       # leave the lock exactly as it is (do NOT unlock with work outstanding), but
@@ -58,7 +63,7 @@ module UserService
       return unless transitioned
 
       # Enqueue notifications outside the row lock, gated on the transition.
-      should_lock ? notify_locked(now:) : notify_unlocked
+      should_lock ? notify_locked(now:) : notify_unlocked(now:)
     end
 
     private
@@ -68,9 +73,25 @@ module UserService
       send_sms(locked_message(now:))
     end
 
-    def notify_unlocked
-      CardLockingMailer.cards_unlocked(user: @user).deliver_later
-      send_sms("Your HCB cards work again. Keep uploading receipts within 7 days of the charge, or your cards will lock again. Manage receipts at #{CardLocking.inbox_url}.")
+    # An unlock has two very different causes. Clearing your receipts earns the
+    # plain "your cards work again". An admin suppression does not: the receipts
+    # are still overdue and the cards lock again when it expires, so telling that
+    # cardholder their cards work again full stop would be a promise HCB breaks on
+    # a date they were never told.
+    def notify_unlocked(now:)
+      suppressed_until = @user.card_locking_suppressed_until if @user.card_locking_suppressed?(now:)
+
+      CardLockingMailer.cards_unlocked(user: @user, suppressed_until:).deliver_later
+      send_sms(unlocked_message(suppressed_until, now:))
+    end
+
+    def unlocked_message(suppressed_until, now:)
+      return "Your HCB cards work again. Keep uploading receipts within 7 days of the charge, or your cards will lock again. Manage receipts at #{CardLocking.inbox_url}." if suppressed_until.nil?
+
+      count = @user.card_locking_overdue_charges(now:).count("hcb_codes.id")
+      noun = "receipt".pluralize(count)
+      deadline = CardLocking.format_deadline(suppressed_until, @user.assumed_timezone)
+      "Your HCB cards work again until #{deadline}, as a one time exception from the HCB team. Upload your #{count} overdue #{noun} before then or your cards lock again. #{CardLocking.inbox_url}"
     end
 
     def locked_message(now:)
