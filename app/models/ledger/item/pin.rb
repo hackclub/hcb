@@ -59,5 +59,7 @@ class Ledger
         self.pinned_at = nil if pinned? && will_save_change_to_ledger_id?
       end
     end
+
   end
+
 end
