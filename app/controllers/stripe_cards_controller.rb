@@ -83,17 +83,19 @@ class StripeCardsController < ApplicationController
                       .includes(canonical_pending_transactions: [:raw_pending_stripe_transaction], canonical_transactions: :transaction_source)
                       .page(params[:page]).per(params[:per] || 25)
 
-    # Grant cards (viewable here by auditors) keep their charges on the card
-    # grant's ledger rather than the event's.
-    @per = params[:per] || 25
-    @table_only = true
-    @ledger = @card.card_grant&.ledger || @event.ledger
-    # TODO: Swap this out for Ledger::Query once Stripe cards have their own non-primary ledgers
-    @items = @ledger.items
-                    .includes(:canonical_transactions, :canonical_pending_transactions, :linked_object)
-                    .where(linked_object_type: "CardCharge", linked_object_id: @card.card_charges.select(:id))
-                    .order(datetime: :desc, created_at: :desc, id: :desc)
-                    .page(params[:page]).per(@per)
+    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
+      # Grant cards (viewable here by auditors) keep their charges on the card
+      # grant's ledger rather than the event's.
+      @per = params[:per] || 25
+      @table_only = true
+      @ledger = @card.card_grant&.ledger || @event.ledger
+      # TODO: Swap this out for Ledger::Query once Stripe cards have their own non-primary ledgers
+      @items = @ledger.items
+                      .includes(:canonical_transactions, :canonical_pending_transactions, :linked_object)
+                      .where(linked_object_type: "CardCharge", linked_object_id: @card.card_charges.select(:id))
+                      .order(datetime: :desc, created_at: :desc, id: :desc)
+                      .page(params[:page]).per(@per)
+    end
 
     if params[:frame] == "true" && turbo_frame_request?
       @frame = true
