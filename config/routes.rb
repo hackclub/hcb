@@ -558,7 +558,6 @@ Rails.application.routes.draw do
       get "memo_frame"
       get "dispute"
       post "invoice_as_personal_transaction"
-      post "pin"
       post "toggle_tag/:tag_id", to: "hcb_codes#toggle_tag", as: :toggle_tag
       post "send_receipt_sms", to: "hcb_codes#send_receipt_sms", as: :send_sms_receipt
 
@@ -641,6 +640,8 @@ Rails.application.routes.draw do
   scope module: :ledger, as: :ledger do
     resources :items, path: "transactions", only: [:show] do
       get "hcb"
+      post "pin"
+      post "unpin"
     end
   end
   resources :ledger_items, only: [], path: "transactions", concerns: :commentable

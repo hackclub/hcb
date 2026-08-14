@@ -97,28 +97,6 @@ class HcbCodesController < ApplicationController
     @suggested_memos = ::HcbCodeService::SuggestedMemos.new(hcb_code: @hcb_code, event: @event).run.first(4)
   end
 
-  def pin
-    @hcb_code = HcbCode.find(params[:id])
-    param_event = Event.friendly.find_by_friendly_id(params[:event])
-    @event = param_event ? @hcb_code.events.find_by(id: param_event.id) : @hcb_code.event
-
-    authorize @hcb_code
-    authorize @event
-
-    mapping = @hcb_code.ledger_item&.primary_mapping
-
-    if mapping&.pinned?
-      mapping.unpin
-      flash[:success] = "Unpinned transaction from #{@event.name}"
-    elsif mapping&.pin
-      flash[:success] = "Transaction pinned!"
-    else
-      flash[:error] = mapping&.errors&.full_messages&.to_sentence || "At the moment, this transaction can't be pinned."
-    end
-
-    redirect_back fallback_location: @event
-  end
-
   def update
     @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
 

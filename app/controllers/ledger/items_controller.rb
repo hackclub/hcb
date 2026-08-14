@@ -32,6 +32,35 @@ class Ledger
       redirect_to hcb_code_path(@item.hcb_code)
     end
 
+    def pin
+      @item = Ledger::Item.find_by_hashid!(params[:item_id])
+      @event = @item.primary_ledger&.event
+
+      authorize @item
+      authorize @event
+
+      if @item.primary_mapping&.pin
+        flash[:success] = "Transaction pinned!"
+      else
+        flash[:error] = @item.primary_mapping&.errors&.full_messages&.to_sentence || "At the moment, this transaction can't be pinned."
+      end
+
+      redirect_back fallback_location: @event
+    end
+
+    def unpin
+      @item = Ledger::Item.find_by_hashid!(params[:item_id])
+      @event = @item.primary_ledger&.event
+
+      authorize @item
+      authorize @event
+
+      @item.primary_mapping&.unpin
+      flash[:success] = "Unpinned transaction from #{@event&.name}"
+
+      redirect_back fallback_location: @event
+    end
+
   end
 
 end

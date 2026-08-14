@@ -6,8 +6,8 @@
       <%= link_to organizer_signed_in? ? hcb_code : "#", data: @show_popovers ? hcb_code_popover_data(hcb_code.local_hcb_code) : {}, class: "pinned__transaction relative card card-outlined flex flex-col black" do %>
         <% if organizer_signed_in? %>
           <%= form_for(
-                hcb_code,
-                url: pin_hcb_code_path(hcb_code, event: @event),
+                ledger_item,
+                url: unpin_ledger_item_path(ledger_item),
                 method: :post,
                 data: { turbo_confirm: "This will unpin the transaction for all team members. Continue?" }
               ) do |form| %>
