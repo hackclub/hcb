@@ -7,7 +7,7 @@
     <% pinned_ledger_items.each do |ledger_item| %>
       <%= link_to organizer_signed_in? ? ledger_item_path(ledger_item) : "#", data: show_popovers ? ledger_item_popover_data(ledger_item) : {}, class: "pinned__transaction relative card card-outlined flex flex-col black" do %>
         <% if organizer_signed_in? %>
-          <%= button_to unpin_ledger_item_path(ledger_item),
+          <%= button_to ledger_item_unpin_path(ledger_item),
                 method: :post,
                 class: "pinned__transaction__pin pointer pop tooltipped tooltipped--w",
                 aria: { label: "Unpin" },
