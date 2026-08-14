@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_05_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_11_161442) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -2912,6 +2912,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_05_120000) do
     t.bigint "payout_method_id"
     t.string "payout_method_type"
     t.text "phone_number"
+    t.boolean "phone_number_verification_bypassed", default: false, null: false
     t.boolean "phone_number_verified", default: false
     t.string "preferred_name"
     t.boolean "pretend_is_not_admin", default: false, null: false

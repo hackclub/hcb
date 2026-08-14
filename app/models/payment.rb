@@ -139,11 +139,11 @@ class Payment < ApplicationRecord
 
 
   def state_color
-    return "info" if ["under_review", "pending_legal_entity"].include?(aasm_state)
+    return "info" if ["under_review", "pending_legal_entity", "sent"].include?(aasm_state)
     return "success" if aasm_state == "successful"
     return "error" if aasm_state == "rejected"
 
-    "muted"
+    "muted" # aasm_state == "canceled"
   end
 
   def state_text
