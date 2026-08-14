@@ -7,7 +7,7 @@
 #  id                :bigint           not null, primary key
 #  aasm_state        :string           not null
 #  amount_cents      :integer          not null
-#  classification    :string           default("other_services"), not null
+#  classification    :string           default("general_services"), not null
 #  currency          :string           not null
 #  purpose           :string           not null
 #  rejected_at       :datetime
