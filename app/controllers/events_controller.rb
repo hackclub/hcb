@@ -289,7 +289,7 @@ class EventsController < ApplicationController
 
     @all_positions = @event.organizer_positions
                            .joins(:user)
-    @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.email ILIKE :query" : "users.full_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
+    @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.preferred_name ILIKE :query OR users.email ILIKE :query" : "users.preferred_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
                                    .order(created_at: :desc)
     if @filter == "active_teenagers"
       @all_positions = @all_positions.select { |op| op.user.is_teenager? && op.user.active? } # select if user is a teenager and active (stole from the other code ;))
@@ -955,6 +955,18 @@ class EventsController < ApplicationController
         end
 
         send_data csv, filename: "#{@event.name}'s sub-organizations.csv", type: "text/csv", disposition: :attachment
+      end
+
+      # Like the CSV, the XLSX export intentionally does not consider filters.
+      # Unlike the CSV, it includes every visible descendant (not just direct
+      # sub-organizations), rendered as a collapsible tree via row grouping.
+      format.xlsx do
+        send_data(
+          Event::SubOrganizationsExport.new(@event, descendant_ids: visible_descendant_ids).xlsx,
+          filename: "#{@event.name}'s sub-organizations.xlsx",
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          disposition: :attachment
+        )
       end
     end
 
