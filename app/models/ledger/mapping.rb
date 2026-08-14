@@ -35,7 +35,7 @@ class Ledger
 
     has_paper_trail
 
-    include Pinnable
+    include Ledger::Item::Pin
 
     belongs_to :ledger, class_name: "::Ledger"
     belongs_to :ledger_item, class_name: "Ledger::Item"
