@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class AdminController < Admin::BaseController
+  include Admin::PaymentApprovable
+
   def nav
     @nav = Admin::Nav.new(page_title: params[:title])
 
@@ -630,17 +632,11 @@ class AdminController < Admin::BaseController
     ach_transfer = AchTransfer.find(params[:id])
     return unless enforce_sudo_mode
 
-    ach_transfer.payment&.update!(classification: params[:classification])
+    ensure_tax_form_satisifed!(ach_transfer, classification: params[:classification])
 
-    if ach_transfer.payment.nil? || ach_transfer.payment.legal_entity.payable?(requires_tax_form: ach_transfer.payment.requires_tax_form)
-      ach_transfer.approve!(current_user)
+    ach_transfer.approve!(current_user)
 
-      redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success" }
-    else
-      ach_transfer.payment.request_tax_form!
-
-      redirect_to ach_start_approval_admin_path(ach_transfer), flash: { error: "Tax information was missing for this payment and has been requested" }
-    end
+    redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success" }
   rescue Faraday::Error => e
     redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: "Something went wrong: #{ColumnService.error_to_admin_message(e)}" }
   rescue => e

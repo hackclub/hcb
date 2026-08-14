@@ -3,6 +3,7 @@
 class WiseTransfersController < ApplicationController
   include SetEvent
   include Admin::TransferApprovable
+  include Admin::PaymentApprovable
 
   before_action :set_event, only: %i[new create]
   before_action :set_wise_transfer, only: %i[update approve reject mark_sent mark_failed]
@@ -45,6 +46,8 @@ class WiseTransfersController < ApplicationController
     return unless enforce_sudo_mode
 
     ensure_admin_may_approve!(@wise_transfer, amount_cents: @wise_transfer.quoted_usd_amount_cents)
+    ensure_tax_form_satisifed!(@wise_transfer, classification: params[:classification])
+
     @wise_transfer.mark_approved!
 
     redirect_to wise_transfer_process_admin_path(@wise_transfer), flash: { success: "You have assigned yourself to this Wise transfer." }
@@ -74,17 +77,9 @@ class WiseTransfersController < ApplicationController
     @wise_transfer.assign_attributes(wise_transfer_params)
 
     begin
-      @wise_transfer.payment&.update!(classification: params.dig(:wise_transfer, :classification))
+      @wise_transfer.mark_sent!
 
-      if @wise_transfer.payment.nil? || @wise_transfer.payment.legal_entity.payable?(requires_tax_form: @wise_transfer.payment.requires_tax_form)
-        @wise_transfer.mark_sent!
-
-        flash[:success] = "Marked as sent."
-      else
-        @wise_transfer.payment.request_tax_form!
-
-        flash[:error] = "Tax information was missing for this payment and has been requested"
-      end
+      flash[:success] = "Marked as sent."
     rescue ActiveRecord::RecordInvalid => e
       flash[:error] = e.record.errors.full_messages.to_sentence
     end
