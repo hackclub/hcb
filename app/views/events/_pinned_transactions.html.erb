@@ -1,26 +1,20 @@
 <%# locals: (event:) %>
 
 <% show_popovers = popovers_enabled? && organizer_signed_in? %>
-<% if event.pinned_ledger_items.any? %>
+<% pinned_ledger_items = event.pinned_ledger_items.to_a %>
+<% if pinned_ledger_items.any? %>
   <div class="flex gap-4 my-2 pinned__container">
-    <% event.pinned_ledger_items.each do |ledger_item| %>
+    <% pinned_ledger_items.each do |ledger_item| %>
       <%= link_to organizer_signed_in? ? ledger_item_path(ledger_item) : "#", data: show_popovers ? ledger_item_popover_data(ledger_item) : {}, class: "pinned__transaction relative card card-outlined flex flex-col black" do %>
         <% if organizer_signed_in? %>
-          <%= form_for(
-                ledger_item,
-                url: unpin_ledger_item_path(ledger_item),
+          <%= button_to unpin_ledger_item_path(ledger_item),
                 method: :post,
-                data: { turbo_confirm: "This will unpin the transaction for all team members. Continue?" }
-              ) do |form| %>
-            <%= form.button(
-                  type: "submit",
-                  class: "pinned__transaction__pin pointer pop tooltipped tooltipped--w",
-                  aria: { label: "Unpin" },
-                  style: "margin-left: auto",
-                  onclick: "event.stopPropagation()"
-                ) do %>
-              <%= inline_icon "pin-remove", size: 28 %>
-            <% end %>
+                class: "pinned__transaction__pin pointer pop tooltipped tooltipped--w",
+                aria: { label: "Unpin" },
+                style: "margin-left: auto",
+                onclick: "event.stopPropagation()",
+                data: { turbo_confirm: "This will unpin the transaction for all team members. Continue?" } do %>
+            <%= inline_icon "pin-remove", size: 28 %>
           <% end %>
         <% end %>
 
