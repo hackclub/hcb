@@ -46,7 +46,7 @@ class WiseTransfersController < ApplicationController
     return unless enforce_sudo_mode
 
     ensure_admin_may_approve!(@wise_transfer, amount_cents: @wise_transfer.quoted_usd_amount_cents)
-    ensure_tax_form_satisifed!(@wise_transfer, classification: params[:classification])
+    ensure_legal_entity_payable!(@wise_transfer, classification: params[:classification])
 
     @wise_transfer.mark_approved!
 

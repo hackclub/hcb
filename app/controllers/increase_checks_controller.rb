@@ -47,7 +47,7 @@ class IncreaseChecksController < ApplicationController
     return unless enforce_sudo_mode
 
     ensure_admin_may_approve!(@check, amount_cents: @check.amount)
-    ensure_tax_form_satisifed!(@check, classification: params[:classification])
+    ensure_legal_entity_payable!(@check, classification: params[:classification])
 
     @check.send_check!
 

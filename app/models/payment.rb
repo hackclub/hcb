@@ -179,11 +179,6 @@ class Payment < ApplicationRecord
     !legal_entity&.payable? || legal_entity.default_payout_method.blank?
   end
 
-  def request_tax_form!
-    mark_pending_legal_entity!
-    current_attempt&.payout&.mark_rejected!
-  end
-
   def update_requires_tax_form
     set_requires_tax_form
     save!

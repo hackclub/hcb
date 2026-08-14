@@ -45,7 +45,7 @@ class WiresController < ApplicationController
     return unless enforce_sudo_mode
 
     ensure_admin_may_approve!(@wire, amount_cents: @wire.usd_amount_cents)
-    ensure_tax_form_satisifed!(@wire, classification: params[:classification])
+    ensure_legal_entity_payable!(@wire, classification: params[:classification])
 
     @wire.mark_approved!
 

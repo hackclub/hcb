@@ -632,7 +632,7 @@ class AdminController < Admin::BaseController
     ach_transfer = AchTransfer.find(params[:id])
     return unless enforce_sudo_mode
 
-    ensure_tax_form_satisifed!(ach_transfer, classification: params[:classification])
+    ensure_legal_entity_payable!(ach_transfer, classification: params[:classification])
 
     ach_transfer.approve!(current_user)
 
