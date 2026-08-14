@@ -24,10 +24,7 @@
 
         <p class="font-bold m0 flex items-center g2">
           <%= format_date ledger_item.datetime %>
-          <%# TODO: extract to partial %>
-          <% unless ledger_item.settled? %>
-            <%= badge_for ledger_item.status_text, class: ledger_item.status_css %>
-          <% end %>
+          <%= render "ledger/items/status", ledger_item: %>
         </p>
         <p class="pinned__transaction__text pinned__transaction__text--memo mt1 mb1 leading-[1.25] h3">
           <%= ledger_item.memo %>
@@ -36,12 +33,7 @@
           <span class="m0 muted">
             <%= render_money ledger_item.amount_cents %>
           </span>
-          <%# TODO: extract to partial %>
-          <% if ledger_item.icon.is_a?(YellowPages::Merchant) %>
-            <%= merchant_icon(ledger_item.icon, style: "height: 1.2em") %>
-          <% else %>
-            <%= inline_icon(ledger_item.icon, size: 32) %>
-          <% end %>
+          <%= render "ledger/items/icon", ledger_item: %>
         </footer>
       <% end %>
     <% end %>
