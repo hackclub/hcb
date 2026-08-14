@@ -25,7 +25,7 @@ module Admin
           end
 
           if error.present?
-            current_attempt&.payout&.mark_rejected!
+            payment.current_attempt&.payout&.mark_rejected!
             raise LegalEntityNotPayableError, error
           end
         end
