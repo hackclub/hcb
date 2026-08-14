@@ -70,6 +70,10 @@ class CardCharge < ApplicationRecord
     raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_data") || raw_stripe_transactions.first&.stripe_transaction&.[]("merchant_data")
   end
 
+  def stripe_refund?
+    raw_stripe_transactions.first&.refund? && raw_pending_stripe_transaction.nil? || (raw_stripe_transactions.size > 0 && ledger_item.amount_cents > 0)
+  end
+
   def stripe_cash_withdrawal?
     stripe_merchant_data&.[]("category_code") == "6011"
   end
