@@ -2008,7 +2008,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_005945) do
   create_table "payments", force: :cascade do |t|
     t.string "aasm_state", null: false
     t.integer "amount_cents", null: false
-    t.string "classification", default: "other_services", null: false
+    t.string "classification", default: "general_services", null: false
     t.datetime "created_at", null: false
     t.bigint "creator_id", null: false
     t.string "currency", null: false
