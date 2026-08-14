@@ -581,18 +581,17 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :canonical_pending_transactions, only: [:show, :edit, :update] do
+  resources :canonical_pending_transactions, only: [:show, :update] do
     member do
       post "set_category"
     end
   end
 
-  resources :canonical_transactions, only: [:show, :edit] do
+  resources :canonical_transactions, only: [:show] do
     member do
       post "waive_fee"
       post "unwaive_fee"
       post "mark_bank_fee"
-      post "set_custom_memo"
       post "set_category"
     end
   end
@@ -1041,6 +1040,7 @@ Rails.application.routes.draw do
     resources :payroll_positions, only: [:new, :create, :show, :edit, :update], controller: "payroll/positions" do
       member do
         get :contract
+        post :terminate
       end
     end
     resources :payroll_invoices, only: [], controller: "payroll/invoices" do

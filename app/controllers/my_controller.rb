@@ -100,25 +100,17 @@ class MyController < ApplicationController
 
     hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
 
-    @time_based_sorting = hcb_code_ids_missing_receipt.count > (params[:per] || 15).to_i
-
     hcb_codes_missing_receipt = HcbCode.where(id: hcb_code_ids_missing_receipt)
                                        .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction) # HcbCode#card uses CT and PT
                                        .index_by(&:id).slice(*hcb_code_ids_missing_receipt).values
 
-    if @time_based_sorting
-      hcb_codes_missing_receipt = hcb_codes_missing_receipt.sort_by(&:created_at).reverse
-    end
-
     @hcb_codes = Kaminari.paginate_array(hcb_codes_missing_receipt)
                          .page(params[:page]).per(params[:per] || 15)
 
-    unless @time_based_sorting
-      @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }.transform_values { |v| v.sort_by(&:created_at).reverse }
-      @cards = GlobalID::Locator.locate_many(@card_hcb_codes.keys, includes: :event)
-                                # Order cards by created_at, newest first
-                                .sort_by(&:created_at).reverse!
-    end
+    @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }.transform_values { |v| v.sort_by(&:created_at).reverse }
+    @cards = GlobalID::Locator.locate_many(@card_hcb_codes.keys, includes: :event)
+                              # Order cards by created_at, newest first
+                              .sort_by(&:created_at).reverse!
 
     @mailbox_address = current_user.active_mailbox_address
     @receipts = Receipt.in_receipt_bin.with_attached_file.where(user: current_user)

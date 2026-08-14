@@ -265,7 +265,7 @@ class CardGrantsController < ApplicationController
   def activate
     authorize @card_grant
 
-    unless @card_grant.user.phone_number_verified?
+    unless @card_grant.user.phone_number_verified_or_bypassed?
       settings_path = current_user == @card_grant.user ? my_settings_path : edit_user_path(@card_grant.user)
       return redirect_to @card_grant, flash: { error: { "text" => "Please verify your phone number before activating your grant card.", "link_text" => "Go to settings", "link" => settings_path } }
     end
