@@ -61,8 +61,6 @@ module StripeCardholderService
       @current_user.email
     end
 
-    # Mirrors `User#update_stripe_cardholder`: only verified numbers are synced
-    # to Stripe, so a user with a bypass gets a cardholder without a phone.
     def phone_number
       @current_user.phone_number if @current_user.phone_number_verified?
     end
