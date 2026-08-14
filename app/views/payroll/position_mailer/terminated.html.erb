@@ -5,8 +5,7 @@
   and you will no longer be able to submit invoices for this position.
 
   <% if @position.invoices.submitted.exists? || @position.payments.pending_or_under_review.any? %>
-    Any pending invoices or payments for this position will still be processed,
-    unless otherwise noted.
+    Any pending invoices or payments for this position may still be reviewed or processed, unless otherwise noted.
   <% end %>
 </p>
 
