@@ -24,25 +24,24 @@
         <% end %>
 
         <p class="font-bold m0 flex items-center g2">
-          <%= format_date hcb_code.date %>
-          <% if hcb_code.canonical_transactions.none? %>
-            <% if hcb_code.pt&.declined? %>
-              <%= badge_for "Declined", class: "bg-error m0 mr1" %>
-            <% else %>
-              <%= badge_for "Pending", class: "bg-transparent border border-dashed border-muted m0 mr1" %>
-            <% end %>
+          <%= format_date ledger_item.datetime %>
+          <%# TODO: extract to partial %>
+          <% unless ledger_item.settled? %>
+            <%= badge_for ledger_item.status_text, class: ledger_item.status_css %>
           <% end %>
         </p>
         <p class="pinned__transaction__text pinned__transaction__text--memo mt1 mb1 leading-[1.25] h3">
-          <%= hcb_code.memo %>
+          <%= ledger_item.memo %>
         </p>
         <footer class="flex items-center justify-between -mb-1 gap-2 w-full">
           <span class="m0 muted">
-            <%= render_money hcb_code.amount_cents_by_event(@event) %>
+            <%= render_money ledger_item.amount_cents %>
           </span>
-          <% tx = hcb_code.ct || hcb_code.pt %>
-          <% cache(["tx_#{tx.hcb_code}", "icon", "pinned", "w"], expires_in: 12.hours) do %>
-            <%= render "hcb_codes/icon", tx: tx, tooltip_direction: "w" %>
+          <%# TODO: extract to partial %>
+          <% if ledger_item.icon.is_a?(YellowPages::Merchant) %>
+            <%= merchant_icon(ledger_item.icon, style: "height: 1.2em") %>
+          <% else %>
+            <%= inline_icon(ledger_item.icon, size: 32) %>
           <% end %>
         </footer>
       <% end %>
