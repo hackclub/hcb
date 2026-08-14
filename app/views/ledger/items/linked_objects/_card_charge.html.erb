@@ -7,7 +7,6 @@
 <% renderable_amount_cents = card_charge.stripe_atm_fee ? ledger_item.amount_cents.abs - card_charge.stripe_atm_fee : ledger_item.amount_cents.abs %>
 
 <% admin_tool("mt1") do %>
-  <%# TODO: test this with both force capture and regular capture %>
   <%= link_to "View on Stripe", card_charge.stripe_auth_dashboard_url || card_charge.stripe_txn_dashboard_url, class: "btn bg-accent" %>
   <%= link_to "Flag transaction", admin_ledger_audits_tasks_path(hcb_code: ledger_item.hcb_code.id), method: :post, class: "btn bg-error" %>
 <% end %>

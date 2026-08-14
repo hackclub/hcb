@@ -95,8 +95,7 @@
     <% if invoice.personal_transaction.present? %>
       <p>
         <strong>Repayment for</strong>
-        <%# TODO: migrate personal transactions to ledger items %>
-        <%= link_to invoice.personal_transaction.hcb_code.memo, invoice.personal_transaction.hcb_code, data: { turbo_frame: "_top" } %>
+        <%= link_to invoice.personal_transaction.hcb_code.ledger_item.memo, invoice.personal_transaction.hcb_code, data: { turbo_frame: "_top" } %>
       </p>
     <% end %>
     <p>
