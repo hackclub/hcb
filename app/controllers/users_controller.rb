@@ -256,49 +256,50 @@ class UsersController < ApplicationController
   def admin_details_ach_transfers
     authorize @user
 
-    @ach_transfers = @user.ach_transfers.page(params[:page] || 1).per(params[:per] || 10)
+    @ach_transfers = @user.ach_transfers.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_check_deposits
     authorize @user
 
-    @check_deposits = @user.check_deposits.page(params[:page] || 1).per(params[:per] || 10)
+    @check_deposits = @user.check_deposits.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_disbursements
     authorize @user
 
-    @disbursements = @user.disbursements.includes([:destination_event]).page(params[:page] || 1).per(params[:per] || 10)
+    @disbursements = @user.disbursements.order(created_at: :desc).includes([:destination_event]).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_emburse_cards
     authorize @user
 
-    @emburse_cards = @user.emburse_cards.page(params[:page] || 1).per(params[:per] || 10)
+    @emburse_cards = @user.emburse_cards.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_increase_checks
     authorize @user
 
-    @increase_checks = @user.increase_checks.page(params[:page] || 1).per(params[:per] || 10)
+    @increase_checks = @user.increase_checks.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_invoices
     authorize @user
 
-    @invoices = @user.invoices.page(params[:page] || 1).per(params[:per] || 10)
+    @invoices = @user.invoices.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_lob_checks
     authorize @user
 
-    @lob_checks = @user.checks.page(params[:page] || 1).per(params[:per] || 10)
+    @lob_checks = @user.checks.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_missing_receipts
     authorize @user
 
     @hcb_codes_missing_receipts = @user.transactions_missing_receipt
+                                       .order(created_at: :desc)
                                        .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
                                        .page(params[:page] || 1).per(params[:per] || 10)
   end
@@ -307,6 +308,7 @@ class UsersController < ApplicationController
     authorize @user
 
     @reimbursement_reports = @user.reimbursement_reports
+                                  .order(created_at: :desc)
                                   .includes([:event, :payout_holding])
                                   .page(params[:page] || 1).per(params[:per] || 10)
   end
@@ -314,7 +316,7 @@ class UsersController < ApplicationController
   def admin_details_stripe_cards
     authorize @user
 
-    @stripe_cards = @user.stripe_cards.page(params[:page] || 1).per(params[:per] || 10)
+    @stripe_cards = @user.stripe_cards.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_stripe_transactions
