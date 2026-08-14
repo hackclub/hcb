@@ -161,6 +161,15 @@
     </div>
 
     <%= form_with(model: @user, local: true, class: "pb2", data: { turbo_frame: "_top" }) do |form| %>
+      <% if current_user == @user %>
+        <div class="card border b--warning mb2" data-controller="incognito" hidden>
+          <div class="flex items-center warning">
+            <%= inline_icon "important", size: 20, class: "mr1 flex-shrink-0" %>
+            <span>You appear to be browsing privately (incognito). This window forgets your session as soon as you close it, so you'll be signed out sooner than the preference below.</span>
+          </div>
+        </div>
+      <% end %>
+
       <div class="field">
         <%= form.label :session_validity_preference, "Sign me out after" %>
         <%= form.select :session_validity_preference, SessionsHelper::SESSION_DURATION_OPTIONS.to_a, {}, selected: @user.session_validity_preference, disabled: %>

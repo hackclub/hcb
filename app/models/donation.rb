@@ -319,7 +319,7 @@ class Donation < ApplicationRecord
   end
 
   def recurring?
-    recurring_donation.present?
+    recurring_donation_id.present?
   end
 
   def initial_recurring_donation?

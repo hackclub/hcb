@@ -298,6 +298,7 @@ class UsersController < ApplicationController
   def admin_details_missing_receipts
     authorize @user
 
+    # TODO: add change here in receipt bin PR
     @hcb_codes_missing_receipts = @user.transactions_missing_receipt
                                        .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
                                        .page(params[:page] || 1).per(params[:per] || 10)
@@ -320,10 +321,19 @@ class UsersController < ApplicationController
   def admin_details_stripe_transactions
     authorize @user
 
-    @stripe_transactions = HcbCode.where(id: @user.stripe_cards.flat_map { |sc| sc.local_hcb_codes.pluck(:id) })
-                                  .order(created_at: :desc)
-                                  .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
+    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
+      # TODO: Swap this out for Ledger::Query once users have their own non-primary ledgers
+      @stripe_transactions = @user.ledger_items
+                                  .includes(:canonical_transactions, :canonical_pending_transactions, :linked_object)
+                                  .where(linked_object_type: "CardCharge")
+                                  .order(datetime: :desc, created_at: :desc, id: :desc)
                                   .page(params[:page] || 1).per(params[:per] || 10)
+    else
+      @stripe_transactions = HcbCode.where(id: @user.stripe_cards.flat_map { |sc| sc.local_hcb_codes.pluck(:id) })
+                                    .order(created_at: :desc)
+                                    .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
+                                    .page(params[:page] || 1).per(params[:per] || 10)
+    end
   end
 
   def suppress_card_locking
