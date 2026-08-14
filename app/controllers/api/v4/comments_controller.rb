@@ -31,6 +31,14 @@ module Api
 
       require_oauth2_scope "comments:write", :create
 
+      private
+
+      # `admin:comments:read` and `admin:comments:write` scopes unlock
+      # admin-only comments without granting admin access elsewhere in the API.
+      def pundit_user
+        current_user && ApiAdminContext.new(current_user, current_token, resource: :comments)
+      end
+
     end
   end
 end
