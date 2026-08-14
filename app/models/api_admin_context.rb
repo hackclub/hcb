@@ -46,7 +46,7 @@ class ApiAdminContext
 
   # `admin:read` / `admin:write` grant admin access across the whole API.
   # `admin:<resource>:read` / `admin:<resource>:write` scopes grant the
-  # same level for one resource only. 
+  # same level for one resource only.
   # Both are checked independently of the `restricted` scope.
   def admin_scope?(level)
     scopes = @token&.scopes || []
