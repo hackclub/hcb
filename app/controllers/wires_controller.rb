@@ -3,6 +3,7 @@
 class WiresController < ApplicationController
   include SetEvent
   include Admin::TransferApprovable
+  include Admin::PaymentApprovable
 
   before_action :set_event, only: %i[new create]
   before_action :set_wire, only: %i[approve reject send_wire edit update]
@@ -44,6 +45,8 @@ class WiresController < ApplicationController
     return unless enforce_sudo_mode
 
     ensure_admin_may_approve!(@wire, amount_cents: @wire.usd_amount_cents)
+    ensure_legal_entity_payable!(@wire, classification: params[:classification])
+
     @wire.mark_approved!
 
     redirect_to wire_process_admin_path(@wire), flash: { success: "Thanks for sending that wire." }
@@ -73,6 +76,7 @@ class WiresController < ApplicationController
 
     ensure_admin_may_approve!(@wire, amount_cents: @wire.usd_amount_cents)
     @wire.send_wire!
+    @wire.payment&.update!(classification: params[:classification])
 
     if params[:charge_fee] == "1"
       disbursement = DisbursementService::Create.new(

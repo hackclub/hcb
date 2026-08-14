@@ -40,7 +40,7 @@ class Payment
 
     has_one :legal_entity, through: :payment
 
-    scope :not_failed, -> { where.not(aasm_state: "failed" ) }
+    scope :active, -> { where.not(aasm_state: ["failed", "rejected", "canceled"] ) }
 
     validate :other_attempts_failed
     validate :terminal_states_freeze_attempt, on: :update
@@ -88,7 +88,7 @@ class Payment
       event :mark_rejected do
         transitions from: :under_review, to: :rejected
         after do
-          payment.mark_rejected!
+          payment.mark_rejected! if payment.may_mark_rejected?
         end
       end
 
@@ -101,6 +101,10 @@ class Payment
     end
 
     after_create :create_transfer!
+
+    def active?
+      !(failed? || rejected? || canceled?)
+    end
 
     private
 
@@ -136,8 +140,8 @@ class Payment
     end
 
     def other_attempts_failed
-      if Payment::Attempt.not_failed.where(payment:).excluding(self).any?
-        errors.add(:base, "all other attempts for this payment must be failed before creating a new attempt")
+      if Payment::Attempt.active.where(payment:).excluding(self).any?
+        errors.add(:base, "all other attempts for this payment must be failed, rejected, or canceled before creating a new attempt")
       end
     end
 
@@ -154,7 +158,7 @@ class Payment
     end
 
     def legal_entity_payable
-      unless legal_entity.payable?
+      unless legal_entity.payable?(requires_tax_form: payment.requires_tax_form)
         errors.add(:legal_entity, "must be payable")
       end
     end

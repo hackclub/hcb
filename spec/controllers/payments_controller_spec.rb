@@ -25,7 +25,7 @@ RSpec.describe PaymentsController do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Payout method")
       expect(response.body).to include("Tax information")
-      expect(response.body).not_to include("has submitted their tax information")
+      expect(response.body).not_to include("has submitted their payout information")
     end
 
     it "shows recipient-submitted messaging for a contractor payee" do
@@ -34,7 +34,7 @@ RSpec.describe PaymentsController do
       get :new, params: { event_id: event.slug, payee_id: payee.hashid }
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("has submitted their tax information")
+      expect(response.body).to include("has submitted their payout information")
     end
   end
 end

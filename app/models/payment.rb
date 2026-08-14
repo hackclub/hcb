@@ -4,19 +4,21 @@
 #
 # Table name: payments
 #
-#  id              :bigint           not null, primary key
-#  aasm_state      :string           not null
-#  amount_cents    :integer          not null
-#  currency        :string           not null
-#  purpose         :string           not null
-#  rejected_at     :datetime
-#  sent_at         :datetime
-#  successful_at   :datetime
-#  under_review_at :datetime
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  creator_id      :bigint           not null
-#  payee_id        :bigint           not null
+#  id                :bigint           not null, primary key
+#  aasm_state        :string           not null
+#  amount_cents      :integer          not null
+#  classification    :string           default("general_services"), not null
+#  currency          :string           not null
+#  purpose           :string           not null
+#  rejected_at       :datetime
+#  requires_tax_form :boolean          default(TRUE), not null
+#  sent_at           :datetime
+#  successful_at     :datetime
+#  under_review_at   :datetime
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#  creator_id        :bigint           not null
+#  payee_id          :bigint           not null
 #
 # Indexes
 #
@@ -38,10 +40,12 @@ class Payment < ApplicationRecord
   has_one :legal_entity, through: :payee
   has_many :attempts, -> { order(created_at: :desc) }, class_name: "Payment::Attempt", inverse_of: :payment
   has_one :successful_attempt, -> { successful }, class_name: "Payment::Attempt", inverse_of: :payment
-  has_one :current_attempt, -> { not_failed }, class_name: "Payment::Attempt", inverse_of: :payment
+  has_one :current_attempt, -> { active }, class_name: "Payment::Attempt", inverse_of: :payment
   has_one :payroll_invoice, class_name: "Payroll::Invoice", inverse_of: :payment, dependent: :nullify
 
   monetize :amount_cents, with_model_currency: :currency
+
+  enum :classification, { goods: "goods", attorney_or_medical_services: "attorney_or_medical_services", general_services: "general_services" }, prefix: :for
 
   pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }
   pg_search_scope :search_purpose_and_event, against: [:purpose], associated_against: { event: [:name] }
@@ -61,6 +65,13 @@ class Payment < ApplicationRecord
 
     event :mark_under_review do
       transitions from: [:pending_legal_entity, :sent], to: :under_review
+    end
+
+    event :mark_pending_legal_entity do
+      transitions from: :under_review, to: :pending_legal_entity
+      after do
+        PaymentMailer.with(payment: self).missing_tax_information.deliver_later
+      end
     end
 
     event :mark_sent do
@@ -86,10 +97,14 @@ class Payment < ApplicationRecord
     end
   end
 
+  before_save :set_requires_tax_form, if: -> { new_record? || classification_changed? }
+
   after_create do
-    if legal_entity&.payable? && legal_entity.default_payout_method.present?
+    payable = legal_entity&.payable?(requires_tax_form:)
+
+    if payable && legal_entity.default_payout_method.present?
       create_payment_attempt!
-    elsif legal_entity&.payable?
+    elsif payable
       PaymentMailer.with(payment: self).missing_payout_method.deliver_later
     else
       PaymentMailer.with(payment: self).missing_tax_information.deliver_later
@@ -122,9 +137,9 @@ class Payment < ApplicationRecord
   # never sends mail, so repeated calls can't spam a recipient with reminders.
   def refresh_legal_entity_state!
     return unless pending_legal_entity?
-    return unless legal_entity&.payable?
+    return unless legal_entity&.payable?(requires_tax_form:)
     return if legal_entity.default_payout_method.nil?
-    return unless attempts.all?(&:failed?)
+    return if attempts.any?(&:active?)
 
     create_payment_attempt!
   end
@@ -164,7 +179,23 @@ class Payment < ApplicationRecord
     !legal_entity&.payable? || legal_entity.default_payout_method.blank?
   end
 
+  def update_requires_tax_form
+    set_requires_tax_form
+    save!
+  end
+
+  # Computes the up-to-date value for records that haven't been (re)saved
+  # since a relevant change, e.g. a payment built but not yet persisted.
+  def requires_tax_form
+    set_requires_tax_form if new_record? || classification_changed?
+    super
+  end
+
   private
+
+  def set_requires_tax_form
+    self.requires_tax_form = !(payee.legal_entity&.corporation? && !for_attorney_or_medical_services?) && !for_goods?
+  end
 
   def schedule_acceptance_reminders
     ACCEPTANCE_REMINDER_DAYS.each do |days|
@@ -175,7 +206,7 @@ class Payment < ApplicationRecord
   def create_payment_attempt!
     self.with_lock do
       raise ArgumentError, "this payment was rejected" if rejected?
-      raise ArgumentError, "all attempts must have failed" unless attempts.all?(&:failed?)
+      raise ArgumentError, "all attempts must be failed, rejected, or canceled" if attempts.any?(&:active?)
       raise ArgumentError, "there is no default payout method" if legal_entity.default_payout_method.nil?
 
       attempts.create!(payout_method: legal_entity.default_payout_method)
