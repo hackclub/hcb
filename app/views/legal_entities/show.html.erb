@@ -60,22 +60,18 @@
     been banned from receiving payments from organizations on HCB.
   </p>
 <% elsif @legal_entity.completed_tax_form? && (mismatched = @legal_entity.mismatched_tax_form || @legal_entity.entity_type_mismatched_tax_form).present? %>
-  <% previous_tax_form = @legal_entity.latest_usable_tax_form %>
-
-  <% if previous_tax_form.present? %>
+  <% if @legal_entity.mismatched_tax_form.present? %>
     <p>
       You submitted a W8/W9 with a different TIN (SSN, EIN, or foreign TIN) than your previous
-      tax form for this legal entity (<%= masked_tin_tag previous_tax_form, viewable: show_tin %>).
+      tax form for this legal entity (<%= masked_tin_tag @legal_entity.latest_usable_tax_form, viewable: show_tin %>).
       Choose an option to continue:
     </p>
-  <% elsif @legal_entity.latest_completed_tax_form.taxbandits_tin_match_failed? %>
+  <% else %>
     <p>
       The tax form you submitted is for a <%= mismatched.entity_type %>, but
       <%= @legal_entity.person? ? "this is your personal legal entity" : "#{@legal_entity.name.presence || "this"} is a business legal entity" %>.
       Choose an option to continue:
     </p>
-
-    <%= button_to "Start tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
   <% end %>
 
   <% entity_type_matches = mismatched.entity_type == @legal_entity.entity_type %>
@@ -140,7 +136,7 @@
 
     <%= button_to "Discard last tax form", discard_tax_form_path(mismatched), class: "btn" %>
   </div>
-<% elsif @legal_entity.latest_completed_tax_form.taxbandits_tin_match_failed? %>
+<% elsif @legal_entity.latest_completed_tax_form&.taxbandits_tin_match_failed? %>
   <p>
     Your submission for <%= @legal_entity.person? ? "your" : "#{@legal_entity.name.presence || "Business"}'s" %>
     tax information is invalid.
