@@ -104,7 +104,6 @@ class MyController < ApplicationController
       @time_based_sorting = ledger_item_ids_missing_receipt.count > (params[:per] || 15).to_i
 
       ledger_items_missing_receipt = Ledger::Item.where(id: ledger_item_ids_missing_receipt)
-                                                 .includes(linked_object: :stripe_card)
                                                  .index_by(&:id).slice(*ledger_item_ids_missing_receipt).values
 
       if @time_based_sorting
@@ -115,22 +114,10 @@ class MyController < ApplicationController
                               .page(params[:page]).per(params[:per] || 15)
 
       unless @time_based_sorting
-        card_global_ids = @ledger_items.map { |item| item.linked_object.stripe_card.to_global_id.to_s }.uniq
-
-        @cards = GlobalID::Locator.locate_many(card_global_ids, includes: :event)
+        @card_ledger_items = @ledger_items.group_by { |item| item.linked_object.stripe_card.to_global_id.to_s }.transform_values { |item| item.sort_by(&:datetime).reverse }
+        @cards = GlobalID::Locator.locate_many(@card_ledger_items.keys, includes: :event)
                                   # Order cards by created_at, newest first
                                   .sort_by(&:created_at).reverse!
-
-        # Give each card's items as a real AR association (card.ledger_items),
-        # not an in-memory array, so ledgers/ledger's `items.load` works and
-        # each card's items + tags/author/hcb_code load in one query per card
-        # instead of N+1 per item.
-        @card_ledger_items = @cards.index_by { |card| card.to_global_id.to_s }
-                                   .transform_values do |card|
-                                     card.ledger_items.missing_receipt
-                                         .includes(:hcb_code, :tags, :author, :linked_object)
-                                         .order(datetime: :desc)
-                                   end
       end
     else
       @count = current_user.transactions_missing_receipt.count
