@@ -647,17 +647,11 @@ class AdminController < Admin::BaseController
     ach_transfer = AchTransfer.find(params[:id])
     return unless enforce_sudo_mode
 
-    ach_transfer.payment&.update!(classification: params[:classification])
+    ensure_legal_entity_payable!(ach_transfer, classification: params[:classification])
 
-    if ach_transfer.payment.nil? || ach_transfer.payment.legal_entity.payable?(requires_tax_form: ach_transfer.payment.requires_tax_form)
-      ach_transfer.approve!(current_user, send_realtime: true)
+    ach_transfer.approve!(current_user, send_realtime: true)
 
-      redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success - sent in realtime" }
-    else
-      ach_transfer.payment.request_tax_form!
-
-      redirect_to ach_start_approval_admin_path(ach_transfer), flash: { error: "Tax information was missing for this payment and has been requested" }
-    end
+    redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success - sent in realtime" }
   rescue Faraday::Error => e
     redirect_to ach_start_approval_admin_path(params[:id]), flash: { error: "Something went wrong: #{ColumnService.error_to_admin_message(e)}" }
   rescue => e
