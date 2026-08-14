@@ -259,6 +259,28 @@ RSpec.describe UsersController do
       expect(flash.to_h["error"]).to include(reason)
       expect(user.reload.default_payout_method).to be_nil
     end
+
+    it "lets an admin bypass phone number verification for a user" do
+      admin_user = create(:user, :make_admin)
+      user = create(:user, phone_number: "+18556254225")
+      create_session(admin_user, verified: true)
+
+      patch(:update, params: { id: user.id, user: { phone_number_verification_bypassed: "1" } })
+
+      user.reload
+      expect(user.phone_number_verification_bypassed).to eq(true)
+      expect(user.phone_number_verified).to eq(false)
+      expect(user.phone_number_verified_or_bypassed?).to eq(true)
+    end
+
+    it "does not let a non-admin bypass phone number verification for themselves" do
+      user = create(:user, phone_number: "+18556254225")
+      create_session(user, verified: true)
+
+      patch(:update, params: { id: user.id, user: { phone_number_verification_bypassed: "1" } })
+
+      expect(user.reload.phone_number_verification_bypassed).to eq(false)
+    end
   end
 
   describe "settings access for unverified users" do
