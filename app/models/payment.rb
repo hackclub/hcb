@@ -184,6 +184,13 @@ class Payment < ApplicationRecord
     save!
   end
 
+  # Computes the up-to-date value for records that haven't been (re)saved
+  # since a relevant change, e.g. a payment built but not yet persisted.
+  def requires_tax_form
+    set_requires_tax_form if new_record? || classification_changed?
+    super
+  end
+
   private
 
   def set_requires_tax_form
