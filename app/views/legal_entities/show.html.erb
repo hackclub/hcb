@@ -41,7 +41,7 @@
     <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
   <% end %>
 <% elsif @legal_entity.archived? %>
-  <% own_active_entities = current_user.legal_entities.reject(&:archived?) if @legal_entity.users.include?(current_user) %>
+  <% own_active_entities = @legal_entity.users.include?(current_user) ? current_user.legal_entities.reject(&:archived?) : nil  %>
 
   <% if own_active_entities.present? %>
     <p>This legal entity has been archived. Your active legal entities are:</p>
