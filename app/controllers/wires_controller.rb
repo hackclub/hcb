@@ -47,7 +47,7 @@ class WiresController < ApplicationController
 
     @wire.payment&.update!(classification: params[:classification])
 
-    if @wire.payment.nil? || @wire.payment.legal_entity.payable?(requires_tax_form: @wire.payment.requires_tax_form?)
+    if @wire.payment.nil? || @wire.payment.legal_entity.payable?(requires_tax_form: @wire.payment.requires_tax_form)
       @wire.mark_approved!
 
       redirect_to wire_process_admin_path(@wire), flash: { success: "Thanks for sending that wire." }

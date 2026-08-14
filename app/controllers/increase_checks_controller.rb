@@ -49,7 +49,7 @@ class IncreaseChecksController < ApplicationController
 
     @check.payment&.update!(classification: params[:classification])
 
-    if @check.payment.nil? || @check.payment.legal_entity.payable?(requires_tax_form: @check.payment.requires_tax_form?)
+    if @check.payment.nil? || @check.payment.legal_entity.payable?(requires_tax_form: @check.payment.requires_tax_form)
       @check.send_check!
 
       redirect_to increase_check_process_admin_path(@check), flash: { success: "Check has been sent!" }

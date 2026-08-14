@@ -55,6 +55,12 @@ class LegalEntity < ApplicationRecord
 
   delegate :address_city, :address_country, :address_line1, :address_postal_code, :address_state, to: :latest_tax_form, allow_nil: true
 
+  after_update do
+    if entity_type_previously_changed?
+      payments.each(&:update_requires_tax_form)
+    end
+  end
+
   def tax_identification_number = Tax::IdentificationNumber.new(tin_hash:, legal_entity: self)
 
   def managed?
@@ -96,7 +102,7 @@ class LegalEntity < ApplicationRecord
   end
 
   def tax_form_required?
-    payments.pending_legal_entity.any?(&:requires_tax_form?) || payroll_positions.onboarding.exists?
+    payments.pending_legal_entity.any?(&:requires_tax_form) || payroll_positions.onboarding.exists?
   end
 
   # Whether tax info has ever been completed. Distinct from latest_tax_form, which

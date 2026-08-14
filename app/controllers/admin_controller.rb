@@ -632,7 +632,7 @@ class AdminController < Admin::BaseController
 
     ach_transfer.payment&.update!(classification: params[:classification])
 
-    if ach_transfer.payment.nil? || ach_transfer.payment.legal_entity.payable?(requires_tax_form: ach_transfer.payment.requires_tax_form?)
+    if ach_transfer.payment.nil? || ach_transfer.payment.legal_entity.payable?(requires_tax_form: ach_transfer.payment.requires_tax_form)
       ach_transfer.approve!(current_user)
 
       redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success" }
@@ -653,7 +653,7 @@ class AdminController < Admin::BaseController
 
     ach_transfer.payment&.update!(classification: params[:classification])
 
-    if ach_transfer.payment.nil? || ach_transfer.payment.legal_entity.payable?(requires_tax_form: ach_transfer.payment.requires_tax_form?)
+    if ach_transfer.payment.nil? || ach_transfer.payment.legal_entity.payable?(requires_tax_form: ach_transfer.payment.requires_tax_form)
       ach_transfer.approve!(current_user, send_realtime: true)
 
       redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success - sent in realtime" }

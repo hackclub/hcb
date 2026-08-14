@@ -115,7 +115,7 @@ RSpec.describe Payment, type: :model do
 
       # Mirrors LegalEntity#payable?: payable only once the tax form requirement
       # is dropped, so these examples fail if Payment stops passing
-      # requires_tax_form? through to legal_entity.payable?.
+      # requires_tax_form through to legal_entity.payable?.
       def stub_conditionally_payable_legal_entity(payment, payout_method:)
         legal_entity = double("LegalEntity", default_payout_method: payout_method).as_null_object
         allow(legal_entity).to receive(:payable?) { |requires_tax_form: true| !requires_tax_form }
@@ -145,15 +145,15 @@ RSpec.describe Payment, type: :model do
     end
   end
 
-  describe "#requires_tax_form?" do
+  describe "#requires_tax_form" do
     it "is true for a tax reportable payment, regardless of amount" do
       payment = build(:payment, amount_cents: 1_00, classification: :general_services)
-      expect(payment.requires_tax_form?).to be true
+      expect(payment.requires_tax_form).to be true
     end
 
     it "is false for a payment that isn't tax reportable, regardless of amount" do
       payment = build(:payment, amount_cents: 100_000, classification: :goods)
-      expect(payment.requires_tax_form?).to be false
+      expect(payment.requires_tax_form).to be false
     end
   end
 
@@ -212,7 +212,7 @@ RSpec.describe Payment, type: :model do
     before { allow(PaymentMailer).to receive(:with).and_return(double.as_null_object) }
 
     # $1,000 and tax reportable (the factory default) so this payment actually
-    # requires a completed tax form — see "Payment#requires_tax_form?" below.
+    # requires a completed tax form — see "Payment#requires_tax_form" below.
     let!(:payment) { create(:payment, payee:, amount_cents: 100_000) }
 
     context "when the tax form is completed and the entity becomes payable" do

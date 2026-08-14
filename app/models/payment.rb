@@ -4,20 +4,21 @@
 #
 # Table name: payments
 #
-#  id              :bigint           not null, primary key
-#  aasm_state      :string           not null
-#  amount_cents    :integer          not null
-#  classification  :string           default("general_services"), not null
-#  currency        :string           not null
-#  purpose         :string           not null
-#  rejected_at     :datetime
-#  sent_at         :datetime
-#  successful_at   :datetime
-#  under_review_at :datetime
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  creator_id      :bigint           not null
-#  payee_id        :bigint           not null
+#  id                :bigint           not null, primary key
+#  aasm_state        :string           not null
+#  amount_cents      :integer          not null
+#  classification    :string           default("other_services"), not null
+#  currency          :string           not null
+#  purpose           :string           not null
+#  rejected_at       :datetime
+#  requires_tax_form :boolean          default(TRUE), not null
+#  sent_at           :datetime
+#  successful_at     :datetime
+#  under_review_at   :datetime
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#  creator_id        :bigint           not null
+#  payee_id          :bigint           not null
 #
 # Indexes
 #
@@ -96,8 +97,10 @@ class Payment < ApplicationRecord
     end
   end
 
+  before_save :set_requires_tax_form, if: -> { new_record? || classification_changed? }
+
   after_create do
-    payable = legal_entity&.payable?(requires_tax_form: requires_tax_form?)
+    payable = legal_entity&.payable?(requires_tax_form:)
 
     if payable && legal_entity.default_payout_method.present?
       create_payment_attempt!
@@ -128,18 +131,13 @@ class Payment < ApplicationRecord
     MoneyService.convert_to_usd(amount_cents, currency)
   end
 
-  # Payments that aren't tax reportable don't need to wait on the payee's tax paperwork.
-  def requires_tax_form?
-    !(payee.legal_entity&.corporation? && !for_attorney_or_medical_services?) && !for_goods?
-  end
-
   # Idempotent: safe to call any number of times, from any code path that
   # touches the associated legal entity (tax form completion, payout method
   # creation, payee reassignment). Only ever creates a payment attempt —
   # never sends mail, so repeated calls can't spam a recipient with reminders.
   def refresh_legal_entity_state!
     return unless pending_legal_entity?
-    return unless legal_entity&.payable?(requires_tax_form: requires_tax_form?)
+    return unless legal_entity&.payable?(requires_tax_form:)
     return if legal_entity.default_payout_method.nil?
     return if attempts.any?(&:active?)
 
@@ -186,7 +184,16 @@ class Payment < ApplicationRecord
     current_attempt&.payout&.mark_rejected!
   end
 
+  def update_requires_tax_form
+    set_requires_tax_form
+    save!
+  end
+
   private
+
+  def set_requires_tax_form
+    self.requires_tax_form = !(payee.legal_entity&.corporation? && !for_attorney_or_medical_services?) && !for_goods?
+  end
 
   def schedule_acceptance_reminders
     ACCEPTANCE_REMINDER_DAYS.each do |days|

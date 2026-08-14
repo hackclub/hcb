@@ -76,7 +76,7 @@ class WiseTransfersController < ApplicationController
     begin
       @wise_transfer.payment&.update!(classification: params.dig(:wise_transfer, :classification))
 
-      if @wise_transfer.payment.nil? || @wise_transfer.payment.legal_entity.payable?(requires_tax_form: @wise_transfer.payment.requires_tax_form?)
+      if @wise_transfer.payment.nil? || @wise_transfer.payment.legal_entity.payable?(requires_tax_form: @wise_transfer.payment.requires_tax_form)
         @wise_transfer.mark_sent!
 
         flash[:success] = "Marked as sent."
