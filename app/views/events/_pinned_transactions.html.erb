@@ -1,8 +1,10 @@
-<% @show_popovers = popovers_enabled? && organizer_signed_in? %>
-<% if @event.pinned_ledger_items.any? %>
+<%# locals: (event:) %>
+
+<% show_popovers = popovers_enabled? && organizer_signed_in? %>
+<% if event.pinned_ledger_items.any? %>
   <div class="flex gap-4 my-2 pinned__container">
-    <% @event.pinned_ledger_items.each do |ledger_item| %>
-      <%= link_to organizer_signed_in? ? ledger_item_path(ledger_item) : "#", data: @show_popovers ? ledger_item_popover_data(ledger_item) : {}, class: "pinned__transaction relative card card-outlined flex flex-col black" do %>
+    <% event.pinned_ledger_items.each do |ledger_item| %>
+      <%= link_to organizer_signed_in? ? ledger_item_path(ledger_item) : "#", data: show_popovers ? ledger_item_popover_data(ledger_item) : {}, class: "pinned__transaction relative card card-outlined flex flex-col black" do %>
         <% if organizer_signed_in? %>
           <%= form_for(
                 ledger_item,
