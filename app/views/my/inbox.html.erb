@@ -9,11 +9,28 @@
 </h1>
 
 <% if CardLocking.enabled? %>
-  <%= render "application/callout", class: "mt-2", type: "info", title: "Card locking" do %>
+  <% locked = current_user.cards_locked? %>
+  <% due_in = CardLocking.time_remaining_in_words(@locking_next_due_at) %>
+  <%# A calm green "active" is misleading when the next deadline is an hour out, %>
+  <%# so the callout escalates as that deadline approaches (or is already blown). %>
+  <% urgent = !locked && (@locking_count.positive? || (@locking_next_due_at.present? && @locking_next_due_at <= CardLocking::WARNING_LEAD_TIME.from_now)) %>
+  <% callout_type = if locked
+                      "error"
+                    elsif urgent
+                      "warning"
+                    else
+                      "info"
+                    end %>
+  <%= render "application/callout", class: "mt-2", type: callout_type, title: "Card locking" do %>
     <p class="my-0">
+      <%# The rule states the consequence once; each status below is only a status. %>
       Upload a receipt within <strong>7 days</strong> of every card charge. Miss it and your cards <strong>will lock</strong> until you upload.
-      <% if current_user.cards_locked? %>
+      <% if locked %>
         Your cards are currently <strong class="error">locked</strong>. Uploading a receipt will unlock them in seconds.
+      <% elsif @locking_count.positive? %>
+        Your cards are currently <strong class="success">active</strong>, but <%= pluralize(@locking_count, "receipt") %> <%= @locking_count == 1 ? "is" : "are" %> already overdue.
+      <% elsif due_in %>
+        Your cards are currently <strong class="success">active</strong>. Your next receipt is due in <strong class="<%= "warning" if urgent %>"><%= due_in %></strong>.
       <% else %>
         Your cards are currently <strong class="success">active</strong>.
       <% end %>
