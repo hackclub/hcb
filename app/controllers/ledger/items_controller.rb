@@ -55,8 +55,11 @@ class Ledger
       authorize @item
       authorize @event
 
-      @item.primary_mapping&.unpin
-      flash[:success] = "Unpinned transaction from #{@event&.name}"
+      if @item.primary_mapping&.unpin
+        flash[:success] = "Unpinned transaction from #{@event&.name}"
+      else
+        flash[:error] = "There was an error in unpinning this transaction."
+      end
 
       redirect_back fallback_location: @event
     end
