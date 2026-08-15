@@ -117,7 +117,7 @@ class StripeCardholder < ApplicationRecord
       self.public_send(:"address_#{key}=", value)
     end
 
-    save
+    save!
   end
 
   def self.first_name(user)

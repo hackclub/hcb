@@ -152,10 +152,11 @@ class UsersController < ApplicationController
   def reset_billing_address
     authorize @user
 
-    if @user.stripe_cardholder&.reset_billing_address_to_default!
+    begin
+      @user.stripe_cardholder&.reset_billing_address_to_default!
       flash[:success] = "Reset your billing address to HCB's default address."
-    else
-      flash[:error] = @user.stripe_cardholder&.errors&.first&.full_message || "Couldn't reset your billing address."
+    rescue ActiveRecord::RecordInvalid => e
+      flash[:error] = e.record&.errors&.first&.full_message || "Couldn't reset your billing address."
     end
 
     redirect_back_or_to address_user_path(@user)
