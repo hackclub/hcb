@@ -24,7 +24,7 @@ module Payroll
     # submit invoices against it.
     def contractor?
       return false if user.blank?
-      return false unless record.onboarded?
+      return false unless record.payroll_position.onboarded?
 
       legal_entity = record.payroll_position.payee.legal_entity
       legal_entity.present? && legal_entity.users.exists?(id: user.id)

@@ -133,6 +133,74 @@ RSpec.describe UsersController do
     end
   end
 
+  describe "#edit_address reset to default address button" do
+    render_views
+
+    it "shows the reset button when the billing address differs from the default" do
+      user = create(:user)
+      create(:stripe_cardholder, user:, stripe_id: "ich_#{SecureRandom.hex(8)}", stripe_billing_address_line1: "123 Fake St")
+      create_session(user, verified: true)
+
+      get(:edit_address, params: { id: user.id })
+
+      expect(response.body).to include("Reset to default address")
+    end
+
+    it "hides the reset button when the billing address already matches the default" do
+      user = create(:user)
+      create(:stripe_cardholder, user:, stripe_id: "ich_#{SecureRandom.hex(8)}")
+      create_session(user, verified: true)
+
+      get(:edit_address, params: { id: user.id })
+
+      expect(response.body).not_to include("Reset to default address")
+    end
+  end
+
+  describe "#reset_billing_address" do
+    it "lets a user reset their own billing address to the default" do
+      user = create(:user)
+      cardholder = create(:stripe_cardholder, user:, stripe_id: "ich_#{SecureRandom.hex(8)}", stripe_billing_address_line1: "123 Fake St", stripe_billing_address_city: "Faketown")
+      create_session(user, verified: true)
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update)
+
+      post(:reset_billing_address, params: { id: user.id })
+
+      expect(response).to redirect_to(address_user_path(user))
+      expect(flash[:success]).to eq("Reset your billing address to HCB's default address.")
+      cardholder.reload
+      expect(cardholder.stripe_billing_address_line1).to eq(StripeCardholder::DEFAULT_BILLING_ADDRESS[:line1])
+      expect(cardholder.stripe_billing_address_city).to eq(StripeCardholder::DEFAULT_BILLING_ADDRESS[:city])
+    end
+
+    it "lets an admin reset another user's billing address" do
+      admin_user = create(:user, :make_admin)
+      user = create(:user)
+      cardholder = create(:stripe_cardholder, user:, stripe_id: "ich_#{SecureRandom.hex(8)}", stripe_billing_address_line1: "123 Fake St")
+      create_session(admin_user, verified: true)
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update)
+
+      post(:reset_billing_address, params: { id: user.id })
+
+      expect(response).to redirect_to(address_user_path(user))
+      expect(cardholder.reload.stripe_billing_address_line1).to eq(StripeCardholder::DEFAULT_BILLING_ADDRESS[:line1])
+    end
+
+    it "forbids a non-admin from resetting another user's billing address" do
+      requester = create(:user)
+      user = create(:user)
+      cardholder = create(:stripe_cardholder, user:, stripe_id: "ich_#{SecureRandom.hex(8)}", stripe_billing_address_line1: "123 Fake St")
+      create_session(requester, verified: true)
+
+      post(:reset_billing_address, params: { id: user.id })
+
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+      expect(cardholder.reload.stripe_billing_address_line1).to eq("123 Fake St")
+    end
+  end
+
   describe "#update" do
     render_views
 

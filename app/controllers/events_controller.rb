@@ -571,10 +571,18 @@ class EventsController < ApplicationController
         transaction_source_type: "RawColumnTransaction",
         transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id' = '#{@event.column_account_number.column_id}'").select(:id)
       )
-      @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
-                                         .order(created_at: :desc)
-      page = (params[:page] || 1).to_i
-      @transactions = @transactions.page(page).per(params[:per] || 25)
+      if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
+        @ledger = @event.ledger
+        @ledger_items = @ledger.items
+                               .where(id: column_transactions.select(:ledger_item_id), linked_object_type: nil)
+                               .order(created_at: :desc)
+                               .page((params[:page] || 1).to_i).per(params[:per] || 25)
+      else
+        @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
+                                           .order(created_at: :desc)
+        page = (params[:page] || 1).to_i
+        @transactions = @transactions.page(page).per(params[:per] || 25)
+      end
 
       # We only want to show this callout if there were transfers from before https://github.com/hackclub/hcb/pull/13684 was merged
       @show_transfer_callout = column_transactions.where.not("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
