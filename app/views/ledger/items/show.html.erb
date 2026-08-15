@@ -84,14 +84,31 @@
   </div>
 <% end %>
 
-<%= render "receipts/list_v2", hcb_code: @item, frame: false, transaction_show_receipt_button: true, transaction_show_author_img: true %>
-<%= render partial: "receipts/form_v3", locals: {
-      receiptable: @item,
-      enable_linking: true,
-      upload_method: "transaction_page",
-      include_spacing: true,
-      turbo: true
-    } %>
+<% if @item.accepts_receipts? %>
+  <% admin_tool("mt1 p-3") do %>
+    💌 Bonjour!
+    <%= mail_to @item.hcb_code.receipt_upload_email, "Email me to upload your receipts" %>
+  <% end %>
+  <% admin_tool("mt1 p-3") do %>
+    🌸 Aloha!
+    <%= link_to "Here's the page for attaching receipts", attach_receipt_url(@item.hcb_code) %>
+  <% end %>
+  <% if @item.linked_object_type == "CardCharge" %>
+    <% admin_tool("mt1 p-3") do %>
+      ☎️ moshi moshi?
+      <%= link_to "Click to get an SMS (to #{current_user.phone_number}) of the notification", send_sms_receipt_hcb_code_path(@item.hcb_code), method: :post %>
+    <% end %>
+  <% end %>
+  
+  <%= render "receipts/list_v2", hcb_code: @item, frame: false, transaction_show_receipt_button: true, transaction_show_author_img: true %>
+  <%= render partial: "receipts/form_v3", locals: {
+        receiptable: @item,
+        enable_linking: true,
+        upload_method: "transaction_page",
+        include_spacing: true,
+        turbo: true
+      } %>
+<% end %>
 
 <%= render "comments/list", comments: @item.comments %>
 <%= render "comments/form", commentable: @item %>

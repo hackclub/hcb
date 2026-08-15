@@ -155,6 +155,10 @@ class Ledger
       receipt_required? && marked_no_or_lost_receipt_at.nil? && receipt_count == 0
     end
 
+    def accepts_receipts?
+      linked_object_type != "Reimbursement::ExpensePayout"
+    end
+
     # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
     # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
     # refresh! should not update any non-caching columns
