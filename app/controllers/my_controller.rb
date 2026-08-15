@@ -98,9 +98,6 @@ class MyController < ApplicationController
     @count = current_user.transactions_missing_receipt.count
     @locking_count = current_user.card_locking_overdue_charges.count
     @now = Time.current
-    # Kaminari swaps its own default in for a non-positive :per, so match it.
-    per = (params[:per] || 15).to_i
-    per = Kaminari.config.default_per_page unless per.positive?
 
     hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
 
@@ -111,17 +108,13 @@ class MyController < ApplicationController
     # Deadlines only exist (and are only explained elsewhere on this page) for
     # cardholders inside the card locking rollout, so don't group by them until
     # there's at least one to group.
-    @groupable_by_due_date = Flipper.enabled?(:card_locking_2025_06_09, current_user) &&
+    @groupable_by_due_date = CardLocking.enabled? &&
                              hcb_codes_missing_receipt.any? { |hcb_code| hcb_code.receipt_due_at.present? }
-    # Card sections are built from the current page, so a pile spanning several
-    # pages would split a card's charges across pages and repeat its header on
-    # each. Offer a flat, newest-first list instead.
-    @alternate_grouping = hcb_codes_missing_receipt.size > per ? "flat" : "card"
     @grouping =
       if @groupable_by_due_date
-        params[:group].presence_in(["due_date", @alternate_grouping]) || "due_date"
+        params[:group].presence_in(["due_date", "card"]) || "due_date"
       else
-        @alternate_grouping
+        "card"
       end
 
     hcb_codes_missing_receipt =
@@ -142,12 +135,12 @@ class MyController < ApplicationController
     end
 
     @hcb_codes = Kaminari.paginate_array(hcb_codes_missing_receipt)
-                         .page(params[:page]).per(per)
+                         .page(params[:page]).per(params[:per] || 15)
 
     if @grouping == "due_date"
       # @hcb_codes is already in due date order, so group_by preserves it.
       @due_date_groups = @hcb_codes.group_by { |hcb_code| helpers.receipt_due_group(hcb_code, now: @now) }
-    elsif @grouping == "card"
+    else
       @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }.transform_values { |v| v.sort_by(&:created_at).reverse }
       @cards = GlobalID::Locator.locate_many(@card_hcb_codes.keys, includes: :event)
                                 # Order cards by created_at, newest first

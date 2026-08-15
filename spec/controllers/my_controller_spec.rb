@@ -78,8 +78,8 @@ RSpec.describe MyController do
       before do
         travel_to(now)
         # The shared context only enables the enforcement stage flag; the
-        # deadline UI is gated on the callout flag as well.
-        Flipper.enable(:card_locking_2025_06_09, user)
+        # deadline UI is gated on the feature kill switch as well.
+        Flipper.enable(:card_locking)
         sign_in_verified(user)
       end
 
@@ -136,31 +136,20 @@ RSpec.describe MyController do
         expect(ivar(:grouping)).to eq("card")
       end
 
-      # Card sections are built from the current page, so a multi-page pile
-      # would split a card's charges across pages; a flat list is the fallback.
-      it "falls back to a flat list when an undated pile spans more than one page" do
+      it "groups an undated pile by card however many pages it spans" do
         2.times { create_inbox_charge(receipt_due_at: nil) }
 
         get :inbox, params: { per: 1 }
 
         expect(ivar(:groupable_by_due_date)).to eq(false)
-        expect(ivar(:grouping)).to eq("flat")
-        expect(ivar(:cards)).to be_nil
+        expect(ivar(:grouping)).to eq("card")
         expect(ivar(:hcb_codes).size).to eq(1)
       end
 
-      it "still groups an undated pile by card when it fits on one page" do
-        2.times { create_inbox_charge(receipt_due_at: nil) }
-
-        get :inbox, params: { per: 5 }
-
-        expect(ivar(:grouping)).to eq("card")
-      end
-
       # The enforcement stage flags that materialize receipt_due_at are a
-      # separate axis from the flag gating the callout that explains deadlines.
-      it "keeps deadlines hidden from cardholders outside the card locking flag" do
-        Flipper.disable(:card_locking_2025_06_09, user)
+      # separate axis from the kill switch gating the deadline UI.
+      it "keeps deadlines hidden while the card locking feature is off" do
+        Flipper.disable(:card_locking)
         create_inbox_charge(receipt_due_at: 1.day.from_now)
 
         get :inbox
@@ -189,24 +178,13 @@ RSpec.describe MyController do
         expect(ivar(:due_date_groups)).to be_nil
       end
 
-      # Card sections can't span pages, so a multi-page pile swaps the card
-      # option out for a flat list — inside the due date rollout too.
-      it "offers a flat list instead of card sections when a dated pile spans pages" do
-        2.times { create_inbox_charge(receipt_due_at: 1.day.from_now) }
-
-        get :inbox, params: { per: 1, group: "flat" }
-
-        expect(ivar(:alternate_grouping)).to eq("flat")
-        expect(ivar(:grouping)).to eq("flat")
-        expect(ivar(:cards)).to be_nil
-      end
-
-      it "ignores a card grouping request when the pile spans pages" do
+      it "honours a card grouping request when the pile spans pages" do
         2.times { create_inbox_charge(receipt_due_at: 1.day.from_now) }
 
         get :inbox, params: { per: 1, group: "card" }
 
-        expect(ivar(:grouping)).to eq("due_date")
+        expect(ivar(:grouping)).to eq("card")
+        expect(ivar(:due_date_groups)).to be_nil
       end
 
       it "falls back to the default rather than trusting an unknown grouping" do
@@ -254,26 +232,6 @@ RSpec.describe MyController do
           expect(response.body).not_to include("By due date")
           # The org lives in the card section header instead, not on every row.
           expect(response.body).not_to include("transaction__event")
-        end
-
-        it "renders one headerless table when it falls back to a flat list" do
-          2.times { create_inbox_charge(receipt_due_at: nil) }
-
-          get :inbox, params: { per: 1 }
-
-          expect(response).to have_http_status(:ok)
-          expect(response.body).not_to include("By due date")
-          # No section header to carry the org, so each row carries its own.
-          expect(response.body).to include("transaction__event")
-        end
-
-        it "offers a newest-first tab instead of cards when the pile spans pages" do
-          2.times { create_inbox_charge(receipt_due_at: 1.day.from_now) }
-
-          get :inbox, params: { per: 1 }
-
-          expect(response.body).to include("By due date", "Newest first")
-          expect(response.body).not_to include("By card")
         end
 
         it "labels a group that spills onto other pages with the on-page count" do
