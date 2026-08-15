@@ -116,6 +116,9 @@ RSpec.describe "Users::FirstController", type: :request do
 
   describe "DELETE /first/sign_out" do
     it "clears the session_token cookie" do
+      post "/first", params: valid_form
+      expect(cookies["session_token"]).to be_present, "expected signup to establish a session to sign out of"
+
       delete "/first/sign_out"
 
       set_cookie_header = response.headers["Set-Cookie"].to_s

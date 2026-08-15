@@ -15,15 +15,15 @@
 #  extracted_merchant_zip_code     :string
 #  extracted_subtotal_amount_cents :integer
 #  extracted_total_amount_cents    :integer
-#  receiptable_type                :string
 #  suggested_memo                  :string
 #  textual_content_bidx            :string
 #  textual_content_ciphertext      :text
-#  textual_content_source          :integer          default("pdf_text")
+#  textual_content_source          :integer          default(0)
 #  upload_method                   :integer
 #  created_at                      :datetime         not null
 #  updated_at                      :datetime         not null
 #  receiptable_id                  :bigint
+#  receiptable_type                :string
 #  user_id                         :bigint
 #
 # Indexes
@@ -67,8 +67,6 @@ class Receipt < ApplicationRecord
   # - @sampoder
   PREPROCESSED_SIZES = ["1024x1024"].freeze
 
-  CARD_LOCKING_START_DATE = Date.new(2025, 6, 13)
-
   has_one_attached :file do |attachable|
     PREPROCESSED_SIZES.each do |resize|
       attachable.variant(resize.to_sym, resize:, preprocessed: true)
@@ -76,7 +74,7 @@ class Receipt < ApplicationRecord
   end
 
   validates :file, attached: true, content_type: /(\Aimage\/.*\z|application\/pdf|text\/csv)/
-  validates :file, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["file"].present? }
+  validates :file, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["file"].present? }
 
   before_create do
     if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
@@ -104,9 +102,8 @@ class Receipt < ApplicationRecord
     end
   end
 
-  after_commit do
-    User::UpdateCardLockingJob.perform_later(user:)
-  end
+  after_commit(on: [:create, :update]) { CardLocking::ReceiptResolution.on_receipt_upsert(self) }
+  after_commit(on: :destroy) { CardLocking::ReceiptResolution.on_receipt_destroy(self) }
 
   validate :has_owner
 
@@ -133,7 +130,9 @@ class Receipt < ApplicationRecord
     sms_reimbursement: 19,
     employee_payment: 20,
     duplicate: 21,
-    discord_bot_modal: 22
+    discord_bot_modal: 22,
+    payment_page: 23,
+    contractor_invoice: 24
   }
 
   enum :textual_content_source, {

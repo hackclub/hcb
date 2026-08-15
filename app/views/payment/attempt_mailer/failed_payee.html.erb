@@ -1,0 +1,24 @@
+<p>Hello <%= @payment.legal_entity.name %>,</p>
+
+<p>
+  Your payment of <%= @payment.amount.format(with_currency: true) %> from <%= @payment.event.name %>
+  for <i>"<%= @payment.purpose %>"</i> failed to send<%= @reason.present? ? ":" : "." %>
+</p>
+
+<% if @reason.present? %>
+  <blockquote>
+    <%= @reason %>
+  </blockquote>
+<% end %>
+
+<p>
+  Please login to HCB to edit your payout information and retry the payment.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
+
+<p><i class="muted"><%= @payment.event.name %> is fiscally sponsored by The Hack Foundation (d.b.a. HCB), a 501(c)(3) nonprofit (EIN: 81-2908499).</i></p>

@@ -11,7 +11,7 @@ module Contractable
       contracts.where(aasm_state: [:pending, :sent]).find_each(&:mark_voided!)
     end
 
-    def send_contract(cosigner_email: nil, include_videos: false, reissue_signee_message: nil, reissue_cosigner_message: nil)
+    def send_contract(cosigner_email: nil, include_videos: false, reissue_messages: {}, reissue_of: nil)
       # This method should be overwritten in specific classes
       raise NotImplementedError, "The #{self.class.name} model includes Contractable, but hasn't implemented it's own version of send_contract."
     end
@@ -44,6 +44,11 @@ module Contractable
     def contract_notify_hcb?
       # This method can be overwritten in specific classes to disable sending HCB's notification when all other parties have signed
       true
+    end
+
+    def notify_mailer_for(party)
+      # This method can be overwritten in specific classes to customize how a party is notified
+      Contract::PartyMailer.with(party:).notify.deliver_later
     end
   end
 end

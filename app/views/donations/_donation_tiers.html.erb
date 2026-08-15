@@ -24,15 +24,15 @@
           <span class="opacity-60">per month</span>
         </div>
 
-        <%= link_to start_donation_tier_donations_path(@event, @tier), class: "btn btn-primary mt-4 w-full", onclick: "event.preventDefault();try {navigator.share({ text: 'Donate to ' + #{@event.name.to_json}, url: window.location.href })} catch (e) { navigator.clipboard.writeText(window.location.href); alert('Copied URL to clipboard!'); }" do %>
+        <%= link_to start_donation_tier_donations_path(@event, @tier), class: "btn btn-primary mt-4 w-full", onclick: "event.preventDefault();try {navigator.share({ text: 'Donate to ' + #{@event.name.to_json}, url: window.location.href })} catch (e) { navigator.clipboard.writeText(window.location.href); swal('Copied!', 'URL copied to clipboard.', 'success'); }" do %>
           <%= inline_icon "share" %>
           Share link
         <% end %>
       <% end %>
     </div>
   <% else %>
-    <h2 class="mt-10 px-5 sm:px-2">Make a contribution</h2>
-    <div class="mt-4 px-2 -mx-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-2 mx-auto">
+    <h2 class="mt-10">Make a contribution</h2>
+    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-2">
       <div class="card w-full flex-1 flex flex-col">
         <h3 class="mb-0 mt-0">
           Custom

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Discovery feed for crawlers. The app defaults to `X-Robots-Tag: none`
+  (see ApplicationController), so this only lists the handful of public pages
+  that explicitly opt back into indexing. Served as a static file so it
+  bypasses the app's auth redirect. Keep in sync when adding indexable pages.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://hcb.hackclub.com/for/funders</loc>
+  </url>
+  <url>
+    <loc>https://hcb.hackclub.com/for/funders/faq</loc>
+  </url>
+  <url>
+    <loc>https://hcb.hackclub.com/branding</loc>
+  </url>
+  <url>
+    <loc>https://hcb.hackclub.com/security</loc>
+  </url>
+</urlset>

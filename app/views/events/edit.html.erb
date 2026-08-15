@@ -1,6 +1,6 @@
 <% title "#{@event.name} Settings" %>
 <% page_md %>
-<%= render "events/nav", selected: :settings %>
+<%= render "events/nav", selected: "settings_#{@settings_tab}".to_sym %>
 
 <% unless params[:frame] %>
   <span class="eyebrow -mb-4 mt-5 block">Settings</span>

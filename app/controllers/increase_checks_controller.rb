@@ -37,7 +37,7 @@ class IncreaseChecksController < ApplicationController
       end
       redirect_to url_for(@check.local_hcb_code), flash: { success: "Your check has been sent!" }
     else
-      render "new", status: :unprocessable_entity
+      render "new", status: :unprocessable_content
     end
   end
 

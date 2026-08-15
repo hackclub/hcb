@@ -48,15 +48,17 @@ module Api
           }, status: :bad_request
         end
 
-        @check.save!
+        ActiveRecord::Base.transaction do
+          @check.save!
 
-        if check_params[:file]
-          ::ReceiptService::Create.new(
-            uploader: current_user,
-            attachments: check_params[:file],
-            upload_method: :api,
-            receiptable: @check.local_hcb_code
-          ).run!
+          if check_params[:file]
+            ::ReceiptService::Create.new(
+              uploader: current_user,
+              attachments: check_params[:file],
+              upload_method: :api,
+              receiptable: @check.local_hcb_code
+            ).run!
+          end
         end
 
         render :show, status: :created
