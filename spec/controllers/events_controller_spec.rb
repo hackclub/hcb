@@ -340,7 +340,11 @@ RSpec.describe EventsController do
         # Nested descendants are indented under their parent...
         expect(strings).to include("    #{nested.name}")
         # ...and grouped so Excel renders them collapsible.
-        expect(xlsx_entry(response.body, "xl/worksheets/sheet1.xml")).to include('outlineLevel="1"')
+        sheet = xlsx_entry(response.body, "xl/worksheets/sheet1.xml")
+        expect(sheet).to include('outlineLevel="1"')
+        # Excel hides the grouping gutter entirely when this attribute is set,
+        # even though Google Sheets ignores it. See SubOrganizationsExport.
+        expect(sheet).not_to include("showOutlineSymbols")
       end
     end
   end
