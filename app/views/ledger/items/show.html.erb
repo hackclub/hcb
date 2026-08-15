@@ -3,71 +3,73 @@
   <%= render "events/nav" %>
 <% end %>
 
-<section class="details">
-  <div>
-    <strong>
-      Memo
-    </strong>
-    <span>
-      <%= @item.memo %>
-    </span>
-  </div>
-  <div>
-    <strong>
-      Amount
-    </strong>
-    <span>
-      <%= @item.amount.format %>
-    </span>
-  </div>
-  <div>
-    <strong>
-      Date
-    </strong>
-    <span>
-      <%= @item.datetime.strftime("%b %e, %Y") %>
-    </span>
-  </div>
-  <% if @item.hcb_code.present? %>
+<% admin_tool do %>
+  <section class="details">
     <div>
       <strong>
-        HCB Code
+        Memo
       </strong>
       <span>
-        <%= link_to @item.hcb_code.hcb_code, hcb_code_path(@item.hcb_code), target: :_blank %>
+        <%= @item.memo %>
       </span>
     </div>
-  <% end %>
-  <% if @item.linked_object.present? %>
-    <% admin_tool do %>
+    <div>
       <strong>
-        Linked Object
+        Amount
       </strong>
       <span>
-        <%= @item.linked_object_type %> (<%= @item.linked_object_id %>)
+        <%= @item.amount.format %>
       </span>
-    <% end %>
-  <% end %>
-  <% if (event = @item.primary_ledger&.event).present? %>
-    <% admin_tool do %>
+    </div>
+    <div>
       <strong>
-        Event
+        Date
       </strong>
       <span>
-        <%= link_to event.name, event_path(event), target: :_blank %> (<%= event.id %>)
+        <%= @item.datetime.strftime("%b %e, %Y") %>
       </span>
+    </div>
+    <% if @item.hcb_code.present? %>
+      <div>
+        <strong>
+          HCB Code
+        </strong>
+        <span>
+          <%= link_to @item.hcb_code.hcb_code, hcb_code_path(@item.hcb_code), target: :_blank %>
+        </span>
+      </div>
     <% end %>
-  <% elsif (card_grant = @item.primary_ledger&.card_grant).present? %>
-    <% admin_tool do %>
-      <strong>
-        Card Grant
-      </strong>
-      <span>
-        <%= link_to "Grant to #{card_grant.name}", card_grant_path(card_grant), target: :_blank %> (<%= card_grant.id %>)
-      </span>
+    <% if @item.linked_object.present? %>
+      <div>
+        <strong>
+          Linked Object
+        </strong>
+        <span>
+          <%= @item.linked_object_type %> (<%= @item.linked_object_id %>)
+        </span>
+      </div>
     <% end %>
-  <% end %>
-</section>
+    <% if (event = @item.primary_ledger&.event).present? %>
+      <div>
+        <strong>
+          Event
+        </strong>
+        <span>
+          <%= link_to event.name, event_path(event), target: :_blank %> (<%= event.id %>)
+        </span>
+      </div>
+    <% elsif (card_grant = @item.primary_ledger&.card_grant).present? %>
+      <div>
+        <strong>
+          Card Grant
+        </strong>
+        <span>
+          <%= link_to "Grant to #{card_grant.name}", card_grant_path(card_grant), target: :_blank %> (<%= card_grant.id %>)
+        </span>
+      </div>
+    <% end %>
+  </section>
+<% end %>
 
 <%= render partial: "application/admin_viewer", locals: { record: @item } %>
 <%= render partial: "application/admin_viewer", locals: { record: @item.primary_mapping } if @item.primary_mapping.present? %>
@@ -99,7 +101,7 @@
       <%= link_to "Click to get an SMS (to #{current_user.phone_number}) of the notification", send_sms_receipt_hcb_code_path(@item.hcb_code), method: :post %>
     <% end %>
   <% end %>
-  
+
   <%= render "receipts/list_v2", hcb_code: @item, frame: false, transaction_show_receipt_button: true, transaction_show_author_img: true %>
   <%= render partial: "receipts/form_v3", locals: {
         receiptable: @item,
