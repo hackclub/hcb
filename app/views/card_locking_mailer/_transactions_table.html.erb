@@ -10,7 +10,9 @@
     </tr>
   </thead>
   <tbody>
-    <% hcb_codes.sort_by { |hcb| hcb.card_charge_settled_at || hcb.created_at }.reverse.each do |hcb| %>
+    <%# Oldest first: the charge that has been outstanding longest is the most %>
+    <%# overdue, so it is the one to upload first. %>
+    <% hcb_codes.sort_by { |hcb| hcb.card_charge_settled_at || hcb.created_at }.each do |hcb| %>
       <tr>
         <td><%= link_to render_money(hcb.amount_cents.abs.to_s), attach_receipt_url(hcb) %></td>
         <td><%= hcb.stripe_merchant["name"] %></td>

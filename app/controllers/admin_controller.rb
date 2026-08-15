@@ -1576,7 +1576,9 @@ class AdminController < Admin::BaseController
 
     @count = messages.count
 
-    @messages = messages.page(@page).per(@per).order(sent_at: :desc)
+    # `reorder` because `search_subject` (pg_search) orders by relevance rank,
+    # which would otherwise take precedence over `sent_at`.
+    @messages = messages.reorder(sent_at: :desc).page(@page).per(@per)
   end
 
   def unknown_merchants
