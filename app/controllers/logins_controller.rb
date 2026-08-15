@@ -1,11 +1,19 @@
 # frozen_string_literal: true
 
 class LoginsController < ApplicationController
+  include TurnstileProtection
+
   skip_before_action :signed_in_user, except: [:reauthenticate]
   skip_after_action :verify_authorized
   before_action :set_login, except: [:new, :create, :reauthenticate]
   before_action :set_user, except: [:new, :create, :reauthenticate]
   invisible_captcha only: [:create, :complete], honeypot: :remember_me
+
+  # `#sms` spends a Twilio Verify message on whatever phone number the email
+  # resolves to, and needs no session to reach. The token comes from the widget
+  # on the form that started the login and rides through `continue_login`'s 307
+  # redirect. Declared after `set_login` so `@login` is loaded.
+  turnstile_protect only: [:sms], action: TurnstileService::LOGIN_ACTION, if: :turnstile_required?
 
   layout ->{ @login&.for_application? ? "apply" : "login" }
 
@@ -225,6 +233,18 @@ class LoginsController < ApplicationController
     else
       redirect_to choose_login_preference_login_path(@login)
     end
+  end
+
+  # `#sms` is also reached from `#complete` (via `continue_login`) when a login
+  # needs a second factor. Those requests come from the factor forms and carry
+  # no token, but the login has already cleared a factor by then, so it isn't
+  # the anonymous traffic Turnstile is here to stop.
+  def turnstile_required?
+    @login.authentication_factors_count.zero?
+  end
+
+  def turnstile_failed
+    redirect_to auth_users_path, flash: { error: TurnstileProtection::FAILURE_MESSAGE }
   end
 
   def login_params

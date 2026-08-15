@@ -23,6 +23,7 @@
 
       <%= email_field_tag :email, @prefill_email, placeholder: "Enter your email...", autofocus: true, autocomplete: "username", class: "!max-w-full w-full", style: "padding: 12px 15px", required: true, "data-webauthn-auth-target" => "loginEmailInput" %>
       <%= invisible_captcha :remember_me %>
+      <%= render partial: "application/turnstile", locals: { action: TurnstileService::LOGIN_ACTION } %>
 
       <div class="flex justify-between items-center gap-4">
         <% if @login.for_application? %>

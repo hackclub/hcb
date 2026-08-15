@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
 class UsersController < ApplicationController
+  include TurnstileProtection
+
+  # Sends a Twilio Verify message to a phone number the user just typed in, so
+  # it's the enrollment side of the same abuse surface as the SMS login code.
+  # The token comes from the widget in the "Verify phone number" modal.
+  turnstile_protect only: [:start_sms_auth_verification], action: TurnstileService::SMS_VERIFICATION_ACTION
+
   # `unimpersonate` is gated by its own `current_session&.impersonated?` guard,
   # and must remain reachable from impersonated sessions whose `verified` flag
   # mirrors an unverified target — otherwise the admin is locked out.

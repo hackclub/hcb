@@ -1,0 +1,11 @@
+<%# locals: (action:) %>
+<%# Cloudflare Turnstile widget. Render this inside the form whose submission
+    leads to an SMS being sent; `action` must match what the controller
+    verifies against (see TurnstileService). Renders nothing when Turnstile
+    isn't configured, in which case the controller skips the check too. %>
+<% if TurnstileService.enabled? %>
+  <div class="my-2"
+       data-controller="turnstile"
+       data-turnstile-sitekey-value="<%= TurnstileService.site_key %>"
+       data-turnstile-action-value="<%= action %>"></div>
+<% end %>
