@@ -59,6 +59,7 @@ class Ledger
         flash[:success] = "Unpinned transaction from #{@event&.name}"
       else
         flash[:error] = "There was an error in unpinning this transaction."
+        Rails.error.unexpected "There was an error in unpinning ledger item #{@item.hashid}"
       end
 
       redirect_back fallback_location: @event
