@@ -2,6 +2,8 @@
 
 class Ledger
   class ItemsController < ApplicationController
+    before_action :set_pin, only: [:pin, :unpin]
+
     def show
       @item = Ledger::Item.find_by_hashid!(params[:id])
 
@@ -33,7 +35,6 @@ class Ledger
     end
 
     def pin
-      @item = Ledger::Item.find_by_hashid!(params[:item_id])
       @event = @item.primary_ledger&.event
 
       authorize @item
@@ -49,7 +50,6 @@ class Ledger
     end
 
     def unpin
-      @item = Ledger::Item.find_by_hashid!(params[:item_id])
       @event = @item.primary_ledger&.event
 
       authorize @item
@@ -59,6 +59,12 @@ class Ledger
       flash[:success] = "Unpinned transaction from #{@event&.name}"
 
       redirect_back fallback_location: @event
+    end
+
+    private
+
+    def set_pin
+      @item = Ledger::Item.find_by_hashid!(params[:item_id])
     end
 
   end
