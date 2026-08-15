@@ -58,7 +58,7 @@
   <% end %>
 
   <% if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user) %>
-    <%= render "ledgers/ledger", ledger: @ledger, items: @ledger_items %>
+    <%= render "ledgers/ledger", ledger: @ledger, items: @ledger_items, show_author: false %>
   <% else %>
     <% if !(@transactions.nil? || @transactions.length == 0) %>
       <div class="table-container">
