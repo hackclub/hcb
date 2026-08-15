@@ -4,11 +4,11 @@
 # a Twilio Verify SMS. Shaped like `invisible_captcha` so the two read alike on
 # the controllers where they sit side by side.
 #
-#   turnstile_protect only: [:sms], action: TurnstileService::LOGIN_ACTION
+#   turnstile_protect only: [:start_sms_auth_verification],
+#                     action: TurnstileService::SMS_VERIFICATION_ACTION
 #
-# Views supply the token by rendering `application/turnstile` with a matching
-# `action:` inside the form. The widget writes it into a `cf-turnstile-response`
-# field, which rides along through the 307 redirects in the login flow.
+# Clients supply the token in a `cf-turnstile-response` param whose widget was
+# rendered with a matching `action` (see `settings/SmsVerification`).
 module TurnstileProtection
   extend ActiveSupport::Concern
 
@@ -42,7 +42,7 @@ module TurnstileProtection
     false
   end
 
-  # Overridden by controllers that have a better place to send someone back to.
+  # Override in controllers that have a better place to send someone back to.
   def turnstile_failed
     if request.format.json?
       render json: { error: FAILURE_MESSAGE }, status: :forbidden

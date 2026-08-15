@@ -4,7 +4,7 @@ require "rails_helper"
 
 # `POST /users/start_sms_auth_verification` sends a Twilio Verify message to a
 # phone number the user just typed in, so it's gated on a solved Turnstile
-# challenge the same way the SMS login code is.
+# challenge.
 #
 # Controller-spec style so `SessionSupport#create_session` can sign the user in
 # (in a request spec it collides with `ActionDispatch::Integration::Runner`).
@@ -59,10 +59,10 @@ RSpec.describe UsersController do
     expect(enroll_service).not_to have_received(:start_verification)
   end
 
-  # A token minted by the login widget carries a different action, so it can't
-  # be spent here.
-  it "refuses a token solved for the login flow" do
-    stub_siteverify(success: true, action: TurnstileService::LOGIN_ACTION)
+  # A token minted by any other widget on our sitekey carries a different
+  # action, so it can't be spent here.
+  it "refuses a token solved for a different widget" do
+    stub_siteverify(success: true, action: "some-other-widget")
 
     start_verification("cf-turnstile-response" => token)
 

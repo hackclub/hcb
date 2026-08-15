@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe TurnstileService::Verify do
   let(:token) { "0.abc123" }
-  let(:action) { TurnstileService::LOGIN_ACTION }
+  let(:action) { TurnstileService::SMS_VERIFICATION_ACTION }
   let(:hostname) { "hcb.hackclub.com" }
 
   before { allow(TurnstileService).to receive(:secret_key).and_return("0x0000secret") }
@@ -44,8 +44,8 @@ RSpec.describe TurnstileService::Verify do
     expect(run).to be false
   end
 
-  # A token minted by the phone-verification widget must not be usable against
-  # the login flow, and vice versa.
+  # A token minted by any other widget on our sitekey must not be usable
+  # against the phone-verification flow.
   it "rejects a token solved for a different action" do
     stub_siteverify({ "success" => true, "action" => "some-other-form", "hostname" => hostname })
 

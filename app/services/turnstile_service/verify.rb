@@ -13,7 +13,7 @@ module TurnstileService
     # isn't ours, so drop it rather than spending a request on it.
     MAX_TOKEN_LENGTH = 2048
 
-    # Deliberately short: every one of these sits in front of a login.
+    # Deliberately short: someone is sitting in a modal waiting on this.
     TIMEOUT = 5
 
     def initialize(token:, action:, hostname:, remote_ip: nil)
@@ -67,8 +67,7 @@ module TurnstileService
 
       JSON.parse(response.body)
     rescue => e
-      # Failing to reach Cloudflare fails the check closed. The user can retry,
-      # or sign in with a factor that doesn't send an SMS.
+      # Failing to reach Cloudflare fails the check closed; the user can retry.
       Rails.error.report(e)
       nil
     end

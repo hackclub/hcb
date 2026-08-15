@@ -1,17 +1,17 @@
 # frozen_string_literal: true
 
-# Cloudflare Turnstile — a bot check in front of the flows that dispatch a
-# Twilio Verify SMS. Each SMS costs us money and lands on someone's phone, so
-# these are the flows spam signups have historically abused.
+# Cloudflare Turnstile — a bot check in front of phone-number verification,
+# the one flow that texts a Twilio Verify code to an unverified, user-typed
+# number. That's the surface spam signups have abused to run up our Twilio
+# bill; login SMS codes only ever go to numbers verified through here.
 #
 # The server half lives in TurnstileService::Verify; the widget is rendered by
-# the `application/turnstile` partial and the `turnstile` Stimulus controller.
+# the `settings/SmsVerification` React component via `common/turnstile.js`.
 module TurnstileService
-  # Widget actions. Cloudflare records these when a token is solved and echoes
-  # them back at siteverify, so a token minted on one form can't be replayed
-  # against another. Referenced by both the view and the controller to keep the
-  # two from drifting apart.
-  LOGIN_ACTION = "login"
+  # Widget action. Cloudflare records it when a token is solved and echoes it
+  # back at siteverify, so a token minted by any other widget on our sitekey
+  # can't be replayed here. Referenced by both the component and the controller
+  # to keep the two from drifting apart.
   SMS_VERIFICATION_ACTION = "sms-verification"
 
   def self.site_key

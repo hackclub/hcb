@@ -68,12 +68,6 @@ RSpec.describe LoginsController do
     end
 
     it "sends an SMS code if the user has opted-in and verified their phone number" do
-      # `#sms` is Turnstile-gated whenever the credentials are configured, which
-      # they are for anyone with `TURNSTILE__*` in their environment. This
-      # example is about the send, not the bot check; the gate has its own
-      # coverage in spec/requests/logins_turnstile_spec.rb.
-      allow(TurnstileService).to receive_messages(site_key: nil, secret_key: nil)
-
       user = create(:user, phone_number: "+18556254225")
       # This can't be done through the factory because we have validation logic
       # that clears out `phone_number_verified` when the phone number changes.
@@ -90,6 +84,21 @@ RSpec.describe LoginsController do
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("SMS code")
       expect(response.body).to include("We just sent a login code")
+    end
+
+    # The UI never offers SMS for an unverified number, so this request only
+    # comes from a script POSTing at the endpoint directly to spend Twilio
+    # messages on made-up numbers.
+    it "sends no SMS if the phone number isn't verified" do
+      user = create(:user, phone_number: "+18556254225")
+      login = create(:login, user:)
+
+      expect(TwilioVerificationService).not_to receive(:new)
+
+      get(:sms, params: { id: login.hashid })
+
+      expect(flash[:error]).to eq("SMS login isn't available for this account.")
+      expect(response).to redirect_to(auth_users_path)
     end
 
     it "returns an error if the login is a reauthentication" do
