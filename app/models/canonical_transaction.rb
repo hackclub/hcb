@@ -52,8 +52,8 @@ class CanonicalTransaction < ApplicationRecord
   scope :outgoing_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE}%'") }
   scope :incoming_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE}%'") }
   scope :stripe_card_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_CARD_CODE}%'") }
-  scope :with_custom_memo, -> { where("custom_memo is not null") }
-  scope :without_custom_memo, -> { where("custom_memo is null") }
+  scope :with_custom_memo, -> { where.not(custom_memo: nil) }
+  scope :without_custom_memo, -> { where(custom_memo: nil) }
   scope :with_short_code, -> { where("memo ~ '.*HCB-\\w{5}.*'") }
 
   scope :revenue, -> { where("amount_cents > 0") }

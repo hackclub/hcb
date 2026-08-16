@@ -51,6 +51,21 @@ RSpec.describe User, type: :model do
         expect(user).to be_valid, "expected #{domain} to be allowed"
       end
     end
+
+    it "allows a provider's regional domains" do
+      %w[outlook.de outlook.fr yahoo.fr yahoo.ca hotmail.co.uk].each do |domain|
+        user = build(:user, email: "someone@#{domain}")
+
+        expect(user).to be_valid, "expected #{domain} to be allowed"
+      end
+    end
+
+    it "suggests icloud.com for icloud.co" do
+      user = build(:user, email: "someone@icloud.co")
+
+      expect(user).to_not be_valid
+      expect(user.errors[:email]).to eq(["looks like a typo. Did you mean someone@icloud.com?"])
+    end
   end
 
   context "birthday validations" do
