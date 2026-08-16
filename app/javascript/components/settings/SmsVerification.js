@@ -49,13 +49,16 @@ const SmsVerification = ({
 
     let removed = false
 
+    // Render a fresh widget on every open, not just the first: jquery-modal
+    // re-appends the modal element to its blocker each time it opens, and
+    // moving an iframe in the DOM reloads it, killing an existing widget.
     const observer = new IntersectionObserver(entries => {
       if (!entries.some(entry => entry.isIntersecting)) return
-      observer.disconnect()
 
       loadTurnstile()
         .then(turnstile => {
           if (removed) return
+          withTurnstileWidget(id => turnstile.remove(id))
           turnstileWidgetId.current = turnstile.render(
             turnstileContainer.current,
             {
