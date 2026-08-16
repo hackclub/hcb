@@ -41,29 +41,41 @@ const SmsVerification = ({
   }
 
   // Render the widget once, when a sitekey is configured. This component mounts
-  // inside a modal, so Cloudflare's automatic scan never sees it.
+  // inside a modal, so Cloudflare's automatic scan never sees it. The render
+  // also has to wait until the modal opens: the widget comes up blank and the
+  // challenge never runs if it renders into a display:none container.
   useEffect(() => {
     if (!turnstileSitekey || !turnstileContainer.current) return undefined
 
     let removed = false
 
-    loadTurnstile()
-      .then(turnstile => {
-        if (removed) return
-        turnstileWidgetId.current = turnstile.render(
-          turnstileContainer.current,
-          {
-            sitekey: turnstileSitekey,
-            action: TURNSTILE_ACTION,
-          }
+    const observer = new IntersectionObserver(entries => {
+      if (!entries.some(entry => entry.isIntersecting)) return
+      observer.disconnect()
+
+      loadTurnstile()
+        .then(turnstile => {
+          if (removed) return
+          turnstileWidgetId.current = turnstile.render(
+            turnstileContainer.current,
+            {
+              sitekey: turnstileSitekey,
+              action: TURNSTILE_ACTION,
+              // Stay invisible unless the user actually has to interact, so
+              // the post-send reset doesn't visibly re-run the challenge.
+              appearance: 'interaction-only',
+            }
+          )
+        })
+        .catch(() =>
+          setErrors(["We couldn't load the human-verification check."])
         )
-      })
-      .catch(() =>
-        setErrors(["We couldn't load the human-verification check."])
-      )
+    })
+    observer.observe(turnstileContainer.current)
 
     return () => {
       removed = true
+      observer.disconnect()
       withTurnstileWidget(id => window.turnstile?.remove(id))
       turnstileWidgetId.current = null
     }
