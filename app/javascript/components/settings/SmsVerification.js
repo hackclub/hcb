@@ -24,6 +24,7 @@ const SmsVerification = ({
   const [validationSent, setValidationSent] = useState(false)
   const [validationSuccess, setValidationSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [turnstileReady, setTurnstileReady] = useState(false)
   const [code, setCode] = useState('')
   const verificationCodeInput = useRef(null)
   const turnstileContainer = useRef(null)
@@ -59,14 +60,15 @@ const SmsVerification = ({
         .then(turnstile => {
           if (removed) return
           withTurnstileWidget(id => turnstile.remove(id))
+          setTurnstileReady(false)
           turnstileWidgetId.current = turnstile.render(
             turnstileContainer.current,
             {
               sitekey: turnstileSitekey,
               action: TURNSTILE_ACTION,
-              // Stay invisible unless the user actually has to interact, so
-              // the post-send reset doesn't visibly re-run the challenge.
-              appearance: 'interaction-only',
+              callback: () => setTurnstileReady(true),
+              'expired-callback': () => setTurnstileReady(false),
+              'error-callback': () => setTurnstileReady(false),
             }
           )
         })
@@ -84,9 +86,13 @@ const SmsVerification = ({
     }
   }, [turnstileSitekey])
 
+  // Sending needs a token, so hold the send/resend controls until the widget
+  // has produced one.
+  const awaitingTurnstile = !!turnstileSitekey && !turnstileReady
+
   const handleClick = async e => {
     e.preventDefault()
-    if (loading) {
+    if (loading || awaitingTurnstile) {
       return
     }
     setLoading(true)
@@ -126,6 +132,7 @@ const SmsVerification = ({
     } finally {
       // Tokens are single-use, so "Resend code" needs a fresh one either way.
       withTurnstileWidget(id => window.turnstile?.reset(id))
+      setTurnstileReady(false)
       setLoading(false)
     }
   }
@@ -229,7 +236,9 @@ const SmsVerification = ({
                 <a
                   href="#"
                   onClick={handleClick}
-                  className={loading ? 'muted wait' : 'pointer'}
+                  className={
+                    loading || awaitingTurnstile ? 'muted wait' : 'pointer'
+                  }
                 >
                   Resend code
                 </a>{' '}
@@ -244,7 +253,12 @@ const SmsVerification = ({
               </p>
               <button
                 onClick={handleClick}
-                className={loading ? 'bg-muted wait btn' : 'bg-info btn'}
+                disabled={awaitingTurnstile}
+                className={
+                  loading || awaitingTurnstile
+                    ? 'bg-muted wait btn'
+                    : 'bg-info btn'
+                }
               >
                 Send verification code
               </button>
