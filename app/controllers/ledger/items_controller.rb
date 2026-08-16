@@ -2,6 +2,8 @@
 
 class Ledger
   class ItemsController < ApplicationController
+    before_action :set_pin, only: [:pin, :unpin]
+
     def show
       @item = Ledger::Item.find_by_hashid!(params[:id])
 
@@ -30,6 +32,43 @@ class Ledger
       authorize @item
 
       redirect_to hcb_code_path(@item.hcb_code)
+    end
+
+    def pin
+      @event = @item.primary_ledger&.event
+
+      authorize @item
+      authorize @event
+
+      if @item.primary_mapping&.pin
+        flash[:success] = "Transaction pinned!"
+      else
+        flash[:error] = @item.primary_mapping&.errors&.full_messages&.to_sentence || "At the moment, this transaction can't be pinned."
+      end
+
+      redirect_back fallback_location: @event
+    end
+
+    def unpin
+      @event = @item.primary_ledger&.event
+
+      authorize @item
+      authorize @event
+
+      if @item.primary_mapping&.unpin
+        flash[:success] = "Unpinned transaction from #{@event&.name}"
+      else
+        flash[:error] = "There was an error in unpinning this transaction."
+        Rails.error.unexpected "There was an error in unpinning ledger item #{@item.hashid}"
+      end
+
+      redirect_back fallback_location: @event
+    end
+
+    private
+
+    def set_pin
+      @item = Ledger::Item.find_by_hashid!(params[:item_id])
     end
 
   end

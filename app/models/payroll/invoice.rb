@@ -58,6 +58,7 @@ module Payroll
       event :mark_approved do
         after do |reviewed_by|
           update!(reviewed_by:)
+          copy_receipts_to_payment!
         end
         transitions from: :submitted, to: :approved
       end
@@ -79,6 +80,19 @@ module Payroll
     end
 
     private
+
+    # The document the contractor uploaded is the receipt for the payment their
+    # invoice triggers, so hand it over on approval. Payment::Attempt makes the
+    # same hand-off from payment to transfer, but only at the moment it creates
+    # the transfer — when the payee was ready to be paid straight away that
+    # already happened, so catch the transfer's HCB code up here too.
+    def copy_receipts_to_payment!
+      return if payment.nil?
+
+      [payment, payment.payout&.local_hcb_code].compact.each do |receiptable|
+        Receipt.reupload(old_receiptable: self, new_receiptable: receiptable)
+      end
+    end
 
     def notify_managers
       Payroll::InvoiceMailer.with(invoice: self).submitted.deliver_later

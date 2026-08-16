@@ -40,7 +40,9 @@ class Ledger < ApplicationRecord
   validate :validate_owner_based_on_primary
 
   has_many :mappings, class_name: "Ledger::Mapping"
+  has_many :pinned_mappings, -> { pinned }, class_name: "Ledger::Mapping", inverse_of: :ledger
   has_many :items, through: :mappings, source: :ledger_item, class_name: "Ledger::Item"
+  has_many :pinned_items, through: :pinned_mappings, source: :ledger_item, class_name: "Ledger::Item"
 
   has_many :canonical_transactions, through: :items
   has_many :canonical_pending_transactions, through: :items

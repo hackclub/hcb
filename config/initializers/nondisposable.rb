@@ -121,6 +121,59 @@ Nondisposable.configure do |config|
     toolzim.com
     kedaiqq.com
     f5.si
+    dnsink.com
+    careney.com
+    aghism.com
+    amupx.com
+    priyomail.site
+    upstary.com
+    rpaintel.com
+    primetor.com
+    vitreu.com
+    tarscon.com
+    vemzite.com
+    murkstar.com
+    sureido.com
+    chackaut.com
+    emalupe.com
+    netiren.com
+    missfuli.com
+    mrworlds.com
+    aganseo.com
+    seolaner.com
+    sagesole.com
+    shortapk.com
+    iapapi.com
+    sskaid.com
+    tixpad.com
+    westecom.com
+    donumart.com
+    videocel.com
+    vektoru.com
+    lanvos.com
+    dyleris.com
+    disiok.com
+    woraco.com
+    copawoke.com
+    brixozu.com
+    theaumos.com
+    buloan.com
+    trepolan.com
+    tikwel.com
+    tongtode.com
+    taoxe.com
+    savdz.com
+    widenely.com
+    fanchatu.com
+    uswaid.com
+    topkute.com
+    web5h.com
+    lovadio.com
+    soliset.com
+    candaba.com
+    5nek.com
+    skyprofy.com
+    velpai.com
   ].freeze
 
   # https://www.okta.com/blog/threat-intelligence/opportunistic-sms-pumping-attacks-target-customer-sign-up-pages/
