@@ -15,9 +15,6 @@ module UserService
       # doing this here to be safe.
       raise ArgumentError.new("phone number for user: #{@user.id} not in E.164 format") unless @user.phone_number =~ /\A\+[1-9]\d{1,14}\z/
 
-      # TEMP BLOCK FOR EVERYONE
-      raise ArgumentError.new("try again later")
-
       unless has_meaningful_activity? || has_verified_phone_number_before? || not_fresh_user?
         raise SMSEnrollmentError, "SMS authentication currently unavailable for your account, please try again later."
       end
