@@ -1,7 +1,7 @@
 <%# locals: (position:, perspective:, contractor_party: nil) %>
 
 <% checklist = position.onboarding_checklist %>
-<% current_key = position.next_onboarding_step&.dig(:key) %>
+<% current_key = checklist.find { |step| !step[:complete] }&.dig(:key) %>
 <% organizer_name = position.contract&.party(:organizer)&.user&.name.presence || "the organizer" %>
 <% event = position.event %>
 
@@ -56,7 +56,7 @@
                 class: "btn btn-small bg-info nowrap", data: { turbo_frame: "_top" } %>
         <% elsif current %>
           <span class="onboarding-flow__status onboarding-flow__status--waiting nowrap">
-            Waiting on <%= mine ? "you" : owner_name %>
+            Waiting on <%= owner_name %>
           </span>
         <% end %>
       </div>
