@@ -87,6 +87,15 @@ class LoginsController < ApplicationController
 
   # post to request sms login code
   def sms
+    # The UI only offers SMS for verified numbers; `continue_login` never
+    # routes here otherwise. A request for an unverified number is a script
+    # POSTing directly, spending a Twilio message on a number nobody has
+    # proven they hold.
+    unless @login.sms_available?
+      flash[:error] = "SMS login isn't available for this account."
+      return redirect_to auth_users_path
+    end
+
     resp = LoginCodeService::Request.new(email: @email, sms: true, ip_address: request.remote_ip, user_agent: request.user_agent).run
 
     if resp[:error].present?

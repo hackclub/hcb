@@ -212,7 +212,8 @@
       <%= modal_header "Verify phone number" %>
       <%= react_component "settings/SmsVerification",
               phone_number: @user.phone_number,
-              enroll_sms_auth: true %>
+              enroll_sms_auth: true,
+              turnstile_sitekey: (TurnstileService.site_key if TurnstileService.enabled?) %>
     </section>
   <% end %>
 </turbo-frame>
