@@ -14,6 +14,20 @@
         </span>
         <span class="badge h4 bg-<%= @position.status_color %> nowrap order-1"><%= @position.status_text %></span>
       </span>
+
+      <div data-controller="menu" data-menu-placement-value="bottom-end">
+        <%= pop_icon_to "more",
+            "#",
+            class: "align-middle", "aria-label": "More Options",
+            data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
+
+        <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
+          <%= link_to terminate_event_payroll_position_path(event: @event, payroll_position: @position), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you want to terminate this contractor immediately? We will notify the contractor." } do %>
+            <%= inline_icon "profile-forbidden", size: 24 %>
+            Terminate
+          <% end %>
+        </div>
+      </div>
     </h2>
 
     <section class="hcb-code--info">

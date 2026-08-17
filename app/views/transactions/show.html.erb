@@ -60,11 +60,6 @@
         <%= @transaction.display_name %>
       </span>
     </p>
-
-    <%= pop_icon_to "edit",
-      edit_canonical_transaction_path(@transaction),
-      disabled: !organizer_signed_in?,
-      class: "right tooltipped tooltipped--w", "aria-label": "Rename transaction" if organizer_signed_in?(as: :member) %>
   </div>
 
   <section class="details">
@@ -155,7 +150,6 @@
         <%= link_to "[unwaive fee]", unwaive_fee_canonical_transaction_url(@transaction), method: :post if @transaction.fee&.revenue_waived? %>
       <% end %>
     <% end %>
-
   </section>
 
   <% if @transaction&.disbursement %>
@@ -168,7 +162,6 @@
       </p>
     <% end %>
   <% end %>
-
 </article>
 
 <% if @hcb_code %>

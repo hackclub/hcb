@@ -17,7 +17,7 @@ module DonationService
         donation.mark_refunded!
 
         # 2. Un-front all pending transaction associated with this donation
-        donation.canonical_pending_transactions.update_all(fronted: false)
+        donation.canonical_pending_transactions.find_each { |cpt| cpt.update(fronted: false) }
 
         # 3. Waive all fees collected
         donation.canonical_transactions.each do |ct|
