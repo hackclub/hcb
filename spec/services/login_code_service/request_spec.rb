@@ -3,6 +3,8 @@
 require "rails_helper"
 
 describe LoginCodeService::Request do
+  include TwilioSupport
+
   let(:ip_address) { "127.0.0.1" }
   let(:user_agent) { "fake firefox" }
 
@@ -60,6 +62,35 @@ describe LoginCodeService::Request do
                                method: :email,
                                login_code:
                              })
+    end
+  end
+
+  context "when SMS is requested" do
+    let(:user) { create(:user, phone_number: "+18005550100") }
+
+    it "sends the SMS while under the daily cap" do
+      stub_twilio_sms_verification(phone_number: user.phone_number)
+      allow(Rails.cache).to receive(:increment).and_return(1)
+
+      response = described_class.new(email: user.email, sms: true, ip_address:, user_agent:).run
+
+      expect(TwilioVerificationService.new).to have_received(:send_verification_request).with(user.phone_number)
+      expect(response[:method]).to eq(:sms)
+    end
+
+    # The Turnstile gate covers the zero-factor login form, but not the paths
+    # that reach this service with a factor already cleared (or from sudo-mode
+    # reauthentication) — the cap is the backstop for those.
+    it "falls back to email once the daily cap is spent" do
+      allow(Rails.cache).to receive(:increment).and_return(LoginCodeService::Request::DAILY_SMS_LIMIT + 1)
+      allow(Rails.error).to receive(:report)
+      expect(TwilioVerificationService).not_to receive(:new)
+      expect(LoginCodeMailer).to receive_message_chain(:send_code, :deliver_now)
+
+      response = described_class.new(email: user.email, sms: true, ip_address:, user_agent:).run
+
+      expect(response[:method]).to eq(:email)
+      expect(Rails.error).to have_received(:report).with(an_instance_of(Errors::TwilioAbuseError))
     end
   end
 

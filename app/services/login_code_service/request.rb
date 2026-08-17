@@ -2,6 +2,10 @@
 
 module LoginCodeService
   class Request
+    # Far above what a person retrying login needs; far below what makes a
+    # pumped premium number pay.
+    DAILY_SMS_LIMIT = 10
+
     def initialize(email:, ip_address:, user_agent:, sms: false)
       @email = email
       @sms = sms
@@ -21,6 +25,14 @@ module LoginCodeService
 
     def send_login_code_by_sms(user)
       return { error: "no phone number provided", method: :sms } if user.phone_number.empty?
+
+      # Turnstile gates the zero-factor login form, but this service is also
+      # reachable once a factor has cleared and from sudo-mode
+      # reauthentication, where no widget runs. Cap what a single account can
+      # spend in a day so a once-verified premium number can't be pumped
+      # through those paths. Mirrors
+      # `UserService::EnrollSmsAuth#disallow_excessive_sms_verifications`.
+      return send_login_code_by_email(user) if daily_sms_limit_reached?(user)
 
       begin
         TwilioVerificationService.new.send_verification_request(user.phone_number)
@@ -56,6 +68,18 @@ module LoginCodeService
         method: :email,
         login_code:
       }
+    end
+
+    private
+
+    def daily_sms_limit_reached?(user)
+      cache_key = "login_sms_count:#{user.id}:#{Date.current}"
+      count = Rails.cache.increment(cache_key, 1, expires_in: 25.hours).to_i
+
+      return false if count <= DAILY_SMS_LIMIT
+
+      Rails.error.report(Errors::TwilioAbuseError.new("User #{user.id} exceeded login SMS send limit (count: #{count})."))
+      true
     end
 
   end

@@ -5,23 +5,22 @@ require "rails_helper"
 # `POST /logins/:id/sms` spends a Twilio Verify message and needs no session to
 # reach, so it's gated on a solved Turnstile challenge.
 RSpec.describe "LoginsController Turnstile protection", type: :request do
-  let(:user) { create(:user, phone_number: "+18005550100", phone_number_verified: true) }
+  include TurnstileSupport
+  include TwilioSupport
+
+  let(:user) do
+    create(:user, phone_number: "+18005550100").tap do |u|
+      # Can't be set through the factory: `User#on_phone_number_update` clears
+      # verification whenever the number changes, creation included.
+      u.update!(phone_number_verified: true)
+    end
+  end
   let(:login) { create(:login, user:) }
   let(:token) { "0.turnstile-token" }
 
   before do
-    allow(TurnstileService).to receive_messages(site_key: "0x0000site", secret_key: "0x0000secret")
-    allow(TwilioVerificationService).to receive(:new).and_return(
-      instance_double(TwilioVerificationService, send_verification_request: nil)
-    )
-  end
-
-  def stub_siteverify(success:, action: TurnstileService::LOGIN_ACTION, hostname: "www.example.com")
-    stub_request(:post, TurnstileService::Verify::SITEVERIFY_URL).to_return(
-      status: 200,
-      body: { "success" => success, "action" => action, "hostname" => hostname }.to_json,
-      headers: { "Content-Type" => "application/json" }
-    )
+    enable_turnstile!
+    stub_twilio_sms_verification(phone_number: user.phone_number)
   end
 
   def request_sms_code(params = {})
@@ -87,8 +86,19 @@ RSpec.describe "LoginsController Turnstile protection", type: :request do
     expect(response.body).to include('data-controller="turnstile"')
   end
 
+  # Once a factor has cleared, the server skips the check (`turnstile_required?`),
+  # so don't make people mid-2FA run a challenge whose token nothing reads.
+  it "renders no widget once a factor has been cleared" do
+    user.update!(use_sms_auth: true, use_two_factor_authentication: true)
+    login.update!(authenticated_with_email: true)
+
+    get choose_login_preference_login_path(login)
+
+    expect(response.body).not_to include('data-controller="turnstile"')
+  end
+
   context "when Turnstile isn't configured" do
-    before { allow(TurnstileService).to receive_messages(site_key: nil, secret_key: nil) }
+    before { disable_turnstile! }
 
     it "sends the code without calling Cloudflare" do
       request_sms_code

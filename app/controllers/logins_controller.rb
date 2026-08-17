@@ -251,6 +251,9 @@ class LoginsController < ApplicationController
   def turnstile_required?
     @login.authentication_factors_count.zero?
   end
+  # The views mirror this so nobody is handed a challenge whose token the
+  # server wouldn't read.
+  helper_method :turnstile_required?
 
   def turnstile_failed
     redirect_to auth_users_path, flash: { error: TurnstileProtection::FAILURE_MESSAGE }

@@ -24,6 +24,13 @@ export default class extends Controller {
     // Held disabled until the widget produces a token.
     this.setReady(false)
 
+    // Turbo snapshots the page for its cache *before* `disconnect` runs, so
+    // scrub the widget out here too or a restore visit (e.g. the back button)
+    // comes back with a dead iframe and a stale token input, and `connect`
+    // then renders a second widget next to them.
+    this.removeForCache = () => this.removeWidget()
+    document.addEventListener('turbo:before-cache', this.removeForCache)
+
     let turnstile
     try {
       turnstile = await loadTurnstile()
@@ -49,10 +56,22 @@ export default class extends Controller {
     // A torn-down widget (e.g. Turbo navigation) must not leave the button dead.
     this.setReady(true)
 
+    document.removeEventListener('turbo:before-cache', this.removeForCache)
+    this.removeWidget()
+  }
+
+  removeWidget() {
     if (this.widgetId === undefined) return
 
-    window.turnstile?.remove(this.widgetId)
+    // `remove` throws once the widget's DOM has already gone away — same dance
+    // as `withTurnstileWidget` in `settings/SmsVerification`.
+    try {
+      window.turnstile?.remove(this.widgetId)
+    } catch {
+      // Already gone.
+    }
     this.widgetId = undefined
+    this.element.replaceChildren()
   }
 
   setReady(ready) {

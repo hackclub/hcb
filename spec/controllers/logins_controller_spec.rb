@@ -6,6 +6,7 @@ require "webauthn/fake_client"
 RSpec.describe LoginsController do
   include SessionSupport
   include WebAuthnSupport
+  include TurnstileSupport
   render_views
 
   describe "#new" do
@@ -72,7 +73,7 @@ RSpec.describe LoginsController do
       # they are for anyone with `TURNSTILE__*` in their environment. This
       # example is about the send, not the bot check; the gate has its own
       # coverage in spec/requests/logins_turnstile_spec.rb.
-      allow(TurnstileService).to receive_messages(site_key: nil, secret_key: nil)
+      disable_turnstile!
 
       user = create(:user, phone_number: "+18556254225")
       # This can't be done through the factory because we have validation logic
@@ -98,7 +99,7 @@ RSpec.describe LoginsController do
     it "sends no SMS if the phone number isn't verified" do
       # Keep this example about the `sms_available?` guard, not the Turnstile
       # gate that sits in front of it (covered in logins_turnstile_spec.rb).
-      allow(TurnstileService).to receive_messages(site_key: nil, secret_key: nil)
+      disable_turnstile!
 
       user = create(:user, phone_number: "+18556254225")
       login = create(:login, user:)
