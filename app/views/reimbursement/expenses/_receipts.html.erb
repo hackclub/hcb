@@ -22,7 +22,7 @@
         "
       }) do |form| %>
       <% if expense.is_fee? %>
-        <p class="my-0">This fee is imposed by Wise to process your transaction. <%= link_to "Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise" %></p>
+        <p class="my-0">This fee is imposed by Wise to process your transaction. <%= link_to "Learn more about Wise on HCB →", "https://hack.club/hcb-help-wise-transfer" %></p>
       <% elsif expense.receipts.any? %>
         <div class="flex flex-col p1" id="link_receipt__form">
           <% column_amount = [((expense.receipts.length - 1) / 2.to_f).ceil, expense.receipts.length == 2 ? 2 : 1].max %>
