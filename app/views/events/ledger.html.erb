@@ -35,4 +35,6 @@
   HCB is working on a faster ledger to improve your experience. If you have any feedback, send it our way!
 <% end %>
 
+<%= render "ledgers/pinned_items", event: @ledger.event %>
+
 <%= render "ledgers/ledger", ledger: @ledger, items: @items, table_only: true, filter: capture { render partial: "ledgers/filters/filter" }, show_fee: true %>
