@@ -8,8 +8,8 @@ let loader
 // widget still fetches the script a single time.
 //
 // We render explicitly rather than letting the script scan for `.cf-turnstile`
-// elements: the widget mounts inside a modal after page load, which the
-// automatic scan never sees.
+// elements: widgets here appear on Turbo-rendered pages and inside a modal that
+// mounts after load, neither of which the automatic scan sees.
 export default function loadTurnstile() {
   if (!loader) {
     loader = new Promise((resolve, reject) => {
