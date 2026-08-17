@@ -181,6 +181,8 @@ Rails.application.routes.draw do
       post "unimpersonate"
 
       post "suppress_card_locking", to: "users#suppress_card_locking"
+
+      post "reset_billing_address", to: "users#reset_billing_address"
     end
     post "delete_profile_picture", to: "users#delete_profile_picture"
     post "generate_totp"
@@ -558,7 +560,6 @@ Rails.application.routes.draw do
       get "memo_frame"
       get "dispute"
       post "invoice_as_personal_transaction"
-      post "pin"
       post "toggle_tag/:tag_id", to: "hcb_codes#toggle_tag", as: :toggle_tag
       post "send_receipt_sms", to: "hcb_codes#send_receipt_sms", as: :send_sms_receipt
 
@@ -641,6 +642,8 @@ Rails.application.routes.draw do
   scope module: :ledger, as: :ledger do
     resources :items, path: "transactions", only: [:show] do
       get "hcb"
+      post "pin"
+      post "unpin"
     end
   end
   resources :ledger_items, only: [], path: "transactions", concerns: :commentable

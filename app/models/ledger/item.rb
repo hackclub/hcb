@@ -309,6 +309,14 @@ class Ledger
       :zero
     end
 
+    def pinnable?
+      (ct_count > 0 || cpt_count > 0) && primary_ledger&.event.present?
+    end
+
+    def pinned?
+      primary_mapping&.pinned? || false
+    end
+
     private
 
     def assign_linked_object!

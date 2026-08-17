@@ -459,6 +459,7 @@ class Event < ApplicationRecord
   after_create :create_ledger
   has_many :hcb_codes
   has_many :pinned_hcb_codes, -> { includes(hcb_code: [:canonical_transactions, :canonical_pending_transactions]) }, class_name: "HcbCode::Pin"
+  has_many :pinned_ledger_items, through: :ledger, source: :pinned_items, class_name: "Ledger::Item"
 
   has_many :check_deposits
 

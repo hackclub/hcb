@@ -59,6 +59,7 @@ class EventPolicy < ApplicationPolicy
   def pin?
     admin_or_member?
   end
+  alias_method :unpin?, :pin?
 
   def permit_merchant?
     admin_or_member?
