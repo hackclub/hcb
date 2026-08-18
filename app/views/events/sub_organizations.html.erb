@@ -9,6 +9,13 @@
 <h1 class="heading flex items-center gap-2 flex-col sm:flex-row border-0 mb-0">
   <span class="flex-grow">Sub-organizations</span>
   <div class="flex items-center gap-2">
+    <%# Switching to the table drops the filters with it: the table shows a tree
+        rather than a filtered list, so carrying a filter over would leave the
+        balance above it describing a different set of organizations. %>
+    <%= pop_icon_to @view == "list" ? "grid" : "list",
+                    @view == "list" ? url_for(request.query_parameters.merge(view: "grid")) : url_for(view: "list"),
+                    class: "tooltipped tooltipped--w",
+                    "aria-label": @view == "list" ? "Switch to cards" : "Switch to a table" %>
     <div data-controller="menu" data-menu-placement-value="bottom-end">
       <button
         type="button"
@@ -34,48 +41,70 @@
   <div class="stat statset__wide" data-tour-step="balance">
     <span class="stat__label"><%= @has_filter ? "Filtered s" : "S" %>ub-organization balance</span>
     <span class="stat__value">
-      <%= turbo_frame_tag "sub_event_balance_#{@event.public_id}", src: event_async_sub_organization_balance_path(@event, request.query_parameters), loading: :lazy do %>
+      <%= turbo_frame_tag "sub_event_balance_#{@event.public_id}", src: event_async_sub_organization_balance_path(@event, @view == "list" ? {} : request.query_parameters), loading: :lazy do %>
         <strong>-</strong>
       <% end %>
     </span>
   </div>
 </div>
 
-<% if @all_events.length > 1 %>
-  <div class="card my-3 p-0 relative" style="overflow-x: auto;">
-    <div
-      data-controller="sub-organizations-graph"
-      data-sub-organizations-graph-nodes-value="<%= @all_events.map { |e| { id: e.id, name: e.name, parentId: e.parent_id, href: e.id == @event.id ? event_sub_organizations_path(@event) : event_path(e), isRoot: e.id == @event.id } }.to_json %>"
-      data-sub-organizations-graph-src-value="<%= event_async_sub_organizations_graph_path(@event) %>"
-    ></div>
-  </div>
-<% end %>
+<% if @view == "list" %>
+  <% if @rows.any? %>
+    <article class="table-container mt-3">
+      <table data-controller="sub-organization-tree">
+        <thead>
+          <tr>
+            <th>Organization</th>
+            <th>Tags</th>
+            <th>Balance</th>
+            <th>Cards</th>
+            <th>Team</th>
+          </tr>
+        </thead>
+        <tbody id="sub_organizations">
+          <% @rows.each do |row| %>
+            <%= render "events/sub_organization_row", row:, depth: 0 %>
+          <% end %>
+        </tbody>
+      </table>
+    </article>
 
-<div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
-  <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
-    <%= render "events/filters/search", form: %>
+    <%# Sub-organizations this viewer may not see are left out entirely, along
+        with everything beneath them, since showing a placeholder would give
+        away that a private organization is there. %>
+    <% unless organizer_signed_in? %>
+      <p class="muted mt-2">Only transparent sub-organizations are listed.</p>
+    <% end %>
+  <% else %>
+    <%= blankslate "No sub-organizations yet" %>
   <% end %>
-  <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
-</div>
+<% else %>
+  <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
+    <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+      <%= render "events/filters/search", form: %>
+    <% end %>
+    <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
+  </div>
 
-<%= render "events/filters/bar", filters: @filter_options if @has_filter %>
+  <%= render "events/filters/bar", filters: @filter_options if @has_filter %>
 
-<% if @sub_organizations.any? %>
-  <ul id="sub_organizations" class="grid grid--medium-narrow text-left w-100 mt0">
-    <%= render partial: "events/event_card", collection: @sub_organizations, as: :event, locals: { show_scoped_tags: true } %>
-  </ul>
-  <%= paginate @sub_organizations %>
-<% elsif @hidden_sub_organizations.none? %>
-  <%= blankslate "No sub-organizations yet" %>
-<% end %>
-
-<% if @hidden_sub_organizations.any? %>
-  <details id="hidden_sub_organizations" class="w-full text-left">
-    <summary><h4 class="inline-block pb-0 border-none muted">Hidden sub-organizations</h4></summary>
-    <ul class="grid grid--medium-narrow text-left mt0">
-      <%= render partial: "events/event_card", collection: @hidden_sub_organizations, as: :event, locals: { show_scoped_tags: true } %>
+  <% if @sub_organizations.any? %>
+    <ul id="sub_organizations" class="grid grid--medium-narrow text-left w-100 mt0">
+      <%= render partial: "events/event_card", collection: @sub_organizations, as: :event, locals: { show_scoped_tags: true } %>
     </ul>
-  </details>
+    <%= paginate @sub_organizations %>
+  <% elsif @hidden_sub_organizations.none? %>
+    <%= blankslate "No sub-organizations yet" %>
+  <% end %>
+
+  <% if @hidden_sub_organizations.any? %>
+    <details id="hidden_sub_organizations" class="w-full text-left">
+      <summary><h4 class="inline-block pb-0 border-none muted">Hidden sub-organizations</h4></summary>
+      <ul class="grid grid--medium-narrow text-left mt0">
+        <%= render partial: "events/event_card", collection: @hidden_sub_organizations, as: :event, locals: { show_scoped_tags: true } %>
+      </ul>
+    </details>
+  <% end %>
 <% end %>
 
 <% if policy(@event).create_sub_organization? %>

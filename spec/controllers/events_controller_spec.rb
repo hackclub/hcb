@@ -6,13 +6,11 @@ require "csv"
 RSpec.describe EventsController do
   include SessionSupport
 
-  # The graph's node list is inlined as a JSON Stimulus value on the page.
-  def graph_node_names(body)
-    attribute = Nokogiri::HTML5(body)
-                        .at_css("[data-controller='sub-organizations-graph']")
-                        .attr("data-sub-organizations-graph-nodes-value")
-
-    JSON.parse(attribute).pluck("name")
+  # The names linked from the rows currently rendered in the table view. Not
+  # scoped to `tr`, so that it also reads a response holding only the rows of an
+  # expanded branch, which the HTML5 parser strips the table markup from.
+  def table_row_names(body)
+    Nokogiri::HTML5(body).css(".sub-organization-row__link").map(&:text)
   end
 
   def money(cents)
@@ -251,12 +249,6 @@ RSpec.describe EventsController do
         expect(response.body).not_to include(event_async_balance_path(private_sub))
       end
 
-      it "omits private sub-organizations from the graph nodes" do
-        get(:sub_organizations, params: { event_id: parent.slug })
-
-        expect(graph_node_names(response.body)).to match_array(["Parent Organization", "Transparent Sub-organization"])
-      end
-
       it "excludes private sub-organizations from the CSV export", :aggregate_failures do
         get(:sub_organizations, params: { event_id: parent.slug }, format: :csv)
 
@@ -311,10 +303,15 @@ RSpec.describe EventsController do
           expect(main_list.text).to include("Transparent Sub-organization")
         end
 
-        it "omits it from the graph" do
-          get(:sub_organizations, params: { event_id: parent.slug })
+        # The table is a tree, so hidden organizations stay in place with the
+        # rest of the branch rather than being split into their own section.
+        it "lists it inline in the table view, badged as hidden", :aggregate_failures do
+          get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
 
-          expect(graph_node_names(response.body)).not_to include("Hidden Sub-organization")
+          row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{hidden_sub.id}")
+
+          expect(table_row_names(response.body)).to include("Hidden Sub-organization")
+          expect(row.css(".badge").map { |badge| badge.text.strip }).to include("Hidden")
         end
       end
     end
@@ -345,37 +342,108 @@ RSpec.describe EventsController do
     end
   end
 
-  describe "#async_sub_organizations_graph" do
-    let(:parent) { create(:event, is_public: true) }
-    let!(:transparent_sub) { create(:event, parent:, is_public: true) }
-    let!(:private_sub) { create(:event, parent:, is_public: false) }
+  describe "#sub_organizations, in the table view" do
+    render_views
+
+    let(:parent) { create(:event, is_public: true, name: "Parent Organization") }
+    let!(:transparent_sub) do
+      create(:event, parent:, is_public: true, name: "Transparent Sub-organization", slug: "transparent-sub-organization")
+    end
+    let!(:private_sub) do
+      create(:event, parent:, is_public: false, name: "Private Sub-organization", slug: "private-sub-organization")
+    end
+
+    it "starts collapsed at the immediate sub-organizations", :aggregate_failures do
+      grandchild = create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild")
+
+      get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
+
+      expect(table_row_names(response.body)).to eq(["Transparent Sub-organization"])
+      expect(response.body).not_to include(grandchild.name)
+    end
 
     it "omits private sub-organizations from a signed out visitor" do
-      get(:async_sub_organizations_graph, params: { event_id: parent.slug })
+      get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
 
-      expect(response.parsed_body.pluck("id")).to match_array([parent.id, transparent_sub.id])
+      expect(table_row_names(response.body)).to eq(["Transparent Sub-organization"])
     end
 
-    it "includes private sub-organizations for an organizer of the parent" do
+    it "lists private sub-organizations for an organizer, badged as private", :aggregate_failures do
       sign_in_organizer_of(parent)
 
-      get(:async_sub_organizations_graph, params: { event_id: parent.slug })
+      get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
 
-      expect(response.parsed_body.pluck("id")).to match_array([parent.id, transparent_sub.id, private_sub.id])
+      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{private_sub.id}")
+
+      expect(table_row_names(response.body)).to match_array(["Transparent Sub-organization", "Private Sub-organization"])
+      expect(row.css(".badge").map { |badge| badge.text.strip }).to include("Private")
     end
 
-    # The cache entry is shared by every viewer, so filtering has to happen on
-    # the way out rather than being baked into what was cached.
-    it "filters private sub-organizations out of a cache entry that holds them" do
-      store = ActiveSupport::Cache::MemoryStore.new
-      allow(Rails).to receive(:cache).and_return(store)
-      store.write("sub_organizations_graph_#{parent.id}", [parent, transparent_sub, private_sub].map do |event|
-        { id: event.id, balance_cents: 500, card_count: 3 }
-      end)
+    # A row that a viewer cannot expand is indistinguishable from a leaf, which
+    # is the point: an expander would give away that something is under there.
+    it "offers no expander for a branch whose sub-organizations are all private" do
+      create(:event, parent: transparent_sub, is_public: false, name: "Private Grandchild")
 
-      get(:async_sub_organizations_graph, params: { event_id: parent.slug })
+      get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
 
-      expect(response.parsed_body.pluck("id")).to match_array([parent.id, transparent_sub.id])
+      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{transparent_sub.id}")
+      expect(row.at_css("button.sub-organization-row__toggle")).to be_nil
+    end
+
+    it "offers an expander to an organizer who can see the private sub-organizations" do
+      create(:event, parent: transparent_sub, is_public: false, name: "Private Grandchild")
+      sign_in_organizer_of(parent)
+
+      get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
+
+      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{transparent_sub.id}")
+      expect(row.at_css("button.sub-organization-row__toggle")).to be_present
+    end
+
+    it "remembers the chosen view between visits" do
+      get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
+      get(:sub_organizations, params: { event_id: parent.slug })
+
+      expect(response.body).to include("sub-organization-row")
+    end
+  end
+
+  describe "#sub_organization_rows" do
+    render_views
+
+    let(:parent) { create(:event, is_public: true, name: "Parent Organization") }
+    let!(:transparent_sub) do
+      create(:event, parent:, is_public: true, name: "Transparent Sub-organization", slug: "transparent-sub-organization")
+    end
+
+    it "renders the rows one level under the expanded organization", :aggregate_failures do
+      create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild")
+
+      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, depth: 1 })
+
+      expect(table_row_names(response.body)).to eq(["Transparent Grandchild"])
+      expect(response.body).to include("--depth: 1")
+    end
+
+    it "omits private sub-organizations from a signed out visitor" do
+      create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild")
+      create(:event, parent: transparent_sub, is_public: false, name: "Private Grandchild")
+
+      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, depth: 1 })
+
+      expect(table_row_names(response.body)).to eq(["Transparent Grandchild"])
+    end
+
+    # Authorizing the organization being expanded, rather than the one whose
+    # page this is, is what stops the table from being walked by hand into a
+    # branch the viewer cannot see.
+    it "refuses to expand a private organization for a signed out visitor" do
+      private_sub = create(:event, parent:, is_public: false, name: "Private Sub-organization")
+      create(:event, parent: private_sub, is_public: true, name: "Transparent Grandchild")
+
+      get(:sub_organization_rows, params: { event_id: private_sub.slug, depth: 1 })
+
+      expect(response).to have_http_status(:redirect)
     end
   end
 

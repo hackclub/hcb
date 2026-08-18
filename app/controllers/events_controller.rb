@@ -546,25 +546,6 @@ class EventsController < ApplicationController
     render :async_sub_organization_balance, layout: false
   end
 
-  def async_sub_organizations_graph
-    authorize @event
-    data = Rails.cache.fetch("sub_organizations_graph_#{@event.id}", expires_in: 5.minutes) do
-      all_events = [@event] + @event.descendants.includes(:stripe_cards).order(:name).to_a
-      all_events.map { |e|
-        {
-          id: e.id,
-          balance_cents: e.balance_v2_cents,
-          card_count: e.stripe_cards.count { |c| c.stripe_status == "active" && c.subledger_id.nil? }
-        }
-      }
-    end
-
-    # The cached entry covers every descendant and is shared across viewers, so
-    # drop the sub-organizations this one isn't allowed to see before rendering.
-    visible_ids = visible_descendant_ids.to_set << @event.id
-    render json: data.select { |row| visible_ids.include?(row[:id]) }
-  end
-
   def account_number
     if @event.column_account_number.present?
       column_transactions = CanonicalTransaction.where(
@@ -935,14 +916,23 @@ class EventsController < ApplicationController
 
     respond_to do |format|
       format.html do
-        sub_organizations = filtered_sub_organizations
-        # Hidden organizations are set aside in their own collapsed section,
-        # matching how the organization index treats them.
-        @sub_organizations = sub_organizations.not_hidden.page(params[:page]).per(params[:per] || 24)
-        @hidden_sub_organizations = sub_organizations.hidden.to_a
-        # The graph renders only nodes reachable from the root, so leaving a
-        # hidden organization out keeps everything under it off the graph too.
-        @all_events = [@event] + Event.where(id: visible_descendant_ids).not_hidden.order(:name).select(:name, :parent_id, :slug, :id).to_a
+        cookies[:sub_organizations_view] = params[:view] if params[:view]
+        @view = cookies[:sub_organizations_view] || "grid"
+
+        if @view == "list"
+          # The table is a tree rather than a list, so it goes unfiltered; the
+          # balance above it has to cover the same set to agree with it.
+          @has_filter = false
+          # It starts collapsed at the immediate sub-organizations, with deeper
+          # levels fetched by #sub_organization_rows as they are expanded.
+          @rows = sub_organization_table_rows(@event)
+        else
+          sub_organizations = filtered_sub_organizations
+          # Hidden organizations are set aside in their own collapsed section,
+          # matching how the organization index treats them.
+          @sub_organizations = sub_organizations.not_hidden.page(params[:page]).per(params[:per] || 24)
+          @hidden_sub_organizations = sub_organizations.hidden.to_a
+        end
       end
 
       # CSV export intentionally does not consider filters
@@ -978,6 +968,19 @@ class EventsController < ApplicationController
       end
     end
 
+  end
+
+  # One level of the sub-organization table, expanded underneath `@event`'s row.
+  # `@event` is the organization being expanded rather than the one whose page
+  # this is, so authorizing it is what keeps the table from being walked into
+  # sub-organizations this viewer cannot see.
+  def sub_organization_rows
+    authorize @event
+
+    @rows = sub_organization_table_rows(@event)
+    @depth = params[:depth].to_i.clamp(0, Event::MAX_PARENT_DEPTH)
+
+    render :sub_organization_rows, layout: false
   end
 
   def create_sub_organization
@@ -1349,6 +1352,29 @@ class EventsController < ApplicationController
   # Memoized across the several surfaces of this page that need it.
   def visible_descendant_ids
     @visible_descendant_ids ||= @event.visible_descendant_ids(current_user)
+  end
+
+  # The rows of the sub-organization table directly under `event`. Counts are
+  # gathered in one query apiece rather than per row, since the table renders a
+  # level at a time and a deep tree would otherwise be all counting.
+  def sub_organization_table_rows(event)
+    subevents = event.visible_subevents(current_user)
+                     .includes(:scoped_tags, logo_attachment: :blob)
+                     .order(:name)
+                     .to_a
+    expandable = event.expandable_subevent_ids(current_user)
+    ids = subevents.map(&:id)
+    card_counts = StripeCard.active.on_main_ledger.where(event_id: ids).group(:event_id).count
+    organizer_counts = OrganizerPosition.where(event_id: ids).group(:event_id).count
+
+    subevents.map do |subevent|
+      {
+        event: subevent,
+        expandable: expandable.include?(subevent.id),
+        card_count: card_counts[subevent.id] || 0,
+        organizer_count: organizer_counts[subevent.id] || 0
+      }
+    end
   end
 
   def filtered_sub_organizations

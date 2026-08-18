@@ -188,6 +188,30 @@ class Event < ApplicationRecord
     subevents.where(is_public: true, hidden_at: nil).or(subevents.where(id: organized_ids))
   end
 
+  # Of the sub-organizations `user` may see under this event, the ids of those
+  # that have visible sub-organizations of their own. The sub-organization table
+  # uses this to decide which rows are expandable; it batches the rules in
+  # #visible_subevents so that a row does not cost a query.
+  def expandable_subevent_ids(user)
+    grandchildren = Event.where(parent_id: visible_subevents(user).select(:id))
+
+    unless user&.auditor?
+      organized_ids = user ? OrganizerPosition.reader_access.where(user:).pluck(:event_id) : []
+
+      unless organized_ids.any? && organized_ids.intersect?(ancestor_ids)
+        # Reader access to a sub-organization unlocks everything below it, so its
+        # own sub-organizations are visible whether or not they are transparent.
+        grandchildren = grandchildren.where(is_public: true, hidden_at: nil)
+                                     .or(grandchildren.where(id: organized_ids))
+                                     .or(grandchildren.where(parent_id: organized_ids))
+      end
+    end
+
+    # reorder(nil) drops the default scope's ordering, which SELECT DISTINCT
+    # would otherwise demand be in the select list.
+    grandchildren.reorder(nil).distinct.pluck(:parent_id).to_set
+  end
+
   # The descendants `user` is allowed to see, mirroring EventPolicy#show?
   # (`is_public || auditor_or_reader?`, where reader access is inherited from
   # any ancestor). Hidden events are treated as private, matching how every

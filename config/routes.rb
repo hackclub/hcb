@@ -1059,7 +1059,6 @@ Rails.application.routes.draw do
 
     get "async_balance"
     get "async_sub_organization_balance"
-    get "async_sub_organizations_graph"
     get "reimbursements_pending_review_icon"
 
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)
@@ -1072,6 +1071,7 @@ Rails.application.routes.draw do
     get "employees"
     get "contractors"
     get "sub_organizations"
+    get "sub_organizations/rows", to: "events#sub_organization_rows", as: :sub_organization_rows
     get "sub_organizations/new", to: "suborganizations#new", as: :new_sub_organization
     get "donations", to: "events#donation_overview", as: :donation_overview
     get "activation_flow", to: "events#activation_flow", as: :activation_flow
