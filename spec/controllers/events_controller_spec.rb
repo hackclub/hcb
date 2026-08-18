@@ -478,11 +478,12 @@ RSpec.describe EventsController do
       rows = table_rows(response.body)
 
       expect(rows.map { |row| row["data-depth"] }).to eq(["2", "2"])
-      # "10": a line for the first level, none for the second, whose branch has
-      # already ended.
-      expect(rows.first.css(".sub-organization-row__rail").map { |rail| rail["class"].include?("--line") })
-        .to eq([true, false])
-      # Only the final row closes the branch off with a corner.
+      # "10" is one level still carrying a line and one whose branch has already
+      # ended, and the join to this row's own parent is always the last rail.
+      expect(rows.first.css(".sub-organization-row__rail").map { |rail| rail["class"].split.last })
+        .to eq(["sub-organization-row__rail--line", "sub-organization-row__rail--connector"])
+      # Only the final row closes the branch off, by leaving the line that would
+      # carry on below its corner.
       expect(rows.map { |row| row["class"].include?("sub-organization-row--last") }).to eq([false, true])
     end
 

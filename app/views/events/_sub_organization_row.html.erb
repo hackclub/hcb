@@ -17,11 +17,11 @@
     data-parent-id="<%= event.parent_id %>"
     data-depth="<%= depth %>">
   <td class="sub-organization-row__cell">
-    <%# One rail per level above this row, drawing the line that runs down from
-        that ancestor's expander. They sit outside the row's own padding so the
-        lines join up from one row to the next, and a level whose branch has
-        already ended leaves its rail blank. %>
-    <span class="sub-organization-row__rails" aria-hidden="true"><% rails.each do |line| %><span class="sub-organization-row__rail <%= "sub-organization-row__rail--line" if line %>"></span><% end %></span>
+    <%# One rail per level above this row. The last one is the join to this
+        row's own parent; the rest carry the lines of levels further up, and a
+        level whose branch has already ended leaves its rail blank. They sit
+        outside the row's own padding so the lines meet from row to row. %>
+    <span class="sub-organization-row__rails" aria-hidden="true"><% rails.each_with_index do |line, level| %><span class="sub-organization-row__rail <%= level == rails.size - 1 ? "sub-organization-row__rail--connector" : ("sub-organization-row__rail--line" if line) %>"></span><% end %></span>
 
     <div class="sub-organization-row__name" style="--sub-organization-depth: <%= depth %>">
       <% if row[:expandable] %>

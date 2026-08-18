@@ -30,6 +30,8 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   width: $sub-organization-indent;
 }
 
+// A level further up the tree that still has rows to come, drawn as a line
+// passing straight through this row.
 .sub-organization-row__rail--line::before {
   content: '';
   position: absolute;
@@ -43,11 +45,39 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   }
 }
 
-// The last row of a branch turns its line into a corner, so a branch visibly
-// ends rather than trailing off into the row below it.
-.sub-organization-row--last
-  .sub-organization-row__rail--line:last-child::before {
-  bottom: 50%;
+// The join to this row's own parent: down from its expander, then a rounded
+// turn towards this row. Drawn as one corner so the bend is smooth rather than
+// two lines meeting at a point.
+.sub-organization-row__rail--connector::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 100%;
+  height: 50%;
+  border-left: 1px solid $sub-organization-rail;
+  border-bottom: 1px solid $sub-organization-rail;
+  border-bottom-left-radius: 0.5rem;
+
+  html[data-dark='true'] & {
+    border-color: $sub-organization-rail-dark;
+  }
+}
+
+// While rows remain at this level, the line carries on down past the turn. The
+// last row of a branch leaves it off, so the branch visibly ends.
+.sub-organization-row:not(.sub-organization-row--last)
+  .sub-organization-row__rail--connector::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  bottom: 0;
+  left: 50%;
+  border-left: 1px solid $sub-organization-rail;
+
+  html[data-dark='true'] & {
+    border-left-color: $sub-organization-rail-dark;
+  }
 }
 
 .sub-organization-row__name {
@@ -115,23 +145,6 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   }
 }
 
-// The elbow joining a row to the rail coming down from its parent. Rows at the
-// top level have no rail to join, so they go without.
-.sub-organization-row:not([data-depth='0']) .sub-organization-row__toggle {
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: -50%;
-    right: 50%;
-    border-top: 1px solid $sub-organization-rail;
-
-    html[data-dark='true'] & {
-      border-top-color: $sub-organization-rail-dark;
-    }
-  }
-}
-
 // While a level is being fetched the caret pulses in place, so a slow expand
 // reads as loading rather than as a click that missed.
 .sub-organization-row__toggle--loading svg {
@@ -172,6 +185,16 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
 
 .sub-organization-row:hover .sub-organization-row__title {
   color: map-get($palette, primary);
+}
+
+// The stock row hover paints white, which reads as nothing against a white
+// card, so these rows tint instead.
+.sub-organization-row:hover a.stretched-link {
+  background-color: map-get($palette, snow);
+
+  html[data-dark='true'] & {
+    background-color: rgba(255, 255, 255, 0.04);
+  }
 }
 
 .sub-organization-row__count {
