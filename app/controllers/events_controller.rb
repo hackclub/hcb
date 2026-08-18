@@ -978,7 +978,7 @@ class EventsController < ApplicationController
     authorize @event
 
     @rows = sub_organization_table_rows(@event)
-    @depth = params[:depth].to_i.clamp(0, Event::MAX_PARENT_DEPTH)
+    @rails = helpers.parse_rails_param(params[:rails])
 
     render :sub_organization_rows, layout: false
   end
@@ -1358,9 +1358,11 @@ class EventsController < ApplicationController
   # gathered in one query apiece rather than per row, since the table renders a
   # level at a time and a deep tree would otherwise be all counting.
   def sub_organization_table_rows(event)
+    # `reorder` rather than `order`, which the default scope's ordering by id
+    # would otherwise win out over and leave the tree in creation order.
     subevents = event.visible_subevents(current_user)
                      .includes(:scoped_tags, logo_attachment: :blob)
-                     .order(:name)
+                     .reorder(:name)
                      .to_a
     expandable = event.expandable_subevent_ids(current_user)
     ids = subevents.map(&:id)

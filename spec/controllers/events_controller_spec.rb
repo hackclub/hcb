@@ -6,11 +6,15 @@ require "csv"
 RSpec.describe EventsController do
   include SessionSupport
 
-  # The names linked from the rows currently rendered in the table view. Not
-  # scoped to `tr`, so that it also reads a response holding only the rows of an
-  # expanded branch, which the HTML5 parser strips the table markup from.
+  # The rows currently rendered in the table view. A response holding only the
+  # rows of an expanded branch is wrapped first, since the HTML5 parser drops
+  # `tr` elements that aren't sitting in a table.
+  def table_rows(body)
+    Nokogiri::HTML5("<table><tbody>#{body}</tbody></table>").css("tr.sub-organization-row")
+  end
+
   def table_row_names(body)
-    Nokogiri::HTML5(body).css(".sub-organization-row__link").map(&:text)
+    table_rows(body).css(".sub-organization-row__title").map(&:text)
   end
 
   def money(cents)
@@ -368,6 +372,18 @@ RSpec.describe EventsController do
       expect(table_row_names(response.body)).to eq(["Transparent Sub-organization"])
     end
 
+    # Event's default scope orders by id, which plain `order` would not displace.
+    it "sorts the rows by name" do
+      create(:event, parent:, is_public: true, name: "Anchor Sub-organization")
+      create(:event, parent:, is_public: true, name: "Middle Sub-organization")
+
+      get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
+
+      expect(table_row_names(response.body)).to eq(
+        ["Anchor Sub-organization", "Middle Sub-organization", "Transparent Sub-organization"]
+      )
+    end
+
     it "lists private sub-organizations for an organizer, badged as private", :aggregate_failures do
       sign_in_organizer_of(parent)
 
@@ -400,6 +416,22 @@ RSpec.describe EventsController do
       expect(row.at_css("button.sub-organization-row__toggle")).to be_present
     end
 
+    # The row is a link target as a whole via .stretched-link, so the expander
+    # has to sit outside it or opening a branch would navigate away instead.
+    it "links the whole row, with the expander alongside the link", :aggregate_failures do
+      create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild")
+
+      get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
+
+      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{transparent_sub.id}")
+
+      expect(row["class"]).to include("clickable")
+      expect(row.at_css("a.stretched-link")["href"]).to eq("/#{transparent_sub.slug}")
+      expect(row.at_css("button.sub-organization-row__toggle")).to be_present
+      # The name is plain text; the link covering the row is what navigates.
+      expect(row.at_css(".sub-organization-row__title").name).to eq("span")
+    end
+
     it "remembers the chosen view between visits" do
       get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
       get(:sub_organizations, params: { event_id: parent.slug })
@@ -419,19 +451,47 @@ RSpec.describe EventsController do
     it "renders the rows one level under the expanded organization", :aggregate_failures do
       create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild")
 
-      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, depth: 1 })
+      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, rails: "1" })
 
       expect(table_row_names(response.body)).to eq(["Transparent Grandchild"])
-      expect(response.body).to include("--depth: 1")
+      expect(response.body).to include('data-depth="1"')
     end
 
     it "omits private sub-organizations from a signed out visitor" do
       create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild")
       create(:event, parent: transparent_sub, is_public: false, name: "Private Grandchild")
 
-      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, depth: 1 })
+      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, rails: "1" })
 
       expect(table_row_names(response.body)).to eq(["Transparent Grandchild"])
+    end
+
+    # The rails say which levels above a row still have rows to come, and so
+    # which of them draw a connecting line. Getting that wrong draws a branch
+    # that appears to continue past its last row.
+    it "carries the tree's connecting lines down into the expanded level", :aggregate_failures do
+      create(:event, parent: transparent_sub, is_public: true, name: "First Grandchild")
+      create(:event, parent: transparent_sub, is_public: true, name: "Second Grandchild")
+
+      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, rails: "10" })
+
+      rows = table_rows(response.body)
+
+      expect(rows.map { |row| row["data-depth"] }).to eq(["2", "2"])
+      # "10": a line for the first level, none for the second, whose branch has
+      # already ended.
+      expect(rows.first.css(".sub-organization-row__rail").map { |rail| rail["class"].include?("--line") })
+        .to eq([true, false])
+      # Only the final row closes the branch off with a corner.
+      expect(rows.map { |row| row["class"].include?("sub-organization-row--last") }).to eq([false, true])
+    end
+
+    it "ignores a rails value that isn't a run of flags" do
+      create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild")
+
+      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, rails: "../nonsense" })
+
+      expect(response.body).to include('data-depth="0"')
     end
 
     # Authorizing the organization being expanded, rather than the one whose
@@ -441,7 +501,7 @@ RSpec.describe EventsController do
       private_sub = create(:event, parent:, is_public: false, name: "Private Sub-organization")
       create(:event, parent: private_sub, is_public: true, name: "Transparent Grandchild")
 
-      get(:sub_organization_rows, params: { event_id: private_sub.slug, depth: 1 })
+      get(:sub_organization_rows, params: { event_id: private_sub.slug, rails: "1" })
 
       expect(response).to have_http_status(:redirect)
     end

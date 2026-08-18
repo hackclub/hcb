@@ -1,0 +1,196 @@
+// One level of nesting. The expander is the same width, so a child's expander
+// lands directly under the line dropping from its parent's.
+$sub-organization-indent: 1.75rem;
+// Matches the padding a table gives its first cell, which the rails have to
+// clear to line up with the row's contents.
+$sub-organization-cell-padding: 1rem;
+$sub-organization-rail: rgba(0, 0, 0, 0.12);
+$sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
+
+.sub-organization-row[hidden] {
+  display: none;
+}
+
+.sub-organization-row__cell {
+  position: relative;
+}
+
+// Anchored to the cell rather than to the row's contents, so the lines run the
+// full height of the row and meet the ones above and below without a break.
+.sub-organization-row__rails {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: $sub-organization-cell-padding;
+  display: flex;
+}
+
+.sub-organization-row__rail {
+  position: relative;
+  width: $sub-organization-indent;
+}
+
+.sub-organization-row__rail--line::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  border-left: 1px solid $sub-organization-rail;
+
+  html[data-dark='true'] & {
+    border-left-color: $sub-organization-rail-dark;
+  }
+}
+
+// The last row of a branch turns its line into a corner, so a branch visibly
+// ends rather than trailing off into the row below it.
+.sub-organization-row--last
+  .sub-organization-row__rail--line:last-child::before {
+  bottom: 50%;
+}
+
+.sub-organization-row__name {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 2rem;
+  padding-left: calc(
+    var(--sub-organization-depth, 0) * #{$sub-organization-indent}
+  );
+}
+
+.sub-organization-row__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  position: relative;
+  width: $sub-organization-indent;
+  height: $sub-organization-indent;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: $muted;
+  cursor: pointer;
+  // `tr.clickable` switches pointer events off inside its cells so that the
+  // stretched link covering the row wins every click. The expander is the one
+  // control that has to keep them, and it sits above the link to get them.
+  pointer-events: auto;
+  z-index: 1;
+
+  svg {
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    transform: rotate(-90deg);
+  }
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+    color: $slate;
+
+    html[data-dark='true'] & {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: map-get($palette, smoke);
+    }
+  }
+
+  &:active svg {
+    transform: scale(0.85) rotate(-90deg);
+  }
+
+  &[aria-expanded='true'] {
+    svg {
+      transform: rotate(0deg);
+    }
+
+    &:active svg {
+      transform: scale(0.85);
+    }
+  }
+
+  &--empty {
+    cursor: default;
+    pointer-events: none;
+  }
+}
+
+// The elbow joining a row to the rail coming down from its parent. Rows at the
+// top level have no rail to join, so they go without.
+.sub-organization-row:not([data-depth='0']) .sub-organization-row__toggle {
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -50%;
+    right: 50%;
+    border-top: 1px solid $sub-organization-rail;
+
+    html[data-dark='true'] & {
+      border-top-color: $sub-organization-rail-dark;
+    }
+  }
+}
+
+// While a level is being fetched the caret pulses in place, so a slow expand
+// reads as loading rather than as a click that missed.
+.sub-organization-row__toggle--loading svg {
+  animation: sub-organization-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes sub-organization-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.sub-organization-row__label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: 0.5rem;
+  min-width: 0;
+}
+
+.sub-organization-row__logo {
+  border-radius: var(--radius-md);
+  flex: 0 0 auto;
+}
+
+.sub-organization-row__title {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.125s ease-in-out;
+}
+
+.sub-organization-row:hover .sub-organization-row__title {
+  color: map-get($palette, primary);
+}
+
+.sub-organization-row__count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: $slate;
+
+  html[data-dark='true'] & {
+    color: map-get($palette, smoke);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sub-organization-row__toggle svg {
+    transition: none;
+  }
+
+  .sub-organization-row__toggle--loading svg {
+    animation: none;
+  }
+}

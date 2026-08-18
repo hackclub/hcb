@@ -62,8 +62,8 @@
           </tr>
         </thead>
         <tbody id="sub_organizations">
-          <% @rows.each do |row| %>
-            <%= render "events/sub_organization_row", row:, depth: 0 %>
+          <% @rows.each_with_index do |row, index| %>
+            <%= render "events/sub_organization_row", row:, rails: [], last: index == @rows.size - 1 %>
           <% end %>
         </tbody>
       </table>

@@ -1,0 +1,96 @@
+<%# locals: (row:, rails:, last:) %>
+
+<% event = row[:event] %>
+<% depth = rails.size %>
+
+<%# What this row's own children would draw: this row's level gains a line, and
+    the level above it keeps one only while there are more rows still to come. %>
+<% child_rails = (rails.empty? ? [] : rails[0..-2] + [!last]) + [true] %>
+
+<%# `clickable` is what makes the whole row a link target via .stretched-link.
+    It also switches off pointer events inside the cells, so the expander opts
+    itself back in rather than being swallowed by the link covering the row. %>
+<tr id="sub_organization_row_<%= event.id %>"
+    class="sub-organization-row clickable <%= "sub-organization-row--last" if last %>"
+    data-sub-organization-tree-target="row"
+    data-event-id="<%= event.id %>"
+    data-parent-id="<%= event.parent_id %>"
+    data-depth="<%= depth %>">
+  <td class="sub-organization-row__cell">
+    <%# One rail per level above this row, drawing the line that runs down from
+        that ancestor's expander. They sit outside the row's own padding so the
+        lines join up from one row to the next, and a level whose branch has
+        already ended leaves its rail blank. %>
+    <span class="sub-organization-row__rails" aria-hidden="true"><% rails.each do |line| %><span class="sub-organization-row__rail <%= "sub-organization-row__rail--line" if line %>"></span><% end %></span>
+
+    <div class="sub-organization-row__name" style="--sub-organization-depth: <%= depth %>">
+      <% if row[:expandable] %>
+        <button type="button"
+                class="sub-organization-row__toggle"
+                aria-expanded="false"
+                aria-label="Show the sub-organizations of <%= event.name %>"
+                data-action="sub-organization-tree#toggle"
+                data-url="<%= event_sub_organization_rows_path(event, rails: rails_param(child_rails)) %>">
+          <%= inline_icon "down-caret", size: 22 %>
+        </button>
+      <% else %>
+        <span class="sub-organization-row__toggle sub-organization-row__toggle--empty"></span>
+      <% end %>
+
+      <span class="sub-organization-row__label">
+        <% if event.logo.attached? %>
+          <%= image_tag event.logo, height: 20, width: 20, class: "sub-organization-row__logo" %>
+        <% end %>
+
+        <span class="sub-organization-row__title"><%= event.name %></span>
+
+        <% if event.hidden? %>
+          <span class="badge bg-muted tooltipped tooltipped--n"
+                aria-label="Hidden from this list for everyone but your team">
+            <%= inline_icon "view-close", size: 14 %> Hidden
+          </span>
+        <% elsif !event.is_public? %>
+          <span class="badge bg-muted tooltipped tooltipped--n"
+                aria-label="Only visible to people with access to this organization">
+            <%= inline_icon "private", size: 14 %> Private
+          </span>
+        <% end %>
+
+        <% if event.demo_mode? %>
+          <span class="badge bg-info">Playground Mode</span>
+        <% end %>
+      </span>
+    </div>
+  </td>
+  <td>
+    <%# Tags are read-only here; the cards are where they can be edited. The
+        data attribute is kept so that deleting a tag still clears it from the
+        rows on screen. %>
+    <% event.scoped_tags.each do |tag| %>
+      <% if tag.parent_event_id == event.parent_id %>
+        <span class="badge m-0 mb-1 bg-muted" data-scoped-tag="<%= tag.id %>"><%= tag.name %></span>
+      <% end %>
+    <% end %>
+  </td>
+  <td class="tabular-nums">
+    <%= turbo_frame_tag "event_balance_#{event.public_id}",
+                        src: event_async_balance_path(event),
+                        loading: :lazy,
+                        data: { controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" } do %>
+      <span class="muted">—</span>
+    <% end %>
+  </td>
+  <td>
+    <span class="sub-organization-row__count tabular-nums">
+      <%= inline_icon "card", size: 18, class: "muted", 'aria-label': "Cards" %>
+      <%= row[:card_count] %>
+    </span>
+  </td>
+  <td>
+    <span class="sub-organization-row__count tabular-nums">
+      <%= inline_icon "people-2", size: 18, class: "muted", 'aria-label': "Team members" %>
+      <%= row[:organizer_count] %>
+    </span>
+    <%= link_to "", event, class: "stretched-link", "aria-label": event.name %>
+  </td>
+</tr>

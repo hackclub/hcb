@@ -426,6 +426,21 @@ module EventsHelper
     return tag.span humanize_audit_log_value(field, value), class: color
   end
 
+  # The sub-organization table draws a tree, so each row has to know which of
+  # the levels above it still have rows to come and therefore need a connecting
+  # line. That travels to the rows endpoint as a string of flags, one per level,
+  # which is also what gives a row its depth.
+  def rails_param(rails)
+    rails.map { |line| line ? "1" : "0" }.join
+  end
+
+  def parse_rails_param(value)
+    value = value.to_s
+    return [] unless value.match?(/\A[01]*\z/)
+
+    value.chars.first(Event::MAX_PARENT_DEPTH).map { |flag| flag == "1" }
+  end
+
   def show_org_switcher?
     signed_in? && current_user.events.not_hidden.count > 1
   end

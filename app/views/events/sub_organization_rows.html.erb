@@ -1,0 +1,5 @@
+<%# One expanded level of the sub-organization table, inserted after the row of
+    the organization that was expanded. %>
+<% @rows.each_with_index do |row, index| %>
+  <%= render "events/sub_organization_row", row:, rails: @rails, last: index == @rows.size - 1 %>
+<% end %>
