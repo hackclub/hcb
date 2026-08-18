@@ -36,6 +36,14 @@ class FeeReimbursement < ApplicationRecord
   scope :pending, -> { includes(:t_transaction).where.not(processed_at: nil).where(transactions: { fee_reimbursement_id: nil }) }
   scope :completed, -> { includes(:t_transaction).where.not(transactions: { fee_reimbursement_id: nil }) }
 
+  # `pending` above joins against the legacy (pre-2021) `transactions` table,
+  # which nothing writes to anymore — `transactions.fee_reimbursement_id` is
+  # always nil, so `pending` never actually excludes anything and grows
+  # forever. This scope is what the nightly backstop actually needs: reimbursements
+  # that have been processed (topped up) but still lack the modern
+  # RawPendingFeeReimbursementTransaction/CPT, so it shrinks as the backfill catches up.
+  scope :missing_pending_transaction, -> { where.not(processed_at: nil).where.missing(:raw_pending_fee_reimbursement_transaction) }
+
   def unprocessed?
     processed_at.nil? && t_transaction.nil?
   end
