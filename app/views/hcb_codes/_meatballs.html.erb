@@ -1,5 +1,5 @@
-<% is_pinned = hcb_code.pin.present? %>
-<% pinnable = hcb_code.pinnable? %>
+<% is_pinned = hcb_code.ledger_item&.pinned? %>
+<% pinnable = hcb_code.ledger_item&.pinnable? %>
 <% flagable = (hcb_code.stripe_card? || hcb_code.stripe_force_capture?) && hcb_code.stripe_card.present? && !hcb_code.personal_transaction.present? %>
 <% open_invoice = hcb_code.invoice? && hcb_code.invoice.open_v2? %>
 <% disputable = can_dispute?(hcb_code:) %>
@@ -17,7 +17,7 @@
         data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
     <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
       <% if pinnable %>
-        <%= link_to pin_hcb_code_path(hcb_code, event: @event), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "This will #{is_pinned ? "unpin" : "pin" } this transaction for all team members. Continue?" } do %>
+        <%= link_to is_pinned ? ledger_item_unpin_path(hcb_code.ledger_item) : ledger_item_pin_path(hcb_code.ledger_item), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "This will #{is_pinned ? "unpin" : "pin" } this transaction for all team members. Continue?" } do %>
           <%= inline_icon "pin-fill", size: 24 %>
           <%= is_pinned ? "Unpin from transaction list" : "Pin to top of transaction list" %>
         <% end %>

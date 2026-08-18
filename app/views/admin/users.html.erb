@@ -62,7 +62,7 @@
         <td>
           <%= user.phone_number %>
           <% unless user.phone_number_verified %>
-            <br><small><i>⚠️ Unverified</i></small>
+            <br><small><i>⚠️ Unverified<%= " (bypassed)" if user.phone_number_verification_bypassed? %></i></small>
           <% end %>
         </td>
         <td>

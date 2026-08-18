@@ -4,41 +4,42 @@
 #
 # Table name: users
 #
-#  id                            :bigint           not null, primary key
-#  access_level                  :integer          default(0), not null
-#  birthday_ciphertext           :text
-#  card_locking_suppressed_until :datetime
-#  cards_locked                  :boolean          default(FALSE), not null
-#  charge_notifications          :integer          default(0), not null
-#  comment_notifications         :integer          default(0), not null
-#  creation_method               :integer
-#  email                         :text             not null
-#  full_name                     :string
-#  joined_as_teenager            :boolean
-#  locked_at                     :datetime
-#  monthly_donation_summary      :boolean          default(TRUE)
-#  monthly_follower_summary      :boolean          default(TRUE)
-#  phone_number                  :text
-#  phone_number_verified         :boolean          default(FALSE)
-#  preferred_name                :string
-#  pretend_is_not_admin          :boolean          default(FALSE), not null
-#  receipt_report_option         :integer          default(0), not null
-#  running_balance_enabled       :boolean          default(FALSE), not null
-#  seasonal_themes_enabled       :boolean          default(TRUE), not null
-#  session_validity_preference   :integer          default(259200), not null
-#  sessions_reported             :boolean          default(FALSE), not null
-#  slug                          :string
-#  subscribed_to_loops_at        :datetime
-#  teenager                      :boolean
-#  use_sms_auth                  :boolean          default(FALSE)
-#  use_two_factor_authentication :boolean          default(FALSE)
-#  verified                      :boolean          default(FALSE), not null
-#  created_at                    :datetime         not null
-#  updated_at                    :datetime         not null
-#  discord_id                    :string
-#  payout_method_id              :bigint
-#  payout_method_type            :string
-#  webauthn_id                   :string
+#  id                                 :bigint           not null, primary key
+#  access_level                       :integer          default(0), not null
+#  birthday_ciphertext                :text
+#  card_locking_suppressed_until      :datetime
+#  cards_locked                       :boolean          default(FALSE), not null
+#  charge_notifications               :integer          default(0), not null
+#  comment_notifications              :integer          default(0), not null
+#  creation_method                    :integer
+#  email                              :text             not null
+#  full_name                          :string
+#  joined_as_teenager                 :boolean
+#  locked_at                          :datetime
+#  monthly_donation_summary           :boolean          default(TRUE)
+#  monthly_follower_summary           :boolean          default(TRUE)
+#  phone_number                       :text
+#  phone_number_verification_bypassed :boolean          default(FALSE), not null
+#  phone_number_verified              :boolean          default(FALSE)
+#  preferred_name                     :string
+#  pretend_is_not_admin               :boolean          default(FALSE), not null
+#  receipt_report_option              :integer          default(0), not null
+#  running_balance_enabled            :boolean          default(FALSE), not null
+#  seasonal_themes_enabled            :boolean          default(TRUE), not null
+#  session_validity_preference        :integer          default(259200), not null
+#  sessions_reported                  :boolean          default(FALSE), not null
+#  slug                               :string
+#  subscribed_to_loops_at             :datetime
+#  teenager                           :boolean
+#  use_sms_auth                       :boolean          default(FALSE)
+#  use_two_factor_authentication      :boolean          default(FALSE)
+#  verified                           :boolean          default(FALSE), not null
+#  created_at                         :datetime         not null
+#  updated_at                         :datetime         not null
+#  discord_id                         :string
+#  payout_method_id                   :bigint
+#  payout_method_type                 :string
+#  webauthn_id                        :string
 #
 # Indexes
 #
@@ -366,6 +367,35 @@ class User < ApplicationRecord
     words.any? ? words.map(&:first).join.upcase : name
   end
 
+  # HCB stores no timezone preference, so this infers one from sessions, whose
+  # timezone the browser reports at sign-in. A guess, only ever for presenting a
+  # time back to the user. Never compute a deadline from it.
+  #
+  # Takes the most common value across recent sessions rather than the latest, so
+  # a trip does not repoint someone's timezone for a fortnight after they get
+  # home. Ties go to the more recent. A VPN needs no handling: the browser reads
+  # this from the operating system, not from the IP address, so tunnelling through
+  # another country does not change it.
+  #
+  # Most values are IANA names, but some browsers report things ActiveSupport
+  # cannot resolve ("Etc/Unknown", "UTC+480", bare offsets). Those are skipped in
+  # favour of the next best candidate rather than falling straight to the default.
+  DEFAULT_TIMEZONE = ActiveSupport::TimeZone["America/New_York"]
+  TIMEZONE_SESSION_SAMPLE = 20
+
+  def assumed_timezone
+    reported = user_sessions.where.not(timezone: [nil, ""])
+                            .order(Arel.sql("COALESCE(last_seen_at, created_at) DESC"))
+                            .limit(TIMEZONE_SESSION_SAMPLE)
+                            .pluck(:timezone)
+
+    reported.tally
+            .sort_by { |zone, count| [-count, reported.index(zone)] }
+            .each { |zone, _count| return ActiveSupport::TimeZone[zone] || next }
+
+    DEFAULT_TIMEZONE
+  end
+
   # gary@hackclub.com → g***y@hackclub.com
   # gt@hackclub.com → g*@hackclub.com
   # g@hackclub.com → g@hackclub.com
@@ -394,6 +424,14 @@ class User < ApplicationRecord
 
   def seasonal_themes_disabled?
     !seasonal_themes_enabled?
+  end
+
+  # Whether this user is allowed to issue stripe cards and activate card grants.
+  # Admins can grant `phone_number_verification_bypassed` to unblock a user who
+  # can't complete SMS verification; it deliberately leaves the number itself
+  # unverified.
+  def phone_number_verified_or_bypassed?
+    phone_number_verified? || phone_number_verification_bypassed?
   end
 
   def locked?
