@@ -16,6 +16,10 @@
 #
 #  index_tags_on_event_id  (event_id)
 #
+# Check Constraints
+#
+#  tags_emoji_null  (emoji IS NOT NULL)
+#
 class Tag < ApplicationRecord
   include ActionView::Helpers::TextHelper # for `pluralize`
 

@@ -111,6 +111,36 @@ RSpec.describe Payment, type: :model do
     end
   end
 
+  describe "acceptance reminders" do
+    let(:payee) { create(:payee) }
+
+    def create_payment(payable:, payout_method:, managed: false)
+      payment = build(:payment, payee:)
+      legal_entity = double("LegalEntity", payable?: payable, default_payout_method: payout_method, managed?: managed).as_null_object
+      allow(payment).to receive(:legal_entity).and_return(legal_entity)
+      allow_any_instance_of(Payment::Attempt).to receive(:create_transfer!)
+      allow_any_instance_of(Payment::Attempt).to receive(:legal_entity_payable)
+      payment.save!
+      payment
+    end
+
+    it "schedules one reminder per day in the cadence while onboarding is outstanding" do
+      expect { create_payment(payable: false, payout_method: nil) }
+        .to have_enqueued_job(Payment::AcceptanceReminderJob)
+        .exactly(Payment::ACCEPTANCE_REMINDER_DAYS.count).times
+    end
+
+    it "does not schedule reminders once the recipient is ready to be paid" do
+      expect { create_payment(payable: true, payout_method: create(:legal_entity_payout_method)) }
+        .not_to have_enqueued_job(Payment::AcceptanceReminderJob)
+    end
+
+    it "does not schedule reminders for managed legal entities, which have nobody to email" do
+      expect { create_payment(payable: false, payout_method: nil, managed: true) }
+        .not_to have_enqueued_job(Payment::AcceptanceReminderJob)
+    end
+  end
+
   describe "Tax::Form integration" do
     # Full-stack: real DB objects, no doubles. Verifies that marking a tax form
     # completed triggers the correct payment-processing path.

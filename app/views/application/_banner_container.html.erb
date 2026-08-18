@@ -37,11 +37,17 @@
           <p class="font-bold text-xl m0"><%= @event.name %> has been terminated, thanks for working with HCB!</p>
         </div>
       </div>
-    <% elsif @event&.contracts&.any? && @event&.contracts&.signed&.none? %>
+    <% elsif @event&.contracts&.signed&.none? && (pending_contract = @event.contract_pending_signature) %>
+      <% contract_party = Contract::Party.for(event: @event, user: current_user) %>
+      <%# Name the agreement after the contract we link to, so that the wording and
+          the link can't describe two different contracts when several are open. %>
+      <% agreement_name = (contract_party&.contract || pending_contract).agreement_name %>
       <div class="w-full dev-banner dev-banner--info no-underline">
         <div class="flex flex-col md:flex-row gap-y-2 gap-x-6 py-6 items-center justify-center">
           <p class="font-bold text-xl m0">
-            <%= @event.name %> is currently inactive on HCB; to activate the organization, a fiscal sponsorship contract must be signed.
+            <%= @event.name %> is currently inactive on HCB; to activate the organization,
+            <% if contract_party %><%= link_to "a #{agreement_name}", contract_party_path(contract_party) %><% else %>a <%= agreement_name %><% end %>
+            must be signed.
           </p>
         </div>
       </div>
