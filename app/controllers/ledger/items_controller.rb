@@ -2,7 +2,7 @@
 
 class Ledger
   class ItemsController < ApplicationController
-    before_action :set_pin, only: [:pin, :unpin]
+    before_action :set_item, only: [:pin, :unpin, :edit, :update]
 
     def show
       @item = Ledger::Item.find_by_hashid!(params[:id])
@@ -65,9 +65,40 @@ class Ledger
       redirect_back fallback_location: @event
     end
 
+    # Renders the "rename transaction" form. Routed as the singular `rename`
+    # path (GET), which the router dispatches here.
+    def edit
+      @event = @item.primary_ledger&.event
+
+      authorize @item
+
+      if params[:inline].present?
+        return render partial: "ledger/items/memo/memo", locals: { item: @item, form: true, location: params[:location] }
+      end
+
+      # When items/show links here as a turbo frame (matching the frame this
+      # renders below), Turbo swaps in just that frame instead of navigating.
+      @frame = turbo_frame_request?
+    end
+
+    # Handles submission of the "rename transaction" form. Routed as the
+    # singular `rename` path (PATCH), which the router dispatches here.
+    def update
+      authorize @item
+
+      rename_params = params.require(:ledger_item).permit(:memo, :inline, :location)
+      @item.update_custom_memo!(rename_params[:memo].presence)
+
+      if rename_params[:inline].present?
+        return render partial: "ledger/items/memo/memo", locals: { item: @item, form: false, location: rename_params[:location], renamed: true }
+      end
+
+      redirect_to ledger_item_path(@item)
+    end
+
     private
 
-    def set_pin
+    def set_item
       @item = Ledger::Item.find_by_hashid!(params[:item_id])
     end
 

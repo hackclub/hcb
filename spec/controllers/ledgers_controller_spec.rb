@@ -26,6 +26,60 @@ RSpec.describe LedgersController, type: :controller do
       get :show, params: { id: ledger.to_param }
       expect(response).to be_successful
     end
+
+    describe "memo rename affordance" do
+      render_views
+
+      let(:item) { create(:ledger_item) }
+
+      before { create(:ledger_mapping, :on_primary, ledger:, ledger_item: item) }
+
+      it "renders the shift-click-to-rename widget with the memo as alt text" do
+        get :show, params: { id: ledger.to_param }
+
+        expect(response).to be_successful
+        expect(response.body).to include("data-action=\"click->navigation#navigateOnShiftClick\"")
+        expect(response.body).to include("data-navigation-location-param=\"#{ERB::Util.html_escape(ledger_item_rename_path(item, inline: true, location: "ledger"))}\"")
+        expect(response.body).to include("aria-label=\"Shift+click to rename this transaction\"")
+        expect(response.body).to include("title=\"#{item.memo}\"")
+      end
+
+      context "as a member without admin/auditor access" do
+        let(:member_user) { create(:user) }
+
+        before do
+          create(:organizer_position, event:, user: member_user, role: :member)
+          create_session(member_user, verified: true)
+        end
+
+        it "still renders the widget once the new-ledger flag is enabled" do
+          Flipper.enable(:new_ledger_2026_06_30, event)
+
+          get :show, params: { id: ledger.to_param }
+
+          expect(response).to be_successful
+          expect(response.body).to include("data-action=\"click->navigation#navigateOnShiftClick\"")
+        end
+      end
+
+      context "as a reader who can view the ledger but can't rename" do
+        let(:reader_user) { create(:user) }
+
+        before do
+          create(:organizer_position, event:, user: reader_user, role: :reader)
+          create_session(reader_user, verified: true)
+          Flipper.enable(:new_ledger_2026_06_30, event)
+        end
+
+        it "falls back to a plain link instead of the rename widget" do
+          get :show, params: { id: ledger.to_param }
+
+          expect(response).to be_successful
+          expect(response.body).not_to include("data-action=\"click->navigation#navigateOnShiftClick\"")
+          expect(response.body).to include("href=\"#{ledger_item_path(item)}\"")
+        end
+      end
+    end
   end
 
 end

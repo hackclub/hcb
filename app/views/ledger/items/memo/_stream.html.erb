@@ -1,0 +1,7 @@
+<%# locals: (item:) -%>
+
+<%= turbo_stream.replace_all "span[data-memo-for='#{dom_id(item)}']" do %>
+  <span data-memo-for="<%= dom_id(item) %>">
+    <%= item.memo %>
+  </span>
+<% end %>
