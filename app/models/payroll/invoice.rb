@@ -48,7 +48,7 @@ module Payroll
     validates :currency, inclusion: { in: Money::Currency.all.map(&:iso_code) }
     validate :currency_matches_position
 
-    after_create_commit :notify_manager
+    after_create_commit :notify_managers
 
     aasm timestamps: true do
       state :submitted, initial: true
