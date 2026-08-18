@@ -47,7 +47,8 @@ module Payroll
         rate_unit: position_params[:rate_unit].presence || "hour",
         start_date: position_params[:starts_on],
         end_date: position_params[:ends_on],
-        description: position_params[:purpose]
+        description: position_params[:purpose],
+        manager_id: position_params[:manager_id]
       )
 
       if @payee.nil?
