@@ -67,7 +67,15 @@ module SetLedgerFilters
                    .with_attached_profile_picture
                    .order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
 
-      @user = User.friendly.find(params[:user], allow_nil: true) if params[:user]
+      # Scoped to @users (this ledger's authors ∪ organizers), not every
+      # User: this is what renders as a name + avatar in the filter chip
+      # below, and resolving it against the whole users table would turn any
+      # ledger page into a global "does this slug belong to a real account,
+      # and what's their name/photo" oracle for people with no connection to
+      # this org. A slug outside @users still has to filter to zero rows
+      # rather than silently no-op — that's handled in ledger_query below via
+      # params[:user] directly, so it doesn't depend on @user resolving here.
+      @user = @users.friendly.find(params[:user], allow_nil: true) if params[:user]
 
       if @merchant
         merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
@@ -108,7 +116,14 @@ module SetLedgerFilters
       # Whole-day inclusive end bound, matching the old transactions page
       query << { datetime: { "$lt": @end_date.to_date.next_day } } if @end_date.present?
 
-      query << { author: { "$eq": @user.slug } } if @user.present?
+      # @user may be nil even when a user filter was requested: it's only
+      # resolved against this ledger's authors/organizers (see
+      # set_ledger_filters, above), not every account, to avoid leaking an
+      # unrelated user's name/avatar into the filter chip. Fall back to the
+      # raw param so a slug outside that scope still narrows to zero rows —
+      # Ledger::Query does its own User.where(slug:) lookup for this field —
+      # instead of silently skipping the filter and returning everything.
+      query << { author: { "$eq": @user&.slug || params[:user] } } if params[:user].present?
 
       if @type.present?
         linked_object_type = {
