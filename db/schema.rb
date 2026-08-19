@@ -430,9 +430,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_120100) do
     t.index ["reimbursement_payout_holding_id"], name: "index_canonical_pending_txs_on_reimbursement_payout_holding_id"
     t.index ["wire_id"], name: "index_canonical_pending_transactions_on_wire_id"
     t.index ["wise_transfer_id"], name: "index_canonical_pending_transactions_on_wise_transfer_id"
+    t.check_constraint "fronted IS NOT NULL", name: "canonical_pending_transactions_fronted_null"
   end
-
-  add_check_constraint "canonical_pending_transactions", "fronted IS NOT NULL", name: "canonical_pending_transactions_fronted_null", validate: false
 
   create_table "canonical_transactions", force: :cascade do |t|
     t.integer "amount_cents", null: false
