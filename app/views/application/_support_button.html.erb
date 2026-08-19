@@ -9,17 +9,3 @@
     <%= inline_icon "question-mark", size: 18, style: "width:18px" %>
   <% end %>
 </div>
-<script>
-  const supportTrigger = document.getElementById('support-trigger');
-
-  if(document.documentElement.clientWidth >= 1024)
-  window.addEventListener("load", () => {
-    window.Beacon('config', {
-      display: {
-        position: 'left',
-        horizontalOffset: supportTrigger.getBoundingClientRect().left,
-        verticalOffset: document.documentElement.clientHeight - supportTrigger.getBoundingClientRect().bottom + 25,
-      }
-    });
-  })
-</script>
