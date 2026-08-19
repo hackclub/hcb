@@ -10,7 +10,6 @@ class EnforceFrontedNotNullOnCanonicalPendingTransactions < ActiveRecord::Migrat
   end
 
   def down
-    add_check_constraint :canonical_pending_transactions, "fronted IS NOT NULL", name: "canonical_pending_transactions_fronted_null", validate: false
     change_column_null :canonical_pending_transactions, :fronted, true
   end
 
