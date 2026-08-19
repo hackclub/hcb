@@ -202,6 +202,7 @@ class User < ApplicationRecord
   before_create :format_number
   before_save :on_phone_number_update
   validate :second_factor_present_for_2fa
+  validate :sms_auth_eligibility, if: -> { use_sms_auth_changed?(to: true) }
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? || phone_number_verified_previously_changed? }
   after_create :create_legal_entity
@@ -560,6 +561,10 @@ class User < ApplicationRecord
     charge_notifications_sms? || charge_notifications_email_and_sms?
   end
 
+  def eligible_for_sms_auth?
+    organizer_positions.any? || card_grants.any?
+  end
+
   def queue_sync_with_loops_job
     new_user = was_onboarding? && !onboarding?
     User::SyncUserToLoopsJob.perform_later(user_id: id, new_user:)
@@ -794,6 +799,12 @@ class User < ApplicationRecord
   def second_factor_present_for_2fa
     if use_two_factor_authentication? && !use_sms_auth? && !totp.present? && webauthn_credentials.none?
       errors.add(:use_two_factor_authentication, "can not be enabled without a second authentication factor")
+    end
+  end
+
+  def sms_auth_eligibility
+    unless eligible_for_sms_auth?
+      errors.add(:use_sms_auth, "can not be enabled without being part of an organization or having a card grant")
     end
   end
 

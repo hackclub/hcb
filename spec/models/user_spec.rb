@@ -334,27 +334,34 @@ RSpec.describe User, type: :model do
 
   describe "#use_two_factor_authentication" do
     it "cannot be disabled by admins" do
-      user = create(:user, :make_admin, use_two_factor_authentication: true, phone_number: "+18556254225", phone_number_verified: true, use_sms_auth: true)
+      user = create(:user, :make_admin, phone_number: "+18556254225")
+      create(:organizer_position, user:)
+      user.update!(phone_number_verified: true, use_sms_auth: true, use_two_factor_authentication: true)
 
       expect(user.update(use_two_factor_authentication: false)).to eq(false)
       expect(user.errors[:use_two_factor_authentication]).to contain_exactly("cannot be disabled for admin accounts")
     end
 
     it "cannot be disabled by admins pretending not to be admins" do
-      user = create(:user, :make_admin, use_two_factor_authentication: true, pretend_is_not_admin: true, phone_number: "+18556254225", phone_number_verified: true, use_sms_auth: true)
+      user = create(:user, :make_admin, pretend_is_not_admin: true, phone_number: "+18556254225")
+      create(:organizer_position, user:)
+      user.update!(phone_number_verified: true, use_sms_auth: true, use_two_factor_authentication: true)
 
       expect(user.update(use_two_factor_authentication: false)).to eq(false)
       expect(user.errors[:use_two_factor_authentication]).to contain_exactly("cannot be disabled for admin accounts")
     end
 
     it "can be disabled by regular users" do
-      user = create(:user, use_two_factor_authentication: true, phone_number: "+18556254225", phone_number_verified: true, use_sms_auth: true)
+      user = create(:user, phone_number: "+18556254225")
+      create(:organizer_position, user:)
+      user.update!(phone_number_verified: true, use_sms_auth: true, use_two_factor_authentication: true)
 
       expect(user.update(use_two_factor_authentication: false)).to eq(true)
     end
 
     it "can be enabled with SMS auth" do
       user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+      create(:organizer_position, user:)
       user.update!(use_sms_auth: true)
 
       expect(user.use_sms_auth).to eq(true)
@@ -366,6 +373,38 @@ RSpec.describe User, type: :model do
 
       expect(user.update(use_two_factor_authentication: true)).to eq(false)
       expect(user.errors[:use_two_factor_authentication]).to contain_exactly("can not be enabled without a second authentication factor")
+    end
+  end
+
+  describe "#use_sms_auth" do
+    it "cannot be enabled without an organizer position or card grant" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+
+      expect(user.update(use_sms_auth: true)).to eq(false)
+      expect(user.errors[:use_sms_auth]).to contain_exactly("can not be enabled without being part of an organization or having a card grant")
+    end
+
+    it "can be enabled with an organizer position" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+      create(:organizer_position, user:)
+
+      expect(user.update(use_sms_auth: true)).to eq(true)
+    end
+
+    it "can be enabled with a card grant" do
+      allow_any_instance_of(CardGrant).to receive(:transfer_money)
+
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+      create(:card_grant, user:)
+
+      expect(user.update(use_sms_auth: true)).to eq(true)
+    end
+
+    it "can be disabled without an organizer position or card grant" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+      user.update_column(:use_sms_auth, true)
+
+      expect(user.update(use_sms_auth: false)).to eq(true)
     end
   end
 
@@ -479,6 +518,7 @@ RSpec.describe User, type: :model do
     describe "use_sms_auth changes" do
       it "sends an email when SMS authentication is enabled" do
         user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        create(:organizer_position, user:)
 
         expect {
           user.update!(use_sms_auth: true)
@@ -487,6 +527,7 @@ RSpec.describe User, type: :model do
 
       it "sends an email when SMS authentication is disabled" do
         user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        create(:organizer_position, user:)
         user.update!(use_sms_auth: true)
 
         expect {
@@ -496,6 +537,7 @@ RSpec.describe User, type: :model do
 
       it "does not send an email when use_sms_auth is not changed" do
         user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        create(:organizer_position, user:)
         user.update!(use_sms_auth: true)
 
         expect {
@@ -507,6 +549,7 @@ RSpec.describe User, type: :model do
     describe "use_two_factor_authentication changes" do
       it "sends an email when two-factor authentication is enabled" do
         user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        create(:organizer_position, user:)
         user.update!(use_sms_auth: true)
 
         expect {
@@ -516,6 +559,7 @@ RSpec.describe User, type: :model do
 
       it "sends an email when two-factor authentication is disabled" do
         user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        create(:organizer_position, user:)
         user.update!(use_sms_auth: true)
         user.update!(use_two_factor_authentication: true)
 
@@ -526,6 +570,7 @@ RSpec.describe User, type: :model do
 
       it "does not send an email when use_two_factor_authentication is not changed" do
         user = create(:user, phone_number: "+18556254225", phone_number_verified: true)
+        create(:organizer_position, user:)
         user.update!(use_sms_auth: true)
         user.update!(use_two_factor_authentication: true)
 

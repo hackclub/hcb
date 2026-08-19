@@ -69,6 +69,7 @@ RSpec.describe LoginsController do
 
     it "sends an SMS code if the user has opted-in and verified their phone number" do
       user = create(:user, phone_number: "+18556254225")
+      create(:organizer_position, user:)
       # This can't be done through the factory because we have validation logic
       # that clears out `phone_number_verified` when the phone number changes.
       user.update!(use_sms_auth: true, phone_number_verified: true)
@@ -379,11 +380,11 @@ RSpec.describe LoginsController do
 
     context "2fa" do
       it "requests a second factor if 2fa is enabled" do
-        user = create(:user,
-                      phone_number: "+18556254225",
-                      phone_number_verified: true,
-                      use_sms_auth: true,
-                      use_two_factor_authentication: true)
+        user = create(:user, phone_number: "+18556254225")
+        create(:organizer_position, user:)
+        user.update!(phone_number_verified: true,
+                     use_sms_auth: true,
+                     use_two_factor_authentication: true)
         totp = user.create_totp!
         login = create(:login, user:)
         login_code = create(:login_code, user:)

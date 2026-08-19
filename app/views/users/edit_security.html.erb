@@ -44,6 +44,10 @@
           <% else %>
             <% if disabled %>
               <p><%= @user.name %> doesn't have their phone number verified.</p>
+            <% elsif !@user.eligible_for_sms_auth? %>
+              <p>
+                Login codes via SMS are only available to users who are part of an organization or have a card grant.
+              </p>
             <% else %>
               <p>
                 To send login codes to your phone or enable two factor authentication, first

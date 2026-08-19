@@ -15,8 +15,8 @@ module UserService
       # doing this here to be safe.
       raise ArgumentError.new("phone number for user: #{@user.id} not in E.164 format") unless @user.phone_number =~ /\A\+[1-9]\d{1,14}\z/
 
-      unless has_meaningful_activity? || has_verified_phone_number_before? || not_fresh_user?
-        raise SMSEnrollmentError, "SMS authentication currently unavailable for your account, please try again later."
+      unless @user.eligible_for_sms_auth?
+        raise SMSEnrollmentError, "SMS authentication is only available to users in an organization or with a card grant."
       end
 
       disallow_excessive_sms_verifications
@@ -44,6 +44,7 @@ module UserService
     def enroll_sms_auth
       raise SMSEnrollmentError, "user has no phone number" if @user.phone_number.blank?
       raise SMSEnrollmentError, "user has not verified phone number" unless @user.phone_number_verified
+      raise SMSEnrollmentError, "SMS authentication is only available to users in an organization or with a card grant." unless @user.eligible_for_sms_auth?
 
       @user.use_sms_auth = true
       @user.save!
@@ -64,18 +65,6 @@ module UserService
 
       Rails.error.report(Errors::TwilioAbuseError.new("User #{@user.id} exceeded SMS verification send limit (count: #{count})."))
       raise SMSEnrollmentError, "You've requested too many verification codes. Please try again tomorrow or contact support at hcb@hackclub.com."
-    end
-
-    def has_verified_phone_number_before?
-      @user.versions.where_object_changes_to(phone_number_verified: true).any?
-    end
-
-    def has_meaningful_activity?
-      @user.organizer_position_invites.any? || @user.card_grants.any? || @user.organizer_positions.any? || @user.reimbursement_reports.any? || @user.applications.any?
-    end
-
-    def not_fresh_user?
-      @user.created_at >= 1.day.ago
     end
 
   end

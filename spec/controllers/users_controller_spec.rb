@@ -206,6 +206,7 @@ RSpec.describe UsersController do
 
     it "requires sudo mode in order to change 2fa settings" do
       user = create(:user, phone_number: "+18556254225")
+      create(:organizer_position, user:)
       user.update!(phone_number_verified: true)
       user.update!(use_sms_auth: true)
       user.update!(use_two_factor_authentication: true)
@@ -246,6 +247,7 @@ RSpec.describe UsersController do
 
     it "does not require sudo mode unless the feature flag is enabled" do
       user = create(:user, phone_number: "+18556254225")
+      create(:organizer_position, user:)
       user.update!(phone_number_verified: true)
       user.update!(use_sms_auth: true)
       user.update!(use_two_factor_authentication: true)
