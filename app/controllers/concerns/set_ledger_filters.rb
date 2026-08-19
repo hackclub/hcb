@@ -40,8 +40,6 @@ module SetLedgerFilters
         @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
       end
 
-      @user = @event.users.friendly.find(params[:user], allow_nil: true) if params[:user]
-
       @type = params[:type].presence
       @start_date = params[:start].presence
       @end_date = params[:end].presence
@@ -68,6 +66,8 @@ module SetLedgerFilters
       @users = User.where("users.id IN (#{author_ids.to_sql} UNION #{organizer_ids.to_sql})")
                    .with_attached_profile_picture
                    .order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+
+      @user = User.friendly.find(params[:user], allow_nil: true) if params[:user]
 
       if @merchant
         merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
