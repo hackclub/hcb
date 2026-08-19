@@ -129,7 +129,16 @@ module SetLedgerFilters
         query << { linked_object_type: }
       end
 
-      query << { status: { "$in": ["settled", "pending", "reversed"] } }
+      # Amount trumps status: an item that moved any non-zero amount should
+      # always render (e.g. a declined/failed transaction that still posted a
+      # partial charge), regardless of its status. Only zero-amount items are
+      # subject to the status allowlist.
+      query << {
+        "$or": [
+          { amount_cents: { "$ne": 0 } },
+          { status: { "$in": ["settled", "pending", "reversed"] } }
+        ]
+      }
       Ledger::Query.new({ "$and": query })
     end
 
