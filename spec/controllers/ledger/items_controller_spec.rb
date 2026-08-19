@@ -22,31 +22,15 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       create_session(member_user, verified: true)
     end
 
-    describe "GET #edit" do
-      it "renders the full page form" do
-        get :edit, params: { item_id: item.hashid }
-        expect(response).to be_successful
-      end
-
-      it "renders the inline form partial" do
-        get :edit, params: { item_id: item.hashid, inline: "true", location: "ledger" }
-        expect(response).to be_successful
-        expect(response.body).to include("<form")
-      end
-    end
-
     describe "PATCH #update" do
-      it "updates the memo and redirects" do
+      it "updates the memo and responds with a turbo stream" do
         patch :update, params: { item_id: item.hashid, ledger_item: { memo: "New memo" } }
-        expect(response).to redirect_to(ledger_item_path(item))
-        expect(item.reload.memo).to eq("New memo")
-      end
 
-      it "updates the memo and renders the inline partial" do
-        patch :update, params: { item_id: item.hashid, ledger_item: { memo: "Another memo", inline: "true", location: "ledger" } }
         expect(response).to be_successful
-        expect(item.reload.memo).to eq("Another memo")
-        expect(response.body).to include("Another memo")
+        expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+        expect(item.reload.memo).to eq("New memo")
+        expect(response.body).to include("New memo")
+        expect(response.body).to include("turbo-stream")
       end
     end
   end

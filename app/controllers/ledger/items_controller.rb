@@ -2,7 +2,7 @@
 
 class Ledger
   class ItemsController < ApplicationController
-    before_action :set_item, only: [:pin, :unpin, :edit, :update]
+    before_action :set_item, only: [:pin, :unpin, :update]
 
     def show
       @item = Ledger::Item.find_by_hashid!(params[:id])
@@ -65,35 +65,18 @@ class Ledger
       redirect_back fallback_location: @event
     end
 
-    # Renders the "rename transaction" form. Routed as the singular `rename`
-    # path (GET), which the router dispatches here.
-    def edit
-      @event = @item.primary_ledger&.event
-
-      authorize @item
-
-      if params[:inline].present?
-        return render partial: "ledger/items/memo/memo", locals: { item: @item, form: true, location: params[:location] }
-      end
-
-      # When items/show links here as a turbo frame (matching the frame this
-      # renders below), Turbo swaps in just that frame instead of navigating.
-      @frame = turbo_frame_request?
-    end
-
-    # Handles submission of the "rename transaction" form. Routed as the
-    # singular `rename` path (PATCH), which the router dispatches here.
+    # Persists a memo rename. Entering/leaving edit mode happens entirely
+    # client-side (see app/javascript/controllers/memo_controller.js) since
+    # the current memo is already in the DOM — this is the only server round
+    # trip the widget ever makes, and it always responds with a Turbo Stream
+    # that updates every occurrence of this item's memo on the page.
     def update
       authorize @item
 
-      rename_params = params.require(:ledger_item).permit(:memo, :inline, :location)
-      @item.update_custom_memo!(rename_params[:memo].presence)
+      memo = params.require(:ledger_item).permit(:memo)[:memo].presence
+      @item.update_custom_memo!(memo)
 
-      if rename_params[:inline].present?
-        return render partial: "ledger/items/memo/memo", locals: { item: @item, form: false, location: rename_params[:location], renamed: true }
-      end
-
-      redirect_to ledger_item_path(@item)
+      render partial: "ledger/items/memo/stream", locals: { item: @item }, formats: :turbo_stream
     end
 
     private

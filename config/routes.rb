@@ -644,7 +644,6 @@ Rails.application.routes.draw do
       get "hcb"
       post "pin"
       post "unpin"
-      get "rename", action: :edit
       patch "rename", action: :update
     end
   end

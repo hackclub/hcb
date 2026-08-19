@@ -1,48 +1,37 @@
-<%# locals: (item:, form: false, location: "ledger_item_show_page", renamed: false) -%>
-
-<% frame_id = "#{location}:#{dom_id(item)}:memo" %>
-<% link_data = popovers_enabled? ? ledger_item_popover_data(item) : { turbo: false } %>
+<%# locals: (item:) -%>
 
 <% if policy(item).update? %>
-  <%= turbo_frame_tag frame_id, class: "flex gap-1", style: "flex-grow: 1" do %>
-    <% if form %>
-      <%= form_with model: item, url: ledger_item_rename_path(item), method: :patch, class: "renaming", data: { turbo: true, controller: "form" } do |form| %>
-        <div class="flex items-center w-screen">
-          <%= form.hidden_field :inline, value: "true" %>
-          <%= form.hidden_field :location, value: location %>
-          <%= form.text_field :memo,
-                              placeholder: item.memo,
-                              autofocus: true,
-                              defaultValue: item.memo,
-                              data: { controller: "input", input_target: "input", action: "focus->input#select blur->form#submit keydown->form#keydown" },
-                              class: "bg-transparent fit",
-                              style: "border: none; outline: none; padding: 0; border-radius: 0; min-height: 0; margin-top: 5px; margin-bottom: 3px; width: 100%" %>
-        </div>
-      <% end %>
-    <% else %>
-      <% contents = capture do %>
-        <span class="<%= "renamed" if renamed %>"
-              data-controller="navigation"
-              title="<%= item.memo %>"
-              style="flex-grow: 1"
-              data-action="click->navigation#navigateOnShiftClick"
-              data-navigation-location-param="<%= ledger_item_rename_path(item, inline: true, location:) %>"
-              data-navigation-frame-param="<%= frame_id %>">
-          <span class="mr2 tooltipped tooltipped--s memo-underline"
-                style="color: inherit; text-decoration: none;"
-                aria-label="Shift+click to rename this transaction">
-            <span data-memo-for="<%= dom_id(item) %>">
-              <%= item.memo %>
-            </span>
-          </span>
-        </span>
-      <% end %>
-      <%= link_to contents, ledger_item_path(item), style: "color: inherit; min-width: 0;", data: link_data %>
-      <% if renamed %>
-        <%= render "ledger/items/memo/stream", item: %>
-      <% end %>
+  <div class="flex gap-1" style="flex-grow: 1" data-controller="memo">
+    <% link_data = (popovers_enabled? ? ledger_item_popover_data(item) : { turbo: false }).merge(
+         memo_target: "display",
+         action: "click->memo#editOnShiftClick"
+       ) %>
+    <%= link_to ledger_item_path(item), style: "color: inherit; min-width: 0;", data: link_data do %>
+      <%= render "ledger/items/memo/span", item: %>
     <% end %>
-  <% end %>
+
+    <%# form_with only passes :id, :class, :multipart, :method, :data, and
+        :authenticity_token through as top-level html attributes — anything
+        else (like `hidden`) has to go through html: {} or it's silently
+        dropped. %>
+    <%= form_with model: item, url: ledger_item_rename_path(item), method: :patch, class: "renaming", html: { hidden: true }, data: { memo_target: "form", turbo_stream: true, action: "turbo:submit-end->memo#submitEnd" } do |form| %>
+      <div class="flex items-center w-screen">
+        <%# form.text_field defaults to id="ledger_item_memo" — identical for
+            every row, since Rails derives it from the model/field name, not
+            the record. Scoping it by item avoids duplicate ids across the
+            page (which was also confusing the browser's autofill into
+            suggesting other rows' memos); autocomplete is off for the same
+            reason — it's not a field a browser should ever be filling in. %>
+        <%= form.text_field :memo,
+                            value: item.memo,
+                            id: "#{dom_id(item)}_memo",
+                            autocomplete: "off",
+                            data: { memo_target: "input", action: "blur->memo#save keydown->memo#keydown" },
+                            class: "bg-transparent fit",
+                            style: "border: none; outline: none; padding: 0; border-radius: 0; min-height: 0; margin-top: 5px; margin-bottom: 3px; width: 100%" %>
+      </div>
+    <% end %>
+  </div>
 <% else %>
-  <%= link_to item.memo, ledger_item_path(item), style: "color: inherit; min-width: 0;", data: link_data %>
+  <%= link_to item.memo, ledger_item_path(item), style: "color: inherit; min-width: 0;", data: popovers_enabled? ? ledger_item_popover_data(item) : { turbo: false } %>
 <% end %>

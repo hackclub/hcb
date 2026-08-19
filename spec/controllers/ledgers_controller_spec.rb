@@ -38,8 +38,8 @@ RSpec.describe LedgersController, type: :controller do
         get :show, params: { id: ledger.to_param }
 
         expect(response).to be_successful
-        expect(response.body).to include("data-action=\"click->navigation#navigateOnShiftClick\"")
-        expect(response.body).to include("data-navigation-location-param=\"#{ERB::Util.html_escape(ledger_item_rename_path(item, inline: true, location: "ledger"))}\"")
+        expect(response.body).to include("data-controller=\"memo\"")
+        expect(response.body).to include("data-action=\"click-&gt;memo#editOnShiftClick\"")
         expect(response.body).to include("aria-label=\"Shift+click to rename this transaction\"")
         expect(response.body).to include("title=\"#{item.memo}\"")
       end
@@ -58,7 +58,7 @@ RSpec.describe LedgersController, type: :controller do
           get :show, params: { id: ledger.to_param }
 
           expect(response).to be_successful
-          expect(response.body).to include("data-action=\"click->navigation#navigateOnShiftClick\"")
+          expect(response.body).to include("data-action=\"click-&gt;memo#editOnShiftClick\"")
         end
       end
 
@@ -75,7 +75,7 @@ RSpec.describe LedgersController, type: :controller do
           get :show, params: { id: ledger.to_param }
 
           expect(response).to be_successful
-          expect(response.body).not_to include("data-action=\"click->navigation#navigateOnShiftClick\"")
+          expect(response.body).not_to include("data-action=\"click-&gt;memo#editOnShiftClick\"")
           expect(response.body).to include("href=\"#{ledger_item_path(item)}\"")
         end
       end
