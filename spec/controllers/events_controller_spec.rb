@@ -142,6 +142,8 @@ RSpec.describe EventsController do
   end
 
   describe "#ledger" do
+    render_views
+
     let(:admin) { create(:user, :make_admin) }
     let(:event) { create(:event) }
 
@@ -167,6 +169,33 @@ RSpec.describe EventsController do
         get(:ledger, params: { event_id: event.slug, maximum_amount: 500 })
 
         expect(response).to have_http_status(:ok)
+      end
+
+      # The default status filter hides declined/failed/rejected/canceled/
+      # released items, but a non-zero amount should trump that: e.g. a
+      # declined card charge that still posted a partial hold must still show.
+      #
+      # `status`/`amount_cents`/`memo` are derived columns recalculated by
+      # Ledger::Item#refresh! (triggered by Ledger::Mapping's after_commit)
+      # whenever a bare, unlinked item is created or mapped — `memo` in
+      # particular falls back to custom_memo/system_memo/fallback_memo, so the
+      # factory's plain `memo:` gets overwritten. Set `custom_memo` so it
+      # survives refresh, and set status/amount_cents via update_columns
+      # (bypasses callbacks) after mapping, to simulate a real
+      # declined-but-moved-money item.
+      it "shows a non-settled item with a non-zero amount, but hides one with a zero amount" do
+        moved_money = create(:ledger_item, custom_memo: "Declined but moved money", datetime: Time.current)
+        Ledger::Mapping.create!(ledger: event.ledger, ledger_item: moved_money, on_primary_ledger: true)
+        moved_money.update_columns(status: "declined", amount_cents: 500)
+
+        no_money_moved = create(:ledger_item, custom_memo: "Declined with no amount", datetime: Time.current)
+        Ledger::Mapping.create!(ledger: event.ledger, ledger_item: no_money_moved, on_primary_ledger: true)
+        no_money_moved.update_columns(status: "declined", amount_cents: 0)
+
+        get(:ledger, params: { event_id: event.slug })
+
+        expect(response.body).to include("Declined but moved money")
+        expect(response.body).not_to include("Declined with no amount")
       end
     end
   end
