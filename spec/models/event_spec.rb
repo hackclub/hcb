@@ -278,8 +278,7 @@ RSpec.describe Event, type: :model do
     end
   end
 
-  # The sub-organization table asks this which of its rows can be expanded, so a
-  # row that opens must be one #visible_subevents would fill.
+  # A row that opens must be one #visible_subevents would fill.
   describe "#expandable_subevent_ids" do
     let(:root) { create(:event, is_public: true) }
     let!(:child) { create(:event, parent: root, is_public: true) }

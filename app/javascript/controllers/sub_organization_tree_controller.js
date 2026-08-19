@@ -52,8 +52,7 @@ export default class extends Controller {
       button.setAttribute('aria-expanded', 'true')
       this.#animateIn(inserted)
     } catch (error) {
-      // Leaving the branch collapsed lets the viewer try again by clicking it
-      // a second time.
+      // Left collapsed, so a second click retries.
       console.error(error)
     } finally {
       button.disabled = false
@@ -62,9 +61,8 @@ export default class extends Controller {
     }
   }
 
-  // The rows are inserted straight after their parent's, and returned in the
-  // order they now sit in. Reading them back off the DOM rather than waiting
-  // for Stimulus to pick them up as targets keeps them animatable right away.
+  // Read back off the DOM rather than waiting for Stimulus to register them as
+  // targets, so they can be animated right away.
   #insert(row, html) {
     const stopAt = row.nextElementSibling
     row.insertAdjacentHTML('afterend', html)
@@ -90,14 +88,12 @@ export default class extends Controller {
     const rows = this.#branch(row).filter(child => !child.hidden)
 
     await this.#animateOut(rows)
-    // Each row keeps its own expanded state, so re-opening this branch restores
-    // the shape it was left in.
+    // Each row keeps its expanded state, so re-opening restores the shape.
     for (const child of rows) child.hidden = true
   }
 
-  // Every row under `row`, top down. With `onlyExpanded`, it stops at branches
-  // that were collapsed when their parent was, which are the ones that should
-  // stay collapsed now that it is opening again.
+  // Every row under `row`. `onlyExpanded` stops at branches that were already
+  // collapsed, which should stay that way.
   #branch(row, { onlyExpanded = false } = {}) {
     const rows = []
 
@@ -150,7 +146,7 @@ export default class extends Controller {
       )
     )
 
-    // An interrupted animation rejects; the rows still need hiding either way.
+    // An interrupted animation rejects; hide the rows either way.
     await Promise.allSettled(animations.map(animation => animation.finished))
   }
 

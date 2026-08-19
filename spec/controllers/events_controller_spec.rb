@@ -6,9 +6,7 @@ require "csv"
 RSpec.describe EventsController do
   include SessionSupport
 
-  # The rows currently rendered in the table view. A response holding only the
-  # rows of an expanded branch is wrapped first, since the HTML5 parser drops
-  # `tr` elements that aren't sitting in a table.
+  # Wrapped, since the HTML5 parser drops `tr` elements outside a table.
   def table_rows(body)
     Nokogiri::HTML5("<table><tbody>#{body}</tbody></table>").css("tr.sub-organization-row")
   end
@@ -307,8 +305,7 @@ RSpec.describe EventsController do
           expect(main_list.text).to include("Transparent Sub-organization")
         end
 
-        # The table is a tree, so hidden organizations stay in place with the
-        # rest of the branch rather than being split into their own section.
+        # The tree keeps them in place rather than in their own section.
         it "lists it inline in the table view, badged as hidden", :aggregate_failures do
           get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
 
@@ -406,8 +403,7 @@ RSpec.describe EventsController do
       expect(row.css(".badge").map { |badge| badge.text.strip }).to include("Private")
     end
 
-    # A row that a viewer cannot expand is indistinguishable from a leaf, which
-    # is the point: an expander would give away that something is under there.
+    # An unexpandable row looks like a leaf; an expander would give it away.
     it "offers no expander for a branch whose sub-organizations are all private" do
       create(:event, parent: transparent_sub, is_public: false, name: "Private Grandchild")
 
@@ -427,8 +423,7 @@ RSpec.describe EventsController do
       expect(row.at_css("button.sub-organization-row__toggle")).to be_present
     end
 
-    # The row is a link target as a whole via .stretched-link, so the expander
-    # has to sit outside it or opening a branch would navigate away instead.
+    # The expander has to sit outside the row-wide link, or it would navigate.
     it "links the whole row, with the expander alongside the link", :aggregate_failures do
       create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild")
 
@@ -439,12 +434,10 @@ RSpec.describe EventsController do
       expect(row["class"]).to include("clickable")
       expect(row.at_css("a.stretched-link")["href"]).to eq("/#{transparent_sub.slug}")
       expect(row.at_css("button.sub-organization-row__toggle")).to be_present
-      # The name is plain text; the link covering the row is what navigates.
       expect(row.at_css(".sub-organization-row__title").name).to eq("span")
     end
 
-    # The pins have to sit outside the table: it scrolls horizontally, which is
-    # what a sticky element inside it would stick to rather than the page.
+    # Inside the table, a sticky element would stick to its horizontal scroll.
     it "wires up the bar that pins the organizations you are scrolled inside of", :aggregate_failures do
       get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
 
@@ -490,9 +483,7 @@ RSpec.describe EventsController do
       expect(table_row_names(response.body)).to eq(["Transparent Grandchild"])
     end
 
-    # The rails say which levels above a row still have rows to come, and so
-    # which of them draw a connecting line. Getting that wrong draws a branch
-    # that appears to continue past its last row.
+    # Get this wrong and a branch appears to continue past its last row.
     it "carries the tree's connecting lines down into the expanded level", :aggregate_failures do
       create(:event, parent: transparent_sub, is_public: true, name: "First Grandchild")
       create(:event, parent: transparent_sub, is_public: true, name: "Second Grandchild")
@@ -502,12 +493,10 @@ RSpec.describe EventsController do
       rows = table_rows(response.body)
 
       expect(rows.map { |row| row["data-depth"] }).to eq(["2", "2"])
-      # "10" is one level still carrying a line and one whose branch has already
-      # ended, and the join to this row's own parent is always the last rail.
+      # "10": one level still carrying a line, one whose branch has ended.
       expect(rows.first.css(".sub-organization-row__rail").map { |rail| rail["class"].split.last })
         .to eq(["sub-organization-row__rail--line", "sub-organization-row__rail--connector"])
-      # Only the final row closes the branch off, by leaving the line that would
-      # carry on below its corner.
+      # Only the final row closes the branch off.
       expect(rows.map { |row| row["class"].include?("sub-organization-row--last") }).to eq([false, true])
     end
 
@@ -519,9 +508,8 @@ RSpec.describe EventsController do
       expect(response.body).to include('data-depth="0"')
     end
 
-    # Authorizing the organization being expanded, rather than the one whose
-    # page this is, is what stops the table from being walked by hand into a
-    # branch the viewer cannot see.
+    # Authorizing the organization being expanded is what stops the table from
+    # being walked by hand into a branch the viewer cannot see.
     it "refuses to expand a private organization for a signed out visitor" do
       private_sub = create(:event, parent:, is_public: false, name: "Private Sub-organization")
       create(:event, parent: private_sub, is_public: true, name: "Transparent Grandchild")

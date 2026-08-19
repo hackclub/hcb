@@ -920,16 +920,12 @@ class EventsController < ApplicationController
         @view = cookies[:sub_organizations_view] || "grid"
 
         if @view == "list"
-          # The table is a tree rather than a list, so it goes unfiltered; the
-          # balance above it has to cover the same set to agree with it.
+          # The tree goes unfiltered, so the balance above it has to as well.
           @has_filter = false
-          # It starts collapsed at the immediate sub-organizations, with deeper
-          # levels fetched by #sub_organization_rows as they are expanded.
           @rows = sub_organization_table_rows(@event)
         else
           sub_organizations = filtered_sub_organizations
-          # Hidden organizations are set aside in their own collapsed section,
-          # matching how the organization index treats them.
+          # Hidden organizations are set aside in their own collapsed section.
           @sub_organizations = sub_organizations.not_hidden.page(params[:page]).per(params[:per] || 24)
           @hidden_sub_organizations = sub_organizations.hidden.to_a
         end
@@ -970,10 +966,8 @@ class EventsController < ApplicationController
 
   end
 
-  # One level of the sub-organization table, expanded underneath `@event`'s row.
-  # `@event` is the organization being expanded rather than the one whose page
-  # this is, so authorizing it is what keeps the table from being walked into
-  # sub-organizations this viewer cannot see.
+  # `@event` is the organization being expanded, so authorizing it is what stops
+  # the table from being walked into sub-organizations this viewer cannot see.
   def sub_organization_rows
     authorize @event
 
@@ -1354,14 +1348,9 @@ class EventsController < ApplicationController
     @visible_descendant_ids ||= @event.visible_descendant_ids(current_user)
   end
 
-  # The rows of the sub-organization table directly under `event`. Counts are
-  # gathered in one query apiece rather than per row, since the table renders a
-  # level at a time and a deep tree would otherwise be all counting.
   def sub_organization_table_rows(event)
-    # `reorder` rather than `order`, which the default scope's ordering by id
-    # would otherwise win out over and leave the tree in creation order. The
-    # sort is then redone in Ruby, since plain alphabetical order reads badly
-    # for the numbered names sub-organizations tend to have.
+    # `reorder`, since the default scope's ordering by id would win out over
+    # `order`. Redone in Ruby so that "#2" sorts before "#10".
     subevents = event.visible_subevents(current_user)
                      .includes(:scoped_tags, logo_attachment: :blob)
                      .reorder(:name)

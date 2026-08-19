@@ -426,10 +426,8 @@ module EventsHelper
     return tag.span humanize_audit_log_value(field, value), class: color
   end
 
-  # The sub-organization table draws a tree, so each row has to know which of
-  # the levels above it still have rows to come and therefore need a connecting
-  # line. That travels to the rows endpoint as a string of flags, one per level,
-  # which is also what gives a row its depth.
+  # One flag per level above a row, saying whether that level still has rows to
+  # come and so needs a connecting line. Its length is the row's depth.
   def rails_param(rails)
     rails.map { |line| line ? "1" : "0" }.join
   end

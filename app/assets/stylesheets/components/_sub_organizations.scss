@@ -1,8 +1,6 @@
-// One level of nesting. The expander is the same width, so a child's expander
-// lands directly under the line dropping from its parent's.
+// One level of nesting, and the expander's width, so the two line up.
 $sub-organization-indent: 1.75rem;
-// Matches the padding a table gives its first cell, which the rails have to
-// clear to line up with the row's contents.
+// The padding a table gives its first cell, which the rails have to clear.
 $sub-organization-cell-padding: 1rem;
 $sub-organization-rail: rgba(0, 0, 0, 0.12);
 $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
@@ -11,10 +9,7 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   display: none;
 }
 
-// The organizations the page is currently scrolled inside of, pinned to the
-// top. It holds no height of its own, so it takes up nothing while there is
-// nothing pinned, and covers the rows that have scrolled behind it when there
-// is.
+// Holds no height of its own, so it takes up nothing while nothing is pinned.
 .sub-organization-tree__pinned {
   position: sticky;
   top: 0;
@@ -51,8 +46,7 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   position: relative;
 }
 
-// Anchored to the cell rather than to the row's contents, so the lines run the
-// full height of the row and meet the ones above and below without a break.
+// Anchored to the cell, so the lines meet from one row to the next.
 .sub-organization-row__rails {
   position: absolute;
   top: 0;
@@ -66,8 +60,7 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   width: $sub-organization-indent;
 }
 
-// A level further up the tree that still has rows to come, drawn as a line
-// passing straight through this row.
+// A level further up that still has rows to come: a line straight through.
 .sub-organization-row__rail--line::before {
   content: '';
   position: absolute;
@@ -81,9 +74,7 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   }
 }
 
-// The join to this row's own parent: down from its expander, then a rounded
-// turn towards this row. Drawn as one corner so the bend is smooth rather than
-// two lines meeting at a point.
+// The join to this row's parent, as one corner so the bend is rounded.
 .sub-organization-row__rail--connector::before {
   content: '';
   position: absolute;
@@ -100,8 +91,7 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   }
 }
 
-// While rows remain at this level, the line carries on down past the turn. The
-// last row of a branch leaves it off, so the branch visibly ends.
+// The line carries on past the turn until the branch's last row.
 .sub-organization-row:not(.sub-organization-row--last)
   .sub-organization-row__rail--connector::after {
   content: '';
@@ -140,9 +130,8 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   background: transparent;
   color: $muted;
   cursor: pointer;
-  // `tr.clickable` switches pointer events off inside its cells so that the
-  // stretched link covering the row wins every click. The expander is the one
-  // control that has to keep them, and it sits above the link to get them.
+  // `tr.clickable` drops pointer events in its cells so the stretched link wins
+  // every click; the expander opts back in and sits above the link.
   pointer-events: auto;
   z-index: 1;
 
@@ -186,8 +175,7 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   }
 }
 
-// While a level is being fetched the caret pulses in place, so a slow expand
-// reads as loading rather than as a click that missed.
+// Pulses while a level is being fetched, so a slow expand reads as loading.
 .sub-organization-row__toggle--loading svg {
   animation: sub-organization-pulse 0.9s ease-in-out infinite;
 }
@@ -228,8 +216,7 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   color: map-get($palette, primary);
 }
 
-// The stock row hover paints white, which reads as nothing against a white
-// card, so these rows tint instead.
+// The stock hover paints white, invisible on a white card; tint instead.
 .sub-organization-row:hover a.stretched-link {
   background-color: map-get($palette, snow);
 

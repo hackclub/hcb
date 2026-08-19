@@ -3,13 +3,11 @@
 <% event = row[:event] %>
 <% depth = rails.size %>
 
-<%# What this row's own children would draw: this row's level gains a line, and
-    the level above it keeps one only while there are more rows still to come. %>
+<%# The rails this row's own children draw. %>
 <% child_rails = (rails.empty? ? [] : rails[0..-2] + [!last]) + [true] %>
 
-<%# `clickable` is what makes the whole row a link target via .stretched-link.
-    It also switches off pointer events inside the cells, so the expander opts
-    itself back in rather than being swallowed by the link covering the row. %>
+<%# `clickable` links the whole row via .stretched-link; the expander opts back
+    into pointer events so it isn't swallowed by that link. %>
 <tr id="sub_organization_row_<%= event.id %>"
     class="sub-organization-row clickable <%= "sub-organization-row--last" if last %>"
     data-sub-organization-tree-target="row"
@@ -17,10 +15,7 @@
     data-parent-id="<%= event.parent_id %>"
     data-depth="<%= depth %>">
   <td class="sub-organization-row__cell">
-    <%# One rail per level above this row. The last one is the join to this
-        row's own parent; the rest carry the lines of levels further up, and a
-        level whose branch has already ended leaves its rail blank. They sit
-        outside the row's own padding so the lines meet from row to row. %>
+    <%# One rail per level above this row; the last is the join to its parent. %>
     <span class="sub-organization-row__rails" aria-hidden="true"><% rails.each_with_index do |line, level| %><span class="sub-organization-row__rail <%= level == rails.size - 1 ? "sub-organization-row__rail--connector" : ("sub-organization-row__rail--line" if line) %>"></span><% end %></span>
 
     <div class="sub-organization-row__name" style="--sub-organization-depth: <%= depth %>">
@@ -63,9 +58,7 @@
     </div>
   </td>
   <td>
-    <%# Tags are read-only here; the cards are where they can be edited. The
-        data attribute is kept so that deleting a tag still clears it from the
-        rows on screen. %>
+    <%# Read-only here; the cards are where tags can be edited. %>
     <% event.scoped_tags.each do |tag| %>
       <% if tag.parent_event_id == event.parent_id %>
         <span class="badge m-0 mb-1 bg-muted" data-scoped-tag="<%= tag.id %>"><%= tag.name %></span>
