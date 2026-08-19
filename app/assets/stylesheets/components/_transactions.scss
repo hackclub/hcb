@@ -211,8 +211,17 @@ html[data-dark='true'] {
   }
 }
 
+@keyframes highlight-row {
+  from {
+    background-color: map-get($palette, warning);
+  }
+  to {
+    background-color: none;
+  }
+}
+
 .transaction:has(.renamed) {
-  animation: highlight 2s;
+  animation: highlight-row 2s;
 }
 
 .transaction:has(.renaming:not([hidden])) {
