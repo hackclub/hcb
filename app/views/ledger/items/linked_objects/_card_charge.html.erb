@@ -63,12 +63,12 @@
     <% end %>
     <div>
       <strong><%= card_charge.stripe_refund? ? "Refunded" : "Spent" %></strong>
-      <%= local_time_ago card_charge.raw_pending_stripe_transaction&.created_at || Time.at(card_charge.raw_stripe_transactions.first&.stripe_transaction&[]("created")) %>
+      <%= local_time_ago card_charge.raw_pending_stripe_transaction&.created_at || Time.at(card_charge.raw_stripe_transactions.first&.stripe_transaction&.[]("created")) %>
     </div>
     <% unless ledger_item.ct_count == 0 || ledger_item.cpt_count == 0 %>
       <div>
         <strong>Settled after</strong>
-        <span title="<%= Time.at(card_charge.raw_stripe_transactions.first&.stripe_transaction&[]("created")).strftime("%B %e, %Y %l:%M%P") %>">
+        <span title="<%= Time.at(card_charge.raw_stripe_transactions.first&.stripe_transaction&.[]("created")).strftime("%B %e, %Y %l:%M%P") %>">
         <%= distance_of_time_in_words card_charge.raw_pending_stripe_transaction.created_at, ledger_item.canonical_transactions.first.created_at %>
         </span>
       </div>
