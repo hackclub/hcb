@@ -18,18 +18,6 @@
       <strong>Report</strong>
       <%= link_to "View Report", reimbursement_payout_holding.report %>
     </p>
-    <% if reimbursement_payout_holding.ach_transfer %>
-      <p>
-        <strong>ACH transfer</strong>
-        <%= link_to "View Transfer", reimbursement_payout_holding.ach_transfer %>
-      </p>
-    <% end %>
-    <% if reimbursement_payout_holding.increase_check %>
-      <p>
-        <strong>Check</strong>
-        <%= link_to "View", reimbursement_payout_holding.increase_check.local_hcb_code %>
-      </p>
-    <% end %>
   </section>
 
   <%= render partial: "reimbursement/reports/expenses", locals: { report: reimbursement_payout_holding.report } %>
