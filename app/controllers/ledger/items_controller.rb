@@ -2,7 +2,7 @@
 
 class Ledger
   class ItemsController < ApplicationController
-    before_action :set_item, only: [:pin, :unpin, :update]
+    before_action :set_item, only: [:pin, :unpin, :rename]
 
     def show
       @item = Ledger::Item.find_by_hashid!(params[:id])
@@ -70,7 +70,7 @@ class Ledger
     # the current memo is already in the DOM — this is the only server round
     # trip the widget ever makes, and it always responds with a Turbo Stream
     # that updates every occurrence of this item's memo on the page.
-    def update
+    def rename
       authorize @item
 
       memo = params.require(:ledger_item).permit(:memo)[:memo].presence

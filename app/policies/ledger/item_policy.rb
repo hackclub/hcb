@@ -15,7 +15,7 @@ class Ledger
     alias_method :pin?, :show?
     alias_method :unpin?, :show?
 
-    def update?
+    def rename?
       OrganizerPosition.role_at_least?(user, record.primary_ledger&.event, :member)
     end
 

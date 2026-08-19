@@ -22,9 +22,9 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       create_session(member_user, verified: true)
     end
 
-    describe "PATCH #update" do
+    describe "PATCH #rename" do
       it "updates the memo and responds with a turbo stream" do
-        patch :update, params: { item_id: item.hashid, ledger_item: { memo: "New memo" } }
+        patch :rename, params: { item_id: item.hashid, ledger_item: { memo: "New memo" } }
 
         expect(response).to be_successful
         expect(response.media_type).to eq("text/vnd.turbo-stream.html")
@@ -44,7 +44,7 @@ RSpec.describe Ledger::ItemsController, type: :controller do
     end
 
     it "denies renaming" do
-      patch :update, params: { item_id: item.hashid, ledger_item: { memo: "Nope" } }
+      patch :rename, params: { item_id: item.hashid, ledger_item: { memo: "Nope" } }
       expect(response).to redirect_to(root_path)
       expect(flash[:error]).to eq("You are not authorized to perform this action.")
       expect(item.reload.memo).not_to eq("Nope")
