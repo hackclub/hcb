@@ -67,14 +67,6 @@ module SetLedgerFilters
                    .with_attached_profile_picture
                    .order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
 
-      # Scoped to @users (this ledger's authors ∪ organizers), not every
-      # User: this is what renders as a name + avatar in the filter chip
-      # below, and resolving it against the whole users table would turn any
-      # ledger page into a global "does this slug belong to a real account,
-      # and what's their name/photo" oracle for people with no connection to
-      # this org. A slug outside @users still has to filter to zero rows
-      # rather than silently no-op — that's handled in ledger_query below via
-      # params[:user] directly, so it doesn't depend on @user resolving here.
       @user = @users.friendly.find(params[:user], allow_nil: true) if params[:user]
 
       if @merchant
