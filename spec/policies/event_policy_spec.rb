@@ -132,12 +132,6 @@ RSpec.describe EventPolicy, type: :policy do
         is_expected.to eq(false)
       end
 
-      it "is allowed when the event has new_ledger_2026_06_30 enabled" do
-        Flipper.enable(:new_ledger_2026_06_30, event)
-
-        is_expected.to eq(true)
-      end
-
       it "is allowed when the user has opted into new_ledger_2026_07_17" do
         Flipper.enable_actor(:new_ledger_2026_07_17, user)
 
