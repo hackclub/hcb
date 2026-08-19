@@ -4,7 +4,9 @@ export default class extends Controller {
   static targets = ['display', 'form', 'input', 'tooltip']
 
   connect() {
-    this.tooltipObserver = new MutationObserver(() => this.syncInputFromDisplay())
+    this.tooltipObserver = new MutationObserver(() =>
+      this.syncInputFromDisplay()
+    )
     this.tooltipObserver.observe(this.tooltipTarget, { childList: true })
   }
 
