@@ -293,7 +293,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def ledger?
-    auditor? || Flipper.enabled?(:new_ledger_2026_07_17, user)
+    auditor? || (reader? && Flipper.enabled?(:new_ledger_2026_07_17, user))
   end
 
   def toggle_new_ledger?
