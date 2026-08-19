@@ -174,23 +174,26 @@
   </section>
 
   <section class="card__banner border-top flex flex-wrap">
-    <%= link_to "Void",
-      invoice_void_path(@invoice.id),
-      disabled: !organizer_signed_in?,
-      method: :post,
-      data: { confirm: "Are you sure you want to void this invoice? Voided invoices can not be paid and this action cannot be undone." },
-      class: "btn bg-error mr1 right" if @invoice.open_v2? && InvoicePolicy.new(@user, @invoice).void? %>
-  <%= link_to (@invoice.archived? ? "Un-archive" : "Archive"),
-    (@invoice.archived? ? invoice_unarchive_path(@invoice) : invoice_archive_path(@invoice)),
-    disabled: !organizer_signed_in?,
-    method: :post,
-    class: "btn bg-muted" unless @invoice.void_v2? || InvoicePolicy.new(@user, @invoice).archive? %>
-  <%= link_to organizer_signed_in? ? invoice_hosted_path(@invoice.hashid) : root_path,
+    <% if @invoice.open_v2? && policy(@invoice).void? %>
+      <%= link_to "Void",
+        invoice_void_path(@invoice.id),
+        disabled: !organizer_signed_in?,
+        data: { turbo_method: :post, turbo_confirm: "Are you sure you want to void this invoice? Voided invoices can not be paid and this action cannot be undone.", turbo_confirm_danger: true },
+        class: "btn bg-error mr1 right" %>
+    <% end %>
+    <% if !@invoice.void_v2? && policy(@invoice).archive? %>
+      <%= link_to (@invoice.archived? ? "Un-archive" : "Archive"),
+        (@invoice.archived? ? invoice_unarchive_path(@invoice) : invoice_archive_path(@invoice)),
+        disabled: !organizer_signed_in?,
+        method: :post,
+        class: "btn bg-muted" %>
+    <% end %>
+    <%= link_to organizer_signed_in? ? invoice_hosted_path(@invoice.hashid) : root_path,
       disabled: !organizer_signed_in?,
       class: "btn bg-accent ml-auto",
       target: "_blank" do %>
-      <%= inline_icon "external" %>
-      View sent invoice
+        <%= inline_icon "external" %>
+        View sent invoice
     <% end %>
   </section>
 </article>

@@ -1,0 +1,3644 @@
+// Marketing landing pages (/for/*). Refined, editorial take on HCB's design system:
+// snow base, HCB red accent, system-ui type, the signature border-shadow surfaces —
+// elevated with mono eyebrows, generous space, a dark contrast band, and load reveals.
+// Shared by every marketing page; page-specific styling stays prefixed `mk-`.
+
+$mk-ink: $black; // #1f2d3d
+$mk-bg: $snow; // #f9fafc
+
+// Hack Club's brand typeface, served from the HC CDN (same source the app bundle uses).
+// Used for marketing headings; body stays on the system stack for readability.
+@font-face {
+  font-family: 'Phantom Sans';
+  src:
+    url('https://assets.hackclub.com/fonts/Phantom_Sans_0.8/Regular.woff2')
+      format('woff2'),
+    url('https://assets.hackclub.com/fonts/Phantom_Sans_0.8/Regular.woff')
+      format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Phantom Sans';
+  src:
+    url('https://assets.hackclub.com/fonts/Phantom_Sans_0.8/Bold.woff2')
+      format('woff2'),
+    url('https://assets.hackclub.com/fonts/Phantom_Sans_0.8/Bold.woff')
+      format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+// ---------------------------------------------------------------- base / layout
+.marketing {
+  --mk-nav-h: 64px; // sticky nav height; sticky-header + scroll-margin offsets all derive from this
+  background: $mk-bg;
+  color: $mk-ink;
+}
+
+// Resets wrapped in :where() so their specificity is element-only. Otherwise
+// `.marketing p`/`.marketing h2` (0,1,1) silently beat single-class component margins
+// like `.mk-cta__brandline` or `.marketing-form__hint` (0,1,0), eating their spacing.
+:where(.marketing) {
+  h1,
+  h2,
+  h3,
+  h4 {
+    margin: 0;
+    border: 0;
+    padding: 0;
+    font-family:
+      'Phantom Sans',
+      #{$font-family};
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: $mk-ink;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.marketing__main {
+  flex: 1 1 auto;
+}
+
+// Consistent, visible focus ring on every marketing link (nav, footer, table, badges).
+.marketing a:focus-visible {
+  outline: 2px solid $red;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.mk-container {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.mk-narrow {
+  max-width: 760px;
+}
+
+// The comparison section runs wider than the page's prose columns so the table's labels and
+// values wrap less. Tablet falls back to the container's own responsive width (padding-bounded),
+// and mobile renders the table as stacked cards.
+.mk-compare-wide {
+  max-width: 960px;
+}
+
+.mk-section {
+  padding: clamp(56px, 7.5vw, 104px) 0;
+
+  &--alt {
+    background: $snow-dark;
+  }
+}
+
+.mk-section__head {
+  max-width: 640px;
+  margin-bottom: clamp(28px, 4vw, 44px);
+}
+
+.mk-section__title {
+  font-size: clamp(1.75rem, 3.4vw, 2.6rem);
+  text-wrap: balance;
+}
+
+.mk-lead {
+  font-size: clamp(1.05rem, 1.4vw, 1.2rem);
+  line-height: 1.6;
+  color: $slate;
+  text-wrap: pretty;
+
+  // Space stacked lead paragraphs (the global reset zeroes <p> margins).
+  & + & {
+    margin-top: 1em;
+  }
+
+  strong {
+    color: $mk-ink;
+    font-weight: 600;
+  }
+}
+
+.mk-eyebrow {
+  font-family: $mono;
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: $red;
+  margin-bottom: 14px;
+
+  // Lightened enough to clear AA contrast (≈4.5:1) on the dark band.
+  &--light {
+    color: lighten($red, 22%);
+  }
+}
+
+.mk-br-md {
+  display: none;
+  @media (min-width: 720px) {
+    display: inline;
+  }
+}
+
+.mk-vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+// ---------------------------------------------------------------- hero entrance
+// One-time, CSS-only entrance for the hero. Everything below the fold renders
+// immediately (no scroll-reveal) so content is never hidden — robust without JS.
+@keyframes mk-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+// Copy fades up on load; the hero media (the fan-out diagram) runs its own
+// JS-driven intro via the funders-flow controller, with a static fallback.
+@media (prefers-reduced-motion: no-preference) {
+  .mk-hero__copy > * {
+    animation: mk-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+    @for $i from 1 through 5 {
+      &:nth-child(#{$i}) {
+        animation-delay: #{0.06s * $i};
+      }
+    }
+  }
+}
+
+// ---------------------------------------------------------------- buttons
+// Squared, flat fills on HCB's own radius + shadow tokens — deliberately the same
+// language as the in-app button (components/_buttons.scss), not a pill with a gradient
+// fill and a colored glow (which read as generic SaaS rather than HCB).
+.marketing-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: var(--radius-lg);
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 0;
+  transition:
+    box-shadow 0.12s ease,
+    background-color 0.12s ease;
+
+  &--sm {
+    height: 38px;
+    padding: 0 14px;
+    font-size: 0.9375rem;
+  }
+
+  &--lg {
+    height: 50px;
+    padding: 0 24px;
+    font-size: 1.0625rem;
+  }
+
+  &--primary {
+    color: #fff;
+    background-color: $red;
+    box-shadow:
+      inset 0 0 0 0.5px rgba($black, 0.2),
+      var(--shadow-sm);
+
+    &:hover,
+    &:focus-visible {
+      // Keep the text white on hover — re-stated here so it beats the app's
+      // global `a:hover` colour rule (which otherwise wins by specificity).
+      color: #fff;
+      background-color: darken($red, 6%);
+      box-shadow:
+        inset 0 0 0 0.5px rgba($black, 0.2),
+        var(--shadow-md);
+    }
+  }
+
+  &--ghost {
+    color: $mk-ink;
+    background: $white;
+    box-shadow: var(--shadow-border-sm);
+
+    &:hover,
+    &:focus-visible {
+      color: $mk-ink;
+      background: darken($white, 4%);
+      box-shadow: var(--shadow-border-md);
+    }
+  }
+}
+
+// ---------------------------------------------------------------- email form
+.marketing-form {
+  width: 100%;
+
+  &__row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  // `& &__input` (0,2,0) beats the app's global `input[type=…]/textarea` rule (0,1,1),
+  // which otherwise imposes a 6px radius, a border, and a 24rem max-width on our fields.
+  & &__input {
+    flex: 1 1 240px;
+    min-width: 0;
+    max-width: none;
+    height: 50px;
+    padding: 0 18px;
+    font-size: 1.0625rem;
+    color: $mk-ink;
+    background: $white;
+    border: 0;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-border-sm);
+    transition: box-shadow 0.12s ease;
+
+    &::placeholder {
+      color: $muted;
+    }
+
+    &:focus {
+      outline: 0;
+      box-shadow:
+        inset 0 0 0 1.5px $red,
+        0 0 0 4px rgba($red, 0.14);
+    }
+  }
+
+  &__hint {
+    margin-top: 18px;
+    font-size: 0.85rem;
+    color: $muted;
+  }
+
+  // Fuller "send a note" variant (final CTA): stacked name + email + message + submit.
+  &--detailed {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .marketing-form__input {
+      flex: none;
+      width: 100%;
+    }
+  }
+
+  & &__textarea {
+    height: auto;
+    min-height: 104px;
+    padding: 14px 22px;
+    line-height: 1.5;
+    resize: vertical;
+    font-family: inherit;
+  }
+
+  &__submit {
+    width: 100%;
+    margin-top: 2px;
+  }
+}
+
+// ---------------------------------------------------------------- nav
+.marketing-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba($snow, 0.8);
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  box-shadow: inset 0 -1px 0 rgba($black, 0.07);
+
+  &__inner {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  &__logo {
+    display: inline-flex;
+    align-items: center;
+
+    img {
+      display: block;
+    }
+  }
+
+  &__links {
+    display: none;
+    align-items: center;
+    gap: 26px;
+    margin-left: 8px;
+
+    @media (min-width: 860px) {
+      display: flex;
+    }
+
+    a {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: $slate;
+      text-decoration: none;
+      transition: color 0.12s ease;
+
+      &:hover {
+        color: $mk-ink;
+      }
+
+      &[aria-current='page'] {
+        color: $red;
+      }
+    }
+  }
+
+  &__actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  &__login {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: $slate;
+    text-decoration: none;
+
+    &:hover {
+      color: $mk-ink;
+    }
+
+    // Save room for the primary CTA on small phones.
+    @media (max-width: 430px) {
+      display: none;
+    }
+  }
+
+  &__dashboard {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    height: 38px;
+    padding: 0 14px 0 8px;
+    // Pill on purpose: it wraps a circular avatar, so the concentric radius reads
+    // right. (The AI tell was the gradient pill *CTA*, not avatar chips.)
+    border-radius: 999px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: $mk-ink;
+    text-decoration: none;
+    background: $white;
+    box-shadow: var(--shadow-border-sm);
+    transition: box-shadow 0.12s ease;
+
+    &:hover {
+      box-shadow: var(--shadow-border-md);
+    }
+
+    img {
+      border-radius: 999px;
+    }
+  }
+
+  &__arrow {
+    color: $muted;
+  }
+}
+
+// ---------------------------------------------------------------- hero
+.mk-hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(56px, 9vw, 120px) 0 clamp(40px, 6vw, 72px);
+
+  &__bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  // A single, quiet warm light anchored behind the headline — one hue, low
+  // opacity. Deliberately not the multi-color radial "mesh" blob that reads as AI.
+  &__glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      52% 60% at 8% -8%,
+      rgba($red, 0.07),
+      transparent 68%
+    );
+  }
+
+  // Faint vertical rules echoing HCB's columns mark (pillars / a bar chart),
+  // confined to the right where the diagram sits and softly masked at the edges.
+  &__ledger {
+    position: absolute;
+    inset: 0 0 0 48%;
+    background-image: repeating-linear-gradient(
+      to right,
+      rgba($black, 0.04) 0 1px,
+      transparent 1px 92px
+    );
+    -webkit-mask-image: radial-gradient(
+      120% 90% at 78% 30%,
+      #000,
+      transparent 72%
+    );
+    mask-image: radial-gradient(120% 90% at 78% 30%, #000, transparent 72%);
+  }
+
+  &__inner {
+    position: relative;
+    display: grid;
+    gap: clamp(32px, 5vw, 56px);
+    align-items: center;
+
+    @media (min-width: 920px) {
+      grid-template-columns: 1.05fr 0.95fr;
+    }
+  }
+
+  &__copy {
+    min-width: 0;
+  }
+
+  &__media {
+    position: relative;
+    min-width: 0;
+    margin-top: 8px;
+  }
+
+  &__title {
+    font-size: clamp(2.3rem, 5.4vw, 3.9rem);
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+
+  &__subtitle {
+    margin-top: 22px;
+    max-width: 54ch;
+    font-size: clamp(1.05rem, 1.4vw, 1.2rem);
+    line-height: 1.65;
+    color: $slate;
+
+    // Inline link (e.g. "Hack Club") reads as text, not a loud CTA: same ink,
+    // a quiet underline, warming to red on hover.
+    a {
+      color: $mk-ink;
+      text-decoration: underline;
+      text-decoration-color: rgba($slate, 0.35);
+      text-underline-offset: 2px;
+      transition:
+        color 0.15s ease,
+        text-decoration-color 0.15s ease;
+
+      &:hover {
+        color: $red;
+        text-decoration-color: $red;
+      }
+    }
+  }
+
+  &__brandline {
+    display: block;
+    margin-top: 14px;
+    font-weight: 600;
+    color: $mk-ink;
+  }
+
+  &__cta {
+    margin-top: 30px;
+    max-width: 520px;
+  }
+}
+
+// ---------------------------------------------------------------- hero fan-out
+// "Capital → grants" staged in 2.5D: a funder source node wired to several
+// recipient orgs, with capital flowing the wires (animated by
+// funders_flow_controller). The scene sits on a perspective stage whose depth
+// layers parallax against one another on cursor + scroll. Renders as a flat,
+// static diagram with no JS / reduced motion, and stacks on narrow screens.
+.mk-flow {
+  position: relative;
+  width: 100%;
+  // Keep the diagram compact on wide screens so the wires don't sprawl.
+  max-width: 560px;
+  margin: 0 auto;
+  min-height: clamp(330px, 33vw, 430px);
+  // 3D stage: the children below are depth layers parallaxed by the controller.
+  perspective: 1200px;
+}
+
+// The transformable stage. The controller tilts it toward the cursor and settles
+// it on scroll; its children sit at different depths and parallax against it.
+.mk-flow__scene {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+}
+
+// Farthest layer: a soft warm bloom that lights the scene from behind and drifts
+// most under parallax. Purely atmospheric (depth + light), never interactive.
+.mk-flow__atmosphere {
+  position: absolute;
+  inset: -18%;
+  z-index: 0;
+  pointer-events: none;
+  will-change: transform;
+  background:
+    radial-gradient(38% 48% at 32% 42%, rgba($red, 0.12), transparent 70%),
+    radial-gradient(42% 52% at 72% 60%, rgba($black, 0.05), transparent 72%);
+  filter: blur(6px);
+}
+
+// The scene's front plane: wires + source + recipient cards. Measured and drawn
+// in its own coordinate space, then moved/tilted as one rigid layer so the wires
+// stay glued to the cards under any parallax.
+.mk-flow__field {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.mk-flow__wires {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.mk-flow__wire {
+  stroke: rgba($black, 0.14);
+  stroke-width: 1.5;
+}
+
+// A comet of capital riding a wire: a short, round-capped red streak with a soft
+// glow. Its position/length are animated via stroke-dashoffset by the controller,
+// so it follows the curved wire exactly with no per-frame point math.
+.mk-flow__charge {
+  stroke: $red;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  // Layered bloom so the comet reads as luminous capital, not a flat line.
+  filter: drop-shadow(0 0 4px rgba($red, 0.55))
+    drop-shadow(0 0 11px rgba($red, 0.35));
+}
+
+.mk-flow__source {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: clamp(118px, 27%, 154px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 16px;
+  background: $white;
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-border-md);
+
+  // Output port: a small glowing node where the wires leave the source, anchoring
+  // the fan-out to "your capital" instead of floating off the card's edge.
+  &::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    width: 9px;
+    height: 9px;
+    transform: translate(50%, -50%);
+    border-radius: 50%;
+    background: $red;
+    box-shadow:
+      0 0 0 4px rgba($red, 0.12),
+      0 0 8px rgba($red, 0.5);
+  }
+}
+
+.mk-flow__mark {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.mk-flow__source-name {
+  font-weight: 700;
+  color: $mk-ink;
+  font-size: 1.05rem;
+}
+
+.mk-flow__source-sub {
+  margin-top: 3px;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  color: $muted;
+}
+
+.mk-flow__feed {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  width: clamp(210px, 60%, 300px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+
+.mk-flow__grant {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 13px;
+  background: $white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-border-sm);
+
+  // "Received" swell. --recv is tweened 1 -> 0 by the controller on the comet's
+  // own timeline, so the swell lands exactly when the capital does. A faint rim
+  // plus a soft, wide bloom that contracts as it fades reads as a calm
+  // acknowledgement, not a hard flash. Defaults to 0 (no JS / reduced motion).
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow:
+      inset 0 0 0 1px rgba($red, 0.45),
+      0 14px calc(22px + var(--recv, 0) * 20px) -14px rgba($red, 0.6);
+    opacity: var(--recv, 0);
+    pointer-events: none;
+  }
+}
+
+.mk-flow__avatar {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  // Warms toward red and pops slightly as its grant lands (driven by --recv).
+  background: color-mix(
+    in srgb,
+    #{$red} calc(var(--recv, 0) * 22%),
+    rgba($black, 0.05)
+  );
+  color: color-mix(in srgb, #{$red} calc(var(--recv, 0) * 85%), #{$slate});
+  transform: scale(calc(1 + var(--recv, 0) * 0.08));
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.mk-flow__org {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.mk-flow__name {
+  font-weight: 600;
+  color: $mk-ink;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mk-flow__meta {
+  font-size: 0.78rem;
+  color: $muted;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Narrow screens can't fit the source + rows side by side, so collapse the 3D
+// stage and stack the field into a plain list (the controller detects the hidden
+// SVG and disables the scene + animation).
+@media (max-width: 640px) {
+  .mk-flow {
+    min-height: 0;
+    perspective: none;
+  }
+
+  .mk-flow__scene {
+    position: static;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  .mk-flow__atmosphere {
+    display: none;
+  }
+
+  .mk-flow__field {
+    position: static;
+    transform: none !important;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .mk-flow__wires {
+    display: none;
+  }
+
+  .mk-flow__source {
+    position: static;
+    transform: none;
+    width: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+
+    // No wires to anchor when stacked, so drop the output port node.
+    &::after {
+      display: none;
+    }
+  }
+
+  .mk-flow__mark {
+    margin-bottom: 0;
+  }
+
+  .mk-flow__source-sub {
+    margin-top: 0;
+  }
+
+  .mk-flow__feed {
+    position: static;
+    width: auto;
+    gap: 10px;
+  }
+}
+
+// Reduced motion: never transform the stage layers, even if JS sets them.
+@media (prefers-reduced-motion: reduce) {
+  .mk-flow__scene,
+  .mk-flow__field,
+  .mk-flow__atmosphere {
+    transform: none !important;
+  }
+}
+
+// --------------------------------------------------------- app screenshot frame
+// Frameless: the product screenshot already carries the full HCB app chrome, so
+// we just round + lift it. (No invented title bar — it duplicated the shot's own
+// heading/logo and a "LIVE" badge would be false on a static image.)
+.mk-window {
+  margin: 0;
+  border-radius: var(--radius-xl);
+  background: $white;
+  overflow: hidden;
+  box-shadow:
+    var(--shadow-border-lg),
+    0 40px 80px -28px rgba($black, 0.25);
+
+  &__shot {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+}
+
+// Soft pulsing dot used by the "Real-time data" value prop in the explorer.
+@keyframes mk-live-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba($green, 0.5);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 6px rgba($green, 0);
+  }
+}
+
+// ---------------------------------------------------------------- product / visibility
+.mk-product__grid {
+  display: grid;
+  gap: clamp(32px, 5vw, 64px);
+  align-items: center;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 920px) {
+    grid-template-columns: 0.9fr 1.1fr;
+  }
+}
+
+// Case-study variant: long copy paired with a compact metric card (not a screenshot), so
+// give the copy the wider column and let the card take the narrower one — otherwise the card
+// floats in a too-wide column and the body text is cramped.
+.mk-product--metric .mk-product__grid {
+  @media (min-width: 920px) {
+    grid-template-columns: 1.1fr 0.9fr;
+  }
+}
+
+// Mirror the layout (media left, copy right) so stacked product/case sections alternate
+// instead of repeating the same zig. Desktop only — on mobile both columns collapse to one
+// and copy stays first (source order).
+.mk-product--reverse {
+  @media (min-width: 920px) {
+    .mk-product__copy {
+      order: 2;
+    }
+
+    .mk-product__media {
+      order: 1;
+    }
+
+    // Keep the copy in the wider column even though it now sits on the right.
+    &.mk-product--metric .mk-product__grid {
+      grid-template-columns: 0.9fr 1.1fr;
+    }
+  }
+}
+
+.mk-product__copy {
+  min-width: 0;
+}
+
+.mk-product__media {
+  min-width: 0;
+}
+
+.mk-ticks {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+
+  li {
+    position: relative;
+    padding-left: 28px;
+    margin-bottom: 12px;
+    color: $slate;
+    line-height: 1.5;
+
+    &::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: $green-dark;
+      font-weight: 600;
+    }
+  }
+}
+
+// ---------------------------------------------------------------- funders marquee
+// Centered text strip of recognizable funders whose grants have reached orgs on HCB. Names now;
+// swap to logos once assets + clearance are in hand.
+.mk-funders {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  // Flex (not grid) so a partial last row centers instead of clinging to the left. A fixed flex-basis
+  // gives grid-like columns; justify-content centers every row, including an incomplete one.
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  row-gap: 36px;
+
+  li {
+    flex: 0 0 50%; // 2 per row
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px; // column gutter
+  }
+
+  @media (min-width: 600px) {
+    li {
+      flex-basis: 33.3333%; // 3 per row
+    }
+  }
+  @media (min-width: 920px) {
+    li {
+      flex-basis: 25%; // 4 per row -> 12 logos fill three even rows
+    }
+  }
+
+  // Render every logo as one uniform silhouette (ignoring each brand's own colors) so the wall reads
+  // evenly. Every asset is transparent, so `brightness(0)` gives a clean black shape; hover animates
+  // to `brightness(1)` (the untouched asset) to reveal the real brand color.
+  img {
+    max-height: 28px; // kept well below the section heading so the logos read as a supporting row
+    max-width: 100%;
+    width: auto;
+    filter: brightness(0);
+    opacity: 0.5;
+    transition:
+      filter 0.2s ease,
+      opacity 0.15s ease;
+  }
+
+  li:hover img {
+    filter: brightness(1);
+    opacity: 1;
+  }
+
+  // Some supplied logos carry heavy transparent padding (e.g. Hewlett: content fills <45% of its
+  // canvas), so they render small at the shared height. Boost those to match optically. (A
+  // tightly-cropped asset would let us drop this.)
+  img.mk-funders__logo--boost {
+    max-height: 52px; // scaled with the base height above to keep Hewlett optically matched
+  }
+}
+
+// ---------------------------------------------------------------- case-study metric
+// Sits in the right column of the Argosy case study (reuses .mk-product__grid). Styled to
+// match .mk-case so the page's card surfaces stay consistent.
+.mk-metric {
+  padding: 32px;
+  background: $white;
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-border-md);
+
+  &__num {
+    margin: 0;
+    font-size: clamp(3rem, 7vw, 4.5rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    color: $red; // ties into the HCB accent used on the comparison table column
+  }
+
+  &__label {
+    margin: 12px 0 0;
+    font-size: 1.05rem;
+    color: $mk-ink;
+  }
+
+  &__list {
+    margin: 20px 0 0;
+    padding: 0; // reset default <ul> indent so items align with the number and label
+    list-style: none;
+    display: grid;
+    gap: 10px;
+    color: $slate;
+    font-size: 0.95rem;
+  }
+
+  // Factual attribution footer: foundation logo above, named founder below. Stacked (rather
+  // than logo-left like .mk-case) because a wide wordmark doesn't center cleanly against a
+  // single line of credit text the way a square avatar does.
+  &__source {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 24px 0 0;
+    padding: 24px 0 0;
+    border-top: 1px solid rgba($black, 0.08);
+  }
+
+  // Links out to the foundation (matches the .mk-photo tiles); shrink-wrap the logo and
+  // soften on hover so it reads as clickable.
+  &__logo-link {
+    display: inline-flex;
+    transition: opacity 0.15s ease;
+
+    &:hover,
+    &:focus-visible {
+      opacity: 0.7;
+    }
+  }
+
+  &__logo {
+    height: 40px;
+    width: auto;
+  }
+
+  &__detail {
+    font-size: 0.85rem;
+    line-height: 1.35;
+    color: $muted;
+  }
+}
+
+// ---------------------------------------------------------------- stats
+.mk-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px 40px;
+  margin: clamp(36px, 5vw, 60px) 0 0;
+  padding-top: 32px;
+  border-top: 1px solid rgba($black, 0.08);
+
+  @media (min-width: 720px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  &__item {
+    dt {
+      font-size: clamp(1.7rem, 3vw, 2.3rem);
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      color: $mk-ink;
+    }
+
+    dd {
+      margin: 4px 0 0;
+      font-size: 0.95rem;
+      color: $muted;
+    }
+  }
+}
+
+// ------------------------------------------------------- value-prop explorer
+// Tabs (left) drive a detail panel (right). On no-JS the controller never adds
+// `.is-enhanced`, so every panel stays visible and the tabs read as a plain list.
+.mk-explore {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+
+  // Go side-by-side from tablet up (matches the stats/uses breakpoint) so iPad-width
+  // viewers get the panel beside the tabs rather than scrolled off below them.
+  @media (min-width: 720px) {
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 24px;
+    align-items: stretch;
+  }
+}
+
+.mk-explore__tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mk-explore__tab {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  padding: 16px 18px;
+  background: $white;
+  border: 0;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-border-sm);
+  cursor: pointer;
+  color: $mk-ink;
+  transition:
+    box-shadow 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.15s ease;
+
+  &-icon {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-lg);
+    color: $red;
+    background: rgba($red, 0.08);
+    transition:
+      color 0.15s ease,
+      background-color 0.15s ease;
+
+    svg {
+      width: 22px;
+      height: 22px;
+    }
+  }
+
+  &-text {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+    min-width: 0;
+  }
+
+  &-title {
+    font-weight: 600;
+    font-size: 1.05rem;
+  }
+
+  &-sub {
+    font-size: 0.85rem;
+    color: darken($muted, 18%); // clears AA contrast on white at this size
+  }
+
+  // Chevron that signals each row is selectable (CSS-drawn ">").
+  &-caret {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border: solid $smoke-dark;
+    border-width: 2px 2px 0 0;
+    transform: rotate(45deg);
+    transition:
+      border-color 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  &:hover {
+    box-shadow: var(--shadow-border-md);
+
+    .mk-explore__tab-caret {
+      border-color: $slate;
+      transform: rotate(45deg) translate(1px, -1px);
+    }
+  }
+
+  // Active tab (set by the controller): red mark + accent ring + red caret.
+  &.is-active {
+    box-shadow:
+      var(--shadow-border-md),
+      inset 0 0 0 1.5px rgba($red, 0.5);
+
+    .mk-explore__tab-icon {
+      color: #fff;
+      background: $red;
+    }
+
+    .mk-explore__tab-caret {
+      border-color: $red;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid $red;
+    outline-offset: 2px;
+  }
+}
+
+.mk-explore__stage {
+  position: relative;
+
+  // When enhanced, stack every panel into a single grid cell so the stage always
+  // reserves the height of the *tallest* panel. Switching props (by hand or via
+  // auto-rotate) then never changes the stage height, so there's no layout jump.
+  .is-enhanced & {
+    display: grid;
+  }
+}
+
+.mk-explore__panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: clamp(24px, 3vw, 36px);
+  background: $white;
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-border-md);
+
+  h3 {
+    font-size: clamp(1.3rem, 2.2vw, 1.6rem);
+    margin-bottom: 14px;
+    text-wrap: balance;
+  }
+
+  p {
+    color: $slate;
+    line-height: 1.6;
+    font-size: 1.05rem;
+  }
+
+  // Enhanced: every panel shares the one grid cell on the stage, so they overlap and
+  // the stage stays as tall as the tallest. Inactive panels keep their layout box (so
+  // that height holds steady) but are hidden from view and assistive tech.
+  .is-enhanced & {
+    grid-area: 1 / 1;
+    visibility: hidden;
+  }
+
+  .is-enhanced &.is-active {
+    visibility: visible;
+
+    // The active panel fades in as it swaps.
+    @media (prefers-reduced-motion: no-preference) {
+      animation: mk-fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+  }
+}
+
+// Stacked-card fallback spacing when JS hasn't enhanced the explorer.
+.mk-explore:not(.is-enhanced) .mk-explore__panel + .mk-explore__panel {
+  margin-top: 12px;
+}
+
+.mk-explore__proof {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: auto;
+  padding-top: 24px;
+
+  &--badge {
+    align-items: center;
+  }
+}
+
+.mk-explore__stat {
+  font-size: clamp(2.4rem, 5vw, 3.2rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: $red;
+
+  &--range {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+}
+
+.mk-explore__stat-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: $mk-ink;
+  line-height: 1.35;
+
+  span {
+    display: block;
+    margin-top: 3px;
+    font-weight: 400;
+    font-size: 0.85rem;
+    color: $muted;
+  }
+}
+
+.mk-explore__badge-mark {
+  display: block;
+  flex: none;
+  border-radius: 11px;
+}
+
+.mk-explore__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: $green-dark;
+
+  i {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: $green;
+
+    @media (prefers-reduced-motion: no-preference) {
+      animation: mk-live-pulse 2s ease-out infinite;
+    }
+  }
+}
+
+// ---------------------------------------------------------------- organizations on HCB (portfolio)
+// Sibling of .mk-explore: a selectable rail of real recipient orgs + a detail stage that swaps as
+// you pick one. Deliberately shares the explorer's rail look so the page's two selectable rails
+// read as one family, while staying visually distinct from the funder proof (Argosy card, funders
+// marquee) so funders vs. recipients never blur together.
+
+// Live org-count anchor under the heading; the number counts up on first scroll-in.
+.mk-portfolio-count {
+  margin-top: 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: $slate;
+
+  span {
+    color: $red;
+    font-variant-numeric: tabular-nums; // no width jitter while the count animates
+  }
+}
+
+.mk-portfolio {
+  display: grid;
+  gap: 16px;
+  // minmax(0, …) not the default 1fr (== minmax(auto, 1fr)): the `auto` floor would let a track
+  // grow to its widest child's intrinsic width, so a panel with a non-wrapping element (e.g. the
+  // "Visit <long org name> →" link) would push the shared column — and the rail rows in it — wider
+  // than the viewport and overflow horizontally on mobile.
+  grid-template-columns: minmax(0, 1fr);
+
+  @media (min-width: 880px) {
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+    gap: 28px;
+    // `start`, not `stretch`: the stage takes its own (tallest-panel) height rather than being
+    // forced to the taller heading+rail aside, which would leave a big void in the lighter cards.
+    align-items: start;
+  }
+}
+
+// Left column wrapper: the section heading stacked above the selectable rail.
+.mk-portfolio__aside {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mk-portfolio__head {
+  margin-bottom: clamp(22px, 3vw, 34px);
+}
+
+.mk-portfolio__rail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mk-portfolio__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  padding: 14px 16px;
+  background: $white;
+  border: 0;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-border-sm);
+  cursor: pointer;
+  color: $mk-ink;
+  transition:
+    box-shadow 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.15s ease;
+
+  &-icon {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-lg);
+    color: $red;
+    background: rgba($red, 0.08);
+    transition:
+      color 0.15s ease,
+      background-color 0.15s ease;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  // Logo variant of the icon slot: the org's own brand mark on a clean plate instead of a
+  // tinted glyph. Stays a white surface (even when active) so colored logos read correctly.
+  &-icon--logo {
+    background: $white;
+    box-shadow: inset 0 0 0 1px rgba($black, 0.08);
+    overflow: hidden;
+    padding: 4px;
+  }
+
+  &-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 6px;
+  }
+
+  &-text {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+    min-width: 0;
+  }
+
+  &-name {
+    font-weight: 600;
+    font-size: 1.02rem;
+  }
+
+  &-sub {
+    font-size: 0.83rem;
+    color: $muted;
+  }
+
+  // Chevron that signals each row is selectable (CSS-drawn ">"), matching .mk-explore.
+  &-caret {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border: solid $smoke-dark;
+    border-width: 2px 2px 0 0;
+    transform: rotate(45deg);
+    transition:
+      border-color 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  &:hover {
+    box-shadow: var(--shadow-border-md);
+
+    .mk-portfolio__item-caret {
+      border-color: $slate;
+      transform: rotate(45deg) translate(1px, -1px);
+    }
+  }
+
+  // Active item (set by the controller): red mark + accent ring + red caret.
+  &.is-active {
+    box-shadow:
+      var(--shadow-border-md),
+      inset 0 0 0 1.5px rgba($red, 0.5);
+
+    .mk-portfolio__item-icon {
+      color: $white;
+      background: $red;
+    }
+
+    // A logo plate keeps its white surface when active (a red fill would clash with the mark).
+    .mk-portfolio__item-icon--logo {
+      background: $white;
+    }
+
+    .mk-portfolio__item-caret {
+      border-color: $red;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid $red;
+    outline-offset: 2px;
+  }
+
+  // Open-door wildcard sits a touch apart from the real orgs, with a lighter "add a thing" feel.
+  &--open {
+    margin-top: 4px;
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px rgba($black, 0.12);
+
+    .mk-portfolio__item-icon {
+      color: $slate;
+      background: rgba($black, 0.05);
+    }
+
+    &:hover {
+      box-shadow: inset 0 0 0 1.5px rgba($red, 0.4);
+    }
+
+    &.is-active {
+      background: $white;
+      box-shadow:
+        var(--shadow-border-md),
+        inset 0 0 0 1.5px rgba($red, 0.5);
+
+      .mk-portfolio__item-icon {
+        color: $white;
+        background: $red;
+      }
+    }
+  }
+}
+
+// Mobile-only "swipe / tap" cue; on desktop the rail + stage are side by side so it's redundant.
+.mk-portfolio__hint {
+  margin: 4px 2px 0;
+  font-size: 0.85rem;
+  color: $muted;
+
+  @media (min-width: 880px) {
+    display: none;
+  }
+}
+
+// Mobile-only position dots beneath the swipe strip: one per real org, so the count itself signals
+// how many orgs there are; the active dot (set by the controller) mirrors the selected org. Hidden
+// on desktop, where the full vertical rail makes a position indicator redundant.
+.mk-portfolio__dots {
+  display: none;
+  justify-content: center;
+  gap: 7px;
+  margin: 12px 0 2px;
+
+  @media (max-width: 879.98px) {
+    display: flex;
+  }
+}
+
+.mk-portfolio__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba($black, 0.16);
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+
+  &.is-active {
+    background: $red;
+    transform: scale(1.4);
+  }
+}
+
+// Mobile-only closing CTA — the open-door wildcard lifted out of the swipe strip. Desktop keeps the
+// in-stage wildcard tab/panel; on mobile it's a standalone card set apart by its own eyebrow so it
+// reads as "and beyond this list", not more detail about the selected org above it.
+.mk-portfolio__open-cta {
+  display: none;
+
+  @media (max-width: 879.98px) {
+    display: block;
+    margin-top: 16px;
+    padding: clamp(20px, 5vw, 26px);
+    border-radius: var(--radius-2xl);
+    background: $snow;
+    box-shadow: inset 0 0 0 1.5px rgba($black, 0.1);
+
+    .mk-portfolio__name {
+      margin-top: 6px;
+    }
+
+    .mk-portfolio__what {
+      margin-bottom: 18px;
+    }
+
+    .marketing-btn {
+      width: 100%; // full-width tap target to close out the section
+    }
+  }
+}
+
+.mk-portfolio__stage {
+  position: relative;
+  min-width: 0; // allow the stage to shrink within its grid track instead of forcing overflow
+
+  // Desktop: stack every panel in one grid cell so the stage reserves the TALLEST panel's height
+  // and never resizes on swap (no layout shift). Mobile keeps normal flow (one panel shown).
+  @media (min-width: 880px) {
+    display: grid;
+  }
+}
+
+.mk-portfolio__panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden; // clip the media banner to the card's rounded corners
+  background: $white;
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-border-md);
+  scroll-margin-top: 84px; // clear the header when a tap scrolls a panel to the top (mobile)
+
+  @media (min-width: 880px) {
+    grid-area: 1 / 1; // overlap all panels in the same cell
+  }
+}
+
+// Stacked-card fallback spacing when JS hasn't enhanced the explorer (no-JS shows every panel).
+.mk-portfolio:not(.is-enhanced) .mk-portfolio__panel + .mk-portfolio__panel {
+  margin-top: 12px;
+}
+
+// Once enhanced, only the active panel shows. On mobile inactive panels are removed from flow
+// (display:none); on desktop they stay in the overlap cell but are hidden via `visibility`, so
+// they still reserve the tallest height and the stage stays a constant size.
+.mk-portfolio.is-enhanced .mk-portfolio__panel:not(.is-active) {
+  display: none;
+
+  @media (min-width: 880px) {
+    display: flex;
+    visibility: hidden;
+  }
+}
+
+// ---- mobile (<880px): FSO spotlight as a horizontal swipeable strip ----
+// The vertical rail of orgs pushed the detail card a full screen below the nav, so picking an org
+// and reading its story were never visible together. Below 880px the rail becomes a horizontal,
+// swipeable strip (the next card peeks → "there's more") with position dots beneath it, the active
+// org's card renders directly under it, and the open-door wildcard is lifted out of the strip into
+// a standalone closing CTA (.mk-portfolio__open-cta). Desktop (>=880px) is untouched.
+@media (max-width: 879.98px) {
+  .mk-portfolio__rail {
+    flex-direction: row;
+    gap: 10px;
+    overflow-x: auto;
+    // No scroll-snap: snapping every chip made the strip feel jumpy and refused to rest a card
+    // mid-scroll. Free momentum scroll instead; the dots + peeking neighbour carry the position cue.
+    padding-block: 6px; // room so the cards' shadows aren't clipped by the scroll container
+    margin-inline: -4px; // bleed into the gutter so the first card lines up with the heading
+    padding-inline: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; // the peeking card + dots are the scroll cue; a bar would clutter it
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    // Edge fades are class-driven (the controller sets these from scroll position) so a fade only
+    // shows where there's actually more to scroll: both edges mid-scroll, and neither on a short
+    // strip that doesn't overflow. At a boundary the relevant override below drops that edge.
+    &.is-overflowing {
+      -webkit-mask-image: linear-gradient(
+        to right,
+        transparent 0,
+        #000 22px,
+        #000 calc(100% - 28px),
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        transparent 0,
+        #000 22px,
+        #000 calc(100% - 28px),
+        transparent 100%
+      );
+    }
+
+    // At the start there's nothing to the left — keep that edge crisp, fade only the right.
+    &.is-overflowing.is-at-start {
+      -webkit-mask-image: linear-gradient(
+        to right,
+        #000 0,
+        #000 calc(100% - 28px),
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        #000 0,
+        #000 calc(100% - 28px),
+        transparent 100%
+      );
+    }
+
+    // At the end there's nothing to the right — fade only the left, so the last card stays solid.
+    &.is-overflowing.is-at-end {
+      -webkit-mask-image: linear-gradient(
+        to right,
+        transparent 0,
+        #000 22px,
+        #000 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        transparent 0,
+        #000 22px,
+        #000 100%
+      );
+    }
+  }
+
+  .mk-portfolio__item {
+    // Fixed-ish width so the next org card always peeks at the right edge as a scroll affordance.
+    flex: 0 0 auto;
+    width: min(76%, 320px);
+  }
+
+  // The chevron points right, which on a horizontal strip reads as "swipe" and fights the scroll
+  // axis; the chips are obviously tappable, so drop it here.
+  .mk-portfolio__item-caret {
+    display: none;
+  }
+
+  // Fixed-width chips can't wrap a long name (e.g. "Mutual Aid LA Network") to two lines without
+  // throwing off the strip's baseline, so clamp the name and sub to one line each.
+  .mk-portfolio__item-name,
+  .mk-portfolio__item-sub {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // Shorter banner on a phone so the org's story sits higher and shares the screen with the strip
+  // (the desktop hero-height banner is overkill here). The terminal art keeps a touch more room.
+  .mk-portfolio__media {
+    min-height: 132px;
+  }
+
+  .mk-portfolio__media--terminal {
+    min-height: 160px;
+  }
+
+  // The wildcard is desktop-only as a tab: on mobile its tab AND panel are hidden, and it's
+  // re-rendered as a standalone, non-tab CTA below the content (see .mk-portfolio__open-cta). This
+  // keeps the strip a clean roster of real orgs and avoids an orphan tabpanel in the a11y tree.
+  .mk-portfolio__item--open,
+  .mk-portfolio__panel--open {
+    display: none;
+  }
+}
+
+// Brand banner at the top of a panel: a cropped photo, a contained wordmark/mark (logo), or CSS
+// terminal art. Its height is fluid: $mk-portfolio-banner-h is the *minimum*, and the banner grows
+// to fill whatever height a panel has to spare (see .mk-portfolio__media), so a light card reads as
+// a taller hero instead of a centered block ringed by whitespace.
+$mk-portfolio-banner-h: 190px;
+
+.mk-portfolio__media {
+  position: relative; // anchors the absolutely-positioned photo (below)
+  overflow: hidden;
+  margin: 0;
+  // Grow to absorb a panel's slack height. Because every panel is stretched to the tallest panel's
+  // height (no layout shift on swap), a sparse card would otherwise strand that slack as voids
+  // around its centered body; letting the banner take it keeps the card visually full.
+  flex: 1 1 auto;
+  min-height: $mk-portfolio-banner-h;
+
+  &-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  // Logo/wordmark on a clean plate, centered within the banner height. A slightly stronger
+  // divider keeps the pale plate reading as a distinct header zone above the white card body.
+  &--logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: $snow;
+    border-bottom: 1px solid rgba($black, 0.09);
+
+    .mk-portfolio__media-img {
+      width: auto;
+      max-width: 64%;
+      height: auto;
+      max-height: 84px;
+      object-fit: contain;
+    }
+  }
+
+  // Absolutely positioned so the photo's own aspect ratio never inflates the banner's intrinsic
+  // height (a portrait image would otherwise force a huge banner). The banner sizes from min-height
+  // + flex-grow only; the photo just covers whatever height that yields.
+  &--photo .mk-portfolio__media-img {
+    position: absolute;
+    inset: 0;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  // Terminal-art cover (Ghostty): a faux terminal window themed after Ghostty's own branding —
+  // the Challenger Deep palette (deep indigo ground, violet prompt) the project's icon ships with.
+  // It fills the banner instead of floating a few bars in a void: a title bar pinned to the top,
+  // then a session that types a command and streams output beneath it.
+  &--terminal {
+    display: flex;
+    background: radial-gradient(
+      120% 130% at 88% -20%,
+      #2a2545 0%,
+      #1e1c31 52%,
+      #16142a 100%
+    );
+  }
+}
+
+// Challenger Deep palette — the scheme Ghostty's icon/brand is built on.
+$mk-term-bg: #1e1c31;
+$mk-term-fg: #cbe3e7;
+$mk-term-violet: #a08cff; // prompt sigil / accent (brand purple, brightened for contrast)
+$mk-term-blue: #65b2ff;
+$mk-term-green: #62d196;
+
+.mk-portfolio__terminal {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  font-family: $mono;
+}
+
+// Slim window/tab bar across the top: three ANSI-tinted dots + a faint tab label.
+.mk-portfolio__terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 11px clamp(16px, 3vw, 26px);
+  border-bottom: 1px solid rgba($snow, 0.06);
+  background: rgba($snow, 0.02);
+}
+
+.mk-portfolio__terminal-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: rgba($snow, 0.18);
+
+  &:nth-child(1) {
+    background: #ff5458;
+  } // ANSI red
+  &:nth-child(2) {
+    background: #ffb378;
+  } // ANSI yellow
+  &:nth-child(3) {
+    background: $mk-term-green;
+  } // ANSI green
+}
+
+.mk-portfolio__terminal-tab {
+  margin-left: 6px;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: rgba($mk-term-fg, 0.5);
+}
+
+// The "screen": holds the watermark ghost behind the text feed.
+.mk-portfolio__terminal-screen {
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+  padding: clamp(14px, 2.6vw, 22px) clamp(16px, 3vw, 26px)
+    clamp(16px, 3vw, 24px);
+}
+
+// The ghost mark, recolored from its flat source via mask and dropped to a faint watermark in the
+// corner so the banner is unmistakably Ghostty without competing with the text.
+.mk-portfolio__terminal-ghost {
+  position: absolute;
+  right: -6%;
+  bottom: -14%;
+  width: clamp(120px, 26%, 220px);
+  aspect-ratio: 1;
+  background: $mk-term-violet;
+  opacity: 0.08;
+  mask: url('https://cdn.hackclub.com/019e8700-8100-7a6a-86eb-9f0e73b3320a/ghostty.svg')
+    center / contain no-repeat;
+  -webkit-mask: url('https://cdn.hackclub.com/019e8700-8100-7a6a-86eb-9f0e73b3320a/ghostty.svg')
+    center / contain no-repeat;
+}
+
+.mk-portfolio__terminal-feed {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1.4vw, 14px);
+  font-size: clamp(0.82rem, 0.6vw + 0.62rem, 1rem);
+  line-height: 1.2;
+  color: $mk-term-fg;
+}
+
+.mk-portfolio__terminal-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.mk-portfolio__terminal-sigil {
+  flex: 0 0 auto;
+  margin-right: 0.6em;
+  font-weight: 700;
+  color: $mk-term-violet;
+}
+
+// The typed command: a fixed-width monospace box (overflow hidden) the type-on animation widens
+// from zero. "ghostty" is 7 glyphs, so it rests at 7ch with a hair of slack.
+.mk-portfolio__terminal-type {
+  flex: 0 0 auto;
+  width: 7.2ch;
+  overflow: hidden;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+// Caret that rides the end of the command while it types; hidden when static (no motion).
+.mk-portfolio__terminal-caret {
+  flex: 0 0 auto;
+  width: 0.55em;
+  height: 1.15em;
+  margin-left: 1px;
+  background: $mk-term-fg;
+  border-radius: 1px;
+  opacity: 0;
+}
+
+// Streamed output lines: faint colored bars standing in for the command's result.
+.mk-portfolio__terminal-out {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba($mk-term-fg, 0.16);
+
+  &--1 {
+    width: 64%;
+    background: rgba($mk-term-blue, 0.4);
+  }
+  &--2 {
+    width: 78%;
+  }
+  &--3 {
+    width: 46%;
+    background: rgba($mk-term-green, 0.4);
+  }
+}
+
+// Block cursor at the fresh prompt after output.
+.mk-portfolio__terminal-cursor {
+  width: 0.55em;
+  height: 1.15em;
+  background: $mk-term-fg;
+  border-radius: 1px;
+}
+
+// --- the looping session ---------------------------------------------------
+// Static resting state (above) = a finished session, fully legible with no JS and under
+// prefers-reduced-motion. The timeline below is layered on only when motion is welcome: every
+// element shares one 9s cycle so the type-on, output stream, and cursor stay in lockstep, and
+// the feed fades out/in at the seam so the reset is never seen.
+@media (prefers-reduced-motion: no-preference) {
+  .mk-portfolio__terminal-feed {
+    animation: mk-term-feed 9s ease-in-out infinite;
+  }
+  .mk-portfolio__terminal-type {
+    animation: mk-term-type 9s steps(7, end) infinite;
+  }
+  .mk-portfolio__terminal-caret {
+    animation: mk-term-caret 9s linear infinite;
+  }
+  .mk-portfolio__terminal-out {
+    opacity: 0;
+    animation: mk-term-out 9s ease-out infinite;
+  }
+  .mk-portfolio__terminal-out--2 {
+    animation-name: mk-term-out-2;
+  }
+  .mk-portfolio__terminal-out--3 {
+    animation-name: mk-term-out-3;
+  }
+  .mk-portfolio__terminal-row--next {
+    opacity: 0;
+    animation: mk-term-next 9s steps(1) infinite;
+  }
+  .mk-portfolio__terminal-cursor {
+    animation: mk-term-blink 1.05s steps(1) infinite;
+  }
+}
+
+// Fade the whole feed in at the start and out at the very end, hiding the wrap-around reset.
+@keyframes mk-term-feed {
+  0% {
+    opacity: 0;
+  }
+  4%,
+  93% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+// Type "ghostty" on, then hold for the rest of the cycle.
+@keyframes mk-term-type {
+  0%,
+  5% {
+    width: 0;
+  }
+  23%,
+  100% {
+    width: 7.2ch;
+  }
+}
+
+// Caret visible (and blinking) only while the command is being typed.
+@keyframes mk-term-caret {
+  0%,
+  26% {
+    opacity: 1;
+  }
+  13% {
+    opacity: 0;
+  }
+  27%,
+  100% {
+    opacity: 0;
+  }
+}
+
+// Output bars reveal in sequence after the command "runs".
+@keyframes mk-term-out {
+  0%,
+  30% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  36%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes mk-term-out-2 {
+  0%,
+  37% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  43%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes mk-term-out-3 {
+  0%,
+  44% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  50%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// The fresh prompt appears once output has finished streaming.
+@keyframes mk-term-next {
+  0%,
+  54% {
+    opacity: 0;
+  }
+  55%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes mk-term-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.mk-portfolio__body {
+  display: flex;
+  flex-direction: column;
+  // Content-height: the banner above takes the slack (flex-grow), so the body sits compactly
+  // beneath it with the footer flush to the card's bottom edge. (The wildcard panel, which has no
+  // banner, overrides this back to flex:1 so it can center its CTA.)
+  flex: 0 0 auto;
+  padding: clamp(22px, 2.6vw, 32px);
+}
+
+.mk-portfolio__body-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.mk-portfolio__name {
+  font-size: clamp(1.25rem, 2vw, 1.5rem);
+  margin-bottom: 8px;
+  text-wrap: balance;
+}
+
+.mk-portfolio__what {
+  color: $slate;
+  line-height: 1.55;
+  font-size: 1.02rem;
+}
+
+.mk-portfolio__stat-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.mk-portfolio__stat {
+  font-size: clamp(2rem, 4vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: $red;
+}
+
+.mk-portfolio__stat-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $mk-ink;
+  line-height: 1.35;
+}
+
+.mk-portfolio__facts {
+  margin-top: 18px;
+}
+
+// Pull-quote inside a panel (deep entries like Reboot / Public Grids). A large, faint quotation
+// mark sits behind the text so the block reads unmistakably as a quote at a glance.
+.mk-portfolio__quote {
+  position: relative;
+  margin: 24px 0 0;
+
+  &::before {
+    content: '\201C'; // left double quotation mark
+    position: absolute;
+    top: -0.36em;
+    left: -0.04em;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 4.5rem;
+    line-height: 1;
+    color: rgba($red, 0.16);
+    pointer-events: none;
+  }
+
+  blockquote {
+    position: relative; // sit above the decorative mark
+    margin: 0;
+    font-size: 1.02rem;
+    line-height: 1.5;
+    color: $mk-ink;
+  }
+}
+
+.mk-portfolio__author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.mk-portfolio__avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  flex: none;
+  object-fit: cover;
+  object-position: center;
+}
+
+.mk-portfolio__author-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.mk-portfolio__author-name {
+  font-weight: 600;
+  color: $mk-ink;
+}
+
+.mk-portfolio__author-role {
+  font-size: 0.85rem;
+  color: $muted;
+}
+
+// Footer pinned to the card bottom: optional funder credit + the "visit" link.
+.mk-portfolio__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: auto;
+  padding-top: 22px;
+}
+
+// The org's grantmaker(s). Small + clearly labeled so it reads "a funder's money reached this org
+// on HCB", never as the funder being an HCB customer.
+.mk-portfolio__funded {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap; // wrap onto multiple lines on a narrow card instead of overflowing
+  gap: 8px 12px;
+  min-width: 0;
+}
+
+.mk-portfolio__funded-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $muted;
+
+  // Give the label its own line on phone widths so both logos sit together beneath it.
+  @media (max-width: 600px) {
+    flex-basis: 100%;
+  }
+}
+
+.mk-portfolio__funder {
+  height: 18px;
+  width: auto;
+  max-width: 100%; // never let a wide logo bleed past the card edge
+  // Greyscale + slight transparency downweights the backer logos so a recipient card never
+  // reads as a funder testimonial — and so they don't compete with the full-colour logos in
+  // the "In good company" funder marquee directly below.
+  filter: grayscale(1);
+  opacity: 0.75;
+
+  &--omidyar {
+    height: 22px;
+    filter: grayscale(1) brightness(0); // Omidyar's lockup needs darkening to read at this size
+  }
+}
+
+.mk-portfolio__visit {
+  margin-left: auto; // hug the right even when a funder credit shares the row
+  font-weight: 600;
+  color: $red;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// Open-door wildcard panel: lighter, content centered vertically, ends in the primary CTA.
+.mk-portfolio__panel--open {
+  // A faint dot grid turns the open space into an intentional "blank canvas to fund something
+  // new" rather than an empty card — echoing the hero's ledger motif.
+  background:
+    radial-gradient(circle, rgba($black, 0.05) 1.1px, transparent 1.4px) 0 0 /
+      22px 22px,
+    $white;
+
+  .mk-portfolio__body {
+    flex: 1 1 auto; // no banner here, so let the body fill the panel and center its CTA
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .mk-portfolio__footer {
+    margin-top: 24px;
+    padding-top: 0;
+  }
+}
+
+.mk-portfolio__open-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  color: $red;
+  background: rgba($red, 0.08);
+  margin-bottom: 18px;
+
+  svg {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+// ---------------------------------------------------------------- dark band / uses
+.mk-dark {
+  background: $dark;
+  color: $snow;
+
+  .mk-section__title {
+    color: $snow;
+  }
+
+  // Intro lead on the dark band: light, slightly muted body + spacing from the heading.
+  .mk-lead {
+    margin-top: 16px;
+    color: rgba($snow, 0.8);
+  }
+}
+
+.mk-uses {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 720px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (min-width: 1000px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.mk-use {
+  padding: 26px 24px;
+  border-radius: var(--radius-xl);
+  background: rgba($white, 0.04);
+  box-shadow: inset 0 0 0 1px rgba($white, 0.08);
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+
+  &--wide {
+    box-shadow: inset 0 0 0 1px rgba($red, 0.35); // keep the emphasis ring at all widths
+
+    @media (min-width: 1000px) {
+      grid-column: span 2;
+      background: linear-gradient(120deg, rgba($red, 0.18), rgba($white, 0.04));
+    }
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    background: rgba($white, 0.07);
+    box-shadow: inset 0 0 0 1px rgba($white, 0.16);
+  }
+
+  h3 {
+    font-size: 1.2rem;
+    color: $snow;
+    margin-bottom: 8px;
+  }
+
+  p {
+    color: rgba($snow, 0.7);
+    line-height: 1.55;
+    font-size: 0.975rem;
+  }
+}
+
+// ---------------------------------------------------------------- comparison
+.mk-table-wrap {
+  // `clip` clips to the border-radius (keeping the rounded corners) WITHOUT creating a scroll
+  // container, so the sticky <thead> still sticks to the viewport. `hidden`/`auto` would trap
+  // the sticky header; `visible` would let the opaque header square off (and leak through) the
+  // rounded corners. table-layout is fixed so nothing overflows horizontally; mobile is cards.
+  position: relative; // containing block for the stuck-state sentinel
+  overflow: clip;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-border-md);
+  background: $white;
+}
+
+// A zero-footprint marker at the top of the table; the controller watches it to know when the
+// sticky header has parked under the nav.
+.mk-table__sentinel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+// Once the header is stuck under the nav, give it a drop shadow so it reads as a floating bar,
+// distinct from the rows scrolling beneath it. (At rest it sits flush in the rounded card.)
+.mk-table-wrap.is-stuck thead th {
+  box-shadow: 0 6px 11px -7px rgba($black, 0.32);
+}
+
+.mk-table-wrap.is-stuck thead .mk-table__hcb {
+  box-shadow:
+    inset 0 3px 0 $red,
+    0 6px 11px -7px rgba($black, 0.32);
+}
+
+// Closing note under the comparison table: invites funders who already give through a
+// DAF or foundation to use HCB alongside it (not instead of it). A left-aligned callout
+// card with a bold hook so it reads as an aside, not another paragraph of body copy.
+.mk-compare-note {
+  margin: 28px 0 0;
+  padding: 20px 24px;
+  text-align: left;
+  background: $white;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-border-sm);
+
+  &__lead {
+    margin: 0 0 4px;
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: $mk-ink;
+  }
+
+  &__body {
+    margin: 0;
+    color: $slate;
+    line-height: 1.6;
+  }
+
+  // Variant with the team avatar cluster (the FAQ page's "didn't find your answer" card).
+  &--team {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    @media (max-width: 480px) {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+}
+
+// Compact overlapping avatar cluster (mirrors the app's `.avatar-row`: faces overlap, separated by
+// a white ring). Decorative, so the images carry empty alt and the wrapper is aria-hidden.
+.mk-avatar-stack {
+  display: flex;
+  flex: 0 0 auto;
+
+  &__img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 0 2px $white;
+
+    & + & {
+      margin-left: -10px;
+    }
+  }
+}
+
+.mk-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.975rem;
+
+  th,
+  td {
+    padding: 16px 18px;
+    border-bottom: 1px solid rgba($black, 0.07);
+    overflow-wrap: break-word;
+    white-space: normal; // override the app's global `th { white-space: nowrap }`
+    vertical-align: middle;
+    text-align: left;
+  }
+
+  thead th {
+    // Sticky column headers: stay visible while scrolling a long (expanded) table. They
+    // park just below the sticky marketing nav (64px), with an opaque background so rows
+    // pass cleanly underneath.
+    position: sticky;
+    top: var(--mk-nav-h);
+    z-index: 2;
+    background: $white;
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: darken($muted, 18%); // clears AA contrast on white
+  }
+
+  tbody th {
+    font-weight: 600;
+    color: $slate;
+  }
+
+  td {
+    color: $slate;
+  }
+
+  tbody tr:last-child th,
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  // Highlighted HCB column: a soft tint + a red accent on the header — no heavy box.
+  &__hcb {
+    background: rgba($red, 0.06);
+    color: $mk-ink;
+
+    strong {
+      color: darken($red, 14%); // deeper red so values clear AA on the tint
+    }
+  }
+
+  thead .mk-table__hcb {
+    color: darken($red, 14%);
+    background: mix(
+      $red,
+      $white,
+      6%
+    ); // opaque version of the column tint, for the sticky header
+    box-shadow: inset 0 3px 0 $red;
+  }
+
+  // Desktop layout; on mobile the table becomes stacked cards (below). Option values are
+  // centered only on desktop — on mobile they're right-aligned within each card.
+  @media (min-width: 641px) {
+    th:first-child,
+    td:first-child {
+      width: 38%; // a bit more room for the label column so dimension names wrap less
+    }
+
+    thead th:not(:first-child),
+    td:not(:first-child) {
+      text-align: center;
+    }
+  }
+}
+
+// "Compare against" segmented control (mobile only): pick which alternative sits beside HCB.
+.mk-compare-switch {
+  display: none;
+}
+
+.mk-compare-switch__label {
+  display: block;
+  margin-bottom: 8px;
+  font-family: $mono;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: darken($muted, 18%);
+}
+
+.mk-compare-switch__track {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  background: rgba($black, 0.05);
+  border-radius: var(--radius-lg);
+}
+
+.mk-compare-switch__opt {
+  padding: 9px 12px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $slate;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+
+  &.is-active {
+    background: $white;
+    color: $mk-ink;
+    box-shadow: var(--shadow-border-sm);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $red;
+    outline-offset: 2px;
+  }
+}
+
+// Comparison table on small screens: the "compare against" control picks one alternative, and each
+// dimension shows HCB beside it as two equal cards, so the two values sit side by side.
+@media (max-width: 640px) {
+  // The segmented control appears only once JS can drive it (no-JS keeps the full table).
+  .mk-table-wrap.is-enhanced .mk-compare-switch {
+    display: block;
+    margin-bottom: 18px;
+  }
+
+  .mk-table-wrap {
+    overflow: visible;
+    background: none;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .mk-table,
+  .mk-table tbody,
+  .mk-table tr,
+  .mk-table th,
+  .mk-table td {
+    display: block;
+    width: auto;
+  }
+
+  .mk-table thead {
+    display: none;
+  }
+
+  // Show HCB vs. the chosen alternative: hide the other one (only once JS sets data-compare).
+  .mk-table-wrap[data-compare='pf'] .mk-table tbody td[data-label='DAF'],
+  .mk-table-wrap[data-compare='daf']
+    .mk-table
+    tbody
+    td[data-label='Foundation'] {
+    display: none;
+  }
+
+  // Likewise hide the non-selected alternative's explanation in the expanded detail.
+  .mk-table-wrap[data-compare='pf']
+    .mk-compare-detail__vehicle[data-vehicle='daf'],
+  .mk-table-wrap[data-compare='daf']
+    .mk-compare-detail__vehicle[data-vehicle='pf'] {
+    display: none;
+  }
+
+  // Each dimension is a card: a full-width label header, then HCB and the alternative as two cards.
+  .mk-table tbody tr.mk-compare-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 10px;
+    align-items: stretch;
+    background: $white;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-border-sm);
+    padding: 4px 14px 14px;
+    margin-bottom: 14px;
+  }
+
+  .mk-table tbody tr.mk-compare-row:last-of-type {
+    margin-bottom: 0;
+  }
+
+  // Dimension label spans both columns; the toggle is a full-width accordion (chevron at the edge).
+  .mk-table tbody th[scope='row'] {
+    grid-column: 1 / -1;
+    padding: 14px 2px 12px;
+    border-bottom: 0; // drop the base table-cell rule so no stray line sits above the value cards
+    font-size: 1rem;
+    font-weight: 600;
+    color: $mk-ink;
+  }
+
+  .mk-table tbody th[scope='row'] .mk-table__toggle {
+    justify-content: space-between;
+  }
+
+  // Equal-height value cards (grid stretch): HCB is the tinted hero, the alternative is neutral.
+  .mk-table tbody td {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    align-content: flex-start; // keep the label row pinned to the top, so both cards' labels line up
+    column-gap: 8px;
+    padding: 11px 12px;
+    border: 1px solid rgba($black, 0.07);
+    border-radius: var(--radius-md);
+    background: rgba($black, 0.015);
+    color: $mk-ink;
+    font-weight: 500;
+    line-height: 1.4;
+
+    // Status chip then label share the top line; the value wraps to its own line below.
+    &::before {
+      order: 1;
+      content: attr(data-label);
+      font-family: $mono;
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: darken($muted, 18%);
+    }
+  }
+
+  .mk-cell__v {
+    order: 2;
+    flex: 0 0 100%;
+    margin-top: 5px;
+  }
+
+  .mk-table tbody td.mk-table__hcb {
+    background: rgba($red, 0.06);
+    border-color: rgba($red, 0.22);
+    color: darken($red, 14%);
+
+    &::before {
+      color: darken($red, 14%);
+    }
+  }
+
+  .mk-table tbody td.mk-table__hcb .mk-table__hcb-sub {
+    display: block;
+    margin-top: 3px;
+    color: darken($red, 14%);
+    opacity: 0.8;
+  }
+
+  // At-a-glance status chip (favorable / partial / unfavorable), inline after the vehicle label. The
+  // "no" mark is a dash, not an ✗, so the chip never reads as a close button.
+  .mk-table tbody td[data-status]::after {
+    order: 0; // chip sits before the vehicle label
+    display: grid;
+    place-items: center;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    font-size: 0.62rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .mk-table tbody td[data-status='yes']::after {
+    content: '\2713'; // check
+    background: rgba($slate, 0.12);
+    color: $slate;
+  }
+
+  .mk-table tbody td[data-status='partial']::after {
+    content: '~';
+    background: rgba($yellow, 0.25);
+    color: darken($yellow, 28%);
+  }
+
+  .mk-table tbody td[data-status='no']::after {
+    content: '\2013'; // en dash (not a cross, so it doesn't read as a close button)
+    background: rgba($black, 0.06);
+    color: darken($muted, 12%);
+  }
+
+  // HCB is the recommended option: a filled red chip, cohesive with its red card, so it reads as best.
+  .mk-table tbody td.mk-table__hcb[data-status='yes']::after {
+    background: $red;
+    color: $white;
+  }
+}
+
+// ------------------------------------------------- comparison table interactivity
+// The comparison table's detail rows ship expanded in the HTML (so AI crawlers and
+// no-JS visitors get every fact + source); `funders-compare` adds `is-enhanced` and
+// collapses them, then toggles per row. Affordances (chevron, pointer cursor) are
+// gated on `is-enhanced` so a no-JS visitor never sees a control that does nothing.
+
+// Answer-first interceptor line above the table — also a clean, citable passage for AI.
+.mk-compare-lead {
+  margin: 0 0 22px;
+  color: $slate;
+  font-size: 1.05rem;
+  line-height: 1.6;
+
+  strong {
+    color: $mk-ink;
+  }
+}
+
+// Entity-disambiguation line directly under the comparison table, so an AI engine that extracts
+// just the table chunk still knows what HCB legally is. Matches the disclaimer so the two footnote
+// lines below the table read as one uniform block.
+.mk-compare-entity {
+  margin: 14px 0 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: darken($muted, 18%);
+}
+
+.mk-compare-disclaimer {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: darken($muted, 18%); // legal "not tax advice" line must clear AA
+}
+
+// Each row label becomes a full-width toggle button; plain text until JS enhances it.
+.mk-table__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  text-align: left;
+  cursor: default;
+
+  &:focus-visible {
+    outline: 2px solid $red;
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+}
+
+.mk-table__chevron {
+  display: none; // shown only once enhanced (see .is-enhanced below)
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg); // expanded → points down
+  opacity: 0.45;
+  transition: transform 0.18s ease;
+}
+
+// Collapsed → chevron points right.
+.mk-table__toggle[aria-expanded='false'] .mk-table__chevron {
+  transform: rotate(-45deg);
+}
+
+// Secondary clause on an HCB value (e.g. "one simple fee"): its own muted line under the
+// headline value, so a separator never dangles at the end of a wrapped line.
+.mk-table__hcb-sub {
+  display: block;
+  margin-top: 3px;
+  font-weight: 400;
+  font-size: 0.82em;
+  line-height: 1.3;
+  color: $slate;
+}
+
+.is-enhanced {
+  .mk-table__toggle {
+    cursor: pointer;
+  }
+
+  // Hover affordance so the row reads as clickable.
+  .mk-table__toggle:hover {
+    color: $mk-ink;
+
+    .mk-table__chevron {
+      opacity: 0.8;
+    }
+  }
+
+  .mk-table__chevron {
+    display: inline-block;
+  }
+}
+
+// Collapsed detail rows: beat the mobile `tr { display: block }` rule further down.
+.mk-table tbody tr.mk-table__detail[hidden] {
+  display: none;
+}
+
+.mk-table__detail td {
+  // The expanded explanation, set off as a tinted sub-panel with a clear whitespace gap below, so
+  // each label-and-detail pair reads as one group, plainly separate from the next row.
+  padding: 16px 20px;
+  text-align: left;
+  background: rgba($black, 0.03);
+  border-bottom: 14px solid $white;
+}
+
+// Group an expanded row with its detail so the detail clearly belongs to the label ABOVE it: drop
+// the divider between the row and its detail. (Desktop; the stacked mobile cards join via their
+// own rules below.)
+@media (min-width: 641px) {
+  .mk-table tbody tr.mk-compare-row:has(+ .mk-table__detail:not([hidden])) > th,
+  .mk-table
+    tbody
+    tr.mk-compare-row:has(+ .mk-table__detail:not([hidden]))
+    > td {
+    border-bottom-color: transparent;
+  }
+}
+
+// The expanded detail is one short, labeled explanation per vehicle (HCB / Foundation / DAF).
+.mk-compare-detail {
+  display: grid;
+  gap: 16px;
+}
+
+.mk-compare-detail__vehicle-name {
+  margin: 0 0 3px;
+  font-family: $mono;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: darken($muted, 18%);
+}
+
+.mk-compare-detail__vehicle[data-vehicle='hcb']
+  .mk-compare-detail__vehicle-name {
+  color: darken($red, 14%);
+}
+
+.mk-compare-detail__text {
+  max-width: 64ch;
+  margin: 0;
+  color: $slate;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mk-table__chevron {
+    transition: none;
+  }
+}
+
+// Mobile (cards): the expanded detail is a card joined to the summary above it (shared squared
+// corners), so the full-width prose reads as that dimension opened up, not a separate card.
+@media (max-width: 640px) {
+  .mk-table tbody tr.mk-table__detail:not([hidden]) {
+    background: $white;
+    box-shadow: var(--shadow-border-sm);
+    border-radius: var(--radius-xl);
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    margin: 0 0 14px;
+    padding: 0 14px 14px;
+  }
+
+  .mk-table tbody tr.mk-table__detail td {
+    display: block;
+    padding: 12px 0 0; // top padding so the prose clears the values it expands from
+    text-align: left;
+    background: none;
+    border: 0; // not a value card: drop the card border/radius so the prose isn't boxed
+    border-radius: 0;
+
+    &::before {
+      content: none;
+    }
+  }
+
+  .mk-table tbody tr.mk-compare-row:has(+ tr.mk-table__detail:not([hidden])) {
+    margin-bottom: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+}
+
+// ---------------------------------------------------------------- funder FAQ
+// Q&A on the dedicated /for/funders/faq page and the short teaser on the main page. Plain,
+// fully-visible Q&A (no JS) so every answer is server-rendered, extractable, and scannable.
+
+// FAQ page: a wide editorial layout with a sticky, scroll-tracked table-of-contents rail.
+.mk-faq-page {
+  max-width: 1040px;
+}
+
+.mk-faq-page__head {
+  max-width: 720px;
+}
+
+.mk-faq-layout {
+  display: grid;
+  gap: clamp(32px, 5vw, 64px);
+  align-items: start;
+
+  @media (min-width: 900px) {
+    grid-template-columns: 216px minmax(0, 1fr);
+  }
+}
+
+// Sticky TOC rail (desktop only; narrow screens skim the content directly).
+.mk-faq-toc {
+  display: none;
+
+  @media (min-width: 900px) {
+    position: sticky;
+    top: calc(var(--mk-nav-h) + 24px);
+    display: block;
+    align-self: start;
+  }
+}
+
+.mk-faq-toc__label {
+  margin: 0 0 14px;
+  font-family: $mono;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: darken($muted, 18%); // clears AA contrast on snow
+}
+
+.mk-faq-toc__list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mk-faq-toc__link {
+  display: flex;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  color: $slate;
+  font-size: 0.9rem;
+  line-height: 1.3;
+  text-decoration: none;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+
+  &:hover {
+    color: $mk-ink;
+    background: rgba($black, 0.04);
+  }
+
+  &.is-active {
+    color: darken($red, 14%); // the table's already-validated AA red
+    background: rgba($red, 0.07);
+    font-weight: 600;
+  }
+}
+
+.mk-faq-toc__num {
+  flex: 0 0 auto;
+  padding-top: 1px;
+  font-family: $mono;
+  font-size: 0.72rem;
+  color: darken($muted, 18%);
+}
+
+.mk-faq-toc__link.is-active .mk-faq-toc__num {
+  color: darken($red, 14%);
+}
+
+// Smooth in-page jumps for marketing anchor links (the TOC, "talk to us", etc.).
+.marketing {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing {
+    scroll-behavior: auto;
+  }
+}
+
+.mk-faq {
+  display: grid;
+  gap: 40px;
+}
+
+// The topic is a mono section label (not another bold heading), so it never competes with the
+// bold questions below it. A hairline rule sets the section off.
+.mk-faq__topic {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 18px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid rgba($black, 0.09);
+  scroll-margin-top: calc(
+    var(--mk-nav-h) + 16px
+  ); // clear the sticky nav when jumped to
+}
+
+.mk-faq__topic-num {
+  flex: 0 0 auto;
+  font-family: $mono;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: $red;
+}
+
+.mk-faq__topic-text {
+  font-family: $mono;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: darken($muted, 16%);
+}
+
+.mk-faq__item {
+  padding: 16px 0;
+  border-bottom: 1px solid rgba($black, 0.07);
+}
+
+.mk-faq__group .mk-faq__item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.mk-faq__q {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: $mk-ink;
+  scroll-margin-top: calc(
+    var(--mk-nav-h) + 16px
+  ); // clear the sticky nav when a question is deep-linked
+}
+
+.mk-faq__a {
+  max-width: 68ch;
+  margin: 0;
+  color: $slate;
+  line-height: 1.65;
+}
+
+// Meta links under an answer or a comparison detail row (Sources and Related share one treatment so
+// they read as siblings): a small mono label + subtle dotted-underline links. Shared by the FAQ page
+// and the comparison table so a citation looks the same everywhere.
+// Two columns: the mono label sits in a fixed left column and the links stack in the right one, so a
+// second citation aligns under the first instead of wrapping back under the label.
+.mk-meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 12px;
+  row-gap: 5px;
+  align-items: baseline;
+  margin: 12px 0 0;
+}
+
+.mk-meta__label {
+  font-family: $mono;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: darken($muted, 18%); // clears AA contrast on snow
+}
+
+.mk-meta__link {
+  grid-column: 2; // every link shares the right column, so they stack and align
+  justify-self: start;
+  font-size: 0.85rem;
+  color: darken(
+    $muted,
+    18%
+  ); // AA-legible: these are citation/cross-link affordances funders click
+  // Dotted underline via text-decoration (not border-bottom) so it hugs the text uniformly, even
+  // when a long citation wraps to a second line.
+  text-decoration: underline dotted rgba($black, 0.4);
+  text-underline-offset: 3px;
+
+  &:hover {
+    color: $mk-ink;
+    text-decoration-color: $mk-ink;
+  }
+}
+
+// Footer (disclaimer + "didn't find your answer" card) sits in the content column, set off from
+// the Q&A with clear space so the bottom of the page doesn't feel crowded.
+.mk-faq-content .mk-compare-disclaimer {
+  margin-top: 44px;
+}
+
+.mk-faq__more {
+  margin: 36px 0 0;
+}
+
+.mk-faq__back {
+  color: inherit;
+  text-decoration: none;
+
+  &::before {
+    content: '← ';
+  }
+}
+
+// Teaser block on the main page: a flat list (no topic groups), divider-separated.
+.mk-faq--teaser {
+  gap: 0;
+
+  .mk-faq__item:first-child {
+    padding-top: 0;
+  }
+
+  .mk-faq__item:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+}
+
+// ---------------------------------------------------------------- case studies
+.mk-cases {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 680px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.mk-case {
+  margin: 0; // reset default <figure> inline margin (preflight is disabled)
+  padding: 28px;
+  background: $white;
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-border-md);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+
+  blockquote {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    color: $mk-ink;
+  }
+
+  figcaption {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: auto;
+  }
+
+  &__avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, $snow-dark, $smoke);
+    flex: none;
+    // When it's a real photo (vs. the gradient placeholder), crop to the circle.
+    object-fit: cover;
+    object-position: center;
+  }
+
+  &__meta {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+  }
+
+  &__name {
+    font-weight: 600;
+    color: $mk-ink;
+  }
+
+  &__detail {
+    font-size: 0.85rem;
+    color: $muted;
+  }
+
+  &--placeholder {
+    blockquote {
+      color: $muted;
+    }
+  }
+}
+
+.mk-cases__note {
+  margin-top: 20px;
+  font-size: 0.9rem;
+  color: $muted;
+  text-align: center;
+}
+
+// ---------------------------------------------------------------- trust
+.mk-trust {
+  text-align: center;
+
+  // Centered body text reads as jagged when line lengths are uneven; balance evens them.
+  .mk-lead {
+    text-wrap: balance;
+  }
+}
+
+.mk-badges {
+  list-style: none;
+  margin: 28px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+
+  li {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: $slate;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: $white;
+    box-shadow: var(--shadow-border-sm);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      color: $red;
+    }
+  }
+}
+
+// ---------------------------------------------------------------- how it works
+.mk-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 28px 24px;
+  grid-template-columns: 1fr;
+
+  @media (min-width: 620px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (min-width: 1000px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.mk-step {
+  &__num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    background: $red;
+    color: #fff;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  h3 {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+  }
+
+  p {
+    color: $slate;
+    line-height: 1.55;
+    font-size: 0.975rem;
+  }
+}
+
+// ---------------------------------------------------------------- post-CTA: next steps + team
+.mk-next {
+  margin-top: clamp(40px, 6vw, 64px);
+  padding-top: clamp(32px, 4vw, 44px);
+  border-top: 1px solid rgba($black, 0.08);
+}
+
+.mk-next__steps {
+  list-style: none;
+  margin: 0 auto;
+  padding: 0;
+  max-width: 480px;
+  display: grid;
+  gap: 16px;
+  text-align: left;
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    color: $slate;
+    line-height: 1.5;
+  }
+}
+
+.mk-next__num {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: $red;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.mk-team {
+  margin: 32px auto 0;
+  text-align: center;
+
+  &__label {
+    font-size: 0.85rem;
+    color: $muted;
+    margin-bottom: 14px;
+  }
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px 22px;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 500;
+      color: $mk-ink;
+    }
+  }
+
+  &__avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    object-fit: cover;
+    background: $snow-dark; // placeholder tint while the image loads
+    box-shadow: var(--shadow-border-xs);
+  }
+}
+
+// ---------------------------------------------------------------- final CTA
+.mk-cta {
+  &__inner {
+    text-align: center;
+  }
+
+  &__title {
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    margin-bottom: 16px;
+    text-wrap: balance;
+  }
+
+  // Centered lead: cap the width and balance the lines so it forms a tidy block
+  // instead of two long lines over one short one.
+  .mk-lead {
+    max-width: 48ch;
+    margin-inline: auto;
+    text-wrap: balance;
+  }
+
+  &__form {
+    margin: 32px auto 0;
+    max-width: 520px;
+    text-align: left;
+  }
+
+  &__brandline {
+    margin-top: clamp(48px, 7vw, 72px);
+    font-family: $mono;
+    font-size: 0.8rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: $muted;
+  }
+}
+
+.mk-notice {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  text-align: left;
+  margin: 0 auto;
+  max-width: 560px;
+  padding: 20px 24px;
+  border-radius: var(--radius-2xl);
+  background: $white;
+  box-shadow: var(--shadow-border-md);
+  color: $slate;
+  line-height: 1.55;
+
+  strong {
+    display: block;
+    margin-bottom: 2px;
+    color: $mk-ink;
+  }
+
+  &__icon {
+    flex: none;
+    display: inline-flex;
+    margin-top: 1px;
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  &--success &__icon {
+    color: $green-dark;
+  }
+
+  // The error alert is a compact red-tinted card (vs. the neutral white success card).
+  &--error {
+    margin-bottom: 20px;
+    padding: 16px 20px;
+    background: rgba($red, 0.05);
+    box-shadow: inset 0 0 0 1px rgba($red, 0.2);
+    color: darken($red, 18%);
+
+    .mk-notice__icon {
+      color: $red;
+    }
+
+    strong {
+      color: darken($red, 18%);
+    }
+  }
+}
+
+// ---------------------------------------------------------------- footer
+.marketing-footer {
+  background: $darker;
+  color: rgba($snow, 0.7);
+  padding: clamp(56px, 7vw, 88px) 0 40px;
+
+  &__inner {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: grid;
+    gap: 48px;
+    grid-template-columns: 1fr;
+
+    @media (min-width: 860px) {
+      grid-template-columns: 1.3fr 2fr;
+    }
+  }
+
+  &__brand {
+    max-width: 320px;
+
+    img {
+      display: block;
+      margin-bottom: 16px;
+    }
+
+    p {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: rgba($snow, 0.6);
+    }
+  }
+
+  &__social {
+    display: flex;
+    gap: 18px;
+    margin-top: 20px;
+
+    a {
+      font-size: 0.9rem;
+      color: rgba($snow, 0.7);
+      text-decoration: none;
+
+      &:hover {
+        color: $snow;
+      }
+    }
+  }
+
+  &__cols {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 32px;
+
+    @media (min-width: 620px) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    h3 {
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba($snow, 0.6);
+      margin: 0 0 14px;
+      font-weight: 600;
+    }
+
+    a {
+      display: block;
+      font-size: 0.95rem;
+      color: rgba($snow, 0.72);
+      text-decoration: none;
+      margin-bottom: 10px;
+
+      &:hover {
+        color: $snow;
+      }
+    }
+  }
+
+  &__legal {
+    max-width: 1120px;
+    margin: clamp(40px, 6vw, 64px) auto 0;
+    padding: 28px 24px 0;
+    border-top: 1px solid rgba($snow, 0.1);
+
+    p {
+      font-size: 0.8rem;
+      line-height: 1.6;
+      color: rgba($snow, 0.6);
+      margin: 0 0 10px;
+      max-width: 760px;
+    }
+  }
+}

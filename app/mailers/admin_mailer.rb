@@ -85,15 +85,6 @@ class AdminMailer < ApplicationMailer
     mail subject: "24 Hour Reminders for the Operations Team"
   end
 
-  def weekly_ysws_event_summary
-    @events = params[:events]
-    mail(
-      to: ["zach@hackclub.com", "max@hackclub.com"],
-      cc: "hcb@hackclub.com",
-      subject: "#{@events.length} new YSWS #{"organization".pluralize(@events.length)} created this past week"
-    )
-  end
-
   def blocked_authorization
     @stripe_card = params.fetch(:stripe_card)
     @event = @stripe_card.event
@@ -103,6 +94,40 @@ class AdminMailer < ApplicationMailer
       to: OPERATIONS_EMAIL,
       subject: "#{@event.name}: Stripe card authorization blocked"
     )
+  end
+
+  def balance_anomalies(anomalous_events:, anomalous_card_grants:)
+    @anomalous_events = anomalous_events
+    @anomalous_card_grants = anomalous_card_grants
+
+    mail(
+      to: engineers,
+      subject: "#{anomalous_events.length + anomalous_card_grants.length} ledgers have balance anomalies"
+    )
+  end
+
+  def fee_anomalies(anomalous_events:)
+    @anomalous_events = anomalous_events
+
+    mail(
+      to: engineers,
+      subject: "#{anomalous_events.length} events have fee anomalies"
+    )
+  end
+
+  def linked_object_anomalies(anomalous_items:)
+    @anomalous_items = anomalous_items
+
+    mail(
+      to: engineers,
+      subject: "#{anomalous_items.length} items have linked object anomalies"
+    )
+  end
+
+  private
+
+  def engineers
+    User.where(email: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"]).pluck(:email)
   end
 
 end

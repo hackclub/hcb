@@ -73,7 +73,7 @@
             <%= inline_icon "view-close", size: 32 %>
             <span>Ignore</span>
           <% end %>
-          <%= link_to accept_suggested_pairing_path(pairing, current_slide: i), class: "btn #{"bg-success" unless pairing.receipt.suggested_memo} tooltipped ml1 tooltipped--n", "aria-label": "Ignore suggestion", data: { turbo: true, turbo_method: :post } do %>
+          <%= link_to accept_suggested_pairing_path(pairing, current_slide: i), class: "btn #{"bg-success" unless pairing.receipt.suggested_memo} tooltipped ml1 tooltipped--n", "aria-label": "Link receipt to transaction", data: { turbo: true, turbo_method: :post } do %>
             <%= inline_icon "link", size: 32 %>
             <span>Accept</span>
           <% end %>

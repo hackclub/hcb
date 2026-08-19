@@ -5,9 +5,27 @@ module Api
     class DonationsController < ApplicationController
       include SetEvent
 
-      before_action :set_api_event, only: [:create]
-      before_action :set_donation, only: [:payment_intent]
-      before_action :require_trusted_oauth_app!, only: [:payment_intent]
+      before_action :set_api_event, only: [:index, :create]
+      before_action :set_donation, only: [:show, :payment_intent]
+      before_action :require_trusted_oauth_app!, only: [:create, :payment_intent]
+
+      def index
+        authorize @event, :show_in_v4?
+
+        donations = @event.donations.not_pending.order(created_at: :desc)
+
+        donations = donations.filter_by_visible_state(params[:status], context: @event) if params[:status].present?
+
+        @donations = paginate_cursor(donations.to_a, &:public_id)
+
+        if @expand.include?(:stats)
+          @total_cents = @event.donations.not_pending.succeeded_and_not_refunded.sum(:amount)
+        end
+      end
+
+      def show
+        authorize @donation
+      end
 
       def create
         amount = params[:amount_cents]
@@ -36,28 +54,15 @@ module Api
       end
 
       def payment_intent
-        amount = @donation.amount
-        if @donation.fee_covered
-          amount /= (1 - @donation.event.revenue_fee).ceil
-        end
+        authorize @donation
 
-        payment_intent = StripeService::PaymentIntent.create({
-                                                               amount:,
-                                                               currency: "usd",
-                                                               payment_method_types: ["card_present"],
-                                                               capture_method: "automatic",
-                                                               statement_descriptor: "HCB",
-                                                               statement_descriptor_suffix: StripeService::StatementDescriptor.format(@donation.event.short_name, as: :suffix),
-                                                               metadata: { donation: true, donation_id: @donation.id, event_id: @donation.event.id },
-                                                             })
-
-        render json: { payment_intent_id: payment_intent.id, client_secret: payment_intent.client_secret }, status: :created
+        render json: { payment_intent_id: @donation.stripe_payment_intent_id, client_secret: @donation.stripe_client_secret }
       end
 
       private
 
       def set_donation
-        @donation = Donation.find(params[:id])
+        @donation = Donation.find_by_public_id!(params[:id])
       end
 
     end

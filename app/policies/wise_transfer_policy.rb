@@ -14,7 +14,7 @@ class WiseTransferPolicy < ApplicationPolicy
   end
 
   def reject?
-    user_who_can_transfer?
+    user&.admin?
   end
 
   def update?
@@ -26,7 +26,7 @@ class WiseTransferPolicy < ApplicationPolicy
   end
 
   def mark_failed?
-    user_who_can_transfer?
+    user&.admin?
   end
 
   def generate_quote?

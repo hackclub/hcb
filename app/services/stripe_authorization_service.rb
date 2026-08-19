@@ -12,7 +12,8 @@ module StripeAuthorizationService
         "government_owned_lotteries_non_us_region",
         "government_owned_lotteries_us_region_only",
         "wires_money_orders",
-        "non_fi_money_orders"
+        "non_fi_money_orders",
+        "non_fi_stored_value_card_purchase_load"
       ]
     ).freeze
 
@@ -20,6 +21,16 @@ module StripeAuthorizationService
     Set.new(
       [
         "8203300025" # HEPTA PAY LTD (primary used for fraud; https://hcb.hackclub.com/blazer/queries/1118-hepta-pay-ltd-card-transactions)
+      ]
+    ).freeze
+
+  # Network IDs that are allowed even when their merchant category is forbidden.
+  # This does NOT override FORBIDDEN_MERCHANT_NETWORK_IDS — explicitly blocked
+  # network IDs (e.g. fraud) can never be allowlisted.
+  ALLOWLISTED_MERCHANT_NETWORK_IDS =
+    Set.new(
+      [
+        "088011245800" # AlipayHK "Add Card" to wallet (non_fi_money_orders)
       ]
     ).freeze
 end

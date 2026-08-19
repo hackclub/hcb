@@ -13,7 +13,7 @@
 
   <div class="flex items-center mt-2 gap-4 flex-wrap">
     <%= link_to @params.merge(format: :csv) do %>
-      <button class="btn" type="button" <%= "disabled" if @users.count == 0 %>>Export <%= pluralize @users.count, "record" %></button>
+      <button class="btn" type="button" <%= "disabled" if @users.empty? %>>Export <%= pluralize @users.count, "record" %></button>
     <% end %>
     <%= form.submit "Search", class: "ml-auto" %>
   </div>
@@ -62,7 +62,7 @@
         <td>
           <%= user.phone_number %>
           <% unless user.phone_number_verified %>
-            <br><small><i>⚠️ Unverified</i></small>
+            <br><small><i>⚠️ Unverified<%= " (bypassed)" if user.phone_number_verification_bypassed? %></i></small>
           <% end %>
         </td>
         <td>

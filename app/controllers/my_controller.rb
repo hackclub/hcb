@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :feed] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :pay, :feed] # do not force pundit
   skip_before_action :signed_in_user, only: [:cards, :reimbursements]
   before_action :signed_in_or_unverified_user, only: [:cards, :reimbursements]
   before_action :set_reimbursement_reports, only: [:reimbursements, :reimbursements_icon]
@@ -96,29 +96,21 @@ class MyController < ApplicationController
 
   def inbox
     @count = current_user.transactions_missing_receipt.count
-    @locking_count = current_user.transactions_missing_receipt(from: Receipt::CARD_LOCKING_START_DATE, to: 24.hours.ago).count
+    @locking_count = current_user.card_locking_overdue_charges.count
 
     hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
-
-    @time_based_sorting = hcb_code_ids_missing_receipt.count > (params[:per] || 15).to_i
 
     hcb_codes_missing_receipt = HcbCode.where(id: hcb_code_ids_missing_receipt)
                                        .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction) # HcbCode#card uses CT and PT
                                        .index_by(&:id).slice(*hcb_code_ids_missing_receipt).values
 
-    if @time_based_sorting
-      hcb_codes_missing_receipt = hcb_codes_missing_receipt.sort_by(&:created_at).reverse
-    end
-
     @hcb_codes = Kaminari.paginate_array(hcb_codes_missing_receipt)
                          .page(params[:page]).per(params[:per] || 15)
 
-    unless @time_based_sorting
-      @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }.transform_values { |v| v.sort_by(&:created_at).reverse }
-      @cards = GlobalID::Locator.locate_many(@card_hcb_codes.keys, includes: :event)
-                                # Order cards by created_at, newest first
-                                .sort_by(&:created_at).reverse!
-    end
+    @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }.transform_values { |v| v.sort_by(&:created_at).reverse }
+    @cards = GlobalID::Locator.locate_many(@card_hcb_codes.keys, includes: :event)
+                              # Order cards by created_at, newest first
+                              .sort_by(&:created_at).reverse!
 
     @mailbox_address = current_user.active_mailbox_address
     @receipts = Receipt.in_receipt_bin.with_attached_file.where(user: current_user)
@@ -144,7 +136,7 @@ class MyController < ApplicationController
 
     @reports = @reports.search(params[:q]) if params[:q].present?
 
-    @payout_method = current_user.payout_method
+    @payout_method = current_user.default_payout_method&.details
   end
 
   def reimbursements_icon
@@ -155,7 +147,57 @@ class MyController < ApplicationController
 
   def payroll
     @jobs = current_user.jobs
-    @payout_method = current_user.payout_method
+    @payout_method = current_user.default_payout_method&.details
+  end
+
+  def pay
+    @legal_entities = current_user.legal_entities
+
+    if params[:legal_entity_id].present?
+      selected = @legal_entities.find_by(id: params[:legal_entity_id])
+      session[:legal_entity_id] = selected.id.to_s if selected
+      return redirect_to my_pay_path
+    end
+
+    @legal_entity = @legal_entities.find_by(id: session[:legal_entity_id]) || current_user.personal_legal_entity
+    session[:legal_entity_id] = @legal_entity.id
+
+    @payout_method = @legal_entity.default_payout_method
+
+    all_payments = @legal_entity.payments
+
+    @stats = {
+      deposited: all_payments.where(aasm_state: "successful").sum(:amount_cents),
+      in_transit: all_payments.where(aasm_state: %w[pending_legal_entity under_review sent]).sum(:amount_cents),
+      canceled: all_payments.where(aasm_state: "rejected").sum(:amount_cents)
+    }
+
+    @payments = all_payments.includes(:event, :payee, { payroll_invoice: { receipts: :file_attachment } }, attempts: :payout).order(created_at: :desc)
+    @payments = @payments.search_purpose_and_event(params[:q]) if params[:q].present?
+    @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
+    @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
+    @payments = @payments.where(aasm_state: "rejected") if params[:status] == "canceled"
+    @payments = @payments.page(params[:page] || 1).per(params[:per] || 10)
+
+    @filter_options = [
+      { key: "status", label: "Status", type: "select", options: %w[deposited in_transit canceled] }
+    ]
+    @has_filter = params[:status].present?
+
+    @contractor_positions = Payroll::Position.joins(payee: { legal_entity: :legal_entity_users })
+                                             .where(legal_entity_users: { user_id: current_user.id })
+                                             .where(payees: { legal_entity_id: @legal_entity.id })
+                                             .includes(payee: :event)
+                                             .order(created_at: :desc)
+                                             .load
+    @tax_form_required = @contractor_positions.any? && !@legal_entity.completed_tax_form?
+    # Approved invoices are represented by their payment in the history table
+    # below, so only surface invoices still awaiting review here to avoid
+    # duplicating information.
+    @invoices = Payroll::Invoice.where(payroll_position: @contractor_positions)
+                                .where(aasm_state: "submitted")
+                                .includes(payroll_position: { payee: :event })
+                                .order(created_at: :desc)
   end
 
   def feed
