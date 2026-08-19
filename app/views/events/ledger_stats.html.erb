@@ -14,23 +14,23 @@
       <% end %>
     </div>
 
-    <div class="stat stat--small tooltipped tooltipped--s" aria-label="May differ slightly from the classic ledger's total revenue. Your total account balance is unaffected.">
-      <span class="stat__label flex items-center">
-        Total revenue
-        <%= inline_icon "info", size: 24, class: "ml1", 'aria-label': "Info icon" %>
-      </span>
+    <div class="stat stat--small">
+      <span class="stat__label">Total revenue</span>
       <span class="stat__value stat__value--no-space">
         <%= render_money_amount(@ledger.items.where("amount_cents > 0").sum(:amount_cents)) %>
+        <span class="tooltipped tooltipped--s" aria-label="May differ slightly from the classic ledger's total revenue. Your total account balance is unaffected.">
+          <%= inline_icon "info", size: 14, style: "color: #338eda; vertical-align: top;", 'aria-label': "Info icon" %>
+        </span>
       </span>
     </div>
 
-    <div class="stat stat--small tooltipped tooltipped--s" aria-label="May differ slightly from the classic ledger's total expenses. Your total account balance is unaffected.">
-      <span class="stat__label flex items-center">
-        Total expenses
-        <%= inline_icon "info", size: 24, class: "ml1", 'aria-label': "Info icon" %>
-      </span>
+    <div class="stat stat--small">
+      <span class="stat__label">Total expenses</span>
       <span class="stat__value stat__value--no-space">
         <%= render_money_amount(@ledger.items.where("amount_cents < 0").sum(:amount_cents).abs) %>
+        <span class="tooltipped tooltipped--s" aria-label="May differ slightly from the classic ledger's total expenses. Your total account balance is unaffected.">
+          <%= inline_icon "info", size: 14, style: "color: #338eda; vertical-align: top;", 'aria-label': "Info icon" %>
+        </span>
       </span>
     </div>
   </div>
