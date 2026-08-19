@@ -1359,11 +1359,14 @@ class EventsController < ApplicationController
   # level at a time and a deep tree would otherwise be all counting.
   def sub_organization_table_rows(event)
     # `reorder` rather than `order`, which the default scope's ordering by id
-    # would otherwise win out over and leave the tree in creation order.
+    # would otherwise win out over and leave the tree in creation order. The
+    # sort is then redone in Ruby, since plain alphabetical order reads badly
+    # for the numbered names sub-organizations tend to have.
     subevents = event.visible_subevents(current_user)
                      .includes(:scoped_tags, logo_attachment: :blob)
                      .reorder(:name)
                      .to_a
+                     .sort_by { |subevent| [natural_order_key(subevent.name), subevent.id] }
     expandable = event.expandable_subevent_ids(current_user)
     ids = subevents.map(&:id)
     card_counts = StripeCard.active.on_main_ledger.where(event_id: ids).group(:event_id).count
@@ -1376,6 +1379,12 @@ class EventsController < ApplicationController
         card_count: card_counts[subevent.id] || 0,
         organizer_count: organizer_counts[subevent.id] || 0
       }
+    end
+  end
+
+  def natural_order_key(name)
+    name.downcase.split(/(\d+)/).map.with_index do |part, index|
+      index.odd? ? [1, part.to_i, ""] : [0, 0, part]
     end
   end
 

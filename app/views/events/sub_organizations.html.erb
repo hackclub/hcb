@@ -50,24 +50,28 @@
 
 <% if @view == "list" %>
   <% if @rows.any? %>
-    <article class="table-container mt-3">
-      <table data-controller="sub-organization-tree">
-        <thead>
-          <tr>
-            <th>Organization</th>
-            <th>Tags</th>
-            <th>Balance</th>
-            <th>Cards</th>
-            <th>Team</th>
-          </tr>
-        </thead>
-        <tbody id="sub_organizations">
-          <% @rows.each_with_index do |row, index| %>
-            <%= render "events/sub_organization_row", row:, rails: [], last: index == @rows.size - 1 %>
-          <% end %>
-        </tbody>
-      </table>
-    </article>
+    <div class="mt-3" data-controller="sub-organization-tree">
+      <div class="sub-organization-tree__pinned" data-sub-organization-tree-target="pinned"></div>
+
+      <article class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Organization</th>
+              <th>Tags</th>
+              <th>Balance</th>
+              <th>Cards</th>
+              <th>Team</th>
+            </tr>
+          </thead>
+          <tbody id="sub_organizations">
+            <% @rows.each_with_index do |row, index| %>
+              <%= render "events/sub_organization_row", row:, rails: [], last: index == @rows.size - 1 %>
+            <% end %>
+          </tbody>
+        </table>
+      </article>
+    </div>
 
     <%# Sub-organizations this viewer may not see are left out entirely, along
         with everything beneath them, since showing a placeholder would give

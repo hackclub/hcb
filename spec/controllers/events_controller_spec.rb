@@ -384,6 +384,17 @@ RSpec.describe EventsController do
       )
     end
 
+    it "sorts numbered names in counting order" do
+      ["Chapter #10", "Chapter #2", "Chapter #1"].each do |name|
+        create(:event, parent:, is_public: true, name:)
+      end
+
+      get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
+
+      expect(table_row_names(response.body).grep(/Chapter/))
+        .to eq(["Chapter #1", "Chapter #2", "Chapter #10"])
+    end
+
     it "lists private sub-organizations for an organizer, badged as private", :aggregate_failures do
       sign_in_organizer_of(parent)
 
@@ -430,6 +441,19 @@ RSpec.describe EventsController do
       expect(row.at_css("button.sub-organization-row__toggle")).to be_present
       # The name is plain text; the link covering the row is what navigates.
       expect(row.at_css(".sub-organization-row__title").name).to eq("span")
+    end
+
+    # The pins have to sit outside the table: it scrolls horizontally, which is
+    # what a sticky element inside it would stick to rather than the page.
+    it "wires up the bar that pins the organizations you are scrolled inside of", :aggregate_failures do
+      get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
+
+      document = Nokogiri::HTML5(response.body)
+      controller = document.at_css("[data-controller='sub-organization-tree']")
+
+      expect(controller.at_css("[data-sub-organization-tree-target='pinned']")).to be_present
+      expect(controller.at_css("table")).to be_present
+      expect(controller.at_css(".table-container [data-sub-organization-tree-target='pinned']")).to be_nil
     end
 
     it "remembers the chosen view between visits" do
