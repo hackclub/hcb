@@ -1,5 +1,9 @@
 <%# locals: (item:) -%>
 
-<%= turbo_stream.replace_all "span[data-memo-for='#{dom_id(item)}']" do %>
-  <%= render "ledger/items/memo/span", item: %>
+<%# update_all (not replace_all): it swaps only the span's *children*, leaving
+    the span itself — and the hover-tooltip listener bound to it on page
+    load — untouched. Replacing the span outright would destroy that
+    listener with no way to re-attach it without a full page load. %>
+<%= turbo_stream.update_all "span[data-memo-for='#{dom_id(item)}']" do %>
+  <%= render "ledger/items/memo/memo_text", item: %>
 <% end %>
