@@ -3,9 +3,7 @@
 <% title "Send a wire" %>
 <% subtitle "From #{@event.name}" %>
 
-<% if @event.present? && !policy(@event).create_transfer? %>
-  <%= render partial: "events/unauthorized_callout", locals: { action: "send a wire" } %>
-<% end %>
+<% content_for :unauthorized_action, "send a wire" if @event.present? && !policy(@event).create_transfer? %>
 
 <% content_for :table_of_contents do %>
   <%= render "events/transfers/step_item", number: 1, label: "Recipient details" %>

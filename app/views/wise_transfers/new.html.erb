@@ -7,10 +7,9 @@
   <%= render "events/transfers/step_item", number: 2, label: "Payment details" %>
 <% end %>
 
+<% content_for :unauthorized_action, "send a Wise transfer" if @event.present? && !policy(@event).create_transfer? %>
+
 <% content_for :sidebar_footer do %>
-  <% if @event.present? && !policy(@event).create_transfer? %>
-    <%= render partial: "events/unauthorized_callout", locals: { action: "send a Wise transfer" } %>
-  <% end %>
   <%= render "application/callout",
       type: "info",
       icon: "wise",

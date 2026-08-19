@@ -18,9 +18,8 @@
       <li>ACH transfers are <strong>irreversible</strong> and can't be canceled.</li>
     </ul>
   <% end %>
-  <% if @event.present? && !policy(@event).create_transfer? %>
-    <%= render partial: "events/unauthorized_callout", locals: { action: "send an ACH" } %>
-  <% end %>
 <% end %>
+
+<% content_for :unauthorized_action, "send an ACH" if @event.present? && !policy(@event).create_transfer? %>
 
 <%= render "ach_transfers/form", ach_transfer: @ach_transfer %>
