@@ -27,7 +27,7 @@ class StaticPagesController < ApplicationController
       Event.find_by_public_id(id)
     end.select do |event|
       event&.is_public? && event.is_indexable?
-    end.sample(6)
+    end.sample(3)
 
     @organizer_positions = @service.organizer_positions.not_hidden
     @invites = @service.invites
