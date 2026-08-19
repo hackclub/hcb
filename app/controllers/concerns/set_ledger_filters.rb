@@ -108,13 +108,6 @@ module SetLedgerFilters
       # Whole-day inclusive end bound, matching the old transactions page
       query << { datetime: { "$lt": @end_date.to_date.next_day } } if @end_date.present?
 
-      # @user may be nil even when a user filter was requested: it's only
-      # resolved against this ledger's authors/organizers (see
-      # set_ledger_filters, above), not every account, to avoid leaking an
-      # unrelated user's name/avatar into the filter chip. Fall back to the
-      # raw param so a slug outside that scope still narrows to zero rows —
-      # Ledger::Query does its own User.where(slug:) lookup for this field —
-      # instead of silently skipping the filter and returning everything.
       query << { author: { "$eq": @user&.slug || params[:user] } } if params[:user].present?
 
       if @type.present?
