@@ -215,10 +215,6 @@ html[data-dark='true'] {
   animation: highlight 2s;
 }
 
-// The rename form now always exists in the DOM (just hidden until shift+click
-// toggles it on — see memo_controller.js), so :has(.renaming) alone would
-// match every row permanently. :not([hidden]) requires it to actually be the
-// one currently being edited.
 .transaction:has(.renaming:not([hidden])) {
   background-image:
     linear-gradient(90deg, $orange 50%, transparent 50%),

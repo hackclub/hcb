@@ -10,18 +10,8 @@
       <%= render "ledger/items/memo/span", item: %>
     <% end %>
 
-    <%# form_with only passes :id, :class, :multipart, :method, :data, and
-        :authenticity_token through as top-level html attributes — anything
-        else (like `hidden`) has to go through html: {} or it's silently
-        dropped. %>
     <%= form_with model: item, url: ledger_item_rename_path(item), method: :patch, class: "renaming", html: { hidden: true }, data: { memo_target: "form", turbo_stream: true, action: "turbo:submit-end->memo#submitEnd" } do |form| %>
       <div class="flex items-center w-screen">
-        <%# form.text_field defaults to id="ledger_item_memo" — identical for
-            every row, since Rails derives it from the model/field name, not
-            the record. Scoping it by item avoids duplicate ids across the
-            page (which was also confusing the browser's autofill into
-            suggesting other rows' memos); autocomplete is off for the same
-            reason — it's not a field a browser should ever be filling in. %>
         <%= form.text_field :memo,
                             value: item.memo,
                             id: "#{dom_id(item)}_memo",

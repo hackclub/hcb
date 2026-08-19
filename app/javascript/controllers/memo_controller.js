@@ -1,11 +1,5 @@
 import { Controller } from '@hotwired/stimulus'
 
-// Toggles a transaction's memo between a read-only display and an inline
-// rename form entirely client-side — the current memo is already in the DOM,
-// so entering edit mode never needs a request. The only network round trip
-// is the actual save (a Turbo Stream PATCH), which updates every occurrence
-// of this item's memo on the page and hands control back to whichever
-// instance of this controller triggered it.
 export default class extends Controller {
   static targets = ['display', 'form', 'input']
 

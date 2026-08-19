@@ -65,11 +65,6 @@ class Ledger
       redirect_back fallback_location: @event
     end
 
-    # Persists a memo rename. Entering/leaving edit mode happens entirely
-    # client-side (see app/javascript/controllers/memo_controller.js) since
-    # the current memo is already in the DOM — this is the only server round
-    # trip the widget ever makes, and it always responds with a Turbo Stream
-    # that updates every occurrence of this item's memo on the page.
     def rename
       authorize @item
 
