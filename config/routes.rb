@@ -499,7 +499,6 @@ Rails.application.routes.draw do
 
   resources :wires, only: [:edit, :update] do
     member do
-      post "approve"
       post "send", to: "wires#send_wire"
       post "reject"
     end
