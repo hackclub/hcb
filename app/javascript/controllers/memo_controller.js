@@ -3,6 +3,22 @@ import { Controller } from '@hotwired/stimulus'
 export default class extends Controller {
   static targets = ['display', 'form', 'input', 'tooltip']
 
+  connect() {
+    this.tooltipObserver = new MutationObserver(() => this.syncInputFromDisplay())
+    this.tooltipObserver.observe(this.tooltipTarget, { childList: true })
+  }
+
+  disconnect() {
+    this.tooltipObserver?.disconnect()
+  }
+
+  syncInputFromDisplay() {
+    const memo = this.tooltipTarget.textContent.trim()
+    this.inputTarget.value = memo
+    this.inputTarget.defaultValue = memo
+    this.tooltipTarget.title = memo
+  }
+
   editOnShiftClick(e) {
     if (!e.shiftKey) return
 
@@ -30,10 +46,6 @@ export default class extends Controller {
 
   submitEnd(e) {
     if (!e.detail.success) return
-
-    this.inputTarget.defaultValue = this.inputTarget.value
-
-    this.tooltipTarget.title = this.inputTarget.value
 
     this.showDisplay()
     this.flashRenamed()
