@@ -152,6 +152,13 @@ class EventsController < ApplicationController
     authorize @event
   end
 
+  # Ledger-native (new transaction engine) equivalent of `stats`, turbo-framed
+  # into the ledger page.
+  def ledger_stats
+    authorize @event
+    @ledger = @event.ledger
+  end
+
   def transactions
     maybe_pending_invite = OrganizerPositionInvite.pending.find_by(user: current_user, event: @event)
 

@@ -200,6 +200,32 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#ledger_stats" do
+    render_views
+
+    let(:admin) { create(:user, :make_admin) }
+    let(:event) { create(:event) }
+
+    before { create_session(admin, verified: true) }
+
+    it "sums ledger items by sign for revenue and expenses" do
+      revenue_item = create(:ledger_item, custom_memo: "Revenue item", datetime: Time.current)
+      Ledger::Mapping.create!(ledger: event.ledger, ledger_item: revenue_item, on_primary_ledger: true)
+      revenue_item.update_columns(status: "settled", amount_cents: 1500)
+
+      expense_item = create(:ledger_item, custom_memo: "Expense item", datetime: Time.current)
+      Ledger::Mapping.create!(ledger: event.ledger, ledger_item: expense_item, on_primary_ledger: true)
+      expense_item.update_columns(status: "settled", amount_cents: -600)
+
+      get(:ledger_stats, params: { event_id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(money(1500)) # total revenue
+      expect(response.body).to include(money(600))  # total expenses, shown positive
+      expect(response.body).to include(money(900))  # account balance (1500 - 600)
+    end
+  end
+
   describe "#transactions" do
     let(:admin) { create(:user, :make_admin) }
     let(:event) { create(:event) }

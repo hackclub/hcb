@@ -296,6 +296,9 @@ class EventPolicy < ApplicationPolicy
     auditor? || (reader? && (Flipper.enabled?(:new_ledger_2026_06_30, record) || Flipper.enabled?(:new_ledger_2026_07_17, user)))
   end
 
+  # Turbo frame for the ledger page
+  alias_method :ledger_stats?, :ledger?
+
   def toggle_new_ledger?
     auditor_or_reader?
   end
