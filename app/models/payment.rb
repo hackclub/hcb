@@ -104,8 +104,8 @@ class Payment < ApplicationRecord
     create_payment_attempt!
   end
 
-  def current_payout
-    current_attempt&.payout
+  def latest_payout
+    attempts.last&.payout
   end
 
   def popover_path
