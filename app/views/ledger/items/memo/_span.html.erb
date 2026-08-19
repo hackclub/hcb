@@ -1,16 +1,5 @@
 <%# locals: (item:) -%>
 
-<%# The outer span's inline text-decoration:none blocks a class-based rule
-    from underlining it directly, so .memo-underline's hover-underline (see
-    _transactions.scss) targets a plain inner span instead.
-
-    data-memo-target="tooltip": after a rename, _stream.turbo_stream.erb
-    updates this span's *children* (not the span itself, see below) so the
-    tooltip's hover listener — bound once, on page load, by ui.js's
-    attachTooltipListener — stays attached to this same element rather than
-    being lost on a fresh replacement. Its title attribute doesn't get
-    refreshed by that child-only update, so memo_controller.js sets it here
-    directly after a successful save. %>
 <span class="mr2 tooltipped tooltipped--s memo-underline"
       style="color: inherit; text-decoration: none;"
       title="<%= item.memo %>"
