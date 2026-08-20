@@ -217,7 +217,7 @@
       </thead>
       <tbody>
         <% @payments.each do |payment| %>
-          <% payout = payment.payout %>
+          <% payout = payment.latest_payout %>
           <% state_color = { "pending_legal_entity" => "muted", "under_review" => "info", "sent" => "info", "successful" => "success", "rejected" => "error" }[payment.aasm_state] %>
           <tr class="clickable">
             <td>
