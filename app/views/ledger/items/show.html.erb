@@ -165,7 +165,7 @@
 </section>
 
 <% if @item.hcb_code.present? %>
-  <%= render "receipts/list_v2", hcb_code: @item, frame: false, transaction_show_receipt_button: true, transaction_show_author_img: true %>
+  <%= render "receipts/list_v2", hcb_code: @item.hcb_code, frame: false, transaction_show_receipt_button: true, transaction_show_author_img: true %>
   <%= render partial: "receipts/form_v3", locals: {
         receiptable: @item.hcb_code,
         enable_linking: true,
@@ -174,7 +174,7 @@
         turbo: true
       } %>
   
-  <%= render "comments/list", comments: @item.comments %>
+  <%= render "comments/list", comments: @item.hcb_code.comments %>
   <%= render "comments/form", commentable: @item.hcb_code %>
 <% end %>
 
