@@ -188,16 +188,10 @@ class Ledger
       nil
     end
 
-    # TODO: TEMPORARY, remove the hcb_code term once comments are fully
-    # migrated from HcbCode to Ledger::Item. Comments are being moved over in
-    # stages; until that finishes, a transaction's comments may still live on
-    # its HcbCode instead of here. Overrides Commentable#all_comments to fold
-    # those in too, on top of the shared_commentable union above.
-    def all_comments
-      scope = Comment.where(commentable: self).or(Comment.where(commentable: hcb_code))
-      scope = scope.or(Comment.where(commentable: shared_commentable)) if shared_commentable
-      scope.order(:created_at)
-    end
+    # Comments now live solely on Ledger::Item (see the Comment->Ledger::Item
+    # migration), so Commentable#all_comments' default implementation — self
+    # plus shared_commentable, which is real as of #14694 — is exactly right;
+    # no override needed here anymore.
 
     def comment_recipients_for(comment)
       users = []

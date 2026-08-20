@@ -442,9 +442,10 @@ RSpec.describe Ledger::Item, type: :model do
       expect(item.comment_count).to eq(1)
     end
 
-    it "counts comments from both the item and its hcb_code" do
-      # TODO: TEMPORARY — comments are being migrated from HcbCode to Ledger::Item;
-      # remove this once all_comments no longer needs to fold in the hcb_code side.
+    it "counts only the item's own comments, not its hcb_code's" do
+      # Comments now live on Ledger::Item; a comment still attached directly to
+      # the hcb_code (which shouldn't normally happen post-migration) doesn't
+      # count here.
       user = create(:user)
       item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current)
       item.save(validate: false)
@@ -457,8 +458,8 @@ RSpec.describe Ledger::Item, type: :model do
       item.refresh!
       item.reload
 
-      expect(item.comment_count).to eq(3)
-      expect(item.not_admin_only_comment_count).to eq(2)
+      expect(item.comment_count).to eq(2)
+      expect(item.not_admin_only_comment_count).to eq(1)
     end
   end
 
@@ -536,18 +537,15 @@ RSpec.describe Ledger::Item, type: :model do
       expect(item.all_comments).to include(invoice_comment)
     end
 
-    # TODO: TEMPORARY — remove once comments are fully migrated from HcbCode to
-    # Ledger::Item and this override is no longer needed.
-    it "includes comments on both the item and its hcb_code" do
+    it "does not include comments on its hcb_code" do
       user = create(:user)
       item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current)
       item.save(validate: false)
       hcb_code = create(:hcb_code, ledger_item: item)
 
-      item_comment = create(:comment, commentable: item, user:)
       hcb_code_comment = create(:comment, commentable: hcb_code, user:)
 
-      expect(item.all_comments).to include(item_comment, hcb_code_comment)
+      expect(item.all_comments).not_to include(hcb_code_comment)
     end
 
     it "does not include comments from unrelated hcb_codes" do
