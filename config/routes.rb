@@ -181,6 +181,8 @@ Rails.application.routes.draw do
       post "unimpersonate"
 
       post "suppress_card_locking", to: "users#suppress_card_locking"
+
+      post "reset_billing_address", to: "users#reset_billing_address"
     end
     post "delete_profile_picture", to: "users#delete_profile_picture"
     post "generate_totp"
@@ -497,7 +499,6 @@ Rails.application.routes.draw do
 
   resources :wires, only: [:edit, :update] do
     member do
-      post "approve"
       post "send", to: "wires#send_wire"
       post "reject"
     end
@@ -558,7 +559,6 @@ Rails.application.routes.draw do
       get "memo_frame"
       get "dispute"
       post "invoice_as_personal_transaction"
-      post "pin"
       post "toggle_tag/:tag_id", to: "hcb_codes#toggle_tag", as: :toggle_tag
       post "send_receipt_sms", to: "hcb_codes#send_receipt_sms", as: :send_sms_receipt
 
@@ -641,6 +641,9 @@ Rails.application.routes.draw do
   scope module: :ledger, as: :ledger do
     resources :items, path: "transactions", only: [:show] do
       get "hcb"
+      post "pin"
+      post "unpin"
+      patch "rename"
     end
   end
   resources :ledger_items, only: [], path: "transactions", concerns: :commentable
@@ -729,7 +732,6 @@ Rails.application.routes.draw do
 
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
-          get :intercom_token, to: "intercom#token"
         end
 
         resources :users, only: [:show] do
@@ -1001,6 +1003,7 @@ Rails.application.routes.draw do
     get "ledger"
     post "toggle_new_ledger"
     get "stats"
+    get "ledger_stats"
     get "merchants_filter"
     put "toggle_hidden"
     post "claim_point_of_contact"
