@@ -2,7 +2,7 @@
 
 class Ledger
   class ItemsController < ApplicationController
-    before_action :set_item, only: [:pin, :unpin, :rename]
+    before_action :set_item, only: [:pin, :unpin, :rename, :invoice_as_personal_transaction]
 
     def show
       @item = Ledger::Item.find_by_hashid!(params[:id])
@@ -72,6 +72,29 @@ class Ledger
       @item.update_custom_memo!(memo)
 
       render partial: "ledger/items/memo/stream", locals: { item: @item }, formats: :turbo_stream
+    end
+
+    def invoice_as_personal_transaction
+      authorize @item
+
+      # TODO: reference hcb_code.ledger_item directly for the sake of migration; revisit once this is Ledger::Item-native.
+      hcb_code = @item.hcb_code
+
+      if hcb_code.amount_cents > -100
+        flash[:error] = "Invoices can only be generated for charges of $1.00 or more."
+        return redirect_to hcb_code
+      end
+
+      if @item.personal_transaction
+        flash[:error] = "A repayment invoice already exists for this transaction."
+        return redirect_to @item.personal_transaction.invoice
+      end
+
+      personal_tx = PersonalTransaction.create(ledger_item: @item, reporter: current_user)
+
+      flash[:success] = "We've sent an invoice for repayment to #{personal_tx.invoice.sponsor.contact_email}."
+
+      redirect_to personal_tx.invoice
     end
 
     private
