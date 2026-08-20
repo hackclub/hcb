@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_173648) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_19_120100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -385,7 +385,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_173648) do
     t.text "custom_memo"
     t.date "date", null: false
     t.boolean "fee_waived", default: false
-    t.boolean "fronted", default: false
+    t.boolean "fronted", default: false, null: false
     t.text "hcb_code"
     t.bigint "increase_check_id"
     t.bigint "ledger_item_id"
@@ -430,7 +430,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_173648) do
     t.index ["reimbursement_payout_holding_id"], name: "index_canonical_pending_txs_on_reimbursement_payout_holding_id"
     t.index ["wire_id"], name: "index_canonical_pending_transactions_on_wire_id"
     t.index ["wise_transfer_id"], name: "index_canonical_pending_transactions_on_wise_transfer_id"
-    t.check_constraint "fronted IS NOT NULL", name: "canonical_pending_transactions_fronted_null"
   end
 
   create_table "canonical_transactions", force: :cascade do |t|
@@ -2616,12 +2615,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_173648) do
   create_table "tags", force: :cascade do |t|
     t.text "color"
     t.datetime "created_at", null: false
-    t.string "emoji"
+    t.string "emoji", null: false
     t.bigint "event_id", null: false
     t.text "label"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_tags_on_event_id"
-    t.check_constraint "emoji IS NOT NULL", name: "tags_emoji_null"
   end
 
   create_table "tasks", force: :cascade do |t|
