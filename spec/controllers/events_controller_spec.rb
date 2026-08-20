@@ -149,7 +149,7 @@ RSpec.describe EventsController do
 
     before { create_session(admin, verified: true) }
 
-    context "when the organizer has opted into the new ledger" do
+    context "when the user has opted into the new ledger" do
       before { Flipper.enable_actor(:new_ledger_2026_07_17, admin) }
 
       it "renders the new ledger" do

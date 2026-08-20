@@ -1,6 +1,8 @@
 <%# locals: (item:) -%>
 
-<% if policy(item).rename? %>
+<% if !policy(item).show? %>
+  <span title="<%= item.memo %>"><%= render "ledger/items/memo/memo_text", item: %></span>
+<% elsif policy(item).rename? %>
   <div class="flex gap-1" style="flex-grow: 1; min-height: 28px" data-controller="memo">
     <% link_data = (popovers_enabled? ? ledger_item_popover_data(item) : { turbo: false }).merge(
          memo_target: "display",
