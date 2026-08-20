@@ -33,8 +33,8 @@ class FeeReimbursement < ApplicationRecord
   validates_uniqueness_of :transaction_memo
 
   scope :unprocessed, -> { where(processed_at: nil) }
-    scope :pending, -> { where.not(processed_at: nil) }
-    scope :completed, -> { includes(:t_transaction).where.not(transactions: { fee_reimbursement_id: nil }) }
+  scope :pending, -> { where.not(processed_at: nil) }
+  scope :completed, -> { includes(:t_transaction).where.not(transactions: { fee_reimbursement_id: nil }) }
 
   # `pending` above joins against the legacy (pre-2021) `transactions` table,
   # which nothing writes to anymore — `transactions.fee_reimbursement_id` is
