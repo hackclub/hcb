@@ -407,6 +407,115 @@ RSpec.describe Ledger::Item, type: :model do
       item.update!(custom_memo: "  Custom memo  ")
       expect(item.custom_memo).to eq("Custom memo")
     end
+
+    # Regression coverage for a production bug: the counter cache never
+    # included shared_commentable's comments (e.g. a disbursement's shared
+    # thread), because Ledger::Item had no shared_commentable at all.
+    it "counts a disbursement's shared comments" do
+      user = create(:user)
+      disbursement = create(:disbursement)
+      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current, linked_object: disbursement.outgoing_disbursement)
+      item.save(validate: false)
+
+      create(:comment, commentable: disbursement, user:)
+      create(:comment, commentable: disbursement, admin_only: true, user:)
+
+      item.refresh!
+      item.reload
+
+      expect(item.comment_count).to eq(2)
+      expect(item.not_admin_only_comment_count).to eq(1)
+    end
+
+    it "counts an invoice's comments" do
+      expect_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)
+      user = create(:user)
+      invoice = create(:invoice)
+      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current, linked_object: invoice)
+      item.save(validate: false)
+
+      create(:comment, commentable: invoice, user:)
+
+      item.refresh!
+      item.reload
+
+      expect(item.comment_count).to eq(1)
+    end
+  end
+
+  describe "#shared_commentable" do
+    it "returns the Disbursement for an outgoing disbursement leg" do
+      disbursement = create(:disbursement)
+      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current, linked_object: disbursement.outgoing_disbursement)
+      item.save(validate: false)
+
+      expect(item.shared_commentable?).to be true
+      expect(item.shared_commentable).to eq(disbursement)
+    end
+
+    it "returns the Disbursement for an incoming disbursement leg" do
+      disbursement = create(:disbursement)
+      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current, linked_object: disbursement.incoming_disbursement)
+      item.save(validate: false)
+
+      expect(item.shared_commentable?).to be true
+      expect(item.shared_commentable).to eq(disbursement)
+    end
+
+    it "returns the Invoice for an invoice-linked item" do
+      expect_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)
+      invoice = create(:invoice)
+      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current, linked_object: invoice)
+      item.save(validate: false)
+
+      expect(item.shared_commentable?).to be true
+      expect(item.shared_commentable).to eq(invoice)
+    end
+
+    # Not special-cased on Invoice specifically — any linked_object that's
+    # itself Commentable is shared, so this generalizes for free to whatever
+    # else ends up being both a linked_object and Commentable.
+    it "returns the linked_object itself when it is Commentable, regardless of type" do
+      ach_transfer = create(:ach_transfer, event: create(:event, :with_positive_balance))
+      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current, linked_object: ach_transfer)
+      item.save(validate: false)
+
+      expect(item.shared_commentable?).to be true
+      expect(item.shared_commentable).to eq(ach_transfer)
+    end
+
+    it "returns nil for items with no shared commentable" do
+      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current)
+      item.save(validate: false)
+
+      expect(item.shared_commentable?).to be false
+      expect(item.shared_commentable).to be_nil
+    end
+  end
+
+  describe "#all_comments" do
+    it "includes the shared_commentable's comments for a disbursement leg" do
+      user = create(:user)
+      disbursement = create(:disbursement)
+      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current, linked_object: disbursement.outgoing_disbursement)
+      item.save(validate: false)
+
+      disbursement_comment = create(:comment, commentable: disbursement, user:)
+
+      expect(item.all_comments).to include(disbursement_comment)
+    end
+
+    it "includes the Invoice's comments for an invoice-linked item" do
+      expect_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)
+      user = create(:user)
+      invoice = create(:invoice)
+      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current, linked_object: invoice)
+      item.save(validate: false)
+
+      invoice_comment = create(:comment, commentable: invoice, user:)
+
+      expect(item.all_comments).to include(invoice_comment)
+    end
   end
 
   describe "account verification detection" do

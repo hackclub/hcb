@@ -55,8 +55,17 @@
 
   </div>
 
-  <% if commentable.shared_commentable? && !@comment&.persisted? %>
-    <% disbursement = commentable.outgoing_disbursement || commentable.incoming_disbursement %>
+  <%# The "share with counterparty" choice below is a disbursement-specific
+      feature (it needs a counterparty to share with) — gate on that directly
+      rather than the generic shared_commentable?, which other commentables
+      (e.g. Invoice) can also be true for without having a counterparty.
+      Scoped to HcbCode/Ledger::Item specifically: Disbursement itself also
+      defines same-named methods for an unrelated purpose (always truthy),
+      and most other commentables (User, Event, ...) don't define them at all. %>
+  <% if commentable.is_a?(HcbCode) || commentable.is_a?(Ledger::Item)
+       disbursement = commentable.outgoing_disbursement || commentable.incoming_disbursement
+     end %>
+  <% if disbursement && !@comment&.persisted? %>
     <div data-controller="commentable"
          data-commentable-shared-type-value="<%= commentable.shared_commentable.class.to_s %>"
          data-commentable-shared-id-value="<%= commentable.shared_commentable.id %>">

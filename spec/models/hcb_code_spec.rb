@@ -281,10 +281,19 @@ RSpec.describe HcbCode, type: :model do
         expect(incoming.shared_commentable?).to be true
       end
 
-      it "returns false for non-disbursement codes" do
-        hcb_code = create(:hcb_code)
+      # The :hcb_code factory's default code_type is INVOICE_CODE, so an
+      # explicit non-invoice, non-disbursement code_type is needed here.
+      it "returns false for non-disbursement, non-invoice codes" do
+        hcb_code = create(:hcb_code, code_type: ::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE)
 
         expect(hcb_code.shared_commentable?).to be false
+      end
+
+      it "returns true for invoice codes" do
+        expect_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)
+        invoice = create(:invoice)
+
+        expect(invoice.local_hcb_code.shared_commentable?).to be true
       end
     end
 
@@ -303,10 +312,17 @@ RSpec.describe HcbCode, type: :model do
         expect(incoming.shared_commentable).to eq(disbursement)
       end
 
-      it "returns nil for non-disbursement codes" do
-        hcb_code = create(:hcb_code)
+      it "returns nil for non-disbursement, non-invoice codes" do
+        hcb_code = create(:hcb_code, code_type: ::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE)
 
         expect(hcb_code.shared_commentable).to be_nil
+      end
+
+      it "returns the Invoice for invoice codes" do
+        expect_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)
+        invoice = create(:invoice)
+
+        expect(invoice.local_hcb_code.shared_commentable).to eq(invoice)
       end
     end
 
@@ -335,6 +351,16 @@ RSpec.describe HcbCode, type: :model do
         comment = create(:comment, commentable: hcb_code, user:)
 
         expect(hcb_code.all_comments).to include(comment)
+      end
+
+      it "includes comments on the associated Invoice for invoice codes" do
+        expect_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)
+        invoice = create(:invoice)
+        hcb_code = invoice.local_hcb_code
+        hcb_code_comment = create(:comment, commentable: hcb_code, user:)
+        invoice_comment = create(:comment, commentable: invoice, user:)
+
+        expect(hcb_code.all_comments).to include(hcb_code_comment, invoice_comment)
       end
     end
 

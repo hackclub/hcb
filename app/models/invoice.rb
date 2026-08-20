@@ -114,6 +114,8 @@ class Invoice < ApplicationRecord
 
   include Freezable
 
+  include Commentable
+
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
@@ -373,6 +375,35 @@ class Invoice < ApplicationRecord
 
   def smart_memo
     sponsor.name
+  end
+
+  def comment_recipients_for(comment)
+    users = []
+    users += comments.map(&:user)
+    users += comments.flat_map(&:mentioned_users)
+    users += (event&.users || []).reject(&:my_threads?)
+    users += [creator]
+
+    if comment.admin_only?
+      users += [event&.point_of_contact].compact
+      return users.uniq.select(&:auditor?).reject(&:no_threads?).excluding(comment.user).collect(&:email_address_with_name)
+    end
+
+    users.uniq.excluding(comment.user).reject(&:no_threads?).collect(&:email_address_with_name)
+  end
+
+  def comment_mailer_subject
+    "New comment on invoice for #{item_description}."
+  end
+
+  def comment_mentionable(current_user: nil)
+    users = []
+    users += comments.includes(:user).map(&:user)
+    users += comments.flat_map(&:mentioned_users)
+    users += event.users if event && (!current_user || Pundit.policy(current_user, event).team?)
+    users += [event&.point_of_contact].compact
+
+    users.compact.uniq
   end
 
   include HasHcbCode

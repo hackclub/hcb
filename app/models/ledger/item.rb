@@ -155,6 +155,54 @@ class Ledger
       receipt_required? && marked_no_or_lost_receipt_at.nil? && receipt_count == 0
     end
 
+    # Mirrors HcbCode#outgoing_disbursement/#incoming_disbursement, but this is
+    # simpler: a disbursement leg's ledger item already has linked_object set
+    # directly to the Disbursement::Outgoing/Incoming side, no lookup needed.
+    def outgoing_disbursement
+      linked_object if linked_object_type == "Disbursement::Outgoing"
+    end
+
+    def incoming_disbursement
+      linked_object if linked_object_type == "Disbursement::Incoming"
+    end
+
+    # Overrides shared_commentable?/shared_commentable in Commentable so a
+    # disbursement's two ledger items (one per side) share a comment thread
+    # through the parent Disbursement, and a linked object that's itself
+    # Commentable (e.g. Invoice) shares one through that object directly —
+    # a stable home for comments that predate/outlive this specific ledger
+    # item (e.g. discussion on an invoice that's never paid).
+    #
+    # The disbursement case can't be folded into the general linked_object
+    # check below: linked_object for a disbursement leg is a
+    # Disbursement::Outgoing/Incoming (from Disbursement#outgoing_disbursement/
+    # #incoming_disbursement), and Commentable is only included on the plain
+    # Disbursement class, not that wrapper — hence #disbursement to convert.
+    def shared_commentable?
+      shared_commentable.present?
+    end
+
+    def shared_commentable
+      return (outgoing_disbursement || incoming_disbursement)&.disbursement if outgoing_disbursement || incoming_disbursement
+      return linked_object if linked_object.is_a?(Commentable)
+
+      nil
+    end
+
+    # TODO: this union will simplify once the Comment->Ledger::Item migration
+    # finishes and comments live directly on Ledger::Item. For now, comments
+    # live on hcb_code — deliberately built on a plain Comment.where rather
+    # than the `comments` association (which goes through hcb_code and so
+    # brings its own INNER JOIN): combining that with an unrelated
+    # Comment.where(commentable: shared_commentable) via `.or` silently drops
+    # every shared_commentable row, since the join still applies to the whole
+    # query regardless of which side of the WHERE-level OR would've matched.
+    def all_comments
+      scope = Comment.where(commentable: hcb_code)
+      scope = scope.or(Comment.where(commentable: shared_commentable)) if shared_commentable
+      scope.order(:created_at)
+    end
+
     # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
     # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
     # refresh! should not update any non-caching columns
@@ -169,8 +217,8 @@ class Ledger
       # Counter caches
       self.ct_count = canonical_transactions.size
       self.cpt_count = canonical_pending_transactions.size
-      self.comment_count = comments.size
-      self.not_admin_only_comment_count = comments.not_admin_only.size
+      self.comment_count = all_comments.count
+      self.not_admin_only_comment_count = all_comments.not_admin_only.count
       self.receipt_count = receipts.size
 
       self.amount_cents = calculate_amount_cents

@@ -46,8 +46,11 @@
   <%= turbo_frame_tag :subscriptions, src: subscriptions_transactions_hcb_code_path(@hcb_code) if @hcb_code.stripe_card? %>
 
   <%= render "comments/list", comments: @hcb_code.all_comments, viewing_commentable: @hcb_code %>
-  <% if @hcb_code.shared_commentable? %>
-    <% viewing_disbursement = @hcb_code.outgoing_disbursement || @hcb_code.incoming_disbursement %>
+  <%# The counterparty link below is a disbursement-specific feature — gate on
+      that directly rather than the generic shared_commentable?, which other
+      commentables (e.g. Invoice) can also be true for without a counterparty. %>
+  <% viewing_disbursement = @hcb_code.outgoing_disbursement || @hcb_code.incoming_disbursement %>
+  <% if viewing_disbursement %>
     <% counterparty_hcb_code = viewing_disbursement.counterparty.local_hcb_code %>
     <% if policy(counterparty_hcb_code).show? && counterparty_hcb_code.comments.count > 0 %>
       <p class="muted">

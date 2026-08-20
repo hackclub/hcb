@@ -507,11 +507,14 @@ class HcbCode < ApplicationRecord
   # Overrides shared_commentable? in Commentable concern to avoid
   # unnecessary database read
   def shared_commentable?
-    outgoing_disbursement? || incoming_disbursement?
+    outgoing_disbursement? || incoming_disbursement? || invoice?
   end
 
   def shared_commentable
-    (outgoing_disbursement || incoming_disbursement)&.disbursement
+    return (outgoing_disbursement || incoming_disbursement)&.disbursement if outgoing_disbursement? || incoming_disbursement?
+    return invoice if invoice?
+
+    nil
   end
 
   def card_grant
