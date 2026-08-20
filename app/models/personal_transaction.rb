@@ -26,6 +26,7 @@
 class PersonalTransaction < ApplicationRecord
   belongs_to :ledger_item, class_name: "Ledger::Item", inverse_of: :personal_transaction
   validates :ledger_item, uniqueness: true, presence: true
+  validate :ledger_item_amount_is_negative
   belongs_to :invoice
   belongs_to :reporter, class_name: "User"
 
@@ -37,6 +38,12 @@ class PersonalTransaction < ApplicationRecord
   end
 
   private
+
+  def ledger_item_amount_is_negative
+    return if ledger_item.nil?
+
+    errors.add(:ledger_item, "must have a negative amount") if ledger_item.amount_cents >= 0
+  end
 
   # TODO: reference hcb_code.ledger_item directly for the sake of migration; revisit once PersonalTransaction goes Ledger::Item-native.
   def send_invoice

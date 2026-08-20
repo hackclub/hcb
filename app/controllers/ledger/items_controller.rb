@@ -78,7 +78,7 @@ class Ledger
       # TODO: reference hcb_code.ledger_item directly for the sake of migration; revisit once this is Ledger::Item-native.
       hcb_code = @item.hcb_code
 
-      if hcb_code.amount_cents > -100
+      if @item.amount_cents > -100
         flash[:error] = "Invoices can only be generated for charges of $1.00 or more."
         return redirect_to hcb_code
       end
