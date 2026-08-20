@@ -28,4 +28,55 @@ RSpec.describe CardGrant, type: :model do
       expect(card_grant.ledger).to be_a(Ledger)
     end
   end
+
+  describe "#state_text" do
+    let(:system_user) { create(:user, email: User::SYSTEM_USER_EMAIL) }
+
+    before do
+      allow_any_instance_of(CardGrant).to receive(:transfer_money)
+      allow(User).to receive(:system_user).and_return(system_user)
+    end
+
+    context "when card is frozen by the system user (one time use)" do
+      it "returns the one-time-use frozen message" do
+        card_grant = create(:card_grant)
+        card_grant.stripe_card.update!(stripe_status: "inactive", last_frozen_by: system_user)
+        allow(card_grant.stripe_card).to receive(:frozen?).and_return(true)
+
+        expect(card_grant.state_text).to eq("Frozen by one time use, contact the org for any inquiries")
+      end
+    end
+
+    context "when card is frozen by a non-system user" do
+      it "returns 'Frozen'" do
+        card_grant = create(:card_grant)
+        other_user = create(:user)
+        card_grant.stripe_card.update!(stripe_status: "inactive", last_frozen_by: other_user)
+        allow(card_grant.stripe_card).to receive(:frozen?).and_return(true)
+
+        expect(card_grant.state_text).to eq("Frozen")
+      end
+    end
+
+    context "when card is frozen with no last_frozen_by" do
+      it "returns 'Frozen'" do
+        card_grant = create(:card_grant)
+        card_grant.stripe_card.update!(stripe_status: "inactive", last_frozen_by: nil)
+        allow(card_grant.stripe_card).to receive(:frozen?).and_return(true)
+
+        expect(card_grant.state_text).to eq("Frozen")
+      end
+    end
+
+    context "when card is inactive (never activated) by system user" do
+      it "returns the one-time-use frozen message" do
+        card_grant = create(:card_grant)
+        card_grant.stripe_card.update!(stripe_status: "inactive", last_frozen_by: system_user)
+        allow(card_grant.stripe_card).to receive(:frozen?).and_return(false)
+        allow(card_grant.stripe_card).to receive(:inactive?).and_return(true)
+
+        expect(card_grant.state_text).to eq("Frozen by one time use, contact the org for any inquiries")
+      end
+    end
+  end
 end
