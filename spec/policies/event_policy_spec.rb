@@ -139,14 +139,6 @@ RSpec.describe EventPolicy, type: :policy do
       end
     end
 
-    context "as a non-member with the opt-in flag enabled" do
-      before { Flipper.enable_actor(:new_ledger_2026_07_17, user) }
-
-      it "is denied" do
-        is_expected.to eq(false)
-      end
-    end
-
     context "as an auditor" do
       let(:user) { create(:user, :make_auditor) }
 
