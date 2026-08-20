@@ -39,7 +39,7 @@ RSpec.describe ReceiptsHelper, type: :helper do
   describe "#receipt_due_group_label" do
     it "names the two buckets that aren't dates" do
       expect(helper.receipt_due_group_label(:overdue, now:)).to eq("Overdue")
-      expect(helper.receipt_due_group_label(:none, now:)).to eq("No deadline")
+      expect(helper.receipt_due_group_label(:none, now:)).to eq("Older receipts")
     end
 
     it "uses relative wording for the next couple of days" do

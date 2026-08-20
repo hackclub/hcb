@@ -106,21 +106,32 @@
 <% if @grouping == "due_date" %>
   <% @due_date_groups.each do |group, hcb_codes| %>
     <% style = receipt_due_group_style(group, now: @now) %>
-    <section class="mb3 card p0 receipt-card">
-      <h2 class="heading leading-[1.5] p1 pl2 mt0 ml0 flex justify-between items-center gap-2">
-        <span class="flex items-center gap-2">
-          <%= inline_icon style[:icon], size: 25, class: style[:icon_class] %>
-          <%= receipt_due_group_label(group, now: @now) %>
-        </span>
+    <%# Charges with no deadline are a long tail nobody is on the hook for, so
+        they collapse behind a disclosure instead of padding out the page. %>
+    <% collapsible = group == :none %>
+    <%= content_tag(collapsible ? :details : :section, class: "mb3 card p0 receipt-card") do %>
+      <%= content_tag(collapsible ? :summary : :div) do %>
+        <h2 class="heading leading-[1.5] p1 pl2 mt0 ml0 flex justify-between items-center gap-2">
+          <span class="flex items-center gap-2">
+            <%= inline_icon style[:icon], size: 25, class: style[:icon_class] %>
+            <%= receipt_due_group_label(group, now: @now) %>
+          </span>
 
-        <%# When a group spills onto other pages, say so rather than repeating
-            the same total above a partial list. %>
-        <% total = @due_date_group_counts[group] %>
-        <%= badge_for hcb_codes.size == total ? pluralize(total, "transaction") : "#{hcb_codes.size} of #{total} transactions", class: style[:badge_class] %>
-      </h2>
+          <span class="flex items-center gap-2">
+            <%# When a group spills onto other pages, say so rather than repeating
+                the same total above a partial list. %>
+            <% total = @due_date_group_counts[group] %>
+            <%= badge_for hcb_codes.size == total ? pluralize(total, "transaction") : "#{hcb_codes.size} of #{total} transactions", class: style[:badge_class] %>
+
+            <% if collapsible %>
+              <span class="muted line-height-0"><%= inline_icon "down-caret", size: 24, class: "flip-when-open" %></span>
+            <% end %>
+          </span>
+        </h2>
+      <% end %>
 
       <%= render "my/missing_receipt_transactions", hcb_codes:, show_event_name: true %>
-    </section>
+    <% end %>
   <% end %>
 <% else %>
   <% @cards.each do |card| %>

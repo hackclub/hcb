@@ -16,7 +16,7 @@ module ReceiptsHelper
   def receipt_due_group_label(group, now: Time.current)
     case group
     when :overdue then "Overdue"
-    when :none then "No deadline"
+    when :none then "Older receipts"
     else
       case (group - now.to_date).to_i
       when 0 then "Due today"
