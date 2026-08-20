@@ -173,7 +173,7 @@
         include_spacing: true,
         turbo: true
       } %>
-  <%= render "comments/list", comments: @item.hcb_code.comments %>
+  <%= render "comments/list", comments: @item.all_comments %>
   <%= render "comments/form", commentable: @item.hcb_code %>
 <% end %>
 

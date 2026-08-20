@@ -734,14 +734,19 @@ class HcbCode < ApplicationRecord
   end
 
   def not_admin_only_comments_count
-    # `not_admin_only.count` always issues a new query to the DB because a scope is being applied.
-    # However, if comments have been preloaded, it's more likely to be faster to count
-    # the non admin comments in memory. The vast majority of HcbCodes have fewer than 4 comments
-    @not_admin_only_comments_count ||= if comments.loaded?
-                                         comments.count { |c| !c.admin_only }
-                                       else
-                                         comments.not_admin_only.count
-                                       end
+    @not_admin_only_comments_count ||= all_comments.not_admin_only.count
+  end
+
+  # TODO: TEMPORARY, remove once comments are fully migrated from HcbCode to
+  # Ledger::Item. Comments are being moved over in stages; until that finishes,
+  # a transaction's comments may live on either this HcbCode or its Ledger::Item.
+  # Overrides Commentable#all_comments to fold both in, on top of the existing
+  # shared_commentable (disbursement/invoice) union.
+  def all_comments
+    scope = comments
+    scope = scope.or(Comment.where(commentable: ledger_item)) if ledger_item
+    scope = scope.or(Comment.where(commentable: shared_commentable)) if shared_commentable
+    scope.order(:created_at)
   end
 
   def pinnable?

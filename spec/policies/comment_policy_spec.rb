@@ -9,6 +9,27 @@ RSpec.describe CommentPolicy, type: :policy do
   end
 
   describe "#users" do
+    context "when commentable is a Ledger::Item" do
+      it "includes users from every ledger it's mapped onto, plus their ancestors" do
+        parent_event = create(:event)
+        ancestor_user = create(:user)
+        create(:organizer_position, event: parent_event, user: ancestor_user)
+
+        child_event = create(:event, parent: parent_event)
+        direct_user = create(:user)
+        create(:organizer_position, event: child_event, user: direct_user)
+
+        item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current)
+        item.save(validate: false)
+        create(:ledger_mapping, :on_primary, ledger: child_event.ledger, ledger_item: item)
+
+        comment = create(:comment, commentable: item)
+        policy = described_class.new(direct_user, comment)
+
+        expect(policy.send(:users)).to include(direct_user, ancestor_user)
+      end
+    end
+
     context "when commentable responds to :events (HcbCode)" do
       it "includes both direct users and ancestor users" do
         parent_event = create(:event)

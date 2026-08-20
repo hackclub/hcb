@@ -58,7 +58,6 @@ class Ledger
     belongs_to :author, class_name: "User", optional: true
 
     # TODO: THIS IS SO TEMPORARY REMOVE ASAP
-    has_many :comments, -> { order(:created_at) }, as: :commentable, inverse_of: :commentable, through: :hcb_code
     has_many :receipts, as: :receiptable, after_add: :update_task_completion, after_remove: :update_task_completion, through: :hcb_code
     has_many :tags, through: :hcb_code
 
@@ -189,16 +188,13 @@ class Ledger
       nil
     end
 
-    # TODO: this union will simplify once the Comment->Ledger::Item migration
-    # finishes and comments live directly on Ledger::Item. For now, comments
-    # live on hcb_code — deliberately built on a plain Comment.where rather
-    # than the `comments` association (which goes through hcb_code and so
-    # brings its own INNER JOIN): combining that with an unrelated
-    # Comment.where(commentable: shared_commentable) via `.or` silently drops
-    # every shared_commentable row, since the join still applies to the whole
-    # query regardless of which side of the WHERE-level OR would've matched.
+    # TODO: TEMPORARY, remove the hcb_code term once comments are fully
+    # migrated from HcbCode to Ledger::Item. Comments are being moved over in
+    # stages; until that finishes, a transaction's comments may still live on
+    # its HcbCode instead of here. Overrides Commentable#all_comments to fold
+    # those in too, on top of the shared_commentable union above.
     def all_comments
-      scope = Comment.where(commentable: hcb_code)
+      scope = Comment.where(commentable: self).or(Comment.where(commentable: hcb_code))
       scope = scope.or(Comment.where(commentable: shared_commentable)) if shared_commentable
       scope.order(:created_at)
     end

@@ -132,7 +132,7 @@
         <% end %>
       <% end %>
       <% if ct.local_hcb_code %>
-        <%= list_badge_for auditor_signed_in? ? ct.local_hcb_code.comments.size : ct.local_hcb_code.not_admin_only_comments_count, "comment", "post", optional: true %>
+        <%= list_badge_for auditor_signed_in? ? ct.local_hcb_code.all_comments.count : ct.local_hcb_code.not_admin_only_comments_count, "comment", "post", optional: true %>
         <% receipts_count = if ct.local_hcb_code.reimbursement_expense_payout?
                               Rails.cache.fetch("ct_#{ct.hcb_code}/receipts_count", expires_in: 12.hours) { ct.local_hcb_code.receipts.size }
                             else

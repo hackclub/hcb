@@ -46,7 +46,11 @@ class CommentPolicy < ApplicationPolicy
   def users
     user_list = []
 
-    if record.commentable.respond_to?(:events)
+    if record.commentable.is_a?(Ledger::Item)
+      # Ledger::Item deliberately has no generic event/events method (it can be
+      # mapped onto more than one ledger) — go straight to its ledger mappings.
+      user_list = record.commentable.all_ledgers.filter_map(&:event).flat_map(&:ancestor_users)
+    elsif record.commentable.respond_to?(:events)
       user_list = record.commentable.events.collect(&:ancestor_users).flatten
     elsif record.commentable.is_a?(Reimbursement::Report)
       user_list = [record.commentable.user]

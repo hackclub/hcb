@@ -362,6 +362,19 @@ RSpec.describe HcbCode, type: :model do
 
         expect(hcb_code.all_comments).to include(hcb_code_comment, invoice_comment)
       end
+
+      # TODO: TEMPORARY — remove once comments are fully migrated from HcbCode to
+      # Ledger::Item and this override is no longer needed.
+      it "includes comments on the hcb_code's ledger_item" do
+        item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current)
+        item.save(validate: false)
+        hcb_code = create(:hcb_code, ledger_item: item)
+
+        hcb_code_comment = create(:comment, commentable: hcb_code, user:)
+        ledger_item_comment = create(:comment, commentable: item, user:)
+
+        expect(hcb_code.all_comments).to include(hcb_code_comment, ledger_item_comment)
+      end
     end
 
     describe "#humanized_type" do

@@ -33,6 +33,30 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         expect(response.body).to include("turbo-stream")
       end
     end
+
+    describe "GET #show" do
+      # TODO: TEMPORARY — comments are being migrated from HcbCode to
+      # Ledger::Item; this asserts the transitional union rendered by both
+      # commentables (Ledger::Item::all_comments) until that finishes.
+      it "renders comments from both the item and its hcb_code" do
+        allow(FlipperGroups).to receive(:hcb_engineer?).and_return(true)
+        hcb_code = create(:hcb_code, ledger_item: item)
+        # CommentPolicy#users needs an event to determine who can see the comment;
+        # for HcbCode that comes from its canonical (pending) transactions.
+        cpt = create(:canonical_pending_transaction)
+        cpt.update_column(:hcb_code, hcb_code.hcb_code)
+        create(:canonical_pending_event_mapping, canonical_pending_transaction: cpt, event:)
+
+        item_comment = create(:comment, commentable: item, user: member_user, content: "comment on the ledger item")
+        hcb_code_comment = create(:comment, commentable: hcb_code, user: member_user, content: "comment on the hcb code")
+
+        get :show, params: { id: item.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include(item_comment.content)
+        expect(response.body).to include(hcb_code_comment.content)
+      end
+    end
   end
 
   context "as a reader (not a member)" do

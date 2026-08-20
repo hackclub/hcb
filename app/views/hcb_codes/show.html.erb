@@ -52,10 +52,10 @@
   <% viewing_disbursement = @hcb_code.outgoing_disbursement || @hcb_code.incoming_disbursement %>
   <% if viewing_disbursement %>
     <% counterparty_hcb_code = viewing_disbursement.counterparty.local_hcb_code %>
-    <% if policy(counterparty_hcb_code).show? && counterparty_hcb_code.comments.count > 0 %>
+    <% if policy(counterparty_hcb_code).show? && counterparty_hcb_code.all_comments.count > 0 %>
       <p class="muted">
         <%= link_to counterparty_hcb_code do %>
-          View <%= pluralize(counterparty_hcb_code.comments.count, "other comment") %> from <%= viewing_disbursement.counterparty_label %>
+          View <%= pluralize(counterparty_hcb_code.all_comments.count, "other comment") %> from <%= viewing_disbursement.counterparty_label %>
         <% end %>
       </p>
     <% end %>

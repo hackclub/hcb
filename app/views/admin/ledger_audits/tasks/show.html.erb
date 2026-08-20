@@ -124,7 +124,7 @@
 
 <div style="max-width: 600px; margin-left: auto; margin-right: auto;" class="mt4">
   <h3>HCB Code Comments</h3>
-  <%= render "comments/list", comments: @hcb_code.comments %>
+  <%= render "comments/list", comments: @hcb_code.all_comments %>
   <%= render "comments/form", commentable: @hcb_code %>
 </div>
 
