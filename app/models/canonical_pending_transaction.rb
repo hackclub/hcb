@@ -9,7 +9,7 @@
 #  custom_memo                                      :text
 #  date                                             :date             not null
 #  fee_waived                                       :boolean          default(FALSE)
-#  fronted                                          :boolean          default(FALSE)
+#  fronted                                          :boolean          default(FALSE), not null
 #  hcb_code                                         :text
 #  memo                                             :text             not null
 #  created_at                                       :datetime         not null
@@ -64,10 +64,6 @@
 #
 #  fk_rails_...  (ledger_item_id => ledger_items.id)
 #  fk_rails_...  (raw_pending_stripe_transaction_id => raw_pending_stripe_transactions.id)
-#
-# Check Constraints
-#
-#  canonical_pending_transactions_fronted_null  (fronted IS NOT NULL)
 #
 class CanonicalPendingTransaction < ApplicationRecord
   has_paper_trail
@@ -166,7 +162,7 @@ class CanonicalPendingTransaction < ApplicationRecord
       }
     )
   }
-  scope :with_custom_memo, -> { where("custom_memo is not null") }
+  scope :with_custom_memo, -> { where.not(custom_memo: nil) }
 
   scope :pending_expired, -> { unsettled.where(created_at: ..5.days.ago) }
 
