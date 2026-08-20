@@ -7,9 +7,9 @@
 #  id             :bigint           not null, primary key
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
-#  invoice_id     :bigint
-#  ledger_item_id :bigint
-#  reporter_id    :bigint
+#  invoice_id     :bigint           not null
+#  ledger_item_id :bigint           not null
+#  reporter_id    :bigint           not null
 #
 # Indexes
 #
@@ -29,27 +29,41 @@ class PersonalTransaction < ApplicationRecord
   belongs_to :reporter, class_name: "User"
 
   validates :ledger_item, uniqueness: true, presence: true
-  # Declared after the belongs_to's so its implicit presence validator (on
-  # :invoice) has already run and can be superseded below.
+  # Declared after the belongs_to's so their implicit presence validators (on
+  # :invoice) have already run and can be superseded below.
+  validate :ledger_item_is_linked_to_a_card_charge
   validate :ledger_item_is_a_qualifying_charge
 
   # before_validation callbacks always run before validate-registered
-  # validations, so gate this on the same conditions ledger_item_is_a_qualifying_charge
-  # and the ledger_item uniqueness validation check — otherwise an
-  # already-doomed-to-be-invalid record would still send a real invoice
-  # before getting rejected and thrown away.
+  # validations, so gate this on the same conditions as the validations above
+  # (plus the ledger_item uniqueness check) — otherwise an already-doomed-to-
+  # be-invalid record would still send a real invoice before getting rejected
+  # and thrown away.
   before_validation :send_invoice, on: :create, if: -> { invoice.nil? && ledger_item_ready_for_invoice? }
 
   after_create do
-    # This stays keyed off hcb_code (rather than ledger_item.no_or_lost_receipt!)
-    # because CardLocking::ReceiptResolution.on_no_or_lost_receipt only acts on
-    # HcbCode instances; calling it on the ledger item directly would silently
-    # skip the cardholder's unlock recompute.
+    # This stays keyed off hcb_code rather than ledger_item.no_or_lost_receipt!
+    # because it's the only place that ever clears card-locking state for this
+    # charge: CardLocking::ChargeBehavior#materialize_card_locking! only fires
+    # here (via CardLocking::ReceiptResolution.on_no_or_lost_receipt, gated on
+    # `is_a?(HcbCode)`), never from the recurring card-locking sweep — once
+    # marked_no_or_lost_receipt_at is set, HcbCode.card_locking_candidates
+    # excludes this charge, so the sweep never revisits it. Skipping this call
+    # wouldn't just delay the cardholder's unlock; receipt_due_at /
+    # receipt_resolved_at would stay stale on this charge forever.
     hcb_code = ledger_item.hcb_code
     hcb_code.no_or_lost_receipt! if hcb_code.missing_receipt?
   end
 
   private
+
+  def ledger_item_is_linked_to_a_card_charge
+    return if ledger_item.nil?
+    return if ledger_item.linked_object_type == "CardCharge"
+
+    errors.delete(:invoice)
+    errors.add(:base, "Invoices can only be generated for card charges.")
+  end
 
   def ledger_item_is_a_qualifying_charge
     return if ledger_item.nil?
@@ -62,7 +76,10 @@ class PersonalTransaction < ApplicationRecord
   end
 
   def ledger_item_ready_for_invoice?
-    ledger_item.present? && ledger_item.amount_cents <= -100 && !PersonalTransaction.exists?(ledger_item:)
+    ledger_item.present? &&
+      ledger_item.linked_object_type == "CardCharge" &&
+      ledger_item.amount_cents <= -100 &&
+      !PersonalTransaction.exists?(ledger_item:)
   end
 
   def send_invoice

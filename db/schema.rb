@@ -2078,9 +2078,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_20_120000) do
 
   create_table "personal_transactions", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.bigint "invoice_id"
-    t.bigint "ledger_item_id"
-    t.bigint "reporter_id"
+    t.bigint "invoice_id", null: false
+    t.bigint "ledger_item_id", null: false
+    t.bigint "reporter_id", null: false
     t.datetime "updated_at", null: false
     t.index ["invoice_id"], name: "index_personal_transactions_on_invoice_id"
     t.index ["ledger_item_id"], name: "index_personal_transactions_on_ledger_item_id", unique: true
