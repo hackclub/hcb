@@ -9,7 +9,7 @@ RSpec.describe CardGrantsController do
   describe "read-only grant settings" do
     it "allows members to view, but not edit, grant settings" do
       member = create(:user)
-      event = create(:event)
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
       create(:organizer_position, user: member, event:, role: :member)
       card_grant = create(:card_grant, event:)
       create_session(member, verified: true)
