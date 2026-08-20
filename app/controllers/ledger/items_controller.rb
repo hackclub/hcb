@@ -75,24 +75,20 @@ class Ledger
     def invoice_as_personal_transaction
       authorize @item
 
-      # TODO: reference hcb_code.ledger_item directly for the sake of migration; revisit once this is Ledger::Item-native.
-      hcb_code = @item.hcb_code
+      personal_tx = PersonalTransaction.new(ledger_item: @item, reporter: current_user)
 
-      if @item.amount_cents > -100
-        flash[:error] = "Invoices can only be generated for charges of $1.00 or more."
-        return redirect_to hcb_code
+      if personal_tx.save
+        flash[:success] = "We've sent an invoice for repayment to #{personal_tx.invoice.sponsor.contact_email}."
+        return redirect_to personal_tx.invoice
       end
 
       if @item.personal_transaction
         flash[:error] = "A repayment invoice already exists for this transaction."
-        return redirect_to @item.personal_transaction.invoice
+        redirect_to @item.personal_transaction.invoice
+      else
+        flash[:error] = personal_tx.errors.full_messages.to_sentence
+        redirect_to @item.hcb_code
       end
-
-      personal_tx = PersonalTransaction.create(ledger_item: @item, reporter: current_user)
-
-      flash[:success] = "We've sent an invoice for repayment to #{personal_tx.invoice.sponsor.contact_email}."
-
-      redirect_to personal_tx.invoice
     end
 
     private

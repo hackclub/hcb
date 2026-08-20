@@ -25,36 +25,55 @@
 #
 class PersonalTransaction < ApplicationRecord
   belongs_to :ledger_item, class_name: "Ledger::Item", inverse_of: :personal_transaction
-  validates :ledger_item, uniqueness: true, presence: true
-  validate :ledger_item_amount_is_negative
   belongs_to :invoice
   belongs_to :reporter, class_name: "User"
 
-  before_validation :send_invoice, on: :create, if: -> { invoice.nil? }
+  validates :ledger_item, uniqueness: true, presence: true
+  # Declared after the belongs_to's so its implicit presence validator (on
+  # :invoice) has already run and can be superseded below.
+  validate :ledger_item_is_a_qualifying_charge
+
+  # before_validation callbacks always run before validate-registered
+  # validations, so gate this on the same conditions ledger_item_is_a_qualifying_charge
+  # and the ledger_item uniqueness validation check — otherwise an
+  # already-doomed-to-be-invalid record would still send a real invoice
+  # before getting rejected and thrown away.
+  before_validation :send_invoice, on: :create, if: -> { invoice.nil? && ledger_item_ready_for_invoice? }
 
   after_create do
+    # This stays keyed off hcb_code (rather than ledger_item.no_or_lost_receipt!)
+    # because CardLocking::ReceiptResolution.on_no_or_lost_receipt only acts on
+    # HcbCode instances; calling it on the ledger item directly would silently
+    # skip the cardholder's unlock recompute.
     hcb_code = ledger_item.hcb_code
     hcb_code.no_or_lost_receipt! if hcb_code.missing_receipt?
   end
 
   private
 
-  def ledger_item_amount_is_negative
+  def ledger_item_is_a_qualifying_charge
     return if ledger_item.nil?
+    return if ledger_item.amount_cents <= -100
 
-    errors.add(:ledger_item, "must have a negative amount") if ledger_item.amount_cents >= 0
+    # Supersede the belongs_to :invoice presence error (invoice is never sent
+    # for a non-qualifying charge) with the message that actually explains it.
+    errors.delete(:invoice)
+    errors.add(:base, "Invoices can only be generated for charges of $1.00 or more.")
   end
 
-  # TODO: reference hcb_code.ledger_item directly for the sake of migration; revisit once PersonalTransaction goes Ledger::Item-native.
+  def ledger_item_ready_for_invoice?
+    ledger_item.present? && ledger_item.amount_cents <= -100 && !PersonalTransaction.exists?(ledger_item:)
+  end
+
   def send_invoice
-    hcb_code = ledger_item.hcb_code
-    event = hcb_code.event
-    spender = hcb_code.stripe_cardholder&.user || reporter
+    card_charge = ledger_item.linked_object
+    event = ledger_item.primary_ledger&.event
+    spender = card_charge.stripe_cardholder&.user || reporter
     self.invoice = ::InvoiceService::Create.new(
       event_id: event.id,
       due_date: 1.month.from_now,
-      item_description: "Reimbursing personal transaction: #{hcb_code.memo}",
-      item_amount: hcb_code.amount.abs,
+      item_description: "Reimbursing personal transaction: #{ledger_item.memo}",
+      item_amount: ledger_item.amount.abs,
       current_user: reporter,
       sponsor_id: nil,
       sponsor_name: spender.name,
