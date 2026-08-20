@@ -426,8 +426,6 @@ module EventsHelper
     return tag.span humanize_audit_log_value(field, value), class: color
   end
 
-  # One flag per level above a row, saying whether that level still has rows to
-  # come and so needs a connecting line. Its length is the row's depth.
   def rails_param(rails)
     rails.map { |line| line ? "1" : "0" }.join
   end

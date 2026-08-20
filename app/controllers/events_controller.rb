@@ -920,12 +920,10 @@ class EventsController < ApplicationController
         @view = cookies[:sub_organizations_view] || "grid"
 
         if @view == "list"
-          # The tree goes unfiltered, so the balance above it has to as well.
           @has_filter = false
           @rows = sub_organization_table_rows(@event)
         else
           sub_organizations = filtered_sub_organizations
-          # Hidden organizations are set aside in their own collapsed section.
           @sub_organizations = sub_organizations.not_hidden.page(params[:page]).per(params[:per] || 24)
           @hidden_sub_organizations = sub_organizations.hidden.to_a
         end
@@ -966,8 +964,6 @@ class EventsController < ApplicationController
 
   end
 
-  # `@event` is the organization being expanded, so authorizing it is what stops
-  # the table from being walked into sub-organizations this viewer cannot see.
   def sub_organization_rows
     authorize @event
 
@@ -1349,8 +1345,6 @@ class EventsController < ApplicationController
   end
 
   def sub_organization_table_rows(event)
-    # `reorder`, since the default scope's ordering by id would win out over
-    # `order`. Redone in Ruby so that "#2" sorts before "#10".
     subevents = event.visible_subevents(current_user)
                      .includes(:scoped_tags, logo_attachment: :blob)
                      .reorder(:name)
