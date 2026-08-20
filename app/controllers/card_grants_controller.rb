@@ -137,27 +137,27 @@ class CardGrantsController < ApplicationController
   end
 
   def edit_overview
-    authorize @card_grant
+    authorize @card_grant, :show?
   end
 
   def edit_purpose
-    authorize @card_grant
+    authorize @card_grant, :show?
   end
 
   def edit_actions
-    authorize @card_grant
+    authorize @card_grant, :show?
   end
 
   def edit_balance
-    authorize @card_grant
+    authorize @card_grant, :show?
   end
 
   def edit_usage_restrictions
-    authorize @card_grant
+    authorize @card_grant, :show?
   end
 
   def edit_expiration
-    authorize @card_grant
+    authorize @card_grant, :show?
   end
 
   def edit_topup
