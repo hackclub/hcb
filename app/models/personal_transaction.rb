@@ -42,15 +42,20 @@ class PersonalTransaction < ApplicationRecord
   before_validation :send_invoice, on: :create, if: -> { invoice.nil? && ledger_item_ready_for_invoice? }
 
   after_create do
-    # This stays keyed off hcb_code rather than ledger_item.no_or_lost_receipt!
-    # because it's the only place that ever clears card-locking state for this
-    # charge: CardLocking::ChargeBehavior#materialize_card_locking! only fires
-    # here (via CardLocking::ReceiptResolution.on_no_or_lost_receipt, gated on
-    # `is_a?(HcbCode)`), never from the recurring card-locking sweep — once
-    # marked_no_or_lost_receipt_at is set, HcbCode.card_locking_candidates
-    # excludes this charge, so the sweep never revisits it. Skipping this call
-    # wouldn't just delay the cardholder's unlock; receipt_due_at /
-    # receipt_resolved_at would stay stale on this charge forever.
+    # Calling this on either side syncs marked_no_or_lost_receipt_at onto both
+    # hcb_code and ledger_item (Receiptable#sync_no_or_lost_receipt!), so that
+    # part doesn't depend on which one we call here. What does depend on it:
+    # CardLocking::ReceiptResolution.on_no_or_lost_receipt only materializes
+    # card-locking state (and checks the cardholder's unlock) for whichever
+    # object it's handed, gated on `is_a?(HcbCode)` — the sync's plain
+    # `counterpart.update!` on the other side never re-triggers that. Calling
+    # ledger_item.no_or_lost_receipt! would still mark hcb_code correctly, but
+    # would skip clearing hcb_code's own receipt_due_at/receipt_resolved_at
+    # and skip the unlock check — and since a marked charge no longer matches
+    # HcbCode.card_locking_candidates, nothing else revisits it to fix that up
+    # later. Confirmed by spying on CardLocking::ReceiptResolution: calling
+    # this on ledger_item syncs hcb_code's column but passes the Ledger::Item,
+    # never the HcbCode, into on_no_or_lost_receipt.
     hcb_code = ledger_item.hcb_code
     hcb_code.no_or_lost_receipt! if hcb_code.missing_receipt?
   end
