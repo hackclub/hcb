@@ -43,6 +43,9 @@ export default class extends Controller {
   }
 
   save() {
+    // showDisplay's hidden toggle can force a blur that re-enters here; ignore it.
+    if (this.closingForm) return
+
     this.formTarget.requestSubmit()
   }
 
@@ -54,8 +57,12 @@ export default class extends Controller {
   }
 
   showDisplay() {
+    // Hiding a still-focused input (e.g. after confirming with Enter) forces
+    // a blur, which would otherwise re-trigger save() with a stale value.
+    this.closingForm = true
     this.formTarget.hidden = true
     this.displayTarget.hidden = false
+    this.closingForm = false
   }
 
   flashRenamed() {
