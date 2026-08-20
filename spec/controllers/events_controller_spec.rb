@@ -6,7 +6,6 @@ require "csv"
 RSpec.describe EventsController do
   include SessionSupport
 
-  # Wrapped, since the HTML5 parser drops `tr` elements outside a table.
   def table_rows(body)
     Nokogiri::HTML5("<table><tbody>#{body}</tbody></table>").css("tr.sub-organization-row")
   end
