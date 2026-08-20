@@ -32,7 +32,8 @@ module Api
       require_oauth2_scope "comments:write", :create
 
       def update
-        @comment = authorize Comment.find_by_public_id!(params[:id])
+        @comment = Comment.find_by_public_id!(params[:id])
+        authorize @comment
 
         @comment.assign_attributes(params.permit(:content, :admin_only, :file))
 
