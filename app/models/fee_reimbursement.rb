@@ -32,7 +32,7 @@ class FeeReimbursement < ApplicationRecord
   validates_length_of :transaction_memo, maximum: 30
   validates_uniqueness_of :transaction_memo
 
-  scope :unprocessed, -> { includes(:t_transaction).where(processed_at: nil, transactions: { fee_reimbursement_id: nil }) }
+  scope :unprocessed, -> { where(processed_at: nil) }
   scope :pending, -> { includes(:t_transaction).where.not(processed_at: nil).where(transactions: { fee_reimbursement_id: nil }) }
   scope :completed, -> { includes(:t_transaction).where.not(transactions: { fee_reimbursement_id: nil }) }
 
