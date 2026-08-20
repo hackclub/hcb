@@ -174,7 +174,7 @@
         turbo: true
       } %>
   <%= render "comments/list", comments: @item.all_comments %>
-  <%= render "comments/form", commentable: @item.hcb_code %>
+  <%= render "comments/form", commentable: @item %>
 <% end %>
 
 <% admin_tool("p-2 my-3") do %>

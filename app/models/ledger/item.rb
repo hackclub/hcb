@@ -199,6 +199,39 @@ class Ledger
       scope.order(:created_at)
     end
 
+    def comment_recipients_for(comment)
+      users = []
+      users += all_comments.map(&:user)
+      users += all_comments.flat_map(&:mentioned_users)
+      # No generic event/events method on Ledger::Item (it can be mapped onto
+      # more than one ledger) — go straight to the events its ledger mappings touch.
+      event_list = Event.where(id: all_ledgers.pluck(:event_id).compact.uniq)
+      users += event_list.flat_map(&:users).reject(&:my_threads?)
+      users += [author] if author
+
+      if comment.admin_only?
+        users += event_list.map(&:point_of_contact)
+        return users.uniq.select(&:auditor?).reject(&:no_threads?).excluding(comment.user).collect(&:email_address_with_name)
+      end
+
+      users.uniq.excluding(comment.user).reject(&:no_threads?).collect(&:email_address_with_name)
+    end
+
+    def comment_mailer_subject
+      "New comment on #{memo}."
+    end
+
+    def comment_mentionable(current_user: nil)
+      users = []
+      users += all_comments.includes(:user).map(&:user)
+      users += all_comments.flat_map(&:mentioned_users)
+      event_list = Event.where(id: all_ledgers.pluck(:event_id).compact.uniq).includes(:users, :point_of_contact)
+      users += event_list.select { |e| !current_user || Pundit.policy(current_user, e).team? }.flat_map(&:users)
+      users += event_list.map(&:point_of_contact)
+
+      users.compact.uniq
+    end
+
     # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
     # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
     # refresh! should not update any non-caching columns

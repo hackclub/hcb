@@ -562,6 +562,57 @@ RSpec.describe Ledger::Item, type: :model do
     end
   end
 
+  describe "#comment_recipients_for" do
+    it "includes the item's author and event members, but not the commenter" do
+      event = create(:event)
+      author = create(:user)
+      commenter = create(:user)
+      organizer = create(:user)
+      create(:organizer_position, event:, user: organizer, role: :member)
+
+      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current)
+      item.save(validate: false)
+      create(:ledger_mapping, :on_primary, ledger: event.ledger, ledger_item: item)
+      comment = create(:comment, commentable: item, user: commenter, content: "hi")
+
+      # Both the mapping and the comment above touch/refresh! the item, which
+      # recomputes author from a linked_object this item doesn't have — pin it
+      # past that directly, after everything else that would clobber it.
+      item.update_columns(author_id: author.id)
+
+      recipients = item.comment_recipients_for(comment)
+
+      expect(recipients).to include(author.email_address_with_name)
+      expect(recipients).to include(organizer.email_address_with_name)
+      expect(recipients).not_to include(commenter.email_address_with_name)
+    end
+  end
+
+  describe "#comment_mentionable" do
+    it "includes event members as mentionable users" do
+      event = create(:event)
+      organizer = create(:user)
+      create(:organizer_position, event:, user: organizer, role: :member)
+
+      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current)
+      item.save(validate: false)
+      create(:ledger_mapping, :on_primary, ledger: event.ledger, ledger_item: item)
+
+      expect(item.comment_mentionable).to include(organizer)
+    end
+  end
+
+  describe "#comment_mailer_subject" do
+    it "includes the item's memo" do
+      item = create(:ledger_item)
+      # refresh! (run via after_create) recomputes memo from canonical
+      # transactions this item doesn't have, so pin it past that directly.
+      item.update_columns(memo: "Coffee for the team")
+
+      expect(item.comment_mailer_subject).to include("Coffee for the team")
+    end
+  end
+
   describe "account verification detection" do
     # Pins memo/amount/linked_object_type past the refresh! callbacks (which
     # recompute them from canonical transactions these items don't have),

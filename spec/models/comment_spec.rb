@@ -43,6 +43,35 @@ RSpec.describe Comment, type: :model, versioning: true do
     end
   end
 
+  describe "#tracked_event_id" do
+    it "returns nil for admin_only comments" do
+      hcb_code = create(:hcb_code)
+      hcb_code.update_columns(event_id: event.id)
+      comment = create(:comment, commentable: hcb_code, admin_only: true)
+
+      expect(comment.tracked_event_id).to be_nil
+    end
+
+    it "returns the commentable's event id" do
+      hcb_code = create(:hcb_code)
+      hcb_code.update_columns(event_id: event.id)
+      comment = create(:comment, commentable: hcb_code)
+
+      expect(comment.tracked_event_id).to eq(event.id)
+    end
+
+    # Ledger::Item has no generic event/events method (it can be mapped onto
+    # more than one ledger) — this goes through primary_ledger instead.
+    it "returns the ledger item's primary ledger's event id for a Ledger::Item commentable" do
+      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current)
+      item.save(validate: false)
+      create(:ledger_mapping, :on_primary, ledger: event.ledger, ledger_item: item)
+      comment = create(:comment, commentable: item)
+
+      expect(comment.tracked_event_id).to eq(event.id)
+    end
+  end
+
   context "when missing content" do
     before do
       comment.content = ""

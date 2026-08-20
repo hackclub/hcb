@@ -64,5 +64,45 @@ RSpec.describe HcbCodesController, type: :controller do
       expect(response).to be_successful
       expect(response.body).to include("other comment")
     end
+
+    # TODO: TEMPORARY — comments are being migrated from HcbCode to
+    # Ledger::Item; the comment form should target the ledger_item once one
+    # exists, per PR 2 of that migration.
+    context "form target" do
+      let(:event) { create(:event) }
+      let(:member_user) { create(:user) }
+      let(:hcb_code) { create(:hcb_code, code_type: ::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE) }
+
+      before do
+        create(:organizer_position, event:, user: member_user, role: :member)
+
+        cpt = create(:canonical_pending_transaction)
+        cpt.update_column(:hcb_code, hcb_code.hcb_code)
+        create(:canonical_pending_event_mapping, canonical_pending_transaction: cpt, event:)
+
+        create_session(member_user, verified: true)
+      end
+
+      it "targets the hcb_code's ledger_item for new comments when one exists" do
+        item = create(:ledger_item)
+        hcb_code.update!(ledger_item: item)
+
+        get :show, params: { id: hcb_code.hcb_code }
+        page = Nokogiri::HTML5.fragment(response.body)
+
+        expect(response).to be_successful
+        expect(page.at_css("#comment_commentable_type")["value"]).to eq("Ledger::Item")
+        expect(page.at_css("#comment_commentable_id")["value"]).to eq(item.id.to_s)
+      end
+
+      it "falls back to the hcb_code itself when it has no ledger_item" do
+        get :show, params: { id: hcb_code.hcb_code }
+        page = Nokogiri::HTML5.fragment(response.body)
+
+        expect(response).to be_successful
+        expect(page.at_css("#comment_commentable_type")["value"]).to eq("HcbCode")
+        expect(page.at_css("#comment_commentable_id")["value"]).to eq(hcb_code.id.to_s)
+      end
+    end
   end
 end

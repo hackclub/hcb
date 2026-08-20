@@ -59,7 +59,7 @@ class Comment < ApplicationRecord
   }
 
   include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user || record&.user }, event_id: proc { |controller, record| record.admin_only? ? nil : record.commentable.try(:event)&.id }, only: [:create, :update, :destroy]
+  tracked owner: proc{ |controller, record| controller&.current_user || record&.user }, event_id: proc { |controller, record| record.tracked_event_id }, only: [:create, :update, :destroy]
 
   after_create_commit :send_notification_email
 
@@ -99,6 +99,16 @@ class Comment < ApplicationRecord
   def shared?
     # currently the only situation where we share comments at the moment. If we expand this, do something smarter
     commentable_type == "Disbursement"
+  end
+
+  # Used by the `tracked` event_id: proc above. Ledger::Item has no generic
+  # event/events method (it can be mapped onto more than one ledger), so it
+  # needs its own branch here rather than the general `commentable.try(:event)`.
+  def tracked_event_id
+    return nil if admin_only?
+
+    event = commentable.is_a?(Ledger::Item) ? commentable.primary_ledger&.event : commentable.try(:event)
+    event&.id
   end
 
   # This regex was stolen from URI::MailTo::EMAIL_REGEXP

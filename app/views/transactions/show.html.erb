@@ -177,5 +177,5 @@
 
   <h2>Comments</h2>
   <%= render "comments/list", comments: @hcb_code.all_comments %>
-  <%= render "comments/form", commentable: @hcb_code %>
+  <%= render "comments/form", commentable: @hcb_code.ledger_item || @hcb_code %>
 <% end %>

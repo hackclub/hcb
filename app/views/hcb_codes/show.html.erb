@@ -60,7 +60,10 @@
       </p>
     <% end %>
   <% end %>
-  <%= render "comments/form", commentable: @hcb_code %>
+  <%# New comments attach to this transaction's Ledger::Item; fall back to the
+      HcbCode itself for the small number of transactions with no ledger_item
+      yet (see the Comment->Ledger::Item migration). %>
+  <%= render "comments/form", commentable: @hcb_code.ledger_item || @hcb_code %>
 
   <% admin_tool("mt2 p-3") do %>
     <%= render partial: "hcb_codes/transaction_history" %>
