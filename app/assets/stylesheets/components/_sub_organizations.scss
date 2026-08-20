@@ -1,6 +1,4 @@
-// One level of nesting, and the expander's width, so the two line up.
 $sub-organization-indent: 1.75rem;
-// The padding a table gives its first cell, which the rails have to clear.
 $sub-organization-cell-padding: 1rem;
 $sub-organization-rail: rgba(0, 0, 0, 0.12);
 $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
@@ -9,7 +7,6 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   display: none;
 }
 
-// Holds no height of its own, so it takes up nothing while nothing is pinned.
 .sub-organization-tree__pinned {
   position: sticky;
   top: 0;
@@ -46,7 +43,6 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   position: relative;
 }
 
-// Anchored to the cell, so the lines meet from one row to the next.
 .sub-organization-row__rails {
   position: absolute;
   top: 0;
@@ -60,7 +56,6 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   width: $sub-organization-indent;
 }
 
-// A level further up that still has rows to come: a line straight through.
 .sub-organization-row__rail--line::before {
   content: '';
   position: absolute;
@@ -74,7 +69,6 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   }
 }
 
-// The join to this row's parent, as one corner so the bend is rounded.
 .sub-organization-row__rail--connector::before {
   content: '';
   position: absolute;
@@ -91,7 +85,6 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   }
 }
 
-// The line carries on past the turn until the branch's last row.
 .sub-organization-row:not(.sub-organization-row--last)
   .sub-organization-row__rail--connector::after {
   content: '';
@@ -130,8 +123,6 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   background: transparent;
   color: $muted;
   cursor: pointer;
-  // `tr.clickable` drops pointer events in its cells so the stretched link wins
-  // every click; the expander opts back in and sits above the link.
   pointer-events: auto;
   z-index: 1;
 
@@ -169,13 +160,11 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
     pointer-events: none;
   }
 
-  // Stands in for the expander on a pinned row, which is always open.
   &--open svg {
     transform: rotate(0deg);
   }
 }
 
-// Pulses while a level is being fetched, so a slow expand reads as loading.
 .sub-organization-row__toggle--loading svg {
   animation: sub-organization-pulse 0.9s ease-in-out infinite;
 }
@@ -216,7 +205,6 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   color: map-get($palette, primary);
 }
 
-// The stock hover paints white, invisible on a white card; tint instead.
 .sub-organization-row:hover a.stretched-link {
   background-color: map-get($palette, snow);
 
