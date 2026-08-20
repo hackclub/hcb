@@ -80,8 +80,6 @@ module Payroll
 
     CONTRACTOR_ONBOARDING_STEPS = %i[tax_form contractor_signature payout_method].freeze
 
-    UNORDERED_ONBOARDING_STEPS = %i[payout_method].freeze
-
     ONBOARDING_REMINDER_DAYS = [1, 2, 7, 14].freeze
     ONBOARDING_REMINDER_INTERVAL_DAYS = 14
 
@@ -171,6 +169,8 @@ module Payroll
       end
     end
 
+    # The steps a contractor must complete before payments can be sent, each as
+    # { label:, complete: }. Rendered in the contractor show modal.
     def onboarding_checklist
       legal_entity = payee.legal_entity
 
