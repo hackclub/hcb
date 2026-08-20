@@ -2,9 +2,11 @@
 
 class Ledger
   class ItemsController < ApplicationController
-    before_action :set_item
+    before_action :set_item, except: [:show]
 
     def show
+      @item = Ledger::Item.find_by_hashid!(params[:id])
+
       # Non-engineers see the user-facing HCB code page rather than the raw
       # ledger item. hcb_codes#show performs its own authorization.
       unless FlipperGroups.hcb_engineer?(current_user) || Rails.env.development?
@@ -13,6 +15,15 @@ class Ledger
       end
 
       authorize @item
+    rescue ActiveRecord::RecordNotFound
+      # Maintain backward compatibility for old v1 transaction engine URLs. They
+      # used to also live at `/transactions/*`
+      if Transaction.with_deleted.where(id: params[:id]).exists? || CanonicalTransaction.where(id: params[:id]).exists?
+        skip_authorization
+        return redirect_to transaction_path(params[:id])
+      end
+
+      raise
     end
 
     def hcb
@@ -87,18 +98,7 @@ class Ledger
     private
 
     def set_item
-      @item = Ledger::Item.find_by_hashid!(params[:item_id] || params[:id])
-    rescue ActiveRecord::RecordNotFound
-      raise unless action_name == "show"
-
-      # Maintain backward compatibility for old v1 transaction engine URLs. They
-      # used to also live at `/transactions/*`
-      if Transaction.with_deleted.where(id: params[:id]).exists? || CanonicalTransaction.where(id: params[:id]).exists?
-        skip_authorization
-        return redirect_to transaction_path(params[:id])
-      end
-
-      raise
+      @item = Ledger::Item.find_by_hashid!(params[:item_id])
     end
 
   end
