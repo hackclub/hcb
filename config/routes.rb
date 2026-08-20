@@ -643,6 +643,7 @@ Rails.application.routes.draw do
       get "hcb"
       post "pin"
       post "unpin"
+      patch "rename"
     end
   end
   resources :ledger_items, only: [], path: "transactions", concerns: :commentable
@@ -731,7 +732,6 @@ Rails.application.routes.draw do
 
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
-          get :intercom_token, to: "intercom#token"
         end
 
         resources :users, only: [:show] do
@@ -1003,6 +1003,7 @@ Rails.application.routes.draw do
     get "ledger"
     post "toggle_new_ledger"
     get "stats"
+    get "ledger_stats"
     get "merchants_filter"
     put "toggle_hidden"
     post "claim_point_of_contact"

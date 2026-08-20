@@ -14,8 +14,6 @@ class LoginsController < ApplicationController
     response.delete_header("X-Robots-Tag")
   end
 
-  before_action { @_intercom_script_tag_helper_called = true }
-
   # view to log in
   def new
     render "users/logout" if current_user
