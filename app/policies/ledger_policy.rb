@@ -2,7 +2,9 @@
 
 class LedgerPolicy < ApplicationPolicy
   def show?
-    user&.auditor? || Flipper.enabled?(:new_ledger_2026_07_17, user)
+    # Non-primary ledgers (e.g. a card grant's own ledger) aren't directly
+    # tied to an event, so fall back to the event that owns the card grant.
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event || record.card_grant&.event, :reader)
   end
 
 end
