@@ -29,16 +29,9 @@ class PersonalTransaction < ApplicationRecord
   belongs_to :reporter, class_name: "User"
 
   validates :ledger_item, uniqueness: true, presence: true
-  # Declared after the belongs_to's so their implicit presence validators (on
-  # :invoice) have already run and can be superseded below.
   validate :ledger_item_is_linked_to_a_card_charge
   validate :ledger_item_is_a_qualifying_charge
 
-  # before_validation callbacks always run before validate-registered
-  # validations, so gate this on the same conditions as the validations above
-  # (plus the ledger_item uniqueness check) — otherwise an already-doomed-to-
-  # be-invalid record would still send a real invoice before getting rejected
-  # and thrown away.
   before_validation :send_invoice, on: :create, if: -> { invoice.nil? && ledger_item_ready_for_invoice? }
 
   after_create do

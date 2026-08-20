@@ -82,7 +82,7 @@ class Ledger
         return redirect_to personal_tx.invoice
       end
 
-      if @item.personal_transaction
+      if @item.personal_transaction.present?
         flash[:error] = "A repayment invoice already exists for this transaction."
         redirect_to @item.personal_transaction.invoice
       else
