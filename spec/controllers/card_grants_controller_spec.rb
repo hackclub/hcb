@@ -19,6 +19,15 @@ RSpec.describe CardGrantsController do
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body.at_css("[name='card_grant[purpose]']")["disabled"]).to eq("disabled")
       expect(response.parsed_body.at_css("[value='Save']")["disabled"]).to eq("disabled")
+
+      original_purpose = card_grant.purpose
+      patch(:update, params: {
+              id: card_grant.hashid,
+              card_grant: { purpose: "Updated purpose" }
+            })
+
+      expect(flash[:error]).to match(/not authorized/i)
+      expect(card_grant.reload.purpose).to eq(original_purpose)
     end
   end
 
