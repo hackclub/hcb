@@ -2,7 +2,7 @@
 
 class Ledger
   class ItemsController < ApplicationController
-    before_action :set_pin, only: [:pin, :unpin]
+    before_action :set_item, only: [:pin, :unpin, :rename]
 
     def show
       @item = Ledger::Item.find_by_hashid!(params[:id])
@@ -65,9 +65,18 @@ class Ledger
       redirect_back fallback_location: @event
     end
 
+    def rename
+      authorize @item
+
+      memo = params.require(:ledger_item).permit(:memo)[:memo].presence
+      @item.update_custom_memo!(memo)
+
+      render partial: "ledger/items/memo/stream", locals: { item: @item }, formats: :turbo_stream
+    end
+
     private
 
-    def set_pin
+    def set_item
       @item = Ledger::Item.find_by_hashid!(params[:item_id])
     end
 

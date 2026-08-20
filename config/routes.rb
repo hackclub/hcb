@@ -643,6 +643,7 @@ Rails.application.routes.draw do
       get "hcb"
       post "pin"
       post "unpin"
+      patch "rename"
     end
   end
   resources :ledger_items, only: [], path: "transactions", concerns: :commentable
