@@ -1,0 +1,8 @@
+<p>
+  <%= link_to(admin_user_url(@user)) do %>
+    <%= @user.name %> (<%= @user.email %>)
+  <% end %> just had their cards locked for <%= @count %> overdue <%= "receipt".pluralize(@count) %>.
+</p>
+<% if @suppressed %>
+  <p><strong>Note:</strong> this user's card locking is currently suppressed by an admin.</p>
+<% end %>
