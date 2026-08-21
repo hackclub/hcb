@@ -487,11 +487,6 @@ class CanonicalTransaction < ApplicationRecord
 
   def assign_ledger_item
     safely do
-      # `local_hcb_code` is keyed on the `hcb_code` string column, which is
-      # only populated by `write_hcb_code` moments before this callback runs.
-      # If anything accessed `local_hcb_code` on this instance earlier (e.g.
-      # while `hcb_code` was still nil), the association would be memoized as
-      # nil forever, so force a fresh lookup before relying on it.
       reload_local_hcb_code
       ActiveRecord::Base.transaction do
         if calculated_ledger_item != local_hcb_code.ledger_item
