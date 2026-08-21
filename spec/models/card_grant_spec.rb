@@ -40,11 +40,12 @@ RSpec.describe CardGrant, type: :model do
     context "when card is frozen by the system user (one time use)" do
       it "returns the one-time-use frozen message" do
         card_grant = create(:card_grant)
+        card_grant.one_time_use = true
         card_grant.stripe_card.update!(stripe_status: "inactive", last_frozen_by: system_user)
         allow(card_grant.stripe_card).to receive(:frozen?).and_return(true)
 
         expect(card_grant.state_text).to eq("Frozen")
-        expect(card_grant.frozen_by_otu?).to eq(true)
+        expect(card_grant.frozen_by_one_time_use?).to eq(true)
       end
     end
 
@@ -56,6 +57,7 @@ RSpec.describe CardGrant, type: :model do
         allow(card_grant.stripe_card).to receive(:frozen?).and_return(true)
 
         expect(card_grant.state_text).to eq("Frozen")
+        expect(card_grant.frozen_by_one_time_use?).to eq(false)
       end
     end
 
@@ -66,6 +68,7 @@ RSpec.describe CardGrant, type: :model do
         allow(card_grant.stripe_card).to receive(:frozen?).and_return(true)
 
         expect(card_grant.state_text).to eq("Frozen")
+        expect(card_grant.frozen_by_one_time_use?).to eq(false)
       end
     end
 
@@ -73,11 +76,12 @@ RSpec.describe CardGrant, type: :model do
       it "returns the one-time-use frozen message" do
         card_grant = create(:card_grant)
         card_grant.stripe_card.update!(stripe_status: "inactive", last_frozen_by: system_user)
+        card_grant.one_time_use = false
         allow(card_grant.stripe_card).to receive(:frozen?).and_return(false)
         allow(card_grant.stripe_card).to receive(:inactive?).and_return(true)
 
         expect(card_grant.state_text).to eq("Frozen")
-        expect(card_grant.frozen_by_otu?).to eq(true)
+        expect(card_grant.frozen_by_one_time_use?).to eq(false)
       end
     end
   end
