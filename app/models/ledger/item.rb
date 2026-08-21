@@ -183,9 +183,6 @@ class Ledger
 
       save!
 
-      # Only worth checking once ct_count/cpt_count actually transition —
-      # otherwise a brand-new item (both start at 0) would look abandoned
-      # before whatever's creating it has attached anything.
       cleanup_if_empty! if saved_change_to_ct_count? || saved_change_to_cpt_count?
     end
 
@@ -423,13 +420,6 @@ class Ledger
       SpecialAppearance.find_by_linked_object(linked_object)
     end
 
-    # Ledger items can end up with nothing attached to them once every CT/CPT
-    # that pointed to one gets reassigned elsewhere (e.g. a CPT settling into
-    # an existing CT's ledger item — see CanonicalPendingSettledMapping). An
-    # item that's truly empty (no mapping, no linked object, no CTs, no CPTs)
-    # is just clutter, so it's destroyed. An item with a mapping or linked
-    # object but somehow still no CTs/CPTs is unexpected, so it's reported
-    # instead of destroyed.
     def cleanup_if_empty!
       return unless ct_count.zero? && cpt_count.zero?
 

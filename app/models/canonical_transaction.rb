@@ -144,9 +144,6 @@ class CanonicalTransaction < ApplicationRecord
 
   after_commit if: -> { previous_changes.key?("ledger_item_id") } do
     old_ledger_item_id = previous_changes["ledger_item_id"].first
-    # refresh! can now destroy an item that's become empty (e.g. via the
-    # touch: true above, if it already ran), so the old item may be gone by
-    # the time we get here — find_by + safe nav instead of find.
     Ledger::Item.find_by(id: old_ledger_item_id)&.refresh! if old_ledger_item_id.present?
   end
 
