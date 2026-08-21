@@ -30,7 +30,7 @@ RSpec.describe CardGrant, type: :model do
   end
 
   describe "#state_text" do
-    let(:system_user) { create(:user, email: User::SYSTEM_USER_EMAIL) }
+    let(:system_user) { User.find_or_create_by!(email: User::SYSTEM_USER_EMAIL) { |u| u.name = "System User" } }
 
     before do
       allow_any_instance_of(CardGrant).to receive(:transfer_money)
@@ -43,7 +43,8 @@ RSpec.describe CardGrant, type: :model do
         card_grant.stripe_card.update!(stripe_status: "inactive", last_frozen_by: system_user)
         allow(card_grant.stripe_card).to receive(:frozen?).and_return(true)
 
-        expect(card_grant.state_text).to eq("Frozen by one time use, contact the org for any inquiries")
+        expect(card_grant.state_text).to eq("Frozen")
+        expect(card_grant.frozen_by_otu?).to eq(true)
       end
     end
 
@@ -75,7 +76,8 @@ RSpec.describe CardGrant, type: :model do
         allow(card_grant.stripe_card).to receive(:frozen?).and_return(false)
         allow(card_grant.stripe_card).to receive(:inactive?).and_return(true)
 
-        expect(card_grant.state_text).to eq("Frozen by one time use, contact the org for any inquiries")
+        expect(card_grant.state_text).to eq("Frozen")
+        expect(card_grant.frozen_by_otu?).to eq(true)
       end
     end
   end

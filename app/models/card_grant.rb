@@ -141,7 +141,7 @@ class CardGrant < ApplicationRecord
     elsif pending_invite?
       "Invitation sent"
     elsif stripe_card.frozen? || stripe_card.inactive?
-      stripe_card.last_frozen_by == User.system_user ? "Frozen by one time use, contact the org for any inquiries" : "Frozen"
+      "Frozen"
     else
       "Active"
     end
@@ -333,6 +333,10 @@ class CardGrant < ApplicationRecord
       inviter: sent_by,
       card_grant: self
     )
+  end
+
+  def frozen_by_otu?
+    (stripe_card.frozen? || stripe_card.inactive?) && stripe_card.last_frozen_by == User.system_user
   end
 
   private

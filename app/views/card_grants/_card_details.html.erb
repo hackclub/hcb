@@ -20,6 +20,11 @@
             <strong>Frozen by</strong>
             <%= user_mention stripe_card.last_frozen_by %>
           </div>
+        <% elsif stripe_card.frozen? && stripe_card.last_frozen_by && stripe_card.last_frozen_by == User.system_user %>
+          <div class="fs-mask">
+            <strong>Frozen by</strong>
+            <span title="Contact Org for any issues with this"><%= "One Time Purchase" %></span>
+          </div>
         <% end %>
 
         <div class="fs-mask">
