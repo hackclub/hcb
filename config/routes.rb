@@ -1003,7 +1003,6 @@ Rails.application.routes.draw do
     get "ledger"
     post "toggle_new_ledger"
     get "stats"
-    get "ledger_stats"
     get "merchants_filter"
     put "toggle_hidden"
     post "claim_point_of_contact"

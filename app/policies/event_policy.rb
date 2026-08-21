@@ -296,8 +296,6 @@ class EventPolicy < ApplicationPolicy
     is_public || auditor_or_reader?
   end
 
-  alias_method :ledger_stats?, :ledger?
-
   def toggle_new_ledger?
     is_public || auditor_or_reader?
   end

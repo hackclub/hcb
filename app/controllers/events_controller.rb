@@ -152,11 +152,6 @@ class EventsController < ApplicationController
     authorize @event
   end
 
-  def ledger_stats
-    authorize @event
-    @ledger = @event.ledger
-  end
-
   def transactions
     maybe_pending_invite = OrganizerPositionInvite.pending.find_by(user: current_user, event: @event)
 
