@@ -16,7 +16,7 @@ RSpec.describe CanonicalPendingTransaction, type: :model do
     let(:hcb_code) { canonical_pending_transaction.reload.hcb_code }
 
     it "calculates it on create" do
-      expect(hcb_code).to eql("HCB-000-#{canonical_pending_transaction.id}")
+      expect(hcb_code).to eql("HCB-000-canonical_pending_transaction_#{canonical_pending_transaction.id}")
     end
 
     context "when a raw_pending_stripe_transaction is attached" do

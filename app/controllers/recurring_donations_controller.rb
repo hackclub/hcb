@@ -2,6 +2,7 @@
 
 class RecurringDonationsController < ApplicationController
   include SetEvent
+  include TurnstileProtection
 
   before_action :set_event, only: [:create, :pay, :finished]
   before_action :set_recurring_donation_by_hashid, only: [:pay, :finished]
@@ -11,6 +12,11 @@ class RecurringDonationsController < ApplicationController
   skip_before_action :redirect_to_onboarding
 
   invisible_captcha only: [:create], honeypot: :subtitle
+
+  # The monthly half of the donation form, gated for the same reason as the
+  # one-time one: saving a RecurringDonation creates a Stripe subscription and
+  # with it a PaymentIntent for card testers to work against.
+  turnstile_protect only: [:create], action: TurnstileService::DONATION_ACTION
 
   def create
     params[:recurring_donation][:amount] = Monetize.parse(params[:recurring_donation][:amount]).cents
@@ -82,6 +88,31 @@ class RecurringDonationsController < ApplicationController
   end
 
   private
+
+  # Mirrors the failed-save path in `create`: the donation page hides flashes
+  # and the form sits in a Turbo frame, so the error belongs on the form. Keep
+  # what they'd already typed, since re-rendering the frame otherwise empties
+  # it.
+  def turnstile_failed
+    @recurring_donation = @event.recurring_donations.build(resubmitted_attributes)
+    @recurring_donation.errors.add(:base, TurnstileProtection::FAILURE_MESSAGE)
+    @monthly = true
+    @top_donors = []
+    @recent_donors = []
+    @hide_flash = true
+
+    render "donations/start_donation", status: :unprocessable_content
+  end
+
+  # A bot's POST needn't include the key at all, so don't assume it's there;
+  # the amount arrives from the form as dollars.
+  def resubmitted_attributes
+    submitted = params[:recurring_donation]
+    return {} unless submitted.is_a?(ActionController::Parameters)
+
+    attributes = submitted.permit(:name, :email, :message, :anonymous, :amount).to_h
+    attributes.merge("amount" => (Monetize.parse(attributes["amount"]).cents if attributes["amount"].present?))
+  end
 
   def set_recurring_donation_by_hashid
     @recurring_donation = @event.recurring_donations.find_by_hashid!(params[:id])
