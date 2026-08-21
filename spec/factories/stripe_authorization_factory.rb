@@ -64,7 +64,7 @@ FactoryBot.define do
           category: "employment_temp_agencies",
           category_code: "7361",
           network_id: "9999999999",
-          name: "FAWRA*A1B2C3"
+          name: "FAWRY*A1B2C3"
         }
       end
     end

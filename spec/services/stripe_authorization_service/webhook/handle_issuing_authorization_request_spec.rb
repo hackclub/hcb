@@ -137,7 +137,7 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
             category: "employment_temp_agencies",
             category_code: "7361",
             network_id: "9999999999",
-            name: "TOTALLY NOT FAWRA*A1B2C3"
+            name: "TOTALLY NOT FAWRY*A1B2C3"
           }
         )
       end
