@@ -66,6 +66,7 @@ module UserService
 
       deadline =
         if remaining.nil?
+          # We think this isn't possible??? maybe 🤷‍♂️
           "Your cards lock once a receipt goes past its deadline."
         elsif count == 1
           "It's due in #{remaining}. Miss it and your cards lock."
