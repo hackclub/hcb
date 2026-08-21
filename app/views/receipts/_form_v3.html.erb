@@ -114,7 +114,7 @@
     <% if defined?(receiptable) && (receiptable&.missing_receipt? || (admin_signed_in? && !receiptable&.no_or_lost_receipt?)) %>
       <div class="flex muted justify-end items-center mt1">
         <%= inline_icon "forbidden", size: 20 %>
-        <%= link_to receiptable_mark_no_or_lost_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id), method: :post do %>
+        <%= link_to receiptable_mark_no_or_lost_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, s: local_assigns[:secret]), method: :post do %>
           <small class="mt0 mb0">
             No/lost receipt?
           </small>

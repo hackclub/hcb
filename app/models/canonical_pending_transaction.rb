@@ -9,7 +9,7 @@
 #  custom_memo                                      :text
 #  date                                             :date             not null
 #  fee_waived                                       :boolean          default(FALSE)
-#  fronted                                          :boolean          default(FALSE)
+#  fronted                                          :boolean          default(FALSE), not null
 #  hcb_code                                         :text
 #  memo                                             :text             not null
 #  created_at                                       :datetime         not null
@@ -21,6 +21,7 @@
 #  raw_pending_bank_fee_transaction_id              :bigint
 #  raw_pending_column_transaction_id                :bigint
 #  raw_pending_donation_transaction_id              :bigint
+#  raw_pending_fee_reimbursement_transaction_id     :bigint
 #  raw_pending_fee_revenue_transaction_id           :bigint
 #  raw_pending_incoming_disbursement_transaction_id :bigint
 #  raw_pending_invoice_transaction_id               :bigint
@@ -54,6 +55,7 @@
 #  index_canonical_pending_txs_on_reimbursement_expense_payout_id   (reimbursement_expense_payout_id)
 #  index_canonical_pending_txs_on_reimbursement_payout_holding_id   (reimbursement_payout_holding_id)
 #  index_canonical_pending_txs_on_rpct_id                           (raw_pending_column_transaction_id)
+#  index_cpts_on_raw_pending_fee_reimbursement_tx_id                (raw_pending_fee_reimbursement_transaction_id)
 #  index_cpts_on_raw_pending_incoming_disbursement_transaction_id   (raw_pending_incoming_disbursement_transaction_id)
 #  index_cpts_on_raw_pending_outgoing_disbursement_transaction_id   (raw_pending_outgoing_disbursement_transaction_id)
 #  index_cpts_on_raw_pending_stripe_service_fee_tx_id               (raw_pending_stripe_service_fee_transaction_id)
@@ -85,6 +87,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :raw_pending_outgoing_disbursement_transaction, optional: true
   belongs_to :raw_pending_stripe_service_fee_transaction, optional: true
   belongs_to :raw_pending_fee_revenue_transaction, optional: true
+  belongs_to :raw_pending_fee_reimbursement_transaction, optional: true
   belongs_to :increase_check, optional: true
   belongs_to :paypal_transfer, optional: true
   belongs_to :wire, optional: true
@@ -122,6 +125,7 @@ class CanonicalPendingTransaction < ApplicationRecord
   scope :bank_fee, -> { where("raw_pending_bank_fee_transaction_id is not null") }
   scope :stripe_service_fee, -> { where("raw_pending_stripe_service_fee_transaction_id is not null") }
   scope :fee_revenue, -> { where("raw_pending_fee_revenue_transaction_id is not null") }
+  scope :fee_reimbursement, -> { where("raw_pending_fee_reimbursement_transaction_id is not null") }
   scope :incoming_disbursement, -> { where("raw_pending_incoming_disbursement_transaction_id is not null") }
   scope :outgoing_disbursement, -> { where("raw_pending_outgoing_disbursement_transaction_id is not null") }
   scope :reimbursement_expense_payout, -> { where.not(reimbursement_expense_payout_id: nil) }
@@ -158,7 +162,7 @@ class CanonicalPendingTransaction < ApplicationRecord
       }
     )
   }
-  scope :with_custom_memo, -> { where("custom_memo is not null") }
+  scope :with_custom_memo, -> { where.not(custom_memo: nil) }
 
   scope :pending_expired, -> { unsettled.where(created_at: ..5.days.ago) }
 
@@ -173,15 +177,7 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   belongs_to :ledger_item, optional: true, class_name: "Ledger::Item", touch: true
 
-  after_create_commit unless: -> { ledger_item.present? } do
-    safely do
-      ActiveRecord::Base.transaction do
-        li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
-        update!(ledger_item: li)
-        li.map!
-      end
-    end
-  end
+  after_create_commit :assign_ledger_item, unless: -> { ledger_item.present? }
 
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
@@ -478,6 +474,17 @@ class CanonicalPendingTransaction < ApplicationRecord
   end
 
   private
+
+  def assign_ledger_item
+    safely do
+      reload_local_hcb_code
+      ActiveRecord::Base.transaction do
+        li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        update!(ledger_item: li)
+        li.map!
+      end
+    end
+  end
 
   def write_hcb_code
     safely do

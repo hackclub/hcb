@@ -5,8 +5,8 @@
 # Table name: card_grants
 #
 #  id                         :bigint           not null, primary key
-#  allow_reimbursement_report :boolean          default(NULL), not null
-#  allow_stripe_card          :boolean          default(NULL), not null
+#  allow_reimbursement_report :boolean          default(FALSE), not null
+#  allow_stripe_card          :boolean          default(TRUE), not null
 #  amount_cents               :integer
 #  banned_categories          :string
 #  banned_merchants           :string
@@ -20,7 +20,7 @@
 #  one_time_use               :boolean
 #  pre_authorization_required :boolean          default(FALSE), not null
 #  purpose                    :string
-#  status                     :integer          default("active"), not null
+#  status                     :integer          default(0), not null
 #  created_at                 :datetime         not null
 #  updated_at                 :datetime         not null
 #  disbursement_id            :bigint
@@ -133,7 +133,7 @@ class CardGrant < ApplicationRecord
   def state
     if suspected_fraud?
       "error"
-    elsif reimbursement_report.present?
+    elsif converted_to_reimbursement_report?
       "success"
     elsif canceled? || expired?
       "muted"
@@ -149,8 +149,8 @@ class CardGrant < ApplicationRecord
   def state_text
     if suspected_fraud?
       "Fraudulent"
-    elsif reimbursement_report.present?
-      "Active"
+    elsif converted_to_reimbursement_report?
+      "Converted to reimbursement"
     elsif canceled?
       "Canceled"
     elsif expired?
@@ -171,6 +171,10 @@ class CardGrant < ApplicationRecord
     return :warning if s == :info
 
     :muted
+  end
+
+  def converted_to_reimbursement_report?
+    canceled? && reimbursement_report.present?
   end
 
   def suspected_fraud?

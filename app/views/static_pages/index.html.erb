@@ -36,6 +36,15 @@
   </div>
 <% end %>
 
+<% valid_contracts = current_user.contracts.sent.select { |contract| contract.party(:signee).present? } %>
+<% if valid_contracts.any? %>
+  <h2 class="w-full text-left mt-4 pb-0 border-none">Pending forms</h2>
+  <p class="text-left my0 w-100 muted">Forms are sent to your HCB email, currently set to <%= mail_to current_user.email %>.</p>
+  <div class="grid grid--narrow grid-cols-1 text-left w-full mt-2">
+    <%= render partial: "contracts/contract", collection: valid_contracts, as: :contract %>
+  </div>
+<% end %>
+
 <% if current_user.card_grants.not_activated.any? %>
   <h2 class="user-home-section mb-2">Pending grant invitations</h2>
   <ul class="grid grid-cols-1 text-left w-full mt-2">
@@ -226,15 +235,6 @@
     <% end %>
 
     <%= render "static_pages/index/explore" %>
-
-    <% valid_contracts = current_user.contracts.sent.select { |contract| contract.party(:signee).present? } %>
-    <% if valid_contracts.any? %>
-      <h2 class="w-full text-left mt-4 pb-0 border-none">Pending forms</h2>
-      <p class="text-left my0 w-100 muted">Forms are sent to your HCB email, currently set to <%= mail_to current_user.email %>.</p>
-      <div class="grid grid--narrow grid-cols-1 text-left w-full mt-2">
-        <%= render partial: "contracts/contract", collection: valid_contracts, as: :contract %>
-      </div>
-    <% end %>
   <% end %>
 
   <% if auditor_signed_in? %>

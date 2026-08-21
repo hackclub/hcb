@@ -24,6 +24,10 @@
 #  fk_rails_...  (card_grant_id => card_grants.id)
 #  fk_rails_...  (event_id => events.id)
 #
+# Check Constraints
+#
+#  ledgers_owner_rules  ("primary" IS TRUE AND (event_id IS NOT NULL AND card_grant_id IS NULL OR event_id IS NULL AND card_grant_id IS NOT NULL) OR "primary" IS FALSE AND event_id IS NULL AND card_grant_id IS NULL)
+#
 class Ledger < ApplicationRecord
   self.table_name = "ledgers"
 
@@ -36,7 +40,9 @@ class Ledger < ApplicationRecord
   validate :validate_owner_based_on_primary
 
   has_many :mappings, class_name: "Ledger::Mapping"
+  has_many :pinned_mappings, -> { pinned }, class_name: "Ledger::Mapping", inverse_of: :ledger
   has_many :items, through: :mappings, source: :ledger_item, class_name: "Ledger::Item"
+  has_many :pinned_items, through: :pinned_mappings, source: :ledger_item, class_name: "Ledger::Item"
 
   has_many :canonical_transactions, through: :items
   has_many :canonical_pending_transactions, through: :items

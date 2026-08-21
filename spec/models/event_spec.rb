@@ -179,6 +179,105 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe "#visible_descendant_ids" do
+    let(:root) { create(:event, is_public: true) }
+    let!(:transparent_child) { create(:event, parent: root, is_public: true) }
+    let!(:private_child) { create(:event, parent: root, is_public: false) }
+
+    it "omits private descendants, and their subtrees, from a signed out visitor" do
+      create(:event, parent: private_child, is_public: true)
+
+      expect(root.visible_descendant_ids(nil)).to eq([transparent_child.id])
+    end
+
+    it "omits hidden descendants, and their subtrees, from a signed out visitor" do
+      hidden_child = create(:event, parent: root, is_public: true, hidden_at: Time.current)
+      create(:event, parent: hidden_child, is_public: true)
+
+      expect(root.visible_descendant_ids(nil)).to eq([transparent_child.id])
+    end
+
+    it "omits private descendants from a user with no organizer positions" do
+      expect(root.visible_descendant_ids(create(:user))).to eq([transparent_child.id])
+    end
+
+    it "includes transparent events nested under transparent events" do
+      grandchild = create(:event, parent: transparent_child, is_public: true)
+
+      expect(root.visible_descendant_ids(nil)).to match_array([transparent_child.id, grandchild.id])
+    end
+
+    it "includes private descendants for an admin" do
+      admin = create(:user, :make_admin)
+
+      expect(root.visible_descendant_ids(admin)).to match_array([transparent_child.id, private_child.id])
+    end
+
+    it "includes private and hidden descendants for a reader on the root" do
+      user = create(:user)
+      create(:organizer_position, event: root, user:, role: :reader)
+      hidden_child = create(:event, parent: root, is_public: true, hidden_at: Time.current)
+
+      expect(root.visible_descendant_ids(user)).to match_array(
+        [transparent_child.id, private_child.id, hidden_child.id]
+      )
+    end
+
+    it "includes a private descendant, and its subtree, for a user who organizes only it" do
+      user = create(:user)
+      create(:organizer_position, event: private_child, user:, role: :reader)
+      grandchild = create(:event, parent: private_child, is_public: false)
+
+      expect(root.visible_descendant_ids(user)).to match_array(
+        [transparent_child.id, private_child.id, grandchild.id]
+      )
+    end
+  end
+
+  # EventPolicy#sub_organizations? asks this whether the page has anything on
+  # it, so it has to agree with #visible_descendant_ids about who sees what.
+  # Each example below asserts both, so a rule that drifts apart in one of them
+  # fails here.
+  describe "#visible_subevents" do
+    let(:root) { create(:event, is_public: true) }
+
+    it "is empty for a signed out visitor when only a private subtree exists", :aggregate_failures do
+      private_child = create(:event, parent: root, is_public: false)
+      create(:event, parent: private_child, is_public: true)
+
+      expect(root.visible_subevents(nil)).to be_empty
+      expect(root.visible_descendant_ids(nil)).to be_empty
+    end
+
+    it "is empty for a signed out visitor when only a hidden subtree exists", :aggregate_failures do
+      hidden_child = create(:event, parent: root, is_public: true, hidden_at: Time.current)
+      create(:event, parent: hidden_child, is_public: true)
+
+      expect(root.visible_subevents(nil)).to be_empty
+      expect(root.visible_descendant_ids(nil)).to be_empty
+    end
+
+    it "is empty when the only sub-organization has been deleted", :aggregate_failures do
+      create(:event, parent: root, is_public: true).destroy
+
+      expect(root.visible_subevents(nil)).to be_empty
+      expect(Event.where(id: root.visible_descendant_ids(nil))).to be_empty
+    end
+
+    it "is empty for a user with no organizer positions on a private roster" do
+      create(:event, parent: root, is_public: false)
+
+      expect(root.visible_subevents(create(:user))).to be_empty
+    end
+
+    it "returns the transparent sub-organizations" do
+      transparent_child = create(:event, parent: root, is_public: true)
+      create(:event, parent: root, is_public: false)
+
+      expect(root.visible_subevents(nil)).to eq([transparent_child])
+    end
+  end
+
   describe "#plan" do
     it "uses the parent event's subevent plan by default" do
       parent = create(:event)
@@ -217,6 +316,59 @@ RSpec.describe Event, type: :model do
 
       expect(event).to respond_to(:ledger)
       expect(event.ledger).to be_a(Ledger)
+    end
+  end
+
+  describe "#contract_pending_signature" do
+    let(:event) { create(:event) }
+
+    before do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+    end
+
+    def build_contract
+      invite = create(:organizer_position_invite, event:, user: create(:user))
+
+      Contract::FiscalSponsorship.create!(contractable: invite, include_videos: false)
+    end
+
+    it "returns a contract that still needs signing" do
+      contract = build_contract
+
+      expect(event.contract_pending_signature).to eq contract
+    end
+
+    it "returns nothing once the contract is signed" do
+      build_contract.update_column(:aasm_state, "signed")
+
+      expect(event.contract_pending_signature).to be_nil
+    end
+
+    # The inactive organization banner keys off this, so a voided contract must
+    # not leave an organization being told to sign something that no longer exists.
+    it "returns nothing once the contract is voided" do
+      build_contract.update_column(:aasm_state, "voided")
+
+      expect(event.contract_pending_signature).to be_nil
+    end
+
+    it "returns the oldest of several open contracts" do
+      first = build_contract
+      build_contract
+
+      expect(event.contract_pending_signature).to eq first
+    end
+  end
+
+  describe "#can_front_balance" do
+    it "enqueues a job to refresh the event's ledgers when changed" do
+      expect { event.update!(can_front_balance: !event.can_front_balance) }
+        .to have_enqueued_job(Event::RefreshLedgersJob).with(event_id: event.id)
+    end
+
+    it "does not enqueue a job when unchanged" do
+      expect { event.update!(name: "Renamed") }
+        .not_to have_enqueued_job(Event::RefreshLedgersJob)
     end
   end
 end
