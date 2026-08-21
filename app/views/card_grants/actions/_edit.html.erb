@@ -9,7 +9,7 @@
 <% end %>
 
 <% if policy(card_grant).edit_overview? %>
-  <div class="tooltipped tooltipped--w" aria-label="Manage this grant">
+  <div class="tooltipped tooltipped--w" aria-label="<%= policy(card_grant).edit? ? "Manage this grant" : "View grant settings" %>">
     <%= link_to edit_card_grant_path(card_grant),
                 class: "btn whitespace-nowrap",
                 data: { behavior: "modal_trigger", modal: "edit_card_grant" } do %>
