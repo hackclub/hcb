@@ -13,6 +13,14 @@
 
 module FeeReimbursementService
   class Nightly
+    # There's a large historical backlog of reimbursements that predate the
+    # CPT/Ledger::Item backfill (some going back years). Chewing through all
+    # of it in one run — each one doing a handful of creates plus a
+    # Ledger::Mapper pass — is what ran the job out of memory. Bound it to a
+    # slice per night; missing_pending_transaction shrinks as the backlog
+    # catches up over several nights instead.
+    BACKSTOP_BATCH_LIMIT = 500
+
     def run
       # Rescued per-record below — one org's Stripe hiccup shouldn't take down
       # the whole run and, with it, the backstop loop that follows.
@@ -22,7 +30,7 @@ module FeeReimbursementService
 
       # Backstop: catch any already-processed reimbursements that still lack a
       # pending transaction (idempotent — no-ops for ones that already have one).
-      FeeReimbursement.missing_pending_transaction.find_each(batch_size: 100) do |fee_reimbursement|
+      FeeReimbursement.missing_pending_transaction.order(:processed_at).limit(BACKSTOP_BATCH_LIMIT).find_each(batch_size: 100) do |fee_reimbursement|
         create_canonical_pending_transaction(fee_reimbursement)
       end
     end

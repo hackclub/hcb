@@ -7,12 +7,20 @@ module FeeReimbursementService
     end
 
     # Idempotent: safe to re-run (e.g. from the nightly) — it no-ops once the
-    # fee reimbursement already has its raw pending transaction, and skips
-    # zero-amount reimbursements (which move no money and get no topup).
+    # fee reimbursement already has its raw pending transaction, skips
+    # zero-amount reimbursements (which move no money and get no topup), and
+    # skips reimbursements whose top-up has already settled as a real
+    # CanonicalTransaction. That last case matters for old, backfilled
+    # reimbursements: their money already moved and reconciled months/years
+    # ago, so inventing a fresh "pending" leg for them now would never settle
+    # (nothing ever maps a CPT back to a CT that already exists) and, worse,
+    # can land on a different HcbCode/Ledger::Item than the one the real
+    # settled transaction lives on — see FeeReimbursement#settled_fee_reimbursement_transaction.
     def run
       existing = fee_reimbursement.raw_pending_fee_reimbursement_transaction
       return existing.canonical_pending_transaction if existing.present?
       return if fee_reimbursement.amount.to_i.zero?
+      return if fee_reimbursement.settled_fee_reimbursement_transaction.present?
 
       ActiveRecord::Base.transaction do
         rpfrt = fee_reimbursement.create_raw_pending_fee_reimbursement_transaction!(

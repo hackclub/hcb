@@ -137,4 +137,62 @@ class FeeReimbursement < ApplicationRecord
     @canonical_transaction ||= event.canonical_transactions.where("memo ilike ? and date >= ?", "#{sanitize_sql_like(transaction_memo)}%", created_at - 1.day).first
   end
 
+  # Has this reimbursement's OWN Stripe top-up already posted as a real,
+  # settled bank transaction? NOTE this is deliberately separate from
+  # #canonical_transaction above, which checks something else entirely: it's
+  # scoped to the *org's* event and matched on the *invoice/donation's* short
+  # code (`transaction_memo`), because it's asking whether the underlying
+  # invoice/donation payout settled. The reimbursement's own top-up settles
+  # under Hack Club Bank (see OUTGOING_FEE_REIMBURSEMENT_CODE), grouped by
+  # week, under a *different* short code — so it needs its own lookup.
+  #
+  # Matched two ways:
+  # 1. By the weekly HCB-900-<week> short code embedded in the topup's
+  #    statement descriptor (Nightly#local_hcb_code, since 5c932154). This is
+  #    reliable regardless of which ISO week the transaction actually clears
+  #    in — bank/ACH settlement can land a few business days after
+  #    `processed_at`, crossing into the following week.
+  # 2. Falling back to a week + amount match for reimbursements processed
+  #    before short codes were embedded (pre-2025-05-18), where the settled
+  #    memo ("STRIPE FEE REIMBU" / "HCKCLB FEE REIMBU") carries no code to
+  #    match on at all — see
+  #    TransactionGroupingEngine::Calculate::HcbCode#outgoing_fee_reimbursement?.
+  #    This is a best-effort match: it can only key off week + amount, so a
+  #    coincidental duplicate amount in the same window could match the wrong
+  #    transaction.
+  def settled_fee_reimbursement_transaction
+    return @settled_fee_reimbursement_transaction if defined?(@settled_fee_reimbursement_transaction)
+
+    @settled_fee_reimbursement_transaction = settled_transaction_by_weekly_short_code || settled_transaction_by_week_and_amount
+  end
+
+  private
+
+  def outgoing_fee_reimbursement_hcb_code
+    [
+      ::TransactionGroupingEngine::Calculate::HcbCode::HCB_CODE,
+      ::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_FEE_REIMBURSEMENT_CODE,
+      processed_at.strftime("%G_%V"),
+    ].join(::TransactionGroupingEngine::Calculate::HcbCode::SEPARATOR)
+  end
+
+  def settled_transaction_by_weekly_short_code
+    return nil unless processed_at
+
+    short_code = ::HcbCode.find_by(hcb_code: outgoing_fee_reimbursement_hcb_code)&.short_code
+    return nil unless short_code.present?
+
+    ::CanonicalTransaction.where("memo ilike ?", "%HCB-#{short_code}%").first
+  end
+
+  def settled_transaction_by_week_and_amount
+    return nil unless processed_at && amount.present?
+
+    ::CanonicalTransaction
+      .where("hcb_code ilike ?", "HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_FEE_REIMBURSEMENT_CODE}-%")
+      .where(date: (processed_at.to_date - 1.day)..(processed_at.to_date + 10.days))
+      .where(amount_cents: -amount)
+      .first
+  end
+
 end

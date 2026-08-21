@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe FeeReimbursementService::CreateCanonicalPendingTransaction, type: :service do
   # The pending transaction is mapped to the Hack Club Bank event, which must
   # exist for the service to succeed.
-  let!(:hack_club_bank) { create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK) }
+  let!(:hack_club_bank) { Event.find_by(id: EventMappingEngine::EventIds::HACK_CLUB_BANK) || create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK) }
 
   let(:fee_reimbursement) { create(:fee_reimbursement, amount: 12_34) }
 
@@ -56,6 +56,41 @@ RSpec.describe FeeReimbursementService::CreateCanonicalPendingTransaction, type:
 
       expect(result).to be_nil
       expect(zero.reload.raw_pending_fee_reimbursement_transaction).to be_nil
+    end
+
+    # Regression test: creating a fresh (and inevitably unmapped) Ledger::Item
+    # for a reimbursement whose top-up already settled, instead of finding
+    # the settled transaction's existing one.
+    context "when the reimbursement's top-up already settled" do
+      it "does nothing when the settled transaction embeds the weekly short code" do
+        old = create(:fee_reimbursement, amount: 12_34, processed_at: 18.months.ago)
+        weekly_hcb_code = HcbCode.create!(hcb_code: "HCB-900-#{old.processed_at.strftime("%G_%V")}")
+        create(:canonical_transaction, memo: "HCBCLB HCB-#{weekly_hcb_code.short_code}", amount_cents: -1234)
+
+        result = described_class.new(fee_reimbursement_id: old.id).run
+
+        expect(result).to be_nil
+        expect(old.reload.raw_pending_fee_reimbursement_transaction).to be_nil
+      end
+
+      it "does nothing when settlement crossed into the next ISO week (no short code, old memo format)" do
+        old = create(:fee_reimbursement, amount: 12_34, processed_at: Time.utc(2025, 1, 10, 12, 0, 0)) # Friday
+        create(:canonical_transaction, memo: "HCKCLB FEE REIMBU", amount_cents: -1234, date: Date.new(2025, 1, 13)) # following Monday
+
+        result = described_class.new(fee_reimbursement_id: old.id).run
+
+        expect(result).to be_nil
+        expect(old.reload.raw_pending_fee_reimbursement_transaction).to be_nil
+      end
+
+      it "still creates the pending transaction when nothing has settled yet" do
+        old = create(:fee_reimbursement, amount: 12_34, processed_at: 18.months.ago)
+
+        result = described_class.new(fee_reimbursement_id: old.id).run
+
+        expect(result).to be_present
+        expect(old.reload.raw_pending_fee_reimbursement_transaction).to be_present
+      end
     end
   end
 
