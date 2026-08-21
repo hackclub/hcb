@@ -96,10 +96,10 @@ class MyController < ApplicationController
 
   def inbox
     @count = current_user.transactions_missing_receipt.count
-    @locking_count = current_user.card_locking_overdue_charges.count
-    # Drives the countdown in the card locking callout. Only queried for
-    # cardholders who can actually see that callout.
-    @locking_next_due_at = current_user.card_locking_next_due_at if CardLocking.enabled?
+    if CardLocking.enabled?
+      @locking_count = current_user.card_locking_overdue_charges.count
+      @locking_next_due_at = current_user.card_locking_next_due_at
+    end
 
     hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
 
