@@ -63,6 +63,7 @@ RSpec.describe MyController do
 
     it "sets @locking_count from card_locking_overdue_charges" do
       user = sign_in_verified
+      Flipper.enable(:card_locking)
 
       get :inbox
 
