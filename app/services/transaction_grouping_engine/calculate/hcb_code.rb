@@ -316,6 +316,20 @@ module TransactionGroupingEngine
       end
 
       def unknown_hcb_code
+        # `run` gets re-invoked periodically for any transaction still
+        # classified as unknown (see TransactionGroupingEngine::NightlyJob,
+        # which reprocesses every CanonicalTransaction with a `000` code every
+        # 5 minutes). That means this method MUST be idempotent for a given
+        # record: once an "unknown" code has been assigned and stored, we
+        # have to keep returning that exact same string forever. Computing a
+        # *different* string here — even one that's equally "correct" as an
+        # unknown code — would make the caller (`write_hcb_code`/the nightly
+        # job) find-or-create a brand new, disconnected HcbCode row and
+        # silently reassign the transaction to it, orphaning its real
+        # ledger_item, comments, receipts, and tags (which stay behind on the
+        # original HcbCode row). See #14680/incident writeup.
+        return @ct_or_cp.hcb_code if already_unknown?
+
         [
           HCB_CODE,
           UNKNOWN_CODE,
@@ -323,11 +337,17 @@ module TransactionGroupingEngine
         ].join(SEPARATOR)
       end
 
+      def already_unknown?
+        @ct_or_cp.hcb_code&.start_with?("#{HCB_CODE}#{SEPARATOR}#{UNKNOWN_CODE}#{SEPARATOR}")
+      end
+
       # CanonicalTransaction and CanonicalPendingTransaction each have their
       # own `id` sequence, so an unrelated CT and CPT can end up with the same
       # id. Prefixing with the model name keeps their "unknown" hcb_codes from
       # colliding with each other (which would otherwise merge two unrelated
-      # transactions onto the same HcbCode/ledger item).
+      # transactions onto the same HcbCode/ledger item). This only ever runs
+      # for a transaction's first-ever "unknown" assignment — see
+      # `already_unknown?` above.
       def unknown_identifier
         "#{@ct_or_cp.model_name.param_key}_#{@ct_or_cp.id}"
       end
