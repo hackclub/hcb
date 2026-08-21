@@ -101,6 +101,66 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
     end
   end
 
+  context "forbidden merchant name prefixes" do
+    let(:stripe_authorization) do
+      build(
+        :stripe_authorization,
+        :forbidden_name_prefix,
+        card: { id: stripe_card.stripe_id }
+      )
+    end
+
+    it "declines and notifies ops" do
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+
+      sent_emails = capture_emails do
+        expect(service.run).to be(false)
+      end
+
+      expect(service.declined_reason).to eq("merchant_not_allowed_globally")
+
+      ops_email =
+        sent_emails
+        .filter { |mail| mail.recipients.include?(ApplicationMailer::OPERATIONS_EMAIL) }
+        .sole
+
+      expect(ops_email.subject).to eq("#{event.name}: Stripe card authorization blocked")
+    end
+
+    context "when the merchant name only contains the prefix mid-name" do
+      let(:stripe_authorization) do
+        build(
+          :stripe_authorization,
+          :forbidden_name_prefix,
+          card: { id: stripe_card.stripe_id },
+          merchant_data: {
+            category: "employment_temp_agencies",
+            category_code: "7361",
+            network_id: "9999999999",
+            name: "TOTALLY NOT FAWRA*A1B2C3"
+          }
+        )
+      end
+
+      it "approves" do
+        create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+
+        expect(service.run).to be(true)
+      end
+    end
+
+    context "when user is admin" do
+      let(:user) { create(:user, :make_admin) }
+      let(:stripe_cardholder) { create(:stripe_cardholder, user:) }
+      let(:stripe_card) { create(:stripe_card, :with_stripe_id, event:, stripe_cardholder:) }
+
+      it "approves when sufficient funds" do
+        create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+        expect(service.run).to be(true)
+      end
+    end
+  end
+
   context "allowlisted merchant network IDs" do
     let(:stripe_authorization) do
       build(
