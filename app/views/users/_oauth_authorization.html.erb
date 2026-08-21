@@ -62,8 +62,9 @@
       </div>
     <% end %>
     <% if latest_token.ip_address.present? %>
-      <div class="flex items-center mt-2">
-        <%= inline_icon "web", size: 20 %>&nbsp;<code class="mr1 tooltipped tooltipped--n" aria-label="<%= latest_token.ip_address %>"><%= latest_token.ip_address %></code>
+      <div class="flex items-center gap-x-1 min-w-0 mt-2">
+        <%= inline_icon "web", size: 20, class: "flex-shrink-0" %>
+        <code class="tooltipped tooltipped--n break-all" aria-label="<%= latest_token.ip_address %>"><%= latest_token.ip_address %></code>
       </div>
     <% end %>
     <p class="regular italic muted text-sm m-0 mt-1">

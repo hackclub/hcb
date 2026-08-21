@@ -66,6 +66,7 @@
       right: 0;
       bottom: 0;
       opacity: 0.1;
+      pointer-events: none;
       background-image: url('frc-background.png');
       background-size: 24em;
       background-position: center;
@@ -158,23 +159,22 @@ html[data-dark='true'] {
   color: map-get($palette, muted);
 }
 
-// Fills the remaining table width and truncates with an ellipsis instead of
-// widening the table (max-width: 0 keeps the content from sizing the cell)
+// Fills the remaining table width when the memo is short, but lets the cell
+// grow with its content when it isn't (overriding .transaction__memo's
+// max-width) instead of truncating it — .table-container's overflow-x: auto
+// then turns that extra width into a horizontal scrollbar.
 .transaction__memo--fluid {
   width: 100%;
-  max-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  max-width: none;
   white-space: nowrap;
 }
 
+// visibility (not width) is what reveals this on hover — the badge always
+// takes up its natural width so the row's width, and thus the fluid memo
+// column's, stays constant whether or not it's hovered.
 .transaction:hover .add-tag-badge,
 .add-tag-badge[aria-expanded='true'] {
   visibility: visible;
-}
-
-.transaction:not(:hover) .add-tag-badge {
-  width: 1px;
 }
 
 .transaction:hover .suggested_tag,
@@ -210,11 +210,20 @@ html[data-dark='true'] {
   }
 }
 
-.transaction:has(.renamed) {
-  animation: highlight 2s;
+@keyframes highlight-row {
+  from {
+    background-color: map-get($palette, warning);
+  }
+  to {
+    background-color: none;
+  }
 }
 
-.transaction:has(.renaming) {
+.transaction:has(.renamed) {
+  animation: highlight-row 2s;
+}
+
+.transaction:has(.renaming:not([hidden])) {
   background-image:
     linear-gradient(90deg, $orange 50%, transparent 50%),
     linear-gradient(90deg, $orange 50%, transparent 50%),

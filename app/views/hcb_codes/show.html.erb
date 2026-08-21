@@ -26,24 +26,21 @@
       <% end %>
     <% end %>
     <%= render "receipts/list_v2", hcb_code: @hcb_code, frame: @frame, transaction_show_receipt_button: @transaction_show_receipt_button, transaction_show_author_img: @transaction_show_author_img %>
-    <% admin_tool_if @hcb_code.receipt_optional? do %>
-      <%= begin receipt_upload_form_config = {
-            receiptable: @hcb_code,
-            enable_linking: true,
-            upload_method: "transaction_page",
-            include_spacing: true,
-            turbo: true
-          }
-
-                receipt_upload_form_config[:restricted_dropzone] = true if @frame
-                receipt_upload_form_config[:inline_linking] = true if @frame
-                receipt_upload_form_config[:upload_method] = "transaction_popover" if @frame
-                receipt_upload_form_config[:popover] = "HcbCode:#{@hcb_code.hashid}" if @frame
-                receipt_upload_form_config[:show_receipt_button] = @transaction_show_receipt_button
-                receipt_upload_form_config[:show_author_img] = @transaction_show_author_img
-                render partial: "receipts/form_v3", locals: receipt_upload_form_config
-          end %>
-    <% end %>
+    <%= begin receipt_upload_form_config = {
+          receiptable: @hcb_code,
+          enable_linking: true,
+          upload_method: "transaction_page",
+          include_spacing: true,
+          turbo: true
+        }
+              receipt_upload_form_config[:restricted_dropzone] = true if @frame
+              receipt_upload_form_config[:inline_linking] = true if @frame
+              receipt_upload_form_config[:upload_method] = "transaction_popover" if @frame
+              receipt_upload_form_config[:popover] = "HcbCode:#{@hcb_code.hashid}" if @frame
+              receipt_upload_form_config[:show_receipt_button] = @transaction_show_receipt_button
+              receipt_upload_form_config[:show_author_img] = @transaction_show_author_img
+              render partial: "receipts/form_v3", locals: receipt_upload_form_config
+        end %>
   <% end %>
 
   <%= turbo_frame_tag :subscriptions, src: subscriptions_transactions_hcb_code_path(@hcb_code) if @hcb_code.stripe_card? %>

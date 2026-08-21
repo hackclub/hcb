@@ -15,7 +15,7 @@ module InvoiceService
       ActiveRecord::Base.transaction do
 
         # 1. Un-front all pending transaction associated with this invoice
-        invoice.canonical_pending_transactions.update_all(fronted: false)
+        invoice.canonical_pending_transactions.find_each { |cpt| cpt.update(fronted: false) }
 
         # 2. Process remotely
         ::StripeService::Refund.create(charge: stripe_charge_id, amount: @amount, reason: @reason)

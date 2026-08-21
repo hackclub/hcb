@@ -3,6 +3,8 @@
 module OneTimeJobs
   class NukeLedger < ApplicationJob
     def perform
+      return unless Rails.env.development?
+
       delete_ledger_mappings
       clear_canonical_transaction_references
       delete_ledger_items

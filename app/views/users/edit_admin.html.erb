@@ -53,6 +53,12 @@
             <%= form.label :running_balance_enabled, "Show running balance?" %>
             <%= form.check_box :running_balance_enabled, checked: @user.running_balance_enabled? %>
           </div>
+
+          <div class="field field--checkbox">
+            <%= form.label :phone_number_verification_bypassed, "Bypass phone number verification for stripe cards / card grants" %>
+            <%= form.check_box :phone_number_verification_bypassed, checked: @user.phone_number_verification_bypassed? %>
+          </div>
+
         <% end %>
 
         <% if superadmin_signed_in? %>
