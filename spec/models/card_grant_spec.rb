@@ -30,7 +30,7 @@ RSpec.describe CardGrant, type: :model do
   end
 
   describe "#state_text" do
-    let(:system_user) { User.find_or_create_by!(email: User::SYSTEM_USER_EMAIL) { |u| u.name = "System User" } }
+    let(:system_user) { User.find_or_create_by!(email: User::SYSTEM_USER_EMAIL) }
 
     before do
       allow_any_instance_of(CardGrant).to receive(:transfer_money)
