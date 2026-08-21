@@ -39,7 +39,7 @@ class CardLockingMailer < ApplicationMailer
     @count = @hcb_codes.size
     # Same countdown the warning SMS carries, off the same pile. Taken from the
     # loaded rows rather than a second query, so mail and text agree exactly.
-    @due_in = CardLocking.time_remaining_in_words(@hcb_codes.filter_map(&:receipt_due_at).min)
+    @due_in = CardLocking.time_remaining_in_words(@user.card_locking_next_due_at)
     @show_org = user.events.size > 1
     mail to: user.email, subject: "You have #{@count} receipt#{'s' unless @count == 1} to upload"
   end
