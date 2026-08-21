@@ -319,8 +319,17 @@ module TransactionGroupingEngine
         [
           HCB_CODE,
           UNKNOWN_CODE,
-          @ct_or_cp.column_transaction_id || @ct_or_cp.id
+          @ct_or_cp.column_transaction_id || unknown_identifier
         ].join(SEPARATOR)
+      end
+
+      # CanonicalTransaction and CanonicalPendingTransaction each have their
+      # own `id` sequence, so an unrelated CT and CPT can end up with the same
+      # id. Prefixing with the model name keeps their "unknown" hcb_codes from
+      # colliding with each other (which would otherwise merge two unrelated
+      # transactions onto the same HcbCode/ledger item).
+      def unknown_identifier
+        "#{@ct_or_cp.model_name.param_key}_#{@ct_or_cp.id}"
       end
 
     end

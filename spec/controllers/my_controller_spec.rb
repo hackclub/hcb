@@ -63,11 +63,33 @@ RSpec.describe MyController do
 
     it "sets @locking_count from card_locking_overdue_charges" do
       user = sign_in_verified
+      Flipper.enable(:card_locking)
 
       get :inbox
 
       expect(response).to have_http_status(:ok)
       expect(controller.instance_variable_get(:@locking_count)).to eq(user.card_locking_overdue_charges.count)
+    end
+
+    it "sets @locking_next_due_at for the card locking callout's countdown" do
+      sign_in_verified
+      Flipper.enable(:card_locking)
+      deadline = 11.hours.from_now
+      allow_any_instance_of(User).to receive(:card_locking_next_due_at).and_return(deadline)
+
+      get :inbox
+
+      expect(controller.instance_variable_get(:@locking_next_due_at)).to eq(deadline)
+    end
+
+    # The callout is behind the kill switch, so cardholders who cannot see it
+    # should not pay for the query behind it.
+    it "does not query the next deadline when card locking is off" do
+      sign_in_verified
+      Flipper.disable(:card_locking)
+      expect_any_instance_of(User).not_to receive(:card_locking_next_due_at)
+
+      get :inbox
     end
 
     describe "grouping" do

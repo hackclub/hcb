@@ -96,7 +96,10 @@ class MyController < ApplicationController
 
   def inbox
     @count = current_user.transactions_missing_receipt.count
-    @locking_count = current_user.card_locking_overdue_charges.count
+    if CardLocking.enabled?
+      @locking_count = current_user.card_locking_overdue_charges.count
+      @locking_next_due_at = current_user.card_locking_next_due_at
+    end
     @now = Time.current
 
     hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
