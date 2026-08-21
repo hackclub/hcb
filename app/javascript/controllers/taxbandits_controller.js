@@ -1,12 +1,10 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = ['doneForm']
-  static values = { formId: String }
+  static values = { formId: String, advanceUrl: String }
 
   connect() {
     window.addEventListener('message', e => {
-      console.log(e)
       // Validate message
       if (
         e.origin !== 'https://links.taxbandits.io' &&
@@ -22,7 +20,7 @@ export default class extends Controller {
       if (typeof payload.iat !== 'number' || Math.abs(now - payload.iat) > 60)
         return
 
-      this.doneFormTarget.requestSubmit()
+      window.location.href = this.advanceUrlValue
     })
   }
 }
