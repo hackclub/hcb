@@ -34,7 +34,7 @@
     <% icon = inline_icon "view-reload" %>
   <% elsif tx.try(:raw_stripe_transaction) || tx.try(:raw_pending_stripe_transaction_id) %>
     <% label = "Card transaction#{!local_assigns[:authorless] && tx.stripe_cardholder ? " by " + tx.stripe_cardholder.user.initial_name : "" }" %>
-    <% icon = render "hcb_codes/merchant_icon", tx: %>
+    <% icon = render "hcb_codes/merchant_icon", tx: tx %>
   <% elsif tx.local_hcb_code.invoice? %>
     <% label = "Invoice" %>
     <% icon = inline_icon "payment-docs" %>

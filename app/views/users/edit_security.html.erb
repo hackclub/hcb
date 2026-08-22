@@ -22,7 +22,7 @@
                     <%= form.check_box :use_sms_auth,
                       data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
                       switch: true,
-                      disabled: %>
+                      disabled: disabled %>
                     <span class="slider"></span>
                   <% end %>
                 </div>
@@ -34,12 +34,12 @@
                     <%= form.check_box :use_two_factor_authentication,
                       data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
                       switch: true,
-                      disabled: %>
+                      disabled: disabled %>
                     <span class="slider"></span>
                   <% end %>
                 </div>
               </div>
-              <%= form.submit "Update preferences", disabled: %>
+              <%= form.submit "Update preferences", disabled: disabled %>
             <% end %>
           <% else %>
             <% if disabled %>
@@ -172,20 +172,20 @@
 
       <div class="field">
         <%= form.label :session_validity_preference, "Sign me out after" %>
-        <%= form.select :session_validity_preference, SessionsHelper::SESSION_DURATION_OPTIONS.to_a, {}, selected: @user.session_validity_preference, disabled: %>
+        <%= form.select :session_validity_preference, SessionsHelper::SESSION_DURATION_OPTIONS.to_a, {}, selected: @user.session_validity_preference, disabled: disabled %>
       </div>
 
       <div class="submit">
-        <%= form.submit "Save", disabled: %>
+        <%= form.submit "Save", disabled: disabled %>
       </div>
     <% end %>
 
     <div class="grid grid--split">
       <% @all_sessions.each do |session| %>
         <% if session.is_a? User::Session %>
-          <%= render "users/user_session", session: %>
+          <%= render "users/user_session", session: session %>
         <% elsif session.respond_to? :authorization_count %>
-          <%= render "users/oauth_authorization", authorization: session, disabled: %>
+          <%= render "users/oauth_authorization", authorization: session, disabled: disabled %>
         <% end %>
       <% end %>
     </div>
@@ -198,9 +198,9 @@
       <div class="grid grid--split">
         <% @expired_sessions.each do |session| %>
           <% if session.is_a? User::Session %>
-            <%= render "users/user_session", session: %>
+            <%= render "users/user_session", session: session %>
           <% elsif session.respond_to? :authorization_count %>
-            <%= render "users/oauth_authorization", authorization: session, disabled: %>
+            <%= render "users/oauth_authorization", authorization: session, disabled: disabled %>
           <% end %>
         <% end %>
       </div>

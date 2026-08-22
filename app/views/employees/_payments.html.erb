@@ -54,7 +54,7 @@
             <% end %>
             <td>
               <%= link_to payment.title, "#", data: { behavior: "modal_trigger", modal: "employee_payment_#{payment.id}" } %>
-              <%= render "employee/payments/modal", payment: %>
+              <%= render "employee/payments/modal", payment: payment %>
             </td>
             <td>
               <%= render_money payment.amount_cents %>

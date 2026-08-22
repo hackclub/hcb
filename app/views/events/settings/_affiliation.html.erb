@@ -36,11 +36,11 @@
         "#",
         class: "tooltipped tooltipped--w mr2 h-8 w-8", "aria-label": "Edit this affiliation",
         data: { behavior: "modal_trigger", modal: "edit_affiliation_#{affiliation.id}" },
-        disabled: %>
+        disabled: disabled %>
       <section class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" id="edit_affiliation_<%= affiliation.id %>">
         <%= modal_header("Edit affiliation") %>
         <%= form_with(url: affiliation_path(affiliation.id), method: :patch, local: true, html: { "x-data": "{ type: '#{affiliation.name}', disabled: #{disabled} }" }) do |form| %>
-          <%= render "events/settings/affiliation_form", affiliation:, form: %>
+          <%= render "events/settings/affiliation_form", affiliation:, form: form %>
         <% end %>
       </section>
     </div>
@@ -51,6 +51,6 @@
       style: "background: #ec375020; color: #ec3750",
       data: { turbo_confirm: "Are you sure you would like to delete this affiliation?", turbo_method: :delete, turbo_confirm_danger: true },
       'aria-label': "Delete this affiliation",
-      disabled: %>
+      disabled: disabled %>
   </div>
 </div>

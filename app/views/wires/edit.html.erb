@@ -23,7 +23,7 @@
     <%= form.text_field :memo,
         placeholder: "For venue payment...",
         required: true,
-        disabled: %>
+        disabled: disabled %>
   </div>
 
   <h2 class="mb2 mt3">Recipient details</h2>
@@ -35,7 +35,7 @@
 
   <div class="field">
   <%= form.label :recipient_email, "Email" %>
-  <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>
+  <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: disabled %>
   </div>
 
   <%= render partial: "transfers/recipient_details", locals: { form:, disabled:, required: true } %>
@@ -44,7 +44,7 @@
 
   <div class="field">
     <%= form.label :payment_for, "What are you paying for with this wire?" %>
-    <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: %>
+    <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: disabled %>
     <span class="muted">This is to help HCB keep record of our transactions.</span>
   </div>
 
@@ -53,6 +53,6 @@
   <%= render partial: "wires/country_specific_details", locals: { form:, disabled:, required: true } %>
 
   <div class="actions inline-block mt1">
-    <%= form.submit "Update wire", disabled: %>
+    <%= form.submit "Update wire", disabled: disabled %>
   </div>
 <% end %>

@@ -63,7 +63,7 @@
               </div>
               <% if event.logo.attached? %>
                 <div class="menu__divider"></div>
-                <%= link_to "Remove logo", event_remove_logo_path(event), method: :post, style: "padding: 0.25rem 0.5rem", disabled: %>
+                <%= link_to "Remove logo", event_remove_logo_path(event), method: :post, style: "padding: 0.25rem 0.5rem", disabled: disabled %>
               <% end %>
             </div>
           </div>
@@ -79,16 +79,16 @@
             <p class="h5 muted mt0 mb1">
               At most sixteen characters long; used on statement descriptors and printed on your event's HCB card.
             </p>
-            <%= form.text_field :short_name, placeholder: "#{event.name[0...Event::MAX_SHORT_NAME_LENGTH]}...", maxlength: Event::MAX_SHORT_NAME_LENGTH, disabled: %>
+            <%= form.text_field :short_name, placeholder: "#{event.name[0...Event::MAX_SHORT_NAME_LENGTH]}...", maxlength: Event::MAX_SHORT_NAME_LENGTH, disabled: disabled %>
           </div>
         <% end %>
         <div class="field flex-1">
           <%= form.label :website, "Website URL" %>
-          <%= form.text_field :website, type: :url, placeholder: "https://hackclub.com", disabled: %>
+          <%= form.text_field :website, type: :url, placeholder: "https://hackclub.com", disabled: disabled %>
         </div>
         <div class="field flex-1">
           <%= form.label :description, "Mission statement" %>
-          <%= form.text_area :description, placeholder: "A short description of your organization’s goals.", disabled: %>
+          <%= form.text_area :description, placeholder: "A short description of your organization’s goals.", disabled: disabled %>
         </div>
       </div>
       <div class="md:flex items-end">
@@ -141,7 +141,7 @@
       <div class="field mt-2">
         <%= inline_icon "markdown", size: 32, class: "muted right" %>
         <%= form.label :public_message, "Message to show visitors" %>
-        <%= form.text_area :public_message, class: "w-100 fit", disabled: %>
+        <%= form.text_area :public_message, class: "w-100 fit", disabled: disabled %>
       </div>
       <div class="field field--checkbox">
         <%= form.check_box :is_indexable, disabled:, switch: true %>
@@ -154,7 +154,7 @@
         </div>
       <% end %>
     </div>
-    <%= form.submit "Update", disabled: %>
+    <%= form.submit "Update", disabled: disabled %>
   </div>
 
   <h3 class="mb1" id="cards_heading">HCB card</h3>
@@ -174,7 +174,7 @@
         <div data-file-upload-target="clear"></div>
       </div>
     </div>
-    <%= form.submit "Update", disabled: %>
+    <%= form.submit "Update", disabled: disabled %>
   </div>
 
   <h3 class="mb1" id="announcements_heading">Announcements</h3>
@@ -198,7 +198,7 @@
         <% end %>
       </div>
     </div>
-    <%= form.submit "Update", disabled: %>
+    <%= form.submit "Update", disabled: disabled %>
   </div>
 
   <h3 class="mb1" id="cards_heading">Contact information</h3>
@@ -209,10 +209,10 @@
         <p class="h5 muted mt0 mb1">
           If you’d prefer for the HCB operations team to reach out to a shared email, configure that here.
         </p>
-        <%= config.email_field :contact_email, placeholder: "team@lioncityhacks.com", disabled: %>
+        <%= config.email_field :contact_email, placeholder: "team@lioncityhacks.com", disabled: disabled %>
       <% end %>
     </div>
-    <%= form.submit "Update", disabled: %>
+    <%= form.submit "Update", disabled: disabled %>
   </div>
 
   <h3 class="mb1">Danger zone</h3>
@@ -244,11 +244,11 @@
         <span>hcb.hackclub.com</span>
         <span>/</span>
       </span>
-      <%= form.text_field :slug, class: "!p-0 !border-none !shadow-none min-h-auto", placeholder: event.persisted? ? event.name.parameterize : nil, data: { action: "input->external-validation#validate" }, disabled: %>
+      <%= form.text_field :slug, class: "!p-0 !border-none !shadow-none min-h-auto", placeholder: event.persisted? ? event.name.parameterize : nil, data: { action: "input->external-validation#validate" }, disabled: disabled %>
     </div>
     <span data-external-validation-target="hint" style="grid-column-start: 2"></span>
     <div class="actions">
-      <%= form.submit "Update", disabled: %>
+      <%= form.submit "Update", disabled: disabled %>
     </div>
   </div>
 <% end %>

@@ -51,7 +51,7 @@
 
       <div class="field" id="admin_settings">
         <%= form.label :name %>
-        <%= form.text_field :name, disabled: %>
+        <%= form.text_field :name, disabled: disabled %>
       </div>
 
       <div class="field">
@@ -80,7 +80,7 @@
 
       <div class="field">
         <%= form.label :postal_code %>
-        <%= form.text_field :postal_code, placeholder: "90069", disabled: %>
+        <%= form.text_field :postal_code, placeholder: "90069", disabled: disabled %>
       </div>
 
       <div class="field">
@@ -105,17 +105,17 @@
 
       <div class="field field--checkbox">
         <%= form.label :demo_mode, "Is in Playground Mode?" %>
-        <%= form.check_box :demo_mode, switch: true, disabled: %>
+        <%= form.check_box :demo_mode, switch: true, disabled: disabled %>
       </div>
 
       <div class="field field--checkbox">
         <%= form.label :financially_frozen, "Is financially frozen? ⚠️ 🚨#{" (⚠️ has active recurring donations - please handle before freezing)" if event.recurring_donations.active.exists?}" %>
-        <%= form.check_box :financially_frozen, switch: true, disabled: %>
+        <%= form.check_box :financially_frozen, switch: true, disabled: disabled %>
       </div>
 
       <div class="field field--checkbox">
         <%= form.label :can_front_balance, "Front incoming transactions?" %>
-        <%= form.check_box :can_front_balance, switch: true, disabled: %>
+        <%= form.check_box :can_front_balance, switch: true, disabled: disabled %>
       </div>
 
       <div class="action">
@@ -183,11 +183,11 @@
     <%= form_with(model: [event, Fee], local: true, class: "mb3", data: { turbo_frame: "_top" }) do |form| %>
       <div class="field">
         <%= form.label :memo %>
-        <%= form.text_field :memo, placeholder: "Fee for inbound wire.", required: true, disabled: %>
+        <%= form.text_field :memo, placeholder: "Fee for inbound wire.", required: true, disabled: disabled %>
       </div>
       <div class="field">
         <%= form.label :amount, "Amount" %>
-        <%= form.number_field :amount, placeholder: 100, min: 1, step: 0.01, required: true, disabled: %>
+        <%= form.number_field :amount, placeholder: 100, min: 1, step: 0.01, required: true, disabled: disabled %>
       </div>
       <div class="action">
         <%= form.submit "Charge fee", disabled: !policy(event.fees.build).create? %>
@@ -207,9 +207,9 @@
     <% admin_tool "p-3" do %>
       <h3 id="admin_fees" class="mb2 mt1">Wire minimum exemption</h3>
       <% if Flipper.enabled?(:exempt_from_wire_minimum, event) %>
-        <%= link_to "Disable", disable_feature_path(feature: :exempt_from_wire_minimum, event_id: event.id), method: :post, class: "btn bg-accent", data: { turbo_method: :post }, disabled: %>
+        <%= link_to "Disable", disable_feature_path(feature: :exempt_from_wire_minimum, event_id: event.id), method: :post, class: "btn bg-accent", data: { turbo_method: :post }, disabled: disabled %>
       <% else %>
-        <%= link_to "Enable", enable_feature_path(feature: :exempt_from_wire_minimum, event_id: event.id), method: :post, class: "btn bg-info", disabled: %>
+        <%= link_to "Enable", enable_feature_path(feature: :exempt_from_wire_minimum, event_id: event.id), method: :post, class: "btn bg-info", disabled: disabled %>
       <% end %>
     <% end %>
   <% end %>
@@ -222,7 +222,7 @@
   <% end %>
 
   <% admin_tool "p-3" do %>
-    <%= render "events/settings/admin/tags", event: %>
+    <%= render "events/settings/admin/tags", event: event %>
   <% end %>
 
   <% admin_tool "p-3" do %>

@@ -148,8 +148,8 @@
       <%= form.date_field :invoiced_at, disabled:, style: "max-width: 190px", max: Date.current %>
     </div>
 
-    <%= render "events/transfers/notify_recipient", form:, disabled: %>
-    <%= render "events/transfers/attach_receipt", form:, disabled: %>
+    <%= render "events/transfers/notify_recipient", form:, disabled: disabled %>
+    <%= render "events/transfers/attach_receipt", form:, disabled: disabled %>
   </div>
   </div>
 

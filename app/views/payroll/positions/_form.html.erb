@@ -102,7 +102,7 @@
                 <%= form.date_field :starts_on, value: position&.start_date, required: true, disabled:,
                       max: (Date.current + Payroll::Position::MAX_START_LEAD_TIME).iso8601 %>
                 <span class="muted">to</span>
-                <%= form.date_field :ends_on, value: position&.end_date, required: true, disabled: %>
+                <%= form.date_field :ends_on, value: position&.end_date, required: true, disabled: disabled %>
               </div>
             </div>
 

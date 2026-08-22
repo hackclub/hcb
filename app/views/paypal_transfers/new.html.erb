@@ -42,12 +42,12 @@
     <%= form.text_field :memo,
         placeholder: "for venue payment",
         required: true,
-        disabled: %>
+        disabled: disabled %>
   </div>
 
   <div class="field">
     <%= form.label :payment_for, "What are you paying for with this transfer?" %>
-    <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: %>
+    <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: disabled %>
     <span class="muted">This is to help HCB keep record of our transactions.</span>
   </div>
 
@@ -76,7 +76,7 @@
 
   <div class="field">
     <%= form.label :recipient_email, "Recipient's PayPal Email" %>
-    <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: %>
+    <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true, disabled: disabled %>
   </div>
 
   <%= form.label :file, "Attach a receipt / invoice", class: "mt2 font-semibold" %>
@@ -92,13 +92,13 @@
           "file-drop-target"   => "fileInput",
           "file-upload-target" => "input"
         },
-        disabled: %>
+        disabled: disabled %>
     <button data-file-upload-target="preview" type="button"></button>
     <div data-file-upload-target="clear"></div>
   </div>
   <p class="muted mt0 mb2">Required for reimbursements / goods & services payments.</p>
 
   <div class="actions tooltipped tooltipped--n inline-block mt1" aria-label="Your transfer will be sent out on the next business day.">
-    <%= form.submit "Send transfer", disabled: %>
+    <%= form.submit "Send transfer", disabled: disabled %>
   </div>
 <% end %>
