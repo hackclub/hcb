@@ -126,5 +126,10 @@ module Bank
 
     config.action_controller.include_all_helpers = false
 
+    # Logins check a browser token cookie against the login record so a login
+    # can only be continued in the browser that began it. Only the test
+    # environment turns this off.
+    config.x.skip_login_browser_token_check = false
+
   end
 end
