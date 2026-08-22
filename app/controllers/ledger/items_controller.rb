@@ -2,7 +2,7 @@
 
 class Ledger
   class ItemsController < ApplicationController
-    before_action :set_item, only: [:pin, :unpin, :rename]
+    before_action :set_item, except: [:show]
 
     def show
       @item = Ledger::Item.find_by_hashid!(params[:id])
@@ -27,8 +27,6 @@ class Ledger
     end
 
     def hcb
-      @item = Ledger::Item.find_by_hashid!(params[:item_id])
-
       authorize @item
 
       redirect_to hcb_code_path(@item.hcb_code)
@@ -72,6 +70,25 @@ class Ledger
       @item.update_custom_memo!(memo)
 
       render partial: "ledger/items/memo/stream", locals: { item: @item }, formats: :turbo_stream
+    end
+
+    def invoice_as_personal_transaction
+      authorize @item
+
+      personal_tx = PersonalTransaction.new(ledger_item: @item, reporter: current_user)
+
+      if personal_tx.save
+        flash[:success] = "We've sent an invoice for repayment to #{personal_tx.invoice.sponsor.contact_email}."
+        return redirect_to personal_tx.invoice
+      end
+
+      if @item.personal_transaction.present?
+        flash[:error] = "A repayment invoice already exists for this transaction."
+        redirect_to @item.personal_transaction.invoice
+      else
+        flash[:error] = personal_tx.errors.full_messages.to_sentence
+        redirect_to @item.hcb_code
+      end
     end
 
     private
