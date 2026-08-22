@@ -87,4 +87,30 @@ module CardLocking
   def self.inbox_url
     Rails.application.routes.url_helpers.my_inbox_url
   end
+
+  # A deadline countdown for cardholder-facing copy: "45 minutes", "11 hours",
+  # "3 days". Always rounds DOWN, so a cardholder is never told they have more
+  # runway than they really do. Returns nil when there is no deadline or it has
+  # already passed; callers say something other than a countdown in that case.
+  #
+  # Switches from hours to days at 48h (WARNING_LEAD_TIME) so the pre-lock
+  # warning, which only fires inside that window, always counts down in hours.
+  def self.time_remaining_in_words(due_at, now: Time.current)
+    return nil if due_at.blank?
+
+    seconds = (due_at - now).to_i
+    return nil if seconds <= 0
+
+    if seconds < 1.hour.to_i
+      # Never round down to "0 minutes"; a deadline this close is still ahead.
+      minutes = [seconds / 1.minute.to_i, 1].max
+      "#{minutes} #{'minute'.pluralize(minutes)}"
+    elsif seconds < WARNING_LEAD_TIME.to_i
+      hours = seconds / 1.hour.to_i
+      "#{hours} #{'hour'.pluralize(hours)}"
+    else
+      days = seconds / 1.day.to_i
+      "#{days} #{'day'.pluralize(days)}"
+    end
+  end
 end

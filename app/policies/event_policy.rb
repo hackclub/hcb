@@ -293,13 +293,13 @@ class EventPolicy < ApplicationPolicy
   end
 
   def ledger?
-    auditor? || Flipper.enabled?(:new_ledger_2026_07_17, user)
+    is_public || auditor_or_reader?
   end
 
   alias_method :ledger_stats?, :ledger?
 
   def toggle_new_ledger?
-    auditor_or_reader?
+    is_public || auditor_or_reader?
   end
 
   alias hide_onboarding_message? request_call?
