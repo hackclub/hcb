@@ -46,6 +46,20 @@ class ApplicationMailer < ActionMailer::Base
     end
   end
 
+  # Marks this mailer's emails as containing secrets (login codes, passwords,
+  # tokens). The stored copy is kept in full and stays readable from the Rails
+  # console, but only superadmins can see its subject and contents in the admin
+  # email viewer.
+  #
+  # Takes the same `only:`/`except:`/`if:`/`unless:` filters as `has_history`.
+  def self.has_sensitive_contents(**options)
+    # `has_history` merges `extra` wholesale, so a caller-supplied `extra` would
+    # replace the flag and silently turn this declaration into a no-op.
+    raise ArgumentError, "has_sensitive_contents does not accept :extra" if options.key?(:extra)
+
+    has_history(extra: { sensitive: true }, **options)
+  end
+
   def mail(...)
     super(...).tap do |msg|
       new_to = (msg.to || []) - self.class.earmuffed_recipients
