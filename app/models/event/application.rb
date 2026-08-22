@@ -106,6 +106,7 @@ class Event
       project_info: "project_info",
       personal_info: "personal_info",
       review: "review",
+      sign_agreement: "sign_agreement",
       agreement: "agreement",
       submission: "submission"
     }
