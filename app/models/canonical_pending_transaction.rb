@@ -132,11 +132,15 @@ class CanonicalPendingTransaction < ApplicationRecord
   scope :reimbursement_payout_holding, -> { where.not(reimbursement_payout_holding_id: nil) }
   scope :unmapped, -> { includes(:canonical_pending_event_mapping).where(canonical_pending_event_mappings: { canonical_pending_transaction_id: nil }) }
   scope :mapped, -> { includes(:canonical_pending_event_mapping).where.not(canonical_pending_event_mappings: { canonical_pending_transaction_id: nil }) }
+  # Filtered with subqueries rather than joins. `where(association: ...)` resolves
+  # through Rails' table aliasing, so an `includes` anywhere else in the query can
+  # reach the same table by another path, take the alias, and silently rebind
+  # these conditions to a different row. Both foreign keys are NOT NULL, so `NOT
+  # IN` is safe here.
   scope :unsettled, -> {
-    includes(:canonical_pending_settled_mappings)
-      .where(canonical_pending_settled_mappings: { canonical_pending_transaction_id: nil })
-      .includes(:canonical_pending_declined_mapping)
-      .where(canonical_pending_declined_mapping: { canonical_pending_transaction_id: nil })
+    preload(:canonical_pending_settled_mappings, :canonical_pending_declined_mapping)
+      .where.not(id: CanonicalPendingSettledMapping.select(:canonical_pending_transaction_id))
+      .where.not(id: CanonicalPendingDeclinedMapping.select(:canonical_pending_transaction_id))
   }
   scope :missing_hcb_code, -> { where(hcb_code: nil) }
   scope :missing_or_unknown_hcb_code, -> { where("hcb_code is null or hcb_code ilike 'HCB-000%'") }

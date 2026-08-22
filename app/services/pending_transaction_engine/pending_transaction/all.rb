@@ -42,12 +42,26 @@ module PendingTransactionEngine
           begin
             included_local_hcb_code_associations = [:receipts, :comments, :canonical_transactions, { canonical_pending_transactions: [:canonical_pending_declined_mapping] }]
             included_local_hcb_code_associations << :tags
-            cpts = CanonicalPendingTransaction.includes([:raw_pending_stripe_transaction,
-                                                         order_by_mapped_at ? :canonical_pending_event_mapping : nil,
-                                                         { local_hcb_code: included_local_hcb_code_associations }])
+            # `includes` here becomes a single LEFT OUTER JOIN across eleven tables,
+            # which multiplies rows out through the has_many associations. `preload`
+            # fetches them in separate queries instead.
+            cpts = CanonicalPendingTransaction.preload([:raw_pending_stripe_transaction,
+                                                        order_by_mapped_at ? :canonical_pending_event_mapping : nil,
+                                                        { local_hcb_code: included_local_hcb_code_associations }])
                                               .unsettled
-                                              .where(id: canonical_pending_event_mappings.pluck(:canonical_pending_transaction_id))
-                                              .order("#{order_by_mapped_at ? "canonical_pending_event_mappings.created_at" : "canonical_pending_transactions.date"} desc, canonical_pending_transactions.id desc")
+                                              .where(id: canonical_pending_event_mappings.select(:canonical_pending_transaction_id))
+
+            cpts =
+              if order_by_mapped_at
+                # Ordering by the mapping needs it joined. There's a unique index on
+                # canonical_pending_transaction_id, so this can't duplicate rows.
+                cpts.joins(:canonical_pending_event_mapping)
+                    .order("canonical_pending_event_mappings.created_at desc, canonical_pending_transactions.id desc")
+              else
+                # Ordering by a raw string re-references the included tables and puts
+                # the join back, so name the columns.
+                cpts.order(date: :desc, id: :desc)
+              end
 
             if @user || @merchant
               cpts = cpts.joins("LEFT JOIN raw_pending_stripe_transactions on raw_pending_stripe_transactions.id = canonical_pending_transactions.raw_pending_stripe_transaction_id")
