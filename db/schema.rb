@@ -488,6 +488,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_120100) do
   end
 
   create_table "card_grant_settings", force: :cascade do |t|
+    t.boolean "allow_reimbursement_report", default: false, null: false
+    t.boolean "allow_stripe_card", default: true, null: false
     t.string "banned_categories"
     t.string "banned_merchants"
     t.boolean "block_suspected_fraud", default: true, null: false
@@ -507,6 +509,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_120100) do
   end
 
   create_table "card_grants", force: :cascade do |t|
+    t.boolean "allow_reimbursement_report", default: false, null: false
+    t.boolean "allow_stripe_card", default: true, null: false
     t.integer "amount_cents"
     t.string "banned_categories"
     t.string "banned_merchants"
@@ -1101,6 +1105,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_120100) do
     t.string "type"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_event_plans_on_event_id"
+    t.index ["event_id"], name: "index_event_plans_on_event_id_when_active", unique: true, where: "((aasm_state)::text = 'active'::text)"
   end
 
   create_table "event_scoped_tags", force: :cascade do |t|
