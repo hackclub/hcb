@@ -12,7 +12,7 @@
       </span>
     <% end %>
 
-    <%= render "hcb_codes/memo/stream", hcb_code: %>
+    <%= render "hcb_codes/memo/stream", hcb_code: hcb_code %>
     <%= render partial: "hcb_codes/memo/ai", locals: { hcb_code: } %>
     <div class="flex-1"></div>
     <%= pop_icon_to "edit",

@@ -132,14 +132,14 @@
         <%= form_errors @user, "profile", "We couldn't update your" %>
         <% if current_season(override_preference: true) %>
           <div class="field field--checkbox">
-            <%= form.check_box :seasonal_themes_enabled, disabled: %>
+            <%= form.check_box :seasonal_themes_enabled, disabled: disabled %>
             <%= form.label :seasonal_themes_enabled, "#{by_season "✨", override_preference: true, fall: "🎃", winter: "🎄"} Enable #{current_season(override_preference: true)} theme", class: "h3 bold" %>
           </div>
         <% end %>
 
         <div class="field">
           <%= form.label :full_name %>
-          <%= form.text_field :full_name, required: true, placeholder: "Fiona Hackworth III", pattern: '^\S+.+', disabled: %>
+          <%= form.text_field :full_name, required: true, placeholder: "Fiona Hackworth III", pattern: '^\S+.+', disabled: disabled %>
           <% @user.errors.full_messages_for(:full_name).each do |message| %>
             <div class="primary"><%= message %></div>
           <% end %>
@@ -147,7 +147,7 @@
         <div class="field">
           <%= form.label :preferred_name %>
           <p class="h5 muted mt0 mb1">If you go by a different name.</p>
-          <%= form.text_field :preferred_name, placeholder: @user.full_name.presence || "FiFi Hacks", maxlength: 30, disabled: %>
+          <%= form.text_field :preferred_name, placeholder: @user.full_name.presence || "FiFi Hacks", maxlength: 30, disabled: disabled %>
         </div>
 
         <div class="field">
@@ -177,7 +177,7 @@
                                  end_year: Date.today.year - 100,
                                  order: [:month, :day, :year],
                                  prompt: @user.birthday.nil?,
-                                 disabled: %>
+                                 disabled: disabled %>
             <% unless @user.birthday.nil? %>
               <% admin_tool("p-1.5 !ml-2") do %>
                 <%= @user.is_teenager? ? "✅ Teenager" : "Not a teenager" %>
@@ -187,7 +187,7 @@
         </div>
         <div class="field">
           <%= form.label :email %>
-          <%= form.email_field :email, disabled: %>
+          <%= form.email_field :email, disabled: disabled %>
           <% if @user.email_updates.active.any? %>
             <p style="max-width: 420px;">
               <small>
@@ -227,12 +227,12 @@
             Off by default.
           </p>
           <div class="field field--options">
-            <%= form.radio_button :sessions_reported, true, disabled: %>
+            <%= form.radio_button :sessions_reported, true, disabled: disabled %>
             <%= form.label :sessions_reported, value: true do %>
               <%= inline_icon "support", size: 28 %>
               <strong>Sure thing!</strong>
             <% end %>
-            <%= form.radio_button :sessions_reported, false, disabled: %>
+            <%= form.radio_button :sessions_reported, false, disabled: disabled %>
             <%= form.label :sessions_reported, value: false do %>
               <%= inline_icon "thumbsdown", size: 28 %>
               <strong>No thanks</strong>
@@ -241,7 +241,7 @@
         </fieldset>
 
         <div class="actions flex">
-          <%= form.submit "Save settings", disabled: %>
+          <%= form.submit "Save settings", disabled: disabled %>
         </div>
       <% end %>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/intlTelInput.min.js" integrity="sha512-QMUqEPmhXq1f3DnAVdXvu40C8nbTgxvBGvNruP6RFacy3zWKbNTmx7rdQVVM2gkd2auCWhlPYtcW2tHwzso4SA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>

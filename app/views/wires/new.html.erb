@@ -80,7 +80,7 @@
         <%= form.label :recipient_email, "Email" %>
         <%= form.email_field :recipient_email, class: "!max-w-full", placeholder: "fionah@gmail.com", required: true, disabled: disabled %>
       </div>
-      <%= render "events/transfers/notify_recipient", form:, disabled: %>
+      <%= render "events/transfers/notify_recipient", form:, disabled: disabled %>
 
       <template x-if="payment_recipient && !editing">
         <div class="flex flex-col gap-3">
@@ -139,7 +139,7 @@
         </div>
       </template>
 
-      <%= render "events/transfers/attach_receipt", form:, disabled: %>
+      <%= render "events/transfers/attach_receipt", form:, disabled: disabled %>
     </div>
 
     <%= render "transfers/domestic_wire_warning", event: @event %>

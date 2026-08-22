@@ -41,7 +41,7 @@
       <div class="field">
         <%= form.label :recipient_name, "Legal name (use company name if applicable)" %>
         <span class="muted mb-1 block">May be used for tax purposes. Match the name on the recipient's account.</span>
-        <%= form.text_field :recipient_name, placeholder: "Raviga Capital", class: "!max-w-full", required: true, maxlength: 250, disabled: %>
+        <%= form.text_field :recipient_name, placeholder: "Raviga Capital", class: "!max-w-full", required: true, maxlength: 250, disabled: disabled %>
       </div>
 
       <div class="field">
@@ -94,11 +94,11 @@
       <div class="field">
         <%= form.label :payment_for, "What are you paying for with this transfer?" %>
         <span class="muted">This is to help HCB keep record of our transactions.</span>
-        <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: %>
+        <%= form.text_field :payment_for, placeholder: "Event venue", required: true, disabled: disabled %>
       </div>
 
       <%= render partial: "wise_transfers/currency_specific_details", locals: { form:, disabled: } %>
-      <%= render "events/transfers/attach_receipt", form:, disabled: %>
+      <%= render "events/transfers/attach_receipt", form:, disabled: disabled %>
     </div>
   </div>
 

@@ -62,7 +62,7 @@
 
 <div class="mb-4 flex flex-row justify-between items-center width-100 gap-2">
   <%= form_with(model: false, local: true, method: :get, class: "flex-auto") do |form| %>
-    <%= render "events/filters/search", form: %>
+    <%= render "events/filters/search", form: form %>
     <%= form.hidden_field :filter, value: params[:filter] if params[:filter] %>
     <%= form.hidden_field :view, value: @view if @view %>
   <% end %>
@@ -124,7 +124,7 @@
       <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="approve_invite_request_<%= invite_request.hashid %>">
         <%= modal_header "Approve invite request" %>
 
-        <%= render "organizer_position_invite/requests/approval_form", invite_request: %>
+        <%= render "organizer_position_invite/requests/approval_form", invite_request: invite_request %>
       </section>
       <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
         <span class="w-full flex gap-2 items-center align-middle">

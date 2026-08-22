@@ -5,7 +5,7 @@
   <%= render "ledgers/ledger", ledger: @ledger, items: @items, show_author: false %>
 <% else %>
   <% if hcb_codes&.any? %>
-    <%= render "application/merchant_not_allowed_callout", hcb_codes: %>
+    <%= render "application/merchant_not_allowed_callout", hcb_codes: hcb_codes %>
     <div style="overflow-x: auto;" class="table-container">
       <table>
         <tbody data-behavior="transactions">

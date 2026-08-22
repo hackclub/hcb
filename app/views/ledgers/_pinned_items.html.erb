@@ -20,7 +20,7 @@
 
         <p class="font-bold m0 flex items-center g2">
           <%= format_date ledger_item.datetime %>
-          <%= render "ledger/items/status", ledger_item: %>
+          <%= render "ledger/items/status", ledger_item: ledger_item %>
         </p>
         <p class="pinned__transaction__text pinned__transaction__text--memo mt1 mb1 leading-[1.25] h3">
           <%= ledger_item.memo %>
@@ -29,7 +29,7 @@
           <span class="m0 muted">
             <%= render_money ledger_item.amount_cents %>
           </span>
-          <%= render "ledger/items/icon", ledger_item: %>
+          <%= render "ledger/items/icon", ledger_item: ledger_item %>
         </footer>
       <% end %>
     <% end %>

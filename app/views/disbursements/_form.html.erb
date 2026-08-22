@@ -11,10 +11,10 @@
       <div class="field">
         <%= form.label :name, "What is the transfer for?" %>
         <span class="muted block mb-1">This is to help HCB keep record of our transactions.</span>
-        <%= form.text_field :name, placeholder: "Donating extra funds to another organization", maxlength: 60, required: true, class: "!max-w-full", disabled: %>
+        <%= form.text_field :name, placeholder: "Donating extra funds to another organization", maxlength: 60, required: true, class: "!max-w-full", disabled: disabled %>
       </div>
 
-      <%= render "events/transfers/attach_receipt", form:, disabled: %>
+      <%= render "events/transfers/attach_receipt", form:, disabled: disabled %>
     </div>
   </div>
 

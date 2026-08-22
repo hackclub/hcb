@@ -5,20 +5,20 @@
     <div class="w-full flex-grow">
       <div class="field">
         <%= form.label :email %>
-        <%= form.email_field :email, value: card_grant.email, placeholder: "fiona@hackclub.com", autofocus: true, required: true, disabled: %>
+        <%= form.email_field :email, value: card_grant.email, placeholder: "fiona@hackclub.com", autofocus: true, required: true, disabled: disabled %>
       </div>
 
       <div class="field">
         <%= form.label :amount_cents, "Amount" %>
         <div class="flex items-center">
           <span class="bold muted shrink-none" style="width: 1rem;">$</span>
-          <%= form.number_field :amount_cents, value: (card_grant.amount_cents.nil? ? nil : ("%.2f" % (card_grant.amount_cents.to_f / 100))), placeholder: "10.00", required: true, min: 0.01, step: 0.01, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" }, disabled: %>
+          <%= form.number_field :amount_cents, value: (card_grant.amount_cents.nil? ? nil : ("%.2f" % (card_grant.amount_cents.to_f / 100))), placeholder: "10.00", required: true, min: 0.01, step: 0.01, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" }, disabled: disabled %>
         </div>
       </div>
 
       <div class="field">
         <%= form.label :expiration_at, "Expires on" %>
-        <%= form.date_field :expiration_at, value: card_grant.default_expiration_at, disabled: %>
+        <%= form.date_field :expiration_at, value: card_grant.default_expiration_at, disabled: disabled %>
       </div>
 
       <div class="field">
@@ -28,7 +28,7 @@
 
       <div class="field">
         <%= form.label :one_time_use, class: "flex gap-2 items-center" do %>
-          <%= form.check_box :one_time_use, disabled: %>
+          <%= form.check_box :one_time_use, disabled: disabled %>
           One time use?
           <span class="info tooltipped tooltipped--e h-5" aria-label="Card will freeze after the first charge">
             <%= inline_icon "info", size: 20 %>
@@ -38,7 +38,7 @@
 
       <div class="field">
         <%= form.label :pre_authorization_required, class: "flex gap-2 items-center" do %>
-          <%= form.check_box :pre_authorization_required, disabled: %>
+          <%= form.check_box :pre_authorization_required, disabled: disabled %>
           Require pre-authorization?
           <span class="info tooltipped tooltipped--e h-5" aria-label="Recipient will submit documentation of their purchase before activation, which will be compared with the grant's purpose and flagged if it is potentially fraudulent">
             <%= inline_icon "info", size: 20 %>
@@ -87,6 +87,6 @@
       <% end %>
     <% end %>
     <span></span>
-    <%= form.submit "Send grant", disabled: %>
+    <%= form.submit "Send grant", disabled: disabled %>
   </footer>
 <% end %>
