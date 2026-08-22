@@ -11,7 +11,7 @@ RUN su vscode -c "/bin/bash -l -c \"rvm --default use ${RUBY_VERSION}\""
 RUN su vscode -c "/bin/bash -l -c \"gem install rails webdrivers\""
 RUN su vscode -c "/bin/bash -l -c \"rvm fix-permissions\""
 
-ARG NODE_VERSION="22"
+ARG NODE_VERSION="24"
 RUN su vscode -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash"
 RUN su vscode -c "\
   export NVM_DIR=/home/vscode/.nvm && \

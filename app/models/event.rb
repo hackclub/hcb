@@ -438,8 +438,8 @@ class Event < ApplicationRecord
 
   scope :engaged, -> {
     Event.where(id: Event.joins(:canonical_transactions)
-        .where("canonical_transactions.date >= ?", 6.months.ago)
-        .distinct)
+                         .where("canonical_transactions.date >= ?", 6.months.ago)
+                         .distinct)
   }
 
   scope :dormant, -> { where.not(id: Event.engaged) }

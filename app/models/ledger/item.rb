@@ -193,8 +193,8 @@ class Ledger
       # TODO: remove CT and CPT updates because they are HCB code specific
       ActiveRecord::Base.transaction do
         if hcb_code.present?
-          hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
-          hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
+          hcb_code.canonical_transactions.update_all(custom_memo: memo)
+          hcb_code.canonical_pending_transactions.update_all(custom_memo: memo)
         end
         update!(custom_memo: memo)
       end
