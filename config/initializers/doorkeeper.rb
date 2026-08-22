@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../api_scopes"
+
 Doorkeeper.configure do
   orm :active_record
 
@@ -182,7 +184,13 @@ Doorkeeper.configure do
   # https://doorkeeper.gitbook.io/guides/ruby-on-rails/scopes
   #
   # default_scopes  :public
-  optional_scopes :read, :write, :"admin:read", :"admin:write"
+  #
+  # See config/api_scopes.rb. Alongside the broad read/write/admin scopes this includes the
+  # granular per-resource scopes (receipts:write, ledgers:read, …) that
+  # `Api::V4::ApplicationController.require_oauth2_scope` gates actions on. Those are only enforced
+  # against tokens that also carry `restricted`, so adding them here doesn't change what any
+  # existing token can do.
+  optional_scopes(*ApiScopes.optional)
 
   # Allows to restrict only certain scopes for grant_type.
   # By default, all the scopes will be available for all the grant types.
@@ -371,8 +379,12 @@ Doorkeeper.configure do
   #   puts "AFTER HOOK FIRED! #{request}, #{response}"
   # end
 
+  # `response` is nil for the device authorization endpoint: doorkeeper-device_authorization_grant
+  # fires this hook from `create_successful_response` before the request's `@response` is assigned,
+  # so a bare `response.token` raises and turns POST /oauth/authorize_device into a 500. There's no
+  # token to stamp at that point anyway — the IP is recorded when the token itself is issued.
   after_successful_strategy_response do |_request, response|
-    response.token&.update_column(:ip_address, Current.request_ip)
+    response&.token&.update_column(:ip_address, Current.request_ip)
   end
 
   # Hook into Authorization flow in order to implement Single Sign Out
