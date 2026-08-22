@@ -1,5 +1,9 @@
 <ul class="list-reset comments w-100 my-0 p-3 activity overflow-y-visible overflow-x-hidden">
-  <%= turbo_stream_from current_user, "activities" %>
+  <% if auditor_signed_in? && cookies[:admin_activities] == "everyone" %>
+    <%= turbo_stream_from current_user, "admin_activities" %>
+  <% else %>
+    <%= turbo_stream_from current_user, "activities" %>
+  <% end %>
   <turbo-frame id="activities-<%= @activities.current_page %>" target="_top">
     <%= render_activities(@activities.reject { |activity| activity.trackable.nil? && !activity.trackable_is_deletable? }) %>
     <% if @activities.next_page %>
