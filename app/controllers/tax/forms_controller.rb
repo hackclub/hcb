@@ -2,7 +2,7 @@
 
 module Tax
   class FormsController < ApplicationController
-    before_action :set_form, only: [:show, :sync, :discard]
+    before_action :set_form, only: [:show, :completed, :discard]
 
     def show
       authorize @form
@@ -10,10 +10,11 @@ module Tax
       @form.sync_with_taxbandits
 
       if @form.completed?
-        if pending_payroll_position.present?
+        flash[:success] = "This form has been completed"
+
+        if pending_payroll_position.present? && @form.legal_entity.payable?
           redirect_to onboarding_payroll_position_path(pending_payroll_position)
         else
-          flash[:success] = "This form has been completed"
           redirect_to legal_entity_path(@form.legal_entity)
           return
         end
@@ -36,20 +37,17 @@ module Tax
       redirect_to tax_form_path(tax_form)
     end
 
-    def sync
+    def completed
       authorize @form
 
       @form.sync_with_taxbandits
 
       if @form.completed?
-        if pending_payroll_position.present?
+        if pending_payroll_position.present? && @form.legal_entity.payable?
           redirect_to onboarding_payroll_position_path(pending_payroll_position)
         else
           redirect_to legal_entity_path(@form.legal_entity)
         end
-      else
-        flash[:error] = "Complete the form before continuing"
-        redirect_back_or_to tax_form_path(@form)
       end
     end
 
