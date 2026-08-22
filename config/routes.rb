@@ -1074,6 +1074,8 @@ Rails.application.routes.draw do
     get "sub_organizations"
     get "sub_organizations/new", to: "suborganizations#new", as: :new_sub_organization
     get "donations", to: "events#donation_overview", as: :donation_overview
+    get "donations/donation_overview", to: "events#donations", as: :donations
+    get "donations/recurring_donation_overview", to: "events#recurring_donations", as: :recurring_donations
     get "activation_flow", to: "events#activation_flow", as: :activation_flow
     post "activate", to: "events#activate", as: :activate
     resources :disbursements, only: [:new, :create]
