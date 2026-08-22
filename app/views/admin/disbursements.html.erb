@@ -1,35 +1,27 @@
 <% title "Disbursements" %>
 
-<%= form_with local: true, class: "card overflow-visible", url: disbursements_admin_index_path, method: :get do |form| %>
-  <div class="flex flex-col sm:flex-row items-center gap-2">
+<% content_for(:admin_actions) do %>
+  <%= link_to disbursement_new_admin_index_path, class: "btn bg-primary" do %>
+    <%= inline_icon "plus" %>
+    New disbursement
+  <% end %>
+<% end %>
+
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: disbursements_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
-    <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
+    <%= render "admin/filters/event", event: @event %>
     <%= render "admin/date_range_filter", start_date: @start_date, end_date: @end_date %>
   </div>
-  <div class="flex items-center mt-2 gap-4 flex-wrap">
-    <%= form.label :reviewing do %>
-      <%= form.check_box :reviewing, checked: @reviewing %> Reviewing
-    <% end %>
-    <%= form.label :pending do %>
-      <%= form.check_box :pending, checked: @pending %> Pending
-    <% end %>
-    <%= form.label :processing do %>
-      <%= form.check_box :processing, checked: @processing %> Processing
-    <% end %>
-    <%= form.submit "Search", class: "ml-auto" %>
-    <%= link_to disbursement_new_admin_index_path do %>
-      <button class="btn bg-primary" type="button">New Disbursement</button>
-    <% end %>
+  <div class="flex flex-wrap items-center gap-2">
+    <%= render "admin/filters/toggle", form:, name: :reviewing, label: "Reviewing", checked: @reviewing %>
+    <%= render "admin/filters/toggle", form:, name: :pending, label: "Pending", checked: @pending %>
+    <%= render "admin/filters/toggle", form:, name: :processing, label: "Processing", checked: @processing %>
+    <%= render "admin/filters/actions", form: %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @disbursements, entry_name: "disbursements" %>
-  </div>
-  <%= paginate @disbursements %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -43,11 +35,11 @@
   </thead>
   <tbody>
     <% @disbursements.each do |disbursement| %>
-      <tr class="<%= "admin-bg-transit" if disbursement.pending? %><%= "admin-bg-pending" if disbursement.reviewing? %>">
+      <tr class="<%= "shade-cyan" if disbursement.pending? %><%= "shade-yellow" if disbursement.reviewing? %>">
         <td><%= disbursement.id %></td>
         <td><%= disbursement.created_at.strftime("%Y-%m-%d") %></td>
         <td>
-          <%= link_to disbursement_path(disbursement) do %>
+          <%= link_to disbursement_path(disbursement), data: admin_popover_data_for(disbursement) do %>
             <%= disbursement.source_event.name.upcase %>: <%= disbursement.name %>
           <% end %>
         </td>
@@ -63,12 +55,10 @@
             AUTOMATED
           <% end %>
 
-          <%= link_to(disbursement_process_admin_path(disbursement)) do %>
-            <% if disbursement.reviewing? %>
-              Process
-            <% else %>
-              View
-            <% end %>
+          <% if disbursement.reviewing? %>
+            <%= link_to "Process", disbursement_process_admin_path(disbursement), class: "btn", data: admin_process_popover_data(disbursement) %>
+          <% else %>
+            <%= pop_icon_to "external", disbursement_process_admin_path(disbursement), "aria-label": "View" %>
           <% end %>
         </td>
       </tr>
@@ -76,4 +66,10 @@
   </tbody>
 </table>
 
-<%= paginate @disbursements %>
+  <div class="table-footer">
+    <div class="flex-grow">
+      <%= page_entries_info @disbursements, entry_name: "disbursements" %>
+    </div>
+    <%= paginate @disbursements %>
+  </div>
+</div>

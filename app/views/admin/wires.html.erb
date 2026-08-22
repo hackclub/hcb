@@ -1,26 +1,18 @@
 <% title "Wires" %>
 
-<%= form_with local: true, class: "card overflow-visible", url: wires_admin_index_path, method: :get do |form| %>
-  <div class="flex flex-col sm:flex-row items-center gap-2">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: wires_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
-    <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
+    <%= render "admin/filters/event", event: @event %>
     <%= render "admin/date_range_filter", start_date: @start_date, end_date: @end_date %>
   </div>
-  <div class="flex items-center mt-2 gap-4 flex-wrap">
-    <%= form.label :exclude_reimbursements do %>
-      <%= form.check_box :exclude_reimbursements, checked: @exclude_reimbursements %> Exclude Reimbursements
-    <% end %>
-    <%= form.submit "Search", class: "ml-auto" %>
+  <div class="flex flex-wrap items-center gap-2">
+    <%= render "admin/filters/toggle", form:, name: :exclude_reimbursements, label: "Exclude reimbursements", checked: @exclude_reimbursements %>
+    <%= render "admin/filters/actions", form: %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @wires, entry_name: "transfers" %>
-  </div>
-  <%= paginate @wires %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -37,7 +29,7 @@
   </thead>
   <tbody>
     <% @wires.each do |wire| %>
-      <tr class="<%= "admin-bg-pending" if wire.pending? %>">
+      <tr class="<%= "shade-yellow" if wire.pending? %>">
         <td><%= wire.id %></td>
         <td><%= wire.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= wire.event.name %></td>
@@ -47,12 +39,20 @@
         <td><%= Money.from_cents(wire.amount_cents, wire.currency).format %></td>
         <td><%= wire.aasm.human_state %></td>
         <td>
-          <%= link_to "View", hcb_code_path(wire.hcb_code) %>
-          <%= link_to "Process", wire_process_admin_path(wire) %>
+          <div class="flex items-center gap-2">
+            <%= pop_icon_to "external", hcb_code_path(wire.hcb_code), "aria-label": "View", data: admin_popover_data_for(wire) %>
+            <%= link_to "Process", wire_process_admin_path(wire), class: "btn", data: admin_process_popover_data(wire) %>
+          </div>
         </td>
       </tr>
     <% end %>
   </tbody>
 </table>
 
-<%= paginate @wires %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @wires, entry_name: "transfers" %>
+  </div>
+  <%= paginate @wires %>
+</div>
+</div>

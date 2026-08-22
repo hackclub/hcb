@@ -445,6 +445,24 @@ module ApplicationHelper
     capture { link_to(name, uri.to_s, *options) }
   end
 
+  # Sanitizes a URL that we've stored (or that a third party handed us) before
+  # it's used as an `href`. Returns nil for anything that isn't a plain http(s)
+  # URL, so a stored `javascript:` link can never make it into the page.
+  #
+  # Prefer `ugc_link_to` when you're linking user-generated content; this is for
+  # the block form of `link_to`, which `ugc_link_to` doesn't support.
+  def external_url(url)
+    uri = begin
+      URI.parse(url.to_s)
+    rescue URI::InvalidURIError
+      nil
+    end
+
+    return nil unless uri&.scheme&.downcase&.in?(%w[http https])
+
+    ERB::Util.html_escape(uri.to_s)
+  end
+
   def dropdown_button(button_class: "bg-success", template: ->(value) { value }, **options)
     return content_tag :div, class: "relative w-fit #{options[:class]}", data: { controller: "dropdown-button", "dropdown-button-target": "container" } do
       (content_tag :div, class: "dropdown-button__container", **options[:button_container_options] do

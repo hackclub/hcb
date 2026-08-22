@@ -1,29 +1,19 @@
 <% title "ACH Transfers" %>
 
-<%= form_with local: true, class: "card overflow-visible", url: ach_admin_index_path, method: :get do |form| %>
-  <div class="flex flex-col sm:flex-row items-center gap-2">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: ach_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
-    <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
+    <%= render "admin/filters/event", event: @event %>
     <%= render "admin/date_range_filter", start_date: @start_date, end_date: @end_date %>
   </div>
-  <div class="flex items-center mt-2 gap-4 flex-wrap">
-    <%= form.label :pending do %>
-      <%= form.check_box :pending, checked: @pending %> Pending
-    <% end %>
-    <%= form.label :exclude_reimbursements do %>
-      <%= form.check_box :exclude_reimbursements, checked: @exclude_reimbursements %> Exclude Reimbursements
-    <% end %>
-    <%= form.submit "Search", class: "ml-auto" %>
+  <div class="flex flex-wrap items-center gap-2">
+    <%= render "admin/filters/toggle", form:, name: :pending, label: "Pending", checked: @pending %>
+    <%= render "admin/filters/toggle", form:, name: :exclude_reimbursements, label: "Exclude reimbursements", checked: @exclude_reimbursements %>
+    <%= render "admin/filters/actions", form: %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @ach_transfers, entry_name: "ACH transfers" %>
-  </div>
-  <%= paginate @ach_transfers %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -38,11 +28,11 @@
   </thead>
   <tbody>
     <% @ach_transfers.each do |ach| %>
-      <tr class="<%= "admin-bg-pending" if ach.pending? %> <%= "admin-bg-transit" if ach.in_transit? %>">
+      <tr class="<%= "shade-yellow" if ach.pending? %> <%= "shade-cyan" if ach.in_transit? %>">
         <td><%= ach.id %></td>
         <td><%= ach.created_at.strftime("%Y-%m-%d") %></td>
         <td>
-          <%= link_to ach_transfer_path(ach) do %>
+          <%= link_to ach_transfer_path(ach), data: admin_popover_data_for(ach) do %>
             <%= ach.event.name.upcase %>: <%= ach.recipient_name.upcase %>
           <% end %>
         </td>
@@ -55,12 +45,18 @@
         </td>
         <td><%= ach.confirmation_number %></td>
         <td>
-          <%= link_to "Process", ach_start_approval_admin_path(ach) if ach.pending? %>
-          <%= link_to "View", ach_start_approval_admin_path(ach) unless ach.pending? %>
+          <%= link_to "Process", ach_start_approval_admin_path(ach), class: "btn", data: admin_process_popover_data(ach) if ach.pending? %>
+          <%= pop_icon_to "external", ach_start_approval_admin_path(ach), "aria-label": "View" unless ach.pending? %>
         </td>
       </tr>
     <% end %>
   </tbody>
 </table>
 
-<%= paginate @ach_transfers %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @ach_transfers, entry_name: "ACH transfers" %>
+  </div>
+  <%= paginate @ach_transfers %>
+</div>
+</div>
