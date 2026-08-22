@@ -108,9 +108,15 @@ module StripeAuthorizationService
         auth[:merchant_data][:network_id]
       end
 
+      def merchant_name
+        auth[:merchant_data][:name]
+      end
+
       def forbidden_merchant?
-        # Explicitly blocked network IDs (e.g. fraud) can never be allowlisted.
+        # Explicitly blocked network IDs and name prefixes (e.g. fraud) can
+        # never be allowlisted.
         return true if StripeAuthorizationService::FORBIDDEN_MERCHANT_NETWORK_IDS.include?(merchant_network_id)
+        return true if StripeAuthorizationService.forbidden_merchant_name?(merchant_name)
 
         StripeAuthorizationService::FORBIDDEN_MERCHANT_CATEGORIES.include?(merchant_category) &&
           StripeAuthorizationService::ALLOWLISTED_MERCHANT_NETWORK_IDS.exclude?(merchant_network_id)
@@ -132,7 +138,7 @@ module StripeAuthorizationService
 
         return true if allowed_categories&.include?(merchant_category)
         return true if allowed_merchants&.include?(merchant_network_id)
-        return true if keyword_lock.present? && Regexp.new(keyword_lock).match?(auth[:merchant_data][:name])
+        return true if keyword_lock.present? && Regexp.new(keyword_lock).match?(merchant_name)
 
         false # decline transaction if none of the above match
       end

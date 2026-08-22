@@ -459,6 +459,7 @@ class Event < ApplicationRecord
   after_create :create_ledger
   has_many :hcb_codes
   has_many :pinned_hcb_codes, -> { includes(hcb_code: [:canonical_transactions, :canonical_pending_transactions]) }, class_name: "HcbCode::Pin"
+  has_many :pinned_ledger_items, through: :ledger, source: :pinned_items, class_name: "Ledger::Item"
 
   has_many :check_deposits
 
@@ -532,8 +533,8 @@ class Event < ApplicationRecord
     build_plan(type: fallback_plan_class) if plan.nil?
   end
 
-  after_update if: -> { can_front_balance_changed? } do
-    refresh_ledgers!
+  after_update_commit if: :can_front_balance_previously_changed? do
+    Event::RefreshLedgersJob.perform_later(event_id: id)
   end
 
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
@@ -1034,6 +1035,13 @@ class Event < ApplicationRecord
 
   def contracts_pending_on_hcb
     contracts.sent.select { |c| c.parties.not_hcb.all?(&:signed?) }
+  end
+
+  # The oldest contract standing between this organization and activation, if
+  # any. An organization can have more than one open at a time, since contracts
+  # hang off individual signee invites rather than off the organization.
+  def contract_pending_signature
+    contracts.not_voided.where.not(aasm_state: :signed).first
   end
 
   private

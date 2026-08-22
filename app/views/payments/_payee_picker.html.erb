@@ -88,10 +88,16 @@
           <button type="button" class="btn bg-blue w-full gap-2 mt-3" data-action="manual-payee#continue">
             Continue <%= inline_icon "view-forward" %>
           </button>
-          <%# The manual path is temporarily disabled; the button stays visible to signal it's on the way. %>
-          <button type="button" class="!shadow-none btn w-full text-sm font-[500] mt-1" data-manual-payee-target="enableButton" disabled <%= "hidden" if manual %>>
-            Submitting tax and payout information on behalf of the recipient — coming soon
-          </button>
+          <% if Flipper.enabled?(:manual_payees_2026_08_05, event) %>
+            <button type="button" class="!shadow-none btn w-full text-sm font-[500] mt-1" data-manual-payee-target="enableButton" data-action="manual-payee#enable" <%= "hidden" if manual %>>
+              I want to submit tax and payout information on behalf of the recipient
+            </button>
+          <% else %>
+            <%# Without the flag the manual path is disabled; the button stays visible to signal it's on the way. %>
+            <button type="button" class="!shadow-none btn w-full text-sm font-[500] mt-1" data-manual-payee-target="enableButton" disabled <%= "hidden" if manual %>>
+              Submitting tax and payout information on behalf of the recipient — coming soon
+            </button>
+          <% end %>
           <button type="button" class="!shadow-none btn w-full text-sm mt-1" data-manual-payee-target="undoButton" data-action="manual-payee#undo" <%= "hidden" unless manual %>>
             I'll have the recipient fill this out instead
           </button>

@@ -17,6 +17,7 @@
 #  receipt_count                :integer          default(0), not null
 #  receipt_required             :boolean
 #  short_code                   :text
+#  special_appearance           :string
 #  status                       :string           default("pending"), not null
 #  system_memo                  :text
 #  created_at                   :datetime         not null
@@ -53,7 +54,7 @@ class Ledger
     include Receiptable
 
     has_one :hcb_code, class_name: "HcbCode", required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
-    belongs_to :linked_object, polymorphic: true, optional: true
+    belongs_to :linked_object, polymorphic: true, optional: true, inverse_of: :ledger_item
     belongs_to :author, class_name: "User", optional: true
 
     # TODO: THIS IS SO TEMPORARY REMOVE ASAP
@@ -79,6 +80,8 @@ class Ledger
       canceled: "canceled", # user canceled transfer (for IncreaseCheck this also includes transfers rejected by ops)
       declined: "declined" # CPT has CPDM, no CPTs
     }
+
+    attribute :special_appearance, Ledger::Item::SpecialAppearance::Type.new
 
     validates_presence_of :amount_cents, :memo, :datetime, :status
 
@@ -152,6 +155,182 @@ class Ledger
       receipt_required? && marked_no_or_lost_receipt_at.nil? && receipt_count == 0
     end
 
+    # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
+    # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
+    # refresh! should not update any non-caching columns
+    def refresh!
+      # `after_create :refresh!` runs before any ledger mappings exist, which
+      # memoizes `primary_ledger` as nil on this instance. Reset the association
+      # caches so refresh! always recomputes from current database state (e.g.
+      # after a mapping is created).
+      association(:primary_mapping).reset
+      association(:primary_ledger).reset
+
+      # Counter caches
+      self.ct_count = canonical_transactions.size
+      self.cpt_count = canonical_pending_transactions.size
+      self.comment_count = comments.size
+      self.not_admin_only_comment_count = comments.not_admin_only.size
+      self.receipt_count = receipts.size
+
+      self.amount_cents = calculate_amount_cents
+      self.author = calculate_author
+      self.receipt_required = calculate_receipt_required
+      self.status = calculate_status
+      self.special_appearance = calculate_special_appearance
+      self.system_memo = calculate_system_memo # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
+      self.memo = self.custom_memo.presence || self.system_memo.presence || fallback_memo
+
+      save!
+    end
+
+    def map!
+      Ledger::Mapper.new(ledger_item: self).run
+      refresh!
+    end
+
+    def update_custom_memo!(memo)
+      # TODO: remove CT and CPT updates because they are HCB code specific
+      ActiveRecord::Base.transaction do
+        if hcb_code.present?
+          hcb_code.canonical_transactions.update_all(custom_memo: memo)
+          hcb_code.canonical_pending_transactions.update_all(custom_memo: memo)
+        end
+        update!(custom_memo: memo)
+      end
+
+      refresh!
+    end
+
+    def humanized_type
+      return "Card grant" if special_appearance&.key == "card_grant"
+
+      case linked_object_type
+      when "Invoice"
+        "Invoice"
+      when "Donation"
+        "Donation"
+      when "AchTransfer"
+        "Outgoing ACH"
+      when "Wire"
+        "Wire"
+      when "PaypalTransfer"
+        "PayPal transfer"
+      when "WiseTransfer"
+        "Wise transfer"
+      when "Check"
+        "Mailed check"
+      when "IncreaseCheck"
+        "Mailed check"
+      when "CheckDeposit"
+        "Check deposit"
+      when "Disbursement::Outgoing"
+        "Outgoing transfer"
+      when "Disbursement::Incoming"
+        "Incoming transfer"
+      when "StripeServiceFee"
+        "Stripe service fee"
+      when "BankFee"
+        "Fiscal sponsorship fee"
+      when "FeeRevenue"
+        "Fee revenue"
+      when "Reimbursement::PayoutHolding"
+        "Reimbursement payout holding"
+      when "Reimbursement::ExpensePayout"
+        "Reimbursement"
+      when "CardCharge"
+        "Card charge"
+      else
+        "Bank account transaction"
+      end
+    end
+
+    def pretty_title
+      amount_preposition = ["Donation", "Disbursement::Outgoing", "Disbursement::Incoming", "CardCharge", "BankFee"].include?(linked_object_type) ? "of" : "for"
+
+      amount_preposition = "refunded" if linked_object_type == "CardCharge" && amount_cents.positive?
+
+      type_label = linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) ? "HCB transfer" : humanized_type
+
+      "#{type_label} #{amount_preposition} #{ApplicationController.helpers.render_money(amount_cents.abs)}"
+    end
+
+    def icon
+      return special_appearance.icon if special_appearance&.icon
+
+      case linked_object_type
+      when "Invoice"
+        "payment-docs"
+      when "Donation"
+        if linked_object.recurring?
+          "support-recurring"
+        else
+          "support"
+        end
+      when "AchTransfer"
+        "payment-transfer"
+      when "Wire"
+        "web"
+      when "PaypalTransfer"
+        "paypal"
+      when "WiseTransfer"
+        "wise"
+      when "Check"
+        "email"
+      when "IncreaseCheck"
+        "email"
+      when "CheckDeposit"
+        "cheque"
+      when "Disbursement::Outgoing"
+        "door-leave"
+      when "Disbursement::Incoming"
+        "door-enter"
+      when "StripeServiceFee"
+        "cash" # TODO: find unique icon
+      when "BankFee"
+        "bank-icon"
+      when "FeeRevenue"
+        "bank-icon"
+      when "Reimbursement::PayoutHolding"
+        "reimbursement"
+      when "Reimbursement::ExpensePayout"
+        "reimbursement"
+      when "CardCharge"
+        linked_object.icon
+      else
+        "cash"
+      end
+    end
+
+    def sign
+      return :positive if amount_cents.positive?
+      return :negative if amount_cents.negative?
+
+      :zero
+    end
+
+    def pinnable?
+      (ct_count > 0 || cpt_count > 0) && primary_ledger&.event.present?
+    end
+
+    def pinned?
+      primary_mapping&.pinned? || false
+    end
+
+    private
+
+    def assign_linked_object!
+      # Once a linked object is assigned, it should never be changed.
+      # In the event of a merger of ledger items (e.g. mapping a CT to an LI with an existing CPT),
+      # the ledger item with the CPT will persist, and the ledger item with the CT will be destroyed.
+      # No linked objects will be changed.
+      return if linked_object.present?
+
+      linked_object = (canonical_pending_transactions.order(date: :asc).map(&:linked_object) + canonical_transactions.order(date: :asc).map(&:linked_object_v2)).compact.first
+
+      update!(linked_object:) if linked_object.present?
+    end
+
     def calculate_amount_cents
       amount_cents = canonical_transactions.sum(:amount_cents)
       amount_cents += canonical_pending_transactions.outgoing.unsettled.sum(:amount_cents)
@@ -162,6 +341,35 @@ class Ledger
       end
 
       amount_cents
+    end
+
+    def calculate_author
+      case linked_object_type
+      when "AchTransfer"
+        linked_object&.creator
+      when "CheckDeposit"
+        linked_object&.created_by
+      when "Check"
+        linked_object&.creator
+      when "IncreaseCheck"
+        linked_object&.user
+      when "Disbursement::Outgoing"
+        linked_object&.requested_by
+      when "Disbursement::Incoming"
+        linked_object&.requested_by
+      when "Reimbursement::ExpensePayout"
+        linked_object&.expense&.report&.user
+      when "PaypalTransfer"
+        linked_object&.user
+      when "Donation"
+        linked_object&.collected_by if linked_object&.in_person?
+      when "Wire"
+        linked_object&.user
+      when "WiseTransfer"
+        linked_object&.user
+      when "CardCharge"
+        linked_object&.stripe_cardholder&.user
+      end
     end
 
     def calculate_receipt_required
@@ -206,7 +414,13 @@ class Ledger
       :pending
     end
 
+    def calculate_special_appearance
+      SpecialAppearance.find_by_linked_object(linked_object)
+    end
+
     def calculate_system_memo
+      return special_appearance.memo if special_appearance&.memo
+
       case linked_object_type
       when "Invoice"
         "Invoice to #{linked_object.smart_memo}"
@@ -275,205 +489,6 @@ class Ledger
 
     def fallback_memo
       self.canonical_transactions.first&.try(:smart_memo).presence || self.canonical_pending_transactions.first&.try(:smart_memo).presence || "Transaction"
-    end
-
-    def calculate_author
-      case linked_object_type
-      when "AchTransfer"
-        linked_object&.creator
-      when "CheckDeposit"
-        linked_object&.created_by
-      when "Check"
-        linked_object&.creator
-      when "IncreaseCheck"
-        linked_object&.user
-      when "Disbursement::Outgoing"
-        linked_object&.requested_by
-      when "Disbursement::Incoming"
-        linked_object&.requested_by
-      when "Reimbursement::ExpensePayout"
-        linked_object&.expense&.report&.user
-      when "PaypalTransfer"
-        linked_object&.user
-      when "Donation"
-        linked_object&.collected_by if linked_object&.in_person?
-      when "Wire"
-        linked_object&.user
-      when "WiseTransfer"
-        linked_object&.user
-      when "CardCharge"
-        linked_object&.stripe_cardholder&.user
-      end
-    end
-
-    # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
-    # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
-    # refresh! should not update any non-caching columns
-    def refresh!
-      # `after_create :refresh!` runs before any ledger mappings exist, which
-      # memoizes `primary_ledger` as nil on this instance. Reset the association
-      # caches so refresh! always recomputes from current database state (e.g.
-      # after a mapping is created).
-      association(:primary_mapping).reset
-      association(:primary_ledger).reset
-
-      self.amount_cents = calculate_amount_cents
-      self.author = calculate_author
-      self.ct_count = canonical_transactions.size
-      self.cpt_count = canonical_pending_transactions.size
-      self.comment_count = comments.size
-      self.not_admin_only_comment_count = comments.not_admin_only.size
-      self.receipt_count = receipts.size
-      self.receipt_required = calculate_receipt_required
-      self.status = calculate_status
-      # TODO: only update this when the transaction gets its first CPT and then first CT assigned. currently it updates on every refresh
-      self.system_memo = calculate_system_memo
-      self.memo = self.custom_memo.presence || self.system_memo.presence || fallback_memo
-
-      save!
-    end
-
-    def update_custom_memo!(memo)
-      # TODO: remove CT and CPT updates because they are HCB code specific
-      ActiveRecord::Base.transaction do
-        if hcb_code.present?
-          hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
-          hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
-        end
-        update!(custom_memo: memo)
-      end
-
-      refresh!
-    end
-
-    def map!
-      Ledger::Mapper.new(ledger_item: self).run
-      refresh!
-    end
-
-    def humanized_type
-      case linked_object_type
-      when "Invoice"
-        "Invoice"
-      when "Donation"
-        "Donation"
-      when "AchTransfer"
-        "Outgoing ACH"
-      when "Wire"
-        "Wire"
-      when "PaypalTransfer"
-        "PayPal transfer"
-      when "WiseTransfer"
-        "Wise transfer"
-      when "Check"
-        "Mailed check"
-      when "IncreaseCheck"
-        "Mailed check"
-      when "CheckDeposit"
-        "Check deposit"
-      when "Disbursement::Outgoing"
-        "Outgoing transfer"
-      when "Disbursement::Incoming"
-        "Incoming transfer"
-      when "StripeServiceFee"
-        "Stripe service fee"
-      when "BankFee"
-        "Fiscal sponsorship fee"
-      when "FeeRevenue"
-        "Fee revenue"
-      when "Reimbursement::PayoutHolding"
-        "Reimbursement payout holding"
-      when "Reimbursement::ExpensePayout"
-        "Reimbursement"
-      when "CardCharge"
-        "Card charge"
-      else
-        "Bank account transaction"
-      end
-    end
-
-    def pretty_title
-      amount_preposition = ["Donation", "Disbursement::Outgoing", "Disbursement::Incoming", "CardCharge", "BankFee"].include?(linked_object_type) ? "of" : "for"
-
-      amount_preposition = "refunded" if linked_object_type == "CardCharge" && amount_cents.positive?
-
-      type_label = linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) ? "HCB transfer" : humanized_type
-
-      "#{type_label} #{amount_preposition} #{ApplicationController.helpers.render_money(amount_cents.abs)}"
-    end
-
-    def icon
-      case linked_object_type
-      when "Invoice"
-        "payment-docs"
-      when "Donation"
-        if linked_object.recurring?
-          "support-recurring"
-        else
-          "support"
-        end
-      when "AchTransfer"
-        "payment-transfer"
-      when "Wire"
-        "web"
-      when "PaypalTransfer"
-        "paypal"
-      when "WiseTransfer"
-        "wise"
-      when "Check"
-        "email"
-      when "IncreaseCheck"
-        "email"
-      when "CheckDeposit"
-        "cheque"
-      when "Disbursement::Outgoing" # TODO: support for special appearance icons
-        if linked_object.card_grant.present?
-          "bag"
-        else
-          "door-leave"
-        end
-      when "Disbursement::Incoming"
-        if linked_object.card_grant.present?
-          "bag"
-        else
-          "door-enter"
-        end
-      when "StripeServiceFee"
-        "cash" # TODO: find unique icon
-      when "BankFee"
-        "bank-icon"
-      when "FeeRevenue"
-        "bank-icon"
-      when "Reimbursement::PayoutHolding"
-        "reimbursement"
-      when "Reimbursement::ExpensePayout"
-        "reimbursement"
-      when "CardCharge"
-        linked_object.icon
-      else
-        "cash"
-      end
-    end
-
-    def sign
-      return :positive if amount_cents.positive?
-      return :negative if amount_cents.negative?
-
-      :zero
-    end
-
-    private
-
-    def assign_linked_object!
-      # Once a linked object is assigned, it should never be changed.
-      # In the event of a merger of ledger items (e.g. mapping a CT to an LI with an existing CPT),
-      # the ledger item with the CPT will persist, and the ledger item with the CT will be destroyed.
-      # No linked objects will be changed.
-      return if linked_object.present?
-
-      linked_object = (canonical_pending_transactions.order(date: :asc).map(&:linked_object) + canonical_transactions.order(date: :asc).map(&:linked_object_v2)).compact.first
-
-      update!(linked_object:) if linked_object.present?
     end
 
   end

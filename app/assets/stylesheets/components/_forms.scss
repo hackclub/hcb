@@ -29,7 +29,7 @@ textarea {
   width: 100%;
   max-width: 24rem;
 
-  &:focus-within {
+  &:not(.transaction *):focus-within {
     border-color: map-get($palette, info);
     box-shadow: 0 0 0 3px rgba(map-get($palette, info), 0.25);
   }

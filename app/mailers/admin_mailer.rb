@@ -115,14 +115,12 @@ class AdminMailer < ApplicationMailer
     )
   end
 
-  def logical_transaction_anomalies(event:, hcb_codes:, ledger_items:)
-    @event = event
-    @hcb_codes = hcb_codes
-    @ledger_items = ledger_items
+  def linked_object_anomalies(anomalous_items:)
+    @anomalous_items = anomalous_items
 
     mail(
       to: engineers,
-      subject: "#{hcb_codes.length} logical transactions have anomalies for #{@event.name}"
+      subject: "#{anomalous_items.length} items have linked object anomalies"
     )
   end
 
