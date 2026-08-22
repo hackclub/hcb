@@ -134,6 +134,8 @@ class CardGrant < ApplicationRecord
   def state_text
     if suspected_fraud?
       "Fraudulent"
+    elsif converted_to_reimbursement_report?
+      "Converted to reimbursement"
     elsif canceled?
       "Canceled"
     elsif expired?
@@ -154,6 +156,10 @@ class CardGrant < ApplicationRecord
     return :warning if s == :info
 
     :muted
+  end
+
+  def converted_to_reimbursement_report?
+    canceled? && reimbursement_report.present?
   end
 
   def suspected_fraud?
