@@ -6,9 +6,10 @@ class SuggestTagsJob < ApplicationJob
     if hcb_code_id
       HcbCodeService::Generate::SuggestedTags.new(hcb_code: HcbCode.find(hcb_code_id), event: Event.find(event_id)).run!
     else
+      event = Event.find(event_id)
       transactions = TransactionGroupingEngine::Transaction::All.new(event_id:).run
       transactions.each do |transaction|
-        HcbCodeService::Generate::SuggestedTags.new(hcb_code: transaction.local_hcb_code, event: Event.find(event_id)).run!
+        HcbCodeService::Generate::SuggestedTags.new(hcb_code: transaction.local_hcb_code, event:).run!
       end
     end
   end
