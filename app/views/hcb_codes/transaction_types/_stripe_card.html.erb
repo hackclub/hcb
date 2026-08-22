@@ -52,7 +52,7 @@
         <% end %>
       <% end %>
 
-      <% if @hcb_code.ledger_item&.personal_transaction&.present? %>
+      <% if @hcb_code.ledger_item&.personal_transaction.present? %>
         <span class="badge h4 bg-warning">
           Personal
           <%= inline_icon :info, size: 20 %>
@@ -250,7 +250,7 @@
           <span><strong>Sign in to view</strong></span>
         <% end %>
       </div>
-      <% if @hcb_code.ledger_item&.personal_transaction&.present? %>
+      <% if @hcb_code.ledger_item&.personal_transaction.present? %>
         <p>
           <strong>Repaid by</strong>
           <%= link_to @hcb_code.ledger_item.personal_transaction.invoice.local_hcb_code.memo, @hcb_code.ledger_item.personal_transaction.invoice %>
