@@ -7,12 +7,12 @@
   <%= link_to "Flag transaction", admin_ledger_audits_tasks_path(hcb_code: @hcb_code.id), method: :post, class: "btn bg-error" %>
 <% end %>
 
-<% @hcb_code.canonical_pending_transactions.each do |pt| %>
-<%= render partial: "application/admin_viewer", locals: { record: pt } %>
-<%= render partial: "application/admin_viewer", locals: { record: pt.raw_pending_stripe_transaction } %>
+<% @hcb_code.canonical_pending_transactions.each do |cpt| %>
+  <%= render partial: "application/admin_viewer", locals: { record: cpt } %>
+  <%= render partial: "application/admin_viewer", locals: { record: cpt.raw_pending_stripe_transaction } %>
 <% end %>
-<% @hcb_code.canonical_transactions.each do |pt| %>
-<%= render partial: "application/admin_viewer", locals: { record: pt } %>
+<% @hcb_code.canonical_transactions.each do |ct| %>
+  <%= render partial: "application/admin_viewer", locals: { record: ct } %>
 <% end %>
 
 <article class="hcb-code">

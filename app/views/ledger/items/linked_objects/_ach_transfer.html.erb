@@ -1,0 +1,132 @@
+<%# locals: (ledger_item:) %>
+
+<% ach_transfer = ledger_item.linked_object %>
+
+<% if ach_transfer.column_id.present? %>
+  <% admin_tool("mt3") do %>
+    <%= link_to "View transfer on Column", "https://dashboard.column.com/app/transfers/edit/ach/#{ach_transfer.column_id}", class: "btn bg-accent", target: "_blank" %>
+  <% end %>
+<% end %>
+
+<article class="ledger-item">
+  <%= render "hcb_codes/heading", hcb_code: ledger_item.hcb_code do %>
+    <span>
+      <span class="regular muted">ACH transfer to</span>
+      <%= ach_transfer.recipient_name %>
+      <span class="regular muted">for</span>
+      <span class="regular"><%= render_money ach_transfer.amount %></span>
+    </span>
+    <span class="badge h4 bg-<%= ach_transfer.state %> nowrap order-1">
+      <%= ach_transfer.status_text %>
+      <%= inline_icon ach_transfer.state_icon, size: 20 if ach_transfer.state_icon %>
+    </span>
+  <% end %>
+
+  <section class="ledger-item--details">
+    <div>
+      <strong>Sent by</strong>
+      <%= user_mention ach_transfer.creator %>
+    </div>
+    <% unless ach_transfer.processor.nil? %>
+      <% admin_tool("", "div") do %>
+        <strong>Processed by</strong>
+        <%= user_mention ach_transfer.processor %>
+      <% end %>
+    <% end %>
+    <div>
+      <strong>Sent at</strong>
+      <%= format_datetime ach_transfer.created_at %>
+    </div>
+  </section>
+  <turbo-frame id="details">
+    <section class="ledger-item--info">
+      <p>
+        <strong>Recipient name</strong>
+        <%= ach_transfer.recipient_name %>
+      </p>
+
+      <p>
+        <strong>Recipient email</strong>
+        <%= ach_transfer.recipient_email || "(no email provided)" %>
+      </p>
+
+      <% if ach_transfer.recipient_tel.present? %>
+        <p class="fs-mask">
+          <strong>Recipient phone</strong>
+          <%= organizer_signed_in? ? ach_transfer.recipient_tel : "Sign in to view" %>
+        </p>
+      <% end %>
+
+      <p>
+        <strong>Payment purpose</strong>
+        <%= ach_transfer.payment_for %>
+      </p>
+
+      <p>
+        <strong>Bank name</strong>
+        <%= organizer_signed_in? ? ach_transfer.bank_name : "Sign in to view" %>
+      </p>
+
+      <% if policy(ach_transfer).view_account_routing_numbers? %>
+        <p class="fs-mask">
+          <strong>Routing number</strong>
+          <% if @show_ach_details %>
+            <%= ach_transfer.routing_number %>
+          <% else %>
+            <%= link_to "Reveal", ledger_item_path(ledger_item, show_details: "true"), data: { turbo: true } %>
+          <% end %>
+        </p>
+
+        <p class="fs-mask">
+          <strong>Account number</strong>
+          <% if @show_ach_details %>
+            <%= ach_transfer.account_number %>
+          <% else %>
+            <%= link_to "Reveal", ledger_item_path(ledger_item, show_details: "true"), data: { turbo: true } %>
+          <% end %>
+        </p>
+      <% end %>
+
+      <p>
+        <strong>Amount</strong>
+        <%= render_money ach_transfer.amount %>
+      </p>
+
+      <% if ach_transfer.reimbursement_payout_holding.present? %>
+        <p>
+          <strong>Reimbursing</strong>
+         <%= link_to ach_transfer.reimbursement_payout_holding.report.name, ach_transfer.reimbursement_payout_holding.report, data: { turbo_frame: "_top" } %>
+        </p>
+      <% end %>
+
+      <p>
+        <strong>Status</strong>
+        <span>
+          <%= ach_transfer.status_text_long %>
+          <% if ach_transfer.deposited? && policy(ach_transfer).transfer_confirmation_letter? %>
+            <span class="muted">
+              <%= link_to "(view confirmation letter)", ach_transfer_confirmation_path(ach_transfer, format: :pdf), target: "_blank" %>
+            </span>
+          <% end %>
+        </span>
+      </p>
+    </section>
+  </turbo-frame>
+
+  <% if ach_transfer.may_mark_rejected? %>
+    <div class="card__banner card__darker border-top overflow-hidden flex items-center g2">
+      <% cancel_button = button_to "Cancel transfer", cancel_ach_transfer_path(ach_transfer), class: "btn bg-error #{"disabled" unless policy(ach_transfer).cancel?}" %>
+      <% if policy(ach_transfer).cancel? %>
+        <%= cancel_button %>
+      <% else %>
+        <div class="tooltipped tooltipped--e w-fit" aria-label="Only managers can cancel ACHs!">
+          <%= cancel_button %>
+        </div>
+      <% end %>
+
+      <% admin_tool do %>
+        <%= button_to "Process", ach_start_approval_admin_path(ach_transfer), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
+      <% end %>
+    </div>
+  <% end %>
+</article>

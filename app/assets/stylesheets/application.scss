@@ -416,6 +416,26 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   }
 }
 
+// When multiple admin-tools rows are stacked back-to-back inside a .details
+// list (e.g. several admin_tool blocks in a row), merge their dotted outlines
+// into a single continuous box instead of each row drawing its own rounded
+// border and overlapping its neighbor.
+.details > .admin-tools {
+  &:has(+ .admin-tools)::before {
+    bottom: 0;
+    border-bottom: none;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  & + .admin-tools::before {
+    top: 0;
+    border-top: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+}
+
 .dev-tools {
   padding: 0.5rem;
   border-radius: 0.5rem;
