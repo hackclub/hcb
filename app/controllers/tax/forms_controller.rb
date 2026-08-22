@@ -42,7 +42,7 @@ module Tax
       @form.sync_with_taxbandits
 
       if @form.completed?
-        if pending_payroll_position.present? && @form.legal_entity.payable?
+        if pending_payroll_position.present?
           redirect_to onboarding_payroll_position_path(pending_payroll_position)
         else
           redirect_to legal_entity_path(@form.legal_entity)
