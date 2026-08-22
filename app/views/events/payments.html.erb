@@ -69,7 +69,7 @@
     </div>
   </div>
 
-  <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
+  <div class="flex items-center gap-2">
     <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
       <%= render "events/filters/search", form: %>
     <% end %>
@@ -117,6 +117,10 @@
                 <% elsif d.is_a?(WiseTransfer) %>
                   <span class="tooltipped tooltipped--e inline-block" aria-label="Wise transfer">
                     <%= inline_icon "wise" %>
+                  </span>
+                <% elsif d.is_a?(Payment) %>
+                  <span class="tooltipped tooltipped--e inline-block" aria-label="Payment">
+                    <%= inline_icon "payment" %>
                   </span>
                 <% else %>
                   <span class="tooltipped tooltipped--e inline-block" aria-label="HCB transfer">
@@ -180,7 +184,7 @@
                                   data: popovers_enabled? && transfer_popover_title ? popover_data(
                                     title: transfer_popover_title,
                                     src: payment_path(d),
-                                    frame_id: d.id,
+                                    frame_id: "payment_#{d.id}",
                                     state_url: payment_path(d),
                                     external_link: payment_path(d)
                                   ) : nil %>

@@ -7,7 +7,7 @@
 #  id             :bigint           not null, primary key
 #  aasm_state     :string           not null
 #  archived_at    :datetime
-#  category       :integer          default("general"), not null
+#  category       :integer          default(0), not null
 #  deleted_at     :datetime
 #  name           :text
 #  slug           :text
@@ -55,7 +55,8 @@ class Document < ApplicationRecord
     general: 0,
     nonprofit_status: 1,
     tax_exemption: 2,
-    forms: 3
+    forms: 3,
+    contracts: 4
   }
 
   aasm timestamps: true do

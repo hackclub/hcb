@@ -74,7 +74,7 @@ export default class extends Controller {
         const visibleLeaves = leaves.slice(0, slots)
         const hiddenCount = leaves.length - visibleLeaves.length
 
-        if (hiddenCount > 0) {
+        if (hiddenCount > 1) {
           const visibleIds = new Set(
             [...parents, ...visibleLeaves].map(c => c.id)
           )
@@ -269,10 +269,6 @@ export default class extends Controller {
       .attr('height', NODE_H)
       .attr('rx', 6)
       .attr('stroke-width', 2)
-    const label =
-      node.hiddenCount === 1
-        ? '+1 organization'
-        : `+${node.hiddenCount} organizations`
     moreG
       .append('text')
       .attr('class', 'more-text')
@@ -280,7 +276,7 @@ export default class extends Controller {
       .attr('y', y + NODE_H / 2)
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'central')
-      .text(label)
+      .text(`+${node.hiddenCount} organizations`)
   }
 
   formatBalance(cents) {

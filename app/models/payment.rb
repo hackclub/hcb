@@ -36,12 +36,20 @@ class Payment < ApplicationRecord
 
   has_one :event, through: :payee
   has_one :legal_entity, through: :payee
-  has_many :attempts, class_name: "Payment::Attempt"
+  has_many :attempts, -> { order(created_at: :desc) }, class_name: "Payment::Attempt", inverse_of: :payment
   has_one :successful_attempt, -> { successful }, class_name: "Payment::Attempt", inverse_of: :payment
+  has_one :current_attempt, -> { not_failed }, class_name: "Payment::Attempt", inverse_of: :payment
+  has_one :payroll_invoice, class_name: "Payroll::Invoice", inverse_of: :payment, dependent: :nullify
 
   monetize :amount_cents, with_model_currency: :currency
 
   pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }
+  pg_search_scope :search_purpose_and_event, against: [:purpose], associated_against: { event: [:name] }
+
+  scope :successful_or_sent, -> { where(aasm_state: ["successful", "sent"]) }
+  scope :pending_or_under_review, -> { where(aasm_state: ["pending_legal_entity", "under_review"]) }
+
+  ACCEPTANCE_REMINDER_DAYS = [1, 2, 7, 14, 30, 60, 80, 85, 89].freeze
 
   aasm timestamps: true do
     state :pending_legal_entity, initial: true # We're waiting on the LE to complete tasks before payment can be sent
@@ -49,6 +57,7 @@ class Payment < ApplicationRecord
     state :sent
     state :successful
     state :rejected
+    state :canceled
 
     event :mark_under_review do
       transitions from: [:pending_legal_entity, :sent], to: :under_review
@@ -68,24 +77,56 @@ class Payment < ApplicationRecord
     event :mark_successful do
       transitions from: :sent, to: :successful
     end
+
+    event :mark_canceled do
+      transitions from: [:pending_legal_entity, :under_review, :sent], to: :canceled
+      after do
+        current_attempt&.mark_canceled!
+      end
+    end
   end
 
   after_create do
-    if legal_entity&.complete? && legal_entity.default_payout_method.present?
+    if legal_entity&.payable? && legal_entity.default_payout_method.present?
       create_payment_attempt!
-    elsif legal_entity&.complete?
-      PaymentMailer.with(payment: self, initial: true).missing_payout_method.deliver_later
+    elsif legal_entity&.payable?
+      PaymentMailer.with(payment: self).missing_payout_method.deliver_later
     else
       PaymentMailer.with(payment: self).missing_tax_information.deliver_later
     end
+  end
+
+  after_create_commit do
+    schedule_acceptance_reminders if awaiting_recipient_onboarding?
   end
 
   def retry!
     create_payment_attempt!
   end
 
+  def latest_payout
+    attempts.last&.payout
+  end
+
+  def popover_path
+    Rails.application.routes.url_helpers.payment_path(id: hashid, frame: true)
+  end
+
   def estimate_usd_amount_cents
     MoneyService.convert_to_usd(amount_cents, currency)
+  end
+
+  # Idempotent: safe to call any number of times, from any code path that
+  # touches the associated legal entity (tax form completion, payout method
+  # creation, payee reassignment). Only ever creates a payment attempt —
+  # never sends mail, so repeated calls can't spam a recipient with reminders.
+  def refresh_legal_entity_state!
+    return unless pending_legal_entity?
+    return unless legal_entity&.payable?
+    return if legal_entity.default_payout_method.nil?
+    return unless attempts.all?(&:failed?)
+
+    create_payment_attempt!
   end
 
   def receipt_required?
@@ -98,15 +139,16 @@ class Payment < ApplicationRecord
 
 
   def state_color
-    return "warning" if ["under_review", "pending_legal_entity"].include?(aasm_state)
+    return "info" if ["under_review", "pending_legal_entity", "sent"].include?(aasm_state)
     return "success" if aasm_state == "successful"
     return "error" if aasm_state == "rejected"
 
-    "muted"
+    "muted" # aasm_state == "canceled"
   end
 
   def state_text
-    return "Pending recipient" if aasm_state == "pending_legal_entity"
+    return "Awaiting recipient" if pending_legal_entity?
+    return "Processing" if under_review?
 
     return aasm_state.humanize
   end
@@ -115,7 +157,20 @@ class Payment < ApplicationRecord
     "Payment to #{payee.display_name} for #{purpose}"
   end
 
+  def awaiting_recipient_onboarding?
+    return false unless pending_legal_entity?
+    return false if legal_entity&.managed?
+
+    !legal_entity&.payable? || legal_entity.default_payout_method.blank?
+  end
+
   private
+
+  def schedule_acceptance_reminders
+    ACCEPTANCE_REMINDER_DAYS.each do |days|
+      Payment::AcceptanceReminderJob.set(wait: days.days).perform_later(self)
+    end
+  end
 
   def create_payment_attempt!
     self.with_lock do
