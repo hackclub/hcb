@@ -367,19 +367,15 @@ class User < ApplicationRecord
     words.any? ? words.map(&:first).join.upcase : name
   end
 
-  # HCB stores no timezone preference, so this infers one from sessions, whose
-  # timezone the browser reports at sign-in. A guess, only ever for presenting a
-  # time back to the user. Never compute a deadline from it.
+  # HCB stores no timezone preference, so this infers one from the timezone the
+  # browser reports at sign-in. A guess, only for presenting a time back to the
+  # user; never compute a deadline from it. (VPNs need no handling: the browser
+  # reads this from the OS, not the IP.)
   #
-  # Takes the most common value across recent sessions rather than the latest, so
-  # a trip does not repoint someone's timezone for a fortnight after they get
-  # home. Ties go to the more recent. A VPN needs no handling: the browser reads
-  # this from the operating system, not from the IP address, so tunnelling through
-  # another country does not change it.
-  #
-  # Most values are IANA names, but some browsers report things ActiveSupport
-  # cannot resolve ("Etc/Unknown", "UTC+480", bare offsets). Those are skipped in
-  # favour of the next best candidate rather than falling straight to the default.
+  # Most common value across recent sessions rather than the latest, so a trip
+  # does not repoint someone's timezone for weeks after they get home; ties go to
+  # the more recent. Values ActiveSupport cannot resolve ("Etc/Unknown", "UTC+480")
+  # are skipped in favour of the next candidate rather than dropping to the default.
   DEFAULT_TIMEZONE = ActiveSupport::TimeZone["America/New_York"]
   TIMEZONE_SESSION_SAMPLE = 20
 
