@@ -12,9 +12,16 @@
       <h2 class="border-none !mx-0 !px-0 !mt-0 inline-flex items-center flex-wrap">
         Grant to &nbsp; <%= user_mention(card_grant.user, class: "mr-2") %> for <%= render_money card_grant.amount %>
       </h2>
-      <p class="my-0 flex items-baseline g-1">
+      <p class="my-0 flex items-baseline g-1 items-center">
         <%= status_badge card_grant.status_badge_type %>
-        <%= card_grant.state_text %>
+        <% if card_grant.frozen_by_one_time_use? %>
+            Frozen by One Time Use
+            <span class="info tooltipped tooltipped--e inline-flex items-center" aria-label="For help with your grant, please reach out to <%= card_grant.event.name %>.">
+              <%= inline_icon "info", size: 18, style: "position: unset;" %>
+            </span>
+        <% else %>
+          <%= card_grant.state_text %>
+        <% end %>
         <% if card_grant.purpose.present? %>
           • <%= card_grant.purpose %>
         <% end %>

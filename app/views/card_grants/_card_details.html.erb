@@ -20,6 +20,11 @@
             <strong>Frozen by</strong>
             <%= user_mention stripe_card.last_frozen_by %>
           </div>
+        <% elsif stripe_card.frozen? && stripe_card.last_frozen_by && card_grant.frozen_by_one_time_use? %>
+          <div class="fs-mask">
+            <strong>Frozen by</strong>
+            <span title="Contact <%= card_grant.event.name %> for any issues with this"><%= "One Time Use" %></span>
+          </div>
         <% end %>
 
         <div class="fs-mask">
