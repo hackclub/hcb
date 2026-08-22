@@ -347,6 +347,8 @@ Rails.application.routes.draw do
 
   namespace :admin do
     root to: redirect("/admin/events")
+    get "page_engineers", to: "engineering_pages#new", as: :page_engineers
+    post "page_engineers", to: "engineering_pages#create"
     namespace :ledger_audits do
       resources :tasks, only: [:index, :show, :create] do
         post :reviewed
