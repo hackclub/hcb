@@ -4,41 +4,42 @@
 #
 # Table name: users
 #
-#  id                            :bigint           not null, primary key
-#  access_level                  :integer          default(0), not null
-#  birthday_ciphertext           :text
-#  card_locking_suppressed_until :datetime
-#  cards_locked                  :boolean          default(FALSE), not null
-#  charge_notifications          :integer          default(0), not null
-#  comment_notifications         :integer          default(0), not null
-#  creation_method               :integer
-#  email                         :text             not null
-#  full_name                     :string
-#  joined_as_teenager            :boolean
-#  locked_at                     :datetime
-#  monthly_donation_summary      :boolean          default(TRUE)
-#  monthly_follower_summary      :boolean          default(TRUE)
-#  phone_number                  :text
-#  phone_number_verified         :boolean          default(FALSE)
-#  preferred_name                :string
-#  pretend_is_not_admin          :boolean          default(FALSE), not null
-#  receipt_report_option         :integer          default(0), not null
-#  running_balance_enabled       :boolean          default(FALSE), not null
-#  seasonal_themes_enabled       :boolean          default(TRUE), not null
-#  session_validity_preference   :integer          default(259200), not null
-#  sessions_reported             :boolean          default(FALSE), not null
-#  slug                          :string
-#  subscribed_to_loops_at        :datetime
-#  teenager                      :boolean
-#  use_sms_auth                  :boolean          default(FALSE)
-#  use_two_factor_authentication :boolean          default(FALSE)
-#  verified                      :boolean          default(FALSE), not null
-#  created_at                    :datetime         not null
-#  updated_at                    :datetime         not null
-#  discord_id                    :string
-#  payout_method_id              :bigint
-#  payout_method_type            :string
-#  webauthn_id                   :string
+#  id                                 :bigint           not null, primary key
+#  access_level                       :integer          default(0), not null
+#  birthday_ciphertext                :text
+#  card_locking_suppressed_until      :datetime
+#  cards_locked                       :boolean          default(FALSE), not null
+#  charge_notifications               :integer          default(0), not null
+#  comment_notifications              :integer          default(0), not null
+#  creation_method                    :integer
+#  email                              :text             not null
+#  full_name                          :string
+#  joined_as_teenager                 :boolean
+#  locked_at                          :datetime
+#  monthly_donation_summary           :boolean          default(TRUE)
+#  monthly_follower_summary           :boolean          default(TRUE)
+#  phone_number                       :text
+#  phone_number_verification_bypassed :boolean          default(FALSE), not null
+#  phone_number_verified              :boolean          default(FALSE)
+#  preferred_name                     :string
+#  pretend_is_not_admin               :boolean          default(FALSE), not null
+#  receipt_report_option              :integer          default(0), not null
+#  running_balance_enabled            :boolean          default(FALSE), not null
+#  seasonal_themes_enabled            :boolean          default(TRUE), not null
+#  session_validity_preference        :integer          default(259200), not null
+#  sessions_reported                  :boolean          default(FALSE), not null
+#  slug                               :string
+#  subscribed_to_loops_at             :datetime
+#  teenager                           :boolean
+#  use_sms_auth                       :boolean          default(FALSE)
+#  use_two_factor_authentication      :boolean          default(FALSE)
+#  verified                           :boolean          default(FALSE), not null
+#  created_at                         :datetime         not null
+#  updated_at                         :datetime         not null
+#  discord_id                         :string
+#  payout_method_id                   :bigint
+#  payout_method_type                 :string
+#  webauthn_id                        :string
 #
 # Indexes
 #
@@ -423,6 +424,14 @@ class User < ApplicationRecord
 
   def seasonal_themes_disabled?
     !seasonal_themes_enabled?
+  end
+
+  # Whether this user is allowed to issue stripe cards and activate card grants.
+  # Admins can grant `phone_number_verification_bypassed` to unblock a user who
+  # can't complete SMS verification; it deliberately leaves the number itself
+  # unverified.
+  def phone_number_verified_or_bypassed?
+    phone_number_verified? || phone_number_verification_bypassed?
   end
 
   def locked?

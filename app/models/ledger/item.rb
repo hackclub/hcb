@@ -193,8 +193,8 @@ class Ledger
       # TODO: remove CT and CPT updates because they are HCB code specific
       ActiveRecord::Base.transaction do
         if hcb_code.present?
-          hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
-          hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
+          hcb_code.canonical_transactions.update_all(custom_memo: memo)
+          hcb_code.canonical_pending_transactions.update_all(custom_memo: memo)
         end
         update!(custom_memo: memo)
       end
@@ -307,6 +307,14 @@ class Ledger
       return :negative if amount_cents.negative?
 
       :zero
+    end
+
+    def pinnable?
+      (ct_count > 0 || cpt_count > 0) && primary_ledger&.event.present?
+    end
+
+    def pinned?
+      primary_mapping&.pinned? || false
     end
 
     private

@@ -104,7 +104,8 @@
           <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="verify_phone">
             <%= modal_header "Verify phone number" %>
             <%= react_component "settings/SmsVerification",
-                                phone_number: @user.phone_number_in_database %>
+                                phone_number: @user.phone_number_in_database,
+                                turnstile_sitekey: (TurnstileService.site_key if TurnstileService.enabled?) %>
           </section>
         <% end %>
       </turbo-frame>
@@ -252,7 +253,8 @@
       <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="verify_phone">
         <%= modal_header "Verify phone number" %>
         <%= react_component "settings/SmsVerification",
-                            phone_number: @user.phone_number_in_database %>
+                            phone_number: @user.phone_number_in_database,
+                            turnstile_sitekey: (TurnstileService.site_key if TurnstileService.enabled?) %>
       </section>
     <% end %>
   </turbo-frame>
