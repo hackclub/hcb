@@ -466,6 +466,19 @@ To gain admin permissions via the API, the token must explicitly carry an admin 
 
 `admin:write` does **not** imply `admin:read` — both scopes must be granted independently if both are needed. 
 
+### Resource-Scoped Admin Scopes
+
+An action can also accept a narrower `admin.<resource>:read` / `admin.<resource>:write` scope instead of the blanket `admin:read` / `admin:write` (e.g. `admin.receipts:write`). Both `can_admin?` and `require_admin_scope!` take an optional `resource:` to check it. Pick the call site based on what's being gated:
+
+| Gating... | Use | Example |
+|---|---|---|
+| A whole action, or whether an object appears in a list at all | `require_admin_scope!(level, resource:)` in a `before_action` | `before_action -> { require_admin_scope!(:read, resource: "receipts") }, only: [:admin_index]` |
+| An extra field on an object already being rendered | `can_admin?(level, resource:)` directly in the jbuilder partial | `if can_admin?(:read, resource: "receipts")` around `json._debug { ... }`, same as the blanket-scope `if can_admin?(:read)` in `transactions/_transaction.json.jbuilder` |
+
+List filtering always happens in the controller — no `json.array!` in this API filters mid-render.
+
+Only introduce a resource-scoped admin scope when an action needs access narrower than "all admin data" — most endpoints should keep using the blanket scopes.
+
 ### Implementation Notes
 
 - Always check for the admin scope explicitly. Do not fall back to checking if the authenticated user is an admin.
