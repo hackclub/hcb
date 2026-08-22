@@ -36,11 +36,11 @@ export default class extends Controller {
       question: 'Do you have their account & routing number?',
       yes: {
         type: 'ACH transfer',
-        link: 'https://help.hcb.hackclub.com/en/articles/15410090-how-do-i-send-an-ach-transfer',
+        link: 'https://hack.club/hcb-help-ach-transfer',
       },
       no: {
         type: 'Mailed check',
-        link: 'https://help.hcb.hackclub.com/en/articles/15410094-how-do-i-send-a-check',
+        link: 'https://hack.club/hcb-help-send-check',
       },
     },
     {
@@ -48,11 +48,11 @@ export default class extends Controller {
       question: 'Is your transfer amount over $500?',
       yes: {
         type: 'International wire',
-        link: 'https://help.hcb.hackclub.com/en/articles/15410092-how-do-i-send-a-wire-transfer',
+        link: 'https://hack.club/hcb-help-wire-transfer',
       },
       no: {
         type: 'Wise transfer',
-        link: 'https://help.hcb.hackclub.com/en/articles/15410093-how-do-i-send-a-wise-transfer',
+        link: 'https://hack.club/hcb-help-wise-transfer',
       },
     },
   ]
