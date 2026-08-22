@@ -54,7 +54,7 @@ RSpec.describe Comment, type: :model, versioning: true do
 
     context "has attachment" do
       before do
-        comment.file.attach(
+        comment.files.attach(
           io: File.open(Rails.root.join("spec/fixtures/files/attachment1.txt")),
           filename: "attachment1.txt",
           content_type: "text/plain"
