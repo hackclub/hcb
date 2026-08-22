@@ -121,6 +121,26 @@ class OrganizerPositionInvitesController < ApplicationController
     redirect_to event_team_path @invite.event
   end
 
+  def resend_to_cosigner
+    authorize @invite
+
+    new_cosigner_email = params[:cosigner_email]&.strip
+    contract = @invite.contract
+
+    if new_cosigner_email == @invite.user.email
+      flash[:error] = "You cannot use your own email as the cosigner's email"
+    elsif new_cosigner_email == contract.party(:cosigner)&.email
+      contract.party(:cosigner).notify
+      flash[:success] = "Resent agreement to cosigner"
+    else
+      contract.mark_voided!(reissuing: true)
+      @invite.send_contract(cosigner_email: new_cosigner_email, include_videos: contract.include_videos, reissue_of: contract)
+      flash[:success] = "Resent agreement to cosigner"
+    end
+
+    redirect_back_or_to organizer_position_invite_path(@invite)
+  end
+
   private
 
   def set_opi

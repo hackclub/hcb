@@ -13,7 +13,12 @@ class Contract
     end
 
     def resend?
-      user&.admin?
+      return user&.admin? if record.hcb?
+
+      # Self-service: the contract's own signee/organizer can resend to any
+      # non-HCB party on their own contract without changing anything. To
+      # restrict this back to admins only, drop the `|| ...` clause below.
+      user&.admin? || record.contract.owned_by?(user)
     end
 
     alias_method :completed?, :show?

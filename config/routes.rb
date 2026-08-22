@@ -394,6 +394,7 @@ Rails.application.routes.draw do
     member do
       post "change_position_role"
       post "send_contract"
+      post "resend_to_cosigner"
     end
   end
 
