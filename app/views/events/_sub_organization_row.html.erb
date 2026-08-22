@@ -39,6 +39,10 @@
 
         <span class="sub-organization-row__title"><%= event.name %></span>
 
+        <% if row[:parent] %>
+          <span class="sub-organization-row__parent muted">in <%= row[:parent].name %></span>
+        <% end %>
+
         <% if event.hidden? %>
           <span class="badge bg-muted tooltipped tooltipped--n"
                 aria-label="Hidden from this list for everyone but your team">

@@ -920,8 +920,9 @@ class EventsController < ApplicationController
         @view = cookies[:sub_organizations_view] || "grid"
 
         if @view == "list"
-          @has_filter = false
-          @rows = sub_organization_table_rows(@event)
+          @search = params[:q].presence
+          @has_filter = @search.present?
+          @rows = @search ? searched_sub_organization_rows(@search) : sub_organization_table_rows(@event)
         else
           sub_organizations = filtered_sub_organizations
           @sub_organizations = sub_organizations.not_hidden.page(params[:page]).per(params[:per] || 24)
@@ -1350,17 +1351,33 @@ class EventsController < ApplicationController
                      .reorder(:name)
                      .to_a
                      .sort_by { |subevent| [natural_order_key(subevent.name), subevent.id] }
-    expandable = event.expandable_subevent_ids(current_user)
-    ids = subevents.map(&:id)
+
+    build_sub_organization_rows(subevents, expandable: event.expandable_subevent_ids(current_user))
+  end
+
+  def searched_sub_organization_rows(query)
+    matches = Event.where(id: visible_descendant_ids)
+                   .where("name ILIKE ?", "%#{Event.sanitize_sql_like(query)}%")
+                   .includes(:scoped_tags, :parent, logo_attachment: :blob)
+                   .reorder(:name)
+                   .to_a
+                   .sort_by { |event| [natural_order_key(event.name), event.id] }
+
+    build_sub_organization_rows(matches, expandable: Set.new, name_parent: true)
+  end
+
+  def build_sub_organization_rows(events, expandable:, name_parent: false)
+    ids = events.map(&:id)
     card_counts = StripeCard.active.on_main_ledger.where(event_id: ids).group(:event_id).count
     organizer_counts = OrganizerPosition.where(event_id: ids).group(:event_id).count
 
-    subevents.map do |subevent|
+    events.map do |event|
       {
-        event: subevent,
-        expandable: expandable.include?(subevent.id),
-        card_count: card_counts[subevent.id] || 0,
-        organizer_count: organizer_counts[subevent.id] || 0
+        event:,
+        expandable: expandable.include?(event.id),
+        card_count: card_counts[event.id] || 0,
+        organizer_count: organizer_counts[event.id] || 0,
+        parent: (event.parent if name_parent && event.parent_id != @event.id)
       }
     end
   end

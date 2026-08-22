@@ -211,6 +211,14 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   transition: color 0.125s ease-in-out;
 }
 
+.sub-organization-row__parent {
+  flex: 0 1 auto;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .sub-organization-row:hover .sub-organization-row__title {
   color: map-get($palette, primary);
 }
