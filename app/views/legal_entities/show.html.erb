@@ -6,6 +6,7 @@
   <% show_tin = policy(@legal_entity).show_masked_tin? %>
 
   <% if @legal_entity.archived? %>
+    <% own_active_entities = [] %>
     <% own_active_entities = current_user.legal_entities.reject(&:archived?) if @legal_entity.users.include?(current_user) %>
 
     <% if own_active_entities.present? %>

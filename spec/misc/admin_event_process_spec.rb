@@ -60,6 +60,14 @@ RSpec.describe AdminController, type: :controller do
 
       expect(response).to redirect_to(event_process_admin_path(event))
     end
+
+    it "refuses backslash-prefixed and absolute off-host return paths" do
+      ["/\\evil.example.com", "https://evil.example.com/admin/events", "javascript:alert(1)"].each do |return_to|
+        put :event_toggle_approved, params: { id: event.id, return_to: }
+
+        expect(response).to redirect_to(event_process_admin_path(event))
+      end
+    end
   end
 
   describe "#event_reject" do

@@ -23,7 +23,7 @@
       <% end %>
       <span class="flex-grow"></span>
       <% if wire.column_id.present? %>
-        <%= link_to("https://dashboard.column.com/app/transfers/edit/intl-wire/#{wire.column_id}", class: "btn btn-small bg-none !bg-[#4575CD] hover:saturate-[125%] transition-all !text-white flex-shrink-0", target: "_blank") do %>
+        <%= link_to(external_url("https://dashboard.column.com/app/transfers/edit/intl-wire/#{wire.column_id}"), class: "btn btn-small bg-none !bg-[#4575CD] hover:saturate-[125%] transition-all !text-white flex-shrink-0", target: "_blank") do %>
           <%= inline_icon "column" %>
           Column
         <% end %>
@@ -100,13 +100,6 @@
                     data: { turbo_confirm: "This will automatically send the wire. You don't need to send it manually!" } %>
             </div>
           <% end %>
-
-          <span class="block text-[0.8125rem] leading-snug opacity-60">Already sent it yourself? Record it instead:</span>
-
-          <div>
-            <%= button_to "🔧 Approve as manually sent", approve_wire_path(wire), method: :post, class: "btn bg-warning", form_class: "contents",
-                  data: { turbo_frame: "_top", turbo_confirm: "Have you manually sent this wire? This option requires you send this wire." } %>
-          </div>
         </section>
 
         <%= render "admin/review_reject", url: reject_wire_path(wire), noun: "wire" %>

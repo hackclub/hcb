@@ -1733,14 +1733,22 @@ class AdminController < Admin::BaseController
   # Where to send an admin after approving/rejecting an organization. The review
   # modal is opened from the organizations table and passes the table's URL so
   # the admin lands back on the same page of results, filters intact.
+  # The event process page is rendered inside a popover on the admin index
+  # pages, so we send the admin back where they came from. Only same-host paths
+  # are honoured; anything else falls back to the process page itself.
   def event_process_return_path
+    fallback = event_process_admin_path(@event)
     return_to = params[:return_to].presence
+    return fallback unless return_to&.start_with?("/")
+    return fallback if return_to.start_with?("//", "/\\")
 
-    if return_to&.start_with?("/") && !return_to.start_with?("//")
-      return_to
-    else
-      event_process_admin_path(@event)
+    absolute = begin
+      URI.join(request.base_url, return_to).to_s
+    rescue URI::Error
+      nil
     end
+
+    (absolute && url_from(absolute)) || fallback
   end
 
   # Bank identifiers we've actually seen transactions for, for the raw

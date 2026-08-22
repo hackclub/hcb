@@ -12,8 +12,12 @@ export default class extends Controller {
 
   connect() {
     this.draw = this.draw.bind(this)
-    this.defaultValue = this.hasValueTarget ? this.valueTarget.textContent : null
-    this.defaultPeriod = this.hasPeriodTarget ? this.periodTarget.textContent : null
+    this.defaultValue = this.hasValueTarget
+      ? this.valueTarget.textContent
+      : null
+    this.defaultPeriod = this.hasPeriodTarget
+      ? this.periodTarget.textContent
+      : null
     this.draw()
     window.addEventListener('resize', this.draw)
   }
@@ -41,7 +45,8 @@ export default class extends Controller {
 
   showPoint({ date, value }) {
     if (this.hasValueTarget) this.valueTarget.textContent = this.format(value)
-    if (this.hasPeriodTarget) this.periodTarget.textContent = `on ${this.formatDate(date)}`
+    if (this.hasPeriodTarget)
+      this.periodTarget.textContent = `on ${this.formatDate(date)}`
   }
 
   reset() {

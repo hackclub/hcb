@@ -16,7 +16,7 @@ RSpec.describe Admin::Nav do
 
       active_section = instance.sections.filter(&:active?).sole
       expect(instance.active_section).to eq(active_section)
-      expect(active_section.name).to eq("Incoming Money")
+      expect(active_section.name).to eq("Incoming")
 
       active_item = instance.sections.flat_map(&:items).filter(&:active?).sole
       expect(active_item.name).to eq("Donations")

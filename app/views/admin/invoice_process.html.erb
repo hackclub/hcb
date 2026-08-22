@@ -7,13 +7,19 @@
       <span class="text-[1.75rem] font-bold leading-[1.1] tabular-nums"><%= render_money invoice.item_amount %></span>
       <span class="badge <%= invoice_state_badge(invoice) %> ml-0"><%= invoice.state_text %></span>
       <span class="flex-grow"></span>
-      <%= link_to invoice.hosted_invoice_url, class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
-        <%= inline_icon "link" %>
-        Hosted invoice
+      <% hosted_invoice_url = external_url(invoice.hosted_invoice_url) %>
+      <% if hosted_invoice_url %>
+        <%= link_to hosted_invoice_url, class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
+          <%= inline_icon "link" %>
+          Hosted invoice
+        <% end %>
       <% end %>
-      <%= link_to invoice.stripe_dashboard_url, class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
-        <%= inline_icon "external" %>
-        Stripe
+      <% stripe_dashboard_url = external_url(invoice.stripe_dashboard_url) %>
+      <% if stripe_dashboard_url %>
+        <%= link_to stripe_dashboard_url, class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
+          <%= inline_icon "external" %>
+          Stripe
+        <% end %>
       <% end %>
     </div>
 
@@ -34,7 +40,10 @@
 
         <%= render "admin/review_fact", label: "Memo", value: invoice.memo %>
         <%= render "admin/review_fact", label: "Stripe ID", value: invoice.stripe_invoice_id, copy: invoice.stripe_invoice_id %>
-        <%= render "admin/review_fact", label: "PDF", value: link_to("Download", invoice.invoice_pdf, target: "_blank") %>
+        <% invoice_pdf_url = external_url(invoice.invoice_pdf) %>
+        <% if invoice_pdf_url %>
+          <%= render "admin/review_fact", label: "PDF", value: link_to("Download", invoice_pdf_url, target: "_blank") %>
+        <% end %>
       </div>
     </section>
 

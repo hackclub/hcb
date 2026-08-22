@@ -20,7 +20,7 @@
       <% end %>
       <span class="flex-grow"></span>
       <% if transfer.column_id.present? %>
-        <%= link_to("https://dashboard.column.com/app/transfers/edit/ach/#{transfer.column_id}", class: "btn btn-small bg-none !bg-[#4575CD] hover:saturate-[125%] transition-all !text-white flex-shrink-0", target: "_blank") do %>
+        <%= link_to(external_url("https://dashboard.column.com/app/transfers/edit/ach/#{transfer.column_id}"), class: "btn btn-small bg-none !bg-[#4575CD] hover:saturate-[125%] transition-all !text-white flex-shrink-0", target: "_blank") do %>
           <%= inline_icon "column" %>
           Column
         <% end %>

@@ -7,7 +7,7 @@
   </head>
   <body class="bg-snow overflow-x-hidden min-h-screen max-w-[100vw]">
     <a class="skip-to-main" href="#main">Skip to main content</a>
-    <% title = yield(:title) if content_for?(:title) %>
+    <% title = content_for?(:title) ? yield(:title) : nil %>
     <% nav = Admin::Nav.new(page_title: title) %>
 
     <main class="app flex flex-col lg:flex-row gap-0 w-full">
