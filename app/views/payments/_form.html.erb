@@ -29,7 +29,7 @@
         </div>
       <% else %>
         <%= render "payees/recipient_section", event:, payee:, destination: "payments",
-              manual_title: "Manual", manual_subtitle: "Tax forms and payment details entered directly" %>
+              manual_title: "Manual", manual_subtitle: "Payment details entered directly" %>
       <% end %>
     <% end %>
 
@@ -87,11 +87,6 @@
               <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method, title: "Select a payout method" %>
             </div>
           <% end %>
-        </div>
-
-        <div data-scroll-seek-target="section" data-payout-toggle-target="section" <%= "hidden" unless manual %>>
-          <h3 class="mb-2">Tax information</h3>
-          <div class="card mb-4 p-20"></div>
         </div>
 
         <div data-scroll-seek-target="section">

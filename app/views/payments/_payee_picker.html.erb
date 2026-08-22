@@ -80,7 +80,7 @@
         </div>
 
         <div data-manual-payee-target="manualBanner" <%= "hidden" unless manual %>>
-          <%= render "application/callout", type: "warning", icon: "important", title: "Tax and payment info required", class: "mt-0 mb-0" do %>
+          <%= render "application/callout", type: "warning", icon: "important", title: "Payment info required", class: "mt-0 mb-0" do %>
             We'll ask for this soon. Only use this if the recipient can't submit their own.
           <% end %>
         </div>
@@ -90,7 +90,7 @@
           </button>
           <% if Flipper.enabled?(:manual_payees_2026_08_05, event) %>
             <button type="button" class="!shadow-none btn w-full text-sm font-[500] mt-1" data-manual-payee-target="enableButton" data-action="manual-payee#enable" <%= "hidden" if manual %>>
-              I want to submit tax and payout information on behalf of the recipient
+              I want to submit payout information on behalf of the recipient
             </button>
             <button type="button" class="!shadow-none btn w-full text-sm mt-1" data-manual-payee-target="undoButton" data-action="manual-payee#undo" <%= "hidden" unless manual %>>
               I'll have the recipient fill this out instead
