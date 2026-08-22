@@ -44,6 +44,12 @@
     </div>
   <% end %>
   <div class="flex-1 md:pt-3 sm:mb-24">
+    <%# Pages opt in by setting :unauthorized_action to the thing the user can't do. %>
+    <% if content_for?(:unauthorized_action) %>
+      <div class="-mt-3">
+        <%= render partial: "events/unauthorized_callout", locals: { action: yield(:unauthorized_action) } %>
+      </div>
+    <% end %>
     <%= render "application/flash", klass: "mb-2" unless sidebar %>
     <%= yield %>
     <% if can_transfer %>

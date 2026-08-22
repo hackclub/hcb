@@ -46,12 +46,9 @@
       </li>
     </ul>
   <% end %>
-
-  <% if @event.present? && !policy(@event).create_transfer? %>
-    <%= render partial: "events/unauthorized_callout",
-      locals: { action: "send a check" } %>
-  <% end %>
 <% end %>
+
+<% content_for :unauthorized_action, "send a check" if @event.present? && !policy(@event).create_transfer? %>
 
 <%= form_with(model: [@event, @check], local: true,
   data: { controller: "extraction", extraction_target: "form" },
