@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :feed] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :pay, :feed] # do not force pundit
   skip_before_action :signed_in_user, only: [:cards, :reimbursements]
   before_action :signed_in_or_unverified_user, only: [:cards, :reimbursements]
   before_action :set_reimbursement_reports, only: [:reimbursements, :reimbursements_icon]
@@ -96,24 +96,54 @@ class MyController < ApplicationController
 
   def inbox
     @count = current_user.transactions_missing_receipt.count
-    @locking_count = current_user.transactions_missing_receipt(from: Receipt::CARD_LOCKING_START_DATE, to: 24.hours.ago).count
+    if CardLocking.enabled?
+      @locking_count = current_user.card_locking_overdue_charges.count
+      @locking_next_due_at = current_user.card_locking_next_due_at
+    end
+    @now = Time.current
 
     hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
-
-    @time_based_sorting = hcb_code_ids_missing_receipt.count > (params[:per] || 15).to_i
 
     hcb_codes_missing_receipt = HcbCode.where(id: hcb_code_ids_missing_receipt)
                                        .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction) # HcbCode#card uses CT and PT
                                        .index_by(&:id).slice(*hcb_code_ids_missing_receipt).values
 
-    if @time_based_sorting
-      hcb_codes_missing_receipt = hcb_codes_missing_receipt.sort_by(&:created_at).reverse
+    # Deadlines only exist (and are only explained elsewhere on this page) for
+    # cardholders inside the card locking rollout, so don't group by them until
+    # there's at least one to group.
+    @groupable_by_due_date = CardLocking.enabled? &&
+                             hcb_codes_missing_receipt.any? { |hcb_code| hcb_code.receipt_due_at.present? }
+    @grouping =
+      if @groupable_by_due_date
+        params[:group].presence_in(["due_date", "card"]) || "due_date"
+      else
+        "card"
+      end
+
+    hcb_codes_missing_receipt =
+      if @grouping == "due_date"
+        # Soonest deadline first; charges with no deadline sort last, newest first.
+        hcb_codes_missing_receipt.sort_by do |hcb_code|
+          hcb_code.receipt_due_at ? [0, hcb_code.receipt_due_at.to_i] : [1, -hcb_code.created_at.to_i]
+        end
+      else
+        hcb_codes_missing_receipt.sort_by(&:created_at).reverse
+      end
+
+    if @grouping == "due_date"
+      # Counted over the whole pile, not the page, so a group spanning several
+      # pages still reports its real size.
+      @due_date_group_counts = hcb_codes_missing_receipt.group_by { |hcb_code| helpers.receipt_due_group(hcb_code, now: @now) }
+                                                        .transform_values(&:count)
     end
 
     @hcb_codes = Kaminari.paginate_array(hcb_codes_missing_receipt)
                          .page(params[:page]).per(params[:per] || 15)
 
-    unless @time_based_sorting
+    if @grouping == "due_date"
+      # @hcb_codes is already in due date order, so group_by preserves it.
+      @due_date_groups = @hcb_codes.group_by { |hcb_code| helpers.receipt_due_group(hcb_code, now: @now) }
+    else
       @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }.transform_values { |v| v.sort_by(&:created_at).reverse }
       @cards = GlobalID::Locator.locate_many(@card_hcb_codes.keys, includes: :event)
                                 # Order cards by created_at, newest first
@@ -144,7 +174,7 @@ class MyController < ApplicationController
 
     @reports = @reports.search(params[:q]) if params[:q].present?
 
-    @payout_method = current_user.payout_method
+    @payout_method = current_user.default_payout_method&.details
   end
 
   def reimbursements_icon
@@ -155,7 +185,57 @@ class MyController < ApplicationController
 
   def payroll
     @jobs = current_user.jobs
-    @payout_method = current_user.payout_method
+    @payout_method = current_user.default_payout_method&.details
+  end
+
+  def pay
+    @legal_entities = current_user.legal_entities
+
+    if params[:legal_entity_id].present?
+      selected = @legal_entities.find_by(id: params[:legal_entity_id])
+      session[:legal_entity_id] = selected.id.to_s if selected
+      return redirect_to my_pay_path
+    end
+
+    @legal_entity = @legal_entities.find_by(id: session[:legal_entity_id]) || current_user.personal_legal_entity
+    session[:legal_entity_id] = @legal_entity.id
+
+    @payout_method = @legal_entity.default_payout_method
+
+    all_payments = @legal_entity.payments
+
+    @stats = {
+      deposited: all_payments.where(aasm_state: "successful").sum(:amount_cents),
+      in_transit: all_payments.where(aasm_state: %w[pending_legal_entity under_review sent]).sum(:amount_cents),
+      canceled: all_payments.where(aasm_state: "rejected").sum(:amount_cents)
+    }
+
+    @payments = all_payments.includes(:event, :payee, { payroll_invoice: { receipts: :file_attachment } }, attempts: :payout).order(created_at: :desc)
+    @payments = @payments.search_purpose_and_event(params[:q]) if params[:q].present?
+    @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
+    @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
+    @payments = @payments.where(aasm_state: "rejected") if params[:status] == "canceled"
+    @payments = @payments.page(params[:page] || 1).per(params[:per] || 10)
+
+    @filter_options = [
+      { key: "status", label: "Status", type: "select", options: %w[deposited in_transit canceled] }
+    ]
+    @has_filter = params[:status].present?
+
+    @contractor_positions = Payroll::Position.joins(payee: { legal_entity: :legal_entity_users })
+                                             .where(legal_entity_users: { user_id: current_user.id })
+                                             .where(payees: { legal_entity_id: @legal_entity.id })
+                                             .includes(payee: :event)
+                                             .order(created_at: :desc)
+                                             .load
+    @tax_form_required = @contractor_positions.any? && !@legal_entity.completed_tax_form?
+    # Approved invoices are represented by their payment in the history table
+    # below, so only surface invoices still awaiting review here to avoid
+    # duplicating information.
+    @invoices = Payroll::Invoice.where(payroll_position: @contractor_positions)
+                                .where(aasm_state: "submitted")
+                                .includes(payroll_position: { payee: :event })
+                                .order(created_at: :desc)
   end
 
   def feed

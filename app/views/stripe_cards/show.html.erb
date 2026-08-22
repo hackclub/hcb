@@ -39,5 +39,5 @@
     </article>
   </turbo-frame>
 
-  <%= render partial: "stripe_cards/transactions", locals: { stripe_card: @card, hcb_codes: @hcb_codes } %>
+  <%= render partial: "stripe_cards/transactions", locals: { stripe_card: @card, hcb_codes: @hcb_codes, ledger: @ledger, items: @items } %>
 <% end %>

@@ -136,30 +136,6 @@
       "note": "It generates a link to a stripe resource based on the model name and the id in 'has_stripe_dashboard_url.rb' which both should be safe."
     },
     {
-      "warning_type": "Denial of Service",
-      "warning_code": 76,
-      "fingerprint": "33fd4663b98a1d3c429121aff4c7300b51235ad04569ab3f07ef5f30de9a9292",
-      "check_name": "RegexDoS",
-      "message": "Model attribute used in regular expression",
-      "file": "app/jobs/user/subordinate_summary_job.rb",
-      "line": 77,
-      "link": "https://brakemanscanner.org/docs/warning_types/denial_of_service/",
-      "code": "/\\A#{User.get_public_id_prefix}.*\\Z/",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "User::SubordinateSummaryJob",
-        "method": "s(:self).to_user"
-      },
-      "user_input": "User.get_public_id_prefix",
-      "confidence": "Medium",
-      "cwe_id": [
-        20,
-        185
-      ],
-      "note": "User.get_public_id_prefix calls a class method that returns :usr so this is safe"
-    },
-    {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
       "fingerprint": "41118d19fb5e498f2b4ac5a7b8a9cddca6f3e089ced5eebdcf598a1a4ff9bad7",

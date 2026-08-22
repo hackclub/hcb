@@ -11,11 +11,11 @@
 #  friendly_memo           :text
 #  hcb_code                :text
 #  memo                    :text             not null
-#  transaction_source_type :string
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
 #  ledger_item_id          :bigint
 #  transaction_source_id   :bigint
+#  transaction_source_type :string
 #
 # Indexes
 #
@@ -52,8 +52,8 @@ class CanonicalTransaction < ApplicationRecord
   scope :outgoing_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE}%'") }
   scope :incoming_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE}%'") }
   scope :stripe_card_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_CARD_CODE}%'") }
-  scope :with_custom_memo, -> { where("custom_memo is not null") }
-  scope :without_custom_memo, -> { where("custom_memo is null") }
+  scope :with_custom_memo, -> { where.not(custom_memo: nil) }
+  scope :without_custom_memo, -> { where(custom_memo: nil) }
   scope :with_short_code, -> { where("memo ~ '.*HCB-\\w{5}.*'") }
 
   scope :revenue, -> { where("amount_cents > 0") }
@@ -122,7 +122,7 @@ class CanonicalTransaction < ApplicationRecord
 
   before_validation { self.custom_memo = custom_memo.presence&.strip }
 
-  belongs_to :ledger_item, optional: true, class_name: "Ledger::Item"
+  belongs_to :ledger_item, optional: true, class_name: "Ledger::Item", touch: true
 
   before_create do
     self.ledger_item_id ||= if short_code.present? && (li = Ledger::Item.find_by(short_code:))
@@ -135,21 +135,16 @@ class CanonicalTransaction < ApplicationRecord
                             end
   end
 
-  after_create_commit unless: -> { ledger_item.present? } do
-    safely do
-      li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, date: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
-      update(ledger_item: li)
-    end
-  end
+  after_create_commit :assign_ledger_item, unless: -> { ledger_item.present? }
 
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
-    ledger_item.write_amount_cents!
+    ledger_item.refresh!
   end
 
   after_commit if: -> { previous_changes.key?("ledger_item_id") } do
     old_ledger_item_id = previous_changes["ledger_item_id"].first
-    Ledger::Item.find(old_ledger_item_id).write_amount_cents! if old_ledger_item_id.present?
+    Ledger::Item.find(old_ledger_item_id).refresh! if old_ledger_item_id.present?
   end
 
   after_create :write_hcb_code
@@ -193,6 +188,14 @@ class CanonicalTransaction < ApplicationRecord
 
   def linked_object
     @linked_object ||= TransactionEngine::SyntaxSugarService::LinkedObject.new(canonical_transaction: self).run
+  end
+
+  def linked_object_v2
+    if column_id = column_transaction_id
+      AchTransfer.find_by(column_id:) || Wire.find_by(column_id:) || CheckDeposit.find_by(column_id:) || IncreaseCheck.find_by(column_id:)
+    else
+      transaction_source&.try(:card_charge)
+    end
   end
 
   def raw_plaid_transaction
@@ -334,6 +337,18 @@ class CanonicalTransaction < ApplicationRecord
     nil
   end
 
+  def stripe_service_fee
+    return linked_object if linked_object.is_a?(StripeServiceFee)
+
+    nil
+  end
+
+  def fee_revenue
+    return linked_object if linked_object.is_a?(FeeRevenue)
+
+    nil
+  end
+
   def reimbursement_expense_payout
     return linked_object if linked_object.is_a?(Reimbursement::ExpensePayout)
 
@@ -469,6 +484,25 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   private
+
+  def assign_ledger_item
+    safely do
+      reload_local_hcb_code
+      ActiveRecord::Base.transaction do
+        if calculated_ledger_item != local_hcb_code.ledger_item
+          Rails.error.unexpected("CanonicalTransaction #{id} has calculated a different ledger item from its local_hcb_code. (#{calculated_ledger_item&.id} vs. #{local_hcb_code.ledger_item&.id})")
+        end
+
+        li = calculated_ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        update!(ledger_item: li)
+        li.map!
+      end
+    end
+  end
+
+  def calculated_ledger_item
+    @calculated_ledger_item ||= Ledger::Item.find_by(short_code:) || linked_object_v2&.ledger_item
+  end
 
   def hashed_transaction
     @hashed_transaction ||= begin

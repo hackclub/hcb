@@ -11,6 +11,14 @@ class Ledger
       end
     end
 
+    alias_method :hcb?, :show?
+    alias_method :pin?, :show?
+    alias_method :unpin?, :show?
+
+    def rename?
+      OrganizerPosition.role_at_least?(user, record.primary_ledger&.event, :member)
+    end
+
   end
 
 end
