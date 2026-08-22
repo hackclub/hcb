@@ -101,7 +101,7 @@
     <% end %>
   <% end %>
 
-  <%= render "events/public_message" %>
+  <%= render "events/public_message", event: @event %>
 
   <%= turbo_frame_tag "balance_transactions", src: event_balance_transactions_path(@event), class: "flex-1 homepage-row empty:hidden flex gap-4 mb-4", loading: "lazy", target: "_top" do %>
     <div class="card card--breakdown p-0 text-center flex-1 flex flex-col items-center justify-center min-h-[422px]">

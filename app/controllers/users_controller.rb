@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
 class UsersController < ApplicationController
+  include TurnstileProtection
+
+  # Sends a Twilio Verify message to whatever phone number the user typed in —
+  # the surface spam signups abused to run up our Twilio bill. The token comes
+  # from the widget in the "Verify phone number" modal.
+  turnstile_protect only: [:start_sms_auth_verification], action: TurnstileService::SMS_VERIFICATION_ACTION
+
   # `unimpersonate` is gated by its own `current_session&.impersonated?` guard,
   # and must remain reachable from impersonated sessions whose `verified` flag
   # mirrors an unverified target — otherwise the admin is locked out.
@@ -33,7 +40,7 @@ class UsersController < ApplicationController
     :admin_details_disbursements, :admin_details_emburse_cards, :admin_details_increase_checks,
     :admin_details_invoices, :admin_details_lob_checks, :admin_details_missing_receipts,
     :admin_details_reimbursement_reports, :admin_details_stripe_cards, :admin_details_stripe_transactions,
-    :suppress_card_locking
+    :suppress_card_locking, :reset_billing_address
   ]
   wrap_parameters format: :url_encoded_form
 
@@ -149,6 +156,19 @@ class UsersController < ApplicationController
     authorize @user
   end
 
+  def reset_billing_address
+    authorize @user
+
+    begin
+      @user.stripe_cardholder&.reset_billing_address_to_default!
+      flash[:success] = "Reset your billing address to HCB's default address."
+    rescue ActiveRecord::RecordInvalid => e
+      flash[:error] = e.record&.errors&.first&.full_message || "Couldn't reset your billing address."
+    end
+
+    redirect_back_or_to address_user_path(@user)
+  end
+
   def edit_payout
     authorize @user
 
@@ -256,49 +276,51 @@ class UsersController < ApplicationController
   def admin_details_ach_transfers
     authorize @user
 
-    @ach_transfers = @user.ach_transfers.page(params[:page] || 1).per(params[:per] || 10)
+    @ach_transfers = @user.ach_transfers.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_check_deposits
     authorize @user
 
-    @check_deposits = @user.check_deposits.page(params[:page] || 1).per(params[:per] || 10)
+    @check_deposits = @user.check_deposits.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_disbursements
     authorize @user
 
-    @disbursements = @user.disbursements.includes([:destination_event]).page(params[:page] || 1).per(params[:per] || 10)
+    @disbursements = @user.disbursements.order(created_at: :desc).includes([:destination_event]).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_emburse_cards
     authorize @user
 
-    @emburse_cards = @user.emburse_cards.page(params[:page] || 1).per(params[:per] || 10)
+    @emburse_cards = @user.emburse_cards.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_increase_checks
     authorize @user
 
-    @increase_checks = @user.increase_checks.page(params[:page] || 1).per(params[:per] || 10)
+    @increase_checks = @user.increase_checks.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_invoices
     authorize @user
 
-    @invoices = @user.invoices.page(params[:page] || 1).per(params[:per] || 10)
+    @invoices = @user.invoices.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_lob_checks
     authorize @user
 
-    @lob_checks = @user.checks.page(params[:page] || 1).per(params[:per] || 10)
+    @lob_checks = @user.checks.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_missing_receipts
     authorize @user
 
+    # TODO: add change here in receipt bin PR
     @hcb_codes_missing_receipts = @user.transactions_missing_receipt
+                                       .order(created_at: :desc)
                                        .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
                                        .page(params[:page] || 1).per(params[:per] || 10)
   end
@@ -307,6 +329,7 @@ class UsersController < ApplicationController
     authorize @user
 
     @reimbursement_reports = @user.reimbursement_reports
+                                  .order(created_at: :desc)
                                   .includes([:event, :payout_holding])
                                   .page(params[:page] || 1).per(params[:per] || 10)
   end
@@ -314,16 +337,25 @@ class UsersController < ApplicationController
   def admin_details_stripe_cards
     authorize @user
 
-    @stripe_cards = @user.stripe_cards.page(params[:page] || 1).per(params[:per] || 10)
+    @stripe_cards = @user.stripe_cards.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
   end
 
   def admin_details_stripe_transactions
     authorize @user
 
-    @stripe_transactions = HcbCode.where(id: @user.stripe_cards.flat_map { |sc| sc.local_hcb_codes.pluck(:id) })
-                                  .order(created_at: :desc)
-                                  .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
+    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
+      # TODO: Swap this out for Ledger::Query once users have their own non-primary ledgers
+      @stripe_transactions = @user.ledger_items
+                                  .includes(:canonical_transactions, :canonical_pending_transactions, :linked_object)
+                                  .where(linked_object_type: "CardCharge")
+                                  .order(datetime: :desc, created_at: :desc, id: :desc)
                                   .page(params[:page] || 1).per(params[:per] || 10)
+    else
+      @stripe_transactions = HcbCode.where(id: @user.stripe_cards.flat_map { |sc| sc.local_hcb_codes.pluck(:id) })
+                                    .order(created_at: :desc)
+                                    .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
+                                    .page(params[:page] || 1).per(params[:per] || 10)
+    end
   end
 
   def suppress_card_locking
@@ -564,6 +596,10 @@ class UsersController < ApplicationController
           :stripe_billing_address_country
         ]
       }
+    end
+
+    if admin_signed_in?
+      attributes << :phone_number_verification_bypassed
     end
 
     if superadmin_signed_in?

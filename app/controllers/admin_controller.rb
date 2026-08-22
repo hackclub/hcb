@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class AdminController < Admin::BaseController
+  include Admin::TransferApprovable
+
   def nav
     @nav = Admin::Nav.new(page_title: params[:title])
 
@@ -630,6 +632,8 @@ class AdminController < Admin::BaseController
     ach_transfer = AchTransfer.find(params[:id])
     return unless enforce_sudo_mode
 
+    ensure_admin_may_approve!(ach_transfer, amount_cents: ach_transfer.amount)
+
     ach_transfer.approve!(current_user)
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success" }
@@ -642,6 +646,8 @@ class AdminController < Admin::BaseController
   def ach_send_realtime
     ach_transfer = AchTransfer.find(params[:id])
     return unless enforce_sudo_mode
+
+    ensure_admin_may_approve!(ach_transfer, amount_cents: ach_transfer.amount)
 
     ach_transfer.approve!(current_user, send_realtime: true)
 
@@ -1570,7 +1576,9 @@ class AdminController < Admin::BaseController
 
     @count = messages.count
 
-    @messages = messages.page(@page).per(@per).order(sent_at: :desc)
+    # `reorder` because `search_subject` (pg_search) orders by relevance rank,
+    # which would otherwise take precedence over `sent_at`.
+    @messages = messages.reorder(sent_at: :desc).page(@page).per(@per)
   end
 
   def unknown_merchants
@@ -1605,8 +1613,8 @@ class AdminController < Admin::BaseController
         yp_name: merchant[:name],
         yp_network_id: network_id,
         memos: RawStripeTransaction
-          .where("stripe_transaction->'merchant_data'->>'network_id' = ?", network_id)
-          .pluck(Arel.sql("distinct(stripe_transaction->'merchant_data'->'name')"))
+               .where("stripe_transaction->'merchant_data'->>'network_id' = ?", network_id)
+               .pluck(Arel.sql("distinct(stripe_transaction->'merchant_data'->'name')"))
       }
     end
   end
@@ -1744,7 +1752,7 @@ class AdminController < Admin::BaseController
     relation = relation.where(id: events.joins(:canonical_transactions).where("canonical_transactions.date >= ?", @activity_since_date)) if @activity_since_date.present?
     if @plan != "all"
       relation = relation.where(id: events.joins("LEFT JOIN event_plans on event_plans.event_id = events.id")
-                         .where("event_plans.aasm_state = 'active' AND event_plans.type = ?", @plan))
+                                          .where("event_plans.aasm_state = 'active' AND event_plans.type = ?", @plan))
     end
     relation = relation.where(point_of_contact_id: @point_of_contact_id) if @point_of_contact_id != "all"
     if @country == 9999

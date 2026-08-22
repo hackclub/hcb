@@ -152,6 +152,11 @@ class EventsController < ApplicationController
     authorize @event
   end
 
+  def ledger_stats
+    authorize @event
+    @ledger = @event.ledger
+  end
+
   def transactions
     maybe_pending_invite = OrganizerPositionInvite.pending.find_by(user: current_user, event: @event)
 
@@ -289,7 +294,7 @@ class EventsController < ApplicationController
 
     @all_positions = @event.organizer_positions
                            .joins(:user)
-    @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.email ILIKE :query" : "users.full_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
+    @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.preferred_name ILIKE :query OR users.email ILIKE :query" : "users.preferred_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
                                    .order(created_at: :desc)
     if @filter == "active_teenagers"
       @all_positions = @all_positions.select { |op| op.user.is_teenager? && op.user.active? } # select if user is a teenager and active (stole from the other code ;))
@@ -571,10 +576,18 @@ class EventsController < ApplicationController
         transaction_source_type: "RawColumnTransaction",
         transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id' = '#{@event.column_account_number.column_id}'").select(:id)
       )
-      @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
-                                         .order(created_at: :desc)
-      page = (params[:page] || 1).to_i
-      @transactions = @transactions.page(page).per(params[:per] || 25)
+      if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
+        @ledger = @event.ledger
+        @ledger_items = @ledger.items
+                               .where(id: column_transactions.select(:ledger_item_id), linked_object_type: nil)
+                               .order(created_at: :desc)
+                               .page((params[:page] || 1).to_i).per(params[:per] || 25)
+      else
+        @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
+                                           .order(created_at: :desc)
+        page = (params[:page] || 1).to_i
+        @transactions = @transactions.page(page).per(params[:per] || 25)
+      end
 
       # We only want to show this callout if there were transfers from before https://github.com/hackclub/hcb/pull/13684 was merged
       @show_transfer_callout = column_transactions.where.not("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
@@ -955,6 +968,18 @@ class EventsController < ApplicationController
         end
 
         send_data csv, filename: "#{@event.name}'s sub-organizations.csv", type: "text/csv", disposition: :attachment
+      end
+
+      # Like the CSV, the XLSX export intentionally does not consider filters.
+      # Unlike the CSV, it includes every visible descendant (not just direct
+      # sub-organizations), rendered as a collapsible tree via row grouping.
+      format.xlsx do
+        send_data(
+          Event::SubOrganizationsExport.new(@event, descendant_ids: visible_descendant_ids).xlsx,
+          filename: "#{@event.name}'s sub-organizations.xlsx",
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          disposition: :attachment
+        )
       end
     end
 

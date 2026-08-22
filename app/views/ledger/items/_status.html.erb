@@ -1,0 +1,5 @@
+<%# locals: (ledger_item:) %>
+
+<% unless ledger_item.settled? %>
+  <%= badge_for ledger_item.status_text, class: ledger_item.status_css %>
+<% end %>
