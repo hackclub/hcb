@@ -2,6 +2,7 @@
 
 class RecurringDonationsController < ApplicationController
   include SetEvent
+  include DonationPageSetup
   include TurnstileProtection
 
   before_action :set_event, only: [:create, :pay, :finished]
@@ -37,6 +38,7 @@ class RecurringDonationsController < ApplicationController
       redirect_to pay_event_recurring_donation_path(@event, @recurring_donation)
     else
       @monthly = true
+      prepare_donation_page!(event: @event)
       render "donations/start_donation", status: :unprocessable_content
     end
   end
