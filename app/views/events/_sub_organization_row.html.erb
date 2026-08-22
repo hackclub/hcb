@@ -9,7 +9,7 @@
 <%# `clickable` links the whole row via .stretched-link; the expander opts back
     into pointer events so it isn't swallowed by that link. %>
 <tr id="sub_organization_row_<%= event.id %>"
-    class="sub-organization-row clickable <%= "sub-organization-row--last" if last %>"
+    class="sub-organization-row clickable <%= "sub-organization-row--last" if last %> <%= "sub-organization-row--leaf" unless row[:expandable] %>"
     data-sub-organization-tree-target="row"
     data-event-id="<%= event.id %>"
     data-parent-id="<%= event.parent_id %>"

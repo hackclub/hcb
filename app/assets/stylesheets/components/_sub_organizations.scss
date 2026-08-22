@@ -1,5 +1,6 @@
 $sub-organization-indent: 1.75rem;
 $sub-organization-cell-padding: 1rem;
+$sub-organization-rail-gap: 0.25rem;
 $sub-organization-rail: rgba(0, 0, 0, 0.12);
 $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
 
@@ -74,15 +75,24 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   position: absolute;
   top: 0;
   left: 50%;
-  width: 100%;
+
+  // Stop short of the toggle column so the elbow doesn't run into the caret
+  // (or its hover target) and read as an arrowhead pointing at the row.
+  width: calc(50% - #{$sub-organization-rail-gap});
   height: 50%;
   border-left: 1px solid $sub-organization-rail;
   border-bottom: 1px solid $sub-organization-rail;
-  border-bottom-left-radius: 0.5rem;
+  border-bottom-left-radius: 0.375rem;
 
   html[data-dark='true'] & {
     border-color: $sub-organization-rail-dark;
   }
+}
+
+// A leaf has no caret for the elbow to flow into, so the curve reads as a stray
+// squiggle; square the corner off instead.
+.sub-organization-row--leaf .sub-organization-row__rail--connector::before {
+  border-bottom-left-radius: 0;
 }
 
 .sub-organization-row:not(.sub-organization-row--last)
