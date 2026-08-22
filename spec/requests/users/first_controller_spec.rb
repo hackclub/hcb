@@ -21,6 +21,12 @@ RSpec.describe "Users::FirstController", type: :request do
     }
   end
 
+  # Rendering the signup form is what writes invisible_captcha's session token,
+  # so anything posting to /first has to fetch it first, the way a browser does.
+  def visit_signup_form
+    get welcome_first_index_path
+  end
+
   describe "POST /first" do
     it "responds with a redirect when the supplied email already belongs to an existing user" do
       existing = create(:user, verified: true)
@@ -29,6 +35,7 @@ RSpec.describe "Users::FirstController", type: :request do
       params[:user][:email] = existing.email.upcase
 
       expect {
+        visit_signup_form
         post "/first", params: params
       }.not_to(change { User.count })
 
@@ -41,11 +48,13 @@ RSpec.describe "Users::FirstController", type: :request do
 
       taken = valid_form.deep_dup
       taken[:user][:email] = existing.email
+      visit_signup_form
       post "/first", params: taken
       taken_status = response.status
 
       fresh = valid_form.deep_dup
       fresh[:user][:email] = "brand-new-#{SecureRandom.hex(4)}@example.invalid"
+      visit_signup_form
       post "/first", params: fresh
       fresh_status = response.status
 
@@ -72,6 +81,7 @@ RSpec.describe "Users::FirstController", type: :request do
         expect(attribution.user_id).to be_nil
         expect(attribution.user_session_id).to be_present
 
+        visit_signup_form
         post "/first", params: valid_form
 
         new_user = User.find_by!(email: valid_form[:user][:email])
@@ -83,6 +93,7 @@ RSpec.describe "Users::FirstController", type: :request do
         get "/referrals/#{other_link.slug}"
         expect(Referral::Attribution.where(link: [link, other_link]).pluck(:user_id)).to all(be_nil)
 
+        visit_signup_form
         post "/first", params: valid_form
 
         new_user = User.find_by!(email: valid_form[:user][:email])
@@ -98,6 +109,7 @@ RSpec.describe "Users::FirstController", type: :request do
 
         params = valid_form.deep_dup
         params[:user][:email] = existing.email
+        visit_signup_form
         post "/first", params: params
 
         expect(attribution.reload.user_id).to eq(existing.id)
@@ -108,7 +120,10 @@ RSpec.describe "Users::FirstController", type: :request do
       params = valid_form.deep_dup
       params[:user][:email] = "no-referral-#{SecureRandom.hex(4)}@example.invalid"
 
-      expect { post "/first", params: params }.to change { User.count }.by(1)
+      expect {
+        visit_signup_form
+        post "/first", params: params
+      }.to change { User.count }.by(1)
       expect(response.status).to eq(302)
     end
 
@@ -116,6 +131,7 @@ RSpec.describe "Users::FirstController", type: :request do
 
   describe "DELETE /first/sign_out" do
     it "clears the session_token cookie" do
+      visit_signup_form
       post "/first", params: valid_form
       expect(cookies["session_token"]).to be_present, "expected signup to establish a session to sign out of"
 

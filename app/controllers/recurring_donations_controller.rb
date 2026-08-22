@@ -11,7 +11,10 @@ class RecurringDonationsController < ApplicationController
   skip_before_action :signed_in_user
   skip_before_action :redirect_to_onboarding
 
-  invisible_captcha only: [:create], honeypot: :subtitle
+  # Opted out of the timestamp check: this form has not been checked for
+  # multi-step flows that would consume the session token. See
+  # config/initializers/invisible_captcha.rb.
+  invisible_captcha only: [:create], honeypot: :subtitle, timestamp_enabled: false
 
   # The monthly half of the donation form, gated for the same reason as the
   # one-time one: saving a RecurringDonation creates a Stripe subscription and
