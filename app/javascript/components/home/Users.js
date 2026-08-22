@@ -15,6 +15,10 @@ import { generateColor, USDollarNoCents, useDarkMode } from './utils'
 export default function Users({ data }) {
   const isDark = useDarkMode()
 
+  const maxNameLength = Math.max(...data.map(d => d.name.length))
+  const charWidth = 8
+  const yAxisWidth = Math.min(maxNameLength * charWidth, 120)
+
   return (
     <ResponsiveContainer
       width="100%"
@@ -42,10 +46,16 @@ export default function Users({ data }) {
           type="category"
           dataKey="name"
           textAnchor="end"
-          verticalAnchor="start"
           interval={0}
-          height={80}
-          tickFormatter={v => ` ${v}`}
+          width={yAxisWidth}
+          tick={{ width: yAxisWidth - 5 }}
+          tickFormatter={v => {
+            const maxChars = Math.floor(yAxisWidth / charWidth)
+            if (v.length > maxChars) {
+              return v.substring(0, maxChars - 1) + '…'
+            }
+            return v
+          }}
         />
         <Tooltip content={CustomTooltip} cursor={{ fill: 'transparent' }} />
         <Bar dataKey="value" radius={[0, 5, 5, 0]}>
