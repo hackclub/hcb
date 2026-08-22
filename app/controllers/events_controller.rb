@@ -1373,14 +1373,12 @@ class EventsController < ApplicationController
 
   def build_sub_organization_rows(events, expandable:, name_parent: false)
     ids = events.map(&:id)
-    card_counts = StripeCard.active.on_main_ledger.where(event_id: ids).group(:event_id).count
     organizer_counts = OrganizerPosition.where(event_id: ids).group(:event_id).count
 
     events.map do |event|
       {
         event:,
         expandable: expandable.include?(event.id),
-        card_count: card_counts[event.id] || 0,
         organizer_count: organizer_counts[event.id] || 0,
         parent: (event.parent if name_parent && event.parent_id != @event.id)
       }
