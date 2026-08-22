@@ -188,6 +188,22 @@ class Event < ApplicationRecord
     subevents.where(is_public: true, hidden_at: nil).or(subevents.where(id: organized_ids))
   end
 
+  def expandable_subevent_ids(user)
+    grandchildren = Event.where(parent_id: visible_subevents(user).select(:id))
+
+    unless user&.auditor?
+      organized_ids = user ? OrganizerPosition.reader_access.where(user:).pluck(:event_id) : []
+
+      unless organized_ids.any? && organized_ids.intersect?(ancestor_ids)
+        grandchildren = grandchildren.where(is_public: true, hidden_at: nil)
+                                     .or(grandchildren.where(id: organized_ids))
+                                     .or(grandchildren.where(parent_id: organized_ids))
+      end
+    end
+
+    grandchildren.reorder(nil).distinct.pluck(:parent_id).to_set
+  end
+
   # The descendants `user` is allowed to see, mirroring EventPolicy#show?
   # (`is_public || auditor_or_reader?`, where reader access is inherited from
   # any ancestor). Hidden events are treated as private, matching how every

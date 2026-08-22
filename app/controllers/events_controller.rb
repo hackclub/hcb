@@ -551,25 +551,6 @@ class EventsController < ApplicationController
     render :async_sub_organization_balance, layout: false
   end
 
-  def async_sub_organizations_graph
-    authorize @event
-    data = Rails.cache.fetch("sub_organizations_graph_#{@event.id}", expires_in: 5.minutes) do
-      all_events = [@event] + @event.descendants.includes(:stripe_cards).order(:name).to_a
-      all_events.map { |e|
-        {
-          id: e.id,
-          balance_cents: e.balance_v2_cents,
-          card_count: e.stripe_cards.count { |c| c.stripe_status == "active" && c.subledger_id.nil? }
-        }
-      }
-    end
-
-    # The cached entry covers every descendant and is shared across viewers, so
-    # drop the sub-organizations this one isn't allowed to see before rendering.
-    visible_ids = visible_descendant_ids.to_set << @event.id
-    render json: data.select { |row| visible_ids.include?(row[:id]) }
-  end
-
   def account_number
     if @event.column_account_number.present?
       column_transactions = CanonicalTransaction.where(
@@ -940,14 +921,18 @@ class EventsController < ApplicationController
 
     respond_to do |format|
       format.html do
-        sub_organizations = filtered_sub_organizations
-        # Hidden organizations are set aside in their own collapsed section,
-        # matching how the organization index treats them.
-        @sub_organizations = sub_organizations.not_hidden.page(params[:page]).per(params[:per] || 24)
-        @hidden_sub_organizations = sub_organizations.hidden.to_a
-        # The graph renders only nodes reachable from the root, so leaving a
-        # hidden organization out keeps everything under it off the graph too.
-        @all_events = [@event] + Event.where(id: visible_descendant_ids).not_hidden.order(:name).select(:name, :parent_id, :slug, :id).to_a
+        cookies[:sub_organizations_view] = params[:view] if params[:view]
+        @view = cookies[:sub_organizations_view] || "grid"
+
+        if @view == "list"
+          @search = params[:q].presence
+          @has_filter = @search.present?
+          @rows = @search ? searched_sub_organization_rows(@search) : sub_organization_table_rows(@event)
+        else
+          sub_organizations = filtered_sub_organizations
+          @sub_organizations = sub_organizations.not_hidden.page(params[:page]).per(params[:per] || 24)
+          @hidden_sub_organizations = sub_organizations.hidden.to_a
+        end
       end
 
       # CSV export intentionally does not consider filters
@@ -983,6 +968,15 @@ class EventsController < ApplicationController
       end
     end
 
+  end
+
+  def sub_organization_rows
+    authorize @event
+
+    @rows = sub_organization_table_rows(@event)
+    @rails = helpers.parse_rails_param(params[:rails])
+
+    render :sub_organization_rows, layout: false
   end
 
   def create_sub_organization
@@ -1354,6 +1348,47 @@ class EventsController < ApplicationController
   # Memoized across the several surfaces of this page that need it.
   def visible_descendant_ids
     @visible_descendant_ids ||= @event.visible_descendant_ids(current_user)
+  end
+
+  def sub_organization_table_rows(event)
+    subevents = event.visible_subevents(current_user)
+                     .includes(:scoped_tags, logo_attachment: :blob)
+                     .reorder(:name)
+                     .to_a
+                     .sort_by { |subevent| [natural_order_key(subevent.name), subevent.id] }
+
+    build_sub_organization_rows(subevents, expandable: event.expandable_subevent_ids(current_user))
+  end
+
+  def searched_sub_organization_rows(query)
+    matches = Event.where(id: visible_descendant_ids)
+                   .where("name ILIKE ?", "%#{Event.sanitize_sql_like(query)}%")
+                   .includes(:scoped_tags, :parent, logo_attachment: :blob)
+                   .reorder(:name)
+                   .to_a
+                   .sort_by { |event| [natural_order_key(event.name), event.id] }
+
+    build_sub_organization_rows(matches, expandable: Set.new, name_parent: true)
+  end
+
+  def build_sub_organization_rows(events, expandable:, name_parent: false)
+    ids = events.map(&:id)
+    organizer_counts = OrganizerPosition.where(event_id: ids).group(:event_id).count
+
+    events.map do |event|
+      {
+        event:,
+        expandable: expandable.include?(event.id),
+        organizer_count: organizer_counts[event.id] || 0,
+        parent: (event.parent if name_parent && event.parent_id != @event.id)
+      }
+    end
+  end
+
+  def natural_order_key(name)
+    name.downcase.split(/(\d+)/).map.with_index do |part, index|
+      index.odd? ? [1, part.to_i, ""] : [0, 0, part]
+    end
   end
 
   def filtered_sub_organizations
