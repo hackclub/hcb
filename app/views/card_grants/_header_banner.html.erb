@@ -14,8 +14,13 @@
       </h2>
       <p class="my-0 flex items-baseline g-1 items-center">
         <%= status_badge card_grant.status_badge_type %>
-        <% if card_grant.frozen_by_one_time_use? %>
-            Frozen by One Time Use
+        <% if card_grant.frozen_by_one_time_use? && organizer_signed_in? %>
+            Frozen automactically by one time use
+            <span class="info tooltipped tooltipped--e inline-flex items-center" aria-label="Defrosting clears one time use from the grant card.">
+              <%= inline_icon "info", size: 18, style: "position: unset;" %>
+            </span>
+        <% elsif card_grant.frozen_by_one_time_use? && !organizer_signed_in? %>
+            Frozen by <%= card_grant.event.name %> after first purchase
             <span class="info tooltipped tooltipped--e inline-flex items-center" aria-label="For help with your grant, please reach out to <%= card_grant.event.name %>.">
               <%= inline_icon "info", size: 18, style: "position: unset;" %>
             </span>
