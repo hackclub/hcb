@@ -182,6 +182,8 @@ class Ledger
       self.memo = self.custom_memo.presence || self.system_memo.presence || fallback_memo
 
       save!
+
+      cleanup_if_empty! if saved_change_to_ct_count? || saved_change_to_cpt_count?
     end
 
     def map!
@@ -416,6 +418,17 @@ class Ledger
 
     def calculate_special_appearance
       SpecialAppearance.find_by_linked_object(linked_object)
+    end
+
+    def cleanup_if_empty!
+      return unless ct_count.zero? && cpt_count.zero?
+
+      if linked_object_type.present? || ledger_mappings.exists?
+        Rails.error.unexpected("Ledger::Item #{id} has a mapping or linked object but no CTs or CPTs")
+        return
+      end
+
+      destroy!
     end
 
     def calculate_system_memo

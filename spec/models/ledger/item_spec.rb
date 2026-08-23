@@ -409,6 +409,63 @@ RSpec.describe Ledger::Item, type: :model do
     end
   end
 
+  describe "cleanup when a ledger item becomes empty" do
+    it "destroys an item once it loses its last CT and has no mapping or linked object" do
+      item = create(:ledger_item)
+      ct = create(:canonical_transaction, ledger_item_id: item.id)
+      expect(item.reload.ct_count).to eq(1)
+
+      other_item = create(:ledger_item)
+      ct.update!(ledger_item: other_item)
+
+      expect { item.reload }.to raise_error(ActiveRecord::RecordNotFound)
+    end
+
+    it "destroys an item once it loses its last CPT and has no mapping or linked object" do
+      item = create(:ledger_item)
+      cpt = create(:canonical_pending_transaction, ledger_item_id: item.id)
+      expect(item.reload.cpt_count).to eq(1)
+
+      other_item = create(:ledger_item)
+      cpt.update!(ledger_item: other_item)
+
+      expect { item.reload }.to raise_error(ActiveRecord::RecordNotFound)
+    end
+
+    it "alerts instead of destroying when a mapping remains after losing its last CT" do
+      primary_ledger = create(:event).ledger
+      item = create(:ledger_item)
+      Ledger::Mapping.create!(ledger: primary_ledger, ledger_item: item, on_primary_ledger: true)
+      ct = create(:canonical_transaction, ledger_item_id: item.id)
+      expect(item.reload.ct_count).to eq(1)
+
+      other_item = create(:ledger_item)
+      expect(Rails.error).to receive(:unexpected).with(a_string_matching(/mapping or linked object/))
+      ct.update!(ledger_item: other_item)
+
+      expect(item.reload).to be_persisted
+    end
+
+    it "alerts instead of destroying when a linked object remains after losing its last CT" do
+      item = create(:ledger_item, linked_object: create(:bank_fee))
+      ct = create(:canonical_transaction, ledger_item_id: item.id)
+      expect(item.reload.ct_count).to eq(1)
+
+      other_item = create(:ledger_item)
+      expect(Rails.error).to receive(:unexpected).with(a_string_matching(/mapping or linked object/))
+      ct.update!(ledger_item: other_item)
+
+      expect(item.reload).to be_persisted
+    end
+
+    it "leaves a newly created, not-yet-populated item alone" do
+      expect(Rails.error).not_to receive(:unexpected)
+      item = create(:ledger_item)
+
+      expect(item.reload).to be_persisted
+    end
+  end
+
   describe "account verification detection" do
     # Pins memo/amount/linked_object_type past the refresh! callbacks (which
     # recompute them from canonical transactions these items don't have),
