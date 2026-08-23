@@ -4,6 +4,10 @@ class EventsController < ApplicationController
   TRANSACTIONS_PER_PAGE = 75
   DONATIONS_PER_PAGE = 25
 
+  # The sub-organization tree's guide lines, one flag per level above a row.
+  # Capped, because the view draws a rail per flag and the value arrives in a URL.
+  TREE_RAILS = /\A[01]{0,#{Event::MAX_PARENT_DEPTH}}\z/
+
   include SetEvent
   include SetLedgerFilters
 
@@ -974,7 +978,7 @@ class EventsController < ApplicationController
     authorize @event
 
     @rows = sub_organization_table_rows
-    @rails = params[:rails].to_s.slice(/\A[01]{0,#{Event::MAX_PARENT_DEPTH}}\z/).to_s
+    @rails = tree_rails
 
     render :sub_organization_rows, layout: false
   end
@@ -1343,6 +1347,14 @@ class EventsController < ApplicationController
       params_hash[:hidden_at] = nil
     end
     params_hash.delete(:hidden)
+  end
+
+  # Anything malformed draws no guide lines rather than refusing the request:
+  # they are decoration, and the rows themselves are still worth rendering.
+  def tree_rails
+    rails = params[:rails].to_s
+
+    rails.match?(TREE_RAILS) ? rails : ""
   end
 
   # Memoized across the several surfaces of this page that need it.
