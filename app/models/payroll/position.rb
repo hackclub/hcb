@@ -192,7 +192,7 @@ module Payroll
         {
           key: :tax_form,
           owner: :contractor,
-          label: "Submit a W-9 / W-8BEN",
+          label: "Submit tax information",
           hint: "Needed before signing",
           complete: legal_entity&.completed_tax_form? || false
         },

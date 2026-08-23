@@ -20,7 +20,7 @@
     <li class="onboarding-flow__step onboarding-flow__step--<%= state %> <%= "onboarding-flow__step--unordered" if step[:key] == "payout_method" %>">
       <span class="onboarding-flow__marker">
         <% if step[:complete] %>
-          <%= inline_icon "checkmark", size: 18 %>
+          <%= inline_icon "badge-check-fill", size: 22 %>
         <% else %>
           <%= index + 1 %>
         <% end %>
