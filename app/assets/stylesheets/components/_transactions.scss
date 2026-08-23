@@ -153,6 +153,55 @@ html[data-dark='true'] {
   }
 }
 
+// The organization a transaction belongs to, shown under its memo when rows
+// from several orgs share one table. Long org names truncate.
+.transaction__event {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+
+  a {
+    color: map-get($palette, muted);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// The "Older receipts" group is a <details>, and its header is the <summary>.
+// Hide the default disclosure triangle in favour of the caret in the header.
+.receipt-card > summary {
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+}
+
+// The heading's bottom margin is the gap between it and the table below, but on
+// a collapsible group it would have to vanish when collapsed or it reads as dead
+// space under the header. Toggling it snaps the card 8px mid-animation, so the
+// gap lives on the table instead: there it sits inside ::details-content and is
+// revealed by the same block-size transition.
+details.receipt-card {
+  > summary > .heading {
+    margin-bottom: 0;
+  }
+
+  > .table-container {
+    margin-top: 0.5rem;
+  }
+
+  // Turn with the disclosure rather than snapping when it opens.
+  .flip-when-open {
+    transition: transform 0.5s;
+  }
+}
+
 // Grey out the memo for pending transactions. The memo link uses
 // `color: inherit`, so setting the cell's color muted greys it in both themes.
 .transaction__memo--pending {

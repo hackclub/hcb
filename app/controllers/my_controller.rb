@@ -100,6 +100,7 @@ class MyController < ApplicationController
       @locking_count = current_user.card_locking_overdue_charges.count
       @locking_next_due_at = current_user.card_locking_next_due_at
     end
+    @now = Time.current
 
     hcb_code_ids_missing_receipt = current_user.hcb_code_ids_missing_receipt
 
@@ -107,13 +108,47 @@ class MyController < ApplicationController
                                        .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction) # HcbCode#card uses CT and PT
                                        .index_by(&:id).slice(*hcb_code_ids_missing_receipt).values
 
+    # Deadlines only exist (and are only explained elsewhere on this page) for
+    # cardholders inside the card locking rollout, so don't group by them until
+    # there's at least one to group.
+    @groupable_by_due_date = CardLocking.enabled? &&
+                             hcb_codes_missing_receipt.any? { |hcb_code| hcb_code.receipt_due_at.present? }
+    @grouping =
+      if @groupable_by_due_date
+        params[:group].presence_in(["due_date", "card"]) || "due_date"
+      else
+        "card"
+      end
+
+    hcb_codes_missing_receipt =
+      if @grouping == "due_date"
+        # Soonest deadline first; charges with no deadline sort last, newest first.
+        hcb_codes_missing_receipt.sort_by do |hcb_code|
+          hcb_code.receipt_due_at ? [0, hcb_code.receipt_due_at.to_i] : [1, -hcb_code.created_at.to_i]
+        end
+      else
+        hcb_codes_missing_receipt.sort_by(&:created_at).reverse
+      end
+
+    if @grouping == "due_date"
+      # Counted over the whole pile, not the page, so a group spanning several
+      # pages still reports its real size.
+      @due_date_group_counts = hcb_codes_missing_receipt.group_by { |hcb_code| helpers.receipt_due_group(hcb_code, now: @now) }
+                                                        .transform_values(&:count)
+    end
+
     @hcb_codes = Kaminari.paginate_array(hcb_codes_missing_receipt)
                          .page(params[:page]).per(params[:per] || 15)
 
-    @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }.transform_values { |v| v.sort_by(&:created_at).reverse }
-    @cards = GlobalID::Locator.locate_many(@card_hcb_codes.keys, includes: :event)
-                              # Order cards by created_at, newest first
-                              .sort_by(&:created_at).reverse!
+    if @grouping == "due_date"
+      # @hcb_codes is already in due date order, so group_by preserves it.
+      @due_date_groups = @hcb_codes.group_by { |hcb_code| helpers.receipt_due_group(hcb_code, now: @now) }
+    else
+      @card_hcb_codes = @hcb_codes.group_by { |hcb| hcb.card.to_global_id.to_s }.transform_values { |v| v.sort_by(&:created_at).reverse }
+      @cards = GlobalID::Locator.locate_many(@card_hcb_codes.keys, includes: :event)
+                                # Order cards by created_at, newest first
+                                .sort_by(&:created_at).reverse!
+    end
 
     @mailbox_address = current_user.active_mailbox_address
     @receipts = Receipt.in_receipt_bin.with_attached_file.where(user: current_user)

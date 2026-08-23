@@ -186,11 +186,11 @@ RSpec.describe EventsController do
       it "shows a non-settled item with a non-zero amount, but hides one with a zero amount" do
         moved_money = create(:ledger_item, custom_memo: "Declined but moved money", datetime: Time.current)
         Ledger::Mapping.create!(ledger: event.ledger, ledger_item: moved_money, on_primary_ledger: true)
-        moved_money.update_columns(status: "declined", amount_cents: 500)
+        moved_money.update_columns(status: "declined", amount_cents: 500, ct_count: 1)
 
         no_money_moved = create(:ledger_item, custom_memo: "Declined with no amount", datetime: Time.current)
         Ledger::Mapping.create!(ledger: event.ledger, ledger_item: no_money_moved, on_primary_ledger: true)
-        no_money_moved.update_columns(status: "declined", amount_cents: 0)
+        no_money_moved.update_columns(status: "declined", amount_cents: 0, ct_count: 1)
 
         get(:ledger, params: { event_id: event.slug })
 
