@@ -437,8 +437,8 @@ class Ledger
     # default if it has any data. See spec/models/ledger/item_associations_coverage_spec.rb,
     # which fails until a newly added association is added to one list or the other.
     EMPTY_CHECK_IGNORED_ASSOCIATIONS = [
-      :canonical_transactions,         # already covered by ct_count above; re-checking here would be a redundant query
-      :canonical_pending_transactions, # already covered by cpt_count above, same reasoning
+      :canonical_transactions,         # already confirmed empty by the live check below; re-checking here would be a redundant query
+      :canonical_pending_transactions, # already confirmed empty by the live check below, same reasoning
       :hcb_code,                       # legacy 1:1 link; destroying the item just nullifies hcb_codes.ledger_item_id (ON DELETE nullify)
       :comments,                       # flows through hcb_code (TEMPORARY, see the has_many above) — real rows live on the HcbCode, unaffected by destroying this item
       :receipts,                       # same as comments — flows through hcb_code
@@ -450,7 +450,9 @@ class Ledger
     ].freeze
 
     def cleanup_if_empty!
-      return unless ct_count.zero? && cpt_count.zero?
+      # Live query rather than the cached ct_count/cpt_count columns, so this
+      # decision never trusts a counter cache that could (in principle) be stale.
+      return if canonical_transactions.exists? || canonical_pending_transactions.exists?
 
       blocking = blocking_associations(ignoring: EMPTY_CHECK_IGNORED_ASSOCIATIONS)
 
