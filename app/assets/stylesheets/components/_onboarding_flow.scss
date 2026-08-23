@@ -52,6 +52,18 @@
     height: 0.875rem;
     fill: currentColor;
   }
+
+  &--unordered {
+    background-color: transparent;
+
+    &::before {
+      content: '';
+      width: 0.4375rem;
+      height: 0.4375rem;
+      border-radius: 50%;
+      background-color: rgba(map-get($palette, muted), 0.45);
+    }
+  }
 }
 
 .onboarding-flow__step--complete .onboarding-flow__marker {
@@ -67,6 +79,14 @@
 .onboarding-flow__step--current .onboarding-flow__marker {
   background-color: map-get($palette, info);
   color: $white;
+
+  &.onboarding-flow__marker--unordered {
+    background-color: transparent;
+
+    &::before {
+      background-color: map-get($palette, info);
+    }
+  }
 }
 
 .onboarding-flow__body {

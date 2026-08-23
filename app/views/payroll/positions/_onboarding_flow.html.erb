@@ -10,18 +10,19 @@
     <% current = step[:key] == current_key %>
     <% state = step[:complete] ? "complete" : (current ? "current" : "upcoming") %>
     <% mine = step[:owner] == perspective %>
-    <% actionable = mine && (current || step[:key] == "payout_method") %>
+    <% unordered = step[:key] == :payout_method %>
+    <% actionable = mine && (current || unordered) %>
     <% owner_name = case step[:owner]
                     when :organizer then mine ? "You" : organizer_name
                     when :contractor then mine ? "You" : position.payee.display_name
                     else "HCB operations"
                     end %>
 
-    <li class="onboarding-flow__step onboarding-flow__step--<%= state %> <%= "onboarding-flow__step--unordered" if step[:key] == "payout_method" %>">
-      <span class="onboarding-flow__marker">
+    <li class="onboarding-flow__step onboarding-flow__step--<%= state %> <%= "onboarding-flow__step--unordered" if unordered %>">
+      <span class="onboarding-flow__marker <%= "onboarding-flow__marker--unordered" if unordered && !step[:complete] %>">
         <% if step[:complete] %>
           <%= inline_icon "badge-check-fill", size: 22 %>
-        <% else %>
+        <% elsif !unordered %>
           <%= index + 1 %>
         <% end %>
       </span>
