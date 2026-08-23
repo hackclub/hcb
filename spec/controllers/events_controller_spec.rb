@@ -186,11 +186,11 @@ RSpec.describe EventsController do
       it "shows a non-settled item with a non-zero amount, but hides one with a zero amount" do
         moved_money = create(:ledger_item, custom_memo: "Declined but moved money", datetime: Time.current)
         Ledger::Mapping.create!(ledger: event.ledger, ledger_item: moved_money, on_primary_ledger: true)
-        moved_money.update_columns(status: "declined", amount_cents: 500)
+        moved_money.update_columns(status: "declined", amount_cents: 500, ct_count: 1)
 
         no_money_moved = create(:ledger_item, custom_memo: "Declined with no amount", datetime: Time.current)
         Ledger::Mapping.create!(ledger: event.ledger, ledger_item: no_money_moved, on_primary_ledger: true)
-        no_money_moved.update_columns(status: "declined", amount_cents: 0)
+        no_money_moved.update_columns(status: "declined", amount_cents: 0, ct_count: 1)
 
         get(:ledger, params: { event_id: event.slug })
 
@@ -397,6 +397,10 @@ RSpec.describe EventsController do
         # ...and grouped so Excel renders them collapsible.
         sheet = xlsx_entry(response.body, "xl/worksheets/sheet1.xml")
         expect(sheet).to include('outlineLevel="1"')
+        # Descendants start hidden, and every row with children carries the
+        # collapsed flag, so the tree opens fully collapsed.
+        expect(sheet).to include('hidden="1"')
+        expect(sheet).to include('collapsed="1"')
         # Excel hides the grouping gutter entirely when this attribute is set,
         # even though Google Sheets ignores it. See SubOrganizationsExport.
         expect(sheet).not_to include("showOutlineSymbols")
