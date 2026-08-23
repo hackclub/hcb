@@ -1,11 +1,10 @@
-<%# locals: (row:, rails:, last:) %>
+<%# locals: (row:, guides:, last:) %>
 
 <% event = row[:event] %>
-<% depth = rails.size %>
+<% depth = guides.size %>
 
-<%# The rails this row's own children draw: "1" carries a line down through a
     level, "0" ends it, and the final flag is their join to this row. %>
-<% child_rails = (rails.empty? ? "" : rails[0..-2] + (last ? "0" : "1")) + "1" %>
+<% child_guides = (guides.empty? ? "" : guides[0..-2] + (last ? "0" : "1")) + "1" %>
 
 <%# `clickable` links the whole row via .stretched-link; the expander opts back
     into pointer events so it isn't swallowed by that link. %>
@@ -15,8 +14,7 @@
     data-event-id="<%= event.id %>"
     data-depth="<%= depth %>">
   <td class="sub-organization-row__cell">
-    <%# One rail per level above this row; the last is the join to its parent. %>
-    <span class="sub-organization-row__rails" aria-hidden="true"><% rails.each_char.with_index do |line, level| %><span class="sub-organization-row__rail <%= level == rails.size - 1 ? "sub-organization-row__rail--connector" : ("sub-organization-row__rail--line" if line == "1") %>"></span><% end %></span>
+    <span class="sub-organization-row__guides" aria-hidden="true"><% guides.each_char.with_index do |line, level| %><span class="sub-organization-row__guide <%= level == guides.size - 1 ? "sub-organization-row__guide--connector" : ("sub-organization-row__guide--line" if line == "1") %>"></span><% end %></span>
 
     <div class="sub-organization-row__name" style="--sub-organization-depth: <%= depth %>">
       <% if row[:expandable] %>
@@ -25,7 +23,7 @@
                 aria-expanded="false"
                 aria-label="Show the sub-organizations of <%= event.name %>"
                 data-action="sub-organization-tree#toggle"
-                data-url="<%= event_sub_organization_rows_path(event, rails: child_rails) %>">
+                data-url="<%= event_sub_organization_rows_path(event, guides: child_guides) %>">
           <%= inline_icon "down-caret", size: 22 %>
         </button>
       <% else %>

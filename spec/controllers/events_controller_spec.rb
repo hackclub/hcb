@@ -498,6 +498,8 @@ RSpec.describe EventsController do
       expect(controller.at_css("[data-sub-organization-tree-target='pinned']")).to be_present
       expect(controller.at_css("table")).to be_present
       expect(controller.at_css(".table-container [data-sub-organization-tree-target='pinned']")).to be_nil
+      expect(controller["data-action"].split)
+        .to include("scroll@window->sub-organization-tree#repin:passive")
     end
 
     it "remembers the chosen view between visits" do
@@ -519,7 +521,7 @@ RSpec.describe EventsController do
     it "renders the rows one level under the expanded organization", :aggregate_failures do
       create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild")
 
-      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, rails: "1" })
+      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, guides: "1" })
 
       expect(table_row_names(response.body)).to eq(["Transparent Grandchild"])
       expect(response.body).to include('data-depth="1"')
@@ -529,7 +531,7 @@ RSpec.describe EventsController do
       create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild")
       create(:event, parent: transparent_sub, is_public: false, name: "Private Grandchild")
 
-      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, rails: "1" })
+      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, guides: "1" })
 
       expect(table_row_names(response.body)).to eq(["Transparent Grandchild"])
     end
@@ -539,22 +541,22 @@ RSpec.describe EventsController do
       create(:event, parent: transparent_sub, is_public: true, name: "First Grandchild")
       create(:event, parent: transparent_sub, is_public: true, name: "Second Grandchild")
 
-      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, rails: "10" })
+      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, guides: "10" })
 
       rows = table_rows(response.body)
 
       expect(rows.map { |row| row["data-depth"] }).to eq(["2", "2"])
       # "10": one level still carrying a line, one whose branch has ended.
-      expect(rows.first.css(".sub-organization-row__rail").map { |rail| rail["class"].split.last })
-        .to eq(["sub-organization-row__rail--line", "sub-organization-row__rail--connector"])
+      expect(rows.first.css(".sub-organization-row__guide").map { |guide| guide["class"].split.last })
+        .to eq(["sub-organization-row__guide--line", "sub-organization-row__guide--connector"])
       # Only the final row closes the branch off.
       expect(rows.map { |row| row["class"].include?("sub-organization-row--last") }).to eq([false, true])
     end
 
-    it "ignores a rails value that isn't a run of flags" do
+    it "ignores a guides value that isn't a run of flags" do
       create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild")
 
-      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, rails: "../nonsense" })
+      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, guides: "../nonsense" })
 
       expect(response.body).to include('data-depth="0"')
     end
@@ -565,7 +567,7 @@ RSpec.describe EventsController do
       private_sub = create(:event, parent:, is_public: false, name: "Private Sub-organization")
       create(:event, parent: private_sub, is_public: true, name: "Transparent Grandchild")
 
-      get(:sub_organization_rows, params: { event_id: private_sub.slug, rails: "1" })
+      get(:sub_organization_rows, params: { event_id: private_sub.slug, guides: "1" })
 
       expect(response).to have_http_status(:redirect)
     end

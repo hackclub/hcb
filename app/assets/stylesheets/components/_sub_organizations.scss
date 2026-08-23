@@ -1,8 +1,8 @@
 $sub-organization-indent: 1.75rem;
 $sub-organization-cell-padding: 1rem;
-$sub-organization-rail-gap: 0.25rem;
-$sub-organization-rail: rgba(0, 0, 0, 0.12);
-$sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
+$sub-organization-guide-gap: 0.25rem;
+$sub-organization-guide: rgba(0, 0, 0, 0.12);
+$sub-organization-guide-dark: rgba(255, 255, 255, 0.15);
 
 .sub-organization-row[hidden] {
   display: none;
@@ -40,8 +40,8 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   position: relative;
 }
 
-.sub-organization-row__rails {
-  --rail-color: #{$sub-organization-rail};
+.sub-organization-row__guides {
+  --guide-color: #{$sub-organization-guide};
 
   position: absolute;
   top: 0;
@@ -50,25 +50,25 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   display: flex;
 
   html[data-dark='true'] & {
-    --rail-color: #{$sub-organization-rail-dark};
+    --guide-color: #{$sub-organization-guide-dark};
   }
 }
 
-.sub-organization-row__rail {
+.sub-organization-row__guide {
   position: relative;
   width: $sub-organization-indent;
 }
 
-.sub-organization-row__rail--line::before {
+.sub-organization-row__guide--line::before {
   content: '';
   position: absolute;
   top: 0;
   bottom: 0;
   left: 50%;
-  border-left: 1px solid var(--rail-color);
+  border-left: 1px solid var(--guide-color);
 }
 
-.sub-organization-row__rail--connector::before {
+.sub-organization-row__guide--connector::before {
   content: '';
   position: absolute;
   top: 0;
@@ -76,27 +76,27 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
 
   // Stop short of the toggle column so the elbow doesn't run into the caret
   // (or its hover target) and read as an arrowhead pointing at the row.
-  width: calc(50% - #{$sub-organization-rail-gap});
+  width: calc(50% - #{$sub-organization-guide-gap});
   height: 50%;
-  border-left: 1px solid var(--rail-color);
-  border-bottom: 1px solid var(--rail-color);
+  border-left: 1px solid var(--guide-color);
+  border-bottom: 1px solid var(--guide-color);
   border-bottom-left-radius: 0.375rem;
 }
 
 // A leaf has no caret for the elbow to flow into, so the curve reads as a stray
 // squiggle; square the corner off instead.
-.sub-organization-row--leaf .sub-organization-row__rail--connector::before {
+.sub-organization-row--leaf .sub-organization-row__guide--connector::before {
   border-bottom-left-radius: 0;
 }
 
 .sub-organization-row:not(.sub-organization-row--last)
-  .sub-organization-row__rail--connector::after {
+  .sub-organization-row__guide--connector::after {
   content: '';
   position: absolute;
   top: 50%;
   bottom: 0;
   left: 50%;
-  border-left: 1px solid var(--rail-color);
+  border-left: 1px solid var(--guide-color);
 }
 
 .sub-organization-row__name {
