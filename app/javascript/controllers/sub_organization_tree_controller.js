@@ -1,7 +1,18 @@
 import { Controller } from '@hotwired/stimulus'
 
-const IN_DURATION = 140
-const OUT_DURATION = 100
+const LIFTED = { opacity: 0, transform: 'translateY(-0.25rem)' }
+const RESTING = { opacity: 1, transform: 'translateY(0)' }
+
+const FADE_IN = {
+  keyframes: [LIFTED, RESTING],
+  duration: 140,
+  easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+}
+const FADE_OUT = {
+  keyframes: [RESTING, LIFTED],
+  duration: 100,
+  easing: 'ease-in',
+}
 
 export default class extends Controller {
   static targets = ['row', 'pinned']
@@ -9,35 +20,39 @@ export default class extends Controller {
   connect() {
     this.repin = () => this.#requestPin()
 
-    window.addEventListener('scroll', this.repin, { passive: true })
-    window.addEventListener('resize', this.repin, { passive: true })
+    for (const event of ['scroll', 'resize']) {
+      window.addEventListener(event, this.repin, { passive: true })
+    }
     this.#requestPin()
   }
 
   disconnect() {
-    window.removeEventListener('scroll', this.repin)
-    window.removeEventListener('resize', this.repin)
+    for (const event of ['scroll', 'resize']) {
+      window.removeEventListener(event, this.repin)
+    }
     if (this.pinFrame) cancelAnimationFrame(this.pinFrame)
   }
 
   async toggle(event) {
     const button = event.currentTarget
     const row = button.closest('tr')
+    const expand = button.getAttribute('aria-expanded') !== 'true'
 
-    if (button.getAttribute('aria-expanded') === 'true') {
-      button.setAttribute('aria-expanded', 'false')
-      await this.#collapse(row)
+    try {
+      if (!expand) await this.#collapse(row)
+      else if (row.dataset.loaded === 'true') this.#reveal(row)
+      else await this.#load(row, button)
+
+      button.setAttribute('aria-expanded', String(expand))
+    } catch (error) {
+      // Left as it was, so a second click retries.
+      console.error(error)
+    } finally {
       this.#requestPin()
-      return
     }
+  }
 
-    if (row.dataset.loaded === 'true') {
-      button.setAttribute('aria-expanded', 'true')
-      this.#reveal(row)
-      this.#requestPin()
-      return
-    }
-
+  async #load(row, button) {
     button.disabled = true
     button.classList.add('sub-organization-row__toggle--loading')
 
@@ -47,68 +62,58 @@ export default class extends Controller {
       })
       if (!response.ok) throw new Error(response.statusText)
 
-      const inserted = this.#insert(row, await response.text())
+      // A template parses `<tr>` outside a table, and holding the rows before
+      // they are inserted animates them without waiting on Stimulus targets.
+      const template = document.createElement('template')
+      template.innerHTML = await response.text()
+      const inserted = [...template.content.children]
+
+      row.after(template.content)
       row.dataset.loaded = 'true'
-      button.setAttribute('aria-expanded', 'true')
-      this.#animateIn(inserted)
-    } catch (error) {
-      // Left collapsed, so a second click retries.
-      console.error(error)
+      this.#animate(inserted, FADE_IN)
     } finally {
       button.disabled = false
       button.classList.remove('sub-organization-row__toggle--loading')
-      this.#requestPin()
     }
-  }
-
-  // Read back off the DOM rather than waiting for Stimulus to register them as
-  // targets, so they can be animated right away.
-  #insert(row, html) {
-    const stopAt = row.nextElementSibling
-    row.insertAdjacentHTML('afterend', html)
-
-    const inserted = []
-    for (
-      let node = row.nextElementSibling;
-      node && node !== stopAt;
-      node = node.nextElementSibling
-    ) {
-      inserted.push(node)
-    }
-    return inserted
   }
 
   #reveal(row) {
     const rows = this.#branch(row, { onlyExpanded: true })
+
     for (const child of rows) child.hidden = false
-    this.#animateIn(rows)
+    this.#animate(rows, FADE_IN)
   }
 
   async #collapse(row) {
     const rows = this.#branch(row).filter(child => !child.hidden)
 
-    await this.#animateOut(rows)
+    await this.#animate(rows, FADE_OUT)
     // Each row keeps its expanded state, so re-opening restores the shape.
     for (const child of rows) child.hidden = true
   }
 
-  // Every row under `row`. `onlyExpanded` stops at branches that were already
-  // collapsed, which should stay that way.
+  // Every row nested under `row`, in document order. `onlyExpanded` skips the
+  // branches that were already collapsed, which should stay that way.
   #branch(row, { onlyExpanded = false } = {}) {
+    const depth = Number(row.dataset.depth)
     const rows = []
+    let collapsedAt = Infinity
 
-    for (const child of this.#childrenOf(row)) {
-      rows.push(child)
-      if (onlyExpanded && !this.#isExpanded(child)) continue
-      rows.push(...this.#branch(child, { onlyExpanded }))
+    for (
+      let node = row.nextElementSibling;
+      node?.classList.contains('sub-organization-row');
+      node = node.nextElementSibling
+    ) {
+      const nodeDepth = Number(node.dataset.depth)
+
+      if (nodeDepth <= depth) break
+      if (nodeDepth > collapsedAt) continue
+
+      collapsedAt =
+        onlyExpanded && !this.#isExpanded(node) ? nodeDepth : Infinity
+      rows.push(node)
     }
     return rows
-  }
-
-  #childrenOf(row) {
-    return this.rowTargets.filter(
-      candidate => candidate.dataset.parentId === row.dataset.eventId
-    )
   }
 
   #isExpanded(row) {
@@ -119,35 +124,14 @@ export default class extends Controller {
     )
   }
 
-  #animateIn(rows) {
-    if (this.#prefersReducedMotion) return
-
-    for (const row of rows) {
-      row.animate(
-        [
-          { opacity: 0, transform: 'translateY(-0.25rem)' },
-          { opacity: 1, transform: 'translateY(0)' },
-        ],
-        { duration: IN_DURATION, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
-      )
-    }
-  }
-
-  async #animateOut(rows) {
+  // An interrupted animation rejects; settle either way so the caller can hide
+  // the rows once they have faded.
+  #animate(rows, { keyframes, ...timing }) {
     if (this.#prefersReducedMotion || rows.length === 0) return
 
-    const animations = rows.map(row =>
-      row.animate(
-        [
-          { opacity: 1, transform: 'translateY(0)' },
-          { opacity: 0, transform: 'translateY(-0.25rem)' },
-        ],
-        { duration: OUT_DURATION, easing: 'ease-in' }
-      )
+    return Promise.allSettled(
+      rows.map(row => row.animate(keyframes, timing).finished)
     )
-
-    // An interrupted animation rejects; hide the rows either way.
-    await Promise.allSettled(animations.map(animation => animation.finished))
   }
 
   get #prefersReducedMotion() {
@@ -176,19 +160,9 @@ export default class extends Controller {
   }
 
   #branchBottom(row) {
-    const depth = Number(row.dataset.depth)
-    let last = row
+    const visible = this.#branch(row).filter(child => !child.hidden)
 
-    for (
-      let node = row.nextElementSibling;
-      node;
-      node = node.nextElementSibling
-    ) {
-      if (!node.classList.contains('sub-organization-row')) break
-      if (Number(node.dataset.depth) <= depth) break
-      if (!node.hidden) last = node
-    }
-    return last.getBoundingClientRect().bottom
+    return (visible.at(-1) ?? row).getBoundingClientRect().bottom
   }
 
   #renderPinned(rows) {

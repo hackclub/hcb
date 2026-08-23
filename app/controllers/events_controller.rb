@@ -927,7 +927,7 @@ class EventsController < ApplicationController
         if @view == "list"
           @search = params[:q].presence
           @has_filter = @search.present?
-          @rows = @search ? searched_sub_organization_rows(@search) : sub_organization_table_rows(@event)
+          @rows = sub_organization_table_rows(search: @search)
         else
           sub_organizations = filtered_sub_organizations
           @sub_organizations = sub_organizations.not_hidden.page(params[:page]).per(params[:per] || 24)
@@ -973,8 +973,10 @@ class EventsController < ApplicationController
   def sub_organization_rows
     authorize @event
 
-    @rows = sub_organization_table_rows(@event)
-    @rails = helpers.parse_rails_param(params[:rails])
+    @rows = sub_organization_table_rows
+    # A run of flags, one per level above these rows; anything else is dropped
+    # rather than rendered, and the depth is capped so it can't be inflated.
+    @rails = params[:rails].to_s.slice(/\A[01]{0,#{Event::MAX_PARENT_DEPTH}}\z/).to_s
 
     render :sub_organization_rows, layout: false
   end
@@ -1350,45 +1352,39 @@ class EventsController < ApplicationController
     @visible_descendant_ids ||= @event.visible_descendant_ids(current_user)
   end
 
-  def sub_organization_table_rows(event)
-    subevents = event.visible_subevents(current_user)
-                     .includes(:scoped_tags, logo_attachment: :blob)
-                     .reorder(:name)
-                     .to_a
-                     .sort_by { |subevent| [natural_order_key(subevent.name), subevent.id] }
+  # The rows one level under @event, or -- when searching -- every matching
+  # descendant, flattened and named by the parent they sit under. Search results
+  # are already the whole subtree, so nothing there is expandable.
+  def sub_organization_table_rows(search: nil)
+    scope =
+      if search
+        Event.where(id: visible_descendant_ids)
+             .where("name ILIKE ?", "%#{Event.sanitize_sql_like(search)}%")
+      else
+        @event.visible_subevents(current_user)
+      end
 
-    build_sub_organization_rows(subevents, expandable: event.expandable_subevent_ids(current_user))
-  end
+    events = scope.includes(:parent, :scoped_tags, logo_attachment: :blob)
+                  .to_a
+                  .sort_by { |event| [natural_order_key(event.name), event.id] }
 
-  def searched_sub_organization_rows(query)
-    matches = Event.where(id: visible_descendant_ids)
-                   .where("name ILIKE ?", "%#{Event.sanitize_sql_like(query)}%")
-                   .includes(:scoped_tags, :parent, logo_attachment: :blob)
-                   .reorder(:name)
-                   .to_a
-                   .sort_by { |event| [natural_order_key(event.name), event.id] }
-
-    build_sub_organization_rows(matches, expandable: Set.new, name_parent: true)
-  end
-
-  def build_sub_organization_rows(events, expandable:, name_parent: false)
-    ids = events.map(&:id)
-    organizer_counts = OrganizerPosition.where(event_id: ids).group(:event_id).count
+    expandable = search ? Set.new : @event.expandable_subevent_ids(current_user)
+    organizer_counts = OrganizerPosition.where(event: events).group(:event_id).count
 
     events.map do |event|
       {
         event:,
         expandable: expandable.include?(event.id),
         organizer_count: organizer_counts[event.id] || 0,
-        parent: (event.parent if name_parent && event.parent_id != @event.id)
+        parent: (event.parent unless event.parent_id == @event.id)
       }
     end
   end
 
+  # Pad every run of digits so they compare by value, putting "Club 9" ahead of
+  # "Club 10" the way a reader scanning the list expects.
   def natural_order_key(name)
-    name.downcase.split(/(\d+)/).map.with_index do |part, index|
-      index.odd? ? [1, part.to_i, ""] : [0, 0, part]
-    end
+    name.downcase.gsub(/\d+/) { |digits| digits.rjust(20, "0") }
   end
 
   def filtered_sub_organizations

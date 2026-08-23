@@ -9,10 +9,12 @@
 <h1 class="heading flex items-center gap-2 flex-col sm:flex-row border-0 mb-0">
   <span class="flex-grow">Sub-organizations</span>
   <div class="flex items-center gap-2">
-    <%= pop_icon_to @view == "list" ? "grid" : "list",
-                    @view == "list" ? url_for(request.query_parameters.merge(view: "grid")) : url_for({ view: "list", q: params[:q].presence }.compact),
+    <% list_view = @view == "list" %>
+    <%# The cards filter on more than the tree can, so only the search carries over. %>
+    <% switch_to = list_view ? request.query_parameters.merge(view: "grid") : { view: "list", q: params[:q].presence }.compact %>
+    <%= pop_icon_to list_view ? "grid" : "list", url_for(switch_to),
                     class: "tooltipped tooltipped--w",
-                    "aria-label": @view == "list" ? "Switch to cards" : "Switch to a table" %>
+                    "aria-label": list_view ? "Switch to cards" : "Switch to a table" %>
     <div data-controller="menu" data-menu-placement-value="bottom-end">
       <button
         type="button"
@@ -69,7 +71,7 @@
           </thead>
           <tbody id="sub_organizations">
             <% @rows.each_with_index do |row, index| %>
-              <%= render "events/sub_organization_row", row:, rails: [], last: index == @rows.size - 1 %>
+              <%= render "events/sub_organization_row", row:, rails: "", last: index == @rows.size - 1 %>
             <% end %>
           </tbody>
         </table>
