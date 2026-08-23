@@ -72,9 +72,7 @@
             </tr>
           </thead>
           <tbody id="sub_organizations">
-            <% @rows.each_with_index do |row, index| %>
-              <%= render "events/sub_organization_row", row:, guides: "", last: index == @rows.size - 1 %>
-            <% end %>
+            <%= render "events/sub_organization_rows", rows: @rows, guides: "" %>
           </tbody>
         </table>
       </article>

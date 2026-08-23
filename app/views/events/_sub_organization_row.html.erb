@@ -3,7 +3,7 @@
 <% event = row[:event] %>
 <% depth = guides.size %>
 
-<% child_guides = (guides.empty? ? "" : guides[0..-2] + (last ? "0" : "1")) + "1" %>
+<% child_guides = guides.empty? ? "1" : guides[0..-2] + (last ? "0" : "1") + "1" %>
 
 <%# `clickable` links the whole row via .stretched-link; the expander opts back
     into pointer events so it isn't swallowed by that link. %>
