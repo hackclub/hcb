@@ -57,7 +57,6 @@
     </div>
   </td>
   <td>
-    <%# Read-only here; the cards are where tags can be edited. %>
     <% event.scoped_tags.each do |tag| %>
       <% if tag.parent_event_id == event.parent_id %>
         <span class="badge m-0 mb-1 bg-muted" data-scoped-tag="<%= tag.id %>"><%= tag.name %></span>
