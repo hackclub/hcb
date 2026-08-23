@@ -185,8 +185,6 @@ class Event < ApplicationRecord
     subevents.where(is_public: true, hidden_at: nil).or(subevents.where(id: reader_event_ids(user)))
   end
 
-  # The visible sub-organizations with something to show a level down, and so
-  # worth an expander.
   def expandable_subevent_ids(user)
     grandchildren = Event.where(parent_id: visible_subevents(user).select(:id))
 
@@ -200,8 +198,6 @@ class Event < ApplicationRecord
     grandchildren.reorder(nil).distinct.pluck(:parent_id).to_set
   end
 
-  # Every event `user` reads directly, memoized because each visibility helper
-  # here wants it.
   def reader_event_ids(user)
     return [] unless user
 
@@ -209,8 +205,6 @@ class Event < ApplicationRecord
     @reader_event_ids[user.id] ||= OrganizerPosition.reader_access.where(user:).pluck(:event_id)
   end
 
-  # Auditors see everything, and so does a reader on any ancestor, since reader
-  # access is inherited.
   def sees_all_descendants?(user)
     user&.auditor? || reader_event_ids(user).intersect?(ancestor_ids)
   end

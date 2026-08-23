@@ -4,8 +4,6 @@ class EventsController < ApplicationController
   TRANSACTIONS_PER_PAGE = 75
   DONATIONS_PER_PAGE = 25
 
-  # The sub-organization tree's guide lines, one flag per level above a row.
-  # Capped, because the view draws a guide per flag and the value arrives in a URL.
   TREE_GUIDES = /\A[01]{0,#{Event::MAX_PARENT_DEPTH}}\z/
 
   include SetEvent
@@ -1349,8 +1347,6 @@ class EventsController < ApplicationController
     params_hash.delete(:hidden)
   end
 
-  # Anything malformed draws no guide lines rather than refusing the request:
-  # they are decoration, and the rows themselves are still worth rendering.
   def tree_guides
     guides = params[:guides].to_s
 

@@ -10,7 +10,6 @@
   <span class="flex-grow">Sub-organizations</span>
   <div class="flex items-center gap-2">
     <% list_view = @view == "list" %>
-    <%# The cards filter on more than the tree can, so only the search carries over. %>
     <% switch_to = list_view ? request.query_parameters.merge(view: "grid") : { view: "list", q: params[:q].presence }.compact %>
     <%= pop_icon_to list_view ? "grid" : "list", url_for(switch_to),
                     class: "tooltipped tooltipped--w",
@@ -57,8 +56,6 @@
     <div class="mt-3"
          data-controller="sub-organization-tree"
          data-action="scroll@window->sub-organization-tree#repin:passive resize@window->sub-organization-tree#repin:passive">
-      <%# Outside the table: its horizontal scrolling is what a sticky element
-          inside it would stick to, rather than the page. %>
       <div class="sub-organization-tree__pinned" data-sub-organization-tree-target="pinned"></div>
 
       <article class="table-container">
