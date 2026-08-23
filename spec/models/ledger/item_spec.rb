@@ -440,7 +440,7 @@ RSpec.describe Ledger::Item, type: :model do
       expect(item.reload.ct_count).to eq(1)
 
       other_item = create(:ledger_item)
-      expect(Rails.error).to receive(:unexpected).with(a_string_matching(/mapping or linked object/))
+      expect(Rails.error).to receive(:unexpected).with(a_string_matching(/still has ledger_mappings/))
       ct.update!(ledger_item: other_item)
 
       expect(item.reload).to be_persisted
@@ -452,7 +452,7 @@ RSpec.describe Ledger::Item, type: :model do
       expect(item.reload.ct_count).to eq(1)
 
       other_item = create(:ledger_item)
-      expect(Rails.error).to receive(:unexpected).with(a_string_matching(/mapping or linked object/))
+      expect(Rails.error).to receive(:unexpected).with(a_string_matching(/still has linked_object/))
       ct.update!(ledger_item: other_item)
 
       expect(item.reload).to be_persisted
@@ -463,6 +463,33 @@ RSpec.describe Ledger::Item, type: :model do
       item = create(:ledger_item)
 
       expect(item.reload).to be_persisted
+    end
+
+    it "alerts instead of destroying when any other association still has data, by default" do
+      item = create(:ledger_item)
+      ct = create(:canonical_transaction, ledger_item_id: item.id)
+      expect(item.reload.ct_count).to eq(1)
+      Task::Receiptable::Upload.create!(taskable: item, assignee: create(:user))
+
+      other_item = create(:ledger_item)
+      expect(Rails.error).to receive(:unexpected).with(a_string_matching(/still has tasks/))
+      ct.update!(ledger_item: other_item)
+
+      expect(item.reload).to be_persisted
+    end
+
+    describe "#blocking_associations" do
+      it "fails closed: an unignored association with data blocks, even one this model doesn't know about yet" do
+        item = create(:ledger_item, linked_object: create(:bank_fee))
+
+        expect(item.blocking_associations(ignoring: [])).to include(:linked_object)
+      end
+
+      it "only exempts what's explicitly passed in" do
+        item = create(:ledger_item, linked_object: create(:bank_fee))
+
+        expect(item.blocking_associations(ignoring: [:linked_object])).not_to include(:linked_object)
+      end
     end
   end
 
