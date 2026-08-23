@@ -1,35 +1,20 @@
 import { Controller } from '@hotwired/stimulus'
 
-const LIFTED = { opacity: 0, transform: 'translateY(-0.25rem)' }
-const RESTING = { opacity: 1, transform: 'translateY(0)' }
-
-const FADE_IN = {
-  keyframes: [LIFTED, RESTING],
-  duration: 140,
-  easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-}
-const FADE_OUT = {
-  keyframes: [RESTING, LIFTED],
-  duration: 100,
-  easing: 'ease-in',
-}
+const FADE = [
+  { opacity: 0, transform: 'translateY(-0.25rem)' },
+  { opacity: 1, transform: 'translateY(0)' },
+]
+const FADE_IN = { duration: 140, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
+const FADE_OUT = { duration: 100, easing: 'ease-out', direction: 'reverse' }
 
 export default class extends Controller {
   static targets = ['row', 'pinned']
 
   connect() {
-    this.repin = () => this.#requestPin()
-
-    for (const event of ['scroll', 'resize']) {
-      window.addEventListener(event, this.repin, { passive: true })
-    }
-    this.#requestPin()
+    this.repin()
   }
 
   disconnect() {
-    for (const event of ['scroll', 'resize']) {
-      window.removeEventListener(event, this.repin)
-    }
     if (this.pinFrame) cancelAnimationFrame(this.pinFrame)
   }
 
@@ -48,13 +33,22 @@ export default class extends Controller {
       // Left as it was, so a second click retries.
       console.error(error)
     } finally {
-      this.#requestPin()
+      this.repin()
     }
+  }
+
+  // Coalesced into one frame; scrolling fires far faster than this needs to run.
+  repin() {
+    if (!this.hasPinnedTarget || this.pinFrame) return
+
+    this.pinFrame = requestAnimationFrame(() => {
+      this.pinFrame = null
+      this.#pin()
+    })
   }
 
   async #load(row, button) {
     button.disabled = true
-    button.classList.add('sub-organization-row__toggle--loading')
 
     try {
       const response = await fetch(button.dataset.url, {
@@ -73,12 +67,11 @@ export default class extends Controller {
       this.#animate(inserted, FADE_IN)
     } finally {
       button.disabled = false
-      button.classList.remove('sub-organization-row__toggle--loading')
     }
   }
 
   #reveal(row) {
-    const rows = this.#branch(row, { onlyExpanded: true })
+    const rows = this.#branch(row)
 
     for (const child of rows) child.hidden = false
     this.#animate(rows, FADE_IN)
@@ -92,9 +85,9 @@ export default class extends Controller {
     for (const child of rows) child.hidden = true
   }
 
-  // Every row nested under `row`, in document order. `onlyExpanded` skips the
-  // branches that were already collapsed, which should stay that way.
-  #branch(row, { onlyExpanded = false } = {}) {
+  // Every row nested under `row`, in document order, stopping at branches that
+  // are collapsed: their rows are already hidden and should stay that way.
+  #branch(row) {
     const depth = Number(row.dataset.depth)
     const rows = []
     let collapsedAt = Infinity
@@ -109,44 +102,27 @@ export default class extends Controller {
       if (nodeDepth <= depth) break
       if (nodeDepth > collapsedAt) continue
 
-      collapsedAt =
-        onlyExpanded && !this.#isExpanded(node) ? nodeDepth : Infinity
+      collapsedAt = this.#isExpanded(node) ? Infinity : nodeDepth
       rows.push(node)
     }
     return rows
   }
 
   #isExpanded(row) {
-    return (
-      row
-        .querySelector('.sub-organization-row__toggle')
-        ?.getAttribute('aria-expanded') === 'true'
-    )
+    return row.querySelector('[aria-expanded="true"]') !== null
   }
 
   // An interrupted animation rejects; settle either way so the caller can hide
   // the rows once they have faded.
-  #animate(rows, { keyframes, ...timing }) {
-    if (this.#prefersReducedMotion || rows.length === 0) return
+  #animate(rows, timing) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     return Promise.allSettled(
-      rows.map(row => row.animate(keyframes, timing).finished)
+      rows.map(row => row.animate(FADE, timing).finished)
     )
   }
 
-  get #prefersReducedMotion() {
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  }
-
-  #requestPin() {
-    if (!this.hasPinnedTarget || this.pinFrame) return
-
-    this.pinFrame = requestAnimationFrame(() => {
-      this.pinFrame = null
-      this.#pin()
-    })
-  }
-
+  // The rows whose branch you are scrolled inside of, outermost first.
   #pin() {
     const inside = []
 
@@ -179,6 +155,7 @@ export default class extends Controller {
 
     rows.forEach((row, index) => {
       const pin = this.pinnedTarget.children[index]
+      // Slide a pin away with its branch once that branch runs out of room.
       const overshoot = Math.min(
         0,
         this.#branchBottom(row) - (top + pin.offsetHeight)

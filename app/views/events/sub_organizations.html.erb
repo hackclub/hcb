@@ -54,7 +54,9 @@
   <% end %>
 
   <% if @rows.any? %>
-    <div class="mt-3" data-controller="sub-organization-tree">
+    <div class="mt-3"
+         data-controller="sub-organization-tree"
+         data-action="scroll@window:passive->sub-organization-tree#repin resize@window:passive->sub-organization-tree#repin">
       <%# Outside the table: its horizontal scrolling is what a sticky element
           inside it would stick to, rather than the page. %>
       <div class="sub-organization-tree__pinned" data-sub-organization-tree-target="pinned"></div>

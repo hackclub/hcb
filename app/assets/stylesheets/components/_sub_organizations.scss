@@ -165,7 +165,7 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
   }
 }
 
-.sub-organization-row__toggle--loading svg {
+.sub-organization-row__toggle:disabled svg {
   animation: sub-organization-pulse 0.9s ease-in-out infinite;
 }
 
@@ -238,7 +238,7 @@ $sub-organization-rail-dark: rgba(255, 255, 255, 0.15);
     transition: none;
   }
 
-  .sub-organization-row__toggle--loading svg {
+  .sub-organization-row__toggle:disabled svg {
     animation: none;
   }
 }
