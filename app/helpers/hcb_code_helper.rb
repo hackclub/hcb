@@ -42,6 +42,11 @@ module HcbCodeHelper
     content_tag :span, emoji, class: "tooltipped tooltipped--w pr1", 'aria-label': country_code
   end
 
+  # Currency symbols are ambiguous ($ is USD, CAD and AUD), so pair them with the ISO code.
+  def humanized_foreign_amount(money)
+    "#{humanized_money_with_symbol money} #{money.currency.iso_code}"
+  end
+
   def stripe_verification_check_badge(check, verification_data = @verification_data)
     case verification_data["#{check}_check"]
     when "match"
