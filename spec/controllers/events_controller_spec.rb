@@ -443,17 +443,6 @@ RSpec.describe EventsController do
       )
     end
 
-    it "sorts numbered names in counting order" do
-      ["Chapter #10", "Chapter #2", "Chapter #1"].each do |name|
-        create(:event, parent:, is_public: true, name:)
-      end
-
-      get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
-
-      expect(table_row_names(response.body).grep(/Chapter/))
-        .to eq(["Chapter #1", "Chapter #2", "Chapter #10"])
-    end
-
     it "lists private sub-organizations for an organizer, badged as private", :aggregate_failures do
       sign_in_organizer_of(parent)
 

@@ -974,8 +974,6 @@ class EventsController < ApplicationController
     authorize @event
 
     @rows = sub_organization_table_rows
-    # A run of flags, one per level above these rows; anything else is dropped
-    # rather than rendered, and the depth is capped so it can't be inflated.
     @rails = params[:rails].to_s.slice(/\A[01]{0,#{Event::MAX_PARENT_DEPTH}}\z/).to_s
 
     render :sub_organization_rows, layout: false
@@ -1352,9 +1350,6 @@ class EventsController < ApplicationController
     @visible_descendant_ids ||= @event.visible_descendant_ids(current_user)
   end
 
-  # The rows one level under @event, or -- when searching -- every matching
-  # descendant, flattened and named by the parent they sit under. Search results
-  # are already the whole subtree, so nothing there is expandable.
   def sub_organization_table_rows(search: nil)
     scope =
       if search
@@ -1365,8 +1360,8 @@ class EventsController < ApplicationController
       end
 
     events = scope.includes(:parent, :scoped_tags, logo_attachment: :blob)
+                  .reorder(:name, :id)
                   .to_a
-                  .sort_by { |event| [natural_order_key(event.name), event.id] }
 
     expandable = search ? Set.new : @event.expandable_subevent_ids(current_user)
     organizer_counts = OrganizerPosition.where(event: events).group(:event_id).count
@@ -1379,12 +1374,6 @@ class EventsController < ApplicationController
         parent: (event.parent unless event.parent_id == @event.id)
       }
     end
-  end
-
-  # Pad every run of digits so they compare by value, putting "Club 9" ahead of
-  # "Club 10" the way a reader scanning the list expects.
-  def natural_order_key(name)
-    name.downcase.gsub(/\d+/) { |digits| digits.rjust(20, "0") }
   end
 
   def filtered_sub_organizations
