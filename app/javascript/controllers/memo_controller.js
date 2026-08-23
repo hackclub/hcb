@@ -1,9 +1,13 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = ['display', 'form', 'input', 'tooltip']
+  static targets = ['display', 'form', 'input', 'tooltip', 'yield', 'memoDisplay']
 
   connect() {
+    // Some usages (e.g. the ledger-item heading) don't have a live tooltip
+    // target until a memo actually exists, so don't assume it's there.
+    if (!this.hasTooltipTarget) return
+
     this.tooltipObserver = new MutationObserver(() =>
       this.syncInputFromDisplay()
     )
@@ -19,6 +23,14 @@ export default class extends Controller {
     this.inputTarget.value = memo
     this.inputTarget.defaultValue = memo
     this.tooltipTarget.title = memo
+
+    // If we were showing yielded content in place of the memo (e.g. no
+    // custom memo set yet), a successful rename means there's now a real
+    // memo to show instead.
+    if (this.hasYieldTarget) {
+      this.yieldTarget.hidden = true
+      this.memoDisplayTarget.hidden = false
+    }
   }
 
   editOnShiftClick(e) {
@@ -26,6 +38,12 @@ export default class extends Controller {
 
     e.preventDefault()
     e.stopImmediatePropagation()
+
+    this.edit()
+  }
+
+  edit(e) {
+    e?.preventDefault()
 
     this.displayTarget.hidden = true
     this.formTarget.hidden = false
