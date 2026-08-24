@@ -48,7 +48,7 @@
 
   <tbody>
     <% @g_suite_accounts.each do |g_suite_account| %>
-      <tr class="<%= "shade-yellow" if g_suite_account.under_review? %> <%= "shade-red" if g_suite_account.rejected? %>">
+      <tr class="<%= "shade-yellow" if g_suite_account.under_review? %>">
         <td><%= g_suite_account.address %></td>
         <td><%= g_suite_account.backup_email %></td>
         <td><%= g_suite_account.status.capitalize %></td>

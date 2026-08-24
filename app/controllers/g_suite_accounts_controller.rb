@@ -108,7 +108,7 @@ class GSuiteAccountsController < ApplicationController
   end
 
   def g_suite_account_params
-    params.require(:g_suite_account).permit(:backup_email, :address, :accepted_at, :rejected_at, :initial_password, :g_suite_id, :first_name, :last_name)
+    params.require(:g_suite_account).permit(:backup_email, :address, :accepted_at, :initial_password, :g_suite_id, :first_name, :last_name)
   end
 
   def full_email_address(address, g_suite)
