@@ -54,7 +54,7 @@
       <% end %>
     <% elsif params[:q].present? %>
       <div class="px-4">
-        <%= blankslate "No results for \"#{params[:q]}\"" %>
+        <%= blankslate "No results for \"#{params[:q]}\"", class: "text-sm" %>
       </div>
       <button type="button" class="btn btn--list-item border-t rounded-none w-full" data-action="payee-picker#showAddingFromSearch" data-payee-picker-query-param="<%= params[:q] %>">
         <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
