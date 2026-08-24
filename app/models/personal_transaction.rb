@@ -32,7 +32,7 @@ class PersonalTransaction < ApplicationRecord
   validate :ledger_item_is_linked_to_a_card_charge
   validate :ledger_item_is_a_qualifying_charge
 
-  before_validation :send_invoice, on: :create, if: -> { invoice.nil? && ledger_item_ready_for_invoice? }
+  before_validation :send_invoice, on: :create, if: -> { invoice.nil? }
 
   after_create do
     # Calling this on either side syncs marked_no_or_lost_receipt_at onto both
@@ -73,14 +73,18 @@ class PersonalTransaction < ApplicationRecord
     errors.add(:base, "Invoices can only be generated for charges of $1.00 or more.")
   end
 
-  def ledger_item_ready_for_invoice?
-    ledger_item.present? &&
-      ledger_item.linked_object_type == "CardCharge" &&
-      ledger_item.amount_cents <= -100 &&
-      !PersonalTransaction.exists?(ledger_item:)
-  end
-
+  # before_validation callbacks always run before validate-registered
+  # validations, so this can't rely on the validate methods above having run
+  # yet — it re-checks the same conditions itself before actually generating
+  # an invoice. Otherwise a too-small charge, a non-card-charge, or a
+  # duplicate submission would still send a real invoice before the record
+  # gets rejected and thrown away.
   def send_invoice
+    return if ledger_item.nil?
+    return unless ledger_item.linked_object_type == "CardCharge"
+    return unless ledger_item.amount_cents <= -100
+    return if PersonalTransaction.exists?(ledger_item:)
+
     card_charge = ledger_item.linked_object
     event = ledger_item.primary_ledger&.event
     spender = card_charge.stripe_cardholder&.user || reporter
