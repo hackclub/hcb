@@ -15,7 +15,8 @@
     <% owner_name = case step[:owner]
                     when :organizer then mine ? "You" : organizer_name
                     when :contractor then mine ? "You" : position.payee.display_name
-                    else "HCB team"
+                    when :hcb then "HCB team"
+                    else Rails.error.unexpected("Unknown owner")
                     end %>
 
     <li class="onboarding-flow__step onboarding-flow__step--<%= state %> <%= "onboarding-flow__step--unordered" if unordered %>">
