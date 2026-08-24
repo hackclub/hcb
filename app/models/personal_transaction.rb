@@ -25,14 +25,21 @@
 #
 class PersonalTransaction < ApplicationRecord
   belongs_to :ledger_item, class_name: "Ledger::Item", inverse_of: :personal_transaction
-  belongs_to :invoice
+  # Rails-level presence is deliberately relaxed here (the DB still enforces
+  # NOT NULL on invoice_id) so that validation can pass on ledger_item's own
+  # merits before invoice exists — see send_invoice below.
+  belongs_to :invoice, optional: true
   belongs_to :reporter, class_name: "User"
 
   validates :ledger_item, uniqueness: true, presence: true
   validate :ledger_item_is_linked_to_a_card_charge
   validate :ledger_item_is_a_qualifying_charge
 
-  before_validation :send_invoice, on: :create, if: -> { invoice.nil? }
+  # before_create only runs once validation has already passed, so by the
+  # time this fires, ledger_item is already confirmed to be a qualifying,
+  # not-yet-invoiced card charge — send_invoice can rely on that instead of
+  # re-checking it.
+  before_create :send_invoice, if: -> { invoice.nil? }
 
   after_create do
     # Calling this on either side syncs marked_no_or_lost_receipt_at onto both
@@ -59,7 +66,6 @@ class PersonalTransaction < ApplicationRecord
     return if ledger_item.nil?
     return if ledger_item.linked_object_type == "CardCharge"
 
-    errors.delete(:invoice)
     errors.add(:base, "Invoices can only be generated for card charges.")
   end
 
@@ -67,24 +73,10 @@ class PersonalTransaction < ApplicationRecord
     return if ledger_item.nil?
     return if ledger_item.amount_cents <= -100
 
-    # Supersede the belongs_to :invoice presence error (invoice is never sent
-    # for a non-qualifying charge) with the message that actually explains it.
-    errors.delete(:invoice)
     errors.add(:base, "Invoices can only be generated for charges of $1.00 or more.")
   end
 
-  # before_validation callbacks always run before validate-registered
-  # validations, so this can't rely on the validate methods above having run
-  # yet — it re-checks the same conditions itself before actually generating
-  # an invoice. Otherwise a too-small charge, a non-card-charge, or a
-  # duplicate submission would still send a real invoice before the record
-  # gets rejected and thrown away.
   def send_invoice
-    return if ledger_item.nil?
-    return unless ledger_item.linked_object_type == "CardCharge"
-    return unless ledger_item.amount_cents <= -100
-    return if PersonalTransaction.exists?(ledger_item:)
-
     card_charge = ledger_item.linked_object
     event = ledger_item.primary_ledger&.event
     spender = card_charge.stripe_cardholder&.user || reporter
