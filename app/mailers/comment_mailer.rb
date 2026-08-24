@@ -52,8 +52,6 @@ class CommentMailer < ApplicationMailer
 
   def thread_id(commentable)
     first_comment = commentable.comments.first
-    return unless first_comment
-
     message_id(first_comment)
   end
 
