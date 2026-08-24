@@ -233,8 +233,9 @@ module HasWireRecipient
     end
 
     def self.payment_purpose_code_for(country)
-      # Add exceptions
-      "IVPT"
+      {
+        "IN": "P0802"
+      }[country] | "IVPT"
     end
 
     def self.reimbursement_remittance_info_for(country)
