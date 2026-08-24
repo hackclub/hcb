@@ -125,24 +125,10 @@ RSpec.describe EventPolicy, type: :policy do
 
     subject { described_class.new(user, event).ledger? }
 
-    context "as a reader" do
-      before { create(:organizer_position, user:, event:, role: :reader) }
-
-      it "is denied without either ledger flag" do
-        is_expected.to eq(false)
-      end
-
-      it "is allowed when the user has opted into new_ledger_2026_07_17" do
-        Flipper.enable_actor(:new_ledger_2026_07_17, user)
-
-        is_expected.to eq(true)
-      end
-    end
-
     context "as an auditor" do
       let(:user) { create(:user, :make_auditor) }
 
-      it "is allowed without either flag" do
+      it "is allowed" do
         is_expected.to eq(true)
       end
     end

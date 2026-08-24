@@ -44,10 +44,10 @@ module Api
           platinum: current_user.stripe_cards.platinum.any?,
           testflight: Flipper.enabled?(:mobile_testflight_icon, current_user),
           hackathon_grant: current_user
-                .events
-                .joins(:incoming_disbursements)
-                .where("disbursements.source_event_id = ? AND disbursements.aasm_state IN ('pending', 'in_transit', 'deposited')", EventMappingEngine::EventIds::HACKATHON_GRANT_FUND)
-                .any?,
+                           .events
+                           .joins(:incoming_disbursements)
+                           .where("disbursements.source_event_id = ? AND disbursements.aasm_state IN ('pending', 'in_transit', 'deposited')", EventMappingEngine::EventIds::HACKATHON_GRANT_FUND)
+                           .any?,
           premium: current_user.events.any? { |e| e.users.where(teenager: true).active.size >= 10 }
         }
 
