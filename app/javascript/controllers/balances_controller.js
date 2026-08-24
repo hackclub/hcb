@@ -6,6 +6,11 @@ import { Controller } from '@hotwired/stimulus'
 // render, or a batch of rows inserted by expanding a branch — is fetched in
 // one call to `async_balances`, instead of each row triggering its own
 // turbo-frame request.
+// Must match EventsController::ASYNC_BALANCES_LIMIT — batches larger than
+// that get truncated server-side, so anything queued beyond one chunk is
+// split into its own request rather than silently dropped.
+const CHUNK_SIZE = 300
+
 export default class extends Controller {
   static targets = ['frame']
   static values = { url: String }
@@ -40,6 +45,15 @@ export default class extends Controller {
     this.pendingIds.clear()
     if (ids.length === 0) return
 
+    const chunks = []
+    for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
+      chunks.push(ids.slice(i, i + CHUNK_SIZE))
+    }
+
+    await Promise.all(chunks.map(chunk => this.#fetchChunk(chunk)))
+  }
+
+  async #fetchChunk(ids) {
     const url = new URL(this.urlValue, window.location.href)
     for (const id of ids) url.searchParams.append('ids[]', id)
 
