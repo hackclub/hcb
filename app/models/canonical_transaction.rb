@@ -489,11 +489,11 @@ class CanonicalTransaction < ApplicationRecord
     safely do
       reload_local_hcb_code
       ActiveRecord::Base.transaction do
-        if calculated_ledger_item != local_hcb_code.ledger_item
+        if calculated_ledger_item.present? && calculated_ledger_item != local_hcb_code.ledger_item
           Rails.error.unexpected("CanonicalTransaction #{id} has calculated a different ledger item from its local_hcb_code. (#{calculated_ledger_item&.id} vs. #{local_hcb_code.ledger_item&.id})")
         end
 
-        li = calculated_ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        li = local_hcb_code.ledger_item || calculated_ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
         update!(ledger_item: li)
         li.map!
       end
