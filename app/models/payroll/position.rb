@@ -185,7 +185,7 @@ module Payroll
         {
           key: :hcb_review,
           owner: :hcb,
-          label: "HCB operations review",
+          label: "HCB team review",
           hint: "The contractor is emailed once HCB signs",
           complete: !under_review? && !rejected?
         },
