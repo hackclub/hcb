@@ -348,7 +348,7 @@ RSpec.describe EventsController do
         before { sign_in_organizer_of(parent) }
 
         it "sets it aside in a collapsed section rather than the main list", :aggregate_failures do
-          get(:sub_organizations, params: { event_id: parent.slug })
+          get(:sub_organizations, params: { event_id: parent.slug, view: "grid" })
 
           document = Nokogiri::HTML5(response.body)
           hidden_section = document.at_css("details#hidden_sub_organizations")
