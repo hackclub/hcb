@@ -22,7 +22,15 @@
   <% completed_tax_form = @legal_entity.latest_completed_tax_form %>
   <% if @legal_entity.payable? %>
     <% if @legal_entity.managed? %>
-      <p>This legal entity's payout information is managed by <%= @legal_entity.managing_event.name %>.</p>
+      <p>
+        Your payout information is managed by <%= @legal_entity.managing_event.name %>.
+        Any pending or future payments will be sent via the payout method <%= @legal_entity.managing_event.name %>
+        has configured. 
+      </p>
+      <p>
+        Contact <%= @legal_entity.managing_event.name %> if you would like to update your
+        payout method.
+      </p>
     <% else %>
       <% if @legal_entity.default_payout_method.present? %>
         <p>
