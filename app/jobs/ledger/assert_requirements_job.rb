@@ -59,6 +59,10 @@ class Ledger
           if (hcb_code.subledger&.card_grant || hcb_code.event)&.ledger != item.primary_ledger
             report_anomaly "Ledger::Item #{item.hashid} ledger does not match HcbCode #{hcb_code.hashid} ledger"
           end
+
+          if hcb_code.custom_memo.presence != item.custom_memo.presence
+            report_anomaly "Ledger::Item #{item.hashid} custom_memo does not match HcbCode #{hcb_code.hashid} custom_memo"
+          end
         end
       end
     end
