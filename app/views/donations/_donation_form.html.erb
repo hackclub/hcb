@@ -132,7 +132,7 @@
       <%= form.submit "Continue →", class: "w-100 bg-success mt1", disabled: "true" %>
     <% else %>
       <%# The Turnstile controller keeps this disabled until the challenge is solved. %>
-      <%= form.submit "Continue →", class: "w-100 bg-success mt1", disabled: turnstile_sitekey.present?, data: (turnstile_sitekey ? { turnstile_target: "submit" } : {}) %>
+      <%= form.submit "Continue →", class: "w-100 bg-success mt1", disabled: turnstile_sitekey.present?, data: ({ turnstile_target: "submit" } if turnstile_sitekey) %>
     <% end %>
   <% end %>
 <% end %>
