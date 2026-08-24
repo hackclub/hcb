@@ -58,6 +58,8 @@ class DonationsController < ApplicationController
   def start_donation
     return unless build_donation_page!(event: @event, params:, request:)
 
+    load_donors!(event: @event)
+
     authorize @donation
     @hide_flash = true
 
@@ -190,8 +192,6 @@ class DonationsController < ApplicationController
     # The POST carries no tier, and the tier picker renders *instead of* the
     # form — which would swallow the error. Show the form.
     @show_tiers = false
-    @top_donors = []
-    @recent_donors = []
     @hide_flash = true
 
     render :start_donation, status: :unprocessable_content

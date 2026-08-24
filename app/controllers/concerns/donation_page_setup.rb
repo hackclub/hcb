@@ -64,9 +64,20 @@ module DonationPageSetup
 
     @placeholder_amount = "%.2f" % (DonationService::SuggestedAmount.new(event, monthly: @monthly).run / 100.0)
 
-    donors = DonationService::Donors.new(event) if params[:tier_id].blank?
+    # Only the landing screen shows donor cards, so every other render of this
+    # page leaves these empty rather than nil.
+    @top_donors = []
+    @recent_donors = []
+  end
 
-    @top_donors = donors && event.show_top_donors ? donors.top : []
-    @recent_donors = donors && event.show_recent_donors ? donors.recent : []
+  # Donor cards belong to the first screen of the donation page: they're absent
+  # from tier screens, and from re-renders after a failed submission.
+  def load_donors!(event:)
+    return if params[:tier_id].present?
+
+    donors = DonationService::Donors.new(event)
+
+    @top_donors = donors.top if event.show_top_donors
+    @recent_donors = donors.recent if event.show_recent_donors
   end
 end
