@@ -2,15 +2,11 @@
 
 class CommentMailer < ApplicationMailer
   def notification
-    @comment = params[:comment]
+    # re-fetch (rather than trust params[:comment] directly) since the comment
+    # may have been soft-deleted (acts_as_paranoid) between this job being
+    # enqueued and running - there's nothing worth notifying about then.
+    @comment = Comment.find_by(id: params[:comment]&.id)
     return if @comment.nil?
-
-    # the comment may have been soft-deleted (acts_as_paranoid) between this
-    # job being enqueued and running - the in-memory `@comment` above still
-    # looks valid since it was resolved before that happened, so re-check
-    # against the DB rather than trusting it. There's nothing worth notifying
-    # about for a comment that's already gone.
-    return unless Comment.exists?(@comment.id)
 
     @commentable = @comment.commentable
 
