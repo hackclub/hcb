@@ -75,7 +75,7 @@ class LegalEntity
       end
 
       # See LegalEntity::PayoutMethod for the shared `create_transfer` contract.
-      def create_transfer(event, amount:, payment_for:, recipient_email:, user:, recipient_name:, memo:, send_email_notification: false, **)
+      def create_transfer(event, amount:, payment_for:, recipient_email:, user:, recipient_name:, memo:, purpose:, send_email_notification: false, **)
         event.wires.build(
           address_line1:,
           address_line2:,
@@ -86,7 +86,11 @@ class LegalEntity
           account_number:,
           bic_code:,
           recipient_information: recipient_information.merge({
-                                                               purpose_code: Wire.reimbursement_purpose_code_for(recipient_country),
+                                                               purpose_code: if purpose == :reimbursement
+                                                                               Wire.reimbursement_purpose_code_for(recipient_country)
+                                                                             else
+                                                                               Wire.payment_purpose_code_for(recipient_country)
+                                                                             end,
                                                                remittance_info: Wire.reimbursement_remittance_info_for(recipient_country),
                                                              }),
           amount_cents: amount,
