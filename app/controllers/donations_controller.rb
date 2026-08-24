@@ -130,8 +130,6 @@ class DonationsController < ApplicationController
     if @donation.save
       redirect_to finish_donation_donations_path(@event, @donation.url_hash, background: @background)
     else
-      # Donor cards only load in `start_donation`; this re-render would
-      # otherwise leave them nil for the view.
       @top_donors = []
       @recent_donors = []
 

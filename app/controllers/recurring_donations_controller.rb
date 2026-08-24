@@ -37,8 +37,6 @@ class RecurringDonationsController < ApplicationController
       redirect_to pay_event_recurring_donation_path(@event, @recurring_donation)
     else
       @monthly = true
-      # Donor cards only load in `DonationsController#start_donation`; this
-      # re-render would otherwise leave them nil for the view.
       @top_donors = []
       @recent_donors = []
 
