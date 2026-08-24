@@ -90,7 +90,7 @@ class Ledger
     def cems_match_ledger_mapping
       @cts.find_each do |ct|
         safely do
-          if (cpem = ct.canonical_event_mapping) && (cpem.subledger&.card_grant || cpem.event)&.ledger != ct.ledger_item&.primary_ledger
+          if (cem = ct.canonical_event_mapping) && (cem.subledger&.card_grant || cem.event)&.ledger != ct.ledger_item&.primary_ledger
             report_anomaly "CanonicalTransaction #{ct.id} canonical_event_mapping does not match Ledger::Item"
           end
         end
