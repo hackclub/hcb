@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe CommentMailer do
   describe "#notification" do
-    it "does not raise when the comment was deleted before the mail is sent" do
+    it "does not send (or raise) when the comment was deleted before the mail is sent" do
       event = create(:event, name: "Daydream")
       owner = create(:user, full_name: "Report Owner", email: "owner@example.com")
       commenter = create(:user, full_name: "Commenter Person", email: "commenter@example.com")
@@ -19,7 +19,7 @@ RSpec.describe CommentMailer do
 
       mail = described_class.with(comment:).notification
 
-      expect { mail.deliver_now }.not_to raise_error
+      expect { mail.deliver_now }.not_to change { ActionMailer::Base.deliveries.count }
     end
   end
 end

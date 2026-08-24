@@ -3,6 +3,15 @@
 class CommentMailer < ApplicationMailer
   def notification
     @comment = params[:comment]
+    return if @comment.nil?
+
+    # the comment may have been soft-deleted (acts_as_paranoid) between this
+    # job being enqueued and running - the in-memory `@comment` above still
+    # looks valid since it was resolved before that happened, so re-check
+    # against the DB rather than trusting it. There's nothing worth notifying
+    # about for a comment that's already gone.
+    return unless Comment.exists?(@comment.id)
+
     @commentable = @comment.commentable
 
     return if @commentable.comment_recipients_for(@comment).empty?
