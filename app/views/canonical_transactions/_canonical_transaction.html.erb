@@ -91,7 +91,7 @@
         </div>
 
         <% if local_assigns[:show_event_name] %>
-          <%= render "hcb_codes/event_name", event: %>
+          <%= render "hcb_codes/event_name", event: event %>
         <% end %>
 
         <% if !event&.demo_mode? && defined?(show_tags) && show_tags %>

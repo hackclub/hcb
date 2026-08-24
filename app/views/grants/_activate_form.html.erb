@@ -67,11 +67,11 @@
       <%= form.hidden_field :receipt_method, "x-model" => "receipt_method" %>
 
       <div x-show="receipt_method == 'ach_transfer'">
-        <%= render "ach_transfer_form", form: %>
+        <%= render "ach_transfer_form", form: form %>
       </div>
 
       <div x-show="receipt_method == 'check'">
-        <%= render "check_form", form: %>
+        <%= render "check_form", form: form %>
       </div>
 
       <div x-show="receipt_method == 'manual'" class="card">

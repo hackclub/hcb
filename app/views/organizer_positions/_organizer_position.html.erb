@@ -34,7 +34,7 @@
     </div>
     <% if organizer_signed_in? %>
       <div class="flex flex-wrap g1 h-fit justify-end w-full">
-        <%= render "organizer_positions/actions", organizer_position: %>
+        <%= render "organizer_positions/actions", organizer_position: organizer_position %>
       </div>
     <% end %>
   </div>

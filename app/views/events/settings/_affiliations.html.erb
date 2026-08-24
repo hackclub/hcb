@@ -5,7 +5,7 @@
   <div class="card mb3">
     <% affiliation = Event::Affiliation.new(affiliable: event) %>
     <%= form_with(url: affiliations_path(affiliable_type: event.class.name, affiliable_id: event.id), local: true, html: { "x-data": "{ type: 'first', disabled: #{!policy(affiliation).update?} }" }) do |form| %>
-      <%= render "events/settings/affiliation_form", affiliation:, form: %>
+      <%= render "events/settings/affiliation_form", affiliation:, form: form %>
     <% end %>
   </div>
 

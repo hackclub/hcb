@@ -10,26 +10,26 @@
   <div class="flex items-center">
   <div class="field mr2">
     <%= form.label :first_name %>
-    <%= form.text_field :first_name, value: current_user&.first_name, required: true, disabled: %>
+    <%= form.text_field :first_name, value: current_user&.first_name, required: true, disabled: disabled %>
   </div>
   <div class="field">
     <%= form.label :last_name %>
-    <%= form.text_field :last_name, value: current_user&.last_name, required: true, disabled: %>
+    <%= form.text_field :last_name, value: current_user&.last_name, required: true, disabled: disabled %>
   </div>
   </div>
   <div class="field">
     <%= form.label :address %>
     <div class="flex items-center">
-      <%= form.text_field :address, value: example_email_username, class: "input--narrow text-right", required: true, disabled: %>
+      <%= form.text_field :address, value: example_email_username, class: "input--narrow text-right", required: true, disabled: disabled %>
       <span style="margin-left: 2px;">@<%= g_suite_account.g_suite.domain %></span>
     </div>
   </div>
   <div class="field">
     <%= form.label :backup_email %>
-    <%= form.email_field :backup_email, value: current_user&.email, required: true, disabled: %>
+    <%= form.email_field :backup_email, value: current_user&.email, required: true, disabled: disabled %>
     <span class="block muted h5">(To sign into your account for the first time, you’ll receive your initial password to this email.)</span>
   </div>
   <div class="actions">
-    <%= form.submit "Create", disabled: %>
+    <%= form.submit "Create", disabled: disabled %>
   </div>
 <% end %>
