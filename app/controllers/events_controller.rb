@@ -924,7 +924,7 @@ class EventsController < ApplicationController
     respond_to do |format|
       format.html do
         cookies[:sub_organizations_view] = params[:view] if params[:view]
-        @view = cookies[:sub_organizations_view] || "grid"
+        @view = cookies[:sub_organizations_view] || "list"
 
         if @view == "list"
           @search = params[:q].presence
