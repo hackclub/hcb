@@ -6,6 +6,11 @@ class EventsController < ApplicationController
 
   TREE_GUIDES = /\A[01]{0,#{Event::MAX_PARENT_DEPTH}}\z/
 
+  # Caps how many balances a single async_balances batch can pull, so the
+  # sub-organization tree can't be used to force one request to compute an
+  # unbounded number of ledger balances.
+  ASYNC_BALANCES_LIMIT = 300
+
   include SetEvent
   include SetLedgerFilters
 
@@ -543,6 +548,20 @@ class EventsController < ApplicationController
     authorize @event
 
     render :async_balance, layout: false
+  end
+
+  # Batched counterpart to `async_balance`: the sub-organization tree renders
+  # every visible row up front, and loading each row's balance as its own
+  # turbo-frame request was enough traffic to trip the site-wide rate limit.
+  # This fetches many balances, scoped to this event's visible descendants, in
+  # a single request and streams them all back at once.
+  def async_balances
+    authorize @event, :sub_organizations?
+
+    ids = Array(params[:ids]).first(ASYNC_BALANCES_LIMIT)
+    @events = Event.where(public_id: ids, id: visible_descendant_ids + [@event.id]).to_a
+
+    render :async_balances, layout: false
   end
 
   def async_sub_organization_balance

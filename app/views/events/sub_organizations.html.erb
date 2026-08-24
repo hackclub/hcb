@@ -54,7 +54,8 @@
 
   <% if @rows.any? %>
     <div class="mt-3"
-         data-controller="sub-organization-tree"
+         data-controller="sub-organization-tree balances"
+         data-balances-url-value="<%= event_async_balances_path(@event) %>"
          data-action="scroll@window->sub-organization-tree#repin:passive resize@window->sub-organization-tree#repin:passive">
       <div class="sub-organization-tree__pinned" data-sub-organization-tree-target="pinned"></div>
 

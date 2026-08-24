@@ -1058,6 +1058,7 @@ Rails.application.routes.draw do
     end
 
     get "async_balance"
+    get "async_balances"
     get "async_sub_organization_balance"
     get "async_sub_organization_rows"
     get "reimbursements_pending_review_icon"

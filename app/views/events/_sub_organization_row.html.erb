@@ -65,9 +65,7 @@
   </td>
   <td class="tabular-nums">
     <%= turbo_frame_tag "event_balance_#{event.public_id}",
-                        src: event_async_balance_path(event),
-                        loading: :lazy,
-                        data: { controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" } do %>
+                        data: { balances_target: "frame", event_public_id: event.public_id } do %>
       <span class="muted">—</span>
     <% end %>
   </td>
