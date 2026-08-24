@@ -510,7 +510,7 @@ RSpec.describe EventsController do
     end
   end
 
-  describe "#sub_organization_rows" do
+  describe "#async_sub_organization_rows" do
     render_views
 
     let(:parent) { create(:event, is_public: true, name: "Parent Organization") }
@@ -521,7 +521,7 @@ RSpec.describe EventsController do
     it "renders the rows one level under the expanded organization", :aggregate_failures do
       create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild")
 
-      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, guides: "1" })
+      get(:async_sub_organization_rows, params: { event_id: transparent_sub.slug, guides: "1" })
 
       expect(table_row_names(response.body)).to eq(["Transparent Grandchild"])
       expect(response.body).to include('data-depth="1"')
@@ -531,7 +531,7 @@ RSpec.describe EventsController do
       create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild")
       create(:event, parent: transparent_sub, is_public: false, name: "Private Grandchild")
 
-      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, guides: "1" })
+      get(:async_sub_organization_rows, params: { event_id: transparent_sub.slug, guides: "1" })
 
       expect(table_row_names(response.body)).to eq(["Transparent Grandchild"])
     end
@@ -541,7 +541,7 @@ RSpec.describe EventsController do
       create(:event, parent: transparent_sub, is_public: true, name: "First Grandchild")
       create(:event, parent: transparent_sub, is_public: true, name: "Second Grandchild")
 
-      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, guides: "10" })
+      get(:async_sub_organization_rows, params: { event_id: transparent_sub.slug, guides: "10" })
 
       rows = table_rows(response.body)
 
@@ -556,7 +556,7 @@ RSpec.describe EventsController do
     it "ignores a guides value that isn't a run of flags" do
       create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild")
 
-      get(:sub_organization_rows, params: { event_id: transparent_sub.slug, guides: "../nonsense" })
+      get(:async_sub_organization_rows, params: { event_id: transparent_sub.slug, guides: "../nonsense" })
 
       expect(response.body).to include('data-depth="0"')
     end
@@ -567,7 +567,7 @@ RSpec.describe EventsController do
       private_sub = create(:event, parent:, is_public: false, name: "Private Sub-organization")
       create(:event, parent: private_sub, is_public: true, name: "Transparent Grandchild")
 
-      get(:sub_organization_rows, params: { event_id: private_sub.slug, guides: "1" })
+      get(:async_sub_organization_rows, params: { event_id: private_sub.slug, guides: "1" })
 
       expect(response).to have_http_status(:redirect)
     end

@@ -972,7 +972,7 @@ class EventsController < ApplicationController
 
   end
 
-  def sub_organization_rows
+  def async_sub_organization_rows
     authorize @event
 
     @rows = sub_organization_table_rows
@@ -1358,13 +1358,24 @@ class EventsController < ApplicationController
     @visible_descendant_ids ||= @event.visible_descendant_ids(current_user)
   end
 
+  def visible_subevent_ids
+    children = Rails.cache.fetch("sub_organization_children_#{@event.id}", expires_in: 5.minutes) do
+      @event.subevents.pluck(:id, :is_public, :hidden_at)
+    end
+
+    return children.map(&:first) if @event.sees_all_descendants?(current_user)
+
+    organized_ids = @event.reader_event_ids(current_user)
+    children.filter_map { |id, is_public, hidden_at| id if (is_public && hidden_at.nil?) || organized_ids.include?(id) }
+  end
+
   def sub_organization_table_rows(search: nil)
     scope =
       if search
         Event.where(id: visible_descendant_ids)
              .where("name ILIKE ?", "%#{Event.sanitize_sql_like(search)}%")
       else
-        @event.visible_subevents(current_user)
+        Event.where(id: visible_subevent_ids)
       end
 
     events = scope.includes(:parent, :scoped_tags, logo_attachment: :blob)

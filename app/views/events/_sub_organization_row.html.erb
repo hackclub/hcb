@@ -20,7 +20,7 @@
                 aria-expanded="false"
                 aria-label="Show the sub-organizations of <%= event.name %>"
                 data-action="sub-organization-tree#toggle"
-                data-url="<%= event_sub_organization_rows_path(event, guides: child_guides) %>">
+                data-url="<%= event_async_sub_organization_rows_path(event, guides: child_guides) %>">
           <%= inline_icon "down-caret", size: 22 %>
         </button>
       <% else %>
