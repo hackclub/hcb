@@ -36,6 +36,7 @@ class CardGrantSetting < ApplicationRecord
 
   belongs_to :event
   validates :event, uniqueness: true
+  validate :at_least_one_acceptance_method
   serialize :merchant_lock, coder: CommaSeparatedCoder # convert comma-separated merchant list to an array
   serialize :category_lock, coder: CommaSeparatedCoder
   serialize :banned_merchants, coder: CommaSeparatedCoder
@@ -62,6 +63,17 @@ class CardGrantSetting < ApplicationRecord
 
   def email_support?
     support_url&.start_with?("mailto:")
+  end
+
+  private
+
+  # Grants inherit these flags from the setting, so leaving both off here would
+  # make every grant created without explicit overrides (API, bulk CSV upload)
+  # fail `CardGrant`'s matching validation.
+  def at_least_one_acceptance_method
+    unless allow_stripe_card? || allow_reimbursement_report?
+      errors.add(:base, "At least one acceptance method (virtual card or reimbursement report) must be enabled")
+    end
   end
 
 end

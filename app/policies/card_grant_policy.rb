@@ -65,8 +65,12 @@ class CardGrantPolicy < ApplicationPolicy
     (admin_or_manager? || cardholder?) && record.active? && record.card_grant_setting.reimbursement_conversions_enabled?
   end
 
+  # `stripe_card_id` must still be blank: once a virtual card has been issued,
+  # swapping the grant for a reimbursement report is a *conversion*, which is
+  # gated separately by `convert_to_reimbursement_report?`.
   def accept_as_reimbursement?
-    (user&.admin? || cardholder?) && record.active? && record.allow_reimbursement_report?
+    (user&.admin? || (cardholder? && authorized_to_activate?)) &&
+      record.active? && record.stripe_card_id.nil? && record.allow_reimbursement_report?
   end
 
   def edit?

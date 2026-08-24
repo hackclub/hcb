@@ -287,8 +287,8 @@ class CardGrantsController < ApplicationController
     end
 
     redirect_to report, flash: { success: "Successfully opened a reimbursement report for your grant." }
-  rescue ArgumentError => e
-    redirect_to @card_grant, flash: { error: e.message }
+  rescue ArgumentError, DisbursementService::Create::UserError => e
+    redirect_to @card_grant, flash: { error: "This grant could not be opened as a reimbursement: #{e.message}" }
   end
 
   def cancel

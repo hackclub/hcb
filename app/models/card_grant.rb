@@ -111,12 +111,6 @@ class CardGrant < ApplicationRecord
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, on: :create, integer_column: true
   validate :at_least_one_acceptance_method, on: :create
 
-  def at_least_one_acceptance_method
-    unless allow_stripe_card? || allow_reimbursement_report?
-      errors.add(:base, "At least one acceptance method (virtual card or reimbursement report) must be enabled")
-    end
-  end
-
   MAXIMUM_PURPOSE_LENGTH = 30
   validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
 
@@ -175,6 +169,25 @@ class CardGrant < ApplicationRecord
 
   def converted_to_reimbursement_report?
     canceled? && reimbursement_report.present?
+  end
+
+  # The acceptance-method flags are `nil` on a new record so they can inherit
+  # from the event's `CardGrantSetting`. These resolve the value that
+  # `apply_acceptance_method_defaults` will persist, so forms can render it
+  # without duplicating the fallback chain. The column default covers events
+  # that don't have a setting yet.
+  def effective_allow_stripe_card
+    return allow_stripe_card unless allow_stripe_card.nil?
+    return setting.allow_stripe_card unless setting.nil?
+
+    self.class.column_defaults["allow_stripe_card"]
+  end
+
+  def effective_allow_reimbursement_report
+    return allow_reimbursement_report unless allow_reimbursement_report.nil?
+    return setting.allow_reimbursement_report unless setting.nil?
+
+    self.class.column_defaults["allow_reimbursement_report"]
   end
 
   def suspected_fraud?
@@ -400,8 +413,14 @@ class CardGrant < ApplicationRecord
   end
 
   def apply_acceptance_method_defaults
-    self.allow_stripe_card = setting.allow_stripe_card if self.allow_stripe_card.nil?
-    self.allow_reimbursement_report = setting.allow_reimbursement_report if self.allow_reimbursement_report.nil?
+    self.allow_stripe_card = effective_allow_stripe_card
+    self.allow_reimbursement_report = effective_allow_reimbursement_report
+  end
+
+  def at_least_one_acceptance_method
+    unless allow_stripe_card? || allow_reimbursement_report?
+      errors.add(:base, "At least one acceptance method (virtual card or reimbursement report) must be enabled")
+    end
   end
 
 end
