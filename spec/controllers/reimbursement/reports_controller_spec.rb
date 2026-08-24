@@ -273,4 +273,43 @@ RSpec.describe Reimbursement::ReportsController do
       expect(report.reload.legal_entity_payout_method).to eq(default_pm)
     end
   end
+
+  describe "#destroy" do
+    it "lets an external contributor delete their own draft report" do
+      user = create(:user)
+      event = create(:event)
+      report = create(:reimbursement_report, user:, event:, aasm_state: :draft)
+
+      create_session(user, verified: true)
+
+      delete(:destroy, params: { id: report.id })
+
+      expect(Reimbursement::Report.find_by(id: report.id)).to be_nil
+      expect(response).to redirect_to(my_reimbursements_path)
+    end
+
+    it "does not let an external contributor delete a report once it is submitted" do
+      user = create(:user)
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :submitted)
+
+      create_session(user, verified: true)
+
+      delete(:destroy, params: { id: report.id })
+
+      expect(flash[:error]).to match(/not authorized/i)
+      expect(report.reload).to be_present
+    end
+
+    it "does not let a stranger delete someone else's draft report" do
+      report = create(:reimbursement_report, user: create(:user), event: create(:event), aasm_state: :draft)
+      stranger = create(:user)
+
+      create_session(stranger, verified: true)
+
+      delete(:destroy, params: { id: report.id })
+
+      expect(flash[:error]).to match(/not authorized/i)
+      expect(report.reload).to be_present
+    end
+  end
 end
