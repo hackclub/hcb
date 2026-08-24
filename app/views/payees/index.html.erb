@@ -54,8 +54,18 @@
       <% end %>
     <% elsif params[:q].present? %>
       <div class="px-4">
-        <%= blankslate "No results for \"#{params[:q]}\"", class: "py-5 text-sm mb-2" %>
+        <%= blankslate "No results for \"#{params[:q]}\"" %>
       </div>
+      <button type="button" class="btn btn--list-item border-t rounded-none w-full" data-action="payee-picker#showAddingFromSearch" data-payee-picker-query-param="<%= params[:q] %>">
+        <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
+          <%= inline_icon "plus", size: 18 %>
+        </div>
+        <div class="text-left">
+          <p class="font-medium">Create new recipient</p>
+          <p class="text-sm muted">Add "<%= params[:q] %>" as a new payment recipient</p>
+        </div>
+        <%= inline_icon "view-forward", class: "ml-auto muted" %>
+      </button>
     <% end %>
   <% end %>
 <% end %>
