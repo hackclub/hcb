@@ -19,7 +19,7 @@ RSpec.describe CommentMailer do
 
       mail = described_class.with(comment:).notification
 
-      expect { mail.deliver_now }.not_to change { ActionMailer::Base.deliveries.count }
+      expect { mail.deliver_now }.not_to(change { ActionMailer::Base.deliveries.count })
     end
   end
 end
