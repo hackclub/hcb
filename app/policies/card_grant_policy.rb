@@ -22,7 +22,7 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def edit_overview?
-    auditor_or_member?
+    auditor_or_member? && record.active?
   end
 
   alias_method :edit_actions?, :edit_overview?
@@ -43,10 +43,6 @@ class CardGrantPolicy < ApplicationPolicy
 
   def convert_to_reimbursement_report?
     (admin_or_manager? || cardholder?) && record.active? && record.card_grant_setting.reimbursement_conversions_enabled?
-  end
-
-  def edit?
-    admin_or_manager? && record.active?
   end
 
   def toggle_one_time_use?
