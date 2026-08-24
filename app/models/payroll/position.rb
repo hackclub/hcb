@@ -193,14 +193,14 @@ module Payroll
           key: :tax_form,
           owner: :contractor,
           label: "Submit tax information",
-          hint: "Needed before signing",
+          hint: "Needed before contractor signs",
           complete: legal_entity&.completed_tax_form? || false
         },
         {
           key: :contractor_signature,
           owner: :contractor,
-          label: "Sign the contract",
-          hint: "Signs the same agreement",
+          label: "Contractor signs",
+          hint: "Makes the agreement official",
           complete: contract_signed_by?(:contractor)
         },
         {
