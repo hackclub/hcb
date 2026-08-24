@@ -91,7 +91,11 @@ class LegalEntity
                                                                              else
                                                                                Wire.payment_purpose_code_for(recipient_country)
                                                                              end,
-                                                               remittance_info: Wire.reimbursement_remittance_info_for(recipient_country),
+                                                               remittance_info: if purpose == :reimbursement
+                                                                                  Wire.reimbursement_remittance_info_for(recipient_country)
+                                                                                else
+                                                                                  Wire.payment_remittance_info_for(recipient_country)
+                                                                                end,
                                                              }),
           amount_cents: amount,
           recipient_name: self.recipient_name.presence || recipient_name,
