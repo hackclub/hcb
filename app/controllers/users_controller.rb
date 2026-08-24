@@ -73,7 +73,11 @@ class UsersController < ApplicationController
   def toggle_pretend_is_not_admin
     authorize current_user
     current_user.update(pretend_is_not_admin: !current_user.pretend_is_not_admin)
+<<<<<<< HEAD
     redirect_to params[:return_to] || root_path, flash: { info: "You've stopped pretending not to be an admin." }
+=======
+    redirect_to params[:return_to] || request.referrer || root_path, flash: { info: "You've stopped pretending not to be an admin." }
+>>>>>>> d43e37572e4bad7d5a16793cc64a26c4c728b16d
   end
 
   def webauthn_options
