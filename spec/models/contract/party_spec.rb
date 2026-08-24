@@ -161,4 +161,32 @@ RSpec.describe Contract::Party, type: :model do
       expect(described_class.for(event:, user: signee)).to be_nil
     end
   end
+
+  describe "#mark_signed" do
+    before do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+    end
+
+    # DocusealController#webhook wraps the whole party.with_lock { party.mark_signed! }
+    # call in its own outer transaction. If on_party_signed fired from a plain
+    # `after` (rather than `after_commit`), its mailer/reminder job enqueues
+    # would carry a GlobalID for a party row that isn't committed yet - a
+    # background worker could pick the job up and fail to find it
+    # (ActiveJob::DeserializationError) before our transaction ever commits.
+    it "does not notify until the enclosing transaction commits" do
+      invite = create(:organizer_position_invite)
+      contract = Contract::FiscalSponsorship.create!(contractable: invite, include_videos: false)
+      party = contract.parties.create!(user: create(:user), role: :signee)
+
+      signaled = false
+      allow_any_instance_of(Contract).to receive(:on_party_signed) { signaled = true }
+
+      ActiveRecord::Base.transaction do
+        party.with_lock { party.mark_signed! }
+        expect(signaled).to be false
+      end
+
+      expect(signaled).to be true
+    end
+  end
 end
