@@ -221,26 +221,26 @@ module HasWireRecipient
 
     def self.reimbursement_purpose_code_for(country)
       {
-        "CO": "Reimbursement",
-        "KZ": "EKNP 2714USD859",
-        "MY": "34000",
-        "PK": "9675",
-        "AE": "TTS",
-        "CN": "SRV",
-        "IN": "S1099",
-        "KG": "55501000"
+        "CO" => "Reimbursement",
+        "KZ" => "EKNP 2714USD859",
+        "MY" => "34000",
+        "PK" => "9675",
+        "AE" => "TTS",
+        "CN" => "SRV",
+        "IN" => "S1099",
+        "KG" => "55501000"
       }[country] || "ICCP"
     end
 
     def self.payment_purpose_code_for(country)
       {
-        "IN": "P0802"
-      }[country] | "IVPT"
+        "IN" => "P0802"
+      }[country] || "IVPT"
     end
 
     def self.reimbursement_remittance_info_for(country)
       {
-        "PK": "Reimbursement of expenses made for a nonprofit. Recipient is a volunteer.",
+        "PK" => "Reimbursement of expenses made for a nonprofit. Recipient is a volunteer.",
       }[country] || "Reimbursement of expenses made for a nonprofit."
     end
 
