@@ -171,11 +171,6 @@ class CardGrant < ApplicationRecord
     canceled? && reimbursement_report.present?
   end
 
-  # The acceptance-method flags are `nil` on a new record so they can inherit
-  # from the event's `CardGrantSetting`. These resolve the value that
-  # `apply_acceptance_method_defaults` will persist, so forms can render it
-  # without duplicating the fallback chain. The column default covers events
-  # that don't have a setting yet.
   def effective_allow_stripe_card
     return allow_stripe_card unless allow_stripe_card.nil?
     return setting.allow_stripe_card unless setting.nil?

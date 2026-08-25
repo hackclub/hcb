@@ -4,9 +4,6 @@
   <div class="w-full">
 
     <% if card_grant.allow_stripe_card? && card_grant.allow_reimbursement_report? %>
-      <%# Both options available — one form holding the shared terms, with a %>
-      <%# submit button per option. The card button overrides the action via %>
-      <%# `formaction` so the shared terms stay browser-enforced without JS. %>
       <div class="card border b--info" data-controller="grant-terms">
         <h2 class="mt-0 mb-3"><%= card_grant.event.name %> has granted you <%= render_money card_grant.amount %></h2>
         <%= form_with url: accept_as_reimbursement_card_grant_path(card_grant) do |form| %>

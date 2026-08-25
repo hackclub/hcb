@@ -33,8 +33,6 @@
 <div class="sm:mt-5 check--form flex justify-center <%= "flex-wrap" if @frame %> mb-5" style="gap: 3rem">
   <%# Grantee has pending invite %>
   <% if @card_grant.user == current_user && @card_grant.pending_invite? %>
-    <%# A converted grant is never `pending_invite?` (it has a report), so it %>
-    <%# falls through to the branch below, which renders `canceled_warning`. %>
     <% if @card_grant.canceled? %>
       <%= blankslate "Sorry, this grant was canceled!", class: "flex-grow" %>
     <% else %>

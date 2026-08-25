@@ -67,9 +67,6 @@ class CardGrantSetting < ApplicationRecord
 
   private
 
-  # Grants inherit these flags from the setting, so leaving both off here would
-  # make every grant created without explicit overrides (API, bulk CSV upload)
-  # fail `CardGrant`'s matching validation.
   def at_least_one_acceptance_method
     unless allow_stripe_card? || allow_reimbursement_report?
       errors.add(:base, "At least one acceptance method (virtual card or reimbursement report) must be enabled")
