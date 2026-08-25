@@ -297,9 +297,6 @@ RSpec.describe EventsController do
     end
 
     context "as a signed out visitor" do
-      # Only the rows that are rendered get a balance frame, and only those
-      # frames' ids are handed to the batched balance loader, so a private
-      # organization is never asked about.
       it "lists only transparent sub-organizations, with a balance frame for only those", :aggregate_failures do
         get(:sub_organizations, params: { event_id: parent.slug })
 
