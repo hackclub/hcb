@@ -33,10 +33,6 @@ class HcbCodePolicy < ApplicationPolicy
     gte_member_in_events?
   end
 
-  def pin?
-    gte_member_in_events?
-  end
-
   def toggle_tag?
     gte_member_in_events?
   end

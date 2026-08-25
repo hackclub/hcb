@@ -29,8 +29,9 @@ RSpec.describe Ledger::Query, type: :model do
     Ledger::Mapping.create(ledger: test_ledger, ledger_item: item, on_primary_ledger: true)
     # refresh! (triggered on create and on mapping) recomputes memo and
     # amount_cents from canonical transactions, which these items don't have.
-    # Pin the intended values, bypassing callbacks.
-    item.update_columns(**attrs)
+    # Pin the intended values, bypassing callbacks. Also pin ct_count to 1 so
+    # these items don't get filtered out as empty (see Ledger::Query#execute).
+    item.update_columns(ct_count: 1, **attrs)
     item
   end
 
@@ -470,7 +471,7 @@ RSpec.describe Ledger::Query, type: :model do
     def create_other_ledger_item(**attrs)
       item = create(:ledger_item, **attrs)
       Ledger::Mapping.create(ledger: other_ledger, ledger_item: item, on_primary_ledger: true)
-      item.update_columns(**attrs)
+      item.update_columns(ct_count: 1, **attrs)
       item
     end
 
@@ -549,6 +550,34 @@ RSpec.describe Ledger::Query, type: :model do
 
       # item_a (amount=0) + all items except item_f (gamma payment)
       expect(result.pluck(:id)).to match_array(ids_of(item_a, item_b, item_c, item_d, item_e, item_g))
+    end
+  end
+
+  describe "empty items" do
+    it "excludes items with no CTs and no CPTs" do
+      empty_item = create_mapped_item(amount_cents: 100, memo: "empty item", datetime: Date.new(2024, 1, 4))
+      empty_item.update_columns(ct_count: 0, cpt_count: 0)
+
+      result = execute_query({ amount_cents: 100 })
+
+      expect(result.pluck(:id)).to match_array(ids_of(item_b, item_g))
+      expect(result.pluck(:id)).not_to include(empty_item.id)
+    end
+
+    it "includes items with a CT but no CPTs" do
+      item_b.update_columns(ct_count: 1, cpt_count: 0)
+
+      result = execute_query({ amount_cents: 100 })
+
+      expect(result.pluck(:id)).to include(item_b.id)
+    end
+
+    it "includes items with a CPT but no CTs" do
+      item_b.update_columns(ct_count: 0, cpt_count: 1)
+
+      result = execute_query({ amount_cents: 100 })
+
+      expect(result.pluck(:id)).to include(item_b.id)
     end
   end
 end

@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_11_161442) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_23_003730) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -385,7 +385,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_161442) do
     t.text "custom_memo"
     t.date "date", null: false
     t.boolean "fee_waived", default: false
-    t.boolean "fronted", default: false
+    t.boolean "fronted", default: false, null: false
     t.text "hcb_code"
     t.bigint "increase_check_id"
     t.bigint "ledger_item_id"
@@ -430,7 +430,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_161442) do
     t.index ["reimbursement_payout_holding_id"], name: "index_canonical_pending_txs_on_reimbursement_payout_holding_id"
     t.index ["wire_id"], name: "index_canonical_pending_transactions_on_wire_id"
     t.index ["wise_transfer_id"], name: "index_canonical_pending_transactions_on_wise_transfer_id"
-    t.check_constraint "fronted IS NOT NULL", name: "canonical_pending_transactions_fronted_null"
   end
 
   create_table "canonical_transactions", force: :cascade do |t|
@@ -591,6 +590,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_161442) do
     t.text "routing_number_ciphertext"
     t.datetime "updated_at", null: false
     t.index ["account_number_bidx"], name: "index_column_account_numbers_on_account_number_bidx", unique: true
+    t.index ["column_id"], name: "index_column_account_numbers_on_column_id", unique: true
     t.index ["event_id"], name: "index_column_account_numbers_on_event_id", unique: true
   end
 
@@ -1641,8 +1641,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_161442) do
     t.bigint "ledger_item_id", null: false
     t.bigint "mapped_by_id"
     t.boolean "on_primary_ledger", null: false
+    t.datetime "pinned_at"
     t.datetime "updated_at", null: false
     t.index ["ledger_id", "ledger_item_id"], name: "index_ledger_mappings_on_ledger_and_item", unique: true
+    t.index ["ledger_id", "pinned_at"], name: "index_ledger_mappings_on_ledger_id_and_pinned_at"
     t.index ["ledger_id"], name: "index_ledger_mappings_on_ledger_id"
     t.index ["ledger_item_id"], name: "index_ledger_mappings_on_ledger_item_id"
     t.index ["ledger_item_id"], name: "index_ledger_mappings_unique_item_on_primary", unique: true, where: "(on_primary_ledger = true)"
@@ -2614,12 +2616,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_11_161442) do
   create_table "tags", force: :cascade do |t|
     t.text "color"
     t.datetime "created_at", null: false
-    t.string "emoji"
+    t.string "emoji", null: false
     t.bigint "event_id", null: false
     t.text "label"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_tags_on_event_id"
-    t.check_constraint "emoji IS NOT NULL", name: "tags_emoji_null"
   end
 
   create_table "tasks", force: :cascade do |t|

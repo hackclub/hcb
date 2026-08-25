@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
 class UsersController < ApplicationController
+  include TurnstileProtection
+
+  # Sends a Twilio Verify message to whatever phone number the user typed in —
+  # the surface spam signups abused to run up our Twilio bill. The token comes
+  # from the widget in the "Verify phone number" modal.
+  turnstile_protect only: [:start_sms_auth_verification], action: TurnstileService::SMS_VERIFICATION_ACTION
+
   # `unimpersonate` is gated by its own `current_session&.impersonated?` guard,
   # and must remain reachable from impersonated sessions whose `verified` flag
   # mirrors an unverified target — otherwise the admin is locked out.
@@ -33,7 +40,7 @@ class UsersController < ApplicationController
     :admin_details_disbursements, :admin_details_emburse_cards, :admin_details_increase_checks,
     :admin_details_invoices, :admin_details_lob_checks, :admin_details_missing_receipts,
     :admin_details_reimbursement_reports, :admin_details_stripe_cards, :admin_details_stripe_transactions,
-    :suppress_card_locking
+    :suppress_card_locking, :reset_billing_address
   ]
   wrap_parameters format: :url_encoded_form
 
@@ -147,6 +154,19 @@ class UsersController < ApplicationController
     @states = ISO3166::Country.new("US").subdivisions.values.map { |s| [s.translations["en"], s.code] }
     redirect_to edit_user_path(@user) unless @user.stripe_cardholder
     authorize @user
+  end
+
+  def reset_billing_address
+    authorize @user
+
+    begin
+      @user.stripe_cardholder&.reset_billing_address_to_default!
+      flash[:success] = "Reset your billing address to HCB's default address."
+    rescue ActiveRecord::RecordInvalid => e
+      flash[:error] = e.record&.errors&.first&.full_message || "Couldn't reset your billing address."
+    end
+
+    redirect_back_or_to address_user_path(@user)
   end
 
   def edit_payout

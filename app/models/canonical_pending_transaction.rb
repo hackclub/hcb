@@ -9,7 +9,7 @@
 #  custom_memo                                      :text
 #  date                                             :date             not null
 #  fee_waived                                       :boolean          default(FALSE)
-#  fronted                                          :boolean          default(FALSE)
+#  fronted                                          :boolean          default(FALSE), not null
 #  hcb_code                                         :text
 #  memo                                             :text             not null
 #  created_at                                       :datetime         not null
@@ -64,10 +64,6 @@
 #
 #  fk_rails_...  (ledger_item_id => ledger_items.id)
 #  fk_rails_...  (raw_pending_stripe_transaction_id => raw_pending_stripe_transactions.id)
-#
-# Check Constraints
-#
-#  canonical_pending_transactions_fronted_null  (fronted IS NOT NULL)
 #
 class CanonicalPendingTransaction < ApplicationRecord
   has_paper_trail
@@ -185,7 +181,6 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
-    ledger_item.refresh!
   end
 
   after_commit if: -> { previous_changes.key?("ledger_item_id") } do
@@ -481,6 +476,7 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   def assign_ledger_item
     safely do
+      reload_local_hcb_code
       ActiveRecord::Base.transaction do
         li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
         update!(ledger_item: li)

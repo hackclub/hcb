@@ -51,7 +51,7 @@ class Contract
 
       event :mark_signed do
         transitions from: :pending, to: :signed
-        after do
+        after_commit do
           contract.on_party_signed(self)
         end
 
