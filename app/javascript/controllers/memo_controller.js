@@ -1,7 +1,14 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = ['display', 'form', 'input', 'tooltip', 'yield', 'memoDisplay']
+  static targets = [
+    'display',
+    'form',
+    'input',
+    'tooltip',
+    'yield',
+    'memoDisplay',
+  ]
 
   connect() {
     // Some usages (e.g. the ledger-item heading) don't have a live tooltip
