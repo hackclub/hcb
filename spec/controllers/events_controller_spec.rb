@@ -716,8 +716,6 @@ RSpec.describe EventsController do
       expect(response.body).to include(money(grandchild.balance_available_v2_cents))
     end
 
-    # A hand-picked id for an organization the viewer cannot see is skipped
-    # rather than redirecting, which would break the rest of the page's balances.
     it "skips a private descendant for a signed out visitor", :aggregate_failures do
       get(:async_sub_organization_balances,
           params: { event_id: parent.slug, ids: [transparent_sub.id, private_sub.id] },
