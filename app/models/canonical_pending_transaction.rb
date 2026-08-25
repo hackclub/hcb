@@ -181,7 +181,6 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
-    ledger_item.refresh!
   end
 
   after_commit if: -> { previous_changes.key?("ledger_item_id") } do
@@ -477,6 +476,7 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   def assign_ledger_item
     safely do
+      reload_local_hcb_code
       ActiveRecord::Base.transaction do
         li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
         update!(ledger_item: li)

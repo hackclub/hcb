@@ -59,14 +59,21 @@ class Event
       worksheet.write_number(@current_row, 3, event.balance_v2_cents / 100.0)
       worksheet.write_string(@current_row, 4, tags_for_parent.map(&:name).join(", "))
 
-      if depth.positive?
+      children = children_of(event.id)
+      hidden = depth.positive?
+      # `symbols_below: 0` puts each group's toggle on the parent row above it,
+      # so the `collapsed` flag belongs on any row that has children.
+      collapsed = children.any?
+
+      if hidden || collapsed
         # Syntax: set_row(row, height, format, hidden, level, collapsed)
-        worksheet.set_row(@current_row, nil, nil, 0, depth.clamp(0, MAX_OUTLINE_LEVEL))
+        worksheet.set_row(@current_row, nil, nil, hidden ? 1 : 0,
+                          depth.clamp(0, MAX_OUTLINE_LEVEL), collapsed ? 1 : 0)
       end
 
       @current_row += 1
 
-      children_of(event.id).each { |child| write_subtree(worksheet, child, depth + 1) }
+      children.each { |child| write_subtree(worksheet, child, depth + 1) }
     end
 
     def children_of(parent_id)
