@@ -74,6 +74,12 @@ class CardGrant < ApplicationRecord
 
   enum :status, { active: 0, canceled: 1, expired: 2 }, default: :active
 
+  # These columns are `NOT NULL` in the database, but we override the in-memory
+  # default to `nil` so a new, unsaved record can represent "not specified yet"
+  # and inherit the value from the event's `CardGrantSetting`. Read the resolved
+  # value through `effective_allow_stripe_card` /
+  # `effective_allow_reimbursement_report`, not the raw attribute, until the
+  # record has been saved (`apply_acceptance_method_defaults` persists it).
   attribute :allow_stripe_card, :boolean, default: nil
   attribute :allow_reimbursement_report, :boolean, default: nil
 
