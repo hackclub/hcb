@@ -361,6 +361,17 @@ module EventsHelper
     false
   end
 
+  # A single balance is several aggregate queries, and the sub-organization
+  # table asks for many at once. Cache each briefly so a warm cache serves the
+  # figure instantly and repeat viewers of the same organization don't each pay
+  # to recompute it. The short TTL matches how the rest of this page caches its
+  # heavier data (see `sub_organization_children` and `balance_by_date`).
+  def cached_available_balance_cents(event)
+    Rails.cache.fetch("event_balance_available_v2_cents_#{event.id}", expires_in: 5.minutes) do
+      event.balance_available_v2_cents
+    end
+  end
+
   def paypal_transfers_airtable_form_url(embed: false, event: nil, user: nil)
     # The airtable form is located within the Bank Promotions base
     form_id = "4j6xJB5hoRus"

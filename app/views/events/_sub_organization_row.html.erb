@@ -64,10 +64,10 @@
     <% end %>
   </td>
   <td class="tabular-nums">
-    <%= turbo_frame_tag "event_balance_#{event.public_id}",
-                        src: event_async_balance_path(event),
-                        loading: :lazy,
-                        data: { controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" } do %>
+    <%# Balances are batch-loaded by sub-organization-tree, not per-row, to keep %>
+    <%# the whole tree to a handful of requests. The server caches each balance %>
+    <%# briefly, so a warm cache fills these in almost immediately. %>
+    <%= turbo_frame_tag "event_balance_#{event.public_id}" do %>
       <span class="muted">—</span>
     <% end %>
   </td>
