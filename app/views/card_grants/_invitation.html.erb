@@ -4,7 +4,7 @@
   <div class="w-full">
 
     <% if card_grant.allow_stripe_card? && card_grant.allow_reimbursement_report? %>
-      <div class="card border b--info" data-controller="grant-terms">
+      <div class="card border b--info" data-controller="form-disable">
         <h2 class="mt-0 mb-3"><%= card_grant.event.name %> has granted you <%= render_money card_grant.amount %></h2>
         <%= form_with url: accept_as_reimbursement_card_grant_path(card_grant) do |form| %>
           <%= render "card_grants/terms", card_grant:, form: %>
@@ -17,12 +17,12 @@
             <div class="card card--sunken flex-1 flex flex-col">
               <p class="mt-0">Get a virtual debit card to spend money online or in-person with digital wallets.</p>
               <div class="field field--checkbox mb-2">
-                <%= form.check_box :terms, data: { grant_terms_target: "cardTerm", action: "change->grant-terms#update" } %>
+                <%= form.check_box :terms, data: { "action" => "form-disable#run", "form-disable-target" => "radioButton" } %>
                 <%= form.label :terms do %>
                   I agree to the <%= link_to "Card Issuing Terms", "https://stripe.com/legal/issuing/celtic-authorized-user-terms", target: :_blank %>
                 <% end %>
               </div>
-              <%= form.submit "Get a virtual card", class: "btn btn--primary w-full mt-auto", formaction: activate_card_grant_path(card_grant), data: { grant_terms_target: "cardSubmitButton" } %>
+              <%= form.submit "Get a virtual card", class: "btn btn--primary w-full mt-auto", formaction: activate_card_grant_path(card_grant), data: { "form-disable-target" => "submitButton" } %>
             </div>
             <div class="card card--sunken flex-1 flex flex-col">
               <p class="mt-0">
