@@ -1,0 +1,81 @@
+<%# locals: (row:, guides:, last:) %>
+
+<% event = row[:event] %>
+<% depth = guides.size %>
+
+<% child_guides = guides.empty? ? "1" : guides[0..-2] + (last ? "0" : "1") + "1" %>
+
+<tr id="sub_organization_row_<%= event.id %>"
+    class="sub-organization-row clickable <%= "sub-organization-row--last" if last %> <%= "sub-organization-row--leaf" unless row[:expandable] %>"
+    data-sub-organization-tree-target="row"
+    data-event-id="<%= event.id %>"
+    data-depth="<%= depth %>">
+  <td class="sub-organization-row__cell">
+    <span class="sub-organization-row__guides" aria-hidden="true"><% guides.each_char.with_index do |line, level| %><span class="sub-organization-row__guide <%= level == guides.size - 1 ? "sub-organization-row__guide--connector" : ("sub-organization-row__guide--line" if line == "1") %>"></span><% end %></span>
+
+    <div class="sub-organization-row__name" style="--sub-organization-depth: <%= depth %>">
+      <% if row[:expandable] %>
+        <button type="button"
+                class="sub-organization-row__toggle"
+                aria-expanded="false"
+                aria-label="Show the sub-organizations of <%= event.name %>"
+                data-action="sub-organization-tree#toggle"
+                data-url="<%= event_async_sub_organization_rows_path(event, guides: child_guides) %>">
+          <%= inline_icon "down-caret", size: 22 %>
+        </button>
+      <% else %>
+        <span class="sub-organization-row__toggle sub-organization-row__toggle--empty"></span>
+      <% end %>
+
+      <span class="sub-organization-row__label">
+        <% if event.logo.attached? %>
+          <%= image_tag event.logo, height: 20, width: 20, class: "sub-organization-row__logo" %>
+        <% end %>
+
+        <span class="sub-organization-row__title"><%= event.name %></span>
+
+        <% if row[:parent] %>
+          <span class="sub-organization-row__parent muted">in <%= row[:parent].name %></span>
+        <% end %>
+
+        <% if event.hidden? %>
+          <span class="badge bg-muted tooltipped tooltipped--n"
+                aria-label="Hidden from this list for everyone but your team">
+            <%= inline_icon "view-close", size: 14 %> Hidden
+          </span>
+        <% elsif !event.is_public? %>
+          <span class="badge bg-muted tooltipped tooltipped--n"
+                aria-label="Only visible to people with access to this organization">
+            <%= inline_icon "private", size: 14 %> Private
+          </span>
+        <% end %>
+
+        <% if event.demo_mode? %>
+          <span class="badge bg-info">Playground Mode</span>
+        <% end %>
+      </span>
+    </div>
+  </td>
+  <td>
+    <% event.scoped_tags.each do |tag| %>
+      <% if tag.parent_event_id == event.parent_id %>
+        <span class="badge m-0 mb-1 bg-muted" data-scoped-tag="<%= tag.id %>"><%= tag.name %></span>
+      <% end %>
+    <% end %>
+  </td>
+  <td class="tabular-nums">
+    <%= turbo_frame_tag "event_balance_#{event.public_id}",
+                        src: event_async_balance_path(event),
+                        loading: :lazy,
+                        data: { controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" } do %>
+      <span class="muted">—</span>
+    <% end %>
+  </td>
+  <td>
+    <span class="sub-organization-row__count tabular-nums">
+      <%= inline_icon "people-2", size: 18, class: "muted", 'aria-label': "Team members" %>
+      <%= row[:organizer_count] %>
+    </span>
+    <%= link_to "", event, class: "stretched-link", "aria-label": event.name %>
+  </td>
+</tr>
