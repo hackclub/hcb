@@ -553,20 +553,11 @@ class EventsController < ApplicationController
     render :async_sub_organization_balance, layout: false
   end
 
-  # Loads the balances for a batch of rows in the sub-organization table in one
-  # request. The table used to give every row its own lazy balance frame, which
-  # meant a large tree fired hundreds of requests and tripped the rate limiter.
-  # The client now asks for balances in chunks instead, so a whole page costs a
-  # handful of requests rather than one per row.
   def async_sub_organization_balances
     authorize @event
 
     requested_ids = Array(params[:ids]).map(&:to_i)
 
-    # Intersect in SQL rather than in Ruby: `visible_descendant_ids` can come
-    # back as strings, and this also enforces that a hand-picked id for an
-    # organization the viewer cannot see is simply skipped (no balance, no
-    # redirect that would break the rest of the page's balances).
     @balance_events = Event.where(id: requested_ids).where(id: visible_descendant_ids)
 
     render :async_sub_organization_balances, layout: false

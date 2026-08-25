@@ -7,10 +7,6 @@ const FADE = [
 const FADE_IN = { duration: 140, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
 const FADE_OUT = { duration: 100, easing: 'ease-out', direction: 'reverse' }
 
-// Balances are expensive to compute, so they load after the table renders. One
-// request per row overwhelmed the rate limiter, so they are fetched in chunks:
-// a large tree costs a handful of requests instead of hundreds, while each
-// request stays small enough to come back quickly.
 const BALANCE_CHUNK_SIZE = 25
 
 export default class extends Controller {
@@ -79,8 +75,6 @@ export default class extends Controller {
     }
   }
 
-  // Fetches the balances for `rows` in chunks and drops them into each row's
-  // balance frame via Turbo Streams.
   async #loadBalances(rows) {
     if (!this.hasBalancesUrlValue) return
 
@@ -107,7 +101,6 @@ export default class extends Controller {
 
       window.Turbo.renderStreamMessage(await response.text())
     } catch (error) {
-      // A failed chunk just leaves those rows showing a dash; the rest load.
       console.error(error)
     }
   }
