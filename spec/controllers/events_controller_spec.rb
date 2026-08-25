@@ -18,10 +18,6 @@ RSpec.describe EventsController do
     ApplicationController.helpers.render_money_amount(cents)
   end
 
-  def dom_id_for_balance(event)
-    "event_balance_#{event.public_id}"
-  end
-
   def sign_in_organizer_of(event)
     organizer = create(:user)
     create(:organizer_position, user: organizer, event:)
@@ -307,8 +303,8 @@ RSpec.describe EventsController do
 
         expect(response.body).to include("Transparent Sub-organization")
         expect(response.body).not_to include("Private Sub-organization")
-        expect(document.at_css("##{dom_id_for_balance(transparent_sub)}")).to be_present
-        expect(document.at_css("##{dom_id_for_balance(private_sub)}")).to be_nil
+        expect(document.at_css("#event_balance_#{transparent_sub.public_id}")).to be_present
+        expect(document.at_css("#event_balance_#{private_sub.public_id}")).to be_nil
       end
 
       it "excludes private sub-organizations from the CSV export", :aggregate_failures do

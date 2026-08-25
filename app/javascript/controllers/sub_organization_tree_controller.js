@@ -79,20 +79,17 @@ export default class extends Controller {
     }
   }
 
-  // Fetches the balances for `rows` in chunks and drops them into each row's
-  // balance frame via Turbo Streams.
-  async #loadBalances(rows) {
+  // Fetches the balances for `rows`, chunked so a large tree costs a handful of
+  // requests, and drops each chunk into its rows' balance frames via Turbo
+  // Streams. The chunks run in parallel: each fetch fires as the loop reaches it.
+  #loadBalances(rows) {
     if (!this.hasBalancesUrlValue) return
 
     const ids = [...rows].map(row => row.dataset.eventId).filter(Boolean)
-    if (ids.length === 0) return
 
-    const chunks = []
     for (let i = 0; i < ids.length; i += BALANCE_CHUNK_SIZE) {
-      chunks.push(ids.slice(i, i + BALANCE_CHUNK_SIZE))
+      this.#loadBalanceChunk(ids.slice(i, i + BALANCE_CHUNK_SIZE))
     }
-
-    await Promise.all(chunks.map(chunk => this.#loadBalanceChunk(chunk)))
   }
 
   async #loadBalanceChunk(ids) {

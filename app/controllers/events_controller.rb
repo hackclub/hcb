@@ -553,21 +553,23 @@ class EventsController < ApplicationController
     render :async_sub_organization_balance, layout: false
   end
 
-  # Loads the balances for a batch of rows in the sub-organization table in one
-  # request. The table used to give every row its own lazy balance frame, which
-  # meant a large tree fired hundreds of requests and tripped the rate limiter.
-  # The client now asks for balances in chunks instead, so a whole page costs a
-  # handful of requests rather than one per row.
+  # Loads the balances for a batch of sub-organization rows in one request. The
+  # table used to give every row its own lazy balance frame, which fired hundreds
+  # of requests and tripped the rate limiter; the client now asks in chunks.
   def async_sub_organization_balances
     authorize @event
 
-    requested_ids = Array(params[:ids]).map(&:to_i)
-
-    # Intersect in SQL rather than in Ruby: `visible_descendant_ids` can come
-    # back as strings, and this also enforces that a hand-picked id for an
-    # organization the viewer cannot see is simply skipped (no balance, no
+    # Intersect the requested ids with what this viewer may see, so a hand-picked
+    # id for an organization they can't see is simply skipped (no balance, and no
     # redirect that would break the rest of the page's balances).
-    @balance_events = Event.where(id: requested_ids).where(id: visible_descendant_ids)
+    @balance_events = Event.where(id: Array(params[:ids])).where(id: visible_descendant_ids)
+
+    # A balance is several aggregate queries, so cache each briefly; fetch_multi
+    # reads them in one round-trip and computes only the misses. The short TTL
+    # matches the rest of this page (`sub_organization_children`, `balance_by_date`).
+    @balances = Rails.cache.fetch_multi(*@balance_events, expires_in: 5.minutes) do |event|
+      event.balance_available_v2_cents
+    end
 
     render :async_sub_organization_balances, layout: false
   end
