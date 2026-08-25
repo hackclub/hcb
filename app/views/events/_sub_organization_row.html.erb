@@ -65,10 +65,9 @@
   </td>
   <td class="tabular-nums">
     <%# Balances are batch-loaded by sub-organization-tree, not per-row, to keep %>
-    <%# the whole tree to a handful of requests. cached-frame restores the last %>
-    <%# known balance from a previous visit while the fresh one loads. %>
-    <%= turbo_frame_tag "event_balance_#{event.public_id}",
-                        data: { controller: "cached-frame" } do %>
+    <%# the whole tree to a handful of requests. The server caches each balance %>
+    <%# briefly, so a warm cache fills these in almost immediately. %>
+    <%= turbo_frame_tag "event_balance_#{event.public_id}" do %>
       <span class="muted">—</span>
     <% end %>
   </td>

@@ -93,7 +93,6 @@ export default class extends Controller {
     }
 
     await Promise.all(chunks.map(chunk => this.#loadBalanceChunk(chunk)))
-    this.#cacheBalances(rows)
   }
 
   async #loadBalanceChunk(ids) {
@@ -110,15 +109,6 @@ export default class extends Controller {
     } catch (error) {
       // A failed chunk just leaves those rows showing a dash; the rest load.
       console.error(error)
-    }
-  }
-
-  // Mirrors cached-frame's localStorage contract so a return visit shows the
-  // last known balance immediately instead of a dash.
-  #cacheBalances(rows) {
-    for (const row of rows) {
-      const frame = row.querySelector('[id^="event_balance_"]')
-      if (frame) localStorage.setItem(`cached_frame:${frame.id}`, frame.innerHTML)
     }
   }
 
