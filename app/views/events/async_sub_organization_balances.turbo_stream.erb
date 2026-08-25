@@ -1,0 +1,5 @@
+<% @balance_events.each do |event| %>
+  <%= turbo_stream.update "event_balance_#{event.public_id}" do %>
+    <%= render_money_amount(event.balance_available_v2_cents) %>
+  <% end %>
+<% end %>

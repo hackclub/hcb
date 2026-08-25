@@ -18,6 +18,10 @@ RSpec.describe EventsController do
     ApplicationController.helpers.render_money_amount(cents)
   end
 
+  def dom_id_for_balance(event)
+    "event_balance_#{event.public_id}"
+  end
+
   def sign_in_organizer_of(event)
     organizer = create(:user)
     create(:organizer_position, user: organizer, event:)
@@ -293,16 +297,18 @@ RSpec.describe EventsController do
     end
 
     context "as a signed out visitor" do
-      # The private card's lazy balance frame is what redirected signed out
-      # visitors to the login page: it 302s, and Turbo turns the resulting
-      # missing frame into a full page visit.
-      it "lists only transparent sub-organizations, and loads balances for only those", :aggregate_failures do
+      # Only the rows that are rendered get a balance frame, and only those
+      # frames' ids are handed to the batched balance loader, so a private
+      # organization is never asked about.
+      it "lists only transparent sub-organizations, with a balance frame for only those", :aggregate_failures do
         get(:sub_organizations, params: { event_id: parent.slug })
+
+        document = Nokogiri::HTML5(response.body)
 
         expect(response.body).to include("Transparent Sub-organization")
         expect(response.body).not_to include("Private Sub-organization")
-        expect(response.body).to include(event_async_balance_path(transparent_sub))
-        expect(response.body).not_to include(event_async_balance_path(private_sub))
+        expect(document.at_css("##{dom_id_for_balance(transparent_sub)}")).to be_present
+        expect(document.at_css("##{dom_id_for_balance(private_sub)}")).to be_nil
       end
 
       it "excludes private sub-organizations from the CSV export", :aggregate_failures do
@@ -690,6 +696,48 @@ RSpec.describe EventsController do
       expect(response.body).to include(
         money(transparent_sub.balance_available_v2_cents + private_sub.balance_available_v2_cents)
       )
+    end
+  end
+
+  describe "#async_sub_organization_balances" do
+    render_views
+
+    let(:parent) { create(:event, is_public: true) }
+    let!(:transparent_sub) { create(:event, :with_positive_balance, parent:, is_public: true) }
+    let!(:private_sub) { create(:event, :with_positive_balance, parent:, is_public: false) }
+
+    it "returns a balance stream for each requested descendant", :aggregate_failures do
+      grandchild = create(:event, :with_positive_balance, parent: transparent_sub, is_public: true)
+
+      get(:async_sub_organization_balances,
+          params: { event_id: parent.slug, ids: [transparent_sub.id, grandchild.id] },
+          format: :turbo_stream)
+
+      expect(response.body).to include("event_balance_#{transparent_sub.public_id}")
+      expect(response.body).to include(money(transparent_sub.balance_available_v2_cents))
+      expect(response.body).to include("event_balance_#{grandchild.public_id}")
+      expect(response.body).to include(money(grandchild.balance_available_v2_cents))
+    end
+
+    # A hand-picked id for an organization the viewer cannot see is skipped
+    # rather than redirecting, which would break the rest of the page's balances.
+    it "skips a private descendant for a signed out visitor", :aggregate_failures do
+      get(:async_sub_organization_balances,
+          params: { event_id: parent.slug, ids: [transparent_sub.id, private_sub.id] },
+          format: :turbo_stream)
+
+      expect(response.body).to include("event_balance_#{transparent_sub.public_id}")
+      expect(response.body).not_to include("event_balance_#{private_sub.public_id}")
+    end
+
+    it "returns a private descendant for an organizer of the parent" do
+      sign_in_organizer_of(parent)
+
+      get(:async_sub_organization_balances,
+          params: { event_id: parent.slug, ids: [private_sub.id] },
+          format: :turbo_stream)
+
+      expect(response.body).to include("event_balance_#{private_sub.public_id}")
     end
   end
 

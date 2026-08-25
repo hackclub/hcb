@@ -7,11 +7,19 @@ const FADE = [
 const FADE_IN = { duration: 140, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
 const FADE_OUT = { duration: 100, easing: 'ease-out', direction: 'reverse' }
 
+// Balances are expensive to compute, so they load after the table renders. One
+// request per row overwhelmed the rate limiter, so they are fetched in chunks:
+// a large tree costs a handful of requests instead of hundreds, while each
+// request stays small enough to come back quickly.
+const BALANCE_CHUNK_SIZE = 25
+
 export default class extends Controller {
   static targets = ['row', 'pinned']
+  static values = { balancesUrl: String }
 
   connect() {
     this.repin()
+    this.#loadBalances(this.rowTargets)
   }
 
   disconnect() {
@@ -65,8 +73,52 @@ export default class extends Controller {
       row.after(template.content)
       row.dataset.loaded = 'true'
       this.#animate(inserted, FADE_IN)
+      this.#loadBalances(inserted)
     } finally {
       button.disabled = false
+    }
+  }
+
+  // Fetches the balances for `rows` in chunks and drops them into each row's
+  // balance frame via Turbo Streams.
+  async #loadBalances(rows) {
+    if (!this.hasBalancesUrlValue) return
+
+    const ids = [...rows].map(row => row.dataset.eventId).filter(Boolean)
+    if (ids.length === 0) return
+
+    const chunks = []
+    for (let i = 0; i < ids.length; i += BALANCE_CHUNK_SIZE) {
+      chunks.push(ids.slice(i, i + BALANCE_CHUNK_SIZE))
+    }
+
+    await Promise.all(chunks.map(chunk => this.#loadBalanceChunk(chunk)))
+    this.#cacheBalances(rows)
+  }
+
+  async #loadBalanceChunk(ids) {
+    const params = new URLSearchParams()
+    for (const id of ids) params.append('ids[]', id)
+
+    try {
+      const response = await fetch(`${this.balancesUrlValue}?${params}`, {
+        headers: { Accept: 'text/vnd.turbo-stream.html' },
+      })
+      if (!response.ok) throw new Error(response.statusText)
+
+      window.Turbo.renderStreamMessage(await response.text())
+    } catch (error) {
+      // A failed chunk just leaves those rows showing a dash; the rest load.
+      console.error(error)
+    }
+  }
+
+  // Mirrors cached-frame's localStorage contract so a return visit shows the
+  // last known balance immediately instead of a dash.
+  #cacheBalances(rows) {
+    for (const row of rows) {
+      const frame = row.querySelector('[id^="event_balance_"]')
+      if (frame) localStorage.setItem(`cached_frame:${frame.id}`, frame.innerHTML)
     }
   }
 
