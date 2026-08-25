@@ -735,6 +735,19 @@ RSpec.describe EventsController do
 
       expect(response.body).to include("event_balance_#{private_sub.public_id}")
     end
+
+    # Caps the work a hand-crafted request can demand: each balance is several
+    # aggregate queries, and the client only ever sends one chunk at a time.
+    it "computes at most BALANCE_BATCH_LIMIT balances per request" do
+      grandchild = create(:event, :with_positive_balance, parent: transparent_sub, is_public: true)
+      stub_const("EventsController::BALANCE_BATCH_LIMIT", 1)
+
+      get(:async_sub_organization_balances,
+          params: { event_id: parent.slug, ids: [transparent_sub.id, grandchild.id] },
+          format: :turbo_stream)
+
+      expect(response.body.scan("event_balance_").size).to eq(1)
+    end
   end
 
   describe "#transactions_list" do

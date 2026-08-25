@@ -4,6 +4,11 @@ class EventsController < ApplicationController
   TRANSACTIONS_PER_PAGE = 75
   DONATIONS_PER_PAGE = 25
 
+  # Upper bound on ids accepted per async balance batch. The table's Stimulus
+  # controller sends far fewer (one chunk at a time); this only bounds the work a
+  # hand-crafted request can demand, since each balance is several queries.
+  BALANCE_BATCH_LIMIT = 100
+
   TREE_GUIDES = /\A[01]{0,#{Event::MAX_PARENT_DEPTH}}\z/
 
   include SetEvent
@@ -561,8 +566,11 @@ class EventsController < ApplicationController
 
     # Intersect the requested ids with what this viewer may see, so a hand-picked
     # id for an organization they can't see is simply skipped (no balance, and no
-    # redirect that would break the rest of the page's balances).
-    @balance_events = Event.where(id: Array(params[:ids])).where(id: visible_descendant_ids)
+    # redirect that would break the rest of the page's balances). The client asks
+    # a chunk at a time; cap the batch so a hand-crafted request can't force every
+    # descendant's balance (each is several aggregate queries) to compute at once.
+    requested_ids = Array(params[:ids]).first(BALANCE_BATCH_LIMIT)
+    @balance_events = Event.where(id: requested_ids).where(id: visible_descendant_ids)
 
     # A balance is several aggregate queries, so cache each briefly; fetch_multi
     # reads them in one round-trip and computes only the misses. The short TTL
