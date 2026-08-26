@@ -70,7 +70,7 @@
     <p>
       <strong>For</strong>
       <span>
-      <%= link_to "A transfer of #{render_money @canonical_pending_transaction.ach_transfer.amount}", @canonical_pending_transaction.ach_transfer %>
+      <%= link_to "A transfer of #{render_money @canonical_pending_transaction.ach_transfer.amount_cents}", @canonical_pending_transaction.ach_transfer %>
       </span>
     </p>
     <% end %>

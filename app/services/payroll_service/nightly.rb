@@ -43,7 +43,7 @@ module PayrollService
         when LegalEntity::PayoutMethod::AchTransfer
           safely do
             ach_transfer = payment.employee.event.ach_transfers.build(
-              amount: payment.amount_cents,
+              amount_cents: payment.amount_cents,
               payment_for: "Payment for \"#{payment.title}\".",
               recipient_name: payment.employee.user.full_name,
               recipient_email: payment.employee.user.email,
