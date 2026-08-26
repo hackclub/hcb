@@ -196,7 +196,7 @@ class AdminController < Admin::BaseController
     @access_level = params[:access_level]
     @event_id = params[:event_id].presence
     @referral_program_id = params[:referral_program_id].presence
-    @locked = ActiveModel::Type::Boolean.new.cast(params[:locked])
+    @locked = params[:locked] == "1"
     @params = params.permit(:page, :per, :q, :access_level, :event_id, :referral_program_id, :locked)
 
     if @event_id
