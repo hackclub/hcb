@@ -55,8 +55,8 @@ RSpec.describe Api::V4::CardGrantsController do
         "playground_mode"                   => false,
         "playground_mode_meeting_requested" => nil,
         "transparent"                       => true,
-        "created_at"                        => event.created_at.iso8601(3),
-        "card_grants_enabled"               => true
+        "card_grants_enabled"               => true,
+        "created_at"                        => event.created_at.iso8601(3)
       }
 
       expect(response.parsed_body).to eq(
