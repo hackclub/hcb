@@ -58,4 +58,8 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # Logins are started without a browser here, so there's no cookie to compare
+  # the login's browser token against. Specs that cover that check flip this off.
+  config.x.skip_login_browser_token_check = true
 end

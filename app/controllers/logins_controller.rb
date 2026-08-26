@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class LoginsController < ApplicationController
+  # Longer than any URL a browser will navigate to, and `return_to` is stored
+  # in `Login#state`, which is capped at 10KB.
+  MAX_RETURN_TO_BYTES = 2.kilobytes
+
   skip_before_action :signed_in_user, except: [:reauthenticate]
   skip_after_action :verify_authorized
   before_action :set_login, except: [:new, :create, :reauthenticate]
@@ -19,7 +23,7 @@ class LoginsController < ApplicationController
     render "users/logout" if current_user
 
     referral_link_id = Referral::Link.find_by(slug: params[:referral])&.slug if params[:referral].present?
-    @login = Login.new(state: { return_to: url_from(params[:return_to]), purpose: params[:purpose] }, referral_link_id:)
+    @login = Login.new(state: { return_to: requested_return_to, purpose: params[:purpose] }, referral_link_id:)
 
     @prefill_email = params[:email].presence || current_user(allow_unverified: true)&.email.presence
     @signup = params[:signup] == "true"
@@ -46,21 +50,24 @@ class LoginsController < ApplicationController
 
     continue_login(preference: login_preference || :email)
   rescue ActiveRecord::RecordInvalid => e
-    flash[:error] = e.record.errors.full_messages.to_sentence
-    return redirect_to auth_users_path
+    return restart_login(error: e.record.errors.full_messages.to_sentence)
   rescue => e
-    flash[:error] = e.message
-    return redirect_to auth_users_path
+    # Exception messages here can carry database internals (a unique violation
+    # quotes the conflicting email), so report them rather than showing them.
+    Rails.error.report(e)
+    return restart_login(error: "Something went wrong signing you in. Please try again or contact HCB for support.")
   end
 
   # get page to choose preference
   def choose_login_preference
-    return redirect_to auth_users_path if @email.nil?
+    if @email.nil?
+      Rails.error.unexpected("[Login] Login #{@login.id} has a user without an email address.")
+      return restart_login(error: "Something went wrong. Please try again or contact HCB for support.")
+    end
 
     if @login.available_factors.none?
       Rails.error.unexpected("[Login] Login ran out of available factors. This should never be possible.")
-      flash[:error] = "Something went wrong. Please try again or contact HCB for support."
-      return redirect_to auth_users_path
+      return restart_login(error: "Something went wrong. Please try again or contact HCB for support.")
     end
 
     session.delete :login_preference
@@ -75,10 +82,7 @@ class LoginsController < ApplicationController
   def email
     resp = LoginCodeService::Request.new(email: @email, ip_address: request.remote_ip, user_agent: request.user_agent).run
 
-    if resp[:error].present?
-      flash[:error] = resp[:error]
-      return redirect_to auth_users_path
-    end
+    return restart_login(error: resp[:error]) if resp[:error].present?
 
     render status: :unprocessable_content
   end
@@ -96,10 +100,7 @@ class LoginsController < ApplicationController
 
     resp = LoginCodeService::Request.new(email: @email, sms: true, ip_address: request.remote_ip, user_agent: request.user_agent).run
 
-    if resp[:error].present?
-      flash[:error] = resp[:error]
-      return redirect_to auth_users_path
-    end
+    return restart_login(error: resp[:error]) if resp[:error].present?
 
     render status: :unprocessable_content
   end
@@ -123,7 +124,7 @@ class LoginsController < ApplicationController
       )
 
       unless ok
-        redirect_to(auth_users_path, flash: { error: service.errors.full_messages.to_sentence })
+        restart_login(error: service.errors.full_messages.to_sentence)
         return
       end
     when "sms"
@@ -185,19 +186,11 @@ class LoginsController < ApplicationController
       elsif @referral_link.present?
         redirect_to referral_link_path(@referral_link)
       elsif (@user.full_name.blank? || @user.phone_number.blank?) && !@login.for_application?
-        redirect_to edit_user_path(@user.slug, return_to: @login.return_to)
+        redirect_to edit_user_path(@user.slug, return_to: safe_return_to(@login.return_to))
       elsif @login.authenticated_with_backup_code && @user.backup_codes.active.empty?
         redirect_to security_user_path(@user), flash: { warning: "You've just used your last backup code, and we recommend generating more." }
       else
-        return_path = url_from(@login.return_to)
-        if return_path.present?
-          begin
-            route = Rails.application.routes.recognize_path(return_path)
-            return_path = root_path if route[:controller] == "logins"
-          rescue ActionController::RoutingError
-            return_path = root_path
-          end
-        end
+        return_path = safe_return_to(@login.return_to)
 
         if @user.only_draft_application? && return_path.blank?
           redirect_to application_path(@user.applications.first)
@@ -209,7 +202,7 @@ class LoginsController < ApplicationController
       continue_login
     end
   rescue SessionsHelper::AccountLockedError => e
-    redirect_to(auth_users_path, flash: { error: e.message })
+    restart_login(error: e.message)
   end
 
   def reauthenticate
@@ -235,7 +228,49 @@ class LoginsController < ApplicationController
   end
 
   def login_params
-    params.require(:login).permit(:return_to, :purpose, :referral_link_id)
+    params
+      .require(:login)
+      .permit(:return_to, :purpose, :referral_link_id)
+      # `ApplicationController` filters `params[:return_to]`, but not the
+      # nested `login[return_to]` this form posts, so filter it here.
+      .merge(return_to: safe_return_to(params.dig(:login, :return_to)))
+  end
+
+  # Reduces a candidate `return_to` to somewhere we're willing to send a user:
+  # this host, a route that exists, and not back into the login flow they just
+  # came out of.
+  #
+  # @return [String, nil]
+  def safe_return_to(value)
+    return nil if value.to_s.bytesize > MAX_RETURN_TO_BYTES
+
+    url = url_from(value)
+    return nil if url.blank?
+
+    begin
+      return nil if Rails.application.routes.recognize_path(url)[:controller] == "logins"
+    rescue ActionController::RoutingError
+      return nil
+    end
+
+    url
+  end
+
+  # The page the visitor was trying to reach before we asked them to sign in.
+  def requested_return_to
+    safe_return_to(params[:return_to])
+  end
+
+  # Sends the visitor back to the start of the login flow without dropping the
+  # page they were originally trying to reach.
+  #
+  # @param error [String] flash error to show on the login page
+  # @param login [Login, nil] the login to recover `return_to` from
+  def restart_login(error:, login: @login)
+    return_to = safe_return_to(login&.return_to) || requested_return_to
+    flash[:error] = error
+
+    redirect_to auth_users_path(return_to:)
   end
 
   def login_preference
@@ -247,26 +282,47 @@ class LoginsController < ApplicationController
   end
 
   def set_login
-    begin
-      if params[:id]
-        @login = Login.incomplete.active.initial.find_by_hashid!(params[:id])
-        @referral_link = @login.referral_link
-        @referral_program = @referral_link&.program
-        unless valid_browser_token?
-          # error! browser token doesn't match the cookie.
-          flash[:error] = "This doesn't seem to be the browser who began this login; please ensure cookies are enabled."
-          redirect_to auth_users_path
-        end
-      elsif session[:auth_email]
-        @login = User.find_by_email(session[:auth_email]).logins.create
-        cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
-      else
-        flash[:error] = "Please try again."
-        redirect_to auth_users_path
+    if params[:id]
+      @login = Login.incomplete.active.initial.find_by_hashid(params[:id])
+
+      unless @login
+        # The login expired or never existed. Recover `return_to` from it so
+        # the user doesn't lose the page they were heading to, but only for the
+        # browser that began it: hashids are enumerable (they're salted with an
+        # empty string), so a login that can't prove which browser started it
+        # doesn't get to hand its `return_to` to whoever asks.
+        expired = Login.initial.incomplete.find_by_hashid(params[:id])
+        expired = nil unless expired&.browser_token.present? && valid_browser_token?(expired)
+
+        return restart_login(error: "Please start again.", login: expired)
       end
-    rescue ActiveRecord::RecordNotFound
-      flash[:error] = "Please start again."
-      redirect_to auth_users_path, flash: { error: "Please start again." }
+
+      @referral_link = @login.referral_link
+      @referral_program = @referral_link&.program
+
+      unless valid_browser_token?
+        # error! browser token doesn't match the cookie. Don't hand this
+        # browser the other browser's `return_to`.
+        return restart_login(
+          error: "This doesn't seem to be the browser who began this login; please ensure cookies are enabled.",
+          login: nil
+        )
+      end
+    elsif session[:auth_email] && (user = User.find_by_email(session[:auth_email]))
+      # Reached when a login begins without a persisted `Login` record: the
+      # passkey flow on the login page and the "Sign in another way" link both
+      # reach the collection routes, so `return_to` arrives as a param.
+      @login = user.logins.create!(state: { return_to: requested_return_to, purpose: params[:purpose] })
+      cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
+    else
+      if session[:auth_email].present?
+        # `UsersController#webauthn_options` stores the email before checking
+        # that it belongs to anyone, so a typo leaves this pointing at nobody.
+        # Left in place it makes every retry fail the same way.
+        session.delete(:auth_email)
+      end
+
+      restart_login(error: "Please try again.")
     end
   end
 
@@ -285,12 +341,16 @@ class LoginsController < ApplicationController
     }
   end
 
-  def valid_browser_token?
-    return true if Rails.env.test?
-    return true unless @login.browser_token
-    return false unless cookies.signed["browser_token_#{@login.hashid}"]
+  def valid_browser_token?(login = @login)
+    # Specs drive logins without a browser, so they can't produce the cookie.
+    # Those covering this check turn the bypass off (see config/environments/test.rb).
+    # Compared against `true` because an unset `config.x` key reads back as an
+    # empty `OrderedOptions`, which is truthy.
+    return true if Rails.configuration.x.skip_login_browser_token_check == true
+    return true unless login.browser_token
+    return false unless cookies.signed["browser_token_#{login.hashid}"]
 
-    ActiveSupport::SecurityUtils.secure_compare(@login.browser_token, cookies.signed["browser_token_#{@login.hashid}"])
+    ActiveSupport::SecurityUtils.secure_compare(login.browser_token, cookies.signed["browser_token_#{login.hashid}"])
   end
 
 end
