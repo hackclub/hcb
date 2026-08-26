@@ -374,8 +374,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_120100) do
     t.bigint "canonical_transaction_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["canonical_pending_transaction_id"], name: "idx_on_canonical_pending_transaction_id_d803a74980"
-    t.index ["canonical_transaction_id"], name: "idx_on_canonical_transaction_id_b8c2c28a37"
+    t.index ["canonical_pending_transaction_id"], name: "index_canonical_pending_settled_map_on_canonical_pending_tx_id"
+    t.index ["canonical_transaction_id"], name: "index_canonical_pending_settled_mappings_on_canonical_tx_id"
   end
 
   create_table "canonical_pending_transactions", force: :cascade do |t|
@@ -1975,7 +1975,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_120100) do
     t.string "display_name", null: false
     t.string "email", null: false
     t.bigint "event_id", null: false
-    t.datetime "imported_at"
     t.bigint "legal_entity_id"
     t.datetime "updated_at", null: false
     t.index ["archived_at"], name: "index_payees_on_archived_at"
