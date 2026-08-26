@@ -51,14 +51,21 @@
         <%= hidden_field_tag :manual, manual.to_s, data: { "manual-payee-target": "payeeFormManualField" } %>
       <% end %>
 
-      <div class="flex flex-col gap-3">
+      <% existing_payees = event.payees.not_archived.order(:display_name).pluck(:email, :display_name).map { |email, name| { email:, name: } } %>
+      <div class="flex flex-col gap-3" data-controller="duplicate-payee" data-duplicate-payee-existing-value="<%= existing_payees.to_json %>">
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
           <%= label_tag :name, "Name" %>
           <%= text_field_tag :name, params[:payee_name], placeholder: "Orpheus", required: true, form: "new-payee-form", data: { "manual-payee-target": "nameInput" } %>
         </div>
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
           <%= label_tag :email, "Email" %>
-          <%= email_field_tag :email, params[:payee_email], placeholder: "orpheus@hackclub.com", required: true, form: "new-payee-form", data: { "manual-payee-target": "emailInput" } %>
+          <%= email_field_tag :email, params[:payee_email], placeholder: "orpheus@hackclub.com", required: true, form: "new-payee-form", data: { "manual-payee-target": "emailInput", "duplicate-payee-target": "email", action: "input->duplicate-payee#check" } %>
+        </div>
+
+        <div data-duplicate-payee-target="warning" hidden>
+          <%= render "application/callout", type: "warning", icon: "important", title: "You already have a recipient with this email", class: "mt-0 mb-0" do %>
+            <span data-duplicate-payee-target="names"></span> already uses this email. Only add another recipient if they'll be paid under a <strong>different legal entity</strong> — for example, the same person's personal account and their business. Otherwise, go back and pick the existing recipient.
+          <% end %>
         </div>
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2" data-manual-payee-target="manualOnly" <%= "hidden" unless manual %>>
           <%= label_tag :payee_entity_type, "Recipient type" %>
