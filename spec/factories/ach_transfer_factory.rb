@@ -2,7 +2,7 @@
 
 FactoryBot.define do
   factory :ach_transfer do
-    amount { 50 }
+    amount_cents { 50 }
     routing_number { Faker::Bank.routing_number }
     account_number { Faker::Bank.account_number }
     bank_name { Faker::Bank.name }
