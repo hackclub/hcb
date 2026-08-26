@@ -56,6 +56,68 @@ RSpec.describe UserService::SendCardLockingNotification, type: :service do
     )
   end
 
+  # The cards are NOT locked at this point, so the text has to count down to the
+  # deadline. A bare count plus "your cards will lock until you do" reads as a
+  # lock that has already happened, which is what cardholders reported.
+  #
+  # Time is frozen because the countdown rounds down: a deadline set 11h out and
+  # read a few microseconds later is 10h59m of remaining runway, i.e. "10 hours".
+  it "counts down to the soonest deadline in the pile" do
+    freeze_time do
+      allow(user).to receive(:card_locking_outstanding_count).and_return(11)
+      allow(user).to receive(:card_locking_next_due_at).and_return(11.hours.from_now)
+
+      service.run
+
+      expect(User::SendSmsJob).to have_been_enqueued.with(
+        user_id: user.id,
+        body: "You have 11 receipts to upload. Your next receipt is due in 11 hours. " \
+              "Miss it and your cards lock. Upload at #{CardLocking.inbox_url}."
+      )
+    end
+  end
+
+  it "says 'it' rather than 'your next receipt' for a single outstanding receipt" do
+    freeze_time do
+      allow(user).to receive(:card_locking_outstanding_count).and_return(1)
+      allow(user).to receive(:card_locking_next_due_at).and_return(3.days.from_now)
+
+      service.run
+
+      expect(User::SendSmsJob).to have_been_enqueued.with(
+        user_id: user.id,
+        body: "You have 1 receipt to upload. It's due in 3 days. " \
+              "Miss it and your cards lock. Upload at #{CardLocking.inbox_url}."
+      )
+    end
+  end
+
+  it "falls back to the rule when there is no deadline to count down to" do
+    allow(user).to receive(:card_locking_outstanding_count).and_return(4)
+    allow(user).to receive(:card_locking_next_due_at).and_return(nil)
+
+    service.run
+
+    expect(User::SendSmsJob).to have_been_enqueued.with(
+      user_id: user.id,
+      body: "You have 4 receipts to upload. Your cards lock once a receipt goes past its deadline. " \
+            "Upload at #{CardLocking.inbox_url}."
+    )
+  end
+
+  # Enforcement runs on its own schedule, so the pile can go past due between
+  # sweeps. A negative countdown ("due in -2 hours") would be worse than none.
+  it "falls back to the rule when the soonest deadline has already passed" do
+    allow(user).to receive(:card_locking_outstanding_count).and_return(4)
+    allow(user).to receive(:card_locking_next_due_at).and_return(2.hours.ago)
+
+    service.run
+
+    expect(User::SendSmsJob).to have_been_enqueued.with(
+      user_id: user.id, body: a_string_matching(/goes past its deadline/)
+    )
+  end
+
   it "does not send when no charge is approaching its deadline" do
     allow(user).to receive(:card_locking_has_approaching_charge?).and_return(false)
     allow(user).to receive(:card_locking_outstanding_count).and_return(4)

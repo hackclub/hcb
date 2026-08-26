@@ -72,8 +72,8 @@ class Metric
         FROM "users"
         ORDER BY spent desc
         ').reject { |hash| hash["spent"].nil? }
-                          .map { |item| [item["user_id"], item["spent"].to_i] }
-                          .to_h
+          .map { |item| [item["user_id"], item["spent"].to_i] }
+          .to_h
       end
 
       def metric

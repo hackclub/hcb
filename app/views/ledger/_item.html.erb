@@ -12,7 +12,7 @@
       <div class="flex-auto">
         <div class="flex items-center gap-[1ch] min-w-0">
           <%= render "ledger/items/status", ledger_item: item %>
-          <div class="min-w-0">
+          <div class="min-w-0 overflow-hidden text-ellipsis">
             <%= render "ledger/items/memo/memo", item: %>
           </div>
         </div>
