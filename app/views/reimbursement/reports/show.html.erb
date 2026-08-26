@@ -36,7 +36,7 @@
       <% end %>
     <% end %>
 
-    <% if @report.draft? && organizer_signed_in?(as: :member) %>
+    <% if @report.draft? && (organizer_signed_in?(as: :member) || @report.user == current_user) %>
       <%= pop_icon_to "delete",
                       reimbursement_report_path(@report),
                       data: { turbo_confirm: "Are you sure?", turbo_method: :delete, turbo_confirm_danger: true },
