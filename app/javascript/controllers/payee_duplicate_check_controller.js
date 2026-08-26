@@ -1,10 +1,6 @@
 import { Controller } from '@hotwired/stimulus'
 import { debounce } from 'lodash/function'
 
-// Warns when the email being entered for a new recipient already belongs to an
-// existing (non-archived) recipient on this organization. Creating a duplicate
-// is still allowed — a person may legitimately have more than one legal entity —
-// so this only surfaces a heads-up and a shortcut to the existing recipient.
 export default class extends Controller {
   static values = { url: String, destination: String }
   static targets = ['warning', 'list']
