@@ -1,23 +1,15 @@
 <% title "Account Numbers" %>
 
-<%= form_with method: :get, class: "card overflow-visible" do |form| %>
-  <div class="flex flex-col sm:flex-row items-center gap-2">
+<%= form_with method: :get, class: "card filter-form flex flex-col gap-2.5 p-3" do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
-    <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
+    <%= render "admin/filters/event", event: @event %>
     <%= form.select :account_number_type, [["All", "0"], ["Deposit only", "1"], ["Spend + Deposit", "2"]], selected: @account_number_type %>
-  </div>
-  <div class="flex items-center mt-2">
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= render "admin/filters/actions", form: %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @account_numbers, entry_name: "Account Number" %>
-  </div>
-  <%= paginate @account_numbers %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -50,3 +42,12 @@
     <% end %>
   </tbody>
 </table>
+
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @account_numbers, entry_name: "Account Number" %>
+  </div>
+  <%= paginate @account_numbers %>
+</div>
+
+</div>

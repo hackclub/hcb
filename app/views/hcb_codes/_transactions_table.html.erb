@@ -1,4 +1,4 @@
-<%# locals: (canonical_transactions: [], canonical_pending_transactions: [], t_transaction: nil) %>
+<%# locals: (canonical_transactions: [], canonical_pending_transactions: [], t_transaction: nil, popovers: false) %>
 
 <table>
   <thread>
@@ -46,10 +46,11 @@
               ) %>
         </td>
         <td>
+          <% popover_data = popovers ? admin_popover_data_for(transaction) : {} %>
           <% if transaction.is_a?(CanonicalPendingTransaction) %>
-            <%= link_to("view", canonical_pending_transaction_path(transaction)) %>
+            <%= link_to("view", canonical_pending_transaction_path(transaction), data: popover_data) %>
           <% else %>
-            <%= link_to("view", canonical_transaction_path(transaction)) %>
+            <%= link_to("view", canonical_transaction_path(transaction), data: popover_data) %>
           <% end %>
         </td>
       </tr>

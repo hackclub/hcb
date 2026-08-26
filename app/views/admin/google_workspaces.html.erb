@@ -1,41 +1,25 @@
 <% title "Google Workspaces" %>
 
-<%= form_with local: true, class: "card overflow-visible", url: google_workspaces_admin_index_path, method: :get do |form| %>
-  <div class="flex flex-col sm:flex-row items-center gap-2">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: google_workspaces_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
-    <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
+    <%= render "admin/filters/event", event: @event %>
   </div>
-  <div class="flex items-center mt-2 gap-4 flex-wrap">
-    <%= form.label :needs_ops_review do %>
-      <%= form.check_box :needs_ops_review, checked: @needs_ops_review %> Needs Ops Review
-    <% end %>
-    <%= form.label :configuring do %>
-      <%= form.check_box :configuring, checked: @configuring %> Configuring
-    <% end %>
-    <%= form.label :verification_error do %>
-      <%= form.check_box :verification_error, checked: @verification_error %> Verification Error
-    <% end %>
-    <%= form.label :revocation_present do %>
-      <%= form.check_box :revocation_present, checked: @revocation_present %> Has Revocation
-    <% end %>
-    <%= form.label :pending_deletion do %>
-      <%= form.check_box :pending_deletion, checked: @pending_deletion %> Revoked, Ready for Deletion
-    <% end %>
-    <%= form.submit "Search", class: "ml-auto" %>
+  <div class="flex flex-wrap items-center gap-2">
+    <%= render "admin/filters/toggle", form:, name: :needs_ops_review, label: "Needs ops review", checked: @needs_ops_review %>
+    <%= render "admin/filters/toggle", form:, name: :configuring, label: "Configuring", checked: @configuring %>
+    <%= render "admin/filters/toggle", form:, name: :verification_error, label: "Verification error", checked: @verification_error %>
+    <%= render "admin/filters/toggle", form:, name: :revocation_present, label: "Has revocation", checked: @revocation_present %>
+    <%= render "admin/filters/toggle", form:, name: :pending_deletion, label: "Revoked, ready for deletion", checked: @pending_deletion %>
+    <%= render "admin/filters/actions", form: %>
   </div>
 <% end %>
 
 <%= form_with(model: false, local: true, url: google_workspaces_verify_all_admin_index_path, method: :post) do |form| %>
-  <%= form.submit "Attempt to verify all currently verifying domains", class: "mt-2" %>
+  <%= form.submit "Attempt to verify all currently verifying domains", class: "btn btn-default mt-2" %>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @g_suites, entry_name: "Google Workspaces" %>
-  </div>
-  <%= paginate @g_suites %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -51,7 +35,7 @@
   </thead>
   <tbody>
     <% @g_suites.each do |g_suite| %>
-      <tr class="<%= "admin-bg-red;" if g_suite.deleted_at.present? %> <%= "admin-bg-pending" if g_suite.needs_ops_review? %>">
+      <tr class="<%= "shade-red" if g_suite.deleted_at.present? %> <%= "shade-yellow" if g_suite.needs_ops_review? %>">
         <td><%= g_suite.id %></td>
         <td><%= g_suite.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= link_to "#{g_suite.event.name.upcase}: #{g_suite.domain}", event_g_suite_overview_path(event_id: g_suite.event.slug) %></td>
@@ -61,13 +45,13 @@
         <td><%= g_suite.revocation.present? ? g_suite.revocation.pending? ? "Pending Revocation".upcase : "Ready for Deletion".upcase : g_suite.aasm_state.upcase %></td>
         <td>
           <% if g_suite.needs_ops_review? %>
-            <%= link_to("Process", google_workspace_process_admin_path(g_suite)) %>
+            <%= link_to("Process", google_workspace_process_admin_path(g_suite), class: "btn") %>
           <% elsif g_suite.revocation.present? && g_suite.revocation.revoked? %>
-            <%= link_to("Process", google_workspace_process_admin_path(g_suite)) %>
+            <%= link_to("Process", google_workspace_process_admin_path(g_suite), class: "btn") %>
           <% elsif g_suite.dkim_key.nil? %>
-            <%= link_to("DKIM", google_workspace_process_admin_path(g_suite)) %>
+            <%= link_to("DKIM", google_workspace_process_admin_path(g_suite), class: "btn") %>
           <% else %>
-            <%= link_to("View", google_workspace_process_admin_path(g_suite)) %>
+            <%= pop_icon_to "external", google_workspace_process_admin_path(g_suite), "aria-label": "View" %>
           <% end %>
         </td>
       </tr>
@@ -75,4 +59,11 @@
   </tbody>
 </table>
 
-<%= paginate @g_suites %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @g_suites, entry_name: "Google Workspaces" %>
+  </div>
+  <%= paginate @g_suites %>
+</div>
+
+</div>

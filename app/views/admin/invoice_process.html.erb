@@ -1,79 +1,93 @@
-<h1>Process Invoice #<%= @invoice.id %> (<%= @invoice.number %>)</h1>
-<p><small>Current Status: <%= @invoice.state_text %></small></p>
+<% title "Invoice ##{@invoice.id}" %>
 
-<hr>
+<% invoice = @invoice %>
+<%= turbo_frame_tag(admin_process_frame_id(invoice)) do %>
+  <div class="fields flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start">
+    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-2 lg:col-span-full">
+      <span class="text-[1.75rem] font-bold leading-[1.1] tabular-nums"><%= render_money invoice.item_amount %></span>
+      <span class="badge <%= invoice_state_badge(invoice) %> ml-0"><%= invoice.state_text %></span>
+      <span class="flex-grow"></span>
+      <% hosted_invoice_url = external_url(invoice.hosted_invoice_url) %>
+      <% if hosted_invoice_url %>
+        <%= link_to hosted_invoice_url, class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
+          <%= inline_icon "link" %>
+          Hosted invoice
+        <% end %>
+      <% end %>
+      <% stripe_dashboard_url = external_url(invoice.stripe_dashboard_url) %>
+      <% if stripe_dashboard_url %>
+        <%= link_to stripe_dashboard_url, class: "btn btn-small bg-muted flex-shrink-0", target: "_blank" do %>
+          <%= inline_icon "external" %>
+          Stripe
+        <% end %>
+      <% end %>
+    </div>
 
-<h3>Invoice Details</h3>
+    <section class="card flex flex-col gap-3.5 overflow-visible">
+      <h3 class="eyebrow m-0">Invoice</h3>
 
-<table class="table--autosize">
-  <tbody>
-    <tr>
-      <td style="text-align: right;">Sponsor:</td>
-      <td><%= @invoice.sponsor.name %></td>
-    </tr>
-    <tr>
-      <td style="text-align: right;">Amount:</td>
-      <td><%= @invoice.item_amount %></td>
-    </tr>
-    <tr>
-      <td style="text-align: right;">Created At:</td>
-      <td><%= format_datetime @invoice.created_at %></td>
-    </tr>
-    <tr>
-      <td style="text-align: right;">Sent By:</td>
-      <td><%= @invoice.creator.name %> &lt;<%= @invoice.creator.email %>&gt;</td>
-    </tr>
-    <tr>
-      <td style="text-align: right;">Memo:</td>
-      <td class="max-w-lg"><%= @invoice.memo %></td>
-    </tr>
-    <tr>
-      <td style="text-align: right;">StripeInvoiceId:</td>
-      <td><%= link_to @invoice.stripe_invoice_id, @invoice.stripe_dashboard_url, target: :_blank %></td>
-    </tr>
-    <tr>
-      <td style="text-align: right;">Invoice URL:</td>
-      <td>
-        <%= link_to "URL", @invoice.hosted_invoice_url, target: :_blank %>,
-        <%= link_to "PDF", @invoice.invoice_pdf %>
-      </td>
-    </tr>
-  </tbody>
-</table>
+      <div class="details m0">
+        <%= render "admin/review_fact", label: "Number", value: invoice.number, copy: invoice.number %>
+        <%= render "admin/review_fact", label: "Organization", value: link_to(invoice.event.name, invoice.event, target: "_top") %>
+        <%= render "admin/review_fact", label: "Sponsor", value: invoice.sponsor.name %>
+        <%= render "admin/review_fact", label: "Due", value: format_date(invoice.due_date) %>
+        <%= render "admin/review_fact", label: "Sent", value: format_datetime(invoice.created_at) %>
+        <%= render "admin/review_fact", label: "Sent by", value: user_mention(invoice.creator) %>
 
-<hr>
+        <% if invoice.amount_paid.present? && invoice.amount_paid != invoice.item_amount %>
+          <%= render "admin/review_fact", label: "Amount paid", value: render_money(invoice.amount_paid) %>
+        <% end %>
 
-<h3>Instructions</h3>
+        <%= render "admin/review_fact", label: "Memo", value: invoice.memo %>
+        <%= render "admin/review_fact", label: "Stripe ID", value: invoice.stripe_invoice_id, copy: invoice.stripe_invoice_id %>
+        <% invoice_pdf_url = external_url(invoice.invoice_pdf) %>
+        <% if invoice_pdf_url %>
+          <%= render "admin/review_fact", label: "PDF", value: link_to("Download", invoice_pdf_url, target: "_blank") %>
+        <% end %>
+      </div>
+    </section>
 
-<% if @invoice.open? %>
-  <p>Go to <%= link_to "this invoice", @invoice %>.</p>
+    <% if invoice.open? %>
+      <section class="card flex flex-col gap-3.5 overflow-visible">
+        <h3 class="eyebrow m-0">Mark as paid</h3>
 
-  <p>
-    Manually mark this invoice as paid. You'll want to do this if the sponsor pays via check or another method not built into our Stripe integration.
-  </p>
+        <span class="block text-[0.8125rem] leading-snug opacity-60">
+          Use this when the sponsor paid by check, or by another method that isn't wired into our
+          Stripe integration.
+        </span>
 
-  <p>
-    ⚠️ Warning: this action is permanent and irreversable. If you do this in error, a new invoice will have to be created for the sponsor, which will send them another email. Please exercise caution. Your account will be associated with this action.
-  </p>
+        <div class="card b--warning">
+          <p class="warning bold m0">
+            ⚠️ This is permanent and can't be undone. If you do it by mistake, a new invoice has to be
+            created for the sponsor, which emails them again. Your account is recorded against this action.
+          </p>
+        </div>
 
-  <%= form_with(model: false, local: true, url: invoice_mark_paid_admin_path(@invoice.id), method: :post) do |form| %>
-    <fieldset>
-      <legend>Manually Mark Paid</legend>
-      <p>
-        <%= form.label :reason, "Reason for manually marking as paid:" %>
-        <%= form.text_field :reason %>
-      </p>
+        <%= form_with(model: false, local: true, url: invoice_mark_paid_admin_path(invoice.id), method: :post, class: "flex flex-col gap-3.5 overflow-visible", data: { turbo_frame: "_top" }) do |form| %>
+          <div class="field">
+            <%= form.label :reason, "Reason" %>
+            <span class="block text-[0.8125rem] leading-snug opacity-60">How was this invoice actually paid?</span>
+            <%= form.text_field :reason, placeholder: "Paid by check #1234, deposited Jul 22", required: true %>
+          </div>
 
-      <p>
-        <%= form.file_field :attachment %>
-        <%= form.label :attachment, "(optional) attach a file giving more background (like a PDF of check, ACH, or wire image)" %>
-      </p>
-    </fieldset>
+          <div class="field">
+            <%= form.label :attachment, "Supporting file" %>
+            <span class="block text-[0.8125rem] leading-snug opacity-60">Optional — a PDF or image of the check, ACH, or wire.</span>
+            <%= form.file_field :attachment %>
+          </div>
 
-    <p>
-      <%= form.submit "Mark Paid", data: { turbo_confirm: "Mark paid? YOU CANNOT UNDO THIS." } %>
-    </p>
-  <% end %>
-<% else %>
-  <p>Nothing to do.</p>
+          <div>
+            <%= button_tag "Mark as paid", name: nil, class: "btn bg-success",
+                  data: { turbo_confirm: "Mark #{invoice.number} as paid? You cannot undo this.", turbo_confirm_danger: true } %>
+          </div>
+        <% end %>
+      </section>
+    <% else %>
+      <section class="card flex flex-col gap-3.5 overflow-visible">
+        <p class="m0">
+          This invoice is <strong><%= invoice.state_text.downcase %></strong> — there's nothing to process.
+        </p>
+      </section>
+    <% end %>
+  </div>
 <% end %>

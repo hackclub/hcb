@@ -273,6 +273,31 @@ a.card {
   }
 }
 
+// A flash that floats over the page instead of sitting in the flow. Slides up
+// on arrival and back down when the flash controller dismisses it.
+.flash--toast {
+  --flash-offset: 1rem;
+  animation: flash-slide-in 0.5s;
+
+  &.flash--dismissed {
+    translate: 0 calc(100% + var(--flash-offset));
+    display: none;
+    transition-property: translate, display;
+    transition-duration: 0.5s;
+    transition-behavior: allow-discrete;
+  }
+}
+
+@keyframes flash-slide-in {
+  from {
+    translate: 0 calc(100% + var(--flash-offset, 0));
+  }
+
+  to {
+    translate: 0 0;
+  }
+}
+
 .card--promo {
   background-size: cover;
   background-position: center center;

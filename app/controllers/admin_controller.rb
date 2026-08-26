@@ -3,6 +3,37 @@
 class AdminController < Admin::BaseController
   include Admin::TransferApprovable
 
+  def index
+    today = Date.current
+    start_date = today - 29.days
+    days = (start_date..today).to_a
+
+    stats = CanonicalTransaction.included_in_stats.where(date: start_date..today)
+    raised_by_day = stats.revenue.group("canonical_transactions.date").sum(:amount_cents)
+    spent_by_day = stats.expense.group("canonical_transactions.date").sum(:amount_cents)
+
+    # Amounts are signed (incoming positive, outgoing negative); expose spending
+    # as a positive magnitude for display, matching Event#total_spent_cents.
+    @raised_series = days.map { |date| { date: date.iso8601, value: raised_by_day[date].to_i } }
+    @spent_series = days.map { |date| { date: date.iso8601, value: spent_by_day[date].to_i.abs } }
+
+    @raised_today = raised_by_day[today].to_i
+    @spent_today = spent_by_day[today].to_i.abs
+
+    # Distinct teenagers with a non-impersonated session seen on each day.
+    active_teens_by_day = User::Session.not_impersonated
+                                       .joins(:user)
+                                       .where(users: { teenager: true })
+                                       .where(last_seen_at: start_date.beginning_of_day..today.end_of_day)
+                                       .group("date(user_sessions.last_seen_at)")
+                                       .distinct
+                                       .count(:user_id)
+    @active_teens_series = days.map { |date| { date: date.iso8601, value: active_teens_by_day[date].to_i } }
+    @active_teens_today = active_teens_by_day[today].to_i
+
+    @activities = PublicActivity::Activity.all.order(created_at: :desc).first(8)
+  end
+
   def nav
     @nav = Admin::Nav.new(page_title: params[:title])
 
@@ -77,6 +108,8 @@ class AdminController < Admin::BaseController
 
   def event_process
     @event = Event.friendly.find(params[:id])
+
+    render(layout: !turbo_frame_request?)
   end
 
   def event_new
@@ -155,9 +188,9 @@ class AdminController < Admin::BaseController
 
     state = ::EventService::ToggleApproved.new(@event).run
 
-    redirect_to event_process_admin_path(@event), flash: { success: "Successfully marked as #{state}" }
+    redirect_to event_process_return_path, flash: { success: "Successfully marked as #{state}" }
   rescue => e
-    redirect_to event_process_admin_path(@event), flash: { error: e.message }
+    redirect_to event_process_return_path, flash: { error: e.message }
   end
 
   def event_reject
@@ -165,9 +198,9 @@ class AdminController < Admin::BaseController
 
     state = ::EventService::Reject.new(@event).run
 
-    redirect_to event_process_admin_path(@event), flash: { success: "Event has been #{state}" }
+    redirect_to event_process_return_path, flash: { success: "Event has been #{state}" }
   rescue => e
-    redirect_to event_process_admin_path(@event), flash: { error: e.message }
+    redirect_to event_process_return_path, flash: { error: e.message }
   end
 
   def bank_fees
@@ -251,6 +284,7 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = params[:per] || 100
     @unique_bank_identifier = params[:unique_bank_identifier].presence
+    @bank_identifiers = known_bank_identifiers
 
     relation = RawCsvTransaction
     relation = relation.where(unique_bank_identifier: @unique_bank_identifier) if @unique_bank_identifier
@@ -261,6 +295,7 @@ class AdminController < Admin::BaseController
   end
 
   def raw_transaction_new
+    @bank_identifiers = known_bank_identifiers
   end
 
   def raw_transaction_create
@@ -611,7 +646,10 @@ class AdminController < Admin::BaseController
   end
 
   def stripe_card_personalization_design_create
-    return unless params[:logo].present?
+    if params[:logo].blank?
+      return redirect_to stripe_card_personalization_design_new_admin_index_path,
+                         flash: { error: "A PNG logo is required." }
+    end
 
     ::StripeCardService::PersonalizationDesign::Create.new(
       file: params[:logo],
@@ -621,11 +659,14 @@ class AdminController < Admin::BaseController
     ).run
 
     redirect_to stripe_card_personalization_designs_admin_index_path, flash: { success: "Successfully created #{params[:name]}" }
+  rescue => e
+    redirect_to stripe_card_personalization_design_new_admin_index_path, flash: { error: e.message }
   end
 
   def ach_start_approval
     @ach_transfer = AchTransfer.find(params[:id])
 
+    render(layout: !turbo_frame_request?)
   end
 
   def ach_approve
@@ -671,6 +712,7 @@ class AdminController < Admin::BaseController
   def disbursement_process
     @disbursement = Disbursement.find(params[:id])
 
+    render(layout: !turbo_frame_request?)
   end
 
   def disbursement_approve
@@ -775,6 +817,7 @@ class AdminController < Admin::BaseController
   def increase_check_process
     @check = IncreaseCheck.find(params[:id])
 
+    render(layout: !turbo_frame_request?)
   end
 
   def paypal_transfers
@@ -799,6 +842,7 @@ class AdminController < Admin::BaseController
   def paypal_transfer_process
     @paypal_transfer = PaypalTransfer.find(params[:id])
 
+    render(layout: !turbo_frame_request?)
   end
 
   def wires
@@ -882,10 +926,14 @@ class AdminController < Admin::BaseController
 
   def wire_process
     @wire = Wire.find(params[:id])
+
+    render(layout: !turbo_frame_request?)
   end
 
   def wise_transfer_process
     @wise_transfer = WiseTransfer.find(params[:id])
+
+    render(layout: !turbo_frame_request?)
   end
 
   def applications
@@ -1137,10 +1185,16 @@ class AdminController < Admin::BaseController
   def invoice_process
     @invoice = Invoice.find(params[:id])
 
+    render(layout: !turbo_frame_request?)
   end
 
   def invoice_mark_paid
-    @invoice = Invoice.open.find(params[:id])
+    @invoice = Invoice.find(params[:id])
+
+    unless @invoice.open?
+      return redirect_to invoice_process_admin_path(@invoice),
+                         flash: { error: "This invoice is already #{@invoice.state_text.downcase}." }
+    end
 
     ::InvoiceService::MarkPaid.new(
       invoice_id: @invoice.id,
@@ -1149,7 +1203,9 @@ class AdminController < Admin::BaseController
       user: current_user
     ).run
 
-    redirect_to invoices_admin_index_path, flash: { success: "Success" }
+    redirect_to invoices_admin_index_path, flash: { success: "Marked invoice #{@invoice.number} as paid" }
+  rescue => e
+    redirect_to invoice_process_admin_path(@invoice), flash: { error: e.message }
   end
 
   def sponsors
@@ -1673,6 +1729,37 @@ class AdminController < Admin::BaseController
   end
 
   private
+
+  # Where to send an admin after approving/rejecting an organization. The review
+  # modal is opened from the organizations table and passes the table's URL so
+  # the admin lands back on the same page of results, filters intact.
+  # The event process page is rendered inside a popover on the admin index
+  # pages, so we send the admin back where they came from. Only same-host paths
+  # are honoured; anything else falls back to the process page itself.
+  def event_process_return_path
+    fallback = event_process_admin_path(@event)
+    return_to = params[:return_to].presence
+    return fallback unless return_to&.start_with?("/")
+    return fallback if return_to.start_with?("//", "/\\")
+
+    absolute = begin
+      URI.join(request.base_url, return_to).to_s
+    rescue URI::Error
+      nil
+    end
+
+    (absolute && url_from(absolute)) || fallback
+  end
+
+  # Bank identifiers we've actually seen transactions for, for the raw
+  # transaction filter and manual-entry form.
+  def known_bank_identifiers
+    HashedTransaction
+      .where.not(unique_bank_identifier: nil)
+      .distinct
+      .order(unique_bank_identifier: :asc)
+      .pluck(:unique_bank_identifier)
+  end
 
   def cache_event_metric(metric_name, &block)
     @event = Event.friendly.find(params[:id])

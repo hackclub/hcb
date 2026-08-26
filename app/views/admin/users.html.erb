@@ -1,31 +1,18 @@
 <% title "Users" %>
 
-<%= form_with local: true, class: "card overflow-visible", url: users_admin_index_path, method: :get do |form| %>
-  <div class="flex gap-2 items-center">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: users_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
-    <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
+    <%= render "admin/filters/event", event: @event %>
   </div>
-
-  <div class="flex gap-2 items-center mt-2">
+  <div class="flex flex-wrap items-center gap-2">
     <%= form.select :access_level, User.access_levels.keys.map { |level| [level.humanize, level] }, { include_blank: "All user types", selected: @access_level } %>
     <%= form.select :referral_program_id, @referral_programs.map { |program| [program.name, program.id] }, { include_blank: "No referral filter", selected: @referral_program_id } %>
-  </div>
-
-  <div class="flex items-center mt-2 gap-4 flex-wrap">
-    <%= link_to @params.merge(format: :csv) do %>
-      <button class="btn" type="button" <%= "disabled" if @users.empty? %>>Export <%= pluralize @users.count, "record" %></button>
-    <% end %>
-    <%= form.submit "Search", class: "ml-auto" %>
+    <%= render "admin/filters/actions", form:, export_count: @users.count, export_params: @params %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @users, entry_name: "users" %>
-  </div>
-  <%= paginate @users %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -106,4 +93,11 @@
   </tbody>
 </table>
 
-<%= paginate @users %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @users, entry_name: "users" %>
+  </div>
+  <%= paginate @users %>
+</div>
+
+</div>

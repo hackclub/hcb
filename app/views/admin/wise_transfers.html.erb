@@ -1,27 +1,19 @@
 <% title "Wise Transfers" %>
 
-<%= form_with local: true, class: "card overflow-visible", url: wise_transfers_admin_index_path, method: :get do |form| %>
-  <div class="flex flex-col sm:flex-row items-center gap-2">
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: wise_transfers_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
     <%= render "events/filters/search", form: %>
-    <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-72", value: @event&.to_combobox_display %>
-    <%= form.collection_select(:status, WiseTransfer.aasm.states, :name, :human_name, { include_blank: "Filter by status", selected: @status }) %>
+    <%= render "admin/filters/event", event: @event %>
+    <%= form.collection_select(:status, WiseTransfer.aasm.states, :name, :human_name, { include_blank: "All statuses", selected: @status }) %>
     <%= render "admin/date_range_filter", start_date: @start_date, end_date: @end_date %>
   </div>
-  <div class="flex items-center mt-2 gap-4 flex-wrap">
-    <%= form.label :exclude_reimbursements do %>
-      <%= form.check_box :exclude_reimbursements, checked: @exclude_reimbursements %> Exclude Reimbursements
-    <% end %>
-    <%= form.submit "Search", class: "ml-auto" %>
+  <div class="flex flex-wrap items-center gap-2">
+    <%= render "admin/filters/toggle", form:, name: :exclude_reimbursements, label: "Exclude reimbursements", checked: @exclude_reimbursements %>
+    <%= render "admin/filters/actions", form: %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @wise_transfers, entry_name: "transfers" %>
-  </div>
-  <%= paginate @wise_transfers %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -36,7 +28,7 @@
   </thead>
   <tbody>
     <% @wise_transfers.each do |wise_transfer| %>
-      <tr class="<%= "admin-bg-pending" if wise_transfer.pending? %> <%= "admin-bg-transit" if wise_transfer.approved? %>">
+      <tr class="<%= "shade-yellow" if wise_transfer.pending? %> <%= "shade-cyan" if wise_transfer.approved? %>">
         <td><%= wise_transfer.id %></td>
         <td><%= wise_transfer.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= wise_transfer.event.name %></td>
@@ -44,12 +36,21 @@
         <td><%= Money.from_cents(wise_transfer.amount_cents, wise_transfer.currency).format %></td>
         <td><%= wise_transfer.aasm.human_state %></td>
         <td>
-          <%= link_to "View", hcb_code_path(wise_transfer.hcb_code) %>
-          <%= link_to "Process", wise_transfer_process_admin_path(wise_transfer) %>
+          <div class="flex items-center gap-2">
+            <%= pop_icon_to "external", hcb_code_path(wise_transfer.hcb_code), "aria-label": "View", data: admin_popover_data_for(wise_transfer) %>
+            <%= link_to "Process", wise_transfer_process_admin_path(wise_transfer), class: "btn", data: admin_process_popover_data(wise_transfer) %>
+          </div>
         </td>
       </tr>
     <% end %>
   </tbody>
 </table>
 
-<%= paginate @wise_transfers %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @wise_transfers, entry_name: "transfers" %>
+  </div>
+  <%= paginate @wise_transfers %>
+</div>
+
+</div>
