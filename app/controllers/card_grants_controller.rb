@@ -283,6 +283,13 @@ class CardGrantsController < ApplicationController
     authorize @card_grant
 
     report = @card_grant.with_lock do
+      # Re-check inside the lock: a concurrent `activate` may have issued a
+      # virtual card after `accept_as_reimbursement?` was authorized. Switching
+      # an activated grant is a conversion, gated by `#convert_to_reimbursement_report?`.
+      if @card_grant.reimbursement_report.nil? && @card_grant.stripe_card_id.present?
+        raise ArgumentError, "a virtual card has already been activated for this grant"
+      end
+
       @card_grant.reimbursement_report || @card_grant.convert_to_reimbursement_report!
     end
 
