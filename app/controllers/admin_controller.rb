@@ -65,7 +65,7 @@ class AdminController < Admin::BaseController
       @stale_remap = true
       @remap_confirm_msg = "⚠️ This transaction was already mapped to \"#{@canonical_transaction.event&.name}\" #{helpers.time_ago_in_words(@canonical_transaction.canonical_event_mapping.created_at)} ago. Remapping it now may disrupt our accounting. Are you absolutely sure you want to remap this transaction?"
       @remap_confirm_phrase = "REMAP #{@canonical_transaction.id}"
-      @remap_after_message = "Please contact Sierra and the HCB Ops team right away to let them know you remapped transaction ##{@canonical_transaction.id}."
+      @remap_after_message = "Please contact Sierra in the #hcb-ops channel to let them know you remapped transaction ##{@canonical_transaction.id}."
       @remap_warning_tooltip = "This transaction was already mapped #{helpers.time_ago_in_words(@canonical_transaction.canonical_event_mapping.created_at)} ago — remapping it requires extra confirmation."
     end
   end
