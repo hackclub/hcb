@@ -51,14 +51,22 @@
         <%= hidden_field_tag :manual, manual.to_s, data: { "manual-payee-target": "payeeFormManualField" } %>
       <% end %>
 
-      <div class="flex flex-col gap-3">
+      <div class="flex flex-col gap-3"
+        data-controller="payee-duplicate-check"
+        data-payee-duplicate-check-url-value="<%= check_duplicate_event_payees_path(event_id: event.slug) %>">
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
           <%= label_tag :name, "Name" %>
           <%= text_field_tag :name, params[:payee_name], placeholder: "Orpheus", required: true, form: "new-payee-form", data: { "manual-payee-target": "nameInput" } %>
         </div>
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
           <%= label_tag :email, "Email" %>
-          <%= email_field_tag :email, params[:payee_email], placeholder: "orpheus@hackclub.com", required: true, form: "new-payee-form", data: { "manual-payee-target": "emailInput" } %>
+          <%= email_field_tag :email, params[:payee_email], placeholder: "orpheus@hackclub.com", required: true, form: "new-payee-form", data: { "manual-payee-target": "emailInput", "payee-duplicate-check-target": "email", action: "input->payee-duplicate-check#check" } %>
+        </div>
+
+        <div data-payee-duplicate-check-target="warning" hidden>
+          <%= render "application/callout", type: "warning", icon: "important", title: "You already have a recipient with this email", class: "mt-0 mb-0" do %>
+            It's linked to <strong data-payee-duplicate-check-target="names"></strong>. If that's the same person or business, go back and pick them instead of adding a duplicate. Only add a new recipient here if this is a separate legal entity — like the same person's different business.
+          <% end %>
         </div>
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2" data-manual-payee-target="manualOnly" <%= "hidden" unless manual %>>
           <%= label_tag :payee_entity_type, "Recipient type" %>

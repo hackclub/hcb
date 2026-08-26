@@ -3,7 +3,7 @@
 class PayeesController < ApplicationController
   include SetEvent
 
-  before_action :set_event, only: [:index, :create, :update, :archive]
+  before_action :set_event, only: [:index, :create, :update, :archive, :check_duplicate]
   before_action :set_payee, only: [:choose_legal_entity, :set_legal_entity]
 
   class InvalidManualPayeeEntityType < StandardError; end
@@ -18,6 +18,23 @@ class PayeesController < ApplicationController
     @payees = [selected, *payees.to_a].compact.uniq.first(15)
 
     render layout: false
+  end
+
+  def check_duplicate
+    authorize @event.payees.build, :create?
+
+    email = params[:email].to_s.strip.downcase
+
+    recipients = if email.present?
+                   @event.payees.not_archived.where(email:).order(created_at: :desc)
+                 else
+                   Payee.none
+                 end
+
+    render json: {
+      duplicate: recipients.any?,
+      recipients: recipients.map { |recipient| { name: recipient.display_name, email: recipient.email } }
+    }
   end
 
   def create

@@ -5,10 +5,60 @@ require "rails_helper"
 RSpec.describe PayeesController do
   include SessionSupport
 
-  describe "POST #create" do
-    let(:user) { create(:user) }
-    let(:event) { create(:event, organizers: [user]) }
+  let(:user) { create(:user) }
+  let(:event) { create(:event, organizers: [user]) }
 
+  describe "GET #check_duplicate" do
+    before do
+      Flipper.enable(:payments_contractors_refresh_2026_06_26, event)
+      create_session(user, verified: true)
+    end
+
+    it "flags an email that already belongs to a recipient in the event" do
+      existing = create(:payee, event:, display_name: "Orpheus", email: "orpheus@hackclub.com")
+
+      get :check_duplicate, params: { event_id: event.slug, email: "Orpheus@hackclub.com" }
+
+      body = response.parsed_body
+      expect(body["duplicate"]).to be(true)
+      expect(body["recipients"]).to eq([{ "name" => existing.display_name, "email" => existing.email }])
+    end
+
+    it "does not flag an email with no matching recipient" do
+      create(:payee, event:, email: "orpheus@hackclub.com")
+
+      get :check_duplicate, params: { event_id: event.slug, email: "someone-else@hackclub.com" }
+
+      body = response.parsed_body
+      expect(body["duplicate"]).to be(false)
+      expect(body["recipients"]).to eq([])
+    end
+
+    it "ignores recipients from other events" do
+      other_event = create(:event)
+      create(:payee, event: other_event, email: "orpheus@hackclub.com")
+
+      get :check_duplicate, params: { event_id: event.slug, email: "orpheus@hackclub.com" }
+
+      expect(response.parsed_body["duplicate"]).to be(false)
+    end
+
+    it "ignores archived recipients" do
+      create(:payee, event:, email: "orpheus@hackclub.com").archive!
+
+      get :check_duplicate, params: { event_id: event.slug, email: "orpheus@hackclub.com" }
+
+      expect(response.parsed_body["duplicate"]).to be(false)
+    end
+
+    it "returns no duplicate for a blank email" do
+      get :check_duplicate, params: { event_id: event.slug, email: "" }
+
+      expect(response.parsed_body["duplicate"]).to be(false)
+    end
+  end
+
+  describe "POST #create" do
     before do
       Flipper.enable(:payments_contractors_refresh_2026_06_26, event)
       create_session(user, verified: true)
