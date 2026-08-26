@@ -36,7 +36,10 @@
     <% end %>
   </div>
 
-  <div data-payee-picker-target="addingPanel" hidden>
+  <div data-payee-picker-target="addingPanel" hidden
+       data-controller="payee-duplicate-check"
+       data-payee-duplicate-check-url-value="<%= check_email_event_payees_path(event_id: event.slug) %>"
+       data-payee-duplicate-check-destination-value="<%= destination %>">
     <div class="px-4 py-3">
       <button type="button" class="btn mb-3" data-action="payee-picker#hideAdding">
         <%= inline_icon "view-back" %>
@@ -58,7 +61,18 @@
         </div>
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
           <%= label_tag :email, "Email" %>
-          <%= email_field_tag :email, params[:payee_email], placeholder: "orpheus@hackclub.com", required: true, form: "new-payee-form", data: { "manual-payee-target": "emailInput" } %>
+          <%= email_field_tag :email, params[:payee_email], placeholder: "orpheus@hackclub.com", required: true, form: "new-payee-form", data: { "manual-payee-target": "emailInput", "payee-duplicate-check-target": "emailInput", action: "input->payee-duplicate-check#check" } %>
+        </div>
+
+        <div data-payee-duplicate-check-target="warning" hidden class="flex flex-col card border b--warning p-4 mt-0 mb-0 gap-1">
+          <div class="flex items-center warning">
+            <%= inline_icon "important", size: 24, class: "mr1 shrink-0" %>
+            <p class="bold m-0">You already have a recipient with this email</p>
+          </div>
+          <p class="m-0 text-sm">
+            This email is already used by <span data-payee-duplicate-check-target="list"></span>.
+            Only add a new recipient if this is a different person or legal entity &mdash; otherwise go back and select the existing one.
+          </p>
         </div>
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2" data-manual-payee-target="manualOnly" <%= "hidden" unless manual %>>
           <%= label_tag :payee_entity_type, "Recipient type" %>
