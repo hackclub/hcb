@@ -14,7 +14,7 @@
         <tr>
           <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis;"><%= check.payment_for %></td>
           <td><%= check.memo %></td>
-          <td><%= render_money check.amount %></td>
+          <td><%= render_money check.amount_cents %></td>
           <td><%= check.aasm_state %></td>
           <td><%= check.approved_at %></td>
           <td><%= link_to "View", hcb_code_path(check.hcb_code), data: { turbo_frame: "_top" } %></td>
