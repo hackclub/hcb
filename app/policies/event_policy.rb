@@ -59,6 +59,7 @@ class EventPolicy < ApplicationPolicy
   def pin?
     admin_or_member?
   end
+  alias_method :unpin?, :pin?
 
   def permit_merchant?
     admin_or_member?
@@ -223,7 +224,7 @@ class EventPolicy < ApplicationPolicy
     (is_public || auditor_or_reader?) && (record.subevents_enabled? || record.visible_subevents(user).exists?)
   end
 
-  alias async_sub_organizations_graph? sub_organizations?
+  alias async_sub_organization_rows? sub_organizations?
 
   def sub_organizations_in_v4?
     auditor_or_reader? && sub_organizations?
@@ -292,11 +293,13 @@ class EventPolicy < ApplicationPolicy
   end
 
   def ledger?
-    auditor? || (reader? && (Flipper.enabled?(:new_ledger_2026_06_30, record) || Flipper.enabled?(:new_ledger_2026_07_17, user)))
+    is_public || auditor_or_reader?
   end
 
+  alias_method :ledger_stats?, :ledger?
+
   def toggle_new_ledger?
-    auditor_or_reader?
+    is_public || auditor_or_reader?
   end
 
   alias hide_onboarding_message? request_call?
