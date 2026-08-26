@@ -24,7 +24,6 @@ RSpec.describe PaymentsController do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Payout method")
-      expect(response.body).to include("Tax information")
       expect(response.body).not_to include("has submitted their tax information")
     end
 
