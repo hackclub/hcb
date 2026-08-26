@@ -20,7 +20,7 @@
       check_number: @check.check_number,
       date: (@check.approved_at || @check.created_at).strftime("%b %d, %Y"),
       recipient_name: @check.recipient_name,
-      amount: @check.amount,
+      amount: @check.amount_cents,
       memo: @check.memo,
       account_details: @account_details %>
 
@@ -31,7 +31,7 @@
         <span class="regular muted">Check to</span>
         <%= @hcb_code.increase_check.recipient_name %>
         <span class="regular muted">for</span>
-        <span class="regular"><%= render_money @hcb_code.increase_check.amount %></span>
+        <span class="regular"><%= render_money @hcb_code.increase_check.amount_cents %></span>
       </span>
       <span class="badge h4 nowrap bg-<%= @hcb_code.increase_check.state %>">
         <%= @hcb_code.increase_check.state_text %>
