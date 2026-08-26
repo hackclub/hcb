@@ -76,4 +76,86 @@ RSpec.describe PayeesController do
     end
   end
 
+  describe "GET #check_email" do
+    let(:user) { create(:user) }
+    let(:event) { create(:event, organizers: [user]) }
+
+    before do
+      Flipper.enable(:payments_contractors_refresh_2026_06_26, event)
+      create_session(user, verified: true)
+    end
+
+    it "reports no duplicate when the email is unused" do
+      get :check_email, params: { event_id: event.slug, email: "orpheus@hackclub.com" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to eq("duplicate" => false)
+    end
+
+    it "reports no duplicate when the email is blank" do
+      get :check_email, params: { event_id: event.slug, email: "  " }
+
+      expect(response.parsed_body).to eq("duplicate" => false)
+    end
+
+    it "reports a duplicate, normalizing case and whitespace, with the matching names" do
+      existing = event.payees.create!(display_name: "Orpheus", email: "orpheus@hackclub.com")
+
+      get :check_email, params: { event_id: event.slug, email: "  Orpheus@Hackclub.com  " }
+
+      expect(response.parsed_body).to eq(
+        "duplicate" => true,
+        "email"     => "orpheus@hackclub.com",
+        "names"     => [existing.display_name]
+      )
+    end
+
+    it "lists every non-archived recipient sharing the email, oldest first" do
+      first = event.payees.create!(display_name: "Orpheus Inc.", email: "orpheus@hackclub.com")
+      second = event.payees.create!(display_name: "Orpheus LLC", email: "orpheus@hackclub.com")
+      archived = event.payees.create!(display_name: "Old Orpheus", email: "orpheus@hackclub.com")
+      archived.archive!
+
+      get :check_email, params: { event_id: event.slug, email: "orpheus@hackclub.com" }
+
+      expect(response.parsed_body["duplicate"]).to be(true)
+      expect(response.parsed_body["names"]).to eq([first.display_name, second.display_name])
+    end
+
+    it "excludes the recipient being edited from its own duplicate check" do
+      editing = event.payees.create!(display_name: "Orpheus", email: "orpheus@hackclub.com")
+
+      get :check_email, params: {
+        event_id: event.slug,
+        email: "orpheus@hackclub.com",
+        exclude_payee_id: editing.hashid
+      }
+
+      expect(response.parsed_body).to eq("duplicate" => false)
+    end
+
+    it "still flags other recipients when excluding the one being edited" do
+      editing = event.payees.create!(display_name: "Orpheus", email: "orpheus@hackclub.com")
+      other = event.payees.create!(display_name: "Orpheus LLC", email: "orpheus@hackclub.com")
+
+      get :check_email, params: {
+        event_id: event.slug,
+        email: "orpheus@hackclub.com",
+        exclude_payee_id: editing.hashid
+      }
+
+      expect(response.parsed_body["duplicate"]).to be(true)
+      expect(response.parsed_body["names"]).to eq([other.display_name])
+    end
+
+    it "scopes matches to the current event" do
+      other_event = create(:event, organizers: [user])
+      other_event.payees.create!(display_name: "Orpheus", email: "orpheus@hackclub.com")
+
+      get :check_email, params: { event_id: event.slug, email: "orpheus@hackclub.com" }
+
+      expect(response.parsed_body).to eq("duplicate" => false)
+    end
+  end
+
 end

@@ -3,7 +3,7 @@
 class PayeesController < ApplicationController
   include SetEvent
 
-  before_action :set_event, only: [:index, :create, :update, :archive]
+  before_action :set_event, only: [:index, :create, :update, :archive, :check_email]
   before_action :set_payee, only: [:choose_legal_entity, :set_legal_entity]
 
   class InvalidManualPayeeEntityType < StandardError; end
@@ -18,6 +18,37 @@ class PayeesController < ApplicationController
     @payees = [selected, *payees.to_a].compact.uniq.first(15)
 
     render layout: false
+  end
+
+  def check_email
+    authorize @event, :create_payment?
+
+    # Normalize the same way Payee does so the lookup matches how emails are
+    # stored (see Payee's `normalizes :email`).
+    email = params[:email].to_s.strip.downcase
+
+    if email.blank?
+      return render json: { duplicate: false }
+    end
+
+    matches = @event.payees.not_archived.where(email:).order(created_at: :asc)
+
+    # When editing an existing recipient, don't warn about that recipient's own
+    # email — only about *other* recipients that happen to share it.
+    if params[:exclude_payee_id].present?
+      excluded = @event.payees.find_by_hashid(params[:exclude_payee_id])
+      matches = matches.where.not(id: excluded.id) if excluded
+    end
+
+    if matches.exists?
+      render json: {
+        duplicate: true,
+        email:,
+        names: matches.pluck(:display_name)
+      }
+    else
+      render json: { duplicate: false }
+    end
   end
 
   def create

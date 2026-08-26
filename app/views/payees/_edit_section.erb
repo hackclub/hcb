@@ -12,9 +12,17 @@
           <%= form.label :display_name, "Name" %>
           <%= form.text_field :display_name, value: payee.display_name, class: "!max-w-full", required: true %>
         </div>
-        <div>
+        <div data-controller="payee-email-check"
+             data-payee-email-check-url-value="<%= check_email_event_payees_path(event_id: event.slug, exclude_payee_id: payee.hashid) %>">
           <%= form.label :email, "Email" %>
-          <%= form.email_field :email, value: payee.email, class: "!max-w-full", required: true %>
+          <%= form.email_field :email, value: payee.email, class: "!max-w-full", required: true, data: { action: "input->payee-email-check#check" } %>
+          <div data-payee-email-check-target="warning" hidden>
+            <%= render "application/callout", type: "warning", icon: "important", title: "This email is already on another recipient", class: "mt-0 mb-0" do %>
+              This email already belongs to <strong data-payee-email-check-target="names"></strong>.
+              Keep them separate only if this is a distinct legal entity — for example, the same
+              person paid through a different business.
+            <% end %>
+          </div>
         </div>
       </div>
 
