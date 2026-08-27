@@ -711,9 +711,9 @@ RSpec.describe EventsController do
           format: :turbo_stream)
 
       expect(response.body).to include("event_balance_#{transparent_sub.public_id}")
-      expect(response.body).to include(money(transparent_sub.balance_available_v2_cents))
+      expect(response.body).to include(money(transparent_sub.ledger.balance_cents))
       expect(response.body).to include("event_balance_#{grandchild.public_id}")
-      expect(response.body).to include(money(grandchild.balance_available_v2_cents))
+      expect(response.body).to include(money(grandchild.ledger.balance_cents))
     end
 
     it "skips a private descendant for a signed out visitor", :aggregate_failures do

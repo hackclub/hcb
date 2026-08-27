@@ -361,12 +361,6 @@ module EventsHelper
     false
   end
 
-  def cached_available_balance_cents(event)
-    Rails.cache.fetch("event_balance_available_v2_cents_#{event.id}", expires_in: 5.minutes) do
-      event.balance_available_v2_cents
-    end
-  end
-
   def paypal_transfers_airtable_form_url(embed: false, event: nil, user: nil)
     # The airtable form is located within the Bank Promotions base
     form_id = "4j6xJB5hoRus"

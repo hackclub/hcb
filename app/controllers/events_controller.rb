@@ -559,6 +559,7 @@ class EventsController < ApplicationController
     requested_ids = Array(params[:ids]).map(&:to_i)
 
     @balance_events = Event.where(id: requested_ids).where(id: visible_descendant_ids)
+    @balance_cents_by_event_id = Ledger.balance_cents_by_event_id(@balance_events)
 
     render :async_sub_organization_balances, layout: false
   end

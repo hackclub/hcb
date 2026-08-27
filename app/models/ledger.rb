@@ -50,6 +50,13 @@ class Ledger < ApplicationRecord
   monetize def balance_cents = items.sum(:amount_cents)
   monetize def available_balance_cents = items.sum(:amount_cents) - fronted_fee_balance_cents
 
+  def self.balance_cents_by_event_id(events)
+    Ledger::Mapping.joins(:ledger, :ledger_item)
+                   .where(ledgers: { primary: true, event: events })
+                   .group("ledgers.event_id")
+                   .sum("ledger_items.amount_cents")
+  end
+
   def can_front_balance?
     event&.can_front_balance? || card_grant&.event&.can_front_balance? || false
   end
