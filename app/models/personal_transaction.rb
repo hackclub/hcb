@@ -42,22 +42,7 @@ class PersonalTransaction < ApplicationRecord
   before_create :send_invoice, if: -> { invoice.nil? }
 
   after_create do
-    # Calling this on either side syncs marked_no_or_lost_receipt_at onto both
-    # hcb_code and ledger_item (Receiptable#sync_no_or_lost_receipt!), so that
-    # part doesn't depend on which one we call here. What does depend on it:
-    # CardLocking::ReceiptResolution.on_no_or_lost_receipt only materializes
-    # card-locking state (and checks the cardholder's unlock) for whichever
-    # object it's handed, gated on `is_a?(HcbCode)` — the sync's plain
-    # `counterpart.update!` on the other side never re-triggers that. Calling
-    # ledger_item.no_or_lost_receipt! would still mark hcb_code correctly, but
-    # would skip clearing hcb_code's own receipt_due_at/receipt_resolved_at
-    # and skip the unlock check — and since a marked charge no longer matches
-    # HcbCode.card_locking_candidates, nothing else revisits it to fix that up
-    # later. Confirmed by spying on CardLocking::ReceiptResolution: calling
-    # this on ledger_item syncs hcb_code's column but passes the Ledger::Item,
-    # never the HcbCode, into on_no_or_lost_receipt.
-    hcb_code = ledger_item.hcb_code
-    hcb_code.no_or_lost_receipt! if hcb_code.missing_receipt?
+    ledger_item.no_or_lost_receipt! if ledger_item.missing_receipt?
   end
 
   private
