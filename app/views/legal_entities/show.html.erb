@@ -160,7 +160,7 @@
     </p>
 
     <% if @legal_entity.managed? %>
-      <p>Once your submission is verified, you'll be able to receive payments from any organization on HCB.
+      <p>Once your submission is verified, you'll be able to receive payments from any organization on HCB.</p>
     <% else %>
       <p>
         While we process your submission, <%= @legal_entity.default_payout_method.present? ? "review your" : "add a" %>
