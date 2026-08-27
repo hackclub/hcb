@@ -19,7 +19,7 @@ module RuboCop
       #   # also good — renders a real <form>
       #   button_to "Accept invitation", accept_path, method: :post
       class TurboMethod < Base
-        MSG = "Use `data: { turbo_method: %<verb>s }` instead of `method: %<verb>s`. " \
+        MSG = "Use `data: { turbo_method: %{verb} }` instead of `method: %{verb}`. " \
               "Turbo ignores `data-method`, so this link falls back to a GET and 404s."
 
         LINK_HELPERS = %i[link_to pop_icon_to].freeze
