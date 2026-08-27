@@ -92,7 +92,7 @@
       <p>To whom it may concern,</p>
       <p>
         This letter serves as a confirmation that Hack Club<% if !@event.omit_stats? %>, on behalf of
-        <%= @event.name %>,<% end %> has transferred <%= render_money @ach_transfer.amount %> to
+        <%= @event.name %>,<% end %> has transferred <%= render_money @ach_transfer.amount_cents %> to
         <%= @ach_transfer.recipient_name %> for the reason of <em>"<%= @ach_transfer.payment_for %>"</em>.
       </p>
 
@@ -132,7 +132,7 @@
           </tr>
           <tr>
             <td class="bold">Amount</td>
-            <td colspan="2"><%= render_money @ach_transfer.amount %></td>
+            <td colspan="2"><%= render_money @ach_transfer.amount_cents %></td>
           </tr>
         </tbody>
       </table>

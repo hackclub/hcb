@@ -22,7 +22,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_120000) do
     t.string "aasm_state", null: false
     t.string "account_number_bidx"
     t.text "account_number_ciphertext"
-    t.integer "amount"
+    t.integer "amount_cents"
     t.datetime "approved_at", precision: nil
     t.string "bank_name"
     t.text "column_id"

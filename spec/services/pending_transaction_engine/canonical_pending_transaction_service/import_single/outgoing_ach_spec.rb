@@ -8,7 +8,7 @@ describe PendingTransactionEngine::CanonicalPendingTransactionService::ImportSin
   let(:ach_transfer) {
     create(:ach_transfer,
            event:,
-           amount: 1000,
+           amount_cents: 1000,
            aasm_state: "deposited",
            recipient_email: "example@example.com",
 

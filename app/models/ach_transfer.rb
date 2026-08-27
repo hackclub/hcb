@@ -8,7 +8,7 @@
 #  aasm_state                :string           not null
 #  account_number_bidx       :string
 #  account_number_ciphertext :text
-#  amount                    :integer
+#  amount_cents              :integer
 #  approved_at               :datetime
 #  bank_name                 :string
 #  company_entry_description :string
@@ -57,7 +57,7 @@ class AchTransfer < ApplicationRecord
   blind_index :account_number
   has_encrypted :routing_number
   blind_index :routing_number
-  monetize :amount, as: "amount_money"
+  monetize :amount_cents, as: "amount_money"
 
   include Hashid::Rails
   hashid_config salt: ""
@@ -86,7 +86,7 @@ class AchTransfer < ApplicationRecord
   belongs_to :processor, class_name: "User", optional: true
   belongs_to :event
 
-  validates :amount, numericality: { greater_than: 0, message: "must be greater than 0" }
+  validates :amount_cents, numericality: { greater_than: 0, message: "must be greater than 0" }
 
   validates :routing_number, presence: true, unless: :payment_recipient
   validates :account_number, presence: true, unless: :payment_recipient
@@ -101,7 +101,7 @@ class AchTransfer < ApplicationRecord
   validates_presence_of :recipient_email, on: :create
   validate :scheduled_on_must_be_in_the_future, on: :create
   validate on: :create do
-    if amount > event.balance_available_v2_cents
+    if amount_cents > event.balance_available_v2_cents
       errors.add(:base, "You don't have enough money to send this transfer! Your balance is #{(event.balance_available_v2_cents / 100).to_money.format}.")
     end
   end
@@ -203,10 +203,10 @@ class AchTransfer < ApplicationRecord
   has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::ACH_TRANSFER_CODE, eager_create: true
 
   after_create unless: -> { scheduled_on.present? } do
-    create_raw_pending_outgoing_ach_transaction!(amount_cents: -amount, date_posted: scheduled_on || created_at)
+    create_raw_pending_outgoing_ach_transaction!(amount_cents: -amount_cents, date_posted: scheduled_on || created_at)
     raw_pending_outgoing_ach_transaction.create_canonical_pending_transaction!(
       event:,
-      amount_cents: -amount,
+      amount_cents: -amount_cents,
       memo: raw_pending_outgoing_ach_transaction.memo,
       date: raw_pending_outgoing_ach_transaction.date_posted,
     )
@@ -219,7 +219,7 @@ class AchTransfer < ApplicationRecord
 
     column_ach_transfer = ColumnService.post("/transfers/ach", {
       idempotency_key: self.id.to_s,
-      amount:,
+      amount: amount_cents,
       currency_code: "USD",
       type: "CREDIT",
       entry_class_code: "PPD",
@@ -254,7 +254,7 @@ class AchTransfer < ApplicationRecord
 
     column_realtime_transfer = ColumnService.post("/transfers/realtime", {
       idempotency_key: self.id.to_s,
-      amount:,
+      amount: amount_cents,
       currency_code: "USD",
       counterparty_id: column_counterparty["id"],
       description: payment_for,
@@ -293,7 +293,7 @@ class AchTransfer < ApplicationRecord
   def approve!(processed_by = nil, send_realtime: false)
     GovernanceService::Admin::Transfer::Approval.new(
       transfer: self,
-      amount_cents: amount,
+      amount_cents:,
       user: processed_by,
     ).ensure_may_approve!
 
@@ -351,7 +351,7 @@ class AchTransfer < ApplicationRecord
   end
 
   def admin_dropdown_description
-    "#{event.name} - #{recipient_name} | #{ApplicationController.helpers.render_money amount}"
+    "#{event.name} - #{recipient_name} | #{ApplicationController.helpers.render_money amount_cents}"
   end
 
   def smart_memo

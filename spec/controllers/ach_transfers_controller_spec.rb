@@ -95,7 +95,7 @@ describe AchTransfersController do
       expect(ach_transfer.bank_name).to eq("The Bank of Nova Scotia")
       expect(ach_transfer.recipient_name).to eq("Orpheus")
       expect(ach_transfer.recipient_email).to eq("orpheus@example.com")
-      expect(ach_transfer.amount).to eq(100_00)
+      expect(ach_transfer.amount_cents).to eq(100_00)
       expect(ach_transfer.payment_for).to eq("Snacks")
       expect(ach_transfer.send_email_notification).to eq(false)
       expect(ach_transfer.invoiced_at).to eq(Date.new(2025, 1, 1))
@@ -145,7 +145,7 @@ describe AchTransfersController do
       expect(response).to redirect_to(event_transfers_path(event))
       ach_transfer = event.ach_transfers.sole
       expect(ach_transfer.payment_for).to eq("Snacks")
-      expect(ach_transfer.amount).to eq(500_01)
+      expect(ach_transfer.amount_cents).to eq(500_01)
     end
   end
 end

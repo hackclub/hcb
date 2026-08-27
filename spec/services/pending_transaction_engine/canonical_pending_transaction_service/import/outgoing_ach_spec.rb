@@ -8,7 +8,7 @@ describe PendingTransactionEngine::CanonicalPendingTransactionService::Import::O
   let(:ach_transfer) {
     create(:ach_transfer,
            event:,
-           amount: 1000,
+           amount_cents: 1000,
            aasm_state: "deposited",
            recipient_email: "example@example.com",
 
@@ -55,7 +55,7 @@ describe PendingTransactionEngine::CanonicalPendingTransactionService::Import::O
       it "processes into a CanonicalPendingTransaction" do
         new_ach_transfer = create(:ach_transfer,
                                   event:,
-                                  amount: 1000,
+                                  amount_cents: 1000,
                                   aasm_state: "deposited",
                                   recipient_email: "example1@example.com",
                                   scheduled_on: Date.current + 1.day )
