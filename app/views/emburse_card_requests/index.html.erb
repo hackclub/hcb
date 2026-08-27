@@ -26,7 +26,7 @@
         <% if emburse_card_request.under_review? %>
           <td><%= link_to "Show", emburse_card_request %></td>
           <td><%= link_to "Edit", edit_emburse_card_request_path(emburse_card_request) %></td>
-          <td><%= link_to "Reject", emburse_card_request_reject_path(emburse_card_request), method: :post %></td>
+          <td><%= link_to "Reject", emburse_card_request_reject_path(emburse_card_request), data: { turbo_method: :post } %></td>
         <% end %>
       </tr>
     <% end %>
