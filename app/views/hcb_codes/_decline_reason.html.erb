@@ -152,7 +152,7 @@
 
       <br>
 
-      <span class="mt-2 block">If this transaction was intentional, double check the card details and try again. If you don't recognize this transaction, <%= link_to "freeze your card", stripe_card_url(hcb_code.stripe_card), method: :post %>.</span>
+      <span class="mt-2 block">If this transaction was intentional, double check the card details and try again. If you don't recognize this transaction, <%= link_to "freeze your card", stripe_card_url(hcb_code.stripe_card), data: { turbo_method: :post } %>.</span>
     <% elsif hcb_decline_reason != :inadequate_balance %>
       Try again, or contact the HCB team at <%= mail_to "hcb@hackclub.com" %>.
 
