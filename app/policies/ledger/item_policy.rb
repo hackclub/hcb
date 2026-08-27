@@ -19,6 +19,10 @@ class Ledger
       OrganizerPosition.role_at_least?(user, record.primary_ledger&.event, :member)
     end
 
+    def invoice_as_personal_transaction?
+      OrganizerPosition.role_at_least?(user, record.primary_ledger&.event, :member)
+    end
+
   end
 
 end

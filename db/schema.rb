@@ -2077,6 +2077,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_003730) do
     t.index ["payee_id"], name: "index_payroll_positions_on_payee_id"
   end
 
+  create_table "personal_transactions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "invoice_id", null: false
+    t.bigint "ledger_item_id", null: false
+    t.bigint "reporter_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invoice_id"], name: "index_personal_transactions_on_invoice_id"
+    t.index ["ledger_item_id"], name: "index_personal_transactions_on_ledger_item_id", unique: true
+    t.index ["reporter_id"], name: "index_personal_transactions_on_reporter_id"
+  end
+
   create_table "raffles", force: :cascade do |t|
     t.boolean "confirmed", default: true, null: false
     t.datetime "created_at", null: false
@@ -3192,6 +3203,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_003730) do
   add_foreign_key "payroll_invoices", "payroll_positions"
   add_foreign_key "payroll_invoices", "users", column: "reviewed_by_id"
   add_foreign_key "payroll_positions", "payees"
+  add_foreign_key "personal_transactions", "invoices"
+  add_foreign_key "personal_transactions", "ledger_items"
+  add_foreign_key "personal_transactions", "users", column: "reporter_id"
   add_foreign_key "raffles", "raffles", column: "referring_raffle_id"
   add_foreign_key "raffles", "users"
   add_foreign_key "raw_pending_fee_reimbursement_transactions", "fee_reimbursements"
