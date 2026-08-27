@@ -150,10 +150,12 @@
       </tr>
     </thead>
     <tbody>
-      <tr>
-        <td style="white-space: normal"><%= @invoice.item_description %></td>
-        <td class="<%= width_css_class %>"><%= render_money @invoice.item_amount %></td>
-      </tr>
+      <% @invoice.line_items_for_display.each do |line_item| %>
+        <tr>
+          <td style="white-space: normal"><%= line_item.description %></td>
+          <td class="<%= width_css_class %>"><%= render_money line_item.amount %></td>
+        </tr>
+      <% end %>
       <tr class="border-none">
         <td class="text-right pr1"><strong>Total</strong></td>
         <td class="<%= width_css_class %>">

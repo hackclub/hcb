@@ -1,0 +1,47 @@
+<%#
+  Renders one editable invoice line item (description + amount).
+
+  locals:
+    index       - the array index used in the field names
+    description - prefilled description (optional)
+    amount      - prefilled amount in cents (optional)
+    demo        - whether the parent event is in demo mode
+    removable   - whether to render the remove button (default true)
+%>
+<% removable = local_assigns.fetch(:removable, true) %>
+<div class="invoice-line-item flex gap-2 items-start mb-2" data-invoice-line-items-target="row">
+  <div class="field flex-auto !mb-0">
+    <%= text_field_tag "invoice[line_items][#{index}][description]", description,
+                       placeholder: "#{@event.name} Silver Sponsorship",
+                       required: true,
+                       disabled: demo,
+                       class: "!max-w-full !mb-0",
+                       aria: { label: "Line item description" },
+                       data: { "invoice-line-items-target": "description" } %>
+  </div>
+  <div class="field !mb-0" style="width: 9.5rem;">
+    <div class="flex input !max-w-full !py-0 !mb-0 items-center border border-gray-200 dark:bg-darkless dark:border-0 rounded-lg px-3">
+      <span class="bold muted" style="width: 1rem;">$</span>
+      <%= number_field_tag "invoice[line_items][#{index}][amount]",
+                           (amount.nil? ? nil : (amount.to_f / 100)),
+                           placeholder: "500.00",
+                           step: 0.01,
+                           min: 1.00,
+                           required: true,
+                           disabled: demo,
+                           style: "max-width:100%!important",
+                           class: "!border-none bg-transparent !shadow-none !mb-0",
+                           aria: { label: "Line item amount" },
+                           data: { controller: "truncate-decimal",
+                                   action: "truncate-decimal#truncate input->invoice-line-items#recalculate blur->truncate-decimal#pad",
+                                   "invoice-line-items-target": "amount" } %>
+    </div>
+  </div>
+  <button type="button"
+          class="btn bg-transparent slate hover:bg-smoke dark:hover:bg-neutral-700 !px-2 !py-2 mt-1 tooltipped tooltipped--n <%= "invisible" unless removable %>"
+          aria-label="Remove line item"
+          data-invoice-line-items-target="removeButton"
+          data-action="invoice-line-items#remove">
+    <%= inline_icon "delete", size: 24 %>
+  </button>
+</div>

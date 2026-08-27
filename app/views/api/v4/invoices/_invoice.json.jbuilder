@@ -11,6 +11,10 @@ object_shape(json, invoice) do
     json.due_date invoice.due_date
     json.item_amount invoice.item_amount
     json.item_description invoice.item_description
+    json.line_items invoice.line_items_for_display do |line_item|
+      json.description line_item.description
+      json.amount line_item.amount
+    end
     json.sponsor_id invoice.sponsor_id
   end
 end

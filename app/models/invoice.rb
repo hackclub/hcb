@@ -150,6 +150,8 @@ class Invoice < ApplicationRecord
   belongs_to :archived_by, class_name: "User", optional: true
   belongs_to :voided_by, class_name: "User", optional: true
 
+  has_many :line_items, -> { order(:id) }, class_name: "Invoice::LineItem", inverse_of: :invoice, dependent: :destroy
+
   has_one :personal_transaction, class_name: "HcbCode::PersonalTransaction", required: false
   has_one_attached :manually_marked_as_paid_attachment
   validates :manually_marked_as_paid_attachment, size: { less_than_or_equal_to: 20.megabytes }, if: -> { attachment_changes["manually_marked_as_paid_attachment"].present? }
@@ -378,6 +380,17 @@ class Invoice < ApplicationRecord
 
   def smart_memo
     sponsor.name
+  end
+
+  # Returns the invoice's line items for display. Invoices created before the
+  # multiple line items feature don't have any persisted `line_items`, so we
+  # fall back to a single synthetic line built from the legacy columns.
+  def line_items_for_display
+    line_items.presence || [LineItem.new(description: item_description, amount: item_amount)]
+  end
+
+  def multiple_line_items?
+    line_items.size > 1
   end
 
   include HasHcbCode

@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_23_003730) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_27_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1500,6 +1500,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_003730) do
     t.index ["payment_recipient_id"], name: "index_increase_checks_on_payment_recipient_id"
     t.index ["reissued_for_id"], name: "index_increase_checks_on_reissued_for_id"
     t.index ["user_id"], name: "index_increase_checks_on_user_id"
+  end
+
+  create_table "invoice_line_items", force: :cascade do |t|
+    t.bigint "amount", null: false
+    t.datetime "created_at", null: false
+    t.text "description", null: false
+    t.bigint "invoice_id", null: false
+    t.text "item_stripe_id"
+    t.datetime "updated_at", null: false
+    t.index ["invoice_id"], name: "index_invoice_line_items_on_invoice_id"
+    t.index ["item_stripe_id"], name: "index_invoice_line_items_on_item_stripe_id", unique: true
   end
 
   create_table "invoice_payouts", force: :cascade do |t|
@@ -3148,6 +3159,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_003730) do
   add_foreign_key "increase_checks", "events"
   add_foreign_key "increase_checks", "increase_checks", column: "reissued_for_id"
   add_foreign_key "increase_checks", "users"
+  add_foreign_key "invoice_line_items", "invoices"
   add_foreign_key "invoices", "fee_reimbursements"
   add_foreign_key "invoices", "invoice_payouts", column: "payout_id"
   add_foreign_key "invoices", "sponsors"

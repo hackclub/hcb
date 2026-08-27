@@ -85,11 +85,18 @@ class InvoicesController < ApplicationController
 
     due_date = Date.parse(filtered_params["due_date"])
 
+    # Indexed field names (`invoice[line_items][0][…]`) arrive as a hash keyed
+    # by index rather than an array, so normalize to an array of hashes.
+    submitted_line_items = filtered_params[:line_items]
+    submitted_line_items = submitted_line_items.values if submitted_line_items.respond_to?(:values)
+    line_items = Array(submitted_line_items).map do |line_item|
+      { description: line_item[:description], amount: line_item[:amount] }
+    end
+
     @invoice = ::InvoiceService::Create.new(
       event_id: @event.id,
       due_date:,
-      item_description: filtered_params[:item_description],
-      item_amount: filtered_params[:item_amount],
+      line_items:,
       current_user:,
 
       sponsor_id: sponsor_attrs[:id],
@@ -233,6 +240,7 @@ class InvoicesController < ApplicationController
       :item_description,
       :item_amount,
       :sponsor_id,
+      line_items: [:description, :amount],
       sponsor_attributes: policy(Sponsor).permitted_attributes
     )
   end

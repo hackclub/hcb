@@ -2,18 +2,25 @@
 
 module InvoiceService
   class Create
+    # `line_items` is an array of hashes, each with a `:description` and an
+    # `:amount` (in dollars, as accepted by Monetize). For backwards
+    # compatibility a single `item_description` / `item_amount` pair is still
+    # accepted and treated as a one-line invoice.
     def initialize(event_id:,
-                   due_date:, item_description:, item_amount:,
+                   due_date:,
                    current_user:,
                    sponsor_id:,
                    sponsor_name:, sponsor_email:,
                    sponsor_address_line1:, sponsor_address_line2:,
                    sponsor_address_city:, sponsor_address_state:,
                    sponsor_address_postal_code:,
-                   sponsor_address_country:)
+                   sponsor_address_country:,
+                   line_items: nil,
+                   item_description: nil, item_amount: nil)
       @event_id = event_id
 
       @due_date = due_date
+      @line_items = line_items
       @item_description = item_description
       @item_amount = item_amount
 
@@ -39,9 +46,26 @@ module InvoiceService
         invoice = Invoice.create!(attrs)
 
         remote_invoice = StripeService::Invoice.create(remote_invoice_attrs(invoice:))
-        item = StripeService::InvoiceItem.create(remote_invoice_item_attrs.merge({ invoice: remote_invoice.id }))
 
-        invoice.item_stripe_id = item.id
+        clean_line_items.each do |line_item|
+          item = StripeService::InvoiceItem.create(
+            customer: sponsor.stripe_customer_id,
+            currency: "usd",
+            description: line_item[:description],
+            amount: line_item[:amount],
+            invoice: remote_invoice.id
+          )
+
+          invoice.line_items.create!(
+            description: line_item[:description],
+            amount: line_item[:amount],
+            item_stripe_id: item.id
+          )
+
+          # Keep the legacy `item_stripe_id` column pointing at the first item.
+          invoice.item_stripe_id ||= item.id
+        end
+
         invoice.stripe_invoice_id = remote_invoice.id
         invoice.save!
 
@@ -54,15 +78,6 @@ module InvoiceService
     end
 
     private
-
-    def remote_invoice_item_attrs
-      {
-        customer: sponsor.stripe_customer_id,
-        currency: "usd",
-        description: @item_description,
-        amount: clean_item_amount
-      }
-    end
 
     def remote_invoice_attrs(invoice:)
       {
@@ -83,7 +98,7 @@ module InvoiceService
     end
 
     def payment_method_types
-      if clean_item_amount >= Invoice::MAX_CARD_AMOUNT
+      if total_amount >= Invoice::MAX_CARD_AMOUNT
         ["ach_credit_transfer"]
       else
         # just use the default types
@@ -102,8 +117,8 @@ module InvoiceService
     def attrs
       {
         due_date: @due_date,
-        item_description: @item_description,
-        item_amount: clean_item_amount,
+        item_description: clean_line_items.first[:description],
+        item_amount: total_amount,
         sponsor:,
         statement_descriptor: StripeService::StatementDescriptor.format(event.short_name, as: :full),
         creator: @current_user
@@ -123,8 +138,31 @@ module InvoiceService
       }
     end
 
-    def clean_item_amount
-      @clean_item_amount ||= Monetize.parse(@item_amount).cents
+    def clean_line_items
+      @clean_line_items ||= begin
+        raw = if @line_items.present?
+                @line_items
+              else
+                [{ description: @item_description, amount: @item_amount }]
+              end
+
+        items = raw.filter_map do |line_item|
+          description = line_item[:description].presence
+          amount = line_item[:amount]
+          next if description.nil? || amount.blank?
+
+          { description:, amount: Monetize.parse(amount).cents }
+        end
+
+        raise ArgumentError, "an invoice needs at least one line item" if items.empty?
+        raise ArgumentError, "each line item must be at least $1" if items.any? { |item| item[:amount] < 100 }
+
+        items
+      end
+    end
+
+    def total_amount
+      @total_amount ||= clean_line_items.sum { |line_item| line_item[:amount] }
     end
 
     def sponsor
