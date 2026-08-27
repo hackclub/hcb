@@ -12,7 +12,7 @@ module Maintenance
 
     def process(personal_transaction)
       ledger_item = personal_transaction.hcb_code&.ledger_item
-      return if ledger_item.nil?
+      raise "No ledger_item found for HcbCode::PersonalTransaction##{personal_transaction.id}" if ledger_item.nil?
 
       # Set every attribute up front (rather than letting callbacks run) so
       # this is a pure data copy: no re-sending of the reimbursement invoice.
