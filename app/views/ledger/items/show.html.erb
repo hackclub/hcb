@@ -96,7 +96,7 @@
   <% if @item.linked_object_type == "CardCharge" %>
     <% admin_tool("mt1 p-3") do %>
       ☎️ moshi moshi?
-      <%= link_to "Click to get an SMS (to #{current_user.phone_number}) of the notification", send_sms_receipt_hcb_code_path(@item.hcb_code), method: :post %>
+      <%= link_to "Click to get an SMS (to #{current_user.phone_number}) of the notification", send_sms_receipt_hcb_code_path(@item.hcb_code), data: { turbo_method: :post } %>
     <% end %>
   <% end %>
 
