@@ -31,6 +31,12 @@ class Event
         5600050
       end
 
+      def contract_skip_prefills
+        {
+          "Contract Signee" => ["The Project"]
+        }
+      end
+
     end
 
   end
