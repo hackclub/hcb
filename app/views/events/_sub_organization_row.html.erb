@@ -63,19 +63,19 @@
       <% end %>
     <% end %>
   </td>
-  <td class="tabular-nums">
-    <%= turbo_frame_tag "event_balance_#{event.public_id}",
-                        src: event_async_balance_path(event),
-                        loading: :lazy,
-                        data: { controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" } do %>
-      <span class="muted">—</span>
-    <% end %>
-  </td>
   <td>
     <span class="sub-organization-row__count tabular-nums">
       <%= inline_icon "people-2", size: 18, class: "muted", 'aria-label': "Team members" %>
       <%= row[:organizer_count] %>
     </span>
     <%= link_to "", event, class: "stretched-link", "aria-label": event.name %>
+  </td>
+  <td class="tabular-nums text-right">
+    <%= turbo_frame_tag "event_balance_#{event.public_id}",
+                        src: event_async_balance_path(event, symbol: "true"),
+                        loading: :lazy,
+                        data: { controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" } do %>
+      <span class="muted">—</span>
+    <% end %>
   </td>
 </tr>
