@@ -45,6 +45,7 @@ module Payroll
     pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }, using: { tsearch: { prefix: true, dictionary: "english" } }
 
     has_many :invoices, class_name: "Payroll::Invoice", foreign_key: "payroll_position_id", inverse_of: :payroll_position, dependent: :destroy
+    has_many :payments, through: :invoices
     has_one :event, through: :payee
     has_one :contract_event, through: :payee, source: :event # a requirement of Contractable
     has_one :contract, ->{ where.not(aasm_state: :voided) }, inverse_of: :contractable, as: :contractable
@@ -122,6 +123,10 @@ module Payroll
 
       event :mark_terminated do
         transitions from: :onboarded, to: :terminated
+
+        after do
+          Payroll::PositionMailer.with(position: self).terminated.deliver_later
+        end
       end
     end
 
@@ -131,8 +136,10 @@ module Payroll
         :active
       when :under_review, :onboarding
         :onboarding
-      when :expired, :terminated, :rejected
+      when :expired
         :completed
+      else
+        aasm_state.to_sym
       end
     end
 
@@ -168,11 +175,41 @@ module Payroll
       legal_entity = payee.legal_entity
 
       [
-        { key: :organizer_signature, label: "Contract signed by organizer", complete: contract_signed_by?(:organizer) },
-        { key: :hcb_review, label: "Contract reviewed by HCB operations", complete: !under_review? && !rejected? },
-        { key: :tax_form, label: "W-9 / W-8BEN submitted", complete: legal_entity&.completed_tax_form? || false },
-        { key: :contractor_signature, label: "Contract signed by contractor", complete: contract_signed_by?(:contractor) },
-        { key: :payout_method, label: "Payout method configured", complete: legal_entity&.default_payout_method.present? },
+        {
+          key: :organizer_signature,
+          owner: :organizer,
+          label: "Sign the contract",
+          hint: "Starts the onboarding process",
+          complete: contract_signed_by?(:organizer)
+        },
+        {
+          key: :hcb_review,
+          owner: :hcb,
+          label: "HCB team review",
+          hint: "The contractor is emailed once HCB signs",
+          complete: !under_review? && !rejected?
+        },
+        {
+          key: :tax_form,
+          owner: :contractor,
+          label: "Submit tax information",
+          hint: "Needed before contractor signs",
+          complete: legal_entity&.completed_tax_form? || false
+        },
+        {
+          key: :contractor_signature,
+          owner: :contractor,
+          label: "Contractor signs",
+          hint: "Makes the agreement official",
+          complete: contract_signed_by?(:contractor)
+        },
+        {
+          key: :payout_method,
+          owner: :contractor,
+          label: "Add a payout method",
+          hint: "Can be done at any time",
+          complete: legal_entity&.default_payout_method.present?
+        },
       ]
     end
 
