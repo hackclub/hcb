@@ -66,8 +66,7 @@
     <% if defined?(delete_on_hover) && delete_on_hover && policy(receipt).destroy? %>
       <%= pop_icon_to "view-close",
               { controller: "/receipts", action: :destroy, id: receipt.id, popover: local_assigns[:popover] },
-              method: :delete,
-              data: { behavior: "modal_ignore" },
+              data: { turbo_method: :delete, behavior: "modal_ignore" },
               size: 12,
               class: "warning bg-black-important tooltipped tooltipped--w receipt__delete-button",
               style: "position: absolute; top: 4px; right: 4px; z-index: 1;",
