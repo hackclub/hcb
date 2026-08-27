@@ -300,20 +300,25 @@ class Invoice < ApplicationRecord
     self.starting_balance = inv.starting_balance
     self.statement_descriptor = inv.statement_descriptor
     self.status = inv.status
-    if inv&.charge.is_a?(String)
-      self.stripe_charge_id = inv.charge
-    else
-      self.stripe_charge_id = inv&.charge&.id
-      # https://stripe.com/docs/api/charges/object#charge_object-payment_method_details
-      self.payment_method_type = type = inv&.charge&.payment_method_details&.type
-    end
     self.subtotal = inv.subtotal
     self.tax = inv.tax
     # self.tax_percent = inv.tax_percent
     self.total = inv.total
-    return unless self.payment_method_type
 
-    details = inv&.charge&.payment_method_details&.[](self.payment_method_type)
+    charge = inv&.charge
+    # the charge is unexpanded (just an ID) on responses that weren't fetched
+    # through `Partners::Stripe::Invoices::Show`, ex. the response to voiding.
+    if charge.is_a?(String)
+      self.stripe_charge_id = charge
+      return
+    end
+
+    self.stripe_charge_id = charge&.id
+    # https://stripe.com/docs/api/charges/object#charge_object-payment_method_details
+    self.payment_method_type = type = charge&.payment_method_details&.type
+    return unless type
+
+    details = charge.payment_method_details[type]
     return unless details
 
     case type
@@ -394,7 +399,12 @@ class Invoice < ApplicationRecord
   end
 
   def close_stripe_invoice
-    remote_invoice.void_invoice
+    # Stripe rejects voiding an invoice that's already void, which would leave
+    # invoices voided remotely but not locally stuck that way forever.
+    remote_invoice.void_invoice unless remote_invoice.status == "void"
+    # `void_invoice` updates `remote_invoice` in place with an unexpanded
+    # response; drop it so the sync refetches the expanded invoice.
+    @remote_invoice = nil
 
     sync_remote!
   end

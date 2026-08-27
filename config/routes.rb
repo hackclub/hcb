@@ -947,7 +947,7 @@ Rails.application.routes.draw do
 
   resources :tax_forms, only: [:show, :create], controller: "tax/forms" do
     member do
-      post "sync"
+      get "completed"
       post "discard"
     end
   end
