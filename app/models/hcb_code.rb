@@ -319,18 +319,19 @@ class HcbCode < ApplicationRecord
     pt&.raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_currency") || raw_stripe_transaction.stripe_transaction["merchant_currency"]
   end
 
-  # What the merchant charged in their own currency, when that isn't USD. Prefers
-  # the settled transaction, since that's where `amount_cents` comes from too.
-  def stripe_original_amount
+  # What the merchant charged, in their own currency. Prefers the settled
+  # transaction, since that's where `amount_cents` comes from too.
+  def stripe_merchant_amount
     txn = (raw_stripe_transaction || pt&.raw_pending_stripe_transaction)&.stripe_transaction
     amount, currency = txn&.values_at("merchant_amount", "merchant_currency")
-    return nil if amount.nil? || currency.blank? || currency.casecmp?("usd") || Money::Currency.find(currency).nil?
+    return nil if amount.nil? || currency.blank? || Money::Currency.find(currency).nil?
 
     Money.from_cents(amount.abs, currency.upcase)
   end
 
   def stripe_foreign_currency?
-    stripe_original_amount.present?
+    amount = stripe_merchant_amount
+    amount.present? && amount.currency != Money.default_currency
   end
 
   def stripe_refund?
