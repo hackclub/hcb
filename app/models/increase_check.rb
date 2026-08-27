@@ -11,7 +11,7 @@
 #  address_line2           :string
 #  address_state           :string
 #  address_zip             :string
-#  amount_cents            :integer
+#  amount                  :integer
 #  approved_at             :datetime
 #  check_number            :string
 #  column_delivery_status  :string
@@ -59,8 +59,6 @@ class IncreaseCheck < ApplicationRecord
   include Payoutable
   include Freezable
   include HasPaymentRecipient
-
-  monetize :amount_cents, as: "amount"
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
@@ -143,7 +141,7 @@ class IncreaseCheck < ApplicationRecord
   has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
 
   after_create do
-    create_canonical_pending_transaction!(event:, amount_cents: -amount_cents, memo: "OUTGOING CHECK", date: created_at)
+    create_canonical_pending_transaction!(event:, amount_cents: -amount, memo: "OUTGOING CHECK", date: created_at)
   end
 
   after_update if: -> { column_status_previously_changed?(to: "stopped") } do
@@ -201,7 +199,7 @@ class IncreaseCheck < ApplicationRecord
     end
   end
 
-  validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }
+  validates :amount, numericality: { greater_than: 0, message: "can't be zero!" }
   validates :memo, length: { in: 1..40 }, on: :create
   validates :recipient_name, length: { in: 1..250 }
   validates_presence_of :memo, :payment_for, :recipient_name, :address_line1, :address_city, :address_zip
@@ -214,8 +212,8 @@ class IncreaseCheck < ApplicationRecord
   normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
   validate on: :create do
-    if amount_cents > event.balance_available_v2_cents
-      errors.add(:amount_cents, "You don't have enough money to send this transfer! Your balance is #{ApplicationController.helpers.render_money(event.balance_available_v2_cents)}.")
+    if amount > event.balance_available_v2_cents
+      errors.add(:amount, "You don't have enough money to send this transfer! Your balance is #{ApplicationController.helpers.render_money(event.balance_available_v2_cents)}.")
     end
   end
 
@@ -378,7 +376,7 @@ class IncreaseCheck < ApplicationRecord
     column_check = ColumnService.post "/transfers/checks/issue",
                                       idempotency_key:,
                                       account_number_id:,
-                                      positive_pay_amount: amount_cents,
+                                      positive_pay_amount: amount,
                                       currency_code: "USD",
                                       payee_name: recipient_name,
                                       mail_check_request: {

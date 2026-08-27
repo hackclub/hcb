@@ -8,7 +8,7 @@ RSpec.describe IncreaseChecksController do
 
   def build_check_attributes(overrides = {})
     {
-      amount_cents: 100_00,
+      amount: 100_00,
       memo: "Test memo",
       payment_for: "Snacks",
       recipient_name: "Orpheus",
@@ -78,7 +78,7 @@ RSpec.describe IncreaseChecksController do
   describe "create" do
     def increase_check_params
       {
-        amount_cents: "123.45",
+        amount: "123.45",
         payment_for: "Snacks",
         memo: "Test memo",
         recipient_name: "Orpheus",
@@ -110,7 +110,7 @@ RSpec.describe IncreaseChecksController do
       check = event.increase_checks.sole
       expect(response).to redirect_to(hcb_code_path(check.local_hcb_code))
       expect(check).to be_pending
-      expect(check.amount_cents).to eq(123_45)
+      expect(check.amount).to eq(123_45)
       expect(check.payment_for).to eq("Snacks")
       expect(check.memo).to eq("Test memo")
       expect(check.recipient_name).to eq("Orpheus")
@@ -137,7 +137,7 @@ RSpec.describe IncreaseChecksController do
         event_id: event.friendly_id,
         increase_check: {
           **increase_check_params,
-          amount_cents: "500.01",
+          amount: "500.01",
         }
       }.freeze
 
@@ -162,7 +162,7 @@ RSpec.describe IncreaseChecksController do
       check = event.increase_checks.sole
       expect(response).to redirect_to(hcb_code_path(check.local_hcb_code))
       expect(check.memo).to eq("Test memo")
-      expect(check.amount_cents).to eq(500_01)
+      expect(check.amount).to eq(500_01)
     end
   end
 end

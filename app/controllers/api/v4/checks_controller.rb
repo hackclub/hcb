@@ -33,14 +33,15 @@ module Api
         )
 
         @check = @event.increase_checks.build(
-          check_params.except(:file).merge(
+          check_params.except(:file, :amount_cents).merge(
+            amount: check_params[:amount_cents],
             user: current_user
           )
         )
 
         authorize @check
 
-        if @check.amount_cents > SudoModeHandler::THRESHOLD_CENTS
+        if @check.amount > SudoModeHandler::THRESHOLD_CENTS
           return render json: {
             error: "invalid_operation",
             messages: ["Checks above the sudo mode threshold of #{ApplicationController.helpers.render_money(SudoModeHandler::THRESHOLD_CENTS)} are not allowed via API."]

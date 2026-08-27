@@ -21,7 +21,7 @@
           check_number: "1024",
           date: Date.today.strftime("%b %d, %Y"),
           recipient_name: @check.recipient_name || "　",
-          amount: @check.amount_cents || 0,
+          amount: @check.amount || 0,
           memo: @check.memo || "　",
           account_details: @event.column_account_number,
           editable: true %>
@@ -269,8 +269,8 @@
 
       <div class="flex items-center justify-between gap-2">
         <div>
-          <%= form.label :amount_cents, "Amount" %>
-          <% @check.errors.messages_for(:amount_cents).each do |message| %>
+          <%= form.label :amount, "Amount" %>
+          <% @check.errors.messages_for(:amount).each do |message| %>
             <div class="primary"><%= message %></div>
           <% end %>
           <% if @event.balance <= 0 %>
@@ -282,10 +282,10 @@
         <div class="input flex gap-2 items-center py-0 max-w-[150px]">
           <span class="bold muted" style="width: 1rem;">$</span>
           <div class="flex flex-col">
-            <%= form.number_field :amount_cents,
+            <%= form.number_field :amount,
               placeholder: "500.00",
               class: "!p-0 !border-none !shadow-none min-h-auto",
-              value: (@check.amount_cents.nil? ? nil : ("%.2f" % (@check.amount_cents.to_f / 100))),
+              value: (@check.amount.nil? ? nil : ("%.2f" % (@check.amount.to_f / 100))),
               disabled: @event.balance <= 0 || disabled,
               step: 0.01,
               min: 1,

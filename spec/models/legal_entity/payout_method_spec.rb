@@ -185,7 +185,7 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
 
         expect(check).to be_a(IncreaseCheck)
         expect(check.memo.length).to eq(40)
-        expect(check.amount_cents).to eq(10_000) # USD passthrough
+        expect(check.amount).to eq(10_000) # USD passthrough
         expect(check.user).to eq(user)
         expect(check.recipient_name).to eq("Jane Doe")
       end

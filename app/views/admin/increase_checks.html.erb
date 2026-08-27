@@ -35,7 +35,7 @@
         <td><%= check.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= check.event.name %></td>
         <td><%= check.recipient_name %></td>
-        <td><%= render_money(check.amount_cents) %></td>
+        <td><%= render_money(check.amount) %></td>
         <td><%= check.aasm.human_state %><%= " - #{check.increase_status&.humanize}" if check.approved? %></td>
         <td>
           <%= link_to "View", hcb_code_path(check.hcb_code) %>

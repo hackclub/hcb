@@ -31,7 +31,11 @@ class Metric
       def calculate
         card = RawStripeTransaction.joins("JOIN stripe_cardholders on raw_stripe_transactions.stripe_transaction->>'cardholder' = stripe_cardholders.stripe_id").where("EXTRACT(YEAR FROM date_posted) = ?", Metric.year).where(stripe_cardholders: { user_id: user.id }).sum(:amount_cents)
         ach = AchTransfer.where(creator_id: user.id, rejected_at: nil).where("EXTRACT(YEAR FROM created_at) = ?", Metric.year).sum(:amount_cents)
+<<<<<<< HEAD
         checks = Check.where(creator_id: user.id, rejected_at: nil).where("EXTRACT(YEAR FROM created_at) = ?", Metric.year).sum(:amount) + IncreaseCheck.where(user_id: user.id, increase_status: "deposited").where.not(approved_at: nil).where("EXTRACT(YEAR FROM created_at) = ?", Metric.year).sum(:amount_cents)
+=======
+        checks = Check.where(creator_id: user.id, rejected_at: nil).where("EXTRACT(YEAR FROM created_at) = ?", Metric.year).sum(:amount) + IncreaseCheck.where(user_id: user.id, increase_status: "deposited").where.not(approved_at: nil).where("EXTRACT(YEAR FROM created_at) = ?", Metric.year).sum(:amount)
+>>>>>>> origin/claude/pr-14759-cleanup-2zz1bp
         card.abs + ach.abs + checks.abs
       end
 

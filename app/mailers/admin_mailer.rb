@@ -46,7 +46,7 @@ class AdminMailer < ApplicationMailer
 
         @tasks << {
           url: increase_check_process_admin_url(check),
-          label: "[Check] #{ApplicationController.helpers.render_money check.amount_cents} #{check.payment_for} (#{check.event.name}) (Requested by #{check.user&.name || "Unknown User"})"
+          label: "[Check] #{ApplicationController.helpers.render_money check.amount} #{check.payment_for} (#{check.event.name}) (Requested by #{check.user&.name || "Unknown User"})"
         }
       end
     end
