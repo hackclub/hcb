@@ -14,14 +14,20 @@ module Maintenance
       ledger_item = personal_transaction.hcb_code&.ledger_item
       raise "No ledger_item found for HcbCode::PersonalTransaction##{personal_transaction.id}" if ledger_item.nil?
 
+      pt = PersonalTransaction.find_or_initialize_by(ledger_item:)
+      return unless pt.new_record?
+
       # Set every attribute up front (rather than letting callbacks run) so
       # this is a pure data copy: no re-sending of the reimbursement invoice.
-      PersonalTransaction.find_or_create_by!(ledger_item:) do |pt|
-        pt.invoice_id = personal_transaction.invoice_id
-        pt.reporter_id = personal_transaction.reporter_id
-        pt.created_at = personal_transaction.created_at
-        pt.updated_at = personal_transaction.updated_at
-      end
+      pt.invoice_id = personal_transaction.invoice_id
+      pt.reporter_id = personal_transaction.reporter_id
+      pt.created_at = personal_transaction.created_at
+      pt.updated_at = personal_transaction.updated_at
+
+      # Bypass validations: legacy records may not satisfy today's
+      # qualifying-charge rules, but this is a straight data copy, not the
+      # creation of a new personal transaction.
+      pt.save!(validate: false)
     end
 
   end
