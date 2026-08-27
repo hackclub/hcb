@@ -12,9 +12,8 @@ require "rails_helper"
 # that each entry was individually audited: its job is to force a decision on
 # anything new.
 #
-# When this spec fails, read the new action's template and decide. If it renders
-# a login code, a password, a token, or anything else that grants access,
-# declare `has_sensitive_contents` on its mailer. Either way, add it to the list.
+# If this spec is failing, the failure message tells you exactly what to do; you
+# do not need to read this file to fix it.
 RSpec.describe "mailer sensitive contents coverage", type: :mailer do
   let(:reviewed_mailer_actions) do
     [
@@ -183,14 +182,79 @@ RSpec.describe "mailer sensitive contents coverage", type: :mailer do
     }.sort
 
     unreviewed = actual - reviewed_mailer_actions
-    expect(unreviewed).to be_empty,
-                          "New mailer action(s) found. Confirm they send no secrets (declare " \
-                          "`has_sensitive_contents` on the mailer if they do), then add them to " \
-                          "reviewed_mailer_actions:\n  #{unreviewed.join("\n  ")}"
+    expect(unreviewed).to be_empty, unreviewed_instructions(unreviewed)
 
     stale = reviewed_mailer_actions - actual
-    expect(stale).to be_empty,
-                     "Stale entries in reviewed_mailer_actions; these mailer actions no longer " \
-                     "exist:\n  #{stale.join("\n  ")}"
+    expect(stale).to be_empty, stale_instructions(stale)
+  end
+
+  private
+
+  def bulleted(actions)
+    actions.map { |action| "  #{action}" }.join("\n")
+  end
+
+  def unreviewed_instructions(actions)
+    <<~MESSAGE
+      #{actions.size} mailer action(s) exist that are not in REVIEWED_MAILER_ACTIONS:
+
+      #{bulleted(actions)}
+
+      WHY THIS FAILED
+        `has_sensitive_contents` is opt in. Until a mailer declares it, its emails
+        are readable in /admin/emails by every auditor, which is the entire
+        read-only admin population. This list is the tripwire that makes someone
+        look at each new mailer action once.
+
+      WHAT TO DO
+        1. Open each action's template under app/views/ and read what it renders.
+
+        2. Decide whether the email contains a secret. It does if it renders a
+           login code, a password, an API key, a token, a `signed_id`, or a link
+           that grants access to whoever holds it. Grep the template for `_url(`
+           with a token or `s:` argument. It does NOT count as a secret merely
+           because the email concerns money or is personal.
+
+        3a. If it DOES contain a secret, declare it on the mailer class:
+
+              class WhateverMailer < ApplicationMailer
+                has_sensitive_contents
+              end
+
+            app/mailers/login_code_mailer.rb is a live example. Declare it bare,
+            covering the whole mailer, wherever you can. If some actions on that
+            mailer genuinely carry no secret, use `except: [:safe_action]` rather
+            than `only: [:risky_action]`. With `only:`, the NEXT action added to
+            the mailer is visible to auditors by default; with `except:` it is
+            restricted by default. Fail closed.
+
+            Also add a case to spec/mailers/sensitive_contents_spec.rb proving the
+            flag gets set, since this spec checks that a decision was recorded,
+            not that the declaration works.
+
+        3b. If it does NOT contain a secret, change nothing else. The email stays
+            visible to admins, which is what makes /admin/emails useful.
+
+        4. Either way, add the action(s) to REVIEWED_MAILER_ACTIONS in this file
+           so this spec passes. Keep the list alphabetically sorted.
+    MESSAGE
+  end
+
+  def stale_instructions(actions)
+    <<~MESSAGE
+      #{actions.size} entry/entries in REVIEWED_MAILER_ACTIONS no longer exist:
+
+      #{bulleted(actions)}
+
+      WHAT TO DO
+        Remove them from REVIEWED_MAILER_ACTIONS in this file. They were deleted
+        or renamed.
+
+        If an action was RENAMED and it sends a secret, also update
+        app/tasks/maintenance/backfill_sensitive_ahoy_messages_task.rb. That task
+        matches the `mailer` string stored on each `ahoy_messages` row, and
+        historical rows keep the OLD name forever, so a renamed sensitive action
+        needs BOTH names listed there or its history stays readable by auditors.
+    MESSAGE
   end
 end
