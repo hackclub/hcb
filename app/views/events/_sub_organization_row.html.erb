@@ -5,10 +5,10 @@
 
 <% child_guides = guides.empty? ? "1" : guides[0..-2] + (last ? "0" : "1") + "1" %>
 
-<tr id="sub_organization_row_<%= event.id %>"
+<tr id="sub_organization_row_<%= event.public_id %>"
     class="sub-organization-row clickable <%= "sub-organization-row--last" if last %> <%= "sub-organization-row--leaf" unless row[:expandable] %>"
     data-sub-organization-tree-target="row"
-    data-event-id="<%= event.id %>"
+    data-event-id="<%= event.public_id %>"
     data-depth="<%= depth %>">
   <td class="sub-organization-row__cell">
     <span class="sub-organization-row__guides" aria-hidden="true"><% guides.each_char.with_index do |line, level| %><span class="sub-organization-row__guide <%= level == guides.size - 1 ? "sub-organization-row__guide--connector" : ("sub-organization-row__guide--line" if line == "1") %>"></span><% end %></span>

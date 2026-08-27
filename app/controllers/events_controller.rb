@@ -556,9 +556,7 @@ class EventsController < ApplicationController
   def async_sub_organization_balances
     authorize @event
 
-    requested_ids = Array(params[:ids]).map(&:to_i)
-
-    events = Event.where(id: requested_ids).where(id: visible_descendant_ids)
+    events = Event.where_public_id(params[:ids]).where(id: visible_descendant_ids)
     balance_cents_by_event_id = Ledger.balance_cents_by_event_id(events)
 
     balances = events.to_h do |event|

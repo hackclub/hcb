@@ -366,7 +366,7 @@ RSpec.describe EventsController do
         it "lists it inline in the table view, badged as hidden", :aggregate_failures do
           get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
 
-          row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{hidden_sub.id}")
+          row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{hidden_sub.public_id}")
 
           expect(table_row_names(response.body)).to include("Hidden Sub-organization")
           expect(row.css(".badge").map { |badge| badge.text.strip }).to include("Hidden")
@@ -451,7 +451,7 @@ RSpec.describe EventsController do
 
       get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
 
-      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{private_sub.id}")
+      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{private_sub.public_id}")
 
       expect(table_row_names(response.body)).to match_array(["Transparent Sub-organization", "Private Sub-organization"])
       expect(row.css(".badge").map { |badge| badge.text.strip }).to include("Private")
@@ -463,7 +463,7 @@ RSpec.describe EventsController do
 
       get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
 
-      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{transparent_sub.id}")
+      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{transparent_sub.public_id}")
       expect(row.at_css("button.sub-organization-row__toggle")).to be_nil
     end
 
@@ -473,7 +473,7 @@ RSpec.describe EventsController do
 
       get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
 
-      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{transparent_sub.id}")
+      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{transparent_sub.public_id}")
       expect(row.at_css("button.sub-organization-row__toggle")).to be_present
     end
 
@@ -483,7 +483,7 @@ RSpec.describe EventsController do
 
       get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
 
-      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{transparent_sub.id}")
+      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{transparent_sub.public_id}")
 
       expect(row["class"]).to include("clickable")
       expect(row.at_css("a.stretched-link")["href"]).to eq("/#{transparent_sub.slug}")
@@ -705,7 +705,7 @@ RSpec.describe EventsController do
       grandchild = create(:event, :with_positive_balance, parent: transparent_sub, is_public: true)
 
       get(:async_sub_organization_balances,
-          params: { event_id: parent.slug, ids: [transparent_sub.id, grandchild.id] },
+          params: { event_id: parent.slug, ids: [transparent_sub.public_id, grandchild.public_id] },
           format: :json)
 
       expect(response.parsed_body).to eq(
@@ -716,7 +716,7 @@ RSpec.describe EventsController do
 
     it "skips a private descendant for a signed out visitor" do
       get(:async_sub_organization_balances,
-          params: { event_id: parent.slug, ids: [transparent_sub.id, private_sub.id] },
+          params: { event_id: parent.slug, ids: [transparent_sub.public_id, private_sub.public_id] },
           format: :json)
 
       expect(response.parsed_body.keys).to eq([transparent_sub.public_id])
@@ -726,7 +726,7 @@ RSpec.describe EventsController do
       sign_in_organizer_of(parent)
 
       get(:async_sub_organization_balances,
-          params: { event_id: parent.slug, ids: [private_sub.id] },
+          params: { event_id: parent.slug, ids: [private_sub.public_id] },
           format: :json)
 
       expect(response.parsed_body.keys).to eq([private_sub.public_id])
