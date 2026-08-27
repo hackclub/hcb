@@ -63,6 +63,7 @@ class DonationsController < ApplicationController
       donations = @event.donations
                         .left_joins(:recurring_donation)
                         .succeeded_and_not_refunded
+                        .tax_deductible
                         .where("COALESCE(recurring_donations.email, donations.email) <> ''")
 
       # Aggregate per donor in SQL: total amount + the id of each group's most
@@ -92,7 +93,7 @@ class DonationsController < ApplicationController
     end
 
     if @event.show_recent_donors
-      @recent_donors = @event.donations.includes(:recurring_donation).succeeded_and_not_refunded.order(created_at: :desc).limit(8).to_a
+      @recent_donors = @event.donations.includes(:recurring_donation).succeeded_and_not_refunded.tax_deductible.order(created_at: :desc).limit(8).to_a
       if @recent_donors.size < 8
         @recent_donors = []
       end
