@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_23_003730) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1473,7 +1473,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_23_003730) do
     t.string "address_line2"
     t.string "address_state"
     t.string "address_zip"
-    t.integer "amount"
+    t.integer "amount_cents"
     t.datetime "approved_at"
     t.string "check_number"
     t.string "column_delivery_status"
