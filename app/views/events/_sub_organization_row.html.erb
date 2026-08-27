@@ -64,9 +64,9 @@
     <% end %>
   </td>
   <td class="tabular-nums">
-    <%= turbo_frame_tag "event_balance_#{event.public_id}" do %>
+    <span id="event_balance_<%= event.public_id %>">
       <span class="muted">—</span>
-    <% end %>
+    </span>
   </td>
   <td>
     <span class="sub-organization-row__count tabular-nums">

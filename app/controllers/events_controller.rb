@@ -558,10 +558,14 @@ class EventsController < ApplicationController
 
     requested_ids = Array(params[:ids]).map(&:to_i)
 
-    @balance_events = Event.where(id: requested_ids).where(id: visible_descendant_ids)
-    @balance_cents_by_event_id = Ledger.balance_cents_by_event_id(@balance_events)
+    events = Event.where(id: requested_ids).where(id: visible_descendant_ids)
+    balance_cents_by_event_id = Ledger.balance_cents_by_event_id(events)
 
-    render :async_sub_organization_balances, layout: false
+    balances = events.to_h do |event|
+      [event.public_id, helpers.render_money_amount(balance_cents_by_event_id.fetch(event.id, 0))]
+    end
+
+    render json: balances
   end
 
   def account_number

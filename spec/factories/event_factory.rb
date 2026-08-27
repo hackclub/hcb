@@ -48,8 +48,6 @@ FactoryBot.define do
       after :create do |event|
         canonical_transaction = create(:canonical_transaction, amount_cents: 100_000, memo: "🏦 Test Donation")
         create(:canonical_event_mapping, canonical_transaction:, event:)
-
-        Ledger::Mapping.map_primary!(ledger: event.ledger, ledger_item: canonical_transaction.reload.ledger_item, mapped_by: Ledger::Mapper::SYSTEM)
       end
     end
   end

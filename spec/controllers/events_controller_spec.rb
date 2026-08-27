@@ -697,32 +697,29 @@ RSpec.describe EventsController do
   end
 
   describe "#async_sub_organization_balances" do
-    render_views
-
     let(:parent) { create(:event, is_public: true) }
     let!(:transparent_sub) { create(:event, :with_positive_balance, parent:, is_public: true) }
     let!(:private_sub) { create(:event, :with_positive_balance, parent:, is_public: false) }
 
-    it "returns a balance stream for each requested descendant", :aggregate_failures do
+    it "returns a balance for each requested descendant" do
       grandchild = create(:event, :with_positive_balance, parent: transparent_sub, is_public: true)
 
       get(:async_sub_organization_balances,
           params: { event_id: parent.slug, ids: [transparent_sub.id, grandchild.id] },
-          format: :turbo_stream)
+          format: :json)
 
-      expect(response.body).to include("event_balance_#{transparent_sub.public_id}")
-      expect(response.body).to include(money(transparent_sub.ledger.balance_cents))
-      expect(response.body).to include("event_balance_#{grandchild.public_id}")
-      expect(response.body).to include(money(grandchild.ledger.balance_cents))
+      expect(response.parsed_body).to eq(
+        transparent_sub.public_id => money(transparent_sub.ledger.balance_cents),
+        grandchild.public_id      => money(grandchild.ledger.balance_cents)
+      )
     end
 
-    it "skips a private descendant for a signed out visitor", :aggregate_failures do
+    it "skips a private descendant for a signed out visitor" do
       get(:async_sub_organization_balances,
           params: { event_id: parent.slug, ids: [transparent_sub.id, private_sub.id] },
-          format: :turbo_stream)
+          format: :json)
 
-      expect(response.body).to include("event_balance_#{transparent_sub.public_id}")
-      expect(response.body).not_to include("event_balance_#{private_sub.public_id}")
+      expect(response.parsed_body.keys).to eq([transparent_sub.public_id])
     end
 
     it "returns a private descendant for an organizer of the parent" do
@@ -730,9 +727,9 @@ RSpec.describe EventsController do
 
       get(:async_sub_organization_balances,
           params: { event_id: parent.slug, ids: [private_sub.id] },
-          format: :turbo_stream)
+          format: :json)
 
-      expect(response.body).to include("event_balance_#{private_sub.public_id}")
+      expect(response.parsed_body.keys).to eq([private_sub.public_id])
     end
   end
 

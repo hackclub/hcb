@@ -1,5 +1,0 @@
-<% @balance_events.each do |event| %>
-  <%= turbo_stream.update "event_balance_#{event.public_id}" do %>
-    <%= render_money_amount(@balance_cents_by_event_id.fetch(event.id, 0)) %>
-  <% end %>
-<% end %>
