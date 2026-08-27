@@ -35,7 +35,7 @@
         <span class="regular"><%= render_money(renderable_amount_cents) %></span>
       <% end %>
 
-      <% if ledger_item.hcb_code.personal_transaction.present? %>
+      <% if ledger_item.personal_transaction.present? %>
         <span class="badge h4 bg-warning">
           Personal
           <%= inline_icon :info, size: 20 %>
@@ -231,10 +231,10 @@
           <span><strong>Sign in to view</strong></span>
         <% end %>
       </div>
-      <% if ledger_item.hcb_code.personal_transaction.present? %>
+      <% if ledger_item.personal_transaction.present? %>
         <p>
           <strong>Repaid by</strong>
-          <%= link_to ledger_item.hcb_code.personal_transaction.invoice.local_hcb_code.memo, ledger_item.hcb_code.personal_transaction.invoice %>
+          <%= link_to ledger_item.personal_transaction.invoice.ledger_item.memo, ledger_item.personal_transaction.invoice %>
         </p>
       <% end %>
       <% if card_charge.stripe_card.card_grant.present? %>
