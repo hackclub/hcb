@@ -81,8 +81,8 @@
         <strong>Declined</strong>
         <action data-behavior="modal_trigger" data-modal="declined_information_<%= instance %>" class="pointer" tabindex="0">
 
-          <%= render partial: "hcb_codes/decline_reason", locals: {
-                hcb_code: ledger_item.hcb_code,
+          <%= render partial: "ledger/items/decline_reason", locals: {
+                ledger_item: ledger_item,
                 include_troubleshooting: false,
                 include_external: true
               } %>
@@ -318,8 +318,8 @@
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="declined_information_<%= instance %>">
       <%= modal_header "Transaction declined" %>
 
-      <%= render partial: "hcb_codes/decline_reason", locals: {
-            hcb_code: ledger_item.hcb_code,
+      <%= render partial: "ledger/items/decline_reason", locals: {
+            ledger_item: ledger_item,
             include_troubleshooting: true,
             include_external: true
           } %>

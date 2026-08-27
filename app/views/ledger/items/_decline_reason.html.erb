@@ -1,13 +1,12 @@
-<%# locals: (hcb_code:, include_troubleshooting: false, include_external: true, is_email: false) %>
+<%# locals: (ledger_item:, include_troubleshooting: false, include_external: true, is_email: false) %>
 
-<% card = hcb_code.stripe_card %>
-
-<% pt = hcb_code.pt %>
+<% card = ledger_item.linked_object.stripe_card %>
+<% pt = ledger_item.canonical_pending_transactions.first %>
 <% hcb_decline_reason = pt&.hcb_decline_reason %>
 <% stripe_decline_reason = pt&.stripe_decline_reason %>
 
 <% this_transaction = local_assigns[:is_email] && pt.present? ?
-  "A #{humanized_money_with_symbol pt.amount.abs} charge to your card ending in #{hcb_code.stripe_card.last4} at '#{pt.raw_pending_stripe_transaction.stripe_transaction["merchant_data"]["name"]}'"
+  "A #{humanized_money_with_symbol pt.amount.abs} charge to your card ending in #{card.last4} at '#{pt.raw_pending_stripe_transaction.stripe_transaction["merchant_data"]["name"]}'"
    : "This transaction" %>
 
 <span class="inline-flex">
@@ -16,14 +15,14 @@
       <span><%= this_transaction %> was declined
       <%= {
             merchant_not_allowed_globally: "by HCB because this merchant is not allowed",
-            merchant_not_allowed: "by #{hcb_code.event.name} because this merchant is not allowed",
+            merchant_not_allowed: "by #{ledger_item.primary_ledger.event.name} because this merchant is not allowed",
             cash_withdrawals_not_allowed: "by HCB because cash withdrawals were not enabled on this card",
             user_cards_locked: "by HCB because you have overdue receipts"
           }[hcb_decline_reason] || "due to insufficient funds" %>.</span>
     <% else %>
       <span>
       <%= ("#{this_transaction} was declined by our card issuer " + ({
-            card_inactive: !hcb_code.stripe_card.initially_activated? ? "because this card hasn't been activated yet" : "because this card is frozen",
+            card_inactive: !card.initially_activated? ? "because this card hasn't been activated yet" : "because this card is frozen",
             card_canceled: "because this card is canceled",
             card_expired: "because this card is expired",
             verification_failed: "because the card verification failed",
@@ -46,7 +45,7 @@
           }[hcb_decline_reason] || "Insufficient funds" %>
     <% else %>
       <%= {
-            card_inactive: !hcb_code.stripe_card.initially_activated? ? "Card not activated" : "Card frozen",
+            card_inactive: !card.initially_activated? ? "Card not activated" : "Card frozen",
             card_canceled: "Card canceled",
             card_expired: "Card expired",
             verification_failed: "Card verification failed",
@@ -75,7 +74,7 @@
     <% if hcb_decline_reason == :merchant_not_allowed_globally %>
       This merchant is blocked because it is commonly associated with fraudulent transactions. If you are trying to make a payment, please use a <%= link_to "different transfer method", "https://help.hcb.hackclub.com/en/articles/15033356-how-do-i-transfer-money" %>.
     <% elsif hcb_decline_reason == :merchant_not_allowed %>
-      If you believe that this merchant should be enabled, please reach out to the <%= hcb_code.event.name %> team.
+      If you believe that this merchant should be enabled, please reach out to the <%= ledger_item.primary_ledger.event.name %> team.
     <% elsif hcb_decline_reason == :cash_withdrawals_not_allowed %>
       Cash withdrawals are disabled for most HCB cards. If you need to make a purchase with cash, try using personal funds and submitting a reimbursement report.
     <% elsif hcb_decline_reason == :user_cards_locked %>
@@ -85,10 +84,10 @@
     <% elsif stripe_decline_reason == :webhook_timeout %>
       HCB experienced a network issue while processing this transaction. Please try again.
     <% elsif stripe_decline_reason == :card_inactive %>
-      <% if hcb_code.stripe_card.initially_activated? %>
-        You can defrost your card at any time <%= link_to "here", stripe_card_url(hcb_code.stripe_card) %>.
+      <% if card.initially_activated? %>
+        You can defrost your card at any time <%= link_to "here", stripe_card_url(card) %>.
       <% else %>
-        Activate your new card <%= link_to "here", stripe_card_url(hcb_code.stripe_card) %> before using it.
+        Activate your new card <%= link_to "here", stripe_card_url(card) %> before using it.
       <% end %>
     <% elsif stripe_decline_reason == :card_canceled %>
       <% if card.replacement %>
@@ -112,8 +111,8 @@
     <% elsif stripe_decline_reason.in? %i[verification_failed suspected_fraud] %>
       <% verification_data = pt&.raw_pending_stripe_transaction&.stripe_transaction&.[]("verification_data") %>
       <% card_details = capture do %>
-        <% if defined?(current_user) && hcb_code.stripe_card.user == current_user %>
-          <%= link_to "your card details", stripe_card_path(hcb_code.stripe_card) %>
+        <% if defined?(current_user) && card.user == current_user %>
+          <%= link_to "your card details", stripe_card_path(card) %>
         <% else %>
           the card details
         <% end %>
@@ -151,7 +150,7 @@
 
       <br>
 
-      <span class="mt-2 block">If this transaction was intentional, double check the card details and try again. If you don't recognize this transaction, <%= link_to "freeze your card", stripe_card_url(hcb_code.stripe_card), data: { turbo_method: :post } %>.</span>
+      <span class="mt-2 block">If this transaction was intentional, double check the card details and try again. If you don't recognize this transaction, <%= link_to "freeze your card", stripe_card_url(card), data: { turbo_method: :post } %>.</span>
     <% elsif hcb_decline_reason != :inadequate_balance %>
       Try again, or contact the HCB team at <%= mail_to "hcb@hackclub.com" %>.
 
