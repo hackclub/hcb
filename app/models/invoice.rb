@@ -96,6 +96,7 @@
 #
 class Invoice < ApplicationRecord
   MAX_CARD_AMOUNT = 10_000_00 # Maximum amount we allow to be paid via credit card, in cents
+  MAX_LINE_ITEMS = 50 # Each line item is a synchronous Stripe API call, so bound the fan-out.
 
   has_paper_trail skip: [:payment_method_ach_credit_transfer_account_number] # ciphertext columns will still be tracked
   has_encrypted :payment_method_ach_credit_transfer_account_number

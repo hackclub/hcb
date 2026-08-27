@@ -10,6 +10,7 @@ export default class extends Controller {
     'row',
     'amount',
     'removeButton',
+    'addButton',
     'total',
     'feePreview',
     'cardWarning',
@@ -18,16 +19,25 @@ export default class extends Controller {
   static values = {
     fee: Number,
     maxCard: Number, // in cents
+    max: { type: Number, default: 50 }, // max number of line items
     index: Number,
   }
 
   connect() {
+    // Preserve a server-rendered disabled state (e.g. demo mode) so the
+    // count-based toggle below never re-enables the button.
+    this.addDisabledByDefault = this.hasAddButtonTarget
+      ? this.addButtonTarget.disabled
+      : false
     this.recalculate()
     this.updateRemoveButtons()
+    this.updateAddButton()
   }
 
   add(event) {
     event.preventDefault()
+
+    if (this.rowTargets.length >= this.maxValue) return
 
     const html = this.templateTarget.innerHTML.replaceAll(
       'NEW_RECORD',
@@ -37,6 +47,7 @@ export default class extends Controller {
 
     this.rowsTarget.insertAdjacentHTML('beforeend', html)
     this.updateRemoveButtons()
+    this.updateAddButton()
 
     // Focus the description field of the row we just added.
     const descriptions = this.rowsTarget.querySelectorAll(
@@ -56,7 +67,14 @@ export default class extends Controller {
       .remove()
 
     this.updateRemoveButtons()
+    this.updateAddButton()
     this.recalculate()
+  }
+
+  updateAddButton() {
+    if (!this.hasAddButtonTarget) return
+    this.addButtonTarget.disabled =
+      this.addDisabledByDefault || this.rowTargets.length >= this.maxValue
   }
 
   updateRemoveButtons() {

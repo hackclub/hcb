@@ -120,6 +120,7 @@
           data-controller="invoice-line-items"
           data-invoice-line-items-fee-value="<%= sponsor.event.revenue_fee %>"
           data-invoice-line-items-max-card-value="<%= Invoice::MAX_CARD_AMOUNT %>"
+          data-invoice-line-items-max-value="<%= Invoice::MAX_LINE_ITEMS %>"
           data-invoice-line-items-index-value="1">
           <%= form.label :line_items, "Line items" %>
           <div class="flex gap-2 text-xs muted mb-1">
@@ -135,7 +136,8 @@
           </template>
           <button
             type="button"
-            class="btn bg-transparent info !px-0 !py-1 text-sm"
+            class="btn bg-transparent info !px-0 !py-1 text-sm disabled:opacity-50"
+            data-invoice-line-items-target="addButton"
             data-action="invoice-line-items#add"
             <%= "disabled" if @event.demo_mode? %>>
             <%= inline_icon "plus", size: 20 %>

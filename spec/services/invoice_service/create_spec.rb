@@ -224,4 +224,44 @@ RSpec.describe InvoiceService::Create, type: :model do
     end
   end
 
+  def build_service(line_items:)
+    event = create(:event, name: "Scrapyard")
+    InvoiceService::Create.new(
+      event_id: event.id,
+      due_date: (Date.current + 14).to_s,
+      line_items:,
+      current_user: create(:user),
+      sponsor_id: nil,
+      sponsor_name: "Sponsor Name",
+      sponsor_email: "sponsor@email.com",
+      sponsor_address_line1: "123 Main St",
+      sponsor_address_line2: nil,
+      sponsor_address_city: "Santa Monica",
+      sponsor_address_state: "CA",
+      sponsor_address_postal_code: "90401",
+      sponsor_address_country: "US"
+    )
+  end
+
+  it "rejects line items below the $1 minimum before touching Stripe" do
+    expect(StripeService::Invoice).not_to receive(:create)
+    expect(StripeService::InvoiceItem).not_to receive(:create)
+
+    service = build_service(line_items: [{ description: "Too cheap", amount: "0.50" }])
+
+    expect { service.run }.to raise_error(ArgumentError, /at least \$1/)
+    expect(Invoice.count).to eq(0)
+  end
+
+  it "rejects more than the maximum number of line items before touching Stripe" do
+    expect(StripeService::Invoice).not_to receive(:create)
+    expect(StripeService::InvoiceItem).not_to receive(:create)
+
+    line_items = Array.new(Invoice::MAX_LINE_ITEMS + 1) { |i| { description: "Item #{i}", amount: "1.00" } }
+    service = build_service(line_items:)
+
+    expect { service.run }.to raise_error(ArgumentError, /at most/)
+    expect(Invoice.count).to eq(0)
+  end
+
 end

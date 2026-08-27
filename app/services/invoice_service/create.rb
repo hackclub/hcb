@@ -155,6 +155,7 @@ module InvoiceService
         end
 
         raise ArgumentError, "an invoice needs at least one line item" if items.empty?
+        raise ArgumentError, "an invoice can have at most #{Invoice::MAX_LINE_ITEMS} line items" if items.size > Invoice::MAX_LINE_ITEMS
         raise ArgumentError, "each line item must be at least $1" if items.any? { |item| item[:amount] < 100 }
 
         items
