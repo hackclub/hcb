@@ -556,11 +556,10 @@ class EventsController < ApplicationController
   def async_sub_organization_balances
     authorize @event
 
-    events = Event.where_public_id(params[:ids]).where(id: visible_descendant_ids)
-    balance_cents_by_event_id = Ledger.balance_cents_by_event_id(events)
+    events = Event.where_public_id(params[:ids]).where(id: visible_descendant_ids).includes(:ledger)
 
     balances = events.to_h do |event|
-      [event.public_id, helpers.render_money_amount(balance_cents_by_event_id.fetch(event.id, 0))]
+      [event.public_id, helpers.render_money_amount(event.ledger.available_balance_cents)]
     end
 
     render json: balances

@@ -709,8 +709,8 @@ RSpec.describe EventsController do
           format: :json)
 
       expect(response.parsed_body).to eq(
-        transparent_sub.public_id => money(transparent_sub.ledger.balance_cents),
-        grandchild.public_id      => money(grandchild.ledger.balance_cents)
+        transparent_sub.public_id => money(transparent_sub.ledger.available_balance_cents),
+        grandchild.public_id      => money(grandchild.ledger.available_balance_cents)
       )
     end
 
