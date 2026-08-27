@@ -31,6 +31,13 @@ module Payroll
            subject: "#{@position.payee.display_name} has been onboarded as a contractor for #{@position.event.name}"
     end
 
+    def terminated
+      @position = params[:position]
+      @payee = @position.payee
+
+      mail to: recipients, subject: "Your contracting position for #{@position.event.name} has been terminated"
+    end
+
     private
 
     def recipients

@@ -196,7 +196,8 @@ class AdminController < Admin::BaseController
     @access_level = params[:access_level]
     @event_id = params[:event_id].presence
     @referral_program_id = params[:referral_program_id].presence
-    @params = params.permit(:page, :per, :q, :access_level, :event_id, :referral_program_id)
+    @locked = params[:locked] == "1"
+    @params = params.permit(:page, :per, :q, :access_level, :event_id, :referral_program_id, :locked)
 
     if @event_id
       @event = Event.find(@event_id)
@@ -214,6 +215,7 @@ class AdminController < Admin::BaseController
 
     relation = relation.search_name(@q) if @q
     relation = relation.where(access_level: @access_level) if @access_level.present?
+    relation = relation.where.not(locked_at: nil) if @locked
 
     @count = relation.count
 
@@ -1613,8 +1615,8 @@ class AdminController < Admin::BaseController
         yp_name: merchant[:name],
         yp_network_id: network_id,
         memos: RawStripeTransaction
-          .where("stripe_transaction->'merchant_data'->>'network_id' = ?", network_id)
-          .pluck(Arel.sql("distinct(stripe_transaction->'merchant_data'->'name')"))
+               .where("stripe_transaction->'merchant_data'->>'network_id' = ?", network_id)
+               .pluck(Arel.sql("distinct(stripe_transaction->'merchant_data'->'name')"))
       }
     end
   end
@@ -1752,7 +1754,7 @@ class AdminController < Admin::BaseController
     relation = relation.where(id: events.joins(:canonical_transactions).where("canonical_transactions.date >= ?", @activity_since_date)) if @activity_since_date.present?
     if @plan != "all"
       relation = relation.where(id: events.joins("LEFT JOIN event_plans on event_plans.event_id = events.id")
-                         .where("event_plans.aasm_state = 'active' AND event_plans.type = ?", @plan))
+                                          .where("event_plans.aasm_state = 'active' AND event_plans.type = ?", @plan))
     end
     relation = relation.where(point_of_contact_id: @point_of_contact_id) if @point_of_contact_id != "all"
     if @country == 9999

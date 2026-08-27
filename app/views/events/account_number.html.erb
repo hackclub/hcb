@@ -57,8 +57,11 @@
     <% end %>
   <% end %>
 
-  <% if !(@transactions.nil? || @transactions.length == 0) %>
-    <div class="table-container">
+  <% if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user) %>
+    <%= render "ledgers/ledger", ledger: @ledger, items: @ledger_items, show_author: false %>
+  <% else %>
+    <% if !(@transactions.nil? || @transactions.length == 0) %>
+      <div class="table-container">
         <table>
           <thead>
             <tr>
@@ -75,8 +78,9 @@
       </div>
 
       <%= paginate @transactions %>
-  <% else %>
-    <%= blankslate "No transactions yet" %>
+    <% else %>
+      <%= blankslate "No transactions yet" %>
+    <% end %>
   <% end %>
 <% else %>
   <div class="card container--sm mx-auto center pt4 pb4 mb3">
