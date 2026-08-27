@@ -92,7 +92,7 @@ class DonationsController < ApplicationController
     end
 
     if @event.show_recent_donors
-      @recent_donors = @event.donations.includes(:recurring_donation).succeeded_and_not_refunded.order(created_at: :desc).limit(8).to_a
+      @recent_donors = @event.donations.includes(:recurring_donation).succeeded_and_not_refunded.where(tax_deductible: true).order(created_at: :desc).limit(8).to_a
       if @recent_donors.size < 8
         @recent_donors = []
       end
