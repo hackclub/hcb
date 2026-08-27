@@ -12,11 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-<<<<<<< HEAD
 ActiveRecord::Schema[8.1].define(version: 2026_08_27_120000) do
-=======
-ActiveRecord::Schema[8.1].define(version: 2026_08_27_120000) do
->>>>>>> origin/main
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
