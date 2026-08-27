@@ -55,6 +55,7 @@ class Ledger
 
     has_one :hcb_code, class_name: "HcbCode", required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_one :personal_transaction, required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
+    has_many :admin_ledger_audit_tasks, class_name: "Admin::LedgerAudit::Task", foreign_key: "ledger_item_id", inverse_of: :ledger_item
     belongs_to :linked_object, polymorphic: true, optional: true, inverse_of: :ledger_item
     belongs_to :author, class_name: "User", optional: true
 
