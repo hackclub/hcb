@@ -188,7 +188,51 @@ RSpec.describe "mailer sensitive contents coverage", type: :mailer do
     expect(stale).to be_empty, stale_instructions(stale)
   end
 
+  it "keeps REVIEWED_MAILER_ACTIONS sorted and free of duplicates" do
+    duplicates = reviewed_mailer_actions.tally.select { |_, count| count > 1 }.keys
+    expect(duplicates).to be_empty, duplicate_instructions(duplicates)
+
+    misplaced = reviewed_mailer_actions.each_cons(2).reject { |earlier, later| earlier < later }
+    expect(misplaced).to be_empty, unsorted_instructions(misplaced)
+  end
+
   private
+
+  def duplicate_instructions(actions)
+    <<~MESSAGE
+      REVIEWED_MAILER_ACTIONS lists the same action more than once:
+
+      #{bulleted(actions)}
+
+      WHAT TO DO
+        Delete the duplicate lines. A duplicate usually means two people added
+        the same new mailer action to different parts of the list, which is the
+        thing keeping it sorted is meant to prevent.
+    MESSAGE
+  end
+
+  def unsorted_instructions(pairs)
+    <<~MESSAGE
+      REVIEWED_MAILER_ACTIONS is not alphabetically sorted. Out of order:
+
+      #{bulleted(pairs.map { |earlier, later| "#{earlier.inspect} appears before #{later.inspect}" })}
+
+      WHY THIS MATTERS
+        The comparison above does not care about order, so nothing is broken
+        right now. Sorting is enforced because an unsorted list makes it easy to
+        append a duplicate, and makes every diff to this file harder to read.
+
+      WHAT TO DO
+        Move the entries into alphabetical order. Note this is Ruby string sort,
+        so "User::EmailUpdateMailer#..." sorts before "UserMailer#...", because
+        ":" precedes "M".
+
+        You can regenerate the entire list, but ONLY when the other example in
+        this file passes. If a new mailer action exists and you regenerate, you
+        will silently mark it reviewed without anyone having looked at it, which
+        defeats the point of the tripwire.
+    MESSAGE
+  end
 
   def bulleted(actions)
     actions.map { |action| "  #{action}" }.join("\n")
