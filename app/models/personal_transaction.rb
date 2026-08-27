@@ -63,7 +63,7 @@ class PersonalTransaction < ApplicationRecord
 
   def send_invoice
     card_charge = ledger_item.linked_object
-    event = ledger_item.primary_ledger&.event
+    event = ledger_item.primary_ledger&.event || ledger_item.primary_ledger&.card_grant&.event
     spender = card_charge.stripe_cardholder&.user || reporter
     self.invoice = ::InvoiceService::Create.new(
       event_id: event.id,
