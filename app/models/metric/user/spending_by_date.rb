@@ -40,7 +40,7 @@ class Metric
                                             .where(creator_id: user.id)
                                             .group("date(created_at)")
 
-        increase_checks_subquery = IncreaseCheck.select("date(created_at) AS transaction_date, SUM(amount_cents) AS amount")
+        increase_checks_subquery = IncreaseCheck.select("date(created_at) AS transaction_date, SUM(amount) AS amount")
                                                 .where("EXTRACT(YEAR FROM created_at) = ?", Metric.year)
                                                 .where(user_id: user.id)
                                                 .group("date(created_at)")

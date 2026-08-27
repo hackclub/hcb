@@ -80,7 +80,7 @@ class LegalEntity
           address_city:,
           address_state:,
           address_zip: address_postal_code,
-          amount_cents: amount,
+          amount:,
           memo: memo&.slice(0...40),
           payment_for:,
           recipient_name:,

@@ -16,13 +16,13 @@ class IncreaseChecksController < ApplicationController
   end
 
   def create
-    params[:increase_check][:amount_cents] = Monetize.parse(params[:increase_check][:amount_cents]).cents
+    params[:increase_check][:amount] = Monetize.parse(params[:increase_check][:amount]).cents
 
     @check = @event.increase_checks.build(check_params.except(:file).merge(user: current_user))
 
     authorize @check
 
-    if @check.amount_cents > SudoModeHandler::THRESHOLD_CENTS
+    if @check.amount > SudoModeHandler::THRESHOLD_CENTS
       return unless enforce_sudo_mode # rubocop:disable Style/SoleNestedConditional
     end
 
@@ -45,7 +45,7 @@ class IncreaseChecksController < ApplicationController
     authorize @check
     return unless enforce_sudo_mode
 
-    ensure_admin_may_approve!(@check, amount_cents: @check.amount_cents)
+    ensure_admin_may_approve!(@check, amount_cents: @check.amount)
     @check.send_check!
 
     redirect_to increase_check_process_admin_path(@check), flash: { success: "Check has been sent!" }
@@ -79,7 +79,7 @@ class IncreaseChecksController < ApplicationController
   def check_params
     params.require(:increase_check).permit(
       :memo,
-      :amount_cents,
+      :amount,
       :payment_for,
       :recipient_name,
       :address_line1,
