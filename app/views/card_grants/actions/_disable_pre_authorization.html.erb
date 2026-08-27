@@ -8,7 +8,8 @@
                                  "You don't have permission to perform this action"
                                end %>
 <%= link_to disable_pre_authorization_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
-            method: :post,
+            data: { turbo_method: :post },
+
             class: "btn btn--list-item",
             disabled: !policy(card_grant).disable_pre_authorization? do %>
   <%= inline_icon "pre-authorization", size: 20 %>
