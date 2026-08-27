@@ -219,11 +219,12 @@ class AdminController < Admin::BaseController
 
     @count = relation.count
 
-    @users = relation.page(@page).per(@per).order(created_at: :desc)
+    @users = relation.order(created_at: :desc)
     @referral_programs = Referral::Program.all
 
     respond_to do |format|
       format.html do
+        @users = @users.page(@page).per(@per)
       end
       format.csv { render csv: @users.includes(:stripe_cards, :emburse_cards) }
     end

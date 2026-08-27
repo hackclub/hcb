@@ -63,16 +63,16 @@
       <% end %>
     <% end %>
   </td>
-  <td class="tabular-nums">
-    <span id="event_balance_<%= event.public_id %>">
-      <span class="muted">—</span>
-    </span>
-  </td>
   <td>
     <span class="sub-organization-row__count tabular-nums">
       <%= inline_icon "people-2", size: 18, class: "muted", 'aria-label': "Team members" %>
       <%= row[:organizer_count] %>
     </span>
     <%= link_to "", event, class: "stretched-link", "aria-label": event.name %>
+  </td>
+  <td class="tabular-nums text-right">
+    <span id="event_balance_<%= event.public_id %>">
+      <span class="muted">—</span>
+    </span>
   </td>
 </tr>
