@@ -11,7 +11,7 @@ module Maintenance
     end
 
     def process(task)
-      return if task.hcb_code.blank?
+      return if task.hcb_code_id.nil?
 
       task.update!(ledger_item_id: task.hcb_code.ledger_item_id)
     end
