@@ -281,7 +281,7 @@
   <div class="flex flex-row items-start justify-start gap-4">
     <span class="-m-[2px] w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-bold border-2 border-solid border-smoke">1</span>
     <p class="m-0">
-      <%= link_to "Approve & assign yourself", approve_wise_transfer_path(@wise_transfer), method: :post %> to this Wise transfer to prevent double-processing.
+      <%= link_to "Approve & assign yourself", approve_wise_transfer_path(@wise_transfer), data: { turbo_method: :post } %> to this Wise transfer to prevent double-processing.
     </p>
   </div>
   <div class="flex flex-row items-start justify-start gap-4">
