@@ -1355,9 +1355,6 @@ class EventsController < ApplicationController
 
   private
 
-  # Sums a report's non-fee expenses. Mirrors Reimbursement::Report#amount_cents
-  # (via the Expense.to_sum scope) so the "Amount" column can be sorted in SQL.
-  REIMBURSEMENT_AMOUNT_SORT_SQL = "(SELECT COALESCE(SUM(amount_cents), 0) FROM reimbursement_expenses WHERE reimbursement_report_id = reimbursement_reports.id AND type != 'Reimbursement::Expense::Fee')"
   REIMBURSEMENT_COLUMNS = [
     { key: "aasm_state", display: "Status" },
     { key: "name", display: "Report" },
@@ -1367,9 +1364,7 @@ class EventsController < ApplicationController
       key: "amount",
       display: "Amount",
       right: true,
-      order: ->(relation, direction) do
-        relation.order(Arel.sql("#{REIMBURSEMENT_AMOUNT_SORT_SQL} #{direction == :asc ? 'ASC' : 'DESC'}"))
-      end,
+      order: ->(relation, direction) { relation.order_by_amount(direction) },
     },
   ].freeze
   private_constant :REIMBURSEMENT_COLUMNS
