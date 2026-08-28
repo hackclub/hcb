@@ -21,7 +21,6 @@
   }
 }
 
-// Wraps the visible input so it reads as a regular form field.
 .combobox__field {
   @extend .input;
   padding: 0 0.25rem !important;
