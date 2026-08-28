@@ -14,5 +14,4 @@ export default class extends Controller {
     this.defaultPanelTarget.hidden = false
     if (this.hasSummaryTarget) this.summaryTarget.hidden = false
   }
-
 }
