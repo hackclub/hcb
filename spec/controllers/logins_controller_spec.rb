@@ -153,7 +153,7 @@ RSpec.describe LoginsController do
         # to some unrelated wildcard route (unlike e.g. "/console", which also
         # matches the catch-all `events#show` route).
         login = create(:login, user:, state: { return_to: "/schema/foo/bar" })
-        webauthn_credential = create_webauthn_credential(user:)
+        create_webauthn_credential(user:)
 
         webauthn_challenge = generate_webauthn_challenge(user:)
         session[:webauthn_challenge] = webauthn_challenge
