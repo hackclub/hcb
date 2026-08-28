@@ -10,12 +10,17 @@
     </ul>
   <% end %>
 
+  <%# Cloudflare Turnstile gates the submit button; see the `turnstile` Stimulus controller. %>
+  <% turnstile_sitekey = TurnstileService.site_key if TurnstileService.enabled? %>
+  <% form_data = { turbo: true, turbo_action: "advance" } %>
+  <% form_data.merge!(controller: "turnstile", turnstile_sitekey_value: turnstile_sitekey, turnstile_action_value: TurnstileService::DONATION_ACTION) if turnstile_sitekey %>
+
   <%= form_with(model: @monthly ? [@event, @recurring_donation] : donation, local: true, url: (make_donation_donations_path unless @monthly),
-                class: "card mx-auto max-w-96 mb3", data: { turbo: true, turbo_action: "advance" }, html: { autocomplete: "off" }) do |form| %>
+                class: "card mx-auto max-w-96 mb3", data: form_data, html: { autocomplete: "off" }) do |form| %>
     <% donation = @recurring_donation if @monthly %>
 
     <%= form.invisible_captcha :subtitle %>
-    <%= form_errors(donation, nil, "We couldn't start this") unless @monthly %>
+    <%= form_errors(donation, nil, "We couldn't start this") %>
 
     <div class="field mb2">
       <%= form.label :name, "Your name" %>
@@ -115,10 +120,19 @@
     <%= form.hidden_field :utm_content %>
     <%= form.hidden_field :referrer %>
 
+    <% if turnstile_sitekey %>
+      <%= hidden_field_tag TurnstileProtection::TOKEN_PARAM, nil, id: nil, data: { turnstile_target: "token" } %>
+      <div class="mt1" data-turnstile-target="widget"></div>
+      <div class="primary h5 mt1" data-turnstile-target="error" hidden>
+        We couldn’t load the human-verification check. Please disable any ad blocker for this page and reload.
+      </div>
+    <% end %>
+
     <% if @event.demo_mode? %>
       <%= form.submit "Continue →", class: "w-100 bg-success mt1", disabled: "true" %>
     <% else %>
-      <%= form.submit "Continue →", class: "w-100 bg-success mt1" %>
+      <%# The Turnstile controller keeps this disabled until the challenge is solved. %>
+      <%= form.submit "Continue →", class: "w-100 bg-success mt1", disabled: turnstile_sitekey.present?, data: ({ turnstile_target: "submit" } if turnstile_sitekey) %>
     <% end %>
   <% end %>
 <% end %>

@@ -114,7 +114,7 @@ class Wire < ApplicationRecord
     state :failed
 
     event :mark_approved do
-      after_commit do
+      after do
         WireMailer.with(wire: self).notify_recipient.deliver_later if self.send_email_notification
         payment_attempt.mark_sent! if payment_attempt.present?
       end

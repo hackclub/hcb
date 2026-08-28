@@ -18,7 +18,7 @@
 #  one_time_use               :boolean
 #  pre_authorization_required :boolean          default(FALSE), not null
 #  purpose                    :string
-#  status                     :integer          default("active"), not null
+#  status                     :integer          default(0), not null
 #  created_at                 :datetime         not null
 #  updated_at                 :datetime         not null
 #  disbursement_id            :bigint
@@ -134,6 +134,8 @@ class CardGrant < ApplicationRecord
   def state_text
     if suspected_fraud?
       "Fraudulent"
+    elsif converted_to_reimbursement_report?
+      "Converted to reimbursement"
     elsif canceled?
       "Canceled"
     elsif expired?
@@ -154,6 +156,10 @@ class CardGrant < ApplicationRecord
     return :warning if s == :info
 
     :muted
+  end
+
+  def converted_to_reimbursement_report?
+    canceled? && reimbursement_report.present?
   end
 
   def suspected_fraud?

@@ -6,15 +6,15 @@ ruby file: ".ruby-version"
 
 gem "dotenv-rails", groups: [:development, :test]
 
-gem "rails", "~> 8.0"
+gem "rails", "~> 8.1"
 
-gem "puma", "~> 6.6" # app server
+gem "puma", "~> 7.2" # app server
 
 gem "pg", ">= 0.18", "< 2.0" # database
 gem "fx"
 gem "redis", "~> 5.4" # for caching, jobs, etc.
 gem "sidekiq", "~> 7.3.8" # background jobs
-gem "sidekiq-cron", "~> 2.3" # run Sidekiq jobs at scheduled intervals
+gem "sidekiq-cron", "~> 2.4" # run Sidekiq jobs at scheduled intervals
 gem "activejob-traffic_control" # throttle jobs
 gem "suo", github: "instacart/suo" # suo is a transitive dependency of activejob-traffic_control
 # explicitly use instacart fork here to work around dalli log in upstream https://github.com/nickelser/suo/pull/21
@@ -54,9 +54,10 @@ gem "lockbox" # encrypt sensitive data
 gem "blind_index" # needed to query and/or guarantee uniqueness for encrypted fields with lockbox
 
 gem "aasm" # state machine
+gem "after_commit_everywhere", "~> 1.0" # makes AASM :after_commit callbacks safe from race conditions and redundant calls
 
-gem "paper_trail", "~> 16.0.0" # track changes to models
-gem "acts_as_paranoid", "~> 0.10.3" # enables soft deletions
+gem "paper_trail", "~> 17.0.0" # track changes to models
+gem "acts_as_paranoid", "~> 0.11.0" # enables soft deletions
 
 gem "friendly_id", "~> 5.6.0" # slugs
 gem "hashid-rails", "~> 1.0" # obfuscate IDs in URLs
@@ -162,8 +163,6 @@ group :development, :test do
   gem "pry-rails", require: ENV["EXCLUDE_PRY"] != "true"
 end
 
-gem "query_count"
-
 gem "rack-mini-profiler", "~> 3.3"
 gem "stackprof" # used by `rack-mini-profiler` to provide flamegraphs
 
@@ -235,7 +234,6 @@ gem "discordrb"
 gem "pghero", "~> 3.7"
 gem "pg_query", ">= 2"
 
-gem "intercom-rails"
 gem "hotwire_combobox"
 
 gem "maintenance_tasks", "~> 2.14"
