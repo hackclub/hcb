@@ -116,5 +116,6 @@ module Blazer
         f.response :json
       end
     end
+
   end
 end

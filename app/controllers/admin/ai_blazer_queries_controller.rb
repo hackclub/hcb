@@ -31,7 +31,7 @@ module Admin
         flash.now[:error] = @query.errors.full_messages.to_sentence
         render :new, status: :unprocessable_entity
       end
-    rescue StandardError => e
+    rescue => e
       Rails.error.report(e)
       flash.now[:error] = "Unable to generate a query right now."
       render :new, status: :unprocessable_entity
@@ -52,5 +52,6 @@ module Admin
     def query_params
       params.require(:ai_blazer_query).permit(:prompt)
     end
+
   end
 end

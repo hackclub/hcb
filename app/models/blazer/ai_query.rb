@@ -6,9 +6,7 @@ module Blazer
     PROMPT_COMMENT_PREFIX = "/* AI prompt:"
 
     class << self
-      def count
-        relation.count
-      end
+      delegate :count, to: :relation
 
       def relation
         Blazer::Query.where("name LIKE ?", "#{PREFIX} %")
@@ -54,6 +52,8 @@ module Blazer
 
         lines.drop(1).join.strip
       end
+
     end
+
   end
 end
