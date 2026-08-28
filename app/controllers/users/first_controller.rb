@@ -122,6 +122,13 @@ module Users
         @user.creation_method = :first_robotics_form
         @user.save!
 
+        # An anonymous visitor only has a session if they arrived via a
+        # referral link (see Referral::LinksController#show). No session means
+        # no clicks to attribute, so there is nothing to transfer.
+        current_session&.referral_attributions&.where(user_id: nil)&.find_each do |attribution|
+          attribution.update!(user: @user)
+        end
+
         if program.present?
           raf = Raffle.find_or_create_by!(user: @user, program:)
           raf.update!(referring_raffle: user_referral) if user_referral.present?
@@ -133,15 +140,20 @@ module Users
       end
 
       @user = User.find_by!(email: user_params[:email])
+
+      current_session&.referral_attributions&.where(user_id: nil)&.find_each do |attribution|
+        attribution.update!(user: @user)
+      end
+
       @login = Login.create!(state: { purpose: "first", return_to: first_index_path, user_params:, raffle: program }, user: @user)
 
       cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
 
       redirect_to choose_login_preference_login_path(@login)
     rescue ActiveRecord::RecordInvalid => e
-      flash[:error] = e.message
+      flash.now[:error] = e.record.errors.full_messages.to_sentence
 
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
 
     def macbook_qr_code

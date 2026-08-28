@@ -1,0 +1,145 @@
+<% content_for :title, "Funder FAQ: funding through HCB" %>
+
+<% content_for :head do %>
+  <% description = "For funders and donors: answers to common questions about funding through HCB by Hack Club, including funding projects that aren't 501(c)(3)s, how it compares to a private foundation or donor-advised fund, tax-deductibility, control, fees, and transparency." %>
+  <% share_image = "#{request.base_url}/brand/hcb-icon-icon-original.png" %>
+  <meta name="description" content="<%= description %>">
+  <link rel="canonical" href="<%= funders_faq_url %>">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="HCB">
+  <meta property="og:url" content="<%= funders_faq_url %>">
+  <meta property="og:title" content="HCB for funders: frequently asked questions">
+  <meta property="og:description" content="<%= description %>">
+  <meta property="og:image" content="<%= share_image %>">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="HCB for funders: frequently asked questions">
+  <meta name="twitter:description" content="<%= description %>">
+  <meta name="twitter:image" content="<%= share_image %>">
+
+  <%# FAQPage structured data, generated from the same source as the visible Q&A below so the two
+      always match. AI engines extract these Q&A pairs near-verbatim. %>
+  <script type="application/ld+json"> <%# erb_lint:disable AllowedScriptType %>
+    <%= raw({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "name": "HCB",
+              "legalName": "The Hack Foundation",
+              "url": "https://hcb.hackclub.com",
+              "logo": "https://hcb.hackclub.com/brand/hcb-icon-icon-original.png",
+              "taxID": "81-2908499",
+              "identifier": { "@type": "PropertyValue", "propertyID": "EIN", "value": "81-2908499" },
+              "sameAs": ["https://github.com/hackclub/hcb", "https://hackclub.com", "https://en.wikipedia.org/wiki/Hack_Club", "https://projects.propublica.org/nonprofits/organizations/812908499"]
+            },
+            {
+              "@type": "FAQPage",
+              "audience": { "@type": "Audience", "audienceType": "Funders, donors, and grantmakers" },
+              "mainEntity": funder_faqs(stats: @stats).flat_map { |group| group[:faqs] }.map { |faq|
+                { "@type": "Question", "name": faq[:q], "acceptedAnswer": { "@type": "Answer", "text": faq[:a] } }
+              }
+            },
+            {
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                { "@type": "ListItem", "position": 1, "name": "For funders", "item": funders_url },
+                { "@type": "ListItem", "position": 2, "name": "Funder FAQ", "item": funders_faq_url }
+              ]
+            }
+          ]
+        }.to_json) %>
+  </script>
+<% end %>
+
+<section class="mk-section">
+  <div class="mk-container mk-faq-page">
+    <div class="mk-section__head mk-faq-page__head">
+      <p class="mk-eyebrow"><a href="<%= funders_path %>" class="mk-faq__back">For funders</a></p>
+      <h1 class="mk-section__title">Funder questions, answered</h1>
+      <p class="mk-lead">Everything funders ask before moving money through HCB, from what you can
+        fund and how it compares to a foundation or donor-advised fund, to tax-deductibility,
+        control, fees, and transparency. These answers are written for funders and donors; if you
+        run a project on HCB, some answers will be different for you. Still have a question?
+        <a href="<%= funders_path(anchor: "talk-to-us") %>">Talk to our team</a>.</p>
+    </div>
+
+    <% faqs = funder_faqs(stats: @stats).select { |group| group[:faqs].present? } %>
+    <%# Stable-id lookup so "related" links reference an id (not the question's wording), which keeps
+        them from breaking when an answer is reworded. %>
+    <% faq_by_id = faqs.flat_map { |group| group[:faqs] }.select { |entry| entry[:id] }.index_by { |entry| entry[:id] } %>
+    <div class="mk-faq-layout" data-controller="funders-faq-toc">
+      <%# Sticky table of contents (desktop). The jump links work without JS; the controller adds
+          the scroll-tracked active state. %>
+      <nav class="mk-faq-toc" aria-label="On this page">
+        <p class="mk-faq-toc__label">On this page</p>
+        <ol class="mk-faq-toc__list">
+          <% faqs.each_with_index do |group, i| %>
+            <li>
+              <a class="mk-faq-toc__link" href="#<%= group[:topic].parameterize %>"
+                 data-funders-faq-toc-target="link" data-toc-id="<%= group[:topic].parameterize %>">
+                <span class="mk-faq-toc__num"><%= format("%02d", i + 1) %></span>
+                <span class="mk-faq-toc__text"><%= group[:topic] %></span>
+              </a>
+            </li>
+          <% end %>
+        </ol>
+      </nav>
+
+      <div class="mk-faq-content">
+        <div class="mk-faq">
+          <% faqs.each_with_index do |group, i| %>
+            <section class="mk-faq__group" id="<%= group[:topic].parameterize %>"
+                     data-funders-faq-toc-target="section" data-toc-id="<%= group[:topic].parameterize %>">
+              <h2 class="mk-faq__topic">
+                <span class="mk-faq__topic-num"><%= format("%02d", i + 1) %></span>
+                <span class="mk-faq__topic-text"><%= group[:topic] %></span>
+              </h2>
+              <% group[:faqs].each do |faq| %>
+                <div class="mk-faq__item">
+                  <h3 class="mk-faq__q" id="<%= faq[:id] || faq[:q].parameterize %>"><%= faq[:q] %></h3>
+                  <p class="mk-faq__a"><%= faq[:a] %></p>
+                  <% if faq[:sources].present? %>
+                    <p class="mk-meta">
+                      <span class="mk-meta__label">Sources</span>
+                      <% faq[:sources].each do |source| %>
+                        <a class="mk-meta__link" href="<%= source[:url] %>" target="_blank" rel="noopener"><%= source[:text] %><span class="mk-vh"> (opens in a new tab)</span></a>
+                      <% end %>
+                    </p>
+                  <% end %>
+                  <% if faq[:related].present? %>
+                    <p class="mk-meta">
+                      <span class="mk-meta__label">Related</span>
+                      <% faq[:related].each do |rel_id| %>
+                        <% rel = faq_by_id[rel_id] %>
+                        <% if rel %>
+                          <a class="mk-meta__link" href="#<%= rel[:id] %>"><%= rel[:q] %></a>
+                        <% end %>
+                      <% end %>
+                    </p>
+                  <% end %>
+                </div>
+              <% end %>
+            </section>
+          <% end %>
+        </div>
+
+        <p class="mk-compare-disclaimer">This page is general information, not tax or legal advice;
+          confirm specifics with your own advisor.</p>
+
+        <div class="mk-compare-note mk-compare-note--team">
+          <div class="mk-avatar-stack" aria-hidden="true">
+            <% funder_team.each do |member| %>
+              <img class="mk-avatar-stack__img" src="<%= member[:avatar] %>" alt="" width="36" height="36" loading="lazy" decoding="async">
+            <% end %>
+          </div>
+          <div>
+            <p class="mk-compare-note__lead">Didn't find your answer?</p>
+            <p class="mk-compare-note__body">Tell us what you're trying to fund and a real person will
+              walk you through it. <a href="<%= funders_path(anchor: "talk-to-us") %>">Talk to our team</a>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,6 +1,6 @@
 <%# locals: (raffle:, raffle_name:) %>
 
-<div class="my-4 flex rounded-lg bg-white dark:bg-black overflow-hidden border-2 border-dashed border-blue">
+<div class="my-4 flex rounded-lg bg-white overflow-hidden border-2 border-dashed <%= raffle.confirmed? ? "border-blue dark:bg-black" : "border-yellow bg-yellow !bg-opacity-20" %>">
   <div class="flex-1 p-5">
     <% if raffle.confirmed? %>
       <% if raffle.program_allows_referrals? %>
@@ -24,7 +24,7 @@
     <% end %>
     <p class="text-xs muted mb-0">Entered <%= raffle.created_at.strftime("%B %-d, %Y") %></p>
   </div>
-  <div class="border-0 border-l-2 border-dashed self-stretch border-blue"></div>
+  <div class="border-0 border-l-2 border-dashed self-stretch <%= raffle.confirmed? ? "border-blue" : "border-yellow" %>"></div>
   <div class="w-32 p-5 flex flex-col items-center justify-center text-center gap-1 shrink-0">
     <p class="text-xs uppercase tracking-widest muted mt-0 mb-1">Ticket No.</p>
     <p class="font-mono font-bold text-2xl my-0 <%= "muted" unless raffle.confirmed? %>"><%= raffle.ticket_number || "——" %></p>

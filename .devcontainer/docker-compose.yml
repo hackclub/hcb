@@ -4,8 +4,8 @@ services:
       context: ..
       dockerfile: .devcontainer/Dockerfile
       args:
-        RUBY_VERSION: 3.4.7
-        NODE_VERSION: 22
+        RUBY_VERSION: 3.4.9
+        NODE_VERSION: 24
 
     volumes:
       - ../..:/workspaces:cached

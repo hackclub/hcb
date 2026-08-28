@@ -66,6 +66,7 @@
       right: 0;
       bottom: 0;
       opacity: 0.1;
+      pointer-events: none;
       background-image: url('frc-background.png');
       background-size: 24em;
       background-position: center;
@@ -75,6 +76,10 @@
 }
 
 html[data-dark='true'] {
+  .transaction__memo a {
+    color: inherit;
+  }
+
   .transaction--frc {
     color: $white;
 
@@ -91,6 +96,26 @@ html[data-dark='true'] {
   > div {
     display: flex;
     align-items: center;
+  }
+
+  a {
+    position: relative;
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    // Enlarge the vertical touch target without affecting row height: an
+    // absolutely-positioned overlay extends the clickable area above and below
+    // while staying out of layout flow.
+    &::after {
+      content: '';
+      position: absolute;
+      inset: -0.25rem 0;
+      pointer-events: none;
+    }
   }
 
   span:not(.badge):not(.list-badge):first-of-type {
@@ -128,9 +153,100 @@ html[data-dark='true'] {
   }
 }
 
+// The organization a transaction belongs to, shown under its memo when rows
+// from several orgs share one table. Long org names truncate.
+.transaction__event {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+
+  a {
+    color: map-get($palette, muted);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// The "Older receipts" group is a <details>, and its header is the <summary>.
+// Hide the default disclosure triangle in favour of the caret in the header.
+.receipt-card > summary {
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+}
+
+// The heading's bottom margin is the gap between it and the table below, but on
+// a collapsible group it would have to vanish when collapsed or it reads as dead
+// space under the header. Toggling it snaps the card 8px mid-animation, so the
+// gap lives on the table instead: there it sits inside ::details-content and is
+// revealed by the same block-size transition.
+details.receipt-card {
+  > summary > .heading {
+    margin-bottom: 0;
+  }
+
+  > .table-container {
+    margin-top: 0.5rem;
+  }
+
+  // Turn with the disclosure rather than snapping when it opens.
+  .flip-when-open {
+    transition: transform 0.5s;
+  }
+}
+
+.transaction__receipt-action {
+  width: 1%;
+}
+
+.receipt-card {
+  .transaction__date {
+    min-width: 7.5rem;
+  }
+
+  .transaction__memo {
+    width: 100%;
+    max-width: 0;
+    min-width: 12rem;
+  }
+
+  .transaction__amount {
+    min-width: 7rem;
+  }
+
+  .transaction__receipt-action {
+    min-width: 21rem;
+  }
+}
+
+.transaction__memo--pending {
+  color: map-get($palette, muted);
+}
+
+// Fills the remaining table width and truncates with an ellipsis instead of
+// widening the table (max-width: 0 keeps the content from sizing the cell)
+.transaction__memo--fluid {
+  width: 100%;
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .transaction:hover .add-tag-badge,
 .add-tag-badge[aria-expanded='true'] {
   visibility: visible;
+}
+
+.transaction:not(:hover) .add-tag-badge {
+  width: 1px;
 }
 
 .transaction:hover .suggested_tag,
@@ -166,19 +282,20 @@ html[data-dark='true'] {
   }
 }
 
-.transaction__fee_icon {
-  svg {
-    height: 18px;
-    width: 18px;
-    margin-left: 3px;
+@keyframes highlight-row {
+  from {
+    background-color: map-get($palette, warning);
+  }
+  to {
+    background-color: none;
   }
 }
 
 .transaction:has(.renamed) {
-  animation: highlight 2s;
+  animation: highlight-row 2s;
 }
 
-.transaction:has(.renaming) {
+.transaction:has(.renaming:not([hidden])) {
   background-image:
     linear-gradient(90deg, $orange 50%, transparent 50%),
     linear-gradient(90deg, $orange 50%, transparent 50%),

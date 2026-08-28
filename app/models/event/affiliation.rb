@@ -5,12 +5,12 @@
 # Table name: event_affiliations
 #
 #  id              :bigint           not null, primary key
-#  affiliable_type :string           not null
 #  metadata        :jsonb            not null
 #  name            :string           not null
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  affiliable_id   :bigint           not null
+#  affiliable_type :string           not null
 #
 # Indexes
 #
@@ -123,34 +123,38 @@ class Event
       league = league.to_s.strip.downcase
       team_number = team_number.to_s.strip
 
-      conn = Faraday.new(url: TBA_BASE_URL) do |f|
-        f.headers["X-TBA-Auth-Key"] = Credentials.fetch(:THE_BLUE_ALLIANCE, :API_KEY)
-      end
-
-      team_key = "frc#{team_number}"
-      team_response = conn.get("team/#{team_key}")
-
-      return nil unless team_response.success?
-
-      team_data = JSON.parse(team_response.body)
-
-      avatar = nil
-      media_response = conn.get("team/#{team_key}/media/#{Date.today.year}")
-      if media_response.success?
-        media = JSON.parse(media_response.body)
-        avatar_media = media.find { |m| m["type"] == "avatar" }
-        if avatar_media
-          base64 = avatar_media.dig("details", "base64Image")
-          avatar = base64.present? ? "data:image/png;base64,#{base64}" : avatar_media["direct_url"].presence
+      # The Blue Alliance is a community-run service; if it's unreachable, report
+      # it and degrade to no team info rather than failing the request.
+      Rails.error.handle(context: { external_service: :the_blue_alliance }) do
+        conn = Faraday.new(url: TBA_BASE_URL) do |f|
+          f.headers["X-TBA-Auth-Key"] = Credentials.fetch(:THE_BLUE_ALLIANCE, :API_KEY)
         end
-      end
 
-      {
-        league: league,
-        team_number: team_number,
-        team_name: team_data["nickname"],
-        avatar: avatar
-      }
+        team_key = "frc#{team_number}"
+        team_response = conn.get("team/#{team_key}")
+
+        next nil unless team_response.success?
+
+        team_data = JSON.parse(team_response.body)
+
+        avatar = nil
+        media_response = conn.get("team/#{team_key}/media/#{Date.today.year}")
+        if media_response.success?
+          media = JSON.parse(media_response.body)
+          avatar_media = media.find { |m| m["type"] == "avatar" }
+          if avatar_media
+            base64 = avatar_media.dig("details", "base64Image")
+            avatar = base64.present? ? "data:image/png;base64,#{base64}" : avatar_media["direct_url"].presence
+          end
+        end
+
+        {
+          league: league,
+          team_number: team_number,
+          team_name: team_data["nickname"],
+          avatar: avatar
+        }
+      end
     end
 
     private
