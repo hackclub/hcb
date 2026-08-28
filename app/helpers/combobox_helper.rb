@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 module ComboboxHelper
-  DEFAULT_COMBOBOX_PLACEHOLDER = "Select one…"
-  COMBOBOX_INPUT_ACTIONS = "input->combobox#onInput focus->combobox#onFocus " \
-                           "keydown->combobox#onKeydown blur->combobox#onBlur"
-
   def combobox_tag(name, src, selected: nil, wrapper_class: nil, data: {}, **input_options)
     value, display = combobox_selection(selected)
     input_id = input_options.delete(:id) || name.to_s.gsub(/\W+/, "_").delete_suffix("_")
@@ -13,9 +9,9 @@ module ComboboxHelper
     input = tag.input(**{
       type: "text", id: input_id, role: "combobox",
       class: token_list("combobox__input", input_options.delete(:class)),
-      placeholder: DEFAULT_COMBOBOX_PLACEHOLDER, autocomplete: "off",
+      placeholder: "Select one…", autocomplete: "off",
       aria: { autocomplete: "both", expanded: false, controls: listbox_id },
-      data: { combobox_target: "input", action: COMBOBOX_INPUT_ACTIONS }
+      data: { combobox_target: "input", action: "input->combobox#onInput focus->combobox#onFocus keydown->combobox#onKeydown blur->combobox#onBlur" }
     }.deep_merge(input_options))
 
     tag.div class: token_list("combobox", wrapper_class),
