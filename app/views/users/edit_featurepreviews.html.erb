@@ -16,14 +16,6 @@
     <% end %>
 
     <%= render partial: "features/preview", locals: {
-          id: "transaction-popovers",
-          feature_flag: :hcb_code_popovers_2023_06_16,
-          name: "Popovers",
-          description: "This feature flag enables a popover allowing quick and easy access to transaction details, card information, and more!",
-          user: @user
-        } %>
-
-    <%= render partial: "features/preview", locals: {
           id: "sudo-mode",
           feature_flag: :sudo_mode_2015_07_21,
           name: "Sudo Mode",
