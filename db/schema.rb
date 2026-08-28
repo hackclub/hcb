@@ -1272,7 +1272,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_120000) do
 
   create_table "g_suite_accounts", force: :cascade do |t|
     t.datetime "accepted_at", precision: nil
-    t.text "address"
+    t.text "address", null: false
     t.text "backup_email"
     t.datetime "created_at", precision: nil, null: false
     t.bigint "creator_id"
