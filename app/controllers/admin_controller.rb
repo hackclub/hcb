@@ -426,7 +426,6 @@ class AdminController < Admin::BaseController
     }
   end
 
-  # Options for `combobox_tag`; see app/helpers/combobox_helper.rb.
   def user_search
     @q = params[:q].presence
     @users = if @q.present?
