@@ -7,6 +7,12 @@ RSpec.describe CardLockingMailer, type: :mailer do
 
   before { travel_to(Time.zone.parse("2026-10-10 12:00:00")) }
 
+  # Quoted-printable soft-wraps the encoded body every 76 characters, which can
+  # split a sentence mid-phrase; assert against the decoded HTML instead.
+  def html_body(mail)
+    (mail.html_part || mail).body.decoded
+  end
+
   describe "#cards_locked" do
     it "names the overdue count and avoids countdown/violation language" do
       hcb_code = create_settled_card_charge(user:, settled_at: 10.days.ago)
@@ -96,6 +102,28 @@ RSpec.describe CardLockingMailer, type: :mailer do
       mail = described_class.warning(user:)
 
       expect(mail.subject).to eq("You have 2 receipts to upload")
+    end
+
+    it "counts down to the soonest deadline in the pile" do
+      soonest = create_settled_card_charge(user:, settled_at: 6.days.ago)
+      soonest.update!(receipt_due_at: 11.hours.from_now)
+      later = create_settled_card_charge(user:, settled_at: 1.day.ago)
+      later.update!(receipt_due_at: 6.days.from_now)
+
+      mail = described_class.warning(user:)
+
+      expect(html_body(mail)).to include("Your next receipt is due in")
+      expect(html_body(mail)).to include("11 hours")
+    end
+
+    it "states the rule instead of a countdown when the pile carries no deadline" do
+      hcb_code = create_settled_card_charge(user:, settled_at: 2.days.ago)
+      hcb_code.update!(receipt_due_at: nil)
+
+      mail = described_class.warning(user:)
+
+      expect(html_body(mail)).not_to include("is due in")
+      expect(html_body(mail)).to include("more than 7 days without a receipt")
     end
   end
 end

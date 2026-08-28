@@ -24,7 +24,7 @@ class CardGrantsController < ApplicationController
     card_grants_page = (params[:page] || 1).to_i
     card_grants_per_page = (params[:per] || 20).to_i
 
-    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger).order(created_at: :desc)
+    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger, :reimbursement_report).order(created_at: :desc)
     @card_grants = @card_grants.search_for(params[:q]) if params[:q].present?
     @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
   end
@@ -333,10 +333,6 @@ class CardGrantsController < ApplicationController
     @card_grant.update(pre_authorization_required: false)
 
     redirect_to @card_grant, flash: { success: "Successfully disabled pre-authorization for this card grant." }
-  end
-
-  def edit
-    authorize @card_grant
   end
 
   private

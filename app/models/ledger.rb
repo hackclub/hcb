@@ -78,7 +78,15 @@ class Ledger < ApplicationRecord
     (event.fees.sum(:amount_cents_as_decimal) - total_fee_payments_cents + (feed_fronted_balance * BigDecimal(event.revenue_fee))).ceil
   end
 
+  def fee_balance_cents
+    return 0 if event.nil?
+
+    event.fees.sum(:amount_cents_as_decimal).ceil - total_fee_payments_cents
+  end
+
   def total_fee_payments_cents
+    return 0 if event.nil?
+
     @total_fee_payments_cents ||=
       begin
         paid = canonical_transactions.includes(:fee).where(fee: { reason: "HACK CLUB FEE" }).sum(:amount_cents)

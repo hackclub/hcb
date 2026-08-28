@@ -2,6 +2,7 @@ plugins:
   - rubocop-rails
 require:
   - ./lib/rubocop/cop/hcb/turbo_confirm
+  - ./lib/rubocop/cop/hcb/turbo_method
 inherit_from: .rubocop_todo.yml
 
 AllCops:

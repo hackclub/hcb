@@ -54,6 +54,8 @@ class Ledger
     include Receiptable
 
     has_one :hcb_code, class_name: "HcbCode", required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
+    has_one :personal_transaction, required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
+    has_many :admin_ledger_audit_tasks, class_name: "Admin::LedgerAudit::Task", foreign_key: "ledger_item_id", inverse_of: :ledger_item
     belongs_to :linked_object, polymorphic: true, optional: true, inverse_of: :ledger_item
     belongs_to :author, class_name: "User", optional: true
 
@@ -193,8 +195,8 @@ class Ledger
       # TODO: remove CT and CPT updates because they are HCB code specific
       ActiveRecord::Base.transaction do
         if hcb_code.present?
-          hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
-          hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
+          hcb_code.canonical_transactions.update_all(custom_memo: memo)
+          hcb_code.canonical_pending_transactions.update_all(custom_memo: memo)
         end
         update!(custom_memo: memo)
       end
