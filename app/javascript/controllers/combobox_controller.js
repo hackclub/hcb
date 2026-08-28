@@ -1,16 +1,3 @@
-/*
-  A lightweight, self-contained autocomplete combobox.
-
-  It loads its options asynchronously from `urlValue` (an endpoint returning
-  JSON `[{ value, label, sublabel, disabled }]`), lets the user filter by
-  typing, and mirrors the chosen option's `value` into a hidden form field so
-  the surrounding form submits it. Only options returned by the endpoint can be
-  selected — free text is reverted on blur.
-
-  Don't hand-write the markup: `combobox_tag` (app/helpers/combobox_helper.rb)
-  renders it, wires up the targets and actions, and prefills the selection.
-*/
-
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
