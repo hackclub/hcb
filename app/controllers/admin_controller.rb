@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class AdminController < Admin::BaseController
+  include Admin::TransferApprovable
+
   def nav
     @nav = Admin::Nav.new(page_title: params[:title])
 
@@ -194,7 +196,8 @@ class AdminController < Admin::BaseController
     @access_level = params[:access_level]
     @event_id = params[:event_id].presence
     @referral_program_id = params[:referral_program_id].presence
-    @params = params.permit(:page, :per, :q, :access_level, :event_id, :referral_program_id)
+    @locked = params[:locked] == "1"
+    @params = params.permit(:page, :per, :q, :access_level, :event_id, :referral_program_id, :locked)
 
     if @event_id
       @event = Event.find(@event_id)
@@ -212,14 +215,16 @@ class AdminController < Admin::BaseController
 
     relation = relation.search_name(@q) if @q
     relation = relation.where(access_level: @access_level) if @access_level.present?
+    relation = relation.where.not(locked_at: nil) if @locked
 
     @count = relation.count
 
-    @users = relation.page(@page).per(@per).order(created_at: :desc)
+    @users = relation.order(created_at: :desc)
     @referral_programs = Referral::Program.all
 
     respond_to do |format|
       format.html do
+        @users = @users.page(@page).per(@per)
       end
       format.csv { render csv: @users.includes(:stripe_cards, :emburse_cards) }
     end
@@ -378,6 +383,34 @@ class AdminController < Admin::BaseController
     @count = relation.count
 
     @canonical_transactions = relation.page(@page).per(@per).order(date: :desc)
+  end
+
+  def ledger_items
+    @page = params[:page] || 1
+    @per = params[:per] || 100
+    @amount = params[:amount].presence
+    @q = params[:q].presence
+    @unmapped = params[:unmapped] != "0"
+    @nonzero = params[:nonzero] == "1" ? true : nil
+
+    relation = if @q
+                 Ledger::Item.where(id: @q)
+                             .or(Ledger::Item.where(short_code: @q))
+                             .or(Ledger::Item.where(id: HcbCode.where(hcb_code: @q).select(:ledger_item_id)))
+                             .or(Ledger::Item.where(id: Ledger::Item.search_memo(@q).select(:id)))
+               else
+                 Ledger::Item.all
+               end
+
+    relation = relation.where.missing(:primary_mapping) if @unmapped.present? && @q.blank?
+
+    relation = relation.where(amount_cents: @amount.to_i).or(relation.where(amount_cents: -@amount.to_i)) if @amount
+    relation = relation.where.not(amount_cents: 0) if @nonzero.present? && @q.blank?
+
+    @count = relation.count
+
+    @ledger_items = relation.includes(:hcb_code)
+                            .page(@page).per(@per).order(datetime: :desc)
   end
 
   def event_search
@@ -602,6 +635,8 @@ class AdminController < Admin::BaseController
     ach_transfer = AchTransfer.find(params[:id])
     return unless enforce_sudo_mode
 
+    ensure_admin_may_approve!(ach_transfer, amount_cents: ach_transfer.amount)
+
     ach_transfer.approve!(current_user)
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success" }
@@ -614,6 +649,8 @@ class AdminController < Admin::BaseController
   def ach_send_realtime
     ach_transfer = AchTransfer.find(params[:id])
     return unless enforce_sudo_mode
+
+    ensure_admin_may_approve!(ach_transfer, amount_cents: ach_transfer.amount)
 
     ach_transfer.approve!(current_user, send_realtime: true)
 
@@ -1057,6 +1094,7 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = params[:per] || 20
     @q = params[:q].presence
+    @number = params[:number].presence
     @open = params[:open] == "1" ? true : nil
     @paid = params[:paid] == "1" ? true : nil
     @missing_payout = params[:missing_payout] == "1" ? true : nil
@@ -1083,6 +1121,8 @@ class AdminController < Admin::BaseController
         relation = relation.search_description(@q)
       end
     end
+
+    relation = relation.where(number: @number) if @number
 
     relation = relation.open_v2 if @open
     relation = relation.paid_v2 if @paid
@@ -1231,9 +1271,8 @@ class AdminController < Admin::BaseController
 
     safely do
       ledger = Ledger.find_or_create_by!(primary: true, event_id: params[:event_id])
-      Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: @canonical_transaction.ledger_item) do |mapping|
-        mapping.on_primary_ledger = true
-      end
+
+      Ledger::Mapping.map_primary!(ledger:, ledger_item: @canonical_transaction.ledger_item, mapped_by: current_user)
     end
 
     redirect_to transaction_admin_path(@canonical_transaction)
@@ -1255,9 +1294,8 @@ class AdminController < Admin::BaseController
 
           safely do
             ledger = Ledger.find_or_create_by!(primary: true, event_id: params[:event_id])
-            Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: @canonical_transaction.ledger_item) do |mapping|
-              mapping.on_primary_ledger = true
-            end
+
+            Ledger::Mapping.map_primary!(ledger:, ledger_item: @canonical_transaction.ledger_item, mapped_by: current_user)
           end
         rescue => e
           return redirect_to ledger_admin_index_path, flash: { error: e.message }
@@ -1279,9 +1317,8 @@ class AdminController < Admin::BaseController
 
       safely do
         ledger = Ledger.find_or_create_by!(primary: true, event_id: paypal_transfer.event.id)
-        Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: canonical_transaction.ledger_item) do |mapping|
-          mapping.on_primary_ledger = true
-        end
+
+        Ledger::Mapping.map_primary!(ledger:, ledger_item: canonical_transaction.ledger_item, mapped_by: current_user)
       end
 
       CanonicalPendingTransactionService::Unsettle.new(canonical_pending_transaction: paypal_transfer.canonical_pending_transaction).run
@@ -1313,9 +1350,8 @@ class AdminController < Admin::BaseController
 
       safely do
         ledger = Ledger.find_or_create_by!(primary: true, event_id: wire.event.id)
-        Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: canonical_transaction.ledger_item) do |mapping|
-          mapping.on_primary_ledger = true
-        end
+
+        Ledger::Mapping.map_primary!(ledger:, ledger_item: canonical_transaction.ledger_item, mapped_by: current_user)
       end
 
       CanonicalPendingTransactionService::Settle.new(
@@ -1345,9 +1381,8 @@ class AdminController < Admin::BaseController
 
       safely do
         ledger = Ledger.find_or_create_by!(primary: true, event_id: wise_transfer.event.id)
-        Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: canonical_transaction.ledger_item) do |mapping|
-          mapping.on_primary_ledger = true
-        end
+
+        Ledger::Mapping.map_primary!(ledger:, ledger_item: li, mapped_by: current_user)
       end
 
       CanonicalPendingTransactionService::Settle.new(
@@ -1544,7 +1579,9 @@ class AdminController < Admin::BaseController
 
     @count = messages.count
 
-    @messages = messages.page(@page).per(@per).order(sent_at: :desc)
+    # `reorder` because `search_subject` (pg_search) orders by relevance rank,
+    # which would otherwise take precedence over `sent_at`.
+    @messages = messages.reorder(sent_at: :desc).page(@page).per(@per)
   end
 
   def unknown_merchants
@@ -1579,8 +1616,8 @@ class AdminController < Admin::BaseController
         yp_name: merchant[:name],
         yp_network_id: network_id,
         memos: RawStripeTransaction
-          .where("stripe_transaction->'merchant_data'->>'network_id' = ?", network_id)
-          .pluck(Arel.sql("distinct(stripe_transaction->'merchant_data'->'name')"))
+               .where("stripe_transaction->'merchant_data'->>'network_id' = ?", network_id)
+               .pluck(Arel.sql("distinct(stripe_transaction->'merchant_data'->'name')"))
       }
     end
   end
@@ -1718,7 +1755,7 @@ class AdminController < Admin::BaseController
     relation = relation.where(id: events.joins(:canonical_transactions).where("canonical_transactions.date >= ?", @activity_since_date)) if @activity_since_date.present?
     if @plan != "all"
       relation = relation.where(id: events.joins("LEFT JOIN event_plans on event_plans.event_id = events.id")
-                         .where("event_plans.aasm_state = 'active' AND event_plans.type = ?", @plan))
+                                          .where("event_plans.aasm_state = 'active' AND event_plans.type = ?", @plan))
     end
     relation = relation.where(point_of_contact_id: @point_of_contact_id) if @point_of_contact_id != "all"
     if @country == 9999
@@ -1764,7 +1801,7 @@ class AdminController < Admin::BaseController
   end
 
   def pending_identity_vault_verifications_task_size
-    client = Faraday.new do |c|
+    client = Faraday.new(request: { open_timeout: 5, timeout: 8 }) do |c|
       c.response :json
       c.response :raise_error
     end
@@ -1777,7 +1814,7 @@ class AdminController < Admin::BaseController
 
   def hackathons_task_size
     hackathons = Faraday
-                 .new(ssl: { verify: false }) { |c| c.response :json }
+                 .new(ssl: { verify: false }, request: { open_timeout: 5, timeout: 8 }) { |c| c.response :json }
                  .get("https://dash.hackathons.hackclub.com/api/v1/stats/hackathons")
                  .body
 
@@ -1795,8 +1832,6 @@ class AdminController < Admin::BaseController
         hackathons_task_size
       when :pending_bank_applications_airtable
         airtable_task_size :bank_applications
-      when :pending_onboard_id_airtable
-        airtable_task_size :onboard_id
       when :pending_stickers_airtable
         airtable_task_size :stickers
       when :pending_onepassword_airtable
@@ -1815,8 +1850,6 @@ class AdminController < Admin::BaseController
         airtable_task_size :feedback
       when :pending_google_workspace_waitlist_airtable
         airtable_task_size :google_workspace_waitlist
-      when :pending_boba_airtable
-        airtable_task_size :boba
       when :pending_you_ship_we_ship_airtable
         airtable_task_size :you_ship_we_ship
       when :pending_identity_vault_verifications
@@ -1854,7 +1887,6 @@ class AdminController < Admin::BaseController
     # This method could take upwards of 10 seconds. USE IT SPARINGLY
     pending_task :pending_hackathons_airtable
     pending_task :pending_bank_applications_airtable
-    pending_task :pending_onboard_id_airtable
     pending_task :pending_stickers_airtable
     pending_task :pending_onepassword_airtable
     pending_task :pending_domains_airtable

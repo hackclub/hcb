@@ -15,6 +15,59 @@ RSpec.describe User, type: :model do
     expect(user).to be_admin
   end
 
+  describe "nondisposable email validation" do
+    it "suggests the real domain for a known typo domain" do
+      user = build(:user, email: "someone@gmail.con")
+
+      expect(user).to_not be_valid
+      expect(user.errors[:email]).to eq(["looks like a typo. Did you mean someone@gmail.com?"])
+    end
+
+    it "uses the generic message for a non-typo disposable domain" do
+      user = build(:user, email: "someone@tormails.com")
+
+      expect(user).to_not be_valid
+      expect(user.errors[:email]).to eq(["provider is unsupported. Please try with another email address."])
+    end
+
+    it "suggests gmail.com for googlemail.com, which aliases the same mailbox" do
+      user = build(:user, email: "someone@googlemail.com")
+
+      expect(user).to_not be_valid
+      expect(user.errors[:email]).to eq(["looks like a typo. Did you mean someone@gmail.com?"])
+    end
+
+    it "only blocks disposable domains on create, leaving existing accounts usable" do
+      user = create(:user, email: "someone@gmail.com")
+      user.update_column(:email, "someone@googlemail.com")
+
+      expect(user.reload).to be_valid
+    end
+
+    it "allows major providers and school domains" do
+      %w[gmail.com hackclub.com outlook.com icloud.com student.hbuhsd.edu].each do |domain|
+        user = build(:user, email: "someone@#{domain}")
+
+        expect(user).to be_valid, "expected #{domain} to be allowed"
+      end
+    end
+
+    it "allows a provider's regional domains" do
+      %w[outlook.de outlook.fr yahoo.fr yahoo.ca hotmail.co.uk].each do |domain|
+        user = build(:user, email: "someone@#{domain}")
+
+        expect(user).to be_valid, "expected #{domain} to be allowed"
+      end
+    end
+
+    it "suggests icloud.com for icloud.co" do
+      user = build(:user, email: "someone@icloud.co")
+
+      expect(user).to_not be_valid
+      expect(user.errors[:email]).to eq(["looks like a typo. Did you mean someone@icloud.com?"])
+    end
+  end
+
   context "birthday validations" do
     it "fails validation when birthday is removed" do
       user = create(:user, full_name: "Caleb Denio")
@@ -528,27 +581,6 @@ RSpec.describe User, type: :model do
         expect(user.default_payout_method).to eq(pm)
         expect(user.default_payout_method.details).to eq(pm.details)
         expect(user.default_payout_method.details).to be_a(LegalEntity::PayoutMethod::AchTransfer)
-      end
-    end
-
-
-    describe "#can_update_payout_method?" do
-      it "is true when there is no payout method" do
-        expect(user.can_update_payout_method?).to be(true)
-      end
-
-      it "is false when the default is Wise and a reimbursement is being processed" do
-        user.personal_legal_entity.payout_methods.create!(
-          default: true,
-          details: LegalEntity::PayoutMethod::WiseTransfer.new(
-            address_line1: "1 Main St", address_city: "Toronto", address_state: "ON",
-            address_postal_code: "M5V2T6", recipient_country: "CA", currency: "CAD"
-          )
-        )
-        event = create(:event)
-        create(:reimbursement_report, user:, event:, aasm_state: :reimbursement_requested)
-
-        expect(user.can_update_payout_method?).to be(false)
       end
     end
   end

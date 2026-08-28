@@ -9,38 +9,29 @@ module Reimbursement
           payout_holding.with_lock do
             next unless payout_holding.settled?
 
-            payout_method = payout_holding.report.user.default_payout_method&.details
+            payout_method = payout_holding.report.payout_method&.details
 
             case payout_method
             when LegalEntity::PayoutMethod::Wire
               Rails.error.handle do
-                wire = clearinghouse.wires.build(
+                wire = payout_method.create_transfer(
+                  clearinghouse,
+                  amount: payout_holding.amount_cents,
                   memo: "Reimbursement for #{payout_holding.report.name}.",
-                  payment_for: "Reimbursement for #{payout_holding.report.name}."[0...140],
-                  amount_cents: payout_holding.amount_cents,
-                  address_line1: payout_method.address_line1,
-                  address_line2: payout_method.address_line2,
-                  address_city: payout_method.address_city,
-                  address_state: payout_method.address_state,
-                  address_postal_code: payout_method.address_postal_code,
-                  recipient_country: payout_method.recipient_country,
+                  payment_for: "Reimbursement for #{payout_holding.report.name}.",
+                  recipient_name: payout_holding.report.user.full_name,
                   recipient_email: payout_holding.report.user.email,
                   send_email_notification: false,
-                  recipient_name: payout_method.recipient_name.presence || payout_holding.report.user.full_name,
-                  account_number: payout_method.account_number,
-                  bic_code: payout_method.bic_code,
-                  recipient_information: payout_method.recipient_information.merge({
-                                                                                     purpose_code: Wire.reimbursement_purpose_code_for(payout_method.recipient_country),
-                                                                                     remittance_info: Wire.reimbursement_remittance_info_for(payout_method.recipient_country),
-                                                                                   }),
-                  currency: "USD",
-                  user: User.system_user
+                  user: User.system_user,
+                  currency: "USD"
                 )
                 begin
                   wire.save!
                   wire.send_wire!
                 rescue
                   wire.mark_rejected!
+                  payout_holding.wire = wire
+                  payout_holding.save!
                   payout_holding.mark_failed!
                   reason = "There was an error creating the wire transfer."
                   reason = wire.errors.full_messages.join(", ") if wire.errors.any?
@@ -56,18 +47,14 @@ module Reimbursement
               end
             when LegalEntity::PayoutMethod::Check
               Rails.error.handle do
-                check = clearinghouse.increase_checks.build(
-                  memo: "Reimbursement for #{payout_holding.report.name}."[0...40],
+                check = payout_method.create_transfer(
+                  clearinghouse,
                   amount: payout_holding.amount_cents,
+                  memo: "Reimbursement for #{payout_holding.report.name}.",
                   payment_for: "Reimbursement for #{payout_holding.report.name}.",
                   recipient_name: payout_holding.report.user.full_name,
-                  address_line1: payout_method.address_line1,
-                  address_line2: payout_method.address_line2,
-                  address_city: payout_method.address_city,
-                  address_state: payout_method.address_state,
                   recipient_email: payout_holding.report.user.email,
                   send_email_notification: false,
-                  address_zip: payout_method.address_postal_code,
                   user: User.system_user
                 )
                 check.save!
@@ -76,24 +63,29 @@ module Reimbursement
                   payout_holding.increase_check = check
                   payout_holding.save!
                   payout_holding.mark_sent!
-                rescue Faraday::Error => e
+                rescue
                   check.mark_rejected!
+                  payout_holding.increase_check = check
+                  payout_holding.save!
+                  payout_holding.mark_failed!
                   message = e.response_body&.dig("message") || e.message
+                  ReimbursementMailer.with(
+                    reimbursement_payout_holding: payout_holding,
+                    reason: message
+                  ).check_failed.deliver_later
                   Rails.error.unexpected "[reimbursements / check issuing] #{message}. report ID: #{payout_holding.report.id}"
                 end
               end
             when LegalEntity::PayoutMethod::AchTransfer
               Rails.error.handle do
-                ach_transfer = clearinghouse.ach_transfers.build(
+                ach_transfer = payout_method.create_transfer(
+                  clearinghouse,
                   amount: payout_holding.amount_cents,
                   payment_for: "Reimbursement for #{payout_holding.report.name}.",
                   recipient_name: payout_holding.report.user.full_name,
                   recipient_email: payout_holding.report.user.email,
                   send_email_notification: false,
-                  routing_number: payout_method.routing_number,
-                  account_number: payout_method.account_number,
-                  bank_name: (ColumnService.get("/institutions/#{payout_method.routing_number}")["full_name"] rescue "Bank Account"),
-                  creator: User.system_user,
+                  user: User.system_user,
                   company_entry_description: "REIMBURSE"
                 )
                 ach_transfer.save!
@@ -101,6 +93,8 @@ module Reimbursement
                   ach_transfer.approve!(User.system_user)
                 rescue
                   ach_transfer.mark_rejected!(User.system_user)
+                  payout_holding.ach_transfer = ach_transfer
+                  payout_holding.save!
                   payout_holding.mark_failed!
                   ReimbursementMailer.with(
                     reimbursement_payout_holding: payout_holding,

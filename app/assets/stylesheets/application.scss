@@ -318,12 +318,15 @@ summary {
 @import 'components/lists';
 @import 'components/marketing';
 @import 'components/menus';
+@import 'components/payout_methods';
 @import 'components/modals';
 @import 'components/physical_cards';
 @import 'components/public_message';
 @import 'components/stats';
+@import 'components/sub_organizations';
 @import 'components/pinned_transactions';
 @import 'components/steps';
+@import 'components/contractor_onboarding_flow';
 @import 'components/tooltips';
 @import 'components/transactions';
 @import 'components/promos';
@@ -395,19 +398,24 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   &.badge::before {
     border-radius: 99px;
   }
-}
 
-.admin-tools::before {
-  content: '';
-  border-radius: 0.5rem;
-  border: 2px dotted rgba(map-get($palette, warning), 0.3);
-  background: rgba(map-get($palette, pending), 0.08);
-  position: absolute;
-  top: -2.5px;
-  right: -2.5px;
-  bottom: -2.5px;
-  pointer-events: none;
-  left: -2.5px;
+  &::before {
+    content: '';
+    border-radius: 0.5rem;
+    border: 2px dotted rgba(map-get($palette, warning), 0.3);
+    inset: 0px;
+    background: rgba(map-get($palette, pending), 0.08);
+    position: absolute;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  &:not(td)::before {
+    top: -2.5px;
+    right: -2.5px;
+    bottom: -2.5px;
+    left: -2.5px;
+  }
 }
 
 .dev-tools {
@@ -723,7 +731,7 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   ) !important;
   font-size: 14px;
   height: 64px;
-  z-index: 99;
+  z-index: 1;
   position: absolute;
   left: 0;
   bottom: 0;

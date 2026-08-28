@@ -1,6 +1,6 @@
 <%# locals: (report:) %>
 
-<% payout_method = report.user.default_payout_method&.details %>
+<% payout_method = report.payout_method&.details %>
 
 <table class="w-full table-fixed my-6">
   <tbody>

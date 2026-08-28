@@ -31,7 +31,7 @@
             </div>
             <% if event.background_image.attached? %>
               <div class="menu__divider"></div>
-              <%= link_to "Remove background image", event_remove_background_image_path(event), method: :post, style: "padding: 0.25rem 0.5rem" %>
+              <%= link_to "Remove background image", event_remove_background_image_path(event), data: { turbo_method: :post }, style: "padding: 0.25rem 0.5rem" %>
             <% end %>
           </div>
         </div>
@@ -63,7 +63,7 @@
               </div>
               <% if event.logo.attached? %>
                 <div class="menu__divider"></div>
-                <%= link_to "Remove logo", event_remove_logo_path(event), method: :post, style: "padding: 0.25rem 0.5rem", disabled: %>
+                <%= link_to "Remove logo", event_remove_logo_path(event), data: { turbo_method: :post }, style: "padding: 0.25rem 0.5rem", disabled: %>
               <% end %>
             </div>
           </div>

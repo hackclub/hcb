@@ -6,6 +6,8 @@ module OneTimeJobs
 
     # Backfills `Ledger::Item`s for all HcbCodes on a single event.
     def perform(event_id)
+      return unless Rails.env.development?
+
       event = Event.find(event_id)
 
       hcb_codes = event.hcb_codes
@@ -18,33 +20,36 @@ module OneTimeJobs
                          subledger: { card_grant: :ledger },
                          event: :ledger
                        )
-                       .where.missing(:ledger_item)
 
       hcb_codes.find_each do |hcb_code|
-        if hcb_code.subledger_id.present? && (card_grant = hcb_code.subledger&.card_grant)
-          ledger = card_grant.ledger
-        else
-          ledger = hcb_code.event&.ledger
+        safely do
+          if hcb_code.subledger_id.present? && (card_grant = hcb_code.subledger&.card_grant)
+            ledger = card_grant.ledger
+          else
+            ledger = hcb_code.event&.ledger
+          end
+          next unless ledger
+
+          item = Ledger::Item.find_or_create_by!(short_code: hcb_code.short_code) do |li|
+            li.amount_cents = hcb_code.amount_cents
+            li.memo = "MEMO PLACEHOLDER FROM BACKFILL"
+            li.datetime = hcb_code.date || hcb_code.created_at
+            li.marked_no_or_lost_receipt_at = hcb_code.marked_no_or_lost_receipt_at
+          end
+
+          Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: item) do |mapping|
+            mapping.on_primary_ledger = true
+          end
+
+          hcb_code.canonical_transactions.update_all(ledger_item_id: item.id)
+          hcb_code.canonical_pending_transactions.update_all(ledger_item_id: item.id)
+
+          item.reload
+          hcb_code.update!(ledger_item: item)
+          item.send(:assign_linked_object!)
+          item.custom_memo = hcb_code.custom_memo if hcb_code.custom_memo.present?
+          item.refresh!
         end
-        next unless ledger
-
-        item = Ledger::Item.find_or_create_by!(short_code: hcb_code.short_code) do |li|
-          li.amount_cents = hcb_code.amount_cents
-          li.memo = hcb_code.memo
-          li.date = hcb_code.date || hcb_code.created_at
-          li.marked_no_or_lost_receipt_at = hcb_code.marked_no_or_lost_receipt_at
-        end
-
-        Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: item) do |mapping|
-          mapping.on_primary_ledger = true
-        end
-
-        hcb_code.canonical_transactions.update_all(ledger_item_id: item.id)
-        hcb_code.canonical_pending_transactions.update_all(ledger_item_id: item.id)
-
-        item.reload
-        item.write_amount_cents!
-        hcb_code.update!(ledger_item: item)
       end
     end
 

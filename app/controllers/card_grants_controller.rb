@@ -2,6 +2,7 @@
 
 class CardGrantsController < ApplicationController
   include SetEvent
+  include SetLedgerFilters
 
   skip_before_action :signed_in_user, only: [:index, :card_index, :transaction_index, :show, :spending]
   skip_after_action :verify_authorized, only: [:show, :spending]
@@ -23,11 +24,7 @@ class CardGrantsController < ApplicationController
     card_grants_page = (params[:page] || 1).to_i
     card_grants_per_page = (params[:per] || 20).to_i
 
-    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger).order(
-      Arel.sql("card_grant_pre_authorizations.aasm_state='fraudulent' DESC"),
-      "card_grants.created_at DESC"
-    )
-    # we allow searching by purpose but sometimes the purpose shown in the table is actually the memo
+    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger, :reimbursement_report).order(created_at: :desc)
     @card_grants = @card_grants.search_for(params[:q]) if params[:q].present?
     @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
   end
@@ -36,6 +33,19 @@ class CardGrantsController < ApplicationController
     authorize @event, :card_grant_overview?
 
     @subledger = true
+
+    @use_card_grant_ledgers = true
+    set_ledger_filters
+    return if performed?
+
+    @per = params[:per] || 25
+    @table_only = true
+    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
+      @ledger = @event.ledger
+      @items = ledger_query.execute(ledgers: @ledgers)
+      @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id)) if @tag&.id.present?
+      @items = @items.page(params[:page]).per(@per)
+    end
   end
 
   def new
@@ -73,7 +83,7 @@ class CardGrantsController < ApplicationController
         raise e
       end
 
-      render(:new, status: :unprocessable_entity)
+      render(:new, status: :unprocessable_content)
       return
     end
 
@@ -90,7 +100,7 @@ class CardGrantsController < ApplicationController
 
     unless params[:csv_file].present?
       flash[:error] = "Please select a CSV file to upload"
-      render :bulk_upload_form, status: :unprocessable_entity
+      render :bulk_upload_form, status: :unprocessable_content
       return
     end
 
@@ -105,11 +115,11 @@ class CardGrantsController < ApplicationController
       redirect_to event_card_grant_overview_path(@event)
     else
       flash.now[:error] = result.errors.join(". ")
-      render :bulk_upload_form, status: :unprocessable_entity
+      render :bulk_upload_form, status: :unprocessable_content
     end
   rescue DisbursementService::Create::UserError => e
     flash.now[:error] = e.message
-    render :bulk_upload_form, status: :unprocessable_entity
+    render :bulk_upload_form, status: :unprocessable_content
   end
 
   def bulk_upload_template
@@ -211,6 +221,13 @@ class CardGrantsController < ApplicationController
     @card = @card_grant.stripe_card
     @hcb_codes = @card_grant.visible_hcb_codes
 
+    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
+      @per = params[:per] || 25
+      @table_only = true
+      @ledger = @card_grant.ledger
+      @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).page(params[:page]).per(@per)
+    end
+
     @show_card_details = params[:show_details] == "true"
 
     @frame = params[:frame].present?
@@ -229,6 +246,11 @@ class CardGrantsController < ApplicationController
     @card = @card_grant.stripe_card
     @hcb_codes = @card&.local_hcb_codes
 
+    @per = params[:per] || 25
+    @table_only = true
+    @ledger = @card_grant.ledger
+    @items = @card_grant.ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page]).per(@per)
+
     @frame = params[:frame].present?
     @force_no_popover = @frame
 
@@ -243,7 +265,7 @@ class CardGrantsController < ApplicationController
   def activate
     authorize @card_grant
 
-    unless @card_grant.user.phone_number_verified?
+    unless @card_grant.user.phone_number_verified_or_bypassed?
       settings_path = current_user == @card_grant.user ? my_settings_path : edit_user_path(@card_grant.user)
       return redirect_to @card_grant, flash: { error: { "text" => "Please verify your phone number before activating your grant card.", "link_text" => "Go to settings", "link" => settings_path } }
     end
@@ -311,10 +333,6 @@ class CardGrantsController < ApplicationController
     @card_grant.update(pre_authorization_required: false)
 
     redirect_to @card_grant, flash: { success: "Successfully disabled pre-authorization for this card grant." }
-  end
-
-  def edit
-    authorize @card_grant
   end
 
   private

@@ -7,7 +7,7 @@
   <em><%= link_to @report.name, @report %></em>.
 </p>
 
-<% payout_method = @report.user&.default_payout_method&.details %>
+<% payout_method = @report.payout_method&.details %>
 <p>
   <% if payout_method&.kind == "check" %>
     You'll receive a check for <%= render_money @report.amount_to_reimburse %> from us in approximately 10-12 business days.

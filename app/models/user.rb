@@ -4,40 +4,42 @@
 #
 # Table name: users
 #
-#  id                            :bigint           not null, primary key
-#  access_level                  :integer          default("user"), not null
-#  birthday_ciphertext           :text
-#  cards_locked                  :boolean          default(FALSE), not null
-#  charge_notifications          :integer          default("email_and_sms"), not null
-#  comment_notifications         :integer          default("all_threads"), not null
-#  creation_method               :integer
-#  email                         :text             not null
-#  full_name                     :string
-#  joined_as_teenager            :boolean
-#  locked_at                     :datetime
-#  monthly_donation_summary      :boolean          default(TRUE)
-#  monthly_follower_summary      :boolean          default(TRUE)
-#  payout_method_type            :string
-#  phone_number                  :text
-#  phone_number_verified         :boolean          default(FALSE)
-#  preferred_name                :string
-#  pretend_is_not_admin          :boolean          default(FALSE), not null
-#  receipt_report_option         :integer          default("weekly"), not null
-#  running_balance_enabled       :boolean          default(FALSE), not null
-#  seasonal_themes_enabled       :boolean          default(TRUE), not null
-#  session_validity_preference   :integer          default(259200), not null
-#  sessions_reported             :boolean          default(FALSE), not null
-#  slug                          :string
-#  subscribed_to_loops_at        :datetime
-#  teenager                      :boolean
-#  use_sms_auth                  :boolean          default(FALSE)
-#  use_two_factor_authentication :boolean          default(FALSE)
-#  verified                      :boolean          default(FALSE), not null
-#  created_at                    :datetime         not null
-#  updated_at                    :datetime         not null
-#  discord_id                    :string
-#  payout_method_id              :bigint
-#  webauthn_id                   :string
+#  id                                 :bigint           not null, primary key
+#  access_level                       :integer          default(0), not null
+#  birthday_ciphertext                :text
+#  card_locking_suppressed_until      :datetime
+#  cards_locked                       :boolean          default(FALSE), not null
+#  charge_notifications               :integer          default(0), not null
+#  comment_notifications              :integer          default(0), not null
+#  creation_method                    :integer
+#  email                              :text             not null
+#  full_name                          :string
+#  joined_as_teenager                 :boolean
+#  locked_at                          :datetime
+#  monthly_donation_summary           :boolean          default(TRUE)
+#  monthly_follower_summary           :boolean          default(TRUE)
+#  phone_number                       :text
+#  phone_number_verification_bypassed :boolean          default(FALSE), not null
+#  phone_number_verified              :boolean          default(FALSE)
+#  preferred_name                     :string
+#  pretend_is_not_admin               :boolean          default(FALSE), not null
+#  receipt_report_option              :integer          default(0), not null
+#  running_balance_enabled            :boolean          default(FALSE), not null
+#  seasonal_themes_enabled            :boolean          default(TRUE), not null
+#  session_validity_preference        :integer          default(259200), not null
+#  sessions_reported                  :boolean          default(FALSE), not null
+#  slug                               :string
+#  subscribed_to_loops_at             :datetime
+#  teenager                           :boolean
+#  use_sms_auth                       :boolean          default(FALSE)
+#  use_two_factor_authentication      :boolean          default(FALSE)
+#  verified                           :boolean          default(FALSE), not null
+#  created_at                         :datetime         not null
+#  updated_at                         :datetime         not null
+#  discord_id                         :string
+#  payout_method_id                   :bigint
+#  payout_method_type                 :string
+#  webauthn_id                        :string
 #
 # Indexes
 #
@@ -61,6 +63,9 @@ class User < ApplicationRecord
 
   include ApplicationHelper
   prepend MemoWise
+
+  # Card-locking lock decision, trust, and outstanding/overdue queries. See the concern.
+  include CardLocking::CardholderBehavior
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| record }, recipient: proc { |controller, record| record }, only: [:create, :update]
@@ -106,6 +111,7 @@ class User < ApplicationRecord
   has_many :api_tokens
   has_many :email_updates, class_name: "User::EmailUpdate", inverse_of: :user
   has_many :email_updates_created, class_name: "User::EmailUpdate", inverse_of: :updated_by
+  has_many :ledger_items, class_name: "Ledger::Item", inverse_of: :author
 
   has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :affiliable, as: :affiliable
   accepts_nested_attributes_for :affiliations
@@ -182,6 +188,9 @@ class User < ApplicationRecord
   has_one :personal_legal_entity, through: :person_legal_entity_user, source: :legal_entity
   has_one :default_payout_method, through: :personal_legal_entity
 
+  has_many :payments_received, through: :legal_entities, source: :payments
+  has_many :payroll_positions, through: :legal_entities
+
   has_encrypted :birthday, type: :date
 
   include HasMetrics
@@ -205,6 +214,8 @@ class User < ApplicationRecord
 
   after_update :update_draft_applications, if: -> { birthday_previously_changed? }
 
+  after_update :update_legal_entity_name, if: -> { full_name_previously_changed? }
+
   before_update :set_default_seasonal_theme
 
   validates_presence_of :full_name, if: -> { full_name_in_database.present? }
@@ -212,17 +223,25 @@ class User < ApplicationRecord
 
   validates :full_name, format: {
     with: /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,'-]+ [a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,' -]+\z/,
-    message: "must contain your first and last name, and can't contain special characters.", allow_blank: true,
+    message: "must contain your first and last name, and only contain characters in the latin alphabet.", allow_blank: true,
   }
 
   validates :email, uniqueness: true, presence: true
   validates_email_format_of :email
   normalizes :email, with: ->(email) { email.strip.downcase }
-  validates :email, nondisposable: true, on: :create
+  EMAIL_TYPO_MESSAGE = lambda do |user, _|
+    fix = EmailTypoDomains.suggestion_for(user.email)
+    fix ? "looks like a typo. Did you mean #{user.email.sub(/@.+/, "@#{fix}")}?" : Nondisposable.configuration.error_message
+  end
+  validates :email, nondisposable: { message: EMAIL_TYPO_MESSAGE }, on: :create
 
   validates :phone_number, phone: { allow_blank: true }
 
   validates :preferred_name, length: { maximum: 30 }
+  validates :preferred_name, format: {
+    with: /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,' -]+\z/,
+    message: "must only contain characters in the latin alphabet.", allow_blank: true,
+  }, if: :preferred_name_changed?
 
   validates(:session_validity_preference, presence: true, inclusion: { in: SessionsHelper::SESSION_DURATION_OPTIONS.values })
 
@@ -281,8 +300,11 @@ class User < ApplicationRecord
   # a auditor is an admin who can only view things.
   # auditor? takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
-  def auditor?
-    ["auditor", "admin", "superadmin"].include?(self.access_level) && !self.pretend_is_not_admin
+  def auditor?(override_pretend: false)
+    has_auditor_role = ["auditor", "admin", "superadmin"].include?(self.access_level)
+    return has_auditor_role if override_pretend
+
+    has_auditor_role && !self.pretend_is_not_admin
   end
 
   # admin? by default, takes into account an admin user's preference
@@ -345,6 +367,35 @@ class User < ApplicationRecord
     words.any? ? words.map(&:first).join.upcase : name
   end
 
+  # HCB stores no timezone preference, so this infers one from sessions, whose
+  # timezone the browser reports at sign-in. A guess, only ever for presenting a
+  # time back to the user. Never compute a deadline from it.
+  #
+  # Takes the most common value across recent sessions rather than the latest, so
+  # a trip does not repoint someone's timezone for a fortnight after they get
+  # home. Ties go to the more recent. A VPN needs no handling: the browser reads
+  # this from the operating system, not from the IP address, so tunnelling through
+  # another country does not change it.
+  #
+  # Most values are IANA names, but some browsers report things ActiveSupport
+  # cannot resolve ("Etc/Unknown", "UTC+480", bare offsets). Those are skipped in
+  # favour of the next best candidate rather than falling straight to the default.
+  DEFAULT_TIMEZONE = ActiveSupport::TimeZone["America/New_York"]
+  TIMEZONE_SESSION_SAMPLE = 20
+
+  def assumed_timezone
+    reported = user_sessions.where.not(timezone: [nil, ""])
+                            .order(Arel.sql("COALESCE(last_seen_at, created_at) DESC"))
+                            .limit(TIMEZONE_SESSION_SAMPLE)
+                            .pluck(:timezone)
+
+    reported.tally
+            .sort_by { |zone, count| [-count, reported.index(zone)] }
+            .each { |zone, _count| return ActiveSupport::TimeZone[zone] || next }
+
+    DEFAULT_TIMEZONE
+  end
+
   # gary@hackclub.com → g***y@hackclub.com
   # gt@hackclub.com → g*@hackclub.com
   # g@hackclub.com → g@hackclub.com
@@ -375,12 +426,22 @@ class User < ApplicationRecord
     !seasonal_themes_enabled?
   end
 
+  # Whether this user is allowed to issue stripe cards and activate card grants.
+  # Admins can grant `phone_number_verification_bypassed` to unblock a user who
+  # can't complete SMS verification; it deliberately leaves the number itself
+  # unverified.
+  def phone_number_verified_or_bypassed?
+    phone_number_verified? || phone_number_verification_bypassed?
+  end
+
   def locked?
     locked_at.present?
   end
 
   def locked_by
-    User.find_by(id: self.versions.where_object_changes_from(locked_at: nil).last.whodunnit)
+    # find(nil) returns ActiveRecord::RecordNotFound
+    # find_by(id: nil) returns nil
+    User.find_by(id: self.versions.where_object_changes_from(locked_at: nil).last&.whodunnit)
   end
 
   def lock!
@@ -562,34 +623,10 @@ class User < ApplicationRecord
     BackupCodeMailer.with(user_id: id).backup_codes_disabled.deliver_now
   end
 
-  def access_level_for(event, organizer_positions)
-    role = nil
-    access_level = nil
-    user_ops = organizer_positions.select { |op| op.user == self }
-    return nil if user_ops.empty?
-
-    user_ops.each do |op|
-      if role.nil? || OrganizerPosition.roles[op.role] > OrganizerPosition.roles[role]
-        role = op.role
-        access_level = op.event == event ? :direct : :indirect
-      end
-    end
-
-    { role:, access_level: }
-  end
-
   def needs_to_enable_2fa?
     admin_override_pretend? && !use_two_factor_authentication
   end
 
-  def can_update_payout_method?
-    return true if default_payout_method&.details.nil?
-    return true unless default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
-    return false if reimbursement_reports.reimbursement_requested.any?
-    return false if reimbursement_reports.joins(:payout_holding).where({ payout_holding: { aasm_state: :pending } }).any?
-
-    true
-  end
 
   def managed_active_teenagers_count
     User.active_teenager.joins(organizer_positions: :event).where(events: { id: managed_events }).distinct.count
@@ -660,10 +697,29 @@ class User < ApplicationRecord
     !verified?
   end
 
+  def pending_payments_received
+    payments_received.pending_legal_entity + unassociated_payments_received
+  end
+
+  def unassociated_payments_received
+    Payment.pending_legal_entity.joins(:payee).where(payee: { email:, legal_entity: nil })
+  end
+
+  def onboarding_contractor_positions
+    Payroll::Position.where(aasm_state: :onboarding)
+                     .left_joins(payee: { legal_entity: :legal_entity_users })
+                     .where(
+                       "legal_entity_users.user_id = :uid OR (payees.legal_entity_id IS NULL AND payees.email = :email)",
+                       uid: id, email:
+                     )
+                     .includes(payee: :event)
+                     .distinct
+  end
+
   private
 
   def create_legal_entity
-    legal_entities.create!(entity_type: :person)
+    legal_entities.create!(entity_type: :person, name: full_name)
   end
 
   def auditors_must_be_verified
@@ -764,6 +820,10 @@ class User < ApplicationRecord
 
   def update_draft_applications
     applications.draft.each { |application| application.update!(teen_led: is_teenager?) }
+  end
+
+  def update_legal_entity_name
+    personal_legal_entity.update!(name: full_name)
   end
 
   def should_sync_teenager_columns?
