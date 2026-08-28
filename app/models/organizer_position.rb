@@ -8,7 +8,7 @@
 #  deleted_at                     :datetime
 #  first_time                     :boolean          default(TRUE)
 #  is_signee                      :boolean          default(FALSE)
-#  role                           :integer          default("manager"), not null
+#  role                           :integer          default(100), not null
 #  sort_index                     :integer
 #  created_at                     :datetime         not null
 #  updated_at                     :datetime         not null
@@ -33,6 +33,11 @@ class OrganizerPosition < ApplicationRecord
   has_paper_trail
   include OrganizerPosition::HasRole
   include OrganizerPosition::HasSpending
+
+  include Hashid::Rails
+
+  include PublicIdentifiable
+  set_public_id_prefix :opn
 
   scope :not_hidden, -> { where(event: { hidden_at: nil }) }
 

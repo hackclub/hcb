@@ -22,28 +22,25 @@
     <% if @hcb_code.stripe_card? || @hcb_code.stripe_force_capture? %>
       <% admin_tool("mt1 p-3") do %>
         ☎️ moshi moshi?
-        <%= link_to "Click to get an SMS (to #{current_user.phone_number}) of the notification", send_sms_receipt_hcb_code_path(@hcb_code), method: :post %>
+        <%= link_to "Click to get an SMS (to #{current_user.phone_number}) of the notification", send_sms_receipt_hcb_code_path(@hcb_code), data: { turbo_method: :post } %>
       <% end %>
     <% end %>
     <%= render "receipts/list_v2", hcb_code: @hcb_code, frame: @frame, transaction_show_receipt_button: @transaction_show_receipt_button, transaction_show_author_img: @transaction_show_author_img %>
-    <% admin_tool_if @hcb_code.receipt_optional? do %>
-      <%= begin receipt_upload_form_config = {
-            receiptable: @hcb_code,
-            enable_linking: true,
-            upload_method: "transaction_page",
-            include_spacing: true,
-            turbo: true
-          }
-
-                receipt_upload_form_config[:restricted_dropzone] = true if @frame
-                receipt_upload_form_config[:inline_linking] = true if @frame
-                receipt_upload_form_config[:upload_method] = "transaction_popover" if @frame
-                receipt_upload_form_config[:popover] = "HcbCode:#{@hcb_code.hashid}" if @frame
-                receipt_upload_form_config[:show_receipt_button] = @transaction_show_receipt_button
-                receipt_upload_form_config[:show_author_img] = @transaction_show_author_img
-                render partial: "receipts/form_v3", locals: receipt_upload_form_config
-          end %>
-    <% end %>
+    <%= begin receipt_upload_form_config = {
+          receiptable: @hcb_code,
+          enable_linking: true,
+          upload_method: "transaction_page",
+          include_spacing: true,
+          turbo: true
+        }
+              receipt_upload_form_config[:restricted_dropzone] = true if @frame
+              receipt_upload_form_config[:inline_linking] = true if @frame
+              receipt_upload_form_config[:upload_method] = "transaction_popover" if @frame
+              receipt_upload_form_config[:popover] = "HcbCode:#{@hcb_code.hashid}" if @frame
+              receipt_upload_form_config[:show_receipt_button] = @transaction_show_receipt_button
+              receipt_upload_form_config[:show_author_img] = @transaction_show_author_img
+              render partial: "receipts/form_v3", locals: receipt_upload_form_config
+        end %>
   <% end %>
 
   <%= turbo_frame_tag :subscriptions, src: subscriptions_transactions_hcb_code_path(@hcb_code) if @hcb_code.stripe_card? %>
@@ -65,6 +62,19 @@
   <% admin_tool("mt2 p-3") do %>
     <%= render partial: "hcb_codes/transaction_history" %>
     <%= render partial: "hcb_codes/pending_transaction_history" %>
+  <% end %>
+
+  <% admin_tool("p-2 my-3") do %>
+    <h3 class="my-2">Quickly go to</h3>
+    <% if @hcb_code.ledger_item.present? %>
+      <%= link_to "Ledger::Item #{@hcb_code.ledger_item.hashid}", ledger_item_path(@hcb_code.ledger_item), class: "btn btn--secondary" %>
+    <% end %>
+    <% @hcb_code.canonical_transactions.each do |tx| %>
+      <%= link_to "CT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
+    <% end %>
+    <% @hcb_code.canonical_pending_transactions.each do |tx| %>
+      <%= link_to "CPT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
+    <% end %>
   <% end %>
 <% end %>
 

@@ -9,9 +9,11 @@
   <% end %>
 </p>
 
+<% if @can_enable_transparency %>
 <p>
   Managers can re-enable transparency mode at any time in <%= link_to "your organization settings", edit_event_url(@event) %>.
 </p>
+<% end %>
 
 <p>
   From,<br>

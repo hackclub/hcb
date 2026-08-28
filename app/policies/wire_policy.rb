@@ -5,12 +5,12 @@ class WirePolicy < ApplicationPolicy
     auditor_or_user?
   end
 
-  def create?
-    user_who_can_transfer?
+  def show?
+    auditor_or_user?
   end
 
-  def approve?
-    user&.admin?
+  def create?
+    user_who_can_transfer?
   end
 
   def send_wire?

@@ -8,10 +8,10 @@
 #  active        :boolean          default(TRUE)
 #  name          :string
 #  step          :integer          default(0)
-#  tourable_type :string           not null
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
 #  tourable_id   :bigint           not null
+#  tourable_type :string           not null
 #
 # Indexes
 #
