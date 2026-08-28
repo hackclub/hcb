@@ -202,31 +202,15 @@ details.receipt-card {
   }
 }
 
-// Shrink-to-fit: the upload buttons claim only the width they need.
 .transaction__receipt-action {
   width: 1%;
 }
 
-// Every group in the receipt inbox is its own <table>, and auto layout sizes a
-// table's columns from that table's rows alone: whatever width the rows don't
-// claim gets shared out among the columns in proportion to their content, so
-// two groups with different memo lengths, amounts or upload buttons put their
-// columns in visibly different places.
-//
-// Giving the memo `width: 100%` takes that surplus off the table — it claims
-// everything going, which drops every other column to its min-content width.
-// Those are then pinned with `min-width` so they measure the same in every
-// group. It has to be `min-width` and not `width`: a column alongside a
-// percentage-width one never gets as far as its specified width, but a
-// `min-width` raises the min-content it falls back to.
 .receipt-card {
   .transaction__date {
     min-width: 7.5rem;
   }
 
-  // `max-width: 0` keeps the memo's own text out of the column sizing entirely —
-  // it takes what's left over and truncates, rather than widening the table past
-  // the card. `min-width` is the floor it can't be squeezed below.
   .transaction__memo {
     width: 100%;
     max-width: 0;
@@ -237,15 +221,11 @@ details.receipt-card {
     min-width: 7rem;
   }
 
-  // Fits "Upload another receipt" alongside the select and email buttons, so the
-  // column holds its width when a row switches to the "Uploaded!" pill.
   .transaction__receipt-action {
     min-width: 21rem;
   }
 }
 
-// Grey out the memo for pending transactions. The memo link uses
-// `color: inherit`, so setting the cell's color muted greys it in both themes.
 .transaction__memo--pending {
   color: map-get($palette, muted);
 }
