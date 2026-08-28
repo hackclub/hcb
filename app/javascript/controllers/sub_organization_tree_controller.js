@@ -7,11 +7,15 @@ const FADE = [
 const FADE_IN = { duration: 140, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
 const FADE_OUT = { duration: 100, easing: 'ease-out', direction: 'reverse' }
 
+const BALANCE_CHUNK_SIZE = 25
+
 export default class extends Controller {
   static targets = ['row', 'pinned']
+  static values = { balancesUrl: String }
 
   connect() {
     this.repin()
+    this.#loadBalances(this.rowTargets)
   }
 
   disconnect() {
@@ -65,8 +69,42 @@ export default class extends Controller {
       row.after(template.content)
       row.dataset.loaded = 'true'
       this.#animate(inserted, FADE_IN)
+      this.#loadBalances(inserted)
     } finally {
       button.disabled = false
+    }
+  }
+
+  async #loadBalances(rows) {
+    if (!this.hasBalancesUrlValue) return
+
+    const ids = [...rows].map(row => row.dataset.eventId).filter(Boolean)
+    if (ids.length === 0) return
+
+    const chunks = []
+    for (let i = 0; i < ids.length; i += BALANCE_CHUNK_SIZE) {
+      chunks.push(ids.slice(i, i + BALANCE_CHUNK_SIZE))
+    }
+
+    await Promise.all(chunks.map(chunk => this.#loadBalanceChunk(chunk)))
+  }
+
+  async #loadBalanceChunk(ids) {
+    const params = new URLSearchParams()
+    for (const id of ids) params.append('ids[]', id)
+
+    try {
+      const response = await fetch(`${this.balancesUrlValue}?${params}`, {
+        headers: { Accept: 'application/json' },
+      })
+      if (!response.ok) throw new Error(response.statusText)
+
+      for (const [publicId, amount] of Object.entries(await response.json())) {
+        const cell = document.getElementById(`event_balance_${publicId}`)
+        if (cell) cell.textContent = amount
+      }
+    } catch (error) {
+      console.error(error)
     }
   }
 

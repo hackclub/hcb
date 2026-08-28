@@ -558,7 +558,6 @@ Rails.application.routes.draw do
       get "attach_receipt"
       get "memo_frame"
       get "dispute"
-      post "invoice_as_personal_transaction"
       post "toggle_tag/:tag_id", to: "hcb_codes#toggle_tag", as: :toggle_tag
       post "send_receipt_sms", to: "hcb_codes#send_receipt_sms", as: :send_sms_receipt
 
@@ -644,6 +643,7 @@ Rails.application.routes.draw do
       post "pin"
       post "unpin"
       patch "rename"
+      post "invoice_as_personal_transaction"
     end
   end
   resources :ledger_items, only: [], path: "transactions", concerns: :commentable
@@ -1059,6 +1059,7 @@ Rails.application.routes.draw do
 
     get "async_balance"
     get "async_sub_organization_balance"
+    get "async_sub_organization_balances"
     get "async_sub_organization_rows"
     get "reimbursements_pending_review_icon"
 
