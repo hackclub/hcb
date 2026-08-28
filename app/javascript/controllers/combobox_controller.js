@@ -286,8 +286,6 @@ export default class extends Controller {
   }
 }
 
-// Values arrive as whatever JSON the endpoint emits (ids are often numbers);
-// compare and render them as strings so nothing hinges on the endpoint's types.
 function normalize(option) {
   return {
     ...option,
