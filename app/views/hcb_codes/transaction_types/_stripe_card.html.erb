@@ -4,7 +4,7 @@
 
 <% admin_tool("mt1") do %>
   <%= link_to "View on Stripe", @hcb_code.stripe_card? ? @hcb_code.stripe_auth_dashboard_url : @hcb_code.stripe_txn_dashboard_url, class: "btn bg-accent" %>
-  <%= link_to "Flag transaction", admin_ledger_audits_tasks_path(hcb_code: @hcb_code.id), method: :post, class: "btn bg-error" %>
+  <%= link_to "Flag transaction", admin_ledger_audits_tasks_path(hcb_code: @hcb_code.id), data: { turbo_method: :post }, class: "btn bg-error" %>
 <% end %>
 
 <% @hcb_code.canonical_pending_transactions.each do |pt| %>
@@ -52,7 +52,7 @@
         <% end %>
       <% end %>
 
-      <% if @hcb_code.personal_transaction.present? %>
+      <% if @hcb_code.ledger_item&.personal_transaction.present? %>
         <span class="badge h4 bg-warning">
           Personal
           <%= inline_icon :info, size: 20 %>
@@ -256,10 +256,10 @@
           <span><strong>Sign in to view</strong></span>
         <% end %>
       </div>
-      <% if @hcb_code.personal_transaction.present? %>
+      <% if @hcb_code.ledger_item&.personal_transaction.present? %>
         <p>
           <strong>Repaid by</strong>
-          <%= link_to @hcb_code.personal_transaction.invoice.local_hcb_code.memo, @hcb_code.personal_transaction.invoice %>
+          <%= link_to @hcb_code.ledger_item.personal_transaction.invoice.local_hcb_code.memo, @hcb_code.ledger_item.personal_transaction.invoice %>
         </p>
       <% end %>
       <% if @hcb_code.card.card_grant.present? %>
