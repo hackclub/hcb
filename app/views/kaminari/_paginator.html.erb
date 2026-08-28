@@ -3,6 +3,9 @@
     role="navigation"
     aria-label="Pagination"
     class="flex items-center justify-center list-reset my-4 gap-2">
+    <%# Callers that paginate at a fixed size (e.g. the recipient picker) opt out
+        of the per-page menu with `paginate @scope, per_page_menu: false`. %>
+    <% if local_assigns.fetch(:per_page_menu, true) %>
     <% per_options = ([10, 25, 50, 100] + [per_page]).sort.uniq %>
     <div data-controller="menu" data-menu-placement-value="bottom-start" class="mr-auto">
       <button
@@ -29,6 +32,7 @@
         <% end %>
       </div>
     </div>
+    <% end %>
     <%= first_page_tag unless current_page.first? %>
     <%= prev_page_tag unless current_page.first? %>
     <%= next_page_tag unless current_page.last? %>

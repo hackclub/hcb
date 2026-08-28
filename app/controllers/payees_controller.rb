@@ -8,15 +8,18 @@ class PayeesController < ApplicationController
 
   class InvalidManualPayeeEntityType < StandardError; end
 
+  PER_PAGE = 15
+
   def index
     authorize @event
     all = @event.payees.not_archived.includes(:legal_entity, :payments)
     payees = params[:q].present? ? all.search(params[:q]) : all
-    @total_count = payees.count
-    payees = payees.order(created_at: :desc).limit(15)
+    @payees = payees.order(created_at: :desc).page(params[:page]).per(PER_PAGE)
 
-    selected = all.find_by_hashid(params[:payee_id]) if params[:payee_id].present?
-    @payees = [selected, *payees.to_a].compact.uniq.first(15)
+    # Pin the selected recipient to the top of the list, unless it's already on
+    # the page being displayed.
+    @selected = all.find_by_hashid(params[:payee_id]) if params[:payee_id].present?
+    @selected = nil if @selected && @payees.include?(@selected)
 
     render layout: false
   end
