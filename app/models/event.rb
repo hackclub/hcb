@@ -1037,8 +1037,27 @@ class Event < ApplicationRecord
   end
 
   def update_pending_bank_fee
-    bank_fee = pending_bank_fee || bank_fees.build(aasm_state: :pending, amount_cents: 0)
-    bank_fee.amount_cents = bank_fee.amount_cents + fee_balance_v2_cents
+    bank_fee = pending_bank_fee
+    own_pending_transaction_ids = bank_fee ? bank_fee.canonical_pending_transactions.map(&:id) : []
+
+    # `fee_balance_v2_cents` nets out every unsettled bank fee pending transaction mapped
+    # to this event, including this fee's own -- but only once
+    # `PendingEventMappingEngine::Map::BankFee` has mapped it, which runs on a half hourly
+    # cron. Add our own contribution back so we write the same amount either way.
+    already_netted = canonical_pending_transactions.bank_fee
+                                                   .unsettled
+                                                   .where(id: own_pending_transaction_ids)
+                                                   .sum(:amount_cents)
+
+    # A regular bank fee is negative; see `HasBookTransfer`.
+    amount_cents = already_netted - fee_balance_v2_cents
+
+    # Most fees are waived (`amount_cents_as_decimal` of 0), so don't open a bank fee for
+    # an event that doesn't owe anything.
+    return if bank_fee.nil? && amount_cents.zero?
+
+    bank_fee ||= bank_fees.build(aasm_state: :pending)
+    bank_fee.amount_cents = amount_cents
     bank_fee.save!
     bank_fee
   end
