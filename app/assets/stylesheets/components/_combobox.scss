@@ -9,7 +9,6 @@
 }
 
 .combobox {
-  // The listbox is absolutely positioned against this.
   position: relative;
 
   &,
@@ -41,8 +40,6 @@
   right: var(--combobox-handle-offset-right);
   top: 0;
   width: var(--combobox-handle-width);
-  // Let clicks fall through to the input underneath, so clicking the chevron
-  // focuses the field and opens the list.
   pointer-events: none;
 
   &::before {
@@ -64,6 +61,7 @@
   @apply border border-solid border-gray-300 dark:border-neutral-500;
   line-height: var(--combobox-line-height);
   list-style: none;
+  backdrop-filter: blur(4px);
   max-height: var(--combobox-listbox-max-height);
   overflow-y: auto;
   top: calc(100% + 0.2rem);
@@ -107,7 +105,6 @@
   @apply bg-gray-200 dark:bg-neutral-700;
 }
 
-// Status rows ("Loading…", "No results") aren't selectable.
 .combobox__option--status {
   @apply bg-gray-100 dark:bg-neutral-800;
   cursor: default;
