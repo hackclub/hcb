@@ -48,7 +48,7 @@
     <%= render "hcb_codes/icon", tx: ct, authorless: local_assigns[:authorless], selects: defined?(selectable) && selectable && ct.local_hcb_code.hashid, special_appearance: special_appearance %>
   <% end %>
 
-  <td>
+  <td class="transaction__date">
     <% if subscription %>
       <% label = "" %>
       <% if subscription[:average_date_difference] > 29 && subscription[:average_date_difference] < 31 %>
@@ -89,6 +89,10 @@
             </span>
           <% end %>
         </div>
+
+        <% if local_assigns[:show_event_name] %>
+          <%= render "hcb_codes/event_name", event: %>
+        <% end %>
 
         <% if !event&.demo_mode? && defined?(show_tags) && show_tags %>
           <div class="flex flex-wrap tags hcb_code_<%= ct.local_hcb_code.hashid %>_tags" style="gap: 0.25rem">
@@ -143,7 +147,7 @@
     </div>
   </td>
 
-  <td class="nowrap">
+  <td class="nowrap transaction__amount">
     <span class="flex items-center justify-end">
       <% if ct.likely_account_verification_related? && !organizer_signed_in? %>
         <%= redacted_amount %>
@@ -174,7 +178,7 @@
   <% end %>
 
   <% if local_assigns[:receipt_upload_button] %>
-    <td style="width: 1%">
+    <td class="transaction__receipt-action">
       <% if ct.local_hcb_code.missing_receipt?(event, type) || !local_assigns[:updated_via_turbo_stream] %>
         <%= form_with url: receipts_path, data: { controller: "form", "file-drop-target" => "form", "turbo" => true } do |form| %>
           <%= form.file_field :file, id: "file_#{ct.local_hcb_code.hashid}", multiple: true, include_hidden: false, required: true, class: "display-none", data: { action: "change->form#submit", "file-drop-target" => "fileInput" } %>
@@ -187,6 +191,7 @@
           <%= form.hidden_field :upload_method, value: "receipts_page", data: { "file-drop-target" => "uploadMethod" } %>
           <%= form.hidden_field :show_receipt_button, value: local_assigns[:receipt_upload_button] %>
           <%= form.hidden_field :show_author_img, value: local_assigns[:show_author_column] %>
+          <%= form.hidden_field :show_event_name, value: local_assigns[:show_event_name] %>
           <div class="btn-group btn-group--no-wrap w-100">
             <%= form.label "file_#{ct.local_hcb_code.hashid}", class: "btn #{"disabled" if local_assigns[:receipt_upload_button_disabled]} flex-grow", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" do %>
               <%= inline_icon "cloud-upload" %>
@@ -216,7 +221,7 @@
     <% if !local_assigns[:receipt_upload_button_disabled] %>
       <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
         <%= modal_header "Select receipt" %>
-        <%= turbo_frame_tag "link_modal_#{ct.local_hcb_code.id}", src: link_modal_receipts_path(receiptable_type: "HcbCode", receiptable_id: ct.local_hcb_code.id, show_receipt_button: local_assigns[:receipt_upload_button], show_author_img: local_assigns[:show_author_column]), turbo_frame: "_top" do %>
+        <%= turbo_frame_tag "link_modal_#{ct.local_hcb_code.id}", src: link_modal_receipts_path(receiptable_type: "HcbCode", receiptable_id: ct.local_hcb_code.id, show_receipt_button: local_assigns[:receipt_upload_button], show_author_img: local_assigns[:show_author_column], show_event_name: local_assigns[:show_event_name]), turbo_frame: "_top" do %>
           <strong>Loading...</strong>
         <% end %>
       </section>

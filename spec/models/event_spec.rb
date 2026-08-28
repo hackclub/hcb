@@ -278,6 +278,64 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  # A row that opens must be one #visible_subevents would fill.
+  describe "#expandable_subevent_ids" do
+    let(:root) { create(:event, is_public: true) }
+    let!(:child) { create(:event, parent: root, is_public: true) }
+
+    it "is empty when no sub-organization has sub-organizations of its own" do
+      expect(root.expandable_subevent_ids(nil)).to be_empty
+    end
+
+    it "includes a sub-organization with a transparent sub-organization" do
+      create(:event, parent: child, is_public: true)
+
+      expect(root.expandable_subevent_ids(nil)).to eq(Set[child.id])
+    end
+
+    it "omits a sub-organization whose sub-organizations are all private" do
+      create(:event, parent: child, is_public: false)
+
+      expect(root.expandable_subevent_ids(nil)).to be_empty
+    end
+
+    it "omits a sub-organization whose sub-organizations are all hidden" do
+      create(:event, parent: child, is_public: true, hidden_at: Time.current)
+
+      expect(root.expandable_subevent_ids(nil)).to be_empty
+    end
+
+    it "includes private sub-organizations for an admin" do
+      create(:event, parent: child, is_public: false)
+
+      expect(root.expandable_subevent_ids(create(:user, :make_admin))).to eq(Set[child.id])
+    end
+
+    it "includes private sub-organizations for a reader on the root" do
+      user = create(:user)
+      create(:organizer_position, event: root, user:, role: :reader)
+      create(:event, parent: child, is_public: false)
+
+      expect(root.expandable_subevent_ids(user)).to eq(Set[child.id])
+    end
+
+    it "includes a private sub-organization the viewer organizes, along with its subtree" do
+      user = create(:user)
+      private_child = create(:event, parent: root, is_public: false)
+      create(:organizer_position, event: private_child, user:, role: :reader)
+      create(:event, parent: private_child, is_public: false)
+
+      expect(root.expandable_subevent_ids(user)).to eq(Set[private_child.id])
+    end
+
+    it "ignores sub-organizations the viewer cannot see at all" do
+      private_child = create(:event, parent: root, is_public: false)
+      create(:event, parent: private_child, is_public: true)
+
+      expect(root.expandable_subevent_ids(nil)).to be_empty
+    end
+  end
+
   describe "#plan" do
     it "uses the parent event's subevent plan by default" do
       parent = create(:event)
@@ -316,6 +374,59 @@ RSpec.describe Event, type: :model do
 
       expect(event).to respond_to(:ledger)
       expect(event.ledger).to be_a(Ledger)
+    end
+  end
+
+  describe "#contract_pending_signature" do
+    let(:event) { create(:event) }
+
+    before do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+    end
+
+    def build_contract
+      invite = create(:organizer_position_invite, event:, user: create(:user))
+
+      Contract::FiscalSponsorship.create!(contractable: invite, include_videos: false)
+    end
+
+    it "returns a contract that still needs signing" do
+      contract = build_contract
+
+      expect(event.contract_pending_signature).to eq contract
+    end
+
+    it "returns nothing once the contract is signed" do
+      build_contract.update_column(:aasm_state, "signed")
+
+      expect(event.contract_pending_signature).to be_nil
+    end
+
+    # The inactive organization banner keys off this, so a voided contract must
+    # not leave an organization being told to sign something that no longer exists.
+    it "returns nothing once the contract is voided" do
+      build_contract.update_column(:aasm_state, "voided")
+
+      expect(event.contract_pending_signature).to be_nil
+    end
+
+    it "returns the oldest of several open contracts" do
+      first = build_contract
+      build_contract
+
+      expect(event.contract_pending_signature).to eq first
+    end
+  end
+
+  describe "#can_front_balance" do
+    it "enqueues a job to refresh the event's ledgers when changed" do
+      expect { event.update!(can_front_balance: !event.can_front_balance) }
+        .to have_enqueued_job(Event::RefreshLedgersJob).with(event_id: event.id)
+    end
+
+    it "does not enqueue a job when unchanged" do
+      expect { event.update!(name: "Renamed") }
+        .not_to have_enqueued_job(Event::RefreshLedgersJob)
     end
   end
 end
