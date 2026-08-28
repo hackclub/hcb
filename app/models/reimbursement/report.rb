@@ -79,6 +79,8 @@ module Reimbursement
     monetize :amount_cents, as: "amount", allow_nil: true, with_model_currency: :currency
     validates :maximum_amount_cents, numericality: { greater_than: 0 }, allow_nil: true, integer_column: true
     has_many :expenses, foreign_key: "reimbursement_report_id", inverse_of: :report, dependent: :destroy
+    # The expenses that count toward a report's amount (everything but fees), mirroring #amount_cents.
+    has_many :non_fee_expenses, -> { to_sum }, class_name: "Reimbursement::Expense", foreign_key: "reimbursement_report_id", inverse_of: :report
     has_one :payout_holding, inverse_of: :report
     alias_attribute :report_name, :name
 
@@ -89,6 +91,12 @@ module Reimbursement
     scope :search, ->(q) { joins("LEFT JOIN users AS u2 on u2.id = reimbursement_reports.user_id").where("u2.full_name ILIKE :query OR reimbursement_reports.name ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
     scope :pending, -> { where(aasm_state: ["draft", "submitted", "reimbursement_requested"]) }
     scope :to_calculate_total, -> { where.not(aasm_state: ["rejected"]) }
+    # Order by the reimbursable amount (sum of non-fee expenses) for sortable tables.
+    scope :order_by_amount, ->(direction) do
+      left_joins(:non_fee_expenses)
+        .group(:id)
+        .order(Reimbursement::Expense.arel_table[:amount_cents].sum.public_send(direction))
+    end
     scope :visible, -> { joins(:user).where.not(user: { full_name: nil }, invited_by_id: nil) }
     # view https://github.com/hackclub/hcb/issues/8486 for context behind this scope
 
