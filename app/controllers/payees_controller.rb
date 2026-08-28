@@ -12,6 +12,7 @@ class PayeesController < ApplicationController
     authorize @event
     all = @event.payees.not_archived.includes(:legal_entity, :payments)
     payees = params[:q].present? ? all.search(params[:q]) : all
+    @total_count = payees.count
     payees = payees.order(created_at: :desc).limit(15)
 
     selected = all.find_by_hashid(params[:payee_id]) if params[:payee_id].present?
