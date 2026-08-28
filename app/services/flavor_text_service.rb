@@ -183,7 +183,7 @@ class FlavorTextService
       "<a href='https://hcb.hackclub.com/docs/api/v3'>README</a>".html_safe,
       "Read the&nbsp;<a href='https://hcb.hackclub.com/docs/api/v3'>docs</a>!".html_safe,
       'Now with "code"',
-      "Closed source!",
+      "Open source!",
       "Finally complete!",
       "Internet enabled!",
       "It's finally here!",

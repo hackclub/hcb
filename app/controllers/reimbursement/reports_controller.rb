@@ -176,7 +176,7 @@ module Reimbursement
         end
         redirect_to @report
       else
-        render :edit, status: :unprocessable_entity
+        render :edit, status: :unprocessable_content
       end
     end
 
@@ -213,7 +213,7 @@ module Reimbursement
         end
 
         flash[:success] = {
-          text: "Your report has been submitted for review and your payout method can no longer be changed for this report. When it's approved, you'll be reimbursed via #{@report.payout_method.name}.",
+          text: "Your report has been submitted for review and your payout method can no longer be changed for this report. When it's approved, you'll be reimbursed via #{@report.payout_method.display_name}.",
         }
       rescue => e
         flash[:error] = e.message

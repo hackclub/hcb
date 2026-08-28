@@ -29,8 +29,9 @@ RSpec.describe Ledger::Query, type: :model do
     Ledger::Mapping.create(ledger: test_ledger, ledger_item: item, on_primary_ledger: true)
     # refresh! (triggered on create and on mapping) recomputes memo and
     # amount_cents from canonical transactions, which these items don't have.
-    # Pin the intended values, bypassing callbacks.
-    item.update_columns(**attrs)
+    # Pin the intended values, bypassing callbacks. Also pin ct_count to 1 so
+    # these items don't get filtered out as empty (see Ledger::Query#execute).
+    item.update_columns(ct_count: 1, **attrs)
     item
   end
 
@@ -470,7 +471,7 @@ RSpec.describe Ledger::Query, type: :model do
     def create_other_ledger_item(**attrs)
       item = create(:ledger_item, **attrs)
       Ledger::Mapping.create(ledger: other_ledger, ledger_item: item, on_primary_ledger: true)
-      item.update_columns(**attrs)
+      item.update_columns(ct_count: 1, **attrs)
       item
     end
 
@@ -553,12 +554,16 @@ RSpec.describe Ledger::Query, type: :model do
   end
 
   describe "preloading" do
-    it "preloads author and linked_object's nested associations so rendering a page doesn't N+1" do
+    it "preloads author, hcb_code, and linked_object so rendering a page doesn't N+1" do
       author = create(:user)
       raw_pending = create(:raw_pending_stripe_transaction)
       card_charge_item = create(:ledger_item, linked_object: raw_pending.card_charge, datetime: Time.current)
-      card_charge_item.update_columns(author_id: author.id)
       Ledger::Mapping.create!(ledger: test_ledger, ledger_item: card_charge_item, on_primary_ledger: true)
+      # Set after mapping: mapping the item touches it, which triggers refresh!
+      # and would otherwise recompute ct_count as 0 (no real canonical
+      # transactions exist here), which Ledger::Query#execute filters out as
+      # empty (see the "empty items" examples above).
+      card_charge_item.update_columns(author_id: author.id, ct_count: 1)
 
       # execute_query({}) also returns this describe block's shared item_a..item_g
       # fixtures (mapped onto the same test_ledger in the top-level `before`
@@ -566,17 +571,43 @@ RSpec.describe Ledger::Query, type: :model do
       result = execute_query({}).to_a
       reloaded_card_charge_item = result.find { |item| item.id == card_charge_item.id }
 
-      # Covers the CardCharge branch of the preload (a has_many-through plus a
-      # belongs_to). Disbursement's :card_grant and Donation's
-      # :recurring_donation go through the same preload directive in
-      # execute() but aren't separately exercised here.
+      # Covers the CardCharge branch of the preload. CardCharge#icon reads its
+      # own cached merchant_network_id / merchant_category columns rather than
+      # a nested association, so linked_object doesn't need to be preloaded
+      # any deeper than this to avoid an N+1 here.
       expect {
         reloaded_card_charge_item.author&.name
-        # icon (app/models/ledger/item.rb) touches these associations for a
-        # CardCharge row; each should already be preloaded.
-        reloaded_card_charge_item.linked_object.raw_stripe_transactions.to_a
-        reloaded_card_charge_item.linked_object.raw_pending_stripe_transaction
+        reloaded_card_charge_item.hcb_code
+        reloaded_card_charge_item.linked_object.icon
       }.not_to make_database_queries
+    end
+  end
+
+  describe "empty items" do
+    it "excludes items with no CTs and no CPTs" do
+      empty_item = create_mapped_item(amount_cents: 100, memo: "empty item", datetime: Date.new(2024, 1, 4))
+      empty_item.update_columns(ct_count: 0, cpt_count: 0)
+
+      result = execute_query({ amount_cents: 100 })
+
+      expect(result.pluck(:id)).to match_array(ids_of(item_b, item_g))
+      expect(result.pluck(:id)).not_to include(empty_item.id)
+    end
+
+    it "includes items with a CT but no CPTs" do
+      item_b.update_columns(ct_count: 1, cpt_count: 0)
+
+      result = execute_query({ amount_cents: 100 })
+
+      expect(result.pluck(:id)).to include(item_b.id)
+    end
+
+    it "includes items with a CPT but no CTs" do
+      item_b.update_columns(ct_count: 0, cpt_count: 1)
+
+      result = execute_query({ amount_cents: 100 })
+
+      expect(result.pluck(:id)).to include(item_b.id)
     end
   end
 end

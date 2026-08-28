@@ -4,6 +4,8 @@ class EventsController < ApplicationController
   TRANSACTIONS_PER_PAGE = 75
   DONATIONS_PER_PAGE = 25
 
+  TREE_GUIDES = /\A[01]{0,#{Event::MAX_PARENT_DEPTH}}\z/
+
   include SetEvent
   include SetLedgerFilters
 
@@ -148,6 +150,15 @@ class EventsController < ApplicationController
     render partial: "events/home/users_chart", locals: { users: @users, timeframe: params[:timeframe], event: @event }
   end
 
+  def stats
+    authorize @event
+  end
+
+  def ledger_stats
+    authorize @event
+    @ledger = @event.ledger
+  end
+
   def transactions
     maybe_pending_invite = OrganizerPositionInvite.pending.find_by(user: current_user, event: @event)
 
@@ -212,7 +223,7 @@ class EventsController < ApplicationController
     @pending_transactions = type_results[:pending_transactions]
 
     page = (params[:page] || 1).to_i
-    per_page = (params[:per] || TRANSACTIONS_PER_PAGE).to_i
+    per_page = (params[:per] || TRANSACTIONS_PER_PAGE).to_i.clamp(1, 200)
 
     @transactions = Kaminari.paginate_array(@all_transactions).page(page).per(per_page)
     TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: @transactions, event: @event).run!
@@ -285,7 +296,7 @@ class EventsController < ApplicationController
 
     @all_positions = @event.organizer_positions
                            .joins(:user)
-    @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.email ILIKE :query" : "users.full_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
+    @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.preferred_name ILIKE :query OR users.email ILIKE :query" : "users.preferred_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
                                    .order(created_at: :desc)
     if @filter == "active_teenagers"
       @all_positions = @all_positions.select { |op| op.user.is_teenager? && op.user.active? } # select if user is a teenager and active (stole from the other code ;))
@@ -295,17 +306,26 @@ class EventsController < ApplicationController
     @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(params[:per] || (@view == "list" ? 20 : 10))
 
     if @event.parent
-      ops = @event.ancestor_organizer_positions.includes(:user)
-      users = ops.map(&:user).uniq
+      # `ancestor_organizer_positions` covers this organization as well as its
+      # ancestors, so both halves come from the one query. The avatars are
+      # preloaded because every user here is rendered as a `user_mention`.
+      ops = @event.ancestor_organizer_positions.includes(user: { profile_picture_attachment: :blob })
+      direct_ops, ancestor_ops = ops.partition { |op| op.event_id == @event.id }
+      direct_roles = direct_ops.to_h { |op| [op.user_id, op.role] }
 
-      access_levels = users.filter_map do |user|
-        access_level = user.access_level_for(@event, ops)
-        next if access_level[:access_level] == :direct
+      @indirect_access = ancestor_ops.group_by(&:user).filter_map do |user, user_ops|
+        # Inheriting from an ancestor is all-or-nothing (see
+        # OrganizerPosition.role_at_least?): managers inherit their full role,
+        # everyone else only inherits read access.
+        inherited_role = user_ops.any?(&:manager?) ? "manager" : "reader"
 
-        [user, access_level[:role]]
-      end.sort_by { |_, role| role }.to_h
+        # Someone with their own position here is already in the team list
+        # below, so only mention them when what they inherit outranks it.
+        direct_role = direct_roles[user.id]
+        next if direct_role && OrganizerPosition.roles[direct_role] >= OrganizerPosition.roles[inherited_role]
 
-      @indirect_access = access_levels
+        [user, inherited_role]
+      end.sort_by { |user, role| [-OrganizerPosition.roles[role], user.name.to_s] }.to_h
     end
 
     @invites = @event.organizer_position_invites.pending.includes(:sender)
@@ -389,7 +409,7 @@ class EventsController < ApplicationController
           redirect_back_or_to edit_event_path(@event.slug)
         end
       else
-        render :edit, status: :unprocessable_entity
+        render :edit, status: :unprocessable_content
       end
     rescue Errors::InvalidStripeCardLogoError => e
       flash[:error] = e.message
@@ -533,19 +553,16 @@ class EventsController < ApplicationController
     render :async_sub_organization_balance, layout: false
   end
 
-  def async_sub_organizations_graph
+  def async_sub_organization_balances
     authorize @event
-    data = Rails.cache.fetch("sub_organizations_graph_#{@event.id}", expires_in: 5.minutes) do
-      all_events = [@event] + @event.descendants.includes(:stripe_cards).order(:name).to_a
-      all_events.map { |e|
-        {
-          id: e.id,
-          balance_cents: e.balance_v2_cents,
-          card_count: e.stripe_cards.count { |c| c.stripe_status == "active" && c.subledger_id.nil? }
-        }
-      }
+
+    events = Event.where_public_id(params[:ids]).where(id: visible_descendant_ids).includes(:ledger)
+
+    balances = events.to_h do |event|
+      [event.public_id, helpers.render_money_amount(event.ledger.available_balance_cents)]
     end
-    render json: data
+
+    render json: balances
   end
 
   def account_number
@@ -554,10 +571,18 @@ class EventsController < ApplicationController
         transaction_source_type: "RawColumnTransaction",
         transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id' = '#{@event.column_account_number.column_id}'").select(:id)
       )
-      @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
-                                         .order(created_at: :desc)
-      page = (params[:page] || 1).to_i
-      @transactions = @transactions.page(page).per(params[:per] || 25)
+      if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
+        @ledger = @event.ledger
+        @ledger_items = @ledger.items
+                               .where(id: column_transactions.select(:ledger_item_id), linked_object_type: nil)
+                               .order(created_at: :desc)
+                               .page((params[:page] || 1).to_i).per(params[:per] || 25)
+      else
+        @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
+                                           .order(created_at: :desc)
+        page = (params[:page] || 1).to_i
+        @transactions = @transactions.page(page).per(params[:per] || 25)
+      end
 
       # We only want to show this callout if there were transfers from before https://github.com/hackclub/hcb/pull/13684 was merged
       @show_transfer_callout = column_transactions.where.not("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
@@ -910,8 +935,18 @@ class EventsController < ApplicationController
 
     respond_to do |format|
       format.html do
-        @sub_organizations = filtered_sub_organizations.page(params[:page]).per(params[:per] || 24)
-        @all_events = [@event] + @event.descendants.order(:name).select(:name, :parent_id, :slug, :id).to_a
+        cookies[:sub_organizations_view] = params[:view] if params[:view]
+        @view = cookies[:sub_organizations_view] || "list"
+
+        if @view == "list"
+          @search = params[:q].presence
+          @has_filter = @search.present?
+          @rows = sub_organization_table_rows(search: @search)
+        else
+          sub_organizations = filtered_sub_organizations
+          @sub_organizations = sub_organizations.not_hidden.page(params[:page]).per(params[:per] || 24)
+          @hidden_sub_organizations = sub_organizations.hidden.to_a
+        end
       end
 
       # CSV export intentionally does not consider filters
@@ -920,18 +955,42 @@ class EventsController < ApplicationController
           # We include the public ID because our partners iterate this CSV to
           # access organizations via the V3 API. The public ID serves has a
           # robust, immutable identifier compared to slugs.
-          csv << %w[ID Name Slug Balance Tags]
+          # Rows cover the whole subtree, not just direct sub-organizations, so
+          # the parent ID is what lets consumers rebuild the tree. Rows for the
+          # top level point at this organization, which has no row of its own.
+          csv << ["ID", "Name", "Slug", "Balance", "Tags", "Parent ID"]
 
-          @event.subevents.includes(:scoped_tags).find_each do |e|
+          Event.where(id: visible_descendant_ids).includes(:scoped_tags, :parent).find_each do |e|
             tags_for_parent = e.scoped_tags.select { |tag| tag.parent_event_id == e.parent_id }
-            csv << [e.public_id, e.name, e.slug, e.balance_v2_cents / 100.0, tags_for_parent.map(&:name).join(", ")].map { |value| SafeCsv.sanitize(value) }
+            csv << [e.public_id, e.name, e.slug, e.balance_v2_cents / 100.0, tags_for_parent.map(&:name).join(", "), e.parent&.public_id].map { |value| SafeCsv.sanitize(value) }
           end
         end
 
         send_data csv, filename: "#{@event.name}'s sub-organizations.csv", type: "text/csv", disposition: :attachment
       end
+
+      # Like the CSV, the XLSX export intentionally does not consider filters.
+      # Unlike the CSV, it includes every visible descendant (not just direct
+      # sub-organizations), rendered as a collapsible tree via row grouping.
+      format.xlsx do
+        send_data(
+          Event::SubOrganizationsExport.new(@event, descendant_ids: visible_descendant_ids).xlsx,
+          filename: "#{@event.name}'s sub-organizations.xlsx",
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          disposition: :attachment
+        )
+      end
     end
 
+  end
+
+  def async_sub_organization_rows
+    authorize @event
+
+    @rows = sub_organization_table_rows
+    @guides = tree_guides
+
+    render :sub_organization_rows, layout: false
   end
 
   def create_sub_organization
@@ -1130,7 +1189,7 @@ class EventsController < ApplicationController
       redirect_to event_path(@event)
       @event.set_airtable_status("Onboarded")
     else
-      render :activation_flow, status: :unprocessable_entity
+      render :activation_flow, status: :unprocessable_content
     end
   end
 
@@ -1253,15 +1312,40 @@ class EventsController < ApplicationController
 
   def ledger
     authorize @event
-    @per = params[:per] || 25
+    @per = (params[:per] || 100).to_i.clamp(1, 200)
 
     @items = ledger_query.execute(ledgers: @ledgers)
 
-    @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id)) if @tag&.id.present?
+    # TODO: move these to Ledger::Query
+    if @tag.present?
+      @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id))
+    end
 
-    @items = @items.page(params[:page]).per(@per)
+    if @category.present?
+      categorized_cts = @category.canonical_transactions.where(ledger_item: @items).select(:ledger_item_id)
+      categorized_cpts = @category.canonical_pending_transactions.where(ledger_item: @items).select(:ledger_item_id)
+      @items = @items.where(id: categorized_cts).or(@items.where(id: categorized_cpts))
+    end
+
+    if @merchant.present?
+      @items = @items.where(linked_object_type: "CardCharge", linked_object_id: CardCharge.where(merchant_network_id: @merchant).select(:id))
+    end
+
+    @items = @items.page(params[:page]).per(@per).preload(:tags, hcb_code: { event: :tags })
   rescue Pundit::NotAuthorizedError
     return head :not_found
+  end
+
+  def toggle_new_ledger
+    authorize @event
+
+    if params[:enabled] == "true"
+      Flipper.enable_actor(:new_ledger_2026_07_17, current_user)
+      redirect_to event_ledger_path(@event)
+    else
+      Flipper.disable_actor(:new_ledger_2026_07_17, current_user)
+      redirect_to event_transactions_path(@event)
+    end
   end
 
   private
@@ -1275,11 +1359,59 @@ class EventsController < ApplicationController
     params_hash.delete(:hidden)
   end
 
-  def filtered_sub_organizations(sub_organizations = @event.subevents)
+  def tree_guides
+    guides = params[:guides].to_s
+
+    guides.match?(TREE_GUIDES) ? guides : ""
+  end
+
+  # Memoized across the several surfaces of this page that need it.
+  def visible_descendant_ids
+    @visible_descendant_ids ||= @event.visible_descendant_ids(current_user)
+  end
+
+  def visible_subevent_ids
+    children = Rails.cache.fetch("sub_organization_children_#{@event.id}", expires_in: 5.minutes) do
+      @event.subevents.pluck(:id, :is_public, :hidden_at)
+    end
+
+    return children.map(&:first) if @event.sees_all_descendants?(current_user)
+
+    organized_ids = @event.reader_event_ids(current_user)
+    children.filter_map { |id, is_public, hidden_at| id if (is_public && hidden_at.nil?) || organized_ids.include?(id) }
+  end
+
+  def sub_organization_table_rows(search: nil)
+    scope =
+      if search
+        Event.where(id: visible_descendant_ids)
+             .where("name ILIKE ?", "%#{Event.sanitize_sql_like(search)}%")
+      else
+        Event.where(id: visible_subevent_ids)
+      end
+
+    events = scope.includes(:parent, :scoped_tags, logo_attachment: :blob)
+                  .reorder(:name, :id)
+                  .to_a
+
+    expandable = search ? Set.new : @event.expandable_subevent_ids(current_user)
+    organizer_counts = OrganizerPosition.where(event: events).group(:event_id).count
+
+    events.map do |event|
+      {
+        event:,
+        expandable: expandable.include?(event.id),
+        organizer_count: organizer_counts[event.id] || 0,
+        parent: (event.parent unless event.parent_id == @event.id)
+      }
+    end
+  end
+
+  def filtered_sub_organizations
     search = params[:q] || params[:search]
     scoped_tag = Event::ScopedTag.find_by(name: params[:tag])
 
-    relation = sub_organizations.includes(:scoped_tags, :parent, logo_attachment: :blob, background_image_attachment: :blob, organizer_positions: :user)
+    relation = @event.subevents.where(id: visible_descendant_ids).includes(:scoped_tags, :parent, logo_attachment: :blob, background_image_attachment: :blob, organizer_positions: :user)
     relation = relation.where("name ILIKE ?", "%#{search}%") if search.present?
     relation = relation.joins(:scoped_tags).where("event_scoped_tags.id = #{scoped_tag.id}") if scoped_tag.present?
     relation = relation.order(created_at: :desc)
@@ -1431,6 +1563,9 @@ class EventsController < ApplicationController
     # The search query name was historically `search`. It has since been renamed
     # to `q`. This following line retains backwards compatibility.
     params[:q] ||= params[:search]
+
+    reject_disabled_filters
+    return if performed?
 
     if params[:tag]
       @tag = Tag.find_by(event_id: @event.id, label: params[:tag])

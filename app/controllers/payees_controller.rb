@@ -22,6 +22,10 @@ class PayeesController < ApplicationController
 
   def create
     manual = params[:manual] == "true"
+    if manual && !Flipper.enabled?(:manual_payees_2026_08_05, @event)
+      flash[:error] = "Please try again."
+      redirect_to helpers.new_recipient_transfer_path(params[:destination], @event)
+    end
 
     payee = @event.payees.build(display_name: params[:name], email: params[:email])
     authorize payee
@@ -50,10 +54,10 @@ class PayeesController < ApplicationController
 
     if payee.update(payee_params)
       flash[:success] = "Recipient updated."
-      redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.hashid)
+      redirect_to helpers.new_recipient_transfer_path(params[:destination], @event, payee_id: payee.hashid)
     else
       flash[:error] = payee.errors.full_messages.to_sentence
-      redirect_to new_event_payment_path(event_id: @event.slug, payee_id: payee.hashid, edit_payee: true)
+      redirect_to helpers.new_recipient_transfer_path(params[:destination], @event, payee_id: payee.hashid, edit_payee: true)
     end
   end
 
@@ -64,7 +68,7 @@ class PayeesController < ApplicationController
     payee.archive!
 
     flash[:success] = "Recipient archived."
-    redirect_to new_event_payment_path(event_id: @event.slug)
+    redirect_to helpers.new_recipient_transfer_path(params[:destination], @event)
   end
 
   def choose_legal_entity

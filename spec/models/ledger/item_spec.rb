@@ -109,6 +109,16 @@ RSpec.describe Ledger::Item, type: :model do
       expect(item.errors[:datetime]).to include("can't be blank")
     end
 
+    it "requires status" do
+      item = Ledger::Item.new(amount_cents: 1000, memo: "Test", datetime: Time.current, status: nil)
+      expect(item).not_to be_valid
+      expect(item.errors[:status]).to include("can't be blank")
+    end
+
+    it "defaults status to pending" do
+      expect(Ledger::Item.new.status).to eq("pending")
+    end
+
     describe "primary_ledger association" do
       it "can be created without a primary_ledger" do
         item = Ledger::Item.new(
@@ -301,27 +311,31 @@ RSpec.describe Ledger::Item, type: :model do
     end
   end
 
-  describe "#calculate_amount_cents" do
-    let(:item) do
-      i = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current)
-      i.save(validate: false)
-      i
+  describe "#refresh!" do
+    it "sets amount_cents to 0 when there are no transactions" do
+      item = Ledger::Item.new(amount_cents: 999, memo: "Test", datetime: Time.current)
+      item.save(validate: false)
+
+      item.refresh!
+      item.reload
+
+      expect(item.amount_cents).to eq(0)
     end
 
-    it "returns 0 when there are no transactions" do
-      expect(item.calculate_amount_cents).to eq(0)
-    end
+    it "sums canonical transaction amounts into amount_cents" do
+      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current)
+      item.save(validate: false)
 
-    it "sums canonical transaction amounts" do
       create(:canonical_transaction, amount_cents: -500, ledger_item_id: item.id)
       create(:canonical_transaction, amount_cents: -300, ledger_item_id: item.id)
 
-      expect(item.calculate_amount_cents).to eq(-800)
-    end
-  end
+      item.refresh!
+      item.reload
 
-  describe "#refresh!" do
-    it "updates amount_cents from calculate_amount_cents and updates receipt_required from calculate_receipt_required" do
+      expect(item.amount_cents).to eq(-800)
+    end
+
+    it "updates amount_cents and updates receipt_required" do
       # The primary ledger's plan requires receipts, so a negative amount makes
       # the item's receipt_required.
       primary_ledger = create(:event).ledger
