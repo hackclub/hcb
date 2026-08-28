@@ -15,7 +15,7 @@ RSpec.describe Reimbursement::ReportsController do
         card_grant = create(:card_grant, event:, user: admin, sent_by: admin)
         report = create(:reimbursement_report, user: admin, event:, card_grant:)
 
-        sign_in(admin)
+        create_session(admin, verified: true)
 
         get(:edit, params: { id: report.id })
         select_tag = response.body[/<select[^>]*name="reimbursement_report\[event_id\]"[^>]*>/]
@@ -33,7 +33,7 @@ RSpec.describe Reimbursement::ReportsController do
         event = create(:event)
         report = create(:reimbursement_report, user: admin, event:)
 
-        sign_in(admin)
+        create_session(admin, verified: true)
 
         get(:edit, params: { id: report.id })
         select_tag = response.body[/<select[^>]*name="reimbursement_report\[event_id\]"[^>]*>/]
@@ -162,7 +162,7 @@ RSpec.describe Reimbursement::ReportsController do
         card_grant = create(:card_grant, event: source_event, user: admin, sent_by: admin)
         report = create(:reimbursement_report, user: admin, event: source_event, card_grant:)
 
-        sign_in(admin)
+        create_session(admin, verified: true)
 
         patch(:update, params: {
                 id: report.id,
