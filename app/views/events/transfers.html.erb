@@ -4,7 +4,7 @@
 <%= render "events/transfers/modal" if policy(@event).new_transfer? %>
 <%= render "card_grants/create_modal" if policy(@event).card_grant_overview? %>
 
-<% if @transfers.empty? && organizer_signed_in? && !params[:q].present? && !params[:filter].present? %>
+<% if @transfers.empty? && organizer_signed_in? && !params[:q].present? && !params[:status].present? && !params[:transfer_type].present? %>
   <%= render "events/one_pager",
     title: "Transfers",
     screenshots: {
@@ -73,15 +73,13 @@
 
   <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
     <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
-    <%= render "events/filters/search", form: %>
+      <%= render "events/filters/search", form: %>
     <% end %>
-    <div class="filterbar">
-      <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["deposited", "in_transit", "canceled"].include?(params[:filter]), role: "tab" %>
-      <%= link_to "Deposited", "?filter=deposited", class: "filterbar__item", "aria-selected": params[:filter] == "deposited", role: "tab" %>
-      <%= link_to "In transit", "?filter=in_transit", class: "filterbar__item", "aria-selected": params[:filter] == "in_transit", role: "tab" %>
-      <%= link_to "Canceled", "?filter=canceled", class: "filterbar__item", "aria-selected": params[:filter] == "canceled", role: "tab" %>
-    </div>
+
+    <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
   </div>
+
+  <%= render "events/filters/bar", filters: @filter_options if @has_filter %>
 
   <% if @transfers.any? %>
     <article class="table-container">
@@ -135,7 +133,7 @@
                 <%= format_date d.created_at %>
               </td>
               <td style="max-width: 15ch" class="overflow-hidden truncate" title="<%= d.name %>">
-                <% if d.is_a?(Disbursement) %>
+                <% if d.is_a?(Disbursement::Outgoing) %>
                   <strong>
                     <% if d.destination_event.is_public? || organizer_signed_in?(d.destination_event) %>
                       <%= link_to d.destination_event.name, d.destination_event, style: "z-index:1;pointer-events:auto" %>
@@ -148,7 +146,7 @@
                 <% end %>
               </td>
               <td style="max-width: 25ch;" class="overflow-hidden truncate">
-                <% if d.is_a?(Disbursement) %>
+                <% if d.is_a?(Disbursement::Outgoing) %>
                   <%= d.name %>
                 <% else %>
                   <%= d.try(:payment_for) %>
@@ -171,6 +169,8 @@
                       <%= ledger_amount %>
                     </span>
                   <% end %>
+                <% when Disbursement::Outgoing %>
+                  <%= render_money(-d.amount) %>
                 <% else %>
                   <%= render_money(d.amount) %>
                 <% end %>
@@ -184,9 +184,9 @@
           <% end %>
         </tbody>
       </table>
-
-      <%= paginate @transfers %>
     </article>
+
+    <%= paginate @transfers %>
   <% else %>
     <%= blankslate "No transfers yet" %>
   <% end %>

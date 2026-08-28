@@ -35,7 +35,7 @@ class WiseTransfersController < ApplicationController
       end
       redirect_to url_for(@wise_transfer.local_hcb_code), flash: { success: "Your Wise transfer has been sent!" }
     else
-      render "new", status: :unprocessable_entity
+      render "new", status: :unprocessable_content
     end
 
   end
@@ -104,7 +104,7 @@ class WiseTransfersController < ApplicationController
   def generate_quote
     authorize WiseTransfer.new
 
-    money = Money.from_dollars(params[:amount].to_f, params[:currency])
+    money = Money.from_amount(params[:amount].to_f, params[:currency])
     quote = WiseTransfer.generate_quote(money)
 
     render plain: quote.format, content_type: "text/plain"

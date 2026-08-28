@@ -83,7 +83,7 @@ class User
           active_events.joins("JOIN event_graph ON events.id = event_graph.parent_id")
         )
 
-        (ancestors + descendants).index_by(&:id)
+        (ancestors + descendants).sort_by(&:id).index_by(&:id)
       end
     end
 

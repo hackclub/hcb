@@ -5,7 +5,7 @@
 # Table name: reimbursement_expenses
 #
 #  id                      :bigint           not null, primary key
-#  aasm_state              :string
+#  aasm_state              :string           not null
 #  amount_cents            :integer          default(0), not null
 #  approved_at             :datetime
 #  category                :integer

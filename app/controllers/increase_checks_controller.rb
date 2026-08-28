@@ -5,7 +5,7 @@ class IncreaseChecksController < ApplicationController
   include Admin::TransferApprovable
 
   before_action :set_event, only: %i[new create]
-  before_action :set_check, only: %i[approve reject stop reissue]
+  before_action :set_check, only: %i[approve reject stop]
 
   def new
     @check = @event.increase_checks.build
@@ -37,7 +37,7 @@ class IncreaseChecksController < ApplicationController
       end
       redirect_to url_for(@check.local_hcb_code), flash: { success: "Your check has been sent!" }
     else
-      render "new", status: :unprocessable_entity
+      render "new", status: :unprocessable_content
     end
   end
 
@@ -72,14 +72,6 @@ class IncreaseChecksController < ApplicationController
     @check.stop!
 
     redirect_back_or_to url_for(@check.local_hcb_code), flash: { success: "Check has been stopped." }
-  end
-
-  def reissue
-    authorize @check
-
-    @check.reissue!
-
-    redirect_back_or_to url_for(@check.reissued_as.local_hcb_code), flash: { success: "Check has been reissued!" }
   end
 
   private
