@@ -37,7 +37,7 @@
     </div>
   </div>
 
-  <% if @recurring_donations.size > 0 && @donations.current_page == 1 %>
+  <% if @recurring_donations.any? && @donations.current_page == 1 %>
     <h2 class="heading mt4 pb1" style="margin-bottom: 16px;">
       Recurring donations
     </h2>
@@ -75,7 +75,7 @@
               </td>
               <% if recurring_donation.is_a?(RecurringDonation) && OrganizerPosition.role_at_least?(current_user, @event, :manager) %>
                 <td class="text-right">
-                  <%= pop_icon_to "view-close", cancel_recurring_donation_path(recurring_donation.url_hash), method: :post, data: { confirm: "Are you sure you want to cancel this recurring donation?" }, class: "error" %>
+                  <%= pop_icon_to "view-close", cancel_recurring_donation_path(recurring_donation.url_hash), data: { turbo_method: :post, turbo_confirm: "Are you sure you want to cancel this recurring donation?", turbo_confirm_danger: true }, class: "error" %>
                 </td>
               <% end %>
             </tr>
@@ -116,7 +116,7 @@
     </div>
   </div>
 
-  <% if @donations.size > 0 %>
+  <% if @donations.any? %>
   <article class="table-container">
     <table>
       <thead>
@@ -168,9 +168,6 @@
     <%= blankslate "No donations yet" %>
   <% end %>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <%= javascript_include_tag "donation_qr_codes.js" %>
-
   <% if organizer_signed_in? %>
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="donation_settings">
       <%= modal_header("Settings", external_link: edit_event_path(@event, tab: "donations")) %>
@@ -183,7 +180,7 @@
 <% else %>
   <%= render "events/one_pager",
     title: "Donations",
-    support_article: "https://help.hcb.hackclub.com/en/articles/13370938-in-what-ways-can-i-edit-my-donation-page",
+    support_article: "https://help.hcb.hackclub.com/en/articles/15410000-how-do-i-set-up-and-share-my-donation-page",
     screenshots: {
       light: "https://cdn.hackclub.com/019e7c92-1acf-7866-80cf-5946f5515639/image.png",
       dark: "https://cdn.hackclub.com/019e7c95-f032-727c-9379-ae4cc062889b/image.png"

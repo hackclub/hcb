@@ -5,7 +5,7 @@
 # Table name: stripe_cardholders
 #
 #  id                                 :bigint           not null, primary key
-#  cardholder_type                    :integer          default("individual"), not null
+#  cardholder_type                    :integer          default(0), not null
 #  stripe_billing_address_city        :text
 #  stripe_billing_address_country     :text
 #  stripe_billing_address_line1       :text
@@ -112,6 +112,14 @@ class StripeCardholder < ApplicationRecord
     end
   end
 
+  def reset_billing_address_to_default!
+    DEFAULT_BILLING_ADDRESS.each do |key, value|
+      self.public_send(:"address_#{key}=", value)
+    end
+
+    save!
+  end
+
   def self.first_name(user)
     clean_name(user.first_name(legal: true))
   end
@@ -145,23 +153,27 @@ class StripeCardholder < ApplicationRecord
   end
 
   def update_cardholder_in_stripe
-    StripeService::Issuing::Cardholder.update(
-      stripe_id,
-      {
-        email: stripe_email,
-        phone_number: stripe_phone_number,
-        billing: {
-          address: {
-            line1: address_line1,
-            line2: address_line2,
-            city: address_city,
-            state: address_state,
-            postal_code: address_postal_code,
-            country: address_country
-          }.compact_blank
-        }
-      }.compact_blank # Stripe doesn't like blank values
-    )
+    stripe_params = {
+      email: stripe_email,
+      phone_number: stripe_phone_number,
+      billing: {
+        address: {
+          line1: address_line1,
+          line2: address_line2,
+          city: address_city,
+          state: address_state,
+          postal_code: address_postal_code,
+          country: address_country
+        }.compact_blank
+      }
+    }.compact_blank # Stripe doesn't like blank values
+
+    # When phone number is explicitly cleared, send empty string to clear it on Stripe
+    if stripe_phone_number.blank? && stripe_phone_number_changed?
+      stripe_params[:phone_number] = ""
+    end
+
+    StripeService::Issuing::Cardholder.update(stripe_id, stripe_params)
   rescue Stripe::StripeError => error
     if error.message.downcase.include?("address") || error.message.downcase.include?("country") || error.message.downcase.include?("state")
       errors.add(:base, error.message)
