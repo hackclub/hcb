@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_25_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_27_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -120,11 +120,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_120100) do
     t.bigint "admin_ledger_audit_id"
     t.datetime "created_at", null: false
     t.bigint "hcb_code_id"
+    t.bigint "ledger_item_id"
     t.bigint "reviewer_id"
     t.string "status", default: "pending"
     t.datetime "updated_at", null: false
     t.index ["admin_ledger_audit_id"], name: "index_admin_ledger_audit_tasks_on_admin_ledger_audit_id"
     t.index ["hcb_code_id"], name: "index_admin_ledger_audit_tasks_on_hcb_code_id"
+    t.index ["ledger_item_id"], name: "index_admin_ledger_audit_tasks_on_ledger_item_id"
     t.index ["reviewer_id"], name: "index_admin_ledger_audit_tasks_on_reviewer_id"
   end
 
@@ -2081,6 +2083,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_120100) do
     t.index ["payee_id"], name: "index_payroll_positions_on_payee_id"
   end
 
+  create_table "personal_transactions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "invoice_id", null: false
+    t.bigint "ledger_item_id", null: false
+    t.bigint "reporter_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invoice_id"], name: "index_personal_transactions_on_invoice_id"
+    t.index ["ledger_item_id"], name: "index_personal_transactions_on_ledger_item_id", unique: true
+    t.index ["reporter_id"], name: "index_personal_transactions_on_reporter_id"
+  end
+
   create_table "raffles", force: :cascade do |t|
     t.boolean "confirmed", default: true, null: false
     t.datetime "created_at", null: false
@@ -3044,6 +3057,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_120100) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "admin_ledger_audit_tasks", "admin_ledger_audits"
   add_foreign_key "admin_ledger_audit_tasks", "hcb_codes"
+  add_foreign_key "admin_ledger_audit_tasks", "ledger_items"
   add_foreign_key "admin_ledger_audit_tasks", "users", column: "reviewer_id"
   add_foreign_key "announcement_blocks", "announcements"
   add_foreign_key "announcements", "events"
@@ -3196,6 +3210,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_120100) do
   add_foreign_key "payroll_invoices", "payroll_positions"
   add_foreign_key "payroll_invoices", "users", column: "reviewed_by_id"
   add_foreign_key "payroll_positions", "payees"
+  add_foreign_key "personal_transactions", "invoices"
+  add_foreign_key "personal_transactions", "ledger_items"
+  add_foreign_key "personal_transactions", "users", column: "reporter_id"
   add_foreign_key "raffles", "raffles", column: "referring_raffle_id"
   add_foreign_key "raffles", "users"
   add_foreign_key "raw_pending_fee_reimbursement_transactions", "fee_reimbursements"

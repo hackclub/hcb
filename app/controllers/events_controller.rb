@@ -553,6 +553,18 @@ class EventsController < ApplicationController
     render :async_sub_organization_balance, layout: false
   end
 
+  def async_sub_organization_balances
+    authorize @event
+
+    events = Event.where_public_id(params[:ids]).where(id: visible_descendant_ids).includes(:ledger)
+
+    balances = events.to_h do |event|
+      [event.public_id, helpers.render_money_amount(event.ledger.available_balance_cents)]
+    end
+
+    render json: balances
+  end
+
   def account_number
     if @event.column_account_number.present?
       column_transactions = CanonicalTransaction.where(
