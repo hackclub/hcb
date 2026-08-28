@@ -60,7 +60,7 @@ RSpec.describe Reimbursement::ReportsController do
         # report, this regression test would silently become vacuous.
         expect(report.aasm_state).to eq("draft")
 
-        sign_in(attacker)
+        create_session(attacker, verified: true)
 
         patch(:update, params: {
                 id: report.id,
@@ -82,7 +82,7 @@ RSpec.describe Reimbursement::ReportsController do
 
         report = create(:reimbursement_report, user:, event: source_event)
 
-        sign_in(user)
+        create_session(user, verified: true)
 
         patch(:update, params: {
                 id: report.id,
@@ -103,7 +103,7 @@ RSpec.describe Reimbursement::ReportsController do
 
         report = create(:reimbursement_report, user:, event: source_event)
 
-        sign_in(user)
+        create_session(user, verified: true)
 
         patch(:update, params: {
                 id: report.id,
@@ -123,7 +123,7 @@ RSpec.describe Reimbursement::ReportsController do
 
         report = create(:reimbursement_report, user: admin, event: source_event)
 
-        sign_in(admin)
+        create_session(admin, verified: true)
 
         patch(:update, params: {
                 id: report.id,
@@ -142,7 +142,7 @@ RSpec.describe Reimbursement::ReportsController do
         create(:organizer_position, user:, event:)
         report = create(:reimbursement_report, user:, event:, name: "Old Name")
 
-        sign_in(user)
+        create_session(user, verified: true)
 
         patch(:update, params: {
                 id: report.id,
@@ -182,7 +182,7 @@ RSpec.describe Reimbursement::ReportsController do
         create(:organizer_position, user: manager, event:)
         report = create(:reimbursement_report, user: creator, event:)
 
-        sign_in(creator)
+        create_session(creator, verified: true)
 
         patch(:update, params: {
                 id: report.id,
@@ -200,7 +200,7 @@ RSpec.describe Reimbursement::ReportsController do
         create(:organizer_position, user: other_manager, event:)
         report = create(:reimbursement_report, user: manager, event:)
 
-        sign_in(manager)
+        create_session(manager, verified: true)
 
         patch(:update, params: {
                 id: report.id,
@@ -219,7 +219,7 @@ RSpec.describe Reimbursement::ReportsController do
         create(:organizer_position, user: other_manager, event:)
         report = create(:reimbursement_report, user: creator, event:)
 
-        sign_in(manager)
+        create_session(manager, verified: true)
 
         patch(:update, params: {
                 id: report.id,
@@ -236,7 +236,7 @@ RSpec.describe Reimbursement::ReportsController do
         create(:organizer_position, user: reviewer, event:)
         report = create(:reimbursement_report, user: admin, event:)
 
-        sign_in(admin)
+        create_session(admin, verified: true)
 
         patch(:update, params: {
                 id: report.id,
@@ -245,6 +245,132 @@ RSpec.describe Reimbursement::ReportsController do
 
         expect(report.reload.reviewer_id).to eq(reviewer.id)
       end
+    end
+  end
+
+  describe "#update_payout_method" do
+    def ach(account: "12345678")
+      LegalEntity::PayoutMethod::AchTransfer.new(account_number: account, routing_number: "021000021")
+    end
+
+    it "changes a draft report's payout method to one of the user's methods" do
+      user = create(:user)
+      default_pm = user.personal_legal_entity.payout_methods.create!(default: true, details: ach)
+      other_pm = user.personal_legal_entity.payout_methods.create!(default: false, details: ach(account: "99999999"))
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft)
+      expect(report.legal_entity_payout_method).to eq(default_pm)
+
+      create_session(user, verified: true)
+
+      post(:update_payout_method, params: { report_id: report.id, legal_entity_payout_method_id: other_pm.id })
+
+      expect(report.reload.legal_entity_payout_method).to eq(other_pm)
+    end
+
+    it "converts the report and its expenses when switching to a different-currency method" do
+      stub_request(:get, /api\.column\.com\/institutions/)
+        .to_return(status: 200, body: { country_code: "GB" }.to_json, headers: { "Content-Type" => "application/json" })
+
+      user = create(:user)
+      user.personal_legal_entity.payout_methods.create!(default: true, details: ach)
+      wise = user.personal_legal_entity.payout_methods.create!(
+        default: false,
+        details: LegalEntity::PayoutMethod::WiseTransfer.new(
+          address_line1: "1 Main St", address_city: "London", address_state: "England",
+          address_postal_code: "SW1A 1AA", recipient_country: 1, currency: "GBP"
+        )
+      )
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft)
+
+      create_session(user, verified: true)
+
+      post(:update_payout_method, params: { report_id: report.id, legal_entity_payout_method_id: wise.id })
+
+      expect(report.reload.currency).to eq("GBP")
+      expect(report.legal_entity_payout_method).to eq(wise)
+    end
+
+    it "refuses to assign a payout method belonging to another user" do
+      user = create(:user)
+      own_pm = user.personal_legal_entity.payout_methods.create!(default: true, details: ach)
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft)
+
+      stranger = create(:user)
+      stranger_pm = stranger.personal_legal_entity.payout_methods.create!(default: true, details: ach)
+
+      create_session(user, verified: true)
+
+      post(:update_payout_method, params: { report_id: report.id, legal_entity_payout_method_id: stranger_pm.id })
+
+      expect(flash[:error]).to eq("Payout method not found.")
+      expect(report.reload.legal_entity_payout_method).to eq(own_pm)
+    end
+
+    it "refuses to assign an archived payout method" do
+      user = create(:user)
+      default_pm = user.personal_legal_entity.payout_methods.create!(default: true, details: ach)
+      archived = user.personal_legal_entity.payout_methods.create!(default: false, archived: true, details: ach(account: "99999999"))
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft)
+
+      create_session(user, verified: true)
+
+      post(:update_payout_method, params: { report_id: report.id, legal_entity_payout_method_id: archived.id })
+
+      expect(flash[:error]).to eq("Payout method not found.")
+      expect(report.reload.legal_entity_payout_method).to eq(default_pm)
+    end
+
+    it "is not authorized once the report is no longer a draft" do
+      user = create(:user)
+      default_pm = user.personal_legal_entity.payout_methods.create!(default: true, details: ach)
+      other_pm = user.personal_legal_entity.payout_methods.create!(default: false, details: ach(account: "99999999"))
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :submitted)
+
+      create_session(user, verified: true)
+
+      post(:update_payout_method, params: { report_id: report.id, legal_entity_payout_method_id: other_pm.id })
+
+      expect(flash[:error]).to match(/not authorized/i)
+      expect(report.reload.legal_entity_payout_method).to eq(default_pm)
+    end
+  end
+
+  describe "#destroy" do
+    it "lets an external contributor delete their own draft report" do
+      user = create(:user)
+      event = create(:event)
+      report = create(:reimbursement_report, user:, event:, aasm_state: :draft)
+
+      create_session(user, verified: true)
+
+      delete(:destroy, params: { id: report.id })
+
+      expect(Reimbursement::Report.find_by(id: report.id)).to be_nil
+      expect(response).to redirect_to(my_reimbursements_path)
+    end
+
+    it "does not let an external contributor delete a report once it is submitted" do
+      user = create(:user)
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :submitted)
+
+      create_session(user, verified: true)
+
+      delete(:destroy, params: { id: report.id })
+
+      expect(flash[:error]).to match(/not authorized/i)
+      expect(report.reload).to be_present
+    end
+
+    it "does not let a stranger delete someone else's draft report" do
+      report = create(:reimbursement_report, user: create(:user), event: create(:event), aasm_state: :draft)
+      stranger = create(:user)
+
+      create_session(stranger, verified: true)
+
+      delete(:destroy, params: { id: report.id })
+
+      expect(flash[:error]).to match(/not authorized/i)
+      expect(report.reload).to be_present
     end
   end
 end

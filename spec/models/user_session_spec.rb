@@ -17,13 +17,13 @@ RSpec.describe User::Session, type: :model do
   context "when user is locked" do
     it "can't be created" do
       user = create(:user, locked_at: Time.now)
-      expect { create(:user_session, user:) }.to raise_error(ActiveRecord::RecordInvalid)
+      expect { create(:user_session, verified: true, user:) }.to raise_error(ActiveRecord::RecordInvalid)
     end
 
     it "can be be created when impersonated" do
       user = create(:user, locked_at: Time.now)
       admin_user = create(:user, access_level: :admin)
-      user_session = create(:user_session, user:, impersonated_by: admin_user)
+      user_session = create(:user_session, verified: true, user:, impersonated_by: admin_user)
       expect(user_session).to be_valid
     end
   end
@@ -36,7 +36,7 @@ RSpec.describe User::Session, type: :model do
     end
 
     it "returns false if there are no associated logins" do
-      user_session = create(:user_session)
+      user_session = create(:user_session, verified: true)
       Flipper.enable(:sudo_mode_2015_07_21, user_session.user)
 
       expect(user_session).not_to be_sudo_mode
@@ -46,7 +46,7 @@ RSpec.describe User::Session, type: :model do
       freeze_time do
         user = create(:user)
         Flipper.enable(:sudo_mode_2015_07_21, user)
-        user_session = create(:user_session, user:)
+        user_session = create(:user_session, verified: true, user:)
         _initial_login = create(
           :login,
           user:,
@@ -75,7 +75,7 @@ RSpec.describe User::Session, type: :model do
 
   describe "#last_reauthenticated_at" do
     it "returns nil if there was only an initial login" do
-      user_session = create(:user_session)
+      user_session = create(:user_session, verified: true)
       initial_login = create(:login, user: user_session.user, authenticated_with_email: true)
       initial_login.update!(user_session:)
 
@@ -83,7 +83,7 @@ RSpec.describe User::Session, type: :model do
     end
 
     it "returns the latest reauthentication time" do
-      user_session = create(:user_session)
+      user_session = create(:user_session, verified: true)
       initial_login = create(:login, user: user_session.user, authenticated_with_email: true)
       initial_login.update!(user_session:)
 
@@ -104,7 +104,7 @@ RSpec.describe User::Session, type: :model do
       user = create(:user, full_name: "Hack Clubber")
 
       PublicActivity.with_tracking do
-        create(:user_session, user:)
+        create(:user_session, verified: true, user:)
       end
 
       activity = PublicActivity::Activity.sole
@@ -117,7 +117,7 @@ RSpec.describe User::Session, type: :model do
       user = create(:user, full_name: "Hack Clubber")
 
       PublicActivity.with_tracking do
-        create(:user_session, user:, impersonated_by: admin)
+        create(:user_session, verified: true, user:, impersonated_by: admin)
       end
 
       activity = PublicActivity::Activity.sole
@@ -134,6 +134,112 @@ RSpec.describe User::Session, type: :model do
         .fragment(raw_html)
         .text
         .squish
+    end
+
+    specify "attributes unverified session creation to the underlying user in the audit feed" do
+      user = create(:user, verified: false, full_name: "Unverified User")
+
+      PublicActivity.with_tracking do
+        User::Session.create!(
+          user:,
+          verified: false,
+          session_token: SecureRandom.urlsafe_base64,
+          expiration_at: 1.week.from_now,
+        )
+      end
+
+      activity = PublicActivity::Activity.sole
+      expect(activity.owner_id).to eq(user.id)
+      expect(activity.owner_type).to eq("User")
+    end
+
+    specify "does not create an activity for a session with no associated user" do
+      PublicActivity.with_tracking do
+        User::Session.create!(
+          user: nil,
+          verified: false,
+          session_token: SecureRandom.urlsafe_base64,
+          expiration_at: 1.week.from_now,
+        )
+      end
+
+      expect(PublicActivity::Activity.count).to eq(0)
+    end
+
+    specify "creates an activity when a user is later assigned to a previously anonymous session" do
+      user = create(:user, full_name: "Hack Clubber")
+
+      session = PublicActivity.with_tracking do
+        User::Session.create!(
+          user: nil,
+          verified: false,
+          session_token: SecureRandom.urlsafe_base64,
+          expiration_at: 1.week.from_now,
+        )
+      end
+
+      expect(PublicActivity::Activity.count).to eq(0)
+
+      PublicActivity.with_tracking do
+        session.update!(user:, verified: true)
+      end
+
+      activity = PublicActivity::Activity.sole
+      expect(activity.owner_id).to eq(user.id)
+      expect(activity.owner_type).to eq("User")
+    end
+  end
+
+  describe "verified/unverified mismatch validation" do
+    it "rejects a verified session for an unverified user" do
+      unverified_user = create(:user, verified: false)
+
+      session = build(
+        :user_session,
+        user: unverified_user,
+        verified: true,
+      )
+
+      expect(session).not_to be_valid
+      expect { session.errors.full_messages }.not_to raise_error
+      expect(session.errors.full_messages.join(" ")).to match(/verified/i)
+    end
+
+    it "rejects an unverified session for a verified user" do
+      verified_user = create(:user, verified: true)
+
+      session = build(
+        :user_session,
+        user: verified_user,
+        verified: false,
+      )
+
+      expect(session).not_to be_valid
+      expect { session.errors.full_messages }.not_to raise_error
+    end
+  end
+
+  describe "#update_session_timestamps" do
+    it "honors the underlying user's session_validity_preference even when the session is unverified" do
+      preference_seconds = SessionsHelper::SESSION_DURATION_OPTIONS.fetch("15 minutes")
+      user = create(
+        :user,
+        verified: false,
+        session_validity_preference: preference_seconds,
+      )
+      session = create(
+        :user_session,
+        user:,
+        verified: false,
+        last_seen_at: 1.hour.ago,
+        expiration_at: 3.weeks.from_now,
+      )
+
+      session.update_session_timestamps
+
+      session.reload
+      expected_max = preference_seconds.seconds.from_now + 1.minute # generous slack
+      expect(session.expiration_at).to be <= expected_max
     end
   end
 end

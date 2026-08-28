@@ -19,7 +19,7 @@ RSpec.describe Reimbursement::ExpensesController do
         original_state = expense.aasm_state
         original_expense_number = expense.expense_number
 
-        sign_in(attacker)
+        create_session(attacker, verified: true)
 
         patch(:update, params: {
                 id: expense.id,
@@ -45,7 +45,7 @@ RSpec.describe Reimbursement::ExpensesController do
         report = create(:reimbursement_report, user:, event: source_event)
         expense = create(:reimbursement_expense, report:)
 
-        sign_in(user)
+        create_session(user, verified: true)
 
         patch(:update, params: {
                 id: expense.id,
@@ -67,7 +67,7 @@ RSpec.describe Reimbursement::ExpensesController do
         report = create(:reimbursement_report, user:, event: source_event)
         expense = create(:reimbursement_expense, report:)
 
-        sign_in(user)
+        create_session(user, verified: true)
 
         patch(:update, params: {
                 id: expense.id,
@@ -88,7 +88,7 @@ RSpec.describe Reimbursement::ExpensesController do
         report = create(:reimbursement_report, user: admin, event: source_event)
         expense = create(:reimbursement_expense, report:)
 
-        sign_in(admin)
+        create_session(admin, verified: true)
 
         patch(:update, params: {
                 id: expense.id,

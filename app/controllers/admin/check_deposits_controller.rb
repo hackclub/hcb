@@ -29,7 +29,7 @@ module Admin
         # error, but rather return a string (301 status code), when given an
         # empty string.
         flash.now[:error] = "Column ID is required."
-        return render :show, status: :unprocessable_entity
+        return render :show, status: :unprocessable_content
       end
       ColumnService.get "/transfers/checks/#{params[:column_id]}"
 
@@ -37,15 +37,15 @@ module Admin
       redirect_to admin_check_deposits_path, flash: { success: "Check deposit processed!" }
     rescue ActiveRecord::RecordInvalid
       flash.now[:error] = "Another check deposit has already been processed with this ID."
-      render :show, status: :unprocessable_entity
+      render :show, status: :unprocessable_content
     rescue Faraday::Error => e
       Rails.error.report(e)
       flash.now[:error] = "Something went wrong: #{ColumnService.error_to_admin_message(e)}"
-      render :show, status: :unprocessable_entity
+      render :show, status: :unprocessable_content
     rescue => e
       Rails.error.report(e)
       flash.now[:error] = "Something went wrong :("
-      render :show, status: :unprocessable_entity
+      render :show, status: :unprocessable_content
     end
 
     def reject

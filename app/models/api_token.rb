@@ -7,7 +7,6 @@
 #  id                       :bigint           not null, primary key
 #  expires_in               :integer
 #  ip_address               :inet
-#  refresh_token            :string
 #  refresh_token_bidx       :text
 #  refresh_token_ciphertext :text
 #  revoked_at               :datetime
@@ -47,9 +46,11 @@ class ApiToken < ApplicationRecord
   scope :accessible, -> { not_expired.and(not_revoked) }
 
   has_encrypted :token
-  has_encrypted :refresh_token, migrating: true
+  has_encrypted :refresh_token
   blind_index :token
-  blind_index :refresh_token, migrating: true
+  blind_index :refresh_token
+
+  self.ignored_columns += ["refresh_token"]
 
   belongs_to :user
 

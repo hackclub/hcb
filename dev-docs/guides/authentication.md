@@ -32,7 +32,7 @@ The complete method does two things:
 Lastly, if the login is complete, this line signs the user in:
 
 ```ruby
-@login.update(user_session: sign_in(user: @login.user, fingerprint_info:))
+@login.update(user_session: create_session(user: @login.user, verified: true, fingerprint_info:))
 ```
 
 ### WebAuthn

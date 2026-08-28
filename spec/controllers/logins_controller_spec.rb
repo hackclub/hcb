@@ -11,7 +11,7 @@ RSpec.describe LoginsController do
   describe "#new" do
     it "shows the current user when logged in" do
       user = create(:user)
-      sign_in(user)
+      create_session(user, verified: true)
 
       get(:new)
       expect(response).to have_http_status(:ok)
@@ -62,7 +62,7 @@ RSpec.describe LoginsController do
         get(:email, params: { id: login.hashid })
       }.to send_email(to: user.email)
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("Email code")
       expect(response.body).to include("We just sent a login code")
     end
@@ -81,9 +81,24 @@ RSpec.describe LoginsController do
 
       get(:sms, params: { id: login.hashid })
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("SMS code")
       expect(response.body).to include("We just sent a login code")
+    end
+
+    # The UI never offers SMS for an unverified number, so this request only
+    # comes from a script POSTing at the endpoint directly to spend Twilio
+    # messages on made-up numbers.
+    it "sends no SMS if the phone number isn't verified" do
+      user = create(:user, phone_number: "+18556254225")
+      login = create(:login, user:)
+
+      expect(TwilioVerificationService).not_to receive(:new)
+
+      get(:sms, params: { id: login.hashid })
+
+      expect(flash[:error]).to eq("SMS login isn't available for this account.")
+      expect(response).to redirect_to(auth_users_path)
     end
 
     it "returns an error if the login is a reauthentication" do
@@ -145,7 +160,7 @@ RSpec.describe LoginsController do
             }
           )
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           expect(response.body).to include("Invalid login code")
         end
 
@@ -199,7 +214,7 @@ RSpec.describe LoginsController do
             }
           )
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           expect(response.body).to include("Invalid login code")
         end
 
@@ -450,7 +465,7 @@ RSpec.describe LoginsController do
     it "checks for sudo mode and redirects" do
       user = create(:user)
       Flipper.enable(:sudo_mode_2015_07_21, user)
-      sign_in(user)
+      create_session(user, verified: true)
 
       travel(3.hours)
 

@@ -11,7 +11,7 @@
             <small class="text-muted">Redirects to: <%= link_to(program.redirect_to.presence || root_url) %></small>
           </div>
           <div class="flex flex-row gap-2 justify-between m-0">
-            <span class="m-0"><%= pluralize(program.users.size, "user") %> • <%= pluralize(program.new_users.size, "new user") %></span>
+            <span class="m-0"><%= pluralize(program.attributions.size, "click") %> • <%= pluralize(program.users.size, "user") %> • <%= pluralize(program.new_users.size, "new user") %></span>
           </div>
 
           <div class="flex-grow"></div>
