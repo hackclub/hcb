@@ -180,12 +180,33 @@ class Event < ApplicationRecord
   # down from exactly this set, so it comes back empty whenever this does, which
   # is the cheap way to ask whether there is anything to show.
   def visible_subevents(user)
-    return subevents if user&.auditor?
+    return subevents if sees_all_descendants?(user)
 
-    organized_ids = user ? OrganizerPosition.reader_access.where(user:).pluck(:event_id) : []
-    return subevents if organized_ids.any? && organized_ids.intersect?(ancestor_ids)
+    subevents.where(is_public: true, hidden_at: nil).or(subevents.where(id: reader_event_ids(user)))
+  end
 
-    subevents.where(is_public: true, hidden_at: nil).or(subevents.where(id: organized_ids))
+  def expandable_subevent_ids(user)
+    grandchildren = Event.where(parent_id: visible_subevents(user).select(:id))
+
+    unless sees_all_descendants?(user)
+      organized_ids = reader_event_ids(user)
+      grandchildren = grandchildren.where(is_public: true, hidden_at: nil)
+                                   .or(grandchildren.where(id: organized_ids))
+                                   .or(grandchildren.where(parent_id: organized_ids))
+    end
+
+    grandchildren.reorder(nil).distinct.pluck(:parent_id).to_set
+  end
+
+  def reader_event_ids(user)
+    return [] unless user
+
+    @reader_event_ids ||= {}
+    @reader_event_ids[user.id] ||= OrganizerPosition.reader_access.where(user:).pluck(:event_id)
+  end
+
+  def sees_all_descendants?(user)
+    user&.auditor? || reader_event_ids(user).intersect?(ancestor_ids)
   end
 
   # The descendants `user` is allowed to see, mirroring EventPolicy#show?
@@ -200,12 +221,9 @@ class Event < ApplicationRecord
   # Like #descendant_ids, these ids skip the paranoid scope, so read them back
   # through ActiveRecord to drop any that are soft deleted.
   def visible_descendant_ids(user)
-    return descendant_ids if user&.auditor?
+    return descendant_ids if sees_all_descendants?(user)
 
-    # Equivalent to OrganizerPosition.role_at_least?(user, self, :reader), reusing
-    # the positions already fetched rather than querying for them again.
-    organized_ids = user ? OrganizerPosition.reader_access.where(user:).pluck(:event_id) : []
-    return descendant_ids if organized_ids.any? && organized_ids.intersect?(ancestor_ids)
+    organized_ids = reader_event_ids(user)
 
     # Guard the empty case rather than let sanitize_sql_array render it, since it
     # turns [] into NULL and `e.id = ANY(ARRAY[NULL])` would make `unlocked` NULL.
