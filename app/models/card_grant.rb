@@ -341,6 +341,12 @@ class CardGrant < ApplicationRecord
     )
   end
 
+  def frozen_by_one_time_use?
+    return false unless stripe_card
+
+    (stripe_card.frozen? || stripe_card.inactive?) && stripe_card.last_frozen_by == User.system_user && self.one_time_use
+  end
+
   private
 
   def create_card_grant_setting
