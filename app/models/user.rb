@@ -690,7 +690,7 @@ class User < ApplicationRecord
   end
 
   def to_combobox_display
-    "#{full_name} (Email: #{email}, ID: #{id})"
+    full_name.presence || email
   end
 
   def unverified?

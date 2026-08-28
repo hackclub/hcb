@@ -234,8 +234,6 @@ gem "discordrb"
 gem "pghero", "~> 3.7"
 gem "pg_query", ">= 2"
 
-gem "hotwire_combobox"
-
 gem "maintenance_tasks", "~> 2.14"
 
 gem "aws-sdk-kms"

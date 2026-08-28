@@ -432,11 +432,6 @@ GEM
       activerecord (>= 4.0)
       hashids (~> 1.0)
     hashids (1.0.6)
-    hotwire_combobox (0.4.1)
-      platform_agent (>= 1.0.1)
-      rails (>= 7.0.7.2)
-      stimulus-rails (>= 1.2)
-      turbo-rails (>= 1.2)
     htmlbeautifier (1.4.3)
     htmlentities (4.3.4)
     http-accept (1.7.0)
@@ -618,9 +613,6 @@ GEM
     plaid (44.0.0)
       faraday (>= 1.0.1, < 3.0)
       faraday-multipart (>= 1.0.1, < 2.0)
-    platform_agent (1.0.1)
-      activesupport (>= 5.2.0)
-      useragent (~> 0.16.3)
     poppler (4.3.6)
       cairo-gobject (= 4.3.6)
       gio2 (= 4.3.6)
@@ -1018,7 +1010,6 @@ DEPENDENCIES
   grape-swagger
   grape-swagger-entity (~> 0.7)
   hashid-rails (~> 1.0)
-  hotwire_combobox
   htmlbeautifier
   image_processing (~> 1.2)
   invisible_captcha
