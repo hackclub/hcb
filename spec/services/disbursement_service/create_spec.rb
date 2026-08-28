@@ -153,6 +153,12 @@ RSpec.describe DisbursementService::Create do
   end
 
   describe "subledger disbursements" do
+    before do
+      # Stub transfer_money to avoid disbursement side effects when creating
+      # card grants (subledgers need card grants for memo generation)
+      allow_any_instance_of(CardGrant).to receive(:transfer_money)
+    end
+
     # Helper to fund a subledger with a positive balance
     def fund_subledger(subledger, amount_cents:)
       ct = create(:canonical_transaction, amount_cents: amount_cents)
@@ -164,7 +170,7 @@ RSpec.describe DisbursementService::Create do
 
       requestor = create(:user)
       source_event = create(:event)
-      source_subledger = create(:subledger, event: source_event)
+      source_subledger = create(:card_grant, event: source_event).subledger
       fund_subledger(source_subledger, amount_cents: 10000)
       create(:organizer_position, event: source_event, user: requestor)
 
@@ -192,7 +198,7 @@ RSpec.describe DisbursementService::Create do
       create(:organizer_position, event: source_event, user: requestor)
 
       destination_event = create(:event)
-      destination_subledger = create(:subledger, event: destination_event)
+      destination_subledger = create(:card_grant, event: destination_event).subledger
 
       disbursement = described_class.new(
         name: "Subledger Transfer",
@@ -213,8 +219,8 @@ RSpec.describe DisbursementService::Create do
 
       requestor = create(:user)
       event = create(:event)
-      source_subledger = create(:subledger, event: event)
-      destination_subledger = create(:subledger, event: event)
+      source_subledger = create(:card_grant, event: event).subledger
+      destination_subledger = create(:card_grant, event: event).subledger
       fund_subledger(source_subledger, amount_cents: 10000)
       create(:organizer_position, event: event, user: requestor)
 
@@ -240,8 +246,8 @@ RSpec.describe DisbursementService::Create do
 
       requestor = create(:user)
       event = create(:event)
-      source_subledger = create(:subledger, event: event)
-      destination_subledger = create(:subledger, event: event)
+      source_subledger = create(:card_grant, event: event).subledger
+      destination_subledger = create(:card_grant, event: event).subledger
       fund_subledger(source_subledger, amount_cents: 10000)
       create(:organizer_position, event: event, user: requestor)
 

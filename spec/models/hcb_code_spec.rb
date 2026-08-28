@@ -69,6 +69,15 @@ RSpec.describe HcbCode, type: :model do
         hcb_code.outgoing_disbursement = sentinel
         expect(hcb_code.outgoing_disbursement).to equal(sentinel)
       end
+
+      it "resolves to the outgoing lens with a negative amount" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+
+        expect(hcb_code.outgoing_disbursement).to be_a(Disbursement::Outgoing)
+        expect(hcb_code.outgoing_disbursement.id).to eq(disbursement.id)
+        expect(hcb_code.outgoing_disbursement.amount).to eq(-disbursement.amount)
+      end
     end
 
     describe "#incoming_disbursement" do
@@ -104,6 +113,41 @@ RSpec.describe HcbCode, type: :model do
         hcb_code.incoming_disbursement = sentinel
         expect(hcb_code.incoming_disbursement).to equal(sentinel)
       end
+
+      it "resolves to the incoming lens with a positive amount" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+
+        expect(hcb_code.incoming_disbursement).to be_a(Disbursement::Incoming)
+        expect(hcb_code.incoming_disbursement.id).to eq(disbursement.id)
+        expect(hcb_code.incoming_disbursement.amount).to eq(disbursement.amount)
+      end
+    end
+
+    describe "#amount_cents_by_event" do
+      let(:event) { create(:event) }
+
+      it "returns the negative outgoing amount for an outgoing disbursement code" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+
+        expect(hcb_code.amount_cents_by_event(event)).to eq(-disbursement.amount)
+      end
+
+      it "returns the positive incoming amount for an incoming disbursement code" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+
+        expect(hcb_code.amount_cents_by_event(event)).to eq(disbursement.amount)
+      end
+
+      it "resolves disbursement amounts without the deprecated HcbCode#disbursement accessors" do
+        disbursement = create(:disbursement)
+        hcb_code = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+
+        expect(Rails.application.deprecators[:hcb]).not_to receive(:warn)
+        hcb_code.amount_cents_by_event(event)
+      end
     end
 
     # The goal is to deprecate this method entirely with the disbursement splitting work
@@ -118,16 +162,16 @@ RSpec.describe HcbCode, type: :model do
         before do
           # Create CPTs for the disbursement with both events
           outgoing_cpt = create(:canonical_pending_transaction, amount_cents: -disbursement.amount)
-          outgoing_cpt.update_column(:hcb_code, disbursement.hcb_code)
+          outgoing_cpt.update_column(:hcb_code, disbursement.outgoing_hcb_code)
           create(:canonical_pending_event_mapping, canonical_pending_transaction: outgoing_cpt, event: source_event)
 
           incoming_cpt = create(:canonical_pending_transaction, amount_cents: disbursement.amount)
-          incoming_cpt.update_column(:hcb_code, disbursement.hcb_code)
+          incoming_cpt.update_column(:hcb_code, disbursement.outgoing_hcb_code)
           create(:canonical_pending_event_mapping, canonical_pending_transaction: incoming_cpt, event: destination_event)
         end
 
         it "returns both source and destination events" do
-          hcb_code = HcbCode.find_by(hcb_code: disbursement.hcb_code)
+          hcb_code = HcbCode.find_by(hcb_code: disbursement.outgoing_hcb_code)
           hcb_code.instance_variable_set(:@events, nil)
 
           expect(hcb_code.events).to contain_exactly(source_event, destination_event)
@@ -165,12 +209,12 @@ RSpec.describe HcbCode, type: :model do
 
         before do
           outgoing_cpt = create(:canonical_pending_transaction, amount_cents: -disbursement.amount)
-          outgoing_cpt.update_column(:hcb_code, disbursement.hcb_code)
+          outgoing_cpt.update_column(:hcb_code, disbursement.outgoing_hcb_code)
           create(:canonical_pending_event_mapping, canonical_pending_transaction: outgoing_cpt, event: source_event)
         end
 
         it "returns the first event" do
-          hcb_code = HcbCode.find_by(hcb_code: disbursement.hcb_code)
+          hcb_code = HcbCode.find_by(hcb_code: disbursement.outgoing_hcb_code)
           hcb_code.instance_variable_set(:@events, nil)
 
           expect(hcb_code.event).to eq(source_event)
@@ -219,6 +263,78 @@ RSpec.describe HcbCode, type: :model do
 
           expect(hcb_code.type).to eq(:card_grant)
         end
+      end
+    end
+
+    describe "#shared_commentable?" do
+      let(:disbursement) { create(:disbursement) }
+
+      it "returns true for outgoing disbursement codes" do
+        outgoing = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+
+        expect(outgoing.shared_commentable?).to be true
+      end
+
+      it "returns true for incoming disbursement codes" do
+        incoming = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+
+        expect(incoming.shared_commentable?).to be true
+      end
+
+      it "returns false for non-disbursement codes" do
+        hcb_code = create(:hcb_code)
+
+        expect(hcb_code.shared_commentable?).to be false
+      end
+    end
+
+    describe "#shared_commentable" do
+      let(:disbursement) { create(:disbursement) }
+
+      it "returns the Disbursement for outgoing disbursement codes" do
+        outgoing = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+
+        expect(outgoing.shared_commentable).to eq(disbursement)
+      end
+
+      it "returns the Disbursement for incoming disbursement codes" do
+        incoming = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+
+        expect(incoming.shared_commentable).to eq(disbursement)
+      end
+
+      it "returns nil for non-disbursement codes" do
+        hcb_code = create(:hcb_code)
+
+        expect(hcb_code.shared_commentable).to be_nil
+      end
+    end
+
+    describe "#all_comments" do
+      let(:disbursement) { create(:disbursement) }
+      let(:user) { create(:user) }
+
+      it "includes comments on both the HcbCode and the Disbursement" do
+        outgoing = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+        hcb_code_comment = create(:comment, commentable: outgoing, user:)
+        disbursement_comment = create(:comment, commentable: disbursement, user:)
+
+        expect(outgoing.all_comments).to include(hcb_code_comment, disbursement_comment)
+      end
+
+      it "does not include comments from the paired HcbCode" do
+        outgoing = HcbCode.find_or_create_by(hcb_code: disbursement.outgoing_hcb_code)
+        incoming = HcbCode.find_or_create_by(hcb_code: disbursement.incoming_hcb_code)
+        incoming_comment = create(:comment, commentable: incoming, user:)
+
+        expect(outgoing.all_comments).not_to include(incoming_comment)
+      end
+
+      it "returns regular comments for non-disbursement codes" do
+        hcb_code = create(:hcb_code)
+        comment = create(:comment, commentable: hcb_code, user:)
+
+        expect(hcb_code.all_comments).to include(comment)
       end
     end
 

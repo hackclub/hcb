@@ -7,7 +7,7 @@
 
 <div class="flex flex-col flex-1 justify-center <%= @login.for_application? ? "card" : "max-w-md" %>">
   <div class="flex flex-col justify-between items-start">
-    <%= render "logins/header", label: "Sign in to HCB" do %>
+    <%= render "logins/header" do %>
       One-time code
     <% end %>
 

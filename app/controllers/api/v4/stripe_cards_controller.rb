@@ -4,7 +4,6 @@ module Api
   module V4
     class StripeCardsController < ApplicationController
       include SetEvent
-      include ApplicationHelper
 
       def index
         if params[:event_id].present?
@@ -27,8 +26,7 @@ module Api
         @hcb_codes = @stripe_card.local_hcb_codes.order(created_at: :desc)
         @hcb_codes = @hcb_codes.select(&:missing_receipt?) if params[:missing_receipts] == "true"
 
-        @total_count = @hcb_codes.size
-        @hcb_codes = paginate_hcb_codes(@hcb_codes)
+        @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
       end
 
       def create
@@ -50,6 +48,7 @@ module Api
 
         return render json: { error: "Birthday must be set before creating a card." }, status: :bad_request if current_user.birthday.nil?
         return render json: { error: "Cards can only be shipped to the US." }, status: :bad_request if card[:card_type] == "physical" && card[:shipping_address_country] != "US"
+        return render json: { error: "A verified phone number is required to issue a card." }, status: :bad_request unless current_user.phone_number_verified_or_bypassed?
 
         @stripe_card = ::StripeCardService::Create.new(
           current_user:,
@@ -83,7 +82,7 @@ module Api
           end
         else
           skip_authorization
-          render json: { error: "Invalid status" }, status: :unprocessable_entity
+          render json: { error: "Invalid status" }, status: :unprocessable_content
         end
       end
 
@@ -91,7 +90,7 @@ module Api
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
         if @stripe_card.canceled?
-          return render json: { error: "Card is already cancelled" }, status: :unprocessable_entity
+          return render json: { error: "Card is already cancelled" }, status: :unprocessable_content
         end
 
         begin
@@ -126,14 +125,14 @@ module Api
           @designs = StripeCard::PersonalizationDesign.common.available
         end
 
-        @designs += StripeCard::PersonalizationDesign.unlisted.available if current_user.auditor?
+        @designs += StripeCard::PersonalizationDesign.unlisted.available if can_admin?(:read)
       end
 
       def freeze
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
         if @stripe_card.canceled?
-          return render json: { error: "Card is canceled." }, status: :unprocessable_entity
+          return render json: { error: "Card is canceled." }, status: :unprocessable_content
         end
 
         @stripe_card.freeze!(frozen_by: current_user)
@@ -144,7 +143,7 @@ module Api
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
         if @stripe_card.stripe_status == "active"
-          return render json: { error: "Card is already active." }, status: :unprocessable_entity
+          return render json: { error: "Card is already active." }, status: :unprocessable_content
         end
 
         @stripe_card.defrost!
@@ -155,17 +154,17 @@ module Api
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
         if params[:last4].blank?
-          return render json: { error: "Last four digits are required." }, status: :unprocessable_entity
+          return render json: { error: "Last four digits are required." }, status: :unprocessable_content
         end
 
         # Find the correct card based on it's last4
         card = current_user.stripe_cardholder&.stripe_cards&.find_by(last4: params[:last4])
         if card.nil? || card.id != @stripe_card.id
-          return render json: { error: "Last four digits are incorrect." }, status: :unprocessable_entity
+          return render json: { error: "Last four digits are incorrect." }, status: :unprocessable_content
         end
 
         if @stripe_card.canceled?
-          return render json: { error: "Card is canceled." }, status: :unprocessable_entity
+          return render json: { error: "Card is canceled." }, status: :unprocessable_content
         end
 
         # If this replaces another card, attempt to cancel the old card.

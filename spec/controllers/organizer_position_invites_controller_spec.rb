@@ -16,7 +16,7 @@ RSpec.describe OrganizerPositionInvitesController do
       user = create(:user)
       event = create(:event, organizers: [user])
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(
         :create,
@@ -68,7 +68,7 @@ RSpec.describe OrganizerPositionInvitesController do
           headers: { content_type: "application/json" }
         )
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(
         :create,
