@@ -112,7 +112,7 @@
                   <% end %>
                   <%= link_to "", event_payroll_position_path(event_id: @event.slug, id: contractor),
                         class: "stretched-link",
-                        data: popovers_enabled? ? contractor_popover_data(contractor) : { turbo_frame: "_top" } %>
+                        data: contractor_popover_data(contractor) %>
                 </td>
               <% end %>
             </tr>
