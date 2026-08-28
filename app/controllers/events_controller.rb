@@ -890,8 +890,7 @@ class EventsController < ApplicationController
     @reports = helpers.sorted_relation(
       @reports,
       REIMBURSEMENT_COLUMNS,
-      sort: [params[:sort], params[:direction]],
-      default: [:created_at, :desc]
+      sort: [params[:sort], params[:direction]]
     ).page(params[:page] || 1).per(params[:per] || 25)
 
     @table_columns = REIMBURSEMENT_COLUMNS
@@ -1356,21 +1355,21 @@ class EventsController < ApplicationController
 
   private
 
+  # Sums a report's non-fee expenses. Mirrors Reimbursement::Report#amount_cents
+  # (via the Expense.to_sum scope) so the "Amount" column can be sorted in SQL.
   REIMBURSEMENT_AMOUNT_SORT_SQL = "(SELECT COALESCE(SUM(amount_cents), 0) FROM reimbursement_expenses WHERE reimbursement_report_id = reimbursement_reports.id AND type != 'Reimbursement::Expense::Fee')"
-  REIMBURSEMENT_AMOUNT_ASC_ORDER = "#{REIMBURSEMENT_AMOUNT_SORT_SQL} ASC".freeze
-  REIMBURSEMENT_AMOUNT_DESC_ORDER = "#{REIMBURSEMENT_AMOUNT_SORT_SQL} DESC".freeze
   REIMBURSEMENT_COLUMNS = [
     { key: "aasm_state", display: "Status" },
     { key: "name", display: "Report" },
-    { key: "user_name", display: "From", column: "user" },
+    { key: "user_name", display: "From", column: "users.full_name", join: :user },
     { key: "created_at", default: true, display: "Created", right: true },
     {
       key: "amount",
       display: "Amount",
+      right: true,
       order: ->(relation, direction) do
-        relation.order(Arel.sql(direction == :asc ? REIMBURSEMENT_AMOUNT_ASC_ORDER : REIMBURSEMENT_AMOUNT_DESC_ORDER))
+        relation.order(Arel.sql("#{REIMBURSEMENT_AMOUNT_SORT_SQL} #{direction == :asc ? 'ASC' : 'DESC'}"))
       end,
-      right: true
     },
   ].freeze
   private_constant :REIMBURSEMENT_COLUMNS
