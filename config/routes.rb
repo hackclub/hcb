@@ -181,6 +181,8 @@ Rails.application.routes.draw do
       post "unimpersonate"
 
       post "suppress_card_locking", to: "users#suppress_card_locking"
+
+      post "reset_billing_address", to: "users#reset_billing_address"
     end
     post "delete_profile_picture", to: "users#delete_profile_picture"
     post "generate_totp"
@@ -497,7 +499,6 @@ Rails.application.routes.draw do
 
   resources :wires, only: [:edit, :update] do
     member do
-      post "approve"
       post "send", to: "wires#send_wire"
       post "reject"
     end
@@ -557,8 +558,6 @@ Rails.application.routes.draw do
       get "attach_receipt"
       get "memo_frame"
       get "dispute"
-      post "invoice_as_personal_transaction"
-      post "pin"
       post "toggle_tag/:tag_id", to: "hcb_codes#toggle_tag", as: :toggle_tag
       post "send_receipt_sms", to: "hcb_codes#send_receipt_sms", as: :send_sms_receipt
 
@@ -581,18 +580,17 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :canonical_pending_transactions, only: [:show, :edit, :update] do
+  resources :canonical_pending_transactions, only: [:show, :update] do
     member do
       post "set_category"
     end
   end
 
-  resources :canonical_transactions, only: [:show, :edit] do
+  resources :canonical_transactions, only: [:show] do
     member do
       post "waive_fee"
       post "unwaive_fee"
       post "mark_bank_fee"
-      post "set_custom_memo"
       post "set_category"
     end
   end
@@ -642,6 +640,10 @@ Rails.application.routes.draw do
   scope module: :ledger, as: :ledger do
     resources :items, path: "transactions", only: [:show] do
       get "hcb"
+      post "pin"
+      post "unpin"
+      patch "rename"
+      post "invoice_as_personal_transaction"
     end
   end
   resources :ledger_items, only: [], path: "transactions", concerns: :commentable
@@ -730,7 +732,6 @@ Rails.application.routes.draw do
 
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
-          get :intercom_token, to: "intercom#token"
         end
 
         resources :users, only: [:show] do
@@ -946,7 +947,7 @@ Rails.application.routes.draw do
 
   resources :tax_forms, only: [:show, :create], controller: "tax/forms" do
     member do
-      post "sync"
+      get "completed"
       post "discard"
     end
   end
@@ -1002,6 +1003,7 @@ Rails.application.routes.draw do
     get "ledger"
     post "toggle_new_ledger"
     get "stats"
+    get "ledger_stats"
     get "merchants_filter"
     put "toggle_hidden"
     post "claim_point_of_contact"
@@ -1040,6 +1042,7 @@ Rails.application.routes.draw do
     resources :payroll_positions, only: [:new, :create, :show, :edit, :update], controller: "payroll/positions" do
       member do
         get :contract
+        post :terminate
       end
     end
     resources :payroll_invoices, only: [], controller: "payroll/invoices" do
@@ -1056,7 +1059,8 @@ Rails.application.routes.draw do
 
     get "async_balance"
     get "async_sub_organization_balance"
-    get "async_sub_organizations_graph"
+    get "async_sub_organization_balances"
+    get "async_sub_organization_rows"
     get "reimbursements_pending_review_icon"
 
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)

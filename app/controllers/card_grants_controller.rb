@@ -24,11 +24,7 @@ class CardGrantsController < ApplicationController
     card_grants_page = (params[:page] || 1).to_i
     card_grants_per_page = (params[:per] || 20).to_i
 
-    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger).order(
-      Arel.sql("card_grant_pre_authorizations.aasm_state='fraudulent' DESC"),
-      "card_grants.created_at DESC"
-    )
-    # we allow searching by purpose but sometimes the purpose shown in the table is actually the memo
+    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger, :reimbursement_report).order(created_at: :desc)
     @card_grants = @card_grants.search_for(params[:q]) if params[:q].present?
     @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
   end
@@ -44,10 +40,12 @@ class CardGrantsController < ApplicationController
 
     @per = params[:per] || 25
     @table_only = true
-    @ledger = @event.ledger
-    @items = ledger_query.execute(ledgers: @ledgers)
-    @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id)) if @tag&.id.present?
-    @items = @items.page(params[:page]).per(@per)
+    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
+      @ledger = @event.ledger
+      @items = ledger_query.execute(ledgers: @ledgers)
+      @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id)) if @tag&.id.present?
+      @items = @items.page(params[:page]).per(@per)
+    end
   end
 
   def new
@@ -223,10 +221,12 @@ class CardGrantsController < ApplicationController
     @card = @card_grant.stripe_card
     @hcb_codes = @card_grant.visible_hcb_codes
 
-    @per = params[:per] || 25
-    @table_only = true
-    @ledger = @card_grant.ledger
-    @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).page(params[:page]).per(@per)
+    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
+      @per = params[:per] || 25
+      @table_only = true
+      @ledger = @card_grant.ledger
+      @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).page(params[:page]).per(@per)
+    end
 
     @show_card_details = params[:show_details] == "true"
 
@@ -265,10 +265,10 @@ class CardGrantsController < ApplicationController
   def activate
     authorize @card_grant
 
-    # unless @card_grant.user.phone_number_verified?
-    #   settings_path = current_user == @card_grant.user ? my_settings_path : edit_user_path(@card_grant.user)
-    #   return redirect_to @card_grant, flash: { error: { "text" => "Please verify your phone number before activating your grant card.", "link_text" => "Go to settings", "link" => settings_path } }
-    # end
+    unless @card_grant.user.phone_number_verified_or_bypassed?
+      settings_path = current_user == @card_grant.user ? my_settings_path : edit_user_path(@card_grant.user)
+      return redirect_to @card_grant, flash: { error: { "text" => "Please verify your phone number before activating your grant card.", "link_text" => "Go to settings", "link" => settings_path } }
+    end
 
     @card_grant.create_stripe_card(request.remote_ip)
 
@@ -333,10 +333,6 @@ class CardGrantsController < ApplicationController
     @card_grant.update(pre_authorization_required: false)
 
     redirect_to @card_grant, flash: { success: "Successfully disabled pre-authorization for this card grant." }
-  end
-
-  def edit
-    authorize @card_grant
   end
 
   private

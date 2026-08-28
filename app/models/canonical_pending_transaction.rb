@@ -9,7 +9,7 @@
 #  custom_memo                                      :text
 #  date                                             :date             not null
 #  fee_waived                                       :boolean          default(FALSE)
-#  fronted                                          :boolean          default(FALSE)
+#  fronted                                          :boolean          default(FALSE), not null
 #  hcb_code                                         :text
 #  memo                                             :text             not null
 #  created_at                                       :datetime         not null
@@ -65,10 +65,6 @@
 #  fk_rails_...  (ledger_item_id => ledger_items.id)
 #  fk_rails_...  (raw_pending_stripe_transaction_id => raw_pending_stripe_transactions.id)
 #
-# Check Constraints
-#
-#  canonical_pending_transactions_fronted_null  (fronted IS NOT NULL)
-#
 class CanonicalPendingTransaction < ApplicationRecord
   has_paper_trail
 
@@ -91,7 +87,6 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :raw_pending_outgoing_disbursement_transaction, optional: true
   belongs_to :raw_pending_stripe_service_fee_transaction, optional: true
   belongs_to :raw_pending_fee_revenue_transaction, optional: true
-  belongs_to :raw_pending_fee_reimbursement_transaction, optional: true
   belongs_to :increase_check, optional: true
   belongs_to :paypal_transfer, optional: true
   belongs_to :wire, optional: true
@@ -129,7 +124,6 @@ class CanonicalPendingTransaction < ApplicationRecord
   scope :bank_fee, -> { where("raw_pending_bank_fee_transaction_id is not null") }
   scope :stripe_service_fee, -> { where("raw_pending_stripe_service_fee_transaction_id is not null") }
   scope :fee_revenue, -> { where("raw_pending_fee_revenue_transaction_id is not null") }
-  scope :fee_reimbursement, -> { where("raw_pending_fee_reimbursement_transaction_id is not null") }
   scope :incoming_disbursement, -> { where("raw_pending_incoming_disbursement_transaction_id is not null") }
   scope :outgoing_disbursement, -> { where("raw_pending_outgoing_disbursement_transaction_id is not null") }
   scope :reimbursement_expense_payout, -> { where.not(reimbursement_expense_payout_id: nil) }
@@ -166,7 +160,7 @@ class CanonicalPendingTransaction < ApplicationRecord
       }
     )
   }
-  scope :with_custom_memo, -> { where("custom_memo is not null") }
+  scope :with_custom_memo, -> { where.not(custom_memo: nil) }
 
   scope :pending_expired, -> { unsettled.where(created_at: ..5.days.ago) }
 
@@ -185,7 +179,6 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
-    ledger_item.refresh!
   end
 
   after_commit if: -> { previous_changes.key?("ledger_item_id") } do
@@ -481,6 +474,7 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   def assign_ledger_item
     safely do
+      reload_local_hcb_code
       ActiveRecord::Base.transaction do
         li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
         update!(ledger_item: li)

@@ -4,6 +4,8 @@ class EventsController < ApplicationController
   TRANSACTIONS_PER_PAGE = 75
   DONATIONS_PER_PAGE = 25
 
+  TREE_GUIDES = /\A[01]{0,#{Event::MAX_PARENT_DEPTH}}\z/
+
   include SetEvent
   include SetLedgerFilters
 
@@ -152,6 +154,11 @@ class EventsController < ApplicationController
     authorize @event
   end
 
+  def ledger_stats
+    authorize @event
+    @ledger = @event.ledger
+  end
+
   def transactions
     maybe_pending_invite = OrganizerPositionInvite.pending.find_by(user: current_user, event: @event)
 
@@ -289,7 +296,7 @@ class EventsController < ApplicationController
 
     @all_positions = @event.organizer_positions
                            .joins(:user)
-    @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.email ILIKE :query" : "users.full_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
+    @all_positions = @all_positions.where(organizer_signed_in? ? "users.full_name ILIKE :query OR users.preferred_name ILIKE :query OR users.email ILIKE :query" : "users.preferred_name ILIKE :query", query: "%#{User.sanitize_sql_like(@q)}%")
                                    .order(created_at: :desc)
     if @filter == "active_teenagers"
       @all_positions = @all_positions.select { |op| op.user.is_teenager? && op.user.active? } # select if user is a teenager and active (stole from the other code ;))
@@ -546,23 +553,16 @@ class EventsController < ApplicationController
     render :async_sub_organization_balance, layout: false
   end
 
-  def async_sub_organizations_graph
+  def async_sub_organization_balances
     authorize @event
-    data = Rails.cache.fetch("sub_organizations_graph_#{@event.id}", expires_in: 5.minutes) do
-      all_events = [@event] + @event.descendants.includes(:stripe_cards).order(:name).to_a
-      all_events.map { |e|
-        {
-          id: e.id,
-          balance_cents: e.balance_v2_cents,
-          card_count: e.stripe_cards.count { |c| c.stripe_status == "active" && c.subledger_id.nil? }
-        }
-      }
+
+    events = Event.where_public_id(params[:ids]).where(id: visible_descendant_ids).includes(:ledger)
+
+    balances = events.to_h do |event|
+      [event.public_id, helpers.render_money_amount(event.ledger.available_balance_cents)]
     end
 
-    # The cached entry covers every descendant and is shared across viewers, so
-    # drop the sub-organizations this one isn't allowed to see before rendering.
-    visible_ids = visible_descendant_ids.to_set << @event.id
-    render json: data.select { |row| visible_ids.include?(row[:id]) }
+    render json: balances
   end
 
   def account_number
@@ -571,10 +571,18 @@ class EventsController < ApplicationController
         transaction_source_type: "RawColumnTransaction",
         transaction_source_id: RawColumnTransaction.where("column_transaction->>'account_number_id' = '#{@event.column_account_number.column_id}'").select(:id)
       )
-      @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
-                                         .order(created_at: :desc)
-      page = (params[:page] || 1).to_i
-      @transactions = @transactions.page(page).per(params[:per] || 25)
+      if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
+        @ledger = @event.ledger
+        @ledger_items = @ledger.items
+                               .where(id: column_transactions.select(:ledger_item_id), linked_object_type: nil)
+                               .order(created_at: :desc)
+                               .page((params[:page] || 1).to_i).per(params[:per] || 25)
+      else
+        @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
+                                           .order(created_at: :desc)
+        page = (params[:page] || 1).to_i
+        @transactions = @transactions.page(page).per(params[:per] || 25)
+      end
 
       # We only want to show this callout if there were transfers from before https://github.com/hackclub/hcb/pull/13684 was merged
       @show_transfer_callout = column_transactions.where.not("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
@@ -927,14 +935,18 @@ class EventsController < ApplicationController
 
     respond_to do |format|
       format.html do
-        sub_organizations = filtered_sub_organizations
-        # Hidden organizations are set aside in their own collapsed section,
-        # matching how the organization index treats them.
-        @sub_organizations = sub_organizations.not_hidden.page(params[:page]).per(params[:per] || 24)
-        @hidden_sub_organizations = sub_organizations.hidden.to_a
-        # The graph renders only nodes reachable from the root, so leaving a
-        # hidden organization out keeps everything under it off the graph too.
-        @all_events = [@event] + Event.where(id: visible_descendant_ids).not_hidden.order(:name).select(:name, :parent_id, :slug, :id).to_a
+        cookies[:sub_organizations_view] = params[:view] if params[:view]
+        @view = cookies[:sub_organizations_view] || "list"
+
+        if @view == "list"
+          @search = params[:q].presence
+          @has_filter = @search.present?
+          @rows = sub_organization_table_rows(search: @search)
+        else
+          sub_organizations = filtered_sub_organizations
+          @sub_organizations = sub_organizations.not_hidden.page(params[:page]).per(params[:per] || 24)
+          @hidden_sub_organizations = sub_organizations.hidden.to_a
+        end
       end
 
       # CSV export intentionally does not consider filters
@@ -956,8 +968,29 @@ class EventsController < ApplicationController
 
         send_data csv, filename: "#{@event.name}'s sub-organizations.csv", type: "text/csv", disposition: :attachment
       end
+
+      # Like the CSV, the XLSX export intentionally does not consider filters.
+      # Unlike the CSV, it includes every visible descendant (not just direct
+      # sub-organizations), rendered as a collapsible tree via row grouping.
+      format.xlsx do
+        send_data(
+          Event::SubOrganizationsExport.new(@event, descendant_ids: visible_descendant_ids).xlsx,
+          filename: "#{@event.name}'s sub-organizations.xlsx",
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          disposition: :attachment
+        )
+      end
     end
 
+  end
+
+  def async_sub_organization_rows
+    authorize @event
+
+    @rows = sub_organization_table_rows
+    @guides = tree_guides
+
+    render :sub_organization_rows, layout: false
   end
 
   def create_sub_organization
@@ -1326,9 +1359,52 @@ class EventsController < ApplicationController
     params_hash.delete(:hidden)
   end
 
+  def tree_guides
+    guides = params[:guides].to_s
+
+    guides.match?(TREE_GUIDES) ? guides : ""
+  end
+
   # Memoized across the several surfaces of this page that need it.
   def visible_descendant_ids
     @visible_descendant_ids ||= @event.visible_descendant_ids(current_user)
+  end
+
+  def visible_subevent_ids
+    children = Rails.cache.fetch("sub_organization_children_#{@event.id}", expires_in: 5.minutes) do
+      @event.subevents.pluck(:id, :is_public, :hidden_at)
+    end
+
+    return children.map(&:first) if @event.sees_all_descendants?(current_user)
+
+    organized_ids = @event.reader_event_ids(current_user)
+    children.filter_map { |id, is_public, hidden_at| id if (is_public && hidden_at.nil?) || organized_ids.include?(id) }
+  end
+
+  def sub_organization_table_rows(search: nil)
+    scope =
+      if search
+        Event.where(id: visible_descendant_ids)
+             .where("name ILIKE ?", "%#{Event.sanitize_sql_like(search)}%")
+      else
+        Event.where(id: visible_subevent_ids)
+      end
+
+    events = scope.includes(:parent, :scoped_tags, logo_attachment: :blob)
+                  .reorder(:name, :id)
+                  .to_a
+
+    expandable = search ? Set.new : @event.expandable_subevent_ids(current_user)
+    organizer_counts = OrganizerPosition.where(event: events).group(:event_id).count
+
+    events.map do |event|
+      {
+        event:,
+        expandable: expandable.include?(event.id),
+        organizer_count: organizer_counts[event.id] || 0,
+        parent: (event.parent unless event.parent_id == @event.id)
+      }
+    end
   end
 
   def filtered_sub_organizations

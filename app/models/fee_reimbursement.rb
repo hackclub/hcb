@@ -23,7 +23,6 @@ class FeeReimbursement < ApplicationRecord
   has_one :invoice, required: false
   has_one :donation, required: false
   has_one :t_transaction, class_name: "Transaction", inverse_of: :fee_reimbursement
-  has_one :raw_pending_fee_reimbursement_transaction
 
   belongs_to :stripe_topup, optional: true
 

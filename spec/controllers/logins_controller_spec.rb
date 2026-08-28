@@ -86,6 +86,21 @@ RSpec.describe LoginsController do
       expect(response.body).to include("We just sent a login code")
     end
 
+    # The UI never offers SMS for an unverified number, so this request only
+    # comes from a script POSTing at the endpoint directly to spend Twilio
+    # messages on made-up numbers.
+    it "sends no SMS if the phone number isn't verified" do
+      user = create(:user, phone_number: "+18556254225")
+      login = create(:login, user:)
+
+      expect(TwilioVerificationService).not_to receive(:new)
+
+      get(:sms, params: { id: login.hashid })
+
+      expect(flash[:error]).to eq("SMS login isn't available for this account.")
+      expect(response).to redirect_to(auth_users_path)
+    end
+
     it "returns an error if the login is a reauthentication" do
       user = create(:user, email: "text@example.com")
       login = create(:login, user:, is_reauthentication: true)

@@ -104,7 +104,8 @@
           <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="verify_phone">
             <%= modal_header "Verify phone number" %>
             <%= react_component "settings/SmsVerification",
-                                phone_number: @user.phone_number_in_database %>
+                                phone_number: @user.phone_number_in_database,
+                                turnstile_sitekey: (TurnstileService.site_key if TurnstileService.enabled?) %>
           </section>
         <% end %>
       </turbo-frame>
@@ -205,7 +206,7 @@
             <span>
               <% if @user.profile_picture.attached? %>
                 You're currently using an uploaded profile picture.<br>
-                If you'd like to switch back to your Gravatar, <%= link_to "click here", user_delete_profile_picture_path(@user), method: :post %>.
+                If you'd like to switch back to your Gravatar, <%= link_to "click here", user_delete_profile_picture_path(@user), data: { turbo_method: :post } %>.
               <% else %>
                 If you have a <a href="https://gravatar.com" target="_blank">Gravatar</a>, we’ll pull it in here.<br>
                 Or, you can upload a profile picture.<br>
@@ -252,7 +253,8 @@
       <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="verify_phone">
         <%= modal_header "Verify phone number" %>
         <%= react_component "settings/SmsVerification",
-                            phone_number: @user.phone_number_in_database %>
+                            phone_number: @user.phone_number_in_database,
+                            turnstile_sitekey: (TurnstileService.site_key if TurnstileService.enabled?) %>
       </section>
     <% end %>
   </turbo-frame>

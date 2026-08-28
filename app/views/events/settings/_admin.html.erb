@@ -40,8 +40,7 @@
     <% admin_tool "p-3" do %>
       <%= link_to (event.hidden? ? "Un-hide project" : "Hide project"),
                   event_toggle_hidden_path(event),
-                  method: :put,
-                  "data-confirm": "Do you really want to #{event.hidden? ? "un-hide" : "hide"} #{event.name}?",
+                  data: { turbo_method: :put, turbo_confirm: "Do you really want to #{event.hidden? ? "un-hide" : "hide"} #{event.name}?" },
                   class: "btn bg-success mb2",
                   disabled: disabled if event.persisted? %>
 
@@ -95,7 +94,7 @@
 
       <div class="field">
         <%= form.label :point_of_contact_id, capture { %>
-          Point of Contact <%= link_to "(Me!)", event_claim_point_of_contact_path(event), method: :post %>
+          Point of Contact <%= link_to "(Me!)", event_claim_point_of_contact_path(event), data: { turbo_method: :post } %>
         <% } %>
         <%= form.collection_select :point_of_contact_id, User.admin.or(User.where(id: event.point_of_contact_id)).order(:email), :id, :email, {}, { disabled: } %>
         <% if event.point_of_contact_history.any? %>
@@ -207,9 +206,9 @@
     <% admin_tool "p-3" do %>
       <h3 id="admin_fees" class="mb2 mt1">Wire minimum exemption</h3>
       <% if Flipper.enabled?(:exempt_from_wire_minimum, event) %>
-        <%= link_to "Disable", disable_feature_path(feature: :exempt_from_wire_minimum, event_id: event.id), method: :post, class: "btn bg-accent", data: { turbo_method: :post }, disabled: %>
+        <%= link_to "Disable", disable_feature_path(feature: :exempt_from_wire_minimum, event_id: event.id), class: "btn bg-accent", data: { turbo_method: :post }, disabled: %>
       <% else %>
-        <%= link_to "Enable", enable_feature_path(feature: :exempt_from_wire_minimum, event_id: event.id), method: :post, class: "btn bg-info", disabled: %>
+        <%= link_to "Enable", enable_feature_path(feature: :exempt_from_wire_minimum, event_id: event.id), data: { turbo_method: :post }, class: "btn bg-info", disabled: %>
       <% end %>
     <% end %>
   <% end %>
