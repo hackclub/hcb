@@ -225,7 +225,6 @@ export default class extends Controller {
     this.hiddenTarget.value = ''
   }
 
-  // Non-selectable row used for "Loading…" / "No results".
   renderStatus(message) {
     this.activeIndex = -1
     this.listboxTarget.innerHTML = `
