@@ -387,8 +387,22 @@ RSpec.describe HcbCode, type: :model do
       expect(donation.local_hcb_code.author).to be_nil
     end
 
-    it "leaves the author column empty for an in-person donation" do
-      donation = create(:donation, in_person: true, collected_by: collector, name: "Ada Lovelace")
+    it "shows the donor who paid for an in-person donation" do
+      donation = create(:donation, in_person: true, collected_by: collector, name: "Ada Lovelace", email: "ada@example.com")
+
+      expect(donation.local_hcb_code.fallback_avatar).to include(Digest::SHA256.hexdigest("ada@example.com"))
+      expect(donation.local_hcb_code.author_name).to eq("Ada Lovelace")
+    end
+
+    it "leaves the author column empty for an anonymous in-person donor" do
+      donation = create(:donation, in_person: true, collected_by: collector, name: "Ada Lovelace", email: "ada@example.com", anonymous: true)
+
+      expect(donation.local_hcb_code.fallback_avatar).to be_nil
+      expect(donation.local_hcb_code.author_name).to be_nil
+    end
+
+    it "leaves the author column empty when an in-person donor gave no email" do
+      donation = create(:donation, in_person: true, collected_by: collector, name: "Ada Lovelace", email: nil)
 
       expect(donation.local_hcb_code.fallback_avatar).to be_nil
       expect(donation.local_hcb_code.author_name).to be_nil

@@ -774,12 +774,20 @@ class HcbCode < ApplicationRecord
     donation? && donation.in_person?
   end
 
+  # The donor who paid for an in-person donation, when there's an email address
+  # to build an avatar from. Nil when they donated anonymously or gave none,
+  # which leaves the author column empty rather than falling back to anyone at
+  # the organization: the money is the donor's, and the collector's face there
+  # would read as if they made the payment.
+  def donor
+    return nil unless in_person_donation?
+    return nil if donation.anonymous? || donation.email.blank?
+
+    donation
+  end
+
   def fallback_avatar
-    # An in-person donation is collected by an organizer tapping their phone,
-    # but the money is the donor's. Nobody at the organization belongs in the
-    # author column, and we don't have the donor to put there instead, so it
-    # stays empty.
-    return nil if in_person_donation?
+    return nil if in_person_donation? && donor.nil?
 
     return gravatar_url(donation.email, donation.name, donation.email.to_i, 48) if donation? && !donation.anonymous?
     return gravatar_url(invoice.sponsor.contact_email, invoice.sponsor.name, invoice.sponsor.contact_email.to_i, 48) if invoice?
@@ -789,7 +797,8 @@ class HcbCode < ApplicationRecord
 
   def author_name
     return author&.name if author&.name.present?
-    return donation.name if donation? && !donation.anonymous? && !in_person_donation?
+    return nil if in_person_donation? && donor.nil?
+    return donation.name if donation? && !donation.anonymous?
     return invoice.sponsor.name if invoice?
 
     nil

@@ -126,6 +126,16 @@ class Ledger
       end
     end
 
+    # The author column falls back to whoever is behind an item with no
+    # organizer to attribute it to — the donor, or an invoice's sponsor.
+    def fallback_avatar
+      hcb_code&.fallback_avatar
+    end
+
+    def author_name
+      author&.name.presence || hcb_code&.author_name
+    end
+
     # Substring identifiers (case-insensitive) in the memo that indicate an
     # account-verification micro-deposit. Most use "ACCTVERIFY"; a few companies
     # use other variants. Mirrors CanonicalTransaction#likely_account_verification_related?.

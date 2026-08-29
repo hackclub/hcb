@@ -36,12 +36,15 @@
     </span>
   </td>
   <% if show_author %>
+    <% author_name = item.author_name %>
     <td>
-      <% if item.author.present? %>
-        <div class="flex items-center justify-center tooltipped tooltipped--w" aria-label="<%= item.author.name %>">
+      <div class="flex items-center justify-center <%= "tooltipped tooltipped--w" if author_name %>" aria-label="<%= author_name %>">
+        <% if item.author.present? %>
           <%= avatar_for item.author, class: "align-middle author", cached: true %>
-        </div>
-      <% end %>
+        <% elsif item.fallback_avatar %>
+          <%= image_tag(item.fallback_avatar, loading: "lazy", width: 24, height: 24, class: "rounded-full shrink-none") %>
+        <% end %>
+      </div>
     </td>
   <% end %>
 </tr>
