@@ -137,13 +137,14 @@ RSpec.describe Reimbursement::Report, type: :model do
         expect(report).to be_exceeds_maximum_amount
       end
 
-      # Maximums are only enforced on USD reports, so they are not applied to
-      # anything else here either.
-      it "falls back to the expenses filed on a non-USD report" do
+      # `exceeds_maximum_amount?` skips non-USD reports, but ops check the Wise
+      # total against the maximum before approving the transfer, so it binds
+      # here too. `maximum_amount_cents` is denominated in USD.
+      it "reports the maximum on a non-USD report" do
         report = report_with_expense(:draft, 8_000, maximum_amount_cents: 50_000, expense_state: :pending)
         report.update!(currency: "EUR")
 
-        expect(report.committed_amount_cents).to eq(8_000)
+        expect(report.committed_amount_cents).to eq(50_000)
       end
     end
 

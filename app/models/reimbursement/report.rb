@@ -283,21 +283,32 @@ module Reimbursement
       expenses.approved.to_sum.sum(:amount_cents)
     end
 
-    # How much of the event's balance this report has a claim on.
+    # A draft's expenses are whatever the reimbursee has typed in so far, so an
+    # organizer-set maximum is the only figure that means anything until the
+    # report is submitted.
+    def committed_to_maximum?
+      draft? && maximum_amount_cents.present?
+    end
+
+    # How much of the event's balance this report has a claim on, in USD cents.
     #
-    # Matches `amount_cents` everywhere except a draft carrying an
-    # organizer-set maximum. A draft's expenses are whatever the reimbursee has
-    # typed in so far, which says nothing about what they will eventually
-    # claim — an untouched report reads as $0 and one filled past its maximum
-    # reads above what could ever be paid out. The maximum is the figure the
-    # organizers actually committed to, so that is what the event is on the
-    # hook for until the report is submitted.
+    # Matches `amount_cents` everywhere except a draft carrying a maximum. An
+    # untouched report reads as $0 there, and one filled past its maximum reads
+    # above what could ever be paid out, so neither number describes what the
+    # event is on the hook for — the maximum does.
+    #
+    # This applies to non-USD reports too. `amount_to_reimburse_cents` and
+    # `exceeds_maximum_amount?` only enforce maximums on USD reports, but
+    # `Reimbursement::ReportsController` checks the Wise total against the
+    # maximum before approving a transfer, so ops enforce it either way.
+    # `maximum_amount_cents` is denominated in USD, which is what that check
+    # compares against.
     #
     # Deliberately separate from `amount_cents`: that one gates
     # `exceeds_maximum_amount?` and is what the reimbursee is shown as their
     # requested amount, and neither should move.
     def committed_amount_cents
-      return maximum_amount_cents if draft? && maximum_amount_cents && currency == "USD"
+      return maximum_amount_cents if committed_to_maximum?
 
       amount_cents
     end

@@ -812,6 +812,18 @@ RSpec.describe EventsController do
       expect(stat_value(response.body, "Pending")).to eq(money(8_000))
     end
 
+    it "counts a non-USD draft with a maximum at its maximum, without a Wise quote" do
+      report = create(:reimbursement_report, user: create(:user), event:, aasm_state: :draft, currency: "EUR", maximum_amount_cents: 50_000)
+      create(:reimbursement_expense, report:, value: 80.00, aasm_state: :pending)
+
+      expect_any_instance_of(Reimbursement::Report).not_to receive(:cached_wise_transfer_quote_amount)
+
+      get(:reimbursements, params: { event_id: event.slug })
+
+      expect(stat_value(response.body, "Total")).to eq(money(50_000))
+      expect(stat_value(response.body, "Pending")).to eq(money(50_000))
+    end
+
     it "leaves a submitted report with a maximum on the expenses filed" do
       report = create(:reimbursement_report, user: create(:user), event:, aasm_state: :submitted, maximum_amount_cents: 50_000)
       create(:reimbursement_expense, report:, value: 50.00, aasm_state: :pending)
