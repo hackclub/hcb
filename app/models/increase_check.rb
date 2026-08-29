@@ -5,7 +5,7 @@
 # Table name: increase_checks
 #
 #  id                      :bigint           not null, primary key
-#  aasm_state              :string
+#  aasm_state              :string           not null
 #  address_city            :string
 #  address_line1           :string
 #  address_line2           :string
@@ -30,7 +30,6 @@
 #  event_id                :bigint           not null
 #  increase_id             :string
 #  payment_recipient_id    :bigint
-#  reissued_for_id         :bigint
 #  user_id                 :bigint
 #
 # Indexes
@@ -38,14 +37,12 @@
 #  index_increase_checks_on_column_id             (column_id) UNIQUE
 #  index_increase_checks_on_event_id              (event_id)
 #  index_increase_checks_on_payment_recipient_id  (payment_recipient_id)
-#  index_increase_checks_on_reissued_for_id       (reissued_for_id)
 #  index_increase_checks_on_transaction_id        ((((increase_object -> 'deposit'::text) ->> 'transaction_id'::text)))
 #  index_increase_checks_on_user_id               (user_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)
-#  fk_rails_...  (reissued_for_id => increase_checks.id)
 #  fk_rails_...  (user_id => users.id)
 #
 class IncreaseCheck < ApplicationRecord
@@ -58,7 +55,7 @@ class IncreaseCheck < ApplicationRecord
   include AASM
   include Payoutable
   include Freezable
-  include Payment
+  include HasPaymentRecipient
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
@@ -127,10 +124,9 @@ class IncreaseCheck < ApplicationRecord
     "Wyoming"          => "WY"
   }.freeze
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
   belongs_to :user, optional: true
-  belongs_to :reissued_for, class_name: "IncreaseCheck", optional: true
-  has_one :reissued_as, class_name: "IncreaseCheck", foreign_key: :reissued_for_id, inverse_of: :reissued_for
 
   def payment_recipient_attributes
     %i[address_line1 address_line2 address_city address_state address_zip]
@@ -139,6 +135,7 @@ class IncreaseCheck < ApplicationRecord
   has_one :canonical_pending_transaction
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :increase_check, required: false
+  has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
 
   after_create do
     create_canonical_pending_transaction!(event:, amount_cents: -amount, memo: "OUTGOING CHECK", date: created_at)
@@ -146,6 +143,23 @@ class IncreaseCheck < ApplicationRecord
 
   after_update if: -> { column_status_previously_changed?(to: "stopped") } do
     canonical_pending_transaction.decline!
+
+    if reimbursement_payout_holding.present?
+      reimbursement_payout_holding.mark_failed!
+    elsif payment_attempt.present?
+      payment_attempt.mark_failed!
+    else
+      IncreaseCheckMailer.with(check: self).notify_stopped.deliver_later if self.send_email_notification
+    end
+  end
+
+  after_update if: -> { column_status_previously_changed?(to: "rejected") } do
+    canonical_pending_transaction.decline!
+    reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
+  end
+
+  after_update if: -> { column_status_previously_changed?(to: "settled") } do
+    payment_attempt&.mark_successful!
   end
 
   aasm timestamps: true, whiny_persistence: true do
@@ -167,6 +181,7 @@ class IncreaseCheck < ApplicationRecord
       after_commit do
         IncreaseCheckMailer.with(check: self).notify_recipient.deliver_later if self.send_email_notification
         employee_payment.mark_paid! if employee_payment.present?
+        payment_attempt.mark_sent! if payment_attempt.present?
       end
     end
 
@@ -175,6 +190,7 @@ class IncreaseCheck < ApplicationRecord
         canonical_pending_transaction.decline!
         create_activity(key: "increase_check.rejected")
         employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
+        payment_attempt.mark_rejected! if payment_attempt&.may_mark_rejected?
       end
       transitions from: :pending, to: :rejected
     end
@@ -188,7 +204,7 @@ class IncreaseCheck < ApplicationRecord
   validates :address_state, inclusion: { in: US_STATES.values, message: "This isn't a valid US state!", allow_blank: true }
   validates :address_zip, format: { with: /\A\d{5}(?:[-\s]\d{4})?\z/, message: "This isn't a valid ZIP code." }
 
-  validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }, allow_nil: true
+  validates_email_format_of :recipient_email, allow_nil: true, if: :recipient_email_changed?
   validates_presence_of :recipient_email, on: :create
   normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
@@ -319,54 +335,34 @@ class IncreaseCheck < ApplicationRecord
     mark_approved!
   end
 
+  def can_cancel?
+    pending? || (approved && can_stop?)
+  end
+
+  def cancel!
+    if pending?
+      mark_rejected!
+    elsif approved?
+      stop!
+    end
+  end
+
   # https://column.com/docs/api/#check-transfer/stop
   def can_stop?
     column_issued? || column_manual_review?
   end
 
   def stop!
-    raise ArgumentError, "Stopping checks is not yet supported"
-    # raise ArgumentError, "Check must have a column id" if column_id.nil?
-    # raise ArgumentError, "Check must be in issued or manual_review status" if !can_stop?
+    raise ArgumentError, "Check must have a column id" if column_id.nil?
+    raise ArgumentError, "Check must be in issued or manual_review status" if !can_stop?
 
-    # column_check = ColumnService.post("/transfers/checks/#{column_id}/stop-payment", idempotency_key: "stop_#{column_id}")
+    column_check = ColumnService.post("/transfers/checks/#{column_id}/stop-payment", idempotency_key: "stop_#{column_id}")
 
-    # reimbursement_payout_holding.mark_failed! if reimbursement_payout_holding.present?
-
-    # update!(
-    #   column_object: column_check,
-    #   column_status: column_check["status"],
-    #   column_delivery_status: column_check["delivery_status"],
-    # )
-  end
-
-  def reissue!
-    raise ArgumentError, "Reissuing checks is not yet supported"
-
-    # stop! unless column_stopped? || column_pending_stop?
-
-    # reissued_check = event.increase_checks.build(
-    #   user_id:,
-    #   memo:,
-    #   amount:,
-    #   payment_for:,
-    #   recipient_name:,
-    #   address_line1:,
-    #   address_line2:,
-    #   address_city:,
-    #   address_state:,
-    #   recipient_email:,
-    #   send_email_notification:,
-    #   address_zip:,
-    #   payment_recipient_id:,
-    #   reissued_for_id: id,
-    # )
-
-    # reissued_check.save!
-
-    # Receipt.reupload(old_receiptable: local_hcb_code, new_receiptable: reissued_check.local_hcb_code)
-
-    # reissued_check.send_check!
+    update!(
+      column_object: column_check,
+      column_status: column_check["status"],
+      column_delivery_status: column_check["delivery_status"],
+    )
   end
 
   private

@@ -10,7 +10,7 @@ class CheckDepositPolicy < ApplicationPolicy
   end
 
   def create?
-    OrganizerPosition.role_at_least?(user, record.event, :member) && !record.event.demo_mode?
+    OrganizerPosition.role_at_least?(user, record.event, :member) && !record.event.demo_mode? && check_deposits_enabled?
   end
 
   def view_image?

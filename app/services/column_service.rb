@@ -37,6 +37,26 @@ class ColumnService
 
     idempotency_key = params.delete(:idempotency_key)
     conn.post(url, params, { "Idempotency-Key" => idempotency_key }.compact_blank).body
+  rescue Faraday::Error => e
+    # AppSignal turns the Rails error reporter's `context:` into tags, which
+    # can't hold nested hashes, so `params`/`response_body` get dropped. Attach
+    # them as custom data (which supports nesting) on the active transaction the
+    # re-raised error is reported against, and keep scalars as filterable tags.
+    Appsignal.add_tags(
+      column_url: url,
+      idempotency_key:,
+      response_status: e.response_status
+    )
+    Appsignal.add_custom_data(
+      column: {
+        url:,
+        params:,
+        idempotency_key:,
+        response_status: e.response_status,
+        response_body: e.response_body
+      }
+    )
+    raise
   end
 
   def self.transactions(from_date: 1.week.ago, to_date: Date.today, bank_account: Accounts::FS_MAIN)
@@ -117,6 +137,14 @@ class ColumnService
 
   def self.return_ach(id, with:)
     post("/transfers/ach/#{id}/return", return_code: with, idempotency_key: "#{id}_return")
+  end
+
+  # This should only be shown to admins since it may contain sensitive information.
+  # https://column.com/docs/workingwithapi/errors
+  def self.error_to_admin_message(faraday_error)
+    message = faraday_error.response_body["message"]
+    details = faraday_error.response_body["details"]&.map { |k, v| "#{k}: #{v}" }&.to_sentence
+    [message, details].compact.join(" ")
   end
 
 end

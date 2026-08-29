@@ -1,5 +1,14 @@
 <% title "Checks" %>
 
+<%= form_with local: true, class: "card overflow-visible", url: increase_checks_admin_index_path, method: :get do |form| %>
+  <div class="flex items-center mt-2 gap-4 flex-wrap">
+    <%= form.label :exclude_reimbursements do %>
+      <%= form.check_box :exclude_reimbursements, checked: @exclude_reimbursements %> Exclude Reimbursements
+    <% end %>
+    <%= form.submit "Search", class: "ml-auto" %>
+  </div>
+<% end %>
+
 <div class="flex items-center mb2 flex-col sm:flex-row">
   <div class="flex-grow">
     <%= page_entries_info @checks, entry_name: "check" %>

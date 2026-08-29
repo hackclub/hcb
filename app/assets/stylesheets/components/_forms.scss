@@ -29,7 +29,7 @@ textarea {
   width: 100%;
   max-width: 24rem;
 
-  &:focus-within {
+  &:not(.transaction *, .input input):focus-within {
     border-color: map-get($palette, info);
     box-shadow: 0 0 0 3px rgba(map-get($palette, info), 0.25);
   }
@@ -434,7 +434,7 @@ legend {
 
 .btn--form-option,
 .field--options label,
-.field_with_errors > label {
+form:not(.no-error-styling) .field_with_errors > label {
   display: flex;
   flex-direction: column;
   align-items: center;

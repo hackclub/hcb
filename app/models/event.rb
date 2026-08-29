@@ -12,7 +12,6 @@
 #  country                                      :integer
 #  deleted_at                                   :datetime
 #  demo_mode                                    :boolean          default(FALSE), not null
-#  demo_mode_request_meeting_at                 :datetime
 #  description                                  :text
 #  donation_page_enabled                        :boolean          default(TRUE)
 #  donation_page_message                        :text
@@ -35,8 +34,10 @@
 #  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
 #  risk_level                                   :integer
 #  short_name                                   :string
+#  show_recent_donors                           :boolean          default(FALSE), not null
+#  show_top_donors                              :boolean          default(FALSE), not null
 #  slug                                         :text
-#  stripe_card_shipping_type                    :integer          default("standard"), not null
+#  stripe_card_shipping_type                    :integer          default(0), not null
 #  website                                      :string
 #  created_at                                   :datetime         not null
 #  updated_at                                   :datetime         not null
@@ -107,7 +108,6 @@ class Event < ApplicationRecord
   scope :indexable, -> { where(is_public: true, is_indexable: true, demo_mode: false) }
   scope :omitted, -> { includes(:plan).where(plan: { type: Event::Plan.that(:omit_stats).collect(&:name) }) }
   scope :not_omitted, -> { includes(:plan).where.not(plan: { type: Event::Plan.that(:omit_stats).collect(&:name) }) }
-  scope :hidden, -> { where("hidden_at is not null") }
   scope :hidden, -> { where.not(hidden_at: nil) }
   scope :not_hidden, -> { where(hidden_at: nil) }
   scope :funded, -> {
@@ -128,6 +128,10 @@ class Event < ApplicationRecord
       .where("flipper_gates.feature_key = ? AND flipper_gates.key = ?", flag, "actors")
   }
 
+  # Following the convention of Module#ancestors https://apidock.com/ruby/Module/ancestors
+  # this returns the id of self as well as all the ancestors,
+  # in order from self->parent->grandparent->...
+  # We guarantee this order using SEARCH BREADTH FIRST https://www.postgresql.org/docs/current/queries-with.html#QUERIES-WITH-SEARCH
   def ancestor_ids
     [id] + Event.connection.execute(<<-SQL).map { |row| row["id"] }
       WITH RECURSIVE parent_events AS (
@@ -138,8 +142,8 @@ class Event < ApplicationRecord
         SELECT e.id, e.parent_id
         FROM events e
         INNER JOIN parent_events pe ON e.id = pe.parent_id
-      )
-      SELECT id FROM parent_events WHERE id != #{id};
+      ) SEARCH BREADTH FIRST BY id SET ordercol
+      SELECT id FROM parent_events WHERE id != #{id} ORDER BY ordercol;
     SQL
   end
 
@@ -158,12 +162,92 @@ class Event < ApplicationRecord
     SQL
   end
 
+  # Following the convention of Module#ancestors https://apidock.com/ruby/Module/ancestors
+  # this returns self as well as all the ancestors
   def ancestors
-    Event.where(id: ancestor_ids)
+    # array_position preserves the order from ancestor_ids; sanitize_sql_array parameterizes the ids so it's statically safe and passes brakeman.
+    fetched_ancestor_ids = ancestor_ids
+    Event.where(id: fetched_ancestor_ids).reorder(Arel.sql(
+                                                    Event.sanitize_sql_array(["array_position(ARRAY[?]::bigint[], events.id)", fetched_ancestor_ids])
+                                                  ))
   end
 
   def descendants
     Event.where(id: descendant_ids)
+  end
+
+  # The direct sub-organizations `user` may see. #visible_descendant_ids walks
+  # down from exactly this set, so it comes back empty whenever this does, which
+  # is the cheap way to ask whether there is anything to show.
+  def visible_subevents(user)
+    return subevents if sees_all_descendants?(user)
+
+    subevents.where(is_public: true, hidden_at: nil).or(subevents.where(id: reader_event_ids(user)))
+  end
+
+  def expandable_subevent_ids(user)
+    grandchildren = Event.where(parent_id: visible_subevents(user).select(:id))
+
+    unless sees_all_descendants?(user)
+      organized_ids = reader_event_ids(user)
+      grandchildren = grandchildren.where(is_public: true, hidden_at: nil)
+                                   .or(grandchildren.where(id: organized_ids))
+                                   .or(grandchildren.where(parent_id: organized_ids))
+    end
+
+    grandchildren.reorder(nil).distinct.pluck(:parent_id).to_set
+  end
+
+  def reader_event_ids(user)
+    return [] unless user
+
+    @reader_event_ids ||= {}
+    @reader_event_ids[user.id] ||= OrganizerPosition.reader_access.where(user:).pluck(:event_id)
+  end
+
+  def sees_all_descendants?(user)
+    user&.auditor? || reader_event_ids(user).intersect?(ancestor_ids)
+  end
+
+  # The descendants `user` is allowed to see, mirroring EventPolicy#show?
+  # (`is_public || auditor_or_reader?`, where reader access is inherited from
+  # any ancestor). Hidden events are treated as private, matching how every
+  # other organization list treats `not_hidden`.
+  #
+  # Traversal stops at an event the user cannot see, so a transparent event
+  # nested under a private one stays hidden too. Surfacing it would reveal that
+  # the private organization exists.
+  #
+  # Like #descendant_ids, these ids skip the paranoid scope, so read them back
+  # through ActiveRecord to drop any that are soft deleted.
+  def visible_descendant_ids(user)
+    return descendant_ids if sees_all_descendants?(user)
+
+    organized_ids = reader_event_ids(user)
+
+    # Guard the empty case rather than let sanitize_sql_array render it, since it
+    # turns [] into NULL and `e.id = ANY(ARRAY[NULL])` would make `unlocked` NULL.
+    organized =
+      if organized_ids.any?
+        Event.sanitize_sql_array(["e.id = ANY(ARRAY[?]::bigint[])", organized_ids])
+      else
+        "FALSE"
+      end
+    transparent = "(e.is_public AND e.hidden_at IS NULL)"
+
+    Event.connection.execute(<<-SQL).map { |row| row["id"] }
+      WITH RECURSIVE child_events AS (
+        SELECT e.id, e.parent_id, #{organized} AS unlocked
+        FROM events e
+        WHERE e.parent_id = #{id} AND (#{transparent} OR #{organized})
+        UNION ALL
+        SELECT e.id, e.parent_id, (ce.unlocked OR #{organized})
+        FROM events e
+        INNER JOIN child_events ce ON e.parent_id = ce.id
+        WHERE #{transparent} OR #{organized} OR ce.unlocked
+      )
+      SELECT id FROM child_events;
+    SQL
   end
 
   belongs_to :parent, class_name: "Event", optional: true
@@ -327,9 +411,14 @@ class Event < ApplicationRecord
 
   has_many :ach_transfers
   has_many :payment_recipients
+  has_many :payees
+  has_many :payments, through: :payees
+  has_many :payroll_positions, through: :payees, class_name: "Payroll::Position"
+  has_many :payroll_invoices, through: :payroll_positions, source: :invoices, class_name: "Payroll::Invoice"
+
   has_many :disbursements
-  has_many :incoming_disbursements, class_name: "Disbursement"
-  has_many :outgoing_disbursements, class_name: "Disbursement", foreign_key: :source_event_id
+  has_many :incoming_disbursements, class_name: "Disbursement::Incoming"
+  has_many :outgoing_disbursements, class_name: "Disbursement::Outgoing", foreign_key: :source_event_id
   has_many :donations
   has_many :donation_payouts, through: :donations, source: :payout
   has_many :recurring_donations
@@ -367,8 +456,8 @@ class Event < ApplicationRecord
 
   scope :engaged, -> {
     Event.where(id: Event.joins(:canonical_transactions)
-        .where("canonical_transactions.date >= ?", 6.months.ago)
-        .distinct)
+                         .where("canonical_transactions.date >= ?", 6.months.ago)
+                         .distinct)
   }
 
   scope :dormant, -> { where.not(id: Event.engaged) }
@@ -388,6 +477,7 @@ class Event < ApplicationRecord
   after_create :create_ledger
   has_many :hcb_codes
   has_many :pinned_hcb_codes, -> { includes(hcb_code: [:canonical_transactions, :canonical_pending_transactions]) }, class_name: "HcbCode::Pin"
+  has_many :pinned_ledger_items, through: :ledger, source: :pinned_items, class_name: "Ledger::Item"
 
   has_many :check_deposits
 
@@ -408,19 +498,19 @@ class Event < ApplicationRecord
 
   has_one_attached :donation_header_image
   validates :donation_header_image, content_type: [:png, :jpeg]
-  validates :donation_header_image, size: { less_than_or_equal_to: 8.megabytes }, if: -> { attachment_changes["donation_header_image"].present? }
+  validates :donation_header_image, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["donation_header_image"].present? }
 
   has_one_attached :background_image
   validates :background_image, content_type: [:png, :jpeg, :gif]
-  validates :background_image, size: { less_than_or_equal_to: 8.megabytes }, if: -> { attachment_changes["background_image"].present? }
+  validates :background_image, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["background_image"].present? }
 
   has_one_attached :logo
   validates :logo, content_type: [:png, :jpeg]
-  validates :logo, size: { less_than_or_equal_to: 5.megabytes }, if: -> { attachment_changes["logo"].present? }
+  validates :logo, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["logo"].present? }
 
   has_one_attached :stripe_card_logo
   validates :stripe_card_logo, content_type: [:png, :jpeg]
-  validates :stripe_card_logo, size: { less_than_or_equal_to: 5.megabytes }, if: -> { attachment_changes["stripe_card_logo"].present? }
+  validates :stripe_card_logo, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["stripe_card_logo"].present? }
 
   include HasMetrics
 
@@ -461,12 +551,16 @@ class Event < ApplicationRecord
     build_plan(type: fallback_plan_class) if plan.nil?
   end
 
+  after_update_commit if: :can_front_balance_previously_changed? do
+    Event::RefreshLedgersJob.perform_later(event_id: id)
+  end
+
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
   after_validation :move_friendly_id_error_to_slug
 
   after_update :generate_stripe_card_designs, if: -> { attachment_changes["stripe_card_logo"].present? && stripe_card_logo.attached? && !Rails.env.test? }
 
-  after_update if: :is_public_previously_changed? do
+  after_update_commit if: :is_public_previously_changed? do
     version = self.versions.where_object_changes(is_public:).last
     whodunnit = version&.whodunnit.present? ? User.find(version.whodunnit) : User.system_user
 
@@ -563,6 +657,13 @@ class Event < ApplicationRecord
     # We're including only pending charges on emburse_cards so organizers have a conservative estimate of their balance
     pending_t = self.emburse_transactions.pending.where("amount < 0").sum(:amount)
     completed_t + pending_t
+  end
+
+  def refresh_ledgers!
+    ledger.refresh_all!
+    Ledger.where(card_grant: self.card_grants).find_each do |ledger|
+      ledger.refresh_all!
+    end
   end
 
   def total_raised
@@ -774,10 +875,6 @@ class Event < ApplicationRecord
     !engaged?
   end
 
-  def frozen?
-    Flipper.enabled?(:frozen, self)
-  end
-
   def revenue_fee
     configured = plan&.revenue_fee
     return configured if configured.present?
@@ -854,8 +951,12 @@ class Event < ApplicationRecord
     !plan.is_a?(Event::Plan::SalaryAccount)
   end
 
-  def eligible_for_disabling_transparency?
-    !parent&.is_public?
+  def forced_transparency?
+    # `plan` is built by a later `before_validation` callback, so it can still
+    # be nil the first time this runs on a new record.
+    return false unless plan&.forces_transparency?
+
+    parent&.is_public? || false
   end
 
   def eligible_for_indexing?
@@ -934,6 +1035,33 @@ class Event < ApplicationRecord
     scoped_tags.where(parent_event_id: parent_id)
   end
 
+  def to_combobox_display
+    name
+  end
+
+  def onboarding_scheduling_link
+    return unless point_of_contact.present?
+
+    Rails.cache.fetch("scheduling_link_#{point_of_contact.id}", expires_in: 5.minutes) do
+      begin
+        OnboardersTable.all(filter: "{HCB ID} = #{point_of_contact.id}").first&.[]("Scheduling Link")
+      rescue
+        nil
+      end
+    end
+  end
+
+  def contracts_pending_on_hcb
+    contracts.sent.select { |c| c.parties.not_hcb.all?(&:signed?) }
+  end
+
+  # The oldest contract standing between this organization and activation, if
+  # any. An organization can have more than one open at a time, since contracts
+  # hang off individual signee invites rather than off the organization.
+  def contract_pending_signature
+    contracts.not_voided.where.not(aasm_state: :signed).first
+  end
+
   private
 
   def point_of_contact_is_admin
@@ -985,7 +1113,7 @@ class Event < ApplicationRecord
       self.is_indexable = false
     end
 
-    unless eligible_for_disabling_transparency?
+    if forced_transparency?
       self.is_public = true
     end
 

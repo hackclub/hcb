@@ -22,7 +22,7 @@
             <% section.items.each do |item| %>
               <%= link_to item.path, style: "#{item.active? ? "color: var(--hcb-accent)" : "color: var(--hcb-tx-1)"};max-height:auto;height:auto;padding: 5px 10px" do %>
                 <%= item.name %>
-                <span class="badge <%= item.record_count? || item.count.zero? ? "bg-muted" : "" %> h-fit ml-auto">
+                <span class="badge <%= item.task_count? && item.count > 0 ? "bg-success" : "bg-muted" %> h-fit ml-auto">
                   <%= item.count %>
                 </span>
               <% end %>

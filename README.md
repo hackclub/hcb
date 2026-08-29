@@ -36,7 +36,7 @@ by reading [our documentation](/dev-docs)).
 ## I found a security vulnerability! What should I do?
 
 Please email [hcb-security@hackclub.com](mailto:hcb-security@hackclub.com) to
-report the vulnerability. To learn more about bug bounties, visit https://security.hackclub.com
+report the vulnerability. To learn more about security bounties, visit https://security.hackclub.com
 
 ## Quick start
 
