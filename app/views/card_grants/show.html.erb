@@ -22,6 +22,12 @@
 
 <%= render partial: "card_grants/header_banner", locals: { card_grant: @card_grant, footer: } %>
 
+<%# The grantee's org — not HCB — sets the spending rules, so say so before anything else. %>
+<% if @card_grant.user == current_user %>
+  <%= render partial: "card_grants/administered_by", locals: { card_grant: @card_grant } %>
+<% end %>
+<%= render partial: "card_grants/support_modal", locals: { card_grant: @card_grant } %>
+
 <% if @card_grant.instructions.present? %>
   <%= render "application/callout", title: "Instructions from #{@card_grant.event.name}", type: "info", class: "mb-4" do %>
     <p class="m-0">

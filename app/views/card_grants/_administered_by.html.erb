@@ -1,0 +1,44 @@
+<%# locals: (card_grant:) %>
+
+<% event = card_grant.event %>
+<% setting = card_grant.setting %>
+
+<div class="card card--sunken flex flex-col gap-3 mb-2">
+  <div class="flex items-center gap-3">
+    <% if event.logo.attached? %>
+      <%= image_tag event.logo, height: 40, width: 40, class: "rounded flex-shrink-0" %>
+    <% end %>
+    <div>
+      <p class="eyebrow mb-0 opacity-50">Administered by</p>
+      <strong class="text-xl leading-tight"><%= link_to event.name, event %></strong>
+    </div>
+  </div>
+
+  <p class="my-0">
+    <strong><%= event.name %></strong> decides what this grant can be spent on, which merchants
+    are allowed, and when it expires. HCB issues the card and moves the money, but HCB staff
+    can't change those rules or approve a purchase — <strong>ask <%= event.name %> instead</strong>.
+  </p>
+
+  <% if setting.support_url.present? %>
+    <div>
+      <%= link_to setting.support_url, target: "_blank", class: "btn btn--primary" do %>
+        <% if setting.slack_support? %>
+          <%= inline_icon "slack" %>
+        <% elsif setting.email_support? %>
+          <%= inline_icon "email" %>
+        <% else %>
+          <%= inline_icon "help" %>
+        <% end %>
+        <span>Ask <%= event.name %> about this grant</span>
+      <% end %>
+    </div>
+  <% elsif setting.support_message.present? %>
+    <div>
+      <button class="btn btn--primary" data-behavior="modal_trigger" data-modal="support_card_grant_<%= card_grant.id %>">
+        <%= inline_icon "help" %>
+        <span>Ask <%= event.name %> about this grant</span>
+      </button>
+    </div>
+  <% end %>
+</div>

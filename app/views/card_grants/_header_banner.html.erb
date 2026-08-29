@@ -27,8 +27,13 @@
         <%= user_mention card_grant.sent_by %>
       </p>
       <p>
-        <strong>Funded by</strong>
-        <%= link_to card_grant.event.name, card_grant.event %>
+        <strong>Administered by</strong>
+        <span class="inline-flex items-center gap-1">
+          <% if card_grant.event.logo.attached? %>
+            <%= image_tag card_grant.event.logo, height: 18, width: 18, class: "rounded" %>
+          <% end %>
+          <%= link_to card_grant.event.name, card_grant.event %>
+        </span>
       </p>
       <p>
         <strong>Sent</strong>

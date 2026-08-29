@@ -31,6 +31,24 @@ RSpec.describe CardGrantsController do
     end
   end
 
+  describe "#show" do
+    it "tells the grantee that their org, not HCB, administers the grant" do
+      event = create(:event, :with_positive_balance, name: "Flavourtown")
+      create(:card_grant_setting, event:, support_url: "mailto:help@flavourtown.example")
+      card_grant = create(:card_grant, event:)
+      create_session(card_grant.user, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      body = response.parsed_body.text.squish
+      expect(body).to include("Administered by")
+      expect(body).to include("Flavourtown decides what this grant can be spent on")
+      expect(body).to include("ask Flavourtown instead")
+      expect(response.parsed_body.at_css("a[href='mailto:help@flavourtown.example']")).to be_present
+    end
+  end
+
   describe "#new" do
     it "renders successfully" do
       user = create(:user)
