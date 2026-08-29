@@ -42,7 +42,7 @@ Authorization: Bearer hcb_<token>
 
 There are two ways to register an app. The examples below use the local dev host `localhost:3000`; on **production, use `https://hcb.hackclub.com`** for the same `/api/v4/oauth/...` endpoints and the application UI at `https://hcb.hackclub.com/api/v4/oauth/applications`, with a real `redirect_uri`.
 
-> To use the granular v4 scopes (e.g. `restricted receipts:write ledgers:read receipts:read`), register the application with **those** scopes instead of `read write`, and request the same strings in the authorize step. See [Requesting Scopes on a Token](./scopes.md#requesting-scopes-on-a-token).
+> To use the granular v4 scopes (e.g. `restricted receipts:write ledgers:read receipts:read`), register the application with **those** scopes instead of `read write`, and request the same strings in the authorize step. [`config/api_scopes.rb`](../../config/api_scopes.rb) lists every scope you can request; see [Requesting Scopes on a Token](./scopes.md#requesting-scopes-on-a-token).
 
 **Option A — Web UI**
 
