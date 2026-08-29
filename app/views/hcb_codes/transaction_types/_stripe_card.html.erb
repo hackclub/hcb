@@ -75,7 +75,7 @@
     <% if @hcb_code.stripe_foreign_currency? %>
       <div>
         <strong>Charged in <%= @hcb_code.stripe_merchant_amount.currency.iso_code %></strong>
-        <span><%= humanized_foreign_amount @hcb_code.stripe_merchant_amount %></span>
+        <span><%= @hcb_code.stripe_merchant_amount.format(with_currency: true) %></span>
       </div>
     <% end %>
     <% if @hcb_code.stripe_atm_fee %>
