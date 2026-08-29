@@ -86,7 +86,7 @@ class Payment < ApplicationRecord
     end
   end
 
-  after_create do
+  after_create_commit do
     if legal_entity&.payable? && legal_entity.default_payout_method.present?
       create_payment_attempt!
     elsif legal_entity&.payable?
