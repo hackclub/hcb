@@ -349,6 +349,17 @@ class Donation < ApplicationRecord
     "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://#{URI::Parser.new.escape(referrer_domain)}&size=256"
   end
 
+  # Whether there's a donor for the ledger's author column to show. A donation
+  # collected in person with tap to pay only has one if the donor left an email
+  # address to build an avatar from — anyone else in that column would be the
+  # organizer who collected it, reading as if they made the payment.
+  def showable_donor?
+    return false if anonymous?
+    return email.present? if in_person?
+
+    true
+  end
+
   def avatar(size = 128)
     gravatar_url(email, name, email&.sum || rand(1000), size) unless anonymous?
   end

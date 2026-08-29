@@ -445,6 +445,42 @@ RSpec.describe Ledger::Item, type: :model do
     end
   end
 
+  describe "the author column fallback" do
+    def donation_item(donation)
+      item = Ledger::Item.new(
+        amount_cents: donation.amount,
+        memo: "Donation",
+        datetime: Time.current,
+        linked_object: donation
+      )
+      item.save(validate: false)
+      item
+    end
+
+    it "shows the donor behind an in-person donation, reading its own linked object" do
+      stub_donation_payment_intent_creation
+      donation = create(:donation, in_person: true, collected_by: create(:user), name: "Ada Lovelace", email: "ada@example.com")
+
+      item = donation_item(donation)
+
+      # The item has no HcbCode of its own, so this can only come from the
+      # linked donation.
+      expect(item.hcb_code).to be_nil
+      expect(item.fallback_avatar).to eq(donation.avatar(48))
+      expect(item.author_name).to eq("Ada Lovelace")
+    end
+
+    it "stays empty when an in-person donor gave no email" do
+      stub_donation_payment_intent_creation
+      donation = create(:donation, in_person: true, collected_by: create(:user), name: "Ada Lovelace", email: nil)
+
+      item = donation_item(donation)
+
+      expect(item.fallback_avatar).to be_nil
+      expect(item.author_name).to be_nil
+    end
+  end
+
   describe "#author" do
     it "is nobody for an in-person donation, which the donor paid rather than the organizer who collected it" do
       stub_donation_payment_intent_creation

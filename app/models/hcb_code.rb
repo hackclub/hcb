@@ -768,28 +768,8 @@ class HcbCode < ApplicationRecord
     return wise_transfer&.user if wise_transfer?
   end
 
-  # A donation an organizer collected with tap to pay, rather than one the
-  # donor made online themselves.
-  def in_person_donation?
-    donation? && donation.in_person?
-  end
-
-  # The donor who paid for an in-person donation, when there's an email address
-  # to build an avatar from. Nil when they donated anonymously or gave none,
-  # which leaves the author column empty rather than falling back to anyone at
-  # the organization: the money is the donor's, and the collector's face there
-  # would read as if they made the payment.
-  def donor
-    return nil unless in_person_donation?
-    return nil if donation.anonymous? || donation.email.blank?
-
-    donation
-  end
-
   def fallback_avatar
-    return nil if in_person_donation? && donor.nil?
-
-    return gravatar_url(donation.email, donation.name, donation.email.to_i, 48) if donation? && !donation.anonymous?
+    return donation.avatar(48) if donation? && donation.showable_donor?
     return gravatar_url(invoice.sponsor.contact_email, invoice.sponsor.name, invoice.sponsor.contact_email.to_i, 48) if invoice?
 
     nil
@@ -797,8 +777,7 @@ class HcbCode < ApplicationRecord
 
   def author_name
     return author&.name if author&.name.present?
-    return nil if in_person_donation? && donor.nil?
-    return donation.name if donation? && !donation.anonymous?
+    return donation.name if donation? && donation.showable_donor?
     return invoice.sponsor.name if invoice?
 
     nil

@@ -52,6 +52,7 @@ class Ledger
 
     include Commentable
     include Receiptable
+    include UsersHelper
 
     has_one :hcb_code, class_name: "HcbCode", required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_one :personal_transaction, required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
@@ -129,11 +130,24 @@ class Ledger
     # The author column falls back to whoever is behind an item with no
     # organizer to attribute it to — the donor, or an invoice's sponsor.
     def fallback_avatar
-      hcb_code&.fallback_avatar
+      case linked_object_type
+      when "Donation"
+        linked_object.avatar(48) if linked_object.showable_donor?
+      when "Invoice"
+        sponsor = linked_object.sponsor
+        gravatar_url(sponsor.contact_email, sponsor.name, sponsor.contact_email.to_i, 48)
+      end
     end
 
     def author_name
-      author&.name.presence || hcb_code&.author_name
+      return author.name if author&.name.present?
+
+      case linked_object_type
+      when "Donation"
+        linked_object.name if linked_object.showable_donor?
+      when "Invoice"
+        linked_object.sponsor.name
+      end
     end
 
     # Substring identifiers (case-insensitive) in the memo that indicate an
