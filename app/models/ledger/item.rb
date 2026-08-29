@@ -130,24 +130,18 @@ class Ledger
     # The author column falls back to whoever is behind an item with no
     # organizer to attribute it to — the donor, or an invoice's sponsor.
     def fallback_avatar
-      case linked_object_type
-      when "Donation"
-        linked_object.avatar(48) if linked_object.showable_donor?
-      when "Invoice"
-        sponsor = linked_object.sponsor
-        gravatar_url(sponsor.contact_email, sponsor.name, sponsor.contact_email.to_i, 48)
-      end
+      return gravatar_url(linked_object.email, linked_object.name, linked_object.email.to_i, 48) if showable_donation?
+      return gravatar_url(linked_object.sponsor.contact_email, linked_object.sponsor.name, linked_object.sponsor.contact_email.to_i, 48) if linked_object_type == "Invoice"
+
+      nil
     end
 
     def author_name
       return author.name if author&.name.present?
+      return linked_object.name if showable_donation?
+      return linked_object.sponsor.name if linked_object_type == "Invoice"
 
-      case linked_object_type
-      when "Donation"
-        linked_object.name if linked_object.showable_donor?
-      when "Invoice"
-        linked_object.sponsor.name
-      end
+      nil
     end
 
     # Substring identifiers (case-insensitive) in the memo that indicate an
@@ -367,6 +361,10 @@ class Ledger
       end
 
       amount_cents
+    end
+
+    def showable_donation?
+      linked_object_type == "Donation" && linked_object&.showable_donor?
     end
 
     def calculate_author

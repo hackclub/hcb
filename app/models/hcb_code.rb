@@ -769,7 +769,7 @@ class HcbCode < ApplicationRecord
   end
 
   def fallback_avatar
-    return donation.avatar(48) if donation? && donation.showable_donor?
+    return gravatar_url(donation.email, donation.name, donation.email.to_i, 48) if donation? && donation.showable_donor?
     return gravatar_url(invoice.sponsor.contact_email, invoice.sponsor.name, invoice.sponsor.contact_email.to_i, 48) if invoice?
 
     nil

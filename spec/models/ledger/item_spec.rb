@@ -466,7 +466,7 @@ RSpec.describe Ledger::Item, type: :model do
       # The item has no HcbCode of its own, so this can only come from the
       # linked donation.
       expect(item.hcb_code).to be_nil
-      expect(item.fallback_avatar).to eq(donation.avatar(48))
+      expect(item.fallback_avatar).to include(Digest::SHA256.hexdigest("ada@example.com"))
       expect(item.author_name).to eq("Ada Lovelace")
     end
 
