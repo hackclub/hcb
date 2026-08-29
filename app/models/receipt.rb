@@ -97,12 +97,6 @@ class Receipt < ApplicationRecord
   after_commit(on: [:create, :update]) { CardLocking::ReceiptResolution.on_receipt_upsert(self) }
   after_commit(on: :destroy) { CardLocking::ReceiptResolution.on_receipt_destroy(self) }
 
-  after_create_commit do
-    if receiptable.is_a?(Payment) && receiptable.current_attempt&.payout.present?
-      Receipt.reupload(old_receiptable: receiptable, new_receiptable: receiptable.current_attempt.payout.local_hcb_code)
-    end
-  end
-
   validate :has_owner
 
   enum :upload_method, {
