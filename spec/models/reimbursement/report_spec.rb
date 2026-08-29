@@ -97,4 +97,77 @@ RSpec.describe Reimbursement::Report, type: :model do
       end
     end
   end
+
+  describe "#committed_amount_cents" do
+    let(:event) { create(:event) }
+    let(:user) { create(:user) }
+
+    def report_with_expense(aasm_state, cents, maximum_amount_cents: nil, expense_state: :approved)
+      report = create(:reimbursement_report, user:, event:, aasm_state:, maximum_amount_cents:)
+      create(:reimbursement_expense, report:, value: cents / 100.0, aasm_state: expense_state) if cents.positive?
+      report
+    end
+
+    context "when the report is a draft with a maximum" do
+      it "reports the maximum even though nothing has been filed" do
+        report = report_with_expense(:draft, 0, maximum_amount_cents: 50_000)
+
+        expect(report.amount_cents).to eq(0)
+        expect(report.committed_amount_cents).to eq(50_000)
+      end
+
+      it "reports the maximum rather than the expenses filed under it" do
+        report = report_with_expense(:draft, 8_000, maximum_amount_cents: 50_000, expense_state: :pending)
+
+        expect(report.committed_amount_cents).to eq(50_000)
+      end
+
+      # `submit` is guarded on `!exceeds_maximum_amount?`, so an over-maximum
+      # report is a state reports sit in rather than pass through.
+      it "reports the maximum rather than expenses filed above it" do
+        report = report_with_expense(:draft, 70_000, maximum_amount_cents: 50_000, expense_state: :pending)
+
+        expect(report.amount_cents).to eq(70_000)
+        expect(report.committed_amount_cents).to eq(50_000)
+      end
+
+      it "leaves `exceeds_maximum_amount?` reading the filed expenses" do
+        report = report_with_expense(:draft, 70_000, maximum_amount_cents: 50_000, expense_state: :pending)
+
+        expect(report).to be_exceeds_maximum_amount
+      end
+
+      # Maximums are only enforced on USD reports, so they are not applied to
+      # anything else here either.
+      it "falls back to the expenses filed on a non-USD report" do
+        report = report_with_expense(:draft, 8_000, maximum_amount_cents: 50_000, expense_state: :pending)
+        report.update!(currency: "EUR")
+
+        expect(report.committed_amount_cents).to eq(8_000)
+      end
+    end
+
+    context "when the report has no maximum" do
+      it "matches the expenses filed on a draft" do
+        report = report_with_expense(:draft, 8_000, expense_state: :pending)
+
+        expect(report.committed_amount_cents).to eq(report.amount_cents)
+        expect(report.committed_amount_cents).to eq(8_000)
+      end
+    end
+
+    context "when the report is past draft" do
+      it "matches `amount_cents` once submitted, maximum or not" do
+        report = report_with_expense(:submitted, 5_000, maximum_amount_cents: 50_000, expense_state: :pending)
+
+        expect(report.committed_amount_cents).to eq(5_000)
+      end
+
+      it "matches `amount_cents` once reimbursement has been requested" do
+        report = report_with_expense(:reimbursement_requested, 10_000, maximum_amount_cents: 50_000)
+
+        expect(report.committed_amount_cents).to eq(10_000)
+      end
+    end
+  end
 end

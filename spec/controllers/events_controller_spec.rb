@@ -768,4 +768,59 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#reimbursements" do
+    render_views
+
+    let(:event) { create(:event) }
+
+    # The statset renders each figure as a `.stat__label` / `.stat__value` pair,
+    # so pull the value out by its label rather than matching loose text.
+    def stat_value(body, label)
+      stat = Nokogiri::HTML5(body).css(".stat").find { |node| node.css(".stat__label").text.strip == label }
+      stat&.css(".stat__value")&.text&.strip
+    end
+
+    before { sign_in_organizer_of(event) }
+
+    it "counts a draft with a maximum at its maximum, not at what has been filed" do
+      report = create(:reimbursement_report, user: create(:user), event:, aasm_state: :draft, maximum_amount_cents: 50_000)
+      create(:reimbursement_expense, report:, value: 80.00, aasm_state: :pending)
+
+      get(:reimbursements, params: { event_id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(stat_value(response.body, "Total")).to eq(money(50_000))
+      expect(stat_value(response.body, "Pending")).to eq(money(50_000))
+    end
+
+    it "counts an untouched draft with a maximum at its maximum" do
+      create(:reimbursement_report, user: create(:user), event:, aasm_state: :draft, maximum_amount_cents: 50_000)
+
+      get(:reimbursements, params: { event_id: event.slug })
+
+      expect(stat_value(response.body, "Total")).to eq(money(50_000))
+      expect(stat_value(response.body, "Pending")).to eq(money(50_000))
+    end
+
+    it "leaves a draft without a maximum on the expenses filed" do
+      report = create(:reimbursement_report, user: create(:user), event:, aasm_state: :draft)
+      create(:reimbursement_expense, report:, value: 80.00, aasm_state: :pending)
+
+      get(:reimbursements, params: { event_id: event.slug })
+
+      expect(stat_value(response.body, "Total")).to eq(money(8_000))
+      expect(stat_value(response.body, "Pending")).to eq(money(8_000))
+    end
+
+    it "leaves a submitted report with a maximum on the expenses filed" do
+      report = create(:reimbursement_report, user: create(:user), event:, aasm_state: :submitted, maximum_amount_cents: 50_000)
+      create(:reimbursement_expense, report:, value: 50.00, aasm_state: :pending)
+
+      get(:reimbursements, params: { event_id: event.slug })
+
+      expect(stat_value(response.body, "Total")).to eq(money(5_000))
+      expect(stat_value(response.body, "Pending")).to eq(money(5_000))
+    end
+  end
+
 end

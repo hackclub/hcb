@@ -283,6 +283,25 @@ module Reimbursement
       expenses.approved.to_sum.sum(:amount_cents)
     end
 
+    # How much of the event's balance this report has a claim on.
+    #
+    # Matches `amount_cents` everywhere except a draft carrying an
+    # organizer-set maximum. A draft's expenses are whatever the reimbursee has
+    # typed in so far, which says nothing about what they will eventually
+    # claim — an untouched report reads as $0 and one filled past its maximum
+    # reads above what could ever be paid out. The maximum is the figure the
+    # organizers actually committed to, so that is what the event is on the
+    # hook for until the report is submitted.
+    #
+    # Deliberately separate from `amount_cents`: that one gates
+    # `exceeds_maximum_amount?` and is what the reimbursee is shown as their
+    # requested amount, and neither should move.
+    def committed_amount_cents
+      return maximum_amount_cents if draft? && maximum_amount_cents && currency == "USD"
+
+      amount_cents
+    end
+
     def fees_charged_cents
       expenses.approved.where(type: Reimbursement::Expense::Fee.name).sum(:amount_cents)
     end
