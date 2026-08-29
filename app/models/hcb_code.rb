@@ -61,7 +61,6 @@ class HcbCode < ApplicationRecord
   has_many :suggested_pairings
   has_many :suggested_receipts, source: :receipt, through: :suggested_pairings
 
-  has_one :personal_transaction, required: false
   has_one :pin, required: false
 
   belongs_to :event, optional: true

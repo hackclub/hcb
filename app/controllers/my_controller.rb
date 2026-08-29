@@ -122,9 +122,14 @@ class MyController < ApplicationController
 
     hcb_codes_missing_receipt =
       if @grouping == "due_date"
-        # Soonest deadline first; charges with no deadline sort last, newest first.
+        # Soonest deadline first, then charges still pending, then charges that
+        # never had a deadline; both undated groups newest first.
         hcb_codes_missing_receipt.sort_by do |hcb_code|
-          hcb_code.receipt_due_at ? [0, hcb_code.receipt_due_at.to_i] : [1, -hcb_code.created_at.to_i]
+          if hcb_code.receipt_due_at
+            [0, hcb_code.receipt_due_at.to_i]
+          else
+            [hcb_code.canonical_transactions.empty? ? 1 : 2, -hcb_code.created_at.to_i]
+          end
         end
       else
         hcb_codes_missing_receipt.sort_by(&:created_at).reverse
