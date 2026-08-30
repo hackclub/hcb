@@ -116,11 +116,13 @@ csp = {
   worker_src: ["'self'", "blob:"],
 }
 
-# In development the blog widget (iframe + unread-count fetch) points at a local
-# blog server instead of blog.hcb.hackclub.com.
+# In development, allow any local dev server on any localhost port (the blog
+# widget's iframe + unread-count fetch, asset/HMR servers, etc.). The `:*` port
+# wildcard is required — a bare host only matches the scheme's default port.
 if Rails.env.development?
-  csp[:connect_src] += %w[http://localhost:3001]
-  csp[:frame_src]   += %w[http://localhost:3001]
+  localhost = %w[http://localhost:* http://127.0.0.1:*]
+  csp[:connect_src] += localhost + %w[ws://localhost:* ws://127.0.0.1:*]
+  csp[:frame_src]   += localhost
 end
 
 report_only = ENV["CSP_REPORT_ONLY"].present?
