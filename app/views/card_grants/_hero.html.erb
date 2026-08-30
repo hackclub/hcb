@@ -36,14 +36,11 @@
     </div>
 
     <p class="m-0 secondary" style="max-width: 46ch">
-      <% if card_grant.pending_invite? %>
+      <% if card_grant.pending_invite? && !own %>
         Activate the card below and you can start spending straight away.
-      <% elsif own %>
-        Spend it with the card below. You don't need to ask anyone first, and you
-        don't need to pay anything back.
       <% else %>
         <%= card_grant.user.first_name %> can spend this with the card issued to
-        them &mdash; no reimbursement paperwork on either side.
+        them
       <% end %>
     </p>
 
