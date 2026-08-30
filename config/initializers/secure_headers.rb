@@ -16,8 +16,8 @@
 
 asset_host = ENV["ASSET_HOST"].presence
 
-s3_bucket = ENV["S3__BUCKET"].presence
-s3_region = ENV["S3__REGION"].presence
+s3_bucket = Credentials.fetch(:S3, :BUCKET).presence
+s3_region = Credentials.fetch(:S3, :REGION).presence
 s3_host = ("https://#{s3_bucket}.s3.#{s3_region}.amazonaws.com" if s3_bucket && s3_region)
 
 csp = {
