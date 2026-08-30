@@ -151,8 +151,8 @@ module Tax
       # A manually entered form has no certificate at TaxBandits to sync against.
       return unless sent_with_taxbandits?
 
-      form_data = begin
-        remote_taxbandits_submission_form_data
+      submission = begin
+        submission = remote_taxbandits_submission
       rescue
         nil
       end
@@ -160,19 +160,22 @@ module Tax
       form_status = nil
       tin_match_status = nil
 
-      if form_data.present?
-        form_status_field = form_data.keys.find { |key| key.end_with?("Status") }
-        form_status = form_data[form_status_field]
-        tin_match_status = form_data["TINMatching"]&.[]("Status")&.downcase
+      if submission.present?
+        submission_form_type = submission["FormType"]
+        form_hash = submission[TaxbanditsService::TAXBANDITS_FORM_DATA_KEYS[submission_form_type]]
+
+        form_status_field = form_hash.keys.find { |key| key.end_with?("Status") }
+        form_status = form_hash[form_status_field]
+        tin_match_status = form_hash["TINMatching"]&.[]("Status")
       else
         status_response = TaxbanditsService.get_status(public_id)
-        form_status = status_response["FormStatus"].downcase
-        tin_match_status = status_response["TINMatching"]&.[]("Status")&.downcase
+        form_status = status_response["FormStatus"]
+        tin_match_status = status_response["TINMatching"]&.[]("Status")
       end
 
       update!(
-        taxbandits_status: form_status,
-        taxbandits_tin_matching_status: tin_match_status
+        taxbandits_status: form_status.downcase,
+        taxbandits_tin_matching_status: tin_match_status&.downcase
       )
     end
 
@@ -226,14 +229,6 @@ module Tax
       TaxbanditsService.get_submission(public_id)
     end
 
-    def remote_taxbandits_submission_form_data
-      submission = remote_taxbandits_submission
-      return if submission.nil?
-
-      submission_form_type = submission["FormType"]
-      submission.dig(TaxbanditsService::TAXBANDITS_FORM_DATA_KEYS[submission_form_type], "FormData")
-    end
-
     def tin_hash_cannot_change
       if tin_hash_changed? && tin_hash_was.present?
         errors.add(:tin_hash, "cannot change once set")
@@ -248,7 +243,11 @@ module Tax
     end
 
     def import_taxbandits_data
-      form_data = remote_taxbandits_submission_form_data
+      submission = remote_taxbandits_submission
+      return if submission.nil?
+
+      submission_form_type = submission["FormType"]
+      form_data = submission.dig(TaxbanditsService::TAXBANDITS_FORM_DATA_KEYS[submission_form_type], "FormData")
 
       return if form_data.blank?
 
