@@ -77,10 +77,11 @@ csp = {
   worker_src: ["'self'", "blob:"],
 }
 
-# blogs run on different port, see blog_controller.js
+# allows all development sources in dev
 if Rails.env.development?
-  csp[:connect_src] += %w[http://localhost:3001]
-  csp[:frame_src]   += %w[http://localhost:3001]
+  localhost = %w[http://localhost:* http://127.0.0.1:*]
+  csp[:connect_src] += localhost + %w[ws://localhost:* ws://127.0.0.1:*]
+  csp[:frame_src]   += localhost
 end
 
 SecureHeaders::Configuration.default do |config|
