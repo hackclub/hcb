@@ -1,4 +1,4 @@
-<%# locals: (card_grant:, footer: nil) %>
+<%# locals: (card_grant:, footer: nil, actions: true) %>
 
 <% own = card_grant.user == current_user %>
 <% total = card_grant.amount %>
@@ -7,7 +7,7 @@
 <% days_left = (card_grant.expiration_at.to_date - Date.current).to_i %>
 <% spendable = card_grant.active? && !card_grant.pending_invite? %>
 
-<% manage = organizer_signed_in?(as: :member) %>
+<% manage = actions && organizer_signed_in?(as: :member) %>
 
 <% if manage %>
   <div class="flex items-center flex-wrap justify-end gap-2 mt-4">
@@ -28,7 +28,6 @@
           <span class="muted"><%= card_grant.purpose %></span>
         <% end %>
       </div>
-
 
       <span class="grant-hero__amount"><%= render_money remaining %></span>
       <p class="mt-1 mb-3 muted">
@@ -58,16 +57,16 @@
 
       <div class="grant-meta mt-2">
         <div>
-          <span class="muted">Granted by</span>
-          <%= link_to card_grant.event.name, card_grant.event %>
+          <span class="muted grant-meta__label">Granted by</span>
+          <%= link_to card_grant.event.name, card_grant.event, class: "grant-meta__value" %>
         </div>
         <div>
-          <span class="muted">Granted to</span>
-          <%= user_mention card_grant.user %>
+          <span class="muted grant-meta__label">Granted to</span>
+          <%= user_mention card_grant.user, class: "grant-meta__value" %>
         </div>
         <div>
-          <span class="muted">Sent</span>
-          <span class="tooltipped tooltipped--w" aria-label="<%= card_grant.created_at.to_formatted_s(:long) %>">
+          <span class="muted grant-meta__label">Sent</span>
+          <span class="grant-meta__value tooltipped tooltipped--w" aria-label="<%= card_grant.created_at.to_formatted_s(:long) %>">
             <%= time_ago_in_words card_grant.created_at %> ago
           </span>
         </div>

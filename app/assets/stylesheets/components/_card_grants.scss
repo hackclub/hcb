@@ -89,13 +89,37 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
   }
 }
 
-// Compact label / value pairs stacked in the hero aside.
+// Compact label / value pairs stacked in the hero aside. Rows grow when a long
+// value wraps rather than colliding with the row beneath them.
+.grant-meta {
+  display: grid;
+  gap: 0.375rem;
+}
+
 .grant-meta > div {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
-  height: 26px;
+  min-height: 1.625rem;
+}
+
+.grant-meta__label {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.grant-meta__value {
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+
+  // `.mention` carries a trailing margin meant for inline prose; drop it so
+  // avatars line up flush with the values above and below.
+  &.mention,
+  .mention {
+    margin-right: 0;
+  }
 }
 
 .grant-section {
@@ -229,4 +253,156 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
   font-weight: 600;
   line-height: 1.35;
   overflow-wrap: anywhere;
+}
+
+// Pre-authorization: the cart-screenshot dropzone and its uploads share one
+// panel, so an empty dropzone reads as part of the step rather than a stray box.
+$grant-upload-height: 11.5rem;
+
+.grant-upload {
+  padding: 0;
+}
+
+.grant-upload__grid {
+  display: flex;
+  flex-direction: column;
+
+  @media (min-width: 56em) {
+    flex-direction: row;
+    align-items: stretch;
+  }
+}
+
+.grant-upload__drop {
+  flex: 0 0 auto;
+  padding: 1.25rem;
+
+  @media (min-width: 56em) {
+    flex-basis: 19rem;
+  }
+}
+
+.grant-upload__dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  height: 100%;
+  min-height: $grant-upload-height;
+  padding: 1.25rem;
+  text-align: center;
+  border: 2px dashed $grant-hairline;
+  border-radius: var(--radius-lg);
+  background-color: rgba(map-get($palette, smoke), 0.35);
+  transition: 0.125s ease-in-out;
+  transition-property: border-color, background-color;
+
+  html[data-dark='true'] & {
+    border-color: rgba(255, 255, 255, 0.15);
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+
+  &:hover {
+    border-color: rgba(map-get($palette, info), 0.5);
+  }
+}
+
+.grant-upload__dropzone-icon {
+  color: map-get($palette, muted);
+}
+
+.grant-upload__list {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  min-height: $grant-upload-height;
+  padding: 1.25rem;
+  overflow-x: auto;
+}
+
+// Only hairline the two apart when the dropzone is actually there — once the
+// pre-authorization is submitted the list stands alone.
+.grant-upload__drop + .grant-upload__list {
+  @include grant-hairline(top);
+
+  @media (min-width: 56em) {
+    border-top: 0;
+    @include grant-hairline(left);
+  }
+}
+
+// Nothing uploaded yet: let the dropzone have the whole panel rather than
+// pairing it with an empty gallery. Browsers without `:has()` keep the split.
+.grant-upload__grid:has(.grant-upload__empty) {
+  .grant-upload__drop {
+    flex: 1 1 auto;
+  }
+
+  .grant-upload__drop + .grant-upload__list {
+    display: none;
+  }
+}
+
+.grant-upload__thumb {
+  display: block;
+  flex: 0 0 auto;
+  height: $grant-upload-height;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-border-sm);
+  transition: transform 0.125s ease-in-out;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+
+  img {
+    display: block;
+    height: 100%;
+    width: auto;
+    max-width: none;
+  }
+}
+
+.grant-upload__empty {
+  flex: 1 1 auto;
+  align-self: center;
+  text-align: center;
+}
+
+.grant-upload__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  @include grant-hairline(top);
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+}
+
+// Step 3: the explainer and its call to action sit on one line where there's room.
+.grant-submit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  p {
+    flex: 1 1 22rem;
+  }
+
+  .btn {
+    flex: 0 0 auto;
+  }
 }
