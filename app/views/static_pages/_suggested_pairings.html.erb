@@ -69,7 +69,7 @@
         <div class="lg-hide m2"></div>
 
         <div class="flex flex-row justify-end xs-hide sm-hide" style="margin-top: 16px;">
-          <%= link_to ignore_suggested_pairing_path(pairing), method: :post, class: "btn bg-muted tooltipped tooltipped--n", "aria-label": "Ignore suggestion" do %>
+          <%= link_to ignore_suggested_pairing_path(pairing), data: { turbo_method: :post }, class: "btn bg-muted tooltipped tooltipped--n", "aria-label": "Ignore suggestion" do %>
             <%= inline_icon "view-close", size: 32 %>
             <span>Ignore</span>
           <% end %>
