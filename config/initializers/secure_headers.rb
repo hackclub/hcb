@@ -28,9 +28,10 @@
 #   * script-src 'unsafe-eval'   — Alpine.js evaluates its directive
 #     expressions with `new Function(...)`.
 #
-# Rollout: deploy first with `CSP_REPORT_ONLY=true` so violations are reported
-# (in Report-Only mode) but not enforced; confirm nothing legitimate is blocked,
-# then unset it to enforce.
+# Rollout: deploy first with `CSP_REPORT_ONLY=true`. In Report-Only mode the
+# policy blocks nothing; violations only surface in each browser's devtools
+# console, so walk the key flows (login, donations, card reveal, OAuth authorize,
+# HelpScout), confirm nothing legitimate is flagged, then unset it to enforce.
 
 # When assets are served from a CDN (config.asset_host), that origin serves our
 # JS/CSS/fonts and must be allow-listed wherever those load from.
@@ -107,11 +108,6 @@ csp = {
   # Some libraries (html-to-image, AppSignal) spin up blob-backed workers.
   worker_src: ["'self'", "blob:"],
 }
-
-# Send violation reports to a collector when one is configured.
-if (report_uri = ENV["CSP_REPORT_URI"].presence)
-  csp[:report_uri] = [report_uri]
-end
 
 report_only = ENV["CSP_REPORT_ONLY"].present?
 
