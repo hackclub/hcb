@@ -72,19 +72,27 @@ class LegalEntity < ApplicationRecord
                      .find_each(&:refresh_onboarding_state!)
   end
 
+  def payable?
+    pending_payable_requirements.empty?
+  end
+
   # Deliberately the latest *completed* form, not latest_tax_form. A pending form
   # has a NULL completed_at, which Postgres sorts first on a DESC order, so
   # latest_tax_form becomes the new form the moment a payee starts one. Keying
   # payability off that would strand every pending payment of anyone who took us up
   # on "start a new tax form". A newly submitted TIN only blocks payouts once it
   # completes and turns out to disagree, which is what mismatched_tax_form catches.
-  def payable?
+  def pending_payable_requirements
     form = latest_completed_tax_form
     requires_verification = form&.form_type == "W9" && tax_identification_number.predicted_to_be_over_threshold?
 
-    form.present? && mismatched_tax_form.nil? && entity_type_mismatched_tax_form.nil? &&
-      (form.taxbandits_tin_match_success? || !requires_verification) &&
-      !tin_banned? && !archived?
+    {
+      form_present: form.present?,
+      form_not_mismatched: mismatched_tax_form.nil? && entity_type_mismatched_tax_form.nil?,
+      form_verified: form.taxbandits_tin_match_success? || !requires_verification,
+      not_tin_banned: !tin_banned?,
+      not_archived: !archived?
+    }.reject { |k, done| done }.keys
   end
 
   def latest_completed_tax_form

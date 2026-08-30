@@ -1,0 +1,23 @@
+<p>Hello <%= @form.legal_entity.name %>,</p>
+
+<p>
+  Thank you for submitting your tax information to HCB.
+</p>
+
+<% if @form.legal_entity.payable? %>
+  <% if @form.legal_entity.default_payout_method.present? %>
+    <p>
+      <%= @form.legal_entity.person? ? "You" : (@form.legal_entity.name.presence || "Business") %>
+      can now receive payments from any organization on HCB.
+    </p>
+  <% else %>
+    <p>
+      Before <%= @form.legal_entity.person? ? "You" : (@form.legal_entity.name.presence || "Business") %>
+      can receive payments, you'll need to <%= link_to "add a payout method on HCB", legal_entity_url(@form.legal_entity) %>.
+    </p>
+  <% end %>
+<% else %>
+  
+<% end %>
+
+<p>You can see all of your payments in the <%= link_to "Pay tab", my_pay_url(legal_entity_id: @form.legal_entity.id) %>.</p>
