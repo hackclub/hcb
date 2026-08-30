@@ -1,63 +1,46 @@
 <%# locals: (card_grant:) %>
 
-<div class="card grant-facts">
-  <div class="grant-fact">
-    <p class="grant-fact__label m-0">Merchants</p>
-    <p class="grant-fact__value">
-      <% if card_grant.allowed_merchants.any? %>
-        <%= card_grant.allowed_merchant_names.to_sentence %>
-      <% else %>
-        Anywhere
-      <% end %>
-    </p>
-    <% if card_grant.allowed_merchants.any? %>
-      <p class="m-0 mt-1 muted font-mono text-sm">
-        IDs: <%= card_grant.allowed_merchants.join(", ") %>
+<div class="card">
+  <section class="grant-strip">
+    <div>
+      <span class="grant-strip__label">Merchants</span>
+      <p class="grant-strip__value">
+        <%= card_grant.allowed_merchants.any? ? card_grant.allowed_merchant_names.to_sentence : "Anywhere" %>
       </p>
-    <% end %>
-  </div>
+    </div>
 
-  <div class="grant-fact">
-    <p class="grant-fact__label m-0">Categories</p>
-    <p class="grant-fact__value">
-      <%= card_grant.allowed_category_names.to_sentence.presence || "Anything" %>
+    <div>
+      <span class="grant-strip__label">Categories</span>
+      <p class="grant-strip__value">
+        <%= card_grant.allowed_category_names.to_sentence.presence || "Anything" %>
+      </p>
+    </div>
+
+    <% if card_grant.keyword_lock.present? %>
+      <div>
+        <span class="grant-strip__label">Keyword</span>
+        <p class="grant-strip__value font-mono"><%= card_grant.keyword_lock %></p>
+      </div>
+    <% end %>
+
+    <div>
+      <span class="grant-strip__label">One time use</span>
+      <p class="grant-strip__value"><%= card_grant.one_time_use ? "Yes" : "No" %></p>
+    </div>
+
+    <div>
+      <span class="grant-strip__label">Unspent funds</span>
+      <p class="grant-strip__value">Return to <%= card_grant.event.name %></p>
+    </div>
+  </section>
+
+  <div class="bg-gray-100 p-4 py-2 rounded-b-lg -mb-4 -mx-4 mt-2 border-1 border-solid border-gray-200">
+    <p class="my-0">
+      <strong><%= @card_grant.event.name %> sets these limits, not HCB.</strong>
+    </p>
+    <p class="text-sm my-0 opacity-60">
+      To change these restrictions, message the <%= @card_grant.event.name %> team.
+      <strong>HCB cannot change your grant limits.</strong>
     </p>
   </div>
-
-  <div class="grant-fact">
-    <p class="grant-fact__label m-0">Deadline</p>
-    <p class="grant-fact__value"><%= format_date card_grant.expiration_at %></p>
-    <p class="m-0 mt-1 muted text-sm">Unspent funds return to <%= card_grant.event.name %>.</p>
-  </div>
-
-  <% if card_grant.one_time_use %>
-    <div class="grant-fact">
-      <p class="grant-fact__label m-0">One time use</p>
-      <p class="grant-fact__value">Yes</p>
-      <p class="m-0 mt-1 muted text-sm">The card freezes itself after your first purchase.</p>
-    </div>
-  <% end %>
-
-  <% if card_grant.keyword_lock.present? %>
-    <div class="grant-fact">
-      <p class="grant-fact__label m-0">Merchant keyword lock</p>
-      <p class="grant-fact__value font-mono"><%= card_grant.keyword_lock %></p>
-      <p class="m-0 mt-1 muted text-sm">Merchant names must contain this.</p>
-    </div>
-  <% end %>
-
-  <% if card_grant.purpose.present? %>
-    <div class="grant-fact">
-      <p class="grant-fact__label m-0">Purpose</p>
-      <p class="grant-fact__value"><%= card_grant.purpose %></p>
-    </div>
-  <% end %>
 </div>
-
-<p class="mt-2 mb-0 muted">
-  <i>
-    If there are any issues with the grant amount, spend by date, or allowed
-    merchants, please reach out to the <%= card_grant.event.name %> team. HCB
-    staff are unable to help with these requests.
-  </i>
-</p>

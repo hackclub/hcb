@@ -12,30 +12,12 @@
 <% footer = nil %>
 <% if awaiting_activation %>
   <% footer = capture do %>
-    <div class="flex flex-row items-center justify-start gap-2 lg:items-end">
-      <div class="flex items-start flex-col lg:flex-row lg:items-end justify-start gap-2">
-        <div class="flex flex-row items-end justify-start gap-2 w-min-content min-w-0 flex-shrink-0">
-          <h3 class="m-0 p-0">Card activation</h3>
-          <%= inline_icon "view-forward", class: "m-0 lg:self-center", size: 20 %>
-        </div>
-        <p class="m-0">We just need one more thing before you can start spending&nbsp;your&nbsp;grant.</p>
-      </div>
+    <div class="flex items-baseline flex-wrap gap-x-2">
+      <h3 class="m-0 p-0">Card activation</h3>
+      <p class="m-0 muted">One more thing before you can start spending.</p>
     </div>
   <% end %>
 <% end %>
-
-<div class="flex items-baseline flex-wrap gap-2 mt-4">
-  <% if organizer_signed_in? %>
-    <%= link_to "Grants", event_card_grant_overview_path(@card_grant.event), class: "breadcrumb" %>
-  <% else %>
-    <%= link_to "Grants", my_cards_path, class: "breadcrumb" %>
-  <% end %>
-  <span class="font-medium"><%= @card_grant.user.initial_name %></span>
-  <span class="flex-grow"></span>
-  <% if organizer_signed_in?(as: :member) %>
-    <%= render "card_grants/actions/edit", card_grant: @card_grant %>
-  <% end %>
-</div>
 
 <%= render partial: "card_grants/hero", locals: { card_grant: @card_grant, footer: } %>
 
@@ -64,40 +46,23 @@
     <%= render partial: "card_grants/invitation", locals: { card_grant: @card_grant } %>
   <% end %>
 <% elsif @card_grant.user.admin? || organizer_signed_in? || own %>
-  <% if stripe_card.present? %>
-    <% card_type = stripe_card.virtual? ? "Virtual" : "Physical" %>
-    <%= render "card_grants/section_heading",
-               number: 1,
-               title: own ? "Pay with your card" : "The card",
-               subtitle: if !own
-                           "#{card_type} Visa issued to #{@card_grant.user.first_name}."
-                         elsif stripe_card.virtual?
-                           "Virtual Visa — type these into any checkout page."
-                         else
-                           "Physical Visa — tap, swipe, or type these in at checkout."
-                         end %>
-
-    <%= render partial: "card_grants/card_details", locals: { card_grant: @card_grant } %>
-    <%= render partial: "card_grants/actions", locals: { card_grant: @card_grant } %>
-  <% end %>
-
-  <%= render "card_grants/section_heading",
-             number: stripe_card.present? ? 2 : 1,
-             title: "What you can spend it on" %>
-
+  <%= render "card_grants/section_heading", icon: "1", title: "What you can spend it on" %>
   <%= render partial: "card_grants/grant_details", locals: { card_grant: @card_grant } %>
+
+  <% if stripe_card.present? %>
+    <%= render "card_grants/section_heading", icon: "2", title: "Pay with your card" %>
+    <%= render partial: "card_grants/card_details", locals: { card_grant: @card_grant } %>
+  <% end %>
 
   <%= render partial: "card_grant/pre_authorizations/organizer_info", locals: { pre_authorization: @card_grant.pre_authorization, link_to_pre_authorization: true } if @card_grant.pre_authorization.present? && organizer_signed_in? %>
 
-  <%= render "card_grants/section_heading",
-             number: stripe_card.present? ? 3 : 2,
-             title: "Where it's gone" %>
-
+  <%= render "card_grants/section_heading", icon: "3", title: "Upload receipts for each purchase" %>
   <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes, ledger: @ledger, items: @items, heading: false } %>
 <% end %>
 
 <% if policy(@card_grant.comments.build).create? %>
-  <h2>Comments</h2>
+  <div class="mt-10 mb-10 block menu__divider"></div>
+  <%= render "card_grants/section_heading", icon: "", title: "Comments" %>
   <%= render "comments/list", comments: @card_grant.comments, show_blankslate: true %>
   <%= render "comments/form", commentable: @card_grant %>
 <% end %>
