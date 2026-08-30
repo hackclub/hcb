@@ -59,13 +59,31 @@ class Rack::Attack
   # counted by rack-attack and this throttle may be activated too
   # quickly. If so, enable the condition to exclude them from tracking.
 
+  # Must match the throttle below exactly, so anything it doesn't cover still
+  # falls back to req/ip. GET on this path routes to events#show.
+  csp_report_path = Rails.configuration.constants[:csp_violation_report_path]
+  csp_report = ->(req) { req.post? && req.path.chomp("/") == csp_report_path }
+
+  # Reject oversized reports here rather than in the controller: Rails
+  # materializes and parses the whole body before any controller code runs.
+  blocklist("oversized csp reports") do |req|
+    csp_report.call(req) && req.content_length.to_i > Rails.configuration.constants[:csp_violation_report_max_bytes]
+  end
+
   # Throttle all requests by IP (60rpm)
   #
   # Key: "rack::attack:#{Time.now.to_i/:period}:req/ip:#{req.ip}"
   throttle("req/ip", limit: 1000, period: 5.minutes) do |req|
+    # Browsers, not users, decide CSP report volume; throttled separately below.
     req.ip unless req.path.start_with?("/assets") ||
                   req.path.start_with?("/admin") ||
-                  req.path.start_with?("/stats")
+                  req.path.start_with?("/stats") ||
+                  csp_report.call(req)
+  end
+
+  # Key: "rack::attack:#{Time.now.to_i/:period}:csp-reports/ip:#{req.ip}"
+  throttle("csp-reports/ip", limit: 60, period: 1.minute) do |req|
+    req.ip if csp_report.call(req)
   end
 
   ### Prevent Brute-Force Login Attacks ###
