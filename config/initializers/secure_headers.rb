@@ -41,9 +41,10 @@ asset_host = ENV["ASSET_HOST"].presence
 # same-origin blob URL 302s to the S3 bucket's virtual-hosted host. Browsers
 # re-check CSP against the redirect target, so the bucket host must be allowed
 # for the iframes that preview receipts/PDFs (images already allow any https:).
-# Keys mirror `Credentials.fetch(:S3, ...)` (ENV takes precedence over creds).
-s3_bucket = ENV["S3__BUCKET"].presence
-s3_region = ENV["S3__REGION"].presence
+# Read the same S3 config storage.yml uses; Credentials (required in
+# config/application.rb) covers both ENV and Rails' encrypted credentials.
+s3_bucket = Credentials.fetch(:S3, :BUCKET).presence
+s3_region = Credentials.fetch(:S3, :REGION).presence
 s3_host = ("https://#{s3_bucket}.s3.#{s3_region}.amazonaws.com" if s3_bucket && s3_region)
 
 # CSP keyword sources must keep their surrounding single quotes, so they are
