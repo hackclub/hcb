@@ -59,13 +59,13 @@ class Rack::Attack
   # counted by rack-attack and this throttle may be activated too
   # quickly. If so, enable the condition to exclude them from tracking.
 
-  # Must match the throttle below exactly, so anything it doesn't cover still
-  # falls back to req/ip. GET on this path routes to events#show.
+  # Must match the csp-reports throttle below exactly, so anything it doesn't
+  # cover still falls back to req/ip.
   csp_report_path = Rails.configuration.constants[:csp_violation_report_path]
   csp_report = ->(req) { req.post? && req.path.chomp("/") == csp_report_path }
 
-  # Reject oversized reports here rather than in the controller: Rails
-  # materializes and parses the whole body before any controller code runs.
+  # Reject oversized reports here rather than in the controller: Rails buffers
+  # the whole body before any controller code runs.
   blocklist("oversized csp reports") do |req|
     csp_report.call(req) && req.content_length.to_i > Rails.configuration.constants[:csp_violation_report_max_bytes]
   end

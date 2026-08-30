@@ -12,7 +12,6 @@
 # Ships report-only: nothing is blocked until CSP_ENFORCE=true. Once reports are
 # quiet, flip the default below rather than relying on the variable forever.
 
-# Serves every JS and CSS bundle in production.
 asset_hosts = Array(ENV["ASSET_HOST"].presence)
 
 # Both endpoint shapes: the SDK uses the global one on us-east-1 (what production

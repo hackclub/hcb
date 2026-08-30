@@ -18,7 +18,7 @@ RSpec.describe "CSP Violation Reports", type: :request do
   end
 
   def post_report(body, content_type: "application/csp-report")
-    post "/csp-violation-report", params: body, headers: { "Content-Type" => content_type }
+    post Rails.configuration.constants[:csp_violation_report_path], params: body, headers: { "Content-Type" => content_type }
   end
 
   it "accepts an unauthenticated report and logs it" do
@@ -52,7 +52,7 @@ RSpec.describe "CSP Violation Reports", type: :request do
     post_report({ "blocked-uri" => "https://evil.example/#{'a' * 2_000}" }.to_json)
 
     expect(Rails.logger).to have_received(:warn) do |line|
-      expect(line.length).to be < 2_000
+      expect(line.length).to be < CspViolationReportsController::MAX_FIELD_CHARS + 200
     end
   end
 
