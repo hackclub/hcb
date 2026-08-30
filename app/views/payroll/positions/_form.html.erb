@@ -123,7 +123,8 @@
                 <%= form.label :manager_id, "Manager" %>
                 <span class="muted block">Responsible for approving invoices</span>
               </div>
-              <%= form.collection_select :manager_id, event.managers, :id, :name, value: current_user.id, include_blank: "No manager" %>
+              <%= form.collection_select :manager_id, event.managers, :id, :name,
+      { selected: position&.manager_id || current_user.id, include_blank: "No manager" } %>
             </div>
 
             <div class="menu__divider my-0"></div>
