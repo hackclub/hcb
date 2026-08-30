@@ -27,9 +27,6 @@ class DonationsController < ApplicationController
   # Rationale: the session doesn't work inside iframes (because of third-party cookies)
   skip_before_action :verify_authenticity_token, only: [:start_donation, :make_donation, :finish_donation]
 
-  # Allow embedding donation pages inside iframes. X-Frame-Options (set to
-  # SAMEORIGIN globally by secure_headers) has no "allow some origins" value, so
-  # we drop it here and let the CSP frame-ancestors directive open embedding up.
   before_action :allow_iframe_embedding, only: [:start_donation, :make_donation, :finish_donation]
 
   permissions_policy do |p|
