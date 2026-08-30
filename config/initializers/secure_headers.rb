@@ -36,11 +36,11 @@ csp = {
   script_src: ["'self'", "'unsafe-inline'", "'unsafe-eval'"] + %w[
     https://js.stripe.com https://*.js.stripe.com https://m.stripe.network
     https://cdn.plaid.com
-    https://cdn.docuseal.com
+    https://docuseal.com https://cdn.docuseal.com
     https://challenges.cloudflare.com
     https://beacon-v2.helpscout.net
     https://plausible.io
-    https://edge.fullstory.com
+    https://edge.fullstory.com https://rs.fullstory.com
     https://www.youtube.com
     https://unpkg.com
     https://cdnjs.cloudflare.com
@@ -50,10 +50,11 @@ csp = {
   style_src: ["'self'", "'unsafe-inline'"] + %w[
     https://fonts.googleapis.com
     https://cdnjs.cloudflare.com
+    https://cdn.jsdelivr.net
     https://unpkg.com
   ] + asset_hosts,
 
-  font_src: ["'self'", "data:"] + %w[https://fonts.gstatic.com https://assets.hackclub.com https://unpkg.com] + asset_hosts,
+  font_src: ["'self'", "data:"] + %w[https://fonts.gstatic.com https://assets.hackclub.com https://docuseal.co https://unpkg.com] + asset_hosts,
 
   # Blanket https: — images come from too many CDNs and user uploads to enumerate.
   img_src: ["'self'", "data:", "blob:", "https:"],
@@ -65,8 +66,9 @@ csp = {
     https://docuseal.com https://docuseal.co https://cdn.docuseal.com
     https://appsignal-endpoint.net
     https://challenges.cloudflare.com
-    https://beaconapi.helpscout.net https://chatapi.helpscout.net
-    https://*.fullstory.com
+    https://beaconapi.helpscout.net https://chatapi.helpscout.net wss://chatapi.helpscout.net
+    https://*.fullstory.com wss://*.fullstory.com
+    https://blog.hcb.hackclub.com https://icons.hackclub.com https://assets.hackclub.com
     https://*.cloudfront.net
     https://cdn.jsdelivr.net
     https://plausible.io
