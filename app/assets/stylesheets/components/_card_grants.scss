@@ -95,11 +95,7 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
   align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.375rem 0;
-
-  + div {
-    @include grant-hairline(top);
-  }
+  height: 26px;
 }
 
 .grant-section {
@@ -118,6 +114,8 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
   flex: 0 0 auto;
   width: 2rem;
   height: 2rem;
+  font-size: 17px;
+  font-weight: 900;
   border-radius: var(--radius-xl);
   background: rgba(map-get($palette, muted), 0.15);
   color: map-get($palette, slate);

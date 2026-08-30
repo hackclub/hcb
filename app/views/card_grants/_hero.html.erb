@@ -17,18 +17,19 @@
 
 <section class="card card--background-image grant-hero <%= manage ? "mt-2" : "mt-4" %>"
          style="<%= card_grant.event.background_image.attached? ? "--bg-image: url(#{url_for(card_grant.event.background_image).dump})" : "--bg-image: #{GeoPattern.generate(card_grant.stripe_card&.public_id || card_grant.public_id).to_data_uri}" %>">
-  <div class="flex items-center flex-wrap gap-x-3 gap-y-2 mb-3">
-    <p class="eyebrow m-0"><%= own ? "Your grant" : "Card grant" %></p>
-    <span class="badge ml-0 bg-<%= card_grant.status_badge_type %>">
-      <%= status_badge card_grant.status_badge_type %><%= card_grant.state_text %>
-    </span>
-    <% if card_grant.purpose.present? %>
-      <span class="muted"><%= card_grant.purpose %></span>
-    <% end %>
-  </div>
-
   <div class="grant-hero__grid">
     <div>
+      <div class="flex items-center flex-wrap gap-x-3 gap-y-2 mb-1">
+        <p class="eyebrow m-0"><%= own ? "Your grant" : "Card grant" %></p>
+        <span class="badge ml-0 bg-<%= card_grant.status_badge_type %>">
+          <%= card_grant.state_text %>
+        </span>
+        <% if card_grant.purpose.present? %>
+          <span class="muted"><%= card_grant.purpose %></span>
+        <% end %>
+      </div>
+
+
       <span class="grant-hero__amount"><%= render_money remaining %></span>
       <p class="mt-1 mb-3 muted">
         <%= remaining == total ? "to spend" : "left of #{render_money total}" %>
@@ -55,7 +56,7 @@
         </span>
       </div>
 
-      <div class="grant-meta mt-3">
+      <div class="grant-meta mt-2">
         <div>
           <span class="muted">Granted by</span>
           <%= link_to card_grant.event.name, card_grant.event %>
