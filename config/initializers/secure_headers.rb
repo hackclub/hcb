@@ -11,6 +11,7 @@
 #
 # Ships report-only: nothing is blocked until CSP_ENFORCE=true. Once reports are
 # quiet, flip the default below rather than relying on the variable forever.
+# CSP_REPORTING=off drops the report-uri directive without a deploy.
 
 asset_hosts = Array(ENV["ASSET_HOST"].presence)
 
@@ -85,9 +86,13 @@ csp = {
   ] + s3_hosts, # s3: receipt preview iframes use a self path that 302s to S3
 
   worker_src: ["'self'", "blob:"],
-
-  report_uri: [Rails.configuration.constants[:csp_violation_report_path]],
 }
+
+# Browsers stop sending reports when the directive goes away, so this is the
+# no-deploy lever if report volume becomes a problem.
+if ENV["CSP_REPORTING"] != "off"
+  csp[:report_uri] = [Rails.configuration.constants[:csp_violation_report_path]]
+end
 
 if Rails.env.development?
   localhost = %w[http://localhost:* http://127.0.0.1:*]

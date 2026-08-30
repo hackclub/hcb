@@ -62,7 +62,10 @@ class Rack::Attack
   # Must match the csp-reports throttle below exactly, so anything it doesn't
   # cover still falls back to req/ip.
   csp_report_path = Rails.configuration.constants[:csp_violation_report_path]
-  csp_report = ->(req) { req.post? && req.path.chomp("/") == csp_report_path }
+  csp_report = lambda do |req|
+    # Rails routes //path and path.format here too, so normalise before matching.
+    req.post? && req.path.sub(/\A\/+/, "/").chomp("/").sub(/\.[^.\/]*\z/, "") == csp_report_path
+  end
 
   # Reject oversized reports here rather than in the controller: Rails buffers
   # the whole body before any controller code runs.
@@ -84,6 +87,14 @@ class Rack::Attack
   # Key: "rack::attack:#{Time.now.to_i/:period}:csp-reports/ip:#{req.ip}"
   throttle("csp-reports/ip", limit: 60, period: 1.minute) do |req|
     req.ip if csp_report.call(req)
+  end
+
+  # A fleet-wide ceiling as well as a per-IP one: a policy that starts reporting
+  # on every page load is a volume problem no per-IP limit would catch. Set well
+  # above plausible real volume, since a shared bucket that abuse can saturate
+  # would suppress the reports this rollout depends on.
+  throttle("csp-reports/global", limit: 3_000, period: 1.minute) do |req|
+    "global" if csp_report.call(req)
   end
 
   ### Prevent Brute-Force Login Attacks ###

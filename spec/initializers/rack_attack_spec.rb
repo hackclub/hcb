@@ -112,8 +112,19 @@ RSpec.describe Rack::Attack, type: :request do
       expect(discriminator("csp-reports/ip", path, method: "POST")).to eq("203.0.113.7")
     end
 
-    it "covers the trailing-slash variant, which also routes to the controller" do
-      expect(discriminator("csp-reports/ip", "#{path}/", method: "POST")).to eq("203.0.113.7")
+    it "covers the path variants that also route to the controller" do
+      ["#{path}/", "#{path}.json"].each do |variant|
+        expect(discriminator("csp-reports/ip", variant, method: "POST")).to eq("203.0.113.7"), "expected #{variant} to be throttled"
+      end
+    end
+
+    # Rails routes a doubled slash to the same action. MockRequest.env_for reads
+    # "//x" as protocol-relative, so set the path Rack would actually see.
+    it "covers a doubled leading slash" do
+      request = request_for(path, method: "POST")
+      request.env["PATH_INFO"] = "/#{path}"
+
+      expect(Rack::Attack.throttles.fetch("csp-reports/ip").block.call(request)).to eq("203.0.113.7")
     end
 
     # GET on this path falls through to events#show, so it has to stay on the
@@ -138,6 +149,13 @@ RSpec.describe Rack::Attack, type: :request do
 
     it "ignores other paths" do
       expect(blocklisted?("oversized csp reports", "/branding", method: "POST", content_length: cap + 1)).to be false
+    end
+
+    it "is not bypassed by a doubled slash" do
+      request = request_for(path, method: "POST", content_length: cap + 1)
+      request.env["PATH_INFO"] = "/#{path}"
+
+      expect(Rack::Attack.blocklists.fetch("oversized csp reports").block.call(request)).to be_truthy
     end
   end
 end

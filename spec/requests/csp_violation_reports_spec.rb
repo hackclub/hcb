@@ -56,6 +56,24 @@ RSpec.describe "CSP Violation Reports", type: :request do
     end
   end
 
+  it "logs a repeated violation once per window, not once per page load" do
+    allow(Rails.logger).to receive(:warn).and_call_original
+    allow(Rails.cache).to receive(:write).and_return(true, false)
+
+    2.times { post_report(report) }
+
+    expect(Rails.logger).to have_received(:warn).with(/csp-violation/).once
+  end
+
+  # JSON.parse does not validate UTF-8, so this reached String#presence and 500'd.
+  it "survives invalid UTF-8 in a report field" do
+    body = %({"csp-report":{"blocked-uri":"https://evil.example/\xC3\x28\xFF"}}).dup.force_encoding("BINARY")
+
+    post_report(body)
+
+    expect(response).to have_http_status(:no_content)
+  end
+
   it "rejects a body that is not JSON" do
     post_report("not json")
 
