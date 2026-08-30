@@ -79,7 +79,11 @@ csp = {
     https://unpkg.com
   ] + Array(asset_host),
 
-  font_src: ["'self'", "data:"] + %w[https://fonts.gstatic.com] + Array(asset_host),
+  font_src: ["'self'", "data:"] + %w[
+    https://fonts.gstatic.com
+    https://assets.hackclub.com
+    https://d3hb14vkzrxvla.cloudfront.net
+  ] + Array(asset_host),
 
   # Images come from many Hack Club CDNs, Gravatar, Giphy, S3 receipts, etc.,
   # and the list changes often; allow any HTTPS image (plus data:/blob: for QR
@@ -91,8 +95,10 @@ csp = {
     https://*.plaid.com
     https://appsignal-endpoint.net
     https://challenges.cloudflare.com
-    https://beaconapi.helpscout.net https://chatapi.helpscout.net
+    https://*.helpscout.net wss://*.helpscout.net https://d3hb14vkzrxvla.cloudfront.net
     https://plausible.io
+    https://cdn.jsdelivr.net
+    https://blog.hcb.hackclub.com
   ] + Array(asset_host),
 
   frame_src: ["'self'"] + %w[
@@ -108,6 +114,13 @@ csp = {
   # Some libraries (html-to-image, AppSignal) spin up blob-backed workers.
   worker_src: ["'self'", "blob:"],
 }
+
+# In development the blog widget (iframe + unread-count fetch) points at a local
+# blog server instead of blog.hcb.hackclub.com.
+if Rails.env.development?
+  csp[:connect_src] += %w[http://localhost:3001]
+  csp[:frame_src]   += %w[http://localhost:3001]
+end
 
 report_only = ENV["CSP_REPORT_ONLY"].present?
 
