@@ -48,7 +48,7 @@ csp = {
     https://unpkg.com
   ] + Array(asset_host),
 
-  font_src: ["'self'", "data:"] + %w[https://fonts.gstatic.com] + Array(asset_host),
+  font_src: ["'self'", "data:"] + %w[https://fonts.gstatic.com https://assets.hackclub.com] + Array(asset_host),
 
   # Images come from many Hack Club CDNs, Gravatar, Giphy, S3 receipts, etc.,
   img_src: ["'self'", "data:", "blob:", "https:"],
@@ -59,6 +59,8 @@ csp = {
     https://appsignal-endpoint.net
     https://challenges.cloudflare.com
     https://beaconapi.helpscout.net https://chatapi.helpscout.net
+    https://*.cloudfront.net
+    https://cdn.jsdelivr.net
     https://plausible.io
   ] + Array(asset_host),
 
@@ -68,12 +70,18 @@ csp = {
     https://docuseal.com https://cdn.docuseal.com
     https://challenges.cloudflare.com
     https://www.youtube.com https://www.youtube-nocookie.com
-    https://blog.hcb.hackclub.com
+    https://*.hackclub.com
     https://links.taxbandits.io https://testlinks.taxbandits.io
   ] + Array(s3_host),
 
   worker_src: ["'self'", "blob:"],
 }
+
+# blogs run on different port, see blog_controller.js
+if Rails.env.development?
+  csp[:connect_src] += %w[http://localhost:3001]
+  csp[:frame_src]   += %w[http://localhost:3001]
+end
 
 SecureHeaders::Configuration.default do |config|
   config.hsts    = SecureHeaders::OPT_OUT
