@@ -152,7 +152,7 @@ module Tax
       return unless sent_with_taxbandits?
 
       submission = begin
-        submission = remote_taxbandits_submission
+        remote_taxbandits_submission
       rescue
         nil
       end
