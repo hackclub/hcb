@@ -60,10 +60,12 @@
     been banned from receiving payments from organizations on HCB.
   </p>
 <% elsif @legal_entity.completed_tax_form? && (mismatched = @legal_entity.mismatched_tax_form || @legal_entity.entity_type_mismatched_tax_form).present? %>
+  <% previous_tax_form = @legal_entity.latest_usable_tax_form %>
+  
   <% if @legal_entity.mismatched_tax_form.present? %>
     <p>
       You submitted a W8/W9 with a different TIN (SSN, EIN, or foreign TIN) than your previous
-      tax form for this legal entity (<%= masked_tin_tag @legal_entity.latest_usable_tax_form, viewable: show_tin %>).
+      tax form for this legal entity (<%= masked_tin_tag previous_tax_form, viewable: show_tin %>).
       Choose an option to continue:
     </p>
   <% else %>
