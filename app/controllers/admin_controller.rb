@@ -2,6 +2,7 @@
 
 class AdminController < Admin::BaseController
   include Admin::TransferApprovable
+  helper ReactOnRailsMigrationHelper
 
   def nav
     @nav = Admin::Nav.new(page_title: params[:title])
