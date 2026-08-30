@@ -1,0 +1,223 @@
+// The card grant detail page reads top-to-bottom as a guide: what you were
+// given, how to spend it, what the rules are, and where it went.
+
+.grant-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 0;
+
+  @media (min-width: 56em) {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+}
+
+.grant-hero__main {
+  padding: 1.5rem;
+}
+
+.grant-hero__aside {
+  padding: 1.5rem;
+  border-top: 1px solid rgba(200, 200, 200, 0.3);
+  background-color: rgba(map-get($palette, snow), 0.75);
+
+  @media (min-width: 56em) {
+    border-top: 0;
+    border-left: 1px solid rgba(200, 200, 200, 0.3);
+  }
+
+  html[data-dark='true'] & {
+    border-color: rgba(255, 255, 255, 0.125);
+    background-color: rgba(map-get($palette, dark), 0.4);
+  }
+}
+
+.grant-hero__amount {
+  margin: 0;
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+
+  @media (max-width: 32em) {
+    font-size: 2.25rem;
+  }
+}
+
+.grant-hero__date {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.125;
+  letter-spacing: -0.02em;
+}
+
+// A single bar: how much of the grant is still yours to spend.
+.grant-progress {
+  height: 6px;
+  border-radius: 999px;
+  background-color: rgba(map-get($palette, smoke), 0.8);
+  overflow: hidden;
+
+  html[data-dark='true'] & {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.grant-progress__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background-color: map-get($palette, success);
+  transition: width 0.25s ease-in-out;
+
+  &.grant-progress__fill--muted {
+    background-color: map-get($palette, muted);
+  }
+}
+
+// Numbered marker for each step of the page, echoing `.steps` without the list.
+.grant-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background-color: map-get($palette, black);
+  color: $white;
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+
+  html[data-dark='true'] & {
+    background-color: map-get($palette, smoke);
+    color: map-get($palette, black);
+  }
+}
+
+.grant-section__heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  margin: 2rem 0 0.75rem;
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+// Two panes divided by a hairline; the 1px grid gap is the divider.
+.grant-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1px;
+  padding: 0;
+  background-color: rgba(200, 200, 200, 0.3);
+
+  html[data-dark='true'] & {
+    background-color: rgba(255, 255, 255, 0.125);
+  }
+
+  // With nothing in the second pane, don't stretch the card across the page.
+  &.grant-split--single {
+    max-width: 24rem;
+  }
+
+  @media (min-width: 56em) {
+    grid-template-columns: minmax(0, 21rem) minmax(0, 1fr);
+
+    &.grant-split--single {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+}
+
+.grant-split__pane {
+  padding: 1.5rem;
+  background-color: var(--card-bg);
+}
+
+// Label / value / copy rows, e.g. the card & billing details.
+.grant-fields {
+  display: flex;
+  flex-direction: column;
+}
+
+.grant-field {
+  display: grid;
+  grid-template-columns: minmax(6rem, 11rem) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  padding: 0.625rem 0;
+  border-top: 1px solid rgba(200, 200, 200, 0.3);
+
+  &:first-child {
+    border-top: 0;
+  }
+
+  html[data-dark='true'] & {
+    border-color: rgba(255, 255, 255, 0.125);
+  }
+
+  @media (max-width: 32em) {
+    grid-template-columns: minmax(0, 1fr) auto;
+
+    > .grant-field__label {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+.grant-field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: map-get($palette, muted);
+}
+
+.grant-field__value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.grant-copy {
+  height: 30px !important;
+  min-height: 30px !important;
+  min-width: 4.5rem;
+  padding: 0 0.75rem !important;
+  font-size: 0.875rem;
+  color: map-get($palette, info);
+}
+
+// Hairline-separated grid of facts; the 1px gap doubles as the divider.
+.grant-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1px;
+  padding: 0;
+  background-color: rgba(200, 200, 200, 0.3);
+
+  html[data-dark='true'] & {
+    background-color: rgba(255, 255, 255, 0.125);
+  }
+}
+
+.grant-fact {
+  padding: 1.125rem 1.25rem;
+  background-color: var(--card-bg);
+}
+
+.grant-fact__label {
+  color: map-get($palette, muted);
+  font-size: 0.875rem;
+}
+
+.grant-fact__value {
+  margin: 0.125rem 0 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}

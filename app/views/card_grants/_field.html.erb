@@ -1,0 +1,18 @@
+<%# locals: (label:, value:, copy: nil, hint: nil, hint_icon: "info", hint_class: "info", monospace: false, mask: true) %>
+
+<div class="grant-field <%= "fs-mask" if mask %>">
+  <span class="grant-field__label">
+    <%= label %>
+    <% if hint.present? %>
+      <span class="<%= hint_class %> tooltipped tooltipped--e h-[18px]" aria-label="<%= hint %>">
+        <%= inline_icon hint_icon, size: 18, style: "position: unset;" %>
+      </span>
+    <% end %>
+  </span>
+  <span class="grant-field__value <%= "font-mono" if monospace %>"><%= value %></span>
+  <% if copy.present? %>
+    <%= copy_to_clipboard(copy, tooltip_direction: "w", class: "btn btn-small grant-copy", "data-clipboard-confirm-text-value": "Copied!") { "Copy" } %>
+  <% else %>
+    <span></span>
+  <% end %>
+</div>

@@ -1,0 +1,113 @@
+<%# locals: (card_grant:, footer: nil) %>
+
+<% own = card_grant.user == current_user %>
+<% total = card_grant.amount %>
+<% remaining = card_grant.balance %>
+<% remaining_fraction = total.positive? ? [[remaining.cents.to_f / total.cents, 0].max, 1].min : 0 %>
+<% days_left = (card_grant.expiration_at.to_date - Date.current).to_i %>
+<% spendable = card_grant.active? && !card_grant.pending_invite? %>
+
+<section class="card grant-hero mt-4">
+  <div class="grant-hero__main">
+    <div class="flex items-center flex-wrap gap-x-3 gap-y-1 mb-3">
+      <p class="eyebrow m-0"><%= own ? "Your grant" : "Card grant" %></p>
+      <span class="badge ml-0 bg-<%= card_grant.status_badge_type %> uppercase tracking-wide">
+        <%= status_badge card_grant.status_badge_type %><%= card_grant.state_text %>
+      </span>
+      <% if card_grant.purpose.present? %>
+        <span class="muted">for <%= card_grant.purpose %></span>
+      <% end %>
+    </div>
+
+    <div class="flex items-baseline flex-wrap gap-x-3 gap-y-1">
+      <p class="grant-hero__amount"><%= render_money remaining %></p>
+      <p class="m-0 muted">
+        <% if remaining == total %>
+          to spend
+        <% else %>
+          left to spend of <%= render_money total %>
+        <% end %>
+      </p>
+    </div>
+
+    <div class="grant-progress mt-4 mb-4">
+      <span class="grant-progress__fill <%= "grant-progress__fill--muted" unless spendable %>"
+            style="width: <%= number_to_percentage(remaining_fraction * 100, precision: 2) %>"></span>
+    </div>
+
+    <p class="m-0 secondary" style="max-width: 46ch">
+      <% if card_grant.pending_invite? %>
+        Activate the card below and you can start spending straight away.
+      <% elsif own %>
+        Spend it with the card below. You don't need to ask anyone first, and you
+        don't need to pay anything back.
+      <% else %>
+        <%= card_grant.user.first_name %> can spend this with the card issued to
+        them &mdash; no reimbursement paperwork on either side.
+      <% end %>
+    </p>
+
+    <% if card_grant.stripe_card&.canceled? %>
+      <p class="m-0 mt-2 muted"><i>
+        Refunds received after cancelation will be sent to <%= card_grant.event.name %>.
+        <% if card_grant.reimbursement_report.present? %>
+          The funds will not automatically be contributed towards the reimbursement report cap.
+        <% end %>
+      </i></p>
+    <% elsif card_grant.stripe_card&.frozen? %>
+      <p class="m-0 mt-2 muted"><i>
+        Refunds received while frozen will still process and be returned to the card.
+      </i></p>
+    <% end %>
+  </div>
+
+  <aside class="grant-hero__aside">
+    <p class="m-0 muted">Spend it by</p>
+    <div class="flex items-baseline flex-wrap gap-x-2 mt-1">
+      <p class="grant-hero__date"><%= format_date card_grant.expiration_at %></p>
+      <span class="muted">
+        <% if days_left.positive? %>
+          <%= pluralize days_left, "day" %> left
+        <% elsif days_left.zero? %>
+          today
+        <% else %>
+          <%= pluralize days_left.abs, "day" %> ago
+        <% end %>
+      </span>
+    </div>
+    <p class="mt-2 mb-0 muted">
+      Anything unspent after that date goes back to <%= card_grant.event.name %>.
+    </p>
+
+    <hr class="my-4 border-none h-[1px] bg-gray-200 dark:bg-neutral-700">
+
+    <div class="grant-fields">
+      <div class="flex items-baseline justify-between gap-4">
+        <span class="muted">Granted by</span>
+        <span class="text-right"><%= link_to card_grant.event.name, card_grant.event %></span>
+      </div>
+      <div class="flex items-baseline justify-between gap-4 mt-2">
+        <span class="muted">Granted to</span>
+        <span class="text-right"><%= user_mention card_grant.user %></span>
+      </div>
+      <div class="flex items-baseline justify-between gap-4 mt-2">
+        <span class="muted">Sent</span>
+        <span class="text-right font-medium tooltipped tooltipped--w" aria-label="<%= card_grant.created_at.to_formatted_s(:long) %>">
+          <%= time_ago_in_words card_grant.created_at %> ago
+        </span>
+      </div>
+      <% if organizer_signed_in? %>
+        <div class="flex items-baseline justify-between gap-4 mt-2">
+          <span class="muted">Sent by</span>
+          <span class="text-right"><%= user_mention card_grant.sent_by %></span>
+        </div>
+      <% end %>
+    </div>
+  </aside>
+
+  <% if footer.present? %>
+    <div class="card !shadow-none rounded-none border-top divide-secondary" style="grid-column: 1 / -1">
+      <%= footer %>
+    </div>
+  <% end %>
+</section>

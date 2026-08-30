@@ -1,0 +1,9 @@
+<%# locals: (number:, title:, subtitle: nil) %>
+
+<h2 class="grant-section__heading">
+  <span class="grant-step" aria-hidden="true"><%= number %></span>
+  <span><%= title %></span>
+  <% if subtitle.present? %>
+    <span class="muted font-normal text-base leading-snug"><%= subtitle %></span>
+  <% end %>
+</h2>
