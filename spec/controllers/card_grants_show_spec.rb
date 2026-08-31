@@ -19,8 +19,8 @@ RSpec.describe CardGrantsController do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Billing address")
       expect(response.body).to include("Show details")
-      expect(response.body).to include("Spending rules")
-      expect(response.body).to include("Transactions")
+      expect(response.body).to include("What you can spend it on")
+      expect(response.body).to include("Upload receipts for each purchase")
     end
 
     it "renders the activation prompt before the card exists" do
@@ -44,8 +44,8 @@ RSpec.describe CardGrantsController do
       get(:show, params: { id: card_grant.hashid })
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("The card")
-      expect(response.body).to include("Spending rules")
+      expect(response.body).to include("Pay with your card")
+      expect(response.body).to include("What you can spend it on")
       expect(response.body).not_to include("Billing address")
       expect(response.body).not_to include("Show details")
     end
