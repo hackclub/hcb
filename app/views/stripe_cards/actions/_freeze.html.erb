@@ -29,16 +29,11 @@
     </div>
   <% end %>
 <% elsif !stripe_card&.canceled? %>
-  <%= button_to freeze_stripe_card_path(stripe_card),
-                method: :post,
-                form_class: "contents",
-                class: "btn btn--list-item",
-                disabled: true,
-                data: { turbo: true, turbo_frame: "_top" } do %>
+  <button type="button" class="btn btn--list-item" disabled>
     <%= inline_icon "freeze" %>
     <div>
       <strong>Freeze</strong>
       <p class="text-sm opacity-60">This card cannot be frozen because it has not been activated</p>
     </div>
-  <% end %>
+  </button>
 <% end %>
