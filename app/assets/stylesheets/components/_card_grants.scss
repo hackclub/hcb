@@ -415,7 +415,6 @@ $grant-upload-height: 11.5rem;
   display: flex;
   flex-direction: column;
 
-  // `.btn--list-item` fills its whole cell by design; leave those alone.
   > .btn:not(.btn--list-item) {
     margin-top: auto;
     align-self: flex-start;

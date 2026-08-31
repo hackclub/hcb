@@ -3,10 +3,10 @@
 <%# TODO: point this at the real card grant help article. %>
 <% help_article_url = "https://help.hcb.hackclub.com/card-grants" %>
 
-<div class="py-2 px-4">
+<div class="p-2">
   <strong><%= label %></strong>
   <p class="text-sm opacity-60 mb-2 mt-1">
-    <%= subtitle.presence || "Contact the #{card_grant.event.name} team, see if you can split the payment, or buy the item and get reimbursed" %>
+    <%= subtitle.presence || "Contact the #{card_grant.event.name} team, or buy the item and get reimbursed" %>
   </p>
   <%= link_to "Learn more", help_article_url, target: "_blank", rel: "noopener", class: "btn" %>
 </div>
