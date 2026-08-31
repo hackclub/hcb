@@ -61,8 +61,23 @@
           <%= inline_icon "plus", size: 18 %>
         </div>
         <div class="text-left">
-          <p class="font-medium">Create new recipient</p>
-          <p class="text-sm muted">Add "<%= params[:q] %>" as a new payment recipient</p>
+          <p class="font-medium">Add "<%= params[:q] %>"</p>
+          <p class="text-sm muted">
+            We'll prefill the <%= params[:q].match?(/\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i) ? "email" : "name" %> and let you fill out the rest
+          </p>
+        </div>
+        <%= inline_icon "view-forward", class: "ml-auto muted" %>
+      </button>
+
+      <button type="button" class="btn btn--list-item border-t rounded-none w-full" data-action="payee-picker#showAddingFromSearch">
+        <div class="w-10 h-10 shrink-0 flex items-center justify-center muted">
+          <%= inline_icon "plus", class: "border-2 border-current border-dashed", style: "background: transparent!important", size: 18 %>
+        </div>
+        <div class="text-left">
+          <p class="font-medium">Enter details manually</p>
+          <p class="text-sm muted">
+            Create a new payment recipient
+          </p>
         </div>
         <%= inline_icon "view-forward", class: "ml-auto muted" %>
       </button>
