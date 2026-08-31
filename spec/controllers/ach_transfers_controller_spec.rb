@@ -101,6 +101,29 @@ describe AchTransfersController do
       expect(ach_transfer.invoiced_at).to eq(Date.new(2025, 1, 1))
     end
 
+    it "re-renders the form when payment_for is too long" do
+      user = create(:user)
+      event = create(:event, :with_positive_balance)
+      create(:organizer_position, user:, event:)
+
+      create_session(user, verified: true)
+
+      post(
+        :create,
+        params: {
+          event_id: event.friendly_id,
+          ach_transfer: {
+            **ach_transfer_params,
+            payment_for: "a" * 256,
+          }
+        }
+      )
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("is too long (maximum is 255 characters)")
+      expect(event.ach_transfers).to be_empty
+    end
+
     it "requires sudo mode if the amount is greater than 500" do
       user = create(:user)
       Flipper.enable(:sudo_mode_2015_07_21, user)
