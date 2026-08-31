@@ -14,48 +14,26 @@
 module FeeReimbursementService
   class Nightly
     def run
-      # Rescued per-record below — one org's Stripe hiccup shouldn't take down
-      # the whole run and, with it, the backstop loop that follows.
       FeeReimbursement.unprocessed.find_each(batch_size: 100) do |fee_reimbursement|
-        process_unprocessed(fee_reimbursement)
+        raise ArgumentError, "must be an unprocessed fee reimbursement only" unless fee_reimbursement.unprocessed?
+
+        amount_cents = fee_reimbursement.amount
+
+        if amount_cents.zero?
+          fee_reimbursement.update!(processed_at: Time.now)
+        else
+          topup = StripeTopup.create(
+            amount_cents:,
+            statement_descriptor: "HCB-#{local_hcb_code.short_code}",
+            description: "Fee reimbursement ##{fee_reimbursement.id}",
+            metadata: {
+              fee_reimbursement_id: fee_reimbursement.id,
+            }
+          )
+
+          fee_reimbursement.update!(stripe_topup_id: topup.id, processed_at: Time.now)
+        end
       end
-
-      # Backstop: catch any already-processed reimbursements that still lack a
-      # pending transaction (idempotent — no-ops for ones that already have one).
-      FeeReimbursement.missing_pending_transaction.find_each(batch_size: 100) do |fee_reimbursement|
-        create_canonical_pending_transaction(fee_reimbursement)
-      end
-    end
-
-    def process_unprocessed(fee_reimbursement)
-      raise ArgumentError, "must be an unprocessed fee reimbursement only" unless fee_reimbursement.unprocessed?
-
-      amount_cents = fee_reimbursement.amount
-
-      if amount_cents.zero?
-        fee_reimbursement.update!(processed_at: Time.now)
-      else
-        topup = StripeTopup.create(
-          amount_cents:,
-          statement_descriptor: "HCB-#{local_hcb_code.short_code}",
-          description: "Fee reimbursement ##{fee_reimbursement.id}",
-          metadata: {
-            fee_reimbursement_id: fee_reimbursement.id,
-          }
-        )
-
-        fee_reimbursement.update!(stripe_topup_id: topup.id, processed_at: Time.now)
-      end
-
-      create_canonical_pending_transaction(fee_reimbursement)
-    rescue => e
-      Rails.error.report(e)
-    end
-
-    def create_canonical_pending_transaction(fee_reimbursement)
-      ::FeeReimbursementService::CreateCanonicalPendingTransaction.new(fee_reimbursement_id: fee_reimbursement.id).run
-    rescue => e
-      Rails.error.report(e)
     end
 
     def hcb_code

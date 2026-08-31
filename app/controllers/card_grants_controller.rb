@@ -335,10 +335,6 @@ class CardGrantsController < ApplicationController
     redirect_to @card_grant, flash: { success: "Successfully disabled pre-authorization for this card grant." }
   end
 
-  def edit
-    authorize @card_grant
-  end
-
   private
 
   def set_card_grant
