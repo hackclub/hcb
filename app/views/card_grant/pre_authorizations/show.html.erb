@@ -1,5 +1,6 @@
 <% title "Grant to #{@card_grant.user.name}" %>
 <%= render "events/nav", selected: :transfers if organizer_signed_in? %>
+<%= render "users/nav", selected: :home unless organizer_signed_in? %>
 
 <%= turbo_stream_from @pre_authorization %>
 
@@ -53,7 +54,7 @@
 <%= form_with model: @pre_authorization, id: "pre_authorization_form", url: card_grant_pre_authorizations_path(@card_grant), method: :patch, data: { turbo: true } do |form| %>
   <div class="card">
     <% if draft %>
-      <div class="field m-0">
+      <div class="field flex items-center justify-between m-0">
         <%= form.label :product_url, "Product page URL" %>
         <%= form.text_field :product_url, required: true, placeholder: "https://example.com/product" %>
       </div>
@@ -98,7 +99,7 @@
 
 <%= render "card_grants/section_heading", icon: "3", title: "Submit for review" %>
 
-<div class="card grant-submit">
+<div class="card grant-submit mb-20">
   <p class="m-0 muted">
     Once you've provided the product link and uploaded the screenshot, our review process will screen your submission and activate your grant.
   </p>
@@ -106,6 +107,6 @@
   <% if draft %>
     <input type="submit" class="btn" value="Submit for review" form="pre_authorization_form">
   <% elsif @pre_authorization.submitted? %>
-    <input type="submit" class="btn bg-warning" value="Submitted…" form="pre_authorization_form" disabled>
+    <input type="submit" class="btn bg-warning" value="Submitted" form="pre_authorization_form" disabled>
   <% end %>
 </div>

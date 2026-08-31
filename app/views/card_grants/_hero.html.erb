@@ -73,10 +73,9 @@
       </div>
     </div>
   </div>
-
-  <% if footer.present? %>
-    <div class="card__banner card__banner--bottom card__darker pt2 pb2 mt-4">
-      <%= footer %>
-    </div>
-  <% end %>
 </section>
+<% if footer.present? %>
+  <div class="card mt-2">
+    <%= footer %>
+  </div>
+<% end %>
