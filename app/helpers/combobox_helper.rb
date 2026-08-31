@@ -34,7 +34,7 @@ module ComboboxHelper
     case selected
     when nil then []
     when Hash then selected.values_at(:value, :label)
-    else [selected.id, selected.to_combobox_display]
+    else [selected.id, selected.to_combobox_display(admin: admin_signed_in?)]
     end
   end
 end

@@ -435,7 +435,7 @@ class AdminController < Admin::BaseController
              end
 
     render json: @users.map { |user|
-      { value: user.id.to_s, label: user.to_combobox_display, sublabel: "#{user.email} · ID #{user.id}" }
+      { value: user.id.to_s, label: user.to_combobox_display(admin: admin_signed_in?), sublabel: "#{user.email} · ID #{user.id}" }
     }
   end
 
