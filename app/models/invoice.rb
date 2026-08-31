@@ -153,7 +153,7 @@ class Invoice < ApplicationRecord
 
   has_many :line_items, -> { order(:id) }, class_name: "Invoice::LineItem", inverse_of: :invoice, dependent: :destroy
 
-  has_one :personal_transaction, class_name: "HcbCode::PersonalTransaction", required: false
+  has_one :personal_transaction, required: false
   has_one_attached :manually_marked_as_paid_attachment
   validates :manually_marked_as_paid_attachment, size: { less_than_or_equal_to: 20.megabytes }, if: -> { attachment_changes["manually_marked_as_paid_attachment"].present? }
 
