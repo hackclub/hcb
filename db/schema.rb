@@ -1665,12 +1665,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_30_120000) do
   end
 
   create_table "legal_entities", force: :cascade do |t|
-    t.string "address_city"
-    t.string "address_country"
-    t.string "address_line1"
-    t.string "address_line2"
-    t.string "address_postal_code"
-    t.string "address_state"
     t.datetime "archived_at"
     t.string "banned_reason"
     t.datetime "created_at", null: false
