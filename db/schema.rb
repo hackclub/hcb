@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_27_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_30_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -221,7 +221,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_120000) do
     t.datetime "created_at", null: false
     t.integer "expires_in"
     t.inet "ip_address"
-    t.string "refresh_token"
     t.text "refresh_token_bidx"
     t.text "refresh_token_ciphertext"
     t.datetime "revoked_at"
@@ -1272,7 +1271,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_120000) do
 
   create_table "g_suite_accounts", force: :cascade do |t|
     t.datetime "accepted_at", precision: nil
-    t.text "address"
+    t.text "address", null: false
     t.text "backup_email"
     t.datetime "created_at", precision: nil, null: false
     t.bigint "creator_id"
@@ -1492,7 +1491,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_120000) do
     t.bigint "payment_recipient_id"
     t.string "recipient_email"
     t.string "recipient_name"
-    t.bigint "reissued_for_id"
     t.boolean "send_email_notification", default: false
     t.datetime "updated_at", null: false
     t.bigint "user_id"
@@ -1500,7 +1498,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_120000) do
     t.index ["column_id"], name: "index_increase_checks_on_column_id", unique: true
     t.index ["event_id"], name: "index_increase_checks_on_event_id"
     t.index ["payment_recipient_id"], name: "index_increase_checks_on_payment_recipient_id"
-    t.index ["reissued_for_id"], name: "index_increase_checks_on_reissued_for_id"
     t.index ["user_id"], name: "index_increase_checks_on_user_id"
   end
 
@@ -1668,12 +1665,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_120000) do
   end
 
   create_table "legal_entities", force: :cascade do |t|
-    t.string "address_city"
-    t.string "address_country"
-    t.string "address_line1"
-    t.string "address_line2"
-    t.string "address_postal_code"
-    t.string "address_state"
     t.datetime "archived_at"
     t.string "banned_reason"
     t.datetime "created_at", null: false
@@ -3160,7 +3151,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_120000) do
   add_foreign_key "hcb_codes", "ledger_items", on_delete: :nullify
   add_foreign_key "increase_account_numbers", "events"
   add_foreign_key "increase_checks", "events"
-  add_foreign_key "increase_checks", "increase_checks", column: "reissued_for_id"
   add_foreign_key "increase_checks", "users"
   add_foreign_key "invoices", "fee_reimbursements"
   add_foreign_key "invoices", "invoice_payouts", column: "payout_id"
