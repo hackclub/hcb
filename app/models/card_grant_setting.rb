@@ -36,8 +36,6 @@ class CardGrantSetting < ApplicationRecord
 
   belongs_to :event
 
-  # Left unset so that an explicit `false` is distinguishable from "not
-  # specified", which mirrors `reimbursement_conversions_enabled` instead.
   attribute :allow_reimbursement_report, :boolean, default: nil
   before_validation :apply_reimbursement_report_default, on: :create
 
