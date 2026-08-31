@@ -1,7 +1,5 @@
 import { Controller } from '@hotwired/stimulus'
 
-// Live "N more words required" hint for the application description, and the
-// matching validation message so a short description can't be submitted.
 export default class extends Controller {
   static targets = ['input', 'hint']
   static values = {
