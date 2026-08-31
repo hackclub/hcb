@@ -35,6 +35,12 @@ class CardGrantSetting < ApplicationRecord
   has_paper_trail
 
   belongs_to :event
+
+  # Left unset so that an explicit `false` is distinguishable from "not
+  # specified", which mirrors `reimbursement_conversions_enabled` instead.
+  attribute :allow_reimbursement_report, :boolean, default: nil
+  before_validation :apply_reimbursement_report_default, on: :create
+
   validates :event, uniqueness: true
   validate :at_least_one_acceptance_method
   serialize :merchant_lock, coder: CommaSeparatedCoder # convert comma-separated merchant list to an array
@@ -66,6 +72,12 @@ class CardGrantSetting < ApplicationRecord
   end
 
   private
+
+  def apply_reimbursement_report_default
+    return unless allow_reimbursement_report.nil?
+
+    self.allow_reimbursement_report = reimbursement_conversions_enabled
+  end
 
   def at_least_one_acceptance_method
     unless allow_stripe_card? || allow_reimbursement_report?
