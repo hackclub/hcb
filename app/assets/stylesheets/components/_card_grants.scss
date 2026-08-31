@@ -406,3 +406,18 @@ $grant-upload-height: 11.5rem;
     flex: 0 0 auto;
   }
 }
+
+// Controls grid. Headings and descriptions vary in length, so each cell is a
+// column that pushes its button to the bottom — the buttons line up across the
+// row instead of floating at whatever height the copy above them ends.
+// `> div:not(.modal)` skips the modals some action partials render as siblings.
+.grant-controls > div:not(.modal) {
+  display: flex;
+  flex-direction: column;
+
+  // `.btn--list-item` fills its whole cell by design; leave those alone.
+  > .btn:not(.btn--list-item) {
+    margin-top: auto;
+    align-self: flex-start;
+  }
+}

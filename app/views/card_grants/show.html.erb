@@ -56,7 +56,7 @@
 
   <%= render partial: "card_grant/pre_authorizations/organizer_info", locals: { pre_authorization: @card_grant.pre_authorization, link_to_pre_authorization: true } if @card_grant.pre_authorization.present? && organizer_signed_in? %>
 
-  <%= render "card_grants/section_heading", icon: "3", title: "Upload receipts for each purchase" %>
+  <%= render "card_grants/section_heading", icon: "3", title: "Upload receipts for each purchase (required)" %>
   <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes, ledger: @ledger, items: @items, heading: false } %>
 <% end %>
 
