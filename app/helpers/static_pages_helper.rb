@@ -13,7 +13,7 @@ module StaticPagesHelper
             else
               content_tag(:div, "") # Empty div if no badge is present
             end
-    pin = inline_icon("pin", class: "pin transition-opacity group-hover:opacity-100 absolute top-0 right-0", size: 24, ':color': "isPinned($el.closest('a').parentElement.id) ? 'orange' : 'var(--muted)'", '@click.prevent': "pin($el.closest('a').parentElement.id, $el.closest('.grid').id)", ":class": "isPinned($el.closest('a').parentElement.id) ? 'opacity-100' : 'opacity-0'")
+    pin = inline_icon("pin", class: "pin transition-opacity group-hover:opacity-100 absolute top-0 right-0 opacity-0", size: 24, color: "var(--muted)", "data-pinnable-cards-pin": "", "data-action": "click->pinnable-cards#toggle")
     content_tag(:div, id: options[:id] || "card-#{name.parameterize}", class: "group relative") do
       link_to content_tag(:div,
                           [

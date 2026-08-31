@@ -14,7 +14,7 @@
 <button id="linkButton">Begin</button>
 
 <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
-<script>
+<script nonce="<%= content_security_policy_script_nonce %>">
 var linkHandler = Plaid.create({
   selectAccount: true,
   env: <%= @link_env.to_json.html_safe %>,

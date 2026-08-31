@@ -99,7 +99,7 @@
   <% end %>
 </section>
 
-<section data-behavior="wise_transfer_payout_method_inputs" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::WiseTransfer) %>" x-data="{ currency: <%= payout_method.try(:currency) ? "'#{payout_method.currency}'" : "null" %>, amount: null, account_type: <%= payout_method.try(:account_type) ? "'#{payout_method.account_type}'" : "null" %>, use_same_email_for_interac: <%= payout_method.try(:use_same_email_for_interac) ? "'#{payout_method.use_same_email_for_interac}'" : "false" %>, email: null }">
+<section data-behavior="wise_transfer_payout_method_inputs" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::WiseTransfer) %>">
   <%= form.fields_for :payout_method_wise_transfer, detail_for.call(LegalEntity::PayoutMethod::WiseTransfer) do |form| %>
     <p class="muted mt-2 mb-5">
       We've integrated Wise into HCB to offer international reimbursements to over 100 countries. HCB never charges fees on reimbursements, however Wise will charge processing fees to the organization reimbursing you. An account with Wise is not required; funds will be sent directly via a local bank transfer.
@@ -110,7 +110,7 @@
 
     <div class="field">
       <%= form.label :currency, "Currency" %>
-      <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { disabled: true }, { "@change" => "currency = $event.target.value;" } %>
+      <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { disabled: true }, { data: { conditional_fields_key: "currency", action: "conditional-fields#update" } } %>
     </div>
 
     <%= form.hidden_field :wise_recipient_id, value: "" %>
@@ -133,23 +133,8 @@
 <section
   data-behavior="ach_transfer_payout_method_inputs"
   class="<%= "hidden" unless ach %>"
-  x-data="
-  {
-    routingNumber: '<%= routing_display %>',
-    accountNumber: '<%= account_display %>',
-    editing: <%= ach_errored %>,
-    toggle() {
-      if(!this.editing) {
-        this.routingNumber = '';
-        this.accountNumber = '';
-        this.editing = true;
-      } else if (this.routingNumber == '' && this.accountNumber == '') {
-        this.editing = false;
-        this.routingNumber = '<%= ach_errored ? "" : routing_display %>';
-        this.accountNumber = '<%= ach_errored ? "" : account_display %>';
-      }
-    }
-  }">
+  data-controller="masked-fields"
+  data-masked-fields-editing-value="<%= ach_errored %>">
   <%= form.fields_for :payout_method_ach_transfer, ach || LegalEntity::PayoutMethod::AchTransfer.new do |form| %>
     <p class="muted mt-2 mb-5">
       ACH transfers can take between 1 and 3 business days to arrive in your bank account. They're the fastest option for receiving reimbursements in the United States but are not supported internationally.
@@ -163,11 +148,8 @@
       <%= form.text_field :routing_number,
                           placeholder: "123456789",
                           class: "fs-mask",
-                          "@focus": "toggle()",
-                          "@blur": "toggle()",
-                          "x-model": "routingNumber",
-                          data: { action: "input->external-validation#validate" },
-                          value: "" %>
+                          data: { action: "input->external-validation#validate focus->masked-fields#toggle blur->masked-fields#toggle", masked_fields_target: "field", masked_restore: (ach_errored ? "" : routing_display) },
+                          value: routing_display %>
       <span class="muted" data-external-validation-target="hint"></span>
     </div>
 
@@ -176,15 +158,13 @@
       <%= form.text_field :account_number,
                           placeholder: "0913338883",
                           class: "fs-mask",
-                          "@focus": "toggle()",
-                          "@blur": "toggle()",
-                          "x-model": "accountNumber",
-                          value: "" %>
+                          data: { action: "focus->masked-fields#toggle blur->masked-fields#toggle", masked_fields_target: "field", masked_restore: (ach_errored ? "" : account_display) },
+                          value: account_display %>
     </div>
 
     <% unless embedded %>
       <div class="actions inline-block mt1">
-        <%= form.submit "Save", ':disabled': "!editing", 'x-transition.duration.500ms': "" %>
+        <%= form.submit "Save", data: { masked_fields_target: "submit" } %>
       </div>
     <% end %>
   <% end %>

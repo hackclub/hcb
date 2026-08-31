@@ -1,4 +1,4 @@
-<script type="text/javascript">
+<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
   !function(e,t,n){
     function a(){
       var e=t.getElementsByTagName("script")[0],
@@ -15,6 +15,6 @@
   }(window,document,window.Beacon||function(){});
 </script>
 
-<script type="text/javascript">
+<script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
   window.Beacon('init', '<%= Credentials.fetch(:HELPSCOUT, :BEACON_ID) %>')
 </script>

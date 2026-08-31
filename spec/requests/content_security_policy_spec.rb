@@ -26,6 +26,23 @@ RSpec.describe "Content Security Policy", type: :request do
     expect(response.headers["Content-Security-Policy"]).to be_nil
   end
 
+  it "no longer needs the unsafe keywords, now that Alpine and inline handlers are gone" do
+    get start_donation_donations_path(event.slug)
+
+    expect(sources_for("script-src")).not_to include("'unsafe-inline'", "'unsafe-eval'")
+  end
+
+  it "nonces the inline scripts it still ships" do
+    get start_donation_donations_path(event.slug)
+
+    nonce = sources_for("script-src").grep(/\A'nonce-/).first
+    expect(nonce).to be_present, "script-src carries no nonce"
+
+    # Turbo copies this onto scripts it re-creates for frame and stream
+    # responses, so it has to match the header.
+    expect(response.body).to include(%(<meta name="csp-nonce" content="#{nonce[/\A'nonce-(.*)'\z/, 1]}">))
+  end
+
   it "points violations at the endpoint that logs them" do
     get root_path
 

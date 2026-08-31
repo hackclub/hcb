@@ -49,21 +49,24 @@
 
   <% if @event.present? && !policy(@event).create_transfer? %>
     <%= render partial: "events/unauthorized_callout",
-      locals: { action: "send a check" } %>
+               locals: { action: "send a check" } %>
   <% end %>
 <% end %>
 
 <%= form_with(model: [@event, @check], local: true,
-  data: { controller: "extraction", extraction_target: "form" },
-  html: {
-    "x-data" => "check(#{({
-      payment_recipient: (@check.payment_recipient.to_safe_hash if @check.payment_recipient&.event&.== @check.event),
-      editing: @check.address_line1.present?,
-    }.to_json)})"
+  data: {
+    controller: "extraction payment-recipient conditional-fields",
+    extraction_target: "form",
+    action: "payment-recipient:set->conditional-fields#set",
+    payment_recipient_recipient_value: (@check.payment_recipient.to_safe_hash if @check.payment_recipient&.event&.== @check.event).to_json,
+    payment_recipient_editing_value: @check.address_line1.present?,
+    payment_recipient_fields_value: { increase_check_recipient_email: "email", increase_check_address_line1: "address_line1", increase_check_address_line2: "address_line2", increase_check_address_city: "address_city", increase_check_address_state: "address_state", increase_check_address_zip: "address_zip" }.to_json,
+    payment_recipient_focus_value: "increase_check_address_line1",
+    conditional_fields_state_value: { recipient: "", editing: false }.to_json
   }) do |form| %>
   <%= form_errors(@check, "check", "We couldn't send this") %>
 
-  <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient?.id" %>
+  <%= form.hidden_field :payment_recipient_id, data: { payment_recipient_target: "id" } %>
 
   <div data-scroll-seek-target="section" class="lg:-mt-8">
     <h3 class="mb-2" id="contact-information">Recipient details</h3>
@@ -91,13 +94,13 @@
               click@document->menu#close
               keydown@document->menu#keydown
               input->text-filter#query
+              input->payment-recipient#clear
             ",
             menu_target: "toggle",
+            payment_recipient_target: "name",
           },
           maxlength: 250,
-          class: "!max-w-full",
-          "x-ref" => "name_input",
-          "@input" => "payment_recipient = null" %>
+          class: "!max-w-full" %>
 
         <% if organizer_signed_in? && @event.payment_recipients.where(payment_model: "IncreaseCheck").any? %>
           <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
@@ -106,9 +109,8 @@
                 <button
                   type="button"
                   class="menu__action flex justify-between flex-auto mr1"
-                  data-action="input#focus menu#close"
-                  data-recipient="<%= payment_recipient.to_safe_json %>"
-                  @click="payment_recipient = JSON.parse($el.dataset.recipient)">
+                  data-action="payment-recipient#select input#focus menu#close"
+                  data-recipient="<%= payment_recipient.to_safe_json %>">
                   <span class="truncate"><%= payment_recipient.name %></span>
                   <span class="muted ml1"><%= payment_recipient.address_city %>, <%= payment_recipient.address_state %></span>
                 </button>
@@ -134,7 +136,7 @@
 
       <%= render "events/transfers/notify_recipient", form: form, disabled: disabled %>
 
-      <template x-if="!payment_recipient || editing">
+      <template data-conditional-fields-when='[{"any":[{"key":"recipient","blank":true},{"key":"editing","present":true}]}]'>
         <div class="flex flex-col gap-3">
           <div>
             <%= form.label :address_line1,
@@ -197,34 +199,34 @@
         </div>
       </template>
 
-      <template x-if="payment_recipient && !editing">
+      <template data-conditional-fields-when='[{"key":"recipient","present":true},{"key":"editing","blank":true}]'>
         <div class="flex flex-col gap-3">
           <button type="button"
             class="text-muted cursor-pointer select-none tooltipped tooltipped--w bg-transparent border-none absolute top-3 right-3"
             aria-label="Edit address details"
-            @click="editing = true">
+            data-action="payment-recipient#edit">
             <%= inline_icon "pen", size: 18 %>
           </button>
           <div>
             <label>Street address (where we're mailing it to)</label>
             <div class="flex items-center gap-2">
-              <input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.address_line1">
-              <input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.address_line2">
+              <input disabled class="!text-muted bg-transparent" type="text" data-payment-recipient-summary="address_line1">
+              <input disabled class="!text-muted bg-transparent" type="text" data-payment-recipient-summary="address_line2">
             </div>
           </div>
           <div class="flex gap-2">
             <div class="flex-auto">
               <label>City</label>
-              <input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.address_city">
+              <input disabled class="!text-muted bg-transparent" type="text" data-payment-recipient-summary="address_city">
             </div>
             <div class="flex-auto">
               <label>State</label>
-              <input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.address_state">
+              <input disabled class="!text-muted bg-transparent" type="text" data-payment-recipient-summary="address_state">
             </div>
           </div>
           <div class="flex items-center justify-between">
             <label>ZIP</label>
-            <input disabled class="!max-w-[150px] !text-muted bg-transparent" type="text" :value="payment_recipient.address_zip">
+            <input disabled class="!max-w-[150px] !text-muted bg-transparent" type="text" data-payment-recipient-summary="address_zip">
           </div>
           <div class="flex items-center justify-between">
             <label>Country</label>

@@ -25,7 +25,7 @@
 
           <div data-menu-target="content" class="menu__content menu__content--2 text-sm">
             <div data-controller="file-upload" class="justify-center">
-              <%= form.file_field :background_image, accept: "image/png,image/jpeg", data: { file_upload_target: "input" }, oninput: "document.getElementById('event_background_image').files = this.files" %>
+              <%= form.file_field :background_image, accept: "image/png,image/jpeg", data: { file_upload_target: "input", action: "input->mirror-files#mirror", mirror_files_to_value: "event_background_image" } %>
               <button data-file-upload-target="preview" type="button"></button>
               <div data-file-upload-target="clear"></div>
             </div>
@@ -57,7 +57,7 @@
             </button>
             <div data-menu-target="content" class="menu__content menu__content--2 text-sm">
               <div data-controller="file-upload" class="justify-center">
-                <%= form.file_field :logo, accept: "image/png,image/jpeg", disabled:, data: { file_upload_target: "input" }, oninput: "document.getElementById('event_logo').files = this.files" %>
+                <%= form.file_field :logo, accept: "image/png,image/jpeg", disabled:, data: { file_upload_target: "input", action: "input->mirror-files#mirror", mirror_files_to_value: "event_logo" } %>
                 <button data-file-upload-target="preview" type="button"></button>
                 <div data-file-upload-target="clear"></div>
               </div>
@@ -239,12 +239,12 @@
       </li>
     </ul>
     <%= form.label :slug, "Organization URL" %>
-    <div class="input flex mt1" onclick="this.querySelector('input').focus()" tabindex="0" style="gap: 0.15rem">
+    <div class="input flex mt1" data-controller="focus" data-action="click->focus#focus" tabindex="0" style="gap: 0.15rem">
       <span class="secondary flex items-center opacity-70 select-none" style="gap: 0.15rem">
         <span>hcb.hackclub.com</span>
         <span>/</span>
       </span>
-      <%= form.text_field :slug, class: "!p-0 !border-none !shadow-none min-h-auto", placeholder: event.persisted? ? event.name.parameterize : nil, data: { action: "input->external-validation#validate" }, disabled: %>
+      <%= form.text_field :slug, class: "!p-0 !border-none !shadow-none min-h-auto", placeholder: event.persisted? ? event.name.parameterize : nil, data: { action: "input->external-validation#validate", focus_target: "element" }, disabled: %>
     </div>
     <span data-external-validation-target="hint" style="grid-column-start: 2"></span>
     <div class="actions">

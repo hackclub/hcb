@@ -12,11 +12,6 @@
   resolved "https://registry.yarnpkg.com/@alloc/quick-lru/-/quick-lru-5.2.0.tgz#7bf68b20c0a350f936915fcae06f58e32007ce30"
   integrity sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==
 
-"@alpinejs/persist@^3.15.0":
-  version "3.15.0"
-  resolved "https://registry.yarnpkg.com/@alpinejs/persist/-/persist-3.15.0.tgz#b6b2cd51246af8c730d3bdd09844bd1b381cc786"
-  integrity sha512-SmW1DWn9FRflfPqZZtpTq+2uXDq/ohbSiKmYg6HXX1UxQnsaSkTT0HT72SQcbqOC3WmIUF28CberBnwiWoqmpw==
-
 "@appsignal/javascript@=1.6.0":
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/@appsignal/javascript/-/javascript-1.6.0.tgz#cce05f14f8a5b950c10b6fdf60e3abf55b402111"
@@ -1692,18 +1687,6 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@vue/reactivity@~3.1.1":
-  version "3.1.5"
-  resolved "https://registry.npmjs.org/@vue/reactivity/-/reactivity-3.1.5.tgz"
-  integrity sha512-1tdfLmNjWG6t/CsPldh+foumYFo3cpyCHgBYQ34ylaMsJ+SNHQ1kApMIa8jN+i593zQuaw3AdWH0nJTARzCFhg==
-  dependencies:
-    "@vue/shared" "3.1.5"
-
-"@vue/shared@3.1.5":
-  version "3.1.5"
-  resolved "https://registry.npmjs.org/@vue/shared/-/shared-3.1.5.tgz"
-  integrity sha512-oJ4F3TnvpXaQwZJNF3ZK+kLPHKarDmJjJ6jyzVNDKH9md1dptjC7lWR//jrGuLdek/U6iltWxqAnYOu8gCiOvA==
-
 "@webassemblyjs/ast@1.14.1", "@webassemblyjs/ast@^1.14.1":
   version "1.14.1"
   resolved "https://registry.yarnpkg.com/@webassemblyjs/ast/-/ast-1.14.1.tgz#a9f6a07f2b03c95c8d38c4536a1fdfb521ff55b6"
@@ -1898,13 +1881,6 @@ ajv@^8.0.0, ajv@^8.9.0:
     json-schema-traverse "^1.0.0"
     require-from-string "^2.0.2"
     uri-js "^4.4.1"
-
-alpinejs@^3.15.0:
-  version "3.15.0"
-  resolved "https://registry.yarnpkg.com/alpinejs/-/alpinejs-3.15.0.tgz#f65e0a4683f28718910e0319ae25301533ee1e7d"
-  integrity sha512-lpokA5okCF1BKh10LG8YjqhfpxyHBk4gE7boIgVHltJzYoM7O9nK3M7VlntLEJGsVmu7U/RzUWajmHREGT38Eg==
-  dependencies:
-    "@vue/reactivity" "~3.1.1"
 
 ansi-regex@^5.0.1:
   version "5.0.1"

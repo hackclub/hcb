@@ -16,15 +16,16 @@
 <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}", class: "mt-7", data: { action: "input->application-autosave#save", "application-autosave-target": "form" } do |form| %>
   <div
     class="card card--outline mb-6"
-    x-data="application_project_info({ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>', teenager: '<%= @application.teen_led? ? "true" : "false" %>', committed: '<%= @application.committed_amount %>', description: '<%= @application.description %>' })">
+    data-controller="conditional-fields"
+    data-conditional-fields-state-value="<%= { has_website: @application.website_url.present? ? "true" : "false", has_political: @application.political_description.present? ? "true" : "false", committed: @application.committed_amount.to_s }.to_json %>">
     <div class="field">
       <%= form.label :name do %>
         Project name <span class="text-primary">*</span>
       <% end %>
-      <%= form.text_field :name, placeholder: "Leosia Hacks", class: "w-full !max-w-full", required: true, "x-bind:disabled": "teenager == null" %>
+      <%= form.text_field :name, placeholder: "Leosia Hacks", class: "w-full !max-w-full", required: true %>
     </div>
 
-    <div class="field">
+    <div class="field" data-controller="word-count" data-word-count-validate-value="<%= !@application.teen_led? %>">
       <%= form.label :description do %>
         <% if @application.teen_led? %>
           Tell us about your project
@@ -40,9 +41,9 @@
           Please share some additional details about your project’s charitable mission, operations and reason for seeking fiscal sponsorship. (minimum 50 words)
         <% end %>
       </p>
-      <%= form.text_area :description, class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null", "x-model": "description" %>
+      <%= form.text_area :description, class: "w-full max-w-full", required: true, data: { word_count_target: "input", action: "input->word-count#update" } %>
       <% unless @application.teen_led? %>
-        <p class="text-sm muted mt-1 mb-2" x-text="description_word_count_text"></p>
+        <p class="text-sm muted mt-1 mb-2" data-word-count-target="hint"></p>
       <% end %>
     </div>
 
@@ -50,14 +51,14 @@
       <%= form.label :has_website do %>
         Do you have a website? <span class="text-primary">*</span>
       <% end %>
-      <%= form.select :has_website, options_for_select([["No", "false"], ["Yes", "true"]], @application.website_url.present? ? "true" : "false"), {}, { "@change": "has_website = $event.target.value; document.getElementById('website_url_field').required = (has_website === 'true'); if (has_website === 'false') document.getElementById('website_url_field').value = ''", class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
+      <%= form.select :has_website, options_for_select([["No", "false"], ["Yes", "true"]], @application.website_url.present? ? "true" : "false"), {}, { data: { conditional_fields_key: "has_website", action: "conditional-fields#update" }, class: "w-full max-w-full", required: true } %>
     </div>
 
-    <div class="field" x-show="has_website === 'true'">
+    <div class="field" data-conditional-fields-when='[{"key":"has_website","in":["true"]}]'>
       <%= form.label :website_url do %>
         Website URL <span class="text-primary">*</span>
       <% end %>
-      <%= form.url_field :website_url, placeholder: "https://hackclub.com", class: "w-full !max-w-full", id: "website_url_field", data: { controller: "url-validator", action: "blur->url-validator#handleBlur" }, "x-bind:disabled": "teenager == null" %>
+      <%= form.url_field :website_url, placeholder: "https://hackclub.com", class: "w-full !max-w-full", id: "website_url_field", data: { controller: "url-validator", action: "blur->url-validator#handleBlur", conditional_fields_require: [{ key: "has_website", in: ["true"] }].to_json, conditional_fields_clear: [{ key: "has_website", in: ["true"] }].to_json } %>
     </div>
 
     <div class="field">
@@ -65,32 +66,32 @@
         Is your project involved with political activity? <span class="text-primary">*</span>
       <% end %>
       <p class="text-sm muted mt-1 mb-2">This includes but is not limited to protests, public demonstrations, political education, and lobbying.</p>
-      <%= form.select :has_political, options_for_select([["No", "false"], ["Yes", "true"]], @application.political_description.present? ? "true" : "false"), {}, { "@change": "has_political = $event.target.value; document.getElementById('political_description_field').required = (has_political === 'true')", class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
+      <%= form.select :has_political, options_for_select([["No", "false"], ["Yes", "true"]], @application.political_description.present? ? "true" : "false"), {}, { data: { conditional_fields_key: "has_political", action: "conditional-fields#update" }, class: "w-full max-w-full", required: true } %>
     </div>
 
-    <div class="field" x-show="has_political === 'true'">
+    <div class="field" data-conditional-fields-when='[{"key":"has_political","in":["true"]}]'>
       <%= form.label :political_description do %>
         Please describe the political activity your project is involved in <span class="text-primary">*</span>
       <% end %>
-      <%= form.text_area :political_description, class: "w-full max-w-full", id: "political_description_field", "x-bind:disabled": "teenager == null" %>
+      <%= form.text_area :political_description, class: "w-full max-w-full", id: "political_description_field", data: { conditional_fields_require: [{ key: "has_political", in: ["true"] }].to_json } %>
     </div>
 
-    <div class="field" x-show="teenager == 'false' || teenager == false">
+    <div class="field" style="<%= "display: none;" if @application.teen_led? %>">
       <%= form.label :planning_duration do %>
         How long have you been planning your project? <span class="text-primary">*</span>
       <% end %>
-      <%= form.text_field :planning_duration, placeholder: "4 months", class: "w-full !max-w-full", "x-bind:required": "teenager == 'false' || teenager == false" %>
+      <%= form.text_field :planning_duration, placeholder: "4 months", class: "w-full !max-w-full", required: !@application.teen_led? %>
     </div>
 
-    <div class="field" x-show="teenager == 'false' || teenager == false">
+    <div class="field" style="<%= "display: none;" if @application.teen_led? %>">
       <%= form.label :team_size do %>
         How many people are on your team? <span class="text-primary">*</span>
       <% end %>
-      <%= form.number_field :team_size, placeholder: "7", class: "w-full !max-w-full", "x-bind:required": "teenager == 'false' || teenager == false", step: 1, min: 1 %>
+      <%= form.number_field :team_size, placeholder: "7", class: "w-full !max-w-full", required: !@application.teen_led?, step: 1, min: 1 %>
     </div>
 
     <div class="flex flex-row w-full gap-4 my-4">
-      <div class="field w-full flex-1 flex-shrink-0 mb-0" x-show="teenager == 'false' || teenager == false">
+      <div class="field w-full flex-1 flex-shrink-0 mb-0" style="<%= "display: none;" if @application.teen_led? %>">
         <%= form.label :annual_budget do %>
           Annual budget <span class="text-primary">*</span>
         <% end %>
@@ -98,36 +99,36 @@
         <div class="flex items-center">
           <div class="input flex gap-2 items-center py-0">
             <span class="bold muted">$</span>
-            <%= form.number_field :annual_budget, id: "annual_budget_field", "x-bind:disabled": "teenager == null", placeholder: "500.00", step: 0.01, min: 0.01, "x-required": "teenager == 'false' || teenager == false", data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+            <%= form.number_field :annual_budget, id: "annual_budget_field", placeholder: "500.00", step: 0.01, min: 0.01, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
           </div>
         </div>
       </div>
 
-      <div class="field w-full flex-1 flex-shrink-0 mb-0" x-show="teenager == 'false' || teenager == false">
+      <div class="field w-full flex-1 flex-shrink-0 mb-0" style="<%= "display: none;" if @application.teen_led? %>">
         <%= form.label :committed_amount do %>
           Committed amount <span class="text-primary">*</span>
         <% end %>
         <div class="flex items-center">
           <div class="input flex gap-2 items-center py-0">
             <span class="bold muted">$</span>
-            <%= form.number_field :committed_amount, id: "committed_amount_field", "x-bind:disabled": "teenager == null", "x-model": "committed", placeholder: "500.00", step: 0.01, min: 0.00, "x-required": "teenager == 'false' || teenager == false", data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+            <%= form.number_field :committed_amount, id: "committed_amount_field", placeholder: "500.00", step: 0.01, min: 0.00, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad input->conditional-fields#update", extraction_field: "total", conditional_fields_key: "committed" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="field m-0 my-4" x-show="(teenager == 'false' || teenager == false) && committed > 0">
+    <%= tag.div class: "field m-0 my-4", style: "display: none;", data: (@application.teen_led? ? {} : { conditional_fields_when: [{ key: "committed", gt: 0 }].to_json }) do %>
       <%= form.label :funding_source do %>
         What is the source of your funding? <span class="text-primary">*</span>
       <% end %>
-      <%= form.text_field :funding_source, placeholder: "The Orpheus Endowment", class: "w-full !max-w-full", "x-bind:required": "(teenager == 'false' || teenager == false) && committed > 0" %>
-    </div>
+      <%= form.text_field :funding_source, placeholder: "The Orpheus Endowment", class: "w-full !max-w-full", data: (@application.teen_led? ? {} : { conditional_fields_require: [{ key: "committed", gt: 0 }].to_json }) %>
+    <% end %>
 
     <div class="field m-0">
       <%= form.label :previously_applied do %>
         Have you applied for fiscal sponsorship with HCB in the past? <span class="text-primary">*</span>
       <% end %>
-      <%= form.select :previously_applied, options_for_select([["No", "false"], ["Yes", "true"]], (@application.previously_applied.nil? ? @application.user.organizer_positions.with_deleted.joins(:organizer_position_invite).where(is_signee: true, organizer_position_invite: { initial: true }).exists? : @application.previously_applied).to_s), {}, { class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
+      <%= form.select :previously_applied, options_for_select([["No", "false"], ["Yes", "true"]], (@application.previously_applied.nil? ? @application.user.organizer_positions.with_deleted.joins(:organizer_position_invite).where(is_signee: true, organizer_position_invite: { initial: true }).exists? : @application.previously_applied).to_s), {}, { class: "w-full max-w-full", required: true } %>
     </div>
   </div>
 
@@ -138,7 +139,13 @@
 
   <div class="card mb3">
     <% affiliation = Event::Affiliation.new(affiliable: @application) %>
-    <%= form_with(url: affiliations_path(affiliable_type: @application.class.name, affiliable_id: @application.id), local: true, html: { "x-data": "{ type: '', disabled: #{!policy(affiliation).update?} }", "x-init": "$watch('type', val => (val ? document.getElementById('submit_application').setAttribute('data-turbo-confirm', 'You have an unsaved affiliation. Are you sure you want to continue?') : document.getElementById('submit_application').removeAttribute('data-turbo-confirm')))", "@turbo:submit-end": "type = ''" }) do |form| %>
+    <%= form_with(url: affiliations_path(affiliable_type: @application.class.name, affiliable_id: @application.id), local: true, data: {
+                    controller: "conditional-fields unsaved-affiliation",
+                    conditional_fields_state_value: { type: "" }.to_json,
+                    unsaved_affiliation_button_value: "submit_application",
+                    unsaved_affiliation_message_value: "You have an unsaved affiliation. Are you sure you want to continue?",
+                    action: "change->unsaved-affiliation#update turbo:submit-end->unsaved-affiliation#clear unsaved-affiliation:set->conditional-fields#set"
+                  }) do |form| %>
       <%= render "events/settings/affiliation_form", affiliation:, form: %>
     <% end %>
   </div>

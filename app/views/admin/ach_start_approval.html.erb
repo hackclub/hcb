@@ -65,7 +65,7 @@
             <td style="text-align: right;">Payee Name</td>
             <td><%= @ach_transfer.recipient_name %></td>
             <td>
-              <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= @ach_transfer.recipient_name.to_json %>);">
+              <span class="m0 badge pointer" data-controller="clipboard" data-action="clipboard#copy" data-clipboard-text-value="<%= @ach_transfer.recipient_name %>">
                 copy
               </span>
             </td>
@@ -75,7 +75,7 @@
               <td style="text-align: right;">Payee Phone Number</td>
               <td><%= @ach_transfer.recipient_tel %></td>
               <td>
-                <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= @ach_transfer.recipient_tel.to_json %>);">
+                <span class="m0 badge pointer" data-controller="clipboard" data-action="clipboard#copy" data-clipboard-text-value="<%= @ach_transfer.recipient_tel %>">
                   copy
                 </span>
               </td>
@@ -99,7 +99,7 @@
             <td style="text-align: right;">Account Number:</td>
             <td><%= @ach_transfer.account_number %></td>
             <td>
-              <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= @ach_transfer.account_number.to_json %>);">
+              <span class="m0 badge pointer" data-controller="clipboard" data-action="clipboard#copy" data-clipboard-text-value="<%= @ach_transfer.account_number %>">
                 copy
               </span>
             </td>
@@ -108,7 +108,7 @@
             <td style="text-align: right;">Routing Number:</td>
             <td><%= @ach_transfer.routing_number %></td>
             <td>
-              <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= @ach_transfer.routing_number.to_json %>);">
+              <span class="m0 badge pointer" data-controller="clipboard" data-action="clipboard#copy" data-clipboard-text-value="<%= @ach_transfer.routing_number %>">
                 copy
               </span>
             </td>
@@ -117,7 +117,7 @@
             <td style="text-align: right;">Amount</td>
             <td><%= render_money_amount @ach_transfer.amount %></td>
             <td>
-              <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= render_money_amount(@ach_transfer.amount).to_json %>);">
+              <span class="m0 badge pointer" data-controller="clipboard" data-action="clipboard#copy" data-clipboard-text-value="<%= render_money_amount(@ach_transfer.amount) %>">
                 copy
               </span>
             </td>
