@@ -96,6 +96,7 @@ module Payroll
     validate :end_date_after_start_date
     validate :start_date_within_set_lead_time
     validate :duration_within_set_max
+    validate :manager_is_event_manager
 
     aasm timestamps: true do
       state :under_review, initial: true
@@ -343,6 +344,12 @@ module Payroll
       return if start_date.blank? || end_date.blank?
 
       errors.add(:end_date, "cannot be more than 1 year after the start date") if end_date > start_date + MAX_DURATION
+    end
+
+    def manager_is_event_manager
+      if manager.present? && (manager.event != event || manager.role != "manager")
+        errors.add(:manager, "must be a manager of the event this position is for")
+      end
     end
 
   end
