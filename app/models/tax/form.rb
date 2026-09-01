@@ -164,7 +164,7 @@ module Tax
         submission_form_type = submission["FormType"]
         form_hash = submission[TaxbanditsService::TAXBANDITS_FORM_DATA_KEYS[submission_form_type]]
 
-        form_status_field = form_hash.keys.find { |key| key.end_with?("Status") }
+        form_status_field = "#{submission["FormType"][4..]}Status"
         form_status = form_hash[form_status_field]
         tin_match_status = form_hash["TINMatching"]&.[]("Status")
       else
