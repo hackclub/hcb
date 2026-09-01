@@ -37,6 +37,7 @@ class Payee < ApplicationRecord
   validates_uniqueness_of :legal_entity_id, scope: [:event_id], allow_nil: true
 
   validate :managed_legal_entity_constraints
+  validate :email_frozen, if: -> { legal_entity.present? }
 
   normalizes :email, with: ->(email) { email.strip.downcase }
 
@@ -87,6 +88,12 @@ class Payee < ApplicationRecord
 
     if legal_entity.payees.where.not(id:).exists?
       errors.add(:legal_entity, "is managed and can only have one payee")
+    end
+  end
+
+  def email_frozen
+    if email_changed? && !legal_entity_id_changed?(from: nil)
+      errors.add(:email, "cannot change once a legal entity has been assigned")
     end
   end
 
