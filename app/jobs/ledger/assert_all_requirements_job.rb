@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Ledger
-  class AssertRequirementsJob < ApplicationJob
+  class AssertAllRequirementsJob < ApplicationJob
     queue_as :low
 
     def perform
@@ -12,6 +12,7 @@ class Ledger
       Ledger::AssertNoOrphanedCptsJob.perform_later
       Ledger::AssertCemsMatchLedgerMappingJob.perform_later
       Ledger::AssertCpemsMatchLedgerMappingJob.perform_later
+      Ledger::AssertCorrectLedgerBalancesJob.perform_later
     end
   end
 
