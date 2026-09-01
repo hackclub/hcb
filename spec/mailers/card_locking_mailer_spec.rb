@@ -85,7 +85,8 @@ RSpec.describe CardLockingMailer, type: :mailer do
 
   describe "#warning" do
     it "reports a calm pile count and avoids violation/urgent language" do
-      create_settled_card_charge(user:, settled_at: 2.days.ago)
+      hcb_code = create_settled_card_charge(user:, settled_at: 2.days.ago)
+      hcb_code.update!(receipt_due_at: 5.days.from_now)
 
       mail = described_class.warning(user:)
 
@@ -96,8 +97,10 @@ RSpec.describe CardLockingMailer, type: :mailer do
     end
 
     it "pluralizes the subject for more than one receipt" do
-      create_settled_card_charge(user:, settled_at: 2.days.ago)
-      create_settled_card_charge(user:, settled_at: 1.day.ago)
+      older = create_settled_card_charge(user:, settled_at: 2.days.ago)
+      older.update!(receipt_due_at: 5.days.from_now)
+      newer = create_settled_card_charge(user:, settled_at: 1.day.ago)
+      newer.update!(receipt_due_at: 6.days.from_now)
 
       mail = described_class.warning(user:)
 
