@@ -219,11 +219,12 @@ class AdminController < Admin::BaseController
 
     @count = relation.count
 
-    @users = relation.page(@page).per(@per).order(created_at: :desc)
+    @users = relation.order(created_at: :desc)
     @referral_programs = Referral::Program.all
 
     respond_to do |format|
       format.html do
+        @users = @users.page(@page).per(@per)
       end
       format.csv { render csv: @users.includes(:stripe_cards, :emburse_cards) }
     end
@@ -1812,12 +1813,16 @@ class AdminController < Admin::BaseController
   end
 
   def hackathons_task_size
-    hackathons = Faraday
-                 .new(ssl: { verify: false }, request: { open_timeout: 5, timeout: 8 }) { |c| c.response :json }
-                 .get("https://dash.hackathons.hackclub.com/api/v1/stats/hackathons")
-                 .body
+    client = Faraday.new(ssl: { verify: false }, request: { open_timeout: 5, timeout: 8 }) do |c|
+      c.response :json
+      c.response :raise_error
+    end
 
-    hackathons.dig("status", "pending", "meta", "count")
+    hackathons = client.get("https://dash.hackathons.hackclub.com/api/v1/stats/hackathons").body
+
+    raise TypeError, "unexpected response: #{hackathons.inspect.truncate(200)}" unless hackathons.is_a?(Hash)
+
+    hackathons.dig("status", "pending", "meta", "count") || 0
   rescue => e
     Rails.error.report(e)
     9999

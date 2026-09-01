@@ -174,6 +174,33 @@ Nondisposable.configure do |config|
     5nek.com
     skyprofy.com
     velpai.com
+    toooby.com
+    text0.com
+    usmary.com
+    webonews.com
+    tabeebee.com
+    sepmaf.com
+    novelv.com
+    playboot.com
+    hutdot.com
+    joystill.com
+    beiwoh.com
+    ittiv.com
+    neplis.com
+    luhupo.com
+    gouziben.com
+    ecorpmail.cfd
+    goncolos.cfd
+    lottery-sambad.site
+    instaddr.org
+    adadad.uk
+    nanana.uk
+    oemails.com
+    oletters.com
+    yanemail.com
+    ghostmail.live
+    tempkit.io
+    vexomail.xyz
   ].freeze
 
   # https://www.okta.com/blog/threat-intelligence/opportunistic-sms-pumping-attacks-target-customer-sign-up-pages/
