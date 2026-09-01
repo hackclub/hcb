@@ -4,7 +4,6 @@ export default class extends Controller {
   static targets = [
     'addingPanel',
     'defaultPanel',
-    'searchHidden',
     'summary',
     'nameInput',
     'emailInput',
