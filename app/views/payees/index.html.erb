@@ -12,7 +12,7 @@
   <% end %>
 
   <%= turbo_frame_tag :payee_results_list do %>
-    <% rows = [@selected, *@payees].compact %>
+    <% rows = [@selected, *@payees].uniq.compact %>
     <% if rows.any? %>
       <% rows.each do |payee| %>
         <div class="btn btn--list-item border-t rounded-none relative">

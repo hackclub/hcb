@@ -14,10 +14,7 @@ class PayeesController < ApplicationController
     payees = params[:q].present? ? all.search(params[:q]) : all
     @payees = payees.order(created_at: :desc).page(params[:page]).per(15)
 
-    # Pin the currently selected recipient to the top of the list so it stays
-    # visible while paging, unless this page already contains it.
     @selected = all.find_by_hashid(params[:payee_id]) if params[:payee_id].present?
-    @selected = nil if @selected && @payees.include?(@selected)
 
     render layout: false
   end
