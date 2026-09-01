@@ -89,7 +89,15 @@ class Payment
       event :mark_rejected do
         transitions from: :under_review, to: :rejected
         after do
-          payment.mark_rejected! if payment.may_mark_rejected?
+          payment.mark_rejected!
+        end
+      end
+
+      # Only reject the attempt, and reset the payment back to pending LE state
+      event :mark_rejected_retryable do
+        transitions from: :under_review, to: :rejected
+        after do
+          payment.mark_pending_legal_entity!
         end
       end
 

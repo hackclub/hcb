@@ -13,19 +13,21 @@ module Admin
         if payment.present?
           payment.update!(classification:) if classification.present?
 
+          payout = payment.current_attempt&.payout
           error = nil
 
           if payment.legal_entity.tin_banned?
+            payout&.mark_rejected!
             error = "This legal entity's TIN has been banned"
           elsif payment.legal_entity.archived?
+            payout&.mark_rejected!
             error = "This legal entity has been archived"
           elsif !payment.legal_entity.payable?(requires_tax_form: payment.requires_tax_form)
-            payment.mark_pending_legal_entity!
+            payout&.mark_rejected_retryable!
             error = "Tax information was missing for this payment and has been requested"
           end
 
           if error.present?
-            payment.current_attempt&.payout&.mark_rejected!
             raise LegalEntityNotPayableError, error
           end
         end
