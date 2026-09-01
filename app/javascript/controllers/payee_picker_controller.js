@@ -33,11 +33,4 @@ export default class extends Controller {
     this.defaultPanelTarget.hidden = false
     if (this.hasSummaryTarget) this.summaryTarget.hidden = false
   }
-
-  search(event) {
-    const searching = event.target.value.length > 0
-    this.searchHiddenTargets.forEach(el => {
-      el.hidden = searching
-    })
-  }
 }
