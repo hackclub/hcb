@@ -63,6 +63,8 @@ module Reimbursement
       end
     end
 
+    validate :cannot_change_event_when_card_grant_present, on: :update
+
     validates :name, no_urls: true, if: ->(report){ report.from_public_reimbursement_form? }
     normalizes :name, with: ->(name) { name&.strip }
 
@@ -453,6 +455,13 @@ module Reimbursement
     end
 
     private
+
+    def cannot_change_event_when_card_grant_present
+      # `_was` catches a same-request card_grant_id nil-out paired with an event_id change.
+      if event_id_changed? && (card_grant_id_was.present? || card_grant_id.present?)
+        errors.add(:base, "You cannot change the organization of a card grant reimbursement.")
+      end
+    end
 
     def set_payout_method
       self.legal_entity_payout_method ||= user&.default_payout_method

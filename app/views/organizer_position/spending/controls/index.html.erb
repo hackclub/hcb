@@ -55,7 +55,7 @@
 <% if @organizer_position.member? %>
   <% spending_controls_callout_footer = capture do %>
     <% if @active_control %>
-      <% control_disable_button = link_to new_event_organizer_position_spending_control_path(@event, @organizer_position), class: "btn btn-small bg-error tooltipped tooltipped--e", disabled: !policy(@provisional_control).destroy?, method: :delete do %>
+      <% control_disable_button = link_to new_event_organizer_position_spending_control_path(@event, @organizer_position), class: "btn btn-small bg-error tooltipped tooltipped--e", disabled: !policy(@provisional_control).destroy?, data: { turbo_method: :delete } do %>
         Disable controls for <%= @organizer_position.user.first_name %>
       <% end %>
 
@@ -67,7 +67,7 @@
         </div>
       <% end %>
     <% else %>
-      <% control_enable_button = link_to event_organizer_position_spending_controls_path(@event, @organizer_position), class: "btn btn-small bg-info tooltipped tooltipped--e", disabled: !policy(@provisional_control).new?, method: :post do %>
+      <% control_enable_button = link_to event_organizer_position_spending_controls_path(@event, @organizer_position), class: "btn btn-small bg-info tooltipped tooltipped--e", disabled: !policy(@provisional_control).new?, data: { turbo_method: :post } do %>
         Enable controls for <%= @organizer_position.user.first_name %>
       <% end %>
 

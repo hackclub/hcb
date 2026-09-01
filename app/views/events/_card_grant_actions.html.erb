@@ -9,11 +9,11 @@
       <%= inline_icon "card", size: 20 %> View transactions
     <% end if card_grant.stripe_card.present? %>
     <% if card_grant.active? && card_grant.stripe_card&.active? && policy(card_grant.stripe_card).freeze? %>
-      <%= link_to freeze_stripe_card_path(card_grant.stripe_card), method: :post do %>
+      <%= link_to freeze_stripe_card_path(card_grant.stripe_card), data: { turbo_method: :post } do %>
       <%= inline_icon "freeze", size: 20 %> Freeze card
       <% end %>
     <% elsif card_grant.active? && card_grant.stripe_card&.frozen? && policy(card_grant.stripe_card).defrost? %>
-      <%= link_to defrost_stripe_card_path(card_grant.stripe_card), method: :post do %>
+      <%= link_to defrost_stripe_card_path(card_grant.stripe_card), data: { turbo_method: :post } do %>
         <%= inline_icon "freeze", size: 20 %> Defrost
       <% end %>
     <% end %>
