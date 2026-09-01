@@ -38,6 +38,8 @@
 
   <%= render "events/perks/onboard", event: @event %>
 
+  <%= render "events/perks/wallets", event: @event, perks_available: @perks_available %>
+
   <%= render "events/perks/sendy" %>
 
   <%= render "events/perks/stickermule", event: @event, perks_available: @perks_available %>
