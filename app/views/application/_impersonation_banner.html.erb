@@ -1,9 +1,3 @@
-<%#
-  Resolve the impersonated user through `allow_unverified: true`: impersonation
-  sessions mirror their target's `verified` flag, so `current_user` is nil
-  whenever an admin impersonates an unverified account and the exit link would
-  otherwise be built with a nil id.
-%>
 <% impersonated_user = current_user(allow_unverified: true) %>
 <% if current_session&.impersonated? && impersonated_user.present? %>
   <div class="w-100 px4 bg-white transparency-banner <%= local_assigns[:klass] %>">
