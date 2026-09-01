@@ -90,7 +90,7 @@ class Payment < ApplicationRecord
     end
 
     event :mark_canceled do
-      transitions from: [:pending_legal_entity, :under_review, :sent], to: :canceled
+      transitions from: [:pending_legal_entity, :under_review, :sent], to: :canceled, if: -> { current_attempt.nil? || current_attempt.may_mark_canceled? }
       after do
         current_attempt&.mark_canceled!
       end
@@ -99,7 +99,7 @@ class Payment < ApplicationRecord
 
   before_save :set_requires_tax_form, if: -> { new_record? || classification_changed? }
 
-  after_create do
+  after_create_commit do
     payable = legal_entity&.payable?(requires_tax_form:)
 
     if payable && legal_entity.default_payout_method.present?

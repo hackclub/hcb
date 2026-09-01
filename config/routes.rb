@@ -6,6 +6,7 @@ require "sidekiq/cron/web"
 Rails.application.routes.draw do
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
   get "up" => "rails/health#show", as: :rails_health_check
+  post Rails.configuration.constants[:csp_violation_report_path], to: "csp_violation_reports#create"
   get "/my_ip", to: "admin#my_ip"
 
   constraints AdminConstraint do
@@ -558,7 +559,6 @@ Rails.application.routes.draw do
       get "attach_receipt"
       get "memo_frame"
       get "dispute"
-      post "invoice_as_personal_transaction"
       post "toggle_tag/:tag_id", to: "hcb_codes#toggle_tag", as: :toggle_tag
       post "send_receipt_sms", to: "hcb_codes#send_receipt_sms", as: :send_sms_receipt
 
@@ -644,6 +644,7 @@ Rails.application.routes.draw do
       post "pin"
       post "unpin"
       patch "rename"
+      post "invoice_as_personal_transaction"
     end
   end
   resources :ledger_items, only: [], path: "transactions", concerns: :commentable
@@ -947,7 +948,7 @@ Rails.application.routes.draw do
 
   resources :tax_forms, only: [:show, :create], controller: "tax/forms" do
     member do
-      post "sync"
+      get "completed"
       post "discard"
     end
   end
@@ -1059,6 +1060,7 @@ Rails.application.routes.draw do
 
     get "async_balance"
     get "async_sub_organization_balance"
+    get "async_sub_organization_balances"
     get "async_sub_organization_rows"
     get "reimbursements_pending_review_icon"
 
