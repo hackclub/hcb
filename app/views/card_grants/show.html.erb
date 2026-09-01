@@ -46,23 +46,23 @@
     <%= render partial: "card_grants/invitation", locals: { card_grant: @card_grant } %>
   <% end %>
 <% elsif @card_grant.user.admin? || organizer_signed_in? || own %>
-  <%= render "card_grants/section_heading", icon: "1", title: own ? "Spending controls" : "What you can spend it on" %>
-  <%= render partial: "card_grants/grant_details", locals: { card_grant: @card_grant } %>
+  <%= render "card_grants/section_heading", icon: "1", title: own ? "What you can spend it on" : "Spending controls", own: own %>
+  <%= render partial: "card_grants/grant_details", locals: { card_grant: @card_grant, own: own } %>
 
   <% if stripe_card.present? %>
-    <%= render "card_grants/section_heading", icon: "2", title: own ? "Virtual card" : "Pay with your card" %>
+    <%= render "card_grants/section_heading", icon: "2", title: own ? "Pay with your card" : "Virtual card", own: own %>
     <%= render partial: "card_grants/card_details", locals: { card_grant: @card_grant } %>
   <% end %>
 
   <%= render partial: "card_grant/pre_authorizations/organizer_info", locals: { pre_authorization: @card_grant.pre_authorization, link_to_pre_authorization: true } if @card_grant.pre_authorization.present? && organizer_signed_in? %>
 
-  <%= render "card_grants/section_heading", icon: "3", title: own ? "Transactions" : "Upload receipts for each purchase (required)" %>
+  <%= render "card_grants/section_heading", icon: "3", title: own ? "Upload receipts for each purchase (required)" : "Transactions", own: own %>
   <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes, ledger: @ledger, items: @items, heading: false } %>
 <% end %>
 
 <% if policy(@card_grant.comments.build).create? %>
   <div class="mt-10 mb-10 block menu__divider"></div>
-  <%= render "card_grants/section_heading", icon: "", title: "Comments" %>
+  <%= render "card_grants/section_heading", title: "Comments", own: own %>
   <%= render "comments/list", comments: @card_grant.comments, show_blankslate: true %>
   <%= render "comments/form", commentable: @card_grant %>
 <% end %>

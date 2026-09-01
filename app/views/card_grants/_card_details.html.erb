@@ -23,6 +23,11 @@
 
     <% fields = capture do %>
       <div class="grant-row fs-mask">
+        <span class="grant-row__label">Name on card</span>
+        <span class="grant-row__value"><%= copy_to_clipboard(stripe_card.user.name, tooltip_direction: "w") %></span>
+      </div>
+
+      <div class="grant-row fs-mask">
         <span class="grant-row__label">Card number</span>
         <span class="grant-row__value font-mono">
           <% if revealed %>

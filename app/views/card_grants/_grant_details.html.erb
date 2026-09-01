@@ -1,4 +1,4 @@
-<%# locals: (card_grant:) %>
+<%# locals: (card_grant:, own:) %>
 
 <div class="card">
   <section class="grant-strip">
@@ -34,7 +34,7 @@
     </div>
   </section>
 
-  <% unless organizer_signed_in? %>
+  <% if own %>
     <div class="bg-gray-100 p-4 py-2 rounded-b-lg -mb-4 -mx-4 mt-4 border-1 border-solid border-gray-200">
       <p class="my-0">
         <strong><%= @card_grant.event.name %> sets these limits, not HCB.</strong>
