@@ -15,6 +15,13 @@
     <%= relative_timestamp receipt.created_at %>
   </div>
 
+  <% if receipt.assigned_at.present? && receipt.assigned_at != receipt.created_at %>
+    <div class="fs-mask" style="grid-template-columns: 7rem auto;">
+      <strong style="font-weight: 600;">Matched</strong>
+      <%= relative_timestamp receipt.assigned_at %>
+    </div>
+  <% end %>
+
   <div class="fs-mask" style="grid-template-columns: 7rem auto;">
     <strong style="font-weight: 600;">Size</strong>
     <%= number_to_human_size receipt.file.blob.byte_size %>
