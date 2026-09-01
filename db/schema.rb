@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_27_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_30_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -221,7 +221,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_120000) do
     t.datetime "created_at", null: false
     t.integer "expires_in"
     t.inet "ip_address"
-    t.string "refresh_token"
     t.text "refresh_token_bidx"
     t.text "refresh_token_ciphertext"
     t.datetime "revoked_at"
@@ -1666,12 +1665,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_120000) do
   end
 
   create_table "legal_entities", force: :cascade do |t|
-    t.string "address_city"
-    t.string "address_country"
-    t.string "address_line1"
-    t.string "address_line2"
-    t.string "address_postal_code"
-    t.string "address_state"
     t.datetime "archived_at"
     t.string "banned_reason"
     t.datetime "created_at", null: false
