@@ -82,9 +82,14 @@ class Ledger
         return redirect_to personal_tx.invoice
       end
 
-      if @item.personal_transaction.present?
+      # Deliberately queried rather than read off `@item.personal_transaction`:
+      # building `personal_tx` above populates that association (`inverse_of`)
+      # with the unsaved record, which has no invoice to redirect to.
+      existing = PersonalTransaction.find_by(ledger_item_id: @item.id)
+
+      if existing
         flash[:error] = "A repayment invoice already exists for this transaction."
-        redirect_to @item.personal_transaction.invoice
+        redirect_to existing.invoice
       else
         flash[:error] = personal_tx.errors.full_messages.to_sentence
         redirect_to @item.hcb_code
