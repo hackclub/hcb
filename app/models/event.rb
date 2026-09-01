@@ -827,6 +827,10 @@ class Event < ApplicationRecord
     event_tags.where(name: EventTag::Tags::HACKATHON).exists?
   end
 
+  def ysws?
+    event_tags.where(name: EventTag::Tags::YSWS).exists?
+  end
+
   def reload(**args)
     @total_fee_payments_v2_cents = nil
     super(**args)

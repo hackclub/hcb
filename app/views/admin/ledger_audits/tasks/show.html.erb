@@ -6,6 +6,16 @@
 
 <h2>Fraud-O-Matic: Ledger Auditor (<%= link_to @hcb_code.hcb_code, @hcb_code, target: "_blank" %>)</h2>
 
+<% teen_led = @event.organized_by_teenagers? %>
+<div class="age_group_banner <%= teen_led ? "age_group_banner--teen" : "age_group_banner--adult" %>">
+  <span class="age_group_banner__label">
+    <%= teen_led ? "🧑‍🎓 Teen-led organization" : "🧑‍💼 Adult organization" %>
+  </span>
+  <% if @event.ysws? %>
+    <span class="age_group_banner__badge">YSWS</span>
+  <% end %>
+</div>
+
 <% if @hcb_code.receipts.any? { |r| r.extracted_incorrect_amount_cents? } %>
   <div class="warning bold mb2">
     ⚠️ Please check these receipts closely, we suspect that their amounts don't match
@@ -83,6 +93,12 @@
             </span>
           </p>
           <p>
+            <strong>Age group</strong>
+            <span>
+              <%= @event.organized_by_teenagers? ? "Teen-led" : "Adult" %><%= " (YSWS)" if @event.ysws? %>
+            </span>
+          </p>
+          <p>
             <strong>Current plan</strong>
             <span><%= @event.plan.label.titleize %></span>
           </p>
@@ -129,6 +145,36 @@
 </div>
 
 <style>
+  .age_group_banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 1.25rem;
+    font-weight: bold;
+    border: 2px solid;
+  }
+  .age_group_banner--teen {
+    background-color: #eafcf0;
+    border-color: #33d6a6;
+    color: #0b7a5b;
+  }
+  .age_group_banner--adult {
+    background-color: #fff3e6;
+    border-color: #ff8c37;
+    color: #a34700;
+  }
+  .age_group_banner__badge {
+    font-size: 0.9rem;
+    font-weight: bold;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background-color: #8492a6;
+    color: #fff;
+    letter-spacing: 0.03em;
+  }
   .action_row {
     display: flex;
     flex-direction: row;
