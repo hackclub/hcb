@@ -79,14 +79,14 @@ class Payment < ApplicationRecord
     end
 
     event :mark_canceled do
-      transitions from: [:pending_legal_entity, :under_review, :sent], to: :canceled
+      transitions from: [:pending_legal_entity, :under_review, :sent], to: :canceled, if: -> { current_attempt.nil? || current_attempt.may_mark_canceled? }
       after do
         current_attempt&.mark_canceled!
       end
     end
   end
 
-  after_create do
+  after_create_commit do
     if legal_entity&.payable? && legal_entity.default_payout_method.present?
       create_payment_attempt!
     elsif legal_entity&.payable?

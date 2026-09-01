@@ -2,25 +2,15 @@
 <%# The picker always opens in contractor mode; the manual-payee controller
     toggles to the manual path client-side via the enable/undo buttons. %>
 <% manual = false %>
+<% has_payees = event.payees.any? %>
 
 <div>
-  <div data-payee-picker-target="defaultPanel" class="py-2">
-    <% if event.payees.any? %>
+  <div data-payee-picker-target="defaultPanel" class="py-2" <%= "hidden" unless has_payees %>>
+    <% if has_payees %>
       <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id], destination:) do %>
         <%= render "application/loading_container", klass: "py-8" %>
       <% end %>
     <% end %>
-
-    <a class="btn btn--list-item <%= "border-t" if event.payees.any? %> rounded-none w-full" data-action="payee-picker#showAdding" data-payee-picker-target="searchHidden">
-      <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
-        <%= inline_icon "plus", size: 18 %>
-      </div>
-      <div class="text-left">
-        <p class="font-medium">New recipient</p>
-        <p class="text-sm muted">Create a new payment recipient</p>
-      </div>
-      <%= inline_icon "view-forward", class: "ml-auto muted" %>
-    </a>
 
     <% if destination == "payments" %>
       <%= link_to new_disbursement_path(source_event_id: event.slug), class: "btn btn--list-item border-t rounded-none w-full", data: { turbo_frame: "_top" } do %>
@@ -36,12 +26,14 @@
     <% end %>
   </div>
 
-  <div data-payee-picker-target="addingPanel" hidden>
-    <div class="px-4 py-3">
-      <button type="button" class="btn mb-3" data-action="payee-picker#hideAdding">
-        <%= inline_icon "view-back" %>
-        Back
-      </button>
+  <div data-payee-picker-target="addingPanel" <%= "hidden" if has_payees %>>
+    <div class="px-4 py-3 card">
+      <% if has_payees %>
+        <button type="button" class="btn mb-3" data-action="payee-picker#hideAdding">
+          <%= inline_icon "view-back" %>
+          Back
+        </button>
+      <% end %>
 
       <%# The recipient's name/email/type live in this form (associated via form:) and
           submit to PayeesController on Continue. On the manual path this also creates a
