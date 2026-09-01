@@ -60,8 +60,9 @@ class WiresController < ApplicationController
     authorize @wire
 
     ensure_admin_may_approve!(@wire, amount_cents: @wire.usd_amount_cents)
+    ensure_legal_entity_payable!(@wire, classification: params[:classification])
+
     @wire.send_wire!
-    @wire.payment&.update!(classification: params[:classification])
 
     if params[:charge_fee] == "1"
       disbursement = DisbursementService::Create.new(
