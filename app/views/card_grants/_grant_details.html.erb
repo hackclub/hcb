@@ -34,13 +34,15 @@
     </div>
   </section>
 
-  <div class="bg-gray-100 p-4 py-2 rounded-b-lg -mb-4 -mx-4 mt-2 border-1 border-solid border-gray-200">
-    <p class="my-0">
-      <strong><%= @card_grant.event.name %> sets these limits, not HCB.</strong>
-    </p>
-    <p class="text-sm my-0 opacity-60">
-      To change these restrictions, message the <%= @card_grant.event.name %> team.
-      <strong>HCB cannot change your grant limits.</strong>
-    </p>
-  </div>
+  <% unless organizer_signed_in? %>
+    <div class="bg-gray-100 p-4 py-2 rounded-b-lg -mb-4 -mx-4 mt-4 border-1 border-solid border-gray-200">
+      <p class="my-0">
+        <strong><%= @card_grant.event.name %> sets these limits, not HCB.</strong>
+      </p>
+      <p class="text-sm my-0 opacity-60">
+        To change these restrictions, message the <%= @card_grant.event.name %> team.
+        <strong>HCB cannot change your grant limits.</strong>
+      </p>
+    </div>
+  <% end %>
 </div>

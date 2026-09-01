@@ -20,7 +20,6 @@
   <div class="grant-hero__grid">
     <div>
       <div class="flex items-center flex-wrap gap-x-3 gap-y-2 mb-1">
-        <p class="eyebrow m-0"><%= own ? "Your grant" : "Card grant" %></p>
         <span class="badge ml-0 bg-<%= card_grant.status_badge_type %>">
           <%= card_grant.state_text %>
         </span>
@@ -41,7 +40,9 @@
     </div>
 
     <div class="grant-hero__aside">
-      <p class="eyebrow m-0">Spend it by</p>
+      <p class="eyebrow m-0">
+        <%= own ? "Spend it by" : "Expires on" %>
+      </p>
       <div class="flex items-baseline flex-wrap gap-x-2">
         <p class="grant-hero__date"><%= format_date card_grant.expiration_at %></p>
         <span class="muted">

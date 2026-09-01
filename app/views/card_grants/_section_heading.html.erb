@@ -1,6 +1,8 @@
 <%# locals: (icon:, title:) %>
 
 <h2 class="grant-section">
-  <span class="grant-section__icon" aria-hidden="true"><%= icon %></span>
+  <% unless organizer_signed_in? %>
+    <span class="grant-section__icon" aria-hidden="true"><%= icon %></span>
+  <% end %>
   <%= title %>
 </h2>

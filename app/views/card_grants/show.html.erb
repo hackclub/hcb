@@ -46,17 +46,17 @@
     <%= render partial: "card_grants/invitation", locals: { card_grant: @card_grant } %>
   <% end %>
 <% elsif @card_grant.user.admin? || organizer_signed_in? || own %>
-  <%= render "card_grants/section_heading", icon: "1", title: "What you can spend it on" %>
+  <%= render "card_grants/section_heading", icon: "1", title: own ? "Spending controls" : "What you can spend it on" %>
   <%= render partial: "card_grants/grant_details", locals: { card_grant: @card_grant } %>
 
   <% if stripe_card.present? %>
-    <%= render "card_grants/section_heading", icon: "2", title: "Pay with your card" %>
+    <%= render "card_grants/section_heading", icon: "2", title: own ? "Virtual card" : "Pay with your card" %>
     <%= render partial: "card_grants/card_details", locals: { card_grant: @card_grant } %>
   <% end %>
 
   <%= render partial: "card_grant/pre_authorizations/organizer_info", locals: { pre_authorization: @card_grant.pre_authorization, link_to_pre_authorization: true } if @card_grant.pre_authorization.present? && organizer_signed_in? %>
 
-  <%= render "card_grants/section_heading", icon: "3", title: "Upload receipts for each purchase (required)" %>
+  <%= render "card_grants/section_heading", icon: "3", title: own ? "Transactions" : "Upload receipts for each purchase (required)" %>
   <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes, ledger: @ledger, items: @items, heading: false } %>
 <% end %>
 
