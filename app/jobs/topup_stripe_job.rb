@@ -3,6 +3,14 @@
 class TopupStripeJob < ApplicationJob
   queue_as :default
 
+  # This job runs hourly on a schedule (see `config/schedule.yml`).
+  #
+  # It used to be enqueued from every Stripe issuing authorization webhook,
+  # which meant a burst of card activity ran many copies of it concurrently.
+  # Each copy read the balance and the list of pending top-ups before any of
+  # them had created one, so they all computed the same amount and each
+  # created a duplicate top-up.
+
   # Don't retry jobs w/ balance anomalies, reattempt at next run
   discard_on(Errors::StripeIssuingBalanceAnomaly) do |job, error|
     Rails.error.report error
