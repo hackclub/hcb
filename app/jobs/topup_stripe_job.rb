@@ -3,7 +3,7 @@
 class TopupStripeJob < ApplicationJob
   queue_as :default
 
-  # This job runs hourly on a schedule (see `config/schedule.yml`).
+  # This job runs twice a day on a schedule (see `config/schedule.yml`).
   #
   # It used to be enqueued from every Stripe issuing authorization webhook,
   # which meant a burst of card activity ran many copies of it concurrently.

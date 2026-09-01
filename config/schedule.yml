@@ -231,7 +231,7 @@ stripe_missed_webhooks_job:
   class: "StripeMissedWebhooksJob"
 
 topup_stripe_job:
-  cron: "15 * * * *" # run every 1 hour
+  cron: "15 */12 * * *" # run twice a day
   class: "TopupStripeJob"
 
 events_sync_to_airtable_job:
