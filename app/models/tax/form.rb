@@ -151,14 +151,32 @@ module Tax
       # A manually entered form has no certificate at TaxBandits to sync against.
       return unless sent_with_taxbandits?
 
-      response = TaxbanditsService.get_status(public_id)
-
-      if response.present?
-        update!(
-          taxbandits_status: response["FormStatus"].downcase,
-          taxbandits_tin_matching_status: response["TINMatching"]&.[]("Status")&.downcase
-        )
+      submission = begin
+        remote_taxbandits_submission
+      rescue
+        nil
       end
+
+      form_status = nil
+      tin_match_status = nil
+
+      if submission.present?
+        submission_form_type = submission["FormType"]
+        form_hash = submission[TaxbanditsService::TAXBANDITS_FORM_DATA_KEYS[submission_form_type]]
+
+        form_status_field = "#{submission["FormType"][4..]}Status"
+        form_status = form_hash[form_status_field]
+        tin_match_status = form_hash["TINMatching"]&.[]("Status")
+      else
+        status_response = TaxbanditsService.get_status(public_id)
+        form_status = status_response["FormStatus"]
+        tin_match_status = status_response["TINMatching"]&.[]("Status")
+      end
+
+      update!(
+        taxbandits_status: form_status.downcase,
+        taxbandits_tin_matching_status: tin_match_status&.downcase
+      )
     end
 
     # Only the last four digits, and only ever shown to the payee themselves.

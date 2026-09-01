@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
-  static targets = ['addingPanel', 'defaultPanel', 'searchHidden', 'summary']
+  static targets = ['addingPanel', 'defaultPanel', 'summary']
 
   showAdding() {
     this.addingPanelTarget.hidden = false
@@ -13,12 +13,5 @@ export default class extends Controller {
     this.addingPanelTarget.hidden = true
     this.defaultPanelTarget.hidden = false
     if (this.hasSummaryTarget) this.summaryTarget.hidden = false
-  }
-
-  search(event) {
-    const searching = event.target.value.length > 0
-    this.searchHiddenTargets.forEach(el => {
-      el.hidden = searching
-    })
   }
 }
