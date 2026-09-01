@@ -1036,6 +1036,7 @@ class Event < ApplicationRecord
   end
 
   def to_combobox_display(admin: false)
+    return "#{name} (ID: #{id})" if admin
     name
   end
 
