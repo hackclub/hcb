@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_173648) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_30_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -120,11 +120,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_173648) do
     t.bigint "admin_ledger_audit_id"
     t.datetime "created_at", null: false
     t.bigint "hcb_code_id"
+    t.bigint "ledger_item_id"
     t.bigint "reviewer_id"
     t.string "status", default: "pending"
     t.datetime "updated_at", null: false
     t.index ["admin_ledger_audit_id"], name: "index_admin_ledger_audit_tasks_on_admin_ledger_audit_id"
     t.index ["hcb_code_id"], name: "index_admin_ledger_audit_tasks_on_hcb_code_id"
+    t.index ["ledger_item_id"], name: "index_admin_ledger_audit_tasks_on_ledger_item_id"
     t.index ["reviewer_id"], name: "index_admin_ledger_audit_tasks_on_reviewer_id"
   end
 
@@ -219,7 +221,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_173648) do
     t.datetime "created_at", null: false
     t.integer "expires_in"
     t.inet "ip_address"
-    t.string "refresh_token"
     t.text "refresh_token_bidx"
     t.text "refresh_token_ciphertext"
     t.datetime "revoked_at"
@@ -385,7 +386,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_173648) do
     t.text "custom_memo"
     t.date "date", null: false
     t.boolean "fee_waived", default: false
-    t.boolean "fronted", default: false
+    t.boolean "fronted", default: false, null: false
     t.text "hcb_code"
     t.bigint "increase_check_id"
     t.bigint "ledger_item_id"
@@ -430,7 +431,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_173648) do
     t.index ["reimbursement_payout_holding_id"], name: "index_canonical_pending_txs_on_reimbursement_payout_holding_id"
     t.index ["wire_id"], name: "index_canonical_pending_transactions_on_wire_id"
     t.index ["wise_transfer_id"], name: "index_canonical_pending_transactions_on_wise_transfer_id"
-    t.check_constraint "fronted IS NOT NULL", name: "canonical_pending_transactions_fronted_null"
   end
 
   create_table "canonical_transactions", force: :cascade do |t|
@@ -591,6 +591,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_173648) do
     t.text "routing_number_ciphertext"
     t.datetime "updated_at", null: false
     t.index ["account_number_bidx"], name: "index_column_account_numbers_on_account_number_bidx", unique: true
+    t.index ["column_id"], name: "index_column_account_numbers_on_column_id", unique: true
     t.index ["event_id"], name: "index_column_account_numbers_on_event_id", unique: true
   end
 
@@ -1270,7 +1271,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_173648) do
 
   create_table "g_suite_accounts", force: :cascade do |t|
     t.datetime "accepted_at", precision: nil
-    t.text "address"
+    t.text "address", null: false
     t.text "backup_email"
     t.datetime "created_at", precision: nil, null: false
     t.bigint "creator_id"
@@ -1490,7 +1491,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_173648) do
     t.bigint "payment_recipient_id"
     t.string "recipient_email"
     t.string "recipient_name"
-    t.bigint "reissued_for_id"
     t.boolean "send_email_notification", default: false
     t.datetime "updated_at", null: false
     t.bigint "user_id"
@@ -1498,7 +1498,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_173648) do
     t.index ["column_id"], name: "index_increase_checks_on_column_id", unique: true
     t.index ["event_id"], name: "index_increase_checks_on_event_id"
     t.index ["payment_recipient_id"], name: "index_increase_checks_on_payment_recipient_id"
-    t.index ["reissued_for_id"], name: "index_increase_checks_on_reissued_for_id"
     t.index ["user_id"], name: "index_increase_checks_on_user_id"
   end
 
@@ -1666,12 +1665,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_173648) do
   end
 
   create_table "legal_entities", force: :cascade do |t|
-    t.string "address_city"
-    t.string "address_country"
-    t.string "address_line1"
-    t.string "address_line2"
-    t.string "address_postal_code"
-    t.string "address_state"
     t.datetime "archived_at"
     t.string "banned_reason"
     t.datetime "created_at", null: false
@@ -2077,6 +2070,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_173648) do
     t.datetime "updated_at", null: false
     t.index ["manager_id"], name: "index_payroll_positions_on_manager_id"
     t.index ["payee_id"], name: "index_payroll_positions_on_payee_id"
+  end
+
+  create_table "personal_transactions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "invoice_id", null: false
+    t.bigint "ledger_item_id", null: false
+    t.bigint "reporter_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invoice_id"], name: "index_personal_transactions_on_invoice_id"
+    t.index ["ledger_item_id"], name: "index_personal_transactions_on_ledger_item_id", unique: true
+    t.index ["reporter_id"], name: "index_personal_transactions_on_reporter_id"
   end
 
   create_table "raffles", force: :cascade do |t|
@@ -2618,12 +2622,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_173648) do
   create_table "tags", force: :cascade do |t|
     t.text "color"
     t.datetime "created_at", null: false
-    t.string "emoji"
+    t.string "emoji", null: false
     t.bigint "event_id", null: false
     t.text "label"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_tags_on_event_id"
-    t.check_constraint "emoji IS NOT NULL", name: "tags_emoji_null"
   end
 
   create_table "tasks", force: :cascade do |t|
@@ -3043,6 +3046,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_173648) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "admin_ledger_audit_tasks", "admin_ledger_audits"
   add_foreign_key "admin_ledger_audit_tasks", "hcb_codes"
+  add_foreign_key "admin_ledger_audit_tasks", "ledger_items"
   add_foreign_key "admin_ledger_audit_tasks", "users", column: "reviewer_id"
   add_foreign_key "announcement_blocks", "announcements"
   add_foreign_key "announcements", "events"
@@ -3149,7 +3153,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_173648) do
   add_foreign_key "hcb_codes", "ledger_items", on_delete: :nullify
   add_foreign_key "increase_account_numbers", "events"
   add_foreign_key "increase_checks", "events"
-  add_foreign_key "increase_checks", "increase_checks", column: "reissued_for_id"
   add_foreign_key "increase_checks", "users"
   add_foreign_key "invoices", "fee_reimbursements"
   add_foreign_key "invoices", "invoice_payouts", column: "payout_id"
@@ -3195,6 +3198,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_173648) do
   add_foreign_key "payroll_invoices", "payroll_positions"
   add_foreign_key "payroll_invoices", "users", column: "reviewed_by_id"
   add_foreign_key "payroll_positions", "payees"
+  add_foreign_key "personal_transactions", "invoices"
+  add_foreign_key "personal_transactions", "ledger_items"
+  add_foreign_key "personal_transactions", "users", column: "reporter_id"
   add_foreign_key "raffles", "raffles", column: "referring_raffle_id"
   add_foreign_key "raffles", "users"
   add_foreign_key "raw_pending_fee_reimbursement_transactions", "fee_reimbursements"

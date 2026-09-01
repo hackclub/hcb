@@ -79,7 +79,7 @@ class AchTransfer < ApplicationRecord
   pg_search_scope :search_recipient, against: [:recipient_name], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "ach_transfers.created_at"
 
   include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  tracked owner: proc { |controller, record| record.creator || controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :creator, class_name: "User", optional: true

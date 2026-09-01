@@ -90,4 +90,37 @@ RSpec.describe User do
       expect(user.card_locking_outstanding_count).to eq(0)
     end
   end
+
+  describe "#card_locking_next_due_at" do
+    it "is the soonest deadline in the outstanding pile" do
+      soonest = create_settled_card_charge(user:, settled_at: 5.days.ago)
+      soonest.update!(receipt_due_at: 11.hours.from_now)
+      later = create_settled_card_charge(user:, settled_at: 1.day.ago)
+      later.update!(receipt_due_at: 6.days.from_now)
+
+      expect(user.card_locking_next_due_at).to eq(soonest.receipt_due_at)
+    end
+
+    it "ignores charges that already have a receipt" do
+      resolved = create_settled_card_charge(user:, settled_at: 5.days.ago, uploaded_at: Time.current)
+      resolved.update!(receipt_due_at: 11.hours.from_now)
+      outstanding = create_settled_card_charge(user:, settled_at: 1.day.ago)
+      outstanding.update!(receipt_due_at: 6.days.from_now)
+
+      expect(user.card_locking_next_due_at).to eq(outstanding.receipt_due_at)
+    end
+
+    # A cardholder in no rollout stage has no deadlines at all; MIN over NULLs is
+    # NULL, so there is nothing to count down to.
+    it "is nil when the outstanding pile carries no deadlines" do
+      hc = create_settled_card_charge(user:, settled_at: 1.day.ago)
+      hc.update!(receipt_due_at: nil)
+
+      expect(user.card_locking_next_due_at).to be_nil
+    end
+
+    it "is nil when nothing is outstanding" do
+      expect(user.card_locking_next_due_at).to be_nil
+    end
+  end
 end

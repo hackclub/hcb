@@ -153,8 +153,79 @@ html[data-dark='true'] {
   }
 }
 
-// Grey out the memo for pending transactions. The memo link uses
-// `color: inherit`, so setting the cell's color muted greys it in both themes.
+// The organization a transaction belongs to, shown under its memo when rows
+// from several orgs share one table. Long org names truncate.
+.transaction__event {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+
+  a {
+    color: map-get($palette, muted);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// The "Older receipts" group is a <details>, and its header is the <summary>.
+// Hide the default disclosure triangle in favour of the caret in the header.
+.receipt-card > summary {
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+}
+
+// The heading's bottom margin is the gap between it and the table below, but on
+// a collapsible group it would have to vanish when collapsed or it reads as dead
+// space under the header. Toggling it snaps the card 8px mid-animation, so the
+// gap lives on the table instead: there it sits inside ::details-content and is
+// revealed by the same block-size transition.
+details.receipt-card {
+  > summary > .heading {
+    margin-bottom: 0;
+  }
+
+  > .table-container {
+    margin-top: 0.5rem;
+  }
+
+  // Turn with the disclosure rather than snapping when it opens.
+  .flip-when-open {
+    transition: transform 0.5s;
+  }
+}
+
+.transaction__receipt-action {
+  width: 1%;
+}
+
+.receipt-card {
+  .transaction__date {
+    min-width: 7.5rem;
+  }
+
+  .transaction__memo {
+    width: 100%;
+    max-width: 0;
+    min-width: 12rem;
+  }
+
+  .transaction__amount {
+    min-width: 7rem;
+  }
+
+  .transaction__receipt-action {
+    min-width: 21rem;
+  }
+}
+
 .transaction__memo--pending {
   color: map-get($palette, muted);
 }
@@ -211,11 +282,20 @@ html[data-dark='true'] {
   }
 }
 
-.transaction:has(.renamed) {
-  animation: highlight 2s;
+@keyframes highlight-row {
+  from {
+    background-color: map-get($palette, warning);
+  }
+  to {
+    background-color: none;
+  }
 }
 
-.transaction:has(.renaming) {
+.transaction:has(.renamed) {
+  animation: highlight-row 2s;
+}
+
+.transaction:has(.renaming:not([hidden])) {
   background-image:
     linear-gradient(90deg, $orange 50%, transparent 50%),
     linear-gradient(90deg, $orange 50%, transparent 50%),
