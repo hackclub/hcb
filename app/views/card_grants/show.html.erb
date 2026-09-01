@@ -61,8 +61,18 @@
 <% end %>
 
 <% if policy(@card_grant.comments.build).create? %>
+  <% comments = policy_scope(@card_grant.comments) %>
   <div class="mt-10 mb-10 block menu__divider"></div>
-  <%= render "card_grants/section_heading", title: "Comments", own: own %>
-  <%= render "comments/list", comments: @card_grant.comments, show_blankslate: true %>
-  <%= render "comments/form", commentable: @card_grant %>
+  <details class="grant-comments" <%= "open" if comments.any? %>>
+    <summary class="grant-comments__summary">
+      <h2 class="grant-section m-0">
+        Comments
+        <span class="grant-comments__count"><%= comments.size %></span>
+      </h2>
+    </summary>
+    <div class="grant-comments__body">
+      <%= render "comments/list", comments: @card_grant.comments, show_blankslate: true %>
+      <%= render "comments/form", commentable: @card_grant %>
+    </div>
+  </details>
 <% end %>

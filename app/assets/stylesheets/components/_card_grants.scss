@@ -420,3 +420,56 @@ $grant-upload-height: 11.5rem;
     align-self: flex-start;
   }
 }
+
+.grant-comments__summary {
+  cursor: pointer;
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  &::before {
+    content: '';
+    display: inline-block;
+    flex: 0 0 auto;
+    width: 0.45rem;
+    height: 0.45rem;
+    margin-right: 0.625rem;
+    border-right: 2px solid map-get($palette, muted);
+    border-bottom: 2px solid map-get($palette, muted);
+    transform: rotate(-45deg);
+    transition: transform 0.15s ease-in-out;
+  }
+
+  .grant-section {
+    display: inline-flex;
+    vertical-align: middle;
+  }
+}
+
+.grant-comments[open] > .grant-comments__summary::before {
+  transform: rotate(45deg);
+}
+
+.grant-comments__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  padding: 0 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.5rem;
+  border-radius: var(--radius-xl);
+  background: rgba(map-get($palette, muted), 0.15);
+  color: map-get($palette, slate);
+
+  html[data-dark='true'] & {
+    color: map-get($palette, smoke);
+  }
+}
+
+.grant-comments__body {
+  margin-top: 0.875rem;
+}
