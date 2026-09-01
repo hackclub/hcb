@@ -48,7 +48,7 @@
       <% if report.locked? %>
         <div style="flex-grow: 1;" class="flex sm:justify-start sm:items-center">
           <% if report.reimbursement_requested? && !admin_signed_in? %>
-            <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted w-full sm:w-auto", method: :post do %>
+            <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted w-full sm:w-auto", data: { turbo_method: :post } do %>
               <%= inline_icon "reply" %>
               Mark as draft
               <% button_hint = capture do %>
@@ -56,7 +56,7 @@
               <% end %>
             <% end %>
           <% elsif current_user == report.user && report.submitted? %>
-            <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted w-full sm:w-auto", method: :post do %>
+            <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted w-full sm:w-auto", data: { turbo_method: :post } do %>
               <%= inline_icon "reply" %>
               Mark as draft
               <% button_hint = capture do %>
@@ -77,7 +77,7 @@
 
       <% if policy(report).update_currency? %>
         <div style="flex-grow: 1;" class="flex sm:justify-end">
-          <%= link_to reimbursement_report_update_currency_path(report), method: :post, class: "btn bg-secondary" do %>
+          <%= link_to reimbursement_report_update_currency_path(report), data: { turbo_method: :post }, class: "btn bg-secondary" do %>
             <%= inline_icon "transactions" %>
             Switch to <%= report.payout_method&.currency %>
           <% end %>
@@ -177,7 +177,7 @@
             <% end %>
           </div>
         <% elsif report.draft? && report.currency != "USD" && report.wise_transfer_may_exceed_balance? && !report.team_review_required? %>
-          <%= link_to reimbursement_report_submit_path(report_id: report.id), class: "btn bg-warning whitespace-nowrap", method: :post, data: { turbo_confirm: "Reports that exceed an organization's balance will be rejected. With current exchange rates, this report exceeds your balance." } do %>
+          <%= link_to reimbursement_report_submit_path(report_id: report.id), class: "btn bg-warning whitespace-nowrap", data: { turbo_method: :post, turbo_confirm: "Reports that exceed an organization's balance will be rejected. With current exchange rates, this report exceeds your balance." } do %>
             <%= inline_icon "send" %>
             Submit & request review
             <% button_hint = capture do %>
@@ -185,7 +185,7 @@
             <% end %>
           <% end %>
         <% elsif report.initial_draft? %>
-          <%= link_to reimbursement_report_submit_path(report_id: report.id), class: "btn bg-info whitespace-nowrap", method: :post do %>
+          <%= link_to reimbursement_report_submit_path(report_id: report.id), class: "btn bg-info whitespace-nowrap", data: { turbo_method: :post } do %>
             <%= inline_icon "send" %>
             Submit & request review
             <% button_hint = capture do %>
@@ -229,7 +229,7 @@
             </div>
           </div>
         <% elsif report.submitted? && policy(report).approve_all_expenses? && report.expenses.approved.none? %>
-          <%= link_to reimbursement_report_approve_all_expenses_path(report), class: "btn bg-success", method: :post do %>
+          <%= link_to reimbursement_report_approve_all_expenses_path(report), class: "btn bg-success", data: { turbo_method: :post } do %>
             <%= inline_icon "thumbsup" %>
             Approve all expenses
           <% end %>
@@ -276,7 +276,7 @@
                   <li>Close this reimbursement report without marking it as reimbursed</li>
                 </ul>
 
-                <%= link_to reimbursement_report_convert_to_wise_transfer_path(report), class: "btn btn-large bg-muted tooltipped tooltipped--n", method: :post, "aria-label": "Don't do this without checking with engineering first!" do %>
+                <%= link_to reimbursement_report_convert_to_wise_transfer_path(report), class: "btn btn-large bg-muted tooltipped tooltipped--n", data: { turbo_method: :post }, "aria-label": "Don't do this without checking with engineering first!" do %>
                   <%= inline_icon "important" %>
                   Alternative: Convert to Wise transfer
                 <% end %>
@@ -348,7 +348,7 @@
                 <% end %>
               </section>
             <% else %>
-              <%= link_to reimbursement_report_admin_approve_path(report_id: report.id), class: "btn bg-info whitespace-nowrap", method: :post, data: { turbo_confirm: } do %>
+              <%= link_to reimbursement_report_admin_approve_path(report_id: report.id), class: "btn bg-info whitespace-nowrap", data: { turbo_method: :post, turbo_confirm: } do %>
                 <%= inline_icon "thumbsup" %>
                 Approve <%= "#{payout_method.human_kind} " if payout_method %>reimbursement
               <% end %>
@@ -359,7 +359,7 @@
     </div>
   <% end %>
   <% if report.rejected? && !member_viewing %>
-    <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted mt2", method: :post do %>
+    <%= link_to reimbursement_report_draft_path(report_id: report.id), class: "btn bg-muted mt2", data: { turbo_method: :post } do %>
       <%= inline_icon "view-reload" %>
       Re-open report for review
     <% end %>

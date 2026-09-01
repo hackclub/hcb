@@ -73,12 +73,12 @@ class WiseTransfer < ApplicationRecord
   monetize :amount_cents, as: "amount", with_model_currency: :currency
   monetize :usd_amount_cents, as: "usd_amount", allow_nil: true
 
-  validates :amount_cents, numericality: { greater_than_or_equal_to: 100, message: "must be at least $1" }
-  validates :usd_amount_cents, numericality: { greater_than_or_equal_to: 0, message: "must be positive" }, allow_nil: true
+  validates :amount_cents, numericality: { greater_than_or_equal_to: 0, message: "must be positive" }
+  validates :usd_amount_cents, numericality: { greater_than_or_equal_to: 100, message: "must be at least $1" }, allow_nil: true
   validates :quoted_usd_amount_cents, numericality: { greater_than_or_equal_to: 0, message: "must be positive" }, allow_nil: true
 
   include PublicActivity::Model
-  tracked owner: proc { |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  tracked owner: proc { |controller, record| record.user || controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
   WISE_ID_FORMAT = /\A\d+\z/
   before_validation(:normalize_wise_id)
@@ -178,11 +178,11 @@ class WiseTransfer < ApplicationRecord
 
   def status_color
     if pending?
-      :warning
+      :muted
     elsif approved?
-      :blue
+      :info
     elsif sent?
-      :purple
+      :info
     elsif rejected? || failed?
       :error
     elsif deposited?
@@ -197,18 +197,32 @@ class WiseTransfer < ApplicationRecord
     aasm_state.humanize
   end
 
-  def self.generate_detailed_quote(initial_local_amount)
-    conn = Faraday.new url: "https://api.wise.com" do |f|
+  def self.quote_connection
+    Faraday.new url: "https://api.wise.com" do |f|
       f.request :json
       f.response :raise_error
       f.response :json
     end
+  end
 
-    response = conn.post("/v3/quotes", {
-                           sourceCurrency: "USD",
-                           targetCurrency: initial_local_amount.currency.to_s,
-                           targetAmount: initial_local_amount.amount
-                         })
+  def self.convert_usd_to_local(usd_amount, target_currency)
+    return Money.from_cents(usd_amount.cents, target_currency) if target_currency == "USD"
+
+    response = quote_connection.post("/v3/quotes", {
+                                       sourceCurrency: "USD",
+                                       targetCurrency: target_currency,
+                                       sourceAmount: usd_amount.amount
+                                     })
+
+    Money.from_amount(usd_amount.amount * response.body["rate"], target_currency)
+  end
+
+  def self.generate_detailed_quote(initial_local_amount)
+    response = quote_connection.post("/v3/quotes", {
+                                       sourceCurrency: "USD",
+                                       targetCurrency: initial_local_amount.currency.to_s,
+                                       targetAmount: initial_local_amount.amount
+                                     })
 
     payment_option = response.body["paymentOptions"].first
     price_after_all_fees = Money.from_amount(payment_option["sourceAmount"], "USD")

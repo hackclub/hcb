@@ -22,7 +22,8 @@ module FeeRevenueService
           date: rpfrt.date,
           amount_cents: rpfrt.amount_cents,
           memo: rpfrt.memo,
-          raw_pending_fee_revenue_transaction: rpfrt
+          raw_pending_fee_revenue_transaction: rpfrt,
+          fronted: true
         )
 
         TransactionCategoryService

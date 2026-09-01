@@ -101,7 +101,7 @@ class AdminMailer < ApplicationMailer
     @anomalous_card_grants = anomalous_card_grants
 
     mail(
-      to: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"],
+      to: engineers,
       subject: "#{anomalous_events.length + anomalous_card_grants.length} ledgers have balance anomalies"
     )
   end
@@ -110,20 +110,24 @@ class AdminMailer < ApplicationMailer
     @anomalous_events = anomalous_events
 
     mail(
-      to: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"],
+      to: engineers,
       subject: "#{anomalous_events.length} events have fee anomalies"
     )
   end
 
-  def logical_transaction_anomalies(event:, hcb_codes:, ledger_items:)
-    @event = event
-    @hcb_codes = hcb_codes
-    @ledger_items = ledger_items
+  def linked_object_anomalies(anomalous_items:)
+    @anomalous_items = anomalous_items
 
     mail(
-      to: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"],
-      subject: "#{hcb_codes.length} logical transactions have anomalies for #{@event.name}"
+      to: engineers,
+      subject: "#{anomalous_items.length} items have linked object anomalies"
     )
+  end
+
+  private
+
+  def engineers
+    User.where(email: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"]).pluck(:email)
   end
 
 end

@@ -6,7 +6,7 @@ module Api
       include SetEvent
 
       before_action :set_api_event, only: [:index, :create]
-      before_action :set_donation, only: [:payment_intent]
+      before_action :set_donation, only: [:show, :payment_intent]
       before_action :require_trusted_oauth_app!, only: [:create, :payment_intent]
 
       def index
@@ -21,6 +21,10 @@ module Api
         if @expand.include?(:stats)
           @total_cents = @event.donations.not_pending.succeeded_and_not_refunded.sum(:amount)
         end
+      end
+
+      def show
+        authorize @donation
       end
 
       def create

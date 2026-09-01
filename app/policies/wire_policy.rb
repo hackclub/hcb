@@ -13,10 +13,6 @@ class WirePolicy < ApplicationPolicy
     user_who_can_transfer?
   end
 
-  def approve?
-    user&.admin?
-  end
-
   def send_wire?
     user&.admin?
   end

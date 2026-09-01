@@ -20,7 +20,6 @@
 #  index_legal_entities_on_tin_hash           (tin_hash)
 #
 class LegalEntity < ApplicationRecord
-  self.ignored_columns += ["address_city", "address_country", "address_line1", "address_line2", "address_postal_code", "address_state"]
   include Hashid::Rails
 
   include PublicIdentifiable
@@ -62,9 +61,11 @@ class LegalEntity < ApplicationRecord
   end
 
   # Re-check onboarding for any of this entity's contractor positions that are
-  # mid-onboarding. Called when a step that lives on the legal entity (tax form,
-  # payout method) completes.
-  def refresh_contractor_onboarding!
+  # mid-onboarding and payments that are pending. Called when a step that lives
+  # on the legal entity (tax form, payout method) completes.
+  def refresh_pending_contractors_payments!
+    payments.pending_legal_entity.each(&:refresh_legal_entity_state!)
+
     Payroll::Position.joins(:payee)
                      .where(payees: { legal_entity_id: id }, aasm_state: :onboarding)
                      .find_each(&:refresh_onboarding_state!)
@@ -78,9 +79,10 @@ class LegalEntity < ApplicationRecord
   # completes and turns out to disagree, which is what mismatched_tax_form catches.
   def payable?
     form = latest_completed_tax_form
+    requires_verification = form&.form_type == "W9" && tax_identification_number.predicted_to_be_over_threshold?
 
     form.present? && mismatched_tax_form.nil? && entity_type_mismatched_tax_form.nil? &&
-      (form.taxbandits_tin_match_success? || !tax_identification_number.predicted_to_be_over_threshold?) &&
+      (form.taxbandits_tin_match_success? || !requires_verification) &&
       !tin_banned? && !archived?
   end
 

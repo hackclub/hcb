@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class AdminController < Admin::BaseController
+  include Admin::TransferApprovable
+
   def nav
     @nav = Admin::Nav.new(page_title: params[:title])
 
@@ -194,7 +196,8 @@ class AdminController < Admin::BaseController
     @access_level = params[:access_level]
     @event_id = params[:event_id].presence
     @referral_program_id = params[:referral_program_id].presence
-    @params = params.permit(:page, :per, :q, :access_level, :event_id, :referral_program_id)
+    @locked = params[:locked] == "1"
+    @params = params.permit(:page, :per, :q, :access_level, :event_id, :referral_program_id, :locked)
 
     if @event_id
       @event = Event.find(@event_id)
@@ -212,14 +215,16 @@ class AdminController < Admin::BaseController
 
     relation = relation.search_name(@q) if @q
     relation = relation.where(access_level: @access_level) if @access_level.present?
+    relation = relation.where.not(locked_at: nil) if @locked
 
     @count = relation.count
 
-    @users = relation.page(@page).per(@per).order(created_at: :desc)
+    @users = relation.order(created_at: :desc)
     @referral_programs = Referral::Program.all
 
     respond_to do |format|
       format.html do
+        @users = @users.page(@page).per(@per)
       end
       format.csv { render csv: @users.includes(:stripe_cards, :emburse_cards) }
     end
@@ -386,6 +391,7 @@ class AdminController < Admin::BaseController
     @amount = params[:amount].presence
     @q = params[:q].presence
     @unmapped = params[:unmapped] != "0"
+    @nonzero = params[:nonzero] == "1" ? true : nil
 
     relation = if @q
                  Ledger::Item.where(id: @q)
@@ -399,10 +405,11 @@ class AdminController < Admin::BaseController
     relation = relation.where.missing(:primary_mapping) if @unmapped.present? && @q.blank?
 
     relation = relation.where(amount_cents: @amount.to_i).or(relation.where(amount_cents: -@amount.to_i)) if @amount
+    relation = relation.where.not(amount_cents: 0) if @nonzero.present? && @q.blank?
 
     @count = relation.count
 
-    @ledger_items = relation.includes(:hcb_code, :canonical_transactions, :canonical_pending_transactions)
+    @ledger_items = relation.includes(:hcb_code)
                             .page(@page).per(@per).order(datetime: :desc)
   end
 
@@ -628,6 +635,8 @@ class AdminController < Admin::BaseController
     ach_transfer = AchTransfer.find(params[:id])
     return unless enforce_sudo_mode
 
+    ensure_admin_may_approve!(ach_transfer, amount_cents: ach_transfer.amount)
+
     ach_transfer.approve!(current_user)
 
     redirect_to ach_start_approval_admin_path(ach_transfer), flash: { success: "Success" }
@@ -640,6 +649,8 @@ class AdminController < Admin::BaseController
   def ach_send_realtime
     ach_transfer = AchTransfer.find(params[:id])
     return unless enforce_sudo_mode
+
+    ensure_admin_may_approve!(ach_transfer, amount_cents: ach_transfer.amount)
 
     ach_transfer.approve!(current_user, send_realtime: true)
 
@@ -1083,6 +1094,7 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = params[:per] || 20
     @q = params[:q].presence
+    @number = params[:number].presence
     @open = params[:open] == "1" ? true : nil
     @paid = params[:paid] == "1" ? true : nil
     @missing_payout = params[:missing_payout] == "1" ? true : nil
@@ -1109,6 +1121,8 @@ class AdminController < Admin::BaseController
         relation = relation.search_description(@q)
       end
     end
+
+    relation = relation.where(number: @number) if @number
 
     relation = relation.open_v2 if @open
     relation = relation.paid_v2 if @paid
@@ -1565,7 +1579,9 @@ class AdminController < Admin::BaseController
 
     @count = messages.count
 
-    @messages = messages.page(@page).per(@per).order(sent_at: :desc)
+    # `reorder` because `search_subject` (pg_search) orders by relevance rank,
+    # which would otherwise take precedence over `sent_at`.
+    @messages = messages.reorder(sent_at: :desc).page(@page).per(@per)
   end
 
   def unknown_merchants
@@ -1600,8 +1616,8 @@ class AdminController < Admin::BaseController
         yp_name: merchant[:name],
         yp_network_id: network_id,
         memos: RawStripeTransaction
-          .where("stripe_transaction->'merchant_data'->>'network_id' = ?", network_id)
-          .pluck(Arel.sql("distinct(stripe_transaction->'merchant_data'->'name')"))
+               .where("stripe_transaction->'merchant_data'->>'network_id' = ?", network_id)
+               .pluck(Arel.sql("distinct(stripe_transaction->'merchant_data'->'name')"))
       }
     end
   end
@@ -1739,7 +1755,7 @@ class AdminController < Admin::BaseController
     relation = relation.where(id: events.joins(:canonical_transactions).where("canonical_transactions.date >= ?", @activity_since_date)) if @activity_since_date.present?
     if @plan != "all"
       relation = relation.where(id: events.joins("LEFT JOIN event_plans on event_plans.event_id = events.id")
-                         .where("event_plans.aasm_state = 'active' AND event_plans.type = ?", @plan))
+                                          .where("event_plans.aasm_state = 'active' AND event_plans.type = ?", @plan))
     end
     relation = relation.where(point_of_contact_id: @point_of_contact_id) if @point_of_contact_id != "all"
     if @country == 9999
