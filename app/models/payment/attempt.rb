@@ -41,6 +41,7 @@ class Payment
     has_one :legal_entity, through: :payment
 
     scope :active, -> { where.not(aasm_state: ["failed", "rejected", "canceled"] ) }
+    def active? = !(failed? || rejected? || canceled?)
 
     validate :other_attempts_failed
     validate :terminal_states_freeze_attempt, on: :update
@@ -101,10 +102,6 @@ class Payment
     end
 
     after_create :create_transfer!
-
-    def active?
-      !(failed? || rejected? || canceled?)
-    end
 
     private
 
