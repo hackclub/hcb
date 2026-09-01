@@ -193,6 +193,15 @@ module Tax
       end
     end
 
+    def signing_url_uid
+      return nil if signing_url.nil?
+
+      url = URI.parse(signing_url)
+      queries = CGI.parse(url.query)
+
+      queries["whid"].first
+    end
+
     private
 
     # WhCertificate/Get returns the payee's full, unmasked TIN. Nothing outside

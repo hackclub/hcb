@@ -118,8 +118,8 @@
 </div>
 
 <div class="action_row">
-  <%= link_to "Looks good! 🌈 ✨", admin_ledger_audits_task_reviewed_path(@task), class: "btn", method: :post %>
-  <%= link_to "Looks fishy... 🐡", admin_ledger_audits_task_flagged_path(@task), class: "btn bg-error", method: :post %>
+  <%= link_to "Looks good! 🌈 ✨", admin_ledger_audits_task_reviewed_path(@task), class: "btn", data: { turbo_method: :post } %>
+  <%= link_to "Looks fishy... 🐡", admin_ledger_audits_task_flagged_path(@task), class: "btn bg-error", data: { turbo_method: :post } %>
 </div>
 
 <div style="max-width: 600px; margin-left: auto; margin-right: auto;" class="mt4">
