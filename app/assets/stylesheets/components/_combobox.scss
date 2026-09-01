@@ -58,9 +58,9 @@
 .combobox__listbox {
   @apply shadow-lg absolute p-0 m-0 left-0 rounded-lg overflow-hidden;
   @apply border border-solid border-gray-300 dark:border-neutral-500;
+  @apply bg-gray-100 dark:bg-neutral-800;
   line-height: var(--combobox-line-height);
   list-style: none;
-  backdrop-filter: blur(4px);
   max-height: var(--combobox-listbox-max-height);
   overflow-y: auto;
   top: calc(100% + 0.2rem);
