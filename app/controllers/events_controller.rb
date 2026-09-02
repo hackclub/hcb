@@ -1053,12 +1053,12 @@ class EventsController < ApplicationController
     else
       @event.update(hidden_at: Time.now)
       file_redirects = [
-        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/a7ce1ae34b9e9422_barking_dog_turned_into_wood_meme.mp4",
-        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/2d373908baa69206_dog_transforms_after_seeing_chair.mp4",
-        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/292b3ec8e3ad9fb1_dog_turns_into_bread__but_it_s_in_hd.mp4",
-        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/b7b400f98e3f264a_run_now_meme.mp4",
-        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/2cda55c3a53f23b6_bonk_sound_effect.mp4",
-        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/9a837b44dd082d95_disappearing_doge_meme.mp4"
+        "https://cdn.hackclub.com/019c2570-f1b0-7b5e-957e-8b05a76344fd/barking_dog_turned_into_wood_meme.mp4",
+        "https://cdn.hackclub.com/019c2570-f243-7802-a276-f4f6c35b67a8/dog_transforms_after_seeing_chair.mp4",
+        "https://cdn.hackclub.com/019c2570-f3c5-7fff-9824-12d7eb6089fc/dog_turns_into_bread__but_it_s_in_hd.mp4",
+        "https://cdn.hackclub.com/019c2570-f36c-7ea4-a7e1-4a251c8d39e9/run_now_meme.mp4",
+        "https://cdn.hackclub.com/019c2570-da59-7be2-9275-100f44b60ac9/bonk_sound_effect.mp4",
+        "https://cdn.hackclub.com/019c2570-e103-73f6-8f6d-c97881b8904e/disappearing_doge_meme.mp4"
       ].sample
 
       redirect_to file_redirects, allow_other_host: true

@@ -107,7 +107,7 @@ module UsersHelper
   end
 
   def profile_picture_for(user, size = 24, default_image: nil)
-    default_image ||= "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/1e41035b85ccb92f_image.png"
+    default_image ||= "https://cdn.hackclub.com/019c256a-a9f8-7cfe-8def-b35f44a55f15/image.png"
 
     # profile_picture_for works with OpenStructs (used on the front end when a user isn't registered),
     # so this method shows Gravatars/intials for non-registered and allows showing of uploaded profile pictures for registered users.
@@ -312,44 +312,44 @@ module UsersHelper
   def onboarding_gallery
     [
       {
-        image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/f00f504836b546b6_image.png",
+        image: "https://cdn.hackclub.com/019c256a-97ad-793a-b693-d6f96a08a1f5/image.png",
         url: "https://hcb.hackclub.com/zephyr",
         overlay_color: "#802434",
       },
       {
-        image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/8e36b998e8f8a014_image.png",
+        image: "https://cdn.hackclub.com/019c256a-9d96-7c2f-a22c-f02c10edafd4/image.png",
         url: "https://hcb.hackclub.com/the-charlotte-bridge",
         overlay_color: "#805b24",
       },
       {
-        image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/c2b21fc2bac8fe37_image.png",
+        image: "https://cdn.hackclub.com/019c2570-ee44-7e7a-973c-d2f41ca05fdf/image.png",
         url: "https://hcb.hackclub.com/windyhacks",
         overlay_color: "#807f0a",
       },
       {
-        image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/3693a52722bd453d_image.png",
+        image: "https://cdn.hackclub.com/019c2570-efbc-719f-8d62-d1d42e83ca8c/image.png",
         url: "https://hcb.hackclub.com/the-innovation-circuit",
         overlay_color: "#22806c",
         object_position: "center"
       },
       {
-        image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/0dd4665e1f416fe0_image.png",
+        image: "https://cdn.hackclub.com/019c2570-e0d4-7bd8-9e83-4bd8843410f2/image.png",
         url: "https://hcb.hackclub.com/zephyr",
         overlay_color: "#3c7d80",
         object_position: "center"
       },
       {
-        image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/014152a92bec1ca3_image.png",
+        image: "https://cdn.hackclub.com/019c256a-9bd8-7712-9211-0cad87140bb0/image.png",
         url: "https://hcb.hackclub.com/hackpenn",
         overlay_color: "#225c80",
       },
       {
-        image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/17c73dbb7921ea42_image.png",
+        image: "https://cdn.hackclub.com/019c256b-bbf2-7c93-96f7-072136636b4e/image.png",
         url: "https://hcb.hackclub.com/wild-wild-west",
         overlay_color: "#6c2280",
       },
       {
-        image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/395d07060854ce95_image.png",
+        image: "https://cdn.hackclub.com/019c256a-aabc-7a58-8893-9ba27d59a656/image.png",
         url: "https://hcb.hackclub.com/assemble",
         overlay_color: "#802434",
       }

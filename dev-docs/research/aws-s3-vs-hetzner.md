@@ -877,7 +877,7 @@ result in:
       environment variables.
 3. Run benchmarks for Hetzner and AWS S3
    ```sh
-   export AWS_PROFILE=hetzner && ./s3-benchmark -region=hel1 -endpoint=https://hel1.your-objectstorage.com -upload-csv=data
+   export AWS_PROFILE=hetzner && ./s3-benchmark -region=hel1 -endpoint=https://cdn.hackclub.com/01a06291-b35e-7244-9fd8-1280a27115e4/download -upload-csv=data
    ```
    ```sh
    export AWS_PROFILE=aws && ./s3-benchmark -region=us-east-2 -upload-csv=data
