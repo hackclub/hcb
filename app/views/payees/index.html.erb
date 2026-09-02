@@ -13,6 +13,7 @@
 
   <%= turbo_frame_tag :payee_results_list do %>
     <% rows = [@selected, *@payees].uniq.compact %>
+    <% is_email_query = params[:q].present? && ValidatesEmailFormatOf.validate_email_format(params[:q]).nil? %>
     <% if rows.any? %>
       <% rows.each do |payee| %>
         <div class="btn btn--list-item border-t rounded-none relative">
@@ -57,22 +58,30 @@
       <div class="px-4">
         <%= paginate @payees, per_page_menu: false %>
       </div>
+      <% if params[:q].present? %>
+        <button type="button" class="btn btn--list-item border-t rounded-none w-full" data-action="payee-picker#showAddingFromSearch" data-payee-picker-query-param="<%= params[:q] %>" data-payee-picker-url-param="<%= check_email_format_event_payees_path(event_id: @event.slug) %>">
+          <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
+            <%= inline_icon "plus", size: 18 %>
+          </div>
+          <div class="text-left">
+            <p class="font-medium">Add "<%= params[:q] %>" as a new recipient</p>
+            <p class="text-sm muted">
+              We'll prefill the <%= is_email_query ? "email" : "name" %> and let you fill out the rest
+            </p>
+          </div>
+          <%= inline_icon "view-forward", class: "ml-auto muted" %>
+        </button>
+      <% end %>
     <% elsif params[:q].present? %>
       <div class="px-4">
-        <%= blankslate "No results for \"#{params[:q]}\"", class: "text-sm" %>
+        <div class="center pt4 pb4 rounded-lg border border-gray-200 dark:border-gray-700 w-full">
+          <p class="muted font-medium h3 mt0 mb3">No results for "<%= params[:q] %>"</p>
+          <button type="button" class="btn bg-blue gap-2" data-action="payee-picker#showAddingFromSearch" data-payee-picker-query-param="<%= params[:q] %>" data-payee-picker-url-param="<%= check_email_format_event_payees_path(event_id: @event.slug) %>">
+            <%= inline_icon "plus", size: 16 %>
+            Add "<%= params[:q] %>" as a new recipient
+          </button>
+        </div>
       </div>
-      <button type="button" class="btn btn--list-item border-t rounded-none w-full" data-action="payee-picker#showAddingFromSearch" data-payee-picker-query-param="<%= params[:q] %>">
-        <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
-          <%= inline_icon "plus", size: 18 %>
-        </div>
-        <div class="text-left">
-          <p class="font-medium">Add "<%= params[:q] %>"</p>
-          <p class="text-sm muted">
-            We'll prefill the <%= params[:q].match?(/\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i) ? "email" : "name" %> and let you fill out the rest
-          </p>
-        </div>
-        <%= inline_icon "view-forward", class: "ml-auto muted" %>
-      </button>
 
       <button type="button" class="btn btn--list-item border-t rounded-none w-full" data-action="payee-picker#showAddingFromSearch">
         <div class="w-10 h-10 shrink-0 flex items-center justify-center muted">

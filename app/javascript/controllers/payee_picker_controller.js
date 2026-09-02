@@ -15,10 +15,16 @@ export default class extends Controller {
     if (this.hasSummaryTarget) this.summaryTarget.hidden = true
   }
 
-  showAddingFromSearch(event) {
+  async showAddingFromSearch(event) {
     const query = (event.params.query || '').trim()
+    const checkEmailFormatUrl = event.params.url
+
     if (query) {
-      if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(query)) {
+      const isEmail =
+        checkEmailFormatUrl &&
+        (await this.#isEmailFormat(checkEmailFormatUrl, query))
+
+      if (isEmail) {
         this.emailInputTarget.value = query
       } else {
         this.nameInputTarget.value = query
@@ -31,5 +37,22 @@ export default class extends Controller {
     this.addingPanelTarget.hidden = true
     this.defaultPanelTarget.hidden = false
     if (this.hasSummaryTarget) this.summaryTarget.hidden = false
+  }
+
+  async #isEmailFormat(checkEmailFormatUrl, query) {
+    try {
+      const url = new URL(checkEmailFormatUrl, window.location.origin)
+      url.searchParams.set('email', query)
+
+      const response = await fetch(url, {
+        headers: { Accept: 'application/json' },
+      })
+      if (!response.ok) return false
+
+      const { valid } = await response.json()
+      return valid
+    } catch {
+      return false
+    }
   }
 }

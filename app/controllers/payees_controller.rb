@@ -3,7 +3,7 @@
 class PayeesController < ApplicationController
   include SetEvent
 
-  before_action :set_event, only: [:index, :create, :update, :archive]
+  before_action :set_event, only: [:index, :create, :update, :archive, :check_email_format]
   before_action :set_payee, only: [:choose_legal_entity, :set_legal_entity]
 
   class InvalidManualPayeeEntityType < StandardError; end
@@ -17,6 +17,14 @@ class PayeesController < ApplicationController
     @selected = all.find_by_hashid(params[:payee_id]) if params[:payee_id].present?
 
     render layout: false
+  end
+
+  def check_email_format
+    authorize @event, :index?
+
+    valid = ValidatesEmailFormatOf.validate_email_format(params[:email].to_s).nil?
+
+    render json: { valid: }
   end
 
   def create
