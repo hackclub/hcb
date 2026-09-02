@@ -1813,12 +1813,16 @@ class AdminController < Admin::BaseController
   end
 
   def hackathons_task_size
-    hackathons = Faraday
-                 .new(ssl: { verify: false }, request: { open_timeout: 5, timeout: 8 }) { |c| c.response :json }
-                 .get("https://dash.hackathons.hackclub.com/api/v1/stats/hackathons")
-                 .body
+    client = Faraday.new(ssl: { verify: false }, request: { open_timeout: 5, timeout: 8 }) do |c|
+      c.response :json
+      c.response :raise_error
+    end
 
-    hackathons.dig("status", "pending", "meta", "count")
+    hackathons = client.get("https://dash.hackathons.hackclub.com/api/v1/stats/hackathons").body
+
+    raise TypeError, "unexpected response: #{hackathons.inspect.truncate(200)}" unless hackathons.is_a?(Hash)
+
+    hackathons.dig("status", "pending", "meta", "count") || 0
   rescue => e
     Rails.error.report(e)
     9999
