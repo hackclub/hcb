@@ -80,4 +80,27 @@ RSpec.describe CanonicalPendingTransactionService::Settle do
       end
     end
   end
+
+  context "when a capture is settled from inside the transaction that creates it" do
+    let(:canonical_pending_transaction) { create(:canonical_pending_transaction, amount_cents: -1000) }
+    let(:canonical_transaction) { create(:canonical_transaction, amount_cents: -400) }
+
+    # notify_settled reads both records back in another process, so it must not
+    # be enqueued against a transaction that may still roll back.
+    it "holds the settled notification until the transaction commits" do
+      allow(canonical_pending_transaction).to receive(:raw_pending_stripe_transaction).and_return(create(:raw_pending_stripe_transaction))
+      allow(canonical_transaction).to receive(:stripe_card).and_return(create(:stripe_card, :with_stripe_id))
+
+      clear_enqueued_jobs
+
+      ActiveRecord::Base.transaction do
+        service.run!
+
+        expect(CanonicalPendingSettledMapping.count).to eq(1)
+        expect(enqueued_jobs).to be_empty
+      end
+
+      expect(enqueued_jobs).not_to be_empty
+    end
+  end
 end

@@ -147,12 +147,24 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   after_create :write_hcb_code
+
+  # Settle in the transaction that creates this transaction, not after it
+  # commits. A CanonicalTransaction that is visible without the
+  # CanonicalPendingSettledMapping recording what it settles leaves its
+  # CanonicalPendingTransaction looking unsettled, and
+  # Ledger::Item#calculate_amount_cents then counts the authorization and the
+  # capture, doubling the item's amount (and the ledger's balance) for as long
+  # as that window is open. Creating both atomically closes it.
+  after_create do
+    PendingEventMappingEngine::Settle::Single::Stripe.new(canonical_transaction: self).run if likely_stripe_card_transaction?
+  end
+
   after_create_commit :write_system_event
+  # Event mapping stays outside the creating transaction: it raises for a card
+  # HCB doesn't know about, and that must not roll back the import of the
+  # transaction itself.
   after_create_commit do
-    if likely_stripe_card_transaction?
-      PendingEventMappingEngine::Settle::Single::Stripe.new(canonical_transaction: self).run
-      EventMappingEngine::Map::Single::Stripe.new(canonical_transaction: self).run
-    end
+    EventMappingEngine::Map::Single::Stripe.new(canonical_transaction: self).run if likely_stripe_card_transaction?
   end
 
   def smart_memo
