@@ -13,7 +13,7 @@
 
 <% if @application.event.event_tags.include?(EventTag.find_by(name: EventTag::Tags::HACKATHON)) %>
   <p>
-    Also, check out <%= link_to "our guide to organizing a hackathon", "https://hackclub.com/how-to-organize-a-hackathon/" %>.
+    Also, check out <%= link_to "our guide to organizing a hackathon", "https://v3.hackclub.com/how-to-organize-a-hackathon/" %>.
     We're excited to see your event come to life!
   </p>
 <% elsif @application.event.event_tags.include?(EventTag.find_by(name: EventTag::Tags::ROBOTICS_TEAM)) %>
