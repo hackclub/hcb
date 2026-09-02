@@ -102,6 +102,26 @@ export const generateEventActions = data => {
       parent: event.slug,
       keywords: 'ach check',
     })),
+    ...data
+      .filter(e => e.features.payments)
+      .map(event => ({
+        id: `${event.slug}-payments`,
+        name: 'Payments',
+        perform: navigate(`/${event.slug}/payments`),
+        icon: <Icon glyph="payment-transfer" size={16} />,
+        parent: event.slug,
+        keywords: 'ach check transfer send money',
+      })),
+    ...data
+      .filter(e => e.features.contractors)
+      .map(event => ({
+        id: `${event.slug}-contractors`,
+        name: 'Contractors',
+        perform: navigate(`/${event.slug}/contractors`),
+        icon: <Icon glyph="person-badge" size={16} />,
+        parent: event.slug,
+        keywords: 'payroll contractor',
+      })),
     ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-reimbursements`,
       name: 'Reimbursements',
