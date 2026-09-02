@@ -407,15 +407,16 @@ Sponsor.skip_callback(:update, :before, :update_stripe_customer, raise: false)
 # Real ABA routing numbers (Chase, BofA, Wells Fargo, US Bank, PNC, Citi, TD...).
 REAL_ROUTING_NUMBERS = %w[021000021 026009593 121042882 091000022 043000096 021000089 031201360 111000025 122105155 322271627].freeze
 EMAIL_DOMAINS = %w[gmail.com outlook.com yahoo.com icloud.com hotmail.com proton.me].freeze
+# [merchant name, Stripe category key, MCC category_code] — codes match YellowPages' dataset.
 CARD_MERCHANTS = [
-  ["Amazon Web Services", "computer_software_stores"], ["GitHub", "computer_software_stores"],
-  ["Delta Air Lines", "airlines_air_carriers"], ["Amtrak", "transportation_services"],
-  ["Uber", "taxicabs_limousines"], ["Blue Bottle Coffee", "eating_places_restaurants"],
-  ["Chipotle", "eating_places_restaurants"], ["Target", "discount_stores"],
-  ["Home Depot", "home_supply_warehouse_stores"], ["Adafruit", "electronics_stores"],
-  ["DigiKey", "electronics_stores"], ["Notion Labs", "computer_software_stores"],
-  ["Figma", "computer_software_stores"], ["Zoom", "computer_software_stores"],
-  ["Marriott", "lodging"], ["Costco", "wholesale_clubs"]
+  ["Amazon Web Services", "computer_software_stores", "5734"], ["GitHub", "computer_software_stores", "5734"],
+  ["Delta Air Lines", "airlines_air_carriers", "4511"], ["Amtrak", "passenger_railways", "4112"],
+  ["Uber", "taxicabs_limousines", "4121"], ["Blue Bottle Coffee", "eating_places_restaurants", "5812"],
+  ["Chipotle", "eating_places_restaurants", "5812"], ["Target", "discount_stores", "5310"],
+  ["Home Depot", "home_supply_warehouse_stores", "5200"], ["Adafruit", "electronics_stores", "5732"],
+  ["DigiKey", "electronics_stores", "5732"], ["Notion Labs", "computer_software_stores", "5734"],
+  ["Figma", "computer_software_stores", "5734"], ["Zoom", "computer_software_stores", "5734"],
+  ["Marriott", "hotels_motels_and_resorts", "7011"], ["Costco", "wholesale_clubs", "5300"]
 ].freeze
 
 def fake_name
@@ -537,10 +538,14 @@ def seed_card(event, cardholder, status:, name:, subledger: nil, last4: nil)
   card
 end
 
-def seed_card_charge(event, card, merchant, category, cents, date, uploader: nil)
+def seed_card_charge(event, card, merchant, category, category_code, cents, date, uploader: nil)
   auth_id = "iauth_seed_#{SecureRandom.hex(6)}"
+  merchant_data = { "name" => merchant, "network_id" => rand(10**9).to_s, "category" => category, "category_code" => category_code,
+                    "city" => "San Francisco", "state" => "CA", "postal_code" => "94105", "country" => "US"
+}
+  verification_data = { "address_line1_check" => "match", "address_postal_code_check" => "match", "cvc_check" => "match", "expiry_check" => "match" }
   rpst = RawPendingStripeTransaction.create!(stripe_transaction_id: auth_id, amount_cents: -cents, date_posted: date,
-                                             stripe_transaction: { "id" => auth_id, "status" => "pending", "created" => date.to_i, "authorization_method" => "online", "amount" => cents, "pending_request" => { "amount" => cents }, "card" => { "id" => card.stripe_id }, "merchant_data" => { "name" => merchant, "network_id" => rand(10**9).to_s, "category" => category } })
+                                             stripe_transaction: { "id" => auth_id, "status" => "pending", "created" => date.to_i, "authorization_method" => "online", "amount" => cents, "merchant_currency" => "usd", "pending_request" => { "amount" => cents }, "card" => { "id" => card.stripe_id }, "merchant_data" => merchant_data, "verification_data" => verification_data })
   cpt = CanonicalPendingTransaction.create!(raw_pending_stripe_transaction: rpst, amount_cents: -cents, date:, memo: merchant)
   CanonicalPendingEventMapping.create!(canonical_pending_transaction_id: cpt.id, event_id: event.id, subledger_id: card.subledger_id)
   seed_receipt(cpt.local_hcb_code, uploader) if uploader
@@ -635,9 +640,9 @@ def populate_event!(event, admin:, organizers:, scale: 20)
     seed_card(event, seed_cardholder(person), status: (person == organizers.last ? "inactive" : "active"), name: "#{person.name.split.first}'s card")
   end
   (scale + 10).times do |i|
-    merchant, category = CARD_MERCHANTS.sample
+    merchant, category, category_code = CARD_MERCHANTS.sample
     card = cards.sample
-    seed_card_charge(event, card, merchant, category, [8_40, 12_99, 25_99, 42_00, 89_00, 120_00, 350_00, 1_200_00].sample,
+    seed_card_charge(event, card, merchant, category, category_code, [8_40, 12_99, 25_99, 42_00, 89_00, 120_00, 350_00, 1_200_00].sample,
                      rand(1..30).days.ago, uploader: i.even? ? card.user : nil)
   end
 
@@ -716,7 +721,7 @@ def populate_event!(event, admin:, organizers:, scale: 20)
     hcb.tags << travel_tag if i.even?
     Comment.create!(commentable: hcb, user: organizer, content: ["Please add a receipt for this.", "Reimbursed to organizer.", "Confirmed with vendor."].sample, admin_only: i.even?)
   end
-  Announcement.create!(event:, author: admin, title: "Welcome to #{event.name}!",
+  Announcement.create!(event:, author: admin, title: "Welcome to #{event.name}!", published_at: rand(1..10).days.ago,
                        content: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Our finances are now live on HCB." }] }] }, aasm_state: :published)
   Announcement.create!(event:, author: admin, title: "Draft update",
                        content: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Work in progress." }] }] }, aasm_state: :draft)
