@@ -5,6 +5,7 @@
 # Table name: stripe_card_personalization_designs
 #
 #  id                        :bigint           not null, primary key
+#  color                     :string
 #  common                    :boolean          default(FALSE), not null
 #  stale                     :boolean          default(FALSE), not null
 #  stripe_card_logo          :string
