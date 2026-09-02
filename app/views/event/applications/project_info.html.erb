@@ -17,12 +17,12 @@
   <div
     class="card card--outline mb-6"
     x-data="application_project_info(<%= {
-      has_website: @application.website_url.present? ? "true" : "false",
-      has_political: @application.political_description.present? ? "true" : "false",
-      teenager: @application.teen_led? ? "true" : "false",
-      committed: @application.committed_amount,
-      description: @application.description
-    }.to_json %>)">
+                                           has_website: @application.website_url.present? ? "true" : "false",
+                                           has_political: @application.political_description.present? ? "true" : "false",
+                                           teenager: @application.teen_led? ? "true" : "false",
+                                           committed: @application.committed_amount,
+                                           description: @application.description
+                                         }.to_json %>)">
     <div class="field">
       <%= form.label :name do %>
         Project name <span class="text-primary">*</span>
