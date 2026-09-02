@@ -184,6 +184,8 @@ class Ledger
       self.memo = self.custom_memo.presence || self.system_memo.presence || fallback_memo
 
       save!
+
+      cleanup_if_empty! if saved_change_to_ct_count? || saved_change_to_cpt_count?
     end
 
     def map!
@@ -319,6 +321,18 @@ class Ledger
       primary_mapping&.pinned? || false
     end
 
+    # Fails closed: any association not explicitly passed in `ignoring` that
+    # has data is returned as blocking, so a newly added association is
+    # protective by default rather than silently unchecked. Used by
+    # #cleanup_if_empty! to decide whether an otherwise-empty item is safe to
+    # destroy.
+    def blocking_associations(ignoring:)
+      self.class.reflect_on_all_associations
+          .reject { |reflection| ignoring.include?(reflection.name) }
+          .select { |reflection| reflection.collection? ? send(reflection.name).exists? : send(reflection.name).present? }
+          .map(&:name)
+    end
+
     private
 
     def assign_linked_object!
@@ -418,6 +432,38 @@ class Ledger
 
     def calculate_special_appearance
       SpecialAppearance.find_by_linked_object(linked_object)
+    end
+
+    # Associations exempted from the emptiness check below, each for a specific,
+    # deliberate reason — everything else on this model blocks destruction by
+    # default if it has any data. See spec/models/ledger/item_associations_coverage_spec.rb,
+    # which fails until a newly added association is added to one list or the other.
+    EMPTY_CHECK_IGNORED_ASSOCIATIONS = [
+      :canonical_transactions,         # already confirmed empty by the live check below; re-checking here would be a redundant query
+      :canonical_pending_transactions, # already confirmed empty by the live check below, same reasoning
+      :hcb_code,                       # legacy 1:1 link; destroying the item just nullifies hcb_codes.ledger_item_id (ON DELETE nullify)
+      :comments,                       # flows through hcb_code (TEMPORARY, see the has_many above) — real rows live on the HcbCode, unaffected by destroying this item
+      :receipts,                       # same as comments — flows through hcb_code
+      :tags,                           # same as comments — flows through hcb_code
+      :versions,                       # PaperTrail's audit log; written on every save, so it's present on nearly every item, and is meant to survive the tracked record's destruction
+      :primary_mapping,                # derived (through ledger_mappings) — can't have data when ledger_mappings doesn't, so checking it too is redundant
+      :primary_ledger,                 # derived (through primary_mapping) — same reasoning
+      :all_ledgers,                    # derived (through ledger_mappings) — same reasoning
+    ].freeze
+
+    def cleanup_if_empty!
+      # Live query rather than the cached ct_count/cpt_count columns, so this
+      # decision never trusts a counter cache that could (in principle) be stale.
+      return if canonical_transactions.exists? || canonical_pending_transactions.exists?
+
+      blocking = blocking_associations(ignoring: EMPTY_CHECK_IGNORED_ASSOCIATIONS)
+
+      if blocking.any?
+        Rails.error.unexpected("Ledger::Item #{id} still has #{blocking.join(", ")} but no CTs or CPTs")
+        return
+      end
+
+      destroy!
     end
 
     def calculate_system_memo
