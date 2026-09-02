@@ -64,6 +64,10 @@
         Continue
       </button>
     </div>
+
+    <div class="flex justify-end">
+      <%= render partial: "logins/resend_code", locals: { path: email_login_path(@login), seconds: 30 } %>
+    </div>
   <% end %>
 
   <%= javascript_include_tag "https://cdn.jsdelivr.net/npm/ua-parser-js/dist/ua-parser.min.js" %>
