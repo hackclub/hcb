@@ -78,7 +78,7 @@ class StripeCard
       end
       self.stripe_carrier_text = stripe_obj[:carrier_text]
       self.stripe_physical_bundle_id = stripe_obj[:physical_bundle]
-      self.color ||= StripeService.physical_bundle_ids.invert[stripe_physical_bundle_id]&.to_s
+      self[:color] ||= StripeService.physical_bundle_ids.invert[stripe_physical_bundle_id]&.to_s
       self.stripe_name = stripe_obj[:name]
       self.stripe_card_logo = stripe_obj[:card_logo]
       self.save
