@@ -1,0 +1,13 @@
+<% current_user ||= local_assigns[:p][:current_user] %>
+
+<% if activity.trackable.present? %>
+  <%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: reimbursement_report_path(activity.trackable) } do %>
+    <%= current_user.name %>
+    <% if activity.parameters[:is_draft] %>
+      created a draft announcement
+    <% else %>
+      published the announcement
+    <% end %>
+    <%= link_to activity.trackable.title, activity.recipient %>
+  <% end %>
+<% end %>
