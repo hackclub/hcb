@@ -1,5 +1,5 @@
-<%# locals: (path:, seconds:) -%>
-<div class="mt-2" data-controller="resend-code" data-resend-code-seconds-value="<%= seconds %>" data-action="turbo:submit-start->resend-code#sending turbo:submit-end->resend-code#submitEnd">
-  <span class="muted tabular-nums" data-resend-code-target="countdown" hidden></span>
-  <%= button_to "Resend code", path, class: "link-button", data: { "resend-code-target": "button" } %>
+<%# locals: (seconds:) -%>
+<div class="absolute inset-y-0 right-2 flex items-center gap-1 h5 muted pointer-events-none" data-controller="resend-code" data-resend-code-seconds-value="<%= seconds %>" data-action="turbo:submit-start@window->resend-code#sending turbo:submit-end@window->resend-code#submitEnd">
+  <span class="bold tabular-nums cursor-not-allowed pointer-events-auto" data-resend-code-target="countdown" hidden></span>
+  <button type="submit" form="resend-code-form" class="!font-bold link-button pointer-events-auto" data-resend-code-target="button">Resend code</button>
 </div>

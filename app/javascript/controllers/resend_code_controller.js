@@ -15,11 +15,13 @@ export default class extends Controller {
     this.stop()
   }
 
-  sending() {
+  sending(event) {
+    if (event.target.id !== 'resend-code-form') return
     this.showCountdown('Sending...')
   }
 
   submitEnd(event) {
+    if (event.target.id !== 'resend-code-form') return
     if (event.detail.fetchResponse?.statusCode === 429) {
       this.start(this.secondsValue * 2, 'Too many attempts, try again')
       return
@@ -47,7 +49,7 @@ export default class extends Controller {
       this.showButton()
       return
     }
-    this.showCountdown(`${this.message ?? 'Resend code'} in ${this.remaining}s`)
+    this.showCountdown(`${this.message ?? 'Resend code'} (${this.remaining}s)`)
   }
 
   showCountdown(label) {
