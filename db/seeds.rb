@@ -373,30 +373,58 @@ CanonicalPendingEventMapping.create!({
 # ============================================================================
 # EXTENSIVE DEVELOPMENT SEED DATA
 #
-# Everything below builds realistic, fully-fictional demo data that exercises
-# every major surface of the app: organizations, sub-organizations, members,
-# donations, invoices, transfers (ACH/check/wire/PayPal/Wise), disbursements,
-# cards & card grants, reimbursements, contractors, payroll, employees, tax
-# forms, admin review queues, and general engagement (comments, tags,
-# announcements, receipts). None of it is copied from production.
+# Builds a large, realistic, fully-fictional dataset (nothing copied from
+# production) so a development database exercises every major surface of the
+# app with plenty of volume: organizations & sub-orgs, members, donations,
+# invoices, transfers (ACH/check/wire/PayPal/Wise), disbursements, cards & card
+# grants, reimbursements, contractors, payroll, employees, tax forms, admin
+# review queues, receipts, comments, tags, announcements and documents.
 #
-# It is written to run offline (`rails db:seed`): callbacks that would hit
-# external services (Stripe, Column, Wise, DocuSeal, TaxBandits) are skipped or
-# side-stepped, and transfers are advanced with their AASM events rather than
-# their network-backed senders. It is designed to run on a freshly prepared
-# database (`rails db:setup` / `db:reset`); each org's rich data is guarded so it
-# is generated only once even if the section runs again.
+# The signed-in admin (`User.first`) is woven in as a real participant of the
+# showcased events so their own cards, card grants, receipts, reimbursements and
+# payout methods are populated.
+#
+# Runs offline: in development the Stripe/Column fake-key fallbacks only apply in
+# the test env, so callbacks that would reach external services (Stripe, Column,
+# Wise, DocuSeal, TaxBandits) are skipped or side-stepped, and transfers are
+# advanced with their AASM events rather than their network-backed senders. Jobs
+# are enqueued to the test adapter so no async side effects fire. Designed for the
+# standard `rails db:setup` / `db:reset` flow; each event's rich data is guarded
+# so it is generated only once.
 # ============================================================================
 
 require "stringio"
 
-Faker::Config.random = Random.new(0) # deterministic, reproducible fake data
+Faker::Config.random = Random.new(0)                  # deterministic fake data
+ActiveJob::Base.queue_adapter = :test                 # enqueue only; no async side effects
 admin = user
 
 # Callbacks that would reach Stripe in development (only stubbed in test env).
 Donation.skip_callback(:create, :before, :create_stripe_payment_intent, raise: false)
 Sponsor.skip_callback(:create, :before, :create_stripe_customer, raise: false)
 Sponsor.skip_callback(:update, :before, :update_stripe_customer, raise: false)
+
+# Real ABA routing numbers (Chase, BofA, Wells Fargo, US Bank, PNC, Citi, TD...).
+REAL_ROUTING_NUMBERS = %w[021000021 026009593 121042882 091000022 043000096 021000089 031201360 111000025 122105155 322271627].freeze
+EMAIL_DOMAINS = %w[gmail.com outlook.com yahoo.com icloud.com hotmail.com proton.me].freeze
+CARD_MERCHANTS = [
+  ["Amazon Web Services", "computer_software_stores"], ["GitHub", "computer_software_stores"],
+  ["Delta Air Lines", "airlines_air_carriers"], ["Amtrak", "transportation_services"],
+  ["Uber", "taxicabs_limousines"], ["Blue Bottle Coffee", "eating_places_restaurants"],
+  ["Chipotle", "eating_places_restaurants"], ["Target", "discount_stores"],
+  ["Home Depot", "home_supply_warehouse_stores"], ["Adafruit", "electronics_stores"],
+  ["DigiKey", "electronics_stores"], ["Notion Labs", "computer_software_stores"],
+  ["Figma", "computer_software_stores"], ["Zoom", "computer_software_stores"],
+  ["Marriott", "lodging"], ["Costco", "wholesale_clubs"]
+].freeze
+
+def fake_name
+  "#{Faker::Name.first_name.gsub(/[^A-Za-z]/, '')} #{Faker::Name.last_name.gsub(/[^A-Za-z]/, '')}"
+end
+
+def fake_email(seed = SecureRandom.hex(3))
+  "#{seed.downcase.gsub(/[^a-z0-9]+/, '.')}@#{EMAIL_DOMAINS.sample}"
+end
 
 def seed_person(email, full_name)
   User.create_with(full_name:, verified: true).find_or_create_by!(email:)
@@ -412,7 +440,7 @@ def seed_member(event, member, role, sender)
   return if OrganizerPosition.exists?(event:, user: member)
 
   invite = OrganizerPositionInvite.create!(event:, user: member, sender:, role:)
-  invite.accept unless invite.accepted? # self-invites auto-accept via callback
+  invite.accept unless invite.accepted?
 end
 
 def seed_tag(event, name)
@@ -420,16 +448,27 @@ def seed_tag(event, name)
   event.event_tags << tag unless event.event_tags.include?(tag)
 end
 
-# Creates a settled canonical transaction and maps it to the event. Positive
-# cents = money in, negative = money out. Returns the CanonicalTransaction.
+# Settled canonical transaction mapped to the event. RawCsvTransactionService takes
+# a dollar amount (whole dollars here); positive = money in, negative = money out.
 def seed_settled(event, memo, amount_cents, date)
-  # RawCsvTransactionService takes a dollar amount (it monetizes into cents); seed amounts are whole dollars.
   ::RawCsvTransactionService::Create.new(unique_bank_identifier: "FSMAIN", date: date.iso8601(3), memo:, amount: amount_cents / 100).run
   ::TransactionEngine::HashedTransactionService::RawCsvTransaction::Import.new.run
   ::TransactionEngine::CanonicalTransactionService::Import::All.new.run
   ct = CanonicalTransaction.last
   CanonicalEventMapping.create!(canonical_transaction_id: ct.id, event_id: event.id, user_id: User.first.id)
   ct
+end
+
+def fake_receipt_file
+  case %i[png pdf csv].sample
+  when :png then { io: StringIO.new("\x89PNG\r\n\x1a\n".b + SecureRandom.bytes(48)), filename: "receipt-#{SecureRandom.hex(3)}.png", content_type: "image/png" }
+  when :pdf then { io: StringIO.new("%PDF-1.4\n% seed receipt\n"), filename: "receipt-#{SecureRandom.hex(3)}.pdf", content_type: "application/pdf" }
+  else { io: StringIO.new("item,amount\nSeed item,#{rand(1..500)}\n"), filename: "receipt-#{SecureRandom.hex(3)}.csv", content_type: "text/csv" }
+  end
+end
+
+def seed_receipt(receiptable, uploader)
+  Receipt.create!(receiptable:, user: uploader, upload_method: :transaction_page, file: fake_receipt_file)
 end
 
 # Donation -> fronted pending transaction on the org ledger.
@@ -445,296 +484,332 @@ def seed_donation(event, amount_cents, name:, email:, created_at:, recurring: ni
   end
   donation.save!
   donation.mark_in_transit!
-
   rpdt = ::PendingTransactionEngine::RawPendingDonationTransactionService::Donation::ImportSingle.new(donation:).run
   cpt = ::PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Donation.new(raw_pending_donation_transaction: rpdt).run
   ::PendingEventMappingEngine::Map::Single::Donation.new(canonical_pending_transaction: cpt).run
   donation
 end
 
-def seed_receipt(receiptable, uploader)
-  Receipt.create!(receiptable:, user: uploader, upload_method: :transaction_page,
-                  file: { io: StringIO.new("seed,receipt\n#{receiptable.class.name},#{Time.now.to_i}\n"), filename: "receipt-#{SecureRandom.hex(4)}.csv", content_type: "text/csv" })
+def seed_sponsor(event, name)
+  event.sponsors.create!(name:, contact_email: fake_email(name), address_line1: Faker::Address.street_address,
+                         address_city: "San Francisco", address_state: "CA", address_postal_code: "94105",
+                         address_country: "US", stripe_customer_id: "cus_seed_#{SecureRandom.hex(8)}")
 end
 
-def seed_populated?(event)
-  event.canonical_transactions.exists? || event.canonical_pending_transactions.exists? || event.donations.exists?
+def seed_invoice(event, sponsor, creator, description, cents, state)
+  paid = %i[paid manual].include?(state)
+  invoice = Invoice.create!(sponsor:, creator:, item_description: description, item_amount: cents,
+                            due_date: rand(3..30).days.from_now, status: (if state == :void
+                                                                            "void"
+                                                                          else
+                                                                            state == :open ? "open" : "paid"
+                                                                          end),
+                            amount_due: cents, amount_paid: (paid ? cents : 0), amount_remaining: (paid ? 0 : cents),
+                            subtotal: cents, total: cents, stripe_invoice_id: "in_seed_#{SecureRandom.hex(10)}",
+                            item_stripe_id: "ii_seed_#{SecureRandom.hex(10)}", auto_advance: false)
+  case state
+  when :void
+    invoice.mark_void!
+  when :manual
+    invoice.update!(manually_marked_as_paid_at: rand(1..10).days.ago, manually_marked_as_paid_user: creator, manually_marked_as_paid_reason: "Paid via mailed check")
+    invoice.mark_paid!
+  when :paid
+    invoice.mark_paid!
+    rpit = RawPendingInvoiceTransaction.create!(invoice_transaction_id: invoice.id.to_s, amount_cents: invoice.amount_paid, date_posted: rand(1..10).days.ago)
+    cpt = CanonicalPendingTransaction.create!(date: rpit.date, memo: rpit.memo, amount_cents: rpit.amount_cents, raw_pending_invoice_transaction_id: rpit.id, fronted: true, fee_waived: false)
+    CanonicalPendingEventMapping.create!(canonical_pending_transaction_id: cpt.id, event_id: event.id)
+  end
+  invoice
 end
 
-# Gives a user a default ACH payout method (required to submit reimbursements).
+def seed_cardholder(person)
+  StripeCardholder.find_by(user: person) ||
+    StripeCardholder.create!(user: person, stripe_id: "ich_seed_#{person.id}", cardholder_type: :individual, stripe_name: person.name, stripe_email: person.email)
+end
+
+def seed_card(event, cardholder, status:, name:, subledger: nil, last4: nil)
+  card = StripeCard.new(event:, stripe_cardholder: cardholder, card_type: :virtual, subledger:,
+                        stripe_id: "ic_seed_#{SecureRandom.hex(5)}", stripe_brand: "Visa", stripe_exp_month: rand(1..12),
+                        stripe_exp_year: 2030, last4: last4 || rand(1000..9999).to_s, stripe_status: status,
+                        initially_activated: true, name:)
+  card.skip_notify_user = true
+  card.save!
+  card
+end
+
+def seed_card_charge(event, card, merchant, category, cents, date, uploader: nil)
+  auth_id = "iauth_seed_#{SecureRandom.hex(6)}"
+  rpst = RawPendingStripeTransaction.create!(stripe_transaction_id: auth_id, amount_cents: -cents, date_posted: date,
+                                             stripe_transaction: { "id" => auth_id, "status" => "pending", "created" => date.to_i, "authorization_method" => "online", "amount" => cents, "pending_request" => { "amount" => cents }, "card" => { "id" => card.stripe_id }, "merchant_data" => { "name" => merchant, "network_id" => rand(10**9).to_s, "category" => category } })
+  cpt = CanonicalPendingTransaction.create!(raw_pending_stripe_transaction: rpst, amount_cents: -cents, date:, memo: merchant)
+  CanonicalPendingEventMapping.create!(canonical_pending_transaction_id: cpt.id, event_id: event.id, subledger_id: card.subledger_id)
+  seed_receipt(cpt.local_hcb_code, uploader) if uploader
+  cpt
+end
+
+def seed_card_grant(event, sender, grantee_email, cents, purpose)
+  grant = CardGrant.create!(event:, sent_by: sender, email: grantee_email, amount_cents: cents, purpose:)
+  card = seed_card(event, seed_cardholder(grant.user), status: "active", name: "#{purpose} card", subledger: grant.subledger)
+  grant.update!(stripe_card: card)
+  grant
+end
+
 def seed_payout_method(person)
   le = person.personal_legal_entity
   return if le.nil? || le.default_payout_method
 
   LegalEntity::PayoutMethod.create!(legal_entity: le, default: true,
-                                    details: LegalEntity::PayoutMethod::AchTransfer.new(account_number: "123456789", routing_number: "021000021"))
+                                    details: LegalEntity::PayoutMethod::AchTransfer.new(account_number: rand(10**8..10**11).to_s, routing_number: REAL_ROUTING_NUMBERS.sample))
 end
 
-# ---- shared cast of fictional people --------------------------------------
-maya      = seed_person("maya.organizer@example.com", "Maya Rodriguez")
-devon     = seed_person("devon.member@example.com", "Devon Clarke")
-priya     = seed_person("priya.reader@example.com", "Priya Nair")
-contractor_user = seed_person("sam.contractor@example.com", "Sam Whitfield")
-auditor = seed_person("audrey.auditor@example.com", "Audrey Lin")
-auditor.update!(access_level: :auditor) unless auditor.auditor?
+def seed_reimbursement(event, person, name, expenses, state)
+  seed_payout_method(person)
+  report = Reimbursement::Report.create!(user: person, event:, name:)
+  expenses.each do |value, memo, category|
+    expense = report.expenses.create!(value:, memo:, category:)
+    seed_receipt(expense, person)
+  end
+  return report if state == :draft
 
-# ===========================================================================
-# 1. FLAGSHIP ORG — every feature exercised
-# ===========================================================================
-flagship = seed_org("bay-area-hacks", "Bay Area Hacks", is_public: true)
-flagship.plan.update(type: Event::Plan::Standard.name) unless flagship.plan.is_a?(Event::Plan::Standard)
-seed_member(flagship, maya, :manager, admin)
-seed_member(flagship, devon, :member, admin)
-seed_member(flagship, priya, :reader, admin)
-seed_tag(flagship, EventTag::Tags::HACKATHON)
-seed_tag(flagship, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS)
+  report.mark_submitted!
+  report.reload
+  if report.submitted?
+    report.expenses.pending.each(&:mark_approved!)
+    report.mark_reimbursement_requested! unless state == :submitted
+  end
+  report.mark_reimbursement_approved! if state == :reimbursed && report.reimbursement_requested?
+  report.mark_rejected! if state == :rejected && report.may_mark_rejected?
+  report
+end
 
-unless seed_populated?(flagship)
-  # -- funding (settled starting balance) --
-  grant_ct = seed_settled(flagship, "🏦 Founding grant from The Hack Foundation", 8_000_000, 20.days.ago)
-  seed_settled(flagship, "🏦 Corporate match — GitHub", 1_500_000, 15.days.ago)
+# Contractor with a completed (manual) tax form, so their legal entity is payable.
+def seed_contractor(event, person)
+  le = person.personal_legal_entity
+  Tax::Form.create!(legal_entity: le, external_service: :manual, aasm_state: :completed, entity_type: :person, sent_at: rand(5..20).days.ago, completed_at: rand(1..4).days.ago) if le.latest_completed_tax_form.nil?
+  Payee.create_with(display_name: person.name).find_or_create_by!(event:, legal_entity: le, email: person.email)
+end
 
-  # editable memo + comment + tag + receipt on a real transaction
-  grant_ct.update!(custom_memo: "Initial program funding")
-  grant_hcb = grant_ct.local_hcb_code
-  Comment.create!(commentable: grant_hcb, user: maya, content: "Confirmed receipt with the foundation. 🎉")
-  Tag.create!(event: flagship, label: "Food", emoji: "🍕", color: "orange")
-  travel_tag = Tag.create!(event: flagship, label: "Travel", emoji: "🚌", color: "blue")
-  grant_hcb.tags << travel_tag
-  seed_receipt(grant_hcb, maya)
+# ---- big, reusable event populator ----------------------------------------
+def populate_event!(event, admin:, organizers:, scale: 20)
+  return if event.donations.exists?
 
-  # -- donations: one-off, anonymous, in-person, min & large, recurring --
-  seed_donation(flagship, 5_000, name: "Jane Donor", email: "jane.donor@gmail.com", created_at: 12.days.ago)
-  seed_donation(flagship, 100, name: "Penny Pincher", email: "penny@gmail.com", created_at: 11.days.ago) # $1 minimum
-  seed_donation(flagship, 2_500_00, name: "Big Backer", email: "big.backer@gmail.com", created_at: 10.days.ago)
-  seed_donation(flagship, 7_500, name: "Anonymous", email: "anon.donor@gmail.com", created_at: 9.days.ago, anonymous: true)
-  seed_donation(flagship, 4_000, name: "Cash Donor", email: "cash@gmail.com", created_at: 8.days.ago, in_person: true)
+  organizer = organizers.first
+  seed_settled(event, "🏦 Founding grant from The Hack Foundation", 8_000_000, 35.days.ago)
+  seed_settled(event, "💳 Corporate sponsorship — GitHub", 2_500_000, 28.days.ago)
+  seed_settled(event, "🏦 Grant disbursement from HQ", 1_200_000, 20.days.ago)
 
-  recurring = RecurringDonation.new(event: flagship, name: "Monthly Mary", email: "mary.monthly@gmail.com", amount: 2_500, stripe_status: "active")
-  recurring.stripe_subscription_id = "sub_seed_#{SecureRandom.hex(8)}"
-  recurring.stripe_customer_id = "cus_seed_#{SecureRandom.hex(8)}"
-  recurring.save!
-  seed_donation(flagship, recurring.amount, name: nil, email: nil, created_at: 6.days.ago, recurring:)
-
-  # refunded & failed donations (edge states, no ledger entry)
-  refunded = Donation.new(event: flagship, amount: 3_000, status: "succeeded", created_at: 7.days.ago, name: "Regretful Rita", email: "rita@gmail.com", url_hash: SecureRandom.hex(8), stripe_payment_intent_id: "pi_seed_#{SecureRandom.hex(8)}")
-  refunded.save!
+  # --- donations: lots, with variety ---
+  scale.times do |i|
+    name = fake_name
+    seed_donation(event, [500, 1_000, 2_500, 5_000, 10_000, 25_000, 50_000, 100_00, 250_00, 500_00].sample,
+                  name:, email: fake_email("#{name}#{i}"), created_at: rand(1..34).days.ago,
+                  anonymous: i.even? && i % 6 == 0, in_person: i % 7 == 0)
+  end
+  seed_donation(event, 100, name: fake_name, email: fake_email("min"), created_at: 9.days.ago)      # $1 minimum
+  seed_donation(event, 500_00, name: fake_name, email: fake_email("max"), created_at: 6.days.ago)   # large
+  3.times do |i|
+    rd = RecurringDonation.new(event:, name: fake_name, email: fake_email("recurring#{i}#{event.id}"), amount: [1_000, 2_500, 5_000].sample, stripe_status: "active")
+    rd.stripe_subscription_id = "sub_seed_#{SecureRandom.hex(8)}"
+    rd.stripe_customer_id = "cus_seed_#{SecureRandom.hex(8)}"
+    rd.save!
+    seed_donation(event, rd.amount, name: nil, email: nil, created_at: rand(1..20).days.ago, recurring: rd)
+  end
+  # refunded & failed edge states
+  refunded = Donation.create!(event:, amount: 3_000, status: "succeeded", created_at: 7.days.ago, name: fake_name, email: fake_email("refund"), url_hash: SecureRandom.hex(8), stripe_payment_intent_id: "pi_seed_#{SecureRandom.hex(8)}")
   refunded.mark_in_transit!
   refunded.mark_refunded!
-  failed = Donation.new(event: flagship, amount: 6_000, status: "failed", created_at: 5.days.ago, name: "Bounced Bob", email: "bob@gmail.com", url_hash: SecureRandom.hex(8), stripe_payment_intent_id: "pi_seed_#{SecureRandom.hex(8)}")
-  failed.save!
-  failed.mark_failed!
+  Donation.create!(event:, amount: 6_000, status: "failed", created_at: 5.days.ago, name: fake_name, email: fake_email("failed"), url_hash: SecureRandom.hex(8), stripe_payment_intent_id: "pi_seed_#{SecureRandom.hex(8)}").mark_failed!
 
-  # -- sponsor + invoices (open, paid-on-ledger, manually paid, void) --
-  sponsor = flagship.sponsors.create!(name: "Globex Corporation", contact_email: "ap@globex.example.com",
-                                      address_line1: "500 Market St", address_city: "San Francisco", address_state: "CA",
-                                      address_postal_code: "94105", address_country: "US", stripe_customer_id: "cus_seed_#{SecureRandom.hex(8)}")
-
-  Invoice.create!(sponsor:, creator: admin, item_description: "Platinum event sponsorship", item_amount: 2_500_00,
-                  due_date: 14.days.from_now, status: "open", amount_due: 2_500_00, amount_remaining: 2_500_00, amount_paid: 0,
-                  subtotal: 2_500_00, total: 2_500_00, stripe_invoice_id: "in_seed_#{SecureRandom.hex(10)}", item_stripe_id: "ii_seed_#{SecureRandom.hex(10)}", auto_advance: false)
-
-  paid_invoice = Invoice.create!(sponsor:, creator: admin, item_description: "Gold sponsorship", item_amount: 1_000_00,
-                                 due_date: 7.days.from_now, status: "paid", amount_due: 1_000_00, amount_paid: 1_000_00, amount_remaining: 0,
-                                 subtotal: 1_000_00, total: 1_000_00, stripe_invoice_id: "in_seed_#{SecureRandom.hex(10)}", item_stripe_id: "ii_seed_#{SecureRandom.hex(10)}", auto_advance: false)
-  paid_invoice.mark_paid!
-  paid_rpit = RawPendingInvoiceTransaction.create!(invoice_transaction_id: paid_invoice.id.to_s, amount_cents: paid_invoice.amount_paid, date_posted: 2.days.ago)
-  paid_cpt = CanonicalPendingTransaction.create!(date: paid_rpit.date, memo: paid_rpit.memo, amount_cents: paid_rpit.amount_cents, raw_pending_invoice_transaction_id: paid_rpit.id, fronted: true, fee_waived: false)
-  CanonicalPendingEventMapping.create!(canonical_pending_transaction_id: paid_cpt.id, event_id: flagship.id)
-
-  manual_invoice = Invoice.create!(sponsor:, creator: admin, item_description: "Silver sponsorship (paid by check)", item_amount: 500_00,
-                                   due_date: 5.days.from_now, status: "paid", amount_due: 500_00, amount_paid: 500_00, amount_remaining: 0,
-                                   subtotal: 500_00, total: 500_00, stripe_invoice_id: "in_seed_#{SecureRandom.hex(10)}", item_stripe_id: "ii_seed_#{SecureRandom.hex(10)}", auto_advance: false)
-  manual_invoice.update!(manually_marked_as_paid_at: 1.day.ago, manually_marked_as_paid_user: admin, manually_marked_as_paid_reason: "Received a mailed check")
-  manual_invoice.mark_paid!
-
-  Invoice.create!(sponsor:, creator: admin, item_description: "Bronze sponsorship (cancelled)", item_amount: 250_00,
-                  due_date: 10.days.from_now, status: "void", amount_due: 250_00, amount_remaining: 250_00, amount_paid: 0,
-                  subtotal: 250_00, total: 250_00, stripe_invoice_id: "in_seed_#{SecureRandom.hex(10)}", item_stripe_id: "ii_seed_#{SecureRandom.hex(10)}", auto_advance: false).mark_void!
-
-  # -- cards: cardholder, virtual card, card spend, a frozen card --
-  cardholder = StripeCardholder.create!(user: maya, stripe_id: "ich_seed_#{maya.id}", cardholder_type: :individual, stripe_name: maya.name, stripe_email: maya.email)
-  card = StripeCard.new(event: flagship, stripe_cardholder: cardholder, card_type: :virtual, stripe_id: "ic_seed_#{SecureRandom.hex(4)}",
-                        stripe_brand: "Visa", stripe_exp_month: 12, stripe_exp_year: 2030, last4: "4242", stripe_status: "active", initially_activated: true, name: "Maya's Card")
-  card.skip_notify_user = true
-  card.save!
-  frozen_card = StripeCard.new(event: flagship, stripe_cardholder: cardholder, card_type: :virtual, stripe_id: "ic_seed_#{SecureRandom.hex(4)}",
-                               stripe_brand: "Visa", stripe_exp_month: 6, stripe_exp_year: 2029, last4: "1010", stripe_status: "inactive", initially_activated: true, name: "Frozen Card")
-  frozen_card.skip_notify_user = true
-  frozen_card.save!
-
-  [["SkyLab Cloud Hosting", 25_99, "computer_software_stores"], ["Blue Bottle Coffee", 8_40, "eating_places_restaurants"], ["Amtrak", 120_00, "transportation_services"]].each do |merchant, cents, category|
-    auth_id = "iauth_seed_#{SecureRandom.hex(6)}"
-    rpst = RawPendingStripeTransaction.create!(stripe_transaction_id: auth_id, amount_cents: -cents, date_posted: rand(1..9).days.ago,
-                                               stripe_transaction: { "id" => auth_id, "status" => "pending", "created" => Time.now.to_i, "authorization_method" => "online", "amount" => cents, "pending_request" => { "amount" => cents }, "card" => { "id" => card.stripe_id }, "merchant_data" => { "name" => merchant, "network_id" => rand(10**9).to_s, "category" => category } })
-    charge_cpt = CanonicalPendingTransaction.create!(raw_pending_stripe_transaction: rpst, amount_cents: -cents, date: rpst.date_posted, memo: merchant)
-    CanonicalPendingEventMapping.create!(canonical_pending_transaction_id: charge_cpt.id, event_id: flagship.id, subledger_id: card.subledger_id)
+  # --- sponsors + invoices (open / paid / manual / void) ---
+  2.times do |i|
+    sponsor = seed_sponsor(event, Faker::Company.name)
+    %i[paid paid open manual void].each do |state|
+      seed_invoice(event, sponsor, organizer, "#{Faker::Commerce.department} sponsorship (#{state})", [250_00, 500_00, 1_000_00, 2_500_00].sample, state)
+    end
   end
 
-  # -- card grant (issues an internal disbursement to a subledger) --
-  card_grant = CardGrant.create!(event: flagship, sent_by: admin, email: "grantee@example.com", amount_cents: 250_00, purpose: "Travel stipend")
-  grant_card = StripeCard.new(event: flagship, stripe_cardholder: cardholder, card_type: :virtual, subledger: card_grant.subledger, stripe_id: "ic_grant_#{SecureRandom.hex(4)}",
-                              stripe_brand: "Visa", stripe_exp_month: 12, stripe_exp_year: 2030, last4: "3333", stripe_status: "active", initially_activated: true, name: "Grant Card")
-  grant_card.skip_notify_user = true
-  grant_card.save!
-  card_grant.update!(stripe_card: grant_card)
+  # --- cards + card spend (admin + organizers), many charges with receipts ---
+  card_owners = ([admin] + organizers).uniq
+  cards = card_owners.map do |person|
+    seed_member(event, person, :manager, admin) unless person == admin
+    seed_card(event, seed_cardholder(person), status: (person == organizers.last ? "inactive" : "active"), name: "#{person.name.split.first}'s card")
+  end
+  (scale + 10).times do |i|
+    merchant, category = CARD_MERCHANTS.sample
+    card = cards.sample
+    seed_card_charge(event, card, merchant, category, [8_40, 12_99, 25_99, 42_00, 89_00, 120_00, 350_00, 1_200_00].sample,
+                     rand(1..30).days.ago, uploader: i.even? ? card.user : nil)
+  end
 
-  # -- outgoing transfers: ACH, check, wire, PayPal, Wise --
-  ach = AchTransfer.create!(event: flagship, creator: admin, amount: 250_00, routing_number: "110000000", account_number: "000123456789",
-                            bank_name: "Seed Bank", recipient_name: "Jane Vendor", recipient_email: "jane.vendor@example.com", payment_for: "Venue deposit")
-  ach.mark_in_transit!
-  ach.mark_deposited!
-  ach.update_column(:column_id, "acht_seed_#{SecureRandom.hex(6)}")
+  # --- card grants (some to the signed-in admin so they see their own) ---
+  seed_card_grant(event, admin, admin.email, 250_00, "Travel stipend")
+  seed_card_grant(event, admin, admin.email, 150_00, "Food budget")
+  3.times { |i| seed_card_grant(event, organizer, fake_email("grantee#{i}#{event.id}"), [50_00, 100_00, 250_00].sample, ["Hackathon travel", "Team meals", "Supplies"].sample) }
 
-  check = IncreaseCheck.create!(event: flagship, user: admin, amount: 100_00, memo: "Prize payout", payment_for: "Hackathon prize",
-                                recipient_name: "Winning Team", recipient_email: "winner@example.com", address_line1: "123 Main St", address_line2: "",
-                                address_city: "West Hollywood", address_state: "CA", address_zip: "90069")
-  check.mark_approved!
-
+  # --- outgoing transfers ---
+  3.times do |i|
+    t = AchTransfer.create!(event:, creator: admin, amount: [150_00, 300_00, 750_00].sample, routing_number: REAL_ROUTING_NUMBERS.sample,
+                            account_number: rand(10**8..10**11).to_s, bank_name: Faker::Bank.name, recipient_name: fake_name,
+                            recipient_email: fake_email("vendor#{i}"), payment_for: ["Venue deposit", "Catering", "Equipment rental"].sample)
+    t.mark_in_transit!
+    t.mark_deposited! if i.even?
+    t.update_column(:column_id, "acht_seed_#{SecureRandom.hex(6)}")
+  end
+  2.times do |i|
+    IncreaseCheck.create!(event:, user: admin, amount: [100_00, 250_00, 400_00].sample, memo: "Prize payout", payment_for: "Award",
+                          recipient_name: fake_name, recipient_email: fake_email("check#{i}"), address_line1: Faker::Address.street_address,
+                          address_line2: "", address_city: "West Hollywood", address_state: "CA", address_zip: "90069").mark_approved!
+  end
   # Wire validation performs Column bank-country lookups; skip them (still fronts a pending txn).
-  Wire.new(event: flagship, user: admin, amount_cents: 500_00, currency: "USD", memo: "Intl vendor payment", payment_for: "Merch printing",
-           recipient_name: "Global Print Ltd", recipient_email: "ap@globalprint.example", account_number: "DE89370400440532013000", bic_code: "DEUTDEFF",
+  Wire.new(event:, user: admin, amount_cents: 500_00, currency: "USD", memo: "International vendor", payment_for: "Merch printing",
+           recipient_name: Faker::Company.name, recipient_email: fake_email("wire"), account_number: "DE89370400440532013000", bic_code: "DEUTDEFF",
            address_line1: "10 Alexanderplatz", address_line2: "", address_city: "Berlin", address_state: "BE", address_postal_code: "10178", recipient_country: "DE").save!(validate: false)
-
-  # PayPal transfers can't be validated (model blocks new ones); create unvalidated, leave pending.
-  PaypalTransfer.new(event: flagship, user: admin, amount_cents: 75_00, memo: "Speaker honorarium", payment_for: "Keynote", recipient_name: "Alex Speaker", recipient_email: "alex.speaker@example.com").save!(validate: false)
-
-  WiseTransfer.create!(event: flagship, user: admin, amount_cents: 300_00, currency: "EUR", quoted_usd_amount_cents: 330_00, usd_amount_cents: 330_00,
-                       payment_for: "Contractor", recipient_name: "Marie Dev", recipient_email: "marie.dev@example.com", recipient_country: "FR",
+  # PayPal transfers can't be validated (model blocks new ones); create unvalidated.
+  PaypalTransfer.new(event:, user: admin, amount_cents: 75_00, memo: "Speaker honorarium", payment_for: "Keynote", recipient_name: fake_name, recipient_email: fake_email("paypal")).save!(validate: false)
+  WiseTransfer.create!(event:, user: admin, amount_cents: 300_00, currency: "EUR", quoted_usd_amount_cents: 330_00, usd_amount_cents: 330_00,
+                       payment_for: "Contractor", recipient_name: fake_name, recipient_email: fake_email("wise"), recipient_country: "FR",
                        address_line1: "5 Rue de Rivoli", address_city: "Paris", address_state: "IDF", address_postal_code: "75001")
 
-  # -- incoming check deposit --
+  # --- incoming check deposit ---
   png = "\x89PNG\r\n\x1a\n".b + SecureRandom.bytes(64)
-  deposit = CheckDeposit.new(event: flagship, created_by: admin, amount_cents: 400_00)
+  deposit = CheckDeposit.new(event:, created_by: admin, amount_cents: 400_00)
   deposit.front.attach(io: StringIO.new(png), filename: "front.png", content_type: "image/png")
   deposit.back.attach(io: StringIO.new(png), filename: "back.png", content_type: "image/png")
   deposit.save!
 
-  # -- contractor: payee + tax form + payment + payroll + signed contract --
-  contractor_le = contractor_user.personal_legal_entity
-  Tax::Form.create!(legal_entity: contractor_le, external_service: :manual, aasm_state: :completed, entity_type: :person, sent_at: 3.days.ago, completed_at: 2.days.ago)
-  payee = Payee.create!(event: flagship, legal_entity: contractor_le, display_name: contractor_user.name, email: contractor_user.email)
-  Payment.create!(payee:, creator: admin, amount_cents: 250_00, currency: "USD", purpose: "Logo design", aasm_state: "successful", sent_at: 2.days.ago, successful_at: 1.day.ago)
+  # --- contractors: payees, payments, payroll ---
+  2.times do |i|
+    contractor = seed_person(fake_email("contractor#{i}#{event.id}"), fake_name)
+    payee = seed_contractor(event, contractor)
+    Payment.create!(payee:, creator: admin, amount_cents: [150_00, 250_00, 500_00].sample, currency: "USD", purpose: Faker::Job.title, aasm_state: "successful", sent_at: rand(1..10).days.ago, successful_at: rand(1..5).days.ago)
+    next unless i.zero?
 
-  position = Payroll::Position.create!(payee:, title: "Backend Engineer", description: "API work for the fall program", rate_cents: 8_500, currency: "USD", rate_unit: "hour", start_date: Date.current, end_date: 3.months.from_now, aasm_state: "onboarded")
-  payroll_invoice = Payroll::Invoice.create!(payroll_position: position, amount_cents: 500_00, currency: "USD", name: "October hours", aasm_state: "approved", approved_at: 1.day.ago)
-  payroll_payment = Payment.create!(payee:, creator: admin, amount_cents: payroll_invoice.amount_cents, currency: "USD", purpose: payroll_invoice.name, aasm_state: "successful", sent_at: 2.hours.ago, successful_at: 1.hour.ago)
-  payroll_invoice.update!(payment: payroll_payment)
-
-  # Build the contract in `pending` (so its auto hcb party is allowed), add parties, then
-  # settle the signed state without firing DocuSeal/onboarding callbacks.
-  contract = Contract::PayrollPosition.create!(contractable: position, external_service: :manual, include_videos: false)
-  contract.parties.create!(user: admin, role: :organizer)
-  contract.parties.create!(external_email: payee.email, role: :contractor)
-  contract.parties.update_all(aasm_state: "signed", signed_at: 1.day.ago)
-  contract.update_columns(aasm_state: "signed", signed_at: 1.day.ago)
-  seed_payout_method(contractor_user) # after payments settle, so no Column call
-
-  # -- employee (Gusto-style) payroll --
-  employee = Employee.create!(event: flagship, entity: devon, aasm_state: "onboarded", gusto_id: "gusto_seed_#{SecureRandom.hex(4)}")
-  Employee::Payment.create!(employee:, title: "Salary — October", amount_cents: 3_000_00, aasm_state: "paid", reviewed_by: admin, approved_at: 1.day.ago)
-
-  # -- reimbursement report (full lifecycle to reimbursed) --
-  seed_payout_method(maya)
-  report = Reimbursement::Report.create!(user: maya, event: flagship, name: "Conference travel")
-  expense = report.expenses.create!(value: 42.50, memo: "Taxi from airport", category: "Travel")
-  seed_receipt(expense, maya)
-  report.expenses.create!(value: 18.75, memo: "Team lunch", category: "Food & Entertainment").tap { |e| seed_receipt(e, maya) }
-  report.mark_submitted!
-  if report.reload.submitted?
-    report.expenses.pending.each(&:mark_approved!)
-    report.mark_reimbursement_requested!
+    position = Payroll::Position.create!(payee:, title: "Backend Engineer", description: "API work for the program", rate_cents: 8_500, currency: "USD", rate_unit: "hour", start_date: Date.current, end_date: 3.months.from_now, aasm_state: "onboarded")
+    payroll_invoice = Payroll::Invoice.create!(payroll_position: position, amount_cents: 500_00, currency: "USD", name: "Monthly hours", aasm_state: "approved", approved_at: 1.day.ago)
+    payment = Payment.create!(payee:, creator: admin, amount_cents: payroll_invoice.amount_cents, currency: "USD", purpose: payroll_invoice.name, aasm_state: "successful", sent_at: 2.hours.ago, successful_at: 1.hour.ago)
+    payroll_invoice.update!(payment:)
+    contract = Contract::PayrollPosition.create!(contractable: position, external_service: :manual, include_videos: false)
+    contract.parties.create!(user: admin, role: :organizer)
+    contract.parties.create!(external_email: payee.email, role: :contractor)
+    contract.parties.update_all(aasm_state: "signed", signed_at: 1.day.ago)
+    contract.update_columns(aasm_state: "signed", signed_at: 1.day.ago)
+    seed_payout_method(contractor)
   end
-  report.mark_reimbursement_approved!
 
-  # a rejected reimbursement (edge state)
-  rejected_report = Reimbursement::Report.create!(user: maya, event: flagship, name: "Unapproved gadget")
-  rejected_report.expenses.create!(value: 99.00, memo: "Drone", category: "Equipment & Furniture").tap { |e| seed_receipt(e, maya) }
-  rejected_report.mark_submitted! if rejected_report.may_mark_submitted?
-  rejected_report.mark_rejected!
+  # --- employee (Gusto-style) payroll ---
+  employee = Employee.create!(event:, entity: organizer, aasm_state: "onboarded", gusto_id: "gusto_seed_#{SecureRandom.hex(4)}")
+  Employee::Payment.create!(employee:, title: "Salary — monthly", amount_cents: 3_000_00, aasm_state: "paid", reviewed_by: admin, approved_at: 1.day.ago)
 
-  # -- engagement: announcement + document --
-  Announcement.create!(event: flagship, author: admin, title: "Welcome to Bay Area Hacks!",
-                       content: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Our finances are now live on HCB. Reach out to an organizer with any questions." }] }] },
-                       aasm_state: :draft)
-  bylaws = Document.new(user: admin, event: flagship, name: "Organization Bylaws", category: :forms)
-  bylaws.file.attach(io: StringIO.new("Seed bylaws document."), filename: "bylaws.txt", content_type: "text/plain")
-  bylaws.save!
+  # --- reimbursements: several states, including the admin's own ---
+  seed_reimbursement(event, admin, "Conference travel", [[42.50, "Taxi from airport", "Travel"], [18.75, "Team lunch", "Food & Entertainment"], [230.00, "Hotel night", "Travel"]], :reimbursed)
+  seed_reimbursement(event, admin, "Workshop supplies", [[64.00, "Soldering irons", "Project Supplies"]], :reimbursement_requested)
+  seed_reimbursement(event, organizer, "Swag order", [[310.00, "T-shirts", "Advertising / Marketing"]], :reimbursed)
+  seed_reimbursement(event, organizer, "Unapproved gadget", [[99.00, "Drone", "Equipment & Furniture"]], :rejected)
+  seed_reimbursement(event, organizers.last, "Draft expenses", [[15.00, "Stickers", "Advertising / Marketing"]], :draft)
 
-  # -- a member requests removal (admin review queue) --
-  OrganizerPositionDeletionRequest.create!(organizer_position: OrganizerPosition.find_by(event: flagship, user: priya), submitted_by: priya, reason: "No longer involved with the team.")
+  # --- engagement: tags on transactions, comments, announcements, documents ---
+  travel_tag = Tag.create!(event:, label: "Travel", emoji: "🚌", color: "blue")
+  Tag.create!(event:, label: "Food", emoji: "🍕", color: "orange")
+  Tag.create!(event:, label: "Hardware", emoji: "🔧", color: "green")
+  event.canonical_pending_transactions.limit(6).each_with_index do |cpt, i|
+    hcb = cpt.local_hcb_code
+    hcb.tags << travel_tag if i.even?
+    Comment.create!(commentable: hcb, user: organizer, content: ["Please add a receipt for this.", "Reimbursed to organizer.", "Confirmed with vendor."].sample, admin_only: i.even?)
+  end
+  Announcement.create!(event:, author: admin, title: "Welcome to #{event.name}!",
+                       content: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Our finances are now live on HCB." }] }] }, aasm_state: :published)
+  Announcement.create!(event:, author: admin, title: "Draft update",
+                       content: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Work in progress." }] }] }, aasm_state: :draft)
+  %i[forms nonprofit_status contracts].each do |category|
+    doc = Document.new(user: admin, event:, name: "#{category.to_s.titleize} document", category:)
+    doc.file.attach(io: StringIO.new("Seed #{category} document."), filename: "#{category}.txt", content_type: "text/plain")
+    doc.save!
+  end
+
+  event
+end
+
+# ---- shared cast of fictional people --------------------------------------
+seed_payout_method(admin)
+people = 12.times.map { |i| seed_person(fake_email("organizer#{i}"), fake_name) }
+people.each { |p| seed_payout_method(p) }
+maya, devon, priya = people[0], people[1], people[2]
+auditor = seed_person("audrey.auditor@example.com", "Audrey Lin")
+auditor.update!(access_level: :auditor) unless auditor.auditor?
+
+# ===========================================================================
+# Fully-populate every event the signed-in admin can see
+# ===========================================================================
+non_transparent_event.update!(name: "ExpensiCon 2023") # existing showcase org (non-transparent)
+transparent_event.update!(name: "Hack The Seas")       # existing showcase org (transparent)
+
+flagship = seed_org("bay-area-hacks", "Bay Area Hacks", is_public: true)
+robotics = seed_org("team-8032-robotics", "Team 8032 Robotics", is_public: true)
+robotics.plan.update(type: Event::Plan::FeeWaived.name) unless robotics.plan.is_a?(Event::Plan::FeeWaived)
+seed_tag(flagship, EventTag::Tags::HACKATHON)
+seed_tag(robotics, EventTag::Tags::ROBOTICS_TEAM)
+
+[non_transparent_event, transparent_event, flagship, robotics].each_with_index do |event, i|
+  populate_event!(event, admin:, organizers: people[(i * 3), 3], scale: 22)
 end
 
 # ===========================================================================
-# 2. SUB-ORGANIZATION + disbursement from the flagship parent
+# Sub-organization + disbursement from the flagship parent
 # ===========================================================================
 suborg = seed_org("bay-area-hacks-south-bay", "Bay Area Hacks — South Bay Chapter", is_public: true, parent: flagship)
 seed_member(suborg, devon, :manager, admin)
-unless seed_populated?(suborg)
+unless suborg.canonical_pending_transactions.exists?
   DisbursementService::Create.new(source_event_id: flagship.id, destination_event_id: suborg.id,
                                   name: "Seed funding for South Bay chapter", amount: "1500.00", requested_by_id: admin.id, fronted: true).run
+  4.times { |i| seed_donation(suborg, [1_000, 5_000, 10_000].sample, name: fake_name, email: fake_email("sub#{i}"), created_at: rand(1..14).days.ago) }
 end
 
 # ===========================================================================
-# 3. ROBOTICS TEAM — moderate data, different plan/tags
-# ===========================================================================
-robotics = seed_org("team-8032-robotics", "Team 8032 Robotics", is_public: true)
-robotics.plan.update(type: Event::Plan::FeeWaived.name) unless robotics.plan.is_a?(Event::Plan::FeeWaived)
-seed_member(robotics, priya, :manager, admin)
-seed_tag(robotics, EventTag::Tags::ROBOTICS_TEAM)
-unless seed_populated?(robotics)
-  seed_settled(robotics, "🏦 School district grant", 1_200_000, 18.days.ago)
-  seed_settled(robotics, "🔧 Machine shop supplies", -85_000, 6.days.ago)
-  seed_donation(robotics, 15_000, name: "Robotics Booster", email: "booster@gmail.com", created_at: 9.days.ago)
-  seed_donation(robotics, 5_000, name: "Alumni Fund", email: "alumni@gmail.com", created_at: 4.days.ago)
-  check = IncreaseCheck.create!(event: robotics, user: admin, amount: 300_00, memo: "Competition registration", payment_for: "FRC regional",
-                                recipient_name: "FIRST Robotics", recipient_email: "reg@example.com", address_line1: "200 Bedford St", address_line2: "",
-                                address_city: "Manchester", address_state: "NH", address_zip: "03101")
-  check.mark_approved!
-end
-
-# ===========================================================================
-# 4. EDGE CASE — financially frozen, high risk, mixed pending activity
+# EDGE CASE — financially frozen, high risk, mixed pending activity
 # ===========================================================================
 frozen_org = seed_org("frozen-assets-collective", "Frozen Assets Collective", is_public: false)
 frozen_org.plan.update(type: Event::Plan::FeeWaived.name) unless frozen_org.plan.is_a?(Event::Plan::FeeWaived)
-unless seed_populated?(frozen_org)
+unless frozen_org.donations.exists?
   seed_settled(frozen_org, "🏦 Initial deposit", 500_000, 30.days.ago)
-  seed_donation(frozen_org, 10_000, name: "Concerned Citizen", email: "citizen@gmail.com", created_at: 12.days.ago)
+  5.times { |i| seed_donation(frozen_org, [2_500, 10_000].sample, name: fake_name, email: fake_email("frozen#{i}"), created_at: rand(1..20).days.ago) }
   pending = CanonicalPendingTransaction.create!(date: 2.days.ago, memo: "❄️ Suspicious purchase under review", amount_cents: -75_000)
   CanonicalPendingEventMapping.create!(canonical_pending_transaction_id: pending.id, event_id: frozen_org.id)
 end
 frozen_org.update!(financially_frozen: true, risk_level: :high) unless frozen_org.financially_frozen?
 
 # ===========================================================================
-# 5. EDGE CASE — brand-new empty org (tests empty states)
+# EDGE CASE — brand-new empty org (tests empty states)
 # ===========================================================================
 fresh = seed_org("fresh-start-hacks", "Fresh Start Hacks", is_public: true)
 seed_member(fresh, maya, :manager, admin)
 
 # ===========================================================================
-# 6. EDGE CASE — overdrawn org (negative balance)
+# EDGE CASE — overdrawn org (negative balance)
 # ===========================================================================
 overdrawn = seed_org("overdrawn-outpost", "Overdrawn Outpost", is_public: false)
-unless seed_populated?(overdrawn)
+unless overdrawn.canonical_transactions.exists?
   seed_settled(overdrawn, "🏦 Small starting grant", 50_000, 14.days.ago)
   seed_settled(overdrawn, "💸 Emergency equipment purchase", -120_000, 3.days.ago)
 end
 
 # ===========================================================================
-# 7. ADMIN REVIEW QUEUE — a pending fiscal sponsorship application
+# ADMIN REVIEW QUEUES — pending applications & organizer-removal requests
 # ===========================================================================
-Event::Application.create_with(
-  description: "A new competitive programming club looking for fiscal sponsorship.",
-  address_line1: "1 Main St", address_city: "Burlington", address_state: "VT",
-  address_postal_code: "05401", address_country: "US", aasm_state: :under_review,
-  submitted_at: 2.days.ago, under_review_at: 1.day.ago, teen_led: true
-).find_or_create_by!(user: maya, name: "Algorithms Club")
+[["Algorithms Club", maya, "Burlington", "VT"], ["Rocketry Society", priya, "Austin", "TX"], ["Design Guild", devon, "Seattle", "WA"]].each do |name, applicant, city, state|
+  Event::Application.create_with(
+    description: "A student group applying for fiscal sponsorship.", address_line1: "1 Main St", address_city: city,
+    address_state: state, address_postal_code: "05401", address_country: "US", aasm_state: :under_review,
+    submitted_at: rand(1..5).days.ago, under_review_at: rand(1..3).days.ago, teen_led: true
+  ).find_or_create_by!(user: applicant, name:)
+end
+priya_op = OrganizerPosition.find_by(event: transparent_event, user: priya)
+OrganizerPositionDeletionRequest.create!(organizer_position: priya_op, submitted_by: priya, reason: "No longer involved with the team.") if priya_op && !OrganizerPositionDeletionRequest.exists?(organizer_position: priya_op)
 
 # ===========================================================================
-# 8. MISC ENGAGEMENT — raffle, referral program, event group
+# MISC ENGAGEMENT — raffles, referral programs, event groups
 # ===========================================================================
 Raffle.find_or_create_by!(user: maya, program: "first-worlds-2026-macbook")
+Raffle.find_or_create_by!(user: devon, program: "summer-of-making-2026")
 referral_program = Referral::Program.find_or_create_by!(name: "FIRST 2026 Referrals", creator: admin)
 Referral::Link.create_with(name: "Homepage banner").find_or_create_by!(program: referral_program, creator: admin)
 Event::Group.find_or_create_by!(name: "My Demo Orgs", user: admin)
