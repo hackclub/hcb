@@ -7,10 +7,17 @@ export default class extends Controller {
     window.open(`mailto:${this.emailValue}`)
   }
 
-  copyEmail() {
+  copyEmail(e) {
     navigator.clipboard.writeText(this.emailValue)
+    
+    const item = e.currentTarget
+    const label = item.querySelector('span.ml1')
+    
+    const previousText = label.innerText
+    label.innerText = 'Copied!'
 
-    // eslint-disable-next-line no-alert
-    alert('Copied!')
+    setTimeout(() => {
+      label.innerText = previousText
+    }, 1500)
   }
 }
