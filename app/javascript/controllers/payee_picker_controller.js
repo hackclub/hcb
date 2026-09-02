@@ -15,15 +15,11 @@ export default class extends Controller {
     if (this.hasSummaryTarget) this.summaryTarget.hidden = true
   }
 
-  showAddingFromSearch(event) {
-    const query = (event.params.query || '').trim()
-    if (query) {
-      if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(query)) {
-        this.emailInputTarget.value = query
-      } else {
-        this.nameInputTarget.value = query
-      }
-    }
+  async showAddingFromSearch(event) {
+    if (event.params.query)
+      this[
+        event.params.isEmail ? 'emailInputTarget' : 'nameInputTarget'
+      ].value = event.params.query
     this.showAdding()
   }
 
