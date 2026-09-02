@@ -51,6 +51,22 @@ RSpec.describe LoginsController do
       expect(login.user).to eq(user)
       expect(response).to redirect_to(email_login_path(login))
     end
+    it "blocks creating more than 10 logins per user in the window" do
+      original_cache = Rails.cache
+      Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+      user = create(:user)
+
+      10.times do
+        post(:create, params: { email: user.email, login: { purpose: "" } })
+      end
+
+      post(:create, params: { email: user.email, login: { purpose: "" } })
+      expect(response).to redirect_to(auth_users_path)
+      expect(flash[:error]).to eq("You're creating logins too quickly. Please try again later.")
+    ensure
+      Rails.cache = original_cache
+    end
   end
 
   describe "#login_code" do
