@@ -93,10 +93,11 @@ class Payment
         end
       end
 
-      # Only reject the attempt, and reset the payment back to pending LE state
+      # Only reject the attempt/payout, and reset the payment back to pending LE state
       event :mark_rejected_retryable do
         transitions from: :under_review, to: :rejected
         after do
+          payout&.mark_rejected!
           payment.mark_pending_legal_entity!
         end
       end
