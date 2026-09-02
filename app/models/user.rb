@@ -494,6 +494,19 @@ class User < ApplicationRecord
     transactions_missing_receipt(from:, to:).size
   end
 
+  def ledger_items_missing_receipt(from: nil, to: nil)
+    user_ledger_items = ledger_items.where(linked_object_type: "CardCharge").missing_receipt
+    user_ledger_items = user_ledger_items.where("datetime >= ?", from) if from
+    user_ledger_items = user_ledger_items.where("datetime <= ?", to) if to
+    user_ledger_items.order(created_at: :desc)
+  end
+
+  def ledger_item_ids_missing_receipt
+    @ledger_item_ids_missing_receipt ||= begin
+      stripe_cards.flat_map { |card| card.ledger_items.missing_receipt.pluck(:id) } # a card will only ever have CardCharge ledger items so no need to filter
+    end
+  end
+
   def email_address_with_name(full_name: false)
     display_name = full_name ? (self.full_name.presence || name) : name
     ActionMailer::Base.email_address_with_name(email, display_name)
