@@ -3,38 +3,46 @@
 <% if card_grant.pending_invite? %>
   <div class="w-full">
 
-    <% if card_grant.allow_stripe_card? && card_grant.allow_reimbursement_report? %>
+    <% if card_grant.effective_allow_stripe_card && card_grant.effective_allow_reimbursement_report %>
       <div class="card border b--info" data-controller="form-disable">
         <h2 class="mt-0 mb-3"><%= card_grant.event.name %> has granted you <%= render_money card_grant.amount %></h2>
         <%= form_with url: accept_as_reimbursement_card_grant_path(card_grant) do |form| %>
           <%= render "card_grants/terms", card_grant:, form: %>
 
           <p class="muted mt-4 mb-2">
-            Choose how you would like to redeem your grant<% if card_grant.purpose.present? %> for "<strong><%= card_grant.purpose %></strong>"<% end %>
+            Choose <strong>one</strong> way to redeem your grant<% if card_grant.purpose.present? %> for "<strong><%= card_grant.purpose %></strong>"<% end %>
           </p>
 
           <div class="flex flex-col md:flex-row gap-4">
             <div class="card card--sunken flex-1 flex flex-col">
-              <p class="mt-0">Get a virtual debit card to spend money online or in-person with digital wallets.</p>
-              <div class="field field--checkbox mb-2">
+              <h3 class="mt-0 mb-1">Virtual card</h3>
+              <p class="mt-0 mb-2">Spend right away with a virtual debit card, online or in person with digital wallets.</p>
+              <ul class="h5 muted mt-0 mb-3 pl-4">
+                <li>Best if you haven't paid yet</li>
+                <li>Works with Apple&nbsp;Pay and Google&nbsp;Pay</li>
+              </ul>
+              <div class="field field--checkbox mb-2 mt-auto">
                 <%= form.check_box :terms, data: { "action" => "form-disable#run", "form-disable-target" => "radioButton" } %>
                 <%= form.label :terms do %>
                   I agree to the <%= link_to "Card Issuing Terms", "https://stripe.com/legal/issuing/celtic-authorized-user-terms", target: :_blank %>
                 <% end %>
               </div>
-              <%= form.submit "Get a virtual card", class: "btn btn--primary w-full mt-auto", formaction: activate_card_grant_path(card_grant), data: { "form-disable-target" => "submitButton" } %>
+              <%= form.submit "Get a virtual card", class: "btn btn--primary w-full", formaction: activate_card_grant_path(card_grant), data: { "form-disable-target" => "submitButton" } %>
             </div>
             <div class="card card--sunken flex-1 flex flex-col">
-              <p class="mt-0">
-                Paid out of pocket? Reimburse yourself up to <%= render_money card_grant.amount %>
-              </p>
+              <h3 class="mt-0 mb-1">Reimbursement</h3>
+              <p class="mt-0 mb-2">Already paid out of pocket? Reimburse yourself up to <%= render_money card_grant.amount %>.</p>
+              <ul class="h5 muted mt-0 mb-3 pl-4">
+                <li>Best if you've already spent your own money</li>
+                <li>Paid to your bank account (supported countries only)</li>
+              </ul>
               <%= form.submit "Open a reimbursement", class: "btn btn--primary w-full mt-auto" %>
             </div>
           </div>
         <% end %>
       </div>
 
-    <% elsif card_grant.allow_stripe_card? %>
+    <% elsif card_grant.effective_allow_stripe_card %>
       <%# Only virtual card allowed %>
       <div class="card border b--info">
         <h2 class="mt-0">Activate your grant card</h2>
@@ -49,7 +57,7 @@
         <% end %>
       </div>
 
-    <% elsif card_grant.allow_reimbursement_report? %>
+    <% elsif card_grant.effective_allow_reimbursement_report %>
       <%# Only reimbursement allowed %>
       <div class="card border b--info">
         <h2 class="mt-0">Open a reimbursement report</h2>
