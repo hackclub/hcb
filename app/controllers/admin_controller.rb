@@ -678,11 +678,14 @@ class AdminController < Admin::BaseController
 
   def disbursement_approve
     disbursement = Disbursement.find(params[:id])
+    authorize disbursement, :approve?
     return unless enforce_sudo_mode
 
     disbursement.approve_by_admin(current_user)
 
     redirect_to disbursement_process_admin_path(disbursement), flash: { success: "Success" }
+  rescue Pundit::NotAuthorizedError
+    raise
   rescue => e
     Rails.error.report(e)
     redirect_to disbursement_process_admin_path(params[:id]), flash: { error: e.message }
@@ -690,12 +693,15 @@ class AdminController < Admin::BaseController
 
   def disbursement_reject
     disbursement = Disbursement.find(params[:id])
+    authorize disbursement, :reject?
 
     disbursement.mark_rejected!(current_user)
 
     disbursement.local_hcb_code.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
 
     redirect_to disbursement_process_admin_path(disbursement), flash: { success: "Success" }
+  rescue Pundit::NotAuthorizedError
+    raise
   rescue => e
     Rails.error.report(e)
     redirect_to disbursement_process_admin_path(params[:id]), flash: { error: e.message }
