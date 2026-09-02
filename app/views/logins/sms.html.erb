@@ -60,11 +60,11 @@
         Continue
       </button>
     </div>
-
-    <div class="flex justify-end">
-      <%= render partial: "logins/resend_code", locals: { path: sms_login_path(@login), seconds: 30 } %>
-    </div>
   <% end %>
+
+  <div class="flex justify-end">
+    <%= render partial: "logins/resend_code", locals: { path: sms_login_path(@login), seconds: 30 } %>
+  </div>
 
   <%= render partial: "logins/environment_banner" %>
 </div>
