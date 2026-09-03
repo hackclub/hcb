@@ -571,8 +571,6 @@ class UsersController < ApplicationController
       :birthday,
       :profile_picture,
       :seasonal_themes_enabled,
-      # admin
-      :pretend_is_not_admin,
       # security
       :sessions_reported,
       :session_validity_preference,
@@ -596,6 +594,16 @@ class UsersController < ApplicationController
           :stripe_billing_address_country
         ]
       }
+    end
+
+    # Pretending not to be an admin is only meaningful for accounts that
+    # actually have the role, and `UserPolicy#toggle_pretend_is_not_admin?`
+    # already limits the toggle to the admin's own account. Without this guard
+    # any user could set the flag on themselves through `#update` and get stuck
+    # with the "you're pretending to not be an admin" banner, since they aren't
+    # authorized to turn it back off.
+    if @user == current_user && current_user.admin_override_pretend?
+      attributes << :pretend_is_not_admin
     end
 
     if admin_signed_in?

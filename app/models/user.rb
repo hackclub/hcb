@@ -199,6 +199,12 @@ class User < ApplicationRecord
 
   before_save :sync_teenager_columns, if: :should_sync_teenager_columns?
 
+  # `pretend_is_not_admin` only makes sense for accounts that hold the role;
+  # left set on a regular user it just pins the "you're pretending to not be an
+  # admin" banner to an account that can't authorize the toggle to remove it.
+  # Clearing it on save also covers admins who are later demoted.
+  before_save :clear_pretend_is_not_admin, if: -> { pretend_is_not_admin? && !admin_override_pretend? }
+
   before_create :format_number
   before_save :on_phone_number_update
   validate :second_factor_present_for_2fa
@@ -839,6 +845,10 @@ class User < ApplicationRecord
   def sync_teenager_columns
     self.teenager = is_teenager?
     self.joined_as_teenager = was_teenager_on_join?
+  end
+
+  def clear_pretend_is_not_admin
+    self.pretend_is_not_admin = false
   end
 
 end
