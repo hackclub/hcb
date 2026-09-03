@@ -24,7 +24,7 @@
           </button>
 
           <div data-menu-target="content" class="menu__content menu__content--2 text-sm">
-            <div data-controller="file-upload" class="justify-center">
+            <div data-controller="file-upload mirror-files" class="justify-center">
               <%= form.file_field :background_image, accept: "image/png,image/jpeg", data: { file_upload_target: "input", action: "input->mirror-files#mirror", mirror_files_to_value: "event_background_image" } %>
               <button data-file-upload-target="preview" type="button"></button>
               <div data-file-upload-target="clear"></div>
@@ -56,7 +56,7 @@
               <%= inline_icon "photo", size: 24 %>
             </button>
             <div data-menu-target="content" class="menu__content menu__content--2 text-sm">
-              <div data-controller="file-upload" class="justify-center">
+              <div data-controller="file-upload mirror-files" class="justify-center">
                 <%= form.file_field :logo, accept: "image/png,image/jpeg", disabled:, data: { file_upload_target: "input", action: "input->mirror-files#mirror", mirror_files_to_value: "event_logo" } %>
                 <button data-file-upload-target="preview" type="button"></button>
                 <div data-file-upload-target="clear"></div>
