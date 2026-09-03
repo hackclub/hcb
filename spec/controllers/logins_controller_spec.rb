@@ -67,6 +67,23 @@ RSpec.describe LoginsController do
       expect(response.body).to include("We just sent a login code")
     end
 
+    it "resends the login code when the user requests it" do
+      user = create(:user, email: "text@example.com")
+      login = create(:login, user:)
+
+      expect {
+        post(:email, params: { id: login.hashid })
+      }.to send_email(to: user.email)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Resend code")
+      expect(response.body).to include(email_login_path(login))
+
+      expect {
+        post(:email, params: { id: login.hashid })
+      }.to send_email(to: user.email)
+    end
+
     it "sends an SMS code if the user has opted-in and verified their phone number" do
       user = create(:user, phone_number: "+18556254225")
       # This can't be done through the factory because we have validation logic
@@ -84,6 +101,24 @@ RSpec.describe LoginsController do
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("SMS code")
       expect(response.body).to include("We just sent a login code")
+    end
+
+    it "resends the SMS code when the user requests it" do
+      user = create(:user, phone_number: "+18556254225")
+      user.update!(use_sms_auth: true, phone_number_verified: true)
+      login = create(:login, user:)
+
+      verification_service = instance_double(TwilioVerificationService)
+      expect(verification_service).to receive(:send_verification_request).with(user.phone_number).twice
+      expect(TwilioVerificationService).to receive(:new).twice.and_return(verification_service)
+
+      post(:sms, params: { id: login.hashid })
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Resend code")
+
+      post(:sms, params: { id: login.hashid })
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Resend code")
     end
 
     # The UI never offers SMS for an unverified number, so this request only
