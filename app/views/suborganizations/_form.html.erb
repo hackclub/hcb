@@ -1,6 +1,6 @@
 <%# locals: (event:) %>
 
-<%= form_with(url: event_create_sub_organization_path(event.slug), method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full", "x-data" => "scoped_tag_picker" }) do |form| %>
+<%= form_with(url: event_create_sub_organization_path(event.slug), method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full", "x-data" => "scoped_tag_picker(#{{ create_url: event_scoped_tags_url(event) }.to_json})" }) do |form| %>
   <div class="card border b--info mt2 mb2 container--sm mx-auto">
     <p class="mt0 mb0">
       Sub-organizations are separate organizations nested under <%= event.name %>. All members
@@ -86,7 +86,7 @@
       </div>
 
       <template x-if="query.length > 0 && $el.parentElement.checkVisibility()">
-        <%= link_to "#", data: { turbo_method: :post }, "x-bind:href": "`#{event_scoped_tags_url(event)}?name=${query}`" do %>
+        <%= link_to "#", data: { turbo_method: :post }, "x-bind:href": "create_tag_url" do %>
           <%= inline_icon "plus", size: 15 %> Create tag
           "<span x-text="query"></span>"
         <% end %>

@@ -55,6 +55,8 @@ import wire_form from './datas/wire_form'
 import check_form from './datas/check_form'
 import wise_form from './datas/wise_form'
 import application_project_info_form from './datas/application_project_info_form'
+import application_edit_project_info from './datas/application_edit_project_info'
+import application_affiliation_form from './datas/application_affiliation_form'
 import admin_tools_pinned_cards from './datas/admin_tools_pinned_cards'
 import allowance_form from './datas/allowance_form'
 import donation_form from './datas/donation_form'
@@ -71,6 +73,8 @@ Alpine.data('wire', wire_form)
 Alpine.data('check', check_form)
 Alpine.data('wise_form', wise_form)
 Alpine.data('application_project_info', application_project_info_form)
+Alpine.data('application_edit_project_info', application_edit_project_info)
+Alpine.data('application_affiliation_form', application_affiliation_form)
 Alpine.data('admin_tools_pinned_cards', admin_tools_pinned_cards)
 Alpine.data('allowance_form', allowance_form)
 Alpine.data('donation_form', donation_form)
