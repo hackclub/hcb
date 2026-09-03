@@ -259,3 +259,14 @@ jobs:
       - uses: ./.github/actions/setup-ruby
       - name: Run Brakeman
         run: bundle exec brakeman -q
+  bundler_audit:
+    name: Bundler Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-ruby
+      # `--update` pulls the latest ruby-advisory-db so a newly published
+      # advisory against an already-locked gem fails CI without needing a
+      # Gemfile.lock change to trigger it.
+      - name: Run Bundler Audit
+        run: bundle exec bundle-audit check --update

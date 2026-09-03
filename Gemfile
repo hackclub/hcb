@@ -156,6 +156,7 @@ group :development, :test do
   gem "rubocop-rails", "~> 2.30"
   gem "relaxed-rubocop"
   gem "brakeman" # static security vulnerability scanner
+  gem "bundler-audit", require: false
 
   gem "rspec-rails", "~> 7.1.1"
 
