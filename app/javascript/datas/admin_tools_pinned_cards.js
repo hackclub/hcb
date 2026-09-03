@@ -4,7 +4,9 @@ import Alpine from '@alpinejs/csp'
 // moves the card's DOM node into that grid and remembers where it came from, so
 // unpinning can put it back. The list survives reloads via the persist plugin.
 export default () => ({
-  pinned_cards: Alpine.$persist([]).as('pinned_cards'),
+  // No `.as(...)`: the auto key (`_x_pinned_cards`) is the one the inline
+  // `$persist([])` already wrote, so existing pins survive.
+  pinned_cards: Alpine.$persist([]),
 
   pin(id, old_grid_id) {
     this.isPinned(id)
