@@ -1,6 +1,6 @@
 <%# locals: (event:) %>
 
-<%= form_with(url: event_create_sub_organization_path(event.slug), method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full", "x-data" => "{ scoped_tags: [], query: '' }" }) do |form| %>
+<%= form_with(url: event_create_sub_organization_path(event.slug), method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full", "x-data" => "scoped_tag_picker" }) do |form| %>
   <div class="card border b--info mt2 mb2 container--sm mx-auto">
     <p class="mt0 mb0">
       Sub-organizations are separate organizations nested under <%= event.name %>. All members
@@ -51,7 +51,7 @@
               <span x-text="scoped_tag.name"></span>
               <button
                 type="button" class="p0 line-height-0 bg-transparent border-none cursor-pointer link-reset"
-                x-on:click="scoped_tags = scoped_tags.filter(t => t.id !== scoped_tag.id)">
+                x-on:click="remove(scoped_tag.id)">
                 <%= inline_icon "view-close", size: 16 %>
               </button>
             </span>

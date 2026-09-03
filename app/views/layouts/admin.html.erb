@@ -36,8 +36,9 @@
         <div style="flex-grow: 1; display: flex; gap: 8px; height: 28px; justify-content: flex-end;">
           <div data-controller="menu">
             <a
-              href="javascript:void(0)"
-              class="-mr-1 block"
+              role="button"
+              tabindex="0"
+              class="-mr-1 block pointer"
               data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
               data-menu-target="toggle">
               <%= inline_icon "moon", size: 28 %>
