@@ -19,6 +19,9 @@ module Api
       ].freeze
 
       when_expanded do
+        expose :ledger_item_id, documentation: { type: "string" } do |hcb_code, options|
+          hcb_code.ledger_item&.public_id
+        end
         expose :amount_cents, documentation: { type: "integer" } do |hcb_code, options|
           org = options[:org]
 
@@ -99,8 +102,7 @@ module Api
         [
           {
             entity: Entities::CardCharge,
-            # Convert the HcbCode to it's equivalent CardCharge.
-            hcb_method: ->(hcb_code) { Models::CardCharge.find(hcb_code.id) },
+            hcb_method: ->(hcb_code) { Models::CardCharge.find_by(id: hcb_code.local_hcb_code&.id) },
           },
           {
             entity: Entities::AchTransfer,
