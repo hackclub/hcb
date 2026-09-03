@@ -14,15 +14,24 @@ on:
 # itself exactly what the Claude Code action needs.
 permissions: {}
 
+# Only keep the latest review run per PR; a new push supersedes an in-flight review.
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+    # Skip fork PRs (no secrets or OIDC token on pull_request events), bot PRs
+    # (Dependabot etc. also get no secrets, and the action rejects non-human
+    # actors), and drafts (reviewed once marked ready_for_review). Without this
+    # gate those PRs would show a failing check instead of a skipped one.
+    if: |
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.type != 'Bot' &&
+      github.event.pull_request.draft == false
 
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
       pull-requests: read
