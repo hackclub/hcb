@@ -54,8 +54,6 @@ RSpec.describe HashidQueryable do
     end
 
     it "does not preserve the order of the given hashids" do
-      # This is a set lookup: the query has no ORDER BY of its own, so callers
-      # needing an order have to ask for one, as this expectation does.
       expect(User.where_hashid(hashids.reverse).order(:id).map(&:id)).to eq(users.map(&:id).sort)
     end
 
