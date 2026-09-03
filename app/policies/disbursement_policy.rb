@@ -37,19 +37,19 @@ class DisbursementPolicy < ApplicationPolicy
   end
 
   def edit?
-    user.admin?
+    user&.admin?
   end
 
   def update?
-    user.admin?
+    user&.admin?
   end
 
   def cancel?
-    user.admin?
+    user&.admin?
   end
 
   def mark_fulfilled?
-    user.admin?
+    user&.admin?
   end
 
   def approve?
@@ -57,15 +57,15 @@ class DisbursementPolicy < ApplicationPolicy
   end
 
   def reject?
-    user.admin?
+    user&.admin?
   end
 
   def pending_disbursements?
-    user.admin?
+    user&.admin?
   end
 
   def set_transaction_categories?
-    user.admin?
+    user&.admin?
   end
 
   private
