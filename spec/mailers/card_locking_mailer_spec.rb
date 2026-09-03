@@ -85,23 +85,26 @@ RSpec.describe CardLockingMailer, type: :mailer do
 
   describe "#warning" do
     it "reports a calm pile count and avoids violation/urgent language" do
-      create_settled_card_charge(user:, settled_at: 2.days.ago)
+      hcb_code = create_settled_card_charge(user:, settled_at: 2.days.ago)
+      hcb_code.update!(receipt_due_at: 5.days.from_now)
 
       mail = described_class.warning(user:)
 
-      expect(mail.subject).to eq("You have 1 receipt to upload")
+      expect(mail.subject).to eq("You have 1 receipt to upload in the next 5 days")
       expect(mail.subject).not_to match(/urgent/i)
       expect(mail.body.encoded).not_to include("violation")
       expect(mail.body.encoded).not_to include("72 hours")
     end
 
     it "pluralizes the subject for more than one receipt" do
-      create_settled_card_charge(user:, settled_at: 2.days.ago)
-      create_settled_card_charge(user:, settled_at: 1.day.ago)
+      older = create_settled_card_charge(user:, settled_at: 2.days.ago)
+      older.update!(receipt_due_at: 5.days.from_now)
+      newer = create_settled_card_charge(user:, settled_at: 1.day.ago)
+      newer.update!(receipt_due_at: 6.days.from_now)
 
       mail = described_class.warning(user:)
 
-      expect(mail.subject).to eq("You have 2 receipts to upload")
+      expect(mail.subject).to eq("You have 2 receipts to upload, the next due in 5 days")
     end
 
     it "counts down to the soonest deadline in the pile" do
@@ -114,6 +117,7 @@ RSpec.describe CardLockingMailer, type: :mailer do
 
       expect(html_body(mail)).to include("Your next receipt is due in")
       expect(html_body(mail)).to include("11 hours")
+      expect(mail.subject).to eq("You have 2 receipts to upload, the next due in 11 hours")
     end
 
     it "states the rule instead of a countdown when the pile carries no deadline" do
@@ -124,6 +128,7 @@ RSpec.describe CardLockingMailer, type: :mailer do
 
       expect(html_body(mail)).not_to include("is due in")
       expect(html_body(mail)).to include("more than 7 days without a receipt")
+      expect(mail.subject).to eq("You have 1 receipt to upload")
     end
   end
 end

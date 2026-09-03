@@ -213,6 +213,7 @@ GEM
       cairo (>= 1.16.2)
       glib2 (= 4.3.6)
     cbor (0.5.10.1)
+    cgi (0.5.2)
     chartkick (5.1.5)
     childprocess (5.1.0)
       logger (~> 1.5)
@@ -813,6 +814,8 @@ GEM
     sanitize (6.0.2)
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
+    secure_headers (7.3.0)
+      cgi (>= 0.1)
     securerandom (0.4.1)
     sidekiq (7.3.8)
       base64
@@ -1078,6 +1081,7 @@ DEPENDENCIES
   ruby-limiter
   rubyzip (>= 2.3.0, < 3.0)
   safely_block
+  secure_headers
   sidekiq (~> 7.3.8)
   sidekiq-cron (~> 2.4)
   simplecov

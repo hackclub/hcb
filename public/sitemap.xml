@@ -4,13 +4,13 @@
   (see ApplicationController), so this only lists the handful of public pages
   that explicitly opt back into indexing. Served as a static file so it
   bypasses the app's auth redirect. Keep in sync when adding indexable pages.
+
+  /for/funders/faq is deliberately absent: it 404s until the
+  funders_landing_comparison_faq flag is on. Add it when that flag ships.
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://hcb.hackclub.com/for/funders</loc>
-  </url>
-  <url>
-    <loc>https://hcb.hackclub.com/for/funders/faq</loc>
   </url>
   <url>
     <loc>https://hcb.hackclub.com/branding</loc>
