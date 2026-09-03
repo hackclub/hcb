@@ -32,7 +32,7 @@ class LoginsController < ApplicationController
 
     @user = User.create_with(creation_method: @login.for_application? ? :application_form : :login).find_or_create_by!(email: params[:email])
 
-    if Rails.cache.increment("login:#{@user.id}", 1, expires_in: 25.hours).to_i > 10
+    if Rails.cache.increment("login:#{@user.id}", 1, expires_in: 1.hour).to_i > 10
       flash[:error] = "You're creating logins too quickly. Please try again later."
       return redirect_to auth_users_path
     end
@@ -264,7 +264,7 @@ class LoginsController < ApplicationController
         end
       elsif session[:auth_email]
         @login_user = User.find_by_email(session[:auth_email])
-        if @login_user && Rails.cache.increment("login:#{@login_user.id}", 1, expires_in: 25.hours).to_i > 10
+        if @login_user && Rails.cache.increment("login:#{@login_user.id}", 1, expires_in: 1.hour).to_i > 10
           flash[:error] = "You're creating too many logins. Please try again later."
           return redirect_to auth_users_path
         end

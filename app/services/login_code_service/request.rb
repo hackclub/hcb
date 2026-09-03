@@ -23,7 +23,7 @@ module LoginCodeService
       return { error: "no phone number provided", method: :sms } if user.phone_number.empty?
 
       key = "sms_code:#{Digest::SHA256.hexdigest(user.phone_number)}"
-      if Rails.cache.increment(key, 1, expires_in: 25.hours).to_i > 20
+      if Rails.cache.increment(key, 1, expires_in: 1.hour).to_i > 20
         return { error: "You're requesting too many SMS codes. Please try again later.", method: :sms }
       end
 
@@ -48,7 +48,7 @@ module LoginCodeService
       end
 
       key = "email_code:#{user.id}"
-      if Rails.cache.increment(key, 1, expires_in: 25.hours).to_i > 20
+      if Rails.cache.increment(key, 1, expires_in: 1.hour).to_i > 20
         return { error: "You're requesting too many login codes. Please try again later.", method: :email }
       end
 

@@ -141,7 +141,7 @@ module Users
 
       @user = User.find_by!(email: user_params[:email])
 
-      if Rails.cache.increment("login:#{@user.id}", 1, expires_in: 25.hours).to_i > 10
+      if Rails.cache.increment("login:#{@user.id}", 1, expires_in: 1.hour).to_i > 10
         flash.now[:error] = "You're creating too many logins. Please try again later."
         render :new, status: :unprocessable_content
         return
