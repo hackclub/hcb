@@ -2,7 +2,7 @@
   <% if @on_behalf %>
     Upload an invoice on behalf of <strong><%= @position.payee.display_name %></strong>
     for their work as <strong><%= @position.title %></strong>.<br>
-    You'll still need to approve it before payment is sent.
+    It'll be approved automatically, and payment will be sent after HCB review.
   <% else %>
     Invoice <strong><%= @position.event.name %></strong> for your work as
     <strong><%= @position.title %></strong>.<br>
@@ -10,7 +10,7 @@
   <% end %>
 </p>
 
-<%= form_with(model: @invoice, url: payroll_position_invoices_path(@position), scope: :payroll_invoice, local: true) do |form| %>
+<%= form_with(model: @invoice, url: payroll_position_invoices_path(@position), scope: :payroll_invoice, local: true, data: { turbo_frame: "_top" }) do |form| %>
   <div class="card mb-4 flex flex-col gap-3">
     <div class="flex justify-between items-center">
       <div>
