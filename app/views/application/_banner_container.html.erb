@@ -8,6 +8,13 @@
     </div>
   <% end %>
   <%= render "application/impersonation_banner", klass: "px-4" %>
+  <% if current_user&.pretend_is_not_admin? %>
+    <div class="w-100 px4 bg-white transparency-banner px-4">
+      <p class="h5 medium center py-2 my-0">
+        <%= link_to "← Stop Pretending", toggle_pretend_is_not_admin_users_path(return_to: request.url), data: { turbo_method: :post, turbo_frame: "_top" }, onclick: "window.open('https://www.youtube.com/shorts/1lSNY1FbLT8', '_blank')" %> | You're currently pretending to not be an admin
+      </p>
+    </div>
+  <% end %>
   <% if current_user&.cards_locked? %>
     <div class="w-100 px4 bg-white transparency-banner px-4">
       <p class="h5 medium center py-2 my-0">
