@@ -97,7 +97,9 @@ class CardGrant < ApplicationRecord
 
   has_one :pre_authorization
   has_one :reimbursement_report, class_name: "Reimbursement::Report"
+  has_one :grant, as: :grantable
   after_create :create_pre_authorization!, if: :pre_authorization_required?
+  after_create :establish_grant
 
   before_validation :create_card_grant_setting, on: :create
   before_create :create_user
@@ -303,6 +305,8 @@ class CardGrant < ApplicationRecord
     expired ? mark_expired! : mark_canceled!
 
     stripe_card&.cancel!
+
+    sync_grant_cancellation!(expired:)
   end
 
   def create_stripe_card(ip_address)
@@ -319,6 +323,8 @@ class CardGrant < ApplicationRecord
         ).run
 
         save!
+
+        grant.mark_accepted_with_card! if grant&.may_mark_accepted_with_card?
       rescue Stripe::InvalidRequestError, Errors::StripeInvalidNameError => e
         raise e.class, "This card could not be activated: #{e.message}"
       end
@@ -374,13 +380,17 @@ class CardGrant < ApplicationRecord
 
     stripe_card&.cancel!
 
-    event.reimbursement_reports.create!(
+    report = event.reimbursement_reports.create!(
       user:,
       report_name: "Reimbursement for #{purpose.presence || "previously issued card grant"}",
       maximum_amount_cents:,
       inviter: sent_by,
       card_grant: self
     )
+
+    sync_grant_conversion!(report)
+
+    report
   end
 
   private
@@ -428,6 +438,27 @@ class CardGrant < ApplicationRecord
 
   def return_remaining_balance!(requested_by:, reason:)
     zero!(custom_memo: "Returning #{reason} grant to #{user.name}", requested_by:) if balance > 0
+  end
+
+  def establish_grant
+    create_grant!(event:, user:, sent_by:, aasm_state: stripe_card.present? ? "accepted_with_card" : "pending")
+  end
+
+  def sync_grant_cancellation!(expired:)
+    return if grant.nil?
+
+    if expired
+      grant.mark_expired! if grant.may_mark_expired?
+    elsif grant.may_mark_canceled?
+      grant.mark_canceled!
+    end
+  end
+
+  def sync_grant_conversion!(report)
+    return if grant.nil?
+
+    grant.update!(grantable: report)
+    grant.mark_accepted_with_reimbursement! if grant.may_mark_accepted_with_reimbursement?
   end
 
   def at_least_one_acceptance_method

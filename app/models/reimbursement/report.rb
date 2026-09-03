@@ -72,6 +72,7 @@ module Reimbursement
     belongs_to :reviewer, class_name: "User", optional: true, inverse_of: :assigned_reimbursement_reports
     belongs_to :card_grant, optional: true
     belongs_to :legal_entity_payout_method, class_name: "LegalEntity::PayoutMethod", optional: true
+    has_one :grant, as: :grantable
 
     has_paper_trail ignore: :expense_number
     include HasPaperTrailHelpers

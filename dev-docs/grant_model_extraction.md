@@ -40,38 +40,55 @@ Reimbursement::Report # unchanged; gains has_one :grant
 `grantable` is `nil` while the invitation is pending and set once the recipient
 accepts.
 
-## Why not in #13687
+## What is implemented now
+
+The `Grant` model and its wiring have landed (expand + backfill + dual-write):
+
+- `grants` table and `Grant` model with `belongs_to :grantable, polymorphic:
+  true` (a `CardGrant` or a `Reimbursement::Report`), plus `event` / `user` /
+  `sent_by` and an AASM lifecycle (`pending` → `accepted_with_card` /
+  `accepted_with_reimbursement` / `canceled` / `expired`).
+- `CardGrant has_one :grant, as: :grantable` and the same on
+  `Reimbursement::Report`.
+- A `Grant` is created with every card grant and kept in sync at each
+  transition: activation → `accepted_with_card`; cancel/expire → matching
+  state; conversion repoints `grantable` to the new report and moves to
+  `accepted_with_reimbursement`.
+- A backfill seeds one `Grant` per existing grant (pointing at the report when
+  it was accepted as a reimbursement, otherwise the card grant).
+
+`CardGrant` is still the source of truth for invitation data (amount, email,
+purpose, …); `Grant` currently delegates rather than owns it. That is the
+deliberate dividing line below.
+
+## Why the rest is a separate PR
 
 `CardGrant` is referenced in ~212 files and backs ledgers, disbursements,
 Stripe authorization, subledgers, metrics, the v4 API, jobs, and Wrapped.
-There is no additive path that both (a) moves invitation data off
-`card_grants` and (b) leaves those call sites working, so a literal extraction
-is a staged, multi-step program with a production data migration. Landing it
-inside the feature PR would make that PR unreviewable and risk the feature.
-The feature PR instead ships the parts that stand on their own: the acceptance
-UI, an explicit AASM `converted_to_reimbursement` state, and settings
-inheritance modeled on the `allowed_merchants` pattern (NULL = inherit). Those
-are forward-compatible with this extraction.
+Moving the invitation data off `card_grants` and repointing all of those reads
+is the **contract** phase: a staged program with a production data migration
+that would make the feature PR unreviewable if bundled in. It is described
+under "Migration plan" below, steps 4-5.
 
 ## Migration plan (expand / migrate / contract)
 
 Ship in small, independently-deployable steps; never a single cutover.
 
-1. **Expand.** Add the `grants` table and `Grant` model. Add
-   `grant_id`/`grantable` columns where needed. No behavior change yet.
-2. **Backfill.** Create one `Grant` per existing `CardGrant`
-   (`grantable: card_grant`, copying invitation columns and mapping the current
-   status onto the new `aasm_state`). Run in batches; make it idempotent and
-   re-runnable.
-3. **Dual-write.** Point creation (`CardGrantsController#create`,
-   `CardGrantService::BulkCreate`, API v4) at `Grant`, which builds its
-   `grantable`. Keep `CardGrant` writes in sync via delegation so nothing that
-   reads `CardGrant` breaks.
-4. **Repoint reads incrementally.** Move call sites from `card_grant.amount`,
-   `.purpose`, `.user`, acceptance settings, etc. to `grant.*`, a directory at a
-   time, leaning on delegation so each step is small and green.
-5. **Contract.** Once no code reads the duplicated columns off `card_grants`,
-   drop them and remove the delegations.
+1. **Expand.** *(done)* Add the `grants` table and `Grant` model, and the
+   `has_one :grant, as: :grantable` associations.
+2. **Backfill.** *(done)* Seed one `Grant` per existing grant, pointing at the
+   report if it was accepted as a reimbursement and otherwise the card grant,
+   with `aasm_state` mapped from the current status. Idempotent and re-runnable.
+3. **Dual-write.** *(done)* A `Grant` is created and transitioned alongside the
+   `CardGrant` at every lifecycle step, so nothing that reads `CardGrant`
+   breaks.
+4. **Repoint reads incrementally.** *(remaining)* Move call sites from
+   `card_grant.amount`, `.purpose`, `.user`, acceptance settings, etc. to
+   `grant.*`, a directory at a time, leaning on delegation so each step is small
+   and green.
+5. **Contract.** *(remaining)* Once no code reads the duplicated concerns off
+   `card_grants`, move invitation data onto `grants` and drop it from
+   `card_grants`.
 
 Each step is its own PR with its own tests; the app is shippable between every
 step.

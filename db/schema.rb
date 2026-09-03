@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_02_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_02_020000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1378,6 +1378,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_02_000000) do
     t.index ["ip_address"], name: "index_governance_request_contexts_on_ip_address"
     t.index ["request_id"], name: "index_governance_request_contexts_on_request_id", unique: true
     t.index ["user_id"], name: "index_governance_request_contexts_on_user_id"
+  end
+
+  create_table "grants", force: :cascade do |t|
+    t.string "aasm_state", default: "pending", null: false
+    t.datetime "created_at", null: false
+    t.bigint "event_id", null: false
+    t.bigint "grantable_id", null: false
+    t.string "grantable_type", null: false
+    t.bigint "sent_by_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["event_id"], name: "index_grants_on_event_id"
+    t.index ["grantable_type", "grantable_id"], name: "index_grants_on_grantable", unique: true
+    t.index ["sent_by_id"], name: "index_grants_on_sent_by_id"
+    t.index ["user_id"], name: "index_grants_on_user_id"
   end
 
   create_table "hashed_transactions", force: :cascade do |t|
@@ -3144,6 +3159,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_02_000000) do
   add_foreign_key "governance_admin_transfer_limits", "users"
   add_foreign_key "governance_request_contexts", "users"
   add_foreign_key "governance_request_contexts", "users", column: "impersonator_id"
+  add_foreign_key "grants", "events"
+  add_foreign_key "grants", "users"
+  add_foreign_key "grants", "users", column: "sent_by_id"
   add_foreign_key "hashed_transactions", "raw_plaid_transactions"
   add_foreign_key "hcb_code_personal_transactions", "hcb_codes"
   add_foreign_key "hcb_code_personal_transactions", "invoices"
