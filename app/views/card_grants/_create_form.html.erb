@@ -1,6 +1,6 @@
 <% disabled = !policy(card_grant).create? %>
 
-<%= form_with model: [@event, card_grant], data: { turbo_frame: "_top" } do |form| %>
+<%= form_with model: [@event, card_grant], data: { turbo_frame: "_top", controller: "card-grant-form" } do |form| %>
   <div class="flex flex-col md:flex-row md:gap-5">
     <div class="w-full flex-grow">
       <div class="field">
@@ -27,31 +27,11 @@
       </div>
 
       <div class="field">
-        <%= form.label :one_time_use, class: "flex gap-2 items-center" do %>
-          <%= form.check_box :one_time_use, disabled: %>
-          One time use?
-          <span class="info tooltipped tooltipped--e h-5" aria-label="Card will freeze after the first charge">
-            <%= inline_icon "info", size: 20 %>
-          </span>
-        <% end %>
-      </div>
-
-      <div class="field">
-        <%= form.label :pre_authorization_required, class: "flex gap-2 items-center" do %>
-          <%= form.check_box :pre_authorization_required, disabled: %>
-          Require pre-authorization?
-          <span class="info tooltipped tooltipped--e h-5" aria-label="Recipient will submit documentation of their purchase before activation, which will be compared with the grant's purpose and flagged if it is potentially fraudulent">
-            <%= inline_icon "info", size: 20 %>
-          </span>
-        <% end %>
-      </div>
-
-      <div class="field">
         <label class="bold mb-1 block">Acceptance methods</label>
-        <p class="h5 muted mt-0 mb-2">Choose how the recipient can accept this grant.</p>
+        <p class="h5 muted mt-0 mb-2">Choose how the recipient can accept this grant. You can enable both.</p>
         <div class="flex flex-col gap-1">
           <%= form.label :allow_stripe_card, class: "flex gap-2 items-center" do %>
-            <%= form.check_box :allow_stripe_card, disabled:, checked: card_grant.effective_allow_stripe_card %>
+            <%= form.check_box :allow_stripe_card, disabled:, checked: card_grant.effective_allow_stripe_card, data: { "card-grant-form-target" => "stripeCard", "action" => "card-grant-form#toggle" } %>
             Allow virtual card
             <span class="info tooltipped tooltipped--e h-5" aria-label="Recipient can activate a virtual card to make purchases">
               <%= inline_icon "info", size: 20 %>
@@ -65,6 +45,26 @@
             </span>
           <% end %>
         </div>
+      </div>
+
+      <div class="field" data-card-grant-form-target="cardOption">
+        <%= form.label :one_time_use, class: "flex gap-2 items-center" do %>
+          <%= form.check_box :one_time_use, disabled: %>
+          One time use?
+          <span class="info tooltipped tooltipped--e h-5" aria-label="Card will freeze after the first charge">
+            <%= inline_icon "info", size: 20 %>
+          </span>
+        <% end %>
+      </div>
+
+      <div class="field" data-card-grant-form-target="cardOption">
+        <%= form.label :pre_authorization_required, class: "flex gap-2 items-center" do %>
+          <%= form.check_box :pre_authorization_required, disabled: %>
+          Require pre-authorization?
+          <span class="info tooltipped tooltipped--e h-5" aria-label="Recipient will submit documentation of their purchase before activation, which will be compared with the grant's purpose and flagged if it is potentially fraudulent">
+            <%= inline_icon "info", size: 20 %>
+          </span>
+        <% end %>
       </div>
     </div>
 

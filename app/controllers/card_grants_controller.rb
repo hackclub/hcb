@@ -283,11 +283,7 @@ class CardGrantsController < ApplicationController
     authorize @card_grant
 
     report = @card_grant.with_lock do
-      if @card_grant.reimbursement_report.nil? && @card_grant.stripe_card_id.present?
-        raise ArgumentError, "a virtual card has already been activated for this grant"
-      end
-
-      @card_grant.reimbursement_report || @card_grant.convert_to_reimbursement_report!
+      @card_grant.reimbursement_report || @card_grant.convert_to_reimbursement_report!(accepted_by: current_user)
     end
 
     redirect_to report, flash: { success: "Successfully opened a reimbursement report for your grant." }
@@ -329,7 +325,7 @@ class CardGrantsController < ApplicationController
   def convert_to_reimbursement_report
     authorize @card_grant
 
-    report = @card_grant.convert_to_reimbursement_report!
+    report = @card_grant.convert_to_reimbursement_report!(accepted_by: current_user)
 
     redirect_to report, flash: { success: "Successfully converted grant into a reimbursement report." }
   end
