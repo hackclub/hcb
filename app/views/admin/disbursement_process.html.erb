@@ -165,7 +165,7 @@
     <% end %>
   <% end %>
 
-  <% if !policy(@disbursement).approve? && !policy(@disbursement).reject? %>
+  <% if !policy(@disbursement).approve? || !policy(@disbursement).reject? %>
     <p class="muted">You don't have permission to approve or reject this disbursement.</p>
   <% end %>
 <% end %>
