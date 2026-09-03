@@ -16,7 +16,7 @@ export default class extends Controller {
     label.innerText = 'Copied!'
 
     setTimeout(() => {
-      label.innerText = "Copy email"
+      label.innerText = 'Copy email'
     }, 1500)
   }
 }
