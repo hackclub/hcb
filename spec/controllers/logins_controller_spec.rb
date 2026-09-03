@@ -63,7 +63,7 @@ RSpec.describe LoginsController do
 
       post(:create, params: { email: user.email, login: { purpose: "" } })
       expect(response).to redirect_to(auth_users_path)
-      expect(flash[:error]).to eq("You're creating logins too quickly. Please try again later.")
+      expect(flash[:error]).to eq("You're creating too many logins. Please try again later.")
     ensure
       Rails.cache = original_cache
     end
