@@ -42,7 +42,7 @@
       <%= form.text_area :message, placeholder: "Keep up the good work!", required: false %>
     </div>
 
-    <div data-controller="fee-coverage" data-fee-coverage-fee-value="<%= @event.revenue_fee %>">
+    <div x-data="donation_form(<%= { revenue_fee: @event.revenue_fee.to_f }.to_json %>)">
       <div class="field <%= "hidden" if @tier %>">
         <% if @international %>
           <%= form.label :amount, "Donation amount (USD)" %>
@@ -58,7 +58,9 @@
                                 min: 1, # Limitations placed by Stripe
                                 max: 999_999.99, # Limitations placed by Stripe
                                 required: true, class: "fit w-100",
-                                data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad input->fee-coverage#update", fee_coverage_target: "amount" } %>
+                                "x-init": "amount = $el.value",
+                                "@input": "amount = $event.target.value",
+                                data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
           <% if @monthly %>
             <span class="muted nowrap ml1">/ month</span>
           <% end %>
@@ -77,7 +79,7 @@
         <div class="field field--checkbox mb0">
           <%= form.check_box :fee_covered, style: "margin-left: 0;" %>
           <%= form.label :fee_covered, style: "display: inline; flex-grow: 1;" do %>
-            <span data-fee-coverage-target="label"></span>
+            <span x-text="'Add $' + additionalAmountToCoverFee + ' to cover all fees'"></span>
           <% end %>
           <a class="tooltipped tooltipped--w link--ignore flex" aria-label="By clicking this box, you are covering credit card processing and fiscal sponsorship fees." tabindex="0">
             <%= inline_icon "info", width: 24 %>

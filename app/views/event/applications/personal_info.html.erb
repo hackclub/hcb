@@ -14,7 +14,7 @@
 <% end %>
 
 <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}", class: "mt-7", data: { action: "input->application-autosave#save", "application-autosave-target": "form" } do |form| %>
-  <div class="card mb-6" data-controller="conditional-fields" data-action="minor-check:set->conditional-fields#set" data-conditional-fields-state-value="<%= { minor: @application.user.is_minor? || false, country: @application.address_country.presence.to_s, disallowed_countries: Event::Application::DISALLOWED_COUNTRIES }.to_json %>">
+  <div class="card mb-6" x-data="event_application_personal_info(<%= { minor: @application.user.is_minor? || false, country: @application.address_country.presence, country_label: nil, disallowed_countries: Event::Application::DISALLOWED_COUNTRIES }.to_json %>)">
     <div class="md:flex items-end gap-2">
       <div class="field flex-1">
         <%= form.label :full_name do %>
@@ -46,7 +46,7 @@
             <%= inline_icon "info", size: 18 %>
           </div>
         </div>
-        <div class="flex gap-2 onboarding" data-controller="minor-check" data-action="change->minor-check#check">
+        <div class="flex gap-2 onboarding" x-on:change="minor = $isMinor($el)">
           <%= form.date_select :birthday,
                                 { start_year: Date.today.year,
                                   end_year: Date.today.year - 100,
@@ -99,15 +99,14 @@
         <%= form.label :address_country do %>
           Country <span class="text-primary">*</span>
         <% end %>
-        <% unsupported = [{ key: "disallowed_countries", includes: "country" }].to_json %>
-        <%= form.country_select :address_country, { priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country", required: true }, { class: "!min-h-[36px]", data: { conditional_fields_key: "country", action: "conditional-fields#update", conditional_fields_invalid: unsupported, conditional_fields_invalid_message: "HCB is not supported in this country" } } %>
+        <%= form.country_select :address_country, { priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country", required: true }, { class: "!min-h-[36px]", "x-model": "country", "x-on:change": "sync_country($el)", "x-init": "sync_country($el)" } %>
       </div>
     </div>
 
-    <template data-conditional-fields-when="<%= unsupported %>">
+    <template x-if="country_disallowed">
       <div class="border border-1 border-primary/50 bg-primary/10 flex flex-row justify-start gap-2 items-center rounded-[6px] py-1 px-2 mt-4">
         <%= inline_icon "important", size: 20, class: "primary" %>
-        <p class="primary text-sm m-0 p-0">HCB is not supported in <span data-controller="selected-label" data-selected-label-from-value="event_application_address_country">that country</span>. This is because of regulatory restrictions, incompatible financial systems, or a combination of the two.</p>
+        <p class="primary text-sm m-0 p-0">HCB is not supported in <span x-text="country_label">that country</span>. This is because of regulatory restrictions, incompatible financial systems, or a combination of the two.</p>
       </div>
     </template>
 
@@ -125,12 +124,12 @@
       <%= form.text_area :accessibility_notes, class: "w-full max-w-full" %>
     </div>
 
-    <div class="field col-span-2" data-conditional-fields-when='[{"key":"minor","present":true}]'>
+    <div class="field col-span-2" x-show="minor">
       <%= form.label :cosigner_email do %>
         Parent email <span class="text-primary">*</span>
       <% end %>
       <p class="h5 muted mt0 mb1">We'll need a parent or legal guardian to sign the fiscal sponsorship agreement. They're giving you permission to create an organization on HCB but will not have access or control.</p>
-      <%= form.email_field :cosigner_email, class: "w-full !max-w-full", required: true, placeholder: "orpheus@hackclub.com", data: { conditional_fields_require: [{ key: "minor", present: true }].to_json, controller: "custom-validity", action: "input->custom-validity#check", custom_validity_equals_value: @application.user.email, custom_validity_message_value: "You cannot use your own email" } %>
+      <%= form.email_field :cosigner_email, class: "w-full !max-w-full", required: true, placeholder: "orpheus@hackclub.com", "x-bind:required": "minor", "x-on:input": "$el.value == #{@application.user.email.to_json} ? $el.setCustomValidity('You cannot use your own email') : $el.setCustomValidity('')" %>
     </div>
   </div>
 

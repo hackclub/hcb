@@ -74,7 +74,7 @@
 
   <p class="my-0">
     <% if hcb_decline_reason == :merchant_not_allowed_globally %>
-      This merchant is blocked because it is commonly associated with fraudulent transactions. If you are trying to make a payment, please use a <%= link_to "different transfer method", "https://help.hcb.hackclub.com/en/articles/15033356-how-do-i-transfer-money" %>.
+      This merchant is blocked because it is commonly associated with fraudulent transactions. If you are trying to make a payment, please use a <%= link_to "different transfer method", "https://help.hcb.hackclub.com/en/articles/15410084-how-do-i-spend-money-on-hcb" %>.
     <% elsif hcb_decline_reason == :merchant_not_allowed %>
       If you believe that this merchant should be enabled, please reach out to the <%= hcb_code.event.name %> team.
     <% elsif hcb_decline_reason == :cash_withdrawals_not_allowed %>
@@ -99,7 +99,9 @@
       <% end %>
     <% elsif stripe_decline_reason == :card_expired %>
       Try again using a different card.
-    <% elsif stripe_decline_reason.in? %i[cardholder_verification_required insufficient_funds] %>
+    <% elsif stripe_decline_reason == :cardholder_verification_required %>
+      This could be a persistent issue affecting many of your transactions. Please email a photo of your ID and your full name to <%= mail_to "hcb@hackclub.com" %> so we can complete cardholder verification.
+    <% elsif stripe_decline_reason == :insufficient_funds %>
       This could be a persistent issue affecting many of your transactions. Please contact the HCB team at <%= mail_to "hcb@hackclub.com" %>.
     <% elsif stripe_decline_reason == :insecure_authorization_method %>
       <% auth_method = pt&.raw_pending_stripe_transaction&.stripe_transaction&.[]("authorization_method") %>

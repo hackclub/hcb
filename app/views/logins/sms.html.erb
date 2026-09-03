@@ -22,31 +22,34 @@
   </p>
 
   <%= form_tag complete_login_path(@login), id: "login" do %>
-    <% if Flipper.enabled?(:otp_single_input, @login.user) %>
-      <%= text_field_tag(
-            :login_code,
-            "",
-            class: "otp_code",
-            autocomplete: "one-time-code",
-            required: true,
-            inputmode: "numeric",
-            maxlength: "6",
-            autofocus: true,
-            data: { behavior: "otp_input", "op-ignore": true }
-          ) %>
-    <% else %>
-      <%= text_field_tag(
-            :login_code,
-            "",
-            placeholder: "Enter your login code",
-            class: "!max-w-full w-max",
-            autocomplete: "one-time-code",
-            required: true,
-            autofocus: true,
-            inputmode: "numeric",
-            data: { "op-ignore": true }
-          ) %>
-    <% end %>
+    <div class="relative">
+      <% if Flipper.enabled?(:otp_single_input, @login.user) %>
+        <%= text_field_tag(
+              :login_code,
+              "",
+              class: "otp_code",
+              autocomplete: "one-time-code",
+              required: true,
+              inputmode: "numeric",
+              maxlength: "6",
+              autofocus: true,
+              data: { behavior: "otp_input", "op-ignore": true }
+            ) %>
+      <% else %>
+        <%= text_field_tag(
+              :login_code,
+              "",
+              placeholder: "Enter your login code",
+              class: "!max-w-full w-max pr-32",
+              autocomplete: "one-time-code",
+              required: true,
+              autofocus: true,
+              inputmode: "numeric",
+              data: { "op-ignore": true }
+            ) %>
+      <% end %>
+      <%= render partial: "logins/resend_code", locals: { seconds: 30 } %>
+    </div>
 
     <%= invisible_captcha :remember_me %>
     <%= hidden_field_tag :method, :sms %>
@@ -54,13 +57,15 @@
 
     <div class="flex flex-row justify-between items-center mt-4 gap-2">
       <% if @login.available_factors.excluding(:sms).any? %>
-        <%= link_to "Sign in another way", choose_login_preference_login_path(@login), class: "block mt-0 no-underline" %>
+        <%= link_to "Sign in another way", choose_login_preference_login_path(@login), class: "block mt-0 underline" %>
       <% end %>
       <button type="submit" class="gap-2 btn ml-auto">
         Continue
       </button>
     </div>
   <% end %>
+
+  <%= render partial: "logins/resend_code_form", locals: { path: sms_login_path(@login) } %>
 
   <%= render partial: "logins/environment_banner" %>
 </div>

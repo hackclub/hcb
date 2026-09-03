@@ -78,7 +78,7 @@ class WiseTransfer < ApplicationRecord
   validates :quoted_usd_amount_cents, numericality: { greater_than_or_equal_to: 0, message: "must be positive" }, allow_nil: true
 
   include PublicActivity::Model
-  tracked owner: proc { |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  tracked owner: proc { |controller, record| record.user || controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
   WISE_ID_FORMAT = /\A\d+\z/
   before_validation(:normalize_wise_id)

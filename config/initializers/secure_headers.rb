@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
-# `script-src` carries neither `'unsafe-inline'` nor `'unsafe-eval'`: the inline
-# bootstrap scripts that remain (Plaid, HelpScout, FullStory, the console banner)
-# are nonced with `nonced_javascript_tag`, every `on*=` attribute has become a
-# Stimulus `data-action`, and Alpine.js — which needed `'unsafe-eval'` for its
-# `new Function(...)` directive compiler — has been replaced with Stimulus.
+# `script-src` carries neither `'unsafe-inline'` nor `'unsafe-eval'`:
+#   * The inline bootstrap scripts that remain (Plaid, HelpScout, FullStory, the
+#     console banner) are nonced, and every `on*=` attribute has become a
+#     Stimulus `data-action`.
+#   * Alpine.js runs the `@alpinejs/csp` build, which interprets its directives
+#     with a small parser instead of `new Function(...)`.
 #
 # Note that a nonce makes browsers ignore `'unsafe-inline'` entirely, so the two
 # cannot be mixed as a fallback.

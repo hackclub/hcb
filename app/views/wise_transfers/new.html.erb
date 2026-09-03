@@ -28,9 +28,8 @@
 <%= form_with(
       model: [@event, @wise_transfer],
       local: true,
-      data: {
-        controller: "conditional-fields wise-quote",
-        conditional_fields_state_value: { currency: @wise_transfer.currency.to_s, account_type: nil }.to_json
+      html: {
+        "x-data": "wise_form(#{{ currency: @wise_transfer.currency }.to_json})"
       }
     ) do |form| %>
 
@@ -47,7 +46,7 @@
 
       <div class="field">
         <%= form.label :recipient_email, "Email" %>
-        <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", class: "!max-w-full", required: true, disabled: %>
+        <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", class: "!max-w-full", required: true, disabled:, "@keyup": "email = $event.target.value" %>
       </div>
 
       <%= render partial: "transfers/recipient_details", locals: { form:, disabled: } %>
@@ -64,7 +63,7 @@
       <div class="field">
         <div class="flex items-center g1">
           <div style="width: 72px">
-            <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { required: true, disabled: true }, { data: { conditional_fields_key: "currency", wise_quote_target: "currency", action: "conditional-fields#update wise-quote#update" } } %>
+            <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { required: true, disabled: true }, { "@change" => "set_currency($event.target.value)" } %>
           </div>
           <div class="flex flex-col flex-grow">
             <%= form.number_field :amount,
@@ -72,7 +71,8 @@
               disabled: disabled || @event.balance <= 0,
               step: 0.01,
               required: true,
-              data: { controller: "truncate-decimal", wise_quote_target: "amount", action: "truncate-decimal#truncate blur->truncate-decimal#pad change->wise-quote#update" } %>
+              "@change": "set_amount($event.target.value)",
+              data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
           </div>
         </div>
         <% @wise_transfer.errors.messages_for(:amount).each do |message| %>
@@ -82,7 +82,7 @@
           <span class="error">There are no funds to transfer.<br>
         <% end %>
 
-        <p data-wise-quote-target="quote" class="muted mt-0"></p>
+        <p x-text="quote_text" class="muted mt-0"></p>
       </div>
 
       <div class="field">

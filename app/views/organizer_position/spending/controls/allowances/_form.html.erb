@@ -1,12 +1,12 @@
-<%= form_with(model: [@event, @active_control, @provisional_allowance], url: event_organizer_position_spending_control_allowances_path(control_id: @active_control), data: { turbo: false, controller: "allowance-preview conditional-fields", allowance_preview_balance_value: @active_control.balance_cents / 100.0, conditional_fields_state_value: { amount: nil, operation: "add" }.to_json }, class: "w-full") do |form| %>
+<%= form_with(model: [@event, @active_control, @provisional_allowance], url: event_organizer_position_spending_control_allowances_path(control_id: @active_control), data: { turbo: false }, class: "w-full", html: { "x-data" => "allowance_form(#{{ balance_cents: @active_control.balance_cents }.to_json})" }) do |form| %>
   <div class="field field--options w-full max-w-none">
-    <%= form.radio_button :operation, "add", data: { conditional_fields_key: "operation", action: "change->conditional-fields#update change->allowance-preview#update" }, required: true, checked: true %>
+    <%= form.radio_button :operation, "add", "x-model" => "operation", required: true, checked: true %>
     <%= form.label :operation, value: "add", class: "w-full inline-flex" do %>
       <%= inline_icon "plus" %>
       <strong>Increase allowance</strong>
     <% end %>
 
-    <%= form.radio_button :operation, "subtract", data: { conditional_fields_key: "operation", action: "change->conditional-fields#update change->allowance-preview#update" }, required: true %>
+    <%= form.radio_button :operation, "subtract", "x-model" => "operation", required: true %>
     <%= form.label :operation, value: "subtract", class: "w-full inline-flex" do %>
       <%= inline_icon "minus" %>
       <strong>Decrease allowance</strong>
@@ -15,7 +15,7 @@
 
   <div class="field">
     <%= form.label :amount %>
-    <%= form.number_field :amount, placeholder: "500.00", required: true, step: 0.01, min: 0, data: { allowance_preview_target: "amount", conditional_fields_key: "amount", conditional_fields_cast: "number", action: "input->conditional-fields#update input->allowance-preview#update" } %>
+    <%= form.number_field :amount, placeholder: "500.00", required: true, step: 0.01, min: 0, "x-on:input": "amount = $el.value" %>
   </div>
 
   <div class="field">
@@ -23,7 +23,7 @@
     <%= form.text_field :memo, placeholder: "Lunch for layover at SFO", required: true %>
   </div>
 
-  <p data-conditional-fields-when='[{"key":"amount","present":true},{"key":"amount","gte":0},{"key":"operation","present":true}]' style="display: none;"><%= @active_control.organizer_position.user.name %>'s spending balance will be <span data-allowance-preview-target="preview"></span></p>
+  <p x-show="amount && amount >= 0 && operation"><%= @active_control.organizer_position.user.name %>'s spending balance will be <span x-text="projected_balance"></span></p>
 
   <div class="actions">
     <%= form.submit "Create allowance" %>

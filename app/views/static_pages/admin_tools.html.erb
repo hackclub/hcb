@@ -1,13 +1,13 @@
 <%= turbo_frame_tag(:admin_tools, target: "_top", class: "w-full") do %>
   <% admin_tool("w-100 center mt3") do %>
-    <div data-controller="pinnable-cards">
+    <div x-data="admin_tools_pinned_cards">
       <p>
         <%= content_tag :strong, render_money(@transaction_volume) %>
         in transactions & counting…
       </p>
-      <div data-pinnable-cards-target="section" style="display: none;">
+      <div x-show="pinned_cards.length > 0" x-transition>
         <h2>Pinned Cards</h2>
-        <ul class="grid text-left w-100 mt0" data-pinnable-cards-target="grid"></ul>
+        <ul class="grid text-left w-100 mt0" x-ref="pinnedGrid" x-init="$nextTick(teleport_mass_cards())" />
       </div>
       <h2>Tasks</h2>
       <ul class="grid text-left w-100 mt0" id="task-grid">

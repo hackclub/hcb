@@ -13,7 +13,7 @@
 <hr class="mt1 mb1">
 
 <%= form_with(model: @wire, local: true, html: {
-                data: { controller: "conditional-fields", conditional_fields_state_value: { country: @wire.recipient_country }.to_json }
+                "x-data": "{ country: #{@wire.recipient_country ? "'#{@wire.recipient_country}'" : "null"} }"
               }) do |form| %>
 
   <%= form_errors(@wire, "wire", "We couldn't send this") %>

@@ -1,20 +1,16 @@
 <%# locals: (user:, legal_entity: nil, editing: nil, creating: nil, attempted: nil, embedded: false, title: nil) %>
 <% payout_method = editing ? editing.details : attempted&.details %>
-<% country_state = {
-     country: payout_method.is_a?(LegalEntity::PayoutMethod::Wire) ? payout_method.recipient_country : nil,
-     currency: payout_method.try(:currency),
-     account_type: payout_method.try(:account_type)
-   }.to_json %>
+<% country_init = payout_method.is_a?(LegalEntity::PayoutMethod::Wire) ? "'#{payout_method.recipient_country}'" : "null" %>
 <% form_class = "no-error-styling" %>
 <% form_class += " payout-form--managed" if editing %>
 <% if embedded %>
-  <div class="<%= form_class %>" data-controller="conditional-fields" data-conditional-fields-state-value="<%= country_state %>">
+  <div class="<%= form_class %>" x-data="{ country: <%= country_init %> }">
     <%= fields_for :user, user do |form| %>
       <%= render "users/payout_form/fields", form:, user:, payout_method:, editing:, embedded: true, title: %>
     <% end %>
   </div>
 <% else %>
-  <% form_opts = { model: user, data: { turbo_frame: "_top", controller: "conditional-fields", conditional_fields_state_value: country_state }, html: { class: form_class } } %>
+  <% form_opts = { model: user, data: { turbo_frame: "_top" }, html: { "x-data": "{ country: #{country_init} }", class: form_class } } %>
   <% form_opts.merge!(url: payout_method_path(editing), method: :patch) if editing %>
   <% form_opts.merge!(url: payout_methods_path, method: :post) if creating %>
   <%= form_with(**form_opts) do |form| %>

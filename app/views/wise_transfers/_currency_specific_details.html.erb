@@ -1,21 +1,16 @@
 <%# locals: (form:, disabled:, excluded_fields: [], model: WiseTransfer) %>
 
 <% (WiseTransfer::AVAILABLE_CURRENCIES + [nil]).each do |currency| %>
-  <template data-conditional-fields-when="<%= [{ key: "currency", in: [currency.nil? ? "null" : currency] }].to_json %>">
+  <template x-if="currency == '<%= currency.nil? ? "null" : currency %>'">
     <div>
       <% model.information_required_for(currency.nil? ? nil : currency).each do |field| %>
         <% unless (field[:key]).in?(excluded_fields) %>
-        <% required = field[:required].nil? || field[:required] %>
-        <% always_required = required && field[:conditional].nil? %>
-        <% field_data = { conditional_fields_key: field[:key], action: "change->conditional-fields#update" } %>
-        <% field_data[:conditional_fields_require] = [field[:conditional]].to_json if required && field[:conditional] %>
-        <%= tag.div class: "field #{"flex flex-row-reverse items-center justify-end gap-2" if field[:type] == :check_box}",
-                    data: (field[:conditional] ? { conditional_fields_when: [field[:conditional]].to_json } : {}) do %>
+        <div class="field <%= "flex flex-row-reverse items-center justify-end gap-2" if field[:type] == :check_box %>" x-on:change="<%= field[:key] %> = <%= field[:type] == :check_box ? "$event.target.checked" : "$event.target.value" %>" <% if field[:conditional] %> x-show="<%= field[:conditional] %>" <% end %>>
           <%= form.label field[:key], field[:label], (field[:label_options] || {}) %>
           <% if field[:type] == :select %>
-            <%= form.select field[:key], options_for_select(field[:options].to_a), { prompt: "Select one..." }, disabled:, required: always_required, data: field_data %>
+            <%= form.select field[:key], options_for_select(field[:options].to_a), disabled:, prompt: "Select one...", "x-bind:required": "#{field[:conditional] || "true"} && #{field[:required].nil? || field[:required]}" %>
           <% else %>
-            <%= form.send(field[:type], field[:key], placeholder: field[:placeholder], disabled:, required: always_required, data: field_data) %>
+            <%= form.send(field[:type], field[:key], placeholder: field[:placeholder], disabled:, "x-bind:required": "#{field[:conditional] || "true"} && #{field[:required].nil? || field[:required]}") %>
           <% end %>
           <% if field[:description].present? || field[:refer_to].present? %>
             <div class=" muted mt1 ">
@@ -25,7 +20,7 @@
               <% end %>
             </div>
           <% end %>
-        <% end %>
+        </div>
         <% end %>
       <% end %>
     </div>

@@ -16,21 +16,16 @@
   <%= render partial: "wires/requirements", locals: { class: "my-4", event: @event } %>
 <% end %>
 
-<%= form_with(model: [@event, @wire],
-              local: true,
-              data: {
-                controller: "payment-recipient conditional-fields",
-                action: "payment-recipient:set->conditional-fields#set",
-                payment_recipient_recipient_value: (@wire.payment_recipient.to_safe_hash if @wire.payment_recipient&.event&.== @wire.event).to_json,
-                payment_recipient_editing_value: @wire.address_line1.present?,
-                payment_recipient_country_value: true,
-                payment_recipient_fields_value: { wire_recipient_email: "email", wire_address_line1: "address_line1", wire_address_line2: "address_line2", wire_address_city: "address_city", wire_address_state: "address_state", wire_recipient_country: "recipient_country", wire_address_postal_code: "address_postal_code", wire_bic_code: "bic_code" }.to_json,
-                payment_recipient_focus_value: "wire_address_line1",
-                conditional_fields_state_value: { recipient: "", editing: false, country: @wire.recipient_country.to_s }.to_json
-              }) do |form| %>
+<%= form_with(model: [@event, @wire], local: true, html: {
+      "x-data" => "wire(#{({
+        payment_recipient: (@wire.payment_recipient.to_safe_hash if @wire.payment_recipient&.event&.== @wire.event),
+        editing: @wire.address_line1.present?,
+        country: @wire.recipient_country ? "'#{@wire.recipient_country}'" : "null"
+      }.to_json)})"
+}) do |form| %>
   <%= form_errors(@wire, "wire", "We couldn't send this") %>
 
-  <%= form.hidden_field :payment_recipient_id, data: { payment_recipient_target: "id" } %>
+  <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient ? payment_recipient.id : ''" %>
 
   <div data-scroll-seek-target="section">
     <h3 class="mb-2">Recipient details</h3>
@@ -52,13 +47,13 @@
                                 click@document->menu#close
                                 keydown@document->menu#keydown
                                 input->text-filter#query
-                                input->payment-recipient#clear
                               ",
                               menu_target: "toggle",
-                              payment_recipient_target: "name",
                             },
                             maxlength: 250,
-                            class: "!max-w-full" %>
+                            class: "!max-w-full",
+                            "x-ref" => "name_input",
+                            "@input" => "payment_recipient = null" %>
         <% if organizer_signed_in? && @event.payment_recipients.where(payment_model: "Wire").any? %>
           <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
             <% @event.payment_recipients.where(payment_model: "Wire").each do |payment_recipient| %>
@@ -66,8 +61,9 @@
                 <button
                   type="button"
                   class="menu__action flex justify-between flex-auto mr1"
-                  data-action="payment-recipient#select input#focus menu#close"
-                  data-recipient="<%= payment_recipient.to_safe_json %>">
+                  data-action="input#focus menu#close"
+                  data-recipient="<%= payment_recipient.to_safe_json %>"
+                  @click="select_recipient($el.dataset.recipient)">
                   <span class="truncate"><%= payment_recipient.name %></span>
                   <span class="muted ml1">••••<%= payment_recipient.account_number.slice(-4, 4) %></span>
                 </button>
@@ -86,17 +82,17 @@
       </div>
       <%= render "events/transfers/notify_recipient", form:, disabled: %>
 
-      <template data-conditional-fields-when='[{"key":"recipient","present":true},{"key":"editing","blank":true}]'>
+      <template x-if="payment_recipient && !editing">
         <div class="flex flex-col gap-3">
-          <button type="button" class="text-muted cursor-pointer select-none tooltipped tooltipped--w bg-transparent border-none absolute top-3 right-3" aria-label="Edit payment details" data-action="payment-recipient#edit">
+          <button type="button" class="text-muted cursor-pointer select-none tooltipped tooltipped--w bg-transparent border-none absolute top-3 right-3" aria-label="Edit payment details" @click="editing = true">
             <%= inline_icon "pen", size: 18 %>
           </button>
-          <div><label>SWIFT / BIC code</label><input disabled class="!text-muted bg-transparent" type="text" data-payment-recipient-summary="bic_code"></div>
-          <div><label>Account number</label><input disabled class="!text-muted bg-transparent" type="text" data-payment-recipient-summary="masked_account_number"></div>
+          <div><label>SWIFT / BIC code</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.bic_code"></div>
+          <div><label>Account number</label><input disabled class="!text-muted bg-transparent" type="text" :value="payment_recipient.masked_account_number"></div>
         </div>
       </template>
 
-      <template data-conditional-fields-when='[{"any":[{"key":"recipient","blank":true},{"key":"editing","present":true}]}]'>
+      <template x-if="!payment_recipient || editing">
         <div class="flex flex-col">
           <%= render partial: "transfers/recipient_details", locals: { form: form, disabled: disabled, required: true, show_us: true } %>
         </div>
@@ -136,7 +132,7 @@
         <span class="error">There are no funds to transfer.</span>
       <% end %>
 
-      <template data-conditional-fields-when='[{"any":[{"key":"recipient","blank":true},{"key":"editing","present":true}]},{"key":"country","notIn":["US"]}]'>
+      <template x-if="(!payment_recipient || editing) && country !== 'US'">
         <div class="flex flex-col gap-3">
           <%= render partial: "wires/account_details", locals: { form: form, disabled: disabled, required: true } %>
           <%= render partial: "wires/country_specific_details", locals: { form: form, disabled: disabled, required: true } %>
@@ -148,9 +144,9 @@
 
     <%= render "transfers/domestic_wire_warning", event: @event %>
 
-    <%= tag.button type: "submit", class: "gap-2 btn w-full bg-blue mt-2", disabled: disabled, data: (disabled ? {} : { conditional_fields_disable: [{ key: "country", in: ["US"] }].to_json }) do %>
+    <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %> :disabled="<%= disabled %> || country === 'US'">
       Send wire
       <%= inline_icon "send" %>
-    <% end %>
+    </button>
   </div>
 <% end %>

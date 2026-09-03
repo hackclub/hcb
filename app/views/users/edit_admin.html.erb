@@ -93,7 +93,7 @@
       <% if @user.card_locking_suppressed? %>
         <p>Card locking is suppressed until <%= format_datetime @user.card_locking_suppressed_until %>.</p>
       <% end %>
-      <% if admin_signed_in? %>
+      <% if admin_signed_in? && (@user != current_user || Flipper.enabled?(:card_locking_self_suppression, current_user)) %>
         <%= form_with url: suppress_card_locking_user_path(@user), method: :post, data: { turbo_frame: "_top" } do |form| %>
           <div class="field">
             <%= form.label :hours, "Suppress card locking for (hours)" %>
