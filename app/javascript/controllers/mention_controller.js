@@ -13,11 +13,10 @@ export default class extends Controller {
     const item = e.currentTarget
     const label = item.querySelector('span.ml1')
 
-    const previousText = label.innerText
     label.innerText = 'Copied!'
 
     setTimeout(() => {
-      label.innerText = previousText
+      label.innerText = "Copy email"
     }, 1500)
   }
 }
