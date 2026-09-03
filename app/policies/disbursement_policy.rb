@@ -53,7 +53,7 @@ class DisbursementPolicy < ApplicationPolicy
   end
 
   def approve?
-    user.admin?
+    user&.admin?
   end
 
   def reject?
