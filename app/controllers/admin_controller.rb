@@ -3,6 +3,8 @@
 class AdminController < Admin::BaseController
   include Admin::TransferApprovable
 
+  before_action :set_restrictable_email, only: [:email, :email_html]
+
   def nav
     @nav = Admin::Nav.new(page_title: params[:title])
 
@@ -1560,14 +1562,11 @@ class AdminController < Admin::BaseController
   end
 
   def email
-    @message = Ahoy::Message.find(params[:message_id])
   end
 
   def email_html
-    @message_id = params[:message_id]
-
     respond_to do |format|
-      format.html { render html: Ahoy::Message.find(@message_id).html_content.html_safe } # rubocop:disable Rails/OutputSafety
+      format.html { render html: @message.html_content.html_safe } # rubocop:disable Rails/OutputSafety
     end
   end
 
@@ -1581,7 +1580,15 @@ class AdminController < Admin::BaseController
     messages = Ahoy::Message.all
     messages = messages.where(user: User.find(@user_id)) if @user_id.present?
     messages = messages.where(to: @to) if @to
-    messages = messages.search_subject(@q) if @q
+    if @q
+      # `subject` is stored in plaintext and is what pg_search matches against.
+      # A sensitive subject can contain the secret itself (login codes are in
+      # the subject line), so without this a non-superadmin could confirm a live
+      # code from the result count alone. These rows stay in the unfiltered and
+      # user/recipient filtered listings.
+      messages = messages.where(sensitive: false) unless superadmin_signed_in?
+      messages = messages.search_subject(@q)
+    end
 
     @count = messages.count
 
@@ -1682,6 +1689,20 @@ class AdminController < Admin::BaseController
   end
 
   private
+
+  def set_restrictable_email
+    @message = Ahoy::Message.find(params[:message_id])
+
+    head :forbidden if restricted_email?(@message)
+  end
+
+  # Emails whose contents are secrets (login codes, passwords, tokens) are
+  # readable only by superadmins. `superadmin_signed_in?` is used rather than
+  # `current_user.superadmin?` because it also rejects impersonated sessions.
+  def restricted_email?(message)
+    message.sensitive? && !superadmin_signed_in?
+  end
+  helper_method :restricted_email?
 
   def cache_event_metric(metric_name, &block)
     @event = Event.friendly.find(params[:id])
