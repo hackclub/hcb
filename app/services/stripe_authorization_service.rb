@@ -24,6 +24,18 @@ module StripeAuthorizationService
       ]
     ).freeze
 
+  # Merchant name prefixes blocked HCB-wide. Matched case-insensitively against
+  # the beginning of the merchant name, so "FAWRY" also blocks "FAWRY*A1B2C3"
+  # and "FAWRYPF*A1B2C3". Like FORBIDDEN_MERCHANT_NETWORK_IDS, a merchant
+  # matching one of these can never be allowlisted.
+  FORBIDDEN_MERCHANT_NAME_PREFIXES =
+    Set.new(
+      [
+        "FAWRY",  # Fawry Pay (FAWRY*, FAWRYPF*, etc.), primarily used for fraud on HQ satellites. Requested by the HQ Events team.
+        "MYFAWRY" # Fawry's consumer wallet app
+      ]
+    ).freeze
+
   # Network IDs that are allowed even when their merchant category is forbidden.
   # This does NOT override FORBIDDEN_MERCHANT_NETWORK_IDS — explicitly blocked
   # network IDs (e.g. fraud) can never be allowlisted.
@@ -33,4 +45,11 @@ module StripeAuthorizationService
         "088011245800" # AlipayHK "Add Card" to wallet (non_fi_money_orders)
       ]
     ).freeze
+
+  def self.forbidden_merchant_name?(merchant_name)
+    normalized = merchant_name.to_s.strip.downcase
+    return false if normalized.blank?
+
+    FORBIDDEN_MERCHANT_NAME_PREFIXES.any? { |prefix| normalized.start_with?(prefix.downcase) }
+  end
 end

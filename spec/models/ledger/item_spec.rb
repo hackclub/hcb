@@ -444,4 +444,23 @@ RSpec.describe Ledger::Item, type: :model do
       end
     end
   end
+
+  describe "#author" do
+    it "is nobody for an in-person donation, which the donor paid rather than the organizer who collected it" do
+      stub_donation_payment_intent_creation
+      donation = create(:donation, in_person: true, collected_by: create(:user))
+
+      item = Ledger::Item.new(
+        amount_cents: 1000,
+        memo: "Initial",
+        datetime: Time.current,
+        linked_object: donation
+      )
+      item.save(validate: false)
+
+      item.refresh!
+
+      expect(item.reload.author).to be_nil
+    end
+  end
 end

@@ -15,19 +15,21 @@
         <span class="badge h4 bg-<%= @position.status_color %> nowrap order-1"><%= @position.status_text %></span>
       </span>
 
-      <div data-controller="menu" data-menu-placement-value="bottom-end">
-        <%= pop_icon_to "more",
-            "#",
-            class: "align-middle", "aria-label": "More Options",
-            data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
+      <% if @position.may_mark_terminated? %>
+        <div data-controller="menu" data-menu-placement-value="bottom-end">
+          <%= pop_icon_to "more",
+              "#",
+              class: "align-middle", "aria-label": "More Options",
+              data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
 
-        <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
-          <%= link_to terminate_event_payroll_position_path(event: @event, payroll_position: @position), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you want to terminate this contractor immediately? We will notify the contractor." } do %>
-            <%= inline_icon "profile-forbidden", size: 24 %>
-            Terminate
-          <% end %>
+          <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
+            <%= link_to terminate_event_payroll_position_path(event: @event, payroll_position: @position), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you want to terminate this contractor immediately? We will notify the contractor." } do %>
+              <%= inline_icon "profile-forbidden", size: 24 %>
+              Terminate
+            <% end %>
+          </div>
         </div>
-      </div>
+      <% end %>
     </h2>
 
     <section class="hcb-code--info">
@@ -80,21 +82,8 @@
   <% end %>
 
   <% if @position.status == :onboarding %>
-    <h3 class="eyebrow muted mt-4 mb-2">Onboarding checklist</h3>
-    <div class="flex flex-col gap-2">
-      <% @position.onboarding_checklist.each do |item| %>
-        <div class="card flex items-center justify-between py-3 mb-0">
-          <span class="flex items-center gap-2">
-            <%= inline_icon item[:complete] ? "check-circle-fill" : "important-fill",
-                  size: 24, class: item[:complete] ? "text-green" : "text-orange" %>
-            <span class="<%= "muted" unless item[:complete] %>"><%= item[:label] %></span>
-          </span>
-          <span class="badge bg-<%= item[:complete] ? "success" : "warning" %>">
-            <%= item[:complete] ? "Done" : "Pending" %>
-          </span>
-        </div>
-      <% end %>
-    </div>
+    <h3 class="mt-4 mb-2">Onboarding</h3>
+    <%= render "payroll/positions/onboarding_flow", position: @position, perspective: :organizer %>
   <% end %>
 
   <h3 class="mt-4 mb-2">Invoices</h3>

@@ -85,7 +85,7 @@ class Wire < ApplicationRecord
 
 
   include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  tracked owner: proc { |controller, record| record.user || controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
   after_create do
     create_canonical_pending_transaction!(
@@ -114,7 +114,7 @@ class Wire < ApplicationRecord
     state :failed
 
     event :mark_approved do
-      after_commit do
+      after do
         WireMailer.with(wire: self).notify_recipient.deliver_later if self.send_email_notification
         payment_attempt.mark_sent! if payment_attempt.present?
       end
