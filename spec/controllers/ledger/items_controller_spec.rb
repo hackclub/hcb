@@ -22,6 +22,23 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       create_session(member_user, verified: true)
     end
 
+    describe "POST #invoice_as_personal_transaction" do
+      # Regression: building the PersonalTransaction populates
+      # `item.personal_transaction` via `inverse_of` with the unsaved record,
+      # which used to be mistaken for an existing invoice and redirected to its
+      # nil invoice ("Cannot redirect to nil!").
+      it "reports the validation error instead of redirecting to a nil invoice" do
+        hcb_code = create(:hcb_code, hcb_code: "HCB-100-#{item.id}", ledger_item: item)
+
+        expect do
+          post :invoice_as_personal_transaction, params: { item_id: item.hashid }
+        end.not_to change(PersonalTransaction, :count)
+
+        expect(response).to redirect_to(hcb_code)
+        expect(flash[:error]).to include("card charges")
+      end
+    end
+
     describe "PATCH #rename" do
       it "updates the memo and responds with a turbo stream" do
         patch :rename, params: { item_id: item.hashid, ledger_item: { memo: "New memo" } }
