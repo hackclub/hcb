@@ -1,8 +1,7 @@
 <p class="h5 leading-[1.25] muted mt0 mb-3">
   <% if @on_behalf %>
     Upload an invoice on behalf of <strong><%= @position.payee.display_name %></strong>
-    for their work as <strong><%= @position.title %></strong>.<br>
-    It'll be approved automatically, and payment will be sent after HCB review.
+    for their work as <strong><%= @position.title %></strong>.
   <% else %>
     Invoice <strong><%= @position.event.name %></strong> for your work as
     <strong><%= @position.title %></strong>.<br>
@@ -55,5 +54,5 @@
           label: "Invoice or timesheet", hint: "Attach an invoice, timesheet, or other supporting document" %>
   </div>
 
-  <%= form.submit (@on_behalf ? "Upload invoice" : "Submit invoice"), class: "btn bg-success w-full" %>
+  <%= form.submit (@on_behalf ? "Upload & approve invoice" : "Submit invoice"), class: "btn bg-success w-full" %>
 <% end %>
