@@ -203,6 +203,69 @@ RSpec.describe EventsController do
     end
   end
 
+  # The ledger rows are shared between viewers through a fragment cache, so the
+  # key has to withhold caching from anyone whose rows carry per-session state.
+  # Organizers render tag forms and the inline rename form, each with its own
+  # CSRF token — caching those would hand one organizer's token to whoever loads
+  # the page next.
+  describe "#ledger row fragment cache key" do
+    render_views
+
+    let(:event) { create(:event, is_public: true) }
+
+    def rows_cache_key
+      controller.instance_variable_get(:@ledger_rows_cache_key)
+    end
+
+    it "withholds a key from an organizer, whose rows embed CSRF-bearing forms" do
+      organizer = create(:user)
+      create(:organizer_position, user: organizer, event:, role: :member)
+      create_session(organizer, verified: true)
+
+      get(:ledger, params: { event_id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(rows_cache_key).to be_nil
+    end
+
+    it "gives a key to an anonymous reader of a transparent org" do
+      get(:ledger, params: { event_id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(rows_cache_key).to be_present
+    end
+
+    it "withholds a key once the rows are filtered or paginated" do
+      outsider = create(:user)
+      create_session(outsider, verified: true)
+
+      get(:ledger, params: { event_id: event.slug, q: "coffee" })
+      expect(rows_cache_key).to be_nil
+
+      get(:ledger, params: { event_id: event.slug, page: "2" })
+      expect(rows_cache_key).to be_nil
+
+      get(:ledger, params: { event_id: event.slug, direction: "revenue" })
+      expect(rows_cache_key).to be_nil
+    end
+
+    # Two viewers only share an entry when their rows are identical; the key
+    # separates signed-in from anonymous so a signed-in-only affordance can
+    # never be served to an anonymous reader.
+    it "separates the signed-in and anonymous buckets" do
+      get(:ledger, params: { event_id: event.slug })
+      anonymous_key = rows_cache_key
+      expect(anonymous_key).to be_present
+
+      outsider = create(:user)
+      create_session(outsider, verified: true)
+      get(:ledger, params: { event_id: event.slug })
+
+      expect(rows_cache_key).to be_present
+      expect(rows_cache_key).not_to eq(anonymous_key)
+    end
+  end
+
   describe "#ledger_stats" do
     render_views
 

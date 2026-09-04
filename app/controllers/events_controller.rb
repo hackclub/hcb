@@ -1332,6 +1332,7 @@ class EventsController < ApplicationController
     end
 
     @items = @items.page(params[:page]).per(@per).preload(:tags, hcb_code: { event: :tags })
+    @ledger_rows_cache_key = ledger_rows_cache_key
   rescue Pundit::NotAuthorizedError
     return head :not_found
   end
@@ -1630,6 +1631,35 @@ class EventsController < ApplicationController
     return false if params[:q].present?
 
     @show_running_balance = auditor_signed_in? && current_user.running_balance_enabled?
+  end
+
+  # Fragment key for the ledger row markup, or nil when the rows must not be
+  # shared between viewers.
+  #
+  # Only non-organizers get a key. Their rows carry no per-session state: the
+  # tag menu, tag remove buttons and inline rename are all gated on an organizer
+  # role, so nothing inside the fragment embeds a CSRF token that would be
+  # replayed to the next viewer. Organizers render uncached, which is also what
+  # `set_cacheable` does for the legacy transactions page.
+  #
+  # Any filter or pagination makes the row set viewer-specific, so those opt out
+  # rather than trying to encode every combination in the key.
+  #
+  # The key carries the collection's own version, so a new or edited item shows
+  # up immediately. Tags hang off HCB codes rather than the items, so a tag
+  # change is only picked up when the entry expires — the same 5 minute bound
+  # the legacy page accepts.
+  def ledger_rows_cache_key
+    return nil if organizer_signed_in?
+    return nil if params[:q].present? || params[:subledger].present?
+    return nil if params[:per].present?
+    return nil if params[:page].present? && params[:page].to_s != "1"
+    return nil if SetLedgerFilters::FILTER_PARAMS.any? { |name| params[name].present? }
+
+    # signed_in? is part of the key purely as insurance: the two buckets render
+    # identically today, and keeping them apart means a future signed-in-only
+    # affordance can't leak into an anonymous reader's cached page.
+    ["events", @event.id, "ledger_rows", signed_in?, @per, @items.cache_key_with_version]
   end
 
   def set_cacheable

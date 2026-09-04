@@ -60,6 +60,11 @@ class OrganizerPosition < ApplicationRecord
 
   after_create_commit :autofollow_event
 
+  # Keeps the per-request role_at_least? memo honest when a position is created,
+  # changed, or removed inside the same request that later re-checks a role.
+  after_save :clear_role_at_least_cache
+  after_destroy :clear_role_at_least_cache
+
   def tourable_options
     {
       demo: event.demo_mode?,
@@ -71,6 +76,23 @@ class OrganizerPosition < ApplicationRecord
     return false unless event.present? && role.present?
     return true if user&.admin?
 
+    # The answer depends only on (user, event, role), but list views authorize
+    # every row: a 100-row ledger page asked this ~300 times for one event,
+    # each ask costing an `exists?` plus the recursive ancestor_ids CTE. Memoize
+    # for the life of the request/job — CurrentAttributes resets between them,
+    # and `clear_role_at_least_cache!` below drops the memo as soon as any
+    # position changes, so a granted or revoked role is never served stale.
+    #
+    # Unsaved events have no stable identity to key on, so they skip the memo.
+    return uncached_role_at_least?(user, event, role) if event.id.nil?
+
+    cache = (Current.role_at_least_cache ||= {})
+    cache.fetch([user&.id, event.id, role.to_s]) do |key|
+      cache[key] = uncached_role_at_least?(user, event, role)
+    end
+  end
+
+  def self.uncached_role_at_least?(user, event, role)
     if role.to_s == "reader"
       return event.ancestor_organizer_positions.reader_access.where(user:).exists?
     end
@@ -86,8 +108,20 @@ class OrganizerPosition < ApplicationRecord
 
     false
   end
+  private_class_method :uncached_role_at_least?
+
+  # Any write to a position can change a role_at_least? answer, so drop the
+  # whole memo rather than trying to predict which keys it invalidates (a
+  # position on an ancestor event affects descendants too).
+  def self.clear_role_at_least_cache!
+    Current.role_at_least_cache = nil
+  end
 
   private
+
+  def clear_role_at_least_cache
+    self.class.clear_role_at_least_cache!
+  end
 
   def fs_contract_is_proper_type
     if fiscal_sponsorship_contract.present? && !fiscal_sponsorship_contract.is_a?(::Contract::FiscalSponsorship)

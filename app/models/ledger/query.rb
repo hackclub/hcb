@@ -65,8 +65,13 @@ class Ledger
       # preload, not includes: linked_object is polymorphic, so it can never be
       # JOINed — and includes makes pluck/count attempt exactly that join
       # (EagerLoadPolymorphicError).
+      #
+      # primary_ledger (and its owning event/card grant) is preloaded because
+      # Ledger::ItemPolicy#show? and #rename? both walk it, and the ledger views
+      # authorize every row — without this each row costs a mapping, a ledger,
+      # and an event query.
       results.order(pending_first.asc, datetime: :desc, created_at: :desc, id: :desc)
-             .preload(:hcb_code, :author, :linked_object)
+             .preload(:hcb_code, :author, :linked_object, primary_ledger: [:event, { card_grant: :event }])
     end
 
     def self.sanitize_query(query_hash)

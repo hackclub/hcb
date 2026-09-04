@@ -1,4 +1,4 @@
-<%# locals: (ledger: nil, items:, table_only: true, filter: nil, show_fee: false, show_author: true) %>
+<%# locals: (ledger: nil, items:, table_only: true, filter: nil, show_fee: false, show_author: true, rows_cache_key: nil) %>
 
 <%= turbo_frame_tag ledger.present? ? dom_id(ledger) : "ledger" do %>
   <% if !table_only && ledger.present? %>
@@ -56,7 +56,15 @@
         </thead>
         <tbody>
           <%= render partial: "ledgers/pending_fee_transaction", locals: { ledger: } if show_fee && ledger.present? %>
-          <%= render partial: "ledger/item", locals: { show_author: }, collection: items, as: :item %>
+          <%#
+            Row markup is only shareable between viewers when it carries no
+            per-session state — no CSRF-bearing tag forms, no rename affordance.
+            Callers that can guarantee that (see EventsController#ledger_rows_cache_key)
+            pass a key; everyone else passes nil and renders uncached.
+          %>
+          <% cache_if rows_cache_key.present?, rows_cache_key, expires_in: 5.minutes, race_condition_ttl: 1.minute do %>
+            <%= render partial: "ledger/item", locals: { show_author: }, collection: items, as: :item %>
+          <% end %>
         </tbody>
       </table>
     </div>

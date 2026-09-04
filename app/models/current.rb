@@ -12,6 +12,11 @@ class Current < ActiveSupport::CurrentAttributes
   # to render HCB's structure even when signed out / unverified
   attribute :unverified_user
 
+  # Per-request memo for OrganizerPosition.role_at_least?. Reset automatically
+  # between requests/jobs by CurrentAttributes, and cleared eagerly by
+  # OrganizerPosition writes — see OrganizerPosition.role_at_least?.
+  attribute :role_at_least_cache
+
   def user
     session&.user
   end

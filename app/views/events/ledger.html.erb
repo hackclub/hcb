@@ -39,4 +39,4 @@
 
 <%= render "ledgers/pinned_items", event: @ledger.event %>
 
-<%= render "ledgers/ledger", ledger: @ledger, items: @items, table_only: true, filter: capture { render partial: "ledgers/filters/filter" }, show_fee: true %>
+<%= render "ledgers/ledger", ledger: @ledger, items: @items, table_only: true, filter: capture { render partial: "ledgers/filters/filter" }, show_fee: true, rows_cache_key: @ledger_rows_cache_key %>
