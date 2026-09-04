@@ -10,7 +10,7 @@ class WiseTransferPolicy < ApplicationPolicy
   end
 
   def show?
-    is_admin_or_auditor?
+    user&.auditor?
   end
 
   def approve?
