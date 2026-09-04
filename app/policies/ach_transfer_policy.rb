@@ -14,7 +14,8 @@ class AchTransferPolicy < ApplicationPolicy
   end
 
   def show?
-    is_admin_or_auditor?
+    # Semantically, this should be admin_or_manager?, right?
+    is_public? || user_who_can_transfer?
   end
 
   def view_account_routing_numbers?
