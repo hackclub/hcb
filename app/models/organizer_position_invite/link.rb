@@ -31,10 +31,13 @@ class OrganizerPositionInvite
     hashid_config salt: ""
 
     DEFAULT_EXPIRATION = 30.days
+    MAX_EXPIRATION = 3.months
 
     belongs_to :event
     belongs_to :creator, class_name: "User"
     belongs_to :deactivator, class_name: "User", optional: true
+
+    validate :expiration_within_limit, on: :create
 
     has_many :requests, class_name: "OrganizerPositionInvite::Request", foreign_key: "organizer_position_invite_link_id", inverse_of: :link, dependent: :destroy
 
@@ -56,6 +59,16 @@ class OrganizerPositionInvite
       return false if deactivated?
 
       update(deactivated_at: Time.now, deactivator: user)
+    end
+
+    private
+
+    def expiration_within_limit
+      return if expires_in.blank?
+
+      if expires_in.seconds.from_now > MAX_EXPIRATION.from_now
+        errors.add(:base, "Expiration date cannot be greater than 3 months from now")
+      end
     end
 
   end
