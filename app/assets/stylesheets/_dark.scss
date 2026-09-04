@@ -272,6 +272,10 @@ html[data-dark='true'] {
     background-color: mix($darkless, map-get($palette, warning), 90%);
   }
 
+  .comments .comment--container blockquote {
+    border-left-color: rgba(255, 255, 255, 0.125);
+  }
+
   .card__banner.bg-success,
   .transaction--positive {
     background-color: rgba(map-get($palette, success), 0.25);
