@@ -350,7 +350,9 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
       display: block;
     }
 
-    ~ .grant-strip .grant-disclosure[for='#{'grant-' + $key}'] .grant-disclosure__caret {
+    ~ .grant-strip
+      .grant-disclosure[for='#{'grant-' + $key}']
+      .grant-disclosure__caret {
       transform: rotate(180deg);
     }
   }
