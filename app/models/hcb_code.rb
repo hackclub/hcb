@@ -765,6 +765,7 @@ class HcbCode < ApplicationRecord
     return stripe_cardholder&.user if stripe_card?
     return reimbursement_expense_payout&.expense&.report&.user if reimbursement_expense_payout?
     return paypal_transfer&.user if paypal_transfer?
+    return donation&.collected_by if donation? && donation&.in_person?
     return wise_transfer&.user if wise_transfer?
   end
 
