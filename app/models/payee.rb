@@ -8,6 +8,7 @@
 #  archived_at     :datetime
 #  display_name    :string           not null
 #  email           :string           not null
+#  imported_at     :datetime
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  event_id        :bigint           not null
@@ -66,6 +67,10 @@ class Payee < ApplicationRecord
 
   def managed?
     legal_entity&.managing_event_id.present?
+  end
+
+  def imported?
+    imported_at.present?
   end
 
   def archive!
