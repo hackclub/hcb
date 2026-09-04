@@ -6,7 +6,6 @@ class WiseTransfersController < ApplicationController
 
   before_action :set_event, only: %i[new create]
   before_action :set_wise_transfer, only: %i[show update approve reject mark_sent mark_failed]
-  skip_before_action :signed_in_user, only: %i[show]
 
   def show
     authorize @wise_transfer
