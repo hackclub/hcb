@@ -13,6 +13,7 @@
 
   <%= turbo_frame_tag :payee_results_list do %>
     <% rows = [@selected, *@payees].uniq.compact %>
+    <% is_email_query = params[:q].present? && ValidatesEmailFormatOf.validate_email_format(params[:q]).nil? %>
     <% if rows.any? %>
       <% rows.each do |payee| %>
         <div class="btn btn--list-item border-t rounded-none relative">
@@ -59,7 +60,17 @@
       </div>
     <% elsif params[:q].present? %>
       <div class="px-4">
-        <%= blankslate "No results for \"#{params[:q]}\"", class: "py-5 text-sm mb-2" %>
+        <div class="center pt4 pb4 rounded-lg border border-gray-200 dark:border-gray-700 w-full">
+          <p class="muted font-medium mb-2">No results for "<%= params[:q] %>"</p>
+          <button
+              type="button"
+              class="btn"
+              data-action="payee-picker#showAddingFromSearch" data-payee-picker-query-param="<%= params[:q] %>"
+              data-payee-picker-is-email-param="<%= is_email_query %>">
+            <%= inline_icon "plus", size: 16 %>
+            Add "<%= params[:q] %>" as a new recipient
+          </button>
+        </div>
       </div>
     <% end %>
   <% end %>
