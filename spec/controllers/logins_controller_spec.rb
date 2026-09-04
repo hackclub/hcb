@@ -180,6 +180,41 @@ RSpec.describe LoginsController do
       end
     end
 
+    context "when return_to points at a route guarded by a constraint that reads cookies" do
+      it "signs the user in and redirects to root instead of raising" do
+        user = create(:user, phone_number: "+18556254225")
+        # No route other than the AuditorConstraint-guarded `/schema` mount
+        # matches this path, so route recognition can't silently fall through
+        # to some unrelated wildcard route (unlike e.g. "/console", which also
+        # matches the catch-all `events#show` route).
+        login = create(:login, user:, state: { return_to: "/schema/foo/bar" })
+        create_webauthn_credential(user:)
+
+        webauthn_challenge = generate_webauthn_challenge(user:)
+        session[:webauthn_challenge] = webauthn_challenge
+
+        credential = get_webauthn_credential(challenge: webauthn_challenge)
+
+        post(
+          :complete,
+          params: {
+            id: login.hashid,
+            method: "webauthn",
+            credential: JSON.dump(credential)
+          }
+        )
+
+        # Regression test: `return_to` is user-controlled and reaches
+        # `Rails.application.routes.recognize_path`, which evaluates route
+        # constraints (AuditorConstraint/AdminConstraint) against a synthetic
+        # request that bypasses the cookies middleware. That used to raise
+        # `NoMethodError: undefined method 'generate_key' for nil` instead of
+        # completing the login.
+        expect(response).to redirect_to(root_path)
+        expect(login.reload).to be_complete
+      end
+    end
+
     context "login_code" do
       context "email" do
         it "rejects invalid login codes" do

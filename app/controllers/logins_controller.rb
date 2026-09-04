@@ -194,7 +194,11 @@ class LoginsController < ApplicationController
           begin
             route = Rails.application.routes.recognize_path(return_path)
             return_path = root_path if route[:controller] == "logins"
-          rescue ActionController::RoutingError
+          rescue ActionController::RoutingError, NoMethodError
+            # `recognize_path` builds a synthetic request that bypasses the
+            # normal middleware stack, so routes guarded by constraints that
+            # depend on middleware-populated request state (e.g. cookie
+            # decryption keys) can raise here. Fall back to root_path.
             return_path = root_path
           end
         end
