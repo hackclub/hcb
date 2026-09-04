@@ -7,8 +7,8 @@
 <% end %>
 
 <h1 class="heading flex items-center gap-2 flex-col sm:flex-row border-0 mb-0">
-  <span class="flex-grow">Sub-organizations</span>
-  <div class="flex items-center gap-2">
+  <span class="flex-grow w-full sm:w-auto">Sub-organizations</span>
+  <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
     <% list_view = @view == "list" %>
     <% switch_to = list_view ? request.query_parameters.merge(view: "grid") : { view: "list", q: params[:q].presence }.compact %>
     <%= pop_icon_to list_view ? "grid" : "list", url_for(switch_to),
@@ -28,14 +28,14 @@
         <%= link_to "Download tree as Excel", { format: :xlsx }, target: :_blank %>
       </div>
     </div>
-    <%= link_to event_new_sub_organization_path(@event), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "create" }, disabled: !policy(@event).create_sub_organization? do %>
+    <%= link_to event_new_sub_organization_path(@event), class: "btn bg-success !ml-0", data: { behavior: "modal_trigger", modal: "create" }, disabled: !policy(@event).create_sub_organization? do %>
       <%= inline_icon "plus" %>
       Create a sub-organization
     <% end %>
   </div>
 </h1>
 
-<div class="statset">
+<div class="statset mb-2">
   <div class="stat statset__wide" data-tour-step="balance">
     <span class="stat__label"><%= @has_filter ? "Filtered s" : "S" %>ub-organization balance</span>
     <span class="stat__value">
@@ -85,7 +85,7 @@
     <%= blankslate "No sub-organizations yet" %>
   <% end %>
 <% else %>
-  <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb-2">
+  <div class="flex items-center gap-2 mb-2">
     <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
       <%= render "events/filters/search", form: %>
     <% end %>
