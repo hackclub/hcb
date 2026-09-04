@@ -227,7 +227,6 @@ module HasWireRecipient
         "PK" => "9675",
         "AE" => "TTS",
         "CN" => "SRV",
-        "IN" => "S1099",
         "KG" => "55501000"
       }[country] || "ICCP"
     end
