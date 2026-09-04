@@ -9,6 +9,10 @@ class WiseTransferPolicy < ApplicationPolicy
     user_who_can_transfer?
   end
 
+  def show?
+    is_admin_or_auditor?
+  end
+
   def approve?
     user&.admin?
   end
@@ -45,6 +49,10 @@ class WiseTransferPolicy < ApplicationPolicy
 
   def user_who_can_transfer?
     EventPolicy.new(user, record.event).create_transfer?
+  end
+
+  def is_public?
+    record.event.is_public?
   end
 
 end
