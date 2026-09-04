@@ -7,7 +7,7 @@ module Api
 
       when_expanded do
         expose :memo do |obj, options|
-          obj.local_hcb_code.memo
+          Models::LedgerTransaction.resolve(obj, options).memo
         end
       end
 
@@ -16,7 +16,7 @@ module Api
         # they will belong to the same Organization as the one associated below
         # (in this Linked Object)
 
-        obj.local_hcb_code
+        Models::LedgerTransaction.resolve(obj, options)
       end
 
       expose_associated Organization, hide: [API_LINKED_OBJECT_TYPE, Transaction] do |obj, options|

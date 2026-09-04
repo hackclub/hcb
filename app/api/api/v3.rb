@@ -52,10 +52,26 @@ module Api
         error!({ message: "Organization not found." }, 404)
       end
 
+      def ledger_items(query = {})
+        ::Ledger::Query.new(
+          "$and" => [
+            query,
+            { "$or" => [
+              { amount_cents: { "$ne" => 0 } },
+              { status: { "$in" => %w[settled pending reversed] } }
+            ]
+}
+          ]
+        ).execute(ledgers: [org.ledger])
+                       .preload(:canonical_transactions, :canonical_pending_transactions, :receipts, :tags, primary_ledger: :event)
+      end
+
       def transactions
-        # TODO: this can be optimized
         @transactions ||=
-          begin
+          if ledger_engine?
+            paginate(ledger_items).map { |item| Models::LedgerTransaction.new(item) }
+          else
+            # TODO: this can be optimized
             pending = PendingTransactionEngine::PendingTransaction::All.new(event_id: org.id).run
             settled = TransactionGroupingEngine::Transaction::All.new(event_id: org.id).run
 
@@ -65,13 +81,20 @@ module Api
       end
 
       def transaction
-        public_id_resource!(:@transaction, :transaction_id, HcbCode, "Transaction not found.")
+        public_id_resource!(:@transaction, :transaction_id, HcbCode, "Transaction not found.").tap do |hcb_code|
+          error!({ message: "Transaction not found." }, 404) if ledger_engine? && hcb_code.event.nil?
+        end
       end
 
       def card_charges
-        # TODO: this can be optimized
         @card_charges ||=
-          begin
+          if ledger_engine?
+            items = paginate(ledger_items(linked_object_type: { "$eq" => "CardCharge" }))
+            charges = Models::CardCharge.where(id: items.filter_map { |item| item.hcb_code&.id }).index_by(&:id)
+
+            items.filter_map { |item| charges[item.hcb_code&.id] }
+          else
+            # TODO: this can be optimized
             pending = PendingTransactionEngine::PendingTransaction::All.new(event_id: org.id).run
             settled = TransactionGroupingEngine::Transaction::All.new(event_id: org.id).run
 
@@ -184,8 +207,15 @@ module Api
       def type_expansion(expand: [], hide: [])
         {
           expand: (params[:expand] || []) + expand,
-          hide: (params[:hide] || []) + hide
+          hide: (params[:hide] || []) + hide,
+          ledger: ledger_engine?
         }
+      end
+
+      def ledger_engine?
+        return @ledger_engine if defined?(@ledger_engine)
+
+        @ledger_engine = Models::LedgerTransaction.requested?(request)
       end
 
       params :expand do
@@ -882,7 +912,8 @@ module Api
       route_param :transaction_id do
         get do
           Pundit.authorize(nil, [:api, transaction], :show?)
-          present transaction, with: Api::Entities::Transaction, **type_expansion(expand: %w[transaction])
+          options = type_expansion(expand: %w[transaction])
+          present Models::LedgerTransaction.resolve(transaction, options), with: Api::Entities::Transaction, **options
         end
       end
     end
