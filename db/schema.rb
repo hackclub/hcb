@@ -2057,6 +2057,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_30_120000) do
     t.string "currency", default: "USD", null: false
     t.text "description", null: false
     t.date "end_date", null: false
+    t.bigint "manager_id"
     t.datetime "onboarded_at"
     t.datetime "onboarding_at"
     t.bigint "payee_id", null: false
@@ -2067,6 +2068,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_30_120000) do
     t.datetime "terminated_at"
     t.text "title", null: false
     t.datetime "updated_at", null: false
+    t.index ["manager_id"], name: "index_payroll_positions_on_manager_id"
     t.index ["payee_id"], name: "index_payroll_positions_on_payee_id"
   end
 
