@@ -41,6 +41,8 @@ class AnnouncementsController < ApplicationController
   end
 
   def show
+    return if @announcement.deleted?
+
     authorize @announcement
   end
 
@@ -104,7 +106,11 @@ class AnnouncementsController < ApplicationController
 
   def set_announcement
     if params[:id].present?
-      @announcement = Announcement.find(params[:id])
+      @announcement = if action_name == "show"
+                        Announcement.with_deleted.find(params[:id])
+                      else
+                        Announcement.find(params[:id])
+                      end
     end
   end
 
