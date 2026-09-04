@@ -1,0 +1,94 @@
+<%# locals: (ledger_item:) %>
+
+<% wire = ledger_item.linked_object %>
+
+<% if wire.column_id.present? %>
+  <% admin_tool("mt3") do %>
+    <%= link_to "View wire on Column", "https://dashboard.column.com/app/transfers/edit/intl-wire/#{wire.column_id}", class: "btn bg-accent", target: "_blank" %>
+  <% end %>
+<% end %>
+
+<article class="ledger-item">
+  <%= render "ledger/items/heading", ledger_item: ledger_item do %>
+    <span>
+      <% if wire.failed? %>
+        <span class="regular muted">Attempted to wire transfer to</span>
+        <%= wire.recipient_name %>
+        <span class="regular muted">for</span>
+        <span class="regular"><%= Money.from_cents(wire.amount_cents, wire.currency).format %></span>
+        <span class="regular muted">(charged <%= render_money(ledger_item.amount_cents * -1) %>)</span>
+      <% else %>
+        <span class="regular muted">Wire transfer to</span>
+        <%= wire.recipient_name %>
+        <span class="regular muted">for</span>
+        <span class="regular"><%= Money.from_cents(wire.amount_cents, wire.currency).format %></span>
+      <% end %>
+    </span>
+    <span class="badge h4 bg-<%= wire.state %> nowrap order-1">
+      <%= wire.state_text %>
+    </span>
+  <% end %>
+
+  <section class="ledger-item--details">
+    <div>
+      <strong>Sent by</strong>
+      <%= user_mention wire.user %>
+    </div>
+    <div>
+      <strong>Sent at</strong>
+      <%= format_datetime wire.created_at %>
+    </div>
+  </section>
+  <turbo-frame id="details">
+    <section class="ledger-item--info">
+      <p>
+        <strong>Recipient name</strong>
+        <%= wire.recipient_name %>
+      </p>
+
+      <p>
+        <strong>Recipient email</strong>
+        <%= wire.recipient_email %>
+      </p>
+
+      <p>
+        <strong>Recipient country</strong>
+        <%= wire.recipient_country %>
+      </p>
+
+      <p>
+        <strong>Payment purpose</strong>
+        <%= wire.payment_for %>
+      </p>
+
+      <% if wire.return_reason.present? %>
+        <p>
+          <strong>Return reason</strong>
+          <%= wire.return_reason %>
+        </p>
+      <% end %>
+
+      <p>
+        <strong>Amount (<%= wire.currency %>)</strong>
+        <%= Money.from_cents(wire.amount_cents, wire.currency).format %>
+      </p>
+
+      <p>
+        <% if ledger_item.ct_count > 0 %>
+          <strong>Settled amount (USD)</strong>
+        <% else %>
+          <strong>Pending amount (USD)</strong>
+        <% end %>
+        <%= render_money ledger_item.amount_cents.abs %>
+      </p>
+    </section>
+  </turbo-frame>
+
+  <% if admin_signed_in? && wire.may_mark_rejected? %>
+    <div class="card__banner card__darker border-top overflow-hidden">
+      <% admin_tool "w-fit" do %>
+        <%= button_to "Process", wire_process_admin_path(wire), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
+      <% end %>
+    </div>
+  <% end %>
+</article>

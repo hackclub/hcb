@@ -66,6 +66,46 @@ class CardCharge < ApplicationRecord
     end
   end
 
+  def stripe_merchant_data
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_data") || raw_stripe_transactions.first&.stripe_transaction&.[]("merchant_data")
+  end
+
+  def stripe_refund?
+    raw_stripe_transactions.first&.refund? && raw_pending_stripe_transaction.nil? || (raw_stripe_transactions.size > 0 && ledger_item.amount_cents > 0)
+  end
+
+  def stripe_cash_withdrawal?
+    stripe_merchant_data&.[]("category_code") == "6011"
+  end
+
+  def stripe_atm_fee
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("amount_details")&.dig("atm_fee") || raw_stripe_transactions.first&.stripe_transaction&.dig("amount_details")&.dig("atm_fee")
+  end
+
+  def remote_stripe_ipi_id
+    return nil unless raw_stripe_transactions.first
+
+    raw_stripe_transactions.first.stripe_transaction_id
+  end
+
+  def stripe_txn_dashboard_url
+    return nil unless remote_stripe_ipi_id
+
+    "https://dashboard.stripe.com/issuing/transactions/#{remote_stripe_ipi_id}"
+  end
+
+  def remote_stripe_iauth_id
+    return nil unless raw_pending_stripe_transaction
+
+    raw_pending_stripe_transaction.stripe_transaction_id
+  end
+
+  def stripe_auth_dashboard_url
+    return nil unless remote_stripe_iauth_id
+
+    "https://dashboard.stripe.com/issuing/authorizations/#{remote_stripe_iauth_id}"
+  end
+
   # Finds the charge for a Stripe authorization ID (iauth_...), whether it was
   # first seen as an authorization or as a settled transaction.
   def self.find_by_stripe_authorization_id(stripe_authorization_id)
