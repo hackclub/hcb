@@ -9,18 +9,22 @@
     <div class="p-2">
       <strong><%= label.presence || "Defrost" %></strong>
       <p class="text-sm opacity-60 mb-2 mt-1"><%= defrost_subtitle %></p>
-      <%= link_to defrost_stripe_card_path(stripe_card),
-                  data: { turbo_method: :post },
-                  class: "btn",
-                  disabled: !policy(stripe_card).defrost? do %>
+      <%= button_to defrost_stripe_card_path(stripe_card),
+                    method: :post,
+                    form_class: "contents",
+                    class: "btn",
+                    disabled: !policy(stripe_card).defrost?,
+                    data: { turbo: true, turbo_frame: "_top" } do %>
         Defrost
       <% end %>
     </div>
   <% else %>
-    <%= link_to defrost_stripe_card_path(stripe_card),
-                data: { turbo_method: :post },
-                class: "btn btn--list-item",
-                disabled: !policy(stripe_card).defrost? do %>
+    <%= button_to defrost_stripe_card_path(stripe_card),
+                  method: :post,
+                  form_class: "contents",
+                  class: "btn btn--list-item",
+                  disabled: !policy(stripe_card).defrost?,
+                  data: { turbo: true, turbo_frame: "_top" } do %>
       <%= inline_icon "freeze" %>
       <div>
         <strong>Defrost</strong>
@@ -35,18 +39,22 @@
     <div class="p-2">
       <strong><%= label.presence || "Freeze" %></strong>
       <p class="text-sm opacity-60 mb-2 mt-1"><%= freeze_subtitle %></p>
-      <%= link_to freeze_stripe_card_path(stripe_card),
-                  data: { turbo_method: :post },
-                  class: "btn",
-                  disabled: !policy(stripe_card).freeze? do %>
+      <%= button_to freeze_stripe_card_path(stripe_card),
+                    method: :post,
+                    form_class: "contents",
+                    class: "btn",
+                    disabled: !policy(stripe_card).freeze?,
+                    data: { turbo: true, turbo_frame: "_top" } do %>
         Freeze
       <% end %>
     </div>
   <% else %>
-    <%= link_to freeze_stripe_card_path(stripe_card),
-                data: { turbo_method: :post },
-                class: "btn btn--list-item",
-                disabled: !policy(stripe_card).freeze? do %>
+    <%= button_to freeze_stripe_card_path(stripe_card),
+                  method: :post,
+                  form_class: "contents",
+                  class: "btn btn--list-item",
+                  disabled: !policy(stripe_card).freeze?,
+                  data: { turbo: true, turbo_frame: "_top" } do %>
       <%= inline_icon "freeze" %>
       <div>
         <strong>Freeze</strong>
@@ -61,15 +69,12 @@
       <p class="text-sm opacity-60">This card cannot be frozen because it has not been activated</p>
     </div>
   <% else %>
-    <%= link_to "#",
-                data: { turbo_method: :post },
-                class: "btn btn--list-item",
-                disabled: true do %>
+    <button type="button" class="btn btn--list-item" disabled>
       <%= inline_icon "freeze" %>
       <div>
         <strong>Freeze</strong>
         <p class="text-sm opacity-60">This card cannot be frozen because it has not been activated</p>
       </div>
-    <% end %>
+    </button>
   <% end %>
 <% end %>

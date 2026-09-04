@@ -678,11 +678,14 @@ class AdminController < Admin::BaseController
 
   def disbursement_approve
     disbursement = Disbursement.find(params[:id])
+    authorize disbursement, :approve?
     return unless enforce_sudo_mode
 
     disbursement.approve_by_admin(current_user)
 
     redirect_to disbursement_process_admin_path(disbursement), flash: { success: "Success" }
+  rescue Pundit::NotAuthorizedError
+    raise
   rescue => e
     Rails.error.report(e)
     redirect_to disbursement_process_admin_path(params[:id]), flash: { error: e.message }
@@ -690,12 +693,15 @@ class AdminController < Admin::BaseController
 
   def disbursement_reject
     disbursement = Disbursement.find(params[:id])
+    authorize disbursement, :reject?
 
     disbursement.mark_rejected!(current_user)
 
     disbursement.local_hcb_code.comments.create(content: params[:comment], user: current_user, action: :rejected_transfer) if params[:comment]
 
     redirect_to disbursement_process_admin_path(disbursement), flash: { success: "Success" }
+  rescue Pundit::NotAuthorizedError
+    raise
   rescue => e
     Rails.error.report(e)
     redirect_to disbursement_process_admin_path(params[:id]), flash: { error: e.message }
@@ -1813,12 +1819,16 @@ class AdminController < Admin::BaseController
   end
 
   def hackathons_task_size
-    hackathons = Faraday
-                 .new(ssl: { verify: false }, request: { open_timeout: 5, timeout: 8 }) { |c| c.response :json }
-                 .get("https://dash.hackathons.hackclub.com/api/v1/stats/hackathons")
-                 .body
+    client = Faraday.new(ssl: { verify: false }, request: { open_timeout: 5, timeout: 8 }) do |c|
+      c.response :json
+      c.response :raise_error
+    end
 
-    hackathons.dig("status", "pending", "meta", "count")
+    hackathons = client.get("https://dash.hackathons.hackclub.com/api/v1/stats/hackathons").body
+
+    raise TypeError, "unexpected response: #{hackathons.inspect.truncate(200)}" unless hackathons.is_a?(Hash)
+
+    hackathons.dig("status", "pending", "meta", "count") || 0
   rescue => e
     Rails.error.report(e)
     9999

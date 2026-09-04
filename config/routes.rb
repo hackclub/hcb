@@ -6,6 +6,7 @@ require "sidekiq/cron/web"
 Rails.application.routes.draw do
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
   get "up" => "rails/health#show", as: :rails_health_check
+  post Rails.configuration.constants[:csp_violation_report_path], to: "csp_violation_reports#create"
   get "/my_ip", to: "admin#my_ip"
 
   constraints AdminConstraint do
