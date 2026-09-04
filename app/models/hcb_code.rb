@@ -765,12 +765,11 @@ class HcbCode < ApplicationRecord
     return stripe_cardholder&.user if stripe_card?
     return reimbursement_expense_payout&.expense&.report&.user if reimbursement_expense_payout?
     return paypal_transfer&.user if paypal_transfer?
-    return donation&.collected_by if donation? && donation&.in_person?
     return wise_transfer&.user if wise_transfer?
   end
 
   def fallback_avatar
-    return gravatar_url(donation.email, donation.name, donation.email.to_i, 48) if donation? && !donation.anonymous?
+    return gravatar_url(donation.email, donation.name, donation.email.to_i, 48) if donation? && donation.showable_donor?
     return gravatar_url(invoice.sponsor.contact_email, invoice.sponsor.name, invoice.sponsor.contact_email.to_i, 48) if invoice?
 
     nil
@@ -778,7 +777,7 @@ class HcbCode < ApplicationRecord
 
   def author_name
     return author&.name if author&.name.present?
-    return donation.name if donation? && !donation.anonymous?
+    return donation.name if donation? && donation.showable_donor?
     return invoice.sponsor.name if invoice?
 
     nil

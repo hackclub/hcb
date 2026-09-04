@@ -52,6 +52,7 @@ class Ledger
 
     include Commentable
     include Receiptable
+    include UsersHelper
 
     has_one :hcb_code, class_name: "HcbCode", required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_one :personal_transaction, required: false, foreign_key: "ledger_item_id", inverse_of: :ledger_item
@@ -124,6 +125,23 @@ class Ledger
       when :declined
         "badge m-0 pr-[6px] mr-2 bg-error"
       end
+    end
+
+    # The author column falls back to whoever is behind an item with no
+    # organizer to attribute it to — the donor, or an invoice's sponsor.
+    def fallback_avatar
+      return gravatar_url(linked_object.email, linked_object.name, linked_object.email.to_i, 48) if showable_donation?
+      return gravatar_url(linked_object.sponsor.contact_email, linked_object.sponsor.name, linked_object.sponsor.contact_email.to_i, 48) if linked_object_type == "Invoice"
+
+      nil
+    end
+
+    def author_name
+      return author.name if author&.name.present?
+      return linked_object.name if showable_donation?
+      return linked_object.sponsor.name if linked_object_type == "Invoice"
+
+      nil
     end
 
     # Substring identifiers (case-insensitive) in the memo that indicate an
@@ -345,6 +363,10 @@ class Ledger
       amount_cents
     end
 
+    def showable_donation?
+      linked_object_type == "Donation" && linked_object&.showable_donor?
+    end
+
     def calculate_author
       case linked_object_type
       when "AchTransfer"
@@ -363,8 +385,6 @@ class Ledger
         linked_object&.expense&.report&.user
       when "PaypalTransfer"
         linked_object&.user
-      when "Donation"
-        linked_object&.collected_by if linked_object&.in_person?
       when "Wire"
         linked_object&.user
       when "WiseTransfer"

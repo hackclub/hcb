@@ -373,4 +373,46 @@ RSpec.describe HcbCode, type: :model do
       end
     end
   end
+
+  describe "donation authorship" do
+    include DonationSupport
+
+    before { stub_donation_payment_intent_creation }
+
+    let(:collector) { create(:user) }
+
+    it "does not attribute an in-person donation to the organizer who collected it" do
+      donation = create(:donation, in_person: true, collected_by: collector)
+
+      expect(donation.local_hcb_code.author).to be_nil
+    end
+
+    it "shows the donor who paid for an in-person donation" do
+      donation = create(:donation, in_person: true, collected_by: collector, name: "Ada Lovelace", email: "ada@example.com")
+
+      expect(donation.local_hcb_code.fallback_avatar).to include(Digest::SHA256.hexdigest("ada@example.com"))
+      expect(donation.local_hcb_code.author_name).to eq("Ada Lovelace")
+    end
+
+    it "leaves the author column empty for an anonymous in-person donor" do
+      donation = create(:donation, in_person: true, collected_by: collector, name: "Ada Lovelace", email: "ada@example.com", anonymous: true)
+
+      expect(donation.local_hcb_code.fallback_avatar).to be_nil
+      expect(donation.local_hcb_code.author_name).to be_nil
+    end
+
+    it "leaves the author column empty when an in-person donor gave no email" do
+      donation = create(:donation, in_person: true, collected_by: collector, name: "Ada Lovelace", email: nil)
+
+      expect(donation.local_hcb_code.fallback_avatar).to be_nil
+      expect(donation.local_hcb_code.author_name).to be_nil
+    end
+
+    it "keeps the donor's gravatar on a donation made online" do
+      donation = create(:donation, name: "Ada Lovelace", email: "ada@example.com")
+
+      expect(donation.local_hcb_code.fallback_avatar).to start_with("https://gravatar.com/avatar/")
+      expect(donation.local_hcb_code.author_name).to eq("Ada Lovelace")
+    end
+  end
 end
