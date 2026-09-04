@@ -16,7 +16,7 @@ module Api
 
         donations = donations.filter_by_visible_state(params[:status], context: @event) if params[:status].present?
 
-        @donations = paginate_cursor(donations.to_a, &:public_id)
+        @donations = paginate_relation(donations)
 
         if @expand.include?(:stats)
           @total_cents = @event.donations.not_pending.succeeded_and_not_refunded.sum(:amount)
