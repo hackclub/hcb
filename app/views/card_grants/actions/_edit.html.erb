@@ -8,7 +8,7 @@
   <% end %>
 <% end %>
 
-<% if policy(card_grant).edit_overview? %>
+<% if policy(card_grant).edit_purpose? %>
   <div class="tooltipped tooltipped--w" aria-label="<%= policy(card_grant).update? ? "Manage this grant" : "View grant settings" %>">
     <%= link_to edit_card_grant_path(card_grant),
                 class: "btn whitespace-nowrap",
@@ -25,6 +25,6 @@
 
   <section class="modal modal--scroll modal--wide bg-snow" data-behavior="modal" role="dialog" id="edit_card_grant">
     <%= modal_header(policy(card_grant).update? ? "Manage grant" : "Grant settings") %>
-    <%= turbo_frame_tag "edit_#{card_grant.id}", src: edit_overview_event_card_grant_path(card_grant) %>
+    <%= turbo_frame_tag "edit_#{card_grant.id}", src: edit_purpose_event_card_grant_path(card_grant) %>
   </section>
 <% end %>
