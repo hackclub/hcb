@@ -553,6 +553,36 @@ RSpec.describe Ledger::Query, type: :model do
     end
   end
 
+  describe "preloading" do
+    it "preloads author, hcb_code, and linked_object so rendering a page doesn't N+1" do
+      author = create(:user)
+      raw_pending = create(:raw_pending_stripe_transaction)
+      card_charge_item = create(:ledger_item, linked_object: raw_pending.card_charge, datetime: Time.current)
+      Ledger::Mapping.create!(ledger: test_ledger, ledger_item: card_charge_item, on_primary_ledger: true)
+      # Set after mapping: mapping the item touches it, which triggers refresh!
+      # and would otherwise recompute ct_count as 0 (no real canonical
+      # transactions exist here), which Ledger::Query#execute filters out as
+      # empty (see the "empty items" examples above).
+      card_charge_item.update_columns(author_id: author.id, ct_count: 1)
+
+      # execute_query({}) also returns this describe block's shared item_a..item_g
+      # fixtures (mapped onto the same test_ledger in the top-level `before`
+      # hook); only the CardCharge item is relevant to this assertion.
+      result = execute_query({}).to_a
+      reloaded_card_charge_item = result.find { |item| item.id == card_charge_item.id }
+
+      # Covers the CardCharge branch of the preload. CardCharge#icon reads its
+      # own cached merchant_network_id / merchant_category columns rather than
+      # a nested association, so linked_object doesn't need to be preloaded
+      # any deeper than this to avoid an N+1 here.
+      expect {
+        reloaded_card_charge_item.author&.name
+        reloaded_card_charge_item.hcb_code
+        reloaded_card_charge_item.linked_object.icon
+      }.not_to make_database_queries
+    end
+  end
+
   describe "empty items" do
     it "excludes items with no CTs and no CPTs" do
       empty_item = create_mapped_item(amount_cents: 100, memo: "empty item", datetime: Date.new(2024, 1, 4))
