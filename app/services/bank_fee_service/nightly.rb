@@ -3,7 +3,7 @@
 module BankFeeService
   class Nightly
     def run
-      if BankFee.pending.present? || FeeRevenue.pending.present?
+      if BankFee.confirmed.present? || FeeRevenue.pending.present?
 
         # all transfers to operating must happen before
         # transfers to main. this is because operating sits at $0.
@@ -12,7 +12,7 @@ module BankFeeService
         bank_fees_to_main = []
         fee_revenues_to_main = []
 
-        BankFee.pending.find_each(batch_size: 100) do |bank_fee|
+        BankFee.confirmed.find_each(batch_size: 100) do |bank_fee|
           if bank_fee.book_transfer_to?(:fs_operating)
             ::BankFeeService::ProcessSingle.new(bank_fee_id: bank_fee.id).run
           else
