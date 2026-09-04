@@ -431,6 +431,17 @@ module EventsHelper
     end
   end
 
+  # Resolves an applied filter value to the label shown for it in the filter
+  # dropdown. Both the dropdown and the chips use this so they can't disagree
+  # about how a value is spelled.
+  def filter_option_label(filter_option, value)
+    labels = Array(filter_option[:options]).to_h do |option|
+      option.is_a?(Array) ? [option.last.to_s, option.first] : [option.to_s, option.humanize]
+    end
+
+    labels[value.to_s] || value.to_s.humanize
+  end
+
   def validate_filter_options(filter_options, params)
     filter_options.each do |opt|
       case opt[:type]
