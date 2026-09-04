@@ -4,7 +4,7 @@ module Admin
   class ColumnStatementsController < AdminController
     def index
       @page = params[:page] || 1
-      @per = params[:per] || 20
+      @per = safe_per(20)
       @statements = Column::Statement.includes(:file_attachment).page(@page).per(@per).order(created_at: :desc)
     end
 
