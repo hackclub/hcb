@@ -102,12 +102,6 @@ class ApplicationController < ActionController::Base
     current_user if auditor_signed_in?
   end
 
-  # Safely computes a per-page value for Kaminari pagination from a
-  # user-controlled param. Guards against `?per=0`, `?per=-5`, `?per=abc`,
-  # or `?per=` producing a per-page of 0, which Kaminari accepts silently
-  # via `.per(0)` but then blows up with
-  # `Kaminari::ZeroPerPageOperation: Current page was incalculable. Perhaps you called .per(0)?`
-  # the moment the view calls `.current_page`, `.total_pages`, or renders `paginate`.
   def safe_per(default, max: 200)
     (params[:per] || default).to_i.clamp(1, max)
   end
