@@ -77,12 +77,6 @@ class Payee < ApplicationRecord
     archived_at.present?
   end
 
-  def can_change_email?
-    !legal_entity.present? &&
-      !payments.where.not(aasm_state: :canceled).exists? &&
-      !payroll_positions.where.not(aasm_state: :terminated).exists?
-  end
-
   private
 
   def managed_legal_entity_constraints
@@ -98,8 +92,8 @@ class Payee < ApplicationRecord
   end
 
   def email_frozen
-    if email_changed? && !can_change_email?
-      errors.add(:email, "cannot change once a legal entity has been assigned or if payments or positions are in progress")
+    if email_changed? && legal_entity.present?
+      errors.add(:email, "cannot change once a legal entity has been assigned")
     end
   end
 
