@@ -5,8 +5,8 @@
     <%= render "events/filters/search", form: %>
     <%= form.text_field :amount, value: params[:amount], placeholder: "Amount (¢)", class: "!max-w-full sm:!max-w-[200px]" %>
     <div class="flex flex-col sm:flex-row shrink-0 gap-2 -mt-1 w-full sm:w-[unset]">
-        <%= combobox_tag :user_id, user_search_admin_index_path, placeholder: "User", class: "!max-w-full !min-w-full sm:!min-w-56", value: @user&.to_combobox_display %>
-        <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-56", value: @event&.to_combobox_display %>
+        <%= combobox_tag :user_id, user_search_admin_index_path, placeholder: "User", class: "!max-w-full !min-w-full sm:!min-w-56", selected: @user %>
+        <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !min-w-full sm:!min-w-56", selected: @event %>
     </div>
   </div>
 
@@ -94,7 +94,8 @@
   <% end %>
 
   <div class="flex mt-2 gap-2 items-center justify-end">
-      <%= combobox_tag "event_id", event_search_admin_index_path, placeholder: "Event", class: "!max-w-full !w-56" %>
+      <%# `id` is set because the filter above also submits an `event_id`. %>
+      <%= combobox_tag "event_id", event_search_admin_index_path, id: "bulk_map_event_id", placeholder: "Event", class: "!max-w-full !w-56" %>
       <%= form.submit "Bulk Map to Event", "data-turbo-confirm": "Are you sure you want to bulk map these transactions?" %>
   </div>
 <% end %>
