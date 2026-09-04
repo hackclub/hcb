@@ -111,25 +111,23 @@ class Payment
           raise ArgumentError, "🚨⚠️ unsupported payout method!"
         end
 
-        safely do
-          transfer = payout_method.create_transfer(
-            payment.event,
-            amount: payment.amount_cents,
-            memo: "Payment for \"#{payment.purpose}\".",
-            payment_for: "Payment for \"#{payment.purpose}\".",
-            recipient_name: payment.payee.display_name,
-            recipient_email: payment.payee.email,
-            currency: payment.currency,
-            user: payment.creator,
-          )
+        transfer = payout_method.create_transfer(
+          payment.event,
+          amount: payment.amount_cents,
+          memo: "Payment for \"#{payment.purpose}\".",
+          payment_for: "Payment for \"#{payment.purpose}\".",
+          recipient_name: payment.payee.display_name,
+          recipient_email: payment.payee.email,
+          currency: payment.currency,
+          user: payment.creator,
+        )
 
-          transfer.save!
+        transfer.save!
 
-          self.payout = transfer
-          save!
+        self.payout = transfer
+        save!
 
-          Receipt.reupload(old_receiptable: payment, new_receiptable: transfer.local_hcb_code)
-        end
+        Receipt.reupload(old_receiptable: payment, new_receiptable: transfer.local_hcb_code)
 
         mark_under_review!
       end
