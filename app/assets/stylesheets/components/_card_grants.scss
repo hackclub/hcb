@@ -255,6 +255,115 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
   overflow-wrap: anywhere;
 }
 
+// A long merchant or category list would otherwise stretch its strip cell into
+// a tall single column, so past a couple of entries the cell shows a count and
+// the entries move to a full-width drawer under the strip. CSS-only: each
+// drawer has a hidden checkbox ahead of the strip, and the count label toggles
+// it — so it works without JS and survives Turbo caching.
+.grant-drawer__toggle {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.grant-disclosure {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  cursor: pointer;
+  user-select: none;
+  color: map-get($palette, info);
+
+  html[data-dark='true'] & {
+    color: lighten($blue, 12%);
+  }
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.grant-disclosure__caret {
+  transition: transform 0.15s ease;
+}
+
+.grant-drawer {
+  display: none;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  @include grant-hairline(top);
+}
+
+.grant-drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.grant-drawer__close {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: map-get($palette, muted);
+
+  &:hover {
+    color: map-get($palette, slate);
+  }
+}
+
+.grant-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  // Dozens of merchants stay inside one predictable block instead of pushing
+  // the rest of the page down.
+  max-height: 13rem;
+  overflow-y: auto;
+}
+
+.grant-chip {
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  background: rgba(140, 150, 165, 0.12);
+
+  html[data-dark='true'] & {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+@each $key in ('merchants', 'categories') {
+  ##{'grant-' + $key}:checked {
+    ~ ##{'grant-' + $key}-drawer {
+      display: block;
+    }
+
+    ~ .grant-strip .grant-disclosure[for='#{'grant-' + $key}'] .grant-disclosure__caret {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.grant-limits__note {
+  margin: 1rem -1rem -1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0 0 0.5rem 0.5rem;
+  background: rgba(140, 150, 165, 0.1);
+  @include grant-hairline(top);
+}
+
 // Pre-authorization: the cart-screenshot dropzone and its uploads share one
 // panel, so an empty dropzone reads as part of the step rather than a stray box.
 $grant-upload-height: 11.5rem;

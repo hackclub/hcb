@@ -1,46 +1,51 @@
 <%# locals: (card_grant:, own:) %>
 
-<div class="card">
-  <section class="grant-strip">
-    <div>
-      <span class="grant-strip__label">Merchants</span>
-      <p class="grant-strip__value">
-        <%= card_grant.allowed_merchants.any? ? card_grant.allowed_merchant_names.to_sentence : "Anywhere" %>
-      </p>
-    </div>
+<%
+  merchants = card_grant.allowed_merchants.any? ? card_grant.allowed_merchant_names : []
+  categories = card_grant.allowed_category_names
+  # Long lists collapse into a full-width drawer below the strip so one big list
+  # can't stretch the card into a single tall column.
+  drawers = { "Merchants" => merchants, "Categories" => categories }.select { |_, items| items.size > 2 }
+%>
 
-    <div>
-      <span class="grant-strip__label">Categories</span>
-      <p class="grant-strip__value">
-        <%= card_grant.allowed_category_names.to_sentence.presence || "Anything" %>
-      </p>
-    </div>
+<div class="card grant-limits">
+  <% drawers.each_key do |label| %>
+    <input type="checkbox" class="grant-drawer__toggle" id="grant-<%= label.parameterize %>" autocomplete="off">
+  <% end %>
+
+  <section class="grant-strip">
+    <%= render "card_grants/control_field", id: "grant-merchants", label: "Merchants", items: merchants, empty: "Anywhere" %>
+    <%= render "card_grants/control_field", id: "grant-categories", label: "Categories", items: categories, empty: "Anything" %>
 
     <% if card_grant.keyword_lock.present? %>
-      <div>
+      <div class="grant-strip__cell">
         <span class="grant-strip__label">Keyword</span>
         <p class="grant-strip__value font-mono"><%= card_grant.keyword_lock %></p>
       </div>
     <% end %>
 
-    <div>
+    <div class="grant-strip__cell">
       <span class="grant-strip__label">One time use</span>
       <p class="grant-strip__value"><%= card_grant.one_time_use ? "Yes" : "No" %></p>
     </div>
 
-    <div>
+    <div class="grant-strip__cell">
       <span class="grant-strip__label">Unspent funds</span>
       <p class="grant-strip__value">Return to <%= card_grant.event.name %></p>
     </div>
   </section>
 
+  <% drawers.each do |label, items| %>
+    <%= render "card_grants/control_drawer", id: "grant-#{label.parameterize}", label:, items: %>
+  <% end %>
+
   <% if own %>
-    <div class="bg-gray-100 p-4 py-2 rounded-b-lg -mb-4 -mx-4 mt-4 border-1 border-solid border-gray-200">
+    <div class="grant-limits__note">
       <p class="my-0">
-        <strong><%= @card_grant.event.name %> sets these limits, not HCB.</strong>
+        <strong><%= card_grant.event.name %> sets these limits, not HCB.</strong>
       </p>
       <p class="text-sm my-0 opacity-60">
-        To change these restrictions, message the <%= @card_grant.event.name %> team.
+        To change these restrictions, message the <%= card_grant.event.name %> team.
         <strong>HCB cannot change your grant limits.</strong>
       </p>
     </div>
