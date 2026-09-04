@@ -143,7 +143,7 @@ class MyController < ApplicationController
     end
 
     @hcb_codes = Kaminari.paginate_array(hcb_codes_missing_receipt)
-                         .page(params[:page]).per(params[:per] || 15)
+                         .page(params[:page]).per(safe_per(15))
 
     if @grouping == "due_date"
       # @hcb_codes is already in due date order, so group_by preserves it.
@@ -220,7 +220,7 @@ class MyController < ApplicationController
     @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
     @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
     @payments = @payments.where(aasm_state: "rejected") if params[:status] == "canceled"
-    @payments = @payments.page(params[:page] || 1).per(params[:per] || 10)
+    @payments = @payments.page(params[:page] || 1).per(safe_per(10))
 
     @filter_options = [
       { key: "status", label: "Status", type: "select", options: %w[deposited in_transit canceled] }

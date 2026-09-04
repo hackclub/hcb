@@ -61,7 +61,7 @@ class AdminController < Admin::BaseController
 
   def events
     @page = params[:page] || 1
-    @per = params[:per] || 100
+    @per = safe_per(100)
     @csv_export = params[:format] == "csv"
 
     @events = filtered_events
@@ -172,7 +172,7 @@ class AdminController < Admin::BaseController
 
   def bank_fees
     @page = params[:page] || 1
-    @per = params[:per] || 100
+    @per = safe_per(100)
     @event_id = params[:event_id].presence
 
     if @event_id
@@ -191,7 +191,7 @@ class AdminController < Admin::BaseController
 
   def users
     @page = params[:page] || 1
-    @per = params[:per] || 100
+    @per = safe_per(100)
     @q = params[:q].presence
     @access_level = params[:access_level]
     @event_id = params[:event_id].presence
@@ -232,7 +232,7 @@ class AdminController < Admin::BaseController
 
   def stripe_cards
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
 
     @q = params[:q].presence
 
@@ -252,7 +252,7 @@ class AdminController < Admin::BaseController
 
   def raw_transactions
     @page = params[:page] || 1
-    @per = params[:per] || 100
+    @per = safe_per(100)
     @unique_bank_identifier = params[:unique_bank_identifier].presence
 
     relation = RawCsvTransaction
@@ -281,7 +281,7 @@ class AdminController < Admin::BaseController
 
   def raw_intrafi_transactions
     @page = params[:page] || 1
-    @per = params[:per] || 100
+    @per = safe_per(100)
 
     @count = RawIntrafiTransaction.count
     @imported = flash[:imported_transactions] || []
@@ -332,7 +332,7 @@ class AdminController < Admin::BaseController
 
   def ledger
     @page = params[:page] || 1
-    @per = params[:per] || 100
+    @per = safe_per(100)
     @q = params[:q].presence
     @amount = params[:amount].presence
     @unmapped = params[:unmapped] != "0"
@@ -387,7 +387,7 @@ class AdminController < Admin::BaseController
 
   def ledger_items
     @page = params[:page] || 1
-    @per = params[:per] || 100
+    @per = safe_per(100)
     @amount = params[:amount].presence
     @q = params[:q].presence
     @unmapped = params[:unmapped] != "0"
@@ -435,7 +435,7 @@ class AdminController < Admin::BaseController
 
   def pending_ledger
     @page = params[:page] || 1
-    @per = params[:per] || 100
+    @per = safe_per(100)
     @q = params[:q].presence
     @unsettled = params[:unsettled] == "1" ? true : nil
     @event_id = params[:event_id].presence
@@ -477,7 +477,7 @@ class AdminController < Admin::BaseController
 
   def ach
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
     @q = params[:q].presence
     @pending = params[:pending] == "1" ? true : nil
     @start_date = params[:start_date].presence
@@ -538,7 +538,7 @@ class AdminController < Admin::BaseController
 
   def reimbursements
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
     @q = params[:q].presence
     @pending = params[:pending] == "1" ? true : nil
     @failed = params[:failed] == "1" ? true : nil
@@ -580,7 +580,7 @@ class AdminController < Admin::BaseController
 
   def stripe_card_personalization_designs
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
     @q = params[:q].presence
     @pending = params[:pending] == "1"
     @unlisted = params[:unlisted] == "1"
@@ -709,7 +709,7 @@ class AdminController < Admin::BaseController
 
   def checks
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
     @q = params[:q].presence
     @in_transit = params[:in_transit] == "1" ? true : nil
     @start_date = params[:start_date].presence
@@ -768,7 +768,7 @@ class AdminController < Admin::BaseController
 
   def increase_checks
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
     @exclude_reimbursements = params[:exclude_reimbursements] == "1" ? true : nil
 
     relation = IncreaseCheck.all
@@ -788,7 +788,7 @@ class AdminController < Admin::BaseController
 
   def paypal_transfers
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
     @q = params[:q].presence
     @event = Event.find_by(id: params[:event_id]) if params[:event_id].present?
 
@@ -812,7 +812,7 @@ class AdminController < Admin::BaseController
 
   def wires
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
     @q = params[:q].presence
     @start_date = params[:start_date].presence
     @end_date = params[:end_date].presence
@@ -850,7 +850,7 @@ class AdminController < Admin::BaseController
 
   def wise_transfers
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
     @q = params[:q].presence
     @event_id = params[:event_id].presence
     @status = WiseTransfer.aasm.states.collect(&:name).include?(params[:status]&.to_sym) ? params[:status] : nil
@@ -899,7 +899,7 @@ class AdminController < Admin::BaseController
 
   def applications
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
     @q = params[:q].presence
     @include_archived = params[:include_archived] == "1" ? true : nil
 
@@ -916,7 +916,7 @@ class AdminController < Admin::BaseController
 
   def donations
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
     @q = params[:q].presence
     @ip_address = params[:ip_address].presence
     @user_agent = params[:user_agent].presence
@@ -974,13 +974,13 @@ class AdminController < Admin::BaseController
 
     relation = relation.where(event_id: @event_id) if @event_id
 
-    @donations = relation.page(params[:page]).per(params[:per] || 20).order(created_at: :desc)
+    @donations = relation.page(params[:page]).per(safe_per(20)).order(created_at: :desc)
 
   end
 
   def fee_revenues
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
 
     # Pending fees that haven't been converted to FeeRevenue yet
     # Pre-calculate fee balances to avoid calling fee_balance_v2_cents multiple times per event
@@ -999,7 +999,7 @@ class AdminController < Admin::BaseController
 
   def disbursements
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
     @q = params[:q].presence
     @reviewing = params[:reviewing] == "1" ? true : nil
     @pending = params[:pending] == "1" ? true : nil
@@ -1059,7 +1059,7 @@ class AdminController < Admin::BaseController
   def hcb_codes
     @params = params.permit(:page, :per, :q, :has_receipt, :start_date, :end_date)
     @page = @params[:page] || 1
-    @per = @params[:per] || 20
+    @per = safe_per(20)
     @q = @params[:q].presence
     @has_receipt = @params[:has_receipt]
     @start_date = @params[:start_date]
@@ -1098,7 +1098,7 @@ class AdminController < Admin::BaseController
 
   def invoices
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
     @q = params[:q].presence
     @number = params[:number].presence
     @open = params[:open] == "1" ? true : nil
@@ -1163,7 +1163,7 @@ class AdminController < Admin::BaseController
 
   def sponsors
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
     @q = params[:q].presence
 
     @event_id = params[:event_id].presence
@@ -1185,7 +1185,7 @@ class AdminController < Admin::BaseController
 
   def google_workspaces
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
     @q = params[:q].presence
     @needs_ops_review = params[:needs_ops_review] == "1" ? true : nil
     @configuring = params[:configuring] == "1" ? true : nil
@@ -1526,14 +1526,14 @@ class AdminController < Admin::BaseController
 
   def hq_receipts
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
     @users = User.where(id: Event.omitted.includes(:users).flat_map(&:users).map(&:id)).page(@page).per(@per).order(created_at: :desc)
 
   end
 
   def account_numbers
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
     @q = params[:q].presence
     @event_id = params[:event_id].presence
     @account_number_type = params[:account_number_type].presence # default/nil = show all, 1 = deposit only, 2 = spend + deposit
@@ -1573,7 +1573,7 @@ class AdminController < Admin::BaseController
 
   def emails
     @page = params[:page] || 1
-    @per = params[:per] || 100
+    @per = safe_per(100)
     @q = params[:q].presence
     @user_id = params[:user_id]
     @to = params[:to].presence
@@ -1630,7 +1630,7 @@ class AdminController < Admin::BaseController
 
   def employees
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
     @employees = Employee.all.includes(:event, :entity).page(@page).per(@per).order(
       Arel.sql("aasm_state = 'onboarding' DESC"),
       "employees.created_at desc"
@@ -1639,7 +1639,7 @@ class AdminController < Admin::BaseController
 
   def employee_payments
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
     @payments = Employee::Payment.all.page(@page).per(@per)
   end
 
@@ -1666,7 +1666,7 @@ class AdminController < Admin::BaseController
 
   def contracts
     @page = params[:page] || 1
-    @per = params[:per] || 20
+    @per = safe_per(20)
     @q = params[:q].presence
     @type = params[:type].presence
     @status = params[:status].presence
