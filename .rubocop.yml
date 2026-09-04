@@ -2,6 +2,7 @@ plugins:
   - rubocop-rails
 require:
   - ./lib/rubocop/cop/hcb/turbo_confirm
+  - ./lib/rubocop/cop/hcb/turbo_method
 inherit_from: .rubocop_todo.yml
 
 AllCops:
@@ -186,6 +187,7 @@ Rails/ApplicationController:
     - 'app/controllers/twilio_controller.rb'
     - 'app/controllers/docuseal_controller.rb'
     - 'app/controllers/column/webhooks_controller.rb'
+    - 'app/controllers/csp_violation_reports_controller.rb'
     - 'app/controllers/taxbandits_controller.rb'
 
 Rails/HasAndBelongsToMany:

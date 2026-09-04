@@ -141,6 +141,10 @@ class EventPolicy < ApplicationPolicy
     sub_organizations?
   end
 
+  def async_sub_organization_balances?
+    sub_organizations?
+  end
+
   def create_transfer?
     admin_or_manager? && !record.demo_mode?
   end
@@ -224,7 +228,7 @@ class EventPolicy < ApplicationPolicy
     (is_public || auditor_or_reader?) && (record.subevents_enabled? || record.visible_subevents(user).exists?)
   end
 
-  alias async_sub_organizations_graph? sub_organizations?
+  alias async_sub_organization_rows? sub_organizations?
 
   def sub_organizations_in_v4?
     auditor_or_reader? && sub_organizations?
