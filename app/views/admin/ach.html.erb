@@ -46,7 +46,7 @@
             <%= ach.event.name.upcase %>: <%= ach.recipient_name.upcase %>
           <% end %>
         </td>
-        <td><%= render_money_amount(ach.amount) %></td>
+        <td><%= render_money_amount(ach.amount_cents) %></td>
         <td>
           <%= ach.aasm_state.upcase %>
           <% if ach.pending_expired? %>

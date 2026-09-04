@@ -166,14 +166,14 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
         expect(ach).to be_a(AchTransfer)
         expect(ach.creator).to eq(user)
         expect(ach.bank_name).to eq("Test Bank")
-        expect(ach.amount).to eq(10_000) # USD passthrough
+        expect(ach.amount_cents).to eq(10_000) # USD passthrough
         expect(ach.routing_number).to eq("021000021")
       end
 
       it "ignores :currency and passes the amount through (ACH is USD-only)" do
         ach = details.create_transfer(event, **attrs.merge(currency: "EUR"))
 
-        expect(ach.amount).to eq(10_000)
+        expect(ach.amount_cents).to eq(10_000)
       end
     end
 
