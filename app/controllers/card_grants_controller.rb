@@ -60,7 +60,7 @@ class CardGrantsController < ApplicationController
 
   def create
     params[:card_grant][:amount_cents] = Monetize.parse(params[:card_grant][:amount_cents]).cents
-    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:email, :amount_cents, :expiration_at, :purpose, :one_time_use, :pre_authorization_required, :invite_message, :instructions).merge(sent_by: current_user))
+    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:email, :amount_cents, :expiration_at, :purpose, :one_time_use, :pre_authorization_required, :invite_message, :instructions, :allow_stripe_card, :allow_reimbursement_report).merge(sent_by: current_user))
 
     authorize @card_grant
 
@@ -279,6 +279,18 @@ class CardGrantsController < ApplicationController
     redirect_to @card_grant, flash: { error: e.message }
   end
 
+  def accept_as_reimbursement
+    authorize @card_grant
+
+    report = @card_grant.with_lock do
+      @card_grant.reimbursement_report || @card_grant.convert_to_reimbursement_report!(accepted_by: current_user)
+    end
+
+    redirect_to report, flash: { success: "Successfully opened a reimbursement report for your grant." }
+  rescue ArgumentError, DisbursementService::Create::UserError => e
+    redirect_to @card_grant, flash: { error: "This grant could not be opened as a reimbursement: #{e.message}" }
+  end
+
   def cancel
     authorize @card_grant
 
@@ -313,7 +325,7 @@ class CardGrantsController < ApplicationController
   def convert_to_reimbursement_report
     authorize @card_grant
 
-    report = @card_grant.convert_to_reimbursement_report!
+    report = @card_grant.convert_to_reimbursement_report!(accepted_by: current_user)
 
     redirect_to report, flash: { success: "Successfully converted grant into a reimbursement report." }
   end

@@ -34,7 +34,7 @@ class CardGrantPolicy < ApplicationPolicy
   alias_method :edit_withdraw?, :edit_overview?
 
   def activate?
-    (user&.admin? || (cardholder? && authorized_to_activate?)) && record.active?
+    (user&.admin? || (cardholder? && authorized_to_activate?)) && record.active? && record.effective_allow_stripe_card
   end
 
   def cancel?
@@ -43,6 +43,15 @@ class CardGrantPolicy < ApplicationPolicy
 
   def convert_to_reimbursement_report?
     (admin_or_manager? || cardholder?) && record.active? && record.card_grant_setting.reimbursement_conversions_enabled?
+  end
+
+  def accept_as_reimbursement?
+    (user&.admin? || (cardholder? && authorized_to_activate?)) &&
+      record.active? && record.stripe_card_id.nil? && record.effective_allow_reimbursement_report
+  end
+
+  def edit?
+    admin_or_manager? && record.active?
   end
 
   def toggle_one_time_use?

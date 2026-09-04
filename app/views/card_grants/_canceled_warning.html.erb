@@ -1,24 +1,25 @@
 <%# locals: (card_grant:) %>
 
-<% if card_grant.canceled? %>
+<% if card_grant.canceled? || card_grant.converted_to_reimbursement? %>
+  <% status_change = card_grant.converted_to_reimbursement? ? :converted_to_reimbursement : :canceled %>
   <div class="card border b--info mb-2">
     <div class="flex items-center info">
       <%= inline_icon "info", size: 32, class: "mr1" %>
       <p class="bold mt0 mb0">
-        <% if card_grant.converted_to_reimbursement_report? %>
-          This grant has been canceled and converted into a reimbursement report
+        <% if card_grant.converted_to_reimbursement? %>
+          This grant has been converted into a reimbursement report
         <% else %>
           This grant has been canceled
         <% end %>
-        <% if canceled_by = card_grant.last_user_change_to(status: :canceled) %>
-          by <%= user_mention canceled_by, disable_tooltip: true %>
+        <% if changed_by = card_grant.last_user_change_to(status: status_change) %>
+          by <%= user_mention changed_by, disable_tooltip: true %>
         <% end %>
-        <% if canceled_at = card_grant.last_time_change_to(status: :canceled) %>
-          <span class="tooltipped" aria-label="<%= canceled_at.to_formatted_s(:long) %>">
-            <%= time_ago_in_words canceled_at %> ago
+        <% if changed_at = card_grant.last_time_change_to(status: status_change) %>
+          <span class="tooltipped" aria-label="<%= changed_at.to_formatted_s(:long) %>">
+            <%= time_ago_in_words changed_at %> ago
           </span>
         <% end %>
-        <% if card_grant.converted_to_reimbursement_report? && policy(card_grant.reimbursement_report).show? %>
+        <% if card_grant.converted_to_reimbursement? && policy(card_grant.reimbursement_report).show? %>
           • <%= link_to "View reimbursement report", card_grant.reimbursement_report %>
         <% end %>
       </p>
