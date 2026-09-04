@@ -51,6 +51,27 @@ class Payee < ApplicationRecord
     end
   end
 
+  after_update_commit do
+    if email_previously_changed?
+      payments.where(aasm_state: :pending_legal_entity).find_each(&:send_initial_email)
+
+      payroll_positions.where(aasm_state: :onboarding).find_each do |position|
+        contract = position.contract
+        next if contract.nil?
+
+        contractor = position.contract.party(:contractor)
+
+        if contractor.pending?
+          contractor.update!(user: User.find_by(email:), external_email: email)
+        end
+
+        if position.contract.party(:hcb).signed?
+          position.notify_contractor_of_onboarding(contractor)
+        end
+      end
+    end
+  end
+
   def search_avatar
     User.find_by(email:)
   end
@@ -92,7 +113,7 @@ class Payee < ApplicationRecord
   end
 
   def email_frozen
-    if email_changed? && legal_entity.present?
+    if email_changed?
       errors.add(:email, "cannot change once a legal entity has been assigned")
     end
   end
