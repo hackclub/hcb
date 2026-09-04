@@ -51,8 +51,4 @@ class WiseTransferPolicy < ApplicationPolicy
     EventPolicy.new(user, record.event).create_transfer?
   end
 
-  def is_public?
-    record.event.is_public?
-  end
-
 end
