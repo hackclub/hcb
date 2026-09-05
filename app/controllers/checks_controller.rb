@@ -2,7 +2,6 @@
 
 class ChecksController < ApplicationController
   before_action :set_check
-  skip_before_action :signed_in_user, only: :show
 
   def show
     authorize @check
