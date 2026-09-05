@@ -63,8 +63,4 @@ class AchTransferPolicy < ApplicationPolicy
     user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
   end
 
-  def is_public?
-    record.event.is_public?
-  end
-
 end
