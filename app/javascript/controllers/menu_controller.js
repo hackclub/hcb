@@ -30,6 +30,11 @@ export default class extends Controller {
 
   disconnect() {
     this.cleanup && this.cleanup()
+    // remove cloned popup so it doesn't outlive turbo frame updates.
+    this.content && this.content.remove()
+    this.content = undefined
+    this.cleanup = undefined
+    this.isOpen = false
     document.removeEventListener('hcb:close-menus', this._closeMenusHandler)
   }
 
