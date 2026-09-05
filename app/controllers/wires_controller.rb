@@ -5,7 +5,13 @@ class WiresController < ApplicationController
   include Admin::TransferApprovable
 
   before_action :set_event, only: %i[new create]
-  before_action :set_wire, only: %i[reject send_wire edit update]
+  before_action :set_wire, only: %i[show reject send_wire edit update]
+
+  def show
+    authorize @wire
+
+    redirect_to @wire.local_hcb_code
+  end
 
   def new
     @wire = @event.wires.build

@@ -5,6 +5,35 @@ require "rails_helper"
 RSpec.describe WiresController do
   include SessionSupport
 
+  describe "show" do
+    it "redirects to hcb code only if user is an auditor or admin" do
+      user = create(:user, :make_auditor)
+      event = create(:event, :with_positive_balance)
+
+      wire = event.wires.create!(
+        user: create(:user),
+        memo: "Test Wire",
+        amount_cents: 500_00,
+        payment_for: "Snacks",
+        recipient_name: "Orpheus",
+        recipient_email: "orpheus@example.com",
+        account_number: "123456789",
+        bic_code: "NOSCCATT",
+        recipient_country: "CA",
+        currency: "USD",
+        address_line1: "1 Main Street",
+        address_city: "Ottawa",
+        address_postal_code: "K1A 0A6",
+        address_state: "Ontario",
+      )
+
+      create_session(user, verified: true)
+
+      get :show, params: { id: wire.id }
+      expect(response).to redirect_to(hcb_code_path(wire.local_hcb_code.hashid))
+    end
+  end
+
   describe "create" do
     render_views
 
