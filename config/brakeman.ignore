@@ -331,13 +331,13 @@
     {
       "warning_type": "Cross-Site Scripting",
       "warning_code": 4,
-      "fingerprint": "f6e465cc77fa185d0d6cf2b23ce0e1bb2ea2e8857360fe89c41f0e6bca3d6d74",
+      "fingerprint": "9d0250d9ac9f2db54434d7a0a1fe5c34aa4edc236cd92def76d77b6bec2a7b44",
       "check_name": "LinkToHref",
       "message": "Unsafe parameter value in `link_to` href",
       "file": "app/views/kaminari/_paginator.html.erb",
-      "line": 25,
+      "line": 24,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
-      "code": "link_to(\"#{n} per page\", url_for((request.query_parameters or {}).merge(\"per\" => n, \"page\" => 1, :only_path => true)), :class => (\"menu__action #{\"menu__action--active\" if (n == per_page)}\"), :aria => ({ :current => ((n == per_page) ? (\"true\") : (nil)) }), :data => ({ :turbo_frame => request.headers[\"Turbo-Frame\"].presence, :action => \"menu#close\" }))",
+      "code": "link_to(\"#{n} per page\", url_for((request.query_parameters or {}).merge(\"per\" => n, \"page\" => 1, :only_path => true)), :class => (\"menu__action #{\"menu__action--active\" if (n == per_page)}\"), :aria => ({ :current => ((n == per_page) ? (\"true\") : (nil)) }), :data => ({ :turbo_frame => request.headers[\"Turbo-Frame\"].presence }))",
       "render_path": null,
       "location": {
         "type": "template",
@@ -348,7 +348,7 @@
       "cwe_id": [
         79
       ],
-      "note": "False positive: url_for with a params hash and only_path builds a relative path, not a javascript: URL."
+      "note": ""
     },
     {
       "warning_type": "Cross-Site Scripting",
