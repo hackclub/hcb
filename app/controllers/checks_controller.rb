@@ -13,7 +13,7 @@ class ChecksController < ApplicationController
   private
 
   def set_check
-    @check = Check.includes(:creator).find(params[:id] || params[:check_id])
+    @check = Check.find(params[:id] || params[:check_id])
     @event = @check.event
   end
 
