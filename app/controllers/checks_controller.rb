@@ -13,7 +13,6 @@ class ChecksController < ApplicationController
 
   def set_check
     @check = Check.find(params[:id] || params[:check_id])
-    @event = @check.event
   end
 
 end
