@@ -12,15 +12,27 @@ class Ledger
     end
 
     alias_method :hcb?, :show?
-    alias_method :pin?, :show?
-    alias_method :unpin?, :show?
+
+    def pin?
+      admin_or_member?
+    end
+
+    def unpin?
+      admin_or_member?
+    end
 
     def rename?
-      OrganizerPosition.role_at_least?(user, record.primary_ledger&.event, :member)
+      admin_or_member?
     end
 
     def invoice_as_personal_transaction?
-      OrganizerPosition.role_at_least?(user, record.primary_ledger&.event, :member)
+      admin_or_member?
+    end
+
+    private
+
+    def admin_or_member?
+      user&.admin? || OrganizerPosition.role_at_least?(user, record.primary_ledger&.event, :member)
     end
 
   end
