@@ -7,6 +7,14 @@ module Api
 
       before_action :set_api_event, only: [:create]
 
+      def show
+        @disbursement = authorize find_for_api!(Disbursement, params[:id]), :show_in_v4?
+
+        render :show, status: :ok
+      end
+
+      require_oauth2_scope "transfers:read", :show
+
       def create
         @source_event = @event
         @destination_event = Event.find_by_public_id(params[:to_organization_id]) || Event.friendly.find(params[:to_organization_id])

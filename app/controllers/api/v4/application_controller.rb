@@ -46,6 +46,16 @@ module Api
         @current_user = current_token&.user
       end
 
+      # Looks up a record by its public ID. Admins with read
+      # access can additionally look records up by their internal (numeric) ID.
+      def find_for_api!(klass, id)
+        if can_admin?(:read)
+          klass.find_by_public_id(id) || klass.find(id)
+        else
+          klass.find_by_public_id!(id)
+        end
+      end
+
       def require_admin_scope!(level)
         unless can_admin?(level)
           skip_authorization

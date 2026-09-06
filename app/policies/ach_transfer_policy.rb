@@ -18,6 +18,10 @@ class AchTransferPolicy < ApplicationPolicy
     is_public? || user_who_can_transfer?
   end
 
+  def show_in_v4?
+    auditor_or_user?
+  end
+
   def view_account_routing_numbers?
     admin_or_manager?
   end

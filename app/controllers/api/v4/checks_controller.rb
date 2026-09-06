@@ -13,8 +13,12 @@ module Api
       end
 
       def show
-        @check = authorize IncreaseCheck.find_by_public_id!(params[:id])
+        @check = authorize find_for_api!(IncreaseCheck, params[:id]), :show_in_v4?
+
+        render :show, status: :ok
       end
+
+      require_oauth2_scope "transfers:read", :show
 
       def create
         check_params = params.require(:check).permit(
