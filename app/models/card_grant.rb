@@ -109,6 +109,29 @@ class CardGrant < ApplicationRecord
 
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
+
+  scope :accepted, -> { active.joins(:stripe_card).merge(StripeCard.active) }
+  scope :frozen, -> { active.joins(:stripe_card).merge(StripeCard.frozen) }
+  scope :returned, -> { canceled.where.missing(:reimbursement_report) }
+  scope :converted_to_reimbursement, -> { canceled.joins(:reimbursement_report) }
+
+  # statuses shown in the status filter that each map to their scope
+  FILTERABLE_STATES = {
+    "not_activated"              => "Invited",
+    "accepted"                   => "Accepted",
+    "frozen"                     => "Frozen",
+    "expired"                    => "Expired",
+    "returned"                   => "Returned",
+    "converted_to_reimbursement" => "Converted to reimbursement report"
+  }.freeze
+
+  scope :filter_by_state, ->(state) {
+    if FILTERABLE_STATES.key?(state)
+      public_send(state)
+    else
+      all
+    end
+  }
   scope :search_for, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
   scope :expired_before, ->(date) { where("card_grants.expiration_at < ?", date) }
   scope :expires_on, ->(date) { where("card_grants.expiration_at = DATE(?)", date) }

@@ -31,6 +31,49 @@ RSpec.describe CardGrantsController do
     end
   end
 
+  describe "#card_index" do
+    before do
+      allow_any_instance_of(CardGrant).to receive(:transfer_money)
+    end
+
+    let(:user) { create(:user) }
+    let(:event) { create(:event, plan_type: Event::Plan::HackClubAffiliate) }
+    let!(:not_activated) { create(:card_grant, event:, stripe_card: nil, purpose: "conference travel") }
+    let!(:accepted) { create(:card_grant, event:, purpose: "lunch stipend") }
+
+    before do
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+    end
+
+    it "filters grants by state" do
+      get(:card_index, params: { event_id: event.friendly_id, status: "not_activated" })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(not_activated.purpose)
+      expect(response.body).not_to include(accepted.purpose)
+    end
+
+    it "renders the status filter menu + chips" do
+      get(:card_index, params: { event_id: event.friendly_id })
+      expect(response.body).to include("Add status filters")
+
+      expect(response.body).to include("Invited")
+      expect(response.body).not_to include("Not activated")
+
+      get(:card_index, params: { event_id: event.friendly_id, status: "not_activated" })
+      expect(response.body).to include("Clear status filters")
+    end
+
+    it "shows all grants when the status paramater is invalid" do
+      get(:card_index, params: { event_id: event.friendly_id, status: "bogus" })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(not_activated.purpose)
+      expect(response.body).to include(accepted.purpose)
+    end
+  end
+
   describe "#new" do
     it "renders successfully" do
       user = create(:user)

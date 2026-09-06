@@ -1,8 +1,10 @@
+<%# locals: (filters:, append_to: "turbo-frame#ledger", toggle_label: "Add filters...", clear_label: "Clear filters") %>
+
 <div class="flex items-center filter-menu -mt-2 mb-1">
-  <%= render "events/filters/menu", filters: %>
+  <%= render "events/filters/menu", filters:, append_to:, toggle_label: %>
   <%= link_to nil,
               class: "-ml-2 pop muted tooltipped tooltipped--s",
-              aria: { label: "Clear filters" },
+              aria: { label: clear_label },
               data: { turbo_prefetch: "false" } do %>
     <%= inline_icon "view-close", size: 28 %>
   <% end %>
@@ -11,7 +13,7 @@
     <% filters.each do |filter| %>
       <% if params[filter[:key]] %>
         <div class="badge badge-large bg-muted">
-          <%= params[filter[:key]].humanize %>
+          <%= filter_chip_label(filter, params[filter[:key]]) %>
           <%= link_to upsert_query_params(filter[:key] => nil),
                       class: "flex items-center",
                       data: { turbo_prefetch: "false" } do %>

@@ -12,7 +12,7 @@
     <%= render "card_grants/buttons" %>
   </h1>
 
-  <%= turbo_frame_tag :card_grant_card_overview, src: event_card_grant_card_overview_path(@event), loading: :eager do %>
+  <%= turbo_frame_tag :card_grant_card_overview, src: event_card_grant_card_overview_path(@event, request.query_parameters), loading: :eager do %>
     <%= render "application/loading_container", klass: "mt-8" %>
   <% end %>
 
