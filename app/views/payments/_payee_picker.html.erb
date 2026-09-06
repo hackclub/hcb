@@ -58,7 +58,8 @@
               options_for_select([
                                    ["Select type", ""],
                                    ["An individual", "person"],
-                                   ["A business or organization", "business"]
+                                   ["An unincorporated business", "business"],
+                                   ["A corporation", "corporation"]
                                  ], params[:payee_entity_type]),
               required: manual,
               form: "new-payee-form",
@@ -67,12 +68,12 @@
 
         <div data-manual-payee-target="defaultBanner" <%= "hidden" if manual %>>
           <%= render "application/callout", type: "info", title: "HCB will email the recipient", class: "mt-0 mb-0" do %>
-            They'll be asked to submit their tax information and configure their payout method before receiving the payment.
+            They'll be asked to configure their payout method and tax information if necessary before receiving the payment.
           <% end %>
         </div>
 
         <div data-manual-payee-target="manualBanner" <%= "hidden" unless manual %>>
-          <%= render "application/callout", type: "warning", icon: "important", title: "Tax and payment info required", class: "mt-0 mb-0" do %>
+          <%= render "application/callout", type: "warning", icon: "important", title: "Payout info required", class: "mt-0 mb-0" do %>
             We'll ask for this soon. Only use this if the recipient can't submit their own.
           <% end %>
         </div>
