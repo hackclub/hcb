@@ -1,4 +1,7 @@
+import payment_recipient_members from './payment_recipient'
+
 export default ({ payment_recipient, editing }) => ({
+  ...payment_recipient_members,
   payment_recipient,
   editing: editing || false,
   init() {

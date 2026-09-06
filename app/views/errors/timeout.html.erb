@@ -9,7 +9,7 @@
     title="wanna help us fix this bug? <%= Rails.configuration.constants.github_url %>">
 </div>
 
-<script>
+<script nonce="<%= content_security_policy_script_nonce %>">
   const formUrl = <%= raw Rails.configuration.constants.github_url.to_json %>;
 
   console.log(
