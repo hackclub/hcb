@@ -111,7 +111,7 @@ class CardGrant < ApplicationRecord
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
 
   scope :accepted, -> { active.joins(:stripe_card).merge(StripeCard.active) }
-  scope :frozen, -> { active.joins(:stripe_card).merge(StripeCard.frozen) }
+  scope :frozen, -> { active.joins(:stripe_card).merge(StripeCard.where(stripe_status: "inactive")) }
   scope :returned, -> { canceled.where.missing(:reimbursement_report) }
   scope :converted_to_reimbursement, -> { canceled.joins(:reimbursement_report) }
 

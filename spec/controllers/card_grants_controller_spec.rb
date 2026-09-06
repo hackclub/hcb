@@ -44,6 +44,7 @@ RSpec.describe CardGrantsController do
     before do
       create(:organizer_position, user:, event:)
       create_session(user, verified: true)
+      request.headers["Turbo-Frame"] = "card_grant_card_overview"
     end
 
     it "filters grants by state" do
@@ -57,12 +58,13 @@ RSpec.describe CardGrantsController do
     it "renders the status filter menu + chips" do
       get(:card_index, params: { event_id: event.friendly_id })
       expect(response.body).to include("Add status filters")
-
       expect(response.body).to include("Invited")
-      expect(response.body).not_to include("Not activated")
 
       get(:card_index, params: { event_id: event.friendly_id, status: "not_activated" })
       expect(response.body).to include("Clear status filters")
+
+      expect(response.body).to include("Invited")
+      expect(response.body).not_to include("Not activated")
     end
 
     it "shows all grants when the status paramater is invalid" do
@@ -71,6 +73,51 @@ RSpec.describe CardGrantsController do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(not_activated.purpose)
       expect(response.body).to include(accepted.purpose)
+
+      expect(response.body).not_to include("Clear status filters")
+    end
+
+    it "shows all grants when the status is not a string" do
+      get(:card_index, params: { event_id: event.friendly_id, status: ["not_activated"] })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(not_activated.purpose)
+      expect(response.body).to include(accepted.purpose)
+      expect(response.body).not_to include("Clear status filters")
+    end
+
+    it "keeps status filter when searching" do
+      get(:card_index, params: { event_id: event.friendly_id, status: "not_activated" })
+
+      hidden_status = response.parsed_body.at_css("form input[type='hidden'][name='status']")
+      expect(hidden_status["value"]).to eq("not_activated")
+    end
+
+    it "redirects direct visits to grants page with filters" do
+      request.headers["Turbo-Frame"] = nil
+
+      get(:card_index, params: { event_id: event.friendly_id, status: "not_activated", q: "travel" })
+
+      expect(response).to redirect_to(event_card_grant_overview_path(event, status: "not_activated", q: "travel"))
+    end
+  end
+
+  describe "#index" do
+    before do
+      allow_any_instance_of(CardGrant).to receive(:transfer_money)
+    end
+
+    it "allows filter changes to update the page url" do
+      user = create(:user)
+      event = create(:event, plan_type: Event::Plan::HackClubAffiliate)
+      create(:card_grant, event:)
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+
+      get(:index, params: { event_id: event.friendly_id })
+
+      frame = response.parsed_body.at_css("turbo-frame#card_grant_card_overview")
+      expect(frame["data-turbo-action"]).to eq("advance")
     end
   end
 

@@ -30,6 +30,14 @@ RSpec.describe CardGrant, type: :model do
       expect(event.card_grants.converted_to_reimbursement).to contain_exactly(converted)
     end
 
+    it "treats a card that went inactive before its first activation as frozen" do
+      inactive_card = create(:stripe_card, :with_stripe_id, event:, stripe_status: "inactive", initially_activated: false)
+      frozen_before_activation = create(:card_grant, event:, stripe_card: inactive_card)
+
+      expect(event.card_grants.frozen).to contain_exactly(frozen, frozen_before_activation)
+      expect(event.card_grants.accepted).to contain_exactly(accepted)
+    end
+
     describe ".filter_by_state" do
       it "filters to the state" do
         expect(event.card_grants.filter_by_state("not_activated")).to contain_exactly(not_activated)

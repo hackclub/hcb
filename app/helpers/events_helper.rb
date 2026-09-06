@@ -440,7 +440,7 @@ module EventsHelper
 
     return match.first if match
 
-    value.humanize
+    value.to_s.humanize
   end
 
   def validate_filter_options(filter_options, params)

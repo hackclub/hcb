@@ -2,6 +2,9 @@
   <div class="flex items-center gap-4 flex-col-reverse sm:flex-row mb-2">
     <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
       <%= render "events/filters/search", form: %>
+      <% if @has_filter %>
+        <%= form.hidden_field :status, value: params[:status] %>
+      <% end %>
     <% end %>
 
     <%= render "events/filters/menu", filters: @filter_options, append_to: "turbo-frame#card_grant_card_overview", toggle_label: "Add status filters" unless @has_filter %>
