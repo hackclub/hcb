@@ -177,7 +177,7 @@ class EventPolicy < ApplicationPolicy
     # The contractors list is visible in transparency mode (public events),
     # but only shows status/name/period/purpose to the public. Sensitive
     # details (email, rate, totals, invoices) are gated by contractor_details?.
-    Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && show? && record.plan.transfers_enabled?
+    Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && show? && record.plan.transfers_enabled? && record.plan.contractors_enabled?
   end
 
   def contractor_details?
