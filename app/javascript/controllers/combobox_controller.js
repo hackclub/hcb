@@ -1,13 +1,3 @@
-/*
-  A lightweight, self-contained autocomplete combobox.
-
-  It loads its options asynchronously from `urlValue` (an endpoint returning
-  JSON `[{ value, label, sublabel, disabled }]`), lets the user filter by
-  typing, and mirrors the chosen option's `value` into a hidden form field so
-  the surrounding form submits it. Only options returned by the endpoint can be
-  selected — free text is reverted on blur.
-*/
-
 import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
@@ -18,10 +8,13 @@ export default class extends Controller {
     label: String,
   }
 
+  initialize() {
+    this.searchToken = 0
+  }
+
   connect() {
     this.options = []
     this.activeIndex = -1
-    this.searchToken = 0
     this.deletion = false
 
     // Restore any preselected value (e.g. when editing or prefilled).
@@ -37,6 +30,12 @@ export default class extends Controller {
       this.selectedLabel = ''
       this.selectedOption = null
     }
+  }
+
+  disconnect() {
+    clearTimeout(this.debounce)
+    clearTimeout(this.blurTimeout)
+    this.searchToken++ // abandon any search still in flight
   }
 
   onFocus() {
@@ -91,7 +90,8 @@ export default class extends Controller {
 
   onBlur() {
     // Delay so a click on an option registers before we tear down.
-    setTimeout(() => {
+    clearTimeout(this.blurTimeout)
+    this.blurTimeout = setTimeout(() => {
       if (!this.element.contains(document.activeElement)) {
         this.finalize()
         this.hide()
@@ -117,7 +117,7 @@ export default class extends Controller {
 
   async search(query) {
     const token = ++this.searchToken
-    this.renderLoading()
+    this.renderStatus('Loading…')
     this.show()
     let options = []
     try {
@@ -125,7 +125,7 @@ export default class extends Controller {
         headers: { Accept: 'application/json' },
         credentials: 'same-origin',
       })
-      if (res.ok) options = await res.json()
+      if (res.ok) options = (await res.json()).map(normalize)
     } catch {
       if (token === this.searchToken) this.hide()
       return
@@ -225,28 +225,33 @@ export default class extends Controller {
     this.hiddenTarget.value = ''
   }
 
-  renderLoading() {
+  renderStatus(message) {
     this.activeIndex = -1
     this.listboxTarget.innerHTML = `
-      <li role="option" aria-disabled="true" class="hw-combobox__option">
-        <span class="text-sm muted">Loading…</span>
+      <li role="option" aria-disabled="true"
+          class="combobox__option combobox__option--status">
+        <span class="text-sm muted">${escape(message)}</span>
       </li>`
   }
 
   render() {
+    if (this.options.length === 0) return this.renderStatus('No results')
+
     this.listboxTarget.innerHTML = this.options
       .map((o, i) => {
         const disabled = o.disabled ? ' aria-disabled="true"' : ''
-        const dim = o.disabled ? ' opacity-50' : ''
         const selected =
-          o.value === this.selectedValue ? ' hw-combobox__option--selected' : ''
+          o.value === this.selectedValue ? ' combobox__option--selected' : ''
+        const sublabel = o.sublabel
+          ? `<span class="text-sm muted">${escape(o.sublabel)}</span>`
+          : ''
         return `
           <li role="option" data-index="${i}"${disabled}
-              class="hw-combobox__option${selected}"
+              class="combobox__option${selected}"
               data-action="mousedown->combobox#onOptionClick">
-            <div class="flex flex-col w-full${dim}">
-              <span style="white-space:normal">${escape(o.label)}</span>
-              <span class="text-sm muted">${escape(o.sublabel || '')}</span>
+            <div class="flex flex-col w-full">
+              <span>${escape(o.label)}</span>
+              ${sublabel}
             </div>
           </li>`
       })
@@ -263,7 +268,7 @@ export default class extends Controller {
   highlight() {
     this.listboxTarget.querySelectorAll('[role="option"]').forEach((li, i) => {
       const active = i === this.activeIndex
-      li.classList.toggle('hw-combobox__option--navigated', active)
+      li.classList.toggle('combobox__option--navigated', active)
       li.setAttribute('aria-selected', active ? 'true' : 'false')
       if (active) li.scrollIntoView({ block: 'nearest' })
     })
@@ -281,8 +286,16 @@ export default class extends Controller {
   }
 }
 
+function normalize(option) {
+  return {
+    ...option,
+    value: String(option.value ?? ''),
+    label: String(option.label ?? ''),
+  }
+}
+
 function escape(str) {
   const div = document.createElement('div')
-  div.textContent = str
+  div.textContent = str == null ? '' : str
   return div.innerHTML
 }

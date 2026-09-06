@@ -416,11 +416,14 @@ class AdminController < Admin::BaseController
   def event_search
     @q = params[:q].presence
     @events = if @q.present?
-                Event.search_name(@q).order(Event::CUSTOM_SORT).limit(20).select(:id, :name)
+                Event.search_name(@q).order(Event::CUSTOM_SORT).limit(20).select(:id, :name, :slug)
               else
-                Event.order(Event::CUSTOM_SORT).limit(20).select(:id, :name)
+                Event.order(Event::CUSTOM_SORT).limit(20).select(:id, :name, :slug)
               end
-    render turbo_stream: helpers.async_combobox_options(@events)
+
+    render json: @events.map { |event|
+      { value: event.id.to_s, label: event.to_combobox_display, sublabel: event.slug }
+    }
   end
 
   def user_search
@@ -430,7 +433,10 @@ class AdminController < Admin::BaseController
              else
                User.order(:full_name).limit(20).select(:id, :full_name, :email)
              end
-    render turbo_stream: helpers.async_combobox_options(@users)
+
+    render json: @users.map { |user|
+      { value: user.id.to_s, label: user.to_combobox_display(admin: admin_signed_in?), sublabel: "#{user.email} · ID #{user.id}" }
+    }
   end
 
   def pending_ledger
