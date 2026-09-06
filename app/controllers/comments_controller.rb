@@ -72,7 +72,7 @@ class CommentsController < ApplicationController
   private
 
   def comment_params
-    params.require(:comment).permit(:content, :file, :admin_only)
+    params.require(:comment).permit(:content, :admin_only, files: [])
   end
 
   COMMENTABLE_TYPE_MAP = [AchTransfer, Disbursement, EmburseCardRequest, EmburseTransaction,
