@@ -1,6 +1,6 @@
 <%# locals: (card_grant:) %>
 
-<% if card_grant.setting.support_message.present? || card_grant.setting.support_url.present? %>
+<% if card_grant.setting.support_message.present? || card_grant.setting.support_url.present? || card_grant.setting.support_slack_url.present? %>
   <div class="tooltipped tooltipped--n">
     <% if card_grant.setting.support_message.present? %>
       <button class="btn btn--list-item" data-behavior="modal_trigger" data-modal="support_card_grant_<%= card_grant.id %>">
