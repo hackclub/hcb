@@ -30,7 +30,7 @@ class PaymentMailer < ApplicationMailer
   def set_payment
     @payment = params[:payment]
 
-    if @payment.legal_entity.present?
+    if @payment.legal_entity.present? && !@payment.legal_entity.managed?
       @recipients = @payment.legal_entity.users.map(&:email_address_with_name)
     else
       @recipients = [@payment.payee.email]

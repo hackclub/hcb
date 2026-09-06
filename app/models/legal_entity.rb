@@ -152,6 +152,14 @@ class LegalEntity < ApplicationRecord
 
   delegate :masked_tin, to: :latest_usable_tax_form, allow_nil: true
 
+  def emails
+    if managed?
+      [payees.first.email]
+    else
+      users.map(&:email)
+    end
+  end
+
   private
 
   def managing_event_cannot_change
