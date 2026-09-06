@@ -965,6 +965,7 @@ Rails.application.routes.draw do
         get "personal_info"
         get "project_info"
         get "videos"
+        get "sign_agreement"
         get "agreement"
         get "review"
         get "submission"
