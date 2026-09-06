@@ -820,7 +820,8 @@ Rails.application.routes.draw do
         resources :sponsors, only: [:index, :show, :create]
         resources :check_deposits, only: [:index, :show, :create]
         resources :wires, only: [:index, :show, :create]
-        resources :ach_transfers, only: [:create]
+        resources :ach_transfers, only: [:show, :create]
+        resources :disbursements, only: [:show]
 
         resources :comments, only: [:index, :create]
 

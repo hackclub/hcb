@@ -9,6 +9,10 @@ class WirePolicy < ApplicationPolicy
     auditor_or_user?
   end
 
+  def show_in_v4?
+    auditor_or_user?
+  end
+
   def create?
     user_who_can_transfer?
   end
