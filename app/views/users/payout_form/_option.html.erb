@@ -2,16 +2,23 @@
 
 <% unsupported = LegalEntity::PayoutMethod.unsupported?(model) %>
 <%= form.radio_button :payout_method_type, model.name, checked:, disabled: unsupported %>
-<%= form.label :payout_method_type, value: model.name do %>
-  <%= inline_icon icon, size: 28 %>
-  <strong><%= title %></strong>
+<%= form.label :payout_method_type, value: model.name, class: "payout-option" do %>
+  <span class="payout-option__icon"><%= inline_icon icon, size: 22 %></span>
 
-  <%= yield %><%# in case you wanna add more flare to a specific option %>
+  <span class="payout-option__body">
+    <span class="payout-option__title">
+      <%= title %>
+      <%= yield %><%# in case you wanna add more flare to a specific option %>
+    </span>
 
-  <% if unsupported %>
-    <div class="badge bg-warning m1 mt0 w-fit"><%= LegalEntity::PayoutMethod.unsupported_details(model)[:status_badge] %></div>
-    <small><%= LegalEntity::PayoutMethod.unsupported_details(model)[:reason] %></small>
-  <% else %>
-    <small><%= description %></small>
-  <% end %>
+    <% if unsupported %>
+      <span class="badge bg-warning w-fit mt1"><%= LegalEntity::PayoutMethod.unsupported_details(model)[:status_badge] %></span>
+      <span class="payout-option__desc"><%= LegalEntity::PayoutMethod.unsupported_details(model)[:reason] %></span>
+    <% else %>
+      <span class="payout-option__desc"><%= description %></span>
+    <% end %>
+  </span>
+
+  <span class="payout-option__check"><%= inline_icon "check-circle-fill", size: 20 %></span>
+  <a class="payout-option__change no-underline" href="javascript:void(0)" data-action="click->payout-wizard#showOptions:stop:prevent">Change</a>
 <% end %>

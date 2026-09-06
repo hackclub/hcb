@@ -1964,6 +1964,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_30_120000) do
     t.string "display_name", null: false
     t.string "email", null: false
     t.bigint "event_id", null: false
+    t.datetime "imported_at"
     t.bigint "legal_entity_id"
     t.datetime "updated_at", null: false
     t.index ["archived_at"], name: "index_payees_on_archived_at"
