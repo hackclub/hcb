@@ -1,0 +1,23 @@
+# frozen_string_literal: true
+
+class Ledger
+  class AssertCtsSyncedWithHcbCodeJob < ApplicationJob
+    queue_as :low
+    include AssertsRequirements
+
+    def run
+      @ledger_items = Ledger::Item.all.includes(:canonical_transactions, :hcb_code)
+
+      @ledger_items.find_each do |item|
+        safely do
+          hcb_code = item.hcb_code
+          if hcb_code.canonical_transactions.reorder(id: :asc) != item.canonical_transactions.reorder(id: :asc)
+            report_anomaly "Ledger::Item #{item.hashid} canonical_transactions do not match HcbCode #{hcb_code.hashid} canonical_transactions"
+          end
+        end
+      end
+    end
+
+  end
+
+end
