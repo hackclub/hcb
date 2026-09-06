@@ -1,17 +1,34 @@
-<%# locals: (card_grant:, label: "Create reimbursement report", subtitle: "") %>
+<%# locals: (card_grant:, label: "Create reimbursement report", subtitle: "", variant: "list_item") %>
 
 <% if card_grant.card_grant_setting.reimbursement_conversions_enabled? && card_grant.balance.positive? %>
   <% reimbursement_tooltip = policy(card_grant).convert_to_reimbursement_report? ? "Cancel this grant and open a reimbursement report with remaining funds" : "You don't have permission to perform this action" %>
-  <%= button_to convert_to_reimbursement_report_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
-                method: :post,
-                form_class: "contents",
-                class: "btn btn--list-item",
-                disabled: !policy(card_grant).convert_to_reimbursement_report?,
-                data: { turbo: true, turbo_frame: "_top", turbo_confirm: "Are you sure? This will cancel your card grant and convert it into a reimbursement report.", turbo_confirm_danger: true } do %>
-    <%= inline_icon "attachment", size: 20 %>
-    <div>
+  <% convert_path = convert_to_reimbursement_report_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug) %>
+  <% convert_confirm = { turbo: true, turbo_frame: "_top", turbo_confirm: "Are you sure? This will cancel your card grant and convert it into a reimbursement report.", turbo_confirm_danger: true } %>
+  <% if variant.to_s == "control" %>
+    <div class="p-2">
       <strong><%= label %></strong>
-      <p class="text-sm opacity-60"><%= subtitle.presence || reimbursement_tooltip %></p>
+      <p class="text-sm opacity-60 mb-2 mt-1"><%= subtitle.presence || reimbursement_tooltip %></p>
+      <%= button_to convert_path,
+                    method: :post,
+                    form_class: "contents",
+                    class: "btn",
+                    disabled: !policy(card_grant).convert_to_reimbursement_report?,
+                    data: convert_confirm do %>
+        Get reimbursed
+      <% end %>
     </div>
+  <% else %>
+    <%= button_to convert_path,
+                  method: :post,
+                  form_class: "contents",
+                  class: "btn btn--list-item",
+                  disabled: !policy(card_grant).convert_to_reimbursement_report?,
+                  data: convert_confirm do %>
+      <%= inline_icon "attachment", size: 20 %>
+      <div>
+        <strong><%= label %></strong>
+        <p class="text-sm opacity-60"><%= subtitle.presence || reimbursement_tooltip %></p>
+      </div>
+    <% end %>
   <% end %>
 <% end %>

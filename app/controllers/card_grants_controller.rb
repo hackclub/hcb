@@ -136,10 +136,6 @@ class CardGrantsController < ApplicationController
               disposition: "attachment"
   end
 
-  def edit_overview
-    authorize @card_grant
-  end
-
   def edit_purpose
     authorize @card_grant
   end

@@ -21,17 +21,16 @@ class CardGrantPolicy < ApplicationPolicy
     record.event.is_public? || user&.auditor? || user_in_event?
   end
 
-  def edit_overview?
+  def edit_purpose?
     auditor_or_member? && record.active?
   end
 
-  alias_method :edit_actions?, :edit_overview?
-  alias_method :edit_usage_restrictions?, :edit_overview?
-  alias_method :edit_expiration?, :edit_overview?
-  alias_method :edit_purpose?, :edit_overview?
-  alias_method :edit_balance?, :edit_overview?
-  alias_method :edit_topup?, :edit_overview?
-  alias_method :edit_withdraw?, :edit_overview?
+  alias_method :edit_actions?, :edit_purpose?
+  alias_method :edit_usage_restrictions?, :edit_purpose?
+  alias_method :edit_expiration?, :edit_purpose?
+  alias_method :edit_balance?, :edit_purpose?
+  alias_method :edit_topup?, :edit_purpose?
+  alias_method :edit_withdraw?, :edit_purpose?
 
   def activate?
     (user&.admin? || (cardholder? && authorized_to_activate?)) && record.active?

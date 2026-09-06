@@ -1,13 +1,15 @@
-<%# locals: (card_grant:) %>
+<%# locals: (card_grant:, label: "", subtitle: "") %>
 
-<% return_tooltip = "Cancel this grant and return funds to the organization" %>
-<%= link_to "#", data: { behavior: "modal_trigger", modal: "return-grant" }, class: "btn btn--list-item" do %>
-  <%= inline_icon "support", size: 20 %>
-  <div>
-    <strong>Return grant</strong>
-    <p class="text-sm opacity-60"><%= return_tooltip %></p>
+<% return_tooltip = subtitle.presence || "Cancel this grant and return funds to the organization" %>
+  <div class="p-2">
+    <strong>
+      <%= label.presence || "Return grant" %>
+    </strong>
+    <p class="text-sm opacity-60 mb-2 mt-1"><%= return_tooltip %></p>
+    <%= link_to "#", data: { behavior: "modal_trigger", modal: "return-grant" }, class: "btn" do %>
+      Return grant
+    <% end %>
   </div>
-<% end %>
 
 <div class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="return-grant">
   <%= modal_header "Return #{card_grant.balance.format} to #{card_grant.event.name}?" %>

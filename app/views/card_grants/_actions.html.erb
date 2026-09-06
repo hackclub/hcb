@@ -1,22 +1,26 @@
 <%# locals: (card_grant:) %>
 
 <% if card_grant.active? %>
-  <div class="card card--breakdown flex flex-col p-1">
+  <div class="card card--breakdown flex flex-col p-1 mt-2 py-3">
     <p class="eyebrow mb-0 px-4 opacity-50">Controls</p>
-    <% if organizer_signed_in?(as: :member) %>
-      <%= render "stripe_cards/actions/freeze", stripe_card: card_grant.stripe_card if card_grant.stripe_card.present? %>
-      <%= render "card_grants/actions/convert_to_reimbursement_report", card_grant:, label: card_grant.user == current_user ? "Get reimbursed" : "Create reimbursement report" %>
-      <% if card_grant.user == current_user %>
-        <%= render "card_grants/actions/return", card_grant: %>
-      <% else %>
-        <%= render "card_grants/actions/cancel", card_grant: %>
+    <div class="grant-controls grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 px-2">
+      <% if organizer_signed_in?(as: :member) %>
+        <%= render "stripe_cards/actions/freeze", stripe_card: card_grant.stripe_card, variant: "control", label: "Pause spending instantly", subtitle: "You can unfreeze it yourself at any time" if card_grant.stripe_card.present? %>
+        <%= render "card_grants/actions/convert_to_reimbursement_report", card_grant:, variant: "control", label: card_grant.user == current_user ? "I already paid out of pocket" : "Create reimbursement report", subtitle: "Swap the balance for a reimbursement" %>
+        <% if card_grant.user == current_user %>
+          <%= render "card_grants/actions/return", card_grant:, label: "I don’t need this money", subtitle: "Send the remaining balance back to #{card_grant.event.name}" %>
+          <%= render "card_grants/actions/need_more_money", card_grant: %>
+        <% else %>
+          <%= render "card_grants/actions/cancel", card_grant:, label: "Return the balance to #{card_grant.event.name}" %>
+        <% end %>
+        <%= render "card_grants/actions/support", card_grant: %>
+      <% elsif card_grant.user == current_user %>
+        <%= render "stripe_cards/actions/freeze", stripe_card: card_grant.stripe_card, variant: "control", label: "Pause spending instantly", subtitle: "You can unfreeze it yourself at any time" if card_grant.stripe_card.present? %>
+        <%= render "card_grants/actions/convert_to_reimbursement_report", card_grant:, variant: "control", label: "Get reimbursed", subtitle: "Swap the balance for a reimbursement" %>
+        <%= render "card_grants/actions/return", card_grant:, label: "I don’t need this money", subtitle: "Send the remaining balance back to #{card_grant.event.name}" %>
+        <%= render "card_grants/actions/need_more_money", card_grant: %>
+        <%= render "card_grants/actions/support", card_grant: %>
       <% end %>
-      <%= render "card_grants/actions/support", card_grant: %>
-    <% elsif card_grant.user == current_user %>
-      <%= render "stripe_cards/actions/freeze", stripe_card: card_grant.stripe_card if card_grant.stripe_card.present? %>
-      <%= render "card_grants/actions/convert_to_reimbursement_report", card_grant:, label: "Get reimbursed" %>
-      <%= render "card_grants/actions/return", card_grant: %>
-      <%= render "card_grants/actions/support", card_grant: %>
-    <% end %>
+    </div>
   </div>
 <% end %>
