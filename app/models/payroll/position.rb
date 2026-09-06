@@ -19,11 +19,13 @@
 #  title         :text             not null
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
+#  manager_id    :bigint
 #  payee_id      :bigint           not null
 #
 # Indexes
 #
-#  index_payroll_positions_on_payee_id  (payee_id)
+#  index_payroll_positions_on_manager_id  (manager_id)
+#  index_payroll_positions_on_payee_id    (payee_id)
 #
 # Foreign Keys
 #
@@ -39,6 +41,7 @@ module Payroll
     has_paper_trail
 
     belongs_to :payee
+    belongs_to :manager, optional: true, class_name: "User"
 
     delegate :display_name, to: :payee, prefix: true
 
@@ -93,6 +96,7 @@ module Payroll
     validate :end_date_after_start_date
     validate :start_date_within_set_lead_time
     validate :duration_within_set_max
+    validate :manager_is_event_manager
 
     aasm timestamps: true do
       state :under_review, initial: true
@@ -370,6 +374,12 @@ module Payroll
       return if start_date.blank? || end_date.blank?
 
       errors.add(:end_date, "cannot be more than 1 year after the start date") if end_date > start_date + MAX_DURATION
+    end
+
+    def manager_is_event_manager
+      if manager.present? && (manager.event != event || manager.role != "manager")
+        errors.add(:manager, "must be a manager of the event this position is for")
+      end
     end
 
   end
