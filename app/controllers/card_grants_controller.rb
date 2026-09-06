@@ -17,6 +17,11 @@ class CardGrantsController < ApplicationController
   def card_index
     authorize @event, :card_grant_overview?
 
+    unless turbo_frame_request?
+      redirect_to event_card_grant_overview_path(@event, request.query_parameters)
+      return
+    end
+
     # The search query name was historically `search`. It has since been renamed
     # to `q`. This following line retains backwards compatibility.
     params[:q] ||= params[:search]
@@ -24,8 +29,15 @@ class CardGrantsController < ApplicationController
     card_grants_page = (params[:page] || 1).to_i
     card_grants_per_page = safe_per(20)
 
+    status_options = CardGrant::FILTERABLE_STATES.map { |state, label| [label, state] }
+    @filter_options = [
+      { key: "status", label: "Status", type: "select", options: status_options }
+    ]
+    @has_filter = CardGrant::FILTERABLE_STATES.key?(params[:status])
+
     @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger, :reimbursement_report).order(created_at: :desc)
     @card_grants = @card_grants.search_for(params[:q]) if params[:q].present?
+    @card_grants = @card_grants.filter_by_state(params[:status])
     @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
   end
 
