@@ -100,10 +100,17 @@ export default class extends Controller {
         $(e.target).closest('.menu__content').length
       )
         return
+    }
 
-      this.content && this.content.remove()
-    } else {
-      this.content && this.content.remove()
+    if (this.content) {
+      const content = this.content
+      if (e?.type == 'click') {
+        // let turbo resolve the target frame before removing the link
+        content.style.display = 'none'
+        setTimeout(() => content.remove(), 0)
+      } else {
+        content.remove()
+      }
     }
 
     this.toggleTarget.setAttribute('aria-expanded', false)
