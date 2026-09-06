@@ -48,6 +48,9 @@ class Ledger
     pg_search_scope :search_memo, against: [:memo], ranked_by: "ledger_items.datetime"
 
     include Hashid::Rails
+    include PublicIdentifiable
+    set_public_id_prefix :lit
+
     has_paper_trail
 
     include Commentable
