@@ -75,6 +75,25 @@ class Comment < ApplicationRecord
     file.attached?
   end
 
+  # ActiveStorage attachments aren't tracked columns. This forces a version to be
+  # recorded when the attached file is changed.
+  def save_recording_file_change
+    return save unless attachment_changes["file"].present?
+    return false unless valid?
+
+    record_file_change_version!
+    true
+  end
+
+  def save!
+    return save! unless attachment_changes["file"].present?
+
+    raise ActiveRecord::RecordInvalid, self unless valid?
+
+    record_file_change_version!
+    true
+  end
+
   def reactions_by_emoji
     reactions.joins(:reactor)
              .select("comment_reactions.reactor_id, comment_reactions.emoji, users.*")
@@ -119,6 +138,17 @@ class Comment < ApplicationRecord
 
   def send_notification_email
     CommentMailer.with(comment: self).notification.deliver_later
+  end
+
+  # Forces a PaperTrail version even though the attachment change itself
+  # isn't visible to PaperTrail (it's a separate ActiveStorage table, not a
+  # tracked column), and tags it so the edit history can recognize it as a
+  # file change rather than a content edit.
+  def record_file_change_version!
+    version = paper_trail.save_with_version
+    return unless version
+
+    version.update_columns(object_changes: (version.object_changes || {}).merge("file" => [true, true]))
   end
 
 end

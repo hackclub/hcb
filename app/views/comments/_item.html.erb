@@ -73,6 +73,11 @@
               </div>
             </p>
           </li>
+        <% elsif version&.changeset&.[]("file")&.any? %>
+          <li class="mb2">
+            <%= version.whodunnit.nil? ? "Automatically " : user_mention(User.find(version.whodunnit)) %>
+            changed the attached file <%= time_ago_in_words version.created_at %> ago
+          </li>
         <% end %>
       <% end %>
       <% if comment.has_untracked_edit? %>

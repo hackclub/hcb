@@ -39,7 +39,7 @@ module Api
 
         authorize @comment, :set_admin_only? if @comment.admin_only?
 
-        @comment.save!
+        @comment.save_recording_file_change!
 
         render "show"
       end

@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe Api::V4::CommentsController do
   render_views
 
-  describe "#update" do
+  describe "#update", versioning: true do
     let(:event) { create(:event) }
     let(:hcb_code) { create(:disbursement, source_event: event).outgoing_disbursement.local_hcb_code }
     let(:comment) { create(:comment, commentable: hcb_code, user:, content: "Original content", admin_only: false) }
@@ -181,7 +181,7 @@ RSpec.describe Api::V4::CommentsController do
         authenticate_as(user)
       end
 
-      it "is ignored" do
+      it "attaches the file" do
         patch :update, params: {
           id: comment.public_id,
           content: "Edited content",
@@ -190,7 +190,32 @@ RSpec.describe Api::V4::CommentsController do
 
         expect(response).to have_http_status(:ok)
         expect(comment.reload.content).to eq("Edited content")
-        expect(comment.file).not_to be_attached
+        expect(comment.file).to be_attached
+        expect(response.parsed_body).to include("file" => rails_blob_url(comment.file))
+      end
+
+      it "replaces an existing attached file" do
+        comment.file.attach(io: File.open(Rails.root.join("spec/fixtures/files/attachment1.txt")), filename: "attachment1.txt", content_type: "text/plain")
+
+        patch :update, params: {
+          id: comment.public_id,
+          file: fixture_file_upload("attachment2.txt", "text/plain")
+        }, format: :json
+
+        expect(response).to have_http_status(:ok)
+        expect(comment.reload.file.filename.to_s).to eq("attachment2.txt")
+      end
+
+      it "marks the comment as edited even when the content is unchanged" do
+        expect(comment.edited?).to be false
+
+        patch :update, params: {
+          id: comment.public_id,
+          file: fixture_file_upload("attachment1.txt", "text/plain")
+        }, format: :json
+
+        expect(response).to have_http_status(:ok)
+        expect(comment.reload.edited?).to be true
       end
     end
 
