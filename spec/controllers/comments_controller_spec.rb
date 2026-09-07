@@ -3,6 +3,8 @@
 require "rails_helper"
 
 RSpec.describe CommentsController do
+  include SessionSupport
+
   context "models including Commentable" do
     it "are explicitly registered" do
       Rails.application.eager_load!
@@ -23,7 +25,7 @@ RSpec.describe CommentsController do
 
     before do
       create(:organizer_position, user:, event:)
-      sign_in user
+      create_session(user, verified: true)
     end
 
     it "allows attaching a new file to an existing comment" do

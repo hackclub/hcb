@@ -36,7 +36,7 @@ class CommentsController < ApplicationController
     @comment.assign_attributes(comment_params)
     authorize @comment
 
-    if @comment.save_recording_file_change
+    if @comment.save
       flash[:success] = "Comment successfully updated"
       # @commentable is not guaranteed to have a #show,
       # but all commentables effectively have a #show

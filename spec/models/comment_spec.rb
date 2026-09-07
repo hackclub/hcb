@@ -21,19 +21,19 @@ RSpec.describe Comment, type: :model, versioning: true do
     expect(comment.versions.size).to eq(2)
   end
 
-  describe "#save_recording_file_change" do
+  describe "#save" do
     it "is flagged as edited when only the attached file changes" do
       expect(comment.edited?).to be false
 
       comment.file.attach(io: File.open(Rails.root.join("spec/fixtures/files/attachment1.txt")), filename: "attachment1.txt", content_type: "text/plain")
-      comment.save_recording_file_change
+      comment.save
 
       expect(comment.reload.edited?).to be true
     end
 
     it "does not create an extra version when nothing changes" do
       expect(comment.versions.size).to eq(1)
-      comment.save_recording_file_change
+      comment.save
       expect(comment.versions.size).to eq(1)
     end
   end
