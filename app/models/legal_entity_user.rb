@@ -31,8 +31,8 @@ class LegalEntityUser < ApplicationRecord
   end
 
   def user_only_has_one_person_entity
-    if legal_entity.person? && LegalEntityUser.where(user:).excluding(self).any?
-      errors.add(:base, "Users can only have one person legal entity")
+    if legal_entity.person? && legal_entity.archived_at.nil? && LegalEntityUser.joins(:legal_entity).where(user:, legal_entity: { archived_at: nil, entity_type: "person" }).excluding(self).any?
+      errors.add(:base, "Users can only have one non-archived personal legal entity")
     end
   end
 

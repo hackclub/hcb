@@ -148,8 +148,6 @@
           </div>
           <%= form.submit "💸 Approve and automatically send transfer", data: { turbo_confirm: "This will automatically send the wire. You don't need to send it manually!" }, class: "mb-0" %>
         <% end %>
-        <hr>
-        <%= button_to "🔧 Approve and manually send transfer", approve_wire_path(@wire), method: :post, data: { turbo_confirm: "Have you manually sent this wire? This option requires you send this wire." } %>
       </fieldset>
 
       <fieldset class="px-6 py-3">

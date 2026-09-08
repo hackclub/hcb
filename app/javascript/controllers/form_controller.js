@@ -1,11 +1,20 @@
 import { Controller } from '@hotwired/stimulus'
 import gsap from 'gsap'
+import { debounce } from 'lodash/function'
 
 export default class extends Controller {
   static targets = ['form']
 
+  connect() {
+    this.debouncedSubmit = debounce(() => this.form.requestSubmit(), 300)
+  }
+
   submit() {
     this.form.requestSubmit()
+  }
+
+  submitDebounced() {
+    this.debouncedSubmit()
   }
 
   reset() {

@@ -9,7 +9,7 @@
 #  banned_merchants                  :string
 #  block_suspected_fraud             :boolean          default(TRUE), not null
 #  category_lock                     :string
-#  expiration_preference             :integer          default("1 year"), not null
+#  expiration_preference             :integer          default(365), not null
 #  invite_message                    :string
 #  keyword_lock                      :string
 #  merchant_lock                     :string

@@ -28,7 +28,7 @@ class Donation
 
     belongs_to :event
 
-    validates :amount_cents, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+    validates :amount_cents, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, integer_column: true
     validates :tracking_since, presence: true
 
     validates_uniqueness_of_without_deleted :event_id

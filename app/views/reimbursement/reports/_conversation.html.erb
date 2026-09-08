@@ -80,7 +80,7 @@
             </li>
           <% end %>
         <% else %>
-          <% changes = item.changeset.excluding("updated_at", "conversion_rate").select { |field, changes| changes.any?(&:present?) } %>
+          <% changes = item.changeset.excluding("updated_at", "conversion_rate", "legal_entity_payout_method_id").select { |field, changes| changes.any?(&:present?) } %>
           <% unless item.event == "update" && changes.empty? %>
             <li class="conversation_item mt2" style="margin-bottom: 24px;">
               <div class="flex flex-row items-center" style="gap: 16px">

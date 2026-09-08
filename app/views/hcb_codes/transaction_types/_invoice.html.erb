@@ -38,7 +38,7 @@
   <div class="banner banner--archived mt3">
     <span class="bold block mb1">This invoice was archived by <%= user_mention @invoice.archived_by %> on <%= format_date @invoice.archived_at %>.</span>
     <span class="block">It will only display in the Archived tab<span class="xs-hide"> on the Invoices page</span>.</span>
-    <span>You can <%= link_to "un-archive it", invoice_unarchive_path(@invoice), method: :post %>.</span>
+    <span>You can <%= link_to "un-archive it", invoice_unarchive_path(@invoice), data: { turbo_method: :post } %>.</span>
   </div>
 <% end %>
 
@@ -95,7 +95,7 @@
     <% if @invoice.personal_transaction.present? %>
       <p>
         <strong>Repayment for</strong>
-        <%= link_to @invoice.personal_transaction.hcb_code.memo, @invoice.personal_transaction.hcb_code, data: { turbo_frame: "_top" } %>
+        <%= link_to @invoice.personal_transaction.ledger_item.memo, @invoice.personal_transaction.ledger_item.hcb_code, data: { turbo_frame: "_top" } %>
       </p>
     <% end %>
     <p>
@@ -174,16 +174,20 @@
   </section>
 
   <section class="card__banner border-top flex flex-wrap">
-    <%= link_to "Void",
-      invoice_void_path(@invoice.id),
-      disabled: !organizer_signed_in?,
-      data: { turbo_method: :post, turbo_confirm: "Are you sure you want to void this invoice? Voided invoices can not be paid and this action cannot be undone.", turbo_confirm_danger: true },
-      class: "btn bg-error mr1 right" if @invoice.open_v2? && InvoicePolicy.new(@user, @invoice).void? %>
-    <%= link_to (@invoice.archived? ? "Un-archive" : "Archive"),
-      (@invoice.archived? ? invoice_unarchive_path(@invoice) : invoice_archive_path(@invoice)),
-      disabled: !organizer_signed_in?,
-      method: :post,
-      class: "btn bg-muted" unless @invoice.void_v2? || InvoicePolicy.new(@user, @invoice).archive? %>
+    <% if @invoice.open_v2? && policy(@invoice).void? %>
+      <%= link_to "Void",
+        invoice_void_path(@invoice.id),
+        disabled: !organizer_signed_in?,
+        data: { turbo_method: :post, turbo_confirm: "Are you sure you want to void this invoice? Voided invoices can not be paid and this action cannot be undone.", turbo_confirm_danger: true },
+        class: "btn bg-error mr1 right" %>
+    <% end %>
+    <% if !@invoice.void_v2? && policy(@invoice).archive? %>
+      <%= link_to (@invoice.archived? ? "Un-archive" : "Archive"),
+        (@invoice.archived? ? invoice_unarchive_path(@invoice) : invoice_archive_path(@invoice)),
+        disabled: !organizer_signed_in?,
+        data: { turbo_method: :post },
+        class: "btn bg-muted" %>
+    <% end %>
     <%= link_to organizer_signed_in? ? invoice_hosted_path(@invoice.hashid) : root_path,
       disabled: !organizer_signed_in?,
       class: "btn bg-accent ml-auto",

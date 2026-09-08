@@ -1,5 +1,7 @@
-<% if !organizer_signed_in? && @event&.is_public && !@event&.public_message.blank? %>
+<%# locals: (event:) %>
+
+<% if !organizer_signed_in? && event.is_public && !event.public_message.blank? %>
   <section class="card border b--info mt2 mb2 pb0 pt0 public-message">
-    <%= MarkdownService.instance.render(@event.public_message) %>
+    <%= MarkdownService.instance.render(event.public_message) %>
   </section>
 <% end %>

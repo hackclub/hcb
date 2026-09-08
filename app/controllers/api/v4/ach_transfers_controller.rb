@@ -21,7 +21,7 @@ module Api
           :file,
         ]
 
-        if current_user&.admin?
+        if can_admin?(:write)
           permitted_params << :scheduled_on
         end
 

@@ -122,7 +122,10 @@ module Users
         @user.creation_method = :first_robotics_form
         @user.save!
 
-        current_session.referral_attributions.where(user_id: nil).find_each do |attribution|
+        # An anonymous visitor only has a session if they arrived via a
+        # referral link (see Referral::LinksController#show). No session means
+        # no clicks to attribute, so there is nothing to transfer.
+        current_session&.referral_attributions&.where(user_id: nil)&.find_each do |attribution|
           attribution.update!(user: @user)
         end
 
@@ -138,7 +141,13 @@ module Users
 
       @user = User.find_by!(email: user_params[:email])
 
-      current_session.referral_attributions.where(user_id: nil).find_each do |attribution|
+      if Rails.cache.increment("login:#{@user.id}", 1, expires_in: 1.hour).to_i > 10
+        flash.now[:error] = "You're creating too many logins. Please try again later."
+        render :new, status: :unprocessable_content
+        return
+      end
+
+      current_session&.referral_attributions&.where(user_id: nil)&.find_each do |attribution|
         attribution.update!(user: @user)
       end
 
@@ -148,9 +157,9 @@ module Users
 
       redirect_to choose_login_preference_login_path(@login)
     rescue ActiveRecord::RecordInvalid => e
-      flash[:error] = e.message
+      flash.now[:error] = e.record.errors.full_messages.to_sentence
 
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
 
     def macbook_qr_code

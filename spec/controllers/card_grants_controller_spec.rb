@@ -6,6 +6,31 @@ RSpec.describe CardGrantsController do
   include SessionSupport
   render_views
 
+  describe "read-only grant settings" do
+    it "allows members to view, but not edit, grant settings" do
+      member = create(:user)
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user: member, event:, role: :member)
+      card_grant = create(:card_grant, event:)
+      create_session(member, verified: true)
+
+      get(:edit_purpose, params: { event_id: event.friendly_id, id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.at_css("[name='card_grant[purpose]']")["disabled"]).to eq("disabled")
+      expect(response.parsed_body.at_css("[value='Save']")["disabled"]).to eq("disabled")
+
+      original_purpose = card_grant.purpose
+      patch(:update, params: {
+              id: card_grant.hashid,
+              card_grant: { purpose: "Updated purpose" }
+            })
+
+      expect(flash[:error]).to match(/not authorized/i)
+      expect(card_grant.reload.purpose).to eq(original_purpose)
+    end
+  end
+
   describe "#new" do
     it "renders successfully" do
       user = create(:user)
@@ -35,6 +60,41 @@ RSpec.describe CardGrantsController do
       expect(event.reload.card_grant_setting).to be_present
       input = response.parsed_body.css("[name='card_grant[email]']").sole
       expect(input.get_attribute("value")).to eq("orpheus@hackclub.com")
+    end
+  end
+
+  describe "#card_index" do
+    def create_grant(event:, full_name:, email:)
+      user = create(:user, full_name:, email:)
+      create(:card_grant, event:, user:, email:, purpose: "Pizza")
+    end
+
+    def search(event, query)
+      get(:card_index, params: { event_id: event.friendly_id, q: query })
+      expect(response).to have_http_status(:ok)
+      response.parsed_body.css("a[href*='/spending']").map { |a| a["href"] }
+    end
+
+    it "lets organizers search by email and full name" do
+      organizer = create(:user)
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user: organizer, event:, role: :member)
+      card_grant = create_grant(event:, full_name: "Orpheus Dinosaur", email: "orpheus@hackclub.com")
+      create_session(organizer, verified: true)
+
+      expect(search(event, "orpheus@hackclub.com")).to eq([spending_card_grant_path(card_grant)])
+      expect(search(event, "Dinosaur")).to eq([spending_card_grant_path(card_grant)])
+    end
+
+    it "doesn't let non-organizers search by email or full name" do
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      card_grant = create_grant(event:, full_name: "Orpheus Dinosaur", email: "orpheus@hackclub.com")
+
+      expect(search(event, "orpheus@hackclub.com")).to be_empty
+      expect(search(event, "Dinosaur")).to be_empty
+
+      # ...but they can still search over what the page shows them.
+      expect(search(event, "Pizza")).to eq([spending_card_grant_path(card_grant)])
     end
   end
 
@@ -95,7 +155,7 @@ RSpec.describe CardGrantsController do
       )
 
       expect(event.card_grants).to be_empty
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(flash[:error]).to eq("Purpose is too long (maximum is 30 characters)")
     end
 
@@ -118,7 +178,7 @@ RSpec.describe CardGrantsController do
       )
 
       expect(event.card_grants).to be_empty
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(flash[:error]).to eq("You don't have enough money to make this disbursement.")
     end
   end

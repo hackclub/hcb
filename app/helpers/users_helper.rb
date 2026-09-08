@@ -61,7 +61,17 @@ module UsersHelper
       selected: selected == :reimbursements
     }
 
-    if current_user&.jobs&.any?
+    if current_user&.payments_received&.any? || current_user&.payroll_positions&.any?
+      items << {
+        name: "Pay",
+        path: my_pay_path,
+        icon: "payment",
+        tooltip: "See payments made to you",
+        selected: selected == :pay
+      }
+    end
+
+    if current_user&.jobs&.any? # Deprecated
       items << {
         name: "Pay",
         path: my_payroll_path,
@@ -162,6 +172,17 @@ module UsersHelper
     image_tag(src, options.merge(loading: "lazy", alt:, width: size, height: size, class: klass))
   end
 
+  def avatar_for_email(email, **options)
+    user = User.find_by(email:)
+    if user
+      avatar_for(user, **options)
+    else
+      size = options[:size] || 24
+      src = gravatar_url(email, nil, nil, size * 2)
+      image_tag(src, options.merge(loading: "lazy", alt: "", class: ["rounded-full", "shrink-none", options[:class]].compact.join(" ")))
+    end
+  end
+
   def user_mention(user, default_name: "No User", click_to_mention: false, comment_mention: false, default_image: nil, **options)
     name = content_tag :span, (user&.initial_name || default_name)
     viewer = defined?(current_user) ? current_user : nil
@@ -213,15 +234,15 @@ module UsersHelper
                                content_tag(
                                  :span,
                                  safe_join([inline_icon("email", size: 16), content_tag(:span, "Email", class: "ml1")]),
-                                 onclick: "window.open('mailto:#{user.email}'); return false;",
-                                 class: "menu__item menu__item--icon menu__action", rel: "noopener"
+                                 class: "menu__item menu__item--icon menu__action", rel: "noopener",
+                                 data: { action: "click->mention#sendEmail" }
                                ),
                                #  copy to clipboard
                                content_tag(
                                  :span,
                                  safe_join([inline_icon("copy", size: 16), content_tag(:span, "Copy email", class: "ml1")]),
-                                 onclick: "navigator.clipboard.writeText('#{user.email}');alert('Copied!'); return false;",
-                                 class: "menu__item menu__item--icon menu__action", rel: "noopener"
+                                 class: "menu__item menu__item--icon menu__action", rel: "noopener",
+                                 data: { action: "click->mention#copyEmail" }
                                ),
                                content_tag(
                                  :span,
@@ -240,7 +261,7 @@ module UsersHelper
         :span,
         menu_items,
         class: "menu__content menu__content--2 menu__content--compact h5",
-        data: { "menu-target": "content" }
+        data: { "menu-target": "content", "controller": "mention", "mention-email-value": user.email }
       )
 
       menu_wrapper = content_tag(
