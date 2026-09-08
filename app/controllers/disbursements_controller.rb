@@ -82,13 +82,12 @@ class DisbursementsController < ApplicationController
     # event preference, keeping the relation's existing order as a tiebreaker.
     order_clauses = []
     if q.present?
-      order_clauses << Arel.sql(
-        ActiveRecord::Base.sanitize_sql_array([
-          "CASE WHEN LOWER(name) = LOWER(:exact) OR LOWER(slug) = LOWER(:exact) THEN 0 " \
-          "WHEN name ILIKE :prefix OR slug ILIKE :prefix THEN 1 ELSE 2 END",
-          { exact: q, prefix: "#{q}%" }
-        ])
+      relevance = ActiveRecord::Base.sanitize_sql_array(
+        ["CASE WHEN LOWER(name) = LOWER(:exact) OR LOWER(slug) = LOWER(:exact) THEN 0 " \
+         "WHEN name ILIKE :prefix OR slug ILIKE :prefix THEN 1 ELSE 2 END",
+         { exact: q, prefix: "#{q}%" }]
       )
+      order_clauses << Arel.sql(relevance)
     end
     if user_event_ids.any?
       ids = user_event_ids.map(&:to_i).join(", ")
