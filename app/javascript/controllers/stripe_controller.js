@@ -2,6 +2,7 @@
 
 import { Controller } from '@hotwired/stimulus'
 import { loadStripe } from '@stripe/stripe-js'
+import swal from 'sweetalert'
 
 import themes from '../common/stripeThemes'
 
@@ -56,7 +57,7 @@ export default class extends Controller {
           }
           this.errorsTarget.appendChild(flash)
         } else {
-          alert(result.error.message)
+          swal('Payment error', result.error.message, 'error')
         }
       }
     }

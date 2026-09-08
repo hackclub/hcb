@@ -80,7 +80,7 @@ module HcbCodeService
         { weight: 0.2, value: transaction.local_hcb_code.hcb_i1 == hcb_type }, # same tx type
         { weight: 0.5, value: transaction.amount_cents.positive? == hcb_amount_sign }, # same sign
         { weight: 0.1, value: transaction.amount_cents == hcb_amount }, # same amount
-        { weight: 0.3, value: transaction.date.to_time.to_f / Time.now.to_i }, # most recent
+        { weight: 0.3, value: transaction.date.beginning_of_day.to_f / Time.now.to_i }, # most recent
         { weight: 0.05, value: (/\p{Emoji}/ =~ transaction.custom_memo.first).present? }, # bias emoji
         { weight: 0.3, value: compare_linked.call(
           Invoice,

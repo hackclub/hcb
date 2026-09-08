@@ -103,6 +103,7 @@ FriendlyId.defaults do |config|
     mobile
     deprecated
     apply
+    applications
     maintenance_tasks
     org
   ]

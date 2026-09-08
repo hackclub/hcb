@@ -5,7 +5,7 @@
 # Table name: logins
 #
 #  id                       :bigint           not null, primary key
-#  aasm_state               :string
+#  aasm_state               :string           not null
 #  authentication_factors   :jsonb
 #  browser_token_ciphertext :text
 #  is_reauthentication      :boolean          default(FALSE), not null

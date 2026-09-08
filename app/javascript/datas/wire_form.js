@@ -6,6 +6,7 @@ export default ({ payment_recipient, editing, country }) => ({
     this.$watch('payment_recipient', rec => {
       if (rec) {
         this.editing = false
+        this.country = rec.recipient_country || null
         this.$refs.name_input.value = rec.name
       }
     })
@@ -25,6 +26,7 @@ export default ({ payment_recipient, editing, country }) => ({
             this.payment_recipient.address_state
           document.getElementById('wire_recipient_country').value =
             this.payment_recipient.recipient_country
+          this.country = this.payment_recipient.recipient_country || null
           document.getElementById('wire_address_postal_code').value =
             this.payment_recipient.address_postal_code
           document.getElementById('wire_bic_code').value =

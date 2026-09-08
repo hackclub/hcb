@@ -256,7 +256,7 @@ RSpec.describe CardGrantService::BulkCreate do
             csv_file: csv_file_from_content(csv_content),
             sent_by:
           ).run
-        }.to raise_error(ActiveModel::RangeError)
+        }.to raise_error(ActiveRecord::RecordInvalid, /Amount cents is too big/)
 
         expect(CardGrant.count).to eq(initial_count)
       end

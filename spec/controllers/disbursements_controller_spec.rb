@@ -163,4 +163,20 @@ RSpec.describe DisbursementsController do
       expect(disbursement.destination_transaction_category.slug).to eq("rent")
     end
   end
+
+  describe "#show" do
+    it "renders and resolves the comment thread HcbCode via the outgoing hcb_code" do
+      auditor = create(:user, :make_auditor)
+      disbursement = create(:disbursement)
+
+      create_session(auditor, verified: true)
+
+      get(:show, params: { id: disbursement.id })
+
+      expect(response).to have_http_status(:ok)
+      # The show action find-or-creates the comment thread's HcbCode from the
+      # outgoing hcb_code (the legacy `hcb_code` alias was removed).
+      expect(HcbCode.exists?(hcb_code: disbursement.outgoing_hcb_code)).to be(true)
+    end
+  end
 end

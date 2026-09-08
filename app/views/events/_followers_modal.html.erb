@@ -15,6 +15,7 @@
                             turbo_frame: "_top",
                             turbo_method: :delete,
                             turbo_confirm: "Are you sure you want to remove this follower?",
+                            turbo_confirm_danger: true,
                           },
                           disabled: !policy(event_follow).destroy? %>
         </span>

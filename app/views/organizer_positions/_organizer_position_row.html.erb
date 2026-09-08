@@ -44,7 +44,7 @@
                   <%= inline_icon("clock", size: 24) %>
                 </div>
                 <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
-                  <%= link_to void_contract_path(organizer_position.fiscal_sponsorship_contract), data: { turbo_confirm: "Are you sure you want to void this contract?", turbo_method: :post } do %>
+                  <%= link_to void_contract_path(organizer_position.fiscal_sponsorship_contract), data: { turbo_confirm: "Are you sure you want to void this contract?", turbo_method: :post, turbo_confirm_danger: true } do %>
                     Void this contract
                   <% end %>
                   <% organizer_position.fiscal_sponsorship_contract.parties.reject { |party| party.role == "hcb" }.each do |party| %>

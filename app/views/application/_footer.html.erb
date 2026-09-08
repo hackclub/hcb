@@ -7,8 +7,8 @@
   </p>
 
   <% if !Rails.env.production? || auditor_signed_in? %>
-    <% @sql_count = QueryCount::Counter.counter %>
-    <% @sql_cached_count = QueryCount::Counter.counter_cache %>
+    <% @sql_cached_count = ActiveRecord::RuntimeRegistry.stats.cached_queries_count %>
+    <% @sql_count = ActiveRecord::RuntimeRegistry.stats.queries_count - @sql_cached_count %>
     <p class="text-center text-xs">
       Loaded using <%= @sql_count %> unique
       SQL <%= "query".pluralize @sql_count %> (+ <%= @sql_cached_count %>

@@ -5,7 +5,7 @@
 # Table name: suggested_pairings
 #
 #  id          :bigint           not null, primary key
-#  aasm_state  :string
+#  aasm_state  :string           not null
 #  accepted_at :datetime
 #  distance    :float
 #  ignored_at  :datetime

@@ -13,7 +13,7 @@
         </div>
       </button>
     <% else %>
-      <%= link_to card_grant.setting.support_url, target: "_blank", class: "btn bg-info btn--list-item" do %>
+      <%= link_to card_grant.setting.support_url, target: "_blank", class: "btn btn--list-item" do %>
         <% if card_grant.setting.slack_support? %>
           <%= inline_icon "slack" %>
         <% elsif card_grant.setting.email_support? %>

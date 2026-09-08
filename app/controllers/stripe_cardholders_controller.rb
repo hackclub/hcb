@@ -18,7 +18,7 @@ class StripeCardholdersController < ApplicationController
     if @stripe_cardholder.save
       redirect_to event_stripe_cards_new_path(event_id: @event.slug, stripe_cardholder_id: @stripe_cardholder.id)
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -40,7 +40,7 @@ class StripeCardholdersController < ApplicationController
     if @stripe_cardholder.update(stripe_cardholder_params)
       redirect_back(fallback_location: root_path)
     else
-      render "users/edit", status: :unprocessable_entity
+      render "users/edit", status: :unprocessable_content
     end
   end
 

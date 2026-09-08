@@ -32,7 +32,15 @@ class LoginsController < ApplicationController
 
     @user = User.create_with(creation_method: @login.for_application? ? :application_form : :login).find_or_create_by!(email: params[:email])
 
-    current_session.referral_attributions.each do |attribution|
+    if Rails.cache.increment("login:#{@user.id}", 1, expires_in: 1.hour).to_i > 10
+      flash[:error] = "You're creating too many logins. Please try again later."
+      return redirect_to auth_users_path
+    end
+
+    # An anonymous visitor only has a session if they arrived via a referral
+    # link (see Referral::LinksController#show). No session means no clicks to
+    # attribute, so there is nothing to transfer.
+    current_session&.referral_attributions&.each do |attribution|
       attribution.update!(user: @user)
     end
 
@@ -42,6 +50,9 @@ class LoginsController < ApplicationController
     cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
 
     continue_login(preference: login_preference || :email)
+  rescue ActiveRecord::RecordInvalid => e
+    flash[:error] = e.record.errors.full_messages.to_sentence
+    return redirect_to auth_users_path
   rescue => e
     flash[:error] = e.message
     return redirect_to auth_users_path
@@ -74,11 +85,20 @@ class LoginsController < ApplicationController
       return redirect_to auth_users_path
     end
 
-    render status: :unprocessable_entity
+    render status: :unprocessable_content
   end
 
   # post to request sms login code
   def sms
+    # The UI only offers SMS for verified numbers; `continue_login` never
+    # routes here otherwise. A request for an unverified number is a script
+    # POSTing directly, spending a Twilio message on a number nobody has
+    # proven they hold.
+    unless @login.sms_available?
+      flash[:error] = "SMS login isn't available for this account."
+      return redirect_to auth_users_path
+    end
+
     resp = LoginCodeService::Request.new(email: @email, sms: true, ip_address: request.remote_ip, user_agent: request.user_agent).run
 
     if resp[:error].present?
@@ -86,12 +106,12 @@ class LoginsController < ApplicationController
       return redirect_to auth_users_path
     end
 
-    render status: :unprocessable_entity
+    render status: :unprocessable_content
   end
 
   # get to see totp page
   def totp
-    render status: :unprocessable_entity
+    render status: :unprocessable_content
   end
 
   def complete
@@ -119,7 +139,7 @@ class LoginsController < ApplicationController
 
       unless ok
         flash.now[:error] = service.errors.full_messages.to_sentence
-        render(:sms, status: :unprocessable_entity)
+        render(:sms, status: :unprocessable_content)
         return
       end
     when "email"
@@ -130,7 +150,7 @@ class LoginsController < ApplicationController
 
       unless ok
         flash.now[:error] = service.errors.full_messages.to_sentence
-        render(:email, status: :unprocessable_entity)
+        render(:email, status: :unprocessable_content)
         return
       end
     when "totp"
@@ -243,7 +263,13 @@ class LoginsController < ApplicationController
           redirect_to auth_users_path
         end
       elsif session[:auth_email]
-        @login = User.find_by_email(session[:auth_email]).logins.create
+        @login_user = User.find_by_email(session[:auth_email])
+        if @login_user && Rails.cache.increment("login:#{@login_user.id}", 1, expires_in: 1.hour).to_i > 10
+          flash[:error] = "You're creating too many logins. Please try again later."
+          return redirect_to auth_users_path
+        end
+
+        @login = @login_user.logins.create
         cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
       else
         flash[:error] = "Please try again."

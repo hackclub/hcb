@@ -2,6 +2,29 @@
 
 module ApplicationHelper
   include ActionView::Helpers
+  include LocalTimeHelper
+
+  include DonationsHelper
+  include EmburseCardsHelper
+  include EventsHelper
+  include GSuitesHelper
+  include HcbCodeHelper
+  include InvoicesHelper
+  include LoginsHelper
+  include LogoHelper
+  include OrganizerPosition::Spending::AllowancesHelper
+  include PayeesHelper
+  include PopoverHelper
+  include ReceiptsHelper
+  include SeasonalHelper
+  include SessionsHelper
+  include StaticPagesHelper
+  include StripeAuthorizationsHelper
+  include StripeCardsHelper
+  include TagsHelper
+  include ToursHelper
+  include TurboStreamActionsHelper
+  include UsersHelper
 
   def upsert_query_params(**new_params)
     params = request.query_parameters || {}
@@ -98,10 +121,6 @@ module ApplicationHelper
     content_tag :span, "", class: "status bg-#{type}"
   end
 
-  def status_if(type, condition)
-    status_badge(type) if condition
-  end
-
   def pop_icon_to(icon, url, icon_size: 28, **options)
     link_to url, options.merge(class: "pop #{options[:class] || ""}") do
       inline_icon icon, size: icon_size
@@ -171,14 +190,6 @@ module ApplicationHelper
     content_tag :span, "#{options[:prefix]}#{time_ago_in_words time} ago#{options[:suffix]}", options.merge(title: time)
   end
 
-  def auto_link_new_tab(text)
-    auto_link(text, html: { target: "_blank" })
-  end
-
-  def debug_obj(item)
-    content_tag :pre, pp(item.attributes.to_yaml)
-  end
-
   def inline_icon(filename, **options)
     # cache parsed SVG files to reduce file I/O operations
     @icon_svg_cache ||= {}
@@ -223,12 +234,6 @@ module ApplicationHelper
     end
     options.each { |key, value| svg[key.to_s] = value }
     doc.to_html.html_safe
-  end
-
-  def anchor_link(id)
-    link_to "##{id}", class: "absolute top-0 -left-8 transition-opacity opacity-0 group-hover/summary:opacity-100 group-target/item:opacity-100 anchor-link tooltipped tooltipped--s", 'aria-label': "Copy link", data: { turbo: false, controller: "clipboard", clipboard_text_value: url_for(only_path: false, anchor: id), action: "clipboard#copy" } do
-      inline_icon "link", size: 28
-    end
   end
 
   def help_message
@@ -343,18 +348,6 @@ module ApplicationHelper
     JSON.pretty_generate(obj.as_json)
   end
 
-  def airtable_form(id, params = {}, hide = [])
-    query = {}
-    params.each do |key, value|
-      query["prefill_#{key}"] = value
-    end
-    hide.each do |field|
-      query["hide_#{field}"] = "true"
-    end
-
-    "https://airtable.com/#{id}?#{URI.encode_www_form(query)}"
-  end
-
   def fillout_form(id, params = {}, prefix: "")
     query = params.transform_keys { |k| prefix + k }
     "https://forms.hackclub.com/t/#{id}?#{URI.encode_www_form(query)}"
@@ -388,7 +381,7 @@ module ApplicationHelper
   end
 
   def error_boundary(fallback: nil, fallback_text: nil, ignored_errors: [], &block)
-    block.call
+    capture(&block)
   rescue => e
     Rails.error.report(e) unless e.in?(ignored_errors)
 
@@ -443,6 +436,29 @@ module ApplicationHelper
         end
       end)
     end
+  end
+
+  # Functions as a link_to that shows text on larger screens and just the icon on smaller screens
+  def responsive_link_to(href, text:, icon:, **options)
+    text_class = "#{options[:class]} hidden md:flex"
+    icon_class = "#{options[:class]} flex md:hidden"
+    safe_join([
+                link_to(text, href, options.merge(class: text_class)),
+                link_to(href, options.merge(class: icon_class)) do
+                  inline_icon icon, class: "!m-0"
+                end
+              ])
+  end
+
+  def mobile_button_to(href, text:, icon:, **options)
+    text_form_class = "#{options[:form_class]} hidden md:flex"
+    icon_form_class = "#{options[:form_class]} flex md:hidden"
+    safe_join([
+                button_to(text, href, options.merge(form_class: text_form_class)),
+                button_to(href, options.merge(form_class: icon_form_class)) do
+                  inline_icon icon, class: "!m-0"
+                end
+              ])
   end
 
 end

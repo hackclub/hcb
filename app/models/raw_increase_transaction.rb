@@ -8,12 +8,12 @@
 #  amount_cents            :integer
 #  date_posted             :date
 #  description             :text
-#  increase_route_type     :text
 #  increase_transaction    :jsonb
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
 #  increase_account_id     :text
 #  increase_route_id       :text
+#  increase_route_type     :text
 #  increase_transaction_id :text
 #
 # Indexes

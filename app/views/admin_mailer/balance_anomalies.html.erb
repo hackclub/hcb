@@ -1,0 +1,15 @@
+These events have discrepancies in their balances between the old and new transaction engine:
+
+<% @anomalous_events.each do |anomaly| %>
+  <h2><%= link_to anomaly[:name], event_url(anomaly[:slug]) %> (<%= anomaly[:id] %>)</h2>
+  <p><%= link_to "OLD balance_v2_cents:", event_transactions_url(anomaly[:slug]) %> <%= anomaly[:balance_v2_cents] %></p>
+  <p><%= link_to "NEW ledger.balance_cents (sum of ledger items):", event_ledger_url(anomaly[:slug]) %> <%= anomaly[:ledger_balance_cents] %></p>
+<% end %>
+
+These card grants have discrepancies in their balances between the old and new transaction engine:
+
+<% @anomalous_card_grants.each do |anomaly| %>
+  <h2><%= link_to anomaly[:name], card_grant_url(anomaly[:hashid]) %> (<%= anomaly[:id] %>)</h2>
+  <p><%= link_to "OLD subledger.balance_cents:", card_grant_url(anomaly[:hashid]) %> <%= anomaly[:card_grant_balance_cents] %></p>
+  <p><%= link_to "NEW ledger.balance_cents (sum of ledger items):", card_grant_url(anomaly[:hashid]) %> <%= anomaly[:ledger_balance_cents] %></p>
+<% end %>

@@ -18,7 +18,7 @@
 #  one_time_use               :boolean
 #  pre_authorization_required :boolean          default(FALSE), not null
 #  purpose                    :string
-#  status                     :integer          default("active"), not null
+#  status                     :integer          default(0), not null
 #  created_at                 :datetime         not null
 #  updated_at                 :datetime         not null
 #  disbursement_id            :bigint
@@ -104,14 +104,15 @@ class CardGrant < ApplicationRecord
   serialize :banned_categories, coder: CommaSeparatedCoder
 
   validates_presence_of :amount_cents, :email
-  validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, on: :create
+  validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, on: :create, integer_column: true
 
   MAXIMUM_PURPOSE_LENGTH = 30
   validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
 
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
-  scope :search_for, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
+  scope :search, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
+  scope :public_search, ->(q) { joins(:user).where("users.preferred_name ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
   scope :expired_before, ->(date) { where("card_grants.expiration_at < ?", date) }
   scope :expires_on, ->(date) { where("card_grants.expiration_at = DATE(?)", date) }
 
@@ -136,6 +137,8 @@ class CardGrant < ApplicationRecord
   def state_text
     if suspected_fraud?
       "Fraudulent"
+    elsif converted_to_reimbursement_report?
+      "Converted to reimbursement"
     elsif canceled?
       "Canceled"
     elsif expired?
@@ -156,6 +159,10 @@ class CardGrant < ApplicationRecord
     return :warning if s == :info
 
     :muted
+  end
+
+  def converted_to_reimbursement_report?
+    canceled? && reimbursement_report.present?
   end
 
   def suspected_fraud?
@@ -180,12 +187,13 @@ class CardGrant < ApplicationRecord
         amount: amount_cents / 100.0,
         destination_subledger_id: subledger_id,
         requested_by_id: topped_up_by.id,
-        source_transaction_category_slug: "grants-stipends",
-        destination_transaction_category_slug: "grants-stipends",
+        source_transaction_category_slug: "grants",
+        destination_transaction_category_slug: "grants",
         category_assignment_strategy: "automatic"
       ).run
 
-      disbursement.local_hcb_code.update_custom_memo!(custom_memo)
+      disbursement.incoming_disbursement.local_hcb_code.update_custom_memo!(custom_memo)
+      disbursement.outgoing_disbursement.local_hcb_code.update_custom_memo!(custom_memo)
     end
   end
 
@@ -204,12 +212,13 @@ class CardGrant < ApplicationRecord
         amount: amount_cents / 100.0,
         source_subledger_id: subledger_id,
         requested_by_id: withdrawn_by.id,
-        source_transaction_category_slug: "grants-stipends",
-        destination_transaction_category_slug: "grants-stipends",
+        source_transaction_category_slug: "grants",
+        destination_transaction_category_slug: "grants",
         category_assignment_strategy: "automatic"
       ).run
 
-      disbursement.local_hcb_code.update_custom_memo!(custom_memo)
+      disbursement.incoming_disbursement.local_hcb_code.update_custom_memo!(custom_memo)
+      disbursement.outgoing_disbursement.local_hcb_code.update_custom_memo!(custom_memo)
     end
   end
 
@@ -243,11 +252,12 @@ class CardGrant < ApplicationRecord
       amount: balance.amount,
       source_subledger_id: subledger_id,
       requested_by_id: requested_by.id,
-      source_transaction_category_slug: "grants-stipends",
-      destination_transaction_category_slug: "grants-stipends",
+      source_transaction_category_slug: "grants",
+      destination_transaction_category_slug: "grants",
       category_assignment_strategy: "automatic"
     ).run
-    disbursement.local_hcb_code.update_custom_memo!(custom_memo)
+    disbursement.incoming_disbursement.local_hcb_code.update_custom_memo!(custom_memo)
+    disbursement.outgoing_disbursement.local_hcb_code.update_custom_memo!(custom_memo)
   end
 
   def cancel!(canceled_by = User.system_user, expired: false)
@@ -356,8 +366,8 @@ class CardGrant < ApplicationRecord
       amount: amount.amount,
       requested_by_id: sent_by_id,
       destination_subledger_id: subledger_id,
-      source_transaction_category_slug: "grants-stipends",
-      destination_transaction_category_slug: "grants-stipends",
+      source_transaction_category_slug: "grants",
+      destination_transaction_category_slug: "grants",
       category_assignment_strategy: "automatic"
     ).run
     save!

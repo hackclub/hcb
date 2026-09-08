@@ -24,8 +24,11 @@ services:
       - redis
     environment:
       REDIS_URL: redis://redis:6379
+      # Inside the container Rails must listen on all interfaces so Docker can
+      # forward the published port; the host mapping below controls exposure.
+      WEB_BIND: 0.0.0.0
     ports:
-      - 3000:3000
+      - 127.0.0.1:3000:3000
 
 volumes:
   pg-data:

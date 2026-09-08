@@ -30,6 +30,14 @@ class OrganizerPositionDeletionRequestPolicy < ApplicationPolicy
     user.admin?
   end
 
+  def assign?
+    user.admin?
+  end
+
+  def unassign?
+    user.admin?
+  end
+
   private
 
   def user_in_event?

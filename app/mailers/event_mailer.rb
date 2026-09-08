@@ -65,10 +65,12 @@ class EventMailer < ApplicationMailer
   end
 
   def transparency_mode_enabled
+    @can_disable_transparency = !@event.forced_transparency?
     mail to: @emails, subject: "#{@event.name} has enabled transparency mode"
   end
 
   def transparency_mode_disabled
+    @can_enable_transparency = @event.eligible_for_transparency?
     @visible_pages = []
     @visible_pages << { name: "donation page", link: start_donation_donations_url(@event) } if @event.donation_page_available?
     @visible_pages << { name: "public reimbursements page", link: reimbursement_start_reimbursement_report_url(@event) } if @event.public_reimbursement_page_enabled?
@@ -79,6 +81,11 @@ class EventMailer < ApplicationMailer
 
   def monthly_announcements_enabled
     @monthly_announcement = @event.announcements.monthly_for(Date.today).last
+    if @monthly_announcement.nil?
+      Rails.logger.error("EventMailer#monthly_announcements_enabled: no monthly announcement found for event #{@event.id}; skipping email")
+      return
+    end
+
     @scheduled_for = Date.today.next_month.beginning_of_month
     @warning_date = @scheduled_for - 7.days
 

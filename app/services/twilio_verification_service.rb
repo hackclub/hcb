@@ -11,12 +11,21 @@ class TwilioVerificationService
   # This isn't private/sensitive so it's okay to keep here
   VERIFY_SERVICE_ID = Credentials.fetch(:TWILIO, :SMS_VERIFY, :SERVICE_ID, fallback: "VAe30d49e92f634419aacdc8648948dc75")
 
+  # Twilio error codes for countries where SMS delivery is not supported
+  UNSUPPORTED_COUNTRY_ERRORS = %w[21408 21612].freeze
+
+  class CountryNotSupported < StandardError; end
+
   def send_verification_request(phone_number)
     CLIENT.verify
           .services(VERIFY_SERVICE_ID)
           .verifications
           .create(to: phone_number, channel: "sms")
   rescue => e
+    if UNSUPPORTED_COUNTRY_ERRORS.any? { |code| e.message.include?("errors/#{code}") }
+      raise CountryNotSupported
+    end
+
     unless ::TwilioMessageService::EXPECTED_TWILIO_ERRORS.any? { |code| e.message.include?("errors/#{code}") }
       Rails.error.report(e)
       raise

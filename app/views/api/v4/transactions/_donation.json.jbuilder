@@ -3,6 +3,7 @@
 # locals: (json:, donation:)
 
 object_shape(json, donation) do
+  json.amount_cents donation.amount
   json.recurring donation.recurring?
   json.donor do
     json.name donation.name
@@ -29,6 +30,6 @@ object_shape(json, donation) do
   json.message donation.message
   json.donated_at donation.donated_at
   json.refunded donation.refunded?
-  json.deposited donation.deposited?
-  json.in_transit donation.in_transit?
+  json.deposited donation.visible_state == "deposited"
+  json.in_transit donation.visible_state == "in_transit"
 end

@@ -14,7 +14,7 @@
 #
 # Indexes
 #
-#  index_canonical_event_mappings_on_canonical_transaction_id  (canonical_transaction_id)
+#  index_canonical_event_mappings_on_canonical_transaction_id  (canonical_transaction_id) UNIQUE
 #  index_canonical_event_mappings_on_event_id                  (event_id)
 #  index_canonical_event_mappings_on_subledger_id              (subledger_id)
 #  index_canonical_event_mappings_on_user_id                   (user_id)
@@ -28,7 +28,7 @@
 class CanonicalEventMapping < ApplicationRecord
   broadcasts_refreshes_to ->(mapping) { [mapping.event, :transactions] }
 
-  belongs_to :canonical_transaction
+  belongs_to :canonical_transaction, touch: true
   belongs_to :event
   belongs_to :subledger, optional: true
   belongs_to :user, optional: true
@@ -50,6 +50,8 @@ class CanonicalEventMapping < ApplicationRecord
   after_commit do
     canonical_transaction.local_hcb_code&.write_event_and_subledger_id(event, subledger)
   end
+
+  after_create_commit { CardLocking::Settlement.on_canonical_transaction(canonical_transaction) }
 
   scope :missing_fee, -> { includes(:fee).where(fee: { canonical_event_mapping_id: nil }) }
   scope :mapped_by_human, -> { where("user_id is not null") }

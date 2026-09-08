@@ -39,6 +39,7 @@ document.addEventListener('turbo:before-cache', () => {
 })
 
 import './controllers'
+import './confirm'
 
 import { Turbo } from '@hotwired/turbo-rails'
 window.Turbo = Turbo

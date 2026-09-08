@@ -1,0 +1,7 @@
+These items have discrepancies in their linked objects between the old and new transaction engine:
+
+<% @anomalous_items.each do |anomaly| %>
+  <h2><%= link_to anomaly[:memo], ledger_item_url(anomaly[:hashid]) %> (<%= anomaly[:id] %>)</h2>
+  <p>HcbCode linked object: <%= anomaly[:hcb_code_lo_type] %> (<%= anomaly[:hcb_code_lo_id] %>)</p>
+  <p>Ledger::Item linked object: <%= anomaly[:ledger_item_lo_type] %> (<%= anomaly[:ledger_item_lo_id] %>)</p>
+<% end %>

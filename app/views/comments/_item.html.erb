@@ -14,7 +14,7 @@
         </action>
         <% end %>
         <% if policy(comment).destroy? %>
-          <%= link_to comment, class: "tooltipped tooltipped--s right", 'aria-label': "Delete", data: { turbo_method: :delete, turbo_confirm: "Are you sure you'd like to delete this comment?" } do %>
+          <%= link_to comment, class: "tooltipped tooltipped--s right", 'aria-label': "Delete", data: { turbo_method: :delete, turbo_confirm: "Are you sure you'd like to delete this comment?", turbo_confirm_danger: true } do %>
             <%= inline_icon "delete", size: 24, 'aria-label': "Delete" %>
           <% end %>
         <% end %>

@@ -38,12 +38,18 @@ module Reimbursement
     # FK-cache reset on `event_id=` takes care of this for the reports
     # path).
     #
+    # Card-grant-backed reports are locked to the grant's event: the grant's
+    # funds are sourced from that event, and moving the report elsewhere
+    # would decouple the funds from the grant. Admins cannot bypass this.
+    #
     # TODO: currently requires manager because changing the event carries
     # cascade side-effects (expenses reset to pending, stale approved_by_id
     # on each expense, stale reviewer_id, etc.). The intended long-term
     # behavior is to allow members to change the event provided approvals
     # the destination event's managers wouldn't have granted are cleared.
     def change_event?
+      return false if record.card_grant_id.present?
+
       admin || manager
     end
 
@@ -77,6 +83,10 @@ module Reimbursement
 
     def update_currency?
       (admin || manager || creator) && open && record.mismatched_currency?
+    end
+
+    def update_payout_method?
+      (admin || creator) && record.can_change_payout_method?
     end
 
     def admin_approve?
