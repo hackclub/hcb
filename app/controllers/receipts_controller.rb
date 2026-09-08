@@ -116,7 +116,7 @@ class ReceiptsController < ApplicationController
         receiptable: @receiptable,
         uploader: current_user,
         attachments: [file],
-        upload_method: params[:upload_method]
+        upload_method:
       ).run!
       next if @receiptable && !on_transaction_page?
 
@@ -127,15 +127,15 @@ class ReceiptsController < ApplicationController
                      ))
     end
 
-    if %w[transaction_popover transaction_popover_drag_and_drop].include?(params[:upload_method])
+    if %w[transaction_popover transaction_popover_drag_and_drop].include?(upload_method)
       @frame = true
     end
 
     streams += generate_streams
 
-    unless @receiptable && [:receipts_page, "receipts_page_drag_and_drop"].include?(params[:upload_method])
+    unless @receiptable && [:receipts_page, "receipts_page_drag_and_drop"].include?(upload_method)
       receipt_upload_form_config = {
-        upload_method: params[:upload_method].sub("_drag_and_drop", ""),
+        upload_method: base_upload_method,
         restricted_dropzone: params[:upload_method] != :transaction_page,
         include_spacing: params[:upload_method] != :receipt_center,
         success: "#{"Receipt".pluralize(params[file_param].length)} added!",
@@ -241,6 +241,42 @@ class ReceiptsController < ApplicationController
                           EmburseTransaction, Reimbursement::Expense, Reimbursement::Expense::Mileage,
                           Reimbursement::Expense::Fee, Api::Models::CardCharge, Ledger::Item, Payment,
                           Payroll::Invoice].index_by(&:to_s).freeze
+
+  DRAG_AND_DROP_SUFFIX = "_drag_and_drop"
+  TRAILING_DRAG_AND_DROP = /(?:#{DRAG_AND_DROP_SUFFIX})+\z/
+
+  # The upload method with every trailing `_drag_and_drop` stripped, e.g.
+  # `"receipt_center"`. This is what the re-rendered upload form is seeded with,
+  # since the `file_drop` Stimulus controller re-appends the suffix itself.
+  def base_upload_method
+    @base_upload_method ||= params[:upload_method].to_s.sub(TRAILING_DRAG_AND_DROP, "")
+  end
+
+  # The `file_drop` Stimulus controller appends `_drag_and_drop` client side, so
+  # the param can arrive with the suffix doubled up (or otherwise mangled).
+  # Collapse repeats, and drop anything that still isn't a real
+  # `Receipt#upload_method` rather than failing the upload with an
+  # `ArgumentError` -- the receipt matters more than the analytics label.
+  def upload_method
+    return @upload_method if defined?(@upload_method)
+
+    @upload_method =
+      if params[:upload_method].to_s.end_with?(DRAG_AND_DROP_SUFFIX)
+        "#{base_upload_method}#{DRAG_AND_DROP_SUFFIX}"
+      else
+        base_upload_method
+      end
+
+    unless Receipt.upload_methods.key?(@upload_method)
+      Rails.error.report(
+        ArgumentError.new("unexpected upload_method: #{params[:upload_method].inspect}"),
+        handled: true
+      )
+      @upload_method = nil
+    end
+
+    @upload_method
+  end
 
   def find_receiptable
     return unless params[:receiptable_type].present?
