@@ -243,39 +243,35 @@ class ReceiptsController < ApplicationController
                           Payroll::Invoice].index_by(&:to_s).freeze
 
   DRAG_AND_DROP_SUFFIX = "_drag_and_drop"
-  TRAILING_DRAG_AND_DROP = /(?:#{DRAG_AND_DROP_SUFFIX})+\z/
-
-  # The upload method with every trailing `_drag_and_drop` stripped, e.g.
-  # `"receipt_center"`. This is what the re-rendered upload form is seeded with,
-  # since the `file_drop` Stimulus controller re-appends the suffix itself.
-  def base_upload_method
-    @base_upload_method ||= params[:upload_method].to_s.sub(TRAILING_DRAG_AND_DROP, "")
-  end
 
   # The `file_drop` Stimulus controller appends `_drag_and_drop` client side, so
-  # the param can arrive with the suffix doubled up (or otherwise mangled).
-  # Collapse repeats, and drop anything that still isn't a real
-  # `Receipt#upload_method` rather than failing the upload with an
-  # `ArgumentError` -- the receipt matters more than the analytics label.
+  # the param can arrive with the suffix doubled up. Accept one stray repetition,
+  # and treat anything that still isn't a real `Receipt#upload_method` as unknown
+  # rather than failing the upload with an `ArgumentError` -- the receipt matters
+  # more than the analytics label.
+  #
+  # Deliberately a fixed number of `delete_suffix` attempts rather than stripping
+  # a `/(?:_drag_and_drop)+\z/` run -- that pattern is unanchored at the start, so
+  # it backtracks quadratically on a param built to abuse it.
   def upload_method
     return @upload_method if defined?(@upload_method)
 
-    @upload_method =
-      if params[:upload_method].to_s.end_with?(DRAG_AND_DROP_SUFFIX)
-        "#{base_upload_method}#{DRAG_AND_DROP_SUFFIX}"
-      else
-        base_upload_method
-      end
+    raw = params[:upload_method].to_s
+    @upload_method = [raw, raw.delete_suffix(DRAG_AND_DROP_SUFFIX)].find do |candidate|
+      Receipt.upload_methods.key?(candidate)
+    end
 
-    unless Receipt.upload_methods.key?(@upload_method)
-      Rails.error.report(
-        ArgumentError.new("unexpected upload_method: #{params[:upload_method].inspect}"),
-        handled: true
-      )
-      @upload_method = nil
+    if @upload_method.nil?
+      Rails.error.report(ArgumentError.new("unexpected upload_method: #{raw.inspect}"), handled: true)
     end
 
     @upload_method
+  end
+
+  # What the re-rendered upload form is seeded with, since the `file_drop`
+  # Stimulus controller re-appends the suffix itself on the next drag and drop.
+  def base_upload_method
+    @base_upload_method ||= (upload_method || params[:upload_method].to_s).delete_suffix(DRAG_AND_DROP_SUFFIX)
   end
 
   def find_receiptable
