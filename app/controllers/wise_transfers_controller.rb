@@ -58,11 +58,6 @@ class WiseTransfersController < ApplicationController
     redirect_to wise_transfer_process_admin_path(@wise_transfer), flash: { error: e.message }
   end
 
-  def edit
-    authorize @wise_transfer
-    @event = @wise_transfer.event
-  end
-
   def update
     authorize @wise_transfer
     @event = @wise_transfer.event
