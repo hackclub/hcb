@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_30_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_02_150254) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -2501,6 +2501,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_30_120000) do
   end
 
   create_table "stripe_card_personalization_designs", force: :cascade do |t|
+    t.string "color"
     t.boolean "common", default: false, null: false
     t.datetime "created_at", null: false
     t.bigint "event_id"
