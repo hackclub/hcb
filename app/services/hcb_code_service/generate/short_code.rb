@@ -12,7 +12,7 @@ module HcbCodeService
         loop do
           short_code = generate_unique_short_code_candidate
 
-          break unless ::HcbCode.default_scoped.where(short_code:).exists?
+          break unless ::HcbCode.default_scoped.where(short_code:).exists? || ::Ledger::Item.where(short_code:).exists?
         end
 
         short_code
