@@ -1,5 +1,8 @@
-<%= form_with model: @comment&.new_record? ? [@comment.commentable, @comment] : @comment || [commentable, Comment.new] do |form| %>
-  <%= form.hidden_field :redirect_url, value: url_for(only_path: false) %>
+<%# When this form is rendered inside a turbo frame (a popover, for example), keep %>
+<%# submissions inside that frame so the page behind it isn't navigated away from. %>
+<% frame_id = turbo_frame_request_id %>
+<%= form_with model: @comment&.new_record? ? [@comment.commentable, @comment] : @comment || [commentable, Comment.new], data: { turbo_frame: frame_id }.compact do |form| %>
+  <%= form.hidden_field :return_to, value: request.original_url %>
   <%= form_errors @comment || Comment.new, "message", "We couldn't update your" %>
 
   <div class="comment__name mt2">
@@ -62,7 +65,6 @@
          data-commentable-shared-id-value="<%= commentable.shared_commentable.id %>">
       <%= form.hidden_field :commentable_type, value: commentable.class.to_s, data: { "commentable-target": "commentableType" } %>
       <%= form.hidden_field :commentable_id, value: commentable.id, data: { "commentable-target": "commentableId" } %>
-      <%= form.hidden_field :return_to, value: url_for(only_path: false) %>
       <%= dropdown_button form:,
                           options: [
                             ["Add comment", "private", "Only visible to #{commentable.event&.name || 'this organization'}"],

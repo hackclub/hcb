@@ -19,7 +19,16 @@ class CommentsController < ApplicationController
       flash[:success] = "Comment created."
       # Use return_to param if provided, otherwise fall back to the commentable
       # url_from validates the URL is internal to prevent open redirect vulnerabilities
-      redirect_back_or_to url_from(params[:comment][:return_to]) || @commentable
+      return_to = url_from(params[:comment][:return_to]) || @commentable
+
+      if turbo_frame_request?
+        # The referrer is the top level page, which for a popover is the
+        # commentable's own page; return_to is the frame's source instead, so the
+        # popover is re-rendered in place.
+        redirect_to return_to
+      else
+        redirect_back_or_to return_to
+      end
     else
       render :new, status: :unprocessable_content
     end

@@ -5,6 +5,57 @@ const whenViewed = (element, callback) =>
   new IntersectionObserver(([entry]) => entry.isIntersecting && callback(), {
     threshold: 1,
   }).observe(element)
+
+// Popovers replace the URL with the one of whatever they're showing (see
+// `$.modal.BEFORE_OPEN` below), so reloading would land on that thing's
+// standalone page. Remember which popover is open and the page it covers: the
+// script in <head> uses it to head back to that page before rendering anything,
+// and `reopenSharedPopover` puts the popover back once we're there.
+const POPOVER_STATE_KEY = 'hcb:open_popover'
+const POPOVER_TRIGGER_KEYS = [
+  'popoverTitle',
+  'popoverSrc',
+  'popoverFrameId',
+  'popoverStateUrl',
+  'popoverStateTitle',
+  'popoverExternalLink',
+  'popoverSize',
+]
+
+const absoluteUrl = url => new URL(url, window.location.href).href
+
+// The data attributes of the trigger that populated the shared popover, saved
+// once the popover actually opens (see `$.modal.BEFORE_OPEN` below).
+let popoverTriggerData = null
+
+const readPopoverState = () => {
+  try {
+    return JSON.parse(sessionStorage.getItem(POPOVER_STATE_KEY))
+  } catch {
+    return null
+  }
+}
+
+const writePopoverState = state => {
+  try {
+    sessionStorage.setItem(POPOVER_STATE_KEY, JSON.stringify(state))
+  } catch {
+    // sessionStorage isn't always available (private browsing, for example);
+    // reopening popovers is best-effort.
+  }
+}
+
+const forgetPopoverState = () => {
+  try {
+    sessionStorage.removeItem(POPOVER_STATE_KEY)
+  } catch {
+    // see writePopoverState
+  }
+}
+
+const wasReloaded = () =>
+  performance.getEntriesByType('navigation')[0]?.type === 'reload'
+
 const populateSharedPopover = trigger => {
   const popover = document.getElementById('shared_popover')
   if (!popover) return
@@ -47,7 +98,53 @@ const populateSharedPopover = trigger => {
       body.appendChild(frame)
     }
   }
+
+  popoverTriggerData = Object.fromEntries(
+    POPOVER_TRIGGER_KEYS.filter(key => trigger.dataset[key]).map(key => [
+      key,
+      trigger.dataset[key],
+    ])
+  )
 }
+
+const openSharedPopover = state => {
+  const trigger = document.createElement('div')
+  Object.assign(trigger.dataset, state.trigger)
+  populateSharedPopover(trigger)
+  BK.s('modal', '#shared_popover').modal({
+    fadeDuration: 200,
+    fadeDelay: 0.75,
+  })
+}
+
+// Reopen the popover that was open before this page was reloaded. Runs as soon
+// as this (deferred) script does, so the popover is back before the page behind
+// it has finished loading.
+const reopenSharedPopover = () => {
+  const state = readPopoverState()
+  if (!state || $.modal.getCurrent()) return
+
+  if (state.pending) {
+    // Sent back here by the <head> script.
+    if (window.location.href === state.returnUrl) openSharedPopover(state)
+    // Still on the popover's own page: that navigation hasn't happened yet.
+    else if (window.location.href !== state.stateUrl) forgetPopoverState()
+    return
+  }
+
+  // The popover was closed, or we've navigated elsewhere entirely.
+  if (window.location.href !== state.stateUrl) return forgetPopoverState()
+
+  // The <head> script leaves this case alone: the popover was opened over the
+  // page it points at, so there's nowhere to go back to. Only a reload brings it
+  // back — anything else (following the popover's external link into a new tab,
+  // which inherits this session storage, for example) asked for the page itself.
+  if (!wasReloaded()) return forgetPopoverState()
+
+  openSharedPopover(state)
+}
+
+reopenSharedPopover()
 
 const loadModals = element => {
   $(element).on('click', '[data-behavior~=modal_trigger]', function (e) {
@@ -798,6 +895,14 @@ $(document).on($.modal.BEFORE_OPEN, function (event, modal) {
       '',
       modal.elm[0].dataset.stateUrl
     )
+
+    if (modal.elm[0].id === 'shared_popover' && popoverTriggerData) {
+      writePopoverState({
+        stateUrl: absoluteUrl(modal.elm[0].dataset.stateUrl),
+        returnUrl: document.documentElement.dataset.returnToStateUrl,
+        trigger: popoverTriggerData,
+      })
+    }
   }
 })
 
@@ -814,6 +919,13 @@ $(document).on($.modal.BEFORE_CLOSE, function (event, modal) {
 
 $(document).on($.modal.AFTER_CLOSE, function (event, modal) {
   if (modal?.elm?.[0]?.id === 'shared_popover') {
+    forgetPopoverState()
+
+    // Otherwise the next popover opened without reloading would treat this
+    // page's predecessor as the page it covers.
+    delete document.documentElement.dataset.returnToStateUrl
+    delete document.documentElement.dataset.returnToStateTitle
+
     const body = document.getElementById('shared_popover_body')
     if (body) body.innerHTML = ''
 
