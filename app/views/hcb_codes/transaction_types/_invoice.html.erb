@@ -95,7 +95,7 @@
     <% if @invoice.personal_transaction.present? %>
       <p>
         <strong>Repayment for</strong>
-        <%= link_to @invoice.personal_transaction.hcb_code.memo, @invoice.personal_transaction.hcb_code, data: { turbo_frame: "_top" } %>
+        <%= link_to @invoice.personal_transaction.ledger_item.memo, @invoice.personal_transaction.ledger_item.hcb_code, data: { turbo_frame: "_top" } %>
       </p>
     <% end %>
     <p>
