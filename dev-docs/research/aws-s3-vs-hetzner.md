@@ -845,7 +845,7 @@ Download performance with 512 KB objects
 
 https://docs.google.com/spreadsheets/d/1otN5-t1f7BhSFV5NrbBqDFT1WWLY_YYtc_YaDgA3Ndk/edit?usp=sharing
 
-|                                          | First Byte (p90) | Last Byte (p90) | Throughput  |
+|                                          | First Byte (p90) | Last Byte (p90) | Throughput |
 |------------------------------------------|------------------|-----------------|------------|
 | AWS S3 to Hetzner Server                 | 97.10 ms         | 118.95 ms       | 15.75 MB/s |
 | Hetzner Object Storage to Hetzner Server | 289.11 ms        | 300.14 ms       | 5.36 MB/s  |
