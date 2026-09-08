@@ -69,7 +69,7 @@ class DisbursementsController < ApplicationController
              current_user.manageable_events.not_hidden.filter_demo_mode(false)
            end
 
-    # Apply fuzzy search if query present
+    # Substring match on name/slug (and id for admins) if a query is present.
     if q.present?
       sql = "name ILIKE :name OR slug ILIKE :slug"
       sql += " OR CAST(id AS TEXT) ILIKE :id" if admin_signed_in?
@@ -79,6 +79,17 @@ class DisbursementsController < ApplicationController
     # Sort by user's event preference in SQL, keeping the relation's existing
     # order as a tiebreaker, then limit before loading records into Ruby.
     order_clauses = []
+    if q.present?
+      like_q = ActiveRecord::Base.sanitize_sql_like(q)
+      order_clauses << Arel.sql(
+        Event.sanitize_sql_array([
+                                   "CASE WHEN events.name ILIKE :exact OR events.slug ILIKE :exact THEN 0 "\
+                                   "WHEN events.name ILIKE :prefix OR events.slug ILIKE :prefix THEN 1 "\
+                                   "ELSE 2 END",
+                                   { exact: like_q, prefix: "#{like_q}%" }
+                                 ])
+      )
+    end
     if user_event_ids.any?
       ids = user_event_ids.map(&:to_i).join(", ")
       order_clauses << Arel.sql("array_position(ARRAY[#{ids}]::bigint[], events.id) NULLS LAST")
