@@ -51,23 +51,37 @@ RSpec.describe DisbursementsController do
         expect(labels).to eq([exact, prefix, substring].map { |event| admin_label(event) })
       end
 
-      it "matches case-insensitively in both directions" do
-        create(:event, name: "Some ysws project")
-        exact = create(:event, name: "ysws")
+      # Both orgs are prefix matches, and the decoy has the shorter name, so
+      # only a case-insensitive exact match can lift the real one to the top.
+      it "matches case-insensitively" do
+        decoy = create(:event, name: "Bee", slug: "ysws-hq-extras")
+        exact = create(:event, name: "YSWS-HQ")
 
-        search(q: "YSWS")
+        search(q: "YSWS-hq")
 
-        expect(labels.first).to eq(admin_label(exact))
+        expect(labels).to eq([exact, decoy].map { |event| admin_label(event) })
       end
 
+      # The renamed org has the longer name, so only an exact match on its slug
+      # can rank it above an org whose name merely starts with the query.
       it "ranks an exact slug match above a mere prefix match on a name" do
         prefixed = create(:event, name: "ysws-hq extras")
-        create(:organizer_position, user: @admin, event: prefixed)
-        renamed = create(:event, name: "Renamed Org", slug: "ysws-hq")
+        renamed = create(:event, name: "Renamed Organisation With A Long Name", slug: "ysws-hq")
 
         search(q: "ysws-hq")
 
         expect(labels).to eq([renamed, prefixed].map { |event| admin_label(event) })
+      end
+
+      # Only a prefix match on the renamed org's slug can rank its longer name
+      # above an org whose name merely contains the query.
+      it "ranks a prefix match on a slug above a substring match on a name" do
+        substring = create(:event, name: "x ysws-hq")
+        renamed = create(:event, name: "Renamed Organisation With A Long Name", slug: "ysws-hq-team")
+
+        search(q: "ysws-hq")
+
+        expect(labels).to eq([renamed, substring].map { |event| admin_label(event) })
       end
 
       # A NULL slug makes the comparison NULL, and Postgres sorts NULLs first
@@ -82,15 +96,29 @@ RSpec.describe DisbursementsController do
         expect(labels).to eq([exact, slugless].map { |event| admin_label(event) })
       end
 
+      # Equal-length names, so only the caller's preference can order these.
       it "keeps the caller's own orgs first within a rank" do
-        create(:event, name: "YSWS - Alpha")
-        mine = create(:event, name: "YSWS - Zulu")
+        theirs = create(:event, name: "YSWS - Alpha")
+        mine = create(:event, name: "YSWS - Omega")
         create(:organizer_position, user: @admin, event: mine)
         exact = create(:event, name: "YSWS")
 
         search
 
-        expect(labels).to eq([exact, mine].map { |event| admin_label(event) } + ["YSWS - Alpha (#{Event.find_by(name: 'YSWS - Alpha').id})"])
+        expect(labels).to eq([exact, mine, theirs].map { |event| admin_label(event) })
+      end
+
+      # "ysw" is a prefix of every candidate, so the tiers cannot separate them
+      # and the shortest name has to win before the caller's own orgs do.
+      it "surfaces the shortest name for a partial prefix the caller does not organize" do
+        long = create(:event, name: "YSWS - asdf")
+        longer = create(:event, name: "ysws - asdlfkhjasdlfhd")
+        [long, longer].each { |event| create(:organizer_position, user: @admin, event:) }
+        short = create(:event, name: "YSWS")
+
+        search(q: "ysw")
+
+        expect(labels).to eq([short, long, longer].map { |event| admin_label(event) })
       end
 
       it "breaks ties between identically named orgs deterministically" do
@@ -125,12 +153,12 @@ RSpec.describe DisbursementsController do
         expect(labels).to eq([admin_label(exact)])
       end
 
-      # An unescaped "_" in the prefix pattern would match any character, so a
-      # non-prefix org would tie for the top rank and win on caller preference.
+      # An unescaped "_" in the prefix pattern would match any character, so
+      # this shorter non-prefix org would tie for the top rank and win on
+      # length despite not actually starting with the query.
       it "treats wildcards as literal when ranking prefix matches" do
-        decoy = create(:event, name: "AXB, which also contains A_B")
-        create(:organizer_position, user: @admin, event: decoy)
-        literal_prefix = create(:event, name: "A_B Club")
+        decoy = create(:event, name: "AXB A_B")
+        literal_prefix = create(:event, name: "A_B Club Of Greater Somewhere")
 
         search(q: "A_B")
 
