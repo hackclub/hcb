@@ -153,7 +153,7 @@
         <span class="h2 bold">Sessions</span>
         <%= badge_for @all_sessions.count, class: "bg-muted" %>
       </legend>
-      <%= link_to logout_all_user_path(@user), method: :delete,
+      <%= link_to logout_all_user_path(@user), data: { turbo_method: :delete },
               class: "btn bg-error py1 px2 h4", disabled: @sessions.count <= (current_user == @user ? 1 : 0) || disabled do %>
         <%= inline_icon "door-leave", size: home_action_size %>
         Sign out everywhere else

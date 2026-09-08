@@ -278,6 +278,64 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  # A row that opens must be one #visible_subevents would fill.
+  describe "#expandable_subevent_ids" do
+    let(:root) { create(:event, is_public: true) }
+    let!(:child) { create(:event, parent: root, is_public: true) }
+
+    it "is empty when no sub-organization has sub-organizations of its own" do
+      expect(root.expandable_subevent_ids(nil)).to be_empty
+    end
+
+    it "includes a sub-organization with a transparent sub-organization" do
+      create(:event, parent: child, is_public: true)
+
+      expect(root.expandable_subevent_ids(nil)).to eq(Set[child.id])
+    end
+
+    it "omits a sub-organization whose sub-organizations are all private" do
+      create(:event, parent: child, is_public: false)
+
+      expect(root.expandable_subevent_ids(nil)).to be_empty
+    end
+
+    it "omits a sub-organization whose sub-organizations are all hidden" do
+      create(:event, parent: child, is_public: true, hidden_at: Time.current)
+
+      expect(root.expandable_subevent_ids(nil)).to be_empty
+    end
+
+    it "includes private sub-organizations for an admin" do
+      create(:event, parent: child, is_public: false)
+
+      expect(root.expandable_subevent_ids(create(:user, :make_admin))).to eq(Set[child.id])
+    end
+
+    it "includes private sub-organizations for a reader on the root" do
+      user = create(:user)
+      create(:organizer_position, event: root, user:, role: :reader)
+      create(:event, parent: child, is_public: false)
+
+      expect(root.expandable_subevent_ids(user)).to eq(Set[child.id])
+    end
+
+    it "includes a private sub-organization the viewer organizes, along with its subtree" do
+      user = create(:user)
+      private_child = create(:event, parent: root, is_public: false)
+      create(:organizer_position, event: private_child, user:, role: :reader)
+      create(:event, parent: private_child, is_public: false)
+
+      expect(root.expandable_subevent_ids(user)).to eq(Set[private_child.id])
+    end
+
+    it "ignores sub-organizations the viewer cannot see at all" do
+      private_child = create(:event, parent: root, is_public: false)
+      create(:event, parent: private_child, is_public: true)
+
+      expect(root.expandable_subevent_ids(nil)).to be_empty
+    end
+  end
+
   describe "#plan" do
     it "uses the parent event's subevent plan by default" do
       parent = create(:event)

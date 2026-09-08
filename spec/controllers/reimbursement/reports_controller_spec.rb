@@ -5,6 +5,47 @@ require "rails_helper"
 RSpec.describe Reimbursement::ReportsController do
   include SessionSupport
 
+  describe "#edit" do
+    render_views
+
+    context "when the report is backed by a card grant" do
+      it "disables the organization select and explains why" do
+        admin = create(:user, :make_admin)
+        event = create(:event)
+        card_grant = create(:card_grant, event:, user: admin, sent_by: admin)
+        report = create(:reimbursement_report, user: admin, event:, card_grant:)
+
+        create_session(admin, verified: true)
+
+        get(:edit, params: { id: report.id })
+        select_tag = response.body[/<select[^>]*name="reimbursement_report\[event_id\]"[^>]*>/]
+
+        expect(response).to have_http_status(:ok)
+        expect(select_tag).to be_present
+        expect(select_tag).to include('disabled="disabled"')
+        expect(response.body).to include("backed by a card grant")
+      end
+    end
+
+    context "when the report is not backed by a card grant" do
+      it "leaves the organization select enabled" do
+        admin = create(:user, :make_admin)
+        event = create(:event)
+        report = create(:reimbursement_report, user: admin, event:)
+
+        create_session(admin, verified: true)
+
+        get(:edit, params: { id: report.id })
+        select_tag = response.body[/<select[^>]*name="reimbursement_report\[event_id\]"[^>]*>/]
+
+        expect(response).to have_http_status(:ok)
+        expect(select_tag).to be_present
+        expect(select_tag).not_to include("disabled")
+        expect(response.body).not_to include("backed by a card grant")
+      end
+    end
+  end
+
   describe "#update" do
     context "when event_id is changed to an event the user does not belong to" do
       it "blocks the event change and leaves the report on its original event" do
@@ -110,6 +151,26 @@ RSpec.describe Reimbursement::ReportsController do
 
         expect(report.reload.name).to eq("New Name")
         expect(report.event).to eq(event)
+      end
+    end
+
+    context "when the report is backed by a card grant" do
+      it "blocks changing the event even for admins" do
+        admin = create(:user, :make_admin)
+        source_event = create(:event)
+        destination_event = create(:event)
+        card_grant = create(:card_grant, event: source_event, user: admin, sent_by: admin)
+        report = create(:reimbursement_report, user: admin, event: source_event, card_grant:)
+
+        create_session(admin, verified: true)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { event_id: destination_event.id }
+              })
+
+        expect(flash[:error]).to match(/not authorized/i)
+        expect(report.reload.event).to eq(source_event)
       end
     end
 
@@ -271,6 +332,45 @@ RSpec.describe Reimbursement::ReportsController do
 
       expect(flash[:error]).to match(/not authorized/i)
       expect(report.reload.legal_entity_payout_method).to eq(default_pm)
+    end
+  end
+
+  describe "#destroy" do
+    it "lets an external contributor delete their own draft report" do
+      user = create(:user)
+      event = create(:event)
+      report = create(:reimbursement_report, user:, event:, aasm_state: :draft)
+
+      create_session(user, verified: true)
+
+      delete(:destroy, params: { id: report.id })
+
+      expect(Reimbursement::Report.find_by(id: report.id)).to be_nil
+      expect(response).to redirect_to(my_reimbursements_path)
+    end
+
+    it "does not let an external contributor delete a report once it is submitted" do
+      user = create(:user)
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :submitted)
+
+      create_session(user, verified: true)
+
+      delete(:destroy, params: { id: report.id })
+
+      expect(flash[:error]).to match(/not authorized/i)
+      expect(report.reload).to be_present
+    end
+
+    it "does not let a stranger delete someone else's draft report" do
+      report = create(:reimbursement_report, user: create(:user), event: create(:event), aasm_state: :draft)
+      stranger = create(:user)
+
+      create_session(stranger, verified: true)
+
+      delete(:destroy, params: { id: report.id })
+
+      expect(flash[:error]).to match(/not authorized/i)
+      expect(report.reload).to be_present
     end
   end
 end

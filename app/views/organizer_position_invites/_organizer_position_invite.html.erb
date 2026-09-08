@@ -66,14 +66,16 @@
         <%= pop_icon_to "email",
                         organizer_position_invite_resend_path(organizer_position_invite.id),
                         size: 24,
-                        method: :post,
+                        data: { turbo_method: :post },
+
                         class: "tooltipped tooltipped--w",
                         'aria-label': "Resend this invitation",
                         disabled: !policy(organizer_position_invite).resend? %>
         <%= pop_icon_to "view-close",
                         organizer_position_invite_cancel_path(organizer_position_invite.id),
                         size: 24,
-                        method: :post,
+                        data: { turbo_method: :post },
+
                         class: "error tooltipped tooltipped--w",
                         'aria-label': "Cancel this invitation",
                         disabled: !policy(organizer_position_invite).cancel? %>

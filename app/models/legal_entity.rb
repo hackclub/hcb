@@ -20,7 +20,6 @@
 #  index_legal_entities_on_tin_hash           (tin_hash)
 #
 class LegalEntity < ApplicationRecord
-  self.ignored_columns += ["address_city", "address_country", "address_line1", "address_line2", "address_postal_code", "address_state"]
   include Hashid::Rails
 
   include PublicIdentifiable

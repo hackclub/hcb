@@ -6,6 +6,31 @@ RSpec.describe CardGrantsController do
   include SessionSupport
   render_views
 
+  describe "read-only grant settings" do
+    it "allows members to view, but not edit, grant settings" do
+      member = create(:user)
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user: member, event:, role: :member)
+      card_grant = create(:card_grant, event:)
+      create_session(member, verified: true)
+
+      get(:edit_purpose, params: { event_id: event.friendly_id, id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.at_css("[name='card_grant[purpose]']")["disabled"]).to eq("disabled")
+      expect(response.parsed_body.at_css("[value='Save']")["disabled"]).to eq("disabled")
+
+      original_purpose = card_grant.purpose
+      patch(:update, params: {
+              id: card_grant.hashid,
+              card_grant: { purpose: "Updated purpose" }
+            })
+
+      expect(flash[:error]).to match(/not authorized/i)
+      expect(card_grant.reload.purpose).to eq(original_purpose)
+    end
+  end
+
   describe "#new" do
     it "renders successfully" do
       user = create(:user)

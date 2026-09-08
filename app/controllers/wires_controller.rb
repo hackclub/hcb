@@ -5,7 +5,7 @@ class WiresController < ApplicationController
   include Admin::TransferApprovable
 
   before_action :set_event, only: %i[new create]
-  before_action :set_wire, only: %i[approve reject send_wire edit update]
+  before_action :set_wire, only: %i[reject send_wire edit update]
 
   def new
     @wire = @event.wires.build
@@ -37,19 +37,6 @@ class WiresController < ApplicationController
     else
       render "new", status: :unprocessable_content
     end
-  end
-
-  def approve
-    authorize @wire
-    return unless enforce_sudo_mode
-
-    ensure_admin_may_approve!(@wire, amount_cents: @wire.usd_amount_cents)
-    @wire.mark_approved!
-
-    redirect_to wire_process_admin_path(@wire), flash: { success: "Thanks for sending that wire." }
-
-  rescue => e
-    redirect_to wire_process_admin_path(@wire), flash: { error: e.message }
   end
 
   def edit

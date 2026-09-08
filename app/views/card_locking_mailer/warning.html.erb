@@ -1,5 +1,10 @@
 <p>
-  You have <%= @count %> <%= "receipt".pluralize(@count) %> we still need. Charges that go more than 7 days without a receipt will lock your cards. Upload these to stay ahead.
+  You have <%= @count %> <%= "outstanding receipt".pluralize(@count) %>.
+  <% if @due_in %>
+    Your <%= "next " unless @count == 1 %>receipt is due in <strong><%= @due_in %></strong>. Miss that deadline, and your cards lock until you upload that missing receipt.
+  <% end %>
+
+  Charges that go more than 7 days without a receipt will lock your cards. Upload these to stay ahead.
 </p>
 <p>
   Every charge needs a receipt within 7 days. Manage your receipts on the HCB <%= link_to "receipts page", my_inbox_url %>.

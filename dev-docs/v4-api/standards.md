@@ -356,6 +356,7 @@ Check each endpoint's documentation for its supported expansions. Common ones in
 | `organization`      | transactions, cards, card grants         |
 | `user`              | cards, card grants                       |
 | `balance_cents`     | organizations                            |
+| `plan`              | organizations                            |
 | `account_number`    | organizations (requires permission)      |
 | `users`             | organizations                            |
 | `total_spent_cents` | cards                                    |

@@ -281,7 +281,7 @@ class ReceiptsController < ApplicationController
           streams.append(turbo_stream.replace(
                            ct.local_hcb_code.hashid,
                            partial: "canonical_transactions/canonical_transaction",
-                           locals: @frame && @event ? { ct:, event: @event, show_amount: true, updated_via_turbo_stream: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_tags: on_transaction_page? } : { ct:, event: @hcb_code.event, force_display_details: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_event_name: true, updated_via_turbo_stream: true, show_tags: on_transaction_page? }
+                           locals: @frame && @event ? { ct:, event: @event, show_amount: true, updated_via_turbo_stream: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_tags: on_transaction_page? } : { ct:, event: @hcb_code.event, force_display_details: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_event_name: @show_event_name, updated_via_turbo_stream: true, show_tags: on_transaction_page? }
                          ))
         end
       else
@@ -290,7 +290,7 @@ class ReceiptsController < ApplicationController
           streams.append(turbo_stream.replace(
                            pt.local_hcb_code.hashid,
                            partial: "canonical_pending_transactions/canonical_pending_transaction",
-                           locals: @frame && @event ? { pt:, event: @event, show_amount: true, updated_via_turbo_stream: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_tags: on_transaction_page? } : { pt:, event: @hcb_code.event, force_display_details: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_event_name: true, updated_via_turbo_stream: true, show_tags: on_transaction_page? }
+                           locals: @frame && @event ? { pt:, event: @event, show_amount: true, updated_via_turbo_stream: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_tags: on_transaction_page? } : { pt:, event: @hcb_code.event, force_display_details: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_event_name: @show_event_name, updated_via_turbo_stream: true, show_tags: on_transaction_page? }
                          ))
         end
       end
@@ -376,6 +376,7 @@ class ReceiptsController < ApplicationController
     @frame = params[:popover].present?
     @show_receipt_button = params[:show_receipt_button] == "true"
     @show_author_img = params[:show_author_img] == "true"
+    @show_event_name = params[:show_event_name] == "true"
     @ledger_instance = params[:ledger_instance]
   end
 

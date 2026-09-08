@@ -89,7 +89,7 @@ module Payroll
     def copy_receipts_to_payment!
       return if payment.nil?
 
-      [payment, payment.payout&.local_hcb_code].compact.each do |receiptable|
+      [payment, payment.latest_payout&.local_hcb_code].compact.each do |receiptable|
         Receipt.reupload(old_receiptable: self, new_receiptable: receiptable)
       end
     end
