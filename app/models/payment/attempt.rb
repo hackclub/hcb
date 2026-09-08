@@ -121,6 +121,7 @@ class Payment
             recipient_email: payment.payee.email,
             currency: payment.currency,
             user: payment.creator,
+            purpose: :payment
           )
 
           transfer.save!
