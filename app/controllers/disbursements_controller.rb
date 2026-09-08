@@ -259,14 +259,17 @@ class DisbursementsController < ApplicationController
 
   def match_quality_order(query)
     q = query.downcase
-    name = Event.arel_table[:name].lower
-    slug = Event.arel_table[:slug].lower
+    events = Event.arel_table
+    name = events[:name].lower
+    slug = events[:slug].lower
     prefix = "#{ActiveRecord::Base.sanitize_sql_like(q)}%"
 
-    [
+    tiers = [
       name.eq(q).or(slug.eq(q)),
       name.matches(prefix).or(slug.matches(prefix))
     ].map { |match| match.desc.nulls_last }
+
+    tiers << Arel::Nodes::NamedFunction.new("LENGTH", [events[:name]]).asc
   end
 
   # Only allow a trusted parameter "white list" through.
