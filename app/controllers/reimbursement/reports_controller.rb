@@ -303,14 +303,22 @@ module Reimbursement
       clearinghouse = Event.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
       payout_holding = @report.payout_holding
       payout_holding.with_lock do
-        unless payout_holding.settled?
-          payout_holding.expense_payouts.pending.each do |expense_payout|
-            Reimbursement::ExpensePayoutService::ProcessSingle.new(expense_payout_id: expense_payout.id).run
-          end
+        # `with_lock` reloads, so this sees a concurrent or repeated submission
+        # (two admins, two tabs, a resubmitted form) that already sent a
+        # transfer for this holding. Carrying on would pay the recipient twice.
+        raise ArgumentError, "A Wise transfer has already been sent for this report." if payout_holding.wise_transfer.present? || payout_holding.sent?
+
+        payout_holding.expense_payouts.pending.each do |expense_payout|
+          Reimbursement::ExpensePayoutService::ProcessSingle.new(expense_payout_id: expense_payout.id).run
+        end
+        # An earlier attempt may have already moved the holding along, so only
+        # run the steps that are still outstanding; `ProcessSingle` accepts
+        # pending holdings only, and `mark_settled!` in transit & failed ones.
+        if payout_holding.pending?
           Reimbursement::PayoutHoldingService::ProcessSingle.new(payout_holding_id: payout_holding.id).run
           payout_holding.reload
-          payout_holding.mark_settled!
         end
+        payout_holding.mark_settled! if payout_holding.may_mark_settled?
         wise_payout_method = @report.payout_method&.details
         wise_payout_method.update(wise_recipient_id: params[:wise_recipient_id])
         wise_transfer = clearinghouse.wise_transfers.create!(
@@ -343,7 +351,7 @@ module Reimbursement
       end
 
       redirect_to @report
-    rescue ActiveRecord::RecordInvalid => e
+    rescue ActiveRecord::RecordInvalid, ArgumentError, AASM::InvalidTransition => e
       flash[:error] = e.message
       redirect_to @report
     end
