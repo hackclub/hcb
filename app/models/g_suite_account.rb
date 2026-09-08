@@ -31,8 +31,6 @@ class GSuiteAccount < ApplicationRecord
   has_paper_trail skip: [:initial_password] # ciphertext columns will still be tracked
   has_encrypted :initial_password
 
-  include Rejectable
-
   attr_accessor :skip_gsuite_sync
 
   after_update :attempt_notify_user_of_password_change
@@ -48,7 +46,6 @@ class GSuiteAccount < ApplicationRecord
   normalizes :backup_email, with: ->(backup_email) { backup_email.strip.downcase }
   validates :backup_email, nondisposable: true, on: :create
 
-  validate :status_accepted_or_rejected
   validate :within_quota, on: :create
   validates :address, uniqueness: { scope: :g_suite }
 
