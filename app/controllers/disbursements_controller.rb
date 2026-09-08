@@ -71,9 +71,9 @@ class DisbursementsController < ApplicationController
 
     # Substring match on name/slug (and id for admins) if a query is present.
     if q.present?
-      sql = "name ILIKE :name OR slug ILIKE :slug"
-      sql += " OR CAST(id AS TEXT) ILIKE :id" if admin_signed_in?
-      base = base.where(sql, name: "%#{q}%", slug: "%#{q}%", id: "%#{q}%")
+      sql = "name ILIKE :q OR slug ILIKE :q"
+      sql += " OR CAST(id AS TEXT) ILIKE :q" if admin_signed_in?
+      base = base.where(sql, q: "%#{ActiveRecord::Base.sanitize_sql_like(q)}%")
     end
 
     # Sort by user's event preference in SQL, keeping the relation's existing
