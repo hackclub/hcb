@@ -223,7 +223,7 @@ class EventsController < ApplicationController
     @pending_transactions = type_results[:pending_transactions]
 
     page = (params[:page] || 1).to_i
-    per_page = (params[:per] || TRANSACTIONS_PER_PAGE).to_i.clamp(1, 200)
+    per_page = safe_per(TRANSACTIONS_PER_PAGE)
 
     @transactions = Kaminari.paginate_array(@all_transactions).page(page).per(per_page)
     TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: @transactions, event: @event).run!
@@ -303,7 +303,7 @@ class EventsController < ApplicationController
     elsif @filter
       @all_positions = @all_positions.where(role: @filter)
     end
-    @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(params[:per] || (@view == "list" ? 20 : 10))
+    @positions = Kaminari.paginate_array(@all_positions).page(params[:page]).per(safe_per(@view == "list" ? 20 : 10))
 
     if @event.parent
       # `ancestor_organizer_positions` covers this organization as well as its
@@ -520,7 +520,7 @@ class EventsController < ApplicationController
     authorize @event
 
     page = (params[:page] || 1).to_i
-    per_page = (params[:per] || 18).to_i
+    per_page = safe_per(18)
 
     display_cards = [
       @user_stripe_cards.active,
@@ -576,12 +576,12 @@ class EventsController < ApplicationController
         @ledger_items = @ledger.items
                                .where(id: column_transactions.select(:ledger_item_id), linked_object_type: nil)
                                .order(created_at: :desc)
-                               .page((params[:page] || 1).to_i).per(params[:per] || 25)
+                               .page((params[:page] || 1).to_i).per(safe_per(25))
       else
         @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
                                            .order(created_at: :desc)
         page = (params[:page] || 1).to_i
-        @transactions = @transactions.page(page).per(params[:per] || 25)
+        @transactions = @transactions.page(page).per(safe_per(25))
       end
 
       # We only want to show this callout if there were transfers from before https://github.com/hackclub/hcb/pull/13684 was merged
@@ -657,7 +657,7 @@ class EventsController < ApplicationController
     relation = relation.search_name(params[:q]) if params[:q].present?
 
     page = (params[:page] || 1).to_i
-    per_page = (params[:per] || DONATIONS_PER_PAGE).to_i
+    per_page = safe_per(DONATIONS_PER_PAGE)
 
     @all_donations = relation.order(created_at: :desc)
 
@@ -756,7 +756,7 @@ class EventsController < ApplicationController
       all_transfers = [@payments]
     end
 
-    @transfers = Kaminari.paginate_array(all_transfers.flatten.sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(params[:per] || 100)
+    @transfers = Kaminari.paginate_array(all_transfers.flatten.sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(safe_per(100))
 
     @filter_options = transfer_filter_options
     helpers.validate_filter_options(@filter_options, params)
@@ -846,7 +846,7 @@ class EventsController < ApplicationController
       all_transfers = [@paypal_transfers]
     end
 
-    @transfers = Kaminari.paginate_array(all_transfers.flatten.sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(params[:per] || 100)
+    @transfers = Kaminari.paginate_array(all_transfers.flatten.sort_by { |o| o.created_at }.reverse!).page(params[:page]).per(safe_per(100))
 
     @filter_options = transfer_filter_options
     helpers.validate_filter_options(@filter_options, params)
@@ -887,7 +887,7 @@ class EventsController < ApplicationController
     @reports = @reports.search(params[:q]) if params[:q].present?
     @reports = @reports.where("reimbursement_reports.created_at <= ?", params[:created_before]) if params[:created_before].present?
     @reports = @reports.where("reimbursement_reports.created_at >= ?", params[:created_after]) if params[:created_after].present?
-    @reports = @reports.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 25)
+    @reports = @reports.order(created_at: :desc).page(params[:page] || 1).per(safe_per(25))
 
     @filter_options = [
       { key: "status", label: "Status", type: "select", options: %w[draft review_required pending reimbursed rejected] },
@@ -944,7 +944,7 @@ class EventsController < ApplicationController
           @rows = sub_organization_table_rows(search: @search)
         else
           sub_organizations = filtered_sub_organizations
-          @sub_organizations = sub_organizations.not_hidden.page(params[:page]).per(params[:per] || 24)
+          @sub_organizations = sub_organizations.not_hidden.page(params[:page]).per(safe_per(24))
           @hidden_sub_organizations = sub_organizations.hidden.to_a
         end
       end
@@ -1312,7 +1312,7 @@ class EventsController < ApplicationController
 
   def ledger
     authorize @event
-    @per = (params[:per] || 100).to_i.clamp(1, 200)
+    @per = safe_per(100)
 
     @items = ledger_query.execute(ledgers: @ledgers)
 

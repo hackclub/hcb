@@ -2,11 +2,6 @@
 # yarn lockfile v1
 
 
-"@1password/save-button@^1.3.0":
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/@1password/save-button/-/save-button-1.3.0.tgz#a068601a042d61f9502ee63810140172941b1ac6"
-  integrity sha512-jyVhFEwZEigiWimyjnPlOdEepiIZbPuCc4YpkWrghi5nwl5IYT3dk1yxL2drz/JrleUpBoaYDJUAZw0CX9ZU7Q==
-
 "@alloc/quick-lru@^5.2.0":
   version "5.2.0"
   resolved "https://registry.yarnpkg.com/@alloc/quick-lru/-/quick-lru-5.2.0.tgz#7bf68b20c0a350f936915fcae06f58e32007ce30"

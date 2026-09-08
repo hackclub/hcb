@@ -230,6 +230,10 @@ stripe_missed_webhooks_job:
   cron: "0/5 * * * *" # run every 5 minutes
   class: "StripeMissedWebhooksJob"
 
+topup_stripe_job:
+  cron: "15 */12 * * *" # run twice a day
+  class: "TopupStripeJob"
+
 events_sync_to_airtable_job:
   cron: "0 0 * * *" # run every 1 day
   class: "Event::SyncToAirtableJob"
