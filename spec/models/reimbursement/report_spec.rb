@@ -97,4 +97,31 @@ RSpec.describe Reimbursement::Report, type: :model do
       end
     end
   end
+
+  describe "the invitation email" do
+    it "is sent when somebody else invited the user" do
+      inviter = create(:user)
+
+      expect {
+        create(:reimbursement_report, user: create(:user), inviter:)
+      }.to have_enqueued_mail(ReimbursementMailer, :invitation)
+    end
+
+    it "is not sent when the user created the report themselves" do
+      user = create(:user)
+
+      expect {
+        create(:reimbursement_report, user:, inviter: user)
+      }.not_to have_enqueued_mail(ReimbursementMailer, :invitation)
+    end
+
+    # Eventless draft reports come in from Discord, SMS, and email, and the
+    # invitation email is event-scoped from its subject line down. Enqueuing it
+    # for one raised NoMethodError on nil in the mail delivery job.
+    it "is not sent for an eventless draft report" do
+      expect {
+        create(:reimbursement_report, user: create(:user), event: nil, inviter: nil)
+      }.not_to have_enqueued_mail(ReimbursementMailer, :invitation)
+    end
+  end
 end
