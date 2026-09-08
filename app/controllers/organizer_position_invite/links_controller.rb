@@ -91,7 +91,7 @@ class OrganizerPositionInvite
     private
 
     def set_link
-      @link = OrganizerPositionInvite::Link.find_by_hashid(params[:id])
+      @link = OrganizerPositionInvite::Link.find_by_hashid!(params[:id])
     end
 
   end

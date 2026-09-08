@@ -16,34 +16,46 @@
   </div>
 </nav>
 
+<%# if @can_transfer is nil, assume we can transfer %>
+<% can_transfer = @can_transfer != false %>
+<% steps = content_for?(:table_of_contents) && can_transfer %>
+<% sidebar = steps || can_transfer || content_for?(:sidebar_footer) %>
+
 <div
-  class="flex flex-col md:flex-row max-w-5xl lg:px-8 mx-auto w-full mt-40 md:mt-20 gap-5"
+  class="flex flex-col md:flex-row max-w-5xl lg:px-8 mx-auto w-full <%= steps ? "mt-40" : "mt-28" %> md:mt-20 gap-5"
   data-controller="scroll-seek <%= "check-preview" if @check.present? %>"
   <% if @check.present? %> data-action="scroll@window->check-preview#render"<% end %>>
-  <div class="md:w-[375px]">
-    <div class="md:sticky top-28" id="table-of-contents">
-      <div class="flex fixed z-10 w-full backdrop-blur-xl scrollbar-hidden left-0 top-20 md:static border-[rgba(200,200,200,.3)] md:rounded-xl p-2 border-solid border-[1px] border-x-0 md:border-x-[1px] overflow-x-auto">
-        <div class="inline-flex md:flex md:w-full md:flex-col mx-auto md:mx-0 gap-4 md:gap-0 px-5 md:px-0">
-          <%= yield :table_of_contents %>
-        </div>
+  <% if sidebar %>
+    <div class="md:w-[375px]">
+      <div class="md:sticky top-28" id="table-of-contents">
+        <% if steps %>
+          <div class="flex fixed z-10 w-full backdrop-blur-xl scrollbar-hidden left-0 top-20 md:static border-[rgba(200,200,200,.3)] md:rounded-xl p-2 border-solid border-[1px] border-x-0 md:border-x-[1px] overflow-x-auto">
+            <div class="inline-flex md:flex md:w-full md:flex-col mx-auto md:mx-0 gap-4 md:gap-0 px-5 md:px-0">
+              <%= yield :table_of_contents %>
+            </div>
+          </div>
+        <% end %>
+        <%= render "application/flash", klass: "mt-2" %>
+        <% if content_for?(:sidebar_footer) %>
+          <%= yield :sidebar_footer %>
+        <% end %>
+        <%= render "application/ooo_callout", resource: "transfer", financial: true if can_transfer %>
       </div>
-      <%= render "application/flash", klass: "mt-2" %>
-      <% if content_for?(:sidebar_footer) %>
-        <%= yield :sidebar_footer %>
-      <% end %>
-      <%= render "application/ooo_callout", resource: "transfer", financial: true %>
     </div>
-  </div>
+  <% end %>
   <div class="flex-1 md:pt-3 sm:mb-24">
+    <%= render "application/flash", klass: "mb-2" unless sidebar %>
     <%= yield %>
-    <% if controller_path == "payroll/positions" %>
-      <p class="muted mt-3 text-center text-sm">
-        We'll email the contractor to sign their contract and complete onboarding. Payments can't be sent until that's done.
-      </p>
-    <% else %>
-      <p class="muted mt-3 text-center text-sm <%= "hidden" if controller_name == "payments" && @payee.nil? %>">
-        Your transfer will be reviewed on the next business day <% if @payee && !@payee.managed? %><br><strong>after <%= @payee.display_name %> has submitted their tax information</strong><% end %>
-      </p>
+    <% if can_transfer %>
+      <% if controller_path == "payroll/positions" %>
+        <p class="muted mt-3 text-center text-sm">
+          We'll email the contractor to sign their contract and complete onboarding. Payments can't be sent until that's done.
+        </p>
+      <% else %>
+        <p class="muted mt-3 text-center text-sm <%= "hidden" if controller_name == "payments" && @payee.nil? %>">
+          Your transfer will be reviewed on the next business day <% if @payee && !@payee.managed? %><br><strong>after <%= @payee.display_name %> has submitted their tax information</strong><% end %>
+        </p>
+      <% end %>
     <% end %>
   </div>
 </div>

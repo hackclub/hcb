@@ -8,13 +8,13 @@ gem "dotenv-rails", groups: [:development, :test]
 
 gem "rails", "~> 8.1"
 
-gem "puma", "~> 6.6" # app server
+gem "puma", "~> 7.2" # app server
 
 gem "pg", ">= 0.18", "< 2.0" # database
 gem "fx"
 gem "redis", "~> 5.4" # for caching, jobs, etc.
 gem "sidekiq", "~> 7.3.8" # background jobs
-gem "sidekiq-cron", "~> 2.3" # run Sidekiq jobs at scheduled intervals
+gem "sidekiq-cron", "~> 2.4" # run Sidekiq jobs at scheduled intervals
 gem "activejob-traffic_control" # throttle jobs
 gem "suo", github: "instacart/suo" # suo is a transitive dependency of activejob-traffic_control
 # explicitly use instacart fork here to work around dalli log in upstream https://github.com/nickelser/suo/pull/21
@@ -34,7 +34,7 @@ gem "local_time" # client-side timestamp converter for cache-safe rendering
 gem "countries"
 gem "country_select", "~> 8.0"
 
-gem "faraday" # web requests
+gem "faraday", "~> 1.10.6" # web requests
 
 gem "stripe", "11.7.0"
 gem "plaid", "~> 44.0"
@@ -82,6 +82,7 @@ gem "rubyzip", "< 3.0", ">= 2.3.0" # Force `write_xlsx` to use an older version 
 gem "nondisposable" # disallow temporary/disposable email addresses
 gem "rack-cors" # manage CORS
 gem "rack-attack" # rate limiting
+gem "secure_headers" # Content Security Policy and other security response headers
 gem "browser", "~> 6.2" # browser detection
 
 # Pagination
@@ -234,7 +235,6 @@ gem "discordrb"
 gem "pghero", "~> 3.7"
 gem "pg_query", ">= 2"
 
-gem "intercom-rails"
 gem "hotwire_combobox"
 
 gem "maintenance_tasks", "~> 2.14"

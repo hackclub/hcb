@@ -108,7 +108,8 @@ module CardLocking
       due_at =
         if enforcement_start_date && settled_at >= enforcement_start_date.beginning_of_day
           CardLocking::Deadline.new(
-            settled_at:, trusted:, last_settled_charge_at:, current_due_at: receipt_due_at, now:
+            settled_at:, trusted:, last_settled_charge_at:, current_due_at: receipt_due_at, now:,
+            resolved: resolved_at.present?
           ).compute
         end
 

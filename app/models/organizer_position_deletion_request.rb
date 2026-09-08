@@ -14,6 +14,7 @@
 #  subject_has_outstanding_transactions_stripe  :boolean          default(FALSE), not null
 #  created_at                                   :datetime         not null
 #  updated_at                                   :datetime         not null
+#  assignee_id                                  :bigint
 #  closed_by_id                                 :bigint
 #  organizer_position_id                        :bigint           not null
 #  submitted_by_id                              :bigint           not null
@@ -21,6 +22,7 @@
 # Indexes
 #
 #  index_organizer_deletion_requests_on_organizer_position_id     (organizer_position_id)
+#  index_organizer_position_deletion_requests_on_assignee_id      (assignee_id)
 #  index_organizer_position_deletion_requests_on_closed_by_id     (closed_by_id)
 #  index_organizer_position_deletion_requests_on_submitted_by_id  (submitted_by_id)
 #
@@ -37,22 +39,29 @@ class OrganizerPositionDeletionRequest < ApplicationRecord
 
   belongs_to :submitted_by, class_name: "User"
   belongs_to :closed_by, class_name: "User", optional: true
+  belongs_to :assignee, class_name: "User", optional: true
   belongs_to :organizer_position, with_deleted: true
   has_one :event, through: :organizer_position
 
-  scope :under_review, -> { where(closed_at: nil) }
+  scope :under_review, -> { where(closed_at: nil, assignee_id: nil) }
 
   after_create_commit { OrganizerPositionDeletionRequestMailer.with(opdr: self).notify_operations.deliver_later }
 
   validates_presence_of :reason
 
+  def assigned?
+    assignee.present?
+  end
+
   def under_review?
-    closed_at.nil?
+    closed_at.nil? && assignee.nil?
   end
 
   def status
     if organizer_position.deleted_at.present?
       :organizer_deleted
+    elsif assigned?
+      :assigned
     elsif under_review?
       :under_review
     else
@@ -63,7 +72,7 @@ class OrganizerPositionDeletionRequest < ApplicationRecord
   def status_badge_type
     if organizer_position.deleted_at.present?
       :primary
-    elsif under_review?
+    elsif under_review? || assigned?
       :pending
     else
       :success

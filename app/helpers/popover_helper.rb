@@ -38,7 +38,7 @@ module PopoverHelper
 
   def ledger_item_popover_data(item)
     popover_data(
-      title: item.hcb_code.pretty_title(show_event_name: false, show_amount: true),
+      title: item.pretty_title,
       src: item.hcb_code.popover_path,
       frame_id: item.hcb_code.public_id,
       state_url: ledger_item_path(item),

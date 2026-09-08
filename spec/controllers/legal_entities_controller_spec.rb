@@ -22,10 +22,10 @@ RSpec.describe LegalEntitiesController do
       post :create_from_tax_form, params: {
         new_tax_form_id: tax_form.hashid,
         old_le_id: legal_entity.hashid,
-        name: "Acme Subsidiary"
+        name: "Acme Sub-organization"
       }
 
-      new_le = LegalEntity.find_by(name: "Acme Subsidiary")
+      new_le = LegalEntity.find_by(name: "Acme Sub-organization")
 
       expect(new_le).to be_present
       expect(new_le.tin_hash).to eq("def")
@@ -40,10 +40,10 @@ RSpec.describe LegalEntitiesController do
       post :create_from_tax_form, params: {
         new_tax_form_id: tax_form.hashid,
         old_le_id: legal_entity.hashid,
-        name: "Acme Subsidiary"
+        name: "Acme Sub-organization"
       }
 
-      new_le = LegalEntity.find_by(name: "Acme Subsidiary")
+      new_le = LegalEntity.find_by(name: "Acme Sub-organization")
 
       expect(pending.reload.payee.legal_entity).to eq(new_le)
     end

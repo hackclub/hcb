@@ -92,7 +92,7 @@
       <% end %>
     <% else %>
       <article class="mixed-grid grid--spacious">
-        <%= render partial: "stripe_cards/stripe_card", collection: @paginated_stripe_cards %>
+        <%= render partial: "stripe_cards/stripe_card", collection: @paginated_stripe_cards, locals: { show_purpose: true } %>
       </article>
 
       <% if @paginated_stripe_cards.blank? %>

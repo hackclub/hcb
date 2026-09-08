@@ -12,7 +12,7 @@
 <div class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="return-grant">
   <%= modal_header "Return #{card_grant.balance.format} to #{card_grant.event.name}?" %>
 
-  <%= form_with(url: cancel_event_card_grant_path(id: card_grant.hashid, event_id: card_grant.event.slug), class: "w-full") do |form| %>
+  <%= form_with(url: cancel_event_card_grant_path(id: card_grant.hashid, event_id: card_grant.event.slug), class: "w-full", data: { turbo_frame: "_top" }) do |form| %>
     <p><b>Caution, returning this grant will render it unusable.</b></p>
     <ul>
       <li><strong>You will not be able to use this card.</strong></li>

@@ -38,13 +38,15 @@ class Payee < ApplicationRecord
 
   validate :managed_legal_entity_constraints
 
+  normalizes :email, with: ->(email) { email.strip.downcase }
+
   scope :not_archived, -> { where(archived_at: nil) }
 
   pg_search_scope :search, against: [:display_name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }
 
   after_update do
     if legal_entity_id_previously_changed?(from: nil)
-      payments.pending_legal_entity.each(&:on_legal_entity_assigned)
+      legal_entity.refresh_pending_contractors_payments!
     end
   end
 

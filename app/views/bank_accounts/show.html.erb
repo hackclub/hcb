@@ -2,10 +2,10 @@
 <p>
 <% if @account.should_sync? %>
   <%= status_badge "success" %>Enabled.
-  <%= link_to "Pause syncing.", bank_account_path(@account, bank_account: { should_sync: false }), remote: true, method: :patch %>
+  <%= link_to "Pause syncing.", bank_account_path(@account, bank_account: { should_sync: false }), data: { turbo_method: :patch } %>
 <% else %>
   <%= status_badge "muted" %>Paused.
-  <%= link_to "Enable syncing.", bank_account_path(@account, bank_account: { should_sync: true }), remote: true, method: :patch %>
+  <%= link_to "Enable syncing.", bank_account_path(@account, bank_account: { should_sync: true }), data: { turbo_method: :patch } %>
 <% end %>
 </p>
 <div class="statset mt2 mb2">

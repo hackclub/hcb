@@ -20,9 +20,9 @@
           <%= link_to "View card on Stripe", @card.stripe_dashboard_url, class: "btn btn--list-item" %>
           <%= link_to "View cardholder on Stripe", @card.cardholder.stripe_dashboard_url, class: "btn btn--list-item" %>
           <% if @card.cash_withdrawal_enabled? %>
-            <%= link_to "Disable cash withdrawals", enable_cash_withdrawal_stripe_card_path(@card), method: :post, class: "btn btn--list-item bg-success", disabled: !admin_signed_in? %>
+            <%= link_to "Disable cash withdrawals", enable_cash_withdrawal_stripe_card_path(@card), data: { turbo_method: :post }, class: "btn btn--list-item bg-success", disabled: !admin_signed_in? %>
           <% elsif @card.physical? %>
-            <%= link_to "Enable cash withdrawals", enable_cash_withdrawal_stripe_card_path(@card), method: :post, class: "btn btn--list-item bg-success", disabled: !admin_signed_in? %>
+            <%= link_to "Enable cash withdrawals", enable_cash_withdrawal_stripe_card_path(@card), data: { turbo_method: :post }, class: "btn btn--list-item bg-success", disabled: !admin_signed_in? %>
           <% end %>
         <% end %>
         <%= render partial: "stripe_cards/actions", locals: { stripe_card: @card } %>

@@ -12,7 +12,7 @@
 #  initial_control_allowance_amount_cents :integer
 #  is_signee                              :boolean          default(FALSE)
 #  rejected_at                            :datetime
-#  role                                   :integer          default("manager"), not null
+#  role                                   :integer          default(100), not null
 #  slug                                   :string
 #  created_at                             :datetime         not null
 #  updated_at                             :datetime         not null

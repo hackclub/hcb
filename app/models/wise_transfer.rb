@@ -73,12 +73,12 @@ class WiseTransfer < ApplicationRecord
   monetize :amount_cents, as: "amount", with_model_currency: :currency
   monetize :usd_amount_cents, as: "usd_amount", allow_nil: true
 
-  validates :amount_cents, numericality: { greater_than_or_equal_to: 100, message: "must be at least $1" }
-  validates :usd_amount_cents, numericality: { greater_than_or_equal_to: 0, message: "must be positive" }, allow_nil: true
+  validates :amount_cents, numericality: { greater_than_or_equal_to: 0, message: "must be positive" }
+  validates :usd_amount_cents, numericality: { greater_than_or_equal_to: 100, message: "must be at least $1" }, allow_nil: true
   validates :quoted_usd_amount_cents, numericality: { greater_than_or_equal_to: 0, message: "must be positive" }, allow_nil: true
 
   include PublicActivity::Model
-  tracked owner: proc { |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  tracked owner: proc { |controller, record| record.user || controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
   WISE_ID_FORMAT = /\A\d+\z/
   before_validation(:normalize_wise_id)
@@ -180,9 +180,9 @@ class WiseTransfer < ApplicationRecord
     if pending?
       :muted
     elsif approved?
-      :blue
+      :info
     elsif sent?
-      :blue
+      :info
     elsif rejected? || failed?
       :error
     elsif deposited?

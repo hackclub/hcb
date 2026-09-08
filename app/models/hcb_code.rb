@@ -30,6 +30,10 @@
 #
 #  fk_rails_...  (ledger_item_id => ledger_items.id) ON DELETE => nullify
 #
+# Check Constraints
+#
+#  constraint_hcb_codes_on_short_code_to_uppercase  (short_code = upper(short_code))
+#
 class HcbCode < ApplicationRecord
   has_paper_trail
 
@@ -57,7 +61,6 @@ class HcbCode < ApplicationRecord
   has_many :suggested_pairings
   has_many :suggested_receipts, source: :receipt, through: :suggested_pairings
 
-  has_one :personal_transaction, required: false
   has_one :pin, required: false
 
   belongs_to :event, optional: true
@@ -427,6 +430,10 @@ class HcbCode < ApplicationRecord
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_FORCE_CAPTURE_CODE
   end
 
+  def card_charge?
+    stripe_card? || stripe_force_capture?
+  end
+
   def stripe_service_fee?
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_SERVICE_FEE_CODE
   end
@@ -522,6 +529,12 @@ class HcbCode < ApplicationRecord
     @stripe_service_fee ||= StripeServiceFee.find_by(id: hcb_i2) if stripe_service_fee?
   end
 
+  def card_charge
+    return nil unless card_charge?
+
+    @card_charge ||= raw_stripe_transaction&.card_charge || pt&.raw_pending_stripe_transaction&.card_charge
+  end
+
   def check_deposit?
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::CHECK_DEPOSIT_CODE
   end
@@ -614,7 +627,8 @@ class HcbCode < ApplicationRecord
       check_deposit || outgoing_disbursement ||
       incoming_disbursement || bank_fee ||
       fee_revenue || reimbursement_expense_payout ||
-      reimbursement_payout_holding
+      reimbursement_payout_holding || stripe_service_fee ||
+      card_charge
   end
 
   # The `:receipt_required` scope determines the type of
@@ -751,7 +765,6 @@ class HcbCode < ApplicationRecord
     return stripe_cardholder&.user if stripe_card?
     return reimbursement_expense_payout&.expense&.report&.user if reimbursement_expense_payout?
     return paypal_transfer&.user if paypal_transfer?
-    return donation&.collected_by if donation? && donation&.in_person?
     return wise_transfer&.user if wise_transfer?
   end
 
@@ -779,8 +792,8 @@ class HcbCode < ApplicationRecord
       ledger_item.update_custom_memo!(memo)
       return
     end
-    canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
-    canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
+    canonical_transactions.update_all(custom_memo: memo)
+    canonical_pending_transactions.update_all(custom_memo: memo)
   end
 
 end

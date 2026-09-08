@@ -37,19 +37,16 @@
                 <% if account.accepted? && organizer_signed_in? %>
                   <%= link_to "Reset password",
                       g_suite_account_reset_password_path(account.id),
-                      method: :put,
-                      class: ("disabled" unless policy(account).reset_password?),
-                      'data-confirm': "Reset the account password for #{account.address}? We’ll email a new password to the backup email." %>
+                      data: { turbo_method: :put, turbo_confirm: "Reset the account password for #{account.address}? We’ll email a new password to the backup email." },
+                      class: ("disabled" unless policy(account).reset_password?) %>
                   <%= link_to (account.suspended? ? "Re-activate" : "Suspend"),
                       g_suite_account_toggle_suspension_path(account.id),
-                      method: :put,
-                      class: ("disabled" unless policy(account).toggle_suspension?),
-                      'data-confirm': "Do you really want to #{account.suspended? ? 're-activate' : 'suspend'} #{account.address}?" %>
+                      data: { turbo_method: :put, turbo_confirm: "Do you really want to #{account.suspended? ? 're-activate' : 'suspend'} #{account.address}?" },
+                      class: ("disabled" unless policy(account).toggle_suspension?) %>
                 <% end %>
                 <%= link_to "Delete",
                   account,
-                  method: :delete,
-                  'data-confirm': "Deleting #{account.address} is *permanent, irreversible, and does not back up any data*. Are you sure you want to continue?" if policy(account).destroy? %>
+                  data: { turbo_method: :delete, turbo_confirm: "Deleting #{account.address} is *permanent, irreversible, and does not back up any data*. Are you sure you want to continue?", turbo_confirm_danger: true } if policy(account).destroy? %>
               </div>
             </action>
           </div>

@@ -33,7 +33,16 @@
 <div class="sm:mt-5 check--form flex justify-center <%= "flex-wrap" if @frame %> mb-5" style="gap: 3rem">
   <%# Grantee has pending invite %>
   <% if @card_grant.user == current_user && @card_grant.pending_invite? %>
-    <% if @card_grant.canceled? %>
+    <% if @card_grant.converted_to_reimbursement_report? %>
+      <div class="flex-grow">
+        <%= blankslate "This grant was converted into a reimbursement report." %>
+        <% if policy(@card_grant.reimbursement_report).show? %>
+          <p class="text-center">
+            <%= link_to "View reimbursement report", @card_grant.reimbursement_report %>
+          </p>
+        <% end %>
+      </div>
+    <% elsif @card_grant.canceled? %>
       <%= blankslate "Sorry, this grant was canceled!", class: "flex-grow" %>
     <% else %>
       <%= render partial: "card_grants/invitation", locals: { card_grant: @card_grant } %>
