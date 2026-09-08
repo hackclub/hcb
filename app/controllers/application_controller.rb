@@ -102,6 +102,11 @@ class ApplicationController < ActionController::Base
     current_user if auditor_signed_in?
   end
 
+  def safe_per(default, max: 200)
+    (params[:per] || default).to_i.clamp(1, max)
+  end
+  helper_method :safe_per
+
   private
 
   def redirect_to_onboarding
