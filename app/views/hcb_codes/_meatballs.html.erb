@@ -1,6 +1,6 @@
 <% is_pinned = hcb_code.ledger_item&.pinned? %>
 <% pinnable = hcb_code.ledger_item&.pinnable? %>
-<% flagable = (hcb_code.stripe_card? || hcb_code.stripe_force_capture?) && hcb_code.stripe_card.present? && !hcb_code.personal_transaction.present? %>
+<% flaggable = (hcb_code.stripe_card? || hcb_code.stripe_force_capture?) && hcb_code.stripe_card.present? && hcb_code.ledger_item.present? && !hcb_code.ledger_item.personal_transaction.present? %>
 <% open_invoice = hcb_code.invoice? && hcb_code.invoice.open_v2? %>
 <% disputable = can_dispute?(hcb_code:) %>
 <% reversible_disbursement = hcb_code.incoming_disbursement? && hcb_code.incoming_disbursement.present? && policy(hcb_code.incoming_disbursement.destination_event).create_transfer? %>
@@ -9,7 +9,7 @@
 <% allowable_on_card = merchant_not_allowed && CardGrantPolicy.new(current_user, hcb_code.stripe_card.card_grant).permit_merchant? && !hcb_code.stripe_card.card_grant.merchant_lock.include?(hcb_code.stripe_merchant["network_id"]) %>
 <% allowable_on_event = merchant_not_allowed && EventPolicy.new(current_user, hcb_code.stripe_card.card_grant.event).permit_merchant? && !hcb_code.stripe_card.card_grant.event.card_grant_setting.merchant_lock.include?(hcb_code.stripe_merchant["network_id"]) %>
 
-<% if (disputable || flagable || pinnable || open_invoice || reversible_disbursement || allowable_on_card || allowable_on_event) && organizer_signed_in?(as: :member) %>
+<% if (disputable || flaggable || pinnable || open_invoice || reversible_disbursement || allowable_on_card || allowable_on_event) && organizer_signed_in?(as: :member) %>
   <div data-controller="menu" data-menu-placement-value="bottom-end">
     <%= pop_icon_to "more",
         "#",
@@ -33,8 +33,8 @@
           Reverse HCB transfer
         <% end %>
       <% end %>
-      <% if flagable %>
-        <%= link_to invoice_as_personal_transaction_hcb_code_path(id: hcb_code.hashid), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you'd like to invoice #{hcb_code.stripe_cardholder&.user&.name || "yourself"} for this transaction? They'll be emailed an invoice." } do %>
+      <% if flaggable %>
+        <%= link_to ledger_item_invoice_as_personal_transaction_path(hcb_code.ledger_item), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you'd like to invoice #{hcb_code.stripe_cardholder&.user&.name || "yourself"} for this transaction? They'll be emailed an invoice." } do %>
           <%= inline_icon "sad", size: 24 %>
           Flag as personal transaction
         <% end %>

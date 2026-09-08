@@ -127,13 +127,20 @@ class Event
     def agreement
       authorize @application
 
+      @contract = @application.contract
+      @party = @contract&.party(:signee)
+
+      # There's nothing to sign until the contract has been sent (teenagers get
+      # it on submission, adults on approval) and it's gone once it's voided.
+      if @party.nil?
+        redirect_to application_path(@application)
+        return
+      end
+
       unless @application.videos_watched
         redirect_to videos_application_path(@application)
         return
       end
-
-      @contract = @application.contract
-      @party = @contract.party :signee
     end
 
     def mark_videos_watched

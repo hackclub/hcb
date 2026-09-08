@@ -63,6 +63,8 @@ module Reimbursement
       end
     end
 
+    validate :cannot_change_event_when_card_grant_present, on: :update
+
     validates :name, no_urls: true, if: ->(report){ report.from_public_reimbursement_form? }
     normalizes :name, with: ->(name) { name&.strip }
 
@@ -107,7 +109,9 @@ module Reimbursement
     before_create :set_payout_method
 
     after_create_commit do
-      ReimbursementMailer.with(report: self).invitation.deliver_later if inviter != user
+      # Eventless draft reports (created via Discord, SMS, or email) have nobody
+      # to invite on behalf of; the invitation email is entirely event-scoped.
+      ReimbursementMailer.with(report: self).invitation.deliver_later if inviter != user && event.present?
       Reimbursement::OneDayReminderJob.set(wait: 1.day).perform_later(self)
       Reimbursement::SevenDaysReminderJob.set(wait: 7.days).perform_later(self)
     end
@@ -453,6 +457,13 @@ module Reimbursement
     end
 
     private
+
+    def cannot_change_event_when_card_grant_present
+      # `_was` catches a same-request card_grant_id nil-out paired with an event_id change.
+      if event_id_changed? && (card_grant_id_was.present? || card_grant_id.present?)
+        errors.add(:base, "You cannot change the organization of a card grant reimbursement.")
+      end
+    end
 
     def set_payout_method
       self.legal_entity_payout_method ||= user&.default_payout_method

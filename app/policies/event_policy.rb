@@ -141,6 +141,10 @@ class EventPolicy < ApplicationPolicy
     sub_organizations?
   end
 
+  def async_sub_organization_balances?
+    sub_organizations?
+  end
+
   def create_transfer?
     admin_or_manager? && !record.demo_mode?
   end

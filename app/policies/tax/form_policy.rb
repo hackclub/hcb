@@ -10,7 +10,7 @@ module Tax
       user.admin? || record.users.include?(user)
     end
 
-    def sync?
+    def completed?
       user.admin? || user_in_legal_entity?
     end
 

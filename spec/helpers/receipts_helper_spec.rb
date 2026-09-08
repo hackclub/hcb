@@ -5,8 +5,8 @@ require "rails_helper"
 RSpec.describe ReceiptsHelper, type: :helper do
   let(:now) { Time.zone.parse("2026-08-06 14:00:00") }
 
-  def charge(due_at)
-    instance_double(HcbCode, receipt_due_at: due_at)
+  def charge(due_at, settled: true)
+    instance_double(HcbCode, receipt_due_at: due_at, canonical_transactions: settled ? [instance_double(CanonicalTransaction)] : [])
   end
 
   describe "#receipt_due_group" do
@@ -24,8 +24,12 @@ RSpec.describe ReceiptsHelper, type: :helper do
       expect(helper.receipt_due_group(charge(now + 3.days), now:)).to eq((now + 3.days).to_date)
     end
 
-    it "gives charges with no deadline their own bucket rather than inventing a date" do
+    it "gives settled charges with no deadline their own bucket rather than inventing a date" do
       expect(helper.receipt_due_group(charge(nil), now:)).to eq(:none)
+    end
+
+    it "separates charges that haven't settled yet from the undated long tail" do
+      expect(helper.receipt_due_group(charge(nil, settled: false), now:)).to eq(:pending)
     end
 
     it "buckets two charges due the same day together even at different times" do
@@ -37,8 +41,9 @@ RSpec.describe ReceiptsHelper, type: :helper do
   end
 
   describe "#receipt_due_group_label" do
-    it "names the two buckets that aren't dates" do
+    it "names the buckets that aren't dates" do
       expect(helper.receipt_due_group_label(:overdue, now:)).to eq("Overdue")
+      expect(helper.receipt_due_group_label(:pending, now:)).to eq("Pending transactions")
       expect(helper.receipt_due_group_label(:none, now:)).to eq("Older receipts")
     end
 
@@ -61,6 +66,7 @@ RSpec.describe ReceiptsHelper, type: :helper do
       expect(helper.receipt_due_group_urgency(now.to_date, now:)).to eq(:soon)
       expect(helper.receipt_due_group_urgency(now.to_date + 1, now:)).to eq(:soon)
       expect(helper.receipt_due_group_urgency(now.to_date + 2, now:)).to eq(:later)
+      expect(helper.receipt_due_group_urgency(:pending, now:)).to eq(:pending)
       expect(helper.receipt_due_group_urgency(:none, now:)).to eq(:none)
     end
   end
@@ -70,11 +76,12 @@ RSpec.describe ReceiptsHelper, type: :helper do
       expect(helper.receipt_due_group_style(:overdue, now:)).to include(icon_class: "error", badge_class: "bg-error")
       expect(helper.receipt_due_group_style(now.to_date, now:)).to include(icon_class: "muted", badge_class: "bg-warning")
       expect(helper.receipt_due_group_style(now.to_date + 5, now:)).to include(icon_class: "muted", badge_class: "bg-muted")
+      expect(helper.receipt_due_group_style(:pending, now:)).to include(icon_class: "muted", badge_class: "bg-muted")
       expect(helper.receipt_due_group_style(:none, now:)).to include(icon_class: "muted", badge_class: "bg-muted")
     end
 
     it "names icons that actually exist" do
-      groups = [:overdue, :none, now.to_date, now.to_date + 5]
+      groups = [:overdue, :pending, :none, now.to_date, now.to_date + 5]
 
       groups.each do |group|
         icon = helper.receipt_due_group_style(group, now:)[:icon]

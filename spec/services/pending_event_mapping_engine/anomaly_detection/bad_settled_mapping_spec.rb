@@ -27,7 +27,9 @@ RSpec.describe PendingEventMappingEngine::AnomalyDetection::BadSettledMapping do
     # Known regression: CanonicalTransaction#assign_ledger_item's divergence
     # check (canonical_transaction.rb:493) raises via Rails.error.unexpected
     # when calculated_ledger_item doesn't match local_hcb_code.ledger_item.
-    it(skip: "known CanonicalTransaction#assign_ledger_item ledger-item divergence regression") { is_expected.to eq(true) }
+    it "flags the bad mapping", skip: "known CanonicalTransaction#assign_ledger_item ledger-item divergence regression" do
+      is_expected.to eq(true)
+    end
   end
 
   context "when the canonical transaction predates the pending transaction" do
