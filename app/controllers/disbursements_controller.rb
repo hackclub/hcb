@@ -79,17 +79,7 @@ class DisbursementsController < ApplicationController
     # Sort by user's event preference in SQL, keeping the relation's existing
     # order as a tiebreaker, then limit before loading records into Ruby.
     order_clauses = []
-    if q.present?
-      like_q = ActiveRecord::Base.sanitize_sql_like(q)
-      order_clauses << Arel.sql(
-        Event.sanitize_sql_array([
-                                   "CASE WHEN events.name ILIKE :exact OR events.slug ILIKE :exact THEN 0 "\
-                                   "WHEN events.name ILIKE :prefix OR events.slug ILIKE :prefix THEN 1 "\
-                                   "ELSE 2 END",
-                                   { exact: like_q, prefix: "#{like_q}%" }
-                                 ])
-      )
-    end
+    order_clauses.concat(match_quality_order(q)) if q.present?
     if user_event_ids.any?
       ids = user_event_ids.map(&:to_i).join(", ")
       order_clauses << Arel.sql("array_position(ARRAY[#{ids}]::bigint[], events.id) NULLS LAST")
@@ -266,6 +256,18 @@ class DisbursementsController < ApplicationController
   end
 
   private
+
+  def match_quality_order(query)
+    q = query.downcase
+    name = Event.arel_table[:name].lower
+    slug = Event.arel_table[:slug].lower
+    prefix = "#{ActiveRecord::Base.sanitize_sql_like(q)}%"
+
+    [
+      name.eq(q).or(slug.eq(q)),
+      name.matches(prefix).or(slug.matches(prefix))
+    ].map { |match| match.desc.nulls_last }
+  end
 
   # Only allow a trusted parameter "white list" through.
   def disbursement_params
