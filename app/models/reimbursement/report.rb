@@ -109,7 +109,9 @@ module Reimbursement
     before_create :set_payout_method
 
     after_create_commit do
-      ReimbursementMailer.with(report: self).invitation.deliver_later if inviter != user
+      # Eventless draft reports (created via Discord, SMS, or email) have nobody
+      # to invite on behalf of; the invitation email is entirely event-scoped.
+      ReimbursementMailer.with(report: self).invitation.deliver_later if inviter != user && event.present?
       Reimbursement::OneDayReminderJob.set(wait: 1.day).perform_later(self)
       Reimbursement::SevenDaysReminderJob.set(wait: 7.days).perform_later(self)
     end
