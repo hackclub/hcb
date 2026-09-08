@@ -45,8 +45,6 @@
   </div>
 
   <div data-scroll-seek-target="section">
-    <%# Auditors can't submit these fields (`disbursement_params` only permits
-        them for admins), so don't show them the section at all. %>
     <% if admin_signed_in? %>
       <% admin_tool do %>
         <h3 class="mb-2">Admin</h3>
