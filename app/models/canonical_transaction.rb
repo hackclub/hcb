@@ -143,7 +143,7 @@ class CanonicalTransaction < ApplicationRecord
 
   after_commit if: -> { previous_changes.key?("ledger_item_id") } do
     old_ledger_item_id = previous_changes["ledger_item_id"].first
-    Ledger::Item.find(old_ledger_item_id).refresh! if old_ledger_item_id.present?
+    Ledger::Item.find_by(id: old_ledger_item_id)&.refresh! if old_ledger_item_id.present?
   end
 
   after_create :write_hcb_code
