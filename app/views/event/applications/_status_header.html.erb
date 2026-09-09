@@ -15,10 +15,14 @@
   <h3 class="m-0 muted">
     <% if subheading.present? %>
       <%= subheading %>
+    <% elsif application.contract&.reissue? && (application.contract.party(:signee)&.pending? || application.contract.party(:cosigner)&.pending?) %>
+      You'll need to resign the agreement for <%= application.name %>
     <% elsif !application.approved? || application.contract&.party(:signee)&.pending? || application.contract&.party(:cosigner)&.pending? %>
       Here's what's next for <%= application.name %>
     <% elsif application.approved? && application.contract&.party(:hcb)&.pending? %>
       HCB is finalizing your contract
+    <% elsif application.approved? && application.event.blank? %>
+      We're finalizing the last few steps to activate your organization
     <% else %>
       You're ready to start spending
     <% end %>

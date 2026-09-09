@@ -1,10 +1,10 @@
-<% title "Sign the fiscal sponsorship agreement" %>
+<% title @application.contract&.reissue? ? "Resign the fiscal sponsorship agreement" : "Sign the fiscal sponsorship agreement" %>
 
 <%= render partial: "status_header", locals: {
       application: @application,
       steps: @steps,
-      heading: "Sign the fiscal sponsorship agreement",
-      subheading: "Your application for #{@application.name} has been #{@application.approved? ? "approved" : "submitted"}"
+      heading: @application.contract&.reissue? ? "Resign the fiscal sponsorship agreement" : "Sign the fiscal sponsorship agreement",
+      subheading: @application.contract&.reissue? ? "We found an issue with your signed agreement, so you'll need to resign it" : "Your application for #{@application.name} has been #{@application.approved? ? "approved" : "submitted"}"
     } %>
 
 <div class="flex flex-col mt-9 items-center justify-start">
@@ -14,7 +14,7 @@
     <% if @application.contract.present? %>
       <div class="flex gap-2 sm:gap-3 flex-col sm:flex-row">
         <% if @application.contract.party(:signee).pending? %>
-          <%= link_to "Sign the agreement", agreement_application_path(@application), class: "btn" %>
+          <%= link_to @application.contract.reissue? ? "Resign the agreement" : "Sign the agreement", agreement_application_path(@application), class: "btn" %>
         <% end %>
 
         <% if @application.contract.party(:cosigner)&.pending? %>

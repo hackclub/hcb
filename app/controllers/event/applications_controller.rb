@@ -249,22 +249,30 @@ class Event
 
       return if @application.draft?
 
+      resigning = @application.contract&.reissue? || false
+
       contract_description = if @application.contract.nil?
                                "We'll send you our fiscal sponsorship agreement, which sets the terms and conditions of your usage of HCB."
                              elsif @application.contract.party(:cosigner)&.pending?
+                               verb = resigning ? "resign" : "sign"
                                if @application.contract.party(:signee).signed?
-                                 "Your parent or legal guardian (#{@application.cosigner_email}) needs to sign the agreement before we can review your application."
+                                 "Your parent or legal guardian (#{@application.cosigner_email}) needs to #{verb} the agreement before we can review your application."
                                else
-                                 "You (#{@application.user.email}) and your parent or legal guardian (#{@application.cosigner_email}) need to sign the agreement before we can review your application."
+                                 "You (#{@application.user.email}) and your parent or legal guardian (#{@application.cosigner_email}) need to #{verb} the agreement before we can review your application."
                                end
                              elsif @application.contract.party(:signee)&.pending?
-                               "You (#{@application.user.email}) need to sign the agreement before we can review your application."
+                               if resigning
+                                 "We found an issue with your signed agreement, so you'll need to resign it before we can finish reviewing your application."
+                               else
+                                 "You (#{@application.user.email}) need to sign the agreement before we can review your application."
+                               end
                              else
                                "Our team will sign and finalize the contract soon."
                              end
 
-      # We allow teenagers to receive and sign the contract while applying. Adults must wait for HCB Operations' review.
-      contract_signed = @application.contract&.parties&.not_hcb&.all?(&:signed?) && (@application.teen_led? || @application.contract&.party(:hcb)&.signed?)
+      # Once the applicant (and cosigner, if any) have signed, there's nothing left for them to do, so
+      # we consider this step done even if HCB Operations hasn't countersigned yet.
+      contract_signed = @application.contract&.parties&.not_hcb&.all?(&:signed?) || false
       contract_step = {
         label: "Sign agreement",
         shorthand: "Sign",
@@ -287,8 +295,12 @@ class Event
       @steps << {
         label: "Start spending",
         shorthand: "Spend",
-        name: "Start spending!",
-        description: "You'll have access to your organization to begin raising and spending money.",
+        name: @application.event.present? ? "Start spending!" : "We're finalizing your organization",
+        description: if @application.event.present?
+                       "You'll have access to your organization to begin raising and spending money."
+                     else
+                       "Your agreement is fully signed. We're finishing up the last few steps to activate your organization, and you'll get an email as soon as it's ready."
+                     end,
         completed: false
       }
 
