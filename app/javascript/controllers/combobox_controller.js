@@ -148,7 +148,11 @@ export default class extends Controller {
   async loadMore() {
     if (this.loading || !this.hasMore) return
     const token = this.searchToken
-    const options = await this.fetchPage(this.currentQuery, this.page + 1, token)
+    const options = await this.fetchPage(
+      this.currentQuery,
+      this.page + 1,
+      token
+    )
     if (options === null || token !== this.searchToken) return
 
     this.page += 1
