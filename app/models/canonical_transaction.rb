@@ -155,6 +155,14 @@ class CanonicalTransaction < ApplicationRecord
     end
   end
 
+  # The moment this transaction actually settled, which for Stripe and Column
+  # transactions is earlier than when we ingested it.
+  def datetime
+    raw_stripe_transaction&.stripe_transaction&.dig("created")&.then { |t| Time.at(t) } ||
+      raw_column_transaction&.column_transaction&.dig("effective_at")&.then { |t| Time.parse(t) } ||
+      created_at
+  end
+
   def smart_memo
     custom_memo || less_smart_memo
   end
