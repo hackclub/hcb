@@ -285,4 +285,29 @@ RSpec.describe Ledger, type: :model do
       expect(ledger.balance.cents).to eq(1000)
     end
   end
+
+  describe "#fee_balance_cents" do
+    it "returns 0 when the ledger has no event" do
+      ledger = Ledger.new(primary: false)
+      ledger.save(validate: false)
+
+      expect(ledger.fee_balance_cents).to eq(0)
+    end
+
+    it "returns fees owed minus fees already paid" do
+      event = create(:event)
+      create(:fee, canonical_event_mapping: nil, memo: "Owed fee", event:, reason: :revenue, amount_cents_as_decimal: 500)
+      allow(event.ledger).to receive(:total_fee_payments_cents).and_return(200)
+
+      expect(event.ledger.fee_balance_cents).to eq(300)
+    end
+
+    it "is negative (a fee credit) when more has been paid than is currently owed" do
+      event = create(:event)
+      create(:fee, canonical_event_mapping: nil, memo: "Owed fee", event:, reason: :revenue, amount_cents_as_decimal: 100)
+      allow(event.ledger).to receive(:total_fee_payments_cents).and_return(900)
+
+      expect(event.ledger.fee_balance_cents).to eq(-800)
+    end
+  end
 end

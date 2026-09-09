@@ -52,8 +52,8 @@ class CanonicalTransaction < ApplicationRecord
   scope :outgoing_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE}%'") }
   scope :incoming_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE}%'") }
   scope :stripe_card_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_CARD_CODE}%'") }
-  scope :with_custom_memo, -> { where("custom_memo is not null") }
-  scope :without_custom_memo, -> { where("custom_memo is null") }
+  scope :with_custom_memo, -> { where.not(custom_memo: nil) }
+  scope :without_custom_memo, -> { where(custom_memo: nil) }
   scope :with_short_code, -> { where("memo ~ '.*HCB-\\w{5}.*'") }
 
   scope :revenue, -> { where("amount_cents > 0") }
@@ -139,7 +139,6 @@ class CanonicalTransaction < ApplicationRecord
 
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
-    ledger_item.refresh!
   end
 
   after_commit if: -> { previous_changes.key?("ledger_item_id") } do
@@ -487,6 +486,7 @@ class CanonicalTransaction < ApplicationRecord
 
   def assign_ledger_item
     safely do
+      reload_local_hcb_code
       ActiveRecord::Base.transaction do
         if calculated_ledger_item != local_hcb_code.ledger_item
           Rails.error.unexpected("CanonicalTransaction #{id} has calculated a different ledger item from its local_hcb_code. (#{calculated_ledger_item&.id} vs. #{local_hcb_code.ledger_item&.id})")

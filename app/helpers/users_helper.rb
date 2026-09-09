@@ -234,15 +234,15 @@ module UsersHelper
                                content_tag(
                                  :span,
                                  safe_join([inline_icon("email", size: 16), content_tag(:span, "Email", class: "ml1")]),
-                                 onclick: "window.open('mailto:#{user.email}'); return false;",
-                                 class: "menu__item menu__item--icon menu__action", rel: "noopener"
+                                 class: "menu__item menu__item--icon menu__action", rel: "noopener",
+                                 data: { action: "click->mention#sendEmail" }
                                ),
                                #  copy to clipboard
                                content_tag(
                                  :span,
                                  safe_join([inline_icon("copy", size: 16), content_tag(:span, "Copy email", class: "ml1")]),
-                                 onclick: "navigator.clipboard.writeText('#{user.email}');alert('Copied!'); return false;",
-                                 class: "menu__item menu__item--icon menu__action", rel: "noopener"
+                                 class: "menu__item menu__item--icon menu__action", rel: "noopener",
+                                 data: { action: "click->mention#copyEmail" }
                                ),
                                content_tag(
                                  :span,
@@ -261,7 +261,7 @@ module UsersHelper
         :span,
         menu_items,
         class: "menu__content menu__content--2 menu__content--compact h5",
-        data: { "menu-target": "content" }
+        data: { "menu-target": "content", "controller": "mention", "mention-email-value": user.email }
       )
 
       menu_wrapper = content_tag(

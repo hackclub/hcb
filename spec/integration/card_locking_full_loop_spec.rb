@@ -7,7 +7,7 @@ RSpec.describe "Card locking, end to end", type: :model do
   include_context "card locking charges"
 
   before do
-    Flipper.enable(:card_locking_2025_06_09, user)
+    Flipper.enable(:card_locking)
     # The stage flag (enforcement start 2026-07-14) comes from the shared context.
   end
 

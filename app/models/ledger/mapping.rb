@@ -6,6 +6,7 @@
 #
 #  id                :bigint           not null, primary key
 #  on_primary_ledger :boolean          not null
+#  pinned_at         :datetime
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null
 #  ledger_id         :bigint           not null
@@ -14,11 +15,12 @@
 #
 # Indexes
 #
-#  index_ledger_mappings_on_ledger_and_item      (ledger_id,ledger_item_id) UNIQUE
-#  index_ledger_mappings_on_ledger_id            (ledger_id)
-#  index_ledger_mappings_on_ledger_item_id       (ledger_item_id)
-#  index_ledger_mappings_on_mapped_by_id         (mapped_by_id)
-#  index_ledger_mappings_unique_item_on_primary  (ledger_item_id) UNIQUE WHERE (on_primary_ledger = true)
+#  index_ledger_mappings_on_ledger_and_item          (ledger_id,ledger_item_id) UNIQUE
+#  index_ledger_mappings_on_ledger_id                (ledger_id)
+#  index_ledger_mappings_on_ledger_id_and_pinned_at  (ledger_id,pinned_at)
+#  index_ledger_mappings_on_ledger_item_id           (ledger_item_id)
+#  index_ledger_mappings_on_mapped_by_id             (mapped_by_id)
+#  index_ledger_mappings_unique_item_on_primary      (ledger_item_id) UNIQUE WHERE (on_primary_ledger = true)
 #
 # Foreign Keys
 #
@@ -33,10 +35,15 @@ class Ledger
 
     has_paper_trail
 
+    include Ledger::Item::Pin
+
     belongs_to :ledger, class_name: "::Ledger"
     belongs_to :ledger_item, class_name: "Ledger::Item"
 
     belongs_to :mapped_by, class_name: "User", optional: true
+
+    delegate :event, to: :ledger
+    delegate :card_grant, to: :ledger
 
     scope :mapped_by_human, -> { where.not(mapped_by: nil) }
     scope :mapped_by_system, -> { where(mapped_by: nil) }

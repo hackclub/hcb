@@ -7,7 +7,7 @@ module Payroll
     CONTRACT_RELEVANT_ATTRIBUTES = %w[title rate_cents rate_unit start_date end_date description].freeze
 
     before_action :set_event, except: [:onboarding]
-    before_action :set_position, only: [:edit, :update, :contract]
+    before_action :set_position, only: [:edit, :update, :contract, :terminate]
 
     def show
       @position = @event.payroll_positions.find(params[:id])
@@ -124,6 +124,16 @@ module Payroll
         flash[:error] = @position.errors.full_messages.to_sentence
         render :edit, layout: "transfer", status: :unprocessable_content
       end
+    end
+
+    def terminate
+      authorize @position
+
+      @position.mark_terminated!
+
+      flash[:success] = "Contractor position successfully terminated"
+
+      redirect_to event_payroll_position_path(event: @event, payroll_position: @position)
     end
 
     private

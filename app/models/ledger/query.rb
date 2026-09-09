@@ -46,6 +46,7 @@ class Ledger
     # another organization's items.
     def execute(ledgers: [], all_ledgers: false)
       results = apply_query(relation: Ledger::Item.all, query: @query_hash)
+      results = results.where.not(ct_count: 0, cpt_count: 0)
 
       # Strict boolean: only a literal true opts out of scoping, so a caller that
       # accidentally passes a truthy value (e.g. the string "false") fails closed.
@@ -65,7 +66,7 @@ class Ledger
       # JOINed — and includes makes pluck/count attempt exactly that join
       # (EagerLoadPolymorphicError).
       results.order(pending_first.asc, datetime: :desc, created_at: :desc, id: :desc)
-             .preload(:hcb_code, :author, linked_object: [:card_grant, :recurring_donation])
+             .preload(:hcb_code, :author, :linked_object)
     end
 
     def self.sanitize_query(query_hash)

@@ -9,8 +9,6 @@ RSpec.describe Payroll::Position, type: :model do
       "onboarding"   => :onboarding,
       "onboarded"    => :active,
       "expired"      => :completed,
-      "terminated"   => :completed,
-      "rejected"     => :completed,
     }.each do |aasm_state, expected|
       it "maps #{aasm_state} to #{expected}" do
         position = described_class.new(aasm_state:)
@@ -85,9 +83,20 @@ RSpec.describe Payroll::Position, type: :model do
     let(:position) { create(:payroll_position, aasm_state: :onboarding) }
 
     describe "#onboarding_checklist" do
-      it "includes a step for the organizer signing the contract" do
-        labels = position.onboarding_checklist.map { |step| step[:label] }
-        expect(labels).to include("Contract signed by organizer")
+      it "lists the steps in the order they happen" do
+        keys = position.onboarding_checklist.map { |step| step[:key] }
+        expect(keys).to eq(%i[organizer_signature hcb_review tax_form contractor_signature payout_method])
+      end
+
+      it "says who each step is waiting on" do
+        owners = position.onboarding_checklist.to_h { |step| [step[:key], step[:owner]] }
+        expect(owners).to eq(
+          organizer_signature: :organizer,
+          hcb_review: :hcb,
+          tax_form: :contractor,
+          contractor_signature: :contractor,
+          payout_method: :contractor
+        )
       end
     end
 

@@ -51,6 +51,21 @@ RSpec.describe User, type: :model do
         expect(user).to be_valid, "expected #{domain} to be allowed"
       end
     end
+
+    it "allows a provider's regional domains" do
+      %w[outlook.de outlook.fr yahoo.fr yahoo.ca hotmail.co.uk].each do |domain|
+        user = build(:user, email: "someone@#{domain}")
+
+        expect(user).to be_valid, "expected #{domain} to be allowed"
+      end
+    end
+
+    it "suggests icloud.com for icloud.co" do
+      user = build(:user, email: "someone@icloud.co")
+
+      expect(user).to_not be_valid
+      expect(user.errors[:email]).to eq(["looks like a typo. Did you mean someone@icloud.com?"])
+    end
   end
 
   context "birthday validations" do
@@ -314,6 +329,34 @@ RSpec.describe User, type: :model do
           expect(user.errors[:full_name]).not_to be_empty
         end
       end
+    end
+  end
+
+  describe "#pretend_is_not_admin" do
+    it "is cleared on save for users without an admin role" do
+      user = create(:user)
+      user.pretend_is_not_admin = true
+
+      user.save!
+
+      expect(user.pretend_is_not_admin).to eq(false)
+      expect(user.reload.pretend_is_not_admin).to eq(false)
+    end
+
+    it "is kept for auditors and admins" do
+      auditor = create(:user, access_level: :auditor, pretend_is_not_admin: true)
+      admin = create(:user, :make_admin, pretend_is_not_admin: true)
+
+      expect(auditor.reload.pretend_is_not_admin).to eq(true)
+      expect(admin.reload.pretend_is_not_admin).to eq(true)
+    end
+
+    it "is cleared when an admin is demoted" do
+      admin = create(:user, :make_admin, pretend_is_not_admin: true)
+
+      admin.update!(access_level: :user)
+
+      expect(admin.reload.pretend_is_not_admin).to eq(false)
     end
   end
 

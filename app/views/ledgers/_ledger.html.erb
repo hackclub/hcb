@@ -1,6 +1,6 @@
 <%# locals: (ledger: nil, items:, table_only: true, filter: nil, show_fee: false, show_author: true) %>
 
-<%= turbo_frame_tag dom_id(ledger) do %>
+<%= turbo_frame_tag ledger.present? ? dom_id(ledger) : "ledger" do %>
   <% if !table_only && ledger.present? %>
     <section class="details mb-4">
       <div>

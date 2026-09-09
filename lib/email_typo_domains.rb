@@ -15,11 +15,16 @@ module EmailTypoDomains
       gmail.con gmail.co gamil.com gmail.ocm gmail.ckm gmail.cok gmail.xom
       gmali.com gamail.com gmail.cpom gmail.cokm gmail.fom gmil.com
       gmail.cm gmail.om gmai.com gnail.com
+      gmial.com gmaill.com gmailc.om gmail.cim gmail.cpm gmail.clm gmail.vom
+      gmail.comm gmail.comn gmail.comh gmail.coma gmail.comb
+      gmail.copm gmail.coim gmail.conm gmail.coom
+      gmal.com gmail.col gmail.comc gmail.coms gmail.clom
+      gmaol.com gmile.com gimial.com gmaip.com gmailc.com
       googlemail.com
     ],
-    "icloud.com"     => %w[icloud.con],
+    "icloud.com"     => %w[icloud.con icloud.co],
     "hackclub.com"   => %w[hackclub.co hackclub.con],
-    "outlook.com"    => %w[outlook.con],
+    "outlook.com"    => %w[outlook.con oulook.com ouylook.com],
     "protonmail.com" => %w[protonmail.con],
   }.freeze
 

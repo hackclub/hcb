@@ -71,7 +71,7 @@ module EventsHelper
     },
     {
       name: "Transactions",
-      path_proc: ->(event_id) { (organizer_signed_in? && Flipper.enabled?(:new_ledger_2026_07_17, current_user) ? event_ledger_path(event_id:) : event_transactions_path(event_id:)) },
+      path_proc: ->(event_id) { Flipper.enabled?(:new_ledger_2026_07_17, current_user) ? event_ledger_path(event_id:) : event_transactions_path(event_id:) },
       tooltip: "View detailed ledger",
       icon: "bank-account",
       symbol: :transactions,
@@ -359,20 +359,6 @@ module EventsHelper
 
   def show_mock_data?(event = @event)
     false
-  end
-
-  def paypal_transfers_airtable_form_url(embed: false, event: nil, user: nil)
-    # The airtable form is located within the Bank Promotions base
-    form_id = "4j6xJB5hoRus"
-    embed_url = "https://forms.hackclub.com/t/#{form_id}"
-    url = "https://forms.hackclub.com/t/#{form_id}"
-
-    prefill = []
-    prefill << "prefill_Event/Project+Name=#{CGI.escape(event.name)}" if event
-    prefill << "prefill_Submitter+Name=#{CGI.escape(user.full_name)}" if user
-    prefill << "prefill_Submitter+Email=#{CGI.escape(user.email)}" if user
-
-    "#{embed ? embed_url : url}?#{prefill.join("&")}"
   end
 
   def transaction_memo(tx)

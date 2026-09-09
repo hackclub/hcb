@@ -8,3 +8,7 @@
 shared:
   github_url: https://github.com/hackclub/hcb
   security_reporting_email: hcb-security@hackclub.com
+  # Referenced by the route, the CSP `report-uri`, and Rack::Attack.
+  csp_violation_report_path: /csp-violation-report
+  # Browsers cap report bodies well below this; anything larger is not a browser.
+  csp_violation_report_max_bytes: 16384

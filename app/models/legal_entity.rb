@@ -20,7 +20,6 @@
 #  index_legal_entities_on_tin_hash           (tin_hash)
 #
 class LegalEntity < ApplicationRecord
-  self.ignored_columns += ["address_city", "address_country", "address_line1", "address_line2", "address_postal_code", "address_state"]
   include Hashid::Rails
 
   include PublicIdentifiable
@@ -80,9 +79,10 @@ class LegalEntity < ApplicationRecord
   # completes and turns out to disagree, which is what mismatched_tax_form catches.
   def payable?
     form = latest_completed_tax_form
+    requires_verification = form&.form_type == "W9" && tax_identification_number.predicted_to_be_over_threshold?
 
     form.present? && mismatched_tax_form.nil? && entity_type_mismatched_tax_form.nil? &&
-      (form.taxbandits_tin_match_success? || !tax_identification_number.predicted_to_be_over_threshold?) &&
+      (form.taxbandits_tin_match_success? || !requires_verification) &&
       !tin_banned? && !archived?
   end
 

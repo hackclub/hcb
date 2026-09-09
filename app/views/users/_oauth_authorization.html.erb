@@ -3,7 +3,7 @@
     <span class="bold flex items-center">
       <span><%= authorization.application.name %></span> <span class="badge bg-info ml1">App</span>
     </span>
-    <%= link_to revoke_oauth_application_users_path(authorization.application.id), method: :delete, class: "muted tooltipped tooltipped--w z5", 'aria-label': "Sign out of this app", disabled: do %>
+    <%= link_to revoke_oauth_application_users_path(authorization.application.id), data: { turbo_method: :delete }, class: "muted tooltipped tooltipped--w z5", 'aria-label': "Sign out of this app", disabled: do %>
       <%= inline_icon "door-leave", size: home_action_size %>
     <% end %>
   </span>
@@ -38,7 +38,8 @@
               <td>
                 <% if token.expires_in %>
                   <%= link_to make_authorization_eternal_users_path(id: token.id),
-                              method: :post,
+                              data: { turbo_method: :post },
+
                               class: "btn bg-success py1 px2 h4",
                               disabled: !policy(token).make_eternal? do %>
                     <%= inline_icon "clock", size: home_action_size %>
@@ -62,8 +63,9 @@
       </div>
     <% end %>
     <% if latest_token.ip_address.present? %>
-      <div class="flex items-center mt-2">
-        <%= inline_icon "web", size: 20 %>&nbsp;<code class="mr1 tooltipped tooltipped--n" aria-label="<%= latest_token.ip_address %>"><%= latest_token.ip_address %></code>
+      <div class="flex items-center gap-x-1 min-w-0 mt-2">
+        <%= inline_icon "web", size: 20, class: "flex-shrink-0" %>
+        <code class="tooltipped tooltipped--n break-all" aria-label="<%= latest_token.ip_address %>"><%= latest_token.ip_address %></code>
       </div>
     <% end %>
     <p class="regular italic muted text-sm m-0 mt-1">

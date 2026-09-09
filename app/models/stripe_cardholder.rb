@@ -112,6 +112,14 @@ class StripeCardholder < ApplicationRecord
     end
   end
 
+  def reset_billing_address_to_default!
+    DEFAULT_BILLING_ADDRESS.each do |key, value|
+      self.public_send(:"address_#{key}=", value)
+    end
+
+    save!
+  end
+
   def self.first_name(user)
     clean_name(user.first_name(legal: true))
   end

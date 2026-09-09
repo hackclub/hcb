@@ -40,8 +40,6 @@ module SetLedgerFilters
         @tag = Tag.find_by(event_id: @event.id, label: params[:tag])
       end
 
-      @user = @event.users.friendly.find(params[:user], allow_nil: true) if params[:user]
-
       @type = params[:type].presence
       @start_date = params[:start].presence
       @end_date = params[:end].presence
@@ -68,6 +66,8 @@ module SetLedgerFilters
       @users = User.where("users.id IN (#{author_ids.to_sql} UNION #{organizer_ids.to_sql})")
                    .with_attached_profile_picture
                    .order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
+
+      @user = @users.friendly.find(params[:user], allow_nil: true) if params[:user]
 
       if @merchant
         merchant = @event.merchants.find { |merchant| merchant[:id] == @merchant }
@@ -108,7 +108,7 @@ module SetLedgerFilters
       # Whole-day inclusive end bound, matching the old transactions page
       query << { datetime: { "$lt": @end_date.to_date.next_day } } if @end_date.present?
 
-      query << { author: { "$eq": @user.slug } } if @user.present?
+      query << { author: { "$eq": @user&.slug || params[:user] } } if params[:user].present?
 
       if @type.present?
         linked_object_type = {
@@ -129,7 +129,16 @@ module SetLedgerFilters
         query << { linked_object_type: }
       end
 
-      query << { status: { "$in": ["settled", "pending", "reversed"] } }
+      # Amount trumps status: an item that moved any non-zero amount should
+      # always render (e.g. a declined/failed transaction that still posted a
+      # partial charge), regardless of its status. Only zero-amount items are
+      # subject to the status allowlist.
+      query << {
+        "$or": [
+          { amount_cents: { "$ne": 0 } },
+          { status: { "$in": ["settled", "pending", "reversed"] } }
+        ]
+      }
       Ledger::Query.new({ "$and": query })
     end
 
