@@ -17,8 +17,12 @@ export default class extends Controller {
 
   async showAddingFromSearch(event) {
     if (event.params.query) {
-      const filled = event.params.isEmail ? 'emailInputTarget' : 'nameInputTarget'
-      const other = event.params.isEmail ? 'nameInputTarget' : 'emailInputTarget'
+      const filled = event.params.isEmail
+        ? 'emailInputTarget'
+        : 'nameInputTarget'
+      const other = event.params.isEmail
+        ? 'nameInputTarget'
+        : 'emailInputTarget'
       this[filled].value = event.params.query
       this[other].value = ''
     }
