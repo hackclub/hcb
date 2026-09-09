@@ -15,6 +15,8 @@ HCB is a tool for hackers to hack on the real world, like GitHub, but for buildi
   - [Stripe service fees](./guides/stripe_service_fees.md)
   - [Transaction imports](./guides/transaction_imports.md)
   - [Wires](./guides/wires.md)
+- Research
+  - [v5 API authorization: field-level & index-route policy](./research/v5-authorization.md)
 - [Admin tasks](./admin_tasks.md)
 - [Post-mortems](./postmortems.md)
 - [Pull requests](./pull_requests.md)
