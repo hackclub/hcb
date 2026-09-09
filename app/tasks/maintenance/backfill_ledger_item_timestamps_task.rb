@@ -14,8 +14,10 @@ module Maintenance
     end
 
     def process(ledger_item)
-      pending_at = ledger_item.calculate_pending_at
-      settled_at = ledger_item.calculate_settled_at
+      # Private on Ledger::Item, but reused rather than reimplemented here so
+      # this can't drift from refresh!.
+      pending_at = ledger_item.send(:calculate_pending_at)
+      settled_at = ledger_item.send(:calculate_settled_at)
 
       ledger_item.update_columns(
         pending_at:,

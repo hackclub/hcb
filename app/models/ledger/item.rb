@@ -193,14 +193,6 @@ class Ledger
       save!
     end
 
-    def calculate_pending_at
-      canonical_pending_transactions.order(:date, :id).first&.datetime
-    end
-
-    def calculate_settled_at
-      canonical_transactions.order(:date, :id).last&.datetime
-    end
-
     def map!
       Ledger::Mapper.new(ledger_item: self).run
       refresh!
@@ -346,6 +338,14 @@ class Ledger
       linked_object = (canonical_pending_transactions.order(date: :asc).map(&:linked_object) + canonical_transactions.order(date: :asc).map(&:linked_object_v2)).compact.first
 
       update!(linked_object:) if linked_object.present?
+    end
+
+    def calculate_pending_at
+      canonical_pending_transactions.order(:date, :id).first&.datetime
+    end
+
+    def calculate_settled_at
+      canonical_transactions.order(:date, :id).last&.datetime
     end
 
     def calculate_amount_cents
