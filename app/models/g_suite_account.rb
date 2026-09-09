@@ -111,9 +111,6 @@ class GSuiteAccount < ApplicationRecord
   # (and its aliases) intact. Intended for when a user's account is being
   # transferred to the unmanaged hackclub.com domain from an HCB managed domain
   # (e.g., events.hackclub.com).
-  #
-  # Available in the Rails console, and to admins with the
-  # `unmanage_gsuite_account` feature flag via the Google Workspace overview.
   def unmanage!(confirm:)
     raise ArgumentError, "confirm must match address" unless confirm == address
 
