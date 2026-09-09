@@ -9,6 +9,10 @@ class CardGrant
 
     DEFROSTABLE_STATUSES = %w[reversed released].freeze
 
+    # Stripe rejects activating a card that it considers permanently unusable
+    # (a canceled card, most often). Retrying can't fix that.
+    discard_on(Stripe::InvalidRequestError) { |_job, error| Rails.error.report(error) }
+
     def perform(ledger_item_id:)
       item = Ledger::Item.find_by(id: ledger_item_id)
       return unless item&.linked_object_type == "CardCharge"
