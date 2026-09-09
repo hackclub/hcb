@@ -8,6 +8,7 @@ class Ledger
       Ledger::AssertCtsSyncedWithHcbCodeJob.perform_later
       Ledger::AssertCptsSyncedWithHcbCodeJob.perform_later
       Ledger::AssertLedgerSyncedWithHcbCodeJob.perform_later
+      Ledger::AssertLedgerItemMemoMatchesHcbCodeJob.perform_later
       Ledger::AssertNoOrphanedCtsJob.perform_later
       Ledger::AssertNoOrphanedCptsJob.perform_later
       Ledger::AssertCemsMatchLedgerMappingJob.perform_later

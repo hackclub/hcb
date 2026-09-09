@@ -6,20 +6,21 @@ class Ledger
     include AssertsRequirements
 
     def run
-      @ledger_items = Ledger::Item.all.includes(hcb_code: [:event, { subledger: [:card_grant] }])
+      @ledger_items = Ledger::Item.where(id: Ledger::Mapping
+        .left_joins(ledger: [:event, { card_grant: :subledger }], ledger_item: :hcb_code)
+        .joins("LEFT JOIN events hcb_events ON hcb_events.id = hcb_codes.event_id")
+        .joins("LEFT JOIN card_grants hcb_subledgers ON hcb_subledgers.id = hcb_codes.subledger_id")
+        .where("events.id != hcb_events.id OR subledgers.id != hcb_subledgers.id")
+        .select("ledger_mappings.ledger_item_id as ledger_item_id"))
 
       @ledger_items.find_each do |item|
         safely do
           hcb_code = item.hcb_code
-          if (hcb_code.subledger&.card_grant || hcb_code.event)&.ledger != item.primary_ledger
             report_anomaly "Ledger::Item #{item.hashid} ledger does not match HcbCode #{hcb_code.hashid} ledger"
-          end
-
-          if hcb_code.custom_memo.presence != item.custom_memo.presence
-            report_anomaly "Ledger::Item #{item.hashid} custom_memo does not match HcbCode #{hcb_code.hashid} custom_memo"
           end
         end
       end
+
     end
 
   end
