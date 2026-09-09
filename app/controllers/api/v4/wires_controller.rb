@@ -14,8 +14,6 @@ module Api
 
       def show
         @wire = authorize find_for_api!(Wire, params[:id]), :show_in_v4?
-
-        render :show, status: :ok
       end
 
       require_oauth2_scope "transfers:read", :show
