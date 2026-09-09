@@ -483,6 +483,51 @@ RSpec.describe Ledger::Item, type: :model do
         .to have_enqueued_job(CardGrant::DefrostOneTimeUseJob).with(ledger_item_id: item.id)
     end
 
+    it "enqueues when a full refund refreshes the item through transaction callbacks" do
+      item = card_charge_item(linked_object: card_charge)
+      create(:canonical_transaction, ledger_item: item, amount_cents: -1000)
+      expect(item.reload).to be_settled
+
+      expect { create(:canonical_transaction, ledger_item: item, amount_cents: 1000) }
+        .to have_enqueued_job(CardGrant::DefrostOneTimeUseJob).with(ledger_item_id: item.id)
+
+      expect(item.reload).to be_reversed
+    end
+
+    it "waits until commit even when the item is saved again" do
+      item = card_charge_item(linked_object: card_charge)
+
+      expect do
+        Ledger::Item.transaction do
+          item.update!(status: :released)
+          item.reload.update!(custom_memo: "Released authorization")
+          expect(enqueued_jobs.pluck(:job)).not_to include(CardGrant::DefrostOneTimeUseJob)
+        end
+      end.to have_enqueued_job(CardGrant::DefrostOneTimeUseJob).with(ledger_item_id: item.id)
+    end
+
+    it "does not enqueue for a partial refund" do
+      item = card_charge_item(linked_object: card_charge)
+      create(:canonical_transaction, ledger_item: item, amount_cents: -1000)
+
+      expect { create(:canonical_transaction, ledger_item: item, amount_cents: 500) }
+        .not_to have_enqueued_job(CardGrant::DefrostOneTimeUseJob)
+
+      expect(item.reload).to be_settled
+    end
+
+    it "does not enqueue when the status change is rolled back" do
+      item = card_charge_item(linked_object: card_charge)
+
+      expect do
+        Ledger::Item.transaction(requires_new: true) do
+          item.update!(status: :released)
+          raise ActiveRecord::Rollback
+        end
+        item.reload.update!(custom_memo: "Still pending")
+      end.not_to have_enqueued_job(CardGrant::DefrostOneTimeUseJob)
+    end
+
     it "does not enqueue for other status transitions" do
       item = card_charge_item(linked_object: card_charge)
 

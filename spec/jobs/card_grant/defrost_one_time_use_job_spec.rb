@@ -157,4 +157,39 @@ RSpec.describe CardGrant::DefrostOneTimeUseJob do
   it "does not raise for a missing ledger item id" do
     expect { described_class.perform_now(ledger_item_id: -1) }.not_to raise_error
   end
+
+  %w[canceled expired].each do |status|
+    it "does not defrost a #{status} grant" do
+      freeze_by(system_user)
+      card_grant.update!(status:)
+      item = ledger_item_for(card_charge_for(card), status: "reversed")
+
+      perform(item)
+
+      expect(Stripe::Issuing::Card).not_to have_received(:update)
+      expect(card.reload).to be_frozen
+    end
+  end
+
+  it "does not activate the card again when the job is repeated" do
+    freeze_by(system_user)
+    item = ledger_item_for(card_charge_for(card), status: "reversed")
+
+    2.times { perform(item) }
+
+    expect(Stripe::Issuing::Card).to have_received(:update).once
+    expect(card_grant.reload).to be_one_time_use
+  end
+
+  it "reports a permanent Stripe rejection without retrying" do
+    freeze_by(system_user)
+    item = ledger_item_for(card_charge_for(card), status: "reversed")
+    error = Stripe::InvalidRequestError.new("Card is canceled", "status")
+    allow(Stripe::Issuing::Card).to receive(:update).and_raise(error)
+    expect(Rails.error).to receive(:report).with(error)
+
+    expect { perform(item) }.not_to raise_error
+
+    expect(card.reload).to be_frozen
+  end
 end
