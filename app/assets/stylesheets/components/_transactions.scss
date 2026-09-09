@@ -254,8 +254,26 @@ details.receipt-card {
   max-width: 125px;
 }
 
+[class^='transaction--']:target,
+.transaction:target {
+  scroll-margin-block: 6rem;
+}
+
 [class^='transaction--']:target {
   animation: highlight 2s;
+}
+
+.transaction:target {
+  outline: 2px solid map-get($palette, warning);
+  outline-offset: -2px;
+  animation: highlight-row 2s;
+}
+
+[class^='transaction--']:target,
+.transaction:target {
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 }
 
 .transaction__icon {
@@ -287,7 +305,7 @@ details.receipt-card {
     background-color: map-get($palette, warning);
   }
   to {
-    background-color: none;
+    background-color: transparent;
   }
 }
 
