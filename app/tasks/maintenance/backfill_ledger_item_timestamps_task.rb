@@ -5,26 +5,24 @@ module Maintenance
   # which until now was frozen at whatever the item's first CT/CPT happened to
   # be created at.
   #
-  # Only items with a transaction to derive a timestamp from are visited; the
-  # rest have nothing to backfill and keep the datetime they were created with.
-  # Membership is checked against the transactions themselves rather than the
-  # ct_count/cpt_count caches, which are only correct on items that have been
-  # refreshed since those columns were added.
-  #
-  # This is RefreshLedgerItemsTask narrowed to the items the timestamp columns
-  # are missing from; refreshing everything would work too, just far slower.
+  # Writes with update_columns so only the timestamps change: a full refresh!
+  # would rewrite every other cached column and leave a PaperTrail version
+  # behind on every item. The calculation has to mirror Ledger::Item#refresh!,
+  # so keep the two in step.
   class BackfillLedgerItemTimestampsTask < MaintenanceTasks::Task
-    HAS_TRANSACTIONS = <<~SQL.squish
-      EXISTS (SELECT 1 FROM canonical_transactions WHERE canonical_transactions.ledger_item_id = ledger_items.id)
-      OR EXISTS (SELECT 1 FROM canonical_pending_transactions WHERE canonical_pending_transactions.ledger_item_id = ledger_items.id)
-    SQL
-
     def collection
-      Ledger::Item.where(pending_at: nil, settled_at: nil).where(HAS_TRANSACTIONS)
+      Ledger::Item.all
     end
 
     def process(ledger_item)
-      ledger_item.refresh!
+      pending_at = ledger_item.canonical_pending_transactions.order(:date, :id).first&.datetime
+      settled_at = ledger_item.canonical_transactions.order(:date, :id).last&.datetime
+
+      ledger_item.update_columns(
+        pending_at:,
+        settled_at:,
+        datetime: settled_at || pending_at || ledger_item.datetime
+      )
     end
 
   end
