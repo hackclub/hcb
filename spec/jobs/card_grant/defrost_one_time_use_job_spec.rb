@@ -133,6 +133,17 @@ RSpec.describe CardGrant::DefrostOneTimeUseJob do
     expect(card.reload).to be_frozen
   end
 
+  it "leaves the card frozen when the organization is financially frozen" do
+    freeze_by(system_user)
+    card.event.update!(financially_frozen: true)
+    item = ledger_item_for(card_charge_for(card), status: "reversed")
+
+    perform(item)
+
+    expect(Stripe::Issuing::Card).not_to have_received(:update)
+    expect(card.reload).to be_frozen
+  end
+
   it "does nothing when the item is no longer reversed or released" do
     freeze_by(system_user)
     item = ledger_item_for(card_charge_for(card), status: "settled")

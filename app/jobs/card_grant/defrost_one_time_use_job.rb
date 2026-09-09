@@ -17,6 +17,9 @@ class CardGrant
       card = item.linked_object&.stripe_card
       grant = card&.card_grant
       return unless grant&.one_time_use? && grant.active?
+      # Organizers can't defrost a card while the org is frozen, so neither should we.
+      return if card.event.financially_frozen?
+      # Only undo the freeze HCB applied for the first purchase.
       return unless card.frozen? && card.last_frozen_by == User.system_user
       return if other_live_charges?(card, item)
 
