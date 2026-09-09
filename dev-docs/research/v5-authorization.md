@@ -20,12 +20,13 @@ us there, and proposes a design.
   - [How v3 handles field visibility](#how-v3-handles-field-visibility)
   - [How v4 handles field visibility](#how-v4-handles-field-visibility)
   - [Index routes: three approaches, none of them Pundit's](#index-routes-three-approaches-none-of-them-pundits)
-- [Why `permitted_attributes` Isn't The Answer](#why-permitted_attributes-isnt-the-answer)
+- [Where `permitted_attributes` Lands](#where-permitted_attributes-lands)
 - [Proposal](#proposal)
   - [1. One principal, not one policy per surface](#1-one-principal-not-one-policy-per-surface)
-  - [2. Field visibility as declared policy predicates](#2-field-visibility-as-declared-policy-predicates)
-  - [3. Enforcement: the serializer cannot emit an undeclared field](#3-enforcement-the-serializer-cannot-emit-an-undeclared-field)
+  - [2. `visible_attributes`: a per-viewer list of field names](#2-visible_attributes-a-per-viewer-list-of-field-names)
+  - [3. Deny by default, enforced by the serializer](#3-deny-by-default-enforced-by-the-serializer)
   - [4. Index routes: actually use `policy_scope`](#4-index-routes-actually-use-policy_scope)
+- [Pilot Implementation](#pilot-implementation)
 - [Alternatives Considered](#alternatives-considered)
 - [Migration Plan](#migration-plan)
 - [Open Questions](#open-questions)
@@ -175,220 +176,244 @@ Event.transparent.find_by_public_id id
 
 ---
 
-## Why `permitted_attributes` Isn't The Answer
+## Where `permitted_attributes` Lands
 
-The instinct is right — a policy-owned declaration of which fields a viewer may
-see is exactly what's needed. Pundit's specific `permitted_attributes` API is the
-wrong carrier for it, for four reasons.
+A policy-owned declaration of which fields a viewer may see is the right shape,
+and a **list of field names** carries most of it. Counting `app/views/api/v4/`:
 
-**1. It already means something else here, for input.** Pundit's
-`permitted_attributes` is a strong-parameters helper: the policy returns a symbol
-list, the controller feeds it to `params.permit` for mass assignment. We use it
-that way today:
-
-```ruby
-# app/controllers/sponsors_controller.rb:69
-params.require(:sponsor).permit(policy(Sponsor).permitted_attributes)
-```
-
-Overloading one method to mean both "what may be written" and "what may be read"
-guarantees confusion, and the two lists genuinely differ (a manager may *read* an
-ACH's routing number long after it's immutable).
-
-**2. It's column-shaped; our fields are not.** `permitted_attributes` returns
-model attribute names. Look at what v5 actually needs to gate:
-
-| Field | Why a column list can't express it |
+| | count |
 |---|---|
-| `account_number_last4` | derived — `account_number.slice(-4, 4)`, no such column |
-| TIN last-4 | not in our DB at all; fetched from TaxBandits |
-| `avatar` | computed URL from `profile_picture_for(user, size)` |
-| `name` | `user.initial_name`, not `user.name` |
-| `balance_cents` | an aggregate over the ledger |
-| `shipping_address` | a nested block sourced from `stripe_cards.physical.last` |
-| `card_charge` / `donation` / `check` | polymorphic subtrees on a transaction |
+| Total field emissions | ~300 |
+| Inside some conditional (gated presence) | ~64 (~20%), across 9 files |
+| Value-degradation (present, but a different value) | **2** |
 
-A field name in an API response is a **key in the output contract**, not a model
-attribute. Any design that conflates the two fails on the first derived field —
-and derived fields are the majority of the interesting cases.
+So ~99% of the surface is presence, which a list expresses directly. Two things
+keep it from being *Pundit's* `permitted_attributes` specifically, and one case
+a list cannot express at all.
 
-**3. It has no notion of *why* a field is visible.** The ERB side doesn't want a
-filtered hash; it wants to know whether to render a table row and a
-copy-to-clipboard button. It needs the predicate, not the list.
+**Use a different method name.** Pundit's `permitted_attributes` is a
+strong-parameters helper for *input*, and we use it that way today:
+`SponsorPolicy#permitted_attributes` (`app/policies/sponsor_policy.rb:33`)
+returns `:id` and conditionally `:event_id` and feeds `params.permit` at
+`sponsors_controller.rb:69` and `invoices_controller.rb:236`. Overloading it for
+output would either permit read-only fields as writable or leak write-only
+semantics into the contract. `permitted_attributes_for_<action>` doesn't rescue
+this: Pundit keys it on `params[:action]`, and a nested partial has no action of
+its own — a user rendered inside a transaction inside an index resolves against
+`index`. Serializers are recursive; the action-keyed variant assumes one record
+per request. So: same idea, named `visible_attributes`.
 
-**4. It's per-record, but transparency is per-viewer-relationship.** The same ACH
-transfer shows different fields to an anonymous visitor on a transparent org, a
-reader, a manager, and an admin. That's a lattice, and it maps cleanly onto the
-private predicates policies *already* define (`reader?`, `member?`, `manager?`,
-`admin?`, `is_public` — `app/policies/event_policy.rb:311-363`).
+**A list cannot express a masked value.** It is binary — the symbol is in or
+out. It has nothing to say about a field that is always *present* but carries a
+different value per viewer. That is exactly what "transparency mode should hide
+full names" means: `name` doesn't disappear, it degrades to
+`User#initial_name` (`app/models/user.rb:343`) — "Mohamad A." rather than the
+full name. Dropping the key instead is not a free workaround, because v3 always
+returns a name and every transparency client would break on the missing key.
+The same shape appears in the UI at `app/views/events/account_number.html.erb:38,48`,
+which renders `"•" * account_number.length` rather than omitting the row.
 
-So: keep the concept, drop the API.
+For those, the policy keeps a **named predicate** (`UserPolicy#full_name?`) and
+the serializer picks the value. The policy still makes the decision; only the
+rendering differs. There is essentially one such case in the current surface.
+
+> **A live exposure, found while counting.** `Api::Entities::User` does
+> `expose :name, as: :full_name` with no gating, and v3 authorizes anonymously.
+> We currently publish the full legal name of every member of a transparent
+> organization to unauthenticated callers. Hiding names is listed as a v5 goal;
+> it is a v3 bug today.
 
 ---
 
 ## Proposal
 
-Four changes. (1) and (4) are independently valuable and can land before v5 exists.
+Four changes. (1) and (4) are independently valuable and can land before v5
+exists. A working pilot of (1)-(3) is on this branch — see
+[Pilot Implementation](#pilot-implementation).
 
 ### 1. One principal, not one policy per surface
 
-`show_in_v4?` exists because v4 didn't want anonymous transparency. But that isn't
-a different *rule*, it's a different *actor*. We already have the right shape for
-this — `ApiAdminContext` (`app/models/api_admin_context.rb`) is a principal object
-that ANDs `admin?`/`auditor?` with token scopes so policies don't have to know
-about tokens. Generalize it:
-
-```ruby
-class Principal
-  # delegate_missing_to :@user, as ApiAdminContext already does
-  attr_reader :user, :token, :surface   # :web | :api
-end
-```
-
-- Web: `Principal.new(user: current_user, token: nil, surface: :web)`
-- v5: `Principal.new(user: current_user, token: current_token, surface: :api)`
-  — anonymous requests get `user: nil`, which is exactly what v3 passes today.
-
-Then **delete every `*_in_v4?` method and the whole `app/policies/api/` namespace.**
-`EventPolicy#show?` — `is_public || auditor_or_reader?` — becomes the single answer
-for web, v3, and v5 alike.
+`show_in_v4?` exists because v4 didn't want anonymous transparency. But that
+isn't a different *rule*, it's a different *actor*. We already have the right
+shape — `ApiAdminContext` (`app/models/api_admin_context.rb`) is a principal
+object that ANDs `admin?`/`auditor?` with token scopes so policies don't have to
+know about tokens. Generalize it to carry the surface and an optional token, and
+**delete every `*_in_v4?` method and the whole `app/policies/api/` namespace.**
 
 > **The objection, and the answer.** "But then an OAuth app granted
 > `organizations:read` for one user could walk every transparent org." True, and
-> that's a real concern — but it is a **token** concern, not a **user** concern, and
-> we already have a layer for it. `dev-docs/v4-api/scopes.md` states the split
-> explicitly: *"Scopes restrict tokens; policies restrict users."* The fix is a
-> `transparency:read` scope, not a forked policy method. Once that's clear, the
-> `_in_v4?` fork has no reason to exist — it was scope enforcement smuggled into
+> that's a real concern — but it is a **token** concern, not a **user** concern.
+> `dev-docs/v4-api/scopes.md` states the split: *"Scopes restrict tokens;
+> policies restrict users."* The fix is a `transparency:read` scope, not a
+> forked policy method. The `_in_v4?` family was scope enforcement smuggled into
 > the policy layer.
 
-### 2. Field visibility as declared policy predicates
-
-Add a small class-level DSL to `ApplicationPolicy`. It binds **output field names**
-(JSON keys, not columns) to **predicates the policy already has**:
+### 2. `visible_attributes`: a per-viewer list of field names
 
 ```ruby
 class AchTransferPolicy < ApplicationPolicy
-  field :recipient_name, :recipient_email, :bank_name, :payment_for, :sender,
-        visible_to: :show?
-
-  field :account_number_last4, :routing_number,
-        visible_to: :view_account_routing_numbers?
-
-  def show?
-    is_public || auditor_or_reader?     # transparency restored, no fork
-  end
-
-  def view_account_routing_numbers?
-    admin_or_manager?                   # unchanged, already correct
+  def visible_attributes
+    attrs = []
+    if transparent_or_reader?
+      attrs += %i[amount_cents date status recipient_name payment_for sender]
+      attrs += %i[recipient_email bank_name] if auditor_or_user?
+      attrs += %i[account_number account_number_last4 routing_number] if view_account_routing_numbers?
+    end
+    attrs
   end
 end
 ```
 
-This gives three things off one declaration:
+Names are keys in the **output contract**, not model attributes — which is what
+makes derived values (`:account_number_last4`), externally-fetched ones (a TIN
+last-4 from TaxBandits), and nested blocks (`:sender`) all expressible.
+
+The predicates are the ones the policies already have; nothing new is invented,
+and only the *gated* fields need naming — not all 300.
+
+### 3. Deny by default, enforced by the serializer
+
+This is the actual safety property, and it matters more than list-vs-predicate.
+Serializers write through an `Api::FieldSet` rather than to `json` directly, and
+a field the policy doesn't list is never emitted. Forgetting to declare a field
+becomes a missing-data bug (loud, harmless) instead of a leak (silent, not).
+
+That is not hypothetical: `json.bank_name` is ungated in v4 today while the web
+UI masks it to `"Sign in to view"` (`_ach_transfer.html.erb:63`). Nobody decided
+that — someone just didn't add an `if`.
+
+**Object-level read authorization falls out of the same list.** If a viewer can
+see no attribute, there is nothing to serve:
 
 ```ruby
-policy.visible?(:routing_number)  # => predicate, for ERB *and* jbuilder
-policy.visible_fields             # => Set, for the serializer + docs generation
-AchTransferPolicy.declared_fields # => Set, for the drift spec
-```
-
-Notes on the design:
-
-- **Field names are contract names, not attributes.** `field :account_number_last4`
-  declares the JSON key; the serializer still decides it's `slice(-4, 4)`. This is
-  the property that makes derived fields, TaxBandits-fetched values, and nested
-  blocks all expressible.
-- **Nested blocks are declared by their root key.** `field :shipping_address,
-  visible_to: :view_own_pii?` gates the whole subtree; anything genuinely finer
-  gets its own nested policy.
-- **Polymorphic subtrees delegate.** `json.card_charge` is gated by
-  `CardChargePolicy`, not by a field on the transaction — which is roughly what
-  `_transaction.json.jbuilder:37` does today, just made explicit.
-- **The `expand_pii` logic moves into policies.** `visible_to: :view_own_pii?`,
-  where that predicate is `record == user || (principal.admin? && token has pii)`.
-  That makes it reachable from ERB, which it currently isn't.
-
-### 3. Enforcement: the serializer cannot emit an undeclared field
-
-This is the part that actually delivers "web and v5 can't diverge". Declaring
-fields is worthless if the serializer can still ignore the declaration.
-
-Give v5 a jbuilder wrapper that consults the policy:
-
-```ruby
-# in the v5 serializer helper
-def field(json, record, key, &block)
-  policy = policy_for(record)
-  unless policy.class.declares_field?(key)
-    raise UndeclaredFieldError, "#{policy.class}: #{key} is not declared" if Rails.env.local?
-    return                                    # fail closed in production
-  end
-  return unless policy.visible?(key)
-  json.set!(key, block ? block.call : record.public_send(key))
+def show_any_attribute?
+  visible_attributes.any?
 end
 ```
 
-- **In dev/test, adding a `json.foo` without a `field :foo` raises.** You cannot
-  ship an unauthorized field.
-- **In production, it fails closed** — omitted, never leaked.
+That is what replaces `*_in_v4?`. A new API surface changes which *fields* it
+asks for, never which policy *method* it calls.
 
-Back that with two specs:
-
-1. **Field-drift spec** — render every v5 partial with a stub collector, diff the
-   emitted keys against `Policy.declared_fields`, fail on either direction (an
-   undeclared emission *or* a declared-but-dead field).
-2. **No-fork spec** — assert `app/policies/api/` is empty and that no policy method
-   matches `/_in_v\d\?$/`. Cheap, and it's the thing that stops this document's
-   problem from recurring.
-
-**On the ERB side, be honest about the scope.** ERB has no mechanical output
-contract, so there's nothing to auto-filter — and that's fine. ERB doesn't need
-filtering; it needs *the same predicate*. `visible?(ach_transfer, :routing_number)`
-in a view is the same call the serializer makes, resolved by the same policy object.
-That's what makes drift impossible: not that both sides are filtered the same way,
-but that **both sides read one declaration.** The 12 existing inline checks in
-jbuilder and their ERB twins become instances of one named mechanism.
+**The web side reads the same list**, via a `visible?(record, attribute)` view
+helper. ERB has no mechanical output contract, so there is nothing to
+auto-filter — and it doesn't need it. What prevents drift isn't that both sides
+filter identically; it's that **both read one declaration.**
 
 ### 4. Index routes: actually use `policy_scope`
 
 Replace all three current approaches with the one Pundit ships:
 
 ```ruby
-# v5 base controller
 after_action :verify_authorized
 after_action :verify_policy_scoped, only: :index
 ```
 
-Every index becomes `policy_scope(Model)` or `policy_scope(@event.tags)`, and each
-policy grows a real `Scope#resolve`. **`skip_authorization` in an index action
-becomes a lint failure.**
+Every index becomes `policy_scope(Model)`, and each policy grows a real
+`Scope#resolve`. **`skip_authorization` in an index action becomes a lint
+failure.** This also solves transparency for index routes for free — the
+anonymous branch of a `Scope` is exactly the `Event.transparent` filter v3
+hardcodes today.
 
-This also solves transparency for index routes for free — the anonymous branch of a
-`Scope` is exactly the `Event.transparent` filter v3 hardcodes:
+**Performance caveat, and it's a real one.** `Scope#resolve` must return SQL,
+but our role checks are Ruby walking `ancestor_organizer_positions`, and event
+visibility already involves a recursive CTE (`app/models/event.rb:236-247`).
+Plan for an `Event.visible_to(user)` SQL scope called from `Scope#resolve`, with
+a spec asserting `Model.visible_to(u).include?(r) == policy(u, r).show?` over a
+sample. That equivalence test is what keeps the Ruby and SQL paths honest.
+
+---
+
+## Pilot Implementation
+
+A working vertical slice is on this branch: ACH transfers (presence tiers) and
+users (the one masking case), served by a real endpoint.
+
+| File | Role |
+|---|---|
+| `app/policies/application_policy.rb` | `visible_attributes` (defaults to `[]`), `visible?`, `show_any_attribute?` |
+| `app/lib/api/field_set.rb` | the deny-by-default emitter |
+| `app/policies/ach_transfer_policy.rb` | presence tiers |
+| `app/policies/user_policy.rb` | `visible_attributes` + `full_name?` (masking) |
+| `app/helpers/api/v5/application_helper.rb` | `object_shape` yielding a `FieldSet` |
+| `app/helpers/application_helper.rb` | `visible?(record, attribute)` for ERB |
+| `app/views/api/v5/**` | v5 serializers |
+| `app/controllers/api/v5/**` | `GET /api/v5/ach_transfers/:id`, anonymous allowed |
+
+A serializer looks like this — note that `json` is never written to directly:
 
 ```ruby
-class EventPolicy < ApplicationPolicy
-  class Scope < ApplicationPolicy::Scope
-    def resolve
-      return scope.all                      if user&.auditor?
-      return scope.transparent.not_hidden   if user.nil?
-      scope.transparent.not_hidden.or(scope.where(id: user.readable_events.select(:id)))
-    end
-  end
+object_shape(json, ach_transfer) do |f|
+  f.recipient_name ach_transfer.recipient_name
+  f.bank_name ach_transfer.bank_name
+  f.routing_number ach_transfer.routing_number
+  # Block form: the account number is an encrypted column, so a viewer who
+  # can't see this field never pays to decrypt it.
+  f.account_number_last4 { ach_transfer.account_number.slice(-4, 4) }
+  f.nest(:sender) { json.partial! "api/v5/users/user", user: ach_transfer.creator }
 end
 ```
 
-**Performance caveat, and it's a real one.** `Scope#resolve` must return SQL, but
-our role checks are Ruby that walks `ancestor_organizer_positions`, and event
-visibility already involves a recursive CTE (`app/models/event.rb:236-247`).
-Naïvely translating predicates into scopes will produce N+1s or wrong answers.
-Plan for a `Event.visible_to(user)` SQL scope on the model, called from
-`Scope#resolve`, with a spec asserting that for a sample of records
-`Model.visible_to(u).include?(r) == policy(u, r).show?`. That equivalence test is
-what keeps the Ruby and SQL paths honest.
+One serializer, and the response varies by viewer:
 
----
+| Viewer | Keys returned |
+|---|---|
+| Anonymous, private org | *403* |
+| Anonymous, transparent org | `id object amount_cents date status recipient_name payment_for sender created_at` |
+| Reader | + `recipient_email bank_name` |
+| Manager / admin | + `routing_number account_number_last4` |
+
+and the nested sender's `name` degrades to `"Jane D"` outside the viewer's
+organizations while staying present.
+
+### Verification
+
+| Spec | Covers |
+|---|---|
+| `spec/lib/api/field_set_spec.rb` | gating, deferred values, arity, Object-method name collisions |
+| `spec/policies/ach_transfer_policy_spec.rb` | every role tier, and `show_any_attribute?` |
+| `spec/controllers/api/v5/ach_transfers_controller_spec.rb` | end to end: exact key sets per viewer, name degradation, anonymous access |
+
+> These specs have **not been executed** — they were written in an environment
+> without the gem bundle (Ruby 3.3 against a 3.4.9 Gemfile, no Rails). The
+> `FieldSet` semantics and the `AchTransferPolicy` tiers were verified
+> separately by loading those two files under plain Ruby with the Rails
+> dependencies stubbed. Run the suite before trusting the rest.
+
+### Notes from building it
+
+- **`v5` allows anonymous requests.** A *missing* token is fine (transparency);
+  a *malformed* one is still a 401. That is the whole v3-parity change, and it
+  needed no new policy method.
+- **`FieldSet` is a blank slate.** Field names come from the API contract and
+  some collide with inherited Object methods — `f.display "..."` would call
+  `Kernel#display`, silently, for that name only. Every public method outside a
+  small allowlist is undefined so all field names route through
+  `method_missing`.
+- **Arity is validated before the visibility check**, so a malformed serializer
+  call fails for every viewer rather than only the roles that can see it.
+- **`:account_number` and `:account_number_last4` are both listed** under one
+  permission, because the web UI reveals the full number to a manager while the
+  API ships four digits. That split predates this work and nobody recorded
+  whether it was deliberate. Listing both preserves today's behavior and makes
+  the difference visible in one place instead of two templates. **This needs a
+  decision** (see Open Questions).
+
+### Caveats to hold the design to
+
+1. **Per-surface field names would re-fork it.** `:account_number` vs
+   `:account_number_last4` is the existing instance. Rule to adopt: the same
+   field name on both surfaces, or it's a bug.
+2. **N+1 risk, and the list makes it systematic.** `visible_attributes` calls
+   `role_at_least?(user, record.event, …)` per record; a 100-row page is 100
+   role lookups plus one per nested user and event. Already true of the 12
+   inline checks today, but this would be on every object.
+   `User#readable_event_ids` is memoized here as a start;
+   `UserPolicy#shares_org_with_viewer?` uses `map` rather than `pluck` so a
+   preload actually helps. Index routes must preload before this ships widely.
+3. **Nested objects have no `authorize` call.** For a sender or an org rendered
+   inside a transaction, the list is the *only* gate. `visible_attributes == []`
+   renders as bare `id`/`object`, matching v3's minimized shape — deliberate,
+   and worth confirming per object.
 
 ## Alternatives Considered
 
@@ -404,6 +429,12 @@ TaxBandits values, or nested blocks — the cases that actually hurt.
 ergonomics. But it has no field-level story either, so we'd still be building
 section 2 by hand — on top of a full framework migration. Worth revisiting if we
 ever migrate for other reasons; not worth migrating *for* this.
+
+**A `field :x, visible_to: :predicate?` declaration DSL** (an earlier draft of
+this document). Rejected on the numbers: 2 of ~300 fields need masking, so
+building a declaration mechanism to handle 0.7% of cases is the wrong trade, and
+it puts a line in every policy for every field. A list plus one predicate for
+the masking case covers the same ground with far less machinery.
 
 **Per-viewer serializer variants** (v3's approach, generalized:
 `PublicAchTransferEntity` vs `MemberAchTransferEntity`). Rejected: combinatorial
@@ -422,12 +453,13 @@ anonymous viewers.
 Sequenced so nothing blocks the v3-serializer-on-the-ledger-engine work already in
 flight.
 
-**Phase 0 — pilot, one object end to end.** Build `Principal` + the `field` DSL,
-apply to `AchTransferPolicy` only. It's the ideal pilot: it's the motivating
-example, it already has `view_account_routing_numbers?`, and it has all three
-consumers (ERB at `_ach_transfer.html.erb:66`, jbuilder at
-`_ach_transfer.json.jbuilder:10`, Grape entity). Prove the same declaration drives
-all three. No behavior change.
+**Phase 0 — pilot, one object end to end. ✅ done on this branch.** See
+[Pilot Implementation](#pilot-implementation). `visible_attributes` +
+`Api::FieldSet` applied to `AchTransferPolicy` and `UserPolicy`, consumed by both
+a v5 serializer and the existing ERB view, behind a real endpoint. `Principal` is
+*not* built yet — the pilot reuses `ApiAdminContext` and permits anonymous
+requests at the controller, which was enough to prove transparency works without
+a `show_in_v5?`.
 
 **Phase 1 — `Scope` classes + `verify_policy_scoped`,** on the indexes v5 will
 have. Independently useful: it removes `skip_authorization` from v4 today.
@@ -448,8 +480,11 @@ less thing the API has to reimplement.
 
 ## Open Questions
 
-1. **Should `field` be mandatory or advisory in v5?** Recommendation: mandatory,
-   enforced by the raise in section 3. Advisory decays to the status quo.
+1. **Is the web/API split on `account_number` deliberate?** The web reveals the
+   full number to a manager; v4 ships four digits. Initial read is that it's
+   accidental. If so, unify on the last-4 and drop `:account_number` from the
+   list. If not, write down why — nothing records it today. Same question, more
+   clearly accidental, for `bank_name`.
 2. **How do field declarations interact with `expand`?** `expand=balance_cents`
    controls *cost*; policy controls *permission*. Keep them orthogonal — a field
    must pass both. `_event.json.jbuilder:37` already ANDs them

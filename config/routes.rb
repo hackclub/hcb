@@ -829,6 +829,14 @@ Rails.application.routes.draw do
         match "*path" => "application#not_found", via: [:get, :post]
       end
     end
+
+    # v5 is a pilot: one endpoint, exercising attribute-level authorization
+    # (ApplicationPolicy#visible_attributes) end to end.
+    namespace :v5 do
+      defaults format: :json do
+        resources :ach_transfers, only: [:show]
+      end
+    end
   end
 
   get "api/current_user", to: "api#the_current_user"

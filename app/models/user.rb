@@ -675,6 +675,14 @@ class User < ApplicationRecord
     @readable_events ||= accessible_events(roles: OrganizerPosition.roles.keys)
   end
 
+  # Memoized on the user because policies are instantiated per record: without
+  # this, rendering a list of objects re-runs the readable-events query once per
+  # row. `ApiAdminContext` delegates to this same instance, so API and web share
+  # the memo.
+  def readable_event_ids
+    @readable_event_ids ||= readable_events.pluck(:id).to_set
+  end
+
   def manageable_events
     @manageable_events ||= accessible_events(roles: ["manager"])
   end

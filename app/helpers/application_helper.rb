@@ -26,6 +26,13 @@ module ApplicationHelper
   include TurboStreamActionsHelper
   include UsersHelper
 
+  # Attribute-level authorization for views — the same list the v5 serializers
+  # read, so a field gated in the UI and the same field in the API cannot drift
+  # apart. See ApplicationPolicy#visible_attributes.
+  def visible?(record, attribute)
+    policy(record).visible?(attribute)
+  end
+
   def upsert_query_params(**new_params)
     params = request.query_parameters || {}
     params.merge(new_params)
