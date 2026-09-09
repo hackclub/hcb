@@ -1,11 +1,8 @@
 # frozen_string_literal: true
 
 class Ledger
-  class AssertLedgerItemMemoMatchesHcbCodeJob < ApplicationJob
-    queue_as :low
-    include AssertsRequirements
-
-    def run
+  class AssertLedgerItemMemoMatchesHcbCodeJob < AssertRequirementJob
+    def perform
       @ledger_items = Ledger::Item.where.associated(:hcb_code).includes(:hcb_code)
 
       @ledger_items.find_each do |item|

@@ -1,11 +1,8 @@
 # frozen_string_literal: true
 
 class Ledger
-  class AssertLedgerSyncedWithHcbCodeJob < ApplicationJob
-    queue_as :low
-    include AssertsRequirements
-
-    def run
+  class AssertLedgerSyncedWithHcbCodeJob < AssertRequirementJob
+    def perform
       @ledger_items = Ledger::Item.where(id: Ledger::Mapping
         .left_joins(ledger: [:event, { card_grant: :subledger }], ledger_item: :hcb_code)
         .joins("LEFT JOIN events hcb_events ON hcb_events.id = hcb_codes.event_id")
@@ -16,8 +13,7 @@ class Ledger
       @ledger_items.find_each do |item|
         safely do
           hcb_code = item.hcb_code
-            report_anomaly "Ledger::Item #{item.hashid} ledger does not match HcbCode #{hcb_code.hashid} ledger"
-          end
+          report_anomaly "Ledger::Item #{item.hashid} ledger does not match HcbCode #{hcb_code.hashid} ledger"
         end
       end
 

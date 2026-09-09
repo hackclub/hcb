@@ -1,11 +1,8 @@
 # frozen_string_literal: true
 
 class Ledger
-  class AssertCorrectLedgerBalancesJob < ApplicationJob
-    queue_as :low
-    include AssertsRequirements
-
-    def run
+  class AssertCorrectLedgerBalancesJob < AssertRequirementJob
+    def perform
       @ledgers = Ledger.all.includes(event: :ledger, card_grant: [:subledger, :user])
 
       @ledgers.find_each do |ledger|

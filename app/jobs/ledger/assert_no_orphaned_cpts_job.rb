@@ -1,11 +1,8 @@
 # frozen_string_literal: true
 
 class Ledger
-  class AssertNoOrphanedCptsJob < ApplicationJob
-    queue_as :low
-    include AssertsRequirements
-
-    def run
+  class AssertNoOrphanedCptsJob < AssertRequirementJob
+    def perform
       @cpts = CanonicalPendingTransaction.where(ledger_item_id: nil)
 
       @cpts.find_each do |cpt|

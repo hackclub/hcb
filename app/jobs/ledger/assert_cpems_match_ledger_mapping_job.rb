@@ -1,11 +1,8 @@
 # frozen_string_literal: true
 
 class Ledger
-  class AssertCpemsMatchLedgerMappingJob < ApplicationJob
-    queue_as :low
-    include AssertsRequirements
-
-    def run
+  class AssertCpemsMatchLedgerMappingJob < AssertRequirementJob
+    def perform
       @cpts = CanonicalPendingTransaction.all.includes(:ledger_item, :canonical_pending_event_mapping)
 
       @cpts.find_each do |cpt|

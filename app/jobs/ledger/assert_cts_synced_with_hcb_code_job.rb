@@ -1,11 +1,8 @@
 # frozen_string_literal: true
 
 class Ledger
-  class AssertCtsSyncedWithHcbCodeJob < ApplicationJob
-    queue_as :low
-    include AssertsRequirements
-
-    def run
+  class AssertCtsSyncedWithHcbCodeJob < AssertRequirementJob
+    def perform
       @ledger_items = Ledger::Item.all.includes(:canonical_transactions, :hcb_code)
 
       @ledger_items.find_each do |item|
