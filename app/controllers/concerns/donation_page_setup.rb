@@ -23,9 +23,13 @@ module DonationPageSetup
     @tiers = event.donation_tiers.where(published: true)
     @show_tiers = event.donation_tiers_enabled? && @tiers.any?
 
+    # params override signed-in identity, skip for organizers
+    donor_name = params[:name].presence || (organizer_signed_in? ? nil : current_user&.name)
+    donor_email = params[:email].presence || (organizer_signed_in? ? nil : current_user&.email)
+
     @donation = Donation.new(
-      name: params[:name] || (organizer_signed_in? ? nil : current_user&.name),
-      email: params[:email] || (organizer_signed_in? ? nil : current_user&.email),
+      name: donor_name,
+      email: donor_email,
       amount: params[:amount],
       message: params[:message],
       fee_covered: params[:fee_covered],
@@ -46,8 +50,8 @@ module DonationPageSetup
 
     if @monthly
       @recurring_donation = event.recurring_donations.build(
-        name: params[:name],
-        email: params[:email],
+        name: donor_name,
+        email: donor_email,
         amount: params[:amount],
         message: params[:message],
         fee_covered: params[:fee_covered],
