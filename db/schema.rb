@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_08_162456) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_09_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -715,6 +715,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_08_162456) do
     t.datetime "errored_at", precision: nil
     t.bigint "event_id"
     t.bigint "fulfilled_by_id"
+    t.string "idempotency_key"
     t.datetime "in_transit_at", precision: nil
     t.string "name"
     t.datetime "pending_at", precision: nil
@@ -731,6 +732,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_08_162456) do
     t.index ["event_id"], name: "index_disbursements_on_event_id"
     t.index ["fulfilled_by_id"], name: "index_disbursements_on_fulfilled_by_id"
     t.index ["requested_by_id"], name: "index_disbursements_on_requested_by_id"
+    t.index ["source_event_id", "idempotency_key"], name: "index_disbursements_on_source_event_id_and_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
     t.index ["source_event_id"], name: "index_disbursements_on_source_event_id"
     t.index ["source_subledger_id"], name: "index_disbursements_on_source_subledger_id"
     t.index ["source_transaction_category_id"], name: "index_disbursements_on_source_transaction_category_id"
