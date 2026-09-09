@@ -18,19 +18,21 @@
   <%= form_with(model: @monthly ? [@event, @recurring_donation] : donation, local: true, url: (make_donation_donations_path unless @monthly),
                 class: "card mx-auto max-w-96 mb3", data: form_data, html: { autocomplete: "off" }) do |form| %>
     <% donation = @recurring_donation if @monthly %>
+    <% prefill_name = donation.name.presence || params[:name] || (organizer_signed_in? ? nil : current_user&.name) %>
+    <% prefill_email = donation.email.presence || params[:email] || (organizer_signed_in? ? nil : current_user&.email) %>
 
     <%= form.invisible_captcha :subtitle %>
     <%= form_errors(donation, nil, "We couldn't start this") %>
 
     <div class="field mb2">
       <%= form.label :name, "Your name" %>
-      <%= form.text_field :name, placeholder: "John Smith", required: true, autofocus: !@tier, autocomplete: "off" %>
+      <%= form.text_field :name, placeholder: "John Smith", required: true, autofocus: !@tier, autocomplete: "off", value: prefill_name %>
     </div>
 
     <div class="field mb2">
       <%= form.label :email, "Your email" %>
       <span class="muted block h5"><%= @event.name %> will send <%= @monthly ? "receipts" : "a receipt" %> here for your tax records, and may use it to communicate with you.</span>
-      <%= form.email_field :email, placeholder: "jsmith@gmail.com", required: true, autocomplete: "off" %>
+      <%= form.email_field :email, placeholder: "jsmith@gmail.com", required: true, autocomplete: "off", value: prefill_email %>
       <% donation.errors.messages_for(:email).each do |message| %>
         <div class="primary"><%= message %></div>
       <% end %>
