@@ -67,7 +67,7 @@ RSpec.describe CardGrantsController do
       expect(response.body).not_to include("Not activated")
     end
 
-    it "shows all grants when the status paramater is invalid" do
+    it "shows all grants when the status parameter is invalid" do
       get(:card_index, params: { event_id: event.friendly_id, status: "bogus" })
 
       expect(response).to have_http_status(:ok)
