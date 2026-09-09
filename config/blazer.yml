@@ -79,8 +79,7 @@ user_method: blazer_current_user
 # before_action_method: require_admin
 
 # email to send checks from
-# Bounces and auto-replies land back here, so keep it off Intercom.
-from_email: hcb-engr@hackclub.com
+from_email: hcb@hackclub.com
 
 # webhook for Slack
 # slack_webhook_url: <%= ENV["BLAZER_SLACK_WEBHOOK_URL"] %>
