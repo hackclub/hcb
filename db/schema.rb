@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_08_162456) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_09_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1618,8 +1618,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_08_162456) do
     t.datetime "marked_no_or_lost_receipt_at"
     t.text "memo", null: false
     t.integer "not_admin_only_comment_count", default: 0, null: false
+    t.datetime "pending_at"
     t.integer "receipt_count", default: 0, null: false
     t.boolean "receipt_required"
+    t.datetime "settled_at"
     t.text "short_code"
     t.string "special_appearance"
     t.string "status", default: "pending", null: false
