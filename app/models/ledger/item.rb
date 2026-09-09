@@ -177,6 +177,7 @@ class Ledger
       self.not_admin_only_comment_count = comments.not_admin_only.size
       self.receipt_count = receipts.size
 
+      # Timestamps
       self.pending_at = calculate_pending_at
       self.settled_at = calculate_settled_at
       self.datetime = settled_at || pending_at || datetime
