@@ -178,7 +178,9 @@ class Ledger
       self.receipt_count = receipts.size
 
       # Timestamps
-      assign_timestamps
+      self.pending_at = calculate_pending_at
+      self.settled_at = calculate_settled_at
+      self.datetime = settled_at || pending_at || datetime
 
       self.amount_cents = calculate_amount_cents
       self.author = calculate_author
@@ -189,15 +191,6 @@ class Ledger
       self.memo = self.custom_memo.presence || self.system_memo.presence || fallback_memo
 
       save!
-    end
-
-    # Recomputes only the timestamp columns. Cheaper than a full refresh! for
-    # backfilling existing items, and skips callbacks so it can't re-trigger
-    # mapping.
-    def refresh_timestamps!
-      assign_timestamps
-
-      update_columns(pending_at:, settled_at:, datetime:)
     end
 
     def map!
@@ -345,12 +338,6 @@ class Ledger
       linked_object = (canonical_pending_transactions.order(date: :asc).map(&:linked_object) + canonical_transactions.order(date: :asc).map(&:linked_object_v2)).compact.first
 
       update!(linked_object:) if linked_object.present?
-    end
-
-    def assign_timestamps
-      self.pending_at = calculate_pending_at
-      self.settled_at = calculate_settled_at
-      self.datetime = settled_at || pending_at || datetime
     end
 
     def calculate_pending_at
