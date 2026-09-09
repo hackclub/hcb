@@ -6,14 +6,10 @@ class Ledger
     include AssertsRequirements
 
     def run
-      @cts = CanonicalTransaction.all.includes(:ledger_item)
+      @cts = CanonicalTransaction.where(ledger_item_id: nil)
 
       @cts.find_each do |ct|
-        safely do
-          if ct.ledger_item.nil?
-            report_anomaly "CanonicalTransaction #{ct.id} is orphaned (no Ledger::Item)"
-          end
-        end
+        report_anomaly "CanonicalTransaction #{ct.id} is orphaned (no Ledger::Item)"
       end
     end
 
