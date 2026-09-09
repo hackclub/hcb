@@ -28,7 +28,7 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
     resource "/api/*",
              headers: :any,
              methods: %i[get post put patch delete options head],
-             expose: ["X-Next-Page", "X-Offset", "X-Page", "X-Per-Page", "X-Prev-Page", "X-Request-Id", "X-Runtime", "X-Total", "X-Total-Pages"]
+             expose: ["Idempotent-Replayed", "X-Next-Page", "X-Offset", "X-Page", "X-Per-Page", "X-Prev-Page", "X-Request-Id", "X-Runtime", "X-Total", "X-Total-Pages"]
 
     resource "*",
              headers: :any,
