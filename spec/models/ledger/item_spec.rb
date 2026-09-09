@@ -445,6 +445,52 @@ RSpec.describe Ledger::Item, type: :model do
     end
   end
 
+  describe "one-time-use card grant defrost hook" do
+    include ActiveJob::TestHelper
+
+    def card_charge_item(linked_object:)
+      item = Ledger::Item.new(amount_cents: -1000, memo: "Test", datetime: Time.current, linked_object:)
+      item.save(validate: false)
+      item.reload
+    end
+
+    let(:card_charge) { create(:raw_pending_stripe_transaction).card_charge }
+
+    it "enqueues the defrost job when a card charge becomes reversed" do
+      item = card_charge_item(linked_object: card_charge)
+
+      expect { item.update!(status: :reversed) }
+        .to have_enqueued_job(CardGrant::DefrostOneTimeUseJob).with(ledger_item_id: item.id)
+    end
+
+    it "enqueues the defrost job when a card charge becomes released" do
+      item = card_charge_item(linked_object: card_charge)
+
+      expect { item.update!(status: :released) }
+        .to have_enqueued_job(CardGrant::DefrostOneTimeUseJob).with(ledger_item_id: item.id)
+    end
+
+    it "does not enqueue for other status transitions" do
+      item = card_charge_item(linked_object: card_charge)
+
+      expect { item.update!(status: :settled) }.not_to have_enqueued_job(CardGrant::DefrostOneTimeUseJob)
+    end
+
+    it "does not enqueue when the status is unchanged" do
+      item = card_charge_item(linked_object: card_charge)
+      item.update_columns(status: "reversed")
+
+      expect { item.update!(custom_memo: "Refund") }.not_to have_enqueued_job(CardGrant::DefrostOneTimeUseJob)
+    end
+
+    it "does not enqueue for items that are not card charges" do
+      stub_donation_payment_intent_creation
+      item = card_charge_item(linked_object: create(:donation))
+
+      expect { item.update!(status: :reversed) }.not_to have_enqueued_job(CardGrant::DefrostOneTimeUseJob)
+    end
+  end
+
   describe "#author" do
     it "is nobody for an in-person donation, which the donor paid rather than the organizer who collected it" do
       stub_donation_payment_intent_creation
