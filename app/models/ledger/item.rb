@@ -363,8 +363,6 @@ class Ledger
         linked_object&.expense&.report&.user
       when "PaypalTransfer"
         linked_object&.user
-      when "Donation"
-        linked_object&.collected_by if linked_object&.in_person?
       when "Wire"
         linked_object&.user
       when "WiseTransfer"

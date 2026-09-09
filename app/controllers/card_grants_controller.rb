@@ -22,10 +22,16 @@ class CardGrantsController < ApplicationController
     params[:q] ||= params[:search]
 
     card_grants_page = (params[:page] || 1).to_i
-    card_grants_per_page = (params[:per] || 20).to_i
+    card_grants_per_page = safe_per(20)
 
     @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger, :reimbursement_report).order(created_at: :desc)
-    @card_grants = @card_grants.search_for(params[:q]) if params[:q].present?
+    if params[:q].present?
+      @card_grants = if organizer_signed_in?
+                       @card_grants.search(params[:q])
+                     else
+                       @card_grants.public_search(params[:q])
+                     end
+    end
     @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
   end
 
@@ -38,7 +44,7 @@ class CardGrantsController < ApplicationController
     set_ledger_filters
     return if performed?
 
-    @per = params[:per] || 25
+    @per = safe_per(25)
     @table_only = true
     if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
       @ledger = @event.ledger
@@ -222,7 +228,7 @@ class CardGrantsController < ApplicationController
     @hcb_codes = @card_grant.visible_hcb_codes
 
     if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
-      @per = params[:per] || 25
+      @per = safe_per(25)
       @table_only = true
       @ledger = @card_grant.ledger
       @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).page(params[:page]).per(@per)
@@ -246,7 +252,7 @@ class CardGrantsController < ApplicationController
     @card = @card_grant.stripe_card
     @hcb_codes = @card&.local_hcb_codes
 
-    @per = params[:per] || 25
+    @per = safe_per(25)
     @table_only = true
     @ledger = @card_grant.ledger
     @items = @card_grant.ledger.items.order(datetime: :desc, created_at: :desc, id: :desc).page(params[:page]).per(@per)

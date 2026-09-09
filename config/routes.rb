@@ -498,14 +498,14 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :wires, only: [:edit, :update] do
+  resources :wires, only: [:show, :edit, :update] do
     member do
       post "send", to: "wires#send_wire"
       post "reject"
     end
   end
 
-  resources :wise_transfers, only: [:edit, :update] do
+  resources :wise_transfers, only: [:show, :update] do
     member do
       post "approve"
       post "reject"
