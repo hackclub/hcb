@@ -553,6 +553,25 @@ RSpec.describe Ledger::Query, type: :model do
     end
   end
 
+  describe ".position_of" do
+    it "ranks pending items first and breaks datetime ties by creation time and ID" do
+      timestamp = Time.zone.local(2024, 4, 1)
+      item_a.update_columns(status: "pending", datetime: timestamp - 1.day)
+      item_b.update_columns(status: "settled", datetime: timestamp + 1.day)
+      item_c.update_columns(status: "settled", datetime: timestamp, created_at: timestamp)
+      item_d.update_columns(status: "settled", datetime: timestamp, created_at: timestamp)
+      item_e.update_columns(status: "settled", datetime: timestamp, created_at: timestamp - 1.day)
+
+      relation = described_class.new({}).execute(ledgers: [test_ledger.id])
+                               .where(id: ids_of(item_a, item_b, item_c, item_d, item_e))
+
+      positions = [item_a, item_b, item_d, item_c, item_e].map do |item|
+        described_class.position_of(item, relation:)
+      end
+      expect(positions).to eq([1, 2, 3, 4, 5])
+    end
+  end
+
   describe "empty items" do
     it "excludes items with no CTs and no CPTs" do
       empty_item = create_mapped_item(amount_cents: 100, memo: "empty item", datetime: Date.new(2024, 1, 4))
