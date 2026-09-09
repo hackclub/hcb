@@ -21,7 +21,7 @@ module Maintenance
       ledger_item.update_columns(
         pending_at:,
         settled_at:,
-        datetime: settled_at || pending_at || ledger_item.datetime
+        datetime: settled_at || pending_at || ledger_item.created_at
       )
     end
 

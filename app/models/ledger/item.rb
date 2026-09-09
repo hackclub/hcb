@@ -180,7 +180,7 @@ class Ledger
       # Timestamps
       self.pending_at = calculate_pending_at
       self.settled_at = calculate_settled_at
-      self.datetime = settled_at || pending_at || datetime
+      self.datetime = settled_at || pending_at || created_at
 
       self.amount_cents = calculate_amount_cents
       self.author = calculate_author
