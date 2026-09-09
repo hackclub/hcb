@@ -454,7 +454,20 @@ RSpec.describe Ledger::Item, type: :model do
       item.reload
     end
 
-    let(:card_charge) { create(:raw_pending_stripe_transaction).card_charge }
+    def charge_on(stripe_card)
+      create(
+        :raw_pending_stripe_transaction,
+        stripe_transaction: {
+          "id"                   => "iauth_#{SecureRandom.hex(6)}",
+          "card"                 => { "id" => stripe_card.stripe_id },
+          "authorization_method" => "online",
+          "merchant_data"        => { "name" => "merchant", "category" => "bakeries" }
+        }
+      ).card_charge
+    end
+
+    let(:card_grant) { create(:card_grant, event: create(:event, :with_positive_balance)) }
+    let(:card_charge) { charge_on(card_grant.stripe_card) }
 
     it "enqueues the defrost job when a card charge becomes reversed" do
       item = card_charge_item(linked_object: card_charge)
@@ -486,6 +499,12 @@ RSpec.describe Ledger::Item, type: :model do
     it "does not enqueue for items that are not card charges" do
       stub_donation_payment_intent_creation
       item = card_charge_item(linked_object: create(:donation))
+
+      expect { item.update!(status: :reversed) }.not_to have_enqueued_job(CardGrant::DefrostOneTimeUseJob)
+    end
+
+    it "does not enqueue for a card that isn't a grant card" do
+      item = card_charge_item(linked_object: charge_on(create(:stripe_card, :with_stripe_id)))
 
       expect { item.update!(status: :reversed) }.not_to have_enqueued_job(CardGrant::DefrostOneTimeUseJob)
     end

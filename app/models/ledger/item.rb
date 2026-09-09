@@ -101,7 +101,7 @@ class Ledger
 
     # A refunded or voided charge on a one-time-use grant card should defrost it.
     after_update_commit if: -> { linked_object_type == "CardCharge" && status_previously_changed? && status.in?(%w[reversed released]) } do
-      CardGrant::DefrostOneTimeUseJob.perform_later(ledger_item_id: id)
+      CardGrant::DefrostOneTimeUseJob.perform_later(ledger_item_id: id) if linked_object&.stripe_card&.card_grant
     end
 
     scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
