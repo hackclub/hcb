@@ -5,7 +5,7 @@
 # Table name: stripe_card_personalization_designs
 #
 #  id                        :bigint           not null, primary key
-#  color                     :string
+#  color                     :string           not null
 #  common                    :boolean          default(FALSE), not null
 #  stale                     :boolean          default(FALSE), not null
 #  stripe_card_logo          :string
@@ -48,11 +48,6 @@ class StripeCard
     validate :common_designs_must_not_belong_to_an_event
 
     enum :color, { black: "black", white: "white" }
-
-    # TODO: remove after backfill populates the color column for all designs
-    def color
-      read_attribute(:color) || StripeService.physical_bundle_ids.invert[stripe_physical_bundle_id]&.to_s
-    end
 
     scope :active, -> { where(stripe_status: "active") }
     scope :inactive, -> { where(stripe_status: "inactive") }
