@@ -10,7 +10,6 @@ module Api
       def show
         @ach_transfer = authorize find_for_api!(AchTransfer, params[:id]), :show_in_v4?
 
-        render :show, status: :ok
       end
 
       require_oauth2_scope "transfers:read", :show
