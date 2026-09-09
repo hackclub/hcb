@@ -563,7 +563,7 @@ RSpec.describe Ledger::Query, type: :model do
       item_e.update_columns(status: "settled", datetime: timestamp, created_at: timestamp - 1.day)
 
       relation = described_class.new({}).execute(ledgers: [test_ledger.id])
-                               .where(id: ids_of(item_a, item_b, item_c, item_d, item_e))
+                                .where(id: ids_of(item_a, item_b, item_c, item_d, item_e))
 
       positions = [item_a, item_b, item_d, item_c, item_e].map do |item|
         described_class.position_of(item, relation:)
