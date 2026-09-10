@@ -4,10 +4,6 @@
 <%= csrf_meta_tags %>
 <%= csp_meta_tag %>
 
-<%# A popover puts the URL of whatever it's showing in the address bar, so reloading %>
-<%# would land on that thing's standalone page. Head back to the page the popover was %>
-<%# opened on top of, from here in the <head>, before any of this page is rendered. %>
-<%# ui.js owns the rest of `hcb:open_popover`, and reopens the popover once we land. %>
 <script>
   try {
     var openPopover = JSON.parse(sessionStorage.getItem('hcb:open_popover'))
