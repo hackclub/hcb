@@ -23,7 +23,7 @@ class CommentsController < ApplicationController
       if turbo_frame_request?
         flash.now[:success] = "Comment created."
         render turbo_stream: [
-          turbo_stream.replace("shared_popover_flash", partial: "application/flash", locals: { id: "shared_popover_flash", klass: "mt2" }),
+          turbo_stream.replace("shared_popover_flash", partial: "application/flash", locals: { id: "shared_popover_flash", klass: "mt-3" }),
           turbo_stream.replace(turbo_frame_request_id, helpers.turbo_frame_tag(turbo_frame_request_id, src: return_to, target: "_top"))
         ]
       else
