@@ -10,13 +10,6 @@ module Payroll
       contractor?
     end
 
-    # A manager (reviewer) submitting an invoice on a contractor's behalf. The
-    # invoice is auto-approved, so this is gated by the review permission and,
-    # like contractor submission, only allowed once the position is onboarded.
-    def create_on_behalf?
-      reviewer? && record.payroll_position.onboarded?
-    end
-
     def approve?
       reviewer?
     end
