@@ -132,8 +132,8 @@ class CardGrantsController < ApplicationController
     authorize @event, :bulk_upload_card_grants?
 
     csv_content = CSV.generate do |csv|
-      csv << %w[email amount_cents purpose one_time_use invite_message merchant_lock category_lock keyword_lock banned_merchants banned_categories]
-      csv << ["recipient@example.com", "1000", "Pizza for club meeting", "false", "Thanks for your help!", "", "", "", "", ""]
+      csv << %w[email amount_cents purpose instructions one_time_use pre_authorization_required invite_message merchant_lock category_lock keyword_lock banned_merchants banned_categories]
+      csv << ["recipient@example.com", "1000", "Pizza for club meeting", "Please only purchase pizza for the meeting.", "false", "false", "Thanks for your help!", "", "", "", "", ""]
     end
 
     send_data csv_content,
