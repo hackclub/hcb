@@ -64,6 +64,7 @@ class StripeCardholder < ApplicationRecord
   after_validation :update_cardholder_in_stripe, on: :update, if: -> { errors.none? }
 
   before_validation :set_default_billing_address
+  before_validation :clear_unsupported_phone_number
 
   def state
     return :success if remote_status == "active"
@@ -105,6 +106,12 @@ class StripeCardholder < ApplicationRecord
     postal_code: "90069",
     country: "US"
   }.freeze
+
+  SMS_SUPPORTED = %w[US GB].freeze
+
+  def self.phone_number_supported?(phone_number)
+    SMS_SUPPORTED.include?(Phonelib.parse(phone_number).country)
+  end
 
   def default_billing_address?
     DEFAULT_BILLING_ADDRESS.all? do |key, value|
@@ -150,6 +157,13 @@ class StripeCardholder < ApplicationRecord
       method = :"address_#{key}"
       self.public_send(:"#{method}=", value) if self.public_send(method).blank?
     end
+  end
+
+  def clear_unsupported_phone_number
+    return if stripe_phone_number.blank?
+    return if StripeCardholder.phone_number_supported?(stripe_phone_number)
+
+    self.stripe_phone_number = nil
   end
 
   def update_cardholder_in_stripe
