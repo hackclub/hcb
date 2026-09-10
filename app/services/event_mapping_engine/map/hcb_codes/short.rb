@@ -82,7 +82,26 @@ module EventMappingEngine
           end
           # return hcb_code.outgoing_disbursement.subledger&.id if hcb_code.outgoing_disbursement?
           return hcb_code.incoming_disbursement.subledger&.id if hcb_code.incoming_disbursement?
-          return hcb_code.ct&.canonical_event_mapping&.subledger_id if hcb_code.events.length == 1
+          return existing_mapping(hcb_code, ct)&.subledger_id if hcb_code.events.length == 1
+        end
+
+        # The subledger is inherited from the transaction this HCB code already
+        # has. `ct` is deliberately excluded: it was assigned this HCB code just
+        # above, and `HcbCode#ct` returns the *newest* canonical transaction, so
+        # it would otherwise return `ct` itself — which has no mapping yet,
+        # silently placing the transaction on the main ledger. That's how a
+        # dispute reimbursement for a card grant charge ended up crediting the
+        # organization instead of the grant it was charged to.
+        #
+        # The earliest mapped transaction is the original charge, which is the
+        # one whose subledger a later credit belongs on.
+        def existing_mapping(hcb_code, ct)
+          ::CanonicalEventMapping
+            .joins(:canonical_transaction)
+            .where(canonical_transactions: { hcb_code: hcb_code.hcb_code })
+            .where.not(canonical_transaction_id: ct.id)
+            .order("canonical_transactions.date ASC, canonical_transactions.id ASC")
+            .first
         end
 
         def assign_transaction_category!(hcb_code:, canonical_transaction:)
