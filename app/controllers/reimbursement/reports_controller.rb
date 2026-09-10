@@ -348,23 +348,6 @@ module Reimbursement
       redirect_to @report
     end
 
-    def approve_all_expenses
-      authorize @report
-
-      begin
-        @report.expenses.each do |expense|
-          expense.mark_approved!
-        end
-        flash[:success] = "All expenses have been approved; the report creator will be notified."
-      rescue => e
-        flash[:error] = e.message
-      end
-
-      # Reimbursement::NightlyJob.perform_later
-
-      redirect_to @report
-    end
-
     def approve
       authorize @report
 

@@ -73,10 +73,6 @@ module Reimbursement
       (admin || manager) && open
     end
 
-    def approve_all_expenses?
-      (admin || (manager && !creator)) && open
-    end
-
     def approve?
       (admin || (manager && !creator)) && open
     end
