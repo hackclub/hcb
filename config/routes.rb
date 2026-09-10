@@ -434,6 +434,7 @@ Rails.application.routes.draw do
   resources :g_suite_accounts, only: [:index, :create, :update, :edit, :destroy], path: "g_suite_accounts" do
     put "reset_password"
     put "toggle_suspension"
+    put "unmanage"
     resources :g_suite_aliases, only: [:create, :destroy], shallow: true
   end
 
@@ -498,14 +499,14 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :wires, only: [:edit, :update] do
+  resources :wires, only: [:show, :edit, :update] do
     member do
       post "send", to: "wires#send_wire"
       post "reject"
     end
   end
 
-  resources :wise_transfers, only: [:show, :edit, :update] do
+  resources :wise_transfers, only: [:show, :update] do
     member do
       post "approve"
       post "reject"
