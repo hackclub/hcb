@@ -67,7 +67,7 @@ RSpec.describe CommentsController do
             return_to: frame_url
           }
         }
-      }.not_to change { report.comments.count }
+      }.not_to(change { report.comments.count })
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("shared_popover_flash")
