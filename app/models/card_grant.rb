@@ -132,7 +132,8 @@ class CardGrant < ApplicationRecord
       all
     end
   }
-  scope :search_for, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
+  scope :search, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
+  scope :public_search, ->(q) { joins(:user).where("users.preferred_name ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
   scope :expired_before, ->(date) { where("card_grants.expiration_at < ?", date) }
   scope :expires_on, ->(date) { where("card_grants.expiration_at = DATE(?)", date) }
 

@@ -153,6 +153,42 @@ RSpec.describe CardGrantsController do
     end
   end
 
+  describe "#card_index" do
+    def create_grant(event:, full_name:, email:)
+      user = create(:user, full_name:, email:)
+      create(:card_grant, event:, user:, email:, purpose: "Pizza")
+    end
+
+    def search(event, query)
+      request.headers["Turbo-Frame"] = "card_grant_card_overview"
+      get(:card_index, params: { event_id: event.friendly_id, q: query })
+      expect(response).to have_http_status(:ok)
+      response.parsed_body.css("a[href*='/spending']").map { |a| a["href"] }
+    end
+
+    it "lets organizers search by email and full name" do
+      organizer = create(:user)
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user: organizer, event:, role: :member)
+      card_grant = create_grant(event:, full_name: "Orpheus Dinosaur", email: "orpheus@hackclub.com")
+      create_session(organizer, verified: true)
+
+      expect(search(event, "orpheus@hackclub.com")).to eq([spending_card_grant_path(card_grant)])
+      expect(search(event, "Dinosaur")).to eq([spending_card_grant_path(card_grant)])
+    end
+
+    it "doesn't let non-organizers search by email or full name" do
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      card_grant = create_grant(event:, full_name: "Orpheus Dinosaur", email: "orpheus@hackclub.com")
+
+      expect(search(event, "orpheus@hackclub.com")).to be_empty
+      expect(search(event, "Dinosaur")).to be_empty
+
+      # ...but they can still search over what the page shows them.
+      expect(search(event, "Pizza")).to eq([spending_card_grant_path(card_grant)])
+    end
+  end
+
   describe "#create" do
     def card_grant_params
       {
