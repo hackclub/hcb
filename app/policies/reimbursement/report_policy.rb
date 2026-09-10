@@ -77,6 +77,10 @@ module Reimbursement
       (admin || (manager && !creator)) && open
     end
 
+    def approve?
+      (admin || (manager && !creator)) && open
+    end
+
     def reject?
       (admin || manager) && open
     end

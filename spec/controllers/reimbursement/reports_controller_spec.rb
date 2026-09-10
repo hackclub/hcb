@@ -335,6 +335,64 @@ RSpec.describe Reimbursement::ReportsController do
     end
   end
 
+  describe "#approve" do
+    it "approves all pending expenses and requests reimbursement" do
+      creator = create(:user)
+      event = create(:event)
+      approver = create(:user)
+      create(:organizer_position, user: approver, event:)
+      report = create(:reimbursement_report, user: creator, event:, aasm_state: :submitted, currency: "EUR")
+      expense_one = create(:reimbursement_expense, report:, value: 10.00)
+      expense_two = create(:reimbursement_expense, report:, value: 20.00)
+
+      expect(report.team_review_required?).to be(true)
+      expect(OrganizerPosition.where(user: creator, event:).exists?).to be(false)
+
+      create_session(approver, verified: true)
+
+      post(:approve, params: { report_id: report.id })
+
+      expect(response).to redirect_to(reimbursement_report_path(report))
+      expect(expense_one.reload.approved?).to be(true)
+      expect(expense_one.approved_by_id).to eq(approver.id)
+      expect(expense_two.reload.approved?).to be(true)
+      expect(expense_two.approved_by_id).to eq(approver.id)
+      expect(report.reload.aasm_state).to eq("reimbursement_requested")
+      expect(flash[:success]).to eq("All expenses have been approved and the reimbursement has been requested; the HCB team will review the request promptly.")
+    end
+
+    it "rejects the report creator" do
+      creator = create(:user)
+      event = create(:event)
+      report = create(:reimbursement_report, user: creator, event:, aasm_state: :submitted, currency: "EUR")
+      create(:reimbursement_expense, report:, value: 10.00)
+
+      create_session(creator, verified: true)
+
+      post(:approve, params: { report_id: report.id })
+
+      expect(flash[:error]).to match(/not authorized/i)
+      expect(report.reload.aasm_state).to eq("submitted")
+    end
+
+    it "keeps approved expenses when the reimbursement guard fails" do
+      creator = create(:user)
+      event = create(:event)
+      approver = create(:user)
+      create(:organizer_position, user: approver, event:)
+      report = create(:reimbursement_report, user: creator, event:, aasm_state: :submitted, currency: "USD")
+      expense = create(:reimbursement_expense, report:, value: 10.00)
+
+      create_session(approver, verified: true)
+
+      post(:approve, params: { report_id: report.id })
+
+      expect(expense.reload.approved?).to be(true)
+      expect(report.reload.aasm_state).to eq("submitted")
+      expect(flash[:error]).to be_present
+    end
+  end
+
   describe "#destroy" do
     it "lets an external contributor delete their own draft report" do
       user = create(:user)
