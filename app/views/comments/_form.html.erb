@@ -1,5 +1,3 @@
-<%# When this form is rendered inside a turbo frame (a popover, for example), keep %>
-<%# submissions inside that frame so the page behind it isn't navigated away from. %>
 <% frame_id = turbo_frame_request_id %>
 <%= form_with model: @comment&.new_record? ? [@comment.commentable, @comment] : @comment || [commentable, Comment.new], data: { turbo_frame: frame_id }.compact do |form| %>
   <%= form.hidden_field :return_to, value: request.original_url %>
