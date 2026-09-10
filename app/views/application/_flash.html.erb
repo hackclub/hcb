@@ -1,6 +1,6 @@
-<%# locals: (klass: "") -%>
+<%# locals: (klass: "", id: "flash-container") -%>
 
-<div id="flash-container">
+<div id="<%= id %>">
   <% flash.to_h.except("confetti", "confetti_emojis", "popover").each_with_index do |(key, value), index| %>
     <article
       role="alertdialog"

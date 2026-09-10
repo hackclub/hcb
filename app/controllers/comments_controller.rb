@@ -16,14 +16,18 @@ class CommentsController < ApplicationController
     authorize @comment
 
     if @comment.save
-      flash[:success] = "Comment created."
       # Use return_to param if provided, otherwise fall back to the commentable
       # url_from validates the URL is internal to prevent open redirect vulnerabilities
       return_to = url_from(params[:comment][:return_to]) || @commentable
 
       if turbo_frame_request?
-        redirect_to return_to
+        flash.now[:success] = "Comment created."
+        render turbo_stream: [
+          turbo_stream.replace("shared_popover_flash", partial: "application/flash", locals: { id: "shared_popover_flash", klass: "mt2" }),
+          turbo_stream.replace(turbo_frame_request_id, helpers.turbo_frame_tag(turbo_frame_request_id, src: return_to, target: "_top"))
+        ]
       else
+        flash[:success] = "Comment created."
         redirect_back_or_to return_to
       end
     else

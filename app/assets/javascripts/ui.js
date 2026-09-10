@@ -58,6 +58,9 @@ const populateSharedPopover = trigger => {
 
   popover.classList.toggle('modal--popover--sm', size === 'sm')
 
+  const flash = document.getElementById('shared_popover_flash')
+  if (flash) flash.innerHTML = ''
+
   const body = document.getElementById('shared_popover_body')
   if (body) {
     body.innerHTML = ''
@@ -883,6 +886,9 @@ $(document).on($.modal.AFTER_CLOSE, function (event, modal) {
 
     const body = document.getElementById('shared_popover_body')
     if (body) body.innerHTML = ''
+
+    const flash = document.getElementById('shared_popover_flash')
+    if (flash) flash.innerHTML = ''
 
     const popoverEl = modal.elm[0]
     if (popoverEl && popoverEl.classList) {

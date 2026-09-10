@@ -27,11 +27,31 @@ RSpec.describe CommentsController do
       }
     end
 
-    it "redirects to return_to when submitted from within a turbo frame" do
+    it "reloads the frame and streams the flash into the popover when submitted from within a turbo frame" do
       request.headers["Turbo-Frame"] = "reimbursement_report_#{report.id}"
 
       expect { create_comment }.to change { report.comments.count }.by(1)
-      expect(response).to redirect_to(frame_url)
+      expect(response.media_type).to eq Mime[:turbo_stream]
+      expect(response.body).to include("shared_popover_flash")
+      expect(response.body).to include("Comment created.")
+      expect(response.body).to include("src=\"#{frame_url}\"")
+    end
+
+    it "ignores an external return_to and reloads the commentable instead" do
+      request.headers["Turbo-Frame"] = "reimbursement_report_#{report.id}"
+
+      post :create, params: {
+        reimbursement_report_id: report.id,
+        comment: {
+          content: "Hi!",
+          commentable_type: "Reimbursement::Report",
+          commentable_id: report.id,
+          return_to: "https://evil.example.com"
+        }
+      }
+
+      expect(response.body).not_to include("evil.example.com")
+      expect(response.body).to include("src=\"#{reimbursement_report_path(report)}\"")
     end
 
     it "redirects back to the referring page otherwise" do
