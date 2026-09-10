@@ -18,7 +18,7 @@ module Api
         render :show, status: :ok
       end
 
-      require_oauth2_scope "transfers:read", :show
+      require_oauth2_scope "transactions:read", :show
 
       def create
         @wire = @event.wires.build(wire_params.merge(user: current_user))

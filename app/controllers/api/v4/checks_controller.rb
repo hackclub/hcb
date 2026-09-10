@@ -18,7 +18,7 @@ module Api
         render :show, status: :ok
       end
 
-      require_oauth2_scope "transfers:read", :show
+      require_oauth2_scope "transactions:read", :show
 
       def create
         check_params = params.require(:check).permit(
