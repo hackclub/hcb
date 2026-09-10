@@ -33,6 +33,14 @@
     </td>
   </tr>
   <tr>
+  <tr>
+    <td colspan="2">
+      <% admin_tool do %>
+        <%= render "events/mission_statement", event: @disbursement.source_event %>
+        <%= render "events/mission_statement", event: @disbursement.destination_event %>
+      <% end %>
+    </td>
+  </tr>
     <td class="text-right">Amount:</td>
     <td><%= render_money @disbursement.amount %></td>
   </tr>

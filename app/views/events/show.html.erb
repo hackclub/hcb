@@ -77,6 +77,8 @@
     </div>
   <% end %>
 
+  <%= render "events/mission_statement", event: @event %>
+
   <% if policy(@event).request_call? %>
     <%= render "events/request_call_modal", auto_open: @requesting_call if @requesting_call %>
 

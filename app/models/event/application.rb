@@ -343,6 +343,7 @@ class Event
         poc_user = point_of_contact.presence || contract.party(:hcb).user
         Event.create!(
           name:,
+          description:,
           country: address_country,
           point_of_contact_id: poc_user.id,
           application: self,

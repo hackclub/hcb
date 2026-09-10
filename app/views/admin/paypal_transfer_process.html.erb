@@ -61,6 +61,13 @@
         <% end %>
       </td>
     </tr>
+    <tr>
+      <td colspan="2">
+        <% admin_tool do %>
+          <%= render "events/mission_statement", event: @paypal_transfer.event %>
+        <% end %>
+      </td>
+    </tr>
   </tbody>
 </table>
 

@@ -38,6 +38,13 @@
           </td>
         </tr>
         <tr>
+          <td colspan="2">
+            <% admin_tool do %>
+              <%= render "events/mission_statement", event: @wire.event %>
+            <% end %>
+          </td>
+        </tr>
+        <tr>
           <td>Requested at:</td>
           <td><%= format_datetime @wire.created_at %></td>
         </tr>

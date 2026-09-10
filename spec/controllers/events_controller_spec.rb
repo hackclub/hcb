@@ -768,4 +768,26 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#show" do
+    render_views
+
+    it "renders the mission statement when the event has a description" do
+      event = create(:event, description: "Run neat events for students")
+
+      get(:show, params: { id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Run neat events for students")
+    end
+
+    it "omits the mission statement when the event has no description" do
+      event = create(:event, description: nil)
+
+      get(:show, params: { id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("Mission statement")
+    end
+  end
+
 end

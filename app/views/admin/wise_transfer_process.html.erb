@@ -49,6 +49,13 @@
           </td>
         </tr>
         <tr>
+          <td colspan="2">
+            <% admin_tool do %>
+              <%= render "events/mission_statement", event: @wise_transfer.event %>
+            <% end %>
+          </td>
+        </tr>
+        <tr>
           <td>Balance available:</td>
           <td>
             <%= render_money @wise_transfer.event.balance_available_v2_cents %>

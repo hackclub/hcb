@@ -46,6 +46,13 @@
             </td>
           </tr>
           <tr>
+            <td colspan="3">
+              <% admin_tool do %>
+                <%= render "events/mission_statement", event: @ach_transfer.event %>
+              <% end %>
+            </td>
+          </tr>
+          <tr>
             <td style="text-align: right;">ACH speed:</td>
             <td colspan="2" style="width: 300px">
               <%= @ach_transfer.same_day? ? "💨 Same-day" : "⌛ Standard" %>
