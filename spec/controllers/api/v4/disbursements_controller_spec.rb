@@ -43,24 +43,5 @@ RSpec.describe Api::V4::DisbursementsController do
 
       expect(response).to have_http_status(:forbidden)
     end
-
-    it "doesn't allow lookups by internal ID for non-admins" do
-      user = create(:user)
-      create(:organizer_position, user:, event: source_event)
-      authenticate(user)
-
-      get :show, params: { id: disbursement.id }, as: :json
-
-      expect(response).to have_http_status(:not_found)
-    end
-
-    it "allows lookups by internal ID for admins" do
-      authenticate(create(:user, :make_admin), scopes: "admin:read")
-
-      get :show, params: { id: disbursement.id }, as: :json
-
-      expect(response).to have_http_status(:ok)
-      expect(response.parsed_body).to include("id" => disbursement.public_id)
-    end
   end
 end

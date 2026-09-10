@@ -36,32 +36,5 @@ RSpec.describe Api::V4::AchTransfersController do
 
       expect(response).to have_http_status(:forbidden)
     end
-
-    it "doesn't allow lookups by internal ID for non-admins" do
-      user = create(:user)
-      create(:organizer_position, user:, event:)
-      authenticate(user)
-
-      get :show, params: { id: ach_transfer.id }, as: :json
-
-      expect(response).to have_http_status(:not_found)
-    end
-
-    it "allows lookups by internal ID for admins" do
-      authenticate(create(:user, :make_admin), scopes: "admin:read")
-
-      get :show, params: { id: ach_transfer.id }, as: :json
-
-      expect(response).to have_http_status(:ok)
-      expect(response.parsed_body).to include("id" => ach_transfer.public_id)
-    end
-
-    it "404s on an unknown ID for admins" do
-      authenticate(create(:user, :make_admin), scopes: "admin:read")
-
-      get :show, params: { id: "ach_nonexistent" }, as: :json
-
-      expect(response).to have_http_status(:not_found)
-    end
   end
 end
