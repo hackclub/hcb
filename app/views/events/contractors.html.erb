@@ -48,6 +48,13 @@
     <% end %>
   </h1>
 
+  <% if @pending_invoices_count.positive? %>
+    <%= render "application/callout", type: "warning", icon: "important",
+          title: "#{pluralize(@pending_invoices_count, "invoice")} awaiting your review" do %>
+      Open a contractor marked <span class="badge bg-warning">Review</span> below to approve or reject their invoices.
+    <% end %>
+  <% end %>
+
   <div class="statset mb-4">
     <div class="stat stat--plain">
       <span class="stat__label">Active</span>
@@ -87,8 +94,12 @@
         <tbody>
           <% @contractors.each do |contractor| %>
             <tr class="<%= "clickable" if show_details %>">
+              <% pending = @pending_invoice_counts[contractor.id] || 0 %>
               <td>
                 <span class="badge ml-0 bg-<%= contractor.status_color %>"><%= contractor.status_text %></span>
+                <% if pending.positive? %>
+                  <span class="badge ml-0 mt-1 bg-warning nowrap" title="<%= pluralize(pending, "invoice") %> to review">Review</span>
+                <% end %>
               </td>
               <td>
                 <strong><%= contractor.payee.display_name %></strong>

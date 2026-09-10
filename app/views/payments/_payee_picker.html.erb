@@ -44,8 +44,11 @@
       <% end %>
 
       <div class="flex flex-col gap-3">
-        <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
-          <%= label_tag :name, "Name" %>
+        <div class="flex justify-between flex-col sm:flex-row sm:items-center gap-2">
+          <div>
+            <%= label_tag :name, "Name" %>
+            <span class="muted block text-sm">Shown publicly in transparency mode; needn't be their legal name</span>
+          </div>
           <%= text_field_tag :name, params[:payee_name], placeholder: "Orpheus", required: true, form: "new-payee-form", data: { "manual-payee-target": "nameInput", "payee-picker-target": "nameInput" } %>
         </div>
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2">

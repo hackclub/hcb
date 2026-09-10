@@ -920,6 +920,10 @@ class EventsController < ApplicationController
 
     @contractors = @event.payroll_positions.includes(:event, payee: :payments).order(created_at: :desc)
 
+    can_review = Payroll::PositionPolicy.new(current_user, @event).review?
+    @pending_invoice_counts = can_review ? @event.payroll_invoices.where(aasm_state: "submitted").group(:payroll_position_id).count : {}
+    @pending_invoices_count = @pending_invoice_counts.values.sum
+
     counts_by_status = @contractors.to_a.group_by(&:status).transform_values(&:count)
     @stats = {
       active: counts_by_status[:active] || 0,
