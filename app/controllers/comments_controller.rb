@@ -30,6 +30,9 @@ class CommentsController < ApplicationController
         flash[:success] = "Comment created."
         redirect_back_or_to return_to
       end
+    elsif turbo_frame_request?
+      flash.now[:error] = @comment.errors.full_messages.to_sentence
+      render turbo_stream: turbo_stream.replace("shared_popover_flash", partial: "application/flash", locals: { id: "shared_popover_flash", klass: "mt2" }), status: :unprocessable_content
     else
       render :new, status: :unprocessable_content
     end
