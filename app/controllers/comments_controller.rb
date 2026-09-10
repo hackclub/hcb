@@ -16,19 +16,28 @@ class CommentsController < ApplicationController
     authorize @comment
 
     if @comment.save
-      flash[:success] = "Comment created."
       # Use return_to param if provided, otherwise fall back to the commentable
       # url_from validates the URL is internal to prevent open redirect vulnerabilities
       return_to = url_from(params[:comment][:return_to]) || @commentable
 
       if turbo_frame_request?
-        # The referrer is the top level page, which for a popover is the
-        # commentable's own page; return_to is the frame's source instead, so the
-        # popover is re-rendered in place.
-        redirect_to return_to
+        # The popover sits over the commentable's own page, so a redirect's flash
+        # renders behind the modal. Reload the frame in place and stream the flash
+        # into the popover's own region instead.
+        flash.now[:success] = "Comment created."
+        render turbo_stream: [
+          turbo_stream.replace("shared_popover_flash", partial: "application/flash", locals: { id: "shared_popover_flash", klass: "mt2" }),
+          turbo_stream.replace(turbo_frame_request_id, helpers.turbo_frame_tag(turbo_frame_request_id, src: return_to, target: "_top"))
+        ]
       else
+        flash[:success] = "Comment created."
         redirect_back_or_to return_to
       end
+    elsif turbo_frame_request?
+      # `render :new` has no matching frame, so the error would vanish behind the
+      # popover. Flash it into the popover's own region and leave the form as-is.
+      flash.now[:error] = @comment.errors.full_messages.to_sentence
+      render turbo_stream: turbo_stream.replace("shared_popover_flash", partial: "application/flash", locals: { id: "shared_popover_flash", klass: "mt2" }), status: :unprocessable_content
     else
       render :new, status: :unprocessable_content
     end
