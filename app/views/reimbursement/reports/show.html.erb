@@ -127,8 +127,10 @@
   </article>
 <% end %>
 
-<% admin_tool("mt2") do %>
-  <%= render "events/mission_statement", event: @report.event %>
+<% if @report.event.present? %>
+  <% admin_tool("mt2") do %>
+    <%= render "events/mission_statement", event: @report.event %>
+  <% end %>
 <% end %>
 
 <% if @report.draft? %>

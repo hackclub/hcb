@@ -418,6 +418,19 @@ RSpec.describe Reimbursement::ReportsController do
         expect(response).to have_http_status(:ok)
         expect(response.body).to include("Audit-target mission statement")
       end
+
+      it "renders without error for a draft report with no event" do
+        admin = create(:user, :make_admin)
+        user = create(:user)
+        report = create(:reimbursement_report, user:, event: nil)
+
+        create_session(admin, verified: true)
+
+        get(:show, params: { id: report.id })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("Mission statement")
+      end
     end
 
     context "when the viewer is a report creator who is not an auditor" do
