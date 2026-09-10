@@ -434,6 +434,7 @@ Rails.application.routes.draw do
   resources :g_suite_accounts, only: [:index, :create, :update, :edit, :destroy], path: "g_suite_accounts" do
     put "reset_password"
     put "toggle_suspension"
+    put "unmanage"
     resources :g_suite_aliases, only: [:create, :destroy], shallow: true
   end
 
