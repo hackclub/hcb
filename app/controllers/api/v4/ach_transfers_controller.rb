@@ -12,7 +12,7 @@ module Api
 
       end
 
-      require_oauth2_scope "transfers:read", :show
+      require_oauth2_scope "transactions:read", :show
 
       def create
         permitted_params = [
