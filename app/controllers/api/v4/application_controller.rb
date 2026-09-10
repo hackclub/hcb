@@ -46,6 +46,13 @@ module Api
         @current_user = current_token&.user
       end
 
+      def require_admin_scope!(level)
+        unless can_admin?(level)
+          skip_authorization
+          render json: { error: "not_authorized" }, status: :forbidden
+        end
+      end
+
       def require_trusted_oauth_app!
         unless current_token&.application&.trusted?
           render json: { error: "not_authorized" }, status: :forbidden
