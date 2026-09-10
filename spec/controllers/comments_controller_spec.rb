@@ -5,9 +5,6 @@ require "rails_helper"
 RSpec.describe CommentsController do
   include SessionSupport
 
-  # Popovers render a commentable inside a turbo frame while the browser sits at
-  # the commentable's own URL, so the referrer would navigate the whole page away
-  # from the popover; `return_to` is the frame's source instead.
   describe "POST #create" do
     let(:user) { create(:user, verified: true) }
     let(:report) { create(:reimbursement_report, user:) }

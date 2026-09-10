@@ -22,9 +22,6 @@ class CommentsController < ApplicationController
       return_to = url_from(params[:comment][:return_to]) || @commentable
 
       if turbo_frame_request?
-        # The referrer is the top level page, which for a popover is the
-        # commentable's own page; return_to is the frame's source instead, so the
-        # popover is re-rendered in place.
         redirect_to return_to
       else
         redirect_back_or_to return_to
