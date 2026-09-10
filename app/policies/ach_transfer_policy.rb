@@ -14,8 +14,7 @@ class AchTransferPolicy < ApplicationPolicy
   end
 
   def show?
-    # Semantically, this should be admin_or_manager?, right?
-    is_public? || user_who_can_transfer?
+    user&.auditor?
   end
 
   def show_in_v4?
@@ -66,10 +65,6 @@ class AchTransferPolicy < ApplicationPolicy
 
   def admin_or_manager?
     user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
-  end
-
-  def is_public?
-    record.event.is_public?
   end
 
 end
