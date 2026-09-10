@@ -103,6 +103,10 @@ module Payroll
     end
 
     def notify_managers
+      # Skip when the invoice was approved in the same request it was created
+      # (a manager submitting on a contractor's behalf); there's nothing to review.
+      return unless submitted?
+
       Payroll::InvoiceMailer.with(invoice: self).submitted.deliver_later
     end
 

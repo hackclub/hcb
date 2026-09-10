@@ -5,6 +5,8 @@
     Need an invoice? <%= link_to "Use our template", "https://docuseal.com/d/LJuTkqCU3MKDoT", target: "_blank" %>!
   </p>
 
+  <%= render "application/flash", id: dom_id(@position, :invoice_flash), klass: "mb-3" %>
+
   <%= form_with(model: @invoice, url: payroll_position_invoices_path(@position), scope: :payroll_invoice, local: true) do |form| %>
     <%= render "payroll/invoices/fields", form:, position: @position %>
     <%= form.submit "Submit invoice", class: "btn bg-success w-full" %>

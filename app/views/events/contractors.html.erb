@@ -48,7 +48,7 @@
     <% end %>
   </h1>
 
-  <% if @pending_invoices_count.positive? && Payroll::PositionPolicy.new(current_user, @event).review? %>
+  <% if @pending_invoices_count.positive? %>
     <%= render "application/callout", type: "warning", icon: "important",
           title: "#{pluralize(@pending_invoices_count, "invoice")} awaiting your review" do %>
       Open a contractor marked <span class="badge bg-warning">Review</span> below to approve or reject their invoices.

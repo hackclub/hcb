@@ -47,6 +47,12 @@ RSpec.describe Payroll::InvoicesController do
         expect(response).to redirect_to(event_payroll_position_path(event_id: event.slug, id: position.id))
       end
 
+      it "does not email managers to review an already-approved invoice" do
+        expect do
+          post :create_on_behalf, params: on_behalf_params
+        end.not_to have_enqueued_mail(Payroll::InvoiceMailer, :submitted)
+      end
+
       it "rejects a submission with no attachment and creates nothing" do
         post :create_on_behalf, params: on_behalf_params(file: [])
 
