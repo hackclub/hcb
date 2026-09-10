@@ -8,8 +8,9 @@ module Api
       before_action :set_api_event, only: [:create]
 
       def show
-        @ach_transfer = authorize find_for_api!(AchTransfer, params[:id]), :show_in_v4?
+        @ach_transfer = authorize AchTransfer.find_by_public_id!(params[:id]), :show_in_v4?
 
+        render :show, status: :ok
       end
 
       require_oauth2_scope "transactions:read", :show
