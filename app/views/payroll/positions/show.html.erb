@@ -57,9 +57,15 @@
         <strong>Total paid</strong>
         <%= render_money @position.payee.total_paid_cents %>
       </p>
+      <% if @position.contract&.document.present? %>
+        <p>
+          <strong>Signed contract</strong>
+          <%= link_to "View signed contract", @position.contract.document, data: { turbo_frame: "_top" } %>
+        </p>
+      <% end %>
       <% if @position.file.attached? %>
         <p>
-          <strong>Agreement</strong>
+          <strong>Extra attachment</strong>
           <%= link_to "View attachment", url_for(@position.file), data: { turbo_frame: "_top" } %>
         </p>
       <% end %>
@@ -86,7 +92,26 @@
     <%= render "payroll/positions/onboarding_flow", position: @position, perspective: :organizer %>
   <% end %>
 
-  <h3 class="mt-4 mb-2">Invoices</h3>
+  <div class="flex items-center justify-between mt-4 mb-2">
+    <h3 class="m-0">Invoices</h3>
+    <% if @can_review && @position.onboarded? %>
+      <%= link_to "#", class: "btn bg-success", data: { behavior: "modal_trigger", modal: dom_id(@position, :submit_on_behalf) } do %>
+        <%= inline_icon "plus" %>
+        Submit on behalf
+      <% end %>
+
+      <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog"
+        id="<%= dom_id(@position, :submit_on_behalf) %>"
+        data-controller="turbo-frame-modal"
+        data-turbo-frame-modal-reload-on-success-value="true"
+        data-action="turbo:submit-end->turbo-frame-modal#submitEnd">
+        <%= modal_header "Submit an invoice on behalf" %>
+        <%= turbo_frame_tag dom_id(@position, :on_behalf_invoice_form), src: new_invoice_event_payroll_position_path(event_id: @event.slug, id: @position.id), loading: :lazy do %>
+          <%= render "application/loading_container", klass: "py-8" %>
+        <% end %>
+      </section>
+    <% end %>
+  </div>
   <% if @invoices.any? %>
     <article class="table-container">
       <table>
@@ -101,9 +126,13 @@
         </thead>
         <tbody>
           <% @invoices.each do |invoice| %>
-            <% state_color = invoice.approved? ? "success" : (invoice.rejected? ? "muted" : "warning") %>
             <tr>
-              <td><span class="badge bg-<%= state_color %>"><%= invoice.aasm_state.humanize %></span></td>
+              <td>
+                <span class="badge bg-<%= invoice.state_color %>"><%= invoice.aasm_state.humanize %></span>
+                <% if invoice.reviewed_by.present? %>
+                  <span class="muted block text-xs mt-1"><%= invoice.approved? ? "Approved" : "Rejected" %> by <%= invoice.reviewed_by.name %></span>
+                <% end %>
+              </td>
               <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
                 <%= invoice.name %>
               </td>

@@ -1045,6 +1045,8 @@ Rails.application.routes.draw do
       member do
         get :contract
         post :terminate
+        get :new_invoice, to: "payroll/invoices#new_on_behalf"
+        post :create_invoice, to: "payroll/invoices#create_on_behalf"
       end
     end
     resources :payroll_invoices, only: [], controller: "payroll/invoices" do
