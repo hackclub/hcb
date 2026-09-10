@@ -58,15 +58,15 @@ class AdminController < Admin::BaseController
                              "Are you really really sure you want to map this transaction? 🤔 it seems like a big one :)"
                            end
 
-    # If this transaction was already mapped a while ago, remapping it annoys Sierra's accounting system.
+    # If this transaction's date falls in a previous month, remapping it annoys Sierra's accounting system.
 
     if @canonical_transaction.canonical_event_mapping.present? &&
-       @canonical_transaction.canonical_event_mapping.created_at < 12.hours.ago
+       @canonical_transaction.date < Time.current.beginning_of_month
       @stale_remap = true
-      @remap_confirm_msg = "⚠️ This transaction was already mapped to \"#{@canonical_transaction.event&.name}\" #{helpers.time_ago_in_words(@canonical_transaction.canonical_event_mapping.created_at)} ago. Remapping it now may disrupt our accounting. Are you absolutely sure you want to remap this transaction?"
+      @remap_confirm_msg = "⚠️ This transaction is dated #{@canonical_transaction.date.strftime("%B %Y")} and was already mapped to \"#{@canonical_transaction.event&.name}\". This was from a previous month, so remapping it now may disrupt our accounting. Are you absolutely sure you want to remap this transaction?"
       @remap_confirm_phrase = "REMAP #{@canonical_transaction.id}"
       @remap_after_message = "Please contact Sierra in the #hcb-ops channel to let them know you remapped transaction ##{@canonical_transaction.id}."
-      @remap_warning_tooltip = "This transaction was already mapped #{helpers.time_ago_in_words(@canonical_transaction.canonical_event_mapping.created_at)} ago — remapping it requires extra confirmation."
+      @remap_warning_tooltip = "This transaction is from a previous month, remapping it requires extra confirmation."
     end
   end
 
