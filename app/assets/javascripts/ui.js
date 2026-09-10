@@ -12,17 +12,6 @@ const whenViewed = (element, callback) =>
 // script in <head> uses it to head back to that page before rendering anything,
 // and `reopenSharedPopover` puts the popover back once we're there.
 const POPOVER_STATE_KEY = 'hcb:open_popover'
-const POPOVER_TRIGGER_KEYS = [
-  'popoverTitle',
-  'popoverSrc',
-  'popoverFrameId',
-  'popoverStateUrl',
-  'popoverStateTitle',
-  'popoverExternalLink',
-  'popoverSize',
-]
-
-const absoluteUrl = url => new URL(url, window.location.href).href
 
 // The data attributes of the trigger that populated the shared popover, saved
 // once the popover actually opens (see `$.modal.BEFORE_OPEN` below).
@@ -36,21 +25,13 @@ const readPopoverState = () => {
   }
 }
 
+// Pass null to forget the open popover. sessionStorage isn't always available
+// (private browsing, for example); reopening popovers is best-effort.
 const writePopoverState = state => {
   try {
-    sessionStorage.setItem(POPOVER_STATE_KEY, JSON.stringify(state))
-  } catch {
-    // sessionStorage isn't always available (private browsing, for example);
-    // reopening popovers is best-effort.
-  }
-}
-
-const forgetPopoverState = () => {
-  try {
-    sessionStorage.removeItem(POPOVER_STATE_KEY)
-  } catch {
-    // see writePopoverState
-  }
+    if (state) sessionStorage.setItem(POPOVER_STATE_KEY, JSON.stringify(state))
+    else sessionStorage.removeItem(POPOVER_STATE_KEY)
+  } catch {}
 }
 
 const wasReloaded = () =>
@@ -99,12 +80,7 @@ const populateSharedPopover = trigger => {
     }
   }
 
-  popoverTriggerData = Object.fromEntries(
-    POPOVER_TRIGGER_KEYS.filter(key => trigger.dataset[key]).map(key => [
-      key,
-      trigger.dataset[key],
-    ])
-  )
+  popoverTriggerData = { ...trigger.dataset }
 }
 
 const openSharedPopover = state => {
@@ -128,18 +104,18 @@ const reopenSharedPopover = () => {
     // Sent back here by the <head> script.
     if (window.location.href === state.returnUrl) openSharedPopover(state)
     // Still on the popover's own page: that navigation hasn't happened yet.
-    else if (window.location.href !== state.stateUrl) forgetPopoverState()
+    else if (window.location.href !== state.stateUrl) writePopoverState(null)
     return
   }
 
   // The popover was closed, or we've navigated elsewhere entirely.
-  if (window.location.href !== state.stateUrl) return forgetPopoverState()
+  if (window.location.href !== state.stateUrl) return writePopoverState(null)
 
   // The <head> script leaves this case alone: the popover was opened over the
   // page it points at, so there's nowhere to go back to. Only a reload brings it
   // back — anything else (following the popover's external link into a new tab,
   // which inherits this session storage, for example) asked for the page itself.
-  if (!wasReloaded()) return forgetPopoverState()
+  if (!wasReloaded()) return writePopoverState(null)
 
   openSharedPopover(state)
 }
@@ -898,7 +874,7 @@ $(document).on($.modal.BEFORE_OPEN, function (event, modal) {
 
     if (modal.elm[0].id === 'shared_popover' && popoverTriggerData) {
       writePopoverState({
-        stateUrl: absoluteUrl(modal.elm[0].dataset.stateUrl),
+        stateUrl: new URL(modal.elm[0].dataset.stateUrl, location.href).href,
         returnUrl: document.documentElement.dataset.returnToStateUrl,
         trigger: popoverTriggerData,
       })
@@ -919,7 +895,7 @@ $(document).on($.modal.BEFORE_CLOSE, function (event, modal) {
 
 $(document).on($.modal.AFTER_CLOSE, function (event, modal) {
   if (modal?.elm?.[0]?.id === 'shared_popover') {
-    forgetPopoverState()
+    writePopoverState(null)
 
     // Otherwise the next popover opened without reloading would treat this
     // page's predecessor as the page it covers.
