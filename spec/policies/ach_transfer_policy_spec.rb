@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe AchTransferPolicy, type: :policy do
   describe "#visible_attributes" do
-    let(:event) { create(:event, is_public: transparent) }
+    let(:event) { create(:event, :with_positive_balance, is_public: transparent) }
     let(:ach_transfer) { create(:ach_transfer, event:) }
     let(:transparent) { false }
 
@@ -94,13 +94,13 @@ RSpec.describe AchTransferPolicy, type: :policy do
     let(:user) { nil }
 
     context "on a transparent organization" do
-      let(:event) { create(:event, is_public: true) }
+      let(:event) { create(:event, :with_positive_balance, is_public: true) }
 
       it { is_expected.to eq(true) }
     end
 
     context "on a private organization" do
-      let(:event) { create(:event, is_public: false) }
+      let(:event) { create(:event, :with_positive_balance, is_public: false) }
 
       it { is_expected.to eq(false) }
     end

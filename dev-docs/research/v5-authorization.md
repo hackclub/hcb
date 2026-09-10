@@ -373,11 +373,12 @@ organizations while staying present.
 | `spec/policies/ach_transfer_policy_spec.rb` | every role tier, and `show_any_attribute?` |
 | `spec/controllers/api/v5/ach_transfers_controller_spec.rb` | end to end: exact key sets per viewer, name degradation, anonymous access |
 
-> These specs have **not been executed** — they were written in an environment
-> without the gem bundle (Ruby 3.3 against a 3.4.9 Gemfile, no Rails). The
-> `FieldSet` semantics and the `AchTransferPolicy` tiers were verified
-> separately by loading those two files under plain Ruby with the Rails
-> dependencies stubbed. Run the suite before trusting the rest.
+**30 examples, 0 failures.** A regression pass over `spec/policies`,
+`spec/controllers/api`, `spec/models/api_admin_context_spec.rb` and
+`spec/controllers/ach_transfers_controller_spec.rb` ran 116 examples with one
+failure — `LoadError: cannot load such file -- sassc`, raised from a mailer
+layout via sudo mode. That failure reproduces identically at the commit before
+this work, so it is environmental, not a regression.
 
 ### Notes from building it
 
@@ -391,6 +392,10 @@ organizations while staying present.
   `method_missing`.
 - **Arity is validated before the visibility check**, so a malformed serializer
   call fails for every viewer rather than only the roles that can see it.
+- **ACH transfers validate against the event balance on create**
+  (`app/models/ach_transfer.rb:103`), so specs need
+  `create(:event, :with_positive_balance)`. Worth knowing before writing any
+  more ACH fixtures.
 - **`:account_number` and `:account_number_last4` are both listed** under one
   permission, because the web UI reveals the full number to a manager while the
   API ships four digits. That split predates this work and nobody recorded

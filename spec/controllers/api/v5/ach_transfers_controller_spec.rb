@@ -12,7 +12,7 @@ RSpec.describe Api::V5::AchTransfersController do
     allow_any_instance_of(UsersHelper).to receive(:profile_picture_for).and_return("https://gravatar.com/avatar/stubbed")
   end
 
-  let(:event) { create(:event, is_public: transparent) }
+  let(:event) { create(:event, :with_positive_balance, is_public: transparent) }
   let(:transparent) { false }
   let(:creator) { create(:user, full_name: "Jane Doe") }
   let(:ach_transfer) do
