@@ -3,6 +3,8 @@
 require "rails_helper"
 
 RSpec.describe CommentsController do
+  render_views
+
   include SessionSupport
 
   describe "POST #create" do
