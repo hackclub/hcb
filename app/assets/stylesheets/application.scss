@@ -227,6 +227,10 @@ tr.clickable {
   }
 }
 
+tr.contractor-row--review {
+  background-color: rgba(map-get($palette, warning), 0.125);
+}
+
 thead {
   table-layout: fixed;
 }
