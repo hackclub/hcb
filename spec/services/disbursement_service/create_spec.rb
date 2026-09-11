@@ -451,4 +451,79 @@ RSpec.describe DisbursementService::Create do
     end
   end
 
+
+  describe "idempotency keys" do
+    let(:requestor) { create(:user) }
+    let(:source_event) { create(:event, :with_positive_balance) }
+    let(:destination_event) { create(:event) }
+
+    before { create(:organizer_position, event: source_event, user: requestor) }
+
+    def run(**overrides)
+      service = described_class.new(
+        name: "Boba Drops",
+        amount: "600.00",
+        requested_by_id: requestor.id,
+        source_event_id: source_event.id,
+        destination_event_id: destination_event.id,
+        idempotency_key: "order-1234",
+        **overrides
+      )
+      [service.run, service]
+    end
+
+    it "stores the key on the disbursement" do
+      disbursement, service = run
+
+      expect(disbursement.idempotency_key).to eq("order-1234")
+      expect(service).not_to be_replayed
+    end
+
+    it "returns the existing disbursement on replay, even once the balance can no longer cover it" do
+      first, = run
+      expect(source_event.balance_available_v2_cents).to be < 600_00
+
+      second, service = run
+
+      expect(second).to eq(first)
+      expect(service).to be_replayed
+      expect(Disbursement.count).to eq(1)
+    end
+
+    it "raises when the key is reused with different parameters" do
+      run
+
+      expect { run(amount: "1.00") }.to raise_error(Errors::IdempotencyKeyMismatch, /amount/)
+      expect { run(name: "Not Boba") }.to raise_error(Errors::IdempotencyKeyMismatch, /name/)
+      expect { run(destination_event_id: create(:event).id) }.to raise_error(Errors::IdempotencyKeyMismatch, /destination/)
+      expect(Disbursement.count).to eq(1)
+    end
+
+    it "scopes keys to the source event" do
+      other_source = create(:event, :with_positive_balance)
+      create(:organizer_position, event: other_source, user: requestor)
+
+      first, = run
+      second, service = run(source_event_id: other_source.id)
+
+      expect(second).not_to eq(first)
+      expect(service).not_to be_replayed
+    end
+
+    it "does not claim a key when creation fails" do
+      expect { run(amount: "5000.00") }.to raise_error(DisbursementService::Create::UserError)
+      expect(Disbursement.count).to eq(0)
+
+      disbursement, service = run
+      expect(disbursement.idempotency_key).to eq("order-1234")
+      expect(service).not_to be_replayed
+    end
+
+    it "creates separate disbursements when no key is given" do
+      run(idempotency_key: nil, amount: "1.00")
+      run(idempotency_key: nil, amount: "1.00")
+
+      expect(Disbursement.count).to eq(2)
+    end
+  end
 end

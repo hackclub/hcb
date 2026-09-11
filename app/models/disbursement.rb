@@ -9,6 +9,7 @@
 #  amount                              :integer
 #  deposited_at                        :datetime
 #  errored_at                          :datetime
+#  idempotency_key                     :string
 #  in_transit_at                       :datetime
 #  name                                :string
 #  pending_at                          :datetime
@@ -34,6 +35,7 @@
 #  index_disbursements_on_fulfilled_by_id                      (fulfilled_by_id)
 #  index_disbursements_on_requested_by_id                      (requested_by_id)
 #  index_disbursements_on_source_event_id                      (source_event_id)
+#  index_disbursements_on_source_event_id_and_idempotency_key  (source_event_id,idempotency_key) UNIQUE WHERE (idempotency_key IS NOT NULL)
 #  index_disbursements_on_source_subledger_id                  (source_subledger_id)
 #  index_disbursements_on_source_transaction_category_id       (source_transaction_category_id)
 #
@@ -128,6 +130,7 @@ class Disbursement < ApplicationRecord
                         :name
 
   validates :amount, numericality: { greater_than: 0 }
+  validates :idempotency_key, length: { maximum: 255 }, allow_nil: true
   validate :events_are_different
   validate :events_are_not_demos, on: :create
   validate :scheduled_on_must_be_in_the_future, on: :create

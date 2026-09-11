@@ -19,4 +19,7 @@ module Errors
   class TwilioAbuseError < StandardError
   end
 
+  class IdempotencyKeyMismatch < StandardError
+  end
+
 end

@@ -24,7 +24,8 @@ module DisbursementService
       fronted: false,
       source_transaction_category_slug: nil,
       destination_transaction_category_slug: nil,
-      category_assignment_strategy: "manual"
+      category_assignment_strategy: "manual",
+      idempotency_key: nil
     )
       @source_event_id = source_event_id
       @source_event = Event.find(@source_event_id)
@@ -43,13 +44,24 @@ module DisbursementService
       @source_transaction_category_slug = source_transaction_category_slug
       @destination_transaction_category_slug = destination_transaction_category_slug
       @category_assignment_strategy = category_assignment_strategy
+      @idempotency_key = idempotency_key
+      @replayed = false
     end
+
+    # True if `run` returned an existing disbursement matching the idempotency key
+    # instead of creating one.
+    def replayed? = @replayed
 
     def run
       raise ArgumentError, "amount is required" unless @amount
       raise ArgumentError, "amount_cents must be greater than 0" unless amount_cents > 0
 
       @source_event.with_lock do
+        if (existing = idempotent_replay)
+          @replayed = true
+          next existing
+        end
+
         if @source_subledger_id.present?
           raise UserError, "You don't have enough money to make this disbursement." unless Subledger.find(@source_subledger_id).balance_cents >= amount_cents || requested_by_admin?
         else
@@ -95,17 +107,46 @@ module DisbursementService
     def attrs
       {
         source_event_id: source_event.id,
+        requested_by:,
+        source_transaction_category:,
+        destination_transaction_category:,
+        idempotency_key: @idempotency_key,
+        **idempotent_attrs
+      }
+    end
+
+    # The request-shaped attributes a replay is compared against. Kept to cheap
+    # values so the replay path does no lookups or writes inside the lock.
+    def idempotent_attrs
+      {
         event_id: destination_event.id,
         destination_subledger_id: @destination_subledger_id,
         source_subledger_id: @source_subledger_id,
         scheduled_on: @scheduled_on,
         name: @name,
         amount: amount_cents,
-        requested_by:,
-        should_charge_fee: @should_charge_fee,
-        source_transaction_category:,
-        destination_transaction_category:
+        should_charge_fee: @should_charge_fee
       }
+    end
+
+    MISMATCH_LABELS = { event_id: "destination" }.freeze
+
+    # Must run before the balance check: a replay must succeed even if the
+    # source event can no longer afford the original transfer.
+    def idempotent_replay
+      return if @idempotency_key.blank?
+
+      existing = Disbursement.find_by(source_event_id: source_event.id, idempotency_key: @idempotency_key)
+      return unless existing
+
+      requested = Disbursement.new(idempotent_attrs)
+      mismatched = idempotent_attrs.keys.reject { |attr| existing[attr] == requested[attr] }
+      if mismatched.any?
+        labels = mismatched.map { |attr| MISMATCH_LABELS.fetch(attr, attr) }
+        raise Errors::IdempotencyKeyMismatch, "Idempotency-Key was already used with different parameters (#{labels.join(', ')})"
+      end
+
+      existing
     end
 
     def requested_by

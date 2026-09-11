@@ -14,15 +14,18 @@ module Api
 
         authorize @disbursement
 
-        @disbursement = DisbursementService::Create.new(
+        service = DisbursementService::Create.new(
           source_event_id: @source_event.id,
           destination_event_id: @destination_event.id,
           name: params[:name],
           amount: Money.from_cents(params[:amount_cents]),
           requested_by_id: current_user.id,
-          fronted: @source_event.plan.front_disbursements_enabled?
-        ).run
+          fronted: @source_event.plan.front_disbursements_enabled?,
+          idempotency_key:
+        )
+        @disbursement = service.run
 
+        idempotent_replay! if service.replayed?
         render :show, status: :created, location: api_v4_transaction_path(@disbursement)
       end
 
