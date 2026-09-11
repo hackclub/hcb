@@ -369,19 +369,23 @@ class CardGrant < ApplicationRecord
 
     maximum_amount_cents = balance.cents
 
-    return_remaining_balance!(requested_by: accepted_by, reason: "converted")
+    report = transaction do
+      return_remaining_balance!(requested_by: accepted_by, reason: "converted")
 
-    mark_converted_to_reimbursement!
+      mark_converted_to_reimbursement!
+
+      event.reimbursement_reports.create!(
+        user:,
+        report_name: "Reimbursement for #{purpose.presence || "previously issued card grant"}",
+        maximum_amount_cents:,
+        inviter: sent_by,
+        card_grant: self
+      )
+    end
 
     stripe_card&.cancel!
 
-    event.reimbursement_reports.create!(
-      user:,
-      report_name: "Reimbursement for #{purpose.presence || "previously issued card grant"}",
-      maximum_amount_cents:,
-      inviter: sent_by,
-      card_grant: self
-    )
+    report
   end
 
   private
