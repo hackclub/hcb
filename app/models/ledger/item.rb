@@ -14,8 +14,10 @@
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
 #  not_admin_only_comment_count :integer          default(0), not null
+#  pending_at                   :datetime
 #  receipt_count                :integer          default(0), not null
 #  receipt_required             :boolean
+#  settled_at                   :datetime
 #  short_code                   :text
 #  special_appearance           :string
 #  status                       :string           default("pending"), not null
@@ -184,6 +186,11 @@ class Ledger
       self.not_admin_only_comment_count = comments.not_admin_only.size
       self.receipt_count = receipts.size
 
+      # Timestamps
+      self.pending_at = calculate_pending_at
+      self.settled_at = calculate_settled_at
+      self.datetime = settled_at || pending_at || created_at
+
       self.amount_cents = calculate_amount_cents
       self.author = calculate_author
       self.receipt_required = calculate_receipt_required
@@ -340,6 +347,14 @@ class Ledger
       linked_object = (canonical_pending_transactions.order(date: :asc).map(&:linked_object) + canonical_transactions.order(date: :asc).map(&:linked_object_v2)).compact.first
 
       update!(linked_object:) if linked_object.present?
+    end
+
+    def calculate_pending_at
+      canonical_pending_transactions.order(:date, :id).first&.datetime
+    end
+
+    def calculate_settled_at
+      canonical_transactions.order(:date, :id).last&.datetime
     end
 
     def calculate_amount_cents
