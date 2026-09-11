@@ -27,6 +27,7 @@ us there, and proposes a design.
   - [3. Deny by default, enforced by the serializer](#3-deny-by-default-enforced-by-the-serializer)
   - [4. Index routes: actually use `policy_scope`](#4-index-routes-actually-use-policy_scope)
 - [Pilot Implementation](#pilot-implementation)
+  - [Index routes, measured](#index-routes-measured)
 - [Alternatives Considered](#alternatives-considered)
 - [Migration Plan](#migration-plan)
 - [Open Questions](#open-questions)
@@ -317,9 +318,16 @@ hardcodes today.
 **Performance caveat, and it's a real one.** `Scope#resolve` must return SQL,
 but our role checks are Ruby walking `ancestor_organizer_positions`, and event
 visibility already involves a recursive CTE (`app/models/event.rb:236-247`).
-Plan for an `Event.visible_to(user)` SQL scope called from `Scope#resolve`, with
-a spec asserting `Model.visible_to(u).include?(r) == policy(u, r).show?` over a
-sample. That equivalence test is what keeps the Ruby and SQL paths honest.
+`Event.visible_to(user)` is that SQL scope. Measured consequences are in
+[Index routes, measured](#index-routes-measured) — the naive version cost four
+queries per rendered row.
+
+**The invariant to assert is containment, not equality.** `Model.visible_to(u)`
+is deliberately *narrower* than `policy(u, r).show?` for hidden-but-public
+organizations, because every organization list treats hidden as private while
+`show?` does not. So the spec asserts the scope never returns a record the
+policy would refuse, rather than asserting the two agree exactly. Equality
+would fail on a real, intended difference and teach people to weaken the test.
 
 ---
 
@@ -337,7 +345,9 @@ users (the one masking case), served by a real endpoint.
 | `app/helpers/api/v5/application_helper.rb` | `object_shape` yielding a `FieldSet` |
 | `app/helpers/application_helper.rb` | `visible?(record, attribute)` for ERB |
 | `app/views/api/v5/**` | v5 serializers |
-| `app/controllers/api/v5/**` | `GET /api/v5/ach_transfers/:id`, anonymous allowed |
+| `app/controllers/api/v5/**` | `GET /api/v5/ach_transfers[/:id]`, anonymous allowed |
+| `app/models/event.rb` | `Event.visible_to(user)` — the readable-organizations SQL scope |
+| `app/policies/ach_transfer_policy.rb` | `Scope` for index routes |
 
 A serializer looks like this — note that `json` is never written to directly:
 
@@ -371,9 +381,10 @@ organizations while staying present.
 |---|---|
 | `spec/lib/api/field_set_spec.rb` | gating, deferred values, arity, Object-method name collisions |
 | `spec/policies/ach_transfer_policy_spec.rb` | every role tier, and `show_any_attribute?` |
-| `spec/controllers/api/v5/ach_transfers_controller_spec.rb` | end to end: exact key sets per viewer, name degradation, anonymous access |
+| `spec/controllers/api/v5/ach_transfers_controller_spec.rb` | end to end: exact key sets per viewer, name degradation, anonymous access, index scoping |
+| `spec/controllers/api/v5/ach_transfers_index_queries_spec.rb` | query count does not grow with page size |
 
-**30 examples, 0 failures.** A regression pass over `spec/policies`,
+**49 examples, 0 failures.** A regression pass over `spec/policies`,
 `spec/controllers/api`, `spec/models/api_admin_context_spec.rb` and
 `spec/controllers/ach_transfers_controller_spec.rb` ran 116 examples with one
 failure — `LoadError: cannot load such file -- sassc`, raised from a mailer
@@ -403,18 +414,53 @@ this work, so it is environmental, not a regression.
   the difference visible in one place instead of two templates. **This needs a
   decision** (see Open Questions).
 
+### Index routes, measured
+
+Section 4 is implemented for ACH transfers: `Event.visible_to(user)`,
+`AchTransferPolicy::Scope`, `GET /api/v5/ach_transfers`, and
+`verify_policy_scoped` in the v5 base controller. `ApplicationPolicy::Scope`
+now resolves to `scope.none` instead of `scope`, so a policy with no Scope
+yields an empty index rather than every row. Only comments define a Scope
+today, so nothing else changes behavior.
+
+**Attribute-level authorization runs per record, so a policy that asks the
+database a question costs a query per row.** Rendering a page of transfers was
+doing exactly that:
+
+| | queries per extra row |
+|---|---|
+| First working version | 4 |
+| After `auditor_or_user?` stopped calling `role_at_least?` | 2 |
+| After `admin_or_manager?` did the same | **0** (4 queries total, flat) |
+
+Both role checks were hitting `ancestor_organizer_positions` — a recursive CTE
+— once per rendered row. The manager check ran *even for signed-out visitors*,
+where `where(user: nil)` could only ever return false.
+
+The fix was to replace `OrganizerPosition.role_at_least?(user, event, :reader)`
+with `user.readable_event_ids.include?(event_id)` (and the manager equivalent).
+These are the same rule — `User::PermissionsOverview` resolves ancestor
+inheritance the same way `role_at_least?` walks it — but memoized on the user
+rather than queried per record. `spec/policies/ach_transfer_policy_spec.rb`
+asserts the equivalence across a three-level hierarchy for every role, rather
+than leaving it to inspection, and
+`spec/controllers/api/v5/ach_transfers_index_queries_spec.rb` pins the flat
+query count.
+
+This is the part to carry into every other policy that grows a
+`visible_attributes`. The pattern is cheap to get wrong: the per-record query
+is invisible in a `show` route and only bites at list scale.
+
 ### Caveats to hold the design to
 
 1. **Per-surface field names would re-fork it.** `:account_number` vs
    `:account_number_last4` is the existing instance. Rule to adopt: the same
    field name on both surfaces, or it's a bug.
-2. **N+1 risk, and the list makes it systematic.** `visible_attributes` calls
-   `role_at_least?(user, record.event, …)` per record; a 100-row page is 100
-   role lookups plus one per nested user and event. Already true of the 12
-   inline checks today, but this would be on every object.
-   `User#readable_event_ids` is memoized here as a start;
-   `UserPolicy#shares_org_with_viewer?` uses `map` rather than `pluck` so a
-   preload actually helps. Index routes must preload before this ships widely.
+2. **N+1 risk, and the list makes it systematic.** Confirmed and fixed for ACH
+   transfers — see [Index routes, measured](#index-routes-measured). Every
+   further policy that grows a `visible_attributes` needs the same treatment:
+   role checks resolved from memoized id sets, not per-record queries. A
+   query-count spec on each new index route is the cheapest guard.
 3. **Nested objects have no `authorize` call.** For a sender or an org rendered
    inside a transaction, the list is the *only* gate. `visible_attributes == []`
    renders as bare `id`/`object`, matching v3's minimized shape — deliberate,
@@ -466,8 +512,9 @@ a v5 serializer and the existing ERB view, behind a real endpoint. `Principal` i
 requests at the controller, which was enough to prove transparency works without
 a `show_in_v5?`.
 
-**Phase 1 — `Scope` classes + `verify_policy_scoped`,** on the indexes v5 will
-have. Independently useful: it removes `skip_authorization` from v4 today.
+**Phase 1 — `Scope` classes + `verify_policy_scoped`. ✅ done for ACH transfers**
+on this branch; the remaining index routes still need their own `Scope`.
+Independently useful: it removes `skip_authorization` from v4 today.
 
 **Phase 2 — v5 serializers built on the DSL from day one,** with enforcement on
 (raise on undeclared). New code, so no migration cost — this is the cheapest moment

@@ -13,7 +13,12 @@ module Api
 
       attr_reader :current_user, :current_token
 
-      after_action :verify_authorized
+      # Member actions authorize a record; index actions scope a relation.
+      # Pundit verifies both, which is what removes the need for
+      # `skip_authorization` in an index — the v4 pattern that disables the
+      # safety net and leaves correctness to a hand-written controller scope.
+      after_action :verify_authorized, except: :index
+      after_action :verify_policy_scoped, only: :index
 
       before_action :authenticate
       before_action :set_paper_trail_whodunnit

@@ -81,8 +81,12 @@ class ApplicationPolicy
       @scope = scope
     end
 
+    # Deny by default, mirroring #visible_attributes: a policy that hasn't
+    # defined a Scope resolves to nothing rather than everything, so forgetting
+    # one produces an empty index (loud, harmless) instead of exposing every
+    # row (silent, not).
     def resolve
-      scope
+      scope.none
     end
 
   end

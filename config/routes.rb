@@ -834,7 +834,7 @@ Rails.application.routes.draw do
     # (ApplicationPolicy#visible_attributes) end to end.
     namespace :v5 do
       defaults format: :json do
-        resources :ach_transfers, only: [:show]
+        resources :ach_transfers, only: [:index, :show]
       end
     end
   end

@@ -137,4 +137,49 @@ RSpec.describe Api::V5::AchTransfersController do
     expect(response).to have_http_status(:unauthorized)
   end
 
+
+  describe "#index" do
+    let!(:transparent_event) { create(:event, :with_positive_balance, is_public: true) }
+    let!(:private_event)     { create(:event, :with_positive_balance, is_public: false) }
+    let!(:transparent_ach)   { create(:ach_transfer, event: transparent_event, bank_name: "Open Bank") }
+    let!(:private_ach)       { create(:ach_transfer, event: private_event, bank_name: "Closed Bank") }
+
+    def index(**params)
+      get :index, params: params, as: :json
+    end
+
+    it "lists only transparent organizations' transfers when signed out" do
+      index
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.map { |t| t["id"] }).to contain_exactly(transparent_ach.public_id)
+    end
+
+    it "applies the same field gating to every row" do
+      index
+
+      expect(response.parsed_body.first).not_to include("bank_name", "routing_number")
+      expect(response.body).not_to include("Open Bank")
+    end
+
+    it "includes the reader's own organization" do
+      reader = create(:user)
+      create(:organizer_position, user: reader, event: private_event, role: :reader)
+      authenticate_as(reader)
+
+      index
+
+      expect(response.parsed_body.map { |t| t["id"] })
+        .to contain_exactly(transparent_ach.public_id, private_ach.public_id)
+    end
+
+    # Filtering must narrow what the scope allows, never widen it.
+    it "returns nothing for an organization the viewer cannot read" do
+      index(organization_id: private_event.public_id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to be_empty
+    end
+  end
+
 end

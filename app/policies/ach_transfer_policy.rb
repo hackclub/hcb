@@ -1,6 +1,20 @@
 # frozen_string_literal: true
 
 class AchTransferPolicy < ApplicationPolicy
+  # Index-route authorization. Today the v4 API does this three different ways
+  # — authorize the parent event, `skip_authorization` plus a hand-written
+  # scope, or authorize an unrelated record and read through its association —
+  # and only comments use Pundit's actual answer. This is that answer: the same
+  # rule as #visible_attributes' base tier, in SQL.
+  class Scope < ApplicationPolicy::Scope
+    def resolve
+      return scope.all if user&.auditor?
+
+      scope.where(event: Event.visible_to(user))
+    end
+
+  end
+
   def index?
     user&.auditor?
   end
@@ -77,16 +91,42 @@ class AchTransferPolicy < ApplicationPolicy
     EventPolicy.new(user, record.event).create_transfer?
   end
 
+  # Equivalent to `OrganizerPosition.role_at_least?(user, record.event, :reader)`
+  # but without a query per record: `readable_event_ids` is memoized on the user
+  # and resolves ancestor-inherited reader access through
+  # User::PermissionsOverview, which walks ancestors the same way. Rendering a
+  # page of transfers was issuing four queries per row before this.
+  #
+  # Admins short-circuit on `auditor?` above (admin and superadmin are both
+  # auditor roles, and the two honor the "pretend not to be an admin"
+  # preference identically), which is why dropping `role_at_least?`'s admin
+  # clause is safe. `spec/policies/ach_transfer_policy_spec.rb` asserts the
+  # equivalence directly.
   def auditor_or_user?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
+    user&.auditor? || reader_of_event?
+  end
+
+  def reader_of_event?
+    return false if user.nil?
+
+    user.readable_event_ids.include?(record.event_id)
   end
 
   def admin_or_user?
     user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
+  # Same substitution as #auditor_or_user?, for the same reason: the manager
+  # check ran a recursive-CTE query per rendered row — even for signed-out
+  # visitors, where `where(user: nil)` could only ever return false.
   def admin_or_manager?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
+    user&.admin? || manager_of_event?
+  end
+
+  def manager_of_event?
+    return false if user.nil?
+
+    user.manageable_event_ids.include?(record.event_id)
   end
 
   def transparent_or_reader?

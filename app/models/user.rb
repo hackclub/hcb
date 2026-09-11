@@ -687,6 +687,12 @@ class User < ApplicationRecord
     @manageable_events ||= accessible_events(roles: ["manager"])
   end
 
+  # See #readable_event_ids. Manager access is likewise inherited from
+  # ancestors, so this matches OrganizerPosition.role_at_least?(.., :manager).
+  def manageable_event_ids
+    @manageable_event_ids ||= manageable_events.pluck(:id).to_set
+  end
+
   def reimbursement_event_options
     events.not_demo_mode.or(Event.where(id: reimbursement_events.where(public_reimbursement_page_enabled: true).select(:id))).uniq.pluck(:name, :id)
   end

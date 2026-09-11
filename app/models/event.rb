@@ -110,6 +110,28 @@ class Event < ApplicationRecord
   scope :not_omitted, -> { includes(:plan).where.not(plan: { type: Event::Plan.that(:omit_stats).collect(&:name) }) }
   scope :hidden, -> { where.not(hidden_at: nil) }
   scope :not_hidden, -> { where(hidden_at: nil) }
+
+  # The organizations `user` may read, expressed as SQL so a Pundit scope can
+  # filter an index in one query instead of calling a Ruby predicate per row.
+  #
+  # Mirrors EventPolicy#show? (`is_public || auditor_or_reader?`), with one
+  # deliberate narrowing: hidden organizations are excluded. Listing them would
+  # be a change of behavior, since every other organization list treats hidden
+  # as private (see #visible_descendant_ids) — so a scope built on this is
+  # never broader than the policy, and is narrower for hidden public events.
+  # `spec/policies/ach_transfer_policy_spec.rb` asserts that direction.
+  #
+  # Reader access is inherited from ancestors: `readable_event_ids` resolves
+  # through User::PermissionsOverview, which walks ancestor organizer positions
+  # the same way OrganizerPosition.role_at_least? does.
+  scope :visible_to, ->(user) {
+    next all if user&.auditor?
+
+    public_events = transparent.not_hidden
+    next public_events if user.nil?
+
+    public_events.or(where(id: user.readable_event_ids.to_a))
+  }
   scope :funded, -> {
     includes(canonical_event_mappings: :canonical_transaction)
       .where("canonical_transactions.amount_cents > 0")
