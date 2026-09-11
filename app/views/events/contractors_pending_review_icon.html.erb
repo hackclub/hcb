@@ -1,0 +1,7 @@
+<%= turbo_frame_tag event_contractors_pending_review_icon_path(@event) do %>
+  <% if @contractors_pending_review_count != 0 %>
+    <div class="dock__item--badge">
+      <%= @contractors_pending_review_count %>
+    </div>
+  <% end %>
+<% end %>

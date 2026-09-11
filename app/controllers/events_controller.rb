@@ -903,6 +903,14 @@ class EventsController < ApplicationController
     render :reimbursements_pending_review_icon, layout: false
   end
 
+  def contractors_pending_review_icon
+    authorize @event
+    # Only reviewers see a count; the badge is hidden (count 0) for everyone else.
+    @contractors_pending_review_count = Payroll::PositionPolicy.new(current_user, @event).review? ? @event.payroll_invoices.where(aasm_state: "submitted").count : 0
+
+    render :contractors_pending_review_icon, layout: false
+  end
+
   def employees
     authorize @event
     @employees = @event.employees.order(
