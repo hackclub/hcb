@@ -109,9 +109,9 @@
           <% @invoices.each do |invoice| %>
             <tr>
               <td>
-                <span class="badge bg-<%= invoice.state_color %>"><%= invoice.aasm_state.humanize %></span>
+                <span class="badge ml-0 bg-<%= invoice.state_color %>"><%= invoice.aasm_state.humanize %></span>
                 <% if invoice.reviewed_by.present? %>
-                  <span class="muted block text-xs mt-1"><%= invoice.approved? ? "Approved" : "Rejected" %> by <%= invoice.reviewed_by.name %></span>
+                  <span class="muted block text-xs mt-1 ml-2.5">by <%= invoice.reviewed_by.name %></span>
                 <% end %>
               </td>
               <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
