@@ -1,6 +1,14 @@
 # frozen_string_literal: true
 
 class InvoicePolicy < ApplicationPolicy
+  # An invoice reaches its organization through the sponsor it was issued to.
+  class Scope < ApplicationPolicy::Scope
+    def resolve
+      scope.where(sponsor: Sponsor.where(event: Event.visible_to(user)))
+    end
+
+  end
+
   def index?
     return true if user&.auditor?
 
@@ -64,23 +72,6 @@ class InvoicePolicy < ApplicationPolicy
     user&.admin? || OrganizerPosition.role_at_least?(user, event, :manager)
   end
 
-  private
-
-  def event
-    return record.event if record.respond_to?(:event)
-
-    record&.sponsor&.event
-  end
-
-  def is_public
-    event&.is_public?
-  end
-
-  def unapproved?
-    event&.unapproved?
-  end
-
-
   # See ApplicationPolicy#visible_attributes. v3's `invoice` entity publishes
   # the amount, the sponsor's id and name, the date and the status — not the
   # sponsor's contact email, nor the line-item description.
@@ -95,6 +86,22 @@ class InvoicePolicy < ApplicationPolicy
 
   def policy_event
     record.try(:event) || record.try(:sponsor)&.event
+  end
+
+  private
+
+  def event
+    return record.event if record.respond_to?(:event)
+
+    record&.sponsor&.event
+  end
+
+  def is_public
+    event&.is_public?
+  end
+
+  def unapproved?
+    event&.unapproved?
   end
 
 end

@@ -1,6 +1,15 @@
 # frozen_string_literal: true
 
 class WiseTransferPolicy < ApplicationPolicy
+  # Visible wherever the owning organization is: transparent to anyone, and to
+  # anyone who reads it. Which fields come back is #visible_attributes' call.
+  class Scope < ApplicationPolicy::Scope
+    def resolve
+      scope.where(event: Event.visible_to(user))
+    end
+
+  end
+
   def new?
     auditor_or_user?
   end
@@ -37,6 +46,19 @@ class WiseTransferPolicy < ApplicationPolicy
     user&.auditor? || user.events.any?
   end
 
+  # See ApplicationPolicy#visible_attributes. v3's `wise_transfer` entity publishes
+  # the amounts, currency, date, status, the beneficiary's name and the sender.
+  # The beneficiary's email, country and address are not public.
+  def visible_attributes
+    @visible_attributes ||= begin
+      attrs = []
+      attrs += %i[amount_cents usd_amount_cents currency state recipient_name sender organization_id] if transparent_or_reader?
+      attrs += %i[recipient_email recipient_country payment_for memo return_reason sent_at
+                  address_line1 address_line2 address_city address_state address_postal_code] if event_reader? || !!user&.auditor?
+      attrs
+    end
+  end
+
   private
 
   def auditor_or_user?
@@ -49,20 +71,6 @@ class WiseTransferPolicy < ApplicationPolicy
 
   def user_who_can_transfer?
     EventPolicy.new(user, record.event).create_transfer?
-  end
-
-
-  # See ApplicationPolicy#visible_attributes. v3's `wise_transfer` entity publishes
-  # the amounts, currency, date, status, the beneficiary's name and the sender.
-  # The beneficiary's email, country and address are not public.
-  def visible_attributes
-    @visible_attributes ||= begin
-      attrs = []
-      attrs += %i[amount_cents usd_amount_cents currency state recipient_name sender organization_id] if transparent_or_reader?
-      attrs += %i[recipient_email recipient_country payment_for memo return_reason sent_at
-                  address_line1 address_line2 address_city address_state address_postal_code] if event_reader? || !!user&.auditor?
-      attrs
-    end
   end
 
 end

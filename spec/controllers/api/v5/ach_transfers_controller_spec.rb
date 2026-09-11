@@ -152,13 +152,13 @@ RSpec.describe Api::V5::AchTransfersController do
       index
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body.map { |t| t["id"] }).to contain_exactly(transparent_ach.public_id)
+      expect(response.parsed_body["data"].map { |t| t["id"] }).to contain_exactly(transparent_ach.public_id)
     end
 
     it "applies the same field gating to every row" do
       index
 
-      expect(response.parsed_body.first).not_to include("bank_name", "routing_number")
+      expect(response.parsed_body["data"].first).not_to include("bank_name", "routing_number")
       expect(response.body).not_to include("Open Bank")
     end
 
@@ -169,14 +169,14 @@ RSpec.describe Api::V5::AchTransfersController do
 
       index
 
-      expect(response.parsed_body.map { |t| t["id"] })
+      expect(response.parsed_body["data"].map { |t| t["id"] })
         .to contain_exactly(transparent_ach.public_id, private_ach.public_id)
     end
 
     it "filters to one organization" do
       index(organization_id: transparent_event.public_id)
 
-      expect(response.parsed_body.map { |t| t["id"] }).to contain_exactly(transparent_ach.public_id)
+      expect(response.parsed_body["data"].map { |t| t["id"] }).to contain_exactly(transparent_ach.public_id)
     end
 
     # Filtering must narrow what the scope allows, never widen it.
@@ -184,7 +184,7 @@ RSpec.describe Api::V5::AchTransfersController do
       index(organization_id: private_event.public_id)
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body).to be_empty
+      expect(response.parsed_body["data"]).to be_empty
     end
 
     # `where_public_id` drops ids that aren't prefixed for Event, so a public id
@@ -194,14 +194,14 @@ RSpec.describe Api::V5::AchTransfersController do
       index(organization_id: create(:user).public_id)
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body).to be_empty
+      expect(response.parsed_body["data"]).to be_empty
     end
 
     it "returns nothing for an organization that does not exist" do
       index(organization_id: "org_doesnotexist")
 
       expect(response).to have_http_status(:ok)
-      expect(response.parsed_body).to be_empty
+      expect(response.parsed_body["data"]).to be_empty
     end
   end
 

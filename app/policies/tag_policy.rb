@@ -21,6 +21,12 @@ class TagPolicy < ApplicationPolicy
     member?
   end
 
+  # See ApplicationPolicy#visible_attributes. v3's `tag` entity publishes the
+  # label; colour and emoji carry no more information than the label does.
+  def visible_attributes
+    @visible_attributes ||= transparent_or_reader? ? %i[label color emoji] : []
+  end
+
   private
 
   def auditor?
@@ -33,13 +39,6 @@ class TagPolicy < ApplicationPolicy
 
   def member?
     OrganizerPosition.role_at_least?(user, record.event, :member)
-  end
-
-
-  # See ApplicationPolicy#visible_attributes. v3's `tag` entity publishes the
-  # label; colour and emoji carry no more information than the label does.
-  def visible_attributes
-    @visible_attributes ||= transparent_or_reader? ? %i[label color emoji] : []
   end
 
 end

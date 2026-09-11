@@ -1,6 +1,15 @@
 # frozen_string_literal: true
 
 class IncreaseCheckPolicy < ApplicationPolicy
+  # Visible wherever the owning organization is: transparent to anyone, and to
+  # anyone who reads it. Which fields come back is #visible_attributes' call.
+  class Scope < ApplicationPolicy::Scope
+    def resolve
+      scope.where(event: Event.visible_to(user))
+    end
+
+  end
+
   def new?
     auditor_or_user?
   end

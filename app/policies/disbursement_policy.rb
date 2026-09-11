@@ -1,6 +1,18 @@
 # frozen_string_literal: true
 
 class DisbursementPolicy < ApplicationPolicy
+  # A disbursement sits between two organizations and is listed from either
+  # end, so a reader of the destination sees an incoming transfer they did not
+  # send.
+  class Scope < ApplicationPolicy::Scope
+    def resolve
+      visible = Event.visible_to(user)
+
+      scope.where(source_event: visible).or(scope.where(destination_event: visible))
+    end
+
+  end
+
   def show?
     user.auditor?
   end
@@ -68,13 +80,6 @@ class DisbursementPolicy < ApplicationPolicy
     user&.admin?
   end
 
-  private
-
-  def auditor_or_user?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
-  end
-
-
   # See ApplicationPolicy#visible_attributes. v3's `transfer` entity publishes
   # the amount, date, status and the organizations on each end.
   def visible_attributes
@@ -96,6 +101,12 @@ class DisbursementPolicy < ApplicationPolicy
     return false if user.nil?
 
     [record.source_event, record.destination_event].compact.any? { |e| user.readable_event_ids.include?(e.id) }
+  end
+
+  private
+
+  def auditor_or_user?
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
 end

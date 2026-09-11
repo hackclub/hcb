@@ -29,7 +29,7 @@ RSpec.describe Api::V5::AchTransfersController do
     ActiveSupport::Notifications.unsubscribe(subscription)
 
     expect(response).to have_http_status(:ok)
-    expect(response.parsed_body.size).to eq(rows)
+    expect(response.parsed_body["data"].size).to eq(rows)
     count
   end
 

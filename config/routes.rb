@@ -850,6 +850,13 @@ Rails.application.routes.draw do
         resources :tags, only: [:show]
         resources :stripe_cards, path: "cards", only: [:show]
         resources :sponsors, only: [:index, :show]
+        resources :donations, only: [:index, :show]
+        resources :checks, only: [:index, :show]
+        resources :check_deposits, only: [:index, :show]
+        resources :wires, only: [:index, :show]
+        resources :wise_transfers, only: [:index, :show]
+        resources :invoices, only: [:index, :show]
+        resources :disbursements, path: "transfers", only: [:index, :show]
         resources :organizer_positions, only: [:index]
         resources :users, only: [:show]
 

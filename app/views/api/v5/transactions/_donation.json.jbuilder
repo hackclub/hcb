@@ -32,6 +32,12 @@ object_shape(json, donation) do |f|
     json.utm_content donation.utm_content
   end
 
+  # `Donation#payment_method` resolves through `stripe_obj`, which retrieves the
+  # PaymentIntent from Stripe — an external call per rendered donation. v4 emits
+  # these unconditionally, so listing donations there is one Stripe round trip
+  # per row. Behind `expand` they cost nothing unless asked for, and the
+  # FieldSet block means a viewer who cannot see them never triggers the call
+  # at all.
   f.nest(:payment_method) do
     json.type donation.payment_method_type
     json.brand donation.payment_method_card_brand
@@ -40,5 +46,5 @@ object_shape(json, donation) do |f|
     json.exp_month donation.payment_method_card_exp_month
     json.exp_year donation.payment_method_card_exp_year
     json.country donation.payment_method_card_country
-  end
+  end if expand?(:payment_method)
 end
