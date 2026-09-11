@@ -370,4 +370,36 @@ RSpec.describe CardGrantsController do
       expect(body.to_s).to include("Buy <strong>pizza</strong>")
     end
   end
+
+  describe "#activate" do
+    it "refuses to activate a card unless the Card Issuing Terms are agreed to" do
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:card_grant_setting, event:)
+      card_grant = create(:card_grant, :pending_invite, event:, amount_cents: 10_00)
+      create_session(card_grant.user, verified: true)
+
+      post(:activate, params: { id: card_grant.hashid })
+
+      expect(card_grant.reload.stripe_card).to be_nil
+      expect(flash[:error]).to eq("You must agree to the Card Issuing Terms to activate a virtual card.")
+    end
+  end
+
+  describe "#edit_actions" do
+    it "renders the converted-grant blankslate without calling a removed predicate" do
+      member = create(:user)
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user: member, event:, role: :member)
+      create(:card_grant_setting, event:)
+      card_grant = create(:card_grant, :pending_invite, event:, amount_cents: 10_00, allow_reimbursement_report: true)
+      create(:reimbursement_report, event:, user: card_grant.user, card_grant:)
+      card_grant.update_column(:status, CardGrant.statuses[:converted_to_reimbursement])
+      create_session(member, verified: true)
+
+      get(:edit_actions, params: { event_id: event.friendly_id, id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("converted into a reimbursement report")
+    end
+  end
 end

@@ -271,6 +271,10 @@ class CardGrantsController < ApplicationController
   def activate
     authorize @card_grant
 
+    unless params[:terms] == "1"
+      return redirect_to @card_grant, flash: { error: "You must agree to the Card Issuing Terms to activate a virtual card." }
+    end
+
     unless @card_grant.user.phone_number_verified_or_bypassed?
       settings_path = current_user == @card_grant.user ? my_settings_path : edit_user_path(@card_grant.user)
       return redirect_to @card_grant, flash: { error: { "text" => "Please verify your phone number before activating your grant card.", "link_text" => "Go to settings", "link" => settings_path } }

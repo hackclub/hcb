@@ -50,10 +50,6 @@ class CardGrantPolicy < ApplicationPolicy
       record.active? && record.stripe_card_id.nil? && record.effective_allow_reimbursement_report
   end
 
-  def edit?
-    admin_or_manager? && record.active?
-  end
-
   def toggle_one_time_use?
     admin_or_manager? && record.active?
   end
