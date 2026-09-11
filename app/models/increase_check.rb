@@ -61,7 +61,7 @@ class IncreaseCheck < ApplicationRecord
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
 
   include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  tracked owner: proc { |controller, record| record.user || controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
   include Hashid::Rails
   hashid_config salt: ""
