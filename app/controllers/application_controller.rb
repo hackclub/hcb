@@ -62,7 +62,13 @@ class ApplicationController < ActionController::Base
 
   rescue_from ActionView::MissingTemplate, with: :not_found
 
-  rescue_from Rack::Timeout::RequestTimeoutException do
+  rescue_from Rack::Timeout::RequestTimeoutException do |exception|
+    # Rack::Timeout raises wherever the request happens to be, which can be
+    # after a response has already been rendered or after another `respond_to`
+    # has negotiated a format. Calling `respond_to` again in that case raises
+    # `ActionController::RespondToMismatchError`, masking the actual timeout.
+    raise exception if performed? || response.media_type.present?
+
     respond_to do |format|
       format.html { render "errors/timeout" }
       format.all { render plain: "This request timed out, sorry." }
