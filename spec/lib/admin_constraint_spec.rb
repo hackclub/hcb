@@ -86,5 +86,18 @@ RSpec.describe AdminConstraint do
         expect(described_class.matches?(request)).to eq(false)
       end
     end
+
+    context "when the request's cookie jar can't be decrypted (e.g. a synthetic request built by " \
+            "ActionDispatch::Routing::RouteSet#recognize_path, which bypasses the cookies middleware)" do
+      let(:request) { instance_double("ActionDispatch::Request") }
+
+      before do
+        allow(request).to receive(:cookie_jar).and_raise(NoMethodError, "undefined method 'generate_key' for nil")
+      end
+
+      it "returns false instead of raising" do
+        expect(described_class.matches?(request)).to eq(false)
+      end
+    end
   end
 end
