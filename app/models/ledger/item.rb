@@ -48,6 +48,13 @@ class Ledger
     pg_search_scope :search_memo, against: [:memo], ranked_by: "ledger_items.datetime"
 
     include Hashid::Rails
+    include PublicIdentifiable
+    # The v5 API's `transaction` object. Deliberately the same `txn_` prefix
+    # HcbCode uses: to an API consumer this is still a transaction, and v5 is
+    # the version where transaction ids change. Note that hashids are salted
+    # per model, so a v4 `txn_` id does not resolve here and vice versa — that
+    # is the intended breaking change, not an accident.
+    set_public_id_prefix :txn
     has_paper_trail
 
     include Commentable

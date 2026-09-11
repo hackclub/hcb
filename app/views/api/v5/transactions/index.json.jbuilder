@@ -1,4 +1,4 @@
 # frozen_string_literal: true
 
-json.data @transactions, partial: "api/v5/transactions/transaction", as: :tx
+json.data @items, partial: "api/v5/transactions/transaction", as: :item
 pagination_metadata(json)

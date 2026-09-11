@@ -778,7 +778,7 @@ Rails.application.routes.draw do
           end
         end
 
-        resources :transactions, only: [:show] do
+        resources :transactions, only: [:index, :show] do
           member do
             post "mark_no_receipt"
           end
@@ -843,11 +843,10 @@ Rails.application.routes.draw do
             get "balance_by_date"
           end
 
-          resources :transactions, only: [:index]
         end
 
         resources :ach_transfers, only: [:index, :show]
-        resources :transactions, only: [:show]
+        resources :transactions, only: [:index, :show]
         resources :tags, only: [:show]
         resources :stripe_cards, path: "cards", only: [:show]
 
