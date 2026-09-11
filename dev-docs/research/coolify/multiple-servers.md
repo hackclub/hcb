@@ -46,7 +46,7 @@ TLDR:
 7. Create GitHub app (`hcb-github-app`); named `HCB Coolify` on GitHub
 8. In `gary@hcb` app:
     - Hook up project to `hcb` repo
-    - Use Dockefile as Build Pack
+    - Use Dockerfile as Build Pack
     - In General tab,
         - Set Docker image name to `ghcr.io/hackclub/hcb`. This name is largely
           dictated by ghcr.io (GitHub

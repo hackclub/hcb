@@ -151,7 +151,7 @@ module Discord
     def reimburse_component
       return require_linked_user unless @user
 
-      report = @user.reimbursement_reports.create!(name: "Reimbursement report from Discord")
+      report = @user.reimbursement_reports.create!(name: "Reimbursement report from Discord", inviter: @user)
 
       respond content: "Your new reimbursement report has been created!", embeds: [
         {

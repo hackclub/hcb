@@ -126,14 +126,18 @@
 <% if @disbursement.rejected? %>
   <p>Nothing more to do here. ✨</p>
 <% elsif @disbursement.pending? %>
-  <%= form_with(model: false, local: true, url: disbursement_reject_admin_path(@disbursement), method: :post) do |form| %>
-    <div class="field">
-      <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
-      <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
-    </div>
-    <%= form.submit "Reject disbursement",
-      class: "admin-bg-orange",
-      data: { turbo_confirm: "Are you sure you want to reject this disbursement?", turbo_confirm_danger: true } %>
+  <% if policy(@disbursement).reject? %>
+    <%= form_with(model: false, local: true, url: disbursement_reject_admin_path(@disbursement), method: :post) do |form| %>
+      <div class="field">
+        <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
+        <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
+      </div>
+      <%= form.submit "Reject disbursement",
+        class: "admin-bg-orange",
+        data: { turbo_confirm: "Are you sure you want to reject this disbursement?", turbo_confirm_danger: true } %>
+    <% end %>
+  <% else %>
+    <p class="muted">You don't have permission to reject this disbursement.</p>
   <% end %>
 <% else %>
   <p>This is a human review check.</p>
@@ -143,17 +147,25 @@
     <small>When approved, this disbursement will automatically send on <%= @disbursement.scheduled_on.strftime("%Y-%m-%d") %>.</small>
   <% end %>
 
-  <%= form_with(model: false, local: true, url: disbursement_approve_admin_path(@disbursement), method: :post) do |form| %>
-    <%= form.submit "Approve disbursement" %>
+  <% if policy(@disbursement).approve? %>
+    <%= form_with(model: false, local: true, url: disbursement_approve_admin_path(@disbursement), method: :post) do |form| %>
+      <%= form.submit "Approve disbursement" %>
+    <% end %>
   <% end %>
 
-  <%= form_with(model: false, local: true, url: disbursement_reject_admin_path(@disbursement), method: :post) do |form| %>
-    <div class="field">
-      <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
-      <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
-    </div>
-    <%= form.submit "Reject disbursement",
-      class: "admin-bg-orange",
-      data: { turbo_confirm: "Are you sure you want to reject this disbursement?", turbo_confirm_danger: true } %>
+  <% if policy(@disbursement).reject? %>
+    <%= form_with(model: false, local: true, url: disbursement_reject_admin_path(@disbursement), method: :post) do |form| %>
+      <div class="field">
+        <%= form.label "Reject with a comment", class: "bold mb1" %> <br>
+        <%= form.text_area :comment, style: "width: 400px;", placeholder: "(Markdown supported)" %>
+      </div>
+      <%= form.submit "Reject disbursement",
+        class: "admin-bg-orange",
+        data: { turbo_confirm: "Are you sure you want to reject this disbursement?", turbo_confirm_danger: true } %>
+    <% end %>
+  <% end %>
+
+  <% if !policy(@disbursement).approve? || !policy(@disbursement).reject? %>
+    <p class="muted">You don't have permission to approve or reject this disbursement.</p>
   <% end %>
 <% end %>

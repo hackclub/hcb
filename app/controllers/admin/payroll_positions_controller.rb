@@ -4,7 +4,7 @@ module Admin
   class PayrollPositionsController < Admin::BaseController
     def index
       @page = params[:page] || 1
-      @per = params[:per] || 20
+      @per = safe_per(20)
 
       relation = Payroll::Position.includes(:payee, :event)
 

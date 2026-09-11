@@ -46,11 +46,11 @@
       <div class="flex flex-col gap-3">
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
           <%= label_tag :name, "Name" %>
-          <%= text_field_tag :name, params[:payee_name], placeholder: "Orpheus", required: true, form: "new-payee-form", data: { "manual-payee-target": "nameInput" } %>
+          <%= text_field_tag :name, params[:payee_name], placeholder: "Orpheus", required: true, form: "new-payee-form", data: { "manual-payee-target": "nameInput", "payee-picker-target": "nameInput" } %>
         </div>
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
           <%= label_tag :email, "Email" %>
-          <%= email_field_tag :email, params[:payee_email], placeholder: "orpheus@hackclub.com", required: true, form: "new-payee-form", data: { "manual-payee-target": "emailInput" } %>
+          <%= email_field_tag :email, params[:payee_email], placeholder: "orpheus@hackclub.com", required: true, form: "new-payee-form", data: { "manual-payee-target": "emailInput", "payee-picker-target": "emailInput" } %>
         </div>
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2" data-manual-payee-target="manualOnly" <%= "hidden" unless manual %>>
           <%= label_tag :payee_entity_type, "Recipient type" %>

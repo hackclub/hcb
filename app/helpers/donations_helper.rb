@@ -9,17 +9,6 @@ module DonationsHelper
     render_money fee
   end
 
-  def donation_payout_type(humanized = true, donation = @donation)
-    return humanized ? "–" : nil unless donation.payout
-
-    donation.payout&.type
-  end
-
-  def donation_paid_at(donation = @donation)
-    timestamp = donation&.payout&.created_at
-    timestamp ? format_datetime(timestamp) : "–"
-  end
-
   # this information is visible to admins only because payouts should feel instant to the user
   def donation_payout_datetime(donation = @donation)
     date = nil
@@ -131,9 +120,5 @@ module DonationsHelper
 
     tag = inline_icon icon_name, size: 24
     content_tag(:span, class: "pr1 #{background} line-height-0 tooltipped tooltipped--w", 'aria-label': text) { tag }
-  end
-
-  def donations_embed_html_code(event = @event)
-    html_escape "<iframe src='#{start_donation_donations_url event}' style='border:none;' name='donateFrame' scrolling='yes' frameborder='0' marginheight='0px' marginwidth='0px' height='512px' width='640px' allowfullscreen></iframe>".gsub("'", '"')
   end
 end
