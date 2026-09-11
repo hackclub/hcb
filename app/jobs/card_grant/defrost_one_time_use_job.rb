@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 class CardGrant
-  # One-time-use grant cards are frozen by the system after their first
-  # authorization. When that charge is fully refunded or released, the grant's
-  # balance is restored, so we defrost the card while keeping it one-time-use.
+  # One-time-use grant cards are frozen by the system after each purchase. When
+  # the purchase that froze the card is refunded or released, the freeze has no
+  # reason to stand, so we defrost while keeping the grant one-time-use.
   class DefrostOneTimeUseJob < ApplicationJob
     queue_as :default
 
@@ -23,9 +23,9 @@ class CardGrant
       return unless grant&.one_time_use? && grant.active?
       # Organizers can't defrost a card while the org is frozen, so neither should we.
       return if card.event.financially_frozen?
-      # Only undo the freeze HCB applied for the first purchase.
+      # Only undo a freeze HCB applied, never an organizer's.
       return unless card.frozen? && card.last_frozen_by == User.system_user
-      return if other_live_charges?(card, item)
+      return unless froze_the_card?(card, item)
 
       PaperTrail.request(whodunnit: User.system_user.id) do
         card.defrost!(keep_one_time_use: true)
@@ -34,12 +34,11 @@ class CardGrant
 
     private
 
-    def other_live_charges?(card, item)
-      Ledger::Item
-        .where(linked_object_type: "CardCharge", linked_object_id: card.card_charges.select(:id))
-        .where.not(id: item.id)
-        .where(status: %w[pending settled])
-        .exists?
+    # The card is frozen because of its latest charge, so only that charge
+    # reversing lifts the freeze. Earlier charges were spent under freezes an
+    # organizer has since lifted.
+    def froze_the_card?(card, item)
+      card.card_charges.order(created_at: :desc, id: :desc).first&.id == item.linked_object_id
     end
 
   end

@@ -72,9 +72,9 @@ RSpec.describe CardGrant::DefrostOneTimeUseJob do
     expect(card.reload).to be_active
   end
 
-  it "ignores other charges on the card that are themselves reversed or released" do
+  it "ignores an earlier charge that already settled" do
     freeze_by(system_user)
-    ledger_item_for(card_charge_for(card), status: "released")
+    ledger_item_for(card_charge_for(card), status: "settled")
     item = ledger_item_for(card_charge_for(card), status: "reversed")
 
     perform(item)
@@ -82,10 +82,10 @@ RSpec.describe CardGrant::DefrostOneTimeUseJob do
     expect(card.reload).to be_active
   end
 
-  it "does nothing when another charge on the card is still pending" do
+  it "does nothing when a newer charge on the card is still pending" do
     freeze_by(system_user)
-    ledger_item_for(card_charge_for(card), status: "pending")
     item = ledger_item_for(card_charge_for(card), status: "reversed")
+    ledger_item_for(card_charge_for(card), status: "pending")
 
     perform(item)
 
@@ -93,10 +93,10 @@ RSpec.describe CardGrant::DefrostOneTimeUseJob do
     expect(card.reload).to be_frozen
   end
 
-  it "does nothing when another charge on the card has settled" do
+  it "does nothing when a newer charge on the card has settled" do
     freeze_by(system_user)
-    ledger_item_for(card_charge_for(card), status: "settled")
     item = ledger_item_for(card_charge_for(card), status: "reversed")
+    ledger_item_for(card_charge_for(card), status: "settled")
 
     perform(item)
 
