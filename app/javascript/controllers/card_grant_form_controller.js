@@ -14,7 +14,9 @@ export default class extends Controller {
       el.hidden = !enabled
       // Clear hidden card-only options so a reimbursement-only grant can't submit them.
       if (!enabled) {
-        el.querySelectorAll('input[type="checkbox"]').forEach(checkbox => { checkbox.checked = false })
+        el.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+          checkbox.checked = false
+        })
       }
     })
   }
