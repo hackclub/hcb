@@ -8,7 +8,8 @@ export default class extends Controller {
   submitEnd(event) {
     if (event.detail.success) {
       $.modal.close()
-      if (this.reloadOnSuccessValue) window.Turbo.visit(window.location.href, { action: 'replace' })
+      if (this.reloadOnSuccessValue)
+        window.Turbo.visit(window.location.href, { action: 'replace' })
     }
   }
 }
