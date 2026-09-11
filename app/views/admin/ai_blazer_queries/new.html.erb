@@ -1,0 +1,18 @@
+<% title "New AI Blazer Query" %>
+
+<div class="max-w-3xl mx-auto">
+  <div class="card p3">
+    <h1 class="mt0">Generate a Blazer query with AI</h1>
+    <p class="muted mt1">Describe the analysis you want, and we’ll draft SQL and save it as an AI-labeled Blazer query.</p>
+
+    <%= form_with url: admin_ai_blazer_queries_path, scope: :ai_blazer_query, local: true do |form| %>
+      <%= form.label :prompt, "Prompt", class: "mt2" %>
+      <%= form.text_area :prompt, required: true, rows: 10, value: @prompt, placeholder: "Example: Show monthly donation totals for the last 12 months." %>
+
+      <div class="mt2 flex gap-2">
+        <%= form.submit "Generate & save query", class: "bg-accent" %>
+        <%= link_to "Cancel", admin_ai_blazer_queries_path, class: "btn" %>
+      </div>
+    <% end %>
+  </div>
+</div>
