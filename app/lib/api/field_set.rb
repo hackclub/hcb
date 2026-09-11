@@ -34,7 +34,7 @@ module Api
     end
 
     # Reached through `f`, so they must not go to `method_missing`.
-    RESERVED = %i[nest visible?].freeze
+    RESERVED = %i[set nest visible?].freeze
 
     def initialize(json, visible_attributes)
       @json = json
@@ -43,6 +43,21 @@ module Api
 
     def visible?(key)
       @visible.include?(key)
+    end
+
+    # Explicit form of `f.some_field value`, for when the key is computed
+    # (`f.set(:"#{key}_id", ...)`). The blank slate below undefines
+    # `public_send`, so a computed key has to come through here.
+    def set(key, *args, &block)
+      # Checked before the visibility test on purpose: a malformed call must
+      # fail for every user, not just the ones who can see the field.
+      if args.size > 1 || (args.empty? && block.nil?) || (args.any? && block)
+        raise ArgumentError, "#{key}: pass exactly one of a value or a block"
+      end
+
+      return unless visible?(key)
+
+      @json.set!(key, block ? block.call : args.first)
     end
 
     # Emits a nested object or array. The block writes to `json` itself, so it
@@ -56,15 +71,7 @@ module Api
     def method_missing(key, *args, &block)
       return super if RESERVED.include?(key) || key.to_s.end_with?("!", "?", "=")
 
-      # Checked before the visibility test on purpose: a malformed call must
-      # fail for every user, not just the ones who can see the field.
-      if args.size > 1 || (args.empty? && block.nil?) || (args.any? && block)
-        raise ArgumentError, "#{key}: pass exactly one of a value or a block"
-      end
-
-      return unless visible?(key)
-
-      @json.set!(key, block ? block.call : args.first)
+      set(key, *args, &block)
     end
 
     def respond_to_missing?(key, include_private = false)

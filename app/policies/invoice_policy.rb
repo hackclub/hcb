@@ -80,4 +80,21 @@ class InvoicePolicy < ApplicationPolicy
     event&.unapproved?
   end
 
+
+  # See ApplicationPolicy#visible_attributes. v3's `invoice` entity publishes
+  # the amount, the sponsor's id and name, the date and the status — not the
+  # sponsor's contact email, nor the line-item description.
+  def visible_attributes
+    @visible_attributes ||= begin
+      attrs = []
+      attrs += %i[amount_cents sponsor status sent_at] if transparent_or_reader?
+      attrs += %i[description due_date paid_at sponsor_email] if event_reader? || !!user&.auditor?
+      attrs
+    end
+  end
+
+  def policy_event
+    record.try(:event) || record.try(:sponsor)&.event
+  end
+
 end

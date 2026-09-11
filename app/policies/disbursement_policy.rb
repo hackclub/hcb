@@ -74,4 +74,28 @@ class DisbursementPolicy < ApplicationPolicy
     user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
+
+  # See ApplicationPolicy#visible_attributes. v3's `transfer` entity publishes
+  # the amount, date, status and the organizations on each end.
+  def visible_attributes
+    @visible_attributes ||= begin
+      attrs = []
+      attrs += %i[amount_cents status from to] if transparent_or_reader?
+      attrs += %i[memo transaction_id outgoing_transaction_id incoming_transaction_id sender card_grant_id] if reader_on_either_end?
+      attrs
+    end
+  end
+
+  # A disbursement sits between two organizations and is visible from either.
+  def transparent_or_reader?
+    [record.source_event, record.destination_event].compact.any?(&:is_public?) || reader_on_either_end?
+  end
+
+  def reader_on_either_end?
+    return true if user&.auditor?
+    return false if user.nil?
+
+    [record.source_event, record.destination_event].compact.any? { |e| user.readable_event_ids.include?(e.id) }
+  end
+
 end

@@ -69,6 +69,48 @@ class ApplicationPolicy
     visible_attributes.any?
   end
 
+  # ---- Shared tier helpers -------------------------------------------------
+  #
+  # Almost every record hangs off an organization, and the transparency tier
+  # asks the same question each time. Defining it once means a new policy gets
+  # the N+1-safe role check by default rather than reaching for
+  # `OrganizerPosition.role_at_least?`, which queries per record — and a policy
+  # consulted while rendering a list is consulted once per row.
+  #
+  # These are deliberately named `event_*` rather than `reader?`/`manager?`,
+  # which several policies already define with their own meaning.
+
+  # The organization this record's access hangs off. Override where a record
+  # reaches its event by another path (a card grant, a sponsor, a parent).
+  def policy_event
+    record.try(:event)
+  end
+
+  # The v3 transparency tier: a transparent organization's records are readable
+  # by anyone, signed in or not.
+  def transparent_or_reader?
+    !!policy_event&.is_public? || !!user&.auditor? || event_reader?
+  end
+
+  # Equivalent to OrganizerPosition.role_at_least?(user, policy_event, :reader),
+  # resolved from a set memoized on the user. See
+  # spec/policies/ach_transfer_policy_spec.rb, which asserts the equivalence
+  # across an organization hierarchy for every role.
+  def event_reader?
+    event = policy_event
+    return false if user.nil? || event.nil?
+
+    user.readable_event_ids.include?(event.id)
+  end
+
+  # As #event_reader?, for manager-or-better.
+  def event_manager?
+    event = policy_event
+    return false if user.nil? || event.nil?
+
+    user.manageable_event_ids.include?(event.id)
+  end
+
   def scope
     Pundit.policy_scope!(user, record.class)
   end

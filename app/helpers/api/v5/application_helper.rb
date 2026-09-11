@@ -51,7 +51,7 @@ module Api
             end
           end
         else
-          f.public_send(:"#{key}_id", record&.public_id)
+          f.set(:"#{key}_id", record&.public_id)
         end
       end
 

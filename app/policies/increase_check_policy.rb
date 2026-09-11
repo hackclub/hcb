@@ -21,6 +21,19 @@ class IncreaseCheckPolicy < ApplicationPolicy
     user_who_can_transfer?
   end
 
+  # See ApplicationPolicy#visible_attributes. v3's `check` entity publishes
+  # only amount, date and status — the recipient and their address are not
+  # public.
+  def visible_attributes
+    @visible_attributes ||= begin
+      attrs = []
+      attrs += %i[amount_cents status memo] if transparent_or_reader?
+      attrs += %i[recipient_name recipient_email payment_for check_number
+                  address_line1 address_line2 address_city address_state address_zip] if auditor_or_user?
+      attrs
+    end
+  end
+
   private
 
   def auditor_or_user?

@@ -27,6 +27,18 @@ class CheckDepositPolicy < ApplicationPolicy
     admin?
   end
 
+  # See ApplicationPolicy#visible_attributes. v3's `check_deposit` entity
+  # publishes amount, date, status and the submitting user. Images of the
+  # cheque are gated separately by #view_image?.
+  def visible_attributes
+    @visible_attributes ||= begin
+      attrs = []
+      attrs += %i[amount_cents status created_at] if transparent_or_reader?
+      attrs += %i[front_url back_url] if view_image?
+      attrs
+    end
+  end
+
   private
 
   def admin?

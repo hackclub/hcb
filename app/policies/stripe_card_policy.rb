@@ -54,6 +54,25 @@ class StripeCardPolicy < ApplicationPolicy
     user&.admin?
   end
 
+  # See ApplicationPolicy#visible_attributes. v3's `card` entity publishes the
+  # name, type, status, issue date and the cardholder — not the PAN digits,
+  # expiry, spend, or the shipping address.
+  def visible_attributes
+    @visible_attributes ||= begin
+      attrs = []
+      attrs += %i[type status name user user_id organization organization_id] if transparent_or_reader?
+
+      if event_reader? || !!user&.auditor? || grantee?
+        attrs += %i[last4 exp_month exp_year total_spent_cents balance_available
+                    personalization last_frozen_by last_frozen_by_id]
+      end
+
+      attrs << :shipping if shipping?
+
+      attrs
+    end
+  end
+
   private
 
   def member_and_cardholder?

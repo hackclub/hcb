@@ -842,9 +842,14 @@ Rails.application.routes.draw do
             get "followers"
             get "balance_by_date"
           end
+
+          resources :transactions, only: [:index]
         end
 
         resources :ach_transfers, only: [:index, :show]
+        resources :transactions, only: [:show]
+        resources :tags, only: [:show]
+        resources :stripe_cards, path: "cards", only: [:show]
 
         match "*path" => "application#not_found", via: [:get, :post, :patch, :put, :delete]
       end
