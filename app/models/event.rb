@@ -484,6 +484,7 @@ class Event < ApplicationRecord
   has_many :subledgers
 
   has_many :card_grants
+  has_many :grants
   has_one :card_grant_setting
   accepts_nested_attributes_for :card_grant_setting, update_only: true
 

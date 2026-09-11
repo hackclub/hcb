@@ -157,6 +157,7 @@ class User < ApplicationRecord
   has_many :job_payments, through: :jobs, source: :payments, class_name: "Employee::Payment"
 
   has_many :card_grants
+  has_many :grants
 
   has_many :ach_transfers, inverse_of: :creator
   has_many :checks, inverse_of: :creator

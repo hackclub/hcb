@@ -97,6 +97,7 @@ class CardGrant < ApplicationRecord
 
   has_one :pre_authorization
   has_one :reimbursement_report, class_name: "Reimbursement::Report"
+  has_one :grant, as: :grantable
   after_create :create_pre_authorization!, if: :pre_authorization_required?
 
   before_validation :create_card_grant_setting, on: :create
@@ -104,6 +105,7 @@ class CardGrant < ApplicationRecord
   before_create :create_subledger
   before_create :set_defaults
   after_create :transfer_money
+  after_create :create_grant_for_invitation
   after_create_commit :send_email
 
   before_create do
@@ -374,13 +376,17 @@ class CardGrant < ApplicationRecord
 
       mark_converted_to_reimbursement!
 
-      event.reimbursement_reports.create!(
+      report = event.reimbursement_reports.create!(
         user:,
         report_name: "Reimbursement for #{purpose.presence || "previously issued card grant"}",
         maximum_amount_cents:,
         inviter: sent_by,
         card_grant: self
       )
+
+      grant&.update!(grantable: report)
+
+      report
     end
 
     stripe_card&.cancel!
@@ -396,6 +402,10 @@ class CardGrant < ApplicationRecord
 
   def create_user
     self.user = User.create_with(creation_method: :card_grant).find_or_create_by!(email:)
+  end
+
+  def create_grant_for_invitation
+    create_grant!(event:, user:, sent_by:)
   end
 
   def create_subledger

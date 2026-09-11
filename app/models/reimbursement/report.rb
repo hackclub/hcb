@@ -82,6 +82,7 @@ module Reimbursement
     validates :maximum_amount_cents, numericality: { greater_than: 0 }, allow_nil: true, integer_column: true
     has_many :expenses, foreign_key: "reimbursement_report_id", inverse_of: :report, dependent: :destroy
     has_one :payout_holding, inverse_of: :report
+    has_one :grant, as: :grantable
     alias_attribute :report_name, :name
 
     alias payout_method legal_entity_payout_method
