@@ -76,7 +76,7 @@ class CardGrant < ApplicationRecord
 
   include AASM
 
-  aasm column: :status, enum: true do
+  aasm column: :status, enum: true, whiny_persistence: true do
     state :active, initial: true
     state :canceled
     state :expired
