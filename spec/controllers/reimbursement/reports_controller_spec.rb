@@ -401,4 +401,88 @@ RSpec.describe Reimbursement::ReportsController do
       expect(report.reload).to be_present
     end
   end
+  describe "#admin_send_wise_transfer" do
+    # A payout holding lives in the reimbursement clearinghouse, so the action
+    # needs that event to exist under its hardcoded ID.
+    def clearinghouse
+      Event.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING) ||
+        create(:event, id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
+    end
+
+    def wise_report
+      user = create(:user)
+      user.personal_legal_entity.payout_methods.create!(
+        default: true,
+        details: LegalEntity::PayoutMethod::WiseTransfer.new(
+          address_line1: "1 Main St", address_city: "London", address_state: "England",
+          address_postal_code: "SW1A 1AA", recipient_country: 1, currency: "GBP"
+        )
+      )
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :reimbursement_approved, currency: "GBP")
+      create(:reimbursement_expense, report:, value: 10.00, aasm_state: :approved)
+      report
+    end
+
+    def send_params(report)
+      {
+        report_id: report.id,
+        wise_id: "12345678",
+        wise_recipient_id: "00000000-0000-0000-0000-000000000001"
+      }
+    end
+
+    before do
+      clearinghouse
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+      allow(ColumnService).to receive(:post)
+      allow(ColumnService::Accounts).to receive(:id_of).and_return("bacc_test")
+    end
+
+    it "sends the transfer for a pending payout holding" do
+      report = wise_report
+      holding = Reimbursement::PayoutHolding.create!(report:, amount_cents: 10_00)
+
+      create_session(create(:user, :make_admin), verified: true)
+
+      post(:admin_send_wise_transfer, params: send_params(report))
+
+      expect(flash[:error]).to be_nil
+      expect(holding.reload).to be_sent
+      expect(holding.wise_transfer).to be_present
+    end
+
+    # Regression: the action used to run `PayoutHoldingService::ProcessSingle`
+    # for anything that wasn't settled, and that service accepts pending
+    # holdings only — so an interrupted first attempt left the report stuck
+    # behind a "must be pending payout holding only" ArgumentError.
+    it "resumes an attempt that already moved the holding out of pending" do
+      report = wise_report
+      holding = Reimbursement::PayoutHolding.create!(report:, amount_cents: 10_00)
+      holding.mark_in_transit!
+
+      create_session(create(:user, :make_admin), verified: true)
+
+      post(:admin_send_wise_transfer, params: send_params(report))
+
+      expect(flash[:error]).to be_nil
+      expect(holding.reload).to be_sent
+      expect(holding.wise_transfer).to be_present
+    end
+
+    it "refuses to send a second transfer for a holding that already has one" do
+      report = wise_report
+      holding = Reimbursement::PayoutHolding.create!(report:, amount_cents: 10_00)
+
+      create_session(create(:user, :make_admin), verified: true)
+      post(:admin_send_wise_transfer, params: send_params(report))
+      expect(holding.reload).to be_sent
+      first_transfer = holding.wise_transfer
+
+      post(:admin_send_wise_transfer, params: send_params(report))
+
+      expect(flash[:error]).to match(/already been sent/i)
+      expect(holding.reload.wise_transfer).to eq(first_transfer)
+      expect(WiseTransfer.count).to eq(1)
+    end
+  end
 end
