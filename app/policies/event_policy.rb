@@ -1,6 +1,16 @@
 # frozen_string_literal: true
 
 class EventPolicy < ApplicationPolicy
+  # Index-route authorization. `Event.visible_to` is the SQL form of `show?`
+  # (`is_public || auditor_or_reader?`), narrowed to exclude hidden
+  # organizations the way every other organization list does.
+  class Scope < ApplicationPolicy::Scope
+    def resolve
+      scope.visible_to(user)
+    end
+
+  end
+
   def index?
     user.present?
   end
@@ -34,6 +44,44 @@ class EventPolicy < ApplicationPolicy
   alias_method :transactions_list?, :transactions?
   alias_method :merchants_filter?, :transactions?
   alias_method :stats?, :show?
+
+  # See ApplicationPolicy#visible_attributes.
+  #
+  # The public tier is exactly what `Api::Entities::Organization` exposes to
+  # anonymous v3 callers — no more. Anything v3 does not publish stays at the
+  # access level v4 gave it, so this is "v4's fields with v3's transparency"
+  # field by field rather than by judgement.
+  def visible_attributes
+    @visible_attributes ||= begin
+      attrs = []
+
+      if show?
+        # v3's Organization entity, plus the v4 fields that carry no more
+        # information than those do.
+        # `category` is deliberately absent: v3 computes it with a per-event
+        # tag query, and porting that would reintroduce the N+1 this design
+        # just removed. Add it with a preloaded join, not as-is.
+        attrs += %i[
+          name slug website transparent playground_mode
+          financially_frozen icon donation_header background_image
+          public_message donation_page_available country
+          parent_id fee_percentage
+        ]
+
+        # v3 exposes balances on any transparent organization.
+        attrs += %i[balance_cents fee_balance_cents incoming_balance_cents total_raised_cents]
+
+        # v3 exposes the organizer list on a transparent organization; each
+        # user is then gated by UserPolicy in turn.
+        attrs << :users
+      end
+
+      attrs += %i[plan total_spent_cents] if auditor_or_reader?
+      attrs += %i[account_number routing_number swift_bic_code] if account_number?
+
+      attrs
+    end
+  end
 
   def toggle_hidden?
     user&.admin?

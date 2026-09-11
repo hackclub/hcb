@@ -830,11 +830,23 @@ Rails.application.routes.draw do
       end
     end
 
-    # v5 is a pilot: one endpoint, exercising attribute-level authorization
-    # (ApplicationPolicy#visible_attributes) end to end.
+    # v5 = v4's features with v3's transparency. Every route is authorized by
+    # Pundit alone — `visible_attributes` for fields, `Scope` for indexes — so
+    # the same serializer serves an anonymous visitor to a transparent
+    # organization and a manager of a private one.
     namespace :v5 do
       defaults format: :json do
+        resources :events, path: "organizations", only: [:index, :show] do
+          member do
+            get "sub_organizations"
+            get "followers"
+            get "balance_by_date"
+          end
+        end
+
         resources :ach_transfers, only: [:index, :show]
+
+        match "*path" => "application#not_found", via: [:get, :post, :patch, :put, :delete]
       end
     end
   end
