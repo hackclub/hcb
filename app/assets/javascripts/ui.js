@@ -18,6 +18,8 @@ const readPopoverState = () => {
   }
 }
 
+// Pass null to forget the open popover. sessionStorage isn't always available
+// (private browsing, for example); reopening popovers is best-effort.
 const writePopoverState = state => {
   try {
     if (state) sessionStorage.setItem(POPOVER_STATE_KEY, JSON.stringify(state))
