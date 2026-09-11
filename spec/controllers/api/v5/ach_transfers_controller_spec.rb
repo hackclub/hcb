@@ -173,9 +173,32 @@ RSpec.describe Api::V5::AchTransfersController do
         .to contain_exactly(transparent_ach.public_id, private_ach.public_id)
     end
 
+    it "filters to one organization" do
+      index(organization_id: transparent_event.public_id)
+
+      expect(response.parsed_body.map { |t| t["id"] }).to contain_exactly(transparent_ach.public_id)
+    end
+
     # Filtering must narrow what the scope allows, never widen it.
     it "returns nothing for an organization the viewer cannot read" do
       index(organization_id: private_event.public_id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to be_empty
+    end
+
+    # `where_public_id` drops ids that aren't prefixed for Event, so a public id
+    # belonging to another model filters everything out rather than decoding
+    # into some unrelated event's primary key.
+    it "returns nothing for a public id belonging to a different model" do
+      index(organization_id: create(:user).public_id)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to be_empty
+    end
+
+    it "returns nothing for an organization that does not exist" do
+      index(organization_id: "org_doesnotexist")
 
       expect(response).to have_http_status(:ok)
       expect(response.parsed_body).to be_empty

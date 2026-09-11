@@ -447,6 +447,15 @@ than leaving it to inspection, and
 `spec/controllers/api/v5/ach_transfers_index_queries_spec.rb` pins the flat
 query count.
 
+A smaller one in the same family: filtering an index by organization used
+`Event.find_by_public_id`, which loads the whole row to read its id — a second
+query for nothing. `Event.where_public_id(...)` does it in one, and still drops
+ids that aren't prefixed for Event, so another model's public id filters
+everything out instead of decoding into an unrelated event's primary key.
+(Switching to `event.ach_transfers` does *not* help here: measured, it is the
+same two queries with the WHERE clauses reordered. The cost is loading the
+Event, not the filter.)
+
 This is the part to carry into every other policy that grows a
 `visible_attributes`. The pattern is cheap to get wrong: the per-record query
 is invisible in a `show` route and only bites at list scale.
