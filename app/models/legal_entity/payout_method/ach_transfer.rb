@@ -68,7 +68,7 @@ class LegalEntity
           routing_number:,
           account_number:,
           creator: user,
-          amount:,
+          amount_cents: amount,
           bank_name:,
           payment_for:,
           recipient_name:,

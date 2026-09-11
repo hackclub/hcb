@@ -578,7 +578,7 @@ class Transaction < ApplicationRecord
     # ach transfers out will be negative on the account balance
     unpaired_matching_amount = AchTransfer
                                .approved
-                               .where(amount: -self.amount)
+                               .where(amount_cents: -self.amount)
                                .order(approved_at: :desc)
                                .in_transit
 

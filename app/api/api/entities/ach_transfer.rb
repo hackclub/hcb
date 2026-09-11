@@ -4,7 +4,7 @@ module Api
   module Entities
     class AchTransfer < LinkedObjectBase
       when_expanded do
-        expose :amount, as: :amount_cents
+        expose :amount_cents
         format_as_date do
           expose :created_at, as: :date
         end

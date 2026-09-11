@@ -183,7 +183,7 @@ class HcbCode < ApplicationRecord
         # code adds up.
         canonical_transactions.loaded? ? canonical_transactions.sum(&:amount_cents) : canonical_transactions.sum(:amount_cents)
       elsif ach_transfer? # ACH transfers that haven't been sent don't have any CPTs
-        -ach_transfer.amount
+        -ach_transfer.amount_cents
       else
         canonical_pending_transactions.sum(:amount_cents)
       end
@@ -216,7 +216,7 @@ class HcbCode < ApplicationRecord
     end
 
     # ACH transfers that haven't been sent don't have any CPTs
-    return -ach_transfer.amount if ach_transfer?
+    return -ach_transfer.amount_cents if ach_transfer?
 
     canonical_pending_transactions
       .includes(:canonical_pending_event_mapping)

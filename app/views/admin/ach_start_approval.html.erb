@@ -115,9 +115,9 @@
           </tr>
           <tr>
             <td style="text-align: right;">Amount</td>
-            <td><%= render_money_amount @ach_transfer.amount %></td>
+            <td><%= render_money_amount @ach_transfer.amount_cents %></td>
             <td>
-              <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= render_money_amount(@ach_transfer.amount).to_json %>);">
+              <span class="m0 badge pointer" onClick="navigator.clipboard.writeText(<%= render_money_amount(@ach_transfer.amount_cents).to_json %>);">
                 copy
               </span>
             </td>

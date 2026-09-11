@@ -35,7 +35,7 @@ class Metric
                                                            .where("EXTRACT(YEAR FROM date_posted) = ?", Metric.year)
                                                            .group("date(date_posted)")
 
-        ach_transfers_subquery = AchTransfer.select("date(created_at) AS transaction_date, SUM(amount) AS amount")
+        ach_transfers_subquery = AchTransfer.select("date(created_at) AS transaction_date, SUM(amount_cents) AS amount")
                                             .where("EXTRACT(YEAR FROM created_at) = ?", Metric.year)
                                             .where(creator_id: user.id)
                                             .group("date(created_at)")

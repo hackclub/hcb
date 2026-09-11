@@ -4,7 +4,7 @@
 
 <p>
   <%= @ach_transfer.event.name %> has just sent you a
-  <%= render_money(@ach_transfer.amount) %> ACH transfer for
+  <%= render_money(@ach_transfer.amount_cents) %> ACH transfer for
   <i>"<%= @ach_transfer.payment_for %>"</i>.
 </p>
 
