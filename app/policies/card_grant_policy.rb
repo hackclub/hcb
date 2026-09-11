@@ -25,7 +25,12 @@ class CardGrantPolicy < ApplicationPolicy
     auditor_or_member? && record.active?
   end
 
-  alias_method :edit_actions?, :edit_overview?
+  # Viewable regardless of status so canceled/converted grants can show the
+  # "no further actions" blankslate; each action inside is gated separately.
+  def edit_actions?
+    auditor_or_member?
+  end
+
   alias_method :edit_usage_restrictions?, :edit_overview?
   alias_method :edit_expiration?, :edit_overview?
   alias_method :edit_purpose?, :edit_overview?
