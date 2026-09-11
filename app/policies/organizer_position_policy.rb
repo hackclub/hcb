@@ -1,6 +1,16 @@
 # frozen_string_literal: true
 
 class OrganizerPositionPolicy < ApplicationPolicy
+  # v3 publishes a transparent organization's user list, so the roster follows
+  # the organization's own visibility. Which of each organizer's fields are
+  # returned is UserPolicy's call.
+  class Scope < ApplicationPolicy::Scope
+    def resolve
+      scope.where(event: Event.visible_to(user))
+    end
+
+  end
+
   def destroy?
     admin_or_contract_signee?
   end
@@ -27,6 +37,20 @@ class OrganizerPositionPolicy < ApplicationPolicy
 
   def view_allowances?
     admin_or_manager? || record.user == user || user&.auditor?
+  end
+
+
+  # See ApplicationPolicy#visible_attributes. v3 publishes a transparent
+  # organization's user list, so membership and role are public there. Whether
+  # any given organizer's name or email is visible is UserPolicy's call, not
+  # this one's.
+  def visible_attributes
+    @visible_attributes ||= begin
+      attrs = []
+      attrs += %i[role user user_id] if transparent_or_reader?
+      attrs << :signee if event_reader? || !!user&.auditor?
+      attrs
+    end
   end
 
   private

@@ -68,4 +68,22 @@ class CommentPolicy < ApplicationPolicy
     user_list
   end
 
+
+  # See ApplicationPolicy#visible_attributes. Comments are organizer
+  # conversation, never public. `Scope` already filters admin-only comments;
+  # this governs the fields of the ones that survive it.
+  def visible_attributes
+    @visible_attributes ||= begin
+      return [] unless event_reader? || !!user&.auditor?
+
+      attrs = %i[content user user_id file]
+      attrs << :admin_only if !!user&.auditor?
+      attrs
+    end
+  end
+
+  def policy_event
+    record.try(:commentable).try(:event)
+  end
+
 end

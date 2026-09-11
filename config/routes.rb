@@ -849,6 +849,13 @@ Rails.application.routes.draw do
         resources :transactions, only: [:index, :show]
         resources :tags, only: [:show]
         resources :stripe_cards, path: "cards", only: [:show]
+        resources :sponsors, only: [:index, :show]
+        resources :organizer_positions, only: [:index]
+        resources :users, only: [:show]
+
+        resource :user, only: [] do
+          get "/", to: "users#me", as: "user"
+        end
 
         match "*path" => "application#not_found", via: [:get, :post, :patch, :put, :delete]
       end

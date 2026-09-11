@@ -69,6 +69,21 @@ class CardGrantPolicy < ApplicationPolicy
     admin_or_manager? && record.active?
   end
 
+
+  # See ApplicationPolicy#visible_attributes. Card grants have no v3 entity, so
+  # no public tier. The grantee sees their own grant; organizers see the
+  # organization's.
+  def visible_attributes
+    @visible_attributes ||= begin
+      return [] unless show?
+
+      %i[amount_cents balance_cents status purpose email expires_on card_id
+         merchant_lock category_lock keyword_lock allowed_merchants allowed_categories
+         one_time_use pre_authorization_required disbursements
+         user user_id organization organization_id]
+    end
+  end
+
   private
 
   def admin_or_user?

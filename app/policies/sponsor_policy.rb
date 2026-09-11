@@ -1,6 +1,18 @@
 # frozen_string_literal: true
 
 class SponsorPolicy < ApplicationPolicy
+  # Sponsors are not published by v3, so there is no transparency branch: a
+  # sponsor is visible only to people who can read its organization.
+  class Scope < ApplicationPolicy::Scope
+    def resolve
+      return scope.all if user&.auditor?
+      return scope.none if user.nil?
+
+      scope.where(event_id: user.readable_event_ids.to_a)
+    end
+
+  end
+
   def index?
     auditor_or_reader?
   end
@@ -46,6 +58,21 @@ class SponsorPolicy < ApplicationPolicy
     attrs << :event_id if user&.admin?
 
     attrs
+  end
+
+
+  # See ApplicationPolicy#visible_attributes. Sponsors have no v3 entity, so
+  # there is no public tier — a transparent organization does not publish who
+  # invoices it. SponsorPolicy#show? already says as much.
+  def visible_attributes
+    @visible_attributes ||= begin
+      attrs = []
+      attrs += %i[name slug event_id] if show?
+      attrs += %i[contact_email address_line1 address_line2 address_city address_state
+                  address_postal_code address_country] if show?
+      attrs << :stripe_customer_id if user&.auditor?
+      attrs
+    end
   end
 
   private

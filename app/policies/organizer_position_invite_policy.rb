@@ -45,6 +45,18 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
     user&.admin?
   end
 
+
+  # See ApplicationPolicy#visible_attributes. An invitation is not published by
+  # v3 and is not part of a transparent organization's public face — knowing
+  # who has been invited is organizer information.
+  def visible_attributes
+    @visible_attributes ||= begin
+      return [] unless event_reader? || !!user&.auditor? || record.user == user
+
+      %i[accepted role sender sender_id invitee invitee_id organization organization_id]
+    end
+  end
+
   private
 
   def admin_or_manager?

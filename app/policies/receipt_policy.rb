@@ -31,6 +31,34 @@ class ReceiptPolicy < ApplicationPolicy
     record.user == user && unlocked?
   end
 
+
+  # See ApplicationPolicy#visible_attributes. Receipts are documents attached to
+  # a transaction; v3 publishes only whether one is *missing*, never the file,
+  # so there is no public tier. ReceiptPolicy has no `show?` — visibility is
+  # spelled out here rather than inherited from ApplicationPolicy's `false`,
+  # which would have silently emptied every receipt.
+  def visible_attributes
+    @visible_attributes ||= begin
+      attrs = []
+      attrs += %i[url preview_url filename uploader uploader_id] if viewable?
+      attrs
+    end
+  end
+
+  # A receipt in the bin belongs to its uploader alone; one attached to a
+  # transaction follows that transaction's organization.
+  def viewable?
+    return true if !!user&.auditor?
+    return false if user.nil?
+    return record.user == user if record.receiptable.nil?
+
+    event_reader? || record.user == user
+  end
+
+  def policy_event
+    record.try(:receiptable).try(:event)
+  end
+
   private
 
   def unlocked?
