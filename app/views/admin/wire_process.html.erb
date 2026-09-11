@@ -28,6 +28,10 @@
   <div>
     <h3>Transfer Details</h3>
 
+    <% admin_tool do %>
+      <%= render "events/mission_statement", event: @wire.event %>
+    <% end %>
+
     <table class="table--autosize">
       <tbody>
         <tr>
@@ -35,13 +39,6 @@
           <td>
             <%= @wire.event.name %>
             <%= "(❄️ ⚠️ CURRENTLY FINANCIALLY FROZEN)" if @wire.event.financially_frozen? %>
-          </td>
-        </tr>
-        <tr>
-          <td colspan="2">
-            <% admin_tool do %>
-              <%= render "events/mission_statement", event: @wire.event %>
-            <% end %>
           </td>
         </tr>
         <tr>

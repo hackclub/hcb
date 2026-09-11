@@ -6,9 +6,11 @@
 <h1>Process Disbursement #<%= @disbursement.id %></h1>
 <p><small>Current Status: <%= @disbursement.state_text %></small></p>
 
-<h3>Disbursement Details</h3>
+<div class="grid grid-cols-1 lg:grid-cols-2">
+  <div>
+    <h3>Disbursement Details</h3>
 
-<table class="table--autosize no-stripes">
+    <table class="table--autosize no-stripes">
   <tbody>
   <tr>
     <td class="text-right">HCB Code:</td>
@@ -33,14 +35,6 @@
     </td>
   </tr>
   <tr>
-  <tr>
-    <td colspan="2">
-      <% admin_tool do %>
-        <%= render "events/mission_statement", event: @disbursement.source_event %>
-        <%= render "events/mission_statement", event: @disbursement.destination_event %>
-      <% end %>
-    </td>
-  </tr>
     <td class="text-right">Amount:</td>
     <td><%= render_money @disbursement.amount %></td>
   </tr>
@@ -71,7 +65,18 @@
     </td>
   </tr>
   </tbody>
-</table>
+  </table>
+  </div>
+
+  <div>
+    <% admin_tool do %>
+      <p class="eyebrow m0 mt-3">From <%= @disbursement.source_event.name %></p>
+      <%= render "events/mission_statement", event: @disbursement.source_event %>
+      <p class="eyebrow m0 mt-3">To <%= @disbursement.destination_event.name %></p>
+      <%= render "events/mission_statement", event: @disbursement.destination_event %>
+    <% end %>
+  </div>
+</div>
 
 <h4>Source transactions</h4>
 

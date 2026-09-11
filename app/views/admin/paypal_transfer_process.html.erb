@@ -10,6 +10,10 @@
 
 <h3>Transfer Details</h3>
 
+<% admin_tool do %>
+  <%= render "events/mission_statement", event: @paypal_transfer.event %>
+<% end %>
+
 <table class="table--autosize">
   <tbody>
     <tr>
@@ -58,13 +62,6 @@
         <%= render_money @paypal_transfer.event.balance_available_v2_cents %>
         <% if @paypal_transfer.event.balance_available_v2_cents < 0 %>
           <span class="ml1 badge bg-error">⚠️ Negative balance</span>
-        <% end %>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="2">
-        <% admin_tool do %>
-          <%= render "events/mission_statement", event: @paypal_transfer.event %>
         <% end %>
       </td>
     </tr>

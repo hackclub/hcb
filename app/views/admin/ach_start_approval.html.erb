@@ -28,6 +28,10 @@
   <div>
     <h3>Transfer Details</h3>
 
+    <% admin_tool do %>
+      <%= render "events/mission_statement", event: @ach_transfer.event %>
+    <% end %>
+
     <%= turbo_frame_tag "admin_ach_#{@ach_transfer.id}" do %>
       <table class="table--autosize">
         <tbody>
@@ -43,13 +47,6 @@
             <td style="text-align: right;">Organization</td>
             <td colspan="2" style="width: 300px">
               <%= link_to @ach_transfer.event.name, @ach_transfer.event %>
-            </td>
-          </tr>
-          <tr>
-            <td colspan="3">
-              <% admin_tool do %>
-                <%= render "events/mission_statement", event: @ach_transfer.event %>
-              <% end %>
             </td>
           </tr>
           <tr>
