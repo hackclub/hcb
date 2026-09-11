@@ -17,6 +17,15 @@ class ReceiptablesController < ApplicationController
     end
 
     if @receiptable.no_or_lost_receipt!
+      # In a popover the transaction frame targets _top, so a redirect opens the
+      # full page. Reload the frame in place instead.
+      if params[:popover].present? && @receiptable.is_a?(HcbCode)
+        return render turbo_stream: turbo_stream.replace(
+          @receiptable.public_id,
+          helpers.turbo_frame_tag(@receiptable.public_id, src: @receiptable.popover_path, target: "_top")
+        )
+      end
+
       flash[:success] = "Marked no/lost receipt on that transaction."
       # Signed link visitors can't view the transaction itself, so send them
       # back where they came from, reusing the secret they arrived with.
