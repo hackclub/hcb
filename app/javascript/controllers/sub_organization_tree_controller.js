@@ -99,13 +99,22 @@ export default class extends Controller {
       })
       if (!response.ok) throw new Error(response.statusText)
 
-      for (const [publicId, amount] of Object.entries(await response.json())) {
-        const cell = document.getElementById(`event_balance_${publicId}`)
-        if (cell) cell.textContent = amount
+      for (const [publicId, amounts] of Object.entries(await response.json())) {
+        this.#fill(`event_balance_${publicId}`, amounts.balance)
+        this.#fill(
+          `event_sub_organization_balance_${publicId}`,
+          amounts.sub_organization_balance
+        )
       }
     } catch (error) {
       console.error(error)
     }
+  }
+
+  // A null amount means there is nothing to roll up, so the dash stays.
+  #fill(id, amount) {
+    const cell = document.getElementById(id)
+    if (cell && amount != null) cell.textContent = amount
   }
 
   #reveal(row) {

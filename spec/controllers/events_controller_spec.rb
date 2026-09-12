@@ -419,6 +419,24 @@ RSpec.describe EventsController do
       create(:event, parent:, is_public: false, name: "Private Sub-organization", slug: "private-sub-organization")
     end
 
+    it "adds a sub-organization balance column once the tree goes more than one level deep", :aggregate_failures do
+      create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild")
+
+      get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
+
+      document = Nokogiri::HTML5(response.body)
+      expect(document.css("thead th").map(&:text)).to include("Sub-organization balance")
+      expect(document.at_css("#event_sub_organization_balance_#{transparent_sub.public_id}")).to be_present
+    end
+
+    it "leaves that column out while nothing sits beneath the sub-organizations", :aggregate_failures do
+      get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
+
+      document = Nokogiri::HTML5(response.body)
+      expect(document.css("thead th").map(&:text)).not_to include("Sub-organization balance")
+      expect(document.at_css("#event_sub_organization_balance_#{transparent_sub.public_id}")).to be_nil
+    end
+
     it "starts collapsed at the immediate sub-organizations", :aggregate_failures do
       grandchild = create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild")
 
@@ -537,6 +555,14 @@ RSpec.describe EventsController do
       get(:async_sub_organization_rows, params: { event_id: transparent_sub.slug, guides: "1" })
 
       expect(table_row_names(response.body)).to eq(["Transparent Grandchild"])
+    end
+
+    it "carries the sub-organization balance cell for the table to fill in" do
+      grandchild = create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild")
+
+      get(:async_sub_organization_rows, params: { event_id: transparent_sub.slug, guides: "1" })
+
+      expect(response.body).to include("event_sub_organization_balance_#{grandchild.public_id}")
     end
 
     # Get this wrong and a branch appears to continue past its last row.
@@ -674,14 +700,21 @@ RSpec.describe EventsController do
     render_views
 
     let(:parent) { create(:event, is_public: true) }
-    let!(:transparent_sub) { create(:event, :with_ledger_balance, ledger_balance_cents: 10_000, parent:, is_public: true) }
-    let!(:private_sub) { create(:event, :with_ledger_balance, ledger_balance_cents: 20_000, parent:, is_public: false) }
+    let!(:transparent_sub) do
+      create(:event, :with_ledger_balance, ledger_balance_cents: 10_000, parent:, is_public: true, name: "Transparent Sub-organization")
+    end
+    let!(:private_sub) do
+      create(:event, :with_ledger_balance, ledger_balance_cents: 20_000, parent:, is_public: false, name: "Private Sub-organization")
+    end
 
-    it "sums only transparent sub-organizations for a signed out visitor", :aggregate_failures do
+    def total(body)
+      Nokogiri::HTML5(body).at_css("turbo-frame").text.strip
+    end
+
+    it "sums only transparent sub-organizations for a signed out visitor" do
       get(:async_sub_organization_balance, params: { event_id: parent.slug })
 
-      expect(response.body).to include(money(10_000))
-      expect(response.body).not_to include(money(30_000))
+      expect(total(response.body)).to eq(money(10_000))
     end
 
     it "sums every sub-organization for an organizer of the parent" do
@@ -689,7 +722,42 @@ RSpec.describe EventsController do
 
       get(:async_sub_organization_balance, params: { event_id: parent.slug })
 
-      expect(response.body).to include(money(30_000))
+      expect(total(response.body)).to eq(money(30_000))
+    end
+
+    it "includes every level of the tree, not just direct sub-organizations" do
+      grandchild = create(:event, :with_ledger_balance, ledger_balance_cents: 40_000, parent: transparent_sub, is_public: true)
+      create(:event, :with_ledger_balance, ledger_balance_cents: 80_000, parent: grandchild, is_public: true)
+
+      get(:async_sub_organization_balance, params: { event_id: parent.slug })
+
+      expect(total(response.body)).to eq(money(130_000))
+    end
+
+    it "keeps a private branch out of a signed out visitor's total" do
+      create(:event, :with_ledger_balance, ledger_balance_cents: 40_000, parent: private_sub, is_public: true)
+
+      get(:async_sub_organization_balance, params: { event_id: parent.slug })
+
+      expect(total(response.body)).to eq(money(10_000))
+    end
+
+    it "sums whatever the table's search matches, wherever it sits in the tree" do
+      create(:event, :with_ledger_balance, ledger_balance_cents: 40_000, parent: private_sub, is_public: true, name: "Nested Match")
+      sign_in_organizer_of(parent)
+
+      get(:async_sub_organization_balance, params: { event_id: parent.slug, view: "list", q: "Match" })
+
+      expect(total(response.body)).to eq(money(40_000))
+    end
+
+    it "sums the cards a search matches together with everything beneath them" do
+      create(:event, :with_ledger_balance, ledger_balance_cents: 40_000, parent: transparent_sub, is_public: true, name: "Nested")
+      sign_in_organizer_of(parent)
+
+      get(:async_sub_organization_balance, params: { event_id: parent.slug, q: "Transparent" })
+
+      expect(total(response.body)).to eq(money(50_000))
     end
   end
 
@@ -698,17 +766,39 @@ RSpec.describe EventsController do
     let!(:transparent_sub) { create(:event, :with_ledger_balance, ledger_balance_cents: 10_000, parent:, is_public: true) }
     let!(:private_sub) { create(:event, :with_ledger_balance, ledger_balance_cents: 20_000, parent:, is_public: false) }
 
-    it "returns a balance for each requested descendant" do
+    it "returns each requested descendant's balance, with the tree beneath it rolled up" do
       grandchild = create(:event, :with_ledger_balance, ledger_balance_cents: 40_000, parent: transparent_sub, is_public: true)
+      create(:event, :with_ledger_balance, ledger_balance_cents: 80_000, parent: grandchild, is_public: true)
 
       get(:async_sub_organization_balances,
           params: { event_id: parent.slug, ids: [transparent_sub.public_id, grandchild.public_id] },
           format: :json)
 
       expect(response.parsed_body).to eq(
-        transparent_sub.public_id => money(10_000),
-        grandchild.public_id      => money(40_000)
+        transparent_sub.public_id => { "balance" => money(10_000), "sub_organization_balance" => money(120_000) },
+        grandchild.public_id      => { "balance" => money(40_000), "sub_organization_balance" => money(80_000) }
       )
+    end
+
+    it "leaves the roll-up empty for a sub-organization with nothing beneath it" do
+      get(:async_sub_organization_balances,
+          params: { event_id: parent.slug, ids: [transparent_sub.public_id] },
+          format: :json)
+
+      expect(response.parsed_body).to eq(
+        transparent_sub.public_id => { "balance" => money(10_000), "sub_organization_balance" => nil }
+      )
+    end
+
+    it "rolls up only the descendants a signed out visitor may see" do
+      create(:event, :with_ledger_balance, ledger_balance_cents: 40_000, parent: transparent_sub, is_public: true)
+      create(:event, :with_ledger_balance, ledger_balance_cents: 80_000, parent: transparent_sub, is_public: false)
+
+      get(:async_sub_organization_balances,
+          params: { event_id: parent.slug, ids: [transparent_sub.public_id] },
+          format: :json)
+
+      expect(response.parsed_body.dig(transparent_sub.public_id, "sub_organization_balance")).to eq(money(40_000))
     end
 
     it "skips a private descendant for a signed out visitor" do

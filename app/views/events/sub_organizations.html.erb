@@ -39,7 +39,7 @@
   <div class="stat statset__wide" data-tour-step="balance">
     <span class="stat__label"><%= @has_filter ? "Filtered s" : "S" %>ub-organization balance</span>
     <span class="stat__value">
-      <%= turbo_frame_tag "sub_event_balance_#{@event.public_id}", src: event_async_sub_organization_balance_path(@event, @view == "list" ? { q: @search }.compact : request.query_parameters), loading: :lazy do %>
+      <%= turbo_frame_tag "sub_event_balance_#{@event.public_id}", src: event_async_sub_organization_balance_path(@event, @view == "list" ? { view: "list", q: @search }.compact : request.query_parameters), loading: :lazy do %>
         <strong>-</strong>
       <% end %>
     </span>
@@ -67,10 +67,13 @@
               <th>Tags</th>
               <th>Team</th>
               <th class="text-right">Balance</th>
+              <% if @nested %>
+                <th class="text-right">Sub-organization balance</th>
+              <% end %>
             </tr>
           </thead>
           <tbody id="sub_organizations">
-            <%= render "events/sub_organization_rows", rows: @rows, guides: "" %>
+            <%= render "events/sub_organization_rows", rows: @rows, guides: "", nested: @nested %>
           </tbody>
         </table>
       </article>

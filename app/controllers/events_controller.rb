@@ -545,13 +545,24 @@ class EventsController < ApplicationController
     render :async_balance, layout: false
   end
 
-  # Summed from the ledger, the same engine the balances in the table read
-  # from, so the total agrees with the rows beneath it.
+  # In the table view the total covers what the table lists: every visible
+  # descendant, or the ones the search matches wherever they sit in the tree.
+  # In the card view, which only goes one level down, it covers the
+  # sub-organizations that pass the filters together with everything beneath
+  # them. Both read the ledger, the engine the table's balances come from.
   def async_sub_organization_balance
     authorize @event
 
-    sub_organizations = filtered_sub_organizations.except(:includes, :order).includes(:ledger)
-    @sub_organization_balance_cents = sub_organizations.sum { |event| event.ledger.available_balance_cents }
+    events =
+      if params[:view] == "list"
+        search = params[:q].presence
+        search ? visible_descendants_matching(search) : Event.where(id: visible_descendant_ids)
+      else
+        roots = filtered_sub_organizations.except(:includes, :order).pluck(:id)
+        Event.where(id: sub_organization_tree.subtree_ids(roots))
+      end
+
+    @sub_organization_balance_cents = events.includes(:ledger).sum { |event| event.ledger.available_balance_cents }
 
     render :async_sub_organization_balance, layout: false
   end
@@ -560,9 +571,13 @@ class EventsController < ApplicationController
     authorize @event
 
     events = Event.where_public_id(params[:ids]).where(id: visible_descendant_ids).includes(:ledger)
+    rollups = sub_organization_balance_rollups(events.map(&:id))
 
     balances = events.to_h do |event|
-      [event.public_id, helpers.render_money_amount(event.ledger.available_balance_cents)]
+      [event.public_id, {
+        balance: helpers.render_money_amount(event.ledger.available_balance_cents),
+        sub_organization_balance: rollups.key?(event.id) ? helpers.render_money_amount(rollups[event.id]) : nil
+      }]
     end
 
     render json: balances
@@ -945,6 +960,9 @@ class EventsController < ApplicationController
           @search = params[:q].presence
           @has_filter = @search.present?
           @rows = sub_organization_table_rows(search: @search)
+          # The sub-organization balance column only earns its space once the
+          # tree goes more than one level deep.
+          @nested = expandable_subevent_ids.any?
         else
           sub_organizations = filtered_sub_organizations
           @sub_organizations = sub_organizations.not_hidden.page(params[:page]).per(safe_per(24))
@@ -992,6 +1010,8 @@ class EventsController < ApplicationController
 
     @rows = sub_organization_table_rows
     @guides = tree_guides
+    # Rows are only ever fetched by expanding one, so the tree has depth.
+    @nested = true
 
     render :sub_organization_rows, layout: false
   end
@@ -1373,6 +1393,30 @@ class EventsController < ApplicationController
     @visible_descendant_ids ||= @event.visible_descendant_ids(current_user)
   end
 
+  def sub_organization_tree
+    @sub_organization_tree ||= Event::SubOrganizationTree.new(descendant_ids: visible_descendant_ids)
+  end
+
+  def expandable_subevent_ids
+    @expandable_subevent_ids ||= @event.expandable_subevent_ids(current_user)
+  end
+
+  def visible_descendants_matching(search)
+    Event.where(id: visible_descendant_ids).where("name ILIKE ?", "%#{Event.sanitize_sql_like(search)}%")
+  end
+
+  # For each of `ids`, the available balance of everything visible beneath it
+  # summed, the event itself excluded. Each descendant's balance is read once,
+  # however many of `ids` it sits under.
+  def sub_organization_balance_rollups(ids)
+    groups = sub_organization_tree.descendant_ids_by_root(ids)
+    balances = Event.where(id: groups.values.flatten.uniq).includes(:ledger).find_each.to_h do |event|
+      [event.id, event.ledger.available_balance_cents]
+    end
+
+    groups.transform_values { |descendant_ids| descendant_ids.sum { |id| balances.fetch(id, 0) } }
+  end
+
   def visible_subevent_ids
     children = Rails.cache.fetch("sub_organization_children_#{@event.id}", expires_in: 5.minutes) do
       @event.subevents.pluck(:id, :is_public, :hidden_at)
@@ -1385,19 +1429,13 @@ class EventsController < ApplicationController
   end
 
   def sub_organization_table_rows(search: nil)
-    scope =
-      if search
-        Event.where(id: visible_descendant_ids)
-             .where("name ILIKE ?", "%#{Event.sanitize_sql_like(search)}%")
-      else
-        Event.where(id: visible_subevent_ids)
-      end
+    scope = search ? visible_descendants_matching(search) : Event.where(id: visible_subevent_ids)
 
     events = scope.includes(:parent, :scoped_tags, logo_attachment: :blob)
                   .reorder(:name, :id)
                   .to_a
 
-    expandable = search ? Set.new : @event.expandable_subevent_ids(current_user)
+    expandable = search ? Set.new : expandable_subevent_ids
     organizer_counts = OrganizerPosition.where(event: events).group(:event_id).count
 
     events.map do |event|
