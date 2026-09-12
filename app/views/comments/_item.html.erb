@@ -62,16 +62,26 @@
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="comment-modal-<%= comment.hashid %>">
     <%= modal_header "Edit History" %>
     <ul class="list-reset">
-      <% comment.versions.where(event: "update").reverse.each do |version| %>
+      <% update_versions = comment.versions.where(event: "update").to_a.reverse %>
+      <% whodunnit_ids = update_versions.map(&:whodunnit).compact.map(&:to_i).uniq %>
+      <% users_by_id = User.where(id: whodunnit_ids).index_by(&:id) %>
+      <% update_versions.each do |version| %>
         <% if version&.changeset&.[]("content_ciphertext")&.compact_blank&.any? %>
           <li class="mb2">
-            <%= version.whodunnit.nil? ? "Automatically " : user_mention(User.find(version.whodunnit)) %>
+            <% version_user = version.whodunnit.present? ? users_by_id[version.whodunnit.to_i] : nil %>
+            <%= version_user.nil? ? "Automatically " : user_mention(version_user) %>
             updated <%= time_ago_in_words version.created_at %> ago
             <p class="mb1">
               <div class="card border b--muted">
                 <%= sanitize Diffy::Diff.new(Comment.new(content_ciphertext: version.changeset["content_ciphertext"][0]).content, Comment.new(content_ciphertext: version.changeset["content_ciphertext"][1]).content, allow_empty_diff: false).to_s(:html) %>
               </div>
             </p>
+          </li>
+        <% elsif version&.changeset&.[]("file")&.any? %>
+          <li class="mb2">
+            <% version_user = version.whodunnit.present? ? users_by_id[version.whodunnit.to_i] : nil %>
+            <%= version_user.nil? ? "Automatically " : user_mention(version_user) %>
+            changed the attached file <%= time_ago_in_words version.created_at %> ago
           </li>
         <% end %>
       <% end %>
