@@ -39,7 +39,15 @@
       </p>
       <p>
         <strong>Email</strong>
-        <%= @position.payee.email %>
+        <span class="!inline-flex gap-2 items-center">
+          <%= @position.payee.email %>
+
+          <% if @position.payee.legal_entity.nil? %>
+            <%= link_to "#", data: { behavior: "modal_trigger", modal: "payee_#{@position.payee.id}_change_email" } do %>
+              <%= inline_icon "edit" %>
+            <% end %>
+          <% end %>
+        </span>
       </p>
       <p>
         <strong>Rate</strong>
@@ -174,4 +182,8 @@
   <% else %>
     <%= blankslate "No payments yet" %>
   <% end %>
+<% end %>
+
+<% if @position.payee.legal_entity.nil? %>
+  <%= render partial: "payees/change_email_modal", locals: { payee: @position.payee, destination: "contractors" } %>
 <% end %>
