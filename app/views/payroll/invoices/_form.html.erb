@@ -1,0 +1,58 @@
+<p class="h5 leading-[1.25] muted mt0 mb-3">
+  <% if @on_behalf %>
+    Upload an invoice on behalf of <strong><%= @position.payee.display_name %></strong>
+    for their work as <strong><%= @position.title %></strong>.
+  <% else %>
+    Invoice <strong><%= @position.event.name %></strong> for your work as
+    <strong><%= @position.title %></strong>.<br>
+    Need an invoice? <%= link_to "Use our template", "https://docuseal.com/d/LJuTkqCU3MKDoT", target: "_blank" %>!
+  <% end %>
+</p>
+
+<%= form_with(model: @invoice, url: payroll_position_invoices_path(@position), scope: :payroll_invoice, local: true, data: { turbo_frame: "_top" }) do |form| %>
+  <div class="card mb-4 flex flex-col gap-3">
+    <div class="flex justify-between items-center">
+      <div>
+        <%= form.label :name, "Description" %>
+        <span class="muted block">What is this invoice for?</span>
+      </div>
+      <%= form.text_field :name, placeholder: "e.g. Engineering hours (Jun 1–15)", required: true %>
+    </div>
+
+    <div class="menu__divider my-0"></div>
+
+    <div class="flex justify-between items-center">
+      <div>
+        <%= form.label :amount, "Amount" %>
+        <span class="muted block">
+          <% if @position.fixed_rate? %>
+            This contract has a fixed amount of <%= render_money_short(@position.rate_cents) %>
+          <% else %>
+            Total to invoice at <%= "#{render_money_short(@position.rate_cents)}#{@position.rate_suffix}" %>
+          <% end %>
+        </span>
+      </div>
+      <div class="input flex gap-2 items-center py-0 max-w-[150px]">
+        <span class="bold muted">$</span>
+        <%= form.number_field :amount, placeholder: "1700.00", step: 0.01, min: 0.01, required: true, value: (@position.rate.to_f if @position.fixed_rate?), class: "!p-0 !border-none !shadow-none min-h-auto" %>
+      </div>
+    </div>
+
+    <div class="menu__divider my-0"></div>
+
+    <div class="flex justify-between items-start">
+      <div>
+        <%= form.label :description, "Notes" %>
+        <span class="muted block">Optional details</span>
+      </div>
+      <%= form.text_area :description, rows: 2, placeholder: (@on_behalf ? "Anything HCB should know" : "Anything the organizer or HCB should know") %>
+    </div>
+
+    <div class="menu__divider my-0"></div>
+
+    <%= render "events/transfers/attach_receipt", form:, required: true,
+          label: "Invoice or timesheet", hint: "Attach an invoice, timesheet, or other supporting document" %>
+  </div>
+
+  <%= form.submit (@on_behalf ? "Upload & approve invoice" : "Submit invoice"), class: "btn bg-success w-full" %>
+<% end %>
