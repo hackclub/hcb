@@ -27,26 +27,29 @@ export default class extends Controller {
 
   render() {
     const input = this.inputTarget
-    const fileName = input.files.length > 0 ? input.files[0].name : ''
+    const files = input.files
 
-    if (!fileName) {
-      if (this._savedFile) {
+    if (files.length === 0) {
+      if (this._savedFiles?.length) {
         const dt = new DataTransfer()
-        dt.items.add(this._savedFile)
+        this._savedFiles.forEach((file) => dt.items.add(file))
         input.files = dt.files
       }
       return
     }
 
-    this._savedFile = input.files[0]
-    this.previewTarget.setAttribute('aria-label', fileName)
-    this.previewTarget.innerHTML = `<img class="-ml-0.5 mr-2 w-4" src="https://cdn.jsdelivr.net/npm/file-icon-vectors@1.0.0/dist/icons/classic/${fileName.split('.').pop()}.svg" /> ${this.truncateMiddle(fileName)}`
+    this._savedFiles = Array.from(files)
+    const label = files.length === 1 ? files[0].name : `${files.length} files`
+    const iconFile = files[0].name
+
+    this.previewTarget.setAttribute('aria-label', label)
+    this.previewTarget.innerHTML = `<img class="-ml-0.5 mr-2 w-4" src="https://cdn.jsdelivr.net/npm/file-icon-vectors@1.0.0/dist/icons/classic/${iconFile.split('.').pop()}.svg" /> ${this.truncateMiddle(label)}`
     this.clearTarget.style.display = 'flex'
     this.previewTarget.classList.add('active')
     this.clearTarget.innerHTML = this.constructor.xIcon
     this.clearTarget.type = 'button'
     this.clearTarget.addEventListener('click', () => {
-      this._savedFile = null
+      this._savedFiles = null
       input.value = ''
       this.clearTarget.innerHTML = ''
       this.clearTarget.style.display = 'none'

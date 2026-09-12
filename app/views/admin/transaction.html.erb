@@ -144,7 +144,9 @@
   <% end %>
   <% if comment.has_attached_file? %>
     <p>
-      <%= link_to "📎 attachment", url_for(comment.file), target: "_blank" %>
+      <% comment.attached_files.each do |file| %>
+        <%= link_to "📎 #{file.filename}", url_for(file), target: "_blank", class: "mr2" %>
+      <% end %>
     </p>
   <% end %>
 <% end %>
