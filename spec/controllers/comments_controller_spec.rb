@@ -3,6 +3,85 @@
 require "rails_helper"
 
 RSpec.describe CommentsController do
+  render_views
+
+  include SessionSupport
+
+  describe "POST #create" do
+    let(:user) { create(:user, verified: true) }
+    let(:report) { create(:reimbursement_report, user:) }
+    let(:frame_url) { "http://test.host/reimbursements/reports/#{report.id}?frame=true" }
+
+    before do
+      create_session(user, verified: true)
+      request.env["HTTP_REFERER"] = "http://test.host/my/inbox"
+    end
+
+    def create_comment
+      post :create, params: {
+        reimbursement_report_id: report.id,
+        comment: {
+          content: "Hi!",
+          commentable_type: "Reimbursement::Report",
+          commentable_id: report.id,
+          return_to: frame_url
+        }
+      }
+    end
+
+    it "reloads the frame and streams the flash into the popover when submitted from within a turbo frame" do
+      request.headers["Turbo-Frame"] = "reimbursement_report_#{report.id}"
+
+      expect { create_comment }.to change { report.comments.count }.by(1)
+      expect(response.media_type).to eq Mime[:turbo_stream]
+      expect(response.body).to include("shared_popover_flash")
+      expect(response.body).to include("Comment created.")
+      expect(response.body).to include("src=\"#{frame_url}\"")
+    end
+
+    it "ignores an external return_to and reloads the commentable instead" do
+      request.headers["Turbo-Frame"] = "reimbursement_report_#{report.id}"
+
+      post :create, params: {
+        reimbursement_report_id: report.id,
+        comment: {
+          content: "Hi!",
+          commentable_type: "Reimbursement::Report",
+          commentable_id: report.id,
+          return_to: "https://evil.example.com"
+        }
+      }
+
+      expect(response.body).not_to include("evil.example.com")
+      expect(response.body).to include("src=\"#{reimbursement_report_path(report)}\"")
+    end
+
+    it "streams an error flash into the popover when the comment is invalid" do
+      request.headers["Turbo-Frame"] = "reimbursement_report_#{report.id}"
+
+      expect {
+        post :create, params: {
+          reimbursement_report_id: report.id,
+          comment: {
+            content: "",
+            commentable_type: "Reimbursement::Report",
+            commentable_id: report.id,
+            return_to: frame_url
+          }
+        }
+      }.not_to(change { report.comments.count })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("shared_popover_flash")
+      expect(response.body).to include("Content can&#39;t be blank")
+    end
+
+    it "redirects back to the referring page otherwise" do
+      expect { create_comment }.to change { report.comments.count }.by(1)
+      expect(response).to redirect_to("http://test.host/my/inbox")
+    end
+  end
+
   context "models including Commentable" do
     it "are explicitly registered" do
       Rails.application.eager_load!

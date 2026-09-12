@@ -3,6 +3,25 @@
 <title><%= yield(:title).concat(" – ") if content_for?(:title) %><%= title_suffix %></title>
 <%= csrf_meta_tags %>
 <%= csp_meta_tag %>
+
+<script>
+  try {
+    var openPopover = JSON.parse(sessionStorage.getItem('hcb:open_popover'))
+    if (
+      openPopover &&
+      !openPopover.pending &&
+      openPopover.stateUrl === location.href &&
+      openPopover.returnUrl !== location.href &&
+      performance.getEntriesByType('navigation')[0].type === 'reload'
+    ) {
+      openPopover.pending = true
+      sessionStorage.setItem('hcb:open_popover', JSON.stringify(openPopover))
+      location.replace(openPopover.returnUrl)
+    }
+  } catch (e) {
+    // Malformed state or no session storage; just render the page.
+  }
+</script>
 <meta name="theme-color" content="<%= @is_dark && !force_light ? "#17171d" : "#f9fafc" %>">
 <meta name="apple-itunes-app" content="app-id=6465424810">
 

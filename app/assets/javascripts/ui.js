@@ -5,6 +5,29 @@ const whenViewed = (element, callback) =>
   new IntersectionObserver(([entry]) => entry.isIntersecting && callback(), {
     threshold: 1,
   }).observe(element)
+
+const POPOVER_STATE_KEY = 'hcb:open_popover'
+
+let popoverTriggerData = null
+
+const readPopoverState = () => {
+  try {
+    return JSON.parse(sessionStorage.getItem(POPOVER_STATE_KEY))
+  } catch {
+    return null
+  }
+}
+
+const writePopoverState = state => {
+  try {
+    if (state) sessionStorage.setItem(POPOVER_STATE_KEY, JSON.stringify(state))
+    else sessionStorage.removeItem(POPOVER_STATE_KEY)
+  } catch {}
+}
+
+const wasReloaded = () =>
+  performance.getEntriesByType('navigation')[0]?.type === 'reload'
+
 const populateSharedPopover = trigger => {
   const popover = document.getElementById('shared_popover')
   if (!popover) return
@@ -35,6 +58,9 @@ const populateSharedPopover = trigger => {
 
   popover.classList.toggle('modal--popover--sm', size === 'sm')
 
+  const flash = document.getElementById('shared_popover_flash')
+  if (flash) flash.innerHTML = ''
+
   const body = document.getElementById('shared_popover_body')
   if (body) {
     body.innerHTML = ''
@@ -47,7 +73,38 @@ const populateSharedPopover = trigger => {
       body.appendChild(frame)
     }
   }
+
+  popoverTriggerData = { ...trigger.dataset }
 }
+
+const openSharedPopover = state => {
+  const trigger = document.createElement('div')
+  Object.assign(trigger.dataset, state.trigger)
+  populateSharedPopover(trigger)
+  BK.s('modal', '#shared_popover').modal({
+    fadeDuration: 200,
+    fadeDelay: 0.75,
+  })
+}
+
+const reopenSharedPopover = () => {
+  const state = readPopoverState()
+  if (!state || $.modal.getCurrent()) return
+
+  if (state.pending) {
+    if (window.location.href === state.returnUrl) openSharedPopover(state)
+    else if (window.location.href !== state.stateUrl) writePopoverState(null)
+    return
+  }
+
+  if (window.location.href !== state.stateUrl) return writePopoverState(null)
+
+  if (!wasReloaded()) return writePopoverState(null)
+
+  openSharedPopover(state)
+}
+
+reopenSharedPopover()
 
 const loadModals = element => {
   $(element).on('click', '[data-behavior~=modal_trigger]', function (e) {
@@ -798,6 +855,14 @@ $(document).on($.modal.BEFORE_OPEN, function (event, modal) {
       '',
       modal.elm[0].dataset.stateUrl
     )
+
+    if (modal.elm[0].id === 'shared_popover' && popoverTriggerData) {
+      writePopoverState({
+        stateUrl: new URL(modal.elm[0].dataset.stateUrl, location.href).href,
+        returnUrl: document.documentElement.dataset.returnToStateUrl,
+        trigger: popoverTriggerData,
+      })
+    }
   }
 })
 
@@ -814,8 +879,16 @@ $(document).on($.modal.BEFORE_CLOSE, function (event, modal) {
 
 $(document).on($.modal.AFTER_CLOSE, function (event, modal) {
   if (modal?.elm?.[0]?.id === 'shared_popover') {
+    writePopoverState(null)
+
+    delete document.documentElement.dataset.returnToStateUrl
+    delete document.documentElement.dataset.returnToStateTitle
+
     const body = document.getElementById('shared_popover_body')
     if (body) body.innerHTML = ''
+
+    const flash = document.getElementById('shared_popover_flash')
+    if (flash) flash.innerHTML = ''
 
     const popoverEl = modal.elm[0]
     if (popoverEl && popoverEl.classList) {
