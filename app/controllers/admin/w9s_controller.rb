@@ -9,7 +9,7 @@ module Admin
 
     def index
       @page = params[:page] || 1
-      @per = params[:per] || 20
+      @per = safe_per(20)
       @w9s = W9.all.order(signed_at: :desc).page(@page).per(@per)
     end
 

@@ -2,7 +2,6 @@
 
 class ChecksController < ApplicationController
   before_action :set_check
-  skip_before_action :signed_in_user, only: :show
 
   def show
     authorize @check
@@ -13,8 +12,7 @@ class ChecksController < ApplicationController
   private
 
   def set_check
-    @check = Check.includes(:creator).find(params[:id] || params[:check_id])
-    @event = @check.event
+    @check = Check.find(params[:id] || params[:check_id])
   end
 
 end

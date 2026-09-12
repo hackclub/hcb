@@ -269,6 +269,12 @@ class CanonicalPendingTransaction < ApplicationRecord
     end
   end
 
+  # The moment this transaction actually occurred, which for Stripe
+  # authorizations is earlier than when we ingested it.
+  def datetime
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("created")&.then { |t| Time.at(t) } || created_at
+  end
+
   def smart_memo
     custom_memo || friendly_memo
   end
@@ -476,9 +482,8 @@ class CanonicalPendingTransaction < ApplicationRecord
     safely do
       reload_local_hcb_code
       ActiveRecord::Base.transaction do
-        li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime:, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
         update!(ledger_item: li)
-        li.map!
       end
     end
   end

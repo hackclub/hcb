@@ -24,31 +24,17 @@
 
   <%= form_tag complete_login_path(@login), id: "login" do %>
     <div class="relative">
-      <% if Flipper.enabled?(:otp_single_input, @login.user) %>
-        <%= text_field_tag(
-              :login_code,
-              "",
-              class: "otp_code",
-              autocomplete: "one-time-code",
-              required: true,
-              inputmode: "numeric",
-              maxlength: "6",
-              autofocus: true,
-              data: { behavior: "otp_input", "op-ignore": true }
-            ) %>
-      <% else %>
-        <%= text_field_tag(
-              :login_code,
-              "",
-              placeholder: "Enter your login code",
-              class: "!max-w-full w-max pr-32",
-              autocomplete: "one-time-code",
-              required: true,
-              autofocus: true,
-              inputmode: "numeric",
-              data: { "op-ignore": true }
-            ) %>
-      <% end %>
+      <%= text_field_tag(
+            :login_code,
+            "",
+            placeholder: "Enter your login code",
+            class: "!max-w-full w-max pr-32",
+            autocomplete: "one-time-code",
+            required: true,
+            autofocus: true,
+            inputmode: "numeric",
+            data: { "op-ignore": true }
+          ) %>
       <%= render partial: "logins/resend_code", locals: { seconds: 30 } %>
     </div>
     <%= invisible_captcha :remember_me %>
