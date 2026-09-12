@@ -57,6 +57,12 @@
         <strong>Total paid</strong>
         <%= render_money @position.payee.total_paid_cents %>
       </p>
+      <% if @position.contract&.document.present? %>
+        <p>
+          <strong>Signed contract</strong>
+          <%= link_to "View signed contract", @position.contract.document, data: { turbo_frame: "_top" } %>
+        </p>
+      <% end %>
       <% if @position.file.attached? %>
         <p>
           <strong>Agreement</strong>
@@ -101,9 +107,13 @@
         </thead>
         <tbody>
           <% @invoices.each do |invoice| %>
-            <% state_color = invoice.approved? ? "success" : (invoice.rejected? ? "muted" : "warning") %>
             <tr>
-              <td><span class="badge bg-<%= state_color %>"><%= invoice.aasm_state.humanize %></span></td>
+              <td>
+                <span class="badge ml-0 bg-<%= invoice.state_color %>"><%= invoice.aasm_state.humanize %></span>
+                <% if invoice.reviewed_by.present? %>
+                  <span class="muted block text-xs mt-1 ml-2.5">by <%= invoice.reviewed_by.name %></span>
+                <% end %>
+              </td>
               <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
                 <%= invoice.name %>
               </td>
