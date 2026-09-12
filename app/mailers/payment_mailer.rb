@@ -8,7 +8,9 @@ class PaymentMailer < ApplicationMailer
   end
 
   def missing_tax_information
-    mail to: @recipients, subject: initial_subject
+    @initial = params[:initial]
+
+    mail to: @recipients, subject: @initial ? initial_subject : "[Action Required] Submit tax information to receive your payment for \"#{@payment.purpose}\" from #{@payment.event.name}"
   end
 
   def sent
