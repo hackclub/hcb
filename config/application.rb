@@ -6,6 +6,7 @@ require "rails/all"
 require_relative "../app/lib/credentials"
 require_relative "../lib/active_storage/previewer/document_previewer"
 require_relative "../app/middleware/set_current_request_ip"
+require_relative "../app/middleware/no_transform_html"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -64,6 +65,13 @@ module Bank
 
     # Track request IP for all requests
     config.middleware.insert_after ActionDispatch::RemoteIp, SetCurrentRequestIp
+
+    # Outermost so it sees the final Cache-Control value. Registered just before
+    # the stack is built so it lands outside Rack::MiniProfiler, which gem
+    # railties insert at position 0 after this file is evaluated.
+    initializer "hcb.no_transform_html", before: :build_middleware_stack do |app|
+      app.middleware.insert_before 0, NoTransformHtml
+    end
 
     config.active_storage.variant_processor = :mini_magick
 
