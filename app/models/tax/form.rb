@@ -169,6 +169,8 @@ module Tax
         tin_match_status = form_hash["TINMatching"]&.[]("Status")
       else
         status_response = TaxbanditsService.get_status(public_id)
+        return if status_response.nil?
+
         form_status = status_response["FormStatus"]
         tin_match_status = status_response["TINMatching"]&.[]("Status")
       end
