@@ -32,11 +32,19 @@ class MailboxAddressesController < ApplicationController
       @mailbox_address.mark_activated!
     end
 
-    flash[:success] = "Address activated!" unless turbo_frame_request?
-    redirect_to @mailbox_address
+    respond_to do |format|
+      format.turbo_stream { flash.now[:success] = "Address activated!" }
+      format.html { redirect_to @mailbox_address, flash: { success: "Address activated!" } }
+    end
   rescue ActiveRecord::RecordInvalid
-    flash[:error] = "Error activating address" unless turbo_frame_request?
-    redirect_to @mailbox_address
+    @mailbox_address.reload
+    respond_to do |format|
+      format.turbo_stream do
+        flash.now[:error] = "Error activating address"
+        render :activate
+      end
+      format.html { redirect_to @mailbox_address, flash: { error: "Error activating address" } }
+    end
   end
 
 end

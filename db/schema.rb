@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_30_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_09_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1618,8 +1618,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_30_120000) do
     t.datetime "marked_no_or_lost_receipt_at"
     t.text "memo", null: false
     t.integer "not_admin_only_comment_count", default: 0, null: false
+    t.datetime "pending_at"
     t.integer "receipt_count", default: 0, null: false
     t.boolean "receipt_required"
+    t.datetime "settled_at"
     t.text "short_code"
     t.string "special_appearance"
     t.string "status", default: "pending", null: false
@@ -2003,12 +2005,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_30_120000) do
   create_table "payments", force: :cascade do |t|
     t.string "aasm_state", null: false
     t.integer "amount_cents", null: false
+    t.string "classification", default: "general_services", null: false
     t.datetime "created_at", null: false
     t.bigint "creator_id", null: false
     t.string "currency", null: false
     t.bigint "payee_id", null: false
     t.string "purpose", null: false
     t.datetime "rejected_at"
+    t.boolean "requires_tax_form", default: true, null: false
     t.datetime "sent_at"
     t.datetime "successful_at"
     t.datetime "under_review_at"
@@ -2501,6 +2505,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_30_120000) do
   end
 
   create_table "stripe_card_personalization_designs", force: :cascade do |t|
+    t.string "color", null: false
     t.boolean "common", default: false, null: false
     t.datetime "created_at", null: false
     t.bigint "event_id"
