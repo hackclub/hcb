@@ -13,11 +13,10 @@ module Tax
     def set_form
       @form = params[:form]
 
-      # TODO: refactor to LE
-      if @payment.legal_entity.present?
-        @recipients = @payment.legal_entity.users.map(&:email_address_with_name)
+      if @form.legal_entity.managed?
+        @recipients = @form.legal_entity.emails
       else
-        @recipients = [@payment.payee.email]
+        @recipients = @form.legal_entity.users.map(&:email_address_with_name)
       end
     end
 
