@@ -1,0 +1,13 @@
+<p>Hello <%= @legal_entity.name %>,</p>
+
+<p>
+  Your tax information has been verified!
+</p>
+
+<%= render partial: "tax/form_mailer/legal_entity_summary", locals: { legal_entity: @legal_entity } %>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>

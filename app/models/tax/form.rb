@@ -34,6 +34,9 @@
 #  index_tax_forms_on_legal_entity_id  (legal_entity_id)
 #  index_tax_forms_on_tin_hash         (tin_hash)
 #
+
+require "aws-sdk-s3"
+
 module Tax
   class Form < ApplicationRecord
     include AASM
@@ -85,7 +88,13 @@ module Tax
     end
 
     after_update if: -> { taxbandits_tin_matching_status_previously_changed?(to: :success) } do
+      Tax::FormMailer.with(form: self).verified.deliver_later if legal_entity.requires_tax_verification?
+
       legal_entity.refresh_pending_contractors_payments!
+    end
+
+    after_update if: -> { taxbandits_tin_matching_status_previously_changed?(to: :failed ) } do
+      Tax::FormMailer.with(form: self).verification_failed.deliver_later
     end
 
     after_update if: -> { tin_hash_previously_changed?(from: nil) } do
@@ -119,6 +128,7 @@ module Tax
         after do
           import_taxbandits_data if sent_with_taxbandits?
 
+          Tax::FormMailer.with(form: self).completed.deliver_later
           legal_entity.refresh_pending_contractors_payments!
         end
       end
@@ -222,7 +232,41 @@ module Tax
       queries["whid"].first
     end
 
+    # Returns the raw bytes of the completed form PDF.
+    # This should only be used in Tax::FormsController#download.
+    def pdf_content
+      submission = begin
+        remote_taxbandits_submission
+      rescue
+        nil
+      end
+
+      return nil if submission.nil?
+
+      submission_form_type = submission["FormType"]
+      pdf_url = submission[TaxbanditsService::TAXBANDITS_FORM_DATA_KEYS[submission_form_type]]["PdfUrl"]
+
+      return nil if pdf_url.blank?
+
+      object_key = URI.parse(pdf_url).path.delete_prefix("/")
+
+      taxbandits_s3_bucket.object(object_key).get(
+        sse_customer_algorithm: "AES256",
+        sse_customer_key: Base64.strict_decode64(Credentials.fetch(:TAXBANDITS, :PDF_KEY))
+      ).body.read
+    end
+
     private
+
+    def taxbandits_s3_bucket
+      Aws::S3::Resource.new(
+        region: "us-east-1",
+        credentials: Aws::Credentials.new(
+          Credentials.fetch(:TAXBANDITS, :S3_ACCESS_KEY_ID),
+          Credentials.fetch(:TAXBANDITS, :S3_SECRET_ACCESS_KEY)
+        )
+      ).bucket(Credentials.fetch(:TAXBANDITS, :S3_BUCKET))
+    end
 
     # WhCertificate/Get returns the payee's full, unmasked TIN. Nothing outside
     # import_taxbandits_data may call it, and what it derives (entity type, TIN

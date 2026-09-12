@@ -1,0 +1,17 @@
+<p>Hello <%= @legal_entity.name %>,</p>
+
+<p>
+  We could not verify your submission for your tax information.
+  You may have accidentally entered in details such as your name or SSN/EIN incorrectly.
+</p>
+
+<p>
+  Please <%= link_to "log in to HCB to resubmit your tax information", legal_entity_url(@legal_entity) %>.
+  Make sure to double-check all information on the form before submitting.
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>
