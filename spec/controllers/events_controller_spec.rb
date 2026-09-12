@@ -669,20 +669,19 @@ RSpec.describe EventsController do
     end
   end
 
+  # Distinct amounts, so a sum that leaves one out reads as a different number.
   describe "#async_sub_organization_balance" do
     render_views
 
     let(:parent) { create(:event, is_public: true) }
-    let!(:transparent_sub) { create(:event, :with_positive_balance, parent:, is_public: true) }
-    let!(:private_sub) { create(:event, :with_positive_balance, parent:, is_public: false) }
+    let!(:transparent_sub) { create(:event, :with_ledger_balance, ledger_balance_cents: 10_000, parent:, is_public: true) }
+    let!(:private_sub) { create(:event, :with_ledger_balance, ledger_balance_cents: 20_000, parent:, is_public: false) }
 
     it "sums only transparent sub-organizations for a signed out visitor", :aggregate_failures do
       get(:async_sub_organization_balance, params: { event_id: parent.slug })
 
-      expect(response.body).to include(money(transparent_sub.balance_available_v2_cents))
-      expect(response.body).not_to include(
-        money(transparent_sub.balance_available_v2_cents + private_sub.balance_available_v2_cents)
-      )
+      expect(response.body).to include(money(10_000))
+      expect(response.body).not_to include(money(30_000))
     end
 
     it "sums every sub-organization for an organizer of the parent" do
@@ -690,27 +689,25 @@ RSpec.describe EventsController do
 
       get(:async_sub_organization_balance, params: { event_id: parent.slug })
 
-      expect(response.body).to include(
-        money(transparent_sub.balance_available_v2_cents + private_sub.balance_available_v2_cents)
-      )
+      expect(response.body).to include(money(30_000))
     end
   end
 
   describe "#async_sub_organization_balances" do
     let(:parent) { create(:event, is_public: true) }
-    let!(:transparent_sub) { create(:event, :with_positive_balance, parent:, is_public: true) }
-    let!(:private_sub) { create(:event, :with_positive_balance, parent:, is_public: false) }
+    let!(:transparent_sub) { create(:event, :with_ledger_balance, ledger_balance_cents: 10_000, parent:, is_public: true) }
+    let!(:private_sub) { create(:event, :with_ledger_balance, ledger_balance_cents: 20_000, parent:, is_public: false) }
 
     it "returns a balance for each requested descendant" do
-      grandchild = create(:event, :with_positive_balance, parent: transparent_sub, is_public: true)
+      grandchild = create(:event, :with_ledger_balance, ledger_balance_cents: 40_000, parent: transparent_sub, is_public: true)
 
       get(:async_sub_organization_balances,
           params: { event_id: parent.slug, ids: [transparent_sub.public_id, grandchild.public_id] },
           format: :json)
 
       expect(response.parsed_body).to eq(
-        transparent_sub.public_id => money(transparent_sub.ledger.available_balance_cents),
-        grandchild.public_id      => money(grandchild.ledger.available_balance_cents)
+        transparent_sub.public_id => money(10_000),
+        grandchild.public_id      => money(40_000)
       )
     end
 
