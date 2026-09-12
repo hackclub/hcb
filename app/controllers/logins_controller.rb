@@ -5,7 +5,15 @@ class LoginsController < ApplicationController
   skip_after_action :verify_authorized
   before_action :set_login, except: [:new, :create, :reauthenticate]
   before_action :set_user, except: [:new, :create, :reauthenticate]
-  invisible_captcha only: [:create, :complete], honeypot: :remember_me
+  # `create` is the endpoint that turns an email address into a User, so it
+  # takes the timestamp check: the form has to have been rendered first.
+  invisible_captcha only: [:create], honeypot: :remember_me
+
+  # `complete` opts out. The check consumes the session token, and the WebAuthn
+  # path (logins/new -> create -> choose_login_preference -> security_key ->
+  # POST complete) renders no form in between that would write a new one, so a
+  # security key sign in would be rejected with no way to retry.
+  invisible_captcha only: [:complete], honeypot: :remember_me, timestamp_enabled: false
 
   layout ->{ @login&.for_application? ? "apply" : "login" }
 

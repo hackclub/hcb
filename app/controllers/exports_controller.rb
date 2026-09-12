@@ -6,6 +6,14 @@ class ExportsController < ApplicationController
   skip_before_action :signed_in_user
   skip_after_action :verify_authorized, only: :collect_email
 
+  # Requesting an export with an `email` param creates a User for it, which
+  # makes this an unauthenticated account creation path like the signup forms.
+  # Scoped to that param so ordinary exports, which create nothing, are
+  # unaffected: the collect_email form is the only thing that renders the token.
+  invisible_captcha only: [:transactions],
+                    honeypot: :remember_me,
+                    if: -> { params[:email].present? }
+
   def transactions
     authorize @event, :show?
 
