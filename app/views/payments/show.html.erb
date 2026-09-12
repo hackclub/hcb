@@ -92,15 +92,17 @@
   <% end %>
 
   <% if @payment.attempts.any? %>
-    <% @payment.attempts.each_with_index do |attempt, index| %>
-      <div class="card flex items-center w-full">
-        <p class="my-0"><%= link_to "Attempt ##{index + 1}", attempt.payout.local_hcb_code %></p>
-        <p class="my-0"><span class="badge h4 bg-<%= attempt.state_color %> nowrap order-1"><%= attempt.state_text %></span></p>
+    <div class="flex flex-col gap-1">
+      <% @payment.attempts.reorder(created_at: :asc).each_with_index do |attempt, index| %>
+        <div class="card flex items-center w-full">
+          <p class="my-0"><%= link_to "Attempt ##{index + 1}", attempt.payout.local_hcb_code %></p>
+          <p class="my-0"><span class="badge h4 bg-<%= attempt.state_color %> nowrap order-1"><%= attempt.state_text %></span></p>
 
-        <div class="flex-grow"></div>
-        <p class="my-0"><%= attempt.aasm_state.humanize %> on <%= format_date attempt.created_at %></p>
-      </div>
-    <% end %>
+          <div class="flex-grow"></div>
+          <p class="my-0"><%= attempt.aasm_state.humanize %> on <%= format_date attempt.created_at %></p>
+        </div>
+      <% end %>
+    </div>
   <% end %>
 
   <% unless @payment.attempts.any?(&:active?) %>
