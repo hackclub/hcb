@@ -1035,7 +1035,9 @@ class Event < ApplicationRecord
     scoped_tags.where(parent_event_id: parent_id)
   end
 
-  def to_combobox_display
+  def to_combobox_display(admin: false)
+    return "#{name} (ID: #{id})" if admin
+
     name
   end
 
