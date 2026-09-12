@@ -436,6 +436,13 @@ class User < ApplicationRecord
     phone_number_verified? || phone_number_verification_bypassed?
   end
 
+  def phone_number_for_stripe
+    return nil unless phone_number_verified?
+    return nil unless StripeCardholder.phone_number_supported?(phone_number)
+
+    phone_number
+  end
+
   def locked?
     locked_at.present?
   end
@@ -745,7 +752,7 @@ class User < ApplicationRecord
 
     cardholder.update!(
       stripe_email: email,
-      stripe_phone_number: phone_number_verified? ? phone_number : nil,
+      stripe_phone_number: phone_number_for_stripe,
     )
   end
 
