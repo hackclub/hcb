@@ -1,0 +1,46 @@
+<p>Hi there! 👋</p>
+
+<p>
+  The <%= @contract.agreement_name %> for
+  <% if @contract.contractable.is_a?(Event::Application) %>
+    <%= link_to "#{@contract.event_name}'s application", submission_application_url(@contract.contractable) %>
+  <% elsif @contract.contractable.is_a?(OrganizerPositionInvite) %>
+    <%= link_to "an invitation to #{@contract.event_name}", organizer_position_invite_url(@contract.contractable) %>
+  <% else %>
+    <%= @contract.event_name %>
+  <% end %>
+  was sent <%= time_ago_in_words @contract.created_at %> ago and still hasn't been signed by everyone.
+  You're the HCB point of contact on it, so we wanted to give you an update.
+</p>
+
+<p>Still waiting on:</p>
+
+<ul>
+  <% @contract.parties.reject(&:signed?).each do |pending_party| %>
+    <li>
+      <%= pending_party.hcb? ? "You (HCB Operations)" : pending_party.role.humanize %> &mdash;
+      <%= pending_party.email %>
+    </li>
+  <% end %>
+</ul>
+
+<% if @party.pending? %>
+  <p>
+    <%= link_to "Click here", contract_party_url(@party) %> to sign your part of the agreement.
+  </p>
+<% end %>
+
+<% if @contract.external_id.present? %>
+  <p>
+    <%= link_to "View the submission on DocuSeal", @contract.docuseal_submission_url %> to see where it's stuck.
+  </p>
+<% end %>
+
+<p>
+  If this agreement is no longer needed, you can void it so it stops chasing everyone for signatures.
+</p>
+
+<p>
+  Thanks!<br>
+  Here's a cookie 🍪
+</p>
