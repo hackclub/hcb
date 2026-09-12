@@ -9,7 +9,11 @@ module Tax
     end
 
     def verified
-      mail to: @recipients, subject: "Your tax form has been verified"
+      mail to: @recipients, subject: "Your tax information has been verified"
+    end
+
+    def verification_failed
+      mail to: @recipients, subject: "We were unable to verify your tax information"
     end
 
     private

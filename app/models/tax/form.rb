@@ -90,6 +90,10 @@ module Tax
       legal_entity.refresh_pending_contractors_payments!
     end
 
+    after_update if: -> { taxbandits_tin_matching_status_previously_changed?(to: :failed ) } do
+      Tax::FormMailer.with(form: self).verification_failed.deliver_later
+    end
+
     after_update if: -> { tin_hash_previously_changed?(from: nil) } do
       # Locked: a legal entity's TIN can never change once set, and two forms
       # completing concurrently would otherwise both see a nil hash and race.
