@@ -92,7 +92,7 @@ class LegalEntity < ApplicationRecord
       not_archived: !archived?,
       form_present: !requires_tax_form || form.present?,
       form_not_mismatched: !requires_tax_form || mismatched_tax_form.nil? && entity_type_mismatched_tax_form.nil?,
-      form_not_verified: !requires_tax_form || form&.taxbandits_tin_match_success? || !requires_tax_verification?,
+      form_verified: !requires_tax_form || form&.taxbandits_tin_match_success? || !requires_tax_verification?,
     }.reject { |k, done| done }.keys
   end
 

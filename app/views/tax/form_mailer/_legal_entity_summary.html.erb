@@ -32,16 +32,28 @@
 
       <%= link_to "Log in to HCB to resolve this issue", legal_entity_url(legal_entity) %>.
     </p>
-  <% when :form_not_verified %>
-    <p>
-      Your submission is pending verification. We'll let you know once
-      your tax form is verified.
-    </p>
+  <% when :form_verified %>
+    <% if @legal_entity.latest_completed_tax_form.taxbandits_tin_match_failed? %>
+      <p>
+        We could not verify your submission for your tax information.
+        You may have accidentally entered in details such as your name or SSN/EIN incorrectly.
+      </p>
 
-    <p>
-      Once your submission is verified<%= " and you have added a payout method" unless legal_entity.default_payout_method.present? %>,
-      you'll be able to receive payments from any organization on HCB.
-    </p>
+      <p>
+        Please <%= link_to "log in to HCB to resubmit your tax information", legal_entity_url(@legal_entity) %>.
+        Make sure to double-check all information on the form before submitting.
+      </p>
+    <% else %>
+      <p>
+        Your submission is pending verification. We'll let you know once
+        your tax form is verified.
+      </p>
+
+      <p>
+        Once your submission is verified<%= " and you have added a payout method" unless legal_entity.default_payout_method.present? %>,
+        you'll be able to receive payments from any organization on HCB.
+      </p>
+    <% end %>
   <% end %>
 <% end %>
 
