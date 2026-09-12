@@ -27,6 +27,32 @@ module Api
       end
 
       require_oauth2_scope "receipts:read", :index
+
+      def create
+        receiptable =
+          if params[:transaction_id].present?
+            authorize Ledger::Item.find_by_public_id!(params[:transaction_id]), :upload?, policy_class: ReceiptablePolicy
+          else
+            # No transaction means the Receipt Bin, which is the caller's own.
+            skip_authorization
+            nil
+          end
+
+        @receipt = Receipt.create!(file: params[:file], receiptable:, user: current_user, upload_method: :api)
+
+        render :show, status: :created
+      end
+
+      require_oauth2_scope "receipts:write", :create
+
+      def destroy
+        receipt = authorize Receipt.find_by_public_id!(params[:id])
+        receipt.destroy!
+
+        render json: { message: "Receipt successfully deleted" }, status: :ok
+      end
+
+      require_oauth2_scope "receipts:write", :destroy
     end
   end
 end

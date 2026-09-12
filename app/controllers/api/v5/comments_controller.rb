@@ -18,6 +18,18 @@ module Api
       end
 
       require_oauth2_scope "comments:read", :index
+
+      def create
+        item = Ledger::Item.find_by_public_id!(params[:transaction_id])
+        @comment = item.comments.build(permitted_attributes(Comment.new(commentable: item)).merge(user: current_user))
+
+        authorize @comment
+        @comment.save!
+
+        render :show, status: :created
+      end
+
+      require_oauth2_scope "comments:write", :create
     end
   end
 end

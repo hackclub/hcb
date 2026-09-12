@@ -1,6 +1,15 @@
 # frozen_string_literal: true
 
 class TagPolicy < ApplicationPolicy
+  # Tags follow their organization: v3 publishes them on a transparent
+  # organization's transactions.
+  class Scope < ApplicationPolicy::Scope
+    def resolve
+      scope.where(event: Event.visible_to(user))
+    end
+
+  end
+
   def show?
     reader? || auditor?
   end
@@ -25,6 +34,14 @@ class TagPolicy < ApplicationPolicy
   # label; colour and emoji carry no more information than the label does.
   def visible_attributes
     @visible_attributes ||= transparent_or_reader? ? %i[label color emoji] : []
+  end
+
+
+  # Strong parameters for writes. Distinct from #visible_attributes: the fields
+  # a caller may *send* and the fields it may *see* are different questions, and
+  # conflating them is why the read list is not called `permitted_attributes`.
+  def permitted_attributes
+    %i[label color emoji]
   end
 
   private

@@ -86,4 +86,13 @@ class CommentPolicy < ApplicationPolicy
     record.try(:commentable).try(:event)
   end
 
+
+  # See TagPolicy#permitted_attributes on why writes keep their own list.
+  # `admin_only` is only settable by someone who could read it back.
+  def permitted_attributes
+    attrs = %i[content file]
+    attrs << :admin_only if !!user&.auditor?
+    attrs
+  end
+
 end

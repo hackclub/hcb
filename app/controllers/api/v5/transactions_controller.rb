@@ -29,6 +29,42 @@ module Api
 
       require_oauth2_scope "ledgers:read", :show
 
+      def update
+        @item = authorize Ledger::Item.find_by_public_id!(params[:id]), :rename?
+
+        ActiveRecord::Base.transaction do
+          @item.update_custom_memo!(params[:memo]) if params.key?(:memo)
+
+          if params.key?(:tag_ids)
+            tags = Array(params[:tag_ids]).map { |id| Tag.find_by_public_id!(id) }
+
+            tags.each do |tag|
+              authorize tag, :toggle_tag?
+              # A tag from another organization would otherwise be attachable by
+              # anyone who can tag anything.
+              raise Pundit::NotAuthorizedError unless @item.hcb_code&.events&.include?(tag.event)
+            end
+
+            @item.hcb_code.tags = tags
+            @item.hcb_code.save!
+            @item.refresh!
+          end
+        end
+
+        render :show
+      end
+
+      require_oauth2_scope "transactions:write", :update
+
+      def mark_no_receipt
+        item = authorize Ledger::Item.find_by_public_id!(params[:id]), :mark_no_or_lost?, policy_class: ReceiptablePolicy
+        item.no_or_lost_receipt!
+
+        render json: { message: "Transaction marked as no/lost receipt" }, status: :ok
+      end
+
+      require_oauth2_scope "receipts:write", :mark_no_receipt
+
       private
 
       # Narrows the scope to one organization without loading it. Filtering can

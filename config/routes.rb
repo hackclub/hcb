@@ -845,8 +845,12 @@ Rails.application.routes.draw do
         end
 
         resources :ach_transfers, only: [:index, :show]
-        resources :transactions, only: [:index, :show]
-        resources :tags, only: [:show]
+        resources :transactions, only: [:index, :show, :update] do
+          member do
+            post "mark_no_receipt"
+          end
+        end
+        resources :tags, only: [:index, :show, :create, :destroy]
         resources :sponsors, only: [:index, :show]
         resources :donations, only: [:index, :show]
         resources :checks, only: [:index, :show]
@@ -859,8 +863,8 @@ Rails.application.routes.draw do
         resources :card_grants, only: [:index, :show]
         resources :stripe_cards, path: "cards", only: [:index, :show]
         resources :organizer_position_invites, path: "invitations", only: [:index, :show]
-        resources :comments, only: [:index]
-        resources :receipts, only: [:index]
+        resources :comments, only: [:index, :create]
+        resources :receipts, only: [:index, :create, :destroy]
         resources :users, only: [:show]
 
         resource :user, only: [] do
