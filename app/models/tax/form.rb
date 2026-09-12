@@ -50,7 +50,7 @@ module Tax
 
     enum :form_type, { W8BEN: "W8BEN", W9: "W9", W8BENE: "W8BENE", W8ECI: "W8ECI", W8IMY: "W8IMY", W8EXP: "W8EXP" }
     enum :external_service, { manual: "manual", taxbandits: "taxbandits" }, prefix: :sent_with
-    enum :entity_type, { person: "person", business: "business" }, prefix: :entity
+    enum :entity_type, { person: "person", business: "business", corporation: "corporation" }, prefix: :entity
 
     # https://developer.taxbandits.com/docs/whcertificate/status/
     enum :taxbandits_status, %w[
@@ -151,14 +151,34 @@ module Tax
       # A manually entered form has no certificate at TaxBandits to sync against.
       return unless sent_with_taxbandits?
 
-      response = TaxbanditsService.get_status(public_id)
-
-      if response.present?
-        update!(
-          taxbandits_status: response["FormStatus"].downcase,
-          taxbandits_tin_matching_status: response["TINMatching"]&.[]("Status")&.downcase
-        )
+      submission = begin
+        remote_taxbandits_submission
+      rescue
+        nil
       end
+
+      form_status = nil
+      tin_match_status = nil
+
+      if submission.present?
+        submission_form_type = submission["FormType"]
+        form_hash = submission[TaxbanditsService::TAXBANDITS_FORM_DATA_KEYS[submission_form_type]]
+
+        form_status_field = "#{submission["FormType"][4..]}Status"
+        form_status = form_hash[form_status_field]
+        tin_match_status = form_hash["TINMatching"]&.[]("Status")
+      else
+        status_response = TaxbanditsService.get_status(public_id)
+        return if status_response.nil?
+
+        form_status = status_response["FormStatus"]
+        tin_match_status = status_response["TINMatching"]&.[]("Status")
+      end
+
+      update!(
+        taxbandits_status: form_status.downcase,
+        taxbandits_tin_matching_status: tin_match_status&.downcase
+      )
     end
 
     # Only the last four digits, and only ever shown to the payee themselves.
@@ -292,7 +312,13 @@ module Tax
     def entity_type_from(submission_form_type, form_data)
       case submission_form_type
       when "FormW9"
-        form_data["TINType"] == "SSN" ? :person : :business
+        if form_data["FederalTaxClassification"]&.downcase&.include?("corporation")
+          :corporation
+        elsif form_data["TINType"] == "SSN"
+          :person
+        else
+          :business
+        end
       when "FormW8BEN"
         :person
       when "FormW8ECI"

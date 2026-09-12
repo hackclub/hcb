@@ -332,6 +332,34 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "#pretend_is_not_admin" do
+    it "is cleared on save for users without an admin role" do
+      user = create(:user)
+      user.pretend_is_not_admin = true
+
+      user.save!
+
+      expect(user.pretend_is_not_admin).to eq(false)
+      expect(user.reload.pretend_is_not_admin).to eq(false)
+    end
+
+    it "is kept for auditors and admins" do
+      auditor = create(:user, access_level: :auditor, pretend_is_not_admin: true)
+      admin = create(:user, :make_admin, pretend_is_not_admin: true)
+
+      expect(auditor.reload.pretend_is_not_admin).to eq(true)
+      expect(admin.reload.pretend_is_not_admin).to eq(true)
+    end
+
+    it "is cleared when an admin is demoted" do
+      admin = create(:user, :make_admin, pretend_is_not_admin: true)
+
+      admin.update!(access_level: :user)
+
+      expect(admin.reload.pretend_is_not_admin).to eq(false)
+    end
+  end
+
   describe "#use_two_factor_authentication" do
     it "cannot be disabled by admins" do
       user = create(:user, :make_admin, use_two_factor_authentication: true, phone_number: "+18556254225", phone_number_verified: true, use_sms_auth: true)
