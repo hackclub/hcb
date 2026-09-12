@@ -30,4 +30,8 @@
   <% else %>
     <%= render "payments/payee_picker", event:, destination: %>
   <% end %>
+
+  <% if payee&.imported? && payee.legal_entity.nil? %>
+    <%= render "payees/imported_notice", payee:, class: "mt-0 mb-4" %>
+  <% end %>
 </div>

@@ -1,0 +1,8 @@
+<%# locals: (payee:) %>
+
+<%= render "application/callout", type: "info", title: "You've paid #{payee.display_name} before",
+      class: local_assigns[:class] do %>
+  HCB needs them to confirm their details in the new system, so their payout information from your
+  earlier transfers isn't carried over. They'll be emailed to submit their payout method and tax
+  information before this payment is sent.
+<% end %>

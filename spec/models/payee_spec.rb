@@ -38,4 +38,33 @@ RSpec.describe Payee, type: :model do
       end
     end
   end
+
+  describe "#imported?" do
+    let(:event) { create(:event) }
+
+    it "is true for recipients carried over from the legacy transfer system" do
+      expect(create(:payee, event:, legal_entity: nil, imported_at: Time.current)).to be_imported
+    end
+
+    it "is false for recipients created in the new payments UI" do
+      expect(create(:payee, event:, legal_entity: nil)).not_to be_imported
+    end
+  end
+
+  describe "linking a legal entity" do
+    let(:event) do
+      event = create(:event)
+      create(:canonical_pending_transaction, amount_cents: 1_000_000, event:, fronted: true)
+      event
+    end
+
+    it "does not seed payout methods from legacy transfers to the same email" do
+      create(:ach_transfer, event:, recipient_name: "Orpheus", recipient_email: "orpheus@hackclub.com",
+                            account_number: "123456789", routing_number: "110000000")
+      payee = create(:payee, event:, legal_entity: nil, email: "orpheus@hackclub.com")
+      le = create(:legal_entity)
+
+      expect { payee.update!(legal_entity: le) }.not_to(change { le.payout_methods.count })
+    end
+  end
 end
