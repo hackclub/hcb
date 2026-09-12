@@ -377,7 +377,10 @@ module Payroll
     end
 
     def manager_is_event_manager
-      if manager.present? && (manager.event != event || manager.role != "manager")
+      return if manager.nil?
+
+      op = event.organizer_positions.where(user_id: manager.id).last
+      if op.nil? || op.role != "manager"
         errors.add(:manager, "must be a manager of the event this position is for")
       end
     end
