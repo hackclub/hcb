@@ -79,7 +79,7 @@ class Payment
       end
 
       event :mark_failed do
-        transitions from: :sent, to: :failed
+        transitions from: [:pending, :sent], to: :failed
         after do |reason: nil|
           Payment::AttemptMailer.with(attempt: self).failed_creator.deliver_later
           Payment::AttemptMailer.with(attempt: self, reason:).failed_payee.deliver_later
@@ -121,7 +121,7 @@ class Payment
           raise ArgumentError, "🚨⚠️ unsupported payout method!"
         end
 
-        safely do
+        begin
           transfer = payout_method.create_transfer(
             payment.event,
             amount: payment.amount_cents,
@@ -131,6 +131,7 @@ class Payment
             recipient_email: payment.payee.email,
             currency: payment.currency,
             user: payment.creator,
+            purpose: :payment
           )
 
           transfer.save!
@@ -139,9 +140,13 @@ class Payment
           save!
 
           Receipt.reupload(old_receiptable: payment, new_receiptable: transfer.local_hcb_code)
-        end
 
-        mark_under_review!
+          mark_under_review!
+        rescue => e
+          mark_failed!
+
+          Rails.error.report(e)
+        end
       end
     end
 
