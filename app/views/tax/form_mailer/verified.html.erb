@@ -1,7 +1,7 @@
 <p>Hello <%= @legal_entity.name %>,</p>
 
 <p>
-  Thank you for submitting your tax information to HCB.
+  Your tax information has been verified!
 </p>
 
 <%= render partial: "tax/form_mailer/legal_entity_summary", locals: { legal_entity: @legal_entity } %>

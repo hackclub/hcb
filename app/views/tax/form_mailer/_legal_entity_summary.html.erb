@@ -1,0 +1,48 @@
+<%# locals: (legal_entity:) %>
+
+<% if legal_entity.payable?(requires_tax_form: legal_entity.tax_form_required?) %>
+  <% if legal_entity.default_payout_method.present? %>
+    <p>
+      <%= legal_entity.person? ? "You" : (legal_entity.name.presence || "Business") %>
+      can now receive payments from any organization on HCB.
+    </p>
+  <% else %>
+    <p>
+      Before <%= legal_entity.person? ? "you" : (legal_entity.name.presence || "your business") %>
+      can receive payments, you'll need to <%= link_to "add a payout method on HCB", legal_entity_url(legal_entity) %>.
+    </p>
+  <% end %>
+<% else %>
+  <% next_req = legal_entity.pending_payable_requirements(requires_tax_form: legal_entity.tax_form_required?).first %>
+
+  <% case next_req %>
+  <% when :not_tin_banned %>
+    <p>
+      <%= legal_entity.person? ? "You have" : "#{legal_entity.name.presence || "Business"} has" %>
+      been banned from receiving payments from organizations on HCB.
+    </p>
+  <% when :not_archived %>
+    <p>This legal entity has been archived.</p>
+  <% when :form_present %>
+    <p>You have not yet submitted tax information to HCB.</p>
+  <% when :form_not_mismatched %>
+    <p>
+      You submitted a tax form with a different TIN (SSN, EIN, or foreign TIN)
+      than your previous tax form for this legal entity.
+
+      <%= link_to "Log in to HCB to resolve this issue", legal_entity_url(legal_entity) %>.
+    </p>
+  <% when :form_not_verified %>
+    <p>
+      Your submission is pending verification. We'll let you know once
+      your tax form is verified.
+    </p>
+
+    <p>
+      Once your submission is verified<%= " and you have added a payout method" unless legal_entity.default_payout_method.present? %>,
+      you'll be able to receive payments from any organization on HCB.
+    </p>
+  <% end %>
+<% end %>
+
+<p>You can see all of your payments in the <%= link_to "Pay tab", my_pay_url(legal_entity_id: legal_entity.id) %>.</p>

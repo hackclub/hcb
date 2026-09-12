@@ -86,15 +86,19 @@ class LegalEntity < ApplicationRecord
   # on "start a new tax form".
   def pending_payable_requirements(requires_tax_form: true)
     form = latest_completed_tax_form
-    requires_verification = form&.form_type == "W9" && tax_identification_number.predicted_to_be_over_threshold?
 
     {
       not_tin_banned: !tin_banned?,
       not_archived: !archived?,
       form_present: !requires_tax_form || form.present?,
       form_not_mismatched: !requires_tax_form || mismatched_tax_form.nil? && entity_type_mismatched_tax_form.nil?,
-      form_not_verified: !requires_tax_form || form&.taxbandits_tin_match_success? || !requires_verification,
+      form_not_verified: !requires_tax_form || form&.taxbandits_tin_match_success? || !requires_tax_verification?,
     }.reject { |k, done| done }.keys
+  end
+
+  def requires_tax_verification?
+    form = latest_completed_tax_form
+    requires_verification = form&.form_type == "W9" && tax_identification_number.predicted_to_be_over_threshold?
   end
 
   def latest_completed_tax_form

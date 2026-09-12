@@ -8,6 +8,10 @@ module Tax
       mail to: @recipients, subject: "Thank you for submitting your tax information"
     end
 
+    def verified
+      mail to: @recipients, subject: "Your tax form has been verified"
+    end
+
     private
 
     def set_form

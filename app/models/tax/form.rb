@@ -85,6 +85,8 @@ module Tax
     end
 
     after_update if: -> { taxbandits_tin_matching_status_previously_changed?(to: :success) } do
+      Tax::FormMailer.with(form: self).verified.deliver_later if legal_entity.requires_tax_verification?
+
       legal_entity.refresh_pending_contractors_payments!
     end
 
