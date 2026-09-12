@@ -98,6 +98,24 @@ RSpec.describe Api::V5::TransactionsController do
       expect(response.parsed_body["memo"]).to eq("Account verification")
     end
 
+    # v3 zeroes the amount of an account-verification deposit as well as hiding
+    # the memo. Either half alone identifies the deposit, so both are redacted.
+    it "zeroes the amount of an account-verification deposit for transparency viewers" do
+      item = ledger_item_for(transparent, amount_cents: 12, memo: "ACCTVERIFY deposit")
+
+      get :show, params: { id: item.public_id }, as: :json
+
+      expect(response.parsed_body["amount_cents"]).to eq(0)
+    end
+
+    it "uses the lit_ prefix for transaction ids" do
+      item = ledger_item_for(transparent)
+
+      get :show, params: { id: item.public_id }, as: :json
+
+      expect(response.parsed_body["id"]).to start_with("lit_")
+    end
+
     it "shows the real memo to an organizer" do
       item = ledger_item_for(private_org, amount_cents: 12, memo: "ACCTVERIFY deposit")
       user = create(:user)
@@ -107,6 +125,7 @@ RSpec.describe Api::V5::TransactionsController do
       get :show, params: { id: item.public_id }, as: :json
 
       expect(response.parsed_body["memo"]).to eq("ACCTVERIFY deposit")
+      expect(response.parsed_body["amount_cents"]).to eq(12)
     end
   end
 

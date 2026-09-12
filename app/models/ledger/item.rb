@@ -49,12 +49,11 @@ class Ledger
 
     include Hashid::Rails
     include PublicIdentifiable
-    # The v5 API's `transaction` object. Deliberately the same `txn_` prefix
-    # HcbCode uses: to an API consumer this is still a transaction, and v5 is
-    # the version where transaction ids change. Note that hashids are salted
-    # per model, so a v4 `txn_` id does not resolve here and vice versa — that
-    # is the intended breaking change, not an accident.
-    set_public_id_prefix :txn
+    # The v5 API's `transaction` object. Its own prefix rather than HcbCode's
+    # `txn_`: hashids are salted per model, so sharing the prefix would make a
+    # v4 transaction id silently resolve to nothing in v5 instead of being
+    # recognisably the wrong kind of id.
+    set_public_id_prefix :lit
     has_paper_trail
 
     include Commentable

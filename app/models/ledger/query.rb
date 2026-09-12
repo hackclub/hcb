@@ -27,14 +27,40 @@ class Ledger
     MAX_QUERY_CONDITIONS = 200
     MAX_ARRAY_LENGTH = 1_000
 
-    class Error < ArgumentError; end
+    # Filtering on a field is a read of that field. A query that returns only
+    # the rows whose memo matches "acctverify" discloses those memos as surely
+    # as returning them would, and `{ author: "someone" }` enumerates one
+    # person's transactions whether or not the author is ever rendered. So the
+    # columns a caller may filter on are exactly the fields it may see.
+    #
+    # This maps each queryable column to the API attribute it discloses, which
+    # is then checked against `Ledger::ItemPolicy#visible_attributes`. A column
+    # with no entry here is filterable by nobody — new columns fail closed.
+    COLUMN_DISCLOSES = {
+      "memo"                         => :memo,
+      "amount_cents"                 => :amount_cents,
+      "datetime"                     => :date,
+      "status"                       => :status,
+      "linked_object_type"           => :type,
+      "receipt_required"             => :receipts,
+      "receipt_count"                => :receipts,
+      "marked_no_or_lost_receipt_at" => :lost_receipt,
+      "author"                       => :author,
+    }.freeze
 
-    def initialize(query_hash)
+    class Error < ArgumentError; end
+    class NotAuthorized < Error; end
+
+    # `viewer` is required and has no default on purpose: the column check below
+    # is only as good as the caller's willingness to say who is asking, and a
+    # default would let a new call site skip it silently. Pass `:trusted` for
+    # internal callers that have already established access (background jobs,
+    # admin tooling) — deliberately ugly, so it shows up in review.
+    def initialize(query_hash, viewer:)
       raise Ledger::Query::Error.new("Query must be a Hash") unless query_hash.is_a?(Hash)
 
       @query_hash = self.class.sanitize_query(query_hash)
-
-      # TODO: handle authorization
+      @viewer = viewer
     end
 
     # Expected to return an ActiveRecord::Relation of Ledger::Item.
@@ -45,6 +71,8 @@ class Ledger
     # dynamically-empty set (e.g. an event with no card grants) can never leak
     # another organization's items.
     def execute(ledgers: [], all_ledgers: false)
+      authorize_columns!(ledgers:, all_ledgers:)
+
       results = apply_query(relation: Ledger::Item.all, query: @query_hash)
       results = results.where.not(ct_count: 0, cpt_count: 0)
 
@@ -95,7 +123,64 @@ class Ledger
       end
     end
 
+    # Every column the query filters on. Keys beginning with `$` are operators
+    # ($and, $or, $gt...), everything else is a column name.
+    def self.referenced_columns(node, found = Set.new)
+      case node
+      when Hash
+        node.each do |key, value|
+          found << key.to_s unless key.to_s.start_with?("$")
+          referenced_columns(value, found)
+        end
+      when Array
+        node.each { |value| referenced_columns(value, found) }
+      end
+
+      found
+    end
+
     private
+
+    # Rejects the whole query if it filters on a column this viewer cannot see
+    # in every ledger being queried — most restrictive wins, so a query across
+    # a transparent and a private ledger is held to the private one's tier.
+    def authorize_columns!(ledgers:, all_ledgers:)
+      return if @viewer == :trusted
+
+      # An empty ledger set scopes the result to nothing (see #execute), and a
+      # filter over zero rows cannot disclose anything — so there is nothing to
+      # authorize. Checking anyway would reject queries that were already
+      # guaranteed to return nothing, with a misleading error.
+      return if all_ledgers != true && ledgers.blank?
+
+      referenced = self.class.referenced_columns(@query_hash)
+      return if referenced.empty?
+
+      forbidden = referenced - allowed_columns(ledgers:, all_ledgers:).to_a
+      return if forbidden.empty?
+
+      # Names the columns rather than the reason: which fields a viewer can see
+      # is already discoverable from a rendered item, so this adds nothing, and
+      # a vague error makes the API unusable.
+      raise NotAuthorized.new("Not permitted to filter on: #{forbidden.sort.join(', ')}")
+    end
+
+    def allowed_columns(ledgers:, all_ledgers:)
+      # Querying every ledger is admin-only (see #execute), and an admin sees
+      # every field, so there is no narrowing to do.
+      return COLUMN_DISCLOSES.keys.to_set if all_ledgers == true
+
+      ledger_records = ::Ledger.where(id: ledgers)
+      return Set.new if ledger_records.empty?
+
+      ledger_records.map { |ledger| columns_visible_in(ledger) }.reduce(:&) || Set.new
+    end
+
+    def columns_visible_in(ledger)
+      visible = ::Ledger::ItemPolicy.visible_attributes_in(@viewer, ledger).to_set
+
+      COLUMN_DISCLOSES.select { |_column, attribute| visible.include?(attribute) }.keys.to_set
+    end
 
     def apply_query(relation:, query:, context: "and")
       query.each do |key, value|

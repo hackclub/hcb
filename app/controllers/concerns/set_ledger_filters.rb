@@ -139,7 +139,11 @@ module SetLedgerFilters
           { status: { "$in": ["settled", "pending", "reversed"] } }
         ]
       }
-      Ledger::Query.new({ "$and": query })
+      # Server-authored structure with user-supplied values: the columns are
+      # hard-coded here, but it is still checked against the viewer rather than
+      # marked :trusted, so a future filter on a gated column cannot slip
+      # through unnoticed.
+      Ledger::Query.new({ "$and": query }, viewer: current_user)
     end
 
   end

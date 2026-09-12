@@ -231,7 +231,7 @@ class CardGrantsController < ApplicationController
       @per = safe_per(25)
       @table_only = true
       @ledger = @card_grant.ledger
-      @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).page(params[:page]).per(@per)
+      @items = Ledger::Query.new({}, viewer: current_user).execute(ledgers: [@card_grant.ledger]).page(params[:page]).per(@per)
     end
 
     @show_card_details = params[:show_details] == "true"

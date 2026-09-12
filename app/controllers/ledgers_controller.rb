@@ -17,11 +17,11 @@ class LedgersController < ApplicationController
     end
 
     @items = begin
-      Ledger::Query.new(query_hash).execute(ledgers: [@ledger])
+      Ledger::Query.new(query_hash, viewer: current_user).execute(ledgers: [@ledger])
     rescue Ledger::Query::Error => e
       flash.now[:error] = "Query error: #{e.message}"
 
-      Ledger::Query.new({}).execute(ledgers: [@ledger])
+      Ledger::Query.new({}, viewer: current_user).execute(ledgers: [@ledger])
     end.preload(:tags, hcb_code: :event).page(params[:page])
   end
 

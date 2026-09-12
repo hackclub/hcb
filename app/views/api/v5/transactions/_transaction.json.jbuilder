@@ -7,9 +7,15 @@
 
 linked = item.linked_object
 
+# Account-verification micro-deposits prove ownership of an external account.
+# v3 zeroes their amount (`Api::Entities::Transaction`) and the ledger page
+# redacts their memo from non-organizers — both halves matter, since either one
+# alone identifies the deposit.
+redact_verification = item.likely_account_verification_related? && !policy(item).event_reader?
+
 object_shape(json, item, object_name: "transaction", created_at: false) do |f|
   f.date item.datetime
-  f.amount_cents item.amount_cents
+  f.amount_cents(redact_verification ? 0 : item.amount_cents)
   f.type item.linked_object_type
   f.status item.status
   f.pending item.pending?
@@ -20,15 +26,13 @@ object_shape(json, item, object_name: "transaction", created_at: false) do |f|
   f.lost_receipt { item.marked_no_or_lost_receipt_at.present? }
   f.appearance { item.special_appearance&.key }
 
-  # Account-verification micro-deposits prove ownership of an external account,
-  # so their amount is redacted from transparency viewers — the same rule the
-  # ledger page applies (`app/views/ledger/_item.html.erb`). The policy decides
-  # whether this viewer is an organizer; the serializer picks the value.
-  f.memo do
-    if item.likely_account_verification_related? && !policy(item).event_reader?
-      "Account verification"
+  f.memo { redact_verification ? "Account verification" : item.memo }
+
+  f.nest(:author) do
+    if item.author.present?
+      json.partial! "api/v5/users/user", user: item.author
     else
-      item.memo
+      json.nil!
     end
   end
 

@@ -42,7 +42,9 @@ class Ledger
         attrs = []
 
         if transparent_or_reader?
-          attrs += %i[date amount_cents memo type status pending tags
+          # `author` is public because v3's transaction entity exposes it
+          # outside `when_expanded` — it is in the minimised shape.
+          attrs += %i[date amount_cents memo type status pending tags author author_id
                       receipts comments organization organization_id linked_object]
         end
 
@@ -51,6 +53,20 @@ class Ledger
         attrs
       end
     end
+
+    # The attributes visible on *any* item in `ledger`, without needing a
+    # specific item: `visible_attributes` reads nothing from the record but its
+    # organization, which a ledger already determines.
+    #
+    # This is what lets Ledger::Query decide up front which columns a caller
+    # may filter on. See the note there on why filtering is a read.
+    def self.visible_attributes_in(user, ledger)
+      new(user, ItemInLedger.new(ledger)).visible_attributes
+    end
+
+    # Stands in for "any item in this ledger", supplying the one thing
+    # #policy_event reads.
+    ItemInLedger = Struct.new(:primary_ledger)
 
     # A ledger item reaches its organization through its primary ledger, which
     # may be owned by an event or by a card grant.

@@ -35,8 +35,12 @@ RSpec.describe Ledger::Query, type: :model do
     item
   end
 
+  # `viewer: :trusted` because these examples test query mechanics — operators,
+  # coercion, complexity limits — not who may filter on what. Column
+  # authorization has its own spec (query_authorization_spec.rb); mixing the two
+  # here would make every mechanics test depend on a policy tier.
   def execute_query(query)
-    described_class.new(query).execute(ledgers: [test_ledger.id])
+    described_class.new(query, viewer: :trusted).execute(ledgers: [test_ledger.id])
   end
 
   def ids_of(*items)
@@ -399,65 +403,65 @@ RSpec.describe Ledger::Query, type: :model do
   describe "error handling" do
     it "raises on unsupported logical operator" do
       query = { "$xor" => [{ amount_cents: 100 }] }
-      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /Unsupported logical operator/)
+      expect { described_class.new(query, viewer: :trusted).execute }.to raise_error(Ledger::Query::Error, /Unsupported logical operator/)
     end
 
     it "raises on unsupported comparison operator" do
       query = { amount_cents: { "$regex" => ".*" } }
-      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /Unsupported comparison operator/)
+      expect { described_class.new(query, viewer: :trusted).execute }.to raise_error(Ledger::Query::Error, /Unsupported comparison operator/)
     end
 
     it "raises on non-hash query" do
-      expect { described_class.new("invalid") }.to raise_error(Ledger::Query::Error, /must be a Hash/)
+      expect { described_class.new("invalid", viewer: :trusted) }.to raise_error(Ledger::Query::Error, /must be a Hash/)
     end
 
     it "raises on invalid field name" do
       query = { invalid_column: 100 }
-      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /Invalid field name/)
+      expect { described_class.new(query, viewer: :trusted).execute }.to raise_error(Ledger::Query::Error, /Invalid field name/)
     end
 
     it "raises when $and is given a hash instead of an array" do
       query = { "$and" => { amount_cents: { "$lte" => 100 } } }
-      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /\$and.*array/i)
+      expect { described_class.new(query, viewer: :trusted).execute }.to raise_error(Ledger::Query::Error, /\$and.*array/i)
     end
 
     it "raises when $or is given a hash instead of an array" do
       query = { "$or" => { amount_cents: 100 } }
-      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /\$or.*array/i)
+      expect { described_class.new(query, viewer: :trusted).execute }.to raise_error(Ledger::Query::Error, /\$or.*array/i)
     end
 
     it "raises on an array operand for $eq (use $in for membership)" do
       query = { amount_cents: { "$eq" => [100, 300] } }
-      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /array/i)
+      expect { described_class.new(query, viewer: :trusted).execute }.to raise_error(Ledger::Query::Error, /array/i)
     end
 
     it "raises on an array operand for implicit equality" do
       query = { amount_cents: [100, 300] }
-      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /array/i)
+      expect { described_class.new(query, viewer: :trusted).execute }.to raise_error(Ledger::Query::Error, /array/i)
     end
 
     it "raises with a clear message when $in is given a non-array operand" do
       query = { amount_cents: { "$in" => 5 } }
-      expect { described_class.new(query).execute }.to raise_error(Ledger::Query::Error, /\$in.*array/i)
+      expect { described_class.new(query, viewer: :trusted).execute }.to raise_error(Ledger::Query::Error, /\$in.*array/i)
     end
 
     it "rejects a query nested beyond the depth limit" do
       query = { amount_cents: 1 }
       25.times { query = { "$and" => [query] } }
 
-      expect { described_class.new(query) }.to raise_error(Ledger::Query::Error, /deep|nesting/i)
+      expect { described_class.new(query, viewer: :trusted) }.to raise_error(Ledger::Query::Error, /deep|nesting/i)
     end
 
     it "rejects a query with too many conditions" do
       query = { "$or" => Array.new(250) { |i| { amount_cents: i } } }
 
-      expect { described_class.new(query) }.to raise_error(Ledger::Query::Error, /too many|conditions/i)
+      expect { described_class.new(query, viewer: :trusted) }.to raise_error(Ledger::Query::Error, /too many|conditions/i)
     end
 
     it "rejects an oversized array operand (e.g. a huge $in list)" do
       query = { amount_cents: { "$in" => (1..2000).to_a } }
 
-      expect { described_class.new(query) }.to raise_error(Ledger::Query::Error, /array|too large|elements/i)
+      expect { described_class.new(query, viewer: :trusted) }.to raise_error(Ledger::Query::Error, /array|too large|elements/i)
     end
   end
 
@@ -484,7 +488,7 @@ RSpec.describe Ledger::Query, type: :model do
     end
 
     it "scopes to multiple ledgers" do
-      result = described_class.new({ amount_cents: 100 }).execute(ledgers: [test_ledger.id, other_ledger.id])
+      result = described_class.new({ amount_cents: 100 }, viewer: :trusted).execute(ledgers: [test_ledger.id, other_ledger.id])
 
       expect(result.to_sql).to match(/ledger_mappings/)
       expect(result.to_sql).to match(/IN/)
@@ -492,20 +496,20 @@ RSpec.describe Ledger::Query, type: :model do
     end
 
     it "returns no items when ledgers is empty" do
-      result = described_class.new({ amount_cents: 100 }).execute(ledgers: [])
+      result = described_class.new({ amount_cents: 100 }, viewer: :trusted).execute(ledgers: [])
 
       expect(result.pluck(:id)).to be_empty
     end
 
     it "queries across all ledgers only when all_ledgers is explicitly requested" do
-      result = described_class.new({ amount_cents: 100 }).execute(all_ledgers: true)
+      result = described_class.new({ amount_cents: 100 }, viewer: :trusted).execute(all_ledgers: true)
 
       expect(result.to_sql).not_to match(/ledger_mappings/)
       expect(result.pluck(:id)).to include(item_b.id, item_g.id, other_item.id)
     end
 
     it "does not treat a truthy non-boolean all_ledgers as an opt-in to skip scoping" do
-      result = described_class.new({ amount_cents: 100 }).execute(all_ledgers: "false")
+      result = described_class.new({ amount_cents: 100 }, viewer: :trusted).execute(all_ledgers: "false")
 
       expect(result.to_sql).to match(/ledger_mappings/)
       expect(result.pluck(:id)).to be_empty
