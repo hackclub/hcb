@@ -455,6 +455,59 @@ RSpec.describe User, type: :model do
 
       expect(cardholder.stripe_phone_number).to eq("18556254225")
     end
+
+    it "does not send a non-US/GB phone number to stripe even when verified" do
+      user = create(:user, phone_number: "+919876543210", phone_number_verified: false, email: "test@example.com")
+      cardholder = create(:stripe_cardholder, user:, stripe_email: "test@example.com")
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update)
+
+      user.update!(phone_number_verified: true)
+      cardholder.reload
+
+      expect(cardholder.stripe_phone_number).to be_nil
+    end
+
+    it "clears a synced US number once the verified number is no longer US/GB" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: false, email: "test@example.com")
+      cardholder = create(:stripe_cardholder, user:, stripe_phone_number: "18556254225", stripe_email: "test@example.com")
+      user.update_column(:phone_number, "+919876543210")
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update).with(cardholder.stripe_id, hash_including(phone_number: ""))
+
+      user.update!(phone_number_verified: true)
+      cardholder.reload
+
+      expect(cardholder.stripe_phone_number).to be_nil
+    end
+  end
+
+  describe "#phone_number_for_stripe" do
+    it "returns the phone number when it is verified and in a supported country" do
+      user = create(:user, phone_number: "+18556254225")
+      user.update_column(:phone_number_verified, true)
+
+      expect(user.phone_number_for_stripe).to eq("18556254225")
+    end
+
+    it "returns nil when the phone number is not verified" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: false)
+
+      expect(user.phone_number_for_stripe).to be_nil
+    end
+
+    it "returns nil when the phone number is outside the US and GB" do
+      user = create(:user, phone_number: "+919876543210")
+      user.update_column(:phone_number_verified, true)
+
+      expect(user.phone_number_for_stripe).to be_nil
+    end
+
+    it "returns nil when there is no phone number" do
+      user = create(:user, phone_number: nil, phone_number_verified: true)
+
+      expect(user.phone_number_for_stripe).to be_nil
+    end
   end
 
   describe "#on_phone_number_update" do
