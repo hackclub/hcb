@@ -81,12 +81,12 @@ class StripeCardsController < ApplicationController
 
     @hcb_codes = @card.local_hcb_codes
                       .includes(canonical_pending_transactions: [:raw_pending_stripe_transaction], canonical_transactions: :transaction_source)
-                      .page(params[:page]).per(params[:per] || 25)
+                      .page(params[:page]).per(safe_per(25))
 
     if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
       # Grant cards (viewable here by auditors) keep their charges on the card
       # grant's ledger rather than the event's.
-      @per = params[:per] || 25
+      @per = safe_per(25)
       @table_only = true
       @ledger = @card.card_grant&.ledger || @event.ledger
       # TODO: Swap this out for Ledger::Query once Stripe cards have their own non-primary ledgers

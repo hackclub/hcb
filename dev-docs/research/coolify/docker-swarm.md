@@ -45,7 +45,7 @@ Docker swarm behind a Hetzner Load Balance
 7. Create GitHub app (`hcb-github-app`); named `HCB Coolify` on GitHub
 8. In `gary@hcb` app:
    - Hook up project to `hcb` repo
-   - Use Dockefile as Build Pack
+   - Use Dockerfile as Build Pack
    - In Servers tab,
       - Choose `hcb-app-server-a` as main server
       - Add `hcb-app-server-b` and `c` as additional servers.

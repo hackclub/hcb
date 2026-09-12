@@ -45,6 +45,8 @@ module Api
         render :show, status: :created, location: api_v4_event_path(@event)
       end
 
+      require_oauth2_scope "sub_organizations:write", :create_sub_organization
+
       def show
         authorize @event, :show_in_v4?
       end
