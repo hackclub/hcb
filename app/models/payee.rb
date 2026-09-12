@@ -113,7 +113,7 @@ class Payee < ApplicationRecord
   end
 
   def email_frozen
-    if email_changed?
+    if persisted? && email_changed?
       errors.add(:email, "cannot change once a legal entity has been assigned")
     end
   end
