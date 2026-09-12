@@ -46,8 +46,8 @@ module Api
         @current_user = current_token&.user
       end
 
-      def require_admin_scope!(level)
-        unless can_admin?(level)
+      def require_admin_scope!(level, resource: nil)
+        unless can_admin?(level, resource: resource)
           skip_authorization
           render json: { error: "not_authorized" }, status: :forbidden
         end
