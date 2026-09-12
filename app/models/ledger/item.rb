@@ -101,6 +101,15 @@ class Ledger
     after_create :map!
     after_touch :map!
 
+    # Defrost one-time-use grant cards after a full refund or release.
+    # Capture the status change before another refresh clears it, and enqueue after commit.
+    after_update if: -> { linked_object_type == "CardCharge" && linked_object&.stripe_card&.card_grant && saved_change_to_status? && status.in?(CardGrant::DefrostOneTimeUseJob::DEFROSTABLE_STATUSES) } do
+      ledger_item_id = id
+      self.class.current_transaction.after_commit do
+        CardGrant::DefrostOneTimeUseJob.perform_later(ledger_item_id:)
+      end
+    end
+
     scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
 
     def status_text
