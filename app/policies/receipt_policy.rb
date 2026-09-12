@@ -1,6 +1,19 @@
 # frozen_string_literal: true
 
 class ReceiptPolicy < ApplicationPolicy
+  # Receipts in the bin belong to their uploader alone. Ones attached to a
+  # transaction are reachable through that transaction, which is authorized
+  # separately — the v5 receipts index requires a transaction_id — so this scope
+  # covers the bin and the uploader's own uploads.
+  class Scope < ApplicationPolicy::Scope
+    def resolve
+      return scope.none if user.nil?
+
+      scope.where(user:)
+    end
+
+  end
+
   def destroy?
     return false if record.nil?
     return true if user&.admin?

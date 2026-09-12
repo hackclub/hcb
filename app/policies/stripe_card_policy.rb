@@ -1,6 +1,21 @@
 # frozen_string_literal: true
 
 class StripeCardPolicy < ApplicationPolicy
+  # Cards follow their organization's visibility — v3 publishes a transparent
+  # organization's cards — plus the cardholder's own, which they can see
+  # wherever it was issued.
+  class Scope < ApplicationPolicy::Scope
+    def resolve
+      return scope.all if user&.auditor?
+
+      visible = scope.where(event: Event.visible_to(user))
+      return visible if user.nil?
+
+      visible.or(scope.where(stripe_cardholder: StripeCardholder.where(user:)))
+    end
+
+  end
+
   def index?
     user&.auditor?
   end

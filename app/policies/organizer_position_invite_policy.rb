@@ -1,6 +1,19 @@
 # frozen_string_literal: true
 
 class OrganizerPositionInvitePolicy < ApplicationPolicy
+  # An invitation is visible to the organization's readers and to the person
+  # invited. Not published by v3, so no transparency branch — who has been
+  # invited is organizer information.
+  class Scope < ApplicationPolicy::Scope
+    def resolve
+      return scope.all if user&.auditor?
+      return scope.none if user.nil?
+
+      scope.where(event_id: user.readable_event_ids.to_a).or(scope.where(user:))
+    end
+
+  end
+
   def index?
     user&.auditor? || record.event&.users&.include?(user)
   end

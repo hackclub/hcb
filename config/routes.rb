@@ -842,13 +842,11 @@ Rails.application.routes.draw do
             get "followers"
             get "balance_by_date"
           end
-
         end
 
         resources :ach_transfers, only: [:index, :show]
         resources :transactions, only: [:index, :show]
         resources :tags, only: [:show]
-        resources :stripe_cards, path: "cards", only: [:show]
         resources :sponsors, only: [:index, :show]
         resources :donations, only: [:index, :show]
         resources :checks, only: [:index, :show]
@@ -858,6 +856,11 @@ Rails.application.routes.draw do
         resources :invoices, only: [:index, :show]
         resources :disbursements, path: "transfers", only: [:index, :show]
         resources :organizer_positions, only: [:index]
+        resources :card_grants, only: [:index, :show]
+        resources :stripe_cards, path: "cards", only: [:index, :show]
+        resources :organizer_position_invites, path: "invitations", only: [:index, :show]
+        resources :comments, only: [:index]
+        resources :receipts, only: [:index]
         resources :users, only: [:show]
 
         resource :user, only: [] do

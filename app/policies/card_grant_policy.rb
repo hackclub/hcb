@@ -1,6 +1,19 @@
 # frozen_string_literal: true
 
 class CardGrantPolicy < ApplicationPolicy
+  # A grant is visible to its grantee and to anyone who reads the issuing
+  # organization. No transparency branch: grants have no v3 entity, and a
+  # transparent organization does not publish who it gave money to.
+  class Scope < ApplicationPolicy::Scope
+    def resolve
+      return scope.all if user&.auditor?
+      return scope.none if user.nil?
+
+      scope.where(event_id: user.readable_event_ids.to_a).or(scope.where(user:))
+    end
+
+  end
+
   def new?
     admin_or_user?
   end
