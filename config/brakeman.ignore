@@ -170,6 +170,50 @@
       "note": "It generates a https link that is based on 'stripe_transaction_id' which should be safe."
     },
     {
+      "warning_type": "Cross-Site Scripting",
+      "warning_code": 2,
+      "fingerprint": "45b1d7850182319597ac03060d4d9d024c93e6bbca8748e6b6f3e24804e5652e",
+      "check_name": "CrossSiteScripting",
+      "message": "Unescaped model attribute",
+      "file": "app/views/announcements/_announcement_body.html.erb",
+      "line": 4,
+      "link": "https://brakemanscanner.org/docs/warning_types/cross_site_scripting",
+      "code": "(Announcement.with_deleted.find(params[:id]) or Announcement.find(params[:id])).render",
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "AnnouncementsController",
+          "method": "show",
+          "line": 46,
+          "file": "app/controllers/announcements_controller.rb",
+          "rendered": {
+            "name": "announcements/show",
+            "file": "app/views/announcements/show.html.erb"
+          }
+        },
+        {
+          "type": "template",
+          "name": "announcements/show",
+          "line": 75,
+          "file": "app/views/announcements/show.html.erb",
+          "rendered": {
+            "name": "announcements/_announcement_body",
+            "file": "app/views/announcements/_announcement_body.html.erb"
+          }
+        }
+      ],
+      "location": {
+        "type": "template",
+        "template": "announcements/_announcement_body"
+      },
+      "user_input": "Announcement.with_deleted.find(params[:id])",
+      "confidence": "Weak",
+      "cwe_id": [
+        79
+      ],
+      "note": "The render method outputs HTML already sanitized by ProsemirrorService with an allowlist of safe attributes and URL schemes."
+    },
+    {
       "warning_type": "Redirect",
       "warning_code": 18,
       "fingerprint": "5846154b6e719cd6a5d126ccba81f03e6ef5bf30e485edfa4bbd89bd6a49cdc7",
