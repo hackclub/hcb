@@ -54,6 +54,10 @@
         <%= @position.description %>
       </p>
       <p>
+        <strong>Manager</strong>
+        <%= @position.manager.present? ? user_mention(@position.manager) : "No manager" %>
+      </p>
+      <p>
         <strong>Total paid</strong>
         <%= render_money @position.payee.total_paid_cents %>
       </p>
