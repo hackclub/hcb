@@ -12,11 +12,12 @@ module Tax
 
     def set_form
       @form = params[:form]
+      @legal_entity = @form.legal_entity
 
-      if @form.legal_entity.managed?
-        @recipients = @form.legal_entity.emails
+      if @legal_entity.managed?
+        @recipients = @legal_entity.emails
       else
-        @recipients = @form.legal_entity.users.map(&:email_address_with_name)
+        @recipients = @legal_entity.users.map(&:email_address_with_name)
       end
     end
 

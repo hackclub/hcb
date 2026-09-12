@@ -89,11 +89,11 @@ class LegalEntity < ApplicationRecord
     requires_verification = form&.form_type == "W9" && tax_identification_number.predicted_to_be_over_threshold?
 
     {
+      not_tin_banned: !tin_banned?,
+      not_archived: !archived?,
       form_present: !requires_tax_form || form.present?,
       form_not_mismatched: !requires_tax_form || mismatched_tax_form.nil? && entity_type_mismatched_tax_form.nil?,
-      form_verified: !requires_tax_form || form.taxbandits_tin_match_success? || !requires_verification,
-      not_tin_banned: !tin_banned?,
-      not_archived: !archived?
+      form_not_verified: !requires_tax_form || form&.taxbandits_tin_match_success? || !requires_verification,
     }.reject { |k, done| done }.keys
   end
 
