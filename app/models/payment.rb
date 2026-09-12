@@ -104,8 +104,6 @@ class Payment < ApplicationRecord
 
     if payable && legal_entity.default_payout_method.present?
       create_payment_attempt!
-    elsif payable
-      PaymentMailer.with(payment: self).missing_payout_method.deliver_later
     else
       send_initial_email
     end
