@@ -2,6 +2,13 @@
 
 <h1>Transaction <%= @canonical_transaction.id %></h1>
 
+<% remap_confirm_data = @stale_remap ? {
+     "turbo-confirm-danger": true,
+     "turbo-confirm-type-phrase": @remap_confirm_phrase,
+     "turbo-confirm-after-message": @remap_after_message,
+   } : {} %>
+<% remap_warning_icon = @stale_remap ? content_tag(:span, "⚠️", class: "tooltipped tooltipped--n ml-1", style: "cursor: help;", "aria-label": @remap_warning_tooltip) : "".html_safe %>
+
 <table class="no-stripes <%= "admin-bg-pending" unless @canonical_transaction.canonical_event_mapping %>">
   <tbody>
     <tr>
@@ -85,7 +92,8 @@
         <div class="flex flex-row gap-2">
           <%= form_with model: false, local: true, url: set_event_path(@canonical_transaction), method: :post do |form| %>
             <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Select event", class: "!max-w-full !min-w-72", value: @canonical_transaction.event&.to_combobox_display %>
-            <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
+            <%= form.submit "Set", data: remap_confirm_data.merge("turbo-confirm": @stale_remap ? @remap_confirm_msg : @mapping_confirm_msg) %>
+            <%= remap_warning_icon %>
           <% end %>
         </div>
         <%= form_with url: set_event_path(@canonical_transaction), method: :post do |form| %>
