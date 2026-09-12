@@ -27,8 +27,7 @@ module Payroll
 
       attachments = Array(invoice_params[:file]).compact_blank
       if attachments.empty?
-        flash.now[:error] = "Please attach an invoice or supporting document."
-        return render :new, status: :unprocessable_content, layout: false
+        return redirect_to invoice_redirect_path, flash: { error: "Please attach an invoice or supporting document." }
       end
 
       @invoice.skip_manager_notification = @on_behalf
@@ -55,14 +54,12 @@ module Payroll
           else
             "Invoice uploaded on behalf of #{@position.payee.display_name}, but couldn't be auto-approved: your organization doesn't have enough money to pay it yet. Approve it manually once you've topped up."
           end
-        redirect_to event_payroll_position_path(event_id: @position.event.slug, id: @position.id)
       else
         flash[:success] = "Invoice submitted for review."
-        redirect_to my_pay_path
       end
+      redirect_to invoice_redirect_path
     rescue ActiveRecord::RecordInvalid => e
-      flash.now[:error] = e.message
-      render :new, status: :unprocessable_content, layout: false
+      redirect_to invoice_redirect_path, flash: { error: e.message }
     end
 
     def approve
@@ -136,6 +133,14 @@ module Payroll
 
     def contractor_page
       event_payroll_position_path(event_id: @event.slug, id: @invoice.payroll_position)
+    end
+
+    # Where create lands (success or failure): the form targets `_top`, so both
+    # must be full-page redirects, never frame renders.
+    def invoice_redirect_path
+      return my_pay_path unless @on_behalf
+
+      event_payroll_position_path(event_id: @position.event.slug, id: @position)
     end
 
     def invoice_params
