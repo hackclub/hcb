@@ -1,4 +1,4 @@
-<%= form_with(model: [@event, @active_control, @provisional_allowance], url: event_organizer_position_spending_control_allowances_path(control_id: @active_control), data: { turbo: false }, class: "w-full", html: { "x-data" => "{amount: null, balance: #{@active_control.balance_cents} / 100, operation: 'add', formatter: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }) }" }) do |form| %>
+<%= form_with(model: [@event, @active_control, @provisional_allowance], url: event_organizer_position_spending_control_allowances_path(control_id: @active_control), data: { turbo: false }, class: "w-full", html: { "x-data" => "allowance_form(#{{ balance_cents: @active_control.balance_cents }.to_json})" }) do |form| %>
   <div class="field field--options w-full max-w-none">
     <%= form.radio_button :operation, "add", "x-model" => "operation", required: true, checked: true %>
     <%= form.label :operation, value: "add", class: "w-full inline-flex" do %>
@@ -23,7 +23,7 @@
     <%= form.text_field :memo, placeholder: "Lunch for layover at SFO", required: true %>
   </div>
 
-  <p x-show="amount && amount >= 0 && operation"><%= @active_control.organizer_position.user.name %>'s spending balance will be <span x-html="formatter.format(balance + (operation == 'add' ? Number(amount) : -Number(amount)))"></span></p>
+  <p x-show="amount && amount >= 0 && operation"><%= @active_control.organizer_position.user.name %>'s spending balance will be <span x-text="projected_balance"></span></p>
 
   <div class="actions">
     <%= form.submit "Create allowance" %>

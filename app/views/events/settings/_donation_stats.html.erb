@@ -11,14 +11,13 @@
     </p>
   </div>
   <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
-    <%= form_with(model: event, local: true) do |form| %>
+    <%= form_with(model: event, local: true, data: { controller: "form" }) do |form| %>
       <%= form.hidden_field :tab, value: "donations" %>
       <%= form.label :show_top_donors do %>
         <%= form.check_box :show_top_donors,
-          data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
+          data: { action: "change->accordion#toggle change->form#submit", target: "accordion.checkbox" },
           disabled:,
           checked: event.show_top_donors,
-          onchange: "this.closest('form').requestSubmit();",
           switch: true %>
         <span class="slider"></span>
       <% end %>
@@ -34,14 +33,13 @@
     </p>
   </div>
   <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
-    <%= form_with(model: event, local: true) do |form| %>
+    <%= form_with(model: event, local: true, data: { controller: "form" }) do |form| %>
       <%= form.hidden_field :tab, value: "donations" %>
       <%= form.label :show_recent_donors do %>
         <%= form.check_box :show_recent_donors,
-          data: { action: "change->accordion#toggle", target: "accordion.checkbox" },
+          data: { action: "change->accordion#toggle change->form#submit", target: "accordion.checkbox" },
           disabled:,
           checked: event.show_recent_donors,
-          onchange: "this.closest('form').requestSubmit();",
           switch: true %>
         <span class="slider"></span>
       <% end %>
