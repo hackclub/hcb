@@ -112,6 +112,20 @@ class Payment
 
     after_create :create_transfer!
 
+    def state_color
+      return "info" if pending? || under_review? || sent?
+      return "success" if successful?
+      return "error" if rejected? || failed?
+
+      "muted" # canceled
+    end
+
+    def state_text
+      return "Processing" if pending? || under_review?
+
+      return aasm_state.humanize
+    end
+
     private
 
     def create_transfer!
