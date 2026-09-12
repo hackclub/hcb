@@ -1,0 +1,7 @@
+<%# locals: (event:) %>
+<% if event.description.present? %>
+  <div class="card">
+    <p class="eyebrow mt0 mb0">Mission statement</p>
+    <p class="m0"><%= event.description %></p>
+  </div>
+<% end %>

@@ -127,6 +127,12 @@
   </article>
 <% end %>
 
+<% if @report.event.present? %>
+  <% admin_tool("mt2") do %>
+    <%= render "events/mission_statement", event: @report.event %>
+  <% end %>
+<% end %>
+
 <% if @report.draft? %>
   <section class="hidden md:flex items-start justify-center mt2 mb2" style="gap: 16px; position: relative;">
     <article class="card w-100">

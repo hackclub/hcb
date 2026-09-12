@@ -28,6 +28,10 @@
   <div>
     <h3>Transfer Details</h3>
 
+    <% admin_tool do %>
+      <%= render "events/mission_statement", event: @wire.event %>
+    <% end %>
+
     <table class="table--autosize">
       <tbody>
         <tr>

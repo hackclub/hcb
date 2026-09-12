@@ -401,4 +401,52 @@ RSpec.describe Reimbursement::ReportsController do
       expect(report.reload).to be_present
     end
   end
+
+  describe "#show" do
+    render_views
+
+    context "when the viewer is an auditor" do
+      it "renders the event's mission statement" do
+        admin = create(:user, :make_admin)
+        event = create(:event, description: "Audit-target mission statement")
+        report = create(:reimbursement_report, user: admin, event:)
+
+        create_session(admin, verified: true)
+
+        get(:show, params: { id: report.id })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Audit-target mission statement")
+      end
+
+      it "renders without error for a draft report with no event" do
+        admin = create(:user, :make_admin)
+        user = create(:user)
+        report = create(:reimbursement_report, user:, event: nil)
+
+        create_session(admin, verified: true)
+
+        get(:show, params: { id: report.id })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("Mission statement")
+      end
+    end
+
+    context "when the viewer is a report creator who is not an auditor" do
+      it "does not render the mission statement" do
+        user = create(:user)
+        event = create(:event, description: "Non-auditor mission statement")
+        report = create(:reimbursement_report, user:, event:)
+
+        create_session(user, verified: true)
+
+        get(:show, params: { id: report.id })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("Mission statement")
+        expect(response.body).not_to include("Non-auditor mission statement")
+      end
+    end
+  end
 end
