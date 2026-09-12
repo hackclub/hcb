@@ -23,10 +23,12 @@ module Api
       def transactions
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
-        @hcb_codes = @stripe_card.local_hcb_codes.order(created_at: :desc)
-        @hcb_codes = @hcb_codes.select(&:missing_receipt?) if params[:missing_receipts] == "true"
-
-        @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
+        if params[:missing_receipts] == "true"
+          hcb_codes = @stripe_card.local_hcb_codes.order(created_at: :desc).select(&:missing_receipt?)
+          @hcb_codes = paginate_cursor(hcb_codes, &:public_id)
+        else
+          @hcb_codes = paginate_relation(@stripe_card.local_hcb_codes)
+        end
       end
 
       def create
