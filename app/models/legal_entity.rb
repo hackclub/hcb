@@ -98,7 +98,7 @@ class LegalEntity < ApplicationRecord
 
   def requires_tax_verification?
     form = latest_completed_tax_form
-    requires_verification = form&.form_type == "W9" && tax_identification_number.predicted_to_be_over_threshold?
+    form&.form_type == "W9" && tax_identification_number.predicted_to_be_over_threshold?
   end
 
   def latest_completed_tax_form
