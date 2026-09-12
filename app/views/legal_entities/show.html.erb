@@ -34,7 +34,7 @@
     <% else %>
       <% if @legal_entity.default_payout_method.present? %>
         <p>
-          You're all set! <%= @legal_entity.person? ? "You" : (@legal_entity.name.presence || "Business") %>
+          You're all set! <%= @legal_entity.person? ? "You" : (@legal_entity.name.presence || "Your business") %>
           can now receive payments from any organization on HCB.
           <% if (under_review_count = @legal_entity.payments.under_review.count) > 0 %>
             Once your <%= "payment".pluralize(under_review_count) %> <%= under_review_count == 1 ? "is" : "are" %>
