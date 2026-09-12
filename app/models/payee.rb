@@ -37,6 +37,7 @@ class Payee < ApplicationRecord
   validates_uniqueness_of :legal_entity_id, scope: [:event_id], allow_nil: true
 
   validate :managed_legal_entity_constraints
+  validate :email_frozen, if: -> { legal_entity.present? }
 
   normalizes :email, with: ->(email) { email.strip.downcase }
 
@@ -47,6 +48,27 @@ class Payee < ApplicationRecord
   after_update do
     if legal_entity_id_previously_changed?(from: nil)
       legal_entity.refresh_pending_contractors_payments!
+    end
+  end
+
+  after_update_commit do
+    if email_previously_changed?
+      payments.where(aasm_state: :pending_legal_entity).find_each(&:send_initial_email)
+
+      payroll_positions.where(aasm_state: :onboarding).find_each do |position|
+        contract = position.contract
+        next if contract.nil?
+
+        contractor = position.contract.party(:contractor)
+
+        if contractor.pending?
+          contractor.update!(user: User.find_by(email:), external_email: email)
+        end
+
+        if position.contract.party(:hcb).signed?
+          position.notify_contractor_of_onboarding(contractor)
+        end
+      end
     end
   end
 
@@ -87,6 +109,12 @@ class Payee < ApplicationRecord
 
     if legal_entity.payees.where.not(id:).exists?
       errors.add(:legal_entity, "is managed and can only have one payee")
+    end
+  end
+
+  def email_frozen
+    if persisted? && email_changed?
+      errors.add(:email, "cannot change once a legal entity has been assigned")
     end
   end
 

@@ -104,15 +104,21 @@ class Payment < ApplicationRecord
 
     if payable && legal_entity.default_payout_method.present?
       create_payment_attempt!
-    elsif payable
-      PaymentMailer.with(payment: self).missing_payout_method.deliver_later
     else
-      PaymentMailer.with(payment: self).missing_tax_information.deliver_later
+      send_initial_email
     end
   end
 
   after_create_commit do
     schedule_acceptance_reminders if awaiting_recipient_onboarding?
+  end
+
+  def send_initial_email
+    if legal_entity&.payable?
+      PaymentMailer.with(payment: self).missing_payout_method.deliver_later
+    else
+      PaymentMailer.with(payment: self).missing_tax_information.deliver_later
+    end
   end
 
   def retry!
