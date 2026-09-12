@@ -1,0 +1,7 @@
+<%= link_to hcb_code_url(hcb_code) do %>
+  <img height="43" style="display: block; margin-top: 10px; height: 43px;" src="<%= receipt_status_hcb_codes_url(format: :png, s: hcb_code.signed_id(purpose: :receipt_status)) %>" alt="Receipt uploaded">
+<% end %>
+<p>
+  A receipt has already been uploaded for this transaction.
+  If you'd like to manage this receipt or transaction, <%= link_to "click here", hcb_code_url(hcb_code) %>.
+</p>
