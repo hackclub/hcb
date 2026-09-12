@@ -431,6 +431,18 @@ module EventsHelper
     end
   end
 
+  def filter_chip_label(filter, value)
+    options = filter[:options] || []
+
+    match = options.find do |option|
+      option.is_a?(Array) && option.last.to_s == value.to_s
+    end
+
+    return match.first if match
+
+    value.to_s.humanize
+  end
+
   def validate_filter_options(filter_options, params)
     filter_options.each do |opt|
       case opt[:type]
