@@ -6,9 +6,9 @@
   <% defrost_tooltip = subtitle.presence || "Instantly re-freeze #{stripe_card.user == current_user ? "your" : stripe_card.user.possessive_name} card anytime" %>
   <% defrost_subtitle = policy(stripe_card).defrost? ? defrost_tooltip : "You don't have permission to perform this action" %>
   <% if control %>
-    <div class="p-2">
+    <div class="grant-control">
       <strong><%= label.presence || "Defrost" %></strong>
-      <p class="text-sm opacity-60 mb-2 mt-1"><%= defrost_subtitle %></p>
+      <p class="text-sm opacity-60"><%= defrost_subtitle %></p>
       <%= button_to defrost_stripe_card_path(stripe_card),
                     method: :post,
                     form_class: "contents",
@@ -36,9 +36,9 @@
   <% freeze_tooltip = subtitle.presence || label.presence || "Instantly freeze #{stripe_card.user == current_user ? "your" : stripe_card.user.possessive_name} card anytime" %>
   <% freeze_subtitle = policy(stripe_card).freeze? ? freeze_tooltip : "You don't have permission to perform this action" %>
   <% if control %>
-    <div class="p-2">
+    <div class="grant-control">
       <strong><%= label.presence || "Freeze" %></strong>
-      <p class="text-sm opacity-60 mb-2 mt-1"><%= freeze_subtitle %></p>
+      <p class="text-sm opacity-60"><%= freeze_subtitle %></p>
       <%= button_to freeze_stripe_card_path(stripe_card),
                     method: :post,
                     form_class: "contents",
@@ -64,9 +64,10 @@
   <% end %>
 <% elsif !stripe_card&.canceled? %>
   <% if control %>
-    <div class="p-2">
+    <div class="grant-control">
       <strong>Freeze</strong>
       <p class="text-sm opacity-60">This card cannot be frozen because it has not been activated</p>
+      <button type="button" class="btn" disabled>Freeze</button>
     </div>
   <% else %>
     <button type="button" class="btn btn--list-item" disabled>

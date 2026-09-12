@@ -1,11 +1,11 @@
 <%# locals: (card_grant:, own:) %>
 
-merchants = card_grant.allowed_merchants.any? ? card_grant.allowed_merchant_names : []
-  categories = card_grant.allowed_category_names
-  # Long lists collapse into a full-width drawer below the strip so one big list
-  # can't stretch the card into a single tall column.
-  drawers = { "Merchants" => merchants, "Categories" => categories }.select { |_, items| items.size > 2 }
-%>
+<% merchants = card_grant.allowed_merchants.any? ? card_grant.allowed_merchant_names : [] %>
+<% categories = card_grant.allowed_category_names %>
+
+<%# Long lists collapse into a full-width drawer below the strip so one big list %>
+<%# can't stretch the card into a single tall column. %>
+<% drawers = { "Merchants" => merchants, "Categories" => categories }.select { |_, items| items.size > 2 } %>
 
 <div class="card grant-limits">
   <% drawers.each_key do |label| %>

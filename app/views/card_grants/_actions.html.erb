@@ -11,7 +11,7 @@
           <%= render "card_grants/actions/return", card_grant:, label: "I don’t need this money", subtitle: "Send the remaining balance back to #{card_grant.event.name}" %>
           <%= render "card_grants/actions/need_more_money", card_grant: %>
         <% else %>
-          <%= render "card_grants/actions/cancel", card_grant:, label: "Return the balance to #{card_grant.event.name}" %>
+          <%= render "card_grants/actions/cancel", card_grant:, variant: "control", label: "Return the balance to #{card_grant.event.name}" %>
         <% end %>
         <%= render "card_grants/actions/support", card_grant: %>
       <% elsif card_grant.user == current_user %>

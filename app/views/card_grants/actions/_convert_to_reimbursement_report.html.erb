@@ -5,9 +5,9 @@
   <% convert_path = convert_to_reimbursement_report_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug) %>
   <% convert_confirm = { turbo: true, turbo_frame: "_top", turbo_confirm: "Are you sure? This will cancel your card grant and convert it into a reimbursement report.", turbo_confirm_danger: true } %>
   <% if variant.to_s == "control" %>
-    <div class="p-2">
+    <div class="grant-control">
       <strong><%= label %></strong>
-      <p class="text-sm opacity-60 mb-2 mt-1"><%= subtitle.presence || reimbursement_tooltip %></p>
+      <p class="text-sm opacity-60"><%= subtitle.presence || reimbursement_tooltip %></p>
       <%= button_to convert_path,
                     method: :post,
                     form_class: "contents",
