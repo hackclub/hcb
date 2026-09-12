@@ -119,6 +119,7 @@ module Tax
         after do
           import_taxbandits_data if sent_with_taxbandits?
 
+          Tax::FormMailer.with(form: self).completed.deliver_later
           legal_entity.refresh_pending_contractors_payments!
         end
       end
