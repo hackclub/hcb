@@ -819,4 +819,28 @@ referral_program = Referral::Program.find_or_create_by!(name: "FIRST 2026 Referr
 Referral::Link.create_with(name: "Homepage banner").find_or_create_by!(program: referral_program, creator: admin)
 Event::Group.find_or_create_by!(name: "My Demo Orgs", user: admin)
 
+# ===========================================================================
+# FEATURE FLAGS — enable every feature "fully enabled" in production (plus card
+# grants) globally, so development exercises them for all users and orgs.
+# ===========================================================================
+GLOBALLY_ENABLED_FEATURES = %i[
+  ai_memos_2024_06_20 anonymous_donations_2024_01_29 card_locking
+  card_locking_enabled_on_08_11_2026 changelog_widget_2025_04_24
+  check_deposits_2023_04_17 column_check_transfers email_updates_2024_05_23
+  event_home_page_redesign_2024_09_21 funders_landing_argosy funders_landing_page
+  incoming_ach_payments_2023_02_17 money_printer_2026_06_30
+  organizer_position_contracts_2025_01_03 outgoing_checks
+  payment_recipients_2025_08_08 paypal_2024_05_30 product_hunt
+  reimbursement_reminders_2025_01_21 stats_endpoint transaction_tags_2022_07_29
+  wire_reimbursements_2025_02_05 wise_reimbursements_2025_08_25
+  wise_transfers_2025_07_31 card_grants_2023_05_25
+].freeze
+GLOBALLY_ENABLED_FEATURES.each { |feature| Flipper.enable(feature) }
+
+# Card grants are gated by the org's plan, so move every org that lacks them
+# onto a card-grants-enabled plan.
+Event.find_each do |event|
+  event.plan.update(type: Event::Plan::HackClubAffiliate.name) unless event.plan.card_grants_enabled?
+end
+
 puts "Done!"
