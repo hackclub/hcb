@@ -31,6 +31,15 @@ module Tax
         return
       end
 
+      # We want to make sure that if someone's every submitted a tax form to us,
+      # even if it is not required (such as with imported forms), we allow them
+      # to update their tax information
+      unless @legal_entity.tax_form_required? || @legal_entity.completed_tax_form?
+        flash[:error] = "You don't need to submit a tax form right now"
+        redirect_to legal_entity_path(@legal_entity)
+        return
+      end
+
       tax_form = @legal_entity.tax_forms.create!(external_service: :taxbandits)
       tax_form.send!
 
