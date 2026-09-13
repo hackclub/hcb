@@ -7,11 +7,15 @@ class Ledger
     def show
       @item = Ledger::Item.find_by_hashid!(params[:id])
 
-      # Non-engineers see the user-facing HCB code page rather than the raw
-      # ledger item. hcb_codes#show performs its own authorization.
-      unless FlipperGroups.hcb_engineer?(current_user) || Rails.env.development?
-        skip_authorization
-        return redirect_to hcb_code_path(@item.hcb_code)
+      if params[:show_details] == "true" && @item.linked_object_type == "AchTransfer"
+        # ahoy.track "ACH details shown", hcb_code_id: @hcb_code.id
+        @show_ach_details = true
+      end
+
+      if params[:frame]
+        @frame = true
+      else
+        @frame = false
       end
 
       authorize @item

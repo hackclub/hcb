@@ -1,0 +1,61 @@
+<%# locals: (ledger_item:, render_memo: false) -%>
+
+<% show_yield = ledger_item.custom_memo.nil? && !render_memo %>
+<% can_rename = policy(ledger_item).rename? %>
+
+<h2 class="h2 mt0 border-none flex items-center justify-between hcb-code--heading mb-0 py-3" style="gap: 1ch" data-controller="<%= "memo" if can_rename %>">
+  <% if can_rename %>
+    <div style="min-width: 0; flex-grow: 1;" data-memo-target="display">
+      <% if show_yield %>
+        <span data-memo-target="yield" style="display: contents;">
+          <%= yield %>
+        </span>
+      <% end %>
+      <span <%= "hidden" if show_yield %> data-memo-target="memoDisplay">
+        <span data-memo-target="tooltip" data-memo-for="<%= dom_id(ledger_item) %>" title="<%= ledger_item.memo %>">
+          <%= render "ledger/items/memo/memo_text", item: ledger_item %>
+        </span>
+        <span class="regular muted"> for </span>
+        <span class="regular"><%= render_money ledger_item.amount_cents.abs %></span>
+      </span>
+    </div>
+
+    <%= form_with model: ledger_item, url: ledger_item_rename_path(ledger_item), method: :patch, class: "renaming flex items-center gap-1", html: { hidden: true, style: "flex-grow: 1; min-width: 0;" }, data: { memo_target: "form", turbo_stream: true, action: "turbo:submit-end->memo#submitEnd" } do |form| %>
+      <%= form.text_field :memo,
+                          value: ledger_item.memo,
+                          id: "#{dom_id(ledger_item)}_heading_memo",
+                          autocomplete: "off",
+                          data: { memo_target: "input", action: "blur->memo#save keydown->memo#keydown" },
+                          class: "bg-transparent fit",
+                          style: "border-color: #338eda; padding: 0.125rem 0 0.125rem 4px; min-height: 0; min-width: 0; font-size: 1.5rem; letter-spacing: -0.02em; width: 100%" %>
+      <button type="submit" class="pop border-none cursor-pointer tooltipped tooltipped--e" aria-label="Save">
+        <%= inline_icon "check", size: 28 %>
+      </button>
+    <% end %>
+  <% else %>
+    <div style="flex-grow: 1;">
+      <% if show_yield %>
+        <%= yield %>
+      <% else %>
+        <span>
+          <%= ledger_item.memo %>
+          <span class="regular muted"> for </span>
+          <span class="regular"><%= render_money ledger_item.amount_cents.abs %></span>
+        </span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="flex-1"></div>
+
+  <% if can_rename %>
+    <%= link_to "#",
+        class: "pop align-middle tooltipped tooltipped--s",
+        "aria-label": "Rename",
+        data: { action: "click->memo#edit" } do %>
+      <%= inline_icon "edit", size: 28 %>
+    <% end %>
+  <% end %>
+
+  <%= render partial: "hcb_codes/meatballs", locals: { hcb_code: ledger_item.hcb_code } if ledger_item.hcb_code.present? %>
+</h2>
