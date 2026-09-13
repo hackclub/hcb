@@ -4,7 +4,7 @@ module Payroll
   class PositionsController < ApplicationController
     include SetEvent
 
-    CONTRACT_RELEVANT_ATTRIBUTES = %w[title rate_cents rate_unit start_date end_date description].freeze
+    CONTRACT_RELEVANT_ATTRIBUTES = %w[title rate_cents rate_unit start_date end_date description combine_contract_attachment].freeze
 
     before_action :set_event, except: [:onboarding]
     before_action :set_position, only: [:edit, :update, :contract, :terminate]
