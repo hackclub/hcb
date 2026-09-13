@@ -81,7 +81,7 @@ class PublicActivity::Activity
   end
 
   def trackable_is_deletable?
-    trackable_type.constantize.in?([Reimbursement::Report, WebauthnCredential, Comment])
+    trackable_type.constantize.in?([Reimbursement::Report, WebauthnCredential, Comment, Announcement])
   end
 
   # An activity can be associated with an event through two columns.
