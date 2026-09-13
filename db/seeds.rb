@@ -515,8 +515,10 @@ def seed_invoice(event, sponsor, creator, description, cents, state)
     invoice.update!(manually_marked_as_paid_at: rand(1..10).days.ago, manually_marked_as_paid_user: creator, manually_marked_as_paid_reason: "Paid via mailed check")
     invoice.mark_paid!
   when :paid
+    paid_at = rand(1..10).days.ago
     invoice.mark_paid!
-    rpit = RawPendingInvoiceTransaction.create!(invoice_transaction_id: invoice.id.to_s, amount_cents: invoice.amount_paid, date_posted: rand(1..10).days.ago)
+    invoice.update!(payout_creation_queued_at: paid_at, payout_creation_queued_for: 2.business_days.after(paid_at))
+    rpit = RawPendingInvoiceTransaction.create!(invoice_transaction_id: invoice.id.to_s, amount_cents: invoice.amount_paid, date_posted: paid_at)
     cpt = CanonicalPendingTransaction.create!(date: rpit.date, memo: rpit.memo, amount_cents: rpit.amount_cents, raw_pending_invoice_transaction_id: rpit.id, fronted: true, fee_waived: false)
     CanonicalPendingEventMapping.create!(canonical_pending_transaction_id: cpt.id, event_id: event.id)
   end
@@ -756,6 +758,34 @@ seed_tag(robotics, EventTag::Tags::ROBOTICS_TEAM)
 
 [non_transparent_event, transparent_event, flagship, robotics].each_with_index do |event, i|
   populate_event!(event, admin:, organizers: people[(i * 3), 3], scale: 22)
+end
+
+# ===========================================================================
+# CONTRACTORS & PAYMENTS — showcase on ExpensiCon 2023
+# The feature is flag-gated per org, so enable it for this event and add the
+# signed-in admin plus a couple of teammates as payable contractors.
+# ===========================================================================
+Flipper.enable(:payments_contractors_refresh_2026_06_26, non_transparent_event)
+
+unless Payee.exists?(event: non_transparent_event, legal_entity: admin.personal_legal_entity)
+  # The signed-in admin as a contractor, with an active payroll position & signed contract.
+  admin_payee = seed_contractor(non_transparent_event, admin)
+  position = Payroll::Position.create!(payee: admin_payee, title: "Program Contractor", description: "Ongoing engineering & operations support", rate_cents: 9_500, currency: "USD", rate_unit: "hour", start_date: 1.month.ago.to_date, end_date: 5.months.from_now, aasm_state: "onboarded")
+  Payroll::Invoice.create!(payroll_position: position, amount_cents: 760_00, currency: "USD", name: "Monthly hours", aasm_state: "approved", approved_at: 2.days.ago)
+  contract = Contract::PayrollPosition.create!(contractable: position, external_service: :manual, include_videos: false)
+  contract.parties.create!(user: admin, role: :organizer)
+  contract.parties.create!(external_email: admin_payee.email, role: :contractor)
+  contract.parties.update_all(aasm_state: "signed", signed_at: 1.day.ago)
+  contract.update_columns(aasm_state: "signed", signed_at: 1.day.ago)
+
+  # A couple of external contractors with a history of successful payments.
+  2.times do |i|
+    payee = seed_contractor(non_transparent_event, seed_person(fake_email("expensicon-contractor#{i}"), fake_name))
+    2.times do
+      Payment.create!(payee:, creator: admin, amount_cents: [250_00, 500_00, 750_00, 1_200_00].sample, currency: "USD",
+                      purpose: Faker::Job.title, aasm_state: "successful", sent_at: rand(3..20).days.ago, successful_at: rand(1..3).days.ago)
+    end
+  end
 end
 
 # ===========================================================================
