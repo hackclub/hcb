@@ -77,8 +77,6 @@ RSpec.describe UserService::UpdateCardLocking, type: :service do
     expect { described_class.new(user:).run }.not_to(change { user.reload.cards_locked? })
   end
 
-  # A suppression unlock is temporary and the receipts are still overdue, so the
-  # notification has to carry the expiry rather than the plain "cards work again".
   it "tells a cardholder unlocked by suppression when the exception ends" do
     user.update!(cards_locked: true, card_locking_suppressed_until: 24.hours.from_now)
     allow(user).to receive(:card_locking_has_overdue_charge?).and_return(true)
