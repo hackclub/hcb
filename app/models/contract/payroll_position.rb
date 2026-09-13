@@ -82,9 +82,12 @@ class Contract
         ]
       }
 
-      # Attach user's uploaded PDF contract onto the template
       if inline_documents?
-        base.merge(name: document_name, template_ids: [external_template_id], documents: prefills["documents"])
+        if prefills["combine_documents"]
+          base.merge(name: document_name, template_ids: [external_template_id], documents: prefills["documents"])
+        else
+          base.merge(name: document_name, documents: prefills["documents"])
+        end
       else
         base.merge(template_id: external_template_id)
       end

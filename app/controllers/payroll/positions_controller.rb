@@ -174,7 +174,7 @@ module Payroll
     end
 
     def position_params
-      params.require(:contractor).permit(:title, :rate, :rate_unit, :starts_on, :ends_on, :purpose, :payee_id, file: [])
+      params.require(:contractor).permit(:title, :rate, :rate_unit, :starts_on, :ends_on, :purpose, :payee_id, :combine_contract_attachment, file: [])
     end
 
   end

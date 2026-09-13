@@ -127,6 +127,14 @@
 
             <%= render "events/transfers/attach_receipt", form:, disabled:, required: false, accept: ".pdf,application/pdf",
                   label: "Attachment (optional)", hint: "Attach a statement of work or agreement (PDF)" %>
+
+            <div>
+              <%= form.label :combine_contract_attachment do %>
+                <%= form.check_box :combine_contract_attachment, checked: true %>
+                Combine attachment with
+                <%= link_to "HCB's standard contracting agreement", "https://cdn.hackclub.com/01a0983f-2439-7df6-93fb-5b24bc12cc88/hcb_contractor_agreement.pdf", target: "_blank" %>
+              <% end %>
+            </div>
           </div>
         </div>
 
