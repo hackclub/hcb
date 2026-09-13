@@ -5,6 +5,7 @@ FactoryBot.define do
     skip_create
     initialize_with { Stripe::Issuing::Authorization.construct_from(attributes) }
 
+    sequence(:id) { |n| "iauth_#{n}" }
     amount { 0 }
     approved { true }
     merchant_data do
