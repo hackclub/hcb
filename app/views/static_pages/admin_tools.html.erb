@@ -92,6 +92,8 @@
         <%= card_to "Pending ledger", pending_ledger_admin_index_path, badge: CanonicalPendingTransaction.unsettled.count %>
         <%= card_to "Account numbers", account_numbers_admin_index_path, badge: Column::AccountNumber.count, subtle_badge: true %>
         <%= card_to "Recurring donations", recurring_donations_admin_index_path, badge: RecurringDonation.active.count %>
+        <%# Admin-only: auditors can reach this page but not the paging action. %>
+        <%= card_to "Page engineers", admin_page_engineers_path if admin_signed_in? %>
       </ul>
       <details>
         <summary>Old cards</summary>
