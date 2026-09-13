@@ -6,27 +6,30 @@ const whenViewed = (element, callback) =>
     threshold: 1,
   }).observe(element)
 
-const POPOVER_STATE_KEY = 'hcb:open_popover'
+const POPOVER_COOKIE = 'hcb_open_popover'
 
 let popoverTriggerData = null
 
 const readPopoverState = () => {
+  const cookie = document.cookie
+    .split('; ')
+    .find(c => c.startsWith(`${POPOVER_COOKIE}=`))
+  if (!cookie) return null
+
   try {
-    return JSON.parse(sessionStorage.getItem(POPOVER_STATE_KEY))
+    return JSON.parse(
+      decodeURIComponent(cookie.slice(POPOVER_COOKIE.length + 1))
+    )
   } catch {
     return null
   }
 }
 
 const writePopoverState = state => {
-  try {
-    if (state) sessionStorage.setItem(POPOVER_STATE_KEY, JSON.stringify(state))
-    else sessionStorage.removeItem(POPOVER_STATE_KEY)
-  } catch {}
+  const value = state ? encodeURIComponent(JSON.stringify(state)) : ''
+  const expires = state ? '' : '; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+  document.cookie = `${POPOVER_COOKIE}=${value}; path=/; SameSite=Lax${expires}`
 }
-
-const wasReloaded = () =>
-  performance.getEntriesByType('navigation')[0]?.type === 'reload'
 
 const populateSharedPopover = trigger => {
   const popover = document.getElementById('shared_popover')
@@ -87,24 +90,16 @@ const openSharedPopover = state => {
   })
 }
 
-const reopenSharedPopover = () => {
+// Reloading a page with an open popover lands the browser on the popover's own
+// URL. The server sends us back to the page it was opened from with a #popover
+// fragment (see ApplicationController#reopen_popover); reopen it here.
+if (window.location.hash === '#popover') {
   const state = readPopoverState()
-  if (!state || $.modal.getCurrent()) return
-
-  if (state.pending) {
-    if (window.location.href === state.returnUrl) openSharedPopover(state)
-    else if (window.location.href !== state.stateUrl) writePopoverState(null)
-    return
-  }
-
-  if (window.location.href !== state.stateUrl) return writePopoverState(null)
-
-  if (!wasReloaded()) return writePopoverState(null)
-
-  openSharedPopover(state)
+  if (state) openSharedPopover(state)
+} else {
+  // A freshly loaded document has no popover open, so don't leave one behind.
+  writePopoverState(null)
 }
-
-reopenSharedPopover()
 
 const loadModals = element => {
   $(element).on('click', '[data-behavior~=modal_trigger]', function (e) {
