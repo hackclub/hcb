@@ -83,11 +83,9 @@ class InvoicesController < ApplicationController
 
     sponsor_attrs = filtered_params[:sponsor_attributes]
 
-    due_date = Date.parse(filtered_params["due_date"])
-
     @invoice = ::InvoiceService::Create.new(
       event_id: @event.id,
-      due_date:,
+      due_date: parsed_due_date,
       item_description: filtered_params[:item_description],
       item_amount: filtered_params[:item_amount],
       current_user:,
@@ -108,6 +106,15 @@ class InvoicesController < ApplicationController
     redirect_to @invoice
   rescue Pundit::NotAuthorizedError
     raise
+  rescue ActiveRecord::RecordInvalid => e
+    # Bad sponsor or invoice details are a mistake in what was typed, not a bug,
+    # so re-render the form with the validation errors instead of reporting the
+    # exception and sending the organizer back to an empty form.
+    @sponsor = e.record.is_a?(Sponsor) ? e.record : sponsor_from_params
+    @invoice = e.record.is_a?(Invoice) ? e.record : invoice_from_params
+    @invoice.sponsor ||= @sponsor
+
+    render :new, status: :unprocessable_content
   rescue => e
     Rails.error.report(e)
 
@@ -226,6 +233,29 @@ class InvoicesController < ApplicationController
     { key: "amount_due", right: true, display: "Amount" },
   ].freeze
   private_constant :INVOICE_COLUMNS
+
+  # A blank or malformed date would otherwise raise out of `Date.parse`; leaving
+  # it nil lets Invoice's presence validation report it on the form instead.
+  def parsed_due_date
+    Date.parse(filtered_params[:due_date].to_s)
+  rescue Date::Error
+    nil
+  end
+
+  # Rebuilds the submitted sponsor/invoice so a failed create can re-render the
+  # form with everything the organizer already filled in.
+  def sponsor_from_params
+    @event.sponsors.new(filtered_params[:sponsor_attributes])
+  end
+
+  def invoice_from_params
+    Invoice.new(
+      event: @event,
+      item_description: filtered_params[:item_description],
+      item_amount: Monetize.parse(filtered_params[:item_amount])&.cents,
+      due_date: parsed_due_date
+    )
+  end
 
   def filtered_params
     params.require(:invoice).permit(

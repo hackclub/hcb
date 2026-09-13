@@ -12,6 +12,8 @@ export default class extends Controller {
     'secondTab',
   ]
 
+  static values = { invalid: Boolean }
+
   static fields = [
     'name',
     'contact_email',
@@ -25,9 +27,13 @@ export default class extends Controller {
   ]
 
   connect() {
+    // `invalidValue` means the server re-rendered a rejected submission, so the
+    // fields hold what was typed: show them for correction and don't clear them.
     if (this.selectSponsorTarget.disabled) {
       this.continueButtonTarget.disabled = false
-      this.showNewSponsorCard()
+      this.showNewSponsorCard(!this.invalidValue)
+    } else if (this.invalidValue) {
+      this.showNewSponsorCard(false)
     }
 
     this.sponsorFormTarget.addEventListener(
