@@ -155,8 +155,12 @@
       <fieldset class="px-6 py-3">
         <legend class="py-0 px-2">Approve</legend>
         <p>For this approval check, you're only looking at the transfer purpose and documentation. The balance check will be done after it is approved.</p>
-        <%= button_to "💸 Approve and self-assign", approve_wise_transfer_path(@wise_transfer), method: :post, class: "my-3" %>
-
+        <%= form_with(model: false, local: true, url: approve_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
+          <% if @wise_transfer.payment.present? %>
+            <%= render partial: "payments/classification_input", locals: { form:, classification: @wise_transfer.payment.classification } %>
+          <% end %>
+          <%= form.submit "💸 Approve and self-assign", class: "my-3" %>
+        <% end %>
       </fieldset>
 
       <fieldset class="px-6 py-3">

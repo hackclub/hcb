@@ -3,33 +3,33 @@
 module Tax
   class FormPolicy < ApplicationPolicy
     def show?
-      user.auditor? || user_in_legal_entity?
+      user.auditor? || user_in_legal_entity?(record.legal_entity)
     end
 
     def create?
-      user.admin? || record.users.include?(user)
+      user.admin? || user_in_legal_entity?(record)
     end
 
     def completed?
-      user.admin? || user_in_legal_entity?
+      user.admin? || user_in_legal_entity?(record.legal_entity)
     end
 
     def create_legal_entity?
-      user_in_legal_entity?
+      user_in_legal_entity?(record.legal_entity)
     end
 
     def switch_legal_entity?
-      user_in_legal_entity?
+      user_in_legal_entity?(record.legal_entity)
     end
 
     def discard?
-      user_in_legal_entity?
+      user_in_legal_entity?(record.legal_entity)
     end
 
     private
 
-    def user_in_legal_entity?
-      record.legal_entity.users.include?(user)
+    def user_in_legal_entity?(le)
+      le.emails.include?(user.email)
     end
 
   end

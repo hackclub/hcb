@@ -26,7 +26,7 @@ class LegalEntityPolicy < ApplicationPolicy
   private
 
   def member?
-    record.users.include?(user)
+    record.emails.include?(user.email)
   end
 
 end
