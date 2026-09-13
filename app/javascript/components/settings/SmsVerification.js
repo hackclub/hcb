@@ -121,13 +121,17 @@ const SmsVerification = ({
         },
         body: JSON.stringify(body),
       })
-      const json = await resp.json()
+      // A 500 renders HTML, so parsing fails and there's no message to show.
+      const json = await resp.json().catch(() => ({}))
 
       if (resp.ok) {
         setErrors([])
         setValidationSent(true)
       } else {
-        setErrors([json.error || 'something went wrong!'])
+        setErrors([
+          json.error ||
+            "We couldn't send a verification code. Please try again, or contact hcb@hackclub.com for further assistance.",
+        ])
       }
     } finally {
       // Tokens are single-use, so "Resend code" needs a fresh one either way.
