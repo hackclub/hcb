@@ -1,10 +1,14 @@
+<%# locals: (count:, card_grant:, disabled:) %>
+
 <% url = clear_screenshots_card_grant_pre_authorizations_path(card_grant) %>
 
-<div id="screenshot_count">
-    <small class="muted">
-        <%= pluralize(count, "screenshot") %> uploaded
-        <% if count >= 1 && !disabled %>
-            • <%= link_to "Remove all", url, class: "remove-screenshots", data: { turbo_method: :post } %>
+<div id="screenshot_count" class="grant-upload__footer">
+    <span class="muted"><%= pluralize(count, "screenshot") %> uploaded</span>
+
+    <% if count >= 1 && !disabled %>
+        <%= link_to url, class: "remove-screenshots", data: { turbo_method: :post } do %>
+            <%= inline_icon "view-close-small", size: 20 %>
+            Remove all
         <% end %>
-    </small>
+    <% end %>
 </div>
