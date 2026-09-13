@@ -42,11 +42,23 @@ RSpec.describe PublicIdentifiable do
       expect(User.find_by_public_id(ActionController::Parameters.new(id: users.first.public_id))).to be_nil
     end
 
-    # Characterization of long standing behaviour, not an endorsement: the
-    # parser takes the first and last underscore separated segments, so anything
-    # between them is ignored.
-    it "ignores segments between the prefix and the hashid" do
-      expect(User.find_by_public_id("usr_junk_#{users.first.hashid}")).to eq(users.first)
+    # A public id has exactly one underscore, so these are all malformed even
+    # though they contain a resolvable hashid.
+    it "returns nil for extra segments between the prefix and the hashid" do
+      expect(User.find_by_public_id("usr_junk_#{users.first.hashid}")).to be_nil
+    end
+
+    it "returns nil for a doubled underscore" do
+      expect(User.find_by_public_id("usr__#{users.first.hashid}")).to be_nil
+    end
+
+    it "returns nil for a trailing underscore" do
+      expect(User.find_by_public_id("usr_#{users.first.hashid}_")).to be_nil
+    end
+
+    it "returns nil for a bare prefix" do
+      expect(User.find_by_public_id("usr")).to be_nil
+      expect(User.find_by_public_id("usr_")).to be_nil
     end
   end
 
@@ -110,6 +122,12 @@ RSpec.describe PublicIdentifiable do
 
     it "skips public ids with no prefix" do
       expect(User.where_public_id([users.first.hashid])).to be_empty
+    end
+
+    it "skips malformed public ids that contain a resolvable hashid" do
+      malformed = ["usr_junk_#{users.first.hashid}", "usr__#{users.first.hashid}", "usr_#{users.first.hashid}_"]
+
+      expect(User.where_public_id(malformed)).to be_empty
     end
 
     it "skips ids that are not strings" do
