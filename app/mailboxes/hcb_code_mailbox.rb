@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "email_reply_parser"
+
 class HcbCodeMailbox < ApplicationMailbox
   # mail --> Mail object, this actual email
   # inbound_email => ActionMailbox::InboundEmail record --> the active storage record
@@ -29,6 +31,10 @@ class HcbCodeMailbox < ApplicationMailbox
 
     @commands.each do |command|
       process_command(command)
+    end
+
+    if mail.attachments.any? && (body_for_comment = comment_body)
+      @hcb_code.comments.create(content: body_for_comment, user: @user)
     end
 
     return bounce_error if result&.empty? && @commands.none?
@@ -115,6 +121,11 @@ class HcbCodeMailbox < ApplicationMailbox
 
   def pundit_user
     @user
+  end
+
+  def comment_body
+    content = EmailReplyParser.parse_reply(text || body)
+    content&.lines&.reject { |line| line.strip.start_with?("@") }&.join&.strip&.presence
   end
 
 end
