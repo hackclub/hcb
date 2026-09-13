@@ -4,6 +4,8 @@ import { appsignal } from '../appsignal'
 
 let dropzone
 
+const DRAG_AND_DROP_SUFFIX = '_drag_and_drop'
+
 function extractId(dataTransfer) {
   let receiptId
 
@@ -53,8 +55,6 @@ export default class extends Controller {
     // Explanation: https://stackoverflow.com/a/21002544/10987085
     this.counter = 0
 
-    this.submitting = false
-
     const element = this.globalPasteValue
       ? document.body
       : this.hasFormTarget
@@ -98,9 +98,15 @@ export default class extends Controller {
     this.fileInputTarget.dispatchEvent(new Event('change'))
     if (!this.fileInputTarget.files.length) return
 
-    if (this.hasUploadMethodTarget && !this.submitting) {
-      // Append `_drag_and_drop` to the upload method
-      this.uploadMethodTarget.value += '_drag_and_drop'
+    if (
+      this.hasUploadMethodTarget &&
+      !this.uploadMethodTarget.value.endsWith(DRAG_AND_DROP_SUFFIX)
+    ) {
+      // Append `_drag_and_drop` to the upload method. The check above keeps this
+      // idempotent -- the field can outlive the controller instance that dirtied
+      // it, and appending twice yields a value that is not a valid
+      // `Receipt#upload_method`.
+      this.uploadMethodTarget.value += DRAG_AND_DROP_SUFFIX
     }
 
     if (this.hasFormTarget) {
@@ -108,8 +114,6 @@ export default class extends Controller {
     } else {
       this.element.requestSubmit()
     }
-
-    this.submitting = true
 
     if (e.clipboardData && this.dropzoneTarget.contains(e.target))
       e.stopImmediatePropagation()
