@@ -33,10 +33,16 @@ module PopoverHelper
   end
 
   def ledger_item_popover_data(item)
+    hcb_code = item.hcb_code
+
+    # Items aren't guaranteed to have an HCB code, and the popover is rendered
+    # from one. Fall back to a plain link when there isn't one.
+    return { turbo: false } unless hcb_code
+
     popover_data(
       title: item.pretty_title,
-      src: item.hcb_code.popover_path,
-      frame_id: item.hcb_code.public_id,
+      src: hcb_code.popover_path,
+      frame_id: hcb_code.public_id,
       state_url: ledger_item_path(item),
       external_link: ledger_item_path(item)
     )
