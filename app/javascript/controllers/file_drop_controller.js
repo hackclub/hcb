@@ -98,7 +98,11 @@ export default class extends Controller {
     this.fileInputTarget.dispatchEvent(new Event('change'))
     if (!this.fileInputTarget.files.length) return
 
-    if (this.hasUploadMethodTarget && !this.submitting) {
+    if (
+      this.hasUploadMethodTarget &&
+      !this.submitting &&
+      !this.uploadMethodTarget.value.endsWith('_drag_and_drop')
+    ) {
       // Append `_drag_and_drop` to the upload method
       this.uploadMethodTarget.value += '_drag_and_drop'
     }
