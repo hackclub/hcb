@@ -47,6 +47,9 @@
                 <%= link_to "Delete",
                   account,
                   data: { turbo_method: :delete, turbo_confirm: "Deleting #{account.address} is *permanent, irreversible, and does not back up any data*. Are you sure you want to continue?", turbo_confirm_danger: true } if policy(account).destroy? %>
+                <%= link_to "Unmanage",
+                  g_suite_account_unmanage_path(account.id, confirm: account.address),
+                  data: { turbo_method: :put, turbo_confirm: "Unmanaging #{account.address} removes it and its aliases from HCB, but leaves the Google Workspace account and its aliases intact. This can’t be undone. Are you sure you want to continue?", turbo_confirm_danger: true } if policy(account).unmanage? %>
               </div>
             </action>
           </div>

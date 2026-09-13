@@ -9,7 +9,7 @@
   <div class="flex gap-2 items-center mt-2">
     <%= form.select :access_level, User.access_levels.keys.map { |level| [level.humanize, level] }, { include_blank: "All user types", selected: @access_level } %>
     <%= form.select :referral_program_id, @referral_programs.map { |program| [program.name, program.id] }, { include_blank: "No referral filter", selected: @referral_program_id } %>
-    <div class="field field--checkbox mb0">
+    <div class="field field--checkbox mb0 shrink-0">
       <%= form.label :locked, "Locked" %>
       <%= form.check_box :locked, checked: @locked %>
     </div>
@@ -17,7 +17,7 @@
 
   <div class="flex items-center mt-2 gap-4 flex-wrap">
     <%= link_to @params.merge(format: :csv) do %>
-      <button class="btn" type="button" <%= "disabled" if @users.empty? %>>Export <%= pluralize @users.count, "record" %></button>
+      <button class="btn" type="button" <%= "disabled" if @count.zero? %>>Export <%= pluralize @count, "record" %></button>
     <% end %>
     <%= form.submit "Search", class: "ml-auto" %>
   </div>

@@ -34,7 +34,7 @@ gem "local_time" # client-side timestamp converter for cache-safe rendering
 gem "countries"
 gem "country_select", "~> 8.0"
 
-gem "faraday" # web requests
+gem "faraday", "~> 1.10.6" # web requests
 
 gem "stripe", "11.7.0"
 gem "plaid", "~> 44.0"
@@ -82,6 +82,7 @@ gem "rubyzip", "< 3.0", ">= 2.3.0" # Force `write_xlsx` to use an older version 
 gem "nondisposable" # disallow temporary/disposable email addresses
 gem "rack-cors" # manage CORS
 gem "rack-attack" # rate limiting
+gem "secure_headers" # Content Security Policy and other security response headers
 gem "browser", "~> 6.2" # browser detection
 
 # Pagination

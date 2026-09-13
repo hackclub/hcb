@@ -3,9 +3,16 @@
 class WiseTransfersController < ApplicationController
   include SetEvent
   include Admin::TransferApprovable
+  include Admin::PaymentApprovable
 
   before_action :set_event, only: %i[new create]
-  before_action :set_wise_transfer, only: %i[update approve reject mark_sent mark_failed]
+  before_action :set_wise_transfer, only: %i[show update approve reject mark_sent mark_failed]
+
+  def show
+    authorize @wise_transfer
+
+    redirect_to @wise_transfer.local_hcb_code
+  end
 
   def new
     @wise_transfer = @event.wise_transfers.build
@@ -45,16 +52,13 @@ class WiseTransfersController < ApplicationController
     return unless enforce_sudo_mode
 
     ensure_admin_may_approve!(@wise_transfer, amount_cents: @wise_transfer.quoted_usd_amount_cents)
+    ensure_legal_entity_payable!(@wise_transfer, classification: params[:classification])
+
     @wise_transfer.mark_approved!
 
     redirect_to wise_transfer_process_admin_path(@wise_transfer), flash: { success: "You have assigned yourself to this Wise transfer." }
   rescue => e
     redirect_to wise_transfer_process_admin_path(@wise_transfer), flash: { error: e.message }
-  end
-
-  def edit
-    authorize @wise_transfer
-    @event = @wise_transfer.event
   end
 
   def update
@@ -75,6 +79,7 @@ class WiseTransfersController < ApplicationController
 
     begin
       @wise_transfer.mark_sent!
+
       flash[:success] = "Marked as sent."
     rescue ActiveRecord::RecordInvalid => e
       flash[:error] = e.record.errors.full_messages.to_sentence

@@ -187,6 +187,7 @@ Rails/ApplicationController:
     - 'app/controllers/twilio_controller.rb'
     - 'app/controllers/docuseal_controller.rb'
     - 'app/controllers/column/webhooks_controller.rb'
+    - 'app/controllers/csp_violation_reports_controller.rb'
     - 'app/controllers/taxbandits_controller.rb'
 
 Rails/HasAndBelongsToMany:
