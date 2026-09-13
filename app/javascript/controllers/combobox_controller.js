@@ -10,6 +10,8 @@
 
 import { Controller } from '@hotwired/stimulus'
 
+const PAGE_SIZE = 25
+
 export default class extends Controller {
   static targets = ['input', 'hidden', 'listbox']
   static values = {
@@ -23,6 +25,10 @@ export default class extends Controller {
     this.activeIndex = -1
     this.searchToken = 0
     this.deletion = false
+    this.page = 1
+    this.hasMore = false
+    this.loading = false
+    this.currentQuery = ''
 
     // Restore any preselected value (e.g. when editing or prefilled).
     if (this.selectedValue) {
@@ -117,31 +123,66 @@ export default class extends Controller {
 
   async search(query) {
     const token = ++this.searchToken
+    this.currentQuery = query
+    this.page = 1
     this.renderLoading()
     this.show()
-    let options = []
-    try {
-      const res = await fetch(this.buildUrl(query), {
-        headers: { Accept: 'application/json' },
-        credentials: 'same-origin',
-      })
-      if (res.ok) options = await res.json()
-    } catch {
-      if (token === this.searchToken) this.hide()
-      return
-    }
-    if (token !== this.searchToken) return // a newer search superseded us
+    const options = await this.fetchPage(query, 1, token)
+    if (options === null) return // superseded or errored
 
     this.options = this.withSelected(options)
+    this.hasMore = options.length >= PAGE_SIZE
     this.activeIndex = -1
     this.render()
     this.show()
     if (!this.deletion) this.autocomplete(query)
   }
 
-  buildUrl(query) {
+  // Fetch more results and append when the user scrolls near the bottom.
+  onScroll() {
+    const el = this.listboxTarget
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 40) this.loadMore()
+  }
+
+  async loadMore() {
+    if (this.loading || !this.hasMore) return
+    const options = await this.fetchPage(
+      this.currentQuery,
+      this.page + 1,
+      this.searchToken
+    )
+    if (options === null) return
+
+    this.page += 1
+    this.hasMore = options.length >= PAGE_SIZE
+    const seen = new Set(this.options.map(o => o.value))
+    const fresh = options.filter(o => !seen.has(o.value))
+    const start = this.options.length
+    this.options = this.options.concat(fresh)
+    this.appendOptions(start)
+  }
+
+  async fetchPage(query, page, token) {
+    this.loading = true
+    try {
+      const res = await fetch(this.buildUrl(query, page), {
+        headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+      })
+      if (!res.ok) throw new Error()
+      const options = await res.json()
+      return token === this.searchToken ? options : null
+    } catch {
+      if (token === this.searchToken) this.hide()
+      return null
+    } finally {
+      this.loading = false
+    }
+  }
+
+  buildUrl(query, page = 1) {
     const sep = this.urlValue.includes('?') ? '&' : '?'
-    return `${this.urlValue}${sep}q=${encodeURIComponent(query || '')}`
+    return `${this.urlValue}${sep}q=${encodeURIComponent(query || '')}&page=${page}`
   }
 
   // Inline autocomplete: extend the typed text with the first match and select
@@ -233,23 +274,34 @@ export default class extends Controller {
       </li>`
   }
 
+  optionHtml(o, i) {
+    const disabled = o.disabled ? ' aria-disabled="true"' : ''
+    const dim = o.disabled ? ' opacity-50' : ''
+    const selected =
+      o.value === this.selectedValue ? ' hw-combobox__option--selected' : ''
+    return `
+      <li role="option" data-index="${i}"${disabled}
+          class="hw-combobox__option${selected}"
+          data-action="mousedown->combobox#onOptionClick">
+        <div class="flex flex-col w-full${dim}">
+          <span style="white-space:normal">${escape(o.label)}</span>
+          <span class="text-sm muted">${escape(o.sublabel || '')}</span>
+        </div>
+      </li>`
+  }
+
+  // Append a page of results without rebuilding the list, preserving scroll.
+  appendOptions(start) {
+    const html = this.options
+      .slice(start)
+      .map((o, i) => this.optionHtml(o, start + i))
+      .join('')
+    this.listboxTarget.insertAdjacentHTML('beforeend', html)
+  }
+
   render() {
     this.listboxTarget.innerHTML = this.options
-      .map((o, i) => {
-        const disabled = o.disabled ? ' aria-disabled="true"' : ''
-        const dim = o.disabled ? ' opacity-50' : ''
-        const selected =
-          o.value === this.selectedValue ? ' hw-combobox__option--selected' : ''
-        return `
-          <li role="option" data-index="${i}"${disabled}
-              class="hw-combobox__option${selected}"
-              data-action="mousedown->combobox#onOptionClick">
-            <div class="flex flex-col w-full${dim}">
-              <span style="white-space:normal">${escape(o.label)}</span>
-              <span class="text-sm muted">${escape(o.sublabel || '')}</span>
-            </div>
-          </li>`
-      })
+      .map((o, i) => this.optionHtml(o, i))
       .join('')
 
     // Put the keyboard cursor on the current selection so it's visible.

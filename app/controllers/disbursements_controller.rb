@@ -3,6 +3,8 @@
 class DisbursementsController < ApplicationController
   include TurboStreamFlash
 
+  PAGE_SIZE = 25
+
   before_action :set_disbursement, only: [:show, :edit, :update, :transfer_confirmation_letter]
 
   def show
@@ -76,9 +78,20 @@ class DisbursementsController < ApplicationController
       base = base.where(sql, name: "%#{q}%", slug: "%#{q}%", id: "%#{q}%")
     end
 
-    # Sort by user's event preference in SQL, keeping the relation's existing
-    # order as a tiebreaker, then limit before loading records into Ruby.
+    # Rank by relevance first (exact, then prefix, then substring), then user's
+    # event preference, keeping the relation's existing order as a tiebreaker.
     order_clauses = []
+    if q.present?
+      order_clauses << Arel.sql(
+        ActiveRecord::Base.sanitize_sql_array(
+          [
+            "CASE WHEN LOWER(name) = LOWER(:exact) OR LOWER(slug) = LOWER(:exact) THEN 0 " \
+            "WHEN name ILIKE :prefix OR slug ILIKE :prefix THEN 1 ELSE 2 END",
+            { exact: q, prefix: "#{q}%" }
+          ]
+        )
+      )
+    end
     if user_event_ids.any?
       ids = user_event_ids.map(&:to_i).join(", ")
       order_clauses << Arel.sql("array_position(ARRAY[#{ids}]::bigint[], events.id) NULLS LAST")
@@ -86,7 +99,8 @@ class DisbursementsController < ApplicationController
     order_clauses.concat(base.order_values)
     order_clauses << Arel.sql("events.id ASC")
 
-    events = base.reorder(*order_clauses).limit(25).to_a
+    page = [params[:page].to_i, 1].max
+    events = base.reorder(*order_clauses).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE).to_a
 
     options = events.map do |e|
       disabled_message = nil
