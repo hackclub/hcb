@@ -11,7 +11,7 @@
     <% filters.each do |filter| %>
       <% if params[filter[:key]] %>
         <div class="badge badge-large bg-muted">
-          <%= params[filter[:key]].humanize %>
+          <%= filter_option_label(filter, params[filter[:key]]) %>
           <%= link_to upsert_query_params(filter[:key] => nil),
                       class: "flex items-center",
                       data: { turbo_prefetch: "false" } do %>
