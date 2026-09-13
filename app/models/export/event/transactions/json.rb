@@ -23,10 +23,9 @@ class Export
   module Event
     module Transactions
       class Json < Export
-        store_accessor :parameters, :event_id, :public_only
-        def async?
-          event.canonical_transactions.size > 300
-        end
+        include Filterable
+
+        store_accessor :parameters, :event_id, :public_only, :tag_id, :user_id, :transaction_type, :direction, :minimum_amount, :maximum_amount, :missing_receipts, :category_slug, :merchant_id, :start_date, :end_date, :search
 
         def label
           "JSON transaction export for #{event.name}"
@@ -41,7 +40,7 @@ class Export
         end
 
         def content
-          event.canonical_transactions.order("date desc").map do |ct|
+          transactions.map do |ct|
             row(ct)
           end.to_json
         end
