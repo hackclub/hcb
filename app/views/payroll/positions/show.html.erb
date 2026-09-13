@@ -63,9 +63,9 @@
           <%= link_to "View signed contract", @position.contract.document, data: { turbo_frame: "_top" } %>
         </p>
       <% end %>
-      <% if @position.file.attached? %>
+      <% elsif @position.file.attached? %>
         <p>
-          <strong>Agreement</strong>
+          <strong>Attached agreement</strong>
           <%= link_to "View attachment", url_for(@position.file), data: { turbo_frame: "_top" } %>
         </p>
       <% end %>
@@ -99,6 +99,7 @@
         <thead>
           <tr>
             <th>Status</th>
+            <th>Reviewed by</th>
             <th>Description</th>
             <th>Attachment</th>
             <th class="text-right">Amount</th>
@@ -110,8 +111,12 @@
             <tr>
               <td>
                 <span class="badge ml-0 bg-<%= invoice.state_color %>"><%= invoice.aasm_state.humanize %></span>
+              </td>
+              <td>
                 <% if invoice.reviewed_by.present? %>
-                  <span class="muted block text-xs mt-1 ml-2.5">by <%= invoice.reviewed_by.name %></span>
+                  <%= invoice.reviewed_by.name %>
+                <% else %>
+                  <span class="muted">&mdash;</span>
                 <% end %>
               </td>
               <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
