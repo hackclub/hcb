@@ -759,6 +759,8 @@ document.addEventListener('turbo:before-stream-render', event => {
       })
     } else if (streamElement.action == 'close_modal') {
       $.modal.close().remove()
+    } else if (streamElement.action == 'open_modal') {
+      BK.s('modal', '#' + streamElement.target).modal({ closeExisting: false })
     } else {
       fallbackToDefaultActions(streamElement)
     }
