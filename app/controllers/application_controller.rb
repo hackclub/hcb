@@ -42,6 +42,9 @@ class ApplicationController < ActionController::Base
     params[:return_to] = url_from(params[:return_to]) if params[:return_to]
   end
 
+  # Reopen a popover that was left open when the page was reloaded
+  before_action :reopen_popover
+
   # Enable Rack::MiniProfiler for auditors
   before_action do
     if current_user&.auditor?
@@ -108,6 +111,34 @@ class ApplicationController < ActionController::Base
   helper_method :safe_per
 
   private
+
+  # Popovers push their own URL into the browser's history, so reloading a page
+  # with an open popover lands the user on that URL (e.g. a transaction page)
+  # instead of the page they were on. Send them back to the page the popover was
+  # opened from; the #popover fragment tells the front-end to reopen it (see
+  # ui.js).
+  def reopen_popover
+    # Only real browser navigations (a reload, a bookmark, a typed URL) ask for
+    # a document. Turbo visits and other fetches ask for "empty" and must be
+    # left alone, otherwise a user could never navigate out of a popover.
+    return unless request.get? && request.format.html? && request.headers["Sec-Fetch-Dest"] == "document"
+
+    state = open_popover_state
+    return unless state && state["stateUrl"] == request.original_url
+
+    return_to = url_from(state["returnUrl"])
+    return if return_to.blank? || return_to == request.original_url
+
+    redirect_to "#{return_to.split("#").first}#popover"
+  end
+
+  # Set by the front-end while a popover is open; see ui.js.
+  def open_popover_state
+    state = JSON.parse(cookies["hcb_open_popover"].to_s)
+    state if state.is_a?(Hash)
+  rescue JSON::ParserError
+    nil
+  end
 
   def redirect_to_onboarding
     if current_user&.onboarding?
