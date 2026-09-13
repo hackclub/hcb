@@ -62,7 +62,7 @@ module Reimbursement
     end
 
     def request_reimbursement?
-      (admin || organizer_approver) && open
+      (admin || (manager && !creator)) && open
     end
 
     def convert_to_wise_transfer?
@@ -74,7 +74,7 @@ module Reimbursement
     end
 
     def approve_all_expenses?
-      (admin || organizer_approver) && open
+      (admin || (manager && !creator)) && open
     end
 
     def reject?
@@ -117,10 +117,6 @@ module Reimbursement
 
     def manager
       record.event && OrganizerPosition.role_at_least?(user, record.event, :manager)
-    end
-
-    def organizer_approver
-      manager && (!creator || !record.organizer_peer_review_required?)
     end
 
     def reader
