@@ -112,15 +112,7 @@ class ApplicationController < ActionController::Base
 
   private
 
-  # Popovers push their own URL into the browser's history, so reloading a page
-  # with an open popover lands the user on that URL (e.g. a transaction page)
-  # instead of the page they were on. Send them back to the page the popover was
-  # opened from; the #popover fragment tells the front-end to reopen it (see
-  # ui.js).
   def reopen_popover
-    # Only real browser navigations (a reload, a bookmark, a typed URL) ask for
-    # a document. Turbo visits and other fetches ask for "empty" and must be
-    # left alone, otherwise a user could never navigate out of a popover.
     return unless request.get? && request.format.html? && request.headers["Sec-Fetch-Dest"] == "document"
 
     state = open_popover_state
@@ -132,7 +124,6 @@ class ApplicationController < ActionController::Base
     redirect_to "#{return_to.split("#").first}#popover"
   end
 
-  # Set by the front-end while a popover is open; see ui.js.
   def open_popover_state
     state = JSON.parse(cookies["hcb_open_popover"].to_s)
     state if state.is_a?(Hash)
