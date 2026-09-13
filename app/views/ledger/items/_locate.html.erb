@@ -1,0 +1,5 @@
+<%# locals: (item:) %>
+
+<% if auditor_signed_in? && (event = item&.primary_ledger&.event).present? %>
+  <%= link_to "Navigate to transaction position", event_ledger_path(event, locate: item.hashid), class: "btn btn--secondary", data: { turbo: false } %>
+<% end %>
