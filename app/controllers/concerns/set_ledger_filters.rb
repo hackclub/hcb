@@ -56,17 +56,17 @@ module SetLedgerFilters
                  else
                    [@ledger]
                  end
+      # Resolved as two plain id lookups unioned in Ruby, rather than
+      # `User.where(id: ...).or(User.where(id: ...))` with each side a
+      # subquery: Postgres was choosing to evaluate both subqueries as a
+      # "hashed SubPlan" filter under a sequential scan of the entire `users`
+      # table instead of an indexed id lookup, on ledgers with many items.
+      author_ids = Ledger::Item.where(id: Ledger::Mapping.where(ledger: @ledgers).select(:ledger_item_id)).distinct.pluck(:author_id)
+      user_ids = (author_ids.compact + @event.users.pluck(:id)).uniq
+      @users = User.where(id: user_ids).with_attached_profile_picture.order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
 
-      author_ids = Ledger::Item
-                   .where(id: Ledger::Mapping.where(ledger: @ledgers).select(:ledger_item_id))
-                   .where.not(author_id: nil)
-                   .distinct
-                   .select(:author_id)
-      organizer_ids = @event.users.select(:id)
-      @users = User.where("users.id IN (#{author_ids.to_sql} UNION #{organizer_ids.to_sql})")
-                   .with_attached_profile_picture
-                   .order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
-
+      # Found from @users (not @event.users): a non-organizer who has authored
+      # a transaction is still a valid author to filter by. See #14667.
       @user = @users.friendly.find(params[:user], allow_nil: true) if params[:user]
 
       if @merchant
