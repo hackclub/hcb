@@ -136,15 +136,8 @@ module Reimbursement
           end
         end
         after do
-          if team_review_required?
-            ReimbursementMailer.with(report: self).review_requested.deliver_later
-            create_activity(key: "reimbursement_report.review_requested", owner: user, recipient: reviewer.presence || event, event_id: event.id)
-          else
-            expenses.pending.each do |expense|
-              expense.mark_approved!
-            end
-            self.mark_reimbursement_requested!
-          end
+          ReimbursementMailer.with(report: self).review_requested.deliver_later
+          create_activity(key: "reimbursement_report.review_requested", owner: user, recipient: reviewer.presence || event, event_id: event.id)
         end
       end
 
@@ -334,8 +327,8 @@ module Reimbursement
       draft? && submitted_at.nil?
     end
 
-    def team_review_required?
-      !OrganizerPosition.role_at_least?(user, event, :manager) || (event.reimbursements_require_organizer_peer_review && event.users.size > 1)
+    def organizer_peer_review_required?
+      event.present? && event.reimbursements_require_organizer_peer_review && event.users.size > 1
     end
 
     def reimbursement_confirmation_message

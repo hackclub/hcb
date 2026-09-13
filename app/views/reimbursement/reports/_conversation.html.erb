@@ -51,34 +51,30 @@
             <% message = "invited #{@report.user.initial_name} to this draft report" %>
           <% end %>
 
-          <%# if "whodunnit" is the report's creator, team review was not required for this report. %>
-          <%# if a team re-enables team reviews, we'll show each report as approved by it's creator.  %>
-          <% unless state_change == "reimbursement_requested" && whodunnit == @report.user && !@report.team_review_required? %>
-            <li class="conversation_item mt2" style="margin-bottom: 24px;">
-              <div class="flex flex-row items-center" style="gap: 16px">
-                <div class="flex items-center justify-center z-[2] pop no_hover bg-<%= color %>-important" style="color: white; cursor: default">
-                  <%= inline_icon icon, width: 30 %>
-                </div>
-                <div class="conversation_item_text">
-                  <span class="muted" style="margin-right: -0.25em;">
-                    <%= user_mention whodunnit, default_name: "HCB", default_image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/010fba29b83bf91b_image.png" %>
-                  </span>
-                  <% if state_change == "reimbursement_requested" %>
-                    <span class="align-middle tooltipped tooltipped--n" aria-label="Still pending approval from the HCB team">
-                      <%= message %>
-                    </span>
-                  <% else %>
-                    <span class="align-middle">
-                      <%= message %>
-                    </span>
-                  <% end %>
-                  <span class="tooltipped tooltipped--n align-middle timestamp" style="cursor: default" aria-label="<%= item.created_at.strftime("%b %e, %Y") %>">
-                    <%= time_ago_in_words item.created_at %> ago
-                  </span>
-                </div>
+          <li class="conversation_item mt2" style="margin-bottom: 24px;">
+            <div class="flex flex-row items-center" style="gap: 16px">
+              <div class="flex items-center justify-center z-[2] pop no_hover bg-<%= color %>-important" style="color: white; cursor: default">
+                <%= inline_icon icon, width: 30 %>
               </div>
-            </li>
-          <% end %>
+              <div class="conversation_item_text">
+                <span class="muted" style="margin-right: -0.25em;">
+                  <%= user_mention whodunnit, default_name: "HCB", default_image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/010fba29b83bf91b_image.png" %>
+                </span>
+                <% if state_change == "reimbursement_requested" %>
+                  <span class="align-middle tooltipped tooltipped--n" aria-label="Still pending approval from the HCB team">
+                    <%= message %>
+                  </span>
+                <% else %>
+                  <span class="align-middle">
+                    <%= message %>
+                  </span>
+                <% end %>
+                <span class="tooltipped tooltipped--n align-middle timestamp" style="cursor: default" aria-label="<%= item.created_at.strftime("%b %e, %Y") %>">
+                  <%= time_ago_in_words item.created_at %> ago
+                </span>
+              </div>
+            </div>
+          </li>
         <% else %>
           <% changes = item.changeset.excluding("updated_at", "conversion_rate", "legal_entity_payout_method_id").select { |field, changes| changes.any?(&:present?) } %>
           <% unless item.event == "update" && changes.empty? %>
