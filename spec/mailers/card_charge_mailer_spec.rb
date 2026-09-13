@@ -7,10 +7,10 @@ RSpec.describe CardChargeMailer, type: :mailer do
     stripe_cardholder = create(:stripe_cardholder, user:, stripe_billing_address_postal_code: "90069")
     stripe_card = create(:stripe_card, :with_stripe_id, stripe_cardholder:)
     raw_stripe_transaction = create(:raw_stripe_transaction, stripe_card:, stripe_transaction: {
-      "card" => stripe_card.stripe_id,
-      "merchant_data" => { "name" => merchant_name },
-      "verification_data" => verification_data
-    })
+                                      "card"              => stripe_card.stripe_id,
+                                      "merchant_data"     => { "name" => merchant_name },
+                                      "verification_data" => verification_data
+                                    })
     card_charge = raw_stripe_transaction.card_charge
 
     item = Ledger::Item.new(amount_cents:, memo: "Test", datetime: Time.current, linked_object: card_charge)
