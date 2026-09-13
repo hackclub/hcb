@@ -62,7 +62,6 @@
           <strong>Signed contract</strong>
           <%= link_to "View signed contract", @position.contract.document, data: { turbo_frame: "_top" } %>
         </p>
-      <% end %>
       <% elsif @position.file.attached? %>
         <p>
           <strong>Attached agreement</strong>
