@@ -51,6 +51,15 @@ class WirePolicy < ApplicationPolicy
     end
   end
 
+
+  # Strong parameters for writes. See AchTransferPolicy#permitted_attributes.
+  def permitted_attributes
+    %i[memo amount_cents currency payment_for recipient_name recipient_email
+       account_number bic_code recipient_country address_line1 address_line2
+       address_city address_state address_postal_code send_email_notification file] +
+      Wire.recipient_information_accessors
+  end
+
   private
 
   def auditor_or_user?

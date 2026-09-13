@@ -75,6 +75,15 @@ class SponsorPolicy < ApplicationPolicy
     end
   end
 
+
+  # Strong parameters for writes. Already the shape v4 uses at
+  # `sponsors_controller.rb:69` — this is Pundit's `permitted_attributes` doing
+  # the job it was designed for, which is why the read list has its own name.
+  def permitted_attributes
+    %i[name contact_email address_line1 address_line2 address_city
+       address_state address_postal_code address_country]
+  end
+
   private
 
   def auditor_or_reader?

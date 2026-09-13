@@ -844,21 +844,21 @@ Rails.application.routes.draw do
           end
         end
 
-        resources :ach_transfers, only: [:index, :show]
+        resources :ach_transfers, only: [:index, :show, :create]
         resources :transactions, only: [:index, :show, :update] do
           member do
             post "mark_no_receipt"
           end
         end
         resources :tags, only: [:index, :show, :create, :destroy]
-        resources :sponsors, only: [:index, :show]
+        resources :sponsors, only: [:index, :show, :create]
         resources :donations, only: [:index, :show]
-        resources :checks, only: [:index, :show]
-        resources :check_deposits, only: [:index, :show]
-        resources :wires, only: [:index, :show]
+        resources :checks, only: [:index, :show, :create]
+        resources :check_deposits, only: [:index, :show, :create]
+        resources :wires, only: [:index, :show, :create]
         resources :wise_transfers, only: [:index, :show]
-        resources :invoices, only: [:index, :show]
-        resources :disbursements, path: "transfers", only: [:index, :show]
+        resources :invoices, only: [:index, :show, :create]
+        resources :disbursements, path: "transfers", only: [:index, :show, :create]
         resources :organizer_positions, only: [:index]
         resources :card_grants, only: [:index, :show]
         resources :stripe_cards, path: "cards", only: [:index, :show]

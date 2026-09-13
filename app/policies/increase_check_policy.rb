@@ -43,6 +43,14 @@ class IncreaseCheckPolicy < ApplicationPolicy
     end
   end
 
+
+  # Strong parameters for writes. See AchTransferPolicy#permitted_attributes.
+  def permitted_attributes
+    %i[memo amount_cents payment_for recipient_name recipient_email
+       address_line1 address_line2 address_city address_state address_zip
+       send_email_notification file]
+  end
+
   private
 
   def auditor_or_user?

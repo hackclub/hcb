@@ -88,6 +88,13 @@ class InvoicePolicy < ApplicationPolicy
     record.try(:event) || record.try(:sponsor)&.event
   end
 
+
+  # Strong parameters for writes. The sponsor's details are copied from the
+  # sponsor record rather than accepted from the caller, so they are not here.
+  def permitted_attributes
+    %i[due_date item_description item_amount]
+  end
+
   private
 
   def event

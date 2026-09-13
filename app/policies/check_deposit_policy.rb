@@ -48,6 +48,12 @@ class CheckDepositPolicy < ApplicationPolicy
     end
   end
 
+
+  # Strong parameters for writes. See AchTransferPolicy#permitted_attributes.
+  def permitted_attributes
+    %i[front back amount_cents]
+  end
+
   private
 
   def admin?

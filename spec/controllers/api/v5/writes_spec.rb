@@ -86,4 +86,63 @@ RSpec.describe "v5 write actions" do
     end
   end
 
+  describe Api::V5::AchTransfersController, type: :controller do
+    def ach_params(amount_money: "10.00")
+      {
+        organization_id: event.public_id,
+        ach_transfer: {
+          routing_number: "110000000", account_number: "123456789",
+          bank_name: "Big Bank", recipient_name: "Jane Doe",
+          recipient_email: "payee@example.com", amount_money:,
+          payment_for: "Supplies"
+        }
+      }
+    end
+
+    it "creates a transfer for a member who can transfer" do
+      authenticate_as(member_of(event, role: :manager))
+
+      post :create, params: ach_params, as: :json
+
+      expect(response).to have_http_status(:created)
+      expect(response.parsed_body).to include("recipient_name" => "Jane Doe")
+    end
+
+    it "refuses a transfer from a reader" do
+      authenticate_as(member_of(event, role: :reader))
+
+      post :create, params: ach_params, as: :json
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    it "refuses a transfer from an anonymous caller on a transparent organization" do
+      post :create, params: ach_params, as: :json
+
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    # Above the threshold a browser session would demand re-authentication,
+    # which a token cannot do — so the API refuses rather than skipping it.
+    it "refuses a transfer above the sudo mode threshold" do
+      authenticate_as(member_of(event, role: :manager))
+      over = ((SudoModeHandler::THRESHOLD_CENTS / 100) + 1).to_s
+
+      post :create, params: ach_params(amount_money: over), as: :json
+
+      expect(response).to have_http_status(:bad_request)
+      expect(response.parsed_body["messages"].first).to match(/sudo mode threshold/)
+    end
+
+    # `scheduled_on` is admin-only in the write list.
+    it "ignores scheduled_on from a non-admin" do
+      authenticate_as(member_of(event, role: :manager))
+
+      post :create, params: ach_params.deep_merge(ach_transfer: { scheduled_on: 1.week.from_now.to_date }), as: :json
+
+      expect(response).to have_http_status(:created)
+      expect(AchTransfer.find_by_public_id(response.parsed_body["id"]).scheduled_on).to be_nil
+    end
+  end
+
 end

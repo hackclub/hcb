@@ -85,6 +85,17 @@ class AchTransferPolicy < ApplicationPolicy
     user&.admin?
   end
 
+
+  # Strong parameters for writes — the input counterpart to
+  # #visible_attributes. `scheduled_on` is admin-only: scheduling a transfer
+  # for a future date is an operations action, not a member one.
+  def permitted_attributes
+    attrs = %i[routing_number account_number recipient_email bank_name recipient_name
+               amount_money payment_for send_email_notification invoiced_at file]
+    attrs << :scheduled_on if !!user&.admin?
+    attrs
+  end
+
   private
 
   def user_who_can_transfer?
