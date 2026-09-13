@@ -90,14 +90,10 @@ const openSharedPopover = state => {
   })
 }
 
-// Reloading a page with an open popover lands the browser on the popover's own
-// URL. The server sends us back to the page it was opened from with a #popover
-// fragment (see ApplicationController#reopen_popover); reopen it here.
 if (window.location.hash === '#popover') {
   const state = readPopoverState()
   if (state) openSharedPopover(state)
 } else {
-  // A freshly loaded document has no popover open, so don't leave one behind.
   writePopoverState(null)
 }
 
