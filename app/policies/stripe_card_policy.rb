@@ -88,6 +88,15 @@ class StripeCardPolicy < ApplicationPolicy
     end
   end
 
+
+  # Strong parameters for writes. Shipping details are settable at issue time
+  # only — a card already in the post cannot be redirected through the API.
+  def permitted_attributes
+    %i[card_type shipping_name shipping_address_line1 shipping_address_line2
+       shipping_address_city shipping_address_state shipping_address_postal_code
+       shipping_address_country card_personalization_design_id]
+  end
+
   private
 
   def member_and_cardholder?

@@ -859,16 +859,39 @@ Rails.application.routes.draw do
         resources :wise_transfers, only: [:index, :show]
         resources :invoices, only: [:index, :show, :create]
         resources :disbursements, path: "transfers", only: [:index, :show, :create]
-        resources :organizer_positions, only: [:index]
-        resources :card_grants, only: [:index, :show]
-        resources :stripe_cards, path: "cards", only: [:index, :show]
-        resources :organizer_position_invites, path: "invitations", only: [:index, :show]
+        resources :organizer_positions, only: [:index] do
+          member do
+            post "removal_request"
+          end
+        end
+        resources :card_grants, only: [:index, :show, :create, :update] do
+          member do
+            post "topup"
+            post "withdraw"
+            post "cancel"
+            post "activate"
+          end
+        end
+        resources :stripe_cards, path: "cards", only: [:index, :show, :create] do
+          member do
+            post "freeze"
+            post "defrost"
+            post "cancel"
+          end
+        end
+        resources :organizer_position_invites, path: "invitations", only: [:index, :show, :create, :destroy] do
+          member do
+            post "accept"
+            post "reject"
+          end
+        end
         resources :comments, only: [:index, :create]
         resources :receipts, only: [:index, :create, :destroy]
         resources :users, only: [:show]
 
         resource :user, only: [] do
           get "/", to: "users#me", as: "user"
+          post :revoke
         end
 
         match "*path" => "application#not_found", via: [:get, :post, :patch, :put, :delete]

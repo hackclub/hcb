@@ -13,6 +13,17 @@ module Api
         @organizer_positions = paginate_cursor(@organizer_positions.to_a, &:public_id)
       end
 
+
+      def removal_request
+        organizer_position = authorize OrganizerPosition.find_by_public_id!(params[:id]), :can_request_removal?
+
+        organizer_position.organizer_position_deletion_requests.create!(
+          submitted_by: current_user,
+          reason: params.require(:reason)
+        )
+
+        render json: { message: "Removal request submitted" }, status: :created
+      end
     end
   end
 end

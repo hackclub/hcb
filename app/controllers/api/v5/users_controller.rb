@@ -15,6 +15,17 @@ module Api
 
       require_oauth2_scope "profile:read", :show
 
+      # Revoking is an action on the token, not on a user record — there is no
+      # record to authorize, and a caller can only ever revoke the token it is
+      # presenting.
+      def revoke
+        skip_authorization
+        current_token.update!(revoked_at: Time.current)
+
+        render json: { message: "Token revoked", owner_email: current_user.email,
+                       key_name: current_token.application&.name }
+      end
+
       private
 
       def current_user_record

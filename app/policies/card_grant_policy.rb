@@ -97,6 +97,24 @@ class CardGrantPolicy < ApplicationPolicy
     end
   end
 
+
+  # Strong parameters for writes. Split by action: the grant's amount and
+  # recipient are fixed at creation — changing who a live card belongs to, or
+  # how much it holds, goes through topup/withdraw so the money movement is
+  # recorded rather than edited in place.
+  def permitted_attributes_for_create
+    %i[amount_cents email invite_message purpose instructions expiration_at
+       merchant_lock category_lock keyword_lock one_time_use pre_authorization_required]
+  end
+
+  def permitted_attributes_for_update
+    %i[merchant_lock category_lock keyword_lock purpose one_time_use instructions expiration_at]
+  end
+
+  def permitted_attributes
+    permitted_attributes_for_update
+  end
+
   private
 
   def admin_or_user?
