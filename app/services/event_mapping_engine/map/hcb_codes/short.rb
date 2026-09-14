@@ -65,7 +65,6 @@ module EventMappingEngine
               return hcb_code.outgoing_disbursement.disbursement.source_event_id
             end
           end
-          # return hcb_code.incoming_disbursement.event.id if hcb_code.incoming_disbursement?
           return hcb_code.incoming_disbursement.event.id if hcb_code.incoming_disbursement?
           return hcb_code.event.try(:id) if hcb_code.events.length == 1
 
@@ -80,7 +79,6 @@ module EventMappingEngine
               return hcb_code.outgoing_disbursement.disbursement.source_subledger_id
             end
           end
-          # return hcb_code.outgoing_disbursement.subledger&.id if hcb_code.outgoing_disbursement?
           return hcb_code.incoming_disbursement.subledger&.id if hcb_code.incoming_disbursement?
           return hcb_code.ct&.canonical_event_mapping&.subledger_id if hcb_code.events.length == 1
         end
