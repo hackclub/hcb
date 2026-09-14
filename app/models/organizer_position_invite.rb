@@ -277,6 +277,13 @@ class OrganizerPositionInvite < ApplicationRecord
     Rails.application.routes.url_helpers.event_team_path(event)
   end
 
+  def contractable_link
+    {
+      label: "organizer invite",
+      path: Rails.application.routes.url_helpers.organizer_position_invite_path(self)
+    }
+  end
+
   private
 
   def not_already_organizer

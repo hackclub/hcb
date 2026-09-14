@@ -58,7 +58,7 @@ class Contract
         return
       end
 
-      @contractable_link = contractable_link if signed_in? && policy(@contract.contractable).show?
+      @contractable_link = @contract.contractable.contractable_link if signed_in? && policy(@contract.contractable).show?
       confetti!
     end
 
@@ -67,17 +67,6 @@ class Contract
     def set_party
       @party = Contract::Party.find_by_hashid!(params[:id])
       @contract = @party.contract
-    end
-
-    def contractable_link
-      case @contract.contractable
-      when Event::Application
-        { label: "application", path: application_path(@contract.contractable) }
-      when OrganizerPositionInvite
-        { label: "organizer invite", path: organizer_position_invite_path(@contract.contractable) }
-      when Payroll::Position
-        { label: "contractor position", path: event_payroll_position_path(@contract.contractable.event, @contract.contractable) }
-      end
     end
 
   end
