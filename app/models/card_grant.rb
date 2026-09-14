@@ -118,11 +118,11 @@ class CardGrant < ApplicationRecord
   # statuses shown in the status filter that each map to their scope
   FILTERABLE_STATES = {
     "not_activated"              => "Invited",
-    "accepted"                   => "Accepted",
+    "accepted"                   => "Active",
     "frozen"                     => "Frozen",
     "expired"                    => "Expired",
     "returned"                   => "Returned",
-    "converted_to_reimbursement" => "Converted to reimbursement report"
+    "converted_to_reimbursement" => "Converted to reimbursement"
   }.freeze
 
   scope :filter_by_state, ->(state) {
@@ -161,11 +161,11 @@ class CardGrant < ApplicationRecord
     elsif converted_to_reimbursement_report?
       "Converted to reimbursement"
     elsif canceled?
-      "Canceled"
+      "Returned"
     elsif expired?
       "Expired"
     elsif pending_invite?
-      "Invitation sent"
+      "Invited"
     elsif stripe_card.frozen? || stripe_card.inactive?
       "Frozen"
     else
