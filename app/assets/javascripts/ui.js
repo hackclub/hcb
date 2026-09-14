@@ -6,43 +6,17 @@ const whenViewed = (element, callback) =>
     threshold: 1,
   }).observe(element)
 
-const POPOVER_COOKIE = 'hcb_open_popover'
-
-let popoverTriggerData = null
-
-const readPopoverState = () => {
-  const cookie = document.cookie
-    .split('; ')
-    .find(c => c.startsWith(`${POPOVER_COOKIE}=`))
-  if (!cookie) return null
-
-  try {
-    return JSON.parse(
-      decodeURIComponent(cookie.slice(POPOVER_COOKIE.length + 1))
-    )
-  } catch {
-    return null
-  }
-}
-
-const writePopoverState = state => {
-  const value = state
-    ? `${encodeURIComponent(JSON.stringify(state))}; Max-Age=31536000`
-    : '; Max-Age=0'
-  document.cookie = `${POPOVER_COOKIE}=${value}; path=/; SameSite=Lax`
-}
-
-const populateSharedPopover = dataset => {
+const populateSharedPopover = trigger => {
   const popover = document.getElementById('shared_popover')
   if (!popover) return
 
-  const title = dataset.popoverTitle || ''
-  const src = dataset.popoverSrc || ''
-  const frameId = dataset.popoverFrameId || ''
-  const stateUrl = dataset.popoverStateUrl || ''
-  const stateTitle = dataset.popoverStateTitle || title
-  const externalLink = dataset.popoverExternalLink || ''
-  const size = dataset.popoverSize || ''
+  const title = trigger.dataset.popoverTitle || ''
+  const src = trigger.dataset.popoverSrc || ''
+  const frameId = trigger.dataset.popoverFrameId || ''
+  const stateUrl = trigger.dataset.popoverStateUrl || ''
+  const stateTitle = trigger.dataset.popoverStateTitle || title
+  const externalLink = trigger.dataset.popoverExternalLink || ''
+  const size = trigger.dataset.popoverSize || ''
 
   popover.dataset.stateUrl = stateUrl
   popover.dataset.stateTitle = stateTitle
@@ -77,24 +51,27 @@ const populateSharedPopover = dataset => {
       body.appendChild(frame)
     }
   }
-
-  popoverTriggerData = { ...dataset }
 }
 
-const openSharedPopover = state => {
-  populateSharedPopover(state.trigger)
+// If the current URL points at an open popover (?popover=<state url of the
+// trigger to reopen>), find that trigger on the page and reopen it.
+const openPopoverFromUrl = () => {
+  const link = new URL(location.href).searchParams.get('popover')
+  if (!link) return
+
+  const trigger = document.querySelector(
+    `[data-popover-state-url="${CSS.escape(link)}"]`
+  )
+  if (!trigger) return
+
+  populateSharedPopover(trigger)
   BK.s('modal', '#shared_popover').modal({
     fadeDuration: 200,
     fadeDelay: 0.75,
   })
 }
 
-if (window.location.hash === '#popover') {
-  const state = readPopoverState()
-  if (state) openSharedPopover(state)
-} else {
-  writePopoverState(null)
-}
+openPopoverFromUrl()
 
 const loadModals = element => {
   $(element).on('click', '[data-behavior~=modal_trigger]', function (e) {
@@ -106,7 +83,7 @@ const loadModals = element => {
     }
     document.dispatchEvent(new CustomEvent('hcb:close-menus'))
     if ($(this).data('modal') === 'shared_popover') {
-      populateSharedPopover(this.dataset)
+      populateSharedPopover(this)
     }
     BK.s('modal', '#' + $(this).data('modal')).modal({
       fadeDuration: 200,
@@ -835,43 +812,31 @@ $(document).on('wheel', 'input[type=number]', e => {
 
 $(document).on($.modal.BEFORE_OPEN, function (event, modal) {
   if (modal?.elm[0]?.dataset?.stateUrl) {
-    if (!document.documentElement.dataset.returnToStateUrl) {
-      document.documentElement.dataset.returnToStateUrl = window.location.href
+    if (!document.documentElement.dataset.returnToStateTitle) {
       document.documentElement.dataset.returnToStateTitle = document.title
     }
     document.title = modal.elm[0].dataset.stateTitle
-    window.history.pushState(
-      { modal: modal.elm[0].id },
-      '',
-      modal.elm[0].dataset.stateUrl
-    )
 
-    if (modal.elm[0].id === 'shared_popover' && popoverTriggerData) {
-      writePopoverState({
-        stateUrl: new URL(modal.elm[0].dataset.stateUrl, location.href).href,
-        returnUrl: document.documentElement.dataset.returnToStateUrl,
-        trigger: popoverTriggerData,
-      })
-    }
+    const url = new URL(location.href)
+    url.searchParams.set('popover', modal.elm[0].dataset.stateUrl)
+    window.history.pushState({ modal: modal.elm[0].id }, '', url)
   }
 })
 
 $(document).on($.modal.BEFORE_CLOSE, function (event, modal) {
-  if (document.documentElement.dataset.returnToStateUrl) {
-    window.history.pushState(
-      null,
-      '',
-      document.documentElement.dataset.returnToStateUrl
-    )
-    document.title = document.documentElement.dataset.returnToStateTitle
+  if (modal?.elm[0]?.dataset?.stateUrl) {
+    const url = new URL(location.href)
+    url.searchParams.delete('popover')
+    window.history.pushState(null, '', url)
+
+    if (document.documentElement.dataset.returnToStateTitle) {
+      document.title = document.documentElement.dataset.returnToStateTitle
+    }
   }
 })
 
 $(document).on($.modal.AFTER_CLOSE, function (event, modal) {
   if (modal?.elm?.[0]?.id === 'shared_popover') {
-    writePopoverState(null)
-
-    delete document.documentElement.dataset.returnToStateUrl
     delete document.documentElement.dataset.returnToStateTitle
 
     const body = document.getElementById('shared_popover_body')
