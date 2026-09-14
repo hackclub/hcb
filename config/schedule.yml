@@ -10,9 +10,9 @@ g_suite_scan_verified_dns_job:
   cron: "0 12 * * *" # run every 1 day
   class: "GSuite::ScanVerifiedDnsJob"
 
-#g_suite_initiate_revocations_job:
-#  cron: "0 12 * * *" # run every 1 day
-#  class: "GSuite::InitiateRevocationsJob"
+g_suite_initiate_revocations_job:
+  cron: "0 12 * * *" # run every 1 day
+  class: "GSuite::InitiateRevocationsJob"
 
 g_suite_send_one_week_revocation_warning_job:
   cron: "0 */4 * * *" # run every 4 hour
