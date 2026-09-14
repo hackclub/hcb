@@ -10,6 +10,7 @@
 
 import { Controller } from '@hotwired/stimulus'
 
+// must equal the value of `PAGE_SIZE` in app/controllers/disbursements_controller.rb
 const PAGE_SIZE = 25
 
 export default class extends Controller {

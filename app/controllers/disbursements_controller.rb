@@ -3,6 +3,7 @@
 class DisbursementsController < ApplicationController
   include TurboStreamFlash
 
+  # must equal the value of `PAGE_SIZE` in app/javascript/controllers/combobox_controller.js
   PAGE_SIZE = 25
 
   before_action :set_disbursement, only: [:show, :edit, :update, :transfer_confirmation_letter]
