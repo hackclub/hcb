@@ -234,7 +234,7 @@ class EventsController < ApplicationController
       initial_subtotal = if @all_transactions.count > offset
                            TransactionGroupingEngine::Transaction::RunningBalanceAssociationPreloader.new(transactions: @all_transactions, event: @event).run!
                            # sum up transactions on pages after this one to get the initial subtotal
-                           @all_transactions.slice(offset...).map(&:amount).sum
+                           @all_transactions.slice(offset...).sum(&:amount)
                          else
                            # this is the last page, so start from 0
                            0
