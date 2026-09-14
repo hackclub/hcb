@@ -30,9 +30,10 @@
       <%= render partial: "features/preview", locals: {
                 id: "transaction-popovers",
                 feature_flag: :hcb_code_popovers_2023_06_16,
+                fully_shipped: true,
                 name: "Popovers",
                 description: "This feature flag enables a popover allowing quick and easy access to transaction details, card information, and more!",
-                user: @user
+                user: @user,
               } %>
 
       <%= render partial: "features/preview", locals: {
