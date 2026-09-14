@@ -3,11 +3,11 @@
 module Payroll
   class InvoicePolicy < ApplicationPolicy
     def new?
-      contractor?
+      contractor? || on_behalf?
     end
 
     def create?
-      contractor?
+      contractor? || on_behalf?
     end
 
     def approve?
@@ -28,6 +28,12 @@ module Payroll
 
       legal_entity = record.payroll_position.payee.legal_entity
       legal_entity.present? && legal_entity.users.exists?(id: user.id)
+    end
+
+    def on_behalf?
+      return false unless record.payroll_position.onboarded?
+
+      reviewer?
     end
 
     # Reviewing (approving/rejecting) an invoice is gated by the same permission

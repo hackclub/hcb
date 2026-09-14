@@ -37,6 +37,8 @@ module Payroll
 
     has_paper_trail
 
+    attr_accessor :skip_manager_notification
+
     belongs_to :payroll_position, class_name: "Payroll::Position", inverse_of: :invoices
     belongs_to :reviewed_by, class_name: "User", optional: true
     belongs_to :payment, optional: true
@@ -95,6 +97,8 @@ module Payroll
     end
 
     def notify_managers
+      return if skip_manager_notification
+
       Payroll::InvoiceMailer.with(invoice: self).submitted.deliver_later
     end
 
