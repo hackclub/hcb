@@ -54,24 +54,33 @@ const populateSharedPopover = trigger => {
 }
 
 // If the current URL points at an open popover (?popover=<state url of the
-// trigger to reopen>), find that trigger on the page and reopen it.
+// trigger to reopen>), find that trigger and reopen it. Returns whether a
+// matching trigger was found, since the trigger may still be loading inside
+// a lazy-loaded turbo-frame (e.g. a paginated transactions list).
 const openPopoverFromUrl = () => {
   const link = new URL(location.href).searchParams.get('popover')
-  if (!link) return
+  if (!link) return true
 
   const trigger = document.querySelector(
     `[data-popover-state-url="${CSS.escape(link)}"]`
   )
-  if (!trigger) return
+  if (!trigger) return false
 
   populateSharedPopover(trigger)
   BK.s('modal', '#shared_popover').modal({
     fadeDuration: 200,
     fadeDelay: 0.75,
   })
+  return true
 }
 
-openPopoverFromUrl()
+if (!openPopoverFromUrl()) {
+  document.addEventListener('turbo:frame-load', function handleFrameLoad() {
+    if (openPopoverFromUrl()) {
+      document.removeEventListener('turbo:frame-load', handleFrameLoad)
+    }
+  })
+}
 
 const loadModals = element => {
   $(element).on('click', '[data-behavior~=modal_trigger]', function (e) {
