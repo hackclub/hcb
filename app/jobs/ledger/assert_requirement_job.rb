@@ -16,12 +16,14 @@ class Ledger
     private
 
     def log_anomalies
+      Appsignal.add_tags(assertion_name: self.class.name)
       @anomalies = []
 
       yield
 
       if @anomalies.any?
-        Rails.error.report(Ledger::AssertRequirementJob::FailedJobError.new("#{self.class.name} failed with #{@anomalies.count} anomalies (#{job_id})"))
+        Appsignal.add_tags(anomaly_count: @anomalies.count)
+        Rails.error.report(Ledger::AssertRequirementJob::FailedJobError.new("#{self.class.name} failed with #{@anomalies.count} anomalies"))
         AdminMailer.failed_assertion_job(job: self.class.name, job_id:, anomalies: @anomalies).deliver_now
       end
 
