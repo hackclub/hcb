@@ -3,6 +3,10 @@
 <% invoice = ledger_item.linked_object %>
 <% sponsor = invoice.sponsor %>
 
+<%= render partial: "application/admin_viewer", locals: { record: sponsor } %>
+<%= render partial: "application/admin_viewer", locals: { record: invoice.payout } if invoice.payout.present? %>
+<%= render partial: "application/admin_viewer", locals: { record: invoice.fee_reimbursement } if invoice.fee_reimbursement.present? %>
+
 <% admin_tool("mt3") do %>
   <%= link_to "View on Stripe", invoice.stripe_dashboard_url, class: "btn bg-accent" %>
   <% if invoice.paid? %>
