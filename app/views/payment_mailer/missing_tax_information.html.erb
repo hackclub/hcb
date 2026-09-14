@@ -1,6 +1,8 @@
 <p>Hello,</p>
 
-<%= render partial: "initial_message", locals: { payment: @payment } %>
+<% if @initial %>
+  <%= render partial: "initial_message", locals: { payment: @payment } %>
+<% end %>
 
 <p>
   In order to process this payment, we need your tax information.

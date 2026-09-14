@@ -3,6 +3,7 @@
 class IncreaseChecksController < ApplicationController
   include SetEvent
   include Admin::TransferApprovable
+  include Admin::PaymentApprovable
 
   before_action :set_event, only: %i[new create]
   before_action :set_check, only: %i[approve reject stop]
@@ -46,6 +47,8 @@ class IncreaseChecksController < ApplicationController
     return unless enforce_sudo_mode
 
     ensure_admin_may_approve!(@check, amount_cents: @check.amount)
+    ensure_legal_entity_payable!(@check, classification: params[:classification])
+
     @check.send_check!
 
     redirect_to increase_check_process_admin_path(@check), flash: { success: "Check has been sent!" }
