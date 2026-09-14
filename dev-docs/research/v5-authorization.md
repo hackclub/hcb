@@ -26,8 +26,9 @@ us there, and proposes a design.
   - [2. `visible_attributes`: a per-viewer list of field names](#2-visible_attributes-a-per-viewer-list-of-field-names)
   - [3. Deny by default, enforced by the serializer](#3-deny-by-default-enforced-by-the-serializer)
   - [4. Index routes: actually use `policy_scope`](#4-index-routes-actually-use-policy_scope)
-- [Pilot Implementation](#pilot-implementation)
+- [Implementation](#implementation)
   - [Index routes, measured](#index-routes-measured)
+  - [What is left](#what-is-left)
 - [Alternatives Considered](#alternatives-considered)
 - [Migration Plan](#migration-plan)
 - [Open Questions](#open-questions)
@@ -230,7 +231,7 @@ rendering differs. There is essentially one such case in the current surface.
 
 Four changes. (1) and (4) are independently valuable and can land before v5
 exists. A working pilot of (1)-(3) is on this branch — see
-[Pilot Implementation](#pilot-implementation).
+[Implementation](#implementation).
 
 ### 1. One principal, not one policy per surface
 
@@ -331,25 +332,29 @@ would fail on a real, intended difference and teach people to weaken the test.
 
 ---
 
-## Pilot Implementation
+## Implementation
 
-A working vertical slice is on this branch: ACH transfers (presence tiers) and
-users (the one masking case), served by a real endpoint.
+The port is complete on this branch: 19 resources, read and write, with every
+v4 route covered.
+
+### The pieces
 
 | File | Role |
 |---|---|
-| `app/policies/application_policy.rb` | `visible_attributes` (defaults to `[]`), `visible?`, `show_any_attribute?` |
+| `app/policies/application_policy.rb` | `visible_attributes` (defaults `[]`), `visible?`, `show_any_attribute?`, and the shared `policy_event` / `transparent_or_reader?` / `event_reader?` / `event_manager?` tier helpers |
 | `app/lib/api/field_set.rb` | the deny-by-default emitter |
-| `app/policies/ach_transfer_policy.rb` | presence tiers |
-| `app/policies/user_policy.rb` | `visible_attributes` + `full_name?` (masking) |
+| `app/models/event.rb` | `Event.visible_to(user)` — readable organizations as SQL |
+| `app/models/ledger/query.rb` | `COLUMN_DISCLOSES`, checked against the same policy |
+| `app/controllers/concerns/api/v5/scoped_resource.rb` | index + show for any policy-scoped relation |
+| `app/controllers/concerns/api/v5/transfer_creation.rb` | the sudo-mode guard, receipt attachment, organization lookup |
 | `app/helpers/api/v5/application_helper.rb` | `object_shape` yielding a `FieldSet` |
 | `app/helpers/application_helper.rb` | `visible?(record, attribute)` for ERB |
-| `app/views/api/v5/**` | v5 serializers |
-| `app/controllers/api/v5/**` | `GET /api/v5/ach_transfers[/:id]`, anonymous allowed |
-| `app/models/event.rb` | `Event.visible_to(user)` — the readable-organizations SQL scope |
-| `app/policies/ach_transfer_policy.rb` | `Scope` for index routes |
+| `app/{controllers,views}/api/v5/**` | the API itself |
 
-A serializer looks like this — note that `json` is never written to directly:
+### What a serializer looks like
+
+`json` is never written to directly — everything goes through the emitter, so a
+field the policy doesn't list cannot be emitted:
 
 ```ruby
 object_shape(json, ach_transfer) do |f|
@@ -375,13 +380,47 @@ One serializer, and the response varies by viewer:
 and the nested sender's `name` degrades to `"Jane D"` outside the viewer's
 organizations while staying present.
 
+### Reads and writes are separate lists
+
+`visible_attributes` answers what a caller may *see*; Pundit's
+`permitted_attributes` answers what it may *send*. Keeping them apart is not
+bookkeeping — several rules only exist in one of them:
+
+| Rule | Where |
+|---|---|
+| `admin_only` on a comment is settable only by someone who could read it back | `CommentPolicy#permitted_attributes` |
+| `scheduled_on` on an ACH transfer is admin-only — scheduling is an operations action | `AchTransferPolicy#permitted_attributes` |
+| A card grant's amount and recipient are create-only; changing a live grant goes through topup/withdraw so the movement is *recorded* | `CardGrantPolicy#permitted_attributes_for_{create,update}` |
+| Shipping details are settable at issue time only — a card in the post can't be redirected | `StripeCardPolicy#permitted_attributes` |
+
+`SponsorPolicy#permitted_attributes` already existed, feeding `params.permit` in
+the web controller. v5's create just calls it.
+
+### Guards that exist because of mistakes made building this
+
+Three specs exist because the corresponding bug happened here, not because it
+was anticipated:
+
+- **`spec/policies/visible_attributes_contract_spec.rb`** — `visible_attributes`
+  is called from outside the policy, so defining it below `private` raises at
+  render time, for that policy's objects only, nowhere near the definition.
+  Five policies had it at once.
+- **`spec/controllers/api/v5/routing_spec.rb`** — walks every `api/v5` route and
+  asserts it maps to a defined action. A route added ahead of its action is a
+  500 on first call and nothing else catches it. Happened once, on invoices.
+- **`spec/controllers/api/v5/ach_transfers_index_queries_spec.rb`** — pins the
+  flat query count. See [Index routes, measured](#index-routes-measured).
+
 ### Verification
 
 | Spec | Covers |
 |---|---|
 | `spec/lib/api/field_set_spec.rb` | gating, deferred values, arity, Object-method name collisions |
-| `spec/policies/ach_transfer_policy_spec.rb` | every role tier, and `show_any_attribute?` |
-| `spec/controllers/api/v5/ach_transfers_controller_spec.rb` | end to end: exact key sets per viewer, name degradation, anonymous access, index scoping |
+| `spec/policies/ach_transfer_policy_spec.rb` | every role tier, `show_any_attribute?`, and the `role_at_least?` equivalence |
+| `spec/policies/visible_attributes_contract_spec.rb` | every policy defines `visible_attributes` publicly |
+| `spec/models/ledger/query_authorization_spec.rb` | a caller cannot filter on a column it could not read |
+| `spec/controllers/api/v5/*_spec.rb` | per-viewer key sets, transparency tiers, index scoping, writes |
+| `spec/controllers/api/v5/routing_spec.rb` | every v5 route maps to a defined action |
 | `spec/controllers/api/v5/ach_transfers_index_queries_spec.rb` | query count does not grow with page size |
 
 **49 examples, 0 failures.** A regression pass over `spec/policies`,
@@ -465,12 +504,18 @@ is invisible in a `show` route and only bites at list scale.
 1. **Per-surface field names would re-fork it.** `:account_number` vs
    `:account_number_last4` is the existing instance. Rule to adopt: the same
    field name on both surfaces, or it's a bug.
-2. **N+1 risk, and the list makes it systematic.** Confirmed and fixed for ACH
-   transfers — see [Index routes, measured](#index-routes-measured). Every
-   further policy that grows a `visible_attributes` needs the same treatment:
-   role checks resolved from memoized id sets, not per-record queries. A
+2. **N+1 risk, and the list makes it systematic.** Confirmed and fixed — see
+   [Index routes, measured](#index-routes-measured). The fix now lives in
+   `ApplicationPolicy#event_reader?` / `#event_manager?`, so a policy that uses
+   the shared tier helpers gets it for free; one that reaches for
+   `OrganizerPosition.role_at_least?` directly reintroduces a query per row. A
    query-count spec on each new index route is the cheapest guard.
-3. **Nested objects have no `authorize` call.** For a sender or an org rendered
+3. **The public tier is the common path, not the edge case.** `is_public`
+   defaults to `TRUE` in the schema, so most organizations are transparent.
+   Every field placed in a public tier is live for anonymous internet traffic.
+   The v3-parity rule makes each decision auditable, but `Ledger::ItemPolicy`
+   and `EventPolicy` are worth reading line by line with that in mind.
+4. **Nested objects have no `authorize` call.** For a sender or an org rendered
    inside a transaction, the list is the *only* gate. `visible_attributes == []`
    renders as bare `id`/`object`, matching v3's minimized shape — deliberate,
    and worth confirming per object.
@@ -510,34 +555,37 @@ anonymous viewers.
 
 ## Migration Plan
 
-Sequenced so nothing blocks the v3-serializer-on-the-ledger-engine work already in
-flight.
+Phases 0-2 are done on this branch. What remains is the part that touches v3 and
+v4, which is sequenced after a deprecation window rather than before one.
 
-**Phase 0 — pilot, one object end to end. ✅ done on this branch.** See
-[Pilot Implementation](#pilot-implementation). `visible_attributes` +
-`Api::FieldSet` applied to `AchTransferPolicy` and `UserPolicy`, consumed by both
-a v5 serializer and the existing ERB view, behind a real endpoint. `Principal` is
-*not* built yet — the pilot reuses `ApiAdminContext` and permits anonymous
-requests at the controller, which was enough to prove transparency works without
-a `show_in_v5?`.
+**Phases 0-2 — the v5 API. ✅ done.** `visible_attributes` + `Api::FieldSet`
+across 19 resources, `Scope` classes behind `verify_policy_scoped`, and reads
+authorized by `show_any_attribute?` rather than a per-version `show?`. One
+deviation from the plan: `Principal` was never built. `ApiAdminContext` already
+carried the token, and permitting anonymous requests at the controller was
+enough to make transparency work without a `show_in_v5?` — so the abstraction
+would have been ceremony. It is still the right shape if a third surface appears.
 
-**Phase 1 — `Scope` classes + `verify_policy_scoped`. ✅ done for ACH transfers**
-on this branch; the remaining index routes still need their own `Scope`.
-Independently useful: it removes `skip_authorization` from v4 today.
-
-**Phase 2 — v5 serializers built on the DSL from day one,** with enforcement on
-(raise on undeclared). New code, so no migration cost — this is the cheapest moment
-to make it mandatory, and the reason to settle the design *before* v5 endpoints get
-written.
-
-**Phase 3 — collapse the forks.** Delete `app/policies/api/` and every `*_in_v4?`.
-Until v3/v4 are actually deprecated, redefine the `Api::` policies as thin
-delegations to the canonical ones so there's a single source of truth *during* the
-overlap rather than only after it.
+**Phase 3 — collapse the forks.** Delete `app/policies/api/` and every
+`*_in_v4?`. Not done: those still serve live v3 and v4 traffic, and removing
+them is a deprecation decision rather than a refactor. Until then, redefining
+the `Api::` policies as thin delegations to the canonical ones would give a
+single source of truth *during* the overlap rather than only after it.
 
 **Phase 4 — chip away at the 151 `organizer_signed_in?` call sites,** replacing
-them with policy predicates. Long tail, no deadline, but every one converted is one
-less thing the API has to reimplement.
+them with policy predicates. Long tail, no deadline, but every one converted is
+one less thing an API has to reimplement.
+
+### What is left
+
+Nothing in the v4 surface. The open items are decisions rather than code:
+
+- `category` on organizations — the one v3 public field not ported, because v3
+  computes it with a per-event tag query. Needs a preloaded join first.
+- The `account_number` full-vs-last-4 split between web and API, preserved and
+  now visible in one policy rather than split across two templates.
+- v3 publishing full legal names of transparent organizations' members, which is
+  live today and independent of this work.
 
 ## Open Questions
 
