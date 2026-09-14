@@ -82,6 +82,36 @@ if (!openPopoverFromUrl()) {
   })
 }
 
+// Turbo keeps only the matching frame from a response, so flashes rendered by
+// the layout are thrown away. Re-render them inside the popover instead.
+const renderPopoverFlash = async response => {
+  const container = document.getElementById('shared_popover_flash')
+  if (!container) return
+  if (!response.headers.get('content-type')?.includes('text/html')) return
+
+  const html = await response.clone().text()
+  const flash = new DOMParser()
+    .parseFromString(html, 'text/html')
+    .querySelector('#flash-container')
+    ?.innerHTML.trim()
+
+  // Responses without a flash leave whatever is on screen alone, so a nested
+  // frame loading afterwards doesn't wipe it.
+  if (flash) container.innerHTML = flash
+}
+
+document.addEventListener('turbo:before-fetch-response', event => {
+  if (!event.target.closest?.('#shared_popover')) return
+  renderPopoverFlash(event.detail.fetchResponse.response)
+})
+
+// A re-rendered form (e.g. a validation error) has no matching frame; without
+// this Turbo would navigate the whole page away from the popover. The flash
+// above explains what went wrong.
+document.addEventListener('turbo:frame-missing', event => {
+  if (event.target.closest('#shared_popover')) event.preventDefault()
+})
+
 const loadModals = element => {
   $(element).on('click', '[data-behavior~=modal_trigger]', function (e) {
     const controlOrCommandClick = e.ctrlKey || e.metaKey
