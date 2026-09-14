@@ -1872,7 +1872,6 @@ class AdminController < Admin::BaseController
       when :emburse_transactions
         EmburseTransaction.under_review.size
       when :checks
-        # Check.pending.size + Check.unfinished_void.size
         0
       when :ach_transfers
         AchTransfer.pending.size

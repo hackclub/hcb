@@ -622,13 +622,6 @@ class Event < ApplicationRecord
 
   def admin_dropdown_description
     "#{name} - #{id}#{" (DEMO)" if demo_mode?}"
-
-    # Causing n+1 queries on admin pages with an event dropdown
-
-    # badges = BADGES.map { |_, badge| send(badge[:qualifier]) ? badge[:emoji] : nil }.compact
-    # desc += " [#{badges.join(' ')}]" if badges.any?
-
-    # desc
   end
 
   def disbursement_dropdown_description
