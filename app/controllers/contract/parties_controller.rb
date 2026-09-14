@@ -58,7 +58,10 @@ class Contract
         return
       end
 
-      @contractable_link = @contract.contractable.contractable_link if signed_in? && policy(@contract.contractable).show?
+      if signed_in? && policy(@contract.contractable).show?
+        @contractable_link_label = @contract.contractable.contractable_link_label
+        @contractable_link_path = @contract.contractable.contractable_link_path
+      end
       confetti!
     end
 

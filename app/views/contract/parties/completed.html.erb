@@ -22,7 +22,7 @@
     <% end %>
   <% end %>
 
-  <% if @contractable_link %>
-    <%= link_to "Continue to #{@contractable_link[:label]}", @contractable_link[:path], class: "btn" %>
+  <% if @contractable_link_path %>
+    <%= link_to "Continue to #{@contractable_link_label}", @contractable_link_path, class: "btn" %>
   <% end %>
 </div>

@@ -41,8 +41,12 @@ module Contractable
       "/"
     end
 
-    def contractable_link
-      raise NotImplementedError, "The #{self.class.name} model includes Contractable, but hasn't implemented its own version of contractable_link."
+    def contractable_link_label
+      raise NotImplementedError, "The #{self.class.name} model includes Contractable, but hasn't implemented its own version of contractable_link_label."
+    end
+
+    def contractable_link_path
+      raise NotImplementedError, "The #{self.class.name} model includes Contractable, but hasn't implemented its own version of contractable_link_path."
     end
 
     def contract_notify_hcb?
