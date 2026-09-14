@@ -55,6 +55,16 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  # Turbo frame responses are rendered without the layout, so flashes never reach
+  # the page. Hand them to the client, which renders them itself.
+  # A redirect is skipped so its flash survives to the response Turbo lands on.
+  after_action do
+    if turbo_frame_request? && !response.redirect? && helpers.renderable_flash.any?
+      response.set_header("X-Flash", Base64.strict_encode64(view_context.render("application/flash_messages")))
+      helpers.renderable_flash.each_key { |key| flash.discard(key) }
+    end
+  end
+
   # Force usage of Pundit on actions
   after_action :verify_authorized, unless: -> { controller_path.starts_with?("doorkeeper/") || controller_path.starts_with?("audits1984/") }
 

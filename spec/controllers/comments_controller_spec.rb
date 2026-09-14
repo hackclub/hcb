@@ -26,11 +26,12 @@ RSpec.describe CommentsController do
       }
     end
 
-    it "returns to the frame it was submitted from, so the popover stays open" do
+    it "returns to the frame it was submitted from, keeping the flash for the response Turbo lands on" do
       request.headers["Turbo-Frame"] = "reimbursement_report_#{report.id}"
 
       expect { create_comment }.to change { report.comments.count }.by(1)
       expect(response).to redirect_to(frame_url)
+      expect(response.headers["X-Flash"]).to be_nil
       expect(flash[:success]).to eq("Comment created.")
     end
 
@@ -46,6 +47,7 @@ RSpec.describe CommentsController do
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(flash[:error]).to eq("Content can't be blank")
+      expect(Base64.decode64(response.headers["X-Flash"])).to include("Content can&#39;t be blank")
     end
 
     it "renders the form errors, without a flash, outside of a frame" do
@@ -53,6 +55,7 @@ RSpec.describe CommentsController do
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(flash[:error]).to be_nil
+      expect(response.headers["X-Flash"]).to be_nil
       expect(response.body).to include("Content can&#39;t be blank")
     end
   end

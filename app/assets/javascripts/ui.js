@@ -82,27 +82,23 @@ if (!openPopoverFromUrl()) {
   })
 }
 
-// Turbo keeps only the matching frame from a response, so flashes rendered by
-// the layout are thrown away. Re-render them inside the popover instead.
-const renderPopoverFlash = async response => {
-  const container = document.getElementById('shared_popover_flash')
-  if (!container) return
-  if (!response.headers.get('content-type')?.includes('text/html')) return
-
-  const html = await response.clone().text()
-  const flash = new DOMParser()
-    .parseFromString(html, 'text/html')
-    .querySelector('#flash-container')
-    ?.innerHTML.trim()
-
-  // Responses without a flash leave whatever is on screen alone, so a nested
-  // frame loading afterwards doesn't wipe it.
-  if (flash) container.innerHTML = flash
-}
-
+// Turbo frame responses are rendered without the layout, so the server hands
+// their flashes over in a header. Render them inside the popover when the
+// request came from it, and on the page itself otherwise.
 document.addEventListener('turbo:before-fetch-response', event => {
-  if (!event.target.closest?.('#shared_popover')) return
-  renderPopoverFlash(event.detail.fetchResponse.response)
+  const encoded = event.detail.fetchResponse.response.headers.get('x-flash')
+  if (!encoded) return
+
+  const html = new TextDecoder().decode(
+    Uint8Array.from(atob(encoded), character => character.charCodeAt(0))
+  )
+  const containers = event.target.closest?.('#shared_popover')
+    ? [document.getElementById('shared_popover_flash')]
+    : document.querySelectorAll('#flash-container')
+
+  containers.forEach(container => {
+    if (container) container.innerHTML = html
+  })
 })
 
 // A re-rendered form (e.g. a validation error) has no matching frame; without
