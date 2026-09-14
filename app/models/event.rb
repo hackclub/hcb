@@ -622,6 +622,8 @@ class Event < ApplicationRecord
 
   def admin_dropdown_description
     "#{name} - #{id}#{" (DEMO)" if demo_mode?}"
+
+    # Badges were removed here; they caused n+1 queries on admin pages with an event dropdown
   end
 
   def disbursement_dropdown_description
