@@ -1,10 +1,12 @@
 <%# locals: (card_grant:, label: "") %>
 
 <% cancel_tooltip = policy(card_grant).cancel? ? "Cancel this grant and return funds to the organization" : "You don't have permission to perform this action" %>
-<%= link_to cancel_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
-            data: { turbo_method: :post, turbo_confirm: "Are you sure? This will irreversibly transfer the remaining balance on this grant BACK to your account.", turbo_confirm_danger: true },
-            class: "btn btn--list-item",
-            disabled: !policy(card_grant).cancel? do %>
+<%= button_to cancel_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
+              method: :post,
+              form_class: "contents",
+              class: "btn btn--list-item",
+              disabled: !policy(card_grant).cancel?,
+              data: { turbo: true, turbo_frame: "_top", turbo_confirm: "Are you sure? This will irreversibly transfer the remaining balance on this grant BACK to your account.", turbo_confirm_danger: true } do %>
   <%= inline_icon "reply", size: 20 %>
   <div>
     <strong>Cancel grant</strong>

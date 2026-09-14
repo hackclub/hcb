@@ -27,10 +27,7 @@ class DonationsController < ApplicationController
   # Rationale: the session doesn't work inside iframes (because of third-party cookies)
   skip_before_action :verify_authenticity_token, only: [:start_donation, :make_donation, :finish_donation]
 
-  # Allow embedding donation pages inside iframes
-  content_security_policy(only: [:start_donation, :make_donation, :finish_donation]) do |policy|
-    policy.frame_ancestors "*"
-  end
+  before_action :allow_iframe_embedding, only: [:start_donation, :make_donation, :finish_donation]
 
   permissions_policy do |p|
     # Allow stripe.js to wrap PaymentRequest in non-safari browsers.
@@ -63,6 +60,7 @@ class DonationsController < ApplicationController
       donations = @event.donations
                         .left_joins(:recurring_donation)
                         .succeeded_and_not_refunded
+                        .tax_deductible
                         .where("COALESCE(recurring_donations.email, donations.email) <> ''")
 
       # Aggregate per donor in SQL: total amount + the id of each group's most
@@ -92,7 +90,7 @@ class DonationsController < ApplicationController
     end
 
     if @event.show_recent_donors
-      @recent_donors = @event.donations.includes(:recurring_donation).succeeded_and_not_refunded.order(created_at: :desc).limit(8).to_a
+      @recent_donors = @event.donations.includes(:recurring_donation).succeeded_and_not_refunded.tax_deductible.order(created_at: :desc).limit(8).to_a
       if @recent_donors.size < 8
         @recent_donors = []
       end
@@ -220,6 +218,11 @@ class DonationsController < ApplicationController
   end
 
   private
+
+  def allow_iframe_embedding
+    override_x_frame_options(SecureHeaders::OPT_OUT)
+    override_content_security_policy_directives(frame_ancestors: %w[*])
+  end
 
   # The donation page hides flashes and the form sits in a Turbo frame, so put
   # the error on the form the way a failed save does — and keep what they'd

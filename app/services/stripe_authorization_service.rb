@@ -25,13 +25,14 @@ module StripeAuthorizationService
     ).freeze
 
   # Merchant name prefixes blocked HCB-wide. Matched case-insensitively against
-  # the beginning of the merchant name, so "FAWRY*" also blocks
-  # "FAWRY*A1B2C3". Like FORBIDDEN_MERCHANT_NETWORK_IDS, a merchant matching
-  # one of these can never be allowlisted.
+  # the beginning of the merchant name, so "FAWRY" also blocks "FAWRY*A1B2C3"
+  # and "FAWRYPF*A1B2C3". Like FORBIDDEN_MERCHANT_NETWORK_IDS, a merchant
+  # matching one of these can never be allowlisted.
   FORBIDDEN_MERCHANT_NAME_PREFIXES =
     Set.new(
       [
-        "FAWRY*" # Fawry Pay, primarily used for fraud on HQ satellites. Requested by the HQ Events team.
+        "FAWRY",  # Fawry Pay (FAWRY*, FAWRYPF*, etc.), primarily used for fraud on HQ satellites. Requested by the HQ Events team.
+        "MYFAWRY" # Fawry's consumer wallet app
       ]
     ).freeze
 

@@ -239,7 +239,7 @@ class CanonicalPendingTransaction < ApplicationRecord
                         .where(canonical_pending_event_mapping: { event_id: event.id, subledger_id: subledger&.id })
                         .where(fronted: true)
                         .order(date: :asc, id: :asc)
-    pts_sum = pts.map(&:amount_cents).sum
+    pts_sum = pts.sum(&:amount_cents)
     return 0 if pts_sum.negative?
 
     cts_sum = local_hcb_code.canonical_transactions
@@ -267,6 +267,12 @@ class CanonicalPendingTransaction < ApplicationRecord
     else
       0
     end
+  end
+
+  # The moment this transaction actually occurred, which for Stripe
+  # authorizations is earlier than when we ingested it.
+  def datetime
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("created")&.then { |t| Time.at(t) } || created_at
   end
 
   def smart_memo
@@ -476,9 +482,8 @@ class CanonicalPendingTransaction < ApplicationRecord
     safely do
       reload_local_hcb_code
       ActiveRecord::Base.transaction do
-        li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime:, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
         update!(ledger_item: li)
-        li.map!
       end
     end
   end

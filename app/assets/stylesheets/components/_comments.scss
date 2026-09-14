@@ -17,6 +17,17 @@
   p:last-child {
     margin-bottom: 0;
   }
+
+  blockquote {
+    margin: 0.5rem 0;
+    padding: 0 0.75rem;
+    border-left: 3px solid map-get($palette, divider);
+    color: map-get($palette, muted);
+
+    blockquote {
+      margin: 0.5rem 0;
+    }
+  }
 }
 
 .comments .autolink {

@@ -57,6 +57,7 @@ class Wire < ApplicationRecord
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wire, required: false
   has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
+  has_one :payment, through: :payment_attempt
 
   validates_length_of :payment_for, maximum: 140
 
@@ -85,7 +86,7 @@ class Wire < ApplicationRecord
 
 
   include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  tracked owner: proc { |controller, record| record.user || controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
   after_create do
     create_canonical_pending_transaction!(

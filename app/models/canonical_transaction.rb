@@ -155,6 +155,14 @@ class CanonicalTransaction < ApplicationRecord
     end
   end
 
+  # The moment this transaction actually settled, which for Stripe and Column
+  # transactions is earlier than when we ingested it.
+  def datetime
+    raw_stripe_transaction&.stripe_transaction&.dig("created")&.then { |t| Time.at(t) } ||
+      raw_column_transaction&.column_transaction&.dig("effective_at")&.then { |t| Time.parse(t) } ||
+      created_at
+  end
+
   def smart_memo
     custom_memo || less_smart_memo
   end
@@ -492,9 +500,8 @@ class CanonicalTransaction < ApplicationRecord
           Rails.error.unexpected("CanonicalTransaction #{id} has calculated a different ledger item from its local_hcb_code. (#{calculated_ledger_item&.id} vs. #{local_hcb_code.ledger_item&.id})")
         end
 
-        li = calculated_ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        li = calculated_ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime:, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
         update!(ledger_item: li)
-        li.map!
       end
     end
   end

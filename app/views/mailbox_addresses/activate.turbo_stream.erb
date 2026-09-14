@@ -1,0 +1,7 @@
+<%= turbo_stream.replace "mailbox_address" do %>
+  <%= turbo_frame_tag "mailbox_address" do %>
+    <%= render @mailbox_address %>
+  <% end %>
+<% end %>
+
+<%= turbo_stream.replace "flash-container", partial: "application/flash" %>

@@ -117,6 +117,54 @@ RSpec.describe LegalEntity, type: :model do
 
       expect(entity.reload).not_to be_payable
     end
+
+    context "when requires_tax_form: false" do
+      it "is payable without any tax form at all" do
+        entity = create(:legal_entity)
+
+        expect(entity.payable?(requires_tax_form: false)).to be true
+      end
+
+      it "is still not payable when tin banned" do
+        entity = create(:legal_entity)
+        allow(entity).to receive(:tin_banned?).and_return(true)
+
+        expect(entity.payable?(requires_tax_form: false)).to be false
+      end
+
+      it "is still not payable when archived" do
+        entity = create(:legal_entity, archived_at: Time.current)
+
+        expect(entity.payable?(requires_tax_form: false)).to be false
+      end
+    end
+  end
+
+  describe "#tax_form_required?" do
+    let(:entity) { create(:legal_entity, :person) }
+    let(:payee) { create(:payee, legal_entity: entity) }
+
+    # A fresh legal entity has no default payout method, so a payment that
+    # doesn't need a tax form still stops at "missing_payout_method" rather
+    # than advancing past pending_legal_entity — exactly the state we want to
+    # assert against here.
+    before { allow(PaymentMailer).to receive(:with).and_return(double.as_null_object) }
+
+    it "is false with no pending payments" do
+      expect(entity.tax_form_required?).to be false
+    end
+
+    it "is false when the only pending payment isn't tax reportable" do
+      create(:payment, payee:, amount_cents: 100_000, classification: :goods)
+
+      expect(entity.reload.tax_form_required?).to be false
+    end
+
+    it "is true when a pending payment requires a tax form" do
+      create(:payment, payee:, amount_cents: 100_000, classification: :general_services)
+
+      expect(entity.reload.tax_form_required?).to be true
+    end
   end
 
   describe "#entity_type_mismatched_tax_form" do

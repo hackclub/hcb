@@ -79,7 +79,7 @@ class AchTransfer < ApplicationRecord
   pg_search_scope :search_recipient, against: [:recipient_name], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "ach_transfers.created_at"
 
   include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  tracked owner: proc { |controller, record| record.creator || controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :creator, class_name: "User", optional: true
@@ -124,6 +124,7 @@ class AchTransfer < ApplicationRecord
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :ach_transfer, required: false
   has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
+  has_one :payment, through: :payment_attempt
 
   has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
   has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction

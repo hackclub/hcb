@@ -129,11 +129,7 @@
         <h3 id="parent_organization" class="mb2 mt1">Parent Organization</h3>
 
         <div class="field">
-          <%= form.select(
-                :parent_id,
-                Event.reorder(name: :asc, id: :asc).where.not(id: event.id).map { |event| [event.name, event.id] },
-                include_blank: "None"
-              ) %>
+          <%= combobox_tag form.field_name(:parent_id), event_search_admin_index_path, value: event.parent&.to_combobox_display, placeholder: "None" %>
         </div>
 
         <div class="action">

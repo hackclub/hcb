@@ -1,0 +1,7 @@
+The following anomalies were reported in the last run of <%= @job %> (<%= @job_id %>):
+
+<ul>
+  <% @anomalies.each do |anomaly| %>
+    <li><%= anomaly %></li>
+  <% end %>
+</ul>

@@ -202,8 +202,30 @@ details.receipt-card {
   }
 }
 
-// Grey out the memo for pending transactions. The memo link uses
-// `color: inherit`, so setting the cell's color muted greys it in both themes.
+.transaction__receipt-action {
+  width: 1%;
+}
+
+.receipt-card {
+  .transaction__date {
+    min-width: 7.5rem;
+  }
+
+  .transaction__memo {
+    width: 100%;
+    max-width: 0;
+    min-width: 12rem;
+  }
+
+  .transaction__amount {
+    min-width: 7rem;
+  }
+
+  .transaction__receipt-action {
+    min-width: 21rem;
+  }
+}
+
 .transaction__memo--pending {
   color: map-get($palette, muted);
 }

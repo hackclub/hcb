@@ -1,6 +1,6 @@
 # Migrating Sidekiq's Redis
 
-We store our queue of jobs in a Redis instance. When / if we change hosting providors, we can't lose that data.
+We store our queue of jobs in a Redis instance. When / if we change hosting providers, we can't lose that data.
 
 Here are the steps to do the migration:
 

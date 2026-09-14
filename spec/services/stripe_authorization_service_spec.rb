@@ -15,12 +15,21 @@ RSpec.describe StripeAuthorizationService do
     before do
       stub_const(
         "StripeAuthorizationService::FORBIDDEN_MERCHANT_NAME_PREFIXES",
-        Set.new(["FAWRY*"]).freeze
+        Set.new(["FAWRY", "MYFAWRY"]).freeze
       )
     end
 
     it "matches a merchant name starting with a forbidden prefix" do
       expect(described_class.forbidden_merchant_name?("FAWRY*A1B2C3")).to be(true)
+    end
+
+    it "matches other descriptors sharing a forbidden prefix" do
+      expect(described_class.forbidden_merchant_name?("FAWRYPF*A1B2C3")).to be(true)
+      expect(described_class.forbidden_merchant_name?("FAWRY PAY")).to be(true)
+    end
+
+    it "matches any of the forbidden prefixes" do
+      expect(described_class.forbidden_merchant_name?("MYFAWRY TOP UP")).to be(true)
     end
 
     it "matches regardless of case or surrounding whitespace" do

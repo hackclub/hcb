@@ -51,6 +51,64 @@ RSpec.describe LoginsController do
       expect(login.user).to eq(user)
       expect(response).to redirect_to(email_login_path(login))
     end
+    it "blocks creating more than 10 logins per user in the window" do
+      original_cache = Rails.cache
+      Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+      user = create(:user)
+
+      10.times do
+        post(:create, params: { email: user.email, login: { purpose: "" } })
+      end
+
+      post(:create, params: { email: user.email, login: { purpose: "" } })
+      expect(response).to redirect_to(auth_users_path)
+      expect(flash[:error]).to eq("You're creating too many logins. Please try again later.")
+    ensure
+      Rails.cache = original_cache
+    end
+    it "allows logins again after the rate limit window expires" do
+      original_cache = Rails.cache
+      Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+      user = create(:user)
+
+      10.times do
+        post(:create, params: { email: user.email, login: { purpose: "" } })
+      end
+
+      post(:create, params: { email: user.email, login: { purpose: "" } })
+      expect(response).to redirect_to(auth_users_path)
+
+      travel(1.hour)
+      Rails.cache.clear
+
+      post(:create, params: { email: user.email, login: { purpose: "" } })
+      expect(response).to redirect_to(email_login_path(Login.last))
+    ensure
+      Rails.cache = original_cache
+    end
+  end
+
+  describe "set_login rate limit (session[:auth_email])" do
+    it "blocks creating more than 10 logins per user via session auth_email" do
+      original_cache = Rails.cache
+      Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+      user = create(:user)
+
+      10.times do
+        session[:auth_email] = user.email
+        get(:choose_login_preference)
+      end
+
+      session[:auth_email] = user.email
+      get(:choose_login_preference)
+      expect(response).to redirect_to(auth_users_path)
+      expect(flash[:error]).to eq("You're creating too many logins. Please try again later.")
+    ensure
+      Rails.cache = original_cache
+    end
   end
 
   describe "#login_code" do
@@ -65,6 +123,23 @@ RSpec.describe LoginsController do
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("Email code")
       expect(response.body).to include("We just sent a login code")
+    end
+
+    it "resends the login code when the user requests it" do
+      user = create(:user, email: "text@example.com")
+      login = create(:login, user:)
+
+      expect {
+        post(:email, params: { id: login.hashid })
+      }.to send_email(to: user.email)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Resend code")
+      expect(response.body).to include(email_login_path(login))
+
+      expect {
+        post(:email, params: { id: login.hashid })
+      }.to send_email(to: user.email)
     end
 
     it "sends an SMS code if the user has opted-in and verified their phone number" do
@@ -84,6 +159,24 @@ RSpec.describe LoginsController do
       expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("SMS code")
       expect(response.body).to include("We just sent a login code")
+    end
+
+    it "resends the SMS code when the user requests it" do
+      user = create(:user, phone_number: "+18556254225")
+      user.update!(use_sms_auth: true, phone_number_verified: true)
+      login = create(:login, user:)
+
+      verification_service = instance_double(TwilioVerificationService)
+      expect(verification_service).to receive(:send_verification_request).with(user.phone_number).twice
+      expect(TwilioVerificationService).to receive(:new).twice.and_return(verification_service)
+
+      post(:sms, params: { id: login.hashid })
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Resend code")
+
+      post(:sms, params: { id: login.hashid })
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Resend code")
     end
 
     # The UI never offers SMS for an unverified number, so this request only
