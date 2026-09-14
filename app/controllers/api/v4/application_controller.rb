@@ -29,7 +29,14 @@ module Api
         actions.each { |action| @oauth_requirements[action.to_sym] << required_scope }
       end
 
+      def self.require_admin_scope(scope, *actions)
+        @admin_scope_requirements ||= {}
+
+        actions.each { |action| @admin_scope_requirements[action.to_sym] = scope }
+      end
+
       append_before_action :check_restricted_scopes!
+      append_before_action :check_admin_scope!
 
       private
 
@@ -44,19 +51,6 @@ module Api
         end
 
         @current_user = current_token&.user
-      end
-
-      def require_admin_scope!(level)
-        unless can_admin?(level)
-          skip_authorization
-          render json: { error: "not_authorized" }, status: :forbidden
-        end
-      end
-
-      def require_trusted_oauth_app!
-        unless current_token&.application&.trusted?
-          render json: { error: "not_authorized" }, status: :forbidden
-        end
       end
 
       def check_restricted_scopes!
@@ -75,6 +69,22 @@ module Api
         has_required_scopes = required_scopes.all? { |scope| current_scopes.include?(scope) }
 
         raise Pundit::NotAuthorizedError unless has_required_scopes
+      end
+
+      def check_admin_scope!
+        scope = self.class.instance_variable_get(:@admin_scope_requirements)&.[](action_name.to_sym)
+        return unless scope
+
+        unless can_admin?(scope)
+          skip_authorization
+          render json: { error: "not_authorized" }, status: :forbidden
+        end
+      end
+
+      def require_trusted_oauth_app!
+        unless current_token&.application&.trusted?
+          render json: { error: "not_authorized" }, status: :forbidden
+        end
       end
 
       def set_expand
