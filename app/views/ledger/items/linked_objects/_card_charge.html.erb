@@ -252,7 +252,7 @@
     <% end %>
   </section>
 
-  <%= render "hcb_codes/stripe_card_receipts" %>
+  <%= render "ledger/items/stripe_card_receipts", ledger_item: %>
 </article>
 
 <% unless defined?(@frame) && @frame %>

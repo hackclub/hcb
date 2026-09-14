@@ -118,6 +118,9 @@ class ReceiptsController < ApplicationController
         attachments: [file],
         upload_method: params[:upload_method]
       ).run!
+      # TODO: migrate to the ledger item show page. `on_transaction_page?` only
+      # recognizes the HCB code transaction page, so a receipt uploaded from a
+      # ledger item show page is never prepended to its receipts list.
       next if @receiptable && !on_transaction_page?
 
       streams.append(turbo_stream.prepend(
@@ -315,6 +318,9 @@ class ReceiptsController < ApplicationController
     end
 
     if @receiptable.is_a?(HcbCode) && on_transaction_page? && !@receiptable.stripe_refund?
+      # TODO: remove this stream, and `hcb_codes/_stripe_card_receipts`, once the
+      # ledger item show page has replaced the HCB code transaction page. The
+      # ledger equivalent is streamed below.
       streams.append(
         turbo_stream.replace(
           "#{@ledger_instance}_stripe_card_receipts",
@@ -322,11 +328,28 @@ class ReceiptsController < ApplicationController
         )
       )
 
+      # TODO: migrate to the ledger item show page. This is gated on the
+      # receiptable being an HcbCode, so the ledger item show page's receipts
+      # list isn't refreshed after an upload.
       streams.append(
         turbo_stream.replace(
           "#{@ledger_instance}_receipts_list",
           partial: "receipts/list_v2",
           locals: { hcb_code: @hcb_code, frame: @frame, transaction_show_receipt_button: @show_receipt_button, transaction_show_author_img: @show_author_img }
+        )
+      )
+    end
+
+    # The ledger item show page renders its own copy of the receipt banner, keyed
+    # by the ledger item's hashid instead of by `@ledger_instance`.
+    ledger_item = @receiptable.is_a?(Ledger::Item) ? @receiptable : @receiptable.try(:ledger_item)
+
+    if ledger_item.present? && on_ledger_item_page?
+      streams.append(
+        turbo_stream.replace(
+          "#{ledger_item.hashid}_stripe_card_receipts",
+          partial: "ledger/items/stripe_card_receipts",
+          locals: { ledger_item: }
         )
       )
     end
@@ -367,9 +390,18 @@ class ReceiptsController < ApplicationController
     @receipt = Receipt.find(params[:id])
   end
 
+  # TODO: every caller of this needs migrating to the ledger item show page,
+  # which lives at `/transactions/:id` under the `ledger/items` controller and
+  # so is never matched here. Widening this to cover both pages changes each
+  # caller's behavior, so callers should move over one at a time.
   def on_transaction_page?
     route = Rails.application.routes.recognize_path(request.referrer)
     return route[:controller].classify == "HcbCode"
+  end
+
+  def on_ledger_item_page?
+    route = Rails.application.routes.recognize_path(request.referrer)
+    return route[:controller].classify == "Ledger::Item"
   end
 
   def set_transaction_display_data
