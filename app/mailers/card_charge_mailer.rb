@@ -4,7 +4,7 @@ class CardChargeMailer < ApplicationMailer
   def reversed
     @ledger_item = params[:ledger_item]
     @card_charge = @ledger_item.linked_object
-    @user = @card_charge.stripe_cardholder&.user
+    @user = @ledger_item.author
 
     return if @user.nil?
     return unless @user.email_charge_notifications_enabled?
@@ -20,6 +20,5 @@ class CardChargeMailer < ApplicationMailer
   def verification_data
     (@card_charge.raw_stripe_transactions.last || @card_charge.raw_pending_stripe_transaction)&.stripe_transaction&.dig("verification_data") || {}
   end
-
 
 end
