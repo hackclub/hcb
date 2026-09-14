@@ -26,22 +26,23 @@ const readPopoverState = () => {
 }
 
 const writePopoverState = state => {
-  const value = state ? encodeURIComponent(JSON.stringify(state)) : ''
-  const expires = state ? '' : '; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-  document.cookie = `${POPOVER_COOKIE}=${value}; path=/; SameSite=Lax${expires}`
+  const value = state
+    ? `${encodeURIComponent(JSON.stringify(state))}; Max-Age=31536000`
+    : '; Max-Age=0'
+  document.cookie = `${POPOVER_COOKIE}=${value}; path=/; SameSite=Lax`
 }
 
-const populateSharedPopover = trigger => {
+const populateSharedPopover = dataset => {
   const popover = document.getElementById('shared_popover')
   if (!popover) return
 
-  const title = trigger.dataset.popoverTitle || ''
-  const src = trigger.dataset.popoverSrc || ''
-  const frameId = trigger.dataset.popoverFrameId || ''
-  const stateUrl = trigger.dataset.popoverStateUrl || ''
-  const stateTitle = trigger.dataset.popoverStateTitle || title
-  const externalLink = trigger.dataset.popoverExternalLink || ''
-  const size = trigger.dataset.popoverSize || ''
+  const title = dataset.popoverTitle || ''
+  const src = dataset.popoverSrc || ''
+  const frameId = dataset.popoverFrameId || ''
+  const stateUrl = dataset.popoverStateUrl || ''
+  const stateTitle = dataset.popoverStateTitle || title
+  const externalLink = dataset.popoverExternalLink || ''
+  const size = dataset.popoverSize || ''
 
   popover.dataset.stateUrl = stateUrl
   popover.dataset.stateTitle = stateTitle
@@ -77,13 +78,11 @@ const populateSharedPopover = trigger => {
     }
   }
 
-  popoverTriggerData = { ...trigger.dataset }
+  popoverTriggerData = { ...dataset }
 }
 
 const openSharedPopover = state => {
-  const trigger = document.createElement('div')
-  Object.assign(trigger.dataset, state.trigger)
-  populateSharedPopover(trigger)
+  populateSharedPopover(state.trigger)
   BK.s('modal', '#shared_popover').modal({
     fadeDuration: 200,
     fadeDelay: 0.75,
@@ -107,7 +106,7 @@ const loadModals = element => {
     }
     document.dispatchEvent(new CustomEvent('hcb:close-menus'))
     if ($(this).data('modal') === 'shared_popover') {
-      populateSharedPopover(this)
+      populateSharedPopover(this.dataset)
     }
     BK.s('modal', '#' + $(this).data('modal')).modal({
       fadeDuration: 200,
