@@ -153,6 +153,7 @@ module Reimbursement
       return [] unless report.expenses.pending.none?
       return [] unless report.may_mark_reimbursement_requested?
       return [] unless policy(report).request_reimbursement?
+      return [] if report.currency != "USD" && report.wise_transfer_may_exceed_balance?
 
       [turbo_stream.open_modal("all_expenses_approved_modal")]
     end
