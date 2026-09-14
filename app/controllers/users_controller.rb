@@ -390,25 +390,26 @@ class UsersController < ApplicationController
     version_class = Governance::Admin::Transfer::Limit.paper_trail.version_class
 
     @history = if limit
-      version_class
-        .where(
-          item_type: "Governance::Admin::Transfer::Limit",
-          item_id: limit.id
-        )
-        .order(created_at: :desc)
-        .page(params[:page])
-        .per(params[:per] || 25)
-    else
-      version_class.none
-        .page(params[:page])
-        .per(params[:per] || 25)
-    end
+                 version_class
+                   .where(
+                     item_type: "Governance::Admin::Transfer::Limit",
+                     item_id: limit.id
+                   )
+                   .order(created_at: :desc)
+                   .page(params[:page])
+                   .per(params[:per] || 25)
+               else
+                 version_class
+                   .none
+                   .page(params[:page])
+                   .per(params[:per] || 25)
+               end
 
     changer_ids = @history.map(&:whodunnit).compact.uniq
 
     @changers = User
-      .where(id: changer_ids)
-      .index_by { |user| user.id.to_s }
+                .where(id: changer_ids)
+                .index_by { |user| user.id.to_s }
 
     render partial: "users/admin_transfer_limit_history"
   end

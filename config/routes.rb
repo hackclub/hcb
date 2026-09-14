@@ -187,7 +187,7 @@ Rails.application.routes.draw do
 
       post "update_admin_transfer_limit", to: "users#update_admin_transfer_limit"
       get "admin_transfer_limit_history", to: "users#admin_transfer_limit_history"
-      
+
     end
     post "delete_profile_picture", to: "users#delete_profile_picture"
     post "generate_totp"
