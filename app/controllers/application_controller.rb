@@ -60,7 +60,7 @@ class ApplicationController < ActionController::Base
   # A redirect is skipped so its flash survives to the response Turbo lands on.
   after_action do
     if turbo_frame_request? && !response.redirect? && helpers.renderable_flash.any?
-      response.set_header("X-Flash", Base64.strict_encode64(view_context.render("application/flash_messages")))
+      response.set_header("X-Flash", ERB::Util.url_encode(view_context.render("application/flash_messages")))
       helpers.renderable_flash.each_key { |key| flash.discard(key) }
     end
   end
