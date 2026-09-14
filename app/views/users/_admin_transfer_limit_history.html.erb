@@ -20,9 +20,7 @@
             </td>
 
             <td class="py-[10px]">
-              <%= number_to_currency(
-                  changes["amount_cents"]&.last.to_i / 100.0
-              ) %>
+              <%= number_to_currency(changes["amount_cents"]&.last.to_i / 100.0) %>
             </td>
 
             <td>
@@ -35,7 +33,6 @@
                 <% end %>
               </div>
             </td>
-
 
           </tr>
         <% end %>
