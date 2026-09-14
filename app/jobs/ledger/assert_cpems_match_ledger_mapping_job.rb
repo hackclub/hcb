@@ -13,7 +13,7 @@ class Ledger
 
       @cpts.find_each do |cpt|
         safely do
-            report_anomaly "CanonicalPendingTransaction #{cpt.id} canonical_pending_event_mapping does not match Ledger::Item"
+          report_anomaly "CanonicalPendingTransaction #{cpt.id} canonical_pending_event_mapping does not match Ledger::Item"
         end
       end
     end
