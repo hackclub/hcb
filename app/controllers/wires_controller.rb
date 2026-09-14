@@ -3,6 +3,7 @@
 class WiresController < ApplicationController
   include SetEvent
   include Admin::TransferApprovable
+  include Admin::PaymentApprovable
 
   before_action :set_event, only: %i[new create]
   before_action :set_wire, only: %i[show reject send_wire edit update]
@@ -65,6 +66,8 @@ class WiresController < ApplicationController
     authorize @wire
 
     ensure_admin_may_approve!(@wire, amount_cents: @wire.usd_amount_cents)
+    ensure_legal_entity_payable!(@wire, classification: params[:classification])
+
     @wire.send_wire!
 
     if params[:charge_fee] == "1"

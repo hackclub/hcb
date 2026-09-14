@@ -39,7 +39,7 @@
 
   <div class="field mb2">
     <%= form.label :email, "Your email" %>
-    <%= form.email_field :email, placeholder: "fionah@gmail.com", required: true %>
+    <%= form.email_field :email, placeholder: "fionah@gmail.com", required: true, value: current_user&.email %>
   </div>
 
   <%= invisible_captcha :subtitle %>

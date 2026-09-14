@@ -5,6 +5,34 @@ require "rails_helper"
 RSpec.describe Reimbursement::ReportsController do
   include SessionSupport
 
+  describe "#start" do
+    render_views
+
+    def email_field_value(body)
+      Nokogiri::HTML5(body).at_css('input[name="reimbursement_report[email]"]')&.[]("value")
+    end
+
+    it "prefills the email field when signed in" do
+      event = create(:event, public_reimbursement_page_enabled: true)
+      user = create(:user, email: "fiona@example.com")
+      create_session(user, verified: true)
+
+      get(:start, params: { event_name: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(email_field_value(response.body)).to eq("fiona@example.com")
+    end
+
+    it "does not prefill the email field when signed out" do
+      event = create(:event, public_reimbursement_page_enabled: true)
+
+      get(:start, params: { event_name: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(email_field_value(response.body)).to be_blank
+    end
+  end
+
   describe "#edit" do
     render_views
 
