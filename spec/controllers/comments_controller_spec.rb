@@ -12,73 +12,51 @@ RSpec.describe CommentsController do
     let(:report) { create(:reimbursement_report, user:) }
     let(:frame_url) { "http://test.host/reimbursements/reports/#{report.id}?frame=true" }
 
-    before do
-      create_session(user, verified: true)
-      request.env["HTTP_REFERER"] = "http://test.host/my/inbox"
-    end
+    before { create_session(user, verified: true) }
 
-    def create_comment
+    def create_comment(content: "Hi!", return_to: frame_url)
       post :create, params: {
         reimbursement_report_id: report.id,
         comment: {
-          content: "Hi!",
+          content:,
           commentable_type: "Reimbursement::Report",
           commentable_id: report.id,
-          return_to: frame_url
+          return_to:
         }
       }
     end
 
-    it "reloads the frame and streams the flash into the popover when submitted from within a turbo frame" do
+    it "returns to the frame it was submitted from, keeping the flash for the response Turbo lands on" do
       request.headers["Turbo-Frame"] = "reimbursement_report_#{report.id}"
 
       expect { create_comment }.to change { report.comments.count }.by(1)
-      expect(response.media_type).to eq Mime[:turbo_stream]
-      expect(response.body).to include("shared_popover_flash")
-      expect(response.body).to include("Comment created.")
-      expect(response.body).to include("src=\"#{frame_url}\"")
+      expect(response).to redirect_to(frame_url)
+      expect(response.headers["X-Flash"]).to be_nil
+      expect(flash[:success]).to eq("Comment created.")
     end
 
-    it "ignores an external return_to and reloads the commentable instead" do
-      request.headers["Turbo-Frame"] = "reimbursement_report_#{report.id}"
-
-      post :create, params: {
-        reimbursement_report_id: report.id,
-        comment: {
-          content: "Hi!",
-          commentable_type: "Reimbursement::Report",
-          commentable_id: report.id,
-          return_to: "https://evil.example.com"
-        }
-      }
-
-      expect(response.body).not_to include("evil.example.com")
-      expect(response.body).to include("src=\"#{reimbursement_report_path(report)}\"")
+    it "ignores an external return_to and falls back to the commentable" do
+      expect { create_comment(return_to: "https://evil.example.com") }.to change { report.comments.count }.by(1)
+      expect(response).to redirect_to(reimbursement_report_path(report))
     end
 
-    it "streams an error flash into the popover when the comment is invalid" do
+    it "flashes the errors of an invalid comment submitted from a frame, whose form is discarded" do
       request.headers["Turbo-Frame"] = "reimbursement_report_#{report.id}"
 
-      expect {
-        post :create, params: {
-          reimbursement_report_id: report.id,
-          comment: {
-            content: "",
-            commentable_type: "Reimbursement::Report",
-            commentable_id: report.id,
-            return_to: frame_url
-          }
-        }
-      }.not_to(change { report.comments.count })
+      expect { create_comment(content: "") }.not_to(change { report.comments.count })
 
       expect(response).to have_http_status(:unprocessable_content)
-      expect(response.body).to include("shared_popover_flash")
-      expect(response.body).to include("Content can&#39;t be blank")
+      expect(flash[:error]).to eq("Content can't be blank")
+      expect(Base64.decode64(response.headers["X-Flash"])).to include("Content can&#39;t be blank")
     end
 
-    it "redirects back to the referring page otherwise" do
-      expect { create_comment }.to change { report.comments.count }.by(1)
-      expect(response).to redirect_to("http://test.host/my/inbox")
+    it "renders the form errors, without a flash, outside of a frame" do
+      expect { create_comment(content: "") }.not_to(change { report.comments.count })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(flash[:error]).to be_nil
+      expect(response.headers["X-Flash"]).to be_nil
+      expect(response.body).to include("Content can&#39;t be blank")
     end
   end
 

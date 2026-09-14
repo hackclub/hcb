@@ -82,6 +82,32 @@ if (!openPopoverFromUrl()) {
   })
 }
 
+// Turbo frame responses are rendered without the layout, so the server hands
+// their flashes over in a header. Render them inside the popover when the
+// request came from it, and on the page itself otherwise.
+document.addEventListener('turbo:before-fetch-response', event => {
+  const encoded = event.detail.fetchResponse.response.headers.get('x-flash')
+  if (!encoded) return
+
+  const html = new TextDecoder().decode(
+    Uint8Array.from(atob(encoded), character => character.charCodeAt(0))
+  )
+  const containers = event.target.closest?.('#shared_popover')
+    ? [document.getElementById('shared_popover_flash')]
+    : document.querySelectorAll('#flash-container')
+
+  containers.forEach(container => {
+    if (container) container.innerHTML = html
+  })
+})
+
+// A re-rendered form (e.g. a validation error) has no matching frame; without
+// this Turbo would navigate the whole page away from the popover. The flash
+// above explains what went wrong.
+document.addEventListener('turbo:frame-missing', event => {
+  if (event.target.closest('#shared_popover')) event.preventDefault()
+})
+
 const loadModals = element => {
   $(element).on('click', '[data-behavior~=modal_trigger]', function (e) {
     const controlOrCommandClick = e.ctrlKey || e.metaKey
