@@ -5,7 +5,9 @@
 object_shape(json, comment) do
   json.user comment.user, partial: "api/v4/users/user", as: :user
   json.content comment.content
-  json.file rails_blob_url(comment.file) if comment.file.attached?
+  if comment.attached_files.any?
+    json.files comment.attached_files.map { |file| rails_blob_url(file) }
+  end
 
   if comment.admin_only
     json.admin_only true
