@@ -30,7 +30,7 @@
             <tr>
               <td><%= link_to fee.event.name, fee.event %></td>
               <td><%= render_money fee.amount_cents %></td>
-              <td><%= link_to "Details", url_for(fee.ledger_item) %></td>
+              <td><%= link_to "Details", url_for(fee.ledger_item) if fee.ledger_item.present? %></td>
             </tr>
           <% end %>
         </tbody>

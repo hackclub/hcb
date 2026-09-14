@@ -64,10 +64,20 @@
 
     <div>
       <strong>Direction</strong>
+      <% counterparty_item = disbursement.counterparty.ledger_item %>
+      <% link_to_counterparty = counterparty_item.present? && Ledger::ItemPolicy.new(current_user, counterparty_item).show? %>
       <% if disbursement.is_a?(Disbursement::Outgoing) %>
-        <%= link_to_if Ledger::ItemPolicy.new(current_user, disbursement.counterparty.ledger_item).show?, "Outgoing →", ledger_item_path(disbursement.counterparty.ledger_item), class: "tooltipped tooltipped--n text-nowrap", "aria-label": "View incoming transfer on #{destination.name}" %>
+        <% if link_to_counterparty %>
+          <%= link_to "Outgoing →", ledger_item_path(counterparty_item), class: "tooltipped tooltipped--n text-nowrap", "aria-label": "View incoming transfer on #{destination.name}" %>
+        <% else %>
+          <span class="text-nowrap">Outgoing →</span>
+        <% end %>
       <% else %>
-        <%= link_to_if Ledger::ItemPolicy.new(current_user, disbursement.counterparty.ledger_item).show?, "⇢ Incoming", ledger_item_path(disbursement.counterparty.ledger_item), class: "tooltipped tooltipped--n text-nowrap", "aria-label": "View outgoing transfer on #{source.name}" %>
+        <% if link_to_counterparty %>
+          <%= link_to "⇢ Incoming", ledger_item_path(counterparty_item), class: "tooltipped tooltipped--n text-nowrap", "aria-label": "View outgoing transfer on #{source.name}" %>
+        <% else %>
+          <span class="text-nowrap">⇢ Incoming</span>
+        <% end %>
       <% end %>
     </div>
 
@@ -133,7 +143,7 @@
     <% end %>
   </section>
 
-  <% if ledger_item.primary_ledger.event.can_front_balance? %>
+  <% if ledger_item.primary_ledger&.can_front_balance? %>
     <section class="ledger-item--footer">
       <% if disbursement.may_mark_rejected? %>
         <% admin_tool "w-fit" do %>

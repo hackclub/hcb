@@ -15,7 +15,7 @@
       <span><%= this_transaction %> was declined
       <%= {
             merchant_not_allowed_globally: "by HCB because this merchant is not allowed",
-            merchant_not_allowed: "by #{ledger_item.primary_ledger.event.name} because this merchant is not allowed",
+            merchant_not_allowed: "by #{card.event.name} because this merchant is not allowed",
             cash_withdrawals_not_allowed: "by HCB because cash withdrawals were not enabled on this card",
             user_cards_locked: "by HCB because you have overdue receipts"
           }[hcb_decline_reason] || "due to insufficient funds" %>.</span>
@@ -74,7 +74,7 @@
     <% if hcb_decline_reason == :merchant_not_allowed_globally %>
       This merchant is blocked because it is commonly associated with fraudulent transactions. If you are trying to make a payment, please use a <%= link_to "different transfer method", "https://help.hcb.hackclub.com/en/articles/15033356-how-do-i-transfer-money" %>.
     <% elsif hcb_decline_reason == :merchant_not_allowed %>
-      If you believe that this merchant should be enabled, please reach out to the <%= ledger_item.primary_ledger.event.name %> team.
+      If you believe that this merchant should be enabled, please reach out to the <%= card.event.name %> team.
     <% elsif hcb_decline_reason == :cash_withdrawals_not_allowed %>
       Cash withdrawals are disabled for most HCB cards. If you need to make a purchase with cash, try using personal funds and submitting a reimbursement report.
     <% elsif hcb_decline_reason == :user_cards_locked %>
