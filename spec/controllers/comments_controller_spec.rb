@@ -47,7 +47,7 @@ RSpec.describe CommentsController do
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(flash[:error]).to eq("Content can't be blank")
-      expect(Base64.decode64(response.headers["X-Flash"])).to include("Content can&#39;t be blank")
+      expect(CGI.unescape(response.headers["X-Flash"])).to include("Content can&#39;t be blank")
     end
 
     it "renders the form errors, without a flash, outside of a frame" do

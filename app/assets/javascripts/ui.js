@@ -89,9 +89,7 @@ document.addEventListener('turbo:before-fetch-response', event => {
   const encoded = event.detail.fetchResponse.response.headers.get('x-flash')
   if (!encoded) return
 
-  const html = new TextDecoder().decode(
-    Uint8Array.from(atob(encoded), character => character.charCodeAt(0))
-  )
+  const html = decodeURIComponent(encoded)
   const containers = event.target.closest?.('#shared_popover')
     ? [document.getElementById('shared_popover_flash')]
     : document.querySelectorAll('#flash-container')
