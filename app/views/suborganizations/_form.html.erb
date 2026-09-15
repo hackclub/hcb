@@ -1,6 +1,9 @@
-<%# locals: (event:) %>
+<%# locals: (event:, argosy_grant_amount: nil) %>
 
 <%= form_with(url: event_create_sub_organization_path(event.slug), method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full", "x-data" => "{ scoped_tags: [], query: '' }" }) do |form| %>
+  <% if argosy_grant_amount.present? %>
+    <%= form.hidden_field :argosy_grant_amount, value: argosy_grant_amount %>
+  <% end %>
   <div class="card border b--info mt2 mb2 container--sm mx-auto">
     <p class="mt0 mb0">
       Sub-organizations are separate organizations nested under <%= event.name %>. All members
