@@ -686,12 +686,7 @@ class Event < ApplicationRecord
       return sum
     end
 
-    Ledger::Query.new({
-                        "$and": [
-                          ({ datetime: { "$gte": start_date } } if start_date),
-                          ({ datetime: { "$lte": end_date } } if end_date)
-                        ].compact
-                      }).execute(ledgers: [ledger]).sum(:amount_cents)
+    ledger.balance_cents(start_date:, end_date:)
   end
 
   # This calculates v2 cents of settled (Canonical Transactions)
@@ -751,14 +746,16 @@ class Event < ApplicationRecord
     cpt.sum(:amount_cents)
   end
 
-  def balance_available_v2_cents(legacy: false)
-    @balance_available_v2_cents ||= begin
+  memo_wise def balance_available_v2_cents(legacy: false)
+    if legacy
       fee_balance = can_front_balance? ? fronted_fee_balance_v2_cents : fee_balance_v2_cents
       if fee_balance.positive?
         balance_v2_cents(legacy:) - fee_balance
       else # `fee_balance` is negative, indicating a fee credit
         balance_v2_cents(legacy:)
       end
+    else
+      ledger.balance_available_cents
     end
   end
 
