@@ -56,7 +56,7 @@ class Ledger < ApplicationRecord
                       }).execute(ledgers: [self]).sum(:amount_cents)
   end
 
-  monetize def available_balance_cents = balance_cents - fronted_fee_balance_cents
+  monetize def available_balance_cents = balance_cents - [fronted_fee_balance_cents, 0].max
 
   def can_front_balance?
     event&.can_front_balance? || card_grant&.event&.can_front_balance? || false
