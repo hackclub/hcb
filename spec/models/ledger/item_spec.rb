@@ -475,6 +475,52 @@ RSpec.describe Ledger::Item, type: :model do
     end
   end
 
+  describe "CardCharge reversed/released mailer" do
+    # Pins linked_object past the refresh! callbacks (which would otherwise
+    # recompute status from this item's nonexistent canonical transactions),
+    # mirroring the account-verification specs above.
+    def card_charge_item
+      item = create(:ledger_item)
+      item.update_columns(linked_object_type: "CardCharge", linked_object_id: create(:raw_stripe_transaction).card_charge.id)
+      item.reload
+    end
+
+    it "emails the cardholder when a card charge is reversed" do
+      item = card_charge_item
+
+      expect {
+        item.update!(status: "reversed")
+      }.to have_enqueued_mail(CardChargeMailer, :reversed)
+    end
+
+    it "emails the cardholder when a card charge authorization is released" do
+      item = card_charge_item
+
+      expect {
+        item.update!(status: "released")
+      }.to have_enqueued_mail(CardChargeMailer, :reversed)
+    end
+
+    it "does not email for other linked object types that reverse" do
+      item = create(:ledger_item)
+      item.update_columns(linked_object_type: "AchTransfer")
+      item.reload
+
+      expect {
+        item.update!(status: "reversed")
+      }.not_to have_enqueued_mail(CardChargeMailer, :reversed)
+    end
+
+    it "does not re-email when the item is saved again without a status change" do
+      item = card_charge_item
+      item.update!(status: "reversed")
+
+      expect {
+        item.update!(custom_memo: "Refunded")
+      }.not_to have_enqueued_mail(CardChargeMailer, :reversed)
+    end
+  end
+
   describe "#author" do
     it "is nobody for an in-person donation, which the donor paid rather than the organizer who collected it" do
       stub_donation_payment_intent_creation

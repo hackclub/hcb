@@ -101,6 +101,10 @@ class Ledger
     after_create :map!
     after_touch :map!
 
+    after_update if: -> { linked_object_type == "CardCharge" && (status_previously_changed?(to: "reversed") || status_previously_changed?(to: "released")) } do
+      CardChargeMailer.with(ledger_item: self).reversed.deliver_later
+    end
+
     scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
 
     def status_text
