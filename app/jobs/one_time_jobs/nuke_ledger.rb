@@ -21,8 +21,6 @@ module OneTimeJobs
       puts "Deleted all Ledger::Mapping records"
     end
 
-    # personal_transactions.ledger_item_id is NOT NULL, so these rows have to be
-    # deleted rather than nullified. Their invoices are left alone.
     def delete_personal_transactions
       count = PersonalTransaction.count
       puts "Deleting #{count} PersonalTransaction records"
