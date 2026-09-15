@@ -1694,8 +1694,10 @@ class EventsController < ApplicationController
       member:,
       features: {
         subevents: event.subevents_enabled?,
-        card_grants: event.plan.card_grants_enabled?
-      }
+        card_grants: event.plan.card_grants_enabled?,
+        payments: policy(event).payments?,
+        contractors: policy(event).contractors?
+      }.select { |_, enabled| enabled }
     }
   end
 
