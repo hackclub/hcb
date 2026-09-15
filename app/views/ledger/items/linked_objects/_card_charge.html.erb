@@ -118,7 +118,7 @@
               <p>
                 <strong>Currency</strong>
                 <span>
-                <%= card_charge.stripe_merchant_data_currency.upcase %>
+                <%= card_charge.merchant_currency&.upcase %>
                 </span>
               </p>
               <% if is_city_or_phone?(card_charge.stripe_merchant_data["city"]) == :phone %>
@@ -231,10 +231,11 @@
           <span><strong>Sign in to view</strong></span>
         <% end %>
       </div>
-      <% if ledger_item.personal_transaction.present? %>
+      <% repayment = ledger_item.personal_transaction&.invoice %>
+      <% if repayment.present? %>
         <p>
           <strong>Repaid by</strong>
-          <%= link_to ledger_item.personal_transaction.invoice.ledger_item.memo, ledger_item.personal_transaction.invoice %>
+          <%= link_to (repayment.ledger_item || repayment.local_hcb_code).memo, repayment %>
         </p>
       <% end %>
       <% if card_charge.stripe_card.card_grant.present? %>
@@ -276,7 +277,7 @@
         <p>
           <strong>Currency</strong>
           <span>
-          <%= card_charge.stripe_merchant_data_currency.upcase %>
+          <%= card_charge.merchant_currency&.upcase %>
           </span>
         </p>
         <% if is_city_or_phone?(card_charge.stripe_merchant_data["city"]) == :phone %>
