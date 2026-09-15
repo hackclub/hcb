@@ -509,8 +509,6 @@ class UsersController < ApplicationController
     authorize current_user
     svc = UserService::EnrollSmsAuth.new(current_user)
     svc.start_verification
-    # flash[:info] = "Verifying phone number"
-    # redirect_to edit_user_path(current_user)
     render json: { message: "started verification successfully" }, status: :ok
   rescue UserService::EnrollSmsAuth::SMSEnrollmentError => e
     render json: { error: e.message }, status: :unprocessable_content
@@ -522,12 +520,8 @@ class UsersController < ApplicationController
     svc = UserService::EnrollSmsAuth.new(current_user)
     svc.complete_verification(params[:code])
     svc.enroll_sms_auth if params[:enroll_sms_auth]
-    # flash[:success] = "Completed verification"
-    # redirect_to edit_user_path(current_user)
     render json: { message: "completed verification successfully" }, status: :ok
   rescue ::Errors::InvalidLoginCode
-    # flash[:error] = "Invalid login code"
-    # redirect_to edit_user_path(current_user)
     render json: { error: "invalid login code" }, status: :forbidden
   rescue UserService::EnrollSmsAuth::SMSEnrollmentError => e
     render json: { error: e.message }, status: :unprocessable_content
