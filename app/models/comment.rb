@@ -75,6 +75,28 @@ class Comment < ApplicationRecord
     file.attached?
   end
 
+  # ActiveStorage attachments aren't tracked columns, so changing only the
+  # attached file wouldn't otherwise produce a version. Force one.
+  # rubocop:disable Rails/ActiveRecordOverride -- a callback can't replace the
+  # save itself, which is what forcing the version requires.
+  def save(**options, &block)
+    return super unless recording_file_change?
+    return false unless valid?
+
+    record_file_change_version!
+    true
+  end
+  # rubocop:enable Rails/ActiveRecordOverride
+
+  def save!(**options, &block)
+    return super unless recording_file_change?
+
+    raise ActiveRecord::RecordInvalid, self unless valid?
+
+    record_file_change_version!
+    true
+  end
+
   def reactions_by_emoji
     reactions.joins(:reactor)
              .select("comment_reactions.reactor_id, comment_reactions.emoji, users.*")
@@ -119,6 +141,26 @@ class Comment < ApplicationRecord
 
   def send_notification_email
     CommentMailer.with(comment: self).notification.deliver_later
+  end
+
+  def recording_file_change?
+    # `record_file_change_version!` saves through PaperTrail, which calls back
+    # into `save`; the flag keeps that inner save on the normal path.
+    !@recording_file_change && persisted? && attachment_changes["file"].present?
+  end
+
+  # Forces a PaperTrail version even though the attachment change itself
+  # isn't visible to PaperTrail (it's a separate ActiveStorage table, not a
+  # tracked column), and tags it so the edit history can recognize it as a
+  # file change rather than a content edit.
+  def record_file_change_version!
+    @recording_file_change = true
+    version = paper_trail.save_with_version
+    return unless version
+
+    version.update_columns(object_changes: (version.object_changes || {}).merge("file" => [true, true]))
+  ensure
+    @recording_file_change = false
   end
 
 end
