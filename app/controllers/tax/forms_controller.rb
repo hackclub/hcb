@@ -7,6 +7,10 @@ module Tax
     def show
       authorize @form
 
+      # A manually entered or imported form has no certificate to sign, so there
+      # is nothing for this page to embed.
+      return redirect_to legal_entity_path(@legal_entity) unless @form.sent_with_taxbandits?
+
       @form.sync_with_taxbandits
 
       if @form.completed?

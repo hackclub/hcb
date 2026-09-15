@@ -91,7 +91,10 @@ class LegalEntity < ApplicationRecord
     return true unless requires_tax_form
 
     form = latest_completed_tax_form
-    requires_verification = form&.form_type == "W9" && tax_identification_number.predicted_to_be_over_threshold?
+    # Only a form we actually sent through TaxBandits can report a TIN match, so
+    # a manually entered or imported one has nothing to wait on. Gating on it
+    # anyway would leave every migrated W-9 permanently unpayable.
+    requires_verification = form&.sent_with_taxbandits? && form.form_type == "W9" && tax_identification_number.predicted_to_be_over_threshold?
 
     form.present? && mismatched_tax_form.nil? && entity_type_mismatched_tax_form.nil? &&
       (form.taxbandits_tin_match_success? || !requires_verification)

@@ -89,7 +89,9 @@ module Tax
       legal_entity.refresh_pending_contractors_payments!
     end
 
-    after_update if: -> { tin_hash_previously_changed?(from: nil) } do
+    # after_save, not after_update: an imported form is created already carrying
+    # the TIN it was filed with, rather than completing into one later.
+    after_save if: -> { tin_hash_previously_changed?(from: nil) } do
       # Locked: a legal entity's TIN can never change once set, and two forms
       # completing concurrently would otherwise both see a nil hash and race.
       #
