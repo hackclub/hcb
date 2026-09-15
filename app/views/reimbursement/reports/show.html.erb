@@ -263,6 +263,12 @@
 
 <%= render partial: "reimbursement/reports/actions", locals: { report: @report, user: @user } %>
 
+<% if @report.event.present? %>
+  <% admin_tool("mt-4 p-3") do %>
+    <%= render "events/mission_statement", event: @report.event %>
+  <% end %>
+<% end %>
+
 <% admin_tool("mt-4 p-3") do %>
   <%= error_boundary fallback_text: "Failed to load payout information" do %>
     <%= render partial: "reimbursement/reports/payout_information", locals: { report: @report } %>

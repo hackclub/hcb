@@ -10,6 +10,10 @@
 
 <h3>Transfer Details</h3>
 
+<% admin_tool do %>
+  <%= render "events/mission_statement", event: @paypal_transfer.event %>
+<% end %>
+
 <table class="table--autosize">
   <tbody>
     <tr>
