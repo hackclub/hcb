@@ -32,6 +32,8 @@ RSpec.describe LoginsController do
       email = "test@example.com"
       expect(User.find_by(email:)).to be_nil
 
+      get(:new)
+
       expect { post(:create, params: { email: "test@example.com", login: { purpose: "" } }) }
         .to( change { Login.count }.by(1).and(change { User.count }.by(1)) )
 
@@ -43,6 +45,8 @@ RSpec.describe LoginsController do
 
     it "uses the existing user if the email matches" do
       user = create(:user, email: "test@example.com")
+
+      get(:new)
 
       expect { post(:create, params: { email: user.email, login: { purpose: "" } }) }
         .to(change { Login.count }.by(1).and(change { User.count }.by(0)))
