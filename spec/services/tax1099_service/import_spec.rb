@@ -128,8 +128,49 @@ RSpec.describe Tax1099Service::Import do
     expect(User.find_by(email: "orpheus@hackclub.com")).to be_nil
   end
 
-  it "refuses an export that is missing a column it cannot work without" do
+  it "refuses an export that is missing a column it cannot work without, naming what it does have" do
     expect { import("Email,TIN\norpheus@hackclub.com,123456789\n") }
-      .to raise_error(described_class::HeaderError, /form_type/)
+      .to raise_error(described_class::HeaderError, /form_type.*Email, TIN/m)
+  end
+
+  # Tax1099 lets whoever runs the export choose its headers, so neither the
+  # header nor the value spellings below are a schema we can rely on.
+  it "reads a column the aliases don't cover when it is named explicitly" do
+    csv = "Email,Tax ID Number,TIN Type,Form Type,Signed On\n" \
+          "orpheus@hackclub.com,123456789,SSN,W-9,06/15/2023\n"
+
+    result = import(csv, columns: { tin: "Tax ID Number", completed_at: "Signed On" })
+
+    expect(result.imported).to eq(1)
+  end
+
+  it "reports which header each field resolved to, without reading a row" do
+    mapping = described_class.new(csv: csv(row), columns: { name: "Nope" }).column_mapping
+
+    expect(mapping).to include(email: "Email", tin: "TIN", form_type: "Form Type", name: "Nope")
+    expect(mapping[:address_line2]).to be_nil
+  end
+
+  it "matches a form type however the export spells it" do
+    ["W-9", "W9", "Form W-9"].each_with_index do |spelling, index|
+      result = import(csv(row(email: "orpheus#{index}@hackclub.com", form_type: spelling)))
+
+      expect(result.imported).to eq(1)
+    end
+  end
+
+  it "keeps a W-8BEN-E off the W-8BEN entity type its name is a prefix of" do
+    import(csv(row(email: "boss@acme.com", tin: "987654321", tin_type: "EIN",
+                   form_type: "Form W-8BEN-E", business_name: "Acme Inc")))
+
+    entity = User.find_by(email: "boss@acme.com").legal_entities.find_by(entity_type: :business)
+    expect(entity.tax_forms.sole.form_type).to eq("W8BENE")
+  end
+
+  it "reads a TIN type that is spelt out rather than coded" do
+    result = import(csv(row(email: "new@hackclub.com", tin_type: "Social Security Number")))
+
+    expect(result.imported).to eq(1)
+    expect(User.find_by(email: "new@hackclub.com").personal_legal_entity.tax_forms.sole).to be_entity_person
   end
 end

@@ -36,35 +36,37 @@ module Tax1099Service
 
     REQUIRED_COLUMNS = %i[email tin form_type completed_at].freeze
 
-    FORM_TYPES = {
-      "w 9"      => "W9",
-      "w9"       => "W9",
-      "w 8ben"   => "W8BEN",
-      "w8ben"    => "W8BEN",
-      "w 8ben e" => "W8BENE",
-      "w8ben e"  => "W8BENE",
-      "w8bene"   => "W8BENE",
-      "w 8eci"   => "W8ECI",
-      "w8eci"    => "W8ECI",
-      "w 8imy"   => "W8IMY",
-      "w8imy"    => "W8IMY",
-      "w 8exp"   => "W8EXP",
-      "w8exp"    => "W8EXP",
-    }.freeze
+    # Derived from the model so it can't drift from what we're allowed to store.
+    # Longest first: "w8bene" has to win before "w8ben" can match its prefix.
+    FORM_TYPES = Tax::Form.form_types.keys.sort_by { |type| -type.length }.freeze
 
     BUSINESS_FORM_TYPES = %w[W8BENE W8IMY W8EXP].freeze
-    INDIVIDUAL_TIN_TYPES = %w[ssn itin atin].freeze
-    ENTITY_TIN_TYPES = %w[ein].freeze
+
+    # Matched as substrings of the normalized cell, so both a code and its spelt
+    # out form land in the same bucket. Anything in neither list is a TIN the IRS
+    # didn't issue, which is what makes a W-8 filer foreign.
+    INDIVIDUAL_TIN_TYPES = ["ssn", "itin", "atin", "social security", "individual taxpayer"].freeze
+    ENTITY_TIN_TYPES = ["ein", "employer identification"].freeze
 
     # Tax1099 exports US-ordered dates, which Time.zone.parse reads day-first.
     # Four-digit years come first so a two-digit pattern can't half-match one.
     DATE_FORMATS = ["%m/%d/%Y", "%Y-%m-%d", "%m/%d/%y"].freeze
     MIN_FILING_YEAR = 1990
 
-    def initialize(csv:, dry_run: false)
+    # `columns` maps a field to the exact header carrying it, for an export whose
+    # spelling the aliases above don't cover. Tax1099 lets whoever runs the export
+    # choose its headers, so there is no one schema to hard-code against.
+    def initialize(csv:, dry_run: false, columns: {})
       @csv = csv
       @dry_run = dry_run
+      @overrides = columns.symbolize_keys
       @result = Result.new(imported: 0, skipped: 0, review: [], errors: [])
+    end
+
+    # Which header each field resolved to, for confirming the mapping before a
+    # run. Reads headers only, never a row, so it never touches a TIN.
+    def column_mapping
+      resolve_columns(CSV.parse_line(content, headers: true)&.headers || [])
     end
 
     def run
@@ -91,34 +93,47 @@ module Tax1099Service
     private
 
     def parse
-      # Excel writes a byte order mark ahead of the first header.
-      content = @csv.to_s.delete_prefix("\uFEFF")
       rows = CSV.parse(content, headers: true, skip_blanks: true)
-
-      @headers = COLUMNS.transform_values do |candidates|
-        rows.headers.compact.find { |header| candidates.include?(normalize(header)) }
-      end
+      @headers = resolve_columns(rows.headers)
 
       missing = REQUIRED_COLUMNS.select { |column| @headers[column].nil? }
-      raise HeaderError, "CSV has no column for: #{missing.join(", ")}" if missing.any?
+      if missing.any?
+        # Name what the file actually has: the fix is almost always re-exporting
+        # with a different header selected, or passing that header in `columns`.
+        raise HeaderError, "CSV has no column for #{missing.join(", ")}. " \
+                           "Its headers are: #{rows.headers.compact.join(", ")}"
+      end
 
       rows
     end
 
+    # Excel writes a byte order mark ahead of the first header.
+    def content
+      @content ||= @csv.to_s.delete_prefix("\uFEFF")
+    end
+
+    def resolve_columns(headers)
+      present = headers.compact
+      COLUMNS.to_h do |column, candidates|
+        override = @overrides[column].presence
+        [column, override || present.find { |header| candidates.include?(normalize(header)) }]
+      end
+    end
+
     def import_row(row, line)
       email = field(row, :email)&.downcase
-      form_type = FORM_TYPES[normalize(field(row, :form_type))]
-      tin_type = field(row, :tin_type)&.downcase
+      form_type = form_type_for(field(row, :form_type))
+      tin_kind = tin_kind_for(field(row, :tin_type))
       completed_at = parse_time(field(row, :completed_at))
 
       return invalid(line, email, "email is missing or invalid") if email.blank? || ValidatesEmailFormatOf.validate_email_format(email).present?
       return invalid(line, email, "form type is not one we file") if form_type.nil?
       return invalid(line, email, "submission date is missing or unreadable") if completed_at.nil?
 
-      entity_type = entity_type_for(form_type, tin_type)
+      entity_type = entity_type_for(form_type, tin_kind)
       return review(line, email, "a W-9 that doesn't say whether its TIN is an SSN or an EIN could be either a person or a business") if entity_type.nil?
 
-      tin_type_key = Tax::IdentificationNumber::Hasher.tin_type_for(entity_type:, foreign: foreign?(form_type, tin_type))
+      tin_type_key = Tax::IdentificationNumber::Hasher.tin_type_for(entity_type:, foreign: foreign?(form_type, tin_kind))
       country = tin_type_key == Tax::IdentificationNumber::Hasher::FOREIGN ? field(row, :country) : "US"
       tin = field(row, :tin)
       # A foreign TIN we can't place in an issuing country is left un-fingerprinted
@@ -191,21 +206,38 @@ module Tax1099Service
       @result.imported += 1
     end
 
-    # An SSN identifies a person and an EIN a business; a W-8BEN is only ever
-    # filed by an individual, and the entity W-8s only ever by a business.
-    def entity_type_for(form_type, tin_type)
-      return :person if form_type == "W8BEN"
-      return :business if BUSINESS_FORM_TYPES.include?(form_type)
-      return :person if INDIVIDUAL_TIN_TYPES.include?(tin_type)
-      return :business if ENTITY_TIN_TYPES.include?(tin_type)
+    # Matched on the alphanumerics alone, so "W-9", "W9" and "Form W-9 (Rev.
+    # 10-2018)" all reach the same form type whichever way the export spells it.
+    def form_type_for(value)
+      squeezed = value.to_s.downcase.delete("^a-z0-9").delete_prefix("form")
+
+      FORM_TYPES.find { |form_type| squeezed.start_with?(form_type.downcase) }
+    end
+
+    def tin_kind_for(value)
+      normalized = normalize(value)
+      return nil if normalized.blank?
+      return :individual if INDIVIDUAL_TIN_TYPES.any? { |token| normalized.include?(token) }
+      return :entity if ENTITY_TIN_TYPES.any? { |token| normalized.include?(token) }
 
       nil
     end
 
-    # A W-8 filer who gave us no US TIN is identified by their foreign one, which
-    # is only unique within the country that issued it.
-    def foreign?(form_type, tin_type)
-      form_type != "W9" && !INDIVIDUAL_TIN_TYPES.include?(tin_type) && !ENTITY_TIN_TYPES.include?(tin_type)
+    # An SSN identifies a person and an EIN a business; a W-8BEN is only ever
+    # filed by an individual, and the entity W-8s only ever by a business.
+    def entity_type_for(form_type, tin_kind)
+      return :person if form_type == "W8BEN"
+      return :business if BUSINESS_FORM_TYPES.include?(form_type)
+      return :person if tin_kind == :individual
+      return :business if tin_kind == :entity
+
+      nil
+    end
+
+    # A W-8 filer whose TIN the IRS didn't issue is identified by their foreign
+    # one, which is only unique within the country that issued it.
+    def foreign?(form_type, tin_kind)
+      form_type != "W9" && tin_kind.nil?
     end
 
     def field(row, column)
