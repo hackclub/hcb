@@ -7,6 +7,7 @@
 #  id        :bigint           not null, primary key
 #  content   :text
 #  mailer    :string
+#  sensitive :boolean          default(FALSE), not null
 #  sent_at   :datetime
 #  subject   :text
 #  to        :string
