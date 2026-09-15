@@ -127,12 +127,6 @@
   </article>
 <% end %>
 
-<% if @report.event.present? %>
-  <% admin_tool("mt2") do %>
-    <%= render "events/mission_statement", event: @report.event %>
-  <% end %>
-<% end %>
-
 <% if @report.draft? %>
   <section class="hidden md:flex items-start justify-center mt2 mb2" style="gap: 16px; position: relative;">
     <article class="card w-100">
@@ -254,6 +248,12 @@
 <% end %>
 
 <%= render partial: "reimbursement/reports/actions", locals: { report: @report, user: @user } %>
+
+<% if @report.event.present? %>
+  <% admin_tool("mt-4 p-3") do %>
+    <%= render "events/mission_statement", event: @report.event %>
+  <% end %>
+<% end %>
 
 <% admin_tool("mt-4 p-3") do %>
   <%= error_boundary fallback_text: "Failed to load payout information" do %>
