@@ -8,4 +8,8 @@ export default class extends Controller {
       $.modal.close()
     }
   }
+
+  close() {
+    $.modal.close()
+  }
 }

@@ -75,7 +75,7 @@
                 <div class="menu__divider scoped-tags__divider"></div>
               <% end %>
 
-              <button class="menu__action border-none" data-behavior="modal_trigger" data-modal="create_scoped_tag" onclick="document.getElementById('create_scoped_tag_subevent_id').value = <%= event.id.to_json %>">
+              <button class="menu__action border-none" data-behavior="modal_trigger" data-modal="create_scoped_tag" data-controller="set-field" data-action="set-field#set" data-set-field-input-value="create_scoped_tag_subevent_id" data-set-field-content-value="<%= event.id %>">
                 <%= inline_icon "plus", size: 15 %>
                 Create tag
               </button>

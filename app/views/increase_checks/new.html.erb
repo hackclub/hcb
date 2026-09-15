@@ -63,7 +63,7 @@
   }) do |form| %>
   <%= form_errors(@check, "check", "We couldn't send this") %>
 
-  <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient?.id" %>
+  <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient ? payment_recipient.id : ''" %>
 
   <div data-scroll-seek-target="section" class="lg:-mt-8">
     <h3 class="mb-2" id="contact-information">Recipient details</h3>
@@ -108,7 +108,7 @@
                   class="menu__action flex justify-between flex-auto mr1"
                   data-action="input#focus menu#close"
                   data-recipient="<%= payment_recipient.to_safe_json %>"
-                  @click="payment_recipient = JSON.parse($el.dataset.recipient)">
+                  @click="select_recipient($el.dataset.recipient)">
                   <span class="truncate"><%= payment_recipient.name %></span>
                   <span class="muted ml1"><%= payment_recipient.address_city %>, <%= payment_recipient.address_state %></span>
                 </button>
@@ -309,8 +309,8 @@
       Send check
       <%= inline_icon "send" %>
     </button>
-    <a href="javascript:void(0)"
-      data-action="click->check-preview#scrollToTop"
+    <a role="button" tabindex="0"
+      data-action="click->check-preview#scrollToTop keydown.enter->check-preview#scrollToTop"
       class="bg-muted flex-[2] btn no-underline hidden sm:inline-flex">
       Preview
     </a>

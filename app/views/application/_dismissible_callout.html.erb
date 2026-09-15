@@ -1,0 +1,9 @@
+<%# locals: (key:, id:, article_class: "", article_style: "") %>
+<div id="<%= id %>" style="display: none;" data-controller="dismissible" data-dismissible-key-value="<%= key %>">
+  <article role="alertdialog" class="<%= article_class %> flash flex items-center mt2 mb1 mx-auto shrink-none cursor-pointer" style="<%= article_style %>" data-action="click->dismissible#follow">
+    <span class="flex-auto flex justify-between items-center">
+      <span><%= yield %></span>
+    </span>
+    <%= inline_icon "view-close", size: 32, class: "pointer", style: "", "data-action": "click->dismissible#dismiss:stop" %>
+  </article>
+</div>

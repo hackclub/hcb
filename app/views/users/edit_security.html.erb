@@ -14,7 +14,7 @@
         </legend>
         <div class="card border b--info mt0 mb3">
           <% if @user.phone_number_verified %>
-            <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
+            <%= form_with(model: @user, local: true, data: { turbo_frame: "_top" }) do |form| %>
               <div class="field field--checkbox mt1">
                 <span style="font-weight: 700">Prefer login codes via SMS</span>
                 <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
@@ -71,7 +71,7 @@
                 Disable TOTP
               <% end %>
             <% end %>
-            <%= link_to user_generate_totp_path(@user), class: "btn px2 h4 #{"tooltipped" if @user.totp.present?}", 'aria-label': "A new TOTP secret will invalidate your current TOTP secret.", data: { turbo_method: :post }, onclick: "this.style.display='none'", disabled: do %>
+            <%= link_to user_generate_totp_path(@user), class: "btn px2 h4 #{"tooltipped" if @user.totp.present?}", 'aria-label': "A new TOTP secret will invalidate your current TOTP secret.", data: { turbo_method: :post, controller: "element", action: "click->element#hide" }, disabled: do %>
               <%= inline_icon "plus", size: home_action_size %>
               <%= @user.totp.present? ? "Reset secret" : "Set up" %>
             <% end %>
@@ -129,7 +129,7 @@
             Disable backup codes
           <% end %>
         <% end %>
-        <%= link_to user_generate_backup_codes_path(@user), class: "btn px2 h4", data: { turbo_method: :post, turbo_frame: :backup_codes_card }, onclick: "this.style.display='none'", disabled: do %>
+        <%= link_to user_generate_backup_codes_path(@user), class: "btn px2 h4", data: { turbo_method: :post, turbo_frame: :backup_codes_card, controller: "element", action: "click->element#hide" }, disabled: do %>
           <%= inline_icon "plus", size: home_action_size %>
           <%= @user.backup_codes_enabled? ? "Regenerate codes" : "Generate codes" %>
         <% end %>

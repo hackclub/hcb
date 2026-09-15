@@ -4,23 +4,18 @@
     <%= form_with(url: receipts_path, method: :post, class: "w-100 h-100 flex flex-col justify-center reimbursement-dropzone",
       data: {
         turbo: "true",
-        controller: "file-drop form",
-        action: expense.report.locked? ? "" : "
+        controller: "file-drop form uploading",
+        "uploading-button-value" => "upload-receipt-button",
+        "uploading-icon-value" => "⌛",
+        action: "submit->uploading#start" + (expense.report.locked? ? "" : "
           dragover->file-drop#dragover
           drop->file-drop#drop
           dragenter->file-drop#dragenter
           dragleave->file-drop#dragleave
-        ",
+        "),
         "file-drop-target" => "dropzone",
         "file-drop-title-value" => "Add receipt"
-      }.compact, html: {
-        onsubmit: "
-          const button = $('#upload-receipt-button', this);
-          $('span', button).text('Uploading...');
-          $('b', button).text('⌛');
-          button.attr('disabled', 'disabled');
-        "
-      }) do |form| %>
+      }.compact) do |form| %>
       <% if expense.is_fee? %>
         <p class="my-0">This fee is imposed by Wise to process your transaction. <%= link_to "Learn more about Wise on HCB →", "https://help.hcb.hackclub.com/article/65-wise" %></p>
       <% elsif expense.receipts.any? %>

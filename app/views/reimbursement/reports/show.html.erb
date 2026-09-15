@@ -189,7 +189,7 @@
 
         <div class="field">
           <%= form.label :wise_id, "Wise ID / URL", class: "bold mb1" %>
-          <%= form.text_field :wise_id, class: "mt-0 !max-w-full", style: "width: 400px;", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", onpaste: "var urlPrefix = 'https://wise.com/transactions/activities/by-resource/TRANSFER/'; var clipboardData = event.clipboardData.getData('Text'); clipboardData.startsWith(urlPrefix) ? (event.preventDefault(), event.target.value = clipboardData.substring(urlPrefix.length)) : null" %>
+          <%= form.text_field :wise_id, class: "mt-0 !max-w-full", style: "width: 400px;", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", data: { controller: "strip-prefix", action: "paste->strip-prefix#paste", strip_prefix_prefix_value: "https://wise.com/transactions/activities/by-resource/TRANSFER/" } %>
         </div>
         <div class="field">
           <%= form.label(:wise_recipient_id, "Wise recipient ID", class: "bold mb1") %>

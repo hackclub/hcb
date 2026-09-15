@@ -1,11 +1,11 @@
-<%= form_with(model: @card, id: "stripe_card_name_form") do |form| %>
+<%= form_with(model: @card, id: "stripe_card_name_form", data: { controller: "clear-field" }) do |form| %>
   <div class="field">
     <%= form.label :name %>
 
     <div class="flex gap-3 items-stretch">
-      <%= form.text_field :name, placeholder: "Online Retailers" %>
+      <%= form.text_field :name, placeholder: "Online Retailers", data: { clear_field_target: "field" } %>
       <% if @card.name.present? %>
-        <button class="btn bg-error px-3 tooltipped tooltipped--s overflow-visible" aria-label="Clear name" id="clear_name_btn" onclick="clearName();" type="button">
+        <button class="btn bg-error px-3 tooltipped tooltipped--s overflow-visible" aria-label="Clear name" id="clear_name_btn" type="button" data-clear-field-target="button" data-action="clear-field#clear">
           <%= inline_icon "delete", class: "!m-0" %>
         </button>
       <% end %>
@@ -16,11 +16,3 @@
     <%= form.submit "Save" %>
   </div>
 <% end %>
-
-<script>
-  window.clearName = () => {
-    document.querySelector("#stripe_card_name").value = ""
-    document.querySelector("#clear_name_btn").disabled = true;
-    document.querySelector("#stripe_card_name_form").requestSubmit();
-  }
-</script>

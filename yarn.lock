@@ -7,10 +7,17 @@
   resolved "https://registry.yarnpkg.com/@alloc/quick-lru/-/quick-lru-5.2.0.tgz#7bf68b20c0a350f936915fcae06f58e32007ce30"
   integrity sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==
 
-"@alpinejs/persist@^3.15.0":
-  version "3.15.0"
-  resolved "https://registry.yarnpkg.com/@alpinejs/persist/-/persist-3.15.0.tgz#b6b2cd51246af8c730d3bdd09844bd1b381cc786"
-  integrity sha512-SmW1DWn9FRflfPqZZtpTq+2uXDq/ohbSiKmYg6HXX1UxQnsaSkTT0HT72SQcbqOC3WmIUF28CberBnwiWoqmpw==
+"@alpinejs/csp@^3.17.1":
+  version "3.17.1"
+  resolved "https://registry.yarnpkg.com/@alpinejs/csp/-/csp-3.17.1.tgz#511962711a6ce76b3bcd94aeb22aed23f253fff3"
+  integrity sha512-HDrY0ZxvJWSmeUYqtHVSsitaqy1es3VDCNodPpdQRX4nHhHiRoeib+rOzRFFStFRD/6x0KmQzJVJ4FCLAI/DUQ==
+  dependencies:
+    "@vue/reactivity" "~3.5.40"
+
+"@alpinejs/persist@^3.17.1":
+  version "3.17.1"
+  resolved "https://registry.yarnpkg.com/@alpinejs/persist/-/persist-3.17.1.tgz#9394814081ca4d1bfae96161dd6cce113837d147"
+  integrity sha512-PN/93FIWakZYY4zB/VGDlFtx2LOoa318huflgLMo2jsk+pkjLlDkX1qmuUFh5xhI7Uj3vSvU1Eu1WIA3TN3PTA==
 
 "@appsignal/javascript@=1.6.0":
   version "1.6.0"
@@ -1687,17 +1694,17 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@vue/reactivity@~3.1.1":
-  version "3.1.5"
-  resolved "https://registry.npmjs.org/@vue/reactivity/-/reactivity-3.1.5.tgz"
-  integrity sha512-1tdfLmNjWG6t/CsPldh+foumYFo3cpyCHgBYQ34ylaMsJ+SNHQ1kApMIa8jN+i593zQuaw3AdWH0nJTARzCFhg==
+"@vue/reactivity@~3.5.40":
+  version "3.5.42"
+  resolved "https://registry.yarnpkg.com/@vue/reactivity/-/reactivity-3.5.42.tgz#800220f023d36fd04d94460c7c7ab5808f8ae75f"
+  integrity sha512-TzNNfKpb7hDxbQltwAut8VDQA5YP+BuRlxntHUuRjyKwlMvmAPbs3unhCvieijifY6vFfVBwsS7wG/C7uq+bEQ==
   dependencies:
-    "@vue/shared" "3.1.5"
+    "@vue/shared" "3.5.42"
 
-"@vue/shared@3.1.5":
-  version "3.1.5"
-  resolved "https://registry.npmjs.org/@vue/shared/-/shared-3.1.5.tgz"
-  integrity sha512-oJ4F3TnvpXaQwZJNF3ZK+kLPHKarDmJjJ6jyzVNDKH9md1dptjC7lWR//jrGuLdek/U6iltWxqAnYOu8gCiOvA==
+"@vue/shared@3.5.42":
+  version "3.5.42"
+  resolved "https://registry.yarnpkg.com/@vue/shared/-/shared-3.5.42.tgz#a413cf21262502662354cda3b65ab31bca979202"
+  integrity sha512-2rPxex1jQf4jvl9MOHl6YaXCPcrNqz/FstMOEh3QWY+/OME9nQTvl9WYeCwhW7AFjaR0SnngZGlp/wkR6rkI6g==
 
 "@webassemblyjs/ast@1.14.1", "@webassemblyjs/ast@^1.14.1":
   version "1.14.1"
@@ -1894,12 +1901,12 @@ ajv@^8.0.0, ajv@^8.9.0:
     require-from-string "^2.0.2"
     uri-js "^4.4.1"
 
-alpinejs@^3.15.0:
-  version "3.15.0"
-  resolved "https://registry.yarnpkg.com/alpinejs/-/alpinejs-3.15.0.tgz#f65e0a4683f28718910e0319ae25301533ee1e7d"
-  integrity sha512-lpokA5okCF1BKh10LG8YjqhfpxyHBk4gE7boIgVHltJzYoM7O9nK3M7VlntLEJGsVmu7U/RzUWajmHREGT38Eg==
+alpinejs@^3.17.1:
+  version "3.17.1"
+  resolved "https://registry.yarnpkg.com/alpinejs/-/alpinejs-3.17.1.tgz#b0eea3e9a08606e5c270e77bc45214da72cfbbcb"
+  integrity sha512-HDUhA9juSA/pNYZ5FAAlW4qNsdeVORFSVONEIu0hVasqCOqLitf15R9tCr5GBCV0ZxiZW2Qx6BYdMSF7iGLT/Q==
   dependencies:
-    "@vue/reactivity" "~3.1.1"
+    "@vue/reactivity" "~3.5.40"
 
 ansi-regex@^5.0.1:
   version "5.0.1"

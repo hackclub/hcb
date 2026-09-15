@@ -2,7 +2,7 @@
 <button id="linkButton">Reauthenticate</button>
 
 <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
-<script>
+<script nonce="<%= content_security_policy_script_nonce %>">
 var linkHandler = Plaid.create({
   token: <%= @link_token.to_json.html_safe %>,
   onSuccess: function(public_token, metadata) {
