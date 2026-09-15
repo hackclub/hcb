@@ -1,4 +1,4 @@
-<%# locals: (row:, guides:, last:) %>
+<%# locals: (row:, guides:, last:, nested:) %>
 
 <% event = row[:event] %>
 <% depth = guides.size %>
@@ -75,4 +75,11 @@
       <span class="muted">—</span>
     </span>
   </td>
+  <% if nested %>
+    <td class="tabular-nums text-right">
+      <span id="event_sub_organization_balance_<%= event.public_id %>">
+        <span class="muted">—</span>
+      </span>
+    </td>
+  <% end %>
 </tr>
