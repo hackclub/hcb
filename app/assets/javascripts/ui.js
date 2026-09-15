@@ -6,6 +6,11 @@ const whenViewed = (element, callback) =>
     threshold: 1,
   }).observe(element)
 
+const clearElement = id => {
+  const element = document.getElementById(id)
+  if (element) element.innerHTML = ''
+}
+
 const populateSharedPopover = trigger => {
   const popover = document.getElementById('shared_popover')
   if (!popover) return
@@ -36,8 +41,7 @@ const populateSharedPopover = trigger => {
 
   popover.classList.toggle('modal--popover--sm', size === 'sm')
 
-  const flash = document.getElementById('shared_popover_flash')
-  if (flash) flash.innerHTML = ''
+  clearElement('shared_popover_flash')
 
   const body = document.getElementById('shared_popover_body')
   if (body) {
@@ -94,13 +98,12 @@ document.addEventListener('turbo:before-fetch-response', async event => {
     ?.innerHTML.trim()
   if (!flash) return
 
-  const containers = event.target.closest('#shared_popover')
-    ? [document.getElementById('shared_popover_flash')]
-    : document.querySelectorAll('#flash-container')
-
-  containers.forEach(container => {
-    if (container) container.innerHTML = flash
-  })
+  const container = document.getElementById(
+    event.target.closest('#shared_popover')
+      ? 'shared_popover_flash'
+      : 'flash-container'
+  )
+  if (container) container.innerHTML = flash
 })
 
 // Redirects out of the popover land on a page without its frame; reload the
@@ -880,11 +883,8 @@ $(document).on($.modal.AFTER_CLOSE, function (event, modal) {
   if (modal?.elm?.[0]?.id === 'shared_popover') {
     delete document.documentElement.dataset.returnToStateTitle
 
-    const body = document.getElementById('shared_popover_body')
-    if (body) body.innerHTML = ''
-
-    const flash = document.getElementById('shared_popover_flash')
-    if (flash) flash.innerHTML = ''
+    clearElement('shared_popover_body')
+    clearElement('shared_popover_flash')
 
     const popoverEl = modal.elm[0]
     if (popoverEl && popoverEl.classList) {
