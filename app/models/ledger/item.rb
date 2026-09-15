@@ -177,8 +177,9 @@ class Ledger
       # Counter caches
       self.ct_count = canonical_transactions.size
       self.cpt_count = canonical_pending_transactions.size
-      self.comment_count = comments.size
-      self.not_admin_only_comment_count = comments.not_admin_only.size
+      shown_comments = hcb_code&.all_comments || Comment.none
+      self.comment_count = shown_comments.size
+      self.not_admin_only_comment_count = shown_comments.not_admin_only.size
       self.receipt_count = receipts.size
 
       # Timestamps
