@@ -16,6 +16,7 @@ class Ledger
       Ledger::AssertCorrectLedgerBalancesJob.perform_later
       Ledger::AssertCorrectFeeBalancesJob.perform_later
       Ledger::AssertLinkedObjectsMatchHcbCodeJob.perform_later
+      Ledger::AssertEmptyItemsHaveZeroAmountJob.perform_later
     end
 
   end
