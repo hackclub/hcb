@@ -33,11 +33,13 @@ module Maintenance
 
     private
 
+    # unscoped: the default scope orders by last ACH transfer, which both eager
+    # loads transfers this task doesn't read and drops check and wire recipients.
     def recipients_by_email(event)
-      event.payment_recipients
-           .reorder(nil)
-           .reject { |recipient| recipient.email.blank? }
-           .group_by { |recipient| recipient.email.strip.downcase }
+      PaymentRecipient.unscoped
+                      .where(event:)
+                      .reject { |recipient| recipient.email.blank? }
+                      .group_by { |recipient| recipient.email.strip.downcase }
     end
 
     def import(event, email, recipients)
@@ -45,26 +47,39 @@ module Maintenance
       # falling back to the most recently saved. An imported payee with no
       # default can't be paid at all until the manual picker ships.
       ranked = recipients.sort_by { |recipient| [last_sent_at(recipient) || Time.zone.at(0), recipient.created_at] }.reverse
-      name = recipients.max_by(&:created_at).name.presence
+      # Newest name wins, but a recipient saved without one never blanks out a
+      # name an older row still carries.
+      name = recipients.select { |recipient| recipient.name.present? }.max_by(&:created_at)&.name
 
       ApplicationRecord.transaction do
         legal_entity = LegalEntity.create!(managing_event: event, name:)
         event.payees.create!(display_name: name || email, email:, legal_entity:, imported_at: Time.current)
 
-        defaulted = false
+        imported = []
         ranked.each do |recipient|
-          created = create_payout_method(legal_entity, recipient, default: !defaulted)
-          defaulted = true if created
+          signature = create_payout_method(legal_entity, recipient, default: imported.empty?, seen: imported)
+          imported << signature if signature
         end
       end
     end
 
-    def create_payout_method(legal_entity, recipient, default:)
+    # Recipients were saved once per transfer, so the same account or address
+    # recurs across them; importing each one would leave the payee picking
+    # between identical methods.
+    def create_payout_method(legal_entity, recipient, default:, seen:)
       details = build_details(recipient)
-      return nil unless details && importable?(details)
+      return nil if details.nil? || !importable?(details)
+
+      signature = signature_for(details)
+      return nil if seen.include?(signature)
 
       details.save!
       legal_entity.payout_methods.create!(details:, default:)
+      signature
+    end
+
+    def signature_for(details)
+      [details.class.name, *details.class.permitted_attributes.map { |attribute| details.public_send(attribute) }]
     end
 
     def build_details(recipient)
@@ -99,11 +114,21 @@ module Maintenance
 
     # Legacy recipients predate today's payout method validations, and the wire
     # ones raise on a missing field rather than failing. Whatever can't be
-    # rebuilt cleanly is left behind rather than imported as an unusable method.
+    # rebuilt cleanly is left behind rather than imported as an unusable method,
+    # and logged, since a silent drop is indistinguishable from an infrastructure
+    # failure on a one-time run.
     def importable?(details)
-      details.valid?
-    rescue
+      return true if details.valid?
+
+      log_skipped(details, details.errors.full_messages.to_sentence)
       false
+    rescue StandardError => e
+      log_skipped(details, e.message)
+      false
+    end
+
+    def log_skipped(details, reason)
+      Rails.logger.warn("[#{self.class.name}] skipped #{details.class.name}: #{reason}")
     end
 
     def last_sent_at(recipient)

@@ -90,10 +90,69 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
   end
 
   it "skips a recipient with no email, since a payee cannot exist without one" do
-    create(:payment_recipient, event:, email: nil, payment_model: "AchTransfer", name: "Orpheus",
-                               routing_number: "021000021", account_number: "123456789", bank_name: "Chase")
+    # Saved unvalidated: the email format validation postdates these rows, so prod
+    # carries recipients the factory can no longer create.
+    recipient = build(:payment_recipient, event:, email: nil, payment_model: "AchTransfer", name: "Orpheus",
+                                          routing_number: "021000021", account_number: "123456789", bank_name: "Chase")
+    recipient.save!(validate: false)
 
     expect { run_task }.not_to change(Payee, :count)
+  end
+
+  context "wire recipients" do
+    before do
+      stub_request(:get, /api\.column\.com\/institutions/)
+        .to_return(status: 200, body: '{"country_code":"GB"}', headers: { "Content-Type" => "application/json" })
+    end
+
+    def wire_recipient(**attrs)
+      create(:payment_recipient, event:, email: "orpheus@hackclub.com", name: "Orpheus", payment_model: "Wire",
+                                 account_number: "GB29NWBK60161331926819", bic_code: "NWBKGB2L",
+                                 address_line1: "1 Main", address_line2: "", address_city: "London",
+                                 address_state: "England", address_postal_code: "SW1A 1AA",
+                                 recipient_country: "GB", recipient_information: {}, **attrs)
+    end
+
+    it "copies a wire recipient's details across as a wire payout method" do
+      wire_recipient
+
+      run_task
+
+      details = event.payees.sole.legal_entity.default_payout_method.details
+      expect(details).to be_a(LegalEntity::PayoutMethod::Wire)
+      expect(details.bic_code).to eq("NWBKGB2L")
+      expect(details.recipient_country).to eq("GB")
+    end
+
+    # Wire validations dereference these fields rather than checking presence, so a
+    # legacy row missing one raises instead of failing validation.
+    it "leaves behind a wire whose validations raise rather than aborting the import" do
+      wire_recipient(bic_code: nil)
+
+      expect { run_task }.to change(Payee, :count).by(1)
+      expect(event.payees.sole.legal_entity.payout_methods).to be_empty
+    end
+  end
+
+  it "imports one payout method when two recipients hold identical details" do
+    ach_recipient(email: "orpheus@hackclub.com", account_number: "111111111")
+    ach_recipient(email: "orpheus@hackclub.com", account_number: "111111111")
+
+    run_task
+
+    expect(event.payees.sole.legal_entity.payout_methods.count).to eq(1)
+  end
+
+  it "keeps a name an older recipient carries when the newest was saved without one" do
+    ach_recipient(email: "orpheus@hackclub.com", account_number: "111111111")
+    travel_to(1.day.from_now) do
+      create(:payment_recipient, event:, email: "orpheus@hackclub.com", payment_model: "AchTransfer", name: nil,
+                                 routing_number: "021000021", account_number: "222222222", bank_name: "Chase")
+    end
+
+    run_task
+
+    expect(event.payees.sole.display_name).to eq("Orpheus")
   end
 
   it "copies a check recipient's address across as a check payout method" do
