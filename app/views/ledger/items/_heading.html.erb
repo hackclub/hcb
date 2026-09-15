@@ -20,6 +20,8 @@
       </span>
     </div>
 
+    <%= render "ledger/items/memo/ai", item: ledger_item %>
+
     <%= form_with model: ledger_item, url: ledger_item_rename_path(ledger_item), method: :patch, class: "renaming flex items-center gap-1", html: { hidden: true, style: "flex-grow: 1; min-width: 0;" }, data: { memo_target: "form", turbo_stream: true, action: "turbo:submit-end->memo#submitEnd" } do |form| %>
       <%= form.text_field :memo,
                           value: ledger_item.memo,

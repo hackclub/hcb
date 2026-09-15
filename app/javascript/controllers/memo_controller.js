@@ -58,6 +58,15 @@ export default class extends Controller {
     this.inputTarget.select()
   }
 
+  // The AI memo icon hands us a suggestion to rename with, in place of the
+  // edit page the HCB code heading navigated to.
+  editWithSuggestion(e) {
+    this.edit(e)
+
+    this.inputTarget.value = e.params.suggestion
+    this.inputTarget.select()
+  }
+
   cancel() {
     this.inputTarget.value = this.inputTarget.defaultValue
     this.showDisplay()

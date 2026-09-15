@@ -1,0 +1,14 @@
+<%# locals: (item:) -%>
+
+<span id="<%= dom_id(item, :ai_memo) %>">
+  <%= turbo_stream_from item.hcb_code, "ai_memo" if item.hcb_code.present? %>
+  <% suggested_memo = item.hcb_code&.suggested_memos&.last %>
+  <% if suggested_memo.present? && item.custom_memo.nil? %>
+    <span class="pointer tooltipped tooltipped--w"
+      aria-label="Use AI to generate a memo"
+      data-action="click->memo#editWithSuggestion"
+      data-memo-suggestion-param="<%= suggested_memo %>">
+      <%= inline_icon "rep", size: 36, style: "color: var(--ai); margin: -10px 0px; transform: translateY(-2px);" %>
+    </span>
+  <% end %>
+</span>
