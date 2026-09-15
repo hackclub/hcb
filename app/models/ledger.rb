@@ -48,6 +48,10 @@ class Ledger < ApplicationRecord
   has_many :canonical_pending_transactions, through: :items
 
   monetize def balance_cents(start_date: nil, end_date: nil)
+    # Callers pass calendar dates. Items carry timestamps, so the end date has
+    # to cover its whole day or a bare Date would stop at midnight.
+    end_date = end_date.to_date.end_of_day if end_date.present?
+
     Ledger::Query.new({
                         "$and": [
                           ({ datetime: { "$gte": start_date } } if start_date),
