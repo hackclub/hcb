@@ -35,6 +35,9 @@
               <%= transaction.memo %>
             </span>
           </div>
+          <% admin_tool("m-0 p-0.5") do %>
+            <%= render partial: "hcb_codes/transaction_category_form", locals: { model: transaction } %>
+          <% end %>
           <% admin_tool("-m-0.5 p-0.5") do %>
             <%= link_to canonical_transaction_path(transaction), class: "p-0 m-0 align-middle leading-[0]", target: :_blank do %>
               <%= inline_icon "external", size: 30, class: "!m-0" %>
@@ -70,6 +73,9 @@
               <%= transaction.memo %>
             </span>
           </div>
+          <% admin_tool("m-0 p-0.5") do %>
+            <%= render partial: "hcb_codes/transaction_category_form", locals: { model: transaction } %>
+          <% end %>
           <% admin_tool("-m-0.5 p-0.5") do %>
             <%= link_to canonical_pending_transaction_path(transaction), class: "p-0 m-0 align-middle leading-[0]", target: :_blank do %>
               <%= inline_icon "external", size: 30, class: "!m-0" %>
