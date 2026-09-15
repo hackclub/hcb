@@ -56,6 +56,8 @@ class Ledger < ApplicationRecord
                       }).execute(ledgers: [self]).sum(:amount_cents)
   end
 
+  # A negative fee balance is a fee credit. Credits are not spendable, so
+  # they never add to the available balance.
   monetize def available_balance_cents = balance_cents - [fronted_fee_balance_cents, 0].max
 
   def can_front_balance?
