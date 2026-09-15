@@ -100,10 +100,10 @@ class Contract
                 default_value: ActionController::Base.helpers.asset_url("zach_signature.png", host: "https://hcb.hackclub.com"),
                 readonly: false
               },
-              if prefills["grant_amount"].present?
+              if prefills["grant_amount_cents"].present?
                 {
                   name: "Grant Amount",
-                  default_value: ActionController::Base.helpers.number_to_currency(prefills["grant_amount"] / 100)
+                  default_value: ActionController::Base.helpers.number_to_currency(prefills["grant_amount_cents"] / 100)
                 }
               else
                 nil
