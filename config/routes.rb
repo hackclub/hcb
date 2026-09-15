@@ -951,6 +951,7 @@ Rails.application.routes.draw do
     member do
       get "completed"
       post "discard"
+      get "download"
     end
   end
 
