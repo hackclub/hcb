@@ -97,8 +97,9 @@ RSpec.describe StripeCardholder, type: :model do
       expect(StripeCardholder.phone_number_supported?("+61412345678")).to eq(false)
     end
 
-    it "does not work for Canadian numbers even though they share +1" do
-      expect(StripeCardholder.phone_number_supported?("+12045551234")).to eq(false)
+    it "works for anything on +1, including Canada and US territories" do
+      expect(StripeCardholder.phone_number_supported?("+12045551234")).to eq(true)
+      expect(StripeCardholder.phone_number_supported?("+17872210135")).to eq(true)
     end
 
     it "handles numbers stored without a plus sign" do

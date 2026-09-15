@@ -483,7 +483,7 @@ RSpec.describe User, type: :model do
   end
 
   describe "#phone_number_for_stripe" do
-    it "returns the phone number when it is verified and in a supported country" do
+    it "returns the phone number when it is verified and on a supported country code" do
       user = create(:user, phone_number: "+18556254225")
       user.update_column(:phone_number_verified, true)
 

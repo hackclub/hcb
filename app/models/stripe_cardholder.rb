@@ -107,10 +107,10 @@ class StripeCardholder < ApplicationRecord
     country: "US"
   }.freeze
 
-  SMS_SUPPORTED = %w[US GB].freeze
+  SMS_SUPPORTED = %w[+1 +44].freeze
 
   def self.phone_number_supported?(phone_number)
-    SMS_SUPPORTED.include?(Phonelib.parse(phone_number).country)
+    Phonelib.parse(phone_number).e164.to_s.start_with?(*SMS_SUPPORTED)
   end
 
   def default_billing_address?
