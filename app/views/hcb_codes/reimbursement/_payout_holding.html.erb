@@ -19,7 +19,7 @@
     <% if payout_transfer.present? %>
       <p>
         <strong><%= @hcb_code.reimbursement_payout_holding.report.transfer_text.upcase_first %></strong>
-        <%= link_to "View Transfer", payout_transfer.local_hcb_code %>
+        <%= link_to "View transfer", payout_transfer.local_hcb_code %>
       </p>
     <% end %>
   </section>
