@@ -22,7 +22,7 @@ class TagsController < ApplicationController
       raise Pundit::NotAuthorizedError unless hcb_code.events.include?(@event)
 
       suppress(ActiveRecord::RecordNotUnique) do
-        hcb_code.tags << tag
+        hcb_code.ledger_item.tags << tag
       end
     end
 

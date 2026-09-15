@@ -71,7 +71,7 @@ class HcbCodeMailbox < ApplicationMailbox
       return unless tag
 
       suppress(ActiveRecord::RecordNotUnique) do
-        @hcb_code.tags << tag
+        @hcb_code.ledger_item.tags << tag
       end
       @tagged_with << tag.label
     end

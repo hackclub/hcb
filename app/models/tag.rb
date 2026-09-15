@@ -29,6 +29,8 @@ class Tag < ApplicationRecord
   has_many :hcb_code_tags
   has_many :hcb_code_tag_suggestions, dependent: :destroy, class_name: "HcbCode::Tag::Suggestion"
   has_many :hcb_codes, through: :hcb_code_tags
+  has_many :ledger_item_tags, class_name: "Ledger::Item::Tag"
+  has_many :ledger_items, through: :ledger_item_tags, class_name: "Ledger::Item"
 
   validates :label, presence: true, uniqueness: { scope: :event_id, case_sensitive: false }
   validate :only_one_valid_emoji

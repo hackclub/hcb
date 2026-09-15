@@ -190,9 +190,9 @@ class HcbCodesController < ApplicationController
 
     if hcb_code.tags.exists?(tag.id)
       removed = true
-      hcb_code.tags.destroy(tag)
+      hcb_code.ledger_item.tags.destroy(tag)
     else
-      hcb_code.tags << tag
+      hcb_code.ledger_item.tags << tag
     end
 
     respond_to do |format|
