@@ -263,6 +263,14 @@ class Event
       Rails.application.routes.url_helpers.application_path(self)
     end
 
+    def contractable_link_label
+      "application"
+    end
+
+    def contractable_link_path
+      Rails.application.routes.url_helpers.application_path(self)
+    end
+
     def contract_notify_hcb?
       !teen_led? || contract.reissue?
     end
