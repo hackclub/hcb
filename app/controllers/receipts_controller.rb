@@ -118,9 +118,6 @@ class ReceiptsController < ApplicationController
         attachments: [file],
         upload_method: params[:upload_method]
       ).run!
-      # TODO: migrate to the ledger item show page. `on_transaction_page?` only
-      # recognizes the HCB code transaction page, so a receipt uploaded from a
-      # ledger item show page is never prepended to its receipts list.
       next if @receiptable && !on_transaction_page?
 
       streams.append(turbo_stream.prepend(
@@ -328,9 +325,6 @@ class ReceiptsController < ApplicationController
         )
       )
 
-      # TODO: migrate to the ledger item show page. This is gated on the
-      # receiptable being an HcbCode, so the ledger item show page's receipts
-      # list isn't refreshed after an upload.
       streams.append(
         turbo_stream.replace(
           "#{@ledger_instance}_receipts_list",
@@ -390,13 +384,9 @@ class ReceiptsController < ApplicationController
     @receipt = Receipt.find(params[:id])
   end
 
-  # TODO: every caller of this needs migrating to the ledger item show page,
-  # which lives at `/transactions/:id` under the `ledger/items` controller and
-  # so is never matched here. Widening this to cover both pages changes each
-  # caller's behavior, so callers should move over one at a time.
   def on_transaction_page?
     route = Rails.application.routes.recognize_path(request.referrer)
-    return route[:controller].classify == "HcbCode"
+    return ["HcbCode", "Ledger::Item"].include?(route[:controller].classify)
   end
 
   def on_ledger_item_page?
