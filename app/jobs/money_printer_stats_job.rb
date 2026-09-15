@@ -29,7 +29,7 @@ class MoneyPrinterStatsJob < ApplicationJob
     discrepancies = []
 
     Event.includes(:ledger).find_each do |event|
-      old_cents = event.balance_v2_cents
+      old_cents = event.balance_v2_cents(legacy: true)
       new_cents = event.ledger&.balance_cents || 0
       delta = new_cents - old_cents
 

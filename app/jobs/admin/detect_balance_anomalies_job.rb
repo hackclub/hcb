@@ -10,12 +10,13 @@ module Admin
       Ledger.find_each do |ledger|
         if ledger.event.present?
           event = ledger.event
-          if event.ledger.balance_cents != event.balance_v2_cents
+          legacy_balance_cents = event.balance_v2_cents(legacy: true)
+          if event.ledger.balance_cents != legacy_balance_cents
             anomalous_events << {
               id: event.id,
               slug: event.slug,
               name: event.name,
-              balance_v2_cents: event.balance_v2_cents,
+              balance_v2_cents: legacy_balance_cents,
               ledger_balance_cents: event.ledger.balance_cents
             }
             puts "Found anomaly on event #{event.id}"
