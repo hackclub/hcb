@@ -105,6 +105,20 @@
   <% end %>
 </section>
 
+<% if @report.submitted? %>
+  <section data-behavior="modal" role="dialog" id="all_expenses_approved_modal" class="modal modal--scroll bg-snow">
+    <%= modal_header "All expenses approved" %>
+    <p>You just approved the last expense; do you want to reimburse the entire report?</p>
+    <div class="flex gap-2">
+      <%= link_to "Not now", "#", class: "btn bg-muted", rel: "modal:close" %>
+      <%= link_to reimbursement_report_approve_path(@report), class: "btn bg-info", data: { turbo_method: :post } do %>
+        <%= inline_icon "payment-transfer" %>
+        Reimburse report
+      <% end %>
+    </div>
+  </section>
+<% end %>
+
 <% if @report.event&.public_reimbursement_page_message&.present? && policy(@event).reimbursements? %>
   <article class="card mt2 pt0">
     <%= MarkdownService.instance.render(@report.event.public_reimbursement_page_message) %>
