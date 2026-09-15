@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_09_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_13_005346) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -2057,6 +2057,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_09_120000) do
 
   create_table "payroll_positions", force: :cascade do |t|
     t.string "aasm_state", null: false
+    t.boolean "combine_contract_attachment", default: true, null: false
     t.datetime "created_at", null: false
     t.string "currency", default: "USD", null: false
     t.text "description", null: false

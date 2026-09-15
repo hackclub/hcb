@@ -4,7 +4,7 @@ module Payroll
   class PositionsController < ApplicationController
     include SetEvent
 
-    CONTRACT_RELEVANT_ATTRIBUTES = %w[title rate_cents rate_unit start_date end_date description].freeze
+    CONTRACT_RELEVANT_ATTRIBUTES = %w[title rate_cents rate_unit start_date end_date description combine_contract_attachment].freeze
 
     before_action :set_event, except: [:onboarding]
     before_action :set_position, only: [:edit, :update, :contract, :terminate]
@@ -47,7 +47,8 @@ module Payroll
         rate_unit: position_params[:rate_unit].presence || "hour",
         start_date: position_params[:starts_on],
         end_date: position_params[:ends_on],
-        description: position_params[:purpose]
+        description: position_params[:purpose],
+        combine_contract_attachment: position_params[:combine_contract_attachment]
       )
 
       if @payee.nil?
@@ -103,7 +104,8 @@ module Payroll
         rate_unit: position_params[:rate_unit].presence,
         start_date: position_params[:starts_on],
         end_date: position_params[:ends_on],
-        description: position_params[:purpose]
+        description: position_params[:purpose],
+        combine_contract_attachment: position_params[:combine_contract_attachment]
       }.compact)
       attachment = Array(position_params[:file]).compact_blank.first
       @position.file.attach(attachment) if attachment
@@ -174,7 +176,7 @@ module Payroll
     end
 
     def position_params
-      params.require(:contractor).permit(:title, :rate, :rate_unit, :starts_on, :ends_on, :purpose, :payee_id, file: [])
+      params.require(:contractor).permit(:title, :rate, :rate_unit, :starts_on, :ends_on, :purpose, :payee_id, :combine_contract_attachment, file: [])
     end
 
   end
