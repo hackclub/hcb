@@ -313,6 +313,7 @@ Rails.application.routes.draw do
       post "referral_link_create", to: "referral/links#create"
       get "unknown_merchants", to: "admin#unknown_merchants"
       post "request_balance_export", to: "admin#request_balance_export"
+      post "request_canonical_transaction_balance_export", to: "admin#request_canonical_transaction_balance_export"
       get "active_teenagers_leaderboard", to: "admin#active_teenagers_leaderboard"
       get "new_teenagers_leaderboard", to: "admin#new_teenagers_leaderboard"
       get "contracts", to: "admin#contracts"

@@ -28,6 +28,25 @@
   <% end %>
 </details>
 
+<details class="mt2">
+  <summary>Export all event balances (canonical transactions only)</summary>
+  <%= form_with(url: request_canonical_transaction_balance_export_admin_index_path, method: :post) do |form| %>
+    <p class="mb0 mt0">
+      Balances are calculated from settled canonical transactions only; pending
+      and fronted transactions are excluded.
+    </p>
+    <p class="bold mb0 mt0">
+      Up until...
+    </p>
+    <p>
+      <%= form.date_field :end_date, class: "border mb1", value: nil %>
+    </p>
+    <p>
+      <%= form.submit "Export canonical transaction balances (all events)" %>
+    </p>
+  <% end %>
+</details>
+
 <div class="flex items-center mb2 flex-col sm:flex-row">
   <div class="flex-grow">
     <%= page_entries_info @events, entry_name: "organizations" %>.
