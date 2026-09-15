@@ -75,6 +75,8 @@ class Event < ApplicationRecord
 
   include Commentable
 
+  prepend MemoWise
+
   has_paper_trail
   acts_as_paranoid
   validates_as_paranoid
