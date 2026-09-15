@@ -101,7 +101,7 @@ class Ledger
     after_create :map!
     after_touch :map!
 
-    after_update if: -> { linked_object_type == "CardCharge" && (status_previously_changed?(to: "reversed") || status_previously_changed?(to: "released")) } do
+    after_update if: -> { linked_object_type == "CardCharge" && saved_change_to_status? && status.in?(%w[reversed released]) } do
       CardChargeMailer.with(ledger_item: self).reversed.deliver_later
     end
 
