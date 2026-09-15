@@ -203,6 +203,7 @@ class EventsController < ApplicationController
       start_date: @start_date,
       end_date: @end_date,
       missing_receipts: @missing_receipts,
+      lost_receipts: @lost_receipts,
       category: @category,
       merchant: @merchant,
       order_by: @order_by.to_sym,
@@ -1579,6 +1580,7 @@ class EventsController < ApplicationController
     @minimum_amount = params[:minimum_amount].presence ? Money.from_amount(params[:minimum_amount].to_f) : nil
     @maximum_amount = params[:maximum_amount].presence ? Money.from_amount(params[:maximum_amount].to_f) : nil
     @missing_receipts = params[:missing_receipts].present?
+    @lost_receipts = params[:lost_receipts].present?
     @merchant = params[:merchant].presence
     @direction = params[:direction].presence
     @category = TransactionCategory.find_by(slug: params[:category])
@@ -1614,6 +1616,7 @@ class EventsController < ApplicationController
       start_date: @start_date,
       end_date: @end_date,
       missing_receipts: @missing_receipts,
+      lost_receipts: @lost_receipts,
       category: @category,
       merchant: @merchant,
       order_by: @order_by&.to_sym || "date",
@@ -1647,7 +1650,8 @@ class EventsController < ApplicationController
         @direction.nil? &&
         @category.nil? &&
         @merchant.nil? &&
-        !@missing_receipts
+        !@missing_receipts &&
+        !@lost_receipts
     )
 
     @cacheable = !(organizer_signed_in? || has_filters)

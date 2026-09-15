@@ -3,7 +3,7 @@
 module TransactionGroupingEngine
   module Transaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false, category: nil, merchant: nil, order_by: :date, subledger: false)
+      def initialize(event_id:, search: nil, tag_id: nil, expenses: false, revenue: false, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, user: nil, missing_receipts: false, lost_receipts: false, category: nil, merchant: nil, order_by: :date, subledger: false)
         @event_id = event_id
         @search = ActiveRecord::Base.sanitize_sql_like(search || "")
         @tag_id = tag_id&.to_i
@@ -15,6 +15,7 @@ module TransactionGroupingEngine
         @end_date = end_date&.to_datetime
         @user = user
         @missing_receipts = missing_receipts
+        @lost_receipts = lost_receipts
         @category = category
         @merchant = merchant
         @order_by = order_by
@@ -154,7 +155,7 @@ module TransactionGroupingEngine
           query_params.merge!({ tag_id: @tag_id })
         end
 
-        if !@tag_id && @missing_receipts
+        if !@tag_id && (@missing_receipts || @lost_receipts)
           joins << <<~SQL
             left join hcb_codes on hcb_codes.hcb_code = q1.hcb_code
           SQL
@@ -166,6 +167,8 @@ module TransactionGroupingEngine
           SQL
           conditions << "receipts.id IS NULL AND hcb_codes.marked_no_or_lost_receipt_at is NULL AND q1.amount_cents <= 0"
         end
+
+        conditions << "hcb_codes.marked_no_or_lost_receipt_at IS NOT NULL" if @lost_receipts
 
         conditions << "q1.amount_cents < 0" if @expenses
         conditions << "q1.amount_cents > 0" if @revenue
