@@ -52,32 +52,44 @@ class Contract
           {
             role: "Organizer",
             email: organizer.email,
-            fields: [
-              { name: "Project Name", default_value: prefills["title"], readonly: true },
-              { name: "Description", default_value: prefills["description"], readonly: true },
-              { name: "Start Date", default_value: prefills["start_date"], readonly: true },
-              { name: "End Date", default_value: prefills["end_date"], readonly: true },
-              { name: "Rate", default_value: prefills["rate"], readonly: true },
-            ]
+            fields: if prefills["combine_documents"]
+                      [
+                        { name: "Project Name", default_value: prefills["title"], readonly: true },
+                        { name: "Description", default_value: prefills["description"], readonly: true },
+                        { name: "Start Date", default_value: prefills["start_date"], readonly: true },
+                        { name: "End Date", default_value: prefills["end_date"], readonly: true },
+                        { name: "Rate", default_value: prefills["rate"], readonly: true },
+                      ]
+                    else
+                      []
+                    end
           },
           {
             role: "HCB",
             email: hcb.email,
             send_email: false,
-            fields: [
-              {
-                name: "Signature",
-                default_value: ActionController::Base.helpers.asset_url("zach_signature.png", host: "https://hcb.hackclub.com"),
-                readonly: false
-              }
-            ]
+            fields: if prefills["combine_documents"]
+                      [
+                        {
+                          name: "Signature",
+                          default_value: ActionController::Base.helpers.asset_url("zach_signature.png", host: "https://hcb.hackclub.com"),
+                          readonly: false
+                        }
+                      ]
+                    else
+                      []
+                    end
           },
           {
             role: "Contractor",
             email: contractor.email,
-            fields: [
-              { name: "Name", default_value: prefills["payee_name"] }
-            ]
+            fields: if prefills["combine_documents"]
+                      [
+                        { name: "Name", default_value: prefills["payee_name"] }
+                      ]
+                    else
+                      []
+                    end
           }
         ]
       }
