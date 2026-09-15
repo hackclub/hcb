@@ -1,0 +1,16 @@
+<%# locals: (payee:, destination:) %>
+
+<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="payee_<%= payee.id %>_change_email">
+  <%= modal_header "Change email" %>
+
+  <%= form_with model: payee, url: event_payee_path(payee.event, payee) do |form| %>
+    <%= form.hidden_field :destination, value: destination %>
+    <%= form.hidden_field :redirect_to_show, value: true %>
+    <div class="field">
+      <%= form.label :email %>
+      <%= form.email_field :email %>
+    </div>
+
+    <%= form.submit "Save" %>
+  <% end %>
+</section>

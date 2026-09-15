@@ -40,7 +40,16 @@
       </p>
       <p>
         <strong>Email</strong>
-        <%= @payment.payee.email %>
+
+        <span class="!inline-flex gap-2 items-center">
+          <%= @payment.payee.email %>
+
+          <% if @payment.payee.legal_entity.nil? %>
+            <%= link_to "#", class: "tooltipped h-5", "aria-label": "Change recipient email", data: { behavior: "modal_trigger", modal: "payee_#{@payment.payee.id}_change_email" } do %>
+              <%= inline_icon "edit", size: 24 %>
+            <% end %>
+          <% end %>
+        </span>
       </p>
       <p>
         <strong>Purpose</strong>
@@ -108,4 +117,8 @@
 
   <%= render "comments/list", comments: @payment.all_comments, viewing_commentable: @payment %>
   <%= render "comments/form", commentable: @payment if current_user %>
+<% end %>
+
+<% if @payment.payee.legal_entity.nil? %>
+  <%= render partial: "payees/change_email_modal", locals: { payee: @payment.payee, destination: "payments" } %>
 <% end %>
