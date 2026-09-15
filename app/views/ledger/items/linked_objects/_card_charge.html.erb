@@ -155,7 +155,11 @@
                 <%= copy_to_clipboard(card_charge.stripe_merchant_data["network_id"], class: "w-fit", tooltip_direction: "e") %>
               </p>
             </div>
-            <%= link_to "See all transactions at #{humanized_merchant_name card_charge.stripe_merchant_data}", event_transactions_path(ledger_item.primary_mapping.ledger.event, merchant: card_charge.stripe_merchant_data["network_id"]) %>
+            <% merchant_ledger = ledger_item.primary_mapping&.ledger %>
+            <% merchant_event = merchant_ledger&.event || merchant_ledger&.card_grant&.event %>
+            <% if merchant_event.present? %>
+              <%= link_to "See all transactions at #{humanized_merchant_name card_charge.stripe_merchant_data}", event_transactions_path(merchant_event, merchant: card_charge.stripe_merchant_data["network_id"]) %>
+            <% end %>
             <p class="muted">
               Details are provided by the merchant and not guaranteed to be correct.
             </p>
@@ -308,7 +312,11 @@
           <%= copy_to_clipboard(card_charge.stripe_merchant_data["network_id"], class: "w-fit", tooltip_direction: "e") %>
         </p>
       </div>
-      <%= link_to "See all transactions at #{humanized_merchant_name card_charge.stripe_merchant_data}", event_transactions_path(ledger_item.primary_mapping.ledger.event, merchant: card_charge.stripe_merchant_data["network_id"]) %>
+      <% merchant_ledger = ledger_item.primary_mapping&.ledger %>
+      <% merchant_event = merchant_ledger&.event || merchant_ledger&.card_grant&.event %>
+      <% if merchant_event.present? %>
+        <%= link_to "See all transactions at #{humanized_merchant_name card_charge.stripe_merchant_data}", event_transactions_path(merchant_event, merchant: card_charge.stripe_merchant_data["network_id"]) %>
+      <% end %>
       <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0.5rem;">
         <p class="my0 muted">
           Details are provided by the merchant and not guaranteed to be correct.

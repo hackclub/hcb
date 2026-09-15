@@ -1,4 +1,4 @@
-<%# locals: (ledger_item:, render_memo: false) -%>
+<%# locals: (ledger_item:, render_memo: false, render_status: true) -%>
 
 <% show_yield = ledger_item.custom_memo.nil? && !render_memo %>
 <% can_rename = policy(ledger_item).rename? %>
@@ -46,6 +46,10 @@
         </span>
       <% end %>
     </div>
+  <% end %>
+
+  <% if render_status %>
+    <%= render "ledger/items/status", ledger_item: %>
   <% end %>
 
   <div class="flex-1"></div>

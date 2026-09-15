@@ -9,7 +9,7 @@
 <% end %>
 
 <article class="ledger-item">
-  <%= render "ledger/items/heading", ledger_item: ledger_item do %>
+  <%= render "ledger/items/heading", ledger_item: ledger_item, render_status: false do %>
     <span>
       <% if wire.failed? %>
         <span class="regular muted">Attempted to wire transfer to</span>

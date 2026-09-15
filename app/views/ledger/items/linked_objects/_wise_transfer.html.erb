@@ -12,7 +12,7 @@
 <% end %>
 
 <article class="ledger-item">
-  <%= render "ledger/items/heading", ledger_item: ledger_item do %>
+  <%= render "ledger/items/heading", ledger_item: ledger_item, render_status: false do %>
     <span>
       <% if wise_transfer.failed? %>
         <span class="regular muted">Attempted to Wise transfer to</span>
