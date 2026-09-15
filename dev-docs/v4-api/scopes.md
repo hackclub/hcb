@@ -145,7 +145,7 @@ To gate an action behind a new scope:
    def create
      # ...
    end
-   require_oauth2_scope "ach_transfers:write", :create
+   require_oauth2_scope "transfers:write", :create
    ```
 2. **Pick a name** following the [naming conventions](#scope-naming-conventions) — usually `<resource>:read` or `<resource>:write`.
 5. **Test with a `restricted` token** — remember the scope only takes effect for tokens carrying `restricted`. A non-restricted token will bypass the check entirely.
