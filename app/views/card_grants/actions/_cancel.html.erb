@@ -1,15 +1,33 @@
-<%# locals: (card_grant:, label: "") %>
+<%# locals: (card_grant:, label: "", variant: "list_item") %>
 
 <% cancel_tooltip = policy(card_grant).cancel? ? "Cancel this grant and return funds to the organization" : "You don't have permission to perform this action" %>
-<%= button_to cancel_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
-              method: :post,
-              form_class: "contents",
-              class: "btn btn--list-item",
-              disabled: !policy(card_grant).cancel?,
-              data: { turbo: true, turbo_frame: "_top", turbo_confirm: "Are you sure? This will irreversibly transfer the remaining balance on this grant BACK to your account.", turbo_confirm_danger: true } do %>
-  <%= inline_icon "reply", size: 20 %>
-  <div>
+<% cancel_path = cancel_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug) %>
+<% cancel_data = { turbo: true, turbo_frame: "_top", turbo_confirm: "Are you sure? This will irreversibly transfer the remaining balance on this grant BACK to your account.", turbo_confirm_danger: true } %>
+
+<% if variant.to_s == "control" %>
+  <div class="grant-control">
     <strong>Cancel grant</strong>
     <p class="text-sm opacity-60"><%= label.presence || cancel_tooltip %></p>
+    <%= button_to cancel_path,
+                  method: :post,
+                  form_class: "contents",
+                  class: "btn",
+                  disabled: !policy(card_grant).cancel?,
+                  data: cancel_data do %>
+      Cancel grant
+    <% end %>
   </div>
+<% else %>
+  <%= button_to cancel_path,
+                method: :post,
+                form_class: "contents",
+                class: "btn btn--list-item",
+                disabled: !policy(card_grant).cancel?,
+                data: cancel_data do %>
+    <%= inline_icon "reply", size: 20 %>
+    <div>
+      <strong>Cancel grant</strong>
+      <p class="text-sm opacity-60"><%= label.presence || cancel_tooltip %></p>
+    </div>
+  <% end %>
 <% end %>
