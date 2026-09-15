@@ -21,8 +21,6 @@ class CommentsController < ApplicationController
       # url_from validates the URL is internal to prevent open redirect vulnerabilities
       redirect_back_or_to url_from(params[:comment][:return_to]) || @commentable
     else
-      # A frame request discards the re-rendered form, so surface its errors as a flash
-      flash.now[:error] = @comment.errors.full_messages.to_sentence if turbo_frame_request?
       render :new, status: :unprocessable_content
     end
   end
