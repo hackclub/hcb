@@ -47,8 +47,16 @@ class Ledger < ApplicationRecord
   has_many :canonical_transactions, through: :items
   has_many :canonical_pending_transactions, through: :items
 
-  monetize def balance_cents = items.sum(:amount_cents)
-  monetize def available_balance_cents = items.sum(:amount_cents) - fronted_fee_balance_cents
+  monetize def balance_cents(start_date: nil, end_date: nil)
+    Ledger::Query.new({
+                        "$and": [
+                          ({ datetime: { "$gte": start_date } } if start_date),
+                          ({ datetime: { "$lte": end_date } } if end_date)
+                        ].compact
+                      }).execute(ledgers: [self]).sum(:amount_cents)
+  end
+
+  monetize def available_balance_cents = balance_cents - fronted_fee_balance_cents
 
   def can_front_balance?
     event&.can_front_balance? || card_grant&.event&.can_front_balance? || false
