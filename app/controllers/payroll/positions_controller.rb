@@ -47,7 +47,8 @@ module Payroll
         rate_unit: position_params[:rate_unit].presence || "hour",
         start_date: position_params[:starts_on],
         end_date: position_params[:ends_on],
-        description: position_params[:purpose]
+        description: position_params[:purpose],
+        combine_contract_attachment: position_params[:combine_contract_attachment]
       )
 
       if @payee.nil?
@@ -103,7 +104,8 @@ module Payroll
         rate_unit: position_params[:rate_unit].presence,
         start_date: position_params[:starts_on],
         end_date: position_params[:ends_on],
-        description: position_params[:purpose]
+        description: position_params[:purpose],
+        combine_contract_attachment: position_params[:combine_contract_attachment]
       }.compact)
       attachment = Array(position_params[:file]).compact_blank.first
       @position.file.attach(attachment) if attachment
