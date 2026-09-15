@@ -1,0 +1,7 @@
+<p>
+  Your cards work again until <strong><%= CardLocking.format_deadline(@suppressed_until, @timezone) %></strong>, as a one time exception from the HCB team.
+</p>
+<p>
+  Upload your overdue <%= "receipt".pluralize(@count) %> before the exception ends, or your cards will lock again. <%= @count == 1 ? "This receipt is" : "These #{@count} receipts are" %> still missing:
+</p>
+<%= render "transactions_table", hcb_codes: @hcb_codes, show_org: @show_org %>

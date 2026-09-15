@@ -75,10 +75,25 @@ module CardLocking
     ENFORCEMENT_STAGES.filter_map { |flag, date| date if Flipper.enabled?(flag, user) }.min
   end
 
-  # A deadline as it appears in cardholder-facing copy, in the cardholder's own
-  # timezone (see User#time_zone, inferred from their last session). The zone
-  # abbreviation is kept because the inference can be wrong, and a labelled time
-  # someone can sanity-check beats a bare one they cannot.
+  # How often to remind a cardholder mid-exception that receipts are outstanding.
+  # Far softer than the daily pre-lock digest: they were granted relief, so this
+  # is a courtesy, not a nudge.
+  SUPPRESSION_REMINDER_INTERVAL = 3.days
+
+  # The last call before an exception expires. The sweep runs every few minutes,
+  # so treat this as approximate and never print it as a countdown.
+  SUPPRESSION_FINAL_LEAD = 1.hour
+
+  # Cache key for one suppression message. The ending notices carry the deadline
+  # they were sent for, so extending or shortening an exception re-arms them for
+  # the new date instead of being swallowed by an already-warned flag.
+  def self.suppression_notice_key(stage, user_id, suppressed_until = nil)
+    ["card_locking_suppression", stage, user_id, suppressed_until&.to_i].compact.join(":")
+  end
+
+  # A deadline as it appears in cardholder-facing copy, in their own timezone (see
+  # User#assumed_timezone). The zone abbreviation stays because that inference can
+  # be wrong, and a labelled time can be sanity-checked.
   def self.format_deadline(time, zone)
     time.in_time_zone(zone).strftime("%b %-d at %-l:%M %p %Z")
   end
