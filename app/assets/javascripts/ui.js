@@ -82,28 +82,34 @@ if (!openPopoverFromUrl()) {
   })
 }
 
-// Turbo frame responses are rendered without the layout, so the server hands
-// their flashes over in a header. Render them inside the popover when the
-// request came from it, and on the page itself otherwise.
-document.addEventListener('turbo:before-fetch-response', event => {
-  const encoded = event.detail.fetchResponse.response.headers.get('x-flash')
-  if (!encoded) return
+document.addEventListener('turbo:before-fetch-response', async event => {
+  if (!event.target.closest?.('turbo-frame')) return
 
-  const html = decodeURIComponent(encoded)
-  const containers = event.target.closest?.('#shared_popover')
+  const response = event.detail.fetchResponse.response
+  if (!response.headers.get('content-type')?.includes('text/html')) return
+
+  const flash = new DOMParser()
+    .parseFromString(await response.clone().text(), 'text/html')
+    .querySelector('#flash-container')
+    ?.innerHTML.trim()
+  if (!flash) return
+
+  const containers = event.target.closest('#shared_popover')
     ? [document.getElementById('shared_popover_flash')]
     : document.querySelectorAll('#flash-container')
 
   containers.forEach(container => {
-    if (container) container.innerHTML = html
+    if (container) container.innerHTML = flash
   })
 })
 
-// A re-rendered form (e.g. a validation error) has no matching frame; without
-// this Turbo would navigate the whole page away from the popover. The flash
-// above explains what went wrong.
+// Redirects out of the popover land on a page without its frame; reload the
+// popover in place rather than letting Turbo navigate away from it.
 document.addEventListener('turbo:frame-missing', event => {
-  if (event.target.closest('#shared_popover')) event.preventDefault()
+  if (!event.target.closest('#shared_popover')) return
+
+  event.preventDefault()
+  event.target.reload()
 })
 
 const loadModals = element => {
