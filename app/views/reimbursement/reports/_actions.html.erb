@@ -68,7 +68,7 @@
               <%= inline_icon "reply" %>
               Return to <%= report.user.first_name %>
               <% button_hint = capture do %>
-                <span class="bold">Your next step:</span> review the expenses, then approve the report. Or, return the report to <%= report.user.first_name %>.
+                <span class="bold">Your next step:</span> approve expenses and reimburse the report. Or, return the report to <%= report.user.first_name %>.
               <% end %>
             </button>
           <% end %>
@@ -229,9 +229,9 @@
             </div>
           </div>
         <% elsif report.submitted? && policy(report).approve? && report.expenses.approved.none? %>
-          <%= link_to reimbursement_report_approve_path(report), class: "btn bg-success", data: { turbo_method: :post } do %>
+          <%= link_to reimbursement_report_approve_path(report), class: "btn bg-success", data: { turbo_confirm: "This will approve all expenses and send the report to the HCB team for reimbursement.", turbo_method: :post } do %>
             <%= inline_icon "thumbsup" %>
-            Approve report
+            Approve and reimburse
           <% end %>
         <% elsif report.reimbursement_requested? && !admin_signed_in? %>
           <div class="btn bg-info disabled" style="opacity: 0.75" disabled>
