@@ -103,7 +103,7 @@ class Contract
               if prefills["grant_amount"].present?
                 {
                   name: "Grant Amount",
-                  default_value: prefills["grant_amount"]
+                  default_value: ActionController::Base.helpers.number_to_currency(prefills["grant_amount"] / 100)
                 }
               else
                 nil
