@@ -1,3 +1,7 @@
 <%= link_to @cpt.memo, hcb_code_url(@cpt.local_hcb_code) %> has settled at <%= render_money @ct.amount_cents %>; this was a charge on your card ending in <%= @cpt.stripe_card.last4 %> that previously was <%= render_money @cpt.amount_cents %>.
 
-<%= render partial: "canonical_pending_transaction_mailer/attach_receipt", locals: { hcb_code: @cpt.local_hcb_code, upload_url: @upload_url } if @cpt.local_hcb_code.missing_receipt? %>
+<% if @cpt.local_hcb_code.missing_receipt? %>
+  <%= render partial: "canonical_pending_transaction_mailer/attach_receipt", locals: { hcb_code: @cpt.local_hcb_code, upload_url: @upload_url } %>
+<% elsif @cpt.local_hcb_code.receipts.any? %>
+  <%= render partial: "canonical_pending_transaction_mailer/receipt_uploaded", locals: { hcb_code: @cpt.local_hcb_code } %>
+<% end %>
