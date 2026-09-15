@@ -65,6 +65,15 @@ class Ledger
       # preload, not includes: linked_object is polymorphic, so it can never be
       # JOINed — and includes makes pluck/count attempt exactly that join
       # (EagerLoadPolymorphicError).
+      #
+      # hcb_code and author back app/views/ledger/_item.html.erb's tag/memo
+      # partials and its author avatar column; linked_object backs
+      # Ledger::Item#icon for a Disbursement, Donation, or CardCharge row.
+      # None of icon's linked_object branches touch a *nested* association
+      # anymore (e.g. CardCharge#icon reads its own cached merchant_network_id
+      # / merchant_category columns, not raw_stripe_transactions), so
+      # preloading linked_object itself is enough — no N+1 to chase further
+      # down.
       results.order(pending_first.asc, datetime: :desc, created_at: :desc, id: :desc)
              .preload(:hcb_code, :author, :linked_object)
     end
