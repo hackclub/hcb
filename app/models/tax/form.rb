@@ -89,17 +89,21 @@ module Tax
       legal_entity.refresh_pending_contractors_payments!
     end
 
-    after_update if: -> { tin_hash_previously_changed?(from: nil) } do
+    # after_save, not after_update: an imported form is created already carrying
+    # the TIN it was filed with, rather than completing into one later.
+    after_save if: -> { tin_hash_previously_changed?(from: nil) } do
       # Locked: a legal entity's TIN can never change once set, and two forms
       # completing concurrently would otherwise both see a nil hash and race.
       #
       # A form whose entity type disagrees with the legal entity's is a filing
       # mistake (e.g. a W-8BEN-E against a personal LE); it must not claim the
       # entity's TIN identity. Left un-adopted, entity_type_mismatched_tax_form
-      # flags it and the payee is prompted to discard it.
+      # flags it and the payee is prompted to discard it. An entity that has no
+      # type of its own yet (an imported recipient, whose old transfer record
+      # said nothing about it) learns it here from the form instead.
       legal_entity.with_lock do
-        if legal_entity.tin_hash.nil? && entity_type == legal_entity.entity_type
-          legal_entity.update!(tin_hash:)
+        if legal_entity.tin_hash.nil? && legal_entity.entity_type.in?([nil, entity_type])
+          legal_entity.update!(tin_hash:, entity_type:)
         end
       end
     end

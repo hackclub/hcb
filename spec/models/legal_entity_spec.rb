@@ -9,6 +9,11 @@ RSpec.describe LegalEntity, type: :model do
     LegalEntity::PayoutMethod::AchTransfer.create!(account_number: "12345678", routing_number: "021000021")
   end
 
+  def over_reporting_threshold(entity)
+    allow(entity).to receive(:tax_identification_number)
+      .and_return(instance_double(Tax::IdentificationNumber, banned?: false, predicted_to_be_over_threshold?: true))
+  end
+
   def build_check
     LegalEntity::PayoutMethod::Check.create!(
       address_line1: "1 Main St",
@@ -116,6 +121,22 @@ RSpec.describe LegalEntity, type: :model do
                                     taxbandits_tin_matching_status: :success)
 
       expect(entity.reload).not_to be_payable
+    end
+
+    it "waits on the TIN match for a TaxBandits W-9 over the reporting threshold" do
+      entity = create(:legal_entity, :person, tin_hash: "abc")
+      create(:tax_form, :completed, legal_entity: entity, tin_hash: "abc")
+      over_reporting_threshold(entity)
+
+      expect(entity).not_to be_payable
+    end
+
+    it "is payable on an imported W-9, which has no TaxBandits TIN match to wait on" do
+      entity = create(:legal_entity, :person, tin_hash: "abc")
+      create(:tax_form, :completed, :manual, legal_entity: entity, tin_hash: "abc")
+      over_reporting_threshold(entity)
+
+      expect(entity).to be_payable
     end
 
     context "when requires_tax_form: false" do

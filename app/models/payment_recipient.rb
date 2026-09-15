@@ -29,6 +29,8 @@ class PaymentRecipient < ApplicationRecord
 
   belongs_to :event
   has_many :ach_transfers
+  has_many :increase_checks
+  has_many :wires
 
   scope :order_by_last_used, -> { includes(:ach_transfers).order("ach_transfers.created_at DESC") }
 
