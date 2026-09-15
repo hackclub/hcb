@@ -20,7 +20,13 @@ module FactoryLedgerMapping
   def map_to_primary_ledger(transaction)
     return if transaction.nil?
 
-    transaction.reload
+    # Work on a freshly-loaded copy: the object we were handed is the one the
+    # spec holds (via `let`/local), and reloading it or reading its associations
+    # would pollute its association cache — e.g. caching `event` as nil before a
+    # spec's own `before` block creates the mapping.
+    transaction = transaction.class.find_by(id: transaction.id)
+    return if transaction.nil?
+
     event = transaction.event
     return if event.nil?
 
