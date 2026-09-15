@@ -282,7 +282,7 @@ class Event
           contractable: self,
           include_videos: false,
           external_template_id: Event::Plan::Standard.new.contract_docuseal_template_id,
-          prefills: { "public_id" => public_id, "name" => name, "description" => description }.merge(extra_prefills),
+          prefills: extra_prefills.merge({ "public_id" => public_id, "name" => name, "description" => description }),
           reissue_of:
         )
         fs_contract.parties.create!(user:, role: :signee)

@@ -234,11 +234,11 @@ class OrganizerPositionInvite < ApplicationRecord
         contractable: self,
         include_videos:,
         external_template_id: event.plan.contract_docuseal_template_id,
-        prefills: {
-          "public_id"   => event.public_id,
-          "name"        => event.name,
-          "description" => event.airtable_record&.[]("Tell us about your event")
-        }.merge(extra_prefills),
+        prefills: extra_prefills.merge({
+                                         "public_id"   => event.public_id,
+                                         "name"        => event.name,
+                                         "description" => event.airtable_record&.[]("Tell us about your event")
+                                       }),
         reissue_of:
       )
       fs_contract.parties.create!(user:, role: :signee)
