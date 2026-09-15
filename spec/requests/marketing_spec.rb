@@ -141,9 +141,9 @@ RSpec.describe "Funders landing page", type: :request do
   end
 
   describe "POST /for/funders/inquiry" do
-    # A lead is precious: we email the funder a confirmation AND CC the ops team, so an
-    # inquiry can't be silently lost even if one delivery path fails.
-    it "emails the funder a confirmation and CCs the ops team, then redirects" do
+    # The confirmation goes to the funder with the team members in FunderInquiryMailer::CC_USER_IDS
+    # CC'd for follow-up. The shared operations inbox is deliberately not on the thread.
+    it "emails the funder a confirmation without CCing the operations inbox, then redirects" do
       perform_enqueued_jobs do
         post funder_inquiry_path, params: { email: "funder@example.com", name: "Ada Lovelace", message: "Interested in regranting." }
       end
@@ -151,7 +151,7 @@ RSpec.describe "Funders landing page", type: :request do
       mail = ActionMailer::Base.deliveries.last
       expect(mail).to be_present
       expect(mail.to).to include("funder@example.com")
-      expect(mail.cc).to include(ApplicationMailer::OPERATIONS_EMAIL)
+      expect(mail.cc.to_a).not_to include(ApplicationMailer::OPERATIONS_EMAIL)
       # The confirmation rides on flash, not a query param: a shared or bookmarked
       # "?inquiry=received" URL would otherwise show the "Thanks" card to whoever opens it.
       expect(response).to redirect_to(funders_path(anchor: "talk-to-us"))

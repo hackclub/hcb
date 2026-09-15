@@ -12,6 +12,10 @@ module TurboStreamActionsHelper
   def close_modal
     turbo_stream_action_tag :close_modal
   end
+
+  def open_modal(target)
+    turbo_stream_action_tag :open_modal, target: target
+  end
 end
 
 Turbo::Streams::TagBuilder.prepend(TurboStreamActionsHelper)
