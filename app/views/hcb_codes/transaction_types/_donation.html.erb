@@ -130,12 +130,12 @@
     <% end %>
     <p>
       <strong><%= donation_fee_type(@donation) %></strong>
-      -<%= donation_payment_processor_fee(true, @donation) %>
+      -<%= donation_payment_processor_fee(@donation) %>
     </p>
     <p>
       <strong>Processing fee refund</strong>
       <span>
-        +<%= donation_payment_processor_fee(true, @donation) %>
+        +<%= donation_payment_processor_fee(@donation) %>
         <span class="muted">
           <% "Pending " unless @donation&.fee_reimbursement&.t_transaction %>
           (<%= link_to "learn more", "https://blog.hcb.hackclub.com/posts/were-making-payment-processing-fees-disappear-101088" %>)
