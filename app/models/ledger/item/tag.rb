@@ -4,8 +4,8 @@
 #
 # Table name: ledger_items_tags
 #
-#  created_at     :datetime
-#  updated_at     :datetime
+#  created_at     :datetime         not null
+#  updated_at     :datetime         not null
 #  ledger_item_id :bigint           not null, primary key
 #  tag_id         :bigint           not null, primary key
 #
