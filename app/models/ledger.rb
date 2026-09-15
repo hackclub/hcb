@@ -105,11 +105,11 @@ class Ledger < ApplicationRecord
   end
 
   def sum_fronted_amount(pts)
-    pt_sum_by_ledger_item = pts.group(:ledger_item).sum(:amount_cents)
+    pt_sum_by_ledger_item = pts.group(:ledger_item_id).sum(:amount_cents)
     ledger_items = pt_sum_by_ledger_item.keys
 
-    ct_sum_by_ledger_item = canonical_transactions.where(ledger_item: ledger_items)
-                                                  .group(:ledger_item)
+    ct_sum_by_ledger_item = canonical_transactions.where(ledger_item_id: ledger_items)
+                                                  .group(:ledger_item_id)
                                                   .sum(:amount_cents)
 
     pt_sum_by_ledger_item.reduce 0 do |sum, (ledger_item, pt_sum)|
