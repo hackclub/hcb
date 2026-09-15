@@ -76,7 +76,7 @@ class Export
             event.users.pluck(:email).join(", "),
             event.plan.revenue_fee_label,
             Rails.application.routes.url_helpers.url_for(event),
-            event.balance(end_date: end_date.presence),
+            event.balance(end_date: end_date.present? ? Date.parse(end_date).end_of_day : nil),
             event.total_raised,
             event.omit_stats?
           ]

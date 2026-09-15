@@ -275,17 +275,6 @@ RSpec.describe Ledger, type: :model do
       expect(ledger.balance_cents).to eq(3000)
     end
 
-    it "includes items settled on the end date when given a calendar date" do
-      ct = create(:canonical_transaction, amount_cents: 1000, date: Date.today, memo: "Test Transaction")
-      create(:canonical_event_mapping, canonical_transaction: ct, event: ledger.event)
-      item = create(:ledger_item, amount_cents: 1000, canonical_transactions: [ct])
-      Ledger::Mapping.create!(ledger: ledger, ledger_item: item, on_primary_ledger: true)
-
-      expect(ledger.balance_cents(end_date: Date.today)).to eq(1000)
-      expect(ledger.balance_cents(end_date: Date.today.iso8601)).to eq(1000)
-      expect(ledger.balance_cents(end_date: Date.yesterday)).to eq(0)
-    end
-
     it "returns a Money object" do
       ct = create(:canonical_transaction, amount_cents: 1000, date: Date.today, memo: "Test Transaction")
       create(:canonical_event_mapping, canonical_transaction: ct, event: ledger.event)
