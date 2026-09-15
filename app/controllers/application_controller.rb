@@ -55,14 +55,11 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  # Turbo frame responses are rendered without the layout, so flashes never reach
-  # the page. Hand them to the client, which renders them itself.
-  # A redirect is skipped so its flash survives to the response Turbo lands on.
+  # Turbo frame responses render the flash in the frame layout, so discard it here
+  # to stop it repeating on the next page. A redirect keeps its flash for the page
+  # Turbo lands on.
   after_action do
-    if turbo_frame_request? && !response.redirect? && helpers.renderable_flash.any?
-      response.set_header("X-Flash", ERB::Util.url_encode(view_context.render("application/flash_messages")))
-      helpers.renderable_flash.each_key { |key| flash.discard(key) }
-    end
+    helpers.renderable_flash.each_key { |key| flash.discard(key) } if turbo_frame_request? && !response.redirect?
   end
 
   # Force usage of Pundit on actions
