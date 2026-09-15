@@ -768,4 +768,44 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#show" do
+    render_views
+
+    context "when the viewer is an auditor" do
+      it "renders the mission statement when the event has a description" do
+        admin = create(:user, :make_admin)
+        event = create(:event, description: "Run neat events for students")
+
+        create_session(admin, verified: true)
+
+        get(:show, params: { id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Run neat events for students")
+      end
+
+      it "omits the mission statement when the event has no description" do
+        admin = create(:user, :make_admin)
+        event = create(:event, description: nil)
+
+        create_session(admin, verified: true)
+
+        get(:show, params: { id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("Mission statement")
+      end
+    end
+
+    it "does not render the mission statement for non-auditor visitors" do
+      event = create(:event, description: "Run neat events for students")
+
+      get(:show, params: { id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("Mission statement")
+      expect(response.body).not_to include("Run neat events for students")
+    end
+  end
+
 end

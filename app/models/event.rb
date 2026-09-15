@@ -539,6 +539,8 @@ class Event < ApplicationRecord
 
   validates :discord_guild_id, :discord_channel_id, uniqueness: { message: "is already linked to another organization. Please contact hcb@hackclub.com if this is unexpected." }, allow_nil: true
 
+  validates :description, presence: true, if: -> { application.present? && (new_record? || description_changed?) }
+
   before_create { self.increase_account_id ||= "account_phqksuhybmwhepzeyjcb" }
 
   after_create :apply_plan_default_values
