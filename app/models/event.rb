@@ -757,7 +757,7 @@ class Event < ApplicationRecord
         balance_v2_cents(legacy:)
       end
     else
-      ledger.balance_available_cents
+      ledger.available_balance_cents
     end
   end
 
