@@ -24,7 +24,7 @@ class FunderInquiryMailer < ApplicationMailer
 
     mail(
       to: @email,
-      cc: [ApplicationMailer::OPERATIONS_EMAIL, *team_cc],
+      cc: team_cc,
       subject: "Thanks for reaching out to HCB"
     )
   end
