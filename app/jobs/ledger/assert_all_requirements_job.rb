@@ -14,6 +14,8 @@ class Ledger
       Ledger::AssertCemsMatchLedgerMappingJob.perform_later
       Ledger::AssertCpemsMatchLedgerMappingJob.perform_later
       Ledger::AssertCorrectLedgerBalancesJob.perform_later
+      Ledger::AssertCorrectFeeBalancesJob.perform_later
+      Ledger::AssertLinkedObjectsMatchHcbCodeJob.perform_later
     end
 
   end
