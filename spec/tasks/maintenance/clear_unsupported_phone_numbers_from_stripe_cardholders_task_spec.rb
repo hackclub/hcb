@@ -18,7 +18,7 @@ RSpec.describe Maintenance::ClearUnsupportedPhoneNumbersFromStripeCardholdersTas
   # rows with international numbers predate the before_validation on the model,
   # so they have to be written around it here
   describe "#process" do
-    it "clears a non-US/GB phone number" do
+    it "clears a phone number outside +1/+44" do
       cardholder = create(:stripe_cardholder)
       cardholder.update_column(:stripe_phone_number, "919876543210")
 

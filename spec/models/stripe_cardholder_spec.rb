@@ -61,13 +61,13 @@ RSpec.describe StripeCardholder, type: :model do
     stripe_cardholder.update!(stripe_email: "updated@example.com")
   end
 
-  it "drops a non-US/GB phone number before saving" do
+  it "drops a phone number outside +1/+44 before saving" do
     stripe_cardholder = create(:stripe_cardholder, stripe_phone_number: "919876543210")
 
     expect(stripe_cardholder.stripe_phone_number).to be_nil
   end
 
-  it "clears a non-US/GB phone number on Stripe when it reaches an existing cardholder" do
+  it "clears a phone number outside +1/+44 on Stripe when it reaches an existing cardholder" do
     stripe_cardholder = create(:stripe_cardholder, stripe_phone_number: "18556254225")
 
     expect(StripeService::Issuing::Cardholder).to(
@@ -92,7 +92,7 @@ RSpec.describe StripeCardholder, type: :model do
       expect(StripeCardholder.phone_number_supported?("+447700900123")).to eq(true)
     end
 
-    it "does not work for numbers outside US/GB" do
+    it "does not work for numbers outside +1/+44" do
       expect(StripeCardholder.phone_number_supported?("+919876543210")).to eq(false)
       expect(StripeCardholder.phone_number_supported?("+61412345678")).to eq(false)
     end

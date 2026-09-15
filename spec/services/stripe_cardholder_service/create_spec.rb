@@ -43,7 +43,7 @@ RSpec.describe StripeCardholderService::Create do
       expect(cardholder.stripe_phone_number).to eq("442079460000")
     end
 
-    it "does not send a non-US/GB phone number to Stripe" do
+    it "does not send a phone number outside +1/+44 to Stripe" do
       user = create(:user, phone_number: "+919876543210")
       user.update_column(:phone_number_verified, true)
       allow(StripeService::Issuing::Cardholder).to receive(:update)
