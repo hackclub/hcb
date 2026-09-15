@@ -6,7 +6,7 @@
   <span class="flex-grow">Transactions</span>
 <% end %>
 
-<%= turbo_frame_tag "event_stats", src: event_ledger_stats_path(@event) do %>
+<%= turbo_frame_tag "event_stats", src: event_stats_path(@event) do %>
   <div class="statset mb-2">
     <div class="stat">
       <span class="stat__label">Account balance</span>
