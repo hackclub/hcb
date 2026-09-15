@@ -1018,7 +1018,7 @@ class EventsController < ApplicationController
       parent_event: @event,
       scoped_tags: params[:scoped_tags],
       contract_extra_prefills: {
-        "grant_amount_cents": @event.config.subevent_plan == "Event::Plan::Argosy2026" ? params[:argosy_grant_amount].to_f : nil
+        "grant_amount_cents": @event.config.subevent_plan == "Event::Plan::Argosy2026" ? params[:argosy_grant_amount].to_i : nil
       }.compact
     ).run
 
