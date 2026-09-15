@@ -69,6 +69,22 @@ class Ledger
              .preload(:hcb_code, :author, :linked_object)
     end
 
+    # Returns the item's 1-based position in the filtered, ordered relation.
+    # Filter by ID after ranking so the position isn't always 1.
+    def self.position_of(item, relation:)
+      return if item.nil?
+
+      window = Arel::Nodes::Window.new.order(*relation.arel.orders)
+      position = Arel::Nodes::NamedFunction.new("ROW_NUMBER", []).over(window).as("position")
+      ranked_items = relation.except(:preload).reselect(Ledger::Item.arel_table[:id], position).reorder(nil)
+
+      Ledger::Item.unscoped
+                  .from(ranked_items, :ledger_positions)
+                  .where(ledger_positions: { id: item.id })
+                  .pick(Arel.sql("ledger_positions.position"))
+                  &.to_i
+    end
+
     def self.sanitize_query(query_hash)
       # TODO: Implement query sanitization logic
       validate_complexity!(query_hash)

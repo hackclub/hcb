@@ -200,6 +200,23 @@ RSpec.describe EventsController do
         expect(response.body).to include("Declined but moved money")
         expect(response.body).not_to include("Declined with no amount")
       end
+
+      it "redirects locate to the correct page and transaction fragment" do
+        older = create(:ledger_item, custom_memo: "Older funding", datetime: 2.days.ago)
+        Ledger::Mapping.create!(ledger: event.ledger, ledger_item: older, on_primary_ledger: true)
+        older.update_columns(status: "settled", amount_cents: 1000, ct_count: 1)
+
+        newer = create(:ledger_item, custom_memo: "Newer funding", datetime: 1.day.ago)
+        Ledger::Mapping.create!(ledger: event.ledger, ledger_item: newer, on_primary_ledger: true)
+        newer.update_columns(status: "settled", amount_cents: 1000, ct_count: 1)
+
+        get(:ledger, params: { event_id: event.slug, locate: older.hashid, per: 1 })
+
+        expect(response).to redirect_to(event_ledger_path(event, page: 2, per: 1, anchor: "ledger_item_#{older.id}"))
+        expect(response.location).to end_with("#ledger_item_#{older.id}")
+        expect(response.location).not_to include("anchor=")
+      end
+
     end
   end
 

@@ -3,6 +3,7 @@
 class EventsController < ApplicationController
   TRANSACTIONS_PER_PAGE = 75
   DONATIONS_PER_PAGE = 25
+  LEDGER_LOCATION_PARAMS = (SetLedgerFilters::FILTER_PARAMS + %i[q per]).freeze
 
   TREE_GUIDES = /\A[01]{0,#{Event::MAX_PARENT_DEPTH}}\z/
 
@@ -1331,6 +1332,8 @@ class EventsController < ApplicationController
       @items = @items.where(linked_object_type: "CardCharge", linked_object_id: CardCharge.where(merchant_network_id: @merchant).select(:id))
     end
 
+    return locate_ledger_item if params[:locate].present? && auditor_signed_in?
+
     @items = @items.page(params[:page]).per(@per).preload(:tags, hcb_code: { event: :tags })
   rescue Pundit::NotAuthorizedError
     return head :not_found
@@ -1349,6 +1352,17 @@ class EventsController < ApplicationController
   end
 
   private
+
+  def locate_ledger_item
+    destination = params.permit(*LEDGER_LOCATION_PARAMS).to_h.symbolize_keys.compact_blank
+    item = @items.find_by_hashid(params[:locate])
+    position = Ledger::Query.position_of(item, relation: @items)
+    unless position
+      return redirect_to event_ledger_path(@event, **destination), flash: { error: "That transaction isn't visible in this ledger. It may have been moved, removed, or excluded by filters." }
+    end
+
+    redirect_to event_ledger_path(@event, **destination, page: (position - 1) / @per + 1, anchor: helpers.dom_id(item))
+  end
 
   def process_hidden_param!(params_hash)
     if params_hash[:hidden] == "1" && !@event.hidden_at.present?

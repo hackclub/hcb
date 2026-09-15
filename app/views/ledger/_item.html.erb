@@ -1,6 +1,6 @@
 <%# locals: (item:, show_author: true) %>
 
-<tr class="transaction transaction--<%= item.sign %> <%= item.special_appearance&.css_class %>">
+<tr id="<%= dom_id(item) %>" class="transaction transaction--<%= item.sign %> <%= item.special_appearance&.css_class %>">
   <td class="transaction__icon">
     <div class="tooltipped tooltipped--e" aria-label="<%= item.humanized_type %>">
       <%= render "ledger/items/icon", ledger_item: item %>
