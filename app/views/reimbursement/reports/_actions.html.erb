@@ -229,7 +229,7 @@
             </div>
           </div>
         <% elsif report.submitted? && policy(report).approve? && report.expenses.approved.none? %>
-          <%= link_to reimbursement_report_approve_path(report), class: "btn bg-success", data: { turbo_confirm: "This will approve all expenses and send the report to the HCB team for reimbursement.", turbo_method: :post } do %>
+          <%= link_to reimbursement_report_approve_path(report), class: "btn bg-success", data: { turbo_confirm: "This will approve all expenses and submit the report to the HCB team for review.", turbo_method: :post } do %>
             <%= inline_icon "thumbsup" %>
             Approve and reimburse
           <% end %>
