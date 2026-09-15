@@ -1434,7 +1434,7 @@ class AdminController < Admin::BaseController
     @events = filtered_events
 
     render_balance = ->(event, type) {
-      ApplicationController.helpers.render_money(event.send(type, start_date: @start_date, end_date: @end_date&.end_of_day))
+      ApplicationController.helpers.render_money(event.send(type, start_date: @start_date, end_date: @end_date))
     }
 
     render_monthly_revenue = ->(event, year, month) {

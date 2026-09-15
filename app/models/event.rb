@@ -681,6 +681,8 @@ class Event < ApplicationRecord
   end
 
   def balance_v2_cents(start_date: nil, end_date: nil, legacy: false)
+    end_date = end_date&.to_date&.end_of_day
+
     if legacy
       sum = settled_balance_cents(start_date:, end_date:)
       sum += pending_outgoing_balance_v2_cents(start_date:, end_date:)
