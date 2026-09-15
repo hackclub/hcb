@@ -1055,6 +1055,9 @@ Rails.application.routes.draw do
       end
     end
     resources :payees, only: [:index, :create, :update] do
+      collection do
+        get :check_email
+      end
       member do
         post :archive
       end
