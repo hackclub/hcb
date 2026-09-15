@@ -428,6 +428,12 @@ module Admin
             path: new_teenagers_leaderboard_admin_index_path,
             count: ->{ 0 }, # I think this would be expensive to calculate
             count_type: :records,
+          ),
+          make_item(
+            name: "Page Engineers",
+            path: admin_page_engineers_path,
+            count: ->{ 0 }, # nothing to count; this is an action, not a queue
+            count_type: :records,
           )
         ]
       )

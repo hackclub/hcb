@@ -701,6 +701,16 @@ export const adminActions = (adminUrls, isPretending) => {
       icon: <Icon glyph="member-add" size={16} />,
       perform: navigate('/admin/new_teenagers_leaderboard'),
     },
+    {
+      id: 'admin-page-engineers',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Page engineers',
+      keywords:
+        'page engineers oncall on-call pagerduty incident outage emergency help',
+      icon: <Icon glyph="important" size={16} />,
+      perform: navigate('/admin/page_engineers'),
+    },
     // airtable
     {
       id: 'admin-applications-airtable',
