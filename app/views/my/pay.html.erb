@@ -116,6 +116,7 @@
             <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog"
               id="<%= dom_id(position, :submit_invoice) %>"
               data-controller="turbo-frame-modal"
+              data-turbo-frame-modal-reload-on-success-value="true"
               data-action="turbo:submit-end->turbo-frame-modal#submitEnd">
               <%= modal_header "Submit an invoice" %>
               <%= turbo_frame_tag dom_id(position, :invoice_form), src: new_payroll_position_invoice_path(position), loading: :lazy do %>
@@ -174,9 +175,8 @@
         </thead>
         <tbody>
           <% @invoices.each do |invoice| %>
-            <% state_color = invoice.approved? ? "success" : (invoice.rejected? ? "muted" : "warning") %>
             <tr>
-              <td><span class="badge ml-0 bg-<%= state_color %>"><%= invoice.aasm_state.humanize %></span></td>
+              <td><span class="badge ml-0 bg-<%= invoice.state_color %>"><%= invoice.aasm_state.humanize %></span></td>
               <td><%= format_date invoice.created_at %></td>
               <td><strong><%= invoice.event.name %></strong></td>
               <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
@@ -218,10 +218,9 @@
       <tbody>
         <% @payments.each do |payment| %>
           <% payout = payment.latest_payout %>
-          <% state_color = { "pending_legal_entity" => "muted", "under_review" => "info", "sent" => "info", "successful" => "success", "rejected" => "error" }[payment.aasm_state] %>
           <tr class="clickable">
             <td>
-              <span class="ml0 badge bg-<%= state_color %>">
+              <span class="ml0 badge bg-<%= payment.state_color %>">
                 <%= payment.aasm_state.humanize %>
               </span>
             </td>

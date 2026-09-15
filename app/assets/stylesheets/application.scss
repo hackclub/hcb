@@ -227,6 +227,22 @@ tr.clickable {
   }
 }
 
+.contractor-review-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background-color: map-get($palette, primary);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
 thead {
   table-layout: fixed;
 }

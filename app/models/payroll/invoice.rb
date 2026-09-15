@@ -71,6 +71,14 @@ module Payroll
       end
     end
 
+    def state_color
+      case aasm_state.to_sym
+      when :approved then "success"
+      when :rejected then "muted"
+      else "warning"
+      end
+    end
+
     def receipt_required?
       true
     end
