@@ -226,7 +226,7 @@ class OrganizerPositionInvite < ApplicationRecord
     is_signee
   end
 
-  def send_contract(cosigner_email: nil, include_videos: false, reissue_messages: {}, reissue_of: nil)
+  def send_contract(cosigner_email: nil, include_videos: false, reissue_messages: {}, extra_prefills: {}, reissue_of: nil)
     fs_contract = nil
 
     ActiveRecord::Base.transaction do
@@ -238,7 +238,7 @@ class OrganizerPositionInvite < ApplicationRecord
           "public_id"   => event.public_id,
           "name"        => event.name,
           "description" => event.airtable_record&.[]("Tell us about your event")
-        },
+        }.merge(extra_prefills),
         reissue_of:
       )
       fs_contract.parties.create!(user:, role: :signee)
