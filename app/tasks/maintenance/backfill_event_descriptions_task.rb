@@ -8,7 +8,7 @@ module Maintenance
   # fills blank descriptions.
   class BackfillEventDescriptionsTask < MaintenanceTasks::Task
     def collection
-      Event.where(description: [nil, ""])
+      Event.unscope(:order).includes(:application).where(description: [nil, ""])
     end
 
     def process(event)
