@@ -2005,12 +2005,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_09_120000) do
   create_table "payments", force: :cascade do |t|
     t.string "aasm_state", null: false
     t.integer "amount_cents", null: false
+    t.string "classification", default: "general_services", null: false
     t.datetime "created_at", null: false
     t.bigint "creator_id", null: false
     t.string "currency", null: false
     t.bigint "payee_id", null: false
     t.string "purpose", null: false
     t.datetime "rejected_at"
+    t.boolean "requires_tax_form", default: true, null: false
     t.datetime "sent_at"
     t.datetime "successful_at"
     t.datetime "under_review_at"
@@ -2059,6 +2061,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_09_120000) do
     t.string "currency", default: "USD", null: false
     t.text "description", null: false
     t.date "end_date", null: false
+    t.bigint "manager_id"
     t.datetime "onboarded_at"
     t.datetime "onboarding_at"
     t.bigint "payee_id", null: false
@@ -2069,6 +2072,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_09_120000) do
     t.datetime "terminated_at"
     t.text "title", null: false
     t.datetime "updated_at", null: false
+    t.index ["manager_id"], name: "index_payroll_positions_on_manager_id"
     t.index ["payee_id"], name: "index_payroll_positions_on_payee_id"
   end
 

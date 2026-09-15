@@ -1,0 +1,30 @@
+<%# locals: (application:, steps:, heading: nil, subheading: nil) %>
+
+<div class="flex flex-col gap-3 w-full items-start md:items-center justify-start mt-6">
+  <%= render partial: "progress_bar", locals: { steps: } %>
+  <h2 class="text-3xl md:text-4xl m-0">
+    <% if heading.present? %>
+      <%= heading %>
+    <% elsif application.approved? %>
+      Your application has been approved!
+    <% else %>
+      Your application has been submitted!
+    <% end %>
+  </h2>
+
+  <h3 class="m-0 muted">
+    <% if subheading.present? %>
+      <%= subheading %>
+    <% elsif application.contract&.reissue? && (application.contract.party(:signee)&.pending? || application.contract.party(:cosigner)&.pending?) %>
+      You'll need to resign the agreement for <%= application.name %>
+    <% elsif !application.approved? || application.contract&.party(:signee)&.pending? || application.contract&.party(:cosigner)&.pending? %>
+      Here's what's next for <%= application.name %>
+    <% elsif application.approved? && application.contract&.party(:hcb)&.pending? %>
+      HCB is finalizing your contract
+    <% elsif application.approved? && application.event.blank? %>
+      We're finalizing the last few steps to activate your organization
+    <% else %>
+      You're ready to start spending
+    <% end %>
+  </h3>
+</div>
