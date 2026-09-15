@@ -50,5 +50,21 @@ FactoryBot.define do
         create(:canonical_event_mapping, canonical_transaction:, event:)
       end
     end
+
+    # Ledger#available_balance_cents sums the items mapped onto the event's
+    # primary ledger, which the canonical transaction above does not create.
+    # Ledger::Item#refresh! recomputes the amount from the (absent) canonical
+    # transactions on create, so the amount is written after mapping.
+    trait :with_ledger_balance do
+      transient do
+        ledger_balance_cents { 100_000 }
+      end
+
+      after :create do |event, context|
+        item = create(:ledger_item, memo: "🏦 Test Donation")
+        Ledger::Mapping.create!(ledger: event.ledger, ledger_item: item, on_primary_ledger: true)
+        item.update_columns(amount_cents: context.ledger_balance_cents, status: "settled")
+      end
+    end
   end
 end

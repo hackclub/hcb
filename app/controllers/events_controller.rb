@@ -545,10 +545,13 @@ class EventsController < ApplicationController
     render :async_balance, layout: false
   end
 
+  # Summed from the ledger, the same engine the balances in the table read
+  # from, so the total agrees with the rows beneath it.
   def async_sub_organization_balance
     authorize @event
 
-    @sub_organizations = filtered_sub_organizations
+    sub_organizations = filtered_sub_organizations.except(:includes, :order).includes(:ledger)
+    @sub_organization_balance_cents = sub_organizations.sum { |event| event.ledger.available_balance_cents }
 
     render :async_sub_organization_balance, layout: false
   end
