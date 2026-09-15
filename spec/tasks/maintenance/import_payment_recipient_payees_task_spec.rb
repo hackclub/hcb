@@ -90,8 +90,11 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
   end
 
   it "skips a recipient with no email, since a payee cannot exist without one" do
-    create(:payment_recipient, event:, email: nil, payment_model: "AchTransfer", name: "Orpheus",
-                               routing_number: "021000021", account_number: "123456789", bank_name: "Chase")
+    # The column is nullable and the format validation came later, so a legacy
+    # row can carry no email at all. Saved unvalidated to reproduce one.
+    recipient = build(:payment_recipient, event:, email: nil, payment_model: "AchTransfer", name: "Orpheus",
+                                          routing_number: "021000021", account_number: "123456789", bank_name: "Chase")
+    recipient.save!(validate: false)
 
     expect { run_task }.not_to change(Payee, :count)
   end
