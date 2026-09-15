@@ -135,7 +135,7 @@
                 <%= link_to "HCB's standard contracting agreement", "https://cdn.hackclub.com/01a0983f-2439-7df6-93fb-5b24bc12cc88/hcb_contractor_agreement.pdf", target: "_blank" %>
               <% end %>
               <p class="muted text-sm m-0 mt-1">
-                If unchecked, the uploaded PDF is used as the entire contract, so it must contain a DocuSeal signature tag for each of the Organizer, Contractor, and HCB roles (e.g. <code>{{Signature;type=signature;role=HCB}}</code>) or DocuSeal will reject the submission.
+                If unchecked, the uploaded PDF is used as the entire contract, so it must contain a <%= link_to "DocuSeal signature tag", "https://www.docuseal.com/guides/use-embedded-text-field-tags-in-the-pdf-to-create-a-fillable-form", target: "_blank" %> for each of the Organizer, Contractor, and HCB roles (e.g. <code>{{Signature;type=signature;role=HCB}}</code>) or DocuSeal will reject the submission.
               </p>
             </div>
           </div>
