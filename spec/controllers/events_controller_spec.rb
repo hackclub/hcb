@@ -212,13 +212,15 @@ RSpec.describe EventsController do
     before { create_session(admin, verified: true) }
 
     it "sums ledger items by sign for revenue and expenses" do
+      # ct_count is set because Ledger::Query (used for the account balance)
+      # excludes transaction-less items, which in production always net to $0.
       revenue_item = create(:ledger_item, custom_memo: "Revenue item", datetime: Time.current)
       Ledger::Mapping.create!(ledger: event.ledger, ledger_item: revenue_item, on_primary_ledger: true)
-      revenue_item.update_columns(status: "settled", amount_cents: 1500)
+      revenue_item.update_columns(status: "settled", amount_cents: 1500, ct_count: 1)
 
       expense_item = create(:ledger_item, custom_memo: "Expense item", datetime: Time.current)
       Ledger::Mapping.create!(ledger: event.ledger, ledger_item: expense_item, on_primary_ledger: true)
-      expense_item.update_columns(status: "settled", amount_cents: -600)
+      expense_item.update_columns(status: "settled", amount_cents: -600, ct_count: 1)
 
       get(:ledger_stats, params: { event_id: event.slug })
 
