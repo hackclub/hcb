@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Sent when a funder submits the inquiry form on the /for/funders landing page.
-# It's a warm confirmation addressed to the funder, with the HCB operations team CC'd
+# It's a warm confirmation addressed to the funder, with a few team members CC'd
 # so a real person can follow up on the same thread.
 class FunderInquiryMailer < ApplicationMailer
   # Team members CC'd on funder inquiries so they can follow up directly.
