@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe Tax1099Service::Import do
   def csv(*rows)
-    ["Email,TIN,TIN Type,Form Type,Date Submitted,Name,Business Name,Country", *rows].join("\n") + "\n"
+    ["Email,TIN,TIN Type,Form Type,Date Submitted,Name,Business Name,Country", *rows, ""].join("\n")
   end
 
   def row(email: "orpheus@hackclub.com", tin: "123456789", tin_type: "SSN", form_type: "W-9",
@@ -152,8 +152,10 @@ RSpec.describe Tax1099Service::Import do
   end
 
   it "matches a form type however the export spells it" do
+    # A TIN each: two rows sharing one would be the same taxpayer, and the
+    # second would rightly be skipped rather than filed again.
     ["W-9", "W9", "Form W-9"].each_with_index do |spelling, index|
-      result = import(csv(row(email: "orpheus#{index}@hackclub.com", form_type: spelling)))
+      result = import(csv(row(email: "orpheus#{index}@hackclub.com", tin: "12345678#{index}", form_type: spelling)))
 
       expect(result.imported).to eq(1)
     end
