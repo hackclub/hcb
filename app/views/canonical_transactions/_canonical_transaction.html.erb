@@ -48,7 +48,7 @@
     <%= render "hcb_codes/icon", tx: ct, authorless: local_assigns[:authorless], selects: defined?(selectable) && selectable && ct.local_hcb_code.hashid, special_appearance: special_appearance %>
   <% end %>
 
-  <td>
+  <td class="transaction__date">
     <% if subscription %>
       <% label = "" %>
       <% if subscription[:average_date_difference] > 29 && subscription[:average_date_difference] < 31 %>
@@ -147,7 +147,7 @@
     </div>
   </td>
 
-  <td class="nowrap">
+  <td class="nowrap transaction__amount">
     <span class="flex items-center justify-end">
       <% if ct.likely_account_verification_related? && !organizer_signed_in? %>
         <%= redacted_amount %>
@@ -178,7 +178,7 @@
   <% end %>
 
   <% if local_assigns[:receipt_upload_button] %>
-    <td style="width: 1%">
+    <td class="transaction__receipt-action">
       <% if ct.local_hcb_code.missing_receipt?(event, type) || !local_assigns[:updated_via_turbo_stream] %>
         <%= form_with url: receipts_path, data: { controller: "form", "file-drop-target" => "form", "turbo" => true } do |form| %>
           <%= form.file_field :file, id: "file_#{ct.local_hcb_code.hashid}", multiple: true, include_hidden: false, required: true, class: "display-none", data: { action: "change->form#submit", "file-drop-target" => "fileInput" } %>

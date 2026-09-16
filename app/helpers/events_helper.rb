@@ -361,20 +361,6 @@ module EventsHelper
     false
   end
 
-  def paypal_transfers_airtable_form_url(embed: false, event: nil, user: nil)
-    # The airtable form is located within the Bank Promotions base
-    form_id = "4j6xJB5hoRus"
-    embed_url = "https://forms.hackclub.com/t/#{form_id}"
-    url = "https://forms.hackclub.com/t/#{form_id}"
-
-    prefill = []
-    prefill << "prefill_Event/Project+Name=#{CGI.escape(event.name)}" if event
-    prefill << "prefill_Submitter+Name=#{CGI.escape(user.full_name)}" if user
-    prefill << "prefill_Submitter+Email=#{CGI.escape(user.email)}" if user
-
-    "#{embed ? embed_url : url}?#{prefill.join("&")}"
-  end
-
   def transaction_memo(tx)
     # needed to handle mock data in playground mode
     if tx.local_hcb_code.method(:memo).parameters.empty?

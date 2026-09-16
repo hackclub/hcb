@@ -5,6 +5,75 @@ require "rails_helper"
 RSpec.describe Reimbursement::ReportsController do
   include SessionSupport
 
+  describe "#start" do
+    render_views
+
+    def email_field_value(body)
+      Nokogiri::HTML5(body).at_css('input[name="reimbursement_report[email]"]')&.[]("value")
+    end
+
+    it "prefills the email field when signed in" do
+      event = create(:event, public_reimbursement_page_enabled: true)
+      user = create(:user, email: "fiona@example.com")
+      create_session(user, verified: true)
+
+      get(:start, params: { event_name: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(email_field_value(response.body)).to eq("fiona@example.com")
+    end
+
+    it "does not prefill the email field when signed out" do
+      event = create(:event, public_reimbursement_page_enabled: true)
+
+      get(:start, params: { event_name: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(email_field_value(response.body)).to be_blank
+    end
+  end
+
+  describe "#edit" do
+    render_views
+
+    context "when the report is backed by a card grant" do
+      it "disables the organization select and explains why" do
+        admin = create(:user, :make_admin)
+        event = create(:event)
+        card_grant = create(:card_grant, event:, user: admin, sent_by: admin)
+        report = create(:reimbursement_report, user: admin, event:, card_grant:)
+
+        create_session(admin, verified: true)
+
+        get(:edit, params: { id: report.id })
+        select_tag = response.body[/<select[^>]*name="reimbursement_report\[event_id\]"[^>]*>/]
+
+        expect(response).to have_http_status(:ok)
+        expect(select_tag).to be_present
+        expect(select_tag).to include('disabled="disabled"')
+        expect(response.body).to include("backed by a card grant")
+      end
+    end
+
+    context "when the report is not backed by a card grant" do
+      it "leaves the organization select enabled" do
+        admin = create(:user, :make_admin)
+        event = create(:event)
+        report = create(:reimbursement_report, user: admin, event:)
+
+        create_session(admin, verified: true)
+
+        get(:edit, params: { id: report.id })
+        select_tag = response.body[/<select[^>]*name="reimbursement_report\[event_id\]"[^>]*>/]
+
+        expect(response).to have_http_status(:ok)
+        expect(select_tag).to be_present
+        expect(select_tag).not_to include("disabled")
+        expect(response.body).not_to include("backed by a card grant")
+      end
+    end
+  end
+
   describe "#update" do
     context "when event_id is changed to an event the user does not belong to" do
       it "blocks the event change and leaves the report on its original event" do
@@ -110,6 +179,26 @@ RSpec.describe Reimbursement::ReportsController do
 
         expect(report.reload.name).to eq("New Name")
         expect(report.event).to eq(event)
+      end
+    end
+
+    context "when the report is backed by a card grant" do
+      it "blocks changing the event even for admins" do
+        admin = create(:user, :make_admin)
+        source_event = create(:event)
+        destination_event = create(:event)
+        card_grant = create(:card_grant, event: source_event, user: admin, sent_by: admin)
+        report = create(:reimbursement_report, user: admin, event: source_event, card_grant:)
+
+        create_session(admin, verified: true)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { event_id: destination_event.id }
+              })
+
+        expect(flash[:error]).to match(/not authorized/i)
+        expect(report.reload.event).to eq(source_event)
       end
     end
 
@@ -274,6 +363,64 @@ RSpec.describe Reimbursement::ReportsController do
     end
   end
 
+  describe "#approve" do
+    it "approves all pending expenses and requests reimbursement" do
+      creator = create(:user)
+      event = create(:event)
+      approver = create(:user)
+      create(:organizer_position, user: approver, event:)
+      report = create(:reimbursement_report, user: creator, event:, aasm_state: :submitted, currency: "EUR")
+      expense_one = create(:reimbursement_expense, report:, value: 10.00)
+      expense_two = create(:reimbursement_expense, report:, value: 20.00)
+
+      expect(report.team_review_required?).to be(true)
+      expect(OrganizerPosition.where(user: creator, event:).exists?).to be(false)
+
+      create_session(approver, verified: true)
+
+      post(:approve, params: { report_id: report.id })
+
+      expect(response).to redirect_to(reimbursement_report_path(report))
+      expect(expense_one.reload.approved?).to be(true)
+      expect(expense_one.approved_by_id).to eq(approver.id)
+      expect(expense_two.reload.approved?).to be(true)
+      expect(expense_two.approved_by_id).to eq(approver.id)
+      expect(report.reload.aasm_state).to eq("reimbursement_requested")
+      expect(flash[:success]).to eq("All expenses have been approved and the reimbursement has been requested; the HCB team will review the request promptly.")
+    end
+
+    it "rejects the report creator" do
+      creator = create(:user)
+      event = create(:event)
+      report = create(:reimbursement_report, user: creator, event:, aasm_state: :submitted, currency: "EUR")
+      create(:reimbursement_expense, report:, value: 10.00)
+
+      create_session(creator, verified: true)
+
+      post(:approve, params: { report_id: report.id })
+
+      expect(flash[:error]).to match(/not authorized/i)
+      expect(report.reload.aasm_state).to eq("submitted")
+    end
+
+    it "keeps approved expenses when the reimbursement guard fails" do
+      creator = create(:user)
+      event = create(:event)
+      approver = create(:user)
+      create(:organizer_position, user: approver, event:)
+      report = create(:reimbursement_report, user: creator, event:, aasm_state: :submitted, currency: "USD")
+      expense = create(:reimbursement_expense, report:, value: 10.00)
+
+      create_session(approver, verified: true)
+
+      post(:approve, params: { report_id: report.id })
+
+      expect(expense.reload.approved?).to be(true)
+      expect(report.reload.aasm_state).to eq("submitted")
+      expect(flash[:error]).to be_present
+    end
+  end
+
   describe "#destroy" do
     it "lets an external contributor delete their own draft report" do
       user = create(:user)
@@ -310,6 +457,54 @@ RSpec.describe Reimbursement::ReportsController do
 
       expect(flash[:error]).to match(/not authorized/i)
       expect(report.reload).to be_present
+    end
+  end
+
+  describe "#show" do
+    render_views
+
+    context "when the viewer is an auditor" do
+      it "renders the event's mission statement" do
+        admin = create(:user, :make_admin)
+        event = create(:event, description: "Audit-target mission statement")
+        report = create(:reimbursement_report, user: admin, event:)
+
+        create_session(admin, verified: true)
+
+        get(:show, params: { id: report.id })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Audit-target mission statement")
+      end
+
+      it "renders without error for a draft report with no event" do
+        admin = create(:user, :make_admin)
+        user = create(:user)
+        report = create(:reimbursement_report, user:, event: nil)
+
+        create_session(admin, verified: true)
+
+        get(:show, params: { id: report.id })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("Mission statement")
+      end
+    end
+
+    context "when the viewer is a report creator who is not an auditor" do
+      it "does not render the mission statement" do
+        user = create(:user)
+        event = create(:event, description: "Non-auditor mission statement")
+        report = create(:reimbursement_report, user:, event:)
+
+        create_session(user, verified: true)
+
+        get(:show, params: { id: report.id })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("Mission statement")
+        expect(response.body).not_to include("Non-auditor mission statement")
+      end
     end
   end
 end

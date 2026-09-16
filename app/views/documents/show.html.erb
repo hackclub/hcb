@@ -7,7 +7,7 @@
   <div class="banner banner--archived mt3">
     <span class="bold block mb1">This document was archived by <%= user_mention @document.archived_by %> on <%= format_date @document.archived_at %>.</span>
     <span class="block">It will display under the Archived section<span class="xs-hide"> on the Documents page</span>.</span>
-    <span>You can <%= link_to "unarchive it", document_toggle_path(@document), method: :post %>.</span>
+    <span>You can <%= link_to "unarchive it", document_toggle_path(@document), data: { turbo_method: :post } %>.</span>
   </div>
 <% end %>
 

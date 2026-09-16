@@ -33,6 +33,9 @@
   <div>
     <h3>Transfer Details</h3>
     <p>Requested at <%= format_datetime @wise_transfer.created_at %></p>
+    <% admin_tool do %>
+      <%= render "events/mission_statement", event: @wise_transfer.event %>
+    <% end %>
     <table class="w-full table-fixed border-box max-w-[500px] min-w-0">
       <tbody>
         <tr>
@@ -155,8 +158,12 @@
       <fieldset class="px-6 py-3">
         <legend class="py-0 px-2">Approve</legend>
         <p>For this approval check, you're only looking at the transfer purpose and documentation. The balance check will be done after it is approved.</p>
-        <%= button_to "💸 Approve and self-assign", approve_wise_transfer_path(@wise_transfer), method: :post, class: "my-3" %>
-
+        <%= form_with(model: false, local: true, url: approve_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
+          <% if @wise_transfer.payment.present? %>
+            <%= render partial: "payments/classification_input", locals: { form:, classification: @wise_transfer.payment.classification } %>
+          <% end %>
+          <%= form.submit "💸 Approve and self-assign", class: "my-3" %>
+        <% end %>
       </fieldset>
 
       <fieldset class="px-6 py-3">
@@ -281,7 +288,7 @@
   <div class="flex flex-row items-start justify-start gap-4">
     <span class="-m-[2px] w-7 h-7 flex-shrink-0 rounded-full flex items-center justify-center text-xs font-bold border-2 border-solid border-smoke">1</span>
     <p class="m-0">
-      <%= link_to "Approve & assign yourself", approve_wise_transfer_path(@wise_transfer), method: :post %> to this Wise transfer to prevent double-processing.
+      <%= link_to "Approve & assign yourself", approve_wise_transfer_path(@wise_transfer), data: { turbo_method: :post } %> to this Wise transfer to prevent double-processing.
     </p>
   </div>
   <div class="flex flex-row items-start justify-start gap-4">

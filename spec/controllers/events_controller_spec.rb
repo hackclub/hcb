@@ -18,6 +18,10 @@ RSpec.describe EventsController do
     ApplicationController.helpers.render_money_amount(cents)
   end
 
+  def dom_id_for_balance(event)
+    "event_balance_#{event.public_id}"
+  end
+
   def sign_in_organizer_of(event)
     organizer = create(:user)
     create(:organizer_position, user: organizer, event:)
@@ -199,32 +203,6 @@ RSpec.describe EventsController do
     end
   end
 
-  describe "#ledger_stats" do
-    render_views
-
-    let(:admin) { create(:user, :make_admin) }
-    let(:event) { create(:event) }
-
-    before { create_session(admin, verified: true) }
-
-    it "sums ledger items by sign for revenue and expenses" do
-      revenue_item = create(:ledger_item, custom_memo: "Revenue item", datetime: Time.current)
-      Ledger::Mapping.create!(ledger: event.ledger, ledger_item: revenue_item, on_primary_ledger: true)
-      revenue_item.update_columns(status: "settled", amount_cents: 1500)
-
-      expense_item = create(:ledger_item, custom_memo: "Expense item", datetime: Time.current)
-      Ledger::Mapping.create!(ledger: event.ledger, ledger_item: expense_item, on_primary_ledger: true)
-      expense_item.update_columns(status: "settled", amount_cents: -600)
-
-      get(:ledger_stats, params: { event_id: event.slug })
-
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include(money(1500)) # total revenue
-      expect(response.body).to include(money(600))  # total expenses, shown positive
-      expect(response.body).to include(money(900))  # account balance (1500 - 600)
-    end
-  end
-
   describe "#transactions" do
     let(:admin) { create(:user, :make_admin) }
     let(:event) { create(:event) }
@@ -293,16 +271,15 @@ RSpec.describe EventsController do
     end
 
     context "as a signed out visitor" do
-      # The private card's lazy balance frame is what redirected signed out
-      # visitors to the login page: it 302s, and Turbo turns the resulting
-      # missing frame into a full page visit.
-      it "lists only transparent sub-organizations, and loads balances for only those", :aggregate_failures do
+      it "lists only transparent sub-organizations, with a balance frame for only those", :aggregate_failures do
         get(:sub_organizations, params: { event_id: parent.slug })
+
+        document = Nokogiri::HTML5(response.body)
 
         expect(response.body).to include("Transparent Sub-organization")
         expect(response.body).not_to include("Private Sub-organization")
-        expect(response.body).to include(event_async_balance_path(transparent_sub))
-        expect(response.body).not_to include(event_async_balance_path(private_sub))
+        expect(document.at_css("##{dom_id_for_balance(transparent_sub)}")).to be_present
+        expect(document.at_css("##{dom_id_for_balance(private_sub)}")).to be_nil
       end
 
       it "excludes private sub-organizations from the CSV export", :aggregate_failures do
@@ -363,7 +340,7 @@ RSpec.describe EventsController do
         it "lists it inline in the table view, badged as hidden", :aggregate_failures do
           get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
 
-          row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{hidden_sub.id}")
+          row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{hidden_sub.public_id}")
 
           expect(table_row_names(response.body)).to include("Hidden Sub-organization")
           expect(row.css(".badge").map { |badge| badge.text.strip }).to include("Hidden")
@@ -448,7 +425,7 @@ RSpec.describe EventsController do
 
       get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
 
-      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{private_sub.id}")
+      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{private_sub.public_id}")
 
       expect(table_row_names(response.body)).to match_array(["Transparent Sub-organization", "Private Sub-organization"])
       expect(row.css(".badge").map { |badge| badge.text.strip }).to include("Private")
@@ -460,7 +437,7 @@ RSpec.describe EventsController do
 
       get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
 
-      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{transparent_sub.id}")
+      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{transparent_sub.public_id}")
       expect(row.at_css("button.sub-organization-row__toggle")).to be_nil
     end
 
@@ -470,7 +447,7 @@ RSpec.describe EventsController do
 
       get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
 
-      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{transparent_sub.id}")
+      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{transparent_sub.public_id}")
       expect(row.at_css("button.sub-organization-row__toggle")).to be_present
     end
 
@@ -480,7 +457,7 @@ RSpec.describe EventsController do
 
       get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
 
-      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{transparent_sub.id}")
+      row = Nokogiri::HTML5(response.body).at_css("tr#sub_organization_row_#{transparent_sub.public_id}")
 
       expect(row["class"]).to include("clickable")
       expect(row.at_css("a.stretched-link")["href"]).to eq("/#{transparent_sub.slug}")
@@ -693,6 +670,43 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#async_sub_organization_balances" do
+    let(:parent) { create(:event, is_public: true) }
+    let!(:transparent_sub) { create(:event, :with_positive_balance, parent:, is_public: true) }
+    let!(:private_sub) { create(:event, :with_positive_balance, parent:, is_public: false) }
+
+    it "returns a balance for each requested descendant" do
+      grandchild = create(:event, :with_positive_balance, parent: transparent_sub, is_public: true)
+
+      get(:async_sub_organization_balances,
+          params: { event_id: parent.slug, ids: [transparent_sub.public_id, grandchild.public_id] },
+          format: :json)
+
+      expect(response.parsed_body).to eq(
+        transparent_sub.public_id => money(transparent_sub.ledger.available_balance_cents),
+        grandchild.public_id      => money(grandchild.ledger.available_balance_cents)
+      )
+    end
+
+    it "skips a private descendant for a signed out visitor" do
+      get(:async_sub_organization_balances,
+          params: { event_id: parent.slug, ids: [transparent_sub.public_id, private_sub.public_id] },
+          format: :json)
+
+      expect(response.parsed_body.keys).to eq([transparent_sub.public_id])
+    end
+
+    it "returns a private descendant for an organizer of the parent" do
+      sign_in_organizer_of(parent)
+
+      get(:async_sub_organization_balances,
+          params: { event_id: parent.slug, ids: [private_sub.public_id] },
+          format: :json)
+
+      expect(response.parsed_body.keys).to eq([private_sub.public_id])
+    end
+  end
+
   describe "#transactions_list" do
     let(:event) { create(:event, is_public: true) }
 
@@ -725,6 +739,46 @@ RSpec.describe EventsController do
       get(:transactions_list, params: { event_id: event.slug, direction: "revenue" })
 
       expect(response).to have_http_status(:success)
+    end
+  end
+
+  describe "#show" do
+    render_views
+
+    context "when the viewer is an auditor" do
+      it "renders the mission statement when the event has a description" do
+        admin = create(:user, :make_admin)
+        event = create(:event, description: "Run neat events for students")
+
+        create_session(admin, verified: true)
+
+        get(:show, params: { id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Run neat events for students")
+      end
+
+      it "omits the mission statement when the event has no description" do
+        admin = create(:user, :make_admin)
+        event = create(:event, description: nil)
+
+        create_session(admin, verified: true)
+
+        get(:show, params: { id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("Mission statement")
+      end
+    end
+
+    it "does not render the mission statement for non-auditor visitors" do
+      event = create(:event, description: "Run neat events for students")
+
+      get(:show, params: { id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("Mission statement")
+      expect(response.body).not_to include("Run neat events for students")
     end
   end
 

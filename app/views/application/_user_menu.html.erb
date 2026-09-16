@@ -20,7 +20,7 @@
             <%= inline_icon "settings", style: "width:30px;height:30px;margin-left:-5px;margin-right:-2px" %>
             Settings
           <% end %>
-          <%= link_to logout_users_path, method: :delete do %>
+          <%= link_to logout_users_path, data: { turbo_method: :delete } do %>
             <%= inline_icon "door-leave", size: 23 %>
             Sign out
           <% end %>
@@ -39,11 +39,11 @@
         <div data-controller="dark-mode-toggle" class="menu__content menu__content--compact menu__content--2 p-2 mt-2 h5" data-menu-target="content" style="z-index: 999;">
           <%= render partial: "application/theme_toggle" %>
           <p class="muted font-medium h5 pl-2 p-1 m0">Account</p>
-          <%= link_to verify_email_first_index_path, method: :post do %>
+          <%= link_to verify_email_first_index_path, data: { turbo_method: :post } do %>
             <%= inline_icon "email-exclamation", style: "width:30px;height:30px;margin-left:-5px;margin-right:-2px" %>
             Verify your email
           <% end %>
-          <%= link_to sign_out_first_index_path, method: :delete do %>
+          <%= link_to sign_out_first_index_path, data: { turbo_method: :delete } do %>
             <%= inline_icon "door-leave", size: 23 %>
             Sign out
           <% end %>

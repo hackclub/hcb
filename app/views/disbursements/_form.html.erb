@@ -45,42 +45,44 @@
   </div>
 
   <div data-scroll-seek-target="section">
-    <% admin_tool do %>
-      <h3 class="mb-2">Admin</h3>
+    <% if admin_signed_in? %>
+      <% admin_tool do %>
+        <h3 class="mb-2">Admin</h3>
 
-      <div class="field field--checkbox">
-        <%= form.check_box :should_charge_fee, checked: true, disabled: !admin_signed_in? %>
-        <%= form.label :should_charge_fee do %>
-          Charge fiscal sponsorship fee?
-        <% end %>
-      </div>
+        <div class="field field--checkbox">
+          <%= form.check_box :should_charge_fee, checked: true %>
+          <%= form.label :should_charge_fee do %>
+            Charge fiscal sponsorship fee?
+          <% end %>
+        </div>
 
-      <% category_select = ->(field) {
-           form.select(
-             field,
-             options_for_select(
-               TransactionCategory::Definition::ALL.map { |_, d| [d.label, d.slug] },
-               "internal-transfer"
-             ),
-             include_blank: "None"
-           )
-         } %>
+        <% category_select = ->(field) {
+             form.select(
+               field,
+               options_for_select(
+                 TransactionCategory::Definition::ALL.map { |_, d| [d.label, d.slug] },
+                 "internal-transfer"
+               ),
+               include_blank: "None"
+             )
+           } %>
 
-      <div class="field">
-        <%= form.label(:source_transaction_category_slug, "Source transaction category") %>
-        <%= category_select.call(:source_transaction_category_slug) %>
-      </div>
+        <div class="field">
+          <%= form.label(:source_transaction_category_slug, "Source transaction category") %>
+          <%= category_select.call(:source_transaction_category_slug) %>
+        </div>
 
-      <div class="field">
-        <%= form.label(:destination_transaction_category_slug, "Destination transaction category") %>
-        <%= category_select.call(:destination_transaction_category_slug) %>
-      </div>
+        <div class="field">
+          <%= form.label(:destination_transaction_category_slug, "Destination transaction category") %>
+          <%= category_select.call(:destination_transaction_category_slug) %>
+        </div>
 
-      <div class="field">
-        <%= form.label :scheduled_on, "Schedule for" %>
-        <%= form.date_select :scheduled_on, prompt: true, order: [:month, :day, :year], start_year: Date.today.year %>
-        <p class="h5 muted mt0 mb1">Leave blank to send instantly</p>
-      </div>
+        <div class="field">
+          <%= form.label :scheduled_on, "Schedule for" %>
+          <%= form.date_select :scheduled_on, prompt: true, order: [:month, :day, :year], start_year: Date.today.year %>
+          <p class="h5 muted mt0 mb1">Leave blank to send instantly</p>
+        </div>
+      <% end %>
     <% end %>
 
     <button type="submit" class="gap-2 btn w-full bg-blue mt-2" <%= "disabled" if disabled %>>

@@ -21,37 +21,17 @@ class CardGrantPolicy < ApplicationPolicy
     record.event.is_public? || user&.auditor? || user_in_event?
   end
 
-  def edit_actions?
-    auditor_or_manager?
-  end
-
-  def edit_usage_restrictions?
-    auditor_or_manager?
-  end
-
-  def edit_expiration?
-    auditor_or_manager?
-  end
-
   def edit_overview?
-    auditor_or_manager?
+    auditor_or_member? && record.active?
   end
 
-  def edit_purpose?
-    auditor_or_manager?
-  end
-
-  def edit_balance?
-    auditor_or_manager?
-  end
-
-  def edit_topup?
-    auditor_or_manager?
-  end
-
-  def edit_withdraw?
-    auditor_or_manager?
-  end
+  alias_method :edit_actions?, :edit_overview?
+  alias_method :edit_usage_restrictions?, :edit_overview?
+  alias_method :edit_expiration?, :edit_overview?
+  alias_method :edit_purpose?, :edit_overview?
+  alias_method :edit_balance?, :edit_overview?
+  alias_method :edit_topup?, :edit_overview?
+  alias_method :edit_withdraw?, :edit_overview?
 
   def activate?
     (user&.admin? || (cardholder? && authorized_to_activate?)) && record.active?
@@ -63,10 +43,6 @@ class CardGrantPolicy < ApplicationPolicy
 
   def convert_to_reimbursement_report?
     (admin_or_manager? || cardholder?) && record.active? && record.card_grant_setting.reimbursement_conversions_enabled?
-  end
-
-  def edit?
-    admin_or_manager? && record.active?
   end
 
   def toggle_one_time_use?
@@ -103,8 +79,8 @@ class CardGrantPolicy < ApplicationPolicy
     user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
   end
 
-  def auditor_or_manager?
-    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :manager)
+  def auditor_or_member?
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :member)
   end
 
   def sender_admin_or_manager?

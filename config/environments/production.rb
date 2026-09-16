@@ -138,7 +138,7 @@ Rails.application.configure do
 
   # Use lograge to tame log output to AppSignal.
   config.lograge.enabled = true
-  config.lograge.ignore_actions = ["Rails::HealthController#show"]
+  config.lograge.ignore_actions = ["Rails::HealthController#show", "CspViolationReportsController#create"]
   config.log_tags = [:request_id]
   config.lograge.custom_payload { |controller| { request_id: controller.request.uuid } }
   config.lograge.keep_original_rails_log = true

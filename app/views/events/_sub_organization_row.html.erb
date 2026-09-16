@@ -5,10 +5,10 @@
 
 <% child_guides = guides.empty? ? "1" : guides[0..-2] + (last ? "0" : "1") + "1" %>
 
-<tr id="sub_organization_row_<%= event.id %>"
+<tr id="sub_organization_row_<%= event.public_id %>"
     class="sub-organization-row clickable <%= "sub-organization-row--last" if last %> <%= "sub-organization-row--leaf" unless row[:expandable] %>"
     data-sub-organization-tree-target="row"
-    data-event-id="<%= event.id %>"
+    data-event-id="<%= event.public_id %>"
     data-depth="<%= depth %>">
   <td class="sub-organization-row__cell">
     <span class="sub-organization-row__guides" aria-hidden="true"><% guides.each_char.with_index do |line, level| %><span class="sub-organization-row__guide <%= level == guides.size - 1 ? "sub-organization-row__guide--connector" : ("sub-organization-row__guide--line" if line == "1") %>"></span><% end %></span>
@@ -63,19 +63,16 @@
       <% end %>
     <% end %>
   </td>
-  <td class="tabular-nums">
-    <%= turbo_frame_tag "event_balance_#{event.public_id}",
-                        src: event_async_balance_path(event),
-                        loading: :lazy,
-                        data: { controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" } do %>
-      <span class="muted">—</span>
-    <% end %>
-  </td>
   <td>
     <span class="sub-organization-row__count tabular-nums">
       <%= inline_icon "people-2", size: 18, class: "muted", 'aria-label': "Team members" %>
       <%= row[:organizer_count] %>
     </span>
     <%= link_to "", event, class: "stretched-link", "aria-label": event.name %>
+  </td>
+  <td class="tabular-nums text-right">
+    <span id="event_balance_<%= event.public_id %>">
+      <span class="muted">—</span>
+    </span>
   </td>
 </tr>

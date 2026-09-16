@@ -81,6 +81,11 @@ class EventMailer < ApplicationMailer
 
   def monthly_announcements_enabled
     @monthly_announcement = @event.announcements.monthly_for(Date.today).last
+    if @monthly_announcement.nil?
+      Rails.logger.error("EventMailer#monthly_announcements_enabled: no monthly announcement found for event #{@event.id}; skipping email")
+      return
+    end
+
     @scheduled_for = Date.today.next_month.beginning_of_month
     @warning_date = @scheduled_for - 7.days
 

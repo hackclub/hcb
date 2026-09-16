@@ -28,8 +28,6 @@
       <%= render "payments/payee_picker", event:, destination: %>
     </details>
   <% else %>
-    <div class="card mb-4 p-0 overflow-hidden">
-      <%= render "payments/payee_picker", event:, destination: %>
-    </div>
+    <%= render "payments/payee_picker", event:, destination: %>
   <% end %>
 </div>

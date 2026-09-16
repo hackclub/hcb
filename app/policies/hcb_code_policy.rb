@@ -37,10 +37,6 @@ class HcbCodePolicy < ApplicationPolicy
     gte_member_in_events?
   end
 
-  def invoice_as_personal_transaction?
-    gte_member_in_events?
-  end
-
   def link_receipt_modal?
     gte_member_in_events?
   end
