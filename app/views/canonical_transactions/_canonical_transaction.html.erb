@@ -1,6 +1,6 @@
 <% instance = ct.__id__ %>
 <% event = @event || ct.local_hcb_code.event %>
-<% tagged_with = ct.local_hcb_code.tags.filter { |tag| !@event || tag.event == @event } %>
+<% tagged_with = (ct.local_hcb_code.ledger_item&.tags || []).filter { |tag| !@event || tag.event == @event } %>
 <% subscription = local_assigns[:subscription] %>
 <% type = Rails.cache.fetch("#{ct.hcb_code}/cached_type", expires_in: 12.hours) { ct.local_hcb_code.type } %>
 

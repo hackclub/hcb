@@ -186,13 +186,17 @@ class HcbCodesController < ApplicationController
 
     raise Pundit::NotAuthorizedError unless hcb_code.events.include?(tag.event)
 
+    # `toggle_tag?` guarantees a ledger item; tags live there now.
+    ledger_item = hcb_code.ledger_item
     removed = false
 
-    if hcb_code.tags.exists?(tag.id)
+    if ledger_item.tags.exists?(tag.id)
       removed = true
-      hcb_code.remove_tag(tag)
+      ledger_item.tags.destroy(tag)
     else
-      hcb_code.add_tag(tag)
+      suppress(ActiveRecord::RecordNotUnique) do
+        ledger_item.tags << tag
+      end
     end
 
     respond_to do |format|

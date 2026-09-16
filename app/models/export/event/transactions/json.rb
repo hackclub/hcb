@@ -57,7 +57,7 @@ class Export
             date: ct.date,
             memo: ct.local_hcb_code.memo,
             amount_cents: public_only && ct.likely_account_verification_related? ? 0 : ct.amount_cents,
-            tags: ct.local_hcb_code.tags.filter { |tag| tag.event_id == event_id }.pluck(:label).join(", "),
+            tags: (ct.local_hcb_code.ledger_item&.tags || []).filter { |tag| tag.event_id == event_id }.pluck(:label).join(", "),
             comments: public_only ? [] : ct.local_hcb_code.comments.not_admin_only.pluck(:content),
             user: if ct.local_hcb_code.author.present?
                     {

@@ -13,7 +13,7 @@ module HcbCodeService
       def run!
         return unless @event && @hcb_code&.stripe_card?
         # don't suggest tags for transactions already with tags or tag suggestions
-        return if @hcb_code.tags.filter { |tag| tag.event == @event }.any?
+        return if (@hcb_code.ledger_item&.tags || []).filter { |tag| tag.event == @event }.any?
 
         prompt = <<~PROMPT
           You are a helpful assistant that tags transactions from a list of tags based on the merchant, type of merchant, and the memo. You should return the ID of the tag you think is must applicable; if you are not 100% confident that a tag matches, return null.

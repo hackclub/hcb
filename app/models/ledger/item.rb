@@ -67,12 +67,6 @@ class Ledger
     # TODO: THIS IS SO TEMPORARY REMOVE ASAP
     has_many :comments, -> { order(:created_at) }, as: :commentable, inverse_of: :commentable, through: :hcb_code
     has_many :receipts, as: :receiptable, after_add: :update_task_completion, after_remove: :update_task_completion, through: :hcb_code
-    # Legacy tags reached via the HcbCode. Superseded by `tags` (through
-    # `ledger_items_tags`); kept around until callers are migrated off it.
-    # Named `deprecated_tags` (matching HcbCode) to avoid confusion with the
-    # HcbCodeTag join model.
-    has_many :deprecated_tags, through: :hcb_code, source: :deprecated_tags, class_name: "::Tag"
-
     has_many :ledger_item_tags, class_name: "Ledger::Item::Tag", foreign_key: :ledger_item_id, inverse_of: :ledger_item, dependent: :destroy
     has_many :tags, through: :ledger_item_tags, source: :tag
 
@@ -336,6 +330,20 @@ class Ledger
       primary_mapping&.pinned? || false
     end
 
+    def amount_cents_for(canonical_transactions:, canonical_pending_transactions:)
+      amount_cents = canonical_transactions.sum(&:amount_cents)
+      amount_cents += canonical_pending_transactions.select { |cpt| cpt.amount_cents < 0 && cpt.unsettled? }.sum(&:amount_cents)
+      if primary_ledger&.can_front_balance?
+        fronted_pt_sum = canonical_pending_transactions.select { |cpt| cpt.amount_cents > 0 && cpt.fronted? && !cpt.declined? }.sum(&:amount_cents)
+        settled_ct_sum = [canonical_transactions.sum(&:amount_cents), 0].max
+        amount_cents += [fronted_pt_sum - settled_ct_sum, 0].max
+      end
+
+      amount_cents
+    end
+
+    def amount_for(**args) = Money.new(amount_cents_for(**args), "USD")
+
     private
 
     def assign_linked_object!
@@ -359,15 +367,7 @@ class Ledger
     end
 
     def calculate_amount_cents
-      amount_cents = canonical_transactions.sum(:amount_cents)
-      amount_cents += canonical_pending_transactions.outgoing.unsettled.sum(:amount_cents)
-      if primary_ledger&.can_front_balance?
-        fronted_pt_sum = canonical_pending_transactions.incoming.fronted.not_declined.sum(:amount_cents)
-        settled_ct_sum = [canonical_transactions.sum(:amount_cents), 0].max
-        amount_cents += [fronted_pt_sum - settled_ct_sum, 0].max
-      end
-
-      amount_cents
+      amount_cents_for(canonical_transactions:, canonical_pending_transactions:)
     end
 
     def calculate_author

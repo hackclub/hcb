@@ -34,7 +34,8 @@ class HcbCodePolicy < ApplicationPolicy
   end
 
   def toggle_tag?
-    gte_member_in_events?
+    # Tags live on the ledger item, so there's nowhere to attach one without it.
+    record.ledger_item.present? && gte_member_in_events?
   end
 
   def link_receipt_modal?

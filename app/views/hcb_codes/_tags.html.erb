@@ -1,9 +1,12 @@
-<% if hcb_code.tags.any? || TagPolicy.new(current_user, @event).create? %>
+<%# Tags live on the ledger item now; without one there's nowhere to attach them. %>
+<% ledger_item = hcb_code.ledger_item %>
+<% tags = ledger_item&.tags || [] %>
+<% if ledger_item.present? && (tags.any? || TagPolicy.new(current_user, @event).create?) %>
   <div>
     <strong>Tags</strong>
     <div class="flex items-center flex-wrap" style="gap: 0.25rem">
       <div class="flex items-center flex-wrap hcb_code_<%= hcb_code.hashid %>_tags" style="gap: 0.25rem">
-        <%= render partial: "canonical_transactions/tag", collection: hcb_code.tags, locals: { hcb_code: } %>
+        <%= render partial: "canonical_transactions/tag", collection: tags, locals: { hcb_code: } %>
       </div>
 
       <div data-controller="menu">
@@ -16,7 +19,7 @@
               <%= button_to toggle_tag_hcb_code_path(id: hcb_code.hashid, tag_id: tag.id), class: "menu__action #{tag_dom_id(hcb_code, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
                 <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
                 <%= tag.label %>
-                <%= "✓" if hcb_code.tags.include?(tag) %>
+                <%= "✓" if tags.include?(tag) %>
               <% end %>
               <% if policy(tag).destroy? %>
                 <%= button_to event_tag_path(@event, tag), class: "menu__action", method: :delete, title: "Delete this tag", form: { "data-turbo" => "true", "data-turbo-confirm" => tag.removal_confirmation_message, "data-turbo-confirm-danger" => true } do %>

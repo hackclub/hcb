@@ -21,7 +21,10 @@ class TagsController < ApplicationController
       # guards the same gap.
       raise Pundit::NotAuthorizedError unless hcb_code.events.include?(@event)
 
-      hcb_code.add_tag(tag)
+      # `toggle_tag?` guarantees a ledger item; tags live there now.
+      suppress(ActiveRecord::RecordNotUnique) do
+        hcb_code.ledger_item.tags << tag
+      end
     end
 
     redirect_back fallback_location: @event
