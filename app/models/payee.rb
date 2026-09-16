@@ -42,6 +42,7 @@ class Payee < ApplicationRecord
   normalizes :email, with: ->(email) { email.strip.downcase }
 
   scope :not_archived, -> { where(archived_at: nil) }
+  scope :imported, -> { where.not(imported_at: nil) }
 
   pg_search_scope :search, against: [:display_name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }
 
