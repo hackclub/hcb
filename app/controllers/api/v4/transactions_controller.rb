@@ -88,7 +88,7 @@ module Api
               raise Pundit::NotAuthorizedError unless @hcb_code.events.include?(tag.event)
             end
 
-            @hcb_code.tags = tags
+            @hcb_code.replace_tags(tags)
             @hcb_code.save!
           end
         end

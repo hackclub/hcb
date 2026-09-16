@@ -54,7 +54,10 @@ class HcbCode < ApplicationRecord
   monetize :amount_cents
 
   has_many :hcb_code_tags
-  has_many :tags, through: :hcb_code_tags, class_name: "::Tag"
+  # Legacy tags attached directly to the HCB code via `hcb_codes_tags`. Tags now
+  # live on the Ledger::Item (see `tags` below); this stays readable for the
+  # backfill and any callers not yet migrated. Read-only — write via `tags`.
+  has_many :deprecated_tags, through: :hcb_code_tags, source: :tag, class_name: "::Tag"
   has_many :hcb_code_tag_suggestions, class_name: "HcbCode::Tag::Suggestion"
   has_many :suggested_hcb_code_tag_suggestions, -> { where(aasm_state: "suggested") }, class_name: "HcbCode::Tag::Suggestion", inverse_of: :hcb_code
 
@@ -67,6 +70,10 @@ class HcbCode < ApplicationRecord
   belongs_to :subledger, optional: true
 
   belongs_to :ledger_item, class_name: "Ledger::Item", optional: true, touch: true
+  # HcbCode -> Ledger::Item -> Ledger::Item::Tag -> Tag. Nested through, so
+  # read-only; writes go through `ledger_item.tags`. Declared after
+  # `belongs_to :ledger_item` since the through association must exist first.
+  has_many :tags, through: :ledger_item, source: :tags, class_name: "::Tag"
 
   # Card-locking scopes, columns, and the materializer. See the concern.
   include CardLocking::ChargeBehavior
@@ -794,6 +801,29 @@ class HcbCode < ApplicationRecord
     end
     canonical_transactions.update_all(custom_memo: memo)
     canonical_pending_transactions.update_all(custom_memo: memo)
+  end
+
+  # Tags live on the ledger item now, so writing one requires a ledger item.
+  # Like `update_custom_memo!`, these no-op when this HCB code has none (the FK
+  # is `ON DELETE => nullify`) rather than raising `NoMethodError` on nil.
+  def add_tag(tag)
+    return if ledger_item.nil?
+
+    suppress(ActiveRecord::RecordNotUnique) do
+      ledger_item.tags << tag
+    end
+  end
+
+  def remove_tag(tag)
+    return if ledger_item.nil?
+
+    ledger_item.tags.destroy(tag)
+  end
+
+  def replace_tags(tags)
+    return if ledger_item.nil?
+
+    ledger_item.tags = tags
   end
 
 end
