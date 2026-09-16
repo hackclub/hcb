@@ -18,8 +18,12 @@ module Api
         hcb_fee
       ].freeze
 
+      # "transaction" is either an HCB Code or a Ledger Item
       when_expanded do
-        expose :amount_cents, documentation: { type: "integer" } do |hcb_code, options|
+        expose :ledger_item_id, documentation: { type: "string" }, if: ->(transaction, options) { options[:ledger] } do |transaction, options|
+          transaction.ledger_item&.public_id
+        end
+        expose :amount_cents, documentation: { type: "integer" } do |transaction, options|
           org = options[:org]
 
           # By default, linked objects use the HcbCode#amount_cents method.
@@ -29,24 +33,24 @@ module Api
           # default amount_cents exposure defined in the LinkedObjectBase.
 
           # should be removed post-migration
-          if hcb_code.outgoing_disbursement? && org == hcb_code.outgoing_disbursement.disbursement.source_event &&
-             !(hcb_code.outgoing_disbursement.disbursement.source_subledger_id && hcb_code.outgoing_disbursement.disbursement.destination_subledger_id.nil?) # disbursements with a source_subledger_id and no destination_subledger_id are returned card grants
-            next -hcb_code.outgoing_disbursement.disbursement.amount
-          elsif hcb_code.outgoing_disbursement?
-            next hcb_code.outgoing_disbursement.disbursement.amount
+          if transaction.outgoing_disbursement? && org == transaction.outgoing_disbursement.disbursement.source_event &&
+             !(transaction.outgoing_disbursement.disbursement.source_subledger_id && transaction.outgoing_disbursement.disbursement.destination_subledger_id.nil?) # disbursements with a source_subledger_id and no destination_subledger_id are returned card grants
+            next -transaction.outgoing_disbursement.disbursement.amount
+          elsif transaction.outgoing_disbursement?
+            next transaction.outgoing_disbursement.disbursement.amount
           end
 
-          next hcb_code.incoming_disbursement.amount if hcb_code.incoming_disbursement?
-          next hcb_code.outgoing_disbursement.amount if hcb_code.outgoing_disbursement?
-          next hcb_code.donation.amount if hcb_code.donation?
-          next hcb_code.invoice.item_amount if hcb_code.invoice?
-          next -hcb_code.ach_transfer.amount if hcb_code.ach_transfer?
-          next 0 if hcb_code.likely_account_verification_related?
+          next transaction.incoming_disbursement.amount if transaction.incoming_disbursement?
+          next transaction.outgoing_disbursement.amount if transaction.outgoing_disbursement?
+          next transaction.donation.amount if transaction.donation?
+          next transaction.invoice.item_amount if transaction.invoice?
+          next -transaction.ach_transfer.amount if transaction.ach_transfer?
+          next 0 if transaction.likely_account_verification_related?
 
-          hcb_code.amount_cents
+          transaction.amount_cents
         end
-        expose :memo do |hcb_code, options|
-          hcb_code.memo(event: options[:org])
+        expose :memo do |transaction, options|
+          transaction.memo(event: options[:org])
         end
         format_as_date do
           expose :date
@@ -56,51 +60,50 @@ module Api
         expose :linked_object_type, as: :type, documentation: {
           values: LINKED_OBJECT_TYPES
         }
-        expose :pending, documentation: { type: "boolean" } do |hcb_code, options|
-          if hcb_code.event.can_front_balance?
-            next hcb_code.canonical_transactions.empty? && hcb_code.canonical_pending_transactions.none? { |pt| pt.fronted? }
+        expose :pending, documentation: { type: "boolean" } do |transaction, options|
+          if transaction.event.can_front_balance?
+            next transaction.canonical_transactions.empty? && transaction.canonical_pending_transactions.none? { |pt| pt.fronted? }
           end
 
-          hcb_code.canonical_transactions.empty?
+          transaction.canonical_transactions.empty?
         end
 
         expose :receipts do
-          expose :count, documentation: { type: "integer" } do |hcb_code, options|
-            hcb_code.receipts.size
+          expose :count, documentation: { type: "integer" } do |transaction, options|
+            transaction.receipts.size
           end
-          expose :missing, documentation: { type: "boolean" } do |hcb_code, options|
+          expose :missing, documentation: { type: "boolean" } do |transaction, options|
             # This logic really needs to be moved inside the HcbCode model
-            [:card_charge, :card_force_capture].include?(hcb_code.type) &&
-              !hcb_code.no_or_lost_receipt? &&
-              hcb_code.receipts.none?
+            [:card_charge, :card_force_capture].include?(transaction.type) &&
+              !transaction.no_or_lost_receipt? &&
+              transaction.receipts.none?
           end
         end
 
         expose :comments do
-          expose :count, documentation: { type: "integer" } do |hcb_code, options|
-            hcb_code.not_admin_only_comments_count
+          expose :count, documentation: { type: "integer" } do |transaction, options|
+            transaction.not_admin_only_comments_count
           end
         end
       end
 
-      expose_associated Organization do |hcb_code, options|
-        hcb_code.event
+      expose_associated Organization do |transaction, options|
+        transaction.event
       end
 
-      expose_associated User do |hcb_code, options|
-        hcb_code.author
+      expose_associated User do |transaction, options|
+        transaction.author
       end
 
-      expose_associated Tag, documentation: { type: Tag, is_array: true }, as: :tags do |hcb_code, options|
-        hcb_code.tags
+      expose_associated Tag, documentation: { type: Tag, is_array: true }, as: :tags do |transaction, options|
+        transaction.tags
       end
 
       when_showing LinkedObjectBase::API_LINKED_OBJECT_TYPE do
         [
           {
             entity: Entities::CardCharge,
-            # Convert the HcbCode to it's equivalent CardCharge.
-            hcb_method: ->(hcb_code) { Models::CardCharge.find(hcb_code.id) },
+            hcb_method: ->(transaction) { Models::CardCharge.find_by(id: transaction.local_hcb_code&.id) },
           },
           {
             entity: Entities::AchTransfer,
@@ -120,11 +123,11 @@ module Api
           },
           {
             entity: Entities::Transfer,
-            hcb_method: ->(hcb_code) do
-              if hcb_code.outgoing_disbursement?
-                hcb_code.outgoing_disbursement.disbursement
+            hcb_method: ->(transaction) do
+              if transaction.outgoing_disbursement?
+                transaction.outgoing_disbursement.disbursement
               else
-                hcb_code.incoming_disbursement.disbursement
+                transaction.incoming_disbursement.disbursement
               end
             end
           },
@@ -153,16 +156,16 @@ module Api
           method = linked_type[:hcb_method]
           type = entity.object_type
 
-          expose type, if: ->(hcb_code, options) {
-            obj_type = linked_object_type(hcb_code.type).to_s
+          expose type, if: ->(transaction, options) {
+            obj_type = linked_object_type(transaction.type).to_s
             self.class.should_show?(entity) && type == obj_type
           }, documentation: {
             type: entity
-          } do |hcb_code, options|
+          } do |transaction, options|
             linked_objects = if method.is_a? Proc
-                               method.call(hcb_code)
+                               method.call(transaction)
                              else
-                               hcb_code.public_send(method)
+                               transaction.public_send(method)
                              end
             entity.represent(linked_objects, options_hide([self, Organization]))
           end

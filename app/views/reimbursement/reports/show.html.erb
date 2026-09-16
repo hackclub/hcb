@@ -264,9 +264,7 @@
 <%= render partial: "reimbursement/reports/actions", locals: { report: @report, user: @user } %>
 
 <% if @report.event.present? %>
-  <% admin_tool("mt-4 p-3") do %>
-    <%= render "events/mission_statement", event: @report.event %>
-  <% end %>
+  <%= render "events/mission_statement", event: @report.event, class_name: "mt-4 p-3" %>
 <% end %>
 
 <% admin_tool("mt-4 p-3") do %>
