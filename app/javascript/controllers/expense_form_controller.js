@@ -131,7 +131,9 @@ export default class extends Controller {
 
       this.edit()
       this.amountFieldTarget.value = result.maximum_value
-      this.amountFieldTarget.dispatchEvent(new Event('input', { bubbles: true }))
+      this.amountFieldTarget.dispatchEvent(
+        new Event('input', { bubbles: true })
+      )
       this.#showFitFeesStatus(result.message)
     } catch (error) {
       this.#showFitFeesStatus(error.message, true)
