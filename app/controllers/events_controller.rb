@@ -152,10 +152,6 @@ class EventsController < ApplicationController
 
   def stats
     authorize @event
-  end
-
-  def ledger_stats
-    authorize @event
     @ledger = @event.ledger
   end
 
