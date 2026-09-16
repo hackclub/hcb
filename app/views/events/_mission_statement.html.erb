@@ -1,8 +1,13 @@
-<%# locals: (event:) %>
+<%# locals: (event:, class_name: "", label: nil) %>
 
 <% if event.description.present? %>
-  <div class="card">
-    <p class="eyebrow mt0 mb0">Mission statement</p>
-    <p class="m0"><%= event.description %></p>
-  </div>
+  <% admin_tool(class_name) do %>
+    <% if label.present? %>
+      <p class="eyebrow m0 mb1"><%= label %></p>
+    <% end %>
+    <div class="card">
+      <p class="eyebrow mt0 mb0">Mission statement</p>
+      <p class="m0"><%= event.description %></p>
+    </div>
+  <% end %>
 <% end %>
