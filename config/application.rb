@@ -56,6 +56,10 @@ module Bank
 
     config.action_view.form_with_generates_remote_forms = false
 
+    # jquery_ujs strands `data-disable-with` buttons when Turbo aborts a
+    # submission; Turbo disables the submitter itself while one is in flight.
+    config.action_view.automatically_disable_submit_tag = false
+
     config.exceptions_app = routes
 
     config.to_prepare do
