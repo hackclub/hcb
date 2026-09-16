@@ -37,22 +37,21 @@ module PopoverHelper
   end
 
   def ledger_item_popover_data(item)
-    # Ledger item pages are auditor-only while we test the migration. Non-auditors
-    # can't view the ledger item frame (items_controller#show redirects them to the
-    # HCB code page), so serve them the HCB code popover instead — otherwise the
-    # injected frame id (lit_…) wouldn't match the HCB page's frame (txn_…) and the
-    # popover would render empty.
-    unless auditor_signed_in?
-      return hcb_code_popover_data(item.hcb_code)
+    # Only serve the ledger item popover to users who can actually view the ledger
+    # item show page. Everyone else gets the HCB code popover instead — otherwise
+    # the injected frame id (lit_…) wouldn't match the HCB page's frame (txn_…) and
+    # the popover would render empty.
+    if policy(item).show?
+      popover_data(
+        title: item.pretty_title,
+        src: item.popover_path,
+        frame_id: item.public_id,
+        state_url: ledger_item_path(item),
+        external_link: ledger_item_path(item)
+      )
+    else
+      hcb_code_popover_data(item.hcb_code)
     end
-
-    popover_data(
-      title: item.pretty_title,
-      src: item.popover_path,
-      frame_id: item.public_id,
-      state_url: ledger_item_path(item),
-      external_link: ledger_item_path(item)
-    )
   end
 
   def card_grant_popover_data(card_grant, hcb_code:, event: nil, state_title: nil)
