@@ -9,6 +9,7 @@
 #  amount                              :integer
 #  deposited_at                        :datetime
 #  errored_at                          :datetime
+#  idempotency_key                     :string
 #  in_transit_at                       :datetime
 #  name                                :string
 #  pending_at                          :datetime
@@ -32,6 +33,7 @@
 #  index_disbursements_on_destination_transaction_category_id  (destination_transaction_category_id)
 #  index_disbursements_on_event_id                             (event_id)
 #  index_disbursements_on_fulfilled_by_id                      (fulfilled_by_id)
+#  index_disbursements_on_idempotency_key                      (source_event_id,requested_by_id,idempotency_key) UNIQUE WHERE (idempotency_key IS NOT NULL)
 #  index_disbursements_on_requested_by_id                      (requested_by_id)
 #  index_disbursements_on_source_event_id                      (source_event_id)
 #  index_disbursements_on_source_subledger_id                  (source_subledger_id)
