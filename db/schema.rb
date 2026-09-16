@@ -732,7 +732,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_09_120000) do
     t.index ["event_id"], name: "index_disbursements_on_event_id"
     t.index ["fulfilled_by_id"], name: "index_disbursements_on_fulfilled_by_id"
     t.index ["requested_by_id"], name: "index_disbursements_on_requested_by_id"
-    t.index ["source_event_id", "idempotency_key"], name: "index_disbursements_on_source_event_id_and_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
+    t.index ["source_event_id", "requested_by_id", "idempotency_key"], name: "index_disbursements_on_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
     t.index ["source_event_id"], name: "index_disbursements_on_source_event_id"
     t.index ["source_subledger_id"], name: "index_disbursements_on_source_subledger_id"
     t.index ["source_transaction_category_id"], name: "index_disbursements_on_source_transaction_category_id"

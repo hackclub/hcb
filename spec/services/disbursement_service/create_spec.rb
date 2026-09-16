@@ -525,5 +525,31 @@ RSpec.describe DisbursementService::Create do
 
       expect(Disbursement.count).to eq(2)
     end
+
+    it "treats a blank key as no key at all" do
+      run(idempotency_key: "", amount: "1.00")
+      run(idempotency_key: "", amount: "1.00")
+
+      expect(Disbursement.count).to eq(2)
+      expect(Disbursement.pluck(:idempotency_key)).to all(be_nil)
+    end
+
+    it "scopes keys to the requester" do
+      other_requestor = create(:user)
+      create(:organizer_position, event: source_event, user: other_requestor)
+
+      first, = run(amount: "1.00")
+      second, service = run(amount: "1.00", requested_by_id: other_requestor.id)
+
+      expect(second).not_to eq(first)
+      expect(service).not_to be_replayed
+      expect(second.requested_by).to eq(other_requestor)
+    end
+
+    it "does not raise a mismatch against another requester's key" do
+      run(amount: "1.00")
+
+      expect { run(amount: "2.00", requested_by_id: create(:user).id) }.not_to raise_error
+    end
   end
 end

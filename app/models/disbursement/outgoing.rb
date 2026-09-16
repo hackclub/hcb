@@ -33,9 +33,9 @@
 #  index_disbursements_on_destination_transaction_category_id  (destination_transaction_category_id)
 #  index_disbursements_on_event_id                             (event_id)
 #  index_disbursements_on_fulfilled_by_id                      (fulfilled_by_id)
+#  index_disbursements_on_idempotency_key                      (source_event_id,requested_by_id,idempotency_key) UNIQUE WHERE (idempotency_key IS NOT NULL)
 #  index_disbursements_on_requested_by_id                      (requested_by_id)
 #  index_disbursements_on_source_event_id                      (source_event_id)
-#  index_disbursements_on_source_event_id_and_idempotency_key  (source_event_id,idempotency_key) UNIQUE WHERE (idempotency_key IS NOT NULL)
 #  index_disbursements_on_source_subledger_id                  (source_subledger_id)
 #  index_disbursements_on_source_transaction_category_id       (source_transaction_category_id)
 #

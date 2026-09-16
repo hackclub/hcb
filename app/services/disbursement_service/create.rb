@@ -44,7 +44,7 @@ module DisbursementService
       @source_transaction_category_slug = source_transaction_category_slug
       @destination_transaction_category_slug = destination_transaction_category_slug
       @category_assignment_strategy = category_assignment_strategy
-      @idempotency_key = idempotency_key
+      @idempotency_key = idempotency_key.presence
       @replayed = false
     end
 
@@ -115,6 +115,12 @@ module DisbursementService
       }
     end
 
+    # Keys are namespaced per source event and requester, so one organizer's key
+    # can never replay (or collide with) another's.
+    def idempotency_scope
+      { source_event_id: source_event.id, requested_by_id: @requested_by_id }
+    end
+
     # The request-shaped attributes a replay is compared against. Kept to cheap
     # values so the replay path does no lookups or writes inside the lock.
     def idempotent_attrs
@@ -136,7 +142,7 @@ module DisbursementService
     def idempotent_replay
       return if @idempotency_key.blank?
 
-      existing = Disbursement.find_by(source_event_id: source_event.id, idempotency_key: @idempotency_key)
+      existing = Disbursement.find_by(**idempotency_scope, idempotency_key: @idempotency_key)
       return unless existing
 
       requested = Disbursement.new(idempotent_attrs)
