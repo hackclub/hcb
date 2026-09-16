@@ -29,7 +29,5 @@ class Ledger
       has_one :event, through: :tag
 
     end
-
   end
-
 end

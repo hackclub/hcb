@@ -803,4 +803,27 @@ class HcbCode < ApplicationRecord
     canonical_pending_transactions.update_all(custom_memo: memo)
   end
 
+  # Tags live on the ledger item now, so writing one requires a ledger item.
+  # Like `update_custom_memo!`, these no-op when this HCB code has none (the FK
+  # is `ON DELETE => nullify`) rather than raising `NoMethodError` on nil.
+  def add_tag(tag)
+    return if ledger_item.nil?
+
+    suppress(ActiveRecord::RecordNotUnique) do
+      ledger_item.tags << tag
+    end
+  end
+
+  def remove_tag(tag)
+    return if ledger_item.nil?
+
+    ledger_item.tags.destroy(tag)
+  end
+
+  def replace_tags(tags)
+    return if ledger_item.nil?
+
+    ledger_item.tags = tags
+  end
+
 end

@@ -70,9 +70,7 @@ class HcbCodeMailbox < ApplicationMailbox
       tag = event.tags.search_label(command["argument"]).first
       return unless tag
 
-      suppress(ActiveRecord::RecordNotUnique) do
-        @hcb_code.ledger_item.tags << tag
-      end
+      @hcb_code.add_tag(tag)
       @tagged_with << tag.label
     end
   end

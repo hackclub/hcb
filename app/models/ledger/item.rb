@@ -65,8 +65,10 @@ class Ledger
     has_many :comments, -> { order(:created_at) }, as: :commentable, inverse_of: :commentable, through: :hcb_code
     has_many :receipts, as: :receiptable, after_add: :update_task_completion, after_remove: :update_task_completion, through: :hcb_code
     # Legacy tags reached via the HcbCode. Superseded by `tags` (through
-    # `ledger_item_tags`); kept around until callers are migrated off it.
-    has_many :hcb_code_tags, through: :hcb_code, source: :tags
+    # `ledger_items_tags`); kept around until callers are migrated off it.
+    # Named `deprecated_tags` (matching HcbCode) to avoid confusion with the
+    # HcbCodeTag join model.
+    has_many :deprecated_tags, through: :hcb_code, source: :deprecated_tags, class_name: "::Tag"
 
     has_many :ledger_item_tags, class_name: "Ledger::Item::Tag", foreign_key: :ledger_item_id, inverse_of: :ledger_item, dependent: :destroy
     has_many :tags, through: :ledger_item_tags, source: :tag
