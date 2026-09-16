@@ -423,7 +423,7 @@ class AdminController < Admin::BaseController
     events = combobox_page(events.order(Event::CUSTOM_SORT).select(:id, :name, :slug))
 
     render json: events.map { |event|
-      { value: event.id.to_s, label: event.to_combobox_display(admin: admin_signed_in?), sublabel: event.slug }
+      { value: event.id.to_s, label: helpers.combobox_display(event), sublabel: event.slug }
     }
   end
 
@@ -432,12 +432,10 @@ class AdminController < Admin::BaseController
     users = @q.present? ? User.search_name(@q) : User.order(:full_name)
     users = combobox_page(users.select(:id, :full_name, :email))
 
-    # `combobox_tag` renders a preselected user with the same `admin:` flag, so
-    # both sides have to pass it or the label changes on re-picking. The admin
-    # display already spells out the email and ID, hence the bare sublabel.
-    admin = admin_signed_in?
+    # The admin display already spells out the email and ID, hence the sublabel
+    # only being worth rendering for everyone else.
     render json: users.map { |user|
-      { value: user.id.to_s, label: user.to_combobox_display(admin:), sublabel: (user.email unless admin) }
+      { value: user.id.to_s, label: helpers.combobox_display(user), sublabel: (user.email unless admin_signed_in?) }
     }
   end
 

@@ -122,18 +122,15 @@ export default class extends Controller {
   }
 
   onOptionClick(e) {
-    const li = e.target.closest('[role="option"]')
-    if (!li || li.getAttribute('aria-disabled') === 'true') return
-    this.commit(this.options[Number(li.dataset.index)])
+    const index = this.optionIndexFrom(e)
+    if (index >= 0) this.commit(this.options[index])
   }
 
   // Keep the keyboard cursor under the pointer, so clicking always commits the
   // row the user sees highlighted.
   onOptionHover(e) {
-    const li = e.target.closest('[role="option"]')
-    if (!li || li.getAttribute('aria-disabled') === 'true') return
-    const index = Number(li.dataset.index)
-    if (index === this.activeIndex) return
+    const index = this.optionIndexFrom(e)
+    if (index < 0 || index === this.activeIndex) return
     this.activeIndex = index
     this.highlight({ scroll: false })
   }
@@ -152,6 +149,13 @@ export default class extends Controller {
 
   get isOpen() {
     return !this.listboxTarget.hasAttribute('hidden')
+  }
+
+  // Index of the selectable option an event landed on, or -1.
+  optionIndexFrom(e) {
+    const li = e.target.closest('[role="option"]')
+    if (!li || li.getAttribute('aria-disabled') === 'true') return -1
+    return Number(li.dataset.index)
   }
 
   async search(query) {
@@ -412,6 +416,6 @@ function normalize(option) {
 
 function escape(str) {
   const div = document.createElement('div')
-  div.textContent = str == null ? '' : str
+  div.textContent = str
   return div.innerHTML
 }

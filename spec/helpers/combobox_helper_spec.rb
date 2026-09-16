@@ -15,6 +15,9 @@ RSpec.describe ComboboxHelper, type: :helper do
       expect(html).to include('data-combobox-target="hidden"')
       expect(html).to include('data-combobox-target="listbox"')
       expect(html).to include('data-combobox-target="status"')
+
+      doc = Nokogiri::HTML.fragment(html)
+      expect(doc.at_css("input[type=text]")["aria-controls"]).to eq(doc.at_css("ul")["id"])
     end
 
     # The submitted value lives in the hidden field; the visible input is
@@ -44,12 +47,6 @@ RSpec.describe ComboboxHelper, type: :helper do
 
       expect(html.at_css("input[type=text]")["id"]).to eq("bulk_map_event_id")
       expect(html.at_css("ul")["id"]).to eq("bulk_map_event_id_listbox")
-    end
-
-    it "points the input's aria-controls at the listbox it owns" do
-      html = Nokogiri::HTML.fragment(helper.combobox_tag(:event_id, "/search"))
-
-      expect(html.at_css("input[type=text]")["aria-controls"]).to eq(html.at_css("ul")["id"])
     end
 
     context "with a preselected record" do

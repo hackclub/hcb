@@ -32,10 +32,8 @@
     max-width: none;
   }
 
-  // `@extend .input` splices `.combobox__field` into a rule further down the
-  // sheet, so at equal specificity that rule's `max-width` would win. Scoping
-  // the override to `.combobox` outranks it regardless of source order, and
-  // lets the wrapper alone decide how wide the control is.
+  // Scoped, so it outranks the `.input` rule `@extend` splices this class into
+  // further down the sheet. The wrapper alone decides how wide the control is.
   & .combobox__field {
     max-width: none;
   }

@@ -110,7 +110,7 @@ class DisbursementsController < ApplicationController
 
       {
         value: e.public_id,
-        label: e.to_combobox_display(admin: admin_signed_in?),
+        label: helpers.combobox_display(e),
         sublabel: disabled_message || helpers.render_money_short(e.balance_available),
         disabled: disabled_message.present?
       }

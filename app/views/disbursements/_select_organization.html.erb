@@ -13,7 +13,7 @@
 <%# Keyed on `public_id` rather than `id`, to match what `event_search` returns. %>
 <% selected = selected_event && {
      value: selected_event.public_id,
-     label: selected_event.to_combobox_display(admin: admin_signed_in?)
+     label: combobox_display(selected_event)
    } %>
 
 <div class="field flex-1">
