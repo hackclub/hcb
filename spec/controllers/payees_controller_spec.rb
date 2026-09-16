@@ -115,6 +115,33 @@ RSpec.describe PayeesController do
       expect(response.parsed_body).to eq({ "duplicate" => false, "payees" => [] })
     end
 
+    it "labels managed recipients" do
+      legal_entity = create(:legal_entity, managing_event: event)
+      create(:payee, event:, email: "orpheus@hackclub.com", legal_entity:)
+
+      get :check_email, params: { event_id: event.slug, email: "orpheus@hackclub.com" }
+
+      expect(response.parsed_body["payees"].first["managed"]).to be(true)
+    end
+
+    it "returns the five most recent matches" do
+      7.times { |i| create(:payee, event:, display_name: "Recipient #{i}", email: "orpheus@hackclub.com", legal_entity: nil, created_at: i.minutes.ago) }
+
+      get :check_email, params: { event_id: event.slug, email: "orpheus@hackclub.com" }
+
+      expect(response.parsed_body["payees"].map { |payee| payee["name"] }).to eq(
+        ["Recipient 0", "Recipient 1", "Recipient 2", "Recipient 3", "Recipient 4"]
+      )
+    end
+
+    it "ignores recipients belonging to another organization" do
+      create(:payee, event: create(:event), email: "orpheus@hackclub.com", legal_entity: nil)
+
+      get :check_email, params: { event_id: event.slug, email: "orpheus@hackclub.com" }
+
+      expect(response.parsed_body["duplicate"]).to be(false)
+    end
+
     it "ignores archived recipients" do
       create(:payee, event:, email: "orpheus@hackclub.com", legal_entity: nil, archived_at: Time.current)
 

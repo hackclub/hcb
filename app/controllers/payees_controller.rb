@@ -19,26 +19,6 @@ class PayeesController < ApplicationController
     render layout: false
   end
 
-  def check_email
-    authorize @event, :create_payment?
-
-    email = Payee.normalize_value_for(:email, params[:email])
-    destination = params[:destination].presence || "payments"
-
-    matches = email.present? ? @event.payees.not_archived.where(email:).order(created_at: :desc).limit(5).to_a : []
-
-    render json: {
-      duplicate: matches.any?,
-      payees: matches.map do |payee|
-        {
-          name: payee.display_name,
-          managed: payee.managed?,
-          select_url: helpers.new_recipient_transfer_path(destination, @event, payee_id: payee.hashid)
-        }
-      end
-    }
-  end
-
   def create
     manual = params[:manual] == "true"
     if manual && !Flipper.enabled?(:manual_payees_2026_08_05, @event)
@@ -88,6 +68,26 @@ class PayeesController < ApplicationController
 
     flash[:success] = "Recipient archived."
     redirect_to helpers.new_recipient_transfer_path(params[:destination], @event)
+  end
+
+  def check_email
+    authorize @event, :create_payment?
+
+    email = Payee.normalize_value_for(:email, params[:email])
+    destination = params[:destination].presence || "payments"
+
+    matches = email.present? ? @event.payees.not_archived.includes(:legal_entity).where(email:).order(created_at: :desc).limit(5).to_a : []
+
+    render json: {
+      duplicate: matches.any?,
+      payees: matches.map do |payee|
+        {
+          name: payee.display_name,
+          managed: payee.managed?,
+          select_url: helpers.new_recipient_transfer_path(destination, @event, payee_id: payee.hashid)
+        }
+      end
+    }
   end
 
   def choose_legal_entity

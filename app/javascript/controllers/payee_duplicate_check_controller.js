@@ -7,6 +7,7 @@ export default class extends Controller {
 
   initialize() {
     this.check = debounce(this._check, 400)
+    this.latestRequest = 0
   }
 
   hideWarning() {
@@ -16,6 +17,8 @@ export default class extends Controller {
 
   async _check(e) {
     const email = e.target.value.trim()
+    // Responses can arrive out of order; only the newest one may touch the DOM.
+    const request = ++this.latestRequest
 
     if (!email) {
       this.hideWarning()
@@ -33,15 +36,17 @@ export default class extends Controller {
       })
 
       if (!response.ok) {
-        this.hideWarning()
+        if (request === this.latestRequest) this.hideWarning()
         return
       }
 
       data = await response.json()
     } catch {
-      this.hideWarning()
+      if (request === this.latestRequest) this.hideWarning()
       return
     }
+
+    if (request !== this.latestRequest) return
 
     if (data.duplicate && data.payees?.length) {
       this.render(data.payees)
