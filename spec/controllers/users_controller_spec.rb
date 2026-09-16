@@ -349,6 +349,34 @@ RSpec.describe UsersController do
 
       expect(user.reload.phone_number_verification_bypassed).to eq(false)
     end
+
+    it "does not let a regular user pretend not to be an admin" do
+      user = create(:user)
+      create_session(user, verified: true)
+
+      patch(:update, params: { id: user.id, user: { pretend_is_not_admin: "1" } })
+
+      expect(user.reload.pretend_is_not_admin).to eq(false)
+    end
+
+    it "lets an auditor pretend not to be an admin" do
+      auditor = create(:user, access_level: :auditor)
+      create_session(auditor, verified: true)
+
+      patch(:update, params: { id: auditor.id, user: { pretend_is_not_admin: "1" } })
+
+      expect(auditor.reload.pretend_is_not_admin).to eq(true)
+    end
+
+    it "does not let an admin make another user pretend not to be an admin" do
+      admin_user = create(:user, :make_admin)
+      user = create(:user, access_level: :auditor)
+      create_session(admin_user, verified: true)
+
+      patch(:update, params: { id: user.id, user: { pretend_is_not_admin: "1" } })
+
+      expect(user.reload.pretend_is_not_admin).to eq(false)
+    end
   end
 
   describe "settings access for unverified users" do

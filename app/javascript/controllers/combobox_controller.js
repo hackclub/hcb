@@ -1,7 +1,24 @@
+/*
+  A lightweight, self-contained autocomplete combobox. Rendered by
+  `ComboboxHelper#combobox_tag`.
+
+  It loads its options asynchronously from `urlValue` — an endpoint called as
+  `?q=<query>&page=<n>` and returning JSON `[{ value, label, sublabel,
+  disabled }]`, ordered by relevance, where `value` and `label` are required and
+  a page with fewer than PAGE_SIZE rows is the last one. The user filters by
+  typing, and the chosen option's `value` is mirrored into a hidden form field
+  so the surrounding form submits it. Only options returned by the endpoint can
+  be selected — free text is reverted on blur.
+*/
+
 import { Controller } from '@hotwired/stimulus'
 
+// must equal the value of `PAGE_SIZE` in app/controllers/disbursements_controller.rb
+// and app/controllers/admin_controller.rb
+const PAGE_SIZE = 25
+
 export default class extends Controller {
-  static targets = ['input', 'hidden', 'listbox']
+  static targets = ['input', 'hidden', 'listbox', 'status']
   static values = {
     url: String,
     selected: String,
@@ -16,6 +33,10 @@ export default class extends Controller {
     this.options = []
     this.activeIndex = -1
     this.deletion = false
+    this.page = 1
+    this.hasMore = false
+    this.loading = false
+    this.currentQuery = ''
 
     // Restore any preselected value (e.g. when editing or prefilled).
     if (this.selectedValue) {
@@ -45,6 +66,7 @@ export default class extends Controller {
     if (this.query === this.selectedLabel && this.selectedOption) {
       this.inputTarget.select()
       this.options = [this.selectedOption]
+      this.hasMore = false
       this.activeIndex = 0
       this.render()
       this.show()
@@ -105,6 +127,23 @@ export default class extends Controller {
     this.commit(this.options[Number(li.dataset.index)])
   }
 
+  // Keep the keyboard cursor under the pointer, so clicking always commits the
+  // row the user sees highlighted.
+  onOptionHover(e) {
+    const li = e.target.closest('[role="option"]')
+    if (!li || li.getAttribute('aria-disabled') === 'true') return
+    const index = Number(li.dataset.index)
+    if (index === this.activeIndex) return
+    this.activeIndex = index
+    this.highlight({ scroll: false })
+  }
+
+  // Fetch more results and append when the user scrolls near the bottom.
+  onScroll() {
+    const el = this.listboxTarget
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 40) this.loadMore()
+  }
+
   // --- internals ---
 
   get query() {
@@ -117,31 +156,66 @@ export default class extends Controller {
 
   async search(query) {
     const token = ++this.searchToken
+    this.currentQuery = query
+    this.page = 1
     this.renderStatus('Loading…')
     this.show()
-    let options = []
-    try {
-      const res = await fetch(this.buildUrl(query), {
-        headers: { Accept: 'application/json' },
-        credentials: 'same-origin',
-      })
-      if (res.ok) options = (await res.json()).map(normalize)
-    } catch {
-      if (token === this.searchToken) this.hide()
-      return
-    }
-    if (token !== this.searchToken) return // a newer search superseded us
 
-    this.options = this.withSelected(options)
+    const result = await this.fetchPage(query, 1, token)
+    if (!result) return // a newer search superseded us
+    if (result.error) return this.renderStatus('Search failed. Try again.')
+
+    this.options = this.withSelected(result.options)
+    this.hasMore = result.options.length >= PAGE_SIZE
     this.activeIndex = -1
     this.render()
     this.show()
     if (!this.deletion) this.autocomplete(query)
   }
 
-  buildUrl(query) {
+  async loadMore() {
+    if (this.loading || !this.hasMore) return
+    const result = await this.fetchPage(
+      this.currentQuery,
+      this.page + 1,
+      this.searchToken
+    )
+    // On failure keep the rows already on screen rather than replacing them
+    // with an error; scrolling again retries.
+    if (!result || result.error) return
+
+    this.page += 1
+    this.hasMore = result.options.length >= PAGE_SIZE
+    const seen = new Set(this.options.map(o => o.value))
+    const fresh = result.options.filter(o => !seen.has(o.value))
+    const start = this.options.length
+    this.options = this.options.concat(fresh)
+    this.appendOptions(start)
+  }
+
+  // Resolves to `{ options }` on success, `{ error }` on failure, or `null` if
+  // a newer search superseded this one. Distinguishing the first two matters:
+  // an empty list and a failed request must not look alike to the user.
+  async fetchPage(query, page, token) {
+    this.loading = true
+    try {
+      const res = await fetch(this.buildUrl(query, page), {
+        headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+      })
+      if (!res.ok) throw new Error(`Combobox search returned ${res.status}`)
+      const options = (await res.json()).map(normalize)
+      return token === this.searchToken ? { options } : null
+    } catch (error) {
+      return token === this.searchToken ? { error } : null
+    } finally {
+      this.loading = false
+    }
+  }
+
+  buildUrl(query, page = 1) {
     const sep = this.urlValue.includes('?') ? '&' : '?'
-    return `${this.urlValue}${sep}q=${encodeURIComponent(query || '')}`
+    return `${this.urlValue}${sep}q=${encodeURIComponent(query || '')}&page=${page}`
   }
 
   // Inline autocomplete: extend the typed text with the first match and select
@@ -225,36 +299,60 @@ export default class extends Controller {
     this.hiddenTarget.value = ''
   }
 
+  // Loading/empty/error messages are not choices. Dropping `options` keeps
+  // arrow keys from walking (and Enter from committing) the previous search's
+  // results while one of these is on screen, and `role="presentation"` keeps
+  // screen readers from announcing them as a one-item list — the text goes to
+  // the live region instead.
   renderStatus(message) {
+    this.options = []
     this.activeIndex = -1
+    this.hasMore = false
     this.listboxTarget.innerHTML = `
-      <li role="option" aria-disabled="true"
-          class="combobox__option combobox__option--status">
+      <li role="presentation" class="combobox__option combobox__option--status">
         <span class="text-sm muted">${escape(message)}</span>
       </li>`
+    this.inputTarget.removeAttribute('aria-activedescendant')
+    this.announce(message)
+  }
+
+  optionId(index) {
+    return `${this.listboxTarget.id}-option-${index}`
+  }
+
+  optionHtml(o, i) {
+    const disabled = o.disabled ? ' aria-disabled="true"' : ''
+    const isSelected = o.value === this.selectedValue
+    const selected = isSelected ? ' combobox__option--selected' : ''
+    const sublabel = o.sublabel
+      ? `<span class="text-sm muted">${escape(o.sublabel)}</span>`
+      : ''
+    return `
+      <li role="option" id="${this.optionId(i)}" data-index="${i}"${disabled}
+          aria-selected="${isSelected}"
+          class="combobox__option${selected}"
+          data-action="mousedown->combobox#onOptionClick mouseover->combobox#onOptionHover">
+        <div class="flex flex-col w-full">
+          <span>${escape(o.label)}</span>
+          ${sublabel}
+        </div>
+      </li>`
+  }
+
+  // Append a page of results without rebuilding the list, preserving scroll.
+  appendOptions(start) {
+    const html = this.options
+      .slice(start)
+      .map((o, i) => this.optionHtml(o, start + i))
+      .join('')
+    this.listboxTarget.insertAdjacentHTML('beforeend', html)
   }
 
   render() {
     if (this.options.length === 0) return this.renderStatus('No results')
 
     this.listboxTarget.innerHTML = this.options
-      .map((o, i) => {
-        const disabled = o.disabled ? ' aria-disabled="true"' : ''
-        const selected =
-          o.value === this.selectedValue ? ' combobox__option--selected' : ''
-        const sublabel = o.sublabel
-          ? `<span class="text-sm muted">${escape(o.sublabel)}</span>`
-          : ''
-        return `
-          <li role="option" data-index="${i}"${disabled}
-              class="combobox__option${selected}"
-              data-action="mousedown->combobox#onOptionClick">
-            <div class="flex flex-col w-full">
-              <span>${escape(o.label)}</span>
-              ${sublabel}
-            </div>
-          </li>`
-      })
+      .map((o, i) => this.optionHtml(o, i))
       .join('')
 
     // Put the keyboard cursor on the current selection so it's visible.
@@ -263,15 +361,32 @@ export default class extends Controller {
     )
     if (selIdx >= 0) this.activeIndex = selIdx
     this.highlight()
+    this.announce(
+      `${this.options.length} result${this.options.length === 1 ? '' : 's'}`
+    )
   }
 
-  highlight() {
+  // `aria-selected` marks the committed choice and is set once in `optionHtml`;
+  // the keyboard cursor is exposed separately, via `aria-activedescendant`.
+  highlight({ scroll = true } = {}) {
     this.listboxTarget.querySelectorAll('[role="option"]').forEach((li, i) => {
-      const active = i === this.activeIndex
-      li.classList.toggle('combobox__option--navigated', active)
-      li.setAttribute('aria-selected', active ? 'true' : 'false')
-      if (active) li.scrollIntoView({ block: 'nearest' })
+      const navigated = i === this.activeIndex
+      li.classList.toggle('combobox__option--navigated', navigated)
+      if (navigated && scroll) li.scrollIntoView({ block: 'nearest' })
     })
+
+    if (this.activeIndex >= 0 && this.options[this.activeIndex]) {
+      this.inputTarget.setAttribute(
+        'aria-activedescendant',
+        this.optionId(this.activeIndex)
+      )
+    } else {
+      this.inputTarget.removeAttribute('aria-activedescendant')
+    }
+  }
+
+  announce(message) {
+    if (this.hasStatusTarget) this.statusTarget.textContent = message
   }
 
   show() {
@@ -282,6 +397,7 @@ export default class extends Controller {
   hide() {
     this.listboxTarget.setAttribute('hidden', '')
     this.inputTarget.setAttribute('aria-expanded', 'false')
+    this.inputTarget.removeAttribute('aria-activedescendant')
     this.activeIndex = -1
   }
 }

@@ -10,9 +10,10 @@
 
 <% association_name = field_name.to_s.sub(/_id$/, "") %>
 <% selected_event = form.object.try(association_name) %>
+<%# Keyed on `public_id` rather than `id`, to match what `event_search` returns. %>
 <% selected = selected_event && {
      value: selected_event.public_id,
-     label: admin_signed_in? ? "#{selected_event.name} (#{selected_event.id})" : selected_event.name
+     label: selected_event.to_combobox_display(admin: admin_signed_in?)
    } %>
 
 <div class="field flex-1">
@@ -20,6 +21,6 @@
   <%= combobox_tag form.field_name(field_name), search_path,
                    selected: selected,
                    disabled: disabled,
-                   wrapper_class: "!max-w-full",
+                   class: "!max-w-full",
                    data: { swap_organizations_target: "combobox" } %>
 </div>

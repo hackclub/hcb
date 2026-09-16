@@ -220,26 +220,20 @@ module HasWireRecipient
     end
 
     def self.reimbursement_purpose_code_for(country)
-      {
-        "CO": "Reimbursement",
-        "KZ": "EKNP 2714USD859",
-        "MY": "34000",
-        "PK": "9675",
-        "AE": "TTS",
-        "CN": "SRV",
-        "IN": "S1099",
-        "KG": "55501000"
-      }[country] || "ICCP"
+      # While there are technically country-specific purpose codes
+      # that we should use, ICCP hasn't been causing any issues so far
+      "ICCP"
     end
 
     def self.payment_purpose_code_for(country)
-      # Add exceptions
-      "IVPT"
+      {
+        "IN" => "P0802"
+      }[country] || "IVPT"
     end
 
     def self.reimbursement_remittance_info_for(country)
       {
-        "PK": "Reimbursement of expenses made for a nonprofit. Recipient is a volunteer.",
+        "PK" => "Reimbursement of expenses made for a nonprofit. Recipient is a volunteer.",
       }[country] || "Reimbursement of expenses made for a nonprofit."
     end
 

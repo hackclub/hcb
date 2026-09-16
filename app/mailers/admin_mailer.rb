@@ -96,31 +96,14 @@ class AdminMailer < ApplicationMailer
     )
   end
 
-  def balance_anomalies(anomalous_events:, anomalous_card_grants:)
-    @anomalous_events = anomalous_events
-    @anomalous_card_grants = anomalous_card_grants
+  def failed_assertion_job(job:, job_id:, anomalies:)
+    @anomalies = anomalies
+    @job = job
+    @job_id = job_id
 
     mail(
       to: engineers,
-      subject: "#{anomalous_events.length + anomalous_card_grants.length} ledgers have balance anomalies"
-    )
-  end
-
-  def fee_anomalies(anomalous_events:)
-    @anomalous_events = anomalous_events
-
-    mail(
-      to: engineers,
-      subject: "#{anomalous_events.length} events have fee anomalies"
-    )
-  end
-
-  def linked_object_anomalies(anomalous_items:)
-    @anomalous_items = anomalous_items
-
-    mail(
-      to: engineers,
-      subject: "#{anomalous_items.length} items have linked object anomalies"
+      subject: "Ledger assertion job #{job} failed with #{anomalies.length} anomalies"
     )
   end
 

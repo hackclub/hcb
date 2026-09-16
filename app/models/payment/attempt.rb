@@ -40,7 +40,8 @@ class Payment
 
     has_one :legal_entity, through: :payment
 
-    scope :not_failed, -> { where.not(aasm_state: "failed" ) }
+    scope :active, -> { where.not(aasm_state: ["failed", "rejected", "canceled"] ) }
+    def active? = !(failed? || rejected? || canceled?)
 
     validate :other_attempts_failed
     validate :terminal_states_freeze_attempt, on: :update
@@ -78,7 +79,7 @@ class Payment
       end
 
       event :mark_failed do
-        transitions from: :sent, to: :failed
+        transitions from: [:pending, :sent], to: :failed
         after do |reason: nil|
           Payment::AttemptMailer.with(attempt: self).failed_creator.deliver_later
           Payment::AttemptMailer.with(attempt: self, reason:).failed_payee.deliver_later
@@ -89,6 +90,15 @@ class Payment
         transitions from: :under_review, to: :rejected
         after do
           payment.mark_rejected!
+        end
+      end
+
+      # Only reject the attempt/payout, and reset the payment back to pending LE state
+      event :mark_rejected_retryable do
+        transitions from: :under_review, to: :rejected
+        after do
+          payout&.mark_rejected!
+          payment.mark_pending_legal_entity!
         end
       end
 
@@ -111,7 +121,7 @@ class Payment
           raise ArgumentError, "🚨⚠️ unsupported payout method!"
         end
 
-        safely do
+        begin
           transfer = payout_method.create_transfer(
             payment.event,
             amount: payment.amount_cents,
@@ -121,6 +131,7 @@ class Payment
             recipient_email: payment.payee.email,
             currency: payment.currency,
             user: payment.creator,
+            purpose: :payment
           )
 
           transfer.save!
@@ -129,15 +140,19 @@ class Payment
           save!
 
           Receipt.reupload(old_receiptable: payment, new_receiptable: transfer.local_hcb_code)
-        end
 
-        mark_under_review!
+          mark_under_review!
+        rescue => e
+          mark_failed!
+
+          Rails.error.report(e)
+        end
       end
     end
 
     def other_attempts_failed
-      if Payment::Attempt.not_failed.where(payment:).excluding(self).any?
-        errors.add(:base, "all other attempts for this payment must be failed before creating a new attempt")
+      if Payment::Attempt.active.where(payment:).excluding(self).any?
+        errors.add(:base, "all other attempts for this payment must be failed, rejected, or canceled before creating a new attempt")
       end
     end
 
@@ -154,7 +169,7 @@ class Payment
     end
 
     def legal_entity_payable
-      unless legal_entity.payable?
+      unless legal_entity.payable?(requires_tax_form: payment.requires_tax_form)
         errors.add(:legal_entity, "must be payable")
       end
     end

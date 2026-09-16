@@ -1,6 +1,9 @@
-<%# locals: (event:) %>
+<%# locals: (event:, argosy_grant_amount: nil) %>
 
 <%= form_with(url: event_create_sub_organization_path(event.slug), method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full", "x-data" => "{ scoped_tags: [], query: '' }" }) do |form| %>
+  <% if argosy_grant_amount.present? %>
+    <%= form.hidden_field :argosy_grant_amount, value: argosy_grant_amount %>
+  <% end %>
   <div class="card border b--info mt2 mb2 container--sm mx-auto">
     <p class="mt0 mb0">
       Sub-organizations are separate organizations nested under <%= event.name %>. All members
@@ -78,7 +81,7 @@
                          menu_target: "toggle",
                        } %>
 
-    <div class="menu__content menu__content--2" data-menu-target="content" style="width: 24rem">
+    <div class="menu__content menu__content--2" data-menu-target="content" style="width: 24rem; max-width: calc(100vw - 2rem)">
       <div role="listbox" class="scoped_tag_results">
         <% event.subevent_scoped_tags.each do |scoped_tag| %>
           <%= render partial: "events/scoped_tags/scoped_tag_option", locals: { scoped_tag: } %>

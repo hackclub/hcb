@@ -94,7 +94,7 @@
   <% end %>
 
   <div class="flex mt-2 gap-2 items-center justify-end">
-      <%# `id` is set because the filter above also submits an `event_id`. %>
+      <%# `id` is set because the filter form above already uses the derived one. %>
       <%= combobox_tag "event_id", event_search_admin_index_path, id: "bulk_map_event_id", placeholder: "Event", class: "!max-w-full !w-56" %>
       <%= form.submit "Bulk Map to Event", "data-turbo-confirm": "Are you sure you want to bulk map these transactions?" %>
   </div>

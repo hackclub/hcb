@@ -51,6 +51,64 @@ RSpec.describe LoginsController do
       expect(login.user).to eq(user)
       expect(response).to redirect_to(email_login_path(login))
     end
+    it "blocks creating more than 10 logins per user in the window" do
+      original_cache = Rails.cache
+      Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+      user = create(:user)
+
+      10.times do
+        post(:create, params: { email: user.email, login: { purpose: "" } })
+      end
+
+      post(:create, params: { email: user.email, login: { purpose: "" } })
+      expect(response).to redirect_to(auth_users_path)
+      expect(flash[:error]).to eq("You're creating too many logins. Please try again later.")
+    ensure
+      Rails.cache = original_cache
+    end
+    it "allows logins again after the rate limit window expires" do
+      original_cache = Rails.cache
+      Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+      user = create(:user)
+
+      10.times do
+        post(:create, params: { email: user.email, login: { purpose: "" } })
+      end
+
+      post(:create, params: { email: user.email, login: { purpose: "" } })
+      expect(response).to redirect_to(auth_users_path)
+
+      travel(1.hour)
+      Rails.cache.clear
+
+      post(:create, params: { email: user.email, login: { purpose: "" } })
+      expect(response).to redirect_to(email_login_path(Login.last))
+    ensure
+      Rails.cache = original_cache
+    end
+  end
+
+  describe "set_login rate limit (session[:auth_email])" do
+    it "blocks creating more than 10 logins per user via session auth_email" do
+      original_cache = Rails.cache
+      Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+      user = create(:user)
+
+      10.times do
+        session[:auth_email] = user.email
+        get(:choose_login_preference)
+      end
+
+      session[:auth_email] = user.email
+      get(:choose_login_preference)
+      expect(response).to redirect_to(auth_users_path)
+      expect(flash[:error]).to eq("You're creating too many logins. Please try again later.")
+    ensure
+      Rails.cache = original_cache
+    end
   end
 
   describe "#login_code" do

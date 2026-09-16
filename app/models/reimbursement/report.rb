@@ -88,7 +88,7 @@ module Reimbursement
 
     attribute :name, :string, default: -> { "Expenses from #{Time.now.strftime("%B %e, %Y")}" }
 
-    scope :search, ->(q) { joins("LEFT JOIN users AS u2 on u2.id = reimbursement_reports.user_id").where("u2.full_name ILIKE :query OR reimbursement_reports.name ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
+    scope :search, ->(q) { joins("LEFT JOIN users AS u2 on u2.id = reimbursement_reports.user_id").where("u2.full_name ILIKE :query OR u2.email ILIKE :query OR reimbursement_reports.name ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
     scope :pending, -> { where(aasm_state: ["draft", "submitted", "reimbursement_requested"]) }
     scope :to_calculate_total, -> { where.not(aasm_state: ["rejected"]) }
     scope :visible, -> { joins(:user).where.not(user: { full_name: nil }, invited_by_id: nil) }
@@ -109,7 +109,9 @@ module Reimbursement
     before_create :set_payout_method
 
     after_create_commit do
-      ReimbursementMailer.with(report: self).invitation.deliver_later if inviter != user
+      # Eventless draft reports (created via Discord, SMS, or email) have nobody
+      # to invite on behalf of; the invitation email is entirely event-scoped.
+      ReimbursementMailer.with(report: self).invitation.deliver_later if inviter != user && event.present?
       Reimbursement::OneDayReminderJob.set(wait: 1.day).perform_later(self)
       Reimbursement::SevenDaysReminderJob.set(wait: 7.days).perform_later(self)
     end
@@ -333,7 +335,7 @@ module Reimbursement
     end
 
     def team_review_required?
-      !OrganizerPosition.role_at_least?(user, event, :manager) || (event.reimbursements_require_organizer_peer_review && event.users.size > 1)
+      user.admin? || !OrganizerPosition.role_at_least?(user, event, :manager) || (event.reimbursements_require_organizer_peer_review && event.users.size > 1)
     end
 
     def reimbursement_confirmation_message

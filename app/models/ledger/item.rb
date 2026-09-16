@@ -14,8 +14,10 @@
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
 #  not_admin_only_comment_count :integer          default(0), not null
+#  pending_at                   :datetime
 #  receipt_count                :integer          default(0), not null
 #  receipt_required             :boolean
+#  settled_at                   :datetime
 #  short_code                   :text
 #  special_appearance           :string
 #  status                       :string           default("pending"), not null
@@ -48,6 +50,9 @@ class Ledger
     pg_search_scope :search_memo, against: [:memo], ranked_by: "ledger_items.datetime"
 
     include Hashid::Rails
+    include PublicIdentifiable
+    set_public_id_prefix :lit
+
     has_paper_trail
 
     include Commentable
@@ -157,6 +162,10 @@ class Ledger
       receipt_required? && marked_no_or_lost_receipt_at.nil? && receipt_count == 0
     end
 
+    def accepts_receipts?
+      linked_object_type != "Reimbursement::ExpensePayout"
+    end
+
     # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
     # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
     # refresh! should not update any non-caching columns
@@ -171,9 +180,15 @@ class Ledger
       # Counter caches
       self.ct_count = canonical_transactions.size
       self.cpt_count = canonical_pending_transactions.size
-      self.comment_count = comments.size
-      self.not_admin_only_comment_count = comments.not_admin_only.size
+      shown_comments = hcb_code&.all_comments || Comment.none
+      self.comment_count = shown_comments.size
+      self.not_admin_only_comment_count = shown_comments.not_admin_only.size
       self.receipt_count = receipts.size
+
+      # Timestamps
+      self.pending_at = calculate_pending_at
+      self.settled_at = calculate_settled_at
+      self.datetime = settled_at || pending_at || created_at
 
       self.amount_cents = calculate_amount_cents
       self.author = calculate_author
@@ -257,6 +272,10 @@ class Ledger
       "#{type_label} #{amount_preposition} #{ApplicationController.helpers.render_money(amount_cents.abs)}"
     end
 
+    def popover_path
+      "/transactions/#{hashid}?frame=true"
+    end
+
     def icon
       return special_appearance.icon if special_appearance&.icon
 
@@ -333,6 +352,14 @@ class Ledger
       update!(linked_object:) if linked_object.present?
     end
 
+    def calculate_pending_at
+      canonical_pending_transactions.order(:date, :id).first&.datetime
+    end
+
+    def calculate_settled_at
+      canonical_transactions.order(:date, :id).last&.datetime
+    end
+
     def calculate_amount_cents
       amount_cents = canonical_transactions.sum(:amount_cents)
       amount_cents += canonical_pending_transactions.outgoing.unsettled.sum(:amount_cents)
@@ -363,8 +390,6 @@ class Ledger
         linked_object&.expense&.report&.user
       when "PaypalTransfer"
         linked_object&.user
-      when "Donation"
-        linked_object&.collected_by if linked_object&.in_person?
       when "Wire"
         linked_object&.user
       when "WiseTransfer"
