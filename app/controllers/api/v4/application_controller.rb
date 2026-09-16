@@ -9,6 +9,7 @@ module Api
       include ErrorHandling
       include AdminScopeCheckable
       include Pagination
+      include IdempotencyKeyable
 
       attr_reader :current_user
 
