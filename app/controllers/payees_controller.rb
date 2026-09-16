@@ -20,16 +20,12 @@ class PayeesController < ApplicationController
   end
 
   def check_email
-    authorize @event, :index?, policy_class: PayeePolicy
+    authorize @event, :create_payment?
 
-    email = params[:email].to_s.strip.downcase
+    email = Payee.normalize_value_for(:email, params[:email])
     destination = params[:destination].presence || "payments"
 
-    if email.blank?
-      return render json: { duplicate: false }
-    end
-
-    matches = @event.payees.not_archived.where(email:).order(created_at: :desc).limit(5)
+    matches = email.present? ? @event.payees.not_archived.where(email:).order(created_at: :desc).limit(5).to_a : []
 
     render json: {
       duplicate: matches.any?,

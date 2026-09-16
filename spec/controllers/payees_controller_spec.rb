@@ -126,7 +126,27 @@ RSpec.describe PayeesController do
     it "returns no duplicate for a blank email" do
       get :check_email, params: { event_id: event.slug, email: "" }
 
-      expect(response.parsed_body).to eq({ "duplicate" => false })
+      expect(response.parsed_body).to eq({ "duplicate" => false, "payees" => [] })
+    end
+
+    it "does not expose recipients to a user outside the organization" do
+      create(:payee, event:, email: "orpheus@hackclub.com", legal_entity: nil)
+      create_session(create(:user), verified: true)
+
+      get :check_email, params: { event_id: event.slug, email: "orpheus@hackclub.com" }
+
+      expect(response).to have_http_status(:redirect)
+      expect(response.body).not_to include("orpheus@hackclub.com")
+    end
+
+    it "does not expose recipients to a signed out user" do
+      create(:payee, event:, email: "orpheus@hackclub.com", legal_entity: nil)
+      cookies.delete(:session_token)
+
+      get :check_email, params: { event_id: event.slug, email: "orpheus@hackclub.com" }
+
+      expect(response).to have_http_status(:redirect)
+      expect(response.body).not_to include("orpheus@hackclub.com")
     end
   end
 
