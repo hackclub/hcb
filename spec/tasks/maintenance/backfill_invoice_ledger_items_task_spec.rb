@@ -7,10 +7,19 @@ RSpec.describe Maintenance::BackfillInvoiceLedgerItemsTask do
     allow_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)
   end
 
+  # Simulate an invoice that predates the eager-creation feature: remove its
+  # ledger item (and the ledger mapping the mapper created for it, which the
+  # ledger_items FK would otherwise block).
+  def remove_ledger_item(invoice)
+    item = invoice.ledger_item
+    item.ledger_mappings.destroy_all
+    item.destroy!
+    invoice.reload
+  end
+
   it "creates an empty ledger item for an invoice that has none" do
     invoice = create(:invoice)
-    invoice.ledger_item.destroy!
-    invoice.reload
+    remove_ledger_item(invoice)
     expect(invoice.ledger_item).to be_nil
 
     described_class.new.process(invoice)
@@ -32,7 +41,7 @@ RSpec.describe Maintenance::BackfillInvoiceLedgerItemsTask do
   it "only collects invoices without a ledger item" do
     with_item = create(:invoice)
     without_item = create(:invoice)
-    without_item.ledger_item.destroy!
+    remove_ledger_item(without_item)
 
     collection = described_class.new.collection
 
