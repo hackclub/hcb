@@ -11,9 +11,14 @@ RSpec.describe "Api::V3 transactions", type: :request do
 
   # One fixture visible to both engines: the canonical event mapping is what the
   # legacy engines read, and CanonicalTransaction#assign_ledger_item builds the
-  # Ledger::Item. Ledger::Mapper derives the ledger from raw transaction sources
-  # (Column, Stripe, linked objects), which a plaid-backed fixture has none of,
-  # so map it explicitly the way Ledger::Query's own spec does.
+  # Ledger::Item.
+  #
+  # Ledger::Mapper may or may not have mapped the item by this point: creating
+  # the canonical event mapping writes event_id onto the HcbCode, which touches
+  # the ledger item (belongs_to :ledger_item, touch: true) and fires
+  # Ledger::Item's after_touch :map!. Whether that resolves a ledger depends on
+  # callback ordering, so use map_primary! — it find_or_initialize_by's the
+  # primary mapping and is idempotent either way.
   #
   # `date` is today so the CT's date and the ledger item's datetime agree —
   # in production `backfill_ledger_item_datetime_task` aligns them.
@@ -22,7 +27,11 @@ RSpec.describe "Api::V3 transactions", type: :request do
     create(:canonical_event_mapping, event:, canonical_transaction: ct)
     hcb_code = ct.reload.local_hcb_code
 
-    Ledger::Mapping.create!(ledger: event.ledger, ledger_item: hcb_code.ledger_item, on_primary_ledger: true)
+    Ledger::Mapping.map_primary!(
+      ledger: event.ledger,
+      ledger_item: hcb_code.ledger_item,
+      mapped_by: Ledger::Mapper::SYSTEM
+    )
 
     hcb_code
   end

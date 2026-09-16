@@ -148,7 +148,14 @@ RSpec.describe Api::Models::LedgerTransaction do
       expect(transaction.local_hcb_code).to eq(hcb_code)
     end
 
-    it "reports a Date, matching HcbCode#date" do
+    # Set the datetime here rather than in the factory: Ledger::Item#refresh!
+    # recomputes it as `settled_at || pending_at || created_at`, and refresh!
+    # runs on create (after_create :map!) and again when the mapping commits.
+    # A bare item has no canonical transactions, so a factory-supplied datetime
+    # is immediately overwritten with created_at.
+    it "reports a Date, derived from the ledger item's datetime" do
+      item.update!(datetime: Time.zone.parse("2026-08-27 14:30:00"))
+
       expect(transaction.date).to eq(Date.new(2026, 8, 27))
     end
 

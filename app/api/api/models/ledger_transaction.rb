@@ -72,7 +72,11 @@ module Api
       # Api::Entities::Transaction exposes this as `ledger_item_id`.
       def ledger_item = __getobj__
 
-      def event = primary_ledger&.event
+      # A primary ledger is owned by either an event or a card grant, and an item
+      # may have no primary mapping at all (Ledger::Mapper bails when it can't
+      # derive a ledger). Api::Entities::Transaction dereferences this without a
+      # guard, so fall back the way HcbCode#event does rather than return nil.
+      def event = primary_ledger&.event || primary_ledger&.card_grant&.event || hcb_code&.event
 
       def date = datetime&.to_date
 
