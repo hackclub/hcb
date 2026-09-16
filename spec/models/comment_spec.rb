@@ -22,13 +22,26 @@ RSpec.describe Comment, type: :model, versioning: true do
   end
 
   describe "#save" do
+    def attach_file(name)
+      comment.file.attach(io: File.open(Rails.root.join("spec/fixtures/files/#{name}")), filename: name, content_type: "text/plain")
+      comment.save
+    end
+
     it "is flagged as edited when only the attached file changes" do
       expect(comment.edited?).to be false
 
-      comment.file.attach(io: File.open(Rails.root.join("spec/fixtures/files/attachment1.txt")), filename: "attachment1.txt", content_type: "text/plain")
-      comment.save
+      attach_file("attachment1.txt")
 
       expect(comment.reload.edited?).to be true
+    end
+
+    it "records the file change in the edit history" do
+      attach_file("attachment1.txt")
+
+      # the same condition the edit history renders "changed the attached file" on
+      expect(comment.reload.versions.where(event: "update")).to include(
+        have_attributes(changeset: hash_including("file"))
+      )
     end
 
     it "does not create an extra version when nothing changes" do

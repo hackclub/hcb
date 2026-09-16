@@ -62,6 +62,8 @@ class Comment < ApplicationRecord
   tracked owner: proc{ |controller, record| controller&.current_user || record&.user }, event_id: proc { |controller, record| record.admin_only? ? nil : record.commentable.try(:event)&.id }, only: [:create, :update, :destroy]
 
   after_create_commit :send_notification_email
+  before_update :mark_file_change, if: :file_change?
+  after_update :record_file_change_in_version, if: :file_change?
 
   broadcasts_refreshes_to ->(comment) { [comment.commentable, :comments] } unless Rails.env.test?
 
@@ -73,28 +75,6 @@ class Comment < ApplicationRecord
 
   def has_attached_file?
     file.attached?
-  end
-
-  # ActiveStorage attachments aren't tracked columns, so changing only the
-  # attached file wouldn't otherwise produce a version. Force one.
-  # rubocop:disable Rails/ActiveRecordOverride -- a callback can't replace the
-  # save itself, which is what forcing the version requires.
-  def save(**options, &block)
-    return super unless recording_file_change?
-    return false unless valid?
-
-    record_file_change_version!
-    true
-  end
-  # rubocop:enable Rails/ActiveRecordOverride
-
-  def save!(**options, &block)
-    return super unless recording_file_change?
-
-    raise ActiveRecord::RecordInvalid, self unless valid?
-
-    record_file_change_version!
-    true
   end
 
   def reactions_by_emoji
@@ -143,24 +123,23 @@ class Comment < ApplicationRecord
     CommentMailer.with(comment: self).notification.deliver_later
   end
 
-  def recording_file_change?
-    # `record_file_change_version!` saves through PaperTrail, which calls back
-    # into `save`; the flag keeps that inner save on the normal path.
-    !@recording_file_change && persisted? && attachment_changes["file"].present?
+  def file_change?
+    attachment_changes["file"].present?
   end
 
-  # Forces a PaperTrail version even though the attachment change itself
-  # isn't visible to PaperTrail (it's a separate ActiveStorage table, not a
-  # tracked column), and tags it so the edit history can recognize it as a
-  # file change rather than a content edit.
-  def record_file_change_version!
-    @recording_file_change = true
-    version = paper_trail.save_with_version
-    return unless version
+  # Trigger PaperTrail's usual `after_update` to write a version.
+  def mark_file_change
+    self.updated_at = Time.current
+  end
+
+  # store file changes as PaperTrail doesn't automatically do this
+  def record_file_change_in_version
+    return unless PaperTrail.enabled? && PaperTrail.request.enabled?
+
+    version = versions.last
+    return unless version&.event == "update"
 
     version.update_columns(object_changes: (version.object_changes || {}).merge("file" => [true, true]))
-  ensure
-    @recording_file_change = false
   end
 
 end
