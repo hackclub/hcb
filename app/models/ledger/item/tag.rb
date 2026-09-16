@@ -25,7 +25,10 @@ class Ledger
       self.primary_key = [:ledger_item_id, :tag_id]
 
       belongs_to :ledger_item, class_name: "Ledger::Item"
-      belongs_to :tag
+      # `::Tag` is required: inside the `Ledger::Item` namespace, `:tag` would
+      # otherwise resolve to this class (Ledger::Item::Tag), making `tags`
+      # associations self-referential and producing invalid SQL.
+      belongs_to :tag, class_name: "::Tag"
       has_one :event, through: :tag
 
     end
