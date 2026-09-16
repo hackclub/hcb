@@ -37,7 +37,7 @@ module Api
 
         @comment.assign_attributes(params.permit(:content, :admin_only, :file))
 
-        authorize @comment, :set_admin_only? if @comment.admin_only?
+        authorize @comment, :set_admin_only? if @comment.admin_only_changed?
 
         @comment.save!
 
