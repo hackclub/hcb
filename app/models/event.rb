@@ -59,8 +59,6 @@
 #  fk_rails_...  (point_of_contact_id => users.id)
 #
 class Event < ApplicationRecord
-  self.ignored_columns += ["can_front_balance"]
-
   MIN_WAITING_TIME_BETWEEN_FEES = 5.days
 
   include Hashid::Rails
