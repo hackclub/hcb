@@ -20,22 +20,30 @@
     box-sizing: border-box;
   }
 
-  & input {
+  // Outranks the base `input[type='text']` rules, which would otherwise draw a
+  // second border inside the field and cap the text area at 24rem even where
+  // the field itself is wider.
+  & .combobox__input {
     border: 0 !important;
+    box-shadow: none !important;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    max-width: none;
+  }
+
+  // `@extend .input` splices `.combobox__field` into a rule further down the
+  // sheet, so at equal specificity that rule's `max-width` would win. Scoping
+  // the override to `.combobox` outranks it regardless of source order, and
+  // lets the wrapper alone decide how wide the control is.
+  & .combobox__field {
+    max-width: none;
   }
 }
 
 .combobox__field {
   @extend .input;
-  max-width: none; // the wrapper constrains the width instead
   padding: 0 0.25rem !important;
-
-  & input {
-    box-shadow: none !important;
-    border: 0;
-    padding: 0;
-    margin: 0;
-  }
 }
 
 .combobox__handle {
