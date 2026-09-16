@@ -54,10 +54,6 @@ class HcbCode < ApplicationRecord
   monetize :amount_cents
 
   has_many :hcb_code_tags
-  # Legacy tags attached directly to the HCB code via `hcb_codes_tags`. Tags now
-  # live on the Ledger::Item; reach across to them intentionally via
-  # `ledger_item.tags` rather than through this HCB code.
-  has_many :deprecated_tags, through: :hcb_code_tags, source: :tag, class_name: "::Tag"
   has_many :hcb_code_tag_suggestions, class_name: "HcbCode::Tag::Suggestion"
   has_many :suggested_hcb_code_tag_suggestions, -> { where(aasm_state: "suggested") }, class_name: "HcbCode::Tag::Suggestion", inverse_of: :hcb_code
 
@@ -70,6 +66,10 @@ class HcbCode < ApplicationRecord
   belongs_to :subledger, optional: true
 
   belongs_to :ledger_item, class_name: "Ledger::Item", optional: true, touch: true
+  # Tags live on the ledger item; this reads through to them. Declared after
+  # `belongs_to :ledger_item` since a `through:` needs its association defined
+  # first. Nested through, so read-only — write via `ledger_item.tags`.
+  has_many :tags, through: :ledger_item, source: :tags, class_name: "::Tag"
 
   # Card-locking scopes, columns, and the materializer. See the concern.
   include CardLocking::ChargeBehavior
