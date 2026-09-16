@@ -178,7 +178,7 @@ RSpec.describe DisbursementsController do
 
       expect(response).to have_http_status(:ok)
       labels = JSON.parse(response.body).map { |o| o["label"] }
-      expect(labels.first).to eq("ysws (#{exact.id})")
+      expect(labels.first).to eq("ysws (ID: #{exact.id})")
     end
 
     it "paginates results without overlap across pages" do

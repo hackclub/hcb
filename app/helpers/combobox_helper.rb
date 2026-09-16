@@ -38,10 +38,14 @@ module ComboboxHelper
       data: { combobox_target: "input", action: "input->combobox#onInput focus->combobox#onFocus keydown->combobox#onKeydown blur->combobox#onBlur" }
     }.deep_merge(input_options))
 
-    tag.div class: token_list("combobox", wrapper_class),
-            data: { controller: token_list("combobox", data[:controller]),
-                    combobox_url_value: src, combobox_selected_value: value,
-                    combobox_label_value: display }.merge(data.except(:controller)) do
+    wrapper_data = {
+      controller: token_list("combobox", data[:controller]),
+      combobox_url_value: src,
+      combobox_selected_value: value,
+      combobox_label_value: display
+    }.merge(data.except(:controller))
+
+    tag.div class: token_list("combobox", wrapper_class), data: wrapper_data do
       safe_join [
         tag.div(input + tag.div(class: "combobox__handle"), class: "combobox__field"),
         hidden_field_tag(name, value, id: nil, data: { combobox_target: "hidden" }),
