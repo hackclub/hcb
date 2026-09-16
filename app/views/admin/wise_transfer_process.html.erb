@@ -33,6 +33,9 @@
   <div>
     <h3>Transfer Details</h3>
     <p>Requested at <%= format_datetime @wise_transfer.created_at %></p>
+    <% admin_tool do %>
+      <%= render "events/mission_statement", event: @wise_transfer.event %>
+    <% end %>
     <table class="w-full table-fixed border-box max-w-[500px] min-w-0">
       <tbody>
         <tr>
