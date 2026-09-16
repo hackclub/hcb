@@ -53,7 +53,7 @@
         </div>
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
           <%= label_tag :email, "Email" %>
-          <%= email_field_tag :email, params[:payee_email], placeholder: "orpheus@hackclub.com", required: true, form: "new-payee-form", data: { "manual-payee-target": "emailInput", "payee-picker-target": "emailInput", "payee-duplicate-check-target": "emailInput", action: "input->payee-duplicate-check#check" } %>
+          <%= email_field_tag :email, params[:payee_email], placeholder: "orpheus@hackclub.com", required: true, form: "new-payee-form", data: { "manual-payee-target": "emailInput", "payee-picker-target": "emailInput", action: "input->payee-duplicate-check#check" } %>
         </div>
 
         <div data-payee-duplicate-check-target="warning" hidden>
