@@ -152,10 +152,6 @@ class EventsController < ApplicationController
 
   def stats
     authorize @event
-  end
-
-  def ledger_stats
-    authorize @event
     @ledger = @event.ledger
   end
 
@@ -234,7 +230,7 @@ class EventsController < ApplicationController
       initial_subtotal = if @all_transactions.count > offset
                            TransactionGroupingEngine::Transaction::RunningBalanceAssociationPreloader.new(transactions: @all_transactions, event: @event).run!
                            # sum up transactions on pages after this one to get the initial subtotal
-                           @all_transactions.slice(offset...).map(&:amount).sum
+                           @all_transactions.slice(offset...).sum(&:amount)
                          else
                            # this is the last page, so start from 0
                            0
@@ -479,7 +475,7 @@ class EventsController < ApplicationController
 
     @has_filter = @status.present? || @type.present? || @user.present?
 
-    all_stripe_cards = @event.stripe_cards.where.missing(:card_grant).joins(:stripe_cardholder, :user)
+    all_stripe_cards = @event.stripe_cards.where.missing(:card_grant).joins(:stripe_cardholder, :user).includes(:card_grant)
                              .order("stripe_status asc, created_at desc")
 
     all_stripe_cards = all_stripe_cards.where(user: { id: @user.id }) if @user
@@ -1016,7 +1012,10 @@ class EventsController < ApplicationController
       plan: @event.config.subevent_plan.presence,
       risk_level: @event.risk_level,
       parent_event: @event,
-      scoped_tags: params[:scoped_tags]
+      scoped_tags: params[:scoped_tags],
+      contract_extra_prefills: {
+        "grant_amount_cents": @event.config.subevent_plan == "Event::Plan::Argosy2026" ? params[:argosy_grant_amount].to_i : nil
+      }.compact
     ).run
 
     redirect_to subevent

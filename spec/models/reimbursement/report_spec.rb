@@ -56,6 +56,30 @@ RSpec.describe Reimbursement::Report, type: :model do
     end
   end
 
+  describe ".search" do
+    let!(:report) do
+      user = create(:user, full_name: "Orpheus Dinosaur", email: "orpheus@hackclub.com")
+      create(:reimbursement_report, user:, name: "Sticker printing")
+    end
+
+    it "matches on the reimbursee's email" do
+      expect(described_class.search("orpheus@hackclub.com")).to eq([report])
+      expect(described_class.search("@hackclub.com")).to eq([report])
+    end
+
+    it "matches on the reimbursee's full name" do
+      expect(described_class.search("dinosaur")).to eq([report])
+    end
+
+    it "matches on the report name" do
+      expect(described_class.search("sticker")).to eq([report])
+    end
+
+    it "returns nothing when there's no match" do
+      expect(described_class.search("nobody@example.com")).to be_empty
+    end
+  end
+
   describe "payout method association" do
     let(:user) { create(:user) }
 
