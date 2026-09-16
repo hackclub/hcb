@@ -635,6 +635,7 @@ Rails.application.routes.draw do
     resources :expenses, only: [:create, :edit, :update, :destroy] do
       post "approve"
       post "unapprove"
+      get "fit_fees"
     end
   end
   resources :reimbursement_reports, only: [], path: "reimbursements/reports", concerns: :commentable

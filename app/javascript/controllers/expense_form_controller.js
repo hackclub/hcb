@@ -10,6 +10,9 @@ export default class extends Controller {
     'memoField',
     'card',
     'lightbox',
+    'amountField',
+    'fitFeesButton',
+    'fitFeesStatus',
   ]
   static values = {
     enabled: { type: Boolean, default: false },
@@ -106,6 +109,38 @@ export default class extends Controller {
     }
   }
 
+  async fitFees(e) {
+    e.preventDefault()
+
+    const button = this.fitFeesButtonTarget
+    const originalText = button.textContent
+    button.disabled = true
+    button.textContent = 'Fitting…'
+    this.#showFitFeesStatus('Estimating Wise fees…')
+
+    try {
+      const url = new URL(button.dataset.fitFeesUrl, window.location.origin)
+      url.searchParams.set('value', this.amountFieldTarget.value)
+      const response = await fetch(url, {
+        headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+      })
+      const result = await response.json()
+
+      if (!response.ok) throw new Error(result.error || 'Unable to fit fees.')
+
+      this.edit()
+      this.amountFieldTarget.value = result.maximum_value
+      this.amountFieldTarget.dispatchEvent(new Event('input', { bubbles: true }))
+      this.#showFitFeesStatus(result.message)
+    } catch (error) {
+      this.#showFitFeesStatus(error.message, true)
+    } finally {
+      button.disabled = false
+      button.textContent = originalText
+    }
+  }
+
   #memoInput() {
     if (this.enabledValue) {
       // this.memoFieldTarget.focus()
@@ -195,5 +230,13 @@ export default class extends Controller {
       this.cardTarget.style.position = 'relative'
       this.cardTarget.style.zIndex = 'auto'
     }
+  }
+
+  #showFitFeesStatus(message, error = false) {
+    if (!this.hasFitFeesStatusTarget) return
+
+    this.fitFeesStatusTarget.hidden = false
+    this.fitFeesStatusTarget.textContent = message
+    this.fitFeesStatusTarget.classList.toggle('error', error)
   }
 }

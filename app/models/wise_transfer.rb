@@ -253,6 +253,30 @@ class WiseTransfer < ApplicationRecord
     generate_detailed_quote(money)[:with_fees_usd_amount]
   end
 
+  # find biggest amount in the target cur smallest unit, price is right style
+  def self.fit_quote_to_maximum(maximum_usd_amount, target_currency)
+    raise ArgumentError, "maximum amount must be in USD" unless maximum_usd_amount.currency.iso_code == "USD"
+
+    upper_bound = convert_usd_to_local(maximum_usd_amount, target_currency).cents
+    low = 1
+    high = upper_bound
+    fitted_quote = nil
+
+    while low <= high
+      midpoint = (low + high) / 2
+      quote = generate_detailed_quote(Money.from_cents(midpoint, target_currency))
+
+      if quote[:with_fees_usd_amount] <= maximum_usd_amount
+        fitted_quote = quote
+        low = midpoint + 1
+      else
+        high = midpoint - 1
+      end
+    end
+
+    fitted_quote
+  end
+
   def estimated_usd_amount_cents
     @estimated_usd_amount_cents ||= WiseTransfer.generate_quote(Money.from_cents(amount_cents, currency)).cents
   end

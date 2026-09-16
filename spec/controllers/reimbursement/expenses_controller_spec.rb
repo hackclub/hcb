@@ -5,6 +5,109 @@ require "rails_helper"
 RSpec.describe Reimbursement::ExpensesController do
   include SessionSupport
 
+  describe "#fit_fees" do
+    def capped_wise_report(user: create(:user), maximum_amount_cents: 10_000)
+      payout_method = create(:legal_entity_payout_method_wise)
+      create(:reimbursement_report,
+             user:,
+             currency: "GBP",
+             maximum_amount_cents:,
+             legal_entity_payout_method: payout_method)
+    end
+
+    def fitted_quote(local_cents: 8_000)
+      {
+        initial_local_amount: Money.from_cents(local_cents, "GBP"),
+        without_fees_usd_amount: Money.from_cents(9_500, "USD"),
+        with_fees_usd_amount: Money.from_cents(10_000, "USD"),
+        fees_usd_amount: Money.from_cents(500, "USD")
+      }
+    end
+
+    it "returns the selected expense allowance after leaving other expenses unchanged" do
+      user = create(:user)
+      report = capped_wise_report(user:)
+      expense = create(:reimbursement_expense, report:, value: 50)
+      create(:reimbursement_expense, report:, value: 20)
+      allow(WiseTransfer).to receive(:fit_quote_to_maximum).and_return(fitted_quote)
+      create_session(user, verified: true)
+
+      get(:fit_fees, params: { expense_id: expense.id, value: "70.00" }, format: :json)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to include(
+        "maximum_value"         => "60.0",
+        "estimated_fee_cents"   => 500,
+        "estimated_total_cents" => 10_000
+      )
+      expect(expense.reload.value).to eq(BigDecimal("50"))
+    end
+
+    it "rejects fitting when the unchanged expenses consume the allowance" do
+      user = create(:user)
+      report = capped_wise_report(user:)
+      expense = create(:reimbursement_expense, report:, value: 70)
+      create(:reimbursement_expense, report:, value: 80)
+      allow(WiseTransfer).to receive(:fit_quote_to_maximum).and_return(fitted_quote)
+      create_session(user, verified: true)
+
+      get(:fit_fees, params: { expense_id: expense.id, value: "70" }, format: :json)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body["error"]).to include("other expenses")
+    end
+
+    it "does not increase an input for a report that already fits" do
+      user = create(:user)
+      report = capped_wise_report(user:)
+      expense = create(:reimbursement_expense, report:, value: 50)
+      create(:reimbursement_expense, report:, value: 20)
+      allow(WiseTransfer).to receive(:fit_quote_to_maximum).and_return(fitted_quote)
+      create_session(user, verified: true)
+
+      get(:fit_fees, params: { expense_id: expense.id, value: "50" }, format: :json)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body["error"]).to include("already fits")
+    end
+
+    it "is available only to the report creator" do
+      report = capped_wise_report
+      expense = create(:reimbursement_expense, report:, value: 70)
+      other_user = create(:user)
+      create_session(other_user, verified: true)
+
+      get(:fit_fees, params: { expense_id: expense.id, value: "70" }, format: :json)
+
+      expect(response).to have_http_status(:redirect)
+    end
+
+    it "requires a draft capped Wise report" do
+      user = create(:user)
+      report = create(:reimbursement_report, user:, maximum_amount_cents: nil)
+      expense = create(:reimbursement_expense, report:, value: 70)
+      create_session(user, verified: true)
+
+      get(:fit_fees, params: { expense_id: expense.id, value: "70" }, format: :json)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.parsed_body["error"]).to include("capped Wise")
+    end
+
+    it "returns a clear error when Wise quoting fails" do
+      user = create(:user)
+      report = capped_wise_report(user:)
+      expense = create(:reimbursement_expense, report:, value: 70)
+      allow(WiseTransfer).to receive(:fit_quote_to_maximum).and_raise(Faraday::ConnectionFailed, "unavailable")
+      create_session(user, verified: true)
+
+      get(:fit_fees, params: { expense_id: expense.id, value: "70" }, format: :json)
+
+      expect(response).to have_http_status(:service_unavailable)
+      expect(response.parsed_body["error"]).to include("Wise could not provide")
+    end
+  end
+
   describe "#update" do
     context "when event_id points to an event the user does not belong to" do
       it "blocks the event change and leaves expense state untouched" do

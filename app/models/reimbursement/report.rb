@@ -407,6 +407,25 @@ module Reimbursement
       !::Shared::AmpleBalance.ample_balance?(wise_transfer_quote_amount.cents, event)
     end
 
+    def capped_wise_transfer?
+      maximum_amount_cents.present? && payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
+    end
+
+    def verify_wise_fee_cap!
+      return unless capped_wise_transfer?
+
+      quote = begin
+        WiseTransfer.generate_quote(amount)
+      rescue => error
+        Rails.error.report(error)
+        raise "Wise could not provide a current fee estimate. Please try submitting again later."
+      end
+
+      if quote > maximum_amount
+        raise "This report is over its USD cap after estimated Wise fees. Use “Fit fees” on an expense and try again."
+      end
+    end
+
     def convert_to_wise_transfer!(as: User.system_user)
       raise "Can only convert reports in 'Reimbursement Requested' state" unless reimbursement_requested?
 
