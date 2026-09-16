@@ -81,9 +81,7 @@ module Api
       end
 
       def transaction
-        public_id_resource!(:@transaction, :transaction_id, HcbCode, "Transaction not found.").tap do |hcb_code|
-          error!({ message: "Transaction not found." }, 404) if ledger_engine? && hcb_code.event.nil?
-        end
+        public_id_resource!(:@transaction, :transaction_id, HcbCode, "Transaction not found.")
       end
 
       def card_charges
