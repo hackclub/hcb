@@ -87,10 +87,17 @@ module Api
       def card_charges
         @card_charges ||=
           if ledger_engine?
-            items = paginate(ledger_items(linked_object_type: { "$eq" => "CardCharge" }))
-            charges = Models::CardCharge.where(id: items.filter_map { |item| item.hcb_code&.id }).index_by(&:id)
+            # The ledger tags force captures (HCB-601) with linked_object_type
+            # "CardCharge" too, but Models::CardCharge's default scope is
+            # HCB-600 only. Narrow the relation before paginating, or the
+            # pagination headers count rows that get dropped from the body.
+            items = paginate(
+              ledger_items(linked_object_type: { "$eq" => "CardCharge" })
+                .where(id: Models::CardCharge.select(:ledger_item_id))
+            )
+            charges = Models::CardCharge.where(ledger_item_id: items.map(&:id)).index_by(&:ledger_item_id)
 
-            items.filter_map { |item| charges[item.hcb_code&.id] }
+            items.map { |item| charges[item.id] }
           else
             # TODO: this can be optimized
             pending = PendingTransactionEngine::PendingTransaction::All.new(event_id: org.id).run

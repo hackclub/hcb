@@ -108,6 +108,16 @@ RSpec.describe Api::Models::LedgerTransaction do
 
       expect(transaction.type).to eq(:card_grant)
     end
+
+    # The special appearance is set on both halves of the disbursement pair,
+    # but HcbCode#card_grant? is the issuing side only — the receiving side
+    # stays a plain transfer, and keeps exposing its `transfer` object.
+    it "reports the receiving side of a card grant as a disbursement" do
+      item.update_columns(linked_object_type: "Disbursement::Incoming")
+      allow(item).to receive(:special_appearance).and_return(instance_double(Ledger::Item::SpecialAppearance, key: "card_grant"))
+
+      expect(transaction.type).to eq(:disbursement)
+    end
   end
 
   describe "linked object readers" do

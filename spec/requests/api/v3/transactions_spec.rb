@@ -104,6 +104,42 @@ RSpec.describe "Api::V3 transactions", type: :request do
     end
   end
 
+  describe "GET /organizations/:id/card_charges" do
+    def stripe_transaction(authorization:)
+      raw = build(:raw_stripe_transaction)
+      raw.stripe_transaction = raw.stripe_transaction.merge("authorization" => authorization).compact
+      raw.save!
+
+      ct = create(
+        :canonical_transaction,
+        amount_cents: -500,
+        transaction_source: raw,
+        hashed_transactions: [create(:hashed_transaction, raw_stripe_transaction: raw)]
+      )
+      create(:canonical_event_mapping, event:, canonical_transaction: ct)
+
+      ct.reload
+    end
+
+    before do
+      stripe_transaction(authorization: "iauth_1")
+      stripe_transaction(authorization: nil)
+    end
+
+    it "excludes force captures, and counts them in neither the body nor the headers" do
+      get "/api/v3/organizations/#{event.slug}/card_charges", headers: ledger_header
+
+      expect(response.parsed_body.size).to eq(1)
+      expect(response.headers["X-Total"].to_i).to eq(1)
+    end
+
+    it "reports a force capture as its own type, not as a card charge" do
+      forced = Ledger::Item.joins(:hcb_code).find_by("hcb_codes.hcb_code LIKE 'HCB-601-%'")
+
+      expect(Api::Models::LedgerTransaction.new(forced).type).to eq(:card_force_capture)
+    end
+  end
+
   describe "GET /transactions/:id" do
     it "returns the same payload from both engines" do
       id = get_transactions.parsed_body.first["id"]

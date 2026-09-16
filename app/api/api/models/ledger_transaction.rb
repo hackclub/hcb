@@ -84,8 +84,11 @@ module Api
 
       def not_admin_only_comments_count = not_admin_only_comment_count
 
+      def receipts = hcb_code&.receipts || __getobj__.receipts
+
       def type
-        return :card_grant if special_appearance&.key == "card_grant"
+        return :card_grant if outgoing_disbursement? && special_appearance&.key == "card_grant"
+        return :card_force_capture if hcb_code&.stripe_force_capture?
 
         TYPES[linked_object_type]
       end
