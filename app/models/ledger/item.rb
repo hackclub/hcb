@@ -78,6 +78,7 @@ class Ledger
     has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
 
     enum :status, {
+      empty: "empty", # no CTs or CPTs, but has a linked object (e.g. an unpaid invoice); the linked object protects it from pruning
       pending: "pending", # any CPTs contributing to balance
       settled: "settled", # no CPTs contributing to balance or fronted incoming CPT with no CTs
       reversed: "reversed", # sum of CTs is zero
@@ -112,6 +113,8 @@ class Ledger
 
     def status_css
       case status.to_sym
+      when :empty
+        "bg-transparent border border-dashed border-muted m0 mr1"
       when :pending
         "bg-transparent border border-dashed border-muted m0 mr1"
       when :settled
@@ -404,6 +407,11 @@ class Ledger
     end
 
     def calculate_status
+      # An item that has a linked object but no transactions yet (e.g. an invoice
+      # that has been created but not paid). The linked object keeps it from being
+      # pruned once orphaned-item pruning exists.
+      return :empty if linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
+
       unless canonical_pending_transactions.declined.any?
         return :settled if linked_object_type == "BankFee"
         return :settled if linked_object_type == "Reimbursement::ExpensePayout" && canonical_pending_transactions.exists? && canonical_transactions.none?

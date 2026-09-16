@@ -47,6 +47,35 @@ RSpec.describe Ledger::Mapper do
       end
     end
 
+    context "when the item has a linked object but no transactions" do
+      before do
+        allow_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)
+      end
+
+      it "maps to the linked object's event" do
+        invoice = create(:invoice)
+        item.update!(linked_object: invoice)
+
+        mapper.run
+        item.reload
+
+        expect(item.primary_ledger).to eq(invoice.event.ledger)
+      end
+
+      it "ignores the linked object's event once a transaction exists" do
+        invoice = create(:invoice)
+        item.update!(linked_object: invoice)
+        # A CPT with no resolvable event; because a transaction now exists, the
+        # linked object must not be consulted, so the item stays unmapped.
+        create(:canonical_pending_transaction, ledger_item_id: item.id)
+
+        mapper.run
+        item.reload
+
+        expect(item.primary_ledger).to be_nil
+      end
+    end
+
     it "reuses an existing ledger for the same event" do
       event = create(:event)
       existing_ledger = event.ledger # Event automatically creates a ledger
