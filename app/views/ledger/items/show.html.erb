@@ -3,6 +3,7 @@
   <%= render "events/nav" %>
 <% end %>
 
+<%= turbo_frame_tag @item.public_id, target: "_top" do %>
 <% admin_tool do %>
   <section class="details">
     <div>
@@ -100,14 +101,20 @@
     <% end %>
   <% end %>
 
-  <%= render "receipts/list_v2", hcb_code: @item.hcb_code, frame: false, transaction_show_receipt_button: true, transaction_show_author_img: true %>
-  <%= render partial: "receipts/form_v3", locals: {
+  <%= render "receipts/list_v2", hcb_code: @item.hcb_code, frame: @frame, transaction_show_receipt_button: true, transaction_show_author_img: true %>
+  <%= begin receipt_upload_form_config = {
         receiptable: @item.hcb_code,
         enable_linking: true,
         upload_method: "transaction_page",
         include_spacing: true,
         turbo: true
-      } %>
+      }
+            receipt_upload_form_config[:restricted_dropzone] = true if @frame
+            receipt_upload_form_config[:inline_linking] = true if @frame
+            receipt_upload_form_config[:upload_method] = "transaction_popover" if @frame
+            receipt_upload_form_config[:popover] = "HcbCode:#{@item.hcb_code.hashid}" if @frame
+            render partial: "receipts/form_v3", locals: receipt_upload_form_config
+      end %>
 <% end %>
 
 <% if @item.hcb_code.present? %>
@@ -137,4 +144,5 @@
   <% @item.canonical_pending_transactions.each do |tx| %>
     <%= link_to "CPT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
   <% end %>
+<% end %>
 <% end %>

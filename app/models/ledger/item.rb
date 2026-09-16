@@ -272,6 +272,10 @@ class Ledger
       "#{type_label} #{amount_preposition} #{ApplicationController.helpers.render_money(amount_cents.abs)}"
     end
 
+    def popover_path
+      "/transactions/#{hashid}?frame=true"
+    end
+
     def icon
       return special_appearance.icon if special_appearance&.icon
 
