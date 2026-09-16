@@ -6,7 +6,6 @@ class CardChargeMailer < ApplicationMailer
     @card_charge = @ledger_item.linked_object
     @user = @ledger_item.author
 
-    return if @user.nil?
     return unless @user.email_charge_notifications_enabled?
 
     @merchant_name = @card_charge.merchant_data&.dig("name") || "the merchant"
