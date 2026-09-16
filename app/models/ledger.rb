@@ -47,8 +47,18 @@ class Ledger < ApplicationRecord
   has_many :canonical_transactions, through: :items
   has_many :canonical_pending_transactions, through: :items
 
-  monetize def balance_cents = items.sum(:amount_cents)
-  monetize def available_balance_cents = items.sum(:amount_cents) - fronted_fee_balance_cents
+  monetize def balance_cents(start_date: nil, end_date: nil)
+    Ledger::Query.new({
+                        "$and": [
+                          ({ datetime: { "$gte": start_date } } if start_date),
+                          ({ datetime: { "$lte": end_date } } if end_date)
+                        ].compact
+                      }).execute(ledgers: [self]).sum(:amount_cents)
+  end
+
+  # A negative fee balance is a fee credit. Credits are not spendable, so
+  # they never add to the available balance.
+  monetize def available_balance_cents = balance_cents - [fronted_fee_balance_cents, 0].max
 
   def can_front_balance?
     event&.can_front_balance? || card_grant&.event&.can_front_balance? || false
@@ -97,11 +107,11 @@ class Ledger < ApplicationRecord
   end
 
   def sum_fronted_amount(pts)
-    pt_sum_by_ledger_item = pts.group(:ledger_item).sum(:amount_cents)
+    pt_sum_by_ledger_item = pts.group(:ledger_item_id).sum(:amount_cents)
     ledger_items = pt_sum_by_ledger_item.keys
 
-    ct_sum_by_ledger_item = canonical_transactions.where(ledger_item: ledger_items)
-                                                  .group(:ledger_item)
+    ct_sum_by_ledger_item = canonical_transactions.where(ledger_item_id: ledger_items)
+                                                  .group(:ledger_item_id)
                                                   .sum(:amount_cents)
 
     pt_sum_by_ledger_item.reduce 0 do |sum, (ledger_item, pt_sum)|
