@@ -226,7 +226,7 @@ class OrganizerPositionInvite < ApplicationRecord
     is_signee
   end
 
-  def send_contract(cosigner_email: nil, include_videos: false, reissue_messages: {}, reissue_of: nil)
+  def send_contract(cosigner_email: nil, include_videos: false, reissue_messages: {}, extra_prefills: {}, reissue_of: nil)
     fs_contract = nil
 
     ActiveRecord::Base.transaction do
@@ -234,11 +234,11 @@ class OrganizerPositionInvite < ApplicationRecord
         contractable: self,
         include_videos:,
         external_template_id: event.plan.contract_docuseal_template_id,
-        prefills: {
-          "public_id"   => event.public_id,
-          "name"        => event.name,
-          "description" => event.airtable_record&.[]("Tell us about your event")
-        },
+        prefills: extra_prefills.merge({
+                                         "public_id"   => event.public_id,
+                                         "name"        => event.name,
+                                         "description" => event.airtable_record&.[]("Tell us about your event")
+                                       }),
         reissue_of:
       )
       fs_contract.parties.create!(user:, role: :signee)
