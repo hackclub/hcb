@@ -75,6 +75,8 @@ class Event < ApplicationRecord
 
   include Commentable
 
+  prepend MemoWise
+
   has_paper_trail
   acts_as_paranoid
   validates_as_paranoid
@@ -680,11 +682,17 @@ class Event < ApplicationRecord
     (settled_outgoing_balance_cents + pending_outgoing_balance_v2_cents) * -1
   end
 
-  def balance_v2_cents(start_date: nil, end_date: nil)
-    sum = settled_balance_cents(start_date:, end_date:)
-    sum += pending_outgoing_balance_v2_cents(start_date:, end_date:)
-    sum += fronted_incoming_balance_v2_cents(start_date:, end_date:) if can_front_balance?
-    sum
+  def balance_v2_cents(start_date: nil, end_date: nil, legacy: false)
+    end_date = end_date&.to_date&.end_of_day
+
+    if legacy
+      sum = settled_balance_cents(start_date:, end_date:)
+      sum += pending_outgoing_balance_v2_cents(start_date:, end_date:)
+      sum += fronted_incoming_balance_v2_cents(start_date:, end_date:) if can_front_balance?
+      return sum
+    end
+
+    ledger.balance_cents(start_date:, end_date:)
   end
 
   # This calculates v2 cents of settled (Canonical Transactions)
@@ -744,14 +752,16 @@ class Event < ApplicationRecord
     cpt.sum(:amount_cents)
   end
 
-  def balance_available_v2_cents
-    @balance_available_v2_cents ||= begin
+  memo_wise def balance_available_v2_cents(legacy: false)
+    if legacy
       fee_balance = can_front_balance? ? fronted_fee_balance_v2_cents : fee_balance_v2_cents
       if fee_balance.positive?
-        balance_v2_cents - fee_balance
+        balance_v2_cents(legacy:) - fee_balance
       else # `fee_balance` is negative, indicating a fee credit
-        balance_v2_cents
+        balance_v2_cents(legacy:)
       end
+    else
+      ledger.available_balance_cents
     end
   end
 
