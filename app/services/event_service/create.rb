@@ -19,7 +19,8 @@ module EventService
                    risk_level: 0,
                    parent_event: nil,
                    invited_by: nil,
-                   scoped_tags: [])
+                   scoped_tags: [],
+                   contract_extra_prefills: {})
       @name = name
       @emails = emails
       @is_signee = is_signee
@@ -38,6 +39,7 @@ module EventService
       @cosigner_email = cosigner_email
       @include_onboarding_videos = include_onboarding_videos
       @scoped_tags = scoped_tags || []
+      @contract_extra_prefills = contract_extra_prefills
     end
 
     def run
@@ -65,7 +67,7 @@ module EventService
           invite_service.run!
 
           if @is_signee
-            invite_service.model.send_contract(cosigner_email: @cosigner_email, include_videos: @include_onboarding_videos)
+            invite_service.model.send_contract(cosigner_email: @cosigner_email, include_videos: @include_onboarding_videos, extra_prefills: @contract_extra_prefills)
           end
         end
 
