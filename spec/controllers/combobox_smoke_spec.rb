@@ -43,6 +43,49 @@ RSpec.describe "combobox rendering" do
       expect(combobox_ids).to include("event_id", "bulk_map_event_id")
       expect(combobox_ids.map { |id| all_ids[id] }).to all(eq(1))
     end
+
+    # `combobox_tag` renders the preselected label itself, while the dropdown
+    # rows come from the search endpoint. If the two disagree, the field silently
+    # changes its text the moment the user re-picks the value it already had.
+    describe "preselected label agreement" do
+      [true, false].each do |as_admin|
+        context "as #{as_admin ? 'an admin' : 'a non-admin auditor'}" do
+          it "renders an event with the label event_search returns for it" do
+            viewer = create(:user, as_admin ? :make_admin : :make_auditor)
+            event = create(:event, name: "Hack Club HQ")
+            create_session(viewer, verified: true)
+
+            get :ledger, params: { event_id: event.id }
+            rendered = Nokogiri::HTML(response.body)
+                               .css("[data-combobox-url-value*='event_search']")
+                               .first["data-combobox-label-value"]
+
+            get(:event_search, params: { q: "Hack Club HQ" }, format: :json)
+            from_endpoint = JSON.parse(response.body)
+                                .find { |o| o["value"] == event.id.to_s }["label"]
+
+            expect(rendered).to eq(from_endpoint)
+          end
+
+          it "renders a user with the label user_search returns for them" do
+            viewer = create(:user, as_admin ? :make_admin : :make_auditor)
+            user = create(:user, full_name: "Jane Doe")
+            create_session(viewer, verified: true)
+
+            get :ledger, params: { user_id: user.id }
+            rendered = Nokogiri::HTML(response.body)
+                               .css("[data-combobox-url-value*='user_search']")
+                               .first["data-combobox-label-value"]
+
+            get(:user_search, params: { q: "Jane Doe" }, format: :json)
+            from_endpoint = JSON.parse(response.body)
+                                .find { |o| o["value"] == user.id.to_s }["label"]
+
+            expect(rendered).to eq(from_endpoint)
+          end
+        end
+      end
+    end
   end
 
   describe EventsController, type: :controller do

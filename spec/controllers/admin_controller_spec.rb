@@ -108,7 +108,9 @@ RSpec.describe AdminController do
   end
 
   describe "#user_search" do
-    it "returns JSON options with the email and ID in the sublabel" do
+    # The admin label spells out the email and ID, so repeating them in the
+    # sublabel wrapped every row to several lines.
+    it "gives an admin the detailed label and no redundant sublabel" do
       admin = create(:user, :make_admin)
       create_session(admin, verified: true)
       user = create(:user, full_name: "Jane Doe")
@@ -117,20 +119,20 @@ RSpec.describe AdminController do
 
       expect(response).to have_http_status(:ok)
       option = JSON.parse(response.body).find { |o| o["value"] == user.id.to_s }
-      expect(option["sublabel"]).to eq("#{user.email} \u00b7 ID #{user.id}")
+      expect(option["label"]).to eq("Jane Doe (Email: #{user.email}, ID: #{user.id})")
+      expect(option["sublabel"]).to be_nil
     end
 
-    # The sublabel already carries both facts, so repeating them in the label
-    # wraps every row to several lines.
-    it "does not repeat the email and ID in the label" do
-      admin = create(:user, :make_admin)
-      create_session(admin, verified: true)
+    it "gives a non-admin auditor the plain name with the email as a sublabel" do
+      auditor = create(:user, :make_auditor)
+      create_session(auditor, verified: true)
       user = create(:user, full_name: "Jane Doe")
 
       get(:user_search, params: { q: "Jane Doe" }, format: :json)
 
       option = JSON.parse(response.body).find { |o| o["value"] == user.id.to_s }
       expect(option["label"]).to eq("Jane Doe")
+      expect(option["sublabel"]).to eq(user.email)
     end
 
     it "paginates results without overlap across pages" do

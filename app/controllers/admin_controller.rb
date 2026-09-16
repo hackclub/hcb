@@ -432,10 +432,12 @@ class AdminController < Admin::BaseController
     users = @q.present? ? User.search_name(@q) : User.order(:full_name)
     users = combobox_page(users.select(:id, :full_name, :email))
 
-    # The sublabel already carries the email and ID, so the plain display is
-    # used here even for admins.
+    # `combobox_tag` renders a preselected user with the same `admin:` flag, so
+    # both sides have to pass it or the label changes on re-picking. The admin
+    # display already spells out the email and ID, hence the bare sublabel.
+    admin = admin_signed_in?
     render json: users.map { |user|
-      { value: user.id.to_s, label: user.to_combobox_display, sublabel: "#{user.email} · ID #{user.id}" }
+      { value: user.id.to_s, label: user.to_combobox_display(admin:), sublabel: (user.email unless admin) }
     }
   end
 
