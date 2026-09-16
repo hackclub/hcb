@@ -8,7 +8,6 @@
 #  aasm_state                                   :string           not null
 #  activated_at                                 :datetime
 #  address                                      :text
-#  can_front_balance                            :boolean          default(TRUE), not null
 #  country                                      :integer
 #  deleted_at                                   :datetime
 #  demo_mode                                    :boolean          default(FALSE), not null
@@ -60,6 +59,8 @@
 #  fk_rails_...  (point_of_contact_id => users.id)
 #
 class Event < ApplicationRecord
+  self.ignored_columns += ["can_front_balance"]
+
   MIN_WAITING_TIME_BETWEEN_FEES = 5.days
 
   include Hashid::Rails
@@ -555,10 +556,6 @@ class Event < ApplicationRecord
     build_plan(type: fallback_plan_class) if plan.nil?
   end
 
-  after_update_commit if: :can_front_balance_previously_changed? do
-    Event::RefreshLedgersJob.perform_later(event_id: id)
-  end
-
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
   after_validation :move_friendly_id_error_to_slug
 
@@ -663,19 +660,8 @@ class Event < ApplicationRecord
     completed_t + pending_t
   end
 
-  def refresh_ledgers!
-    ledger.refresh_all!
-    Ledger.where(card_grant: self.card_grants).find_each do |ledger|
-      ledger.refresh_all!
-    end
-  end
-
   def total_raised
-    balance = settled_incoming_balance_cents
-    if can_front_balance?
-      balance += fronted_incoming_balance_v2_cents
-    end
-    balance
+    settled_incoming_balance_cents + fronted_incoming_balance_v2_cents
   end
 
   def total_spent_cents
@@ -688,7 +674,7 @@ class Event < ApplicationRecord
     if legacy
       sum = settled_balance_cents(start_date:, end_date:)
       sum += pending_outgoing_balance_v2_cents(start_date:, end_date:)
-      sum += fronted_incoming_balance_v2_cents(start_date:, end_date:) if can_front_balance?
+      sum += fronted_incoming_balance_v2_cents(start_date:, end_date:)
       return sum
     end
 
@@ -754,7 +740,7 @@ class Event < ApplicationRecord
 
   memo_wise def balance_available_v2_cents(legacy: false)
     if legacy
-      fee_balance = can_front_balance? ? fronted_fee_balance_v2_cents : fee_balance_v2_cents
+      fee_balance = fronted_fee_balance_v2_cents
       if fee_balance.positive?
         balance_v2_cents(legacy:) - fee_balance
       else # `fee_balance` is negative, indicating a fee credit

@@ -1433,7 +1433,6 @@ class EventsController < ApplicationController
       :end,
       :address,
       :demo_mode,
-      :can_front_balance,
       :emburse_department_id,
       :country,
       :postal_code,
