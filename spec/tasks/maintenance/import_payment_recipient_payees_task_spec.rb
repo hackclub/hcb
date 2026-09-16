@@ -15,6 +15,21 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
                                routing_number: "021000021", account_number:, bank_name: "Chase", **attrs)
   end
 
+  def wire_recipient(email:, **attrs)
+    create(:payment_recipient, event:, email:, payment_model: "Wire", name: "Orpheus",
+                               account_number: "GB29NWBK60161331926819", bic_code: "BARCGB22",
+                               address_line1: "1 Hack Lane", address_city: "London", address_state: "London",
+                               address_postal_code: "SW1A 1AA", recipient_country: "GB", **attrs)
+  end
+
+  # Validating a wire asks Column which country the bank is in, so the import
+  # can't run without an answer.
+  def stub_column_institution(country_code:)
+    stub_request(:get, /api\.column\.com/).to_return(
+      status: 200, body: { country_code: }.to_json, headers: { "Content-Type" => "application/json" }
+    )
+  end
+
   def transfer_to(recipient, aasm_state:)
     create(:ach_transfer, :without_payment_details, event:, payment_recipient: recipient,
                                                     recipient_email: recipient.email, aasm_state:)
@@ -109,5 +124,70 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
     details = event.payees.sole.legal_entity.default_payout_method.details
     expect(details).to be_a(LegalEntity::PayoutMethod::Check)
     expect(details.address_postal_code).to eq("90069")
+  end
+
+  it "copies a wire recipient's details across as a wire payout method" do
+    stub_column_institution(country_code: "GB")
+    wire_recipient(email: "orpheus@hackclub.com")
+
+    run_task
+
+    details = event.payees.sole.legal_entity.default_payout_method.details
+    expect(details).to be_a(LegalEntity::PayoutMethod::Wire)
+    expect(details.recipient_country).to eq("GB")
+    expect(details.bic_code).to eq("BARCGB22")
+  end
+
+  it "leaves behind a wire whose saved details no longer make a valid method" do
+    stub_column_institution(country_code: "GB")
+    wire_recipient(email: "orpheus@hackclub.com", address_line1: nil)
+
+    expect { run_task }.to change(Payee, :count).by(1)
+    expect(event.payees.sole.legal_entity.payout_methods).to be_empty
+  end
+
+  it "collapses recipients that repeat the same details into one payout method" do
+    # The old form saves a new recipient every time someone types details into
+    # it, and the payout system writes one behind every modern transfer too, so
+    # the same account recurs. Two identical methods are indistinguishable in
+    # the payee's picker.
+    3.times { ach_recipient(email: "orpheus@hackclub.com", account_number: "123456789") }
+
+    run_task
+
+    expect(event.payees.sole.legal_entity.payout_methods.count).to eq(1)
+  end
+
+  it "names the payee from the most recent recipient that has a name" do
+    # A reimbursement or payroll payout writes a recipient with no name, and it
+    # must not bury the name someone actually typed in earlier.
+    ach_recipient(email: "orpheus@hackclub.com", name: "Orpheus the Dinosaur")
+    travel_to(1.day.from_now) { ach_recipient(email: "orpheus@hackclub.com", name: nil, account_number: "222222222") }
+
+    run_task
+
+    payee = event.payees.sole
+    expect(payee.display_name).to eq("Orpheus the Dinosaur")
+    expect(payee.legal_entity.name).to eq("Orpheus the Dinosaur")
+  end
+
+  it "falls back to the email when no recipient ever had a name" do
+    # The legal entity's name is what gets sent to TaxBandits, so it can't be nil.
+    ach_recipient(email: "orpheus@hackclub.com", name: nil)
+
+    run_task
+
+    payee = event.payees.sole
+    expect(payee.display_name).to eq("orpheus@hackclub.com")
+    expect(payee.legal_entity.name).to eq("orpheus@hackclub.com")
+  end
+
+  it "logs what it left behind, since the payee gives no sign a method went missing" do
+    recipient = ach_recipient(email: "orpheus@hackclub.com")
+    recipient.update!(routing_number: "12345")
+
+    expect(Rails.logger).to receive(:warn).with(/PaymentRecipient #{recipient.id} \(AchTransfer\) left behind/)
+
+    run_task
   end
 end
