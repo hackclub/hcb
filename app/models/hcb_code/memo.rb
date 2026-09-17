@@ -33,8 +33,13 @@ class HcbCode
         ct.try(:smart_memo) || pt.try(:smart_memo) || ""
       end
 
+      # The ledger item is the source of truth for custom memos;
+      # `Ledger::Item#update_custom_memo!` keeps the CTs and CPTs in sync behind
+      # it. They're still read as a fallback for HCB codes that don't have a
+      # ledger item yet, and for the few places that rename a CT directly (e.g.
+      # `StripeCardService::Nightly`).
       def custom_memo
-        ct.try(:custom_memo) || pt.try(:custom_memo)
+        ledger_item&.custom_memo || ct.try(:custom_memo) || pt.try(:custom_memo)
       end
 
       def card_grant_memo
