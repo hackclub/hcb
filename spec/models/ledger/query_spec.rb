@@ -553,6 +553,89 @@ RSpec.describe Ledger::Query, type: :model do
     end
   end
 
+  describe "virtual fields" do
+    # Wiring up a tag, a category or a merchant touches the ledger item, and a
+    # touched item refreshes itself from its (nonexistent) canonical
+    # transactions — undoing what create_mapped_item pinned. Pin it back, so the
+    # item still looks like a real transaction to the query.
+    def repin(item, **attrs)
+      item.update_columns(ct_count: 1, **attrs)
+      item
+    end
+
+    context "tag" do
+      let(:tag) { Tag.create!(event: test_event, label: "Travel", emoji: "✈️", color: "red") }
+
+      before do
+        hcb_code = create(:hcb_code, ledger_item: item_b)
+        HcbCodeTag.create!(hcb_code:, tag:)
+        repin(item_b)
+      end
+
+      it "matches only items tagged with it" do
+        expect(execute_query({ tag: { "$eq" => tag.id } }).pluck(:id)).to match_array(ids_of(item_b))
+      end
+
+      it "matches nothing for a tag no item carries" do
+        other_tag = Tag.create!(event: test_event, label: "Food", emoji: "🍕", color: "red")
+
+        expect(execute_query({ tag: { "$eq" => other_tag.id } })).to be_empty
+      end
+    end
+
+    context "category" do
+      let(:category) { TransactionCategory.find_or_create_by!(slug: "benefits") }
+
+      it "matches items whose canonical transaction carries the category" do
+        ct = create(:canonical_transaction, ledger_item: item_c)
+        TransactionCategoryMapping.create!(category:, categorizable: ct)
+        repin(item_c)
+
+        expect(execute_query({ category: { "$eq" => "benefits" } }).pluck(:id)).to match_array(ids_of(item_c))
+      end
+
+      it "matches items whose pending transaction carries the category" do
+        cpt = create(:canonical_pending_transaction, ledger_item: item_d)
+        TransactionCategoryMapping.create!(category:, categorizable: cpt)
+        repin(item_d)
+
+        expect(execute_query({ category: { "$eq" => "benefits" } }).pluck(:id)).to match_array(ids_of(item_d))
+      end
+
+      it "matches nothing for a slug that isn't a category" do
+        expect(execute_query({ category: { "$eq" => "not-a-category" } })).to be_empty
+      end
+    end
+
+    context "merchant" do
+      it "matches only card charges at that merchant" do
+        card_charge = CardCharge.create!(merchant_network_id: "MERCHANT-1")
+        other_charge = CardCharge.create!(merchant_network_id: "MERCHANT-2")
+        repin(item_e, linked_object_type: "CardCharge", linked_object_id: card_charge.id)
+        repin(item_f, linked_object_type: "CardCharge", linked_object_id: other_charge.id)
+
+        expect(execute_query({ merchant: { "$eq" => "MERCHANT-1" } }).pluck(:id)).to match_array(ids_of(item_e))
+      end
+    end
+
+    it "narrows, rather than replaces, the rest of the query" do
+      tag = Tag.create!(event: test_event, label: "Travel", emoji: "✈️", color: "red")
+      { item_b => Date.new(2024, 1, 2), item_g => Date.new(2024, 3, 15) }.each do |item, datetime|
+        HcbCodeTag.create!(hcb_code: create(:hcb_code, ledger_item: item), tag:)
+        repin(item, datetime:)
+      end
+
+      result = execute_query({ "$and" => [{ tag: { "$eq" => tag.id } }, { datetime: { "$gte" => Date.new(2024, 3, 1) } }] })
+
+      expect(result.pluck(:id)).to match_array(ids_of(item_g))
+    end
+
+    it "rejects operators other than $eq" do
+      expect { execute_query({ tag: { "$gt" => 1 } }) }
+        .to raise_error(Ledger::Query::Error, /Unsupported comparison operator for tag/)
+    end
+  end
+
   describe "empty items" do
     it "excludes items with no CTs and no CPTs" do
       empty_item = create_mapped_item(amount_cents: 100, memo: "empty item", datetime: Date.new(2024, 1, 4))

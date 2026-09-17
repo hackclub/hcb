@@ -1314,23 +1314,8 @@ class EventsController < ApplicationController
     @per = safe_per(100)
 
     @items = ledger_query.execute(ledgers: @ledgers)
-
-    # TODO: move these to Ledger::Query
-    if @tag.present?
-      @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id))
-    end
-
-    if @category.present?
-      categorized_cts = @category.canonical_transactions.where(ledger_item: @items).select(:ledger_item_id)
-      categorized_cpts = @category.canonical_pending_transactions.where(ledger_item: @items).select(:ledger_item_id)
-      @items = @items.where(id: categorized_cts).or(@items.where(id: categorized_cpts))
-    end
-
-    if @merchant.present?
-      @items = @items.where(linked_object_type: "CardCharge", linked_object_id: CardCharge.where(merchant_network_id: @merchant).select(:id))
-    end
-
-    @items = @items.page(params[:page]).per(@per).preload(:tags, hcb_code: { event: :tags })
+                         .page(params[:page]).per(@per)
+                         .preload(:tags, hcb_code: { event: :tags })
   rescue Pundit::NotAuthorizedError
     return head :not_found
   end
