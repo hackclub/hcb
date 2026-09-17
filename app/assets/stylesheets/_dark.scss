@@ -388,6 +388,11 @@ html[data-dark='true'] {
   .pop.muted {
     background-color: rgba(map-get($palette, muted), 0.2);
   }
+  // Keeps the pending badge an outline here too; the blanket `.badge` rule
+  // above outranks its own declaration in components/_badges.scss.
+  .badge.badge--pending {
+    background-color: transparent;
+  }
   .pop {
     color: lighten(map-get($palette, muted), 20%);
   }

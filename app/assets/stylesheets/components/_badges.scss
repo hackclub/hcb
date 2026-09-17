@@ -77,8 +77,13 @@
   // because "pending" is rendered from several unrelated places: Ledger::Item
   // statuses, the legacy transactions table, the announcement blocks, and the
   // pending fee rows.
+  //
+  // The fill is transparent so the dashes read as an outline: the call sites
+  // asked for that with `bg-transparent`, but badge_for appends `bg-muted` to
+  // anything labelled "Pending" and that won on specificity, so the badge had
+  // been rendering filled. Declaring it here beats `bg-muted` on source order.
   &.badge--pending {
-    background-color: rgba(map-get($palette, muted), 0.125);
+    background-color: transparent;
     color: map-get($palette, slate);
     border: 1px dashed;
     border-color: map-get($palette, muted);
