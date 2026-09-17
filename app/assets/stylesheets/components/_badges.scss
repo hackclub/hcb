@@ -78,10 +78,10 @@
   // statuses, the legacy transactions table, the announcement blocks, and the
   // pending fee rows.
   //
-  // The fill is transparent so the dashes read as an outline: the call sites
-  // asked for that with `bg-transparent`, but badge_for appends `bg-muted` to
-  // anything labelled "Pending" and that won on specificity, so the badge had
-  // been rendering filled. Declaring it here beats `bg-muted` on source order.
+  // The fill is transparent so the dashes read as an outline. The call sites
+  // used to ask for that with `bg-transparent`, but badge_for appended
+  // `bg-muted` to anything labelled "Pending" and that won on specificity, so
+  // the badge had always rendered filled.
   &.badge--pending {
     background-color: transparent;
     color: map-get($palette, slate);

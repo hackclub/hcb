@@ -27,7 +27,7 @@
   </td>
   <td class="transaction__memo">
     <% unless et.completed? %>
-      <%= badge_for "Pending", class: "ml0 mr1" %>
+      <%= badge_for "Pending", class: "badge--pending" %>
     <% end %>
     <span>
       <%= et.memo.humanize %>
