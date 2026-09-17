@@ -113,7 +113,7 @@ class Ledger
     def status_css
       case status.to_sym
       when :pending
-        "bg-transparent border border-dashed border-muted m0 mr1"
+        "badge--pending"
       when :settled
         nil
       when :reversed
