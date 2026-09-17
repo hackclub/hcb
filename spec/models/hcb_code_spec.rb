@@ -3,6 +3,43 @@
 require "rails_helper"
 
 RSpec.describe HcbCode, type: :model do
+  describe "#write_event_and_subledger_id" do
+    it "removes tags for events no longer mapped to the transaction" do
+      original_event = create(:event)
+      remapped_event = create(:event)
+      hcb_code = create(:hcb_code)
+      cpt = create(:canonical_pending_transaction, hcb_code: hcb_code.hcb_code)
+      mapping = create(:canonical_pending_event_mapping, canonical_pending_transaction: cpt, event: original_event)
+
+      old_tag = Tag.create!(event: original_event, label: "Old tag", emoji: "🏷️", color: "blue")
+      new_tag = Tag.create!(event: remapped_event, label: "New tag", emoji: "✅", color: "green")
+      hcb_code.tags << [old_tag, new_tag]
+
+      mapping.update!(event: remapped_event)
+
+      expect(hcb_code.reload.tags).to contain_exactly(new_tag)
+    end
+
+    it "keeps tags for all currently mapped events" do
+      event_a = create(:event)
+      event_b = create(:event)
+      hcb_code = create(:hcb_code)
+
+      cpt_a = create(:canonical_pending_transaction, hcb_code: hcb_code.hcb_code)
+      cpt_b = create(:canonical_pending_transaction, hcb_code: hcb_code.hcb_code)
+      create(:canonical_pending_event_mapping, canonical_pending_transaction: cpt_a, event: event_a)
+      create(:canonical_pending_event_mapping, canonical_pending_transaction: cpt_b, event: event_b)
+
+      tag_a = Tag.create!(event: event_a, label: "Tag A", emoji: "🅰️", color: "cyan")
+      tag_b = Tag.create!(event: event_b, label: "Tag B", emoji: "🅱️", color: "purple")
+      hcb_code.tags << [tag_a, tag_b]
+
+      hcb_code.write_event_and_subledger_id(event_a)
+
+      expect(hcb_code.reload.tags).to contain_exactly(tag_a, tag_b)
+    end
+  end
+
   describe "disbursement integration" do
     describe "#outgoing_disbursement?" do
       it "returns true for HCB-500-* codes" do
