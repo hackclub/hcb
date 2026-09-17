@@ -176,39 +176,4 @@ class HcbCodesController < ApplicationController
     send_file Rails.root.join("app", "assets", "images", file_name), type: "image/png", disposition: "inline"
   end
 
-  def toggle_tag
-    hcb_code = HcbCode.find(params[:id])
-    tag = Tag.find(params[:tag_id])
-    @event = tag.event
-
-    authorize hcb_code
-    authorize tag
-
-    raise Pundit::NotAuthorizedError unless hcb_code.events.include?(tag.event)
-
-    # `toggle_tag?` guarantees a ledger item; tags live there now.
-    ledger_item = hcb_code.ledger_item
-    removed = false
-
-    if ledger_item.tags.exists?(tag.id)
-      removed = true
-      ledger_item.tags.destroy(tag)
-    else
-      suppress(ActiveRecord::RecordNotUnique) do
-        ledger_item.tags << tag
-      end
-    end
-
-    respond_to do |format|
-      format.turbo_stream do
-        if removed
-          render partial: "tags/destroy", locals: { hcb_code:, tag: }
-        else
-          render partial: "tags/create", locals: { hcb_code:, tag: }
-        end
-      end
-      format.any { redirect_back fallback_location: @event }
-    end
-  end
-
 end

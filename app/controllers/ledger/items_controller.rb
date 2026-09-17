@@ -85,6 +85,36 @@ class Ledger
       render partial: "ledger/items/memo/stream", locals: { item: @item }, formats: :turbo_stream
     end
 
+    def toggle_tag
+      tag = Tag.find(params[:tag_id])
+      @event = tag.event
+
+      authorize @item, :toggle_tag?
+      authorize tag
+
+      # Scope the tag to this item's event so a member of two organizations
+      # can't attach one org's tag to the other's transaction.
+      raise Pundit::NotAuthorizedError unless @item.primary_ledger&.event == @event
+
+      removed = false
+      if @item.tags.exists?(tag.id)
+        removed = true
+        @item.tags.destroy(tag)
+      else
+        suppress(ActiveRecord::RecordNotUnique) do
+          @item.tags << tag
+        end
+      end
+
+      respond_to do |format|
+        format.turbo_stream do
+          hcb_code = @item.hcb_code
+          render partial: (removed ? "tags/destroy" : "tags/create"), locals: { hcb_code:, tag: }
+        end
+        format.any { redirect_back fallback_location: @event }
+      end
+    end
+
     def invoice_as_personal_transaction
       authorize @item
 
