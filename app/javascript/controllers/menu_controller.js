@@ -30,6 +30,11 @@ export default class extends Controller {
 
   disconnect() {
     this.cleanup && this.cleanup()
+    // remove cloned popup so it doesn't outlive turbo frame updates.
+    this.content && this.content.remove()
+    this.content = undefined
+    this.cleanup = undefined
+    this.isOpen = false
     document.removeEventListener('hcb:close-menus', this._closeMenusHandler)
   }
 
@@ -95,10 +100,17 @@ export default class extends Controller {
         $(e.target).closest('.menu__content').length
       )
         return
+    }
 
-      this.content && this.content.remove()
-    } else {
-      this.content && this.content.remove()
+    if (this.content) {
+      const content = this.content
+      if (e?.type == 'click') {
+        // let turbo resolve the target frame before removing the link
+        content.style.display = 'none'
+        setTimeout(() => content.remove(), 0)
+      } else {
+        content.remove()
+      }
     }
 
     this.toggleTarget.setAttribute('aria-expanded', false)

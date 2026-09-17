@@ -94,6 +94,7 @@ class LegalEntity
     #   recipient_email: String
     #   user:            User    — the user initiating the transfer
     #   memo:            String  — required by Check and Wire; ignored by ACH and Wise
+    #   purpose:         Symbol  - :payment or :reimbursement; required by Wire
     #
     # Optional (MAY be passed):
     #   send_email_notification:   Boolean — default false

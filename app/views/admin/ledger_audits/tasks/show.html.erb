@@ -83,6 +83,14 @@
             </span>
           </p>
           <p>
+            <strong>Organization tags</strong>
+            <span class="flex items-center gap-2 flex-wrap w-[250px]">
+              <% event.event_tags.each do |tag| %>
+                <span class="badge bg-info m-0" style="width: fit-content;"><%= tag.name %></span>
+              <% end %>
+            </span>
+          </p>
+          <p>
             <strong>Current plan</strong>
             <span><%= @event.plan.label.titleize %></span>
           </p>

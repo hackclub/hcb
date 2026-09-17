@@ -1,23 +1,12 @@
 # frozen_string_literal: true
 
 module DonationsHelper
-  def donation_payment_processor_fee(humanized = true, donation = @donation)
+  def donation_payment_processor_fee(donation = @donation, humanized: true)
     fee = donation.payout_creation_balance_stripe_fee
 
     return fee unless humanized
 
     render_money fee
-  end
-
-  def donation_payout_type(humanized = true, donation = @donation)
-    return humanized ? "–" : nil unless donation.payout
-
-    donation.payout&.type
-  end
-
-  def donation_paid_at(donation = @donation)
-    timestamp = donation&.payout&.created_at
-    timestamp ? format_datetime(timestamp) : "–"
   end
 
   # this information is visible to admins only because payouts should feel instant to the user
@@ -26,7 +15,7 @@ module DonationsHelper
     title = nil
     if donation.deposited?
       title = "Funds available since "
-      date = @hcb_code.canonical_transactions.pluck(:date).max
+      date = donation.canonical_transactions.pluck(:date).max
     elsif donation.payout.nil?
       title = "Transfer scheduled for "
       date = donation.payout_creation_queued_for
@@ -59,13 +48,6 @@ module DonationsHelper
         "visa"       => "card-visa",
         "discover"   => "card-discover"
       }[brand] || "card-other"
-      tooltip = {
-        "amex"       => "American Express",
-        "mastercard" => "Mastercard",
-        "visa"       => "Visa",
-        "discover"   => "Discover"
-      }[brand] || "Card"
-      tooltip += " ending in #{last4}" if last4 && organizer_signed_in?
       description_text = organizer_signed_in? ? "••••#{last4}" : "••••"
       icon = inline_icon icon_name, width: 32, height: 20, class: "slate"
     else
@@ -131,9 +113,5 @@ module DonationsHelper
 
     tag = inline_icon icon_name, size: 24
     content_tag(:span, class: "pr1 #{background} line-height-0 tooltipped tooltipped--w", 'aria-label': text) { tag }
-  end
-
-  def donations_embed_html_code(event = @event)
-    html_escape "<iframe src='#{start_donation_donations_url event}' style='border:none;' name='donateFrame' scrolling='yes' frameborder='0' marginheight='0px' marginwidth='0px' height='512px' width='640px' allowfullscreen></iframe>".gsub("'", '"')
   end
 end

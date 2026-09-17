@@ -12,7 +12,7 @@
     <%= form_with(url: event_invite_links_path(event_id: event.slug), data: { turbo_frame: "invite_links_section" }) do |form| %>
       <div class="field">
         <%= form.label :expires_at, "Expires on" %>
-        <%= form.date_field :expires_on, class: "!max-w-full w-full", value: OrganizerPositionInvite::Link::DEFAULT_EXPIRATION.from_now.strftime("%Y-%m-%d") %>
+        <%= form.date_field :expires_on, class: "!max-w-full w-full", value: OrganizerPositionInvite::Link::DEFAULT_EXPIRATION.from_now.strftime("%Y-%m-%d"), max: OrganizerPositionInvite::Link::MAX_EXPIRATION.from_now.strftime("%Y-%m-%d") %>
       </div>
       <button data-action="click->menu#close" class="btn -mt-1 w-full" onclick="this.closest('form').requestSubmit();">
         Continue

@@ -37,6 +37,10 @@ class GSuiteAccountPolicy < ApplicationPolicy
     admin_or_manager?
   end
 
+  def unmanage?
+    user&.admin? && Flipper.enabled?(:unmanage_gsuite_account, user)
+  end
+
   private
 
   def admin_or_manager?

@@ -33,6 +33,34 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         expect(response.body).to include("turbo-stream")
       end
     end
+
+    describe "POST #invoice_as_personal_transaction" do
+      before { create(:hcb_code, ledger_item: item) }
+
+      it "reports why the invoice couldn't be created rather than claiming one exists" do
+        post :invoice_as_personal_transaction, params: { item_id: item.hashid }
+
+        expect(flash[:error]).to include("Invoices can only be generated for card charges.")
+        expect(response).to redirect_to(hcb_code_path(item.hcb_code))
+        expect(PersonalTransaction.where(ledger_item: item)).not_to exist
+      end
+
+      context "when a repayment invoice already exists" do
+        it "redirects to the existing invoice" do
+          allow_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)
+          # Validations are skipped so this stands in for any already-invoiced
+          # item; the branch under test only cares that a row is persisted.
+          existing = PersonalTransaction.new(ledger_item: item, reporter: member_user, invoice: create(:invoice))
+          existing.save!(validate: false)
+
+          post :invoice_as_personal_transaction, params: { item_id: item.hashid }
+
+          expect(flash[:error]).to eq("A repayment invoice already exists for this transaction.")
+          expect(response).to redirect_to(invoice_path(existing.invoice))
+          expect(PersonalTransaction.where(ledger_item: item).count).to eq(1)
+        end
+      end
+    end
   end
 
   context "as a reader (not a member)" do

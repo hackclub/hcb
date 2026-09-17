@@ -7,14 +7,27 @@ class Ledger
     def show
       @item = Ledger::Item.find_by_hashid!(params[:id])
 
-      # Non-engineers see the user-facing HCB code page rather than the raw
+      # Non-auditors see the user-facing HCB code page rather than the raw
       # ledger item. hcb_codes#show performs its own authorization.
-      unless FlipperGroups.hcb_engineer?(current_user) || Rails.env.development?
+      unless auditor_signed_in?
         skip_authorization
         return redirect_to hcb_code_path(@item.hcb_code)
       end
 
+      if params[:show_details] == "true" && @item.linked_object_type == "AchTransfer"
+        # ahoy.track "ACH details shown", hcb_code_id: @hcb_code.id
+        @show_ach_details = true
+      end
+
       authorize @item
+
+      if params[:frame]
+        @frame = true
+        render :show, layout: false
+      else
+        @frame = false
+        render :show
+      end
     rescue ActiveRecord::RecordNotFound
       # Maintain backward compatibility for old v1 transaction engine URLs. They
       # used to also live at `/transactions/*`
@@ -82,9 +95,9 @@ class Ledger
         return redirect_to personal_tx.invoice
       end
 
-      if @item.personal_transaction.present?
+      if (existing = @item.reload_personal_transaction)
         flash[:error] = "A repayment invoice already exists for this transaction."
-        redirect_to @item.personal_transaction.invoice
+        redirect_to existing.invoice
       else
         flash[:error] = personal_tx.errors.full_messages.to_sentence
         redirect_to @item.hcb_code

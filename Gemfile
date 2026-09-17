@@ -34,7 +34,7 @@ gem "local_time" # client-side timestamp converter for cache-safe rendering
 gem "countries"
 gem "country_select", "~> 8.0"
 
-gem "faraday" # web requests
+gem "faraday", "~> 1.10.6" # web requests
 
 gem "stripe", "11.7.0"
 gem "plaid", "~> 44.0"

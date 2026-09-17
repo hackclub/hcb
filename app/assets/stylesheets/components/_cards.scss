@@ -104,7 +104,8 @@
   }
 }
 
-.hcb-code {
+.hcb-code,
+.ledger-item {
   @extend .card;
   @apply pb-0 mb-1 mt-3 shadow-none;
   border: 1px solid rgba(200, 200, 200, 0.3);
@@ -112,7 +113,8 @@
   padding-top: 0px;
 }
 
-.hcb-code--info {
+.hcb-code--info,
+.ledger-item--info {
   @extend .details;
   padding: 0.75rem 0;
   gap: 5px;
@@ -120,7 +122,8 @@
   flex-direction: column;
 }
 
-.hcb-code--details {
+.hcb-code--details,
+.ledger-item--details {
   @extend .details-horiz;
   border-top: 1px solid;
   border-bottom: 1px solid;
@@ -150,11 +153,13 @@
   }
 }
 
-.hcb-code--heading .badge {
+.hcb-code--heading .badge,
+.ledger-item--heading .badge {
   margin: 0px;
 }
 
-.hcb-code--footer {
+.hcb-code--footer,
+.ledger-item--footer {
   padding: 0.75rem 1rem;
   font-style: italic;
   text-align: center;
@@ -286,7 +291,8 @@ a.card {
 #card-pin {
   width: 64px;
 }
-.hcb-code--details-admin-tool p {
+.hcb-code--details-admin-tool p,
+.ledger-item--details-admin-tool p {
   margin: 0;
   padding: 0;
   display: flex;
