@@ -62,7 +62,7 @@
       <% end %>
 
       <div class="field event-select-target">
-        <%= fr_form.label :event %>
+        <%= fr_form.label :event_id %>
         <%= combobox_tag fr_form.field_name(:event_id), event_search_admin_index_path, selected: transaction.fee_relationship&.event, placeholder: "Select one…" %>
       </div>
 

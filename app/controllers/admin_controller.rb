@@ -3,9 +3,7 @@
 class AdminController < Admin::BaseController
   include Admin::PaymentApprovable
   include Admin::TransferApprovable
-
-  # must equal the value of `PAGE_SIZE` in app/javascript/controllers/combobox_controller.js
-  COMBOBOX_PAGE_SIZE = 25
+  include ComboboxSearchable
 
   def nav
     @nav = Admin::Nav.new(page_title: params[:title])
@@ -1696,12 +1694,6 @@ class AdminController < Admin::BaseController
   end
 
   private
-
-  # Slices a combobox search relation for the page the controller asked for.
-  def combobox_page(relation)
-    page = [params[:page].to_i, 1].max
-    relation.limit(COMBOBOX_PAGE_SIZE).offset((page - 1) * COMBOBOX_PAGE_SIZE)
-  end
 
   def cache_event_metric(metric_name, &block)
     @event = Event.friendly.find(params[:id])

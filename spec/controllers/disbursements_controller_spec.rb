@@ -182,7 +182,7 @@ RSpec.describe DisbursementsController do
     end
 
     it "paginates results without overlap across pages" do
-      stub_const("DisbursementsController::PAGE_SIZE", 2)
+      stub_const("ComboboxSearchable::PAGE_SIZE", 2)
       admin = create(:user, :make_admin)
       create_session(admin, verified: true)
 
@@ -199,7 +199,7 @@ RSpec.describe DisbursementsController do
     end
 
     it "clamps non-positive page numbers to the first page" do
-      stub_const("DisbursementsController::PAGE_SIZE", 2)
+      stub_const("ComboboxSearchable::PAGE_SIZE", 2)
       admin = create(:user, :make_admin)
       create_session(admin, verified: true)
 

@@ -7,6 +7,21 @@ require "rails_helper"
 RSpec.describe "combobox rendering" do
   include SessionSupport
 
+  # Freeing the derived id for the visible input is what lets `form.label` point
+  # at something focusable, which the gem's random ids never did. It only holds
+  # while the label targets the attribute the picker submits (`event_id`, not
+  # `event`) and no `id:` override displaces the derived id — both of which have
+  # silently regressed before.
+  shared_examples "a labelled picker" do
+    it "labels the picker with a `for` that resolves to it" do
+      doc = Nokogiri::HTML(response.body)
+      combobox = doc.at_css("input[role=combobox]")
+
+      expect(combobox).to be_present
+      expect(doc.at_css("label[for='#{combobox['id']}']")).to be_present
+    end
+  end
+
   describe AdminController, type: :controller do
     render_views
 
@@ -124,11 +139,9 @@ RSpec.describe "combobox rendering" do
   describe SponsorsController, type: :controller do
     render_views
 
-    # The picker and the fallback hidden field both submit `sponsor[event_id]`.
-    # An auditor who is also a member of the org reaches this form and sees the
-    # picker, so the fallback must not render alongside it — the later field
-    # wins in param parsing and would silently discard the picked org.
-    it "renders the picker without a competing hidden field for an auditor who is a member" do
+    # An auditor who is also a member of the org is the case that reaches this
+    # form with the picker rendered.
+    before do
       auditor = create(:user, :make_auditor)
       # Unrelated to the combobox; creating a sponsor otherwise calls Stripe.
       allow_any_instance_of(Sponsor).to receive(:create_stripe_customer)
@@ -137,17 +150,57 @@ RSpec.describe "combobox rendering" do
       create_session(auditor, verified: true)
 
       get :edit, params: { id: sponsor.id }
+    end
 
+    it_behaves_like "a labelled picker"
+
+    # The picker and the fallback hidden field both submit `sponsor[event_id]`,
+    # so the fallback must not render alongside it — the later field wins in
+    # param parsing and would silently discard the picked org.
+    it "renders the picker without a competing hidden field" do
       expect(response).to have_http_status(:ok)
-      fields = Nokogiri::HTML(response.body).css("[name='sponsor[event_id]']")
+
+      doc = Nokogiri::HTML(response.body)
+      fields = doc.css("[name='sponsor[event_id]']")
       expect(fields.size).to eq(1)
       expect(fields.first["type"]).to eq("hidden")
       expect(fields.first["id"]).to be_nil
 
-      doc = Nokogiri::HTML(response.body)
       all_ids = doc.css("[id]").map { |el| el["id"] }.tally
       combobox_ids = doc.css("input[role=combobox]").map { |el| el["id"] }
       expect(combobox_ids.map { |id| all_ids[id] }).to all(eq(1))
     end
+  end
+
+  describe EmburseTransactionsController, type: :controller do
+    render_views
+
+    before do
+      admin = create(:user, :make_admin)
+      create_session(admin, verified: true)
+
+      get :edit, params: { id: create(:emburse_transaction).id }
+    end
+
+    it_behaves_like "a labelled picker"
+  end
+
+  describe TransactionsController, type: :controller do
+    render_views
+
+    # The picker sits inside an `admin_tool` block while `edit?` requires org
+    # membership, so rendering it takes an admin who is also a member.
+    before do
+      admin = create(:user, :make_admin)
+      event = create(:event)
+      create(:organizer_position, user: admin, event:)
+      # The view branches on `name`, which the legacy factory leaves nil.
+      transaction = create(:transaction, name: "PURCHASE", fee_relationship: create(:fee_relationship, event:))
+      create_session(admin, verified: true)
+
+      get :edit, params: { id: transaction.id }
+    end
+
+    it_behaves_like "a labelled picker"
   end
 end

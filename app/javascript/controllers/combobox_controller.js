@@ -9,12 +9,16 @@
   typing, and the chosen option's `value` is mirrored into a hidden form field
   so the surrounding form submits it. Only options returned by the endpoint can
   be selected — free text is reverted on blur.
+
+  The dropdown renders inline at every width. This deliberately drops the
+  full-screen `<dialog>` picker the `hotwire_combobox` gem switched to below
+  640px: the inline list is usable on a phone and one code path is worth more
+  here than the extra mode.
 */
 
 import { Controller } from '@hotwired/stimulus'
 
-// must equal the value of `PAGE_SIZE` in app/controllers/disbursements_controller.rb
-// and app/controllers/admin_controller.rb
+// must equal the value of `PAGE_SIZE` in app/controllers/concerns/combobox_searchable.rb
 const PAGE_SIZE = 25
 
 export default class extends Controller {
