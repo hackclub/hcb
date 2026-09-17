@@ -10,6 +10,37 @@
 
   <%= render partial: "ledgers/filters/filter_menu" unless filter_applied || @ledger_filters_disabled %>
 
+  <% if !@subledger && @ledger&.items&.exists? %>
+    <%# The export is generated from the same query that built this page, so it
+        carries whatever filters are applied. Say so, and put the number of
+        transactions on the links themselves: the old ledger's export quietly
+        ignored the filters and handed back the whole organization. %>
+    <% export_count = number_with_delimiter(@items.total_count) %>
+    <% export_noun = "transaction".pluralize(@items.total_count) %>
+    <% export_scope = ledger_filtered? ? "#{export_count} filtered #{export_noun}" : "All #{export_count} #{export_noun}" %>
+    <div data-controller="menu" data-menu-placement-value="bottom-end" class="-mb-1">
+      <button
+        type="button"
+        class="tooltipped tooltipped--s pop menu__toggle menu__toggle--arrowless overflow-visible"
+        aria-label="<%= ledger_filtered? ? "Export filtered transactions" : "Export transactions" %>"
+        data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+        data-menu-target="toggle">
+        <%= inline_icon "download", size: 28 %>
+      </button>
+      <div class="menu__content menu__content--2 menu__content--compact h5" data-menu-target="content">
+        <p class="muted h6 m-0 px-2 py-1">
+          <%= ledger_filtered? ? "Exports cover only the transactions matching your filters." : "Exports cover every transaction in this ledger." %>
+        </p>
+        <div class="menu__divider my-0"></div>
+        <%= link_to "#{export_scope} (CSV)", ledger_exports_path(event: @event, format: :csv, **ledger_filter_params), target: :_blank %>
+        <%= link_to "#{export_scope} (JSON)", ledger_exports_path(event: @event, format: :json, **ledger_filter_params), target: :_blank %>
+        <%= link_to "#{export_scope} (Ledger)", ledger_exports_path(event: @event, format: :ledger, **ledger_filter_params), target: :_blank %>
+        <div class="menu__divider my-0"></div>
+        <%= link_to "Monthly statements", event_statements_path(@event) %>
+      </div>
+    </div>
+  <% end %>
+
   <% admin_tool "overflow-hidden" do %>
     <div data-controller="menu" data-menu-placement-value="bottom-end" data-menu-append-to-value="turbo-frame#<%= dom_id(@event) %>_ledger" class="-mb-1">
       <button
