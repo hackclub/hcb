@@ -636,6 +636,17 @@ RSpec.describe Ledger::Query, type: :model do
     end
   end
 
+  describe "#export" do
+    it "hands the query itself to a Ledger::Query::Export" do
+      query = described_class.new({ amount_cents: { "$gt" => 100 } })
+
+      export = query.export(as: :csv, ledgers: [test_ledger])
+
+      expect(export).to be_a(Ledger::Query::Export)
+      expect(export.run.query).to eq({ "amount_cents" => { "$gt" => 100 } })
+    end
+  end
+
   describe "empty items" do
     it "excludes items with no CTs and no CPTs" do
       empty_item = create_mapped_item(amount_cents: 100, memo: "empty item", datetime: Date.new(2024, 1, 4))
