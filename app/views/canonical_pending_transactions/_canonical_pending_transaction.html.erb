@@ -63,7 +63,7 @@
               </section>
             <% end %>
           <% else %>
-            <%= badge_for "Pending", class: "badge--pending" %>
+            <%= badge_for "Pending", class: "bg-transparent border border-dashed border-muted m0 mr1" %>
           <% end %>
           <%= turbo_frame_tag "#{pt.local_hcb_code.hashid}:memo_frame", class: "memo-frame flex", style: "width:100%; overflow:hidden; text-overflow:ellipsis; flex-grow: 1" do %>
             <span style="flex-grow: 1;">

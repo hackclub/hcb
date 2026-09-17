@@ -27,7 +27,7 @@
           <% if hcb_code.pt&.declined? %>
             <%= badge_for "Declined", class: "bg-error m0 mr1" %>
           <% else %>
-            <%= badge_for "Pending", class: "badge--pending" %>
+            <%= badge_for "Pending", class: "bg-transparent border border-dashed border-muted m0 mr1" %>
           <% end %>
         <% end %>
       </p>
