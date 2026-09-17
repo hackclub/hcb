@@ -97,39 +97,46 @@ RSpec.describe WiseTransfer do
   describe ".fit_quote_to_maximum" do
     let(:maximum) { Money.from_cents(1_000, "USD") }
 
-    def quote_for(amount, maximum_target_cents: 900)
-      with_fees = amount.cents <= maximum_target_cents ? maximum : maximum + Money.from_cents(1, "USD")
-      {
-        initial_local_amount: amount,
-        without_fees_usd_amount: with_fees - Money.from_cents(100, "USD"),
-        with_fees_usd_amount: with_fees,
-        fees_usd_amount: Money.from_cents(100, "USD")
-      }
+    def source_amount_quote(rate: 0.8)
+      items = [
+        { "type" => "PAYIN", "value" => { "amount" => 0.50 } },
+        { "type" => "TRANSFERWISE", "value" => { "amount" => 0.50 } }
+      ]
+
+      instance_double(Faraday::Response, body: {
+                        "rate"           => rate,
+                        "paymentOptions" => [{ "price" => { "items" => items } }]
+                      })
     end
 
-    it "returns the greatest target-currency minor unit that fits exactly at the cap" do
-      allow(described_class).to receive(:convert_usd_to_local).and_return(Money.from_cents(1_000, "GBP"))
-      allow(described_class).to receive(:generate_detailed_quote) { |amount| quote_for(amount) }
+    it "fits the target amount with a single source-amount quote" do
+      connection = instance_double(Faraday::Connection)
+      allow(connection).to receive(:post).and_return(source_amount_quote)
+      allow(described_class).to receive(:quote_connection).and_return(connection)
 
       result = described_class.fit_quote_to_maximum(maximum, "GBP")
 
-      expect(result[:initial_local_amount]).to eq(Money.from_cents(900, "GBP"))
+      expect(result[:initial_local_amount]).to eq(Money.from_cents(756, "GBP"))
       expect(result[:with_fees_usd_amount]).to eq(maximum)
-      expect(described_class).to have_received(:generate_detailed_quote).with(Money.from_cents(901, "GBP"))
+      expect(connection).to have_received(:post).once.with(
+        "/v3/quotes",
+        { sourceCurrency: "USD", targetCurrency: "GBP", sourceAmount: 10 }
+      )
     end
 
-    it "searches in the target currency's smallest units" do
-      allow(described_class).to receive(:convert_usd_to_local).and_return(Money.from_cents(10_000, "KWD"))
-      allow(described_class).to receive(:generate_detailed_quote) { |amount| quote_for(amount, maximum_target_cents: 9_123) }
+    it "rounds down in the target currency's smallest units" do
+      connection = instance_double(Faraday::Connection)
+      allow(connection).to receive(:post).and_return(source_amount_quote(rate: 1))
+      allow(described_class).to receive(:quote_connection).and_return(connection)
 
       result = described_class.fit_quote_to_maximum(maximum, "KWD")
 
-      expect(result[:initial_local_amount].cents).to eq(9_123)
-      expect(result[:initial_local_amount].amount).to eq(BigDecimal("9.123"))
+      expect(result[:initial_local_amount].cents).to eq(9_460)
+      expect(result[:initial_local_amount].amount).to eq(BigDecimal("9.46"))
     end
 
     it "propagates Wise quote failures" do
-      allow(described_class).to receive(:convert_usd_to_local).and_raise(Faraday::ConnectionFailed, "unavailable")
+      allow(described_class).to receive(:generate_source_amount_quote).and_raise(Faraday::ConnectionFailed, "unavailable")
 
       expect { described_class.fit_quote_to_maximum(maximum, "GBP") }
         .to raise_error(Faraday::ConnectionFailed)
