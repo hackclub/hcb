@@ -117,6 +117,18 @@ export default class extends Controller {
 
     if (e.clipboardData && this.dropzoneTarget.contains(e.target))
       e.stopImmediatePropagation()
+
+    if (
+      this.hasUploadMethodTarget &&
+      this.uploadMethodTarget.value.endsWith('_drag_and_drop')
+    ) {
+      this.uploadMethodTarget.value = this.uploadMethodTarget.value.slice(
+        0,
+        -'_drag_and_drop'.length
+      )
+    }
+
+    this.submitting = false
   }
 
   dragenter() {
