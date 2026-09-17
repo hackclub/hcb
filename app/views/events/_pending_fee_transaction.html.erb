@@ -4,7 +4,16 @@
       <%= inline_icon "bank-icon" %>
     </td>
     <td><%= format_date Time.now %></td>
-    <td class="transaction__memo"><span class="badge bg-transparent border border-dashed border-muted m0 mr1 bg-muted">Pending</span>Fiscal sponsorship</td>
+    <td class="transaction__memo">
+      <div>
+        <div class="flex-auto">
+          <div class="flex items-center justify-start">
+            <span class="badge bg-transparent border border-dashed border-muted m0 mr1 bg-muted">Pending</span>
+            <span style="flex-grow: 1;">Fiscal sponsorship</span>
+          </div>
+        </div>
+      </div>
+    </td>
     <td class="nowrap text-right">
       <%= render_transaction_amount(-1 * @event.fronted_fee_balance_v2_cents) %>
     </td>

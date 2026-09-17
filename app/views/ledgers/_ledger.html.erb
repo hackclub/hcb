@@ -55,7 +55,7 @@
           </tr>
         </thead>
         <tbody>
-          <%= render partial: "ledgers/pending_fee_transaction", locals: { ledger: } if show_fee && ledger.present? %>
+          <%= render partial: "ledgers/pending_fee_transaction", locals: { ledger:, show_author: } if show_fee && ledger.present? %>
           <%= render partial: "ledger/item", locals: { show_author: }, collection: items, as: :item %>
         </tbody>
       </table>
