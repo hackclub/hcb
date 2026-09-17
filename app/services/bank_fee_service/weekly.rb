@@ -5,8 +5,10 @@ module BankFeeService
     def run
       bank_fees = []
 
-      Event.pending_fees_v2.find_each(batch_size: 100) do |event|
-        bank_fees << BankFeeService::Create.new(event_id: event.id).run
+      BankFee.pending.find_each(batch_size: 100) do |bank_fee|
+        bank_fees << bank_fee
+        bank_fee.mark_confirmed!
+        bank_fee.event.update_column(:last_fee_processed_at, Time.now)
       end
 
       return if bank_fees.empty?
