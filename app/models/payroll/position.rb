@@ -4,27 +4,28 @@
 #
 # Table name: payroll_positions
 #
-#  id                          :bigint           not null, primary key
-#  aasm_state                  :string           not null
-#  combine_contract_attachment :boolean          default(TRUE), not null
-#  currency                    :string           default("USD"), not null
-#  description                 :text             not null
-#  end_date                    :date             not null
-#  onboarded_at                :datetime
-#  onboarding_at               :datetime
-#  rate_cents                  :integer          default(0), not null
-#  rate_unit                   :string           default("hour"), not null
-#  rejected_at                 :datetime
-#  start_date                  :date             not null
-#  terminated_at               :datetime
-#  title                       :text             not null
-#  created_at                  :datetime         not null
-#  updated_at                  :datetime         not null
-#  payee_id                    :bigint           not null
+#  id            :bigint           not null, primary key
+#  aasm_state    :string           not null
+#  currency      :string           default("USD"), not null
+#  description   :text             not null
+#  end_date      :date             not null
+#  onboarded_at  :datetime
+#  onboarding_at :datetime
+#  rate_cents    :integer          default(0), not null
+#  rate_unit     :string           default("hour"), not null
+#  rejected_at   :datetime
+#  start_date    :date             not null
+#  terminated_at :datetime
+#  title         :text             not null
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  manager_id    :bigint
+#  payee_id      :bigint           not null
 #
 # Indexes
 #
-#  index_payroll_positions_on_payee_id  (payee_id)
+#  index_payroll_positions_on_manager_id  (manager_id)
+#  index_payroll_positions_on_payee_id    (payee_id)
 #
 # Foreign Keys
 #
@@ -40,6 +41,7 @@ module Payroll
     has_paper_trail
 
     belongs_to :payee
+    belongs_to :manager, optional: true, class_name: "User"
 
     delegate :display_name, to: :payee, prefix: true
 
@@ -94,6 +96,7 @@ module Payroll
     validate :end_date_after_start_date
     validate :start_date_within_set_lead_time
     validate :duration_within_set_max
+    validate :manager_is_event_manager
 
     aasm timestamps: true do
       state :under_review, initial: true
@@ -372,6 +375,15 @@ module Payroll
       return if start_date.blank? || end_date.blank?
 
       errors.add(:end_date, "cannot be more than 1 year after the start date") if end_date > start_date + MAX_DURATION
+    end
+
+    def manager_is_event_manager
+      return if manager.nil?
+
+      op = event.organizer_positions.where(user_id: manager.id).last
+      if op.nil? || op.role != "manager"
+        errors.add(:manager, "must be a manager of the event this position is for")
+      end
     end
 
   end

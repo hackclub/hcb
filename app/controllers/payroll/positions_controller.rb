@@ -48,7 +48,8 @@ module Payroll
         start_date: position_params[:starts_on],
         end_date: position_params[:ends_on],
         description: position_params[:purpose],
-        combine_contract_attachment: position_params[:combine_contract_attachment].nil? ? true : position_params[:combine_contract_attachment]
+        combine_contract_attachment: position_params[:combine_contract_attachment].nil? ? true : position_params[:combine_contract_attachment],
+        manager_id: position_params[:manager_id]
       )
 
       if @payee.nil?
@@ -105,7 +106,8 @@ module Payroll
         start_date: position_params[:starts_on],
         end_date: position_params[:ends_on],
         description: position_params[:purpose],
-        combine_contract_attachment: position_params[:combine_contract_attachment]
+        combine_contract_attachment: position_params[:combine_contract_attachment],
+        manager_id: position_params[:manager_id]
       }.compact)
       attachment = Array(position_params[:file]).compact_blank.first
       @position.file.attach(attachment) if attachment
@@ -176,7 +178,7 @@ module Payroll
     end
 
     def position_params
-      params.require(:contractor).permit(:title, :rate, :rate_unit, :starts_on, :ends_on, :purpose, :payee_id, :combine_contract_attachment, file: [])
+      params.require(:contractor).permit(:title, :rate, :rate_unit, :starts_on, :ends_on, :purpose, :payee_id, :combine_contract_attachment, :manager_id, file: [])
     end
 
   end

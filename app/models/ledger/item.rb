@@ -50,6 +50,9 @@ class Ledger
     pg_search_scope :search_memo, against: [:memo], ranked_by: "ledger_items.datetime"
 
     include Hashid::Rails
+    include PublicIdentifiable
+    set_public_id_prefix :lit
+
     has_paper_trail
 
     include Commentable
@@ -159,6 +162,10 @@ class Ledger
       receipt_required? && marked_no_or_lost_receipt_at.nil? && receipt_count == 0
     end
 
+    def accepts_receipts?
+      linked_object_type != "Reimbursement::ExpensePayout"
+    end
+
     # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
     # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
     # refresh! should not update any non-caching columns
@@ -173,8 +180,9 @@ class Ledger
       # Counter caches
       self.ct_count = canonical_transactions.size
       self.cpt_count = canonical_pending_transactions.size
-      self.comment_count = comments.size
-      self.not_admin_only_comment_count = comments.not_admin_only.size
+      shown_comments = hcb_code&.all_comments || Comment.none
+      self.comment_count = shown_comments.size
+      self.not_admin_only_comment_count = shown_comments.not_admin_only.size
       self.receipt_count = receipts.size
 
       # Timestamps
@@ -262,6 +270,10 @@ class Ledger
       type_label = linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) ? "HCB transfer" : humanized_type
 
       "#{type_label} #{amount_preposition} #{ApplicationController.helpers.render_money(amount_cents.abs)}"
+    end
+
+    def popover_path
+      "/transactions/#{hashid}?frame=true"
     end
 
     def icon
