@@ -48,7 +48,7 @@ module Payroll
         start_date: position_params[:starts_on],
         end_date: position_params[:ends_on],
         description: position_params[:purpose],
-        combine_contract_attachment: position_params[:combine_contract_attachment].nil? ? true : position_params[:combine_contract_attachment],
+        combine_contract_attachment: position_params[:combine_contract_attachment].nil? || position_params[:combine_contract_attachment],
         manager_id: position_params[:manager_id]
       )
 
