@@ -164,6 +164,52 @@ RSpec.describe DisbursementsController do
     end
   end
 
+  describe "#event_search" do
+    it "ranks the exact match first even when substring matches would trim it" do
+      admin = create(:user, :make_admin)
+      create_session(admin, verified: true)
+
+      create(:event, name: "ysws - aaa")
+      create(:event, name: "ysws - bbb")
+      create(:event, name: "ysws - ccc")
+      exact = create(:event, name: "ysws")
+
+      get(:event_search, params: { q: "ysws" }, format: :json)
+
+      expect(response).to have_http_status(:ok)
+      labels = JSON.parse(response.body).map { |o| o["label"] }
+      expect(labels.first).to eq("ysws (#{exact.id})")
+    end
+
+    it "paginates results without overlap across pages" do
+      stub_const("DisbursementsController::PAGE_SIZE", 2)
+      admin = create(:user, :make_admin)
+      create_session(admin, verified: true)
+
+      3.times { |i| create(:event, name: "ysws #{i}") }
+
+      get(:event_search, params: { q: "ysws", page: 1 }, format: :json)
+      page1 = JSON.parse(response.body).map { |o| o["value"] }
+      get(:event_search, params: { q: "ysws", page: 2 }, format: :json)
+      page2 = JSON.parse(response.body).map { |o| o["value"] }
+
+      expect(page1.size).to eq(2)
+      expect(page2.size).to eq(1)
+      expect(page1 & page2).to be_empty
+    end
+
+    it "clamps non-positive page numbers to the first page" do
+      stub_const("DisbursementsController::PAGE_SIZE", 2)
+      admin = create(:user, :make_admin)
+      create_session(admin, verified: true)
+
+      3.times { |i| create(:event, name: "ysws #{i}") }
+
+      get(:event_search, params: { q: "ysws", page: 0 }, format: :json)
+      expect(JSON.parse(response.body).size).to eq(2)
+    end
+  end
+
   describe "#show" do
     it "renders and resolves the comment thread HcbCode via the outgoing hcb_code" do
       auditor = create(:user, :make_auditor)

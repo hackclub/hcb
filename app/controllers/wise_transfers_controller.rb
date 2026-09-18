@@ -42,7 +42,7 @@ class WiseTransfersController < ApplicationController
       end
       redirect_to url_for(@wise_transfer.local_hcb_code), flash: { success: "Your Wise transfer has been sent!" }
     else
-      render "new", status: :unprocessable_content
+      render "new", layout: "transfer", status: :unprocessable_content
     end
 
   end
