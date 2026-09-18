@@ -28,10 +28,8 @@ module Payroll
       attachments = Array(invoice_params[:file]).compact_blank
       if attachments.empty?
         flash.now[:error] = "Please attach an invoice or supporting document."
-        return render :new, status: :unprocessable_content, layout: false
+        return render_form_error
       end
-
-      @invoice.skip_manager_notification = @on_behalf
 
       approved = false
       ActiveRecord::Base.transaction do
@@ -45,15 +43,15 @@ module Payroll
 
         # An organizer uploading on a contractor's behalf is already
         # approving it, so skip the separate manual-approval step.
-        approved = approve_invoice!(@invoice, @position.event) if @on_behalf
+        approved = @invoice.approve!(reviewed_by: current_user) if @on_behalf
       end
 
       if @on_behalf
         flash[:success] =
           if approved
-            "Invoice uploaded and approved on behalf of #{@position.payee.display_name}. Payment will be sent after HCB review."
+            "Invoice approved for #{@position.payee.display_name}! Payment will be sent after HCB review."
           else
-            "Invoice uploaded on behalf of #{@position.payee.display_name}, but couldn't be auto-approved: your organization doesn't have enough money to pay it yet. Approve it manually once you've topped up."
+            "Invoice uploaded for #{@position.payee.display_name}, but your balance won't cover it. Approve it once you've topped up."
           end
         redirect_to event_payroll_position_path(event_id: @position.event.slug, id: @position.id)
       else
@@ -62,7 +60,7 @@ module Payroll
       end
     rescue ActiveRecord::RecordInvalid => e
       flash.now[:error] = e.message
-      render :new, status: :unprocessable_content, layout: false
+      render_form_error
     end
 
     def approve
@@ -73,7 +71,7 @@ module Payroll
         return redirect_to contractor_page
       end
 
-      if approve_invoice!(@invoice, @event)
+      if @invoice.approve!(reviewed_by: current_user)
         flash[:success] = "Invoice approved! #{helpers.possessive(@invoice.payroll_position.payee.display_name)} payment will be sent after HCB review."
       else
         flash[:error] = "Your organization doesn't have enough money to pay this invoice. Your balance is #{helpers.render_money(@event.balance_available_v2_cents)}."
@@ -113,26 +111,10 @@ module Payroll
       policy(@invoice).on_behalf?
     end
 
-    # Pays out an invoice. Returns false (without raising) if the event can't
-    # currently cover it, so callers can fall back to manual approval later.
-    def approve_invoice!(invoice, event)
-      amount_usd_cents = MoneyService.convert_to_usd(invoice.amount_cents, invoice.currency)
-      return false if amount_usd_cents > event.balance_available_v2_cents
-
-      ActiveRecord::Base.transaction do
-        payment = Payment.create!(
-          payee: invoice.payroll_position.payee,
-          creator: current_user,
-          amount_cents: invoice.amount_cents,
-          currency: invoice.currency,
-          purpose: invoice.name,
-          classification: :general_services
-        )
-        invoice.update!(payment:)
-        invoice.mark_approved!(current_user)
-      end
-
-      true
+    # The on-behalf form breaks out of its frame, so errors need the layout to
+    # come back as a full page (and to render the flash).
+    def render_form_error
+      render :new, status: :unprocessable_content, layout: !turbo_frame_request?
     end
 
     def contractor_page

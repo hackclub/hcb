@@ -37,8 +37,6 @@ module Payroll
 
     has_paper_trail
 
-    attr_accessor :skip_manager_notification
-
     belongs_to :payroll_position, class_name: "Payroll::Position", inverse_of: :invoices
     belongs_to :reviewed_by, class_name: "User", optional: true
     belongs_to :payment, optional: true
@@ -73,6 +71,27 @@ module Payroll
       end
     end
 
+    # Approves the invoice and creates the payment it triggers. Returns false
+    # without raising if the event can't currently cover it, so callers can
+    # fall back to approving it manually later.
+    def approve!(reviewed_by:)
+      return false if MoneyService.convert_to_usd(amount_cents, currency) > event.balance_available_v2_cents
+
+      transaction do
+        update!(payment: Payment.create!(
+          payee: payroll_position.payee,
+          creator: reviewed_by,
+          amount_cents:,
+          currency:,
+          purpose: name,
+          classification: :general_services
+        ))
+        mark_approved!(reviewed_by)
+      end
+
+      true
+    end
+
     def receipt_required?
       true
     end
@@ -96,8 +115,10 @@ module Payroll
       end
     end
 
+    # An invoice an organizer uploaded and approved in one go needs no review,
+    # so there is nothing to tell the manager about.
     def notify_manager
-      return if skip_manager_notification
+      return if approved?
 
       Payroll::InvoiceMailer.with(invoice: self).submitted.deliver_later
     end
