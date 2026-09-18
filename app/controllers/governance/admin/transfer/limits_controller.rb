@@ -38,7 +38,6 @@ module Governance
         end
 
         def set_limit
-          # Not using find_or_create here because on a brand new user if we do it would save the record to the db with val:null and then when we save the real user limit it would result in an error(subtraction of a nuber from nil) so we just create it in memeory and save it later when the limit is updated 
           @limit = Governance::Admin::Transfer::Limit.find_by(user_id: @user.id) || Governance::Admin::Transfer::Limit.new(user: @user)
         end
 
