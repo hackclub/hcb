@@ -10,6 +10,7 @@ module ApplicationHelper
   include GSuitesHelper
   include HcbCodeHelper
   include InvoicesHelper
+  include LegalEntitiesHelper
   include LoginsHelper
   include LogoHelper
   include OrganizerPosition::Spending::AllowancesHelper

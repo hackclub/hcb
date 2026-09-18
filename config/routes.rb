@@ -73,6 +73,7 @@ Rails.application.routes.draw do
     get "settings", to: "users#edit", as: :my_settings
     get "settings/address", to: "users#edit_address"
     get "settings/payouts", to: "users#edit_payout"
+    get "settings/tax", to: "users#edit_tax"
     resources :payout_methods, only: [:create, :update], controller: "legal_entity/payout_methods", path: "settings/payouts/methods" do
       member do
         patch :set_default
@@ -158,6 +159,7 @@ Rails.application.routes.draw do
     member do
       get "address", to: "users#edit_address"
       get "payouts", to: "users#edit_payout"
+      get "tax", to: "users#edit_tax"
       get "previews", to: "users#edit_featurepreviews"
       get "security", to: "users#edit_security"
       get "notifications", to: "users#edit_notifications"

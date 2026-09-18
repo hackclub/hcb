@@ -21,6 +21,9 @@
   <%= dock_item "Payouts",
                 use_my_path ? settings_payouts_path : payouts_user_path(local_assigns[:user] || current_user),
                 selected: local_assigns[:selected] == :settings_reimbursement_payouts && local_assigns[:open] %>
+  <%= dock_item "Tax",
+                use_my_path ? settings_tax_path : tax_user_path(local_assigns[:user] || current_user),
+                selected: local_assigns[:selected] == :settings_tax && local_assigns[:open] %>
   <%= dock_item "Security",
                 use_my_path ? settings_security_path : security_user_path(local_assigns[:user] || current_user),
                 selected: local_assigns[:selected] == :settings_security && local_assigns[:open] %>
