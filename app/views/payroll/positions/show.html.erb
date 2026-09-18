@@ -43,7 +43,7 @@
           <%= @position.payee.email %>
 
           <% if @position.payee.legal_entity.nil? %>
-            <%= link_to "#", data: { behavior: "modal_trigger", modal: "payee_#{@position.payee.id}_change_email" } do %>
+            <%= link_to "#", data: { behavior: "modal_trigger", modal: "payee_#{@position.payee.hashid}_change_email" } do %>
               <%= inline_icon "edit" %>
             <% end %>
           <% end %>

@@ -1,6 +1,6 @@
 <%# locals: (payee:, destination:, destination_id:) %>
 
-<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="payee_<%= payee.id %>_change_email">
+<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="payee_<%= payee.hashid %>_change_email">
   <%= modal_header "Change email" %>
 
   <%= form_with model: payee, url: event_payee_path(payee.event, payee) do |form| %>
