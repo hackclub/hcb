@@ -9,10 +9,11 @@ RSpec.describe CanonicalPendingTransactionMailer, type: :mailer do
 
   describe "#notify_settled" do
     let(:user) { create(:user, full_name: "Test User", email: "user@example.com") }
+    let(:event) { create(:event, plan_type: Event::Plan::Standard) }
     let(:raw_pending_stripe_transaction) { create(:raw_pending_stripe_transaction) }
-    let(:stripe_card) { create(:stripe_card, :with_stripe_id, stripe_id: raw_pending_stripe_transaction.stripe_transaction["card"]["id"], user: user) }
-    let(:canonical_pending_transaction) { create(:canonical_pending_transaction, raw_pending_stripe_transaction: raw_pending_stripe_transaction, amount_cents: -2000, memo: "Coffee Shop") }
-    let(:canonical_transaction) { create(:canonical_transaction, amount_cents: -2500, memo: "Coffee Shop") }
+    let(:stripe_card) { create(:stripe_card, :with_stripe_id, stripe_id: raw_pending_stripe_transaction.stripe_transaction["card"]["id"], user: user, event: event) }
+    let(:canonical_pending_transaction) { create(:canonical_pending_transaction, raw_pending_stripe_transaction: raw_pending_stripe_transaction, amount_cents: -2000, memo: "Coffee Shop", event: event) }
+    let(:canonical_transaction) { create(:canonical_transaction, amount_cents: -2500, memo: "Coffee Shop", event: event) }
 
     before do
       stripe_card
