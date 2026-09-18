@@ -45,6 +45,10 @@ class UserPolicy < ApplicationPolicy
     user.auditor? || record == user
   end
 
+  def edit_tax?
+    user.auditor? || record == user
+  end
+
   def edit_featurepreviews?
     user.auditor? || record == user
   end
