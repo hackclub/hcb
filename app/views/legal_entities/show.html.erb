@@ -94,6 +94,7 @@
       <%= button_to "Start tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
     <% end %>
   <% when :form_not_mismatched %>
+    <% mismatched = @legal_entity.mismatched_tax_form || @legal_entity.entity_type_mismatched_tax_form %>
     <% previous_tax_form = @legal_entity.latest_usable_tax_form %>
     <% if @legal_entity.mismatched_tax_form.present? %>
       <p>
