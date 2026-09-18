@@ -10,7 +10,7 @@
 </p>
 
 <% if @failed_verification_checks.present? %>
-  <h3 class="mb-2">Troubleshooting tips</h3>
+  <h3 class="mb-2">What went wrong</h3>
   <p class="my-0">
     <% if @failed_verification_checks.include?("address_postal_code_check") %>
       We noticed that the zip code used at <%= @merchant_name %> didn't match the billing zip code on your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %> (<%= @card_charge.stripe_cardholder.address_postal_code %>). Please try again using that zip code.
@@ -21,6 +21,26 @@
     <% if @failed_verification_checks.include?("cvc_check") %>
       We noticed that the CVC used at <%= @merchant_name %> didn't match your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please try again with the correct CVC.
     <% end %>
+  </p>
+
+  <% other_reasons = [] %>
+  <% other_reasons << "Your zip code doesn't match the billing zip code on file" unless @failed_verification_checks.include?("address_postal_code_check") %>
+  <% other_reasons << "Your CVC doesn't match the one on file" unless @failed_verification_checks.include?("cvc_check") %>
+  <% other_reasons << "Your organization doesn't have enough balance to cover the purchase" %>
+  <% other_reasons << "You've hit a spending limit set by your organization manager" %>
+
+  <% if other_reasons.present? %>
+    <p class="my-0">
+      A few other common reasons cards get declined or reversed:
+    </p>
+    <ul class="my-0">
+      <% other_reasons.each do |reason| %>
+        <li><%= reason %></li>
+      <% end %>
+    </ul>
+  <% end %>
+  <p class="my-0">
+    Is your reason not listed? There's more at <%= link_to "our help center", "https://help.hcb.hackclub.com/en/articles/15409721-my-card-was-declined-what-should-i-do" %>.
   </p>
 <% end %>
 
