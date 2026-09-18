@@ -314,6 +314,13 @@ class Ledger
         relation.where(Ledger::Item.arel_table[:id].in(Arel::Nodes::UnionAll.new(settled.arel, pending.arel)))
       when "merchant"
         relation.where(linked_object_type: "CardCharge", linked_object_id: CardCharge.where(merchant_network_id: operand).select(:id))
+      else
+        # Unreachable while these arms and VIRTUAL_FIELDS stay in parity, but
+        # they're declared 250-odd lines apart and the guard in
+        # apply_partial_predicate commits to handling anything in the constant.
+        # Adding a field there and forgetting an arm here should say so, not
+        # fall through to nil and surface as a NoMethodError downstream.
+        raise Ledger::Query::Error.new("Unsupported virtual field: #{key}")
       end
     end
 

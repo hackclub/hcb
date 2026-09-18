@@ -645,6 +645,16 @@ RSpec.describe Ledger::Query, type: :model do
         .to raise_error(Ledger::Query::Error, /Unsupported comparison operator for tag/)
     end
 
+    it "raises a query error for a virtual field with no subquery behind it" do
+      # Guards the parity between VIRTUAL_FIELDS and the case arms in
+      # apply_virtual_predicate: adding a field to the constant without an arm
+      # should raise, not return nil.
+      stub_const("#{described_class}::VIRTUAL_FIELDS", described_class::VIRTUAL_FIELDS + ["nonexistent"])
+
+      expect { execute_query({ nonexistent: { "$eq" => "x" } }) }
+        .to raise_error(Ledger::Query::Error, /Unsupported virtual field: nonexistent/)
+    end
+
     it "rejects array operands, so $eq never means IN" do
       %w[tag category merchant].each do |field|
         expect { execute_query({ field => { "$eq" => ["a", "b"] } }) }
