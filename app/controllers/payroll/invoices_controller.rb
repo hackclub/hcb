@@ -110,7 +110,7 @@ module Payroll
     end
 
     def on_behalf?
-      Payroll::PositionPolicy.new(current_user, @position).review?
+      policy(@invoice).on_behalf?
     end
 
     # Pays out an invoice. Returns false (without raising) if the event can't

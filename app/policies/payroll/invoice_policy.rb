@@ -10,6 +10,15 @@ module Payroll
       contractor? || on_behalf?
     end
 
+    # Uploading on a contractor's behalf is a reviewer action, so it never
+    # applies to the contractor themselves (who would otherwise self-approve).
+    def on_behalf?
+      return false if contractor?
+      return false unless record.payroll_position.onboarded?
+
+      reviewer?
+    end
+
     def approve?
       reviewer?
     end
@@ -28,12 +37,6 @@ module Payroll
 
       legal_entity = record.payroll_position.payee.legal_entity
       legal_entity.present? && legal_entity.users.exists?(id: user.id)
-    end
-
-    def on_behalf?
-      return false unless record.payroll_position.onboarded?
-
-      reviewer?
     end
 
     # Reviewing (approving/rejecting) an invoice is gated by the same permission

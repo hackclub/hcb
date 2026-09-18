@@ -97,6 +97,8 @@ module Payroll
     end
 
     def notify_manager
+      return if skip_manager_notification
+
       Payroll::InvoiceMailer.with(invoice: self).submitted.deliver_later
     end
 
