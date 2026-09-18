@@ -41,6 +41,14 @@ module Contractable
       "/"
     end
 
+    def contractable_link_label
+      raise NotImplementedError, "The #{self.class.name} model includes Contractable, but hasn't implemented its own version of contractable_link_label."
+    end
+
+    def contractable_link_path
+      raise NotImplementedError, "The #{self.class.name} model includes Contractable, but hasn't implemented its own version of contractable_link_path."
+    end
+
     def contract_notify_hcb?
       # This method can be overwritten in specific classes to disable sending HCB's notification when all other parties have signed
       true
