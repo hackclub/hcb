@@ -61,7 +61,7 @@ export default class extends Controller {
     payees.forEach((payee, i) => {
       if (i > 0)
         nodes.push(
-          document.createTextNode(i === payees.length - 1 ? ' and ' : ', ')
+          document.createTextNode(i === payees.length - 1 ? ', and ' : ', ')
         )
       const link = document.createElement('a')
       link.href = payee.select_url
