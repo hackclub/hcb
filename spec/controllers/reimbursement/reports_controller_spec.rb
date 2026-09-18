@@ -23,6 +23,17 @@ RSpec.describe Reimbursement::ReportsController do
       expect(email_field_value(response.body)).to eq("fiona@example.com")
     end
 
+    it "does not prefill the email field when signed in as an organizer" do
+      user = create(:user, email: "fiona@example.com")
+      event = create(:event, public_reimbursement_page_enabled: true, organizers: [user])
+      create_session(user, verified: true)
+
+      get(:start, params: { event_name: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(email_field_value(response.body)).to be_blank
+    end
+
     it "does not prefill the email field when signed out" do
       event = create(:event, public_reimbursement_page_enabled: true)
 
