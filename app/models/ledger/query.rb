@@ -283,6 +283,11 @@ class Ledger
     def apply_virtual_predicate(relation, operator, key, operand)
       raise Ledger::Query::Error.new("Unsupported comparison operator for #{key}: #{operator}") unless operator.to_s == "$eq"
 
+      # apply_partial_predicate returns above before reaching its own operand
+      # guards, so repeat the one $eq carries: an array operand would otherwise
+      # turn $eq into an IN here while it raises on every other field.
+      reject_array_operand!(operator, operand)
+
       case key.to_s
       when "tag"
         # Tags hang off the HCB code, which points back at the ledger item.

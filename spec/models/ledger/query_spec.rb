@@ -644,6 +644,13 @@ RSpec.describe Ledger::Query, type: :model do
       expect { execute_query({ tag: { "$gt" => 1 } }) }
         .to raise_error(Ledger::Query::Error, /Unsupported comparison operator for tag/)
     end
+
+    it "rejects array operands, so $eq never means IN" do
+      %w[tag category merchant].each do |field|
+        expect { execute_query({ field => { "$eq" => ["a", "b"] } }) }
+          .to raise_error(Ledger::Query::Error, /does not support array operands/)
+      end
+    end
   end
 
   describe "empty items" do
