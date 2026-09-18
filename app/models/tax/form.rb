@@ -95,7 +95,7 @@ module Tax
     end
 
     after_update if: -> { taxbandits_tin_matching_status_previously_changed?(to: :failed) } do
-      Tax::FormMailer.with(form: self).verification_failed.deliver_later
+      Tax::FormMailer.with(form: self).verification_failed.deliver_later if legal_entity.requires_tax_verification?
     end
 
     after_update if: -> { tin_hash_previously_changed?(from: nil) } do
