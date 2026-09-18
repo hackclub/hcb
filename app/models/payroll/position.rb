@@ -4,23 +4,24 @@
 #
 # Table name: payroll_positions
 #
-#  id            :bigint           not null, primary key
-#  aasm_state    :string           not null
-#  currency      :string           default("USD"), not null
-#  description   :text             not null
-#  end_date      :date             not null
-#  onboarded_at  :datetime
-#  onboarding_at :datetime
-#  rate_cents    :integer          default(0), not null
-#  rate_unit     :string           default("hour"), not null
-#  rejected_at   :datetime
-#  start_date    :date             not null
-#  terminated_at :datetime
-#  title         :text             not null
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
-#  manager_id    :bigint
-#  payee_id      :bigint           not null
+#  id                          :bigint           not null, primary key
+#  aasm_state                  :string           not null
+#  combine_contract_attachment :boolean          default(TRUE), not null
+#  currency                    :string           default("USD"), not null
+#  description                 :text             not null
+#  end_date                    :date             not null
+#  onboarded_at                :datetime
+#  onboarding_at               :datetime
+#  rate_cents                  :integer          default(0), not null
+#  rate_unit                   :string           default("hour"), not null
+#  rejected_at                 :datetime
+#  start_date                  :date             not null
+#  terminated_at               :datetime
+#  title                       :text             not null
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#  manager_id                  :bigint
+#  payee_id                    :bigint           not null
 #
 # Indexes
 #
