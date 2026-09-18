@@ -417,7 +417,7 @@ def seed_person(email, full_name)
 end
 
 def seed_org(slug, name, **attrs)
-  event = Event.create_with(name:, point_of_contact: User.first, can_front_balance: true, **attrs).find_or_create_by!(slug:)
+  event = Event.create_with(name:, point_of_contact: User.first, **attrs).find_or_create_by!(slug:)
   OrganizerPositionInvite.find_or_create_by!(event:, user: User.first, sender: User.first)
   event
 end
@@ -442,7 +442,21 @@ def seed_settled(event, memo, amount_cents, date)
   ::TransactionEngine::CanonicalTransactionService::Import::All.new.run
   ct = CanonicalTransaction.last
   CanonicalEventMapping.create!(canonical_transaction_id: ct.id, event_id: event.id, user_id: User.first.id)
+  map_to_ledger!(ct, event)
   ct
+end
+
+# Ledger::Mapper only recognises Column / Stripe / linked-object transactions, so
+# the bare CanonicalTransactions and CanonicalPendingTransactions seeds create
+# never get a primary ledger mapping, and their money doesn't count toward the
+# org's balance. Map them to the event's ledger explicitly; already-mapped items
+# (e.g. Stripe card charges, which the mapper handles) are left alone.
+def map_to_ledger!(txn, event)
+  ledger_item = txn.reload.ledger_item
+  return if ledger_item.nil? || ledger_item.primary_mapping.present?
+
+  ledger = event.ledger || Ledger.create!(primary: true, event:)
+  Ledger::Mapping.map_primary!(ledger:, ledger_item:, mapped_by: Ledger::Mapper::SYSTEM)
 end
 
 def fake_receipt_file
@@ -506,6 +520,7 @@ def seed_invoice(event, sponsor, creator, description, cents, state)
     rpit = RawPendingInvoiceTransaction.create!(invoice_transaction_id: invoice.id.to_s, amount_cents: invoice.amount_paid, date_posted: paid_at)
     cpt = CanonicalPendingTransaction.create!(date: rpit.date, memo: rpit.memo, amount_cents: rpit.amount_cents, raw_pending_invoice_transaction_id: rpit.id, fronted: true, fee_waived: false)
     CanonicalPendingEventMapping.create!(canonical_pending_transaction_id: cpt.id, event_id: event.id)
+    map_to_ledger!(cpt, event)
   end
   invoice
 end
@@ -535,6 +550,7 @@ def seed_card_charge(event, card, merchant, category, category_code, cents, date
                                              stripe_transaction: { "id" => auth_id, "status" => "pending", "created" => date.to_i, "authorization_method" => "online", "amount" => cents, "merchant_currency" => "usd", "pending_request" => { "amount" => cents }, "card" => { "id" => card.stripe_id }, "merchant_data" => merchant_data, "verification_data" => verification_data })
   cpt = CanonicalPendingTransaction.create!(raw_pending_stripe_transaction: rpst, amount_cents: -cents, date:, memo: merchant)
   CanonicalPendingEventMapping.create!(canonical_pending_transaction_id: cpt.id, event_id: event.id, subledger_id: card.subledger_id)
+  map_to_ledger!(cpt, event) if card.subledger_id.nil?
   seed_receipt(cpt.local_hcb_code, uploader) if uploader
   cpt
 end
@@ -741,6 +757,15 @@ robotics.plan.update(type: Event::Plan::FeeWaived.name) unless robotics.plan.is_
 seed_tag(flagship, EventTag::Tags::HACKATHON)
 seed_tag(robotics, EventTag::Tags::ROBOTICS_TEAM)
 
+# The showcase transactions created above predate the ledger and were never
+# given a primary ledger mapping, so their money wouldn't show up in balances.
+CanonicalEventMapping.includes(canonical_transaction: :ledger_item).find_each do |mapping|
+  map_to_ledger!(mapping.canonical_transaction, mapping.event)
+end
+CanonicalPendingEventMapping.on_main_ledger.includes(canonical_pending_transaction: :ledger_item).find_each do |mapping|
+  map_to_ledger!(mapping.canonical_pending_transaction, mapping.event)
+end
+
 [non_transparent_event, transparent_event, flagship, robotics].each_with_index do |event, i|
   populate_event!(event, admin:, organizers: people[(i * 3), 3], scale: 22)
 end
@@ -794,6 +819,7 @@ unless frozen_org.donations.exists?
   5.times { |i| seed_donation(frozen_org, [2_500, 10_000].sample, name: fake_name, email: fake_email("frozen#{i}"), created_at: rand(1..20).days.ago) }
   pending = CanonicalPendingTransaction.create!(date: 2.days.ago, memo: "❄️ Suspicious purchase under review", amount_cents: -75_000)
   CanonicalPendingEventMapping.create!(canonical_pending_transaction_id: pending.id, event_id: frozen_org.id)
+  map_to_ledger!(pending, frozen_org)
 end
 frozen_org.update!(financially_frozen: true, risk_level: :high) unless frozen_org.financially_frozen?
 
