@@ -35,7 +35,6 @@ module Governance
           @changers = User
                       .where(id: changer_ids)
                       .index_by { |user| user.id.to_s }
-
         end
 
         private
