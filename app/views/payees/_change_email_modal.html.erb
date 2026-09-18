@@ -8,7 +8,7 @@
     <%= form.hidden_field :redirect_to_destination_id, value: destination_id %>
     <div class="field">
       <%= form.label :email %>
-      <%= form.email_field :email %>
+      <%= form.email_field :email, required: true %>
     </div>
 
     <%= form.submit "Save" %>
