@@ -690,7 +690,7 @@ def populate_event!(event, admin:, organizers:, scale: 20)
 
   # --- employee (Gusto-style) payroll ---
   employee = Employee.create!(event:, entity: organizer, aasm_state: "onboarded", gusto_id: "gusto_seed_#{SecureRandom.hex(4)}")
-  Employee::Payment.create!(employee:, title: "Salary — monthly", amount_cents: 3_000_00, aasm_state: "paid", reviewed_by: admin, approved_at: 1.day.ago)
+  employee.payments.create!(title: "Salary — monthly", amount_cents: 3_000_00, aasm_state: "paid", reviewed_by: admin, approved_at: 1.day.ago)
 
   # --- reimbursements: several states, including the admin's own ---
   seed_reimbursement(event, admin, "Conference travel", [[42.50, "Taxi from airport", "Travel"], [18.75, "Team lunch", "Food & Entertainment"], [230.00, "Hotel night", "Travel"]], :reimbursed)
