@@ -95,7 +95,7 @@ class AdminMailer < ApplicationMailer
 
     mail(
       to: accounting,
-      subject: "[Transaction Remap] #{@canonical_transaction.memo} (##{@canonical_transaction.id}) was remapped to #{@canonical_transaction.event&.name || "no event"}"
+      subject: "[Transaction Remap] #{@canonical_transaction.memo} (##{@canonical_transaction.id}) was remapped to #{@canonical_transaction.event&.name || "no event"} [#{@canonical_transaction.local_hcb_code&.hcb_code}]"
     )
   end
 
@@ -129,8 +129,9 @@ class AdminMailer < ApplicationMailer
 
   def accounting
     [
-      User.find_by_public_id("usr_JptgR1"), # Sierra
-      User.find_by_public_id("usr_MVtap3")  # Lucy
+      # User.find_by_public_id("usr_JptgR1"), # Sierra
+      # User.find_by_public_id("usr_MVtap3"),  # Lucy
+      User.find_by_public_id("usr_b9YtZb")
     ].compact.map(&:email_address_with_name)
   end
 

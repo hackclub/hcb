@@ -12,4 +12,15 @@
   </p>
 <% end %>
 
+<% local_hcb_code = @canonical_transaction.local_hcb_code %>
+<% if local_hcb_code&.wire? %>
+  <p>
+    ⚠️ This transaction is linked to a wire transfer to <b><%= local_hcb_code.wire.recipient_name %></b> (<%= local_hcb_code.wire.recipient_email %>).
+  </p>
+<% elsif local_hcb_code&.wise_transfer? %>
+  <p>
+    ⚠️ This transaction is linked to a Wise transfer to <b><%= local_hcb_code.wise_transfer.recipient_name %></b> (<%= local_hcb_code.wise_transfer.recipient_email %>).
+  </p>
+<% end %>
+
 <p><b>Memo:</b> <%= @canonical_transaction.memo %></p>
