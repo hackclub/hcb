@@ -52,7 +52,7 @@ class Contract
           {
             role: "Organizer",
             email: organizer.email,
-            fields: if prefills["combine_documents"]
+            fields: if has_standard_contract?
                       [
                         { name: "Project Name", default_value: prefills["title"], readonly: true },
                         { name: "Description", default_value: prefills["description"], readonly: true },
@@ -68,7 +68,7 @@ class Contract
             role: "HCB",
             email: hcb.email,
             send_email: false,
-            fields: if prefills["combine_documents"]
+            fields: if has_standard_contract?
                       [
                         {
                           name: "Signature",
@@ -83,7 +83,7 @@ class Contract
           {
             role: "Contractor",
             email: contractor.email,
-            fields: if prefills["combine_documents"]
+            fields: if has_standard_contract?
                       [
                         { name: "Name", default_value: prefills["payee_name"] }
                       ]
@@ -103,6 +103,10 @@ class Contract
       else
         base.merge(template_id: external_template_id)
       end
+    end
+
+    def has_standard_contract?
+      !inline_documents? || (inline_documents? && prefills["combine_documents"])
     end
 
     def agreement_name
