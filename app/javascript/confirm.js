@@ -13,8 +13,6 @@ function showConfirm(
   }).then(v => !!v)
 }
 
-// jquery-ujs disables `data-disable-with` elements shortly after every submit
-// event; nothing re-enables them when the confirmation cancels the submission.
 function reenableFormElements(formElement) {
   const jQuery = window.jQuery
   if (formElement && jQuery?.rails)
