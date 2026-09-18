@@ -1,16 +1,16 @@
 <%# locals: (item:, show_author: true) %>
 
-<tr class="transaction transaction--<%= item.sign %> <%= item.special_appearance&.css_class %>">
+<tr class="transaction<%= " muted" if item.pending? %> transaction--<%= item.sign %> <%= item.special_appearance&.css_class %>">
   <td class="transaction__icon">
     <div class="tooltipped tooltipped--e" aria-label="<%= item.humanized_type %>">
       <%= render "ledger/items/icon", ledger_item: item %>
     </div>
   </td>
   <td><%= item.datetime.strftime("%b %e, %Y") %></td>
-  <td class="transaction__memo transaction__memo--fluid<%= " transaction__memo--pending" if item.pending? %>">
+  <td class="transaction__memo transaction__memo--fluid">
     <div>
       <div class="flex-auto">
-        <div class="flex items-center gap-[1ch] min-w-0">
+        <div class="flex items-center min-w-0">
           <%= render "ledger/items/status", ledger_item: item %>
           <div class="min-w-0 overflow-hidden text-ellipsis">
             <%= render "ledger/items/memo/memo", item: %>

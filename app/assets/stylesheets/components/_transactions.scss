@@ -226,10 +226,6 @@ details.receipt-card {
   }
 }
 
-.transaction__memo--pending {
-  color: map-get($palette, muted);
-}
-
 // Fills the remaining table width and truncates with an ellipsis instead of
 // widening the table (max-width: 0 keeps the content from sizing the cell)
 .transaction__memo--fluid {
