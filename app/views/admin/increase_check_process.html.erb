@@ -98,7 +98,12 @@
               ) %>
         </div>
 
-        <%= button_to "💸 Approve and send check", approve_increase_check_path(@check), method: :post, data: { turbo_confirm: "Are you sure you want to send this check?" } %>
+        <%= form_with(model: false, local: true, url: approve_increase_check_path(@check), method: :post) do |form| %>
+          <% if @check.payment.present? %>
+            <%= render partial: "payments/classification_input", locals: { form:, classification: @check.payment.classification } %>
+          <% end %>
+          <%= form.submit "💸 Approve and send check", data: { turbo_confirm: "Are you sure you want to send this check?" } %>
+        <% end %>
       </fieldset>
 
       <fieldset class="p-4">

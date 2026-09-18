@@ -315,6 +315,7 @@ Rails.application.routes.draw do
       post "referral_link_create", to: "referral/links#create"
       get "unknown_merchants", to: "admin#unknown_merchants"
       post "request_balance_export", to: "admin#request_balance_export"
+      post "request_canonical_transaction_balance_export", to: "admin#request_canonical_transaction_balance_export"
       get "active_teenagers_leaderboard", to: "admin#active_teenagers_leaderboard"
       get "new_teenagers_leaderboard", to: "admin#new_teenagers_leaderboard"
       get "contracts", to: "admin#contracts"
@@ -436,6 +437,7 @@ Rails.application.routes.draw do
   resources :g_suite_accounts, only: [:index, :create, :update, :edit, :destroy], path: "g_suite_accounts" do
     put "reset_password"
     put "toggle_suspension"
+    put "unmanage"
     resources :g_suite_aliases, only: [:create, :destroy], shallow: true
   end
 
@@ -615,7 +617,7 @@ Rails.application.routes.draw do
       post "admin_approve"
       post "admin_send_wise_transfer"
       post "reverse"
-      post "approve_all_expenses"
+      post "approve"
       post "request_changes"
       post "reject"
       post "submit"
@@ -967,6 +969,7 @@ Rails.application.routes.draw do
         get "personal_info"
         get "project_info"
         get "videos"
+        get "sign_agreement"
         get "agreement"
         get "review"
         get "submission"
@@ -1006,7 +1009,6 @@ Rails.application.routes.draw do
     get "ledger"
     post "toggle_new_ledger"
     get "stats"
-    get "ledger_stats"
     get "merchants_filter"
     put "toggle_hidden"
     post "claim_point_of_contact"
@@ -1055,6 +1057,9 @@ Rails.application.routes.draw do
       end
     end
     resources :payees, only: [:index, :create, :update] do
+      collection do
+        get :check_email
+      end
       member do
         post :archive
       end
