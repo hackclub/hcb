@@ -11,6 +11,7 @@ module Governance
         def history?
           user&.admin?
         end
+
       end
     end
   end
