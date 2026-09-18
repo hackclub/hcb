@@ -61,11 +61,7 @@ module Api
           values: LINKED_OBJECT_TYPES
         }
         expose :pending, documentation: { type: "boolean" } do |transaction, options|
-          if transaction.event.can_front_balance?
-            next transaction.canonical_transactions.empty? && transaction.canonical_pending_transactions.none? { |pt| pt.fronted? }
-          end
-
-          transaction.canonical_transactions.empty?
+          transaction.canonical_transactions.empty? && transaction.canonical_pending_transactions.none? { |pt| pt.fronted? }
         end
 
         expose :receipts do
