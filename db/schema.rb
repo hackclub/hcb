@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_17_140226) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -467,6 +467,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_17_140226) do
     t.bigint "raw_pending_stripe_transaction_id"
     t.bigint "stripe_card_id"
     t.datetime "updated_at", null: false
+    t.index ["merchant_category"], name: "index_card_charges_on_merchant_category"
+    t.index ["merchant_network_id"], name: "index_card_charges_on_merchant_network_id"
     t.index ["raw_pending_stripe_transaction_id"], name: "index_card_charges_on_raw_pending_stripe_transaction_id", unique: true
     t.index ["stripe_card_id"], name: "index_card_charges_on_stripe_card_id"
   end
