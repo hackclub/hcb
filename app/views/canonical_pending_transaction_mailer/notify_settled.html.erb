@@ -1,3 +1,13 @@
 <%= link_to @cpt.memo, hcb_code_url(@cpt.local_hcb_code) %> has settled at <%= render_money @ct.amount_cents %>; this was a charge on your card ending in <%= @cpt.stripe_card.last4 %> that previously was <%= render_money @cpt.amount_cents %>.
 
-<%= render partial: "canonical_pending_transaction_mailer/attach_receipt", locals: { hcb_code: @cpt.local_hcb_code, upload_url: @upload_url } if @cpt.local_hcb_code.missing_receipt? %>
+<% if @cpt.local_hcb_code.missing_receipt? %>
+  <%= render partial: "canonical_pending_transaction_mailer/attach_receipt", locals: { hcb_code: @cpt.local_hcb_code, upload_url: @upload_url } %>
+<% elsif @cpt.local_hcb_code.receipts.any? %>
+  <%= link_to hcb_code_url(@cpt.local_hcb_code) do %>
+    <img height="43" style="display: block; margin-top: 10px; height: 43px;" src="<%= receipt_status_hcb_codes_url(format: :png, s: @cpt.local_hcb_code.signed_id(purpose: :receipt_status)) %>" alt="Receipt uploaded">
+  <% end %>
+
+  <p>
+    A receipt has already been uploaded for this transaction. If you'd like to manage your receipt or view details, you can <%= link_to "manage your transaction here", hcb_code_url(@cpt.local_hcb_code) %>.
+  </p>
+<% end %>
