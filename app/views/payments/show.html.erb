@@ -120,5 +120,5 @@
 <% end %>
 
 <% if @payment.payee.legal_entity.nil? %>
-  <%= render partial: "payees/change_email_modal", locals: { payee: @payment.payee, destination: "payments" } %>
+  <%= render partial: "payees/change_email_modal", locals: { payee: @payment.payee, destination: "payments", destination_id: @payment.hashid } %>
 <% end %>

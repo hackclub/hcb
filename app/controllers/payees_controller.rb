@@ -54,16 +54,16 @@ class PayeesController < ApplicationController
     if payee.update(payee_params)
       flash[:success] = "Recipient updated."
 
-      if params[:payee][:redirect_to_show]
-        redirect_to helpers.updated_recipient_transfer_path(params[:payee][:destination], @event, payee_id: payee.hashid)
+      if params[:payee][:redirect_to_destination_id].present?
+        redirect_to helpers.updated_recipient_transfer_path(params[:payee][:destination], params[:payee][:redirect_to_destination_id])
       else
         redirect_to helpers.new_recipient_transfer_path(params[:payee][:destination], @event, payee_id: payee.hashid)
       end
     else
       flash[:error] = payee.errors.full_messages.to_sentence
 
-      if params[:payee][:redirect_to_show]
-        redirect_to helpers.updated_recipient_transfer_path(params[:payee][:destination], @event, payee_id: payee.hashid)
+      if params[:payee][:redirect_to_destination_id].present?
+        redirect_to helpers.updated_recipient_transfer_path(params[:payee][:destination], params[:payee][:redirect_to_destination_id])
       else
         redirect_to helpers.new_recipient_transfer_path(params[:payee][:destination], @event, payee_id: payee.hashid, edit_payee: true)
       end
