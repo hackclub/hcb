@@ -938,7 +938,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :legal_entities, only: [:show] do
+  resources :legal_entities, only: [:show, :create] do
     collection do
       post "create_from_tax_form"
     end

@@ -74,6 +74,28 @@ class LegalEntitiesController < ApplicationController
     redirect_to legal_entity_path(new_le)
   end
 
+  def create
+    le = LegalEntity.create!(
+      name: params[:name],
+      entity_type: params[:entity_type],
+      users: [current_user]
+    )
+
+    if params[:payee_id].present?
+      payee = Payee.find(params[:payee_id])
+
+      authorize payee, :set_legal_entity?
+
+      payee.update!(legal_entity: le)
+    else
+      skip_authorization
+    end
+
+    flash[:success] = "Legal entity successfully created"
+
+    redirect_to legal_entity_path(le)
+  end
+
   private
 
   def set_legal_entity
