@@ -40,7 +40,7 @@ class UsersController < ApplicationController
     :admin_details_disbursements, :admin_details_emburse_cards, :admin_details_increase_checks,
     :admin_details_invoices, :admin_details_lob_checks, :admin_details_missing_receipts,
     :admin_details_reimbursement_reports, :admin_details_stripe_cards, :admin_details_stripe_transactions,
-    :suppress_card_locking, :reset_billing_address, :update_admin_transfer_limit, :admin_transfer_limit_history
+    :suppress_card_locking, :reset_billing_address
   ]
   wrap_parameters format: :url_encoded_form
 
@@ -264,6 +264,8 @@ class UsersController < ApplicationController
 
   def edit_admin
     authorize @user
+    
+    @limit = Governance::Admin::Transfer::Limit.find_by(user_id: @user.id)
   end
 
   def admin_details
@@ -366,52 +368,6 @@ class UsersController < ApplicationController
     User::UpdateCardLockingJob.perform_later(user: @user)
 
     redirect_back_or_to admin_user_path(@user), flash: { success: "Card locking suppressed for #{hours}h." }
-  end
-
-  def update_admin_transfer_limit
-    authorize @user
-
-    limit_amount_cents = (params[:limit_amount].to_f * 100).to_i
-    user_limit_record = Governance::Admin::Transfer::Limit.find_by(user_id: @user.id) || Governance::Admin::Transfer::Limit.new(user: @user)
-    user_limit_record.amount_cents = limit_amount_cents
-    user_limit_record.save!
-    redirect_back_or_to admin_user_path(@user), flash: { success: "Admin transfer limit updated to: $#{"%.2f" % (limit_amount_cents / 100.0)}" }
-  end
-
-  def admin_transfer_limit_history
-    authorize @user
-
-    target_user_id = params[:target_user_id].to_i
-
-    limit = Governance::Admin::Transfer::Limit.find_by(
-      user_id: target_user_id
-    )
-
-    version_class = Governance::Admin::Transfer::Limit.paper_trail.version_class
-
-    @history = if limit
-                 version_class
-                   .where(
-                     item_type: "Governance::Admin::Transfer::Limit",
-                     item_id: limit.id
-                   )
-                   .order(created_at: :desc)
-                   .page(params[:page])
-                   .per(params[:per] || 25)
-               else
-                 version_class
-                   .none
-                   .page(params[:page])
-                   .per(params[:per] || 25)
-               end
-
-    changer_ids = @history.map(&:whodunnit).compact.uniq
-
-    @changers = User
-                .where(id: changer_ids)
-                .index_by { |user| user.id.to_s }
-
-    render partial: "users/admin_transfer_limit_history"
   end
 
   def update

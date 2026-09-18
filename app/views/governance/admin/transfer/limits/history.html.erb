@@ -8,21 +8,17 @@
           <th>Set By</th>
         </tr>
       </thead>
-
       <tbody>
         <% @history.each do |version| %>
           <% changes = version.changeset %>
           <% changer = @changers[version.whodunnit.to_s] %>
-
-          <tr class="">
+          <tr>
             <td>
               <%= version.created_at.strftime("%b %-d, %Y") %>
             </td>
-
             <td class="py-[10px]">
               <%= number_to_currency(changes["amount_cents"]&.last.to_i / 100.0) %>
             </td>
-
             <td>
               <div class="flex items-center gap-2">
                 <% if changer.present? %>
@@ -33,13 +29,11 @@
                 <% end %>
               </div>
             </td>
-
           </tr>
         <% end %>
       </tbody>
     </table>
   </section>
 
-  <%= paginate @history,
-        params: { target_user_id: @user.id } %>
+  <%= paginate @history, params: { target_user_id: @user.id } %>
 <% end %>

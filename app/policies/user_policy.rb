@@ -169,12 +169,4 @@ class UserPolicy < ApplicationPolicy
     user.admin?
   end
 
-  def update_admin_transfer_limit?
-    user.superadmin?
-  end
-
-  def admin_transfer_limit_history?
-    user.admin?
-  end
-
 end

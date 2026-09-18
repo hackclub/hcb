@@ -184,10 +184,8 @@ Rails.application.routes.draw do
       post "suppress_card_locking", to: "users#suppress_card_locking"
 
       post "reset_billing_address", to: "users#reset_billing_address"
-
-      post "update_admin_transfer_limit", to: "users#update_admin_transfer_limit"
-      get "admin_transfer_limit_history", to: "users#admin_transfer_limit_history"
-
+      post "update_admin_transfer_limit", to: "governance/admin/transfer/limits#update"
+      get "admin_transfer_limit_history", to: "governance/admin/transfer/limits#history"
     end
     post "delete_profile_picture", to: "users#delete_profile_picture"
     post "generate_totp"

@@ -109,14 +109,13 @@
 
   <% admin_tool "p-3" do %>
     <h3 class="mb2 mt1">Admin Transfer Limit</h3>
-    <% limit = Governance::Admin::Transfer::Limit.find_by(user_id: @user.id) %>
     <section>
-      <p>Admin transfer limit is currently: <strong><%= limit ? number_to_currency(limit.amount_cents / 100.0) : "None" %></strong></p>
+      <p>Admin transfer limit is currently: <strong><%= @limit ? number_to_currency(@limit.amount_cents / 100.0) : "None" %></strong></p>
       <% if superadmin_signed_in? %>
         <%= form_with url: update_admin_transfer_limit_user_path(@user), method: :post, data: { turbo_frame: "_top" } do |form| %>
           <div class="field">
             <%= form.label :limit_amount, "Set admin transfer limit (dollars)" %>
-            <%= form.number_field :limit_amount, step: 0.01, min: 0, value: limit ? "%.2f" % (limit.amount_cents / 100.0) : nil %>
+            <%= form.number_field :limit_amount, step: 0.01, min: 0, value: @limit ? "%.2f" % (@limit.amount_cents / 100.0) : nil %>
           </div>
           <div class="actions flex">
             <%= form.submit "Set admin transfer limit", data: { turbo_confirm: "Set the admin transfer limit for this user to $0.00?" }, onclick: "this.dataset.turboConfirm = 'Set the admin transfer limit for this user to $' +  this.form.limit_amount.value + '?'" %>
@@ -124,12 +123,9 @@
         <% end %>
       <% end %>
     </section>
-    <% if limit %>
+    <% if @limit %>
       <%= turbo_frame_tag "transfer_limit_history",
-            src: admin_transfer_limit_history_user_path(
-              @user,
-              target_user_id: @user.id
-            ),
+            src: admin_transfer_limit_history_user_path(@user),
             loading: :lazy do %>
         <p>Loading transfer limit history...</p>
       <% end %>
