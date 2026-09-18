@@ -85,6 +85,20 @@ class AdminMailer < ApplicationMailer
     mail subject: "24 Hour Reminders for the Operations Team"
   end
 
+  # Sent when an admin remaps a transaction that was first mapped in a previous month, which the
+  # transaction page warns about before letting them through.
+  def remapped_transaction
+    @canonical_transaction = params.fetch(:canonical_transaction)
+    @user = params.fetch(:user)
+    @previous_event = params[:previous_event]
+    @first_mapped_at = params[:first_mapped_at]
+
+    mail(
+      to: accounting,
+      subject: "[Transaction Remap] #{@canonical_transaction.memo} (##{@canonical_transaction.id}) was remapped to #{@canonical_transaction.event&.name || "no event"}"
+    )
+  end
+
   def blocked_authorization
     @stripe_card = params.fetch(:stripe_card)
     @event = @stripe_card.event
@@ -111,6 +125,13 @@ class AdminMailer < ApplicationMailer
 
   def engineers
     User.where(email: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"]).pluck(:email)
+  end
+
+  def accounting
+    [
+      User.find_by_public_id("usr_JptgR1"), # Sierra
+      User.find_by_public_id("usr_MVtap3")  # Lucy
+    ].compact.map(&:email_address_with_name)
   end
 
 end

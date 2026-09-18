@@ -1,0 +1,15 @@
+<p>
+  <%= @user.name %> remapped
+  <%= link_to "transaction ##{@canonical_transaction.id}", transaction_admin_url(@canonical_transaction) %>
+  (<%= ApplicationController.helpers.render_money @canonical_transaction.amount_cents %>, <%= @canonical_transaction.date %>)
+  from <b><%= @previous_event&.name || "no event" %></b>
+  to <b><%= @canonical_transaction.event&.name || "no event" %></b>.
+</p>
+
+<% if @first_mapped_at %>
+  <p>
+    It was first mapped in <b><%= @first_mapped_at.strftime("%B %Y") %></b>, a previous month.
+  </p>
+<% end %>
+
+<p><b>Memo:</b> <%= @canonical_transaction.memo %></p>
