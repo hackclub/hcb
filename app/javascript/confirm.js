@@ -55,7 +55,6 @@ async function showTypeToConfirm(
   return true
 }
 
-Turbo.config.forms.confirm = (message, formElement, submitter) => {
 // jquery-ujs disables `data-disable-with` elements shortly after every submit
 // event; when the confirmation aborts the submission, nothing re-enables them.
 function reenableFormElements(formElement) {
