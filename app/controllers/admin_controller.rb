@@ -58,6 +58,22 @@ class AdminController < Admin::BaseController
                            elsif @canonical_transaction.amount_cents.abs >= 5_000_00 # $5k
                              "Are you really really sure you want to map this transaction? 🤔 it seems like a big one :)"
                            end
+
+    # If this transaction was first mapped in a previous month, mapping it again now annoys Sierra's
+    # accounting system. If it has never been mapped, ops mapping it now is its first mapping and is
+    # always fine.
+    first_mapping_time = first_mapped_at(@canonical_transaction)
+
+    if first_mapping_time.present? && first_mapping_time < Time.current.beginning_of_month
+      first_mapped_month = first_mapping_time.strftime("%B %Y")
+      verb = @canonical_transaction.canonical_event_mapping.present? ? "remap" : "map"
+
+      @stale_remap = true
+      @remap_confirm_msg = "⚠️ This transaction was first mapped back in #{first_mapped_month}#{" and is currently mapped to \"#{@canonical_transaction.event&.name}\"" if @canonical_transaction.event}. #{verb.capitalize}ping transactions mapped in previous months may disrupt our accounting. Are you absolutely sure you want to #{verb} this transaction?"
+      @remap_confirm_phrase = "REMAP #{@canonical_transaction.id}"
+      @remap_after_message = "Please contact Sierra in the #hcb-ops channel to let her know you #{verb}ped transaction ##{@canonical_transaction.id}."
+      @remap_warning_tooltip = "This transaction was first mapped in #{first_mapped_month}, a previous month — #{verb}ping it requires extra confirmation."
+    end
   end
 
   def events
@@ -1276,12 +1292,28 @@ class AdminController < Admin::BaseController
   end
 
   def set_event
+    canonical_transaction = CanonicalTransaction.find(params[:id])
+
+    # The warning shown on the transaction page; if it was there, tell accounting it went ahead.
+    first_mapping_time = first_mapped_at(canonical_transaction)
+    stale_remap = first_mapping_time.present? && first_mapping_time < Time.current.beginning_of_month
+    previous_event = canonical_transaction.event
+
     @canonical_transaction = ::CanonicalTransactionService::SetEvent.new(canonical_transaction_id: params[:id], event_id: params[:event_id], user: current_user).run
 
     safely do
       ledger = Ledger.find_or_create_by!(primary: true, event_id: params[:event_id])
 
       Ledger::Mapping.map_primary!(ledger:, ledger_item: @canonical_transaction.ledger_item, mapped_by: current_user)
+    end
+
+    if stale_remap
+      AdminMailer.with(
+        canonical_transaction: @canonical_transaction,
+        user: current_user,
+        previous_event:,
+        first_mapped_at: first_mapping_time
+      ).remapped_transaction.deliver_later
     end
 
     redirect_to transaction_admin_path(@canonical_transaction)
@@ -1691,6 +1723,15 @@ class AdminController < Admin::BaseController
   end
 
   private
+
+  # When this transaction was first mapped, whether by ops or automatically.
+  def first_mapped_at(canonical_transaction)
+    first_mapped_event_at = Ahoy::Event
+                            .where("name = ? and (properties->'canonical_transaction'->>'id')::int = ?", ::SystemEventService::Write::SettledTransactionMapped::NAME, canonical_transaction.id)
+                            .minimum(:time)
+
+    [first_mapped_event_at, canonical_transaction.canonical_event_mapping&.created_at].compact.min
+  end
 
   def cache_event_metric(metric_name, &block)
     @event = Event.friendly.find(params[:id])
