@@ -13,12 +13,23 @@ function showConfirm(
   }).then(v => !!v)
 }
 
+// jquery-ujs disables `data-disable-with` elements shortly after every submit
+// event; nothing re-enables them when the confirmation cancels the submission.
+function reenableFormElements(formElement) {
+  const jQuery = window.jQuery
+  if (formElement && jQuery?.rails)
+    jQuery.rails.enableFormElements(jQuery(formElement))
+}
+
 Turbo.config.forms.confirm = (message, formElement, submitter) => {
   const dangerMode = Boolean(
     submitter?.hasAttribute('data-turbo-confirm-danger') ||
     formElement?.hasAttribute('data-turbo-confirm-danger')
   )
-  return showConfirm(message, { dangerMode })
+  return showConfirm(message, { dangerMode }).then(confirmed => {
+    if (!confirmed) reenableFormElements(formElement)
+    return confirmed
+  })
 }
 window.showConfirm = showConfirm
 window.swal = swal
