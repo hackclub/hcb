@@ -4,23 +4,24 @@
 #
 # Table name: payroll_positions
 #
-#  id            :bigint           not null, primary key
-#  aasm_state    :string           not null
-#  currency      :string           default("USD"), not null
-#  description   :text             not null
-#  end_date      :date             not null
-#  onboarded_at  :datetime
-#  onboarding_at :datetime
-#  rate_cents    :integer          default(0), not null
-#  rate_unit     :string           default("hour"), not null
-#  rejected_at   :datetime
-#  start_date    :date             not null
-#  terminated_at :datetime
-#  title         :text             not null
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
-#  manager_id    :bigint
-#  payee_id      :bigint           not null
+#  id                          :bigint           not null, primary key
+#  aasm_state                  :string           not null
+#  combine_contract_attachment :boolean          default(TRUE), not null
+#  currency                    :string           default("USD"), not null
+#  description                 :text             not null
+#  end_date                    :date             not null
+#  onboarded_at                :datetime
+#  onboarding_at               :datetime
+#  rate_cents                  :integer          default(0), not null
+#  rate_unit                   :string           default("hour"), not null
+#  rejected_at                 :datetime
+#  start_date                  :date             not null
+#  terminated_at               :datetime
+#  title                       :text             not null
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#  manager_id                  :bigint
+#  payee_id                    :bigint           not null
 #
 # Indexes
 #
@@ -283,13 +284,14 @@ module Payroll
           include_videos: false,
           external_template_id: Contract::PayrollPosition::DOCUSEAL_TEMPLATE_ID,
           prefills: {
-            "payee_name"  => payee.display_name,
-            "title"       => title,
-            "description" => description,
-            "rate"        => rate_label,
-            "start_date"  => start_date.to_fs(:long),
-            "end_date"    => end_date.to_fs(:long),
-            "documents"   => (file.attached? ? [{ "name" => file.blob.filename.to_s, "file" => Rails.application.routes.url_helpers.rails_blob_url(file) }] : nil)
+            "payee_name"        => payee.display_name,
+            "title"             => title,
+            "description"       => description,
+            "rate"              => rate_label,
+            "start_date"        => start_date.to_fs(:long),
+            "end_date"          => end_date.to_fs(:long),
+            "documents"         => (file.attached? ? [{ "name" => file.blob.filename.to_s, "file" => Rails.application.routes.url_helpers.rails_blob_url(file) }] : nil),
+            "combine_documents" => combine_contract_attachment
           }.compact,
           reissue_of:
         )
