@@ -129,9 +129,8 @@ class AdminMailer < ApplicationMailer
 
   def accounting
     [
-      # User.find_by_public_id("usr_JptgR1"), # Sierra
-      # User.find_by_public_id("usr_MVtap3"),  # Lucy
-      User.find_by_public_id("usr_b9YtZb")
+      User.find_by_public_id("usr_JptgR1"), # Sierra
+      User.find_by_public_id("usr_MVtap3")  # Lucy
     ].compact.map(&:email_address_with_name)
   end
 
