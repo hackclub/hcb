@@ -345,7 +345,7 @@ CanonicalPendingEventMapping.create!({
                                      })
 
 te_non_pending_transaction = CanonicalPendingTransaction.create!(
-  date: 1.days.ago,
+  date: 1.day.ago,
   memo: "📋 Overpriced Insurance Policy",
   amount_cents: 140381,
 )
@@ -417,7 +417,7 @@ def seed_person(email, full_name)
 end
 
 def seed_org(slug, name, **attrs)
-  event = Event.create_with(name:, point_of_contact: User.first, **attrs).find_or_create_by!(slug:)
+  event = Event.create_with(name:, point_of_contact: User.first, can_front_balance: true, **attrs).find_or_create_by!(slug:)
   OrganizerPositionInvite.find_or_create_by!(event:, user: User.first, sender: User.first)
   event
 end
@@ -690,7 +690,7 @@ def populate_event!(event, admin:, organizers:, scale: 20)
 
   # --- employee (Gusto-style) payroll ---
   employee = Employee.create!(event:, entity: organizer, aasm_state: "onboarded", gusto_id: "gusto_seed_#{SecureRandom.hex(4)}")
-  employee.payments.create!(title: "Salary — monthly", amount_cents: 3_000_00, aasm_state: "paid", reviewed_by: admin, approved_at: 1.day.ago)
+  Employee::Payment.create!(employee:, title: "Salary — monthly", amount_cents: 3_000_00, aasm_state: "paid", reviewed_by: admin, approved_at: 1.day.ago)
 
   # --- reimbursements: several states, including the admin's own ---
   seed_reimbursement(event, admin, "Conference travel", [[42.50, "Taxi from airport", "Travel"], [18.75, "Team lunch", "Food & Entertainment"], [230.00, "Hotel night", "Travel"]], :reimbursed)
@@ -856,19 +856,6 @@ GLOBALLY_ENABLED_FEATURES.each { |feature| Flipper.enable(feature) }
 # onto a card-grants-enabled plan.
 Event.find_each do |event|
   event.plan.update(type: Event::Plan::HackClubAffiliate.name) unless event.plan.card_grants_enabled?
-end
-
-# ===========================================================================
-# LEDGER MAPPINGS — the new transaction engine maps items from their transaction
-# sources (Column account numbers, Stripe cards, linked objects), which the
-# CSV-sourced and hand-built seed transactions don't have. Map those from their
-# event mappings so ledger balances match the transactions shown.
-# ===========================================================================
-Ledger::Item.where.missing(:primary_mapping).find_each do |item|
-  event = item.canonical_transactions.first&.event || item.canonical_pending_transactions.first&.event
-  next if event.nil?
-
-  Ledger::Mapping.map_primary!(ledger: Ledger.find_or_create_by!(primary: true, event:), ledger_item: item, mapped_by: Ledger::Mapper::SYSTEM)
 end
 
 puts "Done!"
