@@ -4,10 +4,12 @@
   <% admin_tool do %>
     <div class="field">
       <%= form.label :event_id %>
-      <%= combobox_tag form.field_name(:event_id), event_search_admin_index_path, value: sponsor.event&.to_combobox_display, placeholder: "Select event…" %>
+      <%= combobox_tag form.field_name(:event_id), event_search_admin_index_path, selected: sponsor.event, placeholder: "Select event…" %>
     </div>
   <% end %>
-  <%= form.hidden_field :event_id, value: params[:event_id] unless admin_signed_in? %>
+  <%# Only for users who don't get the picker above; otherwise both submit an
+      `event_id` and this one, coming last, would win. %>
+  <%= form.hidden_field :event_id, value: params[:event_id] unless current_user&.auditor? %>
 
   <div class="field">
     <%= form.label :name, "Name (use company name if applicable)" %>

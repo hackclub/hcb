@@ -3,6 +3,7 @@
 class AdminController < Admin::BaseController
   include Admin::PaymentApprovable
   include Admin::TransferApprovable
+  include ComboboxSearchable
 
   def nav
     @nav = Admin::Nav.new(page_title: params[:title])
@@ -416,22 +417,24 @@ class AdminController < Admin::BaseController
 
   def event_search
     @q = params[:q].presence
-    @events = if @q.present?
-                Event.search_name(@q).order(Event::CUSTOM_SORT).limit(20).select(:id, :name)
-              else
-                Event.order(Event::CUSTOM_SORT).limit(20).select(:id, :name)
-              end
-    render turbo_stream: helpers.async_combobox_options(@events)
+    events = @q.present? ? Event.search_name(@q) : Event.all
+    events = combobox_page(events.order(Event::CUSTOM_SORT).select(:id, :name, :slug))
+
+    render json: events.map { |event|
+      { value: event.id.to_s, label: helpers.combobox_display(event), sublabel: event.slug }
+    }
   end
 
   def user_search
     @q = params[:q].presence
-    @users = if @q.present?
-               User.search_name(@q).limit(20).select(:id, :full_name, :email)
-             else
-               User.order(:full_name).limit(20).select(:id, :full_name, :email)
-             end
-    render turbo_stream: helpers.async_combobox_options(@users)
+    users = @q.present? ? User.search_name(@q) : User.order(:full_name)
+    users = combobox_page(users.select(:id, :full_name, :email))
+
+    # The admin display already spells out the email and ID, hence the sublabel
+    # only being worth rendering for everyone else.
+    render json: users.map { |user|
+      { value: user.id.to_s, label: helpers.combobox_display(user), sublabel: (user.email unless admin_signed_in?) }
+    }
   end
 
   def pending_ledger
