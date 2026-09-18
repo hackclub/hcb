@@ -43,7 +43,7 @@ module Payroll
 
         # An organizer uploading on a contractor's behalf is already
         # approving it, so skip the separate manual-approval step.
-        approved = @invoice.approve!(reviewed_by: current_user) if @on_behalf
+        approved = @invoice.approve(reviewed_by: current_user) if @on_behalf
       end
 
       if @on_behalf
@@ -71,7 +71,7 @@ module Payroll
         return redirect_to contractor_page
       end
 
-      if @invoice.approve!(reviewed_by: current_user)
+      if @invoice.approve(reviewed_by: current_user)
         flash[:success] = "Invoice approved! #{helpers.possessive(@invoice.payroll_position.payee.display_name)} payment will be sent after HCB review."
       else
         flash[:error] = "Your organization doesn't have enough money to pay this invoice. Your balance is #{helpers.render_money(@event.balance_available_v2_cents)}."
@@ -111,8 +111,8 @@ module Payroll
       policy(@invoice).on_behalf?
     end
 
-    # The on-behalf form breaks out of its frame, so errors need the layout to
-    # come back as a full page (and to render the flash).
+    # The form breaks out of its frame, so errors need the layout to come back
+    # as a full page (and to render the flash).
     def render_form_error
       render :new, status: :unprocessable_content, layout: !turbo_frame_request?
     end

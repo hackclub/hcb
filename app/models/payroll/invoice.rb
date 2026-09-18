@@ -72,9 +72,9 @@ module Payroll
     end
 
     # Approves the invoice and creates the payment it triggers. Returns false
-    # without raising if the event can't currently cover it, so callers can
-    # fall back to approving it manually later.
-    def approve!(reviewed_by:)
+    # (rather than raising) if the event can't currently cover it, so callers
+    # can fall back to approving it manually later.
+    def approve(reviewed_by:)
       return false if MoneyService.convert_to_usd(amount_cents, currency) > event.balance_available_v2_cents
 
       transaction do
