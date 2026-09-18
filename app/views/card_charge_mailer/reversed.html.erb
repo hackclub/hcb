@@ -12,15 +12,15 @@
 <% if @failed_verification_checks.present? %>
   <h3 class="mb-2">Troubleshooting tips</h3>
   <p class="my-0">
-  <% if @failed_verification_checks.include?("address_postal_code_check") %>
-    We noticed that the zip code used at <%= @merchant_name %> didn't match the billing zip code on your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %> (<%= @card_charge.stripe_cardholder.address_postal_code %>). Please try again using that zip code.
-  <% end %>
-  <% if @failed_verification_checks.include?("address_line1_check") %>
-    We noticed that the billing address used at <%= @merchant_name %> didn't match the billing address on your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please try again using your HCB billing address.
-  <% end %>
-  <% if @failed_verification_checks.include?("cvc_check") %>
-    We noticed that the CVC used at <%= @merchant_name %> didn't match your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please try again with the correct CVC.
-  <% end %>
+    <% if @failed_verification_checks.include?("address_postal_code_check") %>
+      We noticed that the zip code used at <%= @merchant_name %> didn't match the billing zip code on your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %> (<%= @card_charge.stripe_cardholder.address_postal_code %>). Please try again using that zip code.
+    <% end %>
+    <% if @failed_verification_checks.include?("address_line1_check") %>
+      We noticed that the billing address used at <%= @merchant_name %> didn't match the billing address on your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please try again using your HCB billing address.
+    <% end %>
+    <% if @failed_verification_checks.include?("cvc_check") %>
+      We noticed that the CVC used at <%= @merchant_name %> didn't match your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please try again with the correct CVC.
+    <% end %>
   </p>
 <% end %>
 
