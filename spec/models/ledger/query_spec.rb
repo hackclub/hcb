@@ -602,6 +602,16 @@ RSpec.describe Ledger::Query, type: :model do
         expect(execute_query({ category: { "$eq" => "benefits" } }).pluck(:id)).to match_array(ids_of(item_d))
       end
 
+      it "matches an item only once when both its settled and pending transactions carry the category" do
+        # The two branches are UNION ALL'd, so this item's id is in the inner set
+        # twice; IN must still yield one row.
+        TransactionCategoryMapping.create!(category:, categorizable: create(:canonical_transaction, ledger_item: item_c))
+        TransactionCategoryMapping.create!(category:, categorizable: create(:canonical_pending_transaction, ledger_item: item_c))
+        repin(item_c)
+
+        expect(execute_query({ category: { "$eq" => "benefits" } }).pluck(:id)).to eq(ids_of(item_c))
+      end
+
       it "matches nothing for a slug that isn't a category" do
         expect(execute_query({ category: { "$eq" => "not-a-category" } })).to be_empty
       end

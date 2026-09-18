@@ -292,11 +292,21 @@ class Ledger
         # an item matches if either kind carries the category. Resolving the slug
         # inside the subquery (rather than looking the category up first) means an
         # unknown slug simply matches nothing.
+        #
+        # One sublink over a UNION ALL, not two OR'd `id IN (...)` clauses:
+        # Postgres can't pull a sublink out from under an OR, so the two-clause
+        # form plans as `Filter: ((hashed SubPlan 1) OR (hashed SubPlan 2))` —
+        # each subquery is built in full before the ledger scoping `execute` ANDs
+        # on can narrow anything. A single sublink pulls up into one semi-join
+        # over an Append, which the planner can order against that scoping.
         mappings = TransactionCategoryMapping.where(transaction_category_id: TransactionCategory.where(slug: operand).select(:id))
         settled = CanonicalTransaction.where(id: mappings.where(categorizable_type: "CanonicalTransaction").select(:categorizable_id)).select(:ledger_item_id)
         pending = CanonicalPendingTransaction.where(id: mappings.where(categorizable_type: "CanonicalPendingTransaction").select(:categorizable_id)).select(:ledger_item_id)
 
-        relation.where(id: settled).or(relation.where(id: pending))
+        # UNION ALL, not UNION: an item carrying the category on both a settled
+        # and a pending transaction appears twice in the inner set, and IN
+        # doesn't care — deduplicating it would only cost a sort.
+        relation.where(Ledger::Item.arel_table[:id].in(Arel::Nodes::UnionAll.new(settled.arel, pending.arel)))
       when "merchant"
         relation.where(linked_object_type: "CardCharge", linked_object_id: CardCharge.where(merchant_network_id: operand).select(:id))
       end
