@@ -7,10 +7,10 @@ module Payroll
       @position = @invoice.payroll_position
       @event = @position.event
 
-      managers = @event.organizer_contact_emails(only_managers: true)
+      email_recipients = @position.manager&.email_address_with_name || @event.organizer_contact_emails(only_managers: true)
 
       mail(
-        to: managers,
+        to: email_recipients,
         subject: "#{@position.payee.display_name} submitted an invoice for #{@invoice.amount.format}",
         from: hcb_email_with_name_of(@event)
       )
