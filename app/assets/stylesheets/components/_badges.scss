@@ -71,6 +71,25 @@
     background-color: rgba(map-get($palette, muted), 0.125);
     color: map-get($palette, slate);
   }
+
+  // The dashed outline worn by anything whose money hasn't settled yet. It's
+  // defined here rather than as a string of utility classes at each call site
+  // because "pending" is rendered from several unrelated places: Ledger::Item
+  // statuses, the legacy transactions table, the announcement blocks, and the
+  // pending fee rows.
+  //
+  // The fill is transparent so the dashes read as an outline. The call sites
+  // used to ask for that with `bg-transparent`, but badge_for appended
+  // `bg-muted` to anything labelled "Pending" and that won on specificity, so
+  // the badge had always rendered filled.
+  &.badge--pending {
+    background-color: transparent;
+    color: map-get($palette, slate);
+    border: 1px dashed;
+    border-color: map-get($palette, muted);
+    border-width: 0.5px;
+    margin: 0 0.5rem 0 0;
+  }
   &.muted {
     background-color: map-get($palette, muted);
     color: $white;
