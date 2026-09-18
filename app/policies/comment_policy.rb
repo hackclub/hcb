@@ -23,6 +23,8 @@ class CommentPolicy < ApplicationPolicy
   end
 
   def edit?
+    return false if record.admin_only && !user.auditor?
+
     user.admin? || (users.include?(user) && record.user == user) || (user.auditor? && record.user == user)
   end
 
