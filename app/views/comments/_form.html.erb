@@ -1,4 +1,4 @@
-<%= form_with model: @comment&.new_record? ? [@comment.commentable, @comment] : @comment || [commentable, Comment.new], data: { turbo_frame: turbo_frame_request_id }.compact do |form| %>
+<%= form_with model: @comment&.new_record? ? [@comment.commentable, @comment] : @comment || [commentable, Comment.new], data: { turbo_frame: turbo_frame_request_id } do |form| %>
   <%= form.hidden_field :redirect_url, value: url_for(only_path: false) %>
   <%= form_errors @comment || Comment.new, "message", "We couldn't update your" %>
 

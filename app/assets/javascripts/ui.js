@@ -87,7 +87,8 @@ if (!openPopoverFromUrl()) {
 }
 
 document.addEventListener('turbo:before-fetch-response', async event => {
-  if (!event.target.closest?.('turbo-frame')) return
+  const frame = event.target.closest?.('turbo-frame')
+  if (!frame) return
 
   const response = event.detail.fetchResponse.response
   if (!response.headers.get('content-type')?.includes('text/html')) return
@@ -99,7 +100,7 @@ document.addEventListener('turbo:before-fetch-response', async event => {
   if (!flash) return
 
   const container = document.getElementById(
-    event.target.closest('#shared_popover')
+    frame.closest('#shared_popover')
       ? 'shared_popover_flash'
       : 'flash-container'
   )
