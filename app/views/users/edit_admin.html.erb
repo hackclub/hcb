@@ -108,7 +108,7 @@
   <% end %>
 
   <% admin_tool "p-3" do %>
-    <h3 class="mb2 mt1">Admin Transfer Limit</h3>
+    <h3 class="mb2 mt1">Admin transfer limit</h3>
     <section>
       <p>Admin transfer limit is currently: <strong><%= @limit ? number_to_currency(@limit.amount_cents / 100.0) : "None" %></strong></p>
       <% if superadmin_signed_in? %>
@@ -118,6 +118,7 @@
             <%= form.number_field :limit_amount, step: 0.01, min: 0, value: @limit ? "%.2f" % (@limit.amount_cents / 100.0) : nil %>
           </div>
           <div class="actions flex">
+            <%# turbo_confirm can't reference a dynamic ERB variable, so we rewrite it on click with the limit amount value in the input field %>
             <%= form.submit "Set admin transfer limit", data: { turbo_confirm: "Set the admin transfer limit for this user to $0.00?" }, onclick: "this.dataset.turboConfirm = 'Set the admin transfer limit for this user to $' +  this.form.limit_amount.value + '?'" %>
           </div>
         <% end %>
