@@ -19,8 +19,10 @@ module Payroll
       reviewer?
     end
 
+    # A contractor never reviews their own invoice, even when they are also an
+    # organizer who could otherwise approve it.
     def approve?
-      reviewer?
+      !contractor? && reviewer?
     end
 
     def reject?

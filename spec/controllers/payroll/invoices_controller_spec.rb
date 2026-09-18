@@ -91,4 +91,33 @@ RSpec.describe Payroll::InvoicesController do
       end
     end
   end
+
+  describe "POST #approve" do
+    let(:invoice) do
+      position.invoices.create!(name: "Engineering hours", amount_cents: 50_00, currency: position.currency)
+    end
+
+    before { stub_balance(100_00) }
+
+    it "approves the invoice for an organizer who isn't the contractor" do
+      create_session(organizer, verified: true)
+
+      expect { post :approve, params: { event_id: event.slug, id: invoice.id } }
+        .to change(Payment, :count).by(1)
+
+      expect(invoice.reload).to be_approved
+    end
+
+    # An organizer on the payee's legal entity can still submit through the
+    # contractor form, so this endpoint is the remaining self-approval route.
+    it "refuses an organizer approving an invoice they are the contractor for" do
+      create(:legal_entity_user, legal_entity:, user: organizer)
+      create_session(organizer, verified: true)
+
+      expect { post :approve, params: { event_id: event.slug, id: invoice.id } }
+        .not_to change(Payment, :count)
+
+      expect(invoice.reload).to be_submitted
+    end
+  end
 end

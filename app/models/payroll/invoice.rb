@@ -45,6 +45,7 @@ module Payroll
 
     monetize :amount_cents, with_model_currency: :currency
 
+    validates :amount_cents, numericality: { greater_than: 0 }, integer_column: true
     validates :currency, inclusion: { in: Money::Currency.all.map(&:iso_code) }
     validate :currency_matches_position
 
@@ -72,12 +73,15 @@ module Payroll
     end
 
     # Approves the invoice and creates the payment it triggers. Returns false
-    # (rather than raising) if the event can't currently cover it, so callers
-    # can fall back to approving it manually later.
+    # (rather than raising) if it has already been reviewed or the event can't
+    # currently cover it, so callers can fall back to approving it manually
+    # later. The lock keeps two concurrent approvals from paying it twice.
     def approve(reviewed_by:)
       return false if MoneyService.convert_to_usd(amount_cents, currency) > event.balance_available_v2_cents
 
-      transaction do
+      with_lock do
+        next false unless submitted?
+
         update!(payment: Payment.create!(
           payee: payroll_position.payee,
           creator: reviewed_by,
@@ -88,8 +92,6 @@ module Payroll
         ))
         mark_approved!(reviewed_by)
       end
-
-      true
     end
 
     def receipt_required?

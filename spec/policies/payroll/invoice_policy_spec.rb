@@ -41,4 +41,22 @@ RSpec.describe Payroll::InvoicePolicy, type: :policy do
       expect(policy.create?).to eq(false)
     end
   end
+
+  describe "#approve?" do
+    it "is allowed for an organizer who can review the position" do
+      expect(described_class.new(organizer, invoice).approve?).to eq(true)
+    end
+
+    # Otherwise an organizer on the payee's legal entity could submit an
+    # invoice through the contractor form and then approve their own pay.
+    it "is denied for the contractor themselves, even when they can review the position" do
+      create(:legal_entity_user, legal_entity:, user: organizer)
+
+      expect(described_class.new(organizer, invoice).approve?).to eq(false)
+    end
+
+    it "is denied for a user with no permissions on the event" do
+      expect(described_class.new(create(:user), invoice).approve?).to eq(false)
+    end
+  end
 end
