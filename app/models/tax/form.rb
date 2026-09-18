@@ -94,7 +94,7 @@ module Tax
       legal_entity.refresh_pending_contractors_payments!
     end
 
-    after_update if: -> { taxbandits_tin_matching_status_previously_changed?(to: :failed ) } do
+    after_update if: -> { taxbandits_tin_matching_status_previously_changed?(to: :failed) } do
       Tax::FormMailer.with(form: self).verification_failed.deliver_later
     end
 
