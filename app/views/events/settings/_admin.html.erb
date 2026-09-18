@@ -112,11 +112,6 @@
         <%= form.check_box :financially_frozen, switch: true, disabled: %>
       </div>
 
-      <div class="field field--checkbox">
-        <%= form.label :can_front_balance, "Front incoming transactions?" %>
-        <%= form.check_box :can_front_balance, switch: true, disabled: %>
-      </div>
-
       <div class="action">
         <%= form.submit "Update", disabled:, data: { turbo: false } %>
       </div>
