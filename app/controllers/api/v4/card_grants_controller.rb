@@ -35,7 +35,7 @@ module Api
 
         expiration_at = params["expiration_at"]&.to_date
 
-        @card_grant = @event.card_grants.build(params.permit(:amount_cents, :email, :invite_message, :merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by:, expiration_at:))
+        @card_grant = @event.card_grants.build(params.permit(:amount_cents, :email, :invite_message, :merchant_lock, :category_lock, :keyword_lock, :banned_merchants, :banned_categories, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by:, expiration_at:))
 
         authorize @card_grant
 
@@ -91,7 +91,7 @@ module Api
       def update
         authorize @card_grant
 
-        attrs = params.permit(:merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :instructions)
+        attrs = params.permit(:merchant_lock, :category_lock, :keyword_lock, :banned_merchants, :banned_categories, :purpose, :one_time_use, :instructions)
         attrs[:expiration_at] = params["expiration_at"]&.to_date if params["expiration_at"].present?
 
         @card_grant.update!(attrs)
