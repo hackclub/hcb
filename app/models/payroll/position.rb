@@ -269,6 +269,7 @@ module Payroll
         return if contractor.nil? || contractor.signed?
 
         notify_contractor_of_onboarding(contractor)
+        schedule_onboarding_reminders
       end
     end
 
@@ -335,14 +336,13 @@ module Payroll
       Payroll::PositionMailer.with(position: self, party:).onboarding.deliver_later
     end
 
-    private
-
     def notify_contractor_of_onboarding(contractor)
       contractor.notify
-      schedule_onboarding_reminders
     rescue => e
       Rails.error.report(e, context: { payroll_position_id: id })
     end
+
+    private
 
     def schedule_onboarding_reminders
       onboarding_reminder_days.each do |days|
