@@ -1,0 +1,13 @@
+<%# locals: (ledger_item:) %>
+
+<% if ledger_item.pinnable? %>
+  <% is_pinned = ledger_item.pinned? %>
+  <div class="flex muted justify-end items-center">
+    <%= inline_icon "pin-fill", size: 24 %>
+    <%= link_to is_pinned ? ledger_item_unpin_path(ledger_item) : ledger_item_pin_path(ledger_item), data: { turbo_method: :post, turbo_confirm: "This will #{is_pinned ? "unpin" : "pin" } this transaction for all team members. Continue?" } do %>
+      <small class="mt0 mb0">
+        <%= is_pinned ? "Unpin from transaction list" : "Pin to top of transaction list" %>
+      </small>
+    <% end %>
+  </div>
+<% end %>

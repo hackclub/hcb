@@ -26,8 +26,9 @@ module Reimbursement
       (admin? || (manager? && !creator?)) && record.report.submitted?
     end
 
+    # Guards the same nil == nil comparison as HcbCodePolicy#user_made_purchase?.
     def user_made_expense?
-      record&.report&.user == user
+      user.present? && record&.report&.user == user
     end
 
     alias receiptable_upload? user_made_expense?

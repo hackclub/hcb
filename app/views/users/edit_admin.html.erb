@@ -53,6 +53,12 @@
             <%= form.label :running_balance_enabled, "Show running balance?" %>
             <%= form.check_box :running_balance_enabled, checked: @user.running_balance_enabled? %>
           </div>
+
+          <div class="field field--checkbox">
+            <%= form.label :phone_number_verification_bypassed, "Bypass phone number verification for stripe cards / card grants" %>
+            <%= form.check_box :phone_number_verification_bypassed, checked: @user.phone_number_verification_bypassed? %>
+          </div>
+
         <% end %>
 
         <% if superadmin_signed_in? %>
@@ -87,7 +93,7 @@
       <% if @user.card_locking_suppressed? %>
         <p>Card locking is suppressed until <%= format_datetime @user.card_locking_suppressed_until %>.</p>
       <% end %>
-      <% if admin_signed_in? %>
+      <% if admin_signed_in? && (@user != current_user || Flipper.enabled?(:card_locking_self_suppression, current_user)) %>
         <%= form_with url: suppress_card_locking_user_path(@user), method: :post, data: { turbo_frame: "_top" } do |form| %>
           <div class="field">
             <%= form.label :hours, "Suppress card locking for (hours)" %>

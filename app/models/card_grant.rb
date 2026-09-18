@@ -18,7 +18,7 @@
 #  one_time_use               :boolean
 #  pre_authorization_required :boolean          default(FALSE), not null
 #  purpose                    :string
-#  status                     :integer          default("active"), not null
+#  status                     :integer          default(0), not null
 #  created_at                 :datetime         not null
 #  updated_at                 :datetime         not null
 #  disbursement_id            :bigint
@@ -109,7 +109,8 @@ class CardGrant < ApplicationRecord
 
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
-  scope :search_for, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
+  scope :search, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
+  scope :public_search, ->(q) { joins(:user).where("users.preferred_name ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
   scope :expired_before, ->(date) { where("card_grants.expiration_at < ?", date) }
   scope :expires_on, ->(date) { where("card_grants.expiration_at = DATE(?)", date) }
 
@@ -134,6 +135,8 @@ class CardGrant < ApplicationRecord
   def state_text
     if suspected_fraud?
       "Fraudulent"
+    elsif converted_to_reimbursement_report?
+      "Converted to reimbursement"
     elsif canceled?
       "Canceled"
     elsif expired?
@@ -154,6 +157,10 @@ class CardGrant < ApplicationRecord
     return :warning if s == :info
 
     :muted
+  end
+
+  def converted_to_reimbursement_report?
+    canceled? && reimbursement_report.present?
   end
 
   def suspected_fraud?

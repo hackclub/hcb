@@ -7,7 +7,7 @@ RSpec.describe StripeCardholderService::Create do
   let(:ip_address) { "127.0.0.1" }
 
   describe "#run" do
-    it "raises when phone number is not verified" do
+    it "raises when phone number is not verified", skip: "the verified phone number requirement is temporarily disabled" do
       user = create(:user, phone_number: "+18556254225", phone_number_verified: false)
 
       service = described_class.new(current_user: user, ip_address:, event_id: event.id)

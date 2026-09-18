@@ -7,7 +7,7 @@
     <section>
       <% unless @legal_entity != @user.personal_legal_entity %>
         <p class="muted mt0 mb2">
-          When a <%= link_to "reimbursement report of yours", my_reimbursements_path, data: { turbo_frame: "_top" } %> is approved, HCB will use the information below to reimburse you. Without this information, you won't be able to submit reimbursement reports. You can update these settings at any time.
+          When a <%= link_to "reimbursement report of yours", my_reimbursements_path, data: { turbo_frame: "_top" } %> is approved or an <%= !@user.payments_received.exists? ? link_to("organization sends you a payment", my_pay_path, data: { turbo_frame: "_top" }) : "organization sends you a payment" %>, HCB will use your preferred payout method to pay you. Without a payout method, you won't be able to submit reimbursement reports, and you won't be able to accept payments from organizations on HCB. You can update these settings at any time.
           <% if @user.reimbursement_reports.pending.any? %>
             <p>
               Changes made here will apply to all non-reimbursed reports of yours, including your <%= pluralize(@user.reimbursement_reports.pending.count, "pending report") %>.

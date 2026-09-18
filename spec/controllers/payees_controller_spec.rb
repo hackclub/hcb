@@ -15,6 +15,10 @@ RSpec.describe PayeesController do
     end
 
     context "on the manual path" do
+      before do
+        Flipper.enable(:manual_payees_2026_08_05, event)
+      end
+
       it "creates a payee and a managed legal entity, then redirects with the payee selected" do
         expect do
           post :create, params: {

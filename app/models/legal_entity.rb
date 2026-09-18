@@ -20,7 +20,6 @@
 #  index_legal_entities_on_tin_hash           (tin_hash)
 #
 class LegalEntity < ApplicationRecord
-  self.ignored_columns += ["address_city", "address_country", "address_line1", "address_line2", "address_postal_code", "address_state"]
   include Hashid::Rails
 
   include PublicIdentifiable
@@ -30,7 +29,7 @@ class LegalEntity < ApplicationRecord
   # if a payment was sent by manually inputting details
   belongs_to :managing_event, class_name: "Event", optional: true
 
-  enum :entity_type, { person: "person", business: "business" }
+  enum :entity_type, { person: "person", business: "business", corporation: "corporation" }
 
   has_many :legal_entity_users
   has_many :users, through: :legal_entity_users
@@ -55,6 +54,12 @@ class LegalEntity < ApplicationRecord
 
   delegate :address_city, :address_country, :address_line1, :address_postal_code, :address_state, to: :latest_tax_form, allow_nil: true
 
+  after_update do
+    if entity_type_previously_changed?
+      payments.each(&:update_requires_tax_form)
+    end
+  end
+
   def tax_identification_number = Tax::IdentificationNumber.new(tin_hash:, legal_entity: self)
 
   def managed?
@@ -62,9 +67,11 @@ class LegalEntity < ApplicationRecord
   end
 
   # Re-check onboarding for any of this entity's contractor positions that are
-  # mid-onboarding. Called when a step that lives on the legal entity (tax form,
-  # payout method) completes.
-  def refresh_contractor_onboarding!
+  # mid-onboarding and payments that are pending. Called when a step that lives
+  # on the legal entity (tax form, payout method) completes.
+  def refresh_pending_contractors_payments!
+    payments.pending_legal_entity.each(&:refresh_legal_entity_state!)
+
     Payroll::Position.joins(:payee)
                      .where(payees: { legal_entity_id: id }, aasm_state: :onboarding)
                      .find_each(&:refresh_onboarding_state!)
@@ -76,16 +83,26 @@ class LegalEntity < ApplicationRecord
   # payability off that would strand every pending payment of anyone who took us up
   # on "start a new tax form". A newly submitted TIN only blocks payouts once it
   # completes and turns out to disagree, which is what mismatched_tax_form catches.
-  def payable?
+  # requires_tax_form: false skips the tax-paperwork checks (used for payments
+  # that are not tax reportable, or too small to require one) while still
+  # enforcing the unconditional blockers below.
+  def payable?(requires_tax_form: true)
+    return false if tin_banned? || archived?
+    return true unless requires_tax_form
+
     form = latest_completed_tax_form
+    requires_verification = form&.form_type == "W9" && tax_identification_number.predicted_to_be_over_threshold?
 
     form.present? && mismatched_tax_form.nil? && entity_type_mismatched_tax_form.nil? &&
-      (form.taxbandits_tin_match_success? || !tax_identification_number.predicted_to_be_over_threshold?) &&
-      !tin_banned? && !archived?
+      (form.taxbandits_tin_match_success? || !requires_verification)
   end
 
   def latest_completed_tax_form
     @latest_completed_tax_form ||= tax_forms.completed.order(completed_at: :desc, created_at: :desc).first
+  end
+
+  def tax_form_required?
+    payments.pending_legal_entity.any?(&:requires_tax_form) || payroll_positions.onboarding.exists?
   end
 
   # Whether tax info has ever been completed. Distinct from latest_tax_form, which
@@ -149,6 +166,14 @@ class LegalEntity < ApplicationRecord
   end
 
   delegate :masked_tin, to: :latest_usable_tax_form, allow_nil: true
+
+  def emails
+    if managed?
+      [payees.first.email]
+    else
+      users.map(&:email)
+    end
+  end
 
   private
 

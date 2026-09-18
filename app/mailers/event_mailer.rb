@@ -65,7 +65,7 @@ class EventMailer < ApplicationMailer
   end
 
   def transparency_mode_enabled
-    @can_disable_transparency = @event.eligible_for_disabling_transparency?
+    @can_disable_transparency = !@event.forced_transparency?
     mail to: @emails, subject: "#{@event.name} has enabled transparency mode"
   end
 
@@ -81,6 +81,11 @@ class EventMailer < ApplicationMailer
 
   def monthly_announcements_enabled
     @monthly_announcement = @event.announcements.monthly_for(Date.today).last
+    if @monthly_announcement.nil?
+      Rails.logger.error("EventMailer#monthly_announcements_enabled: no monthly announcement found for event #{@event.id}; skipping email")
+      return
+    end
+
     @scheduled_for = Date.today.next_month.beginning_of_month
     @warning_date = @scheduled_for - 7.days
 

@@ -13,7 +13,7 @@
                 <% end %>
             <% end %>
 
-            <%= link_to event_remove_logo_path(@event), method: :post do %>
+            <%= link_to event_remove_logo_path(@event), data: { turbo_method: :post } do %>
                 <div
                     role="button"
                     class="donations-logo-edit-btn donations-logo-edit-btn--left pointer select-none tooltipped tooltipped--e line-height-0 absolute rounded-full flex items-center justify-center embedded-display-none"

@@ -15,6 +15,59 @@ RSpec.describe User, type: :model do
     expect(user).to be_admin
   end
 
+  describe "nondisposable email validation" do
+    it "suggests the real domain for a known typo domain" do
+      user = build(:user, email: "someone@gmail.con")
+
+      expect(user).to_not be_valid
+      expect(user.errors[:email]).to eq(["looks like a typo. Did you mean someone@gmail.com?"])
+    end
+
+    it "uses the generic message for a non-typo disposable domain" do
+      user = build(:user, email: "someone@tormails.com")
+
+      expect(user).to_not be_valid
+      expect(user.errors[:email]).to eq(["provider is unsupported. Please try with another email address."])
+    end
+
+    it "suggests gmail.com for googlemail.com, which aliases the same mailbox" do
+      user = build(:user, email: "someone@googlemail.com")
+
+      expect(user).to_not be_valid
+      expect(user.errors[:email]).to eq(["looks like a typo. Did you mean someone@gmail.com?"])
+    end
+
+    it "only blocks disposable domains on create, leaving existing accounts usable" do
+      user = create(:user, email: "someone@gmail.com")
+      user.update_column(:email, "someone@googlemail.com")
+
+      expect(user.reload).to be_valid
+    end
+
+    it "allows major providers and school domains" do
+      %w[gmail.com hackclub.com outlook.com icloud.com student.hbuhsd.edu].each do |domain|
+        user = build(:user, email: "someone@#{domain}")
+
+        expect(user).to be_valid, "expected #{domain} to be allowed"
+      end
+    end
+
+    it "allows a provider's regional domains" do
+      %w[outlook.de outlook.fr yahoo.fr yahoo.ca hotmail.co.uk].each do |domain|
+        user = build(:user, email: "someone@#{domain}")
+
+        expect(user).to be_valid, "expected #{domain} to be allowed"
+      end
+    end
+
+    it "suggests icloud.com for icloud.co" do
+      user = build(:user, email: "someone@icloud.co")
+
+      expect(user).to_not be_valid
+      expect(user.errors[:email]).to eq(["looks like a typo. Did you mean someone@icloud.com?"])
+    end
+  end
+
   context "birthday validations" do
     it "fails validation when birthday is removed" do
       user = create(:user, full_name: "Caleb Denio")
@@ -276,6 +329,34 @@ RSpec.describe User, type: :model do
           expect(user.errors[:full_name]).not_to be_empty
         end
       end
+    end
+  end
+
+  describe "#pretend_is_not_admin" do
+    it "is cleared on save for users without an admin role" do
+      user = create(:user)
+      user.pretend_is_not_admin = true
+
+      user.save!
+
+      expect(user.pretend_is_not_admin).to eq(false)
+      expect(user.reload.pretend_is_not_admin).to eq(false)
+    end
+
+    it "is kept for auditors and admins" do
+      auditor = create(:user, access_level: :auditor, pretend_is_not_admin: true)
+      admin = create(:user, :make_admin, pretend_is_not_admin: true)
+
+      expect(auditor.reload.pretend_is_not_admin).to eq(true)
+      expect(admin.reload.pretend_is_not_admin).to eq(true)
+    end
+
+    it "is cleared when an admin is demoted" do
+      admin = create(:user, :make_admin, pretend_is_not_admin: true)
+
+      admin.update!(access_level: :user)
+
+      expect(admin.reload.pretend_is_not_admin).to eq(false)
     end
   end
 

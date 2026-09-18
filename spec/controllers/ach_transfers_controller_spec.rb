@@ -6,10 +6,14 @@ describe AchTransfersController do
   include SessionSupport
 
   describe "show" do
-    it "redirects to hcb code" do
+    it "redirects to hcb code only if user is an auditor or admin" do
+      user = create(:user, :make_auditor)
       event = create(:event)
       create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
       ach_transfer = create(:ach_transfer, event:)
+
+      create_session(user, verified: true)
+
       get :show, params: { id: ach_transfer.id }
       expect(response).to redirect_to(hcb_code_path(ach_transfer.local_hcb_code.hashid))
     end

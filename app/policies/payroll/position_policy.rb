@@ -30,6 +30,10 @@ module Payroll
       edit?
     end
 
+    def terminate?
+      event_policy.contractors? && event_policy.create_transfer?
+    end
+
     # Signing its contract during the invite flow requires the same
     # permission as creating a contractor.
     alias_method :contract?, :create?
@@ -52,7 +56,11 @@ module Payroll
     end
 
     def onboarding?
-      user&.auditor? || record.payee.legal_entity&.users&.include?(user) || user&.email == record.payee.email
+      return false if user.nil?
+      return true if user.auditor?
+      return true if record.payee.legal_entity&.users&.include?(user)
+
+      user.email == record.payee.email
     end
 
     private

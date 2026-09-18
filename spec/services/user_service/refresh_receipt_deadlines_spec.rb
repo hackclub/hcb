@@ -24,7 +24,8 @@ RSpec.describe UserService::RefreshReceiptDeadlines do
     expect(hcb_code.receipt_due_at).to be_within(2.seconds).of(1.day.ago + 7.days)
   end
 
-  it "slides due dates for a trusted cardholder to their most recent charge" do
+  # Un-skip when grace periods are announced.
+  it "slides due dates for a trusted cardholder to their most recent charge", :card_locking_trust, skip: "Trust is disabled" do
     # Deterministic on-time history: five charges settled 40-44 days ago, each with
     # a receipt uploaded the next day (well inside the 7-day window). They resolve on
     # time, giving a 100% on-time rate, so the cardholder is genuinely trusted.
@@ -47,7 +48,7 @@ RSpec.describe UserService::RefreshReceiptDeadlines do
     expect(old_outstanding.receipt_due_at).to be_within(2.seconds).of(1.day.ago + 7.days)
   end
 
-  it "does not shorten an outstanding charge below 72h when trust is lost" do
+  it "does not shorten an outstanding charge below 72h when trust is lost", :card_locking_trust, skip: "Trust is disabled" do
     hcb_code = create_settled_card_charge(user:, settled_at: 6.days.ago)
     hcb_code.update_columns(card_charge_settled_at: 6.days.ago, receipt_due_at: now + 5.days)
 

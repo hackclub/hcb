@@ -6,7 +6,6 @@
 #
 #  id                   :bigint           not null, primary key
 #  aasm_state           :string           not null
-#  contractable_type    :string
 #  cosigner_email       :string
 #  deleted_at           :datetime
 #  external_service     :integer
@@ -18,6 +17,7 @@
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
 #  contractable_id      :bigint
+#  contractable_type    :string
 #  document_id          :bigint
 #  external_id          :string
 #  external_template_id :string
@@ -57,7 +57,7 @@ class Contract
               { name: "Description", default_value: prefills["description"], readonly: true },
               { name: "Start Date", default_value: prefills["start_date"], readonly: true },
               { name: "End Date", default_value: prefills["end_date"], readonly: true },
-              { name: "Hourly Rate", default_value: prefills["rate"], readonly: true },
+              { name: "Rate", default_value: prefills["rate"], readonly: true },
             ]
           },
           {

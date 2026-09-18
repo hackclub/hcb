@@ -275,6 +275,18 @@ RSpec.describe Ledger, type: :model do
       expect(ledger.balance_cents).to eq(3000)
     end
 
+    it "filters items by datetime when given a date range" do
+      ct = create(:canonical_transaction, amount_cents: 1000, date: Date.current, memo: "Test Transaction")
+      create(:canonical_event_mapping, canonical_transaction: ct, event: ledger.event)
+      item = create(:ledger_item, amount_cents: 1000, canonical_transactions: [ct])
+      Ledger::Mapping.create!(ledger: ledger, ledger_item: item, on_primary_ledger: true)
+
+      expect(ledger.balance_cents(end_date: Date.current.end_of_day)).to eq(1000)
+      expect(ledger.balance_cents(end_date: Date.yesterday.end_of_day)).to eq(0)
+      expect(ledger.balance_cents(start_date: Date.current.beginning_of_day)).to eq(1000)
+      expect(ledger.balance_cents(start_date: Date.tomorrow.beginning_of_day)).to eq(0)
+    end
+
     it "returns a Money object" do
       ct = create(:canonical_transaction, amount_cents: 1000, date: Date.today, memo: "Test Transaction")
       create(:canonical_event_mapping, canonical_transaction: ct, event: ledger.event)
@@ -283,6 +295,31 @@ RSpec.describe Ledger, type: :model do
 
       expect(ledger.balance).to be_a(Money)
       expect(ledger.balance.cents).to eq(1000)
+    end
+  end
+
+  describe "#fee_balance_cents" do
+    it "returns 0 when the ledger has no event" do
+      ledger = Ledger.new(primary: false)
+      ledger.save(validate: false)
+
+      expect(ledger.fee_balance_cents).to eq(0)
+    end
+
+    it "returns fees owed minus fees already paid" do
+      event = create(:event)
+      create(:fee, canonical_event_mapping: nil, memo: "Owed fee", event:, reason: :revenue, amount_cents_as_decimal: 500)
+      allow(event.ledger).to receive(:total_fee_payments_cents).and_return(200)
+
+      expect(event.ledger.fee_balance_cents).to eq(300)
+    end
+
+    it "is negative (a fee credit) when more has been paid than is currently owed" do
+      event = create(:event)
+      create(:fee, canonical_event_mapping: nil, memo: "Owed fee", event:, reason: :revenue, amount_cents_as_decimal: 100)
+      allow(event.ledger).to receive(:total_fee_payments_cents).and_return(900)
+
+      expect(event.ledger.fee_balance_cents).to eq(-800)
     end
   end
 end

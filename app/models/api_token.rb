@@ -50,8 +50,6 @@ class ApiToken < ApplicationRecord
   blind_index :token
   blind_index :refresh_token
 
-  self.ignored_columns += ["refresh_token"]
-
   belongs_to :user
 
   def self.generate(options = {})

@@ -17,7 +17,7 @@
     <button type="button" class="btn bg-snow flex items-center text-left" style="gap: 8px;width:16rem"
             data-menu-target="toggle"
             data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
-      <span class="flex-1 truncate"><%= current ? current.short_label : "Choose…" %></span>
+      <span class="flex-1 truncate"><%= current ? (current.name.presence || current.short_label) : "Choose…" %></span>
       <%= inline_icon "down-caret", size: 20 %>
     </button>
 
@@ -26,7 +26,7 @@
         <%= link_to reimbursement_report_update_payout_method_path(report, legal_entity_payout_method_id: pm.id),
               class: "flex items-center#{" bold" if pm == current}", data: { turbo_method: :post } do %>
           <%= inline_icon pm.icon, size: 24 %>
-          <%= pm.short_label %>
+          <%= pm.name.presence || pm.short_label %>
         <% end %>
       <% end %>
 

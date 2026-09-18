@@ -13,6 +13,7 @@ class LegalEntity
         legal_entity:,
         details_type: params.dig(:user, :payout_method_type),
         details_attrs: details_params_for(params.dig(:user, :payout_method_type)),
+        name: params.dig(:user, :payout_method_name),
         make_default: legal_entity.payout_methods.unarchived.none?
       )
 
@@ -31,6 +32,7 @@ class LegalEntity
         legal_entity: @payout_method.legal_entity,
         details_type: @payout_method.details_type,
         details_attrs: details_params_for(@payout_method.details_type),
+        name: params.dig(:user, :payout_method_name),
         make_default: @payout_method.default?,
         replacing: @payout_method
       )
@@ -103,7 +105,7 @@ class LegalEntity
       # `edit_payout` lives under `users/`, but this controller isn't namespaced
       # under Users, so Rails won't find the template without the extra prefix.
       lookup_context.prefixes.unshift("users")
-      render template: "users/edit_payout", status: :unprocessable_entity
+      render template: "users/edit_payout", status: :unprocessable_content
     end
 
     def legal_entity

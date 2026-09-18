@@ -113,11 +113,11 @@ class LegalEntitiesController < ApplicationController
         # Re-point each payment at the new payee and then re-run the payability
         # check: these have been waiting in pending_legal_entity, and moving them
         # onto an already-payable entity is exactly the moment they can proceed.
-        # on_legal_entity_assigned no-ops unless the new entity is payable, so a
+        # refresh_legal_entity_state! no-ops unless the new entity is payable, so a
         # not-yet-payable target leaves them pending, as before.
         pending.each do |payment|
           payment.update!(payee: new_payee)
-          payment.on_legal_entity_assigned
+          payment.refresh_legal_entity_state!
         end
       end
 

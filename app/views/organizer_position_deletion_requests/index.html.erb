@@ -10,6 +10,7 @@
         <th>Event</th>
         <th>Submitted by</th>
         <th>Target organizer</th>
+        <th>Assignee</th>
         <th>Status</th>
         <th colspan="3"></th>
       </tr>
@@ -21,11 +22,12 @@
           <td><%= link_to opdr.event.name, event_path(opdr.event) %></td>
           <td><%= user_mention opdr.submitted_by %></td>
           <td><%= user_mention opdr.organizer_position.user %></td>
+          <td><%= opdr.assignee.present? ? user_mention(opdr.assignee) : "None" %></td>
           <td>
             <%= status_badge opdr.status_badge_type %>
             <%= opdr.status.to_s.humanize %>
           </td>
-          <td><%= link_to (opdr.under_review? ? "Process" : "View"), opdr, class: "btn" %></td>
+          <td><%= link_to (opdr.under_review? || opdr.assigned? ? "Process" : "View"), opdr, class: "btn" %></td>
         </tr>
       <% end %>
     </tbody>

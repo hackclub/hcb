@@ -18,7 +18,7 @@
                   use_my_path ? settings_address_path : address_user_path(local_assigns[:user] || current_user),
                   selected: local_assigns[:selected] == :settings_billing_address && local_assigns[:open] %>
   <% end %>
-  <%= dock_item "Reimbursement payouts",
+  <%= dock_item "Payouts",
                 use_my_path ? settings_payouts_path : payouts_user_path(local_assigns[:user] || current_user),
                 selected: local_assigns[:selected] == :settings_reimbursement_payouts && local_assigns[:open] %>
   <%= dock_item "Security",

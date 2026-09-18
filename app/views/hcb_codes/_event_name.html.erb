@@ -1,0 +1,9 @@
+<%# locals: (event:) -%>
+<%# The org a transaction belongs to, shown under its memo when a table mixes
+    rows from several orgs. Inside the memo cell rather than a column of its
+    own so Turbo Stream row replacements can't leave a row a column short. -%>
+<% if event.present? %>
+  <div class="transaction__event">
+    <%= link_to event.name, event_path(event), title: event.name, data: { turbo_frame: "_top" } %>
+  </div>
+<% end %>

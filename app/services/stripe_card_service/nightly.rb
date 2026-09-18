@@ -18,7 +18,7 @@ module StripeCardService
     #
     #   Check out HcbCode#memo for more info on how this work.
     def rename_canonical_transaction
-      stripe_issuing_card_canonical_transactions_to_rename.update_all(custom_memo: "💳 New user card fee")
+      stripe_issuing_card_canonical_transactions_to_rename.find_each { |ct| ct.update(custom_memo: "💳 New user card fee") }
     end
 
     def stripe_issuing_card_canonical_transactions_to_rename

@@ -11,11 +11,11 @@
 #  friendly_memo           :text
 #  hcb_code                :text
 #  memo                    :text             not null
-#  transaction_source_type :string
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
 #  ledger_item_id          :bigint
 #  transaction_source_id   :bigint
+#  transaction_source_type :string
 #
 # Indexes
 #
@@ -52,8 +52,8 @@ class CanonicalTransaction < ApplicationRecord
   scope :outgoing_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE}%'") }
   scope :incoming_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE}%'") }
   scope :stripe_card_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_CARD_CODE}%'") }
-  scope :with_custom_memo, -> { where("custom_memo is not null") }
-  scope :without_custom_memo, -> { where("custom_memo is null") }
+  scope :with_custom_memo, -> { where.not(custom_memo: nil) }
+  scope :without_custom_memo, -> { where(custom_memo: nil) }
   scope :with_short_code, -> { where("memo ~ '.*HCB-\\w{5}.*'") }
 
   scope :revenue, -> { where("amount_cents > 0") }
@@ -139,7 +139,6 @@ class CanonicalTransaction < ApplicationRecord
 
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
-    ledger_item.refresh!
   end
 
   after_commit if: -> { previous_changes.key?("ledger_item_id") } do
@@ -154,6 +153,14 @@ class CanonicalTransaction < ApplicationRecord
       PendingEventMappingEngine::Settle::Single::Stripe.new(canonical_transaction: self).run
       EventMappingEngine::Map::Single::Stripe.new(canonical_transaction: self).run
     end
+  end
+
+  # The moment this transaction actually settled, which for Stripe and Column
+  # transactions is earlier than when we ingested it.
+  def datetime
+    raw_stripe_transaction&.stripe_transaction&.dig("created")&.then { |t| Time.at(t) } ||
+      raw_column_transaction&.column_transaction&.dig("effective_at")&.then { |t| Time.parse(t) } ||
+      created_at
   end
 
   def smart_memo
@@ -487,14 +494,14 @@ class CanonicalTransaction < ApplicationRecord
 
   def assign_ledger_item
     safely do
+      reload_local_hcb_code
       ActiveRecord::Base.transaction do
         if calculated_ledger_item != local_hcb_code.ledger_item
           Rails.error.unexpected("CanonicalTransaction #{id} has calculated a different ledger item from its local_hcb_code. (#{calculated_ledger_item&.id} vs. #{local_hcb_code.ledger_item&.id})")
         end
 
-        li = calculated_ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        li = calculated_ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime:, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
         update!(ledger_item: li)
-        li.map!
       end
     end
   end

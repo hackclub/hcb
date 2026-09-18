@@ -9,6 +9,10 @@ class CardLockingMailerPreview < ActionMailer::Preview
     CardLockingMailer.cards_unlocked(user: User.first)
   end
 
+  def cards_unlocked_by_suppression
+    CardLockingMailer.cards_unlocked(user: User.first, suppressed_until: 24.hours.from_now)
+  end
+
   def warning
     CardLockingMailer.warning(user: User.first)
   end

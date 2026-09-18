@@ -26,7 +26,7 @@ module Payroll
       attachments = Array(invoice_params[:file]).compact_blank
       if attachments.empty?
         flash.now[:error] = "Please attach an invoice or supporting document."
-        return render :new, layout: false, status: :unprocessable_entity
+        return render :new, layout: false, status: :unprocessable_content
       end
 
       ActiveRecord::Base.transaction do
@@ -43,7 +43,7 @@ module Payroll
       redirect_to my_pay_path
     rescue ActiveRecord::RecordInvalid => e
       flash.now[:error] = e.message
-      render :new, layout: false, status: :unprocessable_entity
+      render :new, layout: false, status: :unprocessable_content
     end
 
     def approve
@@ -66,7 +66,8 @@ module Payroll
           creator: current_user,
           amount_cents: @invoice.amount_cents,
           currency: @invoice.currency,
-          purpose: @invoice.name
+          purpose: @invoice.name,
+          classification: :general_services
         )
         @invoice.update!(payment:)
         @invoice.mark_approved!(current_user)

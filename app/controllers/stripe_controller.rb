@@ -173,7 +173,7 @@ class StripeController < ActionController::Base
       return Rails.error.unexpected("Received charge dispute on nonexistent donation") if donation.nil?
 
       # Let's un-front the transaction.
-      donation.canonical_pending_transactions.update_all(fronted: false)
+      donation.canonical_pending_transactions.find_each { |cpt| cpt.update(fronted: false) }
     else
       # It's an invoice or a recurring donation
 
@@ -182,7 +182,7 @@ class StripeController < ActionController::Base
 
       return Rails.error.unexpected("Received charge dispute on nonexistent invoice or recurring donation") if invoice.nil? && donation.nil?
 
-      (invoice || donation).canonical_pending_transactions.update_all(fronted: false)
+      (invoice || donation).canonical_pending_transactions.find_each { |cpt| cpt.update(fronted: false) }
     end
 
     head :ok

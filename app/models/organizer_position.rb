@@ -8,7 +8,7 @@
 #  deleted_at                     :datetime
 #  first_time                     :boolean          default(TRUE)
 #  is_signee                      :boolean          default(FALSE)
-#  role                           :integer          default("manager"), not null
+#  role                           :integer          default(100), not null
 #  sort_index                     :integer
 #  created_at                     :datetime         not null
 #  updated_at                     :datetime         not null
@@ -60,6 +60,9 @@ class OrganizerPosition < ApplicationRecord
 
   after_create_commit :autofollow_event
 
+  after_update :remove_payroll_managers, if: -> { role_previously_changed?(from: :manager) }
+  after_destroy :remove_payroll_managers
+
   def tourable_options
     {
       demo: event.demo_mode?,
@@ -104,11 +107,15 @@ class OrganizerPosition < ApplicationRecord
     # Do nothing. The user already follows this event.
   end
 
-  private
-
   def user_must_be_verified
     if user&.unverified?
       errors.add(:user, "must verify their email before becoming an organizer")
+    end
+  end
+
+  def remove_payroll_managers
+    user.managing_payroll_positions.joins(:payee).where(payee: { event: }).find_each do |position|
+      position.update!(manager: nil)
     end
   end
 

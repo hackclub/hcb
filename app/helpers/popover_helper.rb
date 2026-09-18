@@ -36,6 +36,24 @@ module PopoverHelper
     )
   end
 
+  def ledger_item_popover_data(item)
+    # Only serve the ledger item popover to users who can actually view the ledger
+    # item show page. Everyone else gets the HCB code popover instead — otherwise
+    # the injected frame id (lit_…) wouldn't match the HCB page's frame (txn_…) and
+    # the popover would render empty.
+    if policy(item).show?
+      popover_data(
+        title: item.pretty_title,
+        src: item.popover_path,
+        frame_id: item.public_id,
+        state_url: ledger_item_path(item),
+        external_link: ledger_item_path(item)
+      )
+    else
+      hcb_code_popover_data(item.hcb_code)
+    end
+  end
+
   def card_grant_popover_data(card_grant, hcb_code:, event: nil, state_title: nil)
     popover_data(
       title: hcb_code.pretty_title(show_event_name: false, show_amount: true, event: event),

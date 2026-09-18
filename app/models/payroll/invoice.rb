@@ -48,7 +48,7 @@ module Payroll
     validates :currency, inclusion: { in: Money::Currency.all.map(&:iso_code) }
     validate :currency_matches_position
 
-    after_create_commit :notify_managers
+    after_create_commit :notify_manager
 
     aasm timestamps: true do
       state :submitted, initial: true
@@ -58,6 +58,7 @@ module Payroll
       event :mark_approved do
         after do |reviewed_by|
           update!(reviewed_by:)
+          copy_receipts_to_payment!
         end
         transitions from: :submitted, to: :approved
       end
@@ -80,7 +81,20 @@ module Payroll
 
     private
 
-    def notify_managers
+    # The document the contractor uploaded is the receipt for the payment their
+    # invoice triggers, so hand it over on approval. Payment::Attempt makes the
+    # same hand-off from payment to transfer, but only at the moment it creates
+    # the transfer — when the payee was ready to be paid straight away that
+    # already happened, so catch the transfer's HCB code up here too.
+    def copy_receipts_to_payment!
+      return if payment.nil?
+
+      [payment, payment.latest_payout&.local_hcb_code].compact.each do |receiptable|
+        Receipt.reupload(old_receiptable: self, new_receiptable: receiptable)
+      end
+    end
+
+    def notify_manager
       Payroll::InvoiceMailer.with(invoice: self).submitted.deliver_later
     end
 

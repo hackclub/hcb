@@ -2,6 +2,7 @@
 
 <% user = report.user %>
 <% payout_method = report.payout_method&.details %>
+<% payout_method_name = report.payout_method&.name %>
 
 <h3 class="mt-0">Payout information</h3>
 
@@ -14,6 +15,12 @@
         <td>Payout method:</td>
         <td><%= payout_method.title_kind %></td>
       </tr>
+      <% if payout_method_name.present? %>
+        <tr>
+          <td>Nickname:</td>
+          <td><%= payout_method_name %></td>
+        </tr>
+      <% end %>
       <tr>
         <td>Recipient:</td>
         <td><%= user.name %></td>

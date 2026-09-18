@@ -2,7 +2,7 @@
 
 module Tax
   class FormsController < ApplicationController
-    before_action :set_form, only: [:show, :sync, :discard]
+    before_action :set_form, only: [:show, :completed, :discard]
 
     def show
       authorize @form
@@ -10,10 +10,11 @@ module Tax
       @form.sync_with_taxbandits
 
       if @form.completed?
-        if pending_payroll_position.present?
+        flash[:success] = "This form has been completed"
+
+        if pending_payroll_position.present? && @form.legal_entity.payable?
           redirect_to onboarding_payroll_position_path(pending_payroll_position)
         else
-          flash[:success] = "This form has been completed"
           redirect_to legal_entity_path(@form.legal_entity)
           return
         end
@@ -21,11 +22,20 @@ module Tax
     end
 
     def create
-      @legal_entity = LegalEntity.find_by_hashid(params[:legal_entity_id])
+      @legal_entity = LegalEntity.find_by_hashid!(params[:legal_entity_id])
       authorize @legal_entity, policy_class: Tax::FormPolicy
 
       if @legal_entity.mismatched_tax_form.present? || @legal_entity.entity_type_mismatched_tax_form.present?
         flash[:error] = "Pick an option before starting a new tax form"
+        redirect_to legal_entity_path(@legal_entity)
+        return
+      end
+
+      # We want to make sure that if someone's every submitted a tax form to us,
+      # even if it is not required (such as with imported forms), we allow them
+      # to update their tax information
+      unless @legal_entity.tax_form_required? || @legal_entity.completed_tax_form?
+        flash[:error] = "You don't need to submit a tax form right now"
         redirect_to legal_entity_path(@legal_entity)
         return
       end
@@ -36,20 +46,17 @@ module Tax
       redirect_to tax_form_path(tax_form)
     end
 
-    def sync
+    def completed
       authorize @form
 
       @form.sync_with_taxbandits
 
       if @form.completed?
-        if pending_payroll_position.present?
+        if pending_payroll_position.present? && @form.legal_entity.payable?
           redirect_to onboarding_payroll_position_path(pending_payroll_position)
         else
           redirect_to legal_entity_path(@form.legal_entity)
         end
-      else
-        flash[:error] = "Complete the form before continuing"
-        redirect_back_or_to tax_form_path(@form)
       end
     end
 

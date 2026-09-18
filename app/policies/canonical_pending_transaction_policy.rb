@@ -5,10 +5,6 @@ class CanonicalPendingTransactionPolicy < ApplicationPolicy
     auditor_or_teammember
   end
 
-  def edit?
-    admin_or_teammember
-  end
-
   def update?
     admin_or_teammember
   end

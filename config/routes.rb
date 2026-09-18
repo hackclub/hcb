@@ -6,6 +6,7 @@ require "sidekiq/cron/web"
 Rails.application.routes.draw do
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
   get "up" => "rails/health#show", as: :rails_health_check
+  post Rails.configuration.constants[:csp_violation_report_path], to: "csp_violation_reports#create"
   get "/my_ip", to: "admin#my_ip"
 
   constraints AdminConstraint do
@@ -181,6 +182,8 @@ Rails.application.routes.draw do
       post "unimpersonate"
 
       post "suppress_card_locking", to: "users#suppress_card_locking"
+
+      post "reset_billing_address", to: "users#reset_billing_address"
     end
     post "delete_profile_picture", to: "users#delete_profile_picture"
     post "generate_totp"
@@ -310,6 +313,7 @@ Rails.application.routes.draw do
       post "referral_link_create", to: "referral/links#create"
       get "unknown_merchants", to: "admin#unknown_merchants"
       post "request_balance_export", to: "admin#request_balance_export"
+      post "request_canonical_transaction_balance_export", to: "admin#request_canonical_transaction_balance_export"
       get "active_teenagers_leaderboard", to: "admin#active_teenagers_leaderboard"
       get "new_teenagers_leaderboard", to: "admin#new_teenagers_leaderboard"
       get "contracts", to: "admin#contracts"
@@ -357,6 +361,12 @@ Rails.application.routes.draw do
       post "submit", on: :member
       post "reject", on: :member
     end
+    resources :payments, only: [:index]
+    resources :payroll_positions, only: [:index] do
+      post "reject", on: :member
+    end
+    resources :legal_entities, only: [:index]
+    resources :tax_forms, only: [:index]
     resources :column_statements, only: :index do
       get "bank_account_summary_report"
     end
@@ -418,11 +428,14 @@ Rails.application.routes.draw do
   resources :organizer_position_deletion_requests, only: [:index, :show, :create], concerns: :commentable do
     post "close"
     post "open"
+    post "assign"
+    post "unassign"
   end
 
   resources :g_suite_accounts, only: [:index, :create, :update, :edit, :destroy], path: "g_suite_accounts" do
     put "reset_password"
     put "toggle_suspension"
+    put "unmanage"
     resources :g_suite_aliases, only: [:create, :destroy], shallow: true
   end
 
@@ -487,15 +500,14 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :wires, only: [:edit, :update] do
+  resources :wires, only: [:show, :edit, :update] do
     member do
-      post "approve"
       post "send", to: "wires#send_wire"
       post "reject"
     end
   end
 
-  resources :wise_transfers, only: [:edit, :update] do
+  resources :wise_transfers, only: [:show, :update] do
     member do
       post "approve"
       post "reject"
@@ -549,8 +561,6 @@ Rails.application.routes.draw do
       get "attach_receipt"
       get "memo_frame"
       get "dispute"
-      post "invoice_as_personal_transaction"
-      post "pin"
       post "toggle_tag/:tag_id", to: "hcb_codes#toggle_tag", as: :toggle_tag
       post "send_receipt_sms", to: "hcb_codes#send_receipt_sms", as: :send_sms_receipt
 
@@ -573,18 +583,17 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :canonical_pending_transactions, only: [:show, :edit, :update] do
+  resources :canonical_pending_transactions, only: [:show, :update] do
     member do
       post "set_category"
     end
   end
 
-  resources :canonical_transactions, only: [:show, :edit] do
+  resources :canonical_transactions, only: [:show] do
     member do
       post "waive_fee"
       post "unwaive_fee"
       post "mark_bank_fee"
-      post "set_custom_memo"
       post "set_category"
     end
   end
@@ -606,7 +615,7 @@ Rails.application.routes.draw do
       post "admin_approve"
       post "admin_send_wise_transfer"
       post "reverse"
-      post "approve_all_expenses"
+      post "approve"
       post "request_changes"
       post "reject"
       post "submit"
@@ -634,6 +643,10 @@ Rails.application.routes.draw do
   scope module: :ledger, as: :ledger do
     resources :items, path: "transactions", only: [:show] do
       get "hcb"
+      post "pin"
+      post "unpin"
+      patch "rename"
+      post "invoice_as_personal_transaction"
     end
   end
   resources :ledger_items, only: [], path: "transactions", concerns: :commentable
@@ -722,7 +735,6 @@ Rails.application.routes.draw do
 
           get "transactions/missing_receipt", to: "transactions#missing_receipt"
           get :available_icons
-          get :intercom_token, to: "intercom#token"
         end
 
         resources :users, only: [:show] do
@@ -828,6 +840,7 @@ Rails.application.routes.draw do
   post "stripe/webhook", to: "stripe#webhook"
   post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
+  post "taxbandits/webhook", to: "taxbandits#webhook"
 
   post "discord/event_webhook", to: "discord#event_webhook"
   post "discord/interaction_webhook", to: "discord#interaction_webhook"
@@ -937,7 +950,7 @@ Rails.application.routes.draw do
 
   resources :tax_forms, only: [:show, :create], controller: "tax/forms" do
     member do
-      post "sync"
+      get "completed"
       post "discard"
     end
   end
@@ -954,6 +967,7 @@ Rails.application.routes.draw do
         get "personal_info"
         get "project_info"
         get "videos"
+        get "sign_agreement"
         get "agreement"
         get "review"
         get "submission"
@@ -991,6 +1005,7 @@ Rails.application.routes.draw do
     get "transactions"
     get "transactions_list"
     get "ledger"
+    post "toggle_new_ledger"
     get "stats"
     get "merchants_filter"
     put "toggle_hidden"
@@ -1030,6 +1045,7 @@ Rails.application.routes.draw do
     resources :payroll_positions, only: [:new, :create, :show, :edit, :update], controller: "payroll/positions" do
       member do
         get :contract
+        post :terminate
       end
     end
     resources :payroll_invoices, only: [], controller: "payroll/invoices" do
@@ -1046,7 +1062,8 @@ Rails.application.routes.draw do
 
     get "async_balance"
     get "async_sub_organization_balance"
-    get "async_sub_organizations_graph"
+    get "async_sub_organization_balances"
+    get "async_sub_organization_rows"
     get "reimbursements_pending_review_icon"
 
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)

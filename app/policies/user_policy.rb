@@ -125,6 +125,10 @@ class UserPolicy < ApplicationPolicy
     user.admin? || record == user
   end
 
+  def reset_billing_address?
+    user.admin? || record == user
+  end
+
   def toggle_sms_auth?
     user.admin? || record == user
   end
