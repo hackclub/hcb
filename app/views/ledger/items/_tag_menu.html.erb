@@ -13,7 +13,7 @@
     <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
       <% event.tags.each do |tag| %>
         <div class="flex items-center" data-tag="<%= tag.id %>">
-          <%= button_to toggle_tag_hcb_code_path(id: hcb_code.hashid, tag_id: tag.id), class: "menu__action #{tag_dom_id(hcb_code, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
+          <%= button_to ledger_item_toggle_tag_path(item), params: { tag_id: tag.id }, class: "menu__action #{tag_dom_id(hcb_code, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
             <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
             <%= tag.label %>
             <%= "✓" if item.tags.include?(tag) %>
@@ -26,7 +26,7 @@
       <% if event.tags.any? %>
         <div class="menu__divider tags__divider"></div>
       <% end %>
-      <%= render partial: "hcb_codes/create_tag", locals: { button: hcb_code.hashid } %>
+      <%= render partial: "hcb_codes/create_tag", locals: { button: item.hashid } %>
     </div>
   </div>
 <% end %>

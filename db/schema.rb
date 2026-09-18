@@ -1637,6 +1637,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
     t.index ["status"], name: "index_ledger_items_on_status"
   end
 
+  create_table "ledger_items_tags", primary_key: ["ledger_item_id", "tag_id"], force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "ledger_item_id", null: false
+    t.bigint "tag_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["tag_id"], name: "index_ledger_items_tags_on_tag_id"
+  end
+
   create_table "ledger_mappings", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "ledger_id", null: false
@@ -3169,6 +3177,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
   add_foreign_key "invoices", "users", column: "manually_marked_as_paid_user_id"
   add_foreign_key "invoices", "users", column: "voided_by_id"
   add_foreign_key "ledger_items", "users", column: "author_id"
+  add_foreign_key "ledger_items_tags", "ledger_items"
+  add_foreign_key "ledger_items_tags", "tags"
   add_foreign_key "ledger_mappings", "ledger_items"
   add_foreign_key "ledger_mappings", "ledgers"
   add_foreign_key "ledger_mappings", "ledgers", column: ["ledger_id", "on_primary_ledger"], primary_key: ["id", "primary"], name: "fk_ledger_mappings_primary_match"
