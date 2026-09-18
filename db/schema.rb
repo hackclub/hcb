@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_09_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_17_140226) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1144,7 +1144,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_09_120000) do
     t.string "aasm_state", null: false
     t.datetime "activated_at"
     t.text "address"
-    t.boolean "can_front_balance", default: true, null: false
     t.integer "country"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "deleted_at", precision: nil
@@ -3006,6 +3005,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_09_120000) do
     t.string "recipient_name", null: false
     t.text "return_reason"
     t.boolean "send_email_notification", default: false
+    t.string "uetr"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["column_id"], name: "index_wires_on_column_id", unique: true
