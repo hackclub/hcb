@@ -31,7 +31,6 @@ module Api
           return tx.outgoing_disbursement.disbursement.amount # incoming that needs a backfill
         end
 
-        # return tx.outgoing_disbursement.amount if tx.outgoing_disbursement?
         return tx.incoming_disbursement.amount if tx.incoming_disbursement?
         return tx.donation.amount if tx.donation?
         return tx.invoice.item_amount if tx.invoice?
