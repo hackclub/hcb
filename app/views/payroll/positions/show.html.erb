@@ -93,7 +93,7 @@
   <div class="mt-4 mb-2 flex items-center justify-between gap-2">
     <h3 class="my-0">Invoices</h3>
     <% if @can_upload_invoice %>
-      <%= link_to "##{dom_id(@position, :upload_invoice)}", class: "btn btn-small bg-success", rel: "modal:open" do %>
+      <%= link_to "#", class: "btn btn-small bg-success", data: { behavior: "modal_trigger", modal: dom_id(@position, :upload_invoice) } do %>
         <%= inline_icon "cloud-upload", size: 20 %>
         Upload invoice
       <% end %>

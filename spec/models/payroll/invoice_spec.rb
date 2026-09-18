@@ -32,18 +32,18 @@ RSpec.describe Payroll::Invoice, type: :model do
       expect {
         ActiveRecord::Base.transaction do
           invoice.save!
-          invoice.approve!(reviewed_by: approver)
+          invoice.approve(reviewed_by: approver)
         end
       }.to have_enqueued_mail(Payroll::InvoiceMailer, :submitted).exactly(0).times
     end
   end
 
-  describe "#approve!" do
+  describe "#approve" do
     it "refuses to pay an invoice the event can't cover, leaving it reviewable" do
       stub_balance(999)
       invoice = build_invoice.tap(&:save!)
 
-      expect(invoice.approve!(reviewed_by: approver)).to eq(false)
+      expect(invoice.approve(reviewed_by: approver)).to eq(false)
       expect(invoice.reload).to be_submitted
       expect(invoice.payment).to be_nil
     end
