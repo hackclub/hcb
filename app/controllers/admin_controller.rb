@@ -71,7 +71,7 @@ class AdminController < Admin::BaseController
       @stale_remap = true
       @remap_confirm_msg = "⚠️ This transaction was first mapped back in #{first_mapped_month}#{" and is currently mapped to \"#{@canonical_transaction.event&.name}\"" if @canonical_transaction.event}. #{verb.capitalize}ping transactions mapped in previous months may disrupt our accounting. Are you absolutely sure you want to #{verb} this transaction?"
       @remap_confirm_phrase = "REMAP #{@canonical_transaction.id}"
-      @remap_after_message = "Please contact Sierra in the #hcb-ops channel to let them know you #{verb}ped transaction ##{@canonical_transaction.id}."
+      @remap_after_message = "Please contact Sierra in the #hcb-ops channel to let her know you #{verb}ped transaction ##{@canonical_transaction.id}."
       @remap_warning_tooltip = "This transaction was first mapped in #{first_mapped_month}, a previous month — #{verb}ping it requires extra confirmation."
     end
   end
