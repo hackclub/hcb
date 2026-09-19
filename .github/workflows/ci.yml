@@ -99,6 +99,11 @@ jobs:
       - uses: ./.github/actions/setup-ruby
       - uses: ./.github/actions/setup-node
       - uses: ./.github/actions/setup-db
+      # ubuntu-24.04 runners no longer ship ImageMagick, which MiniMagick
+      # shells out to for the receipt image specs. Production gets it from
+      # the ruby base image. setup-ruby already ran `apt-get update`.
+      - name: Install ImageMagick
+        run: sudo apt-get install -y --fix-missing imagemagick
       - name: Build Assets
         run: yarn build && yarn build:css
       - name: Run RSpec
