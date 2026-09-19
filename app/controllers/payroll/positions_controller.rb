@@ -14,7 +14,7 @@ module Payroll
       authorize @position
       @frame = params[:frame].present?
       @can_review = Payroll::PositionPolicy.new(current_user, @event).review?
-      @invoices = @position.invoices.order(created_at: :desc)
+      @invoices = @position.invoices.includes(:reviewed_by).order(created_at: :desc)
       @payments = @position.payee.payments.order(created_at: :desc)
 
       @position.contract&.party(:organizer)&.sync_with_docuseal

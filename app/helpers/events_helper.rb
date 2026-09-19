@@ -154,6 +154,7 @@ module EventsHelper
     {
       name: "Contractors",
       path_proc: ->(event_id) { event_contractors_path(event_id:) },
+      async_badge_proc: ->(event) { event_contractors_pending_review_icon_path(event) },
       tooltip: "Manage payroll",
       icon: "person-badge",
       symbol: :contractors,
