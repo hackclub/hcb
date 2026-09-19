@@ -6,7 +6,7 @@
 
 <% unless defined?(hide_info) %>
   <span class="<%= "muted " unless defined?(selectable) %>mb1 flex items-center">
-    <button class="pop receipt__minimize mr1" onClick="unexpandReceipt()">
+    <button class="pop receipt__minimize mr1" data-controller="receipt-minimize" data-action="receipt-minimize#minimize">
       <%= inline_icon "view-back", size: 24 %>
     </button>
     <span>
