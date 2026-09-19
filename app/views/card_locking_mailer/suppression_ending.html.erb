@@ -1,0 +1,11 @@
+<p>
+  <% if @final %>
+    Your one time exception from the HCB team ends in about an hour, at <strong><%= CardLocking.format_deadline(@suppressed_until, @timezone) %></strong>.
+  <% else %>
+    Your one time exception from the HCB team ends on <strong><%= CardLocking.format_deadline(@suppressed_until, @timezone) %></strong>.
+  <% end %>
+</p>
+<p>
+  You still have <%= @count %> overdue <%= "receipt".pluralize(@count) %>, and your cards will lock when the exception ends. Upload <%= @count == 1 ? "it" : "them" %> before then and your cards keep working.
+</p>
+<%= render "transactions_table", hcb_codes: @hcb_codes, show_org: @show_org %>
