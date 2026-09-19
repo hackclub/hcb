@@ -27,7 +27,7 @@
 #  created_at                     :datetime         not null
 #  updated_at                     :datetime         not null
 #  external_id                    :string
-#  legal_entity_id                :bigint           not null
+#  legal_entity_id                :bigint
 #
 # Indexes
 #
