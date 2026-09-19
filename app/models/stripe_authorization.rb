@@ -143,7 +143,7 @@ class StripeAuthorization < ApplicationRecord
   end
 
   def remote_stripe_transaction_amount_cents
-    @remote_stripe_transaction_amount_cents ||= remote_stripe_transactions.sum(&:amount)
+    @remote_stripe_transaction_amount_cents ||= remote_stripe_transactions.map(&:amount).sum
   end
 
   def date
