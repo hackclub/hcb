@@ -16,10 +16,10 @@
 
   <%= form_errors(ach_transfer, "ACH transfer", "We couldn't send this") %>
 
-  <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient?.id" %>
+  <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient ? payment_recipient.id : ''" %>
 
   <% if Rails.env.development? %>
-    <pre x-text="'Debug info:\n\n' + JSON.stringify(payment_recipient || {}, null, 2)" class="fixed left-2 bottom-2 min-w-60 hidden lg:block"></pre>
+    <pre x-text="recipient_debug_info(payment_recipient)" class="fixed left-2 bottom-2 min-w-60 hidden lg:block"></pre>
   <% end %>
 
   <div data-scroll-seek-target="section">
@@ -54,7 +54,7 @@
         <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
           <% ach_transfer.event.payment_recipients.where(payment_model: "AchTransfer").each do |payment_recipient| %>
             <div data-name="<%= payment_recipient.name %>" class="flex items-center" data-payment-recipient="<%= payment_recipient.id %>">
-              <button type="button" class="menu__action flex justify-between flex-auto mr1" data-action="input#focus menu#close" data-recipient="<%= payment_recipient.to_safe_json %>" @click="payment_recipient = JSON.parse($el.dataset.recipient)">
+              <button type="button" class="menu__action flex justify-between flex-auto mr1" data-action="input#focus menu#close" data-recipient="<%= payment_recipient.to_safe_json %>" @click="select_recipient($el.dataset.recipient)">
                 <span class="truncate"><%= payment_recipient.name %></span>
                 <span class="muted ml1">••••<%= payment_recipient.account_number.slice(-4, 4) %></span>
               </button>
