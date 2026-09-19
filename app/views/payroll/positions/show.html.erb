@@ -57,10 +57,11 @@
         <strong>Total paid</strong>
         <%= render_money @position.payee.total_paid_cents %>
       </p>
-      <% if @position.contract&.document.present? %>
+      <% signed_contract = @position.contract&.document %>
+      <% if signed_contract.present? %>
         <p>
           <strong>Signed contract</strong>
-          <%= link_to "View signed contract", @position.contract.document, data: { turbo_frame: "_top" } %>
+          <%= link_to "View contract", auditor_signed_in? ? signed_contract : document_download_path(signed_contract), data: { turbo_frame: "_top" } %>
         </p>
       <% elsif @position.file.attached? %>
         <p>
