@@ -136,6 +136,7 @@ class Invoice < ApplicationRecord
   # charge, but it doesn't exist, like in the case of trying to create a payout
   # for an invoice that was so low that no charge was created on Stripe's end
   # (ex. for $0.10).
+  class NoAssociatedStripeCharge < StandardError; end
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :sponsor
   accepts_nested_attributes_for :sponsor
