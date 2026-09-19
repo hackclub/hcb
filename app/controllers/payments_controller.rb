@@ -4,7 +4,7 @@ class PaymentsController < ApplicationController
   include SetEvent
 
   before_action :set_event, only: [:new, :create]
-  before_action :set_payment, only: [:show, :cancel]
+  before_action :set_payment, only: [:show, :cancel, :retry]
 
   def show
     authorize @payment
@@ -71,6 +71,18 @@ class PaymentsController < ApplicationController
 
     flash[:success] = "Payment canceled"
     redirect_back_or_to payment_path(@payment)
+  end
+
+  def retry
+    authorize @payment
+
+    begin
+      @payment.retry!
+    rescue ArgumentError => e
+      flash[:error] = e.message
+    end
+
+    redirect_to @payment
   end
 
   private

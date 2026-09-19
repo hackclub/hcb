@@ -206,6 +206,7 @@ class Payment < ApplicationRecord
   def create_payment_attempt!
     self.with_lock do
       raise ArgumentError, "this payment was rejected" if rejected?
+      raise ArgumentError, "this payment was canceled" if canceled?
       raise ArgumentError, "all attempts must be failed, rejected, or canceled" if attempts.any?(&:active?)
       raise ArgumentError, "there is no default payout method" if legal_entity.default_payout_method.nil?
 
