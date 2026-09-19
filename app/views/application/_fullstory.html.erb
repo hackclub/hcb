@@ -3,7 +3,7 @@
   <% if Rails.env.production? && (current_user&.sessions_reported || @force_fullstory.present?) && !(current_user&.sessions_reported == false) %>
     <% @_rendered_fullstory = true %>
 
-    <script defer>
+    <script defer nonce="<%= content_security_policy_script_nonce %>">
       window['_fs_debug'] = false;
       window['_fs_host'] = 'fullstory.com';
       window['_fs_script'] = 'edge.fullstory.com/s/fs.js';
