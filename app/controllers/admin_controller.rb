@@ -1422,9 +1422,15 @@ class AdminController < Admin::BaseController
     redirect_back(fallback_location: root_path)
   end
 
+  def request_canonical_transaction_balance_export
+    ExportJob.perform_later(export_id: Export::Event::CanonicalTransactionBalances.create(requested_by: current_user, end_date: params[:end_date].presence).id)
+    flash[:success] = "We've emailed you an export of all HCB organizations' canonical transaction balances."
+    redirect_back(fallback_location: root_path)
+  end
+
   def balances
-    @start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
-    @end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
+    @start_date = params[:start_date].present? ? Date.parse(params[:start_date]).beginning_of_day : nil
+    @end_date = params[:end_date].present? ? Date.parse(params[:end_date]).end_of_day : nil
     @monthly_breakdown = params[:monthly_breakdown] || false
 
     if @start_date && @end_date && @start_date > @end_date
@@ -1872,6 +1878,7 @@ class AdminController < Admin::BaseController
       when :emburse_transactions
         EmburseTransaction.under_review.size
       when :checks
+        # Check.pending.size + Check.unfinished_void.size
         0
       when :ach_transfers
         AchTransfer.pending.size

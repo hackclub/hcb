@@ -107,6 +107,7 @@ class AchTransfer < ApplicationRecord
   end
   validates :company_entry_description, length: { maximum: 10 }, allow_blank: true
   validates :company_name, length: { maximum: 16 }, allow_blank: true
+  # validates :invoiced_at, presence: true, on: :create
   validates(
     :invoiced_at,
     comparison: {
