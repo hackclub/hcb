@@ -41,8 +41,13 @@ module HasWiseRecipient
 
       if currency.in?(%w[AED BGN CHF CZK DKK EGP EUR GBP GEL HUF ILS NOK PKR PLN RON SEK TRY UAH TND])
         fields << { type: :text_field, key: "account_number", placeholder: "TR330006100519786457841326", label: "IBAN" }
-      elsif currency.in?(%w[HKD NGN NPR NZD PHP SGD THB])
+      elsif currency.in?(%w[HKD NGN NPR NZD PHP THB])
         fields << ACCOUNT_NUMBER_FIELD
+      elsif currency == "SGD"
+        fields << { type: :select, key: "account_type", label: "Account type", options: { "Bank Account": "bank_account", "PayNow (Phone Number)": "paynow_phone", "PayNow (NRIC)": "paynow_nric" } }
+        fields << ACCOUNT_NUMBER_FIELD.merge(conditional: "account_type == 'bank_account'")
+        fields << { type: :text_field, key: "paynow_phone_number", label: "Phone Number", placeholder: "+6591234567", conditional: "account_type == 'paynow_phone'" }
+        fields << { type: :text_field, key: "paynow_nric", label: "NRIC", placeholder: "S1234567D", conditional: "account_type == 'paynow_nric'" }
       elsif currency == "ARS"
         fields << { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number (CBU)" }
       elsif currency == "AUD"
