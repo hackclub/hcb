@@ -37,7 +37,7 @@ module PopoverHelper
     # item show page. Everyone else gets the HCB code popover instead — otherwise
     # the injected frame id (lit_…) wouldn't match the HCB page's frame (txn_…) and
     # the popover would render empty.
-    if policy(item).show?
+    if policy(item).show? && auditor_signed_in?
       popover_data(
         title: item.pretty_title,
         src: item.popover_path,
