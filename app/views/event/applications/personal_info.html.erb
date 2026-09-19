@@ -14,7 +14,7 @@
 <% end %>
 
 <%= form_with model: @application, url: application_path(@application), method: :patch, id: "edit_application_#{@application.id}", class: "mt-7", data: { action: "input->application-autosave#save", "application-autosave-target": "form" } do |form| %>
-  <div class="card mb-6" x-data="{ minor: <%= @application.user.is_minor? || false %>, country: <%= @application.address_country.presence.to_json %>, disallowed_countries: <%= Event::Application::DISALLOWED_COUNTRIES.to_json %> }">
+  <div class="card mb-6" x-data="event_application_personal_info(<%= { minor: @application.user.is_minor? || false, country: @application.address_country.presence, country_label: nil, disallowed_countries: Event::Application::DISALLOWED_COUNTRIES }.to_json %>)">
     <div class="md:flex items-end gap-2">
       <div class="field flex-1">
         <%= form.label :full_name do %>
@@ -46,7 +46,7 @@
             <%= inline_icon "info", size: 18 %>
           </div>
         </div>
-        <div class="flex gap-2 onboarding" x-on:change="minor = new Date() - new Date([...$el.children].map(c => c.selectedOptions[0].label).join(' ')) < 568_025_136_000">
+        <div class="flex gap-2 onboarding" x-on:change="minor = $isMinor($el)">
           <%= form.date_select :birthday,
                                 { start_year: Date.today.year,
                                   end_year: Date.today.year - 100,
@@ -99,15 +99,14 @@
         <%= form.label :address_country do %>
           Country <span class="text-primary">*</span>
         <% end %>
-        <% validate = "$el.setCustomValidity(disallowed_countries.includes(country) ? 'HCB is not supported in this country' : '')" %>
-        <%= form.country_select :address_country, { priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country", required: true }, { class: "!min-h-[36px]", "x-model": "country", "x-on:change": validate, "x-init": validate } %>
+        <%= form.country_select :address_country, { priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country", required: true }, { class: "!min-h-[36px]", "x-model": "country", "x-on:change": "sync_country($el)", "x-init": "sync_country($el)" } %>
       </div>
     </div>
 
-    <template x-if="disallowed_countries.includes(country)">
+    <template x-if="country_disallowed">
       <div class="border border-1 border-primary/50 bg-primary/10 flex flex-row justify-start gap-2 items-center rounded-[6px] py-1 px-2 mt-4">
         <%= inline_icon "important", size: 20, class: "primary" %>
-        <p class="primary text-sm m-0 p-0">HCB is not supported in <span x-text="(country, event_application_address_country.selectedOptions[0].label)">that country</span>. This is because of regulatory restrictions, incompatible financial systems, or a combination of the two.</p>
+        <p class="primary text-sm m-0 p-0">HCB is not supported in <span x-text="country_label">that country</span>. This is because of regulatory restrictions, incompatible financial systems, or a combination of the two.</p>
       </div>
     </template>
 

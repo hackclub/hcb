@@ -56,7 +56,7 @@
       <%= form.label :has_website do %>
         Do you have a website? <span class="text-primary">*</span>
       <% end %>
-      <%= form.select :has_website, options_for_select([["No", "false"], ["Yes", "true"]], @application.website_url.present? ? "true" : "false"), {}, { "@change": "has_website = $event.target.value; document.getElementById('website_url_field').required = (has_website === 'true'); if (has_website === 'false') document.getElementById('website_url_field').value = ''", class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
+      <%= form.select :has_website, options_for_select([["No", "false"], ["Yes", "true"]], @application.website_url.present? ? "true" : "false"), {}, { "@change": "set_has_website($event.target.value)", class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
     </div>
 
     <div class="field" x-show="has_website === 'true'">
@@ -71,7 +71,7 @@
         Is your project involved with political activity? <span class="text-primary">*</span>
       <% end %>
       <p class="text-sm muted mt-1 mb-2">This includes but is not limited to protests, public demonstrations, political education, and lobbying.</p>
-      <%= form.select :has_political, options_for_select([["No", "false"], ["Yes", "true"]], @application.political_description.present? ? "true" : "false"), {}, { "@change": "has_political = $event.target.value; document.getElementById('political_description_field').required = (has_political === 'true')", class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
+      <%= form.select :has_political, options_for_select([["No", "false"], ["Yes", "true"]], @application.political_description.present? ? "true" : "false"), {}, { "@change": "set_has_political($event.target.value)", class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
     </div>
 
     <div class="field" x-show="has_political === 'true'">
@@ -144,7 +144,7 @@
 
   <div class="card mb3">
     <% affiliation = Event::Affiliation.new(affiliable: @application) %>
-    <%= form_with(url: affiliations_path(affiliable_type: @application.class.name, affiliable_id: @application.id), local: true, html: { "x-data": "{ type: '', disabled: #{!policy(affiliation).update?} }", "x-init": "$watch('type', val => (val ? document.getElementById('submit_application').setAttribute('data-turbo-confirm', 'You have an unsaved affiliation. Are you sure you want to continue?') : document.getElementById('submit_application').removeAttribute('data-turbo-confirm')))", "@turbo:submit-end": "type = ''" }) do |form| %>
+    <%= form_with(url: affiliations_path(affiliable_type: @application.class.name, affiliable_id: @application.id), local: true, html: { "x-data": "application_affiliation_form(#{{ disabled: !policy(affiliation).update? }.to_json})", "@turbo:submit-end": "type = ''" }) do |form| %>
       <%= render "events/settings/affiliation_form", affiliation:, form: %>
     <% end %>
   </div>
