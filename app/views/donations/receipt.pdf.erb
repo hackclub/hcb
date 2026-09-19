@@ -1,5 +1,6 @@
+<% payment_term = @donation.tax_deductible ? "gift" : "payment" %>
 <head>
-  <title><%= @donation.event.name %> Gift Acknowledgement</title>
+  <title><%= @donation.event.name %> <%= @donation.tax_deductible ? "Gift Acknowledgement" : "Payment Receipt" %></title>
   <meta charset="utf-8" />
   <style>
 
@@ -54,23 +55,30 @@
     <br />
     <p style="margin-top: 2rem;"><%= @donation.donated_at.strftime("%B #{@donation.donated_at.day.ordinalize}, %Y") %></p>
     <br />
-    <p style="font-size: 12.5pt;"><span class="bold">Hack Club Gift Acknowledgement - Thank You</span></p>
+    <p style="font-size: 12.5pt;"><span class="bold">Hack Club <%= @donation.tax_deductible ? "Gift Acknowledgement" : "Payment Receipt" %> - Thank You</span></p>
     <br />
 
     <div style="line-height: 1.5;">
       <p>Dear <%= @donation.name(show_anonymous: true) %>,</p>
+      <% if @donation.tax_deductible %>
+        <p>
+          Please consider this letter an acknowledgment of your gift of <%= render_money @donation.amount %>
+          to <%= @donation.event.name %> (fiscally sponsored by The Hack Foundation).
+          You can share this with your accountant for tax purposes. Thank you for your generosity.
+        </p>
+        <p>
+          We will solely use this gift in line with our organization's mission and within guidance of our
+          501(c)(3) status, per IRS rules. You will receive no goods or services as result of this
+          charitable contribution.
+        </p>
+      <% else %>
+        <p>
+          Please consider this letter a receipt for your payment of <%= render_money @donation.amount %>
+          to <%= @donation.event.name %> (fiscally sponsored by The Hack Foundation). Thank you.
+        </p>
+      <% end %>
       <p>
-        Please consider this letter an acknowledgment of your gift of <%= render_money @donation.amount %>
-        to <%= @donation.event.name %> (fiscally sponsored by The Hack Foundation).
-        You can share this with your accountant for tax purposes. Thank you for your generosity.
-      </p>
-      <p>
-        We will solely use this gift in line with our organization's mission and within guidance of our
-        501(c)(3) status, per IRS rules. You will receive no goods or services as result of this
-        charitable contribution.
-      </p>
-      <p>
-        If you have any questions about this gift, please feel free to reach our finance team at
+        If you have any questions about this <%= payment_term %>, please feel free to reach our finance team at
         <a href="mailto:hcb@hackclub.com">hcb@hackclub.com</a>.
       </p>
     </div>
