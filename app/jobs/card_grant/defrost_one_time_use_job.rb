@@ -34,11 +34,18 @@ class CardGrant
 
     private
 
-    # The card is frozen because of its latest charge, so only that charge
-    # reversing lifts the freeze. Earlier charges were spent under freezes an
-    # organizer has since lifted.
+    # Only approved authorizations freeze one-time-use cards; force captures and
+    # declined authorizations cannot.
+    # Compare authorization times, since late imports and backfills make charge
+    # insertion order unreliable, and settlement can change an item's datetime.
     def froze_the_card?(card, item)
-      card.card_charges.order(created_at: :desc, id: :desc).first&.id == item.linked_object_id
+      authorized_charges = card.card_charges
+                               .joins(:raw_pending_stripe_transaction)
+                               .where("raw_pending_stripe_transactions.stripe_transaction ->> 'approved' = 'true'")
+      Ledger::Item
+        .where(linked_object_type: "CardCharge", linked_object_id: authorized_charges.select(:id))
+        .order(Arel.sql("COALESCE(pending_at, datetime) DESC"), id: :desc)
+        .pick(:id) == item.id
     end
 
   end
