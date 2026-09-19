@@ -93,7 +93,7 @@ class PaymentsController < ApplicationController
   end
 
   def payment_params
-    params.require(:payment).permit(:amount, :purpose, :payee_id, file: [])
+    params.require(:payment).permit(:amount, :purpose, :payee_id, :classification, file: [])
   end
 
   def set_payment
