@@ -7,7 +7,8 @@ class DonationMailer < ApplicationMailer
   def donor_receipt
     @initial_recurring_donation = @donation.initial_recurring_donation? && !@donation.recurring_donation&.migrated_from_legacy_stripe_account?
 
-    attachments["Hack Club Donation Receipt.pdf"] = { mime_type: "application/pdf", content: receipt_pdf }
+    receipt_kind = @donation.tax_deductible ? "Donation" : "Payment"
+    attachments["Hack Club #{receipt_kind} Receipt (#{@donation.event.name}).pdf"] = { mime_type: "application/pdf", content: receipt_pdf }
 
     mail to: @donation.email, reply_to: @donation.event.donation_reply_to_email.presence, subject: if @donation.recurring?
                                                                                                      "Receipt for your #{@donation.tax_deductible ? "donation" : "payment"} to #{@donation.event.name} — #{@donation.created_at.strftime("%B %Y")}"
