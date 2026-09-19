@@ -42,15 +42,7 @@
       <%= form.text_area :message, placeholder: "Keep up the good work!", required: false %>
     </div>
 
-    <div x-data="{
-        amount: null,
-        get additionalAmountToCoverFee() {
-            if (this.amount && !isNaN(this.amount)) {
-                return (Math.ceil(((this.amount / (1 - <%= @event.revenue_fee %>)) - this.amount) * 100) / 100).toFixed(2);
-            }
-            return '0.00';
-        }
-    }">
+    <div x-data="donation_form(<%= { revenue_fee: @event.revenue_fee.to_f }.to_json %>)">
       <div class="field <%= "hidden" if @tier %>">
         <% if @international %>
           <%= form.label :amount, "Donation amount (USD)" %>
