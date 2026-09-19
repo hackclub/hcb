@@ -42,7 +42,7 @@ class UsersController < ApplicationController
     :admin_details_reimbursement_reports, :admin_details_stripe_cards, :admin_details_stripe_transactions,
     :suppress_card_locking, :reset_billing_address
   ]
-  before_action :set_legal_entity, only: [ :edit_payout, :edit_tax ]
+  before_action :set_legal_entity, only: [:edit_payout, :edit_tax]
   wrap_parameters format: :url_encoded_form
 
   def show
