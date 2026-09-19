@@ -36,9 +36,7 @@
       manually doing it here.
     %>
     <% unless @subledger %>
-      <script>
-        window.history.pushState(null, '', <%= event_transactions_url(@event, **params.except(:action, :controller, :event_id).to_unsafe_h).to_s.to_json.html_safe %>);
-      </script>
+      <div data-controller="history-replace" data-history-replace-url-value="<%= event_transactions_url(@event, **params.except(:action, :controller, :event_id).to_unsafe_h) %>"></div>
     <% end %>
   <% end %>
 <% end %>
