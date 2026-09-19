@@ -1,0 +1,101 @@
+<head>
+  <title><%= @donation.event.name %> Gift Acknowledgement</title>
+  <meta charset="utf-8" />
+  <style>
+
+    .container {
+      font-size: 13pt;
+      line-height: 1.15;
+      position: relative;
+      padding-left: 40pt;
+      padding-right: 40pt;
+      display: block;
+    }
+
+    .centerImage {
+      position: relative;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .bold {
+      font-weight: bold;
+    }
+
+    body {
+      margin: 8px;
+      font-family: 'Arial';
+    }
+
+    a {
+      color: #1155cc;
+    }
+
+    .auto-page-break {
+      page-break-before: auto;
+      page-break-inside: avoid;
+    }
+  </style>
+</head>
+<body>
+  <br />
+  <div class="container">
+    <br />
+    <div style="height: 80px;">
+        <p style="margin: 0; float: right; font-size: 11pt; line-height: 1.5">
+          <span class="bold">Hack Club</span><br />
+          <span style="white-space: nowrap;">8605 Santa Monica Boulevard #86294</span><br />
+          West Hollywood, CA 90069<br />
+          hcb@hackclub.com
+        </p>
+      <%= image_tag(wicked_pdf_asset_base64('hack_club_logo.png'), width: 156.6, height: 26.88, class: 'centerImage')%>
+    </div>
+    <br />
+    <br />
+    <p style="margin-top: 2rem;"><%= @donation.donated_at.strftime("%B #{@donation.donated_at.day.ordinalize}, %Y") %></p>
+    <br />
+    <p style="font-size: 12.5pt;"><span class="bold">Hack Club Gift Acknowledgement - Thank You</span></p>
+    <br />
+
+    <div style="line-height: 1.5;">
+      <p>Dear <%= @donation.name(show_anonymous: true) %>,</p>
+      <p>
+        Please consider this letter an acknowledgment of your gift of <%= render_money @donation.amount %>
+        to <%= @donation.event.name %> (fiscally sponsored by The Hack Foundation).
+        You can share this with your accountant for tax purposes. Thank you for your generosity.
+      </p>
+      <p>
+        We will solely use this gift in line with our organization's mission and within guidance of our
+        501(c)(3) status, per IRS rules. You will receive no goods or services as result of this
+        charitable contribution.
+      </p>
+      <p>
+        If you have any questions about this gift, please feel free to reach our finance team at
+        <a href="mailto:hcb@hackclub.com">hcb@hackclub.com</a>.
+      </p>
+    </div>
+
+    <p style="font-size: 10pt; color: #999999; margin-top: 1.5rem;">
+      Receipt ID: <%= @donation.public_id %>
+    </p>
+
+    <br />
+    <p>
+      Best regards,
+    </p>
+    <%= image_tag(wicked_pdf_asset_base64('zach_signature.png'), width: 200, height: 118, dpi: 96) %>
+    <p style="line-height: 1.25">
+      Zach Latta<br />
+      Executive Director<br />
+      Hack Club
+    </p>
+    <br />
+    <br />
+    <p style="font-size: 12pt; font-weight: bold; color: #434343; position: fixed; bottom: 12px; width: 100%; white-space: nowrap;">
+      By the students, for the students.
+    </p>
+    <p style="font-size: 10pt; color: #999999; position: fixed; bottom: 0px; width: 100%; white-space: nowrap;">
+      Hack Club is a 501(c)(3) charity. Our nonprofit EIN is 81-2908499.
+    </p>
+  </div>
+</body>
