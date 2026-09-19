@@ -5,6 +5,12 @@ const whenViewed = (element, callback) =>
   new IntersectionObserver(([entry]) => entry.isIntersecting && callback(), {
     threshold: 1,
   }).observe(element)
+
+const clearElement = id => {
+  const element = document.getElementById(id)
+  if (element) element.innerHTML = ''
+}
+
 const populateSharedPopover = trigger => {
   const popover = document.getElementById('shared_popover')
   if (!popover) return
@@ -35,6 +41,8 @@ const populateSharedPopover = trigger => {
 
   popover.classList.toggle('modal--popover--sm', size === 'sm')
 
+  clearElement('shared_popover_flash')
+
   const body = document.getElementById('shared_popover_body')
   if (body) {
     body.innerHTML = ''
@@ -48,6 +56,65 @@ const populateSharedPopover = trigger => {
     }
   }
 }
+
+// If the current URL points at an open popover (?popover=<state url of the
+// trigger to reopen>), find that trigger and reopen it. Returns whether a
+// matching trigger was found, since the trigger may still be loading inside
+// a lazy-loaded turbo-frame (e.g. a paginated transactions list).
+const openPopoverFromUrl = () => {
+  const link = new URL(location.href).searchParams.get('popover')
+  if (!link) return true
+
+  const trigger = document.querySelector(
+    `[data-popover-state-url="${CSS.escape(link)}"]`
+  )
+  if (!trigger) return false
+
+  populateSharedPopover(trigger)
+  BK.s('modal', '#shared_popover').modal({
+    fadeDuration: 200,
+    fadeDelay: 0.75,
+  })
+  return true
+}
+
+if (!openPopoverFromUrl()) {
+  document.addEventListener('turbo:frame-load', function handleFrameLoad() {
+    if (openPopoverFromUrl()) {
+      document.removeEventListener('turbo:frame-load', handleFrameLoad)
+    }
+  })
+}
+
+document.addEventListener('turbo:before-fetch-response', async event => {
+  const frame = event.target.closest?.('turbo-frame')
+  if (!frame) return
+
+  const response = event.detail.fetchResponse.response
+  if (!response.headers.get('content-type')?.includes('text/html')) return
+
+  const flash = new DOMParser()
+    .parseFromString(await response.clone().text(), 'text/html')
+    .querySelector('#flash-container')
+    ?.innerHTML.trim()
+  if (!flash) return
+
+  const container = document.getElementById(
+    frame.closest('#shared_popover')
+      ? 'shared_popover_flash'
+      : 'flash-container'
+  )
+  if (container) container.innerHTML = flash
+})
+
+// Redirects out of the popover land on a page without its frame; reload the
+// popover in place rather than letting Turbo navigate away from it.
+document.addEventListener('turbo:frame-missing', event => {
+  if (!event.target.closest('#shared_popover')) return
+
+  event.preventDefault()
+  event.target.reload()
+})
 
 const loadModals = element => {
   $(element).on('click', '[data-behavior~=modal_trigger]', function (e) {
@@ -790,34 +857,35 @@ $(document).on('wheel', 'input[type=number]', e => {
 
 $(document).on($.modal.BEFORE_OPEN, function (event, modal) {
   if (modal?.elm[0]?.dataset?.stateUrl) {
-    if (!document.documentElement.dataset.returnToStateUrl) {
-      document.documentElement.dataset.returnToStateUrl = window.location.href
+    if (!document.documentElement.dataset.returnToStateTitle) {
       document.documentElement.dataset.returnToStateTitle = document.title
     }
     document.title = modal.elm[0].dataset.stateTitle
-    window.history.pushState(
-      { modal: modal.elm[0].id },
-      '',
-      modal.elm[0].dataset.stateUrl
-    )
+
+    const url = new URL(location.href)
+    url.searchParams.set('popover', modal.elm[0].dataset.stateUrl)
+    window.history.pushState({ modal: modal.elm[0].id }, '', url)
   }
 })
 
 $(document).on($.modal.BEFORE_CLOSE, function (event, modal) {
-  if (document.documentElement.dataset.returnToStateUrl) {
-    window.history.pushState(
-      null,
-      '',
-      document.documentElement.dataset.returnToStateUrl
-    )
-    document.title = document.documentElement.dataset.returnToStateTitle
+  if (modal?.elm[0]?.dataset?.stateUrl) {
+    const url = new URL(location.href)
+    url.searchParams.delete('popover')
+    window.history.pushState(null, '', url)
+
+    if (document.documentElement.dataset.returnToStateTitle) {
+      document.title = document.documentElement.dataset.returnToStateTitle
+    }
   }
 })
 
 $(document).on($.modal.AFTER_CLOSE, function (event, modal) {
   if (modal?.elm?.[0]?.id === 'shared_popover') {
-    const body = document.getElementById('shared_popover_body')
-    if (body) body.innerHTML = ''
+    delete document.documentElement.dataset.returnToStateTitle
+
+    clearElement('shared_popover_body')
+    clearElement('shared_popover_flash')
 
     const popoverEl = modal.elm[0]
     if (popoverEl && popoverEl.classList) {

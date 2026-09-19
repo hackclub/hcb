@@ -55,6 +55,13 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  # Turbo frame responses render the flash in the frame layout, so discard it here
+  # to stop it repeating on the next page. A redirect keeps its flash for the page
+  # Turbo lands on.
+  after_action do
+    helpers.renderable_flash.each_key { |key| flash.discard(key) } if turbo_frame_request? && !response.redirect?
+  end
+
   # Force usage of Pundit on actions
   after_action :verify_authorized, unless: -> { controller_path.starts_with?("doorkeeper/") || controller_path.starts_with?("audits1984/") }
 
