@@ -44,7 +44,8 @@ class StripeController < ActionController::Base
     response.set_header "Stripe-Version", "2022-08-01"
 
     render json: {
-      approved:
+      approved:,
+      metadata: service.metadata
     }
   end
 
