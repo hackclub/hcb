@@ -67,6 +67,12 @@ RSpec.describe "Content Security Policy", type: :request do
     )
   end
 
+  it "no longer needs the unsafe keywords, now that Alpine runs its CSP build" do
+    get start_donation_donations_path(event.slug)
+
+    expect(sources_for("script-src")).not_to include("'unsafe-inline'", "'unsafe-eval'")
+  end
+
   describe "donation pages, which orgs embed in their own sites" do
     # frame-ancestors is ignored in a report-only policy, so X-Frame-Options is
     # what would actually block the embed. It has to be dropped independently.
