@@ -30,7 +30,7 @@
 
   <%= link_to "Create new legal entity",
               "#",
-              class:"btn h-full flex flex-col justify-center",
+              class: "btn h-full flex flex-col justify-center",
               data: { behavior: "modal_trigger", modal: "create_le" } %>
 </div>
 
@@ -51,9 +51,9 @@
       <%= form.label :entity_type, "Recipient type" %>
       <%= form.select :entity_type,
           options_for_select([
-                                ["An unincorporated business", "business"],
-                                ["A corporation", "corporation"]
-                              ]),
+                               ["An unincorporated business", "business"],
+                               ["A corporation", "corporation"]
+                             ]),
           required: true %>
     </div>
 
