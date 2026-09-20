@@ -71,7 +71,7 @@
       <% if wire.uetr.present? %>
         <p>
           <strong>UETR</strong>
-          <%= wire.uetr %>
+          <%= link_to wire.uetr, wire_lookup_admin_index_path(uetr: wire.uetr), title: "Look up SWIFT tracking" %>
         </p>
       <% end %>
 
