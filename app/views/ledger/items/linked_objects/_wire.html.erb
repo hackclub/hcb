@@ -68,6 +68,13 @@
         </p>
       <% end %>
 
+      <% if wire.uetr.present? %>
+        <p>
+          <strong>UETR</strong>
+          <%= wire.uetr %>
+        </p>
+      <% end %>
+
       <p>
         <strong>Amount (<%= wire.currency %>)</strong>
         <%= Money.from_cents(wire.amount_cents, wire.currency).format %>
