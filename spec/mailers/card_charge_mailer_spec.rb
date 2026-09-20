@@ -38,7 +38,7 @@ RSpec.describe CardChargeMailer, type: :mailer do
 
       mail = described_class.with(ledger_item:).reversed
 
-      expect(mail.body.encoded).not_to include("Troubleshooting tips")
+      expect(mail.body.encoded).not_to include("What went wrong")
     end
 
     it "suggests the correct zip code when Stripe reports an address mismatch" do
@@ -47,7 +47,7 @@ RSpec.describe CardChargeMailer, type: :mailer do
 
       mail = described_class.with(ledger_item:).reversed
 
-      expect(mail.body.encoded).to include("Troubleshooting tips")
+      expect(mail.body.encoded).to include("What went wrong")
       expect(mail.body.encoded).to include("90069")
     end
 
