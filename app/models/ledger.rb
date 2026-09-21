@@ -48,21 +48,22 @@ class Ledger < ApplicationRecord
   has_many :canonical_pending_transactions, through: :items
 
   monetize def balance_cents(start_date: nil, end_date: nil)
-    Ledger::Query.new({
-                        "$and": [
-                          ({ datetime: { "$gte": start_date } } if start_date),
-                          ({ datetime: { "$lte": end_date } } if end_date)
-                        ].compact
-                      }).execute(ledgers: [self]).sum(:amount_cents)
+    query_items(start_date:, end_date:).sum(:amount_cents)
   end
+
+  monetize def revenue_cents = query_items(amount: { "$gt": 0 }).sum(:amount_cents)
+
+  # The fiscal sponsorship fee accrues as revenue arrives but only lands on the
+  # ledger once it's charged, so the fee that's still pending is an expense
+  # that hasn't happened yet — the same amount the ledger renders as a pending
+  # "Fiscal sponsorship" row, and the same amount available_balance_cents holds
+  # back, which keeps revenue - expenses == available balance. A negative fee
+  # balance is a fee credit, not an expense, hence the floor at zero.
+  monetize def expenses_cents = query_items(amount: { "$lt": 0 }).sum(:amount_cents).abs + [fronted_fee_balance_cents, 0].max
 
   # A negative fee balance is a fee credit. Credits are not spendable, so
   # they never add to the available balance.
   monetize def available_balance_cents = balance_cents - [fronted_fee_balance_cents, 0].max
-
-  def can_front_balance?
-    event&.can_front_balance? || card_grant&.event&.can_front_balance? || false
-  end
 
   def receipt_required?
     event&.plan&.receipt_required? || card_grant&.event&.plan&.receipt_required?
@@ -77,15 +78,18 @@ class Ledger < ApplicationRecord
   def fronted_fee_balance_cents
     return 0 if event.nil?
 
-    feed_fronted_pts = canonical_pending_transactions
-                       .incoming
-                       .fronted
-                       .not_waived
-                       .not_declined
+    @fronted_fee_balance_cents ||=
+      begin
+        feed_fronted_pts = canonical_pending_transactions
+                           .incoming
+                           .fronted
+                           .not_waived
+                           .not_declined
 
-    feed_fronted_balance = sum_fronted_amount(feed_fronted_pts)
+        feed_fronted_balance = sum_fronted_amount(feed_fronted_pts)
 
-    (event.fees.sum(:amount_cents_as_decimal) - total_fee_payments_cents + (feed_fronted_balance * BigDecimal(event.revenue_fee))).ceil
+        (event.fees.sum(:amount_cents_as_decimal) - total_fee_payments_cents + (feed_fronted_balance * BigDecimal(event.revenue_fee))).ceil
+      end
   end
 
   def fee_balance_cents
@@ -120,6 +124,18 @@ class Ledger < ApplicationRecord
   end
 
   private
+
+  # Every total goes through Ledger::Query so they all count the same set of
+  # items as the balance does.
+  def query_items(start_date: nil, end_date: nil, amount: nil)
+    Ledger::Query.new({
+                        "$and": [
+                          ({ datetime: { "$gte": start_date } } if start_date),
+                          ({ datetime: { "$lte": end_date } } if end_date),
+                          ({ amount_cents: amount } if amount)
+                        ].compact
+                      }).execute(ledgers: [self])
+  end
 
   def validate_owner_based_on_primary
     if primary?
