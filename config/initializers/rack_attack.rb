@@ -18,9 +18,14 @@ class Rack::Attack
     bad_ips&.include?(req.ip)
   end
 
-  # Safelist Hack Club Office(s)
-  Credentials.fetch(:OFFICE_IP)&.split(",")&.map(&:strip)&.each do |office_ip|
-    safelist_ip(office_ip)
+  # Safelist Hack Club Office(s). Resolved in the block rather than at boot (like
+  # the webhook lists below), because referencing the autoloaded HackClub constant
+  # during initialization fails. HackClub.office_ips memoizes the parse, so this
+  # stays cheap despite running per request.
+  safelist("Hack Club offices") do |req|
+    HackClub.office_ips.any? { |office_ip| office_ip.include?(req.ip) }
+  rescue IPAddr::InvalidAddressError
+    false
   end
   safelist_ip("10.0.0.0/16")
 
