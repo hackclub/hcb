@@ -398,10 +398,6 @@ class Ledger
       end
     end
 
-    # Reimbursements keep their receipts on the expense rather than on the HCB
-    # code the payout creates, so `receipts` (which joins through the HCB code)
-    # always counts zero for them. HcbCode#receipts already resolves this;
-    # mirror it here so the ledger reports the expense's uploads.
     def calculate_receipt_count
       return linked_object&.expense&.receipts&.size || 0 if linked_object_type == "Reimbursement::ExpensePayout"
 
