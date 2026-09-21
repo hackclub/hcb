@@ -420,7 +420,7 @@ class Invoice < ApplicationRecord
       # amount_cents stays 0 — it's the balance-impacting amount, which is only
       # realized once the invoice is paid and a CPT maps back to this item.
       # memo/datetime/status are recomputed by Ledger::Item#refresh! on create.
-      create_ledger_item!(amount_cents: 0, datetime: created_at, memo: smart_memo)
+      create_ledger_item!(amount_cents: 0, datetime: created_at, memo: smart_memo, hcb_code: local_hcb_code)
     end
   end
 
