@@ -183,7 +183,7 @@ class Ledger
       shown_comments = hcb_code&.all_comments || Comment.none
       self.comment_count = shown_comments.size
       self.not_admin_only_comment_count = shown_comments.not_admin_only.size
-      self.receipt_count = receipts.size
+      self.receipt_count = calculate_receipt_count
 
       # Timestamps
       self.pending_at = calculate_pending_at
@@ -396,6 +396,16 @@ class Ledger
       when "CardCharge"
         linked_object&.stripe_cardholder&.user
       end
+    end
+
+    # Reimbursements keep their receipts on the expense rather than on the HCB
+    # code the payout creates, so `receipts` (which joins through the HCB code)
+    # always counts zero for them. HcbCode#receipts already resolves this;
+    # mirror it here so the ledger reports the expense's uploads.
+    def calculate_receipt_count
+      return linked_object&.expense&.receipts&.size || 0 if linked_object_type == "Reimbursement::ExpensePayout"
+
+      receipts.size
     end
 
     def calculate_receipt_required
