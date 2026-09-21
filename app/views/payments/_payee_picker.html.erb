@@ -47,8 +47,13 @@
       <% end %>
 
       <div class="flex flex-col gap-3">
-        <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
-          <%= label_tag :name, "Name" %>
+        <div class="flex justify-between flex-col sm:flex-row sm:items-center gap-2">
+          <%= label_tag :name, class: "flex gap-2 items-center" do %>
+            Name
+            <span class="info tooltipped tooltipped--e h-5" aria-label="<%= "Visible in transparency mode. " if event.is_public? %>This does not have to match the recipient's legal name.">
+              <%= inline_icon "info", size: 20 %>
+            </span>
+          <% end %>
           <%= text_field_tag :name, params[:payee_name], placeholder: "Orpheus", required: true, form: "new-payee-form", data: { "manual-payee-target": "nameInput", "payee-picker-target": "nameInput" } %>
         </div>
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2">

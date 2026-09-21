@@ -61,9 +61,15 @@
         <strong>Total paid</strong>
         <%= render_money @position.payee.total_paid_cents %>
       </p>
-      <% if @position.file.attached? %>
+      <% signed_contract = @position.contract&.document %>
+      <% if signed_contract.present? %>
         <p>
-          <strong>Agreement</strong>
+          <strong>Signed contract</strong>
+          <%= link_to "View contract", auditor_signed_in? ? signed_contract : document_download_path(signed_contract), data: { turbo_frame: "_top" } %>
+        </p>
+      <% elsif @position.file.attached? %>
+        <p>
+          <strong>Attached agreement</strong>
           <%= link_to "View attachment", url_for(@position.file), data: { turbo_frame: "_top" } %>
         </p>
       <% end %>
@@ -97,6 +103,7 @@
         <thead>
           <tr>
             <th>Status</th>
+            <th>Reviewed by</th>
             <th>Description</th>
             <th>Attachment</th>
             <th class="text-right">Amount</th>
@@ -105,9 +112,17 @@
         </thead>
         <tbody>
           <% @invoices.each do |invoice| %>
-            <% state_color = invoice.approved? ? "success" : (invoice.rejected? ? "muted" : "warning") %>
             <tr>
-              <td><span class="badge bg-<%= state_color %>"><%= invoice.aasm_state.humanize %></span></td>
+              <td>
+                <span class="badge ml-0 bg-<%= invoice.state_color %>"><%= invoice.aasm_state.humanize %></span>
+              </td>
+              <td>
+                <% if invoice.reviewed_by.present? %>
+                  <%= invoice.reviewed_by.name %>
+                <% else %>
+                  <span class="muted">&mdash;</span>
+                <% end %>
+              </td>
               <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
                 <%= invoice.name %>
               </td>
