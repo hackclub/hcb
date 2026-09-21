@@ -9,6 +9,7 @@ This document explains how OAuth 2.0 scopes work in the HCB v4 API: the permissi
 ## Table of Contents
 
 - [Overview](#overview)
+- [The Scope Directory (`config/api_scopes.rb`)](#the-scope-directory-configapi_scopesrb)
 - [Two Layers of Authorization](#two-layers-of-authorization)
 - [The `restricted` Scope & Gradual Rollout](#the-restricted-scope--gradual-rollout)
 - [Declaring Scope Requirements](#declaring-scope-requirements)
@@ -25,6 +26,14 @@ The v4 API uses **OAuth 2.0 scopes** (via [Doorkeeper](https://doorkeeper.gitboo
 Scopes let an application request **only the access it needs**. For example, a receipt-uploading integration can request `receipts:write` without gaining the ability to read transactions or move money.
 
 Scopes are stored on the access token. They are checked **per controller action** at request time.
+
+---
+
+## The Scope Directory (`config/api_scopes.rb`)
+
+[`config/api_scopes.rb`](../../config/api_scopes.rb) is the **single source of truth for every scope the v4 API supports**, mapping each scope to the description shown on the consent screen. If a scope isn't listed there, it can't be requested and no controller may gate on it. It lives in `config/` because the Doorkeeper initializer needs it at boot, before autoloading is available.
+
+It defines `RESTRICTED` (the marker scope, see [below](#the-restricted-scope--gradual-rollout)), `BROAD` (the older `read` / `write` / `admin:*` scopes), and `GRANULAR` (the per-resource scopes). Everything else reads from it: the Doorkeeper initializer for `optional_scopes`, the consent screen, `Api::V4::ApplicationController` for enforcement, and `spec/controllers/api/v4/oauth_scopes_spec.rb`, which fails if `GRANULAR` and the controllers' `require_oauth2_scope` declarations drift apart in either direction.
 
 ---
 
@@ -61,7 +70,7 @@ Key consequences for a `restricted` token:
 
 Scopes are granted to a token through the standard OAuth flow (see [Authentication in standards.md](./standards.md#authentication)); they aren't attached automatically. Two things must line up:
 
-1. **The OAuth application must be registered with the scopes.** Set the application's `scopes` to include every scope it will request (e.g. `restricted receipts:write ledgers:read receipts:read`). The server does not restrict applications to a fixed list: `enforce_configured_scopes` is off and `optional_scopes` lists only `read` / `write` / `admin:read` / `admin:write`, so the granular scopes above can be registered freely even though they aren't in that list.
+1. **The OAuth application must be registered with the scopes.** Set the application's `scopes` to include every scope it will request (e.g. `restricted receipts:write ledgers:read receipts:read`). Every scope in [`config/api_scopes.rb`](../../config/api_scopes.rb) is wired into Doorkeeper's `optional_scopes`, so anything listed there can be requested; anything not listed is rejected with `invalid_scope` at authorization time.
 2. **The token request must ask for them.** Pass the same space-separated strings in the `scope=` parameter of the `authorize` request (URL-encoded, so spaces become `%20`).
 
 To get per-action enforcement (everything in this document), the requested scopes **must include `restricted`** alongside the granular ones. A token without `restricted` ignores every `require_oauth2_scope` declaration and falls back to legacy full access.
@@ -132,6 +141,7 @@ Guidelines:
 
 - `read` and `write` are **independent** — granting `:write` does not imply `:read`. Declare each where needed.
 - Prefer the `<resource>:<action>` shape. Reach for a bare capability scope only when the access doesn't correspond to CRUD on a single resource.
+- Check [`config/api_scopes.rb`](../../config/api_scopes.rb) before inventing a name — an existing scope often already covers the resource you're gating.
 
 ---
 
@@ -140,15 +150,20 @@ Guidelines:
 
 To gate an action behind a new scope:
 
-1. **Declare it in the controller** right after the action:
+1. **Pick a name** following the [naming conventions](#scope-naming-conventions) — usually `<resource>:read` or `<resource>:write`.
+2. **Register it in [`config/api_scopes.rb`](../../config/api_scopes.rb)** by adding it to `GRANULAR` with the description a user will see on the consent screen. Skip this and no app can request the scope, so every restricted token gets a `403`:
+   ```ruby
+   "ach_transfers:write" => "Send ACH transfers from your organizations",
+   ```
+3. **Declare it in the controller** right after the action:
    ```ruby
    def create
      # ...
    end
    require_oauth2_scope "ach_transfers:write", :create
    ```
-2. **Pick a name** following the [naming conventions](#scope-naming-conventions) — usually `<resource>:read` or `<resource>:write`.
-5. **Test with a `restricted` token** — remember the scope only takes effect for tokens carrying `restricted`. A non-restricted token will bypass the check entirely.
+4. **Run `spec/controllers/api/v4/oauth_scopes_spec.rb`** — it fails if you registered a scope nothing uses, or gated on one you never registered.
+5. **Test with a `restricted` token** — the scope only takes effect for tokens carrying `restricted`. A non-restricted token will bypass the check entirely.
 
 ---
 

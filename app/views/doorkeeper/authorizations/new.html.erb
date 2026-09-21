@@ -17,11 +17,26 @@
     <p class="mt0"><%= @pre_auth.client.name %> is a trusted app created by HCB.</p>
   </div>
 
-  <div class="flex items-start">
-    <span class="muted mr2"><%= inline_icon "important" %></span>
+  <% if ApiScopes.restricted?(@pre_auth.scopes) %>
+    <div class="flex items-start">
+      <span class="muted mr2"><%= inline_icon "checkmark" %></span>
 
-    <p class="mt0"><%= @pre_auth.client.name %> will have full access to your organization funds.</p>
-  </div>
+      <div class="mt0">
+        <p class="mt0 mb1"><%= @pre_auth.client.name %> is only asking to:</p>
+        <ul class="mt0 mb0 pl3">
+          <% ApiScopes.presentable(@pre_auth.scopes).each do |scope| %>
+            <li><%= ApiScopes.describe(scope) %></li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  <% else %>
+    <div class="flex items-start">
+      <span class="muted mr2"><%= inline_icon "important" %></span>
+
+      <p class="mt0"><%= @pre_auth.client.name %> will have full access to your organization funds.</p>
+    </div>
+  <% end %>
 </section>
 
 <div class="flex flex-col gap-2 px-3">
