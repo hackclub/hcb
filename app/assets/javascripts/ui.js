@@ -78,13 +78,17 @@ const openPopoverFromUrl = () => {
   return true
 }
 
-if (!openPopoverFromUrl()) {
-  document.addEventListener('turbo:frame-load', function handleFrameLoad() {
-    if (openPopoverFromUrl()) {
-      document.removeEventListener('turbo:frame-load', handleFrameLoad)
-    }
-  })
+const openPopoverWhenFrameLoads = () => {
+  if (openPopoverFromUrl()) {
+    document.removeEventListener('turbo:frame-load', openPopoverWhenFrameLoads)
+  }
 }
+
+document.addEventListener('turbo:load', () => {
+  if (!openPopoverFromUrl()) {
+    document.addEventListener('turbo:frame-load', openPopoverWhenFrameLoads)
+  }
+})
 
 document.addEventListener('turbo:before-fetch-response', async event => {
   const frame = event.target.closest?.('turbo-frame')
@@ -863,8 +867,10 @@ $(document).on($.modal.BEFORE_OPEN, function (event, modal) {
     document.title = modal.elm[0].dataset.stateTitle
 
     const url = new URL(location.href)
-    url.searchParams.set('popover', modal.elm[0].dataset.stateUrl)
-    window.history.pushState({ modal: modal.elm[0].id }, '', url)
+    if (url.searchParams.get('popover') !== modal.elm[0].dataset.stateUrl) {
+      url.searchParams.set('popover', modal.elm[0].dataset.stateUrl)
+      window.history.pushState({ modal: modal.elm[0].id }, '', url)
+    }
   }
 })
 
