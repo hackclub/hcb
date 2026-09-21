@@ -85,6 +85,31 @@ class Ledger
       render partial: "ledger/items/memo/stream", locals: { item: @item }, formats: :turbo_stream
     end
 
+    def toggle_tag
+      tag = Tag.find(params[:tag_id])
+      @event = tag.event
+
+      authorize tag
+      raise Pundit::NotAuthorizedError unless policy(@item).toggle_tag?(tag)
+
+      removed = false
+      if @item.tags.exists?(tag.id)
+        removed = true
+        @item.tags.destroy(tag)
+      else
+        suppress(ActiveRecord::RecordNotUnique) do
+          @item.tags << tag
+        end
+      end
+
+      respond_to do |format|
+        format.turbo_stream do
+          render partial: (removed ? "tags/destroy" : "tags/create"), locals: { item: @item, tag: }
+        end
+        format.any { redirect_back fallback_location: @event }
+      end
+    end
+
     def invoice_as_personal_transaction
       authorize @item
 

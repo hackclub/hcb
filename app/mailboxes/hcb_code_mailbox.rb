@@ -70,8 +70,12 @@ class HcbCodeMailbox < ApplicationMailbox
       tag = event.tags.search_label(command["argument"]).first
       return unless tag
 
+      # Tags live on the ledger item; skip silently if this code has none.
+      ledger_item = @hcb_code.ledger_item
+      return unless ledger_item
+
       suppress(ActiveRecord::RecordNotUnique) do
-        @hcb_code.tags << tag
+        ledger_item.tags << tag
       end
       @tagged_with << tag.label
     end

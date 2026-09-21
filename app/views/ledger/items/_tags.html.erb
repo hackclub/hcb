@@ -11,7 +11,7 @@
 <% hcb_code = item.hcb_code %>
 <% if hcb_code.present? && !hcb_code.event&.demo_mode? %>
   <% tags = @event ? item.tags.select { |tag| tag.event_id == @event.id } : item.tags %>
-  <div class="flex flex-wrap tags hcb_code_<%= hcb_code.hashid %>_tags" style="gap: 0.25rem">
+  <div class="flex flex-wrap tags ledger_item_<%= item.hashid %>_tags" style="gap: 0.25rem">
     <%= render partial: "ledger/items/tag", collection: tags, as: :tag, locals: { item: } %>
   </div>
 <% end %>

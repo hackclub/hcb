@@ -1,6 +1,6 @@
 <% instance = pt.__id__ %>
 <% event = @event || pt.local_hcb_code.event %>
-<% tagged_with = pt.local_hcb_code.tags.filter { |tag| !@event || tag.event == @event } %>
+<% tagged_with = (pt.local_hcb_code.ledger_item&.tags || []).filter { |tag| !@event || tag.event == @event } %>
 <% type = Rails.cache.fetch("#{pt.hcb_code}/cached_type", expires_in: 12.hours) { pt.local_hcb_code.type } %>
 
 <tr
@@ -10,6 +10,7 @@
   id="<%= pt.local_hcb_code.hashid %>"
   <% if defined?(selectable) && selectable %>
     data-transactions-target="transaction"
+    data-ledger-item-id="<%= pt.local_hcb_code.ledger_item&.hashid %>"
   <% end %>
   <% if local_assigns[:receipt_upload_button] %>
     data-controller="file-drop"
@@ -87,8 +88,8 @@
         <% end %>
 
         <% if !event&.demo_mode? && defined?(show_tags) && show_tags %>
-          <div class="flex flex-wrap pending_transactions_tags tags hcb_code_<%= pt.local_hcb_code.hashid %>_tags" style="gap: 0.25rem">
-            <%= render partial: "canonical_transactions/tag", collection: tagged_with, locals: { hcb_code: pt.local_hcb_code } %>
+          <div class="flex flex-wrap pending_transactions_tags tags ledger_item_<%= pt.local_hcb_code.ledger_item&.hashid %>_tags" style="gap: 0.25rem">
+            <%= render partial: "canonical_transactions/tag", collection: tagged_with, locals: { item: pt.local_hcb_code.ledger_item } %>
           </div>
         <% end %>
       </div>
@@ -102,13 +103,13 @@
             <% end %>
           </div>
         <% end %>
-        <% if event.present? && policy(pt.local_hcb_code).toggle_tag? %>
+        <% if event.present? && pt.local_hcb_code.ledger_item && policy(pt.local_hcb_code.ledger_item).toggle_tag? %>
           <div class="overflow-visible relative" style="margin-left: 0.5rem;" data-controller="menu" data-menu-append-to-value="turbo-frame#ledger">
             <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
             <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
               <% event.tags.each do |tag| %>
                 <div class="flex items-center" data-tag="<%= tag.id %>">
-                  <%= button_to toggle_tag_hcb_code_path(id: pt.local_hcb_code.hashid, tag_id: tag.id), class: "menu__action #{tag_dom_id(pt.local_hcb_code, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
+                  <%= button_to ledger_item_toggle_tag_path(pt.local_hcb_code.ledger_item), params: { tag_id: tag.id }, class: "menu__action #{tag_dom_id(pt.local_hcb_code.ledger_item, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
                     <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
                     <%= tag.label %>
                     <%= "✓" if tagged_with.include?(tag) %>
@@ -121,7 +122,7 @@
               <% if event.tags.any? %>
                 <div class="menu__divider tags__divider"></div>
               <% end %>
-              <%= render partial: "hcb_codes/create_tag", locals: { button: pt.local_hcb_code.hashid } %>
+              <%= render partial: "hcb_codes/create_tag", locals: { button: pt.local_hcb_code.ledger_item&.hashid } %>
             </div>
           </div>
         <% end %>

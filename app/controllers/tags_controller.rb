@@ -11,18 +11,12 @@ class TagsController < ApplicationController
     tag = Tag.where(label: params[:label].strip, event: @event)
     tag = tag.create_with(color: params[:color], emoji: params[:emoji]).first_or_create
 
-    if params[:hcb_code_id]
-      hcb_code = HcbCode.find(params[:hcb_code_id])
-      authorize hcb_code, :toggle_tag?
-
-      # `toggle_tag?` only asks whether the user is a member of *some* event on
-      # this HCB code, so it would let a member of two organizations attach one
-      # organization's tag to the other's transaction. `HcbCodes#toggle_tag`
-      # guards the same gap.
-      raise Pundit::NotAuthorizedError unless hcb_code.events.include?(@event)
+    if params[:ledger_item_id].present?
+      ledger_item = Ledger::Item.find_by_hashid!(params[:ledger_item_id])
+      raise Pundit::NotAuthorizedError unless policy(ledger_item).toggle_tag?(tag)
 
       suppress(ActiveRecord::RecordNotUnique) do
-        hcb_code.tags << tag
+        ledger_item.tags << tag
       end
     end
 
