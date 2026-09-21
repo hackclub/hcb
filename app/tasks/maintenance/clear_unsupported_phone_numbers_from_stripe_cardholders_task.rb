@@ -13,8 +13,6 @@ module Maintenance
       return if StripeCardholder.phone_number_supported?(cardholder.stripe_phone_number)
 
       cardholder.update!(stripe_phone_number: nil)
-    rescue => e
-      Rails.error.report(e, context: { stripe_cardholder_id: cardholder.id })
     end
 
   end
