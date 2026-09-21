@@ -9,7 +9,7 @@ class PayeesController < ApplicationController
   class InvalidManualPayeeEntityType < StandardError; end
 
   def index
-    authorize @event
+    authorize @event, policy_class: PayeePolicy
     all = @event.payees.not_archived.includes(:legal_entity, :payments)
     payees = params[:q].present? ? all.search(params[:q]) : all
     @payees = payees.order(created_at: :desc).page(params[:page]).per(15)
