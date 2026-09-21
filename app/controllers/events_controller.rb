@@ -152,10 +152,6 @@ class EventsController < ApplicationController
 
   def stats
     authorize @event
-  end
-
-  def ledger_stats
-    authorize @event
     @ledger = @event.ledger
   end
 
@@ -234,7 +230,7 @@ class EventsController < ApplicationController
       initial_subtotal = if @all_transactions.count > offset
                            TransactionGroupingEngine::Transaction::RunningBalanceAssociationPreloader.new(transactions: @all_transactions, event: @event).run!
                            # sum up transactions on pages after this one to get the initial subtotal
-                           @all_transactions.slice(offset...).map(&:amount).sum
+                           @all_transactions.slice(offset...).sum(&:amount)
                          else
                            # this is the last page, so start from 0
                            0
@@ -1016,7 +1012,10 @@ class EventsController < ApplicationController
       plan: @event.config.subevent_plan.presence,
       risk_level: @event.risk_level,
       parent_event: @event,
-      scoped_tags: params[:scoped_tags]
+      scoped_tags: params[:scoped_tags],
+      contract_extra_prefills: {
+        "grant_amount_cents": @event.config.subevent_plan == "Event::Plan::Argosy2026" ? params[:argosy_grant_amount].to_i : nil
+      }.compact
     ).run
 
     redirect_to subevent
@@ -1315,23 +1314,8 @@ class EventsController < ApplicationController
     @per = safe_per(100)
 
     @items = ledger_query.execute(ledgers: @ledgers)
-
-    # TODO: move these to Ledger::Query
-    if @tag.present?
-      @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id))
-    end
-
-    if @category.present?
-      categorized_cts = @category.canonical_transactions.where(ledger_item: @items).select(:ledger_item_id)
-      categorized_cpts = @category.canonical_pending_transactions.where(ledger_item: @items).select(:ledger_item_id)
-      @items = @items.where(id: categorized_cts).or(@items.where(id: categorized_cpts))
-    end
-
-    if @merchant.present?
-      @items = @items.where(linked_object_type: "CardCharge", linked_object_id: CardCharge.where(merchant_network_id: @merchant).select(:id))
-    end
-
-    @items = @items.page(params[:page]).per(@per).preload(:tags, hcb_code: { event: :tags })
+                         .page(params[:page]).per(@per)
+                         .preload(:tags, hcb_code: { event: :tags })
   rescue Pundit::NotAuthorizedError
     return head :not_found
   end
@@ -1434,7 +1418,6 @@ class EventsController < ApplicationController
       :end,
       :address,
       :demo_mode,
-      :can_front_balance,
       :emburse_department_id,
       :country,
       :postal_code,

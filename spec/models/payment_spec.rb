@@ -109,6 +109,52 @@ RSpec.describe Payment, type: :model do
         expect(mail).to have_received(:deliver_later)
       end
     end
+
+    context "when the legal entity lacks a completed tax form but the payment doesn't require one" do
+      let(:payout_method) { create(:legal_entity_payout_method) }
+
+      # Mirrors LegalEntity#payable?: payable only once the tax form requirement
+      # is dropped, so these examples fail if Payment stops passing
+      # requires_tax_form through to legal_entity.payable?.
+      def stub_conditionally_payable_legal_entity(payment, payout_method:)
+        legal_entity = double("LegalEntity", default_payout_method: payout_method).as_null_object
+        allow(legal_entity).to receive(:payable?) { |requires_tax_form: true| !requires_tax_form }
+        allow(payment).to receive(:legal_entity).and_return(legal_entity)
+      end
+
+      before do
+        allow_any_instance_of(Payment::Attempt).to receive(:create_transfer!)
+        allow_any_instance_of(Payment::Attempt).to receive(:legal_entity_payable)
+      end
+
+      it "creates an attempt when the payment is not tax reportable" do
+        payment = build(:payment, payee:, classification: :goods)
+        stub_conditionally_payable_legal_entity(payment, payout_method:)
+        payment.save!
+
+        expect(payment.attempts.count).to eq 1
+      end
+
+      it "does not create an attempt when the payment requires a tax form" do
+        payment = build(:payment, payee:, amount_cents: 100_000, classification: :general_services)
+        stub_conditionally_payable_legal_entity(payment, payout_method:)
+        payment.save!
+
+        expect(payment.attempts).to be_empty
+      end
+    end
+  end
+
+  describe "#requires_tax_form" do
+    it "is true for a tax reportable payment, regardless of amount" do
+      payment = build(:payment, amount_cents: 1_00, classification: :general_services)
+      expect(payment.requires_tax_form).to be true
+    end
+
+    it "is false for a payment that isn't tax reportable, regardless of amount" do
+      payment = build(:payment, amount_cents: 100_000, classification: :goods)
+      expect(payment.requires_tax_form).to be false
+    end
   end
 
   describe "acceptance reminders" do
@@ -165,7 +211,9 @@ RSpec.describe Payment, type: :model do
     # globally; individual tests override when asserting specific mailer calls.
     before { allow(PaymentMailer).to receive(:with).and_return(double.as_null_object) }
 
-    let!(:payment) { create(:payment, payee:) }
+    # $1,000 and tax reportable (the factory default) so this payment actually
+    # requires a completed tax form — see "Payment#requires_tax_form" below.
+    let!(:payment) { create(:payment, payee:, amount_cents: 100_000) }
 
     context "when the tax form is completed and the entity becomes payable" do
       context "with a default payout method" do
@@ -252,7 +300,7 @@ RSpec.describe Payment, type: :model do
       before { create(:payment_attempt, payment:, aasm_state: "pending") }
 
       it "raises ArgumentError" do
-        expect { payment.retry! }.to raise_error(ArgumentError, /all attempts must have failed/)
+        expect { payment.retry! }.to raise_error(ArgumentError, /all attempts must be failed, rejected, or canceled/)
       end
     end
 

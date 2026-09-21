@@ -353,7 +353,8 @@ module TransactionGroupingEngine
             ,(#{canonical_transaction_ids_select}) as canonical_transaction_ids
             ,(#{canonical_transactions_select}) as canonical_transactions
           from (
-            #{event.can_front_balance? ? "#{pt_group_sql}\nunion" : ''}
+            #{pt_group_sql}
+            union
             #{ct_group_sql}
           ) q1
           #{modifiers}

@@ -191,6 +191,8 @@ class User < ApplicationRecord
   has_many :payments_received, through: :legal_entities, source: :payments
   has_many :payroll_positions, through: :legal_entities
 
+  has_many :managing_payroll_positions, class_name: "Payroll::Position", inverse_of: :manager
+
   has_encrypted :birthday, type: :date
 
   include HasMetrics
@@ -718,7 +720,7 @@ class User < ApplicationRecord
     Payroll::Position.where(aasm_state: :onboarding)
                      .left_joins(payee: { legal_entity: :legal_entity_users })
                      .where(
-                       "legal_entity_users.user_id = :uid OR (payees.legal_entity_id IS NULL AND payees.email = :email)",
+                       "legal_entity_users.user_id = :uid OR ((payees.legal_entity_id IS NULL OR legal_entities.managing_event_id IS NOT NULL) AND payees.email = :email)",
                        uid: id, email:
                      )
                      .includes(payee: :event)
