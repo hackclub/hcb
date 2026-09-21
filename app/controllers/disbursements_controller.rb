@@ -244,7 +244,7 @@ class DisbursementsController < ApplicationController
     if @disbursement.mark_in_transit!
       flash[:success] = "Disbursement marked as fulfilled"
       if Disbursement.pending.any?
-        redirect_to pending_disbursements_path
+        redirect_to disbursements_admin_index_path(pending: 1)
       else
         redirect_to disbursements_admin_index_path
       end
