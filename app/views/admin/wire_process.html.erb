@@ -28,6 +28,8 @@
   <div>
     <h3>Transfer Details</h3>
 
+    <%= render "events/mission_statement", event: @wire.event %>
+
     <table class="table--autosize">
       <tbody>
         <tr>
@@ -69,6 +71,12 @@
           <td>Currency:</td>
           <td><%= @wire.currency %></td>
         </tr>
+        <% if @wire.uetr.present? %>
+          <tr>
+            <td>UETR:</td>
+            <td><%= @wire.uetr %></td>
+          </tr>
+        <% end %>
         <tr>
           <td>Address (Line 1):</td>
           <td><%= @wire.address_line1 %></td>

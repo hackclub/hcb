@@ -184,6 +184,8 @@ Rails.application.routes.draw do
       post "suppress_card_locking", to: "users#suppress_card_locking"
 
       post "reset_billing_address", to: "users#reset_billing_address"
+      post "update_admin_transfer_limit", to: "governance/admin/transfer/limits#update"
+      get "admin_transfer_limit_history", to: "governance/admin/transfer/limits#history"
     end
     post "delete_profile_picture", to: "users#delete_profile_picture"
     post "generate_totp"
@@ -192,7 +194,6 @@ Rails.application.routes.draw do
     post "generate_backup_codes"
     post "activate_backup_codes"
     post "disable_backup_codes"
-    patch "stripe_cardholder_profile", to: "stripe_cardholders#update_profile"
 
     resources :webauthn_credentials, only: [:create, :destroy] do
       collection do
@@ -313,6 +314,7 @@ Rails.application.routes.draw do
       post "referral_link_create", to: "referral/links#create"
       get "unknown_merchants", to: "admin#unknown_merchants"
       post "request_balance_export", to: "admin#request_balance_export"
+      post "request_canonical_transaction_balance_export", to: "admin#request_canonical_transaction_balance_export"
       get "active_teenagers_leaderboard", to: "admin#active_teenagers_leaderboard"
       get "new_teenagers_leaderboard", to: "admin#new_teenagers_leaderboard"
       get "contracts", to: "admin#contracts"
@@ -456,8 +458,6 @@ Rails.application.routes.draw do
       post "refund"
     end
   end
-
-  resources :stripe_cardholders, only: [:new, :create, :update]
 
   namespace :stripe_cards do
     resource :activation, only: [:new, :create], controller: :activation
@@ -614,7 +614,7 @@ Rails.application.routes.draw do
       post "admin_approve"
       post "admin_send_wise_transfer"
       post "reverse"
-      post "approve_all_expenses"
+      post "approve"
       post "request_changes"
       post "reject"
       post "submit"
@@ -1006,7 +1006,6 @@ Rails.application.routes.draw do
     get "ledger"
     post "toggle_new_ledger"
     get "stats"
-    get "ledger_stats"
     get "merchants_filter"
     put "toggle_hidden"
     post "claim_point_of_contact"
@@ -1055,6 +1054,9 @@ Rails.application.routes.draw do
       end
     end
     resources :payees, only: [:index, :create, :update] do
+      collection do
+        get :check_email
+      end
       member do
         post :archive
       end
