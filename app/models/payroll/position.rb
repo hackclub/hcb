@@ -319,6 +319,14 @@ module Payroll
       Rails.application.routes.url_helpers.my_payroll_path
     end
 
+    def contractable_link_label
+      "contractor position"
+    end
+
+    def contractable_link_path
+      Rails.application.routes.url_helpers.event_payroll_position_path(event, self)
+    end
+
     # The contractor isn't emailed when the contract is sent; they're notified
     # only once HCB signs
     def contract_notify_when_sent

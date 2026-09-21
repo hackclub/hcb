@@ -184,6 +184,8 @@ Rails.application.routes.draw do
       post "suppress_card_locking", to: "users#suppress_card_locking"
 
       post "reset_billing_address", to: "users#reset_billing_address"
+      post "update_admin_transfer_limit", to: "governance/admin/transfer/limits#update"
+      get "admin_transfer_limit_history", to: "governance/admin/transfer/limits#history"
     end
     post "delete_profile_picture", to: "users#delete_profile_picture"
     post "generate_totp"
@@ -192,7 +194,6 @@ Rails.application.routes.draw do
     post "generate_backup_codes"
     post "activate_backup_codes"
     post "disable_backup_codes"
-    patch "stripe_cardholder_profile", to: "stripe_cardholders#update_profile"
 
     resources :webauthn_credentials, only: [:create, :destroy] do
       collection do
@@ -457,8 +458,6 @@ Rails.application.routes.draw do
       post "refund"
     end
   end
-
-  resources :stripe_cardholders, only: [:new, :create, :update]
 
   namespace :stripe_cards do
     resource :activation, only: [:new, :create], controller: :activation

@@ -357,10 +357,6 @@ module EventsHelper
     )
   end
 
-  def show_mock_data?(event = @event)
-    false
-  end
-
   def transaction_memo(tx)
     # needed to handle mock data in playground mode
     if tx.local_hcb_code.method(:memo).parameters.empty?
