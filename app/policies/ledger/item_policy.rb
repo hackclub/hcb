@@ -29,8 +29,12 @@ class Ledger
       admin_or_member?
     end
 
-    def toggle_tag?
-      admin_or_member?
+    def toggle_tag?(tag = nil)
+      return false unless admin_or_member?
+
+      # A tag can only be applied to a transaction in its own event, so a member
+      # of two organizations can't attach one org's tag to the other's.
+      tag.nil? || record.primary_ledger&.event == tag.event
     end
 
     private

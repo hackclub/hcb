@@ -96,8 +96,8 @@
         <% end %>
 
         <% if !event&.demo_mode? && defined?(show_tags) && show_tags %>
-          <div class="flex flex-wrap tags hcb_code_<%= ct.local_hcb_code.hashid %>_tags" style="gap: 0.25rem">
-            <%= render partial: "canonical_transactions/tag", collection: tagged_with, locals: { hcb_code: ct.local_hcb_code } %>
+          <div class="flex flex-wrap tags ledger_item_<%= ct.local_hcb_code.ledger_item&.hashid %>_tags" style="gap: 0.25rem">
+            <%= render partial: "canonical_transactions/tag", collection: tagged_with, locals: { item: ct.local_hcb_code.ledger_item } %>
           </div>
         <% end %>
       </div>
@@ -112,13 +112,13 @@
           </div>
         <% end %>
 
-        <% if event.present? && policy(ct.local_hcb_code).toggle_tag? %>
+        <% if event.present? && ct.local_hcb_code.ledger_item && policy(ct.local_hcb_code.ledger_item).toggle_tag? %>
           <div class="overflow-visible relative" style="margin-left: 0.5rem;" data-controller="menu" data-menu-append-to-value="turbo-frame#ledger">
             <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
             <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
               <% event.tags.each do |tag| %>
                 <div class="flex items-center" data-tag="<%= tag.id %>">
-                  <%= button_to ledger_item_toggle_tag_path(ct.local_hcb_code.ledger_item), params: { tag_id: tag.id }, class: "menu__action #{tag_dom_id(ct.local_hcb_code, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
+                  <%= button_to ledger_item_toggle_tag_path(ct.local_hcb_code.ledger_item), params: { tag_id: tag.id }, class: "menu__action #{tag_dom_id(ct.local_hcb_code.ledger_item, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
                     <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
                     <%= tag.label %>
                     <%= "✓" if tagged_with.include?(tag) %>

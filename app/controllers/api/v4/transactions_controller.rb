@@ -81,17 +81,19 @@ module Api
           end
 
           if params.key? :tag_ids
-            # Tags live on the ledger item; `toggle_tag?` requires one to exist.
-            authorize @hcb_code, :toggle_tag?
+            # Tags live on the ledger item.
+            ledger_item = @hcb_code.ledger_item
+            raise Pundit::NotAuthorizedError if ledger_item.nil?
+            authorize ledger_item, :toggle_tag?
 
             tags = Array(params[:tag_ids]).map { |id| Tag.find_by_public_id!(id) }
 
             tags.each do |tag|
               authorize tag, :toggle_tag?
-              raise Pundit::NotAuthorizedError unless @hcb_code.events.include?(tag.event)
+              raise Pundit::NotAuthorizedError unless policy(ledger_item).toggle_tag?(tag)
             end
 
-            @hcb_code.ledger_item.tags = tags
+            ledger_item.tags = tags
           end
         end
 

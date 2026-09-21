@@ -89,12 +89,8 @@ class Ledger
       tag = Tag.find(params[:tag_id])
       @event = tag.event
 
-      authorize @item, :toggle_tag?
       authorize tag
-
-      # Scope the tag to this item's event so a member of two organizations
-      # can't attach one org's tag to the other's transaction.
-      raise Pundit::NotAuthorizedError unless @item.primary_ledger&.event == @event
+      raise Pundit::NotAuthorizedError unless policy(@item).toggle_tag?(tag)
 
       removed = false
       if @item.tags.exists?(tag.id)
@@ -108,8 +104,7 @@ class Ledger
 
       respond_to do |format|
         format.turbo_stream do
-          hcb_code = @item.hcb_code
-          render partial: (removed ? "tags/destroy" : "tags/create"), locals: { hcb_code:, tag: }
+          render partial: (removed ? "tags/destroy" : "tags/create"), locals: { item: @item, tag: }
         end
         format.any { redirect_back fallback_location: @event }
       end

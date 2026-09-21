@@ -5,8 +5,8 @@
   <div>
     <strong>Tags</strong>
     <div class="flex items-center flex-wrap" style="gap: 0.25rem">
-      <div class="flex items-center flex-wrap hcb_code_<%= hcb_code.hashid %>_tags" style="gap: 0.25rem">
-        <%= render partial: "canonical_transactions/tag", collection: tags, locals: { hcb_code: } %>
+      <div class="flex items-center flex-wrap ledger_item_<%= ledger_item.hashid %>_tags" style="gap: 0.25rem">
+        <%= render partial: "canonical_transactions/tag", collection: tags, locals: { item: ledger_item } %>
       </div>
 
       <div data-controller="menu">
@@ -16,7 +16,7 @@
         <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
           <% @event.tags.each do |tag| %>
             <div class="flex items-center" data-tag="<%= tag.id %>">
-              <%= button_to ledger_item_toggle_tag_path(ledger_item), params: { tag_id: tag.id }, class: "menu__action #{tag_dom_id(hcb_code, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
+              <%= button_to ledger_item_toggle_tag_path(ledger_item), params: { tag_id: tag.id }, class: "menu__action #{tag_dom_id(ledger_item, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
                 <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
                 <%= tag.label %>
                 <%= "✓" if tags.include?(tag) %>

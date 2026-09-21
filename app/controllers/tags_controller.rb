@@ -13,11 +13,7 @@ class TagsController < ApplicationController
 
     if params[:ledger_item_id].present?
       ledger_item = Ledger::Item.find_by_hashid!(params[:ledger_item_id])
-      authorize ledger_item, :toggle_tag?
-
-      # Scope the tag to this item's event so a member of two organizations
-      # can't attach one org's tag to the other's transaction.
-      raise Pundit::NotAuthorizedError unless ledger_item.primary_ledger&.event == @event
+      raise Pundit::NotAuthorizedError unless policy(ledger_item).toggle_tag?(tag)
 
       suppress(ActiveRecord::RecordNotUnique) do
         ledger_item.tags << tag
