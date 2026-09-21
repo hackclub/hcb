@@ -31,6 +31,8 @@ class Announcement < ApplicationRecord
   hashid_config salt: ""
 
   include AASM
+  include PublicActivity::Model
+  tracked owner: proc { |controller, record| controller&.current_user || record&.author }, recipient: :event, only: []
 
   ALLOWED_URL_SCHEMES = ["http", "https", "mailto", "tel"].freeze
   WHITELISTED_ATTRIBUTES = ["href", "src", "rel", "target", "title", "id", "alt"].freeze
@@ -50,6 +52,7 @@ class Announcement < ApplicationRecord
       transitions from: :draft, to: :published
 
       after do
+        create_activity(key: "announcement.create", owner: author, recipient: event, parameters: { is_draft: false })
         Announcement::PublishedJob.perform_later(announcement: self)
       end
     end
@@ -78,6 +81,14 @@ class Announcement < ApplicationRecord
   before_save :autofollow_organizers
 
   before_save :remove_unsafe_content
+
+  before_destroy :delete_activity
+
+  after_create_commit do
+    next if template_draft? # skip templates
+
+    create_activity(key: "announcement.create", owner: author, recipient: event, parameters: { is_draft: true })
+  end
 
   def render
     ProsemirrorService::Renderer.render_html(content, event)
@@ -146,6 +157,13 @@ class Announcement < ApplicationRecord
       Rails.error.unexpected("Announcement #{id}'s content is not a Hash")
       errors.add(:content, "is invalid")
     end
+  end
+
+  def delete_activity
+
+    return if deleted_at.present?
+
+    create_activity(key: "announcement.destroy", owner: author, recipient: event, event_id: event.id, parameters: { title: title })
   end
 
 end
