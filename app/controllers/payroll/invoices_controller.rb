@@ -42,7 +42,7 @@ module Payroll
 
         if @on_behalf && !@invoice.approve(reviewed_by: current_user)
           @invoice.errors.add(:base, insufficient_balance_message(@position.event))
-          raise ActiveRecord::RecordInvalid, @invoice
+          raise ActiveRecord::RecordInvalid.new(@invoice)
         end
       end
 

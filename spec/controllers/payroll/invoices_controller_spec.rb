@@ -112,6 +112,19 @@ RSpec.describe Payroll::InvoicesController do
         expect { post :create, params: invoice_params }.not_to change(Payroll::Invoice, :count)
       end
     end
+
+    context "as an organizer who isn't a manager" do
+      before do
+        member = create(:user)
+        create(:organizer_position, event:, user: member, role: :member)
+        create_session(member, verified: true)
+        stub_balance(100_00)
+      end
+
+      it "can't upload and approve an invoice on the contractor's behalf" do
+        expect { post :create, params: invoice_params }.not_to change(Payroll::Invoice, :count)
+      end
+    end
   end
 
   describe "POST #approve" do
@@ -158,6 +171,21 @@ RSpec.describe Payroll::InvoicesController do
         expect { approve! }.not_to change(Payment, :count)
         expect(invoice.reload).to be_submitted
       end
+    end
+  end
+
+  describe "POST #reject" do
+    before { create_session(organizer, verified: true) }
+
+    # Invoices created before amounts had to be positive must still be reviewable.
+    it "rejects a legacy invoice with a non-positive amount" do
+      invoice = position.invoices.create!(name: "Engineering hours", amount_cents: 50_00, currency: position.currency)
+      invoice.update_column(:amount_cents, 0)
+
+      post :reject, params: { event_id: event.slug, id: invoice.id }
+
+      expect(invoice.reload).to be_rejected
+      expect(invoice.reviewed_by).to eq(organizer)
     end
   end
 end
