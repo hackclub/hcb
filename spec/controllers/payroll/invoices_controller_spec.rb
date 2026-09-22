@@ -59,13 +59,24 @@ RSpec.describe Payroll::InvoicesController do
         expect([Payroll::Invoice.count, Payment.count, Receipt.count]).to eq([0, 0, 0])
       end
 
-      it "rejects zero and negative amounts" do
+      it "re-renders only the form inside its modal, without the validation prefix" do
+        stub_balance(10_00)
+
+        post :create, params: invoice_params
+
+        expect(response.media_type).to eq(Mime[:turbo_stream])
+        expect(response.body).to include(%(target="#{ActionView::RecordIdentifier.dom_id(position, :invoice_form)}"))
+        expect(flash.now[:error]).to eq("Your organization doesn't have enough money to pay this invoice. Your balance is $10.00.")
+      end
+
+      it "rejects non-positive and non-numeric amounts" do
         stub_balance(100_00)
 
         %w[0 -50.00 abc].each do |amount|
           post :create, params: invoice_params(amount:)
 
           expect(response).to have_http_status(:unprocessable_content)
+          expect(flash.now[:error]).to eq("Amount must be greater than 0")
           expect([Payroll::Invoice.count, Payment.count]).to eq([0, 0])
         end
       end
@@ -99,6 +110,53 @@ RSpec.describe Payroll::InvoicesController do
 
       it "refuses to create the invoice" do
         expect { post :create, params: invoice_params }.not_to change(Payroll::Invoice, :count)
+      end
+    end
+  end
+
+  describe "POST #approve" do
+    let(:invoice) { position.invoices.create!(name: "Engineering hours", amount_cents: 50_00, currency: position.currency) }
+
+    def approve!
+      post :approve, params: { event_id: event.slug, id: invoice.id }
+    end
+
+    context "as an organizer" do
+      before { create_session(organizer, verified: true) }
+
+      it "pays an invoice only once when approved twice" do
+        stub_balance(100_00)
+
+        expect { 2.times { approve! } }.to change(Payment, :count).by(1)
+        expect(flash[:error]).to eq("This invoice has already been reviewed.")
+      end
+
+      it "leaves the invoice reviewable when the balance won't cover it" do
+        stub_balance(10_00)
+
+        expect { approve! }.not_to change(Payment, :count)
+        expect(invoice.reload).to be_submitted
+        expect(flash[:error]).to include("Your balance is $10.00")
+      end
+    end
+
+    context "as an organizer who is also the contractor" do
+      before do
+        create(:legal_entity_user, legal_entity:, user: organizer)
+        create_session(organizer, verified: true)
+        stub_balance(100_00)
+      end
+
+      it "can't approve their own invoice" do
+        expect { approve! }.not_to change(Payment, :count)
+        expect(invoice.reload).to be_submitted
+      end
+
+      it "still can't once the position is no longer active" do
+        position.update_column(:aasm_state, "terminated")
+
+        expect { approve! }.not_to change(Payment, :count)
+        expect(invoice.reload).to be_submitted
       end
     end
   end

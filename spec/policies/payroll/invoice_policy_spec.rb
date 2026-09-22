@@ -41,4 +41,15 @@ RSpec.describe Payroll::InvoicePolicy, type: :policy do
       expect(policy.create?).to eq(false)
     end
   end
+
+  describe "#approve?" do
+    it "is denied for the contractor themselves, even after the position ends" do
+      create(:legal_entity_user, legal_entity:, user: organizer)
+      position.update_column(:aasm_state, "terminated")
+
+      policy = described_class.new(organizer, invoice)
+      expect(policy.approve?).to eq(false)
+      expect(policy.reject?).to eq(false)
+    end
+  end
 end
