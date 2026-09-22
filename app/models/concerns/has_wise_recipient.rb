@@ -19,6 +19,13 @@ module HasWiseRecipient
       end
     end
 
+    # Disable unsupported Wise methods temporarily (Interac / Duitnow)
+    validate on: :create do
+      if unsupported_account_type?
+        errors.add(:base, unsupported_account_type_reason)
+      end
+    end
+
     def unsupported_account_type?
       UNSUPPORTED_ACCOUNT_TYPES.key?(account_type)
     end
@@ -145,7 +152,8 @@ module HasWiseRecipient
     "DE": /\A\d{5}\z/
   }.freeze
 
-  # Payment rails Wise is currently unable to pay out to# show people. Keys are `account_type` values from `information_required_for`.
+  # Payment rails Wise is currently unable to pay out to. Keys are `account_type`
+  # values from `information_required_for`.
   UNSUPPORTED_ACCOUNT_TYPES = {
     "interac"               => "Interac",
     "mobile_number_duitnow" => "Duitnow",

@@ -28,12 +28,6 @@ class LegalEntity
 
       validates_presence_of :address_line1, :address_city, :address_state, :address_postal_code, :recipient_country, :currency
 
-      validate on: :create do
-        if unsupported_account_type?
-          errors.add(:base, unsupported_account_type_reason)
-        end
-      end
-
       def self.permitted_attributes
         [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code,
          :recipient_country, :currency] +
