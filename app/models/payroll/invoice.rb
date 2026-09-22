@@ -43,7 +43,7 @@ module Payroll
 
     has_one :event, through: :payroll_position
 
-    monetize :amount_cents, with_model_currency: :currency, numericality: { greater_than: 0 }
+    monetize :amount_cents, with_model_currency: :currency, numericality: { greater_than: 0, on: :create }
 
     validates :currency, inclusion: { in: Money::Currency.all.map(&:iso_code) }
     validate :currency_matches_position
