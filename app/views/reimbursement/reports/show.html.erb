@@ -68,6 +68,16 @@
   <h2 class="heading mt0 mb1 flex justify-start flex-row" style="gap: 0px">
     <span><%= @report.name %></span>
   </h2>
+  <% if @report.user.flagged? %>
+    <% admin_tool "mb1" do %>
+      <span class="badge bg-warning">
+        ⚠️ <%= link_to "Flagged user", admin_flagged_users_path %><%= ": #{@report.user.flagged_reason}" if @report.user.flagged_reason.present? %>
+        <% if @report.user.flagged_by %>
+          (by <%= @report.user.flagged_by.full_name || @report.user.flagged_by.email %> on <%= @report.user.flagged_at.strftime("%Y-%m-%d") %>)
+        <% end %>
+      </span>
+    <% end %>
+  <% end %>
 </div>
 
 <section data-behavior="modal" role="dialog" id="edit" class="modal modal--scroll bg-snow lg:max-w-[450px]">

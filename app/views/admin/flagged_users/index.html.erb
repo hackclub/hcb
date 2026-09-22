@@ -1,0 +1,51 @@
+<% content_for(:title, "Flagged Users") %>
+
+<%= form_with url: admin_flagged_users_path, method: :post, local: true do |f| %>
+  <div class="flex gap-2 items-center flex-wrap">
+    <%= f.email_field :email, required: true, placeholder: "Email" %>
+    <%= f.text_field :reason, placeholder: "Reason (optional)" %>
+    <%= f.submit "Flag" %>
+  </div>
+<% end %>
+
+<table>
+  <thead>
+    <tr>
+      <th>Email</th>
+      <th>Name</th>
+      <th>Reason</th>
+      <th>Flagged by</th>
+      <th>Flagged at</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if @flagged_users.empty? %>
+      <tr>
+        <td colspan="6" class="text-center p-14">
+          No flagged users.
+        </td>
+      </tr>
+    <% else %>
+      <% @flagged_users.each do |user| %>
+        <tr class="align-top">
+          <td><%= link_to(user.email, admin_user_path(user)) %></td>
+          <td><%= user.full_name %></td>
+          <td><%= user.flagged_reason %></td>
+          <td><%= user.flagged_by&.full_name || user.flagged_by&.email %></td>
+          <td><%= user.flagged_at.strftime("%Y-%m-%d") %></td>
+          <td>
+            <%= button_to(
+                  "Unflag",
+                  admin_flagged_user_path(user),
+                  method: :delete,
+                  data: { turbo_confirm: "Are you sure?", turbo_confirm_danger: true },
+                  form_class: "m-0 inline-block",
+                  class: "m-0 btn btn-small btn--destroy"
+                ) %>
+          </td>
+        </tr>
+      <% end %>
+    <% end %>
+  </tbody>
+</table>

@@ -543,15 +543,16 @@ class AdminController < Admin::BaseController
     @q = params[:q].presence
     @pending = params[:pending] == "1" ? true : nil
     @failed = params[:failed] == "1" ? true : nil
+    @flagged = params[:flagged] == "1" ? true : nil
 
     @event_id = params[:event_id].presence
 
     if @event_id
       @event = Event.find(@event_id)
 
-      relation = @event.reimbursement_reports.includes(:event).visible
+      relation = @event.reimbursement_reports.includes(:event, :user).visible
     else
-      relation = Reimbursement::Report.includes(:event).visible
+      relation = Reimbursement::Report.includes(:event, :user).visible
     end
 
     relation = relation.search(@q) if @q
@@ -559,6 +560,8 @@ class AdminController < Admin::BaseController
     relation = relation.reimbursement_requested if @pending
 
     relation = relation.includes(:payout_holding).where(payout_holding: { aasm_state: :failed }) if @failed
+
+    relation = relation.where(user: User.flagged) if @flagged
 
     @unprocessed_wise_report_ids = Reimbursement::Report
                                    .where(id: Reimbursement::PayoutHolding.settled.or(Reimbursement::PayoutHolding.pending).select(:reimbursement_reports_id))

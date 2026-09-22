@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_22_121426) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -2917,6 +2917,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
     t.integer "creation_method"
     t.string "discord_id"
     t.text "email", null: false
+    t.datetime "flagged_at"
+    t.bigint "flagged_by_id"
+    t.text "flagged_reason"
     t.string "full_name"
     t.boolean "joined_as_teenager"
     t.datetime "locked_at", precision: nil
@@ -2944,6 +2947,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
     t.string "webauthn_id"
     t.index ["discord_id"], name: "index_users_on_discord_id", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["flagged_at"], name: "index_users_on_flagged_at", where: "(flagged_at IS NOT NULL)"
+    t.index ["flagged_by_id"], name: "index_users_on_flagged_by_id"
     t.index ["slug"], name: "index_users_on_slug", unique: true
   end
 
@@ -3255,6 +3260,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
   add_foreign_key "user_seen_at_histories", "users"
   add_foreign_key "user_sessions", "users"
   add_foreign_key "user_sessions", "users", column: "impersonated_by_id"
+  add_foreign_key "users", "users", column: "flagged_by_id"
   add_foreign_key "w9s", "users", column: "uploaded_by_id"
   add_foreign_key "webauthn_credentials", "users"
   add_foreign_key "wires", "events"

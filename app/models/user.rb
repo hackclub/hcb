@@ -13,6 +13,8 @@
 #  comment_notifications              :integer          default(0), not null
 #  creation_method                    :integer
 #  email                              :text             not null
+#  flagged_at                         :datetime
+#  flagged_reason                     :text
 #  full_name                          :string
 #  joined_as_teenager                 :boolean
 #  locked_at                          :datetime
@@ -37,15 +39,22 @@
 #  created_at                         :datetime         not null
 #  updated_at                         :datetime         not null
 #  discord_id                         :string
+#  flagged_by_id                      :bigint
 #  payout_method_id                   :bigint
 #  payout_method_type                 :string
 #  webauthn_id                        :string
 #
 # Indexes
 #
-#  index_users_on_discord_id  (discord_id) UNIQUE
-#  index_users_on_email       (email) UNIQUE
-#  index_users_on_slug        (slug) UNIQUE
+#  index_users_on_discord_id     (discord_id) UNIQUE
+#  index_users_on_email          (email) UNIQUE
+#  index_users_on_flagged_at     (flagged_at) WHERE (flagged_at IS NOT NULL)
+#  index_users_on_flagged_by_id  (flagged_by_id)
+#  index_users_on_slug           (slug) UNIQUE
+#
+# Foreign Keys
+#
+#  fk_rails_...  (flagged_by_id => users.id)
 #
 class User < ApplicationRecord
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
@@ -112,6 +121,8 @@ class User < ApplicationRecord
   has_many :email_updates, class_name: "User::EmailUpdate", inverse_of: :user
   has_many :email_updates_created, class_name: "User::EmailUpdate", inverse_of: :updated_by
   has_many :ledger_items, class_name: "Ledger::Item", inverse_of: :author
+
+  belongs_to :flagged_by, class_name: "User", optional: true
 
   has_many :affiliations, class_name: "Event::Affiliation", inverse_of: :affiliable, as: :affiliable
   accepts_nested_attributes_for :affiliations
@@ -295,6 +306,8 @@ class User < ApplicationRecord
     end
   end
 
+  scope :flagged, -> { where.not(flagged_at: nil) }
+
   scope :last_seen_within, ->(ago) { joins(:user_sessions).where(user_sessions: { impersonated_by_id: nil, last_seen_at: ago.. }).distinct }
   scope :currently_online, -> { last_seen_within(15.minutes.ago) }
   scope :active, -> { last_seen_within(30.days.ago) }
@@ -466,6 +479,18 @@ class User < ApplicationRecord
 
   def unlock!
     update!(locked_at: nil)
+  end
+
+  def flagged?
+    flagged_at.present?
+  end
+
+  def flag!(reason:, flagged_by:)
+    update!(flagged_at: Time.now, flagged_reason: reason, flagged_by:)
+  end
+
+  def unflag!
+    update!(flagged_at: nil, flagged_reason: nil, flagged_by: nil)
   end
 
   def onboarding?

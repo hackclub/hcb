@@ -292,6 +292,59 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "#flagged?" do
+    context "when flagged" do
+      it "returns" do
+        user = create(:user, flagged_at: Time.now)
+        expect(user).to be_flagged
+      end
+    end
+
+    context "when unflagged" do
+      it "returns" do
+        user = create(:user, flagged_at: nil)
+        expect(user).not_to be_flagged
+      end
+    end
+  end
+
+  describe "#flag!" do
+    it "flags with a reason and who flagged them, without touching sessions" do
+      flagger = create(:user)
+      user = create(:user, flagged_at: nil)
+      session = create(:user_session, user:)
+
+      user.flag!(reason: "Suspicious activity", flagged_by: flagger)
+
+      expect(user).to be_flagged
+      expect(user.flagged_reason).to eq("Suspicious activity")
+      expect(user.flagged_by).to eq(flagger)
+      expect(session.reload.signed_out_at).to be_nil
+    end
+  end
+
+  describe "#unflag!" do
+    it "clears the flag, reason, and flagger" do
+      flagger = create(:user)
+      user = create(:user, flagged_at: Time.now, flagged_reason: "Suspicious activity", flagged_by: flagger)
+
+      user.unflag!
+
+      expect(user).not_to be_flagged
+      expect(user.flagged_reason).to be_nil
+      expect(user.flagged_by).to be_nil
+    end
+  end
+
+  describe ".flagged" do
+    it "returns only flagged users" do
+      flagged_user = create(:user, flagged_at: Time.now)
+      create(:user, flagged_at: nil)
+
+      expect(User.flagged).to contain_exactly(flagged_user)
+    end
+  end
+
   describe "#private" do
     describe "#namae" do
       context "when brackets in name" do

@@ -12,6 +12,9 @@
     <%= form.label :failed do %>
       <%= form.check_box :failed, checked: @failed %> Payout holding failed
     <% end %>
+    <%= form.label :flagged do %>
+      <%= form.check_box :flagged, checked: @flagged %> Flagged user
+    <% end %>
     <%= form.submit "Search", class: "ml-auto" %>
   </div>
 <% end %>
@@ -56,6 +59,9 @@
           <% end %>
         </td>
         <td>
+          <% if report.user.flagged? %>
+            <span class="tooltipped tooltipped--e" aria-label="<%= report.user.flagged_reason.presence || "Flagged user" %>">⚠️</span>
+          <% end %>
           <%= report.user.name %> (<%= report.user.id %>)
         </td>
         <td class="w-24"><%= report.amount.format %></td>

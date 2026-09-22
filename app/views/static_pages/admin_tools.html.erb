@@ -58,6 +58,7 @@
         <%= card_to "Organizations", events_admin_index_path, badge: Event.approved.count, subtle_badge: true %>
         <%= card_to "Applications (HCB)", applications_admin_index_path, badge: Event::Application.under_review.count %>
         <%= card_to "Users", users_admin_index_path %>
+        <%= card_to "Flagged users", admin_flagged_users_path, badge: User.flagged.count, subtle_badge: true %>
         <%= card_to "Donations", donations_admin_index_path %>
         <%= card_to "Invoices", invoices_admin_index_path %>
         <%= card_to "Sponsors", sponsors_admin_index_path %>
