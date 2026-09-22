@@ -109,12 +109,15 @@ class LegalEntity
       UNSUPPORTED_METHODS[details_class]
     end
 
+    # A method is unsupported either because the whole method is deprecated, or
+    # because it pays out over a rail (e.g. Interac) our processor has suspended.
     def unsupported?
-      self.class.unsupported?(details.class)
+      self.class.unsupported?(details.class) || details&.try(:unsupported_account_type?) || false
     end
 
     def unsupported_details
-      self.class.unsupported_details(details.class)
+      self.class.unsupported_details(details.class) ||
+        (details&.try(:unsupported_account_type?) ? { status_badge: "Unavailable", reason: details.unsupported_account_type_reason } : nil)
     end
 
     def error_messages
@@ -131,9 +134,11 @@ class LegalEntity
 
     private
 
+    # Unsupported rails are rejected by the detail record's own validation, which
+    # keeps the message attached to the field the user picked.
     def details_must_be_supported
-      if unsupported?
-        errors.add(:base, "#{unsupported_details[:reason]} Please choose another method.")
+      if self.class.unsupported?(details.class)
+        errors.add(:base, "#{self.class.unsupported_details(details.class)[:reason]} Please choose another method.")
       end
     end
 

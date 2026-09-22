@@ -19,6 +19,14 @@ module HasWiseRecipient
       end
     end
 
+    def unsupported_account_type?
+      UNSUPPORTED_ACCOUNT_TYPES.key?(account_type)
+    end
+
+    def unsupported_account_type_reason
+      HasWiseRecipient.unsupported_account_type_reason(account_type)
+    end
+
     # Requirements pulled from https://wise.com/ documentation
 
     def self.information_required_for(currency)
@@ -136,6 +144,21 @@ module HasWiseRecipient
     "FR": /\A\d{5}\z/,
     "DE": /\A\d{5}\z/
   }.freeze
+
+  # Payment rails Wise is currently unable to pay out to# show people. Keys are `account_type` values from `information_required_for`.
+  UNSUPPORTED_ACCOUNT_TYPES = {
+    "interac"               => "Interac",
+    "mobile_number_duitnow" => "Duitnow",
+    "nirc_duitnow"          => "Duitnow",
+    "bnr_duitnow"           => "Duitnow"
+  }.freeze
+
+  def self.unsupported_account_type_reason(account_type)
+    rail = UNSUPPORTED_ACCOUNT_TYPES[account_type]
+    return nil unless rail
+
+    "Wise transfers via #{rail} are currently not supported due to technical difficulties on Wise's side. We recommend using a local bank transfer instead."
+  end
 
   ACCOUNT_NUMBER_FIELD = { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number" }.freeze
 
