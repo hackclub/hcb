@@ -12,7 +12,6 @@ module ComboboxSearchable
   # The combobox pages as the user scrolls, and treats a short page as the last
   # one, so this must return a full page whenever more rows exist.
   def combobox_page(relation)
-    page = [params[:page].to_i, 1].max
-    relation.limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE)
+    relation.page(params[:page]).per(PAGE_SIZE)
   end
 end
