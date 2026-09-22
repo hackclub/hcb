@@ -427,7 +427,7 @@ class AdminController < Admin::BaseController
 
   def user_search
     @q = params[:q].presence
-    users = @q.present? ? User.search_name(@q) : User.order(:full_name)
+    users = @q.present? ? User.search_name(@q) : User.order(:full_name, :id)
     users = combobox_page(users.select(:id, :full_name, :email))
 
     # The admin display already spells out the email and ID, hence the sublabel
