@@ -10,6 +10,10 @@
     Need an invoice? <%= link_to "Use our template", "https://docuseal.com/d/LJuTkqCU3MKDoT", target: "_blank" %>!
   </p>
 
+  <% if flash[:error] %>
+    <div class="flash error mb-3"><%= flash[:error] %></div>
+  <% end %>
+
   <%= form_with(model: @invoice, url: payroll_position_invoices_path(@position), scope: :payroll_invoice, local: true, data: { turbo_frame: "_top" }) do |form| %>
     <div class="card mb-4 flex flex-col gap-3">
       <div class="flex justify-between items-center">

@@ -41,7 +41,7 @@ module Payroll
         ).run!
 
         if @on_behalf && !@invoice.approve(reviewed_by: current_user)
-          @invoice.errors.add(:base, "Your organization doesn't have enough money to pay this invoice")
+          @invoice.errors.add(:base, insufficient_balance_message(@position.event))
           raise ActiveRecord::RecordInvalid, @invoice
         end
       end
@@ -54,7 +54,7 @@ module Payroll
         redirect_to my_pay_path
       end
     rescue ActiveRecord::RecordInvalid => e
-      flash.now[:error] = e.message
+      flash.now[:error] = e.record.errors.full_messages.to_sentence
       render_form_error
     end
 
@@ -66,7 +66,7 @@ module Payroll
       elsif !@invoice.submitted?
         flash[:error] = "This invoice has already been reviewed."
       else
-        flash[:error] = "Your organization doesn't have enough money to pay this invoice. Your balance is #{helpers.render_money(@event.balance_available_v2_cents)}."
+        flash[:error] = insufficient_balance_message(@event)
       end
 
       redirect_to contractor_page
@@ -99,9 +99,13 @@ module Payroll
       @invoice = @event.payroll_invoices.find(params[:id])
     end
 
-    # The form targets _top, so errors come back as a full page to show the flash.
+    # The form targets _top so success can redirect; errors re-render only the form, inside its modal.
     def render_form_error
-      render :new, status: :unprocessable_content, layout: !turbo_frame_request?
+      render turbo_stream: turbo_stream.replace([@position, :invoice_form], template: "payroll/invoices/new"), status: :unprocessable_content
+    end
+
+    def insufficient_balance_message(event)
+      "Your organization doesn't have enough money to pay this invoice. Your balance is #{helpers.render_money(event.balance_available_v2_cents)}."
     end
 
     def contractor_page
