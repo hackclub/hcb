@@ -252,7 +252,7 @@ module UsersHelper
                                content_tag(
                                  :span,
                                  safe_join([inline_icon("settings", size: 16), content_tag(:span, "Settings", class: "ml1")]),
-                                 onclick: "window.open('#{admin_user_url(user)}', '_blank'); return false;",
+                                 data: { controller: "new-window", action: "click->new-window#open", new_window_url_value: admin_user_url(user) },
                                  class: "menu__item menu__item--icon menu__action", rel: "noopener"
                                )
                              ])

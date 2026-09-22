@@ -267,6 +267,8 @@ class UsersController < ApplicationController
 
   def edit_admin
     authorize @user
+
+    @limit = Governance::Admin::Transfer::Limit.find_by(user_id: @user.id)
   end
 
   def admin_details
