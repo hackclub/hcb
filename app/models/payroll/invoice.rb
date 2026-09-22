@@ -46,6 +46,7 @@ module Payroll
     monetize :amount_cents, with_model_currency: :currency
 
     validates :currency, inclusion: { in: Money::Currency.all.map(&:iso_code) }
+    validates :amount_cents, numericality: { greater_than: 0, message: "must be greater than 0" }
     validate :currency_matches_position
 
     after_create_commit :notify_manager
@@ -71,13 +72,12 @@ module Payroll
       end
     end
 
-    # Approves the invoice and creates the payment it triggers. Returns false
-    # (rather than raising) if the event can't currently cover it, so callers
-    # can fall back to approving it manually later.
+    # Returns false if the invoice was already reviewed or the event can't cover it.
     def approve(reviewed_by:)
-      return false if MoneyService.convert_to_usd(amount_cents, currency) > event.balance_available_v2_cents
+      with_lock do
+        next false unless submitted?
+        next false if MoneyService.convert_to_usd(amount_cents, currency) > event.balance_available_v2_cents
 
-      transaction do
         update!(payment: Payment.create!(
           payee: payroll_position.payee,
           creator: reviewed_by,
@@ -87,9 +87,8 @@ module Payroll
           classification: :general_services
         ))
         mark_approved!(reviewed_by)
+        true
       end
-
-      true
     end
 
     def receipt_required?
@@ -115,8 +114,7 @@ module Payroll
       end
     end
 
-    # An invoice an organizer uploaded and approved in one go needs no review,
-    # so there is nothing to tell the manager about.
+    # Invoices uploaded and approved on a contractor's behalf need no review.
     def notify_manager
       return if approved?
 

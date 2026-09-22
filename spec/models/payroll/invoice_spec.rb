@@ -20,6 +20,13 @@ RSpec.describe Payroll::Invoice, type: :model do
     allow_any_instance_of(Event).to receive(:balance_available_v2_cents).and_return(cents)
   end
 
+  describe "validations" do
+    it "rejects non-positive amounts" do
+      expect(build_invoice(amount_cents: 0)).not_to be_valid
+      expect(build_invoice(amount_cents: -100)).not_to be_valid
+    end
+  end
+
   describe "manager notification" do
     it "emails the manager when an invoice is left for review" do
       expect { build_invoice.save! }.to have_enqueued_mail(Payroll::InvoiceMailer, :submitted)
@@ -46,6 +53,15 @@ RSpec.describe Payroll::Invoice, type: :model do
       expect(invoice.approve(reviewed_by: approver)).to eq(false)
       expect(invoice.reload).to be_submitted
       expect(invoice.payment).to be_nil
+    end
+
+    it "pays only once when two requests approve the same invoice" do
+      stub_balance(100_00)
+      invoice = build_invoice.tap(&:save!)
+      stale_copy = Payroll::Invoice.find(invoice.id)
+
+      expect(invoice.approve(reviewed_by: approver)).to eq(true)
+      expect { expect(stale_copy.approve(reviewed_by: approver)).to eq(false) }.not_to change(Payment, :count)
     end
   end
 end

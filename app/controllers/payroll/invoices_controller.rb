@@ -11,7 +11,7 @@ module Payroll
     def new
       @invoice = @position.invoices.build
       authorize @invoice
-      @on_behalf = on_behalf?
+      @on_behalf = policy(@invoice).on_behalf?
       render layout: false
     end
 
@@ -23,7 +23,7 @@ module Payroll
         amount_cents: Monetize.parse(invoice_params[:amount], @position.currency).cents
       )
       authorize @invoice
-      @on_behalf = on_behalf?
+      @on_behalf = policy(@invoice).on_behalf?
 
       attachments = Array(invoice_params[:file]).compact_blank
       if attachments.empty?
@@ -31,7 +31,6 @@ module Payroll
         return render_form_error
       end
 
-      approved = false
       ActiveRecord::Base.transaction do
         @invoice.save!
         ::ReceiptService::Create.new(
@@ -41,19 +40,15 @@ module Payroll
           receiptable: @invoice
         ).run!
 
-        # An organizer uploading on a contractor's behalf is already
-        # approving it, so skip the separate manual-approval step.
-        approved = @invoice.approve(reviewed_by: current_user) if @on_behalf
+        if @on_behalf && !@invoice.approve(reviewed_by: current_user)
+          @invoice.errors.add(:base, "Your organization doesn't have enough money to pay this invoice")
+          raise ActiveRecord::RecordInvalid, @invoice
+        end
       end
 
       if @on_behalf
-        flash[:success] =
-          if approved
-            "Invoice approved for #{@position.payee.display_name}! Payment will be sent after HCB review."
-          else
-            "Invoice uploaded for #{@position.payee.display_name}, but your balance won't cover it. Approve it once you've topped up."
-          end
-        redirect_to event_payroll_position_path(event_id: @position.event.slug, id: @position.id)
+        flash[:success] = "Invoice approved for #{@position.payee.display_name}! Payment will be sent after HCB review."
+        redirect_to contractor_page
       else
         flash[:success] = "Invoice submitted for review."
         redirect_to my_pay_path
@@ -66,13 +61,10 @@ module Payroll
     def approve
       authorize @invoice
 
-      unless @invoice.submitted?
-        flash[:error] = "This invoice has already been reviewed."
-        return redirect_to contractor_page
-      end
-
       if @invoice.approve(reviewed_by: current_user)
         flash[:success] = "Invoice approved! #{helpers.possessive(@invoice.payroll_position.payee.display_name)} payment will be sent after HCB review."
+      elsif !@invoice.submitted?
+        flash[:error] = "This invoice has already been reviewed."
       else
         flash[:error] = "Your organization doesn't have enough money to pay this invoice. Your balance is #{helpers.render_money(@event.balance_available_v2_cents)}."
       end
@@ -107,18 +99,13 @@ module Payroll
       @invoice = @event.payroll_invoices.find(params[:id])
     end
 
-    def on_behalf?
-      policy(@invoice).on_behalf?
-    end
-
-    # The form breaks out of its frame, so errors need the layout to come back
-    # as a full page (and to render the flash).
+    # The form targets _top, so errors come back as a full page to show the flash.
     def render_form_error
       render :new, status: :unprocessable_content, layout: !turbo_frame_request?
     end
 
     def contractor_page
-      event_payroll_position_path(event_id: @event.slug, id: @invoice.payroll_position)
+      event_payroll_position_path(event_id: @invoice.event.slug, id: @invoice.payroll_position)
     end
 
     def invoice_params
