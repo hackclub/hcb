@@ -10,8 +10,7 @@ module Payroll
       contractor? || on_behalf?
     end
 
-    # Uploading on a contractor's behalf is a reviewer action, so it never
-    # applies to the contractor themselves (who would otherwise self-approve).
+    # Never applies to the contractor themselves, who would otherwise self-approve.
     def on_behalf?
       return false if contractor?
       return false unless record.payroll_position.onboarded?

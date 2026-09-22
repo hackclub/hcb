@@ -46,17 +46,28 @@ RSpec.describe Payroll::InvoicesController do
         expect(invoice).to be_approved
         expect(invoice.reviewed_by).to eq(organizer)
         expect(invoice.payment.amount_cents).to eq(50_00)
+        expect(invoice.payment.receipts.count).to eq(1)
       end
 
-      it "leaves the invoice for manual review when the balance won't cover it" do
+      it "creates nothing when the balance won't cover it" do
         stub_balance(10_00)
 
         expect { post :create, params: invoice_params }
-          .to have_enqueued_mail(Payroll::InvoiceMailer, :submitted)
-          .and change(Payroll::Invoice, :count).by(1)
+          .to have_enqueued_mail(Payroll::InvoiceMailer, :submitted).exactly(0).times
 
-        expect(Payment.count).to eq(0)
-        expect(Payroll::Invoice.sole).to be_submitted
+        expect(response).to have_http_status(:unprocessable_content)
+        expect([Payroll::Invoice.count, Payment.count, Receipt.count]).to eq([0, 0, 0])
+      end
+
+      it "rejects zero and negative amounts" do
+        stub_balance(100_00)
+
+        %w[0 -50.00 abc].each do |amount|
+          post :create, params: invoice_params(amount:)
+
+          expect(response).to have_http_status(:unprocessable_content)
+          expect([Payroll::Invoice.count, Payment.count]).to eq([0, 0])
+        end
       end
 
       it "rejects an invoice with no attachment" do
