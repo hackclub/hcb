@@ -116,8 +116,7 @@ class LegalEntity
     end
 
     def unsupported_details
-      self.class.unsupported_details(details.class) ||
-        (details&.try(:unsupported_account_type?) ? { status_badge: "Unavailable", reason: details.unsupported_account_type_reason } : nil)
+      (details.try(:unsupported_account_type?) ? { status_badge: "Unavailable", reason: details.unsupported_account_type_reason } : nil)
     end
 
     def error_messages
