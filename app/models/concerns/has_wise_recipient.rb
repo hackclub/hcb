@@ -26,14 +26,6 @@ module HasWiseRecipient
       end
     end
 
-    def unsupported_account_type?
-      UNSUPPORTED_ACCOUNT_TYPES.key?(account_type)
-    end
-
-    def unsupported_account_type_reason
-      HasWiseRecipient.unsupported_account_type_reason(account_type)
-    end
-
     # Requirements pulled from https://wise.com/ documentation
 
     def self.information_required_for(currency)
@@ -140,6 +132,14 @@ module HasWiseRecipient
     def unsupported_currencies_supported_by_wire
       @unsupported_currencies_supported_by_wire ||= (Wire::AVAILABLE_CURRENCIES - AVAILABLE_CURRENCIES).sort
     end
+  end
+
+  def unsupported_account_type?
+    UNSUPPORTED_ACCOUNT_TYPES.key?(account_type)
+  end
+
+  def unsupported_account_type_reason
+    HasWiseRecipient.unsupported_account_type_reason(account_type)
   end
 
   # Postal code formats sourced from https://column.com/docs/international-wires/country-specific-details
