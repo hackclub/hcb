@@ -112,7 +112,7 @@ class LegalEntity
     # A method is unsupported either because the whole method is deprecated, or
     # because it pays out over a rail (e.g. Interac) our processor has suspended.
     def unsupported?
-      self.class.unsupported?(details.class) || details&.try(:unsupported_account_type?) || false
+      self.class.unsupported?(details.class) || details.try(:unsupported_account_type?) || false
     end
 
     def unsupported_details
