@@ -14,7 +14,7 @@ class PaymentsController < ApplicationController
 
   def new
     authorize @event, policy_class: PaymentPolicy
-    @payment = Payment.new
+    @payment = Payment.new(purpose: params[:purpose].presence, amount_cents: prefilled_amount_cents)
     @payee = @event.payees.not_archived.find_by_hashid(params[:payee_id]) if params[:payee_id].present?
     @recent_payments = @payee.payments.order(created_at: :desc).limit(5) if @payee
     render layout: "transfer"
@@ -94,6 +94,14 @@ class PaymentsController < ApplicationController
 
   def payment_params
     params.require(:payment).permit(:amount, :purpose, :payee_id, :classification, file: [])
+  end
+
+  # Prefills the amount from the URL, i.e. /payments/new?amount=21.50
+  def prefilled_amount_cents
+    return if params[:amount].blank?
+
+    cents = Monetize.parse(params[:amount], "USD").cents
+    cents if cents.positive?
   end
 
   def set_payment
