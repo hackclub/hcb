@@ -59,6 +59,22 @@
             <%= form.check_box :phone_number_verification_bypassed, checked: @user.phone_number_verification_bypassed? %>
           </div>
 
+          <div class="field field--checkbox">
+            <%= form.label :flagged, "Flag this user as suspicious (shown as a warning on their reimbursements)" %>
+            <%= form.check_box :flagged, checked: @user.flagged? %>
+          </div>
+
+          <div class="field">
+            <%= form.label :flagged_reason, "Flag reason (optional)" %>
+            <%= form.text_field :flagged_reason, value: @user.flagged_reason %>
+          </div>
+
+          <% if @user.flagged? && @user.flagged_by %>
+            <p class="quiet">
+              Flagged by <%= user_mention @user.flagged_by %> on <%= format_date @user.flagged_at %>
+            </p>
+          <% end %>
+
         <% end %>
 
         <% if superadmin_signed_in? %>

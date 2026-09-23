@@ -544,6 +544,8 @@ class AdminController < Admin::BaseController
     @pending = params[:pending] == "1" ? true : nil
     @failed = params[:failed] == "1" ? true : nil
     @flagged = params[:flagged] == "1" ? true : nil
+    @country = params[:country].presence
+    @countries = self.class.filterable_countries
 
     @event_id = params[:event_id].presence
 
@@ -563,6 +565,15 @@ class AdminController < Admin::BaseController
 
     relation = relation.where(user: User.flagged) if @flagged
 
+    if @country && (country = ISO3166::Country[@country])
+      # Users don't have a country field, so we guess it from the reimbursement's
+      # currency and from the calling code of the user's phone number. Both are
+      # heuristics: a currency (e.g. EUR) or calling code (e.g. +1) can be shared
+      # by multiple countries, so this may include some false positives.
+      relation = relation.where(currency: country.currency_code)
+                         .or(relation.where(user: User.where("phone_number LIKE ?", "#{country.country_code}%")))
+    end
+
     @unprocessed_wise_report_ids = Reimbursement::Report
                                    .where(id: Reimbursement::PayoutHolding.settled.or(Reimbursement::PayoutHolding.pending).select(:reimbursement_reports_id))
                                    .where(user_id: User.joins(legal_entities: :payout_methods)
@@ -574,12 +585,20 @@ class AdminController < Admin::BaseController
 
     @count = relation.count
     @reports = relation.page(@page).per(@per).order(
+      Arel.sql("(SELECT flagged_at FROM users WHERE users.id = reimbursement_reports.user_id) IS NOT NULL DESC"),
       @unprocessed_wise_report_ids.any? ? Arel.sql("CASE WHEN reimbursement_reports.id IN (#{@unprocessed_wise_report_ids.join(',')}) THEN 1 ELSE 0 END DESC") : nil,
       Arel.sql("reimbursement_reports.aasm_state = 'reimbursement_requested' DESC"),
       Arel.sql("reimbursement_reports.reimbursement_requested_at ASC NULLS LAST"),
       Arel.sql("reimbursement_reports.created_at DESC")
     )
 
+  end
+
+  def self.filterable_countries
+    @filterable_countries ||= ISO3166::Country.all
+                                              .select { |c| c.country_code.present? && c.currency_code.present? }
+                                              .sort_by(&:iso_short_name)
+                                              .map { |c| [c.iso_short_name, c.alpha2] }
   end
 
   def stripe_card_personalization_designs

@@ -367,7 +367,6 @@ Rails.application.routes.draw do
     end
     resources :legal_entities, only: [:index]
     resources :tax_forms, only: [:index]
-    resources :flagged_users, only: [:index, :create, :destroy]
     resources :column_statements, only: :index do
       get "bank_account_summary_report"
     end

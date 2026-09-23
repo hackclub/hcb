@@ -15,6 +15,7 @@
     <%= form.label :flagged do %>
       <%= form.check_box :flagged, checked: @flagged %> Flagged user
     <% end %>
+    <%= form.select :country, options_for_select(@countries, @country), { include_blank: "Any country" } %>
     <%= form.submit "Search", class: "ml-auto" %>
   </div>
 <% end %>

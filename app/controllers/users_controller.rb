@@ -409,6 +409,21 @@ class UsersController < ApplicationController
           @user.unlock!
         end
       end
+
+      if params[:user][:flagged].present?
+        flagged = params[:user][:flagged] == "1"
+        flagged_reason = params[:user][:flagged_reason].presence
+
+        if flagged
+          if @user.flagged?
+            @user.update!(flagged_reason:) if flagged_reason != @user.flagged_reason
+          else
+            @user.flag!(reason: flagged_reason, flagged_by: current_user)
+          end
+        elsif @user.flagged?
+          @user.unflag!
+        end
+      end
     end
 
     if params[:user][:email].present? && params[:user][:email] != @user.email

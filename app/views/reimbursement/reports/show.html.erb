@@ -71,7 +71,7 @@
   <% if @report.user.flagged? %>
     <% admin_tool "mb1" do %>
       <span class="badge bg-warning">
-        ⚠️ <%= link_to "Flagged user", admin_flagged_users_path %><%= ": #{@report.user.flagged_reason}" if @report.user.flagged_reason.present? %>
+        ⚠️ <%= link_to "Flagged user", admin_user_path(@report.user, anchor: "admin") %><%= ": #{@report.user.flagged_reason}" if @report.user.flagged_reason.present? %>
         <% if @report.user.flagged_by %>
           (by <%= @report.user.flagged_by.full_name || @report.user.flagged_by.email %> on <%= @report.user.flagged_at.strftime("%Y-%m-%d") %>)
         <% end %>

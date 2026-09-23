@@ -204,6 +204,57 @@ RSpec.describe UsersController do
   describe "#update" do
     render_views
 
+    it "lets admins flag a user with a reason" do
+      admin = create(:user, :make_admin)
+      user = create(:user, flagged_at: nil)
+      create_session(admin, verified: true)
+
+      patch(
+        :update,
+        params: {
+          id: user.id,
+          user: { flagged: "1", flagged_reason: "Suspicious activity" }
+        }
+      )
+
+      user.reload
+      expect(user).to be_flagged
+      expect(user.flagged_reason).to eq("Suspicious activity")
+      expect(user.flagged_by).to eq(admin)
+    end
+
+    it "lets admins unflag a user" do
+      admin = create(:user, :make_admin)
+      flagger = create(:user)
+      user = create(:user, flagged_at: Time.now, flagged_reason: "Suspicious activity", flagged_by: flagger)
+      create_session(admin, verified: true)
+
+      patch(
+        :update,
+        params: {
+          id: user.id,
+          user: { flagged: "0" }
+        }
+      )
+
+      expect(user.reload).not_to be_flagged
+    end
+
+    it "does not let non-admins flag a user" do
+      user = create(:user, flagged_at: nil)
+      create_session(user, verified: true)
+
+      patch(
+        :update,
+        params: {
+          id: user.id,
+          user: { flagged: "1", flagged_reason: "Suspicious activity" }
+        }
+      )
+
+      expect(user.reload).not_to be_flagged
+    end
+
     it "requires sudo mode in order to change 2fa settings" do
       user = create(:user, phone_number: "+18556254225")
       user.update!(phone_number_verified: true)
