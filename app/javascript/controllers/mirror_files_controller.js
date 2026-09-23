@@ -1,10 +1,6 @@
 import { Controller } from '@hotwired/stimulus'
 
-// Copies a file input's selection onto another input, so a styled picker and the
-// field the form actually submits stay in sync. Attach to the picker itself:
-//
-//   data: { controller: "mirror-files", action: "input->mirror-files#mirror",
-//           mirror_files_to_value: "event_logo" }
+// Copies a file input's in org settings (bg image/logo)
 export default class extends Controller {
   static values = { to: String }
 
