@@ -925,8 +925,14 @@ class Event < ApplicationRecord
 
   monetize :minimum_wire_amount_cents
 
+  # Organizations that have raised over $50,000 in the past year don't get
+  # charged for the $25 per wire our partner bank charges us.
+  def wire_fee_waived?
+    canonical_transactions.where("amount_cents > 0").where("date >= ?", 1.year.ago).sum(:amount_cents) > 50_000_00
+  end
+
   def minimum_wire_amount_cents
-    return 100 if canonical_transactions.where("amount_cents > 0").where("date >= ?", 1.year.ago).sum(:amount_cents) > 50_000_00
+    return 100 if wire_fee_waived?
     return 100 if plan.exempt_from_wire_minimum?
     return 100 if Flipper.enabled?(:exempt_from_wire_minimum, self)
 

@@ -250,7 +250,7 @@ class CanonicalPendingTransaction < ApplicationRecord
     # PTs that were chronologically created first in an HcbCode are first
     # responsible for "contributing" to the fronted amount. After a PT's
     # amount_cents is fully allocated to the fronted amount, the next
-    # chronological PT in the hcb_code is responsible for allocating it's own
+    # chronological PT in the hcb_code is responsible for allocating its own
     # amount_cents towards the fronted amount.
     #
     # The code below is a simplified implementation of that "algorithm".

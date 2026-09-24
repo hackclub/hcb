@@ -10,6 +10,7 @@
 #  cover_donation_fees           :boolean          default(FALSE)
 #  generate_monthly_announcement :boolean          default(FALSE), not null
 #  hide_onboarding_message       :boolean          default(FALSE), not null
+#  subevent_name_prefix          :string
 #  subevent_plan                 :string
 #  created_at                    :datetime         not null
 #  updated_at                    :datetime         not null

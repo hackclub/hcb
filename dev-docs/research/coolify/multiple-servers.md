@@ -69,7 +69,7 @@ TLDR:
       You must pick a path that does NOT redirect you.
       For example, the Rails app will redirect `/` to `/users/auth` when you're
       not signed in. This redirect goes to `https` (not `http`) and will result
-      in a error.
+      in an error.
     - I personally recommend `curl`'ing the `/up` health check path. For
       example,
       ```
