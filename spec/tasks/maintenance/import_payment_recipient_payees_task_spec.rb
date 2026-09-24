@@ -59,6 +59,28 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
     expect(event.payees.sole.legal_entity).not_to eq(other_event.payees.sole.legal_entity)
   end
 
+  it "leaves the reimbursement clearing event alone, since its recipients are reimbursed users" do
+    clearing = create(:event, id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
+    create(:payment_recipient, event: clearing, email: "orpheus@hackclub.com", payment_model: "AchTransfer",
+                               name: "Orpheus", routing_number: "021000021", account_number: "123456789", bank_name: "Chase")
+
+    expect { run_task }.not_to change(LegalEntity, :count)
+  end
+
+  it "keeps the payee's other methods when a database error hits one of them" do
+    ach_recipient(email: "orpheus@hackclub.com", account_number: "111111111")
+    ach_recipient(email: "orpheus@hackclub.com", account_number: "222222222")
+    calls = 0
+    allow_any_instance_of(LegalEntity::PayoutMethodService::Update).to receive(:run).and_wrap_original do |run|
+      calls += 1
+      calls == 1 ? ActiveRecord::Base.connection.execute("SELECT 1 / 0") : run.call
+    end
+
+    run_task
+
+    expect(event.payees.sole.legal_entity.payout_methods.count).to eq(1)
+  end
+
   it "defaults to the method money last went out on, not the most recent recipient" do
     paid = ach_recipient(email: "orpheus@hackclub.com", account_number: "111111111")
     transfer_to(paid, aasm_state: "deposited")

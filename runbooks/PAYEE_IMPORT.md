@@ -25,7 +25,9 @@ To run it, open `/maintenance_tasks`, pick the task, and run it.
   writes a row behind *every* ACH transfer, check, and wire, including the ones
   the modern payout system, reimbursements, and payroll create. So the import
   sees the same account many times over, and collapses repeats into one payout
-  method. Rows belonging to an existing payee are skipped by the rule above.
+  method. Rows belonging to an existing payee are skipped by the rule above,
+  and the reimbursement clearing event is skipped entirely, since its
+  recipients are reimbursed users rather than anyone an org paid.
 - Recipients whose saved details can no longer make a valid payout method (a
   malformed routing number, a state stored as "California" rather than "CA", a
   wire missing a field today's validations require) are left behind; the payee

@@ -17,7 +17,9 @@ module Maintenance
     }.freeze
 
     def collection
+      # Reimbursements pay out from the clearing event, so its recipients are reimbursed users, not payees.
       Event.where(id: PaymentRecipient.unscoped.select(:event_id))
+           .where.not(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
     end
 
     def process(event)
@@ -37,7 +39,7 @@ module Maintenance
 
     def recipients_by_email(event)
       event.payment_recipients
-           .reorder(nil)
+           .unscope(:includes, :order)
            .reject { |recipient| recipient.email.blank? }
            .group_by { |recipient| recipient.email.strip.downcase }
     end
@@ -100,7 +102,8 @@ module Maintenance
         make_default: default
       )
 
-      return true if service.run
+      # A savepoint, so a database error here can't abort the payee's transaction.
+      return true if ActiveRecord::Base.transaction(requires_new: true) { service.run }
 
       skipped(recipient, service.error_messages.to_sentence)
     rescue => e
