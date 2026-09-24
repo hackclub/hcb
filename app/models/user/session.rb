@@ -38,7 +38,7 @@
 #
 class User
   class Session < ApplicationRecord
-    has_paper_trail skip: [:session_token] # ciphertext columns will still be tracked
+    has_paper_trail skip: [:session_token, :ip, :longitude, :latitude] # session_token ciphertext columns will still be tracked
     has_encrypted :session_token
     blind_index :session_token
 
@@ -128,9 +128,9 @@ class User
       last_authenticated_at >= SUDO_MODE_TTL.ago
     end
 
-    def clear_metadata!
+    def clear_ip_metadata!
       update!(
-        device_info: nil,
+        ip: nil,
         latitude: nil,
         longitude: nil,
       )

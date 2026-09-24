@@ -10,6 +10,14 @@ module Api
     default_format :json
 
     helpers do
+      def public_id_resource!(ivar_name, param_key, model, not_found_message)
+        return instance_variable_get(ivar_name) if instance_variable_defined?(ivar_name)
+
+        instance_variable_set(ivar_name, model.find_by_public_id!(params[param_key]))
+      rescue ActiveRecord::RecordNotFound
+        error!({ message: not_found_message }, 404)
+      end
+
       def orgs
         @orgs ||= paginate(Event.indexable.by_category(params[:category]).order(created_at: :asc))
       end
@@ -44,10 +52,26 @@ module Api
         error!({ message: "Organization not found." }, 404)
       end
 
+      def ledger_items(query = {})
+        ::Ledger::Query.new(
+          "$and" => [
+            query,
+            { "$or" => [
+              { amount_cents: { "$ne" => 0 } },
+              { status: { "$in" => %w[settled pending reversed] } }
+            ]
+}
+          ]
+        ).execute(ledgers: [org.ledger])
+                       .preload(:canonical_transactions, :canonical_pending_transactions, :receipts, :tags, primary_ledger: :event)
+      end
+
       def transactions
-        # TODO: this can be optimized
         @transactions ||=
-          begin
+          if ledger_engine?
+            paginate(ledger_items).map { |item| Models::LedgerTransaction.new(item) }
+          else
+            # TODO: this can be optimized
             pending = PendingTransactionEngine::PendingTransaction::All.new(event_id: org.id).run
             settled = TransactionGroupingEngine::Transaction::All.new(event_id: org.id).run
 
@@ -57,19 +81,25 @@ module Api
       end
 
       def transaction
-        @transaction ||=
-          begin
-            id = params[:transaction_id]
-            HcbCode.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Transaction not found." }, 404)
+        public_id_resource!(:@transaction, :transaction_id, HcbCode, "Transaction not found.")
       end
 
       def card_charges
-        # TODO: this can be optimized
         @card_charges ||=
-          begin
+          if ledger_engine?
+            # The ledger tags force captures (HCB-601) with linked_object_type
+            # "CardCharge" too, but Models::CardCharge's default scope is
+            # HCB-600 only. Narrow the relation before paginating, or the
+            # pagination headers count rows that get dropped from the body.
+            items = paginate(
+              ledger_items(linked_object_type: { "$eq" => "CardCharge" })
+                .where(id: Models::CardCharge.select(:ledger_item_id))
+            )
+            charges = Models::CardCharge.where(ledger_item_id: items.map(&:id)).index_by(&:ledger_item_id)
+
+            items.map { |item| charges[item.id] }
+          else
+            # TODO: this can be optimized
             pending = PendingTransactionEngine::PendingTransaction::All.new(event_id: org.id).run
             settled = TransactionGroupingEngine::Transaction::All.new(event_id: org.id).run
 
@@ -83,13 +113,7 @@ module Api
       end
 
       def card_charge
-        @card_charge ||=
-          begin
-            id = params[:card_charge_id]
-            Models::CardCharge.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Card charge not found." }, 404)
+        public_id_resource!(:@card_charge, :card_charge_id, Models::CardCharge, "Card charge not found.")
       end
 
       def donations
@@ -97,13 +121,7 @@ module Api
       end
 
       def donation
-        @donation ||=
-          begin
-            id = params[:donation_id]
-            Donation.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Donation not found." }, 404)
+        public_id_resource!(:@donation, :donation_id, Donation, "Donation not found.")
       end
 
       def transfers
@@ -111,13 +129,7 @@ module Api
       end
 
       def transfer
-        @transfer ||=
-          begin
-            id = params[:transfer_id]
-            Disbursement.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Transfer not found." }, 404)
+        public_id_resource!(:@transfer, :transfer_id, Disbursement, "Transfer not found.")
       end
 
       def ach_transfers
@@ -125,13 +137,7 @@ module Api
       end
 
       def ach_transfer
-        @ach_transfer ||=
-          begin
-            id = params[:ach_transfer_id]
-            AchTransfer.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "ACH transfer not found." }, 404)
+        public_id_resource!(:@ach_transfer, :ach_transfer_id, AchTransfer, "ACH transfer not found.")
       end
 
       def invoices
@@ -139,13 +145,7 @@ module Api
       end
 
       def invoice
-        @invoice ||=
-          begin
-            id = params[:invoice_id]
-            Invoice.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Invoice not found." }, 404)
+        public_id_resource!(:@invoice, :invoice_id, Invoice, "Invoice not found.")
       end
 
       def checks
@@ -153,13 +153,7 @@ module Api
       end
 
       def check
-        @check ||=
-          begin
-            id = params[:check_id]
-            Check.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Check not found." }, 404)
+        public_id_resource!(:@check, :check_id, Check, "Check not found.")
       end
 
       def cards
@@ -167,13 +161,7 @@ module Api
       end
 
       def card
-        @card ||=
-          begin
-            id = params[:card_id]
-            StripeCard.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Card not found." }, 404)
+        public_id_resource!(:@card, :card_id, StripeCard, "Card not found.")
       end
 
       def wire_transfers
@@ -181,13 +169,7 @@ module Api
       end
 
       def wire_transfer
-        @wire_transfer ||=
-          begin
-            id = params[:wire_transfer_id]
-            Wire.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Wire transfer not found." }, 404)
+        public_id_resource!(:@wire_transfer, :wire_transfer_id, Wire, "Wire transfer not found.")
       end
 
       def wise_transfers
@@ -195,13 +177,7 @@ module Api
       end
 
       def wise_transfer
-        @wise_transfer ||=
-          begin
-            id = params[:wise_transfer_id]
-            WiseTransfer.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Wise transfer not found." }, 404)
+        public_id_resource!(:@wise_transfer, :wise_transfer_id, WiseTransfer, "Wise transfer not found.")
       end
 
       def check_deposits
@@ -209,13 +185,7 @@ module Api
       end
 
       def check_deposit
-        @check_deposit ||=
-          begin
-            id = params[:check_deposit_id]
-            CheckDeposit.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Check deposit not found." }, 404)
+        public_id_resource!(:@check_deposit, :check_deposit_id, CheckDeposit, "Check deposit not found.")
       end
 
       def reimbursed_expenses
@@ -223,13 +193,7 @@ module Api
       end
 
       def reimbursed_expense
-        @reimbursed_expense ||=
-          begin
-            id = params[:reimbursed_expense_id]
-            Reimbursement::ExpensePayout.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Reimbursed expense not found." }, 404)
+        public_id_resource!(:@reimbursed_expense, :reimbursed_expense_id, Reimbursement::ExpensePayout, "Reimbursed expense not found.")
       end
 
       def hcb_fees
@@ -237,31 +201,26 @@ module Api
       end
 
       def hcb_fee
-        @hcb_fee ||=
-          begin
-            id = params[:hcb_fee_id]
-            BankFee.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "HCB fee not found." }, 404)
+        public_id_resource!(:@hcb_fee, :hcb_fee_id, BankFee, "HCB fee not found.")
       end
 
       def activity
-        @activity ||=
-          begin
-            id = params[:activity_id]
-            PublicActivity::Activity.find_by_public_id!(id)
-          end
-      rescue ActiveRecord::RecordNotFound
-        error!({ message: "Activity not found." }, 404)
+        public_id_resource!(:@activity, :activity_id, PublicActivity::Activity, "Activity not found.")
       end
 
       # FOR TYPE EXPANSION
       def type_expansion(expand: [], hide: [])
         {
           expand: (params[:expand] || []) + expand,
-          hide: (params[:hide] || []) + hide
+          hide: (params[:hide] || []) + hide,
+          ledger: ledger_engine?
         }
+      end
+
+      def ledger_engine?
+        return @ledger_engine if defined?(@ledger_engine)
+
+        @ledger_engine = Models::LedgerTransaction.requested?(request)
       end
 
       params :expand do
@@ -959,7 +918,8 @@ module Api
       route_param :transaction_id do
         get do
           Pundit.authorize(nil, [:api, transaction], :show?)
-          present transaction, with: Api::Entities::Transaction, **type_expansion(expand: %w[transaction])
+          options = type_expansion(expand: %w[transaction])
+          present Models::LedgerTransaction.resolve(transaction, options), with: Api::Entities::Transaction, **options
         end
       end
     end

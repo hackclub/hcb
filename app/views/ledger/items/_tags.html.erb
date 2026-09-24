@@ -1,0 +1,17 @@
+<%# locals: (item:) %>
+
+<%#
+  Adapter between the ledger item view and the tag store. The item view only
+  knows `item.tags`; everything below (which HCB code backs the tags, how the
+  container is streamed into) lives here so a future migration off HCB codes
+  only touches this partial.
+
+  The container renders even when empty so tag toggles can stream chips into it.
+%>
+<% hcb_code = item.hcb_code %>
+<% if hcb_code.present? && !hcb_code.event&.demo_mode? %>
+  <% tags = @event ? item.tags.select { |tag| tag.event_id == @event.id } : item.tags %>
+  <div class="flex flex-wrap tags hcb_code_<%= hcb_code.hashid %>_tags" style="gap: 0.25rem">
+    <%= render partial: "ledger/items/tag", collection: tags, as: :tag, locals: { item: } %>
+  </div>
+<% end %>

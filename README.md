@@ -16,8 +16,8 @@ Welcome to the [HCB](https://hackclub.com/fiscal-sponsorship/) codebase!
 
 HCB is an [open source](https://hackclub.com/fiscal-sponsorship/open-source/),
 safe, and easy-to-use fiscal sponsorship platform for hackathons, Hack Clubs,
-robotic teams and more. We use it to run
-our [fiscal sponsorship program](https://hackclub.com/fiscal-sponsorship/), we
+robotics teams and more. We use it to run
+our [fiscal sponsorship program](https://hackclub.com/fiscal-sponsorship/); we
 provide high schoolers with a 501(c)(3) status-backed restricted fund for their
 organization. Behind the scenes, HCB is a Ruby on Rails application (learn more
 by reading [our documentation](/dev-docs)).
@@ -36,7 +36,7 @@ by reading [our documentation](/dev-docs)).
 ## I found a security vulnerability! What should I do?
 
 Please email [hcb-security@hackclub.com](mailto:hcb-security@hackclub.com) to
-report the vulnerability. To learn more about bug bounties, visit https://security.hackclub.com
+report the vulnerability. To learn more about security bounties, visit https://security.hackclub.com
 
 ## Quick start
 
@@ -46,7 +46,7 @@ Codespaces, Docker, and a native setup.
 
 ## Contributing
 
-We are so excited for you to join the codebase! We have a getting started
+We are so excited for you to join the codebase! We have getting-started
 documentation in the [`dev-docs` folder](/dev-docs/development.md).
 
 All contributors are expected to follow the Hack

@@ -19,8 +19,11 @@
           admin_signed_in? ?
             Event.not_demo_mode.reorder(Event::CUSTOM_SORT).map { |event| [event.name, event.id] } :
             ((@report.event ? [@report.event] : []) + current_user.events.not_hidden.filter_demo_mode(false)).uniq.map { |event| [event.name, event.id] },
-          { prompt: "Select an event…", required: true }) %>
-      <% unless admin_signed_in? %>
+          { prompt: "Select an event…", required: true },
+          { disabled: !policy(@report).change_event? }) %>
+      <% if @report.card_grant.present? %>
+        <span class="muted">This reimbursement is backed by a card grant, so it can't be moved to a different organization.</span>
+      <% elsif !admin_signed_in? %>
         <span class="muted">You can transfer a report to any organization you're a part of.</span>
       <% end %>
     </div>

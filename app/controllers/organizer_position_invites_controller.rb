@@ -38,12 +38,12 @@ class OrganizerPositionInvitesController < ApplicationController
       flash[:success] = "Invite successfully sent to #{user_email}"
       redirect_to event_team_path @invite.event
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
   def show
-    # If the user's not signed in, redirect them to login page
+    # If the user's not signed in, redirect them to the login page
     unless signed_in?
       skip_authorization
       return redirect_to auth_users_path(return_to: organizer_position_invite_path(@invite)), flash: { info: "Please sign in to accept this invitation." }

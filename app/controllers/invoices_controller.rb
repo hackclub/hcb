@@ -26,7 +26,7 @@ class InvoicesController < ApplicationController
     voided = relation.void_v2.sum(:item_amount)
 
     @stats = {
-      # The calcluations for `total` and `unpaid` do not include archived invoices
+      # The calculations for `total` and `unpaid` do not include archived invoices
       total: relation.sum(:item_amount) - archived_unpaid - voided,
       # "paid" status invoices include manually paid invoices and
       # Stripe invoices that are paid, but for which the funds are in transit
@@ -58,9 +58,8 @@ class InvoicesController < ApplicationController
     @invoices = helpers.sorted_relation(
       relation,
       INVOICE_COLUMNS,
-      sort: [params[:sort], params[:direction]],
-      default: [:created_at, :desc]
-    ).includes(:sponsor).page(params[:page]).per(25)
+      sort: [params[:sort], params[:direction]]
+    ).includes(:sponsor).page(params[:page]).per(safe_per(25))
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)

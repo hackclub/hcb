@@ -1,0 +1,59 @@
+<% title "Continue to #{@nav_item[:name]}" %>
+
+<div class="flex gap-3 items-center mt-3">
+  <%= inline_icon(@nav_item[:icon], size: 64) %>
+
+  <div class="flex flex-col">
+    <h2 class="my-0"><%= "Select an organization to continue to" if @available_events.any? %> <%= @nav_item[:name] %></h2>
+    <% if @nav_item[:tooltip].present? %>
+      <p class="text-muted my-0"><%= @nav_item[:tooltip] %></p>
+    <% end %>
+  </div>
+</div>
+
+<ul class="grid grid--medium-narrow text-left w-100 <%= @available_events.any? ? "mt-3" : "mt-0" %>">
+  <% @available_events.each do |event| %>
+    <%= render partial: "events/event_card", locals: { event:, link_path: instance_exec(event.slug, &@nav_item[:path_proc]) } %>
+  <% end %>
+</ul>
+
+<% if @unavailable_events.any? %>
+  <% if @available_events.any? %>
+    <p class="text-muted">
+      You are also in <%= pluralize(@unavailable_events.size, "other organization") %> that <%= @unavailable_events.one? ? "does" : "do" %> not have access to this page: <%= @unavailable_events.map { |e| link_to sanitize(e.name), e }.to_sentence.html_safe %><%# erb_lint:disable ErbSafety %>
+    </p>
+  <% else %>
+    <p>
+      You are in <%= pluralize(@unavailable_events.size, "organization") %> that <%= @unavailable_events.one? ? "does" : "do" %> not have access to this page: <%= @unavailable_events.map { |e| link_to sanitize(e.name), e }.to_sentence.html_safe %><%# erb_lint:disable ErbSafety %>
+    </p>
+
+    <%= link_to "Return to homepage", root_path, class: "btn" %>
+  <% end %>
+<% elsif @available_events.empty? %>
+  <p>You're currently not in any organizations.</p>
+
+  <% if current_user.organizer_position_invites.any? %>
+    <p>However, you do have <%= pluralize(current_user.organizer_position_invites.size, "pending invitation") %>:</p>
+
+    <ul class="grid grid--narrow text-left w-full mt-2">
+      <% current_user.organizer_position_invites.each do |invite| %>
+        <%= link_to invite do %>
+          <li class="overflow-visible card card--hover flex flex-row justify-between items-center gap-2">
+            <span>
+              <%= status_badge "info" %>
+              <strong><%= invite.event&.name %></strong>
+            </span>
+          </li>
+        <% end %>
+      <% end %>
+    </ul>
+  <% else %>
+    <div class="flex flex-col md:flex-row gap-5">
+      <%= link_to apply_path, class: "btn bg-success" do %>
+        <%= inline_icon "plus-box" %> Apply to start a new organization
+      <% end %>
+      <%= link_to "Return to homepage", root_path, class: "btn" %>
+    </div>
+  <% end %>
+
+<% end %>

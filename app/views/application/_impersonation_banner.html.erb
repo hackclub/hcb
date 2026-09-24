@@ -1,0 +1,8 @@
+<% impersonated_user = current_user(allow_unverified: true) %>
+<% if current_session&.impersonated? && impersonated_user.present? %>
+  <div class="w-100 px4 bg-white transparency-banner <%= local_assigns[:klass] %>">
+    <p class="h5 medium center py-2 my-0">
+      <%= link_to "← Exit Impersonation", unimpersonate_user_path(impersonated_user, return_to: request.url), data: { turbo_method: :post, turbo_frame: "_top" } %> | You're currently impersonating <%= user_mention impersonated_user %><% unless impersonated_user.verified? %> <span class="badge bg-warning">unverified</span><% end %>
+    </p>
+  </div>
+<% end %>

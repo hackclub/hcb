@@ -1,0 +1,5 @@
+<%# locals: (seconds:) -%>
+<div class="absolute inset-y-0 right-2 flex items-center gap-1 h5 muted pointer-events-none" data-controller="resend-code" data-resend-code-seconds-value="<%= seconds %>" data-action="turbo:submit-start@window->resend-code#sending turbo:submit-end@window->resend-code#submitEnd">
+  <span class="bold tabular-nums cursor-not-allowed pointer-events-auto" data-resend-code-target="countdown" hidden></span>
+  <button type="submit" form="resend-code-form" class="!font-bold link-button pointer-events-auto" data-resend-code-target="button">Resend code</button>
+</div>

@@ -7,15 +7,7 @@
   <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
     <% if @hcb_code.outgoing_disbursement? %>
       <span>
-        <span class="regular muted">
-          <% if disbursement.fulfilled? || (@destination.can_front_balance? && (disbursement.processed? || disbursement.pending?)) %>
-            Transfer of
-          <% elsif disbursement.processed? || disbursement.pending? %>
-            Transferring
-          <% else %>
-            Transfer of
-          <% end %>
-        </span>
+        <span class="regular muted">Transfer of</span>
         <span class="regular"><%= render_money disbursement.amount.abs %></span>
         <span class="regular muted">to</span>
         <%= @destination.name %>
@@ -24,10 +16,8 @@
       <span>
         <%= @source.name %>
         <span class="regular muted">
-          <% if disbursement.fulfilled? || (@destination.can_front_balance? && (disbursement.processed? || disbursement.pending?)) %>
+          <% if disbursement.fulfilled? || disbursement.processed? || disbursement.pending? %>
             transferred
-          <% elsif disbursement.processed? || disbursement.pending? %>
-            transferring
           <% else %>
             transfer of
           <% end %>
@@ -90,7 +80,7 @@
     <% end %>
     <% admin_tool("", "div") do %>
       <strong>Disbursement ID</strong>
-      <%= link_to disbursement.id, disbursement %>
+      <%= link_to disbursement.id, disbursement_path(disbursement) %>
     <% end %>
 
   </section>
@@ -138,24 +128,22 @@
 
   </section>
 
-  <% if @event.can_front_balance? %>
-    <section class="hcb-code--footer">
-      <% if disbursement.may_mark_rejected? %>
-        <% admin_tool "w-fit" do %>
-          <%= button_to "Process", disbursement_process_admin_path(disbursement), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
-        <% end %>
+  <section class="hcb-code--footer">
+    <% if disbursement.may_mark_rejected? %>
+      <% admin_tool "w-fit" do %>
+        <%= button_to "Process", disbursement_process_admin_path(disbursement), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
       <% end %>
+    <% end %>
 
-      <% if disbursement.scheduled? %>
-        <% admin_tool "w-fit" do %>
-          <%= button_to "Cancel transfer", disbursement_cancel_path(disbursement), class: "btn bg-error" %>
-        <% end %>
+    <% if disbursement.scheduled? %>
+      <% admin_tool "w-fit" do %>
+        <%= button_to "Cancel transfer", disbursement_cancel_path(disbursement), class: "btn bg-error" %>
       <% end %>
+    <% end %>
 
-      <p class="my0 italic">
-        HCB transfers are immediately reflected in your account balance.
-      </p>
-    </section>
-  <% end %>
+    <p class="my0 italic">
+      HCB transfers are immediately reflected in your account balance.
+    </p>
+  </section>
 
 </article>

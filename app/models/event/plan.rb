@@ -59,6 +59,12 @@ class Event
       {}
     end
 
+    # Organizations on plans that force transparency can't opt out of it while
+    # their parent organization is transparent.
+    def forces_transparency?
+      false
+    end
+
     def was_backfilled?
       created_at < Date.new(2024, 8, 24)
     end

@@ -40,7 +40,7 @@ class EmburseTransfer < ApplicationRecord
   paginates_per 50
 
   # NOTE(@msw) emburse_transfers used to be on a per-emburse_card basis & we're keeping the
-  # association for compatability with migrations
+  # association for compatibility with migrations
   belongs_to :emburse_card, optional: true
 
   belongs_to :event
@@ -78,7 +78,7 @@ class EmburseTransfer < ApplicationRecord
   # Return average processing time in days over last_n completed requests rounding up
   def self.processing_time(last_n: 5)
     reqs = EmburseTransfer.transferred.first(last_n)
-    processing_times = reqs.map { |r| (r.t_transaction.date.to_time - r.created_at) / 24.hours }
+    processing_times = reqs.map { |r| (r.t_transaction.date.beginning_of_day - r.created_at) / 24.hours }
 
     # round up
     processing_times.present? ? Util.average(processing_times).ceil : "?"

@@ -1,0 +1,216 @@
+# frozen_string_literal: true
+
+# == Schema Information
+#
+# Table name: payments
+#
+#  id                :bigint           not null, primary key
+#  aasm_state        :string           not null
+#  amount_cents      :integer          not null
+#  classification    :string           default("general_services"), not null
+#  currency          :string           not null
+#  purpose           :string           not null
+#  rejected_at       :datetime
+#  requires_tax_form :boolean          default(TRUE), not null
+#  sent_at           :datetime
+#  successful_at     :datetime
+#  under_review_at   :datetime
+#  created_at        :datetime         not null
+#  updated_at        :datetime         not null
+#  creator_id        :bigint           not null
+#  payee_id          :bigint           not null
+#
+# Indexes
+#
+#  index_payments_on_creator_id  (creator_id)
+#  index_payments_on_payee_id    (payee_id)
+#
+class Payment < ApplicationRecord
+  include AASM
+  include Hashid::Rails
+  include PgSearch::Model
+  include Receiptable
+  include Commentable
+  has_paper_trail
+
+  belongs_to :payee
+  belongs_to :creator, class_name: "User"
+
+  has_one :event, through: :payee
+  has_one :legal_entity, through: :payee
+  has_many :attempts, -> { order(created_at: :desc) }, class_name: "Payment::Attempt", inverse_of: :payment
+  has_one :successful_attempt, -> { successful }, class_name: "Payment::Attempt", inverse_of: :payment
+  has_one :current_attempt, -> { active }, class_name: "Payment::Attempt", inverse_of: :payment
+  has_one :payroll_invoice, class_name: "Payroll::Invoice", inverse_of: :payment, dependent: :nullify
+
+  monetize :amount_cents, with_model_currency: :currency
+
+  enum :classification, { goods: "goods", attorney_or_medical_services: "attorney_or_medical_services", general_services: "general_services" }, prefix: :for
+
+  pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }
+  pg_search_scope :search_purpose_and_event, against: [:purpose], associated_against: { event: [:name] }
+
+  scope :successful_or_sent, -> { where(aasm_state: ["successful", "sent"]) }
+  scope :pending_or_under_review, -> { where(aasm_state: ["pending_legal_entity", "under_review"]) }
+
+  ACCEPTANCE_REMINDER_DAYS = [1, 2, 7, 14, 30, 60, 80, 85, 89].freeze
+
+  aasm timestamps: true do
+    state :pending_legal_entity, initial: true # We're waiting on the LE to complete tasks before payment can be sent
+    state :under_review # HCB reviewing the underlying transfer
+    state :sent
+    state :successful
+    state :rejected
+    state :canceled
+
+    event :mark_under_review do
+      transitions from: [:pending_legal_entity, :sent], to: :under_review
+    end
+
+    event :mark_pending_legal_entity do
+      transitions from: :under_review, to: :pending_legal_entity
+      after do
+        PaymentMailer.with(payment: self).missing_tax_information.deliver_later
+      end
+    end
+
+    event :mark_sent do
+      transitions from: :under_review, to: :sent
+      after do
+        PaymentMailer.with(payment: self).sent.deliver_later
+      end
+    end
+
+    event :mark_rejected do
+      transitions from: :under_review, to: :rejected
+    end
+
+    event :mark_successful do
+      transitions from: :sent, to: :successful
+    end
+
+    event :mark_canceled do
+      transitions from: [:pending_legal_entity, :under_review, :sent], to: :canceled, if: -> { current_attempt.nil? || current_attempt.may_mark_canceled? }
+      after do
+        current_attempt&.mark_canceled!
+      end
+    end
+  end
+
+  before_save :set_requires_tax_form, if: -> { new_record? || classification_changed? }
+
+  after_create_commit do
+    payable = legal_entity&.payable?(requires_tax_form:)
+
+    if payable && legal_entity.default_payout_method.present?
+      create_payment_attempt!
+    elsif payable
+      PaymentMailer.with(payment: self).missing_payout_method.deliver_later
+    else
+      PaymentMailer.with(payment: self).missing_tax_information.deliver_later
+    end
+  end
+
+  after_create_commit do
+    schedule_acceptance_reminders if awaiting_recipient_onboarding?
+  end
+
+  def retry!
+    create_payment_attempt!
+  end
+
+  def latest_payout
+    attempts.last&.payout
+  end
+
+  def popover_path
+    Rails.application.routes.url_helpers.payment_path(id: hashid, frame: true)
+  end
+
+  def estimate_usd_amount_cents
+    MoneyService.convert_to_usd(amount_cents, currency)
+  end
+
+  # Idempotent: safe to call any number of times, from any code path that
+  # touches the associated legal entity (tax form completion, payout method
+  # creation, payee reassignment). Only ever creates a payment attempt —
+  # never sends mail, so repeated calls can't spam a recipient with reminders.
+  def refresh_legal_entity_state!
+    return unless pending_legal_entity?
+    return unless legal_entity&.payable?(requires_tax_form:)
+    return if legal_entity.default_payout_method.nil?
+    return if attempts.any?(&:active?)
+
+    create_payment_attempt!
+  end
+
+  def receipt_required?
+    true
+  end
+
+  def marked_no_or_lost_receipt_at
+    nil
+  end
+
+
+  def state_color
+    return "info" if ["under_review", "pending_legal_entity", "sent"].include?(aasm_state)
+    return "success" if aasm_state == "successful"
+    return "error" if aasm_state == "rejected"
+
+    "muted" # aasm_state == "canceled"
+  end
+
+  def state_text
+    return "Awaiting recipient" if pending_legal_entity?
+    return "Processing" if under_review?
+
+    return aasm_state.humanize
+  end
+
+  def memo
+    "Payment to #{payee.display_name} for #{purpose}"
+  end
+
+  def awaiting_recipient_onboarding?
+    return false unless pending_legal_entity?
+    return false if legal_entity&.managed?
+
+    !legal_entity&.payable? || legal_entity.default_payout_method.blank?
+  end
+
+  def update_requires_tax_form
+    set_requires_tax_form
+    save!
+  end
+
+  # Computes the up-to-date value for records that haven't been (re)saved
+  # since a relevant change, e.g. a payment built but not yet persisted.
+  def requires_tax_form
+    set_requires_tax_form if new_record? || classification_changed?
+    super
+  end
+
+  private
+
+  def set_requires_tax_form
+    self.requires_tax_form = !(payee.legal_entity&.corporation? && !for_attorney_or_medical_services?) && !for_goods?
+  end
+
+  def schedule_acceptance_reminders
+    ACCEPTANCE_REMINDER_DAYS.each do |days|
+      Payment::AcceptanceReminderJob.set(wait: days.days).perform_later(self)
+    end
+  end
+
+  def create_payment_attempt!
+    self.with_lock do
+      raise ArgumentError, "this payment was rejected" if rejected?
+      raise ArgumentError, "all attempts must be failed, rejected, or canceled" if attempts.any?(&:active?)
+      raise ArgumentError, "there is no default payout method" if legal_entity.default_payout_method.nil?
+
+      attempts.create!(payout_method: legal_entity.default_payout_method)
+    end
+  end
+
+end

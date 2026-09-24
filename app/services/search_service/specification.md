@@ -34,7 +34,7 @@ The return types available are as follows:
 
 **Example Searches**
 
-Whilst not explicitly stated, all results will be items that the current users can access.
+Whilst not explicitly stated, all results will be items that the current user can access.
 
 ```
 Outernet

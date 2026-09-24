@@ -43,10 +43,6 @@
   <% end %>
 </article>
 
-<div class="flex justify-end align-middle flex-wrap hcb_code_actions" style="gap: 12px">
-  <%= render partial: "hcb_codes/pin", locals: { hcb_code: @hcb_code } %>
-</div>
-
 <div class="mb4">
   <%= render partial: "receipts/receipt", collection: expense.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true, popover: @frame ? "HcbCode:#{@hcb_code.hashid}" : nil } %>
 </div>

@@ -44,7 +44,7 @@ const tours = {
     } else {
       steps.push({
         attachTo: 'playground_mode',
-        text: "You're in Playground Mode— a HCB staff member will reach out shortly to get you set up.",
+        text: "You're in Playground Mode— an HCB staff member will reach out shortly to get you set up.",
         placement: 'bottom',
       })
     }

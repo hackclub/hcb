@@ -13,12 +13,12 @@
 #  current_limit_window_started_at      :datetime         not null
 #  denial_reason                        :string
 #  result                               :string           not null
-#  transfer_type                        :string           not null
 #  created_at                           :datetime         not null
 #  updated_at                           :datetime         not null
 #  governance_admin_transfer_limit_id   :bigint           not null
 #  governance_request_context_id        :bigint
 #  transfer_id                          :bigint           not null
+#  transfer_type                        :string           not null
 #  user_id                              :bigint           not null
 #
 # Indexes

@@ -210,7 +210,7 @@
             <% end %>
           <% end %>
           <% if @g_suite.configuring? || @g_suite.verification_error? %>
-            <%= link_to @g_suite.verification_error? ? "Retry Verification" : "Verify", event_g_suite_verify_path(event_id: @event.slug), method: :put, class: "btn" %>
+            <%= link_to @g_suite.verification_error? ? "Retry Verification" : "Verify", event_g_suite_verify_path(event_id: @event.slug), data: { turbo_method: :put }, class: "btn" %>
           <% end %>
           <% if @g_suite.verifying? %>
             <span class="h4 ml0 pending badge">Verifying…</span>

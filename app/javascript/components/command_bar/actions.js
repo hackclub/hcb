@@ -377,14 +377,6 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/disbursements'),
     },
     {
-      id: 'admin-paypal',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'PayPal transfers',
-      icon: <Icon glyph="paypal" size={16} />,
-      perform: navigate('/admin/paypal_transfers'),
-    },
-    {
       id: 'admin-wires',
       section: 'Admin Tools',
       priority: Priority.HIGH,

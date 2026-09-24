@@ -7,6 +7,8 @@ module Api
       include Pundit::Authorization
       include PublicActivity::StoreController
       include ErrorHandling
+      include AdminScopeCheckable
+      include Pagination
 
       attr_reader :current_user
 
@@ -31,6 +33,10 @@ module Api
 
       private
 
+      def pundit_user
+        current_user && ApiAdminContext.new(current_user, current_token)
+      end
+
       def authenticate!
         @current_token = authenticate_with_http_token { |t, _options| ApiToken.find_by(token: t) }
         unless @current_token&.accessible?
@@ -40,9 +46,10 @@ module Api
         @current_user = current_token&.user
       end
 
-      def require_admin!
-        unless current_user&.admin?
-          render json: { error: "invalid_auth" }, status: :unauthorized
+      def require_admin_scope!(level)
+        unless can_admin?(level)
+          skip_authorization
+          render json: { error: "not_authorized" }, status: :forbidden
         end
       end
 

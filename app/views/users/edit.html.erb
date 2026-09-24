@@ -1,5 +1,5 @@
 <% if @onboarding %>
-  <% title "Setup your account" %>
+  <% title "Set up your account" %>
   <% page_full %>
   <% no_app_shell %>
   <style>
@@ -30,7 +30,7 @@
       <h1 class="border-0 mt-10 mb-2">Create your account</h1>
       <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
         <p class="muted">Let's get your profile set up in less than two minutes.</p>
-        <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
+        <%= form_with(model: @user, local: true, data: { turbo_frame: "_top" }) do |form| %>
           <%= form_errors @user, "profile", "We couldn't update your" %>
           <div class="md:flex gap-2">
             <div class="field flex-1">
@@ -104,7 +104,8 @@
           <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="verify_phone">
             <%= modal_header "Verify phone number" %>
             <%= react_component "settings/SmsVerification",
-                                phone_number: @user.phone_number_in_database %>
+                                phone_number: @user.phone_number_in_database,
+                                turnstile_sitekey: (TurnstileService.site_key if TurnstileService.enabled?) %>
           </section>
         <% end %>
       </turbo-frame>
@@ -127,7 +128,7 @@
   <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
     <%= render "settings_header", active: "general" unless @onboarding %>
     <section>
-      <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
+      <%= form_with(model: @user, local: true, data: { turbo_frame: "_top" }) do |form| %>
         <%= form_errors @user, "profile", "We couldn't update your" %>
         <% if current_season(override_preference: true) %>
           <div class="field field--checkbox">
@@ -157,9 +158,13 @@
             </p>
           <% end %>
           <%= form.hidden_field :phone_number, required: true, placeholder: "555-555-5555", id: "phone_number" %>
-          <input type="tel" id="phone_raw" value="<%= @user.phone_number.presence %>" required="required" <%= "disabled" if disabled %>>
+          <input type="tel" id="phone_raw" value="<%= @user.phone_number.presence %>" required="required" data-persisted-phone-number="<%= @user.phone_number.presence %>" <%= "disabled" if disabled %>>
+          <p id="unsaved-phone-message" style="display: none;" class="h5 mt1 m0 warning flex items-center">
+            <%= inline_icon "important-fill", class: "warning mr1", size: 20 %>
+            <span>Please save to update the phone number.</span>
+          </p>
           <% if @user.phone_number_in_database.present? && !@user.phone_number_verified? %>
-            <p class="h5 mt1 m0 warning flex items-center">
+            <p id="unverified-phone-message" class="h5 mt1 m0 warning flex items-center">
               <%= inline_icon "important-fill", class: "warning mr1", size: 20 %>
               <span>Your phone number is unverified. <%= link_to "Click here to verify it.", "#", class: "info", data: { behavior: "modal_trigger", modal: "verify_phone" } if current_user == @user %></span>
             </p>
@@ -199,12 +204,13 @@
         </div>
         <div class="field">
           <%= form.label :profile_picture %>
+          <span class="muted block">Your profile picture is visible to anyone.</span>
           <p class="flex items-center mt1">
             <%= avatar_for @user, size: 48, class: "mr2" %>
             <span>
               <% if @user.profile_picture.attached? %>
                 You're currently using an uploaded profile picture.<br>
-                If you'd like to switch back to your Gravatar, <%= link_to "click here", user_delete_profile_picture_path(@user), method: :post %>.
+                If you'd like to switch back to your Gravatar, <%= link_to "click here", user_delete_profile_picture_path(@user), data: { turbo_method: :post } %>.
               <% else %>
                 If you have a <a href="https://gravatar.com" target="_blank">Gravatar</a>, we’ll pull it in here.<br>
                 Or, you can upload a profile picture.<br>
@@ -251,7 +257,8 @@
       <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="verify_phone">
         <%= modal_header "Verify phone number" %>
         <%= react_component "settings/SmsVerification",
-                            phone_number: @user.phone_number_in_database %>
+                            phone_number: @user.phone_number_in_database,
+                            turnstile_sitekey: (TurnstileService.site_key if TurnstileService.enabled?) %>
       </section>
     <% end %>
   </turbo-frame>

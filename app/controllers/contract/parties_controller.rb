@@ -21,7 +21,7 @@ class Contract
         redirect_to completed_contract_party_path(@party)
         return
       elsif @contract.voided?
-        @contracts = current_user.contracts.sent.select { |contract| contract.party(:signee).present? }
+        @contracts = signed_in? ? current_user.contracts.sent.select { |contract| contract.party(:signee).present? } : []
         render "contract/parties/voided"
         return
       elsif @contract.pending?
@@ -42,17 +42,26 @@ class Contract
 
     def completed
       authorize @party
-
-      if @party.signee? && @contract.signed?
-        if @contract.contractable.is_a?(Event::Application)
+      if (@party.signee? && @contract.signed?) || @party.contractor?
+        case @contract.contractable
+        when Event::Application
+          # The applicant lands straight on their application's status page
+          # rather than the "thanks for signing" page, so celebrate there.
+          confetti!
           redirect_to application_path(@contract.contractable)
-        elsif @contract.contractable.is_a?(OrganizerPositionInvite)
+        when OrganizerPositionInvite
           redirect_to organizer_position_invite_path(@contract.contractable)
+        when Payroll::Position
+          redirect_to onboarding_payroll_position_path(@contract.contractable)
         end
 
         return
       end
 
+      if signed_in? && policy(@contract.contractable).show?
+        @contractable_link_label = @contract.contractable.contractable_link_label
+        @contractable_link_path = @contract.contractable.contractable_link_path
+      end
       confetti!
     end
 

@@ -6,7 +6,7 @@
 #
 #  id                                    :bigint           not null, primary key
 #  canceled_at                           :datetime
-#  card_type                             :integer          default("virtual"), not null
+#  card_type                             :integer          default(0), not null
 #  cash_withdrawal_enabled               :boolean          default(FALSE)
 #  initially_activated                   :boolean          default(FALSE), not null
 #  is_platinum_april_fools_2023          :boolean
@@ -92,6 +92,7 @@ class StripeCard < ApplicationRecord
   alias_method :cardholder, :stripe_cardholder
   has_one :user, through: :stripe_cardholder
   has_many :stripe_authorizations
+  has_many :card_charges
   alias_method :authorizations, :stripe_authorizations
   alias_method :transactions, :stripe_authorizations
   alias_attribute :platinum, :is_platinum_april_fools_2023
@@ -308,7 +309,7 @@ class StripeCard < ApplicationRecord
     self.card_type = stripe_obj[:type]
     # On ~2024-03-26, Stripe introduced personalization designs for physical cards
     # This resulted in older cards not having a personalization design ID.
-    # This fix checks if its an old card without a personalization design ID and sets it to the default black design.
+    # This fix checks if it's an old card without a personalization design ID and sets it to the default black design.
     if physical?
       if self.created_at < Time.utc(2024, 3, 27) && stripe_obj[:personalization_design].nil?
         self.stripe_card_personalization_design_id = StripeCard::PersonalizationDesign.default&.id

@@ -37,4 +37,14 @@ object_shape(json, user, created_at: false) do
       end
     end
   end
+
+  # Card-locking receipt-compliance status, for the user's own record only. Lets
+  # clients (the mobile app) surface the locked state and prompt an upload.
+  # Present only when the feature is enabled for the user.
+  if user == current_user && CardLocking.enabled?
+    json.card_locking do
+      json.locked user.cards_locked?
+      json.overdue_receipt_count user.card_locking_overdue_charges.count
+    end
+  end
 end

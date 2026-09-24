@@ -2,22 +2,49 @@
 
 module ApplicationHelper
   include ActionView::Helpers
+  include LocalTimeHelper
+
+  include DonationsHelper
+  include EmburseCardsHelper
+  include EventsHelper
+  include GSuitesHelper
+  include HcbCodeHelper
+  include InvoicesHelper
+  include LoginsHelper
+  include LogoHelper
+  include OrganizerPosition::Spending::AllowancesHelper
+  include PayeesHelper
+  include PopoverHelper
+  include ReceiptsHelper
+  include SeasonalHelper
+  include SessionsHelper
+  include StaticPagesHelper
+  include StripeAuthorizationsHelper
+  include StripeCardsHelper
+  include TagsHelper
+  include ToursHelper
+  include TurboStreamActionsHelper
+  include UsersHelper
 
   def upsert_query_params(**new_params)
     params = request.query_parameters || {}
     params.merge(new_params)
   end
 
-  def sorted_relation(relation, columns, sort:, default:)
-    sort_key, sort_direction = organizer_signed_in? && sort&.first ? sort : default
-    default_key, default_direction = default
+  def sorted_relation(relation, columns, sort:, default_direction: :desc)
+    default_column = columns.find { |c| c[:default] } || columns.first
+
+    sort_key, sort_direction = organizer_signed_in? && sort&.first ? sort : [default_column[:key], default_direction]
 
     sort_direction = sort_direction.to_s.in?(%w[asc desc]) ? sort_direction : default_direction.to_s
-    column_def = columns.find { |c| c[:key] == sort_key.to_s } ||
-                 columns.find { |c| c[:key] == default_key.to_s } ||
-                 columns.first
+    column_def = columns.find { |c| c[:key] == sort_key.to_s } || default_column
     relation = relation.left_joins(column_def[:join]) if column_def[:join]
-    relation.order(column_def.fetch(:column, column_def[:key]) => sort_direction)
+
+    if column_def[:order]
+      column_def[:order].call(relation, sort_direction.to_sym)
+    else
+      relation.order(column_def.fetch(:column, column_def[:key]) => sort_direction)
+    end
   end
 
   def render_money(amount, opts = {})
@@ -94,10 +121,6 @@ module ApplicationHelper
     content_tag :span, "", class: "status bg-#{type}"
   end
 
-  def status_if(type, condition)
-    status_badge(type) if condition
-  end
-
   def pop_icon_to(icon, url, icon_size: 28, **options)
     link_to url, options.merge(class: "pop #{options[:class] || ""}") do
       inline_icon icon, size: icon_size
@@ -134,7 +157,7 @@ module ApplicationHelper
   end
 
   def modal_external_link(external_link)
-    pop_icon_to "external", sanitize(external_link), target: "_blank", size: 14, class: "modal__external muted", onload: "window.navigator.standalone ? this.setAttribute('target', '_top') : null"
+    pop_icon_to "external", sanitize(external_link), target: "_blank", size: 14, class: "modal__external muted", data: { controller: "standalone-link" }
   end
 
   def modal_header(text, external_link: nil)
@@ -165,14 +188,6 @@ module ApplicationHelper
 
   def relative_timestamp(time, **options)
     content_tag :span, "#{options[:prefix]}#{time_ago_in_words time} ago#{options[:suffix]}", options.merge(title: time)
-  end
-
-  def auto_link_new_tab(text)
-    auto_link(text, html: { target: "_blank" })
-  end
-
-  def debug_obj(item)
-    content_tag :pre, pp(item.attributes.to_yaml)
   end
 
   def inline_icon(filename, **options)
@@ -219,12 +234,6 @@ module ApplicationHelper
     end
     options.each { |key, value| svg[key.to_s] = value }
     doc.to_html.html_safe
-  end
-
-  def anchor_link(id)
-    link_to "##{id}", class: "absolute top-0 -left-8 transition-opacity opacity-0 group-hover/summary:opacity-100 group-target/item:opacity-100 anchor-link tooltipped tooltipped--s", 'aria-label': "Copy link", data: { turbo: false, controller: "clipboard", clipboard_text_value: url_for(only_path: false, anchor: id), action: "clipboard#copy" } do
-      inline_icon "link", size: 28
-    end
   end
 
   def help_message
@@ -339,18 +348,6 @@ module ApplicationHelper
     JSON.pretty_generate(obj.as_json)
   end
 
-  def airtable_form(id, params = {}, hide = [])
-    query = {}
-    params.each do |key, value|
-      query["prefill_#{key}"] = value
-    end
-    hide.each do |field|
-      query["hide_#{field}"] = "true"
-    end
-
-    "https://airtable.com/#{id}?#{URI.encode_www_form(query)}"
-  end
-
   def fillout_form(id, params = {}, prefix: "")
     query = params.transform_keys { |k| prefix + k }
     "https://forms.hackclub.com/t/#{id}?#{URI.encode_www_form(query)}"
@@ -384,7 +381,7 @@ module ApplicationHelper
   end
 
   def error_boundary(fallback: nil, fallback_text: nil, ignored_errors: [], &block)
-    block.call
+    capture(&block)
   rescue => e
     Rails.error.report(e) unless e.in?(ignored_errors)
 
@@ -439,6 +436,29 @@ module ApplicationHelper
         end
       end)
     end
+  end
+
+  # Functions as a link_to that shows text on larger screens and just the icon on smaller screens
+  def responsive_link_to(href, text:, icon:, **options)
+    text_class = "#{options[:class]} hidden md:flex"
+    icon_class = "#{options[:class]} flex md:hidden"
+    safe_join([
+                link_to(text, href, options.merge(class: text_class)),
+                link_to(href, options.merge(class: icon_class)) do
+                  inline_icon icon, class: "!m-0"
+                end
+              ])
+  end
+
+  def mobile_button_to(href, text:, icon:, **options)
+    text_form_class = "#{options[:form_class]} hidden md:flex"
+    icon_form_class = "#{options[:form_class]} flex md:hidden"
+    safe_join([
+                button_to(text, href, options.merge(form_class: text_form_class)),
+                button_to(href, options.merge(form_class: icon_form_class)) do
+                  inline_icon icon, class: "!m-0"
+                end
+              ])
   end
 
 end

@@ -30,6 +30,7 @@
                     turbo_frame: "_top",
                     turbo_method: policy(organizer_position).destroy? ? :delete : :get,
                     turbo_confirm: policy(organizer_position).destroy? ? "This will revoke their access to this organization. Their cards will be permanently canceled." : nil,
+                    turbo_confirm_danger: policy(organizer_position).destroy? || nil,
                   },
                   disabled: !policy(organizer_position).can_request_removal? %>
   </div>

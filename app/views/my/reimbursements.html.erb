@@ -11,7 +11,7 @@
     <div class="flex sm:ml-auto gap-2 items-center flex-wrap justify-center">
       <% if @payout_method.present? %>
         <%= link_to settings_payouts_path, class: "!ml-0 btn bg-info" do %>
-          <%= inline_icon @payout_method.icon %>
+          <%= inline_icon "bank-account" %>
           Payout settings
         <% end %>
       <% else %>
@@ -26,6 +26,13 @@
           <%= inline_icon "plus" %>
           Start report
         <% end %>
+      <% else %>
+        <span class="tooltipped tooltipped--n tooltipped--xl inline-block" aria-label="You aren't a member of any HCB organization, so you'll need to be invited to start a reimbursement report.">
+          <button class="!ml-0 btn bg-success" disabled>
+            <%= inline_icon "plus" %>
+            Start report
+          </button>
+        </span>
       <% end %>
     </div>
   </h1>
@@ -135,7 +142,7 @@
 <% else %>
  <%= render "events/one_pager",
       title: "Reimbursements",
-      support_article: "https://help.hcb.hackclub.com/en/articles/13370866-how-do-i-request-reimbursements",
+      support_article: "https://help.hcb.hackclub.com/en/articles/15410232-how-do-i-request-a-reimbursement",
       screenshots: {
         light: "https://user-cdn.hackclub-assets.com/019c3c7a-827e-779a-80bd-505c00c0f793/hcb.hackclub.com_hq_reimbursements.png",
         dark: "https://user-cdn.hackclub-assets.com/019c3c7a-6f5b-7e30-aada-7f7ee823679e/hcb.hackclub.com_hq_reimbursements%20(1).png"

@@ -66,6 +66,9 @@ class Donation < ApplicationRecord
   set_public_id_prefix :don
 
   include AASM
+  include VisibleStatable
+  set_visible_state_mapping(in_transit: :deposited)
+
   include Freezable
   include UsersHelper
 
@@ -78,6 +81,7 @@ class Donation < ApplicationRecord
   include PgSearch::Model
   pg_search_scope :search_name, against: [:name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "donations.created_at"
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
   belongs_to :fee_reimbursement, optional: true
   belongs_to :payout, class_name: "DonationPayout", optional: true
@@ -86,7 +90,7 @@ class Donation < ApplicationRecord
 
   before_save :trim_utm_referrer_fields
 
-  before_create :create_stripe_payment_intent, unless: -> { recurring? || in_person? }
+  before_create :create_stripe_payment_intent, unless: -> { recurring? }
   before_create :assign_unique_hash, unless: -> { recurring? }
 
   after_commit :send_notification
@@ -105,6 +109,7 @@ class Donation < ApplicationRecord
   scope :not_pending, -> { where.not(aasm_state: "pending") }
   scope :incoming_deposits, -> { where("aasm_state in (?)", ["in_transit"]) }
   scope :succeeded_and_not_refunded, -> { where(aasm_state: ["in_transit", "deposited"] ) }
+  scope :tax_deductible, -> { where(tax_deductible: true) }
 
   aasm timestamps: true do
     state :pending, initial: true
@@ -154,7 +159,7 @@ class Donation < ApplicationRecord
     end
 
     if in_person? && name.blank?
-      self.name = payment_intent.latest_charge.payment_method_details.card_present&.cardholder_name || "In-Person Donor"
+      self.name = payment_intent.latest_charge&.payment_method_details&.card_present&.cardholder_name || "In-Person Donor"
     end
 
     mark_in_transit if may_mark_in_transit? && status == "succeeded" # hacky
@@ -165,9 +170,7 @@ class Donation < ApplicationRecord
   end
 
   def state
-    return :success if deposited?
-    return :success if in_transit? && event.can_front_balance?
-    return :info if in_transit?
+    return :success if deposited? || in_transit?
     return :warning if refunded?
     return :error if failed?
 
@@ -175,9 +178,7 @@ class Donation < ApplicationRecord
   end
 
   def state_text
-    return "Deposited" if deposited?
-    return "Deposited" if in_transit? && event.can_front_balance?
-    return "In Transit" if in_transit?
+    return "Deposited" if deposited? || in_transit?
     return "Refunded" if refunded?
     return "Failed" if failed?
 
@@ -185,9 +186,7 @@ class Donation < ApplicationRecord
   end
 
   def state_icon
-    return "checkmark" if deposited? || (in_transit? && event.can_front_balance?)
-
-    "clock" if in_transit?
+    return "checkmark" if deposited? || in_transit?
   end
 
   def unpaid?
@@ -314,7 +313,7 @@ class Donation < ApplicationRecord
   end
 
   def recurring?
-    recurring_donation.present?
+    recurring_donation_id.present?
   end
 
   def initial_recurring_donation?
@@ -388,7 +387,7 @@ class Donation < ApplicationRecord
   end
 
   def create_payment_intent_attrs(customer)
-    {
+    attrs = {
       amount:,
       customer: customer.id,
       currency: "usd",
@@ -396,6 +395,13 @@ class Donation < ApplicationRecord
       statement_descriptor_suffix: StripeService::StatementDescriptor.format(event.short_name, as: :suffix),
       metadata: { 'donation': true, 'event_id': event.id }
     }
+
+    if in_person?
+      attrs[:payment_method_types] = ["card_present"]
+      attrs[:capture_method] = "automatic"
+    end
+
+    attrs
   end
 
   def create_stripe_payment_intent
