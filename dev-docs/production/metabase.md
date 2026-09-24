@@ -24,7 +24,7 @@ Here's a runbook for how the connection and Postgresql user were set up.
    su - postgres
    psql
    # Create metabase user
-   CREATE USER rails WITH INHERIT CONNECTION LIMIT 500 PASSWORD 'password here';
+   CREATE USER metabase WITH INHERIT CONNECTION LIMIT 500 PASSWORD 'password here';
    ```
 
 2. Configure permissions
