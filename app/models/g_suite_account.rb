@@ -40,9 +40,11 @@ class GSuiteAccount < ApplicationRecord
   paginates_per 50
 
   # Google Workspace usernames may only contain letters, numbers, dashes,
-  # underscores, apostrophes, and periods, and can't start or end with a period.
-  # Anything else is rejected by Google with "Invalid Input: primary_user_email".
-  GOOGLE_USERNAME_FORMAT = /\A(?!\.)(?!.*\.\.)[a-z0-9_'.-]+(?<!\.)\z/i
+  # underscores, apostrophes, and periods, can't start or end with a period, and
+  # can be at most 64 characters. Anything else is rejected by Google with
+  # "Invalid Input: primary_user_email".
+  # https://support.google.com/a/answer/9193374
+  GOOGLE_USERNAME_FORMAT = /\A(?!\.)(?!.*\.\.)[a-z0-9_'.-]{1,64}(?<!\.)\z/i
 
   belongs_to :g_suite
   has_one :event, through: :g_suite
@@ -50,6 +52,7 @@ class GSuiteAccount < ApplicationRecord
   belongs_to :creator, class_name: "User"
 
   validates_presence_of :address, :backup_email, :first_name, :last_name
+  normalizes :address, with: ->(address) { address.strip }
   normalizes :backup_email, with: ->(backup_email) { backup_email.strip.downcase }
   validates :backup_email, nondisposable: true, on: :create
 
@@ -147,7 +150,7 @@ class GSuiteAccount < ApplicationRecord
     return if address.blank?
 
     unless address.count("@") == 1 && GOOGLE_USERNAME_FORMAT.match?(username)
-      errors.add(:address, "can only contain letters, numbers, dashes (-), underscores (_), apostrophes ('), and periods (.), and can't start or end with a period")
+      errors.add(:address, "can only contain letters, numbers, dashes (-), underscores (_), apostrophes ('), and periods (.), can't start or end with a period, and can be at most 64 characters before the @")
     end
   end
 
