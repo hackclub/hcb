@@ -204,6 +204,35 @@ RSpec.describe EventsController do
         expect(response.body).to include("Declined but moved money")
         expect(response.body).not_to include("Declined with no amount")
       end
+
+      # The old ledger's export quietly ignored the page's filters and handed
+      # back the whole organization. This one exports what you're looking at,
+      # and the menu says which of the two you're getting.
+      describe "the export menu" do
+        before do
+          [["Coffee", -500], ["Donation from Fiona", 2_000]].each do |memo, amount_cents|
+            item = create(:ledger_item, custom_memo: memo, datetime: Time.current)
+            Ledger::Mapping.create!(ledger: event.ledger, ledger_item: item, on_primary_ledger: true)
+            item.update_columns(amount_cents:, ct_count: 1)
+          end
+        end
+
+        it "offers the whole ledger when nothing is filtered" do
+          get(:ledger, params: { event_id: event.slug })
+
+          expect(response.body).to include("Exports cover every transaction in this ledger.")
+          expect(response.body).to include("All 2 transactions (CSV)")
+          expect(response.body).to include("/exports/ledger/#{event.slug}.csv")
+        end
+
+        it "offers only the filtered transactions, and carries the filter to the export" do
+          get(:ledger, params: { event_id: event.slug, direction: "expenses" })
+
+          expect(response.body).to include("Exports cover only the transactions matching your filters.")
+          expect(response.body).to include("1 filtered transaction (CSV)")
+          expect(response.body).to include("/exports/ledger/#{event.slug}.csv?direction=expenses")
+        end
+      end
     end
   end
 

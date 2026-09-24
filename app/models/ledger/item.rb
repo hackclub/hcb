@@ -166,6 +166,14 @@ class Ledger
       linked_object_type != "Reimbursement::ExpensePayout"
     end
 
+    # Categories are assigned to the underlying canonical transactions rather
+    # than to the item itself. A settled transaction's category wins over a
+    # pending one's: once a charge settles, its category is the final word.
+    def category
+      canonical_transactions.filter_map(&:category).first ||
+        canonical_pending_transactions.filter_map(&:category).first
+    end
+
     # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
     # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
     # refresh! should not update any non-caching columns

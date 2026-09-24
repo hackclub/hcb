@@ -599,6 +599,7 @@ Rails.application.routes.draw do
   resources :exports, only: [] do
     collection do
       get "collect_email", to: "exports#collect_email", as: "collect_email"
+      get "ledger/:event", to: "exports#ledger", as: "ledger"
       get ":event", to: "exports#transactions", as: "transactions"
       get "reimbursements/:event", to: "exports#reimbursements", as: "reimbursements"
     end
