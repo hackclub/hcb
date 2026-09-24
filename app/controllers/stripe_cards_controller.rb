@@ -95,7 +95,7 @@ class StripeCardsController < ApplicationController
       @items = Ledger::Query.new({ linked_object_type: "CardCharge" })
                             .execute(ledgers: [@ledger])
                             .where(linked_object_id: @card.card_charges.select(:id))
-                            .preload(:canonical_transactions, :canonical_pending_transactions)
+                            .preload(:tags, hcb_code: :event)
                             .page(params[:page]).per(@per)
     end
 

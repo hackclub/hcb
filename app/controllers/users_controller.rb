@@ -353,7 +353,7 @@ class UsersController < ApplicationController
       # result to this user either way.
       @stripe_transactions = Ledger::Query.new({ author: @user.slug, linked_object_type: "CardCharge" })
                                           .execute(all_ledgers: true)
-                                          .preload(:canonical_transactions, :canonical_pending_transactions)
+                                          .preload(:tags, hcb_code: :event)
                                           .page(params[:page] || 1).per(safe_per(10))
     else
       @stripe_transactions = HcbCode.where(id: @user.stripe_cards.flat_map { |sc| sc.local_hcb_codes.pluck(:id) })

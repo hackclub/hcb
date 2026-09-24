@@ -229,7 +229,7 @@ class CardGrantsController < ApplicationController
       @per = safe_per(25)
       @table_only = true
       @ledger = @card_grant.ledger
-      @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).page(params[:page]).per(@per)
+      @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).preload(:tags, hcb_code: :event).page(params[:page]).per(@per)
     end
 
     @show_card_details = params[:show_details] == "true"
@@ -253,7 +253,7 @@ class CardGrantsController < ApplicationController
     @per = safe_per(25)
     @table_only = true
     @ledger = @card_grant.ledger
-    @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).page(params[:page]).per(@per)
+    @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).preload(:tags, hcb_code: :event).page(params[:page]).per(@per)
 
     @frame = params[:frame].present?
     @force_no_popover = @frame
