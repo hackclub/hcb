@@ -3,7 +3,7 @@
 This document serves to instruct on how to style code for things the CI does not enforce. If the CI does not enforce a particular style and it is not mentioned here feel free to write it how you would like.
 
 ## Partials
-There are some rules we are trying to enforce for partials. You may come across partials that do not follow these rules. Feel free to leave those alone but any new partials you write should follow by these rules.
+There are some rules we are trying to enforce for partials. You may come across partials that do not follow these rules. Feel free to leave those alone but any new partials you write should follow these rules.
 
 ### Render calls should use the full path
 
@@ -24,7 +24,7 @@ This makes it both easier to understand what is being rendered and also improves
 
 ### Use strict locals instead of local_assigns or instance variables
 
-Strict locals provide an easy to reference comment at the top of the file of which variables are needed. This will also raise an error if you forget to pass a variable, increasing the reliability of code written. If you have an optional local, you should still use strict locals but pass nil as the default value.
+Strict locals provide an easy-to-reference comment at the top of the file of which variables are needed. This will also raise an error if you forget to pass a variable, increasing the reliability of code written. If you have an optional local, you should still use strict locals but pass nil as the default value.
 
 This is superior to instance variables because of the added rigidity to your code that it will fail immediately if a local is not passed. When you use instance variables, you don't always know that it will be defined depending on where the partial is rendered from.
 

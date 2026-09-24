@@ -99,8 +99,16 @@ class Contract
                 name: "Signature",
                 default_value: ActionController::Base.helpers.asset_url("zach_signature.png", host: "https://hcb.hackclub.com"),
                 readonly: false
-              }
-            ]
+              },
+              if prefills["grant_amount_cents"].present?
+                {
+                  name: "Grant Amount",
+                  default_value: ActionController::Base.helpers.number_to_currency(prefills["grant_amount_cents"] / 100.0)
+                }
+              else
+                nil
+              end
+            ].compact
           }
         ].compact
       }

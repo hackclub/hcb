@@ -3,13 +3,13 @@
 class PayeesController < ApplicationController
   include SetEvent
 
-  before_action :set_event, only: [:index, :create, :update, :archive]
+  before_action :set_event, only: [:index, :create, :update, :archive, :check_email]
   before_action :set_payee, only: [:choose_legal_entity, :set_legal_entity]
 
   class InvalidManualPayeeEntityType < StandardError; end
 
   def index
-    authorize @event
+    authorize @event, policy_class: PayeePolicy
     all = @event.payees.not_archived.includes(:legal_entity, :payments)
     payees = params[:q].present? ? all.search(params[:q]) : all
     @payees = payees.order(created_at: :desc).page(params[:page]).per(15)
@@ -68,6 +68,26 @@ class PayeesController < ApplicationController
 
     flash[:success] = "Recipient archived."
     redirect_to helpers.new_recipient_transfer_path(params[:destination], @event)
+  end
+
+  def check_email
+    authorize @event, :create_payment?
+
+    email = Payee.normalize_value_for(:email, params[:email])
+    destination = params[:destination].presence || "payments"
+
+    matches = email.present? ? @event.payees.not_archived.includes(:legal_entity).where(email:).order(created_at: :desc).limit(5).to_a : []
+
+    render json: {
+      duplicate: matches.any?,
+      payees: matches.map do |payee|
+        {
+          name: payee.display_name,
+          managed: payee.managed?,
+          select_url: helpers.new_recipient_transfer_path(destination, @event, payee_id: payee.hashid)
+        }
+      end
+    }
   end
 
   def choose_legal_entity

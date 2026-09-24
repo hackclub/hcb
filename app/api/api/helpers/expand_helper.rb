@@ -8,7 +8,7 @@ module Api
       #
       # The object can be optionally expanded or hidden using the `expand` or
       # `hide` query params. The `hide` query param is not documented publicly,
-      # but is useable!
+      # but is usable!
       #
       # When configuring a new Grape::Entity, you will want to use the following
       # two methods:

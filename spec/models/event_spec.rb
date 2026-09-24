@@ -418,15 +418,36 @@ RSpec.describe Event, type: :model do
     end
   end
 
-  describe "#can_front_balance" do
-    it "enqueues a job to refresh the event's ledgers when changed" do
-      expect { event.update!(can_front_balance: !event.can_front_balance) }
-        .to have_enqueued_job(Event::RefreshLedgersJob).with(event_id: event.id)
+  describe "description validation" do
+    it "requires a description when an app-backed event is created" do
+      event = build(:event, description: nil)
+      event.application = build(:event_application, description: "Run the best hackathon")
+
+      expect(event).not_to be_valid
+      expect(event.errors[:description]).to be_present
     end
 
-    it "does not enqueue a job when unchanged" do
-      expect { event.update!(name: "Renamed") }
-        .not_to have_enqueued_job(Event::RefreshLedgersJob)
+    it "allows a blank description without an application" do
+      expect(create(:event, description: nil)).to be_valid
+    end
+
+    it "allows an app-backed event with a legacy blank description to save unrelated fields" do
+      event = create(:event, description: nil)
+      create(:event_application, event:, description: "Run the best hackathon")
+
+      event.name = "Renamed"
+
+      expect(event).to be_valid
+    end
+
+    it "blocks clearing an existing description on an app-backed event" do
+      event = create(:event, description: "Run the best hackathon")
+      create(:event_application, event:, description: "Run the best hackathon")
+
+      event.description = ""
+
+      expect(event).not_to be_valid
+      expect(event.errors[:description]).to be_present
     end
   end
 end

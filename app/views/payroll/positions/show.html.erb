@@ -23,7 +23,7 @@
               data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
 
           <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
-            <%= link_to terminate_event_payroll_position_path(event: @event, payroll_position: @position), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you want to terminate this contractor immediately? We will notify the contractor." } do %>
+            <%= link_to terminate_event_payroll_position_path(event: @event, payroll_position: @position), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you want to terminate this contractor immediately?#{" We will notify the contractor." unless @position.under_review? }" } do %>
               <%= inline_icon "profile-forbidden", size: 24 %>
               Terminate
             <% end %>
@@ -52,6 +52,10 @@
       <p>
         <strong>Purpose</strong>
         <%= @position.description %>
+      </p>
+      <p>
+        <strong>Manager</strong>
+        <%= @position.manager.present? ? user_mention(@position.manager) : "No manager" %>
       </p>
       <p>
         <strong>Total paid</strong>
