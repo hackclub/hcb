@@ -126,10 +126,12 @@ module Payroll
       end
 
       event :mark_terminated do
-        transitions from: :onboarded, to: :terminated
+        transitions from: [:under_review, :onboarding, :onboarded], to: :terminated
 
         after do
-          Payroll::PositionMailer.with(position: self).terminated.deliver_later
+          # If it's still under review, we haven't sent any emails to the contractor yet,
+          # so we won't tell them that they've been "terminated"
+          Payroll::PositionMailer.with(position: self).terminated.deliver_later unless aasm.from_state == :under_review
         end
       end
     end
@@ -317,6 +319,14 @@ module Payroll
 
     def contract_redirect_path
       Rails.application.routes.url_helpers.my_payroll_path
+    end
+
+    def contractable_link_label
+      "contractor position"
+    end
+
+    def contractable_link_path
+      Rails.application.routes.url_helpers.event_payroll_position_path(event, self)
     end
 
     # The contractor isn't emailed when the contract is sent; they're notified

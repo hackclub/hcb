@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_15_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_24_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -467,6 +467,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_120000) do
     t.bigint "raw_pending_stripe_transaction_id"
     t.bigint "stripe_card_id"
     t.datetime "updated_at", null: false
+    t.index ["merchant_category"], name: "index_card_charges_on_merchant_category"
+    t.index ["merchant_network_id"], name: "index_card_charges_on_merchant_network_id"
     t.index ["raw_pending_stripe_transaction_id"], name: "index_card_charges_on_raw_pending_stripe_transaction_id", unique: true
     t.index ["stripe_card_id"], name: "index_card_charges_on_stripe_card_id"
   end
@@ -1063,6 +1065,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_120000) do
     t.bigint "event_id", null: false
     t.boolean "generate_monthly_announcement", default: false, null: false
     t.boolean "hide_onboarding_message", default: false, null: false
+    t.string "subevent_name_prefix"
     t.string "subevent_plan"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_event_configurations_on_event_id", unique: true
@@ -1144,7 +1147,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_120000) do
     t.string "aasm_state", null: false
     t.datetime "activated_at"
     t.text "address"
-    t.boolean "can_front_balance", default: true, null: false
     t.integer "country"
     t.datetime "created_at", precision: nil, null: false
     t.datetime "deleted_at", precision: nil
@@ -3007,6 +3009,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_15_120000) do
     t.string "recipient_name", null: false
     t.text "return_reason"
     t.boolean "send_email_notification", default: false
+    t.string "uetr"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["column_id"], name: "index_wires_on_column_id", unique: true

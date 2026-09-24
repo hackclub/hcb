@@ -110,7 +110,7 @@ module UsersHelper
     default_image ||= "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/1e41035b85ccb92f_image.png"
 
     # profile_picture_for works with OpenStructs (used on the front end when a user isn't registered),
-    # so this method shows Gravatars/intials for non-registered and allows showing of uploaded profile pictures for registered users.
+    # so this method shows Gravatars/initials for non-registered and allows showing of uploaded profile pictures for registered users.
     if user.nil?
       default_image
     elsif Rails.env.production? && user.is_a?(User) && user.profile_picture&.persisted?
@@ -252,7 +252,7 @@ module UsersHelper
                                content_tag(
                                  :span,
                                  safe_join([inline_icon("settings", size: 16), content_tag(:span, "Settings", class: "ml1")]),
-                                 onclick: "window.open('#{admin_user_url(user)}', '_blank'); return false;",
+                                 data: { controller: "new-window", action: "click->new-window#open", new_window_url_value: admin_user_url(user) },
                                  class: "menu__item menu__item--icon menu__action", rel: "noopener"
                                )
                              ])

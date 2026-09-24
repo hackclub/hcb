@@ -275,6 +275,18 @@ RSpec.describe Ledger, type: :model do
       expect(ledger.balance_cents).to eq(3000)
     end
 
+    it "filters items by datetime when given a date range" do
+      ct = create(:canonical_transaction, amount_cents: 1000, date: Date.current, memo: "Test Transaction")
+      create(:canonical_event_mapping, canonical_transaction: ct, event: ledger.event)
+      item = create(:ledger_item, amount_cents: 1000, canonical_transactions: [ct])
+      Ledger::Mapping.create!(ledger: ledger, ledger_item: item, on_primary_ledger: true)
+
+      expect(ledger.balance_cents(end_date: Date.current.end_of_day)).to eq(1000)
+      expect(ledger.balance_cents(end_date: Date.yesterday.end_of_day)).to eq(0)
+      expect(ledger.balance_cents(start_date: Date.current.beginning_of_day)).to eq(1000)
+      expect(ledger.balance_cents(start_date: Date.tomorrow.beginning_of_day)).to eq(0)
+    end
+
     it "returns a Money object" do
       ct = create(:canonical_transaction, amount_cents: 1000, date: Date.today, memo: "Test Transaction")
       create(:canonical_event_mapping, canonical_transaction: ct, event: ledger.event)
@@ -283,6 +295,87 @@ RSpec.describe Ledger, type: :model do
 
       expect(ledger.balance).to be_a(Money)
       expect(ledger.balance.cents).to eq(1000)
+    end
+  end
+
+  describe "#revenue_cents and #expenses_cents" do
+    let(:event) { create(:event) }
+
+    let(:ledger) { event.ledger }
+
+    before do
+      allow(ledger).to receive(:fronted_fee_balance_cents).and_return(0)
+    end
+
+    def add_item(amount_cents)
+      ct = create(:canonical_transaction, amount_cents:, date: Date.today, memo: "Transaction of #{amount_cents}")
+      create(:canonical_event_mapping, canonical_transaction: ct, event: ledger.event)
+      item = create(:ledger_item, amount_cents:, canonical_transactions: [ct])
+      Ledger::Mapping.create!(ledger: ledger, ledger_item: item, on_primary_ledger: true)
+      item
+    end
+
+    it "returns zero when the ledger has no items" do
+      expect(ledger.revenue_cents).to eq(0)
+      expect(ledger.expenses_cents).to eq(0)
+    end
+
+    it "totals the incoming items as revenue" do
+      add_item(1000)
+      add_item(2500)
+      add_item(-500)
+
+      expect(ledger.revenue_cents).to eq(3500)
+    end
+
+    it "totals the outgoing items as a positive expense amount" do
+      add_item(1000)
+      add_item(-500)
+      add_item(-250)
+
+      expect(ledger.expenses_cents).to eq(750)
+    end
+
+    it "counts the pending fiscal sponsorship fee as an expense" do
+      add_item(-500)
+      allow(ledger).to receive(:fronted_fee_balance_cents).and_return(700)
+
+      expect(ledger.expenses_cents).to eq(1200)
+    end
+
+    it "does not count a fee credit as an expense" do
+      add_item(-500)
+      allow(ledger).to receive(:fronted_fee_balance_cents).and_return(-700)
+
+      expect(ledger.expenses_cents).to eq(500)
+    end
+
+    it "leaves revenue minus expenses equal to the available balance" do
+      add_item(2500)
+      add_item(-500)
+      allow(ledger).to receive(:fronted_fee_balance_cents).and_return(300)
+
+      expect(ledger.revenue_cents - ledger.expenses_cents).to eq(ledger.available_balance_cents)
+    end
+
+    it "ignores items on another ledger" do
+      other_ledger = create(:event).ledger
+      ct = create(:canonical_transaction, amount_cents: 1000, date: Date.today, memo: "Someone else's transaction")
+      create(:canonical_event_mapping, canonical_transaction: ct, event: other_ledger.event)
+      item = create(:ledger_item, amount_cents: 1000, canonical_transactions: [ct])
+      Ledger::Mapping.create!(ledger: other_ledger, ledger_item: item, on_primary_ledger: true)
+
+      expect(ledger.revenue_cents).to eq(0)
+    end
+
+    it "returns Money objects" do
+      add_item(1000)
+      add_item(-400)
+
+      expect(ledger.revenue).to be_a(Money)
+      expect(ledger.revenue.cents).to eq(1000)
+      expect(ledger.expenses).to be_a(Money)
+      expect(ledger.expenses.cents).to eq(400)
     end
   end
 

@@ -13,7 +13,7 @@ module Contractable
 
     def send_contract(cosigner_email: nil, include_videos: false, reissue_messages: {}, extra_prefills: {}, reissue_of: nil)
       # This method should be overwritten in specific classes
-      raise NotImplementedError, "The #{self.class.name} model includes Contractable, but hasn't implemented it's own version of send_contract."
+      raise NotImplementedError, "The #{self.class.name} model includes Contractable, but hasn't implemented its own version of send_contract."
     end
 
     def on_contract_signed(contract)
@@ -39,6 +39,14 @@ module Contractable
     def contract_redirect_path
       # This method can be overwritten in specific classes to set the path that contract-related routes should redirect to
       "/"
+    end
+
+    def contractable_link_label
+      raise NotImplementedError, "The #{self.class.name} model includes Contractable, but hasn't implemented its own version of contractable_link_label."
+    end
+
+    def contractable_link_path
+      raise NotImplementedError, "The #{self.class.name} model includes Contractable, but hasn't implemented its own version of contractable_link_path."
     end
 
     def contract_notify_hcb?

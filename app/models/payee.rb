@@ -29,6 +29,8 @@ class Payee < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :pye
 
+  has_paper_trail
+
   belongs_to :event
   belongs_to :legal_entity, optional: true
 
