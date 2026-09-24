@@ -65,6 +65,18 @@ class Ledger < ApplicationRecord
   # they never add to the available balance.
   monetize def available_balance_cents = balance_cents - [fronted_fee_balance_cents, 0].max
 
+  # How a ledger is referred to on admin pages, where it's always identified by
+  # whose it is rather than by its own id.
+  def admin_description
+    if event
+      "#{event.name} (event #{event.id})"
+    elsif card_grant
+      "#{card_grant.email}'s card grant (#{card_grant.id})"
+    else
+      "ledger ##{id}"
+    end
+  end
+
   def receipt_required?
     event&.plan&.receipt_required? || card_grant&.event&.plan&.receipt_required?
   end

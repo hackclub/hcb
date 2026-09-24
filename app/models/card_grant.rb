@@ -118,6 +118,10 @@ class CardGrant < ApplicationRecord
 
   delegate :name, to: :user
 
+  def to_combobox_display
+    "#{email} — #{event.name} (ID: #{id})"
+  end
+
   def state
     if suspected_fraud?
       "error"
