@@ -39,6 +39,11 @@ class GSuiteAccount < ApplicationRecord
 
   paginates_per 50
 
+  # Google Workspace usernames may only contain letters, numbers, dashes,
+  # underscores, apostrophes, and periods, and can't start or end with a period.
+  # Anything else is rejected by Google with "Invalid Input: primary_user_email".
+  GOOGLE_USERNAME_FORMAT = /\A(?!\.)(?!.*\.\.)[a-z0-9_'.-]+(?<!\.)\z/i
+
   belongs_to :g_suite
   has_one :event, through: :g_suite
   has_many :g_suite_aliases, dependent: :destroy
@@ -51,6 +56,7 @@ class GSuiteAccount < ApplicationRecord
   validate :status_accepted_or_rejected
   validate :within_quota, on: :create
   validates :address, uniqueness: { scope: :g_suite }
+  validate :username_valid_for_google, if: :address_changed?
 
   before_update :sync_update_to_gsuite
 
@@ -136,6 +142,14 @@ class GSuiteAccount < ApplicationRecord
   end
 
   private
+
+  def username_valid_for_google
+    return if address.blank?
+
+    unless address.count("@") == 1 && GOOGLE_USERNAME_FORMAT.match?(username)
+      errors.add(:address, "can only contain letters, numbers, dashes (-), underscores (_), apostrophes ('), and periods (.), and can't start or end with a period")
+    end
+  end
 
   def notify_user_of_password_change(first_password = false)
     email_params = {

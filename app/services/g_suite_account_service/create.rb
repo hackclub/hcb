@@ -8,7 +8,7 @@ module GSuiteAccountService
       @current_user = current_user
 
       @backup_email = backup_email
-      @address = address
+      @address = address.to_s.strip
       @first_name = first_name
       @last_name = last_name
     end
