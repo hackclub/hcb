@@ -126,10 +126,12 @@ module Payroll
       end
 
       event :mark_terminated do
-        transitions from: :onboarded, to: :terminated
+        transitions from: [:under_review, :onboarding, :onboarded], to: :terminated
 
         after do
-          Payroll::PositionMailer.with(position: self).terminated.deliver_later
+          # If it's still under review, we haven't sent any emails to the contractor yet,
+          # so we won't tell them that they've been "terminated"
+          Payroll::PositionMailer.with(position: self).terminated.deliver_later unless aasm.from_state == :under_review
         end
       end
     end
