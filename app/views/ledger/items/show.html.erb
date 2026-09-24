@@ -142,10 +142,10 @@
       <%= link_to @item.hcb_code.hcb_code, hcb_code_path(@item.hcb_code), class: "btn btn--secondary" %>
     <% end %>
     <% @item.canonical_transactions.each do |tx| %>
-      <%= link_to "CT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
+      <%= link_to "CT #{tx.id}", canonical_transaction_path(tx), class: "btn btn--secondary" %>
     <% end %>
     <% @item.canonical_pending_transactions.each do |tx| %>
-      <%= link_to "CPT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
+      <%= link_to "CPT #{tx.id}", canonical_pending_transaction_path(tx), class: "btn btn--secondary" %>
     <% end %>
   <% end %>
 <% end %>

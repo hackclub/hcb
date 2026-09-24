@@ -80,6 +80,19 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         expect { get :show, params: { id: item.hashid } }.to raise_error(ActionController::RoutingError)
       end
     end
+
+    it "links each CPT to its own page for an auditor" do
+      cpt = create(:canonical_pending_transaction)
+      cpt_item = cpt.reload.ledger_item
+      cpt_item.ledger_mappings.delete_all
+      create(:ledger_mapping, :on_primary, ledger:, ledger_item: cpt_item)
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get :show, params: { id: cpt_item.hashid }
+
+      expect(response).to be_successful
+      expect(response.body).to include(%(href="#{canonical_pending_transaction_path(cpt)}">CPT #{cpt.id}</a>))
+    end
   end
 
   context "as a reader (not a member)" do
