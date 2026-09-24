@@ -439,6 +439,46 @@ RSpec.describe Ledger::Item, type: :model do
     end
   end
 
+  describe "empty status" do
+    it "is empty when the item has a linked object but no transactions" do
+      stub_donation_payment_intent_creation
+      donation = create(:donation)
+
+      item = Ledger::Item.new(amount_cents: 0, memo: "Initial", datetime: Time.current, linked_object: donation)
+      item.save(validate: false)
+
+      item.refresh!
+      item.reload
+
+      expect(item.status).to eq("empty")
+      expect(item.amount_cents).to eq(0)
+    end
+
+    it "is no longer empty once a canonical pending transaction maps in" do
+      stub_donation_payment_intent_creation
+      donation = create(:donation)
+
+      item = Ledger::Item.new(amount_cents: 0, memo: "Initial", datetime: Time.current, linked_object: donation)
+      item.save(validate: false)
+      create(:canonical_pending_transaction, ledger_item_id: item.id)
+
+      item.refresh!
+      item.reload
+
+      expect(item.status).not_to eq("empty")
+    end
+
+    it "is not empty when there is no linked object" do
+      item = Ledger::Item.new(amount_cents: 0, memo: "Initial", datetime: Time.current)
+      item.save(validate: false)
+
+      item.refresh!
+      item.reload
+
+      expect(item.status).to eq("pending")
+    end
+  end
+
   describe "account verification detection" do
     # Pins memo/amount/linked_object_type past the refresh! callbacks (which
     # recompute them from canonical transactions these items don't have),

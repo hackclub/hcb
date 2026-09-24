@@ -482,10 +482,18 @@ class CanonicalPendingTransaction < ApplicationRecord
     safely do
       reload_local_hcb_code
       ActiveRecord::Base.transaction do
-        li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime:, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        li = calculated_ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime:, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
         update!(ledger_item: li)
       end
     end
+  end
+
+  # Reuse an existing ledger item before creating a new one. Prefer the linked
+  # object's item (e.g. an invoice eagerly creates its ledger item on creation,
+  # before any CPT exists), then fall back to the HCB code's item for items that
+  # are still grouped that way.
+  def calculated_ledger_item
+    @calculated_ledger_item ||= linked_object&.ledger_item || local_hcb_code.ledger_item
   end
 
   def write_hcb_code
