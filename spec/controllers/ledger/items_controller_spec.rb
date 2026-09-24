@@ -63,6 +63,25 @@ RSpec.describe Ledger::ItemsController, type: :controller do
     end
   end
 
+  describe "GET #show" do
+    context "when the item has no HCB code" do
+      it "renders for an auditor" do
+        create_session(create(:user, :make_auditor), verified: true)
+
+        get :show, params: { id: item.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include(item.memo)
+      end
+
+      it "responds with not found for a non-auditor" do
+        create_session(create(:user), verified: true)
+
+        expect { get :show, params: { id: item.hashid } }.to raise_error(ActionController::RoutingError)
+      end
+    end
+  end
+
   context "as a reader (not a member)" do
     let(:reader_user) { create(:user) }
 

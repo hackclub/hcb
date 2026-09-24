@@ -85,7 +85,7 @@
     <%= render partial: "ledger/items/pin_button", locals: { ledger_item: @item } %>
   </div>
 
-  <% if @item.accepts_receipts? %>
+  <% if @item.accepts_receipts? && @item.hcb_code.present? %>
     <% admin_tool("mt1 p-3") do %>
       💌 Bonjour!
       <%= mail_to @item.hcb_code.receipt_upload_email, "Email me to upload your receipts" %>
@@ -94,7 +94,7 @@
       🌸 Aloha!
       <%= link_to "Here's the page for attaching receipts", attach_receipt_url(@item.hcb_code) %>
     <% end %>
-    <% if @item.linked_object_type == "CardCharge" %>
+    <% if @item.linked_object_type == "CardCharge" && current_user.phone_number.present? %>
       <% admin_tool("mt1 p-3") do %>
         ☎️ moshi moshi?
         <%= link_to "Click to get an SMS (to #{current_user.phone_number}) of the notification", send_sms_receipt_hcb_code_path(@item.hcb_code), data: { turbo_method: :post } %>
@@ -119,8 +119,8 @@
 
   <% if @item.hcb_code.present? %>
     <%= render "comments/list", comments: @item.hcb_code.all_comments, viewing_commentable: @item.hcb_code %>
-    <% if @item.hcb_code.shared_commentable? %>
-      <% viewing_disbursement = @item.hcb_code.outgoing_disbursement || @item.hcb_code.incoming_disbursement %>
+    <% viewing_disbursement = @item.hcb_code.outgoing_disbursement || @item.hcb_code.incoming_disbursement %>
+    <% if viewing_disbursement.present? %>
       <% counterparty_hcb_code = viewing_disbursement.counterparty.local_hcb_code %>
       <% if policy(counterparty_hcb_code).show? && counterparty_hcb_code.comments.count > 0 %>
         <p class="muted">
