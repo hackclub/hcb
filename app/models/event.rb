@@ -926,8 +926,11 @@ class Event < ApplicationRecord
   monetize :minimum_wire_amount_cents
 
   # Organizations that have raised over $50,000 in the past year don't get
-  # charged for the $25 per wire our partner bank charges us.
+  # charged for the $25 per wire our partner bank charges us. Hack Club's own
+  # projects are always charged, however much they've raised.
   def wire_fee_waived?
+    return false if plan.is_a?(Event::Plan::HackClubAffiliate)
+
     canonical_transactions.where("amount_cents > 0").where("date >= ?", 1.year.ago).sum(:amount_cents) > 50_000_00
   end
 
