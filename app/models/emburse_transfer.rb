@@ -40,7 +40,7 @@ class EmburseTransfer < ApplicationRecord
   paginates_per 50
 
   # NOTE(@msw) emburse_transfers used to be on a per-emburse_card basis & we're keeping the
-  # association for compatability with migrations
+  # association for compatibility with migrations
   belongs_to :emburse_card, optional: true
 
   belongs_to :event
