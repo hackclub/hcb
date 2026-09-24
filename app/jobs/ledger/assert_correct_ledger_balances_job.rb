@@ -9,8 +9,9 @@ class Ledger
         safely do
           if ledger.event.present?
             event = ledger.event
-            if event.ledger.balance_cents != event.balance_v2_cents
-              report_anomaly "Event #{event.id} (#{event.slug}) balance_v2_cents #{event.balance_v2_cents} does not match ledger balance_cents #{event.ledger.balance_cents}"
+            legacy_balance_cents = event.balance_v2_cents(legacy: true)
+            if event.ledger.balance_cents != legacy_balance_cents
+              report_anomaly "Event #{event.id} (#{event.slug}) legacy balance_v2_cents #{legacy_balance_cents} does not match ledger balance_cents #{event.ledger.balance_cents}"
             end
           elsif ledger.card_grant.present?
             card_grant = ledger.card_grant

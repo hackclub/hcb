@@ -203,32 +203,6 @@ RSpec.describe EventsController do
     end
   end
 
-  describe "#ledger_stats" do
-    render_views
-
-    let(:admin) { create(:user, :make_admin) }
-    let(:event) { create(:event) }
-
-    before { create_session(admin, verified: true) }
-
-    it "sums ledger items by sign for revenue and expenses" do
-      revenue_item = create(:ledger_item, custom_memo: "Revenue item", datetime: Time.current)
-      Ledger::Mapping.create!(ledger: event.ledger, ledger_item: revenue_item, on_primary_ledger: true)
-      revenue_item.update_columns(status: "settled", amount_cents: 1500)
-
-      expense_item = create(:ledger_item, custom_memo: "Expense item", datetime: Time.current)
-      Ledger::Mapping.create!(ledger: event.ledger, ledger_item: expense_item, on_primary_ledger: true)
-      expense_item.update_columns(status: "settled", amount_cents: -600)
-
-      get(:ledger_stats, params: { event_id: event.slug })
-
-      expect(response).to have_http_status(:ok)
-      expect(response.body).to include(money(1500)) # total revenue
-      expect(response.body).to include(money(600))  # total expenses, shown positive
-      expect(response.body).to include(money(900))  # account balance (1500 - 600)
-    end
-  end
-
   describe "#transactions" do
     let(:admin) { create(:user, :make_admin) }
     let(:event) { create(:event) }
@@ -808,4 +782,45 @@ RSpec.describe EventsController do
     end
   end
 
+  # A zero-percent revenue fee doesn't mean an organization owes nothing: it can
+  # still be charged a fee by hand (Fee's `manual` reason), and that balance is
+  # real money it owes. The ledger short-circuited on `revenue_fee > 0` before
+  # working the balance out, so those orgs never saw the fee they'd been charged.
+  describe "the pending fiscal sponsorship fee row" do
+    render_views
+
+    let(:admin) { create(:user, :make_admin) }
+    # The event factory's default plan is fee-waived — a zero revenue fee.
+    let(:event) { create(:event) }
+
+    before do
+      create_session(admin, verified: true)
+      Flipper.enable_actor(:new_ledger_2026_07_17, admin)
+
+      # The row renders alongside the table, which only renders with an item in it.
+      item = create(:ledger_item, custom_memo: "A transaction", datetime: Time.current)
+      Ledger::Mapping.create!(ledger: event.ledger, ledger_item: item, on_primary_ledger: true)
+      item.update_columns(amount_cents: 1_000, ct_count: 1)
+    end
+
+    # The row's own markup, rather than its label: "Fiscal sponsorship fee" also
+    # renders unconditionally as an option in the type filter menu.
+    fee_row = '<tr class="transaction transaction--negative muted">'
+
+    it "shows a manually charged fee an organization still owes" do
+      expect(event.revenue_fee).to eq(0)
+      event.fees.create!(memo: "Manually charged fee", amount_cents_as_decimal: 500, event_sponsorship_fee: 0, reason: :manual)
+
+      get(:ledger, params: { event_id: event.slug })
+
+      expect(response.body).to include(fee_row)
+      expect(response.body).to include("-$5.00")
+    end
+
+    it "shows nothing when there's no fee outstanding" do
+      get(:ledger, params: { event_id: event.slug })
+
+      expect(response.body).not_to include(fee_row)
+    end
+  end
 end

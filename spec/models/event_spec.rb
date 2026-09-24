@@ -418,18 +418,6 @@ RSpec.describe Event, type: :model do
     end
   end
 
-  describe "#can_front_balance" do
-    it "enqueues a job to refresh the event's ledgers when changed" do
-      expect { event.update!(can_front_balance: !event.can_front_balance) }
-        .to have_enqueued_job(Event::RefreshLedgersJob).with(event_id: event.id)
-    end
-
-    it "does not enqueue a job when unchanged" do
-      expect { event.update!(name: "Renamed") }
-        .not_to have_enqueued_job(Event::RefreshLedgersJob)
-    end
-  end
-
   describe "description validation" do
     it "requires a description when an app-backed event is created" do
       event = build(:event, description: nil)

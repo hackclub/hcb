@@ -69,12 +69,8 @@
     </div>
 
   <div>
-    <% admin_tool do %>
-      <p class="eyebrow m0 mt-3">From <%= @disbursement.source_event.name %></p>
-      <%= render "events/mission_statement", event: @disbursement.source_event %>
-      <p class="eyebrow m0 mt-3">To <%= @disbursement.destination_event.name %></p>
-      <%= render "events/mission_statement", event: @disbursement.destination_event %>
-    <% end %>
+    <%= render "events/mission_statement", event: @disbursement.source_event, class_name: "mt-3", label: "From #{@disbursement.source_event.name}" %>
+    <%= render "events/mission_statement", event: @disbursement.destination_event, class_name: "mt-3", label: "To #{@disbursement.destination_event.name}" %>
   </div>
 </div>
 
