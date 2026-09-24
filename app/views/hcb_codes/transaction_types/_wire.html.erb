@@ -67,7 +67,12 @@
       <% if @hcb_code.wire.uetr.present? %>
         <p>
           <strong>UETR</strong>
-          <%= @hcb_code.wire.uetr %>
+          <%#Only auditors can reach the tracking lookup for now. %>
+          <% if auditor_signed_in? %>
+            <%= link_to @hcb_code.wire.uetr, wire_lookup_admin_index_path(uetr: @hcb_code.wire.uetr), title: "Look up SWIFT tracking" %>
+          <% else %>
+            <%= @hcb_code.wire.uetr %>
+          <% end %>
         </p>
       <% end %>
 

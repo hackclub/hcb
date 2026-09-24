@@ -385,6 +385,15 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/wires'),
     },
     {
+      id: 'admin-wire-lookup',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Wire lookup',
+      keywords: 'uetr swift tracking wire',
+      icon: <Icon glyph="web" size={16} />,
+      perform: navigate('/admin/wire_lookup'),
+    },
+    {
       id: 'admin-wise-transfers',
       section: 'Admin Tools',
       priority: Priority.HIGH,
