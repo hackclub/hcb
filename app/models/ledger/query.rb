@@ -19,6 +19,17 @@ class Ledger
       marked_no_or_lost_receipt_at
     ].freeze
 
+    # Fields with no column of their own on ledger_items: each resolves through
+    # a subquery against a related table. They're filters the ledger UI offers,
+    # so the query owns them rather than the page — that way a query object on
+    # its own fully describes a filtered ledger, and anything handed that query
+    # sees the same rows the page does.
+    VIRTUAL_FIELDS = %w[
+      tag
+      category
+      merchant
+    ].freeze
+
     # Query hashes are untrusted input (they can be constructed client-side), so
     # bound their shape: cap nesting depth, the number of predicate groups, and
     # the length of any array (e.g. a $in list) so a deeply-nested, very wide, or
@@ -187,6 +198,8 @@ class Ledger
     end
 
     def apply_partial_predicate(relation, operator, raw_key, operand)
+      return apply_virtual_predicate(relation, operator, raw_key, operand) if VIRTUAL_FIELDS.include?(raw_key.to_s)
+
       key = PERMITTED_COLUMNS_MAP[raw_key]
       raise Ledger::Query::Error.new("Invalid field name: #{raw_key}") unless key.present?
 
@@ -259,6 +272,55 @@ class Ledger
         relation.where(id: Ledger::Item.search_memo(operand).select(:id))
       else
         raise Ledger::Query::Error.new("Unsupported comparison operator: #{operator}")
+      end
+    end
+
+    # Virtual fields (see VIRTUAL_FIELDS) support equality only: each one is a UI
+    # filter that picks a single value, and the subqueries behind them have no
+    # ordering worth comparing against. Every one of them is expressed as an
+    # `id IN (subquery)`, never a join, so the result stays a plain relation of
+    # ledger items that the rest of the query can keep narrowing.
+    def apply_virtual_predicate(relation, operator, key, operand)
+      raise Ledger::Query::Error.new("Unsupported comparison operator for #{key}: #{operator}") unless operator.to_s == "$eq"
+
+      # apply_partial_predicate returns above before reaching its own operand
+      # guards, so repeat the one $eq carries: an array operand would otherwise
+      # turn $eq into an IN here while it raises on every other field.
+      reject_array_operand!(operator, operand)
+
+      case key.to_s
+      when "tag"
+        # Tags hang off the HCB code, which points back at the ledger item.
+        relation.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: operand).select(:hcb_code_id)).select(:ledger_item_id))
+      when "category"
+        # Categories are assigned to the underlying canonical transactions, and
+        # an item matches if either kind carries the category. Resolving the slug
+        # inside the subquery (rather than looking the category up first) means an
+        # unknown slug simply matches nothing.
+        #
+        # One sublink over a UNION ALL, not two OR'd `id IN (...)` clauses:
+        # Postgres can't pull a sublink out from under an OR, so the two-clause
+        # form plans as `Filter: ((hashed SubPlan 1) OR (hashed SubPlan 2))` —
+        # each subquery is built in full before the ledger scoping `execute` ANDs
+        # on can narrow anything. A single sublink pulls up into one semi-join
+        # over an Append, which the planner can order against that scoping.
+        mappings = TransactionCategoryMapping.where(transaction_category_id: TransactionCategory.where(slug: operand).select(:id))
+        settled = CanonicalTransaction.where(id: mappings.where(categorizable_type: "CanonicalTransaction").select(:categorizable_id)).select(:ledger_item_id)
+        pending = CanonicalPendingTransaction.where(id: mappings.where(categorizable_type: "CanonicalPendingTransaction").select(:categorizable_id)).select(:ledger_item_id)
+
+        # UNION ALL, not UNION: an item carrying the category on both a settled
+        # and a pending transaction appears twice in the inner set, and IN
+        # doesn't care — deduplicating it would only cost a sort.
+        relation.where(Ledger::Item.arel_table[:id].in(Arel::Nodes::UnionAll.new(settled.arel, pending.arel)))
+      when "merchant"
+        relation.where(linked_object_type: "CardCharge", linked_object_id: CardCharge.where(merchant_network_id: operand).select(:id))
+      else
+        # Unreachable while these arms and VIRTUAL_FIELDS stay in parity, but
+        # they're declared 250-odd lines apart and the guard in
+        # apply_partial_predicate commits to handling anything in the constant.
+        # Adding a field there and forgetting an arm here should say so, not
+        # fall through to nil and surface as a NoMethodError downstream.
+        raise Ledger::Query::Error.new("Unsupported virtual field: #{key}")
       end
     end
 
