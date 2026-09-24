@@ -1,0 +1,379 @@
+<% title "Ledger item #{@ledger_item.id}" %>
+
+<h1>Ledger item <%= @ledger_item.id %></h1>
+
+<table class="no-stripes <%= "admin-bg-pending" unless @primary_ledger %>">
+  <tbody>
+    <tr>
+      <th>ID</th>
+      <td><%= link_to @ledger_item.id, ledger_item_path(@ledger_item) %></td>
+    </tr>
+    <tr>
+      <th>Public ID</th>
+      <td><%= @ledger_item.public_id %></td>
+    </tr>
+    <tr>
+      <th>Short code</th>
+      <td><%= @ledger_item.short_code %></td>
+    </tr>
+    <tr>
+      <th>Date</th>
+      <td><%= format_datetime @ledger_item.datetime %></td>
+    </tr>
+    <tr>
+      <th>Memo</th>
+      <td><%= @ledger_item.memo %></td>
+    </tr>
+    <tr>
+      <th>SystemMemo</th>
+      <td><%= @ledger_item.system_memo %></td>
+    </tr>
+    <tr>
+      <th>CustomMemo</th>
+      <td><%= @ledger_item.custom_memo %></td>
+    </tr>
+    <tr>
+      <th>Amount</th>
+      <td><%= @ledger_item.amount.format %></td>
+    </tr>
+    <tr>
+      <th>Type</th>
+      <td><%= @ledger_item.humanized_type %></td>
+    </tr>
+    <tr>
+      <th>Status</th>
+      <td><%= @ledger_item.status_text %></td>
+    </tr>
+    <tr>
+      <th>Linked object</th>
+      <td>
+        <% if @ledger_item.linked_object %>
+          <%= @ledger_item.linked_object_type %> #<%= @ledger_item.linked_object_id %>
+        <% else %>
+          <span class="muted">None — this is a raw bank transaction.</span>
+        <% end %>
+      </td>
+    </tr>
+    <tr>
+      <th>HCB Code</th>
+      <td>
+        <% if @hcb_code %>
+          <%= link_to @hcb_code.hcb_code, hcb_code_path(@hcb_code) %>
+        <% end %>
+      </td>
+    </tr>
+    <tr>
+      <th>Author</th>
+      <td><%= @ledger_item.author&.email %></td>
+    </tr>
+    <tr>
+      <th>Receipts</th>
+      <td>
+        <%= @ledger_item.receipt_count %>
+        <% if @ledger_item.receipt_required? %>
+          (required<%= ", marked no/lost" if @ledger_item.marked_no_or_lost_receipt_at %>)
+        <% end %>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h4>Current mapping</h4>
+
+<table class="no-stripes <%= "admin-bg-pending" unless @primary_ledger %>">
+  <tbody>
+    <tr>
+      <th>Primary ledger</th>
+      <td>
+        <% if @primary_ledger&.event %>
+          <%= link_to @primary_ledger.event.admin_formatted_name, @primary_ledger.event %>
+        <% elsif @primary_ledger&.card_grant %>
+          <%= link_to "#{@primary_ledger.card_grant.email}'s card grant", card_grant_path(@primary_ledger.card_grant) %>
+        <% else %>
+          <span class="muted">Unmapped</span>
+        <% end %>
+      </td>
+    </tr>
+    <tr>
+      <th>MappedBy</th>
+      <td>
+        <% if @primary_mapping.nil? %>
+        <% elsif @primary_mapping.mapped_by %>
+          <%= @primary_mapping.mapped_by.email %>
+        <% else %>
+          <span class="muted">The system</span>
+        <% end %>
+      </td>
+    </tr>
+    <tr>
+      <th>Pinned</th>
+      <td><%= @ledger_item.pinned? ? "Yes" : "No" %></td>
+    </tr>
+    <% if @non_primary_mappings.any? %>
+      <tr>
+        <th>Other ledgers</th>
+        <td>
+          <% @non_primary_mappings.each do |mapping| %>
+            <%= mapping.ledger.admin_description %><br>
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<div class="border-[#9FE870] border-solid border-1 p-5 my-6">
+  <h3 class="mt-0 pt-0 mb-4">What the mapper would do</h3>
+
+  <% if @suggested_owner.is_a?(Event) %>
+    <p>This item looks like it belongs to <%= link_to @suggested_owner.admin_formatted_name, @suggested_owner %>.</p>
+  <% elsif @suggested_owner.is_a?(CardGrant) %>
+    <p>This item looks like it belongs to <%= link_to "#{@suggested_owner.email}'s card grant", card_grant_path(@suggested_owner) %>.</p>
+  <% else %>
+    <p class="muted mb-0">
+      The mapper can't work out a ledger for this item, so it will stay unmapped until you map it by hand.
+    </p>
+  <% end %>
+
+  <% if @suggested_owner %>
+    <%= form_with url: ledger_item_run_mapper_admin_path(@ledger_item), method: :post, class: "mb-0" do |form| %>
+      <%= form.submit "Map automatically", data: { "turbo-confirm": ("Mapping automatically will replace the mapping #{@primary_mapping.mapped_by.email} made by hand." if @primary_mapping&.mapped_by) }, class: "!mb-0 mt-3" %>
+    <% end %>
+  <% end %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Map to an Event</th>
+      <th>Map to a card grant</th>
+      <th>Unmap</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="<%= "admin-bg-pending" unless @primary_ledger %>">
+      <td>
+        <%= form_with url: ledger_item_set_ledger_admin_path(@ledger_item), method: :post do |form| %>
+          <%= form.hidden_field :target, value: "event" %>
+          <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Select event", class: "!max-w-full !min-w-72", value: @primary_ledger&.event&.to_combobox_display %>
+          <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
+        <% end %>
+        <%= form_with url: ledger_item_set_ledger_admin_path(@ledger_item), method: :post do |form| %>
+          <%= form.hidden_field :target, value: "event" %>
+          <%= form.hidden_field :event_id, value: EventMappingEngine::EventIds::NOEVENT %>
+          <%= form.submit "Map to NoEvent", data: { turbo_confirm: @mapping_confirm_msg || "Hey there– you sure you want to map this transaction to NoEvent?" }, class: "my-0" %>
+        <% end %>
+      </td>
+      <td>
+        <%= form_with url: ledger_item_set_ledger_admin_path(@ledger_item), method: :post do |form| %>
+          <%= form.hidden_field :target, value: "card_grant" %>
+          <%= combobox_tag :card_grant_id, card_grant_search_admin_index_path, placeholder: "Select card grant", class: "!max-w-full !min-w-72", value: @primary_ledger&.card_grant&.to_combobox_display %>
+          <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
+        <% end %>
+      </td>
+      <td>
+        <% if @primary_mapping %>
+          <%= form_with url: ledger_item_set_ledger_admin_path(@ledger_item), method: :post do |form| %>
+            <%= form.hidden_field :target, value: "unmap" %>
+            <%= form.submit "Unmap", data: { "turbo-confirm": "This removes the item from #{@primary_ledger.admin_description}, taking #{@ledger_item.amount.format} off that ledger. Are you sure?" } %>
+          <% end %>
+        <% else %>
+          <span class="muted">Already unmapped.</span>
+        <% end %>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h4>Maintenance</h4>
+
+<div class="flex flex-col sm:flex-row gap-4 items-start">
+  <%= form_with url: ledger_item_update_memo_admin_path(@ledger_item), method: :post do |form| %>
+    <%= form.text_field :custom_memo, value: @ledger_item.custom_memo, placeholder: "Custom memo", class: "!max-w-full !min-w-72" %>
+    <%= form.submit "Save memo" %>
+    <p class="muted mt0"><small>Leave blank to fall back to the system memo.</small></p>
+  <% end %>
+
+  <%= form_with url: ledger_item_refresh_admin_path(@ledger_item), method: :post do |form| %>
+    <%= form.submit "Refresh" %>
+    <p class="muted mt0"><small>Recomputes amount, status, memo, counts and timestamps from this item's transactions.</small></p>
+  <% end %>
+</div>
+
+<br><hr>
+
+<h4>Canonical transactions</h4>
+
+<% if @canonical_transactions.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th class="w-32">ID</th>
+        <th class="w-32">Date</th>
+        <th>Memo</th>
+        <th class="w-24">Amount</th>
+        <th>Source</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @canonical_transactions.each do |ct| %>
+        <tr>
+          <td><%= link_to ct.id, transaction_admin_path(ct) %></td>
+          <td><%= ct.date %></td>
+          <td><%= ct.memo %></td>
+          <td class="nowrap"><%= ct.amount.format %></td>
+          <td><%= ct.transaction_source_type %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <%= blankslate "No canonical transactions" %>
+<% end %>
+
+<h4>Canonical pending transactions</h4>
+
+<% if @canonical_pending_transactions.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th class="w-32">ID</th>
+        <th class="w-32">Date</th>
+        <th>Memo</th>
+        <th class="w-24">Amount</th>
+        <th class="w-24">Settled</th>
+        <th>Linked object</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @canonical_pending_transactions.each do |cpt| %>
+        <tr class="<%= "admin-bg-pending" if cpt.unsettled? %>">
+          <td><%= cpt.id %></td>
+          <td><%= cpt.date %></td>
+          <td><%= cpt.memo %></td>
+          <td class="nowrap"><%= cpt.amount.format %></td>
+          <td><%= cpt.settled? ? "Yes" : "No" %></td>
+          <td><%= cpt.linked_object&.class&.name %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <%= blankslate "No canonical pending transactions" %>
+<% end %>
+
+<br><hr>
+
+<% if @hcb_code %>
+  <h4>Receipts</h4>
+
+  <div style="margin-left: -2rem;" class="mt2">
+    <%= render "receipts/list_v2", hcb_code: @hcb_code %>
+  </div>
+
+  <div style="width: 250px;">
+    <%= render partial: "receipts/form_v3", locals: {
+          receiptable: @hcb_code,
+          upload_method: "attach_receipt_page",
+          turbo: false,
+          redirect_url: ledger_item_process_admin_path(@ledger_item)
+        } %>
+  </div>
+<% end %>
+
+<h4 class="mb2">Comments</h4>
+
+<% @ledger_item.comments.each do |comment| %>
+  <p class="mb1">
+    <b>
+      <%= comment.user.name %> <%= comment.action_text %> <%= time_ago_in_words comment.created_at %> ago
+    </b>
+  </p>
+  <% if comment.content.blank? %>
+    <div class="muted mb1"><em>Comment left blank.</em></div>
+  <% else %>
+    <%= MarkdownService.instance.render(comment.content, current_user:, record: comment) %>
+  <% end %>
+  <% if comment.has_attached_file? %>
+    <p>
+      <%= link_to "📎 attachment", url_for(comment.file), target: "_blank" %>
+    </p>
+  <% end %>
+<% end %>
+
+<br><hr>
+
+<h4>Mapping history</h4>
+
+<% if @mapping_versions.any? %>
+  <table>
+    <thead>
+      <tr>
+        <th class="w-32">When</th>
+        <th class="w-24">Event</th>
+        <th>By</th>
+        <th>Changes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @mapping_versions.each do |version| %>
+        <tr>
+          <td><%= format_datetime version.created_at %></td>
+          <td><%= version.event %></td>
+          <td>
+            <% if (user = @mapping_version_users[version.whodunnit]) %>
+              <%= user.email %>
+            <% elsif version.whodunnit %>
+              <%= version.whodunnit %>
+            <% else %>
+              <span class="muted">The system</span>
+            <% end %>
+          </td>
+          <td><%= sanitize(ap(version.object_changes), attributes: %w(style)) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <%= blankslate "No mapping history" %>
+<% end %>
+
+<br><hr>
+
+<h4>Journey</h4>
+
+<p>Ledger::Item</p>
+<%= sanitize(ap(@ledger_item), attributes: %w(style)) %>
+
+<% if @ledger_item.linked_object %>
+  <p>↓</p>
+  <p><%= @ledger_item.linked_object_type %></p>
+  <%= sanitize(ap(@ledger_item.linked_object), attributes: %w(style)) %>
+<% end %>
+
+<% @canonical_transactions.each do |ct| %>
+  <p>↓</p>
+  <p>CanonicalTransaction <%= ct.id %></p>
+  <%= sanitize(ap(ct), attributes: %w(style)) %>
+
+  <p>↓</p>
+  <p><%= ct.transaction_source_type %></p>
+  <%= sanitize(ap(ct.transaction_source), attributes: %w(style)) %>
+<% end %>
+
+<% @canonical_pending_transactions.each do |cpt| %>
+  <p>↓</p>
+  <p>CanonicalPendingTransaction <%= cpt.id %></p>
+  <%= sanitize(ap(cpt), attributes: %w(style)) %>
+<% end %>
+
+<br><hr>
+
+<h4>System Events</h4>
+
+<% @ahoy_events.each do |ae| %>
+  <p><%= ae.name %> <small><%= ae.time %></small></p>
+  <%= sanitize(ap(ae.properties), attributes: %w(style)) %>
+<% end %>
+
+<br><hr>

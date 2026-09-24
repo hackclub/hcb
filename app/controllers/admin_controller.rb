@@ -410,8 +410,121 @@ class AdminController < Admin::BaseController
 
     @count = relation.count
 
-    @ledger_items = relation.includes(:hcb_code)
+    @ledger_items = relation.includes(:hcb_code, primary_ledger: [:event, :card_grant])
                             .page(@page).per(@per).order(datetime: :desc)
+  end
+
+  def ledger_item_process
+    @ledger_item = find_ledger_item
+    @hcb_code = @ledger_item.hcb_code
+
+    @primary_mapping = @ledger_item.primary_mapping
+    @primary_ledger = @primary_mapping&.ledger
+    @non_primary_mappings = @ledger_item.ledger_mappings.where(on_primary_ledger: false).includes(:ledger)
+
+    @suggested_owner = Ledger::Mapper.new(ledger_item: @ledger_item).suggested_owner
+
+    @canonical_transactions = @ledger_item.canonical_transactions.includes(:transaction_source).order(:date, :id)
+    # CanonicalPendingTransaction#linked_object is a derived method, not an
+    # association, so it can't be preloaded — it walks the raw_pending_*
+    # associations instead. Items carry a handful of CPTs at most.
+    @canonical_pending_transactions = @ledger_item.canonical_pending_transactions.order(:date, :id)
+
+    # Scoped to this item's own mappings so the query uses
+    # index_versions_on_item_type_and_item_id. `map_primary!` reuses the same
+    # mapping row when remapping, so that row's versions carry the whole
+    # remapping history; only an unmapped (destroyed) row loses its trail.
+    @mapping_versions = PaperTrail::Version.where(item_type: "Ledger::Mapping", item_id: @ledger_item.ledger_mappings.ids)
+                                           .order(created_at: :desc, id: :desc)
+    # whodunnit holds a user id set from a request, but the console initializer
+    # sets it to an email, so only numeric values are worth looking up.
+    @mapping_version_users = User.where(id: @mapping_versions.filter_map(&:whodunnit).grep(/\A\d+\z/)).index_by { |user| user.id.to_s }
+
+    canonical_transaction_ids = @ledger_item.canonical_transactions.ids
+    @ahoy_events = if canonical_transaction_ids.any?
+                     Ahoy::Event.where("name in (?) and (properties->'canonical_transaction'->>'id')::int in (?)", [::SystemEventService::Write::SettledTransactionMapped::NAME, ::SystemEventService::Write::SettledTransactionCreated::NAME], canonical_transaction_ids).order("time desc")
+                   else
+                     Ahoy::Event.none
+                   end
+
+    @mapping_confirm_msg = ledger_item_mapping_confirm_msg
+  end
+
+  def ledger_item_set_ledger
+    @ledger_item = find_ledger_item
+
+    ledger =
+      case params[:target]
+      when "event"
+        Ledger.find_or_create_by!(primary: true, event: Event.find(params[:event_id]))
+      when "card_grant"
+        card_grant = CardGrant.find(params[:card_grant_id])
+
+        card_grant.ledger || Ledger.find_or_create_by!(primary: true, card_grant:)
+      when "unmap"
+        raise ArgumentError, "This ledger item isn't mapped to a primary ledger." if @ledger_item.primary_mapping.nil?
+
+        nil
+      else
+        raise ArgumentError, "Unknown mapping target: #{params[:target]}"
+      end
+
+    # A nil ledger destroys the existing primary mapping; see Ledger::Mapping.map_primary!.
+    Ledger::Mapping.map_primary!(ledger:, ledger_item: @ledger_item, mapped_by: current_user)
+
+    flash[:success] = ledger ? "Mapped to #{ledger.admin_description}." : "Unmapped."
+
+    redirect_to ledger_item_process_admin_path(@ledger_item)
+  rescue => e
+    redirect_to ledger_item_process_admin_path(params[:id]), flash: { error: e.message }
+  end
+
+  def ledger_item_run_mapper
+    @ledger_item = find_ledger_item
+
+    # force: this button is an explicit request to hand a human-mapped item
+    # back to the system, which the mapper otherwise refuses to touch.
+    Ledger::Mapper.new(ledger_item: @ledger_item).run(force: true)
+
+    if (ledger = @ledger_item.reload.primary_ledger)
+      flash[:success] = "The mapper mapped this item to #{ledger.admin_description}."
+    else
+      flash[:error] = "The mapper couldn't work out a ledger for this item."
+    end
+
+    redirect_to ledger_item_process_admin_path(@ledger_item)
+  rescue => e
+    redirect_to ledger_item_process_admin_path(params[:id]), flash: { error: e.message }
+  end
+
+  def ledger_item_refresh
+    @ledger_item = find_ledger_item
+
+    @ledger_item.refresh!
+
+    redirect_to ledger_item_process_admin_path(@ledger_item), flash: { success: "Refreshed." }
+  rescue => e
+    redirect_to ledger_item_process_admin_path(params[:id]), flash: { error: e.message }
+  end
+
+  def ledger_item_update_memo
+    @ledger_item = find_ledger_item
+
+    @ledger_item.update_custom_memo!(params[:custom_memo].presence)
+
+    redirect_to ledger_item_process_admin_path(@ledger_item), flash: { success: "Memo updated." }
+  rescue => e
+    redirect_to ledger_item_process_admin_path(params[:id]), flash: { error: e.message }
+  end
+
+  def card_grant_search
+    @q = params[:q].presence
+    @card_grants = if @q.present?
+                     CardGrant.search(@q).includes(:event).order(created_at: :desc).limit(20)
+                   else
+                     CardGrant.includes(:event).order(created_at: :desc).limit(20)
+                   end
+    render turbo_stream: helpers.async_combobox_options(@card_grants)
   end
 
   def event_search
@@ -1691,6 +1804,33 @@ class AdminController < Admin::BaseController
   end
 
   private
+
+  # Ledger::Item#to_param is its hashid, so that's what the path helpers emit.
+  # A raw id (what the rest of /admin shows, and what ops search by) and a
+  # `lit_` public id resolve too.
+  def find_ledger_item(id = params[:id])
+    return Ledger::Item.find(id) if id.to_s.match?(/\A\d+\z/)
+
+    Ledger::Item.find_by_public_id(id) || Ledger::Item.find_by_hashid!(id)
+  end
+
+  def ledger_item_mapping_confirm_msg
+    messages = []
+
+    if @ledger_item.linked_object.present?
+      messages << "Woaaahaa! 😯 This ledger item is linked to a #{@ledger_item.humanized_type.downcase}, which means the system should be mapping it on its own. Are you sure you want to map it by hand? 👀"
+    end
+
+    if @ledger_item.amount_cents.abs >= 5_000_00 # $5k
+      messages << "Are you really really sure you want to map this transaction? 🤔 it seems like a big one :)"
+    end
+
+    if @primary_ledger
+      messages << "This item is already mapped to #{@primary_ledger.admin_description}. Remapping it takes #{@ledger_item.amount.format} off that ledger."
+    end
+
+    messages.join("\n\n").presence
+  end
 
   def cache_event_metric(metric_name, &block)
     @event = Event.friendly.find(params[:id])

@@ -156,5 +156,57 @@ RSpec.describe Ledger::Mapper do
       expect(non_primary.ledger).to eq(non_primary_ledger)
       expect(item.reload.primary_ledger).to eq(event.ledger)
     end
+
+    context "with force: true" do
+      it "overrides a mapping a human made" do
+        human_mapped_event = create(:event)
+        Ledger::Mapping.map_primary!(ledger: human_mapped_event.ledger, ledger_item: item, mapped_by: create(:user))
+
+        calculated_event = create(:event)
+        allow(mapper).to receive(:calculate_card_grant).and_return(nil)
+        allow(mapper).to receive(:calculate_event).and_return(calculated_event)
+
+        mapper.run(force: true)
+        item.reload
+
+        expect(item.primary_ledger).to eq(calculated_event.ledger)
+        expect(item.primary_mapping.mapped_by).to be_nil
+      end
+
+      it "leaves a human's mapping alone when nothing can be calculated" do
+        event = create(:event)
+        Ledger::Mapping.map_primary!(ledger: event.ledger, ledger_item: item, mapped_by: create(:user))
+
+        allow(mapper).to receive(:calculate_card_grant).and_return(nil)
+        allow(mapper).to receive(:calculate_event).and_return(nil)
+
+        mapper.run(force: true)
+
+        expect(item.reload.primary_ledger).to eq(event.ledger)
+      end
+    end
+  end
+
+  describe "#suggested_owner" do
+    it "returns the calculated event without mapping anything" do
+      event = create(:event)
+      allow(mapper).to receive(:calculate_card_grant).and_return(nil)
+      allow(mapper).to receive(:calculate_event).and_return(event)
+
+      expect(mapper.suggested_owner).to eq(event)
+      expect(item.reload.primary_ledger).to be_nil
+    end
+
+    it "prefers a card grant over an event" do
+      funded_event = create(:event, :with_positive_balance)
+      card_grant = create(:card_grant, event: funded_event)
+      allow(mapper).to receive(:calculate_card_grant).and_return(card_grant)
+
+      expect(mapper.suggested_owner).to eq(card_grant)
+    end
+
+    it "returns nil when nothing can be calculated" do
+      expect(mapper.suggested_owner).to be_nil
+    end
   end
 end
