@@ -238,6 +238,21 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#update" do
+    it "lets an admin set the sub-organization name prefix" do
+      admin = create(:user, :make_admin)
+      event = create(:event)
+      create_session(admin, verified: true)
+
+      patch(:update, params: {
+              id: event.slug,
+              event: { config_attributes: { id: event.config.id, subevent_name_prefix: "Athena Award — " } }
+            })
+
+      expect(event.config.reload.subevent_name_prefix).to eq("Athena Award — ")
+    end
+  end
+
   describe "#payments" do
     render_views
 
