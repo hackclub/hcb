@@ -1319,7 +1319,6 @@ class EventsController < ApplicationController
 
     @items = ledger_query.execute(ledgers: @ledgers)
                          .page(params[:page]).per(@per)
-                         .preload(hcb_code: { event: :tags })
   rescue Pundit::NotAuthorizedError
     return head :not_found
   end
