@@ -42,7 +42,6 @@ class Payee < ApplicationRecord
   normalizes :email, with: ->(email) { email.strip.downcase }
 
   scope :not_archived, -> { where(archived_at: nil) }
-  scope :imported, -> { where.not(imported_at: nil) }
 
   pg_search_scope :search, against: [:display_name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }
 
@@ -78,8 +77,7 @@ class Payee < ApplicationRecord
     archived_at.present?
   end
 
-  # Whether this recipient came from the old transfer system's address book
-  # rather than being added through the payee flow.
+  # Whether this payee was imported from the old transfer system.
   def imported?
     imported_at.present?
   end

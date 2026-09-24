@@ -1,13 +1,8 @@
 # frozen_string_literal: true
 
 module Maintenance
-  # One-time backfill: brings the old transfer system's address book
-  # (PaymentRecipient) into the payee system, so anyone an org has sent a
-  # transfer to before shows up in the payee picker alongside everyone else.
-  #
-  # Every recipient sharing an email within an event collapses into one imported
-  # payee, backed by a managed legal entity whose payout methods are those
-  # recipients' saved payout details. Only the name and email carry over.
+  # Imports the old transfer system's recipients as payees: one managed legal
+  # entity per email per event, with each distinct set of saved details as a payout method.
   class ImportPaymentRecipientPayeesTask < MaintenanceTasks::Task
     # payment_model => [association on the recipient, states in which the money left]
     SENT_TRANSFERS = {
@@ -16,17 +11,16 @@ module Maintenance
       Wire.name          => [:wires, %w[approved deposited]],
     }.freeze
 
+    # Payouts HCB sends itself; their recipients were never in an org's address book.
+    SYSTEM_PAYOUTS = %i[payment_attempt reimbursement_payout_holding employee_payment].freeze
+
     def collection
       Event.where(id: PaymentRecipient.unscoped.select(:event_id))
     end
 
     def process(event)
       recipients_by_email(event).each do |email, recipients|
-        # An email the payee flow already knows wins outright: that recipient
-        # either owns their payout details or is about to claim them, so
-        # whatever the old system recorded against the same email is ignored.
-        # On a re-run this is also what keeps the import from duplicating
-        # itself or overwriting details their owner has since entered.
+        # An existing payee owns this email, and skipping it keeps re-runs idempotent.
         next if event.payees.exists?(email:)
 
         import(event, email, recipients)
@@ -38,14 +32,16 @@ module Maintenance
     def recipients_by_email(event)
       event.payment_recipients
            .reorder(nil)
-           .reject { |recipient| recipient.email.blank? }
+           .reject { |recipient| recipient.email.blank? || system_generated?(recipient) }
            .group_by { |recipient| recipient.email.strip.downcase }
     end
 
+    def system_generated?(recipient)
+      transfers(recipient)&.any? { |transfer| SYSTEM_PAYOUTS.any? { |payout| transfer.try(payout) } }
+    end
+
     def import(event, email, recipients)
-      # The email stands in for a name nobody ever recorded: the legal entity's
-      # name is what we send to TaxBandits when the payee is asked for a tax
-      # form, so it can't be left empty.
+      # The legal entity's name is sent to TaxBandits, so it can't be empty.
       name = latest_name(recipients) || email
 
       ActiveRecord::Base.transaction do
@@ -61,20 +57,11 @@ module Maintenance
       end
     end
 
-    # The most recent name anyone actually filled in. The newest recipient is
-    # not necessarily it: the payout system writes a recipient behind every
-    # transfer, and a reimbursement or payroll run can leave the name blank.
     def latest_name(recipients)
       recipients.sort_by(&:created_at).reverse.filter_map { |recipient| recipient.name.presence }.first
     end
 
-    # Best payout method first: whichever one money last actually went out on,
-    # falling back to the most recently saved.
-    #
-    # The old form saves a brand new recipient every time someone types details
-    # into it, so the same account turns up over and over; one payout method per
-    # distinct set of details, or the payee's picker fills with entries nothing
-    # on screen can tell apart.
+    # Ranked by when money last went out on each, then by recency, one per distinct set of details.
     def payout_details_for(recipients)
       ranked = recipients.sort_by { |recipient| [last_sent_at(recipient) || Time.zone.at(0), recipient.created_at] }
                          .reverse
@@ -84,14 +71,7 @@ module Maintenance
             .uniq { |_recipient, details| details }
     end
 
-    # Built through the service the payout form uses, so an imported method is
-    # the same thing a payee entering their own details would have produced.
-    #
-    # Legacy recipients predate today's payout method validations, and the wire
-    # ones raise on a missing field rather than failing. Whatever can't be
-    # rebuilt cleanly is left behind rather than imported as an unusable method
-    # — and logged, because nothing about the payee afterwards says a method
-    # went missing.
+    # Details that no longer pass validation are logged and left behind.
     def create_payout_method(legal_entity, details_class, attributes, recipient, default:)
       service = LegalEntity::PayoutMethodService::Update.new(
         legal_entity:,
@@ -100,7 +80,8 @@ module Maintenance
         make_default: default
       )
 
-      return true if service.run
+      # A savepoint, so a database error here can't abort the payee's transaction.
+      return true if ActiveRecord::Base.transaction(requires_new: true) { service.run }
 
       skipped(recipient, service.error_messages.to_sentence)
     rescue => e
@@ -143,11 +124,17 @@ module Maintenance
       end
     end
 
-    def last_sent_at(recipient)
-      association, states = SENT_TRANSFERS[recipient.payment_model]
-      return nil if association.nil?
+    def transfers(recipient)
+      association, _states = SENT_TRANSFERS[recipient.payment_model]
+      recipient.public_send(association) if association
+    end
 
-      recipient.public_send(association).where(aasm_state: states).maximum(:created_at)
+    def last_sent_at(recipient)
+      _association, states = SENT_TRANSFERS[recipient.payment_model]
+      sent = transfers(recipient)&.where(aasm_state: states)
+      # A stopped or returned check stays approved.
+      sent = sent.where.not(id: IncreaseCheck.canceled) if recipient.payment_model == IncreaseCheck.name
+      sent&.maximum(:created_at)
     end
 
   end
