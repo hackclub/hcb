@@ -44,7 +44,7 @@ Based on the ID, `EventMappingEngine::Map::Disbursements` will map the transacti
 
 Every time we issue a card, we need to pay Stripe for printing / shipping etc. They automatically subtract this from our balance. We top up our balance from our bank account.
 
-Each of these top-up transactions is mapped to the Bank organisation on HCB: hcb.hackclub.com/bank. This is done based on the [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb)s memo meeting the following criteria:
+Each of these top-up transactions are mapped to the Bank organisation on HCB: hcb.hackclub.com/bank. This is done based on the [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb)s memo meeting the following criteria:
 
 ```sql
 memo ilike 'Hack Club Bank Issued car%' or memo ilike 'HCKCLB Issued car%' or memo ilike 'STRIPE Issued car%'
