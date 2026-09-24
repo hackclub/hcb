@@ -317,7 +317,7 @@ class AdminController < Admin::BaseController
       end
     end
 
-    # Auto mapp the transactions
+    # Auto map the transactions
     ::EventMappingEngine::Nightly.new.run
 
     duplicates = transactions.count - raw_intrafi_transactions.count
