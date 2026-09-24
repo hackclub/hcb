@@ -43,6 +43,17 @@ RSpec.describe Ledger::Query, type: :model do
     items.map(&:id)
   end
 
+  def count_queries
+    count = 0
+    subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+      count += 1 unless payload[:name].to_s.match?(/SCHEMA|TRANSACTION/)
+    end
+    yield
+    count
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber)
+  end
+
   describe "predicates" do
     context "numeric comparisons" do
       it "$gt generates greater than" do
@@ -688,6 +699,37 @@ RSpec.describe Ledger::Query, type: :model do
       result = execute_query({ amount_cents: 100 })
 
       expect(result.pluck(:id)).to include(item_b.id)
+    end
+  end
+
+  describe "preloading" do
+    # Every page that renders a ledger reads these per row, so the query loads
+    # them up front — otherwise a page's query count grows with its rows. Pages
+    # needing more (the API serializer wants canonical transactions and receipts)
+    # chain their own preloads on top.
+    it "loads what the ledger row renders, so touching it costs no further queries" do
+      # hcb_code is a has_one keyed on ledger_item_id, so point one at an item to
+      # exercise the nested event preload rather than a set of nils.
+      create(:hcb_code, ledger_item: item_c, event: test_event)
+
+      items = execute_query({}).to_a
+
+      queries = count_queries do
+        items.each do |item|
+          item.author
+          item.linked_object
+          item.tags.to_a
+          item.hcb_code&.event
+        end
+      end
+
+      expect(queries).to be_zero
+    end
+
+    it "costs nothing on a query that only aggregates" do
+      # preload values don't fire until records are materialized, so callers
+      # summing or counting don't pay for the row preloads.
+      expect(count_queries { execute_query({}).sum(:amount_cents) }).to eq(1)
     end
   end
 

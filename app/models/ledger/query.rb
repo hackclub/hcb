@@ -73,11 +73,18 @@ class Ledger
                                        .when(Ledger::Item.arel_table[:status].eq(Ledger::Item.statuses[:pending])).then(0)
                                        .else(1)
 
+      # Everything a ledger row renders: the item partial reads all of these per
+      # item, so preloading them here is what keeps a ledger page's query count
+      # flat in the number of rows. Callers that render something else (the API
+      # serializer wants canonical transactions and receipts) chain their own on
+      # top; callers that only aggregate pay nothing, since preloads don't fire
+      # until records are materialized.
+      #
       # preload, not includes: linked_object is polymorphic, so it can never be
       # JOINed — and includes makes pluck/count attempt exactly that join
       # (EagerLoadPolymorphicError).
       results.order(pending_first.asc, datetime: :desc, created_at: :desc, id: :desc)
-             .preload(:hcb_code, :author, :linked_object)
+             .preload(:author, :linked_object, :tags, hcb_code: :event)
     end
 
     def self.sanitize_query(query_hash)
