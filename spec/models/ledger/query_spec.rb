@@ -690,4 +690,32 @@ RSpec.describe Ledger::Query, type: :model do
       expect(result.pluck(:id)).to include(item_b.id)
     end
   end
+
+  describe "ordering" do
+    # Items are born pending, so settle the whole set first — these tests are
+    # about which items lead, and that only means something against a baseline
+    # of settled ones.
+    before { Ledger::Item.update_all(status: "settled") }
+
+    # Every page that renders a ledger executes a query to get this ordering, so
+    # it's the query's job rather than each page's.
+    it "sorts pending items first, then newest first" do
+      item_a.update_columns(status: "pending")
+      item_e.update_columns(status: "pending")
+
+      result = execute_query({})
+
+      # item_e (Feb 15) and item_a (Jan 1) lead despite being older than
+      # everything below them.
+      expect(result.pluck(:id)).to eq(ids_of(item_e, item_a, item_g, item_f, item_d, item_c, item_b))
+    end
+
+    it "keeps pending items first once a narrowing predicate is applied" do
+      item_b.update_columns(status: "pending")
+
+      result = execute_query({ amount_cents: { "$lte" => 150 } })
+
+      expect(result.pluck(:id)).to eq(ids_of(item_b, item_g, item_c, item_a))
+    end
+  end
 end
