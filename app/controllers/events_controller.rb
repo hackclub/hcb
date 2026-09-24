@@ -1502,7 +1502,8 @@ class EventsController < ApplicationController
           :cover_donation_fees,
           :contact_email,
           :generate_monthly_announcement,
-          :subevent_plan
+          :subevent_plan,
+          :subevent_name_prefix
         ]
       }
     ]
