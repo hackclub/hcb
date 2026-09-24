@@ -26,6 +26,11 @@ module ApplicationHelper
   include TurboStreamActionsHelper
   include UsersHelper
 
+  # Flash keys that aren't messages, and so are never rendered as one.
+  def renderable_flash
+    flash.to_h.except("confetti", "confetti_emojis", "popover")
+  end
+
   def upsert_query_params(**new_params)
     params = request.query_parameters || {}
     params.merge(new_params)
