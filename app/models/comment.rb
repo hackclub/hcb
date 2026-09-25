@@ -62,6 +62,8 @@ class Comment < ApplicationRecord
   tracked owner: proc{ |controller, record| controller&.current_user || record&.user }, event_id: proc { |controller, record| record.admin_only? ? nil : record.commentable.try(:event)&.id }, only: [:create, :update, :destroy]
 
   after_create_commit :send_notification_email
+  before_update :mark_file_change, if: :file_change?
+  after_update :record_file_change_in_version, if: :file_change?
 
   broadcasts_refreshes_to ->(comment) { [comment.commentable, :comments] } unless Rails.env.test?
 
@@ -119,6 +121,25 @@ class Comment < ApplicationRecord
 
   def send_notification_email
     CommentMailer.with(comment: self).notification.deliver_later
+  end
+
+  def file_change?
+    attachment_changes["file"].present?
+  end
+
+  # Trigger PaperTrail's usual `after_update` to write a version.
+  def mark_file_change
+    self.updated_at = Time.current
+  end
+
+  # store file changes as PaperTrail doesn't automatically do this
+  def record_file_change_in_version
+    return unless PaperTrail.enabled? && PaperTrail.request.enabled?
+
+    version = versions.last
+    return unless version&.event == "update"
+
+    version.update_columns(object_changes: (version.object_changes || {}).merge("file" => [true, true]))
   end
 
 end
