@@ -244,8 +244,8 @@ class MyController < ApplicationController
   end
 
   def feed
-    @event_follows = current_user.event_follows
-    @all_announcements = Announcement.published.where(event: @event_follows.map(&:event)).order(published_at: :desc, created_at: :desc)
+    @event_follows = current_user.event_follows.includes(event: { logo_attachment: :blob })
+    @all_announcements = Announcement.published.where(event_id: @event_follows.map(&:event_id)).order(published_at: :desc, created_at: :desc)
     @announcements = @all_announcements.page(params[:page]).per(10)
   end
 
