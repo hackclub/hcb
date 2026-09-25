@@ -2,23 +2,18 @@
   <div class="<%= "mb3" if defined?(include_spacing) %> h-100" style="position: relative;">
     <%= form_with model: false, url: card_grant_pre_authorizations_path, method: :patch, remote: true, class: "flex flex-col justify-center h-100", data: {
           turbo: defined?(turbo) ? turbo : "false",
-          controller: "file-drop form",
-          action: defined?(disabled) && disabled ? "" : "
+          controller: "file-drop form uploading",
+          "uploading-button-value" => "upload-screenshot-button",
+          action: "submit->uploading#start" + (defined?(disabled) && disabled ? "" : "
             dragover@window->file-drop#dragover
             drop@window->file-drop#drop
             dragenter@window->file-drop#dragenter
             dragleave@window->file-drop#dragleave
-          ",
+          "),
 
           "file-drop-title-value" => "Drop to add a screenshot.",
           "file-drop-global-paste-value" => "true"
-        }.compact, html: {
-          onsubmit: "
-            const button = $('#upload-screenshot-button', this);
-            $('span', button).text('Uploading...');
-            button.attr('disabled', 'disabled');
-          "
-        } do |form| %>
+        }.compact do |form| %>
 
       <div class="card h-100 flex flex-col<%= " pt0" if defined?(show_banner) && defined?(uploaded_files) && uploaded_files.any? %> justify-center px-8" id="upload_screenshot_form">
         <% if defined?(show_banner) %>
@@ -50,19 +45,10 @@
                                 "action"           => "change->form#submit"
                               } %>
           <span class="flex items-center justify-center flex-row flex-wrap" style="margin: -8px;">
-            <%= form.label :screenshot, class: "btn m1 #{"bg-success" if local_assigns[:success]} #{"bg-error" if local_assigns[:error]}", id: "upload-screenshot-button", disabled: false do %>
+            <%= form.label :screenshot, class: "btn m1 #{"bg-success" if local_assigns[:success]} #{"bg-error" if local_assigns[:error]}", id: "upload-screenshot-button", disabled: false, data: (local_assigns[:success] || local_assigns[:error] ? { controller: "reset-after", reset_after_text_value: "Upload screenshot", reset_after_status_class: "bg-success bg-error" } : {}) do %>
               <%= inline_icon "cloud-upload" %>
               <% if local_assigns[:success] || local_assigns[:error] %>
-                <span id="upload-screenshot-button-text"><%= local_assigns[:success] || local_assigns[:error] %></span>
-                <script>
-                  // JavaScript to revert changes after 2 seconds
-                  setTimeout(function() {
-                    if (document.getElementById("upload-screenshot-button") && document.getElementById("upload-screenshot-button-text")) {
-                      document.getElementById("upload-screenshot-button-text").innerHTML = 'Upload screenshot';
-                      document.getElementById("upload-screenshot-button").classList.remove("bg-success", "bg-error");
-                    }
-                  }, 2000);
-                </script>
+                <span id="upload-screenshot-button-text" data-reset-after-target="label"><%= local_assigns[:success] || local_assigns[:error] %></span>
               <% else %>
                 <span>Upload screenshot</span>
               <% end %>
