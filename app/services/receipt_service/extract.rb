@@ -70,6 +70,13 @@ module ReceiptService
 
       return if extracted.nil?
 
+      # the OpenAI request above can take a while; the receipt (or its file)
+      # may have been deleted in the meantime, e.g. the user removed it from
+      # the receipt bin. re-check freshness before persisting to avoid a
+      # RecordInvalid on the "file can't be blank" validation.
+      @receipt = Receipt.find_by(id: @receipt.id)
+      return if @receipt.nil? || !@receipt.file.attached?
+
       extracted[:textual_content] = @receipt.textual_content
 
       data = OpenStruct.new(extracted) # Protection against missing keys
