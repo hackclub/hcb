@@ -22,8 +22,8 @@ module UserService
       disallow_excessive_sms_verifications
 
       TwilioVerificationService.new.send_verification_request(@user.phone_number)
-    rescue TwilioVerificationService::CountryNotSupported
-      raise SMSEnrollmentError, "SMS verification is not available in your country. Please contact support at hcb@hackclub.com."
+    rescue TwilioVerificationService::DeliveryFailed => e
+      raise SMSEnrollmentError, "We couldn't send a verification code to your phone number: #{e.reason} (Twilio error #{e.code}). Please try a different phone number, or contact hcb@hackclub.com for further assistance."
     end
 
     # Completing the phone number verification by checking that exchanging code works
