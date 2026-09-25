@@ -15,7 +15,7 @@ module Maintenance
     SYSTEM_PAYOUTS = %i[payment_attempt reimbursement_payout_holding employee_payment].freeze
 
     def collection
-      Event.where(id: PaymentRecipient.unscoped.select(:event_id))
+      Event.unscope(:order).where(id: PaymentRecipient.unscoped.select(:event_id))
     end
 
     def process(event)
@@ -31,7 +31,6 @@ module Maintenance
 
     def recipients_by_email(event)
       event.payment_recipients
-           .reorder(nil)
            .reject { |recipient| recipient.email.blank? || system_generated?(recipient) }
            .group_by { |recipient| recipient.email.strip.downcase }
     end

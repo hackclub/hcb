@@ -40,6 +40,16 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
                                                     recipient_email: recipient.email, aasm_state:)
   end
 
+  it "runs from /maintenance_tasks, which can't iterate an ordered relation" do
+    ach_recipient(email: "orpheus@hackclub.com")
+
+    MaintenanceTasks::Runner.run(name: described_class.name)
+    perform_enqueued_jobs(only: MaintenanceTasks::TaskJob)
+
+    expect(MaintenanceTasks::Run.last).to be_succeeded
+    expect(event.payees.sole).to be_imported
+  end
+
   it "collapses every recipient sharing an email into one imported payee" do
     ach_recipient(email: "orpheus@hackclub.com", account_number: "111111111")
     ach_recipient(email: "orpheus@hackclub.com", account_number: "222222222")
@@ -98,9 +108,11 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
     expect(payee).not_to be_imported
   end
 
-  it "leaves behind details that can no longer make a usable payout method" do
+  it "leaves behind and logs details that can no longer make a usable payout method" do
     recipient = ach_recipient(email: "orpheus@hackclub.com")
     recipient.update!(routing_number: "12345")
+
+    expect(Rails.logger).to receive(:warn).with(/PaymentRecipient #{recipient.id} \(AchTransfer\) left behind/)
 
     run_task
 
@@ -150,10 +162,7 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
   end
 
   it "collapses recipients that repeat the same details into one payout method" do
-    # The old form saves a new recipient every time someone types details into
-    # it, and the payout system writes one behind every modern transfer too, so
-    # the same account recurs. Two identical methods are indistinguishable in
-    # the payee's picker.
+    # The old system saves a recipient per transfer, so the same account recurs.
     3.times { ach_recipient(email: "orpheus@hackclub.com", account_number: "123456789") }
 
     run_task
@@ -183,15 +192,6 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
     payee = event.payees.sole
     expect(payee.display_name).to eq("orpheus@hackclub.com")
     expect(payee.legal_entity.name).to eq("orpheus@hackclub.com")
-  end
-
-  it "logs what it left behind, since the payee gives no sign a method went missing" do
-    recipient = ach_recipient(email: "orpheus@hackclub.com")
-    recipient.update!(routing_number: "12345")
-
-    expect(Rails.logger).to receive(:warn).with(/PaymentRecipient #{recipient.id} \(AchTransfer\) left behind/)
-
-    run_task
   end
 
   it "skips a recipient written behind a contractor payment, so an org can't take over the contractor's bank account" do
