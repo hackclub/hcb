@@ -88,6 +88,47 @@ module Reimbursement
       end
     end
 
+    def fit_fees
+      authorize @expense
+
+      report = @expense.report
+      unless report.capped_wise_transfer?
+        return render json: { error: "Fit fees is only available for capped Wise reimbursement reports." }, status: :unprocessable_content
+      end
+
+      fitted_quote = begin
+        WiseTransfer.fit_quote_to_maximum(report.maximum_amount, report.currency)
+      rescue => error
+        Rails.error.report(error)
+        return render json: { error: "Wise could not provide a fee estimate. Please try again later." }, status: :service_unavailable
+      end
+      unless fitted_quote
+        return render json: { error: "Wise could not find a reimbursable amount within this report's cap." }, status: :unprocessable_content
+      end
+
+      other_expenses_cents = report.expenses.to_sum.where.not(id: @expense.id).sum(:amount_cents)
+      fitted_expense_cents = fitted_quote[:initial_local_amount].cents - other_expenses_cents
+      if fitted_expense_cents <= 0
+        return render json: { error: "The other expenses already consume the amount available under this report's cap." }, status: :unprocessable_content
+      end
+
+      current_value = BigDecimal(params.require(:value).to_s)
+      current_amount_cents = (@expense.rate * current_value).round
+      if current_amount_cents <= fitted_expense_cents
+        return render json: { error: "This report already fits within its cap, including estimated Wise fees." }, status: :unprocessable_content
+      end
+
+      fitted_value = BigDecimal(fitted_expense_cents.to_s) / @expense.rate
+      render json: {
+        maximum_value: fitted_value.to_s("F"),
+        estimated_fee_cents: fitted_quote[:fees_usd_amount].cents,
+        estimated_total_cents: fitted_quote[:with_fees_usd_amount].cents,
+        message: "Estimated total: #{fitted_quote[:with_fees_usd_amount].format} USD, including #{fitted_quote[:fees_usd_amount].format} in Wise fees."
+      }
+    rescue ActionController::ParameterMissing, ArgumentError
+      render json: { error: "Enter a valid expense amount before fitting fees." }, status: :unprocessable_content
+    end
+
     def destroy
       authorize @expense
 

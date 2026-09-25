@@ -93,4 +93,76 @@ RSpec.describe WiseTransfer do
       expect(instance.wise_recipient_id).to eq("3e219880-5f3e-4230-8a5a-9c8c25af26bb")
     end
   end
+
+  describe ".fit_quote_to_maximum" do
+    let(:maximum) { Money.from_cents(1_000, "USD") }
+
+    def source_amount_quote(rate: 0.8)
+      items = [
+        { "type" => "PAYIN", "value" => { "amount" => 0.50 } },
+        { "type" => "TRANSFERWISE", "value" => { "amount" => 0.50 } }
+      ]
+
+      instance_double(Faraday::Response, body: {
+                        "rate"           => rate,
+                        "paymentOptions" => [{ "price" => { "items" => items } }]
+                      })
+    end
+
+    it "fits the target amount with a single source-amount quote" do
+      connection = instance_double(Faraday::Connection)
+      allow(connection).to receive(:post).and_return(source_amount_quote)
+      allow(described_class).to receive(:quote_connection).and_return(connection)
+
+      result = described_class.fit_quote_to_maximum(maximum, "GBP")
+
+      expect(result[:initial_local_amount]).to eq(Money.from_cents(756, "GBP"))
+      expect(result[:with_fees_usd_amount]).to eq(maximum)
+      expect(connection).to have_received(:post).once.with(
+        "/v3/quotes",
+        { sourceCurrency: "USD", targetCurrency: "GBP", sourceAmount: 10 }
+      )
+    end
+
+    it "rounds down in the target currency's smallest units" do
+      connection = instance_double(Faraday::Connection)
+      allow(connection).to receive(:post).and_return(source_amount_quote(rate: 1))
+      allow(described_class).to receive(:quote_connection).and_return(connection)
+
+      result = described_class.fit_quote_to_maximum(maximum, "KWD")
+
+      expect(result[:initial_local_amount].cents).to eq(9_460)
+      expect(result[:initial_local_amount].amount).to eq(BigDecimal("9.46"))
+    end
+
+    it "propagates Wise quote failures" do
+      allow(described_class).to receive(:generate_source_amount_quote).and_raise(Faraday::ConnectionFailed, "unavailable")
+
+      expect { described_class.fit_quote_to_maximum(maximum, "GBP") }
+        .to raise_error(Faraday::ConnectionFailed)
+    end
+  end
+
+  describe ".generate_detailed_quote" do
+    it "rounds the ACH-adjusted fee-inclusive amount to USD cents" do
+      response = instance_double(Faraday::Response, body: {
+                                   "paymentOptions" => [{
+                                     "sourceAmount" => 100,
+                                     "price"        => { "items" => [
+                                       { "type" => "PAYIN", "value" => { "amount" => 1 } },
+                                       { "type" => "TRANSFER", "value" => { "amount" => 2 } }
+                                     ]
+}
+                                   }]
+                                 })
+      connection = instance_double(Faraday::Connection)
+      allow(connection).to receive(:post).and_return(response)
+      allow(described_class).to receive(:quote_connection).and_return(connection)
+
+      result = described_class.generate_detailed_quote(Money.from_amount(80, "GBP"))
+
+      expect(result[:with_fees_usd_amount]).to eq(Money.from_amount(99.17, "USD"))
+      expect(result[:fees_usd_amount]).to eq(Money.from_amount(2.17, "USD"))
+    end
+  end
 end
