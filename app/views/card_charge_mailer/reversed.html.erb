@@ -1,0 +1,49 @@
+<p>
+  Your <%= link_to "#{render_money @ledger_item.amount_cents.abs} charge", ledger_item_url(@ledger_item) %> on <%= @ledger_item.datetime.strftime("%B #{@ledger_item.datetime.day.ordinalize}") %> was reversed by <strong><%= @merchant_name %></strong>. Your balance has been updated to reflect this reversal.
+</p>
+
+<h3 class="mb-2">Wasn't expecting this reversal?</h3>
+<p class="my-0">
+  Merchants like <strong><%= @merchant_name %></strong> often reverse charges when an order is canceled or a refund is requested. Another common cause is their fraud detection flagging the purchase, often because your billing information doesn't match what's on file.
+  <br><br>
+  Reversals can also happen for other reasons at the merchant's sole discretion. To find out why this charge was reversed, we recommend reaching out to <%= @merchant_name %> directly.
+</p>
+
+<% if @failed_verification_checks.present? %>
+  <h3 class="mb-2">What went wrong</h3>
+  <p class="my-0">
+    <% if @failed_verification_checks.include?("address_postal_code_check") %>
+      We noticed that the zip code used at <%= @merchant_name %> didn't match the billing zip code on your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %> (<%= @card_charge.stripe_cardholder.address_postal_code %>). Please try again using that zip code.
+    <% end %>
+    <% if @failed_verification_checks.include?("address_line1_check") %>
+      We noticed that the billing address used at <%= @merchant_name %> didn't match the billing address on your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please try again using your HCB billing address.
+    <% end %>
+    <% if @failed_verification_checks.include?("cvc_check") %>
+      We noticed that the CVC used at <%= @merchant_name %> didn't match your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please try again with the correct CVC.
+    <% end %>
+  </p>
+
+  <% other_reasons = [] %>
+  <% other_reasons << "Your zip code doesn't match the billing zip code on file" unless @failed_verification_checks.include?("address_postal_code_check") %>
+  <% other_reasons << "Your CVC doesn't match the one on file" unless @failed_verification_checks.include?("cvc_check") %>
+  <% other_reasons << "Your organization doesn't have enough balance to cover the purchase" %>
+  <% other_reasons << "You've hit a spending limit set by your organization manager" %>
+
+  <% if other_reasons.present? %>
+    <p class="my-0">
+      A few other common reasons cards get declined or reversed:
+    </p>
+    <ul class="my-0">
+      <% other_reasons.each do |reason| %>
+        <li><%= reason %></li>
+      <% end %>
+    </ul>
+  <% end %>
+  <p class="my-0">
+    Is your reason not listed? There's more at <%= link_to "our help center", "https://help.hcb.hackclub.com/en/articles/15409721-my-card-was-declined-what-should-i-do" %>.
+  </p>
+<% end %>
+
+<p>
+  <%= link_to "Click here to view this transaction.", ledger_item_url(@ledger_item) %>
+</p>
