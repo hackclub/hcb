@@ -149,10 +149,10 @@
 
     <%= button_to "Discard last tax form", discard_tax_form_path(mismatched), class: "btn" %>
   </div>
-<% elsif @legal_entity.latest_completed_tax_form&.taxbandits_tin_match_failed? %>
+<% elsif @legal_entity.latest_completed_tax_form&.tin_match_failed? %>
   <p>
     Your submission for <%= @legal_entity.person? ? "your" : "#{@legal_entity.name.presence || "Business"}'s" %>
-    tax information is invalid.
+    tax information couldn't be verified.
   </p>
 
   <%= button_to "Start tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>

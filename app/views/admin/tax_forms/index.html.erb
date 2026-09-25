@@ -37,7 +37,7 @@
       <tr>
         <td><%= form.created_at.strftime("%Y-%m-%d") %></td>
         <td><code><%= form.hashid %></code></td>
-        <td><%= link_to form.legal_entity.name || form.legal_entity.display_name, legal_entity_path(form.legal_entity) %></td>
+        <td><%= form.legal_entity ? link_to(form.legal_entity.name || form.legal_entity.display_name, legal_entity_path(form.legal_entity)) : form.import_email %></td>
         <td><%= form.form_type || "—" %></td>
         <td><%= form.external_service.humanize %></td>
         <td><%= form.aasm_state.humanize %></td>

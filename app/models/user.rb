@@ -209,6 +209,8 @@ class User < ApplicationRecord
 
   after_update :update_stripe_cardholder, if: -> { phone_number_previously_changed? || email_previously_changed? || phone_number_verified_previously_changed? }
   after_create :create_legal_entity
+  # Picks up any tax forms imported from Tax1099 under this email.
+  after_create_commit { safely { Tax::Form.claim_for!(self) } }
 
   after_update :sign_out_unverified_sessions, if: -> { verified_previously_changed? && verified? }
 

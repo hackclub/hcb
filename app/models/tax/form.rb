@@ -18,6 +18,8 @@
 #  external_service               :string           not null
 #  failed_at                      :datetime
 #  form_type                      :string
+#  import_email                   :string
+#  import_name                    :string
 #  sent_at                        :datetime
 #  signing_url                    :string
 #  taxbandits_status              :string
@@ -27,7 +29,7 @@
 #  created_at                     :datetime         not null
 #  updated_at                     :datetime         not null
 #  external_id                    :string
-#  legal_entity_id                :bigint           not null
+#  legal_entity_id                :bigint
 #
 # Indexes
 #
@@ -46,7 +48,7 @@ module Tax
     acts_as_paranoid
     has_paper_trail
 
-    belongs_to :legal_entity
+    belongs_to :legal_entity, optional: true
 
     enum :form_type, { W8BEN: "W8BEN", W9: "W9", W8BENE: "W8BENE", W8ECI: "W8ECI", W8IMY: "W8IMY", W8EXP: "W8EXP" }
     enum :external_service, { manual: "manual", taxbandits: "taxbandits" }, prefix: :sent_with
@@ -76,6 +78,9 @@ module Tax
 
     scope :not_discarded, -> { where.not(aasm_state: :discarded) }
 
+    normalizes :import_email, with: ->(email) { email.strip.downcase }
+
+    validates :legal_entity, presence: true, unless: :unclaimed?
     validate :tin_hash_cannot_change, on: :update
 
     after_update if: -> {
@@ -89,7 +94,7 @@ module Tax
       legal_entity.refresh_pending_contractors_payments!
     end
 
-    after_update if: -> { tin_hash_previously_changed?(from: nil) } do
+    after_save if: -> { completed? && legal_entity && tin_hash && (tin_hash_previously_changed?(from: nil) || legal_entity_id_previously_changed?(from: nil)) } do
       # Locked: a legal entity's TIN can never change once set, and two forms
       # completing concurrently would otherwise both see a nil hash and race.
       #
@@ -112,6 +117,7 @@ module Tax
       state :completed
       state :failed # Failed to create document / send email
       state :discarded
+      state :unclaimed # Imported with no legal entity of its filer's to claim it yet
 
       event :mark_sent do
         transitions from: :pending, to: :sent
@@ -223,6 +229,56 @@ module Tax
       queries = CGI.parse(url.query)
 
       queries["whid"].first
+    end
+
+    # Nothing re-checks a manual form's TIN, so one that didn't match when it was
+    # imported needs replacing, just like a TIN TaxBandits rejected.
+    def tin_match_failed?
+      taxbandits_tin_match_failed? || (sent_with_manual? && !taxbandits_tin_match_success?)
+    end
+
+    # An imported form's filer turns out to own this legal entity. A parked form
+    # moves onto it; a claimed one is copied, since one filer can be many payees.
+    def claim!(legal_entity)
+      claimed = legal_entity.tax_forms.find_by(import_email:, tin_hash:, form_type:)
+      return claimed if claimed
+      return unless claimable_by?(legal_entity)
+
+      # Written directly, as an event would stamp completed_at with now: the form was
+      # signed long ago, and mustn't outrank anything the entity has since completed.
+      form = unclaimed? ? self : dup
+      form.update!(legal_entity:, aasm_state: :completed, completed_at: [completed_at, legal_entity.latest_completed_tax_form&.completed_at&.-(1.second)].compact.min)
+      form
+    end
+
+    def claimable_by?(legal_entity)
+      !legal_entity.archived? && legal_entity.entity_type.in?([nil, entity_type]) && legal_entity.tin_hash.in?([nil, tin_hash])
+    end
+
+    # One form per filing imported under an email, newest first, preferring a parked
+    # form so that claiming moves it rather than leaving it behind.
+    def self.imported_for(email)
+      not_discarded.where(import_email: email).order(completed_at: :desc)
+                   .group_by { |form| [form.tin_hash, form.form_type] }
+                   .map { |_filing, forms| forms.find(&:unclaimed?) || forms.first }
+    end
+
+    # An individual's form goes to their personal legal entity; a business's to the one
+    # with its TIN, or a new one if they have no business yet. Returns what's left over.
+    def self.claim_for!(user)
+      businesses = user.legal_entities.not_archived.where.not(entity_type: :person)
+
+      imported_for(user.email).reject do |form|
+        legal_entity = if form.entity_person?
+                         user.legal_entities.person.not_archived.first
+                       elsif form.tin_hash && businesses.exists?(tin_hash: form.tin_hash)
+                         businesses.find_by(tin_hash: form.tin_hash)
+                       elsif businesses.none? && form.import_name.present?
+                         user.legal_entities.create!(entity_type: form.entity_type, name: form.import_name)
+                       end
+
+        legal_entity && form.claim!(legal_entity)
+      end
     end
 
     private

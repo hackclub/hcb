@@ -3,7 +3,7 @@
 module Tax
   class FormPolicy < ApplicationPolicy
     def show?
-      user.auditor? || user_in_legal_entity?(record.legal_entity)
+      record.legal_entity.present? && (user.auditor? || user_in_legal_entity?(record.legal_entity))
     end
 
     def create?
@@ -11,7 +11,7 @@ module Tax
     end
 
     def completed?
-      user.admin? || user_in_legal_entity?(record.legal_entity)
+      record.legal_entity.present? && (user.admin? || user_in_legal_entity?(record.legal_entity))
     end
 
     def create_legal_entity?
@@ -28,8 +28,9 @@ module Tax
 
     private
 
+    # An unclaimed form has no legal entity, so nobody's in it.
     def user_in_legal_entity?(le)
-      le.emails.include?(user.email)
+      le.present? && le.emails.include?(user.email)
     end
 
   end

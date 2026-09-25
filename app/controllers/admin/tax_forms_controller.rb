@@ -10,7 +10,7 @@ module Admin
 
       @q = params[:q].presence
       if @q
-        relation = relation.left_joins(legal_entity: :users).where("legal_entities.name ILIKE :q OR users.full_name ILIKE :q OR users.email ILIKE :q", q: "%#{Tax::Form.sanitize_sql_like(@q)}%").distinct
+        relation = relation.left_joins(legal_entity: :users).where("legal_entities.name ILIKE :q OR users.full_name ILIKE :q OR users.email ILIKE :q OR tax_forms.import_email ILIKE :q", q: "%#{Tax::Form.sanitize_sql_like(@q)}%").distinct
       end
 
       @state = params[:state].presence

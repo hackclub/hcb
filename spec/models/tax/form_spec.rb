@@ -172,6 +172,13 @@ RSpec.describe Tax::Form, type: :model do
 
       expect(form.masked_tin).to be_nil
     end
+
+    # Nothing will ever match a manual form's TIN later, but TaxBandits may still be
+    # matching its own, so only the manual one sends its payee back to a new form.
+    it "counts an unmatched TIN as failed, unlike a TaxBandits form still being matched" do
+      expect(form).to be_tin_match_failed
+      expect(create(:tax_form, :completed, legal_entity:, taxbandits_tin_matching_status: :order_created)).not_to be_tin_match_failed
+    end
   end
 
   describe "#masked_tin" do
