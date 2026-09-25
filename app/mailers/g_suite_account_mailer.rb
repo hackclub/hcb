@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class GSuiteAccountMailer < ApplicationMailer
+  # Everything here but `verify` mails a Google Workspace password. Listed as an
+  # exclusion so a new action added to this mailer defaults to restricted.
+  has_sensitive_contents except: [:verify]
+
   def verify
     @recipient = params[:recipient]
 
