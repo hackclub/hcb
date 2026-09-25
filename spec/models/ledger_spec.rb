@@ -358,23 +358,12 @@ RSpec.describe Ledger, type: :model do
       expect(ledger.revenue_cents - ledger.expenses_cents).to eq(ledger.available_balance_cents)
     end
 
-    it "filters revenue and expenses by datetime when given a date range" do
+    it "filters revenue by datetime when given a date range" do
       add_item(1000)
-      add_item(-400)
 
       expect(ledger.revenue_cents(start_date: Date.current.beginning_of_day)).to eq(1000)
       expect(ledger.revenue_cents(start_date: Date.tomorrow.beginning_of_day)).to eq(0)
       expect(ledger.revenue_cents(end_date: Date.yesterday.end_of_day)).to eq(0)
-      expect(ledger.expenses_cents(start_date: Date.current.beginning_of_day)).to eq(400)
-      expect(ledger.expenses_cents(end_date: Date.yesterday.end_of_day)).to eq(0)
-    end
-
-    it "only counts the pending fiscal sponsorship fee when the range runs to the present" do
-      add_item(-500)
-      allow(ledger).to receive(:fronted_fee_balance_cents).and_return(700)
-
-      expect(ledger.expenses_cents(start_date: Date.current.beginning_of_day)).to eq(1200)
-      expect(ledger.expenses_cents(end_date: Date.current.end_of_day)).to eq(500)
     end
 
     it "ignores items on another ledger" do

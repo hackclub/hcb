@@ -60,14 +60,8 @@ class Ledger < ApplicationRecord
   # that hasn't happened yet — the same amount the ledger renders as a pending
   # "Fiscal sponsorship" row, and the same amount available_balance_cents holds
   # back, which keeps revenue - expenses == available balance. A negative fee
-  # balance is a fee credit, not an expense, hence the floor at zero. That fee
-  # is what's pending right now, so it's only counted when the range runs up to
-  # the present (no end_date).
-  monetize def expenses_cents(start_date: nil, end_date: nil)
-    expenses = query_items(start_date:, end_date:, amount: { "$lt": 0 }).sum(:amount_cents).abs
-    expenses += [fronted_fee_balance_cents, 0].max if end_date.nil?
-    expenses
-  end
+  # balance is a fee credit, not an expense, hence the floor at zero.
+  monetize def expenses_cents = query_items(amount: { "$lt": 0 }).sum(:amount_cents).abs + [fronted_fee_balance_cents, 0].max
 
   # A negative fee balance is a fee credit. Credits are not spendable, so
   # they never add to the available balance.
