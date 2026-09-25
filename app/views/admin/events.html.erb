@@ -64,7 +64,8 @@
       <th>Name</th>
       <th>Balance</th>
       <th>Raised</th>
-      <th>Fee</th>
+      <th>Raised (YTD)</th>
+      <th>Raised (Last Year)</th>
       <th>Country</th>
       <th>Status</th>
       <th>Active teenagers</th>
@@ -100,7 +101,14 @@
           <% end %>
         </td>
         <td>
-          <%= render_percentage event.revenue_fee %>
+          <%= turbo_frame_tag :raised_ytd, src: event_raised_admin_path(event, period: "ytd"), loading: "lazy" do %>
+            <em>$ –</em>
+          <% end %>
+        </td>
+        <td>
+          <%= turbo_frame_tag :raised_last_year, src: event_raised_admin_path(event, period: "last_year"), loading: "lazy" do %>
+            <em>$ –</em>
+          <% end %>
         </td>
         <td>
           <%= event.country %>

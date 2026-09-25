@@ -147,7 +147,19 @@ class AdminController < Admin::BaseController
   end
 
   def event_raised
-    @raised = cache_event_metric(:raised) { @event.total_raised.to_i }
+    @frame_id = :raised
+
+    @raised = case params[:period]
+              when "ytd"
+                @frame_id = :raised_ytd
+                cache_event_metric(:raised_ytd) { @event.raised_ytd_cents }
+              when "last_year"
+                @frame_id = :raised_last_year
+                cache_event_metric(:raised_last_year) { @event.raised_last_year_cents }
+              else
+                cache_event_metric(:raised) { @event.total_raised.to_i }
+              end
+
     render :event_raised, layout: false
   end
 
