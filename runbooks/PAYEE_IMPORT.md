@@ -23,14 +23,15 @@ To run it, open `/maintenance_tasks`, pick the task, and run it.
   duplicating anything or overwriting details their owner has since entered.
 - `payment_recipients` is not only the old address book: `HasPaymentRecipient`
   writes a row behind *every* ACH transfer, check, and wire, including the ones
-  the modern payout system, reimbursements, and payroll create. So the import
-  sees the same account many times over, and collapses repeats into one payout
-  method. Rows belonging to an existing payee are skipped by the rule above.
+  contractor payments, reimbursements, and payroll create. Rows behind those
+  (a transfer with a `payment_attempt`, `reimbursement_payout_holding`, or
+  `employee_payment`) are skipped. The old form also saves a new row each time
+  details are typed in, so repeats collapse into one payout method.
 - Recipients whose saved details can no longer make a valid payout method (a
   malformed routing number, a state stored as "California" rather than "CA", a
   wire missing a field today's validations require) are left behind; the payee
   is still created, just without that method. Each one is logged with
-  `[ImportPaymentRecipientPayees]` and the recipient id — grep the run's logs
+  `[ImportPaymentRecipientPayees]` and the recipient id. Grep the run's logs
   afterwards, because nothing about the payee itself says a method went missing.
 - Validating a wire calls Column (`/institutions/:bic_code`) to find out what
   country the bank is in, so wire recipients cost a handful of API calls each,

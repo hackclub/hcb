@@ -22,6 +22,11 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
                                address_postal_code: "SW1A 1AA", recipient_country: "GB", **attrs)
   end
 
+  def check_recipient(address_line1: "8605 Santa Monica Blvd")
+    create(:payment_recipient, event:, email: "orpheus@hackclub.com", name: "Orpheus", payment_model: "IncreaseCheck",
+                               address_line1:, address_city: "West Hollywood", address_state: "CA", address_zip: "90069")
+  end
+
   # Validating a wire asks Column which country the bank is in, so the import
   # can't run without an answer.
   def stub_column_institution(country_code:)
@@ -115,9 +120,7 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
   end
 
   it "copies a check recipient's address across as a check payout method" do
-    create(:payment_recipient, event:, email: "orpheus@hackclub.com", name: "Orpheus", payment_model: "IncreaseCheck",
-                               address_line1: "8605 Santa Monica Blvd", address_city: "West Hollywood",
-                               address_state: "CA", address_zip: "90069")
+    check_recipient
 
     run_task
 
@@ -189,5 +192,64 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
     expect(Rails.logger).to receive(:warn).with(/PaymentRecipient #{recipient.id} \(AchTransfer\) left behind/)
 
     run_task
+  end
+
+  it "skips a recipient written behind a contractor payment, so an org can't take over the contractor's bank account" do
+    # Renaming a payee's email leaves the recipient behind their past payments matching no payee.
+    recipient = ach_recipient(email: "old-address@hackclub.com")
+    create(:payment_attempt, payout: transfer_to(recipient, aasm_state: "deposited"))
+
+    expect { run_task }.not_to change(Payee, :count)
+  end
+
+  it "leaves an archived payee's email alone rather than bringing them back" do
+    create(:payee, event:, email: "orpheus@hackclub.com", archived_at: Time.current)
+    ach_recipient(email: "orpheus@hackclub.com")
+
+    expect { run_task }.not_to change(Payee, :count)
+  end
+
+  it "doesn't count a stopped check as money that went out" do
+    stopped = check_recipient(address_line1: "1 Stopped St")
+    IncreaseCheck.insert!({ event_id: event.id, payment_recipient_id: stopped.id, aasm_state: "approved", column_status: "stopped" })
+    travel_to(1.day.from_now) { check_recipient(address_line1: "2 Newer St") }
+
+    run_task
+
+    expect(event.payees.sole.legal_entity.default_payout_method.details.address_line1).to eq("2 Newer St")
+  end
+
+  it "hands the default to the next method when the one money last went out on can't be rebuilt" do
+    paid = ach_recipient(email: "orpheus@hackclub.com", account_number: "111111111")
+    transfer_to(paid, aasm_state: "deposited")
+    paid.update!(routing_number: "12345")
+    ach_recipient(email: "orpheus@hackclub.com", account_number: "222222222")
+
+    run_task
+
+    payout_methods = event.payees.sole.legal_entity.payout_methods
+    expect(payout_methods.sole.details.account_number).to eq("222222222")
+    expect(payout_methods.sole).to be_default
+  end
+
+  it "groups emails saved before they were normalized with their lowercase twins" do
+    ach_recipient(email: "orpheus@hackclub.com", account_number: "111111111")
+    legacy = ach_recipient(email: "orpheus@hackclub.com", account_number: "222222222")
+    PaymentRecipient.unscoped.where(id: legacy.id).update_all(email: " Orpheus@HackClub.com ")
+
+    run_task
+
+    expect(event.payees.sole.legal_entity.payout_methods.count).to eq(2)
+  end
+
+  it "keeps the payee when a payout method hits a database error" do
+    ach_recipient(email: "orpheus@hackclub.com")
+    allow_any_instance_of(LegalEntity::PayoutMethodService::Update).to receive(:run) do
+      ActiveRecord::Base.connection.execute("SELECT 1/0")
+    end
+
+    run_task
+
+    expect(event.payees.sole.legal_entity.payout_methods).to be_empty
   end
 end
