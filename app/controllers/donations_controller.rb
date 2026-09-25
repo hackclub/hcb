@@ -36,7 +36,10 @@ class DonationsController < ApplicationController
     p.fullscreen :self
   end
 
-  invisible_captcha only: [:make_donation], honeypot: :subtitle, on_timestamp_spam: :redirect_to_404
+  # Opted out of the timestamp check: this form has not been checked for
+  # multi-step flows that would consume the session token. See
+  # config/initializers/invisible_captcha.rb.
+  invisible_captcha only: [:make_donation], honeypot: :subtitle, on_timestamp_spam: :redirect_to_404, timestamp_enabled: false
 
   # Saving a Donation mints a Stripe PaymentIntent, which is what card testers
   # are after: script this form and you get a fresh intent to burn stolen card
