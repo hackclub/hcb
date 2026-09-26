@@ -664,6 +664,7 @@ Rails.application.routes.draw do
   resources :payments, only: [:show], concerns: :commentable do
     member do
       post "cancel"
+      post "retry"
     end
   end
 
