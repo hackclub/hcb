@@ -69,6 +69,14 @@ module Reimbursement
       admin && !record.event.financially_frozen?
     end
 
+    def set_reviewer?
+      admin || manager
+    end
+
+    def set_maximum_amount?
+      (admin || manager) && (record.draft? || record.submitted?)
+    end
+
     def request_changes?
       (admin || manager) && open
     end
