@@ -1,6 +1,7 @@
 <% renderable_amount_cents = @hcb_code.stripe_atm_fee ? @hcb_code.amount_cents.abs - @hcb_code.stripe_atm_fee : @hcb_code.amount_cents.abs %>
 
 <% instance = @hcb_code.hashid %>
+<% amount_breakdown = @hcb_code.stripe_amount_breakdown %>
 
 <% admin_tool("mt1") do %>
   <%= link_to "View on Stripe", @hcb_code.stripe_card? ? @hcb_code.stripe_auth_dashboard_url : @hcb_code.stripe_txn_dashboard_url, class: "btn bg-accent" %>
@@ -192,6 +193,9 @@
         <span><strong>Sign in to view</strong></span>
       <% end %>
     </div>
+    <% if @hcb_code.card.user == current_user || organizer_signed_in? %>
+      <%= render "card_charges/amount_breakdown", breakdown: amount_breakdown, modal_id: "amount_breakdown_#{instance}" %>
+    <% end %>
     <% if @hcb_code.pt.present? %>
       <div>
         <span style="height: 100%;">
@@ -278,6 +282,8 @@
 
 <% unless defined?(@frame) && @frame %>
   <% if @hcb_code.card.user == current_user || organizer_signed_in? %>
+    <%= render "card_charges/amount_breakdown_modal", breakdown: amount_breakdown, modal_id: "amount_breakdown_#{instance}" %>
+
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="merchant_details_<%= instance %>">
       <%= modal_header "Merchant details" %>
 
