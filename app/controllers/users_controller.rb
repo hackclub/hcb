@@ -32,7 +32,7 @@ class UsersController < ApplicationController
                                                :start_sms_auth_verification]
   before_action :set_shown_private_feature_previews, only: [:edit, :edit_featurepreviews, :edit_security, :edit_admin]
   before_action :set_user, only: [
-    :show, :edit, :edit_address, :edit_payout, :edit_featurepreviews,
+    :show, :edit, :edit_address, :edit_payout, :edit_tax, :edit_featurepreviews,
     :edit_security, :edit_notifications, :edit_integrations,
     :generate_totp, :enable_totp, :disable_totp,
     :generate_backup_codes, :activate_backup_codes, :disable_backup_codes,
@@ -42,6 +42,7 @@ class UsersController < ApplicationController
     :admin_details_reimbursement_reports, :admin_details_stripe_cards, :admin_details_stripe_transactions,
     :suppress_card_locking, :reset_billing_address
   ]
+  before_action :set_legal_entity, only: [:edit_payout, :edit_tax]
   wrap_parameters format: :url_encoded_form
 
   def show
@@ -171,10 +172,12 @@ class UsersController < ApplicationController
 
   def edit_payout
     authorize @user
+  end
 
-    @legal_entities = @user.legal_entities
-    @legal_entity = @legal_entities.find_by(id: params[:legal_entity_id] || session[:legal_entity_id]) || @user.personal_legal_entity
-    session[:legal_entity_id] = @legal_entity.id
+  def edit_tax
+    authorize @user
+
+    @completed_tax_form = @legal_entity.latest_completed_tax_form
   end
 
   def edit_featurepreviews
@@ -553,6 +556,12 @@ class UsersController < ApplicationController
 
   def set_user
     @user = params[:id] ? User.friendly.find(params[:id]) : current_user
+  end
+
+  def set_legal_entity
+    @legal_entities = @user.legal_entities
+    @legal_entity = @legal_entities.find_by(id: params[:legal_entity_id] || session[:legal_entity_id]) || @user.personal_legal_entity
+    session[:legal_entity_id] = @legal_entity.id
   end
 
   def set_shown_private_feature_previews
