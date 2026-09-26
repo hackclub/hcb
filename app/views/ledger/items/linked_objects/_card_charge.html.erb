@@ -3,6 +3,7 @@
 <% card_charge = ledger_item.linked_object %>
 
 <% instance = ledger_item.hashid %>
+<% amount_breakdown = card_charge.amount_breakdown %>
 
 <% renderable_amount_cents = card_charge.stripe_atm_fee ? ledger_item.amount_cents.abs - card_charge.stripe_atm_fee : ledger_item.amount_cents.abs %>
 
@@ -177,6 +178,9 @@
         <span><strong>Sign in to view</strong></span>
       <% end %>
     </div>
+    <% if ledger_item.author == current_user || organizer_signed_in? %>
+      <%= render "card_charges/amount_breakdown", breakdown: amount_breakdown, modal_id: "amount_breakdown_#{instance}" %>
+    <% end %>
     <% if ledger_item.cpt_count > 0 %>
       <div>
         <span style="height: 100%;">
@@ -262,6 +266,8 @@
 
 <% unless defined?(@frame) && @frame %>
   <% if ledger_item.author == current_user || organizer_signed_in? %>
+    <%= render "card_charges/amount_breakdown_modal", breakdown: amount_breakdown, modal_id: "amount_breakdown_#{instance}" %>
+
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="merchant_details_<%= instance %>">
       <%= modal_header "Merchant details" %>
 
