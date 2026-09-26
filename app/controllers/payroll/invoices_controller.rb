@@ -11,6 +11,7 @@ module Payroll
     def new
       @invoice = @position.invoices.build
       authorize @invoice
+      @on_behalf = policy(@invoice).on_behalf?
       render layout: false
     end
 
@@ -22,11 +23,12 @@ module Payroll
         amount_cents: Monetize.parse(invoice_params[:amount], @position.currency).cents
       )
       authorize @invoice
+      @on_behalf = policy(@invoice).on_behalf?
 
       attachments = Array(invoice_params[:file]).compact_blank
       if attachments.empty?
         flash.now[:error] = "Please attach an invoice or supporting document."
-        return render :new, layout: false, status: :unprocessable_content
+        return render_form_error
       end
 
       ActiveRecord::Base.transaction do
@@ -37,43 +39,36 @@ module Payroll
           upload_method: :contractor_invoice,
           receiptable: @invoice
         ).run!
+
+        if @on_behalf && !@invoice.approve(reviewed_by: current_user)
+          @invoice.errors.add(:base, insufficient_balance_message(@position.event))
+          raise ActiveRecord::RecordInvalid.new(@invoice)
+        end
       end
 
-      flash[:success] = "Invoice submitted for review."
-      redirect_to my_pay_path
+      if @on_behalf
+        flash[:success] = "Invoice approved for #{@position.payee.display_name}! Payment will be sent after HCB review."
+        redirect_to contractor_page
+      else
+        flash[:success] = "Invoice submitted for review."
+        redirect_to my_pay_path
+      end
     rescue ActiveRecord::RecordInvalid => e
-      flash.now[:error] = e.message
-      render :new, layout: false, status: :unprocessable_content
+      flash.now[:error] = e.record.errors.full_messages.to_sentence
+      render_form_error
     end
 
     def approve
       authorize @invoice
 
-      unless @invoice.submitted?
+      if @invoice.approve(reviewed_by: current_user)
+        flash[:success] = "Invoice approved! #{helpers.possessive(@invoice.payroll_position.payee.display_name)} payment will be sent after HCB review."
+      elsif !@invoice.submitted?
         flash[:error] = "This invoice has already been reviewed."
-        return redirect_to contractor_page
+      else
+        flash[:error] = insufficient_balance_message(@event)
       end
 
-      amount_usd_cents = MoneyService.convert_to_usd(@invoice.amount_cents, @invoice.currency)
-      if amount_usd_cents > @event.balance_available_v2_cents
-        flash[:error] = "Your organization doesn't have enough money to pay this invoice. Your balance is #{helpers.render_money(@event.balance_available_v2_cents)}."
-        return redirect_to contractor_page
-      end
-
-      ActiveRecord::Base.transaction do
-        payment = Payment.create!(
-          payee: @invoice.payroll_position.payee,
-          creator: current_user,
-          amount_cents: @invoice.amount_cents,
-          currency: @invoice.currency,
-          purpose: @invoice.name,
-          classification: :general_services
-        )
-        @invoice.update!(payment:)
-        @invoice.mark_approved!(current_user)
-      end
-
-      flash[:success] = "Invoice approved! #{helpers.possessive(@invoice.payroll_position.payee.display_name)} payment will be sent after HCB review."
       redirect_to contractor_page
     end
 
@@ -104,8 +99,17 @@ module Payroll
       @invoice = @event.payroll_invoices.find(params[:id])
     end
 
+    # The form targets _top so success can redirect; errors re-render only the form, inside its modal.
+    def render_form_error
+      render turbo_stream: turbo_stream.replace([@position, :invoice_form], template: "payroll/invoices/new"), status: :unprocessable_content
+    end
+
+    def insufficient_balance_message(event)
+      "Your organization doesn't have enough money to pay this invoice. Your balance is #{helpers.render_money(event.balance_available_v2_cents)}."
+    end
+
     def contractor_page
-      event_payroll_position_path(event_id: @event.slug, id: @invoice.payroll_position)
+      event_payroll_position_path(event_id: @invoice.event.slug, id: @invoice.payroll_position)
     end
 
     def invoice_params

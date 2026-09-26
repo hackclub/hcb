@@ -43,7 +43,7 @@ module Payroll
 
     has_one :event, through: :payroll_position
 
-    monetize :amount_cents, with_model_currency: :currency
+    monetize :amount_cents, with_model_currency: :currency, numericality: { greater_than: 0, on: :create }
 
     validates :currency, inclusion: { in: Money::Currency.all.map(&:iso_code) }
     validate :currency_matches_position
@@ -71,6 +71,25 @@ module Payroll
       end
     end
 
+    # Returns false if the invoice was already reviewed or the event can't cover it.
+    def approve(reviewed_by:)
+      with_lock do
+        next false unless submitted?
+        next false if MoneyService.convert_to_usd(amount_cents, currency) > event.balance_available_v2_cents
+
+        update!(payment: Payment.create!(
+          payee: payroll_position.payee,
+          creator: reviewed_by,
+          amount_cents:,
+          currency:,
+          purpose: name,
+          classification: :general_services
+        ))
+        mark_approved!(reviewed_by)
+        true
+      end
+    end
+
     def receipt_required?
       true
     end
@@ -94,7 +113,10 @@ module Payroll
       end
     end
 
+    # Invoices uploaded and approved on a contractor's behalf need no review.
     def notify_manager
+      return if approved?
+
       Payroll::InvoiceMailer.with(invoice: self).submitted.deliver_later
     end
 
