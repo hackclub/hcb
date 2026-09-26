@@ -805,7 +805,7 @@ GEM
       ffi (~> 1.12)
       logger
     ruby2_keywords (0.0.5)
-    rubyzip (2.4.1)
+    rubyzip (3.4.0)
     safely_block (1.0.0)
     safety_net_attestation (0.5.0)
       jwt (>= 2.0, < 4.0)
@@ -1077,7 +1077,7 @@ DEPENDENCIES
   rubocop
   rubocop-rails (~> 2.30)
   ruby-limiter
-  rubyzip (>= 2.3.0, < 3.0)
+  rubyzip (>= 2.3.0, < 4.0)
   safely_block
   secure_headers
   sidekiq (~> 7.3.8)
