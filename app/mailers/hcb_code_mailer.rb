@@ -38,7 +38,7 @@ class HcbCodeMailer < ApplicationMailer
   end
 
   def bounce_error
-    mail subject: @inbound_mail&.mail&.subject || "An unknown error occured"
+    mail subject: @inbound_mail&.mail&.subject || "An unknown error occurred"
   end
 
 end

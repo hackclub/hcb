@@ -544,7 +544,17 @@ class EventsController < ApplicationController
   def async_sub_organization_balance
     authorize @event
 
-    @sub_organizations = filtered_sub_organizations
+    sub_organizations = filtered_sub_organizations
+
+    # A filter narrows the stat to the matching sub-organizations. Otherwise it
+    # rolls up the whole visible tree, so money nested several levels down is
+    # counted without having to expand every branch to find it.
+    @balance_cents =
+      if @has_filter || (params[:q] || params[:search]).present?
+        sub_organizations.to_a.sum(&:balance_available_v2_cents)
+      else
+        sub_organization_ledger_balances(visible_descendant_ids).values.sum
+      end
 
     render :async_sub_organization_balance, layout: false
   end
@@ -552,10 +562,23 @@ class EventsController < ApplicationController
   def async_sub_organization_balances
     authorize @event
 
-    events = Event.where_public_id(params[:ids]).where(id: visible_descendant_ids).includes(:ledger)
+    events = Event.where_public_id(params[:ids]).where(id: visible_descendant_ids).to_a
+
+    children = Event.where(id: visible_descendant_ids).pluck(:id, :parent_id)
+                    .group_by(&:last).transform_values { |pairs| pairs.map(&:first) }
+    subtrees = events.to_h { |event| [event.id, subtree_ids(event.id, children)] }
+    ledger_balances = sub_organization_ledger_balances(events.map(&:id) + subtrees.values.flatten)
 
     balances = events.to_h do |event|
-      [event.public_id, helpers.render_money_amount(event.ledger.available_balance_cents)]
+      amounts = { balance: helpers.render_money_amount(ledger_balances[event.id]) }
+
+      # Only the descendants this user can see, so a private branch's money
+      # isn't revealed through its parent's row. A row with none keeps its dash.
+      if subtrees[event.id].any?
+        amounts[:sub_organization_balance] = helpers.render_money_amount(ledger_balances.values_at(*subtrees[event.id]).compact.sum)
+      end
+
+      [event.public_id, amounts]
     end
 
     render json: balances
@@ -1314,23 +1337,8 @@ class EventsController < ApplicationController
     @per = safe_per(100)
 
     @items = ledger_query.execute(ledgers: @ledgers)
-
-    # TODO: move these to Ledger::Query
-    if @tag.present?
-      @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id))
-    end
-
-    if @category.present?
-      categorized_cts = @category.canonical_transactions.where(ledger_item: @items).select(:ledger_item_id)
-      categorized_cpts = @category.canonical_pending_transactions.where(ledger_item: @items).select(:ledger_item_id)
-      @items = @items.where(id: categorized_cts).or(@items.where(id: categorized_cpts))
-    end
-
-    if @merchant.present?
-      @items = @items.where(linked_object_type: "CardCharge", linked_object_id: CardCharge.where(merchant_network_id: @merchant).select(:id))
-    end
-
-    @items = @items.page(params[:page]).per(@per).preload(:tags, hcb_code: { event: :tags })
+                         .page(params[:page]).per(@per)
+                         .preload(:tags, hcb_code: { event: :tags })
   rescue Pundit::NotAuthorizedError
     return head :not_found
   end
@@ -1378,6 +1386,17 @@ class EventsController < ApplicationController
 
     organized_ids = @event.reader_event_ids(current_user)
     children.filter_map { |id, is_public, hidden_at| id if (is_public && hidden_at.nil?) || organized_ids.include?(id) }
+  end
+
+  # Each event's available balance on its primary ledger, keyed by event id.
+  # Reading the ids back through Event drops soft-deleted ones.
+  def sub_organization_ledger_balances(event_ids)
+    Event.where(id: event_ids.uniq).includes(:ledger, :plan).to_h { |event| [event.id, event.ledger.available_balance_cents] }
+  end
+
+  # Every id beneath `id` in `children` (a parent id => child ids map).
+  def subtree_ids(id, children)
+    children.fetch(id, []).flat_map { |child_id| [child_id, *subtree_ids(child_id, children)] }
   end
 
   def sub_organization_table_rows(search: nil)
@@ -1483,7 +1502,8 @@ class EventsController < ApplicationController
           :cover_donation_fees,
           :contact_email,
           :generate_monthly_announcement,
-          :subevent_plan
+          :subevent_plan,
+          :subevent_name_prefix
         ]
       }
     ]

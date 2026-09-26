@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_19_201639) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_24_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1065,6 +1065,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_201639) do
     t.bigint "event_id", null: false
     t.boolean "generate_monthly_announcement", default: false, null: false
     t.boolean "hide_onboarding_message", default: false, null: false
+    t.string "subevent_name_prefix"
     t.string "subevent_plan"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_event_configurations_on_event_id", unique: true
