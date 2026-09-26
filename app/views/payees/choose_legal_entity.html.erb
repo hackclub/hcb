@@ -27,4 +27,36 @@
       </div>
     </div>
   <% end %>
+
+  <%= link_to "Create new legal entity",
+              "#",
+              class: "btn h-full flex flex-col justify-center",
+              data: { behavior: "modal_trigger", modal: "create_le" } %>
 </div>
+
+<section id="create_le" class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog">
+  <%= modal_header "Create a new legal entity" %>
+
+  <p>Enter the name of the business you're being paid on behalf of.</p>
+
+  <%= form_with url: legal_entities_path, method: :post do |form| %>
+    <%= form.hidden_field :payee_id, value: @payee.id %>
+
+    <div class="field">
+      <%= form.label :name, "Name" %>
+      <%= form.text_field :name, required: true %>
+    </div>
+
+    <div class="field">
+      <%= form.label :entity_type, "Recipient type" %>
+      <%= form.select :entity_type,
+          options_for_select([
+                               ["An unincorporated business", "business"],
+                               ["A corporation", "corporation"]
+                             ]),
+          required: true %>
+    </div>
+
+    <%= form.submit "Create" %>
+  <% end %>
+</section>
