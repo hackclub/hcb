@@ -1,4 +1,4 @@
-<%= turbo_frame_tag :raised do %>
+<%= turbo_frame_tag @frame_id do %>
   <% if @raised.zero? %>
     <span class="muted">
       <%= render_money 0 %>

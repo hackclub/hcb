@@ -51,7 +51,9 @@ class Ledger < ApplicationRecord
     query_items(start_date:, end_date:).sum(:amount_cents)
   end
 
-  monetize def revenue_cents = query_items(amount: { "$gt": 0 }).sum(:amount_cents)
+  monetize def revenue_cents(start_date: nil, end_date: nil)
+    query_items(start_date:, end_date:, amount: { "$gt": 0 }).sum(:amount_cents)
+  end
 
   # The fiscal sponsorship fee accrues as revenue arrives but only lands on the
   # ledger once it's charged, so the fee that's still pending is an expense
