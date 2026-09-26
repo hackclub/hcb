@@ -23,6 +23,10 @@ class LegalEntityPolicy < ApplicationPolicy
     member?
   end
 
+  def set_legal_entity?
+    user.admin? || member?
+  end
+
   private
 
   def member?
