@@ -58,13 +58,19 @@ module OneTimeJobs
 
         data = prefill(row)
 
+        if (duplicate = duplicate_tax1099_form(data))
+          puts "Skipping row #{row_number}: a tax1099 form for this TIN already exists (#{duplicate.public_id})."
+          skipped_rows.push(row_number)
+          next
+        end
+
         unless prompt_for_row!(data)
           puts "Skipping row #{row_number}."
           skipped_rows.push(row_number)
           next
         end
 
-        form = Tax::Form.create!(external_service: :taxbandits)
+        form = Tax::Form.create!(external_service: :taxbandits, source: :tax1099)
         payload = build_payload(form, data)
 
         begin
@@ -76,10 +82,18 @@ module OneTimeJobs
           next
         end
 
-        form.update!(external_service: :taxbandits, external_id: tb_response["SubmissionId"])
+        form.update!(external_id: tb_response["SubmissionId"])
         imported_count += 1
 
         manual_review_count += 1 unless assign_legal_entity!(form, data)
+
+        # The recipient never visits TaxBandits themselves (create_from_data
+        # already submitted the completed form data on their behalf), so
+        # nothing will ever call import_taxbandits_data for these forms. Set
+        # what it would have derived directly, and mark the form complete now
+        # rather than leaving it stuck pending forever.
+        complete_form!(form, data)
+        form.legal_entity&.refresh_pending_contractors_payments!
       end
 
       puts
@@ -105,10 +119,12 @@ module OneTimeJobs
         first_name: is_business ? row[4].to_s : row[2].to_s,
         middle_name: row[3].to_s,
         last_name: is_business ? "" : row[4].to_s,
-        suffix: row[5].to_s,
+        suffix: row[5].to_s == "SEL" ? "" : row[5].to_s,
         tin:,
         tin_type: is_business ? "EIN" : "SSN",
-        federal_tax_classification: "",
+        # An SSN filer can still be a sole proprietor, not just an individual,
+        # so only prefill when Tax1099's Filer Type agrees it's an individual.
+        federal_tax_classification: !is_business && row[12].to_s.strip.casecmp("Individual").zero? ? "Individual" : "",
         address1: row[13].to_s,
         city: row[14].to_s,
         state: row[15].to_s,
@@ -184,6 +200,50 @@ module OneTimeJobs
       FIELDS.select { |f| f[:required] && data[f[:key]].blank? }.map { |f| f[:label] }
     end
 
+    def duplicate_tax1099_form(data)
+      Tax::Form.tax1099.not_discarded.find_by(tin_hash: compute_tin_hash(data))
+    end
+
+    def entity_type_for(data)
+      if data[:tin_type] == "SSN"
+        :person
+      elsif data[:federal_tax_classification].to_s.include?("Corporation")
+        :corporation
+      else
+        :business
+      end
+    end
+
+    def compute_tin_hash(data)
+      Tax::IdentificationNumber::Hasher.hash_tin(
+        data[:tin],
+        tin_type: Tax::IdentificationNumber::Hasher.tin_type_for(entity_type: entity_type_for(data)),
+        country: "US"
+      )
+    end
+
+    # Populates what Tax::Form#import_taxbandits_data would otherwise have
+    # derived from a TaxBandits sync, and marks the form completed directly:
+    # these forms are already complete the moment TaxBandits accepts them, and
+    # nothing will ever sync them afterwards.
+    def complete_form!(form, data)
+      entity_type = entity_type_for(data)
+
+      form.update!(
+        form_type: :W9,
+        entity_type:,
+        tin_type: Tax::IdentificationNumber::Hasher.tin_type_for(entity_type:),
+        tin_hash: compute_tin_hash(data),
+        address_line1: data[:address1],
+        address_city: data[:city],
+        address_state: data[:state],
+        address_postal_code: data[:zip_code],
+        address_country: "US",
+        aasm_state: "completed",
+        completed_at: Time.current
+      )
+    end
+
     def build_payload(form, data)
       {
         "FormType"      => "W9",
@@ -215,8 +275,9 @@ module OneTimeJobs
     # for manual review instead.
     def assign_legal_entity!(form, data)
       user = User.find_or_create_by!(email: data[:email])
+      entity_type = entity_type_for(data)
 
-      if data[:tin_type] == "SSN"
+      if entity_type == :person
         form.update!(legal_entity: user.personal_legal_entity)
         return true
       end
@@ -224,7 +285,6 @@ module OneTimeJobs
       existing_business_les = user.legal_entities.where.not(entity_type: :person).to_a
 
       if existing_business_les.empty?
-        entity_type = data[:federal_tax_classification].to_s.include?("Corporation") ? :corporation : :business
         new_le = LegalEntity.create!(name: data[:first_name], entity_type:, users: [user])
         form.update!(legal_entity: new_le)
         return true

@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_24_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_26_190542) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -2669,6 +2669,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_140000) do
     t.bigint "legal_entity_id"
     t.datetime "sent_at"
     t.string "signing_url"
+    t.string "source", default: "taxbandits", null: false
     t.string "taxbandits_status"
     t.string "taxbandits_tin_matching_status"
     t.string "tin_hash"
