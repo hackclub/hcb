@@ -1,77 +1,249 @@
 # frozen_string_literal: true
 
-module OneTimeJobs
-  class ImportTax1099W9Forms < ApplicationJob
-    def perform(csv_path)
-      csv_content = File.read(csv_path)
-      rows = csv_content.split("\n")[1..]
+require "csv"
 
-      failed_rows = []
+module OneTimeJobs
+  # Interactive one-time script for importing W-9s collected via Tax1099 into
+  # TaxBandits. Meant to be run by hand from a console/runner session (not
+  # enqueued on the job queue), since it prompts on $stdin for every row:
+  #
+  #   OneTimeJobs::ImportTax1099W9Forms.new.perform("/path/to/export.csv")
+  class ImportTax1099W9Forms < ApplicationJob
+    # Row schema:
+    # Payer Name, Payer TIN, Payee First Name, Payee Middle Name, Payee Last Name, Payee Suffix,
+    # EIN/SSN, W9 Requested Date, W9 Received Date, Email Address, Mail Status (opened, delivered, rejected, etc),
+    # Business Type, Filer Type, Address, City, State, Zip Code, Country, W9 Request, W9 Count,
+    # W9 Completed Date, W9 Cancel Date
+    # Tax1099 doesn't export a value we can trust for this, so it's never
+    # prefilled from the CSV and must always be entered by hand.
+    FEDERAL_TAX_CLASSIFICATIONS = [
+      "Individual", "Sole Proprietor", "Single Member LLC Not Elected", "Single Member LLC Elected",
+      "C Corporation", "S Corporation", "Partnership", "Trust or Estate", "LLC C Corporation",
+      "LLC S Corporation", "LLC Partnership", "Others"
+    ].freeze
+
+    FIELDS = [
+      { key: :first_name, label: "Payee First Name", required: true },
+      { key: :middle_name, label: "Payee Middle Name", required: false },
+      { key: :last_name, label: "Payee Last Name", required: false },
+      { key: :suffix, label: "Payee Suffix", required: false },
+      { key: :tin, label: "TIN (EIN/SSN)", required: true },
+      { key: :tin_type, label: "TIN Type (SSN or EIN)", required: true },
+      { key: :federal_tax_classification, label: "Federal Tax Classification", required: true,
+        hint: "must be one of: #{FEDERAL_TAX_CLASSIFICATIONS.join(", ")}"
+},
+      { key: :address1, label: "Address", required: true },
+      { key: :city, label: "City", required: true },
+      { key: :state, label: "State", required: true },
+      { key: :zip_code, label: "Zip Code", required: true },
+      { key: :email, label: "Email Address", required: true },
+    ].freeze
+
+    def perform(csv_path)
+      rows = CSV.read(csv_path)
+      rows.shift # header row
+
       imported_count = 0
       manual_review_count = 0
+      skipped_rows = []
+      failed_rows = []
 
-      # Row schema:
-      # Payer Name, Payer TIN, Payee First Name, Payee Middle Name, Payee Last Name, Payee Suffix,
-      # EIN/SSN, W9 Requested Date, W9 Received Date, Email Address, Mail Status (opened, delivered, rejected, etc),
-      # Business Type, Filer Type, Address, City, State, Zip Code, Country, W9 Request, W9 Count,
-      # W9 Completed Date, W9 Cancel Date
       rows.each_with_index do |row, i|
-        # Importing the form
-        form = Tax::Form.create!
+        row_number = i + 2 # +1 for the header row, +1 to make it 1-indexed
 
-        is_ssn = row[6].count("-") == 2
-        payload = {
-          "FormType"      => "W9",
-          "IsTinMatching" => false,
-          "PayeeRef"      => form.public_id,
-          "FormW9"        => {
-            "FirstNm"                  => row[2],
-            "MiddleNm"                 => row[3],
-            "LastNm"                   => row[4],
-            "Suffix"                   => row[5],
-            "TINType"                  => is_ssn ? "SSN" : "EIN",
-            "TIN"                      => row[6],
-            "Address"                  => {
-              "Address1" => row[13],
-              "City"     => row[14],
-              "State"    => row[15],
-              "ZipCd"    => row[16]
-            },
-            "FederalTaxClassification" => row[12]
-          }
-        }
+        puts
+        puts "=" * 72
+        puts "Row #{row_number}/#{rows.size + 1}"
+        puts "=" * 72
+
+        data = prefill(row)
+
+        unless prompt_for_row!(data)
+          puts "Skipping row #{row_number}."
+          skipped_rows.push(row_number)
+          next
+        end
+
+        form = Tax::Form.create!(external_service: :taxbandits)
+        payload = build_payload(form, data)
 
         begin
           tb_response = TaxbanditsService.create_from_data(payload)
         rescue => e
-          failed_rows.push(i + 1)
+          puts "  ! Failed to submit row #{row_number} to TaxBandits: #{e.message}"
+          form.destroy!
+          failed_rows.push(row_number)
+          next
         end
 
         form.update!(external_service: :taxbandits, external_id: tb_response["SubmissionId"])
+        imported_count += 1
 
-        # Associate with a LE if possible
-        # If it's a business LE and the user already has a business LE,
-        # we'll manually review the forms without an LE later
-        user = User.find_or_create_by!(email: row[9])
-        if is_ssn
-          form.update!(legal_entity: user.personal_legal_entity)
-        elsif user.legal_entities.where.not(entity_type: :personal).none?
-          new_le = LegalEntity.create!(
-            name: row[4],
-            entity_type: row[12].include?("Corporation") ? :corporation : :business, # TODO: verify the possible values of this field
-            users: [user]
-          )
+        manual_review_count += 1 unless assign_legal_entity!(form, data)
+      end
 
-          form.update!(legal_entity: new_le)
+      puts
+      puts "-" * 72
+      puts "Failed to import rows #{failed_rows.map { |r| "##{r}" }.join(", ")}" if failed_rows.any?
+      puts "Skipped rows #{skipped_rows.map { |r| "##{r}" }.join(", ")}" if skipped_rows.any?
+      puts "Successfully imported #{imported_count} forms"
+      puts "#{manual_review_count} forms need manual legal entity assignment"
+    end
+
+    private
+
+    def prefill(row)
+      tin = row[6].to_s
+      is_business = tin.count("-") != 2
+
+      # Tax1099's export puts the business name in the "Payee Last Name"
+      # column for business filers (there's no separate business-name
+      # column), but TaxBandits expects the entity name in FirstNm for a
+      # business FormW9, so it's moved over here rather than at submission
+      # time so the interactive review below shows it in the right field.
+      {
+        first_name: is_business ? row[4].to_s : row[2].to_s,
+        middle_name: row[3].to_s,
+        last_name: is_business ? "" : row[4].to_s,
+        suffix: row[5].to_s,
+        tin:,
+        tin_type: is_business ? "EIN" : "SSN",
+        federal_tax_classification: "",
+        address1: row[13].to_s,
+        city: row[14].to_s,
+        state: row[15].to_s,
+        zip_code: row[16].to_s,
+        email: row[9].to_s
+      }
+    end
+
+    # Shows the prefilled/edited data for a row and lets the user fix it up
+    # before it's sent to TaxBandits. Returns false if the user chose to skip
+    # the row entirely, true once the row has every required field filled in
+    # and the user has confirmed it.
+    def prompt_for_row!(data)
+      loop do
+        print_fields(data)
+
+        missing = missing_fields(data)
+        if missing.any?
+          print("\nMissing required field(s): #{missing.join(", ")}. Enter a number to edit, or 's' to skip this row: ")
+        else
+          print("\nPress Enter to submit to TaxBandits, enter a number to edit a field, or 's' to skip this row: ")
+        end
+
+        input = $stdin.gets.to_s.strip
+
+        return false if input.casecmp("s").zero?
+
+        if input.empty?
+          if missing.any?
+            puts "Please fill in the missing required field(s) before submitting."
+            next
+          end
+
+          return true
+        end
+
+        field = FIELDS[input.to_i - 1]
+        if field.nil?
+          puts "Invalid selection: #{input}"
+          next
+        end
+
+        if field[:key] == :federal_tax_classification
+          data[field[:key]] = prompt_federal_tax_classification(data[field[:key]])
+        else
+          puts "  (#{field[:hint]})" if field[:hint]
+          print("#{field[:label]} [#{data[field[:key]]}]: ")
+          new_value = $stdin.gets.to_s.strip
+          data[field[:key]] = new_value unless new_value.empty?
         end
       end
+    end
 
-      if failed_rows.any?
-        print("Failed to import rows #{failed.map { |r| "##{r}" }.join(", ")}")
+    def prompt_federal_tax_classification(current)
+      FEDERAL_TAX_CLASSIFICATIONS.each_with_index { |classification, i| puts "    #{i + 1}. #{classification}" }
+      print("Federal Tax Classification [#{current}]: ")
+
+      input = $stdin.gets.to_s.strip
+      return current if input.empty?
+
+      FEDERAL_TAX_CLASSIFICATIONS[input.to_i - 1] || input
+    end
+
+    def print_fields(data)
+      FIELDS.each_with_index do |field, i|
+        flag = field[:required] && data[field[:key]].blank? ? " (required, missing)" : ""
+        puts "  #{i + 1}. #{field[:label]}: #{data[field[:key]].presence || "-"}#{flag}"
+        puts "       (#{field[:hint]})" if field[:hint]
+      end
+    end
+
+    def missing_fields(data)
+      FIELDS.select { |f| f[:required] && data[f[:key]].blank? }.map { |f| f[:label] }
+    end
+
+    def build_payload(form, data)
+      {
+        "FormType"      => "W9",
+        "IsTinMatching" => false,
+        "PayeeRef"      => form.public_id,
+        "FormW9"        => {
+          "FirstNm"                  => data[:first_name],
+          "Line1Nm"                  => [data[:first_name], data[:middle_name], data[:last_name], data[:suffix]].compact.join(" "),
+          "MiddleNm"                 => data[:middle_name],
+          "LastNm"                   => data[:last_name],
+          "Suffix"                   => data[:suffix],
+          "TINType"                  => data[:tin_type],
+          "TIN"                      => data[:tin],
+          "Address"                  => {
+            "Address1" => data[:address1],
+            "City"     => data[:city],
+            "State"    => data[:state],
+            "ZipCd"    => data[:zip_code]
+          },
+          "FederalTaxClassification" => data[:federal_tax_classification]
+        }
+      }
+    end
+
+    # Associates the form with a legal entity by email, same as before:
+    # SSNs go on the user's personal legal entity; EINs create (or reuse) a
+    # business/corporation legal entity. Returns false when the user already
+    # has an ambiguous set of business legal entities and this form is left
+    # for manual review instead.
+    def assign_legal_entity!(form, data)
+      user = User.find_or_create_by!(email: data[:email])
+
+      if data[:tin_type] == "SSN"
+        form.update!(legal_entity: user.personal_legal_entity)
+        return true
       end
 
-      print("Successfully imported #{imported_count} forms")
-      print("#{manual_review_count} forms need manual LE assignment")
+      existing_business_les = user.legal_entities.where.not(entity_type: :person).to_a
+
+      if existing_business_les.empty?
+        entity_type = data[:federal_tax_classification].to_s.include?("Corporation") ? :corporation : :business
+        new_le = LegalEntity.create!(name: data[:first_name], entity_type:, users: [user])
+        form.update!(legal_entity: new_le)
+        return true
+      end
+
+      puts "  ! #{user.email} already has #{existing_business_les.size} business legal entit#{existing_business_les.size == 1 ? "y" : "ies"}:"
+      existing_business_les.each_with_index { |le, i| puts "    #{i + 1}. #{le.name} (#{le.entity_type})" }
+      print("  Enter a number to assign this form to that legal entity, or press Enter to leave for manual review: ")
+
+      input = $stdin.gets.to_s.strip
+      selected = existing_business_les[input.to_i - 1] if input.present?
+
+      if selected
+        form.update!(legal_entity: selected)
+        true
+      else
+        puts "  Leaving this form for manual legal entity assignment."
+        false
+      end
     end
 
   end

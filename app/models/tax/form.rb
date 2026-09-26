@@ -46,7 +46,7 @@ module Tax
     acts_as_paranoid
     has_paper_trail
 
-    belongs_to :legal_entity
+    belongs_to :legal_entity, optional: true
 
     enum :form_type, { W8BEN: "W8BEN", W9: "W9", W8BENE: "W8BENE", W8ECI: "W8ECI", W8IMY: "W8IMY", W8EXP: "W8EXP" }
     enum :external_service, { manual: "manual", taxbandits: "taxbandits" }, prefix: :sent_with
