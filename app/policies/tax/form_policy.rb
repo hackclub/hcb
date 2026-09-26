@@ -26,6 +26,10 @@ module Tax
       user_in_legal_entity?(record.legal_entity)
     end
 
+    def download?
+      user_in_legal_entity?(record.legal_entity)
+    end
+
     private
 
     def user_in_legal_entity?(le)
