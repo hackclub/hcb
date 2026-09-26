@@ -57,7 +57,7 @@ module OneTimeJobs
           form.update!(legal_entity: user.personal_legal_entity)
         elsif user.legal_entities.where.not(entity_type: :personal).none?
           new_le = LegalEntity.create!(
-            name: row[2], # TODO - do we populated with the business name on Line 2 of the w9?
+            name: row[4],
             entity_type: row[12].include?("Corporation") ? :corporation : :business, # TODO: verify the possible values of this field
             users: [user]
           )
