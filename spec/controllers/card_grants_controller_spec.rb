@@ -98,6 +98,25 @@ RSpec.describe CardGrantsController do
     end
   end
 
+  describe "#cancel" do
+    it "replaces the canceled grant row for inline requests" do
+      organizer = create(:user)
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user: organizer, event:)
+      grant = create(:card_grant, event:, sent_by: organizer)
+      allow_any_instance_of(StripeCard).to receive(:cancel!)
+      create_session(organizer, verified: true)
+
+      post(:cancel, params: { event_id: event.friendly_id, id: grant.hashid, inline: "1" }, format: :turbo_stream)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+      expect(Nokogiri::HTML.fragment(response.body).at_css("turbo-stream[action='replace'][target='card_grant_#{grant.id}']")).to be_present
+      expect(response.body).to include("Canceled")
+      expect(grant.reload).not_to be_active
+    end
+  end
+
   describe "#create" do
     def card_grant_params
       {
