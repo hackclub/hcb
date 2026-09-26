@@ -2059,6 +2059,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_140000) do
 
   create_table "payroll_positions", force: :cascade do |t|
     t.string "aasm_state", null: false
+    t.boolean "combine_contract_attachment", default: true, null: false
     t.datetime "created_at", null: false
     t.string "currency", default: "USD", null: false
     t.text "description", null: false
