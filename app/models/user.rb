@@ -301,6 +301,12 @@ class User < ApplicationRecord
   scope :active_teenager, -> { last_seen_within(30.days.ago).where(teenager: true) }
   def active? = last_seen_at && (last_seen_at >= 30.days.ago)
 
+  # true if this user has any admin-only comments left on their profile.
+  # relies on `comments` being preloaded to avoid N+1s when checked in a loop.
+  def admin_comments?
+    comments.to_a.any?(&:admin_only?)
+  end
+
   # an auditor is an admin who can only view things.
   # auditor? takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
