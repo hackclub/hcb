@@ -38,7 +38,7 @@ where fee_balance != 0
 order by fee_balance desc
 ```
 
-Essentially, we calculate the total amount of fees we should have charged all-time and then the total amount of fees we’ve ever charged them all-time. If the difference is zero, we need to charge them fees (or give them a credit if we overcharged). 
+Essentially, we calculate the total amount of fees we should have charged all-time and then the total amount of fees we’ve ever charged them all-time. If the difference is not zero, we need to charge them fees (or give them a credit if we overcharged). 
 
 A couple of things to note about this SQL query. Every time we create a [`CanonicalEventMapping`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_event_mapping.rb), we create a [`Fee`](https://github.com/hackclub/hcb/blob/main/app/models/fee.rb) record for that transaction that stores the fee that needs to be charged for that transaction.
 
