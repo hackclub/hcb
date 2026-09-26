@@ -25,6 +25,8 @@ class LegalEntity < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :len
 
+  has_paper_trail
+
   # Some legal entities will be managed by events,
   # if a payment was sent by manually inputting details
   belongs_to :managing_event, class_name: "Event", optional: true
@@ -166,6 +168,14 @@ class LegalEntity < ApplicationRecord
   end
 
   delegate :masked_tin, to: :latest_usable_tax_form, allow_nil: true
+
+  def emails
+    if managed?
+      [payees.first.email]
+    else
+      users.map(&:email)
+    end
+  end
 
   private
 

@@ -65,6 +65,7 @@ module Tax
       invalid
       bounced
       order_not_created
+      expired
     ].index_with(&:itself), prefix: :taxbandits
 
     enum :taxbandits_tin_matching_status, %w[

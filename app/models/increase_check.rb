@@ -337,7 +337,7 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def can_cancel?
-    pending? || (approved && can_stop?)
+    pending? || (approved? && can_stop?)
   end
 
   def cancel!
