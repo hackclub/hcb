@@ -34,7 +34,7 @@ module StripeCardService
         ),
 
         -- This second query adds a column with an array of distances (in days)#{' '}
-        -- between the dates when transactions occured. My previous example,
+        -- between the dates when transactions occurred. My previous example,
         -- would have a date_differences a bit like [2, 5, 2, 1, 3, 9].
         -- That's a lot of Celsius!
 

@@ -15,16 +15,16 @@ database.
   which require write access to the database. At this point in time, I don't
   plan on granting write permissions until we find it necessary.
 
-Here's a runbook for how the connection and Postgresql user was setup.
+Here's a runbook for how the connection and Postgresql user were set up.
 
-## Postgres User for Meteabase
+## Postgres User for Metabase
 
 1. Create a `metabase` User in the database.
    ```bash
    su - postgres
    psql
    # Create metabase user
-   CREATE USER rails WITH INHERIT CONNECTION LIMIT 500 PASSWORD 'password here';
+   CREATE USER metabase WITH INHERIT CONNECTION LIMIT 500 PASSWORD 'password here';
    ```
 
 2. Configure permissions
@@ -37,7 +37,7 @@ Here's a runbook for how the connection and Postgresql user was setup.
    [read more on why it's needed](https://stackoverflow.com/questions/17338621/what-does-grant-usage-on-schema-do-exactly).
 
 3. Grant `SELECT` (read) access for **_specific_** tables.
-   Here are a list of tables granted with reasoning why:
+   Here is a list of tables granted, with reasoning why:
     - `public.users`
         - Number of users
         - Number of teenagers
@@ -112,7 +112,7 @@ Here's a runbook for how the connection and Postgresql user was setup.
 5. Follow the instructions in [bastion.md](bastion.md) to create a bastion user
    for Metabase.
 
-## Fivetran (and it's Postgres user)
+## Fivetran (and its Postgres user)
 
 Zach uses Fivetran to sync Google Sheets into the HCB postgres database. To make
 this happen, Fivetran needs read and write access to the HCB postgres.
@@ -120,7 +120,7 @@ this happen, Fivetran needs read and write access to the HCB postgres.
 **Scope of permissions:**
 
 - Full read and write access to the `google_sheets` schema
-- NO read nor write access to the `public` schema (where HCB's data is stored)
+- NO read or write access to the `public` schema (where HCB's data is stored)
 
 1. Create a `fivetran` User in the database.
 
@@ -139,7 +139,7 @@ CREATE USER fivetran WITH INHERIT CONNECTION LIMIT 500 PASSWORD 'password here';
    ALTER DEFAULT PRIVILEGES IN SCHEMA google_sheets GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO fivetran;
 
    GRANT CREATE ON DATABASE hcb_production TO fivetran;
-   -- Fivetran needs access to create schemas to run it's connection tests. Ex:
+   -- Fivetran needs access to create schemas to run its connection tests. Ex:
    -- /*Fivetran*/CREATE SCHEMA fivetran_testing_schema_d2fd9a9160be4b1ab714d1b4cd9c48a2
    ```
 
