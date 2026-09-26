@@ -134,4 +134,24 @@ RSpec.describe GSuiteAccountService::Create, type: :model do
       end
     end
   end
+
+  context "when the address is invalid for Google" do
+    let(:address) { "first last" }
+
+    it "raises before creating the user on Google" do
+      expect_any_instance_of(::Partners::Google::GSuite::CreateUser).not_to receive(:run)
+
+      expect do
+        service.run
+      end.to raise_error(ActiveRecord::RecordInvalid, /Address can only contain/)
+    end
+  end
+
+  context "when the address has surrounding whitespace" do
+    let(:address) { " address " }
+
+    it "strips it" do
+      expect(service.run.address).to eq("address@event.example.com")
+    end
+  end
 end
