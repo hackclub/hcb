@@ -592,10 +592,14 @@ class EventsController < ApplicationController
       )
       if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
         @ledger = @event.ledger
-        @ledger_items = @ledger.items
-                               .where(id: column_transactions.select(:ledger_item_id), linked_object_type: nil)
-                               .order(created_at: :desc)
-                               .page((params[:page] || 1).to_i).per(safe_per(25))
+        # The column-transaction narrowing has no expression in Ledger::Query, so
+        # it chains onto the executed relation. Everything the query does own —
+        # pending first, the rest newest first — still comes from the query, which
+        # is the whole point of going through it for the parts that do fit.
+        @ledger_items = Ledger::Query.new({ linked_object_type: nil })
+                                     .execute(ledgers: [@ledger])
+                                     .where(id: column_transactions.select(:ledger_item_id))
+                                     .page((params[:page] || 1).to_i).per(safe_per(25))
       else
         @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
                                            .order(created_at: :desc)
@@ -1338,7 +1342,6 @@ class EventsController < ApplicationController
 
     @items = ledger_query.execute(ledgers: @ledgers)
                          .page(params[:page]).per(@per)
-                         .preload(:tags, hcb_code: { event: :tags })
   rescue Pundit::NotAuthorizedError
     return head :not_found
   end

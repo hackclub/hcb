@@ -73,11 +73,31 @@ class Ledger
                                        .when(Ledger::Item.arel_table[:status].eq(Ledger::Item.statuses[:pending])).then(0)
                                        .else(1)
 
+      # Everything a ledger row renders: the item partial reads all of these per
+      # item, so preloading them here is what keeps a ledger page's query count
+      # flat in the number of rows. Callers that render something else (the API
+      # serializer wants canonical transactions and receipts) chain their own on
+      # top; callers that only aggregate pay nothing, since preloads don't fire
+      # until records are materialized.
+      #
+      # hcb_code: :event is here for one line of ledger/items/_tags, which gates
+      # on `hcb_code.event&.demo_mode?` even where the page already holds @event
+      # — the next line down uses @event, and _tag_menu prefers it. Reaching
+      # through the HCB code for an event the page already has costs a query a
+      # row without this preload, and one with it. #15023 moves tags onto
+      # Ledger::Item and takes that partial's other use of the HCB code with it,
+      # leaving the guard as the last one; it can go the same way.
+      #
+      # The preload outlives that, though: the admin cardholder page runs
+      # all_ledgers with no @event, over items spanning every org the cardholder
+      # holds a card for, so there the event really is per item.
+      #
       # preload, not includes: linked_object is polymorphic, so it can never be
       # JOINed — and includes makes pluck/count attempt exactly that join
-      # (EagerLoadPolymorphicError).
+      # (EagerLoadPolymorphicError). It also costs one query per distinct
+      # linked_object_type in the result, not one per row.
       results.order(pending_first.asc, datetime: :desc, created_at: :desc, id: :desc)
-             .preload(:hcb_code, :author, :linked_object)
+             .preload(:author, :linked_object, :tags, hcb_code: :event)
     end
 
     def self.sanitize_query(query_hash)

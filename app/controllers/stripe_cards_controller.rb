@@ -89,12 +89,13 @@ class StripeCardsController < ApplicationController
       @per = safe_per(25)
       @table_only = true
       @ledger = @card.card_grant&.ledger || @event.ledger
-      # TODO: Swap this out for Ledger::Query once Stripe cards have their own non-primary ledgers
-      @items = @ledger.items
-                      .includes(:canonical_transactions, :canonical_pending_transactions, :linked_object)
-                      .where(linked_object_type: "CardCharge", linked_object_id: @card.card_charges.select(:id))
-                      .order(datetime: :desc, created_at: :desc, id: :desc)
-                      .page(params[:page]).per(@per)
+      # Narrowing to this card's charges has no expression in Ledger::Query, so it
+      # chains onto the executed relation. The charges go in as a relation, which
+      # lands as an IN (subquery) rather than a list of ids to carry around.
+      @items = Ledger::Query.new({ linked_object_type: "CardCharge" })
+                            .execute(ledgers: [@ledger])
+                            .where(linked_object_id: @card.card_charges.select(:id))
+                            .page(params[:page]).per(@per)
     end
 
     if params[:frame] == "true" && turbo_frame_request?
