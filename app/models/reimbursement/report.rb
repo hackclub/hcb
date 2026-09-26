@@ -94,6 +94,43 @@ module Reimbursement
     scope :visible, -> { joins(:user).where.not(user: { full_name: nil }, invited_by_id: nil) }
     # view https://github.com/hackclub/hcb/issues/8486 for context behind this scope
 
+    # The 195 widely recognized countries: the 193 UN member states plus the
+    # 2 UN observer states (the Holy See and the State of Palestine).
+    WIDELY_RECOGNIZED_COUNTRY_CODES = %w[
+      AF AL DZ AD AO AG AR AM AU AT AZ BS BH BD BB BY BE BZ BJ BT BO BA BW BR
+      BN BG BF BI CV KH CM CA CF TD CL CN CO KM CG CD CR CI HR CU CY CZ DK DJ
+      DM DO EC EG SV GQ ER EE SZ ET FJ FI FR GA GM GE DE GH GR GD GT GN GW GY
+      HT HN HU IS IN ID IR IQ IE IL IT JM JP JO KZ KE KI KP KR KW KG LA LV LB
+      LS LR LY LI LT LU MG MW MY MV ML MT MH MR MU MX FM MD MC MN ME MA MZ MM
+      NA NR NP NL NZ NI NE NG MK NO OM PK PW PA PG PY PE PH PL PT QA RO RU RW
+      KN LC VC WS SM ST SA SN RS SC SL SG SK SI SB SO ZA SS ES LK SD SR SE CH
+      SY TJ TZ TH TL TG TO TT TN TR TM TV UG UA AE GB US UY UZ VU VE VN YE ZM
+      ZW VA PS
+    ].freeze
+
+    # Reports are matched to a country if either the reimbursed user's phone
+    # number's calling code, or the report's currency, belongs to that
+    # country. Since several countries can share a currency (e.g. Germany
+    # and Spain both use EUR), matches based on currency alone can be
+    # imprecise when a country's currency isn't unique to it; the phone
+    # number's calling code is what disambiguates those cases (e.g. +49 vs
+    # +34).
+    scope :in_country, ->(alpha2) {
+      country = ISO3166::Country[alpha2]
+      next none unless country
+
+      where(
+        "reimbursement_reports.currency = :currency OR reimbursement_reports.user_id IN (SELECT id FROM users WHERE phone_number LIKE :calling_code)",
+        currency: country.currency_code,
+        calling_code: "#{country.country_code}%"
+      )
+    }
+
+    def self.countries_for_filter
+      WIDELY_RECOGNIZED_COUNTRY_CODES.map { |alpha2| [ISO3166::Country[alpha2].common_name, alpha2] }
+                                     .sort_by { |name, _| I18n.transliterate(name) }
+    end
+
     include AASM
     include Commentable
 
