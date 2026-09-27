@@ -157,7 +157,7 @@ module Api
           return render json: { error: "Last four digits are required." }, status: :unprocessable_content
         end
 
-        # Find the correct card based on it's last4
+        # Find the correct card based on its last4
         card = current_user.stripe_cardholder&.stripe_cards&.find_by(last4: params[:last4])
         if card.nil? || card.id != @stripe_card.id
           return render json: { error: "Last four digits are incorrect." }, status: :unprocessable_content

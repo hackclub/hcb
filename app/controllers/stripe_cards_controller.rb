@@ -10,7 +10,7 @@ class StripeCardsController < ApplicationController
   end
 
   def shipping
-    # Only show shipping for phyiscal cards if the eta is in the future and they haven't already been activated or canceled.
+    # Only show shipping for physical cards if the eta is in the future and they haven't already been activated or canceled.
     @stripe_cards = current_user.stripe_cards.cards_in_shipping
 
     skip_authorization # do not force pundit

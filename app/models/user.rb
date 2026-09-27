@@ -301,7 +301,7 @@ class User < ApplicationRecord
   scope :active_teenager, -> { last_seen_within(30.days.ago).where(teenager: true) }
   def active? = last_seen_at && (last_seen_at >= 30.days.ago)
 
-  # a auditor is an admin who can only view things.
+  # an auditor is an admin who can only view things.
   # auditor? takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
   def auditor?(override_pretend: false)
