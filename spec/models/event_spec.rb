@@ -450,4 +450,39 @@ RSpec.describe Event, type: :model do
       expect(event.errors[:description]).to be_present
     end
   end
+  describe "#wire_fee_waived?" do
+    let(:plan_type) { Event::Plan::Standard }
+    let(:event) { create(:event, plan_type:) }
+
+    def raise_money(cents)
+      tx = create(:canonical_transaction, amount_cents: cents)
+      create(:canonical_event_mapping, canonical_transaction: tx, event:)
+    end
+
+    it "is false when the organization has raised under $50,000 in the past year" do
+      raise_money(49_999_00)
+
+      expect(event.wire_fee_waived?).to be false
+    end
+
+    it "is true when the organization has raised over $50,000 in the past year" do
+      raise_money(50_001_00)
+
+      expect(event.wire_fee_waived?).to be true
+    end
+
+    context "with a Hack Club project" do
+      let(:plan_type) { Event::Plan::HackClubHQ }
+
+      it "is false however much the organization has raised" do
+        raise_money(50_001_00)
+
+        expect(event.wire_fee_waived?).to be false
+      end
+
+      it "still exempts the organization from the wire minimum" do
+        expect(event.minimum_wire_amount_cents).to eq 100
+      end
+    end
+  end
 end
