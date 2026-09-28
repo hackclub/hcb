@@ -1,7 +1,10 @@
 <%# locals: (klass: "") -%>
 
+<% messages = renderable_flash -%>
+<% messages.each_key { |key| flash.discard(key) } if turbo_frame_request? -%>
+
 <div id="flash-container">
-  <% renderable_flash.each_with_index do |(key, value), index| %>
+  <% messages.each_with_index do |(key, value), index| %>
     <article
       role="alertdialog"
       class="flash flex items-center <%= "mt2" unless index == 0 %> shrink-none <%= key %> <%= klass %>"
