@@ -1,5 +1,9 @@
 # frozen_string_literal: true
 
+ActiveSupport.on_load(:active_storage_blob) do
+  validates :byte_size, numericality: { greater_than: 0 }
+end
+
 Rails.application.config.to_prepare do
   ActiveStorage::PreviewImageJob.discard_on ActiveStorage::PreviewError
 end
