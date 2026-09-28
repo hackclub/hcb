@@ -141,6 +141,9 @@
     <% if @item.hcb_code.present? %>
       <%= link_to @item.hcb_code.hcb_code, hcb_code_path(@item.hcb_code), class: "btn btn--secondary" %>
     <% end %>
+    <% if (process_path = admin_process_path_for(@item.linked_object)) %>
+      <%= link_to "Process #{@item.linked_object_type}", process_path, class: "btn btn--secondary" %>
+    <% end %>
     <% @item.canonical_transactions.each do |tx| %>
       <%= link_to "CT #{tx.id}", canonical_transaction_path(tx), class: "btn btn--secondary" %>
     <% end %>

@@ -49,7 +49,7 @@
     </section>
   </turbo-frame>
 
-  <% if admin_signed_in? && paypal_transfer.may_mark_rejected? %>
+  <% if admin_signed_in? && (paypal_transfer.may_mark_rejected? || paypal_transfer.may_mark_failed?) %>
     <div class="card__banner card__darker border-top overflow-hidden">
       <% admin_tool "w-fit" do %>
         <%= button_to "Process", paypal_transfer_process_admin_path(paypal_transfer), class: "btn", method: :get, data: { turbo_frame: "_top" } %>

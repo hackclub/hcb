@@ -69,11 +69,15 @@
     <% if @hcb_code.ledger_item.present? %>
       <%= link_to "Ledger::Item #{@hcb_code.ledger_item.hashid}", ledger_item_path(@hcb_code.ledger_item), class: "btn btn--secondary" %>
     <% end %>
+    <% linked_object = @hcb_code.linked_object %>
+    <% if (process_path = admin_process_path_for(linked_object)) %>
+      <%= link_to "Process #{linked_object.class.name}", process_path, class: "btn btn--secondary" %>
+    <% end %>
     <% @hcb_code.canonical_transactions.each do |tx| %>
       <%= link_to "CT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
     <% end %>
     <% @hcb_code.canonical_pending_transactions.each do |tx| %>
-      <%= link_to "CPT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
+      <%= link_to "CPT #{tx.id}", canonical_pending_transaction_path(tx.id), class: "btn btn--secondary" %>
     <% end %>
   <% end %>
 <% end %>

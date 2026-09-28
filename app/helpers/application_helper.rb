@@ -326,6 +326,24 @@ module ApplicationHelper
     end
   end
 
+  # The admin page where a transfer is reviewed and processed, or nil if the
+  # record doesn't have one.
+  def admin_process_path_for(record)
+    case record
+    when AchTransfer then ach_start_approval_admin_path(record)
+    when CheckDeposit
+      # Admin::CheckDepositsController#show bounces back to the HCB code in any other state
+      admin_check_deposit_path(record) if record.manual_submission_required?
+    when Disbursement then disbursement_process_admin_path(record)
+    when Disbursement::Base then disbursement_process_admin_path(record.disbursement)
+    when IncreaseCheck then increase_check_process_admin_path(record)
+    when Invoice then invoice_process_admin_path(record)
+    when PaypalTransfer then paypal_transfer_process_admin_path(record)
+    when Wire then wire_process_admin_path(record)
+    when WiseTransfer then wise_transfer_process_admin_path(record)
+    end
+  end
+
   def development_mode_flavor
     [
       "Drop the tables for all I care.",

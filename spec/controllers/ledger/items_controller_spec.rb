@@ -93,6 +93,18 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       expect(response).to be_successful
       expect(response.body).to include(%(href="#{canonical_pending_transaction_path(cpt)}">CPT #{cpt.id}</a>))
     end
+
+    it "links the linked transfer to its admin process page for an auditor" do
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+      ach_transfer = create(:ach_transfer, event:)
+      ach_item = ach_transfer.reload.ledger_item
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get :show, params: { id: ach_item.hashid }
+
+      expect(response).to be_successful
+      expect(response.body).to include(%(href="#{ach_start_approval_admin_path(ach_transfer)}">Process AchTransfer</a>))
+    end
   end
 
   context "as a reader (not a member)" do

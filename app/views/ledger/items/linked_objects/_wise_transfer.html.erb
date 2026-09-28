@@ -41,7 +41,7 @@
       <strong>Sent at</strong>
       <%= format_datetime wise_transfer.created_at %>
     </div>
-    <% if wise_transfer.pending? || wise_transfer.approved? %>
+    <% if wise_transfer.pending? || wise_transfer.approved? || wise_transfer.sent? %>
         <% admin_tool "w-fit flex items-center justify-center !px-4" do %>
           <%= link_to "Process", wise_transfer_process_admin_path(wise_transfer), class: "btn", target: "_blank" %>
         <% end %>
