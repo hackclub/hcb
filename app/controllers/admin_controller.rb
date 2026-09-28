@@ -433,7 +433,7 @@ class AdminController < Admin::BaseController
     events = combobox_page(events.order(Event::CUSTOM_SORT).select(:id, :name, :slug))
 
     render json: events.map { |event|
-      { value: event.id.to_s, label: helpers.combobox_display(event), sublabel: event.slug }
+      { value: event.id.to_s, label: helpers.combobox_display(event), sublabel: event.slug, badge: helpers.combobox_badge(event) }
     }
   end
 
@@ -442,10 +442,9 @@ class AdminController < Admin::BaseController
     users = @q.present? ? User.search_name(@q) : User.order(:full_name, :id)
     users = combobox_page(users.select(:id, :full_name, :email))
 
-    # The admin display already spells out the email and ID, hence the sublabel
-    # only being worth rendering for everyone else.
+    # A nameless user is already labelled by their email.
     render json: users.map { |user|
-      { value: user.id.to_s, label: helpers.combobox_display(user), sublabel: (user.email unless admin_signed_in?) }
+      { value: user.id.to_s, label: helpers.combobox_display(user), sublabel: (user.email if user.full_name.present?), badge: helpers.combobox_badge(user) }
     }
   end
 
