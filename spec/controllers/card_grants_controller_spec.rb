@@ -31,6 +31,36 @@ RSpec.describe CardGrantsController do
     end
   end
 
+  describe "#show" do
+    it "shows the recipient email to managers of a canceled grant" do
+      manager = create(:user)
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user: manager, event:, role: :manager)
+      card_grant = create(:card_grant, event:, email: "recipient@example.com")
+      card_grant.update!(status: :canceled)
+      create_session(manager, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.at_css("a[href='mailto:recipient@example.com']")).to be_present
+    end
+
+    it "does not show the recipient email to readers" do
+      reader = create(:user)
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user: reader, event:, role: :reader)
+      card_grant = create(:card_grant, event:, email: "recipient@example.com")
+      card_grant.update!(status: :canceled)
+      create_session(reader, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("recipient@example.com")
+    end
+  end
+
   describe "#new" do
     it "renders successfully" do
       user = create(:user)
