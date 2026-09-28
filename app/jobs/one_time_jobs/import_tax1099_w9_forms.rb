@@ -249,6 +249,7 @@ module OneTimeJobs
         "FormType"      => "W9",
         "IsTinMatching" => false,
         "PayeeRef"      => form.public_id,
+        "PdfUrl"        => "https://user-cdn.hackclub-assets.com/01a0e971-5fe0-7d34-b37f-cada21c0944d/Untitled%20document.pdf",
         "FormW9"        => {
           "FirstNm"                  => data[:first_name],
           "Line1Nm"                  => [data[:first_name], data[:middle_name], data[:last_name], data[:suffix]].compact.join(" "),
