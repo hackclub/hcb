@@ -10,9 +10,9 @@
   <% end %>
 <% end %>
 
-<% if (process_path = admin_process_path_for(check_deposit)) %>
+<% if check_deposit.manual_submission_required? %>
   <% admin_tool("mt3") do %>
-    <%= button_to "Process", process_path, class: "btn", method: :get, data: { turbo_frame: "_top" } %>
+    <%= button_to "Process", admin_check_deposit_path(check_deposit), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
   <% end %>
 <% end %>
 

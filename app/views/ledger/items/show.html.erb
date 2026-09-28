@@ -141,8 +141,24 @@
     <% if @item.hcb_code.present? %>
       <%= link_to @item.hcb_code.hcb_code, hcb_code_path(@item.hcb_code), class: "btn btn--secondary" %>
     <% end %>
-    <% if (process_path = admin_process_path_for(@item.linked_object)) %>
-      <%= link_to "Process #{@item.linked_object_type}", process_path, class: "btn btn--secondary" %>
+    <% linked_object = @item.linked_object %>
+    <% if linked_object.is_a?(AchTransfer) %>
+      <%= link_to "Process AchTransfer", ach_start_approval_admin_path(linked_object), class: "btn btn--secondary" %>
+    <% elsif linked_object.is_a?(CheckDeposit) && linked_object.manual_submission_required? %>
+      <%# In any other state the admin page redirects back to the HCB code %>
+      <%= link_to "Process CheckDeposit", admin_check_deposit_path(linked_object), class: "btn btn--secondary" %>
+    <% elsif linked_object.is_a?(Disbursement::Base) %>
+      <%= link_to "Process Disbursement", disbursement_process_admin_path(linked_object.disbursement), class: "btn btn--secondary" %>
+    <% elsif linked_object.is_a?(IncreaseCheck) %>
+      <%= link_to "Process IncreaseCheck", increase_check_process_admin_path(linked_object), class: "btn btn--secondary" %>
+    <% elsif linked_object.is_a?(Invoice) %>
+      <%= link_to "Process Invoice", invoice_process_admin_path(linked_object), class: "btn btn--secondary" %>
+    <% elsif linked_object.is_a?(PaypalTransfer) %>
+      <%= link_to "Process PaypalTransfer", paypal_transfer_process_admin_path(linked_object), class: "btn btn--secondary" %>
+    <% elsif linked_object.is_a?(Wire) %>
+      <%= link_to "Process Wire", wire_process_admin_path(linked_object), class: "btn btn--secondary" %>
+    <% elsif linked_object.is_a?(WiseTransfer) %>
+      <%= link_to "Process WiseTransfer", wise_transfer_process_admin_path(linked_object), class: "btn btn--secondary" %>
     <% end %>
     <% @item.canonical_transactions.each do |tx| %>
       <%= link_to "CT #{tx.id}", canonical_transaction_path(tx), class: "btn btn--secondary" %>
