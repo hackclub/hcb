@@ -17,11 +17,14 @@ RSpec.describe HcbCodesController, type: :controller do
 
     before { create_session(create(:user, :make_auditor), verified: true) }
 
-    it "links the transfer to its admin process page" do
+    it "shows the Process button after the transfer can no longer be canceled" do
+      ach_transfer.update_column(:aasm_state, "deposited")
+
       get :show, params: { id: hcb_code.hashid }
 
       expect(response).to be_successful
-      expect(response.body).to include(%(href="#{ach_start_approval_admin_path(ach_transfer)}">Process AchTransfer</a>))
+      expect(response.body).to include(%(action="#{ach_start_approval_admin_path(ach_transfer)}"))
+      expect(response.body).not_to include("Cancel transfer")
     end
 
     it "links each CPT to its own page" do
