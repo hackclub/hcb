@@ -611,6 +611,8 @@ class Event < ApplicationRecord
     country
     slug "URL" do |slug| "https://hcb.hackclub.com/#{slug}" end
     is_public "Transparent"
+    raised_ytd_cents "Raised (YTD)" do |cents| Money.from_cents(cents).to_s end
+    raised_last_year_cents "Raised (Last Year)" do |cents| Money.from_cents(cents).to_s end
     users "Active teenagers" do |users| users.active_teenager.distinct.count end
   end
 
@@ -685,6 +687,15 @@ class Event < ApplicationRecord
 
   def total_raised
     settled_incoming_balance_cents + fronted_incoming_balance_v2_cents
+  end
+
+  def raised_ytd_cents
+    ledger.revenue_cents(start_date: Time.current.beginning_of_year)
+  end
+
+  def raised_last_year_cents
+    last_year = 1.year.ago
+    ledger.revenue_cents(start_date: last_year.beginning_of_year, end_date: last_year.end_of_year)
   end
 
   def total_spent_cents
@@ -1065,7 +1076,11 @@ class Event < ApplicationRecord
     scoped_tags.where(parent_event_id: parent_id)
   end
 
-  def to_combobox_display
+  # `admin` is required rather than defaulted, so a caller cannot silently
+  # render a different label than the search endpoint returns.
+  def to_combobox_display(admin:)
+    return "#{name} (ID: #{id})" if admin
+
     name
   end
 
