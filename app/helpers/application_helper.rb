@@ -157,7 +157,7 @@ module ApplicationHelper
   end
 
   def modal_external_link(external_link)
-    pop_icon_to "external", sanitize(external_link), target: "_blank", size: 14, class: "modal__external muted", onload: "window.navigator.standalone ? this.setAttribute('target', '_top') : null"
+    pop_icon_to "external", sanitize(external_link), target: "_blank", size: 14, class: "modal__external muted", data: { controller: "standalone-link" }
   end
 
   def modal_header(text, external_link: nil)

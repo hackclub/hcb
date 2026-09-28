@@ -335,7 +335,7 @@ module Reimbursement
     end
 
     def team_review_required?
-      !OrganizerPosition.role_at_least?(user, event, :manager) || (event.reimbursements_require_organizer_peer_review && event.users.size > 1)
+      user.admin? || !OrganizerPosition.role_at_least?(user, event, :manager) || (event.reimbursements_require_organizer_peer_review && event.users.size > 1)
     end
 
     def reimbursement_confirmation_message
@@ -371,11 +371,7 @@ module Reimbursement
       maximum_amount_cents && amount_cents > maximum_amount_cents && currency == "USD"
     end
 
-    def minimum_wire_amount_cents
-      return event.minimum_wire_amount_cents unless card_grant.present?
-
-      500_00
-    end
+    delegate :minimum_wire_amount_cents, to: :event
 
     def below_minimum_amount?
       payout_method&.details.is_a?(LegalEntity::PayoutMethod::Wire) && amount_cents < minimum_wire_amount_cents

@@ -8,7 +8,6 @@
 #  aasm_state                                   :string           not null
 #  activated_at                                 :datetime
 #  address                                      :text
-#  can_front_balance                            :boolean          default(TRUE), not null
 #  country                                      :integer
 #  deleted_at                                   :datetime
 #  demo_mode                                    :boolean          default(FALSE), not null
@@ -75,6 +74,8 @@ class Event < ApplicationRecord
 
   include Commentable
 
+  prepend MemoWise
+
   has_paper_trail
   acts_as_paranoid
   validates_as_paranoid
@@ -123,6 +124,31 @@ class Event < ApplicationRecord
   scope :organized_by_teenagers, -> { includes(:event_tags).where(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }) }
   scope :not_organized_by_teenagers, -> { includes(:event_tags).where.not(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }).or(includes(:event_tags).where(event_tags: { name: nil })) }
   scope :robotics_team, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ROBOTICS_TEAM }) }
+
+  CATEGORY_TAGS = {
+    "hack_club"     => EventTag::Tags::HACK_CLUB,
+    "climate"       => EventTag::Tags::CLIMATE,
+    "hackathon"     => EventTag::Tags::HACKATHON,
+    "robotics_team" => EventTag::Tags::ROBOTICS_TEAM,
+    "nonprofit"     => nil # default category
+  }.freeze
+
+  # filter organizations by category
+  scope :by_category, ->(category) {
+    return all if category.nil?
+
+    # check if tag is in hash
+    if (tag = CATEGORY_TAGS[category])
+      includes(:event_tags).where(event_tags: { name: tag })
+    elsif category == "hack_club_hq"
+      # hack_club_hq is stored as a plan not a tag
+      includes(:plan).where(event_plans: { type: [Event::Plan::HackClubAffiliate.sti_name, Event::Plan::HackClubHQ.sti_name] })
+    else
+      # unrecognized category, return nothing, though this should never make it this far since values: constraint
+      none
+    end
+  }
+
   scope :flag_enabled, ->(flag) {
     joins("INNER JOIN flipper_gates ON CONCAT('Event;', events.id) = flipper_gates.value")
       .where("flipper_gates.feature_key = ? AND flipper_gates.key = ?", flag, "actors")
@@ -539,6 +565,8 @@ class Event < ApplicationRecord
 
   validates :discord_guild_id, :discord_channel_id, uniqueness: { message: "is already linked to another organization. Please contact hcb@hackclub.com if this is unexpected." }, allow_nil: true
 
+  validates :description, presence: true, if: -> { application.present? && (new_record? || description_changed?) }
+
   before_create { self.increase_account_id ||= "account_phqksuhybmwhepzeyjcb" }
 
   after_create :apply_plan_default_values
@@ -549,10 +577,6 @@ class Event < ApplicationRecord
 
   before_validation do
     build_plan(type: fallback_plan_class) if plan.nil?
-  end
-
-  after_update_commit if: :can_front_balance_previously_changed? do
-    Event::RefreshLedgersJob.perform_later(event_id: id)
   end
 
   # Explanation: https://github.com/norman/friendly_id/blob/0500b488c5f0066951c92726ee8c3dcef9f98813/lib/friendly_id/reserved.rb#L13-L28
@@ -659,30 +683,25 @@ class Event < ApplicationRecord
     completed_t + pending_t
   end
 
-  def refresh_ledgers!
-    ledger.refresh_all!
-    Ledger.where(card_grant: self.card_grants).find_each do |ledger|
-      ledger.refresh_all!
-    end
-  end
-
   def total_raised
-    balance = settled_incoming_balance_cents
-    if can_front_balance?
-      balance += fronted_incoming_balance_v2_cents
-    end
-    balance
+    settled_incoming_balance_cents + fronted_incoming_balance_v2_cents
   end
 
   def total_spent_cents
     (settled_outgoing_balance_cents + pending_outgoing_balance_v2_cents) * -1
   end
 
-  def balance_v2_cents(start_date: nil, end_date: nil)
-    sum = settled_balance_cents(start_date:, end_date:)
-    sum += pending_outgoing_balance_v2_cents(start_date:, end_date:)
-    sum += fronted_incoming_balance_v2_cents(start_date:, end_date:) if can_front_balance?
-    sum
+  def balance_v2_cents(start_date: nil, end_date: nil, legacy: false)
+    end_date = end_date&.to_date&.end_of_day
+
+    if legacy
+      sum = settled_balance_cents(start_date:, end_date:)
+      sum += pending_outgoing_balance_v2_cents(start_date:, end_date:)
+      sum += fronted_incoming_balance_v2_cents(start_date:, end_date:)
+      return sum
+    end
+
+    ledger.balance_cents(start_date:, end_date:)
   end
 
   # This calculates v2 cents of settled (Canonical Transactions)
@@ -742,14 +761,16 @@ class Event < ApplicationRecord
     cpt.sum(:amount_cents)
   end
 
-  def balance_available_v2_cents
-    @balance_available_v2_cents ||= begin
-      fee_balance = can_front_balance? ? fronted_fee_balance_v2_cents : fee_balance_v2_cents
+  memo_wise def balance_available_v2_cents(legacy: false)
+    if legacy
+      fee_balance = fronted_fee_balance_v2_cents
       if fee_balance.positive?
-        balance_v2_cents - fee_balance
+        balance_v2_cents(legacy:) - fee_balance
       else # `fee_balance` is negative, indicating a fee credit
-        balance_v2_cents
+        balance_v2_cents(legacy:)
       end
+    else
+      ledger.available_balance_cents
     end
   end
 
@@ -929,8 +950,17 @@ class Event < ApplicationRecord
 
   monetize :minimum_wire_amount_cents
 
+  # Organizations that have raised over $50,000 in the past year don't get
+  # charged for the $25 per wire our partner bank charges us. Hack Club's own
+  # projects are always charged, however much they've raised.
+  def wire_fee_waived?
+    return false if plan.is_a?(Event::Plan::HackClubAffiliate)
+
+    canonical_transactions.where("amount_cents > 0").where("date >= ?", 1.year.ago).sum(:amount_cents) > 50_000_00
+  end
+
   def minimum_wire_amount_cents
-    return 100 if canonical_transactions.where("amount_cents > 0").where("date >= ?", 1.year.ago).sum(:amount_cents) > 50_000_00
+    return 100 if wire_fee_waived?
     return 100 if plan.exempt_from_wire_minimum?
     return 100 if Flipper.enabled?(:exempt_from_wire_minimum, self)
 

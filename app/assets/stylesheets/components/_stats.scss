@@ -8,7 +8,9 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+    gap: 0.75rem;
     width: 100% !important;
+    min-width: 0;
   }
 }
 
@@ -22,6 +24,7 @@
 
   @media (max-width: 56em) {
     font-size: 1.5rem;
+    flex-shrink: 0;
   }
 }
 
@@ -38,6 +41,12 @@
   opacity: 0.75;
   font-weight: 800;
   white-space: nowrap;
+
+  @media (max-width: 56em) {
+    white-space: normal;
+    text-align: left;
+    min-width: 0;
+  }
 }
 
 .stat--small {

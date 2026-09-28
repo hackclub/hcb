@@ -107,9 +107,8 @@ class GSuiteAccount < ApplicationRecord
     self.save
   end
 
-  # Engineer-only via Rails console. Removes this account from HCB
-  # management, leaving the Google Workspace user (and its aliases) intact.
-  # Intended for use in the Rails console when a user's account is being
+  # Removes this account from HCB management, leaving the Google Workspace user
+  # (and its aliases) intact. Intended for when a user's account is being
   # transferred to the unmanaged hackclub.com domain from an HCB managed domain
   # (e.g., events.hackclub.com).
   def unmanage!(confirm:)

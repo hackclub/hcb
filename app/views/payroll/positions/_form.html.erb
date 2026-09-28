@@ -118,6 +118,17 @@
 
             <div class="menu__divider my-0"></div>
 
+            <div class="flex justify-between items-center gap-4">
+              <div class="pr-2">
+                <%= form.label :manager_id, "Manager" %>
+                <span class="muted block">Responsible for approving invoices</span>
+              </div>
+              <%= form.collection_select :manager_id, event.managers, :id, :name,
+      { selected: position&.manager_id || current_user.id, include_blank: "No manager" } %>
+            </div>
+
+            <div class="menu__divider my-0"></div>
+
             <% if editing && position.file.attached? %>
               <p class="muted text-sm m-0">
                 Current attachment:

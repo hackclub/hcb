@@ -10,7 +10,7 @@
     <% unless @application.may_mark_submitted? %>
       <p class="mt-0 text-lg muted">Your application is not yet complete. See the summary for what fields are missing.</p>
     <% else %>
-      <p class="mt-0 text-lg muted">Make sure everything looks correct before submitting</p>
+      <p class="mt-0 text-lg muted">Make sure everything looks correct before continuing and signing the fiscal sponsorship agreement.</p>
     <% end %>
   </div>
 <% end %>
@@ -31,6 +31,6 @@
     <%= form.hidden_field :return_to, value: review_application_path(@application) %>
   <% end %>
   <%= button_to submit_application_path(@application), method: :post, class: "btn bg-blue #{"tooltipped !pointer-events-auto" unless @application.may_mark_submitted?}", disabled: !@application.may_mark_submitted?, "aria-label": "This application is not ready to submit. See the summary above for what's missing." do %>
-    Submit application
+    Submit and continue
   <% end %>
 <% end %>
