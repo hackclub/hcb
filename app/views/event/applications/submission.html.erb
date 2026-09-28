@@ -145,6 +145,7 @@
                       This message will be sent to the applicant in the rejection email
                     </p>
                     <%= form.text_area :rejection_message, value:, class: "min-h-[300px] w-full max-w-full" %>
+                    <%= form.hidden_field :rejection_reason, value: key %>
                   </div>
                   <%= form.submit "Reject", class: "btn bg-primary" %>
                 </details>

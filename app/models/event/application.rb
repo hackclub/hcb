@@ -156,8 +156,12 @@ class Event
 
       event :mark_rejected do
         transitions from: [:submitted, :under_review, :approved], to: :rejected, if: -> { event.nil? }
-        after do |rejection_message|
+        after do |rejection_message, rejection_reason|
           contract.mark_voided! if contract.present?
+
+          if rejection_reason.present?
+            set_airtable_status(REJECTION_AIRTABLE_STATUSES.fetch(rejection_reason.to_sym))
+          end
 
           if rejection_message.present?
             Event::ApplicationMailer.with(application: self, rejection_message: rejection_message).rejected.deliver_later
@@ -173,6 +177,13 @@ class Event
     scope :in_progress, -> { where.not(aasm_state: ["approved", "rejected"]) }
 
     DISALLOWED_COUNTRIES = %w[IN NG RU CU IR KP SY BY VE SD SS MM AF YE SO PK CF CG ZW LY CM LB IQ].freeze
+
+    REJECTION_AIRTABLE_STATUSES = {
+      generic: "Rejected",
+      country: "Rejected - Country",
+      mission: "Rejected Teen - No charitable mission/values alignment",
+      adult: "Rejected - Adult"
+    }.freeze
 
     def rejection_messages
       generic = <<~MSG.strip
