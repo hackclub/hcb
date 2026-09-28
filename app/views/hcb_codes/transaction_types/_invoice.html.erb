@@ -291,20 +291,18 @@
     <% end %>
 
     <% unless @invoice.deposited? %>
-      <% if @invoice.event.can_front_balance? %>
-        <section class="hcb-code--footer">
-          <p class="my0 italic">
-            <% if @hcb_code.fee_waived? %>
-              Fees were waived on this transaction — enjoy!
-            <% end %>
-            The funds from this invoice payment are immediately reflected in your account balance.
-            (<a href="https://blog.hcb.hackclub.com/posts/oh-yeah-deposits-are-instant-now-238700">learn more</a>)
-          </p>
-        </section>
-      <% end %>
+      <section class="hcb-code--footer">
+        <p class="my0 italic">
+          <% if @hcb_code.fee_waived? %>
+            Fees were waived on this transaction — enjoy!
+          <% end %>
+          The funds from this invoice payment are immediately reflected in your account balance.
+          (<a href="https://blog.hcb.hackclub.com/posts/oh-yeah-deposits-are-instant-now-238700">learn more</a>)
+        </p>
+      </section>
     <% end %>
 
-    <% if (@invoice.deposited? || !@invoice.event.can_front_balance?) && @hcb_code.fee_waived? %>
+    <% if @invoice.deposited? && @hcb_code.fee_waived? %>
       <section class="hcb-code--footer">
         <p class="my0 italic">
           Fees were waived on this transaction — enjoy!

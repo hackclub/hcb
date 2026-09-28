@@ -19,11 +19,13 @@
 #  title         :text             not null
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
+#  manager_id    :bigint
 #  payee_id      :bigint           not null
 #
 # Indexes
 #
-#  index_payroll_positions_on_payee_id  (payee_id)
+#  index_payroll_positions_on_manager_id  (manager_id)
+#  index_payroll_positions_on_payee_id    (payee_id)
 #
 # Foreign Keys
 #
@@ -39,6 +41,7 @@ module Payroll
     has_paper_trail
 
     belongs_to :payee
+    belongs_to :manager, optional: true, class_name: "User"
 
     delegate :display_name, to: :payee, prefix: true
 
@@ -93,6 +96,7 @@ module Payroll
     validate :end_date_after_start_date
     validate :start_date_within_set_lead_time
     validate :duration_within_set_max
+    validate :manager_is_event_manager
 
     aasm timestamps: true do
       state :under_review, initial: true
@@ -122,10 +126,12 @@ module Payroll
       end
 
       event :mark_terminated do
-        transitions from: :onboarded, to: :terminated
+        transitions from: [:under_review, :onboarding, :onboarded], to: :terminated
 
         after do
-          Payroll::PositionMailer.with(position: self).terminated.deliver_later
+          # If it's still under review, we haven't sent any emails to the contractor yet,
+          # so we won't tell them that they've been "terminated"
+          Payroll::PositionMailer.with(position: self).terminated.deliver_later unless aasm.from_state == :under_review
         end
       end
     end
@@ -315,6 +321,14 @@ module Payroll
       Rails.application.routes.url_helpers.my_payroll_path
     end
 
+    def contractable_link_label
+      "contractor position"
+    end
+
+    def contractable_link_path
+      Rails.application.routes.url_helpers.event_payroll_position_path(event, self)
+    end
+
     # The contractor isn't emailed when the contract is sent; they're notified
     # only once HCB signs
     def contract_notify_when_sent
@@ -370,6 +384,15 @@ module Payroll
       return if start_date.blank? || end_date.blank?
 
       errors.add(:end_date, "cannot be more than 1 year after the start date") if end_date > start_date + MAX_DURATION
+    end
+
+    def manager_is_event_manager
+      return if manager.nil?
+
+      op = event.organizer_positions.where(user_id: manager.id).last
+      if op.nil? || op.role != "manager"
+        errors.add(:manager, "must be a manager of the event this position is for")
+      end
     end
 
   end

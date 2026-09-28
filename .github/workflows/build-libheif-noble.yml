@@ -1,0 +1,48 @@
+name: Build libheif packages for Ubuntu 24.04
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - scripts/libheif/build-noble.sh
+      - scripts/libheif/noble.patch
+      - .github/workflows/build-libheif-noble.yml
+  push:
+    branches:
+      - main
+    paths:
+      - scripts/libheif/build-noble.sh
+      - scripts/libheif/noble.patch
+      - .github/workflows/build-libheif-noble.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build amd64 packages
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+
+    env:
+      OUTPUT_DIR: ${{ github.workspace }}/dist/libheif-noble-1.23.4
+
+    steps:
+      - name: Check out package definitions
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Build packages
+        run: scripts/libheif/build-noble.sh "$OUTPUT_DIR"
+
+      - name: Verify package bundle
+        working-directory: ${{ env.OUTPUT_DIR }}
+        run: sha256sum -c SHA256SUMS
+
+      - name: Upload package bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: libheif-noble-1.23.4-1hcb1-ubuntu24.04.1-amd64
+          path: ${{ env.OUTPUT_DIR }}
+          if-no-files-found: error
+          retention-days: 90
+          compression-level: 0

@@ -1,3 +1,5 @@
+<% payout_transfer = @hcb_code.reimbursement_payout_holding.payout_transfer %>
+
 <article class="hcb-code">
   <%= render "hcb_codes/heading", hcb_code: @hcb_code, render_memo: true %>
 
@@ -14,16 +16,10 @@
       <strong>Report</strong>
       <%= link_to "View Report", @hcb_code.reimbursement_payout_holding.report %>
     </p>
-    <% if @hcb_code.reimbursement_payout_holding.ach_transfer %>
+    <% if payout_transfer.present? %>
       <p>
-        <strong>ACH transfer</strong>
-        <%= link_to "View Transfer", @hcb_code.reimbursement_payout_holding.ach_transfer %>
-      </p>
-    <% end %>
-    <% if @hcb_code.reimbursement_payout_holding.increase_check %>
-      <p>
-        <strong>Check</strong>
-        <%= link_to "View", @hcb_code.reimbursement_payout_holding.increase_check.local_hcb_code %>
+        <strong><%= @hcb_code.reimbursement_payout_holding.report.transfer_text.upcase_first %></strong>
+        <%= link_to "View transfer", payout_transfer.local_hcb_code %>
       </p>
     <% end %>
   </section>

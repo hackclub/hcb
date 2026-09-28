@@ -14,7 +14,8 @@ class PaymentsController < ApplicationController
 
   def new
     authorize @event, policy_class: PaymentPolicy
-    @payment = Payment.new
+    @payment = Payment.new(purpose: params[:purpose])
+    @payment.amount_cents = params[:amount_cents] if params[:amount_cents]
     @payee = @event.payees.not_archived.find_by_hashid(params[:payee_id]) if params[:payee_id].present?
     @recent_payments = @payee.payments.order(created_at: :desc).limit(5) if @payee
     render layout: "transfer"

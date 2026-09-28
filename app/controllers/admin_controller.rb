@@ -147,7 +147,19 @@ class AdminController < Admin::BaseController
   end
 
   def event_raised
-    @raised = cache_event_metric(:raised) { @event.total_raised.to_i }
+    @frame_id = :raised
+
+    @raised = case params[:period]
+              when "ytd"
+                @frame_id = :raised_ytd
+                cache_event_metric(:raised_ytd) { @event.raised_ytd_cents }
+              when "last_year"
+                @frame_id = :raised_last_year
+                cache_event_metric(:raised_last_year) { @event.raised_last_year_cents }
+              else
+                cache_event_metric(:raised) { @event.total_raised.to_i }
+              end
+
     render :event_raised, layout: false
   end
 
@@ -317,7 +329,7 @@ class AdminController < Admin::BaseController
       end
     end
 
-    # Auto mapp the transactions
+    # Auto map the transactions
     ::EventMappingEngine::Nightly.new.run
 
     duplicates = transactions.count - raw_intrafi_transactions.count
@@ -1391,7 +1403,12 @@ class AdminController < Admin::BaseController
       safely do
         ledger = Ledger.find_or_create_by!(primary: true, event_id: wise_transfer.event.id)
 
-        Ledger::Mapping.map_primary!(ledger:, ledger_item: li, mapped_by: current_user)
+        # The transfer's pending transaction owns the ledger item this all ends
+        # up on: settling below re-points the canonical transaction onto it and
+        # abandons the one it arrived with. Mapping that abandoned item instead
+        # would lose the admin's mapping, and the system would remap the
+        # surviving item on commit.
+        Ledger::Mapping.map_primary!(ledger:, ledger_item: wise_transfer.canonical_pending_transaction.ledger_item, mapped_by: current_user)
       end
 
       CanonicalPendingTransactionService::Settle.new(
@@ -1422,9 +1439,15 @@ class AdminController < Admin::BaseController
     redirect_back(fallback_location: root_path)
   end
 
+  def request_canonical_transaction_balance_export
+    ExportJob.perform_later(export_id: Export::Event::CanonicalTransactionBalances.create(requested_by: current_user, end_date: params[:end_date].presence).id)
+    flash[:success] = "We've emailed you an export of all HCB organizations' canonical transaction balances."
+    redirect_back(fallback_location: root_path)
+  end
+
   def balances
-    @start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
-    @end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
+    @start_date = params[:start_date].present? ? Date.parse(params[:start_date]).beginning_of_day : nil
+    @end_date = params[:end_date].present? ? Date.parse(params[:end_date]).end_of_day : nil
     @monthly_breakdown = params[:monthly_breakdown] || false
 
     if @start_date && @end_date && @start_date > @end_date

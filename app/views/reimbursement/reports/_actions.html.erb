@@ -68,7 +68,7 @@
               <%= inline_icon "reply" %>
               Return to <%= report.user.first_name %>
               <% button_hint = capture do %>
-                <span class="bold">Your next step:</span> approve individual expenses and reimburse the report. Or, return the report to <%= report.user.first_name %>.
+                <span class="bold">Your next step:</span> approve expenses and reimburse the report. Or, return the report to <%= report.user.first_name %>.
               <% end %>
             </button>
           <% end %>
@@ -228,10 +228,10 @@
               Reimburse <%= report.amount_to_reimburse.format %>
             </div>
           </div>
-        <% elsif report.submitted? && policy(report).approve_all_expenses? && report.expenses.approved.none? %>
-          <%= link_to reimbursement_report_approve_all_expenses_path(report), class: "btn bg-success", data: { turbo_method: :post } do %>
+        <% elsif report.submitted? && policy(report).approve? && report.expenses.approved.none? %>
+          <%= link_to reimbursement_report_approve_path(report), class: "btn bg-success", data: { turbo_confirm: "This will approve all expenses and submit the report to the HCB team for review.", turbo_method: :post } do %>
             <%= inline_icon "thumbsup" %>
-            Approve all expenses
+            Approve and reimburse
           <% end %>
         <% elsif report.reimbursement_requested? && !admin_signed_in? %>
           <div class="btn bg-info disabled" style="opacity: 0.75" disabled>
@@ -251,6 +251,15 @@
               <% button_hint = capture do %>
                 <span class="bold warning">⚠️ Warning</span>: this organization is currently financially frozen.
               <% end %>
+            <% end %>
+            <% if payout_method.is_a?(LegalEntity::PayoutMethod::Wire) && report.amount_to_reimburse_cents < 500_00 && !report.event.wire_fee_waived? %>
+              <% button_hint = capture do %>
+                <%= button_hint %>
+                <% admin_tool("p-2 mt-2") do %>
+                  <span class="bold warning">⚠️ Warning</span>: this wire is below the $500 minimum. Make sure to charge a custom $25 fee to <%= report.event.name %>.
+                <% end %>
+              <% end %>
+              <% turbo_confirm = ["⚠️ WARNING: This wire is below the $500 minimum. Make sure to charge a custom $25 fee to #{report.event.name} after approving this reimbursement.", turbo_confirm].compact.join("\n\n") %>
             <% end %>
             <% if payout_method.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
               <button class="btn bg-info whitespace-nowrap" data-behavior="modal_trigger" data-modal="convert_to_wise_transfer" id="submit_button">
