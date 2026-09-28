@@ -28,6 +28,10 @@ RSpec.describe EventsController do
     create_session(organizer, verified: true)
   end
 
+  def fund(event, cents)
+    create(:canonical_event_mapping, canonical_transaction: create(:canonical_transaction, amount_cents: cents), event:)
+  end
+
   # XLSX files are zip archives; cell text lives in the shared strings table.
   def xlsx_entry(body, entry)
     Zip::File.open_buffer(StringIO.new(body)).read(entry)
@@ -235,6 +239,21 @@ RSpec.describe EventsController do
 
       expect(page.css("#tags_settings input[name='label'][disabled]")).to be_empty
       expect(page.css("#tags_settings a[disabled]")).to be_empty
+    end
+  end
+
+  describe "#update" do
+    it "lets an admin set the sub-organization name prefix" do
+      admin = create(:user, :make_admin)
+      event = create(:event)
+      create_session(admin, verified: true)
+
+      patch(:update, params: {
+              id: event.slug,
+              event: { config_attributes: { id: event.config.id, subevent_name_prefix: "Athena Award — " } }
+            })
+
+      expect(event.config.reload.subevent_name_prefix).to eq("Athena Award — ")
     end
   end
 
@@ -668,6 +687,35 @@ RSpec.describe EventsController do
         money(transparent_sub.balance_available_v2_cents + private_sub.balance_available_v2_cents)
       )
     end
+
+    it "rolls up every visible descendant, not only the direct sub-organizations" do
+      fund(create(:event, parent: create(:event, parent: private_sub, is_public: false), is_public: false), 250)
+      sign_in_organizer_of(parent)
+
+      get(:async_sub_organization_balance, params: { event_id: parent.slug })
+
+      expect(response.body).to include(
+        money(transparent_sub.balance_available_v2_cents + private_sub.balance_available_v2_cents + 250)
+      )
+    end
+
+    it "leaves out a transparent descendant nested under a private one for a signed out visitor" do
+      fund(create(:event, parent: transparent_sub, is_public: true), 250)
+      fund(create(:event, parent: private_sub, is_public: true), 500)
+
+      get(:async_sub_organization_balance, params: { event_id: parent.slug })
+
+      expect(response.body).to include(money(transparent_sub.balance_available_v2_cents + 250))
+    end
+
+    it "sums only the matching sub-organizations when searching", :aggregate_failures do
+      fund(create(:event, parent: transparent_sub, is_public: true), 250)
+
+      get(:async_sub_organization_balance, params: { event_id: parent.slug, q: transparent_sub.name })
+
+      expect(response.body).to include(money(transparent_sub.balance_available_v2_cents))
+      expect(response.body).not_to include(money(transparent_sub.balance_available_v2_cents + 250))
+    end
   end
 
   describe "#async_sub_organization_balances" do
@@ -683,9 +731,40 @@ RSpec.describe EventsController do
           format: :json)
 
       expect(response.parsed_body).to eq(
-        transparent_sub.public_id => money(transparent_sub.ledger.available_balance_cents),
-        grandchild.public_id      => money(grandchild.ledger.available_balance_cents)
+        transparent_sub.public_id => {
+          "balance"                  => money(transparent_sub.ledger.available_balance_cents),
+          "sub_organization_balance" => money(grandchild.ledger.available_balance_cents)
+        },
+        grandchild.public_id      => { "balance" => money(grandchild.ledger.available_balance_cents) }
       )
+    end
+
+    it "rolls each sub-organization balance up through every level beneath it" do
+      child = create(:event, parent: transparent_sub, is_public: true)
+      grandchild = create(:event, parent: child, is_public: true)
+      fund(child, 200)
+      fund(grandchild, 400)
+
+      get(:async_sub_organization_balances,
+          params: { event_id: parent.slug, ids: [transparent_sub.public_id, child.public_id, grandchild.public_id] },
+          format: :json)
+
+      expect(response.parsed_body.transform_values { |amounts| amounts["sub_organization_balance"] }).to eq(
+        transparent_sub.public_id => money(600),
+        child.public_id           => money(400),
+        grandchild.public_id      => nil
+      )
+    end
+
+    it "leaves a private descendant out of the roll-up for a signed out visitor" do
+      fund(create(:event, parent: transparent_sub, is_public: true), 200)
+      fund(create(:event, parent: transparent_sub, is_public: false), 400)
+
+      get(:async_sub_organization_balances,
+          params: { event_id: parent.slug, ids: [transparent_sub.public_id] },
+          format: :json)
+
+      expect(response.parsed_body.dig(transparent_sub.public_id, "sub_organization_balance")).to eq(money(200))
     end
 
     it "skips a private descendant for a signed out visitor" do

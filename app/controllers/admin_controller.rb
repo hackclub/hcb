@@ -317,7 +317,7 @@ class AdminController < Admin::BaseController
       end
     end
 
-    # Auto mapp the transactions
+    # Auto map the transactions
     ::EventMappingEngine::Nightly.new.run
 
     duplicates = transactions.count - raw_intrafi_transactions.count
@@ -1391,7 +1391,12 @@ class AdminController < Admin::BaseController
       safely do
         ledger = Ledger.find_or_create_by!(primary: true, event_id: wise_transfer.event.id)
 
-        Ledger::Mapping.map_primary!(ledger:, ledger_item: li, mapped_by: current_user)
+        # The transfer's pending transaction owns the ledger item this all ends
+        # up on: settling below re-points the canonical transaction onto it and
+        # abandons the one it arrived with. Mapping that abandoned item instead
+        # would lose the admin's mapping, and the system would remap the
+        # surviving item on commit.
+        Ledger::Mapping.map_primary!(ledger:, ledger_item: wise_transfer.canonical_pending_transaction.ledger_item, mapped_by: current_user)
       end
 
       CanonicalPendingTransactionService::Settle.new(

@@ -15,7 +15,7 @@ class CanonicalPendingTransaction
       hcb_code = @cpt.local_hcb_code
       message = "Your card was charged $#{@cpt.amount.abs} at '#{@cpt.memo}'."
       if hcb_code.receipt_required?
-        message += " To attach a receipt, text us a image in the next five minutes, or upload one to #{attach_receipt_url hcb_code}."
+        message += " To attach a receipt, text us an image in the next five minutes, or upload one to #{attach_receipt_url hcb_code}."
       end
 
       TwilioMessageService::Send.new(@user, message, hcb_code:).run!
