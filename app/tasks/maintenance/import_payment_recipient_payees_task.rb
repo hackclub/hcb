@@ -4,15 +4,15 @@ module Maintenance
   # Imports the old transfer system's recipients as payees: one managed legal
   # entity per email per event, with each distinct set of saved details as a payout method.
   class ImportPaymentRecipientPayeesTask < MaintenanceTasks::Task
-    # payment_model => [association on the recipient, states in which the money left]
+    # payment_model => [association on the recipient, states in which the money left, fields saying where it went]
     SENT_TRANSFERS = {
-      AchTransfer.name   => [:ach_transfers, %w[in_transit deposited]],
-      IncreaseCheck.name => [:increase_checks, %w[approved]],
-      Wire.name          => [:wires, %w[approved deposited]],
+      AchTransfer.name   => [:ach_transfers, %w[in_transit deposited], %i[account_number routing_number]],
+      IncreaseCheck.name => [:increase_checks, %w[approved], %i[address_line1 address_line2 address_city address_state address_zip]],
+      Wire.name          => [:wires, %w[approved deposited], %i[account_number bic_code]],
     }.freeze
 
-    # Payouts HCB sends itself; their recipients were never in an org's address book.
-    SYSTEM_PAYOUTS = %i[payment_attempt reimbursement_payout_holding employee_payment].freeze
+    # Payouts HCB sends itself; no organizer ever typed in their recipients.
+    SYSTEM_PAYOUTS = %i[reimbursement_payout_holding employee_payment].freeze
 
     def collection
       Event.unscope(:order).where(id: PaymentRecipient.unscoped.select(:event_id))
@@ -36,38 +36,43 @@ module Maintenance
     end
 
     def system_generated?(recipient)
-      transfers(recipient)&.any? { |transfer| SYSTEM_PAYOUTS.any? { |payout| transfer.try(payout) } }
-    end
-
-    def import(event, email, recipients)
-      # The legal entity's name is sent to TaxBandits, so it can't be empty.
-      name = latest_name(recipients) || email
-
-      ActiveRecord::Base.transaction do
-        legal_entity = LegalEntity.create!(managing_event: event, name:)
-        event.payees.create!(display_name: name, email:, legal_entity:, imported_at: Time.current)
-
-        default = true
-        payout_details_for(recipients).each do |recipient, (details_class, attributes)|
-          next unless create_payout_method(legal_entity, details_class, attributes, recipient, default:)
-
-          default = false
-        end
+      transfers(recipient)&.any? do |transfer|
+        # A contractor's payment attempt still marks their transfer once it's soft deleted.
+        Payment::Attempt.with_deleted.exists?(payout: transfer) || SYSTEM_PAYOUTS.any? { |payout| transfer.try(payout) }
       end
     end
 
-    def latest_name(recipients)
-      recipients.sort_by(&:created_at).reverse.filter_map { |recipient| recipient.name.presence }.first
+    def import(event, email, recipients)
+      recipients = ranked(recipients)
+
+      ActiveRecord::Base.transaction do
+        legal_entity = LegalEntity.create!(managing_event: event)
+
+        default = nil
+        payout_details_for(recipients).each do |recipient, (details_class, attributes)|
+          next unless create_payout_method(legal_entity, details_class, attributes, recipient, default: default.nil?)
+
+          default ||= recipient
+        end
+
+        # Named after whoever the default pays; the name is sent to TaxBandits, so it can't be empty.
+        name = default&.name.presence || recipients.find { |recipient| recipient.name.present? }&.name || email
+        legal_entity.update!(name:)
+        # Dated like the recipients, since the picker lists the newest payees first.
+        event.payees.create!(display_name: name, email:, legal_entity:, imported_at: Time.current, created_at: recipients.map(&:created_at).max)
+      end
     end
 
-    # Ranked by when money last went out on each, then by recency, one per distinct set of details.
-    def payout_details_for(recipients)
-      ranked = recipients.sort_by { |recipient| [last_sent_at(recipient) || Time.zone.at(0), recipient.created_at] }
-                         .reverse
+    # Ranked by when money last went out on each, then by recency.
+    def ranked(recipients)
+      recipients.sort_by { |recipient| [last_sent_at(recipient) || Time.zone.at(0), recipient.created_at] }.reverse
+    end
 
-      ranked.map { |recipient| [recipient, detail_attributes(recipient)] }
-            .reject { |_recipient, details| details.nil? }
-            .uniq { |_recipient, details| details }
+    # One per distinct set of details, keeping the best ranked.
+    def payout_details_for(recipients)
+      recipients.map { |recipient| [recipient, detail_attributes(recipient)] }
+                .reject { |_recipient, details| details.nil? }
+                .uniq { |_recipient, details| details }
     end
 
     # Details that no longer pass validation are logged and left behind.
@@ -103,7 +108,7 @@ module Maintenance
       when IncreaseCheck.name
         [LegalEntity::PayoutMethod::Check, {
           address_line1: recipient.address_line1,
-          address_line2: recipient.address_line2,
+          address_line2: recipient.address_line2.presence,
           address_city: recipient.address_city,
           address_state: recipient.address_state,
           address_postal_code: recipient.address_zip
@@ -113,12 +118,14 @@ module Maintenance
           account_number: recipient.account_number,
           bic_code: recipient.bic_code,
           address_line1: recipient.address_line1,
-          address_line2: recipient.address_line2,
+          address_line2: recipient.address_line2.presence,
           address_city: recipient.address_city,
           address_state: recipient.address_state,
           address_postal_code: recipient.address_postal_code,
           recipient_country: recipient.recipient_country,
-          recipient_information: recipient.recipient_information || {}
+          recipient_name: recipient.name,
+          # Each transfer sets these itself, which is why the payout form leaves them out too.
+          recipient_information: recipient.recipient_information.to_h.except("remittance_info", "purpose_code")
         }]
       end
     end
@@ -129,11 +136,15 @@ module Maintenance
     end
 
     def last_sent_at(recipient)
-      _association, states = SENT_TRANSFERS[recipient.payment_model]
-      sent = transfers(recipient)&.where(aasm_state: states)
+      _association, states, destination = SENT_TRANSFERS[recipient.payment_model]
+      return if destination.nil?
+
+      sent = transfers(recipient).where(aasm_state: states)
       # A stopped or returned check stays approved.
       sent = sent.where.not(id: IncreaseCheck.canceled) if recipient.payment_model == IncreaseCheck.name
-      sent&.maximum(:created_at)
+      # Reusing a saved recipient overwrites its details, so only sends to the ones it holds now count.
+      sent.select { |transfer| destination.all? { |field| transfer.public_send(field) == recipient.public_send(field) } }
+          .map(&:created_at).max
     end
 
   end

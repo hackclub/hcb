@@ -79,11 +79,6 @@ class Payee < ApplicationRecord
     archived_at.present?
   end
 
-  # Whether this payee was imported from the old transfer system.
-  def imported?
-    imported_at.present?
-  end
-
   private
 
   def managed_legal_entity_constraints

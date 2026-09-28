@@ -22,9 +22,9 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
                                address_postal_code: "SW1A 1AA", recipient_country: "GB", **attrs)
   end
 
-  def check_recipient(address_line1: "8605 Santa Monica Blvd")
+  def check_recipient(address_line1: "8605 Santa Monica Blvd", **attrs)
     create(:payment_recipient, event:, email: "orpheus@hackclub.com", name: "Orpheus", payment_model: "IncreaseCheck",
-                               address_line1:, address_city: "West Hollywood", address_state: "CA", address_zip: "90069")
+                               address_line1:, address_city: "West Hollywood", address_state: "CA", address_zip: "90069", **attrs)
   end
 
   # Validating a wire asks Column which country the bank is in, so the import
@@ -47,7 +47,7 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
     perform_enqueued_jobs(only: MaintenanceTasks::TaskJob)
 
     expect(MaintenanceTasks::Run.last).to be_succeeded
-    expect(event.payees.sole).to be_imported
+    expect(event.payees.sole.imported_at).to be_present
   end
 
   it "collapses every recipient sharing an email into one imported payee" do
@@ -57,7 +57,7 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
     run_task
 
     payee = event.payees.sole
-    expect(payee).to be_imported
+    expect(payee.imported_at).to be_present
     expect(payee.email).to eq("orpheus@hackclub.com")
     expect(payee.legal_entity.managing_event).to eq(event)
     expect(payee.legal_entity.payout_methods.count).to eq(2)
@@ -86,6 +86,37 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
     expect(default.details.account_number).to eq("111111111")
   end
 
+  it "names the payee after whoever its default pays, so a shared email can't pin one name on another's account" do
+    # Reusing an older saved recipient makes it the last paid while it stays the oldest saved.
+    staples = ach_recipient(email: "treasurer@hackclub.com", name: "Staples", account_number: "111111111")
+    travel_to(1.day.from_now) do
+      transfer_to(ach_recipient(email: "treasurer@hackclub.com", name: "Home Depot", account_number: "222222222"), aasm_state: "deposited")
+    end
+    travel_to(2.days.from_now) { transfer_to(staples, aasm_state: "deposited") }
+
+    run_task
+
+    payee = event.payees.sole
+    expect(payee.legal_entity.default_payout_method.details.account_number).to eq("111111111")
+    expect(payee.display_name).to eq("Staples")
+    expect(payee.legal_entity.name).to eq("Staples")
+  end
+
+  it "credits a send only to the details it went to, since reusing a saved recipient overwrites them" do
+    edited = ach_recipient(email: "orpheus@hackclub.com", account_number: "111111111")
+    other = ach_recipient(email: "orpheus@hackclub.com", account_number: "222222222")
+    travel_to(1.day.from_now) { transfer_to(other, aasm_state: "deposited") }
+    travel_to(2.days.from_now) { transfer_to(edited, aasm_state: "deposited") }
+    travel_to(3.days.from_now) do
+      create(:ach_transfer, event:, payment_recipient: edited, account_number: "333333333", routing_number: "021000021",
+                            bank_name: "Chase", recipient_name: "Orpheus", recipient_email: edited.email, aasm_state: "rejected")
+    end
+
+    run_task
+
+    expect(event.payees.sole.legal_entity.default_payout_method.details.account_number).to eq("222222222")
+  end
+
   it "falls back to the most recent recipient when nothing was ever sent" do
     ach_recipient(email: "orpheus@hackclub.com", account_number: "111111111")
     travel_to(1.day.from_now) { ach_recipient(email: "orpheus@hackclub.com", account_number: "222222222") }
@@ -105,7 +136,7 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
 
     expect(event.payees.reload).to contain_exactly(payee)
     expect(payee.reload.legal_entity.payout_methods).to be_empty
-    expect(payee).not_to be_imported
+    expect(payee.imported_at).to be_nil
   end
 
   it "leaves behind and logs details that can no longer make a usable payout method" do
@@ -143,7 +174,7 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
 
   it "copies a wire recipient's details across as a wire payout method" do
     stub_column_institution(country_code: "GB")
-    wire_recipient(email: "orpheus@hackclub.com")
+    wire_recipient(email: "orpheus@hackclub.com", name: "Orpheus Holdings Ltd")
 
     run_task
 
@@ -151,6 +182,18 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
     expect(details).to be_a(LegalEntity::PayoutMethod::Wire)
     expect(details.recipient_country).to eq("GB")
     expect(details.bic_code).to eq("BARCGB22")
+    # The payee can be renamed, but a wire has to keep going to the account holder.
+    expect(details.recipient_name).to eq("Orpheus Holdings Ltd")
+  end
+
+  it "leaves per-transfer wire fields off the method, so one account doesn't import twice" do
+    stub_column_institution(country_code: "GB")
+    wire_recipient(email: "orpheus@hackclub.com", recipient_information: { "remittance_info" => "Invoice 1" })
+    wire_recipient(email: "orpheus@hackclub.com", recipient_information: { "remittance_info" => "Invoice 2", "purpose_code" => "IVPT" })
+
+    run_task
+
+    expect(event.payees.sole.legal_entity.payout_methods.sole.details.recipient_information).to be_empty
   end
 
   it "leaves behind a wire whose saved details no longer make a valid method" do
@@ -164,6 +207,15 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
   it "collapses recipients that repeat the same details into one payout method" do
     # The old system saves a recipient per transfer, so the same account recurs.
     3.times { ach_recipient(email: "orpheus@hackclub.com", account_number: "123456789") }
+
+    run_task
+
+    expect(event.payees.sole.legal_entity.payout_methods.count).to eq(1)
+  end
+
+  it "treats a blank address line 2 as a missing one, so one address doesn't import twice" do
+    check_recipient
+    check_recipient(address_line2: "")
 
     run_task
 
@@ -202,6 +254,37 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
     expect { run_task }.not_to change(Payee, :count)
   end
 
+  it "still skips a contractor's recipient once their payment attempt is soft deleted" do
+    recipient = ach_recipient(email: "old-address@hackclub.com")
+    create(:payment_attempt, payout: transfer_to(recipient, aasm_state: "deposited")).destroy
+
+    expect { run_task }.not_to change(Payee, :count)
+  end
+
+  it "skips a recipient written behind a reimbursement, so an org can't take over the reimbursed user's bank account" do
+    transfer = transfer_to(ach_recipient(email: "reimbursed@hackclub.com"), aasm_state: "deposited")
+    Reimbursement::PayoutHolding.insert!({ reimbursement_reports_id: create(:reimbursement_report, event:).id, ach_transfer_id: transfer.id, aasm_state: "sent", amount_cents: 100 })
+
+    expect { run_task }.not_to change(Payee, :count)
+  end
+
+  it "skips a recipient written behind a payroll payment, so an org can't take over an employee's bank account" do
+    transfer = transfer_to(ach_recipient(email: "employee@hackclub.com"), aasm_state: "deposited")
+    employee = Employee.insert!({ aasm_state: "onboarded", entity_id: create(:user).id, entity_type: "User", event_id: event.id })
+    Employee::Payment.insert!({ employee_id: employee.first["id"], payout_id: transfer.id, payout_type: "AchTransfer", aasm_state: "paid", title: "Payroll" })
+
+    expect { run_task }.not_to change(Payee, :count)
+  end
+
+  it "dates each payee by its recipients, so the picker doesn't list the stalest first" do
+    travel_to(1.year.ago) { transfer_to(ach_recipient(email: "stale@hackclub.com"), aasm_state: "deposited") }
+    transfer_to(ach_recipient(email: "recent@hackclub.com"), aasm_state: "deposited")
+
+    run_task
+
+    expect(event.payees.order(created_at: :desc).map(&:email)).to eq(%w[recent@hackclub.com stale@hackclub.com])
+  end
+
   it "leaves an archived payee's email alone rather than bringing them back" do
     create(:payee, event:, email: "orpheus@hackclub.com", archived_at: Time.current)
     ach_recipient(email: "orpheus@hackclub.com")
@@ -211,7 +294,7 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
 
   it "doesn't count a stopped check as money that went out" do
     stopped = check_recipient(address_line1: "1 Stopped St")
-    IncreaseCheck.insert!({ event_id: event.id, payment_recipient_id: stopped.id, aasm_state: "approved", column_status: "stopped" })
+    IncreaseCheck.insert!({ event_id: event.id, payment_recipient_id: stopped.id, aasm_state: "approved", column_status: "stopped", address_line1: "1 Stopped St", address_city: "West Hollywood", address_state: "CA", address_zip: "90069" })
     travel_to(1.day.from_now) { check_recipient(address_line1: "2 Newer St") }
 
     run_task
@@ -219,17 +302,22 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
     expect(event.payees.sole.legal_entity.default_payout_method.details.address_line1).to eq("2 Newer St")
   end
 
-  it "hands the default to the next method when the one money last went out on can't be rebuilt" do
-    paid = ach_recipient(email: "orpheus@hackclub.com", account_number: "111111111")
-    transfer_to(paid, aasm_state: "deposited")
-    paid.update!(routing_number: "12345")
-    ach_recipient(email: "orpheus@hackclub.com", account_number: "222222222")
+  it "hands the default, and the name, to the next method when the one money last went out on can't be rebuilt" do
+    ach_recipient(email: "orpheus@hackclub.com", name: "Home Depot", account_number: "222222222")
+    travel_to(1.day.from_now) do
+      paid = ach_recipient(email: "orpheus@hackclub.com", name: "Staples", account_number: "111111111")
+      # Sent on details today's validations reject, which the transfer also writes back onto the recipient.
+      build(:ach_transfer, event:, payment_recipient: paid, account_number: "111111111", routing_number: "12345",
+                           bank_name: "Chase", recipient_name: "Staples", recipient_email: paid.email, aasm_state: "deposited")
+        .save!(validate: false)
+    end
 
     run_task
 
-    payout_methods = event.payees.sole.legal_entity.payout_methods
-    expect(payout_methods.sole.details.account_number).to eq("222222222")
-    expect(payout_methods.sole).to be_default
+    payee = event.payees.sole
+    expect(payee.legal_entity.payout_methods.sole.details.account_number).to eq("222222222")
+    expect(payee.legal_entity.payout_methods.sole).to be_default
+    expect(payee.display_name).to eq("Home Depot")
   end
 
   it "groups emails saved before they were normalized with their lowercase twins" do
