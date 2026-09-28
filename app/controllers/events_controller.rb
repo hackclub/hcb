@@ -570,12 +570,12 @@ class EventsController < ApplicationController
     ledger_balances = sub_organization_ledger_balances(events.map(&:id) + subtrees.values.flatten)
 
     balances = events.to_h do |event|
-      amounts = { balance: helpers.render_money_amount(ledger_balances[event.id]) }
+      amounts = { balance: helpers.render_money(ledger_balances[event.id]) }
 
       # Only the descendants this user can see, so a private branch's money
       # isn't revealed through its parent's row. A row with none keeps its dash.
       if subtrees[event.id].any?
-        amounts[:sub_organization_balance] = helpers.render_money_amount(ledger_balances.values_at(*subtrees[event.id]).compact.sum)
+        amounts[:sub_organization_balance] = helpers.render_money(ledger_balances.values_at(*subtrees[event.id]).compact.sum)
       end
 
       [event.public_id, amounts]
@@ -956,6 +956,7 @@ class EventsController < ApplicationController
       format.html do
         cookies[:sub_organizations_view] = params[:view] if params[:view]
         @view = cookies[:sub_organizations_view] || "list"
+        @sub_organization_count = visible_subevent_ids.size
 
         if @view == "list"
           @search = params[:q].presence
