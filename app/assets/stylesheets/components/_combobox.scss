@@ -91,7 +91,7 @@
   @apply bg-gray-100 dark:bg-neutral-800;
   padding: var(--combobox-option-padding);
   user-select: none;
-  overflow: hidden;
+  overflow-wrap: anywhere;
   margin-top: 0;
   cursor: pointer;
 
