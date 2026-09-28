@@ -545,6 +545,7 @@ class AdminController < Admin::BaseController
     @failed = params[:failed] == "1" ? true : nil
 
     @event_id = params[:event_id].presence
+    @country = params[:country].presence
 
     if @event_id
       @event = Event.find(@event_id)
@@ -559,6 +560,8 @@ class AdminController < Admin::BaseController
     relation = relation.reimbursement_requested if @pending
 
     relation = relation.includes(:payout_holding).where(payout_holding: { aasm_state: :failed }) if @failed
+
+    relation = relation.in_country(@country) if @country
 
     @unprocessed_wise_report_ids = Reimbursement::Report
                                    .where(id: Reimbursement::PayoutHolding.settled.or(Reimbursement::PayoutHolding.pending).select(:reimbursement_reports_id))
