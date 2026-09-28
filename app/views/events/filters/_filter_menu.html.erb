@@ -143,10 +143,13 @@
         </div>
         <div data-tabs-target="tab" id="receipts">
           <div class="flex items-center">
-            <%= link_to("Missing receipts", event_transactions_list_path(@event, upsert_query_params(missing_receipts: true, page: 1)), class: "flex-auto menu__action #{"menu__action--active" if @missing_receipts}", data: { turbo_prefetch: "false" }) %>
+            <%= link_to("Missing receipts", event_transactions_list_path(@event, upsert_query_params(missing_receipts: true, lost_receipts: nil, page: 1)), class: "flex-auto menu__action #{"menu__action--active" if @missing_receipts}", data: { turbo_prefetch: "false" }) %>
+          </div>
+          <div class="flex items-center">
+            <%= link_to("Lost receipts", event_transactions_list_path(@event, upsert_query_params(lost_receipts: true, missing_receipts: nil, page: 1)), class: "flex-auto menu__action #{"menu__action--active" if @lost_receipts}", data: { turbo_prefetch: "false" }) %>
           </div>
           <div>
-            <%= link_to("All transactions", event_transactions_list_path(@event, upsert_query_params(missing_receipts: nil, page: 1)), class: "flex-auto menu__action #{"menu__action--active" unless @missing_receipts}", data: { turbo_prefetch: "false" }) %>
+            <%= link_to("All transactions", event_transactions_list_path(@event, upsert_query_params(missing_receipts: nil, lost_receipts: nil, page: 1)), class: "flex-auto menu__action #{"menu__action--active" unless @missing_receipts || @lost_receipts}", data: { turbo_prefetch: "false" }) %>
           </div>
         </div>
       </div>

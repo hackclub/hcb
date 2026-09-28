@@ -3,7 +3,7 @@
 module PendingTransactionEngine
   module PendingTransaction
     class All
-      def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, revenue: false, expenses: false, user: nil, missing_receipts: false, category: nil, merchant: nil, order_by: :date, subledger: false)
+      def initialize(event_id:, search: nil, tag_id: nil, minimum_amount: nil, maximum_amount: nil, start_date: nil, end_date: nil, revenue: false, expenses: false, user: nil, missing_receipts: false, lost_receipts: false, category: nil, merchant: nil, order_by: :date, subledger: false)
         @event_id = event_id
         @search = search
         @tag_id = tag_id&.to_i
@@ -15,6 +15,7 @@ module PendingTransactionEngine
         @expenses = expenses
         @user = user
         @missing_receipts = missing_receipts
+        @lost_receipts = lost_receipts
         @category = category
         @merchant = merchant
         @order_by = order_by
@@ -74,6 +75,12 @@ module PendingTransactionEngine
                 cpts.joins("LEFT JOIN hcb_codes ON hcb_codes.hcb_code = canonical_pending_transactions.hcb_code")
                     .joins("LEFT JOIN receipts ON receipts.receiptable_id = hcb_codes.id AND receipts.receiptable_type = 'HcbCode'")
                     .where("receipts.id IS NULL AND hcb_codes.marked_no_or_lost_receipt_at is NULL AND canonical_pending_transactions.amount_cents <= 0")
+            end
+
+            if @lost_receipts
+              cpts =
+                cpts.joins("LEFT JOIN hcb_codes ON hcb_codes.hcb_code = canonical_pending_transactions.hcb_code")
+                    .where("hcb_codes.marked_no_or_lost_receipt_at IS NOT NULL")
             end
 
             if @user
