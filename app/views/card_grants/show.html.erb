@@ -65,8 +65,10 @@
           <% admin_tool_if @card_grant.user != current_user do %>
             <%= render partial: "card_grants/card_details", locals: { card_grant: @card_grant } %>
           <% end %>
-        <% else %>
-          <%= render partial: "card_grants/canceled_warning", locals: { card_grant: @card_grant } %>
+        <% elsif @card_grant.canceled? %>
+          <div class="self-center">
+            <%= render partial: "card_grants/canceled_warning", locals: { card_grant: @card_grant } %>
+          </div>
         <% end %>
         <%= render partial: "card_grants/grant_details", locals: { card_grant: @card_grant } %>
 
