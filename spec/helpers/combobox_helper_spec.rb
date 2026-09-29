@@ -15,6 +15,7 @@ RSpec.describe ComboboxHelper, type: :helper do
       expect(html).to include('data-combobox-target="hidden"')
       expect(html).to include('data-combobox-target="listbox"')
       expect(html).to include('data-combobox-target="status"')
+      expect(html).to include('data-combobox-target="badge"')
 
       doc = Nokogiri::HTML.fragment(html)
       expect(doc.at_css("input[type=text]")["aria-controls"]).to eq(doc.at_css("ul")["id"])
@@ -61,15 +62,14 @@ RSpec.describe ComboboxHelper, type: :helper do
         expect(html.at_css("input[type=hidden]")["value"]).to eq(event.id.to_s)
       end
 
-      # The dropdown labels come from the same method, so the preselected label
-      # has to agree with them or re-picking the same record changes the text.
-      it "uses the admin display when an admin is signed in" do
+      it "badges the record with its ID for admins only, leaving the label plain" do
+        wrapper = -> { Nokogiri::HTML.fragment(helper.combobox_tag(:event_id, "/search", selected: event)).at_css("div.combobox") }
+
+        expect(wrapper.call["data-combobox-badge-value"]).to be_nil
+
         allow(helper).to receive(:admin_signed_in?).and_return(true)
-
-        html = Nokogiri::HTML.fragment(helper.combobox_tag(:event_id, "/search", selected: event))
-
-        expect(html.at_css("div.combobox")["data-combobox-label-value"])
-          .to eq("Hack Club HQ (ID: #{event.id})")
+        expect(wrapper.call["data-combobox-label-value"]).to eq("Hack Club HQ")
+        expect(wrapper.call["data-combobox-badge-value"]).to eq("ID: #{event.id}")
       end
     end
 
@@ -77,15 +77,16 @@ RSpec.describe ComboboxHelper, type: :helper do
     # returns `public_id`) pass a Hash instead.
     it "accepts an explicit value/label Hash, with either string or symbol keys" do
       symbol_keys = Nokogiri::HTML.fragment(
-        helper.combobox_tag(:event_id, "/search", selected: { value: "evt_123", label: "Hack Club HQ" })
+        helper.combobox_tag(:event_id, "/search", selected: { value: "evt_123", label: "Hack Club HQ", badge: "ID: 1" })
       ).at_css("div.combobox")
       string_keys = Nokogiri::HTML.fragment(
-        helper.combobox_tag(:event_id, "/search", selected: { "value" => "evt_123", "label" => "Hack Club HQ" })
+        helper.combobox_tag(:event_id, "/search", selected: { "value" => "evt_123", "label" => "Hack Club HQ", "badge" => "ID: 1" })
       ).at_css("div.combobox")
 
       [symbol_keys, string_keys].each do |wrapper|
         expect(wrapper["data-combobox-selected-value"]).to eq("evt_123")
         expect(wrapper["data-combobox-label-value"]).to eq("Hack Club HQ")
+        expect(wrapper["data-combobox-badge-value"]).to eq("ID: 1")
       end
     end
 
