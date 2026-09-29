@@ -48,7 +48,7 @@
   <% elsif @card_grant.user == current_user && @card_grant.stripe_card.nil? && @card_grant.canceled? %>
     <%= blankslate "Sorry, this grant was canceled!", class: "flex-grow" %>
   <%# Grantee has accepted invite %>
-  <% elsif @card_grant.user.admin? || organizer_signed_in? || @card_grant.user == current_user %>
+  <% elsif organizer_signed_in? || @card_grant.user == current_user %>
     <div class="justify-center flex flex-col sm:flex-row w-full gap-2">
       <% if @card_grant.stripe_card %>
         <div class="sm:max-w-[300px]">
