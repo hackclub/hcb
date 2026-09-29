@@ -252,6 +252,15 @@
                 <span class="bold warning">⚠️ Warning</span>: this organization is currently financially frozen.
               <% end %>
             <% end %>
+            <% if payout_method.is_a?(LegalEntity::PayoutMethod::Wire) && report.amount_to_reimburse_cents < 500_00 && !report.event.wire_fee_waived? %>
+              <% button_hint = capture do %>
+                <%= button_hint %>
+                <% admin_tool("p-2 mt-2") do %>
+                  <span class="bold warning">⚠️ Warning</span>: this wire is below the $500 minimum. Make sure to charge a custom $25 fee to <%= report.event.name %>.
+                <% end %>
+              <% end %>
+              <% turbo_confirm = ["⚠️ WARNING: This wire is below the $500 minimum. Make sure to charge a custom $25 fee to #{report.event.name} after approving this reimbursement.", turbo_confirm].compact.join("\n\n") %>
+            <% end %>
             <% if payout_method.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
               <button class="btn bg-info whitespace-nowrap" data-behavior="modal_trigger" data-modal="convert_to_wise_transfer" id="submit_button">
                 <%= inline_icon "thumbsup" %>
