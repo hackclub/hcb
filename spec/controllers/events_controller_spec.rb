@@ -887,6 +887,19 @@ RSpec.describe EventsController do
       expect(response.body).not_to include("Mission statement")
       expect(response.body).not_to include("Run neat events for students")
     end
+
+    it "does not offer to create an account number for a Playground Mode organization" do
+      user = create(:user)
+      event = create(:event, :demo_mode)
+      create(:organizer_position, user:, event:, role: :manager)
+      create_session(user, verified: true)
+
+      get(:show, params: { id: event.slug })
+
+      modal = Nokogiri::HTML5(response.body).at_css("#account_number")
+      expect(modal.text).to include("Unavailable in Playground Mode")
+      expect(modal.at_css("form[action='#{event_column_account_number_path(event)}']")).to be_nil
+    end
   end
 
   # A zero-percent revenue fee doesn't mean an organization owes nothing: it can
