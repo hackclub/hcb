@@ -664,6 +664,7 @@ Rails.application.routes.draw do
   resources :payments, only: [:show], concerns: :commentable do
     member do
       post "cancel"
+      post "retry"
     end
   end
 
@@ -871,7 +872,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :card_grants, only: [:show, :edit, :update], path: "grants", concerns: :commentable do
+  resources :card_grants, only: [:show, :update], path: "grants", concerns: :commentable do
     member do
       post "activate"
       get "spending"
