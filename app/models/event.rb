@@ -124,6 +124,31 @@ class Event < ApplicationRecord
   scope :organized_by_teenagers, -> { includes(:event_tags).where(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }) }
   scope :not_organized_by_teenagers, -> { includes(:event_tags).where.not(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }).or(includes(:event_tags).where(event_tags: { name: nil })) }
   scope :robotics_team, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ROBOTICS_TEAM }) }
+
+  CATEGORY_TAGS = {
+    "hack_club"     => EventTag::Tags::HACK_CLUB,
+    "climate"       => EventTag::Tags::CLIMATE,
+    "hackathon"     => EventTag::Tags::HACKATHON,
+    "robotics_team" => EventTag::Tags::ROBOTICS_TEAM,
+    "nonprofit"     => nil # default category
+  }.freeze
+
+  # filter organizations by category
+  scope :by_category, ->(category) {
+    return all if category.nil?
+
+    # check if tag is in hash
+    if (tag = CATEGORY_TAGS[category])
+      includes(:event_tags).where(event_tags: { name: tag })
+    elsif category == "hack_club_hq"
+      # hack_club_hq is stored as a plan not a tag
+      includes(:plan).where(event_plans: { type: [Event::Plan::HackClubAffiliate.sti_name, Event::Plan::HackClubHQ.sti_name] })
+    else
+      # unrecognized category, return nothing, though this should never make it this far since values: constraint
+      none
+    end
+  }
+
   scope :flag_enabled, ->(flag) {
     joins("INNER JOIN flipper_gates ON CONCAT('Event;', events.id) = flipper_gates.value")
       .where("flipper_gates.feature_key = ? AND flipper_gates.key = ?", flag, "actors")
@@ -586,6 +611,8 @@ class Event < ApplicationRecord
     country
     slug "URL" do |slug| "https://hcb.hackclub.com/#{slug}" end
     is_public "Transparent"
+    raised_ytd_cents "Raised (YTD)" do |cents| Money.from_cents(cents).to_s end
+    raised_last_year_cents "Raised (Last Year)" do |cents| Money.from_cents(cents).to_s end
     users "Active teenagers" do |users| users.active_teenager.distinct.count end
   end
 
@@ -660,6 +687,15 @@ class Event < ApplicationRecord
 
   def total_raised
     settled_incoming_balance_cents + fronted_incoming_balance_v2_cents
+  end
+
+  def raised_ytd_cents
+    ledger.revenue_cents(start_date: Time.current.beginning_of_year)
+  end
+
+  def raised_last_year_cents
+    last_year = 1.year.ago
+    ledger.revenue_cents(start_date: last_year.beginning_of_year, end_date: last_year.end_of_year)
   end
 
   def total_spent_cents
@@ -926,8 +962,11 @@ class Event < ApplicationRecord
   monetize :minimum_wire_amount_cents
 
   # Organizations that have raised over $50,000 in the past year don't get
-  # charged for the $25 per wire our partner bank charges us.
+  # charged for the $25 per wire our partner bank charges us. Hack Club's own
+  # projects are always charged, however much they've raised.
   def wire_fee_waived?
+    return false if plan.is_a?(Event::Plan::HackClubAffiliate)
+
     canonical_transactions.where("amount_cents > 0").where("date >= ?", 1.year.ago).sum(:amount_cents) > 50_000_00
   end
 
@@ -1037,7 +1076,11 @@ class Event < ApplicationRecord
     scoped_tags.where(parent_event_id: parent_id)
   end
 
-  def to_combobox_display
+  # `admin` is required rather than defaulted, so a caller cannot silently
+  # render a different label than the search endpoint returns.
+  def to_combobox_display(admin:)
+    return "#{name} (ID: #{id})" if admin
+
     name
   end
 

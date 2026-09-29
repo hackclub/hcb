@@ -13,7 +13,9 @@ module Payroll
       @position = @event.payroll_positions.find(params[:id])
       authorize @position
       @frame = params[:frame].present?
-      @can_review = Payroll::PositionPolicy.new(current_user, @event).review?
+      invoice_policy = policy(@position.invoices.build)
+      @can_review = invoice_policy.approve?
+      @can_upload_invoice = invoice_policy.on_behalf?
       @invoices = @position.invoices.order(created_at: :desc)
       @payments = @position.payee.payments.order(created_at: :desc)
 
