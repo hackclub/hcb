@@ -28,9 +28,10 @@
       <% filters.each do |filter| %>
         <button
           id="<%= filter[:label] %>"
+          class="filter-menu__tab"
           data-tabs-target="btn"
           data-action="tabs#select">
-          <%= filter[:label].humanize %>
+          <span class="filter-menu__tab-label"><%= filter[:label].humanize %></span>
           <% if active_filter_params(filter, params).any? %>
             <span class="filter-menu__tab-dot" aria-hidden="true"></span><span class="sr-only">(active)</span>
           <% end %>
