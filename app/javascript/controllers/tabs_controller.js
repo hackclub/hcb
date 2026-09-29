@@ -29,7 +29,7 @@ export default class extends Controller {
     if (selectedTab.hidden) {
       // CLOSE CURRENT TAB
       this.tabTargets.forEach(x => (x.hidden = true)) // hide all tabs
-      this.btnTargets.forEach(x => x.classList.remove('active')) // deactive all btns
+      this.btnTargets.forEach(x => x.classList.remove('active')) // deactivate all btns
       selectedTab.hidden = false // show current tab
       event.currentTarget.classList.add('active') // active current btn
     }

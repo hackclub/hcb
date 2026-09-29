@@ -264,6 +264,8 @@ class UsersController < ApplicationController
 
   def edit_admin
     authorize @user
+
+    @limit = Governance::Admin::Transfer::Limit.find_by(user_id: @user.id)
   end
 
   def admin_details
@@ -463,7 +465,7 @@ class UsersController < ApplicationController
         if @payout_method&.saved_changes? && @user == current_user
           flash[:success] = "Your payout details have been updated. We'll use this information for all payouts going forward."
         elsif email_update&.requested?
-          flash[:success] = "We've sent a verification link to your new email (#{params[:user][:email]}) and a authorization link to your old email (#{@user.email}), please click them both to confirm this change."
+          flash[:success] = "We've sent a verification link to your new email (#{params[:user][:email]}) and an authorization link to your old email (#{@user.email}), please click them both to confirm this change."
         else
           flash[:success] = @user == current_user ? "Updated your profile!" : "Updated #{@user.first_name}'s profile!"
         end

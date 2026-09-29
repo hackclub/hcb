@@ -13,7 +13,7 @@ module Contractable
 
     def send_contract(cosigner_email: nil, include_videos: false, reissue_messages: {}, extra_prefills: {}, reissue_of: nil)
       # This method should be overwritten in specific classes
-      raise NotImplementedError, "The #{self.class.name} model includes Contractable, but hasn't implemented it's own version of send_contract."
+      raise NotImplementedError, "The #{self.class.name} model includes Contractable, but hasn't implemented its own version of send_contract."
     end
 
     def on_contract_signed(contract)

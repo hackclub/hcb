@@ -493,4 +493,58 @@ RSpec.describe Ledger::Item, type: :model do
       expect(item.reload.author).to be_nil
     end
   end
+
+  describe "#receipt_count" do
+    # Reimbursements are the one linked object whose receipts don't hang off
+    # the HCB code: they're uploaded to the expense, and the payout's HCB code
+    # never has any of its own.
+    def attach_receipt_to(expense)
+      receipt = Receipt.new(receiptable: expense, user: expense.report.user, upload_method: :expense_report)
+      receipt.file.attach(
+        io: StringIO.new(File.binread(Rails.root.join("spec/fixtures/files/receipt.png"))),
+        filename: "receipt.png", content_type: "image/png"
+      )
+      receipt.save!
+      receipt
+    end
+
+    def payout_for(expense)
+      expense.update_column(:aasm_state, "approved")
+      expense.report.update_column(:aasm_state, "reimbursement_approved")
+
+      Reimbursement::ExpensePayout.create!(amount_cents: -expense.amount_cents, event: expense.report.event, expense:)
+    end
+
+    let(:event) { create(:event) }
+    let(:report) { create(:reimbursement_report, event:) }
+    let(:expense) { create(:reimbursement_expense, report:, memo: "Snacks") }
+
+    it "counts the receipts uploaded to the reimbursed expense" do
+      attach_receipt_to(expense)
+      attach_receipt_to(expense)
+
+      item = payout_for(expense).reload.ledger_item
+
+      expect(item.receipt_count).to eq(2)
+    end
+
+    it "recounts when a receipt is added to the expense after it has been paid out" do
+      item = payout_for(expense).reload.ledger_item
+      expect(item.receipt_count).to eq(0)
+
+      attach_receipt_to(expense)
+
+      expect(item.reload.receipt_count).to eq(1)
+    end
+
+    it "recounts when a receipt is removed from the expense" do
+      receipt = attach_receipt_to(expense)
+      item = payout_for(expense).reload.ledger_item
+      expect(item.receipt_count).to eq(1)
+
+      receipt.destroy!
+
+      expect(item.reload.receipt_count).to eq(0)
+    end
+  end
 end

@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <%= turbo_stream_from @hcb_code.check_deposit %>
 
 <% if @hcb_code.check_deposit.column_id.present? %>
