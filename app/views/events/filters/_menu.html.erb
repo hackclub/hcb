@@ -1,3 +1,5 @@
+<% active_filter_count = filters.sum { |filter| active_filter_params(filter, params).size } %>
+
 <div
   data-controller="menu"
   class="inline-flex items-center"
@@ -6,11 +8,14 @@
 
   <button
     type="button"
-    class="pop my-2 cursor-pointer tooltipped tooltipped--s"
-    aria-label="Add filters..."
+    class="pop my-2 cursor-pointer tooltipped tooltipped--s relative overflow-visible"
+    aria-label="<%= active_filter_count > 0 ? "#{pluralize(active_filter_count, "filter")} applied" : "Add filters..." %>"
     data-menu-target="toggle"
     data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
     <%= inline_icon "filter", size: 28 %>
+    <% if active_filter_count > 0 %>
+      <span class="filter-menu__count" aria-hidden="true"><%= active_filter_count %></span>
+    <% end %>
   </button>
 
   <div
@@ -26,6 +31,9 @@
           data-tabs-target="btn"
           data-action="tabs#select">
           <%= filter[:label].humanize %>
+          <% if active_filter_params(filter, params).any? %>
+            <span class="filter-menu__tab-dot" aria-hidden="true"></span><span class="sr-only">(active)</span>
+          <% end %>
         </button>
       <% end %>
 

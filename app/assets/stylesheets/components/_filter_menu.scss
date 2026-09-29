@@ -1,3 +1,30 @@
+.filter-menu__count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background-color: map-get($palette, primary);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.filter-menu__tab-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 4px;
+  border-radius: 50%;
+  background-color: map-get($palette, primary);
+  flex-shrink: 0;
+}
+
 .filter-menu {
   display: flex;
   gap: 1rem;
