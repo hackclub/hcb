@@ -160,7 +160,7 @@
         </action>
       </p>
     <% end %>
-    <%= render "hcb_codes/tags", hcb_code: @hcb_code %>
+    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
 
   <% unless @donation.deposited? %>

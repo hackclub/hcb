@@ -271,7 +271,7 @@
         </p>
       <% end %>
     <% end %>
-    <%= render "hcb_codes/tags", hcb_code: @hcb_code %>
+    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
 
   <%= render "hcb_codes/stripe_card_receipts" %>
