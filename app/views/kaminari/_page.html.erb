@@ -1,3 +1,5 @@
+<%# locals: (page:, url:, remote:, **) %>
+
 <% if page.current? %>
   <%= content_tag :a, page, data: { remote:, class: "btn active" }, rel: page.rel, "aria-current": "page" %>
 <% else %>
