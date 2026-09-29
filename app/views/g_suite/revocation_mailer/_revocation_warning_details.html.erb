@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <p>
   <% if @g_suite_revocation.because_of_invalid_dns? %>
     If you would like to keep your Google Workspace access, follow the steps <%= link_to "here on your Google Workspace page", event_g_suite_overview_url(event_id: @g_suite.event.slug) %> to configure your DNS for Google Workspace. Once your domain is verified, you'll get an email that confirms the revocation has been canceled.
