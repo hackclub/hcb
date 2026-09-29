@@ -7,11 +7,11 @@ describe LoginCodeService::Request do
 
   let(:ip_address) { "127.0.0.1" }
   let(:user_agent) { "fake firefox" }
-  let(:original_cache) { Rails.cache }
 
   # The test cache is a null_store which silently never increments a counter,
   # so swap in a MemoryStore to exercise the rate-limit guards.
   around do |example|
+    original_cache = Rails.cache
     Rails.cache = ActiveSupport::Cache::MemoryStore.new
     example.run
   ensure
