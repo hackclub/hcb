@@ -309,8 +309,8 @@
       Send check
       <%= inline_icon "send" %>
     </button>
-    <a href="javascript:void(0)"
-      data-action="click->check-preview#scrollToTop"
+    <a role="button" tabindex="0"
+      data-action="click->check-preview#scrollToTop keydown.enter->check-preview#scrollToTop"
       class="bg-muted flex-[2] btn no-underline hidden sm:inline-flex">
       Preview
     </a>

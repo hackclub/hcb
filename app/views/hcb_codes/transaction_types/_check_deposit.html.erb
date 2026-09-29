@@ -1,9 +1,17 @@
+<%# locals: () %>
+
 <%= turbo_stream_from @hcb_code.check_deposit %>
 
 <% if @hcb_code.check_deposit.column_id.present? %>
   <% admin_tool("mt3") do %>
     <%= link_to "View check on Column", "https://dashboard.column.com/app/transfers/edit/check/#{@hcb_code.check_deposit.column_id}", class: "btn bg-accent", target: "_blank" %>
     <%= link_to @hcb_code.check_deposit.canonical_pending_transaction.fronted ? "De-front check" : "Front check", toggle_fronted_event_check_deposit_path(@event, @hcb_code.check_deposit), class: "btn bg-accent", data: { turbo_method: :post } %>
+  <% end %>
+<% end %>
+
+<% if @hcb_code.check_deposit.manual_submission_required? %>
+  <% admin_tool("mt3") do %>
+    <%= button_to "Process", admin_check_deposit_path(@hcb_code.check_deposit), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
   <% end %>
 <% end %>
 

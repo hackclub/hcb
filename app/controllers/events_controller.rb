@@ -544,7 +544,17 @@ class EventsController < ApplicationController
   def async_sub_organization_balance
     authorize @event
 
-    @sub_organizations = filtered_sub_organizations
+    sub_organizations = filtered_sub_organizations
+
+    # A filter narrows the stat to the matching sub-organizations. Otherwise it
+    # rolls up the whole visible tree, so money nested several levels down is
+    # counted without having to expand every branch to find it.
+    @balance_cents =
+      if @has_filter || (params[:q] || params[:search]).present?
+        sub_organizations.to_a.sum(&:balance_available_v2_cents)
+      else
+        sub_organization_ledger_balances(visible_descendant_ids).values.sum
+      end
 
     render :async_sub_organization_balance, layout: false
   end
@@ -552,10 +562,23 @@ class EventsController < ApplicationController
   def async_sub_organization_balances
     authorize @event
 
-    events = Event.where_public_id(params[:ids]).where(id: visible_descendant_ids).includes(:ledger)
+    events = Event.where_public_id(params[:ids]).where(id: visible_descendant_ids).to_a
+
+    children = Event.where(id: visible_descendant_ids).pluck(:id, :parent_id)
+                    .group_by(&:last).transform_values { |pairs| pairs.map(&:first) }
+    subtrees = events.to_h { |event| [event.id, subtree_ids(event.id, children)] }
+    ledger_balances = sub_organization_ledger_balances(events.map(&:id) + subtrees.values.flatten)
 
     balances = events.to_h do |event|
-      [event.public_id, helpers.render_money_amount(event.ledger.available_balance_cents)]
+      amounts = { balance: helpers.render_money(ledger_balances[event.id]) }
+
+      # Only the descendants this user can see, so a private branch's money
+      # isn't revealed through its parent's row. A row with none keeps its dash.
+      if subtrees[event.id].any?
+        amounts[:sub_organization_balance] = helpers.render_money(ledger_balances.values_at(*subtrees[event.id]).compact.sum)
+      end
+
+      [event.public_id, amounts]
     end
 
     render json: balances
@@ -569,10 +592,14 @@ class EventsController < ApplicationController
       )
       if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
         @ledger = @event.ledger
-        @ledger_items = @ledger.items
-                               .where(id: column_transactions.select(:ledger_item_id), linked_object_type: nil)
-                               .order(created_at: :desc)
-                               .page((params[:page] || 1).to_i).per(safe_per(25))
+        # The column-transaction narrowing has no expression in Ledger::Query, so
+        # it chains onto the executed relation. Everything the query does own —
+        # pending first, the rest newest first — still comes from the query, which
+        # is the whole point of going through it for the parts that do fit.
+        @ledger_items = Ledger::Query.new({ linked_object_type: nil })
+                                     .execute(ledgers: [@ledger])
+                                     .where(id: column_transactions.select(:ledger_item_id))
+                                     .page((params[:page] || 1).to_i).per(safe_per(25))
       else
         @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
                                            .order(created_at: :desc)
@@ -933,6 +960,7 @@ class EventsController < ApplicationController
       format.html do
         cookies[:sub_organizations_view] = params[:view] if params[:view]
         @view = cookies[:sub_organizations_view] || "list"
+        @sub_organization_count = visible_subevent_ids.size
 
         if @view == "list"
           @search = params[:q].presence
@@ -1315,7 +1343,6 @@ class EventsController < ApplicationController
 
     @items = ledger_query.execute(ledgers: @ledgers)
                          .page(params[:page]).per(@per)
-                         .preload(:tags, hcb_code: { event: :tags })
   rescue Pundit::NotAuthorizedError
     return head :not_found
   end
@@ -1363,6 +1390,17 @@ class EventsController < ApplicationController
 
     organized_ids = @event.reader_event_ids(current_user)
     children.filter_map { |id, is_public, hidden_at| id if (is_public && hidden_at.nil?) || organized_ids.include?(id) }
+  end
+
+  # Each event's available balance on its primary ledger, keyed by event id.
+  # Reading the ids back through Event drops soft-deleted ones.
+  def sub_organization_ledger_balances(event_ids)
+    Event.where(id: event_ids.uniq).includes(:ledger, :plan).to_h { |event| [event.id, event.ledger.available_balance_cents] }
+  end
+
+  # Every id beneath `id` in `children` (a parent id => child ids map).
+  def subtree_ids(id, children)
+    children.fetch(id, []).flat_map { |child_id| [child_id, *subtree_ids(child_id, children)] }
   end
 
   def sub_organization_table_rows(search: nil)
@@ -1468,7 +1506,8 @@ class EventsController < ApplicationController
           :cover_donation_fees,
           :contact_email,
           :generate_monthly_announcement,
-          :subevent_plan
+          :subevent_plan,
+          :subevent_name_prefix
         ]
       }
     ]
