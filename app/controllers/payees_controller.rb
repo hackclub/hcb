@@ -9,7 +9,7 @@ class PayeesController < ApplicationController
   class InvalidManualPayeeEntityType < StandardError; end
 
   def index
-    authorize @event
+    authorize @event, policy_class: PayeePolicy
     all = @event.payees.not_archived.includes(:legal_entity, :payments)
     payees = params[:q].present? ? all.search(params[:q]) : all
     @payees = payees.order(created_at: :desc).page(params[:page]).per(15)
@@ -98,13 +98,16 @@ class PayeesController < ApplicationController
       return
     end
 
-    @legal_entities = current_user.legal_entities
+    user = User.find_by(email: @payee.email)
+    @legal_entities = user&.legal_entities || []
   end
 
   def set_legal_entity
     authorize @payee
 
-    le = current_user.legal_entities.find(params[:legal_entity_id])
+    le = LegalEntity.find(params[:legal_entity_id])
+    authorize le
+
     if le.tin_banned?
       flash[:error] = "This legal entity is banned."
       redirect_back_or_to choose_legal_entity_payee_path(@payee)

@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <% @check = @hcb_code.increase_check %>
 <% @account_details = @check.increase? ? @event.increase_account_number : @event.column_account_number %>
 

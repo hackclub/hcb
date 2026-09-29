@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <%= form_with(model: [@event, @active_control, @provisional_allowance], url: event_organizer_position_spending_control_allowances_path(control_id: @active_control), data: { turbo: false }, class: "w-full", html: { "x-data" => "allowance_form(#{{ balance_cents: @active_control.balance_cents }.to_json})" }) do |form| %>
   <div class="field field--options w-full max-w-none">
     <%= form.radio_button :operation, "add", "x-model" => "operation", required: true, checked: true %>
