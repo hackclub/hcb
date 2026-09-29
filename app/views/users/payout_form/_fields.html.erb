@@ -131,23 +131,17 @@
 <% mask = ->(value) { value = value.to_s; "•" * [value.length - 4, 0].max + value[[-4, -value.length].max..] } %>
 <% routing_display = ach_errored ? ach.routing_number : mask.call(ach&.routing_number) %>
 <% account_display = ach_errored ? ach.account_number : mask.call(ach&.account_number) %>
-<% ach_x_data = { routingNumber: routing_display, accountNumber: account_display, editing: ach_errored } %>
+<% ach_x_data = {
+     routingNumber: routing_display,
+     accountNumber: account_display,
+     editing: ach_errored,
+     restoreRoutingNumber: ach_errored ? "" : routing_display,
+     restoreAccountNumber: ach_errored ? "" : account_display,
+   } %>
 <section
   data-behavior="ach_transfer_payout_method_inputs"
   class="<%= "hidden" unless ach %>"
-  x-data="Object.assign(<%= ach_x_data.to_json %>, {
-    toggle() {
-      if(!this.editing) {
-        this.routingNumber = '';
-        this.accountNumber = '';
-        this.editing = true;
-      } else if (this.routingNumber == '' && this.accountNumber == '') {
-        this.editing = false;
-        this.routingNumber = <%= (ach_errored ? "" : routing_display).to_json %>;
-        this.accountNumber = <%= (ach_errored ? "" : account_display).to_json %>;
-      }
-    }
-  })">
+  x-data="payout_ach_fields(<%= ach_x_data.to_json %>)">
   <%= form.fields_for :payout_method_ach_transfer, ach || LegalEntity::PayoutMethod::AchTransfer.new do |form| %>
     <p class="muted mt-2 mb-5">
       ACH transfers can take between 1 and 3 business days to arrive in your bank account. They're the fastest option for receiving reimbursements in the United States but are not supported internationally.
