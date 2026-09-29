@@ -17,13 +17,13 @@ module Payoutable
 
     # This method should be overwritten in specific classes
     def can_cancel?
-      raise NotImplementedError, "The #{self.class.name} model includes Payoutable, but hasn't implemented it's own version of can_cancel?"
+      raise NotImplementedError, "The #{self.class.name} model includes Payoutable, but hasn't implemented its own version of can_cancel?"
     end
 
     # Cancels the transfer if possible, whether it's under review or already in transit
     # This method should be overwritten in specific classes
     def cancel!
-      raise NotImplementedError, "The #{self.class.name} model includes Payoutable, but hasn't implemented it's own version of cancel!"
+      raise NotImplementedError, "The #{self.class.name} model includes Payoutable, but hasn't implemented its own version of cancel!"
     end
   end
 end
