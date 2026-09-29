@@ -25,7 +25,12 @@ class CardGrantPolicy < ApplicationPolicy
     auditor_or_member? && record.active?
   end
 
-  alias_method :edit_actions?, :edit_overview?
+  # Viewable regardless of status so canceled/converted grants can show the
+  # "no further actions" blankslate; each action inside is gated separately.
+  def edit_actions?
+    auditor_or_member?
+  end
+
   alias_method :edit_usage_restrictions?, :edit_overview?
   alias_method :edit_expiration?, :edit_overview?
   alias_method :edit_purpose?, :edit_overview?
@@ -34,7 +39,7 @@ class CardGrantPolicy < ApplicationPolicy
   alias_method :edit_withdraw?, :edit_overview?
 
   def activate?
-    (user&.admin? || (cardholder? && authorized_to_activate?)) && record.active?
+    (user&.admin? || (cardholder? && authorized_to_activate?)) && record.active? && record.effective_allow_stripe_card
   end
 
   def cancel?
@@ -43,6 +48,11 @@ class CardGrantPolicy < ApplicationPolicy
 
   def convert_to_reimbursement_report?
     (admin_or_manager? || cardholder?) && record.active? && record.card_grant_setting.reimbursement_conversions_enabled?
+  end
+
+  def accept_as_reimbursement?
+    (user&.admin? || (cardholder? && authorized_to_activate?)) &&
+      record.active? && record.stripe_card_id.nil? && record.effective_allow_reimbursement_report
   end
 
   def toggle_one_time_use?
