@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <%= render layout: "application/dismissible_callout",
            locals: { key: "hide_card_grant_conversion", id: "card-grant-conversion-dialog", article_class: "info" } do %>
   <strong>Did you know?</strong> Teenagers can use HCB to run clubs, nonprofits, and robotics teams! <%= link_to "https://hackclub.com/fiscal-sponsorship?utm_source=hcb&utm_medium=web&utm_campaign=hcb-grant-conversion", target: "_blank", class: "primary nowrap text-inherit", id: "card-grant-conversion-link", data: { dismissible_target: "link" } do %><strong>Learn more</strong><% end %>

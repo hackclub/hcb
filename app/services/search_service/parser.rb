@@ -10,7 +10,7 @@ module SearchService
 
     def run
 
-      # this line parses the query into a useable format
+      # this line parses the query into a usable format
 
       parsed = @input&.scan(/(?:[^@]+|@[^@]+)/)&.map { |str|
         type = str.match(/@(\w+)/)&.[](1)
@@ -30,7 +30,7 @@ module SearchService
         }
       }
 
-      # the following preforms a series of validations on the query object
+      # the following performs a series of validations on the query object
       # that we've generated.
 
       previous = nil
