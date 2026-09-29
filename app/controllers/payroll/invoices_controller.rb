@@ -26,7 +26,7 @@ module Payroll
       attachments = Array(invoice_params[:file]).compact_blank
       if attachments.empty?
         flash.now[:error] = "Please attach an invoice or supporting document."
-        return render :new, layout: false, status: :unprocessable_content
+        return render :new, formats: :html, layout: false, status: :unprocessable_content
       end
 
       ActiveRecord::Base.transaction do
@@ -40,10 +40,13 @@ module Payroll
       end
 
       flash[:success] = "Invoice submitted for review."
-      redirect_to my_pay_path
+      respond_to do |format|
+        format.turbo_stream { render turbo_stream: turbo_stream.refresh(request_id: nil) }
+        format.html { redirect_to my_pay_path }
+      end
     rescue ActiveRecord::RecordInvalid => e
       flash.now[:error] = e.message
-      render :new, layout: false, status: :unprocessable_content
+      render :new, formats: :html, layout: false, status: :unprocessable_content
     end
 
     def approve

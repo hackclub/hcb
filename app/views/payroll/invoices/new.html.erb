@@ -1,4 +1,8 @@
 <%= turbo_frame_tag dom_id(@position, :invoice_form) do %>
+  <% if flash.now[:error].present? %>
+    <%= render "application/callout", type: "error", title: flash.now[:error] %>
+  <% end %>
+
   <p class="h5 leading-[1.25] muted mt0 mb-3">
     Invoice <strong><%= @position.event.name %></strong> for your work as
     <strong><%= @position.title %></strong>.<br>
