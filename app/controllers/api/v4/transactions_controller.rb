@@ -83,7 +83,8 @@ module Api
           if params.key? :tag_ids
             # Tags live on the ledger item.
             ledger_item = @hcb_code.ledger_item
-            raise Pundit::NotAuthorizedError if ledger_item.nil?
+            raise ActiveRecord::RecordNotFound if ledger_item.nil?
+
             authorize ledger_item, :toggle_tag?
 
             tags = Array(params[:tag_ids]).map { |id| Tag.find_by_public_id!(id) }
