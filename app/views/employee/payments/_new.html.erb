@@ -1,8 +1,10 @@
+<%# locals: (employee: nil, jobs: nil) %>
+
 <section data-behavior="modal" role="dialog" id="create_employee_payment" class="modal modal--scroll bg-snow">
   <%= form_with(model: Employee::Payment, method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full" }, data: { turbo: false }) do |form| %>
     <%= modal_header "Get paid through HCB" %>
 
-    <% if defined?(employee) %>
+    <% if employee %>
       <%= form.hidden_field :employee_id, value: employee.id %>
     <% else %>
       <%= form.label :employee_id, "Organization", class: "mt1 bold" %>

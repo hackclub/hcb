@@ -1,3 +1,5 @@
+<%# locals: (g_suite_account:) %>
+
 <% disabled = !policy(g_suite_account).create? %>
 
 <%= form_with(model: [@g_suite, g_suite_account], local: true) do |form| %>

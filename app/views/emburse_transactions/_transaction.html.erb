@@ -1,3 +1,5 @@
+<%# locals: (et:, show_running_sum:, show_card: nil) %>
+
 <tr>
   <td><%= et.transaction_time.nil? ? "–" : et.transaction_time.to_date %></td>
   <td>
@@ -33,7 +35,7 @@
     <td class="nowrap"><%= render_money @sum %></td>
     <% @sum -= et.amount if et.undeclined? %>
   <% end %>
-  <% if defined? show_card %>
+  <% if show_card %>
   <td>
     <%= et.emburse_card.nil? ? "—" : emburse_card_mention(et.emburse_card) %>
     <%= "(#{et.emburse_card.full_name})" if et.emburse_card %>

@@ -1,3 +1,5 @@
+<%# locals: (lead: "Donate to") %>
+
 <% @has_header_image = @event.donation_header_image.attached? %>
 <% page_sm %>
 
@@ -34,7 +36,7 @@
     <div class="container flex flex-col sm:flex-row items-center justify-center <%= "sm:justify-start px-5" if yield.present? %>">
       <div>
         <h1 class="mt-0 mb0 border-none text-center <%= "sm:text-left" if yield.present? %> <%= "smoke drop-shadow-lg" if @has_header_image %>">
-          <span class="h3 caps block <%= @has_header_image ? "muted" : "secondary" %>"><%= defined?(lead) ? lead : "Donate to" %></span>
+          <span class="h3 caps block <%= @has_header_image ? "muted" : "secondary" %>"><%= lead %></span>
           <div class="flex justify-center items-center mt1">
             <%= render "donations/logo" %>
             <span class="ml2"><%= @event.name %></span>

@@ -48,7 +48,7 @@
 </div>
 
 <% unless @login.for_application? %>
-  <%= render partial: "logins/footer", locals: { whats_hcb: true } %>
+  <%= render partial: "logins/footer" %>
 <% end %>
 
 <% content_for :footer do %>

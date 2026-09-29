@@ -1,3 +1,5 @@
+<%# locals: (pt:, authorless: nil, force_display_details: false, receipt_upload_button: nil, receipt_upload_button_disabled: nil, selectable: nil, show_author_column: nil, show_event_name: nil, show_tags: nil, updated_via_turbo_stream: nil) %>
+
 <% instance = pt.__id__ %>
 <% event = @event || pt.local_hcb_code.event %>
 <% tagged_with = pt.local_hcb_code.tags.filter { |tag| !@event || tag.event == @event } %>
@@ -8,10 +10,10 @@
                                  pt.amount.negative? ? "transaction--negative" : pt.amount.positive? ? "transaction--positive" : "transaction--zero"
                                end %>"
   id="<%= pt.local_hcb_code.hashid %>"
-  <% if defined?(selectable) && selectable %>
+  <% if selectable %>
     data-transactions-target="transaction"
   <% end %>
-  <% if local_assigns[:receipt_upload_button] %>
+  <% if receipt_upload_button %>
     data-controller="file-drop"
     data-file-drop-target="dropzone"
     data-file-drop-linking-value="true"
@@ -22,18 +24,18 @@
       drop->file-drop#drop
       dragenter->file-drop#dragenter
       dragleave->file-drop#dragleave
-      <% if defined?(selectable) && selectable %>
+      <% if selectable %>
         click->transactions#select
       <% end %>
     "
   <% end %>>
-  <% if defined?(selectable) && selectable %>
+  <% if selectable %>
     <td class="transaction__icon transaction__icon--selected">
       <%= inline_icon "checkmark" %>
     </td>
   <% end %>
-  <% cache(["pt_#{pt.hcb_code}", "icon", local_assigns[:authorless], defined?(selectable) && selectable], expires_in: 12.hours) do %>
-    <%= render "hcb_codes/icon", tx: pt, authorless: local_assigns[:authorless], selects: defined?(selectable) && selectable && pt.local_hcb_code.hashid %>
+  <% cache(["pt_#{pt.hcb_code}", "icon", authorless, selectable], expires_in: 12.hours) do %>
+    <%= render "hcb_codes/icon", tx: pt, authorless:, selects: selectable && pt.local_hcb_code.hashid %>
   <% end %>
   <td class="transaction__date">
     <%= format_date pt.created_at %>
@@ -70,30 +72,30 @@
               <% if Rails.cache.fetch("tx_#{pt.hcb_code}/card_grant", expires_in: 12.hours) { pt.local_hcb_code.card_grant? } && !organizer_signed_in? %>
                 <%= link_to(transaction_memo(pt), spending_card_grant_path(pt.local_hcb_code.outgoing_disbursement.card_grant), data: card_grant_popover_data(pt.local_hcb_code.outgoing_disbursement.card_grant, hcb_code: pt.local_hcb_code, event: event, state_title: transaction_memo(pt))) %>
               <% elsif (pt.local_hcb_code.stripe_card? && pt.subledger&.present?) && event.present? && !OrganizerPosition.role_at_least?(current_user, event, :member) %>
-                <%= link_to url_for(pt.local_hcb_code), data: hcb_code_popover_data(pt.local_hcb_code, event: event, transaction_show_receipt_button: local_assigns[:receipt_upload_button], transaction_show_author_img: local_assigns[:show_author_column], ledger_instance: instance) do %>
-                  <%= render "hcb_codes/memo/memo", hcb_code: pt.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
+                <%= link_to url_for(pt.local_hcb_code), data: hcb_code_popover_data(pt.local_hcb_code, event: event, transaction_show_receipt_button: receipt_upload_button, transaction_show_author_img: show_author_column, ledger_instance: instance) do %>
+                  <%= render "hcb_codes/memo/memo", hcb_code: pt.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: %>
                 <% end %>
               <% else %>
                 <span>
-                  <%= render "hcb_codes/memo/memo", hcb_code: pt.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: defined?(force_display_details) %>
+                  <%= render "hcb_codes/memo/memo", hcb_code: pt.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: %>
                 </span>
               <% end %>
             </span>
           <% end %>
         </div>
 
-        <% if local_assigns[:show_event_name] %>
+        <% if show_event_name %>
           <%= render "hcb_codes/event_name", event: %>
         <% end %>
 
-        <% if !event&.demo_mode? && defined?(show_tags) && show_tags %>
+        <% if !event&.demo_mode? && show_tags %>
           <div class="flex flex-wrap pending_transactions_tags tags hcb_code_<%= pt.local_hcb_code.hashid %>_tags" style="gap: 0.25rem">
             <%= render partial: "canonical_transactions/tag", collection: tagged_with, locals: { hcb_code: pt.local_hcb_code } %>
           </div>
         <% end %>
       </div>
 
-      <% if !@frame && defined?(show_tags) && show_tags && TagPolicy.new(current_user, pt).update? && !pt.instance_of?(OpenStruct) %>
+      <% if !@frame && show_tags && TagPolicy.new(current_user, pt).update? && !pt.instance_of?(OpenStruct) %>
         <% if suggestion = pt.local_hcb_code.suggested_hcb_code_tag_suggestions.last %>
           <div class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless b--ai suggested_tag tooltipped tooltippped--s" style="border: 1.5px dashed #a633d6" id="tag_suggestion_<%= suggestion.id %>" aria-label="Click to apply HCB's suggestion">
             <%= link_to "#{suggestion.tag.emoji} #{suggestion.tag.label}", tag_suggestion_accept_path(suggestion), style: "text-decoration: none", class: "ai", data: { turbo_method: :post } %>
@@ -144,7 +146,7 @@
     <td></td>
   <% end %>
 
-  <% if local_assigns[:show_author_column] %>
+  <% if show_author_column %>
     <% cache "pt_#{pt.hcb_code}_author", expires_in: 5.minutes, race_condition_ttl: 1.minute do %>
       <% author = pt.local_hcb_code.author %>
       <% author_name = pt.local_hcb_code.author_name %>
@@ -160,9 +162,9 @@
     <% end %>
   <% end %>
 
-  <% if local_assigns[:receipt_upload_button] %>
+  <% if receipt_upload_button %>
     <td class="transaction__receipt-action">
-      <% if pt.local_hcb_code.missing_receipt?(event, type) || !local_assigns[:updated_via_turbo_stream] %>
+      <% if pt.local_hcb_code.missing_receipt?(event, type) || !updated_via_turbo_stream %>
         <%= form_with url: receipts_path, data: { controller: "form", "file-drop-target" => "form", "turbo" => true } do |form| %>
           <%= form.file_field :file, id: "file_#{pt.local_hcb_code.hashid}", multiple: true, include_hidden: false, required: true, class: "display-none", data: { action: "change->form#submit", "file-drop-target" => "fileInput" } %>
           <%= form.hidden_field :redirect_url, value: @card_grant ? card_grant_path(@card_grant) : my_inbox_path %>
@@ -172,22 +174,22 @@
           <%= form.hidden_field :receiptable_type, value: pt.local_hcb_code.class %>
           <%= form.hidden_field :receiptable_id, value: pt.local_hcb_code.id %>
           <%= form.hidden_field :upload_method, value: "receipts_page", data: { "file-drop-target" => "uploadMethod" } %>
-          <%= form.hidden_field :show_receipt_button, value: local_assigns[:receipt_upload_button] %>
-          <%= form.hidden_field :show_author_img, value: local_assigns[:show_author_column] %>
-          <%= form.hidden_field :show_event_name, value: local_assigns[:show_event_name] %>
+          <%= form.hidden_field :show_receipt_button, value: receipt_upload_button %>
+          <%= form.hidden_field :show_author_img, value: show_author_column %>
+          <%= form.hidden_field :show_event_name, value: show_event_name %>
           <div class="btn-group btn-group--no-wrap w-100">
-            <%= form.label "file_#{pt.local_hcb_code.hashid}", class: "btn #{"disabled" if local_assigns[:receipt_upload_button_disabled]} flex-grow", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" do %>
+            <%= form.label "file_#{pt.local_hcb_code.hashid}", class: "btn #{"disabled" if receipt_upload_button_disabled} flex-grow", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" do %>
               <%= inline_icon "cloud-upload" %>
               <%= pt.local_hcb_code.receipts.any? ? "Upload another receipt" : "Upload receipt" %>
             <% end %>
 
-            <%= link_to my_receipts_upload_path, class: "btn #{"disabled" if local_assigns[:receipt_upload_button_disabled]} bg-primary", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
+            <%= link_to my_receipts_upload_path, class: "btn #{"disabled" if receipt_upload_button_disabled} bg-primary", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
               <%= inline_icon "payment-docs" %>
               <span>Select</span>
             <% end %>
 
             <% if Flipper.enabled?(:copy_receipt_email_2026_01_21) %>
-              <button type="button" class="btn <%= "disabled" if local_assigns[:receipt_upload_button_disabled] %> bg-blue tooltipped tooltipped--n" style="font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" data-clipboard-text-value="<%= pt.local_hcb_code.receipt_upload_email %>" data-action="click->clipboard#copy" data-controller="clipboard" aria-label="Copy email address to clipboard to send receipts to this transaction">
+              <button type="button" class="btn <%= "disabled" if receipt_upload_button_disabled %> bg-blue tooltipped tooltipped--n" style="font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" data-clipboard-text-value="<%= pt.local_hcb_code.receipt_upload_email %>" data-action="click->clipboard#copy" data-controller="clipboard" aria-label="Copy email address to clipboard to send receipts to this transaction">
                 <%= inline_icon "email", style: "margin: 0px" %>
               </button>
             <% end %>
@@ -201,10 +203,10 @@
       <% end %>
     </td>
 
-    <% if !local_assigns[:receipt_upload_button_disabled] %>
+    <% if !receipt_upload_button_disabled %>
       <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="link_receipt_<%= instance %>">
         <%= modal_header "Select receipt" %>
-        <%= turbo_frame_tag "link_modal_#{pt.local_hcb_code.id}", src: link_modal_receipts_path(receiptable_type: "HcbCode", receiptable_id: pt.local_hcb_code.id, show_receipt_button: local_assigns[:receipt_upload_button], show_author_img: local_assigns[:show_author_column], show_event_name: local_assigns[:show_event_name]), turbo_frame: "_top" do %>
+        <%= turbo_frame_tag "link_modal_#{pt.local_hcb_code.id}", src: link_modal_receipts_path(receiptable_type: "HcbCode", receiptable_id: pt.local_hcb_code.id, show_receipt_button: receipt_upload_button, show_author_img: show_author_column, show_event_name:), turbo_frame: "_top" do %>
           <strong>Loading...</strong>
         <% end %>
       </section>

@@ -1,3 +1,5 @@
+<%# locals: (hcb_code:) %>
+
 <% if hcb_code.tags.any? || TagPolicy.new(current_user, @event).create? %>
   <div>
     <strong>Tags</strong>

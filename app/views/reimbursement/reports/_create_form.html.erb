@@ -1,6 +1,8 @@
-<section data-behavior="modal" role="dialog" id="<%= defined?(receipt) ? "create_#{receipt.id}" : defined?(modal_id) ? modal_id : "create_reimbursement_report" %>" class="modal modal--scroll bg-snow">
+<%# locals: (receipt: nil, modal_id: "create_reimbursement_report") %>
+
+<section data-behavior="modal" role="dialog" id="<%= receipt ? "create_#{receipt.id}" : modal_id %>" class="modal modal--scroll bg-snow">
   <%= form_with(model: Reimbursement::Report, method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full" }) do |form| %>
-    <% if defined?(receipt) %>
+    <% if receipt %>
       <%= modal_header "Get reimbursed" %>
     <% else %>
       <%= modal_header "Start a report" %>
@@ -81,7 +83,7 @@
         <%= form.select :currency, [current_user.default_payout_method.currency], {}, class: "tooltipped tooltipped--n", "aria-label": "To change the currency, please update your payout settings", disabled: "disabled" %>
       <% end %>
 
-      <% if defined?(receipt) %>
+      <% if receipt %>
         <% payout_currency = current_user.default_payout_method&.currency || "USD" %>
 
         <%= form.label :value, "Amount", class: "mt1 bold" %>

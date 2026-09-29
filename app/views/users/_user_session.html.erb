@@ -1,3 +1,5 @@
+<%# locals: (session:) %>
+
 <div class="card border<%= " b--warning" if session.impersonated? %><%= " b--success" if current_session.id == session.id %>">
   <% if session.impersonated? %>
     <% admin_tool "", "span" do %>

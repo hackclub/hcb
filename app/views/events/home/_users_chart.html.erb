@@ -1,3 +1,5 @@
+<%# locals: (event:, users:) %>
+
 <%= turbo_frame_tag "users" do %>
   <div id="users-chart" style="height: 100%">
     <% if users.empty? %>

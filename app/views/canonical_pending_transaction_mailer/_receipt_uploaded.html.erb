@@ -1,3 +1,5 @@
+<%# locals: (hcb_code:) %>
+
 <%= link_to hcb_code_url(hcb_code) do %>
   <img height="43" style="display: block; margin-top: 10px; height: 43px;" src="<%= receipt_status_hcb_codes_url(format: :png, s: hcb_code.signed_id(purpose: :receipt_status)) %>" alt="Receipt uploaded">
 <% end %>
