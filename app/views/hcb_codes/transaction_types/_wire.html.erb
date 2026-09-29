@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <% if @hcb_code.wire.column_id.present? %>
   <% admin_tool("mt3") do %>
     <%= link_to "View wire on Column", "https://dashboard.column.com/app/transfers/edit/intl-wire/#{@hcb_code.wire.column_id}", class: "btn bg-accent", target: "_blank" %>
@@ -61,6 +63,13 @@
         <p>
           <strong>Return reason</strong>
           <%= @hcb_code.wire.return_reason %>
+        </p>
+      <% end %>
+
+      <% if @hcb_code.wire.uetr.present? %>
+        <p>
+          <strong>UETR</strong>
+          <%= @hcb_code.wire.uetr %>
         </p>
       <% end %>
 

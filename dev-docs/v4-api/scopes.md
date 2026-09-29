@@ -123,7 +123,7 @@ Multiple `require_oauth2_scope` calls for the same action **accumulate** — the
 
 | Pattern | When to use | Examples |
 |---------|-------------|----------|
-| `<resource>:read` | Read-only access to a resource | `ledgers:read`, `organizations:read` |
+| `<resource>:read` | Read-only access to a resource | `ledgers:read`, `organizations:read` | `card_grants:read`
 | `<resource>:write` | Mutating a resource (create/update/destroy) | `receipts:write`, `card_grants:write` |
 | `<capability>` | A narrow, single-purpose capability that doesn't map cleanly to read/write of one resource | `user_lookup`, `event_followers` |
 | `admin:read` / `admin:write` | Admin-level data or actions (see [Admin Scopes](#admin-scopes)) | `admin:read`, `admin:write` |
@@ -148,7 +148,7 @@ To gate an action behind a new scope:
    require_oauth2_scope "ach_transfers:write", :create
    ```
 2. **Pick a name** following the [naming conventions](#scope-naming-conventions) — usually `<resource>:read` or `<resource>:write`.
-5. **Test with a `restricted` token** — remember the scope only takes effect for tokens carrying `restricted`. A non-restricted token will bypass the check entirely.
+3. **Test with a `restricted` token** — remember the scope only takes effect for tokens carrying `restricted`. A non-restricted token will bypass the check entirely.
 
 ---
 
