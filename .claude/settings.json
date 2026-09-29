@@ -8,6 +8,20 @@
         ]
       }
     ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "agent",
+            "if": "Edit(**/config/routes.rb)",
+            "model": "claude-sonnet-5",
+            "timeout": 180,
+            "prompt": "The Rails routes file was just edited. Hook input (tool_input has the edit; for a Write, tool_response.structuredPatch shows the diff):\n$ARGUMENTS\n\nCheck only the routes this edit added, removed, or changed, resolving paths from the app root (the directory containing config/ in tool_input.file_path). Read the routes file around the edit first: the enclosing namespace, scope module:, resources/resource, controller:, to:, and only:/except: decide each route's controller and actions. Then look for:\n\n1. Dead routes: a controller that doesn't exist under app/controllers, or a mapped action (including those resources/resource imply) with no def in the controller, a parent controller, or an included concern, and no template in app/views/<controller path>/.\n2. Broken references: <name>_path or <name>_url helpers of a removed or renamed (as:) route still used in app/, lib/, config/, or spec/, and controller actions left with no route.\n3. Shadowing: a new route that an earlier route in the same scope already matches, such as get \"things/export\" after resources :things (whose show matches things/:id).\n4. A GET route to an action that creates, updates, or deletes data.\n\nIgnore redirects and mounted engines. Report only problems you confirmed in the code. Return ok: true if there are none; otherwise ok: false with a reason listing each problem, its route, and what's wrong, noting that a missing action may not be written yet."
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
