@@ -41,11 +41,9 @@
       <strong>Sent at</strong>
       <%= format_datetime wise_transfer.created_at %>
     </div>
-    <% if wise_transfer.pending? || wise_transfer.approved? %>
-        <% admin_tool "w-fit flex items-center justify-center !px-4" do %>
-          <%= link_to "Process", wise_transfer_process_admin_path(wise_transfer), class: "btn", target: "_blank" %>
-        <% end %>
-      <% end %>
+    <% admin_tool "w-fit flex items-center justify-center !px-4" do %>
+      <%= link_to "Process", wise_transfer_process_admin_path(wise_transfer), class: "btn", target: "_blank" %>
+    <% end %>
   </section>
   <turbo-frame id="details">
     <section class="ledger-item--info">

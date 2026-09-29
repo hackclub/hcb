@@ -113,6 +113,7 @@ class Ledger
     def event_from_svb_sweep
       return unless @ledger_item.canonical_transactions.to_svb_sweep_account.exists? ||
                     @ledger_item.canonical_transactions.from_svb_sweep_account.exists? ||
+                    @ledger_item.canonical_transactions.hcb_sweep.exists? ||
                     @ledger_item.canonical_transactions.svb_sweep_account.exists?
 
       Event.find(EventMappingEngine::EventIds::SVB_SWEEPS)

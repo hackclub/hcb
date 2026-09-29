@@ -18,6 +18,10 @@ RSpec.describe EventsController do
     ApplicationController.helpers.render_money_amount(cents)
   end
 
+  def dollars(cents)
+    ApplicationController.helpers.render_money(cents)
+  end
+
   def dom_id_for_balance(event)
     "event_balance_#{event.public_id}"
   end
@@ -242,6 +246,21 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#update" do
+    it "lets an admin set the sub-organization name prefix" do
+      admin = create(:user, :make_admin)
+      event = create(:event)
+      create_session(admin, verified: true)
+
+      patch(:update, params: {
+              id: event.slug,
+              event: { config_attributes: { id: event.config.id, subevent_name_prefix: "Athena Award — " } }
+            })
+
+      expect(event.config.reload.subevent_name_prefix).to eq("Athena Award — ")
+    end
+  end
+
   describe "#payments" do
     render_views
 
@@ -382,6 +401,30 @@ RSpec.describe EventsController do
         # Excel hides the grouping gutter entirely when this attribute is set,
         # even though Google Sheets ignores it. See SubOrganizationsExport.
         expect(sheet).not_to include("showOutlineSymbols")
+      end
+    end
+
+    describe "the count in the heading" do
+      def heading_count(body)
+        Nokogiri::HTML5(body).at_css("h1.heading .badge").text.strip
+      end
+
+      before { create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild") }
+
+      it "counts only the immediate sub-organizations a signed out visitor can see" do
+        get(:sub_organizations, params: { event_id: parent.slug })
+
+        expect(heading_count(response.body)).to eq("1")
+      end
+
+      it "counts every immediate sub-organization for an organizer, in either view", :aggregate_failures do
+        sign_in_organizer_of(parent)
+
+        get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
+        expect(heading_count(response.body)).to eq("2")
+
+        get(:sub_organizations, params: { event_id: parent.slug, view: "grid" })
+        expect(heading_count(response.body)).to eq("2")
       end
     end
   end
@@ -717,10 +760,10 @@ RSpec.describe EventsController do
 
       expect(response.parsed_body).to eq(
         transparent_sub.public_id => {
-          "balance"                  => money(transparent_sub.ledger.available_balance_cents),
-          "sub_organization_balance" => money(grandchild.ledger.available_balance_cents)
+          "balance"                  => dollars(transparent_sub.ledger.available_balance_cents),
+          "sub_organization_balance" => dollars(grandchild.ledger.available_balance_cents)
         },
-        grandchild.public_id      => { "balance" => money(grandchild.ledger.available_balance_cents) }
+        grandchild.public_id      => { "balance" => dollars(grandchild.ledger.available_balance_cents) }
       )
     end
 
@@ -735,8 +778,8 @@ RSpec.describe EventsController do
           format: :json)
 
       expect(response.parsed_body.transform_values { |amounts| amounts["sub_organization_balance"] }).to eq(
-        transparent_sub.public_id => money(600),
-        child.public_id           => money(400),
+        transparent_sub.public_id => dollars(600),
+        child.public_id           => dollars(400),
         grandchild.public_id      => nil
       )
     end
@@ -749,7 +792,7 @@ RSpec.describe EventsController do
           params: { event_id: parent.slug, ids: [transparent_sub.public_id] },
           format: :json)
 
-      expect(response.parsed_body.dig(transparent_sub.public_id, "sub_organization_balance")).to eq(money(200))
+      expect(response.parsed_body.dig(transparent_sub.public_id, "sub_organization_balance")).to eq(dollars(200))
     end
 
     it "skips a private descendant for a signed out visitor" do
@@ -843,6 +886,19 @@ RSpec.describe EventsController do
       expect(response).to have_http_status(:ok)
       expect(response.body).not_to include("Mission statement")
       expect(response.body).not_to include("Run neat events for students")
+    end
+
+    it "does not offer to create an account number for a Playground Mode organization" do
+      user = create(:user)
+      event = create(:event, :demo_mode)
+      create(:organizer_position, user:, event:, role: :manager)
+      create_session(user, verified: true)
+
+      get(:show, params: { id: event.slug })
+
+      modal = Nokogiri::HTML5(response.body).at_css("#account_number")
+      expect(modal.text).to include("Unavailable in Playground Mode")
+      expect(modal.at_css("form[action='#{event_column_account_number_path(event)}']")).to be_nil
     end
   end
 
