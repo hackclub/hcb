@@ -103,15 +103,6 @@
       </div>
 
       <% if !@frame && defined?(show_tags) && show_tags && TagPolicy.new(current_user, ct).update? && !ct.instance_of?(OpenStruct) %>
-        <% if suggestion = ct.local_hcb_code.suggested_hcb_code_tag_suggestions.last %>
-          <div class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless b--ai suggested_tag tooltipped tooltippped--s" style="border: 1.5px dashed #a633d6" id="tag_suggestion_<%= suggestion.id %>" aria-label="Click to apply HCB's suggestion">
-            <%= link_to "#{suggestion.tag.emoji} #{suggestion.tag.label}", tag_suggestion_accept_path(suggestion), style: "text-decoration: none", class: "ai", data: { turbo_method: :post } %>
-            <%= button_to tag_suggestion_reject_path(suggestion), class: "p0 line-height-0 bg-transparent border-none cursor-pointer link-reset", form_class: "line-height-0", form: { "data-turbo" => "true" } do %>
-              <%= inline_icon "view-close", size: 16 %>
-            <% end %>
-          </div>
-        <% end %>
-
         <% if event.present? && ct.local_hcb_code.ledger_item && policy(ct.local_hcb_code.ledger_item).toggle_tag? %>
           <div class="overflow-visible relative" style="margin-left: 0.5rem;" data-controller="menu" data-menu-append-to-value="turbo-frame#ledger">
             <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>

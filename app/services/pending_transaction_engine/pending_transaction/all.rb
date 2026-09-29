@@ -56,8 +56,8 @@ module PendingTransactionEngine
             if @tag_id
               cpts =
                 cpts.joins("LEFT JOIN hcb_codes ON hcb_codes.hcb_code = canonical_pending_transactions.hcb_code")
-                    .joins("LEFT JOIN hcb_codes_tags ON hcb_codes_tags.hcb_code_id = hcb_codes.id")
-                    .where("hcb_codes_tags.tag_id = ?", @tag_id)
+                    .joins("LEFT JOIN ledger_items_tags ON ledger_items_tags.ledger_item_id = hcb_codes.ledger_item_id")
+                    .where("ledger_items_tags.tag_id = ?", @tag_id)
             end
 
 

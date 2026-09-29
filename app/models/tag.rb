@@ -29,7 +29,7 @@ class Tag < ApplicationRecord
   has_many :hcb_code_tags
   has_many :hcb_code_tag_suggestions, dependent: :destroy, class_name: "HcbCode::Tag::Suggestion"
   has_many :hcb_codes, through: :hcb_code_tags
-  has_many :ledger_item_tags, class_name: "Ledger::Item::Tag"
+  has_many :ledger_item_tags, class_name: "Ledger::Item::Tag", dependent: :destroy
   has_many :ledger_items, through: :ledger_item_tags, class_name: "Ledger::Item"
 
   validates :label, presence: true, uniqueness: { scope: :event_id, case_sensitive: false }
@@ -44,16 +44,12 @@ class Tag < ApplicationRecord
   def removal_confirmation_message
     message = "Are you sure you'd like to delete this tag?"
 
-    if hcb_codes.any?
-      message + " It will be removed from #{pluralize(hcb_codes.size, 'transaction')}."
+    if ledger_items.any?
+      message + " It will be removed from #{pluralize(ledger_items.size, 'transaction')}."
     else
       message
     end
   end
-
-  after_create_commit {
-    SuggestTagsJob.perform_later(event_id: event.id)
-  }
 
   private
 

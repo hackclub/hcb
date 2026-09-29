@@ -590,22 +590,6 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   }
 }
 
-.suggested_tag {
-  font-style: italic;
-}
-
-.suggested_tag > a {
-  overflow: hidden;
-  max-width: 125px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-decoration: none;
-}
-
-.suggested_tag::after {
-  transform: translateY(0px) translateX(-4px);
-}
-
 .rotated {
   transform: rotate(180deg);
 }
