@@ -43,6 +43,26 @@ RSpec.describe AdminController do
       expect(response.body).to include("A transaction worth mapping")
       expect(response.body).to include("Ledger item process spec event")
       expect(response.body).to include("What the mapper would do")
+
+      combobox = Nokogiri::HTML(response.body).at_css("[data-combobox-url-value*='event_search']")
+      expect(combobox["data-combobox-selected-value"]).to eq(event.id.to_s)
+    end
+
+    # The "Map to NoEvent" form beside the event picker also submits an
+    # `event_id`, so the picker has to override the derived DOM id.
+    it "does not emit a duplicate DOM id on the two event fields" do
+      admin = create(:user, :make_admin)
+      ledger_item = create(:ledger_item)
+
+      create_session(admin, verified: true)
+
+      get :ledger_item_process, params: { id: ledger_item.id }
+
+      doc = Nokogiri::HTML(response.body)
+      all_ids = doc.css("[id]").map { |el| el["id"] }.tally
+
+      expect(doc.at_css("input[role=combobox]#set_event_id")).to be_present
+      expect(all_ids.values_at("set_event_id", "event_id")).to all(be <= 1)
     end
 
     it "renders a card grant mapping, its history and its transactions" do
@@ -63,6 +83,16 @@ RSpec.describe AdminController do
       expect(response.body).to include("CARD GRANT SPEND")
       expect(response.body).to include("Mapping history")
       expect(response.body).to include("Other ledgers")
+
+      # The preselected label has to match what card_grant_search returns, or
+      # the field changes its text when the same grant is picked again.
+      combobox = Nokogiri::HTML(response.body).at_css("[data-combobox-url-value*='card_grant_search']")
+      expect(combobox["data-combobox-selected-value"]).to eq(card_grant.id.to_s)
+
+      get :card_grant_search, params: { q: card_grant.email }, format: :json
+      from_endpoint = JSON.parse(response.body).find { |o| o["value"] == card_grant.id.to_s }["label"]
+
+      expect(combobox["data-combobox-label-value"]).to eq(from_endpoint)
     end
 
     it "renders an item's pending transactions" do
@@ -190,8 +220,6 @@ RSpec.describe AdminController do
   end
 
   describe "#card_grant_search" do
-    render_views
-
     it "returns matching card grants as combobox options" do
       admin = create(:user, :make_admin)
       create(:governance_admin_transfer_limit, user: admin)
@@ -199,10 +227,13 @@ RSpec.describe AdminController do
 
       create_session(admin, verified: true)
 
-      get :card_grant_search, params: { q: card_grant.email }, format: :turbo_stream
+      get :card_grant_search, params: { q: card_grant.email }, format: :json
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(card_grant.email)
+      expect(JSON.parse(response.body)).to contain_exactly(
+        "value" => card_grant.id.to_s,
+        "label" => "#{card_grant.email} — #{card_grant.event.name} (ID: #{card_grant.id})"
+      )
     end
   end
 

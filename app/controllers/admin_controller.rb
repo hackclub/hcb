@@ -532,12 +532,12 @@ class AdminController < Admin::BaseController
 
   def card_grant_search
     @q = params[:q].presence
-    @card_grants = if @q.present?
-                     CardGrant.search(@q).includes(:event).order(created_at: :desc).limit(20)
-                   else
-                     CardGrant.includes(:event).order(created_at: :desc).limit(20)
-                   end
-    render turbo_stream: helpers.async_combobox_options(@card_grants)
+    card_grants = @q.present? ? CardGrant.search(@q) : CardGrant.all
+    card_grants = combobox_page(card_grants.includes(:event).order(created_at: :desc, id: :desc))
+
+    render json: card_grants.map { |card_grant|
+      { value: card_grant.id.to_s, label: helpers.combobox_display(card_grant) }
+    }
   end
 
   def event_search

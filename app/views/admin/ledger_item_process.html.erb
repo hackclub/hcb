@@ -155,7 +155,8 @@
       <td>
         <%= form_with url: ledger_item_set_ledger_admin_path(@ledger_item), method: :post do |form| %>
           <%= form.hidden_field :target, value: "event" %>
-          <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Select event", class: "!max-w-full !min-w-72", value: @primary_ledger&.event&.to_combobox_display %>
+          <%# `id` is set because the "Map to NoEvent" form below also has an `event_id` field. %>
+          <%= combobox_tag :event_id, event_search_admin_index_path, id: "set_event_id", placeholder: "Select event", class: "!max-w-full !min-w-72", selected: @primary_ledger&.event %>
           <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
         <% end %>
         <%= form_with url: ledger_item_set_ledger_admin_path(@ledger_item), method: :post do |form| %>
@@ -167,7 +168,7 @@
       <td>
         <%= form_with url: ledger_item_set_ledger_admin_path(@ledger_item), method: :post do |form| %>
           <%= form.hidden_field :target, value: "card_grant" %>
-          <%= combobox_tag :card_grant_id, card_grant_search_admin_index_path, placeholder: "Select card grant", class: "!max-w-full !min-w-72", value: @primary_ledger&.card_grant&.to_combobox_display %>
+          <%= combobox_tag :card_grant_id, card_grant_search_admin_index_path, placeholder: "Select card grant", class: "!max-w-full !min-w-72", selected: @primary_ledger&.card_grant %>
           <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
         <% end %>
       </td>
