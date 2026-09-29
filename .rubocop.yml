@@ -12,7 +12,7 @@ AllCops:
     - 'vendor/**/*'
     - 'tmp/**/*'
 
-# The "offical" rubocop style guide is indeed quite strict. So intead, we use
+# The "official" rubocop style guide is indeed quite strict. So instead, we use
 # the Relaxed Ruby Style guide. https://relaxed.ruby.style/
 
 inherit_gem:

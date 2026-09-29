@@ -48,9 +48,7 @@ class CardGrantsController < ApplicationController
     @table_only = true
     if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
       @ledger = @event.ledger
-      @items = ledger_query.execute(ledgers: @ledgers)
-      @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id)) if @tag&.id.present?
-      @items = @items.page(params[:page]).per(@per)
+      @items = ledger_query.execute(ledgers: @ledgers).page(params[:page]).per(@per)
     end
   end
 

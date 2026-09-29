@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <% if @hcb_code.ach_transfer.column_id.present? %>
   <% admin_tool("mt3") do %>
     <%= link_to "View transfer on Column", "https://dashboard.column.com/app/transfers/edit/ach/#{@hcb_code.ach_transfer.column_id}", class: "btn bg-accent", target: "_blank" %>

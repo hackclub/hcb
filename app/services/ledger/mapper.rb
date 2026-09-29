@@ -136,7 +136,7 @@ class Ledger
 
     # CardGrant calculation is significantly simpler.
     # At the moment, only disbursements & Stripe card transactions
-    # can exitst on CardGrant's ledger.
+    # can exist on CardGrant's ledger.
     def calculate_card_grant
       @ledger_item.canonical_transactions.each do |ct|
         if ct.raw_stripe_transaction.present? && (card_grant = ct.raw_stripe_transaction.likely_card_grant)

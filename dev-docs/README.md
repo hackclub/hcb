@@ -21,7 +21,7 @@ HCB is a tool for hackers to hack on the real world, like GitHub, but for buildi
 
 ## Getting Started
 
-Let's get the HCB codebase set up on your computer! We have setup a easy and simple [guide](./development.md) for you to get it running on your computer!
+Let's get the HCB codebase set up on your computer! We have set up an easy and simple [guide](./development.md) for you to get it running on your computer!
 
 ## HCB's Structure
 
@@ -29,7 +29,7 @@ We've been building HCB since 2018, so navigating the codebase can be difficult 
 
 ### Organizations
 
-Every project on HCB is considered an "organization" (the model for them is named [`Event`](https://github.com/hackclub/hcb/blob/main/app/models/event.rb), however). Users can be members of multiple organizations. [`OrganizerPosition`](https://github.com/hackclub/hcb/blob/main/app/models/organizer_position.rb) acts as a [many-to-many](https://en.wikipedia.org/wiki/Many-to-many_(data_model)) join table between [`Event`](https://github.com/hackclub/hcb/blob/main/app/models/event.rb) and [`User`](https://github.com/hackclub/hcb/blob/main/app/models/user.rb). [`OrganizerPositionInvite`](https://github.com/hackclub/hcb/blob/main/app/models/organizer_position_invite.rb) is a "pending" connection between the two, we create an [`OrganizerPosition`](https://github.com/hackclub/hcb/blob/main/app/models/organizer_position.rb) after the user accepts the invite.
+Every project on HCB is considered an "organization" (the model for them is named [`Event`](https://github.com/hackclub/hcb/blob/main/app/models/event.rb), however). Users can be members of multiple organizations. [`OrganizerPosition`](https://github.com/hackclub/hcb/blob/main/app/models/organizer_position.rb) acts as a [many-to-many](https://en.wikipedia.org/wiki/Many-to-many_(data_model)) join table between [`Event`](https://github.com/hackclub/hcb/blob/main/app/models/event.rb) and [`User`](https://github.com/hackclub/hcb/blob/main/app/models/user.rb). [`OrganizerPositionInvite`](https://github.com/hackclub/hcb/blob/main/app/models/organizer_position_invite.rb) is a "pending" connection between the two; we create an [`OrganizerPosition`](https://github.com/hackclub/hcb/blob/main/app/models/organizer_position.rb) after the user accepts the invite.
 
 ### Finances
 
@@ -47,7 +47,7 @@ In the past, we've used [Increase](https://www.increase.com/), [Emburse](https:/
 
 #### Receipts
 
-Card transactions as well as ACHs, reimbursements, checks, and PayPal transfers require receipts. Models that allow adding receipts include the [`Receiptable`](https://github.com/hackclub/hcb/blob/main/app/models/concerns/receiptable.rb) concern ([what's a concern?](https://api.rubyonrails.org/classes/ActiveSupport/Concern.html)). Receipt Bin is a tool created to manage "unlinked" receipts that haven't been paired to transactions, these receipts have their `receiptable_id` set to `nil`.
+Card transactions as well as ACHs, reimbursements, checks, and PayPal transfers require receipts. Models that allow adding receipts include the [`Receiptable`](https://github.com/hackclub/hcb/blob/main/app/models/concerns/receiptable.rb) concern ([what's a concern?](https://api.rubyonrails.org/classes/ActiveSupport/Concern.html)). Receipt Bin is a tool created to manage "unlinked" receipts that haven't been paired to transactions; these receipts have their `receiptable_id` set to `nil`.
 
 #### Fees
 
@@ -55,13 +55,13 @@ We collect fees on all revenue collected by organizations, typically 7%. This pr
 
 ### Transaction Engine
 
-The transaction engine is the core of HCB's codebase. Its role is to map transactions that happen in on our underlying bank accounts to their associated organization. Almost every action a user takes on HCB will go through the transaction engine at some point.
+The transaction engine is the core of HCB's codebase. Its role is to map transactions that happen on our underlying bank accounts to their associated organization. Almost every action a user takes on HCB will go through the transaction engine at some point.
 
 Our transaction engine is summarised in [@sampoder](https://github.com/sampoder)'s talk at the SF Bay Area Ruby Meetup: [How we built a bank w/ Ruby on Rails](https://www.youtube.com/watch?v=CBxilReUkJ0&t=3553s).
 
 #### [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb)
 
-[`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb)s are transactions we expect to take place but they haven't occurred yet in our underlying bank account. For example, we create a [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb) the moment you send an ACH transfer even though the transfer only gets sent via Column once a operations staff member has approved.
+[`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb)s are transactions we expect to take place but they haven't occurred yet in our underlying bank account. For example, we create a [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb) the moment you send an ACH transfer even though the transfer only gets sent via Column once an operations staff member has approved.
 
 [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb)s appear on the ledger as "PENDING:" until a [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb) is made.
 
@@ -79,7 +79,7 @@ A [`CanonicalPendingSettledMapping`](https://github.com/hackclub/hcb/blob/main/a
 
 #### [`HcbCode`](https://github.com/hackclub/hcb/blob/main/app/models/hcb_code.rb)
 
-HCB codes group together [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb)s and [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb)s into transactions we can display on the ledger. For example, a donation has a [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb) for both the money paid through the card and a refund for the Stripe processing fee. When we display a transactions, we display the HCB code.
+HCB codes group together [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb)s and [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb)s into transactions we can display on the ledger. For example, a donation has a [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb) for both the money paid through the card and a refund for the Stripe processing fee. When we display a transaction, we display the HCB code.
 
 #### Raw Transactions
 
