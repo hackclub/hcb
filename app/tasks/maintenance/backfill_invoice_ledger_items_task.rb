@@ -5,7 +5,7 @@ module Maintenance
   # Invoice#ensure_ledger_item. An invoice creates no canonical (pending)
   # transaction until it's paid, so nothing else would have created a ledger
   # item for an unpaid invoice. Only invoices still missing a ledger item are
-  # processed; the resulting item is "empty" (it has a linked object but no CTs
+  # processed; the resulting item is "intended" (it has a linked object but no CTs
   # or CPTs).
   class BackfillInvoiceLedgerItemsTask < MaintenanceTasks::Task
     def collection

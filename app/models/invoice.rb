@@ -203,7 +203,7 @@ class Invoice < ApplicationRecord
   }
 
   # An invoice doesn't create a canonical (pending) transaction until it's paid,
-  # so eagerly create its ledger item on creation. It starts "empty" (no CTs or
+  # so eagerly create its ledger item on creation. It starts "intended" (no CTs or
   # CPTs) and is filled in when the invoice is paid and its CPT maps back to it.
   after_create_commit :ensure_ledger_item
 

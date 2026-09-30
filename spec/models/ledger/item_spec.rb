@@ -439,8 +439,8 @@ RSpec.describe Ledger::Item, type: :model do
     end
   end
 
-  describe "empty status" do
-    it "is empty when the item has a linked object but no transactions" do
+  describe "intended status" do
+    it "is intended when the item has a linked object but no transactions" do
       stub_donation_payment_intent_creation
       donation = create(:donation)
 
@@ -450,11 +450,11 @@ RSpec.describe Ledger::Item, type: :model do
       item.refresh!
       item.reload
 
-      expect(item.status).to eq("empty")
+      expect(item.status).to eq("intended")
       expect(item.amount_cents).to eq(0)
     end
 
-    it "is no longer empty once a canonical pending transaction maps in" do
+    it "is no longer intended once a canonical pending transaction maps in" do
       stub_donation_payment_intent_creation
       donation = create(:donation)
 
@@ -465,10 +465,10 @@ RSpec.describe Ledger::Item, type: :model do
       item.refresh!
       item.reload
 
-      expect(item.status).not_to eq("empty")
+      expect(item.status).not_to eq("intended")
     end
 
-    it "is not empty when there is no linked object" do
+    it "is not intended when there is no linked object" do
       item = Ledger::Item.new(amount_cents: 0, memo: "Initial", datetime: Time.current)
       item.save(validate: false)
 

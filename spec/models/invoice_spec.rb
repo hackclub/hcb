@@ -13,13 +13,13 @@ RSpec.describe Invoice, type: :model do
   end
 
   describe "ledger item" do
-    it "eagerly creates an empty ledger item on create" do
+    it "eagerly creates an intended ledger item on create" do
       invoice = create(:invoice)
 
       item = invoice.ledger_item
       expect(item).to be_present
       expect(item.linked_object).to eq(invoice)
-      expect(item.status).to eq("empty")
+      expect(item.status).to eq("intended")
       expect(item.amount_cents).to eq(0)
       # Mapped to the event's ledger via the linked object, even without a CPT.
       expect(item.primary_ledger).to eq(invoice.event.ledger)
