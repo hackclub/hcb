@@ -211,7 +211,7 @@ class Invoice < ApplicationRecord
       # realized once the invoice is paid and a CPT maps back to this item.
       # memo/status are recomputed by Ledger::Item#refresh! on create; intended_at
       # preserves the creation time through refresh! (see #calculate_intended_at).
-      create_ledger_item!(amount_cents: 0, datetime: created_at, intended_at: created_at, memo: smart_memo, hcb_code: local_hcb_code)
+      create_ledger_item!(amount_cents: 0, datetime: created_at, intended_at: created_at, memo: smart_memo, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
     end
   end
 
