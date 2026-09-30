@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class CreateLedgerItemTags < ActiveRecord::Migration[7.2]
+class CreateLedgerItemTags < ActiveRecord::Migration[8.1]
   def change
     create_table :ledger_items_tags, primary_key: [:ledger_item_id, :tag_id] do |t|
       # Composite PK already indexes (ledger_item_id, tag_id), which covers
