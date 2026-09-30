@@ -684,11 +684,10 @@ Rails.application.routes.draw do
   get "for/funders/faq", to: "marketing#funders_faq", as: :funders_faq
   post "for/funders/inquiry", to: "marketing#funder_inquiry", as: :funder_inquiry
 
-  resources :emburse_card_requests, path: "emburse_card_requests", only: [:index, :show, :edit] do
+  resources :emburse_card_requests, path: "emburse_card_requests", only: [:index, :show] do
     collection do
       get "export"
     end
-    post "reject"
   end
 
   resources :emburse_transactions, only: [:index, :edit, :update, :show]
@@ -1153,7 +1152,7 @@ Rails.application.routes.draw do
 
       scope module: "organizer_position" do
         namespace :spending do
-          resources :controls, only: [:index, :create, :destroy, :new] do
+          resources :controls, only: [:index, :create, :destroy] do
             resources :allowances, only: [:new, :create], controller: "control/allowances"
           end
         end
