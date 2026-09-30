@@ -85,6 +85,7 @@ class Event < ApplicationRecord
   validates :donation_thank_you_message, length: { maximum: 500 }
   validates :name, presence: true
   MAX_SHORT_NAME_LENGTH = 16
+  normalizes :short_name, with: ->(short_name) { short_name.strip.presence }
   validates :short_name, length: { maximum: MAX_SHORT_NAME_LENGTH }, allow_blank: true
   validate :short_name_contains_letter, if: :short_name_changed?
 
@@ -1112,7 +1113,7 @@ class Event < ApplicationRecord
 
   # Stripe rejects statement descriptors without a Latin character
   def short_name_contains_letter
-    return if self[:short_name].blank? || self[:short_name].match?(/\p{Latin}/)
+    return if self[:short_name].blank? || ActiveSupport::Inflector.transliterate(self[:short_name]).match?(/[a-zA-Z]/)
 
     errors.add(:short_name, "must contain at least one letter")
   end

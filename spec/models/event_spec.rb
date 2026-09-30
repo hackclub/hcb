@@ -458,6 +458,21 @@ RSpec.describe Event, type: :model do
       expect(event.errors[:short_name]).to be_present
     end
 
+    it "rejects a nickname whose only letters don't transliterate to ASCII" do
+      event.short_name = "ʁ 8866"
+
+      expect(event).not_to be_valid
+      expect(event.errors[:short_name]).to be_present
+    end
+
+    it "stores a blank nickname as nil so the name fallback applies" do
+      event = create(:event, name: "Salt City Robotics")
+      event.update!(short_name: "  ")
+
+      expect(event[:short_name]).to be_nil
+      expect(event.short_name).to eq("Salt City Roboti")
+    end
+
     it "allows a nickname with accented letters and numbers" do
       event.short_name = "École 8866"
 
