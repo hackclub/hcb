@@ -363,7 +363,7 @@ class Ledger
     def calculate_intended_at
       return nil unless linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
 
-      intended_at || created_at
+      linked_object.created_at
     end
 
     def calculate_pending_at
