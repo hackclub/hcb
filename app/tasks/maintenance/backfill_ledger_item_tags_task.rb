@@ -12,15 +12,17 @@ module Maintenance
     end
 
     def process(hcb_code_tag)
-      ledger_item_id = hcb_code_tag.hcb_code.ledger_item_id
-      return if Ledger::Item::Tag.exists?(ledger_item_id:, tag_id: hcb_code_tag.tag_id)
-
-      Ledger::Item::Tag.create!(
-        ledger_item_id:,
-        tag_id: hcb_code_tag.tag_id,
-        created_at: hcb_code_tag.created_at,
-        updated_at: hcb_code_tag.updated_at,
-      )
+      # Idempotent and race-safe: an existing (ledger_item_id, tag_id) row — from
+      # an earlier run or tagged since deploy — hits the unique index and is
+      # suppressed instead of costing an extra existence check per row.
+      suppress(ActiveRecord::RecordNotUnique) do
+        Ledger::Item::Tag.create!(
+          ledger_item_id: hcb_code_tag.hcb_code.ledger_item_id,
+          tag_id: hcb_code_tag.tag_id,
+          created_at: hcb_code_tag.created_at,
+          updated_at: hcb_code_tag.updated_at,
+        )
+      end
     end
 
   end

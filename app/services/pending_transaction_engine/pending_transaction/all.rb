@@ -42,6 +42,7 @@ module PendingTransactionEngine
           begin
             included_local_hcb_code_associations = [:receipts, :comments, :canonical_transactions, { canonical_pending_transactions: [:canonical_pending_declined_mapping] }]
             included_local_hcb_code_associations << :tags
+            included_local_hcb_code_associations << :ledger_item
             cpts = CanonicalPendingTransaction.includes([:raw_pending_stripe_transaction,
                                                          order_by_mapped_at ? :canonical_pending_event_mapping : nil,
                                                          { local_hcb_code: included_local_hcb_code_associations }])

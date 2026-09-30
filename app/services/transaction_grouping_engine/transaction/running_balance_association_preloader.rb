@@ -18,6 +18,7 @@ module TransactionGroupingEngine
                            { canonical_transactions: :canonical_event_mapping },
                            { canonical_pending_transactions: [:event, :canonical_pending_declined_mapping] }]
         included_models << :tags
+        included_models << :ledger_item
         hcb_code_objects = HcbCode
                            .includes(included_models)
                            .where(hcb_code: hcb_code_codes)
