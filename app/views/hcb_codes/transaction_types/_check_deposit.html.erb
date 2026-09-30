@@ -9,6 +9,12 @@
   <% end %>
 <% end %>
 
+<% if @hcb_code.check_deposit.manual_submission_required? %>
+  <% admin_tool("mt3") do %>
+    <%= button_to "Process", admin_check_deposit_path(@hcb_code.check_deposit), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
+  <% end %>
+<% end %>
+
 <% if @hcb_code.check_deposit.rejected? %>
   <div class="banner error-card mt3">
     <p class="bold block mt0 mb0"><%= @hcb_code.check_deposit.rejection_description %></p>
