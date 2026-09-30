@@ -11,6 +11,7 @@
 #  ct_count                     :integer          default(0), not null
 #  custom_memo                  :text
 #  datetime                     :datetime         not null
+#  intended_at                  :datetime
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
 #  not_admin_only_comment_count :integer          default(0), not null
@@ -187,9 +188,10 @@ class Ledger
       self.receipt_count = receipts.size
 
       # Timestamps
+      self.intended_at = calculate_intended_at
       self.pending_at = calculate_pending_at
       self.settled_at = calculate_settled_at
-      self.datetime = settled_at || pending_at || created_at
+      self.datetime = settled_at || pending_at || intended_at || created_at
 
       self.amount_cents = calculate_amount_cents
       self.author = calculate_author
@@ -351,6 +353,17 @@ class Ledger
       linked_object = (canonical_pending_transactions.order(date: :asc).map(&:linked_object) + canonical_transactions.order(date: :asc).map(&:linked_object_v2)).compact.first
 
       update!(linked_object:) if linked_object.present?
+    end
+
+    # When the item became "intended" — a linked object with no transactions yet
+    # (e.g. an unpaid invoice). Unlike pending_at/settled_at there's no
+    # transaction to derive this from, so the value assigned at creation (the
+    # linked object's creation time) is preserved while the item stays intended
+    # and cleared once a transaction maps in.
+    def calculate_intended_at
+      return nil unless linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
+
+      intended_at || created_at
     end
 
     def calculate_pending_at

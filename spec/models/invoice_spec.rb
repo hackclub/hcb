@@ -21,6 +21,9 @@ RSpec.describe Invoice, type: :model do
       expect(item.linked_object).to eq(invoice)
       expect(item.status).to eq("intended")
       expect(item.amount_cents).to eq(0)
+      # intended_at captures the creation time and is preserved through refresh!.
+      expect(item.intended_at).to be_within(1.second).of(invoice.created_at)
+      expect(item.datetime).to be_within(1.second).of(invoice.created_at)
       # Mapped to the event's ledger via the linked object, even without a CPT.
       expect(item.primary_ledger).to eq(invoice.event.ledger)
     end

@@ -452,6 +452,9 @@ RSpec.describe Ledger::Item, type: :model do
 
       expect(item.status).to eq("intended")
       expect(item.amount_cents).to eq(0)
+      # intended_at is set and drives datetime while the item is intended.
+      expect(item.intended_at).to be_present
+      expect(item.datetime).to be_within(1.second).of(item.intended_at)
     end
 
     it "is no longer intended once a canonical pending transaction maps in" do
@@ -466,6 +469,8 @@ RSpec.describe Ledger::Item, type: :model do
       item.reload
 
       expect(item.status).not_to eq("intended")
+      # intended_at is cleared once a transaction maps in (like pending_at/settled_at).
+      expect(item.intended_at).to be_nil
     end
 
     it "is not intended when there is no linked object" do
