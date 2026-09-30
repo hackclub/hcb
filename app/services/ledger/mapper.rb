@@ -113,6 +113,7 @@ class Ledger
     def event_from_svb_sweep
       return unless @ledger_item.canonical_transactions.to_svb_sweep_account.exists? ||
                     @ledger_item.canonical_transactions.from_svb_sweep_account.exists? ||
+                    @ledger_item.canonical_transactions.hcb_sweep.exists? ||
                     @ledger_item.canonical_transactions.svb_sweep_account.exists?
 
       Event.find(EventMappingEngine::EventIds::SVB_SWEEPS)
@@ -148,7 +149,7 @@ class Ledger
 
     # CardGrant calculation is significantly simpler.
     # At the moment, only disbursements & Stripe card transactions
-    # can exitst on CardGrant's ledger.
+    # can exist on CardGrant's ledger.
     def calculate_card_grant
       @ledger_item.canonical_transactions.each do |ct|
         if ct.raw_stripe_transaction.present? && (card_grant = ct.raw_stripe_transaction.likely_card_grant)

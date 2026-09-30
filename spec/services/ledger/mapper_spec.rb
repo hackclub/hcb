@@ -185,5 +185,24 @@ RSpec.describe Ledger::Mapper do
       expect(non_primary.ledger).to eq(non_primary_ledger)
       expect(item.reload.primary_ledger).to eq(event.ledger)
     end
+
+    context "when the item has an SVB sweep transaction" do
+      let!(:svb_sweeps) { create(:event, id: EventMappingEngine::EventIds::SVB_SWEEPS) }
+
+      [
+        "TF TO ICS SWP",
+        "TF FRM ICS SWP",
+        "COLUMN*THE HACK HCB-SWEEP 250108"
+      ].each do |memo|
+        it "maps a transaction with memo #{memo.inspect} to the SVB sweeps event" do
+          create(:canonical_transaction, memo:, ledger_item: item)
+
+          mapper.run
+          item.reload
+
+          expect(item.primary_ledger.event).to eq(svb_sweeps)
+        end
+      end
+    end
   end
 end
