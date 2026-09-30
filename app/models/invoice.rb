@@ -205,7 +205,15 @@ class Invoice < ApplicationRecord
   # An invoice doesn't create a canonical (pending) transaction until it's paid,
   # so eagerly create its ledger item on creation. It starts "intended" (no CTs or
   # CPTs) and is filled in when the invoice is paid and its CPT maps back to it.
-  after_create_commit :ensure_ledger_item
+  after_create_commit unless: -> { ledger_item.present? } do
+    safely do
+      # amount_cents stays 0 — it's the balance-impacting amount, which is only
+      # realized once the invoice is paid and a CPT maps back to this item.
+      # memo/status are recomputed by Ledger::Item#refresh! on create; intended_at
+      # preserves the creation time through refresh! (see #calculate_intended_at).
+      create_ledger_item!(amount_cents: 0, datetime: created_at, intended_at: created_at, memo: smart_memo, hcb_code: local_hcb_code)
+    end
+  end
 
   # Stripe syncing…
   before_destroy :close_stripe_invoice
@@ -412,18 +420,6 @@ class Invoice < ApplicationRecord
   end
 
   private
-
-  def ensure_ledger_item
-    return if ledger_item.present?
-
-    safely do
-      # amount_cents stays 0 — it's the balance-impacting amount, which is only
-      # realized once the invoice is paid and a CPT maps back to this item.
-      # memo/status are recomputed by Ledger::Item#refresh! on create; intended_at
-      # preserves the creation time through refresh! (see #calculate_intended_at).
-      create_ledger_item!(amount_cents: 0, datetime: created_at, intended_at: created_at, memo: smart_memo, hcb_code: local_hcb_code)
-    end
-  end
 
   def raw_pending_invoice_transaction
     raw_pending_invoice_transactions.first
