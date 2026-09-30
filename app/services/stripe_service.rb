@@ -57,7 +57,9 @@ module StripeService
 
       case as
       when :suffix
-        str[0...SUFFIX_CHAR_LIMIT].strip
+        str = str[0...SUFFIX_CHAR_LIMIT].strip
+        # Stripe rejects descriptors without a Latin character (e.g. an org whose short name is a team number)
+        str.match?(/[a-zA-Z]/) ? str : "HCB"
       when :full
         "#{PREFIX}#{str}"[0...CHAR_LIMIT].strip
       else

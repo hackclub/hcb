@@ -86,6 +86,7 @@ class Event < ApplicationRecord
   validates :name, presence: true
   MAX_SHORT_NAME_LENGTH = 16
   validates :short_name, length: { maximum: MAX_SHORT_NAME_LENGTH }, allow_blank: true
+  validate :short_name_contains_letter, if: :short_name_changed?
 
   include AASM
   include PgSearch::Model
@@ -1108,6 +1109,13 @@ class Event < ApplicationRecord
   end
 
   private
+
+  # Stripe rejects statement descriptors without a Latin character
+  def short_name_contains_letter
+    return if self[:short_name].blank? || self[:short_name].match?(/\p{Latin}/)
+
+    errors.add(:short_name, "must contain at least one letter")
+  end
 
   def point_of_contact_is_admin
     return unless point_of_contact_changed?
