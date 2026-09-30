@@ -29,7 +29,7 @@
 
   <% admin_tool "p-3", override_pretend: true do %>
     <h3 id="admin" class="mb2 mt1">Admin configurations</h3>
-      <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
+      <%= form_with(model: @user, local: true, data: { turbo_frame: "_top" }) do |form| %>
         <%= form_errors @user %>
 
         <% if @user == current_user %>

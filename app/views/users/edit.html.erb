@@ -30,7 +30,7 @@
       <h1 class="border-0 mt-10 mb-2">Create your account</h1>
       <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
         <p class="muted">Let's get your profile set up in less than two minutes.</p>
-        <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
+        <%= form_with(model: @user, local: true, data: { turbo_frame: "_top" }) do |form| %>
           <%= form_errors @user, "profile", "We couldn't update your" %>
           <div class="md:flex gap-2">
             <div class="field flex-1">
@@ -128,7 +128,7 @@
   <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
     <%= render "settings_header", active: "general" unless @onboarding %>
     <section>
-      <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
+      <%= form_with(model: @user, local: true, data: { turbo_frame: "_top" }) do |form| %>
         <%= form_errors @user, "profile", "We couldn't update your" %>
         <% if current_season(override_preference: true) %>
           <div class="field field--checkbox">
