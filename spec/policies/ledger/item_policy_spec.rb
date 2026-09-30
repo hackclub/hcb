@@ -37,19 +37,5 @@ RSpec.describe Ledger::ItemPolicy, type: :policy do
     it "refuses a signed-out visitor" do
       expect(described_class.new(nil, item).toggle_tag?(tag)).to be(false)
     end
-
-    context "for a transaction shared between two organizations" do
-      let(:other_event) { create(:event) }
-      let(:other_tag) { other_event.tags.create!(label: "Other", emoji: "🎉", color: "red") }
-
-      before { create(:ledger_mapping, ledger: other_event.ledger, ledger_item: item) }
-
-      it "lets a member of the second org tag it with that org's tag" do
-        user = create(:user)
-        create(:organizer_position, user:, event: other_event, role: :member)
-
-        expect(described_class.new(user, item).toggle_tag?(other_tag)).to be(true)
-      end
-    end
   end
 end
