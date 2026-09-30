@@ -49,7 +49,7 @@
 <% end %>
 
 <% if @card_grant.instructions.present? %>
-  <%= render "callout", title: "Instructions from #{@card_grant.event.name}", type: "info", class: "mb-4" do %>
+  <%= render "callout", title: "Instructions from #{@card_grant.event.name}", type: "info", klass: "mb-4" do %>
     <p class="m-0">
       <%= MarkdownService.instance.render(@card_grant.instructions) %>
     </p>

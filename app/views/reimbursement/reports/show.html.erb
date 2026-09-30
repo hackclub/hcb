@@ -237,7 +237,7 @@
       type: "info",
       icon: "wise",
       title: "Important information about Wise reimbursements",
-      class: "!border-[#9FE870] [&>div.flex]:text-[#163300] dark:[&>div.flex]:text-[#9FE870] mt-4 mb-0" do %>
+      klass: "!border-[#9FE870] [&>div.flex]:text-[#163300] dark:[&>div.flex]:text-[#9FE870] mt-4 mb-0" do %>
     We've integrated Wise into HCB to offer international reimbursements to over 100 countries. HCB never charges fees on reimbursements, however Wise will charge processing fees to your organization.
 
     <%= turbo_frame_tag :wise_transfer_quote, loading: :lazy, src: reimbursement_report_wise_transfer_quote_path(@report) do %>
@@ -282,7 +282,7 @@
 
 <section data-behavior="modal" role="dialog" id="wire_requirements" class="modal modal--scroll bg-snow">
   <%= modal_header "Wire transfer requirements" %>
-  <%= render partial: "/wires/requirements", locals: { event: @report.event, class: "mb-0" } %>
+  <%= render partial: "/wires/requirements", locals: { event: @report.event, klass: "mb-0" } %>
 </section>
 
 <style>

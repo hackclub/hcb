@@ -39,7 +39,7 @@
          "Organized by Hack Clubbers" => "green",
          "Nonprofit"                  => "orange",
        } %>
-    <% if local_assigns[:show_category_badge] %>
+    <% if show_category_badge %>
       <div class="flex flex-row items-center gap-1 mb-2 m-0 mt-[-4px]">
         <% tag = event.event_tags.last&.name || "Nonprofit" %>
         <span class="badge m-0 bg-<%= colors[tag] %>">
@@ -49,7 +49,7 @@
       </div>
     <% end %>
 
-    <% if local_assigns[:show_scoped_tags] && event.parent.present? %>
+    <% if show_scoped_tags && event.parent.present? %>
       <div class="mb-2 m-0 mt-[-4px]">
         <span class="event_<%= event.id %>_scoped_tags">
           <%= render partial: "events/scoped_tags/scoped_tag", collection: event.valid_scoped_tags, locals: { subevent: event } %>
@@ -92,7 +92,7 @@
           —
         <% end %>
       </span>
-      <% if local_assigns[:show_date_stat] %>
+      <% if show_date_stat %>
         <span class="flex items-center gap-1 tabular-nums">
           <%= inline_icon "event-add", size: 20, class: "muted align-middle", 'aria-label': "Cards", style: "transform: scale(1.2)" %>
           <%= time_ago_in_words(event.created_at).sub("about ", "").sub("over ", "").sub("almost ", "") %> ago

@@ -1,6 +1,6 @@
-<%# locals: (amount:, check_number:, date:, memo:, recipient_name:, account_details: nil, class: nil, editable: nil) %>
+<%# locals: (amount:, check_number:, date:, memo:, recipient_name:, account_details: nil, editable: nil, klass: nil) %>
 
-<div class="rounded-lg bg-[#E2ECF5] bg-check-pattern dark:bg-[#193046] dark:bg-none shadow-lg relative flex flex-col justify-end p-6 xs-hide w-full mt3 mb3 outline-1 outline-muted outline-dotted -outline-offset-8 <%= local_assigns[:class] %>" data-behavior="hover_tilt">
+<div class="rounded-lg bg-[#E2ECF5] bg-check-pattern dark:bg-[#193046] dark:bg-none shadow-lg relative flex flex-col justify-end p-6 xs-hide w-full mt3 mb3 outline-1 outline-muted outline-dotted -outline-offset-8 <%= klass %>" data-behavior="hover_tilt">
   <div class="font-check text-right"><%= check_number || "----" %></div>
 
   <div class="flex w-full justify-end items-end mb-2 gap-3">

@@ -1,7 +1,7 @@
-<%# locals: (comment:, class: nil, viewing_commentable: nil) %>
+<%# locals: (comment:, klass: nil, viewing_commentable: nil) %>
 
 <% if policy(comment).show? %>
-  <div class="mt2 mb2 <%= local_assigns[:class] %>" id="<%= dom_id comment %>">
+  <div class="mt2 mb2 <%= klass %>" id="<%= dom_id comment %>">
     <div class="card border pb0 pt0 mb2 max-w-5xl<%= " current-user" if comment.user == current_user %>  <%= " comment--admin" if comment.admin_only? %>" id="comment-<%= comment.hashid %>">
       <div class="border-bottom card__banner secondary">
         <%= user_mention comment.user, click_to_mention: true %> <%= comment.action_text %>

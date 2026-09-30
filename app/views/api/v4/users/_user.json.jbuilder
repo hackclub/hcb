@@ -10,7 +10,7 @@ object_shape(json, user, created_at: false) do
   json.name user.initial_name
 
   # those which we'd like to expose less of:
-  expand_pii(override_if: user == current_user || local_assigns[:show_email]) do
+  expand_pii(override_if: user == current_user || show_email) do
     json.email user.email
   end
 
