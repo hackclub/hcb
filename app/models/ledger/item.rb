@@ -118,6 +118,8 @@ class Ledger
         "bg-transparent border border-dashed border-muted m0 mr1"
       when :settled
         nil
+      when :intended
+        "bg-transparent border border-dashed border-muted m0 mr1"
       when :reversed
         "bg-info m0 mr1"
       when :released
@@ -363,7 +365,7 @@ class Ledger
     def calculate_intended_at
       return nil unless linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
 
-      linked_object.created_at
+      intended_at || created_at
     end
 
     def calculate_pending_at
