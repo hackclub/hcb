@@ -30,27 +30,18 @@ class Ledger
     end
 
     def toggle_tag?(tag = nil)
-      # A transaction can touch more than one org (e.g. a transfer between
-      # orgs), so check every event it's mapped to — not just the primary
-      # ledger's — to match the legacy `hcb_code.events` behavior.
-      return false unless member_of_any_event?
+      # A ledger item belongs to a single primary ledger (owned by an event or a
+      # card grant), so a tag can only be applied within that one event.
+      return false if event.nil?
+      return false unless user&.admin? || OrganizerPosition.role_at_least?(user, event, :member)
 
-      # A tag can only be applied to a transaction in an event it belongs to, so
-      # a member of two organizations can't attach one org's tag to the other's.
-      tag.nil? || events.include?(tag.event)
+      tag.nil? || event == tag.event
     end
 
     private
 
-    def events
-      @events ||= record.all_ledgers.filter_map { |ledger| ledger.event || ledger.card_grant&.event }.uniq
-    end
-
-    def member_of_any_event?
-      return false if user.nil?
-      return true if user.admin?
-
-      events.any? { |event| OrganizerPosition.role_at_least?(user, event, :member) }
+    def event
+      @event ||= record.primary_ledger&.event || record.primary_ledger&.card_grant&.event
     end
 
     def admin_or_member?
