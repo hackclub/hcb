@@ -152,4 +152,56 @@ describe AchTransfersController do
       expect(ach_transfer.amount).to eq(500_01)
     end
   end
+
+  describe "edit" do
+    render_views
+
+    it "renders the edit form for admins" do
+      event = create(:event)
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+      ach_transfer = create(:ach_transfer, event:)
+      create_session(create(:user, :make_admin), verified: true)
+
+      get :edit, params: { id: ach_transfer.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Update ACH transfer")
+    end
+  end
+
+  describe "update" do
+    let(:event) { create(:event) }
+    let(:ach_transfer) do
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+      create(:ach_transfer, event:)
+    end
+    let(:params) { { id: ach_transfer.id, ach_transfer: { recipient_name: "New Name", account_number: "5555555555", amount_money: "1.00" } } }
+
+    it "lets admins edit a pending transfer's details but not its amount" do
+      create_session(create(:user, :make_admin), verified: true)
+
+      expect { patch :update, params: params }.not_to(change { ach_transfer.reload.amount })
+
+      expect(response).to redirect_to(ach_start_approval_admin_path(ach_transfer))
+      expect(ach_transfer.recipient_name).to eq("New Name")
+      expect(ach_transfer.account_number).to eq("5555555555")
+    end
+
+    it "does not let non-admins edit" do
+      create_session(create(:user, :make_auditor), verified: true)
+
+      patch :update, params: params
+
+      expect(ach_transfer.reload.recipient_name).not_to eq("New Name")
+    end
+
+    it "does not let admins edit a transfer that has already been sent" do
+      ach_transfer.mark_in_transit!
+      create_session(create(:user, :make_admin), verified: true)
+
+      patch :update, params: params
+
+      expect(ach_transfer.reload.recipient_name).not_to eq("New Name")
+    end
+  end
 end
