@@ -18,7 +18,7 @@ module Maintenance
       return if invoice.ledger_item.present?
 
       safely do
-        invoice.create_ledger_item!(amount_cents: 0, datetime: invoice.created_at, intended_at: invoice.created_at, memo: invoice.smart_memo, hcb_code: invoice.local_hcb_code)
+        invoice.create_ledger_item!(amount_cents: 0, datetime: invoice.created_at, intended_at: invoice.created_at, memo: invoice.smart_memo, short_code: invoice.local_hcb_code.short_code, hcb_code: invoice.local_hcb_code)
       end
     end
 
