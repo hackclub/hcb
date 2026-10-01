@@ -11,7 +11,7 @@
   <% existing_payout_method = payee&.legal_entity&.default_payout_method if manual %>
 
   <% if disabled %>
-    <%= render partial: "events/unauthorized_callout", locals: { action: "send payments" } %>
+    <%= render partial: "events/unauthorized_callout", locals: { action: "send payments", event: event } %>
   <% end %>
 
   <div data-controller="payee-picker payout-toggle manual-payee" data-action="manual-payee:changed->payout-toggle#update">

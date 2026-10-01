@@ -1,18 +1,18 @@
-<%# locals: (stripe_card:, headless: nil, href: nil, show_purpose: nil) %>
+<%# locals: (stripe_card:, headless: nil, href: nil, show_purpose: nil, event: nil, show_card_details: nil, show_card_popovers: nil) %>
 
 <% sc_href = (stripe_card.is_a?(StripeCard) && policy(stripe_card).show?) || (stripe_card.card_grant.present? && policy(stripe_card.card_grant).show?) ? (href || stripe_card_path(stripe_card)) : "javascript:;" %>
 <% sc_data = { turbo_frame: "_top" } %>
-<% sc_data.merge!(stripe_card_popover_data(stripe_card)) if @show_card_popovers %>
+<% sc_data.merge!(stripe_card_popover_data(stripe_card)) if show_card_popovers %>
 <%= link_to sc_href, class: "text-decoration-none", data: sc_data do %>
 
   <%= creator_bar stripe_card, prefix: "issued ", show_title: true unless headless %>
   <% if stripe_card.canceled? %>
     <div class="canceled-card-wrapper">
-      <%= render "stripe_cards/card", event: @event, stripe_card:, show_card_details: @show_card_details, side: "left" %>
-      <%= render "stripe_cards/card", event: @event, stripe_card:, show_card_details: @show_card_details, side: "right" %>
+      <%= render "stripe_cards/card", event: event, stripe_card:, show_card_details: show_card_details, side: "left" %>
+      <%= render "stripe_cards/card", event: event, stripe_card:, show_card_details: show_card_details, side: "right" %>
     </div>
   <% else %>
-    <%= render "stripe_cards/card", event: @event, stripe_card:, show_card_details: @show_card_details %>
+    <%= render "stripe_cards/card", event: event, stripe_card:, show_card_details: show_card_details %>
   <% end %>
 
   <div class="mt2 muted center">

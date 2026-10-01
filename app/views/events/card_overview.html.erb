@@ -48,10 +48,10 @@
     <% end %>
 
     <% if @view == "list" %>
-      <%= render "event_cards_table", stripe_cards: @paginated_stripe_cards, status: @status %>
+      <%= render "event_cards_table", stripe_cards: @paginated_stripe_cards, status: @status, event: @event, show_card_popovers: @show_card_popovers %>
     <% else %>
       <article class="mixed-grid grid--spacious">
-        <%= render partial: "stripe_cards/stripe_card", collection: @paginated_stripe_cards, locals: { show_purpose: true } %>
+        <%= render partial: "stripe_cards/stripe_card", collection: @paginated_stripe_cards, locals: { show_purpose: true, event: @event, show_card_details: @show_card_details, show_card_popovers: @show_card_popovers } %>
       </article>
 
       <% if @paginated_stripe_cards.blank? %>
@@ -124,6 +124,6 @@
 <% if organizer_signed_in? %>
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="order_card">
     <%= modal_header "Order a card" %>
-    <%= render "stripe_cards/form" %>
+    <%= render "stripe_cards/form", event: @event %>
   </section>
 <% end %>

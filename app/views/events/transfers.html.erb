@@ -1,8 +1,8 @@
 <% title "Transfers for #{@event.name}" %>
 <% page_md %>
 <%= render "events/nav", selected: :transfers %>
-<%= render "events/transfers/modal" if policy(@event).new_transfer? %>
-<%= render "card_grants/create_modal" if policy(@event).card_grant_overview? %>
+<%= render "events/transfers/modal", event: @event if policy(@event).new_transfer? %>
+<%= render "card_grants/create_modal", event: @event, popover: @popover if policy(@event).card_grant_overview? %>
 
 <% if @transfers.empty? && organizer_signed_in? && !params[:q].present? && !params[:status].present? && !params[:transfer_type].present? %>
   <%= render "events/one_pager",

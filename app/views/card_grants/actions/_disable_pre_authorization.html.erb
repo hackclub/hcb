@@ -1,4 +1,4 @@
-<%# locals: (card_grant:, label: "") %>
+<%# locals: (card_grant:, label: "", event:) %>
 
 <% pre_authorization_tooltip = if label.presence
                                  label
@@ -7,7 +7,7 @@
                                else
                                  "You don't have permission to perform this action"
                                end %>
-<%= button_to disable_pre_authorization_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
+<%= button_to disable_pre_authorization_event_card_grant_path(id: card_grant.hashid, event_id: event.slug),
               method: :post,
               form_class: "contents",
               class: "btn btn--list-item",

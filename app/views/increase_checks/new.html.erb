@@ -49,7 +49,7 @@
 
   <% if @event.present? && !policy(@event).create_transfer? %>
     <%= render partial: "events/unauthorized_callout",
-      locals: { action: "send a check" } %>
+      locals: { action: "send a check", event: @event } %>
   <% end %>
 <% end %>
 

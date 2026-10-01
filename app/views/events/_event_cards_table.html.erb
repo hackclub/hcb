@@ -1,4 +1,4 @@
-<%# locals: (status:, stripe_cards:) %>
+<%# locals: (status:, stripe_cards:, event:, show_card_popovers: nil) %>
 
 <% if stripe_cards.blank? %>
   <%= blankslate "You don't have any #{status} cards yet." %>
@@ -41,7 +41,7 @@
           <%# Date issued %>
           <td>
             <%= format_date c.created_at %>
-          <%= link_to "", stripe_card_path(c), class: "stretched-link", data: @show_card_popovers && stripe_card_popover_data(c) if organizer_signed_in? && !@event.demo_mode %>
+          <%= link_to "", stripe_card_path(c), class: "stretched-link", data: show_card_popovers && stripe_card_popover_data(c) if organizer_signed_in? && !event.demo_mode %>
           </td>
         </tr>
 

@@ -14,7 +14,7 @@
 
 <% if policy(@event).create_payment? %>
   <% content_for :sidebar_footer do %>
-    <%= render "events/transfers/modal" %>
+    <%= render "events/transfers/modal", event: @event %>
     <%= link_to "Send transfer manually", "#", class: "btn mt2", data: { behavior: "modal_trigger", modal: "send_transfer" } %>
   <% end %>
 <% end %>

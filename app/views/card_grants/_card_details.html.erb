@@ -1,4 +1,4 @@
-<%# locals: (card_grant:) %>
+<%# locals: (card_grant:, show_card_details: nil) %>
 
 <% if (stripe_card = card_grant.stripe_card).present? %>
   <div>
@@ -26,15 +26,15 @@
           <strong>Card number</strong>
           <div class="flex justify-between font-mono items-center">
             <% if stripe_card.user == current_user && stripe_card.virtual? %>
-              <% if @show_card_details %>
+              <% if show_card_details %>
                 <%= copy_to_clipboard(stripe_card.full_card_number, class: "w-fit", tooltip_direction: "e") do %>
                   <%= stripe_card.formatted_card_number %>
                 <% end %>
               <% else %>
                 <%= stripe_card.hidden_card_number_with_last_four %>
               <% end %>
-              <%= link_to card_grant_path(card_grant, show_details: (!@show_card_details).to_s), data: { turbo: true } do %>
-                <%= inline_icon @show_card_details ? "view-fill" : "view", class: "align-middle" %>
+              <%= link_to card_grant_path(card_grant, show_details: (!show_card_details).to_s), data: { turbo: true } do %>
+                <%= inline_icon show_card_details ? "view-fill" : "view", class: "align-middle" %>
               <% end %>
             <% else %>
               <%= stripe_card.hidden_card_number_with_last_four %>
@@ -59,7 +59,7 @@
           <strong>CVC</strong>
           <div class="flex justify-between font-mono items-center">
             <% if stripe_card.user == current_user && stripe_card.virtual? %>
-              <% if @show_card_details %>
+              <% if show_card_details %>
                 <%= copy_to_clipboard(stripe_card.cvc, class: "w-fit", tooltip_direction: "e") do %>
                   <%= stripe_card.cvc %>
                 <% end %>
@@ -80,7 +80,7 @@
             <strong>PIN</strong>
             <div class="flex justify-between font-mono items-center">
               <span id="card-pin">••••</span>
-              <%= inline_icon @show_card_details ? "view-fill" : "view", class: "align-middle", "data-action": "click->pin#view" %>
+              <%= inline_icon show_card_details ? "view-fill" : "view", class: "align-middle", "data-action": "click->pin#view" %>
             </div>
           </div>
         <% end %>
