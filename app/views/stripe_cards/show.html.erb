@@ -39,5 +39,5 @@
     </article>
   </turbo-frame>
 
-  <%= render partial: "stripe_cards/transactions", locals: { stripe_card: @card, hcb_codes: @hcb_codes, ledger: @ledger, items: @items, card: @card, card_grant: @card_grant, direction: @direction, event: @event, force_no_popover: @force_no_popover, frame: @frame, show_running_balance: @show_running_balance } %>
+  <%= render partial: "stripe_cards/transactions", locals: { stripe_card: @card, hcb_codes: @hcb_codes, ledger: @ledger, items: @items, card_grant: @card_grant, direction: @direction, event: @event, force_no_popover: @force_no_popover, frame: @frame, show_running_balance: @show_running_balance } %>
 <% end %>

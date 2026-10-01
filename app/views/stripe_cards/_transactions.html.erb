@@ -1,10 +1,10 @@
-<%# locals: (stripe_card:, hcb_codes:, ledger:, items:, card: nil, card_grant: nil, direction: nil, event: nil, force_no_popover: nil, frame: nil, show_running_balance: nil) %>
+<%# locals: (stripe_card:, hcb_codes:, ledger:, items:, card_grant: nil, direction: nil, event: nil, force_no_popover: nil, frame: nil, show_running_balance: nil) %>
 
 <% if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user) %>
   <%= render "ledgers/ledger", ledger:, items:, show_author: false, direction: direction, event: event %>
 <% else %>
   <% if hcb_codes.exists? %>
-    <% subscriptions = StripeCardService::PredictSubscriptions.new(card: card).run %>
+    <% subscriptions = StripeCardService::PredictSubscriptions.new(card: stripe_card).run %>
 
     <% if subscriptions.any? && hcb_codes.first_page? %>
       <h2 class="heading h2 leading-[1.5] mt2 ml0 pt1 pb1 pl2 pr2">Active subscriptions on this card</h2>
