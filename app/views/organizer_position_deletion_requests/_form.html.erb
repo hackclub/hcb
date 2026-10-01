@@ -1,4 +1,4 @@
-<%# locals: (organizer_position_deletion_request:, opdr:) %>
+<%# locals: (organizer_position_deletion_request:) %>
 
 <%= form_with(model: organizer_position_deletion_request, local: true) do |form| %>
   <%= form_errors organizer_position_deletion_request, "request" %>
@@ -11,7 +11,7 @@
     <span class="muted h5">(So we have context when we contact you.)</span>
   </div>
 
-  <% cards_num = opdr.organizer_active_cards.count %>
+  <% cards_num = organizer_position_deletion_request.organizer_active_cards.count %>
   <% if cards_num > 0 %>
     <p class="warning">
       <%= inline_icon "important", size: 24, style: "vertical-align: middle; margin: -0.2rem 0 0 -0.2rem;" %>
