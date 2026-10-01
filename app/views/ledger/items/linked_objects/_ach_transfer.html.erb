@@ -1,4 +1,4 @@
-<%# locals: (ledger_item:) %>
+<%# locals: (ledger_item:, show_ach_details: nil) %>
 
 <% ach_transfer = ledger_item.linked_object %>
 
@@ -70,7 +70,7 @@
       <% if policy(ach_transfer).view_account_routing_numbers? %>
         <p class="fs-mask">
           <strong>Routing number</strong>
-          <% if @show_ach_details %>
+          <% if show_ach_details %>
             <%= ach_transfer.routing_number %>
           <% else %>
             <%= link_to "Reveal", ledger_item_path(ledger_item, show_details: "true"), data: { turbo: true } %>
@@ -79,7 +79,7 @@
 
         <p class="fs-mask">
           <strong>Account number</strong>
-          <% if @show_ach_details %>
+          <% if show_ach_details %>
             <%= ach_transfer.account_number %>
           <% else %>
             <%= link_to "Reveal", ledger_item_path(ledger_item, show_details: "true"), data: { turbo: true } %>

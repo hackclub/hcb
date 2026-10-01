@@ -1,4 +1,4 @@
-<%# locals: (expense:) %>
+<%# locals: (expense:, event: nil, ledger_instance: nil) %>
 
 <% instance = expense.id %>
 <%= turbo_frame_tag "receipts_for_#{expense.id}" do %>
@@ -41,7 +41,7 @@
                 <% end %>
               </div>
             <% end %>
-            <%= render partial: "receipts/receipt", collection: expense.receipts.order(created_at: :desc), as: :receipt, locals: { hide_info: true, delete_on_hover: !expense.report.locked?, style: "margin: 0px; min-width: 150px; max-width: 300px; height: 100%; object-fit: cover;" } %>
+            <%= render partial: "receipts/receipt", collection: expense.receipts.order(created_at: :desc), as: :receipt, locals: { hide_info: true, delete_on_hover: !expense.report.locked?, style: "margin: 0px; min-width: 150px; max-width: 300px; height: 100%; object-fit: cover;", event: event, ledger_instance: ledger_instance } %>
           </div>
         </div>
       <% elsif policy(expense).update? %>

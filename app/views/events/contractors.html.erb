@@ -1,6 +1,6 @@
 <% title "Contractors for #{@event.name}" %>
 <% page_md %>
-<%= render "events/nav", selected: :contractors %>
+<%= render "events/nav", selected: :contractors, event: @event, home_size: @home_size %>
 
 <% if @contractors.empty? && organizer_signed_in? && !params[:q].present? %>
   <%= render "events/one_pager",

@@ -28,12 +28,12 @@
             <% @missing.each do |hcb_code| %>
               <% if hcb_code.canonical_transactions.any? %>
                 <% hcb_code.canonical_transactions.each do |ct| %>
-                  <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct:, force_display_details: true, authorless: true, receipt_upload_button: true } %>
+                  <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct:, force_display_details: true, authorless: true, receipt_upload_button: true, card_grant: @card_grant, force_no_popover: @force_no_popover, frame: @frame, page_event: @event, show_running_balance: @show_running_balance } %>
                 <% end %>
               <% else %>
                 <% hcb_code.canonical_pending_transactions.each do |pt| %>
                   <% next if pt.declined? %>
-                  <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", locals: { pt:, force_display_details: true, authorless: true, receipt_upload_button: true } %>
+                  <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", locals: { pt:, force_display_details: true, authorless: true, receipt_upload_button: true, card_grant: @card_grant, force_no_popover: @force_no_popover, frame: @frame, page_event: @event, show_running_balance: @show_running_balance } %>
                 <% end %>
               <% end %>
             <% end %>

@@ -1,4 +1,4 @@
-<%# locals: (pairings:, current_slide:) %>
+<%# locals: (pairings:, current_slide:, card_grant: nil, event: nil, force_no_popover: nil, frame: nil, ledger_instance: nil, show_running_balance: nil) %>
 
 <%= turbo_frame_tag "suggested_pairings" do %>
   <% if pairings.any? %>
@@ -24,7 +24,7 @@
         <div class="flex justify-center">
 
           <div class="xs-hide sm-hide flex flex-col justify-center pt1" style="user-drag: none; -webkit-user-drag: none; -moz-user-drag: none; min-width: 50px; max-width: max(10vw, 50px)">
-            <%= render partial: "receipts/receipt", locals: { receipt: pairing.receipt, show_delete_button: true, link_to_file: true, hide_info: true, size: 200 } %>
+            <%= render partial: "receipts/receipt", locals: { receipt: pairing.receipt, show_delete_button: true, link_to_file: true, hide_info: true, size: 200, event: event, ledger_instance: ledger_instance } %>
           </div>
 
           <div class="flex flex-col justify-center xs-hide sm-hide" style="margin-left: 16px; margin-right: 16px; flex-grow: 0.5; max-width: 36px;">
@@ -47,11 +47,11 @@
                   <tbody data-behavior="transactions">
                     <% if pairing.hcb_code.canonical_transactions.any? %>
                       <% pairing.hcb_code.canonical_transactions.each do |ct| %>
-                        <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct:, force_display_details: true } %>
+                        <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct:, force_display_details: true, card_grant: card_grant, force_no_popover: force_no_popover, frame: frame, page_event: event, show_running_balance: show_running_balance } %>
                       <% end %>
                     <% else %>
                       <% pairing.hcb_code.canonical_pending_transactions.each do |pt| %>
-                        <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", locals: { pt:, force_display_details: true } %>
+                        <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", locals: { pt:, force_display_details: true, card_grant: card_grant, force_no_popover: force_no_popover, frame: frame, page_event: event, show_running_balance: show_running_balance } %>
                       <% end %>
                     <% end %>
                   </tbody>

@@ -17,7 +17,7 @@
 <% end %>
 
 <div class="flex">
-  <%= render(partial: "application/logo") %>
+  <%= render(partial: "application/logo", locals: { home_size: @home_size }) %>
 </div>
 
 <%= render("logins/header", header_label: "Hack Club", login: @login) do %>

@@ -10,7 +10,7 @@
 
   <% raffle_month = end_date.strftime("%B") %>
 
-  <% @raffle_card = capture do %>
+  <% raffle_card = capture do %>
     <div class="card card--hover flex flex-col flex-wrap h-full mx-auto card--background-image text-left mt-4" style="--bg-image: url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/38be05dd4accefb1708c06ba6f99401b4265e7a1_image.png')">
       <div class="flex gap-2 items-center mb-4">
         <span>🎟️</span>
@@ -37,10 +37,10 @@
   <% end %>
 
   <% if already_joined %>
-    <%= @raffle_card %>
+    <%= raffle_card %>
   <% else %>
     <%= link_to new_raffle_path(program: raffle_program), class: "w-full no-underline text-inherit", data: { behavior: "modal_trigger", modal: "join_teenager_raffle" } do %>
-      <%= @raffle_card %>
+      <%= raffle_card %>
     <% end %>
   <% end %>
 <% end %>

@@ -30,7 +30,7 @@
           <% if event.tags.any? %>
             <div class="menu__divider tags__divider"></div>
           <% end %>
-          <%= render partial: "hcb_codes/create_tag", locals: { button: hcb_code.hashid } %>
+          <%= render partial: "hcb_codes/create_tag", locals: { button: hcb_code.hashid, event: event } %>
         </div>
       </div>
     </div>

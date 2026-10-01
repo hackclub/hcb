@@ -279,7 +279,7 @@
   </div>
 </div>
 
-<%= render partial: "receipts/receipt", collection: @wise_transfer.local_hcb_code.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true } %>
+<%= render partial: "receipts/receipt", collection: @wise_transfer.local_hcb_code.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true, event: @event, ledger_instance: @ledger_instance } %>
 
 <div class="flex flex-col gap-4 border-box">
   <h3>Sending Wise transfers</h3>

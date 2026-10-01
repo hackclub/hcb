@@ -1,86 +1,86 @@
-<%# locals: () %>
+<%# locals: (event:, hcb_code:, editing: nil, frame: nil, ledger_instance: nil, show_ach_details: nil) %>
 
 <%# donation %>
-<% if @hcb_code.donation? && @hcb_code.donation.present? %>
-  <%= render partial: "hcb_codes/transaction_types/donation", locals: {} %>
+<% if hcb_code.donation? && hcb_code.donation.present? %>
+  <%= render partial: "hcb_codes/transaction_types/donation", locals: { event: event, hcb_code: hcb_code } %>
 <% end %>
 
 <%# invoice %>
-<% if @hcb_code.invoice? && @hcb_code.invoice.present? %>
-  <%= render partial: "hcb_codes/transaction_types/invoice", locals: {} %>
+<% if hcb_code.invoice? && hcb_code.invoice.present? %>
+  <%= render partial: "hcb_codes/transaction_types/invoice", locals: { event: event, hcb_code: hcb_code } %>
 <% end %>
 
 <%# ach_transfer %>
-<% if @hcb_code.ach_transfer? && @hcb_code.ach_transfer.present? %>
-  <%= render partial: "hcb_codes/transaction_types/ach_transfer", locals: {} %>
+<% if hcb_code.ach_transfer? && hcb_code.ach_transfer.present? %>
+  <%= render partial: "hcb_codes/transaction_types/ach_transfer", locals: { event: event, hcb_code: hcb_code, show_ach_details: show_ach_details } %>
 <% end %>
 
 <%# check %>
-<% if @hcb_code.check? && @hcb_code.check.present? %>
-  <%= render partial: "hcb_codes/transaction_types/check", locals: {} %>
+<% if hcb_code.check? && hcb_code.check.present? %>
+  <%= render partial: "hcb_codes/transaction_types/check", locals: { event: event, hcb_code: hcb_code } %>
 <% end %>
 
 <%# check %>
-<% if @hcb_code.increase_check? && @hcb_code.increase_check.present? %>
-  <%= render partial: "hcb_codes/transaction_types/increase_check", locals: {} %>
+<% if hcb_code.increase_check? && hcb_code.increase_check.present? %>
+  <%= render partial: "hcb_codes/transaction_types/increase_check", locals: { event: event, hcb_code: hcb_code } %>
 <% end %>
 
 <%# check deposit %>
-<% if @hcb_code.check_deposit? && @hcb_code.check_deposit.present? %>
-  <%= render partial: "hcb_codes/transaction_types/check_deposit", locals: {} %>
+<% if hcb_code.check_deposit? && hcb_code.check_deposit.present? %>
+  <%= render partial: "hcb_codes/transaction_types/check_deposit", locals: { event: event, hcb_code: hcb_code } %>
 <% end %>
 
 <%# stripe card %>
-<% if (@hcb_code.stripe_card? || @hcb_code.stripe_force_capture?) && @hcb_code.stripe_card.present? %>
-  <%= render partial: "hcb_codes/transaction_types/stripe_card", locals: {} %>
+<% if (hcb_code.stripe_card? || hcb_code.stripe_force_capture?) && hcb_code.stripe_card.present? %>
+  <%= render partial: "hcb_codes/transaction_types/stripe_card", locals: { event: event, frame: frame, hcb_code: hcb_code, ledger_instance: ledger_instance } %>
 <% end %>
 
 <%# outgoing disbursement %>
-<% if @hcb_code.outgoing_disbursement? && @hcb_code.outgoing_disbursement.present? %>
-  <%= render partial: "hcb_codes/transaction_types/disbursement", locals: { disbursement: @hcb_code.outgoing_disbursement } %>
+<% if hcb_code.outgoing_disbursement? && hcb_code.outgoing_disbursement.present? %>
+  <%= render partial: "hcb_codes/transaction_types/disbursement", locals: { disbursement: hcb_code.outgoing_disbursement, event: event, hcb_code: hcb_code } %>
 <% end %>
 
 <%# incoming disbursement %>
-<% if @hcb_code.incoming_disbursement? && @hcb_code.incoming_disbursement.present? %>
-  <%= render partial: "hcb_codes/transaction_types/disbursement", locals: { disbursement: @hcb_code.incoming_disbursement } %>
+<% if hcb_code.incoming_disbursement? && hcb_code.incoming_disbursement.present? %>
+  <%= render partial: "hcb_codes/transaction_types/disbursement", locals: { disbursement: hcb_code.incoming_disbursement, event: event, hcb_code: hcb_code } %>
 <% end %>
 
 <%# bank fee %>
-<% if @hcb_code.bank_fee? && @hcb_code.bank_fee.present? %>
-  <%= render partial: "hcb_codes/transaction_types/bank_fee", locals: {} %>
+<% if hcb_code.bank_fee? && hcb_code.bank_fee.present? %>
+  <%= render partial: "hcb_codes/transaction_types/bank_fee", locals: { event: event, hcb_code: hcb_code } %>
 <% end %>
 
 <%# expense payout %>
-<% if @hcb_code.reimbursement_expense_payout? %>
-  <%= render partial: "hcb_codes/reimbursement/expense_payout", locals: {} %>
+<% if hcb_code.reimbursement_expense_payout? %>
+  <%= render partial: "hcb_codes/reimbursement/expense_payout", locals: { event: event, frame: frame, hcb_code: hcb_code, ledger_instance: ledger_instance } %>
 <% end %>
 
 <%# payout holding %>
-<% if @hcb_code.reimbursement_payout_holding? %>
-  <%= render partial: "hcb_codes/reimbursement/payout_holding", locals: {} %>
+<% if hcb_code.reimbursement_payout_holding? %>
+  <%= render partial: "hcb_codes/reimbursement/payout_holding", locals: { editing: editing, event: event, hcb_code: hcb_code, ledger_instance: ledger_instance } %>
 <% end %>
 
 <%# fee revenue %>
-<% if @hcb_code.fee_revenue? && @hcb_code.fee_revenue.present? %>
-  <%= render partial: "hcb_codes/transaction_types/fee_revenue", locals: {} %>
+<% if hcb_code.fee_revenue? && hcb_code.fee_revenue.present? %>
+  <%= render partial: "hcb_codes/transaction_types/fee_revenue", locals: { event: event, hcb_code: hcb_code } %>
 <% end %>
 
 <%# paypal transfer %>
-<% if @hcb_code.paypal_transfer? && @hcb_code.paypal_transfer.present? %>
-  <%= render "hcb_codes/transaction_types/paypal_transfer" %>
+<% if hcb_code.paypal_transfer? && hcb_code.paypal_transfer.present? %>
+  <%= render "hcb_codes/transaction_types/paypal_transfer", event: event, hcb_code: hcb_code %>
 <% end %>
 
 <%# wire %>
-<% if @hcb_code.wire? && @hcb_code.wire.present? %>
-  <%= render "hcb_codes/transaction_types/wire" %>
+<% if hcb_code.wire? && hcb_code.wire.present? %>
+  <%= render "hcb_codes/transaction_types/wire", event: event, hcb_code: hcb_code %>
 <% end %>
 
 <%# wise_transfer %>
-<% if @hcb_code.wise_transfer? && @hcb_code.wise_transfer.present? %>
-  <%= render "hcb_codes/transaction_types/wise_transfer" %>
+<% if hcb_code.wise_transfer? && hcb_code.wise_transfer.present? %>
+  <%= render "hcb_codes/transaction_types/wise_transfer", event: event, hcb_code: hcb_code %>
 <% end %>
 
 <%# unknown (most likely a direct to bank account transaction) %>
-<% if @hcb_code.unknown? || @hcb_code.outgoing_fee_reimbursement? %>
-  <%= render partial: "hcb_codes/transaction_types/unknown", locals: {} %>
+<% if hcb_code.unknown? || hcb_code.outgoing_fee_reimbursement? %>
+  <%= render partial: "hcb_codes/transaction_types/unknown", locals: { event: event, hcb_code: hcb_code } %>
 <% end %>

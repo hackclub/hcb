@@ -1,7 +1,7 @@
 <% disabled = !policy(@event).create_transfer? %>
 
 <% title "Edit a wire" %>
-<%= render "events/nav", selected: :transfers %>
+<%= render "events/nav", selected: :transfers, event: @event, home_size: @home_size %>
 <% page_sm %>
 
  <% if @event.present? && !policy(@event).create_transfer? %>

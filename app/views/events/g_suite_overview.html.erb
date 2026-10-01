@@ -1,6 +1,6 @@
 <% title "Google Workspace for #{@event.name}" %>
 <% page_md %>
-<%= render "events/nav", selected: :google_workspace %>
+<%= render "events/nav", selected: :google_workspace, event: @event, home_size: @home_size %>
 <% if !@event.g_suites.exists? && !Flipper.enabled?(:google_workspace, @event) %>
   <%= render "events/one_pager",
      title: "Google Workspace",

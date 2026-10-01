@@ -1,20 +1,20 @@
-<%# locals: (selected: nil) %>
+<%# locals: (selected: nil, event: nil, home_size: nil) %>
 
 <% content_for(:header) do %>
   <div class="flex items-center gap-3 mb-2 pt-4">
-    <%= render partial: "logo" %>
+    <%= render partial: "logo", locals: { home_size: home_size } %>
     <span class="-mx-1.5 text-xl opacity-40">/</span>
-    <%= render "events/title" %>
+    <%= render "events/title", event: event %>
   </div>
 <% end %>
 
 <% content_for(:nav) do %>
-  <% if !@event&.demo_mode? %>
-    <%= render partial: "hcb_codes/create_tag", locals: { button: false } %>
+  <% if !event&.demo_mode? %>
+    <%= render partial: "hcb_codes/create_tag", locals: { button: false, event: event } %>
   <% end %>
 
   <nav class="dock flex mt-4 font-medium">
-    <% events_nav(@event, selected:).each do |item| %>
+    <% events_nav(event, selected:).each do |item| %>
       <% if item[:section] %>
         <span class="mx-1 dock__section"><%= item[:section] %></span>
         <hr class="opacity-80 border-none h-[1px] bg-gray-200">

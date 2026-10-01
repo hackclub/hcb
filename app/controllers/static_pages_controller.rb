@@ -183,7 +183,7 @@ class StaticPagesController < ApplicationController
   def suggested_pairings
     render partial: "static_pages/suggested_pairings", locals: {
       pairings: current_user.receipt_bin.suggested_receipt_pairings,
-      current_slide: 0
+      current_slide: 0, card_grant: @card_grant, event: @event, force_no_popover: @force_no_popover, frame: @frame, ledger_instance: @ledger_instance, show_running_balance: @show_running_balance
     }
   end
 

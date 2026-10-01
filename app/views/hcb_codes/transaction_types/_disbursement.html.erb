@@ -1,20 +1,20 @@
-<%# locals: (disbursement:) %>
-<% @destination = disbursement.destination_event %>
-<% @source = disbursement.source_event %>
-<% @subledger = disbursement.destination_subledger || disbursement.source_subledger %>
+<%# locals: (disbursement:, hcb_code:, event: nil) %>
+<% destination = disbursement.destination_event %>
+<% source = disbursement.source_event %>
+<% subledger = disbursement.destination_subledger || disbursement.source_subledger %>
 
 <article class="hcb-code">
-  <%= render "hcb_codes/heading", hcb_code: @hcb_code do %>
-    <% if @hcb_code.outgoing_disbursement? %>
+  <%= render "hcb_codes/heading", hcb_code: hcb_code do %>
+    <% if hcb_code.outgoing_disbursement? %>
       <span>
         <span class="regular muted">Transfer of</span>
         <span class="regular"><%= render_money disbursement.amount.abs %></span>
         <span class="regular muted">to</span>
-        <%= @destination.name %>
+        <%= destination.name %>
       </span>
     <% else %>
       <span>
-        <%= @source.name %>
+        <%= source.name %>
         <span class="regular muted">
           <% if disbursement.fulfilled? || disbursement.processed? || disbursement.pending? %>
             transferred
@@ -52,12 +52,12 @@
 
     <div>
       <strong>Direction</strong>
-      <% if @hcb_code.outgoing_disbursement? %>
+      <% if hcb_code.outgoing_disbursement? %>
         <% incoming_hcb_code = disbursement.disbursement.incoming_disbursement.local_hcb_code %>
-        <%= link_to_if HcbCodePolicy.new(current_user, incoming_hcb_code).show?, "Outgoing →", hcb_code_path(incoming_hcb_code), class: "tooltipped tooltipped--n text-nowrap", "aria-label": "View incoming transfer on #{@destination.name}" %>
+        <%= link_to_if HcbCodePolicy.new(current_user, incoming_hcb_code).show?, "Outgoing →", hcb_code_path(incoming_hcb_code), class: "tooltipped tooltipped--n text-nowrap", "aria-label": "View incoming transfer on #{destination.name}" %>
       <% else %>
         <% outgoing_hcb_code = disbursement.disbursement.outgoing_disbursement.local_hcb_code %>
-        <%= link_to_if HcbCodePolicy.new(current_user, outgoing_hcb_code).show?, "⇢ Incoming", hcb_code_path(outgoing_hcb_code), class: "tooltipped tooltipped--n text-nowrap", "aria-label": "View outgoing transfer on #{@source.name}" %>
+        <%= link_to_if HcbCodePolicy.new(current_user, outgoing_hcb_code).show?, "⇢ Incoming", hcb_code_path(outgoing_hcb_code), class: "tooltipped tooltipped--n text-nowrap", "aria-label": "View outgoing transfer on #{source.name}" %>
       <% end %>
     </div>
 
@@ -86,24 +86,24 @@
   </section>
 
   <section class="hcb-code--info">
-    <% if @subledger&.card_grant.present? %>
+    <% if subledger&.card_grant.present? %>
       <p>
         <strong>Event</strong>
-        <%= link_to @destination.name, @destination %>
+        <%= link_to destination.name, destination %>
       </p>
       <p>
         <strong>Grant</strong>
-        <%= link_to "Grant to #{@subledger.card_grant.user.name}", card_grant_path(@subledger.card_grant) %>
+        <%= link_to "Grant to #{subledger.card_grant.user.name}", card_grant_path(subledger.card_grant) %>
       </p>
     <% else %>
       <p>
         <strong>From</strong>
-        <%= link_to_if EventPolicy.new(current_user, @source).show?, @source.name, @source, target: "_top" %>
+        <%= link_to_if EventPolicy.new(current_user, source).show?, source.name, source, target: "_top" %>
       </p>
 
       <p>
         <strong>To</strong>
-        <%= link_to_if EventPolicy.new(current_user, @destination).show?, @destination.name, @destination, target: "_top" %>
+        <%= link_to_if EventPolicy.new(current_user, destination).show?, destination.name, destination, target: "_top" %>
       </p>
 
     <% end %>
@@ -124,7 +124,7 @@
       </p>
     <% end %>
 
-    <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
+    <%= render "hcb_codes/tags", hcb_code: hcb_code, event: event || hcb_code.event %>
 
   </section>
 

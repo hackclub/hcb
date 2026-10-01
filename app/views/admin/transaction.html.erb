@@ -117,7 +117,7 @@
 
   <% @hcb_code = @canonical_transaction.local_hcb_code %>
   <div style="margin-left: -2rem;" class="mt2">
-    <%= render "receipts/list_v2", hcb_code: @hcb_code %>
+    <%= render "receipts/list_v2", hcb_code: @hcb_code, event: @event, ledger_instance: @ledger_instance %>
   </div>
 
   <div style="width: 250px;">

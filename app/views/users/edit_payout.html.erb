@@ -1,6 +1,6 @@
 <% title "Account settings" %>
 <% page_md %>
-<%= render "users/nav", selected: :settings_reimbursement_payouts %>
+<%= render "users/nav", selected: :settings_reimbursement_payouts, activities: @activities, before: @before, home_size: @home_size, user: @user %>
 
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
   <%= render "settings_header", active: "payouts", legal_entities: @legal_entities, legal_entity: @legal_entity, user: @user %>

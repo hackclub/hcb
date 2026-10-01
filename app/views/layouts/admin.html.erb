@@ -12,7 +12,7 @@
 
     <nav class="flex flex-col shadow-lg sticky top-0 backdrop-blur-lg z-10 bg-white/80 dark:!bg-[rgba(0,0,0,0.8)]">
       <div class="p-6 pl-5 pb-2 flex items-center w-full gap-2">
-        <%= render "application/logo" %>
+        <%= render "application/logo", home_size: @home_size %>
 
         <span class="text-xl font-bold ml-1 hidden sm:inline-block">HCB Admin</span>
         <span style="color: var(--hcb-link-2); font-weight: 200;">/</span>

@@ -1,6 +1,6 @@
 <% page_sm %>
 
-<%= render "events/nav" unless @document.common? %>
+<%= render "events/nav", event: @event, home_size: @home_size unless @document.common? %>
 
 <h1>Editing Document</h1>
 

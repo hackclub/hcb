@@ -1,7 +1,7 @@
 <% title "Home" %>
 <% page_md %>
 
-<%= render "users/nav", selected: :home if signed_in? %>
+<%= render "users/nav", selected: :home, activities: @activities, before: @before, home_size: @home_size, user: @user if signed_in? %>
 
 <h1 class="heading border-b-0 mb-0 pb-0 flex-col sm:flex-row items-center sm:items-start justify-center sm:justify-between center sm:text-left w-auto m-0 mt-3 gap-2">
   <div>

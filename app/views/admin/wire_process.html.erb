@@ -130,7 +130,7 @@
       </tbody>
     </table>
 
-    <%= render partial: "receipts/receipt", collection: @wire.local_hcb_code.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true } %>
+    <%= render partial: "receipts/receipt", collection: @wire.local_hcb_code.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true, event: @event, ledger_instance: @ledger_instance } %>
   </div>
 
   <div>

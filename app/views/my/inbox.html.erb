@@ -1,6 +1,6 @@
 <% title "My receipts" %>
 <% page_md %>
-<%= render "users/nav", selected: :receipts %>
+<%= render "users/nav", selected: :receipts, activities: @activities, before: @before, home_size: @home_size, user: @user %>
 
 <h1 class="heading border-0 mb-0">
   <span>
@@ -92,7 +92,7 @@
 <ul class="grid grid--medium-narrow text-left w-100 mt0" id="receipts_list">
   <% @receipts.each do |receipt| %>
     <li class="flex grid flex-col justify-between h-100 mx-auto" id="receipt_<%= receipt.id %>">
-      <%= render partial: "receipts/receipt", locals: { receipt:, show_delete_button: true, show_reimbursements_button: true, link_to_file: true, turbo_for_deletion: true } %>
+      <%= render partial: "receipts/receipt", locals: { receipt:, show_delete_button: true, show_reimbursements_button: true, link_to_file: true, turbo_for_deletion: true, event: @event, ledger_instance: @ledger_instance } %>
     </li>
   <% end %>
 </ul>
@@ -147,7 +147,7 @@
         </h2>
       <% end %>
 
-      <%= render "my/missing_receipt_transactions", hcb_codes:, show_event_name: true %>
+      <%= render "my/missing_receipt_transactions", hcb_codes:, show_event_name: true, card_grant: @card_grant, event: @event, force_no_popover: @force_no_popover, frame: @frame, show_running_balance: @show_running_balance %>
     <% end %>
   <% end %>
 <% else %>
@@ -163,7 +163,7 @@
       </h2>
 
       <%# The org is already in this section's header, so it isn't repeated per row. %>
-      <%= render "my/missing_receipt_transactions", hcb_codes: @card_hcb_codes[card.to_global_id.to_s] %>
+      <%= render "my/missing_receipt_transactions", hcb_codes: @card_hcb_codes[card.to_global_id.to_s], card_grant: @card_grant, event: @event, force_no_popover: @force_no_popover, frame: @frame, show_running_balance: @show_running_balance %>
     </section>
   <% end %>
 <% end %>

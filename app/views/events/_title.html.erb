@@ -1,6 +1,6 @@
-<%# locals: () %>
+<%# locals: (event:) %>
 
-<% parent_events ||= @event.ancestors.reject { |e| e.id == @event.id }.reverse %>
+<% parent_events ||= event.ancestors.reject { |e| e.id == event.id }.reverse %>
 <% if parent_events.present? %>
   <div data-controller="menu" class="-mb-2">
     <button
@@ -24,10 +24,10 @@
   <span class="-mx-1.5 text-xl opacity-40">/</span>
 <% end %>
 <div data-controller="menu" class="flex-1 truncate">
-  <%= link_to @event, aria: { label: @event.name }, class: "tooltipped tooltipped--s #{"pointer-events-none" unless signed_in?} flex-1 truncate text-decoration-none gap-2 text-inherit event-title rounded-lg transition-colors flex items-center tracking-tight hover:text-primary", style: "font-weight: 600; word-break: break-word;", data: ({ action: "click->menu#toggle click@document->menu#close keydown@document->menu#keydown", menu_target: "toggle" } if show_org_switcher?) do %>
+  <%= link_to event, aria: { label: event.name }, class: "tooltipped tooltipped--s #{"pointer-events-none" unless signed_in?} flex-1 truncate text-decoration-none gap-2 text-inherit event-title rounded-lg transition-colors flex items-center tracking-tight hover:text-primary", style: "font-weight: 600; word-break: break-word;", data: ({ action: "click->menu#toggle click@document->menu#close keydown@document->menu#keydown", menu_target: "toggle" } if show_org_switcher?) do %>
     <h3 class="my-0 flex lg:max-w-[180px] items-center p-0 pr-2 truncate">
       <span class="truncate flex-1 min-w-0">
-        <%= @event.name %>
+        <%= event.name %>
       </span>
       <%= inline_icon "down-caret", class: "align-middle -mr-4 event-title-dropdown-icon" if show_org_switcher? %>
     </h3>
@@ -35,13 +35,13 @@
   <% if show_org_switcher? %>
     <div class="menu__content menu__content--switcher w-[200px] sm:w-[275px] z-[11] !rounded-xl" data-menu-target="content" style="bottom:unset!important">
       <% admin_tool do %>
-        <button class="menu__action" data-controller="clipboard" data-clipboard-text-value="<%= @event.name %>" data-action="click->clipboard#copy">
+        <button class="menu__action" data-controller="clipboard" data-clipboard-text-value="<%= event.name %>" data-action="click->clipboard#copy">
           <%= inline_icon "copy", size: 24 %>
           Copy org name
         </button>
       <% end %>
       <p class="muted font-medium h5 pl-2 p-1 m0">Switch organizations</p>
-      <% events = current_user.events.not_hidden.excluding(@event).with_attached_logo %>
+      <% events = current_user.events.not_hidden.excluding(event).with_attached_logo %>
       <% events.map do |event| %>
         <%= link_to event, title: event.name, class: "gap-2" do %>
           <% if event.logo.attached? %>

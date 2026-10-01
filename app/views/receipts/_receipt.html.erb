@@ -1,4 +1,4 @@
-<%# locals: (receipt:, delete_on_hover: nil, hide_info: nil, link_to_file: nil, pairing: nil, popover: nil, selectable: nil, show_author_img: nil, show_delete_button: nil, show_receipt_bin_button: nil, show_receipt_button: nil, show_reimbursements_button: nil, size: 256, style: nil, textual_content: nil, turbo_for_deletion: nil) %>
+<%# locals: (receipt:, delete_on_hover: nil, hide_info: nil, link_to_file: nil, pairing: nil, popover: nil, selectable: nil, show_author_img: nil, show_delete_button: nil, show_receipt_bin_button: nil, show_receipt_button: nil, show_reimbursements_button: nil, size: 256, style: nil, textual_content: nil, turbo_for_deletion: nil, event: nil, ledger_instance: nil) %>
 
 <% file_path = Rails.application.routes.url_helpers.rails_blob_path(receipt.file, only_path: true, disposition: "inline") %>
 
@@ -106,7 +106,7 @@
       <% end %>
       <% if show_delete_button && policy(receipt).destroy? %>
         <%= pop_icon_to "view-close",
-            receipt_path(receipt, { popover:, format: (:html unless turbo_for_deletion || popover), show_receipt_button:, show_author_img:, ledger_instance: @ledger_instance }.compact),
+            receipt_path(receipt, { popover:, format: (:html unless turbo_for_deletion || popover), show_receipt_button:, show_author_img:, ledger_instance: ledger_instance }.compact),
             data: {
               behavior: "modal_ignore",
               turbo_method: :delete,
@@ -179,5 +179,5 @@
 <% end %>
 
 <% if show_reimbursements_button && receipt.receiptable_id == nil && current_user %>
-  <%= render partial: "reimbursement/reports/create_form", locals: { receipt: } %>
+  <%= render partial: "reimbursement/reports/create_form", locals: { receipt:, event: event, ledger_instance: ledger_instance } %>
 <% end %>

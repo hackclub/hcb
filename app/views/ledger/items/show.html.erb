@@ -1,6 +1,6 @@
 <% if @item.primary_ledger&.event.present? %>
   <% @event = @item.primary_ledger.event %>
-  <%= render "events/nav" %>
+  <%= render "events/nav", event: @event, home_size: @home_size %>
 <% end %>
 
 <%= turbo_frame_tag @item.public_id, target: "_top" do %>
@@ -82,7 +82,7 @@
 
   <%= render partial: "ledger/items/transactions", locals: { ledger_item: @item } %>
 
-  <%= render partial: "ledger/items/linked_object", locals: { ledger_item: @item } %>
+  <%= render partial: "ledger/items/linked_object", locals: { ledger_item: @item, editing: @editing, event: @event, frame: @frame, ledger_instance: @ledger_instance, show_ach_details: @show_ach_details } %>
 
   <div class="flex justify-end align-middle flex-wrap hcb_code_actions" style="gap: 12px">
     <%= render partial: "ledger/items/pin_button", locals: { ledger_item: @item } %>
@@ -104,7 +104,7 @@
       <% end %>
     <% end %>
 
-    <%= render "receipts/list_v2", hcb_code: @item.hcb_code, frame: @frame, transaction_show_receipt_button: true, transaction_show_author_img: true %>
+    <%= render "receipts/list_v2", hcb_code: @item.hcb_code, frame: @frame, transaction_show_receipt_button: true, transaction_show_author_img: true, event: @event, ledger_instance: @ledger_instance %>
     <%= begin receipt_upload_form_config = {
           receiptable: @item.hcb_code,
           enable_linking: true,

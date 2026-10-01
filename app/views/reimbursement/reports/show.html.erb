@@ -1,7 +1,7 @@
 <% title @report.name %>
 <% page_md %>
-<%= render "events/nav", selected: :reimbursements unless @use_user_nav %>
-<%= render "users/nav", selected: :reimbursements if @use_user_nav %>
+<%= render "events/nav", selected: :reimbursements, event: @event, home_size: @home_size unless @use_user_nav %>
+<%= render "users/nav", selected: :reimbursements, activities: @activities, before: @before, home_size: @home_size, user: @user if @use_user_nav %>
 <%= turbo_stream_from @report %>
 <% turbo_refreshes_with method: :morph, scroll: :preserve %>
 
@@ -228,7 +228,7 @@
 <% end %>
 
 <div id="expenses">
-  <%= render partial: "reimbursement/reports/expenses", locals: { report: @report } %>
+  <%= render partial: "reimbursement/reports/expenses", locals: { report: @report, editing: @editing, event: @event, ledger_instance: @ledger_instance } %>
   <%= render partial: "reimbursement/reports/blankslate", locals: { report: @report } %>
 </div>
 

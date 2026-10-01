@@ -4,7 +4,7 @@
   <% title "Transfer of #{render_money @emburse_transaction.amount}" %>
 <% end %>
 <% page_sm %>
-<%= render "events/nav" if @event %>
+<%= render "events/nav", event: @event, home_size: @home_size if @event %>
 
 <% if @emburse_card %>
   <%= render "emburse_cards/emburse_card", emburse_card: @emburse_card %>

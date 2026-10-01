@@ -26,10 +26,10 @@
 
 <div class="hcb_code mt2">
   <div class="hcb_code_wrapper <%= event.plan.is_a?(Event::Plan::HackClubAffiliate) ? "hack_club_hq" : "" %>" style="margin-top: -16px;">
-    <%= render partial: "hcb_codes/rich_metadata" %>
+    <%= render partial: "hcb_codes/rich_metadata", locals: { editing: @editing, event: @event, frame: @frame, hcb_code: @hcb_code, ledger_instance: @ledger_instance, show_ach_details: @show_ach_details } %>
   </div>
   <div class="receipts_wrapper_mobile">
-    <%= render "receipts/list_v2", hcb_code: @hcb_code %>
+    <%= render "receipts/list_v2", hcb_code: @hcb_code, event: @event, ledger_instance: @ledger_instance %>
   </div>
   <div class="event_wrapper">
     <%= link_to event, style: "max-width: 90vw", class: "draggable text-decoration-none" do %>
@@ -121,7 +121,7 @@
     <% end %>
   </div>
   <div class="receipts_wrapper_desktop">
-    <%= render "receipts/list_v2", hcb_code: @hcb_code %>
+    <%= render "receipts/list_v2", hcb_code: @hcb_code, event: @event, ledger_instance: @ledger_instance %>
   </div>
 </div>
 

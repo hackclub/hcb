@@ -1,6 +1,6 @@
 <% title "Account settings" %>
 <% page_md %>
-<%= render "users/nav", selected: :settings_admin %>
+<%= render "users/nav", selected: :settings_admin, activities: @activities, before: @before, home_size: @home_size, user: @user %>
 
 <%= render "settings_header", active: "admin", user: @user %>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth" class="flex flex-col gap-4">

@@ -1,14 +1,14 @@
-<%# locals: () %>
+<%# locals: (hcb_code:, editing: nil, event: nil, ledger_instance: nil) %>
 
-<% payout_transfer = @hcb_code.reimbursement_payout_holding.payout_transfer %>
+<% payout_transfer = hcb_code.reimbursement_payout_holding.payout_transfer %>
 
 <article class="hcb-code">
-  <%= render "hcb_codes/heading", hcb_code: @hcb_code, render_memo: true %>
+  <%= render "hcb_codes/heading", hcb_code: hcb_code, render_memo: true %>
 
   <section class="card__banner card__darker details-horiz border-top">
     <p>
       <strong>Date</strong>
-      <%= format_date @hcb_code.date %>
+      <%= format_date hcb_code.date %>
     </p>
     <p>
       <strong>Type</strong>
@@ -16,15 +16,15 @@
     </p>
     <p>
       <strong>Report</strong>
-      <%= link_to "View Report", @hcb_code.reimbursement_payout_holding.report %>
+      <%= link_to "View Report", hcb_code.reimbursement_payout_holding.report %>
     </p>
     <% if payout_transfer.present? %>
       <p>
-        <strong><%= @hcb_code.reimbursement_payout_holding.report.transfer_text.upcase_first %></strong>
+        <strong><%= hcb_code.reimbursement_payout_holding.report.transfer_text.upcase_first %></strong>
         <%= link_to "View transfer", payout_transfer.local_hcb_code %>
       </p>
     <% end %>
   </section>
 
-  <%= render partial: "reimbursement/reports/expenses", locals: { report: @hcb_code.reimbursement_payout_holding.report } %>
+  <%= render partial: "reimbursement/reports/expenses", locals: { report: hcb_code.reimbursement_payout_holding.report, editing: editing, event: event, ledger_instance: ledger_instance } %>
 </article>

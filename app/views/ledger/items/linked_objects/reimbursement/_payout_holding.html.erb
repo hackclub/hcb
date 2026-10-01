@@ -1,4 +1,4 @@
-<%# locals: (ledger_item:) %>
+<%# locals: (ledger_item:, editing: nil, event: nil, ledger_instance: nil) %>
 
 <% reimbursement_payout_holding = ledger_item.linked_object %>
 <% payout_transfer = reimbursement_payout_holding.payout_transfer %>
@@ -27,5 +27,5 @@
     <% end %>
   </section>
 
-  <%= render partial: "reimbursement/reports/expenses", locals: { report: reimbursement_payout_holding.report } %>
+  <%= render partial: "reimbursement/reports/expenses", locals: { report: reimbursement_payout_holding.report, editing: editing, event: event, ledger_instance: ledger_instance } %>
 </article>

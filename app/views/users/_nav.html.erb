@@ -1,8 +1,8 @@
-<%# locals: (selected: nil) %>
+<%# locals: (selected: nil, activities: nil, before: nil, home_size: nil, user: nil) %>
 
 <% content_for(:header) do %>
   <div class="flex items-center gap-3 mb-2 pt-4">
-    <%= render partial: "logo" %>
+    <%= render partial: "logo", locals: { home_size: home_size } %>
     <h3 class="my-0">HCB</h3>
   </div>
 <% end %>
@@ -37,14 +37,14 @@
     <% end %>
     <div>
       <% if signed_in? %>
-        <%= render "users/settings_dropdown", selected:, user: current_user, open: @user == current_user && selected.to_s.starts_with?("settings") %>
+        <%= render "users/settings_dropdown", selected:, user: current_user, open: user == current_user && selected.to_s.starts_with?("settings") %>
       <% end %>
     </div>
-    <% if @user && @user != current_user && selected.to_s.starts_with?("settings") %>
-      <span class="mx-1 dock__section"><%= @user.possessive_name %> Settings</span>
+    <% if user && user != current_user && selected.to_s.starts_with?("settings") %>
+      <span class="mx-1 dock__section"><%= user.possessive_name %> Settings</span>
       <hr class="opacity-80 border-none h-[1px] bg-gray-200">
       <div>
-        <%= render "users/settings_dropdown", selected:, user: @user, open: true %>
+        <%= render "users/settings_dropdown", selected:, user: user, open: true %>
       </div>
     <% end %>
   </nav>
@@ -73,7 +73,7 @@
 
 <% content_for(:nav_footer) do %>
   <div style="border-top: 1px solid;border-bottom:1px solid" class="!border-gray-200 dark:!border-neutral-700 flex flex-col h-full p-0 w-[288px]">
-    <% if @activities %>
+    <% if activities %>
       <h4 class="p-3 pb-2 w-100 mb0 text-left mt-0 activity">
         <span class="flex items-center w-100 justify-center">
             <span>Recent activity</span>
@@ -88,7 +88,7 @@
       </h4>
     <% end %>
     <div class="h-full overflow-y-auto px-3">
-      <%= render partial: "my/activities" if @activities %>
+      <%= render partial: "my/activities", locals: { activities: activities, before: before } if activities %>
     </div>
   </div>
 <% end %>

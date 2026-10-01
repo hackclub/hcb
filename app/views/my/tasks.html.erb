@@ -1,6 +1,6 @@
 <% title "Tasks" %>
 <% page_md %>
-<%= render "users/nav" %>
+<%= render "users/nav", activities: @activities, before: @before, home_size: @home_size, user: @user %>
 <%= turbo_stream_from current_user, :tasks %>
 
 <h1 class="heading">
