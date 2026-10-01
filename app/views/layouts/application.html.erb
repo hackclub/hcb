@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" data-dark="<%= @is_dark %>">
   <head>
-    <%= render "layouts/head" %>
+    <%= render "layouts/head", is_dark: @is_dark, skip_layout_og_tags: @skip_layout_og_tags %>
     <%= render "application/helpscout_beacon" %>
   </head>
   <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
@@ -62,12 +62,12 @@
             <% else %>
               <div class="flex h-[1px] w-full bg-gray-200 dark:bg-neutral-700"></div>
             <% end %>
-            <%= render "application/user_menu" %>
+            <%= render "application/user_menu", no_app_shell: @no_app_shell %>
           </aside>
         </div>
 
         <article class="flex-1 pt-16 lg:pt-0 lg:pl-72 w-[100%] m-0">
-          <%= render "application/banner_container" %>
+          <%= render "application/banner_container", event: @event, no_app_shell: @no_app_shell, no_transparency_header: @no_transparency_header, use_user_nav: @use_user_nav %>
           <div class="container p-4 md:p-7 pt-4 pb-[150px] lg:pb-7 <%= content_for :container_class %> mx-auto" style="<%= content_for :container_style %>">
             <div class="lg:hidden">
               <%= render "application/flash", klass: "mb1" unless @hide_flash %>
@@ -79,7 +79,7 @@
         </article>
       </main>
     <% else %>
-      <%= render "application/banner_container" %>
+      <%= render "application/banner_container", event: @event, no_app_shell: @no_app_shell, no_transparency_header: @no_transparency_header, use_user_nav: @use_user_nav %>
       <% unless @no_app_shell %>
         <div class="flex justify-center mt-8">
           <%= render "application/logo" %>

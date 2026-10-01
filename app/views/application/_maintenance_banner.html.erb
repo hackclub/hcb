@@ -1,6 +1,6 @@
-<%# locals: (datetime:, duration:, learn_more_url: nil, notice_duration: 1.day) %>
+<%# locals: (datetime:, duration:, learn_more_url: nil, notice_duration: 1.day, event: nil) %>
 <% datetime = datetime.to_datetime %>
-<% not_demo_mode = !@event&.demo_mode? %>
+<% not_demo_mode = !event&.demo_mode? %>
 
 <% if signed_in? && not_demo_mode %>
   <% if Time.now.between?(datetime - notice_duration, datetime + duration) %><%# if it hasn't already passed %>

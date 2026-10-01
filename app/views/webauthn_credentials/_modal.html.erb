@@ -1,11 +1,11 @@
-<%# locals: () %>
+<%# locals: (user: nil) %>
 
 <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="webauthn_register">
   <%= modal_header "Set up a security key" %>
-  <%= form_with url: user_webauthn_credentials_path(@user), data: {
+  <%= form_with url: user_webauthn_credentials_path(user), data: {
         controller: "webauthn-register",
     action: "webauthn-register#submit",
-    "webauthn-register-options-url-value" => register_options_user_webauthn_credentials_path(@user)
+    "webauthn-register-options-url-value" => register_options_user_webauthn_credentials_path(user)
       } do |form| %>
     <p class="display-none flash error max-w-full" data-webauthn-register-target="error">Something went wrong.</p>
 

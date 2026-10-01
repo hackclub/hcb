@@ -1,7 +1,7 @@
-<%# locals: (active:, legal_entities: nil, legal_entity: nil) %>
+<%# locals: (active:, legal_entities: nil, legal_entity: nil, user: nil) %>
 <span class="text-sm text-muted uppercase font-bold mt-6 block">
-  <% if @user != current_user %>
-    <%= @user.possessive_name %>
+  <% if user != current_user %>
+    <%= user.possessive_name %>
   <% end %>
   Settings
 </span>

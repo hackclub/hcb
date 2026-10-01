@@ -1,4 +1,4 @@
-<%# locals: () %>
+<%# locals: (announcement: nil) %>
 
 <!-- start text/html -->
 <%#
@@ -7,13 +7,13 @@
   https://github.com/premailer/premailer/pull/244
 %>
 <div class="section" style="text-align: left;">
-  <% if @announcement.present? %>
+  <% if announcement.present? %>
     <a
-      href="<%= Rails.application.routes.url_helpers.event_announcement_overview_url(@announcement.event) %>"
+      href="<%= Rails.application.routes.url_helpers.event_announcement_overview_url(announcement.event) %>"
       target="_blank">
-      <% if @announcement.event.logo.present? && @announcement.event.logo.variable? %>
+      <% if announcement.event.logo.present? && announcement.event.logo.variable? %>
         <img
-          src="<%= Rails.application.routes.url_helpers.url_for(@announcement.event.logo.variant(resize_to_limit: [nil, 80])) %>"
+          src="<%= Rails.application.routes.url_helpers.url_for(announcement.event.logo.variant(resize_to_limit: [nil, 80])) %>"
           style="height: 2.5rem; max-width: 80%" height="40">
       <% else %>
         <img

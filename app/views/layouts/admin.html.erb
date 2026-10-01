@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" data-dark="<%= @is_dark %>">
   <head>
-    <%= render "layouts/head", title_suffix: "HCB Admin", admin: true %>
+    <%= render "layouts/head", title_suffix: "HCB Admin", admin: true, is_dark: @is_dark, skip_layout_og_tags: @skip_layout_og_tags %>
     <%= stylesheet_link_tag "admin", media: "all", "data-turbo-track": "reload" %>
     <%= javascript_include_tag "admin", "data-turbo-track": "reload", defer: true %>
   </head>

@@ -1,9 +1,9 @@
-<%# locals: (title_suffix: "HCB", admin: false, bare: false, force_light: false) %>
+<%# locals: (title_suffix: "HCB", admin: false, bare: false, force_light: false, is_dark: nil, skip_layout_og_tags: nil) %>
 
 <title><%= yield(:title).concat(" – ") if content_for?(:title) %><%= title_suffix %></title>
 <%= csrf_meta_tags %>
 <%= csp_meta_tag %>
-<meta name="theme-color" content="<%= @is_dark && !force_light ? "#17171d" : "#f9fafc" %>">
+<meta name="theme-color" content="<%= is_dark && !force_light ? "#17171d" : "#f9fafc" %>">
 <meta name="apple-itunes-app" content="app-id=6465424810">
 
 <%# Marketing pages force light, so skip the system-theme script that would flip them to dark. %>
@@ -66,5 +66,5 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-<%= Rails.env %>-16x16.png">
 <% end %>
 
-<%= render "application/seo_meta_tags" unless @skip_layout_og_tags %>
+<%= render "application/seo_meta_tags" unless skip_layout_og_tags %>
 <%= yield(:head) if content_for?(:head) %>

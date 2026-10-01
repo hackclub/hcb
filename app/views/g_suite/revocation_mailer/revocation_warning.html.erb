@@ -33,7 +33,7 @@
     benefit to other organizations on the waitlist.
   </p>
 
-  <%= render "g_suite/revocation_mailer/revocation_warning_details" %>
+  <%= render "g_suite/revocation_mailer/revocation_warning_details", g_suite: @g_suite, g_suite_revocation: @g_suite_revocation %>
 <% end %>
 
 <p>

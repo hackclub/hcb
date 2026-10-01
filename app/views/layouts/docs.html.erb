@@ -2,7 +2,7 @@
 <html lang="en" data-dark="<%= @is_dark %>">
   <!-- come hack with us on hcb! <%= Rails.configuration.constants.hack_on_hcb_form_url %> -->
   <head>
-    <%= render "layouts/head" %>
+    <%= render "layouts/head", is_dark: @is_dark, skip_layout_og_tags: @skip_layout_og_tags %>
   </head>
   <body <%= yield(:body_attributes) if content_for?(:body_attributes) %> class="bg-snow embedded <%= content_for :page_class %> <%= "season-#{current_season}" if current_season %>">
     <%= react_component "tour/TourOverlay",

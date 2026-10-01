@@ -3,7 +3,7 @@
 <!DOCTYPE html>
 <html lang="en" data-dark="<%= @is_dark %>" class="overscroll-none">
   <head>
-    <%= render "layouts/head" %>
+    <%= render "layouts/head", is_dark: @is_dark, skip_layout_og_tags: @skip_layout_og_tags %>
     <style>
       html, body { overflow-x: hidden }
       @media (min-width: 640px) {

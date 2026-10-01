@@ -1,5 +1,5 @@
 <% content_for :default_header do %>
-  <%= render "layouts/mailer/header" %>
+  <%= render "layouts/mailer/header", announcement: @announcement %>
 <% end %>
 
 <% content_for :default_footer do %>

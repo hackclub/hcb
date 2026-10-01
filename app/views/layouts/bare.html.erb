@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <%= render "layouts/head", bare: true %>
+    <%= render "layouts/head", bare: true, is_dark: @is_dark, skip_layout_og_tags: @skip_layout_og_tags %>
   </head>
   <body>
     <%= yield %>
