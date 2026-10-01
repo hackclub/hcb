@@ -25,7 +25,7 @@
             <%= link_to "Enable cash withdrawals", enable_cash_withdrawal_stripe_card_path(@card), data: { turbo_method: :post }, class: "btn btn--list-item bg-success", disabled: !admin_signed_in? %>
           <% end %>
         <% end %>
-        <%= render partial: "stripe_cards/actions", locals: { stripe_card: @card, card: @card } %>
+        <%= render partial: "stripe_cards/actions", locals: { stripe_card: @card } %>
       </section>
 
       <%= render partial: "stripe_cards/details", locals: { stripe_card: @card, frame: @frame, show_card_details: @show_card_details } if @card.initially_activated? %>

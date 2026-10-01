@@ -1,4 +1,4 @@
-<%# locals: (stripe_card:, card:) %>
+<%# locals: (stripe_card:) %>
 
 <% if stripe_card.stripe_status == "active" && policy(stripe_card).update? %>
   <%= link_to edit_stripe_card_path(stripe_card),
@@ -11,6 +11,6 @@
   <%# Modal for naming card %>
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="name_card">
     <%= modal_header "Name your card" %>
-    <%= render "stripe_cards/name_form", card: card %>
+    <%= render "stripe_cards/name_form", card: stripe_card %>
   </section>
 <% end %>
