@@ -157,10 +157,11 @@ West Hollywood, CA 90069</pre>
     </thead>
     <tbody>
 
-    <%= render partial: "emburse_transactions/transaction",
-               collection: @emburse_transactions,
-               as: :et,
-               locals: { show_running_sum: true, show_card: true } %>
+    <% running_sum = @sum %>
+    <% @emburse_transactions.each do |et| %>
+      <%= render "emburse_transactions/transaction", et:, show_running_sum: true, running_sum:, show_card: true %>
+      <% running_sum -= et.amount if et.undeclined? %>
+    <% end %>
     </tbody>
   </table>
 </div>
