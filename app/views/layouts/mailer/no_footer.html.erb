@@ -1,5 +1,5 @@
 <% content_for :default_header do %>
-  <%= render "layouts/mailer/header" %>
+  <%= render "layouts/mailer/header", announcement: @announcement %>
 <% end %>
 
 <%= render file: Rails.root.join("app/views/layouts/mailer/base") %>

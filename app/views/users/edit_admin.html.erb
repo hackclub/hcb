@@ -2,7 +2,7 @@
 <% page_md %>
 <%= render "users/nav", selected: :settings_admin %>
 
-<%= render "settings_header", active: "admin" %>
+<%= render "settings_header", active: "admin", user: @user %>
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth" class="flex flex-col gap-4">
   <% admin_tool "p-3" do %>
     <h3 class="mb2 mt1">User info</h3>

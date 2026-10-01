@@ -5,7 +5,7 @@
 <%= render "users/nav", selected: :settings_security %>
 
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "settings_header", active: "security" %>
+  <%= render "settings_header", active: "security", user: @user %>
   <fieldset>
     <% unless @user.phone_number.blank? %>
       <%= turbo_frame_tag :sms_auth_card do %>
@@ -106,7 +106,7 @@
         <%= inline_icon "plus", size: home_action_size %>
         Set up
       </button>
-      <%= render "webauthn_credentials/modal" %>
+      <%= render "webauthn_credentials/modal", user: @user %>
     </div>
     <% if @user.webauthn_credentials.length > 0 %>
       <div class="grid grid--split mb3">
@@ -183,7 +183,7 @@
     <div class="grid grid--split">
       <% @all_sessions.each do |session| %>
         <% if session.is_a? User::Session %>
-          <%= render "users/user_session", session: %>
+          <%= render "users/user_session", session:, user: @user %>
         <% elsif session.respond_to? :authorization_count %>
           <%= render "users/oauth_authorization", authorization: session, disabled: %>
         <% end %>
@@ -198,7 +198,7 @@
       <div class="grid grid--split">
         <% @expired_sessions.each do |session| %>
           <% if session.is_a? User::Session %>
-            <%= render "users/user_session", session: %>
+            <%= render "users/user_session", session:, user: @user %>
           <% elsif session.respond_to? :authorization_count %>
             <%= render "users/oauth_authorization", authorization: session, disabled: %>
           <% end %>

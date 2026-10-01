@@ -2,7 +2,7 @@
 <%# Marketing pages are intentionally light-only; opt out of the app's dark mode. %>
 <html lang="en" data-dark="false">
   <head>
-    <%= render "layouts/head", force_light: true %>
+    <%= render "layouts/head", force_light: true, is_dark: @is_dark, skip_layout_og_tags: @skip_layout_og_tags %>
   </head>
   <body class="marketing">
     <%= render "marketing/nav" %>
