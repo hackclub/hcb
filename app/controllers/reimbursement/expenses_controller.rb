@@ -120,7 +120,7 @@ module Reimbursement
     end
 
     def actions_turbo_stream
-      turbo_stream.replace("action-wrapper", partial: "reimbursement/reports/actions", locals: { report: @expense.report, user: @expense.report.user })
+      turbo_stream.replace("action-wrapper", partial: "reimbursement/reports/actions", locals: { report: @expense.report, user: @expense.report.user, event: @event })
     end
 
     EXPENSE_TYPE_MAP = [Reimbursement::Expense, Reimbursement::Expense::Mileage, Reimbursement::Expense::Fee].index_by(&:to_s).freeze

@@ -110,7 +110,8 @@
           enable_linking: true,
           upload_method: "transaction_page",
           include_spacing: true,
-          turbo: true
+          turbo: true,
+          ledger_instance: @ledger_instance
         }
               receipt_upload_form_config[:restricted_dropzone] = true if @frame
               receipt_upload_form_config[:inline_linking] = true if @frame
@@ -133,7 +134,7 @@
         </p>
       <% end %>
     <% end %>
-    <%= render "comments/form", commentable: @item.hcb_code %>
+    <%= render "comments/form", commentable: @item.hcb_code, comment: @comment, popover: @popover %>
   <% end %>
 
   <% admin_tool("p-2 my-3") do %>

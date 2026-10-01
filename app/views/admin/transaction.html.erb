@@ -125,7 +125,7 @@
           receiptable: @canonical_transaction.local_hcb_code,
           upload_method: "attach_receipt_page",
           turbo: false,
-          redirect_url: ledger_admin_index_path
+          redirect_url: ledger_admin_index_path, ledger_instance: @ledger_instance
         } %>
   </div>
 <% end %>

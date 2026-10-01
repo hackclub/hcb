@@ -86,5 +86,5 @@
 <% if policy(@card_grant.comments.build).create? %>
   <h2>Comments</h2>
   <%= render "comments/list", comments: @card_grant.comments, show_blankslate: true %>
-  <%= render "comments/form", commentable: @card_grant %>
+  <%= render "comments/form", commentable: @card_grant, comment: @comment, popover: @popover %>
 <% end %>

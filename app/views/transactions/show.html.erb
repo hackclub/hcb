@@ -172,10 +172,10 @@
         enable_linking: true,
         upload_method: "transaction_page",
         include_spacing: true,
-        turbo: false
+        turbo: false, ledger_instance: @ledger_instance
       } %>
 
   <h2>Comments</h2>
   <%= render "comments/list", comments: @hcb_code.comments %>
-  <%= render "comments/form", commentable: @hcb_code %>
+  <%= render "comments/form", commentable: @hcb_code, comment: @comment, popover: @popover %>
 <% end %>
