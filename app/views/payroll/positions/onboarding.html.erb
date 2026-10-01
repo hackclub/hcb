@@ -42,7 +42,7 @@
       position: @position, perspective: :contractor, contractor_party: @contractor_party %>
 
 <% if @position.onboarding_complete? %>
-  <%= render "application/callout", type: "success", title: "You're all set!", class: "mt-4" do %>
+  <%= render "application/callout", type: "success", title: "You're all set!", klass: "mt-4" do %>
     Your onboarding is complete. <%= @position.event.name %> can now pay you for this position.
   <% end %>
 <% end %>

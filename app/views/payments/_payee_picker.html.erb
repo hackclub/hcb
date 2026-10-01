@@ -57,7 +57,7 @@
         </div>
 
         <div data-payee-duplicate-check-target="warning" hidden>
-          <%= render "application/callout", type: "warning", title: "You already have a recipient with this email", class: "mt-0 mb-0" do %>
+          <%= render "application/callout", type: "warning", title: "You already have a recipient with this email", klass: "mt-0 mb-0" do %>
             This email is already used by <span data-payee-duplicate-check-target="list"></span>.
             Only add a new recipient if this is a different person or legal entity.
           <% end %>
@@ -77,13 +77,13 @@
         </div>
 
         <div data-manual-payee-target="defaultBanner" <%= "hidden" if manual %>>
-          <%= render "application/callout", type: "info", title: "HCB will email the recipient", class: "mt-0 mb-0" do %>
+          <%= render "application/callout", type: "info", title: "HCB will email the recipient", klass: "mt-0 mb-0" do %>
             They'll be asked to configure their payout method and tax information if necessary before receiving the payment.
           <% end %>
         </div>
 
         <div data-manual-payee-target="manualBanner" <%= "hidden" unless manual %>>
-          <%= render "application/callout", type: "warning", icon: "important", title: "Payout info required", class: "mt-0 mb-0" do %>
+          <%= render "application/callout", type: "warning", icon: "important", title: "Payout info required", klass: "mt-0 mb-0" do %>
             We'll ask for this soon. Only use this if the recipient can't submit their own.
           <% end %>
         </div>

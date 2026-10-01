@@ -13,7 +13,7 @@
 <% end %>
 
 <% content_for :sidebar_footer do %>
-  <%= render partial: "wires/requirements", locals: { class: "my-4", event: @event } %>
+  <%= render partial: "wires/requirements", locals: { klass: "my-4", event: @event } %>
 <% end %>
 
 <%= form_with(model: [@event, @wire], local: true, html: {

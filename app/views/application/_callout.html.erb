@@ -1,9 +1,9 @@
-<%# locals: (type:, title:, badge: nil, class: nil, footer: nil, icon: nil) %>
+<%# locals: (type:, title:, badge: nil, footer: nil, klass: nil, icon: nil) %>
 
 <% icon ||= type == "error" ? "important" : (type == "success" ? "emoji" : "info") %> <%# (success | info | warning | error) %>
 <% color ||= type == "error" ? "primary" : type %>
 
-<div class="<%= "flex flex-col card border b--#{color} p-0 mt3 mb3 #{local_assigns[:class]}" %>">
+<div class="<%= "flex flex-col card border b--#{color} p-0 mt3 mb3 #{klass}" %>">
   <div class="<%= "flex items-center #{color}" %> p-4 pb-0">
     <%= inline_icon icon, size: 32, class: "mr1" %>
     <p class="bold mt0 mb0">

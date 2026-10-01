@@ -52,7 +52,7 @@
     <% else %>
       <div class="flex flex-col max-h-full gap-4">
         <% if @party.signee? %>
-          <%= render "application/callout", title: "Watch the onboarding videos", type: "warning", class: "my-0 flex-shrink-0" do %>
+          <%= render "application/callout", title: "Watch the onboarding videos", type: "warning", klass: "my-0 flex-shrink-0" do %>
             <p class="my-0">
               If you haven't had an onboarding meeting, please watch:
               <a href="https://www.youtube.com/watch?v=Ucz-QT2GPOk" target="_blank">HCB Onboarding (#1): Introduction</a> and
