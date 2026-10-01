@@ -1,37 +1,37 @@
-<%# locals: () %>
+<%# locals: (all_unique_cardholders:, filter_status: nil, filter_type: nil, filter_user: nil) %>
 
 <div class="flex items-center filter-menu">
-  <%= render partial: "events/filters/filter_cards_menu" %>
+  <%= render partial: "events/filters/filter_cards_menu", locals: { all_unique_cardholders: all_unique_cardholders, filter_status: filter_status, filter_type: filter_type, filter_user: filter_user } %>
 
-  <% if @status || @user %>
+  <% if filter_status || filter_user %>
     <%= link_to nil, class: "-ml-2 pop muted tooltipped tooltipped--s", aria: { label: "Clear filters" }, data: { turbo_prefetch: "false" } do %>
       <%= inline_icon "view-close", size: 28 %>
     <% end %>
   <% end %>
 
   <div class="filter-menu__chips">
-    <% if @type %>
+    <% if filter_type %>
       <div class="badge badge-large bg-muted">
-        <%= @type.humanize %>
+        <%= filter_type.humanize %>
         <%= link_to upsert_query_params("type" => nil), data: { turbo_prefetch: "false" } do %>
           <%= inline_icon "view-close", size: 20 %>
         <% end %>
       </div>
     <% end %>
 
-    <% if @status %>
+    <% if filter_status %>
       <div class="badge badge-large bg-muted">
-        <%= @status.humanize %>
+        <%= filter_status.humanize %>
         <%= link_to upsert_query_params("status" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
           <%= inline_icon "view-close", size: 20 %>
         <% end %>
       </div>
     <% end %>
 
-    <% if @user %>
+    <% if filter_user %>
       <div class="badge badge-large bg-muted">
-        <%= avatar_for @user, size: 18 %>
-        <%= @user.name %>
+        <%= avatar_for filter_user, size: 18 %>
+        <%= filter_user.name %>
 
         <%= link_to upsert_query_params("user" => nil), class: "flex items-center", data: { turbo_prefetch: "false" } do %>
           <%= inline_icon "view-close", size: 20 %>

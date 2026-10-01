@@ -39,4 +39,4 @@
 
 <%= render "ledgers/pinned_items", event: @ledger.event %>
 
-<%= render "ledgers/ledger", ledger: @ledger, items: @items, table_only: true, filter: capture { render partial: "ledgers/filters/filter" }, show_fee: true %>
+<%= render "ledgers/ledger", ledger: @ledger, items: @items, table_only: true, filter: capture { render partial: "ledgers/filters/filter", locals: { event: @event, filter_category: @category, filter_direction: @direction, filter_end_date: @end_date, filter_maximum_amount: @maximum_amount, filter_merchant: @merchant, filter_merchant_name: @merchant_name, filter_minimum_amount: @minimum_amount, filter_missing_receipts: @missing_receipts, filter_order_by: @order_by, filter_start_date: @start_date, filter_tag: @tag, filter_type: @type, filter_user: @user, ledger_filters_disabled: @ledger_filters_disabled, show_running_balance: @show_running_balance, use_card_grant_ledgers: @use_card_grant_ledgers, users: @users } }, show_fee: true %>
