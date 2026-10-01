@@ -33,8 +33,11 @@ class CommentsController < ApplicationController
   end
 
   def update
-    @comment.assign_attributes(comment_params)
     authorize @comment
+
+    @comment.assign_attributes(comment_params)
+
+    authorize @comment, :set_admin_only? if @comment.admin_only_changed?
 
     if @comment.save
       flash[:success] = "Comment successfully updated"
