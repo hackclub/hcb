@@ -4,7 +4,7 @@
   <div class="inline-block">
     <%= form.text_field :q, value: params[:q], style: "vertical-align: top;", placeholder: "Search" %>
     <%= button_tag("Search") %>
-    <%= render partial: "admin/events_filter", locals: { form:, submit_disable_with_false: true } %>
+    <%= render partial: "admin/events_filter", locals: { form:, submit_disable_with_false: true, active: @active, activity_since_date: @activity_since_date, approved: @approved, country: @country, demo_mode: @demo_mode, engaged: @engaged, funded: @funded, hidden: @hidden, omitted: @omitted, organized_by: @organized_by, pending: @pending, plan: @plan, point_of_contact: @point_of_contact, rejected: @rejected, risk_level: @risk_level, sort_by: @sort_by, tagged_with: @tagged_with, transparent: @transparent, unapproved: @unapproved } %>
     <br><br>
 
     <div style="display: flex; justify-content: space-between; align-items: center; column-gap: 0.5rem;">

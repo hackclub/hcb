@@ -9,7 +9,7 @@
         <button type="button" class="mt-2 btn bg-muted" <%= "disabled" if @events.total_count == 0 %>>Export <%= pluralize @events.total_count, "record" %></button>
       <% end %>
     <% end %>
-    <%= render partial: "admin/events_filter", locals: { form:, action_buttons: export_button } %>
+    <%= render partial: "admin/events_filter", locals: { form:, action_buttons: export_button, active: @active, activity_since_date: @activity_since_date, approved: @approved, country: @country, demo_mode: @demo_mode, engaged: @engaged, funded: @funded, hidden: @hidden, omitted: @omitted, organized_by: @organized_by, pending: @pending, plan: @plan, point_of_contact: @point_of_contact, rejected: @rejected, risk_level: @risk_level, sort_by: @sort_by, tagged_with: @tagged_with, transparent: @transparent, unapproved: @unapproved } %>
   </div>
 <% end %>
 

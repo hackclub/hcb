@@ -1,72 +1,72 @@
-<%# locals: (form:, action_buttons: nil, submit_disable_with_false: false) %>
+<%# locals: (form:, action_buttons: nil, submit_disable_with_false: false, active: nil, activity_since_date: nil, approved: nil, country: nil, demo_mode: nil, engaged: nil, funded: nil, hidden: nil, omitted: nil, organized_by: nil, pending: nil, plan: nil, point_of_contact: nil, rejected: nil, risk_level: nil, sort_by: nil, tagged_with: nil, transparent: nil, unapproved: nil) %>
 
 <div class="events-filter-select">
   <%= form.label :transparent do %>
     Transparent
-    <%= form.select :transparent, [["Both", "both"], ["Not transparent", "not_transparent"], ["Transparent", "transparent"]], selected: @transparent %>
+    <%= form.select :transparent, [["Both", "both"], ["Not transparent", "not_transparent"], ["Transparent", "transparent"]], selected: transparent %>
   <% end %>
   <%= form.label :omitted do %>
     Omitted
-    <%= form.select :omitted, [["Both", "both"], ["Not omitted", "not_omitted"], ["Omitted", "omitted"]], selected: @omitted %>
+    <%= form.select :omitted, [["Both", "both"], ["Not omitted", "not_omitted"], ["Omitted", "omitted"]], selected: omitted %>
   <% end %>
   <%= form.label :demo_mode do %>
     Demo
-    <%= form.select :demo_mode, [["Both", "both"], ["Full", "full"], ["Demo", "demo"]], selected: @demo_mode %>
+    <%= form.select :demo_mode, [["Both", "both"], ["Full", "full"], ["Demo", "demo"]], selected: demo_mode %>
   <% end %>
 
   <%= form.label :active do %>
     Active
-    <%= form.select :active, [["Both", "both"], ["Inactive", "inactive"], ["Active", "active"]], selected: @active %>
+    <%= form.select :active, [["Both", "both"], ["Inactive", "inactive"], ["Active", "active"]], selected: active %>
   <% end %>
 
   <%= form.label :hidden do %>
     Hidden
-    <%= form.select :hidden, [["Both", "both"], ["Not hidden", "not_hidden"], ["Hidden", "hidden"]], selected: @hidden %>
+    <%= form.select :hidden, [["Both", "both"], ["Not hidden", "not_hidden"], ["Hidden", "hidden"]], selected: hidden %>
   <% end %>
 
   <%= form.label :funded do %>
     Funded
-    <%= form.select :funded, [["Both", "both"], ["Not funded", "not_funded"], ["Funded", "funded"]], selected: @funded %>
+    <%= form.select :funded, [["Both", "both"], ["Not funded", "not_funded"], ["Funded", "funded"]], selected: funded %>
   <% end %>
 
   <%= form.label :organized_by do %>
     Organized by
-    <%= form.select :organized_by, [["Anyone", "anyone"], ["Teenagers", "teenagers"], ["Hack Clubbers", "hack_clubbers"], ["Adults", "adults"]], selected: @organized_by %>
+    <%= form.select :organized_by, [["Anyone", "anyone"], ["Teenagers", "teenagers"], ["Hack Clubbers", "hack_clubbers"], ["Adults", "adults"]], selected: organized_by %>
   <% end %>
 
   <%= form.label :country do %>
     Country
-    <%= form.select :country, { 'Outside US': 9999 }.merge(Event.countries), { include_blank: "all", selected: @country } %>
+    <%= form.select :country, { 'Outside US': 9999 }.merge(Event.countries), { include_blank: "all", selected: country } %>
   <% end %>
 
   <%= form.label :point_of_contact_id do %>
     <span style="text-wrap: nowrap;">POC</span>
-    <%= combobox_tag :point_of_contact_id, user_search_admin_index_path, placeholder: "all", class: "!max-w-full !min-w-full", selected: @point_of_contact %>
+    <%= combobox_tag :point_of_contact_id, user_search_admin_index_path, placeholder: "all", class: "!max-w-full !min-w-full", selected: point_of_contact %>
   <% end %>
 
   <%= form.label :activity_since do %>
     Activity since
-    <%= form.date_field :activity_since, value: @activity_since_date %>
+    <%= form.date_field :activity_since, value: activity_since_date %>
   <% end %>
 
   <%= form.label :plan do %>
     Current plan
-    <%= form.select :plan, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, { include_blank: "all", selected: @plan } %>
+    <%= form.select :plan, Event::Plan.available_plans.map { |p| [p.new.label, p.name] }, { include_blank: "all", selected: plan } %>
   <% end %>
 
   <%= form.label :sort_by do %>
     Sort by
-    <%= form.select :sort_by, [["Balance ascending", "balance_asc"], ["Balance descending", "balance_desc"], ["Date descending", "date_desc"]], selected: @sort_by %>
+    <%= form.select :sort_by, [["Balance ascending", "balance_asc"], ["Balance descending", "balance_desc"], ["Date descending", "date_desc"]], selected: sort_by %>
   <% end %>
 
   <%= form.label :tagged_with do %>
     <span style="text-wrap: nowrap;">Tagged with</span>
-    <%= form.select :tagged_with, EventTag.all.map { |t| [t.full_name, t.id] }, { include_blank: "anything", selected: @tagged_with } %>
+    <%= form.select :tagged_with, EventTag.all.map { |t| [t.full_name, t.id] }, { include_blank: "anything", selected: tagged_with } %>
   <% end %>
 
   <%= form.label :risk_level do %>
     <span style="text-wrap: nowrap;">Risk level</span>
-    <%= form.select :risk_level, Event.risk_levels.map { |k, v| [k.humanize.capitalize, v] }.append(%w[Unset unset]), { include_blank: "any", selected: @risk_level } %>
+    <%= form.select :risk_level, Event.risk_levels.map { |k, v| [k.humanize.capitalize, v] }.append(%w[Unset unset]), { include_blank: "any", selected: risk_level } %>
   <% end %>
 
 </div>
@@ -74,23 +74,23 @@
 <fieldset style="display: flex; flex-wrap: wrap; gap: 4px 16px; border: 1px lightgray solid; border-radius: 0.2rem; padding: 0.6rem; padding-top: 0.3rem; margin-right: 0.5rem; margin-top: 8px;">
   <legend style="padding: 0px 8px">State:</legend>
   <%= form.label :pending do %>
-    <%= form.check_box :pending, checked: @pending %>
+    <%= form.check_box :pending, checked: pending %>
     Pending
   <% end %>
   <%= form.label :unapproved do %>
-    <%= form.check_box :unapproved, checked: @unapproved %>
+    <%= form.check_box :unapproved, checked: unapproved %>
     Unapproved
   <% end %>
   <%= form.label :approved do %>
-    <%= form.check_box :approved, checked: @approved %>
+    <%= form.check_box :approved, checked: approved %>
     Approved
   <% end %>
   <%= form.label :rejected do %>
-    <%= form.check_box :rejected, checked: @rejected %>
+    <%= form.check_box :rejected, checked: rejected %>
     Rejected
   <% end %>
   <%= form.label :engaged do %>
-    <%= form.check_box :engaged, checked: @engaged %>
+    <%= form.check_box :engaged, checked: engaged %>
     Engaged (Only)
   <% end %>
 </fieldset>
