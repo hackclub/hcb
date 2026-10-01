@@ -64,7 +64,7 @@
           <%= inline_icon "bank-account", size: 20 %>
           Account numbers
         <% end %>
-        <%= render "events/account_number_modal" %>
+        <%= render "events/account_number_modal", event: @event %>
       <% end %>
 
       <% if InvoicePolicy.new(current_user, @event).create? %>
@@ -72,13 +72,13 @@
           <%= inline_icon "briefcase", size: 20 %>
           Send an invoice
         <% end %>
-        <%= render "invoices/modal" %>
+        <%= render "invoices/modal", event: @event, invoice: @invoice, sponsor: @sponsor %>
       <% end %>
     </div>
   <% end %>
 
   <% if policy(@event).request_call? %>
-    <%= render "events/request_call_modal", auto_open: @requesting_call if @requesting_call %>
+    <%= render "events/request_call_modal", auto_open: @requesting_call, event: @event if @requesting_call %>
 
     <% unless @event.config.hide_onboarding_message %>
       <div class="relative card my-3 text-center sm:text-left flex items-center flex-col sm:flex-row gap-5">

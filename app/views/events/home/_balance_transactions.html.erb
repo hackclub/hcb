@@ -1,8 +1,8 @@
-<%# locals: () %>
+<%# locals: (event:, recent_transactions:) %>
 
 <%= turbo_frame_tag "balance_transactions" do %>
   <div class="flex gap-4 flex-col sm:flex-row w-full" style="min-height: 300px">
-    <%= render partial: "events/home/balance" %>
-    <%= render partial: "events/home/transactions" %>
+    <%= render partial: "events/home/balance", locals: { event: event, recent_transactions: recent_transactions } %>
+    <%= render partial: "events/home/transactions", locals: { event: event, recent_transactions: recent_transactions } %>
   </div>
 <% end %>

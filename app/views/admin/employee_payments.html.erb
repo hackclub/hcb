@@ -13,6 +13,6 @@
   </div>
 </div>
 
-<%= render "employees/payments", payments: @payments, show_stats: false %>
+<%= render "employees/payments", payments: @payments, show_stats: false, event: @event %>
 
 <%= paginate @payments %>

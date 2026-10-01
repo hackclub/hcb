@@ -20,7 +20,7 @@
   </div>
 <% elsif @application.draft? %>
   <% title "Apply" %>
-  <%= render partial: "begin", locals: { application: @application } %>
+  <%= render partial: "begin", locals: { application: @application, referral_code: @referral_code } %>
 <% elsif @application.rejected? %>
   <% title "Application status" %>
 

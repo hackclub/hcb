@@ -65,7 +65,7 @@
 
 <%= turbo_frame_tag :post_editor do %>
   <% if editing %>
-    <%= render partial: "announcements/announcement_form", locals: { announcement: @announcement } %>
+    <%= render partial: "announcements/announcement_form", locals: { announcement: @announcement, event: @event } %>
   <% else %>
     <div class="card">
       <%= render partial: "announcements/announcement_body", locals: { announcement: @announcement } %>

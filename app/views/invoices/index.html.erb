@@ -16,7 +16,7 @@
         <%= inline_icon "send" %>
         Send an invoice
       <% end %>
-      <%= render "invoices/modal" %>
+      <%= render "invoices/modal", event: @event, invoice: @invoice, sponsor: @sponsor %>
     <% end %>
   </h1>
 
@@ -120,7 +120,7 @@
       <% end %>
     <% end %>
     <% if organizer_signed_in? %>
-      <%= render "invoices/modal" %>
+      <%= render "invoices/modal", event: @event, invoice: @invoice, sponsor: @sponsor %>
     <% end %>
   <% end %>
 <% end %>

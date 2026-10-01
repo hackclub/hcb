@@ -44,9 +44,9 @@
     <div>
       <p class="text-sm muted mb-1">Previously applied to HCB</p>
       <p class="mb-0">
-        <% if @application.previously_applied == true %>
+        <% if application.previously_applied == true %>
           Yes
-        <% elsif @application.previously_applied == false %>
+        <% elsif application.previously_applied == false %>
           No
         <% else %>
           <%= missing %>
@@ -189,7 +189,7 @@
         <p class="mt-0 mb-2"><strong>Parent email updates</strong></p>
         <ul class="list-reset m-0">
           <% field = "cosigner_email" %>
-          <% @application.versions.reverse.select { |version| version.changeset[field]&.any?(&:present?) }.map do |version| %>
+          <% application.versions.reverse.select { |version| version.changeset[field]&.any?(&:present?) }.map do |version| %>
             <% change = version.changeset[field] %>
             <li>
               <%= format_date version.created_at %>:

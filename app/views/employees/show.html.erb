@@ -36,7 +36,7 @@
     <% end %>
   <% end %>
 
-  <%= render "employees/payments", payments: @employee.payments, show_stats: true %>
+  <%= render "employees/payments", payments: @employee.payments, show_stats: true, event: @event %>
 
   <%= render "employee/payments/new", employee: @employee %>
 <% end %>

@@ -1,4 +1,4 @@
-<%# locals: (event:) %>
+<%# locals: (event:, shown_private_feature_previews: nil) %>
 
 <details>
   <summary class="mb2">Past feature previews</summary>
@@ -10,7 +10,7 @@
         fully_shipped: true,
         name: "Home Page Redesign",
         description: "A fresh new look for your organization's home page!",
-        event:
+        event:, shown_private_feature_previews: shown_private_feature_previews
       } %>
 
   <%= render partial: "features/preview", locals: {
@@ -20,7 +20,7 @@
         fully_shipped: true,
         name: "Donation Tiers",
         description: "Offer preset monthly donation options with custom names, prices, and perks.",
-        event:
+        event:, shown_private_feature_previews: shown_private_feature_previews
       } %>
 
   <%= render partial: "features/preview", locals: {
@@ -30,7 +30,7 @@
         name: "HCB Card Logo",
         feature_flag: :card_logos_2024_08_27,
         description: "Add a custom logo to every HCB card printed for your organization.",
-        event:
+        event:, shown_private_feature_previews: shown_private_feature_previews
       } %>
 
   <%= render partial: "features/preview", locals: {
@@ -42,7 +42,7 @@
         description: content_tag(:span) do
           concat "Control your members' spending with preauthorized card limits!"
         end,
-        event:
+        event:, shown_private_feature_previews: shown_private_feature_previews
       } %>
 
   <%= render partial: "features/preview", locals: {
@@ -52,6 +52,6 @@
         feature_flag: :transaction_tags_2022_07_29,
         name: "Transaction Tags",
         description: "Categorize and filter transactions using tags!",
-        event:
+        event:, shown_private_feature_previews: shown_private_feature_previews
       } %>
 </details>

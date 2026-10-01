@@ -1,7 +1,7 @@
 <% title "Account number for #{@event.name}" %>
 <% page_md %>
 <%= render "events/nav", selected: :account_number %>
-<%= render "events/account_number_modal" unless @event.demo_mode? %>
+<%= render "events/account_number_modal", event: @event unless @event.demo_mode? %>
 
 <h1 class="heading items-center">
   <div class="flex flex-col justify-center">

@@ -18,7 +18,7 @@
 <% elsif @settings_tab == "affiliations" %>
   <%= render "events/settings/affiliations", event: @event %>
 <% elsif @settings_tab == "features" %>
-  <%= render "events/settings/features", event: @event %>
+  <%= render "events/settings/features", event: @event, shown_private_feature_previews: @shown_private_feature_previews %>
 <% elsif @settings_tab == "integrations" %>
   <%= render "events/settings/integrations", event: @event %>
 <% elsif @settings_tab == "audit_log" %>

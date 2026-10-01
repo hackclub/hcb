@@ -1,28 +1,28 @@
-<%# locals: () %>
+<%# locals: (maximum_negative_change:, past_year_transactions_count:, heatmap: nil, maximum_positive_change: nil) %>
 
 <%= turbo_frame_tag "transaction_heatmap" do %>
-  <% if @past_year_transactions_count > 0 %>
+  <% if past_year_transactions_count > 0 %>
     <div class="card card--breakdown p-4 flex-1 flex flex-col overflow-visible">
       <h4 class="text-muted uppercase text-sm font-bold mt-0 mb-3" style="font-size: 16px">
-        <%= @past_year_transactions_count %> <%= "transaction".pluralize(@past_year_transactions_count) %> in the past
+        <%= past_year_transactions_count %> <%= "transaction".pluralize(past_year_transactions_count) %> in the past
         year
       </h4>
 
       <div class="grid-container mb2">
         <% 7.times do |x| %>
           <% 53.times do |y| %>
-            <% entry = @heatmap.to_a[y * 7 + x][1] %>
-            <% label = DateTime.parse(@heatmap.to_a[y * 7 + x][0]).strftime("%B %d, %Y") %>
+            <% entry = heatmap.to_a[y * 7 + x][1] %>
+            <% label = DateTime.parse(heatmap.to_a[y * 7 + x][0]).strftime("%B %d, %Y") %>
 
             <% if entry > 0 %>
               <div class="grid-item tooltipped tooltipped--s border-transparent"
                    aria-label="<%= "#{label}: #{render_money(entry)}" %>"
-                   style="background-color: rgba(57, 211, 83, <%= Math.log(entry) / Math.log(@maximum_positive_change) %>)">
+                   style="background-color: rgba(57, 211, 83, <%= Math.log(entry) / Math.log(maximum_positive_change) %>)">
               </div>
             <% elsif entry < 0 %>
               <div class="grid-item tooltipped tooltipped--s border-transparent"
                    aria-label="<%= "#{label}: #{render_money(entry)}" %>"
-                   style="background-color: rgba(248, 81, 73, <%= Math.log(entry.abs) / Math.log(@maximum_negative_change.abs) %>)">
+                   style="background-color: rgba(248, 81, 73, <%= Math.log(entry.abs) / Math.log(maximum_negative_change.abs) %>)">
               </div>
             <% else %>
               <div class="grid-item tooltipped tooltipped--s bg-snow border dark:border-dark dark:bg-darkless"

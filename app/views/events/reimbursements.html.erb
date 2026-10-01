@@ -9,7 +9,7 @@
       <%= pop_icon_to "download",
                     reimbursements_exports_path(@event, format: :csv),
                     class: "tooltipped tooltipped--s", "aria-label": "Download CSV export" %>
-      <%= render "reimbursement_buttons" %>
+      <%= render "reimbursement_buttons", event: @event %>
     </div>
   </h1>
 
@@ -119,7 +119,7 @@
       ] do %>
     <div class="flex items-center gap-2 flex-row-reverse">
       <%= render partial: "reimbursement/reports/create_form" %>
-      <%= render partial: "reimbursement_buttons" %>
+      <%= render partial: "reimbursement_buttons", locals: { event: @event } %>
     </div>
   <% end %>
 <% end %>

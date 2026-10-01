@@ -31,7 +31,7 @@
 <% if @active_control %>
   <div class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="new">
     <%= modal_header "New allowance" %>
-    <%= render "organizer_position/spending/controls/allowances/form" %>
+    <%= render "organizer_position/spending/controls/allowances/form", active_control: @active_control, event: @event, provisional_allowance: @provisional_allowance %>
   </div>
 <% end %>
 
@@ -112,7 +112,7 @@
   <% if @active_control&.allowances.blank? %>
     <%= blankslate "No allowances yet" %>
   <% else %>
-    <%= render "organizer_position/spending/controls/spending_items", items: sorted_spending_items(@active_control) %>
+    <%= render "organizer_position/spending/controls/spending_items", items: sorted_spending_items(@active_control), event: @event %>
   <% end %>
 <% end %>
 
@@ -154,7 +154,7 @@
           <% end %>
         </h4>
 
-        <%= render "organizer_position/spending/controls/spending_items", items: sorted_spending_items(c) %>
+        <%= render "organizer_position/spending/controls/spending_items", items: sorted_spending_items(c), event: @event %>
       </div>
     <% end %>
   </div>

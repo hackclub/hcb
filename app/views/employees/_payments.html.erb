@@ -1,4 +1,4 @@
-<%# locals: (payments:, show_stats:) %>
+<%# locals: (payments:, show_stats:, event: nil) %>
 
 <% if show_stats %>
   <div class="statset mt3 mb3">
@@ -35,7 +35,7 @@
       <thead>
         <tr>
           <th>Status</th>
-          <% unless @event %>
+          <% unless event %>
             <th>Event</th>
           <% end %>
           <th>Title</th>
@@ -51,7 +51,7 @@
                 <%= payment.aasm_state.humanize %>
                </span>
             </td>
-            <% unless @event %>
+            <% unless event %>
               <td><%= payment.employee.event.name %></td>
             <% end %>
             <td>

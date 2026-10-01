@@ -31,7 +31,7 @@
       <span class="text-sm text-muted">See <a href="https://hcb.hackclub.com/converge/announcements" target="_blank" rel="noopener noreferrer" class="underline">how Converge sends announcements!</a></span>
     <% end %>
     <div class="flex gap-2 flex-row-reverse">
-      <%= render "announcement_header" %>
+      <%= render "announcement_header", announcement: @announcement, event: @event, event_follow: @event_follow %>
     </div>
   <% end %>
 
@@ -51,7 +51,7 @@
     </span>
 
     <div class="mt-1 sm:mt-0 flex items-center gap-2">
-      <%= render "announcement_header" %>
+      <%= render "announcement_header", announcement: @announcement, event: @event, event_follow: @event_follow %>
     </div>
   </h1>
 
