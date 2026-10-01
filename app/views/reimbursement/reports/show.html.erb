@@ -70,6 +70,16 @@
   </h2>
 </div>
 
+<% admin_only_user_comments = @report.user.comments.admin_only %>
+<% if admin_only_user_comments.any? %>
+  <% admin_tool("mt2 p-3") do %>
+    <h3 class="mt0 mb2 flex items-center" style="gap: 6px;">
+      📌 Admin note<%= "s" if admin_only_user_comments.many? %> about <%= @report.user.first_name %>
+    </h3>
+    <%= render "comments/list", comments: admin_only_user_comments %>
+  <% end %>
+<% end %>
+
 <section data-behavior="modal" role="dialog" id="edit" class="modal modal--scroll bg-snow lg:max-w-[450px]">
   <%= modal_header "Edit report" %>
   <%= render "reimbursement/reports/edit_form" %>
