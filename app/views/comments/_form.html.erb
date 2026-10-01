@@ -1,8 +1,8 @@
-<%# locals: (commentable:, admin_only: nil, comment: nil, submit_text: nil) %>
+<%# locals: (commentable:, admin_only: nil, comment: nil, submit_text: nil, popover: nil) %>
 
-<%= form_with model: @comment&.new_record? ? [@comment.commentable, @comment] : @comment || [commentable, Comment.new] do |form| %>
+<%= form_with model: comment&.new_record? ? [comment.commentable, comment] : comment || [commentable, Comment.new] do |form| %>
   <%= form.hidden_field :redirect_url, value: url_for(only_path: false) %>
-  <%= form_errors @comment || Comment.new, "message", "We couldn't update your" %>
+  <%= form_errors comment || Comment.new, "message", "We couldn't update your" %>
 
   <div class="comment__name mt2">
     <%= user_mention current_user if organizer_signed_in? %>
@@ -25,7 +25,7 @@
 
   <div class="flex flex-row mb2 justify-between items-center">
 
-    <% if @comment&.persisted? %>
+    <% if comment&.persisted? %>
       <% if comment.file.attached? %>
         <div class="field mb0">
           <%= link_to "📎 1 attachment", url_for(comment.file), target: "_blank" %>
@@ -57,7 +57,7 @@
 
   </div>
 
-  <% if commentable.shared_commentable? && !@comment&.persisted? %>
+  <% if commentable.shared_commentable? && !comment&.persisted? %>
     <% disbursement = commentable.outgoing_disbursement || commentable.incoming_disbursement %>
     <div data-controller="commentable"
          data-commentable-shared-type-value="<%= commentable.shared_commentable.class.to_s %>"
@@ -83,7 +83,7 @@
   <% end %>
 <% end %>
 
-<% unless @popover %>
+<% unless popover %>
   <%= turbo_stream_from commentable, :comments %>
   <% turbo_refreshes_with method: :morph, scroll: :preserve %>
 <% end %>

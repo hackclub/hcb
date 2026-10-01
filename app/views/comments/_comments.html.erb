@@ -1,4 +1,4 @@
-<%# locals: () %>
+<%# locals: (comment: nil, commentable: nil, comments: nil, popover: nil) %>
 
-<%= render "comments/list", comments: @comments || [] %>
-<%= render "comments/form", commentable: @commentable if current_user %>
+<%= render "comments/list", comments: comments || [] %>
+<%= render "comments/form", commentable: commentable, comment: comment, popover: popover if current_user %>

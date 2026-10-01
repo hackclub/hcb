@@ -4,4 +4,4 @@
 
 <h1>New note</h1>
 
-<%= render "comments/form", commentable: @commentable if current_user %>
+<%= render "comments/form", commentable: @commentable, comment: @comment, popover: @popover if current_user %>

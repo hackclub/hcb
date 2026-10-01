@@ -1,4 +1,4 @@
-<%# locals: (upload_method:, enable_linking: nil, error: nil, global_paste: nil, include_spacing: nil, inline_linking: nil, popover: nil, receiptable: nil, redirect_url: nil, restricted_dropzone: nil, secret: nil, show_author_img: nil, show_banner: nil, show_receipt_button: nil, success: nil, turbo: "false") %>
+<%# locals: (upload_method:, enable_linking: nil, error: nil, global_paste: nil, include_spacing: nil, inline_linking: nil, popover: nil, receiptable: nil, redirect_url: nil, restricted_dropzone: nil, secret: nil, show_author_img: nil, show_banner: nil, show_receipt_button: nil, success: nil, turbo: "false", ledger_instance: nil) %>
 
 <% instance = local_assigns.__id__ %>
 <div id="<%= receiptable ? "#{receiptable.id}_" : "" %>receipt_upload_form">
@@ -50,10 +50,10 @@
           <%= form.hidden_field :upload_method, value: upload_method, data: { "file-drop-target" => "uploadMethod" } %>
           <%= form.hidden_field :show_receipt_button, value: show_receipt_button %>
           <%= form.hidden_field :show_author_img, value: show_author_img %>
-          <%= form.hidden_field :ledger_instance, value: @ledger_instance %>
+          <%= form.hidden_field :ledger_instance, value: ledger_instance %>
           <%= form.hidden_field :s, value: secret %>
 
-          <%= form.file_field @ledger_instance.present? ? "file_#{@ledger_instance}" : "file",
+          <%= form.file_field ledger_instance.present? ? "file_#{ledger_instance}" : "file",
                               multiple: true,
                               include_hidden: false,
                               required: true,
@@ -70,7 +70,7 @@
                  array << "bg-error" if error
                  array << "disabled" if receiptable && current_user && !ReceiptablePolicy.new(current_user, receiptable).upload?
                end.join(", ") %>
-            <%= form.label @ledger_instance.present? ? "file_#{@ledger_instance}" : "file", class: "btn #{additional_classes}", id: "upload-receipt-button" do %>
+            <%= form.label ledger_instance.present? ? "file_#{ledger_instance}" : "file", class: "btn #{additional_classes}", id: "upload-receipt-button" do %>
               <%= inline_icon "cloud-upload" %>
               <% if success || error %>
                 <span id="upload-receipt-button-text"><%= success || error %></span>

@@ -132,10 +132,10 @@
         enable_linking: true,
         upload_method: "transaction_page",
         include_spacing: true,
-        turbo: false
+        turbo: false, ledger_instance: @ledger_instance
       } %>
 
   <h2>Comments</h2>
   <%= render "comments/list", comments: @disbursement.all_comments, viewing_commentable: @disbursement %>
-  <%= render "comments/form", commentable: @disbursement, submit_text: "Add comment (visible to both organizations)" %>
+  <%= render "comments/form", commentable: @disbursement, submit_text: "Add comment (visible to both organizations)", comment: @comment, popover: @popover %>
 <% end %>

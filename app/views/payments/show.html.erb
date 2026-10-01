@@ -121,9 +121,9 @@
         upload_method: "payment_page",
         include_spacing: true,
         redirect_url: payment_path(@payment),
-        turbo: false
+        turbo: false, ledger_instance: @ledger_instance
       } %>
 
   <%= render "comments/list", comments: @payment.all_comments, viewing_commentable: @payment %>
-  <%= render "comments/form", commentable: @payment if current_user %>
+  <%= render "comments/form", commentable: @payment, comment: @comment, popover: @popover if current_user %>
 <% end %>

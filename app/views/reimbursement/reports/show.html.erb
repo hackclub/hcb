@@ -72,7 +72,7 @@
 
 <section data-behavior="modal" role="dialog" id="edit" class="modal modal--scroll bg-snow lg:max-w-[450px]">
   <%= modal_header "Edit report" %>
-  <%= render "reimbursement/reports/edit_form" %>
+  <%= render "reimbursement/reports/edit_form", report: @report %>
 </section>
 
 <section data-behavior="modal" role="dialog" id="request_changes" class="modal modal--scroll bg-snow">
@@ -261,7 +261,7 @@
   <%= render partial: "reimbursement/reports/payout_method_selector", locals: { report: @report } %>
 <% end %>
 
-<%= render partial: "reimbursement/reports/actions", locals: { report: @report, user: @user } %>
+<%= render partial: "reimbursement/reports/actions", locals: { report: @report, user: @user, event: @event } %>
 
 <% if @report.event.present? %>
   <%= render "events/mission_statement", event: @report.event, class_name: "mt-4 p-3" %>
@@ -273,7 +273,7 @@
   <% end %>
 <% end %>
 
-<%= render partial: "reimbursement/reports/conversation" %>
+<%= render partial: "reimbursement/reports/conversation", locals: { comment: @comment, popover: @popover, report: @report } %>
 
 <section data-behavior="modal" role="dialog" id="edit_payout" class="modal modal--scroll bg-snow">
   <%= modal_header "Add payout information" %>

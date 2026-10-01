@@ -5,7 +5,7 @@
 <% title @hcb_code.pretty_title(show_event_name: false, show_amount: true, event: @event) unless content_for? :title %>
 
 <%= turbo_frame_tag @hcb_code.public_id, target: "_top" do %>
-  <%= render partial: "hcb_codes/admin_tools" %>
+  <%= render partial: "hcb_codes/admin_tools", locals: { hcb_code: @hcb_code } %>
   <div id="rich_metadata">
     <%= render partial: "hcb_codes/rich_metadata" %>
   </div>
@@ -31,7 +31,8 @@
           enable_linking: true,
           upload_method: "transaction_page",
           include_spacing: true,
-          turbo: true
+          turbo: true,
+          ledger_instance: @ledger_instance
         }
               receipt_upload_form_config[:restricted_dropzone] = true if @frame
               receipt_upload_form_config[:inline_linking] = true if @frame
@@ -57,11 +58,11 @@
       </p>
     <% end %>
   <% end %>
-  <%= render "comments/form", commentable: @hcb_code %>
+  <%= render "comments/form", commentable: @hcb_code, comment: @comment, popover: @popover %>
 
   <% admin_tool("mt2 p-3") do %>
-    <%= render partial: "hcb_codes/transaction_history" %>
-    <%= render partial: "hcb_codes/pending_transaction_history" %>
+    <%= render partial: "hcb_codes/transaction_history", locals: { hcb_code: @hcb_code } %>
+    <%= render partial: "hcb_codes/pending_transaction_history", locals: { hcb_code: @hcb_code } %>
   <% end %>
 
   <% admin_tool("p-2 my-3") do %>

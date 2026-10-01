@@ -140,7 +140,8 @@ class ReceiptsController < ApplicationController
         include_spacing: params[:upload_method] != :receipt_center,
         success: "#{"Receipt".pluralize(params[file_param].length)} added!",
         global_paste: !@receiptable,
-        turbo: true
+        turbo: true,
+        ledger_instance: @ledger_instance
       }
       if @receiptable
         receipt_upload_form_config[:enable_linking] = true
@@ -178,7 +179,7 @@ class ReceiptsController < ApplicationController
         partial: "receipts/form_v3", locals: {
           upload_method: "receipt_center",
           restricted_dropzone: true,
-          error: e.message
+          error: e.message, ledger_instance: @ledger_instance
         }
       )
     )
@@ -309,7 +310,7 @@ class ReceiptsController < ApplicationController
         turbo_stream.replace(
           "action-wrapper",
           partial: "reimbursement/reports/actions",
-          locals: { report: @receiptable.report, user: @receiptable.report.user }
+          locals: { report: @receiptable.report, user: @receiptable.report.user, event: @event }
         )
       )
     end
