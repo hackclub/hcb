@@ -1,7 +1,7 @@
 <% page_sm %>
 <% no_app_shell %>
 
-<%= render "events/landing/header" %>
+<%= render "events/landing/header", background: @background, event: @event, force_fullstory: @force_fullstory %>
 
 <div class="card mb3 mt3 pt3 pb3">
   <%= inline_icon :checkmark, size: 48, class: "success block mx-auto mb1" %>
@@ -11,4 +11,4 @@
   </p>
 </div>
 
-<%= render "events/landing/footer" %>
+<%= render "events/landing/footer", event: @event %>

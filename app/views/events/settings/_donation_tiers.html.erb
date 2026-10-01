@@ -28,7 +28,7 @@
       <% end %>
     </div>
   </div>
-  <% if @event.donation_tiers_enabled %>
+  <% if event.donation_tiers_enabled %>
     <div data-donation-tier-form-target="content">
       <div class="field mt-5">
         <%= form_with(url: event_donation_tiers_path(event), local: true, method: :patch) do |form| %>

@@ -47,7 +47,7 @@
       </main>
     <% end %>
 
-    <%= render "application/fullstory" %>
-    <%= render "layouts/body_suffix" %>
+    <%= render "application/fullstory", force_fullstory: @force_fullstory %>
+    <%= render "layouts/body_suffix", force_fullstory: @force_fullstory %>
   </body>
 </html>

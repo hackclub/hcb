@@ -1,6 +1,6 @@
-<%# locals: () %>
+<%# locals: (event:) %>
 
-<% if (donation_goal = @event.donation_goal).present? %>
+<% if (donation_goal = event.donation_goal).present? %>
   <div class="card max-w-sm mx-auto my-8">
     <span class="text-xl font-bold">
       <%= render_money_short donation_goal.progress_amount_cents %>

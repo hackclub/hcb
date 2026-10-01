@@ -14,10 +14,10 @@
   <meta name="description" content="<%= description %>">
 <% end %>
 
-<%= render "events/landing/header" do %>
+<%= render "events/landing/header", background: @background, event: @event, force_fullstory: @force_fullstory do %>
   <% if @event.donation_goal.present? %>
     <div class="shrink-0 w-full max-w-sm sm:ml-auto">
-      <%= render "donations/donation_goal" %>
+      <%= render "donations/donation_goal", event: @event %>
     </div>
   <% end %>
 <% end %>
@@ -33,13 +33,13 @@
 <div class="sm:flex">
   <% if @show_tiers %>
   <div class="<%= "w-full max-w-sm mx-auto sm:mx-0" if !@show_tiers || @tier || params[:tier_id] == "custom" %>">
-    <%= render "donations/donation_tiers" %>
+    <%= render "donations/donation_tiers", event: @event, show_tiers: @show_tiers, tier: @tier, tiers: @tiers %>
   </div>
   <% end %>
   <% if !@show_tiers || params[:tier_id] %>
     <div class="flex-1 px-5 mt-<%= !@show_tiers || params[:tier_id] == "custom" ? "5" : "20" %>">
       <% if !@show_tiers || @tier || params[:tier_id] == "custom" %>
-        <%= render "donations/donation_form", donation: @donation %>
+        <%= render "donations/donation_form", donation: @donation, background: @background, event: @event, international: @international, monthly: @monthly, placeholder_amount: @placeholder_amount, recurring_donation: @recurring_donation, tier: @tier %>
       <% end %>
     </div>
   <% end %>
@@ -62,4 +62,4 @@
   </div>
 <% end %>
 
-<%= render "events/landing/footer" %>
+<%= render "events/landing/footer", event: @event %>

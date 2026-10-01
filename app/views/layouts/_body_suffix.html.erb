@@ -1,7 +1,7 @@
-<%# locals: () %>
+<%# locals: (force_fullstory: nil) %>
 
 <% if Rails.env.production? %>
-  <%= render "application/fullstory" if current_user&.sessions_reported %>
+  <%= render "application/fullstory", force_fullstory: force_fullstory if current_user&.sessions_reported %>
 <% end %>
 
 <% if flash[:confetti] %>
