@@ -116,38 +116,39 @@ class OrganizerPositionInvite < ApplicationRecord
   end
 
   def accept(show_onboarding: true, application_contract: nil)
-    if cancelled?
-      self.errors.add(:base, "was canceled!")
-      return false
-    end
+    # Lock the invite so concurrent accepts (e.g. a double-click) can't each create an OrganizerPosition
+    with_lock do
+      if cancelled?
+        self.errors.add(:base, "was canceled!")
+        return false
+      end
 
-    if accepted?
-      self.errors.add(:base, "already accepted!")
-      return false
-    end
+      if accepted?
+        self.errors.add(:base, "already accepted!")
+        return false
+      end
 
-    if user.unverified?
-      self.errors.add(:user, "must verify their email before accepting this invite")
-      return false
-    end
+      if user.unverified?
+        self.errors.add(:user, "must verify their email before accepting this invite")
+        return false
+      end
 
-    if pending_signature? && application_contract.nil?
-      self.errors.add(:base, "requires a signed contract!")
-      return false
-    end
+      if pending_signature? && application_contract.nil?
+        self.errors.add(:base, "requires a signed contract!")
+        return false
+      end
 
-    self.organizer_position = OrganizerPosition.new(
-      event:,
-      user:,
-      role:,
-      is_signee:,
-      first_time: show_onboarding,
-      fiscal_sponsorship_contract: contract || application_contract
-    )
+      self.organizer_position = OrganizerPosition.new(
+        event:,
+        user:,
+        role:,
+        is_signee:,
+        first_time: show_onboarding,
+        fiscal_sponsorship_contract: contract || application_contract
+      )
 
-    self.accepted_at = Time.current
+      self.accepted_at = Time.current
 
-    ActiveRecord::Base.transaction do
       self.save!
 
       if initial_control_allowance_amount_cents.present?
