@@ -1,9 +1,9 @@
-<%# locals: () %>
+<%# locals: (event:, tiers:, show_tiers: nil, tier: nil) %>
 
-<% if @show_tiers %>
+<% if show_tiers %>
   <% if params[:tier_id] %>
     <div class="flex">
-      <%= link_to start_donation_donations_path(@event), class: "mt-10 inline-flex -ml-2 items-center no-underline gap-2" do %>
+      <%= link_to start_donation_donations_path(event), class: "mt-10 inline-flex -ml-2 items-center no-underline gap-2" do %>
         <%= inline_icon "view-back" %>
         Back
       <% end %>
@@ -13,20 +13,20 @@
         <%= inline_icon "check-thin", size: 24 %>
       </div>
       <h2 class="mt-5">
-        <%= @tier&.name || "Custom" %>
+        <%= tier&.name || "Custom" %>
       </h2>
       <p class="text opacity-60 mt-0 mb-2 pr-10 -flex-1 max-w-full break-words whitespace-normal">
-        <%= @tier&.description || "Pay a custom amount, one-time or recurring, to support #{@event.name}" %>
+        <%= tier&.description || "Pay a custom amount, one-time or recurring, to support #{event.name}" %>
       </p>
-      <% if @tier %>
+      <% if tier %>
         <div class="flex items-end gap-1">
           <span class="text-xl font-bold">
-            <%= render_money_short @tier.amount_cents %>
+            <%= render_money_short tier.amount_cents %>
           </span>
           <span class="opacity-60">per month</span>
         </div>
 
-        <%= link_to start_donation_tier_donations_path(@event, @tier), class: "btn btn-primary mt-4 w-full", data: { controller: "clipboard", action: "clipboard#share", clipboard_share_text_value: "Donate to #{@event.name}" } do %>
+        <%= link_to start_donation_tier_donations_path(event, tier), class: "btn btn-primary mt-4 w-full", data: { controller: "clipboard", action: "clipboard#share", clipboard_share_text_value: "Donate to #{event.name}" } do %>
           <%= inline_icon "share" %>
           Share link
         <% end %>
@@ -40,14 +40,14 @@
           Custom
         </h3>
         <p class="text opacity-60 mb-2 flex-1 max-w-full break-words whitespace-normal">
-          Pay a custom amount, one-time or recurring, to support <%= @event.name %>
+          Pay a custom amount, one-time or recurring, to support <%= event.name %>
         </p>
         <div class="flex-1"></div>
-        <%= link_to start_donation_tier_donations_path(@event, "custom"), class: "w-full btn btn-primary mt-auto" do %>
+        <%= link_to start_donation_tier_donations_path(event, "custom"), class: "w-full btn btn-primary mt-auto" do %>
           Continue
         <% end %>
       </div>
-      <% @tiers.each do |donation_tier| %>
+      <% tiers.each do |donation_tier| %>
         <div class="card w-full flex-1 shrink-0 flex flex-col">
           <h3 class="mb-0 mt-0">
             <%= donation_tier.name %>
@@ -56,7 +56,7 @@
             <%= donation_tier.description %>
           </p>
           <div class="flex-1"></div>
-          <%= link_to start_donation_tier_donations_path(@event, donation_tier), class: "w-full btn btn-primary mt-auto" do %>
+          <%= link_to start_donation_tier_donations_path(event, donation_tier), class: "w-full btn btn-primary mt-auto" do %>
             <%= render_money_short donation_tier.amount_cents %><span class="font-bold text-base opacity-60">/month</span>
           <% end %>
         </div>

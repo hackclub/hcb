@@ -10,11 +10,11 @@
   <meta name="twitter:title" content="Get reimbursed by <%= @event.name %>">
 <% end %>
 
-<%= render "events/landing/header", lead: "Get reimbursed by" %>
+<%= render "events/landing/header", lead: "Get reimbursed by", background: @background, event: @event, force_fullstory: @force_fullstory %>
 
 <div class="card mb3 pt3 pb3">
   <%= inline_icon :checkmark, size: 48, class: "success block mx-auto mb1" %>
   <h2 class="border-none center mt1 ml0 mr0 regular">Check your email for an invite to your reimbursement report.</h2>
 </div>
 
-<%= render "events/landing/footer" %>
+<%= render "events/landing/footer", event: @event %>

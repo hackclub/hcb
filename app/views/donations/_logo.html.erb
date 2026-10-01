@@ -1,9 +1,9 @@
-<%# locals: () %>
+<%# locals: (event:) %>
 
-<% if @event.logo.attached? %>
+<% if event.logo.attached? %>
     <div class="relative donations-logo">
-        <% if policy(@event).update? %>
-            <%= form_with model: @event, data: { "controller" => "form" }, class: "embedded-display-none" do |form| %>
+        <% if policy(event).update? %>
+            <%= form_with model: event, data: { "controller" => "form" }, class: "embedded-display-none" do |form| %>
                 <%= form.file_field :logo, required: true, class: "display-none", accept: "image/png,image/jpeg", data: { action: "change->form#submit" } %>
                 <%= form.label :logo do %>
                     <div
@@ -15,7 +15,7 @@
                 <% end %>
             <% end %>
 
-            <%= link_to event_remove_logo_path(@event), data: { turbo_method: :post } do %>
+            <%= link_to event_remove_logo_path(event), data: { turbo_method: :post } do %>
                 <div
                     role="button"
                     class="donations-logo-edit-btn donations-logo-edit-btn--left pointer select-none tooltipped tooltipped--e line-height-0 absolute rounded-full flex items-center justify-center embedded-display-none"
@@ -25,24 +25,24 @@
                 </div>
             <% end %>
         <% end %>
-        <%= image_tag @event.logo, height: 72, class: "rounded" %>
+        <%= image_tag event.logo, height: 72, class: "rounded" %>
     </div>
-    <% if @event.logo.variable? %>
+    <% if event.logo.variable? %>
         <% content_for :favicon do %>
             <link
                 rel="icon"
                 type="image/png"
                 sizes="32x32"
-                href="<%= Rails.application.routes.url_helpers.rails_representation_url(@event.logo.variant(resize: "32x32")) %>">
+                href="<%= Rails.application.routes.url_helpers.rails_representation_url(event.logo.variant(resize: "32x32")) %>">
             <link
                 rel="icon"
                 type="image/png"
                 sizes="16x16"
-                href="<%= Rails.application.routes.url_helpers.rails_representation_url(@event.logo.variant(resize: "16x16")) %>">
+                href="<%= Rails.application.routes.url_helpers.rails_representation_url(event.logo.variant(resize: "16x16")) %>">
         <% end %>
     <% end %>
-<% elsif policy(@event).update? %>
-    <%= form_with model: @event, data: { "controller" => "form" }, class: "embedded-display-none" do |form| %>
+<% elsif policy(event).update? %>
+    <%= form_with model: event, data: { "controller" => "form" }, class: "embedded-display-none" do |form| %>
         <%= form.file_field :logo, required: true, class: "display-none", accept: "image/png,image/jpeg", data: { action: "change->form#submit" } %>
         <%= form.label :logo do %>
             <div class="donations-logo-placeholder">

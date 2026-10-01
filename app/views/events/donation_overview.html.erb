@@ -17,7 +17,7 @@
       </div>
     <% end %>
     <% if @event.donation_page_available? %>
-      <%= render partial: "events/donations/share_page" %>
+      <%= render partial: "events/donations/share_page", locals: { event: @event } %>
     <% end %>
   </h1>
 
@@ -207,7 +207,7 @@
     <% end %>
     <div class="flex flex-row-reverse gap-2 justify-end">
       <%= pop_icon_to "settings", edit_event_path(@event, tab: "donations") %>
-      <%= render partial: "events/donations/share_page", locals: { is_blankslate: true } %>
+      <%= render partial: "events/donations/share_page", locals: { is_blankslate: true, event: @event } %>
     </div>
   <% end %>
 <% end %>

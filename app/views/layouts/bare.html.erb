@@ -5,6 +5,6 @@
   </head>
   <body>
     <%= yield %>
-    <%= render "application/fullstory" %>
+    <%= render "application/fullstory", force_fullstory: @force_fullstory %>
   </body>
 </html>

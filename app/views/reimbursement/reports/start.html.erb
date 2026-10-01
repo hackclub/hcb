@@ -10,7 +10,7 @@
   <meta name="twitter:title" content="Get reimbursed by <%= @event.name %>">
 <% end %>
 
-<%= render "events/landing/header", lead: "Get reimbursed by" %>
+<%= render "events/landing/header", lead: "Get reimbursed by", background: @background, event: @event, force_fullstory: @force_fullstory %>
 
 <% if @event.public_reimbursement_page_message.present? %>
   <div class="container container--sm">
@@ -63,4 +63,4 @@
   </div>
 <% end %>
 
-<%= render "events/landing/footer" %>
+<%= render "events/landing/footer", event: @event %>

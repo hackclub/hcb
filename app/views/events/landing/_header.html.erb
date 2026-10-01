@@ -1,12 +1,12 @@
-<%# locals: (lead: "Donate to") %>
+<%# locals: (lead: "Donate to", event:, background: nil, force_fullstory: nil) %>
 
-<% @has_header_image = @event.donation_header_image.attached? %>
+<% @has_header_image = event.donation_header_image.attached? %>
 <% page_sm %>
 
 <%= content_for(:header) do %>
-  <% if policy(@event).update? %>
+  <% if policy(event).update? %>
     <div class="flex items-center m2 absolute z-10 top-0 left-0">
-      <%= form_with model: @event, class: "embedded-display-none", data: { "controller" => "form" } do |form| %>
+      <%= form_with model: event, class: "embedded-display-none", data: { "controller" => "form" } do |form| %>
         <%= form.file_field :donation_header_image, required: true, class: "display-none", accept: "image/png,image/jpeg", data: { action: "change->form#submit" } %>
         <%= form.label :donation_header_image do %>
           <div
@@ -18,7 +18,7 @@
         <% end %>
       <% end %>
       <% if @has_header_image %>
-        <%= link_to event_remove_header_image_path(@event), data: { turbo_method: :post, turbo_confirm: "Are you sure you want to remove this image?", turbo_confirm_danger: true } do %>
+        <%= link_to event_remove_header_image_path(event), data: { turbo_method: :post, turbo_confirm: "Are you sure you want to remove this image?", turbo_confirm_danger: true } do %>
           <div
             role="button"
             class="muted pointer ml1 select-none tooltipped tooltipped--e line-height-0"
@@ -31,15 +31,15 @@
   <% end %>
 
   <div class="donations-header-image py-20"
-       <% if @has_header_image %> style="background: linear-gradient(rgba(23, 23, 29, 0.3), rgba(23, 23, 29, 0.9)),  url('<%= url_for @event.donation_header_image %>'); background-position: center; background-size: cover; background-repeat: no-repeat;"
+       <% if @has_header_image %> style="background: linear-gradient(rgba(23, 23, 29, 0.3), rgba(23, 23, 29, 0.9)),  url('<%= url_for event.donation_header_image %>'); background-position: center; background-size: cover; background-repeat: no-repeat;"
        <% end %>>
     <div class="container flex flex-col sm:flex-row items-center justify-center <%= "sm:justify-start px-5" if yield.present? %>">
       <div>
         <h1 class="mt-0 mb0 border-none text-center <%= "sm:text-left" if yield.present? %> <%= "smoke drop-shadow-lg" if @has_header_image %>">
           <span class="h3 caps block <%= @has_header_image ? "muted" : "secondary" %>"><%= lead %></span>
           <div class="flex justify-center items-center mt1">
-            <%= render "donations/logo" %>
-            <span class="ml2"><%= @event.name %></span>
+            <%= render "donations/logo", event: event %>
+            <span class="ml2"><%= event.name %></span>
           </div>
         </h1>
       </div>
@@ -49,16 +49,16 @@
     </div>
   </div>
 
-  <% if @background.present? %>
-    <%# @background is defined in the donations controller's check_background_param method %>
+  <% if background.present? %>
+    <%# background comes from @background, set in the donations controller's check_background_param method %>
     <%# it's used for organisations to set a custom background colour when embedding the form %>
     <style>
         body {
-            background-color: # <%= @background %> !important;
+            background-color: # <%= background %> !important;
         }
     </style>
   <% end %>
 <% end %>
 
-<%= render "application/fullstory" %>
+<%= render "application/fullstory", force_fullstory: force_fullstory %>
 <%= render "application/flash", klass: "mb1" %>
