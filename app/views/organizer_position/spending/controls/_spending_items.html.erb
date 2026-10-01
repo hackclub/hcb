@@ -1,4 +1,4 @@
-<%# locals: (items:) %>
+<%# locals: (items:, event: nil) %>
 
 <% if items.none? %>
   <%= blankslate "Nothing to see here" %>
@@ -15,7 +15,7 @@
       </thead>
 
       <tbody>
-        <%= render partial: "organizer_position/spending/controls/spending_item", collection: items, as: :item %>
+        <%= render partial: "organizer_position/spending/controls/spending_item", collection: items, as: :item, locals: { event: event } %>
       </tbody>
     </table>
   </div>

@@ -1,11 +1,11 @@
-<%# locals: () %>
+<%# locals: (g_suite:) %>
 
 <h2 class="mt0 mb0">Your accounts</h2>
 
-<% if @g_suite.accounts.any? %>
+<% if g_suite.accounts.any? %>
   <% if organizer_signed_in? %>
     <ul class="list list--row list--unlinked mt0 mb2" data-behavior="accounts_list">
-      <% @g_suite.accounts.order(:address).each do |account| %>
+      <% g_suite.accounts.order(:address).each do |account| %>
         <div class="flex flex-col justify-between my-3 account-container">
           <div class="flex flex-row justify-between">
             <div class="flex flex-row">
@@ -128,4 +128,4 @@
   <% end %>
 <% end %>
 
-<%= render "g_suite_accounts/new", g_suite_account: GSuiteAccount.new(g_suite: @g_suite) %>
+<%= render "g_suite_accounts/new", g_suite_account: GSuiteAccount.new(g_suite: g_suite), g_suite: g_suite %>

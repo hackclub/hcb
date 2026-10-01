@@ -4,8 +4,8 @@ pagination_metadata(json)
 
 json.data @hcb_codes do |hcb_code|
   if hcb_code.canonical_transactions.any?
-    json.partial! "api/v4/transactions/transaction", tx: hcb_code
+    json.partial! "api/v4/transactions/transaction", tx: hcb_code, event: @event
   else
-    json.partial! "api/v4/transactions/transaction", tx: hcb_code.pt
+    json.partial! "api/v4/transactions/transaction", tx: hcb_code.pt, event: @event
   end
 end

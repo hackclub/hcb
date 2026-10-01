@@ -45,7 +45,7 @@
   <div class="mb-2"></div>
   <% if @g_suite.present? %>
     <% if @g_suite.revocation.present? %>
-      <%= render "g_suite_revocations/notice" %>
+      <%= render "g_suite_revocations/notice", g_suite: @g_suite %>
     <% end %>
     <% if @g_suite.verification_error? && @g_suite.previously_verified? && !(@g_suite.revocation.present? && @g_suite.revocation.revoked?) %>
       <%= render "application/callout", type: "error", title: "We've detected that you're missing some DNS records required by Google Workspace." do %>
@@ -53,9 +53,9 @@
       <% end %>
     <% end %>
     <% if !@g_suite.revocation&.revoked? %>
-      <%= render "g_suites/panel" %>
+      <%= render "g_suites/panel", event: @event, g_suite: @g_suite, results: @results %>
     <% end %>
   <% else %>
-    <%= render "g_suites/form" %>
+    <%= render "g_suites/form", event: @event %>
   <% end %>
 <% end %>

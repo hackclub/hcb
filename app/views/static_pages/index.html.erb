@@ -218,7 +218,7 @@
 
     <%= render "static_pages/index/teenager_raffle" %>
 
-    <%= render "static_pages/index/explore" %>
+    <%= render "static_pages/index/explore", featured_events: @featured_events %>
   <% end %>
 
   <% if auditor_signed_in? %>

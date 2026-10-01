@@ -1,12 +1,12 @@
-<%# locals: () %>
+<%# locals: (event:) %>
 
 <%= pop_icon_to "settings",
-    edit_event_path(@event, tab: "reimbursements"),
+    edit_event_path(event, tab: "reimbursements"),
     data: { turbo_frame: "_top", behavior: "modal_trigger", modal: "reimbursement_settings" },
     class: "tooltipped tooltipped--s", "aria-label": "Reimbursements settings" if organizer_signed_in?(as: :member) %>
-<% if @event.public_reimbursement_page_available? %>
+<% if event.public_reimbursement_page_available? %>
   <%= pop_icon_to "external",
-      reimbursement_start_reimbursement_report_url(@event),
+      reimbursement_start_reimbursement_report_url(event),
       target: "_blank",
       class: "tooltipped tooltipped--s", "aria-label": "Public form" %>
 <% end %>

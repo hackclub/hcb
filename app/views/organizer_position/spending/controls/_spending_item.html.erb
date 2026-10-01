@@ -1,4 +1,4 @@
-<%# locals: (item:) %>
+<%# locals: (item:, event: nil) %>
 
 <% item_user = item.is_a?(OrganizerPosition::Spending::Control::Allowance) ? item.authorized_by : item.stripe_cardholder.user %> <!-- Item is either an allowance or an HCB code. -->
 
@@ -6,7 +6,7 @@
   <td><%= format_date(spending_item_created_date(item)) %></td>
   <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis;">
     <% if item.is_a?(HcbCode) %>
-      <%= link_to url_for(item), data: hcb_code_popover_data(item, event: @event, transaction_show_receipt_button: false, transaction_show_author_img: false) do %>
+      <%= link_to url_for(item), data: hcb_code_popover_data(item, event: event, transaction_show_receipt_button: false, transaction_show_author_img: false) do %>
         <%= item.memo %>
       <% end %>
     <% else %>

@@ -1,18 +1,18 @@
 # frozen_string_literal: true
 
-# locals: (json:, tx:)
+# locals: (json:, tx:, event: nil)
 
 # This partial is capable of rendering `HcbCode`, `CanonicalPendingTransaction`, and `CanonicalTransactionGrouped` instances
 
 hcb_code = tx.is_a?(HcbCode) ? tx : tx.local_hcb_code
 is_cpt = tx.is_a?(CanonicalPendingTransaction)
 is_hcb_code = tx.is_a?(HcbCode)
-amount = transaction_amount(tx, event: @event)
+amount = transaction_amount(tx, event: event)
 
 object_shape(json, hcb_code, object_name: "transaction", created_at: false) do
   json.date tx.date
   json.amount_cents amount
-  json.memo hcb_code.memo(event: @event)
+  json.memo hcb_code.memo(event: event)
   json.has_custom_memo hcb_code.custom_memo.present?
   json.pending (is_cpt && tx.unsettled?) || (is_hcb_code && !tx.pt&.fronted? && tx.pt&.unsettled?)
   json.declined (is_cpt && tx.declined?) || (is_hcb_code && tx.pt&.declined?)
@@ -24,7 +24,7 @@ object_shape(json, hcb_code, object_name: "transaction", created_at: false) do
     json.emoji tag.emoji
   end
   json.code hcb_code.hcb_i1
-  json.missing_receipt hcb_code.missing_receipt?(@event)
+  json.missing_receipt hcb_code.missing_receipt?(event)
   json.lost_receipt hcb_code.no_or_lost_receipt?
   json.appearance hcb_code.incoming_disbursement.special_appearance_name if hcb_code.incoming_disbursement&.special_appearance?
 

@@ -1,4 +1,4 @@
-<%# locals: (application: nil) %>
+<%# locals: (application: nil, referral_code: nil) %>
 
 <div class="flex flex-col md:flex-row gap-6 lg:gap-4">
   <div class="md:sticky md:top-0 flex flex-col flex-grow justify-between w-full md:max-w-[50%] lg:max-w-md xl:max-w-lg lg:mx-6">
@@ -39,10 +39,10 @@
 
   <div class="flex flex-col items-center flex-grow">
     <div class="md:max-w-[600px] w-full">
-      <%= form_with model: @application || false, url: "#", method: @application.present? ? :patch : :post, id: @application.present? ? "edit_application_#{@application.id}" : "create_application", class: "mt-7" do |form| %>
-        <%= form.hidden_field(:referral_code, value: @referral_code) if @referral_code.present? %>
+      <%= form_with model: application || false, url: "#", method: application.present? ? :patch : :post, id: application.present? ? "edit_application_#{application.id}" : "create_application", class: "mt-7" do |form| %>
+        <%= form.hidden_field(:referral_code, value: referral_code) if referral_code.present? %>
 
-        <div class="card card--outline mb-6" x-data="{ teenager: '<%= @application&.teen_led? ? "true" : @application&.teen_led? == false ? "false" : "" %>' }">
+        <div class="card card--outline mb-6" x-data="{ teenager: '<%= application&.teen_led? ? "true" : application&.teen_led? == false ? "false" : "" %>' }">
           <%= form.label :teen_led do %>
             Are you a teenager? <span class="text-primary">*</span>
           <% end %>
@@ -50,12 +50,12 @@
           <p class="text-sm muted mt-1 mb-2">HCB primarily focuses on teen-led projects, so we're more selective with adult-run organizations.</p>
 
           <div class="field field--options max-w-none mb-0 relative">
-            <%= form.radio_button :teen_led, "true", { "x-model": "teenager", checked: @application&.teen_led?, required: true, class: "absolute !block opacity-0" } %>
+            <%= form.radio_button :teen_led, "true", { "x-model": "teenager", checked: application&.teen_led?, required: true, class: "absolute !block opacity-0" } %>
             <%= form.label :teen_led, value: "true" do %>
               <strong>Yes, I'm a teenager</strong>
               <small>18 and under</small>
             <% end %>
-            <%= form.radio_button :teen_led, "false", { "x-model": "teenager", checked: @application&.teen_led? == false, required: true, class: "absolute !block opacity-0" } %>
+            <%= form.radio_button :teen_led, "false", { "x-model": "teenager", checked: application&.teen_led? == false, required: true, class: "absolute !block opacity-0" } %>
             <%= form.label :teen_led, value: "false" do %>
               <strong>No, I'm an adult</strong>
               <small>Over 18</small>
@@ -77,15 +77,15 @@
       <div class="flex items-center justify-start gap-4">
         <%= responsive_link_to applications_path, text: "Back to dashboard", icon: "view-back", class: "btn bg-muted" %>
 
-        <% if @application.present? %>
-          <%= mobile_button_to archive_application_path(@application), text: "Archive application", icon: "delete", class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?", turbo_confirm_danger: true } %>
+        <% if application.present? %>
+          <%= mobile_button_to archive_application_path(application), text: "Archive application", icon: "delete", class: "btn btn--destroy", data: { turbo_confirm: "Are you sure you want to archive this application and remove it from your dashboard?", turbo_confirm_danger: true } %>
         <% end %>
       </div>
     <% else %>
       <span></span>
     <% end %>
     <% if application.present? %>
-      <button class="btn bg-blue" formaction="<%= application_path(@application, return_to: project_info_application_path(@application)) %>" form="edit_application_<%= @application.id %>">Continue application</button>
+      <button class="btn bg-blue" formaction="<%= application_path(application, return_to: project_info_application_path(application)) %>" form="edit_application_<%= application.id %>">Continue application</button>
     <% else %>
       <button class="btn bg-blue" formaction="<%= applications_path %>" form="create_application" id="start_application">Start application</button>
     <% end %>

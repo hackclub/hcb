@@ -1,4 +1,4 @@
-<%# locals: () %>
+<%# locals: (featured_events:) %>
 
 <% if current_user.is_teenager? %>
   <%# EXPLORE HACK CLUB %>
@@ -97,7 +97,7 @@
   </ul>
 
   <%# EXPLORE HCB %>
-  <% unless @featured_events.none? %>
+  <% unless featured_events.none? %>
     <div class="flex flex-row w-full justify-between items-center">
       <h2 class="heading h2 leading-[1.5] my-2 mr-auto py-2 px-4 ml-0 pl-0 border-none">
         Explore HCB
@@ -109,7 +109,7 @@
     </div>
 
     <ul class="grid grid--medium-narrow text-left w-100 mt0">
-      <%= render partial: "events/event_card", collection: @featured_events, as: :event, locals: { show_category_badge: true, show_date_stat: true } %>
+      <%= render partial: "events/event_card", collection: featured_events, as: :event, locals: { show_category_badge: true, show_date_stat: true } %>
     </ul>
   <% end %>
 <% end %>

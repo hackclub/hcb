@@ -1,12 +1,12 @@
-<%# locals: (g_suite_account:) %>
+<%# locals: (g_suite_account:, g_suite:) %>
 
 <% disabled = !policy(g_suite_account).create? %>
 
-<%= form_with(model: [@g_suite, g_suite_account], local: true) do |form| %>
+<%= form_with(model: [g_suite, g_suite_account], local: true) do |form| %>
   <%= form_errors g_suite_account, "account" %>
 
   <h3 class="mb1">
-    Add <%= @g_suite.accounts.any? ? "another" : "your first" %> account
+    Add <%= g_suite.accounts.any? ? "another" : "your first" %> account
   </h3>
 
   <div class="flex items-center">

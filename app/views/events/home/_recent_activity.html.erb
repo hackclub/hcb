@@ -1,20 +1,20 @@
-<%# locals: () %>
+<%# locals: (activities:, event: nil) %>
 
 <%= turbo_frame_tag "recent_activity" do %>
-  <% if @activities.length > 0 %>
+  <% if activities.length > 0 %>
     <div class="card card--breakdown relative flex-1 flex flex-col p-0" style="min-height: <%= 67.7 * 7 %>px;max-height: <%= 67.7 * 7 %>px">
       <div style="position: absolute; bottom: 0; left: 0; height: 100px; width: 100%; background: linear-gradient(transparent, var(--card-bg)); pointer-events: none; z-index: 1"></div>
       <div class="flex items-center p-4 mt-auto justify-between">
         <h3 class="m-0">Recent activity</h3>
         <% if organizer_signed_in? %>
-          <%= link_to edit_event_path(@event, tab: "audit_log"), class: "flex items-center shrink-0 no-underline" do %>
+          <%= link_to edit_event_path(event, tab: "audit_log"), class: "flex items-center shrink-0 no-underline" do %>
             See all
             <%= inline_icon "view-forward" %>
           <% end %>
         <% end %>
       </div>
 
-      <% if @activities.none? %>
+      <% if activities.none? %>
         <p class="m-0 p-4 pt-2 pb-0 mb-1">
           <i class="muted">Nothing has happened recently.</i>
         </p>
@@ -23,7 +23,7 @@
         </p>
       <% else %>
         <ul class="list-reset comments w-100 pb-2 px-4 pt-0 flex-1 my-0">
-          <%= render_activities(@activities.reject { |activity| activity.trackable.nil? && !activity.trackable_is_deletable? }) %>
+          <%= render_activities(activities.reject { |activity| activity.trackable.nil? && !activity.trackable_is_deletable? }) %>
         </ul>
       <% end %>
     </div>

@@ -1,11 +1,11 @@
-<%# locals: (invoice:, sponsor:) %>
+<%# locals: (invoice:, sponsor:, event:) %>
 
-<% if @event.demo_mode? %>
+<% if event.demo_mode? %>
   <div class="muted mt-6">
     Once your organization is activated, you'll be able to create and send invoices
   </div>
 <% else %>
-  <%= form_with(model: invoice, url: event_invoices_path(@event), local: true, data: { controller: "invoice-form" }, html: { "x-data" => "{ amount: null }" }) do |form| %>
+  <%= form_with(model: invoice, url: event_invoices_path(event), local: true, data: { controller: "invoice-form" }, html: { "x-data" => "{ amount: null }" }) do |form| %>
     <div data-controller="tabs" data-tabs-default-tab-value="sponsor">
       <div class="flex mb-4 gap-5">
         <div
@@ -39,10 +39,10 @@
             name="invoice[sponsor_id]"
             id="invoice_sponsor_id"
             class="max-w-full"
-            <%= "disabled hidden" if @event.sponsors.empty? %>>
+            <%= "disabled hidden" if event.sponsors.empty? %>>
             <option value="default" selected disabled>Select…</option>
             <option value="">+⠀New sponsor…</option>
-            <% @event.sponsors.select(:id, :name, :contact_email, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country).each do |sponsor| %>
+            <% event.sponsors.select(:id, :name, :contact_email, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country).each do |sponsor| %>
               <option value="<%= sponsor.id %>" data-json="<%= sponsor.to_json %>"><%= sponsor.name %></option>
             <% end %>
           </select>
@@ -67,40 +67,40 @@
               <div class="field mt2">
                 <%= form.label :name, "Name" %>
                 <span class="muted mb-2 block text-sm">Use company name if applicable</span>
-                <%= form.text_field :name, placeholder: "Raviga Capital", required: true, disabled: @event.demo_mode? %>
+                <%= form.text_field :name, placeholder: "Raviga Capital", required: true, disabled: event.demo_mode? %>
               </div>
               <div class="field">
                 <%= form.label :contact_email, "Contact email" %>
                 <span class="muted mb-2 block text-sm">Email you'll send this invoice to</span>
-                <%= form.email_field :contact_email, placeholder: "peter.gregory@ravigacapital.com", required: true, disabled: @event.demo_mode? %>
+                <%= form.email_field :contact_email, placeholder: "peter.gregory@ravigacapital.com", required: true, disabled: event.demo_mode? %>
               </div>
               <%= form.label :address_line1, "Street address" %>
               <div class="flex gap-2">
                 <div class="field">
-                  <%= form.text_field :address_line1, placeholder: "1 Letterman Drive", required: true, disabled: @event.demo_mode? %>
+                  <%= form.text_field :address_line1, placeholder: "1 Letterman Drive", required: true, disabled: event.demo_mode? %>
                 </div>
                 <div class="field">
-                  <%= form.text_field :address_line2, placeholder: "Suite 500", disabled: @event.demo_mode? %>
+                  <%= form.text_field :address_line2, placeholder: "Suite 500", disabled: event.demo_mode? %>
                 </div>
               </div>
               <div class="flex">
                 <div class="field flex-auto mr1">
                   <%= form.label :address_city, "City" %>
-                  <%= form.text_field :address_city, placeholder: "San Francisco", required: true, disabled: @event.demo_mode? %>
+                  <%= form.text_field :address_city, placeholder: "San Francisco", required: true, disabled: event.demo_mode? %>
                 </div>
                 <div class="field flex-auto ml1">
                   <%= form.label :address_state, "State" %>
-                  <%= form.text_field :address_state, placeholder: "CA", required: true, disabled: @event.demo_mode? %>
+                  <%= form.text_field :address_state, placeholder: "CA", required: true, disabled: event.demo_mode? %>
                 </div>
               </div>
               <div class="flex gap-2">
                 <div class="field flex-auto">
                   <%= form.label :address_postal_code, "Zip code" %>
-                  <%= form.text_field :address_postal_code, placeholder: "94129", required: true, disabled: @event.demo_mode? %>
+                  <%= form.text_field :address_postal_code, placeholder: "94129", required: true, disabled: event.demo_mode? %>
                 </div>
                 <div class="field flex-auto">
                   <%= form.label :address_country, "Country" %>
-                  <%= form.country_select :address_country, priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country", required: true, disabled: @event.demo_mode? %>
+                  <%= form.country_select :address_country, priority_countries: ["US"], priority_countries_divider: "", include_blank: "Select a country", required: true, disabled: event.demo_mode? %>
                 </div>
               </div>
             </div>
@@ -127,7 +127,7 @@
                                   step: 0.01,
                                   style: "max-width:100%!important",
                                   class: "!border-none bg-transparent !shadow-none",
-                                  min: 1.00, required: true, disabled: @event.demo_mode?,
+                                  min: 1.00, required: true, disabled: event.demo_mode?,
                                   data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" },
                                   "x-model.fill.number" => "amount" %>
           </div>
@@ -142,14 +142,14 @@
         </div>
         <div class="field">
           <%= form.label :item_description, "Description" %>
-          <%= form.text_field :item_description, placeholder: "#{sponsor.event.name} Silver Sponsorship", required: true, class: "!max-w-full", disabled: @event.demo_mode? %>
+          <%= form.text_field :item_description, placeholder: "#{sponsor.event.name} Silver Sponsorship", required: true, class: "!max-w-full", disabled: event.demo_mode? %>
         </div>
         <div class="field">
           <%= form.label :due_date %>
-          <%= form.date_field :due_date, min: 3.days.from_now, value: 30.days.from_now, class: "!max-w-full", disabled: @event.demo_mode? %>
+          <%= form.date_field :due_date, min: 3.days.from_now, value: 30.days.from_now, class: "!max-w-full", disabled: event.demo_mode? %>
         </div>
         <div class="actions tooltipped tooltipped--n inline-block" aria-label="Your invoice will immediately be emailed to the sponsor">
-          <%= form.submit "Send invoice now", disabled: !organizer_signed_in? || @event.demo_mode? %>
+          <%= form.submit "Send invoice now", disabled: !organizer_signed_in? || event.demo_mode? %>
         </div>
       </div>
     </div>
