@@ -1,4 +1,4 @@
-<%# locals: (et:, show_running_sum:, show_card: nil) %>
+<%# locals: (et:, show_running_sum:, running_sum: nil, show_card: nil) %>
 
 <tr>
   <td><%= et.transaction_time.nil? ? "–" : et.transaction_time.to_date %></td>
@@ -32,8 +32,7 @@
   </td>
   <td class="nowrap"><%= render_money et.amount %></td>
   <% if show_running_sum %>
-    <td class="nowrap"><%= render_money @sum %></td>
-    <% @sum -= et.amount if et.undeclined? %>
+    <td class="nowrap"><%= render_money running_sum %></td>
   <% end %>
   <% if show_card %>
   <td>

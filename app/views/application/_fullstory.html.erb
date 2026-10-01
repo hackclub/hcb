@@ -1,9 +1,9 @@
 <%# locals: () %>
 
 <%# We want to make sure FullStory is only rendered at most once %>
-<% unless @_rendered_fullstory %>
+<% unless content_for?(:fullstory_rendered) %>
   <% if Rails.env.production? && (current_user&.sessions_reported || @force_fullstory.present?) && !(current_user&.sessions_reported == false) %>
-    <% @_rendered_fullstory = true %>
+    <% content_for(:fullstory_rendered, "true") %>
 
     <script defer>
       window['_fs_debug'] = false;

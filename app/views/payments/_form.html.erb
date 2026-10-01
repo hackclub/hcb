@@ -4,7 +4,7 @@
   <%= render "payees/edit_section", event:, payee:, destination: "payments", selected: params[:selected] %>
 <% else %>
   <% disabled = !policy(event).create_payment? %>
-  <% @can_transfer = !disabled %>
+  <% content_for(:transfer_disabled, "true") if disabled %>
   <% editing = payment&.persisted? %>
   <% manual = payee&.managed? %>
 

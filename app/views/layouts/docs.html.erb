@@ -26,8 +26,6 @@
 
     <% if content_for?(:nav) %>
       <main class="container app">
-        <%= render "application/native_changelog" if @latest_changelog_post %>
-
         <aside class="app__sidebar">
           <%= render "application/docs_header" %>
           <%= render "application/flash", klass: "mb1" %>
