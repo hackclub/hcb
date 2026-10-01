@@ -50,7 +50,7 @@ class SuggestedPairingsController < ApplicationController
       turbo_stream.replace(
         "suggested_pairings",
         partial: "static_pages/suggested_pairings",
-        locals: { pairings:, current_slide: }
+        locals: { pairings:, current_slide:, card_grant: @card_grant, event: @event, force_no_popover: @force_no_popover, frame: @frame, ledger_instance: @ledger_instance, show_running_balance: @show_running_balance }
       )
     )
 
@@ -60,7 +60,7 @@ class SuggestedPairingsController < ApplicationController
           streams.append(turbo_stream.replace(
                            ct.local_hcb_code.hashid,
                            partial: "canonical_transactions/canonical_transaction",
-                           locals: { ct:, force_display_details: true, receipt_upload_button: true, updated_via_turbo_stream: true }
+                           locals: { ct:, force_display_details: true, receipt_upload_button: true, updated_via_turbo_stream: true, card_grant: @card_grant, force_no_popover: @force_no_popover, frame: @frame, page_event: @event, show_running_balance: @show_running_balance }
                          ))
         end
       else
@@ -68,7 +68,7 @@ class SuggestedPairingsController < ApplicationController
           streams.append(turbo_stream.replace(
                            pt.local_hcb_code.hashid,
                            partial: "canonical_pending_transactions/canonical_pending_transaction",
-                           locals: { pt:, force_display_details: true, receipt_upload_button: true, updated_via_turbo_stream: true }
+                           locals: { pt:, force_display_details: true, receipt_upload_button: true, updated_via_turbo_stream: true, card_grant: @card_grant, force_no_popover: @force_no_popover, frame: @frame, page_event: @event, show_running_balance: @show_running_balance }
                          ))
         end
       end

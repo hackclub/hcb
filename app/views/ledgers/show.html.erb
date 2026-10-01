@@ -1,6 +1,6 @@
 <% title "Ledger #{@ledger.hashid}" %>
 
-<%= render "ledgers/ledger", ledger: @ledger, items: @items %>
+<%= render "ledgers/ledger", ledger: @ledger, items: @items, direction: @direction, event: @event %>
 
 <% admin_tool do %>
   <details class="mb-6 block w-full" <%= "open" if params[:query].present? %>>

@@ -1,6 +1,6 @@
 <% title "Welcome to #{@position.event.name}" %>
 <% page_sm %>
-<%= render "users/nav" %>
+<%= render "users/nav", activities: @activities, before: @before, home_size: @home_size, user: @user %>
 
 <h1 class="heading border-0 mb-0">Welcome, <%= @position.payee.display_name %>!</h1>
 <p class="muted mt-0">

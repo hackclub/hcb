@@ -1,6 +1,6 @@
 <% title "New note" %>
 <% page_sm %>
-<%= render "events/nav" if @event %>
+<%= render "events/nav", event: @event, home_size: @home_size if @event %>
 
 <h1>New note</h1>
 

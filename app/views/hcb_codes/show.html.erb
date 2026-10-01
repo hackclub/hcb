@@ -1,13 +1,13 @@
 <% page_md %>
 
-<%= render "events/nav" if @event %>
+<%= render "events/nav", event: @event, home_size: @home_size if @event %>
 
 <% title @hcb_code.pretty_title(show_event_name: false, show_amount: true, event: @event) unless content_for? :title %>
 
 <%= turbo_frame_tag @hcb_code.public_id, target: "_top" do %>
   <%= render partial: "hcb_codes/admin_tools", locals: { hcb_code: @hcb_code } %>
   <div id="rich_metadata">
-    <%= render partial: "hcb_codes/rich_metadata" %>
+    <%= render partial: "hcb_codes/rich_metadata", locals: { editing: @editing, event: @event, frame: @frame, hcb_code: @hcb_code, ledger_instance: @ledger_instance, show_ach_details: @show_ach_details } %>
   </div>
 
   <% if @hcb_code.accepts_receipts? %>
@@ -25,7 +25,7 @@
         <%= link_to "Click to get an SMS (to #{current_user.phone_number}) of the notification", send_sms_receipt_hcb_code_path(@hcb_code), data: { turbo_method: :post } %>
       <% end %>
     <% end %>
-    <%= render "receipts/list_v2", hcb_code: @hcb_code, frame: @frame, transaction_show_receipt_button: @transaction_show_receipt_button, transaction_show_author_img: @transaction_show_author_img %>
+    <%= render "receipts/list_v2", hcb_code: @hcb_code, frame: @frame, transaction_show_receipt_button: @transaction_show_receipt_button, transaction_show_author_img: @transaction_show_author_img, event: @event, ledger_instance: @ledger_instance %>
     <%= begin receipt_upload_form_config = {
           receiptable: @hcb_code,
           enable_linking: true,

@@ -27,7 +27,7 @@
     <% if content_for?(:nav) %>
       <main class="container app">
         <aside class="app__sidebar">
-          <%= render "application/docs_header" %>
+          <%= render "application/docs_header", home_size: @home_size %>
           <%= render "application/flash", klass: "mb1" %>
           <%= yield(:nav) %>
         </aside>
@@ -38,7 +38,7 @@
         </article>
       </main>
     <% else %>
-      <%= render "application/docs_header" unless @no_app_shell %>
+      <%= render "application/docs_header", home_size: @home_size unless @no_app_shell %>
       <%= yield(:header) %>
       <main class="container px-6 lg:px-3 <%= content_for :container_class %>" style="<%= content_for :container_style %>">
         <%= render "application/flash", klass: "mb1" unless @hide_flash %>

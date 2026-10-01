@@ -1,6 +1,6 @@
 <% title "My feed" %>
 <% page_md %>
-<%= render "users/nav", selected: :feed %>
+<%= render "users/nav", selected: :feed, activities: @activities, before: @before, home_size: @home_size, user: @user %>
 <%= render "my/following_modal", event_follows: @event_follows %>
 
 <h1 class="heading flex items-center border-0 mb-0">

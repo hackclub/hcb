@@ -1,6 +1,6 @@
 <% title "#{@employee.user.name}'s payroll at #{@employee.event.name}" %>
 <% page_md %>
-<%= render "events/nav", selected: :payroll %>
+<%= render "events/nav", selected: :payroll, event: @event, home_size: @home_size %>
 
 <%= turbo_frame_tag "employee_#{@employee.hashid}" do %>
   <h1 class="heading flex <%= "border-none" if @frame %>">

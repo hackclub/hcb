@@ -1,4 +1,4 @@
-<%# locals: (item:) %>
+<%# locals: (item:, page_event: nil) %>
 
 <%#
   Adapter between the ledger item view and the tag store. The item view delegates
@@ -6,7 +6,7 @@
   event lives in this partial so a future migration only touches it.
 %>
 <% hcb_code = item.hcb_code %>
-<% event = @event || hcb_code&.event %>
+<% event = page_event || hcb_code&.event %>
 <% if hcb_code.present? && !event&.demo_mode? && event.present? && policy(hcb_code).toggle_tag? %>
   <div class="overflow-visible relative" style="margin-left: 0.5rem;" data-controller="menu">
     <button class="list-badge add-tag-badge !mx-0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
@@ -26,7 +26,7 @@
       <% if event.tags.any? %>
         <div class="menu__divider tags__divider"></div>
       <% end %>
-      <%= render partial: "hcb_codes/create_tag", locals: { button: hcb_code.hashid } %>
+      <%= render partial: "hcb_codes/create_tag", locals: { button: hcb_code.hashid, event: page_event } %>
     </div>
   </div>
 <% end %>

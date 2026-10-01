@@ -1,6 +1,6 @@
 <% title "Invoices for #{@event.name}" %>
 <% page_md %>
-<%= render "events/nav", selected: :invoices %>
+<%= render "events/nav", selected: :invoices, event: @event, home_size: @home_size %>
 
 <% if @invoices.total_count > 0 || params[:q].present? || @has_filter || !organizer_signed_in? %>
   <h1 class="heading gap-2 flex-col sm:flex-row border-0 mb-2">

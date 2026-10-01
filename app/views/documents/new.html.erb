@@ -1,5 +1,5 @@
 <% page_xs %>
-<%= render "events/nav" if !@event.nil? %>
+<%= render "events/nav", event: @event, home_size: @home_size if !@event.nil? %>
 
 <h1>New Document</h1>
 

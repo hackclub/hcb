@@ -82,7 +82,7 @@
       <%= render "application/banner_container", event: @event, no_app_shell: @no_app_shell, no_transparency_header: @no_transparency_header, use_user_nav: @use_user_nav %>
       <% unless @no_app_shell %>
         <div class="flex justify-center mt-8">
-          <%= render "application/logo" %>
+          <%= render "application/logo", home_size: @home_size %>
         </div>
       <% end %>
       <%= yield(:header) %>

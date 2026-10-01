@@ -1,6 +1,6 @@
 <% title "Perks for #{@event.name}" %>
 <% page_md %>
-<%= render "events/nav", selected: :promotions %>
+<%= render "events/nav", selected: :promotions, event: @event, home_size: @home_size %>
 
 <h1 class="heading gap-2 mb-2 border-0">
   Promotions &amp; perks

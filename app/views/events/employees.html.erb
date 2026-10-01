@@ -1,6 +1,6 @@
 <% title "Contractors for #{@event.name}" %>
 <% page_md %>
-<%= render "events/nav", selected: :payroll %>
+<%= render "events/nav", selected: :payroll, event: @event, home_size: @home_size %>
 
 <% if @employees.empty? && organizer_signed_in? && !params[:q].present? && !params[:filter].present? %>
     <%= render "events/one_pager",

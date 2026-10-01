@@ -6,7 +6,7 @@
 
 <% title @event.name %>
 <% page_md %>
-<%= render "events/nav", selected: :home %>
+<%= render "events/nav", selected: :home, event: @event, home_size: @home_size %>
 
 <% if @event.is_public %>
   <% auto_discover_feed(@event) %>
@@ -46,7 +46,7 @@
         <%= inline_icon "attachment", size: 20 %>
         Get reimbursed
       <% end %>
-      <%= render "reimbursement/reports/create_form", modal_id: "create_reimbursement" %>
+      <%= render "reimbursement/reports/create_form", modal_id: "create_reimbursement", event: @event, ledger_instance: @ledger_instance %>
 
       <% if policy(@event.check_deposits.build).create? %>
         <%= link_to event_check_deposits_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "deposit_check" }  do %>

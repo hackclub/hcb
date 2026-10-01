@@ -1,4 +1,4 @@
-<%# locals: (expense:, new: false) -%>
+<%# locals: (expense:, new: false, event: nil, ledger_instance: nil) -%>
 <% read_only = !OrganizerPosition.role_at_least?(current_user, expense.report.event, :manager) && current_user != expense.report.user && !admin_signed_in? %>
 <%= turbo_frame_tag expense do %>
   <div
@@ -93,7 +93,7 @@
 </div>
 <section class="grid grid--split">
   <%= render partial: "reimbursement/expenses/form", locals: { expense:, new: } %>
-  <%= render partial: "reimbursement/expenses/receipts", locals: { expense: } %>
+  <%= render partial: "reimbursement/expenses/receipts", locals: { expense:, event: event, ledger_instance: ledger_instance } %>
 </section>
 </article>
 <div class="lightbox" data-expense-form-target="lightbox"></div>

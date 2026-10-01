@@ -123,7 +123,7 @@ class ReceiptsController < ApplicationController
       streams.append(turbo_stream.prepend(
                        @ledger_instance.present? ? "#{@ledger_instance}_receipts_list" : "receipts_list",
                        partial: "receipts/receipt",
-                       locals: { receipt:, show_delete_button: true, show_reimbursements_button: true, show_receipt_bin_button: true, link_to_file: true, turbo_for_deletion: true }
+                       locals: { receipt:, show_delete_button: true, show_reimbursements_button: true, show_receipt_bin_button: true, link_to_file: true, turbo_for_deletion: true, event: @event, ledger_instance: @ledger_instance }
                      ))
     end
 
@@ -260,7 +260,7 @@ class ReceiptsController < ApplicationController
         turbo_stream.replace(
           "suggested_pairings",
           partial: "static_pages/suggested_pairings",
-          locals: { pairings: current_user.receipt_bin.suggested_receipt_pairings, current_slide: 0 }
+          locals: { pairings: current_user.receipt_bin.suggested_receipt_pairings, current_slide: 0, card_grant: @card_grant, event: @event, force_no_popover: @force_no_popover, frame: @frame, ledger_instance: @ledger_instance, show_running_balance: @show_running_balance }
         )
       )
       streams.append(
@@ -282,7 +282,7 @@ class ReceiptsController < ApplicationController
           streams.append(turbo_stream.replace(
                            ct.local_hcb_code.hashid,
                            partial: "canonical_transactions/canonical_transaction",
-                           locals: @frame && @event ? { ct:, updated_via_turbo_stream: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_tags: on_hcb_code_page? } : { ct:, force_display_details: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_event_name: @show_event_name, updated_via_turbo_stream: true, show_tags: on_hcb_code_page? }
+                           locals: @frame && @event ? { ct:, updated_via_turbo_stream: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_tags: on_hcb_code_page?, card_grant: @card_grant, force_no_popover: @force_no_popover, frame: @frame, page_event: @event, show_running_balance: @show_running_balance } : { ct:, force_display_details: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_event_name: @show_event_name, updated_via_turbo_stream: true, show_tags: on_hcb_code_page?, card_grant: @card_grant, force_no_popover: @force_no_popover, frame: @frame, page_event: @event, show_running_balance: @show_running_balance }
                          ))
         end
       else
@@ -291,7 +291,7 @@ class ReceiptsController < ApplicationController
           streams.append(turbo_stream.replace(
                            pt.local_hcb_code.hashid,
                            partial: "canonical_pending_transactions/canonical_pending_transaction",
-                           locals: @frame && @event ? { pt:, updated_via_turbo_stream: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_tags: on_hcb_code_page? } : { pt:, force_display_details: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_event_name: @show_event_name, updated_via_turbo_stream: true, show_tags: on_hcb_code_page? }
+                           locals: @frame && @event ? { pt:, updated_via_turbo_stream: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_tags: on_hcb_code_page?, card_grant: @card_grant, force_no_popover: @force_no_popover, frame: @frame, page_event: @event, show_running_balance: @show_running_balance } : { pt:, force_display_details: true, show_author_column: @show_author_img, receipt_upload_button: @show_receipt_button, show_event_name: @show_event_name, updated_via_turbo_stream: true, show_tags: on_hcb_code_page?, card_grant: @card_grant, force_no_popover: @force_no_popover, frame: @frame, page_event: @event, show_running_balance: @show_running_balance }
                          ))
         end
       end
@@ -302,7 +302,7 @@ class ReceiptsController < ApplicationController
         turbo_stream.replace(
           "receipts_for_#{@receiptable.id}",
           partial: "reimbursement/expenses/receipts", locals: {
-            expense: @receiptable
+            expense: @receiptable, event: @event, ledger_instance: @ledger_instance
           }
         )
       )
@@ -323,7 +323,7 @@ class ReceiptsController < ApplicationController
         streams.append(
           turbo_stream.replace(
             "#{@ledger_instance}_stripe_card_receipts",
-            partial: "hcb_codes/stripe_card_receipts",
+            partial: "hcb_codes/stripe_card_receipts", locals: { hcb_code: @hcb_code, ledger_instance: @ledger_instance },
           )
         )
       end
@@ -332,7 +332,7 @@ class ReceiptsController < ApplicationController
         turbo_stream.replace(
           "#{@ledger_instance}_receipts_list",
           partial: "receipts/list_v2",
-          locals: { hcb_code: @hcb_code, frame: @frame, transaction_show_receipt_button: @show_receipt_button, transaction_show_author_img: @show_author_img }
+          locals: { hcb_code: @hcb_code, frame: @frame, transaction_show_receipt_button: @show_receipt_button, transaction_show_author_img: @show_author_img, event: @event, ledger_instance: @ledger_instance }
         )
       )
     end
@@ -355,7 +355,7 @@ class ReceiptsController < ApplicationController
       streams.append(turbo_stream.append(
                        :receipts_list,
                        partial: "receipts/receipt",
-                       locals: { receipt: @receipt, show_delete_button: true, show_receipt_bin_button: true, link_to_file: true }
+                       locals: { receipt: @receipt, show_delete_button: true, show_receipt_bin_button: true, link_to_file: true, event: @event, ledger_instance: @ledger_instance }
                      ))
     elsif @receipt
       streams.append(turbo_stream.remove("receipt_#{@receipt.id}"))

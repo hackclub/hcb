@@ -1,6 +1,6 @@
 <% title "My reimbursements" %>
 <% page_md %>
-<%= render "users/nav", selected: :reimbursements %>
+<%= render "users/nav", selected: :reimbursements, activities: @activities, before: @before, home_size: @home_size, user: @user %>
 
 <% if current_user(allow_unverified: true).verified? %>
   <h1 class="heading flex-col sm:flex-row border-0 mb-0">
@@ -37,7 +37,7 @@
     </div>
   </h1>
 
-  <%= render partial: "reimbursement/reports/create_form" %>
+  <%= render partial: "reimbursement/reports/create_form", locals: { event: @event, ledger_instance: @ledger_instance } %>
 
   <% if current_user.events.not_demo_mode.any? %>
     <section class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-1">

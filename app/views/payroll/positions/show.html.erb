@@ -1,7 +1,7 @@
 <% title "#{@position.payee.display_name}'s contract" %>
 <% page_sm %>
 <% unless @frame %>
-  <%= render "events/nav", selected: :contractors %>
+  <%= render "events/nav", selected: :contractors, event: @event, home_size: @home_size %>
 <% end %>
 
 <%= turbo_frame_tag "contractor_#{@position.id}", target: "_top" do %>
@@ -132,7 +132,7 @@
               <td>
                 <% if invoice.receipts.any? %>
                   <div class="receipts_list flex gap-2">
-                    <%= render partial: "receipts/receipt", collection: invoice.receipts.with_attached_file.includes(:user), as: :receipt, locals: { size: 48, hide_info: true, link_to_file: true } %>
+                    <%= render partial: "receipts/receipt", collection: invoice.receipts.with_attached_file.includes(:user), as: :receipt, locals: { size: 48, hide_info: true, link_to_file: true, event: @event, ledger_instance: @ledger_instance } %>
                   </div>
                 <% else %>
                   <span class="muted">&mdash;</span>

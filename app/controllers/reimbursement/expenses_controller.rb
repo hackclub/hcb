@@ -127,12 +127,12 @@ module Reimbursement
 
     def replace_expense_turbo_stream
       turbo_stream.replace(@expense, partial: "reimbursement/expenses/expense", locals: {
-                             expense: @expense.becomes(EXPENSE_TYPE_MAP[@expense.type] || Reimbursement::Expense)
+                             expense: @expense.becomes(EXPENSE_TYPE_MAP[@expense.type] || Reimbursement::Expense), event: @event, ledger_instance: @ledger_instance
                            })
     end
 
     def new_expense_turbo_stream
-      turbo_stream.append(:expenses, partial: "reimbursement/expenses/expense", locals: { expense: @expense, new: true })
+      turbo_stream.append(:expenses, partial: "reimbursement/expenses/expense", locals: { expense: @expense, new: true, event: @event, ledger_instance: @ledger_instance })
     end
 
     def delete_expense_turbo_stream

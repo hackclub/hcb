@@ -123,7 +123,7 @@
 <% else %>
   <% title "Account settings" %>
   <% page_md %>
-  <%= render "users/nav", selected: :settings_home %>
+  <%= render "users/nav", selected: :settings_home, activities: @activities, before: @before, home_size: @home_size, user: @user %>
   <% disabled = !policy(@user).update? %>
   <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
     <%= render "settings_header", active: "general", user: @user unless @onboarding %>

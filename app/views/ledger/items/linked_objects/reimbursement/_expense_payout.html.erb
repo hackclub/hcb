@@ -1,4 +1,4 @@
-<%# locals: (ledger_item:) %>
+<%# locals: (ledger_item:, event: nil, frame: nil, ledger_instance: nil) %>
 
 <% expense = ledger_item.linked_object.expense %>
 
@@ -45,5 +45,5 @@
 </article>
 
 <div class="mb4">
-  <%= render partial: "receipts/receipt", collection: expense.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true, popover: @frame ? "HcbCode:#{ledger_item.hcb_code.hashid}" : nil } %>
+  <%= render partial: "receipts/receipt", collection: expense.receipts.order(created_at: :asc), as: :receipt, locals: { link_to_file: true, popover: frame ? "HcbCode:#{ledger_item.hcb_code.hashid}" : nil, event: event, ledger_instance: ledger_instance } %>
 </div>

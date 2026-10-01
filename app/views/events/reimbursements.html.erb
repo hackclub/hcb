@@ -1,6 +1,6 @@
 <% title "Reimbursements for #{@event.name}" %>
 <% page_md %>
-<%= render "events/nav", selected: :reimbursements %>
+<%= render "events/nav", selected: :reimbursements, event: @event, home_size: @home_size %>
 
 <% if @reports.any? || !organizer_signed_in? || params[:q].present? || @has_filter %>
   <h1 class="heading gap-2 flex-col sm:flex-row mb-0 border-0">
@@ -13,7 +13,7 @@
     </div>
   </h1>
 
-  <%= render partial: "reimbursement/reports/create_form" %>
+  <%= render partial: "reimbursement/reports/create_form", locals: { event: @event, ledger_instance: @ledger_instance } %>
 
   <div class="statset mb-2">
     <div class="stat">
@@ -118,7 +118,7 @@
         }
       ] do %>
     <div class="flex items-center gap-2 flex-row-reverse">
-      <%= render partial: "reimbursement/reports/create_form" %>
+      <%= render partial: "reimbursement/reports/create_form", locals: { event: @event, ledger_instance: @ledger_instance } %>
       <%= render partial: "reimbursement_buttons", locals: { event: @event } %>
     </div>
   <% end %>

@@ -1,8 +1,8 @@
-<%# locals: (pt:, authorless: nil, force_display_details: false, receipt_upload_button: nil, receipt_upload_button_disabled: nil, selectable: nil, show_author_column: nil, show_event_name: nil, show_tags: nil, updated_via_turbo_stream: nil) %>
+<%# locals: (pt:, authorless: nil, force_display_details: false, receipt_upload_button: nil, receipt_upload_button_disabled: nil, selectable: nil, show_author_column: nil, show_event_name: nil, show_tags: nil, updated_via_turbo_stream: nil, card_grant: nil, force_no_popover: nil, frame: nil, page_event: nil, show_running_balance: nil) %>
 
 <% instance = pt.__id__ %>
-<% event = @event || pt.local_hcb_code.event %>
-<% tagged_with = pt.local_hcb_code.tags.filter { |tag| !@event || tag.event == @event } %>
+<% event = page_event || pt.local_hcb_code.event %>
+<% tagged_with = pt.local_hcb_code.tags.filter { |tag| !page_event || tag.event == page_event } %>
 <% type = Rails.cache.fetch("#{pt.hcb_code}/cached_type", expires_in: 12.hours) { pt.local_hcb_code.type } %>
 
 <tr
@@ -73,11 +73,11 @@
                 <%= link_to(transaction_memo(pt), spending_card_grant_path(pt.local_hcb_code.outgoing_disbursement.card_grant), data: card_grant_popover_data(pt.local_hcb_code.outgoing_disbursement.card_grant, hcb_code: pt.local_hcb_code, event: event, state_title: transaction_memo(pt))) %>
               <% elsif (pt.local_hcb_code.stripe_card? && pt.subledger&.present?) && event.present? && !OrganizerPosition.role_at_least?(current_user, event, :member) %>
                 <%= link_to url_for(pt.local_hcb_code), data: hcb_code_popover_data(pt.local_hcb_code, event: event, transaction_show_receipt_button: receipt_upload_button, transaction_show_author_img: show_author_column, ledger_instance: instance) do %>
-                  <%= render "hcb_codes/memo/memo", hcb_code: pt.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: %>
+                  <%= render "hcb_codes/memo/memo", hcb_code: pt.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details:, event: page_event, force_no_popover: force_no_popover %>
                 <% end %>
               <% else %>
                 <span>
-                  <%= render "hcb_codes/memo/memo", hcb_code: pt.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details: %>
+                  <%= render "hcb_codes/memo/memo", hcb_code: pt.local_hcb_code, location: "ledger", ledger_instance: instance, force_display_details:, event: page_event, force_no_popover: force_no_popover %>
                 </span>
               <% end %>
             </span>
@@ -95,7 +95,7 @@
         <% end %>
       </div>
 
-      <% if !@frame && show_tags && TagPolicy.new(current_user, pt).update? && !pt.instance_of?(OpenStruct) %>
+      <% if !frame && show_tags && TagPolicy.new(current_user, pt).update? && !pt.instance_of?(OpenStruct) %>
         <% if suggestion = pt.local_hcb_code.suggested_hcb_code_tag_suggestions.last %>
           <div class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless b--ai suggested_tag tooltipped tooltippped--s" style="border: 1.5px dashed #a633d6" id="tag_suggestion_<%= suggestion.id %>" aria-label="Click to apply HCB's suggestion">
             <%= link_to "#{suggestion.tag.emoji} #{suggestion.tag.label}", tag_suggestion_accept_path(suggestion), style: "text-decoration: none", class: "ai", data: { turbo_method: :post } %>
@@ -123,7 +123,7 @@
               <% if event.tags.any? %>
                 <div class="menu__divider tags__divider"></div>
               <% end %>
-              <%= render partial: "hcb_codes/create_tag", locals: { button: pt.local_hcb_code.hashid } %>
+              <%= render partial: "hcb_codes/create_tag", locals: { button: pt.local_hcb_code.hashid, event: page_event } %>
             </div>
           </div>
         <% end %>
@@ -142,7 +142,7 @@
   <td class="nowrap text-right transaction__amount">
     <%= render_transaction_amount pt.amount %>
   </td>
-  <% if @show_running_balance %>
+  <% if show_running_balance %>
     <td></td>
   <% end %>
 
@@ -167,8 +167,8 @@
       <% if pt.local_hcb_code.missing_receipt?(event, type) || !updated_via_turbo_stream %>
         <%= form_with url: receipts_path, data: { controller: "form", "file-drop-target" => "form", "turbo" => true } do |form| %>
           <%= form.file_field :file, id: "file_#{pt.local_hcb_code.hashid}", multiple: true, include_hidden: false, required: true, class: "display-none", data: { action: "change->form#submit", "file-drop-target" => "fileInput" } %>
-          <%= form.hidden_field :redirect_url, value: @card_grant ? card_grant_path(@card_grant) : my_inbox_path %>
-          <% unless @card_grant.present? %>
+          <%= form.hidden_field :redirect_url, value: card_grant ? card_grant_path(card_grant) : my_inbox_path %>
+          <% unless card_grant.present? %>
             <%= form.hidden_field :show_link, value: true %>
           <% end %>
           <%= form.hidden_field :receiptable_type, value: pt.local_hcb_code.class %>

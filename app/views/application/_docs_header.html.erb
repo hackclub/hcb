@@ -1,4 +1,4 @@
-<%# locals: () %>
+<%# locals: (home_size: nil) %>
 
 <div class="bg-smoke dark:bg-darkless mb3 px-6 pr-0">
   <div class="container flex flex-row items-center">
@@ -25,7 +25,7 @@
         <% end %>
       <% end %>
 
-      <%= render partial: "application/logo" %>
+      <%= render partial: "application/logo", locals: { home_size: home_size } %>
 
       <%= render "application/command_bar" %>
 

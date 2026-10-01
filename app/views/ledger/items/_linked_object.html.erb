@@ -1,4 +1,4 @@
-<%# locals: (ledger_item:) %>
+<%# locals: (ledger_item:, editing: nil, event: nil, frame: nil, ledger_instance: nil, show_ach_details: nil) %>
 
 <% linked_object_partials = {
      "Invoice"                      => "invoice",
@@ -21,4 +21,10 @@
    } %>
 
 <% partial_name = linked_object_partials.fetch(ledger_item.linked_object_type, "unknown") %>
-<%= render partial: "ledger/items/linked_objects/#{partial_name}", locals: { ledger_item: } %>
+<% extra_locals = {
+     "ach_transfer"                 => { show_ach_details: },
+     "card_charge"                  => { frame: },
+     "reimbursement/expense_payout" => { event:, frame:, ledger_instance: },
+     "reimbursement/payout_holding" => { editing:, event:, ledger_instance: }
+   }.fetch(partial_name, {}) %>
+<%= render partial: "ledger/items/linked_objects/#{partial_name}", locals: { ledger_item:, **extra_locals } %>

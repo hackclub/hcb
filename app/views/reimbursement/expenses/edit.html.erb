@@ -1,8 +1,8 @@
 <% title "Edit Expense on #{@expense.report.name}" %>
 <% @event = @expense.report.event %>
 <% page_md %>
-<%= render "events/nav", selected: :reimbursements unless @use_user_nav %>
-<%= render "users/nav", selected: :reimbursements if @use_user_nav %>
+<%= render "events/nav", selected: :reimbursements, event: @event, home_size: @home_size unless @use_user_nav %>
+<%= render "users/nav", selected: :reimbursements, activities: @activities, before: @before, home_size: @home_size, user: @user if @use_user_nav %>
 
 <div class="mt4">
   <h2 class="heading mt0 flex">
@@ -11,5 +11,5 @@
 </div>
 
 <div class="mt2">
-  <%= render "reimbursement/expenses/expense", expense: @expense %>
+  <%= render "reimbursement/expenses/expense", expense: @expense, event: @event, ledger_instance: @ledger_instance %>
 </div>

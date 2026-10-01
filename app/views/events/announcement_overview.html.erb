@@ -1,7 +1,7 @@
 <% title "Announcements for #{@event.name}" %>
 <% page_md %>
 <% auto_discover_feed(@event) %>
-<%= render "events/nav", selected: :announcements %>
+<%= render "events/nav", selected: :announcements, event: @event, home_size: @home_size %>
 
 <% if @announcements.empty? && organizer_signed_in? %>
   <%= render "events/one_pager",

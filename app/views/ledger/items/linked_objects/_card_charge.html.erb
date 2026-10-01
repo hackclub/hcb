@@ -1,4 +1,4 @@
-<%# locals: (ledger_item:) %>
+<%# locals: (ledger_item:, frame: nil) %>
 
 <% card_charge = ledger_item.linked_object %>
 
@@ -94,7 +94,7 @@
         <strong>Merchant</strong>
       </span>
       <% if ledger_item.author == current_user || organizer_signed_in? %>
-        <% if defined?(@frame) && @frame %>
+        <% if frame %>
           <details>
             <summary class="inline-flex no-select">
               <%= country_to_emoji(card_charge.stripe_merchant_data["country"]) if card_charge.stripe_merchant_data["country"] %>
@@ -183,7 +183,7 @@
           <strong>Charge method</strong>
         </span>
       <% if ledger_item.author == current_user || organizer_signed_in? %>
-        <% if defined?(@frame) && @frame %>
+        <% if frame %>
             <details>
               <summary class="inline-flex select-none">
                 <%= card_charge.raw_pending_stripe_transaction.stripe_transaction["authorization_method"].humanize %>
@@ -260,7 +260,7 @@
   <%= render "ledger/items/stripe_card_receipts", ledger_item: %>
 </article>
 
-<% unless defined?(@frame) && @frame %>
+<% unless frame %>
   <% if ledger_item.author == current_user || organizer_signed_in? %>
     <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="merchant_details_<%= instance %>">
       <%= modal_header "Merchant details" %>

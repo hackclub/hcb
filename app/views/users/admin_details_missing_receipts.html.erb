@@ -4,7 +4,7 @@
     <% if @hcb_codes_missing_receipts.any? %>
       <table>
         <% @hcb_codes_missing_receipts.each do |tx| %>
-          <%= render "canonical_transactions/canonical_transaction", ct: tx %>
+          <%= render "canonical_transactions/canonical_transaction", ct: tx, card_grant: @card_grant, force_no_popover: @force_no_popover, frame: @frame, page_event: @event, show_running_balance: @show_running_balance %>
         <% end %>
       </table>
       <%= paginate @hcb_codes_missing_receipts %>

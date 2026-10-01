@@ -1,6 +1,6 @@
 <% title "Activity" %>
 <% page_md unless auditor_signed_in? %>
-<%= render "users/nav" unless auditor_signed_in? %>
+<%= render "users/nav", activities: @activities, before: @before, home_size: @home_size, user: @user unless auditor_signed_in? %>
 <% @no_app_shell = true if auditor_signed_in? %>
 
 <h2 class="heading">
@@ -12,4 +12,4 @@
   </span>
 </h2>
 
-<%= render partial: "my/activities" if @activities %>
+<%= render partial: "my/activities", locals: { activities: @activities, before: @before } if @activities %>

@@ -1,7 +1,7 @@
 <% title "Pending transaction for #{@canonical_pending_transaction.amount}" %>
 <% page_sm %>
 
-<%= render "events/nav" if @event %>
+<%= render "events/nav", event: @event, home_size: @home_size if @event %>
 
 <% admin_tool("mt3") do %>
   <section class="details">
@@ -124,7 +124,7 @@
 
 <% if @hcb_code %>
   <h2>Receipts</h2>
-  <%= render "receipts/list_v2", hcb_code: @hcb_code %>
+  <%= render "receipts/list_v2", hcb_code: @hcb_code, event: @event, ledger_instance: @ledger_instance %>
   <%= render partial: "receipts/form_v3", locals: {
         receiptable: @hcb_code,
         enable_linking: true,

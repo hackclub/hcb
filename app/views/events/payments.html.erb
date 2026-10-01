@@ -1,6 +1,6 @@
 <% title "Payments for #{@event.name}" %>
 <% page_md %>
-<%= render "events/nav", selected: :payments %>
+<%= render "events/nav", selected: :payments, event: @event, home_size: @home_size %>
 
 <% if @transfers.empty? && organizer_signed_in? && !params[:q].present? && !params[:status].present? && !params[:transfer_type].present? %>
   <%= render "events/one_pager",

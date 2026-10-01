@@ -1,7 +1,7 @@
 <% title "Home" %>
 <% page_md %>
 
-<%= render "users/nav", selected: current_user&.redirect_to_first_dashboard? ? :home : :first %>
+<%= render "users/nav", selected: current_user&.redirect_to_first_dashboard? ? :home : :first, activities: @activities, before: @before, home_size: @home_size, user: @user %>
 
 <% affiliation = current_user(allow_unverified: true)&.affiliations&.find_by(name: "first") %>
 
