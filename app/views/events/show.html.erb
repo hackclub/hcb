@@ -39,8 +39,8 @@
         <%= inline_icon "payment-transfer", size: 20 %>
         Transfer money
       <% end %>
-      <%= render "events/transfers/modal" %>
-      <%= render "card_grants/create_modal" if @event.plan.card_grants_enabled? %>
+      <%= render "events/transfers/modal", event: @event %>
+      <%= render "card_grants/create_modal", event: @event, popover: @popover if @event.plan.card_grants_enabled? %>
 
       <%= link_to event_reimbursements_path(@event), class: "list-badge quick-action", data: { behavior: "modal_trigger", modal: "create_reimbursement" } do %>
         <%= inline_icon "attachment", size: 20 %>

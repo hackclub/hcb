@@ -8,7 +8,7 @@
   <% content_for(:transfer_disabled, "true") if disabled %>
 
   <% if disabled %>
-    <%= render partial: "events/unauthorized_callout", locals: { action: editing ? "edit this contractor" : "invite a contractor" } %>
+    <%= render partial: "events/unauthorized_callout", locals: { action: editing ? "edit this contractor" : "invite a contractor", event: event } %>
   <% else %>
     <%= content_for :sidebar_footer do %>
       <%= render "application/callout", type: "info", title: "About contractor payments", klass: "mt-2" do %>

@@ -1,4 +1,4 @@
-<%# locals: (card_grant:, label: "") %>
+<%# locals: (card_grant:, label: "", event:) %>
 
 <% totu_tooltip = if label.presence
                     label
@@ -11,7 +11,7 @@
                   else
                     "You don't have permission to perform this action"
                   end %>
-<%= button_to toggle_one_time_use_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
+<%= button_to toggle_one_time_use_event_card_grant_path(id: card_grant.hashid, event_id: event.slug),
               method: :post,
               form_class: "contents",
               class: "btn btn--list-item",

@@ -1,7 +1,7 @@
-<%# locals: (card_grant:, label: "") %>
+<%# locals: (card_grant:, label: "", event:) %>
 
 <% cancel_tooltip = policy(card_grant).cancel? ? "Cancel this grant and return funds to the organization" : "You don't have permission to perform this action" %>
-<%= button_to cancel_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
+<%= button_to cancel_event_card_grant_path(id: card_grant.hashid, event_id: event.slug),
               method: :post,
               form_class: "contents",
               class: "btn btn--list-item",

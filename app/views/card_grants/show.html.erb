@@ -53,17 +53,17 @@
       <% if @card_grant.stripe_card %>
         <div class="sm:max-w-[300px]">
           <div class="<%= "scale-[0.98] transition-transform hover:scale-1 mb-2" if @card_grant.canceled? %>">
-            <%= render "stripe_cards/stripe_card", stripe_card: @card_grant.stripe_card, headless: true %>
+            <%= render "stripe_cards/stripe_card", stripe_card: @card_grant.stripe_card, headless: true, event: @event, show_card_details: @show_card_details, show_card_popovers: @show_card_popovers %>
           </div>
           <%= render partial: "card_grants/balance", locals: { card_grant: @card_grant } %>
           <%= render partial: "card_grants/canceled_warning", locals: { card_grant: @card_grant } %>
-          <%= render partial: "card_grants/actions", locals: { card_grant: @card_grant } %>
+          <%= render partial: "card_grants/actions", locals: { card_grant: @card_grant, event: @event } %>
         </div>
       <% end %>
       <div class="flex flex-col flex-1 gap-2 mt-1.5">
         <% if @card_grant.stripe_card %>
           <% admin_tool_if @card_grant.user != current_user do %>
-            <%= render partial: "card_grants/card_details", locals: { card_grant: @card_grant } %>
+            <%= render partial: "card_grants/card_details", locals: { card_grant: @card_grant, show_card_details: @show_card_details } %>
           <% end %>
         <% elsif @card_grant.canceled? %>
           <div class="self-center">

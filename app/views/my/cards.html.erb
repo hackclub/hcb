@@ -44,12 +44,12 @@
   <% end %>
   <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="order_card">
     <%= modal_header "Order a card" %>
-    <%= render "stripe_cards/form" %>
+    <%= render "stripe_cards/form", event: @event %>
   </section>
   <%= turbo_frame_tag :my_cards_shipping, src: my_cards_shipping_path, target: "_top" %>
   <% if @stripe_cards.any? %>
     <article class="mixed-grid grid--spacious">
-      <%= render @stripe_cards, headless: true, show_purpose: true %>
+      <%= render @stripe_cards, headless: true, show_purpose: true, event: @event, show_card_details: @show_card_details, show_card_popovers: @show_card_popovers %>
     </article>
   <% else %>
     <%= blankslate "No cards found!" %>

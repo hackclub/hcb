@@ -3,7 +3,7 @@
 <%= turbo_frame_tag "spending_#{@card_grant.public_id}" do %>
   <div class="mt4 mb4 check--form flex justify-center" style="gap: 3rem">
     <div>
-      <%= render "stripe_cards/stripe_card", stripe_card: @card_grant.stripe_card if @card_grant.stripe_card.present? %>
+      <%= render "stripe_cards/stripe_card", stripe_card: @card_grant.stripe_card, event: @event, show_card_details: @show_card_details, show_card_popovers: @show_card_popovers if @card_grant.stripe_card.present? %>
       <%= render partial: "card_grants/balance", locals: { card_grant: @card_grant } %>
     </div>
   </div>
