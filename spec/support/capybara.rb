@@ -9,6 +9,14 @@ WebMock.disable_net_connect!(allow_localhost: true)
 Capybara.server = :puma, { Silent: true, config_files: ["-"] }
 
 RSpec.configure do |config|
+  # Match production so pages render the CSRF meta tags that fetch() calls read
+  config.around(:each, type: :system) do |example|
+    ActionController::Base.allow_forgery_protection = true
+    example.run
+  ensure
+    ActionController::Base.allow_forgery_protection = false
+  end
+
   config.before(:each, type: :system) do |example|
     js_errors = !example.metadata[:allow_js_errors]
 
