@@ -6,6 +6,35 @@ RSpec.describe GSuiteAccount, type: :model do
   let(:g_suite) { create(:g_suite, domain: "example.com") }
   let(:g_suite_account) { create(:g_suite_account, g_suite:) }
 
+  describe "address validation" do
+    it "accepts usernames Google allows" do
+      ["jane", "jane.doe", "jane_doe", "jane-doe", "o'neil", "j3", "-jane", "_jane", "a" * 64].each do |username|
+        account = build(:g_suite_account, g_suite:, address: "#{username}@example.com")
+        expect(account).to be_valid, "expected #{username} to be valid"
+      end
+    end
+
+    it "rejects usernames Google would reject" do
+      ["jane doe", ".jane", "jane.", "jane..doe", "jane+doe", "jane@example.com", "jäne", "a" * 65].each do |username|
+        account = build(:g_suite_account, g_suite:, address: "#{username}@example.com")
+        expect(account).not_to be_valid, "expected #{username} to be invalid"
+        expect(account.errors[:address]).to be_present
+      end
+    end
+
+    it "strips surrounding whitespace, including on update" do
+      g_suite_account.update!(address: "  jane.doe@example.com ")
+
+      expect(g_suite_account.reload.address).to eq("jane.doe@example.com")
+    end
+
+    it "does not re-validate an existing address that wasn't changed" do
+      g_suite_account.update_column(:address, "jane+legacy@example.com")
+
+      expect(g_suite_account.reload).to be_valid
+    end
+  end
+
   describe "#unmanage!" do
     let(:gsuite_service) { instance_double(GsuiteService, delete_gsuite_user: true) }
 
