@@ -231,13 +231,17 @@ details.receipt-card {
 }
 
 // Fills the remaining table width and truncates with an ellipsis instead of
-// widening the table (max-width: 0 keeps the content from sizing the cell)
+// widening the table (max-width: 0 keeps the content from sizing the cell).
+// On mobile the memo keeps its full width and the table scrolls instead.
 .transaction__memo--fluid {
-  width: 100%;
-  max-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+
+  @media (min-width: 32em) {
+    width: 100%;
+    max-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 .transaction:hover .add-tag-badge,
