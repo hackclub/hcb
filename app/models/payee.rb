@@ -8,6 +8,7 @@
 #  archived_at     :datetime
 #  display_name    :string           not null
 #  email           :string           not null
+#  imported_at     :datetime
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  event_id        :bigint           not null
@@ -76,6 +77,11 @@ class Payee < ApplicationRecord
 
   def archived?
     archived_at.present?
+  end
+
+  # Whether this payee was imported from the old transfer system.
+  def imported?
+    imported_at.present?
   end
 
   private
