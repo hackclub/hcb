@@ -48,10 +48,10 @@
         <thead>
           <tr>
             <th><%# icon %></th>
-            <th>Date</th>
+            <th class="hidden sm:table-cell">Date</th>
             <th>Memo</th>
             <th class="text-right">Amount</th>
-            <% if show_author %><th><%# user avatar %></th><% end %>
+            <% if show_author %><th class="hidden sm:table-cell"><%# user avatar %></th><% end %>
           </tr>
         </thead>
         <tbody>
