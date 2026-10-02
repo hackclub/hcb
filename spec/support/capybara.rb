@@ -9,10 +9,10 @@ WebMock.disable_net_connect!(allow_localhost: true)
 Capybara.server = :puma, { Silent: true, config_files: ["-"] }
 
 RSpec.configure do |config|
-  config.before(:each, type: :system) do
+  config.before(:each, type: :system) do |example|
     driven_by :cuprite, screen_size: [1400, 1400], options: {
       timeout: 15, # first page render compiles assets, which can exceed the 5s default
-      js_errors: true, # fail the spec on any uncaught JS exception
+      js_errors: !example.metadata[:allow_js_errors], # fail the spec on any uncaught JS exception
       url_whitelist: [/\Ahttp:\/\/127\.0\.0\.1:\d+\//], # block third-party scripts (Stripe, CDNs, etc.)
     }
   end
