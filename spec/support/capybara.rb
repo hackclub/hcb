@@ -12,8 +12,13 @@ RSpec.configure do |config|
   config.before(:each, type: :system) do
     driven_by :cuprite, screen_size: [1400, 1400], options: {
       timeout: 15, # first page render compiles assets, which can exceed the 5s default
+      process_timeout: 30, # Chrome can take longer than the 10s default to launch on a cold CI runner
       js_errors: true, # fail the spec on any uncaught JS exception
       url_whitelist: [/\Ahttp:\/\/127\.0\.0\.1:\d+\//], # block third-party scripts (Stripe, CDNs, etc.)
     }
+
+    page.driver.browser # launch Chrome now so a failed start shows Chrome's own output
+  rescue Ferrum::ProcessTimeoutError => e
+    raise e, "#{e.message}\nChrome output:\n#{e.output}"
   end
 end

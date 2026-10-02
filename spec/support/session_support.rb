@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-module SessionSupport
-  # Implements just enough of the logic in `SessionHelper#create_session` to make it
-  # easier to make authenticated requests in controller tests.
+module UserSessionSupport
+  # Implements just enough of the logic in `SessionHelper#create_session` to
+  # create a fully authenticated session record for `user`.
   #
   # @param user [User]
   # @return [User::Session]
-  def create_session(user, verified:)
+  def create_user_session(user, verified:)
     expiration_at = user.session_validity_preference.seconds.from_now
 
     required_factor_count = user.use_two_factor_authentication ? 2 : 1
@@ -22,6 +22,20 @@ module SessionSupport
 
     user_session = create(:user_session, user:, expiration_at:, verified:)
     login.update!(user_session:)
+
+    user_session
+  end
+end
+
+module SessionSupport
+  include UserSessionSupport
+
+  # Makes authenticated requests possible in controller tests.
+  #
+  # @param user [User]
+  # @return [User::Session]
+  def create_session(user, verified:)
+    user_session = create_user_session(user, verified:)
 
     cookies.encrypted[:session_token] = {
       value: user_session.session_token,
