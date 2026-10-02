@@ -85,7 +85,10 @@ RSpec.configure do |config|
 
   # Use a new in memory version of flipper per test (so every flag is disabled)
   # per instructions at https://www.flippercloud.io/docs/testing#starting-fresh
-  config.before(:each) do
+  config.before(:each) do |example|
+    # System specs keep Flipper's shared test adapter so the app server thread sees their flags
+    next if example.metadata[:type] == :system
+
     Flipper.instance = Flipper.new(Flipper::Adapters::Memory.new)
   end
 end
