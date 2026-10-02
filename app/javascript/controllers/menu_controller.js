@@ -113,7 +113,8 @@ export default class extends Controller {
       }
     }
 
-    this.toggleTarget.setAttribute('aria-expanded', false)
+    if (this.hasToggleTarget)
+      this.toggleTarget.setAttribute('aria-expanded', false)
     this.cleanup && this.cleanup()
 
     this.content = undefined
