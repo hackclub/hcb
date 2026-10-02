@@ -10,6 +10,9 @@ RSpec.describe "Modals", type: :system do
 
   def body_overflow = evaluate_script("document.body.style.overflow")
 
+  # Sends Escape to the focused element without clicking anything first
+  def press_escape = page.driver.browser.keyboard.type(:escape)
+
   before do
     create(:event, organizers: [user])
     sign_in(user)
@@ -28,7 +31,7 @@ RSpec.describe "Modals", type: :system do
   end
 
   it "closes on Escape" do
-    find("body").send_keys(:escape)
+    press_escape
 
     expect(page).to have_no_css(modal)
   end
@@ -43,7 +46,7 @@ RSpec.describe "Modals", type: :system do
 
   it "keeps form input when reopened" do
     within(modal) { fill_in "Report name", with: "Chicago Trip Expenses" }
-    find("body").send_keys(:escape)
+    press_escape
     expect(page).to have_no_css(modal)
 
     click_on "Start report"
