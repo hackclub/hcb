@@ -16,5 +16,9 @@ RSpec.configure do |config|
       js_errors: true, # fail the spec on any uncaught JS exception
       url_whitelist: [/\Ahttp:\/\/127\.0\.0\.1:\d+\//], # block third-party scripts (Stripe, CDNs, etc.)
     }
+
+    page.driver.browser # launch Chrome now so a failed start shows Chrome's own output
+  rescue Ferrum::ProcessTimeoutError => e
+    raise e, "#{e.message}\nChrome output:\n#{e.output}"
   end
 end
