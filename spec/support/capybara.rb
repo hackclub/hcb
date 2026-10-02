@@ -5,6 +5,9 @@ require "capybara/cuprite"
 # Capybara pings its local app server before each session
 WebMock.disable_net_connect!(allow_localhost: true)
 
+# Skip config/puma.rb, which fetches Doppler secrets when DOPPLER_TOKEN is set
+Capybara.server = :puma, { Silent: true, config_files: ["-"] }
+
 RSpec.configure do |config|
   config.before(:each, type: :system) do
     driven_by :cuprite, screen_size: [1400, 1400], options: {
