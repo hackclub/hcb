@@ -12,13 +12,27 @@
     <% end %>
     <div class="ml1">
       <%= form.label :value, expense.value_label, class: "bold" %>
-      <% if expense.rate == 100 %>
-        <%= form.number_field :value, placeholder: "500.00", step: 0.01, min: 0.01, value: number_with_precision(expense.value, precision: 2), data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", "expense-form-target": "field", "behavior": "ctrl_enter_submit select_if_empty" } %>
-      <% else %>
-        <%= form.number_field :value, placeholder: "500", step: 1, min: 1, value: number_with_precision(expense.value, precision: 0), data: { controller: "truncate-decimal", "truncate-decimal-places-value": "0", action: "truncate-decimal#truncate blur->truncate-decimal#pad", "expense-form-target": "field", "behavior": "ctrl_enter_submit select_if_empty" } %>
-      <% end %>
+      <div class="input input-group expense-amount-input">
+        <% if expense.is_mileage? %>
+          <%= form.number_field :value, placeholder: "500", step: 1, min: 1, value: number_with_precision(expense.value, precision: 0), data: { controller: "truncate-decimal", "truncate-decimal-places-value": "0", action: "truncate-decimal#truncate blur->truncate-decimal#pad", "expense-form-target": "field amountField", "behavior": "ctrl_enter_submit select_if_empty" } %>
+        <% else %>
+          <% currency_precision = Money::Currency.find(expense.currency).exponent %>
+          <% currency_step = BigDecimal("1") / expense.rate %>
+          <%= form.number_field :value, placeholder: "500.00", step: currency_step.to_s("F"), min: currency_step.to_s("F"), value: number_with_precision(expense.value, precision: currency_precision), data: { controller: "truncate-decimal", "truncate-decimal-places-value": currency_precision, action: "truncate-decimal#truncate blur->truncate-decimal#pad", "expense-form-target": "field amountField", "behavior": "ctrl_enter_submit select_if_empty" } %>
+        <% end %>
+        <% if current_user == expense.report.user && expense.report.draft? && expense.report.capped_wise_transfer? && expense.is_standard? %>
+          <button type="button"
+                  class="btn btn-small bg-muted expense-amount-input__fit"
+                  data-action="expense-form#fitFees"
+                  data-expense-form-target="fitFeesButton"
+                  data-fit-fees-url="<%= reimbursement_expense_fit_fees_path(expense_id: expense.id) %>">
+            Fit fees
+          </button>
+        <% end %>
+      </div>
     </div>
   </div>
+  <p class="h5 muted mt1 mb0" data-expense-form-target="fitFeesStatus" hidden></p>
   <% if expense.report.event&.plan&.requires_reimbursement_expense_categorization? && !expense.is_fee? %>
     <div class="field mt1 mb1 flex flex-col w-100">
       <%= form.label :category, "Category", class: "bold" %>
