@@ -75,11 +75,15 @@ class LegalEntitiesController < ApplicationController
   end
 
   def create
-    le = LegalEntity.create!(
+    le = LegalEntity.new(
       name: params[:name],
       entity_type: params[:entity_type],
       users: [current_user]
     )
+
+    authorize le
+
+    le.save!
 
     if params[:payee_id].present?
       payee = Payee.find(params[:payee_id])
@@ -87,8 +91,6 @@ class LegalEntitiesController < ApplicationController
       authorize payee, :set_legal_entity?
 
       payee.update!(legal_entity: le)
-    else
-      skip_authorization
     end
 
     flash[:success] = "Legal entity successfully created"

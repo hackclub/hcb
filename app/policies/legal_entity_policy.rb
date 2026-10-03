@@ -23,6 +23,10 @@ class LegalEntityPolicy < ApplicationPolicy
     member?
   end
 
+  def create?
+    member?
+  end
+
   private
 
   def member?
