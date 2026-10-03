@@ -105,14 +105,23 @@
           </p>
         </div>
 
-        <div class="field mb-0">
-          <%= card_grant_setting_fields.label :support_url, "Support URL" %>
+        <div class="field">
+          <%= card_grant_setting_fields.label :support_url, "Support email" %>
           <p class="h5 muted m-0">
-            HCB will automatically detect email addresses and Slack channel links.
+    Enter a mailto: link for email support.
           </p>
 
           <%= card_grant_setting_fields.text_field :support_url, placeholder: "mailto:orpheus@hackclub.com", value: event.card_grant_setting.support_url, disabled: %>
         </div>
+
+<div class="field mb-0">
+  <%= card_grant_setting_fields.label :support_slack_url, "Slack channel URL" %>
+  <p class="h5 muted m-0">
+    Paste the Slack channel link recipients should use for support.
+  </p>
+
+  <%= card_grant_setting_fields.text_field :support_slack_url, placeholder: "https://hackclub.slack.com/archives/C12345", value: event.card_grant_setting.support_slack_url, disabled: %>
+</div>
 
         <%= form.submit "Update", disabled:, class: "mt-4" %>
       </div>
