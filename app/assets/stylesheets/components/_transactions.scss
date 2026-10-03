@@ -238,6 +238,11 @@ details.receipt-card {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+
+  // The cell already bounds the memo, so lift the mobile 32ch cap that clips it without an ellipsis
+  span:not(.badge):not(.list-badge):first-of-type {
+    max-width: 100%;
+  }
 }
 
 .transaction:hover .add-tag-badge,

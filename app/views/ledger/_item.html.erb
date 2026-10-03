@@ -6,15 +6,19 @@
       <%= render "ledger/items/icon", ledger_item: item %>
     </div>
   </td>
-  <td><%= item.datetime.strftime("%b %e, %Y") %></td>
+  <td class="hidden sm:table-cell"><%= item.datetime.strftime("%b %e, %Y") %></td>
   <td class="transaction__memo transaction__memo--fluid<%= " transaction__memo--pending" if item.pending? %>">
     <div>
-      <div class="flex-auto">
+      <div class="flex-auto min-w-0">
         <div class="flex items-center gap-[1ch] min-w-0">
-          <%= render "ledger/items/status", ledger_item: item %>
+          <div class="hidden sm:contents"><%= render "ledger/items/status", ledger_item: item %></div>
           <div class="min-w-0 overflow-hidden text-ellipsis">
             <%= render "ledger/items/memo/memo", item: %>
           </div>
+        </div>
+
+        <div class="text-sm muted truncate sm:hidden">
+          <%= item.datetime.strftime("%b %e, %Y") %><%= " · #{item.status_text}" unless item.settled? %>
         </div>
 
         <%= render "ledger/items/tags", item: %>
@@ -36,7 +40,7 @@
     </span>
   </td>
   <% if show_author %>
-    <td>
+    <td class="hidden sm:table-cell">
       <% if item.author.present? %>
         <div class="flex items-center justify-center tooltipped tooltipped--w" aria-label="<%= item.author.name %>">
           <%= avatar_for item.author, class: "align-middle author", cached: true %>
