@@ -413,18 +413,22 @@ module EventsHelper
   end
 
   def check_filters?(filter_options, params)
-    filter_options.any? do |opt|
-      key = opt[:key].to_s
+    filter_options.any? { |opt| active_filter_params(opt, params).any? }
+  end
 
-      case opt[:type]
-      when "date_range"
-        params["#{opt[:key_base]}_before"].present? || params["#{opt[:key_base]}_after"].present?
-      when "amount_range"
-        params["#{opt[:key_base]}_less_than"].present? || params["#{opt[:key_base]}_greater_than"].present?
-      else
-        params[key].present?
-      end
-    end
+  # Param keys for this filter option that currently have a value. Range filters
+  # can have up to two (e.g. both "after" and "before" on a date range).
+  def active_filter_params(filter_option, params)
+    keys = case filter_option[:type]
+           when "date_range"
+             ["#{filter_option[:key_base]}_after", "#{filter_option[:key_base]}_before"]
+           when "amount_range"
+             ["#{filter_option[:key_base]}_greater_than", "#{filter_option[:key_base]}_less_than"]
+           else
+             [filter_option[:key].to_s]
+           end
+
+    keys.select { |key| params[key].present? }
   end
 
   def validate_filter_options(filter_options, params)
