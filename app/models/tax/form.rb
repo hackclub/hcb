@@ -35,8 +35,6 @@
 #  index_tax_forms_on_tin_hash         (tin_hash)
 #
 
-require "aws-sdk-s3"
-
 module Tax
   class Form < ApplicationRecord
     include AASM

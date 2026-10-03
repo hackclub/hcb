@@ -40,7 +40,7 @@ gem "stripe", "11.7.0"
 gem "plaid", "~> 44.0"
 gem "yellow_pages", github: "hackclub/yellow_pages"
 
-gem "aws-sdk-s3", require: false
+gem "aws-sdk-s3"
 
 gem "airrecord", "~> 1.0" # Airtable API for internal operations
 
