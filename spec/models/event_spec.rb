@@ -450,6 +450,44 @@ RSpec.describe Event, type: :model do
       expect(event.errors[:description]).to be_present
     end
   end
+  describe "short_name validation" do
+    it "rejects a nickname without any letters" do
+      event.short_name = "#8866"
+
+      expect(event).not_to be_valid
+      expect(event.errors[:short_name]).to be_present
+    end
+
+    it "rejects a nickname whose only letters don't transliterate to ASCII" do
+      event.short_name = "ʁ 8866"
+
+      expect(event).not_to be_valid
+      expect(event.errors[:short_name]).to be_present
+    end
+
+    it "stores a blank nickname as nil so the name fallback applies" do
+      event = create(:event, name: "Salt City Robotics")
+      event.update!(short_name: "  ")
+
+      expect(event[:short_name]).to be_nil
+      expect(event.short_name).to eq("Salt City Roboti")
+    end
+
+    it "allows a nickname with accented letters and numbers" do
+      event.short_name = "École 8866"
+
+      expect(event).to be_valid
+    end
+
+    it "allows an event with a legacy letterless nickname to save unrelated fields" do
+      event.update_column(:short_name, "8866")
+
+      event.website = "https://hackclub.com"
+
+      expect(event).to be_valid
+    end
+  end
+
   describe "#wire_fee_waived?" do
     let(:plan_type) { Event::Plan::Standard }
     let(:event) { create(:event, plan_type:) }
