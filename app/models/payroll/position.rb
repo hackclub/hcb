@@ -110,6 +110,10 @@ module Payroll
         transitions from: :under_review, to: :onboarding
       end
 
+      event :mark_under_review do
+        transitions from: :onboarding, to: :under_review
+      end
+
       event :mark_rejected do
         transitions from: [:under_review, :onboarding], to: :rejected
       end
@@ -333,6 +337,11 @@ module Payroll
     # The contractor isn't emailed when the contract is sent; they're notified
     # only once HCB signs
     def contract_notify_when_sent
+      false
+    end
+
+    # Contractor reminders are scheduled once HCB signs instead
+    def contract_remind_when_reissued
       false
     end
 

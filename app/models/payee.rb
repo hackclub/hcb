@@ -53,23 +53,16 @@ class Payee < ApplicationRecord
     end
   end
 
+  # Set when the email change reissued a contract the organizer must sign
+  attr_reader :organizer_resign_position
+
   after_update_commit do
+    @organizer_resign_position = nil
     if email_previously_changed?
       payments.where(aasm_state: :pending_legal_entity).find_each(&:send_initial_email)
 
-      payroll_positions.where(aasm_state: :onboarding).find_each do |position|
-        contract = position.contract
-        next if contract.nil?
-
-        contractor = position.contract.party(:contractor)
-
-        if contractor.pending?
-          contractor.update!(user: User.find_by(email:), external_email: email)
-        end
-
-        if position.contract.party(:hcb).signed?
-          position.notify_contractor_of_onboarding(contractor)
-        end
+      payroll_positions.where(aasm_state: [:under_review, :onboarding]).find_each do |position|
+        reissue_contract_for_new_email(position)
       end
     end
   end
@@ -101,6 +94,23 @@ class Payee < ApplicationRecord
   end
 
   private
+
+  def reissue_contract_for_new_email(position)
+    contract = position.contract
+    return if contract.nil?
+    return unless contract.party(:contractor)&.pending?
+
+    contract.mark_voided!(reissuing: true)
+    position.send_contract(
+      reissue_of: contract,
+      reissue_messages: { organizer: "The contractor's email address was updated, so the agreement was reissued with the new email." }
+    )
+    # The reissued contract needs HCB's signature again
+    position.mark_under_review! if position.may_mark_under_review?
+    @organizer_resign_position = position
+  rescue Faraday::Error => e
+    Rails.error.report(e, context: { payroll_position_id: position.id })
+  end
 
   def managed_legal_entity_constraints
     return unless managed?
