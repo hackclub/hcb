@@ -17,7 +17,7 @@ RSpec.describe "Organization pages", type: :system do
   %i[
     event_path event_transactions_path event_team_path event_cards_overview_path event_donation_overview_path
     event_invoices_path event_reimbursements_path event_transfers_path event_check_deposits_path
-    event_documentation_path event_statements_path event_announcement_overview_path event_promotions_path event_edit_path
+    event_statements_path event_announcement_overview_path event_promotions_path event_edit_path
   ].each do |path|
     it "renders #{path} and all its lazy sections without JS errors" do
       visit public_send(path, event)

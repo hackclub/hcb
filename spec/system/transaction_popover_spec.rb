@@ -13,6 +13,8 @@ RSpec.describe "Transaction popovers", type: :system do
   def open_popover
     click_on "TEST DONATION"
     expect(page).to have_css("#{popover} #shared_popover_title", text: "for $1,000.00")
+    # Wait for the slide-in to finish so clicks land where the close button ends up
+    expect(page).to have_css(popover, style: { transform: "matrix(1, 0, 0, 1, 0, 0)" })
   end
 
   before do
