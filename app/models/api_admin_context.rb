@@ -9,14 +9,20 @@ class ApiAdminContext
     @token = token
   end
 
-  # In the v4 API we ignore the "pretend not to be admin" preference
-  def admin?(override_pretend: true)
-    @user.admin?(override_pretend: override_pretend) && @token&.scopes&.include?("admin:write")
+  # In the v4 API we ignore the "pretend not to be admin" preference.
+  #
+  # resource, if given, also accepts the narrower "admin.<resource>:write" scope
+  # in place of the blanket "admin:write" (e.g. "admin.comments:write").
+  def admin?(override_pretend: true, resource: nil)
+    @user.admin?(override_pretend: override_pretend) && has_admin_scope?(:write, resource)
   end
 
-  # In the v4 API we ignore the "pretend not to be admin" preference
-  def auditor?(override_pretend: true)
-    @user.auditor?(override_pretend: override_pretend) && @token&.scopes&.include?("admin:read")
+  # In the v4 API we ignore the "pretend not to be admin" preference.
+  #
+  # resource, if given, also accepts the narrower "admin.<resource>:read" scope
+  # in place of the blanket "admin:read" (e.g. "admin.comments:read").
+  def auditor?(override_pretend: true, resource: nil)
+    @user.auditor?(override_pretend: override_pretend) && has_admin_scope?(:read, resource)
   end
 
   # Same auditor-level roles as #auditor?, so gated behind admin:read too.
@@ -40,5 +46,12 @@ class ApiAdminContext
     @user.is_a?(klass) || super
   end
   alias kind_of? is_a?
+
+  private
+
+  def has_admin_scope?(level, resource)
+    scopes = @token&.scopes || []
+    scopes.include?("admin:#{level}") || (resource.present? && scopes.include?("admin.#{resource}:#{level}"))
+  end
 
 end

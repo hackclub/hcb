@@ -127,6 +127,7 @@ Multiple `require_oauth2_scope` calls for the same action **accumulate** — the
 | `<resource>:write` | Mutating a resource (create/update/destroy) | `receipts:write`, `card_grants:write` |
 | `<capability>` | A narrow, single-purpose capability that doesn't map cleanly to read/write of one resource | `user_lookup`, `event_followers` |
 | `admin:read` / `admin:write` | Admin-level data or actions (see [Admin Scopes](#admin-scopes)) | `admin:read`, `admin:write` |
+| `admin.<resource>:read` / `admin.<resource>:write` | Admin-level access narrowed to a single resource, accepted alongside the blanket `admin:read`/`admin:write` (see [Admin Scopes](#admin-scopes)) | `admin.comments:read` |
 
 Guidelines:
 
