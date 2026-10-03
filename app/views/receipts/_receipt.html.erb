@@ -1,17 +1,19 @@
+<%# locals: (receipt:, delete_on_hover: nil, hide_info: nil, link_to_file: nil, pairing: nil, popover: nil, selectable: nil, show_author_img: nil, show_delete_button: nil, show_receipt_bin_button: nil, show_receipt_button: nil, show_reimbursements_button: nil, size: 256, style: nil, textual_content: nil, turbo_for_deletion: nil) %>
+
 <% file_path = Rails.application.routes.url_helpers.rails_blob_path(receipt.file, only_path: true, disposition: "inline") %>
 
 <% instance = local_assigns.__id__.to_s + receipt.id.to_s %>
 
-<div id="receipt_<%= receipt.id %>" class="receipt flex flex-col relative mb1 hidden_except_<%= receipt.id %> <%= "receipt--pairing" if defined?(pairing) && pairing %>" <% if defined?(textual_content) %> data-textual-content="<%= j receipt.textual_content %>"<% end %> <% if defined?(style) %> style="<%= j style %>"<% end %> data-receipt-id="<%= receipt.id %>" style="--receipt-size: <%= defined?(size) ? size : 256 %>px;<% if defined?(selectable) %> cursor: pointer;" data-receipt-select-target="receipt" data-action="click->receipt-select#select<% end %>">
+<div id="receipt_<%= receipt.id %>" class="receipt flex flex-col relative mb1 hidden_except_<%= receipt.id %> <%= "receipt--pairing" if pairing %>" <% if textual_content %> data-textual-content="<%= j receipt.textual_content %>"<% end %> <% if style %> style="<%= j style %>"<% end %> data-receipt-id="<%= receipt.id %>" style="--receipt-size: <%= size %>px;<% if selectable %> cursor: pointer;" data-receipt-select-target="receipt" data-action="click->receipt-select#select<% end %>">
 
-<% unless defined?(hide_info) %>
-  <span class="<%= "muted " unless defined?(selectable) %>mb1 flex items-center">
+<% unless hide_info %>
+  <span class="<%= "muted " unless selectable %>mb1 flex items-center">
     <button class="pop receipt__minimize mr1" data-controller="receipt-minimize" data-action="receipt-minimize#minimize">
       <%= inline_icon "view-back", size: 24 %>
     </button>
     <span>
       <strong style="overflow-wrap: anywhere;">
-        <% if defined?(link_to_file) && !defined?(selectable) %>
+        <% if link_to_file && !selectable %>
           <%= link_to file_path, target: "_blank", style: "text-decoration: none;" do %>
             <%= receipt.file.blob.filename %>
           <% end %>
@@ -19,14 +21,14 @@
           <%= receipt.file.blob.filename %>
         <% end %>
       </strong>
-      <% unless defined?(selectable) %>
+      <% unless selectable %>
         (<%= number_to_human_size receipt.file.blob.byte_size %>)
       <% end %>
     </span>
   </span>
 <% end %>
 
-  <% if defined?(selectable) %>
+  <% if selectable %>
     <span>
       <div class="receipt__icon"></div>
       <span style="display: inline-grid; border-radius: 0.5rem;">
@@ -39,15 +41,15 @@
       </span>
     </span>
   <% else %>
-    <% if receipt.preview && !local_assigns[:popover] %>
+    <% if receipt.preview && !popover %>
       <span style="display: inline-grid; border-radius: 0.5rem;" class="pointer">
         <%= image_tag receipt.preview, class: "card p0 receipt--image", alt: receipt.suggested_memo, data: {
               "receipt-id" => receipt.id,
-              "behavior"   => defined?(selectable) || receipt.preview.nil? ? nil : "modal_trigger",
-              "modal"      => defined?(selectable) || receipt.preview.nil? ? nil : "preview_receipt_#{instance}"
+              "behavior"   => selectable || receipt.preview.nil? ? nil : "modal_trigger",
+              "modal"      => selectable || receipt.preview.nil? ? nil : "preview_receipt_#{instance}"
             } if receipt.preview %>
       </span>
-    <% elsif receipt.preview && local_assigns[:popover] %>
+    <% elsif receipt.preview && popover %>
     <span style="display: inline-grid; border-radius: 0.5rem;" class="pointer">
       <%= image_tag receipt.preview,
             class: "card p0 receipt--image #{receipt.file.blob.content_type == "application/pdf" ? "receipt__pdf-preview" : ""}",
@@ -55,17 +57,17 @@
             data: {
               "receipt-id" => receipt.id,
               "file_type"  => receipt.file.blob.content_type,
-              "behavior"   => defined?(selectable) || receipt.preview.nil? ? nil : "expand_receipt",
-              "modal"      => defined?(selectable) || receipt.preview.nil? ? nil : "preview_receipt_#{instance}"
+              "behavior"   => selectable || receipt.preview.nil? ? nil : "expand_receipt",
+              "modal"      => selectable || receipt.preview.nil? ? nil : "preview_receipt_#{instance}"
             } if receipt.preview %>
     </span>
     <% if receipt.file.blob.content_type == "application/pdf" %>
       <iframe data-src="<%= file_path %>" style="width: 100%; display: none; height: 100vh; max-height: 100%; border: none; border-radius: 0.75rem; overflow: hidden;"></iframe>
     <% end %>
     <% end %>
-    <% if defined?(delete_on_hover) && delete_on_hover && policy(receipt).destroy? %>
+    <% if delete_on_hover && policy(receipt).destroy? %>
       <%= pop_icon_to "view-close",
-              { controller: "/receipts", action: :destroy, id: receipt.id, popover: local_assigns[:popover] },
+              { controller: "/receipts", action: :destroy, id: receipt.id, popover: popover },
               data: { turbo_method: :delete, behavior: "modal_ignore" },
               size: 12,
               class: "warning bg-black-important tooltipped tooltipped--w receipt__delete-button",
@@ -74,13 +76,13 @@
     <% end %>
   <% end %>
 
-  <% unless defined?(hide_info) %>
+  <% unless hide_info %>
     <footer class="flex items-center flex-row mt1" style="border-top: none;">
-      <%= relative_timestamp receipt.created_at, prefix: "#{receipt.user == current_user ? "you" : ""} added #{"and matched with AI " if receipt.user == current_user && receipt.suggested_pairings.accepted.any?}", suffix: receipt.user == current_user || receipt.user.nil? ? "" : " by #{receipt.user.first_name}", class: defined?(selectable) ? "h5" : "h5 muted" %>
+      <%= relative_timestamp receipt.created_at, prefix: "#{receipt.user == current_user ? "you" : ""} added #{"and matched with AI " if receipt.user == current_user && receipt.suggested_pairings.accepted.any?}", suffix: receipt.user == current_user || receipt.user.nil? ? "" : " by #{receipt.user.first_name}", class: selectable ? "h5" : "h5 muted" %>
 
       <span style="flex-grow: 1;"></span>
 
-      <% if defined?(show_reimbursements_button) && receipt.receiptable_id == nil && current_user&.events&.any? %>
+      <% if show_reimbursements_button && receipt.receiptable_id == nil && current_user&.events&.any? %>
         <%= pop_icon_to "attachment",
             "#",
             data: {
@@ -91,9 +93,9 @@
             class: "info tooltipped tooltipped--w mr1",
             'aria-label': "Get reimbursed for this" %>
       <% end %>
-      <% if defined?(show_receipt_bin_button) %>
+      <% if show_receipt_bin_button %>
         <%= pop_icon_to "payment-docs",
-            reverse_receipt_path(receipt, { popover: local_assigns[:popover], format: (:html unless local_assigns[:turbo_for_deletion]) }.compact),
+            reverse_receipt_path(receipt, { popover:, format: (:html unless turbo_for_deletion) }.compact),
             data: {
               behavior: "modal_ignore",
               turbo_method: :post,
@@ -102,9 +104,9 @@
             class: "warning tooltipped tooltipped--w mr1",
             'aria-label': "Move to Receipt Bin" %>
       <% end %>
-      <% if defined?(show_delete_button) && policy(receipt).destroy? %>
+      <% if show_delete_button && policy(receipt).destroy? %>
         <%= pop_icon_to "view-close",
-            receipt_path(receipt, { popover: local_assigns[:popover], format: (:html unless local_assigns[:turbo_for_deletion] || local_assigns[:popover]), show_receipt_button: local_assigns[:show_receipt_button], show_author_img: local_assigns[:show_author_img], ledger_instance: @ledger_instance }.compact),
+            receipt_path(receipt, { popover:, format: (:html unless turbo_for_deletion || popover), show_receipt_button:, show_author_img:, ledger_instance: @ledger_instance }.compact),
             data: {
               behavior: "modal_ignore",
               turbo_method: :delete,
@@ -119,7 +121,7 @@
   <% end %>
 </div>
 
-<% unless defined?(selectable) || receipt.preview.nil? %>
+<% unless selectable || receipt.preview.nil? %>
   <style>
     .blocker {
       z-index: 300;
@@ -176,6 +178,6 @@
   </section>
 <% end %>
 
-<% if defined?(show_reimbursements_button) && receipt.receiptable_id == nil && current_user %>
+<% if show_reimbursements_button && receipt.receiptable_id == nil && current_user %>
   <%= render partial: "reimbursement/reports/create_form", locals: { receipt: } %>
 <% end %>

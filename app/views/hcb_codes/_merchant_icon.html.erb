@@ -1,3 +1,5 @@
+<%# locals: (tx:) %>
+
 <% stripe_tx = tx.try(:raw_stripe_transaction) || tx.try(:raw_pending_stripe_transaction) %>
 <% if stripe_tx %>
   <% merchant = YellowPages::Merchant.lookup(network_id: stripe_tx.stripe_transaction["merchant_data"]["network_id"]) %>

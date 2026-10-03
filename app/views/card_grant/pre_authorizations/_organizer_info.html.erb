@@ -1,4 +1,4 @@
-<%# locals: { pre_authorization:, link_to_pre_authorization: false } %>
+<%# locals: (pre_authorization:, link_to_pre_authorization: false) %>
 
 <% reader = OrganizerPosition.role_at_least?(current_user, pre_authorization.event, :reader) %>
 <% manager = OrganizerPosition.role_at_least?(current_user, pre_authorization.event, :manager) %>

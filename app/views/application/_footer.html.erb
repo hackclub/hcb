@@ -1,6 +1,8 @@
+<%# locals: (show_help_message: true) %>
+
 <footer class="[&_*]:transition-colors [&_*]:text-muted/50 [&:hover_*]:text-muted/80 [&_a:hover]:text-muted [&_.footer-extras]:transition-opacity [&_.footer-extras]:invisible [&:hover_.footer-extras]:visible py-2 mt-10">
   <p class="text-center">
-    <%= help_message if current_user && local_assigns[:help_message] != false %>
+    <%= help_message if current_user && show_help_message %>
   </p>
   <p class="text-xs text-center">
     HCB Visa® Commercial cards are powered by Stripe and issued by Celtic Bank.

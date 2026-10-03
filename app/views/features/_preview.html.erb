@@ -1,24 +1,26 @@
-<%# leaving current_user just so we don't get a NilClassPolicy error ever %>
-<% disabled = !policy(local_assigns[:event] || local_assigns[:user] || current_user).update? %>
+<%# locals: (description:, feature_flag:, id:, name:, classes: nil, disable_warning: nil, event: nil, footer: nil, fully_shipped: nil, unlisted: nil, user: nil) %>
 
-<% if !defined?(unlisted) || !defined?(@shown_private_feature_previews) || @shown_private_feature_previews&.include?(local_assigns[:id]) || Flipper.enabled?(local_assigns[:feature_flag], local_assigns[:event] || local_assigns[:user]) %>
-  <div class="card pb0 mb3" id="<%= local_assigns[:id] %>">
-    <div class="card__banner card__banner--top flex justify-between items-center <%= local_assigns[:classes]&.any? ? local_assigns[:classes].join(" ") : "feature-generic" %>">
-      <h3 class="h1 pt2 pb2 my0 color-black"><%= local_assigns[:name] %></h3>
-      <% if local_assigns[:fully_shipped] || Flipper.enabled?(local_assigns[:feature_flag]) %>
+<%# leaving current_user just so we don't get a NilClassPolicy error ever %>
+<% disabled = !policy(event || user || current_user).update? %>
+
+<% if !unlisted || !defined?(@shown_private_feature_previews) || @shown_private_feature_previews&.include?(id) || Flipper.enabled?(feature_flag, event || user) %>
+  <div class="card pb0 mb3" id="<%= id %>">
+    <div class="card__banner card__banner--top flex justify-between items-center <%= classes&.any? ? classes.join(" ") : "feature-generic" %>">
+      <h3 class="h1 pt2 pb2 my0 color-black"><%= name %></h3>
+      <% if fully_shipped || Flipper.enabled?(feature_flag) %>
         <%# Feature is enabled for all users, don't include a choice %>
         <div class="actions tooltipped tooltipped--w inline-block mt1" aria-label="This feature is now generally available!">
           <span class="btn bg-success btn-small disabled">Shipped!</span>
         </div>
-      <% elsif Flipper.enabled?(local_assigns[:feature_flag], local_assigns[:event] || local_assigns[:user]) %>
+      <% elsif Flipper.enabled?(feature_flag, event || user) %>
         <%= button_to(
               "Disable",
               disable_feature_path(
-                feature: local_assigns[:feature_flag],
-                event_id: local_assigns[:event]&.id,
-                user_id: local_assigns[:user]&.id
+                feature: feature_flag,
+                event_id: event&.id,
+                user_id: user&.id
               ),
-              data: { turbo_confirm: local_assigns[:disable_warning], turbo_frame: "_top" },
+              data: { turbo_confirm: disable_warning, turbo_frame: "_top" },
               class: "btn bg-accent",
               disabled:
             ) %>
@@ -26,9 +28,9 @@
         <%= button_to(
               "Enable",
               enable_feature_path(
-                feature: local_assigns[:feature_flag],
-                event_id: local_assigns[:event]&.id,
-                user_id: local_assigns[:user]&.id
+                feature: feature_flag,
+                event_id: event&.id,
+                user_id: user&.id
               ),
               data: { turbo_frame: "_top" },
               class: "btn bg-info",
@@ -37,12 +39,12 @@
       <% end %>
     </div>
     <p class="m-0 mb-4">
-      <%= sanitize(local_assigns[:description]) %>
+      <%= sanitize(description) %>
     </p>
-    <% if local_assigns[:footer].present? %>
+    <% if footer.present? %>
       <section class="card__banner card__darker secondary border-top mt-4">
         <p class="m-0">
-          <%= sanitize(local_assigns[:footer], attributes: %w(href data-turbo-action data-turbo-method)) %>
+          <%= sanitize(footer, attributes: %w(href data-turbo-action data-turbo-method)) %>
         </p>
       </section>
     <% end %>

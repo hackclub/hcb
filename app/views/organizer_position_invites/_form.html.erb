@@ -1,3 +1,5 @@
+<%# locals: (invite:) %>
+
 <%= form_with(model: invite, url: event_organizer_position_invites_path(event_id: @event.slug), html: { "x-data": "{ role: 'member' }" }) do |form| %>
   <%= form_errors invite, "user" %>
 

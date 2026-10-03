@@ -207,7 +207,7 @@
     <% end %>
     <div class="flex flex-row-reverse gap-2 justify-end">
       <%= pop_icon_to "settings", edit_event_path(@event, tab: "donations") %>
-      <%= render partial: "events/donations/share_page", is_blankslate: true %>
+      <%= render partial: "events/donations/share_page", locals: { is_blankslate: true } %>
     </div>
   <% end %>
 <% end %>

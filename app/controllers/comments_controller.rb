@@ -60,7 +60,7 @@ class CommentsController < ApplicationController
           partial: "comments/list",
           locals: {
             comments: commentable.comments,
-            show_blankslate: commentable.comments.empty?
+            show_blankslate: true
           }
         )
       end

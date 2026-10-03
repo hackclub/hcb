@@ -1,3 +1,5 @@
+<%# locals: (tx:, authorless: nil, selects: nil, special_appearance: nil, tooltip_direction: "e") %>
+
 <%# This partial combines `CanonicalPendingTransaction`, `CanonicalTransaction`, and `CanonicalTransactionGrouped` icons. `tx` can be either of these! %>
 
   <% if tx.local_hcb_code.bank_fee? || tx.try(:fee_payment?) %>
@@ -33,7 +35,7 @@
     <% label = "Card transaction refund" %>
     <% icon = inline_icon "view-reload" %>
   <% elsif tx.try(:raw_stripe_transaction) || tx.try(:raw_pending_stripe_transaction_id) %>
-    <% label = "Card transaction#{!local_assigns[:authorless] && tx.stripe_cardholder ? " by " + tx.stripe_cardholder.user.initial_name : "" }" %>
+    <% label = "Card transaction#{!authorless && tx.stripe_cardholder ? " by " + tx.stripe_cardholder.user.initial_name : "" }" %>
     <% icon = render "hcb_codes/merchant_icon", tx: %>
   <% elsif tx.local_hcb_code.invoice? %>
     <% label = "Invoice" %>
@@ -44,13 +46,13 @@
   <% elsif tx.local_hcb_code.donation? %>
     <% label = "Donation" %>
     <% icon = inline_icon "support" %>
-  <% elsif local_assigns[:special_appearance].present? %>
+  <% elsif special_appearance.present? %>
     <% if tx.amount.negative? %>
-      <% label = "Outgoing #{local_assigns[:special_appearance]&.[]("title") || "transfer"}" %>
+      <% label = "Outgoing #{special_appearance&.[]("title") || "transfer"}" %>
       <% icon = inline_icon "door-leave" %>
     <% else %>
-      <% label = local_assigns[:special_appearance][:title] %>
-      <% icon = inline_icon(local_assigns[:special_appearance]&.[]("icon") || "door-enter") %>
+      <% label = special_appearance[:title] %>
+      <% icon = inline_icon(special_appearance&.[]("icon") || "door-enter") %>
     <% end %>
   <% elsif Rails.cache.fetch("tx_#{tx.hcb_code}/card_grant", expires_in: 12.hours) { tx.local_hcb_code.card_grant? } %>
     <% label = "Outgoing grant" %>
@@ -67,11 +69,11 @@
   <% end %>
 
 <td class="transaction__icon"
-    <% if defined?(selects) %>
+    <% if selects %>
       data-action="click->transactions#select"
       data-transaction="<%= selects %>"
     <% end %>>
-  <div class="tooltipped tooltipped--<%= defined?(tooltip_direction) ? tooltip_direction : "e" %>" aria-label="<%= label %>">
+  <div class="tooltipped tooltipped--<%= tooltip_direction %>" aria-label="<%= label %>">
     <%= icon %>
   </div>
 </td>
