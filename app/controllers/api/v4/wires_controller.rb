@@ -13,10 +13,10 @@ module Api
       end
 
       def show
-        @wire = authorize Wire.find_by_public_id!(params[:id])
-
-        render :show, status: :ok
+        @wire = authorize Wire.find_by_public_id!(params[:id]), :show_in_v4?
       end
+
+      require_oauth2_scope "transactions:read", :show
 
       def create
         @wire = @event.wires.build(wire_params.merge(user: current_user))
