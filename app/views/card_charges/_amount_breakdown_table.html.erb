@@ -1,0 +1,16 @@
+<%# locals: (breakdown:) %>
+
+<table class="table--autosize mt1 mb1">
+  <tbody>
+    <% breakdown.entries.each do |entry| %>
+      <tr>
+        <td><strong><%= entry.label %></strong></td>
+        <td><%= entry.amount.format %></td>
+        <% if breakdown.foreign_currency? %>
+          <td class="muted"><%= entry.merchant_amount&.format(with_currency: true) %></td>
+        <% end %>
+        <td class="muted"><%= local_time(entry.occurred_at, format: "%b %e, %Y") %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
