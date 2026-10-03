@@ -1,13 +1,18 @@
 # frozen_string_literal: true
 
-# `'unsafe-inline'` and `'unsafe-eval'` are currently required and cannot be
-# dropped without a sizable refactor:
-#   * style-src  'unsafe-inline' — inline `style=` attributes throughout, and
-#     Stripe Elements and Plaid Link both inject inline styles.
-#   * script-src 'unsafe-inline' — inline bootstrap scripts (Plaid, HelpScout,
-#     Plausible, FullStory) and Alpine.js `x-*`/`@click` attribute handlers.
-#   * script-src 'unsafe-eval'   — Alpine.js evaluates its directive
-#     expressions with `new Function(...)`.
+# `script-src` carries neither `'unsafe-inline'` nor `'unsafe-eval'`:
+#   * The inline bootstrap scripts that remain (Plaid, HelpScout, FullStory, the
+#     console banner) are nonced, and every `on*=` attribute has become a
+#     Stimulus `data-action`.
+#   * Alpine.js runs the `@alpinejs/csp` build, which interprets its directives
+#     with a small parser instead of `new Function(...)`.
+#
+# Note that a nonce makes browsers ignore `'unsafe-inline'` entirely, so the two
+# cannot be mixed as a fallback.
+#
+# `style-src` still needs `'unsafe-inline'`: inline `style=` attributes are used
+# throughout, Stripe Elements and Plaid Link inject their own, and a nonce cannot
+# cover a style attribute.
 #
 # Ships report-only: nothing is blocked until CSP_ENFORCE=true. Once reports are
 # quiet, flip the default below rather than relying on the variable forever.
@@ -27,13 +32,18 @@ s3_hosts = [
 csp = {
   preserve_schemes: true,
 
+  # secure_headers pairs every nonce with `'unsafe-inline'` so CSP1-era browsers
+  # still run the scripts. Keeping that would undo the point of this policy;
+  # browsers that understand nonces ignore `'unsafe-inline'` anyway.
+  disable_nonce_backwards_compatibility: true,
+
   default_src: ["'self'"],
   base_uri: ["'self'"],
   object_src: ["'none'"],
   form_action: ["'self'"],
   frame_ancestors: ["'self'"], # donation pages relax this per-action
 
-  script_src: ["'self'", "'unsafe-inline'", "'unsafe-eval'"] + %w[
+  script_src: ["'self'"] + %w[
     https://js.stripe.com https://*.js.stripe.com https://m.stripe.network
     https://cdn.plaid.com
     https://docuseal.com https://cdn.docuseal.com
