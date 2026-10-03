@@ -11,7 +11,10 @@ class MarketingController < ApplicationController
   skip_before_action :redirect_to_onboarding
   skip_after_action :verify_authorized # not Pundit-managed
 
-  invisible_captcha only: [:funder_inquiry], honeypot: :subtitle
+  # Opted out of the timestamp check: this form has not been checked for
+  # multi-step flows that would consume the session token. See
+  # config/initializers/invisible_captcha.rb.
+  invisible_captcha only: [:funder_inquiry], honeypot: :subtitle, timestamp_enabled: false
 
   after_action :allow_indexing, only: [:funders, :funders_faq]
 
