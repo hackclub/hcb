@@ -39,6 +39,7 @@ class Payee < ApplicationRecord
   validates_uniqueness_of :legal_entity_id, scope: [:event_id], allow_nil: true
 
   validate :managed_legal_entity_constraints
+  validate :email_frozen, if: -> { legal_entity.present? }
 
   normalizes :email, with: ->(email) { email.strip.downcase }
 
@@ -49,6 +50,20 @@ class Payee < ApplicationRecord
   after_update do
     if legal_entity_id_previously_changed?(from: nil)
       legal_entity.refresh_pending_contractors_payments!
+    end
+  end
+
+  # Set when the email change reissued a contract the organizer must sign
+  attr_reader :organizer_resign_position
+
+  after_update_commit do
+    @organizer_resign_position = nil
+    if email_previously_changed?
+      payments.where(aasm_state: :pending_legal_entity).find_each(&:send_initial_email)
+
+      payroll_positions.where(aasm_state: [:under_review, :onboarding]).find_each do |position|
+        reissue_contract_for_new_email(position)
+      end
     end
   end
 
@@ -80,6 +95,23 @@ class Payee < ApplicationRecord
 
   private
 
+  def reissue_contract_for_new_email(position)
+    contract = position.contract
+    return if contract.nil?
+    return unless contract.party(:contractor)&.pending?
+
+    contract.mark_voided!(reissuing: true)
+    position.send_contract(
+      reissue_of: contract,
+      reissue_messages: { organizer: "The contractor's email address was updated, so the agreement was reissued with the new email." }
+    )
+    # The reissued contract needs HCB's signature again
+    position.mark_under_review! if position.may_mark_under_review?
+    @organizer_resign_position = position
+  rescue Faraday::Error => e
+    Rails.error.report(e, context: { payroll_position_id: position.id })
+  end
+
   def managed_legal_entity_constraints
     return unless managed?
 
@@ -89,6 +121,12 @@ class Payee < ApplicationRecord
 
     if legal_entity.payees.where.not(id:).exists?
       errors.add(:legal_entity, "is managed and can only have one payee")
+    end
+  end
+
+  def email_frozen
+    if persisted? && email_changed?
+      errors.add(:email, "cannot change once a legal entity has been assigned")
     end
   end
 

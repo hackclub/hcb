@@ -76,7 +76,7 @@
         <% end %>
       <% else %>
         <div class="tooltipped tooltipped--n" aria-label="You don't have permission to view this image">
-          <%= image_tag @hcb_code.check_deposit.front.representation(resize_to_limit: [25, 25], blur: "0x2"), class: "rounded", width: 200 %>
+          <%= image_tag blurred_image_event_check_deposit_path(@event, @hcb_code.check_deposit, side: "front"), class: "rounded", width: 200 %>
         </div>
       <% end %>
     </div>
@@ -87,7 +87,7 @@
         <% end %>
       <% else %>
         <div class="tooltipped tooltipped--n" aria-label="You don't have permission to view this image">
-          <%= image_tag @hcb_code.check_deposit.back.representation(resize_to_limit: [25, 25], blur: "0x2"), class: "rounded", width: 200 %>
+          <%= image_tag blurred_image_event_check_deposit_path(@event, @hcb_code.check_deposit, side: "back"), class: "rounded", width: 200 %>
         </div>
       <% end %>
     </div>

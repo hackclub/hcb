@@ -935,7 +935,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :legal_entities, only: [:show] do
+  resources :legal_entities, only: [:show, :create] do
     collection do
       post "create_from_tax_form"
     end
@@ -1121,6 +1121,7 @@ Rails.application.routes.draw do
     resources :check_deposits, only: [:index, :create], path: "check-deposits" do
       member do
         post "toggle_fronted"
+        get "blurred_image/:side", to: "check_deposits#blurred_image", as: :blurred_image, constraints: { side: /front|back/ }
       end
     end
 
