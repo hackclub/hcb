@@ -3,6 +3,12 @@
 <%= render "events/nav", selected: :payments if policy(@event).show? %>
 
 <%= turbo_frame_tag "payment_#{@payment.id}", target: "_top" do %>
+  <% if @payment.attempts.reorder(created_at: :asc).last&.failed? && @payment.attempts.none?(&:active?) && !@payment.canceled? %>
+    <%= render "application/callout", type: "error", title: "Payment failed to send" do %>
+      We couldn't send this payment to <%= @payment.payee.display_name %>. You can retry below, or contact the recipient to update their payout method.
+    <% end %>
+  <% end %>
+
   <article class="hcb-code">
     <h2 class="h2 mt0 border-none flex items-center justify-between hcb-code--heading mb-0" style="gap: 1ch">
       <span class="flex items-center py-3 gap-2 flex-grow">
@@ -104,7 +110,13 @@
     <div class="flex flex-col gap-1">
       <% @payment.attempts.reorder(created_at: :asc).each_with_index do |attempt, index| %>
         <div class="card flex items-center w-full">
-          <p class="my-0"><%= link_to "Attempt ##{index + 1}", attempt.payout.local_hcb_code %></p>
+          <p class="my-0">
+            <% if attempt.payout.present? %>
+              <%= link_to "Attempt ##{index + 1}", attempt.payout.local_hcb_code %>
+            <% else %>
+              Attempt #<%= index + 1 %>
+            <% end %>
+          </p>
           <p class="my-0"><span class="badge h4 bg-<%= attempt.state_color %> nowrap order-1"><%= attempt.state_text %></span></p>
 
           <div class="flex-grow"></div>
