@@ -288,7 +288,16 @@ class CardGrantsController < ApplicationController
 
     @card_grant.cancel!(current_user)
 
-    redirect_back_or_to event_transfers_path(@card_grant.event), flash: { success: "Successfully canceled grant." }
+    respond_to do |format|
+      format.html { redirect_back_or_to event_transfers_path(@card_grant.event), flash: { success: "Successfully canceled grant." } }
+      format.turbo_stream do
+        if params[:inline] == "1"
+          render turbo_stream: turbo_stream.replace(ActionView::RecordIdentifier.dom_id(@card_grant), partial: "card_grants/card_index_row", locals: { card_grant: @card_grant })
+        else
+          redirect_back_or_to event_transfers_path(@card_grant.event), flash: { success: "Successfully canceled grant." }
+        end
+      end
+    end
   end
 
   def topup
