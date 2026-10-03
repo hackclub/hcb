@@ -17,12 +17,12 @@ module TransactionGroupingEngine
         included_models = [
           :receipts,
           :comments,
-          { suggested_hcb_code_tag_suggestions: [:tag] },
           { canonical_transactions: [:canonical_event_mapping, :transaction_source] },
           { canonical_pending_transactions: [:event, :subledger, :canonical_pending_declined_mapping, :raw_pending_stripe_transaction] },
           { reimbursement_expense_payout: { expense: [:report] } }
         ]
         included_models << :tags
+        included_models << :ledger_item
         hcb_code_objects = HcbCode
                            .includes(included_models)
                            .where(hcb_code: hcb_code_codes)

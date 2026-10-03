@@ -23,7 +23,7 @@ RSpec.describe TagsController do
     it "creates the tag and attaches it to a transaction in the same organization" do
       hcb_code = hcb_code_belonging_to(event)
 
-      post(:create, params: { event_id: event.slug, label: "Snacks", color: "muted", emoji: "🍕", hcb_code_id: hcb_code.hashid })
+      post(:create, params: { event_id: event.slug, label: "Snacks", color: "muted", emoji: "🍕", ledger_item_id: hcb_code.reload.ledger_item.hashid })
 
       tag = event.tags.sole
       expect(tag.label).to eq("Snacks")
@@ -35,7 +35,7 @@ RSpec.describe TagsController do
       create(:organizer_position, user:, event: other_event)
       hcb_code = hcb_code_belonging_to(other_event)
 
-      post(:create, params: { event_id: event.slug, label: "Snacks", color: "muted", emoji: "🍕", hcb_code_id: hcb_code.hashid })
+      post(:create, params: { event_id: event.slug, label: "Snacks", color: "muted", emoji: "🍕", ledger_item_id: hcb_code.reload.ledger_item.hashid })
 
       expect(hcb_code.reload.tags).to be_empty
     end

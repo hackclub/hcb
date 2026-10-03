@@ -310,8 +310,7 @@ class Ledger
 
       case key.to_s
       when "tag"
-        # Tags hang off the HCB code, which points back at the ledger item.
-        relation.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: operand).select(:hcb_code_id)).select(:ledger_item_id))
+        relation.where(id: Ledger::Item::Tag.where(tag_id: operand).select(:ledger_item_id))
       when "category"
         # Categories are assigned to the underlying canonical transactions, and
         # an item matches if either kind carries the category. Resolving the slug
