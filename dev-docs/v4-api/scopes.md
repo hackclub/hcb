@@ -61,7 +61,7 @@ Key consequences for a `restricted` token:
 
 Scopes are granted to a token through the standard OAuth flow (see [Authentication in standards.md](./standards.md#authentication)); they aren't attached automatically. Two things must line up:
 
-1. **The OAuth application must be registered with the scopes.** Set the application's `scopes` to include every scope it will request (e.g. `restricted receipts:write ledgers:read receipts:read`). The server does not restrict applications to a fixed list: `enforce_configured_scopes` is off and `optional_scopes` lists only `read` / `write` / `admin:read` / `admin:write`, so the granular scopes above can be registered freely even though they aren't in that list.
+1. **The OAuth application must be registered with the scopes.** Set the application's `scopes` to include every scope it will request (e.g. `restricted receipts:write ledgers:read receipts:read`). The server does not restrict applications to a fixed list: `enforce_configured_scopes` is off and `optional_scopes` lists only the `read` / `write` and admin scopes, so the granular scopes above can be registered freely even though they aren't in that list.
 2. **The token request must ask for them.** Pass the same space-separated strings in the `scope=` parameter of the `authorize` request (URL-encoded, so spaces become `%20`).
 
 To get per-action enforcement (everything in this document), the requested scopes **must include `restricted`** alongside the granular ones. A token without `restricted` ignores every `require_oauth2_scope` declaration and falls back to legacy full access.
@@ -127,6 +127,7 @@ Multiple `require_oauth2_scope` calls for the same action **accumulate** — the
 | `<resource>:write` | Mutating a resource (create/update/destroy) | `receipts:write`, `card_grants:write` |
 | `<capability>` | A narrow, single-purpose capability that doesn't map cleanly to read/write of one resource | `user_lookup`, `event_followers` |
 | `admin:read` / `admin:write` | Admin-level data or actions (see [Admin Scopes](#admin-scopes)) | `admin:read`, `admin:write` |
+| `admin:<resource>:read` / `admin:<resource>:write` | The same admin level, but limited to one resource - comments (for now) | `admin:comments:read`, `admin:comments:write` |
 
 Guidelines:
 

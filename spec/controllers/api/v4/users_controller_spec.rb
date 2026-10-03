@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe Api::V4::UsersController do
-  # `#show` is gated by `require_admin_scope!(:read)`.
+  # `#show` is gated by `require_admin_scope "admin:read", :show`.
   describe "#show" do
     let(:target) { create(:user, full_name: "Target User") }
 
