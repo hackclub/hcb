@@ -20,7 +20,10 @@ Rails.application.config.to_prepare do
   Rails.autoloaders.main.eager_load_dir(Rails.root.join("app/models/event/plan").to_s)
 
   Event::Plan.available_plans.each do |plan|
-    Flipper.register("organization_plan_#{plan.name.demodulize.underscore}".to_sym) do |actor, _context|
+    name = "organization_plan_#{plan.name.demodulize.underscore}".to_sym
+    next if Flipper.group_exists?(name)
+
+    Flipper.register(name) do |actor, _context|
       FlipperGroups.event_in_plan?(actor.actor, plan)
     end
   end

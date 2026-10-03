@@ -1,5 +1,4 @@
 import swal from 'sweetalert'
-import $ from 'jquery'
 import { Turbo } from '@hotwired/turbo-rails'
 
 function showConfirm(
@@ -14,28 +13,21 @@ function showConfirm(
   }).then(v => !!v)
 }
 
-// jquery-ujs disables `data-disable-with` elements shortly after every submit
-// event; when the confirmation aborts the submission, nothing re-enables them.
 function reenableFormElements(formElement) {
-  if (!formElement || !$.rails) return
-
-  $(formElement)
-    .find($.rails.enableSelector)
-    .each((_, element) => {
-      if ($(element).data('ujs:disabled')) $.rails.enableFormElement($(element))
-    })
+  const jQuery = window.jQuery
+  if (formElement && jQuery?.rails)
+    jQuery.rails.enableFormElements(jQuery(formElement))
 }
 
-Turbo.config.forms.confirm = async (message, formElement, submitter) => {
+Turbo.config.forms.confirm = (message, formElement, submitter) => {
   const dangerMode = Boolean(
     submitter?.hasAttribute('data-turbo-confirm-danger') ||
     formElement?.hasAttribute('data-turbo-confirm-danger')
   )
-  const confirmed = await showConfirm(message, { dangerMode })
-
-  if (!confirmed) reenableFormElements(formElement)
-
-  return confirmed
+  return showConfirm(message, { dangerMode }).then(confirmed => {
+    if (!confirmed) reenableFormElements(formElement)
+    return confirmed
+  })
 }
 window.showConfirm = showConfirm
 window.swal = swal
