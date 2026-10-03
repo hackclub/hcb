@@ -4,6 +4,8 @@
 module PublicIdentifiable
   extend ActiveSupport::Concern
 
+  mattr_accessor :registry, default: {}
+
   included do
     class_attribute :public_id_prefix
   end
@@ -12,9 +14,17 @@ module PublicIdentifiable
     "#{self.public_id_prefix}_#{hashid}"
   end
 
+  def self.find_by_public_id(id)
+    return nil unless id.is_a? String
+
+    prefix = id.split("_").first.to_s.downcase
+    registry[prefix]&.find_by_public_id(id)
+  end
+
   module ClassMethods
     def set_public_id_prefix(prefix)
       self.public_id_prefix = prefix.to_s.downcase
+      PublicIdentifiable.registry[prefix.to_s.downcase] = self
     end
 
     def find_by_public_id(id)
