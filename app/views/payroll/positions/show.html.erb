@@ -75,7 +75,8 @@
           <strong>Signed contract</strong>
           <%= link_to "View contract", auditor_signed_in? ? signed_contract : document_download_path(signed_contract), data: { turbo_frame: "_top" } %>
         </p>
-      <% elsif @position.file.attached? %>
+      <% end %>
+      <% if @position.file.attached? %>
         <p>
           <strong>Attached agreement</strong>
           <%= link_to "View attachment", url_for(@position.file), data: { turbo_frame: "_top" } %>
