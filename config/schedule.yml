@@ -148,6 +148,10 @@ calculate_stats_metric:
   cron: "0 * * * *" # run every hour
   class: "Metric::CalculateStatsJob"
 
+sync_revenue_to_airtable_job:
+  cron: "15 * * * *" # run every hour
+  class: "Event::SyncRevenueToAirtableJob"
+
 calculate_subjects_metrics:
   cron: "0 */12 * * *" # run twice a day
   class: "Metric::CreateSubjectsJob"
