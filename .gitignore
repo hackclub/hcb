@@ -58,4 +58,6 @@ yarn-debug.log*
 /coverage
 
 # AI
-.claude/
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
