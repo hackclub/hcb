@@ -234,10 +234,8 @@ class Invoice < ApplicationRecord
   end
 
   def state
-    return :success if paid_v2? && deposited?
-    return :success if paid_v2? && event.can_front_balance?
+    return :success if paid_v2?
     return :success if manually_marked_as_paid?
-    return :info if paid_v2?
     return :error if void_v2?
     return :info if refunded_v2?
     return :muted if archived?
@@ -248,8 +246,7 @@ class Invoice < ApplicationRecord
   end
 
   def state_text
-    return "Deposited" if paid_v2? && (event.can_front_balance? || deposited?)
-    return "In Transit" if paid_v2?
+    return "Deposited" if paid_v2?
     return "Paid" if manually_marked_as_paid?
     return "Voided" if void_v2?
     return "Refunded" if refunded_v2?
@@ -261,7 +258,7 @@ class Invoice < ApplicationRecord
   end
 
   def state_icon
-    return "checkmark" if deposited? || (paid_v2? && event.can_front_balance?)
+    return "checkmark" if deposited? || paid_v2?
   end
 
   def filter_data

@@ -44,8 +44,8 @@ RSpec.describe CardGrantsController do
       get(:show, params: { id: card_grant.hashid })
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("Pay with your card")
-      expect(response.body).to include("What you can spend it on")
+      expect(response.body).to include("Virtual card")
+      expect(response.body).to include("Spending controls")
       expect(response.body).not_to include("Billing address")
       expect(response.body).not_to include("Show details")
     end

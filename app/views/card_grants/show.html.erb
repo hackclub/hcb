@@ -32,20 +32,18 @@
 <% end %>
 
 <% if awaiting_activation %>
-  <%# The grantee hasn't accepted the invite, so there's nothing to spend yet. %>
-  <% if @card_grant.converted_to_reimbursement_report? %>
-    <%= blankslate "This grant was converted into a reimbursement report." %>
-    <% if policy(@card_grant.reimbursement_report).show? %>
-      <p class="text-center">
-        <%= link_to "View reimbursement report", @card_grant.reimbursement_report %>
-      </p>
-    <% end %>
-  <% elsif @card_grant.canceled? %>
-    <%= blankslate "Sorry, this grant was canceled!" %>
-  <% else %>
-    <%= render partial: "card_grants/invitation", locals: { card_grant: @card_grant } %>
+  <%= render partial: "card_grants/invitation", locals: { card_grant: @card_grant } %>
+<% elsif own && @card_grant.converted_to_reimbursement_report? %>
+  <%= blankslate "This grant was converted into a reimbursement report." %>
+  <% if policy(@card_grant.reimbursement_report).show? %>
+    <p class="text-center">
+      <%= link_to "View reimbursement report", @card_grant.reimbursement_report %>
+    </p>
   <% end %>
-<% elsif @card_grant.user.admin? || organizer_signed_in? || own %>
+  <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes, ledger: @ledger, items: @items } %>
+<% elsif own && stripe_card.nil? && @card_grant.canceled? %>
+  <%= blankslate "Sorry, this grant was canceled!" %>
+<% elsif organizer_signed_in? || own %>
   <%= render "card_grants/section_heading", icon: "1", title: own ? "What you can spend it on" : "Spending controls", own: own %>
   <%= render partial: "card_grants/grant_details", locals: { card_grant: @card_grant, own: own } %>
 

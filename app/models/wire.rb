@@ -26,6 +26,7 @@
 #  recipient_name            :string           not null
 #  return_reason             :text
 #  send_email_notification   :boolean          default(FALSE)
+#  uetr                      :string
 #  created_at                :datetime         not null
 #  updated_at                :datetime         not null
 #  column_id                 :text
@@ -238,6 +239,7 @@ class Wire < ApplicationRecord
     }.compact_blank)
 
     self.column_id = column_wire_transfer["id"]
+    self.uetr = column_wire_transfer["uetr"]
     mark_approved
     save!
   end

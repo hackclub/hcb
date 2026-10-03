@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Wraps a User for the Pundit policy context in the v4 API with respect to admin scopes and admin priviledges
+# Wraps a User for the Pundit policy context in the v4 API with respect to admin scopes and admin privileges
 class ApiAdminContext
   delegate_missing_to :@user
 

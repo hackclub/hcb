@@ -2,6 +2,7 @@
 
 class WiresController < ApplicationController
   include SetEvent
+  include ResolvesPaymentRecipient
   include Admin::TransferApprovable
   include Admin::PaymentApprovable
 
@@ -42,7 +43,7 @@ class WiresController < ApplicationController
       end
       redirect_to url_for(@wire.local_hcb_code), flash: { success: "Your wire has been sent!" }
     else
-      render "new", status: :unprocessable_content
+      render "new", layout: "transfer", status: :unprocessable_content
     end
   end
 
@@ -104,7 +105,7 @@ class WiresController < ApplicationController
   private
 
   def wire_params
-    params.require(:wire).permit(
+    permitted = params.require(:wire).permit(
       [:memo,
        :amount,
        :payment_for,
@@ -123,6 +124,7 @@ class WiresController < ApplicationController
        :send_email_notification,
        { file: [] }] + Wire.recipient_information_accessors
     )
+    @wire_params ||= scope_payment_recipient!(permitted)
   end
 
   def set_wire

@@ -1,2 +1,4 @@
+<%# locals: () %>
+
 <%= render "comments/list", comments: @comments || [] %>
 <%= render "comments/form", commentable: @commentable if current_user %>

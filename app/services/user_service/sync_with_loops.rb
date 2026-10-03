@@ -13,8 +13,8 @@ module UserService
       return if @user.onboarding?
 
       if @user.teenager
-        # The additional `select` is a safety against Airtable query injection
-        user = EmailsTable.all(filter: "{Email} = \"#{@user.email}\"").select { |record| record["Email"] == @user.email }.first
+        # The additional `find` is a safety against Airtable query injection
+        user = EmailsTable.all(filter: "{Email} = \"#{@user.email}\"").find { |record| record["Email"] == @user.email }
         user ||= EmailsTable.new("Email" => @user.email)
 
         user["Full Name"] = "Preferred name: \"#{@user.preferred_name}\", Legal name: \"#{@user.full_name}\""
