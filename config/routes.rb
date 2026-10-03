@@ -664,6 +664,7 @@ Rails.application.routes.draw do
   resources :payments, only: [:show], concerns: :commentable do
     member do
       post "cancel"
+      post "retry"
     end
   end
 
@@ -683,11 +684,10 @@ Rails.application.routes.draw do
   get "for/funders/faq", to: "marketing#funders_faq", as: :funders_faq
   post "for/funders/inquiry", to: "marketing#funder_inquiry", as: :funder_inquiry
 
-  resources :emburse_card_requests, path: "emburse_card_requests", only: [:index, :show, :edit] do
+  resources :emburse_card_requests, path: "emburse_card_requests", only: [:index, :show] do
     collection do
       get "export"
     end
-    post "reject"
   end
 
   resources :emburse_transactions, only: [:index, :edit, :update, :show]
@@ -935,7 +935,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :legal_entities, only: [:show] do
+  resources :legal_entities, only: [:show, :create] do
     collection do
       post "create_from_tax_form"
     end
@@ -1121,6 +1121,7 @@ Rails.application.routes.draw do
     resources :check_deposits, only: [:index, :create], path: "check-deposits" do
       member do
         post "toggle_fronted"
+        get "blurred_image/:side", to: "check_deposits#blurred_image", as: :blurred_image, constraints: { side: /front|back/ }
       end
     end
 
@@ -1152,7 +1153,7 @@ Rails.application.routes.draw do
 
       scope module: "organizer_position" do
         namespace :spending do
-          resources :controls, only: [:index, :create, :destroy, :new] do
+          resources :controls, only: [:index, :create, :destroy] do
             resources :allowances, only: [:new, :create], controller: "control/allowances"
           end
         end

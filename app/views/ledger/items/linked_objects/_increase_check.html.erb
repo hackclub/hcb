@@ -109,7 +109,7 @@
     <% end %>
   </section>
 
-  <% if increase_check.may_mark_rejected? || increase_check.column_id.present? %>
+  <% if increase_check.may_mark_rejected? || increase_check.column_id.present? || auditor_signed_in? %>
     <div class="card__banner card__darker border-top overflow-hidden flex items-center g2">
       <% if increase_check.may_mark_rejected? %>
         <% cancel_button = button_to "Cancel check", reject_increase_check_path(increase_check), class: "btn bg-error", data: { turbo_confirm: "Are you sure you want to cancel this check?", turbo_confirm_danger: true }, disabled: !policy(increase_check).reject? %>
@@ -120,10 +120,10 @@
             <%= cancel_button %>
           </div>
         <% end %>
+      <% end %>
 
-        <% admin_tool do %>
-          <%= button_to "Process", increase_check_process_admin_path(increase_check), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
-        <% end %>
+      <% admin_tool do %>
+        <%= button_to "Process", increase_check_process_admin_path(increase_check), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
       <% end %>
 
       <% if increase_check.column_id.present? %>
