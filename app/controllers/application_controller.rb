@@ -7,6 +7,14 @@ class ApplicationController < ActionController::Base
     Current.session = find_current_session
   end
 
+  # Rails falls back to every registered template format when the requested
+  # extension is unknown, so `/feed.atom~` (or `/anything.html~`) renders the
+  # real page with a 200 and scanners report it as a leftover backup file.
+  # Treat an unrecognised extension as a missing page. Limited to GET/HEAD:
+  # a few non-GET routes (e.g. donation tier deletes) abuse the format slot
+  # for an ID.
+  before_action :reject_unknown_format, if: -> { request.get? || request.head? }
+
   include Pundit::Authorization
   include SessionsHelper
   include ToursHelper
@@ -126,6 +134,10 @@ class ApplicationController < ActionController::Base
 
   def not_found
     raise ActionController::RoutingError.new("Not Found")
+  end
+
+  def reject_unknown_format
+    not_found if params[:format].present? && Mime[params[:format]].nil?
   end
 
   def set_streaming_headers
