@@ -242,30 +242,40 @@ module Tax
 
       return nil if submission.nil?
 
-      submission_form_type = submission["FormType"]
-      pdf_url = submission[TaxbanditsService::TAXBANDITS_FORM_DATA_KEYS[submission_form_type]]["PdfUrl"]
+      self.class.taxbandits_pdf(submission)
+    end
 
-      return nil if pdf_url.blank?
+    class << self
+      # The PDF TaxBandits generated for a submission, or nil if there isn't one yet.
+      def taxbandits_pdf(submission)
+        submission_form_type = submission["FormType"]
+        pdf_url = submission[TaxbanditsService::TAXBANDITS_FORM_DATA_KEYS[submission_form_type]]["PdfUrl"]
 
-      object_key = URI.parse(pdf_url).path.delete_prefix("/")
+        return nil if pdf_url.blank?
 
-      taxbandits_s3_bucket.object(object_key).get(
-        sse_customer_algorithm: "AES256",
-        sse_customer_key: Base64.strict_decode64(Credentials.fetch(:TAXBANDITS, :PDF_KEY))
-      ).body.read
+        object_key = URI.parse(pdf_url).path.delete_prefix("/")
+
+        taxbandits_s3_bucket.object(object_key).get(
+          sse_customer_algorithm: "AES256",
+          sse_customer_key: Base64.strict_decode64(Credentials.fetch(:TAXBANDITS, :PDF_KEY))
+        ).body.read
+      end
+
+      private
+
+      def taxbandits_s3_bucket
+        Aws::S3::Resource.new(
+          region: "us-east-1",
+          credentials: Aws::Credentials.new(
+            Credentials.fetch(:TAXBANDITS, :S3_ACCESS_KEY_ID),
+            Credentials.fetch(:TAXBANDITS, :S3_SECRET_ACCESS_KEY)
+          )
+        ).bucket(Credentials.fetch(:TAXBANDITS, :S3_BUCKET))
+      end
+
     end
 
     private
-
-    def taxbandits_s3_bucket
-      Aws::S3::Resource.new(
-        region: "us-east-1",
-        credentials: Aws::Credentials.new(
-          Credentials.fetch(:TAXBANDITS, :S3_ACCESS_KEY_ID),
-          Credentials.fetch(:TAXBANDITS, :S3_SECRET_ACCESS_KEY)
-        )
-      ).bucket(Credentials.fetch(:TAXBANDITS, :S3_BUCKET))
-    end
 
     # WhCertificate/Get returns the payee's full, unmasked TIN. Nothing outside
     # import_taxbandits_data may call it, and what it derives (entity type, TIN
@@ -309,16 +319,7 @@ module Tax
 
       return if address.blank?
 
-      us_tin, foreign_tin = case submission_form_type
-                            when "FormW9"
-                              [form_data["TIN"], nil]
-                            when "FormW8BEN"
-                              [form_data["USTIN"], form_data["ForeignTIN"]]
-                            when "FormW8ECI"
-                              [form_data["TIN"], form_data["ForeignTIN"]]
-                            when "FormW8BENE", "FormW8IMY", "FormW8EXP"
-                              [form_data.dig("Part1", "USTIN"), form_data.dig("Part1", "ForeignTIN")]
-                            end
+      us_tin, foreign_tin = submission_tins(submission_form_type, form_data)
 
       entity_type = entity_type_from(submission_form_type, form_data)
       tin, tin_type, country = identify_tin(us_tin, foreign_tin, entity_type, submission_form_type, form_data)
@@ -350,6 +351,21 @@ module Tax
       # sensitive can reach Rails logs or AppSignal. cause: nil mirrors the same
       # defense in Tax::IdentificationNumber::Hasher#hash_tin.
       raise ImportError, "failed to import TaxBandits data for #{public_id} (#{e.class})", cause: nil
+    end
+
+    def submission_tins(submission_form_type, form_data)
+      case submission_form_type
+      when "FormW9"
+        [form_data["TIN"], nil]
+      when "FormW8BEN"
+        [form_data["USTIN"], form_data["ForeignTIN"]]
+      when "FormW8ECI"
+        [form_data["TIN"], form_data["ForeignTIN"]]
+      when "FormW8BENE", "FormW8IMY", "FormW8EXP"
+        [form_data.dig("Part1", "USTIN"), form_data.dig("Part1", "ForeignTIN")]
+      else
+        [nil, nil]
+      end
     end
 
     def entity_type_from(submission_form_type, form_data)
