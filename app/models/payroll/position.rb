@@ -111,6 +111,10 @@ module Payroll
         transitions from: :under_review, to: :onboarding
       end
 
+      event :mark_under_review do
+        transitions from: :onboarding, to: :under_review
+      end
+
       event :mark_rejected do
         transitions from: [:under_review, :onboarding], to: :rejected
       end
@@ -272,6 +276,7 @@ module Payroll
         return if contractor.nil? || contractor.signed?
 
         notify_contractor_of_onboarding(contractor)
+        schedule_onboarding_reminders
       end
     end
 
@@ -337,6 +342,11 @@ module Payroll
       false
     end
 
+    # Contractor reminders are scheduled once HCB signs instead
+    def contract_remind_when_reissued
+      false
+    end
+
     def contract_notify_hcb?
       false
     end
@@ -347,14 +357,13 @@ module Payroll
       Payroll::PositionMailer.with(position: self, party:).onboarding.deliver_later
     end
 
-    private
-
     def notify_contractor_of_onboarding(contractor)
       contractor.notify
-      schedule_onboarding_reminders
     rescue => e
       Rails.error.report(e, context: { payroll_position_id: id })
     end
+
+    private
 
     def schedule_onboarding_reminders
       onboarding_reminder_days.each do |days|
