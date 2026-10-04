@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_21_192954) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1671,6 +1671,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
     t.datetime "archived_at"
     t.string "banned_reason"
     t.datetime "created_at", null: false
+    t.boolean "electronic_consent"
+    t.datetime "electronic_consent_at"
     t.string "entity_type"
     t.bigint "managing_event_id"
     t.string "name"

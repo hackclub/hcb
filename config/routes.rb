@@ -949,6 +949,8 @@ Rails.application.routes.draw do
 
   resources :tax_forms, only: [:show, :create], controller: "tax/forms" do
     member do
+      get "electronic_consent"
+      post "electronic_consent", action: :update_electronic_consent
       get "completed"
       post "discard"
     end
