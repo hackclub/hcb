@@ -3,12 +3,6 @@
 <%= render "events/nav", selected: :payments if policy(@event).show? %>
 
 <%= turbo_frame_tag "payment_#{@payment.id}", target: "_top" do %>
-  <% if @payment.attempts.reorder(created_at: :asc).last&.failed? && @payment.attempts.none?(&:active?) && !@payment.canceled? %>
-    <%= render "application/callout", type: "error", title: "Payment failed to send" do %>
-      We couldn't send this payment to <%= @payment.payee.display_name %>. You can retry below, or contact the recipient to update their payout method.
-    <% end %>
-  <% end %>
-
   <article class="hcb-code">
     <h2 class="h2 mt0 border-none flex items-center justify-between hcb-code--heading mb-0" style="gap: 1ch">
       <span class="flex items-center py-3 gap-2 flex-grow">
