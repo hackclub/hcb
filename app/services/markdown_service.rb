@@ -21,12 +21,9 @@ class MarkdownService
       # this is used to link expenses in expense report comments
       # code that finds any lines like #1 and replaces them with links to the elements with id
 
-      fulldoc.gsub!(/#(\d+)/) do |match|
-        id = $1.to_i
+      fulldoc.gsub(/#(\d+)/) do |match|
         "[#{match}](#{match})"
       end
-
-      fulldoc
     end
 
     def postprocess(fulldoc)

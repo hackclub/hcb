@@ -19,6 +19,8 @@ module Api
         end
       end
 
+      require_oauth2_scope "card_grants:read", :index
+
       def create
         sent_by = current_user
 
@@ -76,17 +78,23 @@ module Api
         authorize @card_grant
       end
 
+      require_oauth2_scope "card_grants:read", :show
+
       def topup
         authorize @card_grant
 
         @card_grant.topup!(amount_cents: params["amount_cents"], topped_up_by: current_user)
       end
 
+      require_oauth2_scope "card_grants:write", :topup
+
       def withdraw
         authorize @card_grant
 
         @card_grant.withdraw!(amount_cents: params["amount_cents"], withdrawn_by: current_user)
       end
+
+      require_oauth2_scope "card_grants:write", :withdraw
 
       def update
         authorize @card_grant
@@ -99,12 +107,16 @@ module Api
         render :show
       end
 
+      require_oauth2_scope "card_grants:write", :update
+
       def cancel
         authorize @card_grant
 
         @card_grant.cancel!(current_user)
         render :show
       end
+
+      require_oauth2_scope "card_grants:write", :cancel
 
       def activate
         authorize @card_grant
@@ -113,6 +125,8 @@ module Api
         render :show
       end
 
+      require_oauth2_scope "card_grants:write", :activate
+
       def transactions
         authorize @card_grant
 
@@ -120,6 +134,8 @@ module Api
 
         @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
       end
+
+      require_oauth2_scope "card_grants:read", :transactions
 
       private
 
