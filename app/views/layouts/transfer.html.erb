@@ -40,15 +40,6 @@
           <%= yield :sidebar_footer %>
         <% end %>
         <%= render "application/ooo_callout", resource: "transfer", financial: true if can_transfer %>
-
-        <% if controller_name == "payments" %>
-          <%= render "application/callout", type: "info", title: "Welcome to the new payments form!", class: "mt-2" do %>
-            HCB has a new way to send payments! Instead of collecting payment details yourself, just
-            enter in the recipient's name and email, and we'll handle the rest. For more information,
-            read our <%= link_to "help center article", "#" %>, and send us feedback at
-            <%= mail_to "hcb@hackclub.com" %>.
-          <% end %>
-        <% end %>
       </div>
     </div>
   <% end %>
