@@ -29,7 +29,7 @@ module HcbCodeService
       end
 
       # Apply additional ranking on top of PG's full text search. This is where
-      # can can apply additional context outside of the transaction memo.
+      # can apply additional context outside of the transaction memo.
       similar_transactions.map do |t|
         {
           transaction: t,

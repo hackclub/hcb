@@ -1,0 +1,156 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+
+# The v3 API had no coverage before the ledger rewrite. The assertion that
+# matters most is parity: without the header the legacy transaction engines run,
+# with it Ledger::Query does, and the payloads must agree.
+RSpec.describe "Api::V3 transactions", type: :request do
+  let(:event) { create(:event, is_public: true) }
+  let(:ledger_header) { { Api::Models::LedgerTransaction::HEADER => Api::Models::LedgerTransaction::LEDGER } }
+
+  # One fixture visible to both engines: the canonical event mapping is what the
+  # legacy engines read, and CanonicalTransaction#assign_ledger_item builds the
+  # Ledger::Item.
+  #
+  # Ledger::Mapper may or may not have mapped the item by this point: creating
+  # the canonical event mapping writes event_id onto the HcbCode, which touches
+  # the ledger item (belongs_to :ledger_item, touch: true) and fires
+  # Ledger::Item's after_touch :map!. Whether that resolves a ledger depends on
+  # callback ordering, so use map_primary! — it find_or_initialize_by's the
+  # primary mapping and is idempotent either way.
+  #
+  # `date` is today so the CT's date and the ledger item's datetime agree —
+  # in production `backfill_ledger_item_datetime_task` aligns them.
+  def create_transaction(amount_cents: -1234, memo: "Test transaction")
+    ct = create(:canonical_transaction, amount_cents:, memo:, date: Date.current)
+    create(:canonical_event_mapping, event:, canonical_transaction: ct)
+    hcb_code = ct.reload.local_hcb_code
+
+    Ledger::Mapping.map_primary!(
+      ledger: event.ledger,
+      ledger_item: hcb_code.ledger_item,
+      mapped_by: Ledger::Mapper::SYSTEM
+    )
+
+    hcb_code
+  end
+
+  def get_transactions(headers: {})
+    get "/api/v3/organizations/#{event.slug}/transactions", params: { expand: "transaction" }, headers: headers
+    response
+  end
+
+  def by_id(body) = body.index_by { |txn| txn["id"] }
+
+  def strip_ledger_item_id(node)
+    case node
+    when Hash then node.except("ledger_item_id").transform_values { |value| strip_ledger_item_id(value) }
+    when Array then node.map { |value| strip_ledger_item_id(value) }
+    else node
+    end
+  end
+
+  before { create_transaction }
+
+  describe "GET /organizations/:id/transactions" do
+    it "returns the same payload from both engines" do
+      legacy = by_id(get_transactions.parsed_body)
+      ledger = by_id(get_transactions(headers: ledger_header).parsed_body)
+
+      expect(ledger.keys).to match_array(legacy.keys)
+      expect(strip_ledger_item_id(ledger)).to eq(legacy)
+    end
+
+    it "omits ledger_item_id without the header" do
+      expect(get_transactions.parsed_body.first).not_to have_key("ledger_item_id")
+    end
+
+    it "returns the same pagination headers from both engines" do
+      headers = ->(res) { res.headers.slice("X-Total", "X-Total-Pages", "X-Per-Page", "X-Page") }
+
+      legacy = headers.call(get_transactions)
+
+      expect(headers.call(get_transactions(headers: ledger_header))).to eq(legacy)
+      expect(legacy["X-Total"].to_i).to eq(1)
+    end
+
+    it "exposes the ledger item's public id alongside the HcbCode-derived id" do
+      txn = get_transactions(headers: ledger_header).parsed_body.first
+      item = Ledger::Item.find_by_public_id(txn["ledger_item_id"])
+
+      expect(txn["id"]).to start_with("txn_")
+      expect(txn["ledger_item_id"]).to start_with("lit_")
+      expect(item.hcb_code.public_id).to eq(txn["id"])
+    end
+
+    it "runs Ledger::Query instead of the legacy engines when the header is sent" do
+      expect(TransactionGroupingEngine::Transaction::All).not_to receive(:new)
+      expect(PendingTransactionEngine::PendingTransaction::All).not_to receive(:new)
+
+      expect(get_transactions(headers: ledger_header)).to have_http_status(:ok)
+    end
+
+    it "does not run Ledger::Query without the header" do
+      expect(Ledger::Query).not_to receive(:new)
+
+      expect(get_transactions).to have_http_status(:ok)
+    end
+
+    it "ignores an unrecognised header value" do
+      expect(Ledger::Query).not_to receive(:new)
+
+      expect(get_transactions(headers: { Api::Models::LedgerTransaction::HEADER => "hcb_code" })).to have_http_status(:ok)
+    end
+  end
+
+  describe "GET /organizations/:id/card_charges" do
+    def stripe_transaction(authorization:)
+      raw = build(:raw_stripe_transaction)
+      raw.stripe_transaction = raw.stripe_transaction.merge("authorization" => authorization).compact
+      raw.save!
+
+      ct = create(
+        :canonical_transaction,
+        amount_cents: -500,
+        transaction_source: raw,
+        hashed_transactions: [create(:hashed_transaction, raw_stripe_transaction: raw)]
+      )
+      create(:canonical_event_mapping, event:, canonical_transaction: ct)
+
+      ct.reload
+    end
+
+    before do
+      stripe_transaction(authorization: "iauth_1")
+      stripe_transaction(authorization: nil)
+    end
+
+    it "excludes force captures, and counts them in neither the body nor the headers" do
+      get "/api/v3/organizations/#{event.slug}/card_charges", headers: ledger_header
+
+      expect(response.parsed_body.size).to eq(1)
+      expect(response.headers["X-Total"].to_i).to eq(1)
+    end
+
+    it "reports a force capture as its own type, not as a card charge" do
+      forced = Ledger::Item.joins(:hcb_code).find_by("hcb_codes.hcb_code LIKE 'HCB-601-%'")
+
+      expect(Api::Models::LedgerTransaction.new(forced).type).to eq(:card_force_capture)
+    end
+  end
+
+  describe "GET /transactions/:id" do
+    it "returns the same payload from both engines" do
+      id = get_transactions.parsed_body.first["id"]
+
+      get "/api/v3/transactions/#{id}", params: { expand: "transaction" }
+      legacy = response.parsed_body
+
+      get "/api/v3/transactions/#{id}", params: { expand: "transaction" }, headers: ledger_header
+
+      expect(legacy).not_to have_key("ledger_item_id")
+      expect(strip_ledger_item_id(response.parsed_body)).to eq(legacy)
+    end
+  end
+end

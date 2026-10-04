@@ -1,9 +1,12 @@
+<%# locals: () %>
+
 <% @invoice = @hcb_code.invoice %>
 <% @sponsor = @invoice.sponsor %>
 
 <%= render partial: "application/admin_viewer", locals: { record: @invoice } %>
 
 <% admin_tool("mt3") do %>
+  <%= link_to "Process", invoice_process_admin_path(@invoice), class: "btn" %>
   <%= link_to "View on Stripe", @invoice.stripe_dashboard_url, class: "btn bg-accent" %>
   <% if @invoice.paid? %>
     <button class="btn bg-error" data-behavior="modal_trigger" data-modal="refund">Issue refund</button>
@@ -291,20 +294,18 @@
     <% end %>
 
     <% unless @invoice.deposited? %>
-      <% if @invoice.event.can_front_balance? %>
-        <section class="hcb-code--footer">
-          <p class="my0 italic">
-            <% if @hcb_code.fee_waived? %>
-              Fees were waived on this transaction — enjoy!
-            <% end %>
-            The funds from this invoice payment are immediately reflected in your account balance.
-            (<a href="https://blog.hcb.hackclub.com/posts/oh-yeah-deposits-are-instant-now-238700">learn more</a>)
-          </p>
-        </section>
-      <% end %>
+      <section class="hcb-code--footer">
+        <p class="my0 italic">
+          <% if @hcb_code.fee_waived? %>
+            Fees were waived on this transaction — enjoy!
+          <% end %>
+          The funds from this invoice payment are immediately reflected in your account balance.
+          (<a href="https://blog.hcb.hackclub.com/posts/oh-yeah-deposits-are-instant-now-238700">learn more</a>)
+        </p>
+      </section>
     <% end %>
 
-    <% if (@invoice.deposited? || !@invoice.event.can_front_balance?) && @hcb_code.fee_waived? %>
+    <% if @invoice.deposited? && @hcb_code.fee_waived? %>
       <section class="hcb-code--footer">
         <p class="my0 italic">
           Fees were waived on this transaction — enjoy!

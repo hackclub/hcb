@@ -136,6 +136,7 @@ class IncreaseCheck < ApplicationRecord
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :increase_check, required: false
   has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
+  has_one :payment, through: :payment_attempt
 
   after_create do
     create_canonical_pending_transaction!(event:, amount_cents: -amount, memo: "OUTGOING CHECK", date: created_at)
@@ -215,7 +216,7 @@ class IncreaseCheck < ApplicationRecord
   end
 
   validate do
-    if (address_line1.length + address_line2.length) > 50
+    if (address_line1.to_s.length + address_line2.to_s.length) > 50
       errors.add(:base, "Address line one and line two's combined length can not exceed 50 characters.")
     end
   end
@@ -336,7 +337,7 @@ class IncreaseCheck < ApplicationRecord
   end
 
   def can_cancel?
-    pending? || (approved && can_stop?)
+    pending? || (approved? && can_stop?)
   end
 
   def cancel!

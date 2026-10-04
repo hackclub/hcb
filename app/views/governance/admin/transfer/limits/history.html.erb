@@ -1,0 +1,39 @@
+<%= turbo_frame_tag "transfer_limit_history" do %>
+  <section class="table-container bg-[rgba(255, 255, 255, 0.125)] mt-6">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Transfer Limit</th>
+          <th>Set By</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @history.each do |version| %>
+          <% changes = version.changeset %>
+          <% changer = @changers[version.whodunnit.to_s] %>
+          <tr>
+            <td>
+              <%= version.created_at.strftime("%b %-d, %Y") %>
+            </td>
+            <td class="py-[10px]">
+              <%= number_to_currency(changes["amount_cents"]&.last.to_i / 100.0) %>
+            </td>
+            <td>
+              <div class="flex items-center gap-2">
+                <% if changer.present? %>
+                  <%= avatar_for changer, class: "align-middle author", cached: true %>
+                  <span><%= changer.name || changer.email %></span>
+                <% else %>
+                  <span>Unknown</span>
+                <% end %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+
+  <%= paginate @history, params: { target_user_id: @user.id } %>
+<% end %>

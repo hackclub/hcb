@@ -348,19 +348,20 @@ module Reimbursement
       redirect_to @report
     end
 
-    def approve_all_expenses
+    def approve
       authorize @report
 
       begin
-        @report.expenses.each do |expense|
-          expense.mark_approved!
+        @report.expenses.pending.each do |expense|
+          expense.mark_approved!(current_user)
         end
-        flash[:success] = "All expenses have been approved; the report creator will be notified."
+        @report.mark_reimbursement_requested!
+        flash[:success] = "All expenses have been approved and the reimbursement has been requested; the HCB team will review the request promptly."
+      rescue AASM::InvalidTransition
+        flash[:error] = @report.reload.reimbursement_requested? ? "This report was already sent for reimbursement." : "This report could not be sent for reimbursement."
       rescue => e
         flash[:error] = e.message
       end
-
-      # Reimbursement::NightlyJob.perform_later
 
       redirect_to @report
     end
