@@ -79,7 +79,6 @@ class PaymentsController < ApplicationController
 
     begin
       @payment.retry!
-      flash[:error] = "The payment failed to send." if @payment.attempts.reorder(created_at: :asc).last&.failed?
     rescue ArgumentError => e
       flash[:error] = e.message
     end
