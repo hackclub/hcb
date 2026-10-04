@@ -579,11 +579,12 @@ $grant-upload-height: 11.5rem;
   }
 }
 
-// One row in the controls list. The whole row is the button (or link), so
-// there's one big target instead of a card with a small button inside it.
+// One row in the controls list. The whole row is the button (or link), with a
+// button-styled CTA on the right so it reads as clickable at a glance.
 .grant-action {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'icon text cta';
   align-items: center;
   gap: 0.875rem;
   width: 100%;
@@ -608,15 +609,29 @@ $grant-upload-height: 11.5rem;
 
   &:hover:not(:disabled),
   &:focus-visible {
-    background-color: rgba(140, 150, 165, 0.1);
+    background-color: rgba(140, 150, 165, 0.08);
 
     .grant-action__cta {
-      color: inherit;
+      background-color: darken($white, 5%);
+
+      html[data-dark='true'] & {
+        background-color: lighten($darkless, 5%);
+      }
     }
 
-    .grant-action__chevron {
-      transform: translateX(2px) rotate(-45deg);
+    .grant-action__arrow {
+      transform: translate(1.5px, -1.5px);
     }
+  }
+
+  // Narrow: the CTA drops under the description so its label never gets cut.
+  @container grant-pay (max-width: 30rem) {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'icon text'
+      '. cta';
+    row-gap: 0.625rem;
+    align-items: start;
   }
 
   &:focus-visible {
@@ -631,6 +646,7 @@ $grant-upload-height: 11.5rem;
 }
 
 .grant-action__icon {
+  grid-area: icon;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -649,6 +665,7 @@ $grant-upload-height: 11.5rem;
 }
 
 .grant-action__text {
+  grid-area: text;
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
@@ -666,29 +683,36 @@ $grant-upload-height: 11.5rem;
   color: map-get($palette, muted);
 }
 
+// Mirrors `.btn`, but as a span — the row around it is the real control.
 .grant-action__cta {
+  grid-area: cta;
+  justify-self: end;
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
+  height: 34px;
+  padding: 0 0.875rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-border);
+  background-color: $white;
+  color: $black;
   font-size: 0.875rem;
   font-weight: 600;
   white-space: nowrap;
-  color: map-get($palette, muted);
-  transition: color 0.125s ease-in-out;
+  transition: background-color 0.125s ease-in-out;
 
-  // On a phone the row itself says what it does; keep just the arrow.
+  html[data-dark='true'] & {
+    background-color: $darkless;
+    color: $snow;
+  }
+
   @container grant-pay (max-width: 30rem) {
-    font-size: 0;
-    gap: 0;
+    justify-self: start;
   }
 }
 
-.grant-action__chevron {
-  width: 0.45rem;
-  height: 0.45rem;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  transform: rotate(-45deg);
+.grant-action__arrow {
+  flex: 0 0 auto;
   transition: transform 0.125s ease-in-out;
 }
 

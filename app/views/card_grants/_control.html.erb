@@ -1,6 +1,6 @@
 <%# locals: (icon:, title:, description:, cta:, tone: "muted", external: false) %>
 
-<%# Body of one row in the grant controls list. The row itself is the button or link, so everything in here is inline. %>
+<%# Body of one row in the grant controls list. The row itself is the button or link (so everything in here is inline); the CTA just looks like a button so it's obvious the row is clickable. %>
 <span class="grant-action__icon grant-action__icon--<%= tone %>"><%= inline_icon icon, size: 22 %></span>
 <span class="grant-action__text">
   <span class="grant-action__title"><%= title %></span>
@@ -9,8 +9,9 @@
 <span class="grant-action__cta">
   <%= cta %>
   <% if external %>
-    <%= inline_icon "external", size: 16 %>
-  <% else %>
-    <span class="grant-action__chevron" aria-hidden="true"></span>
+    <%# Opens in a new tab: arrow pointing up and out. %>
+    <svg class="grant-action__arrow" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M3 9l6-6M4 3h5v5" />
+    </svg>
   <% end %>
 </span>
