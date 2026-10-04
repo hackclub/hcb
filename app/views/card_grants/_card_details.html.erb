@@ -1,128 +1,136 @@
 <%# locals: (card_grant:) %>
 
-<% if (stripe_card = card_grant.stripe_card).present? %>
-  <% cardholder = stripe_card.cardholder %>
-  <% owner = stripe_card.user == current_user && stripe_card.virtual? %>
-  <% revealed = owner && @show_card_details %>
-  <% show_fields = card_grant.user == current_user || current_user&.auditor? %>
+<div class="grant-pay">
+  <% if (stripe_card = card_grant.stripe_card).present? %>
+    <% cardholder = stripe_card.cardholder %>
+    <% owner = stripe_card.user == current_user && stripe_card.virtual? %>
+    <% revealed = owner && @show_card_details %>
+    <% show_fields = card_grant.user == current_user || current_user&.auditor? %>
 
-  <div class="card grant-panel <%= "grant-panel--art-only" unless show_fields %>">
-    <div class="grant-panel__art">
-      <div class="<%= "scale-[0.98] transition-transform hover:scale-1" if card_grant.canceled? %>">
-        <%= render "stripe_cards/stripe_card", stripe_card:, headless: true %>
-      </div>
-      <% if owner %>
-        <%= link_to card_grant_path(card_grant, show_details: (!@show_card_details).to_s),
-                    class: "btn w-full mt-4",
-                    data: { turbo: true } do %>
-          <%= inline_icon revealed ? "view-fill" : "view" %>
-          <%= revealed ? "Hide details" : "Show details" %>
+    <div class="card grant-panel <%= "grant-panel--art-only" unless show_fields %>">
+      <div class="grant-panel__art">
+        <div class="<%= "scale-[0.98] transition-transform hover:scale-1" if card_grant.canceled? %>">
+          <%= render "stripe_cards/stripe_card", stripe_card:, headless: true %>
+        </div>
+        <% if owner %>
+          <%= link_to card_grant_path(card_grant, show_details: (!@show_card_details).to_s),
+                      class: "btn w-full mt-4",
+                      data: { turbo: true } do %>
+            <%= inline_icon revealed ? "view-fill" : "view" %>
+            <%= revealed ? "Hide details" : "Show details" %>
+          <% end %>
         <% end %>
+      </div>
+
+      <% fields = capture do %>
+        <div class="grant-panel__group">
+          <p class="grant-panel__heading">Card</p>
+
+          <div class="grant-row fs-mask">
+            <span class="grant-row__label">Name on card</span>
+            <span class="grant-row__value"><%= copy_to_clipboard(stripe_card.user.name, tooltip_direction: "w") %></span>
+          </div>
+
+          <div class="grant-row fs-mask">
+            <span class="grant-row__label">Card number</span>
+            <span class="grant-row__value font-mono">
+              <% if revealed %>
+                <%= copy_to_clipboard(stripe_card.full_card_number, tooltip_direction: "w") { stripe_card.formatted_card_number } %>
+              <% else %>
+                <%= stripe_card.hidden_card_number_with_last_four %>
+              <% end %>
+            </span>
+          </div>
+
+          <div class="grant-row fs-mask">
+            <span class="grant-row__label">
+              Expiry
+              <span class="text-yellow tooltipped tooltipped--e h-[18px]" aria-label="Enter this at checkout — it's not your grant's spend by date.">
+                <%= inline_icon "important", size: 18, style: "position: unset;" %>
+              </span>
+            </span>
+            <span class="grant-row__value font-mono">
+              <%= copy_to_clipboard(render_short_exp_date(stripe_card), tooltip_direction: "w") { render_exp_date stripe_card } %>
+            </span>
+          </div>
+
+          <div class="grant-row fs-mask">
+            <span class="grant-row__label">CVC</span>
+            <span class="grant-row__value font-mono">
+              <% if revealed %>
+                <%= copy_to_clipboard(stripe_card.cvc, tooltip_direction: "w") { stripe_card.cvc } %>
+              <% else %>
+                <%= stripe_card.hidden_cvc %>
+              <% end %>
+            </span>
+          </div>
+
+          <% if stripe_card.cash_withdrawal_enabled? %>
+            <div class="grant-row fs-mask"
+                 data-controller="pin"
+                 data-pin-card-id-value="<%= stripe_card.id %>"
+                 data-pin-stripe-id-value="<%= stripe_card.stripe_id %>"
+                 data-pin-stripe-api-key-value="<%= StripeService.publishable_key %>">
+              <span class="grant-row__label">PIN</span>
+              <span class="grant-row__value font-mono flex items-center gap-2 justify-end">
+                <span id="card-pin">••••</span>
+                <%= inline_icon "view", class: "pointer align-middle", "data-action": "click->pin#view" %>
+              </span>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="grant-panel__group">
+          <p class="grant-panel__heading">Billing address</p>
+
+          <div class="grant-row fs-mask">
+            <span class="grant-row__label">
+              Street
+              <% if stripe_card.user == current_user && cardholder.default_billing_address? %>
+                <%= link_to settings_address_path, class: "info tooltipped tooltipped--e", "aria-label": "This is HCB's billing address, not your home address. You can change it in your settings.", style: "display: flex;", data: { turbo: false } do %>
+                  <%= inline_icon "info", size: 18, style: "position: unset;" %>
+                <% end %>
+              <% end %>
+            </span>
+            <span class="grant-row__value">
+              <%= copy_to_clipboard([cardholder.stripe_billing_address_line1, cardholder.stripe_billing_address_line2.presence].compact.join(" "), tooltip_direction: "w") do %>
+                <%= cardholder.stripe_billing_address_line1 %>
+                <%= cardholder.stripe_billing_address_line2.presence %>
+              <% end %>
+            </span>
+          </div>
+
+          <div class="grant-row fs-mask">
+            <span class="grant-row__label">City</span>
+            <span class="grant-row__value"><%= copy_to_clipboard(cardholder.stripe_billing_address_city, tooltip_direction: "w") %></span>
+          </div>
+
+          <div class="grant-row fs-mask">
+            <span class="grant-row__label">State</span>
+            <span class="grant-row__value"><%= copy_to_clipboard(cardholder.stripe_billing_address_state, tooltip_direction: "w") %></span>
+          </div>
+
+          <div class="grant-row fs-mask">
+            <span class="grant-row__label">ZIP</span>
+            <span class="grant-row__value"><%= copy_to_clipboard(stripe_card.stripe_cardholder.address_postal_code, tooltip_direction: "w") %></span>
+          </div>
+
+          <% if stripe_card.user.pretty_phone_number.presence %>
+            <div class="grant-row fs-mask">
+              <span class="grant-row__label">Phone</span>
+              <span class="grant-row__value"><%= copy_to_clipboard(stripe_card.user.pretty_phone_number, tooltip_direction: "w") %></span>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if card_grant.user == current_user %>
+        <div class="grant-panel__fields"><%= fields %></div>
+      <% elsif current_user&.auditor? %>
+        <% admin_tool("grant-panel__fields") do %><%= fields %><% end %>
       <% end %>
     </div>
+  <% end %>
 
-    <% fields = capture do %>
-      <div class="grant-row fs-mask">
-        <span class="grant-row__label">Name on card</span>
-        <span class="grant-row__value"><%= copy_to_clipboard(stripe_card.user.name, tooltip_direction: "w") %></span>
-      </div>
-
-      <div class="grant-row fs-mask">
-        <span class="grant-row__label">Card number</span>
-        <span class="grant-row__value font-mono">
-          <% if revealed %>
-            <%= copy_to_clipboard(stripe_card.full_card_number, tooltip_direction: "w") { stripe_card.formatted_card_number } %>
-          <% else %>
-            <%= stripe_card.hidden_card_number_with_last_four %>
-          <% end %>
-        </span>
-      </div>
-
-      <div class="grant-row fs-mask">
-        <span class="grant-row__label">
-          Expiry
-          <span class="text-yellow tooltipped tooltipped--e h-[18px]" aria-label="Enter this at checkout — it's not your grant's spend by date.">
-            <%= inline_icon "important", size: 18, style: "position: unset;" %>
-          </span>
-        </span>
-        <span class="grant-row__value font-mono">
-          <%= copy_to_clipboard(render_short_exp_date(stripe_card), tooltip_direction: "w") { render_exp_date stripe_card } %>
-        </span>
-      </div>
-
-      <div class="grant-row fs-mask">
-        <span class="grant-row__label">CVC</span>
-        <span class="grant-row__value font-mono">
-          <% if revealed %>
-            <%= copy_to_clipboard(stripe_card.cvc, tooltip_direction: "w") { stripe_card.cvc } %>
-          <% else %>
-            <%= stripe_card.hidden_cvc %>
-          <% end %>
-        </span>
-      </div>
-
-      <% if stripe_card.cash_withdrawal_enabled? %>
-        <div class="grant-row fs-mask"
-             data-controller="pin"
-             data-pin-card-id-value="<%= stripe_card.id %>"
-             data-pin-stripe-id-value="<%= stripe_card.stripe_id %>"
-             data-pin-stripe-api-key-value="<%= StripeService.publishable_key %>">
-          <span class="grant-row__label">PIN</span>
-          <span class="grant-row__value font-mono flex items-center gap-2 justify-end">
-            <span id="card-pin">••••</span>
-            <%= inline_icon "view", class: "pointer align-middle", "data-action": "click->pin#view" %>
-          </span>
-        </div>
-      <% end %>
-
-      <p class="eyebrow mt-4 mb-1">Billing address</p>
-
-      <div class="grant-row fs-mask">
-        <span class="grant-row__label">
-          Street
-          <% if stripe_card.user == current_user && cardholder.default_billing_address? %>
-            <%= link_to settings_address_path, class: "info tooltipped tooltipped--e", "aria-label": "This is HCB's billing address, not your home address. You can change it in your settings.", style: "display: flex;", data: { turbo: false } do %>
-              <%= inline_icon "info", size: 18, style: "position: unset;" %>
-            <% end %>
-          <% end %>
-        </span>
-        <span class="grant-row__value">
-          <%= copy_to_clipboard([cardholder.stripe_billing_address_line1, cardholder.stripe_billing_address_line2.presence].compact.join(" "), tooltip_direction: "w") do %>
-            <%= cardholder.stripe_billing_address_line1 %>
-            <%= cardholder.stripe_billing_address_line2.presence %>
-          <% end %>
-        </span>
-      </div>
-
-      <div class="grant-row fs-mask">
-        <span class="grant-row__label">City</span>
-        <span class="grant-row__value"><%= copy_to_clipboard(cardholder.stripe_billing_address_city, tooltip_direction: "w") %></span>
-      </div>
-
-      <div class="grant-row fs-mask">
-        <span class="grant-row__label">State</span>
-        <span class="grant-row__value"><%= copy_to_clipboard(cardholder.stripe_billing_address_state, tooltip_direction: "w") %></span>
-      </div>
-
-      <div class="grant-row fs-mask">
-        <span class="grant-row__label">ZIP</span>
-        <span class="grant-row__value"><%= copy_to_clipboard(stripe_card.stripe_cardholder.address_postal_code, tooltip_direction: "w") %></span>
-      </div>
-
-      <% if stripe_card.user.pretty_phone_number.presence %>
-        <div class="grant-row fs-mask">
-          <span class="grant-row__label">Phone</span>
-          <span class="grant-row__value"><%= copy_to_clipboard(stripe_card.user.pretty_phone_number, tooltip_direction: "w") %></span>
-        </div>
-      <% end %>
-    <% end %>
-
-    <% if card_grant.user == current_user %>
-      <div class="grant-panel__fields"><%= fields %></div>
-    <% elsif current_user&.auditor? %>
-      <% admin_tool("grant-panel__fields") do %><%= fields %><% end %>
-    <% end %>
-  </div>
-<% end %>
-
-<%= render partial: "card_grants/actions", locals: { card_grant: } %>
+  <%= render partial: "card_grants/actions", locals: { card_grant: } %>
+</div>

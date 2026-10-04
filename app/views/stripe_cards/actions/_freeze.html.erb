@@ -6,18 +6,14 @@
   <% defrost_tooltip = subtitle.presence || "Instantly re-freeze #{stripe_card.user == current_user ? "your" : stripe_card.user.possessive_name} card anytime" %>
   <% defrost_subtitle = policy(stripe_card).defrost? ? defrost_tooltip : "You don't have permission to perform this action" %>
   <% if control %>
-    <div class="grant-control">
-      <strong><%= label.presence || "Defrost" %></strong>
-      <p class="text-sm opacity-60"><%= defrost_subtitle %></p>
-      <%= button_to defrost_stripe_card_path(stripe_card),
-                    method: :post,
-                    form_class: "contents",
-                    class: "btn",
-                    disabled: !policy(stripe_card).defrost?,
-                    data: { turbo: true, turbo_frame: "_top" } do %>
-        Defrost
-      <% end %>
-    </div>
+    <%= button_to defrost_stripe_card_path(stripe_card),
+                  method: :post,
+                  form_class: "contents",
+                  class: "grant-action",
+                  disabled: !policy(stripe_card).defrost?,
+                  data: { turbo: true, turbo_frame: "_top" } do %>
+      <%= render "card_grants/control", icon: "freeze", tone: "info", title: label.presence || "Defrost", description: defrost_subtitle, cta: "Defrost" %>
+    <% end %>
   <% else %>
     <%= button_to defrost_stripe_card_path(stripe_card),
                   method: :post,
@@ -36,18 +32,14 @@
   <% freeze_tooltip = subtitle.presence || label.presence || "Instantly freeze #{stripe_card.user == current_user ? "your" : stripe_card.user.possessive_name} card anytime" %>
   <% freeze_subtitle = policy(stripe_card).freeze? ? freeze_tooltip : "You don't have permission to perform this action" %>
   <% if control %>
-    <div class="grant-control">
-      <strong><%= label.presence || "Freeze" %></strong>
-      <p class="text-sm opacity-60"><%= freeze_subtitle %></p>
-      <%= button_to freeze_stripe_card_path(stripe_card),
-                    method: :post,
-                    form_class: "contents",
-                    class: "btn",
-                    disabled: !policy(stripe_card).freeze?,
-                    data: { turbo: true, turbo_frame: "_top" } do %>
-        Freeze
-      <% end %>
-    </div>
+    <%= button_to freeze_stripe_card_path(stripe_card),
+                  method: :post,
+                  form_class: "contents",
+                  class: "grant-action",
+                  disabled: !policy(stripe_card).freeze?,
+                  data: { turbo: true, turbo_frame: "_top" } do %>
+      <%= render "card_grants/control", icon: "freeze", tone: "info", title: label.presence || "Freeze", description: freeze_subtitle, cta: "Freeze" %>
+    <% end %>
   <% else %>
     <%= button_to freeze_stripe_card_path(stripe_card),
                   method: :post,
@@ -64,11 +56,9 @@
   <% end %>
 <% elsif !stripe_card&.canceled? %>
   <% if control %>
-    <div class="grant-control">
-      <strong>Freeze</strong>
-      <p class="text-sm opacity-60">This card cannot be frozen because it has not been activated</p>
-      <button type="button" class="btn" disabled>Freeze</button>
-    </div>
+    <button type="button" class="grant-action" disabled>
+      <%= render "card_grants/control", icon: "freeze", tone: "info", title: "Freeze", description: "This card cannot be frozen because it has not been activated", cta: "Freeze" %>
+    </button>
   <% else %>
     <button type="button" class="btn btn--list-item" disabled>
       <%= inline_icon "freeze" %>

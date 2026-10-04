@@ -5,18 +5,14 @@
 <% cancel_data = { turbo: true, turbo_frame: "_top", turbo_confirm: "Are you sure? This will irreversibly transfer the remaining balance on this grant BACK to your account.", turbo_confirm_danger: true } %>
 
 <% if variant.to_s == "control" %>
-  <div class="grant-control">
-    <strong>Cancel grant</strong>
-    <p class="text-sm opacity-60"><%= label.presence || cancel_tooltip %></p>
-    <%= button_to cancel_path,
-                  method: :post,
-                  form_class: "contents",
-                  class: "btn",
-                  disabled: !policy(card_grant).cancel?,
-                  data: cancel_data do %>
-      Cancel grant
-    <% end %>
-  </div>
+  <%= button_to cancel_path,
+                method: :post,
+                form_class: "contents",
+                class: "grant-action",
+                disabled: !policy(card_grant).cancel?,
+                data: cancel_data do %>
+    <%= render "card_grants/control", icon: "reply", tone: "warning", title: "Cancel grant", description: label.presence || cancel_tooltip, cta: "Cancel" %>
+  <% end %>
 <% else %>
   <%= button_to cancel_path,
                 method: :post,
