@@ -591,3 +591,59 @@ $grant-upload-height: 11.5rem;
 .grant-comments__body {
   margin-top: 0.875rem;
 }
+
+// Activation pledges. Each statement is a full-width clickable row rather than
+// a bare checkbox, and lights up once it's been agreed to.
+.grant-pledge {
+  padding: 0;
+  overflow: hidden;
+}
+
+.grant-pledge__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  margin: 0;
+  padding: 1rem 1.25rem;
+  font-weight: 400;
+  line-height: 1.45;
+  cursor: pointer;
+  transition: background-color 0.125s ease-in-out;
+
+  + .grant-pledge__row {
+    @include grant-hairline(top);
+  }
+
+  &:hover {
+    background-color: rgba(140, 150, 165, 0.06);
+  }
+
+  &:has(input:checked) {
+    background-color: rgba(map-get($palette, success), 0.06);
+  }
+
+  input[type='checkbox'] {
+    flex: 0 0 auto;
+    width: 1.125rem;
+    height: 1.125rem;
+    margin: 0.125rem 0 0;
+    accent-color: map-get($palette, success);
+    cursor: pointer;
+  }
+}
+
+.grant-pledge__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
+  font-size: 0.875rem;
+  background: rgba(140, 150, 165, 0.06);
+  @include grant-hairline(top);
+
+  .btn {
+    flex: 0 0 auto;
+  }
+}

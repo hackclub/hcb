@@ -9,17 +9,7 @@
 <% awaiting_activation = own && @card_grant.pending_invite? %>
 <% stripe_card = @card_grant.stripe_card %>
 
-<% footer = nil %>
-<% if awaiting_activation %>
-  <% footer = capture do %>
-    <div class="flex items-baseline flex-wrap gap-x-2">
-      <h3 class="m-0 p-0">Card activation</h3>
-      <p class="m-0 muted">One more thing before you can start spending.</p>
-    </div>
-  <% end %>
-<% end %>
-
-<%= render partial: "card_grants/hero", locals: { card_grant: @card_grant, footer: } %>
+<%= render partial: "card_grants/hero", locals: { card_grant: @card_grant } %>
 
 <%= render partial: "card_grants/canceled_warning", locals: { card_grant: @card_grant } %>
 
