@@ -1,0 +1,16 @@
+<%# locals: (id:, label:, items:) %>
+
+<div class="grant-drawer" id="<%= id %>-drawer">
+  <div class="grant-drawer__head">
+    <span class="grant-strip__label"><%= label %></span>
+    <label class="grant-drawer__close" for="<%= id %>">
+      <%= inline_icon "view-close", size: 18 %>
+      Hide
+    </label>
+  </div>
+  <ul class="grant-chips">
+    <% items.each do |item| %>
+      <li class="grant-chip"><%= item %></li>
+    <% end %>
+  </ul>
+</div>

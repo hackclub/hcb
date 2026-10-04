@@ -2,47 +2,40 @@
 
 <% if card_grant.pending_invite? %>
   <%# Prompt user to create a Stripe Card %>
-  <div class="flex flex-col w-100">
-    <div class="w-full">
-      <div class="card border b--info">
-        <h2 class="mt-0">Activate your grant card</h2>
-        <p>
-          Before you can start spending, you need to agree to the Card Issuing Terms and pledge to use the card responsibly.
-        </p>
-        <%= form_with url: activate_card_grant_path(card_grant) do |form| %>
-          <div class="field field--checkbox mb2" style="display: grid; grid-template-columns: min-content 1fr;">
-            <%= form.check_box :purpose, required: true %>
-            <%= form.label :purpose do %>
-              I will only use this card for the intended purpose
-              <% if card_grant.purpose.present? %>
-                (<strong><%= card_grant.purpose %></strong>)
-              <% end %>
-              and adhere to the instructions provided by <%= card_grant.event.name + (card_grant.instructions.present? ? ":" : "") %>
-            <% end %>
-            <% if card_grant.instructions.present? %>
-              <div></div> <%# this empty <div> exists for layout purposes to handle checkbox alignment %>
-              <div class="card card--sunken py-0">
-                <%= MarkdownService.instance.render(card_grant.instructions) %>
-              </div>
-            <% end %>
-          </div>
-          <div class="field field--checkbox mb2">
-            <%= form.check_box :policy, required: true %>
-            <%= form.label :policy do %>
-              I will abide by the <%= link_to "Code of Conduct", "https://hackclub.com/conduct", target: :_blank %> and understand that fraudulent activity will result in a ban
-            <% end %>
-          </div>
-          <div class="field field--checkbox mb2">
-            <%= form.check_box :terms, required: true %>
-            <%= form.label :terms do %>
-              I agree to the <%= link_to "Card Issuing Terms", "https://stripe.com/legal/issuing/celtic-authorized-user-terms", target: :_blank %>
-            <% end %>
-          </div>
-          <div class="actions">
-            <%= form.submit "Start spending" %>
-          </div>
+  <h2 class="grant-section">Activate your grant card</h2>
+  <p class="muted mt-0 mb-3">
+    One more step before you can start spending: agree to the following and we'll issue your card.
+  </p>
+
+  <%= form_with url: activate_card_grant_path(card_grant), class: "card grant-pledge" do |form| %>
+    <%= form.label :purpose, class: "grant-pledge__row" do %>
+      <%= form.check_box :purpose, required: true %>
+      <span>
+        I will only use this card for the intended purpose
+        <% if card_grant.purpose.present? %>
+          (<strong><%= card_grant.purpose %></strong>)
         <% end %>
-      </div>
+        and adhere to the instructions provided by <%= card_grant.event.name %><%= " above" if card_grant.instructions.present? %>
+      </span>
+    <% end %>
+
+    <%= form.label :policy, class: "grant-pledge__row" do %>
+      <%= form.check_box :policy, required: true %>
+      <span>
+        I will abide by the <%= link_to "Code of Conduct", "https://hackclub.com/conduct", target: :_blank %> and understand that fraudulent activity will result in a ban
+      </span>
+    <% end %>
+
+    <%= form.label :terms, class: "grant-pledge__row" do %>
+      <%= form.check_box :terms, required: true %>
+      <span>
+        I agree to the <%= link_to "Card Issuing Terms", "https://stripe.com/legal/issuing/celtic-authorized-user-terms", target: :_blank %>
+      </span>
+    <% end %>
+
+    <div class="grant-pledge__footer">
+      <p class="m-0 muted">Your virtual card is ready to use as soon as you activate it.</p>
+      <%= form.submit "Start spending", class: "btn bg-success" %>
     </div>
-  </div>
+  <% end %>
 <% end %>
