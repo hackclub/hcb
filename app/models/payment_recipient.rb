@@ -25,6 +25,8 @@
 class PaymentRecipient < ApplicationRecord
   has_paper_trail
 
+  include Hashid::Rails
+
   default_scope { order_by_last_used }
 
   belongs_to :event
@@ -48,7 +50,7 @@ class PaymentRecipient < ApplicationRecord
 
   def to_safe_hash
     base = {
-      id:,
+      id: hashid,
       name:,
       email:,
     }
