@@ -255,21 +255,61 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
 .grant-controls {
   margin: 0;
   padding: 1.25rem 0.75rem 0.75rem;
+  overflow: hidden;
 
   > .grant-panel__heading {
     padding: 0 0.75rem;
   }
 }
 
+// Two columns when there's room. Most controls render conditionally, so the
+// view flags an odd one out as `--wide` and it takes the whole row instead of
+// sitting alone in the left column.
 .grant-controls__grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 0.125rem 0.5rem;
   margin-top: 0.375rem;
+}
+
+// Hairlines between rows (and between the two columns when there are two),
+// so each control reads as its own item.
+.grant-controls__item {
+  display: grid;
+  min-width: 0;
+  padding: 0.375rem 0;
+
+  + .grant-controls__item {
+    @include grant-hairline(top);
+  }
 
   @container grant-pay (min-width: 48rem) {
+    + .grant-controls__item {
+      border-top: 0;
+    }
+
+    &:nth-child(n + 3) {
+      @include grant-hairline(top);
+    }
+
+    &:nth-child(odd):not(.grant-controls__item--wide) {
+      padding-right: 0.5rem;
+      @include grant-hairline(right);
+    }
+
+    &:nth-child(even) {
+      padding-left: 0.5rem;
+    }
+  }
+}
+
+@container grant-pay (min-width: 48rem) {
+  .grant-controls__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+.grant-controls__item--wide {
+  grid-column: 1 / -1;
 }
 
 // Horizontal strip of facts, hairline-separated.
