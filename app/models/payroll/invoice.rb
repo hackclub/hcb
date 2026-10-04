@@ -74,7 +74,7 @@ module Payroll
     def state_color
       case aasm_state.to_sym
       when :approved then "success"
-      when :rejected then "muted"
+      when :rejected then "error"
       else "warning"
       end
     end
