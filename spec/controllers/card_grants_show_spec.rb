@@ -49,5 +49,30 @@ RSpec.describe CardGrantsController do
       expect(response.body).not_to include("Billing address")
       expect(response.body).not_to include("Show details")
     end
+
+    it "shows defrost copy, not the freeze copy, once the grantee's card is frozen" do
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(user_id: card_grant.stripe_card.user.id)
+      card_grant.stripe_card.update_columns(stripe_status: "inactive")
+      create_session(card_grant.user.reload, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response.body).to include("Card frozen")
+      expect(response.body).not_to include("Pause spending instantly")
+    end
+
+    it "explains why cancel is disabled for a member who can't cancel" do
+      create(:organizer_position, event:, role: :manager)
+      member = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      card_grant = create(:card_grant, event:)
+      create_session(member, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response.body).to include("You don&#39;t have permission to perform this action")
+      expect(response.body).not_to include("Return the balance to")
+    end
   end
 end

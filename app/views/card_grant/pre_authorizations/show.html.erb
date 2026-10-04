@@ -65,7 +65,7 @@
           Product page
         </span>
         <% if @pre_authorization.product_url.present? %>
-          <%= link_to @pre_authorization.product_url, @pre_authorization.product_url, target: :_blank, rel: "noopener", class: "grant-row__value" %>
+          <%= ugc_link_to @pre_authorization.product_url, @pre_authorization.product_url, target: :_blank, rel: "noopener", class: "grant-row__value" %>
         <% else %>
           <span class="grant-row__value muted">Not provided</span>
         <% end %>

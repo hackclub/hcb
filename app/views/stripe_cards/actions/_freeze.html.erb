@@ -12,7 +12,8 @@
                   class: "grant-action",
                   disabled: !policy(stripe_card).defrost?,
                   data: { turbo: true, turbo_frame: "_top" } do %>
-      <%= render "card_grants/control", icon: "freeze", tone: "info", title: label.presence || "Defrost", description: defrost_subtitle, cta: "Defrost" %>
+      <%# `label`/`subtitle` describe freezing, so the frozen state has its own copy. %>
+      <%= render "card_grants/control", icon: "freeze", tone: "info", title: "Card frozen", description: policy(stripe_card).defrost? ? "Defrost it to start spending again" : "You don't have permission to perform this action", cta: "Defrost" %>
     <% end %>
   <% else %>
     <%= button_to defrost_stripe_card_path(stripe_card),

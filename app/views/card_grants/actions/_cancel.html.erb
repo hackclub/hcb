@@ -11,7 +11,7 @@
                 class: "grant-action",
                 disabled: !policy(card_grant).cancel?,
                 data: cancel_data do %>
-    <%= render "card_grants/control", icon: "reply", tone: "warning", title: "Cancel grant", description: label.presence || cancel_tooltip, cta: "Cancel" %>
+    <%= render "card_grants/control", icon: "reply", tone: "warning", title: "Cancel grant", description: policy(card_grant).cancel? ? label.presence || cancel_tooltip : cancel_tooltip, cta: "Cancel" %>
   <% end %>
 <% else %>
   <%= button_to cancel_path,
