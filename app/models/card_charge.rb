@@ -14,6 +14,8 @@
 #
 # Indexes
 #
+#  index_card_charges_on_merchant_category                  (merchant_category)
+#  index_card_charges_on_merchant_network_id                (merchant_network_id)
 #  index_card_charges_on_raw_pending_stripe_transaction_id  (raw_pending_stripe_transaction_id) UNIQUE
 #  index_card_charges_on_stripe_card_id                     (stripe_card_id)
 #

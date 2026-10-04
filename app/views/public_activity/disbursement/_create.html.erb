@@ -1,6 +1,8 @@
+<%# locals: (activity:, p:, current_user: nil, **) %>
+
 <% source = activity.trackable.source_event %>
 <% destination = activity.trackable.destination_event %>
-<% current_user ||= local_assigns[:p][:current_user] %>
+<% current_user ||= p[:current_user] %>
 
 <% if activity.trackable.card_grant.present? %>
   <%= render layout: "/public_activity/common", locals: { activity:, current_user: } do %>

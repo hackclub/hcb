@@ -22,7 +22,7 @@ class LedgersController < ApplicationController
       flash.now[:error] = "Query error: #{e.message}"
 
       Ledger::Query.new({}).execute(ledgers: [@ledger])
-    end.preload(:tags, hcb_code: :event).page(params[:page])
+    end.page(params[:page])
   end
 
 end
