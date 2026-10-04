@@ -15,11 +15,11 @@
     <% else %>
       <% controls << render("card_grants/actions/cancel", card_grant:, variant: "control", label: "Return the balance to #{card_grant.event.name}") %>
     <% end %>
-    <% controls << render("card_grants/actions/support", card_grant:) %>
   <% end %>
   <% controls.reject!(&:blank?) %>
+  <% support = render("card_grants/actions/support", card_grant:) if organizer_signed_in?(as: :member) || own %>
 
-  <% if controls.any? %>
+  <% if controls.any? || support.present? %>
     <div class="card grant-controls">
       <p class="grant-panel__heading">Controls</p>
       <div class="grant-controls__grid">
@@ -29,6 +29,9 @@
           </div>
         <% end %>
       </div>
+      <% if support.present? %>
+        <div class="grant-controls__footer"><%= support %></div>
+      <% end %>
     </div>
   <% end %>
 <% end %>

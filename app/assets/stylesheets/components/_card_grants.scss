@@ -271,35 +271,9 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
   margin-top: 0.375rem;
 }
 
-// Hairlines between rows (and between the two columns when there are two),
-// so each control reads as its own item.
 .grant-controls__item {
   display: grid;
   min-width: 0;
-  padding: 0.375rem 0;
-
-  + .grant-controls__item {
-    @include grant-hairline(top);
-  }
-
-  @container grant-pay (min-width: 48rem) {
-    + .grant-controls__item {
-      border-top: 0;
-    }
-
-    &:nth-child(n + 3) {
-      @include grant-hairline(top);
-    }
-
-    &:nth-child(odd):not(.grant-controls__item--wide) {
-      padding-right: 0.5rem;
-      @include grant-hairline(right);
-    }
-
-    &:nth-child(even) {
-      padding-left: 0.5rem;
-    }
-  }
 }
 
 @container grant-pay (min-width: 48rem) {
@@ -310,6 +284,16 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
 
 .grant-controls__item--wide {
   grid-column: 1 / -1;
+}
+
+// "Need help?" sits apart from the actions in a tinted strip along the bottom
+// of the card, the same treatment as the limits note in step 1.
+.grant-controls__footer {
+  display: grid;
+  margin: 0.75rem -0.75rem -0.75rem;
+  padding: 0.375rem 0.75rem;
+  background: rgba(140, 150, 165, 0.1);
+  @include grant-hairline(top);
 }
 
 // Horizontal strip of facts, hairline-separated.
@@ -658,10 +642,6 @@ $grant-upload-height: 11.5rem;
         background-color: lighten($darkless, 5%);
       }
     }
-
-    .grant-action__arrow {
-      transform: translate(1.5px, -1.5px);
-    }
   }
 
   // Narrow: the CTA drops under the description so its label never gets cut.
@@ -749,11 +729,6 @@ $grant-upload-height: 11.5rem;
   @container grant-pay (max-width: 30rem) {
     justify-self: start;
   }
-}
-
-.grant-action__arrow {
-  flex: 0 0 auto;
-  transition: transform 0.125s ease-in-out;
 }
 
 .grant-comments__summary {
