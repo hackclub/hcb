@@ -45,6 +45,9 @@
           <% if pt.declined? %>
             <% if pt.local_hcb_code.stripe_reversed_by_merchant? %>
               <%= badge_for "Reversed", class: "bg-info m0 mr1" %>
+            <% elsif pt.raw_pending_stripe_transaction_id.nil? %>
+              <%# Only card charges have a decline reason to explain. %>
+              <%= badge_for "Declined", class: "bg-error m0 mr1" %>
             <% else %>
               <action data-behavior="modal_trigger" data-modal="declined_information_pt_<%= instance %>" class="pointer" tabindex="0">
                 <span class="badge m-0 pr-[6px] mr-2 bg-error">
