@@ -3,6 +3,7 @@
 module Maintenance
   # Imports the old transfer system's recipients as payees: one managed legal
   # entity per email per event, with each distinct set of saved details as a payout method.
+  # A payee none of whose details import is left without a legal entity.
   class ImportPaymentRecipientPayeesTask < MaintenanceTasks::Task
     # payment_model => [association on the recipient, states in which the money left]
     SENT_TRANSFERS = {
@@ -45,14 +46,20 @@ module Maintenance
 
       ActiveRecord::Base.transaction do
         legal_entity = LegalEntity.create!(managing_event: event, name:)
-        event.payees.create!(display_name: name, email:, legal_entity:, imported_at: Time.current)
 
-        default = true
+        imported = 0
         payout_details_for(recipients).each do |recipient, (details_class, attributes)|
-          next unless create_payout_method(legal_entity, details_class, attributes, recipient, default:)
-
-          default = false
+          imported += 1 if create_payout_method(legal_entity, details_class, attributes, recipient, default: imported.zero?)
         end
+
+        # With nothing carried over, the payee onboards like any other rather
+        # than keeping an entity that holds nothing but a name.
+        if imported.zero?
+          legal_entity.destroy!
+          legal_entity = nil
+        end
+
+        event.payees.create!(display_name: name, email:, legal_entity:, imported_at: Time.current)
       end
     end
 
@@ -79,7 +86,7 @@ module Maintenance
         make_default: default
       )
 
-      # A savepoint, so a database error here can't abort the payee's transaction.
+      # A savepoint, so a database error here can't abort the rest of the import.
       return true if ActiveRecord::Base.transaction(requires_new: true) { service.run }
 
       skipped(recipient, service.error_messages.to_sentence)

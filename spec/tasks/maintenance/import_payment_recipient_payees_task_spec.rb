@@ -114,10 +114,11 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
 
     expect(Rails.logger).to receive(:warn).with(/PaymentRecipient #{recipient.id} \(AchTransfer\) left behind/)
 
-    run_task
+    expect { run_task }.not_to change(LegalEntity, :count)
 
     payee = event.payees.sole
-    expect(payee.legal_entity.payout_methods).to be_empty
+    expect(payee).to be_imported
+    expect(payee.legal_entity).to be_nil
     expect(payee.display_name).to eq("Orpheus")
   end
 
@@ -155,10 +156,11 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
 
   it "leaves behind a wire whose saved details no longer make a valid method" do
     stub_column_institution(country_code: "GB")
-    wire_recipient(email: "orpheus@hackclub.com", address_line1: nil)
+    # SWIFT only carries the English alphabet.
+    wire_recipient(email: "orpheus@hackclub.com", address_line1: "1 Hack Lañe")
 
-    expect { run_task }.to change(Payee, :count).by(1)
-    expect(event.payees.sole.legal_entity.payout_methods).to be_empty
+    expect { run_task }.not_to change(LegalEntity, :count)
+    expect(event.payees.sole.legal_entity).to be_nil
   end
 
   it "collapses recipients that repeat the same details into one payout method" do
@@ -248,8 +250,8 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
       ActiveRecord::Base.connection.execute("SELECT 1/0")
     end
 
-    run_task
+    expect { run_task }.not_to change(LegalEntity, :count)
 
-    expect(event.payees.sole.legal_entity.payout_methods).to be_empty
+    expect(event.payees.sole.legal_entity).to be_nil
   end
 end
