@@ -55,6 +55,41 @@ RSpec.describe Payroll::PositionsController do
       expect(position.contracts.sole).to be_sent
     end
 
+    it "creates a fixed-amount position when the rate unit is contract" do
+      stub_docuseal_create
+      stub_docuseal_fetch
+
+      position_params[:contractor][:rate_unit] = "contract"
+      post :create, params: position_params
+
+      position = event.payroll_positions.last
+      expect(position).to be_fixed_rate
+      expect(position.rate_label).to eq("$25.00 (fixed)")
+    end
+
+    it "normalizes custom rate units and renders them in the rate label" do
+      stub_docuseal_create
+      stub_docuseal_fetch
+
+      position_params[:contractor][:rate_unit] = " Articles "
+      post :create, params: position_params
+
+      position = event.payroll_positions.last
+      expect(position.rate_unit).to eq("article")
+      expect(position.rate_label).to eq("$25.00 per article")
+    end
+
+    it "defaults the rate unit to hour when omitted" do
+      stub_docuseal_create
+      stub_docuseal_fetch
+
+      post :create, params: position_params
+
+      position = event.payroll_positions.last
+      expect(position.rate_unit).to eq("hour")
+      expect(position.rate_label).to eq("$25.00/hr")
+    end
+
     it "redirects to edit and flashes an error when DocuSeal is unreachable, without crashing" do
       stub_docuseal_create(status: 500)
 

@@ -31,5 +31,25 @@ RSpec.describe Payroll::PositionMailer, type: :mailer do
 
       expect(mail.reply_to).to include("manager@example.invalid", "creator@example.invalid")
     end
+
+    describe "#onboarding_reminder" do
+      it "is addressed to the contractor and points to the onboarding page" do
+        mail = described_class.with(position:).onboarding_reminder
+
+        expect(mail.to).to include(payee.email)
+        expect(mail.subject).to include(event.name)
+        expect(mail.reply_to).to include("manager@example.invalid", "creator@example.invalid")
+        expect(mail.body.encoded).to include("payroll_positions/#{position.hashid}")
+      end
+
+      it "goes to the legal entity's users when the contractor has an account" do
+        legal_entity_user = create(:user, email: "contractor@example.invalid")
+        payee.legal_entity.users << legal_entity_user
+
+        mail = described_class.with(position:).onboarding_reminder
+
+        expect(mail.to).to include("contractor@example.invalid")
+      end
+    end
   end
 end

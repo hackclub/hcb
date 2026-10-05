@@ -23,10 +23,18 @@ class LegalEntityPolicy < ApplicationPolicy
     member?
   end
 
+  def create?
+    member?
+  end
+
+  def set_legal_entity?
+    user.admin? || member?
+  end
+
   private
 
   def member?
-    record.users.include?(user)
+    record.emails.include?(user.email)
   end
 
 end

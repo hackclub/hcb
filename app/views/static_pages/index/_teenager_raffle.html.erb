@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <% end_date = Date.new(2026, 8, 1).prev_month.end_of_month %>
 
 <% if current_user.is_teenager? && Date.current <= end_date %>

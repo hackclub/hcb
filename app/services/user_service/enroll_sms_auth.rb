@@ -75,7 +75,7 @@ module UserService
     end
 
     def not_fresh_user?
-      @user.created_at >= 1.day.ago
+      @user.created_at < 1.day.ago
     end
 
   end

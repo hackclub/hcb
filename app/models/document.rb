@@ -7,7 +7,7 @@
 #  id             :bigint           not null, primary key
 #  aasm_state     :string           not null
 #  archived_at    :datetime
-#  category       :integer          default("general"), not null
+#  category       :integer          default(0), not null
 #  deleted_at     :datetime
 #  name           :text
 #  slug           :text

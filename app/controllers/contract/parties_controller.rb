@@ -45,6 +45,9 @@ class Contract
       if (@party.signee? && @contract.signed?) || @party.contractor?
         case @contract.contractable
         when Event::Application
+          # The applicant lands straight on their application's status page
+          # rather than the "thanks for signing" page, so celebrate there.
+          confetti!
           redirect_to application_path(@contract.contractable)
         when OrganizerPositionInvite
           redirect_to organizer_position_invite_path(@contract.contractable)
@@ -55,6 +58,10 @@ class Contract
         return
       end
 
+      if signed_in? && policy(@contract.contractable).show?
+        @contractable_link_label = @contract.contractable.contractable_link_label
+        @contractable_link_path = @contract.contractable.contractable_link_path
+      end
       confetti!
     end
 

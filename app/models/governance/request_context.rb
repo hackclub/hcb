@@ -6,7 +6,6 @@
 #
 #  id                          :bigint           not null, primary key
 #  action_name                 :string           not null
-#  authentication_session_type :string           not null
 #  controller_name             :string           not null
 #  http_method                 :string           not null
 #  ip_address                  :inet             not null
@@ -16,6 +15,7 @@
 #  created_at                  :datetime         not null
 #  updated_at                  :datetime         not null
 #  authentication_session_id   :bigint           not null
+#  authentication_session_type :string           not null
 #  impersonator_id             :bigint
 #  request_id                  :string           not null
 #  user_id                     :bigint           not null

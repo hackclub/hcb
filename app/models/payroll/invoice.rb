@@ -43,12 +43,12 @@ module Payroll
 
     has_one :event, through: :payroll_position
 
-    monetize :amount_cents, with_model_currency: :currency
+    monetize :amount_cents, with_model_currency: :currency, numericality: { greater_than: 0, on: :create }
 
     validates :currency, inclusion: { in: Money::Currency.all.map(&:iso_code) }
     validate :currency_matches_position
 
-    after_create_commit :notify_managers
+    after_create_commit :notify_manager
 
     aasm timestamps: true do
       state :submitted, initial: true
@@ -58,6 +58,7 @@ module Payroll
       event :mark_approved do
         after do |reviewed_by|
           update!(reviewed_by:)
+          copy_receipts_to_payment!
         end
         transitions from: :submitted, to: :approved
       end
@@ -67,6 +68,25 @@ module Payroll
           update!(reviewed_by:)
         end
         transitions from: :submitted, to: :rejected
+      end
+    end
+
+    # Returns false if the invoice was already reviewed or the event can't cover it.
+    def approve(reviewed_by:)
+      with_lock do
+        next false unless submitted?
+        next false if MoneyService.convert_to_usd(amount_cents, currency) > event.balance_available_v2_cents
+
+        update!(payment: Payment.create!(
+          payee: payroll_position.payee,
+          creator: reviewed_by,
+          amount_cents:,
+          currency:,
+          purpose: name,
+          classification: :general_services
+        ))
+        mark_approved!(reviewed_by)
+        true
       end
     end
 
@@ -80,7 +100,23 @@ module Payroll
 
     private
 
-    def notify_managers
+    # The document the contractor uploaded is the receipt for the payment their
+    # invoice triggers, so hand it over on approval. Payment::Attempt makes the
+    # same hand-off from payment to transfer, but only at the moment it creates
+    # the transfer — when the payee was ready to be paid straight away that
+    # already happened, so catch the transfer's HCB code up here too.
+    def copy_receipts_to_payment!
+      return if payment.nil?
+
+      [payment, payment.latest_payout&.local_hcb_code].compact.each do |receiptable|
+        Receipt.reupload(old_receiptable: self, new_receiptable: receiptable)
+      end
+    end
+
+    # Invoices uploaded and approved on a contractor's behalf need no review.
+    def notify_manager
+      return if approved?
+
       Payroll::InvoiceMailer.with(invoice: self).submitted.deliver_later
     end
 

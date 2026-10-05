@@ -1,0 +1,52 @@
+<% title "Welcome to #{@position.event.name}" %>
+<% page_sm %>
+<%= render "users/nav" %>
+
+<h1 class="heading border-0 mb-0">Welcome, <%= @position.payee.display_name %>!</h1>
+<p class="muted mt-0">
+  <%= @position.event.name %> is onboarding you as a contractor through HCB.
+</p>
+
+<article class="hcb-code">
+  <h2 class="h2 mt0 border-none flex items-center justify-between hcb-code--heading mb-0" style="gap: 1ch">
+    <span class="flex items-center py-3 gap-2 flex-grow">
+      <%= @position.title %>
+      <span class="badge h4 bg-<%= @position.status_color %> nowrap order-1"><%= @position.status_text %></span>
+    </span>
+  </h2>
+
+  <section class="hcb-code--info">
+    <p>
+      <strong>Rate</strong>
+      <%= "#{render_money @position.rate_cents}#{@position.rate_suffix}" %>
+    </p>
+    <p>
+      <strong>Period</strong>
+      <%= @position.period_label %>
+    </p>
+    <p>
+      <strong>Purpose</strong>
+      <%= @position.description %>
+    </p>
+    <% if @position.file.attached? %>
+      <p>
+        <strong>Agreement</strong>
+        <%= link_to "View attachment", url_for(@position.file) %>
+      </p>
+    <% end %>
+  </section>
+</article>
+
+<h3 class="mt-4 mb-2">Onboarding</h3>
+<%= render "payroll/positions/onboarding_flow",
+      position: @position, perspective: :contractor, contractor_party: @contractor_party %>
+
+<% if @position.onboarding_complete? %>
+  <%= render "application/callout", type: "success", title: "You're all set!", class: "mt-4" do %>
+    Your onboarding is complete. <%= @position.event.name %> can now pay you for this position.
+  <% end %>
+<% end %>
+
+<p class="mt-4">
+  If you have any questions, please contact <%= @position.event.name %>.
+</p>

@@ -56,16 +56,14 @@ RSpec.describe Disbursement::Incoming, type: :model do
   end
 
   describe "#canonical_transactions" do
-    it "queries by the incoming hcb_code" do
-      ct = create(:canonical_transaction)
-      ct.update_column(:hcb_code, incoming.hcb_code)
+    it "returns transactions linked to the incoming disbursement's ledger item" do
+      ct = create(:canonical_transaction, ledger_item: create(:ledger_item, linked_object: incoming))
 
       expect(incoming.canonical_transactions).to include(ct)
     end
 
-    it "does not include transactions with the outgoing hcb_code" do
-      ct = create(:canonical_transaction)
-      ct.update_column(:hcb_code, disbursement.outgoing_hcb_code)
+    it "does not include transactions linked to the outgoing disbursement's ledger item" do
+      ct = create(:canonical_transaction, ledger_item: create(:ledger_item, linked_object: disbursement.outgoing_disbursement))
 
       expect(incoming.canonical_transactions).not_to include(ct)
     end

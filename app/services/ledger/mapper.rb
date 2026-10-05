@@ -11,12 +11,30 @@ class Ledger
 
     def run
       return if @ledger_item.primary_mapping&.mapped_by_human?
+
+      preload_transaction_sources!
       return if (ledger = calculate_ledger).nil?
 
       Ledger::Mapping.map_primary!(ledger:, ledger_item: @ledger_item, mapped_by: SYSTEM)
     end
 
     private
+
+    # calculate_card_grant and calculate_event both iterate every canonical_(pending_)transaction
+    # and read its raw/(poly)morphic transaction (raw_column_transaction, raw_stripe_transaction,
+    # etc.). Without this, each ct/cpt beyond the first triggers its own SELECT to load that
+    # association; batch-loading them here turns that into one query per type.
+    def preload_transaction_sources!
+      ActiveRecord::Associations::Preloader.new(
+        records: @ledger_item.canonical_transactions,
+        associations: :transaction_source
+      ).call
+
+      ActiveRecord::Associations::Preloader.new(
+        records: @ledger_item.canonical_pending_transactions,
+        associations: [:raw_pending_stripe_transaction, :raw_pending_column_transaction]
+      ).call
+    end
 
     def calculate_event
       event_from_canonical_transactions ||
@@ -83,6 +101,7 @@ class Ledger
     def event_from_svb_sweep
       return unless @ledger_item.canonical_transactions.to_svb_sweep_account.exists? ||
                     @ledger_item.canonical_transactions.from_svb_sweep_account.exists? ||
+                    @ledger_item.canonical_transactions.hcb_sweep.exists? ||
                     @ledger_item.canonical_transactions.svb_sweep_account.exists?
 
       Event.find(EventMappingEngine::EventIds::SVB_SWEEPS)
@@ -118,7 +137,7 @@ class Ledger
 
     # CardGrant calculation is significantly simpler.
     # At the moment, only disbursements & Stripe card transactions
-    # can exitst on CardGrant's ledger.
+    # can exist on CardGrant's ledger.
     def calculate_card_grant
       @ledger_item.canonical_transactions.each do |ct|
         if ct.raw_stripe_transaction.present? && (card_grant = ct.raw_stripe_transaction.likely_card_grant)

@@ -43,7 +43,7 @@ RSpec.describe Receipt, type: :model do
 
   describe "synchronous unlock on receipt upload" do
     before do
-      Flipper.enable(:card_locking_2025_06_09, user)
+      Flipper.enable(:card_locking)
     end
 
     it "unlocks the card on the receipt-upload path when the last overdue charge is resolved" do

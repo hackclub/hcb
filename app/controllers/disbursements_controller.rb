@@ -2,6 +2,7 @@
 
 class DisbursementsController < ApplicationController
   include TurboStreamFlash
+  include ComboboxSearchable
 
   before_action :set_disbursement, only: [:show, :edit, :update, :transfer_confirmation_letter]
 
@@ -61,10 +62,10 @@ class DisbursementsController < ApplicationController
     @source_event = Event.friendly.find_by_public_id(params[:source_event_id]) if params[:source_event_id]
 
     base = if admin_signed_in?
-             Event.select(:name, :id, :demo_mode, :slug, :can_front_balance).reorder(Event::CUSTOM_SORT).includes(:plan)
+             Event.select(:name, :id, :demo_mode, :slug).reorder(Event::CUSTOM_SORT).includes(:plan)
            elsif !sending && @source_event&.plan&.unrestricted_disbursements_enabled?
              allowed_destination_event_ids = current_user.manageable_events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
-             Event.where(id: allowed_destination_event_ids).select(:name, :id, :demo_mode, :can_front_balance, :slug).includes(:plan)
+             Event.where(id: allowed_destination_event_ids).select(:name, :id, :demo_mode, :slug).includes(:plan)
            else
              current_user.manageable_events.not_hidden.filter_demo_mode(false)
            end
@@ -76,9 +77,20 @@ class DisbursementsController < ApplicationController
       base = base.where(sql, name: "%#{q}%", slug: "%#{q}%", id: "%#{q}%")
     end
 
-    # Sort by user's event preference in SQL, keeping the relation's existing
-    # order as a tiebreaker, then limit before loading records into Ruby.
+    # Rank by relevance first (exact, then prefix, then substring), then user's
+    # event preference, keeping the relation's existing order as a tiebreaker.
     order_clauses = []
+    if q.present?
+      order_clauses << Arel.sql(
+        ActiveRecord::Base.sanitize_sql_array(
+          [
+            "CASE WHEN LOWER(name) = LOWER(:exact) OR LOWER(slug) = LOWER(:exact) THEN 0 " \
+            "WHEN name ILIKE :prefix OR slug ILIKE :prefix THEN 1 ELSE 2 END",
+            { exact: q, prefix: "#{q}%" }
+          ]
+        )
+      )
+    end
     if user_event_ids.any?
       ids = user_event_ids.map(&:to_i).join(", ")
       order_clauses << Arel.sql("array_position(ARRAY[#{ids}]::bigint[], events.id) NULLS LAST")
@@ -86,17 +98,16 @@ class DisbursementsController < ApplicationController
     order_clauses.concat(base.order_values)
     order_clauses << Arel.sql("events.id ASC")
 
-    events = base.reorder(*order_clauses).limit(25).to_a
+    events = combobox_page(base.reorder(*order_clauses)).to_a
 
     options = events.map do |e|
       disabled_message = nil
       disabled_message = "Insufficient balance" if sending && !admin_signed_in? && e.balance_available <= 0
       disabled_message = "HCB transfers disabled" if sending && !policy(e).create_transfer?
 
-      name_label = admin_signed_in? ? "#{e.name} (#{e.id})" : e.name
       {
         value: e.public_id,
-        label: name_label,
+        label: helpers.combobox_display(e),
         sublabel: disabled_message || helpers.render_money_short(e.balance_available),
         disabled: disabled_message.present?
       }
@@ -233,7 +244,7 @@ class DisbursementsController < ApplicationController
     if @disbursement.mark_in_transit!
       flash[:success] = "Disbursement marked as fulfilled"
       if Disbursement.pending.any?
-        redirect_to pending_disbursements_path
+        redirect_to disbursements_admin_index_path(pending: 1)
       else
         redirect_to disbursements_admin_index_path
       end

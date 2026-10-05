@@ -12,13 +12,13 @@
 
     <div class="flex-auto" style="min-width: 0;">
       <div class="flex items-center">
-        <strong><%= payout_method.title_kind %></strong>
+        <strong><%= payout_method.display_name %></strong>
         <% if payout_method.default? %>
           <span class="badge bg-success" style="font-size: 11px;">Default</span>
         <% end %>
       </div>
       <div class="muted" style="font-size: 13px; margin-top: 2px;">
-        <%= payout_method.detail_summary %>
+        <%= payout_method.name.present? ? "#{payout_method.title_kind} · #{payout_method.detail_summary}" : payout_method.detail_summary %>
       </div>
     </div>
 

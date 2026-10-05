@@ -2,7 +2,7 @@
   Your HCB cards are locked because <%= @count %> <%= "receipt".pluralize(@count) %> <%= @count == 1 ? "is" : "are" %> overdue. Upload <%= @count == 1 ? "it" : "them" %> and your cards work again in seconds.
 </p>
 <p>
-  Every charge needs a receipt within 7 days. Manage your receipts on the HCB <%= link_to "receipts page", my_inbox_url %>.
+  Every charge needs a receipt within 7 days. Overdue receipts result in your cards being locked. Manage your receipts on the HCB <%= link_to "receipts page", my_inbox_url %>.
 </p>
 <p>
   Any subscriptions or recurring charges on this card will also be declined until you upload.

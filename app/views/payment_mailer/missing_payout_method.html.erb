@@ -1,13 +1,6 @@
 <p>Hello <%= @payment.legal_entity.name %>,</p>
 
-<% if @initial %>
-  <%= render partial: "initial_message", locals: { payment: @payment } %>
-<% else %>
-  <p>
-    We're almost ready to send your payment of <%= @payment.amount.format(with_currency: true) %>
-    for <i>"<%= @payment.purpose %>"</i> from <%= @payment.event.name %> through HCB!
-  </p>
-<% end %>
+<%= render partial: "initial_message", locals: { payment: @payment } %>
 
 <p>
   In order to process this payment, please <%= link_to "configure your payout method on HCB", legal_entity_url(@payment.legal_entity) %>.

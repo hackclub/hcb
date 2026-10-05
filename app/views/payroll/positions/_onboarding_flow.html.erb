@@ -1,0 +1,66 @@
+<%# locals: (position:, perspective:, contractor_party: nil) %>
+
+<% checklist = position.onboarding_checklist %>
+<% current_key = checklist.find { |step| !step[:complete] }&.dig(:key) %>
+<% organizer_name = position.contract&.party(:organizer)&.user&.name.presence || "the organizer" %>
+<% event = position.event %>
+
+<ol class="onboarding-flow">
+  <% checklist.each_with_index do |step, index| %>
+    <% current = step[:key] == current_key %>
+    <% state = step[:complete] ? "complete" : (current ? "current" : "upcoming") %>
+    <% mine = step[:owner] == perspective %>
+    <% unordered = step[:key] == :payout_method %>
+    <% actionable = mine && (current || unordered) %>
+    <% owner_name = case step[:owner]
+                    when :organizer then mine ? "You" : organizer_name
+                    when :contractor then mine ? "You" : position.payee.display_name
+                    when :hcb then "HCB team"
+                    else Rails.error.unexpected("Unknown owner")
+                    end %>
+
+    <li class="onboarding-flow__step onboarding-flow__step--<%= state %> <%= "onboarding-flow__step--unordered" if unordered %>">
+      <span class="onboarding-flow__marker <%= "onboarding-flow__marker--unordered" if unordered && !step[:complete] %>">
+        <% if step[:complete] %>
+          <%= inline_icon "badge-check-fill", size: 22 %>
+        <% elsif !unordered %>
+          <%= index + 1 %>
+        <% end %>
+      </span>
+
+      <div class="onboarding-flow__body">
+        <span class="onboarding-flow__label"><%= step[:label] %></span>
+        <p class="onboarding-flow__hint">
+          <span class="onboarding-flow__owner <%= "onboarding-flow__owner--mine" if mine %>"><%= owner_name %></span>
+          <%= step[:hint] %>
+        </p>
+      </div>
+
+      <div class="onboarding-flow__action">
+        <% if step[:complete] %>
+          <span class="onboarding-flow__status onboarding-flow__status--done">Done</span>
+        <% elsif actionable && perspective == :contractor %>
+          <% case step[:key]
+             when :tax_form, :payout_method %>
+            <%= link_to step[:key] == :tax_form ? "Add tax info" : "Add payout method",
+                  choose_legal_entity_payee_path(position.payee), class: "btn btn-small bg-info nowrap" %>
+          <% when :contractor_signature %>
+            <% if contractor_party.present? %>
+              <%= link_to "Sign contract", contract_party_path(contractor_party), class: "btn btn-small bg-info nowrap" %>
+            <% else %>
+              <span class="onboarding-flow__status onboarding-flow__status--waiting">Waiting</span>
+            <% end %>
+          <% end %>
+        <% elsif actionable && perspective == :organizer && step[:key] == :organizer_signature %>
+          <%= link_to "Sign contract",
+                contract_event_payroll_position_path(event_id: event.slug, id: position.id),
+                class: "btn btn-small bg-info nowrap", data: { turbo_frame: "_top" } %>
+        <% elsif current %>
+          <span class="onboarding-flow__status onboarding-flow__status--waiting nowrap">
+            Waiting on <%= owner_name %>
+          </span>
+        <% end %>
+      </div>
+    </li>
+  <% end %>
+</ol>

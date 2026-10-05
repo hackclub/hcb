@@ -4,16 +4,18 @@ module Payroll
   class PositionsController < ApplicationController
     include SetEvent
 
-    CONTRACT_RELEVANT_ATTRIBUTES = %w[title rate_cents start_date end_date description].freeze
+    CONTRACT_RELEVANT_ATTRIBUTES = %w[title rate_cents rate_unit start_date end_date description combine_contract_attachment].freeze
 
     before_action :set_event, except: [:onboarding]
-    before_action :set_position, only: [:edit, :update, :contract]
+    before_action :set_position, only: [:edit, :update, :contract, :terminate]
 
     def show
       @position = @event.payroll_positions.find(params[:id])
       authorize @position
       @frame = params[:frame].present?
-      @can_review = Payroll::PositionPolicy.new(current_user, @event).review?
+      invoice_policy = policy(@position.invoices.build)
+      @can_review = invoice_policy.approve?
+      @can_upload_invoice = invoice_policy.on_behalf?
       @invoices = @position.invoices.order(created_at: :desc)
       @payments = @position.payee.payments.order(created_at: :desc)
 
@@ -39,14 +41,24 @@ module Payroll
     def create
       authorize @event, policy_class: Payroll::PositionPolicy
 
-      @payee = @event.payees.not_archived.find_by_hashid!(position_params[:payee_id])
-      @position = @payee.payroll_positions.build(
+      @payee = @event.payees.not_archived.find_by_hashid(position_params[:payee_id])
+      @position = Payroll::Position.new(
+        payee: @payee,
         title: position_params[:title],
         rate_cents: Monetize.parse(position_params[:rate]).cents,
+        rate_unit: position_params[:rate_unit].presence || "hour",
         start_date: position_params[:starts_on],
         end_date: position_params[:ends_on],
-        description: position_params[:purpose]
+        description: position_params[:purpose],
+        combine_contract_attachment: position_params[:combine_contract_attachment].nil? || position_params[:combine_contract_attachment],
+        manager_id: position_params[:manager_id]
       )
+
+      if @payee.nil?
+        flash.now[:error] = "Please choose a recipient for this contract."
+        return render :new, layout: "transfer", status: :unprocessable_content
+      end
+
       if (attachment = Array(position_params[:file]).compact_blank.first)
         @position.file.attach(attachment)
       end
@@ -89,13 +101,16 @@ module Payroll
     def update
       authorize @position
 
-      @position.assign_attributes(
+      @position.assign_attributes({
         title: position_params[:title],
         rate_cents: Monetize.parse(position_params[:rate]).cents,
+        rate_unit: position_params[:rate_unit].presence,
         start_date: position_params[:starts_on],
         end_date: position_params[:ends_on],
-        description: position_params[:purpose]
-      )
+        description: position_params[:purpose],
+        combine_contract_attachment: position_params[:combine_contract_attachment],
+        manager_id: position_params[:manager_id]
+      }.compact)
       attachment = Array(position_params[:file]).compact_blank.first
       @position.file.attach(attachment) if attachment
 
@@ -115,6 +130,16 @@ module Payroll
         flash[:error] = @position.errors.full_messages.to_sentence
         render :edit, layout: "transfer", status: :unprocessable_content
       end
+    end
+
+    def terminate
+      authorize @position
+
+      @position.mark_terminated!
+
+      flash[:success] = "Contractor position successfully terminated"
+
+      redirect_to event_payroll_position_path(event: @event, payroll_position: @position)
     end
 
     private
@@ -155,7 +180,7 @@ module Payroll
     end
 
     def position_params
-      params.require(:contractor).permit(:title, :rate, :starts_on, :ends_on, :purpose, :payee_id, file: [])
+      params.require(:contractor).permit(:title, :rate, :rate_unit, :starts_on, :ends_on, :purpose, :payee_id, :combine_contract_attachment, :manager_id, file: [])
     end
 
   end

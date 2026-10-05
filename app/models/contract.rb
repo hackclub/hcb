@@ -6,7 +6,6 @@
 #
 #  id                   :bigint           not null, primary key
 #  aasm_state           :string           not null
-#  contractable_type    :string
 #  cosigner_email       :string
 #  deleted_at           :datetime
 #  external_service     :integer
@@ -18,6 +17,7 @@
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
 #  contractable_id      :bigint
+#  contractable_type    :string
 #  document_id          :bigint
 #  external_id          :string
 #  external_template_id :string
@@ -95,7 +95,7 @@ class Contract < ApplicationRecord
           reissue_messages.each do |role, message|
             party(role)&.notify_reissued(message:) if message.present?
           end
-          notifiable_parties.each(&:schedule_reminders)
+          notifiable_parties.each(&:schedule_reminders) if contractable.contract_remind_when_reissued
         elsif contractable.contract_notify_when_sent
           notifiable_parties.each(&:notify)
           notifiable_parties.each(&:schedule_reminders)
@@ -140,24 +140,24 @@ class Contract < ApplicationRecord
 
   def pending_signee_information
     # This method should be overwritten in subclasses of Contract
-    raise NotImplementedError, "The #{self.class.name} model hasn't implemented it's own pending signee information."
+    raise NotImplementedError, "The #{self.class.name} model hasn't implemented its own pending signee information."
   end
 
   def payload
     # This method should be overwritten in subclasses of Contract
-    raise NotImplementedError, "The #{self.class.name} model hasn't implemented it's own contract payload data."
+    raise NotImplementedError, "The #{self.class.name} model hasn't implemented its own contract payload data."
   end
 
   def required_roles
     # This method should be overwritten in subclasses of Contract
-    raise NotImplementedError, "The #{self.class.name} model hasn't implemented it's own required roles"
+    raise NotImplementedError, "The #{self.class.name} model hasn't implemented its own required roles"
   end
 
   def permitted_roles
     # This method should be overwritten in subclasses of Contract.
     # It is the superset of roles this contract type can have; required_roles
     # must be a subset of it.
-    raise NotImplementedError, "The #{self.class.name} model hasn't implemented it's own permitted roles"
+    raise NotImplementedError, "The #{self.class.name} model hasn't implemented its own permitted roles"
   end
 
   def send!(reissue_messages: {})
@@ -300,7 +300,7 @@ class Contract < ApplicationRecord
     end
   end
 
-  # Overrideen in inherited classes
+  # Overridden in inherited classes
   def document_name
     "Contract with #{party(:signee).user.full_name}"
   end

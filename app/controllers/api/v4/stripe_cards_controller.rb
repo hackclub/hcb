@@ -46,9 +46,9 @@ module Api
           :card_personalization_design_id
         )
 
-        return render json: { error: "Birthday must be set before creating a card." }, status: :bad_request if current_user.birthday.nil?
-        return render json: { error: "Cards can only be shipped to the US." }, status: :bad_request if card[:card_type] == "physical" && card[:shipping_address_country] != "US"
-        return render json: { error: "A verified phone number is required to issue a card." }, status: :bad_request unless current_user.phone_number_verified?
+        return render json: { error: "invalid_operation", messages: ["Birthday must be set before creating a card."] }, status: :bad_request if current_user.birthday.nil?
+        return render json: { error: "invalid_operation", messages: ["Cards can only be shipped to the US."] }, status: :bad_request if card[:card_type] == "physical" && card[:shipping_address_country] != "US"
+        return render json: { error: "invalid_operation", messages: ["A verified phone number is required to issue a card."] }, status: :bad_request unless current_user.phone_number_verified_or_bypassed?
 
         @stripe_card = ::StripeCardService::Create.new(
           current_user:,
@@ -157,7 +157,7 @@ module Api
           return render json: { error: "Last four digits are required." }, status: :unprocessable_content
         end
 
-        # Find the correct card based on it's last4
+        # Find the correct card based on its last4
         card = current_user.stripe_cardholder&.stripe_cards&.find_by(last4: params[:last4])
         if card.nil? || card.id != @stripe_card.id
           return render json: { error: "Last four digits are incorrect." }, status: :unprocessable_content

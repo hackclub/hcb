@@ -14,12 +14,7 @@ class InvoiceMailer < ApplicationMailer
     @emails = @invoice.sponsor.event.organizer_contact_emails
     @emails = @emails.length > 10 ? [@invoice.creator.email_address_with_name] : @emails
 
-    if @invoice.sponsor.event.can_front_balance?
-      mail to: @emails, subject: "Payment from #{@invoice.sponsor.name} has arrived 💵"
-    else
-      mail to: @emails, subject: "Payment from #{@invoice.sponsor.name} is on the way 💵"
-    end
-
+    mail to: @emails, subject: "Payment from #{@invoice.sponsor.name} has arrived 💵"
   end
 
   def refunded

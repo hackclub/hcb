@@ -13,15 +13,6 @@ class CanonicalPendingTransactionsController < ApplicationController
     @hcb_code = HcbCode.find_or_create_by(hcb_code: @canonical_pending_transaction.hcb_code)
   end
 
-  def edit
-    @canonical_pending_transaction = CanonicalPendingTransaction.find(params[:id])
-
-    authorize @canonical_pending_transaction
-
-    @event = @canonical_pending_transaction.event
-    @suggested_memos = ::HcbCodeService::SuggestedMemos.new(hcb_code: @canonical_pending_transaction.local_hcb_code, event: @event).run.first(4)
-  end
-
   def update
     @canonical_pending_transaction = CanonicalPendingTransaction.find(params[:id])
 
@@ -67,9 +58,9 @@ class CanonicalPendingTransactionsController < ApplicationController
 
   def canonical_pending_transaction_params
     if admin_signed_in?
-      params.require(:canonical_pending_transaction).permit(:custom_memo, :fronted, :fee_waived)
+      params.fetch(:canonical_pending_transaction, {}).permit(:fronted, :fee_waived)
     else
-      params.require(:canonical_pending_transaction).permit(:custom_memo)
+      params.fetch(:canonical_pending_transaction, {}).permit
     end
   end
 

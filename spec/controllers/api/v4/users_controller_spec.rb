@@ -46,7 +46,7 @@ RSpec.describe Api::V4::UsersController do
     end
 
     it "exposes card_locking status when the feature is enabled" do
-      Flipper.enable(:card_locking_2025_06_09, user)
+      Flipper.enable(:card_locking)
       get_me
 
       expect(response).to have_http_status(:ok)

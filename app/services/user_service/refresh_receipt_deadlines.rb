@@ -2,9 +2,8 @@
 
 module UserService
   # Maintains card_charge_settled_at / receipt_due_at on a cardholder's outstanding
-  # charges. Idempotent; safe to run every few minutes. The slide advances as new
-  # charges settle; the shortening floor (inside CardLocking::Deadline) protects
-  # the pile when trust is lost.
+  # charges. Idempotent; safe to run every few minutes. The shortening floor
+  # (inside CardLocking::Deadline) protects the pile when trust is lost.
   class RefreshReceiptDeadlines
     def initialize(user:, now: Time.current)
       @user = user
@@ -14,7 +13,9 @@ module UserService
     def run
       return unless @user.stripe_cardholder
 
-      trusted = @user.receipt_trusted?(now: @now)
+      # Disabled: a cardholder sailing past the promised 7 days cannot tell a
+      # grace period from a bug. Restore with `@user.receipt_trusted?(now: @now)`.
+      trusted = false
       last_settled = @user.last_settled_charge_at
       enforcement_start_date = CardLocking.enforcement_start_date(@user)
 

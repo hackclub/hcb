@@ -26,6 +26,7 @@
 #  recipient_name            :string           not null
 #  return_reason             :text
 #  send_email_notification   :boolean          default(FALSE)
+#  uetr                      :string
 #  created_at                :datetime         not null
 #  updated_at                :datetime         not null
 #  column_id                 :text
@@ -57,6 +58,7 @@ class Wire < ApplicationRecord
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wire, required: false
   has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
+  has_one :payment, through: :payment_attempt
 
   validates_length_of :payment_for, maximum: 140
 
@@ -85,7 +87,7 @@ class Wire < ApplicationRecord
 
 
   include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  tracked owner: proc { |controller, record| record.user || controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
   after_create do
     create_canonical_pending_transaction!(
@@ -114,7 +116,7 @@ class Wire < ApplicationRecord
     state :failed
 
     event :mark_approved do
-      after_commit do
+      after do
         WireMailer.with(wire: self).notify_recipient.deliver_later if self.send_email_notification
         payment_attempt.mark_sent! if payment_attempt.present?
       end
@@ -237,6 +239,7 @@ class Wire < ApplicationRecord
     }.compact_blank)
 
     self.column_id = column_wire_transfer["id"]
+    self.uetr = column_wire_transfer["uetr"]
     mark_approved
     save!
   end

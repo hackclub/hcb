@@ -9,7 +9,7 @@
 #  custom_memo                                      :text
 #  date                                             :date             not null
 #  fee_waived                                       :boolean          default(FALSE)
-#  fronted                                          :boolean          default(FALSE)
+#  fronted                                          :boolean          default(FALSE), not null
 #  hcb_code                                         :text
 #  memo                                             :text             not null
 #  created_at                                       :datetime         not null
@@ -21,6 +21,7 @@
 #  raw_pending_bank_fee_transaction_id              :bigint
 #  raw_pending_column_transaction_id                :bigint
 #  raw_pending_donation_transaction_id              :bigint
+#  raw_pending_fee_reimbursement_transaction_id     :bigint
 #  raw_pending_fee_revenue_transaction_id           :bigint
 #  raw_pending_incoming_disbursement_transaction_id :bigint
 #  raw_pending_invoice_transaction_id               :bigint
@@ -54,6 +55,7 @@
 #  index_canonical_pending_txs_on_reimbursement_expense_payout_id   (reimbursement_expense_payout_id)
 #  index_canonical_pending_txs_on_reimbursement_payout_holding_id   (reimbursement_payout_holding_id)
 #  index_canonical_pending_txs_on_rpct_id                           (raw_pending_column_transaction_id)
+#  index_cpts_on_raw_pending_fee_reimbursement_tx_id                (raw_pending_fee_reimbursement_transaction_id)
 #  index_cpts_on_raw_pending_incoming_disbursement_transaction_id   (raw_pending_incoming_disbursement_transaction_id)
 #  index_cpts_on_raw_pending_outgoing_disbursement_transaction_id   (raw_pending_outgoing_disbursement_transaction_id)
 #  index_cpts_on_raw_pending_stripe_service_fee_tx_id               (raw_pending_stripe_service_fee_transaction_id)
@@ -158,7 +160,7 @@ class CanonicalPendingTransaction < ApplicationRecord
       }
     )
   }
-  scope :with_custom_memo, -> { where("custom_memo is not null") }
+  scope :with_custom_memo, -> { where.not(custom_memo: nil) }
 
   scope :pending_expired, -> { unsettled.where(created_at: ..5.days.ago) }
 
@@ -173,19 +175,10 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   belongs_to :ledger_item, optional: true, class_name: "Ledger::Item", touch: true
 
-  after_create_commit unless: -> { ledger_item.present? } do
-    safely do
-      ActiveRecord::Base.transaction do
-        li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
-        update!(ledger_item: li)
-        li.map!
-      end
-    end
-  end
+  after_create_commit :assign_ledger_item, unless: -> { ledger_item.present? }
 
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
-    ledger_item.refresh!
   end
 
   after_commit if: -> { previous_changes.key?("ledger_item_id") } do
@@ -246,7 +239,7 @@ class CanonicalPendingTransaction < ApplicationRecord
                         .where(canonical_pending_event_mapping: { event_id: event.id, subledger_id: subledger&.id })
                         .where(fronted: true)
                         .order(date: :asc, id: :asc)
-    pts_sum = pts.map(&:amount_cents).sum
+    pts_sum = pts.sum(&:amount_cents)
     return 0 if pts_sum.negative?
 
     cts_sum = local_hcb_code.canonical_transactions
@@ -257,7 +250,7 @@ class CanonicalPendingTransaction < ApplicationRecord
     # PTs that were chronologically created first in an HcbCode are first
     # responsible for "contributing" to the fronted amount. After a PT's
     # amount_cents is fully allocated to the fronted amount, the next
-    # chronological PT in the hcb_code is responsible for allocating it's own
+    # chronological PT in the hcb_code is responsible for allocating its own
     # amount_cents towards the fronted amount.
     #
     # The code below is a simplified implementation of that "algorithm".
@@ -274,6 +267,12 @@ class CanonicalPendingTransaction < ApplicationRecord
     else
       0
     end
+  end
+
+  # The moment this transaction actually occurred, which for Stripe
+  # authorizations is earlier than when we ingested it.
+  def datetime
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("created")&.then { |t| Time.at(t) } || created_at
   end
 
   def smart_memo
@@ -478,6 +477,16 @@ class CanonicalPendingTransaction < ApplicationRecord
   end
 
   private
+
+  def assign_ledger_item
+    safely do
+      reload_local_hcb_code
+      ActiveRecord::Base.transaction do
+        li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime:, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        update!(ledger_item: li)
+      end
+    end
+  end
 
   def write_hcb_code
     safely do

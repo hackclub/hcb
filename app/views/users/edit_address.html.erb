@@ -13,7 +13,7 @@
       recurring card charges like subscriptions might break.
     </p>
 
-    <%= form_with model: @user, data: { turbo_frame: "_top" } do |form| %>
+    <%= form_with model: @user, id: "billing_address_form", data: { turbo_frame: "_top" } do |form| %>
       <%= form.fields_for :stripe_cardholder, @user.stripe_cardholder do |form| %>
         <div class="field mb1">
           <%= form.label :stripe_billing_address_line1, "Street address" %>
@@ -46,11 +46,19 @@
             <%= form.country_select :stripe_billing_address_country, nil, { only: ["US"] }, { required: true, disabled: } %>
           </div>
         </div>
-
-        <div class="actions inline-block mt1">
-          <%= form.submit "Save", disabled: %>
-        </div>
       <% end %>
     <% end %>
+
+    <div class="actions mt1 flex gap-2 items-center">
+      <%= submit_tag "Save", disabled:, form: "billing_address_form" %>
+      <% unless disabled || @user.stripe_cardholder.default_billing_address? %>
+        <%= button_to "Reset to default address",
+              reset_billing_address_user_path(@user),
+              method: :post,
+              class: "btn bg-muted",
+              form: { data: { turbo_frame: "_top" } },
+              data: { turbo_confirm: "Reset your billing address to HCB's default address? This applies immediately to all of your cards, and recurring card charges like subscriptions might break." } %>
+      <% end %>
+    </div>
   </section>
 </turbo-frame>
