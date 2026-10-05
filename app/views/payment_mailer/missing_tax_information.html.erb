@@ -1,7 +1,7 @@
 <p>Hello,</p>
 
 <% if @initial %>
-  <%= render partial: "initial_message", locals: { payment: @payment } %>
+  <%= render partial: "payment_mailer/initial_message", locals: { payment: @payment } %>
 <% end %>
 
 <p>

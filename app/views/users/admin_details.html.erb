@@ -100,7 +100,7 @@
 
         <ul>
           <% @permissions_overview.event_graph.each do |node| %>
-            <%= render(partial: "event_permissions", locals: { node: }) %>
+            <%= render(partial: "users/event_permissions", locals: { node: }) %>
           <% end %>
         </ul>
       <% end %>

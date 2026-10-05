@@ -13,7 +13,7 @@
       <%= "was reimbursed " if @report.reimbursed? && @report.payout_holding.sent? %>
       <%= "requested " if @report.rejected? || @report.reversed? %>
       <%= "is requesting " unless @report.closed? %>
-      <%= render "total", report: @report %>
+      <%= render "reimbursement/reports/total", report: @report %>
       <% if @report.maximum_amount_cents %>
         (<%= render_money @report.maximum_amount_cents %> <%= "USD" unless @report.currency == "USD" %> cap)
       <% end %>
