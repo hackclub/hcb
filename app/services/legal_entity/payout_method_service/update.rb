@@ -100,7 +100,7 @@ class LegalEntity
       end
 
       def retry_failed_payments
-        failed_payments = payments.where(aasm_state: :sent).select { |payment| payment.attempts.last.failed? }
+        failed_payments = @legal_entity.payments.where(aasm_state: :sent).select { |payment| payment.attempts.last.failed? }
 
         failed_payments.each(&:retry!)
       end
