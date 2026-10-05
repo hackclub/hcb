@@ -22,7 +22,8 @@ module Maintenance
     def process(event)
       recipients_by_email(event).each do |email, recipients|
         # An existing payee owns this email, and skipping it keeps re-runs idempotent.
-        next if event.payees.exists?(email:)
+        # Compared loosely, since payees saved before email normalization may not be lowercase.
+        next if event.payees.where("lower(btrim(email)) = ?", email).exists?
 
         import(event, email, recipients)
       end

@@ -108,6 +108,17 @@ RSpec.describe Maintenance::ImportPaymentRecipientPayeesTask, type: :model do
     expect(payee).not_to be_imported
   end
 
+  it "recognizes an existing payee whose email predates normalization" do
+    payee = create(:payee, event:, email: "orpheus@hackclub.com")
+    # Raw SQL skips normalizes, reproducing a row saved before it existed.
+    Payee.where(id: payee.id).update_all("email = ' Orpheus@HackClub.com '")
+    ach_recipient(email: "orpheus@hackclub.com")
+
+    run_task
+
+    expect(event.payees.reload).to contain_exactly(payee)
+  end
+
   it "leaves behind and logs details that can no longer make a usable payout method" do
     recipient = ach_recipient(email: "orpheus@hackclub.com")
     recipient.update!(routing_number: "12345")
