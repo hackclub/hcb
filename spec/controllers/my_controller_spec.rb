@@ -54,7 +54,29 @@ RSpec.describe MyController do
 
       expect(response.status).to eq(200)
       expect(response.body).to include("Verify your email")
-      expect(response.body).not_to include("To review")
+      expect(response.body).not_to include("Your reports")
+    end
+
+    it "separates reports assigned to the user, reports open to any manager, and the user's own reports" do
+      user = sign_in_verified
+      event = create(:event)
+      create(:organizer_position, user:, event:, role: :manager)
+
+      assigned = create(:reimbursement_report, event:, reviewer: user, aasm_state: :submitted)
+      unassigned = create(:reimbursement_report, event:, aasm_state: :submitted)
+      assigned_to_someone_else = create(:reimbursement_report, event:, reviewer: create(:user), aasm_state: :submitted)
+      own_submitted = create(:reimbursement_report, user:, event:, aasm_state: :submitted)
+      own_draft = create(:reimbursement_report, user:, event:)
+
+      get :reimbursements
+
+      expect(response.body).to include("Assigned to you for review", "Awaiting review by any manager", "Your reports")
+
+      sections = controller.instance_variable_get(:@sections)
+      expect(sections[:assigned]).to contain_exactly(assigned)
+      expect(sections[:unassigned]).to contain_exactly(unassigned)
+      expect(sections[:mine]).to contain_exactly(own_submitted, own_draft)
+      expect(sections.values.flatten).not_to include(assigned_to_someone_else)
     end
   end
 

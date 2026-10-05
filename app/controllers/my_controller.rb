@@ -168,16 +168,14 @@ class MyController < ApplicationController
   def reimbursements
     return unless signed_in?
 
-    case params[:filter]
-    when "mine"
-      @reports = @my_reports
-    when "review"
-      @reports = @reports_to_review
-    else
-      @reports = @my_reports.or(@reports_to_review)
+    @sections = {
+      assigned: @reports_assigned_to_me,
+      unassigned: @unassigned_reports_to_review,
+      mine: @my_reports,
+    }.transform_values do |reports|
+      reports = reports.search(params[:q]) if params[:q].present?
+      reports.order(created_at: :desc)
     end
-
-    @reports = @reports.search(params[:q]) if params[:q].present?
 
     @payout_method = current_user.default_payout_method&.details
   end
@@ -258,7 +256,10 @@ class MyController < ApplicationController
     manager_events = current_user.events
                                  .joins(:organizer_positions)
                                  .where(organizer_positions: { user_id: current_user.id, role: :manager })
-    @reports_to_review = Reimbursement::Report.submitted.where(event: manager_events, reviewer_id: nil).or(current_user.assigned_reimbursement_reports.submitted)
+    # Managers can't approve their own reports, so those only appear under @my_reports
+    @reports_assigned_to_me = current_user.assigned_reimbursement_reports.submitted.where.not(user: current_user)
+    @unassigned_reports_to_review = Reimbursement::Report.submitted.where(event: manager_events, reviewer_id: nil).where.not(user: current_user)
+    @reports_to_review = @reports_assigned_to_me.or(@unassigned_reports_to_review)
   end
 
 end
