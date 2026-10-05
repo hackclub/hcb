@@ -209,8 +209,8 @@ RSpec.describe Payment::Attempt, type: :model do
   describe "after_create create_transfer!" do
     # These tests exercise the branching on payout_method.details type.
     # We call create_transfer! directly to avoid triggering Rails' save
-    # machinery on association doubles. We stub `safely` to be a no-op so
-    # external-service calls inside each branch are skipped.
+    # machinery on association doubles. We stub payout_method.create_transfer
+    # so external-service calls inside each branch are skipped.
 
     def build_attempt_with_payout_method(payout_method)
       attempt = build(:payment_attempt)
@@ -220,9 +220,13 @@ RSpec.describe Payment::Attempt, type: :model do
       payment_double = double("payment").as_null_object
       allow(attempt).to receive_message_chain(:legal_entity, :default_payout_method).and_return(payout_method)
       allow(attempt).to receive(:payment).and_return(payment_double)
-      # Make safely a no-op so external-service calls inside each branch are
-      # skipped; we only care that mark_under_review! is called at the end.
-      allow(attempt).to receive(:safely)
+      # Stub the external-service boundary directly so each branch skips real
+      # API calls; we only care that mark_under_review! is called at the end.
+      transfer_double = double("transfer", save!: true, local_hcb_code: double("hcb_code").as_null_object)
+      allow(payout_method).to receive(:create_transfer).and_return(transfer_double)
+      allow(attempt).to receive(:payout=)
+      allow(attempt).to receive(:save!)
+      allow(Receipt).to receive(:reupload)
       attempt
     end
 

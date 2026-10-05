@@ -122,9 +122,14 @@ class MyController < ApplicationController
 
     hcb_codes_missing_receipt =
       if @grouping == "due_date"
-        # Soonest deadline first; charges with no deadline sort last, newest first.
+        # Soonest deadline first, then charges still pending, then charges that
+        # never had a deadline; both undated groups newest first.
         hcb_codes_missing_receipt.sort_by do |hcb_code|
-          hcb_code.receipt_due_at ? [0, hcb_code.receipt_due_at.to_i] : [1, -hcb_code.created_at.to_i]
+          if hcb_code.receipt_due_at
+            [0, hcb_code.receipt_due_at.to_i]
+          else
+            [hcb_code.canonical_transactions.empty? ? 1 : 2, -hcb_code.created_at.to_i]
+          end
         end
       else
         hcb_codes_missing_receipt.sort_by(&:created_at).reverse
@@ -138,7 +143,7 @@ class MyController < ApplicationController
     end
 
     @hcb_codes = Kaminari.paginate_array(hcb_codes_missing_receipt)
-                         .page(params[:page]).per(params[:per] || 15)
+                         .page(params[:page]).per(safe_per(15))
 
     if @grouping == "due_date"
       # @hcb_codes is already in due date order, so group_by preserves it.
@@ -215,7 +220,7 @@ class MyController < ApplicationController
     @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
     @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
     @payments = @payments.where(aasm_state: "rejected") if params[:status] == "canceled"
-    @payments = @payments.page(params[:page] || 1).per(params[:per] || 10)
+    @payments = @payments.page(params[:page] || 1).per(safe_per(10))
 
     @filter_options = [
       { key: "status", label: "Status", type: "select", options: %w[deposited in_transit canceled] }

@@ -2,9 +2,9 @@
 
 <h1>Tax form for <%= @legal_entity.name %></h1>
 
-<iframe
-  src="<%= @form.signing_url %>"
-  class="border-0 relative min-h-[75vh] w-full rounded-md">
-</iframe>
-
-<%= button_to "Done", sync_tax_form_path(@form), data: { turbo: false }, class: "btn w-full mt-5" %>
+<div data-controller="taxbandits" data-taxbandits-form-id-value="<%= @form.signing_url_uid %>" data-taxbandits-advance-url-value="<%= completed_tax_form_url(@form) %>">
+  <iframe
+    src="<%= @form.signing_url %>"
+    class="border-0 relative min-h-[75vh] w-full rounded-md">
+  </iframe>
+</div>

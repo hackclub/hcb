@@ -185,7 +185,7 @@ module EventsHelper
       name: "Perks",
       path_proc: ->(event_id) { event_promotions_path(event_id:) },
       tooltip: "Receive promos & discounts",
-      dynamic_tooltip: ->(event) { !policy(event).promotions? ? "Your account isn't eligble for receive promos & discounts" : "Receive promos & discounts" },
+      dynamic_tooltip: ->(event) { !policy(event).promotions? ? "Your account isn't eligible to receive promos & discounts" : "Receive promos & discounts" },
       icon: "perks",
       data: { tour_step: "perks" },
       symbol: :promotions,
@@ -355,24 +355,6 @@ module EventsHelper
       'aria-current': selected ? "page" : "false",
       'aria-disabled': disabled ? "true" : "false",
     )
-  end
-
-  def show_mock_data?(event = @event)
-    false
-  end
-
-  def paypal_transfers_airtable_form_url(embed: false, event: nil, user: nil)
-    # The airtable form is located within the Bank Promotions base
-    form_id = "4j6xJB5hoRus"
-    embed_url = "https://forms.hackclub.com/t/#{form_id}"
-    url = "https://forms.hackclub.com/t/#{form_id}"
-
-    prefill = []
-    prefill << "prefill_Event/Project+Name=#{CGI.escape(event.name)}" if event
-    prefill << "prefill_Submitter+Name=#{CGI.escape(user.full_name)}" if user
-    prefill << "prefill_Submitter+Email=#{CGI.escape(user.email)}" if user
-
-    "#{embed ? embed_url : url}?#{prefill.join("&")}"
   end
 
   def transaction_memo(tx)

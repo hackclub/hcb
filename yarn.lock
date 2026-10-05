@@ -2,11 +2,6 @@
 # yarn lockfile v1
 
 
-"@1password/save-button@^1.3.0":
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/@1password/save-button/-/save-button-1.3.0.tgz#a068601a042d61f9502ee63810140172941b1ac6"
-  integrity sha512-jyVhFEwZEigiWimyjnPlOdEepiIZbPuCc4YpkWrghi5nwl5IYT3dk1yxL2drz/JrleUpBoaYDJUAZw0CX9ZU7Q==
-
 "@alloc/quick-lru@^5.2.0":
   version "5.2.0"
   resolved "https://registry.yarnpkg.com/@alloc/quick-lru/-/quick-lru-5.2.0.tgz#7bf68b20c0a350f936915fcae06f58e32007ce30"
@@ -1200,11 +1195,6 @@
     "@types/node" "*"
     "@types/yargs" "^17.0.8"
     chalk "^4.0.0"
-
-"@josefarias/hotwire_combobox@^0.4.1":
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/@josefarias/hotwire_combobox/-/hotwire_combobox-0.4.1.tgz#d3536ffba107cbaf4111c19e4a8453202d1ef80a"
-  integrity sha512-JvfGC7osghQ8jl/ZkJjAEvvMj4ZecguhjNGcaqmPEBRDhPjSOhYziO9PsOXPUgjqcpLZx654VufWnYu1+aR8xQ==
 
 "@jridgewell/gen-mapping@^0.3.12":
   version "0.3.12"

@@ -14,12 +14,12 @@
   <div class="flex items-center gap-2">
     <% if show_ledger_toggle && signed_in? %>
       <% if new_ledger_active %>
-        <%= link_to event_toggle_new_ledger_path(event, enabled: false), method: :post, class: "btn flex items-center" do %>
+        <%= link_to event_toggle_new_ledger_path(event, enabled: false), data: { turbo_method: :post }, class: "btn flex items-center" do %>
           <%= inline_icon "back" %>
           Go back to the classic ledger
         <% end %>
       <% else %>
-        <%= link_to event_toggle_new_ledger_path(event, enabled: true), method: :post, class: "btn flex items-center" do %>
+        <%= link_to event_toggle_new_ledger_path(event, enabled: true), data: { turbo_method: :post }, class: "btn flex items-center" do %>
           <%= inline_icon "wand-stars" %>
           Try the new ledger
         <% end %>

@@ -1,8 +1,8 @@
 # Postgres in Production
 
-Runbook for how the production postgres database is setup and configured.
+Runbook for how the production postgres database is set up and configured.
 
-Portions of this docs contains processes/commands specific to the migration from
+Portions of these docs contain processes/commands specific to the migration from
 Heroku postgres to our own self hosted postgres.
 
 ## Provision servers on Hetzner
@@ -10,8 +10,8 @@ Heroku postgres to our own self hosted postgres.
 - us-east
 - Ubuntu
 - Dedicated vCPU
-    - CCX13 (2 AMD vCPUS, 8gb RAM, 80gb SSD,, 1TB traffic. $14.49/month)
-- Network. Attach to same private network as rest of HCB servers
+    - CCX13 (2 AMD vCPUS, 8gb RAM, 80gb SSD, 1TB traffic. $14.49/month)
+- Network. Attach to the same private network as the rest of HCB servers
 - Add your SSH key
 - SSH only firewall
 - Placement group: `hcb-postgres-placement`
@@ -37,7 +37,7 @@ apt install postgresql-15
 apt install libpq-dev
 ```
 
-## Ensure Postegres is running
+## Ensure Postgres is running
 
 ```bash
 # Ensure systemd service config for Postgres exists
@@ -47,7 +47,7 @@ cat /usr/lib/systemd/system/postgresql.service
 # Start postgres using Systemctl
 systemctl start postgresql.service # This shouldn't be necessary since the apt install automatically starts it
 
-# You can validate that' it's running using
+# You can validate that it's running using
 ps aux | grep postgres
 ```
 
@@ -56,17 +56,17 @@ ps aux | grep postgres
 ```bash
 # To access with PSQL
 su - postgres
-psql # This will NOT working unless you're the `postgres` linux user.
+psql # This will NOT work unless you're the `postgres` linux user.
 ```
 
 ## Allow connections
 
 ```bash
-# switch back to root. If you `su - postgres`'ed earlier, then you can simpily `exit`
+# switch back to root. If you `su - postgres`'ed earlier, then you can simply `exit`
 vim /etc/postgresql/15/main/pg_hba.conf
 ```
 
-Add the following files to the file:
+Add the following lines to the file:
 
 ```
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
@@ -103,7 +103,7 @@ listen_addresses = 'PRIVATE IP OF THE POSTGRES SERVER'           # what IP addre
 You can get the server's private IP from the Hetzner dashboard
 
 ```bash
-# Restart pogres
+# Restart postgres
 systemctl restart postgresql
 ```
 
@@ -241,7 +241,7 @@ You can check the configuration by running
 sudo -u postgres pgbackrest --stanza=hcb_production --log-level-console=info check
 ```
 
-Since we have `archive_mode = off`, we should expect see:
+Since we have `archive_mode = off`, we should expect to see:
 
 ```
 root@server-postgres-3:~# sudo -u postgres pgbackrest --stanza=hcb_production --log-level-console=info check
@@ -253,7 +253,7 @@ root@server-postgres-3:~# sudo -u postgres pgbackrest --stanza=hcb_production --
 ## Dry run of restore database from dump
 
 ```bash
-# On your local machine, get the dump from Herkou
+# On your local machine, get the dump from Heroku
 heroku pg:backups:capture
 heroku pg:backups:download # it downloads as latest.dump
 
@@ -269,7 +269,7 @@ CREATE DATABASE hcb_production WITH OWNER rails; # The database and all tables m
 # Before running pg_restore, you may want to drop and recreate the database if
 # it already exists. This is because the `--clean` flag will only drop tables
 # that are in the dump.
-# If the current database contains a table not reference in the dump, a future
+# If the current database contains a table not referenced in the dump, a future
 # migration may run into a `relation "table_name" already exists` error.
 #
 # To drop database and recreate it, run:
@@ -311,12 +311,12 @@ DROP DATABASE hcb_production;
 CREATE DATABASE hcb_production WITH OWNER rails;
 ```
 
-Shut down all traffic and write to current database/production
+Shut down all traffic and writes to the current database/production
 
 1. Turn on maintenance mode on Hatchbox
 2. Disable all processes (e.g. Sidekiq, etc.)
 
-After traffic has been shutdown, perform the last write to the DB.
+After traffic has been shut down, perform the last write to the DB.
 
 ```sql
 UPDATE users
@@ -331,7 +331,7 @@ limit 1;
 ```
 
 ```bash
-# On your local machine, get the dump from Herkou
+# On your local machine, get the dump from Heroku
 heroku pg:backups:capture
 heroku pg:backups:download # it downloads as latest.dump
 
@@ -347,7 +347,7 @@ CREATE DATABASE hcb_production WITH OWNER rails; # The database and all tables m
 # Before running pg_restore, you may want to drop and recreate the database if
 # it already exists. This is because the `--clean` flag will only drop tables
 # that are in the dump.
-# If the current database contains a table not reference in the dump, a future
+# If the current database contains a table not referenced in the dump, a future
 # migration may run into a `relation "table_name" already exists` error.
 #
 # To drop database and recreate it, run:
@@ -443,14 +443,14 @@ Add the following line to pg_hba.conf on the primary node:
 host    replication     repuser         PRIVATE_IP_OF_POSTGRES_2_SERVER/32             scram-sha-256
 ```
 
-### Stop relica postgres and delete it's data directory
+### Stop replica postgres and delete its data directory
 
 ```bash
 systemctl stop postgresql
 rm -rf /var/lib/postgresql/15/main
 ```
 
-### `bg_basebackup`
+### `pg_basebackup`
 
 ```bash
 pg_basebackup -d 'host=10.0.1.5 user=repuser' -D /var/lib/postgresql/15/main -R -P

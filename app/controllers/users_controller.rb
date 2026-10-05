@@ -73,7 +73,7 @@ class UsersController < ApplicationController
   def toggle_pretend_is_not_admin
     authorize current_user
     current_user.update(pretend_is_not_admin: !current_user.pretend_is_not_admin)
-    head :ok
+    redirect_to params[:return_to] || root_path, flash: { info: "You're an admin again. Behave." }
   end
 
   def webauthn_options
@@ -264,6 +264,8 @@ class UsersController < ApplicationController
 
   def edit_admin
     authorize @user
+
+    @limit = Governance::Admin::Transfer::Limit.find_by(user_id: @user.id)
   end
 
   def admin_details
@@ -276,43 +278,43 @@ class UsersController < ApplicationController
   def admin_details_ach_transfers
     authorize @user
 
-    @ach_transfers = @user.ach_transfers.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
+    @ach_transfers = @user.ach_transfers.order(created_at: :desc).page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_check_deposits
     authorize @user
 
-    @check_deposits = @user.check_deposits.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
+    @check_deposits = @user.check_deposits.order(created_at: :desc).page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_disbursements
     authorize @user
 
-    @disbursements = @user.disbursements.order(created_at: :desc).includes([:destination_event]).page(params[:page] || 1).per(params[:per] || 10)
+    @disbursements = @user.disbursements.order(created_at: :desc).includes([:destination_event]).page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_emburse_cards
     authorize @user
 
-    @emburse_cards = @user.emburse_cards.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
+    @emburse_cards = @user.emburse_cards.order(created_at: :desc).page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_increase_checks
     authorize @user
 
-    @increase_checks = @user.increase_checks.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
+    @increase_checks = @user.increase_checks.order(created_at: :desc).page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_invoices
     authorize @user
 
-    @invoices = @user.invoices.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
+    @invoices = @user.invoices.order(created_at: :desc).page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_lob_checks
     authorize @user
 
-    @lob_checks = @user.checks.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
+    @lob_checks = @user.checks.order(created_at: :desc).page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_missing_receipts
@@ -322,7 +324,7 @@ class UsersController < ApplicationController
     @hcb_codes_missing_receipts = @user.transactions_missing_receipt
                                        .order(created_at: :desc)
                                        .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
-                                       .page(params[:page] || 1).per(params[:per] || 10)
+                                       .page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_reimbursement_reports
@@ -331,30 +333,32 @@ class UsersController < ApplicationController
     @reimbursement_reports = @user.reimbursement_reports
                                   .order(created_at: :desc)
                                   .includes([:event, :payout_holding])
-                                  .page(params[:page] || 1).per(params[:per] || 10)
+                                  .page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_stripe_cards
     authorize @user
 
-    @stripe_cards = @user.stripe_cards.order(created_at: :desc).page(params[:page] || 1).per(params[:per] || 10)
+    @stripe_cards = @user.stripe_cards.order(created_at: :desc).page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_stripe_transactions
     authorize @user
 
     if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
-      # TODO: Swap this out for Ledger::Query once users have their own non-primary ledgers
-      @stripe_transactions = @user.ledger_items
-                                  .includes(:canonical_transactions, :canonical_pending_transactions, :linked_object)
-                                  .where(linked_object_type: "CardCharge")
-                                  .order(datetime: :desc, created_at: :desc, id: :desc)
-                                  .page(params[:page] || 1).per(params[:per] || 10)
+      # A cardholder's charges span every organization they hold a card for, so
+      # this is one of the few queries that legitimately crosses ledgers. The
+      # page is auditor-gated (see UserPolicy#admin_details?), and the author
+      # filter — which for a CardCharge resolves to the cardholder — bounds the
+      # result to this user either way.
+      @stripe_transactions = Ledger::Query.new({ author: @user.slug, linked_object_type: "CardCharge" })
+                                          .execute(all_ledgers: true)
+                                          .page(params[:page] || 1).per(safe_per(10))
     else
       @stripe_transactions = HcbCode.where(id: @user.stripe_cards.flat_map { |sc| sc.local_hcb_codes.pluck(:id) })
                                     .order(created_at: :desc)
                                     .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
-                                    .page(params[:page] || 1).per(params[:per] || 10)
+                                    .page(params[:page] || 1).per(safe_per(10))
     end
   end
 
@@ -463,7 +467,7 @@ class UsersController < ApplicationController
         if @payout_method&.saved_changes? && @user == current_user
           flash[:success] = "Your payout details have been updated. We'll use this information for all payouts going forward."
         elsif email_update&.requested?
-          flash[:success] = "We've sent a verification link to your new email (#{params[:user][:email]}) and a authorization link to your old email (#{@user.email}), please click them both to confirm this change."
+          flash[:success] = "We've sent a verification link to your new email (#{params[:user][:email]}) and an authorization link to your old email (#{@user.email}), please click them both to confirm this change."
         else
           flash[:success] = @user == current_user ? "Updated your profile!" : "Updated #{@user.first_name}'s profile!"
         end
@@ -571,8 +575,6 @@ class UsersController < ApplicationController
       :birthday,
       :profile_picture,
       :seasonal_themes_enabled,
-      # admin
-      :pretend_is_not_admin,
       # security
       :sessions_reported,
       :session_validity_preference,
@@ -596,6 +598,10 @@ class UsersController < ApplicationController
           :stripe_billing_address_country
         ]
       }
+    end
+
+    if @user == current_user && current_user.admin_override_pretend?
+      attributes << :pretend_is_not_admin
     end
 
     if admin_signed_in?

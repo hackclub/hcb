@@ -335,6 +335,36 @@ RSpec.describe Ledger::Item, type: :model do
       expect(item.amount_cents).to eq(-800)
     end
 
+    it "sets pending_at from the first CPT, settled_at from the last CT, and datetime from settled_at" do
+      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current)
+      item.save(validate: false)
+
+      first_cpt = create(:canonical_pending_transaction, date: 5.days.ago, created_at: 5.days.ago, ledger_item_id: item.id)
+      create(:canonical_pending_transaction, date: 4.days.ago, created_at: 4.days.ago, ledger_item_id: item.id)
+      create(:canonical_transaction, date: 3.days.ago, created_at: 3.days.ago, ledger_item_id: item.id)
+      last_ct = create(:canonical_transaction, date: 2.days.ago, created_at: 2.days.ago, ledger_item_id: item.id)
+
+      item.refresh!
+      item.reload
+
+      expect(item.pending_at).to be_within(1.second).of(first_cpt.created_at)
+      expect(item.settled_at).to be_within(1.second).of(last_ct.created_at)
+      expect(item.datetime).to be_within(1.second).of(last_ct.created_at)
+    end
+
+    it "falls back to pending_at for datetime when there are no canonical transactions" do
+      item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current)
+      item.save(validate: false)
+
+      cpt = create(:canonical_pending_transaction, date: 5.days.ago, created_at: 5.days.ago, ledger_item_id: item.id)
+
+      item.refresh!
+      item.reload
+
+      expect(item.settled_at).to be_nil
+      expect(item.datetime).to be_within(1.second).of(cpt.created_at)
+    end
+
     it "updates amount_cents and updates receipt_required" do
       # The primary ledger's plan requires receipts, so a negative amount makes
       # the item's receipt_required.
@@ -442,6 +472,79 @@ RSpec.describe Ledger::Item, type: :model do
       it "is false when the memo does not name a verification" do
         expect(acctverify_item(memo: "Coffee", amount_cents: 12)).not_to be_likely_account_verification_related
       end
+    end
+  end
+
+  describe "#author" do
+    it "is nobody for an in-person donation, which the donor paid rather than the organizer who collected it" do
+      stub_donation_payment_intent_creation
+      donation = create(:donation, in_person: true, collected_by: create(:user))
+
+      item = Ledger::Item.new(
+        amount_cents: 1000,
+        memo: "Initial",
+        datetime: Time.current,
+        linked_object: donation
+      )
+      item.save(validate: false)
+
+      item.refresh!
+
+      expect(item.reload.author).to be_nil
+    end
+  end
+
+  describe "#receipt_count" do
+    # Reimbursements are the one linked object whose receipts don't hang off
+    # the HCB code: they're uploaded to the expense, and the payout's HCB code
+    # never has any of its own.
+    def attach_receipt_to(expense)
+      receipt = Receipt.new(receiptable: expense, user: expense.report.user, upload_method: :expense_report)
+      receipt.file.attach(
+        io: StringIO.new(File.binread(Rails.root.join("spec/fixtures/files/receipt.png"))),
+        filename: "receipt.png", content_type: "image/png"
+      )
+      receipt.save!
+      receipt
+    end
+
+    def payout_for(expense)
+      expense.update_column(:aasm_state, "approved")
+      expense.report.update_column(:aasm_state, "reimbursement_approved")
+
+      Reimbursement::ExpensePayout.create!(amount_cents: -expense.amount_cents, event: expense.report.event, expense:)
+    end
+
+    let(:event) { create(:event) }
+    let(:report) { create(:reimbursement_report, event:) }
+    let(:expense) { create(:reimbursement_expense, report:, memo: "Snacks") }
+
+    it "counts the receipts uploaded to the reimbursed expense" do
+      attach_receipt_to(expense)
+      attach_receipt_to(expense)
+
+      item = payout_for(expense).reload.ledger_item
+
+      expect(item.receipt_count).to eq(2)
+    end
+
+    it "recounts when a receipt is added to the expense after it has been paid out" do
+      item = payout_for(expense).reload.ledger_item
+      expect(item.receipt_count).to eq(0)
+
+      attach_receipt_to(expense)
+
+      expect(item.reload.receipt_count).to eq(1)
+    end
+
+    it "recounts when a receipt is removed from the expense" do
+      receipt = attach_receipt_to(expense)
+      item = payout_for(expense).reload.ledger_item
+      expect(item.receipt_count).to eq(1)
+
+      receipt.destroy!
+
+      expect(item.reload.receipt_count).to eq(0)
     end
   end
 end

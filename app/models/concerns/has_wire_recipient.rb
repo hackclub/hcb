@@ -9,7 +9,7 @@ module HasWireRecipient
     validates_length_of :remittance_info, maximum: 140
 
     validate do
-      unless bic_code.match /[A-Z]{4}([A-Z]{2})[A-Z0-9]{2}([A-Z0-9]{3})?$/ # https://www.johndcook.com/blog/2024/01/29/swift/
+      unless bic_code.to_s.match /[A-Z]{4}([A-Z]{2})[A-Z0-9]{2}([A-Z0-9]{3})?$/ # https://www.johndcook.com/blog/2024/01/29/swift/
         errors.add(:bic_code, "is not a valid SWIFT / BIC code")
       end
     end
@@ -39,10 +39,10 @@ module HasWireRecipient
       error = "contains invalid characters; the SWIFT system only supports the English alphabet and numbers."
       regex = /[^A-Za-z0-9\-?:( ).,'+\/]/
 
-      errors.add(:address_line1, error) if address_line1.match(regex)
+      errors.add(:address_line1, error) if address_line1&.match(regex)
       errors.add(:address_line2, error) if address_line2.present? && address_line2.match(regex)
-      errors.add(:address_postal_code, error) if address_postal_code.match(regex)
-      errors.add(:address_state, error) if address_state.match(regex)
+      errors.add(:address_postal_code, error) if address_postal_code&.match(regex)
+      errors.add(:address_state, error) if address_state&.match(regex)
 
       Wire.recipient_information_accessors.excluding("legal_type", "email").each do |recipient_information_accessor|
         errors.add(recipient_information_accessor, error) if recipient_information[recipient_information_accessor]&.match(regex)
@@ -220,26 +220,20 @@ module HasWireRecipient
     end
 
     def self.reimbursement_purpose_code_for(country)
-      {
-        "CO": "Reimbursement",
-        "KZ": "EKNP 2714USD859",
-        "MY": "34000",
-        "PK": "9675",
-        "AE": "TTS",
-        "CN": "SRV",
-        "IN": "S1099",
-        "KG": "55501000"
-      }[country] || "ICCP"
+      # While there are technically country-specific purpose codes
+      # that we should use, ICCP hasn't been causing any issues so far
+      "ICCP"
     end
 
     def self.payment_purpose_code_for(country)
-      # Add exceptions
-      "IVPT"
+      {
+        "IN" => "P0802"
+      }[country] || "IVPT"
     end
 
     def self.reimbursement_remittance_info_for(country)
       {
-        "PK": "Reimbursement of expenses made for a nonprofit. Recipient is a volunteer.",
+        "PK" => "Reimbursement of expenses made for a nonprofit. Recipient is a volunteer.",
       }[country] || "Reimbursement of expenses made for a nonprofit."
     end
 

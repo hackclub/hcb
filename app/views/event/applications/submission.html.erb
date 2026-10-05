@@ -106,7 +106,7 @@
       <% admin_tool do %>
         <% disabled = @application.teen_led? && pending_parties.any? %>
         <p class="<%= "tooltipped" if disabled %> my-0" aria-label="<%= "The contract is still pending on the #{pending_parties.to_sentence}" if disabled %>">
-          <%= link_to "Approve", admin_approve_application_path(@application), class: "btn bg-success tooltipped tooltipped--w", method: :post, "aria-label": "Approve this application#{" and continue to the contract" if @application.teen_led?}", disabled: %>
+          <%= link_to "Approve", admin_approve_application_path(@application), class: "btn bg-success tooltipped tooltipped--w", data: { turbo_method: :post }, "aria-label": "Approve this application#{" and continue to the contract" if @application.teen_led?}", disabled: %>
         </p>
       <% end %>
     <% elsif @application.approved? && @application.event.nil? && @application.contract.present? %>

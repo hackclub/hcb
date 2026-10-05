@@ -72,9 +72,9 @@
         </td>
         <td class="text-nowrap">
           <% contract.parties.not_hcb.pending.order(role: :desc).each do |party| %>
-            <%= link_to "Resend to #{party.role}", resend_contract_party_path(party), method: :post %><br>
+            <%= link_to "Resend to #{party.role}", resend_contract_party_path(party), data: { turbo_method: :post } %><br>
           <% end %>
-          <%= link_to "Void", void_contract_path(contract), method: :post if contract.pending? || contract.sent? %>
+          <%= link_to "Void", void_contract_path(contract), data: { turbo_method: :post } if contract.pending? || contract.sent? %>
         </td>
       </tr>
     <% end %>

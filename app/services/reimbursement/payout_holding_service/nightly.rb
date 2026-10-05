@@ -23,7 +23,8 @@ module Reimbursement
                   recipient_email: payout_holding.report.user.email,
                   send_email_notification: false,
                   user: User.system_user,
-                  currency: "USD"
+                  currency: "USD",
+                  purpose: :reimbursement
                 )
                 begin
                   wire.save!

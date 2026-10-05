@@ -106,6 +106,7 @@ class Event
       project_info: "project_info",
       personal_info: "personal_info",
       review: "review",
+      sign_agreement: "sign_agreement",
       agreement: "agreement",
       submission: "submission"
     }
@@ -262,11 +263,19 @@ class Event
       Rails.application.routes.url_helpers.application_path(self)
     end
 
+    def contractable_link_label
+      "application"
+    end
+
+    def contractable_link_path
+      Rails.application.routes.url_helpers.application_path(self)
+    end
+
     def contract_notify_hcb?
       !teen_led? || contract.reissue?
     end
 
-    def send_contract(reissue_messages: {}, reissue_of: nil, **options)
+    def send_contract(reissue_messages: {}, reissue_of: nil, extra_prefills: {}, **options)
       if name.nil? || description.nil?
         raise StandardError.new("Cannot create a contract for application #{hashid}: missing name and/or description")
       end
@@ -281,7 +290,7 @@ class Event
           contractable: self,
           include_videos: false,
           external_template_id: Event::Plan::Standard.new.contract_docuseal_template_id,
-          prefills: { "public_id" => public_id, "name" => name, "description" => description },
+          prefills: extra_prefills.merge({ "public_id" => public_id, "name" => name, "description" => description }),
           reissue_of:
         )
         fs_contract.parties.create!(user:, role: :signee)
@@ -343,6 +352,7 @@ class Event
         poc_user = point_of_contact.presence || contract.party(:hcb).user
         Event.create!(
           name:,
+          description:,
           country: address_country,
           point_of_contact_id: poc_user.id,
           application: self,

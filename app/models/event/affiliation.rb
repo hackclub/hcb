@@ -120,8 +120,8 @@ class Event
     TBA_BASE_URL = "https://www.thebluealliance.com/api/v3"
 
     def self.tba_lookup(league, team_number)
-      league = league.to_s.downcase
-      team_number = team_number.to_s
+      league = league.to_s.strip.downcase
+      team_number = team_number.to_s.strip
 
       # The Blue Alliance is a community-run service; if it's unreachable, report
       # it and degrade to no team info rather than failing the request.

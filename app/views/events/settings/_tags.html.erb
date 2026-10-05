@@ -86,7 +86,8 @@
         </div>
         <%= pop_icon_to "delete",
           event_tag_path(event, tag.id),
-          method: :delete,
+          data: { turbo_method: :delete },
+
           icon_size: 26,
           class: "tooltipped tooltipped--w h-8 w-8",
           style: "background: #ec375020; color: #ec3750",
