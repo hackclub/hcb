@@ -159,6 +159,8 @@ class LegalEntity < ApplicationRecord
 
   # Forms 1099 are furnished as pages on HCB, so consenting on HCB itself
   # demonstrates the recipient can access them, as IRS Publication 1179 requires.
+  # We record the time along with when they consented/refused so we know
+  # who hasn't seen the page yet.
   def record_electronic_consent!(consented)
     update!(electronic_consent: consented, electronic_consent_at: Time.current)
   end
