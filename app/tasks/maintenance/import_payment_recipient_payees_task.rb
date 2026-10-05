@@ -52,8 +52,6 @@ module Maintenance
           imported += 1 if create_payout_method(legal_entity, details_class, attributes, recipient, default: imported.zero?)
         end
 
-        # With nothing carried over, the payee onboards like any other rather
-        # than keeping an entity that holds nothing but a name.
         if imported.zero?
           legal_entity.destroy!
           legal_entity = nil
