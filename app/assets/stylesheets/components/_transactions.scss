@@ -122,10 +122,6 @@ html[data-dark='true'] {
     max-width: 100%;
     overflow: hidden;
 
-    @media screen and (max-width: 32em) {
-      max-width: 32ch; // reduce character count on mobile
-    }
-
     &:not(:has(span)) {
       display: inline-block;
       vertical-align: top;
@@ -134,6 +130,13 @@ html[data-dark='true'] {
 
     &.memo-underline > span:hover {
       text-decoration: underline;
+    }
+  }
+
+  &:not(.transaction__memo--fluid)
+    span:not(.badge):not(.list-badge):first-of-type {
+    @media screen and (max-width: 32em) {
+      max-width: 32ch;
     }
   }
 
@@ -238,11 +241,6 @@ details.receipt-card {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-
-  // The cell already bounds the memo, so lift the mobile 32ch cap that clips it without an ellipsis
-  span:not(.badge):not(.list-badge):first-of-type {
-    max-width: 100%;
-  }
 }
 
 .transaction:hover .add-tag-badge,
