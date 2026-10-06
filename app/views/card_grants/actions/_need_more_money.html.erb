@@ -1,7 +1,0 @@
-<%# locals: (card_grant:, label: "Need more money?", subtitle: "") %>
-
-<% help_article_url = "https://grants.help.hcb.hackclub.com/en/articles/15582009-can-i-add-more-money-to-my-grant-card" %>
-
-<%= link_to help_article_url, target: "_blank", rel: "noopener", class: "grant-action" do %>
-  <%= render "card_grants/control", icon: "plus", tone: "purple", title: label, description: subtitle.presence || "Contact the #{card_grant.event.name} team, or buy the item and get reimbursed", cta: "Learn more" %>
-<% end %>
