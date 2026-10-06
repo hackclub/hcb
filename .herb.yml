@@ -8,6 +8,10 @@ framework: actionview
 linter:
   enabled: true
 
+  # Herb's defaults skip views like `.pdf.erb` and bare `.erb`.
+  include:
+    - "app/views/**/*.erb"
+
   rules:
     all:
       enabled: false
@@ -19,3 +23,8 @@ linter:
     actionview-prefer-qualified-partial-path:
       enabled: true
       severity: error
+
+# We don't use Herb's formatter. This keeps editors with the Herb extension
+# from formatting on save if its default ever changes.
+formatter:
+  enabled: false
