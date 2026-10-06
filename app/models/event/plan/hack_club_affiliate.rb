@@ -66,6 +66,10 @@ class Event
         }
       end
 
+      def assigned_reimbursement_reviewer_required?
+        true
+      end
+
     end
 
   end
