@@ -95,7 +95,7 @@ class Contract < ApplicationRecord
           reissue_messages.each do |role, message|
             party(role)&.notify_reissued(message:) if message.present?
           end
-          notifiable_parties.each(&:schedule_reminders)
+          notifiable_parties.each(&:schedule_reminders) if contractable.contract_remind_when_reissued
         elsif contractable.contract_notify_when_sent
           notifiable_parties.each(&:notify)
           notifiable_parties.each(&:schedule_reminders)
