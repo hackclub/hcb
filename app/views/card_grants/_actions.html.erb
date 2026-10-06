@@ -11,15 +11,15 @@
     <% controls << render("card_grants/actions/convert_to_reimbursement_report", card_grant:, variant: "control", label: own ? "I already paid out of pocket" : "Create reimbursement report", subtitle: "Swap the balance for a reimbursement") %>
     <% if own %>
       <% controls << render("card_grants/actions/return", card_grant:, label: "I don’t need this money", subtitle: "Send the remaining balance back to #{card_grant.event.name}") %>
-      <% controls << render("card_grants/actions/need_more_money", card_grant:) %>
     <% else %>
       <% controls << render("card_grants/actions/cancel", card_grant:, variant: "control", label: "Return the balance to #{card_grant.event.name}") %>
     <% end %>
   <% end %>
   <% controls.reject!(&:blank?) %>
-  <% support = render("card_grants/actions/support", card_grant:) if organizer_signed_in?(as: :member) || own %>
+  <% support = render("card_grants/actions/support", card_grant:, title: own ? "Still stuck?" : "Need help?") if organizer_signed_in?(as: :member) || own %>
+  <% answers = render("card_grants/quick_answers", card_grant:) if own %>
 
-  <% if controls.any? || support.present? %>
+  <% if controls.any? %>
     <div class="card grant-controls">
       <p class="grant-panel__heading">Controls</p>
       <div class="grant-controls__grid">
@@ -29,9 +29,14 @@
           </div>
         <% end %>
       </div>
-      <% if support.present? %>
-        <div class="grant-controls__footer"><%= support %></div>
-      <% end %>
+    </div>
+  <% end %>
+
+  <%# Help gets its own card so it doesn't read as one more control. %>
+  <% if answers.present? || support.present? %>
+    <div class="card grant-help">
+      <%= answers %>
+      <%= support %>
     </div>
   <% end %>
 <% end %>

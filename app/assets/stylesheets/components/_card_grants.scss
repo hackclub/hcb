@@ -262,9 +262,11 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
   }
 }
 
-// Two columns when there's room. Most controls render conditionally, so the
-// view flags an odd one out as `--wide` and it takes the whole row instead of
-// sitting alone in the left column.
+// Side by side: once there's room, every control gets its own column in a
+// single row, title and description on top and its button along the bottom.
+// In between they fall back to two columns (the view flags an odd one out as
+// `--wide` so it doesn't sit alone in the left column), and to stacked rows on
+// phones.
 .grant-controls__grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -276,24 +278,232 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
   min-width: 0;
 }
 
-@container grant-pay (min-width: 48rem) {
-  .grant-controls__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 .grant-controls__item--wide {
   grid-column: 1 / -1;
 }
 
-// "Need help?" sits apart from the actions in a tinted strip along the bottom
-// of the card, the same treatment as the limits note in step 1.
-.grant-controls__footer {
+@container grant-pay (min-width: 36rem) {
+  .grant-controls__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    .grant-action {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: 1fr auto;
+      grid-template-areas:
+        'text'
+        'cta';
+      align-items: start;
+      row-gap: 0.875rem;
+    }
+
+    .grant-action__cta {
+      justify-self: start;
+    }
+  }
+}
+
+@container grant-pay (min-width: 44rem) {
+  .grant-controls__grid {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+  }
+
+  .grant-controls__item--wide {
+    grid-column: auto;
+  }
+
+  // Inset from the dividers so a control's hover background doesn't run into them.
+  .grant-controls__item {
+    padding-inline: 0.5rem;
+
+    &:first-child {
+      padding-left: 0;
+    }
+
+    &:last-child {
+      padding-right: 0;
+    }
+  }
+
+  .grant-controls__item + .grant-controls__item {
+    @include grant-hairline(left);
+  }
+}
+
+// Help card: the help center articles as tiles, then the org's own support
+// as a slim tinted strip along the bottom.
+.grant-help {
   display: grid;
-  margin: 0.75rem -0.75rem -0.75rem;
-  padding: 0.375rem 0.75rem;
-  background: rgba(140, 150, 165, 0.1);
-  @include grant-hairline(top);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+
+  > .grant-action {
+    padding: 0.875rem 1.5rem;
+    border-radius: 0;
+  }
+
+  // Under the tiles it's a footer: tinted, and "Still stuck?" runs into its
+  // description on one line instead of stacking.
+  > .grant-answers + .grant-action {
+    background: rgba(140, 150, 165, 0.08);
+    @include grant-hairline(top);
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+      background: rgba(140, 150, 165, 0.14);
+    }
+
+    .grant-action__text {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: baseline;
+      column-gap: 0.375rem;
+    }
+  }
+}
+
+.grant-answers {
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.grant-answers__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.grant-answers__all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: map-get($palette, muted);
+  text-decoration: none;
+
+  &:hover,
+  &:focus {
+    color: map-get($palette, info);
+  }
+}
+
+// As many columns as fit (all five on a full-width page), wrapping on phones.
+.grant-answers__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 0.625rem;
+  margin-top: 0.875rem;
+}
+
+// Each article's colour shows in its icon, and washes over the whole tile on
+// hover, when an arrow slides in to say it opens the help center.
+.grant-answer {
+  --tone: #{map-get($palette, muted)};
+  --tone-wash: #{rgba(map-get($palette, muted), 0.08)};
+  --tone-soft: #{rgba(map-get($palette, muted), 0.14)};
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border-radius: var(--radius-lg);
+  // An inset shadow rather than a border, so the outline doesn't add to the
+  // tile's size.
+  box-shadow: inset 0 0 0 1px rgba(140, 150, 165, 0.3);
+  background: transparent;
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+
+  html[data-dark='true'] & {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  }
+
+  @each $tone in (primary, warning, success, info, purple, accent) {
+    &.grant-answer--#{$tone} {
+      --tone: #{map-get($palette, $tone)};
+      --tone-wash: #{rgba(map-get($palette, $tone), 0.08)};
+      --tone-soft: #{rgba(map-get($palette, $tone), 0.14)};
+    }
+  }
+
+  &:hover,
+  &:focus {
+    color: inherit;
+  }
+
+  &:hover,
+  &:focus-visible {
+    background: var(--tone-wash);
+
+    html[data-dark='true'] & {
+      background: var(--tone-wash);
+    }
+
+    .grant-answer__arrow {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tone);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.grant-answer__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.625rem;
+  color: var(--tone);
+  background: var(--tone-soft);
+}
+
+.grant-answer__label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+// The arrow glyph only fills the middle third of its icon, so the icon is
+// drawn large and tucked into the corner.
+.grant-answer__arrow {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  display: inline-flex;
+  color: var(--tone);
+  opacity: 0;
+  transform: translate(-3px, 3px);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.grant-section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 2.5rem 0 0.875rem;
+
+  > .grant-section {
+    margin: 0;
+  }
 }
 
 // Horizontal strip of facts, hairline-separated.
@@ -603,12 +813,12 @@ $grant-upload-height: 11.5rem;
   }
 }
 
-// One row in the controls list. The whole row is the button (or link), with a
-// button-styled CTA on the right so it reads as clickable at a glance.
+// One control. The whole thing is the button (or link), with a button-styled
+// CTA so it reads as clickable at a glance.
 .grant-action {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-areas: 'icon text cta';
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'text cta';
   align-items: center;
   gap: 0.875rem;
   width: 100%;
@@ -646,10 +856,10 @@ $grant-upload-height: 11.5rem;
 
   // Narrow: the CTA drops under the description so its label never gets cut.
   @container grant-pay (max-width: 30rem) {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      'icon text'
-      '. cta';
+      'text'
+      'cta';
     row-gap: 0.625rem;
     align-items: start;
   }
@@ -662,25 +872,6 @@ $grant-upload-height: 11.5rem;
   &:disabled {
     cursor: not-allowed;
     opacity: 0.5;
-  }
-}
-
-.grant-action__icon {
-  grid-area: icon;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.75rem;
-  color: map-get($palette, muted);
-  background: rgba(map-get($palette, muted), 0.14);
-
-  @each $tone in (info, success, warning, purple) {
-    &.grant-action__icon--#{$tone} {
-      color: map-get($palette, $tone);
-      background: rgba(map-get($palette, $tone), 0.14);
-    }
   }
 }
 

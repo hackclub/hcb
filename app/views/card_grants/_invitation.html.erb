@@ -2,7 +2,12 @@
 
 <% if card_grant.pending_invite? %>
   <%# Prompt user to create a Stripe Card %>
-  <h2 class="grant-section">Activate your grant card</h2>
+  <div class="grant-section-row">
+    <h2 class="grant-section">Activate your grant card</h2>
+    <%= link_to card_grant_help_url(:getting_started), target: "_blank", rel: "noopener", class: "grant-answers__all" do %>
+      <%= inline_icon "help", size: 18 %> How card grants work
+    <% end %>
+  </div>
   <p class="muted mt-0 mb-3">
     One more step before you can start spending: agree to the following and we'll issue your card.
   </p>

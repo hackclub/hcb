@@ -13,7 +13,7 @@
                   disabled: !policy(stripe_card).defrost?,
                   data: { turbo: true, turbo_frame: "_top" } do %>
       <%# `label`/`subtitle` describe freezing, so the frozen state has its own copy. %>
-      <%= render "card_grants/control", icon: "freeze", tone: "info", title: "Card frozen", description: policy(stripe_card).defrost? ? "Defrost it to start spending again" : "You don't have permission to perform this action", cta: "Defrost" %>
+      <%= render "card_grants/control", title: "Card frozen", description: policy(stripe_card).defrost? ? "Defrost it to start spending again" : "You don't have permission to perform this action", cta: "Defrost" %>
     <% end %>
   <% else %>
     <%= button_to defrost_stripe_card_path(stripe_card),
@@ -39,7 +39,7 @@
                   class: "grant-action",
                   disabled: !policy(stripe_card).freeze?,
                   data: { turbo: true, turbo_frame: "_top" } do %>
-      <%= render "card_grants/control", icon: "freeze", tone: "info", title: label.presence || "Freeze", description: freeze_subtitle, cta: "Freeze" %>
+      <%= render "card_grants/control", title: label.presence || "Freeze", description: freeze_subtitle, cta: "Freeze" %>
     <% end %>
   <% else %>
     <%= button_to freeze_stripe_card_path(stripe_card),
@@ -58,7 +58,7 @@
 <% elsif !stripe_card&.canceled? %>
   <% if control %>
     <button type="button" class="grant-action" disabled>
-      <%= render "card_grants/control", icon: "freeze", tone: "info", title: "Freeze", description: "This card cannot be frozen because it has not been activated", cta: "Freeze" %>
+      <%= render "card_grants/control", title: "Freeze", description: "This card cannot be frozen because it has not been activated", cta: "Freeze" %>
     </button>
   <% else %>
     <button type="button" class="btn btn--list-item" disabled>

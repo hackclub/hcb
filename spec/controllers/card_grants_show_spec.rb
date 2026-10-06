@@ -74,5 +74,36 @@ RSpec.describe CardGrantsController do
       expect(response.body).to include("You don&#39;t have permission to perform this action")
       expect(response.body).not_to include("Return the balance to")
     end
+
+    it "shows the grantee help articles, and only offers combining once they have another grant" do
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(user_id: card_grant.stripe_card.user.id)
+      create_session(card_grant.user.reload, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response.body).to include("All articles")
+      expect(response.body).to include("Card declined")
+      expect(response.body).to include("Need more money?")
+      expect(response.body).not_to include("Combine grants")
+
+      other_grant = create(:card_grant, event:)
+      other_grant.update_columns(user_id: card_grant.user_id)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response.body).to include("Combine grants")
+    end
+
+    it "keeps the grantee help articles off the organizer's view" do
+      organizer = create(:user)
+      card_grant = create(:card_grant, event:)
+      create(:organizer_position, user: organizer, event:)
+      create_session(organizer, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response.body).not_to include("All articles")
+    end
   end
 end

@@ -1,0 +1,21 @@
+<%# locals: (card_grant:) %>
+
+<%# Help center articles as a row of tiles rather than a FAQ list, so one glance shows what's covered. %>
+<div class="grant-answers">
+  <div class="grant-answers__head">
+    <p class="grant-panel__heading m-0">Need help?</p>
+    <%= link_to CardGrantsHelper::CARD_GRANT_HELP_CENTER_URL, target: "_blank", rel: "noopener", class: "grant-answers__all" do %>
+      All articles <%= inline_icon "external", size: 16 %>
+    <% end %>
+  </div>
+
+  <div class="grant-answers__row">
+    <% card_grant_help_tiles(card_grant).each do |article| %>
+      <%= link_to article[:url], target: "_blank", rel: "noopener", class: "grant-answer grant-answer--#{article[:tone]}" do %>
+        <span class="grant-answer__icon"><%= inline_icon article[:icon], size: 20 %></span>
+        <span class="grant-answer__label"><%= article[:label] %></span>
+        <span class="grant-answer__arrow" aria-hidden="true"><%= inline_icon "external-arrow", size: 28 %></span>
+      <% end %>
+    <% end %>
+  </div>
+</div>
