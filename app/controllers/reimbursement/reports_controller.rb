@@ -199,6 +199,15 @@ module Reimbursement
     def submit
       authorize @report
 
+      if @report.assigned_reviewer_required?
+        reviewer = User.find_by_public_id!(params[:reviewer_id])
+        unless @report.eligible_reviewers.exists?(reviewer.id)
+          flash[:error] = "The selected reviewer is not eligible for this report."
+          redirect_to @report and return
+        end
+        @report.reviewer = reviewer
+      end
+
       begin
         @report.mark_submitted!
 
