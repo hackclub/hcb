@@ -122,7 +122,7 @@ class Payment < ApplicationRecord
         0
       end
     when LegalEntity::PayoutMethod::WiseTransfer
-      WiseTransfer.generate_quote(amount) - WiseTransfer.generate_detailed_quote(amount)[:without_fees_usd_amount]
+      (WiseTransfer.generate_quote(amount) - WiseTransfer.generate_detailed_quote(amount)[:without_fees_usd_amount]).cents
     else
       0
     end
