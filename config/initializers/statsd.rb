@@ -11,5 +11,12 @@ Rails.application.configure do
 
   StatsD::Instrument::Environment.setup
 
-  StatsD.increment("startup", 1)
+  begin
+    StatsD.increment("startup", 1)
+  rescue Socket::ResolutionError, SocketError => e
+    # Telemetry must never prevent the app from booting or serving requests
+    # (StatsD is called inline in Stripe webhooks). Fall back to a no-op client.
+    Rails.error.report(e, handled: true)
+    StatsD.singleton_client = StatsD::Instrument::Client.new(sink: StatsD::Instrument::NullSink.new)
+  end
 end
