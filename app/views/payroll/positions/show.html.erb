@@ -146,7 +146,13 @@
                   <span class="muted">&mdash;</span>
                 <% end %>
               </td>
-              <td class="text-right"><%= render_money invoice.amount_cents %></td>
+              <td class="text-right flex flex-col">
+                <%= render_money invoice.amount_cents %>
+
+                <% unless invoice.estimated_fee_cents.zero? %>
+                  <span class="text-sm text-muted">+ <%= render_money invoice.estimated_fee_cents %> fee</span>
+                <% end %>
+              </td>
               <% if @can_review %>
                 <td class="text-right">
                   <% if invoice.submitted? %>

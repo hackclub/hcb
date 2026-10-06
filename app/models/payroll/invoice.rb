@@ -98,6 +98,10 @@ module Payroll
       nil
     end
 
+    def estimated_fee_cents
+      Payment.estimated_fee_cents(amount, payroll_position.event, payroll_position.legal_entity.default_payout_method)
+    end
+
     private
 
     # The document the contractor uploaded is the receipt for the payment their
