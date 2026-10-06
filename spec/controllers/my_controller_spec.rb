@@ -80,6 +80,20 @@ RSpec.describe MyController do
     end
   end
 
+  describe "GET #reimbursements_section" do
+    it "paginates a single section" do
+      user = sign_in_verified
+      create_list(:reimbursement_report, 12, user:)
+
+      get :reimbursements_section, params: { section: "mine", page: 2, per: 5 }
+
+      expect(response.status).to eq(200)
+      expect(response.body).to include('id="my_reimbursements_mine"')
+      expect(controller.instance_variable_get(:@reports).size).to eq(5)
+      expect(controller.instance_variable_get(:@reports).total_count).to eq(12)
+    end
+  end
+
   describe "GET #inbox" do
     render_views(false)
 

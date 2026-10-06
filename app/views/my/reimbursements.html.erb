@@ -83,21 +83,23 @@
     <% end %>
   </div>
 
-  <% if @sections[:assigned].present? %>
+  <% if @sections[:assigned].exists? %>
     <h3 class="mt3 mb1">Assigned to you for review</h3>
-    <%= render "reimbursement_reports_table", reports: @sections[:assigned] %>
+    <%= turbo_frame_tag :my_reimbursements_assigned, src: my_reimbursements_section_path(:assigned, q: params[:q].presence) do %>
+      <p class="muted">Loading reports…</p>
+    <% end %>
   <% end %>
 
-  <% if @sections[:unassigned].present? %>
+  <% if @sections[:unassigned].exists? %>
     <h3 class="mt3 mb1">Awaiting review by any manager</h3>
-    <%= render "reimbursement_reports_table", reports: @sections[:unassigned] %>
+    <%= turbo_frame_tag :my_reimbursements_unassigned, src: my_reimbursements_section_path(:unassigned, q: params[:q].presence) do %>
+      <p class="muted">Loading reports…</p>
+    <% end %>
   <% end %>
 
   <h3 class="mt3 mb1">Your reports</h3>
-  <% if @sections[:mine].present? %>
-    <%= render "reimbursement_reports_table", reports: @sections[:mine] %>
-  <% else %>
-    <%= blankslate "No reports found!" %>
+  <%= turbo_frame_tag :my_reimbursements_mine, src: my_reimbursements_section_path(:mine, q: params[:q].presence) do %>
+    <p class="muted">Loading reports…</p>
   <% end %>
 <% else %>
  <%= render "events/one_pager",

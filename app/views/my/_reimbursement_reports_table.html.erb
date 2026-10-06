@@ -28,7 +28,7 @@
             <% end %>
           </td>
           <td style="max-width: 350px; overflow: hidden; text-overflow: ellipsis;">
-            <%= link_to "", report, class: "stretched-link" %>
+            <%= link_to "", report, class: "stretched-link", data: { turbo_frame: "_top" } %>
             <span><%= report.name %></span>
           </td>
           <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
