@@ -338,6 +338,14 @@ module Reimbursement
       user.admin? || !OrganizerPosition.role_at_least?(user, event, :manager) || (event.reimbursements_require_organizer_peer_review && event.users.size > 1)
     end
 
+    def assigned_reviewer_required?
+      event.plan.assigned_reimbursement_reviewer_required?
+    end
+
+    def eligible_reviewers
+      User.where(id: event.ancestor_organizer_positions.manager_access.select(:user_id))
+    end
+
     def reimbursement_confirmation_message
       return nil if expenses.pending.none?
 
