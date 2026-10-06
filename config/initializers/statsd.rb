@@ -13,7 +13,7 @@ Rails.application.configure do
 
   begin
     StatsD.increment("startup", 1)
-  rescue Socket::ResolutionError, SocketError => e
+  rescue SocketError => e
     # Telemetry must never prevent the app from booting or serving requests
     # (StatsD is called inline in Stripe webhooks). Fall back to a no-op client.
     Rails.error.report(e, handled: true)
