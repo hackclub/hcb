@@ -147,10 +147,14 @@
                 <% end %>
               </td>
               <td class="text-right flex flex-col">
-                <%= render_money invoice.amount_cents %>
+                <% if invoice.payment&.current_attempt.present? %>
+                  <%= render_money invoice.payment.current_attempt.payout.ledger_item.amount_cents.abs %>
+                <% else %>
+                  <%= render_money invoice.amount_cents %>
 
-                <% unless invoice.estimated_fee_cents.zero? %>
-                  <span class="text-sm text-muted">+ <%= render_money invoice.estimated_fee_cents %> fee</span>
+                  <% unless invoice.estimated_fee_cents.zero? %>
+                    <span class="text-sm text-muted">+ <%= render_money invoice.estimated_fee_cents %> fee</span>
+                  <% end %>
                 <% end %>
               </td>
               <% if @can_review %>
