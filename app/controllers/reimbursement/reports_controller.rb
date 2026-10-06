@@ -208,7 +208,7 @@ module Reimbursement
     def submit
       authorize @report
 
-      if @report.assigned_reviewer_required? && !@report.reviewer.present?
+      if @report.assigned_reviewer_required? && !OrganizerPosition.role_at_least?(current_user, @report.event, :manager) && !@report.reviewer.present?
         reviewer = User.find_by_public_id!(params[:reviewer_id])
         unless @report.eligible_reviewers.exists?(reviewer.id)
           flash[:error] = "The selected reviewer is not eligible for this report."
