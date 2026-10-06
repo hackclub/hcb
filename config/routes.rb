@@ -98,6 +98,7 @@ Rails.application.routes.draw do
     post "toggle_admin_activities", to: "my#toggle_admin_activities", as: :toggle_admin_activities
     get "tasks", to: "my#tasks", as: :my_tasks
     get "reimbursements", to: "my#reimbursements", as: :my_reimbursements
+    get "reimbursements/:section", to: "my#reimbursements_section", as: :my_reimbursements_section, constraints: { section: /assigned|unassigned|mine/ }
     get "reimbursements_icon", to: "my#reimbursements_icon", as: :my_reimbursements_icon
 
     get "receipts", to: redirect("/my/inbox")
@@ -935,7 +936,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :legal_entities, only: [:show] do
+  resources :legal_entities, only: [:show, :create] do
     collection do
       post "create_from_tax_form"
     end
@@ -1121,6 +1122,7 @@ Rails.application.routes.draw do
     resources :check_deposits, only: [:index, :create], path: "check-deposits" do
       member do
         post "toggle_fronted"
+        get "blurred_image/:side", to: "check_deposits#blurred_image", as: :blurred_image, constraints: { side: /front|back/ }
       end
     end
 
