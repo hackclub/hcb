@@ -5,6 +5,52 @@ require "rails_helper"
 RSpec.describe Reimbursement::ReportsController do
   include SessionSupport
 
+  describe "#submit with a Wise fee cap" do
+    def wise_report(user:, maximum_amount_cents: 10_000)
+      create(:reimbursement_report,
+             user:,
+             currency: "GBP",
+             maximum_amount_cents:,
+             legal_entity_payout_method: create(:legal_entity_payout_method_wise))
+    end
+
+    it "keeps an over-cap report in draft and directs the creator to fit fees" do
+      user = create(:user)
+      report = wise_report(user:)
+      create(:reimbursement_expense, report:, value: 90)
+      allow(WiseTransfer).to receive(:generate_quote).and_return(Money.from_cents(10_001, "USD"))
+      create_session(user, verified: true)
+
+      post(:submit, params: { report_id: report.id })
+
+      expect(report.reload).to be_draft
+      expect(flash[:error]).to include("Fit fees")
+    end
+
+    it "submits a fitted report after a fresh quote" do
+      user = create(:user)
+      report = wise_report(user:)
+      create(:reimbursement_expense, report:, value: 80, memo: "Travel")
+      allow_any_instance_of(Reimbursement::Report).to receive(:missing_receipts?).and_return(false)
+      allow(WiseTransfer).to receive(:generate_quote).and_return(Money.from_cents(10_000, "USD"))
+      create_session(user, verified: true)
+
+      post(:submit, params: { report_id: report.id })
+
+      expect(report.reload).to be_submitted
+    end
+
+    it "does not quote uncapped or non-Wise reports" do
+      user = create(:user)
+      uncapped_report = wise_report(user:, maximum_amount_cents: nil)
+      non_wise_report = create(:reimbursement_report, user:, maximum_amount_cents: 10_000)
+      expect(WiseTransfer).not_to receive(:generate_quote)
+
+      uncapped_report.verify_wise_fee_cap!
+      non_wise_report.verify_wise_fee_cap!
+    end
+  end
+
   describe "#start" do
     render_views
 

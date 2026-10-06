@@ -18,6 +18,10 @@ module Reimbursement
       unlocked? && (admin? || manager? || creator?) && !record.is_fee?
     end
 
+    def fit_fees?
+      unlocked? && creator? && record.is_standard?
+    end
+
     def approve?
       (admin? || (manager? && !creator?)) && record.report.submitted?
     end
