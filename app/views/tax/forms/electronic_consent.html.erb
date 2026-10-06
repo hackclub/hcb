@@ -91,7 +91,7 @@
       <% end %>
     </div>
 
-    <div class="flex justify-between">  
+    <div class="flex justify-between">
       <%= form.submit "Consent to electronic delivery", class: "btn bg-success" %>
       <%= button_to "No thanks, mail me paper copies", electronic_consent_tax_form_path(@form), params: { electronic_consent: "false" }, class: "btn bg-muted" %>
     </div>
