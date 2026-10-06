@@ -103,10 +103,11 @@
     <% if @report.assigned_reviewer_required? && !OrganizerPosition.role_at_least?(current_user, @report.event, :manager) && !@report.reviewer.present? %>
       <p><%= @report.event.name %> would like you to select a reviewer for your reimbursement report.</p>
       <div class="field">
-        <%= form.label :reviewer_id, "Reviewer" %>
-        <%= form.collection_select :reviewer_id,
-          @report.eligible_reviewers,
-          :public_id, :name, { prompt: "Select a reviewer...", selected: @report.reviewer&.public_id }, { required: true } %>
+        <%= label_tag :reviewer_id, "Reviewer" %>
+        <%= select_tag :reviewer_id,
+        options_from_collection_for_select(@report.eligible_reviewers, :public_id, :name, @report.reviewer&.public_id),
+        prompt: "Select a reviewer...",
+        required: true %>
       </div>
     <% end %>
     <%= form.submit "Submit" %>
