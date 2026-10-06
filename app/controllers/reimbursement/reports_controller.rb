@@ -25,6 +25,7 @@ module Reimbursement
         unless @report.eligible_reviewers.exists?(reviewer.id)
           return redirect_back fallback_location: event_reimbursements_path(@event), flash: { error: "The selected reviewer is not eligible for this report." }
         end
+
         @report.reviewer = reviewer
       end
 
