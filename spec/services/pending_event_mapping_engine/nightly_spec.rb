@@ -152,4 +152,35 @@ RSpec.describe PendingEventMappingEngine::Nightly do
       expect(canonical_transaction.category_mapping).to be_manual
     end
   end
+
+  describe "settling Stripe service fees" do
+    # The pending transaction is mapped to the Hack Club Bank event, which must
+    # exist for it to be created.
+    let!(:hack_club_bank) { create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK) }
+
+    before do
+      # StripeServiceFee creates a StripeTopup on create, which calls the Stripe API.
+      stub_request(:post, "https://api.stripe.com/v1/topups")
+        .to_return(status: 200, body: { id: "tu_1" }.to_json, headers: {})
+    end
+
+    let(:stripe_service_fee) { create(:stripe_service_fee, amount_cents: -12_34) }
+    let!(:cpt) { StripeServiceFeeService::CreateCanonicalPendingTransaction.new(stripe_service_fee_id: stripe_service_fee.id).run }
+
+    let!(:canonical_transaction) do
+      create(:canonical_transaction, amount_cents: cpt.amount_cents).tap do |ct|
+        ct.update_column(:hcb_code, stripe_service_fee.hcb_code)
+      end
+    end
+
+    it "copies the pending transaction's category to the settled transaction" do
+      expect(cpt.category.slug).to eq("stripe-service-fees")
+
+      described_class.new.send(:settle_canonical_pending_stripe_service_fee!)
+
+      expect(cpt.reload.canonical_transactions).to contain_exactly(canonical_transaction)
+      expect(canonical_transaction.reload.category.slug).to eq("stripe-service-fees")
+      expect(canonical_transaction.category_mapping).to be_automatic
+    end
+  end
 end
