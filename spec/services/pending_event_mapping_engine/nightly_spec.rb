@@ -183,4 +183,29 @@ RSpec.describe PendingEventMappingEngine::Nightly do
       expect(canonical_transaction.category_mapping).to be_automatic
     end
   end
+
+  describe "settling fee revenue" do
+    # The pending transaction is mapped to the Hack Club Bank event, which must
+    # exist for it to be created.
+    let!(:hack_club_bank) { create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK) }
+
+    let(:fee_revenue) { create(:fee_revenue, amount_cents: 12_34) }
+    let!(:cpt) { FeeRevenueService::CreateCanonicalPendingTransaction.new(fee_revenue_id: fee_revenue.id).run }
+
+    let!(:canonical_transaction) do
+      create(:canonical_transaction, amount_cents: cpt.amount_cents).tap do |ct|
+        ct.update_column(:hcb_code, fee_revenue.hcb_code)
+      end
+    end
+
+    it "copies the pending transaction's category to the settled transaction" do
+      expect(cpt.category.slug).to eq("hcb-revenue")
+
+      described_class.new.send(:settle_canonical_pending_fee_revenue!)
+
+      expect(cpt.reload.canonical_transactions).to contain_exactly(canonical_transaction)
+      expect(canonical_transaction.reload.category.slug).to eq("hcb-revenue")
+      expect(canonical_transaction.category_mapping).to be_automatic
+    end
+  end
 end
