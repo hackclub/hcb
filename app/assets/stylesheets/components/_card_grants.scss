@@ -430,7 +430,7 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
   }
 
-  @each $tone in (primary, warning, success, info, purple, accent) {
+  @each $tone in (primary, warning, success, info, purple) {
     &.grant-answer--#{$tone} {
       --tone: #{map-get($palette, $tone)};
       --tone-wash: #{rgba(map-get($palette, $tone), 0.08)};
@@ -517,7 +517,7 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
   display: flex;
   flex-wrap: wrap;
 
-  > div {
+  > .grant-strip__cell {
     flex: 1 1 9rem;
     padding: 0.25rem 1.25rem;
     @include grant-hairline(left);

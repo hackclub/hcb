@@ -1,7 +1,7 @@
-<%# locals: (icon: "", title:, own: true) %>
+<%# locals: (icon:, title:, own: true) %>
 
 <h2 class="grant-section">
-  <% if own && !icon.empty? %>
+  <% if own %>
     <span class="grant-section__icon" aria-hidden="true"><%= icon %></span>
   <% end %>
   <%= title %>
