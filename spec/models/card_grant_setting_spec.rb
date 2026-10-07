@@ -16,4 +16,28 @@ RSpec.describe CardGrantSetting, type: :model do
       expect(described_class.new(support_url: "mailto:tagless.hackclub.com").slack_support?).to be false
     end
   end
+
+  describe "support_url validation" do
+    let(:setting) { create(:card_grant_setting) }
+
+    ["https://hackclub.com/support", "http://hackclub.com", "mailto:orpheus@hackclub.com", nil, ""].each do |url|
+      it "accepts #{url.inspect}" do
+        setting.support_url = url
+        expect(setting).to be_valid
+      end
+    end
+
+    ["mailto:tagless.hackclub.com", "mailto:", "javascript:alert(1)", "data:text/html,<script>", "https://", "hackclub.com", "not a url"].each do |url|
+      it "rejects #{url.inspect}" do
+        setting.support_url = url
+        expect(setting).not_to be_valid
+        expect(setting.errors[:support_url]).to be_present
+      end
+    end
+
+    it "does not block saving other fields on a legacy row with a bad URL" do
+      setting.update_column(:support_url, "mailto:tagless.hackclub.com")
+      expect(setting.update(support_message: "Reach out!")).to be true
+    end
+  end
 end

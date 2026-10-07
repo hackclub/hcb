@@ -34,6 +34,7 @@ class CardGrantSetting < ApplicationRecord
 
   belongs_to :event
   validates :event, uniqueness: true
+  validate :support_url_format, if: -> { support_url.present? && support_url_changed? }
   serialize :merchant_lock, coder: CommaSeparatedCoder # convert comma-separated merchant list to an array
   serialize :category_lock, coder: CommaSeparatedCoder
   serialize :banned_merchants, coder: CommaSeparatedCoder
@@ -60,6 +61,20 @@ class CardGrantSetting < ApplicationRecord
 
   def email_support?
     support_url&.start_with?("mailto:")
+  end
+
+  private
+
+  def support_url_format
+    uri = URI.parse(support_url)
+    valid = case uri
+            when URI::HTTP then uri.host.present?
+            when URI::MailTo then uri.to.match?(URI::MailTo::EMAIL_REGEXP)
+            else false
+            end
+    errors.add(:support_url, "must be an http(s) or mailto: link") unless valid
+  rescue URI::Error
+    errors.add(:support_url, "must be an http(s) or mailto: link")
   end
 
 end
