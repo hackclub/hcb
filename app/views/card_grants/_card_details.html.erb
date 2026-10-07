@@ -31,6 +31,13 @@
             <span class="grant-row__value"><%= copy_to_clipboard(stripe_card.user.name, tooltip_direction: "w") %></span>
           </div>
 
+          <% if stripe_card.frozen? && stripe_card.last_frozen_by && stripe_card.last_frozen_by != User.system_user %>
+            <div class="grant-row fs-mask">
+              <span class="grant-row__label">Frozen by</span>
+              <span class="grant-row__value"><%= user_mention stripe_card.last_frozen_by %></span>
+            </div>
+          <% end %>
+
           <div class="grant-row fs-mask">
             <span class="grant-row__label">Card number</span>
             <span class="grant-row__value font-mono">

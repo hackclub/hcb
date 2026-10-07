@@ -1,4 +1,4 @@
-<%# locals: (card_grant:, footer: nil, actions: true) %>
+<%# locals: (card_grant:, footer: nil, show_actions: true) %>
 
 <% own = card_grant.user == current_user %>
 <% total = card_grant.amount %>
@@ -7,7 +7,7 @@
 <% days_left = (card_grant.expiration_at.to_date - Date.current).to_i %>
 <% spendable = card_grant.active? && !card_grant.pending_invite? %>
 
-<% manage = actions && organizer_signed_in?(as: :member) %>
+<% manage = show_actions && organizer_signed_in?(as: :member) %>
 
 <% if manage %>
   <div class="flex items-center flex-wrap justify-end gap-2 mt-4">

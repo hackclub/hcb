@@ -1,11 +1,12 @@
 <%# locals: (card_grant:, own:) %>
 
-<% merchants = card_grant.allowed_merchants.any? ? card_grant.allowed_merchant_names : [] %>
+<% merchants = card_grant.allowed_merchant_names %>
 <% categories = card_grant.allowed_category_names %>
 
 <%# Long lists collapse into a full-width drawer below the strip so one big list %>
 <%# can't stretch the card into a single tall column. %>
-<% drawers = { "Merchants" => merchants, "Categories" => categories }.select { |_, items| items.size > 2 } %>
+<% inline_limit = 2 %>
+<% drawers = { "Merchants" => merchants, "Categories" => categories }.select { |_, items| items.size > inline_limit } %>
 
 <div class="card grant-limits">
   <% drawers.each_key do |label| %>
@@ -13,8 +14,8 @@
   <% end %>
 
   <section class="grant-strip">
-    <%= render "card_grants/control_field", id: "grant-merchants", label: "Merchants", items: merchants, empty: "Anywhere" %>
-    <%= render "card_grants/control_field", id: "grant-categories", label: "Categories", items: categories, empty: "Anything" %>
+    <%= render "card_grants/control_field", id: "grant-merchants", label: "Merchants", items: merchants, empty: "Anywhere", inline_limit: %>
+    <%= render "card_grants/control_field", id: "grant-categories", label: "Categories", items: categories, empty: "Anything", inline_limit: %>
 
     <% if card_grant.keyword_lock.present? %>
       <div class="grant-strip__cell">
@@ -36,6 +37,10 @@
 
   <% drawers.each do |label, items| %>
     <%= render "card_grants/control_drawer", id: "grant-#{label.parameterize}", label:, items: %>
+  <% end %>
+
+  <% if !own && card_grant.allowed_merchants.any? %>
+    <p class="text-sm muted font-mono mt-3 mb-0">Merchant IDs: <%= card_grant.allowed_merchants.join(", ") %></p>
   <% end %>
 
   <% if own %>
