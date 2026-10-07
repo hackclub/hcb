@@ -14,7 +14,7 @@
       <% end %>
     </div>
 
-    <% unless @ledger&.event&.id == 183 && !OrganizerPosition.role_at_least?(current_user, @ledger.event, :reader) %>
+    <% unless @ledger&.event&.id == EventMappingEngine::EventIds::HACK_CLUB_HQ && !OrganizerPosition.role_at_least?(current_user, @ledger.event, :reader) %>
       <div class="stat stat--small">
         <span class="stat__label">Total revenue</span>
         <span class="stat__value stat__value--no-space">
