@@ -10,7 +10,7 @@ class StripeCardsController < ApplicationController
   end
 
   def shipping
-    # Only show shipping for phyiscal cards if the eta is in the future and they haven't already been activated or canceled.
+    # Only show shipping for physical cards if the eta is in the future and they haven't already been activated or canceled.
     @stripe_cards = current_user.stripe_cards.cards_in_shipping
 
     skip_authorization # do not force pundit
@@ -81,9 +81,24 @@ class StripeCardsController < ApplicationController
 
     @hcb_codes = @card.local_hcb_codes
                       .includes(canonical_pending_transactions: [:raw_pending_stripe_transaction], canonical_transactions: :transaction_source)
-                      .page(params[:page]).per(25)
+                      .page(params[:page]).per(safe_per(25))
 
-    if params[:frame] == "true"
+    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
+      # Grant cards (viewable here by auditors) keep their charges on the card
+      # grant's ledger rather than the event's.
+      @per = safe_per(25)
+      @table_only = true
+      @ledger = @card.card_grant&.ledger || @event.ledger
+      # Narrowing to this card's charges has no expression in Ledger::Query, so it
+      # chains onto the executed relation. The charges go in as a relation, which
+      # lands as an IN (subquery) rather than a list of ids to carry around.
+      @items = Ledger::Query.new({ linked_object_type: "CardCharge" })
+                            .execute(ledgers: [@ledger])
+                            .where(linked_object_id: @card.card_charges.select(:id))
+                            .page(params[:page]).per(@per)
+    end
+
+    if params[:frame] == "true" && turbo_frame_request?
       @frame = true
       @force_no_popover = true
       render :show, layout: false
@@ -110,6 +125,7 @@ class StripeCardsController < ApplicationController
 
     return redirect_back fallback_location: event_cards_new_path(event), flash: { error: "Birthday is required" } if current_user.birthday.nil?
     return redirect_back fallback_location: event_cards_new_path(event), flash: { error: "Invalid country" } unless sc[:stripe_shipping_address_country] == "US"
+    return redirect_back fallback_location: event_cards_new_path(event), flash: { error: "A verified phone number is required to issue a card. Please verify your phone number in your settings." } unless current_user.phone_number_verified_or_bypassed?
 
     new_card = ::StripeCardService::Create.new(
       current_user:,

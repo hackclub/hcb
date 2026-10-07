@@ -120,7 +120,7 @@ Rails.application.configure do
   }
   Rails.application.routes.default_url_options[:host] = Credentials.fetch(:LIVE_URL_HOST)
 
-  # Specify outgoing SMTP server. Remember to add smtp/* credentials via rails credentials:edit.
+  # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
   # config.action_mailer.smtp_settings = {
   #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
   #   password: Rails.application.credentials.dig(:smtp, :password),
@@ -138,7 +138,7 @@ Rails.application.configure do
 
   # Use lograge to tame log output to AppSignal.
   config.lograge.enabled = true
-  config.lograge.ignore_actions = ["Rails::HealthController#show"]
+  config.lograge.ignore_actions = ["Rails::HealthController#show", "CspViolationReportsController#create"]
   config.log_tags = [:request_id]
   config.lograge.custom_payload { |controller| { request_id: controller.request.uuid } }
   config.lograge.keep_original_rails_log = true

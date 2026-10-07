@@ -5,7 +5,7 @@
 # Table name: user_totps
 #
 #  id                :bigint           not null, primary key
-#  aasm_state        :string
+#  aasm_state        :string           not null
 #  deleted_at        :datetime
 #  last_used_at      :datetime
 #  secret_ciphertext :text             not null

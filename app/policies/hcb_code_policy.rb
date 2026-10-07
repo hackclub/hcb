@@ -33,15 +33,7 @@ class HcbCodePolicy < ApplicationPolicy
     gte_member_in_events?
   end
 
-  def pin?
-    gte_member_in_events?
-  end
-
   def toggle_tag?
-    gte_member_in_events?
-  end
-
-  def invoice_as_personal_transaction?
     gte_member_in_events?
   end
 
@@ -49,8 +41,11 @@ class HcbCodePolicy < ApplicationPolicy
     gte_member_in_events?
   end
 
+  # `user` is nil for signed out requests, and a charge whose cardholder can't
+  # be resolved has a nil owner, so without the first clause the two compare
+  # equal and an anonymous request is treated as the purchaser.
   def user_made_purchase?
-    record.stripe_card? && record.stripe_cardholder&.user == user
+    user.present? && record.stripe_card? && record.stripe_cardholder&.user == user
   end
 
   alias receiptable_upload? user_made_purchase?
@@ -63,7 +58,7 @@ class HcbCodePolicy < ApplicationPolicy
 
   # if users have permissions greater than or equal to member in events
   def gte_member_in_events?
-    return false if user.nil? # dont run checks if the user isnt signed in
+    return false if user.nil? # don't run checks if the user isn't signed in
     return true if user&.admin?
 
     record.events.any? do |e|

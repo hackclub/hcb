@@ -27,7 +27,7 @@ class StaticPagesController < ApplicationController
       Event.find_by_public_id(id)
     end.select do |event|
       event&.is_public? && event.is_indexable?
-    end.sample(6)
+    end.sample(3)
 
     @organizer_positions = @service.organizer_positions.not_hidden
     @invites = @service.invites
@@ -116,11 +116,26 @@ class StaticPagesController < ApplicationController
           "View the organization's account & routing numbers": :manager
         },
         "HCB transfers": {
-          "Create a HCB Transfer": :manager,
-          "Cancel a HCB Transfer": :manager,
-          "View a HCB Transfer": :reader
+          "Create an HCB Transfer": :manager,
+          "Cancel an HCB Transfer": :manager,
+          "View an HCB Transfer": :reader
+        },
+        Payments: {
+          "Send a payment": :manager,
+          "Cancel a payment": :manager,
+          "View a payment": :reader,
+          "View the organization's recipients": :manager,
+          "Add a recipient": :manager,
+          "Edit or archive a recipient": :manager,
+          _preface: "For paying people & vendors"
         },
         _preface: "As a general rule, only managers can create/modify financial transfers"
+      },
+      Contractors: {
+        "View the list of contractors": :reader,
+        "View a contractor's details, rate, and invoices": :reader,
+        "Invite a contractor": :manager,
+        "Approve or reject a contractor's invoice": :manager,
       },
       Cards: {
         "Order a card": :member,

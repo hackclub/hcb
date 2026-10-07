@@ -20,8 +20,6 @@ class ApplicationController < ActionController::Base
   # that you want to be unauthenticated with skip_before_action.
   before_action :signed_in_user
 
-  before_action :ensure_created_session
-
   # Track papertrail edits to specific users
   before_action :set_paper_trail_whodunnit
 
@@ -103,6 +101,11 @@ class ApplicationController < ActionController::Base
   def find_current_auditor
     current_user if auditor_signed_in?
   end
+
+  def safe_per(default, max: 200)
+    (params[:per] || default).to_i.clamp(1, max)
+  end
+  helper_method :safe_per
 
   private
 

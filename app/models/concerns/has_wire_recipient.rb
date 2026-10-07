@@ -9,7 +9,7 @@ module HasWireRecipient
     validates_length_of :remittance_info, maximum: 140
 
     validate do
-      unless bic_code.match /[A-Z]{4}([A-Z]{2})[A-Z0-9]{2}([A-Z0-9]{3})?$/ # https://www.johndcook.com/blog/2024/01/29/swift/
+      unless bic_code.to_s.match /[A-Z]{4}([A-Z]{2})[A-Z0-9]{2}([A-Z0-9]{3})?$/ # https://www.johndcook.com/blog/2024/01/29/swift/
         errors.add(:bic_code, "is not a valid SWIFT / BIC code")
       end
     end
@@ -39,10 +39,10 @@ module HasWireRecipient
       error = "contains invalid characters; the SWIFT system only supports the English alphabet and numbers."
       regex = /[^A-Za-z0-9\-?:( ).,'+\/]/
 
-      errors.add(:address_line1, error) if address_line1.match(regex)
+      errors.add(:address_line1, error) if address_line1&.match(regex)
       errors.add(:address_line2, error) if address_line2.present? && address_line2.match(regex)
-      errors.add(:address_postal_code, error) if address_postal_code.match(regex)
-      errors.add(:address_state, error) if address_state.match(regex)
+      errors.add(:address_postal_code, error) if address_postal_code&.match(regex)
+      errors.add(:address_state, error) if address_state&.match(regex)
 
       Wire.recipient_information_accessors.excluding("legal_type", "email").each do |recipient_information_accessor|
         errors.add(recipient_information_accessor, error) if recipient_information[recipient_information_accessor]&.match(regex)
@@ -163,7 +163,7 @@ module HasWireRecipient
         fields << LEGAL_TYPE_FIELD
         fields << { type: :text_field, key: "phone", label: "Phone number associated with account" }
         fields << { type: :text_field, key: "local_bank_code", label: "Local bank code", description: "11-character IFSC codes" }
-        fields << { type: :text_area, key: "purpose_code", label: "Purpose code", description: "A 5-character purpose of payment code, beginning with 'P'.", refer_to: "https://rbidocs.rbi.org.in/rdocs/notification/PDFs/ASAP840212FL.pdf", reimbursement_default: "S1099" }
+        fields << { type: :text_area, key: "purpose_code", label: "Purpose code", description: "A 5-character purpose of payment code, beginning with 'P'.", refer_to: "https://cdn.hackclub.com/019ecca2-62ce-75c8-a16a-40e2d557434e/ASAP840212FL.pdf", reimbursement_default: "S1099" }
       when "JO"
         fields << { type: :text_area, key: "remittance_info", label: "Remittance information", description: "Payment purpose must be clearly identified" }
         fields << { type: :text_area, key: "purpose_code", label: "Purpose code", description: "A 4-digit purpose of payment code.", refer_to: "https://www.cbj.gov.jo/EchoBusv3.0/SystemAssets/PDFs/1%D8%A7%D9%84%D8%BA%D8%B1%D8%B6%20%D9%85%D9%86%20%D8%A7%D9%84%D8%AA%D8%AD%D9%88%D9%8A%D9%84%D8%A7%D8%AA%200%D8%A7%D9%84%D9%85%D8%A7%D9%84%D9%8A%D8%A9-20191029.pdf" }
@@ -197,7 +197,7 @@ module HasWireRecipient
       when "TW"
         fields << { type: :text_field, key: "phone", label: "Phone number associated with account" }
       when "UA"
-        fields << { type: :text_field, key: "legal_type", label: "Type of entity" }
+        fields << LEGAL_TYPE_FIELD
         fields << { type: :text_field, key: "legal_id", label: "Legal ID of receiving entity", description: "10-digit tax ID for individuals, or 8-digit tax ID for corporations/NGO/organizations" }
       when "UG"
         fields << { type: :text_field, key: "legal_id", label: "Legal ID of receiving entity", description: "13-digit PRN tax ID" }
@@ -220,24 +220,27 @@ module HasWireRecipient
     end
 
     def self.reimbursement_purpose_code_for(country)
+      # While there are technically country-specific purpose codes
+      # that we should use, ICCP hasn't been causing any issues so far
+      "ICCP"
+    end
+
+    def self.payment_purpose_code_for(country)
       {
-        "CO": "Reimbursement",
-        "KZ": "EKNP 2714USD859",
-        "MY": "34000",
-        "PK": "9675",
-        "AE": "TTS",
-        "CN": "SRV",
-        "IN": "S1099",
-        "KG": "55501000"
-      }[country] || "ICCP"
+        "IN" => "P0802"
+      }[country] || "IVPT"
     end
 
     def self.reimbursement_remittance_info_for(country)
       {
-        "PK": "Reimbursement of expenses made for a nonprofit. Recipient is a volunteer.",
+        "PK" => "Reimbursement of expenses made for a nonprofit. Recipient is a volunteer.",
       }[country] || "Reimbursement of expenses made for a nonprofit."
     end
 
+    def self.payment_remittance_info_for(country)
+      # Edit for each country
+      "Payment of invoice"
+    end
 
     store_accessor :recipient_information, *self.recipient_information_accessors
   end
@@ -384,5 +387,5 @@ module HasWireRecipient
     ColumnService.get("/institutions/#{bic_code}")["country_code"] rescue recipient_country
   end
 
-  AVAILABLE_CURRENCIES = (::EuCentralBank::CURRENCIES + ["EUR"] + WiseTransfer::AVAILABLE_CURRENCIES + ["UGX"]).uniq
+  AVAILABLE_CURRENCIES = (::EuCentralBank::CURRENCIES + ["EUR"] + WiseTransfer::AVAILABLE_CURRENCIES + ["UGX", "HNL"]).uniq
 end

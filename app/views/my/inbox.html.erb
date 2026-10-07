@@ -8,10 +8,32 @@
   </span>
 </h1>
 
-<% if Flipper.enabled?(:card_locking_2025_06_09, current_user) %>
-  <%= render "application/callout", type: "info", title: "Card locking", badge: badge_for("Beta", class: "bg-muted"), footer: :questions do %>
-    <p>
-      Starting Monday, June 16th, 2025, HCB will beta test locking cards for users who have more than 10 missing receipts at any given time. Receipts before this beta period do not count towards the limit, though they still need to be submitted. <strong>Your cards are currently <%= current_user.cards_locked? ? "locked" : "active" %>.</strong>
+<% if CardLocking.enabled? %>
+  <% locked = current_user.cards_locked? %>
+  <% due_in = CardLocking.time_remaining_in_words(@locking_next_due_at) %>
+  <%# A calm green "active" is misleading when the next deadline is an hour out, %>
+  <%# so the callout escalates as that deadline approaches (or is already blown). %>
+  <% urgent = !locked && (@locking_count.positive? || (@locking_next_due_at.present? && @locking_next_due_at <= CardLocking::WARNING_LEAD_TIME.from_now)) %>
+  <% callout_type = if locked
+                      "error"
+                    elsif urgent
+                      "warning"
+                    else
+                      "info"
+                    end %>
+  <%= render "application/callout", class: "mt-2", type: callout_type, title: "Card locking" do %>
+    <p class="my-0">
+      <%# The rule states the consequence once; each status below is only a status. %>
+      Upload a receipt within <strong>7 days</strong> of every card charge. Miss it and your cards <strong>will lock</strong> until you upload.
+      <% if locked %>
+        Your cards are currently <strong class="error">locked</strong>. Uploading a receipt will unlock them in seconds.
+      <% elsif @locking_count.positive? %>
+        Your cards are currently <strong class="success">active</strong>, but <%= pluralize(@locking_count, "receipt") %> <%= @locking_count == 1 ? "is" : "are" %> already overdue.
+      <% elsif due_in %>
+        Your cards are currently <strong class="success">active</strong>. Your next receipt is due in <strong class="<%= "warning" if urgent %>"><%= due_in %></strong>.
+      <% else %>
+        Your cards are currently <strong class="success">active</strong>.
+      <% end %>
     </p>
   <% end %>
 <% end %>
@@ -77,34 +99,57 @@
 
 <h2 class="flex items-center mb2">
   Transactions
-  <% if Flipper.enabled?(:card_locking_2025_06_09, current_user) %>
-    <%= badge_for("#{@count} missing receipts") %>
-    <%= badge_for("#{@locking_count} / 10") %>
+  <% if CardLocking.enabled? %>
+    <%= badge_for(pluralize(@count, "missing receipt")) %>
+    <%= badge_for(pluralize(@locking_count, "overdue receipt")) %>
   <% else %>
     <%= badge_for(@count) %>
   <% end %>
 </h2>
 
-<% if @time_based_sorting %>
-  <section class="mb3 card p0 receipt-card">
-    <div class="table-container">
-        <table>
-        <tbody data-behavior="transactions">
-            <% @hcb_codes.each do |hcb_code| %>
-            <% if hcb_code.canonical_transactions.any? %>
-                <% hcb_code.canonical_transactions.each do |ct| %>
-                  <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct:, force_display_details: true, receipt_upload_button: true, show_event_name: true } %>
-                <% end %>
-            <% else %>
-                <% hcb_code.canonical_pending_transactions.each do |pt| %>
-                  <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", locals: { pt:, force_display_details: true, receipt_upload_button: true, show_event_name: true } %>
-                <% end %>
+<% if @count > 0 && @groupable_by_due_date %>
+  <ul class="tab-container mt-0 mb2">
+    <% { "due_date" => "By due date", "card" => "By card" }.each do |grouping, label| %>
+      <%= settings_tab active: @grouping == grouping do %>
+        <%# Switching the grouping invalidates the page number, so drop it. %>
+        <%= link_to label,
+                    my_inbox_path(request.query_parameters.except("page", "group").merge("group" => grouping)),
+                    data: { turbo: true, turbo_action: "advance" } %>
+      <% end %>
+    <% end %>
+  </ul>
+<% end %>
+
+<% if @grouping == "due_date" %>
+  <% @due_date_groups.each do |group, hcb_codes| %>
+    <% style = receipt_due_group_style(group, now: @now) %>
+    <%# Charges with no deadline are a long tail nobody is on the hook for, so
+        they collapse behind a disclosure instead of padding out the page. %>
+    <% collapsible = group == :none %>
+    <%= content_tag(collapsible ? :details : :section, class: "mb3 card p0 receipt-card") do %>
+      <%= content_tag(collapsible ? :summary : :div) do %>
+        <h2 class="heading leading-[1.5] p1 pl2 mt0 ml0 flex justify-between items-center gap-2">
+          <span class="flex items-center gap-2">
+            <%= inline_icon style[:icon], size: 25, class: style[:icon_class] %>
+            <%= receipt_due_group_label(group, now: @now) %>
+          </span>
+
+          <span class="flex items-center gap-2">
+            <%# When a group spills onto other pages, say so rather than repeating
+                the same total above a partial list. %>
+            <% total = @due_date_group_counts[group] %>
+            <%= badge_for hcb_codes.size == total ? pluralize(total, "transaction") : "#{hcb_codes.size} of #{total} transactions", class: style[:badge_class] %>
+
+            <% if collapsible %>
+              <span class="muted line-height-0"><%= inline_icon "down-caret", size: 24, class: "flip-when-open" %></span>
             <% end %>
-            <% end %>
-        </tbody>
-        </table>
-    </div>
-  </section>
+          </span>
+        </h2>
+      <% end %>
+
+      <%= render "my/missing_receipt_transactions", hcb_codes:, show_event_name: true %>
+    <% end %>
+  <% end %>
 <% else %>
   <% @cards.each do |card| %>
     <section class="mb3 card p0 receipt-card">
@@ -117,23 +162,8 @@
         <% end %>
       </h2>
 
-      <div class="table-container">
-        <table>
-          <tbody data-behavior="transactions">
-            <% @card_hcb_codes[card.to_global_id.to_s].each do |hcb_code| %>
-              <% if hcb_code.canonical_transactions.any? %>
-                <% hcb_code.canonical_transactions.each do |ct| %>
-                  <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct:, force_display_details: true, receipt_upload_button: true, show_event_name: true } %>
-                <% end %>
-              <% else %>
-                <% hcb_code.canonical_pending_transactions.each do |pt| %>
-                  <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", locals: { pt:, force_display_details: true, receipt_upload_button: true, show_event_name: true } %>
-                <% end %>
-              <% end %>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
+      <%# The org is already in this section's header, so it isn't repeated per row. %>
+      <%= render "my/missing_receipt_transactions", hcb_codes: @card_hcb_codes[card.to_global_id.to_s] %>
     </section>
   <% end %>
 <% end %>

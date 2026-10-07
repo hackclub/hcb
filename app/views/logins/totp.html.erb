@@ -21,29 +21,15 @@
   </p>
 
   <%= form_tag complete_login_path(@login) do %>
-    <% if Flipper.enabled?(:otp_single_input, @login.user) %>
-      <%= text_field_tag(
-            :code,
-            "",
-            class: "otp_code",
-            autocomplete: "one-time-code",
-            required: true,
-            autofocus: true,
-            inputmode: "numeric",
-            maxlength: "6",
-            data: { behavior: "otp_input" }
-          ) %>
-    <% else %>
-      <%= text_field_tag(
-            :code,
-            "",
-            placeholder: "Enter your one time password code",
-            autocomplete: "one-time-code",
-            class: "text-left mb2 !max-w-full w-max",
-            required: true,
-            autofocus: true
-          ) %>
-    <% end %>
+    <%= text_field_tag(
+          :code,
+          "",
+          placeholder: "Enter your one time password code",
+          autocomplete: "one-time-code",
+          class: "text-left mb2 !max-w-full w-max",
+          required: true,
+          autofocus: true
+        ) %>
     <%= invisible_captcha :remember_me %>
 
     <%= hidden_field_tag :method, :totp %>
@@ -59,7 +45,6 @@
     </div>
   <% end %>
 
-  <%= javascript_include_tag "otp.js", defer: true %>
   <%= render partial: "logins/environment_banner" %>
 </div>
 <%= render partial: "logins/footer" %>

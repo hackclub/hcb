@@ -101,4 +101,44 @@ RSpec.describe Reimbursement::ExpensesController do
     end
 
   end
+
+  describe "#approve" do
+    render_views
+
+    def submitted_eur_report(expense_count:)
+      report = create(:reimbursement_report, aasm_state: "submitted", currency: "EUR")
+      expense_count.times { create(:reimbursement_expense, report:) }
+      report
+    end
+
+    it "emits an open_modal stream prompting reimbursement when the last pending expense is approved" do
+      admin = create(:user, :make_admin)
+      report = submitted_eur_report(expense_count: 1)
+      expense = report.expenses.first
+
+      allow_any_instance_of(Reimbursement::Report).to receive(:wise_transfer_may_exceed_balance?).and_return(false)
+      create_session(admin, verified: true)
+
+      post(:approve, params: { expense_id: expense.id }, format: :turbo_stream)
+
+      expect(expense.reload).to be_approved
+      expect(response.body).to include('action="open_modal"')
+      expect(response.body).to include("all_expenses_approved_modal")
+    end
+
+    it "omits the open_modal stream while other expenses remain pending" do
+      admin = create(:user, :make_admin)
+      report = submitted_eur_report(expense_count: 2)
+      expense = report.expenses.first
+
+      allow_any_instance_of(Reimbursement::Report).to receive(:wise_transfer_may_exceed_balance?).and_return(false)
+      create_session(admin, verified: true)
+
+      post(:approve, params: { expense_id: expense.id }, format: :turbo_stream)
+
+      expect(expense.reload).to be_approved
+      expect(response.body).not_to include("open_modal")
+    end
+
+  end
 end

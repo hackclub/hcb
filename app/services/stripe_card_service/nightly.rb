@@ -9,7 +9,7 @@ module StripeCardService
     private
 
     # [@garyhtou] This really should be done via linking the CT to a Stripe Card
-    # via an new HCB Code type.
+    # via a new HCB Code type.
     #
     #   The HCB Code's memo would use a default custom stripe card memo that
     #   supersedes the CT's default memo (from plaid). That default custom
@@ -18,7 +18,7 @@ module StripeCardService
     #
     #   Check out HcbCode#memo for more info on how this work.
     def rename_canonical_transaction
-      stripe_issuing_card_canonical_transactions_to_rename.update_all(custom_memo: "💳 New user card fee")
+      stripe_issuing_card_canonical_transactions_to_rename.find_each { |ct| ct.update(custom_memo: "💳 New user card fee") }
     end
 
     def stripe_issuing_card_canonical_transactions_to_rename

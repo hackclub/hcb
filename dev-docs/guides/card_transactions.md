@@ -8,7 +8,7 @@ Authorisations aren’t guaranteed to become transactions but they often do. Whe
 
 We then respond to the webhook with an approved / not approved message. We are required to respond within two seconds otherwise the authorisation will be declined.
 
-No matter whether we approve or decline the transaction, Stripe will send us another webhook which will be handled by `StripeController#handle_issuing_authorization_created` . [`StripeAuthorizationService::CreateFromWebhook`](https://github.com/hackclub/hcb/blob/main/app/services/stripe_authorization_service/create_from_webhook.rb) is called and this service does the following:
+No matter whether we approve or decline the transaction, Stripe will send us another webhook which will be handled by `StripeController#handle_issuing_authorization_created`. [`StripeAuthorizationService::CreateFromWebhook`](https://github.com/hackclub/hcb/blob/main/app/services/stripe_authorization_service/create_from_webhook.rb) is called and this service does the following:
 
 * Creates a [`RawPendingStripeTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/raw_pending_stripe_transaction.rb)
 * Creates a [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb)
@@ -27,11 +27,11 @@ An example of where this is used is when a merchant performs a partial reversal 
 
 If the authorisation is voided (the merchant chooses not to charge the customer in the end. For example, they issue a refund before capturing), the issuing authorisation will be updated to have an `amount` of 0 and a `status` of `reversed`. The [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb) will have its amount updated to reflect this.
 
-If the authorisation expires (the merchant doesn’t explicitly void it but they run out of time to capture the authorised amount), Stripe will set the `status` to `reversed`. The amount will not always be zero, however, it “represents any remaining amount authorised for possible late captures”.
+If the authorisation expires (the merchant doesn’t explicitly void it but they run out of time to capture the authorised amount), Stripe will set the `status` to `reversed`. The amount will not always be zero; however, it “represents any remaining amount authorised for possible late captures”.
 
 Eventually the authorisation will continue being updated until the `amount` is 0.
 
-Alright, so what does it mean for the merchant to “capture” an authorisation? Essentially it’s when a merchant confirms they intend to charge this customer and provide a final amount. When the authorisation is captured, Stripe creates a “transaction” and sets the status of the authorisation to closed. I wrote about how we import Stripe transactions in “How a transaction gets mapped to an event and a HCB code on HCB.” That guide describes how the [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb) I described above becomes a [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb).
+Alright, so what does it mean for the merchant to “capture” an authorisation? Essentially it’s when a merchant confirms they intend to charge this customer and provide a final amount. When the authorisation is captured, Stripe creates a “transaction” and sets the status of the authorisation to closed. I wrote about how we import Stripe transactions in “How a transaction gets mapped to an event and an HCB code on HCB.” That guide describes how the [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb) I described above becomes a [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb).
 
 Capturing has a couple of edge cases:
 

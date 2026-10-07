@@ -5,7 +5,7 @@
 # Table name: mailbox_addresses
 #
 #  id           :bigint           not null, primary key
-#  aasm_state   :string
+#  aasm_state   :string           not null
 #  address      :string           not null
 #  discarded_at :datetime
 #  created_at   :datetime         not null

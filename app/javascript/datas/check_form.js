@@ -6,6 +6,8 @@ export default ({ payment_recipient, editing }) => ({
       if (rec) {
         this.editing = false
         this.$refs.name_input.value = rec.name
+        document.getElementById('increase_check_recipient_email').value =
+          rec.email
       }
     })
 

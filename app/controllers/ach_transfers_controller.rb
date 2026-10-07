@@ -2,6 +2,7 @@
 
 class AchTransfersController < ApplicationController
   include SetEvent
+  include ResolvesPaymentRecipient
 
   before_action :set_ach_transfer, except: [:new, :create, :validate_routing_number]
   before_action :set_event, only: [:new, :create]
@@ -67,7 +68,7 @@ class AchTransfersController < ApplicationController
       end
       redirect_to event_transfers_path(@event), flash: { success: "ACH transfer successfully submitted." }
     else
-      render :new, status: :unprocessable_entity
+      render :new, layout: "transfer", status: :unprocessable_content
     end
   end
 
@@ -128,7 +129,7 @@ class AchTransfersController < ApplicationController
       permitted_params << :scheduled_on
     end
 
-    params.require(:ach_transfer).permit(*permitted_params)
+    @ach_transfer_params ||= scope_payment_recipient!(params.require(:ach_transfer).permit(*permitted_params))
   end
 
 end

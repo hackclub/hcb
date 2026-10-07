@@ -19,29 +19,34 @@ module HasWiseRecipient
       end
     end
 
+    # Disable unsupported Wise methods temporarily (Interac / Duitnow)
+    validate on: :create do
+      if unsupported_account_type?
+        errors.add(:base, unsupported_account_type_reason)
+      end
+    end
+
     # Requirements pulled from https://wise.com/ documentation
 
     def self.information_required_for(currency)
       fields = []
 
-      if self == User::PayoutMethod::WiseTransfer
-        fields << {
-          type: :text_field,
-          key: "account_holder",
-          placeholder: "Fiona Hackworth",
-          label: "Account holder's full name",
-          description: "Must match the name on the bank account exactly"
-        }
+      fields << {
+        type: :text_field,
+        key: "account_holder",
+        placeholder: "Fiona Hackworth",
+        label: "Account holder's full name",
+        description: "Must match the name on the bank account exactly"
+      }
 
-        fields << {
-          type: :text_field,
-          key: "bank_name",
-          placeholder: "Silicon Valley Bank",
-          label: "Name of financial institution"
-        }
-      end
+      fields << {
+        type: :text_field,
+        key: "bank_name",
+        placeholder: "Silicon Valley Bank",
+        label: "Name of financial institution"
+      }
 
-      if currency.in?(%w[AED BGN CHF CZK DKK EGP EUR GBP GEL HUF ILS NOK PKR PLN RON SEK TRY UAH])
+      if currency.in?(%w[AED BGN CHF CZK DKK EGP EUR GBP GEL HUF ILS NOK PKR PLN RON SEK TRY UAH TND])
         fields << { type: :text_field, key: "account_number", placeholder: "TR330006100519786457841326", label: "IBAN" }
       elsif currency.in?(%w[HKD NGN NPR NZD PHP SGD THB])
         fields << ACCOUNT_NUMBER_FIELD
@@ -129,6 +134,14 @@ module HasWiseRecipient
     end
   end
 
+  def unsupported_account_type?
+    UNSUPPORTED_ACCOUNT_TYPES.key?(account_type)
+  end
+
+  def unsupported_account_type_reason
+    HasWiseRecipient.unsupported_account_type_reason(account_type)
+  end
+
   # Postal code formats sourced from https://column.com/docs/international-wires/country-specific-details
 
   POSTAL_CODE_FORMATS = {
@@ -139,8 +152,24 @@ module HasWiseRecipient
     "DE": /\A\d{5}\z/
   }.freeze
 
+  # Payment rails Wise is currently unable to pay out to. Keys are `account_type`
+  # values from `information_required_for`.
+  UNSUPPORTED_ACCOUNT_TYPES = {
+    "interac"               => "Interac",
+    "mobile_number_duitnow" => "Duitnow",
+    "nirc_duitnow"          => "Duitnow",
+    "bnr_duitnow"           => "Duitnow"
+  }.freeze
+
+  def self.unsupported_account_type_reason(account_type)
+    rail = UNSUPPORTED_ACCOUNT_TYPES[account_type]
+    return nil unless rail
+
+    "Wise transfers via #{rail} are currently not supported due to technical difficulties on Wise's side. We recommend using a local bank transfer instead."
+  end
+
   ACCOUNT_NUMBER_FIELD = { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number" }.freeze
 
-  AVAILABLE_CURRENCIES = %w[AED ARS AUD BGN BRL CAD CHF CLP CNY COP CZK DKK EGP EUR GBP GEL HKD HUF IDR ILS JPY KES KRW LKR MAD MXN MYR NGN NOK NPR NZD PHP PKR PLN RON SEK SGD THB TRY UAH UYU VND ZAR].freeze
+  AVAILABLE_CURRENCIES = %w[AED ARS AUD BGN BRL CAD CHF CLP CNY COP CZK DKK EGP EUR GBP GEL HKD HUF IDR ILS JPY KES KRW LKR MAD MXN MYR NGN NOK NPR NZD PHP PKR PLN RON SEK SGD THB TND TRY UAH UYU VND ZAR].freeze
 
 end

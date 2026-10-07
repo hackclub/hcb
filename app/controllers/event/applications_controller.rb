@@ -4,6 +4,8 @@ class Event
   class ApplicationsController < ApplicationController
     before_action :set_application, except: [:apply, :new, :create, :index]
     before_action :prevent_access_after_submission, only: [:project_info, :personal_info, :review]
+    before_action :prevent_access_if_archived, only: [:project_info, :personal_info, :review, :videos, :agreement, :sign_agreement]
+    before_action :set_steps, only: [:show, :sign_agreement]
     after_action :record_pageview
     skip_before_action :signed_in_user, only: [:new, :apply, :create]
     skip_after_action :verify_authorized, only: :create
@@ -39,53 +41,13 @@ class Event
     def show
       authorize @application
 
-      # Signees are redirected to this page right after signing, so let's make sure we have updated data
-      @application.contract&.party(:signee)&.sync_with_docuseal
+      redirect_to sign_agreement_application_path(@application) if signing_next?
+    end
 
-      contract_description = if @application.contract.nil?
-                               "We'll send you our fiscal sponsorship agreement, which sets the terms and conditions of your usage of HCB."
-                             elsif @application.contract.party(:cosigner)&.pending?
-                               if @application.contract.party(:signee).signed?
-                                 "Your parent or legal guardian (#{@application.cosigner_email}) needs to sign the agreement before we can review your application."
-                               else
-                                 "You (#{@application.user.email}) and your parent or legal guardian (#{@application.cosigner_email}) need to sign the agreement before we can review your application."
-                               end
-                             elsif @application.contract.party(:signee)&.pending?
-                               "You (#{@application.user.email}) need to sign the agreement before we can review your application."
-                             else
-                               "Our team will sign and finalize the contract soon."
-                             end
+    def sign_agreement
+      authorize @application
 
-      # We allow teenagers to receive and sign the contract while applying. Adults must wait for HCB Operations' review.
-      contract_signed = @application.contract&.parties&.not_hcb&.all?(&:signed?) && (@application.teen_led? || @application.contract&.party(:hcb)&.signed?)
-      contract_step = {
-        label: "Sign agreement",
-        shorthand: "Sign",
-        name: "Sign the Fiscal Sponsorship Agreement",
-        description: contract_description,
-        completed: contract_signed
-      }
-
-      unless @application.draft?
-        @steps = []
-        @steps << { label: "Submit application", shorthand: "Submit", completed: true }
-        @steps << contract_step if @application.teen_led?
-        @steps << {
-          label: "Await review",
-          shorthand: "Review",
-          name: "Wait for a response from the HCB team",
-          description: "Our operations team will review your application and respond within #{@application.response_time}. You'll hear back soon on whether your application was approved or rejected.",
-          completed: @application.approved? && (contract_signed || !@application.teen_led?)
-        }
-        @steps << contract_step unless @application.teen_led?
-        @steps << {
-          label: "Start spending",
-          shorthand: "Spend",
-          name: "Start spending!",
-          description: "You'll have access to your organization to begin raising and spending money.",
-          completed: false
-        }
-      end
+      redirect_to application_path(@application) unless signing_next?
     end
 
     def airtable
@@ -165,13 +127,20 @@ class Event
     def agreement
       authorize @application
 
+      @contract = @application.contract
+      @party = @contract&.party(:signee)
+
+      # There's nothing to sign until the contract has been sent (teenagers get
+      # it on submission, adults on approval) and it's gone once it's voided.
+      if @party.nil?
+        redirect_to application_path(@application)
+        return
+      end
+
       unless @application.videos_watched
         redirect_to videos_application_path(@application)
         return
       end
-
-      @contract = @application.contract
-      @party = @contract.party :signee
     end
 
     def mark_videos_watched
@@ -223,7 +192,7 @@ class Event
       begin
         @application.mark_submitted!
         confetti!
-        redirect_to application_path(@application)
+        redirect_to sign_agreement_application_path(@application)
       rescue AASM::InvalidTransition
         flash[:error] = "This application is not ready to submit. See the summary for what's missing."
         redirect_to review_application_path(@application)
@@ -250,14 +219,21 @@ class Event
     def resend_to_cosigner
       authorize @application
 
-      @application.update!(cosigner_email: params[:event_application][:cosigner_email])
+      new_cosigner_email = params[:event_application][:cosigner_email]&.strip
 
-      # If the user resends to the same email, the after_save callback does not handle this
-      unless @application.cosigner_email_previously_changed?
-        @application.contract.party(:cosigner).notify
+      if new_cosigner_email == @application.user.email
+        flash[:error] = "You cannot use your own email as your parent's email"
+      else
+        @application.update!(cosigner_email: params[:event_application][:cosigner_email])
+
+        # If the user resends to the same email, the after_save callback does not handle this
+        unless @application.cosigner_email_previously_changed?
+          @application.contract.party(:cosigner).notify
+        end
+
+        flash[:success] = "Resent agreement to parent"
       end
 
-      flash[:success] = "Resent agreement to parent"
       redirect_back_or_to application_path(@application)
     end
 
@@ -265,6 +241,78 @@ class Event
 
     def set_application
       @application = Application.find(params[:id])
+    end
+
+    def set_steps
+      # Signees are redirected to these pages right after signing, so let's make sure we have updated data
+      @application.contract&.party(:signee)&.sync_with_docuseal
+
+      return if @application.draft?
+
+      resigning = @application.contract&.reissue? || false
+
+      contract_description = if @application.contract.nil?
+                               "We'll send you our fiscal sponsorship agreement, which sets the terms and conditions of your usage of HCB."
+                             elsif @application.contract.party(:cosigner)&.pending?
+                               verb = resigning ? "resign" : "sign"
+                               if @application.contract.party(:signee).signed?
+                                 "Your parent or legal guardian (#{@application.cosigner_email}) needs to #{verb} the agreement before we can review your application."
+                               else
+                                 "You (#{@application.user.email}) and your parent or legal guardian (#{@application.cosigner_email}) need to #{verb} the agreement before we can review your application."
+                               end
+                             elsif @application.contract.party(:signee)&.pending?
+                               if resigning
+                                 "We found an issue with your signed agreement, so you'll need to resign it before we can finish reviewing your application."
+                               else
+                                 "You (#{@application.user.email}) need to sign the agreement before we can review your application."
+                               end
+                             else
+                               "Our team will sign and finalize the contract soon."
+                             end
+
+      # Once the applicant (and cosigner, if any) have signed, there's nothing left for them to do, so
+      # we consider this step done even if HCB Operations hasn't countersigned yet.
+      contract_signed = @application.contract&.parties&.not_hcb&.all?(&:signed?) || false
+      contract_step = {
+        label: "Sign agreement",
+        shorthand: "Sign",
+        name: "Sign the Fiscal Sponsorship Agreement",
+        description: contract_description,
+        completed: contract_signed
+      }
+
+      @steps = []
+      @steps << { label: "Submit application", shorthand: "Submit", completed: true }
+      @steps << contract_step if @application.teen_led?
+      @steps << {
+        label: "Await review",
+        shorthand: "Review",
+        name: "Wait for a response from the HCB team",
+        description: "Our team will review your application and respond within #{helpers.pluralize(@application.response_business_days, "business day")}. You'll hear back soon on whether your application was approved or rejected.",
+        completed: @application.approved? && (contract_signed || !@application.teen_led?)
+      }
+      @steps << contract_step unless @application.teen_led?
+      @steps << {
+        label: "Start spending",
+        shorthand: "Spend",
+        name: @application.event.present? ? "Start spending!" : "We're finalizing your organization",
+        description: if @application.event.present?
+                       "You'll have access to your organization to begin raising and spending money."
+                     else
+                       "Your agreement is fully signed. We're finishing up the last few steps to activate your organization, and you'll get an email as soon as it's ready."
+                     end,
+        completed: false
+      }
+
+      @current_step = @steps.find { |step| !step[:completed] }
+    end
+
+    # Signing the agreement lives on its own page, so `show` and `sign_agreement`
+    # bounce to each other depending on which step the applicant is on.
+    def signing_next?
+      return false if @application.archived? || @application.rejected?
+
+      @current_step.present? && @current_step[:label] == "Sign agreement"
     end
 
     def application_params
@@ -283,6 +331,12 @@ class Event
 
     def prevent_access_after_submission
       unless @application.draft? || current_user.auditor?
+        redirect_to application_path(@application)
+      end
+    end
+
+    def prevent_access_if_archived
+      if @application.archived? && !current_user.auditor?
         redirect_to application_path(@application)
       end
     end

@@ -41,7 +41,7 @@
             <% filter[:options].each do |option| %>
               <% label, value = option.is_a?(Array) ? option : [option.humanize, option] %>
               <%= link_to label,
-                          upsert_query_params(filter[:key] => value),
+                          upsert_query_params(filter[:key] => value, page: 1),
                           class: "menu__action !border-none #{'menu__action--active' if params[filter[:key]] == value.to_s}" %>
             <% end %>
 

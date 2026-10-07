@@ -3,7 +3,7 @@
 module Commentable
   extend ActiveSupport::Concern
   included do
-    has_many :comments, as: :commentable
+    has_many :comments, -> { order(:created_at) }, as: :commentable, inverse_of: :commentable
   end
 
   def comment_recipients_for(comment)
@@ -16,5 +16,22 @@ module Commentable
 
   def comment_mentionable(current_user: nil)
     []
+  end
+
+  # Override in models that share comments with another commentable
+  def shared_commentable
+    nil
+  end
+
+  def shared_commentable?
+    shared_commentable.present?
+  end
+
+  def all_comments
+    if shared_commentable
+      Comment.where(commentable: self).or(Comment.where(commentable: shared_commentable)).order(:created_at)
+    else
+      comments
+    end
   end
 end

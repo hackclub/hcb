@@ -32,7 +32,7 @@ class OrganizerPosition
       validate :one_active_control
       validate :inactive_control_has_end_date
 
-      after_create :deactive_other_controls
+      after_create :deactivate_other_controls
 
       def balance_cents
         total_allowances_amount_cents - total_spent_cents
@@ -62,7 +62,7 @@ class OrganizerPosition
       end
 
       def deactivate
-        if allowances.count == 0
+        if allowances.none?
           destroy
         else
           update active: false, ended_at: Time.current
@@ -71,7 +71,7 @@ class OrganizerPosition
 
       private
 
-      def deactive_other_controls
+      def deactivate_other_controls
         organizer_position
           .spending_controls
           .where(active: true)

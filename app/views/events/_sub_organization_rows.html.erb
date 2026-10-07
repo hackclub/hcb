@@ -1,0 +1,4 @@
+<%# locals: (rows:, guides:) %>
+<% rows.each_with_index do |row, index| %>
+  <%= render "events/sub_organization_row", row:, guides:, last: index == rows.size - 1 %>
+<% end %>

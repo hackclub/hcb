@@ -38,7 +38,7 @@ class GSuitesController < ApplicationController
       flash[:success] = "Google Workspace changes saved."
       redirect_to @g_suite
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   rescue => e
     redirect_to edit_event_g_suite_path(@g_suite, event_id: @g_suite.event.slug), flash: { error: e.message }

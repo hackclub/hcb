@@ -85,15 +85,6 @@ class AdminMailer < ApplicationMailer
     mail subject: "24 Hour Reminders for the Operations Team"
   end
 
-  def weekly_ysws_event_summary
-    @events = params[:events]
-    mail(
-      to: ["zach@hackclub.com", "max@hackclub.com"],
-      cc: "hcb@hackclub.com",
-      subject: "#{@events.length} new YSWS #{"organization".pluralize(@events.length)} created this past week"
-    )
-  end
-
   def blocked_authorization
     @stripe_card = params.fetch(:stripe_card)
     @event = @stripe_card.event
@@ -103,6 +94,23 @@ class AdminMailer < ApplicationMailer
       to: OPERATIONS_EMAIL,
       subject: "#{@event.name}: Stripe card authorization blocked"
     )
+  end
+
+  def failed_assertion_job(job:, job_id:, anomalies:)
+    @anomalies = anomalies
+    @job = job
+    @job_id = job_id
+
+    mail(
+      to: engineers,
+      subject: "Ledger assertion job #{job} failed with #{anomalies.length} anomalies"
+    )
+  end
+
+  private
+
+  def engineers
+    User.where(email: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"]).pluck(:email)
   end
 
 end

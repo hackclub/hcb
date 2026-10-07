@@ -5,18 +5,18 @@
 # Table name: metrics
 #
 #  id            :bigint           not null, primary key
-#  aasm_state    :string
+#  aasm_state    :string           not null
 #  canceled_at   :datetime
 #  completed_at  :datetime
 #  failed_at     :datetime
 #  metric        :jsonb
 #  processing_at :datetime
-#  subject_type  :string
 #  type          :string           not null
 #  year          :integer
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
 #  subject_id    :bigint
+#  subject_type  :string
 #
 # Indexes
 #
@@ -62,7 +62,7 @@ class Metric
                                .approved
                                .where("events.created_at <= ?", now)
                                .count,
-          last_transaction_date: tx_all.order(:date).last.date.to_time.to_i,
+          last_transaction_date: tx_all.order(:date).last.date.beginning_of_day.to_i,
 
           # entire time period. this remains to prevent breaking changes to existing systems that use this endpoint
           raised: tx_all.revenue.sum(:amount_cents) + pending_tx_all.incoming.sum(:amount_cents),

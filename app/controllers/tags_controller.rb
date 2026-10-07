@@ -15,6 +15,12 @@ class TagsController < ApplicationController
       hcb_code = HcbCode.find(params[:hcb_code_id])
       authorize hcb_code, :toggle_tag?
 
+      # `toggle_tag?` only asks whether the user is a member of *some* event on
+      # this HCB code, so it would let a member of two organizations attach one
+      # organization's tag to the other's transaction. `HcbCodes#toggle_tag`
+      # guards the same gap.
+      raise Pundit::NotAuthorizedError unless hcb_code.events.include?(@event)
+
       suppress(ActiveRecord::RecordNotUnique) do
         hcb_code.tags << tag
       end
