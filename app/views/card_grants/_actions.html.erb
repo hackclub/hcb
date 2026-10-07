@@ -17,7 +17,7 @@
   <% end %>
   <% controls.reject!(&:blank?) %>
   <% support = render("card_grants/actions/support", card_grant:, title: own ? "Still stuck?" : "Need help?") if organizer_signed_in?(as: :member) || own %>
-  <% answers = render("card_grants/quick_answers", card_grant:) if own %>
+  <% answers = render("card_grants/quick_answers") if own %>
 
   <% if controls.any? %>
     <div class="card grant-controls">
