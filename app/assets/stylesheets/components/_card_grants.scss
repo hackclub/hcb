@@ -384,6 +384,12 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
   color: map-get($palette, muted);
   text-decoration: none;
 
+  // A trailing arrow's glyph sits in the middle of a lot of padding: pull it
+  // in against the text and flush with the right edge.
+  svg:last-child {
+    margin: 0 -0.375rem 0 -0.375rem;
+  }
+
   &:hover,
   &:focus {
     color: map-get($palette, info);
