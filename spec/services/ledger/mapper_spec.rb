@@ -47,6 +47,35 @@ RSpec.describe Ledger::Mapper do
       end
     end
 
+    context "when the item has a linked object but no transactions" do
+      before do
+        allow_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)
+      end
+
+      it "maps to the linked object's event" do
+        invoice = create(:invoice)
+        item.update!(linked_object: invoice)
+
+        mapper.run
+        item.reload
+
+        expect(item.primary_ledger).to eq(invoice.event.ledger)
+      end
+
+      it "ignores the linked object's event once a transaction exists" do
+        invoice = create(:invoice)
+        item.update!(linked_object: invoice)
+        # A CPT with no resolvable event; because a transaction now exists, the
+        # linked object must not be consulted, so the item stays unmapped.
+        create(:canonical_pending_transaction, ledger_item_id: item.id)
+
+        mapper.run
+        item.reload
+
+        expect(item.primary_ledger).to be_nil
+      end
+    end
+
     it "reuses an existing ledger for the same event" do
       event = create(:event)
       existing_ledger = event.ledger # Event automatically creates a ledger
@@ -155,6 +184,25 @@ RSpec.describe Ledger::Mapper do
       expect(non_primary.on_primary_ledger).to be false
       expect(non_primary.ledger).to eq(non_primary_ledger)
       expect(item.reload.primary_ledger).to eq(event.ledger)
+    end
+
+    context "when the item has an SVB sweep transaction" do
+      let!(:svb_sweeps) { create(:event, id: EventMappingEngine::EventIds::SVB_SWEEPS) }
+
+      [
+        "TF TO ICS SWP",
+        "TF FRM ICS SWP",
+        "COLUMN*THE HACK HCB-SWEEP 250108"
+      ].each do |memo|
+        it "maps a transaction with memo #{memo.inspect} to the SVB sweeps event" do
+          create(:canonical_transaction, memo:, ledger_item: item)
+
+          mapper.run
+          item.reload
+
+          expect(item.primary_ledger.event).to eq(svb_sweeps)
+        end
+      end
     end
   end
 end

@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <% renderable_amount_cents = @hcb_code.stripe_atm_fee ? @hcb_code.amount_cents.abs - @hcb_code.stripe_atm_fee : @hcb_code.amount_cents.abs %>
 
 <% instance = @hcb_code.hashid %>

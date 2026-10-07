@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_24_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_02_120100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1615,6 +1615,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_140000) do
     t.integer "ct_count", default: 0, null: false
     t.text "custom_memo"
     t.datetime "datetime", null: false
+    t.datetime "intended_at"
     t.bigint "linked_object_id"
     t.string "linked_object_type"
     t.datetime "marked_no_or_lost_receipt_at"
@@ -1720,6 +1721,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_140000) do
     t.index ["event_id"], name: "index_lob_addresses_on_event_id"
   end
 
+  create_table "login_attempts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "factor", null: false
+    t.inet "ip_address"
+    t.bigint "login_id", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.text "user_agent"
+    t.index ["created_at"], name: "index_login_attempts_on_created_at"
+    t.index ["login_id"], name: "index_login_attempts_on_login_id"
+  end
+
   create_table "login_codes", force: :cascade do |t|
     t.text "code"
     t.datetime "created_at", null: false
@@ -1744,6 +1757,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_140000) do
     t.bigint "user_id", null: false
     t.bigint "user_session_id"
     t.index ["referral_link_id"], name: "index_logins_on_referral_link_id"
+    t.index ["user_id", "created_at"], name: "index_logins_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_logins_on_user_id"
     t.index ["user_session_id"], name: "index_logins_on_user_session_id"
   end
@@ -2059,6 +2073,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_140000) do
 
   create_table "payroll_positions", force: :cascade do |t|
     t.string "aasm_state", null: false
+    t.boolean "combine_contract_attachment", default: true, null: false
     t.datetime "created_at", null: false
     t.string "currency", default: "USD", null: false
     t.text "description", null: false
@@ -3177,6 +3192,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_140000) do
   add_foreign_key "ledgers", "card_grants"
   add_foreign_key "ledgers", "events"
   add_foreign_key "lob_addresses", "events"
+  add_foreign_key "login_attempts", "logins"
   add_foreign_key "login_codes", "users"
   add_foreign_key "mailbox_addresses", "users"
   add_foreign_key "oauth_device_grants", "oauth_applications", column: "application_id"

@@ -1,4 +1,6 @@
-<% current_user ||= local_assigns[:p][:current_user] %>
+<%# locals: (activity:, p:, current_user: nil, **) %>
+
+<% current_user ||= p[:current_user] %>
 <% user = activity.trackable.user %>
 
 <%= render layout: "/public_activity/common", locals: { activity:, current_user:, url: reimbursement_report_path(activity.trackable.report) } do %>
