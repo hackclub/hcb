@@ -127,4 +127,29 @@ RSpec.describe PendingEventMappingEngine::Nightly do
       expect(canonical_transaction.category_mapping).to be_manual
     end
   end
+
+  describe "settling payout holdings" do
+    # Payout holdings live on the reimbursement clearinghouse event, which
+    # must exist for the pending transaction to be created.
+    let!(:clearinghouse) { create(:event, id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING) }
+    let(:report) { create(:reimbursement_report) }
+    let!(:payout_holding) { Reimbursement::PayoutHolding.create!(report:, amount_cents: 10_00) }
+
+    let!(:canonical_transaction) do
+      create(:canonical_transaction, amount_cents: 10_00).tap do |ct|
+        ct.update_column(:hcb_code, payout_holding.hcb_code)
+      end
+    end
+
+    it "copies the pending transaction's category to the settled transaction" do
+      cpt = payout_holding.canonical_pending_transaction
+      TransactionCategoryService.new(model: cpt).set!(slug: "travel", assignment_strategy: "manual")
+
+      described_class.new.send(:settle_canonical_pending_payout_holding!)
+
+      expect(cpt.reload.canonical_transactions).to contain_exactly(canonical_transaction)
+      expect(canonical_transaction.reload.category.slug).to eq("travel")
+      expect(canonical_transaction.category_mapping).to be_manual
+    end
+  end
 end
