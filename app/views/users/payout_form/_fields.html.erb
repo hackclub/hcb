@@ -68,7 +68,7 @@
       <%= form.text_field :recipient_name,
           required: false,
           placeholder: user.full_name %>
-      <span class="muted">If the name on the check should differ from your legal name on HCB.</span>
+      <span class="muted">If the name on the check differs from the recipient's name on HCB.</span>
     </div>
 
     <% unless embedded %>
@@ -193,7 +193,7 @@
       <%= form.text_field :recipient_name,
           required: false,
           placeholder: user.full_name %>
-      <span class="muted">If the name on the bank account differs from your legal name on HCB.</span>
+      <span class="muted">If the name on the bank account differs from the recipient's name on HCB.</span>
     </div>
 
     <% unless embedded %>

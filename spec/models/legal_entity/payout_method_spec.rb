@@ -109,6 +109,21 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
     end
   end
 
+  describe "recipient_name on Check and ACH details" do
+    [LegalEntity::PayoutMethod::Check, LegalEntity::PayoutMethod::AchTransfer].each do |klass|
+      it "strips #{klass.name.demodulize} recipient names and stores whitespace-only ones as nil" do
+        expect(klass.new(recipient_name: "  Jane Doe  ").recipient_name).to eq("Jane Doe")
+        expect(klass.new(recipient_name: "   ").recipient_name).to be_nil
+      end
+
+      it "rejects #{klass.name.demodulize} recipient names longer than 250 characters (IncreaseCheck's limit)" do
+        details = klass.new(recipient_name: "a" * 251)
+        details.valid?
+        expect(details.errors[:recipient_name]).to be_present
+      end
+    end
+  end
+
   describe "#create_transfer (key remapping / consolidation)" do
     let(:event) { create(:event) }
     let(:user)  { create(:user) }
@@ -153,6 +168,14 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
         expect(wise.amount_cents).to eq(7_500)
         expect(wise.currency).to eq("GBP")
         expect(wise.user).to eq(user)
+        expect(wise.recipient_name).to eq("Jane Doe")
+      end
+
+      it "uses the stored account_holder as the recipient name when present" do
+        allow(MoneyService).to receive(:convert_from_usd_wise).and_return(7_500)
+        details.account_holder = "Jane A. Doe"
+
+        expect(details.create_transfer(event, **attrs).recipient_name).to eq("Jane A. Doe")
       end
     end
 
@@ -176,6 +199,14 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
 
         expect(ach.amount).to eq(10_000)
       end
+
+      it "uses the stored recipient_name over the caller's, falling back when blank" do
+        named = build(:ach_transfer_payout_method_details, recipient_name: "Jane A. Doe")
+        blank = build(:ach_transfer_payout_method_details, recipient_name: "   ")
+
+        expect(named.create_transfer(event, **attrs).recipient_name).to eq("Jane A. Doe")
+        expect(blank.create_transfer(event, **attrs).recipient_name).to eq("Jane Doe")
+      end
     end
 
     context "Check" do
@@ -189,6 +220,14 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
         expect(check.amount).to eq(10_000) # USD passthrough
         expect(check.user).to eq(user)
         expect(check.recipient_name).to eq("Jane Doe")
+      end
+
+      it "uses the stored recipient_name over the caller's, falling back when blank" do
+        named = build(:check_payout_method_details, recipient_name: "Jane A. Doe")
+        blank = build(:check_payout_method_details, recipient_name: "   ")
+
+        expect(named.create_transfer(event, **attrs).recipient_name).to eq("Jane A. Doe")
+        expect(blank.create_transfer(event, **attrs).recipient_name).to eq("Jane Doe")
       end
     end
 

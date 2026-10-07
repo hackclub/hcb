@@ -27,7 +27,7 @@
       </tr>
       <tr>
         <td>Name on account:</td>
-        <td><%= payout_method.try(:account_holder).presence || user.full_name %></td>
+        <td><%= payout_method.try(:account_holder).presence || payout_method.try(:recipient_name).presence || user.full_name %></td>
       </tr>
       <tr>
         <td>Email:</td>

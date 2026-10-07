@@ -11,18 +11,14 @@ module PayrollService
         case payout_method
         when LegalEntity::PayoutMethod::Check
           safely do
-            check = payment.employee.event.increase_checks.build(
-              memo: "Payment for \"#{payment.title}\"."[0...40],
+            check = payout_method.create_transfer(
+              payment.employee.event,
+              memo: "Payment for \"#{payment.title}\".",
               amount: payment.amount_cents,
               payment_for: "Payment for \"#{payment.title}\".",
-              recipient_name: payout_method.recipient_name.presence || payment.employee.user.full_name,
-              address_line1: payout_method.address_line1,
-              address_line2: payout_method.address_line2,
-              address_city: payout_method.address_city,
-              address_state: payout_method.address_state,
+              recipient_name: payment.employee.user.full_name,
               recipient_email: payment.employee.user.email,
               send_email_notification: false,
-              address_zip: payout_method.address_postal_code,
               user: User.system_user
             )
 
@@ -42,17 +38,15 @@ module PayrollService
           end
         when LegalEntity::PayoutMethod::AchTransfer
           safely do
-            ach_transfer = payment.employee.event.ach_transfers.build(
+            ach_transfer = payout_method.create_transfer(
+              payment.employee.event,
               amount: payment.amount_cents,
               payment_for: "Payment for \"#{payment.title}\".",
-              recipient_name: payout_method.recipient_name.presence || payment.employee.user.full_name,
+              recipient_name: payment.employee.user.full_name,
               recipient_email: payment.employee.user.email,
               send_email_notification: false,
-              routing_number: payout_method.routing_number,
-              account_number: payout_method.account_number,
-              bank_name: (ColumnService.get("/institutions/#{payout_method.routing_number}")["full_name"] rescue "Bank Account"),
-              creator: User.system_user,
-              company_entry_description: "SALARY",
+              user: User.system_user,
+              company_entry_description: "SALARY"
             )
 
             ach_transfer.save!

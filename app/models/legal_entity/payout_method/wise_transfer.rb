@@ -71,7 +71,7 @@ class LegalEntity
           recipient_information:,
           amount_cents: local_amount_cents,
           payment_for:,
-          recipient_name:,
+          recipient_name: account_holder.presence || recipient_name,
           recipient_email:,
           user:,
           bank_name:

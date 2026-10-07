@@ -278,7 +278,8 @@ RSpec.describe UsersController do
             payout_method_type: "LegalEntity::PayoutMethod::AchTransfer",
             payout_method_attributes: {
               account_number: "12345678",
-              routing_number: "021000021"
+              routing_number: "021000021",
+              recipient_name: " Jane A. Doe "
             }
           }
         }
@@ -290,6 +291,7 @@ RSpec.describe UsersController do
       expect(default).to be_default
       expect(default.details).to be_a(LegalEntity::PayoutMethod::AchTransfer)
       expect(default.details.routing_number).to eq("021000021")
+      expect(default.details.recipient_name).to eq("Jane A. Doe")
     end
 
     it "does not allow saving an unsupported payout method" do

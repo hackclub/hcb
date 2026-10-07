@@ -62,6 +62,24 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
       expect(unnamed.payout_method.name).to be_nil
     end
 
+    it "persists a user-provided recipient name and rejects one that is too long" do
+      service = described_class.new(
+        legal_entity: user.personal_legal_entity,
+        details_type: "LegalEntity::PayoutMethod::AchTransfer",
+        details_attrs: valid_ach_attrs.merge(recipient_name: "  Jane A. Doe  ")
+      )
+      expect(service.run).to be(true)
+      expect(service.payout_method.details.recipient_name).to eq("Jane A. Doe")
+
+      too_long = described_class.new(
+        legal_entity: user.personal_legal_entity,
+        details_type: "LegalEntity::PayoutMethod::AchTransfer",
+        details_attrs: valid_ach_attrs.merge(recipient_name: "a" * 251)
+      )
+      expect(too_long.run).to be(false)
+      expect(too_long.error_messages.join).to include("Recipient name")
+    end
+
     it "keeps the existing ACH numbers when they come back masked (e.g. a nickname-only edit)" do
       existing = seed_default(LegalEntity::PayoutMethod::AchTransfer.new(valid_ach_attrs))
 
