@@ -14,7 +14,7 @@
         —
       </span>
     </div>
-    <% unless @event.id == 183 %>
+    <% unless @event.id == 183 && !OrganizerPosition.role_at_least?(current_user, @event, :reaer) %>
       <div class="stat stat--small">
         <span class="stat__label">Total revenue</span>
         <span class="stat__value stat__value--no-space">

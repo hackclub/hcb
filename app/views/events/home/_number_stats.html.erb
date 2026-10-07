@@ -1,7 +1,7 @@
 <%# locals: () %>
 
 <div class="card card--breakdown p-4 py-6 flex flex-1 flex-col gap-4 justify-center items-center">
-  <% unless @event.id == 183 %>
+  <% unless @event.id == 183 && !OrganizerPosition.role_at_least?(current_user, @event, :reader) %>
     <div class="gap-4 flex flex-1 flex-col items-center justify-center">
       <div class="stat stat--small flex flex-col items-center" style="flex:unset">
         <span class="muted uppercase text-sm" style="font-weight: 700">Total revenue</span>
