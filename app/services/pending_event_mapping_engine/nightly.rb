@@ -100,8 +100,8 @@ module PendingEventMappingEngine
 
     def settle_canonical_pending_wire!
       CanonicalPendingTransaction.unsettled.wire.find_each(batch_size: 100) do |cpt|
-        if cpt.local_hcb_code.ct
-          CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: cpt.local_hcb_code.ct)
+        if (ct = cpt.local_hcb_code.ct)
+          CanonicalPendingTransactionService::Settle.new(canonical_transaction: ct, canonical_pending_transaction: cpt).run!
           cpt.wire.mark_deposited!
         end
       end

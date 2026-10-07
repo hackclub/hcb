@@ -68,4 +68,32 @@ RSpec.describe PendingEventMappingEngine::Nightly do
       expect(canonical_transaction.category_mapping).to be_manual
     end
   end
+
+  describe "settling wires" do
+    before do
+      stub_request(:get, /api\.column\.com\/institutions\/.*/)
+        .to_return(status: 200, body: '{"country_code": "DE"}', headers: { "Content-Type" => "application/json" })
+    end
+
+    let(:event) { create(:event, :with_positive_balance) }
+    let!(:wire) { create(:wire, :approved, event:, user: create(:user, :make_admin)) }
+
+    let!(:canonical_transaction) do
+      create(:canonical_transaction, amount_cents: wire.canonical_pending_transaction.amount_cents).tap do |ct|
+        ct.update_column(:hcb_code, wire.hcb_code)
+      end
+    end
+
+    it "copies the pending transaction's category to the settled transaction" do
+      cpt = wire.canonical_pending_transaction
+      TransactionCategoryService.new(model: cpt).set!(slug: "professional-fees-contractors", assignment_strategy: "manual")
+
+      described_class.new.send(:settle_canonical_pending_wire!)
+
+      expect(cpt.reload.canonical_transactions).to contain_exactly(canonical_transaction)
+      expect(canonical_transaction.reload.category.slug).to eq("professional-fees-contractors")
+      expect(canonical_transaction.category_mapping).to be_manual
+      expect(wire.reload).to be_deposited
+    end
+  end
 end
