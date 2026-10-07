@@ -18,7 +18,7 @@
   </div>
 <% end %>
 
-<%= render partial: "card_grants/hero", locals: { card_grant: @card_grant, footer: hero_footer, actions: false } %>
+<%= render partial: "card_grants/hero", locals: { card_grant: @card_grant, footer: hero_footer, show_actions: false } %>
 
 <% if @pre_authorization.authorized? %>
   <%= render "application/callout", type: "success", title: "Your card grant has been approved!" do %>
