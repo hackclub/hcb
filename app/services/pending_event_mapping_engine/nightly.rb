@@ -109,8 +109,8 @@ module PendingEventMappingEngine
 
     def settle_canonical_pending_check_deposit!
       CanonicalPendingTransaction.unsettled.check_deposit.find_each(batch_size: 100) do |cpt|
-        if cpt.local_hcb_code.ct
-          CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: cpt.local_hcb_code.ct)
+        if (ct = cpt.local_hcb_code.ct)
+          CanonicalPendingTransactionService::Settle.new(canonical_transaction: ct, canonical_pending_transaction: cpt).run!
         end
       end
     end

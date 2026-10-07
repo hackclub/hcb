@@ -96,4 +96,35 @@ RSpec.describe PendingEventMappingEngine::Nightly do
       expect(wire.reload).to be_deposited
     end
   end
+
+  describe "settling check deposits" do
+    let(:event) { create(:event) }
+
+    let!(:check_deposit) do
+      CheckDeposit.create!(
+        event:,
+        created_by: create(:user),
+        amount_cents: 25_00,
+        front: { io: file_fixture("receipt.png").open, filename: "front.png", content_type: "image/png" },
+        back: { io: file_fixture("receipt.png").open, filename: "back.png", content_type: "image/png" }
+      )
+    end
+
+    let!(:canonical_transaction) do
+      create(:canonical_transaction, amount_cents: 25_00).tap do |ct|
+        ct.update_column(:hcb_code, check_deposit.hcb_code)
+      end
+    end
+
+    it "copies the pending transaction's category to the settled transaction" do
+      cpt = check_deposit.canonical_pending_transaction
+      TransactionCategoryService.new(model: cpt).set!(slug: "fundraising", assignment_strategy: "manual")
+
+      described_class.new.send(:settle_canonical_pending_check_deposit!)
+
+      expect(cpt.reload.canonical_transactions).to contain_exactly(canonical_transaction)
+      expect(canonical_transaction.reload.category.slug).to eq("fundraising")
+      expect(canonical_transaction.category_mapping).to be_manual
+    end
+  end
 end
