@@ -47,7 +47,7 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def convert_to_reimbursement_report?
-    (admin_or_manager? || cardholder?) && record.active? && record.card_grant_setting.reimbursement_conversions_enabled?
+    (admin_or_manager? || (cardholder? && record.stripe_card_id.present?)) && record.active? && record.card_grant_setting.reimbursement_conversions_enabled?
   end
 
   def accept_as_reimbursement?

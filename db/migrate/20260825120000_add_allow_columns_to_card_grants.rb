@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class AddAllowColumnsToCardGrants < ActiveRecord::Migration[8.0]
+class AddAllowColumnsToCardGrants < ActiveRecord::Migration[8.1]
   def change
     # Nullable: NULL means "inherit the event's CardGrantSetting default", mirroring
     # how merchant/category locks fall back to the event-level setting.

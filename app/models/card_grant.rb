@@ -100,6 +100,7 @@ class CardGrant < ApplicationRecord
   after_create :create_pre_authorization!, if: :pre_authorization_required?
 
   before_validation :create_card_grant_setting, on: :create
+  before_validation :clear_card_only_options, on: :create, unless: :effective_allow_stripe_card
   before_create :create_user
   before_create :create_subledger
   before_create :set_defaults
@@ -308,7 +309,7 @@ class CardGrant < ApplicationRecord
 
   def create_stripe_card(ip_address)
     self.with_lock do
-      return if stripe_card.present?
+      return if stripe_card.present? || !active?
 
       begin
         self.stripe_card = StripeCardService::Create.new(
@@ -429,6 +430,12 @@ class CardGrant < ApplicationRecord
     if self.invite_message.nil?
       self.invite_message = setting.invite_message
     end
+  end
+
+  # One-time use and pre-authorization only apply to virtual cards.
+  def clear_card_only_options
+    self.one_time_use = false
+    self.pre_authorization_required = false
   end
 
   def return_remaining_balance!(requested_by:, reason:)

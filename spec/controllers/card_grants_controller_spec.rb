@@ -317,10 +317,9 @@ RSpec.describe CardGrantsController do
     end
 
     it "does not authorize acceptance once a virtual card has been activated" do
-      # Converting an activated grant is `#convert_to_reimbursement_report`,
-      # which is gated by the event's `reimbursement_conversions_enabled` flag.
+      # Converting an activated grant is `#convert_to_reimbursement_report`, not this action.
       event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
-      create(:card_grant_setting, event:, reimbursement_conversions_enabled: false)
+      create(:card_grant_setting, event:)
       card_grant = create(:card_grant, event:, amount_cents: 10_00, allow_reimbursement_report: true)
       create_session(card_grant.user, verified: true)
 

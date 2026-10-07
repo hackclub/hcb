@@ -293,7 +293,11 @@ class CardGrantsController < ApplicationController
     authorize @card_grant
 
     report = @card_grant.with_lock do
-      @card_grant.reimbursement_report || @card_grant.convert_to_reimbursement_report!(accepted_by: current_user)
+      next @card_grant.reimbursement_report if @card_grant.reimbursement_report
+
+      # Re-authorize on the locked, reloaded record so a concurrent activation can't be converted.
+      authorize @card_grant
+      @card_grant.convert_to_reimbursement_report!(accepted_by: current_user)
     end
 
     redirect_to report, flash: { success: "Successfully opened a reimbursement report for your grant." }
