@@ -82,6 +82,37 @@ RSpec.describe CardGrant, type: :model do
       expect(card_grant.effective_allow_reimbursement_report).to eq(true)
       expect(card_grant.effective_allow_stripe_card).to eq(true) # still inherited
     end
+
+    it "drops card-only options on a reimbursement-only grant even when submitted" do
+      event = create(:event)
+      card_grant = create(:card_grant, :pending_invite, event:, allow_stripe_card: false, allow_reimbursement_report: true, one_time_use: true, pre_authorization_required: true)
+
+      expect(card_grant.one_time_use).to be(false)
+      expect(card_grant.pre_authorization_required).to be(false)
+      expect(card_grant.pre_authorization).to be_nil
+    end
+
+    it "keeps card-only options when a virtual card is allowed" do
+      event = create(:event)
+      card_grant = create(:card_grant, :pending_invite, event:, allow_stripe_card: true, pre_authorization_required: true)
+
+      expect(card_grant.pre_authorization_required).to be(true)
+      expect(card_grant.pre_authorization).to be_present
+    end
+  end
+
+  describe "#create_stripe_card" do
+    it "does not issue a card once the grant is no longer active" do
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:card_grant_setting, event:)
+      card_grant = create(:card_grant, :pending_invite, event:, amount_cents: 10_00, allow_reimbursement_report: true)
+      card_grant.convert_to_reimbursement_report!(accepted_by: card_grant.user)
+
+      expect(StripeCardService::Create).not_to receive(:new)
+      card_grant.create_stripe_card("127.0.0.1")
+
+      expect(card_grant.reload.stripe_card).to be_nil
+    end
   end
 
   describe "#convert_to_reimbursement_report!" do

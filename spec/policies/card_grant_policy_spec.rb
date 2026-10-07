@@ -64,4 +64,31 @@ RSpec.describe CardGrantPolicy, type: :policy do
       expect(policy.accept_as_reimbursement?).to be(true)
     end
   end
+
+  describe "#convert_to_reimbursement_report?" do
+    let(:event) { create(:event) }
+
+    it "denies the cardholder on a pending grant so acceptance methods can't be bypassed" do
+      card_grant = create(:card_grant, :pending_invite, event:, allow_stripe_card: true, allow_reimbursement_report: false)
+      policy = described_class.new(card_grant.user, card_grant)
+
+      expect(policy.convert_to_reimbursement_report?).to be(false)
+    end
+
+    it "permits the cardholder once a virtual card has been activated" do
+      card_grant = create(:card_grant, event:, allow_reimbursement_report: false)
+      policy = described_class.new(card_grant.user, card_grant)
+
+      expect(policy.convert_to_reimbursement_report?).to be(true)
+    end
+
+    it "permits a manager on a pending grant" do
+      manager = create(:user)
+      create(:organizer_position, user: manager, event:, role: :manager)
+      card_grant = create(:card_grant, :pending_invite, event:, allow_reimbursement_report: false)
+      policy = described_class.new(manager, card_grant)
+
+      expect(policy.convert_to_reimbursement_report?).to be(true)
+    end
+  end
 end
