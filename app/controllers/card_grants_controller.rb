@@ -60,6 +60,8 @@ class CardGrantsController < ApplicationController
     @event.create_card_grant_setting! unless @event.card_grant_setting.present?
 
     @card_grant.amount_cents = params[:amount_cents] if params[:amount_cents]
+    @card_grant.purpose = params[:purpose].to_s.first(CardGrant::MAXIMUM_PURPOSE_LENGTH) if params[:purpose]
+    @card_grant.instructions = params[:instructions] if params[:instructions]
   end
 
   def create
