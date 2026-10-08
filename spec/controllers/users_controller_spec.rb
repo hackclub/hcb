@@ -292,6 +292,22 @@ RSpec.describe UsersController do
       expect(default.details.routing_number).to eq("021000021")
     end
 
+    it "saves a trimmed recipient_name on the payout method and rejects an overlong one" do
+      user = create(:user)
+      create_session(user, verified: true)
+      check_attrs = { address_line1: "1 Main St", address_city: "New York", address_state: "NY", address_postal_code: "10001" }
+
+      patch(:update, params: { id: user.id, user: { payout_method_type: "LegalEntity::PayoutMethod::Check", payout_method_attributes: check_attrs.merge(recipient_name: "  Acme LLC  ") } })
+
+      expect(response).to have_http_status(:found)
+      expect(user.reload.default_payout_method.details.recipient_name).to eq("Acme LLC")
+
+      patch(:update, params: { id: user.id, user: { payout_method_type: "LegalEntity::PayoutMethod::Check", payout_method_attributes: check_attrs.merge(recipient_name: "a" * 251) } })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(user.reload.default_payout_method.details.recipient_name).to eq("Acme LLC")
+    end
+
     it "does not allow saving an unsupported payout method" do
       reason = "Checks are paused in tests."
       stub_const(

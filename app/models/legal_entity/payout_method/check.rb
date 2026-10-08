@@ -24,6 +24,8 @@ class LegalEntity
       validates :address_state, inclusion: { in: ISO3166::Country.new("US").subdivisions.keys, message: "This isn't a valid US state!", allow_blank: true }
       validates :address_postal_code, format: { with: /\A\d{5}(?:[-\s]\d{4})?\z/, message: "This isn't a valid ZIP code." }
       attribute :address_country, :text, default: "US"
+      normalizes :recipient_name, with: ->(recipient_name) { recipient_name.strip.presence }
+      validates :recipient_name, length: { maximum: 250 }
 
       validate do
         combined_length = [address_line1, address_line2].filter(&:present?).sum(&:length)

@@ -18,6 +18,8 @@ class LegalEntity
       has_encrypted :account_number, :routing_number
       validates :routing_number, format: { with: /\A\d{9}\z/, message: "must be 9 digits" }
       validates :account_number, format: { with: /\A\d+\z/, message: "must be only numbers" }
+      normalizes :recipient_name, with: ->(recipient_name) { recipient_name.strip.presence }
+      validates :recipient_name, length: { maximum: 250 }
 
       def self.permitted_attributes
         [:account_number, :routing_number, :recipient_name]

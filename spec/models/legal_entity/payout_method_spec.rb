@@ -176,6 +176,12 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
 
         expect(ach.amount).to eq(10_000)
       end
+
+      it "prefers a stored recipient_name over the one passed in" do
+        details.recipient_name = "Acme LLC"
+
+        expect(details.create_transfer(event, **attrs).recipient_name).to eq("Acme LLC")
+      end
     end
 
     context "Check" do
@@ -190,6 +196,12 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
         expect(check.user).to eq(user)
         expect(check.recipient_name).to eq("Jane Doe")
       end
+
+      it "prefers a stored recipient_name over the one passed in" do
+        details.recipient_name = "Acme LLC"
+
+        expect(details.create_transfer(event, **attrs).recipient_name).to eq("Acme LLC")
+      end
     end
 
     it "does not error when a method-irrelevant key is omitted" do
@@ -199,6 +211,23 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
       expect {
         ach_details.create_transfer(event, amount: 500, payment_for: "x", recipient_name: "A", recipient_email: "a@b.co", user:)
       }.not_to raise_error
+    end
+  end
+
+  describe "recipient_name" do
+    [:check_payout_method_details, :ach_transfer_payout_method_details].each do |factory|
+      it "strips whitespace, treats blank as unset, and caps length (#{factory})" do
+        details = build(factory, recipient_name: "  Acme LLC  ")
+        expect(details.recipient_name).to eq("Acme LLC")
+
+        details.recipient_name = "   "
+        expect(details.recipient_name).to be_nil
+        expect(details).to be_valid
+
+        details.recipient_name = "a" * 251
+        expect(details).not_to be_valid
+        expect(details.errors[:recipient_name]).to be_present
+      end
     end
   end
 
