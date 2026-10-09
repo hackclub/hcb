@@ -5,6 +5,8 @@
 # Table name: card_grants
 #
 #  id                         :bigint           not null, primary key
+#  allow_reimbursement_report :boolean
+#  allow_stripe_card          :boolean
 #  amount_cents               :integer
 #  banned_categories          :string
 #  banned_merchants           :string
@@ -70,13 +72,35 @@ class CardGrant < ApplicationRecord
   has_one :card_grant_setting, through: :event, required: true
   alias_method :setting, :card_grant_setting
 
-  enum :status, { active: 0, canceled: 1, expired: 2 }, default: :active
+  enum :status, { active: 0, canceled: 1, expired: 2, converted_to_reimbursement: 3 }, default: :active
+
+  include AASM
+
+  aasm column: :status, enum: true, whiny_persistence: true do
+    state :active, initial: true
+    state :canceled
+    state :expired
+    state :converted_to_reimbursement
+
+    event :mark_canceled do
+      transitions from: :active, to: :canceled
+    end
+
+    event :mark_expired do
+      transitions from: :active, to: :expired
+    end
+
+    event :mark_converted_to_reimbursement do
+      transitions from: :active, to: :converted_to_reimbursement
+    end
+  end
 
   has_one :pre_authorization
   has_one :reimbursement_report, class_name: "Reimbursement::Report"
   after_create :create_pre_authorization!, if: :pre_authorization_required?
 
   before_validation :create_card_grant_setting, on: :create
+  before_validation :clear_card_only_options, on: :create, unless: :effective_allow_stripe_card
   before_create :create_user
   before_create :create_subledger
   before_create :set_defaults
@@ -103,6 +127,7 @@ class CardGrant < ApplicationRecord
 
   validates_presence_of :amount_cents, :email
   validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, on: :create, integer_column: true
+  validate :at_least_one_acceptance_method, on: :create
 
   MAXIMUM_PURPOSE_LENGTH = 30
   validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
@@ -121,6 +146,8 @@ class CardGrant < ApplicationRecord
   def state
     if suspected_fraud?
       "error"
+    elsif converted_to_reimbursement?
+      "success"
     elsif canceled? || expired?
       "muted"
     elsif pending_invite?
@@ -135,7 +162,7 @@ class CardGrant < ApplicationRecord
   def state_text
     if suspected_fraud?
       "Fraudulent"
-    elsif converted_to_reimbursement_report?
+    elsif converted_to_reimbursement?
       "Converted to reimbursement"
     elsif canceled?
       "Canceled"
@@ -159,8 +186,20 @@ class CardGrant < ApplicationRecord
     :muted
   end
 
-  def converted_to_reimbursement_report?
-    canceled? && reimbursement_report.present?
+  # An unset (NULL) acceptance method inherits the event-level default, mirroring
+  # how merchant/category locks fall back to the setting.
+  def effective_allow_stripe_card
+    return allow_stripe_card unless allow_stripe_card.nil?
+    return setting.allow_stripe_card unless setting.nil?
+
+    CardGrantSetting.column_defaults["allow_stripe_card"]
+  end
+
+  def effective_allow_reimbursement_report
+    return allow_reimbursement_report unless allow_reimbursement_report.nil?
+    return setting.allow_reimbursement_report unless setting.nil?
+
+    CardGrantSetting.column_defaults["allow_reimbursement_report"]
   end
 
   def suspected_fraud?
@@ -261,17 +300,16 @@ class CardGrant < ApplicationRecord
   def cancel!(canceled_by = User.system_user, expired: false)
     raise ArgumentError, "Grant is already #{status}" unless active?
 
-    zero!(custom_memo: "Returning #{expired ? "expired" : "canceled"} grant to #{user.name}", requested_by: canceled_by) if balance > 0
+    return_remaining_balance!(requested_by: canceled_by, reason: expired ? "expired" : "canceled")
 
-    update!(status: :canceled) unless expired
-    update!(status: :expired) if expired
+    expired ? mark_expired! : mark_canceled!
 
     stripe_card&.cancel!
   end
 
   def create_stripe_card(ip_address)
     self.with_lock do
-      return if stripe_card.present?
+      return if stripe_card.present? || !active?
 
       begin
         self.stripe_card = StripeCardService::Create.new(
@@ -325,21 +363,30 @@ class CardGrant < ApplicationRecord
     versions.where_object_changes_to(...).last&.created_at
   end
 
-  def convert_to_reimbursement_report!
+  def convert_to_reimbursement_report!(accepted_by: User.system_user)
+    raise ArgumentError, "Grant is already #{status}" unless active?
     raise ArgumentError, "card grant should have a non-zero balance" if balance.zero?
     raise ArgumentError, "card grant should have a positive balance" unless balance.positive?
 
     maximum_amount_cents = balance.cents
 
-    cancel!
+    report = transaction do
+      return_remaining_balance!(requested_by: accepted_by, reason: "converted")
 
-    event.reimbursement_reports.create!(
-      user:,
-      report_name: "Reimbursement for #{purpose.presence || "previously issued card grant"}",
-      maximum_amount_cents:,
-      inviter: sent_by,
-      card_grant: self
-    )
+      mark_converted_to_reimbursement!
+
+      event.reimbursement_reports.create!(
+        user:,
+        report_name: "Reimbursement for #{purpose.presence || "previously issued card grant"}",
+        maximum_amount_cents:,
+        inviter: sent_by,
+        card_grant: self
+      )
+    end
+
+    stripe_card&.cancel!
+
+    report
   end
 
   private
@@ -382,6 +429,22 @@ class CardGrant < ApplicationRecord
     # was likely left unset via the API.
     if self.invite_message.nil?
       self.invite_message = setting.invite_message
+    end
+  end
+
+  # One-time use and pre-authorization only apply to virtual cards.
+  def clear_card_only_options
+    self.one_time_use = false
+    self.pre_authorization_required = false
+  end
+
+  def return_remaining_balance!(requested_by:, reason:)
+    zero!(custom_memo: "Returning #{reason} grant to #{user.name}", requested_by:) if balance > 0
+  end
+
+  def at_least_one_acceptance_method
+    unless effective_allow_stripe_card || effective_allow_reimbursement_report
+      errors.add(:base, "At least one acceptance method (virtual card or reimbursement report) must be enabled")
     end
   end
 
