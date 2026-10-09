@@ -35,6 +35,10 @@
       <p class="mt-0">HCB partners with <%= link_to "Column N.A.", "https://column.com" %>, Member FDIC, to provide restricted funds to fiscally-sponsored projects. We do not provide direct funding.</p>
     </div>
 
+    <%= render "application/callout", type: "info", icon: "bolt", title: "Need to move money quickly?", class: "max-w-lg mt-4 mb-0" do %>
+      Whether it is sending a grant, receiving incoming funding or setting up a fiscally sponsored project, HCB can get you set up fast so you can focus on your work! Reach out to Meagan (<%= mail_to "meagan@hackclub.com", class: "underline" %>) to learn more.
+    <% end %>
+
   </div>
 
   <div class="flex flex-col items-center flex-grow">
