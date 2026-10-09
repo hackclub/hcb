@@ -11,6 +11,7 @@
 #  address_line2       :text
 #  address_postal_code :text             not null
 #  address_state       :text             not null
+#  recipient_name      :string
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
 #

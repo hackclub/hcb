@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_02_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_07_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -2823,6 +2823,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_02_120100) do
   create_table "user_payout_method_ach_transfers", force: :cascade do |t|
     t.text "account_number_ciphertext", null: false
     t.datetime "created_at", null: false
+    t.string "recipient_name"
     t.text "routing_number_ciphertext", null: false
     t.datetime "updated_at", null: false
   end
@@ -2835,6 +2836,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_02_120100) do
     t.text "address_postal_code", null: false
     t.text "address_state", null: false
     t.datetime "created_at", null: false
+    t.string "recipient_name"
     t.datetime "updated_at", null: false
   end
 

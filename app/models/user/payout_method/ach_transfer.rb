@@ -6,6 +6,7 @@
 #
 #  id                        :bigint           not null, primary key
 #  account_number_ciphertext :text             not null
+#  recipient_name            :string
 #  routing_number_ciphertext :text             not null
 #  created_at                :datetime         not null
 #  updated_at                :datetime         not null
