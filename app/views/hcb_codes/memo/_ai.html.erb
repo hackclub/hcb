@@ -1,3 +1,5 @@
+<%# locals: (hcb_code:) %>
+
 <span id="ai_memo">
   <%= turbo_stream_from hcb_code, "ai_memo" %>
   <% if hcb_code.suggested_memos.any? && hcb_code.custom_memo.nil? %>

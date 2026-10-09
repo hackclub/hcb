@@ -132,7 +132,7 @@
 
   <%= render partial: "receipts/form_v3", locals: {
         receiptable: @payment,
-        enable_linking: false,
+        enable_linking: true,
         upload_method: "payment_page",
         include_spacing: true,
         redirect_url: payment_path(@payment),

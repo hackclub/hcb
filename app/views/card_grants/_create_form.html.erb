@@ -1,3 +1,5 @@
+<%# locals: (card_grant:) %>
+
 <% disabled = !policy(card_grant).create? %>
 
 <%= form_with model: [@event, card_grant], data: { turbo_frame: "_top" } do |form| %>

@@ -1,3 +1,5 @@
+<%# locals: (stripe_card:) %>
+
 <% return unless policy(stripe_card).activate? %>
 
 <% if stripe_card.replacement_for %>

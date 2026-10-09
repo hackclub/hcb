@@ -1,3 +1,5 @@
+<%# locals: (status:, stripe_cards:) %>
+
 <% if stripe_cards.blank? %>
   <%= blankslate "You don't have any #{status} cards yet." %>
 <% else %>

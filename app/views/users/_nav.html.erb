@@ -1,3 +1,5 @@
+<%# locals: (selected: nil) %>
+
 <% content_for(:header) do %>
   <div class="flex items-center gap-3 mb-2 pt-4">
     <%= render partial: "logo" %>
@@ -24,7 +26,7 @@
   <% end %>
 
   <nav class="dock font-medium mt1">
-    <% users_nav(selected: local_assigns[:selected]).each do |item| %>
+    <% users_nav(selected:).each do |item| %>
       <%= dock_item item[:name],
         item[:path],
         tooltip: item[:tooltip],
@@ -35,14 +37,14 @@
     <% end %>
     <div>
       <% if signed_in? %>
-        <%= render "users/settings_dropdown", local_assigns: { selected: local_assigns[:selected], user: current_user, open: @user == current_user && local_assigns[:selected].to_s.starts_with?("settings") } %>
+        <%= render "users/settings_dropdown", selected:, user: current_user, open: @user == current_user && selected.to_s.starts_with?("settings") %>
       <% end %>
     </div>
-    <% if @user && @user != current_user && local_assigns[:selected].to_s.starts_with?("settings") %>
+    <% if @user && @user != current_user && selected.to_s.starts_with?("settings") %>
       <span class="mx-1 dock__section"><%= @user.possessive_name %> Settings</span>
       <hr class="opacity-80 border-none h-[1px] bg-gray-200">
       <div>
-        <%= render "users/settings_dropdown", local_assigns: { selected: local_assigns[:selected], user: @user, open: true } %>
+        <%= render "users/settings_dropdown", selected:, user: @user, open: true %>
       </div>
     <% end %>
   </nav>

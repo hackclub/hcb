@@ -1,3 +1,5 @@
+<%# locals: (report:, user:) %>
+
 <% member_viewing = !OrganizerPosition.role_at_least?(current_user, report.event, :manager) && current_user != report.user && !admin_signed_in? %>
 <% payout_method = report.payout_method&.details %>
 

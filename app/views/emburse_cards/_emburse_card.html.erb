@@ -1,5 +1,7 @@
+<%# locals: (emburse_card:, headless: nil) %>
+
 <%= link_to organizer_signed_in? ? emburse_card : root_path, class: "text-decoration-none" do %>
-  <%= creator_bar emburse_card, prefix: "issued " unless defined? headless %>
+  <%= creator_bar emburse_card, prefix: "issued " unless headless %>
   <% if emburse_card.canceled? %>
     <div class="canceled-card-wrapper">
     <div class="emburse-card <%= emburse_card.is_virtual ? "virtual" : "" %>  deactivated canceled-right" data-behavior="hover_tilt">
