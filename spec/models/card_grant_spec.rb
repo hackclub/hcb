@@ -28,4 +28,39 @@ RSpec.describe CardGrant, type: :model do
       expect(card_grant.ledger).to be_a(Ledger)
     end
   end
+
+  describe "restriction conflicts with the setting" do
+    before do
+      allow_any_instance_of(CardGrant).to receive(:transfer_money)
+    end
+
+    let(:card_grant) { create(:card_grant) }
+
+    it "rejects allowing a merchant the setting blocks" do
+      card_grant.setting.update!(banned_merchants: ["merchant_a"])
+      card_grant.merchant_lock = ["merchant_a"]
+
+      expect(card_grant).not_to be_valid
+      expect(card_grant.errors[:base]).to include("Merchant merchant_a cannot be both allowed and blocked")
+    end
+
+    it "rejects blocking a category the setting allows" do
+      card_grant.setting.update!(category_lock: ["food"])
+      card_grant.banned_categories = ["food"]
+
+      expect(card_grant).not_to be_valid
+      expect(card_grant.errors[:base]).to include("Category food cannot be both allowed and blocked")
+    end
+
+    it "still saves an existing grant after the setting later blocks one of its merchants" do
+      card_grant = create(:card_grant, merchant_lock: ["merchant_a"])
+      card_grant.setting.update!(banned_merchants: ["merchant_a"])
+      card_grant.reload
+
+      expect(card_grant.update(purpose: "Snacks")).to be true
+
+      card_grant.merchant_lock += ["merchant_b"]
+      expect(card_grant).not_to be_valid
+    end
+  end
 end
