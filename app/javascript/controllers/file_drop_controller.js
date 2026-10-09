@@ -4,6 +4,30 @@ import { appsignal } from '../appsignal'
 
 let dropzone
 
+// The id of the receipt a drag started on, when the drag started on a receipt
+// that's already in HCB (the receipt bin, a suggested pairing, a "Select from
+// Receipt Bin" modal). Reading it at the source is exact; `extractId` below has
+// to guess from the serialized drag payload, and browsers disagree about what
+// they put in there.
+let draggedReceiptId = null
+
+document.addEventListener('dragstart', e => {
+  draggedReceiptId =
+    e.target?.closest?.('[data-receipt-id]')?.getAttribute('data-receipt-id') ||
+    null
+})
+
+// Cleared once the drag is over, after every dropzone handler has had its turn:
+// a drop bubbles to the document last, and a drag that ends any other way (the
+// pointer leaves the window, Escape) still fires `dragend` on the source.
+document.addEventListener('dragend', () => {
+  draggedReceiptId = null
+})
+
+document.addEventListener('drop', () => {
+  draggedReceiptId = null
+})
+
 function extractId(dataTransfer) {
   let receiptId
 
@@ -77,8 +101,12 @@ export default class extends Controller {
     this.counter = 0
     this.hideDropzone()
 
+    // A paste has no drag of its own, so a receipt dragged earlier in the page
+    // must not be mistaken for what was pasted.
+    const draggedReceipt = e.clipboardData ? null : draggedReceiptId
+
     if (this.linkingValue) {
-      const receiptId = extractId(e.dataTransfer)
+      const receiptId = draggedReceipt || extractId(e.dataTransfer)
 
       const [receiptableType, receiptableId] = this.receiptableValue.split(':')
       const linkPath = this.modalValue
@@ -93,6 +121,12 @@ export default class extends Controller {
         })
       }
     }
+
+    // The drag started on a receipt HCB already has. Browsers hand the image
+    // file over alongside the markup, so falling through to the upload branch
+    // would attach a second copy of the receipt here and leave the original
+    // sitting in the receipt bin. There is nothing to upload.
+    if (draggedReceipt) return
 
     this.fileInputTarget.files = e.dataTransfer.files
     this.fileInputTarget.dispatchEvent(new Event('change'))
