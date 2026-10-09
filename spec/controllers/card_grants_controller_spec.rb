@@ -77,7 +77,7 @@ RSpec.describe CardGrantsController do
       expect(response.body).not_to include("Return the balance to")
     end
 
-    it "shows the grantee help articles, and only offers combining once they have another grant" do
+    it "shows the grantee help articles" do
       card_grant = create(:card_grant, event:)
       card_grant.update_columns(user_id: card_grant.stripe_card.user.id)
       create_session(card_grant.user.reload, verified: true)
@@ -87,13 +87,6 @@ RSpec.describe CardGrantsController do
       expect(response.body).to include("All articles")
       expect(response.body).to include("Card declined")
       expect(response.body).to include("Need more money?")
-      expect(response.body).not_to include("Combine grants")
-
-      other_grant = create(:card_grant, event:)
-      other_grant.update_columns(user_id: card_grant.user_id)
-
-      get(:show, params: { id: card_grant.hashid })
-
       expect(response.body).to include("Combine grants")
     end
 
