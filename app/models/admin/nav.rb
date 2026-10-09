@@ -150,6 +150,11 @@ module Admin
             count_type: :tasks
           ),
           make_item(
+            name: "Wire Lookup",
+            path: wire_lookup_admin_index_path,
+            count: ->{ 0 }
+          ),
+          make_item(
             name: "Wise Transfers",
             path: wise_transfers_admin_index_path,
             count: ->{ WiseTransfer.pending.count },

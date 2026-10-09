@@ -1,0 +1,29 @@
+<% title "Wire Lookup" %>
+
+<p class="muted">Look up SWIFT tracking status for any wire by its UETR or Column Transfer ID.</p>
+
+<%= form_with local: true, class: "card overflow-visible", url: wire_lookup_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-col sm:flex-row items-center gap-2">
+    <%= form.text_field :uetr, value: @uetr, placeholder: "UETR", class: "!max-w-full !min-w-full sm:!min-w-96" %>
+    <%= form.submit "Look up", class: "ml-auto" %>
+  </div>
+<% end %>
+
+<% if @wire.present? %>
+  <p>
+    <strong>Matching HCB wire</strong>
+    <%= link_to wire_process_admin_path(@wire) do %>
+      Wire #<%= @wire.id %> to <%= @wire.recipient_name %>
+    <% end %>
+  </p>
+<% end %>
+
+<% if @tracking.present? %>
+  <%= render "wires/tracking", tracking: @tracking %>
+<% elsif @uetr.present? %>
+  <p class="muted">No tracking information found for this UETR.</p>
+<% end %>
+
+<% if @transfer.present? %>
+  <%= render "wires/transfer_details", transfer: @transfer %>
+<% end %>
