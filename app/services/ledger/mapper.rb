@@ -9,13 +9,25 @@ class Ledger
       @ledger_item.reload
     end
 
-    def run
-      return if @ledger_item.primary_mapping&.mapped_by_human?
+    # `force:` overrides the "don't touch what a human mapped" guard. It exists
+    # for the admin ledger item process page, where hitting "map automatically"
+    # is an explicit request to hand the item back to the system.
+    def run(force: false)
+      return if !force && @ledger_item.primary_mapping&.mapped_by_human?
 
       preload_transaction_sources!
       return if (ledger = calculate_ledger).nil?
 
       Ledger::Mapping.map_primary!(ledger:, ledger_item: @ledger_item, mapped_by: SYSTEM)
+    end
+
+    # The Event or CardGrant `run` would map this item to, computed without
+    # creating a Ledger (or anything else). Used to preview a mapping on the
+    # admin ledger item process page.
+    def suggested_owner
+      preload_transaction_sources!
+
+      calculate_card_grant || calculate_event
     end
 
     private

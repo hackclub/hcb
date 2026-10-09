@@ -29,12 +29,14 @@
       <th class="w-24">Amount</th>
       <th class="w-16">CTs</th>
       <th class="w-16">CPTs</th>
+      <th class="w-40">Ledger</th>
       <th class="w-24">Actions</th>
     </tr>
   </thead>
   <tbody>
     <% @ledger_items.each do |ledger_item| %>
-      <tr>
+      <% ledger = ledger_item.primary_ledger %>
+      <tr class="<%= "admin-bg-pending" unless ledger %>">
         <td><%= ledger_item.id %></td>
         <td><%= ledger_item.datetime.to_date %></td>
         <td><%= link_to ledger_item.memo, ledger_item_path(ledger_item) %></td>
@@ -43,6 +45,15 @@
         <td><%= ledger_item.ct_count %></td>
         <td><%= ledger_item.cpt_count %></td>
         <td>
+          <% if ledger&.event %>
+            <%= link_to ledger.event.name, ledger.event %>
+          <% elsif ledger&.card_grant %>
+            <%= link_to "#{ledger.card_grant.email}'s card grant", card_grant_path(ledger.card_grant) %>
+          <% end %>
+        </td>
+        <td>
+          <%= link_to "Process", ledger_item_process_admin_path(ledger_item) %>
+          <br>
           <%= link_to "View", ledger_item_path(ledger_item) %>
           <% if ledger_item.hcb_code.present? %>
             <br>
