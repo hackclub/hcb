@@ -1,0 +1,55 @@
+<% title "Edit an ACH transfer" %>
+<%= render "events/nav", selected: :transfers %>
+<% page_sm %>
+
+<h2 class="mt5">Edit ACH transfer to <%= @ach_transfer.recipient_name %> (#<%= @ach_transfer.id %>)</h2>
+
+<hr class="mt1 mb1">
+
+<%= form_with(model: @ach_transfer, local: true) do |form| %>
+  <%= form_errors(@ach_transfer, "ACH transfer", "We couldn't update this") %>
+
+  <h2 class="mb2 mt3">Recipient details</h2>
+
+  <div class="field">
+    <%= form.label :recipient_name, "Legal name" %>
+    <%= form.text_field :recipient_name, placeholder: "Max Kern", required: true %>
+  </div>
+
+  <div class="field">
+    <%= form.label :recipient_email, "Email" %>
+    <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true %>
+  </div>
+
+  <div class="field">
+    <%= form.label :payment_for, "What's this payment for?" %>
+    <%= form.text_field :payment_for, placeholder: "Shipment of potions", required: true %>
+  </div>
+
+  <h2 class="mb2 mt3">Payment details</h2>
+
+  <div class="field">
+    <%= form.label :bank_name %>
+    <%= form.text_field :bank_name, placeholder: "Name of the bank", required: true %>
+  </div>
+
+  <div class="field" data-controller="external-validation" data-external-validation-url-value="<%= validate_routing_number_ach_transfers_path %>">
+    <%= form.label :routing_number %>
+    <%= form.text_field :routing_number, placeholder: "123456789", required: true, class: "fs-mask", data: { action: "input->external-validation#validate" } %>
+    <span class="muted text-sm mt-1 block empty:hidden" data-external-validation-target="hint"></span>
+  </div>
+
+  <div class="field">
+    <%= form.label :account_number %>
+    <%= form.text_field :account_number, placeholder: "0913338883", required: true, class: "fs-mask" %>
+  </div>
+
+  <div class="field">
+    <%= form.label :invoiced_at, "Invoice date" %>
+    <%= form.date_field :invoiced_at, style: "max-width: 190px", max: Date.current %>
+  </div>
+
+  <div class="actions inline-block mt1">
+    <%= form.submit "Update ACH transfer" %>
+  </div>
+<% end %>

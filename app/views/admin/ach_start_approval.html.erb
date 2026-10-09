@@ -147,6 +147,10 @@
       </table>
     <% end %>
 
+    <% if policy(@ach_transfer).edit? %>
+      <%= button_to "✏️ Edit ACH transfer", edit_ach_transfer_path(@ach_transfer), method: :get %>
+    <% end %>
+
     <% if @ach_transfer.local_hcb_code.receipts.any? { |r| r.extracted_incorrect_amount_cents? } %>
       <div class="warning bold mb2">
         ⚠️ Please check these receipts closely, we suspect that their amounts don't match
