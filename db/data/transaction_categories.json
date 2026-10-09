@@ -103,6 +103,9 @@
       "insurance_underwriting_premiums"
     ]
   },
+  "internal-payment": {
+    "label": "Internal payment"
+  },
   "internal-transfer": {
     "label": "Internal transfer"
   },
@@ -338,6 +341,9 @@
   },
   "rent": {
     "label": "Rent"
+  },
+  "repayment": {
+    "label": "Repayment"
   },
   "server-hosting": {
     "label": "Server / hosting",
