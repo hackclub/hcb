@@ -145,6 +145,8 @@ gem "lograge" # Log formatting
 gem "statsd-instrument", "~> 3.9" # For reporting to HC Grafana
 
 group :test do
+  gem "capybara" # Browser-driven system tests
+  gem "cuprite" # Headless Chrome driver for Capybara
   gem "factory_bot_rails" # Test data
   gem "simplecov", require: false # Code coverage
   gem "webmock"
