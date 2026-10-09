@@ -21,25 +21,27 @@
     <% end %>
   </ul>
 
+  <% if @comment&.persisted? && comment.file.attached? %>
+    <div class="field mb1">
+      <%= link_to "📎 1 attachment", url_for(comment.file), target: "_blank" %>
+      <span class="muted h6">Choosing a new file below will replace it</span>
+    </div>
+  <% end %>
+
   <div class="flex flex-row mb2 justify-between items-center">
 
-    <% if @comment&.persisted? %>
-      <% if comment.file.attached? %>
-        <div class="field mb0">
-          <%= link_to "📎 1 attachment", url_for(comment.file), target: "_blank" %>
-        </div>
-      <% end %>
-    <% else %>
-      <div data-controller="file-upload">
-        <%= form.file_field :file,
-            multiple: false,
-            required: false,
-            data: { "file-upload-target": "input" },
-            id: "comment_file_upload" %>
-        <button data-file-upload-target="preview" type="button"></button>
-        <div data-file-upload-target="clear"></div>
-      </div>
-    <% end %>
+    <div
+      data-controller="file-upload file-drop"
+      data-file-drop-title-value="Drop to add a file"
+      data-action="dragover@window->file-drop#dragover drop@window->file-drop#drop dragenter@window->file-drop#dragenter dragleave@window->file-drop#dragleave">
+      <%= form.file_field :file,
+          multiple: false,
+          required: false,
+          data: { "file-upload-target": "input", "file-drop-target": "fileInput" },
+          id: "comment_file_upload" %>
+      <button data-file-upload-target="preview" type="button"></button>
+      <div data-file-upload-target="clear"></div>
+    </div>
 
     <% admin_tool("inline-flex", "span") do %>
       <% if defined?(admin_only) %>
