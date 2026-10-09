@@ -8,16 +8,27 @@
         <%= inline_icon "bank-icon", size: 32 %>
       </div>
     </td>
-    <td><%= format_date Time.now %></td>
+    <td class="hidden sm:table-cell"><%= format_date Time.now %></td>
     <td class="transaction__memo transaction__memo--fluid">
-      <%= badge_for "Pending", class: "bg-transparent border border-dashed border-muted m0 mr1" %>
-      Fiscal sponsorship
+      <div>
+        <div class="flex-auto min-w-0">
+          <div class="flex items-center gap-[1ch] min-w-0">
+            <%= badge_for "Pending", class: "bg-transparent border border-dashed border-muted m0 mr1 hidden sm:inline-flex" %>
+            Fiscal sponsorship
+          </div>
+
+          <div class="flex items-center gap-[1ch] min-w-0 text-sm muted sm:hidden">
+            <time class="truncate"><%= format_date Time.now %></time>
+            <%= badge_for "Pending", class: "bg-transparent border border-dashed border-muted m0 mr1" %>
+          </div>
+        </div>
+      </div>
     </td>
     <td class="nowrap">
       <span class="flex items-center justify-end">
         <%= render_money(-1 * ledger.fronted_fee_balance_cents) %>
       </span>
     </td>
-    <td></td>
+    <td class="hidden sm:table-cell"></td>
   </tr>
 <% end %>
