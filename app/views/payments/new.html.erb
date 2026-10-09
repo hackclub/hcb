@@ -16,6 +16,12 @@
   <% content_for :sidebar_footer do %>
     <%= render "events/transfers/modal" %>
     <%= link_to "Send transfer manually", "#", class: "btn mt2", data: { behavior: "modal_trigger", modal: "send_transfer" } %>
+    <%= render "application/callout", type: "info", title: "Welcome to the new payments form!", class: "mt-2" do %>
+      HCB has a new way to send payments! Instead of collecting payment details yourself, just
+      enter in the recipient's name and email, and we'll handle the rest. For more information,
+      read our <%= link_to "help center article", "#" %>, and send us feedback at
+      <%= mail_to "hcb@hackclub.com" %>.
+    <% end %>
   <% end %>
 <% end %>
 
