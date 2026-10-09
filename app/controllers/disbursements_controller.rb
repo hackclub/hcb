@@ -53,19 +53,18 @@ class DisbursementsController < ApplicationController
   end
 
   def event_search
-    authorize Disbursement.new
+    @source_event = Event.friendly.find_by_public_id(params[:source_event_id]) if params[:source_event_id]
+    authorize Disbursement.new(source_event: @source_event)
     q = params[:q].presence
     # Indicates whether we're searching for source or destination organizations
     sending = params[:sending] == "true"
 
     user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id)
-    @source_event = Event.friendly.find_by_public_id(params[:source_event_id]) if params[:source_event_id]
 
     base = if admin_signed_in?
              Event.select(:name, :id, :demo_mode, :slug).reorder(Event::CUSTOM_SORT).includes(:plan)
            elsif !sending && @source_event&.plan&.unrestricted_disbursements_enabled?
-             allowed_destination_event_ids = current_user.manageable_events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
-             Event.where(id: allowed_destination_event_ids).select(:name, :id, :demo_mode, :slug).includes(:plan)
+             Event.filter_demo_mode(false).select(:name, :id, :demo_mode, :slug).includes(:plan)
            else
              current_user.manageable_events.not_hidden.filter_demo_mode(false)
            end
