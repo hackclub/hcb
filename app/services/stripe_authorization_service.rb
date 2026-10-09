@@ -20,7 +20,8 @@ module StripeAuthorizationService
   FORBIDDEN_MERCHANT_NETWORK_IDS =
     Set.new(
       [
-        "8203300025" # HEPTA PAY LTD (primary used for fraud; https://hcb.hackclub.com/blazer/queries/1118-hepta-pay-ltd-card-transactions)
+        "8203300025",     # HEPTA PAY LTD (primary used for fraud; https://hcb.hackclub.com/blazer/queries/1118-hepta-pay-ltd-card-transactions)
+        "600000001065940" # Used by a receipt fraud group to bypass the eSewa Pay block (https://hcb.hackclub.com/hcb/evHdKKm)
       ]
     ).freeze
 
