@@ -1,0 +1,1038 @@
+// Card grant page. Built on `.card`, the HCB palette and `card--background-image`
+// so it sits inside HCB, but with more air and bigger numbers than the dense
+// `.details` lists — this page is read by grantees, not accountants.
+
+$grant-hairline: rgba(200, 200, 200, 0.35);
+
+@mixin grant-hairline($side) {
+  border-#{$side}: 1px solid $grant-hairline;
+
+  html[data-dark='true'] & {
+    border-#{$side}-color: rgba(255, 255, 255, 0.125);
+  }
+}
+
+.grant-hero {
+  padding: 1.75rem;
+
+  @media (max-width: 40em) {
+    padding: 1.25rem;
+  }
+}
+
+.grant-hero__grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1fr);
+
+  @media (min-width: 56em) {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 2.5rem;
+  }
+}
+
+.grant-hero__aside {
+  @include grant-hairline(top);
+  padding-top: 1.25rem;
+
+  @media (min-width: 56em) {
+    border-top: 0;
+    padding-top: 0;
+    padding-left: 2.5rem;
+    @include grant-hairline(left);
+  }
+}
+
+.grant-hero__amount {
+  display: block;
+  margin: 0;
+  font-size: 3.25rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+
+  @media (max-width: 40em) {
+    font-size: 2.5rem;
+  }
+}
+
+.grant-hero__date {
+  margin: 0;
+  font-size: 1.625rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+// How much of the grant is still yours to spend.
+.grant-meter {
+  height: 8px;
+  border-radius: 999px;
+  background-color: rgba(map-get($palette, smoke), 0.9);
+  overflow: hidden;
+
+  html[data-dark='true'] & {
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+}
+
+.grant-meter__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background-color: map-get($palette, success);
+  transition: width 0.25s ease-in-out;
+
+  &.grant-meter__fill--muted {
+    background-color: map-get($palette, muted);
+  }
+}
+
+// Compact label / value pairs stacked in the hero aside. Rows grow when a long
+// value wraps rather than colliding with the row beneath them.
+.grant-meta {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.grant-meta > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 1.625rem;
+}
+
+.grant-meta__label {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.grant-meta__value {
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+
+  // `.mention` carries a trailing margin meant for inline prose; drop it so
+  // avatars line up flush with the values above and below.
+  &.mention,
+  .mention {
+    margin-right: 0;
+  }
+}
+
+.grant-section {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+  margin: 2.5rem 0 0.875rem;
+  font-size: 1.375rem;
+}
+
+.grant-section__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  font-size: 17px;
+  font-weight: 900;
+  border-radius: var(--radius-xl);
+  background: rgba(map-get($palette, muted), 0.15);
+  color: map-get($palette, slate);
+
+  html[data-dark='true'] & {
+    color: map-get($palette, smoke);
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+// Card artwork beside its numbers, then the controls. Laid out against the
+// section's own width (not the viewport) since the sidebar and admin tools
+// change how much room it gets at any given screen size.
+.grant-pay {
+  container: grant-pay / inline-size;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.grant-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin: 0;
+  padding: 0;
+
+  // Any narrower than 21rem and the card artwork wraps its own number.
+  @container grant-pay (min-width: 46rem) {
+    grid-template-columns: 21rem minmax(0, 1fr);
+  }
+
+  &.grant-panel--art-only {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 23rem;
+  }
+}
+
+.grant-panel__art {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.5rem;
+
+  .btn {
+    max-width: 20rem;
+    margin-inline: auto;
+  }
+}
+
+.grant-panel__fields {
+  display: grid;
+  align-content: center;
+  gap: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  @include grant-hairline(top);
+
+  @container grant-pay (min-width: 46rem) {
+    border-top: 0;
+    @include grant-hairline(left);
+  }
+
+  // Wide enough for card and billing details side by side.
+  @container grant-pay (min-width: 72rem) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 2rem;
+  }
+}
+
+.grant-panel__heading {
+  margin: 0 0 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: map-get($palette, muted);
+}
+
+.grant-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.125rem 1.5rem;
+  min-height: 2.5rem;
+  padding: 0.375rem 0;
+
+  + .grant-row {
+    @include grant-hairline(top);
+  }
+}
+
+.grant-row__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  color: map-get($palette, muted);
+}
+
+// On a narrow screen a long value drops below its label but stays right-aligned.
+.grant-row__value {
+  margin-left: auto;
+  min-width: 0;
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.grant-controls {
+  margin: 0;
+  padding: 1.25rem 0.75rem 0.75rem;
+  overflow: hidden;
+
+  > .grant-panel__heading {
+    padding: 0 0.75rem;
+  }
+}
+
+// Side by side: once there's room, every control gets its own column in a
+// single row, title and description on top and its button along the bottom.
+// In between they fall back to two columns (the view flags an odd one out as
+// `--wide` so it doesn't sit alone in the left column), and to stacked rows on
+// phones.
+.grant-controls__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 0.375rem;
+}
+
+.grant-controls__item {
+  display: grid;
+  min-width: 0;
+}
+
+.grant-controls__item--wide {
+  grid-column: 1 / -1;
+}
+
+@container grant-pay (min-width: 36rem) {
+  .grant-controls__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    .grant-action {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: 1fr auto;
+      grid-template-areas:
+        'text'
+        'cta';
+      align-items: start;
+      row-gap: 0.875rem;
+    }
+
+    .grant-action__cta {
+      justify-self: start;
+    }
+  }
+}
+
+@container grant-pay (min-width: 44rem) {
+  .grant-controls__grid {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+  }
+
+  .grant-controls__item--wide {
+    grid-column: auto;
+  }
+
+  // Inset from the dividers so a control's hover background doesn't run into them.
+  .grant-controls__item {
+    padding-inline: 0.5rem;
+
+    &:first-child {
+      padding-left: 0;
+    }
+
+    &:last-child {
+      padding-right: 0;
+    }
+  }
+
+  .grant-controls__item + .grant-controls__item {
+    @include grant-hairline(left);
+  }
+}
+
+// Help card: the help center articles as tiles, then the org's own support
+// as a slim tinted strip along the bottom.
+.grant-help {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+
+  > .grant-action {
+    padding: 0.875rem 1.5rem;
+    border-radius: 0;
+  }
+
+  // Under the tiles it's a footer: tinted, and "Still stuck?" runs into its
+  // description on one line instead of stacking.
+  > .grant-answers + .grant-action {
+    background: rgba(140, 150, 165, 0.08);
+    @include grant-hairline(top);
+
+    &:hover:not(:disabled),
+    &:focus-visible {
+      background: rgba(140, 150, 165, 0.14);
+    }
+
+    .grant-action__text {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: baseline;
+      column-gap: 0.375rem;
+    }
+  }
+}
+
+.grant-answers {
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.grant-answers__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.grant-answers__all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: map-get($palette, muted);
+  text-decoration: none;
+
+  // A trailing arrow's glyph sits in the middle of a lot of padding: pull it
+  // in against the text and flush with the right edge.
+  svg:last-child {
+    margin: 0 -0.375rem 0 -0.375rem;
+  }
+
+  &:hover,
+  &:focus {
+    color: map-get($palette, info);
+  }
+}
+
+// As many columns as fit (all five on a full-width page), wrapping on phones.
+.grant-answers__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 0.625rem;
+  margin-top: 0.875rem;
+}
+
+// Each article's colour shows in its icon, and washes over the whole tile on
+// hover, when an arrow slides in to say it opens the help center.
+.grant-answer {
+  --tone: #{map-get($palette, muted)};
+  --tone-wash: #{rgba(map-get($palette, muted), 0.08)};
+  --tone-soft: #{rgba(map-get($palette, muted), 0.14)};
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border-radius: var(--radius-lg);
+  // An inset shadow rather than a border, so the outline doesn't add to the
+  // tile's size.
+  box-shadow: inset 0 0 0 1px rgba(140, 150, 165, 0.3);
+  background: transparent;
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+
+  html[data-dark='true'] & {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  }
+
+  @each $tone in (primary, warning, success, info, purple, accent) {
+    &.grant-answer--#{$tone} {
+      --tone: #{map-get($palette, $tone)};
+      --tone-wash: #{rgba(map-get($palette, $tone), 0.08)};
+      --tone-soft: #{rgba(map-get($palette, $tone), 0.14)};
+    }
+  }
+
+  &:hover,
+  &:focus {
+    color: inherit;
+  }
+
+  &:hover,
+  &:focus-visible {
+    background: var(--tone-wash);
+
+    html[data-dark='true'] & {
+      background: var(--tone-wash);
+    }
+
+    .grant-answer__arrow {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tone);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.grant-answer__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.625rem;
+  color: var(--tone);
+  background: var(--tone-soft);
+}
+
+.grant-answer__label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+// The arrow glyph only fills the middle third of its icon, so the icon is
+// drawn large and tucked into the corner.
+.grant-answer__arrow {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  display: inline-flex;
+  color: var(--tone);
+  opacity: 0;
+  transform: translate(-3px, 3px);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.grant-section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 2.5rem 0 0.875rem;
+
+  > .grant-section {
+    margin: 0;
+  }
+}
+
+// Horizontal strip of facts, hairline-separated.
+.grant-strip {
+  display: flex;
+  flex-wrap: wrap;
+
+  > div {
+    flex: 1 1 9rem;
+    padding: 0.25rem 1.25rem;
+    @include grant-hairline(left);
+
+    &:first-child {
+      padding-left: 0;
+      border-left: 0;
+    }
+
+    @media (max-width: 40em) {
+      flex-basis: 45%;
+      padding: 0.5rem 0.75rem;
+
+      &:nth-child(odd) {
+        padding-left: 0;
+        border-left: 0;
+      }
+    }
+  }
+}
+
+.grant-strip__label {
+  display: block;
+  margin: 0 0 0.125rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: map-get($palette, muted);
+}
+
+.grant-strip__value {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+// A long merchant or category list would otherwise stretch its strip cell into
+// a tall single column, so past a couple of entries the cell shows a count and
+// the entries move to a full-width drawer under the strip. CSS-only: each
+// drawer has a hidden checkbox ahead of the strip, and the count label toggles
+// it — so it works without JS and survives Turbo caching.
+.grant-drawer__toggle {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.grant-disclosure {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  cursor: pointer;
+  user-select: none;
+  color: map-get($palette, info);
+
+  html[data-dark='true'] & {
+    color: lighten($blue, 12%);
+  }
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.grant-disclosure__caret {
+  transition: transform 0.15s ease;
+}
+
+.grant-drawer {
+  display: none;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  @include grant-hairline(top);
+}
+
+.grant-drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.grant-drawer__close {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: map-get($palette, muted);
+
+  &:hover {
+    color: map-get($palette, slate);
+  }
+}
+
+.grant-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  // Dozens of merchants stay inside one predictable block instead of pushing
+  // the rest of the page down.
+  max-height: 13rem;
+  overflow-y: auto;
+}
+
+.grant-chip {
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  background: rgba(140, 150, 165, 0.12);
+
+  html[data-dark='true'] & {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+@each $key in ('merchants', 'categories') {
+  ##{'grant-' + $key}:checked {
+    ~ ##{'grant-' + $key}-drawer {
+      display: block;
+    }
+
+    ~ .grant-strip
+      .grant-disclosure[for='#{'grant-' + $key}']
+      .grant-disclosure__caret {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.grant-limits__note {
+  margin: 1rem -1rem -1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0 0 0.5rem 0.5rem;
+  background: rgba(140, 150, 165, 0.1);
+  @include grant-hairline(top);
+}
+
+// Pre-authorization: the cart-screenshot dropzone and its uploads share one
+// panel, so an empty dropzone reads as part of the step rather than a stray box.
+$grant-upload-height: 11.5rem;
+
+.grant-upload {
+  padding: 0;
+}
+
+.grant-upload__grid {
+  display: flex;
+  flex-direction: column;
+
+  @media (min-width: 56em) {
+    flex-direction: row;
+    align-items: stretch;
+  }
+}
+
+.grant-upload__drop {
+  flex: 0 0 auto;
+  padding: 1.25rem;
+
+  @media (min-width: 56em) {
+    flex-basis: 19rem;
+  }
+}
+
+.grant-upload__dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  height: 100%;
+  min-height: $grant-upload-height;
+  padding: 1.25rem;
+  text-align: center;
+  border: 2px dashed $grant-hairline;
+  border-radius: var(--radius-lg);
+  background-color: rgba(map-get($palette, smoke), 0.35);
+  transition: 0.125s ease-in-out;
+  transition-property: border-color, background-color;
+
+  html[data-dark='true'] & {
+    border-color: rgba(255, 255, 255, 0.15);
+    background-color: rgba(255, 255, 255, 0.03);
+  }
+
+  &:hover {
+    border-color: rgba(map-get($palette, info), 0.5);
+  }
+}
+
+.grant-upload__dropzone-icon {
+  color: map-get($palette, muted);
+}
+
+.grant-upload__list {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  min-height: $grant-upload-height;
+  padding: 1.25rem;
+  overflow-x: auto;
+}
+
+// Only hairline the two apart when the dropzone is actually there — once the
+// pre-authorization is submitted the list stands alone.
+.grant-upload__drop + .grant-upload__list {
+  @include grant-hairline(top);
+
+  @media (min-width: 56em) {
+    border-top: 0;
+    @include grant-hairline(left);
+  }
+}
+
+// Nothing uploaded yet: let the dropzone have the whole panel rather than
+// pairing it with an empty gallery. Browsers without `:has()` keep the split.
+.grant-upload__grid:has(.grant-upload__empty) {
+  .grant-upload__drop {
+    flex: 1 1 auto;
+  }
+
+  .grant-upload__drop + .grant-upload__list {
+    display: none;
+  }
+}
+
+.grant-upload__thumb {
+  display: block;
+  flex: 0 0 auto;
+  height: $grant-upload-height;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-border-sm);
+  transition: transform 0.125s ease-in-out;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+
+  img {
+    display: block;
+    height: 100%;
+    width: auto;
+    max-width: none;
+  }
+}
+
+.grant-upload__empty {
+  flex: 1 1 auto;
+  align-self: center;
+  text-align: center;
+}
+
+.grant-upload__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  @include grant-hairline(top);
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+}
+
+// Step 3: the explainer and its call to action sit on one line where there's room.
+.grant-submit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  p {
+    flex: 1 1 22rem;
+  }
+
+  .btn {
+    flex: 0 0 auto;
+  }
+}
+
+// One control. The whole thing is the button (or link), with a button-styled
+// CTA so it reads as clickable at a glance.
+.grant-action {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'text cta';
+  align-items: center;
+  gap: 0.875rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.75rem;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.125s ease-in-out;
+
+  // Some rows are links: beat the global `a:hover, a:focus` slate, which is
+  // near-invisible in dark mode and sticks after a modal trigger is clicked.
+  &:hover,
+  &:focus {
+    color: inherit;
+  }
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    background-color: rgba(140, 150, 165, 0.08);
+
+    .grant-action__cta {
+      background-color: darken($white, 5%);
+
+      html[data-dark='true'] & {
+        background-color: lighten($darkless, 5%);
+      }
+    }
+  }
+
+  // Narrow: the CTA drops under the description so its label never gets cut.
+  @container grant-pay (max-width: 30rem) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'text'
+      'cta';
+    row-gap: 0.625rem;
+    align-items: start;
+  }
+
+  &:focus-visible {
+    outline: 2px solid map-get($palette, info);
+    outline-offset: -2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.grant-action__text {
+  grid-area: text;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.grant-action__title {
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.grant-action__desc {
+  font-size: 0.875rem;
+  line-height: 1.35;
+  color: map-get($palette, muted);
+}
+
+// Mirrors `.btn`, but as a span — the row around it is the real control.
+.grant-action__cta {
+  grid-area: cta;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 34px;
+  padding: 0 0.875rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-border);
+  background-color: $white;
+  color: $black;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 0.125s ease-in-out;
+
+  html[data-dark='true'] & {
+    background-color: $darkless;
+    color: $snow;
+  }
+
+  @container grant-pay (max-width: 30rem) {
+    justify-self: start;
+  }
+}
+
+.grant-comments__summary {
+  cursor: pointer;
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  &::before {
+    content: '';
+    display: inline-block;
+    flex: 0 0 auto;
+    width: 0.45rem;
+    height: 0.45rem;
+    margin-right: 0.625rem;
+    border-right: 2px solid map-get($palette, muted);
+    border-bottom: 2px solid map-get($palette, muted);
+    transform: rotate(-45deg);
+    transition: transform 0.15s ease-in-out;
+  }
+
+  .grant-section {
+    display: inline-flex;
+    vertical-align: middle;
+  }
+}
+
+.grant-comments[open] > .grant-comments__summary::before {
+  transform: rotate(45deg);
+}
+
+.grant-comments__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  padding: 0 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.5rem;
+  border-radius: var(--radius-xl);
+  background: rgba(map-get($palette, muted), 0.15);
+  color: map-get($palette, slate);
+
+  html[data-dark='true'] & {
+    color: map-get($palette, smoke);
+  }
+}
+
+.grant-comments__body {
+  margin-top: 0.875rem;
+}
+
+// Activation pledges. Each statement is a full-width clickable row rather than
+// a bare checkbox, and lights up once it's been agreed to.
+.grant-pledge {
+  padding: 0;
+  overflow: hidden;
+}
+
+.grant-pledge__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  margin: 0;
+  padding: 1rem 1.25rem;
+  font-weight: 400;
+  line-height: 1.45;
+  cursor: pointer;
+  transition: background-color 0.125s ease-in-out;
+
+  + .grant-pledge__row {
+    @include grant-hairline(top);
+  }
+
+  &:hover {
+    background-color: rgba(140, 150, 165, 0.06);
+  }
+
+  &:has(input:checked) {
+    background-color: rgba(map-get($palette, success), 0.06);
+  }
+
+  input[type='checkbox'] {
+    flex: 0 0 auto;
+    width: 1.125rem;
+    height: 1.125rem;
+    margin: 0.125rem 0 0;
+    accent-color: map-get($palette, success);
+    cursor: pointer;
+  }
+}
+
+.grant-pledge__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
+  font-size: 0.875rem;
+  background: rgba(140, 150, 165, 0.06);
+  @include grant-hairline(top);
+
+  .btn {
+    flex: 0 0 auto;
+  }
+}

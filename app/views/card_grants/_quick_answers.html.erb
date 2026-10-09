@@ -1,0 +1,27 @@
+<%# locals: () %>
+
+<%# Help center articles as a row of tiles rather than a FAQ list, so one glance shows what's covered. %>
+<div class="grant-answers">
+  <div class="grant-answers__head">
+    <p class="grant-panel__heading m-0">Need help?</p>
+    <%= link_to "https://grants.help.hcb.hackclub.com/en/collections/19675936-card-grants", target: "_blank", rel: "noopener", class: "grant-answers__all" do %>
+      All articles <%= inline_icon "external-arrow", size: 24 %>
+    <% end %>
+  </div>
+
+  <div class="grant-answers__row">
+    <% [
+         ["Need more money?", "plus", "purple", "https://grants.help.hcb.hackclub.com/en/articles/15582009-can-i-add-more-money-to-my-grant-card"],
+         ["Card declined", "forbidden", "primary", "https://grants.help.hcb.hackclub.com/en/articles/15414377-my-grant-card-was-declined-what-can-i-do"],
+         ["Personal purchase", "flag", "warning", "https://grants.help.hcb.hackclub.com/en/articles/15582008-i-used-my-grant-card-for-a-personal-purchase-by-mistake-what-do-i-do"],
+         ["Refunds", "view-reload", "success", "https://grants.help.hcb.hackclub.com/en/articles/15582011-i-got-a-refund-on-a-grant-purchase-where-does-the-money-go"],
+         ["Combine grants", "card-list", "info", "https://grants.help.hcb.hackclub.com/en/articles/15582012-can-i-combine-multiple-grant-cards"],
+       ].each do |label, icon, tone, url| %>
+      <%= link_to url, target: "_blank", rel: "noopener", class: "grant-answer grant-answer--#{tone}" do %>
+        <span class="grant-answer__icon"><%= inline_icon icon, size: 20 %></span>
+        <span class="grant-answer__label"><%= label %></span>
+        <span class="grant-answer__arrow" aria-hidden="true"><%= inline_icon "external-arrow", size: 28 %></span>
+      <% end %>
+    <% end %>
+  </div>
+</div>
