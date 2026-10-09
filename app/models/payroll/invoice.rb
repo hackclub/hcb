@@ -71,6 +71,14 @@ module Payroll
       end
     end
 
+    def state_color
+      case aasm_state.to_sym
+      when :approved then "success"
+      when :rejected then "error"
+      else "warning"
+      end
+    end
+
     # Returns false if the invoice was already reviewed or the event can't cover it.
     def approve(reviewed_by:)
       with_lock do

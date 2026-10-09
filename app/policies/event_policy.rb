@@ -213,6 +213,10 @@ class EventPolicy < ApplicationPolicy
     show?
   end
 
+  def contractors_pending_review_icon?
+    show?
+  end
+
   def reimbursements?
     auditor_or_reader? && record.plan.reimbursements_enabled?
   end
