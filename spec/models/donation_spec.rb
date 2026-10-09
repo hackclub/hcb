@@ -15,6 +15,19 @@ RSpec.describe Donation, type: :model do
     expect(donation).to be_valid
   end
 
+  it "refreshes the ledger item's memo when the donor's details change" do
+    donation = create(:donation, name: "Old Name")
+    item = create(:ledger_item, linked_object: donation)
+    item.refresh!
+    expect(item.memo).to eq("Donation from Old Name")
+
+    donation.update!(name: "New Name")
+    expect(item.reload.memo).to eq("Donation from New Name")
+
+    donation.update!(anonymous: true)
+    expect(item.reload.memo).to eq("Donation from Anonymous Donor")
+  end
+
   it "sends the correct payment notification for each succeeded donation" do
     event = create(:event)
 
