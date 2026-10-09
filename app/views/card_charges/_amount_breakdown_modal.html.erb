@@ -1,0 +1,17 @@
+<%# locals: (breakdown:, modal_id:) %>
+
+<% if breakdown.entries.any? %>
+  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="<%= modal_id %>">
+    <%= modal_header "Amount breakdown" %>
+
+    <%= render "card_charges/amount_breakdown_table", breakdown: %>
+
+    <% if breakdown.foreign_currency? %>
+      <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0.5rem;">
+        <p class="my0 muted">
+          Amounts in other currencies are what the merchant charged or refunded, before conversion to USD.
+        </p>
+      </article>
+    <% end %>
+  </section>
+<% end %>
