@@ -9,7 +9,7 @@ module Api
 
       def index
         authorize @event, :transfers_in_v4?
-        @wires = paginate_cursor(@event.wires.order(created_at: :desc).to_a, &:public_id)
+        @wires = paginate_relation(@event.wires)
       end
 
       def show
