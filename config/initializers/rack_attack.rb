@@ -274,6 +274,24 @@ class Rack::Attack
     req.ip if req.path.match?(ledger_path)
   end
 
+  # Prevention against too many TaxBandits API calls and abuse
+  tax_form_download_path = %r{
+    \A/tax_forms/
+    (?<hashid>[^/]+)/download
+    (\.[^/]*)?                    # `(.:format)` reaches the same action
+    /?\z
+  }x
+
+  throttle("tax_forms/download/ip", limit: 10, period: 1.minute) do |req|
+    req.ip if req.get? && req.path.match?(tax_form_download_path)
+  end
+
+  throttle("tax_forms/download/form", limit: 5, period: 1.minute) do |req|
+    if req.get? && (m = req.path.match(tax_form_download_path))
+      m[:hashid]
+    end
+  end
+
   # Lockout IP addresses that are hammering your donation page.
   # After 5 requests in 30 seconds, block all requests from that IP for 3 hours.
   blocklist("allow2ban donation scrapers") do |req|
