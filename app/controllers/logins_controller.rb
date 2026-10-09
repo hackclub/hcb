@@ -118,7 +118,7 @@ class LoginsController < ApplicationController
     # Clear the flash - this prevents the error message showing up after an unsuccessful -> successful login
     flash.clear
 
-    service = ProcessLoginService.new(login: @login)
+    service = ProcessLoginService.new(login: @login, ip_address: request.remote_ip, user_agent: request.user_agent)
 
     case params[:method]
     when "webauthn"
@@ -128,6 +128,7 @@ class LoginsController < ApplicationController
       )
 
       unless ok
+        record_failed_completion
         redirect_to(auth_users_path, flash: { error: service.errors.full_messages.to_sentence })
         return
       end
@@ -138,6 +139,7 @@ class LoginsController < ApplicationController
       )
 
       unless ok
+        record_failed_completion
         flash.now[:error] = service.errors.full_messages.to_sentence
         render(:sms, status: :unprocessable_content)
         return
@@ -149,6 +151,7 @@ class LoginsController < ApplicationController
       )
 
       unless ok
+        record_failed_completion
         flash.now[:error] = service.errors.full_messages.to_sentence
         render(:email, status: :unprocessable_content)
         return
@@ -157,6 +160,7 @@ class LoginsController < ApplicationController
       ok = service.process_totp(code: params[:code])
 
       unless ok
+        record_failed_completion
         redirect_to(totp_login_path(@login), flash: { error: "Invalid TOTP code, please try again." })
         return
       end
@@ -164,6 +168,7 @@ class LoginsController < ApplicationController
       ok = service.process_backup_code(code: params[:backup_code])
 
       unless ok
+        record_failed_completion
         redirect_to(backup_code_login_path(@login), flash: { error: service.errors.full_messages.to_sentence })
         return
       end
@@ -294,6 +299,11 @@ class LoginsController < ApplicationController
       timezone: params[:timezone],
       ip: request.remote_ip
     }
+  end
+
+  # Counts towards the per-IP ban in config/initializers/rack_attack.rb.
+  def record_failed_completion
+    Rack::Attack::Fail2Ban.filter(Rack::Attack.login_complete_fail2ban_key(request.remote_ip), Rack::Attack::LOGIN_COMPLETE_FAIL2BAN) { true }
   end
 
   def valid_browser_token?
