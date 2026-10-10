@@ -17,14 +17,24 @@ module StripeAuthorizationService
         @card ||= StripeCard.includes(:card_grant).find_by(stripe_id: stripe_card_id)
       end
 
+      # Metadata to set on the authorization. This is returned as part of our
+      # webhook response (rather than being set with a separate
+      # `Stripe::Issuing::Authorization.update` API call) so that we don't eat
+      # into Stripe's 2 second window for responding to authorization requests.
+      #
+      # Stripe casts all metadata values to strings, so we do it ourselves to
+      # keep the response body valid.
+      def metadata
+        {
+          current_balance_available: card_balance_available,
+          declined_reason:
+        }.compact.transform_values(&:to_s)
+      end
+
       private
 
       def auth
         @stripe_event[:data][:object]
-      end
-
-      def auth_id
-        auth[:id]
       end
 
       def amount_cents
@@ -45,7 +55,6 @@ module StripeAuthorizationService
 
       def decline_with_reason!(reason)
         @declined_reason = reason
-        set_metadata!(declined_reason: reason)
 
         false
       end
@@ -82,22 +91,7 @@ module StripeAuthorizationService
 
         return decline_with_reason!("user_cards_locked") if card.user.cards_locked? && event.plan.card_lockable?
 
-        set_metadata!
-
         true
-      end
-
-      def set_metadata!(additional = {})
-        return if Rails.env.test?
-
-        default_metadata = {
-          current_balance_available: card_balance_available,
-        }
-
-        StripeService::Issuing::Authorization.update(
-          auth_id,
-          { metadata: default_metadata.deep_merge(additional) }
-        )
       end
 
       def merchant_category
