@@ -10,7 +10,7 @@ RSpec.describe CanonicalTransactionsController do
     it "sets the transaction category" do
       user = create(:user, :make_admin)
       ct = create(:canonical_transaction)
-      sign_in(user)
+      create_session(user, verified: true)
 
       post(:set_category, params: { id: ct.id, canonical_transaction: { category_slug: "rent" } }, as: :html)
 
@@ -26,7 +26,7 @@ RSpec.describe CanonicalTransactionsController do
   it "clears the transaction category if the param is blank" do
     user = create(:user, :make_admin)
     ct = create(:canonical_transaction, category_slug: "rent")
-    sign_in(user)
+    create_session(user, verified: true)
 
     post(:set_category, params: { id: ct.id, canonical_transaction: { category_slug: "" } }, as: :html)
 

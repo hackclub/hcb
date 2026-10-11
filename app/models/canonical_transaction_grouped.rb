@@ -35,7 +35,7 @@ class CanonicalTransactionGrouped
     @amount ||=
       begin
         # If this CanonicalTransactionGrouped is a CT, get it's pending
-        # transactions and sum their their fronted amount. This allows the total
+        # transactions and sum their fronted amount. This allows the total
         # amount of an invoice/donation to show when only the payout has arrived.
 
         # Having no pt means it is a ct (the sql query below makes it mutually exclusive)
@@ -130,7 +130,7 @@ class CanonicalTransactionGrouped
   end
 
   def disbursement
-    Rails.error.unexpected "CanonicalTransactionGrouped#disbursement accessed"
+    Rails.application.deprecators[:hcb].warn "CanonicalTransactionGrouped#disbursement accessed"
     Disbursement.find(hcb_i2)
   end
 

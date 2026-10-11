@@ -1,6 +1,6 @@
 <%= turbo_frame_tag "transaction_heatmap" do %>
   <% if @past_year_transactions_count > 0 %>
-    <div class="card  p-4 flex-1 flex flex-col overflow-visible">
+    <div class="card card--breakdown p-4 flex-1 flex flex-col overflow-visible">
       <h4 class="text-muted uppercase text-sm font-bold mt-0 mb-3" style="font-size: 16px">
         <%= @past_year_transactions_count %> <%= "transaction".pluralize(@past_year_transactions_count) %> in the past
         year

@@ -5,7 +5,7 @@
 # Table name: logins
 #
 #  id                       :bigint           not null, primary key
-#  aasm_state               :string
+#  aasm_state               :string           not null
 #  authentication_factors   :jsonb
 #  browser_token_ciphertext :text
 #  is_reauthentication      :boolean          default(FALSE), not null
@@ -18,9 +18,10 @@
 #
 # Indexes
 #
-#  index_logins_on_referral_link_id  (referral_link_id)
-#  index_logins_on_user_id           (user_id)
-#  index_logins_on_user_session_id   (user_session_id)
+#  index_logins_on_referral_link_id        (referral_link_id)
+#  index_logins_on_user_id                 (user_id)
+#  index_logins_on_user_id_and_created_at  (user_id,created_at)
+#  index_logins_on_user_session_id         (user_session_id)
 #
 class Login < ApplicationRecord
   include AASM
@@ -30,6 +31,7 @@ class Login < ApplicationRecord
 
   belongs_to :user
   belongs_to :user_session, class_name: "User::Session", optional: true
+  has_many :attempts, class_name: "Login::Attempt", inverse_of: :login
 
   scope(:initial, -> { where(is_reauthentication: false) })
   scope(:reauthentication, -> { where(is_reauthentication: true) })
@@ -65,9 +67,16 @@ class Login < ApplicationRecord
   end
 
   validate do
-    if user_session.present? && user_session.user != user
-      Rails.error.unexpected "A login with a session present has a session.user (#{session.user.id}) / user (#{user.id}) mismatch."
-      errors.add(:base, "A login with a session present has a session.user / user mismatch.")
+    if user_session.present? && user_session.user_id != user_id
+      Rails.error.unexpected "A login with a session present has a user_session.user_id (#{user_session.user_id}) / user_id (#{user_id}) mismatch."
+      errors.add(:base, "A login with a session present has a user_session.user / user mismatch.")
+    end
+  end
+
+  validate do
+    if user_session.present? && user_session.unverified?
+      # Unverified sessions by definition do not have auth (aka, no Login)
+      errors.add(:user_session, "must be verified")
     end
   end
 
@@ -92,6 +101,10 @@ class Login < ApplicationRecord
 
   def for_application?
     purpose == "application"
+  end
+
+  def for_first?
+    purpose == "first"
   end
 
   def authentication_factors_count

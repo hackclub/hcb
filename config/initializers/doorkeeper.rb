@@ -34,7 +34,7 @@ Doorkeeper.configure do
   # migrations).
   #
   # If this option enabled, Doorkeeper will store not only Resource Owner primary key
-  # value, but also it's type (class name). See "Polymorphic Associations" section of
+  # value, but also its type (class name). See "Polymorphic Associations" section of
   # Rails guides: https://guides.rubyonrails.org/association_basics.html#polymorphic-associations
   #
   # [NOTE] If you apply this option on already existing project don't forget to manually
@@ -182,7 +182,7 @@ Doorkeeper.configure do
   # https://doorkeeper.gitbook.io/guides/ruby-on-rails/scopes
   #
   # default_scopes  :public
-  optional_scopes :read, :write
+  optional_scopes :read, :write, :"admin:read", :"admin:write"
 
   # Allows to restrict only certain scopes for grant_type.
   # By default, all the scopes will be available for all the grant types.

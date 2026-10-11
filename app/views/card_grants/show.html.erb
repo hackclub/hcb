@@ -33,18 +33,28 @@
 <div class="sm:mt-5 check--form flex justify-center <%= "flex-wrap" if @frame %> mb-5" style="gap: 3rem">
   <%# Grantee has pending invite %>
   <% if @card_grant.user == current_user && @card_grant.pending_invite? %>
-    <% if @card_grant.canceled? %>
-      <%= blankslate "Sorry, this grant was canceled!", class: "flex-grow" %>
-    <% else %>
-      <%= render partial: "card_grants/invitation", locals: { card_grant: @card_grant } %>
-    <% end %>
+    <%= render partial: "card_grants/invitation", locals: { card_grant: @card_grant } %>
+  <%# Grant was converted into a reimbursement report %>
+  <% elsif @card_grant.user == current_user && @card_grant.converted_to_reimbursement_report? %>
+    <div class="flex-grow">
+      <%= blankslate "This grant was converted into a reimbursement report." %>
+      <% if policy(@card_grant.reimbursement_report).show? %>
+        <p class="text-center">
+          <%= link_to "View reimbursement report", @card_grant.reimbursement_report %>
+        </p>
+      <% end %>
+    </div>
+  <%# Grant was canceled before the grantee accepted the invite %>
+  <% elsif @card_grant.user == current_user && @card_grant.stripe_card.nil? && @card_grant.canceled? %>
+    <%= blankslate "Sorry, this grant was canceled!", class: "flex-grow" %>
   <%# Grantee has accepted invite %>
-  <% elsif @card_grant.user.admin? || organizer_signed_in? || @card_grant.user == current_user %>
+  <% elsif organizer_signed_in? || @card_grant.user == current_user %>
     <div class="justify-center flex flex-col sm:flex-row w-full gap-2">
       <% if @card_grant.stripe_card %>
         <div class="sm:max-w-[300px]">
-          <%= render "stripe_cards/stripe_card", stripe_card: @card_grant.stripe_card, headless: true %>
-          <div class="-mt-2"></div>
+          <div class="<%= "scale-[0.98] transition-transform hover:scale-1 mb-2" if @card_grant.canceled? %>">
+            <%= render "stripe_cards/stripe_card", stripe_card: @card_grant.stripe_card, headless: true %>
+          </div>
           <%= render partial: "card_grants/balance", locals: { card_grant: @card_grant } %>
           <%= render partial: "card_grants/canceled_warning", locals: { card_grant: @card_grant } %>
           <%= render partial: "card_grants/actions", locals: { card_grant: @card_grant } %>
@@ -55,25 +65,26 @@
           <% admin_tool_if @card_grant.user != current_user do %>
             <%= render partial: "card_grants/card_details", locals: { card_grant: @card_grant } %>
           <% end %>
+        <% elsif @card_grant.canceled? %>
+          <div class="self-center">
+            <%= render partial: "card_grants/canceled_warning", locals: { card_grant: @card_grant } %>
+          </div>
         <% end %>
         <%= render partial: "card_grants/grant_details", locals: { card_grant: @card_grant } %>
 
         <%= render partial: "card_grant/pre_authorizations/organizer_info", locals: { pre_authorization: @card_grant.pre_authorization, link_to_pre_authorization: true } if @card_grant.pre_authorization.present? && organizer_signed_in? %>
 
       </div>
-      <div class="flex flex-col g2">
-        <%= render partial: "card_grants/canceled_warning", locals: { card_grant: @card_grant } unless @card_grant.stripe_card %>
-      </div>
     </div>
   <% end %>
 </div>
 
 <% unless @card_grant.user == current_user && @card_grant.pending_invite? %>
-  <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes } %>
+  <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes, ledger: @ledger, items: @items } %>
 <% end %>
 
 <% if policy(@card_grant.comments.build).create? %>
   <h2>Comments</h2>
-  <%= render "comments/list", comments: @card_grant.comments %>
+  <%= render "comments/list", comments: @card_grant.comments, show_blankslate: true %>
   <%= render "comments/form", commentable: @card_grant %>
 <% end %>

@@ -102,7 +102,7 @@
         <% if organizer_signed_in? && @event.payment_recipients.where(payment_model: "IncreaseCheck").any? %>
           <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
             <% @event.payment_recipients.where(payment_model: "IncreaseCheck").each do |payment_recipient| %>
-              <div data-name="<%= payment_recipient.name %>" class="flex items-center" data-payment-recipient="<%= payment_recipient.id %>">
+              <div data-name="<%= payment_recipient.name %>" class="flex items-center" data-payment-recipient="<%= payment_recipient.hashid %>">
                 <button
                   type="button"
                   class="menu__action flex justify-between flex-auto mr1"
@@ -113,7 +113,7 @@
                   <span class="muted ml1"><%= payment_recipient.address_city %>, <%= payment_recipient.address_state %></span>
                 </button>
                 <%= link_to event_payment_recipient_path(@event, payment_recipient),
-                  data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to remove this payment recipient?" } do %>
+                  data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to remove this payment recipient?", turbo_confirm_danger: true } do %>
                   <%= inline_icon "view-close", size: 24, class: "align-middle" %>
                 <% end %>
               </div>
@@ -309,8 +309,8 @@
       Send check
       <%= inline_icon "send" %>
     </button>
-    <a href="javascript:void(0)"
-      data-action="click->check-preview#scrollToTop"
+    <a role="button" tabindex="0"
+      data-action="click->check-preview#scrollToTop keydown.enter->check-preview#scrollToTop"
       class="bg-muted flex-[2] btn no-underline hidden sm:inline-flex">
       Preview
     </a>

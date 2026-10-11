@@ -5,9 +5,14 @@ FactoryBot.define do
     email { Faker::Internet.email }
     full_name { Faker::Name.name }
     session_validity_preference { SessionsHelper::SESSION_DURATION_OPTIONS.fetch("3 days") }
+    verified { true }
 
     trait :make_admin do
       access_level { :admin }
+    end
+
+    trait :make_auditor do
+      access_level { :auditor }
     end
   end
 end

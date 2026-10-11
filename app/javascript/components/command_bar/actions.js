@@ -18,38 +18,28 @@ preload(
 
 const restrictedFilter = e => !e.demo_mode
 
-const eventIcon = event =>
-  event.logo && event.logo != 'none' ? (
-    <img
-      src={event.logo}
-      height="16px"
-      width="16px"
-      style={{ borderRadius: '4px' }}
-    />
-  ) : (
-    <Icon glyph="bank-account" size={16} />
-  )
+const eventAction = event => ({
+  id: event.slug,
+  name: event.name,
+  icon:
+    event.logo && event.logo != 'none' ? (
+      <img
+        src={event.logo}
+        alt=""
+        height="16px"
+        width="16px"
+        style={{ borderRadius: '4px' }}
+      />
+    ) : (
+      <Icon glyph="bank-account" size={16} />
+    ),
+  priority: !event.member ? Priority.LOW : Priority.HIGH,
+  section: event.parent_slug ? 'Sub-organizations' : 'Organizations',
+})
 
 export const generateEventActions = data => {
   return [
-    ...data
-      .filter(e => !e.parent_slug)
-      .map(event => ({
-        id: event.slug,
-        name: event.name,
-        icon: eventIcon(event),
-        priority: !event.member ? Priority.LOW : Priority.HIGH,
-        section: 'Organizations',
-      })),
-    ...data
-      .filter(e => e.parent_slug)
-      .map(event => ({
-        id: event.slug,
-        name: event.name,
-        icon: eventIcon(event),
-        priority: Priority.NORMAL,
-        section: 'Sub-organizations',
-      })),
+    ...data.map(eventAction),
     ...data.map(event => ({
       id: `${event.slug}-home`,
       name: 'Home',
@@ -388,14 +378,6 @@ export const adminActions = (adminUrls, isPretending) => {
       name: 'Disbursements',
       icon: <Icon glyph="payment-transfer" size={16} />,
       perform: navigate('/admin/disbursements'),
-    },
-    {
-      id: 'admin-paypal',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'PayPal transfers',
-      icon: <Icon glyph="paypal" size={16} />,
-      perform: navigate('/admin/paypal_transfers'),
     },
     {
       id: 'admin-wires',

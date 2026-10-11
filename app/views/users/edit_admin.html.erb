@@ -29,7 +29,7 @@
 
   <% admin_tool "p-3", override_pretend: true do %>
     <h3 id="admin" class="mb2 mt1">Admin configurations</h3>
-      <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
+      <%= form_with(model: @user, local: true, data: { turbo_frame: "_top" }) do |form| %>
         <%= form_errors @user %>
 
         <% if @user == current_user %>
@@ -53,6 +53,12 @@
             <%= form.label :running_balance_enabled, "Show running balance?" %>
             <%= form.check_box :running_balance_enabled, checked: @user.running_balance_enabled? %>
           </div>
+
+          <div class="field field--checkbox">
+            <%= form.label :phone_number_verification_bypassed, "Bypass phone number verification for stripe cards / card grants" %>
+            <%= form.check_box :phone_number_verification_bypassed, checked: @user.phone_number_verification_bypassed? %>
+          </div>
+
         <% end %>
 
         <% if superadmin_signed_in? %>
@@ -77,6 +83,56 @@
     </h3>
   <% end %>
 
+  <% admin_tool "p-3" do %>
+    <h3 class="mb2 mt1">Card locking</h3>
+    <section>
+      <p>
+        Cards are currently
+        <strong class="<%= @user.cards_locked? ? "error" : "success" %>"><%= @user.cards_locked? ? "locked" : "active" %></strong>.
+      </p>
+      <% if @user.card_locking_suppressed? %>
+        <p>Card locking is suppressed until <%= format_datetime @user.card_locking_suppressed_until %>.</p>
+      <% end %>
+      <% if admin_signed_in? && (@user != current_user || Flipper.enabled?(:card_locking_self_suppression, current_user)) %>
+        <%= form_with url: suppress_card_locking_user_path(@user), method: :post, data: { turbo_frame: "_top" } do |form| %>
+          <div class="field">
+            <%= form.label :hours, "Suppress card locking for (hours)" %>
+            <%= form.number_field :hours, value: 24, min: 1, max: 720 %>
+          </div>
+          <div class="actions flex">
+            <%= form.submit "Suppress card locking", data: { turbo_confirm: "Pause card locking for this user and unlock their cards now?" } %>
+          </div>
+        <% end %>
+      <% end %>
+    </section>
+  <% end %>
+
+  <% admin_tool "p-3" do %>
+    <h3 class="mb2 mt1">Admin transfer limit</h3>
+    <section>
+      <p>Admin transfer limit is currently: <strong><%= @limit ? number_to_currency(@limit.amount_cents / 100.0) : "None" %></strong></p>
+      <% if superadmin_signed_in? %>
+        <%= form_with url: update_admin_transfer_limit_user_path(@user), method: :post, data: { turbo_frame: "_top" } do |form| %>
+          <div class="field">
+            <%= form.label :limit_amount, "Set admin transfer limit (dollars)" %>
+            <%= form.number_field :limit_amount, step: 0.01, min: 0, value: @limit ? "%.2f" % (@limit.amount_cents / 100.0) : nil %>
+          </div>
+          <div class="actions flex">
+            <%# turbo_confirm can't reference a dynamic ERB variable, so we are rewriting it using on click with the limit amount value in the input field  %>
+            <%= form.submit "Set admin transfer limit", data: { turbo_confirm: "Set the admin transfer limit for this user to $0.00?" }, onclick: "this.dataset.turboConfirm = 'Set the admin transfer limit for this user to $' +  this.form.limit_amount.value + '?'" %>
+          </div>
+        <% end %>
+      <% end %>
+    </section>
+    <% if @limit %>
+      <%= turbo_frame_tag "transfer_limit_history",
+            src: admin_transfer_limit_history_user_path(@user),
+            loading: :lazy do %>
+        <p>Loading transfer limit history...</p>
+      <% end %>
+    <% end %>
+  <% end %>
+
   <%= turbo_frame_tag :admin_details, src: admin_details_user_path(@user), loading: :lazy do %>
     <% admin_tool "p-3" do %>
       <p>Loading user details</p>
@@ -84,6 +140,7 @@
   <% end %>
 
   <% admin_tool "p-3" do %>
+    <h3 class="mb2 mt1">Comments</h3>
     <%= render "comments/list", comments: @user.comments, show_blankslate: true %>
     <%= render "comments/form", commentable: @user, admin_only: true %>
   <% end %>
