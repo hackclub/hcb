@@ -26,8 +26,8 @@ class Event
 
         record["Organization"] = event.name
         record["Raised YTD"] = event.raised_ytd_cents / 100.0
-        record["Profit YTD"] = fees_cents(event, since: Date.current.beginning_of_year) / 100.0
-        record["Profit All Time"] = fees_cents(event) / 100.0
+        record["Profit YTD"] = event.revenue_fees_v2_cents(start_date: Date.current.beginning_of_year) / 100.0
+        record["Profit All Time"] = event.revenue_fees_v2_cents / 100.0
         record["POC (HCB)"] = event.point_of_contact&.name
         record["POC"] = airtable_point_of_contact(event)
 
@@ -46,15 +46,6 @@ class Event
       standard.where(point_of_contact: User.where_public_id(POINTS_OF_CONTACT.values.compact))
               .or(standard.where(id: robotics_teams))
               .includes(:point_of_contact)
-    end
-
-    def fees_cents(event, since: nil)
-      # Fiscal sponsorship fees charged by the fee engine, at whatever rate the
-      # organization was on at the time. Manual fees (e.g. wire fees) are excluded.
-      fees = event.fees.revenue
-      fees = fees.joins(canonical_event_mapping: :canonical_transaction).where(canonical_transactions: { date: since.. }) if since
-
-      fees.sum(:amount_cents_as_decimal).ceil
     end
 
     def airtable_point_of_contact(event)
