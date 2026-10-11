@@ -5,15 +5,15 @@
 # Table name: comments
 #
 #  id                 :bigint           not null, primary key
-#  action             :integer          default("commented"), not null
+#  action             :integer          default(0), not null
 #  admin_only         :boolean          default(FALSE), not null
-#  commentable_type   :string
 #  content_ciphertext :text
 #  deleted_at         :datetime
 #  has_untracked_edit :boolean          default(FALSE), not null
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
 #  commentable_id     :bigint
+#  commentable_type   :string
 #  user_id            :bigint
 #
 # Indexes
@@ -30,11 +30,11 @@ class Comment < ApplicationRecord
 
   set_public_id_prefix :cmt
 
-  belongs_to :commentable, polymorphic: true
+  belongs_to :commentable, polymorphic: true, touch: true
   belongs_to :user
 
   has_one_attached :file
-  validates :file, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["file"].present? }
+  validates :file, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["file"].present? }
 
   has_paper_trail skip: [:content] # ciphertext columns will still be tracked
   has_encrypted :content

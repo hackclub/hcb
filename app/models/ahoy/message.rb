@@ -10,8 +10,8 @@
 #  sent_at   :datetime
 #  subject   :text
 #  to        :string
-#  user_type :string
 #  user_id   :bigint
+#  user_type :string
 #
 # Indexes
 #

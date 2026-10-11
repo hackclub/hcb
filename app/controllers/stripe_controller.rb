@@ -38,9 +38,7 @@ class StripeController < ActionController::Base
 
     if approved
       user = service.card.user
-      ::User::UpdateCardLockingJob.set(wait: 24.hours + 1.minute).perform_later(user:)
-      ::User::SendCardLockingNotificationJob.perform_later(user:, event: service.card.event)
-      ::User::SendCardLockingNotificationJob.set(wait: 24.hours).perform_later(user:, event: service.card.event)
+      ::User::UpdateCardLockingJob.perform_later(user:)
     end
 
     response.set_header "Stripe-Version", "2022-08-01"
@@ -175,7 +173,7 @@ class StripeController < ActionController::Base
       return Rails.error.unexpected("Received charge dispute on nonexistent donation") if donation.nil?
 
       # Let's un-front the transaction.
-      donation.canonical_pending_transactions.update_all(fronted: false)
+      donation.canonical_pending_transactions.find_each { |cpt| cpt.update(fronted: false) }
     else
       # It's an invoice or a recurring donation
 
@@ -184,7 +182,7 @@ class StripeController < ActionController::Base
 
       return Rails.error.unexpected("Received charge dispute on nonexistent invoice or recurring donation") if invoice.nil? && donation.nil?
 
-      (invoice || donation).canonical_pending_transactions.update_all(fronted: false)
+      (invoice || donation).canonical_pending_transactions.find_each { |cpt| cpt.update(fronted: false) }
     end
 
     head :ok

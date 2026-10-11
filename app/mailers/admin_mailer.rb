@@ -96,4 +96,21 @@ class AdminMailer < ApplicationMailer
     )
   end
 
+  def failed_assertion_job(job:, job_id:, anomalies:)
+    @anomalies = anomalies
+    @job = job
+    @job_id = job_id
+
+    mail(
+      to: engineers,
+      subject: "Ledger assertion job #{job} failed with #{anomalies.length} anomalies"
+    )
+  end
+
+  private
+
+  def engineers
+    User.where(email: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"]).pluck(:email)
+  end
+
 end

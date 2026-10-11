@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class GSuiteAccountsController < ApplicationController
-  before_action :set_g_suite_account, only: [:edit, :update, :reset_password, :toggle_suspension]
+  before_action :set_g_suite_account, only: [:edit, :update, :reset_password, :toggle_suspension, :unmanage]
 
   def index
     authorize GSuiteAccount
@@ -54,7 +54,7 @@ class GSuiteAccountsController < ApplicationController
       flash[:success] = "Saved changes to Google Workspace account."
       redirect_to g_suite_accounts_path
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
@@ -99,6 +99,27 @@ class GSuiteAccountsController < ApplicationController
       flash[:error] = "Something went wrong while trying to #{@g_suite_account.suspended? ? 'suspended' : 're-activate'} #{@g_suite_account.address}."
       redirect_to event_g_suite_overview_path(event_id: @event.slug)
     end
+  end
+
+  # Removes the account from HCB management, leaving the Google Workspace user
+  # (and its aliases) intact. See `GSuiteAccount#unmanage!`.
+  def unmanage
+    authorize @g_suite_account
+
+    @event = @g_suite_account.g_suite.event
+    address = @g_suite_account.address
+
+    begin
+      @g_suite_account.unmanage!(confirm: params[:confirm])
+
+      flash[:success] = "#{address} is no longer managed by HCB. The Google Workspace account still exists."
+    rescue => e
+      Rails.error.report(e)
+
+      flash[:error] = "Something went wrong while trying to unmanage #{address}."
+    end
+
+    redirect_to event_g_suite_overview_path(event_id: @event.slug)
   end
 
   private
