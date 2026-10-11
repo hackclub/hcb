@@ -51,8 +51,17 @@
     </span>
   </div>
 
-  <% if !(@transactions.nil? || @transactions.length == 0) %>
-    <div class="table-container">
+  <% if @show_transfer_callout %>
+    <%= render "application/callout", type: "info", title: "Starting May 21st, 2026, this page only shows direct #{@event.column_account_number.deposit_only? ? "credits" : "debits and credits"}.", class: "mt-2 mb-3" do %>
+      Your previous transfers can still be viewed on the <%= link_to "Transfers", event_transfers_path(@event) %> page.
+    <% end %>
+  <% end %>
+
+  <% if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user) %>
+    <%= render "ledgers/ledger", ledger: @ledger, items: @ledger_items, show_author: false %>
+  <% else %>
+    <% if !(@transactions.nil? || @transactions.length == 0) %>
+      <div class="table-container">
         <table>
           <thead>
             <tr>
@@ -69,8 +78,9 @@
       </div>
 
       <%= paginate @transactions %>
-  <% else %>
-    <%= blankslate "No transactions yet" %>
+    <% else %>
+      <%= blankslate "No transactions yet" %>
+    <% end %>
   <% end %>
 <% else %>
   <div class="card container--sm mx-auto center pt4 pb4 mb3">

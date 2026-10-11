@@ -65,5 +65,7 @@ module Discord
         id: DISCORD_EMOJI_IDS[name]
       }
     end
+
+    EPHEMERAL_MESSAGE_FLAG = 1 << 6
   end
 end

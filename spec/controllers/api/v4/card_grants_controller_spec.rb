@@ -80,6 +80,7 @@ RSpec.describe Api::V4::CardGrantsController do
               "id"                      => disbursement.public_id,
               "object"                  => "disbursement",
               "memo"                    => "Grant to recipient",
+              "reason"                  => disbursement.name,
               "status"                  => "completed",
               "transaction_id"          => disbursement.local_hcb_code.public_id,
               "outgoing_transaction_id" => disbursement.outgoing_disbursement.local_hcb_code.public_id,
@@ -134,7 +135,7 @@ RSpec.describe Api::V4::CardGrantsController do
         as: :json
       )
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.parsed_body).to eq(
         {
           "error"    => "invalid_operation",
@@ -162,7 +163,7 @@ RSpec.describe Api::V4::CardGrantsController do
         as: :json
       )
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.parsed_body).to eq(
         {
           "error"    => "invalid_operation",

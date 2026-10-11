@@ -42,9 +42,10 @@ FactoryBot.define do
     end
 
     trait :with_positive_balance do
-      # Event#balance sums amount_cents on mapped canonical_transactions
-      # (see Event#settled_balance_cents), so a single positive mapping
-      # is enough to give the event a balance for tests that need one.
+      # Event#balance now sums the event's ledger. The canonical_event_mapping
+      # factory maps the transaction's ledger item onto the event's ledger (see
+      # FactoryLedgerMapping), so a single positive mapping is enough to give the
+      # event a balance for tests that need one.
       after :create do |event|
         canonical_transaction = create(:canonical_transaction, amount_cents: 100_000, memo: "🏦 Test Donation")
         create(:canonical_event_mapping, canonical_transaction:, event:)

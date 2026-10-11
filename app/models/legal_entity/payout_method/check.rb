@@ -1,0 +1,97 @@
+# frozen_string_literal: true
+
+# == Schema Information
+#
+# Table name: user_payout_method_checks
+#
+#  id                  :bigint           not null, primary key
+#  address_city        :text             not null
+#  address_country     :text             not null
+#  address_line1       :text             not null
+#  address_line2       :text
+#  address_postal_code :text             not null
+#  address_state       :text             not null
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#
+class LegalEntity
+  class PayoutMethod < ApplicationRecord
+    class Check < ApplicationRecord
+      self.table_name = "user_payout_method_checks"
+      validates_presence_of :address_line1, :address_city, :address_postal_code
+      validates_presence_of :address_state, message: "Please select a state!"
+      validates :address_state, inclusion: { in: ISO3166::Country.new("US").subdivisions.keys, message: "This isn't a valid US state!", allow_blank: true }
+      validates :address_postal_code, format: { with: /\A\d{5}(?:[-\s]\d{4})?\z/, message: "This isn't a valid ZIP code." }
+      attribute :address_country, :text, default: "US"
+
+      validate do
+        combined_length = [address_line1, address_line2].filter(&:present?).sum(&:length)
+
+        if combined_length > 50
+          errors.add(:base, "Address line one and line two's combined length can not exceed 50 characters.")
+        end
+      end
+
+      def self.permitted_attributes
+        [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country]
+      end
+
+      def kind
+        "check"
+      end
+
+      def icon
+        "email"
+      end
+
+      def name
+        "a check"
+      end
+
+      def human_kind
+        "check"
+      end
+
+      def title_kind
+        "Check"
+      end
+
+      def payout_summary
+        "check mailed to #{[address_line1, address_line2].compact_blank.join(", ")}"
+      end
+
+      def short_label
+        address_line1.present? ? "#{title_kind} (#{address_line1})" : title_kind
+      end
+
+      def detail_summary
+        address_line1
+      end
+
+      def currency
+        "USD"
+      end
+
+      # See LegalEntity::PayoutMethod for the shared `create_transfer` contract.
+      def create_transfer(event, amount:, payment_for:, recipient_name:, recipient_email:, user:, memo:, send_email_notification: false, **)
+        event.increase_checks.build(
+          address_line1:,
+          address_line2:,
+          address_city:,
+          address_state:,
+          address_zip: address_postal_code,
+          amount:,
+          memo: memo&.slice(0...40),
+          payment_for:,
+          recipient_name:,
+          recipient_email:,
+          user:,
+          send_email_notification:,
+        )
+      end
+
+    end
+
+  end
+
+end

@@ -13,7 +13,7 @@
 
 <% if @application.event.event_tags.include?(EventTag.find_by(name: EventTag::Tags::HACKATHON)) %>
   <p>
-    Also, check out <%= link_to "our guide to organizing a hackathon", "https://hackclub.com/how-to-organize-a-hackathon/" %>.
+    Also, check out <%= link_to "our guide to organizing a hackathon", "https://v3.hackclub.com/how-to-organize-a-hackathon/" %>.
     We're excited to see your event come to life!
   </p>
 <% elsif @application.event.event_tags.include?(EventTag.find_by(name: EventTag::Tags::ROBOTICS_TEAM)) %>
@@ -29,7 +29,7 @@
 <p>The signed fiscal sponsorship contract is available for you to <%= link_to "download here", document_download_url(@application.contract.document) %>.</p>
 
 <p>
-  If you would like, you can <%= link_to "schedule an onboarding call", event_url(@application.event, request_call: "true") %> with a member of our team,
+  If you would like, you can <%= link_to "schedule an onboarding call", @application.event.onboarding_scheduling_link.presence || event_url(@application.event, request_call: "true") %> with a member of our team,
   or you can contact us at <%= link_to "hcb@hackclub.com", "mailto:hcb@hackclub.com" %> if you have any questions.
 </p>
 

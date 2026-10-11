@@ -14,7 +14,7 @@
         </action>
         <% end %>
         <% if policy(comment).destroy? %>
-          <%= link_to comment, class: "tooltipped tooltipped--s right", 'aria-label': "Delete", data: { turbo_method: :delete, turbo_confirm: "Are you sure you'd like to delete this comment?" } do %>
+          <%= link_to comment, class: "tooltipped tooltipped--s right", 'aria-label': "Delete", data: { turbo_method: :delete, turbo_confirm: "Are you sure you'd like to delete this comment?", turbo_confirm_danger: true } do %>
             <%= inline_icon "delete", size: 24, 'aria-label': "Delete" %>
           <% end %>
         <% end %>
@@ -46,11 +46,7 @@
       </div>
       <% if comment.has_attached_file? %>
         <div class="border-top card__banner">
-        <% if organizer_signed_in? %>
           <%= link_to "📎 attachment", url_for(comment.file), target: "_blank" %>
-        <% else %>
-          <%= link_to "📎 sign in to download attachment", root_path, target: "_blank" %>
-        <% end %>
         </div>
       <% end %>
         <%# if comment.edited? %>
