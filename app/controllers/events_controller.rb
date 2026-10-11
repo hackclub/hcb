@@ -27,21 +27,22 @@ class EventsController < ApplicationController
     authorize Event
     respond_to do |format|
       format.json do
+        sort_index_by_event_id = @current_user.organizer_positions.pluck(:event_id, :sort_index).to_h
         events =
           @current_user
-          .events
+          .readable_events
           .with_attached_logo
-          .preload(:config, :plan)
-          .reorder("organizer_positions.sort_index ASC", "events.id ASC")
+          .preload(:config, :plan, :parent)
           .strict_loading
+          .sort_by { |event| [sort_index_by_event_id[event.id] || Float::INFINITY, event.id] }
           .map { |event| serialize_event(event, member: true) }
 
         if auditor_signed_in?
           events.concat(
             Event
-              .excluding(@current_user.events)
+              .excluding(@current_user.readable_events)
               .with_attached_logo
-              .preload(:config, :plan)
+              .preload(:config, :plan, :parent)
               .strict_loading
               .map { |event| serialize_event(event, member: false) }
           )
@@ -1714,6 +1715,7 @@ class EventsController < ApplicationController
       logo: event.logo.attached? ? Rails.application.routes.url_helpers.url_for(event.logo) : "none",
       demo_mode: event.demo_mode,
       member:,
+      parent_slug: event.parent&.slug,
       features: {
         subevents: event.subevents_enabled?,
         card_grants: event.plan.card_grants_enabled?
