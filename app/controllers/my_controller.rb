@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :pay, :feed] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_section, :reimbursements_icon, :tasks, :payroll, :pay, :feed] # do not force pundit
   skip_before_action :signed_in_user, only: [:cards, :reimbursements]
   before_action :signed_in_or_unverified_user, only: [:cards, :reimbursements]
-  before_action :set_reimbursement_reports, only: [:reimbursements, :reimbursements_icon]
+  before_action :set_reimbursement_reports, only: [:reimbursements, :reimbursements_section, :reimbursements_icon]
 
   def activities
     @before = params[:before] || Time.now
@@ -168,18 +168,16 @@ class MyController < ApplicationController
   def reimbursements
     return unless signed_in?
 
-    case params[:filter]
-    when "mine"
-      @reports = @my_reports
-    when "review"
-      @reports = @reports_to_review
-    else
-      @reports = @my_reports.or(@reports_to_review)
-    end
-
-    @reports = @reports.search(params[:q]) if params[:q].present?
-
+    @sections = reimbursement_sections
     @payout_method = current_user.default_payout_method&.details
+  end
+
+  def reimbursements_section
+    @section = params[:section].to_sym
+    @reports = reimbursement_sections.fetch(@section)
+                                     .order(created_at: :desc)
+                                     .includes(:user, :event, :payout_holding)
+                                     .page(params[:page]).per(safe_per(10))
   end
 
   def reimbursements_icon
@@ -258,7 +256,20 @@ class MyController < ApplicationController
     manager_events = current_user.events
                                  .joins(:organizer_positions)
                                  .where(organizer_positions: { user_id: current_user.id, role: :manager })
-    @reports_to_review = Reimbursement::Report.submitted.where(event: manager_events, reviewer_id: nil).or(current_user.assigned_reimbursement_reports.submitted)
+    # Managers can't approve their own reports, so those only appear under @my_reports
+    @reports_assigned_to_me = current_user.assigned_reimbursement_reports.submitted.where.not(user: current_user)
+    @unassigned_reports_to_review = Reimbursement::Report.submitted.where(event: manager_events, reviewer_id: nil).where.not(user: current_user)
+    @reports_to_review = @reports_assigned_to_me.or(@unassigned_reports_to_review)
+  end
+
+  def reimbursement_sections
+    {
+      assigned: @reports_assigned_to_me,
+      unassigned: @unassigned_reports_to_review,
+      mine: @my_reports,
+    }.transform_values do |reports|
+      params[:q].present? ? reports.search(params[:q]) : reports
+    end
   end
 
 end

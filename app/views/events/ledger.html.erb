@@ -6,7 +6,7 @@
   <span class="flex-grow">Transactions</span>
 <% end %>
 
-<%= turbo_frame_tag "event_stats", src: event_ledger_stats_path(@event) do %>
+<%= turbo_frame_tag "event_stats", src: event_stats_path(@event) do %>
   <div class="statset mb-2">
     <div class="stat">
       <span class="stat__label">Account balance</span>
@@ -14,20 +14,21 @@
         —
       </span>
     </div>
+    <% unless @event.id == EventMappingEngine::EventIds::HACK_CLUB_HQ && !OrganizerPosition.role_at_least?(current_user, @event, :reader) %>
+      <div class="stat stat--small">
+        <span class="stat__label">Total revenue</span>
+        <span class="stat__value stat__value--no-space">
+          —
+        </span>
+      </div>
 
-    <div class="stat stat--small">
-      <span class="stat__label">Total revenue</span>
-      <span class="stat__value stat__value--no-space">
-        —
-      </span>
-    </div>
-
-    <div class="stat stat--small">
-      <span class="stat__label">Total expenses</span>
-      <span class="stat__value stat__value--no-space">
-        —
-      </span>
-    </div>
+      <div class="stat stat--small">
+        <span class="stat__label">Total expenses</span>
+        <span class="stat__value stat__value--no-space">
+          —
+        </span>
+      </div>
+    <% end %>
   </div>
 <% end %>
 

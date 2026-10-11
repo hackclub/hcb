@@ -176,7 +176,7 @@ module Discord
       link_server_button = button_to("Set up HCB on this server", generate_discord_setup_url)
 
       if @current_event.present? && @user.present?
-        respond content: "HCB has already been setup for this Discord server!", embeds: linking_embed
+        respond content: "HCB has already been set up for this Discord server!", embeds: linking_embed
       elsif !@current_event.present? && @user.present?
         respond content: "You've linked your Discord and HCB accounts, but this Discord server isn't connected to an HCB organization yet:",
                 components: link_server_button,
