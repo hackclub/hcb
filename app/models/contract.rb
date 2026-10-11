@@ -185,10 +185,6 @@ class Contract < ApplicationRecord
     "agreement"
   end
 
-  def human_follow_up_email_subject
-    "[Update] #{event_name}'s #{agreement_name} still isn't signed 📝"
-  end
-
   def redirect_path
     contractable.contract_redirect_path
   end
