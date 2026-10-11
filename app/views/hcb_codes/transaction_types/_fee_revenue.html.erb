@@ -15,6 +15,7 @@
   </section>
 
   <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
+  <%= render "hcb_codes/category", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
 
   <section class="card__banner secondary border-top">
     <p class="my0">

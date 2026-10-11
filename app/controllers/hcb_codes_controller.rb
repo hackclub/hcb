@@ -176,6 +176,25 @@ class HcbCodesController < ApplicationController
     send_file Rails.root.join("app", "assets", "images", file_name), type: "image/png", disposition: "inline"
   end
 
+  def set_category
+    hcb_code = HcbCode.find(params[:id])
+    event = Event.friendly.find(params[:event_id])
+
+    authorize hcb_code, :update?
+    raise Pundit::NotAuthorizedError unless OrganizerPosition.role_at_least?(current_user, event, :member)
+
+    slug = params[:category_slug].presence
+    transactions = hcb_code.categorizable_transactions_for(event)
+
+    # Only admins can set, or change away from, HQ-only categories
+    slugs = [slug, *transactions.map { |t| t.category&.slug }]
+    raise Pundit::NotAuthorizedError if !current_user.admin? && slugs.any? { |s| TransactionCategory::Definition::ALL[s]&.hq_only? }
+
+    transactions.each { |t| TransactionCategoryService.new(model: t).set!(slug:, assignment_strategy: "manual") }
+
+    redirect_back_or_to hcb_code_path(hcb_code), status: :see_other, flash: { success: "Transaction category was successfully updated." }
+  end
+
   def toggle_tag
     hcb_code = HcbCode.find(params[:id])
     tag = Tag.find(params[:tag_id])

@@ -1,0 +1,25 @@
+<%# locals: (hcb_code:, event:) %>
+
+<% transactions = event ? hcb_code.categorizable_transactions_for(event) : [] %>
+<% if transactions.any? %>
+  <% category = transactions.filter_map(&:category).first %>
+  <div>
+    <strong>Category</strong>
+    <% if OrganizerPosition.role_at_least?(current_user, event, :member) && (current_user.admin? || !category&.definition&.hq_only?) %>
+      <%= form_with(url: set_category_hcb_code_path(hcb_code, event_id: event.slug), data: { controller: "form" }, html: { class: "m-0" }) do %>
+        <%= select_tag(
+              :category_slug,
+              options_for_select(
+                TransactionCategory::Definition::ALL.values.reject { |d| d.hq_only? && !current_user.admin? }.map { |d| [d.label, d.slug] },
+                category&.slug
+              ),
+              include_blank: "None",
+              data: { action: "change->form#submit" },
+              class: "m-0"
+            ) %>
+      <% end %>
+    <% else %>
+      <span><%= category&.label || "None" %></span>
+    <% end %>
+  </div>
+<% end %>

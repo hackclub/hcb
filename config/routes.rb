@@ -561,6 +561,7 @@ Rails.application.routes.draw do
       get "memo_frame"
       get "dispute"
       post "toggle_tag/:tag_id", to: "hcb_codes#toggle_tag", as: :toggle_tag
+      post "set_category"
       post "send_receipt_sms", to: "hcb_codes#send_receipt_sms", as: :send_sms_receipt
 
       scope module: "hcb_code" do

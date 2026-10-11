@@ -255,6 +255,16 @@ class HcbCode < ApplicationRecord
     super || events.first
   end
 
+  # The transactions on this HCB code that belong to `event` and can carry a
+  # category. Disbursements share an HCB code between both sides, so this is
+  # scoped to one event.
+  def categorizable_transactions_for(event)
+    [
+      *canonical_transactions.joins(:canonical_event_mapping).where(canonical_event_mappings: { event_id: event.id }).includes(:category),
+      *canonical_pending_transactions.joins(:canonical_pending_event_mapping).where(canonical_pending_event_mappings: { event_id: event.id }).includes(:category)
+    ]
+  end
+
   def events
     @events ||=
       begin
