@@ -104,7 +104,7 @@ class LegalEntity < ApplicationRecord
   end
 
   def tax_form_required?
-    payments.pending_legal_entity.any?(&:requires_tax_form) || payroll_positions.onboarding.exists?
+    payments.where(aasm_state: [:pending_legal_entity, :under_review]).any?(&:requires_tax_form) || payroll_positions.onboarding.exists?
   end
 
   # Whether tax info has ever been completed. Distinct from latest_tax_form, which
