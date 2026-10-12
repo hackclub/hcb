@@ -83,6 +83,7 @@
   <%= render partial: "ledger/items/transactions", locals: { ledger_item: @item } %>
 
   <%= render partial: "ledger/items/linked_object", locals: { ledger_item: @item } %>
+  <%= render "ledger/items/repayments", ledger_item: @item %>
 
   <div class="flex justify-end align-middle flex-wrap hcb_code_actions" style="gap: 12px">
     <%= render partial: "ledger/items/pin_button", locals: { ledger_item: @item } %>

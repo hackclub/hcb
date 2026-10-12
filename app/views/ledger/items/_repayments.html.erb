@@ -1,0 +1,16 @@
+<%# locals: (ledger_item:) %>
+
+<% disbursement = ledger_item.linked_object.disbursement if ledger_item.linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) %>
+<% repaid_by = ledger_item.repayments.active.filter_map { |r| r.disbursement.incoming_disbursement.ledger_item } %>
+<% repays = disbursement ? disbursement.repaid_ledger_items : [] %>
+
+<% { "Repaid by" => repaid_by, "Repays" => repays }.each do |label, linked| %>
+  <% next if linked.empty? %>
+  <div class="card flex items-center gap-3 mt-4 py-3">
+    <%= inline_icon "reimbursement", size: 24, class: "m-0 text-blue shrink-0" %>
+    <span>
+      <strong><%= label %></strong>
+      <%= safe_join(linked.map { |item| link_to_if(policy(item).show?, item.memo, ledger_item_path(item)) }, ", ") %>
+    </span>
+  </div>
+<% end %>

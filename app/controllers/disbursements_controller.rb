@@ -122,20 +122,17 @@ class DisbursementsController < ApplicationController
     event = Event.find_by_public_id(params[:destination_event_id])
     return render(json: []) unless event && OrganizerPosition.role_at_least?(current_user, event, :reader)
 
-    repaid_ids = Repayment.active.select(:hcb_code_id)
-    hcb_codes = HcbCode
-                .where(hcb_code: event.canonical_transactions.where("amount_cents < 0").select(:hcb_code))
-                .where.not(id: repaid_ids)
-                .where.not(id: HcbCode.where("hcb_code LIKE 'HCB-500-%' OR hcb_code LIKE 'HCB-550-%'").select(:id)) # disbursements
-                .order(created_at: :desc)
-    hcb_codes = hcb_codes.where(hcb_code: event.canonical_transactions.search_memo(params[:q]).select(:hcb_code)) if params[:q].present?
+    items = Repayment.repayable_ledger_items(event)
+                     .where.not(id: Repayment.active.select(:ledger_item_id))
+                     .order(datetime: :desc)
+    items = items.search_memo(params[:q]) if params[:q].present?
 
-    render json: combobox_page(hcb_codes).map { |hcb_code|
+    render json: combobox_page(items).map { |item|
       {
-        value: hcb_code.hashid,
-        label: hcb_code.memo,
-        sublabel: "#{helpers.render_money(-hcb_code.amount_cents)} · #{hcb_code.date&.strftime("%b %-d, %Y")}",
-        amount: (-hcb_code.amount_cents / 100.0).to_s
+        value: item.hashid,
+        label: item.memo,
+        sublabel: "#{helpers.render_money(-item.amount_cents)} · #{item.datetime.strftime("%b %-d, %Y")}",
+        amount: (-item.amount_cents / 100.0).to_s
       }
     }
   end
@@ -157,8 +154,8 @@ class DisbursementsController < ApplicationController
     raise ArgumentError, "Choose what kind of transfer this is." unless Disbursement.transfer_types.key?(transfer_type)
 
     if transfer_type == "repayment"
-      repaid_hcb_code = HcbCode.find_by_hashid(disbursement_params[:repaid_hcb_code_id])
-      raise Pundit::NotAuthorizedError if repaid_hcb_code && !OrganizerPosition.role_at_least?(current_user, @destination_event, :reader)
+      repaid_ledger_item = Ledger::Item.find_by_hashid(disbursement_params[:repaid_ledger_item_id])
+      raise Pundit::NotAuthorizedError if repaid_ledger_item && !OrganizerPosition.role_at_least?(current_user, @destination_event, :reader)
     end
 
     source_transaction_category_slug = disbursement_params[:source_transaction_category_slug].presence
@@ -181,7 +178,7 @@ class DisbursementsController < ApplicationController
       category_assignment_strategy:,
       transfer_type:,
       payment_category_slug: disbursement_params[:payment_category_slug],
-      repaid_hcb_code_id: repaid_hcb_code&.id
+      repaid_ledger_item_id: repaid_ledger_item&.id
     ).run
 
     if disbursement_params[:file]
@@ -308,7 +305,7 @@ class DisbursementsController < ApplicationController
       :scheduled_on,
       :transfer_type,
       :payment_category_slug,
-      :repaid_hcb_code_id,
+      :repaid_ledger_item_id,
       { file: [] }
     ]
 

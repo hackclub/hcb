@@ -125,7 +125,7 @@ class Disbursement < ApplicationRecord
 
   has_many :t_transactions, class_name: "Transaction", inverse_of: :disbursement
   has_many :repayments, dependent: :destroy
-  has_many :repaid_hcb_codes, through: :repayments
+  has_many :repaid_ledger_items, through: :repayments
 
   # What the transfer is for, asked when a user makes one. Decides how each
   # side is categorized. Nil for transfers HCB creates itself (e.g. card grants).

@@ -27,7 +27,7 @@ module DisbursementService
       category_assignment_strategy: "manual",
       transfer_type: nil,
       payment_category_slug: nil,
-      repaid_hcb_code_id: nil
+      repaid_ledger_item_id: nil
     )
       @source_event_id = source_event_id
       @source_event = Event.find(@source_event_id)
@@ -48,7 +48,7 @@ module DisbursementService
       @category_assignment_strategy = category_assignment_strategy
       @transfer_type = transfer_type
       @payment_category_slug = payment_category_slug
-      @repaid_hcb_code = HcbCode.find(repaid_hcb_code_id) if repaid_hcb_code_id.present?
+      @repaid_ledger_item = Ledger::Item.find(repaid_ledger_item_id) if repaid_ledger_item_id.present?
     end
 
     def run
@@ -67,8 +67,8 @@ module DisbursementService
         ActiveRecord::Base.transaction do
           disbursement = Disbursement.create!(attrs)
 
-          if @repaid_hcb_code
-            disbursement.repayments.create!(repaid_hcb_code: @repaid_hcb_code, amount_cents:).apply_categories!
+          if @repaid_ledger_item
+            disbursement.repayments.create!(repaid_ledger_item: @repaid_ledger_item, amount_cents:).apply_categories!
           end
 
           # 1. Create the raw pending transactions
@@ -155,7 +155,7 @@ module DisbursementService
         definition = TransactionCategory::Definition::ALL[@payment_category_slug]
         raise UserError, "Choose what this payment is for." if definition.nil? || (definition.hq_only? && !requested_by&.admin?)
       when "repayment"
-        raise UserError, "Choose the transaction you're repaying." if @repaid_hcb_code.nil?
+        raise UserError, "Choose the transaction you're repaying." if @repaid_ledger_item.nil?
       end
     end
 
@@ -168,7 +168,7 @@ module DisbursementService
       when "transfer" then "internal-transfer"
       when "payment" then @payment_category_slug
       # The source takes on the expense, so it gets the expense's category.
-      when "repayment" then @repaid_hcb_code.categorizable_transactions_for(destination_event).filter_map(&:category).first&.slug
+      when "repayment" then Repayment.new(repaid_ledger_item: @repaid_ledger_item).repaid_category&.slug
       end
     end
 

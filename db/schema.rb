@@ -2495,11 +2495,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_120100) do
     t.integer "amount_cents", null: false
     t.datetime "created_at", null: false
     t.bigint "disbursement_id", null: false
-    t.bigint "hcb_code_id", null: false
+    t.bigint "ledger_item_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["disbursement_id", "hcb_code_id"], name: "index_repayments_on_disbursement_id_and_hcb_code_id", unique: true
+    t.index ["disbursement_id", "ledger_item_id"], name: "index_repayments_on_disbursement_id_and_ledger_item_id", unique: true
     t.index ["disbursement_id"], name: "index_repayments_on_disbursement_id"
-    t.index ["hcb_code_id"], name: "index_repayments_on_hcb_code_id"
+    t.index ["ledger_item_id"], name: "index_repayments_on_ledger_item_id"
   end
 
   create_table "sponsors", force: :cascade do |t|
@@ -3261,7 +3261,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_120100) do
   add_foreign_key "reimbursement_reports", "users"
   add_foreign_key "reimbursement_reports", "users", column: "invited_by_id"
   add_foreign_key "repayments", "disbursements"
-  add_foreign_key "repayments", "hcb_codes"
+  add_foreign_key "repayments", "ledger_items"
   add_foreign_key "sponsors", "events"
   add_foreign_key "stripe_authorizations", "stripe_cards"
   add_foreign_key "stripe_card_personalization_designs", "events"

@@ -89,8 +89,8 @@
 
       <div data-transfer-type-target="panel" data-type="repayment" hidden>
         <div class="field mt-4 mb-0">
-          <%= form.label :repaid_hcb_code_id, "Which of their transactions are you repaying?" %>
-          <%= combobox_tag form.field_name(:repaid_hcb_code_id), repayable_src,
+          <%= form.label :repaid_ledger_item_id, "Which of their transactions are you repaying?" %>
+          <%= combobox_tag form.field_name(:repaid_ledger_item_id), repayable_src,
                            class: "!max-w-full",
                            data: { transfer_type_target: "repaymentCombobox" } %>
         </div>

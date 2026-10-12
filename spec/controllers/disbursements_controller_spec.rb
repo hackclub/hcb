@@ -246,13 +246,13 @@ RSpec.describe DisbursementsController do
                event_id: destination_event.public_id,
                amount: "100.00",
                transfer_type: "repayment",
-               repaid_hcb_code_id: expense.local_hcb_code.hashid
+               repaid_ledger_item_id: expense.ledger_item.hashid
              }
            })
 
       disbursement = Disbursement.last
       expect(disbursement).to be_transfer_type_repayment
-      expect(disbursement.repaid_hcb_codes).to eq([expense.local_hcb_code])
+      expect(disbursement.repaid_ledger_items).to eq([expense.ledger_item])
       expect(disbursement.source_transaction_category.slug).to eq("food-fun")
     end
 
@@ -262,7 +262,7 @@ RSpec.describe DisbursementsController do
 
       get(:repayable_transactions, params: { destination_event_id: destination_event.public_id }, format: :json)
 
-      expect(response.parsed_body.pluck("value")).to eq([expense.local_hcb_code.hashid])
+      expect(response.parsed_body.pluck("value")).to eq([expense.ledger_item.hashid])
       expect(response.parsed_body.first["amount"]).to eq("100.0")
     end
 

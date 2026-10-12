@@ -500,26 +500,26 @@ RSpec.describe DisbursementService::Create, "transfer types" do
     let!(:expense) { create(:canonical_transaction, event: destination_event, amount_cents: -100_00, category_slug: "food-fun") }
 
     it "gives the sender the expense's category and marks both of the recipient's sides as a repayment" do
-      disbursement = create_disbursement(transfer_type: "repayment", repaid_hcb_code_id: expense.local_hcb_code.id)
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
 
       expect(categories(disbursement)).to eq(["food-fun", "repayment"])
       expect(expense.reload.category.slug).to eq("repayment")
-      expect(disbursement.repaid_hcb_codes).to eq([expense.local_hcb_code])
-      expect(expense.local_hcb_code.repayment_disbursements).to eq([disbursement])
+      expect(disbursement.repaid_ledger_items).to eq([expense.ledger_item])
+      expect(expense.ledger_item.repayment_disbursements).to eq([disbursement])
     end
 
     it "must repay the full amount" do
       expect {
-        create_disbursement(amount: "50.00", transfer_type: "repayment", repaid_hcb_code_id: expense.local_hcb_code.id)
+        create_disbursement(amount: "50.00", transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
       }.to raise_error(ActiveRecord::RecordInvalid, /full amount/)
       expect(expense.reload.category.slug).to eq("food-fun")
     end
 
     it "can't repay a transaction twice" do
-      create_disbursement(transfer_type: "repayment", repaid_hcb_code_id: expense.local_hcb_code.id)
+      create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
 
       expect {
-        create_disbursement(transfer_type: "repayment", repaid_hcb_code_id: expense.local_hcb_code.id)
+        create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
       }.to raise_error(ActiveRecord::RecordInvalid, /already been repaid/)
     end
 
@@ -527,17 +527,17 @@ RSpec.describe DisbursementService::Create, "transfer types" do
       other_expense = create(:canonical_transaction, event: create(:event), amount_cents: -100_00)
 
       expect {
-        create_disbursement(transfer_type: "repayment", repaid_hcb_code_id: other_expense.local_hcb_code.id)
+        create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: other_expense.ledger_item.id)
       }.to raise_error(ActiveRecord::RecordInvalid, /must be an expense/)
     end
 
     it "restores the expense's category when the repayment is rejected" do
-      disbursement = create_disbursement(transfer_type: "repayment", repaid_hcb_code_id: expense.local_hcb_code.id)
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
 
       disbursement.mark_rejected!(create(:user, :make_admin))
 
       expect(expense.reload.category.slug).to eq("food-fun")
-      expect(expense.local_hcb_code.repayments.active).to be_empty
+      expect(expense.ledger_item.repayments.active).to be_empty
     end
   end
 end

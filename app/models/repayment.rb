@@ -15,34 +15,42 @@
 #  created_at      :datetime         not null
 #  updated_at      :datetime         not null
 #  disbursement_id :bigint           not null
-#  hcb_code_id     :bigint           not null
+#  ledger_item_id  :bigint           not null
 #
 # Indexes
 #
-#  index_repayments_on_disbursement_id                  (disbursement_id)
-#  index_repayments_on_disbursement_id_and_hcb_code_id  (disbursement_id,hcb_code_id) UNIQUE
-#  index_repayments_on_hcb_code_id                      (hcb_code_id)
+#  index_repayments_on_disbursement_id                     (disbursement_id)
+#  index_repayments_on_disbursement_id_and_ledger_item_id  (disbursement_id,ledger_item_id) UNIQUE
+#  index_repayments_on_ledger_item_id                      (ledger_item_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (disbursement_id => disbursements.id)
-#  fk_rails_...  (hcb_code_id => hcb_codes.id)
+#  fk_rails_...  (ledger_item_id => ledger_items.id)
 #
 class Repayment < ApplicationRecord
   belongs_to :disbursement
-  belongs_to :repaid_hcb_code, class_name: "HcbCode", foreign_key: :hcb_code_id, inverse_of: :repayments
+  belongs_to :repaid_ledger_item, class_name: "Ledger::Item", foreign_key: :ledger_item_id, inverse_of: :repayments
 
   # Rejected and errored disbursements never moved money, so they don't count.
   scope :active, -> { joins(:disbursement).where.not(disbursements: { aasm_state: [:rejected, :errored] }) }
+
+  # Pending or settled expenses on the organization's ledger. Transfers
+  # between organizations can't be repaid.
+  def self.repayable_ledger_items(event)
+    event.ledger.items
+         .where(status: [:pending, :settled])
+         .where("ledger_items.amount_cents < 0")
+         .where("ledger_items.linked_object_type IS NULL OR ledger_items.linked_object_type NOT IN (?)", ["Disbursement::Outgoing", "Disbursement::Incoming"])
+  end
 
   validates :amount_cents, numericality: { greater_than: 0 }
   validate :repaid_transaction_is_an_expense_of_the_destination
   validate :repays_in_full
   validate :repaid_transaction_not_already_repaid, on: :create
 
-  # The destination's side of the repaid transaction.
   def repaid_transactions
-    repaid_hcb_code.categorizable_transactions_for(disbursement.destination_event)
+    [*repaid_ledger_item.canonical_transactions.includes(:category), *repaid_ledger_item.canonical_pending_transactions.includes(:category)]
   end
 
   def repaid_category
@@ -66,25 +74,25 @@ class Repayment < ApplicationRecord
   private
 
   def repaid_transaction_is_an_expense_of_the_destination
-    return if repaid_hcb_code.nil? || disbursement.nil?
+    return if repaid_ledger_item.nil? || disbursement.nil?
 
-    unless repaid_transactions.any? && !repaid_hcb_code.outgoing_disbursement? && !repaid_hcb_code.incoming_disbursement? && repaid_hcb_code.amount_cents.negative?
-      errors.add(:repaid_hcb_code, "must be an expense of #{disbursement.destination_event.name}")
+    unless Repayment.repayable_ledger_items(disbursement.destination_event).exists?(repaid_ledger_item.id)
+      errors.add(:repaid_ledger_item, "must be an expense of #{disbursement.destination_event.name}")
     end
   end
 
   def repays_in_full
-    return if repaid_hcb_code.nil? || disbursement.nil?
+    return if repaid_ledger_item.nil? || disbursement.nil?
 
-    unless amount_cents == disbursement.amount && amount_cents == -repaid_hcb_code.amount_cents
+    unless amount_cents == disbursement.amount && amount_cents == -repaid_ledger_item.amount_cents
       errors.add(:amount_cents, "must match the full amount of the repaid transaction")
     end
   end
 
   def repaid_transaction_not_already_repaid
-    return if repaid_hcb_code.nil?
+    return if repaid_ledger_item.nil?
 
-    errors.add(:repaid_hcb_code, "has already been repaid") if repaid_hcb_code.repayments.active.where.not(id:).exists?
+    errors.add(:repaid_ledger_item, "has already been repaid") if repaid_ledger_item.repayments.active.where.not(id:).exists?
   end
 
 end
