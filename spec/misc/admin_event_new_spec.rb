@@ -52,7 +52,7 @@ RSpec.describe AdminController, type: :controller do
     # the form's contract fields reach it intact.
     expect_any_instance_of(OrganizerPositionInvite)
       .to receive(:send_contract)
-      .with(cosigner_email: "guardian@hackclub.com", include_videos: true)
+      .with(cosigner_email: "guardian@hackclub.com", include_videos: true, extra_prefills: {})
 
     post :event_create, params: form_params(
       organizer_email: "orpheus@hackclub.com",
