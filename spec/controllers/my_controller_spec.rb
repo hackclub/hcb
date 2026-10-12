@@ -46,6 +46,54 @@ RSpec.describe MyController do
     end
   end
 
+  describe "GET #recurring_donations" do
+    def create_recurring_donation(email:, **attrs)
+      RecurringDonation.create!(
+        event: create(:event),
+        name: "Donor",
+        email:,
+        amount: 1_000,
+        stripe_subscription_id: SecureRandom.hex,
+        stripe_status: "active",
+        stripe_current_period_end: 1.month.from_now,
+        **attrs
+      )
+    end
+
+    it "lists only donations matching the signed in user's normalized email" do
+      user = sign_in_verified(create(:user, email: "donor@example.com"))
+      mine = create_recurring_donation(email: " Donor@Example.com ")
+      other = create_recurring_donation(email: "someone-else@example.com")
+
+      get :recurring_donations
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(mine.event.name)
+      expect(response.body).to include(cancel_recurring_donation_path(mine.url_hash))
+      expect(response.body).not_to include(other.event.name)
+      expect(response.body).not_to include(other.url_hash)
+      expect(user.recurring_donations).to contain_exactly(mine)
+    end
+
+    it "does not offer cancellation for an already canceled donation" do
+      sign_in_verified(create(:user, email: "donor@example.com"))
+      donation = create_recurring_donation(email: "donor@example.com", stripe_status: "canceled", canceled_at: 1.day.ago)
+
+      get :recurring_donations
+
+      expect(response.body).to include(donation.event.name)
+      expect(response.body).not_to include(cancel_recurring_donation_path(donation.url_hash))
+    end
+
+    it "requires a verified session" do
+      sign_in_unverified
+
+      get :recurring_donations
+
+      expect(response).not_to have_http_status(:ok)
+    end
+  end
+
   describe "GET #reimbursements" do
     it "does not render the authenticated reimbursement-report listing UI for an unverified user" do
       sign_in_unverified
