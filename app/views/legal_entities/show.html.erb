@@ -9,7 +9,7 @@
 <% if payable %>
   <% if @legal_entity.managed? %>
     <p>
-      Your payout information is managed by <%= @legal_entity.managing_event.name %>.
+      You're all set! Your payout information is managed by <%= @legal_entity.managing_event.name %>.
       Any pending or future payments will be sent via the payout method <%= @legal_entity.managing_event.name %>
       has configured for you.
     </p>
@@ -18,8 +18,6 @@
       payout method.
     </p>
   <% else %>
-    <% completed_tax_form = @legal_entity.latest_completed_tax_form %>
-
     <% if @legal_entity.default_payout_method.present? %>
       <p>
         You're all set! <%= @legal_entity.person? ? "You" : (@legal_entity.name.presence || "Business") %>
@@ -39,18 +37,20 @@
     <% end %>
 
     <%= render "users/payout_methods_list", user: current_user, legal_entity: @legal_entity %>
+  <% end %>
 
-    <% if completed_tax_form.present? %>
-      <hr>
+  <% completed_tax_form = @legal_entity.latest_completed_tax_form %>
 
-      <p>
-        You last submitted a tax form for this legal entity on <%= format_date completed_tax_form.completed_at %>
-        with TIN <%= masked_tin_tag completed_tax_form, viewable: show_tin %>.
-        If you need to update your tax information, start a new tax form.
-      </p>
+  <% if completed_tax_form.present? %>
+    <hr>
 
-      <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
-    <% end %>
+    <p>
+      You last submitted a tax form for this legal entity on <%= format_date completed_tax_form.completed_at %>
+      with TIN <%= masked_tin_tag completed_tax_form, viewable: show_tin %>.
+      If you need to update your tax information, start a new tax form.
+    </p>
+
+    <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
   <% end %>
 <% elsif @legal_entity.archived? %>
   <% own_active_entities = @legal_entity.users.include?(current_user) ? current_user.legal_entities.reject(&:archived?) : nil %>
