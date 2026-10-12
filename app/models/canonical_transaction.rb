@@ -186,7 +186,13 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   def likely_card_transaction_refund?
-    likely_stripe_card_transaction? && amount_cents > 0
+    amount_cents > 0 && (likely_stripe_card_transaction? || likely_card_dispute_payout?)
+  end
+
+  # Won disputes are paid out from Stripe to Column with the card charge's
+  # short code, so they map back to the card charge as a RawColumnTransaction.
+  def likely_card_dispute_payout?
+    transaction_source_type == RawColumnTransaction.name && !!local_hcb_code&.card_charge?
   end
 
   def likely_stripe_card_transaction?
@@ -502,7 +508,6 @@ class CanonicalTransaction < ApplicationRecord
 
         li = calculated_ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime:, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
         update!(ledger_item: li)
-        li.map!
       end
     end
   end

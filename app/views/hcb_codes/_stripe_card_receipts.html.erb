@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <% unless @hcb_code.stripe_refund? %>
   <% if @hcb_code.receipts.any? %>
     <p class="card__banner bg-success white bold flex items-center mt0 mb0" id="<%= @ledger_instance %>_stripe_card_receipts">
