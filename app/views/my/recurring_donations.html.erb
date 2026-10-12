@@ -1,0 +1,49 @@
+<% title "Recurring donations" %>
+<% page_md %>
+<%= render "users/nav", selected: :recurring_donations %>
+
+<h1 class="heading flex items-center border-0 mb-0">
+  Recurring donations
+  <%= badge_for @recurring_donations.count(&:active?), class: "bg-muted" %>
+</h1>
+
+<%= render "application/flash", klass: "max-w-full mb3" %>
+
+<% if @recurring_donations.any? %>
+  <article class="table-container mb-4">
+    <table>
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Organization</th>
+          <th class="text-right">Amount</th>
+          <th>Next donation</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @recurring_donations.each do |donation| %>
+          <tr>
+            <td><span class="badge ml-0 bg-<%= donation.status_badge_color %>"><%= donation.stripe_status.humanize %></span></td>
+            <td><strong><%= link_to_if donation.event.is_public?, donation.event.name, donation.event %></strong></td>
+            <td class="text-right"><%= render_money donation.amount %> / month</td>
+            <td>
+              <% if donation.canceled? %>
+                Canceled <%= format_date donation.canceled_at %>
+              <% else %>
+                <%= format_date donation.stripe_current_period_end %>
+              <% end %>
+            </td>
+            <td class="text-right">
+              <% unless donation.canceled? %>
+                <%= button_to "Cancel", cancel_recurring_donation_path(donation.url_hash), method: :post, class: "btn bg-error h5", data: { turbo_confirm: "Are you sure you'd like to stop donating to #{donation.event.name}? This can't be undone.", turbo_confirm_danger: true } %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </article>
+<% else %>
+  <%= blankslate "You don't have any recurring donations." %>
+<% end %>

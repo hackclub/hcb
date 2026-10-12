@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_section, :reimbursements_icon, :tasks, :payroll, :pay, :feed] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_section, :reimbursements_icon, :tasks, :payroll, :pay, :feed, :recurring_donations] # do not force pundit
   skip_before_action :signed_in_user, only: [:cards, :reimbursements]
   before_action :signed_in_or_unverified_user, only: [:cards, :reimbursements]
   before_action :set_reimbursement_reports, only: [:reimbursements, :reimbursements_section, :reimbursements_icon]
@@ -59,6 +59,10 @@ class MyController < ApplicationController
       Arel.sql("stripe_status = 'active' DESC"),
       Arel.sql("stripe_status = 'inactive' DESC")
     )
+  end
+
+  def recurring_donations
+    @recurring_donations = current_user.recurring_donations.includes(:event).order(canceled_at: :asc, created_at: :desc)
   end
 
   def tasks
