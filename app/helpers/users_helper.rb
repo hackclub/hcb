@@ -44,7 +44,7 @@ module UsersHelper
       items << {
         name: "Recurring donations",
         path: my_recurring_donations_path,
-        icon: "payment-transfer",
+        icon: "support-recurring",
         tooltip: "Manage your recurring donations",
         selected: selected == :recurring_donations
       }
