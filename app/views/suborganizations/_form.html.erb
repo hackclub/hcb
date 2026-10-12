@@ -1,6 +1,9 @@
-<%# locals: (event:) %>
+<%# locals: (event:, argosy_grant_amount: nil) %>
 
 <%= form_with(url: event_create_sub_organization_path(event.slug), method: :post, html: { class: "[&_input]:max-w-full [&_textarea]:!max-w-full", "x-data" => "{ scoped_tags: [], query: '' }" }) do |form| %>
+  <% if argosy_grant_amount.present? %>
+    <%= form.hidden_field :argosy_grant_amount, value: argosy_grant_amount %>
+  <% end %>
   <div class="card border b--info mt2 mb2 container--sm mx-auto">
     <p class="mt0 mb0">
       Sub-organizations are separate organizations nested under <%= event.name %>. All members
@@ -13,7 +16,7 @@
     data-controller="sub-org-name-check"
     data-sub-org-name-check-url-value="<%= check_sub_organization_name_event_path(event) %>">
     <%= form.label :name, "Project name", class: "bold" %>
-    <%= form.text_field :name, placeholder: "#{possessive(event.name)} latest project", value: params[:name],
+    <%= form.text_field :name, placeholder: "#{possessive(event.name)} latest project", value: params[:name].presence || event.config.subevent_name_prefix,
         data: { action: "input->sub-org-name-check#check" } %>
     <div data-sub-org-name-check-target="warning" hidden class="card border b--warning mt1">
       <div class="flex items-center warning">

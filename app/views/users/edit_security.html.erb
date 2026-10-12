@@ -14,7 +14,7 @@
         </legend>
         <div class="card border b--info mt0 mb3">
           <% if @user.phone_number_verified %>
-            <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
+            <%= form_with(model: @user, local: true, data: { turbo_frame: "_top" }) do |form| %>
               <div class="field field--checkbox mt1">
                 <span style="font-weight: 700">Prefer login codes via SMS</span>
                 <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
