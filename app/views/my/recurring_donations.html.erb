@@ -7,43 +7,54 @@
   <%= badge_for @recurring_donations.count(&:active?), class: "bg-muted" %>
 </h1>
 
-<%= render "application/flash", klass: "max-w-full mb3" %>
+<%= render "application/flash", klass: "max-w-full mb2" %>
 
 <% if @recurring_donations.any? %>
-  <article class="table-container mb-4">
-    <table>
-      <thead>
-        <tr>
-          <th>Status</th>
-          <th>Organization</th>
-          <th class="text-right">Amount</th>
-          <th>Next donation</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @recurring_donations.each do |donation| %>
-          <tr>
-            <td><span class="badge ml-0 bg-<%= donation.status_badge_color %>"><%= donation.stripe_status.humanize %></span></td>
-            <td><strong><%= link_to_if donation.event.is_public?, donation.event.name, donation.event %></strong></td>
-            <td class="text-right"><%= render_money donation.amount %> / month</td>
-            <td>
-              <% if donation.canceled? %>
-                Canceled <%= format_date donation.canceled_at %>
-              <% else %>
-                <%= format_date donation.stripe_current_period_end %>
-              <% end %>
-            </td>
-            <td class="text-right">
-              <% unless donation.canceled? %>
-                <%= button_to "Cancel", cancel_recurring_donation_path(donation.url_hash), method: :post, class: "btn bg-error h5", data: { turbo_confirm: "Are you sure you'd like to stop donating to #{donation.event.name}? This can't be undone.", turbo_confirm_danger: true } %>
-              <% end %>
-            </td>
-          </tr>
+  <ul class="grid grid-cols-1 sm:grid-cols-2 gap-4 list-reset mt2 mb4">
+    <% @recurring_donations.each do |donation| %>
+      <% event = donation.event %>
+      <li class="card flex flex-col gap-4 h-full <%= "opacity-60" if donation.canceled? %>">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex gap-3 items-center min-w-0">
+            <% if event.logo.attached? %>
+              <%= image_tag event.logo, height: 40, width: 40, class: "rounded-lg shrink-0 w-10 h-10 object-cover" %>
+            <% end %>
+            <div class="min-w-0">
+              <strong class="block text-lg leading-tight truncate">
+                <%= link_to_if event.is_public?, event.name, event, class: "no-underline hover:underline text-black dark:text-smoke" %>
+              </strong>
+              <span class="block text-sm muted">
+                Since <%= format_date donation.created_at %>
+              </span>
+            </div>
+          </div>
+          <span class="badge ml-0 shrink-0 bg-<%= donation.status_badge_color %>"><%= donation.stripe_status.humanize %></span>
+        </div>
+
+        <div class="flex items-baseline gap-1">
+          <span class="text-3xl font-bold leading-none"><%= render_money donation.amount %></span>
+          <span class="muted text-sm">per month</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <span class="block muted text-xs uppercase tracking-wide"><%= donation.canceled? ? "Canceled" : "Next donation" %></span>
+            <span class="block font-medium"><%= format_date(donation.canceled? ? donation.canceled_at : donation.stripe_current_period_end) %></span>
+          </div>
+          <div>
+            <span class="block muted text-xs uppercase tracking-wide">Total donated</span>
+            <span class="block font-medium"><%= render_money donation.total_donated %></span>
+          </div>
+        </div>
+
+        <% unless donation.canceled? %>
+          <div class="flex justify-end mt-auto pt-3 border-t border-smoke dark:border-darkless">
+            <%= button_to "Cancel donation", cancel_recurring_donation_path(donation.url_hash), method: :post, class: "btn h5 !ml-0", data: { turbo_confirm: "Are you sure you'd like to stop donating to #{event.name}? This can't be undone.", turbo_confirm_danger: true } %>
+          </div>
         <% end %>
-      </tbody>
-    </table>
-  </article>
+      </li>
+    <% end %>
+  </ul>
 <% else %>
   <%= blankslate "You don't have any recurring donations." %>
 <% end %>

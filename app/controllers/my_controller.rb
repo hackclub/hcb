@@ -62,7 +62,7 @@ class MyController < ApplicationController
   end
 
   def recurring_donations
-    @recurring_donations = current_user.recurring_donations.includes(:event).order(canceled_at: :asc, created_at: :desc)
+    @recurring_donations = current_user.recurring_donations.includes(:event, :donations).order(canceled_at: :asc, created_at: :desc)
   end
 
   def tasks
