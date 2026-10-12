@@ -14,20 +14,21 @@
         —
       </span>
     </div>
+    <% unless @event.id == EventMappingEngine::EventIds::HACK_CLUB_HQ && !OrganizerPosition.role_at_least?(current_user, @event, :reader) %>
+      <div class="stat stat--small">
+        <span class="stat__label">Total revenue</span>
+        <span class="stat__value stat__value--no-space">
+          —
+        </span>
+      </div>
 
-    <div class="stat stat--small">
-      <span class="stat__label">Total revenue</span>
-      <span class="stat__value stat__value--no-space">
-        —
-      </span>
-    </div>
-
-    <div class="stat stat--small">
-      <span class="stat__label">Total expenses</span>
-      <span class="stat__value stat__value--no-space">
-        —
-      </span>
-    </div>
+      <div class="stat stat--small">
+        <span class="stat__label">Total expenses</span>
+        <span class="stat__value stat__value--no-space">
+          —
+        </span>
+      </div>
+    <% end %>
   </div>
 <% end %>
 
