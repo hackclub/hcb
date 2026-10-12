@@ -51,7 +51,6 @@ const populateSharedPopover = trigger => {
       frame.innerHTML = `<div class="flex items-center justify-center" style="height:calc(100vh - 150px)"><img src="/icons/loading.svg" class="dark:invert" /></div>`
       frame.id = frameId
       frame.src = src
-      frame.dataset.popoverSrc = src
       frame.setAttribute('target', '_top')
       body.appendChild(frame)
     }
@@ -92,11 +91,7 @@ document.addEventListener('turbo:load', () => {
 })
 
 document.addEventListener('turbo:before-fetch-response', async event => {
-  // Turbo submits data-turbo-method links from a form appended to <body>
-  const { target } = event
-  const frame =
-    target.closest?.('turbo-frame') ??
-    document.getElementById(target.dataset?.turboFrame ?? '')
+  const frame = event.target.closest?.('turbo-frame')
   if (!frame) return
 
   const response = event.detail.fetchResponse.response
@@ -117,19 +112,12 @@ document.addEventListener('turbo:before-fetch-response', async event => {
 })
 
 // Redirects out of the popover land on a page without its frame; reload the
-// popover in place once (so error pages can't loop) rather than navigating away.
+// popover in place rather than letting Turbo navigate away from it.
 document.addEventListener('turbo:frame-missing', event => {
-  const frame = event.target
-  if (!frame.dataset.popoverSrc || frame.dataset.retried) return
+  if (!event.target.closest('#shared_popover')) return
 
   event.preventDefault()
-  frame.dataset.retried = 'true'
-  frame.src = frame.dataset.popoverSrc
-  frame.reload()
-})
-
-document.addEventListener('turbo:frame-load', event => {
-  delete event.target.dataset.retried
+  event.target.reload()
 })
 
 const loadModals = element => {
