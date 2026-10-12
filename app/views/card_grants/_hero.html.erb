@@ -4,8 +4,15 @@
 <% total = card_grant.amount %>
 <% remaining = card_grant.balance %>
 <% remaining_fraction = total.positive? ? [[remaining.cents.to_f / total.cents, 0].max, 1].min : 0 %>
-<% days_left = (card_grant.expiration_at.to_date - Date.current).to_i %>
-<% spendable = card_grant.active? && !card_grant.pending_invite? %>
+<%# `state` is the one place that knows whether the grant can be spent right
+    now, so the badge, the meter and the date all key off it. %>
+<% state = card_grant.state %>
+<% spendable = state == "success" %>
+<% ended = card_grant.canceled? || card_grant.expired? %>
+<% if ended %>
+  <% ended_at = card_grant.last_time_change_to(status: card_grant.status.to_sym) || card_grant.expiration_at %>
+<% end %>
+<% days_left = ((ended ? ended_at.to_date : card_grant.expiration_at.to_date) - Date.current).to_i %>
 
 <% manage = show_actions && organizer_signed_in?(as: :member) %>
 
@@ -20,7 +27,7 @@
   <div class="grant-hero__grid">
     <div>
       <div class="flex items-center flex-wrap gap-x-3 gap-y-2 mb-1">
-        <span class="badge ml-0 bg-<%= card_grant.status_badge_type %>">
+        <span class="badge ml-0 bg-<%= state %>">
           <%= card_grant.state_text %>
         </span>
         <% if card_grant.purpose.present? %>
@@ -41,10 +48,16 @@
 
     <div class="grant-hero__aside">
       <p class="eyebrow m-0">
-        <%= own ? "Spend it by" : "Expires on" %>
+        <% if card_grant.canceled? %>
+          Canceled on
+        <% elsif card_grant.expired? %>
+          Expired on
+        <% else %>
+          <%= own ? "Spend it by" : "Expires on" %>
+        <% end %>
       </p>
       <div class="flex items-baseline flex-wrap gap-x-2">
-        <p class="grant-hero__date"><%= format_date card_grant.expiration_at %></p>
+        <p class="grant-hero__date"><%= format_date(ended ? ended_at : card_grant.expiration_at) %></p>
         <span class="muted">
           <% if days_left.positive? %>
             <%= pluralize days_left, "day" %> left

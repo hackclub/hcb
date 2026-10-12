@@ -122,6 +122,18 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
   }
 }
 
+// State notices (canceled, frozen, instructions, fraud check…) stack under the
+// hero with one gap between them, whatever margins the callout partial brings.
+.grant-notices {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+
+  > .card {
+    margin: 0;
+  }
+}
+
 .grant-section {
   display: flex;
   align-items: center;

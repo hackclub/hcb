@@ -8,43 +8,50 @@
 <% own = @card_grant.user == current_user %>
 <% awaiting_activation = own && @card_grant.pending_invite? %>
 <% stripe_card = @card_grant.stripe_card %>
+<%# Once a grant is over there's nothing left to do in order, so the grantee's
+    numbered steps give way to plain headings. %>
+<% ended = @card_grant.canceled? || @card_grant.expired? %>
+<% steps = own && !ended %>
 
 <%= render partial: "card_grants/hero", locals: { card_grant: @card_grant } %>
 
-<%= render partial: "card_grants/canceled_warning", locals: { card_grant: @card_grant } %>
+<%# Everything that explains the grant's state sits together under the hero. %>
+<% notices = capture do %>
+  <%= render partial: "card_grants/status_callout", locals: { card_grant: @card_grant } %>
 
-<% if @card_grant.instructions.present? %>
-  <%= render "application/callout", title: "Instructions from #{@card_grant.event.name}", type: "info", class: "mb-4" do %>
-    <p class="m-0">
-      <%= MarkdownService.instance.render(@card_grant.instructions) %>
-    </p>
+  <%= render partial: "card_grant/pre_authorizations/organizer_info", locals: { pre_authorization: @card_grant.pre_authorization, link_to_pre_authorization: true } if @card_grant.pre_authorization.present? && organizer_signed_in? %>
+
+  <% if @card_grant.instructions.present? %>
+    <%= render "application/callout", title: "Instructions from #{@card_grant.event.name}", type: "info" do %>
+      <p class="m-0">
+        <%= MarkdownService.instance.render(@card_grant.instructions) %>
+      </p>
+    <% end %>
   <% end %>
+<% end %>
+<% if notices.present? %>
+  <div class="grant-notices"><%= notices %></div>
 <% end %>
 
 <% if awaiting_activation %>
   <%= render partial: "card_grants/invitation", locals: { card_grant: @card_grant } %>
-<% elsif own && @card_grant.converted_to_reimbursement_report? %>
-  <%= blankslate "This grant was converted into a reimbursement report." %>
-  <% if policy(@card_grant.reimbursement_report).show? %>
-    <p class="text-center">
-      <%= link_to "View reimbursement report", @card_grant.reimbursement_report %>
-    </p>
-  <% end %>
-  <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes, ledger: @ledger, items: @items } %>
-<% elsif own && stripe_card.nil? && @card_grant.canceled? %>
-  <%= blankslate "Sorry, this grant was canceled!" %>
+<% elsif own && (@card_grant.converted_to_reimbursement_report? || stripe_card.nil?) %>
+  <%# The grant ended before (or instead of) the card being used, so the
+      spending rules and card details don't apply: just the money trail. %>
+  <%= render "card_grants/section_heading", title: "Transactions" %>
+  <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes, ledger: @ledger, items: @items, heading: false } %>
 <% elsif organizer_signed_in? || own %>
-  <%= render "card_grants/section_heading", icon: "1", title: own ? "What you can spend it on" : "Spending controls", own: own %>
-  <%= render partial: "card_grants/grant_details", locals: { card_grant: @card_grant, own: own } %>
+  <% unless own && ended %>
+    <%= render "card_grants/section_heading", icon: steps ? "1" : "", title: own ? "What you can spend it on" : "Spending controls", own: own %>
+    <%= render partial: "card_grants/grant_details", locals: { card_grant: @card_grant, own: own } %>
+  <% end %>
 
   <% if stripe_card.present? %>
-    <%= render "card_grants/section_heading", icon: "2", title: own ? "Pay with your card" : "Virtual card", own: own %>
+    <%= render "card_grants/section_heading", icon: steps ? "2" : "", title: own ? (ended ? "Your card" : "Pay with your card") : "Virtual card", own: own %>
     <%= render partial: "card_grants/card_details", locals: { card_grant: @card_grant } %>
   <% end %>
 
-  <%= render partial: "card_grant/pre_authorizations/organizer_info", locals: { pre_authorization: @card_grant.pre_authorization, link_to_pre_authorization: true } if @card_grant.pre_authorization.present? && organizer_signed_in? %>
-
-  <%= render "card_grants/section_heading", icon: "3", title: own ? "Upload receipts for each purchase (required)" : "Transactions", own: own %>
+  <%= render "card_grants/section_heading", icon: steps ? "3" : "", title: own ? "Upload receipts for each purchase (required)" : "Transactions", own: own %>
   <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes, ledger: @ledger, items: @items, heading: false } %>
 <% end %>
 
