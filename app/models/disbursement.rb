@@ -15,6 +15,7 @@
 #  rejected_at                         :datetime
 #  scheduled_on                        :date
 #  should_charge_fee                   :boolean          default(FALSE)
+#  transfer_type                       :string
 #  created_at                          :datetime         not null
 #  updated_at                          :datetime         not null
 #  destination_subledger_id            :bigint
@@ -88,6 +89,7 @@ class Disbursement < ApplicationRecord
     event :mark_errored do
       after do
         canonical_pending_transactions.each { |cpt| cpt.decline! }
+        repayments.each(&:revert_categories!)
       end
       transitions from: [:pending, :in_transit], to: :errored
     end
@@ -96,6 +98,7 @@ class Disbursement < ApplicationRecord
       after do |fulfilled_by|
         update(fulfilled_by:)
         canonical_pending_transactions.each { |cpt| cpt.decline! }
+        repayments.each(&:revert_categories!)
         create_activity(key: "disbursement.rejected", owner: fulfilled_by)
       end
       transitions from: [:scheduled, :reviewing, :pending], to: :rejected
@@ -121,6 +124,12 @@ class Disbursement < ApplicationRecord
   def outgoing_disbursement = @outgoing_disbursement ||= becomes(Disbursement::Outgoing)
 
   has_many :t_transactions, class_name: "Transaction", inverse_of: :disbursement
+  has_many :repayments, dependent: :destroy
+  has_many :repaid_hcb_codes, through: :repayments
+
+  # What the transfer is for, asked when a user makes one. Decides how each
+  # side is categorized. Nil for transfers HCB creates itself (e.g. card grants).
+  enum :transfer_type, { transfer: "transfer", payment: "payment", repayment: "repayment" }, prefix: true, validate: { allow_nil: true }
 
   validates_presence_of :source_event_id,
                         :event_id,

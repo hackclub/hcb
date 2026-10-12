@@ -9,6 +9,7 @@
   <div id="rich_metadata">
     <%= render partial: "hcb_codes/rich_metadata" %>
   </div>
+  <%= render "hcb_codes/repayments", hcb_code: @hcb_code %>
 
   <% if @hcb_code.accepts_receipts? %>
     <% admin_tool("mt1 p-3") do %>

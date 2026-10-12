@@ -116,6 +116,30 @@ class DisbursementsController < ApplicationController
     render json: options
   end
 
+  # Expenses of the destination organization that the source can repay.
+  def repayable_transactions
+    authorize Disbursement.new, :event_search?
+    event = Event.find_by_public_id(params[:destination_event_id])
+    return render(json: []) unless event && OrganizerPosition.role_at_least?(current_user, event, :reader)
+
+    repaid_ids = Repayment.active.select(:hcb_code_id)
+    hcb_codes = HcbCode
+                .where(hcb_code: event.canonical_transactions.where("amount_cents < 0").select(:hcb_code))
+                .where.not(id: repaid_ids)
+                .where.not(id: HcbCode.where("hcb_code LIKE 'HCB-500-%' OR hcb_code LIKE 'HCB-550-%'").select(:id)) # disbursements
+                .order(created_at: :desc)
+    hcb_codes = hcb_codes.where(hcb_code: event.canonical_transactions.search_memo(params[:q]).select(:hcb_code)) if params[:q].present?
+
+    render json: combobox_page(hcb_codes).map { |hcb_code|
+      {
+        value: hcb_code.hashid,
+        label: hcb_code.memo,
+        sublabel: "#{helpers.render_money(-hcb_code.amount_cents)} · #{hcb_code.date&.strftime("%b %-d, %Y")}",
+        amount: (-hcb_code.amount_cents / 100.0).to_s
+      }
+    }
+  end
+
   def create
     @source_event = Event.find_by_public_id(disbursement_params[:source_event_id])
     @destination_event = Event.find_by_public_id(disbursement_params[:event_id]) || Event.friendly.find(disbursement_params[:event_id])
@@ -129,15 +153,19 @@ class DisbursementsController < ApplicationController
                               disbursement_params["scheduled_on(3i)"].to_i)
     end
 
-    if disbursement_params[:source_transaction_category_slug].present? || disbursement_params[:destination_transaction_category_slug].present?
-      source_transaction_category_slug = disbursement_params[:source_transaction_category_slug].presence
-      destination_transaction_category_slug = disbursement_params[:destination_transaction_category_slug].presence
-      category_assignment_strategy = "manual"
-    else
-      source_transaction_category_slug = "internal-transfer"
-      destination_transaction_category_slug = "internal-transfer"
-      category_assignment_strategy = "automatic"
+    transfer_type = disbursement_params[:transfer_type].presence || "transfer"
+    raise ArgumentError, "Choose what kind of transfer this is." unless Disbursement.transfer_types.key?(transfer_type)
+
+    if transfer_type == "repayment"
+      repaid_hcb_code = HcbCode.find_by_hashid(disbursement_params[:repaid_hcb_code_id])
+      raise Pundit::NotAuthorizedError if repaid_hcb_code && !OrganizerPosition.role_at_least?(current_user, @destination_event, :reader)
     end
+
+    source_transaction_category_slug = disbursement_params[:source_transaction_category_slug].presence
+    destination_transaction_category_slug = disbursement_params[:destination_transaction_category_slug].presence
+    # Plain transfers are categorized for the user; anything they chose, or an
+    # admin overrode, is manual.
+    category_assignment_strategy = transfer_type == "transfer" && source_transaction_category_slug.nil? && destination_transaction_category_slug.nil? ? "automatic" : "manual"
 
     disbursement = DisbursementService::Create.new(
       name: disbursement_params[:name],
@@ -150,7 +178,10 @@ class DisbursementsController < ApplicationController
       fronted: @source_event.plan.front_disbursements_enabled?,
       source_transaction_category_slug:,
       destination_transaction_category_slug:,
-      category_assignment_strategy:
+      category_assignment_strategy:,
+      transfer_type:,
+      payment_category_slug: disbursement_params[:payment_category_slug],
+      repaid_hcb_code_id: repaid_hcb_code&.id
     ).run
 
     if disbursement_params[:file]
@@ -275,6 +306,9 @@ class DisbursementsController < ApplicationController
       :amount,
       :name,
       :scheduled_on,
+      :transfer_type,
+      :payment_category_slug,
+      :repaid_hcb_code_id,
       { file: [] }
     ]
 

@@ -1,0 +1,16 @@
+<%# locals: (hcb_code:) %>
+
+<% disbursement = (hcb_code.outgoing_disbursement || hcb_code.incoming_disbursement)&.disbursement %>
+<% repaid_by = hcb_code.repayments.active.filter_map { |r| HcbCode.find_by(hcb_code: r.disbursement.incoming_hcb_code) } %>
+<% repays = disbursement ? disbursement.repaid_hcb_codes : [] %>
+
+<% { "Repaid by" => repaid_by, "Repays" => repays }.each do |label, linked| %>
+  <% next if linked.empty? %>
+  <div class="card flex items-center gap-3 mt-4 py-3">
+    <%= inline_icon "reimbursement", size: 24, class: "m-0 text-blue shrink-0" %>
+    <span>
+      <strong><%= label %></strong>
+      <%= safe_join(linked.map { |linked_hcb_code| link_to_if(policy(linked_hcb_code).show?, linked_hcb_code.memo, hcb_code_path(linked_hcb_code)) }, ", ") %>
+    </span>
+  </div>
+<% end %>

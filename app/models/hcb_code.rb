@@ -229,6 +229,9 @@ class HcbCode < ApplicationRecord
            primary_key: "hcb_code",
            inverse_of: :local_hcb_code
 
+  has_many :repayments, inverse_of: :repaid_hcb_code
+  has_many :repayment_disbursements, through: :repayments, source: :disbursement
+
   has_many :canonical_transactions,
            -> { order("canonical_transactions.date desc, canonical_transactions.id desc") },
            foreign_key: "hcb_code",
@@ -253,6 +256,16 @@ class HcbCode < ApplicationRecord
 
   def event
     super || events.first
+  end
+
+  # The transactions on this HCB code that belong to `event` and can carry a
+  # category. Disbursements share an HCB code between both sides, so this is
+  # scoped to one event.
+  def categorizable_transactions_for(event)
+    [
+      *canonical_transactions.joins(:canonical_event_mapping).where(canonical_event_mappings: { event_id: event.id }).includes(:category),
+      *canonical_pending_transactions.joins(:canonical_pending_event_mapping).where(canonical_pending_event_mappings: { event_id: event.id }).includes(:category)
+    ]
   end
 
   def events

@@ -452,3 +452,92 @@ RSpec.describe DisbursementService::Create do
   end
 
 end
+
+RSpec.describe DisbursementService::Create, "transfer types" do
+  let(:requestor) { create(:user) }
+  let(:source_event) { create(:event, :with_positive_balance) }
+  let(:destination_event) { create(:event) }
+
+  before { create(:organizer_position, event: source_event, user: requestor) }
+
+  def create_disbursement(amount: "100.00", **options)
+    described_class.new(
+      name: "Test",
+      amount:,
+      requested_by_id: requestor.id,
+      source_event_id: source_event.id,
+      destination_event_id: destination_event.id,
+      **options
+    ).run
+  end
+
+  def categories(disbursement)
+    [
+      disbursement.raw_pending_outgoing_disbursement_transaction.canonical_pending_transaction.category&.slug,
+      disbursement.raw_pending_incoming_disbursement_transaction.canonical_pending_transaction.category&.slug
+    ]
+  end
+
+  it "categorizes a transfer as an internal transfer on both sides" do
+    disbursement = create_disbursement(transfer_type: "transfer")
+
+    expect(disbursement).to be_transfer_type_transfer
+    expect(categories(disbursement)).to eq(["internal-transfer", "internal-transfer"])
+  end
+
+  it "categorizes a payment as the chosen category for the sender and an internal payment for the recipient" do
+    disbursement = create_disbursement(transfer_type: "payment", payment_category_slug: "venue")
+
+    expect(categories(disbursement)).to eq(["venue", "internal-payment"])
+  end
+
+  it "requires a payment category that isn't HQ-only" do
+    expect { create_disbursement(transfer_type: "payment") }.to raise_error(DisbursementService::Create::UserError)
+    expect { create_disbursement(transfer_type: "payment", payment_category_slug: "hcb-revenue") }.to raise_error(DisbursementService::Create::UserError)
+  end
+
+  describe "repayments" do
+    let!(:expense) { create(:canonical_transaction, event: destination_event, amount_cents: -100_00, category_slug: "food-fun") }
+
+    it "gives the sender the expense's category and marks both of the recipient's sides as a repayment" do
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_hcb_code_id: expense.local_hcb_code.id)
+
+      expect(categories(disbursement)).to eq(["food-fun", "repayment"])
+      expect(expense.reload.category.slug).to eq("repayment")
+      expect(disbursement.repaid_hcb_codes).to eq([expense.local_hcb_code])
+      expect(expense.local_hcb_code.repayment_disbursements).to eq([disbursement])
+    end
+
+    it "must repay the full amount" do
+      expect {
+        create_disbursement(amount: "50.00", transfer_type: "repayment", repaid_hcb_code_id: expense.local_hcb_code.id)
+      }.to raise_error(ActiveRecord::RecordInvalid, /full amount/)
+      expect(expense.reload.category.slug).to eq("food-fun")
+    end
+
+    it "can't repay a transaction twice" do
+      create_disbursement(transfer_type: "repayment", repaid_hcb_code_id: expense.local_hcb_code.id)
+
+      expect {
+        create_disbursement(transfer_type: "repayment", repaid_hcb_code_id: expense.local_hcb_code.id)
+      }.to raise_error(ActiveRecord::RecordInvalid, /already been repaid/)
+    end
+
+    it "can't repay another organization's transaction" do
+      other_expense = create(:canonical_transaction, event: create(:event), amount_cents: -100_00)
+
+      expect {
+        create_disbursement(transfer_type: "repayment", repaid_hcb_code_id: other_expense.local_hcb_code.id)
+      }.to raise_error(ActiveRecord::RecordInvalid, /must be an expense/)
+    end
+
+    it "restores the expense's category when the repayment is rejected" do
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_hcb_code_id: expense.local_hcb_code.id)
+
+      disbursement.mark_rejected!(create(:user, :make_admin))
+
+      expect(expense.reload.category.slug).to eq("food-fun")
+      expect(expense.local_hcb_code.repayments.active).to be_empty
+    end
+  end
+end

@@ -225,4 +225,53 @@ RSpec.describe DisbursementsController do
       expect(HcbCode.exists?(hcb_code: disbursement.outgoing_hcb_code)).to be(true)
     end
   end
+
+  describe "repayments" do
+    let(:sender) { create(:user) }
+    let(:source_event) { create(:event, :with_positive_balance) }
+    let(:destination_event) { create(:event) }
+    let!(:expense) { create(:canonical_transaction, event: destination_event, amount_cents: -100_00, memo: "Pizza", category_slug: "food-fun") }
+
+    before do
+      create(:organizer_position, user: sender, event: source_event)
+      create(:organizer_position, user: sender, event: destination_event)
+      create_session(sender, verified: true)
+    end
+
+    it "creates a repayment for the picked transaction" do
+      post(:create, params: {
+             disbursement: {
+               name: "Paying back pizza",
+               source_event_id: source_event.public_id,
+               event_id: destination_event.public_id,
+               amount: "100.00",
+               transfer_type: "repayment",
+               repaid_hcb_code_id: expense.local_hcb_code.hashid
+             }
+           })
+
+      disbursement = Disbursement.last
+      expect(disbursement).to be_transfer_type_repayment
+      expect(disbursement.repaid_hcb_codes).to eq([expense.local_hcb_code])
+      expect(disbursement.source_transaction_category.slug).to eq("food-fun")
+    end
+
+    it "lists the destination's unrepaid expenses" do
+      create(:canonical_transaction, event: destination_event, amount_cents: 50_00) # income
+      create(:canonical_transaction, event: create(:event), amount_cents: -50_00) # another org
+
+      get(:repayable_transactions, params: { destination_event_id: destination_event.public_id }, format: :json)
+
+      expect(response.parsed_body.pluck("value")).to eq([expense.local_hcb_code.hashid])
+      expect(response.parsed_body.first["amount"]).to eq("100.0")
+    end
+
+    it "lists nothing for organizations the user can't see" do
+      sender.organizer_positions.find_by(event: destination_event).destroy!
+
+      get(:repayable_transactions, params: { destination_event_id: destination_event.public_id }, format: :json)
+
+      expect(response.parsed_body).to eq([])
+    end
+  end
 end

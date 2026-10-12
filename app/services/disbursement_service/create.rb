@@ -24,7 +24,10 @@ module DisbursementService
       fronted: false,
       source_transaction_category_slug: nil,
       destination_transaction_category_slug: nil,
-      category_assignment_strategy: "manual"
+      category_assignment_strategy: "manual",
+      transfer_type: nil,
+      payment_category_slug: nil,
+      repaid_hcb_code_id: nil
     )
       @source_event_id = source_event_id
       @source_event = Event.find(@source_event_id)
@@ -43,11 +46,16 @@ module DisbursementService
       @source_transaction_category_slug = source_transaction_category_slug
       @destination_transaction_category_slug = destination_transaction_category_slug
       @category_assignment_strategy = category_assignment_strategy
+      @transfer_type = transfer_type
+      @payment_category_slug = payment_category_slug
+      @repaid_hcb_code = HcbCode.find(repaid_hcb_code_id) if repaid_hcb_code_id.present?
     end
 
     def run
       raise ArgumentError, "amount is required" unless @amount
       raise ArgumentError, "amount_cents must be greater than 0" unless amount_cents > 0
+
+      validate_transfer_type!
 
       @source_event.with_lock do
         if @source_subledger_id.present?
@@ -58,6 +66,10 @@ module DisbursementService
 
         ActiveRecord::Base.transaction do
           disbursement = Disbursement.create!(attrs)
+
+          if @repaid_hcb_code
+            disbursement.repayments.create!(repaid_hcb_code: @repaid_hcb_code, amount_cents:).apply_categories!
+          end
 
           # 1. Create the raw pending transactions
           rpodt = ::PendingTransactionEngine::RawPendingOutgoingDisbursementTransactionService::Disbursement::ImportSingle.new(disbursement:).run
@@ -103,6 +115,7 @@ module DisbursementService
         amount: amount_cents,
         requested_by:,
         should_charge_fee: @should_charge_fee,
+        transfer_type: @transfer_type,
         source_transaction_category:,
         destination_transaction_category:
       }
@@ -136,16 +149,51 @@ module DisbursementService
       @destination_event ||= Event.find(@destination_event_id)
     end
 
-    def source_transaction_category
-      return if @source_transaction_category_slug.blank?
+    def validate_transfer_type!
+      case @transfer_type
+      when "payment"
+        definition = TransactionCategory::Definition::ALL[@payment_category_slug]
+        raise UserError, "Choose what this payment is for." if definition.nil? || (definition.hq_only? && !requested_by&.admin?)
+      when "repayment"
+        raise UserError, "Choose the transaction you're repaying." if @repaid_hcb_code.nil?
+      end
+    end
 
-      @source_transaction_category ||= TransactionCategory.find_or_create_by!(slug: @source_transaction_category_slug)
+    # An explicit slug (from admins, or HCB-created transfers like card grants)
+    # wins over the one implied by the transfer type.
+    def source_transaction_category_slug
+      return @source_transaction_category_slug if @source_transaction_category_slug.present?
+
+      case @transfer_type
+      when "transfer" then "internal-transfer"
+      when "payment" then @payment_category_slug
+      # The source takes on the expense, so it gets the expense's category.
+      when "repayment" then @repaid_hcb_code.categorizable_transactions_for(destination_event).filter_map(&:category).first&.slug
+      end
+    end
+
+    def destination_transaction_category_slug
+      return @destination_transaction_category_slug if @destination_transaction_category_slug.present?
+
+      case @transfer_type
+      when "transfer" then "internal-transfer"
+      when "payment" then "internal-payment"
+      when "repayment" then "repayment"
+      end
+    end
+
+    def source_transaction_category
+      slug = source_transaction_category_slug
+      return if slug.blank?
+
+      @source_transaction_category ||= TransactionCategory.find_or_create_by!(slug:)
     end
 
     def destination_transaction_category
-      return if @destination_transaction_category_slug.blank?
+      slug = destination_transaction_category_slug
+      return if slug.blank?
 
-      @destination_transaction_category ||= TransactionCategory.find_or_create_by!(slug: @destination_transaction_category_slug)
+      @destination_transaction_category ||= TransactionCategory.find_or_create_by!(slug:)
     end
 
   end
