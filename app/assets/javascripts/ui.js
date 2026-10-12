@@ -58,12 +58,22 @@ const populateSharedPopover = trigger => {
   }
 }
 
-// If the current URL points at an open popover (?popover=<state url of the
-// trigger to reopen>), find that trigger and reopen it. Returns whether a
-// matching trigger was found, since the trigger may still be loading inside
-// a lazy-loaded turbo-frame (e.g. a paginated transactions list).
+// The open popover lives in the URL fragment (#popover=<state url of its
+// trigger>), so links are shareable and the server never sees it.
+const popoverFromUrl = () =>
+  new URLSearchParams(location.hash.slice(1)).get('popover')
+
+const setPopoverInUrl = stateUrl => {
+  const url = new URL(location.href)
+  url.hash = stateUrl ? `popover=${stateUrl}` : ''
+  window.history.pushState(null, '', url)
+}
+
+// Reopens the popover the URL points at. Returns whether its trigger was
+// found, since it may still be loading inside a lazy-loaded turbo-frame
+// (e.g. a paginated transactions list).
 const openPopoverFromUrl = () => {
-  const link = new URL(location.href).searchParams.get('popover')
+  const link = popoverFromUrl()
   if (!link) return true
 
   const trigger = document.querySelector(
@@ -100,7 +110,7 @@ document.addEventListener('turbo:before-fetch-response', async event => {
   if (!frame) return
 
   const response = event.detail.fetchResponse.response
-  if (!response.headers.get('content-type')?.includes('text/html')) return
+  if (!response.headers.has('X-Flash')) return
 
   const flash = new DOMParser()
     .parseFromString(await response.clone().text(), 'text/html')
@@ -872,25 +882,22 @@ $(document).on('wheel', 'input[type=number]', e => {
 // it also handles using the back button, to reopen or close a popover.
 
 $(document).on($.modal.BEFORE_OPEN, function (event, modal) {
-  if (modal?.elm[0]?.dataset?.stateUrl) {
+  const { stateUrl, stateTitle } = modal?.elm[0]?.dataset ?? {}
+  if (stateUrl) {
     if (!document.documentElement.dataset.returnToStateTitle) {
       document.documentElement.dataset.returnToStateTitle = document.title
     }
-    document.title = modal.elm[0].dataset.stateTitle
+    document.title = stateTitle
 
-    const url = new URL(location.href)
-    if (url.searchParams.get('popover') !== modal.elm[0].dataset.stateUrl) {
-      url.searchParams.set('popover', modal.elm[0].dataset.stateUrl)
-      window.history.pushState({ modal: modal.elm[0].id }, '', url)
-    }
+    if (popoverFromUrl() !== stateUrl) setPopoverInUrl(stateUrl)
   }
 })
 
 $(document).on($.modal.BEFORE_CLOSE, function (event, modal) {
-  if (modal?.elm[0]?.dataset?.stateUrl) {
-    const url = new URL(location.href)
-    url.searchParams.delete('popover')
-    window.history.pushState(null, '', url)
+  const stateUrl = modal?.elm[0]?.dataset?.stateUrl
+  if (stateUrl) {
+    // Already gone from the URL when the close came from popstate
+    if (popoverFromUrl() === stateUrl) setPopoverInUrl(null)
 
     if (document.documentElement.dataset.returnToStateTitle) {
       document.title = document.documentElement.dataset.returnToStateTitle
@@ -913,9 +920,9 @@ $(document).on($.modal.AFTER_CLOSE, function (event, modal) {
   }
 })
 
-window.addEventListener('popstate', e => {
-  if (e.state?.modal) {
-    $(`#${e.state.modal}`).modal()
+window.addEventListener('popstate', () => {
+  if (popoverFromUrl()) {
+    openPopoverFromUrl()
   } else {
     $.modal.close()
   }

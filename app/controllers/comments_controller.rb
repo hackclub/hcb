@@ -20,6 +20,10 @@ class CommentsController < ApplicationController
       # Use return_to param if provided, otherwise fall back to the commentable
       # url_from validates the URL is internal to prevent open redirect vulnerabilities
       redirect_back_or_to url_from(params[:comment][:return_to]) || @commentable
+    elsif turbo_frame_request?
+      # Rendering :new would leave the popover's frame, so return to it with the error instead
+      flash[:error] = @comment.errors.full_messages.to_sentence
+      redirect_to url_from(params[:comment][:redirect_url]) || @commentable
     else
       render :new, status: :unprocessable_content
     end

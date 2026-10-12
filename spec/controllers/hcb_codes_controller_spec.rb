@@ -76,4 +76,52 @@ RSpec.describe HcbCodesController, type: :controller do
       end
     end
   end
+
+  describe "GET #show inside a turbo frame" do
+    let(:event) { create(:event) }
+    let(:user) { create(:user) }
+    let(:cpt) { create(:canonical_pending_transaction) }
+    let(:hcb_code) { cpt.local_hcb_code }
+    let(:message) { "Marked no/lost receipt on that transaction." }
+
+    before do
+      create(:canonical_pending_event_mapping, canonical_pending_transaction: cpt, event:)
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+      request.headers["Turbo-Frame"] = "shared_popover_body"
+    end
+
+    # What the flash hash carries into the *next* request.
+    def flash_carried_over
+      session["flash"].to_h["flashes"]
+    end
+
+    it "renders the flash inside the frame, flags it, and doesn't repeat it on the next page" do
+      get(:edit, params: { id: hcb_code.hashid }, flash: { success: message })
+
+      expect(response.body).to include(message)
+      expect(response.headers["X-Flash"]).to eq("true")
+      expect(flash_carried_over).to be_blank
+    end
+
+    it "keeps the flash on a frame response that never renders it" do
+      get(:edit, params: { id: hcb_code.hashid, inline: "true" }, flash: { success: message })
+
+      expect(response.body).not_to include(message)
+      expect(response.headers).not_to include("X-Flash")
+      expect(flash_carried_over).to include("success" => message)
+    end
+
+    it "only sends the no/lost link back to the frame it was rendered in" do
+      user.make_admin!
+
+      get(:show, params: { id: hcb_code.hashid, frame: true })
+      expect(response.body).to include(CGI.escapeHTML(receiptable_mark_no_or_lost_path(receiptable_type: "HcbCode", receiptable_id: hcb_code.id, return_to: request.original_url)))
+
+      request.headers["Turbo-Frame"] = nil
+      get(:show, params: { id: hcb_code.hashid })
+      expect(response.body).to include("No/lost receipt?")
+      expect(response.body).not_to include("return_to")
+    end
+  end
 end

@@ -2,6 +2,7 @@
 
 <% messages = renderable_flash -%>
 <% messages.each_key { |key| flash.discard(key) } if turbo_frame_request? -%>
+<% response.headers["X-Flash"] = "true" if messages.any? -%>
 
 <div id="flash-container">
   <% messages.each_with_index do |(key, value), index| %>
