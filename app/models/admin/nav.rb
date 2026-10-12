@@ -7,11 +7,12 @@ module Admin
 
     class Section
       prepend MemoWise
-      attr_reader(:name, :items)
+      attr_reader(:name, :items, :icon)
 
-      def initialize(name:, items:)
+      def initialize(name:, items:, icon: nil)
         @name = name
         @items = items
+        @icon = icon
       end
 
       def active?
@@ -19,6 +20,12 @@ module Admin
       end
 
       memo_wise(:active?)
+
+      def path
+        items.find { |item| !item.divider? }&.path
+      end
+
+      memo_wise(:path)
 
       def task_sum
         items.sum { |item| item.task_count? ? item.count : 0 }
@@ -34,15 +41,26 @@ module Admin
 
     end
 
+    class Group
+      attr_reader(:name, :sections)
+
+      def initialize(name:, sections:)
+        @name = name
+        @sections = sections
+      end
+
+    end
+
     class Item
       attr_reader(:name, :path)
 
-      def initialize(name:, path:, count:, count_type: :tasks, active: false)
+      def initialize(name:, path:, count:, count_type: :tasks, active: false, divider: false)
         @name = name
         @path = path
         @count_lambda = count
         @count_type = count_type
         @active = active
+        @divider = divider
 
         unless [:tasks, :records].include?(count_type)
           raise ArgumentError, "invalid count_type: #{count_type.inspect}"
@@ -61,6 +79,10 @@ module Admin
         @count_type == :records
       end
 
+      def divider?
+        @divider
+      end
+
       def task_count?
         @count_type == :tasks
       end
@@ -71,29 +93,42 @@ module Admin
       @page_title = page_title
     end
 
-    def sections
+    def groups
       [
-        spending,
-        ledger,
-        incoming_money,
-        organizations,
-        payroll,
-        misc
+        Group.new(
+          name: "Money",
+          sections: [
+            incoming_money,
+            spending,
+            ledger,
+            cards,
+            financials
+          ]
+        ),
+        Group.new(
+          name: "Organizations & People",
+          sections: [
+            organizations,
+            payroll,
+            users,
+            documents,
+            leaderboards
+          ]
+        )
       ]
     end
 
-    def section_names
-      [
-        "Spending",
-        "Ledger",
-        "Incoming Money",
-        "Organizations",
-        "Payroll",
-        "Misc"
-      ]
+    memo_wise(:groups)
+
+    def sections
+      groups.flat_map(&:sections)
     end
 
     memo_wise(:sections)
+
+    def section_names
+      sections.map(&:name)
+    end
 
     def active_section
       sections.find(&:active?)
@@ -113,17 +148,31 @@ module Admin
       @normalized_page_title ||= normalize_string(page_title)
     end
 
-    def make_item(name:, **properties)
+    def make_divider(name:)
+      Item.new(
+        active: false,
+        divider: true,
+        name:,
+        path: "#",
+        count: ->{ 0 },
+      )
+    end
+
+    # `match_title` lets an item carry a short sidebar label while still
+    # highlighting for a longer page title (e.g. "New Teenagers" under the
+    # Leaderboards divider vs. "New Teenagers Leaderboard").
+    def make_item(name:, match_title: name, **properties)
       Item.new(
         name:,
         **properties,
-        active: normalize_string(name) == normalized_page_title
+        active: normalize_string(match_title) == normalized_page_title
       )
     end
 
     def spending
       Section.new(
         name: "Spending",
+        icon: "door-leave",
         items: [
           make_item(
             name: "ACH Transfers",
@@ -174,6 +223,7 @@ module Admin
     def ledger
       Section.new(
         name: "Ledger",
+        icon: "card-list",
         items: [
           make_item(
             name: "Ledger",
@@ -223,7 +273,8 @@ module Admin
 
     def incoming_money
       Section.new(
-        name: "Incoming Money",
+        name: "Incoming",
+        icon: "door-enter",
         items: [
           make_item(
             name: "Donations",
@@ -262,6 +313,7 @@ module Admin
     def organizations
       Section.new(
         name: "Organizations",
+        icon: "event-check",
         items: [
           make_item(
             name: "Applications (HCB)",
@@ -273,6 +325,12 @@ module Admin
             name: "Organizations",
             path: events_admin_index_path,
             count: ->{ Event.approved.count },
+            count_type: :records
+          ),
+          make_item(
+            name: "Event Groups",
+            path: admin_event_groups_path,
+            count: ->{ Event::Group.count },
             count_type: :records
           ),
           make_item(
@@ -306,6 +364,7 @@ module Admin
     def payroll
       Section.new(
         name: "Payroll",
+        icon: "person-badge",
         items: [
           make_item(
             name: "Contractors",
@@ -329,28 +388,53 @@ module Admin
       )
     end
 
-    def misc
+    def cards
       Section.new(
-        name: "Misc",
+        name: "Cards",
+        icon: "card",
         items: [
           make_item(
-            name: "Blazer",
-            path: blazer_path,
-            count: ->{ Blazer::Query.count },
+            name: "Stripe Cards",
+            path: stripe_cards_admin_index_path,
+            count: ->{ StripeCard.count },
             count_type: :records
           ),
           make_item(
-            name: "Flipper",
-            path: flipper_path,
-            count: ->{ Flipper.features.count },
+            name: "Card Designs",
+            path: stripe_card_personalization_designs_admin_index_path,
+            count: ->{ StripeCard::PersonalizationDesign.count },
             count_type: :records
-          ),
+          )
+        ]
+      )
+    end
+
+    def documents
+      Section.new(
+        name: "Documents",
+        icon: "docs",
+        items: [
           make_item(
             name: "Common Documents",
             path: common_documents_path,
             count: ->{ Document.common.count },
             count_type: :records
           ),
+          make_item(
+            name: "Contracts",
+            path: contracts_admin_index_path,
+            count: ->{ Contract.count },
+            count_type: :records
+          )
+        ]
+      )
+    end
+
+    def financials
+      Section.new(
+        name: "Financials",
+        icon: "bank-account",
+        items: [
           make_item(
             name: "Bank Accounts",
             path: bank_accounts_admin_index_path,
@@ -374,23 +458,20 @@ module Admin
             path: admin_column_statements_path,
             count: ->{ Column::Statement.count },
             count_type: :records
-          ),
+          )
+        ]
+      )
+    end
+
+    def users
+      Section.new(
+        name: "Users",
+        icon: "people-2",
+        items: [
           make_item(
             name: "Users",
             path: users_admin_index_path,
             count: ->{ User.count },
-            count_type: :records
-          ),
-          make_item(
-            name: "Stripe Cards",
-            path: stripe_cards_admin_index_path,
-            count: ->{ StripeCard.count },
-            count_type: :records
-          ),
-          make_item(
-            name: "Card Designs",
-            path: stripe_card_personalization_designs_admin_index_path,
-            count: ->{ StripeCard::PersonalizationDesign.count },
             count_type: :records
           ),
           make_item(
@@ -404,27 +485,26 @@ module Admin
             path: referral_programs_admin_index_path,
             count: ->{ Referral::Program.count },
             count_type: :records
-          ),
+          )
+        ]
+      )
+    end
+
+    def leaderboards
+      Section.new(
+        name: "Leaderboards",
+        icon: "leader",
+        items: [
           make_item(
-            name: "Event Groups",
-            path: admin_event_groups_path,
-            count: ->{ Event::Group.count },
-            count_type: :records,
-          ),
-          make_item(
-            name: "Contracts",
-            path: contracts_admin_index_path,
-            count: ->{ Contract.count },
-            count_type: :records
-          ),
-          make_item(
-            name: "Active Teenagers Leaderboard",
+            name: "Active Teenagers",
+            match_title: "Active Teenagers Leaderboard",
             path: active_teenagers_leaderboard_admin_index_path,
             count: ->{ User.active_teenager.count },
             count_type: :records,
           ),
           make_item(
-            name: "New Teenagers Leaderboard",
+            name: "New Teenagers",
+            match_title: "New Teenagers Leaderboard",
             path: new_teenagers_leaderboard_admin_index_path,
             count: ->{ 0 }, # I think this would be expensive to calculate
             count_type: :records,

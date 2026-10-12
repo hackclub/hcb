@@ -21,6 +21,38 @@
   text-decoration: none;
 }
 
+// Visually hidden until focused, so keyboard users can jump past the chrome.
+.skip-to-main {
+  position: absolute;
+  left: -999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: -999;
+
+  &:focus,
+  &:active {
+    color: $black;
+    background-color: $white;
+    left: auto;
+    top: auto;
+    width: 30%;
+    height: auto;
+    margin: 10px 35%;
+    padding: 5px;
+    border-radius: var(--radius-2xl);
+    text-align: center;
+    z-index: 999;
+  }
+
+  html[data-dark='true'] &:focus,
+  html[data-dark='true'] &:active {
+    color: $smoke;
+    background-color: $dark;
+  }
+}
+
 .medium {
   font-weight: 500;
 }
@@ -90,8 +122,10 @@
 
 $shades: (
   red: rgba($red, 0.125),
+  orange: rgba($orange, 0.125),
   yellow: rgba($yellow, 0.125),
   green: rgba($green, 0.125),
+  cyan: rgba($cyan, 0.125),
   neutral: rgba($muted, 0.125),
 );
 

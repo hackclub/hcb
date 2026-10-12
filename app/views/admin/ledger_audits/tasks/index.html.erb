@@ -1,8 +1,7 @@
-<%= stylesheet_link_tag "application", media: "all", "data-turbo-track": "reload" %>
-
 <h3>Transactions Flagged During Ledger Audits (<%= Admin::LedgerAudit::Task.flagged.count %> unresolved)</h3>
 
 <div>
+  <div class="table-container">
   <table>
     <thead>
       <tr>
@@ -18,7 +17,7 @@
     <tbody>
       <% @tasks.each do |task| %>
         <% hcb_code = task.hcb_code %>
-        <tr class="<%= hcb_code.event.plan.is_a?(Event::Plan::HackClubAffiliate) ? "admin-bg-red" : "" %>">
+        <tr class="<%= hcb_code.event.plan.is_a?(Event::Plan::HackClubAffiliate) ? "shade-red" : "" %>">
           <td><%= hcb_code.created_at.strftime("%Y-%m-%d") %></td>
           <td>
             <span style="display: flex; align-items: center; gap: 8px;">
@@ -49,7 +48,12 @@
     </tbody>
   </table>
 
-  <%= paginate @tasks %>
+  <div class="table-footer">
+    <%= page_entries_info @tasks, entry_name: "tasks" %>
+    <%= paginate @tasks %>
+  </div>
+
+  </div>
 
   <style>
     form, input {

@@ -1,0 +1,29 @@
+<section>
+  <h1 class="mb-1">Welcome, <%= current_user.first_name.presence || current_user.name %></h1>
+  <p class="muted my-0">Here's what's happening across HCB.</p>
+</section>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  <%= render "admin/index/sparkline_card",
+        title: "Raised",
+        value: render_money(@raised_today),
+        series: @raised_series,
+        color: "#33d6a6",
+        format: "money" %>
+
+  <%= render "admin/index/sparkline_card",
+        title: "Spent",
+        value: render_money(@spent_today),
+        series: @spent_series,
+        color: "#ec3750",
+        format: "money" %>
+
+  <%= render "admin/index/sparkline_card",
+        title: "Active teens",
+        value: number_with_delimiter(@active_teens_today),
+        series: @active_teens_series,
+        color: "#338eda",
+        format: "number" %>
+</div>
+
+<%= render "admin/index/recent_activity", activities: @activities %>

@@ -3,6 +3,18 @@
 require "cgi"
 
 module EventsHelper
+  # Copy for the admin review modal: the state's badge label, badge colour, and
+  # a line explaining which transitions are still available.
+  def event_review_status(event)
+    if event.approved?
+      ["Approved", "bg-success", "You can still bring it back to pending or reject it."]
+    elsif event.rejected?
+      ["Rejected", "bg-error", "Rejecting an organization can't be undone."]
+    else
+      ["Pending", "bg-pending", "This organization is waiting on your review."]
+    end
+  end
+
   # Items in the NAV_ITEMS array can be either nav links or sections, and are rendered in order:
 
   # Nav link schema

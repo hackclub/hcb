@@ -1,27 +1,16 @@
 <% title "Applications (HCB)" %>
 
-<%= form_with local: true, class: "card", url: applications_admin_index_path, method: :get do |form| %>
-  <%= render "events/filters/search", form: %>
-
-  <div class="flex flex-col sm:flex-row items-center gap-2 mt-2">
-    <div>
-        <%= form.label :include_archived do %>
-        <%= form.check_box :include_archived, checked: @include_archived %>
-        Include archived
-        <% end %>
-    </div>
-
-    <%= form.submit "Search", class: "ml-auto" %>
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: applications_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
+    <%= render "events/filters/search", form: %>
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    <%= render "admin/filters/toggle", form:, name: :include_archived, label: "Include archived", checked: @include_archived %>
+    <%= render "admin/filters/actions", form: %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @applications, entry_name: "applications" %>
-  </div>
-  <%= paginate @applications %>
-</div>
-
+<div class="table-container">
 <table class="min-w-0">
   <thead>
     <tr>
@@ -35,14 +24,14 @@
   </thead>
   <tbody>
     <% @applications.each do |application| %>
-      <tr class="<%= "admin-bg-pending" if application.submitted? %> <%= "admin-bg-transit" if application.approved? %>">
+      <tr class="<%= "shade-yellow" if application.submitted? %> <%= "shade-cyan" if application.approved? %>">
         <td><%= application.id %></td>
         <td><%= application.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= application.name %></td>
         <td><%= user_mention(application.user) %></td>
         <td><%= application.aasm.human_state %></td>
         <td class="text-nowrap">
-          <%= link_to "View", submission_application_path(application) %>
+          <%= pop_icon_to "external", submission_application_path(application), "aria-label": "View" %>
           <%= link_to "Airtable", airtable_application_path(application), target: "_blank" %>
         </td>
       </tr>
@@ -50,4 +39,11 @@
   </tbody>
 </table>
 
-<%= paginate @applications %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @applications, entry_name: "applications" %>
+  </div>
+  <%= paginate @applications %>
+</div>
+
+</div>

@@ -1,0 +1,14 @@
+<%# locals: (activities:) %>
+<div class="card p-0 flex flex-col">
+  <div class="flex items-center gap-2 p-4 pb-2">
+    <h3 class="m-0 flex-1">Recent activity</h3>
+    <%= link_to my_activities_path, class: "flex items-center shrink-0 no-underline muted" do %>
+      See all
+      <%= inline_icon "view-forward" %>
+    <% end %>
+  </div>
+
+  <ul class="list-reset comments w-100 px-4 pb-2 pt-0 flex-1 my-0">
+    <%= render_activities(activities.reject { |activity| activity.trackable.nil? && !activity.trackable_is_deletable? }) %>
+  </ul>
+</div>

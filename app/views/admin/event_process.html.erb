@@ -1,30 +1,40 @@
-<h1>Process <%= link_to @event.name, event_path(@event) %> <small>(<%= "##{@event.id}" %>)</small></h1>
+<% title "Process #{@event.name}" %>
 
-<% if @event.approved? %>
-  <p>Although this event was <strong>approved</strong>, you may still reject it or bring it back to pending.</p>
+<% state, state_badge, explanation = event_review_status(@event) %>
 
-  <%= form_with(model: false, local: true, url: event_toggle_approved_admin_path(@event), method: :put) do |form| %>
-    <%= form.submit "Mark as pending",
-      data: { turbo_confirm: "This event was previously approved. Are you sure you want to undo that and mark it as pending?" } %>
+<%= turbo_frame_tag(dom_id(@event, :event_process_frame)) do %>
+  <header>
+    <%= modal_close %>
+    <h2 class="h1 mt0 mb0 pb0 border-none">
+      <%= @event.name %>
+      <small class="muted">#<%= @event.id %></small>
+    </h2>
+  </header>
+
+  <span class="badge <%= state_badge %> ml-0"><%= state %></span>
+
+  <p class="mt-2 mb-3"><%= explanation %></p>
+
+  <p class="m0">
+    <%= link_to "Open organization", event_path(@event), target: "_top" %>
+    <span class="muted mx-1">·</span>
+    <%= link_to "Edit settings", edit_event_path(@event, tab: "admin"), target: "_top" %>
+  </p>
+
+  <% unless @event.rejected? %>
+    <footer class="flex flex-wrap items-center gap-2">
+      <% if @event.approved? %>
+        <%= render "admin/event_process_action", return_to: params[:return_to],
+              url: event_toggle_approved_admin_path(@event), label: "Mark as pending", button_class: "btn btn-default",
+              confirm: "This organization was previously approved. Are you sure you want to undo that and mark it as pending?" %>
+      <% else %>
+        <%= render "admin/event_process_action", return_to: params[:return_to],
+              url: event_toggle_approved_admin_path(@event), label: "Approve", button_class: "btn bg-success" %>
+      <% end %>
+
+      <%= render "admin/event_process_action", return_to: params[:return_to],
+            url: event_reject_admin_path(@event), label: "Reject", button_class: "btn btn--destroy",
+            confirm: "Are you sure you want to reject this organization? This can not be undone.", danger: true %>
+    </footer>
   <% end %>
-
-  <%= form_with(model: false, local: true, url: event_reject_admin_path(@event), method: :put) do |form| %>
-    <%= form.submit "Reject event",
-      data: { turbo_confirm: "Are you sure you want to reject this event? This can not be undone.", turbo_confirm_danger: true } %>
-  <% end %>
-
-<% elsif !@event.rejected? %>
-  <p>This event is currently <strong>pending</strong> your review.</p>
-
-  <%= form_with(model: false, local: true, url: event_toggle_approved_admin_path(@event), method: :put) do |form| %>
-    <%= form.submit "Approve event" %>
-  <% end %>
-
-  <%= form_with(model: false, local: true, url: event_reject_admin_path(@event), method: :put) do |form| %>
-    <%= form.submit "Reject event",
-      data: { turbo_confirm: "Are you sure you want to reject this event? This can not be undone.", turbo_confirm_danger: true } %>
-  <% end %>
-
-<% else %>
-  <p>This event was previously <strong>rejected</strong>. This can not be undone.</p>
 <% end %>

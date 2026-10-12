@@ -1,36 +1,15 @@
 <% title "HCB Codes" %>
 
-<%= form_with local: true, class: "card overflow-visible items-center gap-2", url: hcb_codes_admin_index_path, method: :get do |form| %>
-  <%= render "events/filters/search", form: %>
-  <div class="flex flex-col sm:flex-row items-center gap-2 mt-2">
-  <%= form.label :has_receipt do %>
-    <b class="mr1">Receipt status:</b>
-    <%= form.select :has_receipt, [["All", "all"], ["Has receipt", "yes"], ["Missing receipt", "no"], ["Lost receipt", "lost"]], selected: @has_receipt %>
-  <% end %>
-  <%= form.label :start_date do %>
-      <b>Start date:</b>
-      <%= form.text_field :start_date, value: @start_date, placeholder: "YYYY-MM-DD" %>
-  <% end %>
-  <%= form.label :end_date do %>
-      <b class="ml1">End date:</b>
-      <%= form.text_field :end_date, value: @end_date, placeholder: "YYYY-MM-DD" %>
-  <% end %>
-  <div class="ml-auto">
-    <%= form.submit "Search" %>
-    <%= link_to @params.merge(format: :csv) do %>
-      <button type="button" class="btn" <%= "disabled" if @hcb_codes.total_count == 0 %>>Export <%= pluralize @hcb_codes.total_count, "record" %></button>
-    <% end %>
-  </div>
+<%= form_with local: true, class: "card filter-form flex flex-col gap-2.5 p-3", url: hcb_codes_admin_index_path, method: :get do |form| %>
+  <div class="flex flex-wrap items-center gap-2">
+    <%= render "events/filters/search", form: %>
+    <%= form.select :has_receipt, [["Any receipt status", "all"], ["Has receipt", "yes"], ["Missing receipt", "no"], ["Lost receipt", "lost"]], selected: @has_receipt %>
+    <%= render "admin/date_range_filter", start_date: @start_date, end_date: @end_date %>
+    <%= render "admin/filters/actions", form:, export_count: @hcb_codes.total_count, export_params: @params %>
   </div>
 <% end %>
 
-<div class="flex items-center mb2 flex-col sm:flex-row">
-  <div class="flex-grow">
-    <%= page_entries_info @hcb_codes, entry_name: "HCB codes" %>
-  </div>
-  <%= paginate @hcb_codes %>
-</div>
-
+<div class="table-container">
 <table>
   <thead>
     <tr>
@@ -55,7 +34,7 @@
             <span>⚠️ (Overdue)</span>
           <% end %>
         </td>
-        <td><%= link_to hcb_code.memo, url_for(hcb_code) %></td>
+        <td><%= link_to hcb_code.memo, url_for(hcb_code), data: admin_popover_data_for(hcb_code) %></td>
         <td><%= link_to hcb_code.event&.name, hcb_code.event %></td>
         <td>
           <% if hcb_code.stripe_card? && hcb_code.card&.user %>
@@ -98,4 +77,10 @@
   </tbody>
 </table>
 
-<%= paginate @hcb_codes %>
+<div class="table-footer">
+  <div class="flex-grow">
+    <%= page_entries_info @hcb_codes, entry_name: "HCB codes" %>
+  </div>
+  <%= paginate @hcb_codes %>
+</div>
+</div>

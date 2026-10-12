@@ -386,40 +386,6 @@
     },
     {
       "warning_type": "Cross-Site Scripting",
-      "warning_code": 4,
-      "fingerprint": "a74cb8cbaf3547f667ba7a44a440c70a62ee5754c7b007e662bdd1ca4ce7e010",
-      "check_name": "LinkToHref",
-      "message": "Potentially unsafe model attribute in `link_to` href",
-      "file": "app/views/admin/invoice_process.html.erb",
-      "line": 37,
-      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
-      "code": "link_to(\"URL\", Invoice.find(params[:id]).hosted_invoice_url, :target => :_blank)",
-      "render_path": [
-        {
-          "type": "controller",
-          "class": "AdminController",
-          "method": "invoice_process",
-          "line": 1099,
-          "file": "app/controllers/admin_controller.rb",
-          "rendered": {
-            "name": "admin/invoice_process",
-            "file": "app/views/admin/invoice_process.html.erb"
-          }
-        }
-      ],
-      "location": {
-        "type": "template",
-        "template": "admin/invoice_process"
-      },
-      "user_input": "Invoice.find(params[:id]).hosted_invoice_url",
-      "confidence": "Weak",
-      "cwe_id": [
-        79
-      ],
-      "note": "These urls are being set by stripe calls to point to the real stripe invoice urls."
-    },
-    {
-      "warning_type": "Cross-Site Scripting",
       "warning_code": 2,
       "fingerprint": "b6cd6d311c7315e162f5ea02227650137030c6eb44ac30d73e9294c5641f523c",
       "check_name": "CrossSiteScripting",
@@ -515,40 +481,6 @@
         79
       ],
       "note": ""
-    },
-    {
-      "warning_type": "Cross-Site Scripting",
-      "warning_code": 4,
-      "fingerprint": "bdc62cbde9149ebea74063a4d9163076b449ce86fc22403ddeb7da6622f2363a",
-      "check_name": "LinkToHref",
-      "message": "Potentially unsafe model attribute in `link_to` href",
-      "file": "app/views/admin/invoice_process.html.erb",
-      "line": 32,
-      "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
-      "code": "link_to(Invoice.find(params[:id]).stripe_invoice_id, Invoice.find(params[:id]).stripe_dashboard_url, :target => :_blank)",
-      "render_path": [
-        {
-          "type": "controller",
-          "class": "AdminController",
-          "method": "invoice_process",
-          "line": 1099,
-          "file": "app/controllers/admin_controller.rb",
-          "rendered": {
-            "name": "admin/invoice_process",
-            "file": "app/views/admin/invoice_process.html.erb"
-          }
-        }
-      ],
-      "location": {
-        "type": "template",
-        "template": "admin/invoice_process"
-      },
-      "user_input": "Invoice.find(params[:id]).stripe_dashboard_url",
-      "confidence": "Weak",
-      "cwe_id": [
-        79
-      ],
-      "note": "It generates a link to a stripe resource based on the model name and the id in 'has_stripe_dashboard_url.rb' which both should be safe."
     },
     {
       "warning_type": "Cross-Site Scripting",

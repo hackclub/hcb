@@ -257,7 +257,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :admin, only: [] do
+  resources :admin, only: [:index] do
     collection do
       get "nav", to: "admin#nav"
       get "bank_accounts", to: "admin#bank_accounts"
@@ -349,7 +349,6 @@ Rails.application.routes.draw do
   end
 
   namespace :admin do
-    root to: redirect("/admin/events")
     namespace :ledger_audits do
       resources :tasks, only: [:index, :show, :create] do
         post :reviewed

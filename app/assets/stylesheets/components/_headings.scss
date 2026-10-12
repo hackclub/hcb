@@ -37,7 +37,7 @@ h3.heading {
 .eyebrow {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--color-text-secondary);
+  color: var(--color-text-secondary, currentColor);
   text-transform: uppercase;
   margin-bottom: 0.5rem;
   margin-top: 0.5rem;
