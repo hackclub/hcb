@@ -20,7 +20,10 @@ class ReceiptablesController < ApplicationController
       flash[:success] = "Marked no/lost receipt on that transaction."
       # Signed link visitors can't view the transaction itself, so send them
       # back where they came from, reusing the secret they arrived with.
-      redirect_to from_signed_link? ? attach_receipt_hcb_code_path(@receiptable, s: params[:s]) : @receiptable
+      fallback = from_signed_link? ? attach_receipt_hcb_code_path(@receiptable, s: params[:s]) : @receiptable
+      # ApplicationController already runs return_to through url_from; doing it
+      # again here keeps this redirect safe on its own terms (as logins#create does).
+      redirect_to url_from(params[:return_to]) || fallback
     else
       flash[:error] = "Failed to mark that transaction as no/lost receipt."
       redirect_back(fallback_location: @receiptable)
