@@ -32,7 +32,7 @@
               <%= form.submit "Onboard", class: "btn bg-success" %>
             <% end %>
           <% end %>
-          <%= link_to "Mark terminated", employee_terminate_path(employee), method: :post if employee.onboarded? %>
+          <%= link_to "Mark terminated", employee_terminate_path(employee), data: { turbo_method: :post } if employee.onboarded? %>
         </td>
       </tr>
     <% end %>

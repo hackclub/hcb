@@ -7,6 +7,79 @@ RSpec.describe Reimbursement::Report, type: :model do
     LegalEntity::PayoutMethod::AchTransfer.new(account_number: "12345678", routing_number: "021000021")
   end
 
+  describe "validations" do
+    context "when backed by a card grant" do
+      # The card_grant factory's after_create :transfer_money callback runs
+      # DisbursementService::Create, which requires a funded source event.
+      # These specs only care about the card_grant FK, not real disbursement
+      # mechanics, so we stub the callback the same way spec/models/card_grant_spec.rb does.
+      before do
+        allow_any_instance_of(CardGrant).to receive(:transfer_money)
+      end
+
+      it "rejects event_id changes" do
+        source_event = create(:event)
+        destination_event = create(:event)
+        user = create(:user)
+        card_grant = create(:card_grant, event: source_event, user:, sent_by: user)
+        report = create(:reimbursement_report, user:, event: source_event, card_grant:)
+
+        report.event = destination_event
+
+        expect(report.valid?(:update)).to be(false)
+        expect(report.errors[:base]).to include(/card grant/i)
+      end
+
+      it "permits updates that do not change the event" do
+        source_event = create(:event)
+        user = create(:user)
+        card_grant = create(:card_grant, event: source_event, user:, sent_by: user)
+        report = create(:reimbursement_report, user:, event: source_event, card_grant:, name: "Old Name")
+
+        report.name = "New Name"
+
+        expect(report.valid?(:update)).to be(true)
+      end
+    end
+
+    context "when not backed by a card grant" do
+      it "permits event_id changes at the model layer" do
+        source_event = create(:event)
+        destination_event = create(:event)
+        user = create(:user)
+        report = create(:reimbursement_report, user:, event: source_event)
+
+        report.event = destination_event
+
+        expect(report.valid?(:update)).to be(true)
+      end
+    end
+  end
+
+  describe ".search" do
+    let!(:report) do
+      user = create(:user, full_name: "Orpheus Dinosaur", email: "orpheus@hackclub.com")
+      create(:reimbursement_report, user:, name: "Sticker printing")
+    end
+
+    it "matches on the reimbursee's email" do
+      expect(described_class.search("orpheus@hackclub.com")).to eq([report])
+      expect(described_class.search("@hackclub.com")).to eq([report])
+    end
+
+    it "matches on the reimbursee's full name" do
+      expect(described_class.search("dinosaur")).to eq([report])
+    end
+
+    it "matches on the report name" do
+      expect(described_class.search("sticker")).to eq([report])
+    end
+
+    it "returns nothing when there's no match" do
+      expect(described_class.search("nobody@example.com")).to be_empty
+    end
+  end
+
   describe "payout method association" do
     let(:user) { create(:user) }
 
@@ -46,6 +119,33 @@ RSpec.describe Reimbursement::Report, type: :model do
 
         expect(report.reload.payout_method).to eq(original_pm)
       end
+    end
+  end
+
+  describe "the invitation email" do
+    it "is sent when somebody else invited the user" do
+      inviter = create(:user)
+
+      expect {
+        create(:reimbursement_report, user: create(:user), inviter:)
+      }.to have_enqueued_mail(ReimbursementMailer, :invitation)
+    end
+
+    it "is not sent when the user created the report themselves" do
+      user = create(:user)
+
+      expect {
+        create(:reimbursement_report, user:, inviter: user)
+      }.not_to have_enqueued_mail(ReimbursementMailer, :invitation)
+    end
+
+    # Eventless draft reports come in from Discord, SMS, and email, and the
+    # invitation email is event-scoped from its subject line down. Enqueuing it
+    # for one raised NoMethodError on nil in the mail delivery job.
+    it "is not sent for an eventless draft report" do
+      expect {
+        create(:reimbursement_report, user: create(:user), event: nil, inviter: nil)
+      }.not_to have_enqueued_mail(ReimbursementMailer, :invitation)
     end
   end
 end

@@ -62,11 +62,16 @@
             <%= render partial: "hcb_codes/transaction_category_form", locals: { model: hcb_code.ct || hcb_code.pt } %>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2">
-            <%= button_to "💸 Approve and send", approve_increase_check_path(check), method: :post,
-                  form_class: "contents", class: "btn bg-success",
-                  data: { turbo_frame: "_top", turbo_confirm: "Are you sure you want to send this check?" } %>
-          </div>
+          <%= form_with(model: false, local: true, url: approve_increase_check_path(check), method: :post, class: "flex flex-col gap-3.5 overflow-visible", data: { turbo_frame: "_top" }) do |form| %>
+            <% if check.payment.present? %>
+              <%= render partial: "payments/classification_input", locals: { form:, classification: check.payment.classification } %>
+            <% end %>
+
+            <div>
+              <%= button_tag "💸 Approve and send", name: nil, class: "btn bg-success",
+                    data: { turbo_confirm: "Are you sure you want to send this check?" } %>
+            </div>
+          <% end %>
         </section>
 
         <%= render "admin/review_reject", url: reject_increase_check_path(check), noun: "check" %>

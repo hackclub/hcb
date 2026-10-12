@@ -113,8 +113,8 @@
       <% if @opdr.organizer_position.deleted_at.nil? && (@opdr.under_review? || @opdr.assigned?) %>
         <%= link_to "Delete organizer ⚠️☣☠",
                     organizer_path(@opdr.organizer_position.id),
-                    method: :delete,
                     data: {
+                      turbo_method: :delete,
                       turbo_confirm: "You are about to remove " \
                               "#{@opdr.organizer_position.user.initial_name} " \
                               "from #{@opdr.event.name}. This has PERMANENT " \

@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 class MyController < ApplicationController
-  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_icon, :tasks, :payroll, :pay, :feed] # do not force pundit
+  skip_after_action :verify_authorized, only: [:activities, :toggle_admin_activities, :cards, :missing_receipts_list, :missing_receipts_icon, :inbox, :reimbursements, :reimbursements_section, :reimbursements_icon, :tasks, :payroll, :pay, :feed] # do not force pundit
   skip_before_action :signed_in_user, only: [:cards, :reimbursements]
   before_action :signed_in_or_unverified_user, only: [:cards, :reimbursements]
-  before_action :set_reimbursement_reports, only: [:reimbursements, :reimbursements_icon]
+  before_action :set_reimbursement_reports, only: [:reimbursements, :reimbursements_section, :reimbursements_icon]
 
   def activities
     @before = params[:before] || Time.now
@@ -122,9 +122,14 @@ class MyController < ApplicationController
 
     hcb_codes_missing_receipt =
       if @grouping == "due_date"
-        # Soonest deadline first; charges with no deadline sort last, newest first.
+        # Soonest deadline first, then charges still pending, then charges that
+        # never had a deadline; both undated groups newest first.
         hcb_codes_missing_receipt.sort_by do |hcb_code|
-          hcb_code.receipt_due_at ? [0, hcb_code.receipt_due_at.to_i] : [1, -hcb_code.created_at.to_i]
+          if hcb_code.receipt_due_at
+            [0, hcb_code.receipt_due_at.to_i]
+          else
+            [hcb_code.canonical_transactions.empty? ? 1 : 2, -hcb_code.created_at.to_i]
+          end
         end
       else
         hcb_codes_missing_receipt.sort_by(&:created_at).reverse
@@ -138,7 +143,7 @@ class MyController < ApplicationController
     end
 
     @hcb_codes = Kaminari.paginate_array(hcb_codes_missing_receipt)
-                         .page(params[:page]).per(params[:per] || 15)
+                         .page(params[:page]).per(safe_per(15))
 
     if @grouping == "due_date"
       # @hcb_codes is already in due date order, so group_by preserves it.
@@ -163,18 +168,16 @@ class MyController < ApplicationController
   def reimbursements
     return unless signed_in?
 
-    case params[:filter]
-    when "mine"
-      @reports = @my_reports
-    when "review"
-      @reports = @reports_to_review
-    else
-      @reports = @my_reports.or(@reports_to_review)
-    end
-
-    @reports = @reports.search(params[:q]) if params[:q].present?
-
+    @sections = reimbursement_sections
     @payout_method = current_user.default_payout_method&.details
+  end
+
+  def reimbursements_section
+    @section = params[:section].to_sym
+    @reports = reimbursement_sections.fetch(@section)
+                                     .order(created_at: :desc)
+                                     .includes(:user, :event, :payout_holding)
+                                     .page(params[:page]).per(safe_per(10))
   end
 
   def reimbursements_icon
@@ -215,7 +218,7 @@ class MyController < ApplicationController
     @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
     @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
     @payments = @payments.where(aasm_state: "rejected") if params[:status] == "canceled"
-    @payments = @payments.page(params[:page] || 1).per(params[:per] || 10)
+    @payments = @payments.page(params[:page] || 1).per(safe_per(10))
 
     @filter_options = [
       { key: "status", label: "Status", type: "select", options: %w[deposited in_transit canceled] }
@@ -253,7 +256,20 @@ class MyController < ApplicationController
     manager_events = current_user.events
                                  .joins(:organizer_positions)
                                  .where(organizer_positions: { user_id: current_user.id, role: :manager })
-    @reports_to_review = Reimbursement::Report.submitted.where(event: manager_events, reviewer_id: nil).or(current_user.assigned_reimbursement_reports.submitted)
+    # Managers can't approve their own reports, so those only appear under @my_reports
+    @reports_assigned_to_me = current_user.assigned_reimbursement_reports.submitted.where.not(user: current_user)
+    @unassigned_reports_to_review = Reimbursement::Report.submitted.where(event: manager_events, reviewer_id: nil).where.not(user: current_user)
+    @reports_to_review = @reports_assigned_to_me.or(@unassigned_reports_to_review)
+  end
+
+  def reimbursement_sections
+    {
+      assigned: @reports_assigned_to_me,
+      unassigned: @unassigned_reports_to_review,
+      mine: @my_reports,
+    }.transform_values do |reports|
+      params[:q].present? ? reports.search(params[:q]) : reports
+    end
   end
 
 end

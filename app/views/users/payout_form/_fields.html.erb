@@ -99,7 +99,8 @@
   <% end %>
 </section>
 
-<section data-behavior="wise_transfer_payout_method_inputs" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::WiseTransfer) %>" x-data="{ currency: <%= payout_method.try(:currency) ? "'#{payout_method.currency}'" : "null" %>, amount: null, account_type: <%= payout_method.try(:account_type) ? "'#{payout_method.account_type}'" : "null" %>, use_same_email_for_interac: <%= payout_method.try(:use_same_email_for_interac) ? "'#{payout_method.use_same_email_for_interac}'" : "false" %>, email: null }">
+<% wise_transfer_x_data = { currency: payout_method.try(:currency), amount: nil, account_type: payout_method.try(:account_type), use_same_email_for_interac: (payout_method.try(:use_same_email_for_interac) ? payout_method.use_same_email_for_interac.to_s : false), email: nil } %>
+<section data-behavior="wise_transfer_payout_method_inputs" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::WiseTransfer) %>" x-data="<%= wise_transfer_x_data.to_json %>">
   <%= form.fields_for :payout_method_wise_transfer, detail_for.call(LegalEntity::PayoutMethod::WiseTransfer) do |form| %>
     <p class="muted mt-2 mb-5">
       We've integrated Wise into HCB to offer international reimbursements to over 100 countries. HCB never charges fees on reimbursements, however Wise will charge processing fees to the organization reimbursing you. An account with Wise is not required; funds will be sent directly via a local bank transfer.
@@ -130,14 +131,11 @@
 <% mask = ->(value) { value = value.to_s; "•" * [value.length - 4, 0].max + value[[-4, -value.length].max..] } %>
 <% routing_display = ach_errored ? ach.routing_number : mask.call(ach&.routing_number) %>
 <% account_display = ach_errored ? ach.account_number : mask.call(ach&.account_number) %>
+<% ach_x_data = { routingNumber: routing_display, accountNumber: account_display, editing: ach_errored } %>
 <section
   data-behavior="ach_transfer_payout_method_inputs"
   class="<%= "hidden" unless ach %>"
-  x-data="
-  {
-    routingNumber: '<%= routing_display %>',
-    accountNumber: '<%= account_display %>',
-    editing: <%= ach_errored %>,
+  x-data="Object.assign(<%= ach_x_data.to_json %>, {
     toggle() {
       if(!this.editing) {
         this.routingNumber = '';
@@ -145,11 +143,11 @@
         this.editing = true;
       } else if (this.routingNumber == '' && this.accountNumber == '') {
         this.editing = false;
-        this.routingNumber = '<%= ach_errored ? "" : routing_display %>';
-        this.accountNumber = '<%= ach_errored ? "" : account_display %>';
+        this.routingNumber = <%= (ach_errored ? "" : routing_display).to_json %>;
+        this.accountNumber = <%= (ach_errored ? "" : account_display).to_json %>;
       }
     }
-  }">
+  })">
   <%= form.fields_for :payout_method_ach_transfer, ach || LegalEntity::PayoutMethod::AchTransfer.new do |form| %>
     <p class="muted mt-2 mb-5">
       ACH transfers can take between 1 and 3 business days to arrive in your bank account. They're the fastest option for receiving reimbursements in the United States but are not supported internationally.

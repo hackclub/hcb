@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <div id="flash-container" class="fixed bottom-0 right-0 z-[999999] flex w-[50ch] max-w-full flex-col overflow-hidden">
   <% flash.to_h.except("imported_transactions", "file").each do |key, value| %>
     <article

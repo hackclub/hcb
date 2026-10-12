@@ -44,8 +44,6 @@ class FlavorTextService
 
   def holiday_flavor_texts
     [
-      *(["<a href='https://hack.af/hcb-stickers?#{URI.encode_www_form "prefill_Recipient Name": @user.name, "prefill_Login Email": @user.email, prefill_Organization: @user.events.first&.name}' target='_blank' style='color: inherit'>Want a gift?</a>".html_safe] if @user),
-      *(["<a href='https://hack.af/hcb-stickers?#{URI.encode_www_form "prefill_Recipient Name": @user.name, "prefill_Login Email": @user.email, prefill_Organization: @user.events.first&.name}' target='_blank' style='color: inherit'>A present, from us to you</a>".html_safe] if @user),
       "Hacky Holidays",
       "let there be snow",
       "ho ho ho ho",
@@ -357,7 +355,7 @@ class FlavorTextService
       "Receipts are kinda like a recipe for money",
       "Receipts are kinda like a recipe for a nonprofit",
       "Receipts are kinda like a recipe for losing money",
-      "Check the back of this page for an exclusive promo code!<!--\n\n\n\n\n\n\n\n          Use promo code STICKERSNOW for free HCB stickers.\n\n          (Alternatively, you could just get some here: https://hack.af/hcb-stickers)\n\n\n\n\n\n\n\n          -->".html_safe,
+      "Check the back of this page for an exclusive promo code!<!--\n\n\n\n\n\n\n\n          Use promo code STICKERSNOW for free HCB stickers.\n\n\n\n\n\n\n\n          -->".html_safe,
       "You've found the 5th easter egg on the site!",
       "Happiness > Wealthiness, but I didn't tell you that",
       "A wallet is fine too",
@@ -446,7 +444,6 @@ class FlavorTextService
       "Where's the money lebowski?!",
       "We put the 'poggers' in 'taxes' (there isn't any)",
       "We put the 'fun' in 'accrual-based accounting' (there isn't any)",
-      *(["<a href='https://hack.af/hcb-stickers?#{URI.encode_www_form "prefill_Recipient Name": @user.name, "prefill_Login Email": @user.email, prefill_Organization: @user.events.first&.name}' target='_blank' style='color: inherit'>Want stickers?</a>".html_safe] if @user),
       "🐨 Koalaty banking",
       "If money doesn’t grow on trees, then why do banks have branches?",
       "I was gonna tell a Bank joke, but ran out of interest",

@@ -57,6 +57,9 @@
           <%= render "admin/review_fact", label: "BIC / SWIFT", value: wire.bic_code, copy: wire.bic_code, fs_exclude: true %>
           <%= render "admin/review_fact", label: "Account number", value: wire.account_number, copy: wire.account_number, fs_exclude: true %>
           <%= render "admin/review_fact", label: "Currency", value: wire.currency %>
+          <% if wire.uetr.present? %>
+            <%= render "admin/review_fact", label: "UETR", value: wire.uetr, copy: wire.uetr %>
+          <% end %>
 
           <% address = [wire.address_line1, wire.address_line2, wire.address_city, wire.address_state, wire.address_postal_code, wire.recipient_country].compact_blank %>
           <%= render "admin/review_fact", label: "Address", value: address.join(", "), copy: address.join(", ") %>
@@ -72,6 +75,8 @@
           <%= button_to "Edit wire", edit_wire_path(wire), method: :get, class: "btn btn-default", form_class: "contents", data: { turbo_frame: "_top" } %>
         </div>
       </section>
+
+      <%= render "events/mission_statement", event: wire.event %>
 
       <%= render "admin/review_receipts", hcb_code: %>
     </div>
@@ -94,6 +99,10 @@
                 <span class="block text-[0.8125rem] leading-snug opacity-60">Billed to <%= wire.event.name %>.</span>
               </span>
             </label>
+
+            <% if wire.payment.present? %>
+              <%= render partial: "payments/classification_input", locals: { form:, classification: wire.payment.classification } %>
+            <% end %>
 
             <div>
               <%= button_tag "💸 Approve and send automatically", name: nil, class: "btn bg-success",

@@ -33,7 +33,7 @@
         options: { include_blank: "All", selected: @country } %>
 
   <%= render layout: "admin/filters/field", locals: { label: "Point of contact" } do %>
-    <%= combobox_tag :point_of_contact_id, user_search_admin_index_path, placeholder: "Anyone", value: @point_of_contact&.to_combobox_display %>
+    <%= combobox_tag :point_of_contact_id, user_search_admin_index_path, placeholder: "Anyone", selected: @point_of_contact %>
   <% end %>
 
   <%= render layout: "admin/filters/field", locals: { label: "Activity since" } do %>

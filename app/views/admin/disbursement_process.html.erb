@@ -38,15 +38,27 @@
           <%= render "admin/review_fact", label: (disbursement.rejected? ? "Rejected by" : "Fulfilled by"), value: fulfiller %>
         </div>
       </section>
+
+      <%= render "events/mission_statement", event: disbursement.source_event, label: "From #{disbursement.source_event.name}" %>
+      <%= render "events/mission_statement", event: disbursement.destination_event, label: "To #{disbursement.destination_event.name}" %>
     </div>
 
     <div class="flex flex-col gap-4 min-w-0">
+      <% can_approve = policy(disbursement).approve? %>
+      <% can_reject = policy(disbursement).reject? %>
+
       <% if disbursement.rejected? %>
         <section class="card flex flex-col gap-3.5 overflow-visible">
           <p class="m0">This transfer was rejected — there's nothing to process.</p>
         </section>
       <% elsif disbursement.pending? %>
-        <%= render "admin/review_reject", url: disbursement_reject_admin_path(disbursement) %>
+        <% if can_reject %>
+          <%= render "admin/review_reject", url: disbursement_reject_admin_path(disbursement) %>
+        <% else %>
+          <section class="card flex flex-col gap-3.5 overflow-visible">
+            <p class="m0 muted">You don't have permission to reject this transfer.</p>
+          </section>
+        <% end %>
       <% else %>
         <section class="card flex flex-col gap-3.5 overflow-visible">
           <h3 class="eyebrow m-0">Approve</h3>
@@ -58,14 +70,24 @@
             <% end %>
           </span>
 
-          <div class="flex flex-wrap items-center gap-2">
-            <%= form_with(model: false, local: true, url: disbursement_approve_admin_path(disbursement), method: :post, class: "contents", data: { turbo_frame: "_top" }) do %>
-              <%= button_tag "Approve transfer", name: nil, class: "btn bg-success" %>
-            <% end %>
-          </div>
+          <% if can_approve %>
+            <div class="flex flex-wrap items-center gap-2">
+              <%= form_with(model: false, local: true, url: disbursement_approve_admin_path(disbursement), method: :post, class: "contents", data: { turbo_frame: "_top" }) do %>
+                <%= button_tag "Approve transfer", name: nil, class: "btn bg-success" %>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="m0 muted">You don't have permission to approve this transfer.</p>
+          <% end %>
         </section>
 
-        <%= render "admin/review_reject", url: disbursement_reject_admin_path(disbursement) %>
+        <% if can_reject %>
+          <%= render "admin/review_reject", url: disbursement_reject_admin_path(disbursement) %>
+        <% else %>
+          <section class="card flex flex-col gap-3.5 overflow-visible">
+            <p class="m0 muted">You don't have permission to reject this transfer.</p>
+          </section>
+        <% end %>
       <% end %>
     </div>
 

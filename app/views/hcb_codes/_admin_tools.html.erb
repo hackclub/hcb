@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <%= turbo_frame_tag "#{@hcb_code.public_id}:admin_tools", target: "_top" do %>
   <% admin_tool("mt3 pb1") do %>
     <div class="overflow-x-auto mb3 max-w-full">
@@ -16,15 +18,15 @@
             locals: {
               canonical_transactions:
                 @hcb_code
-                  .canonical_pending_transactions
-                  .preload(:category)
-                  .strict_loading,
+                .canonical_pending_transactions
+                .preload(:category)
+                .strict_loading,
               canonical_pending_transactions:
                 @hcb_code
-                  .canonical_transactions
-                  .preload(:category)
-                  .strict_loading
-                  .to_a,
+                .canonical_transactions
+                .preload(:category)
+                .strict_loading
+                .to_a,
               t_transaction: @hcb_code.ach_transfer&.t_transaction
             }
           ) %>

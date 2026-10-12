@@ -37,6 +37,9 @@ class RecurringDonationsController < ApplicationController
       redirect_to pay_event_recurring_donation_path(@event, @recurring_donation)
     else
       @monthly = true
+      @top_donors = []
+      @recent_donors = []
+
       render "donations/start_donation", status: :unprocessable_content
     end
   end

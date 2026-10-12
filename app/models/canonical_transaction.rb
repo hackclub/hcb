@@ -139,7 +139,6 @@ class CanonicalTransaction < ApplicationRecord
 
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
-    ledger_item.refresh!
   end
 
   after_commit if: -> { previous_changes.key?("ledger_item_id") } do
@@ -154,6 +153,14 @@ class CanonicalTransaction < ApplicationRecord
       PendingEventMappingEngine::Settle::Single::Stripe.new(canonical_transaction: self).run
       EventMappingEngine::Map::Single::Stripe.new(canonical_transaction: self).run
     end
+  end
+
+  # The moment this transaction actually settled, which for Stripe and Column
+  # transactions is earlier than when we ingested it.
+  def datetime
+    raw_stripe_transaction&.stripe_transaction&.dig("created")&.then { |t| Time.at(t) } ||
+      raw_column_transaction&.column_transaction&.dig("effective_at")&.then { |t| Time.parse(t) } ||
+      created_at
   end
 
   def smart_memo
@@ -179,7 +186,13 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   def likely_card_transaction_refund?
-    likely_stripe_card_transaction? && amount_cents > 0
+    amount_cents > 0 && (likely_stripe_card_transaction? || likely_card_dispute_payout?)
+  end
+
+  # Won disputes are paid out from Stripe to Column with the card charge's
+  # short code, so they map back to the card charge as a RawColumnTransaction.
+  def likely_card_dispute_payout?
+    transaction_source_type == RawColumnTransaction.name && !!local_hcb_code&.card_charge?
   end
 
   def likely_stripe_card_transaction?
@@ -493,9 +506,8 @@ class CanonicalTransaction < ApplicationRecord
           Rails.error.unexpected("CanonicalTransaction #{id} has calculated a different ledger item from its local_hcb_code. (#{calculated_ledger_item&.id} vs. #{local_hcb_code.ledger_item&.id})")
         end
 
-        li = calculated_ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        li = calculated_ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime:, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
         update!(ledger_item: li)
-        li.map!
       end
     end
   end

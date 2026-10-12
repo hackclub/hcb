@@ -16,7 +16,7 @@
   input[type='date'],
   select,
   .input,
-  .hw-combobox__main__wrapper,
+  .combobox__field,
   .btn,
   input[type='submit'] {
     height: var(--filter-height);
@@ -53,18 +53,18 @@
     }
   }
 
-  .hw-combobox {
+  .combobox {
     flex: 0 1 18rem;
     width: 18rem;
     min-width: 0;
   }
 
-  .hw-combobox__main__wrapper {
+  .combobox__field {
     width: 100%;
     max-width: none;
   }
 
-  .hw-combobox__input {
+  .combobox__input {
     width: 100%;
     min-width: 0;
     font-size: 0.875rem;
@@ -83,7 +83,7 @@
     input[type='date'],
     select,
     .input,
-    .hw-combobox {
+    .combobox {
       width: 100%;
       max-width: none;
       min-width: 0;

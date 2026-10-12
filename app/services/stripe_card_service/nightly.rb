@@ -9,7 +9,7 @@ module StripeCardService
     private
 
     # [@garyhtou] This really should be done via linking the CT to a Stripe Card
-    # via an new HCB Code type.
+    # via a new HCB Code type.
     #
     #   The HCB Code's memo would use a default custom stripe card memo that
     #   supersedes the CT's default memo (from plaid). That default custom

@@ -87,7 +87,6 @@ class CanonicalPendingTransaction < ApplicationRecord
   belongs_to :raw_pending_outgoing_disbursement_transaction, optional: true
   belongs_to :raw_pending_stripe_service_fee_transaction, optional: true
   belongs_to :raw_pending_fee_revenue_transaction, optional: true
-  belongs_to :raw_pending_fee_reimbursement_transaction, optional: true
   belongs_to :increase_check, optional: true
   belongs_to :paypal_transfer, optional: true
   belongs_to :wire, optional: true
@@ -125,7 +124,6 @@ class CanonicalPendingTransaction < ApplicationRecord
   scope :bank_fee, -> { where("raw_pending_bank_fee_transaction_id is not null") }
   scope :stripe_service_fee, -> { where("raw_pending_stripe_service_fee_transaction_id is not null") }
   scope :fee_revenue, -> { where("raw_pending_fee_revenue_transaction_id is not null") }
-  scope :fee_reimbursement, -> { where("raw_pending_fee_reimbursement_transaction_id is not null") }
   scope :incoming_disbursement, -> { where("raw_pending_incoming_disbursement_transaction_id is not null") }
   scope :outgoing_disbursement, -> { where("raw_pending_outgoing_disbursement_transaction_id is not null") }
   scope :reimbursement_expense_payout, -> { where.not(reimbursement_expense_payout_id: nil) }
@@ -181,7 +179,6 @@ class CanonicalPendingTransaction < ApplicationRecord
 
   after_commit if: -> { ledger_item.present? } do
     ledger_item.map!
-    ledger_item.refresh!
   end
 
   after_commit if: -> { previous_changes.key?("ledger_item_id") } do
@@ -242,7 +239,7 @@ class CanonicalPendingTransaction < ApplicationRecord
                         .where(canonical_pending_event_mapping: { event_id: event.id, subledger_id: subledger&.id })
                         .where(fronted: true)
                         .order(date: :asc, id: :asc)
-    pts_sum = pts.map(&:amount_cents).sum
+    pts_sum = pts.sum(&:amount_cents)
     return 0 if pts_sum.negative?
 
     cts_sum = local_hcb_code.canonical_transactions
@@ -253,7 +250,7 @@ class CanonicalPendingTransaction < ApplicationRecord
     # PTs that were chronologically created first in an HcbCode are first
     # responsible for "contributing" to the fronted amount. After a PT's
     # amount_cents is fully allocated to the fronted amount, the next
-    # chronological PT in the hcb_code is responsible for allocating it's own
+    # chronological PT in the hcb_code is responsible for allocating its own
     # amount_cents towards the fronted amount.
     #
     # The code below is a simplified implementation of that "algorithm".
@@ -270,6 +267,12 @@ class CanonicalPendingTransaction < ApplicationRecord
     else
       0
     end
+  end
+
+  # The moment this transaction actually occurred, which for Stripe
+  # authorizations is earlier than when we ingested it.
+  def datetime
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("created")&.then { |t| Time.at(t) } || created_at
   end
 
   def smart_memo
@@ -479,11 +482,18 @@ class CanonicalPendingTransaction < ApplicationRecord
     safely do
       reload_local_hcb_code
       ActiveRecord::Base.transaction do
-        li = local_hcb_code.ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime: created_at, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        li = calculated_ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime:, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
         update!(ledger_item: li)
-        li.map!
       end
     end
+  end
+
+  # Reuse an existing ledger item before creating a new one. Prefer the linked
+  # object's item (e.g. an invoice eagerly creates its ledger item on creation,
+  # before any CPT exists), then fall back to the HCB code's item for items that
+  # are still grouped that way.
+  def calculated_ledger_item
+    @calculated_ledger_item ||= linked_object&.ledger_item || local_hcb_code.ledger_item
   end
 
   def write_hcb_code

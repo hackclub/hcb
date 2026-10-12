@@ -32,7 +32,12 @@ RSpec.describe LedgersController, type: :controller do
 
       let(:item) { create(:ledger_item) }
 
-      before { create(:ledger_mapping, :on_primary, ledger:, ledger_item: item) }
+      before do
+        create(:ledger_mapping, :on_primary, ledger:, ledger_item: item)
+        # Pin ct_count so this item (which has no real CTs) isn't filtered out
+        # as empty (see Ledger::Query#execute).
+        item.update_columns(ct_count: 1)
+      end
 
       it "renders the shift-click-to-rename widget with the memo as alt text" do
         get :show, params: { id: ledger.to_param }

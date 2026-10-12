@@ -81,6 +81,8 @@
         </div>
       </section>
 
+      <%= render "events/mission_statement", event: transfer.event %>
+
       <%= render "admin/review_receipts", hcb_code: %>
     </div>
 
@@ -96,19 +98,23 @@
             <%= render partial: "hcb_codes/transaction_category_form", locals: { model: hcb_code.ct || hcb_code.pt } %>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2">
-            <%= form_with(model: false, local: true, url: ach_approve_admin_path(transfer), method: :post, class: "contents", data: { turbo_frame: "_top" }) do %>
-              <%= button_tag "#{verb} transfer", name: nil, class: "btn bg-success",
-                    data: { turbo_confirm: "Are you sure? Once an ACH transfer is sent, it cannot be un-sent." } %>
+          <%# One form for both buttons so the classification is submitted either way;
+              the realtime button overrides the action with `formaction`. %>
+          <%= form_with(model: false, local: true, url: ach_approve_admin_path(transfer), method: :post, class: "flex flex-col gap-3.5 overflow-visible", data: { turbo_frame: "_top" }) do |form| %>
+            <% if transfer.payment.present? %>
+              <%= render partial: "payments/classification_input", locals: { form:, classification: transfer.payment.classification } %>
             <% end %>
 
-            <% unless transfer.scheduled_on.present? %>
-              <%= form_with(model: false, local: true, url: ach_send_realtime_admin_path(transfer), method: :post, class: "contents", data: { turbo_frame: "_top" }) do %>
-                <%= button_tag "⚡ Send in realtime", name: nil, class: "btn btn-default",
+            <div class="flex flex-wrap items-center gap-2">
+              <%= button_tag "#{verb} transfer", name: nil, class: "btn bg-success",
+                    data: { turbo_confirm: "Are you sure? Once an ACH transfer is sent, it cannot be un-sent." } %>
+
+              <% unless transfer.scheduled_on.present? %>
+                <%= button_tag "⚡ Send in realtime", name: nil, class: "btn btn-default", formaction: ach_send_realtime_admin_path(transfer),
                       data: { turbo_confirm: "Are you sure? Once a realtime transfer is sent, it cannot be un-sent. Realtime transfers incur a $1 fee from Column, that will be covered by HCB." } %>
               <% end %>
-            <% end %>
-          </div>
+            </div>
+          <% end %>
 
           <% if transfer.scheduled_on.present? %>
             <span class="block text-[0.8125rem] leading-snug opacity-60">

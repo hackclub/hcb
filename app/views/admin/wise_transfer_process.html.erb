@@ -81,6 +81,8 @@
         </div>
       </section>
 
+      <%= render "events/mission_statement", event: transfer.event %>
+
       <%= render "admin/review_receipts", hcb_code: %>
     </div>
 
@@ -94,9 +96,15 @@
             happens after approval.
           </span>
 
-          <div class="flex flex-wrap items-center gap-2">
-            <%= button_to "💸 Approve and self-assign", approve_wise_transfer_path(transfer), method: :post, class: "btn bg-success", form_class: "contents", data: { turbo_frame: "_top" } %>
-          </div>
+          <%= form_with(model: false, local: true, url: approve_wise_transfer_path(transfer), method: :post, class: "flex flex-col gap-3.5 overflow-visible", data: { turbo_frame: "_top" }) do |form| %>
+            <% if transfer.payment.present? %>
+              <%= render partial: "payments/classification_input", locals: { form:, classification: transfer.payment.classification } %>
+            <% end %>
+
+            <div>
+              <%= button_tag "💸 Approve and self-assign", name: nil, class: "btn bg-success" %>
+            </div>
+          <% end %>
         </section>
 
         <%= render "admin/review_reject", url: reject_wise_transfer_path(transfer) %>
