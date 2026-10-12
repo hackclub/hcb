@@ -100,7 +100,16 @@
     <%= form.hidden_field :commentable_type, value: @commentable.class %>
     <%= form.hidden_field :commentable_id, value: @report.id %>
     <%= form.text_area :content, class: "card mb2 overflow-visible", placeholder: "(Optional) Describe your changes…", "data-behavior": "ctrl_enter_submit", style: "min-height: 100px" %>
-
+    <% if @report.event.present? && @report.assigned_reviewer_required? && !OrganizerPosition.role_at_least?(current_user, @report.event, :manager) && !@report.reviewer.present? %>
+      <p><%= @report.event.name %> would like you to select a reviewer for your reimbursement report.</p>
+      <div class="field">
+        <%= label_tag :reviewer_id, "Reviewer" %>
+        <%= select_tag :reviewer_id,
+        options_from_collection_for_select(@report.eligible_reviewers, :public_id, :name, @report.reviewer&.public_id),
+        prompt: "Select a reviewer...",
+        required: true %>
+      </div>
+    <% end %>
     <%= form.submit "Submit" %>
   <% end %>
 </section>
