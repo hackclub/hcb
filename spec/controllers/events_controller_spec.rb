@@ -247,6 +247,28 @@ RSpec.describe EventsController do
   end
 
   describe "#update" do
+    render_views
+
+    let(:event) { create(:event, aasm_state: "approved", donation_thank_you_message: "Thank you!") }
+
+    before { sign_in_organizer_of(event) }
+
+    it "keeps donation settings and the submitted message visible with an actionable length error" do
+      message = "a" * 501
+
+      patch(:update, params: { id: event.slug, event: { tab: "donations", donation_thank_you_message: message } })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      page = Nokogiri::HTML5(response.body)
+      settings = page.at_css("#donations_settings")
+      expect(settings).to be_present
+      expect(settings.at_css(".error-card").text).to include("Donation thank you message is too long (maximum is 500 characters)")
+      expect(settings.at_css("textarea[name='event[donation_thank_you_message]']").text).to eq(message)
+      expect(event.reload.donation_thank_you_message).to eq("Thank you!")
+    end
+  end
+
+  describe "#update" do
     it "lets an admin set the sub-organization name prefix" do
       admin = create(:user, :make_admin)
       event = create(:event)
