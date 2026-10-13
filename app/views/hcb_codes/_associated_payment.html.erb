@@ -1,0 +1,8 @@
+<%# locals: (payout:) %>
+
+<% if payout.payment.present? %>
+  <p>
+    <strong>Associated payment</strong>
+    <%= link_to payout.payment.purpose, payout.payment %>
+  </p>
+<% end %>

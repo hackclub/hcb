@@ -95,6 +95,8 @@
       <%= @hcb_code.increase_check.payment_for %>
     </p>
 
+    <%= render partial: "hcb_codes/associated_payment", locals: { payout: @hcb_code.increase_check } %>
+
     <% if @hcb_code.increase_check.check_number.present? %>
       <p>
         <strong>Check number</strong>
