@@ -480,6 +480,11 @@ class EventsController < ApplicationController
 
     all_stripe_cards = all_stripe_cards.where(user: { id: @user.id }) if @user
 
+    @q = params[:q].presence
+    if @q
+      all_stripe_cards = organizer_signed_in? ? all_stripe_cards.search(@q) : all_stripe_cards.public_search(@q)
+    end
+
     all_stripe_cards = case @status
                        when "active"
                          all_stripe_cards.active

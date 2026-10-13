@@ -19,9 +19,7 @@
       </span>
 
       <div class="flex items-center gap-2">
-        <%= render "events/filters/filter_cards_menu" unless @has_filter %>
-        <%= pop_icon_to @view == "list" ? "grid" : "list",
-                        "?view=#{@view == 'list' ? 'grid' : 'list'}#{"&q=#{@q}" if @q}#{"&status=#{@status}" if @status}" %>
+        <%= pop_icon_to @view == "list" ? "grid" : "list", upsert_query_params(view: @view == "list" ? "grid" : "list") %>
         <% if organizer_signed_in?(as: :member) %>
           <%= link_to event_cards_new_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "order_card" } do %>
             <%= inline_icon "card-add" %>
@@ -30,6 +28,17 @@
         <% end %>
       </div>
     </h1>
+
+    <div class="flex items-center gap-2 flex-col-reverse sm:flex-row">
+      <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+        <%= render "events/filters/search", form: %>
+        <% { status: @status, type: @type, user: @user&.friendly_id }.compact.each do |key, value| %>
+          <%= hidden_field_tag key, value %>
+        <% end %>
+      <% end %>
+
+      <%= render "events/filters/filter_cards_menu" unless @has_filter %>
+    </div>
 
     <%= render "events/filters/filter_cards" if @has_filter %>
 
@@ -47,7 +56,9 @@
       <% end %>
     <% end %>
 
-    <% if @view == "list" %>
+    <% if @q && @paginated_stripe_cards.blank? %>
+      <%= blankslate "No cards match your search" %>
+    <% elsif @view == "list" %>
       <%= render "events/event_cards_table", stripe_cards: @paginated_stripe_cards, status: @status %>
     <% else %>
       <article class="mixed-grid grid--spacious">

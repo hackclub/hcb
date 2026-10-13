@@ -81,6 +81,9 @@ class StripeCard < ApplicationRecord
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }
 
+  scope :search, ->(q) { joins(:user).where("stripe_cards.name ILIKE :query OR stripe_cards.last4 ILIKE :query OR users.full_name ILIKE :query OR users.preferred_name ILIKE :query OR users.email ILIKE :query", query: "%#{sanitize_sql_like(q)}%") }
+  scope :public_search, ->(q) { joins(:user).where("stripe_cards.name ILIKE :query OR users.preferred_name ILIKE :query", query: "%#{sanitize_sql_like(q)}%") }
+
   belongs_to :event
   belongs_to :subledger, optional: true
   belongs_to :stripe_cardholder
