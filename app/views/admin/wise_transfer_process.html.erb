@@ -82,6 +82,12 @@
           <td>Payment Purpose:</td>
           <td><%= @wise_transfer.payment_for %></td>
         </tr>
+        <% if @wise_transfer.payment.present? %>
+          <tr>
+            <td>Payment:</td>
+            <td><%= link_to @wise_transfer.payment.purpose, @wise_transfer.payment %>
+          </tr>
+        <% end %>
         <% if @wise_transfer.wise_id.present? %>
           <tr>
             <td>Wise Transfer ID:</td>

@@ -41,6 +41,12 @@
           <td style="text-align: right;">Payment Purpose:</td>
           <td><%= @check.payment_for %></td>
         </tr>
+        <% if @check.payment.present? %>
+          <tr>
+            <td style="text-align: right;">Payment:</td>
+            <td><%= link_to @check.payment.purpose, @check.payment %></td>
+          </tr>
+        <% end %>
         <tr>
           <td style="text-align: right;">Amount:</td>
           <td><%= render_money @check.amount %></td>
