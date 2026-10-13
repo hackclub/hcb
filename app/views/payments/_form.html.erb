@@ -46,7 +46,7 @@
             <div class="flex justify-between items-center">
               <%= form.label :amount, class: "flex items-center gap-1" do %>
                 Amount
-                <span class="info tooltipped tooltipped--e inline-flex" aria-label="In USD. Additional fees may be charged for wire or Wise transfers">
+                <span class="info tooltipped tooltipped--e inline-flex" aria-label="In USD. Additional fees may be charged for <%= event.minimum_wire_amount_cents > 100 ? "wire or " : "" %>Wise transfers">
                   <%= inline_icon "info", size: 20 %>
                 </span>
               <% end %>
