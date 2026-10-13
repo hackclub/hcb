@@ -15,7 +15,7 @@ module PayrollService
               memo: "Payment for \"#{payment.title}\"."[0...40],
               amount: payment.amount_cents,
               payment_for: "Payment for \"#{payment.title}\".",
-              recipient_name: payment.employee.user.full_name,
+              recipient_name: payout_method.recipient_name.presence || payment.employee.user.full_name,
               address_line1: payout_method.address_line1,
               address_line2: payout_method.address_line2,
               address_city: payout_method.address_city,
@@ -45,7 +45,7 @@ module PayrollService
             ach_transfer = payment.employee.event.ach_transfers.build(
               amount: payment.amount_cents,
               payment_for: "Payment for \"#{payment.title}\".",
-              recipient_name: payment.employee.user.full_name,
+              recipient_name: payout_method.recipient_name.presence || payment.employee.user.full_name,
               recipient_email: payment.employee.user.email,
               send_email_notification: false,
               routing_number: payout_method.routing_number,

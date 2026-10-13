@@ -11,6 +11,7 @@
 #  address_line2       :text
 #  address_postal_code :text             not null
 #  address_state       :text             not null
+#  recipient_name      :string
 #  created_at          :datetime         not null
 #  updated_at          :datetime         not null
 #
@@ -33,7 +34,7 @@ class LegalEntity
       end
 
       def self.permitted_attributes
-        [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country]
+        [:address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country, :recipient_name]
       end
 
       def kind
@@ -83,7 +84,7 @@ class LegalEntity
           amount:,
           memo: memo&.slice(0...40),
           payment_for:,
-          recipient_name:,
+          recipient_name: self.recipient_name.presence || recipient_name,
           recipient_email:,
           user:,
           send_email_notification:,

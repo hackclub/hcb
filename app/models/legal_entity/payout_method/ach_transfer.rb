@@ -6,6 +6,7 @@
 #
 #  id                        :bigint           not null, primary key
 #  account_number_ciphertext :text             not null
+#  recipient_name            :string
 #  routing_number_ciphertext :text             not null
 #  created_at                :datetime         not null
 #  updated_at                :datetime         not null
@@ -19,7 +20,7 @@ class LegalEntity
       validates :account_number, format: { with: /\A\d+\z/, message: "must be only numbers" }
 
       def self.permitted_attributes
-        [:account_number, :routing_number]
+        [:account_number, :routing_number, :recipient_name]
       end
 
       def kind
@@ -71,7 +72,7 @@ class LegalEntity
           amount:,
           bank_name:,
           payment_for:,
-          recipient_name:,
+          recipient_name: self.recipient_name.presence || recipient_name,
           recipient_email:,
           company_entry_description:,
           send_email_notification:,
