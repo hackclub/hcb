@@ -33,14 +33,14 @@
       <%= link_to "Log in to HCB to resolve this issue", legal_entity_url(legal_entity) %>.
     </p>
   <% when :form_verified %>
-    <% if @legal_entity.latest_completed_tax_form.taxbandits_tin_match_failed? %>
+    <% if legal_entity.latest_completed_tax_form.taxbandits_tin_match_failed? %>
       <p>
         We could not verify your submission for your tax information.
         You may have accidentally entered in details such as your name or SSN/EIN incorrectly.
       </p>
 
       <p>
-        Please <%= link_to "log in to HCB to resubmit your tax information", legal_entity_url(@legal_entity) %>.
+        Please <%= link_to "log in to HCB to resubmit your tax information", legal_entity_url(legal_entity) %>.
         Make sure to double-check all information on the form before submitting.
       </p>
     <% else %>
