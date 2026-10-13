@@ -10,12 +10,13 @@
 #
 # Table name: repayments
 #
-#  id              :bigint           not null, primary key
-#  amount_cents    :integer          not null
-#  created_at      :datetime         not null
-#  updated_at      :datetime         not null
-#  disbursement_id :bigint           not null
-#  ledger_item_id  :bigint           not null
+#  id                     :bigint           not null, primary key
+#  amount_cents           :integer          not null
+#  previous_category_slug :string
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  disbursement_id        :bigint           not null
+#  ledger_item_id         :bigint           not null
 #
 # Indexes
 #
@@ -58,16 +59,16 @@ class Repayment < ApplicationRecord
   end
 
   def apply_categories!
+    update!(previous_category_slug: repaid_category&.slug)
     repaid_transactions.each do |t|
       TransactionCategoryService.new(model: t).set!(slug: "repayment", assignment_strategy: "manual")
     end
   end
 
-  # Puts the repaid transaction back to the category it had before, which is
-  # what the source side of the disbursement was given.
+  # Puts the repaid transaction back to the category it had before.
   def revert_categories!
     repaid_transactions.each do |t|
-      TransactionCategoryService.new(model: t).set!(slug: disbursement.source_transaction_category&.slug, assignment_strategy: "manual")
+      TransactionCategoryService.new(model: t).set!(slug: previous_category_slug, assignment_strategy: "manual")
     end
   end
 

@@ -539,5 +539,31 @@ RSpec.describe DisbursementService::Create, "transfer types" do
       expect(expense.reload.category.slug).to eq("food-fun")
       expect(expense.ledger_item.repayments.active).to be_empty
     end
+
+    it "restores the expense's category when the repayment errors" do
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
+      disbursement.mark_approved!(create(:user, :make_admin))
+
+      disbursement.mark_errored!
+
+      expect(expense.reload.category.slug).to eq("food-fun")
+    end
+
+    it "restores the expense's own category even if an admin overrode the sender's" do
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id, source_transaction_category_slug: "venue")
+
+      disbursement.mark_rejected!(create(:user, :make_admin))
+
+      expect(expense.reload.category.slug).to eq("food-fun")
+    end
+
+    it "leaves an expense uncategorized if it had no category" do
+      uncategorized = create(:canonical_transaction, event: destination_event, amount_cents: -100_00)
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: uncategorized.ledger_item.id)
+
+      disbursement.mark_rejected!(create(:user, :make_admin))
+
+      expect(uncategorized.reload.category).to be_nil
+    end
   end
 end

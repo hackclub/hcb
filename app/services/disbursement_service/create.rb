@@ -68,6 +68,9 @@ module DisbursementService
           disbursement = Disbursement.create!(attrs)
 
           if @repaid_ledger_item
+            # Two transfers repaying the same transaction at once would both
+            # pass the "already repaid" check without this.
+            @repaid_ledger_item.lock!
             disbursement.repayments.create!(repaid_ledger_item: @repaid_ledger_item, amount_cents:).apply_categories!
           end
 

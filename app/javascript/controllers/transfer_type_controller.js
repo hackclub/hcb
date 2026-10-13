@@ -26,22 +26,27 @@ export default class extends Controller {
         .querySelectorAll('select, input')
         .forEach(el => (el.disabled = !active))
     }
-    if (this.type !== 'repayment') this.amountTarget.readOnly = false
+    this.lockAmount()
+  }
+
+  // A repayment covers the picked transaction in full, so its amount is fixed.
+  lockAmount() {
+    const locked = this.type === 'repayment' && this.repaidAmount != null
+    if (locked) this.amountTarget.value = this.repaidAmount
+    this.amountTarget.readOnly = locked
   }
 
   comboboxChanged({ target, detail: { option } }) {
     if (target === this.repaymentComboboxTarget) {
       target.querySelector('input[role="combobox"]').setCustomValidity('')
-      if (!option) return
-      this.amountTarget.value = option.amount
-      this.amountTarget.readOnly = true
+      this.repaidAmount = option?.amount
+      this.lockAmount()
     } else if (target.querySelector('input[name="disbursement[event_id]"]')) {
       // A new destination means a new set of transactions to pick from.
       const url = new URL(this.repayableUrlValue, window.location.origin)
       if (option) url.searchParams.set('destination_event_id', option.value)
       this.repaymentComboboxTarget.dataset.comboboxUrlValue = url.toString()
       this.repaymentCombobox?.clear()
-      this.amountTarget.readOnly = false
       this.sectionTarget.disabled = !option
       this.hintTarget.hidden = !!option
     }

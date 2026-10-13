@@ -10,7 +10,13 @@
     <%= inline_icon "reimbursement", size: 24, class: "m-0 text-blue shrink-0" %>
     <span>
       <strong><%= label %></strong>
-      <%= safe_join(linked.map { |item| link_to_if(policy(item).show?, item.memo, ledger_item_path(item)) }, ", ") %>
+      <%= safe_join(linked.map { |item|
+            if policy(item).show?
+              link_to item.memo, ledger_item_path(item)
+            else
+              "a transaction in #{item.primary_ledger&.event&.name || "another organization"}"
+            end
+          }, ", ") %>
     </span>
   </div>
 <% end %>
