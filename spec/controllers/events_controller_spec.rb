@@ -613,6 +613,16 @@ RSpec.describe EventsController do
       expect(controller.instance_variable_get(:@paginated_stripe_cards)).to contain_exactly(groceries)
     end
 
+    it "shows card names in the list view" do
+      create(:stripe_card, :with_stripe_id, event:, name: "Groceries")
+
+      get(:card_overview, params: { event_id: event.slug, view: "list" })
+
+      table = Nokogiri::HTML5(response.body).at_css(".table-container table")
+      expect(table.css("th").map(&:text)).to eq(["Name", "Cardholder", "Number", "Type", "Status", "Issued on"])
+      expect(table.css("tbody td").first.text.squish).to eq("Groceries")
+    end
+
     it "says so when no cards match the search" do
       create(:stripe_card, :with_stripe_id, event:, name: "Travel")
 
