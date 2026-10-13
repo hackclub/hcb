@@ -22,7 +22,7 @@ module TransactionGroupingEngine
           { reimbursement_expense_payout: { expense: [:report] } }
         ]
         included_models << :tags
-        included_models << :ledger_item
+        included_models << { ledger_item: [:tags, { primary_ledger: [:event, { card_grant: :event }] }] }
         hcb_code_objects = HcbCode
                            .includes(included_models)
                            .where(hcb_code: hcb_code_codes)
