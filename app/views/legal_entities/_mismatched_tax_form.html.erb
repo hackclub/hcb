@@ -1,3 +1,5 @@
+<%# locals: (legal_entity:, mismatched:, show_tin:) %>
+
 <% previous_tax_form = legal_entity.latest_usable_tax_form %>
 <% if legal_entity.mismatched_tax_form.present? %>
   <p>
