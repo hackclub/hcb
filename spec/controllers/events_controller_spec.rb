@@ -169,6 +169,24 @@ RSpec.describe EventsController do
         expect(response).to have_http_status(:ok)
       end
 
+      it "offers transaction exports to a non-admin member" do
+        member = create(:user)
+        create(:organizer_position, user: member, event:, role: :member)
+        create_session(member, verified: true)
+        Flipper.enable_actor(:new_ledger_2026_07_17, member)
+        fund(event, 1234)
+
+        get(:ledger, params: { event_id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        page = Nokogiri::HTML5(response.body)
+        expect(page.css("button[aria-label='Export transactions']")).not_to be_empty
+        %i[csv json ledger].each do |format|
+          expect(page.css("a").map { |link| link["href"] }).to include(transactions_exports_path(event:, format:))
+        end
+        expect(page.css("a").map { |link| link["href"] }).to include(event_statements_path(event))
+      end
+
       # The maximum_amount filter used to compile to a malformed `$and` query
       # that raised Ledger::Query::Error inside the action (only Pundit was
       # rescued), 500ing the page. Amount-range filtering itself is covered in
