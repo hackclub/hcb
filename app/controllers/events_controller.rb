@@ -374,7 +374,7 @@ class EventsController < ApplicationController
     process_hidden_param!(fixed_event_params)
     process_hidden_param!(fixed_user_event_params)
 
-    plan_param = fixed_event_params[:plan]
+    plan_param = admin_signed_in? ? fixed_event_params[:plan] : nil
     fixed_event_params.delete(:plan)
 
     begin

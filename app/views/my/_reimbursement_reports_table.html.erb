@@ -1,0 +1,47 @@
+<%# locals: (reports:) %>
+
+<article class="table-container">
+  <table>
+    <thead>
+    <tr>
+      <th></th>
+      <th>Status</th>
+      <th>Report</th>
+      <th>Organization</th>
+      <th>Amount</th>
+      <th>Created</th>
+    </tr>
+    </thead>
+    <tbody>
+      <% reports.each do |report| %>
+        <tr class="clickable">
+          <td class="flex items-center justify-center" style="margin-top: 1px;">
+            <%= avatar_for report.user, size: 24 %>
+          </td>
+          <td>
+            <% if report.status_description %>
+              <span class="ml0 badge bg-<%= report.status_color %> tooltipped tooltipped--e tooltipped--xl" aria-label="<%= report.status_description %>">
+                <%= report.status_text %>
+              </span>
+            <% else %>
+              <span class="ml0 badge bg-<%= report.status_color %>"><%= report.status_text %></span>
+            <% end %>
+          </td>
+          <td style="max-width: 350px; overflow: hidden; text-overflow: ellipsis;">
+            <%= link_to "", report, class: "stretched-link", data: { turbo_frame: "_top" } %>
+            <span><%= report.name %></span>
+          </td>
+          <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+            <%= report.event&.name || "None" %>
+          </td>
+          <td>
+            <%= report.amount.format %>
+          </td>
+          <td>
+            <%= format_date report.created_at %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</article>

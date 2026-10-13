@@ -1615,6 +1615,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_02_120100) do
     t.integer "ct_count", default: 0, null: false
     t.text "custom_memo"
     t.datetime "datetime", null: false
+    t.datetime "intended_at"
     t.bigint "linked_object_id"
     t.string "linked_object_type"
     t.datetime "marked_no_or_lost_receipt_at"
