@@ -21,7 +21,7 @@
       check_number: increase_check.check_number,
       date: (increase_check.approved_at || increase_check.created_at).strftime("%b %d, %Y"),
       recipient_name: increase_check.recipient_name,
-      amount: increase_check.amount,
+      amount: increase_check.amount_cents,
       memo: increase_check.memo,
       account_details: increase_check.increase? ? increase_check.event.increase_account_number : increase_check.event.column_account_number %>
 
@@ -32,7 +32,7 @@
         <span class="regular muted">Check to</span>
         <%= increase_check.recipient_name %>
         <span class="regular muted">for</span>
-        <span class="regular"><%= render_money increase_check.amount %></span>
+        <span class="regular"><%= render_money increase_check.amount_cents %></span>
       </span>
       <span class="badge h4 nowrap bg-<%= increase_check.state %>">
         <%= increase_check.state_text %>

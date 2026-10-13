@@ -13,7 +13,7 @@ module PayrollService
           safely do
             check = payment.employee.event.increase_checks.build(
               memo: "Payment for \"#{payment.title}\"."[0...40],
-              amount: payment.amount_cents,
+              amount_cents: payment.amount_cents,
               payment_for: "Payment for \"#{payment.title}\".",
               recipient_name: payment.employee.user.full_name,
               address_line1: payout_method.address_line1,
