@@ -81,7 +81,7 @@ class WiresController < ApplicationController
         fronted: @wire.event.plan.front_disbursements_enabled?
       ).run
 
-      disbursement.comments.create!(content: "This $25 fee covers the cost of sending a wire under $500: #{hcb_code_url(@wire.local_hcb_code)}", user: User.system_user)
+      disbursement.comments.create!(content: "This $25 fee covers the cost of sending a wire under $500: #{hcb_code_url(@wire.local_hcb_code)}", user: current_user)
     end
 
     redirect_to wire_process_admin_path(@wire), flash: { success: "Thanks for approving that wire." }

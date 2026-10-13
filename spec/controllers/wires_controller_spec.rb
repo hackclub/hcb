@@ -122,8 +122,6 @@ RSpec.describe WiresController do
   describe "send_wire" do
     it "charges the fee as a disbursement to HCB Operations with a comment linking to the wire" do
       admin = create(:user, :make_admin)
-      system_user = create(:user, email: User::SYSTEM_USER_EMAIL)
-      allow(User).to receive(:system_user).and_return(system_user)
       create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
       event = create(:event, :with_positive_balance)
       stub_request(:get, "https://api.column.com/institutions/DEUTDEDB")
@@ -146,7 +144,7 @@ RSpec.describe WiresController do
       expect(disbursement.amount).to eq(25_00)
 
       comment = disbursement.comments.sole
-      expect(comment.user).to eq(system_user)
+      expect(comment.user).to eq(admin)
       expect(comment.content).to include(hcb_code_url(wire.local_hcb_code))
     end
   end
