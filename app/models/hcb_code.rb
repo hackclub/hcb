@@ -54,7 +54,6 @@ class HcbCode < ApplicationRecord
   monetize :amount_cents
 
   has_many :hcb_code_tags
-  has_many :hcb_code_tag_suggestions, class_name: "HcbCode::Tag::Suggestion"
 
   has_many :suggested_pairings
   has_many :suggested_receipts, source: :receipt, through: :suggested_pairings

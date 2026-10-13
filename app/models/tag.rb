@@ -26,7 +26,13 @@ class Tag < ApplicationRecord
   set_public_id_prefix :tag
 
   belongs_to :event
-  has_many :hcb_code_tags
+  # Legacy rows; tags now live on ledger items (see ledger_item_tags).
+  # hcb_codes_tags has no foreign key, so without this a deleted tag orphans
+  # them. delete_all, not destroy: HcbCodeTag's broadcast callbacks render
+  # partials that now expect a ledger item.
+  has_many :hcb_code_tags, dependent: :delete_all
+  # Suggestions are no longer created, but hcb_code_tag_suggestions has a
+  # foreign key to tags, so this stays until the table is dropped.
   has_many :hcb_code_tag_suggestions, dependent: :destroy, class_name: "HcbCode::Tag::Suggestion"
   has_many :hcb_codes, through: :hcb_code_tags
   has_many :ledger_item_tags, class_name: "Ledger::Item::Tag", dependent: :destroy
