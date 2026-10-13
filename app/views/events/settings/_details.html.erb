@@ -78,6 +78,7 @@
             <%= form.label :short_name, "Nickname" %>
             <p class="h5 muted mt0 mb1">
               At most sixteen characters long; used on statement descriptors and printed on your event's HCB card.
+              Donations and invoice payments currently show up on bank statements as <strong><%= event.statement_descriptor %></strong>.
             </p>
             <%= form.text_field :short_name, placeholder: "#{event.name[0...Event::MAX_SHORT_NAME_LENGTH]}...", maxlength: Event::MAX_SHORT_NAME_LENGTH, disabled: %>
           </div>

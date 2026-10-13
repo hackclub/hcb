@@ -959,6 +959,12 @@ class Event < ApplicationRecord
     self[:short_name] || name[0...length]
   end
 
+  # How donations and invoice payments show up on bank and card statements,
+  # e.g. "HCB* Hack Club".
+  def statement_descriptor
+    StripeService::StatementDescriptor.format(short_name, as: :full)
+  end
+
   monetize :minimum_wire_amount_cents
 
   # Organizations that have raised over $50,000 in the past year don't get

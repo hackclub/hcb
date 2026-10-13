@@ -24,6 +24,19 @@
         </div>
         <div data-accordion-target="content">
           <div class="menu__divider m-0 mb-4"></div>
+          <div class="flex gap-3 items-start mb-4">
+            <%= inline_icon "info", size: 24, class: "muted shrink-0" %>
+            <p class="h5 muted m0">
+              Donations show up on donors' statements as <strong><%= event.statement_descriptor %></strong>.
+              This comes from your organization's
+              <% if event.name.length > Event::MAX_SHORT_NAME_LENGTH %>
+                <%= link_to "nickname", edit_event_path(event, tab: "details"), data: { turbo_frame: "_top" } %>,
+              <% else %>
+                name,
+              <% end %>
+              so if that changes, donors may not recognize new charges.
+            </p>
+          </div>
           <div class="field">
             <%= form.label :donation_page_message, "Message to show on donation page" %>
             <%= form.text_area :donation_page_message, class: "w-100 fit", disabled: %>
