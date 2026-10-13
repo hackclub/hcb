@@ -29,6 +29,7 @@
       <th class="w-32">Date</th>
       <th>Event</th>
       <th>Recipient</th>
+      <th>Payment</th>
       <th class="w-32">Amount</th>
       <th>Status</th>
       <th class="w-24">Actions</th>
@@ -41,6 +42,13 @@
         <td><%= wise_transfer.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= wise_transfer.event.name %></td>
         <td><%= wise_transfer.recipient_name %></td>
+        <td>
+          <% if wise_transfer.payment.present? %>
+            <%= link_to wise_transfer.payment.purpose, wise_transfer.payment %>
+          <% else %>
+            None
+          <% end %>
+        </td>
         <td><%= Money.from_cents(wise_transfer.amount_cents, wise_transfer.currency).format %></td>
         <td><%= wise_transfer.aasm.human_state %></td>
         <td>
