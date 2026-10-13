@@ -75,8 +75,6 @@ class Payment
             fee += 25_00
           end
 
-          byebug
-
           if fee.positive?
             Payment::AttemptMailer.with(attempt: self, fee:).sent_with_fee.deliver_later
           end
