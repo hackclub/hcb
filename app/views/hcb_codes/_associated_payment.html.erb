@@ -7,9 +7,9 @@
   </p>
 <% end %>
 
-<% if payout.payment&.payroll_invoice.present? %>
+<% if payout.payment&.payroll_position.present? %>
   <p>
     <strong>Contractor</strong>
-    <%= link_to payout.payment.payee.display_name, event_payroll_position_path(payout.event, payout.payment.payroll_invoice.payroll_position), data: { turbo_frame: "_top" } %>
+    <%= link_to payout.payment.payee.display_name, event_payroll_position_path(payout.event, payout.payment.payroll_position), data: { turbo_frame: "_top" } %>
   </p>
 <% end %>

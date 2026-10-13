@@ -63,10 +63,10 @@
         <strong>Organization</strong>
         <%= link_to @payment.event.name, event_path(@payment.event), data: { turbo_frame: "_top" } %>
       </p>
-      <% if @payment.payroll_invoice.present? %>
+      <% if @payment.payroll_position.present? %>
         <p>
           <strong>Contractor</strong>
-          <%= link_to @payment.payee.display_name, event_payroll_position_path(@payment.event, @payment.payroll_invoice.payroll_position) %>
+          <%= link_to @payment.payee.display_name, event_payroll_position_path(@payment.event, @payment.payroll_position) %>
         </p>
       <% end %>
       <p>
