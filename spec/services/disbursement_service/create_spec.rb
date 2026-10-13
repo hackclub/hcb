@@ -485,10 +485,10 @@ RSpec.describe DisbursementService::Create, "transfer types" do
     expect(categories(disbursement)).to eq(["internal-transfer", "internal-transfer"])
   end
 
-  it "categorizes a payment as the chosen category for the sender and an internal payment for the recipient" do
+  it "categorizes a payment as the chosen category for the sender and internal revenue for the recipient" do
     disbursement = create_disbursement(transfer_type: "payment", payment_category_slug: "venue")
 
-    expect(categories(disbursement)).to eq(["venue", "internal-payment"])
+    expect(categories(disbursement)).to eq(["venue", "internal-revenue"])
   end
 
   it "requires a payment category that isn't HQ-only" do

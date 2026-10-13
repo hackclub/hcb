@@ -180,7 +180,7 @@ module DisbursementService
 
       case @transfer_type
       when "transfer" then "internal-transfer"
-      when "payment" then "internal-payment"
+      when "payment" then "internal-revenue"
       when "repayment" then "repayment"
       end
     end
