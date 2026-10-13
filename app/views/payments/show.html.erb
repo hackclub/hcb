@@ -120,7 +120,7 @@
     </div>
   <% end %>
 
-  <% unless @payment.attempts.any?(&:active?) %>
+  <% if @payment.attempts.any? && !@payment.attempts.any?(&:active?) %>
     <%= button_to "Retry payment", retry_payment_path(@payment), class: "btn mt-2" %>
   <% end %>
 
