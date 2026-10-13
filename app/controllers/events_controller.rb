@@ -24,6 +24,8 @@ class EventsController < ApplicationController
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
   before_action :set_timeframe, only: [:merchants_chart, :categories_chart, :tags_chart, :users_chart]
 
+  helper_method :settings_tab_available?
+
   # GET /events
   def index
     authorize Event
@@ -402,7 +404,7 @@ class EventsController < ApplicationController
         # Only the donation settings forms submit a `tab`. Anything else,
         # including a tab this user or organization can't use (see
         # `settings_tab_available?`), falls back to the details tab.
-        tab = params[:event][:tab]
+        tab = params.dig(:event, :tab)
         prepare_settings_tab(settings_tab_available?(tab) ? tab : "details")
         render :edit, status: :unprocessable_content
       end
@@ -1360,12 +1362,11 @@ class EventsController < ApplicationController
 
   private
 
-  # Mirrors the checks in `edit.html.erb` and the settings nav: the admin tab is
-  # only for auditors, and the donations, reimbursements and card grants tabs
-  # only exist once the organization is approved and its plan allows them. The
-  # view would render the details form for an unavailable tab anyway, but
-  # turning it away here keeps that form from appearing under another tab's
-  # heading.
+  # The admin tab is only for auditors, and the donations, reimbursements and
+  # card grants tabs only exist once the organization is approved and its plan
+  # allows them (the settings nav applies the same rules). `edit.html.erb` also
+  # calls this, so it falls back to the details form if it's ever handed an
+  # unavailable tab.
   def settings_tab_available?(tab)
     case tab
     when "donations" then @event.approved? && @event.plan.donations_enabled?
