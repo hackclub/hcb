@@ -278,7 +278,7 @@ class Rack::Attack
   tax_form_download_path = %r{
     \A/tax_forms/
     (?<hashid>[^/]+)/download
-    (\.[^/]*)?                    # `(.:format)` reaches the same action
+    (?:\.[^/]*)?                  # `(.:format)` reaches the same action
     /?\z
   }x
 
