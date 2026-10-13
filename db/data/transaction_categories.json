@@ -103,8 +103,8 @@
       "insurance_underwriting_premiums"
     ]
   },
-  "internal-payment": {
-    "label": "Internal payment"
+  "internal-revenue": {
+    "label": "Internal revenue"
   },
   "internal-transfer": {
     "label": "Internal transfer"
