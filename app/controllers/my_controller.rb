@@ -181,7 +181,6 @@ class MyController < ApplicationController
     @reports = reimbursement_sections.fetch(@section)
                                      .order(created_at: :desc)
                                      .includes(:user, :event, :payout_holding)
-                                     .page(params[:page]).per(safe_per(10))
   end
 
   def reimbursements_icon
