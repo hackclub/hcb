@@ -17,7 +17,7 @@ module TransactionEngine
 
               ph = primary_hash(pt)
 
-              # Option 1, instead of finding by primary hash here, I could find by raw_plaid_transction id ?
+              # Option 1, instead of finding by primary hash here, I could find by raw_plaid_transaction id ?
               ::HashedTransaction.find_or_initialize_by(raw_plaid_transaction_id: pt.id).tap do |ht|
                 ht.primary_hash = ph[0]
                 ht.primary_hash_input = ph[1]

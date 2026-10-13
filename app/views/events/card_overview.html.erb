@@ -56,7 +56,7 @@
     <% end %>
 
     <% if @view == "list" %>
-      <%= render "event_cards_table", stripe_cards: @paginated_stripe_cards, status: @status %>
+      <%= render "events/event_cards_table", stripe_cards: @paginated_stripe_cards, status: @status %>
       <%= paginate @paginated_stripe_cards %>
     <% elsif @cards_by_user %>
       <% preview_count = 3 %>

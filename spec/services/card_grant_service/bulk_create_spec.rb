@@ -77,6 +77,54 @@ RSpec.describe CardGrantService::BulkCreate do
         expect(bob_grant.banned_categories).to eq([])
       end
 
+      it "creates card grants with instructions" do
+        csv_content = <<~CSV
+          email,amount_cents,instructions
+          alice@example.com,1000,"Please only purchase a soldering iron"
+          bob@example.com,2000,
+        CSV
+
+        result = described_class.new(
+          event:,
+          csv_file: csv_file_from_content(csv_content),
+          sent_by:
+        ).run
+
+        expect(result.success?).to be true
+        expect(result.card_grants.count).to eq(2)
+
+        alice_grant = result.card_grants.find { |g| g.email == "alice@example.com" }
+        expect(alice_grant.instructions).to eq("Please only purchase a soldering iron")
+
+        bob_grant = result.card_grants.find { |g| g.email == "bob@example.com" }
+        expect(bob_grant.instructions).to be_nil
+      end
+
+      it "creates card grants with pre_authorization_required" do
+        csv_content = <<~CSV
+          email,amount_cents,pre_authorization_required
+          alice@example.com,1000,true
+          bob@example.com,2000,false
+        CSV
+
+        result = described_class.new(
+          event:,
+          csv_file: csv_file_from_content(csv_content),
+          sent_by:
+        ).run
+
+        expect(result.success?).to be true
+        expect(result.card_grants.count).to eq(2)
+
+        alice_grant = result.card_grants.find { |g| g.email == "alice@example.com" }
+        expect(alice_grant.pre_authorization_required).to be true
+        expect(alice_grant.pre_authorization).to be_present
+
+        bob_grant = result.card_grants.find { |g| g.email == "bob@example.com" }
+        expect(bob_grant.pre_authorization_required).to be false
+        expect(bob_grant.pre_authorization).to be_nil
+      end
+
       it "sends emails after successful creation" do
         csv_content = <<~CSV
           email,amount_cents
