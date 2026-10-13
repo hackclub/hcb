@@ -118,4 +118,36 @@ RSpec.describe WiresController do
       expect(wire.amount_cents).to eq(500_01)
     end
   end
+
+  describe "send_wire" do
+    it "charges the fee as a disbursement to HCB Operations with a comment linking to the wire" do
+      admin = create(:user, :make_admin)
+      system_user = create(:user, email: User::SYSTEM_USER_EMAIL)
+      allow(User).to receive(:system_user).and_return(system_user)
+      create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
+      event = create(:event, :with_positive_balance)
+      stub_request(:get, "https://api.column.com/institutions/DEUTDEDB")
+        .to_return_json(status: 200, body: { country_code: "DE" })
+      wire = create(:wire, :pending, event:)
+
+      allow_any_instance_of(GovernanceService::Admin::Transfer::Approval).to receive(:ensure_may_approve!)
+      allow_any_instance_of(Wire).to receive(:send_wire!)
+
+      create_session(admin, verified: true)
+
+      post(:send_wire, params: { id: wire.id, charge_fee: "1" })
+
+      expect(response).to redirect_to(wire_process_admin_path(wire))
+      expect(flash[:success]).to eq("Thanks for approving that wire.")
+
+      disbursement = Disbursement.sole
+      expect(disbursement.source_event).to eq(event)
+      expect(disbursement.destination_event.id).to eq(EventMappingEngine::EventIds::HACK_CLUB_BANK)
+      expect(disbursement.amount).to eq(25_00)
+
+      comment = disbursement.comments.sole
+      expect(comment.user).to eq(system_user)
+      expect(comment.content).to include(hcb_code_url(wire.local_hcb_code))
+    end
+  end
 end
