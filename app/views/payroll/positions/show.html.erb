@@ -153,7 +153,9 @@
                   <%= render_money invoice.amount_cents %>
 
                   <% unless invoice.estimated_fee_cents.zero? %>
-                    <span class="text-sm text-muted">+ <%= render_money invoice.estimated_fee_cents %> fee</span>
+                    <span class="tooltipped text-sm text-muted" aria-label="<%= invoice.fee_reason %>">
+                      + <%= render_money invoice.estimated_fee_cents %> fee
+                    </span>
                   <% end %>
                 <% end %>
               </td>
