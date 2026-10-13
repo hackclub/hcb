@@ -9,7 +9,7 @@
       was refunded <%= render_money hcb_code.amount_cents.abs %> from <i><%= hcb_code.memo %></i> for <%= link_to hcb_code.event&.name, hcb_code.event %>
     <% end %>
   <% elsif hcb_code.pt&.declined? %>
-    <%= render layout: "/public_activity/common", locals: { possessive: true, current_user:, activity:, url: hcb_code_path(hcb_code) } do %>
+    <%= render layout: "/public_activity/common", locals: { possessive: true, current_user:, activity:, card: activity.trackable.stripe_card, url: hcb_code_path(hcb_code) } do %>
       <%= link_to hcb_code.event&.name, hcb_code.event %> card was declined for <%= render_money activity.trackable.amount_cents.abs %> at <i><%= hcb_code.memo %></i>
     <% end %>
   <% elsif hcb_code.stripe_cash_withdrawal? %>
