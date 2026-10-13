@@ -44,7 +44,13 @@
           <h3 class="mb-2">Payment details</h3>
           <div class="card mb-4 flex flex-col gap-3">
             <div class="flex justify-between items-center">
-              <%= form.label :amount, "Amount" %>
+              <%= form.label :amount, class: "flex items-center gap-1" do %>
+                Amount
+                <span class="info tooltipped tooltipped--e inline-flex" aria-label="In USD. Additional fees may be charged for wire or Wise transfers">
+                  <%= inline_icon "info", size: 20 %>
+                </span>
+              <% end %>
+
               <div class="flex items-center">
                 <div class="input flex gap-2 items-center py-0">
                   <span class="bold muted">$</span>
