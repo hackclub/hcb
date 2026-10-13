@@ -68,9 +68,9 @@ RSpec.describe MyController do
       get :recurring_donations
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(mine.event.name)
+      expect(response.body).to include(ERB::Util.html_escape(mine.event.name))
       expect(response.body).to include(cancel_recurring_donation_path(mine.url_hash))
-      expect(response.body).not_to include(other.event.name)
+      expect(response.body).not_to include(ERB::Util.html_escape(other.event.name))
       expect(response.body).not_to include(other.url_hash)
       expect(user.recurring_donations).to contain_exactly(mine)
     end
@@ -81,7 +81,7 @@ RSpec.describe MyController do
 
       get :recurring_donations
 
-      expect(response.body).to include(donation.event.name)
+      expect(response.body).to include(ERB::Util.html_escape(donation.event.name))
       expect(response.body).not_to include(cancel_recurring_donation_path(donation.url_hash))
     end
 
@@ -93,7 +93,7 @@ RSpec.describe MyController do
 
       get :recurring_donations
 
-      expect(response.body).to match(/#{newer.url_hash}.*#{older.url_hash}.*#{canceled.event.name}/m)
+      expect(response.body).to match(/#{newer.url_hash}.*#{older.url_hash}.*#{Regexp.escape(ERB::Util.html_escape(canceled.event.name))}/m)
     end
 
     it "hides subscriptions that never completed checkout" do
