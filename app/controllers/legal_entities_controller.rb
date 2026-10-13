@@ -144,7 +144,7 @@ class LegalEntitiesController < ApplicationController
   # what payee a payment is for is stored on individual payments
   def migrate_pending_payee_assocs(from_le:, to_le:, archive_remaining_payees: false, include_payroll_positions: false)
     from_le.payees.find_each do |payee|
-      pending = payee.payments.pending_legal_entity.to_a
+      pending = payee.payments.where(aasm_state: [:pending_legal_entity, :under_review]).to_a
       active_positions = if include_payroll_positions
                            payee.payroll_positions.where(aasm_state: [:under_review, :onboarding, :onboarded, :expired])
                          else
