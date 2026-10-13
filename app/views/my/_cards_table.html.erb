@@ -1,0 +1,48 @@
+<%# locals: (stripe_cards:, show_popovers:) %>
+
+<article class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Organization</th>
+        <th>Number</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Issued on</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% stripe_cards.each do |stripe_card| %>
+        <% linked = policy(stripe_card).show? %>
+        <tr class="<%= "clickable" if linked %>">
+          <%# Card grant cards are labeled with the grant's purpose, like in the grid %>
+          <td>
+            <%= stripe_card.card_grant.present? ? stripe_card.card_grant.purpose : stripe_card.name %>
+          </td>
+
+          <td>
+            <%= stripe_card.event.name %>
+          </td>
+
+          <td class="fs-mask">
+            <%= stripe_card.hidden_card_number_with_last_four %>
+          </td>
+
+          <td>
+            <%= stripe_card.virtual? ? "Virtual" : "Physical" %>
+          </td>
+
+          <td>
+            <span class="ml0 badge bg-<%= stripe_card.state %>"><%= stripe_card.state_text %></span>
+          </td>
+
+          <td>
+            <%= format_date stripe_card.created_at %>
+            <%= link_to "", stripe_card_path(stripe_card), class: "stretched-link", data: show_popovers && stripe_card_popover_data(stripe_card) if linked %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</article>

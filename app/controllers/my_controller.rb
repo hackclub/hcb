@@ -26,12 +26,19 @@ class MyController < ApplicationController
       return
     end
 
-    @stripe_cards = current_user.stripe_cards.includes(:event)
+    @stripe_cards = current_user.stripe_cards.includes(:event, :card_grant)
     @emburse_cards = current_user.emburse_cards.includes(:event)
 
     @status = params[:status].presence_in(%w[active inactive frozen canceled])
     @type = params[:type].presence_in(%w[virtual physical])
+    @q = params[:q].presence
     @filter_applied = @status || @type
+
+    cookies[:my_cards_view] = params[:view] if params[:view]
+    @view = cookies[:my_cards_view] || "grid"
+
+    # Card grant cards are labeled with the grant's purpose instead of the card's name
+    @stripe_cards = @stripe_cards.left_joins(:card_grant).where("stripe_cards.name ILIKE :q OR card_grants.purpose ILIKE :q", q: "%#{StripeCard.sanitize_sql_like(@q)}%") if @q
 
     @stripe_cards = case @status
                     when "active"
@@ -57,8 +64,12 @@ class MyController < ApplicationController
 
     @stripe_cards = @stripe_cards.order(
       Arel.sql("stripe_status = 'active' DESC"),
-      Arel.sql("stripe_status = 'inactive' DESC")
+      Arel.sql("stripe_status = 'inactive' DESC"),
+      created_at: :desc,
+      id: :desc
     )
+
+    @paginated_stripe_cards = @stripe_cards.page(params[:page]).per(safe_per(18))
   end
 
   def tasks
