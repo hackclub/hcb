@@ -22,11 +22,13 @@
 #  updated_at                  :datetime         not null
 #  manager_id                  :bigint
 #  payee_id                    :bigint           not null
+#  renewal_of_id               :bigint
 #
 # Indexes
 #
-#  index_payroll_positions_on_manager_id  (manager_id)
-#  index_payroll_positions_on_payee_id    (payee_id)
+#  index_payroll_positions_on_manager_id     (manager_id)
+#  index_payroll_positions_on_payee_id       (payee_id)
+#  index_payroll_positions_on_renewal_of_id  (renewal_of_id)
 #
 # Foreign Keys
 #
@@ -43,8 +45,27 @@ module Payroll
 
     belongs_to :payee
     belongs_to :manager, optional: true, class_name: "User"
+    belongs_to :renewal_of, optional: true, class_name: "Payroll::Position", inverse_of: :renewals
+    has_many :renewals, class_name: "Payroll::Position", foreign_key: :renewal_of_id, inverse_of: :renewal_of, dependent: :nullify
 
     delegate :display_name, to: :payee, prefix: true
+
+    # Renewals that were rejected, or terminated before they were signed, never
+    # took effect, so they don't count as part of a contractor's chain.
+    scope :live, -> { where(aasm_state: %i[under_review onboarding onboarded expired]).or(where(aasm_state: :terminated).where.not(onboarded_at: nil)) }
+
+    # Renewals that have been signed and have started, taking over from the
+    # contract they renew.
+    scope :started_renewals, -> { where.not(renewal_of_id: nil).where.not(onboarded_at: nil).where(start_date: ..Date.current) }
+
+    # Signed renewals still waiting for the contract they renew to end.
+    scope :upcoming_renewals, -> { where.not(renewal_of_id: nil).where.not(onboarded_at: nil).where(start_date: Date.current.tomorrow..) }
+
+    # Each contractor's chain of renewals is listed as a single position: the
+    # latest one that has started, or the first while it's still onboarding.
+    scope :current, -> {
+      where(renewal_of_id: nil).or(started_renewals).where.not(id: started_renewals.select(:renewal_of_id))
+    }
 
     pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }, using: { tsearch: { prefix: true, dictionary: "english" } }
 
@@ -98,6 +119,7 @@ module Payroll
     validate :start_date_within_set_lead_time
     validate :duration_within_set_max
     validate :manager_is_event_manager
+    validate :renewal_of_is_renewable, on: :create, if: :renewal_of
 
     aasm timestamps: true do
       state :under_review, initial: true
@@ -133,10 +155,10 @@ module Payroll
       event :mark_terminated do
         transitions from: [:under_review, :onboarding, :onboarded], to: :terminated
 
-        after do
+        after do |options = {}|
           # If it's still under review, we haven't sent any emails to the contractor yet,
           # so we won't tell them that they've been "terminated"
-          Payroll::PositionMailer.with(position: self).terminated.deliver_later unless aasm.from_state == :under_review
+          Payroll::PositionMailer.with(position: self).terminated.deliver_later unless aasm.from_state == :under_review || options[:notify] == false
         end
       end
     end
@@ -144,7 +166,7 @@ module Payroll
     def status
       case aasm_state.to_sym
       when :onboarded
-        :active
+        upcoming_renewal? ? :upcoming : :active
       when :under_review, :onboarding
         :onboarding
       when :expired
@@ -161,7 +183,7 @@ module Payroll
     def status_color
       case status
       when :active then "success"
-      when :onboarding then "info"
+      when :onboarding, :upcoming then "info"
       else "muted"
       end
     end
@@ -179,6 +201,95 @@ module Payroll
         "#{start_date.strftime("%b %-d")} – #{end_date.strftime("%b %-d, %Y")}"
       else
         "#{start_date.strftime("%b %-d")}–#{end_date.strftime("%-d, %Y")}"
+      end
+    end
+
+    # The live renewal of this position, if one has been started.
+    def renewal
+      renewals.live.order(:id).last
+    end
+
+    # A renewal that hasn't been signed by everyone yet. Its predecessor is
+    # still the contractor's contract of record until it is.
+    def unsigned_renewal?
+      renewal_of_id.present? && onboarded_at.nil?
+    end
+
+    # A signed renewal waiting for the contract it renews to end.
+    def upcoming_renewal?
+      onboarded? && renewal_of_id.present? && start_date > Date.current
+    end
+
+    # A signed renewal only takes invoices once it has started.
+    def accepting_invoices?
+      onboarded? && !upcoming_renewal?
+    end
+
+    # Positions still being onboarded are changed by editing them instead. A
+    # renewal has to start within the usual lead time, so a contract can't be
+    # renewed until it's that close to ending.
+    def renewable?
+      (onboarded? || expired?) && renewal.nil? && renewal_start_date <= MAX_START_LEAD_TIME.from_now.to_date
+    end
+
+    # A renewal picks up the day after this contract ends, or today if it has
+    # already lapsed.
+    def renewal_start_date
+      [end_date + 1.day, Date.current].max
+    end
+
+    # Drafts a renewal carrying over this position's terms, which the
+    # organizer can change before it's sent for signing.
+    def build_renewal
+      start_date = renewal_start_date
+      duration = [(end_date - self.start_date).to_i.days, MAX_DURATION].min
+
+      renewals.build(
+        payee:,
+        manager:,
+        title:,
+        description:,
+        rate_cents:,
+        rate_unit:,
+        currency:,
+        combine_contract_attachment:,
+        start_date:,
+        end_date: start_date + duration
+      ).tap do |renewal|
+        # Blobs are only purged once nothing is attached to them, so sharing
+        # one is safe even if the renewal's attachment is later replaced.
+        renewal.file.attach(file.blob) if file.attached?
+      end
+    end
+
+    # Every position in this contractor's chain of renewals, oldest first.
+    def renewal_chain
+      chain = [self]
+      chain.unshift(chain.first.renewal_of) while chain.first.renewal_of
+      while (successor = chain.last.renewal)
+        chain << successor
+      end
+      chain
+    end
+
+    def chain_invoices
+      Payroll::Invoice.where(payroll_position: renewal_chain)
+    end
+
+    # Canceling a renewal before it's signed leaves the contract it renews in
+    # place. Otherwise, the contractor's whole chain ends, so a contract that's
+    # still running or a renewal waiting to start doesn't outlive it, though
+    # the contractor only needs to hear about it once.
+    def terminate!
+      positions = unsigned_renewal? ? [self] : renewal_chain.select(&:may_mark_terminated?)
+      notified = false
+
+      transaction do
+        positions.each do |position|
+          notify = !notified && !position.under_review?
+          position.mark_terminated!(notify:)
+          notified ||= notify
+        end
       end
     end
 
@@ -397,6 +508,11 @@ module Payroll
       return if start_date.blank? || end_date.blank?
 
       errors.add(:end_date, "cannot be more than 1 year after the start date") if end_date > start_date + MAX_DURATION
+    end
+
+    def renewal_of_is_renewable
+      errors.add(:base, "This contract can't be renewed") unless renewal_of.renewable?
+      errors.add(:start_date, "must be after the previous contract ends") if start_date.present? && start_date <= renewal_of.end_date
     end
 
     def manager_is_event_manager

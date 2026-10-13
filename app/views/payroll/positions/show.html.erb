@@ -15,7 +15,10 @@
         <span class="badge h4 bg-<%= @position.status_color %> nowrap order-1"><%= @position.status_text %></span>
       </span>
 
-      <% if @position.may_mark_terminated? %>
+      <% can_update = (@position.under_review? || @position.onboarding?) && policy(@position).edit? %>
+      <% can_renew = policy(@position).renew? %>
+      <% can_terminate = @position.unsigned_renewal? ? @position.may_mark_terminated? : @renewal_chain.any?(&:may_mark_terminated?) %>
+      <% if can_update || can_renew || can_terminate %>
         <div data-controller="menu" data-menu-placement-value="bottom-end">
           <%= pop_icon_to "more",
               "#",
@@ -23,9 +26,30 @@
               data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
 
           <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
-            <%= link_to terminate_event_payroll_position_path(event: @event, payroll_position: @position), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you want to terminate this contractor immediately?#{" We will notify the contractor." unless @position.under_review? }" } do %>
-              <%= inline_icon "profile-forbidden", size: 24 %>
-              Terminate
+            <% if can_update %>
+              <%= link_to edit_event_payroll_position_path(event_id: @event.slug, id: @position.id), class: "flex items-center", data: { turbo_frame: "_top", turbo_confirm: (@position.contract.present? ? "Changing the details will void this contract and generate a new one to sign. Continue?" : nil) } do %>
+                <%= inline_icon "edit", size: 24 %>
+                Update position
+              <% end %>
+            <% end %>
+            <% if can_renew %>
+              <%= link_to renew_event_payroll_position_path(event_id: @event.slug, id: @position.id), class: "flex items-center", data: { turbo_frame: "_top" } do %>
+                <%= inline_icon "view-reload", size: 24 %>
+                Renew
+              <% end %>
+            <% end %>
+            <% if can_terminate %>
+              <% if @position.unsigned_renewal? %>
+                <%= link_to terminate_event_payroll_position_path(event: @event, payroll_position: @position), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Cancel this renewal? The current contract won't be affected.#{" We will notify the contractor." unless @position.under_review? }" } do %>
+                  <%= inline_icon "view-close", size: 24 %>
+                  Cancel renewal
+                <% end %>
+              <% else %>
+                <%= link_to terminate_event_payroll_position_path(event: @event, payroll_position: @position), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you want to terminate this contractor immediately?#{" Any renewal of this contract will also be terminated." if @renewal_chain.many? }#{" We will notify the contractor." unless @position.under_review? }" } do %>
+                  <%= inline_icon "profile-forbidden", size: 24 %>
+                  Terminate
+                <% end %>
+              <% end %>
             <% end %>
           </div>
         </div>
@@ -57,6 +81,18 @@
         <strong>Period</strong>
         <%= @position.period_label %>
       </p>
+      <% if @position.renewal_of.present? %>
+        <p>
+          <strong>Renews</strong>
+          <%= link_to "Contract for #{@position.renewal_of.period_label}", event_payroll_position_path(event_id: @event.slug, id: @position.renewal_of.id), data: { turbo_frame: "_top" } %>
+        </p>
+      <% end %>
+      <% if @renewal.present? && !@renewal.unsigned_renewal? %>
+        <p>
+          <strong>Renewed by</strong>
+          <%= link_to "Contract for #{@renewal.period_label}", event_payroll_position_path(event_id: @event.slug, id: @renewal.id), data: { turbo_frame: "_top" } %>
+        </p>
+      <% end %>
       <p>
         <strong>Purpose</strong>
         <%= @position.description %>
@@ -105,6 +141,14 @@
     <%= render "payroll/positions/onboarding_flow", position: @position, perspective: :organizer %>
   <% end %>
 
+  <% if @renewal&.unsigned_renewal? %>
+    <div class="mt-4 mb-2 flex items-center justify-between gap-2">
+      <h3 class="my-0">Renewal for <%= @renewal.period_label %></h3>
+      <%= link_to "View renewal", event_payroll_position_path(event_id: @event.slug, id: @renewal.id), class: "btn btn-small bg-info", data: { turbo_frame: "_top" } %>
+    </div>
+    <%= render "payroll/positions/onboarding_flow", position: @renewal, perspective: :organizer %>
+  <% end %>
+
   <div class="mt-4 mb-2 flex items-center justify-between gap-2">
     <h3 class="my-0">Invoices</h3>
     <% if @can_upload_invoice %>
@@ -132,6 +176,7 @@
             <th>Status</th>
             <th>Reviewed by</th>
             <th>Description</th>
+            <% if @renewal_chain.many? %><th>Contract</th><% end %>
             <th>Attachment</th>
             <th class="text-right">Amount</th>
             <% if @can_review %><th></th><% end %>
@@ -153,6 +198,9 @@
               <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
                 <%= invoice.name %>
               </td>
+              <% if @renewal_chain.many? %>
+                <td class="nowrap"><%= invoice.payroll_position.period_label %></td>
+              <% end %>
               <td>
                 <% if invoice.receipts.any? %>
                   <div class="receipts_list flex gap-2">

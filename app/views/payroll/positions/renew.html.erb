@@ -1,0 +1,22 @@
+<% title "Renew contract" %>
+<% subtitle "For #{@position.payee_display_name}" %>
+<% @back_url = event_payroll_position_path(event_id: @event.slug, id: @position.id) %>
+
+<% content_for :table_of_contents do %>
+  <%= render "events/transfers/step_item", number: 1, label: "Contract details", seek: false, current: true %>
+  <%= render "events/transfers/step_item", number: 2, label: "Sign & renew", seek: false, current: false %>
+<% end %>
+
+<%# Rendered before the form so it sits above the form's own sidebar callout %>
+<% content_for :sidebar_footer do %>
+  <%= render "application/callout", type: "info", title: @position.expired? ? "This contract ended on #{@position.end_date.to_fs(:long)}" : "The current contract runs through #{@position.end_date.to_fs(:long)}", class: "mt-2" do %>
+    <p class="my-0">
+      The renewal is a new contract starting <%= @renewal.start_date.to_fs(:long) %>. You'll sign it first, then HCB, then <%= @position.payee_display_name %>.
+      <% if @position.onboarded? %>
+        <%= @position.payee_display_name %> can keep submitting invoices under the current contract until it ends.
+      <% end %>
+    </p>
+  <% end %>
+<% end %>
+
+<%= render "payroll/positions/form", event: @event, payee: @position.payee, position: @renewal %>

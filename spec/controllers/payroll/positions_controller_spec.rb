@@ -229,4 +229,134 @@ RSpec.describe Payroll::PositionsController do
       expect(flash[:error]).to be_present
     end
   end
+
+  describe "renewing" do
+    render_views
+
+    let(:position) do
+      create(:payroll_position, payee:, aasm_state: "onboarded", onboarded_at: 1.month.ago,
+                                start_date: 1.month.ago.to_date, end_date: 2.months.from_now.to_date)
+    end
+
+    let(:renewal_params) do
+      {
+        event_id: event.slug,
+        id: position.id,
+        contractor: {
+          title: "Senior engineer",
+          rate: "40.00",
+          rate_unit: "hour",
+          starts_on: Date.current, # ignored: a renewal always follows the current contract
+          ends_on: (position.end_date + 6.months).to_s,
+          purpose: position.description
+        }
+      }
+    end
+
+    before do
+      stub_docuseal_create
+      stub_docuseal_fetch
+    end
+
+    it "offers to renew from the position's menu" do
+      get :show, params: { event_id: event.slug, id: position.id }
+
+      expect(response.body).to include(renew_event_payroll_position_path(event_id: event.slug, id: position.id))
+      expect(response.body).not_to include("Update position")
+    end
+
+    it "offers to update, rather than renew, a position that's still onboarding" do
+      position.update!(aasm_state: "onboarding", onboarded_at: nil)
+
+      get :show, params: { event_id: event.slug, id: position.id }
+
+      expect(response.body).to include("Update position")
+      expect(response.body).not_to include(renew_event_payroll_position_path(event_id: event.slug, id: position.id))
+    end
+
+    it "prefills the renewal with the current terms, starting after the current contract" do
+      get :renew, params: { event_id: event.slug, id: position.id }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(position.title)
+      expect(response.body).to include((position.end_date + 1.day).iso8601)
+      expect(response.body.index("The current contract runs through")).to be < response.body.index("About contractor payments")
+    end
+
+    it "creates a renewal with the new terms and sends its contract" do
+      post :create_renewal, params: renewal_params
+
+      renewal = position.reload.renewal
+      expect(response).to redirect_to(contract_event_payroll_position_path(event_id: event.slug, id: renewal.id))
+      expect(renewal).to have_attributes(title: "Senior engineer", rate_cents: 4_000, start_date: position.end_date + 1.day, end_date: position.end_date + 6.months)
+      expect(renewal).to be_under_review
+      expect(renewal.contracts.sole).to be_sent
+      expect(position).to be_onboarded
+    end
+
+    it "refuses to renew a terminated position" do
+      position.update!(aasm_state: "terminated")
+
+      post :create_renewal, params: renewal_params
+
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+      expect(position.renewals).to be_empty
+    end
+
+    it "keeps a renewal's start date when its details are updated" do
+      post :create_renewal, params: renewal_params
+      renewal = position.reload.renewal
+      stub_request(:delete, "https://api.docuseal.co/submissions/STUBBED").to_return(status: 200, body: "")
+
+      patch :update, params: renewal_params.merge(id: renewal.id)
+
+      expect(renewal.reload.start_date).to eq(position.end_date + 1.day)
+    end
+
+    it "shows a pending renewal's progress on the current contract, and lets it be canceled from the renewal" do
+      post :create_renewal, params: renewal_params
+      renewal = position.reload.renewal
+
+      get :show, params: { event_id: event.slug, id: position.id }
+      expect(response.body).to include("Renewal for #{renewal.period_label}")
+      expect(response.body).not_to include(renew_event_payroll_position_path(event_id: event.slug, id: position.id))
+
+      get :show, params: { event_id: event.slug, id: renewal.id }
+      expect(response.body).to include("Cancel renewal")
+      expect(response.body).to include("Update position")
+    end
+
+    it "explains the renewal to the contractor on their onboarding page" do
+      renewal = position.build_renewal.tap(&:save!)
+      renewal.send_contract(organizer_user: user)
+      renewal.update!(aasm_state: "onboarding")
+      create_session(create(:user, email: payee.email), verified: true)
+
+      get :onboarding, params: { id: renewal.hashid }
+
+      expect(response.body).to include("is renewing your contract")
+    end
+
+    it "confirms the renewal to the contractor once it's complete" do
+      renewal = position.build_renewal.tap(&:save!)
+      renewal.send_contract(organizer_user: user)
+      renewal.update!(aasm_state: "onboarded", onboarded_at: Time.current)
+      allow_any_instance_of(Payroll::Position).to receive(:onboarding_complete?).and_return(true)
+      create_session(create(:user, email: payee.email), verified: true)
+
+      get :onboarding, params: { id: renewal.hashid }
+
+      expect(response.body).to include(ERB::Util.html_escape("#{event.name} has renewed your contract for #{renewal.period_label}"))
+    end
+
+    it "shows invoices from earlier contracts on the renewal" do
+      invoice = position.invoices.create!(name: "September work", amount_cents: 50_00, currency: position.currency)
+      post :create_renewal, params: renewal_params
+      renewal = position.reload.renewal
+
+      get :show, params: { event_id: event.slug, id: renewal.id }
+
+      expect(response.body).to include(invoice.name)
+    end
+  end
 end

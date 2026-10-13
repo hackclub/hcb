@@ -11,7 +11,7 @@ module Payroll
     end
 
     def on_behalf?
-      record.payroll_position.onboarded? && reviewer?
+      record.payroll_position.accepting_invoices? && reviewer?
     end
 
     def approve?
@@ -27,7 +27,7 @@ module Payroll
     # Only a member of the legal entity the position's payee belongs to may
     # submit invoices against it.
     def contractor?
-      record.payroll_position.onboarded? && payee_member?
+      record.payroll_position.accepting_invoices? && payee_member?
     end
 
     def payee_member?

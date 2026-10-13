@@ -1042,6 +1042,8 @@ Rails.application.routes.draw do
     resources :payroll_positions, only: [:new, :create, :show, :edit, :update], controller: "payroll/positions" do
       member do
         get :contract
+        get :renew
+        post :renew, action: :create_renewal
         post :terminate
       end
     end

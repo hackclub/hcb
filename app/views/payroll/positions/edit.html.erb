@@ -3,9 +3,14 @@
 <% @back_url = contract_event_payroll_position_path(event_id: @event.slug, id: @position.id) %>
 
 <% content_for :table_of_contents do %>
-  <%= render "events/transfers/step_item", number: 1, label: "Recipient", seek: false, current: false %>
-  <%= render "events/transfers/step_item", number: 2, label: "Contract details", seek: false, current: true %>
-  <%= render "events/transfers/step_item", number: 3, label: "Sign & invite", seek: false, current: false %>
+  <% if @position.renewal_of %>
+    <%= render "events/transfers/step_item", number: 1, label: "Contract details", seek: false, current: true %>
+    <%= render "events/transfers/step_item", number: 2, label: "Sign & renew", seek: false, current: false %>
+  <% else %>
+    <%= render "events/transfers/step_item", number: 1, label: "Recipient", seek: false, current: false %>
+    <%= render "events/transfers/step_item", number: 2, label: "Contract details", seek: false, current: true %>
+    <%= render "events/transfers/step_item", number: 3, label: "Sign & invite", seek: false, current: false %>
+  <% end %>
 <% end %>
 
 <%= render "payroll/positions/form", event: @event, payee: @position.payee, position: @position %>
