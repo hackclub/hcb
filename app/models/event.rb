@@ -842,10 +842,13 @@ class Event < ApplicationRecord
   # Fiscal sponsorship fees charged by the fee engine, at whatever rate the
   # organization was on at the time. Manual fees (e.g. wire fees) are excluded.
   def revenue_fees_v2_cents(start_date: nil, end_date: nil)
-    revenue_fees = fees.revenue
-    revenue_fees = revenue_fees.where(created_at: start_date..end_date) if start_date || end_date
+  revenue_fees = fees.revenue
+  if start_date || end_date
+    revenue_fees = revenue_fees.joins(canonical_event_mapping: :canonical_transaction)
+                               .where(canonical_transactions: { date: start_date..end_date })
+  end
 
-    revenue_fees.sum(:amount_cents_as_decimal).ceil
+  revenue_fees.sum(:amount_cents_as_decimal).ceil
   end
 
   def increase_account_number_id
