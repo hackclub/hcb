@@ -85,12 +85,36 @@ RSpec.describe MyController do
       expect(response.body).not_to include(cancel_recurring_donation_path(donation.url_hash))
     end
 
-    it "requires a verified session" do
+    it "lists active donations before canceled ones, newest first" do
+      sign_in_verified(create(:user, email: "donor@example.com"))
+      canceled = create_recurring_donation(email: "donor@example.com", stripe_status: "canceled", canceled_at: 1.day.ago, created_at: 1.day.ago)
+      older = create_recurring_donation(email: "donor@example.com", created_at: 2.days.ago)
+      newer = create_recurring_donation(email: "donor@example.com")
+
+      get :recurring_donations
+
+      expect(response.body).to match(/#{newer.url_hash}.*#{older.url_hash}.*#{canceled.event.name}/m)
+    end
+
+    it "hides subscriptions that never completed checkout" do
+      user = sign_in_verified(create(:user, email: "donor@example.com"))
+      incomplete = create_recurring_donation(email: "donor@example.com", stripe_status: "incomplete", stripe_current_period_end: nil)
+      expired = create_recurring_donation(email: "donor@example.com", stripe_status: "incomplete_expired", stripe_current_period_end: nil)
+
+      get :recurring_donations
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include(incomplete.url_hash)
+      expect(response.body).not_to include(expired.url_hash)
+      expect(user.recurring_donations).to be_empty
+    end
+
+    it "redirects an unverified session to sign in" do
       sign_in_unverified
 
       get :recurring_donations
 
-      expect(response).not_to have_http_status(:ok)
+      expect(response).to redirect_to(auth_users_path(return_to: request.original_url, require_reload: true))
     end
   end
 
