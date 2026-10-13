@@ -34,5 +34,46 @@ RSpec.describe HcbCodesController, type: :controller do
 
       expect(response.body).to include(%(href="#{canonical_pending_transaction_path(cpt)}">CPT #{cpt.id}</a>))
     end
+
+    context "for a Wise transfer whose pending transaction is not grouped under its HCB code" do
+      let(:wise_transfer) do
+        WiseTransfer.create!(
+          event:,
+          user: create(:user),
+          amount_cents: 100_00,
+          currency: "GBP",
+          recipient_country: "GB",
+          recipient_name: "Fiona Hackworth",
+          recipient_email: "fiona@example.com",
+          payment_for: "Speaker fee",
+          # Set so the after_create hook skips generate_quote!, which would
+          # otherwise reach for a live exchange rate.
+          quoted_usd_amount_cents: 130_00
+        )
+      end
+      let(:hcb_code) { wise_transfer.local_hcb_code }
+
+      before do
+        # Reproduces production rows where the CPT's hcb_code write failed, so
+        # HcbCode#pt is nil even though the transfer and its CPT both exist.
+        wise_transfer.canonical_pending_transaction.update_column(:hcb_code, nil)
+      end
+
+      it "renders and still warns that the USD amount may change" do
+        get :show, params: { id: hcb_code.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include("might change")
+      end
+
+      it "drops the warning once a canonical transaction has settled the transfer" do
+        create(:canonical_transaction, amount_cents: -130_00).update_column(:hcb_code, hcb_code.hcb_code)
+
+        get :show, params: { id: hcb_code.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).not_to include("might change")
+      end
+    end
   end
 end
