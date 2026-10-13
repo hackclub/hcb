@@ -120,10 +120,10 @@ class DisbursementsController < ApplicationController
   def repayable_transactions
     authorize Disbursement.new, :event_search?
     event = Event.find_by_public_id(params[:destination_event_id])
-    return render(json: []) unless event && OrganizerPosition.role_at_least?(current_user, event, :reader)
+    return render(json: []) unless event && policy(Disbursement.new(destination_event: event)).repay?
 
     items = Repayment.repayable_ledger_items(event)
-                     .where.not(id: Repayment.active.select(:ledger_item_id))
+                     .where.not(id: Repayment.not_failed.select(:ledger_item_id))
                      .order(datetime: :desc)
     items = items.search_memo(params[:q]) if params[:q].present?
 
@@ -150,12 +150,11 @@ class DisbursementsController < ApplicationController
                               disbursement_params["scheduled_on(3i)"].to_i)
     end
 
-    transfer_type = disbursement_params[:transfer_type].presence || "transfer"
-    raise ArgumentError, "Choose what kind of transfer this is." unless Disbursement.transfer_types.key?(transfer_type)
+    transfer_type = disbursement_params[:transfer_type].presence
 
     if transfer_type == "repayment"
+      authorize @disbursement, :repay?
       repaid_ledger_item = Ledger::Item.find_by_hashid(disbursement_params[:repaid_ledger_item_id])
-      raise Pundit::NotAuthorizedError if repaid_ledger_item && !OrganizerPosition.role_at_least?(current_user, @destination_event, :reader)
     end
 
     source_transaction_category_slug = disbursement_params[:source_transaction_category_slug].presence

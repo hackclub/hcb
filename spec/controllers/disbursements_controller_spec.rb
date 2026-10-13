@@ -25,7 +25,8 @@ RSpec.describe DisbursementsController do
               name: "Boba Drops",
               source_event_id: source_event.public_id,
               event_id: destination_event.public_id,
-              amount: "123.45"
+              amount: "123.45",
+              transfer_type: "transfer"
             }
           }
         )
@@ -60,6 +61,7 @@ RSpec.describe DisbursementsController do
               source_event_id: source_event.public_id,
               event_id: destination_event.public_id,
               amount: "123.45",
+              transfer_type: "transfer",
               source_transaction_category_slug: "donations",
               destination_transaction_category_slug: "fundraising",
             }

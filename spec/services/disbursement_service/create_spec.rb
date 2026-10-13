@@ -13,6 +13,7 @@ RSpec.describe DisbursementService::Create do
     destination_event = create(:event)
 
     disbursement = described_class.new(
+      transfer_type: "transfer",
       name: "Boba Drops",
       amount: "123.45",
       requested_by_id: requestor.id,
@@ -31,8 +32,8 @@ RSpec.describe DisbursementService::Create do
     expect(disbursement.destination_subledger).to be_nil
     expect(disbursement.scheduled_on).to be_nil
     expect(disbursement.should_charge_fee).to eq(false)
-    expect(disbursement.source_transaction_category).to be_nil
-    expect(disbursement.destination_transaction_category).to be_nil
+    expect(disbursement.source_transaction_category.slug).to eq("internal-transfer")
+    expect(disbursement.destination_transaction_category.slug).to eq("internal-transfer")
 
     pending_outgoing = disbursement.raw_pending_outgoing_disbursement_transaction
     expect(pending_outgoing.amount_cents).to eq(-123_45)
@@ -46,7 +47,7 @@ RSpec.describe DisbursementService::Create do
     expect(cpt_outgoing.date).to eq(Date.current)
     expect(cpt_outgoing.fronted).to eq(false)
     expect(cpt_outgoing.hcb_code).to eq("HCB-500-#{disbursement.id}")
-    expect(cpt_outgoing.category).to be_nil
+    expect(cpt_outgoing.category.slug).to eq("internal-transfer")
 
     pending_incoming = disbursement.raw_pending_incoming_disbursement_transaction
     expect(pending_incoming.amount_cents).to eq(123_45)
@@ -60,7 +61,7 @@ RSpec.describe DisbursementService::Create do
     expect(cpt_incoming.date).to eq(Date.current)
     expect(cpt_incoming.fronted).to eq(false)
     expect(cpt_incoming.hcb_code).to eq("HCB-550-#{disbursement.id}")
-    expect(cpt_incoming.category).to be_nil
+    expect(cpt_incoming.category.slug).to eq("internal-transfer")
   end
 
   it "auto-approves when requested by an admin" do
@@ -72,6 +73,7 @@ RSpec.describe DisbursementService::Create do
     destination_event = create(:event)
 
     disbursement = described_class.new(
+      transfer_type: "transfer",
       name: "Boba Drops",
       amount: "123.45",
       requested_by_id: requestor.id,
@@ -94,6 +96,7 @@ RSpec.describe DisbursementService::Create do
     destination_event = create(:event)
 
     disbursement = described_class.new(
+      transfer_type: "transfer",
       name: "Boba Drops",
       amount: "123.45",
       requested_by_id: requestor.id,
@@ -122,6 +125,7 @@ RSpec.describe DisbursementService::Create do
     destination_event = create(:event)
 
     disbursement = described_class.new(
+      transfer_type: "transfer",
       name: "Boba Drops",
       amount: "123.45",
       requested_by_id: requestor.id,
@@ -177,6 +181,7 @@ RSpec.describe DisbursementService::Create do
       destination_event = create(:event)
 
       disbursement = described_class.new(
+        transfer_type: "transfer",
         name: "Subledger Transfer",
         amount: "50.00",
         requested_by_id: requestor.id,
@@ -201,6 +206,7 @@ RSpec.describe DisbursementService::Create do
       destination_subledger = create(:card_grant, event: destination_event).subledger
 
       disbursement = described_class.new(
+        transfer_type: "transfer",
         name: "Subledger Transfer",
         amount: "50.00",
         requested_by_id: requestor.id,
@@ -225,6 +231,7 @@ RSpec.describe DisbursementService::Create do
       create(:organizer_position, event: event, user: requestor)
 
       disbursement = described_class.new(
+        transfer_type: "transfer",
         name: "Subledger to Subledger",
         amount: "25.00",
         requested_by_id: requestor.id,
@@ -252,6 +259,7 @@ RSpec.describe DisbursementService::Create do
       create(:organizer_position, event: event, user: requestor)
 
       disbursement = described_class.new(
+        transfer_type: "transfer",
         name: "Auto-approved Subledger Transfer",
         amount: "25.00",
         requested_by_id: requestor.id,
@@ -275,6 +283,7 @@ RSpec.describe DisbursementService::Create do
 
       expect {
         described_class.new(
+          transfer_type: "transfer",
           name: "Demo Transfer",
           amount: "100.00",
           requested_by_id: requestor.id,
@@ -293,6 +302,7 @@ RSpec.describe DisbursementService::Create do
 
       expect {
         described_class.new(
+          transfer_type: "transfer",
           name: "Demo Transfer",
           amount: "100.00",
           requested_by_id: requestor.id,
@@ -312,6 +322,7 @@ RSpec.describe DisbursementService::Create do
 
       expect {
         described_class.new(
+          transfer_type: "transfer",
           name: "Frozen Transfer",
           amount: "100.00",
           requested_by_id: requestor.id,
@@ -330,6 +341,7 @@ RSpec.describe DisbursementService::Create do
 
       expect {
         described_class.new(
+          transfer_type: "transfer",
           name: "Past Scheduled Transfer",
           amount: "100.00",
           requested_by_id: requestor.id,
@@ -349,6 +361,7 @@ RSpec.describe DisbursementService::Create do
 
       expect {
         described_class.new(
+          transfer_type: "transfer",
           name: "Today Scheduled Transfer",
           amount: "100.00",
           requested_by_id: requestor.id,
@@ -368,6 +381,7 @@ RSpec.describe DisbursementService::Create do
       future_date = 1.week.from_now.to_date
 
       disbursement = described_class.new(
+        transfer_type: "transfer",
         name: "Future Scheduled Transfer",
         amount: "100.00",
         requested_by_id: requestor.id,
@@ -387,6 +401,7 @@ RSpec.describe DisbursementService::Create do
 
       expect {
         described_class.new(
+          transfer_type: "transfer",
           name: "Same Event Transfer",
           amount: "100.00",
           requested_by_id: requestor.id,
@@ -405,6 +420,7 @@ RSpec.describe DisbursementService::Create do
 
       expect {
         described_class.new(
+          transfer_type: "transfer",
           name: "No Funds Transfer",
           amount: "100.00",
           requested_by_id: requestor.id,
@@ -423,6 +439,7 @@ RSpec.describe DisbursementService::Create do
 
       expect {
         described_class.new(
+          transfer_type: "transfer",
           name: "Zero Amount Transfer",
           amount: "0",
           requested_by_id: requestor.id,
@@ -441,6 +458,7 @@ RSpec.describe DisbursementService::Create do
 
       expect {
         described_class.new(
+          transfer_type: "transfer",
           name: "Negative Amount Transfer",
           amount: "-50.00",
           requested_by_id: requestor.id,
@@ -476,6 +494,10 @@ RSpec.describe DisbursementService::Create, "transfer types" do
       disbursement.raw_pending_outgoing_disbursement_transaction.canonical_pending_transaction.category&.slug,
       disbursement.raw_pending_incoming_disbursement_transaction.canonical_pending_transaction.category&.slug
     ]
+  end
+
+  it "requires a transfer type" do
+    expect { create_disbursement }.to raise_error(DisbursementService::Create::UserError, /what kind of transfer/)
   end
 
   it "categorizes a transfer as an internal transfer on both sides" do
@@ -537,7 +559,7 @@ RSpec.describe DisbursementService::Create, "transfer types" do
       disbursement.mark_rejected!(create(:user, :make_admin))
 
       expect(expense.reload.category.slug).to eq("food-fun")
-      expect(expense.ledger_item.repayments.active).to be_empty
+      expect(expense.ledger_item.repayments.not_failed).to be_empty
     end
 
     it "restores the expense's category when the repayment errors" do
@@ -573,6 +595,28 @@ RSpec.describe DisbursementService::Create, "transfer types" do
 
       expect(disbursement.repaid_ledger_items).to eq([expense.ledger_item])
       expect(expense.reload.category.slug).to eq("repayment")
+    end
+
+    it "keeps the repayment when the expense grows afterward, leaving the difference unrepaid" do
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
+      repayment = disbursement.repayments.sole
+
+      # e.g. a tip settling on top of a card charge
+      expense.update!(amount_cents: -120_00)
+      expense_item = expense.ledger_item.reload
+
+      expect(expense_item.amount_cents).to eq(-120_00)
+      expect(repayment.reload).to be_valid
+      expect(repayment.amount_cents + expense_item.amount_cents).to eq(-20_00)
+      expect(expense.reload.category.slug).to eq("repayment")
+
+      # The expense already counts as repaid, so the other $20 can't be.
+      expect {
+        create_disbursement(amount: "20.00", transfer_type: "repayment", repaid_ledger_item_id: expense_item.id)
+      }.to raise_error(ActiveRecord::RecordInvalid, /already been repaid/)
+
+      disbursement.mark_rejected!(create(:user, :make_admin))
+      expect(expense.reload.category.slug).to eq("food-fun")
     end
 
     it "leaves an expense uncategorized if it had no category" do

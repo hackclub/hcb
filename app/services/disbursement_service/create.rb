@@ -153,6 +153,8 @@ module DisbursementService
     end
 
     def validate_transfer_type!
+      raise UserError, "Choose what kind of transfer this is." unless Disbursement.transfer_types.key?(@transfer_type)
+
       case @transfer_type
       when "payment"
         definition = TransactionCategory::Definition::ALL[@payment_category_slug]

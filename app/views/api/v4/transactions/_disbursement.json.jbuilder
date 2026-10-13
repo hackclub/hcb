@@ -15,6 +15,7 @@ object_shape(json, disbursement) do
   json.outgoing_transaction_id outgoing_hcb_code.public_id
   json.incoming_transaction_id incoming_hcb_code.public_id
   json.amount_cents disbursement.amount
+  json.transfer_type disbursement.transfer_type
 
   json.from do
     json.partial! "api/v4/events/event", event: disbursement.source_event

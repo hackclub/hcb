@@ -1,11 +1,5 @@
 # frozen_string_literal: true
 
-# Links a disbursement to a transaction it repays. The destination
-# organization had the expense; the source organization is paying it back.
-#
-# Modeled as a join so a transaction can be repaid by several disbursements
-# and a disbursement can repay several transactions, but for now each
-# repayment covers exactly one transaction in full.
 # == Schema Information
 #
 # Table name: repayments
@@ -29,12 +23,18 @@
 #  fk_rails_...  (disbursement_id => disbursements.id)
 #  fk_rails_...  (ledger_item_id => ledger_items.id)
 #
+# Links a disbursement to a transaction it repays. The destination
+# organization had the expense; the source organization is paying it back.
+#
+# Modeled as a join so a transaction can be repaid by several disbursements
+# and a disbursement can repay several transactions, but for now each
+# repayment covers exactly one transaction in full.
 class Repayment < ApplicationRecord
   belongs_to :disbursement
   belongs_to :repaid_ledger_item, class_name: "Ledger::Item", foreign_key: :ledger_item_id, inverse_of: :repayments
 
   # Rejected and errored disbursements never moved money, so they don't count.
-  scope :active, -> { joins(:disbursement).where.not(disbursements: { aasm_state: [:rejected, :errored] }) }
+  scope :not_failed, -> { joins(:disbursement).where.not(disbursements: { aasm_state: [:rejected, :errored] }) }
 
   # Pending or settled expenses on the organization's ledger. Transfers
   # between organizations can't be repaid.
@@ -46,8 +46,10 @@ class Repayment < ApplicationRecord
   end
 
   validates :amount_cents, numericality: { greater_than: 0 }
-  validate :repaid_transaction_is_an_expense_of_the_destination
-  validate :repays_in_full
+  # Ledger item amounts can change later (e.g. a partial refund), so these are
+  # only checked when the repayment is made.
+  validate :repaid_transaction_is_an_expense_of_the_destination, on: :create
+  validate :repays_in_full, on: :create
   validate :repaid_transaction_not_already_repaid, on: :create
 
   def repaid_transactions
@@ -96,7 +98,7 @@ class Repayment < ApplicationRecord
   def repaid_transaction_not_already_repaid
     return if repaid_ledger_item.nil?
 
-    errors.add(:repaid_ledger_item, "has already been repaid") if repaid_ledger_item.repayments.active.where.not(id:).exists?
+    errors.add(:repaid_ledger_item, "has already been repaid") if repaid_ledger_item.repayments.not_failed.where.not(id:).exists?
   end
 
 end

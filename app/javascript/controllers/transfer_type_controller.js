@@ -47,12 +47,22 @@ export default class extends Controller {
       if (option) url.searchParams.set('destination_event_id', option.value)
       this.repaymentComboboxTarget.dataset.comboboxUrlValue = url.toString()
       this.repaymentCombobox?.clear()
+      this.repaidAmount = null
+      this.lockAmount()
       this.sectionTarget.disabled = !option
       this.hintTarget.hidden = !!option
     }
   }
 
   submit(event) {
+    // The radios are hidden behind their labels, so the browser can't point
+    // at them when none is picked.
+    if (!this.type) {
+      event.preventDefault()
+      this.sectionTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+
     const input = this.repaymentComboboxTarget.querySelector(
       'input[role="combobox"]'
     )

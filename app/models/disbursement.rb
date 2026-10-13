@@ -127,9 +127,10 @@ class Disbursement < ApplicationRecord
   has_many :repayments, dependent: :destroy
   has_many :repaid_ledger_items, through: :repayments
 
-  # What the transfer is for, asked when a user makes one. Decides how each
-  # side is categorized. Nil for transfers HCB creates itself (e.g. card grants).
+  # What the transfer is for. Decides how each side is categorized. Nil only
+  # on transfers made before types existed.
   enum :transfer_type, { transfer: "transfer", payment: "payment", repayment: "repayment" }, prefix: true, validate: { allow_nil: true }
+  validates :transfer_type, presence: true, on: :create
 
   validates_presence_of :source_event_id,
                         :event_id,

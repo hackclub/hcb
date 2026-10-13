@@ -53,24 +53,18 @@
     <fieldset class="card mb-4 relative overflow-visible m-0 min-w-0 transition-opacity disabled:opacity-50" data-transfer-type-target="section" <%= "disabled" unless disbursement.destination_event %>>
       <p class="muted mt-0 mb-3" data-transfer-type-target="hint" <%= "hidden" if disbursement.destination_event %>>Choose who you're sending to first.</p>
 
-      <div class="flex flex-col gap-2">
+      <div class="field field--options max-w-none !grid-cols-1 sm:!grid-cols-3 mb-0">
         <% [
              ["repayment", "reimbursement", "Repayment", "Paying the other organization back for an expense they covered for you, like supplies bought on their card."],
              ["payment", "payment", "Payment", "Paying the other organization for something they provided, like tickets, a venue, or services."],
              ["transfer", "transfers-horizontal", "Transfer", "Sharing funds, like sending leftover money to another organization or funding a sub-organization."]
            ].each do |value, icon, title, description| %>
-          <div>
-            <%= form.radio_button :transfer_type, value, required: true, disabled:, class: "peer sr-only", data: { action: "transfer-type#select" } %>
-            <%= form.label :transfer_type, value:, class: "flex items-center gap-4 m-0 p-4 rounded-lg border-2 border-solid border-smoke dark:border-slate cursor-pointer transition-colors hover:bg-blue/5 peer-checked:border-blue peer-checked:bg-blue/10 peer-focus-visible:ring-2 peer-focus-visible:ring-blue peer-disabled:cursor-not-allowed" do %>
-              <span class="flex items-center justify-center shrink-0 w-11 h-11 rounded-full bg-blue/10 text-blue">
-                <%= inline_icon icon, size: 26, class: "m-0" %>
-              </span>
-              <span class="flex flex-col gap-0.5 text-left">
-                <strong class="text-base"><%= title %></strong>
-                <span class="muted text-sm"><%= description %></span>
-              </span>
-            <% end %>
-          </div>
+          <%= form.radio_button :transfer_type, value, disabled:, data: { action: "transfer-type#select" } %>
+          <%= form.label :transfer_type, value:, class: "justify-start" do %>
+            <%= inline_icon icon, size: 28 %>
+            <strong><%= title %></strong>
+            <small><%= description %></small>
+          <% end %>
         <% end %>
       </div>
 
