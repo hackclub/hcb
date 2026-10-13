@@ -322,6 +322,13 @@ class HcbCode < ApplicationRecord
     ct&.stripe_refund? && (stripe_force_capture? || (stripe_card? && amount_cents > 0))
   end
 
+  def stripe_amount_breakdown
+    CardCharge::AmountBreakdown.new(
+      raw_pending_stripe_transaction: pt&.raw_pending_stripe_transaction,
+      raw_stripe_transactions: canonical_transactions.where(transaction_source_type: "RawStripeTransaction").includes(:transaction_source).map(&:transaction_source)
+    )
+  end
+
   def stripe_cash_withdrawal?
     stripe_merchant&.[]("category_code") == "6011"
   end
