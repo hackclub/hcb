@@ -41,6 +41,10 @@ RSpec.describe CardGrant::DefrostOneTimeUseJob do
     ).card_charge
   end
 
+  def force_capture_for(stripe_card, imported_at: Time.current)
+    create(:raw_stripe_transaction, stripe_card:, created_at: imported_at).card_charge
+  end
+
   def ledger_item_for(card_charge, status:, pending_at: Time.current, datetime: pending_at || Time.current)
     item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime:, pending_at:, linked_object: card_charge)
     item.save(validate: false)
@@ -126,22 +130,32 @@ RSpec.describe CardGrant::DefrostOneTimeUseJob do
     expect(card.reload).to be_frozen
   end
 
-  it "defrosts the reversed authorization despite a later-imported force capture" do
+  it "does not defrost while a force capture imported after the refunded purchase stands" do
     freeze_by(system_user)
     item = ledger_item_for(card_charge_for(card), status: "reversed", pending_at: 1.day.ago)
-    force_capture = create(:raw_stripe_transaction, stripe_card: card).card_charge
-    ledger_item_for(force_capture, status: "settled", pending_at: nil)
+    ledger_item_for(force_capture_for(card), status: "settled", pending_at: nil, datetime: 2.days.ago)
+
+    perform(item)
+
+    expect(Stripe::Issuing::Card).not_to have_received(:update)
+    expect(card.reload).to be_frozen
+  end
+
+  it "defrosts when the force capture that froze the card is refunded" do
+    freeze_by(system_user)
+    ledger_item_for(card_charge_for(card), status: "settled", pending_at: 1.day.ago)
+    item = ledger_item_for(force_capture_for(card), status: "reversed", pending_at: nil, datetime: 2.days.ago)
 
     perform(item)
 
     expect(card.reload).to be_active
+    expect(card_grant.reload.one_time_use).to eq(true)
   end
 
-  it "does not defrost when a force capture is refunded" do
+  it "does not defrost when a force capture imported before a newer purchase is refunded" do
     freeze_by(system_user)
+    item = ledger_item_for(force_capture_for(card, imported_at: 2.days.ago), status: "reversed", pending_at: nil)
     ledger_item_for(card_charge_for(card), status: "settled", pending_at: 1.day.ago)
-    force_capture = create(:raw_stripe_transaction, stripe_card: card).card_charge
-    item = ledger_item_for(force_capture, status: "reversed", pending_at: nil)
 
     perform(item)
 

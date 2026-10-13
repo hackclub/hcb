@@ -34,18 +34,29 @@ class CardGrant
 
     private
 
-    # Only approved authorizations freeze one-time-use cards; force captures and
-    # declined authorizations cannot.
-    # Compare authorization times, since late imports and backfills make charge
-    # insertion order unreliable, and settlement can change an item's datetime.
+    # Approved authorizations and force captures freeze one-time-use cards;
+    # declined authorizations don't. The latest of those is the one whose freeze
+    # is in effect.
     def froze_the_card?(card, item)
-      authorized_charges = card.card_charges
-                               .joins(:raw_pending_stripe_transaction)
-                               .where("raw_pending_stripe_transactions.stripe_transaction ->> 'approved' = 'true'")
-      Ledger::Item
-        .where(linked_object_type: "CardCharge", linked_object_id: authorized_charges.select(:id))
-        .order(Arel.sql("COALESCE(pending_at, datetime) DESC"), id: :desc)
-        .pick(:id) == item.id
+      items = Ledger::Item
+              .where(linked_object_type: "CardCharge", linked_object_id: card.card_charges.select(:id))
+              .includes(linked_object: [:raw_pending_stripe_transaction, :raw_stripe_transactions])
+
+      items.filter_map { |i| (time = frozen_at(i)) && [time, i.id] }.max&.last == item.id
+    end
+
+    # When HCB froze the card for this charge, or nil if it never would have.
+    # An authorization freezes at swipe time, so use that rather than insertion
+    # order, which late imports and backfills scramble, or the item's datetime,
+    # which settlement changes. A force capture freezes when it's imported.
+    def frozen_at(item)
+      charge = item.linked_object
+
+      if (authorization = charge.raw_pending_stripe_transaction)
+        item.pending_at || item.datetime if authorization.stripe_transaction["approved"] == true
+      else
+        charge.raw_stripe_transactions.find(&:force_capture?)&.created_at
+      end
     end
 
   end

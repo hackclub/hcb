@@ -27,6 +27,7 @@ class RawStripeTransaction < ApplicationRecord
   has_one :card_charge, through: :card_charge_raw_stripe_transaction
 
   after_create :link_card_charge!
+  after_create_commit -> { CardGrant::FreezeOneTimeUseJob.perform_later(raw_stripe_transaction_id: id) }, if: :force_capture?
 
   def memo
     @memo ||= stripe_transaction.dig("merchant_data", "name")
@@ -50,6 +51,11 @@ class RawStripeTransaction < ApplicationRecord
 
   def refund?
     stripe_transaction["type"] == "refund"
+  end
+
+  # A capture with no authorization behind it.
+  def force_capture?
+    stripe_authorization_id.blank? && stripe_transaction&.[]("type") == "capture"
   end
 
   def link_card_charge!
