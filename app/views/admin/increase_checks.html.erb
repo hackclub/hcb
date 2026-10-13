@@ -38,7 +38,7 @@
         <td><%= check.recipient_name %></td>
         <td>
           <% if check.payment.present? %>
-            <%= link_to check.payment.purpose, check.payment %>
+            <%= render partial: "admin/payment_link", locals: { payout: check } %>
           <% else %>
             None
           <% end %>

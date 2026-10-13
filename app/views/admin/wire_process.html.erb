@@ -70,7 +70,9 @@
         <% if @wire.payment.present? %>
           <tr>
             <td>Payment:</td>
-            <td><%= link_to @wire.payment.purpose, @wire.payment %></td>
+            <td>
+              <%= render partial: "admin/payment_link", locals: { payout: @wire } %>
+            </td>
           </tr>
         <% end %>
         <tr>

@@ -45,7 +45,7 @@
         <td><%= wire.recipient_name %></td>
         <td>
           <% if wire.payment.present? %>
-            <%= link_to wire.payment.purpose, wire.payment %>
+            <%= render partial: "admin/payment_link", locals: { payout: wire } %>
           <% else %>
             None
           <% end %>

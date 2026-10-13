@@ -90,7 +90,9 @@
           <% if @ach_transfer.payment.present? %>
             <tr>
               <td style="text-align: right;">Payment</td>
-              <td><%= link_to @ach_transfer.payment.purpose, @ach_transfer.payment %></td>
+              <td>
+                <%= render partial: "admin/payment_link", locals: { payout: @ach_transfer } %>
+              </td>
             </tr>
           <% end %>
           <% if @ach_transfer.invoiced_at.present? %>

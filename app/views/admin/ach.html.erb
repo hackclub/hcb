@@ -49,7 +49,7 @@
         </td>
         <td>
           <% if ach.payment.present? %>
-            <%= link_to ach.payment.purpose, ach.payment %>
+            <%= render partial: "admin/payment_link", locals: { payout: ach } %>
           <% else %>
             None
           <% end %>

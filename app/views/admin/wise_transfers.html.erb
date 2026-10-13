@@ -44,7 +44,7 @@
         <td><%= wise_transfer.recipient_name %></td>
         <td>
           <% if wise_transfer.payment.present? %>
-            <%= link_to wise_transfer.payment.purpose, wise_transfer.payment %>
+            <%= render partial: "admin/payment_link", locals: { payout: wise_transfer } %>
           <% else %>
             None
           <% end %>
