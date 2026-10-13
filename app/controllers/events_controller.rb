@@ -399,8 +399,9 @@ class EventsController < ApplicationController
           redirect_back_or_to edit_event_path(@event.slug)
         end
       else
-        # Only the donation settings forms submit a `tab`; every other form
-        # falls back to the details tab, as does anything not on the list.
+        # Only the donation settings forms submit a `tab`. Anything else,
+        # including a tab this user or organization can't use (see
+        # `settings_tab_available?`), falls back to the details tab.
         tab = params[:event][:tab]
         prepare_settings_tab(settings_tab_available?(tab) ? tab : "details")
         render :edit, status: :unprocessable_content
@@ -1359,11 +1360,20 @@ class EventsController < ApplicationController
 
   private
 
-  # The admin tab is only for auditors. `edit.html.erb` also checks this before
-  # rendering it, but turning the tab away here keeps a non-auditor from landing
-  # on a page that's titled "Admin".
+  # Mirrors the checks in `edit.html.erb` and the settings nav: the admin tab is
+  # only for auditors, and the donations, reimbursements and card grants tabs
+  # only exist once the organization is approved and its plan allows them. The
+  # view would render the details form for an unavailable tab anyway, but
+  # turning it away here keeps that form from appearing under another tab's
+  # heading.
   def settings_tab_available?(tab)
-    SETTINGS_TABS.include?(tab) && (tab != "admin" || auditor_signed_in?)
+    case tab
+    when "donations" then @event.approved? && @event.plan.donations_enabled?
+    when "reimbursements" then @event.approved? && @event.plan.reimbursements_enabled?
+    when "card_grants" then @event.approved? && @event.plan.card_grants_enabled?
+    when "admin" then auditor_signed_in?
+    else SETTINGS_TABS.include?(tab)
+    end
   end
 
   def prepare_settings_tab(tab)
@@ -1373,7 +1383,7 @@ class EventsController < ApplicationController
     @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).page(params[:page]).per(25) if @settings_tab == "audit_log"
     @affiliations = @event.affiliations if @settings_tab == "affiliations"
 
-    CardGrantSetting.find_or_create_by!(event: @event) if @event.plan.card_grants_enabled? && @settings_tab == "card_grants"
+    CardGrantSetting.find_or_create_by!(event: @event) if @settings_tab == "card_grants"
   end
 
   def process_hidden_param!(params_hash)

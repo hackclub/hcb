@@ -253,11 +253,18 @@ RSpec.describe EventsController do
 
       expect(response).to redirect_to(edit_event_path(event.slug, tab: "details"))
     end
+
+    it "sends an organization that can't take donations yet from the donations tab to the details tab" do
+      event = create(:event, aasm_state: "pending")
+      sign_in_organizer_of(event)
+
+      get(:edit, params: { id: event.slug, tab: "donations" })
+
+      expect(response).to redirect_to(edit_event_path(event.slug, tab: "details"))
+    end
   end
 
   describe "#update" do
-    render_views
-
     it "lets an admin set the sub-organization name prefix" do
       admin = create(:user, :make_admin)
       event = create(:event)
@@ -272,6 +279,8 @@ RSpec.describe EventsController do
     end
 
     context "when the update is invalid" do
+      render_views
+
       let(:event) { create(:event, aasm_state: "approved", donation_thank_you_message: "Thank you!") }
       let(:too_long_message) { "a" * 501 }
 
@@ -312,6 +321,20 @@ RSpec.describe EventsController do
         expect(headings).to include("Organization")
         expect(headings).not_to include("Admin")
         expect(response.body).not_to include("slug history")
+      end
+
+      context "and the organization can't use the submitted tab" do
+        let(:event) { create(:event, aasm_state: "pending", donation_thank_you_message: "Thank you!") }
+
+        it "falls back to the details tab" do
+          page = submit(tab: "donations")
+
+          expect(response).to have_http_status(:unprocessable_content)
+          headings = page.css("h1").map { |h1| h1.text.strip }
+          expect(headings).to include("Organization")
+          expect(headings).not_to include("Donations")
+          expect(page.at_css(".error-card").text).to include("Donation thank you message is too long")
+        end
       end
     end
   end
