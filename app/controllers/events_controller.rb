@@ -4,6 +4,8 @@ class EventsController < ApplicationController
   TRANSACTIONS_PER_PAGE = 75
   DONATIONS_PER_PAGE = 25
 
+  SETTINGS_TABS = %w[details donations reimbursements card_grants tags affiliations features integrations audit_log admin].freeze
+
   TREE_GUIDES = /\A[01]{0,#{Event::MAX_PARENT_DEPTH}}\z/
 
   include SetEvent
@@ -332,17 +334,9 @@ class EventsController < ApplicationController
   # GET /events/1/edit
   def edit
     authorize @event
-    if !params[:tab] || !%w[details donations reimbursements card_grants tags affiliations features integrations audit_log admin].include?(params[:tab])
-      return redirect_to edit_event_path(@event.slug, tab: "details")
-    end
+    return redirect_to edit_event_path(@event.slug, tab: "details") unless settings_tab_available?(params[:tab])
 
-    @settings_tab = params[:tab]
-    @frame = params[:frame]
-    @activities_before = params[:activities_before] || Time.now
-    @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).page(params[:page]).per(25) if @settings_tab == "audit_log"
-    @affiliations = @event.affiliations if @settings_tab == "affiliations"
-
-    CardGrantSetting.find_or_create_by!(event: @event) if @event.plan.card_grants_enabled? && @settings_tab == "card_grants"
+    prepare_settings_tab(params[:tab])
 
     render :edit, layout: !@frame
   end
@@ -405,7 +399,10 @@ class EventsController < ApplicationController
           redirect_back_or_to edit_event_path(@event.slug)
         end
       else
-        @settings_tab = params[:event][:tab]
+        # Only the donation settings forms submit a `tab`; every other form
+        # falls back to the details tab, as does anything not on the list.
+        tab = params[:event][:tab]
+        prepare_settings_tab(settings_tab_available?(tab) ? tab : "details")
         render :edit, status: :unprocessable_content
       end
     rescue Errors::InvalidStripeCardLogoError => e
@@ -1361,6 +1358,23 @@ class EventsController < ApplicationController
   end
 
   private
+
+  # The admin tab is only for auditors. `edit.html.erb` also checks this before
+  # rendering it, but turning the tab away here keeps a non-auditor from landing
+  # on a page that's titled "Admin".
+  def settings_tab_available?(tab)
+    SETTINGS_TABS.include?(tab) && (tab != "admin" || auditor_signed_in?)
+  end
+
+  def prepare_settings_tab(tab)
+    @settings_tab = tab
+    @frame = params[:frame]
+    @activities_before = params[:activities_before] || Time.now
+    @activities = PublicActivity::Activity.for_event(@event).before(@activities_before).order(created_at: :desc).page(params[:page]).per(25) if @settings_tab == "audit_log"
+    @affiliations = @event.affiliations if @settings_tab == "affiliations"
+
+    CardGrantSetting.find_or_create_by!(event: @event) if @event.plan.card_grants_enabled? && @settings_tab == "card_grants"
+  end
 
   def process_hidden_param!(params_hash)
     if params_hash[:hidden] == "1" && !@event.hidden_at.present?

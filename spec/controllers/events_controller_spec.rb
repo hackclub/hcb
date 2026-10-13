@@ -244,31 +244,20 @@ RSpec.describe EventsController do
       expect(page.css("#tags_settings input[name='label'][disabled]")).to be_empty
       expect(page.css("#tags_settings a[disabled]")).to be_empty
     end
+
+    it "sends a non-auditor who asks for the admin tab to the details tab" do
+      event = create(:event)
+      sign_in_organizer_of(event)
+
+      get(:edit, params: { id: event.slug, tab: "admin" })
+
+      expect(response).to redirect_to(edit_event_path(event.slug, tab: "details"))
+    end
   end
 
   describe "#update" do
     render_views
 
-    let(:event) { create(:event, aasm_state: "approved", donation_thank_you_message: "Thank you!") }
-
-    before { sign_in_organizer_of(event) }
-
-    it "keeps donation settings and the submitted message visible with an actionable length error" do
-      message = "a" * 501
-
-      patch(:update, params: { id: event.slug, event: { tab: "donations", donation_thank_you_message: message } })
-
-      expect(response).to have_http_status(:unprocessable_content)
-      page = Nokogiri::HTML5(response.body)
-      settings = page.at_css("#donations_settings")
-      expect(settings).to be_present
-      expect(settings.at_css(".error-card").text).to include("Donation thank you message is too long (maximum is 500 characters)")
-      expect(settings.at_css("textarea[name='event[donation_thank_you_message]']").text).to eq(message)
-      expect(event.reload.donation_thank_you_message).to eq("Thank you!")
-    end
-  end
-
-  describe "#update" do
     it "lets an admin set the sub-organization name prefix" do
       admin = create(:user, :make_admin)
       event = create(:event)
@@ -280,6 +269,50 @@ RSpec.describe EventsController do
             })
 
       expect(event.config.reload.subevent_name_prefix).to eq("Athena Award — ")
+    end
+
+    context "when the update is invalid" do
+      let(:event) { create(:event, aasm_state: "approved", donation_thank_you_message: "Thank you!") }
+      let(:too_long_message) { "a" * 501 }
+
+      before { sign_in_organizer_of(event) }
+
+      def submit(tab:)
+        patch(:update, params: { id: event.slug, event: { tab:, donation_thank_you_message: too_long_message }.compact })
+        Nokogiri::HTML5(response.body)
+      end
+
+      it "keeps donation settings and the submitted message visible with an actionable length error" do
+        page = submit(tab: "donations")
+
+        expect(response).to have_http_status(:unprocessable_content)
+        settings = page.at_css("#donations_settings")
+        expect(settings).to be_present
+        expect(settings.at_css(".error-card").text).to include("Donation thank you message is too long (maximum is 500 characters)")
+        expect(settings.at_css("textarea[name='event[donation_thank_you_message]']").text).to eq(too_long_message)
+        expect(event.reload.donation_thank_you_message).to eq("Thank you!")
+      end
+
+      it "falls back to the details tab when the tab is missing or isn't a settings tab" do
+        [nil, "bogus", { "x" => "1" }].each do |tab|
+          page = submit(tab:)
+
+          expect(response).to have_http_status(:unprocessable_content)
+          expect(page.css("h1").map { |h1| h1.text.strip }).to include("Organization")
+          expect(page.at_css("#donations_settings")).to be_nil
+          expect(page.at_css(".error-card").text).to include("Donation thank you message is too long")
+        end
+      end
+
+      it "doesn't show a non-auditor the admin tab" do
+        page = submit(tab: "admin")
+
+        expect(response).to have_http_status(:unprocessable_content)
+        headings = page.css("h1").map { |h1| h1.text.strip }
+        expect(headings).to include("Organization")
+        expect(headings).not_to include("Admin")
+        expect(response.body).not_to include("slug history")
+      end
     end
   end
 
