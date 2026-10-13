@@ -582,9 +582,8 @@ class Transaction < ApplicationRecord
                                .order(approved_at: :desc)
                                .in_transit
 
-    return unless unpaired_matching_amount.count > 0
-
-    matched_ach = unpaired_matching_amount[0]
+    matched_ach = unpaired_matching_amount.first
+    return unless matched_ach
 
     self.ach_transfer = matched_ach
 
