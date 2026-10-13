@@ -52,7 +52,7 @@ RSpec.describe Tax::FormsController do
 
     let(:user) { create(:user) }
     let(:legal_entity) { user.personal_legal_entity }
-    let(:form) { create(:tax_form, :sent, legal_entity:) }
+    let(:form) { create(:tax_form, :completed, legal_entity:) }
 
     before { create_session(user, verified: true) }
 
