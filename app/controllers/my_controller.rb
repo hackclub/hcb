@@ -26,7 +26,7 @@ class MyController < ApplicationController
       return
     end
 
-    @stripe_cards = current_user.stripe_cards.includes(:card_grant, event: { logo_attachment: :blob })
+    @stripe_cards = current_user.stripe_cards.includes(:card_grant, event: [:plan, { logo_attachment: :blob }])
     @emburse_cards = current_user.emburse_cards.includes(:event)
 
     @q = params[:q].presence
@@ -59,7 +59,7 @@ class MyController < ApplicationController
     if @q
       @stripe_cards = @stripe_cards.left_joins(:card_grant).where(
         "stripe_cards.name ILIKE :q OR card_grants.purpose ILIKE :q OR stripe_cards.last4 ILIKE :q",
-        q: "%#{@q}%"
+        q: "%#{StripeCard.sanitize_sql_like(@q)}%"
       )
     end
 
@@ -68,7 +68,7 @@ class MyController < ApplicationController
       Arel.sql("stripe_status = 'inactive' DESC")
     )
 
-    @cards_by_event = @stripe_cards.group_by(&:event).reject { |event, _| event.nil? }.sort_by { |event, _| event.name }.to_h
+    @cards_by_event = @stripe_cards.group_by(&:event).sort_by { |event, _| event.name }.to_h
   end
 
   def tasks
