@@ -45,7 +45,7 @@
   <% if mismatched.present? %>
     <hr>
 
-    <%= render "mismatched_tax_form", legal_entity: @legal_entity, mismatched:, show_tin: %>
+    <%= render "legal_entities/mismatched_tax_form", legal_entity: @legal_entity, mismatched:, show_tin: %>
   <% elsif completed_tax_form.present? %>
     <hr>
 
@@ -77,7 +77,7 @@
     been banned from receiving payments from organizations on HCB.
   </p>
 <% elsif mismatched.present? %>
-  <%= render "mismatched_tax_form", legal_entity: @legal_entity, mismatched:, show_tin: %>
+  <%= render "legal_entities/mismatched_tax_form", legal_entity: @legal_entity, mismatched:, show_tin: %>
 <% elsif @legal_entity.latest_completed_tax_form&.taxbandits_tin_match_failed? %>
   <p>
     Your submission for <%= @legal_entity.person? ? "your" : "#{@legal_entity.name.presence || "Business"}'s" %>
