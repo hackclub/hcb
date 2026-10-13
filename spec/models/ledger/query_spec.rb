@@ -167,6 +167,18 @@ RSpec.describe Ledger::Query, type: :model do
       end
     end
 
+    context "memo search" do
+      it "matches case-insensitive word prefixes without including unrelated transactions" do
+        purchase = create_mapped_item(amount_cents: -500, memo: "Purchase at PAPERSTORE", datetime: Date.new(2024, 3, 20))
+
+        ["PAPERSTORE", "paper", "purch paper"].each do |search|
+          expect(execute_query({ memo: { "$search" => search } }).pluck(:id)).to eq([purchase.id])
+        end
+
+        expect(execute_query({ memo: { "$search" => "paper refund" } }).pluck(:id)).to be_empty
+      end
+    end
+
     context "string comparisons" do
       it "$gt compares strings lexicographically" do
         result = execute_query({ memo: { "$gt" => "delta payment" } })
