@@ -557,6 +557,24 @@ RSpec.describe DisbursementService::Create, "transfer types" do
       expect(expense.reload.category.slug).to eq("food-fun")
     end
 
+    it "keeps a category someone set on the expense after it was repaid" do
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
+      TransactionCategoryService.new(model: expense.reload).set!(slug: "venue", assignment_strategy: "manual")
+
+      disbursement.mark_rejected!(create(:user, :make_admin))
+
+      expect(expense.reload.category.slug).to eq("venue")
+    end
+
+    it "can repay an expense again after the first repayment is rejected" do
+      create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id).mark_rejected!(create(:user, :make_admin))
+
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
+
+      expect(disbursement.repaid_ledger_items).to eq([expense.ledger_item])
+      expect(expense.reload.category.slug).to eq("repayment")
+    end
+
     it "leaves an expense uncategorized if it had no category" do
       uncategorized = create(:canonical_transaction, event: destination_event, amount_cents: -100_00)
       disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: uncategorized.ledger_item.id)

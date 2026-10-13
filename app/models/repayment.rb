@@ -65,9 +65,12 @@ class Repayment < ApplicationRecord
     end
   end
 
-  # Puts the repaid transaction back to the category it had before.
+  # Puts the repaid transaction back to the category it had before, unless
+  # someone has recategorized it since.
   def revert_categories!
     repaid_transactions.each do |t|
+      next unless t.category&.slug == "repayment"
+
       TransactionCategoryService.new(model: t).set!(slug: previous_category_slug, assignment_strategy: "manual")
     end
   end
