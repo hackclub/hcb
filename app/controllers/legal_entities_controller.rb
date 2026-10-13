@@ -30,8 +30,13 @@ class LegalEntitiesController < ApplicationController
         name: @legal_entity.name,
         tin_hash: new_tax_form.tin_hash,
         entity_type: new_tax_form.entity_type,
-        users: @legal_entity.users
+        users: @legal_entity.users,
+        managing_event: @legal_entity.managing_event
       )
+
+      @legal_entity.payout_methods.each do |method|
+        method.update!(legal_entity: new_le)
+      end
 
       new_tax_form.update!(legal_entity: new_le)
 
@@ -40,6 +45,18 @@ class LegalEntitiesController < ApplicationController
       @legal_entity.payout_methods.each { |payout_method| payout_method.update!(legal_entity: new_le) }
 
       migrate_pending_payee_assocs(from_le: @legal_entity, to_le: new_le, archive_remaining_payees: true, include_payroll_positions: true)
+
+      # If there were pending payments on the old managed LE, a new payee will already be created
+      # If not, we need to create a new one anyways and archive the old one
+      if new_le.managed? && new_le.payees.none?
+        old_payee = @legal_entity.payees.first
+        new_le.payees.create!(
+          event: old_payee.event,
+          display_name: old_payee.display_name,
+          email: old_payee.email,
+        )
+        old_payee.archive!
+      end
     end
 
     redirect_to legal_entity_path(new_le)
