@@ -1,16 +1,14 @@
 <p>Hello,</p>
 
 <p>
-  Just a heads up: <%= @position.payee.display_name %>'s contract for
-  "<%= @position.title %>" at <%= @event.name %> ends on
-  <strong><%= @position.end_date.to_fs(:long) %></strong>.
+  <%= @position.payee.display_name %>'s contracting position "<%= @position.title %>" for
+  <%= @event.name %> ends on <strong><%= @position.end_date.to_fs(:long) %></strong>.
 </p>
 
 <p>
-  After that date, <%= @position.payee.display_name %> will no longer be able to
-  submit invoices for this position. If you'd like them to keep working with
-  <%= @event.name %>, you can set up a new contract before then. No action is
-  needed if the engagement is wrapping up as planned.
+  After that date, <%= @position.payee.display_name %> will no longer be able to submit
+  invoices for this position. If you'd like to continue working with them, please create a
+  new contractor position before then.
 </p>
 
 <p>
