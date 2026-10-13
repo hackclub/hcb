@@ -43,7 +43,7 @@
         </tr>
         <% if @check.payment.present? %>
           <tr>
-            <td style="text-align: right;">Payment:</td>
+            <td class="text-right">Payment:</td>
             <td>
               <%= render partial: "admin/payment_link", locals: { payout: @check } %>
             </td>
