@@ -469,28 +469,30 @@ class EventsController < ApplicationController
     @type = %w[virtual physical].include?(params[:type]) ? params[:type] : nil
     @q = params[:q].presence
 
-    @filter_options = [
-      { key: "status", label: "Status", type: "select", options: [["Active", "active"], ["Inactive", "inactive"], ["Frozen", "frozen"], ["Canceled", "canceled"]], include_blank: "All" },
-      { key: "type", label: "Type", type: "select", options: [["Virtual", "virtual"], ["Physical", "physical"]], include_blank: "All" },
-      { key: "user", label: "Cardholder", type: "select", options: @event.users.order(:full_name).map { |u| [u.full_name, u.slug] }, include_blank: "All" },
-    ]
-
     cookies[:card_overview_view] = params[:view] if params[:view]
     @view = cookies[:card_overview_view] || "grid"
 
     @user = User.friendly.find(params[:user], allow_nil: true) if params[:user]
 
-    @has_filter = @status.present? || @type.present? || @user.present? || @q.present?
+    event_cards = @event.stripe_cards.where.missing(:card_grant).joins(:stripe_cardholder, :user)
+    all_stripe_cards = event_cards.includes(:card_grant, stripe_cardholder: { user: { profile_picture_attachment: :blob } })
+                                  .order("stripe_status asc, created_at desc")
 
-    all_stripe_cards = @event.stripe_cards.where.missing(:card_grant).joins(:stripe_cardholder, :user).includes(:card_grant, stripe_cardholder: { user: { profile_picture_attachment: :blob } })
-                             .order("stripe_status asc, created_at desc")
+    # Derived from cards rather than @event.users so removed members' cards stay filterable
+    cardholders = User.where(id: event_cards.select("stripe_cardholders.user_id")).order(:full_name)
+    @filter_options = [
+      { key: "status", label: "Status", type: "select", options: [["Active", "active"], ["Inactive", "inactive"], ["Frozen", "frozen"], ["Canceled", "canceled"]] },
+      { key: "type", label: "Type", type: "select", options: [["Virtual", "virtual"], ["Physical", "physical"]] },
+      { key: "user", label: "Cardholder", type: "select", options: cardholders.map { |u| [u.full_name, u.slug] } },
+    ]
+    @has_filter = helpers.check_filters?(@filter_options, params)
 
     all_stripe_cards = all_stripe_cards.where(user: { id: @user.id }) if @user
 
     if @q
       all_stripe_cards = all_stripe_cards.where(
         "stripe_cards.name ILIKE :q OR stripe_cards.last4 ILIKE :q",
-        q: "%#{@q}%"
+        q: "%#{StripeCard.sanitize_sql_like(@q)}%"
       )
     end
 
@@ -524,7 +526,6 @@ class EventsController < ApplicationController
       @user_stripe_cards = StripeCard.none
     end
 
-    @stripe_cardholders = StripeCardholder.where(user_id: @event.users.pluck(:id)).includes(:user).order("created_at desc")
     @organizer_position = OrganizerPosition.find_by(event: @event, user: current_user)
 
     authorize @event
@@ -540,14 +541,12 @@ class EventsController < ApplicationController
     ].flatten
 
     @paginated_stripe_cards = Kaminari.paginate_array(display_cards).page(page).per(per_page)
-    @all_unique_cardholders = @event.stripe_cards.on_main_ledger.map(&:stripe_cardholder).uniq
 
     unless @user || @q
       user_groups = display_cards
                     .group_by(&:user)
                     .reject { |user, _| user.nil? }
-                    .sort_by { |user, _| user == current_user ? "" : (user.full_name || "") }
-                    .to_a
+                    .sort_by { |user, _| [user == current_user ? 0 : 1, user.full_name.to_s] }
 
       @paginated_user_groups = Kaminari.paginate_array(user_groups).page(page).per(10)
       @cards_by_user = @paginated_user_groups.to_h

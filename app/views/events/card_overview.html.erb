@@ -37,7 +37,6 @@
         <%= render "events/filters/search", form: %>
       <% end %>
       <%= render "events/filters/menu", filters: @filter_options unless @has_filter %>
-
     </div>
     <%= render "events/filters/bar", filters: @filter_options if @has_filter %>
 
@@ -71,7 +70,7 @@
               <% end %>
             </div>
             <article class="mixed-grid grid--spacious">
-              <%= render partial: "stripe_cards/stripe_card", collection: cards.first(preview_count), locals: { headless: true } %>
+              <%= render partial: "stripe_cards/stripe_card", collection: cards.first(preview_count), locals: { headless: true, show_purpose: true } %>
             </article>
             <% if cards.count > preview_count %>
               <div class="flex">
@@ -84,11 +83,7 @@
         <% end %>
         <%= paginate @paginated_user_groups %>
       <% else %>
-        <% if organizer_signed_in? %>
-          <%= blankslate "You don’t have any #{@status} cards yet" %>
-        <% else %>
-          <%= blankslate "This organization doesn’t have any #{@status} cards" %>
-        <% end %>
+        <%= blankslate "#{@event.name} doesn’t have any #{@status} cards" %>
       <% end %>
     <% else %>
       <article class="mixed-grid grid--spacious">
@@ -96,11 +91,7 @@
       </article>
 
       <% if @paginated_stripe_cards.blank? %>
-        <% if organizer_signed_in? %>
-          <%= blankslate "You don’t have any #{@status} cards yet" %>
-        <% else %>
-          <%= blankslate "This organization doesn’t have any #{@status} cards" %>
-        <% end %>
+        <%= blankslate "#{@event.name} doesn’t have any #{@status} cards" %>
       <% end %>
 
       <%= paginate @paginated_stripe_cards %>
