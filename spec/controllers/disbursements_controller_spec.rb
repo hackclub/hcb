@@ -268,6 +268,24 @@ RSpec.describe DisbursementsController do
       expect(response.parsed_body.first["amount"]).to eq("100.0")
     end
 
+    it "flags which recipients the user can repay" do
+      # Salary accounts can send to organizations their members aren't on.
+      source_event.plan.update!(type: Event::Plan::SalaryAccount.name)
+      stranger = create(:event, name: "Stranger Things Club", is_public: true, is_indexable: true)
+
+      get(:event_search, params: { sending: "false", source_event_id: source_event.public_id }, format: :json)
+
+      repayable = response.parsed_body.to_h { |option| [option["value"], option["repayable"]] }
+      expect(repayable).to include(destination_event.public_id => true, stranger.public_id => false)
+    end
+
+    it "doesn't flag source organizations as repayable" do
+      get(:event_search, params: { sending: "true" }, format: :json)
+
+      expect(response.parsed_body).to all(satisfy { |option| !option.key?("repayable") })
+      expect(response.parsed_body).not_to be_empty
+    end
+
     it "lists nothing for organizations the user can't see" do
       sender.organizer_positions.find_by(event: destination_event).destroy!
 

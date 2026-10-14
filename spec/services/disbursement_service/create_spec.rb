@@ -518,6 +518,16 @@ RSpec.describe DisbursementService::Create, "transfer types" do
     expect { create_disbursement(transfer_type: "payment", payment_category_slug: "hcb-revenue") }.to raise_error(DisbursementService::Create::UserError)
   end
 
+  it "doesn't let a payment use a category the transfer types assign themselves, even for admins" do
+    requestor.update!(access_level: :admin)
+
+    %w[repayment internal-transfer internal-revenue].each do |slug|
+      expect {
+        create_disbursement(transfer_type: "payment", payment_category_slug: slug)
+      }.to raise_error(DisbursementService::Create::UserError, /what this payment is for/)
+    end
+  end
+
   describe "repayments" do
     let!(:expense) { create(:canonical_transaction, event: destination_event, amount_cents: -100_00, category_slug: "food-fun") }
 
@@ -550,7 +560,16 @@ RSpec.describe DisbursementService::Create, "transfer types" do
 
       expect {
         create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: other_expense.ledger_item.id)
-      }.to raise_error(ActiveRecord::RecordInvalid, /must be an expense/)
+      }.to raise_error(ActiveRecord::RecordInvalid, /must be a settled expense/)
+    end
+
+    it "can't repay a pending transaction" do
+      pending_expense = create(:canonical_pending_transaction, event: destination_event, amount_cents: -100_00)
+
+      expect(pending_expense.ledger_item.reload).to be_pending
+      expect {
+        create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: pending_expense.ledger_item.id)
+      }.to raise_error(ActiveRecord::RecordInvalid, /must be a settled expense/)
     end
 
     it "restores the expense's category when the repayment is rejected" do
@@ -617,6 +636,43 @@ RSpec.describe DisbursementService::Create, "transfer types" do
 
       disbursement.mark_rejected!(create(:user, :make_admin))
       expect(expense.reload.category.slug).to eq("food-fun")
+    end
+
+    it "restores an automatic category as automatic" do
+      expect(expense.category_mapping).to be_automatic
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
+      expect(expense.reload.category_mapping).to be_manual
+
+      disbursement.mark_rejected!(create(:user, :make_admin))
+
+      expect(expense.reload.category_mapping).to be_automatic
+      expect(expense.category.slug).to eq("food-fun")
+    end
+
+    it "restores a manual category as manual" do
+      TransactionCategoryService.new(model: expense).set!(slug: "venue", assignment_strategy: "manual")
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
+
+      disbursement.mark_rejected!(create(:user, :make_admin))
+
+      expect(expense.reload.category_mapping).to be_manual
+      expect(expense.category.slug).to eq("venue")
+    end
+
+    it "restores each of the expense's transactions to its own category" do
+      TransactionCategoryService.new(model: expense).set!(slug: "venue")
+      pending = create(:canonical_pending_transaction, ledger_item: expense.ledger_item, amount_cents: -100_00, category_slug: "food-fun")
+      create(:canonical_pending_settled_mapping, canonical_pending_transaction: pending, canonical_transaction: expense)
+      expense.ledger_item.refresh!
+      expect(expense.ledger_item).to be_settled
+
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
+      expect([expense.reload.category.slug, pending.reload.category.slug]).to eq(["repayment", "repayment"])
+
+      disbursement.mark_rejected!(create(:user, :make_admin))
+
+      expect(expense.reload.category.slug).to eq("venue")
+      expect(pending.reload.category.slug).to eq("food-fun")
     end
 
     it "leaves an expense uncategorized if it had no category" do

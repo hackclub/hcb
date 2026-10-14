@@ -157,8 +157,9 @@ module DisbursementService
 
       case @transfer_type
       when "payment"
-        definition = TransactionCategory::Definition::ALL[@payment_category_slug]
-        raise UserError, "Choose what this payment is for." if definition.nil? || (definition.hq_only? && !requested_by&.admin?)
+        unless Disbursement.payment_categories(admin: requested_by&.admin?).any? { |definition| definition.slug == @payment_category_slug }
+          raise UserError, "Choose what this payment is for."
+        end
       when "repayment"
         raise UserError, "Choose the transaction you're repaying." if @repaid_ledger_item.nil?
       end

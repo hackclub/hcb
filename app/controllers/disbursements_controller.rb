@@ -105,12 +105,16 @@ class DisbursementsController < ApplicationController
       disabled_message = "Insufficient balance" if sending && !admin_signed_in? && e.balance_available <= 0
       disabled_message = "HCB transfers disabled" if sending && !policy(e).create_transfer?
 
-      {
+      option = {
         value: e.public_id,
         label: helpers.combobox_display(e),
         sublabel: disabled_message || helpers.render_money_short(e.balance_available),
         disabled: disabled_message.present?
       }
+      # Lets the form hide the repayment option for recipients whose
+      # transactions the user can't see.
+      option[:repayable] = policy(Disbursement.new(destination_event: e)).repay? unless sending
+      option
     end
 
     render json: options

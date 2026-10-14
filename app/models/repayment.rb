@@ -4,13 +4,13 @@
 #
 # Table name: repayments
 #
-#  id                     :bigint           not null, primary key
-#  amount_cents           :integer          not null
-#  previous_category_slug :string
-#  created_at             :datetime         not null
-#  updated_at             :datetime         not null
-#  disbursement_id        :bigint           not null
-#  ledger_item_id         :bigint           not null
+#  id                  :bigint           not null, primary key
+#  amount_cents        :integer          not null
+#  previous_categories :jsonb            not null
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  disbursement_id     :bigint           not null
+#  ledger_item_id      :bigint           not null
 #
 # Indexes
 #
@@ -36,11 +36,12 @@ class Repayment < ApplicationRecord
   # Rejected and errored disbursements never moved money, so they don't count.
   scope :not_failed, -> { joins(:disbursement).where.not(disbursements: { aasm_state: [:rejected, :errored] }) }
 
-  # Pending or settled expenses on the organization's ledger. Transfers
-  # between organizations can't be repaid.
+  # Settled expenses on the organization's ledger. Pending ones can still
+  # change amount or drop off, so they can't be repaid yet. Transfers between
+  # organizations can't be repaid.
   def self.repayable_ledger_items(event)
     event.ledger.items
-         .where(status: [:pending, :settled])
+         .where(status: :settled)
          .where("ledger_items.amount_cents < 0")
          .where("ledger_items.linked_object_type IS NULL OR ledger_items.linked_object_type NOT IN (?)", ["Disbursement::Outgoing", "Disbursement::Incoming"])
   end
@@ -53,37 +54,63 @@ class Repayment < ApplicationRecord
   validate :repaid_transaction_not_already_repaid, on: :create
 
   def repaid_transactions
-    [*repaid_ledger_item.canonical_transactions.includes(:category), *repaid_ledger_item.canonical_pending_transactions.includes(:category)]
+    [
+      *repaid_ledger_item.canonical_transactions.includes(category_mapping: :category),
+      *repaid_ledger_item.canonical_pending_transactions.includes(category_mapping: :category)
+    ]
   end
 
   def repaid_category
-    repaid_transactions.filter_map(&:category).first
+    repaid_transactions.filter_map { |t| t.category_mapping&.category }.first
   end
 
+  # Remembers each repaid transaction's category (and whether it was set by
+  # hand) so rejecting the repayment can put it back.
   def apply_categories!
-    update!(previous_category_slug: repaid_category&.slug)
-    repaid_transactions.each do |t|
+    transactions = repaid_transactions
+    update!(previous_categories: transactions.to_h { |t| [snapshot_key(t), category_snapshot(t)] })
+    transactions.each do |t|
       TransactionCategoryService.new(model: t).set!(slug: "repayment", assignment_strategy: "manual")
     end
   end
 
-  # Puts the repaid transaction back to the category it had before, unless
+  # Puts each repaid transaction back to the category it had before, unless
   # someone has recategorized it since.
   def revert_categories!
     repaid_transactions.each do |t|
-      next unless t.category&.slug == "repayment"
+      mapping = t.category_mapping
+      next unless mapping&.category&.slug == "repayment"
 
-      TransactionCategoryService.new(model: t).set!(slug: previous_category_slug, assignment_strategy: "manual")
+      previous = previous_categories[snapshot_key(t)]
+      if previous.nil?
+        mapping.destroy!
+      else
+        mapping.update!(
+          category: TransactionCategory.find_or_create_by!(slug: previous["slug"]),
+          assignment_strategy: previous["assignment_strategy"]
+        )
+      end
     end
   end
 
   private
 
+  def snapshot_key(transaction)
+    "#{transaction.class.name}:#{transaction.id}"
+  end
+
+  def category_snapshot(transaction)
+    mapping = transaction.category_mapping
+    return if mapping.nil?
+
+    { "slug" => mapping.category.slug, "assignment_strategy" => mapping.assignment_strategy }
+  end
+
   def repaid_transaction_is_an_expense_of_the_destination
     return if repaid_ledger_item.nil? || disbursement.nil?
 
     unless Repayment.repayable_ledger_items(disbursement.destination_event).exists?(repaid_ledger_item.id)
-      errors.add(:repaid_ledger_item, "must be an expense of #{disbursement.destination_event.name}")
+      errors.add(:repaid_ledger_item, "must be a settled expense of #{disbursement.destination_event.name}")
     end
   end
 

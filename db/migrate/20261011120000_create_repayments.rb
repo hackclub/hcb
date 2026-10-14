@@ -6,7 +6,7 @@ class CreateRepayments < ActiveRecord::Migration[8.1]
       t.references :disbursement, null: false, foreign_key: true
       t.references :ledger_item, null: false, foreign_key: true
       t.integer :amount_cents, null: false
-      t.string :previous_category_slug
+      t.jsonb :previous_categories, null: false, default: {}
 
       t.timestamps
     end

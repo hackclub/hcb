@@ -52,6 +52,8 @@
     <%# Disabled until a recipient is picked: repayments list the recipient's transactions. %>
     <fieldset class="card mb-4 relative overflow-visible m-0 min-w-0 transition-opacity disabled:opacity-50" data-transfer-type-target="section" <%= "disabled" unless disbursement.destination_event %>>
       <p class="muted mt-0 mb-3" data-transfer-type-target="hint" <%= "hidden" if disbursement.destination_event %>>Choose who you're sending to first.</p>
+      <% repayable = disbursement.destination_event.nil? || policy(disbursement).repay? %>
+      <p class="muted mt-0 mb-3" data-transfer-type-target="repaymentHint" <%= "hidden" if repayable %>>Only members of the organization you're sending to can repay its transactions.</p>
 
       <div class="field field--options max-w-none !grid-cols-1 sm:!grid-cols-3 mb-0">
         <% [
@@ -59,7 +61,9 @@
              ["payment", "payment", "Payment", "Paying the other organization for something they provided, like tickets, a venue, or services."],
              ["transfer", "transfers-horizontal", "Transfer", "Sharing funds, like sending leftover money to another organization or funding a sub-organization."]
            ].each do |value, icon, title, description| %>
-          <%= form.radio_button :transfer_type, value, disabled:, data: { action: "transfer-type#select" } %>
+          <%= form.radio_button :transfer_type, value,
+                                disabled: disabled || (value == "repayment" && !repayable),
+                                data: { action: "transfer-type#select", transfer_type_target: ("repaymentRadio" if value == "repayment") } %>
           <%= form.label :transfer_type, value:, class: "justify-start" do %>
             <%= inline_icon icon, size: 28 %>
             <strong><%= title %></strong>
@@ -73,7 +77,7 @@
           <%= form.label :payment_category_slug, "What are you paying for?" %>
           <%= form.select(
                 :payment_category_slug,
-                TransactionCategory::Definition::ALL.values.reject { |d| d.hq_only? && !admin_signed_in? }.map { |d| [d.label, d.slug] },
+                Disbursement.payment_categories(admin: admin_signed_in?).map { |d| [d.label, d.slug] },
                 { include_blank: "Choose a category" },
                 required: true,
                 class: "!max-w-full"

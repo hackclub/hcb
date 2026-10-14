@@ -2496,7 +2496,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_11_120100) do
     t.datetime "created_at", null: false
     t.bigint "disbursement_id", null: false
     t.bigint "ledger_item_id", null: false
-    t.string "previous_category_slug"
+    t.jsonb "previous_categories", default: {}, null: false
     t.datetime "updated_at", null: false
     t.index ["disbursement_id", "ledger_item_id"], name: "index_repayments_on_disbursement_id_and_ledger_item_id", unique: true
     t.index ["disbursement_id"], name: "index_repayments_on_disbursement_id"

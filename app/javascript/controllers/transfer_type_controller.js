@@ -5,7 +5,15 @@ import { Controller } from '@hotwired/stimulus'
 // picker at the destination organization's transactions, and fills in the
 // amount from the transaction being repaid.
 export default class extends Controller {
-  static targets = ['section', 'hint', 'panel', 'repaymentCombobox', 'amount']
+  static targets = [
+    'section',
+    'hint',
+    'panel',
+    'repaymentCombobox',
+    'repaymentRadio',
+    'repaymentHint',
+    'amount',
+  ]
   static values = { repayableUrl: String }
 
   connect() {
@@ -51,6 +59,17 @@ export default class extends Controller {
       this.lockAmount()
       this.sectionTarget.disabled = !option
       this.hintTarget.hidden = !!option
+      this.setRepayable(option?.repayable !== false)
+    }
+  }
+
+  // Only members of the recipient can see, and so repay, its transactions.
+  setRepayable(repayable) {
+    this.repaymentRadioTarget.disabled = !repayable
+    this.repaymentHintTarget.hidden = repayable
+    if (!repayable && this.repaymentRadioTarget.checked) {
+      this.repaymentRadioTarget.checked = false
+      this.select()
     }
   }
 
