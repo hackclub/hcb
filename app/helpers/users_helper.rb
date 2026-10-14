@@ -36,7 +36,7 @@ module UsersHelper
       name: "Cards",
       path: my_cards_path,
       icon: "card",
-      tooltip: "See all your cards",
+      tooltip: "See your cards",
       selected: selected == :cards,
     }
 

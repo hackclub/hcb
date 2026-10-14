@@ -472,6 +472,7 @@ class EventsController < ApplicationController
     @view = cookies[:card_overview_view] || "grid"
 
     @user = User.friendly.find(params[:user], allow_nil: true) if params[:user]
+    @q = params[:q].presence
 
     @has_filter = @status.present? || @type.present? || @user.present?
 
@@ -479,6 +480,7 @@ class EventsController < ApplicationController
                              .order("stripe_status asc, created_at desc")
 
     all_stripe_cards = all_stripe_cards.where(user: { id: @user.id }) if @user
+    all_stripe_cards = all_stripe_cards.where("stripe_cards.name ILIKE ?", "%#{StripeCard.sanitize_sql_like(@q)}%") if @q
 
     all_stripe_cards = case @status
                        when "active"
@@ -526,7 +528,9 @@ class EventsController < ApplicationController
     ].flatten
 
     @paginated_stripe_cards = Kaminari.paginate_array(display_cards).page(page).per(per_page)
-    @all_unique_cardholders = @event.stripe_cards.on_main_ledger.map(&:stripe_cardholder).uniq
+    @all_unique_cardholders = StripeCardholder.where(id: @event.stripe_cards.on_main_ledger.select(:stripe_cardholder_id))
+                                              .includes(:user)
+                                              .sort_by { |cardholder| cardholder.user.name.downcase }
   end
 
   def documentation

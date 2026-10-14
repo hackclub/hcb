@@ -5,6 +5,7 @@
     <table>
       <thead>
       <tr>
+        <th>Name</th>
         <th>Cardholder</th>
         <th>Number</th>
         <th>Type</th>
@@ -15,6 +16,11 @@
       <tbody>
       <% stripe_cards.each do |c| %>
         <tr class="clickable">
+          <%# Name %>
+          <td>
+            <%= c.name %>
+          </td>
+
           <%# Cardholder %>
           <td>
             <%= c.user.name || c.stripe_name || c.user.full_name %>

@@ -597,6 +597,51 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#card_overview" do
+    render_views
+
+    let(:event) { create(:event) }
+
+    before { sign_in_organizer_of(event) }
+
+    it "searches by card name" do
+      groceries = create(:stripe_card, :with_stripe_id, event:, name: "Groceries")
+      create(:stripe_card, :with_stripe_id, event:, name: "Travel")
+
+      get(:card_overview, params: { event_id: event.slug, q: "grocer" })
+
+      expect(controller.instance_variable_get(:@paginated_stripe_cards)).to contain_exactly(groceries)
+    end
+
+    it "shows card names in the list view" do
+      create(:stripe_card, :with_stripe_id, event:, name: "Groceries")
+
+      get(:card_overview, params: { event_id: event.slug, view: "list" })
+
+      table = Nokogiri::HTML5(response.body).at_css(".table-container table")
+      expect(table.css("th").map(&:text)).to eq(["Name", "Cardholder", "Number", "Type", "Status", "Issued on"])
+      expect(table.css("tbody td").first.text.squish).to eq("Groceries")
+    end
+
+    it "says so when no cards match the search" do
+      create(:stripe_card, :with_stripe_id, event:, name: "Travel")
+
+      get(:card_overview, params: { event_id: event.slug, q: "grocer" })
+
+      expect(response.body).to include("No cards match “grocer”")
+    end
+
+    it "lists cardholders in the user filter in alphabetical order" do
+      %w[Charlie alice Bob].each do |name|
+        create(:stripe_card, :with_stripe_id, event:, stripe_cardholder: create(:stripe_cardholder, user: create(:user, preferred_name: name)))
+      end
+
+      get(:card_overview, params: { event_id: event.slug })
+
+      expect(controller.instance_variable_get(:@all_unique_cardholders).map { |cardholder| cardholder.user.name }).to eq(%w[alice Bob Charlie])
+    end
+  end
+
   describe "#team" do
     render_views
 

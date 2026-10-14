@@ -44,6 +44,63 @@ RSpec.describe MyController do
 
       expect(response).to have_http_status(:ok)
     end
+
+    context "with cards" do
+      let(:user) { create(:user) }
+      let(:event) { create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate) }
+      let(:stripe_cardholder) { create(:stripe_cardholder, user:) }
+
+      before do
+        create(:organizer_position, user:, event:)
+        sign_in_verified(user)
+      end
+
+      def create_card(name: nil)
+        create(:stripe_card, :with_stripe_id, event:, stripe_cardholder:, name:)
+      end
+
+      def shown_cards
+        controller.instance_variable_get(:@paginated_stripe_cards)
+      end
+
+      it "searches by card name" do
+        groceries = create_card(name: "Groceries")
+        create_card(name: "Travel")
+
+        get :cards, params: { q: "grocer" }
+
+        expect(shown_cards).to contain_exactly(groceries)
+      end
+
+      it "searches card grant cards by the grant's purpose" do
+        card_grant = create(:card_grant, event:, email: user.email, purpose: "Hackathon snacks", stripe_card: create_card)
+        create_card(name: "Travel")
+
+        get :cards, params: { q: "snacks" }
+
+        expect(shown_cards).to contain_exactly(card_grant.stripe_card)
+      end
+
+      it "shows 18 cards per page" do
+        19.times { create_card }
+
+        get :cards
+
+        expect(shown_cards.size).to eq(18)
+        expect(shown_cards.total_pages).to eq(2)
+      end
+
+      it "shows a table in the list view and remembers it" do
+        create_card(name: "Groceries")
+
+        get :cards, params: { view: "list" }
+
+        table = Nokogiri::HTML5(response.body).at_css(".table-container table")
+        expect(table.css("th").map(&:text)).to eq(["Name", "Organization", "Number", "Type", "Status", "Issued on"])
+        expect(table.css("tbody td").first.text.squish).to eq("Groceries")
+        expect(cookies[:my_cards_view]).to eq("list")
+      end
+    end
   end
 
   describe "GET #reimbursements" do

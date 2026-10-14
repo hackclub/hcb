@@ -10,12 +10,21 @@
     </span>
     <div class="flex ml-auto gap-3 items-center -mt-3">
       <%= render partial: "my/cards_filter_menu" unless @filter_applied %>
+      <%= pop_icon_to @view == "list" ? "grid" : "list",
+                      upsert_query_params(view: @view == "list" ? "grid" : "list"),
+                      class: "tooltipped tooltipped--s mb-1",
+                      "aria-label": @view == "list" ? "Switch to cards" : "Switch to a table" %>
       <button class="btn bg-success mb-1" data-behavior="modal_trigger" data-modal="order_card" <%= "disabled" if current_user.events.not_demo_mode.where.not(id: current_user.reader_events).none? %>>
         <%= inline_icon "card-add" %>
         Order a card
       </button>
     </div>
   </h1>
+  <%= form_with(model: false, local: true, method: :get) do |form| %>
+    <%= render "events/filters/search", form: %>
+    <%= form.hidden_field :status, value: @status if @status %>
+    <%= form.hidden_field :type, value: @type if @type %>
+  <% end %>
   <% if @filter_applied %>
     <div class="flex items-center filter-menu">
       <%= render partial: "my/cards_filter_menu" %>
@@ -47,13 +56,16 @@
     <%= render "stripe_cards/form", stripe_card: StripeCard.new %>
   </section>
   <%= turbo_frame_tag :my_cards_shipping, src: my_cards_shipping_path, target: "_top" %>
-  <% if @stripe_cards.any? %>
-    <article class="mixed-grid grid--spacious">
-      <%= render @stripe_cards, headless: true, show_purpose: true %>
-    </article>
-  <% else %>
+  <% if @paginated_stripe_cards.blank? %>
     <%= blankslate "No cards found!" %>
+  <% elsif @view == "list" %>
+    <%= render "my/cards_table", stripe_cards: @paginated_stripe_cards, show_popovers: @show_card_popovers %>
+  <% else %>
+    <article class="mixed-grid grid--spacious">
+      <%= render @paginated_stripe_cards, headless: true, show_purpose: true %>
+    </article>
   <% end %>
+  <%= paginate @paginated_stripe_cards %>
   <%= turbo_frame_tag :my_missing_receipts_list, src: my_missing_receipts_list_path, target: "_top" %>
   <% if @emburse_cards.any? %>
     <details class="mt3">
