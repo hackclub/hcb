@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <div class="flex flex-col items-center justify-center -mb-9 mt-10">
   <p class="h5 muted lg:-mb-4">
     Need help? <%= help_email %>
@@ -5,5 +7,5 @@
   <p class="lg:hidden text-center block mx-auto -mb-4 relative z-50">
     <%= link_to "What's HCB?", "https://hackclub.com/fiscal-sponsorship?utm_source=hcb&utm_medium=web&utm_campaign=learnmore", target: "_blank" %>
   </p>
-  <%= render partial: "application/footer", locals: { help_message: local_assigns[:help_message] } %>
+  <%= render partial: "application/footer", locals: { show_help_message: false } %>
 </div>

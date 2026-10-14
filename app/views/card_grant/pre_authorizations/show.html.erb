@@ -3,8 +3,6 @@
 
 <%= turbo_stream_from @pre_authorization %>
 
-<% shimmer = @pre_authorization.submitted? %>
-
 <div class="card mt4 mb3 pb0">
   <div class="card__banner card__banner--top flex justify-between items-center border-bottom divide-secondary <%= "card--background-image" if @event.background_image.attached? %>" style="<%= "--bg-image: url(#{url_for(@event.background_image).dump})" if @event.background_image.attached? %>">
     <h3 class="h1 pt2 pb2 my0 color-black">
@@ -78,14 +76,12 @@
 <div class="flex justify-start flex-row gap-4">
   <% if @pre_authorization.draft? %>
     <%= render partial: "card_grant/pre_authorizations/screenshot_form", locals: {
-          upload_method: "attach_receipt_page",
           turbo: true
         } %>
   <% end %>
 
   <%= render partial: "card_grant/pre_authorizations/screenshot_list", locals: {
-        screenshots: @pre_authorization.screenshots.attachments,
-        shimmer:
+        screenshots: @pre_authorization.screenshots.attachments
       } %>
 </div>
 

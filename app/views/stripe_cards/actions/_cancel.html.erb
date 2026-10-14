@@ -1,3 +1,5 @@
+<%# locals: (stripe_card:) %>
+
 <% unless stripe_card.canceled? || !policy(stripe_card).cancel? %>
   <div class="tooltipped tooltipped--n">
     <%= link_to cancel_stripe_card_path(stripe_card),

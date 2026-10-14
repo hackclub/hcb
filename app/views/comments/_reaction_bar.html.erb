@@ -1,3 +1,5 @@
+<%# locals: (comment:) %>
+
 <div class="flex gap-1" id="reactions_<%= comment.id %>">
   <div data-controller="menu" data-menu-placement-value="top-start">
     <button class="reactions-btn" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown" data-menu-target="toggle">

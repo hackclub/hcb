@@ -1,3 +1,5 @@
+<%# locals: (commentable:, admin_only: nil, comment: nil, submit_text: nil) %>
+
 <%= form_with model: @comment&.new_record? ? [@comment.commentable, @comment] : @comment || [commentable, Comment.new] do |form| %>
   <%= form.hidden_field :redirect_url, value: url_for(only_path: false) %>
   <%= form_errors @comment || Comment.new, "message", "We couldn't update your" %>
@@ -42,7 +44,7 @@
     <% end %>
 
     <% admin_tool("inline-flex", "span") do %>
-      <% if defined?(admin_only) %>
+      <% if admin_only %>
         <%= form.hidden_field :admin_only, value: true %>
         This comment will only be shown to admins.
       <% else %>
@@ -77,7 +79,7 @@
   <% else %>
     <%= form.hidden_field :commentable_type, value: commentable&.class %>
     <%= form.hidden_field :commentable_id, value: commentable&.id %>
-    <%= form.submit local_assigns[:submit_text] || "Add comment", disabled: !policy(commentable.comments.build).create? %>
+    <%= form.submit submit_text || "Add comment", disabled: !policy(commentable.comments.build).create? %>
   <% end %>
 <% end %>
 

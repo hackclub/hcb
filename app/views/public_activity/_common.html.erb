@@ -1,28 +1,30 @@
+<%# locals: (activity:, current_user:, color: nil, hide_owner: nil, icon: nil, possessive: nil, url: nil) %>
+
 <li class="mb1 text-sm">
   <div class="flex flex-row gap-2">
-    <% if defined?(icon) && defined?(color) %>
+    <% if icon && color %>
       <%= inline_icon icon, width: 24, class: "bg-#{color}", style: "height: 24px; color: white; border-radius: 999px; padding: 4px;" %>
     <% else %>
-      <%= avatar_for(defined?(hide_owner) && hide_owner ? nil : activity.owner, default_image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/010fba29b83bf91b_image.png") %>
+      <%= avatar_for(hide_owner ? nil : activity.owner, default_image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/010fba29b83bf91b_image.png") %>
     <% end %>
     <div class="flex flex-col" style="transform: translateY(-3px); line-height: 1.6">
       <span>
-        <% unless defined?(hide_owner) && hide_owner %>
+        <% unless hide_owner %>
           <% if activity.owner == current_user %>
-            <% if local_assigns[:possessive] %>
+            <% if possessive %>
               Your
             <% else %>
               You
             <% end %>
           <% else %>
-            <span class="muted"><%= activity.owner&.name || "A user" %></span><%= "'s" if local_assigns[:possessive] %>
+            <span class="muted"><%= activity.owner&.name || "A user" %></span><%= "'s" if possessive %>
           <% end %>
         <% end %>
         <%= yield %>
       </span>
       <div class="flex items-center">
         <% url = hcb_code_path(activity.trackable.hcb_code) if activity.trackable.try(:hcb_code) %>
-        <% if defined?(url) && url %>
+        <% if url %>
           <%= link_to url, class: "flex items-center", target: "_blank" do %>
             <%= inline_icon "link", width: 20, class: "muted ml-[-4px] mr-[2px]" %>
           <% end %>
