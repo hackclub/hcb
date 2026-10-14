@@ -258,6 +258,15 @@
           <%= link_to @hcb_code.ledger_item.personal_transaction.invoice.local_hcb_code.memo, @hcb_code.ledger_item.personal_transaction.invoice %>
         </p>
       <% end %>
+      <% if @hcb_code.subscription.present? && policy(@hcb_code.subscription).show? %>
+        <p>
+          <strong>Subscription</strong>
+          <span>
+            <%= link_to @hcb_code.subscription.name, event_subscription_path(@hcb_code.subscription.event, @hcb_code.subscription) %>
+            <span class="muted">(<%= subscription_rate_label(@hcb_code.subscription) %>)</span>
+          </span>
+        </p>
+      <% end %>
       <% if @hcb_code.card.card_grant.present? %>
         <p>
           <strong>Merchant ID</strong>

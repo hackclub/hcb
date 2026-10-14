@@ -1,0 +1,48 @@
+<% title "Subscriptions for #{@event.name}" %>
+<% page_md %>
+<%= render "events/nav", selected: :subscriptions %>
+
+<h1 class="heading border-0 mb-0">
+  <span class="flex items-center">
+    Subscriptions
+    <%= badge_for @active_subscriptions.length, class: "bg-muted" %>
+  </span>
+</h1>
+
+<% if @active_subscriptions.empty? && @canceled_subscriptions.empty? %>
+  <p class="muted">
+    Recurring card charges, like software or domain renewals, show up here.
+    HCB finds them automatically once a card is charged the same amount by the same merchant a few times on a regular schedule.
+    You can also mark any card transaction as a subscription from its menu.
+  </p>
+  <p class="muted">
+    Only the first charge of a subscription needs a receipt, and a card locked for missing receipts still pays for its subscriptions.
+  </p>
+  <%= blankslate "No subscriptions yet" %>
+<% else %>
+  <div class="statset mb-4">
+    <div class="stat stat--plain">
+      <span class="stat__label">Active</span>
+      <span class="stat__value"><%= @active_subscriptions.length %></span>
+    </div>
+    <div class="stat stat--plain">
+      <span class="stat__label">Per month</span>
+      <span class="stat__value"><%= render_money @stats[:monthly_cents] %></span>
+    </div>
+    <div class="stat stat--plain">
+      <span class="stat__label">Per year</span>
+      <span class="stat__value"><%= render_money @stats[:yearly_cents] %></span>
+    </div>
+  </div>
+
+  <% if @active_subscriptions.any? %>
+    <%= render "subscriptions/table", subscriptions: @active_subscriptions, event: @event %>
+  <% else %>
+    <%= blankslate "No active subscriptions", class: "mb-4" %>
+  <% end %>
+
+  <% if @canceled_subscriptions.any? %>
+    <h2 class="heading h2 border-0 mb-2">Canceled</h2>
+    <%= render "subscriptions/table", subscriptions: @canceled_subscriptions, event: @event %>
+  <% end %>
+<% end %>

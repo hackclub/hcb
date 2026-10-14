@@ -38,6 +38,54 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
     expect(service.declined_reason).to eq("user_cards_locked")
   end
 
+  context "when the cardholder's cards are locked and the card has a subscription" do
+    before do
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+      stripe_card.user.update!(cards_locked: true)
+      Flipper.enable(Subscription::FLAG, event)
+    end
+
+    def create_subscription(**attributes)
+      create(:subscription, stripe_card:, event:, merchant_network_id: "1234567890", merchant_name: "HCB-TEST",
+                            amount_cents: 10_00, last_charged_at: 30.days.ago, **attributes)
+    end
+
+    it "approves a charge matching the subscription" do
+      create_subscription
+
+      expect(service.run).to be(true)
+    end
+
+    it "declines a charge for a different amount" do
+      create_subscription(amount_cents: 9_99)
+
+      expect(service.run).to be(false)
+      expect(service.declined_reason).to eq("user_cards_locked")
+    end
+
+    it "declines a charge that's off-cadence" do
+      create_subscription(last_charged_at: 10.days.ago)
+
+      expect(service.run).to be(false)
+      expect(service.declined_reason).to eq("user_cards_locked")
+    end
+
+    it "declines once the subscription is canceled" do
+      create_subscription.cancel!
+
+      expect(service.run).to be(false)
+      expect(service.declined_reason).to eq("user_cards_locked")
+    end
+
+    it "declines when subscriptions aren't enabled for the organization" do
+      create_subscription
+      Flipper.disable(Subscription::FLAG, event)
+
+      expect(service.run).to be(false)
+      expect(service.declined_reason).to eq("user_cards_locked")
+    end
+  end
+
   context "forbidden merchants" do
     let(:stripe_authorization) do
       build(

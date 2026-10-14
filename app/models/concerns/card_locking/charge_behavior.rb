@@ -44,6 +44,7 @@ module CardLocking
           .left_outer_joins(:receipts)
           .where(receipts: { id: nil })
           .where(marked_no_or_lost_receipt_at: nil)
+          .receipt_not_waived
           .where("canonical_transactions.created_at >= ?", CardLocking::ENFORCEMENT_START_DATE.beginning_of_day)
       }
       # Charges past their deadline and still unresolved. Keys off the persisted

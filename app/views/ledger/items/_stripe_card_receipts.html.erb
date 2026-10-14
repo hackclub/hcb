@@ -19,6 +19,8 @@
       <%= inline_icon "important", size: 24, class: "mr2" %>
       This transaction has no receipt
     </p>
+  <% elsif ledger_item.hcb_code&.receipt_waived_by_subscription? %>
+    <%= render "subscriptions/receipt_waived_banner", subscription: ledger_item.hcb_code.subscription, id: "#{ledger_item.hashid}_stripe_card_receipts" %>
   <% elsif ledger_item.receipt_required? %>
     <p class="card__banner bg-pending slate bold flex items-center mt0 mb0" id="<%= ledger_item.hashid %>_stripe_card_receipts">
       <%= inline_icon "important", size: 24, class: "mr2" %>

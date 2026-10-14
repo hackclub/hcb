@@ -80,11 +80,31 @@ module StripeAuthorizationService
           end
         end
 
-        return decline_with_reason!("user_cards_locked") if card.user.cards_locked? && event.plan.card_lockable?
+        metadata = {}
+        if card.user.cards_locked? && event.plan.card_lockable?
+          return decline_with_reason!("user_cards_locked") unless subscription_charge?
 
-        set_metadata!
+          metadata[:subscription] = true
+        end
+
+        set_metadata!(metadata)
 
         true
+      end
+
+      # A locked card still pays for its flat-amount subscriptions: the charge
+      # has to match the merchant, the exact amount and the cadence, so a locked
+      # cardholder can't use a subscription merchant for anything else.
+      def subscription_charge?
+        return @subscription_charge if defined?(@subscription_charge)
+
+        @subscription_charge = Subscription.enabled_for?(event) && matching_subscription.present?
+      end
+
+      def matching_subscription
+        card.subscriptions.active.where.not(amount_cents: nil).find do |subscription|
+          subscription.matches?(merchant_network_id:, merchant_name:, amount_cents:, at: Time.current)
+        end
       end
 
       def set_metadata!(additional = {})

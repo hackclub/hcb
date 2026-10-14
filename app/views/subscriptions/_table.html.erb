@@ -1,0 +1,60 @@
+<%# locals: (subscriptions:, event:) %>
+
+<article class="table-container mb-4">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Card</th>
+        <th>Amount</th>
+        <th>Last charged</th>
+        <th>Next expected</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <% subscriptions.each do |subscription| %>
+        <tr class="clickable">
+          <td>
+            <span class="flex items-center gap-1">
+              <strong><%= subscription.name %></strong>
+              <span class="badge bg-muted"><%= subscription_source_label(subscription) %></span>
+            </span>
+            <% if subscription.merchant_name.present? && subscription.merchant_name != subscription.name %>
+              <span class="muted block"><%= subscription.merchant_name %></span>
+            <% end %>
+          </td>
+          <td>
+            <%= subscription.stripe_card.user&.name %>
+            <span class="muted block">&bull;&bull;&bull;&bull; <%= subscription.stripe_card.last4 %></span>
+          </td>
+          <td>
+            <%= subscription_amount_label(subscription) %>
+            <% if subscription.amount_cents.present? && !subscription.monthly? %>
+              <span class="muted block"><%= render_money subscription.monthly_cents %>/mo</span>
+            <% end %>
+          </td>
+          <td>
+            <% if subscription.last_charged_at.present? %>
+              <%= format_date subscription.last_charged_at %>
+            <% else %>
+              <span class="muted">&mdash;</span>
+            <% end %>
+          </td>
+          <td>
+            <% if subscription.active? && subscription.next_expected_at.present? %>
+              <%= format_date subscription.next_expected_at %>
+            <% else %>
+              <span class="muted">&mdash;</span>
+            <% end %>
+          </td>
+          <td>
+            <span class="badge ml-0 <%= subscription.active? ? "bg-success" : "bg-muted" %>"><%= subscription.status.humanize %></span>
+            <%= link_to "", event_subscription_path(event, subscription), class: "stretched-link", "aria-label": "View #{subscription.name}" %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</article>

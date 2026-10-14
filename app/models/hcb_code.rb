@@ -16,6 +16,7 @@
 #  event_id                     :bigint
 #  ledger_item_id               :bigint
 #  subledger_id                 :bigint
+#  subscription_id              :bigint
 #
 # Indexes
 #
@@ -25,10 +26,12 @@
 #  index_hcb_codes_on_ledger_item_id          (ledger_item_id)
 #  index_hcb_codes_on_open_receipt_due_at     (receipt_due_at) WHERE ((receipt_due_at IS NOT NULL) AND (receipt_resolved_at IS NULL))
 #  index_hcb_codes_on_short_code              (short_code) UNIQUE
+#  index_hcb_codes_on_subscription_id         (subscription_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (ledger_item_id => ledger_items.id) ON DELETE => nullify
+#  fk_rails_...  (subscription_id => subscriptions.id) ON DELETE => nullify
 #
 # Check Constraints
 #
@@ -68,10 +71,18 @@ class HcbCode < ApplicationRecord
 
   belongs_to :ledger_item, class_name: "Ledger::Item", optional: true, touch: true
 
+  belongs_to :subscription, optional: true, inverse_of: :hcb_codes
+
   # Card-locking scopes, columns, and the materializer. See the concern.
   include CardLocking::ChargeBehavior
 
+  # A charge whose receipt is waived by a subscription: every linked charge
+  # except the subscription's first one. Raw SQL so the transaction engines'
+  # hand-written queries can share it.
+  RECEIPT_NOT_WAIVED_SQL = "(hcb_codes.subscription_id IS NULL OR hcb_codes.id = (SELECT subscriptions.first_hcb_code_id FROM subscriptions WHERE subscriptions.id = hcb_codes.subscription_id))"
+
   scope :on_main_ledger, -> { where(subledger_id: nil) }
+  scope :receipt_not_waived, -> { where(RECEIPT_NOT_WAIVED_SQL) }
   scope :mapped, -> { where.not(event_id: nil).or(where.not(subledger_id: nil)) }
 
   has_one :reimbursement_expense_payout, class_name: "Reimbursement::ExpensePayout", required: false, inverse_of: :local_hcb_code, foreign_key: "hcb_code", primary_key: "hcb_code"
@@ -667,6 +678,8 @@ class HcbCode < ApplicationRecord
   def receipt_required?(event = self.event, type = self.type)
     return false if pt&.declined?
 
+    return false if receipt_waived_by_subscription?
+
     return false if amount_cents >= 0
 
     return false unless event&.plan&.receipt_required?
@@ -675,6 +688,32 @@ class HcbCode < ApplicationRecord
 
     # This HcbCode is likely revenue (e.g. donation, invoice, etc.) so receipts are not required
     false
+  end
+
+  # Not memoized: Subscription#sync_charges! changes the subscription's first
+  # charge and then refreshes these same instances.
+  def receipt_waived_by_subscription?
+    subscription_id.present? && subscription.present? && subscription.first_hcb_code_id != id
+  end
+
+  # Recomputes everything derived from receipt_required? after a subscription
+  # link changes: the ledger item's persisted flag, card-locking deadlines and
+  # the receipt upload task.
+  def refresh_receipt_state!(enqueue_unlock: true)
+    ledger_item&.refresh!
+    materialize_card_locking! if card_locking_chargeable?
+    update_task_completion
+    CardLocking::ReceiptResolution.enqueue_unlock(stripe_card&.user) if enqueue_unlock
+  end
+
+  # The card merchant as { network_id:, name: }, or nil when there's no Stripe
+  # transaction to read it from. Unlike stripe_merchant, never raises.
+  def subscription_merchant
+    merchant = pt&.raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_data") ||
+               raw_stripe_transaction&.stripe_transaction&.dig("merchant_data")
+    return if merchant.blank?
+
+    { network_id: merchant["network_id"].presence, name: merchant["name"].presence }
   end
 
   def receipt_optional?(event = self.event, type = self.type)

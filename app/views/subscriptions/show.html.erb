@@ -1,0 +1,111 @@
+<% title "#{@subscription.name} subscription" %>
+<% page_md %>
+<%= render "events/nav", selected: :subscriptions %>
+
+<p class="mb-1">
+  <%= link_to event_subscriptions_path(@event), class: "muted no-underline inline-flex items-center" do %>
+    <%= inline_icon "view-back", size: 24 %>
+    Subscriptions
+  <% end %>
+</p>
+
+<h1 class="heading border-0 mb-0">
+  <span class="flex items-center gap-2">
+    <%= @subscription.name %>
+    <span class="badge ml-0 <%= @subscription.active? ? "bg-success" : "bg-muted" %>"><%= @subscription.status.humanize %></span>
+    <span class="badge ml-0 bg-muted"><%= subscription_source_label(@subscription) %></span>
+  </span>
+</h1>
+
+<section class="card mb-4">
+  <div class="details">
+    <p>
+      <strong>Amount</strong>
+      <span><%= subscription_amount_label(@subscription) %></span>
+    </p>
+    <p>
+      <strong>Cost</strong>
+      <span><%= subscription_rate_label(@subscription) %></span>
+    </p>
+    <p>
+      <strong>Merchant</strong>
+      <span><%= @subscription.merchant_name %></span>
+    </p>
+    <p>
+      <strong>Card</strong>
+      <span>
+        <%= link_to "•••• #{@subscription.stripe_card.last4}", stripe_card_path(@subscription.stripe_card) %>
+        <% if @subscription.stripe_card.user.present? %>
+          <span class="muted">(<%= @subscription.stripe_card.user.name %>)</span>
+        <% end %>
+      </span>
+    </p>
+    <p>
+      <strong>Last charged</strong>
+      <span><%= @subscription.last_charged_at.present? ? format_date(@subscription.last_charged_at) : "Not yet" %></span>
+    </p>
+    <% if @subscription.active? && @subscription.next_expected_at.present? %>
+      <p>
+        <strong>Next expected</strong>
+        <span><%= format_date @subscription.next_expected_at %></span>
+      </p>
+    <% end %>
+    <% if @subscription.canceled? %>
+      <p>
+        <strong>Canceled</strong>
+        <span><%= format_date @subscription.canceled_at %></span>
+      </p>
+    <% end %>
+  </div>
+  <p class="muted text-sm mb0">
+    <% if @subscription.active? %>
+      Only the first charge needs a receipt. Later charges for exactly <%= render_money @subscription.amount_cents %> are linked automatically and still go through if this card is locked for missing receipts.
+    <% else %>
+      Charges already linked to this subscription still don't need receipts. New charges are no longer linked, and they're declined if this card is locked.
+    <% end %>
+  </p>
+</section>
+
+<h2 class="heading h2 border-0 mb-2">Charges</h2>
+<% if @hcb_codes.any? %>
+  <div class="table-container mb-4">
+    <table>
+      <tbody data-behavior="transactions">
+        <% @hcb_codes.each do |hcb_code| %>
+          <% if hcb_code.canonical_transactions.any? %>
+            <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct: hcb_code, force_display_details: true, show_tags: true } %>
+          <% else %>
+            <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", collection: hcb_code.canonical_pending_transactions, as: :pt, locals: { show_tags: true } %>
+          <% end %>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <%= blankslate "No charges linked yet", class: "mb-4" %>
+<% end %>
+
+<% if policy(@subscription).update? %>
+  <h2 class="heading h2 border-0 mb-2">Settings</h2>
+  <section class="card mb-4">
+    <%= form_with model: @subscription, url: event_subscription_path(@event, @subscription), method: :patch, scope: :subscription do |form| %>
+      <%= render "subscriptions/form", form:, subscription: @subscription %>
+      <%= form.submit "Save changes" %>
+    <% end %>
+  </section>
+
+  <div class="flex flex-wrap gap-2 mb-4">
+    <% if @subscription.active? && policy(@subscription).cancel? %>
+      <%= button_to "Mark as canceled", cancel_event_subscription_path(@event, @subscription),
+                    method: :post,
+                    class: "btn bg-muted",
+                    data: { turbo_confirm: "Mark #{@subscription.name} as canceled? New charges won't be linked to it, and they'll be declined if this card is locked." } %>
+    <% end %>
+    <% if policy(@subscription).destroy? %>
+      <%= button_to "Not a subscription", event_subscription_path(@event, @subscription),
+                    method: :delete,
+                    class: "btn bg-error",
+                    data: { turbo_confirm: "Remove #{@subscription.name} as a subscription? Its charges will need receipts again, each with at least 3 days to upload.", turbo_confirm_danger: true } %>
+    <% end %>
+  </div>
+<% end %>

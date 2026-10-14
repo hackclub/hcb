@@ -9,7 +9,10 @@
 <% allowable_on_card = merchant_not_allowed && CardGrantPolicy.new(current_user, hcb_code.stripe_card.card_grant).permit_merchant? && !hcb_code.stripe_card.card_grant.merchant_lock.include?(hcb_code.stripe_merchant["network_id"]) %>
 <% allowable_on_event = merchant_not_allowed && EventPolicy.new(current_user, hcb_code.stripe_card.card_grant.event).permit_merchant? && !hcb_code.stripe_card.card_grant.event.card_grant_setting.merchant_lock.include?(hcb_code.stripe_merchant["network_id"]) %>
 
-<% if (disputable || flaggable || pinnable || open_invoice || reversible_disbursement || allowable_on_card || allowable_on_event) && organizer_signed_in?(as: :member) %>
+<% subscription_markable = hcb_code.card_charge? && hcb_code.subscription_id.nil? && hcb_code.stripe_card.present? && hcb_code.amount_cents.negative? && !hcb_code.pt&.declined? && hcb_code.subscription_merchant.present? && policy(Subscription.new(event: hcb_code.stripe_card.event)).create? %>
+<% linked_subscription = hcb_code.subscription if hcb_code.subscription.present? && policy(hcb_code.subscription).show? %>
+
+<% if (disputable || flaggable || pinnable || open_invoice || reversible_disbursement || allowable_on_card || allowable_on_event || subscription_markable || linked_subscription) && organizer_signed_in?(as: :member) %>
   <div data-controller="menu" data-menu-placement-value="bottom-end">
     <%= pop_icon_to "more",
         "#",
@@ -37,6 +40,24 @@
         <%= link_to ledger_item_invoice_as_personal_transaction_path(hcb_code.ledger_item), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you'd like to invoice #{hcb_code.stripe_cardholder&.user&.name || "yourself"} for this transaction? They'll be emailed an invoice." } do %>
           <%= inline_icon "sad", size: 24 %>
           Flag as personal transaction
+        <% end %>
+      <% end %>
+      <% if subscription_markable %>
+        <%= link_to "#", data: { behavior: "modal_trigger", modal: "mark_as_subscription_#{hcb_code.hashid}" }, class: "flex items-center" do %>
+          <%= inline_icon "clock", size: 24 %>
+          Mark as subscription
+        <% end %>
+      <% end %>
+      <% if linked_subscription %>
+        <%= link_to event_subscription_path(linked_subscription.event, linked_subscription), class: "flex items-center", data: { turbo_frame: "_top" } do %>
+          <%= inline_icon "clock", size: 24 %>
+          View subscription
+        <% end %>
+        <% if policy(linked_subscription).destroy? %>
+          <%= link_to event_subscription_path(linked_subscription.event, linked_subscription), class: "flex items-center", data: { turbo_method: :delete, turbo_confirm: "Remove #{linked_subscription.name} as a subscription? Its charges will need receipts again.", turbo_confirm_danger: true } do %>
+            <%= inline_icon "view-close", size: 24 %>
+            Not a subscription
+          <% end %>
         <% end %>
       <% end %>
       <% if open_invoice %>
@@ -71,6 +92,10 @@
       <% end %>
     </div>
   </div>
+<% end %>
+
+<% if subscription_markable && organizer_signed_in?(as: :member) %>
+  <%= render "hcb_codes/subscription_modal", hcb_code: %>
 <% end %>
 
 <% if open_invoice %>

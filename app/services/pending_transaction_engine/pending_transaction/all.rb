@@ -74,6 +74,7 @@ module PendingTransactionEngine
                 cpts.joins("LEFT JOIN hcb_codes ON hcb_codes.hcb_code = canonical_pending_transactions.hcb_code")
                     .joins("LEFT JOIN receipts ON receipts.receiptable_id = hcb_codes.id AND receipts.receiptable_type = 'HcbCode'")
                     .where("receipts.id IS NULL AND hcb_codes.marked_no_or_lost_receipt_at is NULL AND canonical_pending_transactions.amount_cents <= 0")
+                    .where(HcbCode::RECEIPT_NOT_WAIVED_SQL)
             end
 
             if @user

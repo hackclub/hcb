@@ -1,0 +1,11 @@
+<%# locals: (subscription:, id:) %>
+
+<p class="card__banner bg-info white bold flex items-center mt0 mb0" id="<%= id %>">
+  <%= inline_icon "clock", size: 24, class: "mr2" %>
+  No receipt needed &middot; part of
+  <% if policy(subscription).show? %>
+    <%= link_to subscription.name, event_subscription_path(subscription.event, subscription), class: "white ml1" %>
+  <% else %>
+    <span class="ml1"><%= subscription.name %></span>
+  <% end %>
+</p>

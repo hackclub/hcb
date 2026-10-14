@@ -165,6 +165,7 @@ module TransactionGroupingEngine
             left join receipts on receipts.receiptable_id = hcb_codes.id AND receipts.receiptable_type = 'HcbCode'
           SQL
           conditions << "receipts.id IS NULL AND hcb_codes.marked_no_or_lost_receipt_at is NULL AND q1.amount_cents <= 0"
+          conditions << HcbCode::RECEIPT_NOT_WAIVED_SQL
         end
 
         conditions << "q1.amount_cents < 0" if @expenses

@@ -428,6 +428,7 @@ class Event < ApplicationRecord
 
   has_many :stripe_cards
   has_many :stripe_authorizations, through: :stripe_cards
+  has_many :subscriptions
   has_many :stripe_card_personalization_designs, class_name: "StripeCard::PersonalizationDesign", inverse_of: :event
 
   has_many :emburse_cards

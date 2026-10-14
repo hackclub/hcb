@@ -51,7 +51,12 @@ class CanonicalEventMapping < ApplicationRecord
     canonical_transaction.local_hcb_code&.write_event_and_subledger_id(event, subledger)
   end
 
-  after_create_commit { CardLocking::Settlement.on_canonical_transaction(canonical_transaction) }
+  after_create_commit do
+    # Link to a subscription first, so the receipt deadline is materialized with
+    # any waiver already in place.
+    safely { Subscription::LinkCharge.on_canonical_transaction(canonical_transaction) }
+    CardLocking::Settlement.on_canonical_transaction(canonical_transaction)
+  end
 
   scope :missing_fee, -> { includes(:fee).where(fee: { canonical_event_mapping_id: nil }) }
   scope :mapped_by_human, -> { where("user_id is not null") }

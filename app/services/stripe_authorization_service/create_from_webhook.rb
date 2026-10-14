@@ -33,6 +33,11 @@ module StripeAuthorizationService
         user = cpt&.stripe_card&.user
 
         if remote_stripe_transaction.approved
+          # Outside the transaction above: the HCB code's event is only written
+          # once it commits. Before the mailer, which says whether a receipt is
+          # needed.
+          safely { Subscription::LinkCharge.new(hcb_code: cpt.local_hcb_code).run if cpt.local_hcb_code }
+
           CanonicalPendingTransactionMailer.with(canonical_pending_transaction_id: cpt.id).notify_approved.deliver_later
           if user.sms_charge_notifications_enabled?
             CanonicalPendingTransaction::SendTwilioReceiptMessageJob.perform_later(cpt_id: cpt.id, user_id: user.id)

@@ -1,0 +1,26 @@
+<%# locals: (form:, subscription:, amount_editable: true) %>
+
+<div class="field">
+  <%= form.label :name, "Name" %>
+  <%= form.text_field :name, value: subscription.name, required: true, class: "!max-w-full w-full" %>
+</div>
+
+<div class="field">
+  <%= form.label :amount, "Amount" %>
+  <% if amount_editable %>
+    <%= form.number_field :amount, value: subscription.amount&.to_d, step: 0.01, min: 0.01, required: true, class: "!max-w-full w-full" %>
+  <% else %>
+    <p class="mt0 mb0 bold"><%= render_money subscription.amount_cents %></p>
+  <% end %>
+  <p class="muted text-sm mt1 mb0">Only charges for exactly this amount count toward this subscription.</p>
+</div>
+
+<div class="field">
+  <%= form.label :cadence, "Charged" %>
+  <%= form.select :cadence, subscription_cadence_options, { selected: subscription.cadence.presence || "monthly" }, class: "!max-w-full w-full" %>
+</div>
+
+<div class="field">
+  <%= form.label :cadence_days, "Days between charges (custom only)" %>
+  <%= form.number_field :cadence_days, value: (subscription.cadence_days if subscription.custom?), min: 1, step: 1, class: "!max-w-full w-full" %>
+</div>

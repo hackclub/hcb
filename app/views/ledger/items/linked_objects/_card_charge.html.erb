@@ -242,6 +242,16 @@
           <%= link_to (repayment.ledger_item || repayment.local_hcb_code).memo, repayment %>
         </p>
       <% end %>
+      <% subscription = ledger_item.hcb_code&.subscription %>
+      <% if subscription.present? && policy(subscription).show? %>
+        <p>
+          <strong>Subscription</strong>
+          <span>
+            <%= link_to subscription.name, event_subscription_path(subscription.event, subscription) %>
+            <span class="muted">(<%= subscription_rate_label(subscription) %>)</span>
+          </span>
+        </p>
+      <% end %>
       <% if card_charge.stripe_card.card_grant.present? %>
         <p>
           <strong>Merchant ID</strong>

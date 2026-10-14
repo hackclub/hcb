@@ -22,6 +22,7 @@ module ApplicationHelper
   include StaticPagesHelper
   include StripeAuthorizationsHelper
   include StripeCardsHelper
+  include SubscriptionsHelper
   include TagsHelper
   include ToursHelper
   include TurboStreamActionsHelper

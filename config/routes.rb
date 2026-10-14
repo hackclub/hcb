@@ -565,6 +565,7 @@ Rails.application.routes.draw do
 
       scope module: "hcb_code" do
         get "subscriptions/transactions", to: "subscriptions#transactions"
+        post "subscriptions", to: "subscriptions#create", as: :subscriptions
       end
     end
 
@@ -1095,6 +1096,9 @@ Rails.application.routes.draw do
     resources :invoices, only: [:new, :create, :index]
     resources :tags, only: [:create, :update, :destroy]
     resources :event_tags, only: [:create, :destroy]
+    resources :subscriptions, only: [:index, :show, :update, :destroy] do
+      post :cancel, on: :member
+    end
     resources :organizer_position_invites,
               only: [:new, :create],
               path: "invites"
