@@ -74,7 +74,7 @@
           <% end %>
         <% end %>
         <% unless expense.type == "Reimbursement::Expense::Mileage" %>
-          <%= link_to reimbursement_expense_path(expense.id, reimbursement_expense: { type: "Reimbursement::Expense::Mileage", value: 0 }), data: { turbo: true, "turbo-method": :patch, "action": "menu#close" } do %>
+          <%= link_to reimbursement_expense_path(expense.id, reimbursement_expense: { type: "Reimbursement::Expense::Mileage", value: 0, category: "Mileage" }), data: { turbo: true, "turbo-method": :patch, "action": "menu#close" } do %>
             <%= inline_icon "car", size: 24 %>
             Mileage expense
           <% end %>
