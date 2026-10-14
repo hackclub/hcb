@@ -1,0 +1,99 @@
+<% title "Electronic delivery of tax forms" %>
+
+<% form_type = @legal_entity.latest_completed_tax_form.form_type == "W9" ? "1099" : "1042-S" %>
+
+<h1>Electronic delivery of tax forms</h1>
+
+<p>
+  Thanks for submitting your tax form for <%= @legal_entity.name %>. If <%= @legal_entity.person? ? "you receive" : "#{@legal_entity.name} receives" %>
+  payments through HCB that must be reported to the IRS, Hack Club will furnish
+  <%= @legal_entity.person? ? "you" : "it" %> a Form <%= form_type %> after the end of the year.
+  You can choose to receive these forms electronically instead of on paper.
+</p>
+
+<div class="card mb3">
+  <h2 class="mt0">Your choice</h2>
+  <p>
+    <strong>
+      You don't have to consent to electronic delivery. If you don't consent, we'll mail you a paper copy of
+      each Form <%= form_type %> to the address on your tax form.
+    </strong>
+  </p>
+
+  <h2>What you're consenting to</h2>
+  <p>
+    Your consent applies to every Form <%= form_type %> that Hack Club furnishes to <%= @legal_entity.name %>, for the current tax year
+    and every future tax year, until you withdraw it.
+  </p>
+
+  <h2>How you'll receive your forms</h2>
+  <p>
+    By the IRS due date (generally January 31, or February 15 for some forms), we'll post your form on HCB and email
+    <%= @legal_entity.emails.to_sentence %> to let you know it's available, with instructions on how to view and print it.
+    Each form will remain available on HCB through at least October 15 of the year it's furnished, so be sure to print or
+    save a copy for your records.
+  </p>
+
+  <h2>Hardware and software requirements</h2>
+  <p>To access your forms, you'll need:</p>
+  <ul>
+    <li>A computer or mobile device with an internet connection</li>
+    <li>A current version of a web browser, such as Chrome, Firefox, Safari, or Edge</li>
+    <li>Access to your HCB account</li>
+  </ul>
+  <p>
+    If these requirements change in a way that could affect your ability to access your forms, we'll notify you before
+    furnishing your next form and ask you to consent again.
+  </p>
+
+  <h2>Getting a paper copy</h2>
+  <p>
+    Even after you consent, you can request a paper copy of any Form <%= form_type %> at no cost by emailing
+    <%= mail_to "hcb@hackclub.com" %>. Requesting a paper copy doesn't withdraw your consent unless you tell us it should.
+  </p>
+
+  <h2>Withdrawing your consent</h2>
+  <p>
+    You can withdraw your consent at any time by notifying us in writing, either by emailing <%= mail_to "hcb@hackclub.com" %>
+    or by mail to Hack Club, 8605 Santa Monica Boulevard #86294, West Hollywood, CA 90069. We'll confirm your withdrawal
+    in writing (by email or mail). Withdrawing your consent applies to forms we haven't yet furnished; it doesn't
+    affect forms that have already been furnished to you electronically.
+  </p>
+
+  <h2>When electronic delivery ends</h2>
+  <p>
+    We'll stop furnishing your forms electronically, and send them on paper instead, if you withdraw your consent, if
+    your HCB account is closed, if our emails to you can't be delivered, or if HCB stops offering electronic delivery.
+    We'll let you know in writing if we stop furnishing your forms electronically.
+  </p>
+
+  <h2>Keeping your information up to date</h2>
+  <p>
+    <% if @legal_entity.managed? %>
+      Your email address is managed by <%= @legal_entity.managing_event.name %>; contact them to update it.
+    <% else %>
+      You can update your email address in your <%= link_to "account settings", my_settings_path %>.
+    <% end %>
+    To update your name, address, or taxpayer identification number, submit a new tax form from your
+    <%= link_to "payment information page", legal_entity_path(@legal_entity) %>. You can also contact us at
+    <%= mail_to "hcb@hackclub.com" %> for help.
+  </p>
+</div>
+
+<div class="card mb3">
+  <%= form_with url: electronic_consent_tax_form_path(@form), method: :post do |form| %>
+    <%= form.hidden_field :electronic_consent, value: "true" %>
+
+    <div class="field field--checkbox">
+      <%= form.check_box :consent_acknowledgement, { required: true }, "true", nil %>
+      <%= form.label :consent_acknowledgement do %>
+        I have read the information above and consent to receive Forms <%= form_type %> for <%= @legal_entity.name %> electronically.
+      <% end %>
+    </div>
+
+    <div class="flex justify-between">
+      <%= form.submit "Consent to electronic delivery", class: "btn bg-success" %>
+      <%= button_to "No thanks, mail me paper copies", electronic_consent_tax_form_path(@form), params: { electronic_consent: "false" }, class: "btn bg-muted" %>
+    </div>
+  <% end %>
+</div>
