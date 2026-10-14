@@ -801,7 +801,16 @@ class AdminController < Admin::BaseController
 
   def increase_check_process
     @check = IncreaseCheck.find(params[:id])
-
+    approval_attempt = Governance::Admin::Transfer::ApprovalAttempt.where(
+      transfer_id: @check.id,
+      transfer_type: "IncreaseCheck",
+      result: Governance::Admin::Transfer::ApprovalAttempt::SUCCESSFUL_RESULTS
+    ).order(created_at: :desc).first
+    if approval_attempt.present? && approval_attempt.successful?
+      @approver = approval_attempt.user
+    else
+      @approver = nil
+    end
   end
 
   def paypal_transfers
@@ -909,6 +918,18 @@ class AdminController < Admin::BaseController
 
   def wire_process
     @wire = Wire.find(params[:id])
+    if !@wire.pending?
+      approval_attempt = Governance::Admin::Transfer::ApprovalAttempt.where(
+        transfer_id: @wire.id,
+        transfer_type: "Wire",
+        result: Governance::Admin::Transfer::ApprovalAttempt::SUCCESSFUL_RESULTS
+      ).order(created_at: :desc).first
+      if approval_attempt.present? && approval_attempt.successful?
+        @approver = approval_attempt.user
+      else
+        @approver = nil
+      end
+    end
   end
 
   def wise_transfer_process
