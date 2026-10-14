@@ -529,6 +529,10 @@ class HcbCode < ApplicationRecord
     @stripe_service_fee ||= StripeServiceFee.find_by(id: hcb_i2) if stripe_service_fee?
   end
 
+  def fee_reimbursement_group
+    @fee_reimbursement_group ||= FeeReimbursementGroup.find_by(week: hcb_i2) if outgoing_fee_reimbursement?
+  end
+
   def card_charge
     return nil unless card_charge?
 

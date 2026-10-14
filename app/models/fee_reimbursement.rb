@@ -4,18 +4,24 @@
 #
 # Table name: fee_reimbursements
 #
-#  id               :bigint           not null, primary key
-#  amount           :bigint
-#  processed_at     :datetime
-#  transaction_memo :string
-#  created_at       :datetime         not null
-#  updated_at       :datetime         not null
-#  stripe_topup_id  :bigint
+#  id                         :bigint           not null, primary key
+#  amount                     :bigint
+#  processed_at               :datetime
+#  transaction_memo           :string
+#  created_at                 :datetime         not null
+#  updated_at                 :datetime         not null
+#  fee_reimbursement_group_id :bigint
+#  stripe_topup_id            :bigint
 #
 # Indexes
 #
-#  index_fee_reimbursements_on_stripe_topup_id   (stripe_topup_id)
-#  index_fee_reimbursements_on_transaction_memo  (transaction_memo) UNIQUE
+#  index_fee_reimbursements_on_fee_reimbursement_group_id  (fee_reimbursement_group_id)
+#  index_fee_reimbursements_on_stripe_topup_id             (stripe_topup_id)
+#  index_fee_reimbursements_on_transaction_memo            (transaction_memo) UNIQUE
+#
+# Foreign Keys
+#
+#  fk_rails_...  (fee_reimbursement_group_id => fee_reimbursement_groups.id)
 #
 class FeeReimbursement < ApplicationRecord
   has_paper_trail
@@ -25,6 +31,8 @@ class FeeReimbursement < ApplicationRecord
   has_one :t_transaction, class_name: "Transaction", inverse_of: :fee_reimbursement
 
   belongs_to :stripe_topup, optional: true
+  # The week this reimbursement was topped up in; nil until processed (or for a zero-amount reimbursement, which makes no top-up)
+  belongs_to :fee_reimbursement_group, optional: true
 
   before_create :default_values
 

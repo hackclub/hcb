@@ -204,11 +204,15 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   def linked_object_v2
-    if column_id = column_transaction_id
-      AchTransfer.find_by(column_id:) || Wire.find_by(column_id:) || CheckDeposit.find_by(column_id:) || IncreaseCheck.find_by(column_id:)
-    else
-      transaction_source&.try(:card_charge)
-    end
+    source_object = if column_id = column_transaction_id
+                      AchTransfer.find_by(column_id:) || Wire.find_by(column_id:) || CheckDeposit.find_by(column_id:) || IncreaseCheck.find_by(column_id:)
+                    else
+                      transaction_source&.try(:card_charge)
+                    end
+
+    # A Stripe fee reimbursement top-up has no source record of its own; its
+    # bank debit carries the week's short code (the top-up's statement descriptor).
+    source_object || fee_reimbursement_group
   end
 
   def raw_plaid_transaction
@@ -384,6 +388,12 @@ class CanonicalTransaction < ApplicationRecord
     return linked_object.fee_reimbursement if linked_object.is_a?(Donation) || linked_object.is_a?(Invoice)
 
     nil
+  end
+
+  def fee_reimbursement_group
+    return nil unless short_code
+
+    HcbCode.find_by(short_code: short_code.upcase)&.fee_reimbursement_group
   end
 
   def check

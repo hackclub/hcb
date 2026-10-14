@@ -1,0 +1,58 @@
+<%# locals: (ledger_item:) %>
+
+<% fee_reimbursement_group = ledger_item.linked_object %>
+<% fee_reimbursements = fee_reimbursement_group.fee_reimbursements.includes(donation: [:event, :ledger_item], invoice: [:event, :ledger_item]).order(:id) %>
+
+<%= render partial: "application/admin_viewer", locals: { record: fee_reimbursement_group } %>
+
+<article class="ledger-item">
+  <%= render "ledger/items/heading", ledger_item: ledger_item, render_memo: true %>
+
+  <section class="ledger-item--details">
+    <div>
+      <strong>Date</strong>
+      <%= format_date ledger_item.datetime %>
+    </div>
+    <div>
+      <strong>Type</strong>
+      Stripe fee reimbursements
+    </div>
+    <div>
+      <strong>Week of</strong>
+      <%= format_date fee_reimbursement_group.start_date %>
+    </div>
+  </section>
+
+  <section class="card__banner secondary border-top">
+    <p class="my0 italic">
+      HCB covers the Stripe processing fee on donations and invoices. Each fee reimbursed this week was topped up to HCB's Stripe balance under this code.
+    </p>
+  </section>
+
+  <% if fee_reimbursements.any? %>
+    <section class="card__banner secondary border-top">
+      <p class="my0">
+        <table>
+          <thead>
+            <tr>
+              <th>Organization</th>
+              <th>For</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% fee_reimbursements.each do |fee_reimbursement| %>
+              <% reimbursed = fee_reimbursement.donation || fee_reimbursement.invoice %>
+              <tr>
+                <td><%= link_to fee_reimbursement.event.name, fee_reimbursement.event if fee_reimbursement.event.present? %></td>
+                <td><%= reimbursed&.model_name&.human %></td>
+                <td><%= render_money fee_reimbursement.amount %></td>
+                <td><%= link_to "Details", url_for(reimbursed.ledger_item) if reimbursed&.ledger_item.present? %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </p>
+    </section>
+  <% end %>
+</article>
