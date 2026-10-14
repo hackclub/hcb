@@ -204,5 +204,51 @@ RSpec.describe Ledger::Mapper do
         end
       end
     end
+
+    context "when the item has a Stripe top-up transaction" do
+      let!(:hack_club_bank) { create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK) }
+      let!(:noevent) { create(:event, id: EventMappingEngine::EventIds::NOEVENT) }
+
+      before do
+        # StripeServiceFee creates a StripeTopup on create, which calls the Stripe API.
+        stub_request(:post, "https://api.stripe.com/v1/topups")
+          .to_return(status: 200, body: { id: "tu_1" }.to_json, headers: {})
+      end
+
+      # HCB's own top-ups carry their HCB code's short code as the statement
+      # descriptor and belong to Hack Club Bank. Only Issuing balance top-ups,
+      # which have no short code, fall through to NOEVENT.
+      it "maps a fee reimbursement top-up to Hack Club Bank" do
+        group = create(:fee_reimbursement_group)
+        group_item = group.ledger_item
+        create(:canonical_transaction, memo: "STRIPE Stripe Top HCB-#{group.local_hcb_code.short_code}", ledger_item: group_item)
+
+        described_class.new(ledger_item: group_item).run
+        group_item.reload
+
+        expect(group_item.primary_ledger.event).to eq(hack_club_bank)
+      end
+
+      it "maps a Stripe service fee top-up to Hack Club Bank" do
+        stripe_service_fee = create(:stripe_service_fee)
+        cpt = StripeServiceFeeService::CreateCanonicalPendingTransaction.new(stripe_service_fee_id: stripe_service_fee.id).run
+        fee_item = cpt.reload.ledger_item
+        create(:canonical_transaction, memo: "STRIPE Stripe Top HCB-#{stripe_service_fee.local_hcb_code.short_code}", ledger_item: fee_item)
+
+        described_class.new(ledger_item: fee_item).run
+        fee_item.reload
+
+        expect(fee_item.primary_ledger.event).to eq(hack_club_bank)
+      end
+
+      it "maps an Issuing balance top-up to NOEVENT" do
+        create(:canonical_transaction, memo: "STRIPE Stripe Top-up", ledger_item: item)
+
+        mapper.run
+        item.reload
+
+        expect(item.primary_ledger.event).to eq(noevent)
+      end
+    end
   end
 end

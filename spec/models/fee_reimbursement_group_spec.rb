@@ -3,8 +3,10 @@
 require "rails_helper"
 
 RSpec.describe FeeReimbursementGroup, type: :model do
-  # The group's ledger item is mapped to the Hack Club Bank event, and a Stripe
-  # top-up's bank memo would otherwise send it to NOEVENT; both must exist.
+  # The group's ledger item is mapped to the Hack Club Bank event. NOEVENT is
+  # where the mapper's Stripe top-up memo rule (meant for Issuing balance
+  # top-ups) puts a top-up it can't attribute, which only happens to an item
+  # with no group yet; both must exist.
   let!(:hack_club_bank) { create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK) }
   let!(:noevent) { create(:event, id: EventMappingEngine::EventIds::NOEVENT) }
 
@@ -62,7 +64,7 @@ RSpec.describe FeeReimbursementGroup, type: :model do
       expect(item.intended_at).to be_nil
       expect(item.receipt_required).to be(false)
       expect(item.memo).to eq(group.memo)
-      # The top-up memo alone would map the item to NOEVENT; the group keeps it on Hack Club Bank.
+      # Fee reimbursements are Hack Club Bank's; the Issuing top-up memo rule doesn't apply.
       expect(item.primary_ledger).to eq(hack_club_bank.ledger)
     end
 

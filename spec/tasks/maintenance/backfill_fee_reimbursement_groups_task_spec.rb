@@ -3,8 +3,9 @@
 require "rails_helper"
 
 RSpec.describe Maintenance::BackfillFeeReimbursementGroupsTask do
-  # The group's ledger item is mapped to the Hack Club Bank event, and a Stripe
-  # top-up's bank memo would otherwise send it to NOEVENT; both must exist.
+  # The group's ledger item is mapped to the Hack Club Bank event; NOEVENT is
+  # where the mapper's Stripe top-up memo rule puts an item with no group yet.
+  # Both must exist.
   let!(:hack_club_bank) { create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK) }
   let!(:noevent) { create(:event, id: EventMappingEngine::EventIds::NOEVENT) }
 

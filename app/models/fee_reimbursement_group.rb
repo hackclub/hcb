@@ -79,8 +79,8 @@ class FeeReimbursementGroup < ApplicationRecord
         create_ledger_item!(amount_cents: 0, datetime: created_at, intended_at: created_at, memo:, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
       elsif existing.linked_object.nil?
         existing.update!(linked_object: self)
-        # Remap as well as refresh: the group now tells the mapper this is a
-        # fee reimbursement (see CanonicalTransaction#linked_object_v2).
+        # Remap as well as refresh: the group now tells the mapper this belongs
+        # to Hack Club Bank (see CanonicalTransaction#linked_object_v2).
         existing.map!
       end
     end

@@ -210,9 +210,10 @@ class CanonicalTransaction < ApplicationRecord
                       transaction_source&.try(:card_charge)
                     end
 
-    # A Stripe fee reimbursement top-up has no source record of its own; its
-    # bank debit carries the week's short code (the top-up's statement descriptor).
-    source_object || fee_reimbursement_group
+    # HCB's own Stripe top-ups (fee reimbursements, Stripe service fees) have no
+    # source record of their own; their bank debit carries the HCB code's short
+    # code as the top-up's statement descriptor.
+    source_object || hcb_stripe_top_up_linked_object
   end
 
   def raw_plaid_transaction
@@ -390,10 +391,15 @@ class CanonicalTransaction < ApplicationRecord
     nil
   end
 
-  def fee_reimbursement_group
+  # The FeeReimbursementGroup or StripeServiceFee whose top-up this transaction
+  # is the bank debit for, found by the short code in the memo. Both belong to
+  # Hack Club Bank; they're unrelated to the Stripe Issuing balance top-ups that
+  # map to NOEVENT.
+  def hcb_stripe_top_up_linked_object
     return nil unless short_code
 
-    HcbCode.find_by(short_code: short_code.upcase)&.fee_reimbursement_group
+    hcb_code = HcbCode.find_by(short_code: short_code.upcase)
+    hcb_code&.fee_reimbursement_group || hcb_code&.stripe_service_fee
   end
 
   def check
