@@ -50,7 +50,7 @@ class HcbCode
         flash[:error] = "This transaction is already part of a subscription."
       elsif subscription.save
         subscription.link!(@hcb_code)
-        flash[:success] = "Marked as a subscription. Future charges from #{subscription.name} for #{helpers.render_money(subscription.amount_cents)} won't need receipts."
+        flash[:success] = "Marked as a subscription."
       else
         flash[:error] = subscription.errors.full_messages.to_sentence
       end

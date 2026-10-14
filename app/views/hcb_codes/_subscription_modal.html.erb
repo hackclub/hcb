@@ -9,11 +9,6 @@
 
 <section data-behavior="modal" role="dialog" id="mark_as_subscription_<%= hcb_code.hashid %>" class="modal modal--scroll bg-snow">
   <%= modal_header "Mark as subscription" %>
-  <p>
-    Later charges from this merchant for the same amount won't need receipts,
-    and they'll still go through if this card is locked for missing receipts.
-    This charge still needs a receipt.
-  </p>
   <%= form_with url: subscriptions_hcb_code_path(hcb_code), scope: :subscription, method: :post do |form| %>
     <%= render "subscriptions/form", form:, subscription:, amount_editable: false %>
     <%= form.submit "Mark as subscription" %>

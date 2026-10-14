@@ -10,14 +10,6 @@
 </h1>
 
 <% if @active_subscriptions.empty? && @canceled_subscriptions.empty? %>
-  <p class="muted">
-    Recurring card charges, like software or domain renewals, show up here.
-    HCB finds them automatically once a card is charged the same amount by the same merchant a few times on a regular schedule.
-    You can also mark any card transaction as a subscription from its menu.
-  </p>
-  <p class="muted">
-    Only the first charge of a subscription needs a receipt, and a card locked for missing receipts still pays for its subscriptions.
-  </p>
   <%= blankslate "No subscriptions yet" %>
 <% else %>
   <div class="statset mb-4">

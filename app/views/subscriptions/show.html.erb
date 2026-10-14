@@ -57,11 +57,6 @@
       </p>
     <% end %>
   </div>
-  <% if @subscription.canceled? %>
-    <p class="muted text-sm mb0">
-      Charges already linked to this subscription still don't need receipts. New charges are no longer linked, and they're declined if this card is locked.
-    </p>
-  <% end %>
 </section>
 
 <h2 class="heading h2 border-0 mb-2">Charges</h2>
@@ -97,13 +92,13 @@
       <%= button_to "Mark as canceled", cancel_event_subscription_path(@event, @subscription),
                     method: :post,
                     class: "btn bg-muted",
-                    data: { turbo_confirm: "Mark #{@subscription.name} as canceled? New charges won't be linked to it, and they'll be declined if this card is locked." } %>
+                    data: { turbo_confirm: "Mark #{@subscription.name} as canceled?" } %>
     <% end %>
     <% if policy(@subscription).destroy? %>
       <%= button_to "Not a subscription", event_subscription_path(@event, @subscription),
                     method: :delete,
                     class: "btn bg-error",
-                    data: { turbo_confirm: "Remove #{@subscription.name} as a subscription? Its charges will need receipts again, each with at least 3 days to upload.", turbo_confirm_danger: true } %>
+                    data: { turbo_confirm: "Remove #{@subscription.name} as a subscription? Its charges will need receipts again.", turbo_confirm_danger: true } %>
     <% end %>
   </div>
 <% end %>
