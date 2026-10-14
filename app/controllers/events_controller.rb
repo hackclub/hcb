@@ -374,7 +374,7 @@ class EventsController < ApplicationController
     process_hidden_param!(fixed_event_params)
     process_hidden_param!(fixed_user_event_params)
 
-    plan_param = fixed_event_params[:plan]
+    plan_param = admin_signed_in? ? fixed_event_params[:plan] : nil
     fixed_event_params.delete(:plan)
 
     begin
@@ -592,10 +592,14 @@ class EventsController < ApplicationController
       )
       if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
         @ledger = @event.ledger
-        @ledger_items = @ledger.items
-                               .where(id: column_transactions.select(:ledger_item_id), linked_object_type: nil)
-                               .order(created_at: :desc)
-                               .page((params[:page] || 1).to_i).per(safe_per(25))
+        # The column-transaction narrowing has no expression in Ledger::Query, so
+        # it chains onto the executed relation. Everything the query does own —
+        # pending first, the rest newest first — still comes from the query, which
+        # is the whole point of going through it for the parts that do fit.
+        @ledger_items = Ledger::Query.new({ linked_object_type: nil })
+                                     .execute(ledgers: [@ledger])
+                                     .where(id: column_transactions.select(:ledger_item_id))
+                                     .page((params[:page] || 1).to_i).per(safe_per(25))
       else
         @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
                                            .order(created_at: :desc)
@@ -922,6 +926,14 @@ class EventsController < ApplicationController
     render :reimbursements_pending_review_icon, layout: false
   end
 
+  def contractors_pending_review_icon
+    authorize @event
+    # Only reviewers see a count; the badge is hidden (count 0) for everyone else.
+    @contractors_pending_review_count = Payroll::PositionPolicy.new(current_user, @event).review? ? @event.payroll_invoices.submitted.count : 0
+
+    render :contractors_pending_review_icon, layout: false
+  end
+
   def employees
     authorize @event
     @employees = @event.employees.order(
@@ -938,6 +950,9 @@ class EventsController < ApplicationController
     authorize @event
 
     @contractors = @event.payroll_positions.includes(:event, payee: :payments).order(created_at: :desc)
+
+    can_review = Payroll::PositionPolicy.new(current_user, @event).review?
+    @pending_invoice_counts = can_review ? @event.payroll_invoices.submitted.group(:payroll_position_id).count : {}
 
     counts_by_status = @contractors.to_a.group_by(&:status).transform_values(&:count)
     @stats = {
@@ -1339,7 +1354,6 @@ class EventsController < ApplicationController
 
     @items = ledger_query.execute(ledgers: @ledgers)
                          .page(params[:page]).per(@per)
-                         .preload(:tags, hcb_code: { event: :tags })
   rescue Pundit::NotAuthorizedError
     return head :not_found
   end
