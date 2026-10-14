@@ -52,8 +52,6 @@ class Subscription < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :sub
 
-  FLAG = :subscriptions_2026_10_13
-
   CADENCE_DAYS = {
     weekly: 7,
     biweekly: 14,
@@ -106,10 +104,6 @@ class Subscription < ApplicationRecord
   validate :not_a_duplicate, if: :active?
 
   after_destroy_commit :resync_unlinked_charges
-
-  def self.enabled_for?(event)
-    event.present? && Flipper.enabled?(FLAG, event)
-  end
 
   def self.gap_fits_cadence?(gap_days, cadence_days)
     (1..MAX_SKIPPED_CYCLES).any? { |k| (gap_days - (k * cadence_days)).abs <= TOLERANCE * cadence_days }

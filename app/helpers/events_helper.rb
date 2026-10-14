@@ -116,7 +116,7 @@ module EventsHelper
     },
     {
       section: "Spend",
-      available_proc: ->(event) { policy(event).card_overview? || policy(event).subscriptions? || policy(event).card_grant_overview? || policy(event).transfers? || policy(event).reimbursements? || policy(event).employees? }
+      available_proc: ->(event) { policy(event).card_overview? || policy(event).card_grant_overview? || policy(event).transfers? || policy(event).reimbursements? || policy(event).employees? }
     },
     {
       name: "Cards",
@@ -126,15 +126,6 @@ module EventsHelper
       data: { tour_step: "cards" },
       symbol: :cards,
       available_proc: ->(event) { policy(event).card_overview? }
-    },
-    {
-      name: "Subscriptions",
-      path_proc: ->(event_id) { event_subscriptions_path(event_id:) },
-      tooltip: "Track recurring card charges",
-      icon: "clock",
-      symbol: :subscriptions,
-      beta: true,
-      available_proc: ->(event) { policy(event).subscriptions? }
     },
     {
       name: "Grants",

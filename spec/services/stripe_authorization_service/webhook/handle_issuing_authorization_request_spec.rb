@@ -42,7 +42,6 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
     before do
       create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
       stripe_card.user.update!(cards_locked: true)
-      Flipper.enable(Subscription::FLAG, event)
     end
 
     def create_subscription(**attributes)
@@ -72,14 +71,6 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
 
     it "declines once the subscription is canceled" do
       create_subscription.cancel!
-
-      expect(service.run).to be(false)
-      expect(service.declined_reason).to eq("user_cards_locked")
-    end
-
-    it "declines when subscriptions aren't enabled for the organization" do
-      create_subscription
-      Flipper.disable(Subscription::FLAG, event)
 
       expect(service.run).to be(false)
       expect(service.declined_reason).to eq("user_cards_locked")

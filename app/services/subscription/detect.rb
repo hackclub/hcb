@@ -23,7 +23,7 @@ class Subscription
 
     # Returns the subscriptions it created.
     def run
-      return [] unless @stripe_card.stripe_id.present? && Subscription.enabled_for?(@stripe_card.event)
+      return [] unless @stripe_card.stripe_id.present?
 
       charges.group_by { |charge| [charge[:merchant_key], charge[:amount_cents]] }.filter_map do |_key, group|
         next if group.size < MIN_CHARGES

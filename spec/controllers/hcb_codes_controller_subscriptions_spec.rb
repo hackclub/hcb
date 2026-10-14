@@ -24,7 +24,6 @@ RSpec.describe HcbCodesController, type: :controller do
 
     create(:organizer_position, user: organizer, event:)
     create_session(organizer, verified: true)
-    Flipper.enable(Subscription::FLAG, event)
   end
 
   it "offers to mark an unlinked card charge as a subscription" do

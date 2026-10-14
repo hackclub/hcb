@@ -29,7 +29,7 @@ class Subscription
       return if @hcb_code.pt&.declined?
 
       stripe_card = @hcb_code.stripe_card
-      return unless stripe_card && Subscription.enabled_for?(stripe_card.event)
+      return unless stripe_card
       return unless @hcb_code.amount_cents.negative?
 
       merchant = @hcb_code.subscription_merchant

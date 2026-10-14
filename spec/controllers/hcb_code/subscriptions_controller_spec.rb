@@ -13,7 +13,6 @@ RSpec.describe HcbCode::SubscriptionsController do
   before do
     create(:organizer_position, user: organizer, event:)
     create_session(organizer, verified: true)
-    Flipper.enable(Subscription::FLAG, event)
   end
 
   describe "#create" do
@@ -41,14 +40,6 @@ RSpec.describe HcbCode::SubscriptionsController do
 
       expect(Subscription.count).to eq(0)
       expect(flash[:error]).to be_present
-    end
-
-    it "doesn't create a subscription without the flag" do
-      Flipper.disable(Subscription::FLAG, event)
-
-      post :create, params: { id: hcb_code.hashid, subscription: { name: "Spotify", cadence: "monthly" } }
-
-      expect(Subscription.count).to eq(0)
     end
 
     it "doesn't let readers create a subscription" do

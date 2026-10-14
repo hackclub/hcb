@@ -15,10 +15,10 @@ RSpec.describe Subscription::Detect do
     times.map { |at| charge(at, **options) }
   end
 
-  # Charges are created before the flag is enabled so the settlement hook
-  # (Subscription::LinkCharge) doesn't detect them as they're created.
+  # The settlement hook would otherwise detect the charges as they're created.
+  before { allow(Subscription::LinkCharge).to receive(:on_canonical_transaction) }
+
   def detect(**options)
-    Flipper.enable(Subscription::FLAG, event)
     described_class.new(stripe_card:, **options).run
   end
 
@@ -104,12 +104,6 @@ RSpec.describe Subscription::Detect do
     charges_at(62.days.ago, 32.days.ago, 2.days.ago, network_id: "spotify-1", name: "SPOTIFY")
 
     expect(detect(merchant_network_id: "spotify-1").sole.merchant_network_id).to eq("spotify-1")
-  end
-
-  it "does nothing when subscriptions aren't enabled for the organization" do
-    charges_at(61.days.ago, 31.days.ago, 1.day.ago)
-
-    expect(described_class.new(stripe_card:).run).to be_empty
   end
 
   it "waives receipts on every charge but the first, retroactively" do

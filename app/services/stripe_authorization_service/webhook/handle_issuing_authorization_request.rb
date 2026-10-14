@@ -98,7 +98,7 @@ module StripeAuthorizationService
       def subscription_charge?
         return @subscription_charge if defined?(@subscription_charge)
 
-        @subscription_charge = Subscription.enabled_for?(event) && matching_subscription.present?
+        @subscription_charge = matching_subscription.present?
       end
 
       def matching_subscription

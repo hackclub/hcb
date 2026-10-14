@@ -2,15 +2,15 @@
 
 class SubscriptionPolicy < ApplicationPolicy
   def show?
-    enabled? && (auditor? || reader?)
+    auditor? || reader?
   end
 
   def create?
-    enabled? && member?
+    member?
   end
 
   def update?
-    enabled? && member?
+    member?
   end
 
   def cancel?
@@ -22,10 +22,6 @@ class SubscriptionPolicy < ApplicationPolicy
   end
 
   private
-
-  def enabled?
-    Subscription.enabled_for?(record.event)
-  end
 
   def auditor?
     user&.auditor?

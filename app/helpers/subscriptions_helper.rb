@@ -22,7 +22,7 @@ module SubscriptionsHelper
   # "This card pays for 2 active subscriptions (Spotify and Vercel). Freezing it
   # will decline their next charges."
   def stripe_card_subscriptions_warning(stripe_card, action:)
-    return unless stripe_card && Subscription.enabled_for?(stripe_card.event)
+    return unless stripe_card
 
     names = stripe_card.subscriptions.active.order(:name).pluck(:name)
     return if names.empty?

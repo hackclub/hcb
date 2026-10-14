@@ -226,7 +226,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def subscriptions?
-    auditor_or_reader? && record.plan.cards_enabled? && Subscription.enabled_for?(record)
+    auditor_or_reader? && record.plan.cards_enabled?
   end
 
   def sub_organizations?

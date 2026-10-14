@@ -1,6 +1,6 @@
 <% title "#{@subscription.name} subscription" %>
 <% page_md %>
-<%= render "events/nav", selected: :subscriptions %>
+<%= render "events/nav", selected: :cards %>
 
 <p class="mb-1">
   <%= link_to event_subscriptions_path(@event), class: "muted no-underline inline-flex items-center" do %>
@@ -57,13 +57,11 @@
       </p>
     <% end %>
   </div>
-  <p class="muted text-sm mb0">
-    <% if @subscription.active? %>
-      Only the first charge needs a receipt. Later charges for exactly <%= render_money @subscription.amount_cents %> are linked automatically and still go through if this card is locked for missing receipts.
-    <% else %>
+  <% if @subscription.canceled? %>
+    <p class="muted text-sm mb0">
       Charges already linked to this subscription still don't need receipts. New charges are no longer linked, and they're declined if this card is locked.
-    <% end %>
-  </p>
+    </p>
+  <% end %>
 </section>
 
 <h2 class="heading h2 border-0 mb-2">Charges</h2>

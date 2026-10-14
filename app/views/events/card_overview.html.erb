@@ -22,6 +22,12 @@
         <%= render "events/filters/filter_cards_menu" unless @has_filter %>
         <%= pop_icon_to @view == "list" ? "grid" : "list",
                         "?view=#{@view == 'list' ? 'grid' : 'list'}#{"&q=#{@q}" if @q}#{"&status=#{@status}" if @status}" %>
+        <% if policy(@event).subscriptions? %>
+          <%= link_to event_subscriptions_path(@event), class: "btn bg-muted" do %>
+            <%= inline_icon "clock" %>
+            Subscriptions
+          <% end %>
+        <% end %>
         <% if organizer_signed_in?(as: :member) %>
           <%= link_to event_cards_new_path(event_id: @event.slug), class: "btn bg-success", data: { behavior: "modal_trigger", modal: "order_card" } do %>
             <%= inline_icon "card-add" %>

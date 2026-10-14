@@ -17,7 +17,6 @@ RSpec.describe SubscriptionsController do
   before do
     create(:organizer_position, user: organizer, event:)
     create_session(organizer, verified: true)
-    Flipper.enable(Subscription::FLAG, event)
     [first, second].each { |hcb_code| hcb_code.update!(subscription:) }
     subscription.sync_charges!
   end
@@ -29,14 +28,6 @@ RSpec.describe SubscriptionsController do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(subscription.name)
       expect(response.body).to include("$120.00")
-    end
-
-    it "isn't available without the flag" do
-      Flipper.disable(Subscription::FLAG, event)
-
-      get :index, params: { event_id: event.slug }
-
-      expect(response).to have_http_status(:redirect)
     end
   end
 
