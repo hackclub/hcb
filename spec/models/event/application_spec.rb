@@ -63,4 +63,14 @@ RSpec.describe Event::Application, type: :model do
       expect(application.reload.event.description).to eq("Run the best hackathon")
     end
   end
+
+  describe "#mark_rejected!" do
+    it "updates the Airtable Status field to Rejected" do
+      application = create(:event_application, aasm_state: "submitted")
+
+      expect(application).to receive(:set_airtable_status).with("Rejected")
+
+      application.mark_rejected!
+    end
+  end
 end

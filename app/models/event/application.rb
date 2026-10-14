@@ -162,6 +162,8 @@ class Event
           if rejection_message.present?
             Event::ApplicationMailer.with(application: self, rejection_message: rejection_message).rejected.deliver_later
           end
+
+          set_airtable_status("Rejected")
         end
       end
 
