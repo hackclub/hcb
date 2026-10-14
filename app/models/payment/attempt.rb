@@ -68,6 +68,16 @@ class Payment
         transitions from: :under_review, to: :sent
         after do
           payment.mark_sent!
+
+          fee = payout.ledger_item.amount_cents.abs - payment.amount_cents
+
+          if payout.is_a?(Wire) && payment.amount_cents < payment.event.minimum_wire_amount_cents
+            fee += 25_00
+          end
+
+          if fee.positive?
+            Payment::AttemptMailer.with(attempt: self, fee:).sent_with_fee.deliver_later
+          end
         end
       end
 

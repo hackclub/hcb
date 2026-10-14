@@ -88,12 +88,17 @@ RSpec.describe Payment::Attempt, type: :model do
     end
 
     describe "#mark_sent!" do
+      let(:ledger_amount_cents) { -attempt.payment.amount_cents }
+      let(:payout) { AchTransfer.new }
+
       before do
         attempt.save!
         attempt.update_columns(aasm_state: "under_review")
         # The mark_sent after block calls payment.mark_sent!; stub it so we
         # don't have to put the payment into under_review state as well.
         allow(attempt.payment).to receive(:mark_sent!)
+        allow(payout).to receive(:ledger_item).and_return(double("ledger_item", amount_cents: ledger_amount_cents))
+        allow(attempt).to receive(:payout).and_return(payout)
       end
 
       it "transitions to sent" do
@@ -104,6 +109,22 @@ RSpec.describe Payment::Attempt, type: :model do
       it "calls mark_sent! on the parent payment" do
         expect(attempt.payment).to receive(:mark_sent!)
         attempt.mark_sent!
+      end
+
+      it "does not send the fee email when there is no fee" do
+        expect(Payment::AttemptMailer).not_to receive(:with)
+        attempt.mark_sent!
+      end
+
+      context "when the payout cost more than the payment amount" do
+        let(:ledger_amount_cents) { -(attempt.payment.amount_cents + 5_00) }
+
+        it "sends the fee email with the difference" do
+          mail = double("mail", deliver_later: true)
+          expect(Payment::AttemptMailer).to receive(:with).with(attempt:, fee: 5_00).and_return(double(sent_with_fee: mail))
+          attempt.mark_sent!
+          expect(mail).to have_received(:deliver_later)
+        end
       end
     end
 
