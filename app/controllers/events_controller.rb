@@ -472,14 +472,13 @@ class EventsController < ApplicationController
     cookies[:card_overview_view] = params[:view] if params[:view]
     @view = cookies[:card_overview_view] || "grid"
 
-    @user = User.friendly.find(params[:user], allow_nil: true) if params[:user]
-
     event_cards = @event.stripe_cards.where.missing(:card_grant).joins(:stripe_cardholder, :user)
     all_stripe_cards = event_cards.includes(:card_grant, stripe_cardholder: { user: { profile_picture_attachment: :blob } })
                                   .order("stripe_status asc, created_at desc")
 
     # Derived from cards rather than @event.users so removed members' cards stay filterable
     cardholders = User.where(id: event_cards.select("stripe_cardholders.user_id")).order(:full_name)
+    @user = cardholders.friendly.find(params[:user], allow_nil: true) if params[:user]
     @filter_options = [
       { key: "status", label: "Status", type: "select", options: [["Active", "active"], ["Inactive", "inactive"], ["Frozen", "frozen"], ["Canceled", "canceled"]] },
       { key: "type", label: "Type", type: "select", options: [["Virtual", "virtual"], ["Physical", "physical"]] },
@@ -487,7 +486,7 @@ class EventsController < ApplicationController
     ]
     @has_filter = helpers.check_filters?(@filter_options, params)
 
-    all_stripe_cards = all_stripe_cards.where(user: { id: @user.id }) if @user
+    all_stripe_cards = all_stripe_cards.where(user: { id: @user&.id }) if params[:user]
 
     if @q
       all_stripe_cards = all_stripe_cards.where(
@@ -542,7 +541,7 @@ class EventsController < ApplicationController
 
     @paginated_stripe_cards = Kaminari.paginate_array(display_cards).page(page).per(per_page)
 
-    unless @user || @q
+    unless params[:user] || @q
       user_groups = display_cards
                     .group_by(&:user)
                     .reject { |user, _| user.nil? }
