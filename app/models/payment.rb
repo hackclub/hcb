@@ -42,6 +42,7 @@ class Payment < ApplicationRecord
   has_one :successful_attempt, -> { successful }, class_name: "Payment::Attempt", inverse_of: :payment
   has_one :current_attempt, -> { active }, class_name: "Payment::Attempt", inverse_of: :payment
   has_one :payroll_invoice, class_name: "Payroll::Invoice", inverse_of: :payment, dependent: :nullify
+  has_one :payroll_position, through: :payroll_invoice
 
   monetize :amount_cents, with_model_currency: :currency
 
@@ -104,15 +105,21 @@ class Payment < ApplicationRecord
 
     if payable && legal_entity.default_payout_method.present?
       create_payment_attempt!
-    elsif payable
-      PaymentMailer.with(payment: self).missing_payout_method.deliver_later
     else
-      PaymentMailer.with(payment: self).missing_tax_information.deliver_later
+      send_initial_email
     end
   end
 
   after_create_commit do
     schedule_acceptance_reminders if awaiting_recipient_onboarding?
+  end
+
+  def send_initial_email
+    if legal_entity&.payable?
+      PaymentMailer.with(payment: self).missing_payout_method.deliver_later
+    else
+      PaymentMailer.with(payment: self).missing_tax_information.deliver_later
+    end
   end
 
   def retry!
@@ -206,6 +213,7 @@ class Payment < ApplicationRecord
   def create_payment_attempt!
     self.with_lock do
       raise ArgumentError, "this payment was rejected" if rejected?
+      raise ArgumentError, "this payment was canceled" if canceled?
       raise ArgumentError, "all attempts must be failed, rejected, or canceled" if attempts.any?(&:active?)
       raise ArgumentError, "there is no default payout method" if legal_entity.default_payout_method.nil?
 

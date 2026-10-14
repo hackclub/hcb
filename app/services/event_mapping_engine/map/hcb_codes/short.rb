@@ -88,11 +88,22 @@ module EventMappingEngine
         def assign_transaction_category!(hcb_code:, canonical_transaction:)
           category_slug = self.class.category_slug_for_hcb_code(hcb_code)
 
-          return unless category_slug
+          if category_slug
+            TransactionCategoryService
+              .new(model: canonical_transaction)
+              .set!(slug: category_slug, assignment_strategy: "automatic")
+          elsif hcb_code.reimbursement_expense_payout? || hcb_code.reimbursement_payout_holding?
+            # A reversed payout comes back as a second transaction on the same
+            # HCB code with no pending transaction of its own to settle against,
+            # so copy the category from the original pending transaction, as
+            # CanonicalPendingTransactionService::Settle does when it settles.
+            pending_mapping = hcb_code.pt&.category_mapping
+            return unless pending_mapping
 
-          TransactionCategoryService
-            .new(model: canonical_transaction)
-            .set!(slug: category_slug, assignment_strategy: "automatic")
+            TransactionCategoryService
+              .new(model: canonical_transaction)
+              .set!(slug: pending_mapping.category.slug, assignment_strategy: pending_mapping.assignment_strategy)
+          end
         end
 
       end

@@ -34,7 +34,7 @@ Doorkeeper.configure do
   # migrations).
   #
   # If this option enabled, Doorkeeper will store not only Resource Owner primary key
-  # value, but also it's type (class name). See "Polymorphic Associations" section of
+  # value, but also its type (class name). See "Polymorphic Associations" section of
   # Rails guides: https://guides.rubyonrails.org/association_basics.html#polymorphic-associations
   #
   # [NOTE] If you apply this option on already existing project don't forget to manually

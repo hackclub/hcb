@@ -1,4 +1,6 @@
-<% current_user ||= local_assigns[:p][:current_user] %>
+<%# locals: (activity:, p:, current_user: nil, **) %>
+
+<% current_user ||= p[:current_user] %>
 <% hcb_code = activity.trackable&.canonical_pending_transaction&.local_hcb_code %>
 
 <% if hcb_code %>

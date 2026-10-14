@@ -205,6 +205,7 @@ class Wire < ApplicationRecord
       routing_number_type: "bic",
       routing_number: bic_code,
       account_number:,
+      account_type: recipient_information["account_type"],
       wire: {
         beneficiary_name: recipient_name,
         beneficiary_email: recipient_email,
@@ -219,8 +220,7 @@ class Wire < ApplicationRecord
         beneficiary_legal_id: recipient_information["legal_id"],
         beneficiary_type: recipient_information["legal_type"],
         local_bank_code: recipient_information["local_bank_code"],
-        local_account_number: recipient_information["local_account_number"],
-        account_type: recipient_information["account_type"]
+        local_account_number: recipient_information["local_account_number"]
       }.compact_blank
     }.compact_blank)
 

@@ -1,30 +1,41 @@
 /*
-  A lightweight, self-contained autocomplete combobox.
+  A lightweight, self-contained autocomplete combobox. Rendered by
+  `ComboboxHelper#combobox_tag`.
 
-  It loads its options asynchronously from `urlValue` (an endpoint returning
-  JSON `[{ value, label, sublabel, disabled }]`), lets the user filter by
-  typing, and mirrors the chosen option's `value` into a hidden form field so
-  the surrounding form submits it. Only options returned by the endpoint can be
-  selected — free text is reverted on blur.
+  It loads its options asynchronously from `urlValue` — an endpoint called as
+  `?q=<query>&page=<n>` and returning JSON `[{ value, label, sublabel,
+  disabled }]`, ordered by relevance, where `value` and `label` are required and
+  a page with fewer than PAGE_SIZE rows is the last one. The user filters by
+  typing, and the chosen option's `value` is mirrored into a hidden form field
+  so the surrounding form submits it. Only options returned by the endpoint can
+  be selected — free text is reverted on blur.
+
+  The dropdown renders inline at every width. This deliberately drops the
+  full-screen `<dialog>` picker the `hotwire_combobox` gem switched to below
+  640px: the inline list is usable on a phone and one code path is worth more
+  here than the extra mode.
 */
 
 import { Controller } from '@hotwired/stimulus'
 
-// must equal the value of `PAGE_SIZE` in app/controllers/disbursements_controller.rb
+// must equal the value of `PAGE_SIZE` in app/controllers/concerns/combobox_searchable.rb
 const PAGE_SIZE = 25
 
 export default class extends Controller {
-  static targets = ['input', 'hidden', 'listbox']
+  static targets = ['input', 'hidden', 'listbox', 'status']
   static values = {
     url: String,
     selected: String,
     label: String,
   }
 
+  initialize() {
+    this.searchToken = 0
+  }
+
   connect() {
     this.options = []
     this.activeIndex = -1
-    this.searchToken = 0
     this.deletion = false
     this.page = 1
     this.hasMore = false
@@ -46,6 +57,12 @@ export default class extends Controller {
     }
   }
 
+  disconnect() {
+    clearTimeout(this.debounce)
+    clearTimeout(this.blurTimeout)
+    this.searchToken++ // abandon any search still in flight
+  }
+
   onFocus() {
     if (this.inputTarget.disabled) return
     // With an untouched selection, just show that one option (selected). The
@@ -53,6 +70,7 @@ export default class extends Controller {
     if (this.query === this.selectedLabel && this.selectedOption) {
       this.inputTarget.select()
       this.options = [this.selectedOption]
+      this.hasMore = false
       this.activeIndex = 0
       this.render()
       this.show()
@@ -98,7 +116,8 @@ export default class extends Controller {
 
   onBlur() {
     // Delay so a click on an option registers before we tear down.
-    setTimeout(() => {
+    clearTimeout(this.blurTimeout)
+    this.blurTimeout = setTimeout(() => {
       if (!this.element.contains(document.activeElement)) {
         this.finalize()
         this.hide()
@@ -107,9 +126,23 @@ export default class extends Controller {
   }
 
   onOptionClick(e) {
-    const li = e.target.closest('[role="option"]')
-    if (!li || li.getAttribute('aria-disabled') === 'true') return
-    this.commit(this.options[Number(li.dataset.index)])
+    const index = this.optionIndexFrom(e)
+    if (index >= 0) this.commit(this.options[index])
+  }
+
+  // Keep the keyboard cursor under the pointer, so clicking always commits the
+  // row the user sees highlighted.
+  onOptionHover(e) {
+    const index = this.optionIndexFrom(e)
+    if (index < 0 || index === this.activeIndex) return
+    this.activeIndex = index
+    this.highlight({ scroll: false })
+  }
+
+  // Fetch more results and append when the user scrolls near the bottom.
+  onScroll() {
+    const el = this.listboxTarget
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 40) this.loadMore()
   }
 
   // --- internals ---
@@ -122,47 +155,55 @@ export default class extends Controller {
     return !this.listboxTarget.hasAttribute('hidden')
   }
 
+  // Index of the selectable option an event landed on, or -1.
+  optionIndexFrom(e) {
+    const li = e.target.closest('[role="option"]')
+    if (!li || li.getAttribute('aria-disabled') === 'true') return -1
+    return Number(li.dataset.index)
+  }
+
   async search(query) {
     const token = ++this.searchToken
     this.currentQuery = query
     this.page = 1
-    this.renderLoading()
+    this.renderStatus('Loading…')
     this.show()
-    const options = await this.fetchPage(query, 1, token)
-    if (options === null) return // superseded or errored
 
-    this.options = this.withSelected(options)
-    this.hasMore = options.length >= PAGE_SIZE
+    const result = await this.fetchPage(query, 1, token)
+    if (!result) return // a newer search superseded us
+    if (result.error) return this.renderStatus('Search failed. Try again.')
+
+    this.options = this.withSelected(result.options)
+    this.hasMore = result.options.length >= PAGE_SIZE
     this.activeIndex = -1
     this.render()
     this.show()
     if (!this.deletion) this.autocomplete(query)
   }
 
-  // Fetch more results and append when the user scrolls near the bottom.
-  onScroll() {
-    const el = this.listboxTarget
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 40) this.loadMore()
-  }
-
   async loadMore() {
     if (this.loading || !this.hasMore) return
-    const options = await this.fetchPage(
+    const result = await this.fetchPage(
       this.currentQuery,
       this.page + 1,
       this.searchToken
     )
-    if (options === null) return
+    // On failure keep the rows already on screen rather than replacing them
+    // with an error; scrolling again retries.
+    if (!result || result.error) return
 
     this.page += 1
-    this.hasMore = options.length >= PAGE_SIZE
+    this.hasMore = result.options.length >= PAGE_SIZE
     const seen = new Set(this.options.map(o => o.value))
-    const fresh = options.filter(o => !seen.has(o.value))
+    const fresh = result.options.filter(o => !seen.has(o.value))
     const start = this.options.length
     this.options = this.options.concat(fresh)
     this.appendOptions(start)
   }
 
+  // Resolves to `{ options }` on success, `{ error }` on failure, or `null` if
+  // a newer search superseded this one. Distinguishing the first two matters:
+  // an empty list and a failed request must not look alike to the user.
   async fetchPage(query, page, token) {
     this.loading = true
     try {
@@ -170,12 +211,11 @@ export default class extends Controller {
         headers: { Accept: 'application/json' },
         credentials: 'same-origin',
       })
-      if (!res.ok) throw new Error()
-      const options = await res.json()
-      return token === this.searchToken ? options : null
-    } catch {
-      if (token === this.searchToken) this.hide()
-      return null
+      if (!res.ok) throw new Error(`Combobox search returned ${res.status}`)
+      const options = (await res.json()).map(normalize)
+      return token === this.searchToken ? { options } : null
+    } catch (error) {
+      return token === this.searchToken ? { error } : null
     } finally {
       this.loading = false
     }
@@ -267,26 +307,42 @@ export default class extends Controller {
     this.hiddenTarget.value = ''
   }
 
-  renderLoading() {
+  // Loading/empty/error messages are not choices. Dropping `options` keeps
+  // arrow keys from walking (and Enter from committing) the previous search's
+  // results while one of these is on screen, and `role="presentation"` keeps
+  // screen readers from announcing them as a one-item list — the text goes to
+  // the live region instead.
+  renderStatus(message) {
+    this.options = []
     this.activeIndex = -1
+    this.hasMore = false
     this.listboxTarget.innerHTML = `
-      <li role="option" aria-disabled="true" class="hw-combobox__option">
-        <span class="text-sm muted">Loading…</span>
+      <li role="presentation" class="combobox__option combobox__option--status">
+        <span class="text-sm muted">${escape(message)}</span>
       </li>`
+    this.inputTarget.removeAttribute('aria-activedescendant')
+    this.announce(message)
+  }
+
+  optionId(index) {
+    return `${this.listboxTarget.id}-option-${index}`
   }
 
   optionHtml(o, i) {
     const disabled = o.disabled ? ' aria-disabled="true"' : ''
-    const dim = o.disabled ? ' opacity-50' : ''
-    const selected =
-      o.value === this.selectedValue ? ' hw-combobox__option--selected' : ''
+    const isSelected = o.value === this.selectedValue
+    const selected = isSelected ? ' combobox__option--selected' : ''
+    const sublabel = o.sublabel
+      ? `<span class="text-sm muted">${escape(o.sublabel)}</span>`
+      : ''
     return `
-      <li role="option" data-index="${i}"${disabled}
-          class="hw-combobox__option${selected}"
-          data-action="mousedown->combobox#onOptionClick">
-        <div class="flex flex-col w-full${dim}">
-          <span style="white-space:normal">${escape(o.label)}</span>
-          <span class="text-sm muted">${escape(o.sublabel || '')}</span>
+      <li role="option" id="${this.optionId(i)}" data-index="${i}"${disabled}
+          aria-selected="${isSelected}"
+          class="combobox__option${selected}"
+          data-action="mousedown->combobox#onOptionClick mouseover->combobox#onOptionHover">
+        <div class="flex flex-col w-full">
+          <span>${escape(o.label)}</span>
+          ${sublabel}
         </div>
       </li>`
   }
@@ -301,6 +357,8 @@ export default class extends Controller {
   }
 
   render() {
+    if (this.options.length === 0) return this.renderStatus('No results')
+
     this.listboxTarget.innerHTML = this.options
       .map((o, i) => this.optionHtml(o, i))
       .join('')
@@ -311,15 +369,32 @@ export default class extends Controller {
     )
     if (selIdx >= 0) this.activeIndex = selIdx
     this.highlight()
+    this.announce(
+      `${this.options.length} result${this.options.length === 1 ? '' : 's'}`
+    )
   }
 
-  highlight() {
+  // `aria-selected` marks the committed choice and is set once in `optionHtml`;
+  // the keyboard cursor is exposed separately, via `aria-activedescendant`.
+  highlight({ scroll = true } = {}) {
     this.listboxTarget.querySelectorAll('[role="option"]').forEach((li, i) => {
-      const active = i === this.activeIndex
-      li.classList.toggle('hw-combobox__option--navigated', active)
-      li.setAttribute('aria-selected', active ? 'true' : 'false')
-      if (active) li.scrollIntoView({ block: 'nearest' })
+      const navigated = i === this.activeIndex
+      li.classList.toggle('combobox__option--navigated', navigated)
+      if (navigated && scroll) li.scrollIntoView({ block: 'nearest' })
     })
+
+    if (this.activeIndex >= 0 && this.options[this.activeIndex]) {
+      this.inputTarget.setAttribute(
+        'aria-activedescendant',
+        this.optionId(this.activeIndex)
+      )
+    } else {
+      this.inputTarget.removeAttribute('aria-activedescendant')
+    }
+  }
+
+  announce(message) {
+    if (this.hasStatusTarget) this.statusTarget.textContent = message
   }
 
   show() {
@@ -330,7 +405,16 @@ export default class extends Controller {
   hide() {
     this.listboxTarget.setAttribute('hidden', '')
     this.inputTarget.setAttribute('aria-expanded', 'false')
+    this.inputTarget.removeAttribute('aria-activedescendant')
     this.activeIndex = -1
+  }
+}
+
+function normalize(option) {
+  return {
+    ...option,
+    value: String(option.value ?? ''),
+    label: String(option.label ?? ''),
   }
 }
 

@@ -41,6 +41,14 @@
           <td style="text-align: right;">Payment Purpose:</td>
           <td><%= @check.payment_for %></td>
         </tr>
+        <% if @check.payment.present? %>
+          <tr>
+            <td class="text-right">Payment:</td>
+            <td>
+              <%= render partial: "admin/payment_link", locals: { payout: @check } %>
+            </td>
+          </tr>
+        <% end %>
         <tr>
           <td style="text-align: right;">Amount:</td>
           <td><%= render_money @check.amount %></td>

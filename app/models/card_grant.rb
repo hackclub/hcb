@@ -168,7 +168,7 @@ class CardGrant < ApplicationRecord
   end
 
   def pending_invite?
-    stripe_card.nil?
+    active? && stripe_card.nil?
   end
 
   def topup!(amount_cents:, topped_up_by: sent_by)

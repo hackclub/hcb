@@ -1,4 +1,4 @@
-<%# locals: (form:, disabled: false, label: "Attach a receipt or invoice", hint: nil, accept: "image/*,image/heic,.pdf", required: Flipper.enabled?(:payments_contractors_refresh_2026_06_26)) %>
+<%# locals: (form:, disabled: false, label: "Attach a receipt or invoice", hint: nil, accept: "image/*,image/heic,.pdf", required: Flipper.enabled?(:payments_contractors_refresh_2026_06_26), input_html: {}, clear_html: {}) %>
 
 <div class="md:flex items-center justify-between gap-4">
   <div class="flex-1">
@@ -27,8 +27,9 @@
           "file-drop-target"   => "fileInput",
           "file-upload-target" => "input"
         },
-        disabled: %>
+        disabled:,
+        **input_html %>
     <button data-file-upload-target="preview" type="button"></button>
-    <div data-file-upload-target="clear"></div>
+    <%= content_tag :div, "", data: { "file-upload-target" => "clear" }, **clear_html %>
   </div>
 </div>

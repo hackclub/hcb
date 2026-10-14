@@ -99,9 +99,11 @@ export default class extends Controller {
       })
       if (!response.ok) throw new Error(response.statusText)
 
-      for (const [publicId, amount] of Object.entries(await response.json())) {
-        const cell = document.getElementById(`event_balance_${publicId}`)
-        if (cell) cell.textContent = amount
+      for (const [publicId, amounts] of Object.entries(await response.json())) {
+        for (const [column, amount] of Object.entries(amounts)) {
+          const cell = document.getElementById(`event_${column}_${publicId}`)
+          if (cell) cell.textContent = amount
+        }
       }
     } catch (error) {
       console.error(error)

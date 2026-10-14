@@ -28,7 +28,7 @@ class ReceiptableMailer < ApplicationMailer
       "Don't tell the IRS!",
       "You monster!",
       "Receipts or it didn't happen!",
-      "Better upload them or noone will believe you.",
+      "Better upload them or no one will believe you.",
       "Quick! Upload them before they go sour.",
       "Quick! Upload them before they expire.",
       "You're going to get in trouble!",

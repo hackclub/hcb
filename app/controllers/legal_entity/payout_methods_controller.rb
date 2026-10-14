@@ -102,9 +102,6 @@ class LegalEntity
       @legal_entities = @user.legal_entities
       flash.now[:error] = payout_method.error_messages.to_sentence
 
-      # `edit_payout` lives under `users/`, but this controller isn't namespaced
-      # under Users, so Rails won't find the template without the extra prefix.
-      lookup_context.prefixes.unshift("users")
       render template: "users/edit_payout", status: :unprocessable_content
     end
 

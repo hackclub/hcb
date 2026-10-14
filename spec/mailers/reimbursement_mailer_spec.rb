@@ -30,7 +30,7 @@ RSpec.describe ReimbursementMailer do
         currency: "CAD",
       )
 
-      drinks = report.expenses.create!(value: 12.34, memo: "Drinks")
+      drinks = report.expenses.create!(value: 12.34, memo: "Drinks", category: "Food & Entertainment")
       ReceiptService::Create.new(
         receiptable: drinks,
         uploader: user,
@@ -38,7 +38,7 @@ RSpec.describe ReimbursementMailer do
         upload_method: :receipts_page
       ).run!
 
-      food = report.expenses.create!(value: 34.56, memo: "Food")
+      food = report.expenses.create!(value: 34.56, memo: "Food", category: "Food & Entertainment")
       ReceiptService::Create.new(
         receiptable: food,
         uploader: user,

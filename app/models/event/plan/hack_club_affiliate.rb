@@ -39,10 +39,6 @@ class Event
         true
       end
 
-      def requires_reimbursement_expense_categorization?
-        true
-      end
-
       def omit_stats
         true
       end
@@ -64,6 +60,10 @@ class Event
           "Contract Signee" => ["Telephone", "Email", "The Project"],
           "HCB"             => ["HCB ID"]
         }
+      end
+
+      def assigned_reimbursement_reviewer_required?
+        true
       end
 
     end

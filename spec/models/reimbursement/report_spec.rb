@@ -122,6 +122,45 @@ RSpec.describe Reimbursement::Report, type: :model do
     end
   end
 
+  describe "submitting" do
+    let(:user) { create(:user) }
+    let(:report) do
+      user.personal_legal_entity.payout_methods.create!(default: true, details: build_ach)
+      create(:reimbursement_report, user:)
+    end
+
+    def add_expense(**attributes)
+      expense = report.expenses.create!(value: 12.34, memo: "Stickers", **attributes)
+      ReceiptService::Create.new(
+        receiptable: expense,
+        uploader: user,
+        attachments: [file_fixture("receipt.png")],
+        upload_method: :receipts_page
+      ).run!
+      expense
+    end
+
+    it "requires every expense to have a category" do
+      add_expense(category: "Project Supplies")
+      uncategorized = add_expense
+
+      expect(report.missing_categories?).to be(true)
+      expect(report.may_mark_submitted?).to be(false)
+
+      uncategorized.update!(category: "Prizes")
+
+      expect(report.missing_categories?).to be(false)
+      expect(report.may_mark_submitted?).to be(true)
+    end
+
+    it "does not require a category on fees" do
+      add_expense(category: "Project Supplies")
+      report.expenses.create!(value: 1, memo: "Wise fee", type: Reimbursement::Expense::Fee.name)
+
+      expect(report.missing_categories?).to be(false)
+    end
+  end
+
   describe "the invitation email" do
     it "is sent when somebody else invited the user" do
       inviter = create(:user)

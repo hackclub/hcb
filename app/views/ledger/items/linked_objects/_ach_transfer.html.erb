@@ -113,15 +113,17 @@
     </section>
   </turbo-frame>
 
-  <% if ach_transfer.may_mark_rejected? %>
+  <% if ach_transfer.may_mark_rejected? || auditor_signed_in? %>
     <div class="card__banner card__darker border-top overflow-hidden flex items-center g2">
-      <% cancel_button = button_to "Cancel transfer", cancel_ach_transfer_path(ach_transfer), class: "btn bg-error #{"disabled" unless policy(ach_transfer).cancel?}" %>
-      <% if policy(ach_transfer).cancel? %>
-        <%= cancel_button %>
-      <% else %>
-        <div class="tooltipped tooltipped--e w-fit" aria-label="Only managers can cancel ACHs!">
+      <% if ach_transfer.may_mark_rejected? %>
+        <% cancel_button = button_to "Cancel transfer", cancel_ach_transfer_path(ach_transfer), class: "btn bg-error #{"disabled" unless policy(ach_transfer).cancel?}" %>
+        <% if policy(ach_transfer).cancel? %>
           <%= cancel_button %>
-        </div>
+        <% else %>
+          <div class="tooltipped tooltipped--e w-fit" aria-label="Only managers can cancel ACHs!">
+            <%= cancel_button %>
+          </div>
+        <% end %>
       <% end %>
 
       <% admin_tool do %>

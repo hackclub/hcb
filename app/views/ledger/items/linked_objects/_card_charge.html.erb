@@ -379,11 +379,11 @@
         </div>
       </article>
 
-      <% raw_pending_stripe_tranasction_decorator = RawPendingStripeTransactionDecorator.new card_charge.raw_pending_stripe_transaction %>
-      <% if raw_pending_stripe_tranasction_decorator.currency != 'USD' %>
+      <% raw_pending_stripe_transaction_decorator = RawPendingStripeTransactionDecorator.new card_charge.raw_pending_stripe_transaction %>
+      <% if raw_pending_stripe_transaction_decorator.currency != 'USD' %>
         <article class="card__banner secondary border-top" style="margin: -2em; margin-top: 0;">
           <p class="my0 muted">
-            This transaction was initially charged as <%= raw_pending_stripe_tranasction_decorator.original_amount_international %>.
+            This transaction was initially charged as <%= raw_pending_stripe_transaction_decorator.original_amount_international %>.
           </p>
         </article>
       <% end %>

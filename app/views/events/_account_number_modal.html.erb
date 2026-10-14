@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="account_number">
   <header>
     <%= modal_close %>
@@ -74,6 +76,8 @@
         These account details can receive direct deposits, but they cannot process direct debits.
       </footer>
     <% end %>
+  <% elsif @event.demo_mode? %>
+    <%= blankslate "Unavailable in Playground Mode", class: "mt3" %>
   <% else %>
     <div class="card container--sm mx-auto center pt4 pb4 mt3">
       <%= button_to "View account number", event_column_account_number_path(@event), method: :post, class: "btn bg-accent" %>

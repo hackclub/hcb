@@ -26,3 +26,11 @@
     </div>
   </template>
 <% end %>
+
+<% unsupported_account_type_reasons = HasWiseRecipient::UNSUPPORTED_ACCOUNT_TYPES.keys.index_with { |type| HasWiseRecipient.unsupported_account_type_reason(type) } %>
+<template x-if="<%= unsupported_account_type_reasons.keys.to_json %>.includes(account_type)">
+  <div class="flex items-start gap-1 warning mb2">
+    <%= inline_icon "important", size: 20, class: "flex-shrink-0" %>
+    <span x-text="<%= unsupported_account_type_reasons.to_json %>[account_type]"></span>
+  </div>
+</template>

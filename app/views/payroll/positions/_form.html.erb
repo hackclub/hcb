@@ -39,7 +39,8 @@
       <% end %>
 
       <% form_url = editing ? event_payroll_position_path(event_id: event.slug, id: position.id) : event_payroll_positions_path(event_id: event.slug) %>
-      <%= form_with(url: form_url, method: editing ? :patch : :post, scope: :contractor, local: true, class: ("hidden" unless payee)) do |form| %>
+      <%= form_with(url: form_url, method: editing ? :patch : :post, scope: :contractor, local: true, class: ("hidden" unless payee),
+            html: { "x-data": "{ hasAttachment: #{editing && position.file.attached? ? "true" : "false"} }" }) do |form| %>
         <%= form.hidden_field :payee_id, value: payee&.hashid %>
         <%= hidden_field_tag "manual", (payee&.managed? || false).to_s, data: { "manual-payee-target": "manualField" } %>
 
@@ -137,7 +138,20 @@
             <% end %>
 
             <%= render "events/transfers/attach_receipt", form:, disabled:, required: false, accept: ".pdf,application/pdf",
-                  label: "Attachment (optional)", hint: "Attach a statement of work or agreement (PDF)" %>
+                  label: "Attachment (optional)", hint: "Attach a statement of work or agreement (PDF)",
+                  input_html: { "x-on:change": "hasAttachment = $event.target.files.length > 0" },
+                  clear_html: { "x-on:click": "hasAttachment = false" } %>
+
+            <div x-show="hasAttachment" x-transition x-cloak>
+              <%= form.label :combine_contract_attachment do %>
+                <%= form.check_box :combine_contract_attachment, checked: editing ? position.combine_contract_attachment : true %>
+                Combine attachment with
+                <%= link_to "HCB's standard contracting agreement", "https://cdn.hackclub.com/01a0983f-2439-7df6-93fb-5b24bc12cc88/hcb_contractor_agreement.pdf", target: "_blank" %>
+              <% end %>
+              <p class="muted text-sm m-0 mt-1">
+                If unchecked, the uploaded PDF is used as the entire contract, so it must contain a <%= link_to "DocuSeal signature tag", "https://www.docuseal.com/guides/use-embedded-text-field-tags-in-the-pdf-to-create-a-fillable-form", target: "_blank" %> for each of the Organizer, Contractor, and HCB roles (e.g. <code>{{Signature;type=signature;role=HCB}}</code>) or DocuSeal will reject the submission.
+              </p>
+            </div>
           </div>
         </div>
 

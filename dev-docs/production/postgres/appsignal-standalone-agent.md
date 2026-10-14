@@ -48,8 +48,8 @@ https://docs.appsignal.com/standalone-agent/installation/linux-package.html
    app_name = "HCB"
    environment = "production"
    ```
-   There is also a `hostname` option, but no need to specify since AppSignal
-   will automatically derive that.
+   There is also a `hostname` option, but there's no need to specify it since
+   AppSignal will automatically derive it.
 9. Start it
    ```bash
    systemctl start appsignal-agent

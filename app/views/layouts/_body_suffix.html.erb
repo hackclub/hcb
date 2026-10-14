@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <% if Rails.env.production? %>
   <%= render "application/fullstory" if current_user&.sessions_reported %>
 <% end %>

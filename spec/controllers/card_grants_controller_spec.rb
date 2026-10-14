@@ -61,6 +61,21 @@ RSpec.describe CardGrantsController do
       input = response.parsed_body.css("[name='card_grant[email]']").sole
       expect(input.get_attribute("value")).to eq("orpheus@hackclub.com")
     end
+
+    it "uses the purpose and instructions params to pre-fill the form" do
+      user = create(:user)
+      event = create(:event)
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+
+      get(:new, params: { event_id: event.friendly_id, purpose: "iPad Grant", instructions: "Please only buy an iPad." })
+
+      expect(response).to have_http_status(:ok)
+      purpose = response.parsed_body.css("[name='card_grant[purpose]']").sole
+      expect(purpose.get_attribute("value")).to eq("iPad Grant")
+      instructions = response.parsed_body.css("[name='card_grant[instructions]']").sole
+      expect(instructions.text.strip).to eq("Please only buy an iPad.")
+    end
   end
 
   describe "#card_index" do

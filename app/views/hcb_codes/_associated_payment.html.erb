@@ -1,0 +1,15 @@
+<%# locals: (payout:) %>
+
+<% if payout.payment.present? %>
+  <p>
+    <strong>Associated payment</strong>
+    <%= link_to payout.payment.purpose, payout.payment, data: { turbo_frame: "_top" } %>
+  </p>
+<% end %>
+
+<% if payout.payment&.payroll_position.present? %>
+  <p>
+    <strong>Contractor</strong>
+    <%= link_to payout.payment.payee.display_name, event_payroll_position_path(payout.event, payout.payment.payroll_position), data: { turbo_frame: "_top" } %>
+  </p>
+<% end %>

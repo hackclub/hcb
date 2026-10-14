@@ -11,6 +11,8 @@ class Ledger
       # ledger item. hcb_codes#show performs its own authorization.
       unless auditor_signed_in?
         skip_authorization
+        return not_found if @item.hcb_code.nil?
+
         return redirect_to hcb_code_path(@item.hcb_code)
       end
 

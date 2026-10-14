@@ -1,4 +1,6 @@
-<% current_user ||= local_assigns[:p][:current_user] %>
+<%# locals: (activity:, p:, current_user: nil, **) %>
+
+<% current_user ||= p[:current_user] %>
 
 <% if activity.trackable.present? %>
   <% if activity.owner != current_user && OrganizerPosition.role_at_least?(current_user, activity.trackable.event, :manager) && (activity.trackable.reviewer.nil? || activity.trackable.reviewer == current_user) %>
