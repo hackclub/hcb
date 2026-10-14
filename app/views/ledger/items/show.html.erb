@@ -1,40 +1,151 @@
-<section class="details">
-  <div>
-    <strong>
-      Memo
-    </strong>
-    <span>
-      <%= @item.memo %>
-    </span>
-  </div>
-  <div>
-    <strong>
-      Amount
-    </strong>
-    <span>
-      <%= @item.amount.format %>
-    </span>
-  </div>
-  <div>
-    <strong>
-      Date
-    </strong>
-    <div>
-      <%= @item.date.strftime("%b %e, %Y") %>
-  </div>
-</section>
+<% if @item.primary_ledger&.event.present? %>
+  <% @event = @item.primary_ledger.event %>
+  <%= render "events/nav" %>
+<% end %>
 
-<%= render "comments/list", comments: @item.comments %>
-<%= render "comments/form", commentable: @item %>
+<%= turbo_frame_tag @item.public_id, target: "_top" do %>
+  <% admin_tool do %>
+    <section class="details">
+      <div>
+        <strong>
+          Memo
+        </strong>
+        <span>
+          <%= @item.memo %>
+        </span>
+      </div>
+      <div>
+        <strong>
+          Amount
+        </strong>
+        <span>
+          <%= @item.amount.format %>
+        </span>
+      </div>
+      <div>
+        <strong>
+          Date
+        </strong>
+        <span>
+          <%= @item.datetime.strftime("%b %e, %Y") %>
+        </span>
+      </div>
+      <% if @item.hcb_code.present? %>
+        <div>
+          <strong>
+            HCB Code
+          </strong>
+          <span>
+            <%= link_to @item.hcb_code.hcb_code, hcb_code_path(@item.hcb_code), target: :_blank %>
+          </span>
+        </div>
+      <% end %>
+      <% if @item.linked_object.present? %>
+        <div>
+          <strong>
+            Linked Object
+          </strong>
+          <span>
+            <%= @item.linked_object_type %> (<%= @item.linked_object_id %>)
+          </span>
+        </div>
+      <% end %>
+      <% if (event = @item.primary_ledger&.event).present? %>
+        <div>
+          <strong>
+            Event
+          </strong>
+          <span>
+            <%= link_to event.name, event_path(event), target: :_blank %> (<%= event.id %>)
+          </span>
+        </div>
+      <% elsif (card_grant = @item.primary_ledger&.card_grant).present? %>
+        <div>
+          <strong>
+            Card Grant
+          </strong>
+          <span>
+            <%= link_to "Grant to #{card_grant.name}", card_grant_path(card_grant), target: :_blank %> (<%= card_grant.id %>)
+          </span>
+        </div>
+      <% end %>
+    </section>
+  <% end %>
 
-<ul class="grid grid--medium-narrow text-left w-100 mt-4 receipts_list">
-  <%= render partial: "receipts/receipt", collection: @item.receipts.with_attached_file.includes(:user).order(created_at: :asc), as: :receipt, locals: { show_delete_button: true, link_to_file: true } %>
-</ul>
+  <%= render partial: "application/admin_viewer", locals: { record: @item } %>
+  <%= render partial: "application/admin_viewer", locals: { record: @item.primary_mapping } if @item.primary_mapping.present? %>
+  <%= render partial: "application/admin_viewer", locals: { record: @item.primary_ledger } if @item.primary_ledger.present? %>
+  <% if (ledger_owner = @item.primary_ledger&.event || @item.primary_ledger&.card_grant).present? %>
+    <%= render partial: "application/admin_viewer", locals: { record: ledger_owner } %>
+  <% end %>
+  <%= render partial: "application/admin_viewer", locals: { record: @item.linked_object } if @item.linked_object.present? %>
 
-<%= render partial: "receipts/form_v3", locals: {
-      receiptable: @receiptable = @item,
-      enable_linking: true,
-      upload_method: "transaction_page",
-      include_spacing: true,
-      turbo: true
-    } %>
+  <%= render partial: "ledger/items/transactions", locals: { ledger_item: @item } %>
+
+  <%= render partial: "ledger/items/linked_object", locals: { ledger_item: @item } %>
+
+  <div class="flex justify-end align-middle flex-wrap hcb_code_actions" style="gap: 12px">
+    <%= render partial: "ledger/items/pin_button", locals: { ledger_item: @item } %>
+  </div>
+
+  <% if @item.accepts_receipts? && @item.hcb_code.present? %>
+    <% admin_tool("mt1 p-3") do %>
+      💌 Bonjour!
+      <%= mail_to @item.hcb_code.receipt_upload_email, "Email me to upload your receipts" %>
+    <% end %>
+    <% admin_tool("mt1 p-3") do %>
+      🌸 Aloha!
+      <%= link_to "Here's the page for attaching receipts", attach_receipt_url(@item.hcb_code) %>
+    <% end %>
+    <% if @item.linked_object_type == "CardCharge" && current_user.phone_number.present? %>
+      <% admin_tool("mt1 p-3") do %>
+        ☎️ moshi moshi?
+        <%= link_to "Click to get an SMS (to #{current_user.phone_number}) of the notification", send_sms_receipt_hcb_code_path(@item.hcb_code), data: { turbo_method: :post } %>
+      <% end %>
+    <% end %>
+
+    <%= render "receipts/list_v2", hcb_code: @item.hcb_code, frame: @frame, transaction_show_receipt_button: true, transaction_show_author_img: true %>
+    <%= begin receipt_upload_form_config = {
+          receiptable: @item.hcb_code,
+          enable_linking: true,
+          upload_method: "transaction_page",
+          include_spacing: true,
+          turbo: true
+        }
+              receipt_upload_form_config[:restricted_dropzone] = true if @frame
+              receipt_upload_form_config[:inline_linking] = true if @frame
+              receipt_upload_form_config[:upload_method] = "transaction_popover" if @frame
+              receipt_upload_form_config[:popover] = "HcbCode:#{@item.hcb_code.hashid}" if @frame
+              render partial: "receipts/form_v3", locals: receipt_upload_form_config
+        end %>
+  <% end %>
+
+  <% if @item.hcb_code.present? %>
+    <%= render "comments/list", comments: @item.hcb_code.all_comments, viewing_commentable: @item.hcb_code %>
+    <% viewing_disbursement = @item.hcb_code.outgoing_disbursement || @item.hcb_code.incoming_disbursement %>
+    <% if viewing_disbursement.present? %>
+      <% counterparty_hcb_code = viewing_disbursement.counterparty.local_hcb_code %>
+      <% if policy(counterparty_hcb_code).show? && counterparty_hcb_code.comments.count > 0 %>
+        <p class="muted">
+          <%= link_to counterparty_hcb_code.ledger_item || counterparty_hcb_code do %>
+            View <%= pluralize(counterparty_hcb_code.comments.count, "other comment") %> from <%= viewing_disbursement.counterparty_label %>
+          <% end %>
+        </p>
+      <% end %>
+    <% end %>
+    <%= render "comments/form", commentable: @item.hcb_code %>
+  <% end %>
+
+  <% admin_tool("p-2 my-3") do %>
+    <h3 class="my-2">Quickly go to</h3>
+    <% if @item.hcb_code.present? %>
+      <%= link_to @item.hcb_code.hcb_code, hcb_code_path(@item.hcb_code), class: "btn btn--secondary" %>
+    <% end %>
+    <% @item.canonical_transactions.each do |tx| %>
+      <%= link_to "CT #{tx.id}", canonical_transaction_path(tx), class: "btn btn--secondary" %>
+    <% end %>
+    <% @item.canonical_pending_transactions.each do |tx| %>
+      <%= link_to "CPT #{tx.id}", canonical_pending_transaction_path(tx), class: "btn btn--secondary" %>
+    <% end %>
+  <% end %>
+<% end %>

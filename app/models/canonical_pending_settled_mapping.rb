@@ -40,4 +40,8 @@ class CanonicalPendingSettledMapping < ApplicationRecord
     canonical_transaction.update(ledger_item: canonical_pending_transaction.ledger_item)
   end
 
+  after_commit if: -> { canonical_pending_transaction.ledger_item.present? } do
+    canonical_pending_transaction.ledger_item.map!
+  end
+
 end

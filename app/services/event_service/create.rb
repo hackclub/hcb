@@ -14,12 +14,12 @@ module EventService
                    approved: false,
                    plan: Event::Plan::Standard,
                    tags: [],
-                   can_front_balance: true,
                    demo_mode: false,
                    risk_level: 0,
                    parent_event: nil,
                    invited_by: nil,
-                   scoped_tags: [])
+                   scoped_tags: [],
+                   contract_extra_prefills: {})
       @name = name
       @emails = emails
       @is_signee = is_signee
@@ -30,7 +30,6 @@ module EventService
       @approved = approved || false
       @plan = plan
       @tags = tags
-      @can_front_balance = can_front_balance
       @demo_mode = demo_mode
       @risk_level = risk_level
       @parent_event = parent_event
@@ -38,13 +37,14 @@ module EventService
       @cosigner_email = cosigner_email
       @include_onboarding_videos = include_onboarding_videos
       @scoped_tags = scoped_tags || []
+      @contract_extra_prefills = contract_extra_prefills
     end
 
     def run
       raise ArgumentError, "organization name is required" unless @name.present?
       raise ArgumentError, "approved must be true or false" unless @approved == true || @approved == false
 
-      ActiveRecord::Base.transaction do
+      event = ActiveRecord::Base.transaction do
         event = ::Event.create!(attrs)
         @tags
           .filter { |tag| EventTag::Tags::ALL.include?(tag) }
@@ -52,6 +52,10 @@ module EventService
             event.event_tags << ::EventTag.find_or_create_by!(name: tag)
           end
 
+        # Subevents shouldn't see an onboarding message
+        if event.parent.present?
+          event.config.update!(hide_onboarding_message: true)
+        end
 
         # Event aasm_state is already approved by default.
         # event.mark_approved! if @approved
@@ -61,15 +65,28 @@ module EventService
           invite_service.run!
 
           if @is_signee
-            invite_service.model.send_contract(cosigner_email: @cosigner_email, include_videos: @include_onboarding_videos)
+            invite_service.model.send_contract(cosigner_email: @cosigner_email, include_videos: @include_onboarding_videos, extra_prefills: @contract_extra_prefills)
           end
         end
 
         event
       end
+
+      notify_parent_event_managers(event)
+
+      event
     end
 
     private
+
+    def notify_parent_event_managers(event)
+      # Only suborg creation notifies (parent_event present); top-level/admin org creation never does.
+      return if @parent_event.nil? || @invited_by.nil?
+      # Suppress when creator is a manager/admin/ancestor-manager of the parent — only members creators trigger the email.
+      return if OrganizerPosition.role_at_least?(@invited_by, @parent_event, :manager)
+
+      EventMailer.with(event: @parent_event, subevent: event, creator: @invited_by).subevent_created.deliver_later
+    end
 
     def attrs
       {
@@ -78,7 +95,6 @@ module EventService
         country: @country,
         is_public: @is_public,
         is_indexable: @is_indexable,
-        can_front_balance: @can_front_balance,
         point_of_contact_id: @point_of_contact_id,
         demo_mode: @demo_mode,
         financially_frozen: true,

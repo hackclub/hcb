@@ -6,7 +6,7 @@ email = Rails.env.staging? ? "staging@bank.engineering" : "admin@bank.engineerin
 
 if user.nil?
   puts "Woah there, there aren't any users! Creating an user (#{email})."
-  user = User.create!(email:, full_name: "Stagey McStageface", phone_number: "+19064225632")
+  user = User.create!(email:, full_name: "Stagey McStageface", phone_number: "+19064225632", verified: true)
 end
 
 puts "Continuing with #{user.email}..."
@@ -15,14 +15,13 @@ user.make_admin! unless user.admin?
 
 Governance::Admin::Transfer::Limit.create(user_id: user.id, amount_cents: 1000000000)
 
-system_user = User.create_with(email: User::SYSTEM_USER_EMAIL).create_or_find_by!(id: User::SYSTEM_USER_ID)
+system_user = User.create_with(email: User::SYSTEM_USER_EMAIL, verified: true).create_or_find_by!(id: User::SYSTEM_USER_ID)
 system_user.make_admin! unless system_user.admin?
 
 # DEMO
 demo_event = Event.create_with(
   name: "DevHacks (Demo Event)",
   slug: "devhacks",
-  can_front_balance: true,
   point_of_contact: user,
   demo_mode: true,
   created_at: 7.days.ago
@@ -38,7 +37,6 @@ OrganizerPositionInvite.create_or_find_by!(
 non_transparent_event = Event.create_with(
   name: "ExpensiCon 2023 (Non-Transparent Event)",
   slug: "expensicon23",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 10.days.ago,
   is_public: false
@@ -54,7 +52,6 @@ OrganizerPositionInvite.create_or_find_by!(
 transparent_event = Event.create_with(
   name: "Hack The Seas (Transparent Event)",
   slug: "hack_the_seas",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -70,7 +67,6 @@ OrganizerPositionInvite.create_or_find_by!(
 incoming_fees_event = Event.create_with(
   name: "Incoming Fees",
   slug: "incoming-fees",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: false
@@ -88,7 +84,6 @@ OrganizerPositionInvite.create_or_find_by!(
 hack_club_bank_event = Event.create_with(
   name: "HCB Operations",
   slug: "bank",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -106,7 +101,6 @@ OrganizerPositionInvite.create_or_find_by!(
 noevent_event = Event.create_with(
   name: "Hack Club NoEvent",
   slug: "noevent",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: false
@@ -124,7 +118,6 @@ OrganizerPositionInvite.create_or_find_by!(
 hackathon_grant_fund_event = Event.create_with(
   name: "Hackathon Grant Fund",
   slug: "hackathon-grant-fund",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -142,7 +135,6 @@ OrganizerPositionInvite.create_or_find_by!(
 winter_hardware_wonderland_grant_fund_event = Event.create_with(
   name: "Winter Hardware Wonderland",
   slug: "winter-hardware-wonderland",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -160,7 +152,6 @@ OrganizerPositionInvite.create_or_find_by!(
 gene_haas_grant_fund_event = Event.create_with(
   name: "Gene Haas",
   slug: "gene-haas",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -176,7 +167,6 @@ OrganizerPositionInvite.create_or_find_by!(
 argosy_grant_fund_event = Event.create_with(
   name: "Argosy Foundation Grant Fund",
   slug: "argosy-foundation-grant",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -192,7 +182,6 @@ OrganizerPositionInvite.create_or_find_by!(
 argosy_grant_fund_2025_event = Event.create_with(
   name: "Argosy Foundation Grant Fund",
   slug: "argosy-hardship-rookie-grant-2025-26-season",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -210,7 +199,6 @@ OrganizerPositionInvite.create_or_find_by!(
 first_transparency_grant_fund_event = Event.create_with(
   name: "Transparency Grant Fund",
   slug: "transparency-grant-fund",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -228,7 +216,6 @@ OrganizerPositionInvite.create_or_find_by!(
 hack_foundation_interest_event = Event.create_with(
   name: "Hack Foundation Interest Earnings",
   slug: "hack-foundation-interest-earnings",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -246,7 +233,6 @@ OrganizerPositionInvite.create_or_find_by!(
 reimbursement_clearing_event = Event.create_with(
   name: "HCB Reimbursement Clearinghouse",
   slug: "reimbursement-clearinghouse",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -264,7 +250,6 @@ OrganizerPositionInvite.create_or_find_by!(
 svb_sweeps_event = Event.create_with(
   name: "HCB Sweeps",
   slug: "hcb-sweeps",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true

@@ -31,7 +31,7 @@ RSpec.describe WiresController do
       event = create(:event, :with_positive_balance)
       create(:organizer_position, user:, event:)
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       stub_request(:get, "https://api.column.com/institutions/NOSCCATT")
         .to_return_json(
@@ -71,7 +71,7 @@ RSpec.describe WiresController do
       event = create(:event, :with_positive_balance)
       create(:organizer_position, user:, event:)
 
-      sign_in(user)
+      create_session(user, verified: true)
 
       travel(3.hours)
 
@@ -116,6 +116,36 @@ RSpec.describe WiresController do
       expect(response).to redirect_to(hcb_code_path(wire.local_hcb_code))
       expect(wire.memo).to eq("Test Wire")
       expect(wire.amount_cents).to eq(500_01)
+    end
+  end
+
+  describe "send_wire" do
+    it "charges the fee as a disbursement to HCB Operations with a comment linking to the wire" do
+      admin = create(:user, :make_admin)
+      create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
+      event = create(:event, :with_positive_balance)
+      stub_request(:get, "https://api.column.com/institutions/DEUTDEDB")
+        .to_return_json(status: 200, body: { country_code: "DE" })
+      wire = create(:wire, :pending, event:)
+
+      allow_any_instance_of(GovernanceService::Admin::Transfer::Approval).to receive(:ensure_may_approve!)
+      allow_any_instance_of(Wire).to receive(:send_wire!)
+
+      create_session(admin, verified: true)
+
+      post(:send_wire, params: { id: wire.id, charge_fee: "1" })
+
+      expect(response).to redirect_to(wire_process_admin_path(wire))
+      expect(flash[:success]).to eq("Thanks for approving that wire.")
+
+      disbursement = Disbursement.sole
+      expect(disbursement.source_event).to eq(event)
+      expect(disbursement.destination_event.id).to eq(EventMappingEngine::EventIds::HACK_CLUB_BANK)
+      expect(disbursement.amount).to eq(25_00)
+
+      comment = disbursement.comments.sole
+      expect(comment.user).to eq(admin)
+      expect(comment.content).to include(hcb_code_url(wire.local_hcb_code))
     end
   end
 end
