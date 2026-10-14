@@ -22,8 +22,8 @@ class Ledger
     # Fields with no column of their own on ledger_items: each resolves through
     # a subquery against a related table. They're filters the ledger UI offers,
     # so the query owns them rather than the page — that way a query object on
-    # its own fully describes a filtered ledger, and anything handed that query
-    # sees the same rows the page does.
+    # its own fully describes a filtered ledger, and anything handed the query
+    # (an export, most of all) sees the same rows the page does.
     VIRTUAL_FIELDS = %w[
       tag
       category
@@ -39,6 +39,10 @@ class Ledger
     MAX_ARRAY_LENGTH = 1_000
 
     class Error < ArgumentError; end
+
+    # The sanitized query, for anything that needs to carry the query itself
+    # rather than the rows it matches (see Ledger::Query::Export).
+    attr_reader :query_hash
 
     def initialize(query_hash)
       raise Ledger::Query::Error.new("Query must be a Hash") unless query_hash.is_a?(Hash)
@@ -98,6 +102,12 @@ class Ledger
       # linked_object_type in the result, not one per row.
       results.order(pending_first.asc, datetime: :desc, created_at: :desc, id: :desc)
              .preload(:author, :linked_object, :tags, hcb_code: :event)
+    end
+
+    # Builds an export over exactly the rows this query matches. See
+    # Ledger::Query::Export, which does the work.
+    def export(as:, **options)
+      Ledger::Query::Export.new(query: self, as:, **options)
     end
 
     def self.sanitize_query(query_hash)
