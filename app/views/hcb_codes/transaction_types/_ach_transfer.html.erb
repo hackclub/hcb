@@ -60,6 +60,8 @@
         <%= @hcb_code.ach_transfer.payment_for %>
       </p>
 
+      <%= render partial: "hcb_codes/associated_payment", locals: { payout: @hcb_code.ach_transfer } %>
+
       <p>
         <strong>Bank name</strong>
         <%= organizer_signed_in? ? @hcb_code.ach_transfer.bank_name : "Sign in to view" %>
