@@ -14,7 +14,7 @@
         <%= link_to(@disbursement.outgoing_hcb_code, hcb_code_path(@disbursement.outgoing_disbursement.local_hcb_code)) %>
         <% if @disbursement.outgoing_disbursement.local_hcb_code.ledger_item.present? %>
           (<%= link_to "Ledger::Item #{@disbursement.outgoing_disbursement.local_hcb_code.ledger_item.hashid}", ledger_item_path(@disbursement.outgoing_disbursement.local_hcb_code.ledger_item) %>)
-          <% end%>
+          <% end %>
       </span>
     </p>
     <p>
