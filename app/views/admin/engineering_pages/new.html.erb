@@ -1,0 +1,62 @@
+<% title "Page engineers" %>
+
+<div class="card border b--warning mb3">
+  <div class="flex items-center warning">
+    <%= inline_icon "important", size: 32, class: "mr1" %>
+    <p class="bold mt0 mb0">This wakes up a real person.</p>
+  </div>
+  <ul class="mt1 mb2">
+    <li>
+      This opens a critical PagerDuty incident and notifies whoever is on call
+      right now, however they've told PagerDuty to reach them, at whatever hour
+      it happens to be for them.
+    </li>
+    <li>
+      Use this when HCB is broken in a way that can’t wait: money is moving
+      wrong, organizations are blocked, or something is down.
+    </li>
+    <li>
+      For anything that can wait until morning, post in Slack instead.
+    </li>
+  </ul>
+</div>
+
+<% if PagerDutyService.manual_page_enabled? %>
+  <%= form_with(url: admin_page_engineers_path, method: :post, local: true, class: "card",
+                data: { controller: "type-to-confirm", type_to_confirm_phrase_value: Admin::EngineeringPagesController::CONFIRMATION_PHRASE }) do |form| %>
+    <%= form.label :message, "What’s happening?" %>
+    <p class="secondary mt0 mb1">
+      This is the entire thing the on-call engineer sees on their phone. Be
+      specific, and say what’s broken rather than what you were doing.
+    </p>
+    <%= form.text_field :message,
+                        value: @message,
+                        required: true,
+                        autofocus: true,
+                        maxlength: Admin::EngineeringPagesController::MAX_MESSAGE_LENGTH,
+                        placeholder: "Transfers are failing for every org with an error page" %>
+
+    <%= form.label :confirmation, "Type #{Admin::EngineeringPagesController::CONFIRMATION_PHRASE} to confirm", class: "mt2" %>
+    <%= form.text_field :confirmation,
+                        autocomplete: "off",
+                        placeholder: Admin::EngineeringPagesController::CONFIRMATION_PHRASE,
+                        data: { type_to_confirm_target: "input", action: "input->type-to-confirm#check" } %>
+
+    <div class="actions">
+      <%# Rendered enabled on purpose. The Stimulus controller disables it until %>
+      <%# the phrase is typed, but if the JS bundle fails to load (plausible %>
+      <%# during the very outage you'd be paging about) this still submits, and %>
+      <%# the controller re-checks the phrase server-side. %>
+      <%= form.submit "Page the on-call engineer",
+                      class: "bg-error",
+                      data: { type_to_confirm_target: "submit" } %>
+    </div>
+  <% end %>
+<% else %>
+  <div class="card">
+    <p class="mt0 mb0">
+      PagerDuty isn’t configured in this environment, so this page can’t reach
+      anyone. Set <code>PAGERDUTY__MANUAL_PAGE_ROUTING_KEY</code> to enable it.
+    </p>
+  </div>
+<% end %>
