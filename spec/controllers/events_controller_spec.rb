@@ -342,7 +342,7 @@ RSpec.describe EventsController do
 
       sections = page.css("section .mention")
       expect(sections.map { |s| s.text.squish }).to eq([organizer.initial_name, other.initial_name])
-      expect(page.css("section").first.css(".stripe-card").count).to eq(3)
+      expect(page.css(".mixed-grid").first.css(".stripe-card").count).to eq(3)
       expect(page.text).to include("+1 more")
     end
 
