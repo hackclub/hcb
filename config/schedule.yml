@@ -107,6 +107,10 @@ payroll_position_expire_nightly_job:
   cron: "0 0 * * *" # run every 1 day
   class: "Payroll::Position::ExpireNightlyJob"
 
+payroll_position_expiring_soon_nightly_job:
+  cron: "0 15 * * *" # run every 1 day
+  class: "Payroll::Position::ExpiringSoonNightlyJob"
+
 bank_fee_nightly_job:
   cron: "*/30 2-23 * * *" # run every 30 minutes
   class: "BankFee::NightlyJob"
