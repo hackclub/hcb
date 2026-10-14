@@ -6,7 +6,7 @@ class RecurringDonationsController < ApplicationController
 
   before_action :set_event, only: [:create, :pay, :finished]
   before_action :set_recurring_donation_by_hashid, only: [:pay, :finished]
-  before_action :set_recurring_donation_by_url_hash, only: [:show, :edit, :update, :cancel]
+  before_action :set_recurring_donation_by_url_hash, only: [:show, :edit, :update, :cancel, :restart]
 
   skip_before_action :signed_in_user
   skip_before_action :redirect_to_onboarding
@@ -88,6 +88,14 @@ class RecurringDonationsController < ApplicationController
     @recurring_donation.cancel!
 
     redirect_back_or_to recurring_donation_path(@recurring_donation.url_hash), flash: { success: "This donation has been canceled." }
+  end
+
+  def restart
+    restarted = RecurringDonationService::Restart.new(@recurring_donation).run
+
+    redirect_to recurring_donation_path(restarted.url_hash), flash: { success: "This donation has been restarted and the first month has been charged." }
+  rescue RecurringDonationService::Restart::Error, ActiveRecord::RecordInvalid, Stripe::CardError, Stripe::InvalidRequestError => e
+    redirect_back_or_to recurring_donation_path(@recurring_donation.url_hash), flash: { error: "This donation couldn't be restarted: #{e.message}" }
   end
 
   private
