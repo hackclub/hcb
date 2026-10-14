@@ -282,6 +282,78 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#card_overview" do
+    render_views
+
+    let(:event) { create(:event) }
+    let(:organizer) { create(:user, full_name: "Zed Organizer") }
+
+    def create_card(user, **attrs)
+      cardholder = user.stripe_cardholder || create(:stripe_cardholder, user:)
+      create(:stripe_card, :with_stripe_id, event:, stripe_cardholder: cardholder, **attrs)
+    end
+
+    def page_for(**params)
+      get(:card_overview, params: { event_id: event.slug, **params })
+      Nokogiri::HTML5(response.body)
+    end
+
+    before do
+      create(:organizer_position, user: organizer, event:)
+      create_session(organizer, verified: true)
+    end
+
+    it "treats LIKE wildcards in the search literally" do
+      create_card(organizer, name: "snake_case")
+      create_card(organizer, name: "snakeXcase")
+
+      page = page_for(q: "_")
+
+      expect(page.text).to include("snake_case")
+      expect(page.text).not_to include("snakeXcase")
+    end
+
+    it "shows no cards for an unknown cardholder instead of all of them" do
+      create_card(organizer, name: "Organizer Card")
+
+      page = page_for(user: "not-a-real-person")
+
+      expect(page.text).not_to include("Organizer Card")
+      expect(page.text).to include("doesn’t have any")
+    end
+
+    it "still filters by a cardholder who has left the team" do
+      former_member = create(:user, full_name: "Former Member")
+      create_card(former_member, name: "Former Member Card")
+      create_card(organizer, name: "Organizer Card")
+
+      page = page_for(user: former_member.slug)
+
+      expect(page.text).to include("Former Member Card")
+      expect(page.text).not_to include("Organizer Card")
+    end
+
+    it "groups cards by user with the viewer first and previews three per user", :aggregate_failures do
+      other = create(:user, full_name: "Aaron Aardvark")
+      create_card(other)
+      4.times { create_card(organizer) }
+
+      page = page_for
+
+      sections = page.css("section .mention")
+      expect(sections.map { |s| s.text.squish }).to eq([organizer.initial_name, other.initial_name])
+      expect(page.css("section").first.css(".stripe-card").count).to eq(3)
+      expect(page.text).to include("+1 more")
+    end
+
+    it "drops the page number when toggling between grid and list" do
+      toggle = page_for(page: 2, status: "active").at_css("a.pop[href*='view=list']")
+
+      expect(toggle["href"]).to include("status=active")
+      expect(toggle["href"]).not_to include("page=")
+    end
+  end
+
   describe "#sub_organizations" do
     render_views
 
