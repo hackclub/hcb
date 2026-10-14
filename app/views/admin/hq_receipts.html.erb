@@ -26,7 +26,7 @@
         </td>
         <td><%= user.email %></td>
         <td style="width: 50rem;">
-          <% missing_receipts = user.transactions_missing_receipt.to_a %>
+          <% missing_receipts = user.transactions_missing_receipt.load %>
           <% if missing_receipts.any? %>
             <details class="mb0" style="background: #ff8c3830;">
               <summary>

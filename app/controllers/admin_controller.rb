@@ -324,7 +324,7 @@ class AdminController < Admin::BaseController
       transactions.each do |tx|
         date_posted, memo, amount_cents = tx.values_at(:date_posted, :memo, :amount_cents)
 
-        unless RawIntrafiTransaction.exists?(date_posted:, memo:, amount_cents:)
+        unless RawIntrafiTransaction.where(date_posted:, memo:, amount_cents:).exists?
           raw_intrafi_transactions << RawIntrafiTransaction.create!(date_posted:, memo:, amount_cents:)
         end
       end
