@@ -148,6 +148,10 @@ calculate_stats_metric:
   cron: "0 * * * *" # run every hour
   class: "Metric::CalculateStatsJob"
 
+sync_revenue_to_airtable_job:
+  cron: "15 * * * *" # run every hour
+  class: "Event::SyncRevenueToAirtableJob"
+
 calculate_subjects_metrics:
   cron: "0 */12 * * *" # run twice a day
   class: "Metric::CreateSubjectsJob"
@@ -159,10 +163,6 @@ ledger_audit_weekly_job:
 send_admin_reminders_job:
   cron: "0 7 * * *" # run at 7am UTC each morning
   class: "SendAdminRemindersJob"
-
-gauge_online_user_count_job:
-  cron: "*/5 * * * *" # Every 5 minutes
-  class: "User::StatsdGaugeOnlineUserCountJob"
 
 user_subordinate_summary_job:
   cron: "0 12 * * mon" # noon UTC every Monday (7am eastern)
@@ -179,6 +179,11 @@ update_teenager_column_job:
 clear_old_user_sessions:
   cron: "0 3 * * *" # every day at 3:00 AM
   class: "User::Session::ClearOldUserSessionsJob"
+  queue: low
+
+clear_old_login_attempts:
+  cron: "10 3 * * *" # every day at 3:10 AM
+  class: "Login::Attempt::ClearOldAttemptsJob"
   queue: low
 
 delete_anonymous_user_sessions:

@@ -23,6 +23,7 @@
       <th class="w-32">Date</th>
       <th>Event</th>
       <th>Recipient</th>
+      <th>Payment</th>
       <th class="w-32">Amount</th>
       <th>Status</th>
       <th class="w-24">Actions</th>
@@ -35,6 +36,13 @@
         <td><%= check.created_at.strftime("%Y-%m-%d") %></td>
         <td><%= check.event.name %></td>
         <td><%= check.recipient_name %></td>
+        <td>
+          <% if check.payment.present? %>
+            <%= render partial: "admin/payment_link", locals: { payout: check } %>
+          <% else %>
+            None
+          <% end %>
+        </td>
         <td><%= render_money(check.amount) %></td>
         <td><%= check.aasm.human_state %><%= " - #{check.increase_status&.humanize}" if check.approved? %></td>
         <td>
