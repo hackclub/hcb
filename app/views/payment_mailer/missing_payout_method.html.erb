@@ -1,6 +1,6 @@
 <p>Hello <%= @payment.legal_entity.name %>,</p>
 
-<%= render partial: "initial_message", locals: { payment: @payment } %>
+<%= render partial: "payment_mailer/initial_message", locals: { payment: @payment } %>
 
 <p>
   In order to process this payment, please <%= link_to "configure your payout method on HCB", legal_entity_url(@payment.legal_entity) %>.

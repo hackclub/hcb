@@ -65,7 +65,7 @@
 
     <%= form_with model: false, local: true, url: set_wise_transfer_path(@canonical_transaction), class: "mb-0", method: :post do |form| %>
       <%= form.hidden_field :wise_transfer_id, value: @suggested_wise_mapping.id %>
-      <%= form.submit "Map to Wise transfer ##{@suggested_wise_mapping.id}", data: { "turbo-confirm": "Are you sure you want to map this transaction to Wise transfer ##{@suggested_wise_mapping.id}?" }, class: "!mb-0 mt-3" %>
+      <%= form.submit "Map to Wise transfer ##{@suggested_wise_mapping.id}", data: { disable_with: false, "turbo-confirm": "Are you sure you want to map this transaction to Wise transfer ##{@suggested_wise_mapping.id}?" }, class: "!mb-0 mt-3" %>
       <%= link_to "View Wise transfer ##{@suggested_wise_mapping.id}", wise_transfer_process_admin_path(@suggested_wise_mapping), class: "ml-2", target: "_blank" %>
     <% end %>
   </div>

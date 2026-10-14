@@ -53,10 +53,23 @@ class PayeesController < ApplicationController
 
     if payee.update(payee_params)
       flash[:success] = "Recipient updated."
-      redirect_to helpers.new_recipient_transfer_path(params[:destination], @event, payee_id: payee.hashid)
+
+      if (position = payee.organizer_resign_position)
+        flash[:info] = "The contract was reissued with the new email. Please sign it."
+        redirect_to contract_event_payroll_position_path(event_id: @event.slug, id: position.id)
+      elsif params[:payee][:redirect_to_destination_id].present?
+        redirect_to helpers.updated_recipient_transfer_path(params[:payee][:destination], params[:payee][:redirect_to_destination_id])
+      else
+        redirect_to helpers.new_recipient_transfer_path(params[:payee][:destination], @event, payee_id: payee.hashid)
+      end
     else
       flash[:error] = payee.errors.full_messages.to_sentence
-      redirect_to helpers.new_recipient_transfer_path(params[:destination], @event, payee_id: payee.hashid, edit_payee: true)
+
+      if params[:payee][:redirect_to_destination_id].present?
+        redirect_to helpers.updated_recipient_transfer_path(params[:payee][:destination], params[:payee][:redirect_to_destination_id])
+      else
+        redirect_to helpers.new_recipient_transfer_path(params[:payee][:destination], @event, payee_id: payee.hashid, edit_payee: true)
+      end
     end
   end
 
