@@ -63,7 +63,7 @@ class OrganizerPosition < ApplicationRecord
   after_update :remove_payroll_managers, if: -> { role_previously_changed?(from: :manager) }
   after_destroy :remove_payroll_managers
 
-  before_save :freeze_cards_if_demoted_to_reader
+  before_save -> { stripe_cards.active.find_each(&:freeze!) }, if: -> { will_save_change_to_role?(to: :reader) }
 
   def tourable_options
     {
@@ -118,20 +118,6 @@ class OrganizerPosition < ApplicationRecord
   def remove_payroll_managers
     user.managing_payroll_positions.joins(:payee).where(payee: { event: }).find_each do |position|
       position.update!(manager: nil)
-    end
-  end
-
-  def freeze_cards_if_demoted_to_reader
-    return unless will_save_change_to_role?
-
-    old_role = role_in_database
-    new_role = self.role
-
-    return if old_role.nil?
-
-    if OrganizerPosition.roles[old_role] > OrganizerPosition.roles[new_role] &&
-       new_role == "reader"
-      stripe_cards.active.find_each(&:freeze!)
     end
   end
 
