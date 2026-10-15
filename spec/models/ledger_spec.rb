@@ -358,6 +358,14 @@ RSpec.describe Ledger, type: :model do
       expect(ledger.revenue_cents - ledger.expenses_cents).to eq(ledger.available_balance_cents)
     end
 
+    it "filters revenue by datetime when given a date range" do
+      add_item(1000)
+
+      expect(ledger.revenue_cents(start_date: Date.current.beginning_of_day)).to eq(1000)
+      expect(ledger.revenue_cents(start_date: Date.tomorrow.beginning_of_day)).to eq(0)
+      expect(ledger.revenue_cents(end_date: Date.yesterday.end_of_day)).to eq(0)
+    end
+
     it "ignores items on another ledger" do
       other_ledger = create(:event).ledger
       ct = create(:canonical_transaction, amount_cents: 1000, date: Date.today, memo: "Someone else's transaction")
