@@ -6,7 +6,7 @@ class WirePolicy < ApplicationPolicy
   end
 
   def show?
-    auditor_or_user?
+    user&.auditor?
   end
 
   def create?
@@ -22,11 +22,11 @@ class WirePolicy < ApplicationPolicy
   end
 
   def edit?
-    user&.admin?
+    user&.admin? && record.pending?
   end
 
   def update?
-    user&.admin?
+    user&.admin? && record.pending?
   end
 
   private

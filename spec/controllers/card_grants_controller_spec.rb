@@ -61,6 +61,56 @@ RSpec.describe CardGrantsController do
       input = response.parsed_body.css("[name='card_grant[email]']").sole
       expect(input.get_attribute("value")).to eq("orpheus@hackclub.com")
     end
+
+    it "uses the purpose and instructions params to pre-fill the form" do
+      user = create(:user)
+      event = create(:event)
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+
+      get(:new, params: { event_id: event.friendly_id, purpose: "iPad Grant", instructions: "Please only buy an iPad." })
+
+      expect(response).to have_http_status(:ok)
+      purpose = response.parsed_body.css("[name='card_grant[purpose]']").sole
+      expect(purpose.get_attribute("value")).to eq("iPad Grant")
+      instructions = response.parsed_body.css("[name='card_grant[instructions]']").sole
+      expect(instructions.text.strip).to eq("Please only buy an iPad.")
+    end
+  end
+
+  describe "#card_index" do
+    def create_grant(event:, full_name:, email:)
+      user = create(:user, full_name:, email:)
+      create(:card_grant, event:, user:, email:, purpose: "Pizza")
+    end
+
+    def search(event, query)
+      get(:card_index, params: { event_id: event.friendly_id, q: query })
+      expect(response).to have_http_status(:ok)
+      response.parsed_body.css("a[href*='/spending']").map { |a| a["href"] }
+    end
+
+    it "lets organizers search by email and full name" do
+      organizer = create(:user)
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user: organizer, event:, role: :member)
+      card_grant = create_grant(event:, full_name: "Orpheus Dinosaur", email: "orpheus@hackclub.com")
+      create_session(organizer, verified: true)
+
+      expect(search(event, "orpheus@hackclub.com")).to eq([spending_card_grant_path(card_grant)])
+      expect(search(event, "Dinosaur")).to eq([spending_card_grant_path(card_grant)])
+    end
+
+    it "doesn't let non-organizers search by email or full name" do
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      card_grant = create_grant(event:, full_name: "Orpheus Dinosaur", email: "orpheus@hackclub.com")
+
+      expect(search(event, "orpheus@hackclub.com")).to be_empty
+      expect(search(event, "Dinosaur")).to be_empty
+
+      # ...but they can still search over what the page shows them.
+      expect(search(event, "Pizza")).to eq([spending_card_grant_path(card_grant)])
+    end
   end
 
   describe "#create" do

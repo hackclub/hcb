@@ -41,6 +41,14 @@
           <td style="text-align: right;">Payment Purpose:</td>
           <td><%= @check.payment_for %></td>
         </tr>
+        <% if @check.payment.present? %>
+          <tr>
+            <td class="text-right">Payment:</td>
+            <td>
+              <%= render partial: "admin/payment_link", locals: { payout: @check } %>
+            </td>
+          </tr>
+        <% end %>
         <tr>
           <td style="text-align: right;">Amount:</td>
           <td><%= render_money @check.amount %></td>
@@ -98,7 +106,12 @@
               ) %>
         </div>
 
-        <%= button_to "💸 Approve and send check", approve_increase_check_path(@check), method: :post, data: { turbo_confirm: "Are you sure you want to send this check?" } %>
+        <%= form_with(model: false, local: true, url: approve_increase_check_path(@check), method: :post) do |form| %>
+          <% if @check.payment.present? %>
+            <%= render partial: "payments/classification_input", locals: { form:, classification: @check.payment.classification } %>
+          <% end %>
+          <%= form.submit "💸 Approve and send check", data: { turbo_confirm: "Are you sure you want to send this check?" } %>
+        <% end %>
       </fieldset>
 
       <fieldset class="p-4">

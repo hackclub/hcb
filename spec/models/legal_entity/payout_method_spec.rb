@@ -122,6 +122,7 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
         recipient_email: "jane@example.com",
         currency: "USD",
         user:,
+        purpose: :payment
       }
     end
 
