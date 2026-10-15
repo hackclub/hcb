@@ -67,8 +67,7 @@ class Donation < ApplicationRecord
 
   include AASM
   include VisibleStatable
-  set_visible_state_context { |donation| donation.event }
-  set_visible_state_mapping(in_transit: ->(event) { event&.can_front_balance? ? :deposited : :in_transit })
+  set_visible_state_mapping(in_transit: :deposited)
 
   include Freezable
   include UsersHelper
@@ -95,6 +94,8 @@ class Donation < ApplicationRecord
   before_create :assign_unique_hash, unless: -> { recurring? }
 
   after_commit :send_notification
+
+  after_update_commit :refresh_ledger_item, if: -> { saved_change_to_name? || saved_change_to_anonymous? }
 
   validates :name, :email, presence: true, unless: -> { recurring? || in_person? } # recurring donations have a name/email in their `RecurringDonation` object
   validates_email_format_of :email, on: :create, unless: -> { recurring? || in_person? } # recurring donations have an email in their `RecurringDonation` object
@@ -171,9 +172,7 @@ class Donation < ApplicationRecord
   end
 
   def state
-    return :success if deposited?
-    return :success if in_transit? && event.can_front_balance?
-    return :info if in_transit?
+    return :success if deposited? || in_transit?
     return :warning if refunded?
     return :error if failed?
 
@@ -181,9 +180,7 @@ class Donation < ApplicationRecord
   end
 
   def state_text
-    return "Deposited" if deposited?
-    return "Deposited" if in_transit? && event.can_front_balance?
-    return "In Transit" if in_transit?
+    return "Deposited" if deposited? || in_transit?
     return "Refunded" if refunded?
     return "Failed" if failed?
 
@@ -191,9 +188,7 @@ class Donation < ApplicationRecord
   end
 
   def state_icon
-    return "checkmark" if deposited? || (in_transit? && event.can_front_balance?)
-
-    "clock" if in_transit?
+    return "checkmark" if deposited? || in_transit?
   end
 
   def unpaid?
@@ -361,6 +356,14 @@ class Donation < ApplicationRecord
 
   def raw_pending_donation_transactions
     @raw_pending_donation_transactions ||= ::RawPendingDonationTransaction.where(donation_transaction_id: id)
+  end
+
+  def refresh_ledger_item
+    return if ledger_item.nil?
+
+    # The item may hold a stale copy of this donation; make refresh! reread it.
+    ledger_item.association(:linked_object).reset
+    ledger_item.refresh!
   end
 
   def send_notification

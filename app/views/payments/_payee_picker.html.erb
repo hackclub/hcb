@@ -26,7 +26,10 @@
     <% end %>
   </div>
 
-  <div data-payee-picker-target="addingPanel" <%= "hidden" if has_payees %>>
+  <div data-payee-picker-target="addingPanel" <%= "hidden" if has_payees %>
+       data-controller="payee-duplicate-check"
+       data-payee-duplicate-check-url-value="<%= check_email_event_payees_path(event_id: event.slug) %>"
+       data-payee-duplicate-check-destination-value="<%= destination %>">
     <div class="px-4 py-3 card">
       <% if has_payees %>
         <button type="button" class="btn mb-3" data-action="payee-picker#hideAdding">
@@ -44,13 +47,25 @@
       <% end %>
 
       <div class="flex flex-col gap-3">
-        <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
-          <%= label_tag :name, "Name" %>
+        <div class="flex justify-between flex-col sm:flex-row sm:items-center gap-2">
+          <%= label_tag :name, class: "flex gap-2 items-center" do %>
+            Name
+            <span class="info tooltipped tooltipped--e h-5" aria-label="<%= "Visible in transparency mode. " if event.is_public? %>This does not have to match the recipient's legal name.">
+              <%= inline_icon "info", size: 20 %>
+            </span>
+          <% end %>
           <%= text_field_tag :name, params[:payee_name], placeholder: "Orpheus", required: true, form: "new-payee-form", data: { "manual-payee-target": "nameInput", "payee-picker-target": "nameInput" } %>
         </div>
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2">
           <%= label_tag :email, "Email" %>
-          <%= email_field_tag :email, params[:payee_email], placeholder: "orpheus@hackclub.com", required: true, form: "new-payee-form", data: { "manual-payee-target": "emailInput", "payee-picker-target": "emailInput" } %>
+          <%= email_field_tag :email, params[:payee_email], placeholder: "orpheus@hackclub.com", required: true, form: "new-payee-form", data: { "manual-payee-target": "emailInput", "payee-picker-target": "emailInput", action: "input->payee-duplicate-check#check" } %>
+        </div>
+
+        <div data-payee-duplicate-check-target="warning" hidden>
+          <%= render "application/callout", type: "warning", title: "You already have a recipient with this email", class: "mt-0 mb-0" do %>
+            This email is already used by <span data-payee-duplicate-check-target="list"></span>.
+            Only add a new recipient if this is a different person or legal entity.
+          <% end %>
         </div>
         <div class="flex justify-between flex-col sm:flex-row items-center gap-2" data-manual-payee-target="manualOnly" <%= "hidden" unless manual %>>
           <%= label_tag :payee_entity_type, "Recipient type" %>

@@ -108,6 +108,21 @@ RSpec.describe Reimbursement::ExpensesController do
     end
   end
 
+  describe "#create" do
+    it "categorizes new mileage expenses as Mileage" do
+      user = create(:user)
+      event = create(:event)
+      create(:organizer_position, user:, event:)
+      report = create(:reimbursement_report, user:, event:)
+
+      create_session(user, verified: true)
+
+      post(:create, params: { report_id: report.id, type: "mileage" })
+
+      expect(report.expenses.sole).to have_attributes(type: "Reimbursement::Expense::Mileage", category: "Mileage")
+    end
+  end
+
   describe "#update" do
     context "when event_id points to an event the user does not belong to" do
       it "blocks the event change and leaves expense state untouched" do

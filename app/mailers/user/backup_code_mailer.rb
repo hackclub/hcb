@@ -11,7 +11,7 @@ class User
     end
 
     def code_used
-      subject = "You've used a backup code to login to HCB"
+      subject = "You've used a backup code to log in to HCB"
       case @user.backup_codes.active.size
       when 0
         subject = "[Action Required] You've used all your backup codes for HCB"
