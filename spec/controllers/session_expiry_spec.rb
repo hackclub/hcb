@@ -49,7 +49,7 @@ RSpec.describe("session expiry", type: :controller) do
     end
   end
 
-  it "caps the maximum session length to 3 weeks" do
+  it "caps ordinary session renewal at 3 weeks" do
     freeze_time do
       user = create(:user, session_validity_preference: SessionsHelper::SESSION_DURATION_OPTIONS.fetch("2 weeks"))
       session = create_session(user, verified: true)
@@ -59,6 +59,50 @@ RSpec.describe("session expiry", type: :controller) do
       get(:index)
       expect(response).to have_http_status(:ok)
       expect(session.reload.expiration_at).to eq(max_expiry)
+    end
+  end
+
+  it "extends active sessions an hour at a time for at most a day beyond the limit" do
+    freeze_time do
+      user = create(:user, session_validity_preference: 2.weeks.to_i)
+      session = controller.create_session(user:, verified: true)
+      max_expiry = 3.weeks.from_now
+
+      travel(13.days)
+      get(:index)
+      expect(session.reload.expiration_at).to eq(max_expiry)
+
+      travel_to(max_expiry - 30.minutes)
+      get(:index)
+      expect(response).to have_http_status(:ok)
+      expect(session.reload.expiration_at).to eq(max_expiry + 30.minutes)
+
+      24.times do
+        travel(1.hour - 1.minute)
+        get(:index)
+        expect(response).to have_http_status(:ok)
+        expect(session.reload.expiration_at).to eq([1.hour.from_now, max_expiry + 24.hours].min)
+      end
+
+      travel_to(max_expiry + 24.hours)
+      get(:index)
+      expect(response).to redirect_to(auth_users_path(require_reload: true, return_to: request.original_url))
+    end
+  end
+
+  it "does not extend the user's inactivity preference during the grace period" do
+    freeze_time do
+      user = create(:user, session_validity_preference: 15.minutes.to_i)
+      session = create_session(user, verified: true)
+      session.update_columns(created_at: 3.weeks.ago)
+
+      get(:index)
+      expect(response).to have_http_status(:ok)
+      expect(session.reload.expiration_at).to eq(15.minutes.from_now)
+
+      travel(15.minutes)
+      get(:index)
+      expect(response).to redirect_to(auth_users_path(require_reload: true, return_to: request.original_url))
     end
   end
 end
