@@ -1,0 +1,188 @@
+<%# locals: (tracking:) %>
+
+<section class="card wire-tracking">
+  <header class="wire-tracking__header">
+    <span class="pop <%= tracking.style %> wire-tracking__status-icon">
+      <%= inline_icon tracking.icon %>
+    </span>
+
+    <div class="wire-tracking__headline">
+      <h3 class="wire-tracking__status"><%= tracking.label %></h3>
+      <p class="wire-tracking__summary"><%= tracking.header_summary %></p>
+    </div>
+
+    <% if tracking.headline_amount.present? %>
+      <div class="wire-tracking__amount">
+        <span class="wire-tracking__amount-value"><%= tracking.headline_amount.format %></span>
+        <span class="wire-tracking__amount-label"><%= tracking.amount_label %></span>
+      </div>
+    <% end %>
+  </header>
+
+  <% tracking.callouts.each do |callout| %>
+    <div class="wire-tracking__callout wire-tracking__callout--<%= callout[:style] %>">
+      <%= inline_icon callout[:icon], size: 18 %>
+      <div>
+        <strong><%= callout[:label] %></strong>
+        <span><%= callout[:summary] %></span>
+      </div>
+    </div>
+  <% end %>
+
+  <ol class="wire-tracking__steps">
+    <% tracking.steps.each do |step| %>
+      <li class="wire-tracking__step wire-tracking__step--<%= step.state %>">
+        <div class="wire-tracking__step-marker">
+          <span class="wire-tracking__step-dot">
+            <% if step.state == "complete" %>
+              <%= inline_icon "check", size: 12 %>
+            <% elsif step.state == "failed" %>
+              <%= inline_icon "view-close", size: 12 %>
+            <% end %>
+          </span>
+          <span class="wire-tracking__step-bar"></span>
+        </div>
+        <p class="wire-tracking__step-name"><%= step.name %></p>
+        <p class="wire-tracking__step-detail">
+          <% if step.at.present? %>
+            <%= format_datetime step.at %>
+          <% else %>
+            <%= step.detail %>
+          <% end %>
+        </p>
+      </li>
+    <% end %>
+  </ol>
+
+  <% if tracking.sent_amount.present? && tracking.total_charges&.positive? %>
+    <div class="wire-tracking__money">
+      <div class="wire-tracking__money-leg">
+        <span class="wire-tracking__money-label">Sent</span>
+        <span class="wire-tracking__money-value"><%= tracking.sent_amount.format %></span>
+      </div>
+      <span class="wire-tracking__money-arrow"><%= inline_icon "view-forward", size: 14 %></span>
+      <div class="wire-tracking__money-leg wire-tracking__money-leg--fee">
+        <span class="wire-tracking__money-label">Bank fees</span>
+        <span class="wire-tracking__money-value">&minus;<%= tracking.total_charges.format %></span>
+      </div>
+      <% if tracking.delivered_amount.present? %>
+        <span class="wire-tracking__money-arrow"><%= inline_icon "view-forward", size: 14 %></span>
+        <div class="wire-tracking__money-leg">
+          <span class="wire-tracking__money-label">Delivered</span>
+          <span class="wire-tracking__money-value"><%= tracking.delivered_amount.format %></span>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <dl class="wire-tracking__facts">
+    <% if tracking.uetr.present? %>
+      <div>
+        <dt>
+          <abbr title="Unique End-to-end Transaction Reference — the ID every bank on the SWIFT network uses for this wire">UETR</abbr>
+        </dt>
+        <dd>
+          <%= copy_to_clipboard tracking.uetr, class: "wire-tracking__uetr" do %>
+            <code><%= tracking.uetr %></code>
+            <%= inline_icon "copy-check", size: 14 %>
+          <% end %>
+        </dd>
+      </div>
+    <% end %>
+    <% if tracking.updated_at.present? %>
+      <div>
+        <dt>Last update</dt>
+        <dd><%= relative_timestamp tracking.updated_at %></dd>
+      </div>
+    <% end %>
+    <% if tracking.duration.present? %>
+      <div>
+        <dt><%= tracking.settled? ? "Took" : "In transit for" %></dt>
+        <dd><%= distance_of_time_in_words tracking.duration %></dd>
+      </div>
+    <% end %>
+  </dl>
+
+  <% if tracking.events.any? %>
+    <ol class="wire-tracking__timeline">
+      <% tracking.timeline_events.each do |event| %>
+        <li class="wire-tracking__event <%= "wire-tracking__event--cover" if event.cover? %>">
+          <div class="wire-tracking__event-rail">
+            <span class="pop <%= event.style %>">
+              <%= inline_icon event.icon, size: 15 %>
+            </span>
+            <span class="wire-tracking__event-line"></span>
+          </div>
+
+          <div class="wire-tracking__event-body">
+            <div class="wire-tracking__event-heading">
+              <p class="wire-tracking__event-title">
+                <%= event.label %>
+                <% if event.instructed_bank.present? %>
+                  <span class="wire-tracking__bank" title="Next bank in the chain<%= " — #{event.instructed_bank.country_name}" if event.instructed_bank.country_name %>">
+                    <span class="wire-tracking__bank-arrow">&rarr;</span>
+                    <%= event.instructed_bank.flag %>
+                    <code><%= event.instructed_bank.name %></code>
+                  </span>
+                <% end %>
+              </p>
+              <% if event.occurred_at.present? %>
+                <time class="wire-tracking__event-time"><%= format_datetime event.occurred_at %></time>
+              <% end %>
+            </div>
+
+            <% if event.status_reason.present? %>
+              <p class="wire-tracking__event-reason"><%= event.status_reason %></p>
+            <% end %>
+            <% if event.cancellation_status_reason.present? %>
+              <p class="wire-tracking__event-reason"><%= event.cancellation_status_reason %></p>
+            <% end %>
+
+            <% event.charges.each do |charge| %>
+              <p class="wire-tracking__event-charge">
+                <%= inline_icon "minus", size: 13 %>
+                <strong><%= charge.amount.format %></strong> fee
+                <% if charge.bank.present? %>
+                  taken by <%= charge.bank.flag %> <code><%= charge.bank.name %></code>
+                <% end %>
+              </p>
+            <% end %>
+
+            <div class="wire-tracking__event-meta">
+              <% if event.updated_by_bank.present? %>
+                <span>
+                  Reported by
+                  <%= event.updated_by_bank.flag %>
+                  <code><%= event.updated_by_bank.name %></code>
+                </span>
+              <% end %>
+              <% if event.instructed_amount.present? %>
+                <span><%= event.instructed_amount.format %> instructed</span>
+              <% end %>
+              <% if event.settled_amount.present? %>
+                <span><%= event.settled_amount.format %> settled</span>
+              <% end %>
+              <% if event.fx_rate.present? %>
+                <span>FX <%= event.fx_rate %></span>
+              <% end %>
+              <% if event.charge_bearer.present? %>
+                <span><%= event.charge_bearer %></span>
+              <% end %>
+              <% if (tag = event.leg_tag).present? %>
+                <span class="wire-tracking__tag" title="<%= tag[:title] %>"><%= tag[:label] %></span>
+              <% end %>
+              <% if event.network_reference.present? %>
+                <span class="wire-tracking__ref"><code><%= event.network_reference %></code></span>
+              <% end %>
+            </div>
+          </div>
+        </li>
+      <% end %>
+    </ol>
+  <% else %>
+    <p class="wire-tracking__empty">
+      <%= inline_icon "clock", size: 18 %>
+      No tracking events yet.
+    </p>
+  <% end %>
+</section>
