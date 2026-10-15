@@ -39,7 +39,15 @@
       </p>
       <p>
         <strong>Email</strong>
-        <%= @position.payee.email %>
+        <span class="!inline-flex gap-2 items-center">
+          <%= @position.payee.email %>
+
+          <% if @position.payee.legal_entity.nil? %>
+            <%= link_to "#", data: { behavior: "modal_trigger", modal: "payee_#{@position.payee.hashid}_change_email" } do %>
+              <%= inline_icon "edit" %>
+            <% end %>
+          <% end %>
+        </span>
       </p>
       <p>
         <strong>Rate</strong>
@@ -61,9 +69,16 @@
         <strong>Total paid</strong>
         <%= render_money @position.payee.total_paid_cents %>
       </p>
+      <% signed_contract = @position.contract&.document %>
+      <% if signed_contract.present? %>
+        <p>
+          <strong>Signed contract</strong>
+          <%= link_to "View contract", auditor_signed_in? ? signed_contract : document_download_path(signed_contract), data: { turbo_frame: "_top" } %>
+        </p>
+      <% end %>
       <% if @position.file.attached? %>
         <p>
-          <strong>Agreement</strong>
+          <strong>Attached agreement</strong>
           <%= link_to "View attachment", url_for(@position.file), data: { turbo_frame: "_top" } %>
         </p>
       <% end %>
@@ -90,13 +105,32 @@
     <%= render "payroll/positions/onboarding_flow", position: @position, perspective: :organizer %>
   <% end %>
 
-  <h3 class="mt-4 mb-2">Invoices</h3>
+  <div class="mt-4 mb-2 flex items-center justify-between gap-2">
+    <h3 class="my-0">Invoices</h3>
+    <% if @can_upload_invoice %>
+      <%= link_to "#", class: "btn btn-small bg-success", data: { behavior: "modal_trigger", modal: dom_id(@position, :upload_invoice) } do %>
+        <%= inline_icon "cloud-upload", size: 20 %>
+        Upload invoice
+      <% end %>
+
+      <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog"
+        id="<%= dom_id(@position, :upload_invoice) %>"
+        data-controller="turbo-frame-modal"
+        data-action="turbo:submit-end->turbo-frame-modal#submitEnd">
+        <%= modal_header "Upload an invoice" %>
+        <%= turbo_frame_tag dom_id(@position, :invoice_form), src: new_payroll_position_invoice_path(@position), loading: :lazy do %>
+          <%= render "application/loading_container", klass: "py-8" %>
+        <% end %>
+      </section>
+    <% end %>
+  </div>
   <% if @invoices.any? %>
     <article class="table-container">
       <table>
         <thead>
           <tr>
             <th>Status</th>
+            <th>Reviewed by</th>
             <th>Description</th>
             <th>Attachment</th>
             <th class="text-right">Amount</th>
@@ -105,9 +139,17 @@
         </thead>
         <tbody>
           <% @invoices.each do |invoice| %>
-            <% state_color = invoice.approved? ? "success" : (invoice.rejected? ? "muted" : "warning") %>
             <tr>
-              <td><span class="badge bg-<%= state_color %>"><%= invoice.aasm_state.humanize %></span></td>
+              <td>
+                <span class="badge ml-0 bg-<%= invoice.state_color %>"><%= invoice.aasm_state.humanize %></span>
+              </td>
+              <td>
+                <% if invoice.reviewed_by.present? %>
+                  <%= invoice.reviewed_by.name %>
+                <% else %>
+                  <span class="muted">&mdash;</span>
+                <% end %>
+              </td>
               <td style="max-width: 25ch;" class="overflow-hidden truncate" title="<%= invoice.name %>">
                 <%= invoice.name %>
               </td>
@@ -178,4 +220,8 @@
   <% else %>
     <%= blankslate "No payments yet" %>
   <% end %>
+<% end %>
+
+<% if @position.payee.legal_entity.nil? %>
+  <%= render partial: "payees/change_email_modal", locals: { payee: @position.payee, destination: "contractors", destination_id: @position.hashid } %>
 <% end %>

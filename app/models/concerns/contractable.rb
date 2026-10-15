@@ -36,6 +36,11 @@ module Contractable
       true
     end
 
+    def contract_remind_when_reissued
+      # This method can be overwritten in specific classes to hold back party reminders when a reissued contract is sent
+      true
+    end
+
     def contract_redirect_path
       # This method can be overwritten in specific classes to set the path that contract-related routes should redirect to
       "/"

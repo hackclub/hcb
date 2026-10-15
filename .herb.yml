@@ -1,0 +1,30 @@
+# Herb (https://herb-tools.dev) lints our ERB templates. We only use it for
+# rules that erb_lint and RuboCop don't have, so every rule starts disabled and
+# is opted back in below.
+
+version: 0.11.0
+framework: actionview
+
+linter:
+  enabled: true
+
+  # Herb's defaults skip views like `.pdf.erb` and bare `.erb`.
+  include:
+    - "app/views/**/*.erb"
+
+  rules:
+    all:
+      enabled: false
+
+    # `render "form"` is looked up against the rendering controller's view
+    # prefixes, not the template's own directory, so the same call can resolve
+    # to a different partial (or none) when the template is rendered from
+    # elsewhere. Spell partials from the view root: `render "events/form"`.
+    actionview-prefer-qualified-partial-path:
+      enabled: true
+      severity: error
+
+# We don't use Herb's formatter. This keeps editors with the Herb extension
+# from formatting on save if its default ever changes.
+formatter:
+  enabled: false
