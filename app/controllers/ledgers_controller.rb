@@ -5,6 +5,8 @@ class LedgersController < ApplicationController
     @ledger = Ledger.find_by_hashid!(params[:id])
     authorize @ledger
 
+    @event = @ledger.event || @ledger.card_grant&.event
+
     query_hash = {}
     if auditor_signed_in? && params[:query].present?
       begin

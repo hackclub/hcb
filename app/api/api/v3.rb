@@ -19,7 +19,7 @@ module Api
       end
 
       def orgs
-        @orgs ||= paginate(Event.indexable.order(created_at: :asc))
+        @orgs ||= paginate(Event.indexable.by_category(params[:category]).order(created_at: :asc))
       end
 
       def activities
@@ -52,10 +52,26 @@ module Api
         error!({ message: "Organization not found." }, 404)
       end
 
+      def ledger_items(query = {})
+        ::Ledger::Query.new(
+          "$and" => [
+            query,
+            { "$or" => [
+              { amount_cents: { "$ne" => 0 } },
+              { status: { "$in" => %w[settled pending reversed] } }
+            ]
+}
+          ]
+        ).execute(ledgers: [org.ledger])
+                       .preload(:canonical_transactions, :canonical_pending_transactions, :receipts, :tags, primary_ledger: :event)
+      end
+
       def transactions
-        # TODO: this can be optimized
         @transactions ||=
-          begin
+          if ledger_engine?
+            paginate(ledger_items).map { |item| Models::LedgerTransaction.new(item) }
+          else
+            # TODO: this can be optimized
             pending = PendingTransactionEngine::PendingTransaction::All.new(event_id: org.id).run
             settled = TransactionGroupingEngine::Transaction::All.new(event_id: org.id).run
 
@@ -69,28 +85,34 @@ module Api
       end
 
       def card_charges
-        # TODO: this can be optimized
         @card_charges ||=
-          begin
+          if ledger_engine?
+            # The ledger tags force captures (HCB-601) with linked_object_type
+            # "CardCharge" too, but Models::CardCharge's default scope is
+            # HCB-600 only. Narrow the relation before paginating, or the
+            # pagination headers count rows that get dropped from the body.
+            items = paginate(
+              ledger_items(linked_object_type: { "$eq" => "CardCharge" })
+                .where(id: Models::CardCharge.select(:ledger_item_id))
+            )
+            charges = Models::CardCharge.with_details.where(ledger_item_id: items.map(&:id)).index_by(&:ledger_item_id)
+
+            items.map { |item| charges[item.id] }
+          else
+            # TODO: this can be optimized
             pending = PendingTransactionEngine::PendingTransaction::All.new(event_id: org.id).run
             settled = TransactionGroupingEngine::Transaction::All.new(event_id: org.id).run
 
             combined = pending + settled
-            prefix = "HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_CARD_CODE}-"
-            combined.select! { |t| t.hcb_code.to_s.start_with?(prefix) }
+            combined.select! { |t| t.local_hcb_code.type == :card_charge }
             combined = paginate(Kaminari.paginate_array(combined))
-
-            card_charges_by_hcb_code = Models::CardCharge
-                                       .where(hcb_code: combined.map(&:hcb_code))
-                                       .includes(:canonical_transactions, canonical_pending_transactions: :raw_pending_stripe_transaction)
-                                       .index_by(&:hcb_code)
-
-            combined.map { |t| card_charges_by_hcb_code[t.hcb_code] }.compact
+            charges = Models::CardCharge.with_details.where(hcb_code: combined.map(&:hcb_code)).index_by(&:hcb_code)
+            combined.filter_map { |transaction| charges[transaction.hcb_code] }
           end
       end
 
       def card_charge
-        public_id_resource!(:@card_charge, :card_charge_id, Models::CardCharge, "Card charge not found.")
+        public_id_resource!(:@card_charge, :card_charge_id, Models::CardCharge.with_details, "Card charge not found.")
       end
 
       def donations
@@ -189,8 +211,15 @@ module Api
       def type_expansion(expand: [], hide: [])
         {
           expand: (params[:expand] || []) + expand,
-          hide: (params[:hide] || []) + hide
+          hide: (params[:hide] || []) + hide,
+          ledger: ledger_engine?
         }
+      end
+
+      def ledger_engine?
+        return @ledger_engine if defined?(@ledger_engine)
+
+        @ledger_engine = Models::LedgerTransaction.requested?(request)
       end
 
       params :expand do
@@ -254,6 +283,7 @@ module Api
     params do
       use :pagination, per_page: 50, max_per_page: 100
       use :expand
+      optional :category, type: String, desc: "Filter organizations by category", values: ["hack_club_hq", "robotics_team", "hackathon", "hack_club", "climate"]
     end
     get :organizations do
       present orgs, with: Api::Entities::Organization, **type_expansion(expand: %w[organization user])
@@ -887,7 +917,8 @@ module Api
       route_param :transaction_id do
         get do
           Pundit.authorize(nil, [:api, transaction], :show?)
-          present transaction, with: Api::Entities::Transaction, **type_expansion(expand: %w[transaction])
+          options = type_expansion(expand: %w[transaction])
+          present Models::LedgerTransaction.resolve(transaction, options), with: Api::Entities::Transaction, **options
         end
       end
     end

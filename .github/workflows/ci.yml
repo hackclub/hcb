@@ -35,7 +35,7 @@ jobs:
       - name: Run Lint
         run: bin/lint -c
       - name: Comment suggested changes
-        uses: parkerbxyz/suggest-changes@v3.0.4
+        uses: parkerbxyz/suggest-changes@v3.1.2
   erblint:
     name: 'ERB Lint'
     runs-on: ubuntu-latest
@@ -52,6 +52,14 @@ jobs:
       - uses: ./.github/actions/setup-node
       - name: Run ESLint
         run: yarn lint
+  herb:
+    name: Herb
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-node
+      - name: Run Herb
+        run: yarn lint:herb
   prettier:
     name: Prettier
     runs-on: ubuntu-latest

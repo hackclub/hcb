@@ -29,8 +29,9 @@ RSpec.describe Ledger::Query, type: :model do
     Ledger::Mapping.create(ledger: test_ledger, ledger_item: item, on_primary_ledger: true)
     # refresh! (triggered on create and on mapping) recomputes memo and
     # amount_cents from canonical transactions, which these items don't have.
-    # Pin the intended values, bypassing callbacks.
-    item.update_columns(**attrs)
+    # Pin the intended values, bypassing callbacks. Also pin ct_count to 1 so
+    # these items don't get filtered out as empty (see Ledger::Query#execute).
+    item.update_columns(ct_count: 1, **attrs)
     item
   end
 
@@ -40,6 +41,17 @@ RSpec.describe Ledger::Query, type: :model do
 
   def ids_of(*items)
     items.map(&:id)
+  end
+
+  def count_queries
+    count = 0
+    subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+      count += 1 unless payload[:name].to_s.match?(/SCHEMA|TRANSACTION/)
+    end
+    yield
+    count
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber)
   end
 
   describe "predicates" do
@@ -470,7 +482,7 @@ RSpec.describe Ledger::Query, type: :model do
     def create_other_ledger_item(**attrs)
       item = create(:ledger_item, **attrs)
       Ledger::Mapping.create(ledger: other_ledger, ledger_item: item, on_primary_ledger: true)
-      item.update_columns(**attrs)
+      item.update_columns(ct_count: 1, **attrs)
       item
     end
 
@@ -549,6 +561,203 @@ RSpec.describe Ledger::Query, type: :model do
 
       # item_a (amount=0) + all items except item_f (gamma payment)
       expect(result.pluck(:id)).to match_array(ids_of(item_a, item_b, item_c, item_d, item_e, item_g))
+    end
+  end
+
+  describe "virtual fields" do
+    # Wiring up a tag, a category or a merchant touches the ledger item, and a
+    # touched item refreshes itself from its (nonexistent) canonical
+    # transactions — undoing what create_mapped_item pinned. Pin it back, so the
+    # item still looks like a real transaction to the query.
+    def repin(item, **attrs)
+      item.update_columns(ct_count: 1, **attrs)
+      item
+    end
+
+    context "tag" do
+      let(:tag) { Tag.create!(event: test_event, label: "Travel", emoji: "✈️", color: "red") }
+
+      before do
+        hcb_code = create(:hcb_code, ledger_item: item_b)
+        HcbCodeTag.create!(hcb_code:, tag:)
+        repin(item_b)
+      end
+
+      it "matches only items tagged with it" do
+        expect(execute_query({ tag: { "$eq" => tag.id } }).pluck(:id)).to match_array(ids_of(item_b))
+      end
+
+      it "matches nothing for a tag no item carries" do
+        other_tag = Tag.create!(event: test_event, label: "Food", emoji: "🍕", color: "red")
+
+        expect(execute_query({ tag: { "$eq" => other_tag.id } })).to be_empty
+      end
+    end
+
+    context "category" do
+      let(:category) { TransactionCategory.find_or_create_by!(slug: "benefits") }
+
+      it "matches items whose canonical transaction carries the category" do
+        ct = create(:canonical_transaction, ledger_item: item_c)
+        TransactionCategoryMapping.create!(category:, categorizable: ct)
+        repin(item_c)
+
+        expect(execute_query({ category: { "$eq" => "benefits" } }).pluck(:id)).to match_array(ids_of(item_c))
+      end
+
+      it "matches items whose pending transaction carries the category" do
+        cpt = create(:canonical_pending_transaction, ledger_item: item_d)
+        TransactionCategoryMapping.create!(category:, categorizable: cpt)
+        repin(item_d)
+
+        expect(execute_query({ category: { "$eq" => "benefits" } }).pluck(:id)).to match_array(ids_of(item_d))
+      end
+
+      it "matches an item only once when both its settled and pending transactions carry the category" do
+        # The two branches are UNION ALL'd, so this item's id is in the inner set
+        # twice; IN must still yield one row.
+        TransactionCategoryMapping.create!(category:, categorizable: create(:canonical_transaction, ledger_item: item_c))
+        TransactionCategoryMapping.create!(category:, categorizable: create(:canonical_pending_transaction, ledger_item: item_c))
+        repin(item_c)
+
+        expect(execute_query({ category: { "$eq" => "benefits" } }).pluck(:id)).to eq(ids_of(item_c))
+      end
+
+      it "matches nothing for a slug that isn't a category" do
+        expect(execute_query({ category: { "$eq" => "not-a-category" } })).to be_empty
+      end
+    end
+
+    context "merchant" do
+      it "matches only card charges at that merchant" do
+        card_charge = CardCharge.create!(merchant_network_id: "MERCHANT-1")
+        other_charge = CardCharge.create!(merchant_network_id: "MERCHANT-2")
+        repin(item_e, linked_object_type: "CardCharge", linked_object_id: card_charge.id)
+        repin(item_f, linked_object_type: "CardCharge", linked_object_id: other_charge.id)
+
+        expect(execute_query({ merchant: { "$eq" => "MERCHANT-1" } }).pluck(:id)).to match_array(ids_of(item_e))
+      end
+    end
+
+    it "narrows, rather than replaces, the rest of the query" do
+      tag = Tag.create!(event: test_event, label: "Travel", emoji: "✈️", color: "red")
+      { item_b => Date.new(2024, 1, 2), item_g => Date.new(2024, 3, 15) }.each do |item, datetime|
+        HcbCodeTag.create!(hcb_code: create(:hcb_code, ledger_item: item), tag:)
+        repin(item, datetime:)
+      end
+
+      result = execute_query({ "$and" => [{ tag: { "$eq" => tag.id } }, { datetime: { "$gte" => Date.new(2024, 3, 1) } }] })
+
+      expect(result.pluck(:id)).to match_array(ids_of(item_g))
+    end
+
+    it "rejects operators other than $eq" do
+      expect { execute_query({ tag: { "$gt" => 1 } }) }
+        .to raise_error(Ledger::Query::Error, /Unsupported comparison operator for tag/)
+    end
+
+    it "raises a query error for a virtual field with no subquery behind it" do
+      # Guards the parity between VIRTUAL_FIELDS and the case arms in
+      # apply_virtual_predicate: adding a field to the constant without an arm
+      # should raise, not return nil.
+      stub_const("#{described_class}::VIRTUAL_FIELDS", described_class::VIRTUAL_FIELDS + ["nonexistent"])
+
+      expect { execute_query({ nonexistent: { "$eq" => "x" } }) }
+        .to raise_error(Ledger::Query::Error, /Unsupported virtual field: nonexistent/)
+    end
+
+    it "rejects array operands, so $eq never means IN" do
+      %w[tag category merchant].each do |field|
+        expect { execute_query({ field => { "$eq" => ["a", "b"] } }) }
+          .to raise_error(Ledger::Query::Error, /does not support array operands/)
+      end
+    end
+  end
+
+  describe "empty items" do
+    it "excludes items with no CTs and no CPTs" do
+      empty_item = create_mapped_item(amount_cents: 100, memo: "empty item", datetime: Date.new(2024, 1, 4))
+      empty_item.update_columns(ct_count: 0, cpt_count: 0)
+
+      result = execute_query({ amount_cents: 100 })
+
+      expect(result.pluck(:id)).to match_array(ids_of(item_b, item_g))
+      expect(result.pluck(:id)).not_to include(empty_item.id)
+    end
+
+    it "includes items with a CT but no CPTs" do
+      item_b.update_columns(ct_count: 1, cpt_count: 0)
+
+      result = execute_query({ amount_cents: 100 })
+
+      expect(result.pluck(:id)).to include(item_b.id)
+    end
+
+    it "includes items with a CPT but no CTs" do
+      item_b.update_columns(ct_count: 0, cpt_count: 1)
+
+      result = execute_query({ amount_cents: 100 })
+
+      expect(result.pluck(:id)).to include(item_b.id)
+    end
+  end
+
+  describe "preloading" do
+    # Every page that renders a ledger reads these per row, so the query loads
+    # them up front — otherwise a page's query count grows with its rows. Pages
+    # needing more (the API serializer wants canonical transactions and receipts)
+    # chain their own preloads on top.
+    it "loads what the ledger row renders, so touching it costs no further queries" do
+      # hcb_code is a has_one keyed on ledger_item_id, so point one at an item to
+      # exercise the nested event preload rather than a set of nils.
+      create(:hcb_code, ledger_item: item_c, event: test_event)
+
+      items = execute_query({}).to_a
+
+      queries = count_queries do
+        items.each do |item|
+          item.author
+          item.linked_object
+          item.tags.to_a
+          item.hcb_code&.event
+        end
+      end
+
+      expect(queries).to be_zero
+    end
+
+    it "costs nothing on a query that only aggregates" do
+      # preload values don't fire until records are materialized, so callers
+      # summing or counting don't pay for the row preloads.
+      expect(count_queries { execute_query({}).sum(:amount_cents) }).to eq(1)
+    end
+  end
+
+  describe "ordering" do
+    # Items are born pending, so settle the whole set first — these tests are
+    # about which items lead, and that only means something against a baseline
+    # of settled ones.
+    before { Ledger::Item.update_all(status: "settled") }
+
+    # Every page that renders a ledger executes a query to get this ordering, so
+    # it's the query's job rather than each page's.
+    it "sorts pending items first, then newest first" do
+      item_a.update_columns(status: "pending")
+      item_e.update_columns(status: "pending")
+
+      result = execute_query({})
+
+      # item_e (Feb 15) and item_a (Jan 1) lead despite being older than
+      # everything below them.
+      expect(result.pluck(:id)).to eq(ids_of(item_e, item_a, item_g, item_f, item_d, item_c, item_b))
+    end
+
+    it "keeps pending items first once a narrowing predicate is applied" do
+      item_b.update_columns(status: "pending")
+
+      result = execute_query({ amount_cents: { "$lte" => 150 } })
+
+      expect(result.pluck(:id)).to eq(ids_of(item_b, item_g, item_c, item_a))
     end
   end
 end

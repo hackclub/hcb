@@ -8,6 +8,7 @@ export default ({ payment_recipient, editing, country }) => ({
         this.editing = false
         this.country = rec.recipient_country || null
         this.$refs.name_input.value = rec.name
+        document.getElementById('wire_recipient_email').value = rec.email
       }
     })
 

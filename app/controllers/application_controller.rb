@@ -20,10 +20,11 @@ class ApplicationController < ActionController::Base
   # that you want to be unauthenticated with skip_before_action.
   before_action :signed_in_user
 
-  before_action :ensure_created_session
-
   # Track papertrail edits to specific users
   before_action :set_paper_trail_whodunnit
+  # PaperTrail registers this callback before `Current.session` is set above;
+  # re-registering moves it here so `info_for_paper_trail` can read the session.
+  before_action :set_paper_trail_controller_info
 
   # Redirect users to the onboarding page if they haven't completed it yet
   before_action :redirect_to_onboarding
@@ -104,6 +105,11 @@ class ApplicationController < ActionController::Base
     current_user if auditor_signed_in?
   end
 
+  def safe_per(default, max: 200)
+    (params[:per] || default).to_i.clamp(1, max)
+  end
+  helper_method :safe_per
+
   private
 
   def redirect_to_onboarding
@@ -119,6 +125,10 @@ class ApplicationController < ActionController::Base
     else
       redirect_to auth_users_path(return_to: request.url, require_reload: true)
     end
+  end
+
+  def info_for_paper_trail
+    { impersonated_by_id: current_session&.impersonated_by_id }
   end
 
   def not_found

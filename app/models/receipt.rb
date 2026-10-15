@@ -14,15 +14,15 @@
 #  extracted_merchant_zip_code     :string
 #  extracted_subtotal_amount_cents :integer
 #  extracted_total_amount_cents    :integer
-#  receiptable_type                :string
 #  suggested_memo                  :string
 #  textual_content_bidx            :string
 #  textual_content_ciphertext      :text
-#  textual_content_source          :integer          default("pdf_text")
+#  textual_content_source          :integer          default(0)
 #  upload_method                   :integer
 #  created_at                      :datetime         not null
 #  updated_at                      :datetime         not null
 #  receiptable_id                  :bigint
+#  receiptable_type                :string
 #  user_id                         :bigint
 #
 # Indexes
@@ -124,7 +124,8 @@ class Receipt < ApplicationRecord
     duplicate: 21,
     discord_bot_modal: 22,
     payment_page: 23,
-    contractor_invoice: 24
+    contractor_invoice: 24,
+    payment_page_drag_and_drop: 25
   }
 
   enum :textual_content_source, {

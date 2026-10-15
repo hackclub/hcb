@@ -1,6 +1,15 @@
 # frozen_string_literal: true
 
 class Rack::Attack
+  # Every rule below keys on `req.ip`, so it has to be an address the client
+  # can't choose, which ActionDispatch::RemoteIp works out
+  class Request < ::Rack::Request
+    def ip
+      (env["action_dispatch.remote_ip"] || env["REMOTE_ADDR"]).to_s
+    end
+
+  end
+
   ### Configure Cache ###
 
   # If you don't want to use Rails.cache (Rack::Attack's default), then
@@ -59,13 +68,42 @@ class Rack::Attack
   # counted by rack-attack and this throttle may be activated too
   # quickly. If so, enable the condition to exclude them from tracking.
 
+  # Must match the csp-reports throttle below exactly, so anything it doesn't
+  # cover still falls back to req/ip.
+  csp_report_path = Rails.configuration.constants[:csp_violation_report_path]
+  csp_report = lambda do |req|
+    # Rails routes //path and path.format here too, so normalise before matching.
+    req.post? && req.path.sub(/\A\/+/, "/").chomp("/").sub(/\.[^.\/]*\z/, "") == csp_report_path
+  end
+
+  # Reject oversized reports here rather than in the controller: Rails buffers
+  # the whole body before any controller code runs.
+  blocklist("oversized csp reports") do |req|
+    csp_report.call(req) && req.content_length.to_i > Rails.configuration.constants[:csp_violation_report_max_bytes]
+  end
+
   # Throttle all requests by IP (60rpm)
   #
   # Key: "rack::attack:#{Time.now.to_i/:period}:req/ip:#{req.ip}"
   throttle("req/ip", limit: 1000, period: 5.minutes) do |req|
+    # Browsers, not users, decide CSP report volume; throttled separately below.
     req.ip unless req.path.start_with?("/assets") ||
                   req.path.start_with?("/admin") ||
-                  req.path.start_with?("/stats")
+                  req.path.start_with?("/stats") ||
+                  csp_report.call(req)
+  end
+
+  # Key: "rack::attack:#{Time.now.to_i/:period}:csp-reports/ip:#{req.ip}"
+  throttle("csp-reports/ip", limit: 60, period: 1.minute) do |req|
+    req.ip if csp_report.call(req)
+  end
+
+  # A fleet-wide ceiling as well as a per-IP one: a policy that starts reporting
+  # on every page load is a volume problem no per-IP limit would catch. Set well
+  # above plausible real volume, since a shared bucket that abuse can saturate
+  # would suppress the reports this rollout depends on.
+  throttle("csp-reports/global", limit: 3_000, period: 1.minute) do |req|
+    "global" if csp_report.call(req)
   end
 
   ### Prevent Brute-Force Login Attacks ###
@@ -126,6 +164,38 @@ class Rack::Attack
     end
   end
 
+  # POST /logins/:id/complete is where codes get guessed. The app caps wrong
+  # email codes per Login and per user (see ProcessLoginService); these are a
+  # cheaper layer in front of that. Legitimate users post here once per factor,
+  # plus the odd typo.
+  LOGIN_COMPLETE_PATH = /\A\/logins\/(?<hashid>[^\/]+)\/complete\z/
+
+  throttle("logins/complete/ip", limit: 20, period: 1.minute) do |req|
+    req.ip if req.post? && LOGIN_COMPLETE_PATH.match?(req.path)
+  end
+
+  throttle("logins/complete/login", limit: 10, period: 5.minutes) do |req|
+    if req.post? && (m = req.path.match(LOGIN_COMPLETE_PATH))
+      m[:hashid]
+    end
+  end
+
+  # Only the app knows whether an attempt failed, so LoginsController#complete
+  # records failures with `Fail2Ban.filter` (LOGIN_COMPLETE_FAIL2BAN) and this
+  # rule turns away an IP once it's banned. Spraying guesses across many
+  # accounts gets past the per-user cap, but not this.
+  LOGIN_COMPLETE_FAIL2BAN = { maxretry: 30, findtime: 15.minutes, bantime: 1.hour }.freeze
+
+  def self.login_complete_fail2ban_key(ip)
+    "logins/complete/ip:#{ip}"
+  end
+
+  blocklist("fail2ban failed login completions") do |req|
+    req.post? &&
+      LOGIN_COMPLETE_PATH.match?(req.path) &&
+      Rack::Attack::Fail2Ban.banned?(login_complete_fail2ban_key(req.ip))
+  end
+
   # Throttle POST requests to SMS verification by IP address
   throttle("sms_verify/ip", limit: 5, period: 8.hours) do |req|
     if req.path == "/users/start_sms_auth_verification" && req.post?
@@ -175,16 +245,33 @@ class Rack::Attack
     end
   end
 
-  throttle("/hq/transactions/ip", limit: 25, period: 1.minute) do |req|
-    if req.path.start_with?("/hq/transactions") && req.cookies[:session_token].nil?
-      req.ip
-    end
+  # Reading an organization's transactions runs the transaction engines, which
+  # cost seconds per request, and a transparent organization can be read without
+  # signing in. The page and its Turbo frame are each requested directly, so both
+  # need covering.
+  ledger_path = %r{
+    \A/
+    (?!admin/)                    # `req/ip` above exempts /admin
+    [^/]+/                        # organization slug
+    (transactions_list | transactions | ledger)
+    (\.[^/]*)?                    # `(.:format)` reaches the same action
+    /?\z
+  }x
+
+  # Presence only: the cookie is encrypted, and verifying it would mean a database
+  # lookup ahead of Rails. A forged value falls through to the wider throttle
+  # below, which is why that one exists.
+  #
+  # `Rack::Request#cookies` is string-keyed; a symbol reads as nil every time and
+  # throttles signed-in organizers too.
+  throttle("transparency/ledger/ip", limit: 25, period: 1.minute) do |req|
+    req.ip if req.path.match?(ledger_path) && req.cookies["session_token"].nil?
   end
 
-  throttle("/hq/ledger/ip", limit: 30, period: 1.minute) do |req|
-    if req.path.start_with?("/hq/ledger") && req.cookies[:session_token].nil?
-      req.ip
-    end
+  # Set far above what clicking through pages reaches, so it only catches
+  # automation sending an unverified `session_token`.
+  throttle("ledger/ip", limit: 100, period: 1.minute) do |req|
+    req.ip if req.path.match?(ledger_path)
   end
 
   # Lockout IP addresses that are hammering your donation page.
@@ -201,4 +288,6 @@ class Rack::Attack
 
 end
 
-Rack::Attack.enabled = Rails.env.production? # only enable in production
+# Only enable in production, unless RACK_ATTACK_ENABLED=true is set to try the
+# rules out locally (also run `bin/rails dev:cache`, or nothing gets counted).
+Rack::Attack.enabled = Rails.env.production? || ENV["RACK_ATTACK_ENABLED"] == "true"

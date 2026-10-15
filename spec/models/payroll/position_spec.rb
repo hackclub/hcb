@@ -9,8 +9,6 @@ RSpec.describe Payroll::Position, type: :model do
       "onboarding"   => :onboarding,
       "onboarded"    => :active,
       "expired"      => :completed,
-      "terminated"   => :completed,
-      "rejected"     => :completed,
     }.each do |aasm_state, expected|
       it "maps #{aasm_state} to #{expected}" do
         position = described_class.new(aasm_state:)
@@ -24,24 +22,24 @@ RSpec.describe Payroll::Position, type: :model do
       expect(described_class.new(start_date: nil).period_label).to be_nil
     end
 
-    it "shows a single month when there is no end date" do
+    it "shows a single date when there is no end date" do
       position = described_class.new(start_date: Date.new(2026, 4, 1))
-      expect(position.period_label).to eq("Apr 2026")
+      expect(position.period_label).to eq("Apr 1, 2026")
     end
 
     it "collapses to a single month when start and end fall in the same month" do
       position = described_class.new(start_date: Date.new(2026, 4, 1), end_date: Date.new(2026, 4, 28))
-      expect(position.period_label).to eq("Apr 2026")
+      expect(position.period_label).to eq("Apr 1–28, 2026")
     end
 
     it "shows a range within the same year" do
       position = described_class.new(start_date: Date.new(2026, 1, 1), end_date: Date.new(2026, 6, 30))
-      expect(position.period_label).to eq("Jan–Jun 2026")
+      expect(position.period_label).to eq("Jan 1 – Jun 30, 2026")
     end
 
     it "spans years when start and end fall in different years" do
       position = described_class.new(start_date: Date.new(2025, 12, 1), end_date: Date.new(2026, 2, 28))
-      expect(position.period_label).to eq("Dec 2025–Feb 2026")
+      expect(position.period_label).to eq("Dec 1, 2025 – Feb 28, 2026")
     end
   end
 
@@ -85,9 +83,37 @@ RSpec.describe Payroll::Position, type: :model do
     let(:position) { create(:payroll_position, aasm_state: :onboarding) }
 
     describe "#onboarding_checklist" do
-      it "includes a step for the organizer signing the contract" do
-        labels = position.onboarding_checklist.map { |step| step[:label] }
-        expect(labels).to include("Contract signed by organizer")
+      it "lists the steps in the order they happen" do
+        keys = position.onboarding_checklist.map { |step| step[:key] }
+        expect(keys).to eq(%i[organizer_signature hcb_review tax_form contractor_signature payout_method])
+      end
+
+      it "says who each step is waiting on" do
+        owners = position.onboarding_checklist.to_h { |step| [step[:key], step[:owner]] }
+        expect(owners).to eq(
+          organizer_signature: :organizer,
+          hcb_review: :hcb,
+          tax_form: :contractor,
+          contractor_signature: :contractor,
+          payout_method: :contractor
+        )
+      end
+    end
+
+    describe "#onboarding_reminder_days" do
+      it "nudges frequently at first, then every two weeks" do
+        position = build(:payroll_position, start_date: Date.current, end_date: Date.current + 60.days)
+        expect(position.onboarding_reminder_days).to eq([1, 2, 7, 14, 28, 42, 56])
+      end
+
+      it "stops at the position's end date rather than a fixed deadline" do
+        position = build(:payroll_position, start_date: Date.current, end_date: Date.current + 10.days)
+        expect(position.onboarding_reminder_days).to eq([1, 2, 7])
+      end
+
+      it "schedules nothing for a position that ends today" do
+        position = build(:payroll_position, start_date: Date.current - 2.months, end_date: Date.current)
+        expect(position.onboarding_reminder_days).to be_empty
       end
     end
 
@@ -205,11 +231,20 @@ RSpec.describe Payroll::Position, type: :model do
       expect { hcb_party.mark_signed! }.to have_enqueued_mail(Payroll::PositionMailer, :onboarding)
     end
 
-    it "schedules signing reminders for the contractor once HCB signs" do
+    it "does not schedule contract-specific signing reminders for the contractor once HCB signs" do
       contract = position.send_contract(organizer_user: organizer)
       hcb_party = contract.party(:hcb)
 
-      expect { hcb_party.mark_signed! }.to have_enqueued_job(Contract::Party::ReminderJob).at_least(:once)
+      expect { hcb_party.mark_signed! }.not_to have_enqueued_job(Contract::Party::ReminderJob)
+    end
+
+    it "schedules onboarding reminders for the contractor once HCB signs" do
+      contract = position.send_contract(organizer_user: organizer)
+      hcb_party = contract.party(:hcb)
+
+      expect { hcb_party.mark_signed! }
+        .to have_enqueued_job(Payroll::Position::OnboardingReminderJob)
+        .exactly(position.onboarding_reminder_days.count).times
     end
 
     it "reports, but does not raise or roll back the signature, when notifying the contractor fails" do

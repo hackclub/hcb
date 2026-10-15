@@ -85,7 +85,7 @@ class TransactionsController < ApplicationController
 
         redirect_to @transaction
       else
-        render :edit, status: :unprocessable_entity
+        render :edit, status: :unprocessable_content
       end
     end
   end

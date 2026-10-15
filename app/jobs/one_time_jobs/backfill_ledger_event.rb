@@ -6,6 +6,8 @@ module OneTimeJobs
 
     # Backfills `Ledger::Item`s for all HcbCodes on a single event.
     def perform(event_id)
+      return unless Rails.env.development?
+
       event = Event.find(event_id)
 
       hcb_codes = event.hcb_codes
