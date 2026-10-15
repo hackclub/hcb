@@ -16,6 +16,7 @@
 #  event_id                     :bigint
 #  ledger_item_id               :bigint
 #  subledger_id                 :bigint
+#  subscription_id              :bigint
 #
 # Indexes
 #
@@ -25,10 +26,12 @@
 #  index_hcb_codes_on_ledger_item_id          (ledger_item_id)
 #  index_hcb_codes_on_open_receipt_due_at     (receipt_due_at) WHERE ((receipt_due_at IS NOT NULL) AND (receipt_resolved_at IS NULL))
 #  index_hcb_codes_on_short_code              (short_code) UNIQUE
+#  index_hcb_codes_on_subscription_id         (subscription_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (ledger_item_id => ledger_items.id) ON DELETE => nullify
+#  fk_rails_...  (subscription_id => subscriptions.id) ON DELETE => nullify
 #
 # Check Constraints
 #

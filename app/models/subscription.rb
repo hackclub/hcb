@@ -1,5 +1,33 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: subscriptions
+#
+#  id                  :bigint           not null, primary key
+#  amount_cents        :integer          not null
+#  cadence             :string           not null
+#  cadence_days        :integer          not null
+#  last_charged_at     :datetime
+#  merchant_name       :string           not null
+#  next_expected_at    :datetime
+#  created_at          :datetime         not null
+#  updated_at          :datetime         not null
+#  event_id            :bigint           not null
+#  merchant_network_id :string
+#  stripe_card_id      :bigint           not null
+#
+# Indexes
+#
+#  index_subscriptions_on_event_id                                (event_id)
+#  index_subscriptions_on_stripe_card_id                          (stripe_card_id)
+#  index_subscriptions_on_stripe_card_id_and_merchant_network_id  (stripe_card_id,merchant_network_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (event_id => events.id)
+#  fk_rails_...  (stripe_card_id => stripe_cards.id)
+#
 # A recurring card charge (e.g. Spotify, Vercel, a domain renewal) found by
 # Subscription::Detect: one merchant charging a card the same amount on a
 # cadence. Charges are linked through `hcb_codes.subscription_id`.
