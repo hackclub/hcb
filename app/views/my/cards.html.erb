@@ -55,12 +55,12 @@
     <%= render "stripe_cards/form", stripe_card: StripeCard.new %>
   </section>
   <%= turbo_frame_tag :my_cards_shipping, src: my_cards_shipping_path, target: "_top" %>
-  <% preview_count = 3 %>
   <% if @cards_by_event.any? %>
     <% @cards_by_event.each do |event, cards| %>
       <section class="mt-3">
         <div class="flex items-center gap-2">
-          <%= link_to event_cards_overview_path(event_id: event.slug), class: "flex items-center gap-2 text-decoration-none text-inherit flex-1 min-w-0 h3" do %>
+          <% can_view_event = policy(event).card_overview? %>
+          <%= content_tag can_view_event ? :a : :div, href: (event_cards_overview_path(event_id: event.slug) if can_view_event), class: "flex items-center gap-2 text-decoration-none text-inherit flex-1 min-w-0 h3" do %>
             <% if event.logo.attached? %>
               <%= image_tag event.logo, height: 24, width: 24, class: "rounded flex-shrink-0" %>
             <% end %>
@@ -70,15 +70,8 @@
           <% end %>
         </div>
         <article class="mixed-grid grid--spacious">
-          <%= render cards.first(preview_count), headless: true, show_purpose: true %>
+          <%= render cards, headless: true, show_purpose: true %>
         </article>
-        <% if cards.count > preview_count %>
-          <div class="flex">
-            <%= link_to event_cards_overview_path(event_id: event.slug, user: current_user.slug), class: "btn ml-auto" do %>
-              +<%= cards.count - preview_count %> more
-            <% end %>
-          </div>
-        <% end %>
       </section>
     <% end %>
   <% else %>
