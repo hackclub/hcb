@@ -1,5 +1,6 @@
 <%# locals: (ledger_item:) %>
 
+<%# Rows for a transaction's details list, linking a repayment and what it repays. %>
 <% disbursement = ledger_item.linked_object.disbursement if ledger_item.linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) %>
 <%# A scheduled transfer has no incoming side until it's sent, so fall back to the outgoing one. %>
 <% repaid_by = ledger_item.repayments.not_failed.filter_map { |r| r.disbursement.incoming_disbursement.ledger_item || r.disbursement.outgoing_disbursement.ledger_item } %>
@@ -7,17 +8,17 @@
 
 <% { "Repaid by" => repaid_by, "Repays" => repays }.each do |label, linked| %>
   <% next if linked.empty? %>
-  <div class="card flex items-center gap-3 mt-4 py-3">
-    <%= inline_icon "reimbursement", size: 24, class: "m-0 text-blue shrink-0" %>
+  <p>
+    <strong><%= label %></strong>
     <span>
-      <strong><%= label %></strong>
       <%= safe_join(linked.map { |item|
-            if policy(item).show?
-              link_to item.memo, ledger_item_path(item)
-            else
-              "a transaction in #{item.primary_ledger&.event&.name || "another organization"}"
-            end
+            name = if policy(item).show?
+                     link_to item.memo, ledger_item_path(item), target: "_top"
+                   else
+                     "A transaction in #{item.primary_ledger&.event&.name || "another organization"}"
+                   end
+            safe_join([name, tag.span("on #{item.datetime.strftime("%b %-d, %Y")}", class: "muted")], " ")
           }, ", ") %>
     </span>
-  </div>
+  </p>
 <% end %>

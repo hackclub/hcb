@@ -307,8 +307,8 @@ RSpec.describe Ledger, type: :model do
       allow(ledger).to receive(:fronted_fee_balance_cents).and_return(0)
     end
 
-    def add_item(amount_cents)
-      ct = create(:canonical_transaction, amount_cents:, date: Date.today, memo: "Transaction of #{amount_cents}")
+    def add_item(amount_cents, category_slug: nil)
+      ct = create(:canonical_transaction, amount_cents:, date: Date.today, memo: "Transaction of #{amount_cents}", category_slug:)
       create(:canonical_event_mapping, canonical_transaction: ct, event: ledger.event)
       item = create(:ledger_item, amount_cents:, canonical_transactions: [ct])
       Ledger::Mapping.create!(ledger: ledger, ledger_item: item, on_primary_ledger: true)
@@ -355,6 +355,17 @@ RSpec.describe Ledger, type: :model do
       add_item(-500)
       allow(ledger).to receive(:fronted_fee_balance_cents).and_return(300)
 
+      expect(ledger.revenue_cents - ledger.expenses_cents).to eq(ledger.available_balance_cents)
+    end
+
+    it "takes repayments off expenses instead of counting them as revenue" do
+      add_item(2500)
+      add_item(-500, category_slug: "repayment") # the expense that was repaid
+      add_item(-300)
+      add_item(500, category_slug: "repayment") # the money paying it back
+
+      expect(ledger.revenue_cents).to eq(2500)
+      expect(ledger.expenses_cents).to eq(300)
       expect(ledger.revenue_cents - ledger.expenses_cents).to eq(ledger.available_balance_cents)
     end
 

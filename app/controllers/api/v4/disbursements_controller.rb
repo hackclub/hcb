@@ -31,7 +31,6 @@ module Api
           requested_by_id: current_user.id,
           fronted: @source_event.plan.front_disbursements_enabled?,
           transfer_type:,
-          payment_category_slug: params[:payment_category_slug],
           repaid_ledger_item_id: repaid_ledger_item&.id,
           category_assignment_strategy: transfer_type == "transfer" ? "automatic" : "manual"
         ).run

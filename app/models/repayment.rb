@@ -30,6 +30,11 @@
 # and a disbursement can repay several transactions, but for now each
 # repayment covers exactly one transaction in full.
 class Repayment < ApplicationRecord
+  # Both sides of a repayment on the repaid organization's ledger carry this
+  # category: the expense and the money paying it back. Money in under it
+  # lowers expenses instead of counting as revenue.
+  CATEGORY_SLUG = "repayment"
+
   belongs_to :disbursement
   belongs_to :repaid_ledger_item, class_name: "Ledger::Item", foreign_key: :ledger_item_id, inverse_of: :repayments
 
@@ -44,6 +49,11 @@ class Repayment < ApplicationRecord
          .where(status: :settled)
          .where("ledger_items.amount_cents < 0")
          .where("ledger_items.linked_object_type IS NULL OR ledger_items.linked_object_type NOT IN (?)", ["Disbursement::Outgoing", "Disbursement::Incoming"])
+  end
+
+  # Repayable items that no live repayment covers yet.
+  def self.unrepaid_ledger_items(event)
+    repayable_ledger_items(event).where.not(id: not_failed.select(:ledger_item_id))
   end
 
   validates :amount_cents, numericality: { greater_than: 0 }
@@ -70,7 +80,7 @@ class Repayment < ApplicationRecord
     transactions = repaid_transactions
     update!(previous_categories: transactions.to_h { |t| [snapshot_key(t), category_snapshot(t)] })
     transactions.each do |t|
-      TransactionCategoryService.new(model: t).set!(slug: "repayment", assignment_strategy: "manual")
+      TransactionCategoryService.new(model: t).set!(slug: CATEGORY_SLUG, assignment_strategy: "manual")
     end
   end
 
@@ -79,7 +89,7 @@ class Repayment < ApplicationRecord
   def revert_categories!
     repaid_transactions.each do |t|
       mapping = t.category_mapping
-      next unless mapping&.category&.slug == "repayment"
+      next unless mapping&.category&.slug == CATEGORY_SLUG
 
       previous = previous_categories[snapshot_key(t)]
       if previous.nil?

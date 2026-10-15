@@ -26,7 +26,6 @@ module DisbursementService
       destination_transaction_category_slug: nil,
       category_assignment_strategy: "manual",
       transfer_type: nil,
-      payment_category_slug: nil,
       repaid_ledger_item_id: nil
     )
       @source_event_id = source_event_id
@@ -47,7 +46,6 @@ module DisbursementService
       @destination_transaction_category_slug = destination_transaction_category_slug
       @category_assignment_strategy = category_assignment_strategy
       @transfer_type = transfer_type
-      @payment_category_slug = payment_category_slug
       @repaid_ledger_item = Ledger::Item.find(repaid_ledger_item_id) if repaid_ledger_item_id.present?
     end
 
@@ -155,14 +153,7 @@ module DisbursementService
     def validate_transfer_type!
       raise UserError, "Choose what kind of transfer this is." unless Disbursement.transfer_types.key?(@transfer_type)
 
-      case @transfer_type
-      when "payment"
-        unless Disbursement.payment_categories(admin: requested_by&.admin?).any? { |definition| definition.slug == @payment_category_slug }
-          raise UserError, "Choose what this payment is for."
-        end
-      when "repayment"
-        raise UserError, "Choose the transaction you're repaying." if @repaid_ledger_item.nil?
-      end
+      raise UserError, "Choose the transaction you're repaying." if @transfer_type == "repayment" && @repaid_ledger_item.nil?
     end
 
     # An explicit slug (from admins, or HCB-created transfers like card grants)
@@ -172,7 +163,6 @@ module DisbursementService
 
       case @transfer_type
       when "transfer" then "internal-transfer"
-      when "payment" then @payment_category_slug
       # The source takes on the expense, so it gets the expense's category.
       when "repayment" then Repayment.new(repaid_ledger_item: @repaid_ledger_item).repaid_category&.slug
       end
@@ -183,8 +173,7 @@ module DisbursementService
 
       case @transfer_type
       when "transfer" then "internal-transfer"
-      when "payment" then "internal-revenue"
-      when "repayment" then "repayment"
+      when "repayment" then Repayment::CATEGORY_SLUG
       end
     end
 

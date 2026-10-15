@@ -1,11 +1,8 @@
-<%# locals: (disbursement:, event: nil, source_event: nil) %>
+<%# locals: (disbursement:, event: nil, source_event: nil, repaid_ledger_item: nil) %>
 
 <% disabled = source_event.present? && !policy(source_event).create_transfer? %>
 
-<% repayable_url = repayable_transactions_disbursements_path %>
-<% repayable_src = disbursement.destination_event ? repayable_transactions_disbursements_path(destination_event_id: disbursement.destination_event.public_id) : repayable_url %>
-
-<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}" }, data: { controller: "transfer-type", transfer_type_repayable_url_value: repayable_url, action: "combobox:change->transfer-type#comboboxChanged submit->transfer-type#submit" }) do |form| %>
+<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}" }, data: { controller: "transfer-type", transfer_type_repayment_picker_outlet: "#repayment_picker", action: "combobox:change->transfer-type#comboboxChanged repayment-picker:select@document->transfer-type#repaymentPicked submit->transfer-type#submit" }) do |form| %>
   <%= form_errors(disbursement, "Disbursements") %>
 
   <div data-scroll-seek-target="section">
@@ -14,7 +11,7 @@
       <div class="field">
         <%= form.label :name, "What is the transfer for?" %>
         <span class="muted block mb-1">This is to help HCB keep record of our transactions.</span>
-        <%= form.text_field :name, placeholder: "Donating extra funds to another organization", maxlength: 60, required: true, class: "!max-w-full", disabled: %>
+        <%= form.text_field :name, placeholder: "Donating extra funds to another organization", maxlength: 60, required: true, class: "!max-w-full", disabled:, data: { transfer_type_target: "name" } %>
       </div>
 
       <%= render "events/transfers/attach_receipt", form:, disabled: %>
@@ -55,42 +52,50 @@
       <% repayable = disbursement.destination_event.nil? || policy(disbursement).repay? %>
       <p class="muted mt-0 mb-3" data-transfer-type-target="repaymentHint" <%= "hidden" if repayable %>>Only members of the organization you're sending to can repay its transactions.</p>
 
-      <div class="field field--options max-w-none !grid-cols-1 sm:!grid-cols-3 mb-0">
+      <div class="flex flex-col gap-2">
         <% [
-             ["repayment", "reimbursement", "Repayment", "Paying the other organization back for an expense they covered for you, like supplies bought on their card."],
-             ["payment", "payment", "Payment", "Paying the other organization for something they provided, like tickets, a venue, or services."],
-             ["transfer", "transfers-horizontal", "Transfer", "Sharing funds, like sending leftover money to another organization or funding a sub-organization."]
+             ["repayment", "payment", "Repayment", "Paying the other organization back for an expense they covered for you, like supplies bought on their card."],
+             ["transfer", "transfers-horizontal", "Internal transfer", "Sharing funds, like sending leftover money to another organization or funding a sub-organization."]
            ].each do |value, icon, title, description| %>
-          <%= form.radio_button :transfer_type, value,
-                                disabled: disabled || (value == "repayment" && !repayable),
-                                data: { action: "transfer-type#select", transfer_type_target: ("repaymentRadio" if value == "repayment") } %>
-          <%= form.label :transfer_type, value:, class: "justify-start" do %>
-            <%= inline_icon icon, size: 28 %>
-            <strong><%= title %></strong>
-            <small><%= description %></small>
-          <% end %>
+          <div>
+            <%= form.radio_button :transfer_type, value,
+                                  disabled: disabled || (value == "repayment" && !repayable),
+                                  class: "peer sr-only",
+                                  data: { action: "transfer-type#select", transfer_type_target: ("repaymentRadio" if value == "repayment") } %>
+            <%= form.label :transfer_type, value:, class: "flex items-center gap-4 m-0 p-4 rounded-lg border-2 border-solid border-smoke dark:border-slate cursor-pointer transition-colors hover:bg-blue/5 peer-checked:border-blue peer-checked:bg-blue/10 peer-focus-visible:ring-2 peer-focus-visible:ring-blue peer-disabled:cursor-not-allowed peer-disabled:opacity-50" do %>
+              <span class="flex items-center justify-center shrink-0 w-11 h-11 rounded-full bg-blue/10 text-blue">
+                <%= inline_icon icon, size: 26, class: "m-0" %>
+              </span>
+              <span class="flex flex-col gap-0.5 text-left">
+                <strong class="text-base"><%= title %></strong>
+                <span class="muted text-sm"><%= description %></span>
+              </span>
+            <% end %>
+          </div>
         <% end %>
-      </div>
-
-      <div data-transfer-type-target="panel" data-type="payment" hidden>
-        <div class="field mt-4 mb-0">
-          <%= form.label :payment_category_slug, "What are you paying for?" %>
-          <%= form.select(
-                :payment_category_slug,
-                Disbursement.payment_categories(admin: admin_signed_in?).map { |d| [d.label, d.slug] },
-                { include_blank: "Choose a category" },
-                required: true,
-                class: "!max-w-full"
-              ) %>
-        </div>
       </div>
 
       <div data-transfer-type-target="panel" data-type="repayment" hidden>
         <div class="field mt-4 mb-0">
-          <%= form.label :repaid_ledger_item_id, "Which of their transactions are you repaying?" %>
-          <%= combobox_tag form.field_name(:repaid_ledger_item_id), repayable_src,
-                           class: "!max-w-full",
-                           data: { transfer_type_target: "repaymentCombobox" } %>
+          <label for="repayment_picker_trigger">Which of their transactions are you repaying?</label>
+          <%= form.hidden_field :repaid_ledger_item_id,
+                                value: repaid_ledger_item&.hashid,
+                                data: { transfer_type_target: "repaidInput", amount: (format("%.2f", -repaid_ledger_item.amount_cents / 100.0) if repaid_ledger_item) } %>
+          <div class="flex items-center gap-3 p-3 rounded-lg border border-solid border-smoke dark:border-slate" data-transfer-type-target="repaidCard">
+            <div class="flex-1 min-w-0">
+              <p class="muted m-0" data-transfer-type-target="repaidEmpty" <%= "hidden" if repaid_ledger_item %>>No transaction chosen yet.</p>
+              <div data-transfer-type-target="repaidSummary" <%= "hidden" unless repaid_ledger_item %>>
+                <strong class="block truncate" data-transfer-type-target="repaidMemo"><%= repaid_ledger_item&.memo %></strong>
+                <span class="muted text-sm" data-transfer-type-target="repaidDate"><%= repaid_ledger_item&.datetime&.strftime("%b %e, %Y") %></span>
+              </div>
+            </div>
+            <strong class="shrink-0" data-transfer-type-target="repaidAmount" <%= "hidden" unless repaid_ledger_item %>><%= repaid_ledger_item&.amount&.abs&.format %></strong>
+            <button type="button" id="repayment_picker_trigger" class="btn btn-small shrink-0" data-behavior="modal_trigger" data-modal="repayment_picker">
+              <span data-transfer-type-target="chooseLabel" <%= "hidden" if repaid_ledger_item %>>Choose</span>
+              <span data-transfer-type-target="changeLabel" <%= "hidden" unless repaid_ledger_item %>>Change</span>
+            </button>
+          </div>
+          <p class="text-sm text-red mt-1 mb-0" role="alert" data-transfer-type-target="repaidError" hidden>Choose the transaction you're repaying.</p>
         </div>
       </div>
     </fieldset>
@@ -142,3 +147,5 @@
     </button>
   </div>
 <% end %>
+
+<%= render "disbursements/repayment_picker", destination_event: disbursement.destination_event %>

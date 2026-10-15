@@ -507,27 +507,6 @@ RSpec.describe DisbursementService::Create, "transfer types" do
     expect(categories(disbursement)).to eq(["internal-transfer", "internal-transfer"])
   end
 
-  it "categorizes a payment as the chosen category for the sender and internal revenue for the recipient" do
-    disbursement = create_disbursement(transfer_type: "payment", payment_category_slug: "venue")
-
-    expect(categories(disbursement)).to eq(["venue", "internal-revenue"])
-  end
-
-  it "requires a payment category that isn't HQ-only" do
-    expect { create_disbursement(transfer_type: "payment") }.to raise_error(DisbursementService::Create::UserError)
-    expect { create_disbursement(transfer_type: "payment", payment_category_slug: "hcb-revenue") }.to raise_error(DisbursementService::Create::UserError)
-  end
-
-  it "doesn't let a payment use a category the transfer types assign themselves, even for admins" do
-    requestor.update!(access_level: :admin)
-
-    %w[repayment internal-transfer internal-revenue].each do |slug|
-      expect {
-        create_disbursement(transfer_type: "payment", payment_category_slug: slug)
-      }.to raise_error(DisbursementService::Create::UserError, /what this payment is for/)
-    end
-  end
-
   describe "repayments" do
     let!(:expense) { create(:canonical_transaction, event: destination_event, amount_cents: -100_00, category_slug: "food-fun") }
 

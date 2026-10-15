@@ -258,14 +258,81 @@ RSpec.describe DisbursementsController do
       expect(disbursement.source_transaction_category.slug).to eq("food-fun")
     end
 
+    def listed_hashids
+      Nokogiri::HTML(response.body).css("[data-repayment-picker-id-param]").map { |row| row["data-repayment-picker-id-param"] }
+    end
+
     it "lists the destination's unrepaid expenses" do
       create(:canonical_transaction, event: destination_event, amount_cents: 50_00) # income
       create(:canonical_transaction, event: create(:event), amount_cents: -50_00) # another org
 
-      get(:repayable_transactions, params: { destination_event_id: destination_event.public_id }, format: :json)
+      get(:repayable_transactions, params: { destination_event_id: destination_event.public_id })
 
-      expect(response.parsed_body.pluck("value")).to eq([expense.ledger_item.hashid])
-      expect(response.parsed_body.first["amount"]).to eq("100.0")
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(%(<turbo-frame id="repayable_transactions">))
+      expect(listed_hashids).to eq([expense.ledger_item.hashid])
+      expect(response.body).to include(%(data-repayment-picker-amount-param="100.00"))
+    end
+
+    it "leaves out transactions that have already been repaid" do
+      post(:create, params: {
+             disbursement: {
+               name: "Paying back pizza",
+               source_event_id: source_event.public_id,
+               event_id: destination_event.public_id,
+               amount: "100.00",
+               transfer_type: "repayment",
+               repaid_ledger_item_id: expense.ledger_item.hashid
+             }
+           })
+
+      get(:repayable_transactions, params: { destination_event_id: destination_event.public_id })
+
+      expect(listed_hashids).to be_empty
+      expect(response.body).to include("No transactions to repay")
+    end
+
+    it "searches by memo" do
+      create(:canonical_transaction, event: destination_event, amount_cents: -20_00, memo: "Stickers")
+
+      get(:repayable_transactions, params: { destination_event_id: destination_event.public_id, q: "pizza" })
+
+      expect(listed_hashids).to eq([expense.ledger_item.hashid])
+    end
+
+    it "matches the exact amount when the search is a number" do
+      create(:canonical_transaction, event: destination_event, amount_cents: -20_00, memo: "Stickers")
+
+      get(:repayable_transactions, params: { destination_event_id: destination_event.public_id, q: "$100" })
+
+      expect(listed_hashids).to eq([expense.ledger_item.hashid])
+    end
+
+    it "filters by date range and category" do
+      expense.update!(date: Date.new(2026, 3, 10))
+      expense.ledger_item.update!(datetime: Date.new(2026, 3, 10))
+      stickers = create(:canonical_transaction, event: destination_event, amount_cents: -20_00, memo: "Stickers", date: Date.new(2026, 5, 1), category_slug: "finance")
+      stickers.ledger_item.update!(datetime: Date.new(2026, 5, 1))
+
+      get(:repayable_transactions, params: { destination_event_id: destination_event.public_id, start: "2026-03-01", end: "2026-03-10" })
+      expect(listed_hashids).to eq([expense.ledger_item.hashid])
+
+      get(:repayable_transactions, params: { destination_event_id: destination_event.public_id, category: "finance" })
+      expect(listed_hashids).to eq([stickers.ledger_item.hashid])
+    end
+
+    it "paginates" do
+      stub_const("DisbursementsController::REPAYABLE_TRANSACTIONS_PER_PAGE", 1)
+      create(:canonical_transaction, event: destination_event, amount_cents: -20_00, memo: "Stickers")
+
+      get(:repayable_transactions, params: { destination_event_id: destination_event.public_id, page: 1 })
+      page1 = listed_hashids
+      get(:repayable_transactions, params: { destination_event_id: destination_event.public_id, page: 2 })
+      page2 = listed_hashids
+
+      expect(page1.size).to eq(1)
+      expect(page2.size).to eq(1)
+      expect(page1 & page2).to be_empty
     end
 
     it "flags which recipients the user can repay" do
@@ -289,9 +356,60 @@ RSpec.describe DisbursementsController do
     it "lists nothing for organizations the user can't see" do
       sender.organizer_positions.find_by(event: destination_event).destroy!
 
-      get(:repayable_transactions, params: { destination_event_id: destination_event.public_id }, format: :json)
+      get(:repayable_transactions, params: { destination_event_id: destination_event.public_id })
 
-      expect(response.parsed_body).to eq([])
+      expect(listed_hashids).to be_empty
+      expect(response.body).not_to include("Pizza")
+    end
+
+    describe "#new" do
+      it "prefills a repayment of the transaction from \"Repay this\"" do
+        get(:new, params: { event_id: destination_event.slug, repaid_ledger_item_id: expense.ledger_item.hashid })
+
+        expect(response).to have_http_status(:ok)
+        page = Nokogiri::HTML(response.body)
+        expect(page.at_css("#disbursement_transfer_type_repayment")["checked"]).to eq("checked")
+        expect(page.at_css("#disbursement_repaid_ledger_item_id")["value"]).to eq(expense.ledger_item.hashid)
+        expect(page.at_css("#disbursement_repaid_ledger_item_id")["data-amount"]).to eq("100.00")
+        expect(page.at_css("#disbursement_amount")["value"]).to eq("100.0")
+        expect(page.at_css("#disbursement_name")["value"]).to eq("Repaying #{expense.ledger_item.memo}")
+      end
+
+      it "keeps a name that was passed in" do
+        get(:new, params: { event_id: destination_event.slug, repaid_ledger_item_id: expense.ledger_item.hashid, message: "Pizza night" })
+
+        expect(Nokogiri::HTML(response.body).at_css("#disbursement_name")["value"]).to eq("Pizza night")
+      end
+
+      it "ignores a transaction that can't be repaid" do
+        income = create(:canonical_transaction, event: destination_event, amount_cents: 50_00)
+
+        get(:new, params: { event_id: destination_event.slug, repaid_ledger_item_id: income.ledger_item.hashid })
+
+        expect(response).to have_http_status(:ok)
+        page = Nokogiri::HTML(response.body)
+        expect(page.at_css("#disbursement_transfer_type_repayment")["checked"]).to be_nil
+        expect(page.at_css("#disbursement_repaid_ledger_item_id")["value"]).to be_nil
+      end
+
+      it "ignores a transaction from another organization" do
+        elsewhere = create(:canonical_transaction, event: source_event, amount_cents: -50_00)
+
+        get(:new, params: { event_id: destination_event.slug, repaid_ledger_item_id: elsewhere.ledger_item.hashid })
+
+        expect(Nokogiri::HTML(response.body).at_css("#disbursement_repaid_ledger_item_id")["value"]).to be_nil
+      end
+
+      it "ignores the transaction when the user can't repay the organization" do
+        sender.update!(access_level: :auditor) # auditors can open the form for any organization
+        sender.organizer_positions.find_by(event: destination_event).destroy!
+
+        get(:new, params: { event_id: destination_event.slug, repaid_ledger_item_id: expense.ledger_item.hashid })
+
+        expect(response).to have_http_status(:ok)
+        expect(Nokogiri::HTML(response.body).at_css("#disbursement_repaid_ledger_item_id")["value"]).to be_nil
+        expect(response.body).not_to include("Repaying")
+      end
     end
   end
 end

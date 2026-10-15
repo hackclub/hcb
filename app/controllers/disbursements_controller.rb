@@ -49,6 +49,7 @@ class DisbursementsController < ApplicationController
     )
 
     authorize @disbursement
+    prefill_repayment
     render layout: "transfer"
   end
 
@@ -120,25 +121,24 @@ class DisbursementsController < ApplicationController
     render json: options
   end
 
-  # Expenses of the destination organization that the source can repay.
+  REPAYABLE_TRANSACTIONS_PER_PAGE = 25
+
+  # Expenses of the destination organization that the source can repay, as
+  # rows for the repayment picker.
   def repayable_transactions
     authorize Disbursement.new, :event_search?
-    event = Event.find_by_public_id(params[:destination_event_id])
-    return render(json: []) unless event && policy(Disbursement.new(destination_event: event)).repay?
+    @destination_event = Event.find_by_public_id(params[:destination_event_id])
 
-    items = Repayment.repayable_ledger_items(event)
-                     .where.not(id: Repayment.not_failed.select(:ledger_item_id))
-                     .order(datetime: :desc)
-    items = items.search_memo(params[:q]) if params[:q].present?
+    @items = if @destination_event && policy(Disbursement.new(destination_event: @destination_event)).repay?
+               repayable_transactions_query
+                 .execute(ledgers: [@destination_event.ledger])
+                 .where(id: Repayment.unrepaid_ledger_items(@destination_event).select(:id))
+             else
+               Ledger::Item.none
+             end
+    @items = @items.page(params[:page]).per(REPAYABLE_TRANSACTIONS_PER_PAGE)
 
-    render json: combobox_page(items).map { |item|
-      {
-        value: item.hashid,
-        label: item.memo,
-        sublabel: "#{helpers.render_money(-item.amount_cents)} · #{item.datetime.strftime("%b %-d, %Y")}",
-        amount: (-item.amount_cents / 100.0).to_s
-      }
-    }
+    render layout: false
   end
 
   def create
@@ -180,7 +180,6 @@ class DisbursementsController < ApplicationController
       destination_transaction_category_slug:,
       category_assignment_strategy:,
       transfer_type:,
-      payment_category_slug: disbursement_params[:payment_category_slug],
       repaid_ledger_item_id: repaid_ledger_item&.id
     ).run
 
@@ -298,6 +297,47 @@ class DisbursementsController < ApplicationController
 
   private
 
+  # "Repay this" on a transaction links here with the transaction picked. Links
+  # can go stale (the transaction gets repaid, or the user loses access), so an
+  # item that can't be repaid is dropped rather than raised on.
+  def prefill_repayment
+    return unless @destination_event && params[:repaid_ledger_item_id].present?
+    return unless policy(Disbursement.new(destination_event: @destination_event)).repay?
+
+    @repaid_ledger_item = Repayment.unrepaid_ledger_items(@destination_event).find_by_hashid(params[:repaid_ledger_item_id])
+    return unless @repaid_ledger_item
+
+    @disbursement.transfer_type = :repayment
+    @disbursement.amount = -@repaid_ledger_item.amount_cents
+    @disbursement.name = "Repaying #{@repaid_ledger_item.memo}".truncate(60) if @disbursement.name.blank?
+  end
+
+  def repayable_transactions_query
+    query = []
+
+    if params[:q].present?
+      search = [{ memo: { "$search": params[:q] } }]
+      # Memos repeat ("AMZN Mktp"), so a number also matches the exact amount.
+      amount = params[:q].strip.delete("$,")
+      search << { amount_cents: -(BigDecimal(amount) * 100).to_i } if amount.match?(/\A\d+(\.\d{1,2})?\z/)
+      query << { "$or": search }
+    end
+
+    start_date = date_param(:start)
+    end_date = date_param(:end)
+    query << { datetime: { "$gte": start_date } } if start_date
+    query << { datetime: { "$lt": end_date.next_day } } if end_date
+    query << { category: { "$eq": params[:category] } } if params[:category].present?
+
+    Ledger::Query.new({ "$and": query })
+  end
+
+  def date_param(name)
+    Date.iso8601(params[name]) if params[name].present?
+  rescue Date::Error, TypeError
+    nil
+  end
+
   # Only allow a trusted parameter "white list" through.
   def disbursement_params
     attributes = [
@@ -307,7 +347,6 @@ class DisbursementsController < ApplicationController
       :name,
       :scheduled_on,
       :transfer_type,
-      :payment_category_slug,
       :repaid_ledger_item_id,
       { file: [] }
     ]

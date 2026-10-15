@@ -142,6 +142,8 @@ RSpec.describe WiresController do
       expect(disbursement.source_event).to eq(event)
       expect(disbursement.destination_event.id).to eq(EventMappingEngine::EventIds::HACK_CLUB_BANK)
       expect(disbursement.amount).to eq(25_00)
+      expect(disbursement.source_transaction_category.slug).to eq("bank-fees")
+      expect(disbursement.destination_transaction_category.slug).to eq("internal-revenue")
 
       comment = disbursement.comments.sole
       expect(comment.user).to eq(admin)

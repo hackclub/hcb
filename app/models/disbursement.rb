@@ -129,19 +129,8 @@ class Disbursement < ApplicationRecord
 
   # What the transfer is for. Decides how each side is categorized. Nil only
   # on transfers made before types existed.
-  enum :transfer_type, { transfer: "transfer", payment: "payment", repayment: "repayment" }, prefix: true, validate: { allow_nil: true }
+  enum :transfer_type, { transfer: "transfer", repayment: "repayment" }, prefix: true, validate: { allow_nil: true }
   validates :transfer_type, presence: true, on: :create
-
-  # Categories the transfer types assign themselves, so they can't be picked
-  # as what a payment is for.
-  TRANSFER_TYPE_CATEGORY_SLUGS = %w[internal-transfer internal-revenue repayment].freeze
-
-  # What a payment can be for.
-  def self.payment_categories(admin: false)
-    TransactionCategory::Definition::ALL.values.reject do |definition|
-      definition.slug.in?(TRANSFER_TYPE_CATEGORY_SLUGS) || (definition.hq_only? && !admin)
-    end
-  end
 
   validates_presence_of :source_event_id,
                         :event_id,

@@ -28,16 +28,6 @@ RSpec.describe Api::V4::DisbursementsController do
     expect(Disbursement.last.source_transaction_category.slug).to eq("internal-transfer")
   end
 
-  it "makes a payment" do
-    create_transfer(transfer_type: "payment", payment_category_slug: "venue")
-
-    expect(response).to have_http_status(:created)
-    disbursement = Disbursement.last
-    expect(disbursement).to be_transfer_type_payment
-    expect(disbursement.source_transaction_category.slug).to eq("venue")
-    expect(disbursement.destination_transaction_category.slug).to eq("internal-revenue")
-  end
-
   it "makes a repayment of a transaction on the destination" do
     expense = create(:canonical_transaction, event: destination_event, amount_cents: -100_00, category_slug: "food-fun")
 

@@ -9,14 +9,31 @@ export default class extends Controller {
     'section',
     'hint',
     'panel',
-    'repaymentCombobox',
     'repaymentRadio',
     'repaymentHint',
     'amount',
+    'repaidInput',
+    'repaidCard',
+    'repaidEmpty',
+    'repaidSummary',
+    'repaidMemo',
+    'repaidDate',
+    'repaidAmount',
+    'chooseLabel',
+    'changeLabel',
+    'repaidError',
+    'name',
   ]
-  static values = { repayableUrl: String }
+  static outlets = ['repayment-picker']
 
   connect() {
+    // Set when the page opens with a transaction already picked.
+    this.repaidAmount = this.repaidInputTarget.dataset.amount || null
+    // A name the server filled in from the picked transaction still follows
+    // the pick until the user edits it.
+    const memo = this.repaidMemoTarget.textContent.trim()
+    if (memo && this.nameTarget.value === this.repaymentName(memo))
+      this.autofilledName = this.nameTarget.value
     this.select()
   }
 
@@ -44,23 +61,55 @@ export default class extends Controller {
     this.amountTarget.readOnly = locked
   }
 
+  repaymentPicked({ detail }) {
+    this.setRepaid(detail)
+  }
+
+  setRepaid(transaction) {
+    this.repaidInputTarget.value = transaction?.id || ''
+    this.repaidAmount = transaction?.amount ?? null
+
+    this.repaidEmptyTarget.hidden = !!transaction
+    this.repaidSummaryTarget.hidden = !transaction
+    this.repaidAmountTarget.hidden = !transaction
+    this.chooseLabelTarget.hidden = !!transaction
+    this.changeLabelTarget.hidden = !transaction
+    this.repaidMemoTarget.textContent = transaction?.memo || ''
+    this.repaidDateTarget.textContent = transaction?.date || ''
+    this.repaidAmountTarget.textContent = transaction?.amountLabel || ''
+    if (transaction) this.repaidErrorTarget.hidden = true
+
+    this.fillName(transaction)
+    this.lockAmount()
+  }
+
+  // Names the transfer after what it repays, unless the user wrote their own.
+  fillName(transaction) {
+    const name = this.nameTarget.value
+    if (name && name !== this.autofilledName) return
+
+    this.autofilledName = transaction
+      ? this.repaymentName(transaction.memo)
+      : ''
+    this.nameTarget.value = this.autofilledName
+  }
+
+  // Matches the server's default, which is cut to the field's 60 characters.
+  repaymentName(memo) {
+    const name = `Repaying ${memo}`
+    return name.length > 60 ? `${name.slice(0, 57)}...` : name
+  }
+
   comboboxChanged({ target, detail: { option } }) {
-    if (target === this.repaymentComboboxTarget) {
-      target.querySelector('input[role="combobox"]').setCustomValidity('')
-      this.repaidAmount = option?.amount
-      this.lockAmount()
-    } else if (target.querySelector('input[name="disbursement[event_id]"]')) {
-      // A new destination means a new set of transactions to pick from.
-      const url = new URL(this.repayableUrlValue, window.location.origin)
-      if (option) url.searchParams.set('destination_event_id', option.value)
-      this.repaymentComboboxTarget.dataset.comboboxUrlValue = url.toString()
-      this.repaymentCombobox?.clear()
-      this.repaidAmount = null
-      this.lockAmount()
-      this.sectionTarget.disabled = !option
-      this.hintTarget.hidden = !!option
-      this.setRepayable(option?.repayable !== false)
-    }
+    if (!target.querySelector('input[name="disbursement[event_id]"]')) return
+
+    // A new destination means a new set of transactions to pick from.
+    this.setRepaid(null)
+    if (this.hasRepaymentPickerOutlet)
+      this.repaymentPickerOutlet.setDestination(option?.value)
+    this.sectionTarget.disabled = !option
+    this.hintTarget.hidden = !!option
+    this.setRepayable(option?.repayable !== false)
   }
 
   // Only members of the recipient can see, and so repay, its transactions.
@@ -82,24 +131,15 @@ export default class extends Controller {
       return
     }
 
-    const input = this.repaymentComboboxTarget.querySelector(
-      'input[role="combobox"]'
-    )
-    const missing =
-      this.type === 'repayment' && !this.repaymentCombobox?.selectedValue
-    input.setCustomValidity(
-      missing ? "Choose the transaction you're repaying." : ''
-    )
+    // The pick lives in a hidden field, which the browser won't validate.
+    const missing = this.type === 'repayment' && !this.repaidInputTarget.value
+    this.repaidErrorTarget.hidden = !missing
     if (missing) {
       event.preventDefault()
-      input.reportValidity()
+      this.repaidCardTarget.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
     }
-  }
-
-  get repaymentCombobox() {
-    return this.application.getControllerForElementAndIdentifier(
-      this.repaymentComboboxTarget,
-      'combobox'
-    )
   }
 }
