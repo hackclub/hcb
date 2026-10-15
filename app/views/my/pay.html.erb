@@ -39,6 +39,11 @@
         Configure payouts
       <% end %>
     <% end %>
+
+    <%= link_to settings_tax_path(legal_entity_id: @legal_entity.id), class: "btn" do %>
+      <%= inline_icon "person" %>
+      Tax information
+    <% end %>
   </div>
 </h1>
 
