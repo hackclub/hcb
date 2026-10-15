@@ -17,9 +17,15 @@ RSpec.describe "public_activity/raw_pending_stripe_transaction/_create", type: :
     allow(transaction).to receive(:try).with(:hcb_code).and_return(nil)
   end
 
-  def render_activity
-    render partial: "public_activity/raw_pending_stripe_transaction/create", locals: { activity:, p: { current_user: viewer } }
-    Nokogiri::HTML.fragment(rendered)
+  def render_activity(current_viewer = viewer)
+    controller = EventsController.new
+    controller.set_request!(ActionDispatch::TestRequest.create)
+    allow(controller).to receive(:current_user).and_return(current_viewer)
+    html = controller.view_context.render(
+      partial: "public_activity/raw_pending_stripe_transaction/create",
+      locals: { activity:, p: { current_user: current_viewer } }
+    )
+    Nokogiri::HTML.fragment(html)
   end
 
   it "links the specific card for organization readers and leaves the transaction link intact" do
@@ -43,13 +49,13 @@ RSpec.describe "public_activity/raw_pending_stripe_transaction/_create", type: :
   end
 
   it "leaves card as plain text for anonymous viewers" do
-    render partial: "public_activity/raw_pending_stripe_transaction/create", locals: { activity:, p: {} }
-    expect(Nokogiri::HTML.fragment(rendered).at_css("a[aria-label='View card']")).to be_nil
+    expect(render_activity(nil).at_css("a[aria-label='View card']")).to be_nil
   end
 
   it "renders missing cards without a broken link" do
     allow(transaction).to receive(:stripe_card).and_return(nil)
-    expect(render_activity.text.squish).to include("card was declined for $16.23")
-    expect(Nokogiri::HTML.fragment(rendered).at_css("a[aria-label='View card']")).to be_nil
+    document = render_activity
+    expect(document.text.squish).to include("card was declined for $16.23")
+    expect(document.at_css("a[aria-label='View card']")).to be_nil
   end
 end

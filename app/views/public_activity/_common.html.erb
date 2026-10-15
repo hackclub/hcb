@@ -27,7 +27,7 @@
             <%= inline_icon "link", width: 20, class: "muted ml-[-4px] mr-[2px]" %>
           <% end %>
         <% end %>
-        <% if local_assigns[:card] && Pundit.policy(current_user, card).show? %>
+        <% if local_assigns[:card] && policy(card).show? %>
           <%= link_to stripe_card_path(card), class: "flex items-center mr-1", aria: { label: "View card" }, data: { turbo_frame: "_top" } do %>
             <%= inline_icon "card", width: 20, class: "muted", "aria-hidden": true %>
           <% end %>
