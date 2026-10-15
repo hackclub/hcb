@@ -68,6 +68,8 @@ class HcbCode < ApplicationRecord
 
   belongs_to :ledger_item, class_name: "Ledger::Item", optional: true, touch: true
 
+  belongs_to :subscription, optional: true, inverse_of: :hcb_codes
+
   # Card-locking scopes, columns, and the materializer. See the concern.
   include CardLocking::ChargeBehavior
 
@@ -312,6 +314,16 @@ class HcbCode < ApplicationRecord
 
   def stripe_merchant
     pt&.raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_data") || raw_stripe_transaction.stripe_transaction["merchant_data"]
+  end
+
+  # The card merchant as { network_id:, name: }, or nil when there's no Stripe
+  # transaction to read it from. Unlike stripe_merchant, never raises.
+  def subscription_merchant
+    merchant = pt&.raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_data") ||
+               raw_stripe_transaction&.stripe_transaction&.dig("merchant_data")
+    return if merchant.blank?
+
+    { network_id: merchant["network_id"].presence, name: merchant["name"].presence }
   end
 
   def stripe_merchant_currency

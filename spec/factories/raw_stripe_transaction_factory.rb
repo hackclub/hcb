@@ -8,6 +8,10 @@ FactoryBot.define do
       sequence(:stripe_transaction_id) { |n| "ipi_#{n}" }
       stripe_card { create(:stripe_card, :with_stripe_id) }
       stripe_merchant_category { "bakeries" }
+      stripe_merchant_name { Faker::Company.name }
+      stripe_merchant_network_id { nil }
+      stripe_merchant_category_code { nil }
+      stripe_created { nil }
     end
 
     stripe_transaction do
@@ -17,11 +21,14 @@ FactoryBot.define do
         "type"          => "capture",
         "amount"        => -amount_cents,
         "cardholder"    => stripe_card.stripe_cardholder.id,
+        "created"       => stripe_created,
         "merchant_data" => {
-          "name"     => Faker::Company.name,
-          "category" => stripe_merchant_category,
-        },
-      }
+          "name"          => stripe_merchant_name,
+          "category"      => stripe_merchant_category,
+          "category_code" => stripe_merchant_category_code,
+          "network_id"    => stripe_merchant_network_id,
+        }.compact,
+      }.compact
     end
   end
 end
