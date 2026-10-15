@@ -41,6 +41,14 @@ module HasWiseRecipient
 
       fields << {
         type: :text_field,
+        key: "recipient_birthday",
+        placeholder: "MM/DD/YYYY",
+        label: "Recipient's date of birth",
+        pattern: "\\d{2}/\\d{2}/\\d{4}"
+      }
+
+      fields << {
+        type: :text_field,
         key: "bank_name",
         placeholder: "Silicon Valley Bank",
         label: "Name of financial institution"
@@ -88,7 +96,6 @@ module HasWiseRecipient
         fields << { type: :select, key: "account_type", label: "Account type", options: { "M-PESA": "mpesa", "Bank Account": " bank_account" } }
         fields << ACCOUNT_NUMBER_FIELD
       elsif currency == "KRW"
-        fields << { type: :date_field, key: "recipient_birthday", label: "Recipient's date of birth" }
         fields << ACCOUNT_NUMBER_FIELD
       elsif currency == "LKR"
         fields << { type: :text_field, key: "branch_name", label: "Branch name" }
@@ -111,7 +118,6 @@ module HasWiseRecipient
         fields << { type: :text_field, key: "institution_number", label: "Bank code (BIC/SWIFT)", placeholder: "AAAA-BB-CC-123" }
         fields << ACCOUNT_NUMBER_FIELD
       elsif currency == "ZAR"
-        fields << { type: :date_field, key: "recipient_birthday", label: "Recipient's date of birth" }
         fields << ACCOUNT_NUMBER_FIELD
       end
       return fields
