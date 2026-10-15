@@ -155,3 +155,27 @@ To gate an action behind a new scope:
 ## Admin Scopes
 
 See [Admin Access in standards.md](./standards.md#admin-access) for the full treatment.
+
+### Freeze an Organization
+
+`POST /api/v4/organizations/:id/freeze` financially freezes the specified organization,
+including a sub-organization. `:id` accepts an organization public ID or slug. No request
+body is required.
+
+The token must carry `admin:write` and belong to an admin or superadmin. This requirement
+applies to both restricted and legacy tokens. `admin:read` is not required.
+
+```bash
+curl -X POST https://hcb.hackclub.com/api/v4/organizations/org_abc123/freeze \
+  -H "Authorization: Bearer hcb_<token>"
+```
+
+Returns `200 OK` with the organization object and `financially_frozen: true`. Repeating
+the request for an already frozen organization also succeeds. The action uses the same
+financial-freeze flag as the admin settings page and only changes the specified
+organization; it does not recursively freeze its parent, siblings, or sub-organizations.
+
+Errors follow the standard API format: `401 invalid_auth` for a missing, invalid,
+expired, or revoked token; `403 not_authorized` for a missing scope or insufficient user
+privileges; `404 resource_not_found` for an unknown organization; and `400 invalid_record`
+if validation fails.
