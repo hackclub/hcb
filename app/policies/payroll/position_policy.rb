@@ -11,11 +11,11 @@ module Payroll
     # Inviting a contractor is starting a transfer against an event with the
     # contractors feature enabled.
     def new?
-      event_policy.contractors? && event_policy.new_transfer? && !event.financially_frozen?
+      event_policy.contractors? && event_policy.new_transfer? && !event_policy.record.financially_frozen?
     end
 
     def create?
-      event_policy.contractors? && event_policy.create_transfer? && !event.financially_frozen?
+      event_policy.contractors? && event_policy.create_transfer? && !event_policy.record.financially_frozen?
     end
 
     # Editing the position requires the same permission as creating a
@@ -65,11 +65,8 @@ module Payroll
 
     private
 
-    def event
-      record.is_a?(Payroll::Position) ? record.event : record
-    end
-
     def event_policy
+      event = record.is_a?(Payroll::Position) ? record.event : record
       EventPolicy.new(user, event)
     end
 
