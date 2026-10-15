@@ -801,12 +801,14 @@ class AdminController < Admin::BaseController
 
   def increase_check_process
     @check = IncreaseCheck.find(params[:id])
-    approval_attempt = Governance::Admin::Transfer::ApprovalAttempt.where(
-      transfer_id: @check.id,
-      transfer_type: "IncreaseCheck",
-      result: Governance::Admin::Transfer::ApprovalAttempt::SUCCESSFUL_RESULTS
-    ).order(created_at: :desc).first
-    @approver = approval_attempt&.user
+    if !@check.pending?
+      approval_attempt = Governance::Admin::Transfer::ApprovalAttempt.where(
+        transfer_id: @check.id,
+        transfer_type: "IncreaseCheck",
+        result: Governance::Admin::Transfer::ApprovalAttempt::SUCCESSFUL_RESULTS
+      ).order(created_at: :desc).first
+      @approver = approval_attempt&.user
+    end
   end
 
   def paypal_transfers
