@@ -806,11 +806,7 @@ class AdminController < Admin::BaseController
       transfer_type: "IncreaseCheck",
       result: Governance::Admin::Transfer::ApprovalAttempt::SUCCESSFUL_RESULTS
     ).order(created_at: :desc).first
-    if approval_attempt.present? && approval_attempt.successful?
-      @approver = approval_attempt.user
-    else
-      @approver = nil
-    end
+    @approver = approval_attempt&.user
   end
 
   def paypal_transfers
@@ -924,11 +920,7 @@ class AdminController < Admin::BaseController
         transfer_type: "Wire",
         result: Governance::Admin::Transfer::ApprovalAttempt::SUCCESSFUL_RESULTS
       ).order(created_at: :desc).first
-      if approval_attempt.present? && approval_attempt.successful?
-        @approver = approval_attempt.user
-      else
-        @approver = nil
-      end
+      @approver = approval_attempt&.user
     end
   end
 
