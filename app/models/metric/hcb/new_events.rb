@@ -31,7 +31,6 @@ class Metric
       def calculate
         ::Event.not_omitted
                .not_hidden
-               .not_demo_mode
                .approved
                .where("EXTRACT(YEAR FROM events.created_at) = ?", Metric.year)
                .count

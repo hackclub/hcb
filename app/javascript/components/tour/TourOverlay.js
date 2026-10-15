@@ -9,43 +9,33 @@ const tours = {
 
     const isMobile = window.matchMedia('(max-width: 56em)').matches
 
-    if (options.initial || options.demo) {
+    if (options.initial) {
       steps.push({
         attachTo: 'invite',
-        text: `Invite others to your ${
-          options.demo ? 'demo' : 'new'
-        } organization. It's like multiplayer banking!`,
+        text: "Invite others to your new organization. It's like multiplayer banking!",
         placement: isMobile ? 'bottom' : 'right',
       })
     }
 
-    if (!options.demo) {
-      steps.push({
-        attachTo: isMobile ? 'spend' : 'cards',
-        text: 'Instantly issue a virtual HCB card for yourself. Gotta spend that 💸!',
-        placement: isMobile ? 'top' : 'right',
-        strategy: 'fixed',
-      })
+    steps.push({
+      attachTo: isMobile ? 'spend' : 'cards',
+      text: 'Instantly issue a virtual HCB card for yourself. Gotta spend that 💸!',
+      placement: isMobile ? 'top' : 'right',
+      strategy: 'fixed',
+    })
 
-      steps.push({
-        attachTo: isMobile ? 'receive' : 'donations',
-        text: 'Share your donation form with others and embed it on your website.',
-        placement: isMobile ? 'top-end' : 'right',
-        strategy: 'fixed',
-      })
+    steps.push({
+      attachTo: isMobile ? 'receive' : 'donations',
+      text: 'Share your donation form with others and embed it on your website.',
+      placement: isMobile ? 'top-end' : 'right',
+      strategy: 'fixed',
+    })
 
-      if (!isMobile) {
-        steps.push({
-          attachTo: 'perks',
-          text: 'Get access to free tools for things like sending newsletters and managing team passwords. Stickers included.',
-          strategy: 'fixed',
-        })
-      }
-    } else {
+    if (!isMobile) {
       steps.push({
-        attachTo: 'playground_mode',
-        text: "You're in Playground Mode— an HCB staff member will reach out shortly to get you set up.",
-        placement: 'bottom',
+        attachTo: 'perks',
+        text: 'Get access to free tools for things like sending newsletters and managing team passwords. Stickers included.',
+        strategy: 'fixed',
       })
     }
 

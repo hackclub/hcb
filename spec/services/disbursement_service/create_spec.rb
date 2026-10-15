@@ -266,42 +266,6 @@ RSpec.describe DisbursementService::Create do
   end
 
   describe "edge cases" do
-    it "raises error for demo destination event" do
-      requestor = create(:user)
-      source_event = create(:event, :with_positive_balance)
-      create(:organizer_position, event: source_event, user: requestor)
-
-      demo_event = create(:event, :demo_mode)
-
-      expect {
-        described_class.new(
-          name: "Demo Transfer",
-          amount: "100.00",
-          requested_by_id: requestor.id,
-          source_event_id: source_event.id,
-          destination_event_id: demo_event.id,
-        ).run
-      }.to raise_error(ActiveRecord::RecordInvalid, /cannot be a demo event/)
-    end
-
-    it "raises error for demo source event" do
-      requestor = create(:user)
-      demo_event = create(:event, :demo_mode, :with_positive_balance)
-      create(:organizer_position, event: demo_event, user: requestor)
-
-      destination_event = create(:event)
-
-      expect {
-        described_class.new(
-          name: "Demo Transfer",
-          amount: "100.00",
-          requested_by_id: requestor.id,
-          source_event_id: demo_event.id,
-          destination_event_id: destination_event.id,
-        ).run
-      }.to raise_error(ActiveRecord::RecordInvalid, /cannot be a demo event/)
-    end
-
     it "raises error for frozen source event" do
       requestor = create(:user)
       frozen_event = create(:event, :with_positive_balance)

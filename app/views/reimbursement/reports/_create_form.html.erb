@@ -103,7 +103,7 @@
         <%= form.hidden_field :receipt_id, value: receipt.id %>
       <% end %>
     <% end %>
-    <div class="tooltipped tooltipped--e inline-block" aria-label="<%= @event&.demo_mode? ? "You don't have access to this feature at the moment." : "This will start your reimbursement report." %>">
+    <div class="tooltipped tooltipped--e inline-block" aria-label="This will start your reimbursement report.">
       <%= form.submit "Start report", class: "mt2", disabled: @event && !policy(@event.reimbursement_reports.build).create? %>
     </div>
   <% end %>

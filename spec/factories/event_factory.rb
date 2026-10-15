@@ -33,10 +33,6 @@ FactoryBot.define do
       end
     end
 
-    trait :demo_mode do
-      demo_mode { true }
-    end
-
     trait :card_grant_event do
       association :card_grant_setting
     end

@@ -130,7 +130,7 @@
     <%= form.text_field :email, class: "mt1", placeholder: "Enter this contractor's email", required: true %>
     <%= form.hidden_field :event_id, value: @event.id %>
     <div class="inline-block">
-      <%= form.submit "Send invitation", class: "mt2", disabled: @event&.demo_mode? %>
+      <%= form.submit "Send invitation", class: "mt2" %>
     </div>
   <% end %>
 </section>

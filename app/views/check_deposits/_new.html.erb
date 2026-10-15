@@ -28,10 +28,6 @@
   </div>
 
   <div class="actions">
-    <% if event.demo_mode? %>
-      <%= form.submit "Unavailable in Playground Mode", disabled: true %>
-    <% else %>
       <%= form.submit "Submit deposit", disabled:, class: "shrink-0", data: { disable_with: "Uploading..." } %>
-    <% end %>
   </div>
 <% end %>

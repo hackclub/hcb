@@ -10,7 +10,7 @@ class AchTransferPolicy < ApplicationPolicy
   end
 
   def create?
-    user_who_can_transfer? && !record.event.demo_mode
+    user_who_can_transfer?
   end
 
   def show?

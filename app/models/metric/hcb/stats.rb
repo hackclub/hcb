@@ -58,7 +58,6 @@ class Metric
           date: now,
           events_count: ::Event.not_omitted
                                .not_hidden
-                               .not_demo_mode
                                .approved
                                .where("events.created_at <= ?", now)
                                .count,

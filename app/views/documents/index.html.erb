@@ -25,7 +25,7 @@
   <div class="grid-row text">
     <h3>General documents</h3>
     <div class="grid grid-cols-3 gap-4">
-      <% if @event.approved? && !@event.demo_mode? %>
+      <% if @event.approved? %>
         <%= link_to event_verification_letter_path(event_id: @event.slug, format: "pdf") do %>
           <li class="card card--hover h-100">
             <div class="overflow-hidden" style="max-height: 250px;">

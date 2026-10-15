@@ -7,9 +7,7 @@
 <% end %>
 
 <% content_for(:nav) do %>
-  <% if !@event&.demo_mode? %>
     <%= render partial: "hcb_codes/create_tag", locals: { button: false } %>
-  <% end %>
 
   <nav class="dock flex mt-4 font-medium">
     <% events_nav(@event, selected: local_assigns[:selected]).each do |item| %>

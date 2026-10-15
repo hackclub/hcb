@@ -103,11 +103,6 @@
       </div>
 
       <div class="field field--checkbox">
-        <%= form.label :demo_mode, "Is in Playground Mode?" %>
-        <%= form.check_box :demo_mode, switch: true, disabled: %>
-      </div>
-
-      <div class="field field--checkbox">
         <%= form.label :financially_frozen, "Is financially frozen? ⚠️ 🚨#{" (⚠️ has active recurring donations - please handle before freezing)" if event.recurring_donations.active.exists?}" %>
         <%= form.check_box :financially_frozen, switch: true, disabled: %>
       </div>
@@ -221,15 +216,6 @@
 
   <% admin_tool "p-3" do %>
     <%= render "events/settings/admin/tags", event: %>
-  <% end %>
-
-  <% admin_tool "p-3" do %>
-    <%= button_to "Delete organization", event_path(event), method: :delete, class: "btn bg-error", disabled: !event.demo_mode?, data: { turbo_confirm: "⚠️ Are you sure you'd like to delete this organization?", turbo_confirm_danger: true } %>
-    <% unless event.demo_mode? %>
-      <p class="h5 muted mt0 mb1">
-        Only demo accounts can be deleted.
-      </p>
-    <% end %>
   <% end %>
 
   <% admin_tool "p-3" do %>

@@ -9,7 +9,7 @@
       <% if !event.plan.promotions_enabled? %>
         <% fee_waiver_ineligible_reason = "Perks are not available for #{event.plan.label} organizations" %>
       <% elsif !perks_available %>
-        <% fee_waiver_ineligible_reason = "You must be a manager and organization must not be in demo mode" %>
+        <% fee_waiver_ineligible_reason = "You must be a manager" %>
       <% end %>
 
       <% if fee_waiver_ineligible_reason %>

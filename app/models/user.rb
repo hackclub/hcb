@@ -689,7 +689,7 @@ class User < ApplicationRecord
   end
 
   def reimbursement_event_options
-    events.not_demo_mode.or(Event.where(id: reimbursement_events.where(public_reimbursement_page_enabled: true).select(:id))).uniq.pluck(:name, :id)
+    events.or(Event.where(id: reimbursement_events.where(public_reimbursement_page_enabled: true).select(:id))).uniq.pluck(:name, :id)
   end
 
   def show_first_dashboard?

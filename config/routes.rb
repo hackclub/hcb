@@ -985,7 +985,7 @@ Rails.application.routes.draw do
   resources :affiliations, only: [:create, :update, :destroy], module: :event
 
   get "/events" => "events#index"
-  resources :events, except: [:new, :create, :edit], concerns: :commentable, path: "/" do
+  resources :events, except: [:new, :create, :edit, :destroy], concerns: :commentable, path: "/" do
 
     # Loaded as Turbo frames on the home page
     get :team_stats
@@ -1078,8 +1078,6 @@ Rails.application.routes.draw do
     get "sub_organizations"
     get "sub_organizations/new", to: "suborganizations#new", as: :new_sub_organization
     get "donations", to: "events#donation_overview", as: :donation_overview
-    get "activation_flow", to: "events#activation_flow", as: :activation_flow
-    post "activate", to: "events#activate", as: :activate
     resources :disbursements, only: [:new, :create]
     resources :increase_checks, only: [:new, :create], path: "checks"
     resources :fees, only: [:create]

@@ -85,10 +85,6 @@ class EventPolicy < ApplicationPolicy
     admin_or_member?
   end
 
-  def destroy?
-    user&.admin? && record.demo_mode?
-  end
-
   def team?
     is_public || auditor_or_reader?
   end
@@ -118,7 +114,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def create_stripe_card?
-    admin_or_member? && is_not_demo_mode?
+    admin_or_member?
   end
 
   def documentation?
@@ -146,23 +142,23 @@ class EventPolicy < ApplicationPolicy
   end
 
   def create_transfer?
-    admin_or_manager? && !record.demo_mode?
+    admin_or_manager?
   end
 
   def new_transfer?
-    auditor_or_reader? && !record.demo_mode?
+    auditor_or_reader?
   end
 
   def g_suite_overview?
-    auditor_or_reader? && is_not_demo_mode? && record.plan.google_workspace_enabled?
+    auditor_or_reader? && record.plan.google_workspace_enabled?
   end
 
   def g_suite_create?
-    admin_or_manager? && is_not_demo_mode? && record.plan.google_workspace_enabled?
+    admin_or_manager? && record.plan.google_workspace_enabled?
   end
 
   def g_suite_verify?
-    auditor_or_reader? && is_not_demo_mode? && record.plan.google_workspace_enabled?
+    auditor_or_reader? && record.plan.google_workspace_enabled?
   end
 
   def transfers?
@@ -280,14 +276,6 @@ class EventPolicy < ApplicationPolicy
     user&.admin?
   end
 
-  def activation_flow?
-    user&.admin? && record.demo_mode?
-  end
-
-  def activate?
-    user&.admin? && record.demo_mode?
-  end
-
   def toggle_scoped_tag?
     admin_or_manager?
   end
@@ -352,10 +340,6 @@ class EventPolicy < ApplicationPolicy
 
   def admin_or_reader?
     admin? || reader?
-  end
-
-  def is_not_demo_mode?
-    !record.demo_mode?
   end
 
   def is_public

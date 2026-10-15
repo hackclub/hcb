@@ -46,21 +46,8 @@
 
   <%= form.hidden_field :event_id, value: @event.id %>
 
-  <% if @event.demo_mode? %>
-    <%= form.submit "Continue →", class: "w-100 bg-success", disabled: "true" %>
-  <% else %>
     <%= form.submit "Continue →", class: "w-100 bg-success" %>
-  <% end %>
 <% end %>
 
-<% if @event.demo_mode? %>
-  <div class="container container--sm">
-    <div class="card border b--info mt3 mb3 pb0 pt0 public-message">
-      <p>
-        Your account is in Playground Mode. Reimbursements are only supported for activated accounts.
-      </p>
-    </div>
-  </div>
-<% end %>
 
 <%= render "events/landing/footer" %>

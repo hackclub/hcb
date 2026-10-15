@@ -5,10 +5,9 @@ require "rails_helper"
 RSpec.describe Api::ActivityPolicy do
   subject(:policy) { described_class.new(nil, activity) }
 
-  let(:indexable_event) { create(:event, is_public: true, is_indexable: true, demo_mode: false) }
-  let(:non_indexable_event) { create(:event, is_public: true, is_indexable: false, demo_mode: false) }
-  let(:non_public_event) { create(:event, is_public: false, is_indexable: true, demo_mode: false) }
-  let(:demo_event) { create(:event, is_public: true, is_indexable: true, demo_mode: true) }
+  let(:indexable_event) { create(:event, is_public: true, is_indexable: true) }
+  let(:non_indexable_event) { create(:event, is_public: true, is_indexable: false) }
+  let(:non_public_event) { create(:event, is_public: false, is_indexable: true) }
 
   # `PublicActivity.enabled = false` in rails_helper.rb disables the
   # gem's automatic activity creation, so we build rows directly to
@@ -38,14 +37,6 @@ RSpec.describe Api::ActivityPolicy do
 
     context "when event_id points to a non-public (private) event" do
       let(:activity) { build_activity(event_id: non_public_event.id) }
-
-      it "denies" do
-        expect(policy.show?).to be false
-      end
-    end
-
-    context "when event_id points to a demo-mode event" do
-      let(:activity) { build_activity(event_id: demo_event.id) }
 
       it "denies" do
         expect(policy.show?).to be false
