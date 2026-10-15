@@ -5,7 +5,9 @@ module Governance
     module Transfer
       class LimitPolicy < ApplicationPolicy
         def update?
-          user&.superadmin?
+          # Mirrors `superadmin_signed_in?`: an admin impersonating a superadmin
+          # must not inherit the ability to change transfer limits.
+          user&.superadmin? && !Current.session&.impersonated?
         end
 
         def history?
