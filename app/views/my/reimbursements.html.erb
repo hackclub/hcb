@@ -97,6 +97,14 @@
     <% end %>
   <% end %>
 
+  <% if @sections[:others].exists? %>
+    <h3 class="mt3 mb1">Assigned to other managers</h3>
+    <p class="muted mt0">You can review these reports or assign them to yourself.</p>
+    <%= turbo_frame_tag :my_reimbursements_others, src: my_reimbursements_section_path(:others, q: params[:q].presence) do %>
+      <p class="muted">Loading reports…</p>
+    <% end %>
+  <% end %>
+
   <h3 class="mt3 mb1">Your reports</h3>
   <%= turbo_frame_tag :my_reimbursements_mine, src: my_reimbursements_section_path(:mine, q: params[:q].presence) do %>
     <p class="muted">Loading reports…</p>

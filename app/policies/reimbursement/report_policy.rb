@@ -30,6 +30,14 @@ module Reimbursement
       admin || manager || (creator && open)
     end
 
+    def assign_reviewer?
+      admin || manager
+    end
+
+    def assign_to_me?
+      manager && !creator && record.submitted?
+    end
+
     # Authorization for placing a report on `record.event` — either changing
     # the event of an existing report (ReportsController#update) or building
     # a fresh report on a destination event as part of moving an expense

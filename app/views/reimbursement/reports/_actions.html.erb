@@ -185,6 +185,7 @@
             <% end %>
           <% end %>
         <% elsif report.initial_draft? %>
+          <% reviewer_required = report.assigned_reviewer_required? && !OrganizerPosition.role_at_least?(current_user, report.event, :manager) && !report.reviewer.present? %>
           <% button = capture do %>
             <%= inline_icon "send" %>
             Submit & request review
@@ -195,7 +196,7 @@
               <% end %>
             <% end %>
           <% end %>
-          <% if report.assigned_reviewer_required? && !OrganizerPosition.role_at_least?(current_user, report.event, :manager) && !report.reviewer.present? %>
+          <% if reviewer_required %>
             <%= link_to "#", class: "btn bg-info whitespace-nowrap", data: { behavior: "modal_trigger", modal: "submit_report" } do %>
               <%= button %>
             <% end %>
@@ -204,30 +205,32 @@
               <%= button %>
             <% end %>
           <% end %>
-          <section data-behavior="modal" role="dialog" id="submit_report" class="modal modal--scroll modal--wide bg-snow">
-            <%= modal_header "Select a reviewer" %>
+          <% if reviewer_required %>
+            <section data-behavior="modal" role="dialog" id="submit_report" class="modal modal--scroll modal--wide bg-snow">
+              <%= modal_header "Select a reviewer" %>
 
-            <p><%= report.event.name %> would like you to select a reviewer for your reimbursement report.</p>
+              <p><%= report.event.name %> would like you to select a reviewer for your reimbursement report.</p>
 
-            <%= form_with url: reimbursement_report_submit_path(report_id: report.id), method: :post, data: { turbo: true } do |form| %>
-              <div class="field">
-                <%= form.label :reviewer_id, "Reviewer" %>
-                <%= form.collection_select :reviewer_id,
-                  report.eligible_reviewers,
-                  :public_id, :name, { prompt: "Select a reviewer...", selected: report.reviewer&.public_id }, { required: true } %>
-              </div>
-              <button type="submit" class="btn bg-info whitespace-nowrap">
-                <%= inline_icon "send" %>
-                Submit & request review
-              </button>
-              <% button_hint = capture do %>
-                <span class="bold">Your next step:</span> after adding all of your expenses, submit the report to request a review.
-                <% if payout_method.present? && user == current_user %>
-                  <br>You will be reimbursed via <strong><%= payout_method.payout_summary %></strong>.
+              <%= form_with url: reimbursement_report_submit_path(report_id: report.id), method: :post, data: { turbo: true } do |form| %>
+                <div class="field">
+                  <%= form.label :reviewer_id, "Reviewer" %>
+                  <%= form.collection_select :reviewer_id,
+                    report.eligible_reviewers,
+                    :public_id, :name, { prompt: "Select a reviewer...", selected: report.reviewer&.public_id }, { required: true } %>
+                </div>
+                <button type="submit" class="btn bg-info whitespace-nowrap">
+                  <%= inline_icon "send" %>
+                  Submit & request review
+                </button>
+                <% button_hint = capture do %>
+                  <span class="bold">Your next step:</span> after adding all of your expenses, submit the report to request a review.
+                  <% if payout_method.present? && user == current_user %>
+                    <br>You will be reimbursed via <strong><%= payout_method.payout_summary %></strong>.
+                  <% end %>
                 <% end %>
               <% end %>
-            <% end %>
-          </section>
+            </section>
+          <% end %>
         <% elsif report.draft? %>
           <button class="btn bg-info whitespace-nowrap" id="submit_button" data-behavior="modal_trigger" data-modal="submit">
             <%= inline_icon "send" %>

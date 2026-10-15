@@ -339,7 +339,7 @@ module Reimbursement
     end
 
     def assigned_reviewer_required?
-      event.plan.assigned_reimbursement_reviewer_required?
+      event.reimbursements_allow_reviewer_selection? && event.plan.assigned_reimbursement_reviewer_required?
     end
 
     def eligible_reviewers

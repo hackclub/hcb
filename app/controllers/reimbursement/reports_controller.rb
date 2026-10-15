@@ -20,7 +20,7 @@ module Reimbursement
 
       authorize @report
 
-      if @report.assigned_reviewer_required? && params[:reimbursement_report][:reviewer_id].present?
+      if (policy(@report).assign_reviewer? || @report.assigned_reviewer_required?) && params[:reimbursement_report][:reviewer_id].present?
         reviewer = User.find_by_public_id!(params[:reimbursement_report][:reviewer_id])
         unless @report.eligible_reviewers.exists?(reviewer.id)
           return redirect_back fallback_location: event_reimbursements_path(@event), flash: { error: "The selected reviewer is not eligible for this report." }
@@ -167,6 +167,18 @@ module Reimbursement
 
     def edit
       authorize @report
+    end
+
+    def assign_to_me
+      authorize @report
+
+      if @report.update(reviewer: current_user)
+        flash[:success] = "Report assigned to you for review."
+      else
+        flash[:error] = @report.errors.full_messages.to_sentence
+      end
+
+      redirect_to @report
     end
 
     def update
@@ -480,7 +492,7 @@ module Reimbursement
       reimbursement_report_params = params.require(:reimbursement_report).permit(:report_name, :event_id, :maximum_amount, :reviewer_id).compact
       reimbursement_report_params.delete(:maximum_amount) unless admin_signed_in? || OrganizerPosition.role_at_least?(current_user, @event, :manager)
       reimbursement_report_params.delete(:maximum_amount) unless @report.draft? || @report.submitted?
-      reimbursement_report_params.delete(:reviewer_id) unless admin_signed_in? || OrganizerPosition.role_at_least?(current_user, @event, :manager)
+      reimbursement_report_params.delete(:reviewer_id) unless policy(@report).assign_reviewer?
       reimbursement_report_params
     end
 

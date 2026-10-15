@@ -31,6 +31,9 @@
           <td class="truncate">
             <%= link_to "", report, class: "stretched-link", data: { turbo_frame: "_top" } %>
             <span><%= report.name %></span>
+            <% if report.submitted? && report.reviewer.present? %>
+              <span class="block muted h5 truncate">Reviewer: <%= report.reviewer.name %></span>
+            <% end %>
           </td>
           <td class="truncate">
             <%= report.event&.name || "None" %>

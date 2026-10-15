@@ -6,8 +6,8 @@
 <% turbo_refreshes_with method: :morph, scroll: :preserve %>
 
 <div class="md:mt-12">
-  <h3 class="mt2 mb1 muted flex items-center" style="font-weight: 400; gap: 8px;">
-    <span style="flex-grow: 1;">
+  <h3 class="mt2 mb1 muted flex flex-wrap items-center" style="font-weight: 400; gap: 8px;">
+    <span class="w-full sm:w-auto" style="flex-grow: 1;">
       <%= user_mention @user, class: "tooltipped--s align-top" %>
       <%= "will be reimbursed " if @report.reimbursement_approved? || @report.reimbursed? && !@report.payout_holding.sent? %>
       <%= "was reimbursed " if @report.reimbursed? && @report.payout_holding.sent? %>
@@ -35,6 +35,10 @@
           <%= inline_icon "forbidden", size: 28, color: "#ff8c37" %>
         <% end %>
       <% end %>
+    <% end %>
+
+    <% if policy(@report).assign_to_me? && @report.reviewer != current_user %>
+      <%= link_to "Assign to me", reimbursement_report_assign_to_me_path(@report), class: "btn btn-small whitespace-nowrap shrink-0", data: { turbo_method: :post } %>
     <% end %>
 
     <% if @report.draft? && (organizer_signed_in?(as: :member) || @report.user == current_user) %>

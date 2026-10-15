@@ -30,6 +30,7 @@
 #  public_message                               :text
 #  public_reimbursement_page_enabled            :boolean          default(FALSE), not null
 #  public_reimbursement_page_message            :text
+#  reimbursements_allow_reviewer_selection      :boolean          default(TRUE), not null
 #  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
 #  risk_level                                   :integer
 #  short_name                                   :string

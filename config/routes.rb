@@ -98,7 +98,7 @@ Rails.application.routes.draw do
     post "toggle_admin_activities", to: "my#toggle_admin_activities", as: :toggle_admin_activities
     get "tasks", to: "my#tasks", as: :my_tasks
     get "reimbursements", to: "my#reimbursements", as: :my_reimbursements
-    get "reimbursements/:section", to: "my#reimbursements_section", as: :my_reimbursements_section, constraints: { section: /assigned|unassigned|mine/ }
+    get "reimbursements/:section", to: "my#reimbursements_section", as: :my_reimbursements_section, constraints: { section: /assigned|unassigned|others|mine/ }
     get "reimbursements_icon", to: "my#reimbursements_icon", as: :my_reimbursements_icon
 
     get "receipts", to: redirect("/my/inbox")
@@ -615,6 +615,7 @@ Rails.application.routes.draw do
       post "admin_send_wise_transfer"
       post "reverse"
       post "approve"
+      post "assign_to_me"
       post "request_changes"
       post "reject"
       post "submit"

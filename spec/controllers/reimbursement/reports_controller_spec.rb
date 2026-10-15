@@ -5,6 +5,169 @@ require "rails_helper"
 RSpec.describe Reimbursement::ReportsController do
   include SessionSupport
 
+  describe "#assign_to_me" do
+    let(:manager) { create(:user) }
+    let(:event) { create(:event, organizers: [manager]) }
+    let(:bot) { create(:user) }
+    let(:report) { create(:reimbursement_report, event:, reviewer: bot, aasm_state: :submitted) }
+
+    it "lets a manager take over a report assigned to someone else" do
+      create_session(manager, verified: true)
+
+      post(:assign_to_me, params: { report_id: report.id })
+
+      expect(report.reload.reviewer).to eq(manager)
+      expect(report.submitted?).to be(true)
+      expect(response).to redirect_to(reimbursement_report_path(report))
+      expect(flash[:success]).to eq("Report assigned to you for review.")
+    end
+
+    it "lets a parent-organization manager take over a report" do
+      child = create(:event, parent: event)
+      report.update!(event: child)
+      create_session(manager, verified: true)
+
+      post(:assign_to_me, params: { report_id: report.id })
+
+      expect(report.reload.reviewer).to eq(manager)
+    end
+
+    it "does not allow a manager to take over their own reimbursement" do
+      report.update!(user: manager)
+      create_session(manager, verified: true)
+
+      post(:assign_to_me, params: { report_id: report.id })
+
+      expect(report.reload.reviewer).to eq(bot)
+      expect(flash[:error]).to match(/not authorized/i)
+    end
+
+    it "does not allow an ordinary member to take over a report" do
+      member = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      create_session(member, verified: true)
+
+      post(:assign_to_me, params: { report_id: report.id })
+
+      expect(report.reload.reviewer).to eq(bot)
+      expect(flash[:error]).to match(/not authorized/i)
+    end
+
+    it "does not allow a manager from another organization to take over a report" do
+      stranger = create(:user)
+      create(:event, organizers: [stranger])
+      create_session(stranger, verified: true)
+
+      post(:assign_to_me, params: { report_id: report.id })
+
+      expect(report.reload.reviewer).to eq(bot)
+      expect(flash[:error]).to match(/not authorized/i)
+    end
+
+    it "does not change the reviewer of a report that has already been reviewed" do
+      report.update!(aasm_state: :reimbursement_requested)
+      create_session(manager, verified: true)
+
+      post(:assign_to_me, params: { report_id: report.id })
+
+      expect(report.reload.reviewer).to eq(bot)
+      expect(flash[:error]).to match(/not authorized/i)
+    end
+  end
+
+  describe "reviewer selection" do
+    render_views
+
+    let(:manager) { create(:user) }
+    let(:event) do
+      create(:event, plan_type: Event::Plan::HackClubAffiliate, organizers: [manager],
+                     public_reimbursement_page_enabled: true, reimbursements_allow_reviewer_selection: false)
+    end
+    let(:user) { create(:user) }
+    let(:report) do
+      user.personal_legal_entity.payout_methods.create!(
+        default: true,
+        details: LegalEntity::PayoutMethod::AchTransfer.new(account_number: "12345678", routing_number: "021000021")
+      )
+      create(:reimbursement_report, user:, event:).tap do |report|
+        expense = create(:reimbursement_expense, report:, value: 12.34, category: "Project Supplies")
+        ReceiptService::Create.new(receiptable: expense, uploader: user, attachments: [file_fixture("receipt.png")], upload_method: :receipts_page).run!
+      end
+    end
+
+    it "hides reviewer selection from submitters when disabled" do
+      create_session(user, verified: true)
+
+      get(:show, params: { id: report.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(Nokogiri::HTML5(response.body).css('select[name*="reviewer_id"]')).to be_empty
+      expect(response.body).not_to include("Assign to me")
+    end
+
+    it "allows submission without a reviewer and ignores a forged reviewer parameter when disabled" do
+      create_session(user, verified: true)
+
+      expect {
+        post(:submit, params: { report_id: report.id, reviewer_id: manager.public_id })
+      }.to have_enqueued_mail(ReimbursementMailer, :review_requested)
+
+      expect(report.reload.submitted?).to be(true)
+      expect(report.reviewer).to be_nil
+      expect(flash[:error]).to be_nil
+    end
+
+    it "keeps the existing reviewer choice when the setting is enabled" do
+      event.update!(reimbursements_allow_reviewer_selection: true)
+      create_session(user, verified: true)
+
+      get(:show, params: { id: report.id })
+      expect(Nokogiri::HTML5(response.body).css('select[name="reviewer_id"]')).not_to be_empty
+
+      post(:submit, params: { report_id: report.id, reviewer_id: manager.public_id })
+
+      expect(report.reload.submitted?).to be(true)
+      expect(report.reviewer).to eq(manager)
+    end
+
+    it "ignores reviewer selection supplied by a submitter when creating a report with selection disabled" do
+      create_session(user, verified: true)
+
+      post(:create, params: { reimbursement_report: { event_id: event.id, email: user.email, report_name: "Supplies", reviewer_id: manager.public_id } })
+
+      expect(Reimbursement::Report.last.reviewer).to be_nil
+      expect(Reimbursement::Report.last.name).to eq("Supplies")
+    end
+
+    it "still lets managers assign a reviewer when creating a report with selection disabled" do
+      create_session(manager, verified: true)
+
+      post(:create, params: { reimbursement_report: { event_id: event.id, email: user.email, report_name: "Supplies", reviewer_id: manager.public_id } })
+
+      expect(Reimbursement::Report.last.reviewer).to eq(manager)
+    end
+
+    it "still lets managers reassign existing reports with selection disabled" do
+      report.update!(reviewer: create(:user), aasm_state: :submitted)
+      create_session(manager, verified: true)
+
+      get(:show, params: { id: report.id })
+      expect(response.body).to include("Assign to me")
+
+      patch(:update, params: { id: report.id, reimbursement_report: { reviewer_id: manager.id } })
+
+      expect(report.reload.reviewer).to eq(manager)
+    end
+
+    it "does not let a submitter bypass the setting through the update endpoint" do
+      create_session(user, verified: true)
+
+      patch(:update, params: { id: report.id, reimbursement_report: { reviewer_id: manager.id } })
+
+      expect(report.reload.reviewer).to be_nil
+    end
+  end
+
   describe "#start" do
     render_views
 
