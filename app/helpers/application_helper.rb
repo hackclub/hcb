@@ -238,7 +238,7 @@ module ApplicationHelper
   end
 
   def help_message
-    content_tag :span, "Contact the HCB team at #{help_email} or call #{help_phone} for urgent requests, or visit our #{help_desk_link}.".html_safe
+    content_tag :span, "Need help? Visit our #{help_desk_link} or email #{help_email}. For urgent issues, call #{help_phone}.".html_safe
   end
 
   def help_email
