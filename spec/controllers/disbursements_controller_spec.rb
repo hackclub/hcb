@@ -208,6 +208,33 @@ RSpec.describe DisbursementsController do
       get(:event_search, params: { q: "ysws", page: 0 }, format: :json)
       expect(JSON.parse(response.body).size).to eq(2)
     end
+
+    it "lets unrestricted senders find transparent orgs that are unlisted from the directory" do
+      sender = create(:user)
+      source_event = create(:event, plan_type: Event::Plan::SalaryAccount)
+      create(:organizer_position, user: sender, event: source_event)
+      unlisted = create(:event, name: "Claude Clearinghouse", is_public: true, is_indexable: false)
+      private_event = create(:event, name: "Claude Private", is_public: false)
+      create_session(sender, verified: true)
+
+      get(:event_search, params: { q: "Claude", source_event_id: source_event.public_id }, format: :json)
+
+      values = JSON.parse(response.body).map { |o| o["value"] }
+      expect(values).to include(unlisted.public_id)
+      expect(values).not_to include(private_event.public_id)
+    end
+
+    it "does not expose other orgs to senders without unrestricted transfers" do
+      sender = create(:user)
+      source_event = create(:event)
+      create(:organizer_position, user: sender, event: source_event)
+      other = create(:event, name: "Claude Clearinghouse", is_public: true, is_indexable: false)
+      create_session(sender, verified: true)
+
+      get(:event_search, params: { q: "Claude", source_event_id: source_event.public_id }, format: :json)
+
+      expect(JSON.parse(response.body).map { |o| o["value"] }).not_to include(other.public_id)
+    end
   end
 
   describe "#show" do
