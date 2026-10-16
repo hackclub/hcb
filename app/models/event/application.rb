@@ -159,13 +159,14 @@ class Event
         after do |rejection_message, rejection_reason|
           contract.mark_voided! if contract.present?
 
-          if rejection_reason.present?
-            set_airtable_status(REJECTION_AIRTABLE_STATUSES.fetch(rejection_reason.to_sym))
-          end
-
           if rejection_message.present?
             Event::ApplicationMailer.with(application: self, rejection_message: rejection_message).rejected.deliver_later
           end
+
+          if rejection_reason.present?
+            set_airtable_status(REJECTION_AIRTABLE_STATUSES.fetch(rejection_reason.to_sym, "Rejected"))
+          end
+
         end
       end
 
