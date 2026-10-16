@@ -1,19 +1,21 @@
 import { Controller } from '@hotwired/stimulus'
 
-// Drives the "What kind of transfer is this?" section of the transfer form:
-// shows the follow-up question for the chosen type, points the repayment
-// picker at the destination organization's transactions, and fills in the
-// amount from the transaction being repaid.
+// Drives the transfer form, which asks what kind of transfer it is first and
+// then shows that type's questions: a repayment picks one of the recipient's
+// transactions and takes its name and amount from it, while a transfer asks
+// for them directly.
 export default class extends Controller {
   static targets = [
-    'section',
-    'hint',
+    'types',
     'panel',
     'repaymentRadio',
     'repaymentHint',
-    'amount',
+    'repaymentName',
+    'repaymentAmount',
     'repaidInput',
     'repaidCard',
+    'pickHint',
+    'pickButton',
     'repaidEmpty',
     'repaidSummary',
     'repaidMemo',
@@ -22,18 +24,15 @@ export default class extends Controller {
     'chooseLabel',
     'changeLabel',
     'repaidError',
-    'name',
   ]
   static outlets = ['repayment-picker']
 
   connect() {
-    // Set when the page opens with a transaction already picked.
-    this.repaidAmount = this.repaidInputTarget.dataset.amount || null
     // A name the server filled in from the picked transaction still follows
-    // the pick until the user edits it.
+    // the pick; one passed in from elsewhere is kept.
     const memo = this.repaidMemoTarget.textContent.trim()
-    if (memo && this.nameTarget.value === this.repaymentName(memo))
-      this.autofilledName = this.nameTarget.value
+    if (memo && this.repaymentNameTarget.value === this.repaymentName(memo))
+      this.autofilledName = this.repaymentNameTarget.value
     this.select()
   }
 
@@ -44,21 +43,13 @@ export default class extends Controller {
   }
 
   select() {
+    // Disabling the inactive panels keeps their fields out of validation and
+    // out of the submitted params, since both panels have a name and amount.
     for (const panel of this.panelTargets) {
-      const active = panel.dataset.type === this.type
+      const active = panel.dataset.type === (this.type || '')
       panel.hidden = !active
-      panel
-        .querySelectorAll('select, input')
-        .forEach(el => (el.disabled = !active))
+      panel.disabled = !active
     }
-    this.lockAmount()
-  }
-
-  // A repayment covers the picked transaction in full, so its amount is fixed.
-  lockAmount() {
-    const locked = this.type === 'repayment' && this.repaidAmount != null
-    if (locked) this.amountTarget.value = this.repaidAmount
-    this.amountTarget.readOnly = locked
   }
 
   repaymentPicked({ detail }) {
@@ -67,9 +58,10 @@ export default class extends Controller {
 
   setRepaid(transaction) {
     this.repaidInputTarget.value = transaction?.id || ''
-    this.repaidAmount = transaction?.amount ?? null
+    this.repaymentAmountTarget.value = transaction?.amount ?? ''
 
-    this.repaidEmptyTarget.hidden = !!transaction
+    this.repaidEmptyTarget.hidden =
+      !!transaction || this.pickButtonTarget.disabled
     this.repaidSummaryTarget.hidden = !transaction
     this.repaidAmountTarget.hidden = !transaction
     this.chooseLabelTarget.hidden = !!transaction
@@ -80,18 +72,17 @@ export default class extends Controller {
     if (transaction) this.repaidErrorTarget.hidden = true
 
     this.fillName(transaction)
-    this.lockAmount()
   }
 
-  // Names the transfer after what it repays, unless the user wrote their own.
+  // Names the transfer after what it repays, unless a name was passed in.
   fillName(transaction) {
-    const name = this.nameTarget.value
+    const name = this.repaymentNameTarget.value
     if (name && name !== this.autofilledName) return
 
     this.autofilledName = transaction
       ? this.repaymentName(transaction.memo)
       : ''
-    this.nameTarget.value = this.autofilledName
+    this.repaymentNameTarget.value = this.autofilledName
   }
 
   // Matches the server's default, which is cut to the field's 60 characters.
@@ -103,12 +94,13 @@ export default class extends Controller {
   comboboxChanged({ target, detail: { option } }) {
     if (!target.querySelector('input[name="disbursement[event_id]"]')) return
 
-    // A new destination means a new set of transactions to pick from.
+    // A new destination means a new set of transactions to pick from, and
+    // there's nothing to pick from until one is chosen.
+    this.pickButtonTarget.disabled = !option
+    this.pickHintTarget.hidden = !!option
     this.setRepaid(null)
     if (this.hasRepaymentPickerOutlet)
       this.repaymentPickerOutlet.setDestination(option?.value)
-    this.sectionTarget.disabled = !option
-    this.hintTarget.hidden = !!option
     this.setRepayable(option?.repayable !== false)
   }
 
@@ -127,7 +119,7 @@ export default class extends Controller {
     // at them when none is picked.
     if (!this.type) {
       event.preventDefault()
-      this.sectionTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      this.typesTarget.scrollIntoView({ behavior: 'smooth', block: 'start' })
       return
     }
 

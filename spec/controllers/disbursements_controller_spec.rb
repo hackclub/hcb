@@ -370,15 +370,14 @@ RSpec.describe DisbursementsController do
         page = Nokogiri::HTML(response.body)
         expect(page.at_css("#disbursement_transfer_type_repayment")["checked"]).to eq("checked")
         expect(page.at_css("#disbursement_repaid_ledger_item_id")["value"]).to eq(expense.ledger_item.hashid)
-        expect(page.at_css("#disbursement_repaid_ledger_item_id")["data-amount"]).to eq("100.00")
-        expect(page.at_css("#disbursement_amount")["value"]).to eq("100.0")
-        expect(page.at_css("#disbursement_name")["value"]).to eq("Repaying #{expense.ledger_item.memo}")
+        expect(page.at_css("#disbursement_repayment_amount")["value"]).to eq("100.00")
+        expect(page.at_css("#disbursement_repayment_name")["value"]).to eq("Repaying #{expense.ledger_item.memo}")
       end
 
       it "keeps a name that was passed in" do
         get(:new, params: { event_id: destination_event.slug, repaid_ledger_item_id: expense.ledger_item.hashid, message: "Pizza night" })
 
-        expect(Nokogiri::HTML(response.body).at_css("#disbursement_name")["value"]).to eq("Pizza night")
+        expect(Nokogiri::HTML(response.body).at_css("#disbursement_repayment_name")["value"]).to eq("Pizza night")
       end
 
       it "ignores a transaction that can't be repaid" do
