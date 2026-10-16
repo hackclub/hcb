@@ -11,7 +11,9 @@ export default class extends Controller {
     }
     document.addEventListener('daterange:change', this._onPick)
 
-    const match = String(this.initialValue || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+    const match = String(this.initialValue || '').match(
+      /^(\d{2})\/(\d{2})\/(\d{4})$/
+    )
     if (match) {
       const [, month, day, year] = match
       this.monthTarget.value = month

@@ -152,7 +152,9 @@ export default class extends Controller {
           event.target.value
         )
       })
-      this.$typedStart.addEventListener('blur', () => this.#commitTyped('start'))
+      this.$typedStart.addEventListener('blur', () =>
+        this.#commitTyped('start')
+      )
     }
 
     if (this.$typedEnd) {
@@ -342,7 +344,8 @@ export default class extends Controller {
     if (hasMonthChanged) {
       this.#renderCalendar()
     } else {
-      if (this.$typedStart) this.$typedStart.value = this.#formatDate(this.start)
+      if (this.$typedStart)
+        this.$typedStart.value = this.#formatDate(this.start)
       if (this.$typedEnd) this.$typedEnd.value = this.#formatDate(this.end)
       this.#paintHover()
     }
@@ -441,7 +444,10 @@ export default class extends Controller {
 
     return `
       <div class="w-full max-w-xl">
-        ${isSingle ? '' : `
+        ${
+          isSingle
+            ? ''
+            : `
         <div class="flex items-center gap-2 mb-3">
           <div class="relative flex-1">
             <input name="${this.nameStartValue}" class="input text-center text-sm" data-role="typed-start" placeholder="${this.placeholderStartValue}" value="${this.typedStart ?? ''}" />
@@ -451,7 +457,8 @@ export default class extends Controller {
             <input name="${this.nameEndValue}" class="input text-center text-sm" data-role="typed-end" placeholder="${this.placeholderEndValue}" value="${this.typedEnd ?? ''}" />
           </div>
         </div>
-        `}
+        `
+        }
 
         <div>
           <div class="flex items-center justify-between pb-2 px-1">
