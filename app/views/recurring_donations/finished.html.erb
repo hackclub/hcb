@@ -9,6 +9,11 @@
   <p class="center secondary">
     We've just sent a receipt to <strong><%= @recurring_donation.email %></strong>. Questions? Reach out to <%= mail_to "hcb@hackclub.com" %>
   </p>
+  <p class="center secondary mb0">
+    You can manage or cancel this donation anytime by
+    <%= link_to "signing in to HCB", auth_users_path(email: @recurring_donation.email, return_to: my_recurring_donations_path) %>
+    with <strong><%= @recurring_donation.email %></strong>.
+  </p>
 </div>
 
 <%= render "events/landing/footer" %>
