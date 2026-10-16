@@ -118,6 +118,14 @@ class CardGrant < ApplicationRecord
 
   delegate :name, to: :user
 
+  # `admin` is required rather than defaulted, so a caller cannot silently
+  # render a different label than the search endpoint returns.
+  def to_combobox_display(admin:)
+    return "#{email} — #{event.name} (ID: #{id})" if admin
+
+    "#{email} — #{event.name}"
+  end
+
   def state
     if suspected_fraud?
       "error"
