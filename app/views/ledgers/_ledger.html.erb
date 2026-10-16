@@ -1,6 +1,6 @@
-<%# locals: (ledger: nil, items:, table_only: true, filter: nil, show_fee: false, show_author: true) %>
+<%# locals: (ledger: nil, items:, table_only: true, filter: nil, show_fee: false, show_author: true, sync_page: false) %>
 
-<%= turbo_frame_tag ledger.present? ? dom_id(ledger) : "ledger" do %>
+<%= turbo_frame_tag ledger.present? ? dom_id(ledger) : "ledger", data: (sync_page ? { controller: "frame_page", action: "turbo:frame-load->frame_page#sync" } : {}) do %>
   <% if !table_only && ledger.present? %>
     <section class="details mb-4">
       <div>
