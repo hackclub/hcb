@@ -14,15 +14,6 @@ module Api
 
         authorize @disbursement
 
-        # Defaults to a plain transfer, which is all this endpoint made before
-        # transfer types existed.
-        transfer_type = params[:transfer_type].presence || "transfer"
-
-        if transfer_type == "repayment"
-          authorize @disbursement, :repay?
-          repaid_ledger_item = HcbCode.find_by_public_id(params[:repaid_transaction_id])&.ledger_item
-        end
-
         @disbursement = DisbursementService::Create.new(
           source_event_id: @source_event.id,
           destination_event_id: @destination_event.id,
@@ -30,9 +21,9 @@ module Api
           amount: Money.from_cents(params[:amount_cents]),
           requested_by_id: current_user.id,
           fronted: @source_event.plan.front_disbursements_enabled?,
-          transfer_type:,
-          repaid_ledger_item_id: repaid_ledger_item&.id,
-          category_assignment_strategy: transfer_type == "transfer" ? "automatic" : "manual"
+          # The API only makes internal transfers for now.
+          transfer_type: "transfer",
+          category_assignment_strategy: "automatic"
         ).run
 
         render :show, status: :created, location: api_v4_transaction_path(@disbursement)
