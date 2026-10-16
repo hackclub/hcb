@@ -59,7 +59,7 @@ module Api
     end
 
     def create_stripe_card?
-      admin_or_user? && is_not_demo_mode?
+      admin_or_user?
     end
 
     def admin_or_user?
@@ -72,10 +72,6 @@ module Api
 
     def user?
       OrganizerPosition.role_at_least?(user, record, :reader)
-    end
-
-    def is_not_demo_mode?
-      !record.demo_mode?
     end
 
   end

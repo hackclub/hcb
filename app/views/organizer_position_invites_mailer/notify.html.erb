@@ -11,7 +11,7 @@
       <%= link_to "Click here", @invite %> to verify your email, log in, and accept the invite.
     <% end %>
   </p>
-<% elsif @invite.event.demo_mode? == false || @invite.initial? == false %>
+<% else %>
   <p>
     <% if @invite.contracts.where(aasm_state: :signed).any? %>
       Thank you for signing the HCB contract!
@@ -21,13 +21,6 @@
 
   <p>
     <%= link_to "Click here", @invite %> to accept the invite, log in, and see what's up!
-  </p>
-<% else %>
-  <p>
-    Thank you for applying to HCB, Hack Club’s fiscal sponsorship program. We're really excited to learn more about your project.
-  </p>
-  <p>
-    We will review your application for <%= @invite.event.name %> and get back to you within two business days.
   </p>
 <% end %>
 

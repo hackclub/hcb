@@ -58,7 +58,7 @@ class Export
       private
 
       def events
-        ::Event.all.not_demo_mode
+        ::Event.all
       end
 
       def header

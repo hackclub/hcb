@@ -14,7 +14,6 @@ module EventService
                    approved: false,
                    plan: Event::Plan::Standard,
                    tags: [],
-                   demo_mode: false,
                    risk_level: 0,
                    parent_event: nil,
                    invited_by: nil,
@@ -30,7 +29,6 @@ module EventService
       @approved = approved || false
       @plan = plan
       @tags = tags
-      @demo_mode = demo_mode
       @risk_level = risk_level
       @parent_event = parent_event
       @invited_by = invited_by
@@ -96,7 +94,6 @@ module EventService
         is_public: @is_public,
         is_indexable: @is_indexable,
         point_of_contact_id: @point_of_contact_id,
-        demo_mode: @demo_mode,
         financially_frozen: true,
         parent: @parent_event,
         plan: Event::Plan.new(type: @plan),

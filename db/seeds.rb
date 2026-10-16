@@ -18,21 +18,6 @@ Governance::Admin::Transfer::Limit.create(user_id: user.id, amount_cents: 100000
 system_user = User.create_with(email: User::SYSTEM_USER_EMAIL, verified: true).create_or_find_by!(id: User::SYSTEM_USER_ID)
 system_user.make_admin! unless system_user.admin?
 
-# DEMO
-demo_event = Event.create_with(
-  name: "DevHacks (Demo Event)",
-  slug: "devhacks",
-  point_of_contact: user,
-  demo_mode: true,
-  created_at: 7.days.ago
-).create_or_find_by!(slug: "devhacks")
-
-OrganizerPositionInvite.create_or_find_by!(
-  event: demo_event,
-  user:,
-  sender: user,
-)
-
 # NON_TRANSPARENT
 non_transparent_event = Event.create_with(
   name: "ExpensiCon 2023 (Non-Transparent Event)",

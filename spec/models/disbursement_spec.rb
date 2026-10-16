@@ -275,22 +275,6 @@ RSpec.describe Disbursement, type: :model do
       end
     end
 
-    describe "events_are_not_demos" do
-      it "does not allow demo destination event on create" do
-        demo_event = create(:event, :demo_mode)
-        disbursement = build(:disbursement, event: demo_event)
-        expect(disbursement).not_to be_valid
-        expect(disbursement.errors[:event]).to include("cannot be a demo event")
-      end
-
-      it "does not allow demo source event on create" do
-        demo_event = create(:event, :demo_mode)
-        disbursement = build(:disbursement, source_event: demo_event)
-        expect(disbursement).not_to be_valid
-        expect(disbursement.errors[:source_event]).to include("cannot be a demo event")
-      end
-    end
-
     describe "scheduled_on_must_be_in_the_future" do
       it "does not allow scheduled_on in the past" do
         disbursement = build(:disbursement, scheduled_on: 1.day.ago)

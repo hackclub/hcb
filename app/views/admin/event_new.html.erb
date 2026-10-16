@@ -53,10 +53,6 @@
     </p>
 
     <p>
-      <%= form.check_box :demo_mode %>
-      <%= form.label :demo_mode, "Playground Mode?" %>
-
-    <p>
       <%= form.label :risk_level %>
       <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" }, selected: params[:risk_level] %>
     </p>

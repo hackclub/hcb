@@ -1,7 +1,7 @@
 <% title "Account number for #{@event.name}" %>
 <% page_md %>
 <%= render "events/nav", selected: :account_number %>
-<%= render "events/account_number_modal" unless @event.demo_mode? %>
+<%= render "events/account_number_modal" %>
 
 <h1 class="heading items-center">
   <div class="flex flex-col justify-center">
@@ -10,17 +10,13 @@
     </span>
     <h4 class="mt1 mb1 muted medium center">Connect your HCB account to GoFundMe, Shopify, Venmo, and more.</h4>
   </div>
-  <% unless @event.demo_mode? %>
     <a href="#" data-behavior="modal_trigger" data-modal="account_number" class="btn">
       <%= inline_icon "bank-account" %>
       Account details
     </a>
-  <% end %>
 </h1>
 
-<% if @event.demo_mode? %>
-  <%= blankslate "Unavailable in Playground Mode" %>
-<% elsif @event.column_account_number.present? %>
+<% if @event.column_account_number.present? %>
   <div class="flex items-start justify-start h2 mb2" style="gap: 2rem">
     <span class="flex flex-col" data-controller="<%= "clipboard" if organizer_signed_in? %>" data-clipboard-text-value="<%= @event.account_number if organizer_signed_in? %>">
       <span class="h4 muted">

@@ -30,15 +30,6 @@ module EventsHelper
 
   NAV_ITEMS = [
     {
-      name: "Activate",
-      path_proc: ->(event_id) { event_activation_flow_path(event_id:) },
-      tooltip: "Activate this organization",
-      icon: "checkmark",
-      symbol: :activation_flow,
-      adminTool: true,
-      available_proc: ->(event) { policy(event).activation_flow? }
-    },
-    {
       name: "Sign",
       path_proc: lambda do |event_id|
         event = Event.friendly.find_by_friendly_id(event_id)
@@ -359,12 +350,7 @@ module EventsHelper
   end
 
   def transaction_memo(tx)
-    # needed to handle mock data in playground mode
-    if tx.local_hcb_code.method(:memo).parameters.empty?
-      tx.local_hcb_code.memo
-    else
-      tx.local_hcb_code.memo(event: @event)
-    end
+    tx.local_hcb_code.memo(event: @event)
   end
 
   def humanize_audit_log_value(field, value)

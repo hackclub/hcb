@@ -39,7 +39,7 @@
           <%# Date issued %>
           <td>
             <%= format_date c.created_at %>
-          <%= link_to "", stripe_card_path(c), class: "stretched-link", data: @show_card_popovers && stripe_card_popover_data(c) if organizer_signed_in? && !@event.demo_mode %>
+          <%= link_to "", stripe_card_path(c), class: "stretched-link", data: @show_card_popovers && stripe_card_popover_data(c) if organizer_signed_in? %>
           </td>
         </tr>
 

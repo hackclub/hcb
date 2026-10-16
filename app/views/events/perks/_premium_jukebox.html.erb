@@ -10,7 +10,7 @@
     <% if !event.plan.promotions_enabled? %>
       <% jukebox_ineligible_reason = "Perks are not available for #{event.plan.label} organizations" %>
     <% elsif !perks_available %>
-      <% jukebox_ineligible_reason = "You must be a manager and organization must not be in demo mode" %>
+      <% jukebox_ineligible_reason = "You must be a manager" %>
     <% elsif active_teenagers_count < 10 %>
       <% jukebox_ineligible_reason = "Organization must have 10 or more active teenagers" %>
     <% end %>

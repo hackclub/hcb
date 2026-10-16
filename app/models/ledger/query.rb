@@ -80,15 +80,7 @@ class Ledger
       # top; callers that only aggregate pay nothing, since preloads don't fire
       # until records are materialized.
       #
-      # hcb_code: :event is here for one line of ledger/items/_tags, which gates
-      # on `hcb_code.event&.demo_mode?` even where the page already holds @event
-      # — the next line down uses @event, and _tag_menu prefers it. Reaching
-      # through the HCB code for an event the page already has costs a query a
-      # row without this preload, and one with it. #15023 moves tags onto
-      # Ledger::Item and takes that partial's other use of the HCB code with it,
-      # leaving the guard as the last one; it can go the same way.
-      #
-      # The preload outlives that, though: the admin cardholder page runs
+      # hcb_code: :event is needed because the admin cardholder page runs
       # all_ledgers with no @event, over items spanning every org the cardholder
       # holds a card for, so there the event really is per item.
       #

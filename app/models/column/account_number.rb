@@ -35,8 +35,6 @@ module Column
 
     before_create :create_column_account_number
 
-    validate :event_is_not_demo_mode
-
     validates_uniqueness_of :account_number_bidx
     validates :event, uniqueness: true
 
@@ -51,10 +49,6 @@ module Column
       self.account_number = account_number["account_number"]
       self.routing_number = account_number["routing_number"]
       self.bic_code = account_number["bic"]
-    end
-
-    def event_is_not_demo_mode
-      errors.add(:base, "Can't create an account number for a Playground Mode org") if event.demo_mode?
     end
 
   end
