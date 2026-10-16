@@ -14,8 +14,13 @@ FactoryBot.define do
     merchant_lock { [] }
     keyword_lock { nil }
 
+    # A grant the recipient hasn't accepted yet: no virtual card, no report.
+    trait :pending_invite do
+      stripe_card { nil }
+    end
+
     after(:create) do |card_grant|
-      card_grant.stripe_card.update(subledger: card_grant.subledger)
+      card_grant.stripe_card&.update(subledger: card_grant.subledger)
     end
   end
 end
