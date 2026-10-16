@@ -176,7 +176,7 @@ class MyController < ApplicationController
     @section = params[:section].to_sym
     @reports = reimbursement_sections.fetch(@section)
                                      .order(created_at: :desc)
-                                     .includes(:user, :event, :payout_holding)
+                                     .includes(:user, :event, :payout_holding, :reviewer)
   end
 
   def reimbursements_icon
@@ -252,19 +252,21 @@ class MyController < ApplicationController
     return unless signed_in?
 
     @my_reports = current_user.reimbursement_reports
-    manager_events = current_user.events
-                                 .joins(:organizer_positions)
-                                 .where(organizer_positions: { user_id: current_user.id, role: :manager })
     # Managers can't approve their own reports, so those only appear under @my_reports
-    @reports_assigned_to_me = current_user.assigned_reimbursement_reports.submitted.where.not(user: current_user)
-    @unassigned_reports_to_review = Reimbursement::Report.submitted.where(event: manager_events, reviewer_id: nil).where.not(user: current_user)
-    @reports_to_review = @reports_assigned_to_me.or(@unassigned_reports_to_review)
+    @reports_to_review = Reimbursement::Report.submitted.where(event: current_user.manageable_events).where.not(user: current_user)
+    if current_user.admin?
+      @reports_to_review = @reports_to_review.or(current_user.assigned_reimbursement_reports.submitted.where.not(user: current_user))
+    end
+    @reports_assigned_to_me = @reports_to_review.where(reviewer: current_user)
+    @unassigned_reports_to_review = @reports_to_review.where(reviewer_id: nil)
+    @reports_assigned_to_others = @reports_to_review.where.not(reviewer_id: [nil, current_user.id])
   end
 
   def reimbursement_sections
     {
       assigned: @reports_assigned_to_me,
       unassigned: @unassigned_reports_to_review,
+      others: @reports_assigned_to_others,
       mine: @my_reports,
     }.transform_values do |reports|
       params[:q].present? ? reports.search(params[:q]) : reports

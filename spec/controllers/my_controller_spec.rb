@@ -57,7 +57,7 @@ RSpec.describe MyController do
       expect(response.body).not_to include("Your reports")
     end
 
-    it "separates reports assigned to the user, reports open to any manager, and the user's own reports" do
+    it "shows every report awaiting the manager's review, including reports assigned to someone else" do
       user = sign_in_verified
       event = create(:event)
       create(:organizer_position, user:, event:, role: :manager)
@@ -70,13 +70,79 @@ RSpec.describe MyController do
 
       get :reimbursements
 
-      expect(response.body).to include("Assigned to you for review", "Awaiting review by any manager", "Your reports")
+      expect(response.body).to include("Assigned to you for review", "Awaiting review by any manager", "Assigned to other managers", "Your reports")
 
       sections = controller.instance_variable_get(:@sections)
       expect(sections[:assigned]).to contain_exactly(assigned)
       expect(sections[:unassigned]).to contain_exactly(unassigned)
+      expect(sections[:others]).to contain_exactly(assigned_to_someone_else)
       expect(sections[:mine]).to contain_exactly(own_submitted, own_draft)
-      expect(sections.values.flatten).not_to include(assigned_to_someone_else)
+    end
+
+    it "includes reports in sub-organizations managed through a parent" do
+      user = sign_in_verified
+      parent = create(:event, organizers: [user])
+      child = create(:event, parent:)
+      report = create(:reimbursement_report, event: child, reviewer: create(:user), aasm_state: :submitted)
+
+      get :reimbursements
+
+      expect(controller.instance_variable_get(:@sections)[:others]).to contain_exactly(report)
+    end
+
+    it "does not expose review queues for organizations the user does not manage" do
+      user = sign_in_verified
+      event = create(:event)
+      create(:organizer_position, user:, event:, role: :member)
+      create(:reimbursement_report, event:, reviewer: user, aasm_state: :submitted)
+      create(:reimbursement_report, event:, reviewer: create(:user), aasm_state: :submitted)
+      create(:reimbursement_report, aasm_state: :submitted)
+
+      get :reimbursements
+
+      expect(controller.instance_variable_get(:@reports_to_review)).to be_empty
+    end
+
+    it "keeps reports assigned to HCB admins visible without an organizer position" do
+      admin = sign_in_verified(create(:user, :make_admin))
+      report = create(:reimbursement_report, reviewer: admin, aasm_state: :submitted)
+
+      get :reimbursements
+
+      expect(controller.instance_variable_get(:@sections)[:assigned]).to contain_exactly(report)
+    end
+  end
+
+  describe "GET #reimbursements_section" do
+    it "searches reports assigned to other managers and shows the reviewer" do
+      user = sign_in_verified
+      event = create(:event, organizers: [user])
+      bot = create(:user, full_name: "Macondo Bot")
+      report = create(:reimbursement_report, event:, reviewer: bot, name: "Workshop supplies", aasm_state: :submitted)
+      create(:reimbursement_report, event:, reviewer: bot, name: "Travel", aasm_state: :submitted)
+      create(:reimbursement_report, reviewer: bot, name: "Private workshop", aasm_state: :submitted)
+
+      get :reimbursements_section, params: { section: "others", q: "Workshop" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(report.name, "Reviewer: Macondo Bot")
+      expect(response.body).not_to include("Travel", "Private workshop")
+    end
+  end
+
+  describe "GET #reimbursements_icon" do
+    it "counts reports assigned to another manager along with unassigned reports and the user's drafts" do
+      user = sign_in_verified
+      event = create(:event, organizers: [user])
+      create(:reimbursement_report, event:, reviewer: create(:user), aasm_state: :submitted)
+      create(:reimbursement_report, event:, aasm_state: :submitted)
+      create(:reimbursement_report, event:, user:)
+      create(:reimbursement_report, event:, user:, aasm_state: :submitted)
+      create(:reimbursement_report, event:, aasm_state: :reimbursed)
+
+      get :reimbursements_icon
+
+      expect(controller.instance_variable_get(:@reports_count)).to eq(3)
     end
   end
 

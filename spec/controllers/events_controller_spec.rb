@@ -247,6 +247,27 @@ RSpec.describe EventsController do
   end
 
   describe "#update" do
+    it "lets a manager disable reviewer selection" do
+      event = create(:event)
+      sign_in_organizer_of(event)
+
+      patch(:update, params: { id: event.slug, event: { reimbursements_allow_reviewer_selection: "0" } })
+
+      expect(event.reload.reimbursements_allow_reviewer_selection?).to be(false)
+    end
+
+    it "does not let an ordinary member disable reviewer selection" do
+      event = create(:event)
+      member = create(:user)
+      create(:organizer_position, event:, user: member, role: :member)
+      create_session(member, verified: true)
+
+      patch(:update, params: { id: event.slug, event: { reimbursements_allow_reviewer_selection: "0" } })
+
+      expect(event.reload.reimbursements_allow_reviewer_selection?).to be(true)
+      expect(flash[:error]).to match(/not authorized/i)
+    end
+
     it "lets an admin set the sub-organization name prefix" do
       admin = create(:user, :make_admin)
       event = create(:event)
