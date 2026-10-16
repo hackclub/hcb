@@ -1,20 +1,27 @@
 <%# locals: (item:, show_author: true) %>
 
+<% date = item.datetime.strftime("%b %e, %Y") %>
+
 <tr class="transaction transaction--<%= item.sign %> <%= item.special_appearance&.css_class %>">
   <td class="transaction__icon">
     <div class="tooltipped tooltipped--e" aria-label="<%= item.humanized_type %>">
       <%= render "ledger/items/icon", ledger_item: item %>
     </div>
   </td>
-  <td><%= item.datetime.strftime("%b %e, %Y") %></td>
+  <td class="hidden sm:table-cell"><%= date %></td>
   <td class="transaction__memo transaction__memo--fluid<%= " transaction__memo--pending" if item.pending? %>">
     <div>
-      <div class="flex-auto">
+      <div class="flex-auto min-w-0">
         <div class="flex items-center gap-[1ch] min-w-0">
-          <%= render "ledger/items/status", ledger_item: item %>
+          <%= render "ledger/items/status", ledger_item: item, class_name: "hidden sm:inline-flex" %>
           <div class="min-w-0 overflow-hidden text-ellipsis">
             <%= render "ledger/items/memo/memo", item: %>
           </div>
+        </div>
+
+        <div class="flex items-center gap-[1ch] min-w-0 text-sm muted sm:hidden">
+          <time class="truncate"><%= date %></time>
+          <%= render "ledger/items/status", ledger_item: item %>
         </div>
 
         <%= render "ledger/items/tags", item: %>
@@ -36,7 +43,7 @@
     </span>
   </td>
   <% if show_author %>
-    <td>
+    <td class="hidden sm:table-cell">
       <% if item.author.present? %>
         <div class="flex items-center justify-center tooltipped tooltipped--w" aria-label="<%= item.author.name %>">
           <%= avatar_for item.author, class: "align-middle author", cached: true %>
