@@ -25,13 +25,16 @@ RSpec.shared_context "card locking charges" do
     at ? travel_to(at) { build_and_save.call } : build_and_save.call
   end
 
-  def create_settled_card_charge(user:, settled_at:, uploaded_at: nil, amount_cents: -10_00, stripe_card: nil, charge_event: nil)
+  def create_settled_card_charge(user:, settled_at:, uploaded_at: nil, amount_cents: -10_00, stripe_card: nil, charge_event: nil,
+                                 merchant_name: "Test Merchant", merchant_network_id: nil)
     charge_event ||= event
     stripe_cardholder = user.stripe_cardholder || create(:stripe_cardholder, user:)
     stripe_card ||= create(:stripe_card, :with_stripe_id, stripe_cardholder:, event: charge_event)
     raw_stripe_transaction = create(
       :raw_stripe_transaction, stripe_card:, stripe_authorization_id: SecureRandom.hex(8),
-      created_at: settled_at, updated_at: settled_at, date_posted: settled_at.to_date
+      created_at: settled_at, updated_at: settled_at, date_posted: settled_at.to_date,
+      stripe_merchant_name: merchant_name, stripe_merchant_network_id: merchant_network_id,
+      stripe_merchant_category_code: "5734", stripe_created: settled_at.to_i
     )
     canonical_transaction = create(
       :canonical_transaction, amount_cents:, memo: "Test Merchant", date: settled_at.to_date,
