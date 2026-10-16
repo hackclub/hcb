@@ -34,6 +34,28 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       end
     end
 
+    describe "POST #toggle_tag" do
+      let(:tag) { event.tags.create!(label: "Snacks", emoji: "🍕", color: "muted") }
+
+      it "adds the tag and then removes it on a second toggle" do
+        post :toggle_tag, params: { item_id: item.hashid, tag_id: tag.id }
+        expect(item.reload.tags).to include(tag)
+
+        post :toggle_tag, params: { item_id: item.hashid, tag_id: tag.id }
+        expect(item.reload.tags).not_to include(tag)
+      end
+
+      it "refuses a tag from another organization" do
+        other_event = create(:event)
+        create(:organizer_position, user: member_user, event: other_event, role: :member)
+        other_tag = other_event.tags.create!(label: "Other", emoji: "🎉", color: "red")
+
+        post :toggle_tag, params: { item_id: item.hashid, tag_id: other_tag.id }
+
+        expect(item.reload.tags).to be_empty
+      end
+    end
+
     describe "POST #invoice_as_personal_transaction" do
       before { create(:hcb_code, ledger_item: item) }
 

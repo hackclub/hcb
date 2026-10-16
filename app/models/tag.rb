@@ -26,9 +26,17 @@ class Tag < ApplicationRecord
   set_public_id_prefix :tag
 
   belongs_to :event
-  has_many :hcb_code_tags
+  # Legacy rows; tags now live on ledger items (see ledger_item_tags).
+  # hcb_codes_tags has no foreign key, so without this a deleted tag orphans
+  # them. delete_all, not destroy: HcbCodeTag's broadcast callbacks render
+  # partials that now expect a ledger item.
+  has_many :hcb_code_tags, dependent: :delete_all
+  # Suggestions are no longer created, but hcb_code_tag_suggestions has a
+  # foreign key to tags, so this stays until the table is dropped.
   has_many :hcb_code_tag_suggestions, dependent: :destroy, class_name: "HcbCode::Tag::Suggestion"
   has_many :hcb_codes, through: :hcb_code_tags
+  has_many :ledger_item_tags, class_name: "Ledger::Item::Tag", dependent: :destroy
+  has_many :ledger_items, through: :ledger_item_tags, class_name: "Ledger::Item"
 
   validates :label, presence: true, uniqueness: { scope: :event_id, case_sensitive: false }
   validate :only_one_valid_emoji
@@ -42,16 +50,12 @@ class Tag < ApplicationRecord
   def removal_confirmation_message
     message = "Are you sure you'd like to delete this tag?"
 
-    if hcb_codes.any?
-      message + " It will be removed from #{pluralize(hcb_codes.size, 'transaction')}."
+    if ledger_items.any?
+      message + " It will be removed from #{pluralize(ledger_items.size, 'transaction')}."
     else
       message
     end
   end
-
-  after_create_commit {
-    SuggestTagsJob.perform_later(event_id: event.id)
-  }
 
   private
 
