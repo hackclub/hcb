@@ -259,6 +259,25 @@ RSpec.describe EventsController do
 
       expect(event.config.reload.subevent_name_prefix).to eq("Athena Award — ")
     end
+
+    it "only lets managers be added to the reimbursement reviewer list" do
+      manager = create(:user)
+      other_manager = create(:user)
+      member = create(:user)
+      event = create(:event)
+      create(:organizer_position, user: manager, event:, role: :manager)
+      create(:organizer_position, user: other_manager, event:, role: :manager)
+      create(:organizer_position, user: member, event:, role: :member)
+      create_session(manager, verified: true)
+
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_ids: ["", other_manager.id, member.id] } })
+
+      expect(event.reload.reimbursement_reviewers).to contain_exactly(other_manager)
+
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_ids: [""] } })
+
+      expect(event.reload.reimbursement_reviewers).to be_empty
+    end
   end
 
   describe "#payments" do

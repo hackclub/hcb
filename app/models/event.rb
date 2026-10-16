@@ -30,6 +30,7 @@
 #  public_message                               :text
 #  public_reimbursement_page_enabled            :boolean          default(FALSE), not null
 #  public_reimbursement_page_message            :text
+#  reimbursements_require_assigned_reviewer     :boolean          default(FALSE), not null
 #  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
 #  risk_level                                   :integer
 #  short_name                                   :string
@@ -420,6 +421,9 @@ class Event < ApplicationRecord
 
   has_many :event_follows, class_name: "Event::Follow", dependent: :destroy
   has_many :followers, through: :event_follows, source: :user
+
+  has_many :event_reimbursement_reviewers, class_name: "Event::ReimbursementReviewer", dependent: :destroy
+  has_many :reimbursement_reviewers, through: :event_reimbursement_reviewers, source: :user, dependent: :destroy
 
   has_many :fee_relationships
   has_many :transactions, through: :fee_relationships, source: :t_transaction
@@ -951,6 +955,21 @@ class Event < ApplicationRecord
 
   def public_reimbursement_page_available?
     public_reimbursement_page_enabled && plan.reimbursements_enabled? && !financially_frozen?
+  end
+
+  def eligible_reimbursement_reviewers
+    User.where(id: ancestor_organizer_positions.manager_access.select(:user_id))
+  end
+
+  # Reviewers on the reimbursement reviewer list who are still managers
+  def active_reimbursement_reviewers
+    eligible_reimbursement_reviewers.where(id: event_reimbursement_reviewers.select(:user_id))
+  end
+
+  # Who can be picked to review a report. Falls back to every eligible
+  # manager when no reviewer list is configured.
+  def reimbursement_review_pool
+    active_reimbursement_reviewers.exists? ? active_reimbursement_reviewers : eligible_reimbursement_reviewers
   end
 
   def short_name(length: MAX_SHORT_NAME_LENGTH)

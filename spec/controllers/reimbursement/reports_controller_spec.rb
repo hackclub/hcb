@@ -374,6 +374,27 @@ RSpec.describe Reimbursement::ReportsController do
     end
   end
 
+  describe "#submit" do
+    it "only accepts reviewers from the organization's reviewer list when a reviewer is required" do
+      event = create(:event, reimbursements_require_assigned_reviewer: true)
+      member = create(:user)
+      listed = create(:user)
+      unlisted = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      create(:organizer_position, user: listed, event:, role: :manager)
+      create(:organizer_position, user: unlisted, event:, role: :manager)
+      event.event_reimbursement_reviewers.create!(user: listed)
+      report = create(:reimbursement_report, user: member, event:)
+
+      create_session(member, verified: true)
+
+      post(:submit, params: { report_id: report.id, reviewer_id: unlisted.public_id })
+
+      expect(flash[:error]).to eq("The selected reviewer is not eligible for this report.")
+      expect(report.reload.reviewer).to be_nil
+    end
+  end
+
   describe "#approve" do
     it "approves all pending expenses and requests reimbursement" do
       creator = create(:user)

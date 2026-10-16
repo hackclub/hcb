@@ -3,6 +3,23 @@
 require "rails_helper"
 
 RSpec.describe ReimbursementMailer do
+  describe "#review_requested" do
+    it "notifies only the reviewer list when one is configured" do
+      event = create(:event)
+      listed = create(:user, email: "listed@example.com")
+      unlisted = create(:user, email: "unlisted@example.com")
+      create(:organizer_position, user: listed, event:, role: :manager)
+      create(:organizer_position, user: unlisted, event:, role: :manager)
+      report = create(:reimbursement_report, event:)
+
+      expect(described_class.with(report:).review_requested.to).to include("unlisted@example.com", "listed@example.com")
+
+      event.event_reimbursement_reviewers.create!(user: listed)
+
+      expect(described_class.with(report:).review_requested.to).to eq(["listed@example.com"])
+    end
+  end
+
   describe "#expenses_approved" do
     it "renders the list of expenses in their original currency" do
       user = create(
