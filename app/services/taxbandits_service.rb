@@ -28,7 +28,9 @@ class TaxbanditsService
   end
 
   # Returns the full, unmasked TIN. Only Tax::Form#import_taxbandits_data may call
-  # this, and only to fingerprint the TIN; nothing else in HCB may touch it.
+  # this, and only to fingerprint the TIN; nothing else in HCB may touch it. (The
+  # PDF download and ConfigurationIntegrity::Taxbandits::MaskedTinCheckJob read
+  # the submission only for its PDF URL.)
   def self.get_submission(payee_ref)
     Rails.logger.info("TaxBandits: get_submission for PayeeRef=#{payee_ref} by current_user_id=#{Current.user&.id || "nil"}")
     taxbandits_client.get("WhCertificate/Get?PayeeRef=#{payee_ref}").body
