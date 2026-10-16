@@ -8,6 +8,7 @@ export default class extends Controller {
     placeholderEnd: { type: String, default: 'YYYY-MM-DD' },
     nameStart: String,
     nameEnd: String,
+    mode: { type: String, default: 'range' },
   }
 
   connect() {
@@ -145,20 +146,25 @@ export default class extends Controller {
     this.$monthTitle = this.element.querySelector('[data-role="month-title"]')
     this.$weeksGrid = this.element.querySelector('[data-role="weeks"]')
 
-    this.$typedStart.addEventListener('input', event => {
-      this.typedStart = this.$typedStart.value = this.#formatInputDate(
-        event.target.value
+    if (this.$typedStart) {
+      this.$typedStart.addEventListener('input', event => {
+        this.typedStart = this.$typedStart.value = this.#formatInputDate(
+          event.target.value
+        )
+      })
+      this.$typedStart.addEventListener('blur', () =>
+        this.#commitTyped('start')
       )
-    })
+    }
 
-    this.$typedEnd.addEventListener('input', event => {
-      this.typedEnd = this.$typedEnd.value = this.#formatInputDate(
-        event.target.value
-      )
-    })
-
-    this.$typedStart.addEventListener('blur', () => this.#commitTyped('start'))
-    this.$typedEnd.addEventListener('blur', () => this.#commitTyped('end'))
+    if (this.$typedEnd) {
+      this.$typedEnd.addEventListener('input', event => {
+        this.typedEnd = this.$typedEnd.value = this.#formatInputDate(
+          event.target.value
+        )
+      })
+      this.$typedEnd.addEventListener('blur', () => this.#commitTyped('end'))
+    }
 
     this.$prevBtn.addEventListener('click', () => {
       this.view = this.#addMonths(this.view, -1)
@@ -237,8 +243,8 @@ export default class extends Controller {
     this.$weeksGrid.replaceChildren(fragment)
     this.$dayButtons = Array.from(this.$weeksGrid.children)
 
-    this.$typedStart.value = this.#formatDate(this.start)
-    this.$typedEnd.value = this.#formatDate(this.end)
+    if (this.$typedStart) this.$typedStart.value = this.#formatDate(this.start)
+    if (this.$typedEnd) this.$typedEnd.value = this.#formatDate(this.end)
 
     this.#paintHover()
   }
@@ -312,7 +318,10 @@ export default class extends Controller {
     const previousViewMonth = this.view.getMonth()
     const previousViewYear = this.view.getFullYear()
 
-    if (!this.start || this.end) {
+    if (this.modeValue === 'single') {
+      this.start = day
+      this.end = day
+    } else if (!this.start || this.end) {
       this.start = day
       this.end = null
       this.view = day
@@ -335,12 +344,17 @@ export default class extends Controller {
     if (hasMonthChanged) {
       this.#renderCalendar()
     } else {
-      this.$typedStart.value = this.#formatDate(this.start)
-      this.$typedEnd.value = this.#formatDate(this.end)
+      if (this.$typedStart)
+        this.$typedStart.value = this.#formatDate(this.start)
+      if (this.$typedEnd) this.$typedEnd.value = this.#formatDate(this.end)
       this.#paintHover()
     }
 
     this.#emitChange()
+
+    if (this.modeValue === 'single') {
+      document.dispatchEvent(new CustomEvent('hcb:close-menus'))
+    }
   }
 
   #inRange(day) {
@@ -426,8 +440,14 @@ export default class extends Controller {
   }
 
   #template() {
+    const isSingle = this.modeValue === 'single'
+
     return `
       <div class="w-full max-w-xl">
+        ${
+          isSingle
+            ? ''
+            : `
         <div class="flex items-center gap-2 mb-3">
           <div class="relative flex-1">
             <input name="${this.nameStartValue}" class="input text-center text-sm" data-role="typed-start" placeholder="${this.placeholderStartValue}" value="${this.typedStart ?? ''}" />
@@ -437,6 +457,8 @@ export default class extends Controller {
             <input name="${this.nameEndValue}" class="input text-center text-sm" data-role="typed-end" placeholder="${this.placeholderEndValue}" value="${this.typedEnd ?? ''}" />
           </div>
         </div>
+        `
+        }
 
         <div>
           <div class="flex items-center justify-between pb-2 px-1">
@@ -450,7 +472,7 @@ export default class extends Controller {
           </div>
 
           <div data-role="weeks" class="grid grid-cols-7 gap-0 py-2"></div>
-          <button type="button" data-action="click->date-range-picker#submitFilter" class="btn w-full">Filter</button>
+          ${isSingle ? '' : '<button type="button" data-action="click->date-range-picker#submitFilter" class="btn w-full">Filter</button>'}
         </div>
       </div>
     `
