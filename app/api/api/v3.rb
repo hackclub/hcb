@@ -95,7 +95,7 @@ module Api
               ledger_items(linked_object_type: { "$eq" => "CardCharge" })
                 .where(id: Models::CardCharge.select(:ledger_item_id))
             )
-            charges = Models::CardCharge.where(ledger_item_id: items.map(&:id)).index_by(&:ledger_item_id)
+            charges = Models::CardCharge.with_details.where(ledger_item_id: items.map(&:id)).index_by(&:ledger_item_id)
 
             items.map { |item| charges[item.id] }
           else
@@ -106,14 +106,13 @@ module Api
             combined = pending + settled
             combined.select! { |t| t.local_hcb_code.type == :card_charge }
             combined = paginate(Kaminari.paginate_array(combined))
-            combined.map do |t|
-              Models::CardCharge.find_by_hcb_code(t.hcb_code)
-            end
+            charges = Models::CardCharge.with_details.where(hcb_code: combined.map(&:hcb_code)).index_by(&:hcb_code)
+            combined.filter_map { |transaction| charges[transaction.hcb_code] }
           end
       end
 
       def card_charge
-        public_id_resource!(:@card_charge, :card_charge_id, Models::CardCharge, "Card charge not found.")
+        public_id_resource!(:@card_charge, :card_charge_id, Models::CardCharge.with_details, "Card charge not found.")
       end
 
       def donations
