@@ -8,7 +8,7 @@
           <%= form.label :expiration_at, "Expires on" %>
 
           <div class="flex gap-3 items-stretch">
-            <%= form.date_field :expiration_at, value: @card_grant.expiration_at, disabled: !policy(@card_grant).update? %>
+            <%= form.date_field :expiration_at, value: @card_grant.expiration_at, disabled: !policy(@card_grant).update?, max: 3.years.from_now.to_date %>
           </div>
         </div>
 
