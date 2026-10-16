@@ -2,13 +2,14 @@ import { Controller } from '@hotwired/stimulus'
 
 export default class extends Controller {
   static targets = ['month', 'day', 'year', 'hidden']
-  static values = { initial: String }
+  static values = { initial: String, pickerId: String }
 
   connect() {
     this._onPick = event => {
+      if (event.target.dataset.pickerId !== this.pickerIdValue) return
       if (event.detail.start) this.#applyDate(event.detail.start)
     }
-    this.element.addEventListener('daterange:change', this._onPick)
+    document.addEventListener('daterange:change', this._onPick)
 
     const match = String(this.initialValue || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
     if (match) {
@@ -22,7 +23,7 @@ export default class extends Controller {
   }
 
   disconnect() {
-    this.element.removeEventListener('daterange:change', this._onPick)
+    document.removeEventListener('daterange:change', this._onPick)
   }
 
   onMonthInput(event) {

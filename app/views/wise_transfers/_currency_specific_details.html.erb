@@ -11,20 +11,21 @@
             <%= form.select field[:key], options_for_select(field[:options].to_a), disabled:, prompt: "Select one...", "x-bind:required": "#{field[:conditional] || "true"} && #{field[:required].nil? || field[:required]}" %>
           <% elsif field[:type] == :segmented_date %>
             <% current_value = form.object.try(field[:key]) %>
+            <% picker_id = "#{form.object_name}-#{field[:key]}".parameterize %>
             <div data-controller="menu" class="relative">
-              <div class="input flex items-center gap-1 cursor-text" data-menu-target="toggle" data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown">
-                <div data-controller="segmented-data-input" data-segmented-data-input-initial-value="<%= current_value %>" class="flex items-center gap-1 flex-1">
-                  <input type="text" inputmode="numeric" maxlength="2" placeholder="MM" class="segment w-8 text-center border-0 p0" data-segmented-data-input-target="month" data-action="input->segmented-data-input#onMonthInput keydown->segmented-data-input#onKeydown" />
+              <div class="input input-group cursor-text" data-menu-target="toggle" data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown">
+                <div data-controller="segmented-data-input" data-segmented-data-input-initial-value="<%= current_value %>" data-segmented-data-input-picker-id-value="<%= picker_id %>" class="flex items-center flex-1">
+                  <input type="text" inputmode="numeric" maxlength="2" placeholder="MM" class="segment w-7 text-center outline-none" data-segmented-data-input-target="month" data-action="input->segmented-data-input#onMonthInput keydown->segmented-data-input#onKeydown" />
                   <span class="text-gray-300">/</span>
-                  <input type="text" inputmode="numeric" maxlength="2" placeholder="DD" class="segment w-8 text-center border-0 p0" data-segmented-data-input-target="day" data-action="input->segmented-data-input#onDayInput keydown->segmented-data-input#onKeydown" />
+                  <input type="text" inputmode="numeric" maxlength="2" placeholder="DD" class="segment w-7 text-center outline-none" data-segmented-data-input-target="day" data-action="input->segmented-data-input#onDayInput keydown->segmented-data-input#onKeydown" />
                   <span class="text-gray-300">/</span>
-                  <input type="text" inputmode="numeric" maxlength="4" placeholder="YYYY" class="segment w-12 text-center border-0 p0" data-segmented-data-input-target="year" data-action="input->segmented-data-input#onYearInput keydown->segmented-data-input#onKeydown" />
+                  <input type="text" inputmode="numeric" maxlength="4" placeholder="YYYY" class="segment w-11 text-center outline-none" data-segmented-data-input-target="year" data-action="input->segmented-data-input#onYearInput keydown->segmented-data-input#onKeydown" />
                   <%= form.hidden_field field[:key], data: { "segmented-data-input-target": "hidden" }, "x-bind:required": "#{field[:conditional] || "true"} && #{field[:required].nil? || field[:required]}" %>
                 </div>
                 <%= inline_icon "calendar", size: 16, class: "ml-auto text-gray-400" %>
               </div>
               <div class="menu__content p-2" data-menu-target="content">
-                <div data-controller="date-range-picker" data-date-range-picker-mode-value="single" data-date-range-picker-initial-start-value="<%= current_value %>"></div>
+                <div data-controller="date-range-picker" data-date-range-picker-mode-value="single" data-date-range-picker-initial-start-value="<%= current_value %>" data-picker-id="<%= picker_id %>"></div>
               </div>
             </div>
           <% else %>
