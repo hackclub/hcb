@@ -209,13 +209,17 @@ class WiseTransfer < ApplicationRecord
   def self.convert_usd_to_local(usd_amount, target_currency)
     return Money.from_cents(usd_amount.cents, target_currency) if target_currency == "USD"
 
-    response = quote_connection.post("/v3/quotes", {
-                                       sourceCurrency: "USD",
-                                       targetCurrency: target_currency,
-                                       sourceAmount: usd_amount.amount
-                                     })
+    response = generate_source_amount_quote(usd_amount, target_currency)
 
     Money.from_amount(usd_amount.amount * response.body["rate"], target_currency)
+  end
+
+  def self.generate_source_amount_quote(usd_amount, target_currency)
+    quote_connection.post("/v3/quotes", {
+                            sourceCurrency: "USD",
+                            targetCurrency: target_currency,
+                            sourceAmount: usd_amount.amount
+                          })
   end
 
   def self.generate_detailed_quote(initial_local_amount)
@@ -251,6 +255,33 @@ class WiseTransfer < ApplicationRecord
 
   def self.generate_quote(money)
     generate_detailed_quote(money)[:with_fees_usd_amount]
+  end
+
+  def self.fit_quote_to_maximum(maximum_usd_amount, target_currency)
+    raise ArgumentError, "maximum amount must be in USD" unless maximum_usd_amount.currency.iso_code == "USD"
+
+    response = generate_source_amount_quote(maximum_usd_amount, target_currency)
+    payment_option = response.body["paymentOptions"].first
+    fees = payment_option["price"]["items"]
+    pay_in_fee = BigDecimal(fees.find { |fee| fee["type"] == "PAYIN" }["value"]["amount"].to_s)
+    total_fees = fees.sum { |fee| BigDecimal(fee["value"]["amount"].to_s) }
+    wise_fees = total_fees - pay_in_fee
+    quoted_amount_to_convert = maximum_usd_amount.amount - total_fees
+
+    # wise dont tell us the ACH fee, but we know it is 0.17% of the amount sent, so we just ball from there
+    wise_fee_multiplier = 1 + (wise_fees / quoted_amount_to_convert)
+    ach_fee_multiplier = BigDecimal("1.0017")
+    without_fees_usd_amount = Money.from_amount(maximum_usd_amount.amount / (wise_fee_multiplier * ach_fee_multiplier), "USD")
+    target_currency = Money::Currency.find(target_currency)
+    target_cents = (without_fees_usd_amount.amount * response.body["rate"] * target_currency.subunit_to_unit).floor
+    initial_local_amount = Money.from_cents(target_cents, target_currency)
+
+    {
+      initial_local_amount:,
+      without_fees_usd_amount:,
+      with_fees_usd_amount: maximum_usd_amount,
+      fees_usd_amount: maximum_usd_amount - without_fees_usd_amount
+    }
   end
 
   def estimated_usd_amount_cents

@@ -41,6 +41,22 @@
   box-shadow: none !important;
 }
 
+.expense-amount-input {
+  padding-right: 0.25rem;
+
+  input[type='number'] {
+    min-width: 0;
+  }
+
+  .expense-amount-input__fit {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    height: 28px;
+    min-height: 28px;
+    padding: 0 0.625rem;
+  }
+}
+
 .lightbox {
   position: fixed;
   height: 100vh;
