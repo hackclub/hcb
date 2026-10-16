@@ -208,6 +208,43 @@ RSpec.describe DisbursementsController do
       get(:event_search, params: { q: "ysws", page: 0 }, format: :json)
       expect(JSON.parse(response.body).size).to eq(2)
     end
+
+    context "when searching destinations as a non-admin" do
+      let(:sender) { create(:user) }
+      let!(:private_event) { create(:event, name: "hq-claude-clearinghouse", is_public: false) }
+      let!(:demo_event) { create(:event, :demo_mode, name: "hq-claude-demo") }
+
+      before { create_session(sender, verified: true) }
+
+      it "lists private organizations the user isn't in when the source plan allows unrestricted disbursements" do
+        source_event = create(:event, plan_type: Event::Plan::SalaryAccount)
+        create(:organizer_position, user: sender, event: source_event)
+
+        get(:event_search, params: { q: "hq-claude", source_event_id: source_event.public_id }, format: :json)
+
+        values = JSON.parse(response.body).map { |o| o["value"] }
+        expect(values).to include(private_event.public_id)
+        expect(values).not_to include(demo_event.public_id)
+      end
+
+      it "only lists organizations the user manages when the source plan is restricted" do
+        source_event = create(:event)
+        create(:organizer_position, user: sender, event: source_event)
+
+        get(:event_search, params: { q: "hq-claude", source_event_id: source_event.public_id }, format: :json)
+
+        expect(JSON.parse(response.body)).to be_empty
+      end
+
+      it "rejects a source organization the user has no role in" do
+        source_event = create(:event, plan_type: Event::Plan::SalaryAccount)
+
+        get(:event_search, params: { q: "hq-claude", source_event_id: source_event.public_id }, format: :json)
+
+        expect(response).not_to have_http_status(:ok)
+        expect(response.body).not_to include(private_event.public_id)
+      end
+    end
   end
 
   describe "#show" do
