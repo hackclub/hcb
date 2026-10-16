@@ -30,7 +30,7 @@ module StripeCardsHelper
     when :phone_number
       current_user.phone_number
     when :name
-      current_user.full_name
+      current_user.name
     when :line1
       current_user&.stripe_cards&.physical&.last&.stripe_shipping_address_line1 ||
         current_user&.stripe_cardholder&.stripe_billing_address_line1 ||
