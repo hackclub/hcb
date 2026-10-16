@@ -3,7 +3,7 @@
   `ComboboxHelper#combobox_tag`.
 
   It loads its options asynchronously from `urlValue` — an endpoint called as
-  `?q=<query>&page=<n>` and returning JSON `[{ value, label, sublabel,
+  `?q=<query>&page=<n>` and returning JSON `[{ value, label, sublabel, badge,
   disabled }]`, ordered by relevance, where `value` and `label` are required and
   a page with fewer than PAGE_SIZE rows is the last one. The user filters by
   typing, and the chosen option's `value` is mirrored into a hidden form field
@@ -22,11 +22,12 @@ import { Controller } from '@hotwired/stimulus'
 const PAGE_SIZE = 25
 
 export default class extends Controller {
-  static targets = ['input', 'hidden', 'listbox', 'status']
+  static targets = ['input', 'hidden', 'listbox', 'status', 'badge']
   static values = {
     url: String,
     selected: String,
     label: String,
+    badge: String,
   }
 
   initialize() {
@@ -48,6 +49,7 @@ export default class extends Controller {
       this.selectedOption = {
         value: this.selectedValue,
         label: this.labelValue,
+        badge: this.badgeValue,
       }
       this.inputTarget.value = this.labelValue
       this.hiddenTarget.value = this.selectedValue
@@ -55,6 +57,7 @@ export default class extends Controller {
       this.selectedLabel = ''
       this.selectedOption = null
     }
+    this.renderBadge()
   }
 
   disconnect() {
@@ -81,6 +84,7 @@ export default class extends Controller {
 
   onInput(e) {
     this.deletion = e.inputType && e.inputType.startsWith('delete')
+    this.renderBadge()
     clearTimeout(this.debounce)
     this.debounce = setTimeout(() => this.search(this.query), 150)
   }
@@ -274,6 +278,7 @@ export default class extends Controller {
     if (!option || option.disabled) return
     this.selectedValue = option.value
     this.labelValue = option.label
+    this.badgeValue = option.badge ?? ''
     this.selectedLabel = option.label
     this.selectedOption = option
     this.hiddenTarget.value = option.value
@@ -282,19 +287,18 @@ export default class extends Controller {
   }
 
   // Resolve the field to a valid state when focus leaves:
+  //  - an untouched committed selection is left as-is, even if its label isn't unique,
   //  - an exact match is committed,
-  //  - an untouched committed selection is left as-is,
   //  - anything else (e.g. edited/backspaced text) is cleared.
   finalize() {
     const current = this.query
     if (current === '') return this.clear()
+    if (current === this.selectedLabel) return
 
     const match = (this.options || []).find(
       o => !o.disabled && o.label.toLowerCase() === current.toLowerCase()
     )
     if (match) return this.commit(match)
-
-    if (current === this.selectedLabel) return // unchanged selection, keep it
 
     this.clear()
   }
@@ -305,6 +309,7 @@ export default class extends Controller {
     this.selectedOption = null
     this.inputTarget.value = ''
     this.hiddenTarget.value = ''
+    this.renderBadge()
   }
 
   // Loading/empty/error messages are not choices. Dropping `options` keeps
@@ -335,13 +340,19 @@ export default class extends Controller {
     const sublabel = o.sublabel
       ? `<span class="text-sm muted">${escape(o.sublabel)}</span>`
       : ''
+    const badge = o.badge
+      ? `<code class="combobox__badge">${escape(o.badge)}</code>`
+      : ''
     return `
       <li role="option" id="${this.optionId(i)}" data-index="${i}"${disabled}
           aria-selected="${isSelected}"
           class="combobox__option${selected}"
           data-action="mousedown->combobox#onOptionClick mouseover->combobox#onOptionHover">
         <div class="flex flex-col w-full">
-          <span>${escape(o.label)}</span>
+          <div class="flex items-baseline justify-between gap-2">
+            <span>${escape(o.label)}</span>
+            ${badge}
+          </div>
           ${sublabel}
         </div>
       </li>`
@@ -397,6 +408,12 @@ export default class extends Controller {
     if (this.hasStatusTarget) this.statusTarget.textContent = message
   }
 
+  // Only show the badge while the field still reads as the selection it belongs to.
+  renderBadge() {
+    const intact = this.inputTarget.value === this.selectedLabel
+    this.badgeTarget.textContent = (intact && this.selectedOption?.badge) || ''
+  }
+
   show() {
     this.listboxTarget.removeAttribute('hidden')
     this.inputTarget.setAttribute('aria-expanded', 'true')
@@ -407,6 +424,7 @@ export default class extends Controller {
     this.inputTarget.setAttribute('aria-expanded', 'false')
     this.inputTarget.removeAttribute('aria-activedescendant')
     this.activeIndex = -1
+    this.renderBadge()
   }
 }
 

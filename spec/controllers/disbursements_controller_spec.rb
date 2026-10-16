@@ -177,8 +177,20 @@ RSpec.describe DisbursementsController do
       get(:event_search, params: { q: "ysws" }, format: :json)
 
       expect(response).to have_http_status(:ok)
-      labels = JSON.parse(response.body).map { |o| o["label"] }
-      expect(labels.first).to eq("ysws (ID: #{exact.id})")
+      expect(JSON.parse(response.body).first["value"]).to eq(exact.public_id)
+    end
+
+    # Organizers use this picker too, and event IDs are for admins only.
+    it "never shows a non-admin the ID" do
+      user = create(:user)
+      event = create(:event, name: "ysws")
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+
+      get(:event_search, params: { q: "ysws" }, format: :json)
+
+      option = JSON.parse(response.body).find { |o| o["value"] == event.public_id }
+      expect(option).to include("label" => "ysws", "badge" => nil)
     end
 
     it "paginates results without overlap across pages" do
