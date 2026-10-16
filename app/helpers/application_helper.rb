@@ -238,7 +238,7 @@ module ApplicationHelper
   end
 
   def help_message
-    content_tag :span, "Contact the HCB team at #{help_email} or call #{help_phone} for urgent requests.".html_safe
+    content_tag :span, "Need help? Visit our #{help_desk_link} or email #{help_email}. For urgent issues, call #{help_phone}.".html_safe
   end
 
   def help_email
@@ -247,6 +247,10 @@ module ApplicationHelper
 
   def help_phone
     phone_to "+18442372290", "+1 (844) 237 2290", class: "nowrap"
+  end
+
+  def help_desk_link
+    link_to "helpdesk", "https://help.hcb.hackclub.com", target: "_blank", rel: "noopener", class: "nowrap"
   end
 
   def format_date(date)
