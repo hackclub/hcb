@@ -26,8 +26,8 @@ class Event
 
         record["Organization"] = event.name
         record["Raised YTD"] = event.raised_ytd_cents / 100.0
-        record["Profit YTD"] = fees_cents(event, since: Date.current.beginning_of_year) / 100.0
-        record["Profit All Time"] = fees_cents(event) / 100.0
+        record["Revenue YTD"] = fees_cents(event, since: Date.current.beginning_of_year) / 100.0
+        record["Revenue All Time"] = fees_cents(event) / 100.0
         record["POC (HCB)"] = event.point_of_contact&.name
         record["POC"] = airtable_point_of_contact(event)
 
