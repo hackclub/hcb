@@ -8,7 +8,7 @@ object_shape(json, donation) do
   json.donor do
     json.name donation.name
     json.email donation.email
-    json.recurring_donor_id donation.recurring_donation.hashid if donation.recurring?
+    json.recurring_donor_id donation.recurring_donation.public_id if donation.recurring?
   end
   json.attribution do
     json.referrer donation.referrer
