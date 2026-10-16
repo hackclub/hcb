@@ -5,6 +5,13 @@ class DisbursementPolicy < ApplicationPolicy
     user.auditor?
   end
 
+  # Readable by anyone with read access to either side of the transfer.
+  def show_in_v4?
+    user&.auditor? ||
+      OrganizerPosition.role_at_least?(user, record.source_event, :reader) ||
+      OrganizerPosition.role_at_least?(user, record.destination_event, :reader)
+  end
+
   def can_send?(role: :manager)
     return true if user&.admin?
     return true if record.source_event.nil?
