@@ -28,6 +28,11 @@ class DisbursementPolicy < ApplicationPolicy
 
   alias event_search? new?
 
+  # Picking a transaction to repay means browsing the destination's ledger.
+  def repay?
+    OrganizerPosition.role_at_least?(user, record.destination_event, :reader)
+  end
+
   def create?
     can_send? && can_receive?
   end

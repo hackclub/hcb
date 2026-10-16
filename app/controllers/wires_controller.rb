@@ -78,7 +78,8 @@ class WiresController < ApplicationController
         source_event_id: @wire.event.id,
         amount: 25,
         requested_by_id: current_user.id,
-        fronted: @wire.event.plan.front_disbursements_enabled?
+        fronted: @wire.event.plan.front_disbursements_enabled?,
+        transfer_type: "transfer"
       ).run
 
       disbursement.comments.create!(content: "This $25 fee covers the cost of sending a wire under $500: #{hcb_code_url(@wire.local_hcb_code)}", user: current_user)
