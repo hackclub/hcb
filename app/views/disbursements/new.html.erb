@@ -2,10 +2,6 @@
 <% @back_url = @source_event ? event_transfers_path(@source_event) : nil %>
 
 <% content_for :sidebar_footer do %>
-  <% if !admin_signed_in? && !current_user.manageable_events.not_hidden.filter_demo_mode(false).exists? && !@source_event&.plan&.unrestricted_disbursements_enabled? %>
-    <p class="h5 muted">It looks like you don't have any organizations to transfer to. You can transfer funds between any organizations you're a part of.</p>
-  <% end %>
-
   <% if @source_event && @destination_event %>
     <% admin_tool("my-2 p-2 px-3") do %>
       Make a transfer from <%= @destination_event.name %> to <%= @source_event.name %>? <%= link_to "Click here", new_disbursement_path(event_id: @source_event.id, source_event_id: @destination_event.id) %>.

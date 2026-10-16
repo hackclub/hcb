@@ -41,6 +41,30 @@ RSpec.describe DisbursementsController do
       expect(disbursement.destination_event).to eq(destination_event)
     end
 
+    it "allows sending to a public organization the user doesn't manage" do
+      sender = create(:user)
+      source_event = create(:event, :with_positive_balance, organizers: [sender])
+      destination_event = create(:event, is_public: true, is_indexable: true)
+      create_session(sender, verified: true)
+
+      expect do
+        post(:create, params: { disbursement: { name: "Claude", source_event_id: source_event.public_id, event_id: destination_event.public_id, amount: "40" } })
+      end.to change(Disbursement, :count).by(1)
+    end
+
+    it "rejects sending to a private organization the user doesn't manage" do
+      sender = create(:user)
+      source_event = create(:event, :with_positive_balance, organizers: [sender])
+      destination_event = create(:event, is_public: false)
+      create_session(sender, verified: true)
+
+      expect do
+        post(:create, params: { disbursement: { name: "Claude", source_event_id: source_event.public_id, event_id: destination_event.public_id, amount: "40" } })
+      end.not_to change(Disbursement, :count)
+
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+    end
+
     it "allows transaction categories to be set by admins" do
       sender = create(:user, :make_admin)
       create(:governance_admin_transfer_limit, user: sender)
@@ -164,7 +188,37 @@ RSpec.describe DisbursementsController do
     end
   end
 
+  describe "#new" do
+    it "rejects a prefilled private destination the user doesn't manage" do
+      sender = create(:user)
+      source_event = create(:event, organizers: [sender])
+      destination_event = create(:event, is_public: false)
+      create_session(sender, verified: true)
+
+      get(:new, params: { source_event_id: source_event.slug, event_id: destination_event.slug })
+
+      expect(response).to redirect_to(root_path)
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+    end
+  end
+
   describe "#event_search" do
+    it "lists public organizations as destinations but hides private, unlisted and demo ones" do
+      user = create(:user)
+      create(:event, organizers: [user])
+      public_event = create(:event, name: "Claude Clearinghouse")
+      create(:event, name: "Claude Private", is_public: false)
+      create(:event, name: "Claude Unlisted", is_indexable: false)
+      create(:event, name: "Claude Demo", demo_mode: true)
+      create_session(user, verified: true)
+
+      get(:event_search, params: { q: "Claude" }, format: :json)
+      expect(JSON.parse(response.body).map { |o| o["value"] }).to eq([public_event.public_id])
+
+      get(:event_search, params: { q: "Claude", sending: true }, format: :json)
+      expect(JSON.parse(response.body)).to be_empty
+    end
+
     it "ranks the exact match first even when substring matches would trim it" do
       admin = create(:user, :make_admin)
       create_session(admin, verified: true)
