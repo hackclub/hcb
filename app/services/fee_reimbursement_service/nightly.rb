@@ -24,28 +24,25 @@ module FeeReimbursementService
         else
           topup = StripeTopup.create(
             amount_cents:,
-            statement_descriptor: "HCB-#{local_hcb_code.short_code}",
+            statement_descriptor: "HCB-#{fee_reimbursement_group.local_hcb_code.short_code}",
             description: "Fee reimbursement ##{fee_reimbursement.id}",
             metadata: {
               fee_reimbursement_id: fee_reimbursement.id,
             }
           )
 
-          fee_reimbursement.update!(stripe_topup_id: topup.id, processed_at: Time.now)
+          fee_reimbursement.update!(stripe_topup_id: topup.id, processed_at: Time.now, fee_reimbursement_group:)
         end
       end
     end
 
-    def hcb_code
-      [
-        ::TransactionGroupingEngine::Calculate::HcbCode::HCB_CODE,
-        ::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_FEE_REIMBURSEMENT_CODE,
-        Time.now.strftime("%G_%V")
-      ].join(::TransactionGroupingEngine::Calculate::HcbCode::SEPARATOR)
-    end
+    private
 
-    def local_hcb_code
-      HcbCode.find_or_create_by(hcb_code:)
+    # Every top-up made this week shares the group's HCB code: its short code is
+    # the statement descriptor, which is how each bank debit finds the group's
+    # ledger item when it comes in.
+    def fee_reimbursement_group
+      @fee_reimbursement_group ||= FeeReimbursementGroup.find_or_create_by!(week: Time.now.strftime(FeeReimbursementGroup::WEEK_FORMAT))
     end
 
   end
