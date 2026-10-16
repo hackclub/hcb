@@ -63,14 +63,32 @@ RSpec.describe Subscription::Detect do
     expect(detect).to be_empty
   end
 
+  it "detects a yearly subscription from two charges" do
+    charges_at(370.days.ago, 2.days.ago)
+
+    subscription = detect.sole
+    expect(subscription).to have_attributes(cadence: "yearly", cadence_days: 365)
+    expect(subscription.hcb_codes.count).to eq(2)
+  end
+
   it "ignores repeat purchases a few days apart" do
     charges_at(9.days.ago, 6.days.ago, 3.days.ago)
 
     expect(detect).to be_empty
   end
 
-  it "needs at least three charges" do
+  it "leaves a repeat charge out rather than breaking the group" do
+    first, second, repeat, last = charges_at(61.days.ago, 31.days.ago, 29.days.ago, 1.day.ago)
+
+    subscription = detect.sole
+    expect(subscription.cadence).to eq("monthly")
+    expect(subscription.hcb_codes).to contain_exactly(first, second, last)
+    expect(repeat.reload.subscription_id).to be_nil
+  end
+
+  it "needs at least three charges unless they're a year apart" do
     charges_at(31.days.ago, 1.day.ago)
+    charges_at(120.days.ago, 2.days.ago, network_id: "other-1", name: "OTHER")
 
     expect(detect).to be_empty
   end
@@ -107,5 +125,11 @@ RSpec.describe Subscription::Detect do
     charges = charges_at(61.days.ago, 31.days.ago, 1.day.ago)
 
     expect { detect }.not_to(change { charges.map { |hcb_code| hcb_code.reload.receipt_required? } })
+  end
+
+  it "doesn't touch the charges' ledger items" do
+    charges = charges_at(61.days.ago, 31.days.ago, 1.day.ago)
+
+    expect { detect }.not_to(change { charges.map { |hcb_code| hcb_code.ledger_item.reload.updated_at } })
   end
 end

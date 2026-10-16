@@ -31,8 +31,16 @@ RSpec.describe Subscription::LinkCharge do
     expect(link(charge(1.day.ago, amount_cents: -12_99))).to be_nil
   end
 
-  it "doesn't link a charge that's off-cadence" do
+  it "doesn't link a charge too soon after the last one" do
     expect(link(charge(21.days.ago))).to be_nil
+  end
+
+  it "links a charge after the billing date moved, and tracks the new date" do
+    subscription.update!(last_charged_at: 60.days.ago)
+    hcb_code = charge(16.days.ago)
+
+    expect(link(hcb_code)).to eq(subscription)
+    expect(subscription.reload.last_charged_at).to be_within(1.second).of(hcb_code.datetime)
   end
 
   it "doesn't link a charge at another merchant" do

@@ -58,10 +58,15 @@ RSpec.describe Subscription, type: :model do
       expect(matches(at: 30.days.ago + 10.days)).to be(false)
     end
 
-    it "matches after skipped cycles" do
+    it "matches after any number of skipped cycles" do
       expect(matches(at: 30.days.ago + 61.days)).to be(true)
       expect(matches(at: 30.days.ago + 90.days)).to be(true)
-      expect(matches(at: 30.days.ago + 150.days)).to be(false)
+      expect(matches(at: 30.days.ago + 150.days)).to be(true)
+    end
+
+    it "matches a charge slightly early" do
+      expect(matches(at: 30.days.ago + 25.days)).to be(true)
+      expect(matches(at: 30.days.ago + 23.days)).to be(false)
     end
 
     it "matches any time when there's no previous charge" do
@@ -86,6 +91,28 @@ RSpec.describe Subscription, type: :model do
 
       expect(subscription.last_charged_at).to be_within(1.second).of(last.datetime)
       expect(subscription.next_expected_at).to be_within(1.second).of(last.datetime + 30.days)
+    end
+  end
+
+  describe "#link!" do
+    include_context "card locking charges"
+
+    let(:stripe_card) { create(:stripe_card, :with_stripe_id, stripe_cardholder: create(:stripe_cardholder, user:), event:) }
+    let(:subscription) { create(:subscription, stripe_card:, event:, amount_cents: 10_00) }
+
+    it "links the charge and tracks it as the last one" do
+      hcb_code = create_settled_card_charge(user:, stripe_card:, settled_at: 10.days.ago)
+
+      subscription.link!(hcb_code)
+
+      expect(hcb_code.reload.subscription).to eq(subscription)
+      expect(subscription.last_charged_at).to be_within(1.second).of(hcb_code.datetime)
+    end
+
+    it "doesn't touch the charge's ledger item" do
+      hcb_code = create_settled_card_charge(user:, stripe_card:, settled_at: 10.days.ago)
+
+      expect { subscription.link!(hcb_code) }.not_to(change { hcb_code.ledger_item.reload.updated_at })
     end
   end
 end

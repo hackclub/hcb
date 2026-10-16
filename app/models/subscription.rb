@@ -46,10 +46,17 @@ class Subscription < ApplicationRecord
     yearly: 365,
   }.freeze
 
-  # A charge lines up with the cadence when the gap since the last charge is
-  # within ±20% of one, two or three cycles. Allowing skipped cycles keeps a
-  # subscription linked after, say, a month with the card frozen.
+  # A charge lines up with the cadence once at least a cycle (less 20%) has
+  # passed since the last charge. Only the lower bound is checked: a charge
+  # too soon after the last one is a repeat purchase, not the subscription,
+  # whereas a long gap (a frozen card, a lapsed subscription that was later
+  # resumed) shouldn't stop the next charge from linking and bringing
+  # last_charged_at back up to date. An upper bound would leave the
+  # subscription stuck on a stale last_charged_at after one off-cadence
+  # charge, with nothing able to link ever again.
   TOLERANCE = 0.2
+  # When detecting a subscription, each gap between consecutive charges may
+  # span up to this many cycles (a skipped month, say).
   MAX_SKIPPED_CYCLES = 3
 
   belongs_to :event
@@ -100,7 +107,7 @@ class Subscription < ApplicationRecord
     return true if last_charged_at.nil? || at.nil?
 
     gap_days = (at - last_charged_at).abs / 1.day
-    self.class.gap_fits_cadence?(gap_days, cadence_days)
+    gap_days >= (1 - TOLERANCE) * cadence_days
   end
 
   def cadence_label
@@ -125,8 +132,11 @@ class Subscription < ApplicationRecord
     update!(last_charged_at:, next_expected_at: last_charged_at && (last_charged_at + cadence_days.days))
   end
 
+  # Linking only stamps a foreign key nothing else reacts to, so it skips the
+  # HcbCode callbacks: saving an HcbCode touches its ledger item, which re-runs
+  # the ledger mapper and enqueues card-locking jobs.
   def link!(hcb_code)
-    hcb_code.update!(subscription: self)
+    hcb_code.update_column(:subscription_id, id)
     sync_charges!
   end
 

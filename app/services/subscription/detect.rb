@@ -3,13 +3,19 @@
 class Subscription
   # Finds flat-amount subscriptions among a card's settled charges and creates
   # them. A subscription is one merchant charging the exact same amount at least
-  # MIN_CHARGES times, with the typical gap close to one of the cadence buckets
-  # (or a free-form number of days) and every gap within ±20% of one to three
-  # cycles.
+  # MIN_CHARGES times (two, for a yearly one), with the typical gap close to one
+  # of the cadence buckets (or a free-form number of days) and every gap within
+  # ±20% of one to three cycles.
   class Detect
     MIN_CHARGES = 3
+    # Three yearly charges would need over two years of history, so two a year
+    # apart are enough for that cadence.
+    MIN_YEARLY_CHARGES = 2
+    # Charges closer together than this are repeats (a retry, a double charge),
+    # not a cadence.
     MIN_GAP_DAYS = 5
-    LOOKBACK = 13.months
+    # Long enough to hold two yearly charges, with tolerance.
+    LOOKBACK = 15.months
 
     def initialize(stripe_card:, merchant_network_id: nil, merchant_name: nil)
       @stripe_card = stripe_card
@@ -23,7 +29,7 @@ class Subscription
       return [] unless @stripe_card.stripe_id.present?
 
       charges.group_by { |charge| [charge[:merchant_key], charge[:amount_cents]] }.filter_map do |_key, group|
-        next if group.size < MIN_CHARGES
+        next if group.size < MIN_YEARLY_CHARGES
 
         create_from(group.sort_by { |charge| [charge[:charged_at], charge[:hcb_code].id] })
       end
@@ -73,19 +79,20 @@ class Subscription
     end
 
     def create_from(group)
-      gaps = group.each_cons(2).map { |a, b| (b[:charged_at] - a[:charged_at]) / 1.day }
-      return if gaps.any? { |gap| gap < MIN_GAP_DAYS }
+      charges = without_repeats(group)
+      return if charges.size < MIN_YEARLY_CHARGES
 
-      cadence, cadence_days = fit_cadence(gaps)
+      cadence, cadence_days = fit_cadence(charges.each_cons(2).map { |a, b| days_between(a, b) })
       return if cadence.nil?
+      return if charges.size < MIN_CHARGES && cadence != :yearly
 
-      merchant = group.last[:merchant]
+      merchant = charges.last[:merchant]
       subscription = Subscription.new(
         event: @stripe_card.event,
         stripe_card: @stripe_card,
         merchant_network_id: merchant[:network_id],
         merchant_name: merchant[:name] || merchant[:network_id],
-        amount_cents: group.first[:amount_cents],
+        amount_cents: charges.first[:amount_cents],
         cadence:,
         cadence_days:
       )
@@ -94,18 +101,43 @@ class Subscription
 
       ActiveRecord::Base.transaction do
         subscription.save!
-        group.each { |charge| charge[:hcb_code].update!(subscription:) }
+        # Only a foreign key changes, so skip the HcbCode callbacks (see
+        # Subscription#link!).
+        HcbCode.where(id: charges.map { |charge| charge[:hcb_code].id }).update_all(subscription_id: subscription.id)
       end
       subscription.sync_charges!
 
       subscription
     end
 
-    # The typical (lower median) gap has to be one cycle; every gap may span up
-    # to MAX_SKIPPED_CYCLES. The buckets' one-cycle windows don't overlap, so at
+    # Leaves out charges within MIN_GAP_DAYS of the previous kept one, so a
+    # retry or a double charge doesn't stop the rest from forming a cadence
+    # (and, since it stays unlinked, from doing so again at every later charge
+    # until it ages out of the lookback). A group whose charges are typically
+    # that close together isn't a subscription at all.
+    def without_repeats(group)
+      gaps = group.each_cons(2).map { |a, b| days_between(a, b) }
+      return [] if gaps.any? && typical(gaps) < MIN_GAP_DAYS
+
+      group.each_with_object([]) do |charge, kept|
+        kept << charge if kept.empty? || days_between(kept.last, charge) >= MIN_GAP_DAYS
+      end
+    end
+
+    def days_between(a, b)
+      (b[:charged_at] - a[:charged_at]) / 1.day
+    end
+
+    # The lower median.
+    def typical(gaps)
+      gaps.sort[(gaps.size - 1) / 2]
+    end
+
+    # The typical gap has to be one cycle; every gap may span up to
+    # MAX_SKIPPED_CYCLES. The buckets' one-cycle windows don't overlap, so at
     # most one bucket can fit.
     def fit_cadence(gaps)
-      typical_gap = gaps.sort[(gaps.size - 1) / 2]
+      typical_gap = typical(gaps)
 
       Subscription::CADENCE_DAYS.each do |cadence, days|
         next unless (typical_gap - days).abs <= Subscription::TOLERANCE * days
