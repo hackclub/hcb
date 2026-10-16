@@ -21,7 +21,7 @@
                                 class: "peer sr-only",
                                 data: { action: "transfer-type#select", transfer_type_target: ("repaymentRadio" if value == "repayment") } %>
           <%# The inset ring keeps the selected card the same size as the others. %>
-          <%= form.label :transfer_type, value:, class: "card flex items-center gap-4 m-0 cursor-pointer transition-colors hover:bg-blue/5 peer-checked:ring-2 peer-checked:ring-inset peer-checked:ring-blue peer-checked:bg-blue/5 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue peer-disabled:cursor-not-allowed peer-disabled:opacity-50" do %>
+          <%= form.label :transfer_type, value:, class: "card flex items-start gap-4 m-0 cursor-pointer transition-colors hover:bg-blue/5 peer-checked:ring-2 peer-checked:ring-inset peer-checked:ring-blue peer-checked:bg-blue/5 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue peer-disabled:cursor-not-allowed peer-disabled:opacity-50" do %>
             <span class="flex items-center justify-center shrink-0 w-10 h-10 rounded-full bg-blue/10 text-blue">
               <%= inline_icon icon, size: 24, class: "m-0" %>
             </span>
