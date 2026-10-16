@@ -31,6 +31,64 @@ RSpec.describe CardGrantsController do
     end
   end
 
+  describe "canceled grant settings" do
+    let(:event) { create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate) }
+    let(:card_grant) { create(:card_grant, event:, email: "recipient@example.com").tap { |grant| grant.update!(status: :canceled) } }
+
+    it "lets managers view the recipient email in settings, not the banner" do
+      manager = create(:user)
+      create(:organizer_position, user: manager, event:, role: :manager)
+      create_session(manager, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("View grant settings")
+      expect(response.body).not_to include("recipient@example.com")
+
+      get(:edit_overview, params: { event_id: event.friendly_id, id: card_grant.hashid })
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.at_css("a[href='mailto:recipient@example.com']")).to be_present
+
+      patch(:update, params: { id: card_grant.hashid, card_grant: { purpose: "Changed" } })
+      expect(flash[:error]).to match(/not authorized/i)
+      expect(card_grant.reload.purpose).not_to eq("Changed")
+    end
+
+    it "lets admins view the recipient email in settings" do
+      admin = create(:user, :admin)
+      create_session(admin, verified: true)
+
+      get(:edit_overview, params: { event_id: event.friendly_id, id: card_grant.hashid })
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.at_css("a[href='mailto:recipient@example.com']")).to be_present
+    end
+
+    it "lets members view settings without the recipient email" do
+      member = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      create_session(member, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("View grant settings")
+      expect(response.body).not_to include("recipient@example.com")
+
+      get(:edit_overview, params: { event_id: event.friendly_id, id: card_grant.hashid })
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("recipient@example.com")
+    end
+
+    it "does not show settings or the recipient email to readers" do
+      reader = create(:user)
+      create(:organizer_position, user: reader, event:, role: :reader)
+      create_session(reader, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("View grant settings", "recipient@example.com")
+    end
+  end
+
   describe "#new" do
     it "renders successfully" do
       user = create(:user)
