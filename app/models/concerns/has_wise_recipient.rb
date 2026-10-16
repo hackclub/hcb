@@ -40,7 +40,7 @@ module HasWiseRecipient
       }
 
       fields << {
-        type: :text_field,
+        type: :segmented_date,
         key: "recipient_birthday",
         placeholder: "MM/DD/YYYY",
         label: "Recipient's date of birth",
