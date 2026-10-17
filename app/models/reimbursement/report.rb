@@ -131,7 +131,7 @@ module Reimbursement
         transitions from: [:draft, :reimbursement_requested], to: :submitted do
           guard do
             payout_method.present? && !user.onboarding? && event && !exceeds_maximum_amount? && !below_minimum_amount? &&
-              expenses.any? && !missing_receipts? && !event.financially_frozen? && expenses.none? { |e| e.amount.zero? } &&
+              expenses.any? && !missing_receipts? && !missing_categories? && !event.financially_frozen? && expenses.none? { |e| e.amount.zero? } &&
               !mismatched_currency? && payout_method_allowed?
           end
         end
@@ -354,6 +354,10 @@ module Reimbursement
 
     def missing_receipts?
       expenses.complete.with_receipt.count != expenses.count
+    end
+
+    def missing_categories?
+      expenses.where.not(type: Reimbursement::Expense::Fee.name).where(category: nil).exists?
     end
 
     def mismatched_currency?

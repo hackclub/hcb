@@ -2976,6 +2976,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_120100) do
   create_table "versions", force: :cascade do |t|
     t.datetime "created_at", precision: nil
     t.string "event", null: false
+    t.bigint "impersonated_by_id"
     t.bigint "item_id", null: false
     t.string "item_type", null: false
     t.jsonb "object"

@@ -44,6 +44,42 @@ RSpec.describe Reimbursement::ReportsController do
     end
   end
 
+  describe "#show" do
+    render_views
+
+    def header_badges(body)
+      Nokogiri::HTML5(body).css("h3 .badge").map { |badge| badge.text.squish }
+    end
+
+    it "shows a single review requested badge naming the assigned reviewer" do
+      creator = create(:user)
+      event = create(:event)
+      reviewer = create(:user, full_name: "Fiona Hackworth")
+      create(:organizer_position, user: reviewer, event:)
+      report = create(:reimbursement_report, user: creator, event:, reviewer:, aasm_state: :submitted)
+
+      create_session(creator, verified: true)
+
+      get(:show, params: { id: report.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(header_badges(response.body)).to eq(["Review requested from Fiona H"])
+    end
+
+    it "shows the status badge when no reviewer is assigned" do
+      creator = create(:user)
+      event = create(:event)
+      report = create(:reimbursement_report, user: creator, event:, aasm_state: :submitted)
+
+      create_session(creator, verified: true)
+
+      get(:show, params: { id: report.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(header_badges(response.body)).to eq(["Review Requested"])
+    end
+  end
+
   describe "#edit" do
     render_views
 
