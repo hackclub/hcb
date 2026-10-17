@@ -280,6 +280,26 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#reimbursements" do
+    render_views
+
+    it "only asks for a reviewer when inviting someone if the organization requires one" do
+      manager = create(:user)
+      event = create(:event)
+      create(:organizer_position, user: manager, event:, role: :manager)
+      create_session(manager, verified: true)
+
+      get(:reimbursements, params: { event_id: event.slug })
+
+      expect(response.body).not_to include("reimbursement_report_reviewer_wrapper")
+
+      event.update!(reimbursements_require_assigned_reviewer: true)
+      get(:reimbursements, params: { event_id: event.slug })
+
+      expect(response.body).to include("reimbursement_report_reviewer_wrapper")
+    end
+  end
+
   describe "#payments" do
     render_views
 
