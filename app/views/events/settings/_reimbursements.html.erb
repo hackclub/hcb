@@ -17,6 +17,26 @@
           </div>
         </div>
       <% end %>
+      <div class="field field--checkbox mb-2">
+        <span class="flex-1" style="font-weight: 700">Enable public reimbursement page</span>
+        <div class="field--checkbox--switch shrink-0">
+          <%= form.label :public_reimbursement_page_enabled do %>
+            <%= form.check_box :public_reimbursement_page_enabled, disabled:, switch: true %>
+            <span class="slider"></span>
+          <% end %>
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <div class="field">
+        <%= form.label :public_reimbursement_page_message, "Message to show for public reimbursements" %>
+        <%= form.text_area :public_reimbursement_page_message, placeholder: "#{event.name} uses HCB to reimburse its volunteers…", class: "w-100 fit mt1", disabled: %>
+        <%= inline_icon "markdown", size: 32, class: "muted right" %>
+      </div>
+
+      <hr class="my-4 clear-both">
+
       <div class="field field--checkbox">
         <span class="flex-1" style="font-weight: 700">Require submitters to pick a reviewer.</span>
         <div class="field--checkbox--switch ml-auto shrink-0">
@@ -32,10 +52,10 @@
       <div class="field">
         <span style="font-weight: 700">Reviewers</span>
         <p class="h5 muted mt0 mb1">
-          Reviewers are notified about reports without an assigned reviewer, and are the only options when submitters must pick one. If none are selected, all managers review.
+          Reports without an assigned reviewer will be sent to these managers for review. When a reviewer is required, submitters can only choose from this list. If no one is selected, all managers will be notified.
         </p>
       </div>
-      <div data-controller="text-filter">
+      <div class="mb-4" data-controller="text-filter">
         <%= text_field_tag :reimbursement_reviewer_search, nil,
                            name: nil,
                            placeholder: "Search managers…",
@@ -59,25 +79,6 @@
         </div>
       </div>
 
-      <hr class="my-4">
-
-      <div class="field field--checkbox mb-2">
-        <span class="flex-1" style="font-weight: 700">Enable public reimbursement page</span>
-        <div class="field--checkbox--switch shrink-0">
-          <%= form.label :public_reimbursement_page_enabled do %>
-            <%= form.check_box :public_reimbursement_page_enabled, disabled:, switch: true %>
-            <span class="slider"></span>
-          <% end %>
-        </div>
-      </div>
-
-      <hr class="my-4">
-
-      <div class="field">
-        <%= form.label :public_reimbursement_page_message, "Message to show for public reimbursements" %>
-        <%= form.text_area :public_reimbursement_page_message, placeholder: "#{event.name} uses HCB to reimburse its volunteers…", class: "w-100 fit mt1", disabled: %>
-        <%= inline_icon "markdown", size: 32, class: "muted right" %>
-      </div>
       <%= form.submit "Update", disabled:, data: { turbo_frame: frame ? "_top" : "" } %>
     <% end %>
   <% end %>
