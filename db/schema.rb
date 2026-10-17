@@ -1185,7 +1185,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_120100) do
     t.text "public_message"
     t.boolean "public_reimbursement_page_enabled", default: false, null: false
     t.text "public_reimbursement_page_message"
-    t.boolean "reimbursements_require_assigned_reviewer", default: false, null: false
+    t.integer "reimbursement_reviewer_selection", default: 0, null: false
     t.boolean "reimbursements_require_organizer_peer_review", default: false, null: false
     t.integer "risk_level"
     t.string "short_name"

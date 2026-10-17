@@ -20,7 +20,7 @@ module Reimbursement
 
       authorize @report
 
-      if @report.assigned_reviewer_required? && params[:reimbursement_report][:reviewer_id].present?
+      if @report.reviewer_selectable? && params[:reimbursement_report][:reviewer_id].present?
         reviewer = User.find_by_public_id!(params[:reimbursement_report][:reviewer_id])
         unless @report.eligible_reviewers.exists?(reviewer.id)
           return redirect_back fallback_location: event_reimbursements_path(@event), flash: { error: "The selected reviewer is not eligible for this report." }
@@ -208,7 +208,7 @@ module Reimbursement
     def submit
       authorize @report
 
-      if @report.assigned_reviewer_required? && !OrganizerPosition.role_at_least?(current_user, @report.event, :manager) && !@report.reviewer.present?
+      if @report.reviewer_selectable? && !OrganizerPosition.role_at_least?(current_user, @report.event, :manager) && !@report.reviewer.present? && (@report.assigned_reviewer_required? || params[:reviewer_id].present?)
         reviewer = User.find_by_public_id!(params[:reviewer_id])
         unless @report.eligible_reviewers.exists?(reviewer.id)
           flash[:error] = "The selected reviewer is not eligible for this report."

@@ -37,14 +37,9 @@
 
       <hr class="my-4 clear-both">
 
-      <div class="field field--checkbox">
-        <span class="flex-1" style="font-weight: 700">Require submitters to pick a reviewer.</span>
-        <div class="field--checkbox--switch ml-auto shrink-0">
-          <%= form.label :reimbursements_require_assigned_reviewer do %>
-            <%= form.check_box :reimbursements_require_assigned_reviewer, disabled:, switch: true %>
-            <span class="slider"></span>
-          <% end %>
-        </div>
+      <div class="field">
+        <%= form.label :reimbursement_reviewer_selection, "Let submitters pick a reviewer" %>
+        <%= form.select :reimbursement_reviewer_selection, [["Disabled", "disabled"], ["Enabled, optional", "optional"], ["Enabled, required", "required"]], {}, { disabled: } %>
       </div>
 
       <hr class="my-4">
@@ -52,7 +47,7 @@
       <div class="field">
         <span style="font-weight: 700">Reviewers</span>
         <p class="h5 muted mt0 mb1">
-          Reports without an assigned reviewer will be sent to these managers for review. When a reviewer is required, submitters can only choose from this list. If no one is selected, all managers will be notified.
+          Reports without an assigned reviewer will be sent to these managers for review. When submitters can pick a reviewer, they can only choose from this list. If no one is selected, all managers will be notified.
         </p>
       </div>
       <div class="mb-4" data-controller="text-filter">

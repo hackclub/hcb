@@ -338,8 +338,12 @@ module Reimbursement
       user.admin? || !OrganizerPosition.role_at_least?(user, event, :manager) || (event.reimbursements_require_organizer_peer_review && event.users.size > 1)
     end
 
+    def reviewer_selectable?
+      !event.reviewer_selection_disabled?
+    end
+
     def assigned_reviewer_required?
-      event.reimbursements_require_assigned_reviewer?
+      event.reviewer_selection_required?
     end
 
     def eligible_reviewers

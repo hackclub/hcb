@@ -30,7 +30,7 @@
 #  public_message                               :text
 #  public_reimbursement_page_enabled            :boolean          default(FALSE), not null
 #  public_reimbursement_page_message            :text
-#  reimbursements_require_assigned_reviewer     :boolean          default(FALSE), not null
+#  reimbursement_reviewer_selection             :integer          default(0), not null
 #  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
 #  risk_level                                   :integer
 #  short_name                                   :string
@@ -642,6 +642,12 @@ class Event < ApplicationRecord
     moderate: 2,
     high: 3,
   }, suffix: :risk_level
+
+  enum :reimbursement_reviewer_selection, {
+    disabled: 0,
+    optional: 1,
+    required: 2,
+  }, prefix: :reviewer_selection
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.id }, only: [:create]
