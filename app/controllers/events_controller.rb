@@ -367,6 +367,12 @@ class EventsController < ApplicationController
   def update
     authorize @event
 
+    if params.dig(:event, :reimbursement_reviewer_ids)&.compact_blank&.empty? && @event.eligible_reimbursement_reviewers.exists?
+      @event.errors.add(:base, "Select at least one reviewer")
+      @settings_tab = "reimbursements"
+      return render :edit, status: :unprocessable_content
+    end
+
     # have to use `fixed_event_params` because `event_params` seems to be a constant
     fixed_event_params = event_params
     fixed_user_event_params = user_event_params
@@ -1386,7 +1392,11 @@ class EventsController < ApplicationController
   def filter_reimbursement_reviewer_ids!(params_hash)
     return unless params_hash.key?(:reimbursement_reviewer_ids)
 
-    params_hash[:reimbursement_reviewer_ids] = @event.eligible_reimbursement_reviewers.where(id: params_hash[:reimbursement_reviewer_ids].compact_blank).pluck(:id)
+    eligible_ids = @event.eligible_reimbursement_reviewers.ids
+    reviewer_ids = eligible_ids & params_hash[:reimbursement_reviewer_ids].compact_blank.map(&:to_i)
+
+    # Selecting every manager is stored as no list, so managers added later are included too
+    params_hash[:reimbursement_reviewer_ids] = reviewer_ids.sort == eligible_ids.sort ? [] : reviewer_ids
   end
 
   def tree_guides

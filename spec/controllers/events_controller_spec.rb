@@ -244,6 +244,26 @@ RSpec.describe EventsController do
       expect(page.css("#tags_settings input[name='label'][disabled]")).to be_empty
       expect(page.css("#tags_settings a[disabled]")).to be_empty
     end
+
+    it "shows every manager as a reimbursement reviewer until a list is set" do
+      manager = create(:user, full_name: "Morgan Manager")
+      other_manager = create(:user, full_name: "Avery Lee")
+      event = create(:event)
+      create(:organizer_position, user: manager, event:, role: :manager)
+      create(:organizer_position, user: other_manager, event:, role: :manager)
+      create_session(manager, verified: true)
+
+      checked_reviewers = lambda do
+        get(:edit, params: { id: event.slug, tab: "reimbursements" })
+        Nokogiri::HTML5(response.body).css("#reimbursement_reviewer_options input[type=checkbox][checked]").map { |box| box["value"].to_i }
+      end
+
+      expect(checked_reviewers.call).to contain_exactly(manager.id, other_manager.id)
+
+      event.event_reimbursement_reviewers.create!(user: other_manager)
+
+      expect(checked_reviewers.call).to contain_exactly(other_manager.id)
+    end
   end
 
   describe "#update" do
@@ -260,7 +280,7 @@ RSpec.describe EventsController do
       expect(event.config.reload.subevent_name_prefix).to eq("Athena Award — ")
     end
 
-    it "only lets managers be added to the reimbursement reviewer list" do
+    it "only lets managers be added to the reimbursement reviewer list, and stores everyone as no list" do
       manager = create(:user)
       other_manager = create(:user)
       member = create(:user)
@@ -275,6 +295,12 @@ RSpec.describe EventsController do
       expect(event.reload.reimbursement_reviewers).to contain_exactly(other_manager)
 
       patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_ids: [""] } })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(controller.instance_variable_get(:@event).errors.full_messages).to eq(["Select at least one reviewer"])
+      expect(event.reload.reimbursement_reviewers).to contain_exactly(other_manager)
+
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_ids: ["", manager.id, other_manager.id] } })
 
       expect(event.reload.reimbursement_reviewers).to be_empty
     end

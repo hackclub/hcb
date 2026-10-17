@@ -47,7 +47,7 @@
       <div class="field">
         <span style="font-weight: 700">Reviewers</span>
         <p class="h5 muted mt0 mb1">
-          Reports without an assigned reviewer will be sent to these managers for review. When submitters can pick a reviewer, they can only choose from this list. If no one is selected, all managers will be notified.
+          Reports without an assigned reviewer will be sent to these managers for review. When submitters can pick a reviewer, they can only choose from this list. While everyone is turned on, new managers are added automatically.
         </p>
       </div>
       <div class="mb-4" data-controller="text-filter">
@@ -60,12 +60,13 @@
                            class: "!max-w-full w-full mb1",
                            data: { action: "input->text-filter#query keydown.enter->text-filter#query:prevent" } %>
         <div id="reimbursement_reviewer_options" role="listbox" class="max-h-72 overflow-y-auto border border-solid border-smoke dark:border-slate rounded-lg px-3">
+          <% active_reviewer_ids = event.active_reimbursement_reviewers.ids %>
           <%= form.collection_check_boxes :reimbursement_reviewer_ids, event.eligible_reimbursement_reviewers.order(:full_name), :id, :name do |b| %>
             <div class="field field--checkbox my-2" data-name="<%= b.text %>">
               <span class="flex-1 flex items-center gap-2"><%= avatar_for b.object %><%= b.text %></span>
               <div class="field--checkbox--switch ml-auto shrink-0">
                 <%= b.label do %>
-                  <%= b.check_box(disabled:) %>
+                  <%= b.check_box(disabled:, checked: active_reviewer_ids.empty? || active_reviewer_ids.include?(b.value)) %>
                   <span class="slider"></span>
                 <% end %>
               </div>
