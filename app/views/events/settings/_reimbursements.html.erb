@@ -37,7 +37,7 @@
       </div>
       <%= form.collection_check_boxes :reimbursement_reviewer_ids, event.eligible_reimbursement_reviewers.order(:full_name), :id, :name do |b| %>
         <div class="field field--checkbox">
-          <span class="flex-1"><%= b.text %></span>
+          <span class="flex-1 flex items-center gap-2"><%= avatar_for b.object %><%= b.text %></span>
           <div class="field--checkbox--switch ml-auto shrink-0">
             <%= b.label do %>
               <%= b.check_box(disabled:) %>
