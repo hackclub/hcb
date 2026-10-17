@@ -373,6 +373,8 @@ class EventsController < ApplicationController
 
     process_hidden_param!(fixed_event_params)
     process_hidden_param!(fixed_user_event_params)
+    filter_reimbursement_reviewer_ids!(fixed_event_params)
+    filter_reimbursement_reviewer_ids!(fixed_user_event_params)
 
     plan_param = admin_signed_in? ? fixed_event_params[:plan] : nil
     fixed_event_params.delete(:plan)
@@ -1381,6 +1383,12 @@ class EventsController < ApplicationController
     params_hash.delete(:hidden)
   end
 
+  def filter_reimbursement_reviewer_ids!(params_hash)
+    return unless params_hash.key?(:reimbursement_reviewer_ids)
+
+    params_hash[:reimbursement_reviewer_ids] = @event.eligible_reimbursement_reviewers.where(id: params_hash[:reimbursement_reviewer_ids].compact_blank).pluck(:id)
+  end
+
   def tree_guides
     guides = params[:guides].to_s
 
@@ -1480,6 +1488,7 @@ class EventsController < ApplicationController
       :donation_page_message,
       :donation_tiers_enabled,
       :reimbursements_require_organizer_peer_review,
+      :reimbursements_require_assigned_reviewer,
       :public_reimbursement_page_enabled,
       :public_reimbursement_page_message,
       :donation_thank_you_message,
@@ -1519,7 +1528,8 @@ class EventsController < ApplicationController
           :generate_monthly_announcement,
           :subevent_plan,
           :subevent_name_prefix
-        ]
+        ],
+        reimbursement_reviewer_ids: []
       }
     ]
 
@@ -1550,6 +1560,7 @@ class EventsController < ApplicationController
       :donation_page_message,
       :donation_tiers_enabled,
       :reimbursements_require_organizer_peer_review,
+      :reimbursements_require_assigned_reviewer,
       :public_reimbursement_page_enabled,
       :public_reimbursement_page_message,
       :donation_thank_you_message,
@@ -1563,6 +1574,7 @@ class EventsController < ApplicationController
       :website,
       :background_image,
       :stripe_card_logo,
+      reimbursement_reviewer_ids: [],
       card_grant_setting_attributes: [
         :merchant_lock,
         :category_lock,

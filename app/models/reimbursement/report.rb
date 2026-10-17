@@ -339,11 +339,11 @@ module Reimbursement
     end
 
     def assigned_reviewer_required?
-      event.plan.assigned_reimbursement_reviewer_required?
+      event.reimbursements_require_assigned_reviewer?
     end
 
     def eligible_reviewers
-      User.where(id: event.ancestor_organizer_positions.manager_access.select(:user_id))
+      event.reimbursement_review_pool
     end
 
     def reimbursement_confirmation_message

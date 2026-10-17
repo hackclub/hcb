@@ -68,7 +68,7 @@
           <%= form.label :invite_message, "Invitation message", class: "bold" %>
           <%= form.text_area :invite_message, placeholder: "We’re excited to see your expenses…" %>
         </div>
-        <% if @event.plan.assigned_reimbursement_reviewer_required? %>
+        <% if @event.reimbursements_require_assigned_reviewer? %>
           <% eligible_reviewers = Reimbursement::Report.new(event: @event).eligible_reviewers %>
           <div id="reimbursement_report_reviewer_wrapper" class="field">
             <%= form.label :reviewer_id, "Reviewer", class: "bold" %>

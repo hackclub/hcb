@@ -28,4 +28,23 @@ RSpec.describe OrganizerPosition, type: :model do
       expect(organizer_position).to_not be_valid
     end
   end
+
+  describe "losing manager access" do
+    it "removes the user from reimbursement reviewer lists they're no longer eligible for" do
+      parent = create(:event)
+      child = create(:event, parent:)
+      parent_manager = create(:user)
+      dual_manager = create(:user)
+      parent_position = create(:organizer_position, user: parent_manager, event: parent, role: :manager)
+      dual_parent_position = create(:organizer_position, user: dual_manager, event: parent, role: :manager)
+      create(:organizer_position, user: dual_manager, event: child, role: :manager)
+      child.event_reimbursement_reviewers.create!(user: parent_manager)
+      child.event_reimbursement_reviewers.create!(user: dual_manager)
+
+      parent_position.update!(role: :member)
+      dual_parent_position.destroy!
+
+      expect(child.reimbursement_reviewers).to contain_exactly(dual_manager)
+    end
+  end
 end

@@ -34,6 +34,51 @@
         <%= form.text_area :public_reimbursement_page_message, placeholder: "#{event.name} uses HCB to reimburse its volunteers…", class: "w-100 fit mt1", disabled: %>
         <%= inline_icon "markdown", size: 32, class: "muted right" %>
       </div>
+
+      <hr class="my-4 clear-both">
+
+      <div class="field field--checkbox">
+        <span class="flex-1" style="font-weight: 700">Require submitters to pick a reviewer.</span>
+        <div class="field--checkbox--switch ml-auto shrink-0">
+          <%= form.label :reimbursements_require_assigned_reviewer do %>
+            <%= form.check_box :reimbursements_require_assigned_reviewer, disabled:, switch: true %>
+            <span class="slider"></span>
+          <% end %>
+        </div>
+      </div>
+
+      <hr class="my-4">
+
+      <div class="field">
+        <span style="font-weight: 700">Reviewers</span>
+        <p class="h5 muted mt0 mb1">
+          Reports without an assigned reviewer will be sent to these managers for review. When a reviewer is required, submitters can only choose from this list. If no one is selected, all managers will be notified.
+        </p>
+      </div>
+      <div class="mb-4" data-controller="text-filter">
+        <%= text_field_tag :reimbursement_reviewer_search, nil,
+                           name: nil,
+                           placeholder: "Search managers…",
+                           autocomplete: "off",
+                           role: "combobox",
+                           "aria-controls": "#reimbursement_reviewer_options",
+                           class: "!max-w-full w-full mb1",
+                           data: { action: "input->text-filter#query keydown.enter->text-filter#query:prevent" } %>
+        <div id="reimbursement_reviewer_options" role="listbox" class="max-h-72 overflow-y-auto border border-solid border-smoke dark:border-slate rounded-lg px-3">
+          <%= form.collection_check_boxes :reimbursement_reviewer_ids, event.eligible_reimbursement_reviewers.order(:full_name), :id, :name do |b| %>
+            <div class="field field--checkbox my-2" data-name="<%= b.text %>">
+              <span class="flex-1 flex items-center gap-2"><%= avatar_for b.object %><%= b.text %></span>
+              <div class="field--checkbox--switch ml-auto shrink-0">
+                <%= b.label do %>
+                  <%= b.check_box(disabled:) %>
+                  <span class="slider"></span>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
       <%= form.submit "Update", disabled:, data: { turbo_frame: frame ? "_top" : "" } %>
     <% end %>
   <% end %>
