@@ -28,17 +28,9 @@ export default class extends Controller {
     window.addEventListener('turbo:morph', this.connect.bind(this))
   }
 
-  // Highlight the wrapping card only when it holds nothing but this field;
-  // otherwise just highlight the field itself.
-  get invalidContainer() {
-    const field = this.element.parentElement
-    const card = field.parentElement
-    return card?.matches('.card') && card.childElementCount === 1 ? card : field
-  }
-
   showInvalid(event) {
     event.preventDefault()
-    this.invalidContainer.classList.add('file-upload--invalid')
+    this.element.classList.add('file-upload--invalid')
 
     // Only scroll if this is the first invalid field, matching native behavior
     const form = this.inputTarget.form
@@ -48,7 +40,7 @@ export default class extends Controller {
         )
       : this.inputTarget
     if (firstInvalid === this.inputTarget) {
-      this.invalidContainer.scrollIntoView({
+      this.element.scrollIntoView({
         behavior: 'smooth',
         block: 'center',
       })
@@ -56,7 +48,7 @@ export default class extends Controller {
   }
 
   clearInvalid() {
-    this.invalidContainer.classList.remove('file-upload--invalid')
+    this.element.classList.remove('file-upload--invalid')
   }
 
   render() {
