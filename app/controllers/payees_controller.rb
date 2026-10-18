@@ -3,7 +3,7 @@
 class PayeesController < ApplicationController
   include SetEvent
 
-  before_action :set_event, only: [:index, :create, :update, :archive, :check_email]
+  before_action :set_event, only: [:index, :create, :update, :archive, :check_email, :transfer_fee]
   before_action :set_payee, only: [:choose_legal_entity, :set_legal_entity]
 
   class InvalidManualPayeeEntityType < StandardError; end
@@ -101,6 +101,17 @@ class PayeesController < ApplicationController
         }
       end
     }
+  end
+
+  def transfer_fee
+    authorize @event, :create_payment?
+
+    payee = @event.payees.not_archived.find_by_hashid!(params[:id])
+    @payout_method = payee.legal_entity&.default_payout_method
+    @amount_cents = Monetize.parse(params[:amount]).cents
+    @fee_cents = @payout_method&.estimated_fee_cents(@event, amount_cents: @amount_cents) if @amount_cents.positive?
+
+    render layout: false
   end
 
   def choose_legal_entity

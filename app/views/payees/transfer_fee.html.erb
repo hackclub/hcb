@@ -1,0 +1,7 @@
+<%= turbo_frame_tag :transfer_fee do %>
+  <% if @fee_cents&.positive? %>
+    <p class="muted text-sm m-0">
+      Your organization will also be charged an estimated <%= render_money @fee_cents %> fee to send this <%= @payout_method.human_kind %>, for a total of <%= render_money @amount_cents + @fee_cents %>.
+    </p>
+  <% end %>
+<% end %>

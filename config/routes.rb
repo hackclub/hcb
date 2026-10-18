@@ -1057,6 +1057,7 @@ Rails.application.routes.draw do
       end
       member do
         post :archive
+        get :transfer_fee
       end
     end
 
