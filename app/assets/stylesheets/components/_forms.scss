@@ -118,6 +118,31 @@ select {
   }
 }
 
+.file-upload__error {
+  display: none;
+  margin: 0.25rem 0 0;
+  font-weight: 600;
+  color: map-get($palette, error);
+}
+
+.file-upload--invalid {
+  outline: 2px solid map-get($palette, error);
+  outline-offset: -2px;
+
+  &:not(.card) {
+    border-radius: 0.5rem;
+    outline-offset: 0.5rem;
+  }
+
+  .file-upload__error {
+    display: block;
+  }
+
+  label {
+    color: map-get($palette, error);
+  }
+}
+
 input[type='file'] {
   color: inherit;
   display: block;

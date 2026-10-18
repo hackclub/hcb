@@ -22,11 +22,46 @@ export default class extends Controller {
     this.previewTarget.classList.add('tooltipped')
     this.previewTarget.onclick = () => this.inputTarget.click()
     this.inputTarget.onchange = () => this.render()
+    // The real input is hidden, so the browser can't show its "required"
+    // bubble. Surface the error ourselves instead.
+    this.inputTarget.oninvalid = e => this.showInvalid(e)
     window.addEventListener('turbo:morph', this.connect.bind(this))
+  }
+
+  // Highlight the wrapping card only when it holds nothing but this field;
+  // otherwise just highlight the field itself.
+  get invalidContainer() {
+    const field = this.element.parentElement
+    const card = field.parentElement
+    return card?.matches('.card') && card.childElementCount === 1 ? card : field
+  }
+
+  showInvalid(event) {
+    event.preventDefault()
+    this.invalidContainer.classList.add('file-upload--invalid')
+
+    // Only scroll if this is the first invalid field, matching native behavior
+    const form = this.inputTarget.form
+    const firstInvalid = form
+      ? Array.from(form.elements).find(
+          el => el.willValidate && !el.validity.valid
+        )
+      : this.inputTarget
+    if (firstInvalid === this.inputTarget) {
+      this.invalidContainer.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
+    }
+  }
+
+  clearInvalid() {
+    this.invalidContainer.classList.remove('file-upload--invalid')
   }
 
   render() {
     const input = this.inputTarget
+    if (input.files.length > 0) this.clearInvalid()
     const fileName = input.files.length > 0 ? input.files[0].name : ''
 
     if (!fileName) {
