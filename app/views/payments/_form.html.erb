@@ -54,7 +54,7 @@
               </div>
             </div>
             <% if transfer_fee_url %>
-              <%= turbo_frame_tag :transfer_fee, src: (transfer_fee_event_payee_path(event_id: event.slug, id: payee.hashid, amount: payment.amount) if payment&.amount_cents), data: { "transfer-fee-target": "frame" } %>
+              <%= turbo_frame_tag :transfer_fee, src: (transfer_fee_event_payee_path(event_id: event.slug, id: payee.hashid, amount: payment.amount) if payment.amount_cents), data: { "transfer-fee-target": "frame" } %>
             <% end %>
 
             <div>

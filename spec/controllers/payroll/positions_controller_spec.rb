@@ -29,6 +29,38 @@ RSpec.describe Payroll::PositionsController do
       )
   end
 
+  describe "GET #show" do
+    render_views
+
+    let(:legal_entity) { create(:legal_entity) }
+    let(:payee) { create(:payee, event:, legal_entity:) }
+    let(:position) { create(:payroll_position, payee:, aasm_state: :onboarded) }
+
+    before do
+      # Wire validations look the bank up on Column, which isn't what's under test here.
+      legal_entity.payout_methods.new(default: true, details: build(:wire_payout_method_details)).save!(validate: false)
+      position.invoices.create!(name: "Engineering hours", amount_cents: 250_00, currency: "USD")
+    end
+
+    it "shows reviewers the transfer fee before they approve" do
+      get :show, params: { event_id: event.slug, id: position.id, frame: true }
+
+      expect(response.body).to include("+ $25.00 est. transfer fee")
+      expect(response.body).to include("will also be charged an estimated $25.00 transfer fee")
+    end
+
+    it "doesn't quote fees for members who can't approve" do
+      member = create(:user)
+      create(:organizer_position, event:, user: member, role: :member)
+      create_session(member, verified: true)
+      expect_any_instance_of(LegalEntity::PayoutMethod).not_to receive(:estimated_fee_cents)
+
+      get :show, params: { event_id: event.slug, id: position.id, frame: true }
+
+      expect(response).to have_http_status(:ok)
+    end
+  end
+
   describe "POST #create" do
     let(:position_params) do
       {
