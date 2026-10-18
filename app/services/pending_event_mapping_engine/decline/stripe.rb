@@ -21,8 +21,8 @@ module PendingEventMappingEngine
             cpt.decline!
           end
 
-          # 3. identify reversed or expired by Stripe (formerly also reported as reversed)
-          if %w[reversed expired].include?(status)
+          # 3. identify reversed
+          if rpst.reversed?
             cpt.decline!
           end
 

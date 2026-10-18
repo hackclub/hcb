@@ -41,9 +41,8 @@ module InvoiceService
         invoice.save!
         invoice.mark_paid! # aasm
 
-        unless invoice.remote_paid?
-          remote_invoice.pay(paid_out_of_band: true)
-        end
+        # `pay` returns the updated invoice rather than refreshing the memoized one
+        @remote_invoice = remote_invoice.pay(paid_out_of_band: true) unless invoice.remote_paid?
       end
 
       invoice.set_fields_from_stripe_invoice(remote_invoice)
@@ -57,7 +56,7 @@ module InvoiceService
     end
 
     def remote_invoice
-      invoice.remote_invoice
+      @remote_invoice ||= invoice.remote_invoice
     end
 
   end

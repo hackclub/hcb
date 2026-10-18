@@ -48,12 +48,13 @@ RSpec.describe InvoiceService::MarkPaid do
     end
 
     it "records an out of band payment on Stripe instead of charging the sponsor" do
-      expect(stripe_invoice).to receive(:pay).with(paid_out_of_band: true)
+      expect(stripe_invoice).to receive(:pay).with(paid_out_of_band: true).and_return(build_stripe_invoice(status: "paid", paid_at: Time.current.to_i))
 
       freeze_time do
         run
 
         expect(invoice.reload).to be_paid_v2
+        expect(invoice.status).to eq("paid")
         expect(invoice.manually_marked_as_paid_at).to eq(Time.current)
         expect(invoice.manually_marked_as_paid_user).to eq(user)
         expect(invoice.stripe_charge_id).to be_nil

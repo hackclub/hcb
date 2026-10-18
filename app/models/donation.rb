@@ -226,6 +226,8 @@ class Donation < ApplicationRecord
 
   def payment_method
     stripe_obj[:payment_method] || recurring_donation&.stripe_subscription&.default_payment_method&.to_hash
+  rescue
+    nil
   end
 
   def payment_method_type

@@ -331,7 +331,7 @@ class HcbCode < ApplicationRecord
   end
 
   def stripe_reversed_by_merchant?
-    pt&.raw_pending_stripe_transaction&.stripe_transaction&.dig("status") == "reversed"
+    pt&.raw_pending_stripe_transaction&.reversed?
   end
 
   def stripe_auth_dashboard_url
