@@ -82,15 +82,17 @@ class RecurringDonation < ApplicationRecord
   def stripe_subscription
     @stripe_subscription ||= StripeService::Subscription.retrieve(
       id: stripe_subscription_id,
-      expand: ["latest_invoice.payment_intent", "default_payment_method"]
+      expand: ["latest_invoice.payments.data.payment.payment_intent", "default_payment_method"]
     )
   end
 
   def sync_with_stripe_subscription!(subscription = stripe_subscription)
+    payment_intent = subscription.latest_invoice&.payments&.data&.find(&:is_default)&.payment&.payment_intent
+
     self.stripe_subscription_id = subscription.id
-    self.stripe_payment_intent_id = subscription.latest_invoice&.payment_intent&.id
-    self.stripe_client_secret = subscription.latest_invoice&.payment_intent&.client_secret
-    self.stripe_current_period_end = Time.at(subscription.current_period_end)
+    self.stripe_payment_intent_id = payment_intent&.id
+    self.stripe_client_secret = payment_intent&.client_secret
+    self.stripe_current_period_end = Time.at(subscription.items.data.first.current_period_end)
     self.stripe_status = subscription.status
     self.last4 = subscription.default_payment_method&.try(:card)&.last4
     self.canceled_at = Time.at(subscription.canceled_at) if subscription.canceled_at
@@ -169,7 +171,7 @@ class RecurringDonation < ApplicationRecord
       ],
       payment_behavior: "default_incomplete",
       payment_settings: { save_default_payment_method: "on_subscription" },
-      expand: ["latest_invoice.payment_intent", "default_payment_method"],
+      expand: ["latest_invoice.payments.data.payment.payment_intent", "default_payment_method"],
       metadata: { event_id: event.id }
     )
 
