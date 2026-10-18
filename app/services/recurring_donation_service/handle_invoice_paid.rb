@@ -14,7 +14,7 @@ module RecurringDonationService
 
       safely do
         StripeService::Charge.update(
-          charge.id,
+          charge&.id,
           { metadata: { event_id: recurring_donation.event.id } },
         )
       end
@@ -26,7 +26,7 @@ module RecurringDonationService
         amount: @stripe_invoice.amount_due,
         amount_received: @stripe_invoice.amount_paid,
         event: recurring_donation.event,
-        stripe_payment_intent_id: charge.payment_intent,
+        stripe_payment_intent_id: charge&.payment_intent,
         anonymous: recurring_donation.anonymous,
         tax_deductible: recurring_donation.tax_deductible,
         fee_covered: recurring_donation.fee_covered
@@ -36,7 +36,7 @@ module RecurringDonationService
         donation.message = recurring_donation.message
       end
 
-      donation.set_fields_from_stripe_payment_intent(StripeService::PaymentIntent.retrieve(id: charge.payment_intent, expand: ["charges.data.balance_transaction", "latest_charge.balance_transaction"]))
+      donation.set_fields_from_stripe_payment_intent(StripeService::PaymentIntent.retrieve(id: charge&.payment_intent, expand: ["charges.data.balance_transaction", "latest_charge.balance_transaction"]))
       donation.save!
 
       donation.send_receipt!
