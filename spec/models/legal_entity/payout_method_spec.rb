@@ -272,4 +272,60 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
       expect(pm.locked_reimbursement_reports).to match_array(locking)
     end
   end
+
+  describe "#estimated_fee_cents" do
+    let(:event) { create(:event) }
+
+    def payout_method_for(details)
+      LegalEntity::PayoutMethod.new(legal_entity:, details:)
+    end
+
+    context "with a wire" do
+      let(:payout_method) { payout_method_for(build(:wire_payout_method_details)) }
+
+      it "passes on the $25 bank fee just under the $500 minimum" do
+        expect(payout_method.estimated_fee_cents(event, amount_cents: 499_99)).to eq(25_00)
+      end
+
+      it "charges nothing from $500 up" do
+        expect(payout_method.estimated_fee_cents(event, amount_cents: 500_00)).to eq(0)
+      end
+
+      it "charges nothing when the event's wire fee is waived" do
+        allow(event).to receive(:wire_fee_waived?).and_return(true)
+
+        expect(payout_method.estimated_fee_cents(event, amount_cents: 100_00)).to eq(0)
+      end
+
+      it "compares the USD equivalent of a foreign amount against the minimum" do
+        allow(MoneyService).to receive(:convert_to_usd).with(450_00, "EUR").and_return(520_00)
+
+        expect(payout_method.estimated_fee_cents(event, amount_cents: 450_00, currency: "EUR")).to eq(0)
+      end
+    end
+
+    context "with a Wise transfer" do
+      let(:payout_method) { payout_method_for(build(:wise_transfer_payout_method_details, currency: "GBP")) }
+
+      it "quotes the fee on the amount the recipient receives in their currency" do
+        allow(MoneyService).to receive(:convert_from_usd_wise).with(250_00, "GBP").and_return(190_00)
+        allow(WiseTransfer).to receive(:generate_detailed_quote)
+          .with(Money.from_cents(190_00, "GBP"))
+          .and_return(fees_usd_amount: Money.from_cents(3_12, "USD"))
+
+        expect(payout_method.estimated_fee_cents(event, amount_cents: 250_00)).to eq(3_12)
+      end
+
+      it "returns nil instead of raising when Wise can't be reached" do
+        allow(MoneyService).to receive(:convert_from_usd_wise).and_raise(Faraday::ConnectionFailed, "down")
+        expect(Rails.error).to receive(:report).with(instance_of(Faraday::ConnectionFailed))
+
+        expect(payout_method.estimated_fee_cents(event, amount_cents: 250_00)).to be_nil
+      end
+    end
+
+    it "charges nothing for an ACH transfer" do
+      expect(payout_method_for(build_ach).estimated_fee_cents(event, amount_cents: 1_00)).to eq(0)
+    end
+  end
 end

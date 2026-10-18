@@ -177,4 +177,51 @@ RSpec.describe PayeesController do
     end
   end
 
+  describe "GET #transfer_fee" do
+    render_views
+
+    let(:user) { create(:user) }
+    let(:event) { create(:event, organizers: [user]) }
+    let(:legal_entity) { create(:legal_entity) }
+    let!(:payee) { create(:payee, event:, legal_entity:) }
+
+    before do
+      Flipper.enable(:payments_contractors_refresh_2026_06_26, event)
+      # Wire validations look the bank up on Column, which isn't what's under test here.
+      legal_entity.payout_methods.new(default: true, details: build(:wire_payout_method_details)).save!(validate: false)
+      create_session(user, verified: true)
+    end
+
+    it "shows the estimated fee and total for a low-value wire" do
+      get :transfer_fee, params: { event_id: event.slug, id: payee.hashid, amount: "250.00" }
+
+      expect(response.body).to include("estimated $25.00 fee to send this international wire, for a total of $275.00")
+    end
+
+    it "ignores non-positive or unparseable amounts" do
+      ["-250", "0", "abc", ""].each do |amount|
+        get :transfer_fee, params: { event_id: event.slug, id: payee.hashid, amount: }
+
+        expect(response.body).not_to include("estimated"), "expected no fee for #{amount.inspect}"
+      end
+    end
+
+    it "does not quote fees for another organization's recipient" do
+      other_payee = create(:payee, event: create(:event), legal_entity:)
+
+      expect do
+        get :transfer_fee, params: { event_id: event.slug, id: other_payee.hashid, amount: "250.00" }
+      end.to raise_error(ActiveRecord::RecordNotFound)
+    end
+
+    it "does not quote fees for a user who can't send payments" do
+      create_session(create(:user), verified: true)
+      expect_any_instance_of(LegalEntity::PayoutMethod).not_to receive(:estimated_fee_cents)
+
+      get :transfer_fee, params: { event_id: event.slug, id: payee.hashid, amount: "250.00" }
+
+      expect(response).to have_http_status(:redirect)
+    end
+  end
+
 end

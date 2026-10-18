@@ -98,6 +98,10 @@ module Payroll
       end
     end
 
+    def estimated_transfer_fee_cents
+      payroll_position.payee.legal_entity&.default_payout_method&.estimated_fee_cents(event, amount_cents:, currency:)
+    end
+
     def receipt_required?
       true
     end

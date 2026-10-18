@@ -108,6 +108,13 @@ class LegalEntity
         )
       end
 
+      # Our partner bank's $25 fee is passed on for wires under $500 unless the event has it waived.
+      def estimated_fee_cents(event, amount_cents:, currency:)
+        return 0 if event.wire_fee_waived? || MoneyService.convert_to_usd(amount_cents, currency) >= 500_00
+
+        25_00
+      end
+
     end
 
   end

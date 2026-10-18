@@ -56,9 +56,6 @@ class LegalEntity
 
       # See LegalEntity::PayoutMethod for the shared `create_transfer` contract.
       def create_transfer(event, amount:, payment_for:, recipient_name:, recipient_email:, user:, currency: "USD", bank_name: nil, **)
-        usd_amount_cents = MoneyService.convert_to_usd_wise(amount, currency)
-        local_amount_cents = MoneyService.convert_from_usd_wise(usd_amount_cents, self.currency)
-
         event.wise_transfers.build(
           address_line1:,
           address_line2:,
@@ -69,13 +66,20 @@ class LegalEntity
           currency: self.currency,
           wise_recipient_id:,
           recipient_information:,
-          amount_cents: local_amount_cents,
+          amount_cents: local_amount_cents(amount, currency),
           payment_for:,
           recipient_name:,
           recipient_email:,
           user:,
           bank_name:
         )
+      end
+
+      def estimated_fee_cents(_event, amount_cents:, currency:)
+        Rails.cache.fetch([self, :estimated_fee_cents, amount_cents, currency], expires_in: 1.day) do
+          local_amount = Money.from_cents(local_amount_cents(amount_cents, currency), self.currency)
+          ::WiseTransfer.generate_detailed_quote(local_amount)[:fees_usd_amount].cents
+        end
       end
 
       def payout_summary
@@ -96,6 +100,12 @@ class LegalEntity
         else
           "Wise transfer"
         end
+      end
+
+      private
+
+      def local_amount_cents(amount_cents, currency)
+        MoneyService.convert_from_usd_wise(MoneyService.convert_to_usd_wise(amount_cents, currency), self.currency)
       end
 
     end

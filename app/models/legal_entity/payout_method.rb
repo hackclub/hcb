@@ -120,6 +120,14 @@ class LegalEntity
         (details.try(:unsupported_account_type?) ? { status_badge: "Unavailable", reason: details.unsupported_account_type_reason } : nil)
     end
 
+    # Estimated USD cents the event is charged on top of the payout, or nil if it can't be quoted.
+    def estimated_fee_cents(event, amount_cents:, currency: "USD")
+      details.try(:estimated_fee_cents, event, amount_cents:, currency:) || 0
+    rescue => e
+      Rails.error.report(e)
+      nil
+    end
+
     def error_messages
       (errors.full_messages_for(:base) + (details&.errors&.full_messages || [])).uniq
     end

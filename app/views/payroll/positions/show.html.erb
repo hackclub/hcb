@@ -139,6 +139,7 @@
         </thead>
         <tbody>
           <% @invoices.each do |invoice| %>
+            <% fee_cents = invoice.estimated_transfer_fee_cents if @can_review && invoice.submitted? %>
             <tr>
               <td>
                 <span class="badge ml-0 bg-<%= invoice.state_color %>"><%= invoice.aasm_state.humanize %></span>
@@ -162,12 +163,17 @@
                   <span class="muted">&mdash;</span>
                 <% end %>
               </td>
-              <td class="text-right"><%= render_money invoice.amount_cents %></td>
+              <td class="text-right">
+                <%= render_money invoice.amount_cents %>
+                <% if fee_cents&.positive? %>
+                  <span class="block muted text-sm nowrap">+ <%= render_money fee_cents %> est. transfer fee</span>
+                <% end %>
+              </td>
               <% if @can_review %>
                 <td class="text-right">
                   <% if invoice.submitted? %>
                     <div class="flex gap-2 justify-end">
-                      <%= button_to "Approve", approve_event_payroll_invoice_path(event_id: @event.slug, id: invoice.id), class: "btn bg-success", data: { turbo_frame: "_top" } %>
+                      <%= button_to "Approve", approve_event_payroll_invoice_path(event_id: @event.slug, id: invoice.id), class: "btn bg-success", data: { turbo_frame: "_top", turbo_confirm: ("#{@event.name} will also be charged an estimated #{render_money fee_cents} transfer fee to send this payment." if fee_cents&.positive?) } %>
                       <%= button_to "Reject", reject_event_payroll_invoice_path(event_id: @event.slug, id: invoice.id), class: "btn bg-muted", data: { turbo_frame: "_top", turbo_confirm: "Reject this invoice?" } %>
                     </div>
                   <% end %>

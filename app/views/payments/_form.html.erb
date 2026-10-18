@@ -9,6 +9,7 @@
   <% manual = payee&.managed? %>
 
   <% existing_payout_method = payee&.legal_entity&.default_payout_method if manual %>
+  <% transfer_fee_url = transfer_fee_event_payee_path(event_id: event.slug, id: payee.hashid) if !disabled && payee&.legal_entity&.default_payout_method %>
 
   <% if disabled %>
     <%= render partial: "events/unauthorized_callout", locals: { action: "send payments" } %>
@@ -42,16 +43,19 @@
 
         <div id="payment-details" data-scroll-seek-target="section">
           <h3 class="mb-2">Payment details</h3>
-          <div class="card mb-4 flex flex-col gap-3">
+          <div class="card mb-4 flex flex-col gap-3" data-controller="transfer-fee" data-transfer-fee-url-value="<%= transfer_fee_url %>">
             <div class="flex justify-between items-center">
               <%= form.label :amount, "Amount" %>
               <div class="flex items-center">
                 <div class="input flex gap-2 items-center py-0">
                   <span class="bold muted">$</span>
-                  <%= form.number_field :amount, placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+                  <%= form.number_field :amount, placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, class: "!p-0 !border-none !shadow-none min-h-auto", data: { action: "input->transfer-fee#update" } %>
                 </div>
               </div>
             </div>
+            <% if transfer_fee_url %>
+              <%= turbo_frame_tag :transfer_fee, src: (transfer_fee_event_payee_path(event_id: event.slug, id: payee.hashid, amount: payment.amount) if payment&.amount_cents), data: { "transfer-fee-target": "frame" } %>
+            <% end %>
 
             <div>
               <%= form.label :purpose, "What's this payment for?" %>
