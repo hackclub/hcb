@@ -7,12 +7,14 @@ module RecurringDonationService
     end
 
     def run
-      recurring_donation = RecurringDonation.find_by(stripe_subscription_id: @stripe_invoice.subscription)
+      recurring_donation = RecurringDonation.find_by(stripe_subscription_id: StripeService.invoice_subscription_id(@stripe_invoice))
       return unless recurring_donation
+
+      charge = StripeService.invoice_charge(::Partners::Stripe::Invoices::Show.new(id: @stripe_invoice.id).run)
 
       safely do
         StripeService::Charge.update(
-          @stripe_invoice[:charge],
+          charge.id,
           { metadata: { event_id: recurring_donation.event.id } },
         )
       end
@@ -24,7 +26,7 @@ module RecurringDonationService
         amount: @stripe_invoice.amount_due,
         amount_received: @stripe_invoice.amount_paid,
         event: recurring_donation.event,
-        stripe_payment_intent_id: @stripe_invoice.payment_intent,
+        stripe_payment_intent_id: charge.payment_intent,
         anonymous: recurring_donation.anonymous,
         tax_deductible: recurring_donation.tax_deductible,
         fee_covered: recurring_donation.fee_covered
@@ -34,7 +36,7 @@ module RecurringDonationService
         donation.message = recurring_donation.message
       end
 
-      donation.set_fields_from_stripe_payment_intent(StripeService::PaymentIntent.retrieve(id: @stripe_invoice.payment_intent, expand: ["charges.data.balance_transaction", "latest_charge.balance_transaction"]))
+      donation.set_fields_from_stripe_payment_intent(StripeService::PaymentIntent.retrieve(id: charge.payment_intent, expand: ["charges.data.balance_transaction", "latest_charge.balance_transaction"]))
       donation.save!
 
       donation.send_receipt!

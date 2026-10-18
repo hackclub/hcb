@@ -36,6 +36,20 @@ module StripeService
     end
   end
 
+  # ID of the subscription that generated an invoice, nil for one-off invoices.
+  def self.invoice_subscription_id(invoice)
+    invoice.parent&.subscription_details&.subscription
+  end
+
+  # Charge behind the payment that paid an invoice. Requires `payments` to be
+  # expanded, ex. by Partners::Stripe::Invoices::Show; nil when paid out of band.
+  def self.invoice_charge(invoice)
+    payment = invoice[:payments]&.data&.find { |p| p.status == "paid" }&.payment
+    return if payment.nil?
+
+    payment.type == "payment_intent" ? payment.payment_intent.latest_charge : payment.charge
+  end
+
   include Stripe
 
   module StatementDescriptor

@@ -42,3 +42,62 @@ RSpec.describe Invoice, type: :model do
     end
   end
 end
+
+RSpec.describe Invoice, "#set_fields_from_stripe_invoice", type: :model do
+  before do
+    expect_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)
+  end
+
+  let(:invoice) { create(:invoice, stripe_charge_id: "ch_existing") }
+
+  def build_stripe_invoice(**overrides)
+    Stripe::Invoice.construct_from(
+      {
+        id: "in_1234", status: "open", amount_due: 100_00, amount_paid: 0, amount_remaining: 100_00,
+        attempt_count: 0, attempted: false, auto_advance: false, due_date: 1.week.from_now.to_i,
+        ending_balance: nil, hosted_invoice_url: nil, invoice_pdf: nil, livemode: false, description: nil,
+        number: "1234", starting_balance: 0, statement_descriptor: nil, subtotal: 100_00, total: 100_00,
+        total_taxes: [{ amount: 7_00, type: "tax_rate_details" }], status_transitions: { finalized_at: nil, paid_at: nil }
+      }.merge(overrides)
+    )
+  end
+
+  it "reads the charge and card behind the payment that paid the invoice" do
+    checks = { address_line1_check: "pass", address_postal_code_check: "pass", cvc_check: "pass" }
+    card = { brand: "visa", country: "US", exp_month: 1, exp_year: 2030, funding: "credit", last4: "4242", checks: }
+    payment_intent = { latest_charge: { id: "ch_1234", payment_method_details: { type: "card", card: } } }
+
+    invoice.set_fields_from_stripe_invoice(
+      build_stripe_invoice(
+        status: "paid",
+        payments: {
+          data: [
+            { status: "canceled", payment: { type: "payment_intent", payment_intent: { latest_charge: { id: "ch_canceled" } } } },
+            { status: "paid", payment: { type: "payment_intent", payment_intent: } }
+          ]
+        }
+      )
+    )
+
+    expect(invoice.stripe_charge_id).to eq("ch_1234")
+    expect(invoice.payment_method_type).to eq("card")
+    expect(invoice.payment_method_card_last4).to eq("4242")
+    expect(invoice.tax).to eq(7_00)
+  end
+
+  it "has no charge while the only payment is still open" do
+    invoice.set_fields_from_stripe_invoice(
+      build_stripe_invoice(payments: { data: [{ status: "open", payment: { type: "payment_intent", payment_intent: "pi_1234" } }] })
+    )
+
+    expect(invoice.stripe_charge_id).to be_nil
+    expect(invoice.payment_method_type).to be_nil
+  end
+
+  it "keeps the charge when the response doesn't expand payments" do
+    invoice.set_fields_from_stripe_invoice(build_stripe_invoice(status: "void"))
+
+    expect(invoice.status).to eq("void")
+    expect(invoice.stripe_charge_id).to eq("ch_existing")
+  end
+end
