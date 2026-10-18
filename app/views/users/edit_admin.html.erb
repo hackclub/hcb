@@ -46,8 +46,16 @@
 
           <div class="field field--checkbox">
             <%= form.label :locked, "Lock user from signing into HCB" %>
-            <%= form.check_box :locked, checked: @user.locked?, disabled: !admin_signed_in? %>
+            <%= form.check_box :locked, checked: @user.locked?, disabled: !admin_signed_in?,
+                                        onchange: ("document.getElementById('freeze_cards_field').hidden = !this.checked;" unless @user.locked?) %>
           </div>
+
+          <% unless @user.locked? %>
+            <div class="pl-5 field field--checkbox" id="freeze_cards_field" hidden>
+              <%= form.label :freeze_cards, "Also freeze all active cards" %>
+              <%= form.check_box :freeze_cards, checked: false %>
+            </div>
+          <% end %>
 
           <div class="field field--checkbox">
             <%= form.label :running_balance_enabled, "Show running balance?" %>
