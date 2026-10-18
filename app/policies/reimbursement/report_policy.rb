@@ -47,10 +47,12 @@ module Reimbursement
     # on each expense, stale reviewer_id, etc.). The intended long-term
     # behavior is to allow members to change the event provided approvals
     # the destination event's managers wouldn't have granted are cleared.
+    #
+    # Exception: a report with no event yet (e.g. by emailing in).
     def change_event?
       return false if record.card_grant_id.present?
 
-      admin || manager
+      admin || manager || (creator && record.persisted? && record.event_id_was.nil?)
     end
 
     def submit?
