@@ -367,6 +367,9 @@ Rails.application.routes.draw do
     end
     resources :legal_entities, only: [:index]
     resources :tax_forms, only: [:index]
+    resources :tax1099_imports, only: [:new, :create] do
+      get :legal_entities, on: :collection
+    end
     resources :column_statements, only: :index do
       get "bank_account_summary_report"
     end
@@ -838,6 +841,9 @@ Rails.application.routes.draw do
   post "docuseal/webhook", to: "docuseal#webhook"
   post "webhooks/column", to: "column/webhooks#webhook"
   post "taxbandits/webhook", to: "taxbandits#webhook"
+  # The one-time URL handed to TaxBandits as PdfUrl. The token lives in the query
+  # string so Rails' parameter filtering keeps it out of the request log.
+  get "taxbandits/w9_certificate", to: "taxbandits#w9_pdf", as: :taxbandits_w9_pdf, format: true
 
   post "discord/event_webhook", to: "discord#event_webhook"
   post "discord/interaction_webhook", to: "discord#interaction_webhook"

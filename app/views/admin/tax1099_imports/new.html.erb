@@ -1,0 +1,117 @@
+<% title "Tax1099 Import" %>
+
+<h1>Tax1099 → TaxBandits import</h1>
+
+<div
+  data-controller="tax1099-import"
+  data-tax1099-import-create-url-value="<%= admin_tax1099_imports_path %>"
+  data-tax1099-import-legal-entities-url-value="<%= legal_entities_admin_tax1099_imports_path %>"
+  data-tax1099-import-fields-value="<%= @fields.map { _1[:key] }.to_json %>">
+  <div class="card mb-4">
+    <h2 class="mt-0">1. Load the Tax1099 export</h2>
+    <p class="mb-2" style="color: var(--hcb-tx-2)">
+      The CSV is read in your browser and is <strong>never uploaded</strong>. Only the single row you
+      press Import on is sent to HCB, one row at a time.
+    </p>
+
+    <input
+      type="file"
+      accept=".csv,text/csv"
+      data-tax1099-import-target="csvInput"
+      data-action="change->tax1099-import#loadCsv">
+
+    <p class="mt-2" style="color: var(--hcb-primary)" data-tax1099-import-target="csvError" hidden></p>
+  </div>
+
+  <div class="card mb-4" data-tax1099-import-target="intro">
+    <h2 class="mt-0">How the W-9 PDF is handled</h2>
+    <ul style="color: var(--hcb-tx-2)">
+      <li>The PDF you attach to a row is held in memory only, for at most an hour. It never reaches S3, ActiveStorage, the database, or disk.</li>
+      <li>HCB gives TaxBandits a single-use link with a 256-bit token. The first successful fetch burns it; the bytes stay readable for one more minute so a retry works, then they are gone for good.</li>
+      <li>Nothing else on HCB can read the PDF, and the link is never written to a log.</li>
+    </ul>
+  </div>
+
+  <div class="mb-3 flex items-center gap-2" data-tax1099-import-target="summary" hidden>
+    <span class="badge bg-muted" data-tax1099-import-target="summaryTotal"></span>
+    <span class="badge bg-success" data-tax1099-import-target="summaryImported"></span>
+    <span class="badge bg-muted" data-tax1099-import-target="summarySkipped"></span>
+    <span class="badge bg-muted" data-tax1099-import-target="summaryReview"></span>
+  </div>
+
+  <div data-tax1099-import-target="rows"></div>
+
+  <%# Cloned once per CSV row. Inert while it lives in the template, so none of
+      these inputs are submitted or picked up as Stimulus targets. %>
+  <template data-tax1099-import-target="rowTemplate">
+    <div class="card mb-3" data-row>
+      <header class="flex items-center gap-2 flex-wrap">
+        <span class="badge bg-muted" data-row-number></span>
+        <strong data-row-title></strong>
+        <span class="badge bg-muted" data-status>Not imported</span>
+        <button type="button" class="ml-auto" data-action="click->tax1099-import#toggleRow" data-toggle>
+          Review
+        </button>
+      </header>
+
+      <div data-body hidden class="mt-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <% @fields.each do |field| %>
+            <label class="block">
+              <span class="block mb-1"><%= field[:label] %><%= " *" if field[:required] %></span>
+
+              <% case field[:key] %>
+              <% when :tin_type %>
+                <select class="w-full" data-field="tin_type" data-action="change->tax1099-import#entityShapeChanged">
+                  <% @tin_types.each do |tin_type| %>
+                    <option value="<%= tin_type %>"><%= tin_type %></option>
+                  <% end %>
+                </select>
+              <% when :federal_tax_classification %>
+                <select class="w-full" data-field="federal_tax_classification" data-action="change->tax1099-import#entityShapeChanged">
+                  <option value="">— pick one —</option>
+                  <% @federal_tax_classifications.each do |classification| %>
+                    <option value="<%= classification %>"><%= classification %></option>
+                  <% end %>
+                </select>
+              <% when :email %>
+                <input type="email" class="w-full" data-field="email" autocomplete="off"
+                       data-action="change->tax1099-import#entityShapeChanged">
+              <% when :tin %>
+                <%# Never prefilled by the browser and never remembered by it. %>
+                <input type="text" class="w-full" data-field="tin" autocomplete="off" spellcheck="false">
+              <% else %>
+                <input type="text" class="w-full" data-field="<%= field[:key] %>" autocomplete="off">
+              <% end %>
+            </label>
+          <% end %>
+        </div>
+
+        <div class="mt-3" data-legal-entity-picker hidden>
+          <label class="block">
+            <span class="block mb-1">
+              This payee already has business legal entities. Attach the form to one of them?
+            </span>
+            <select class="w-full" data-legal-entity-select></select>
+          </label>
+        </div>
+
+        <label class="block mt-3">
+          <span class="block mb-1">Signed W-9 PDF *</span>
+          <input type="file" accept="application/pdf,.pdf" data-pdf data-action="change->tax1099-import#pdfChanged">
+        </label>
+
+        <p class="mt-2" data-message hidden></p>
+
+        <div class="flex items-center gap-2 mt-3">
+          <button type="button" data-action="click->tax1099-import#import" data-import>
+            Import to TaxBandits
+          </button>
+          <button type="button" class="bg-muted" data-action="click->tax1099-import#skip" data-skip>
+            Skip this row
+          </button>
+        </div>
+      </div>
+    </div>
+  </template>
+</div>
