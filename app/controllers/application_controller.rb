@@ -1,11 +1,18 @@
 # frozen_string_literal: true
 
 class ApplicationController < ActionController::Base
+  # set Current.session - this should come first as
+  # a large portion of the code below this depends on this
+  before_action do
+    Current.session = find_current_session
+  end
+
   include Pundit::Authorization
   include SessionsHelper
   include ToursHelper
   include PublicActivity::StoreController
   include SetGovernanceRequestContext
+  include ThemeDetection
 
   protect_from_forgery
 
@@ -15,20 +22,17 @@ class ApplicationController < ActionController::Base
 
   # Track papertrail edits to specific users
   before_action :set_paper_trail_whodunnit
+  # PaperTrail registers this callback before `Current.session` is set above;
+  # re-registering moves it here so `info_for_paper_trail` can read the session.
+  before_action :set_paper_trail_controller_info
 
   # Redirect users to the onboarding page if they haven't completed it yet
   before_action :redirect_to_onboarding
 
   # update the current session's last_seen_at
-  before_action { current_session&.update_session_timestamps }
+  before_action { Current.session&.update_session_timestamps }
 
-  # This cookie is used for Safari PWA prompts
-  before_action do
-    next if current_user.nil?
-
-    @first_visit = cookies[:first_visit] != "1"
-    cookies.permanent[:first_visit] = 1
-  end
+  before_action :attach_appsignal_tags
 
   before_action do
     # Disallow indexing and following
@@ -38,13 +42,19 @@ class ApplicationController < ActionController::Base
   before_action do
     # Disallow all external redirects
     # https://hackclub.slack.com/archives/C047Y01MHJQ/p1743530368138499
-    params[:return_to] = url_from(params[:return_to])
+    params[:return_to] = url_from(params[:return_to]) if params[:return_to]
   end
 
   # Enable Rack::MiniProfiler for auditors
   before_action do
     if current_user&.auditor?
       Rack::MiniProfiler.authorize_request
+    end
+  end
+
+  before_action do
+    unless signed_in?
+      @hide_seasonal_decorations = true
     end
   end
 
@@ -95,6 +105,11 @@ class ApplicationController < ActionController::Base
     current_user if auditor_signed_in?
   end
 
+  def safe_per(default, max: 200)
+    (params[:per] || default).to_i.clamp(1, max)
+  end
+  helper_method :safe_per
+
   private
 
   def redirect_to_onboarding
@@ -112,6 +127,10 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  def info_for_paper_trail
+    { impersonated_by_id: current_session&.impersonated_by_id }
+  end
+
   def not_found
     raise ActionController::RoutingError.new("Not Found")
   end
@@ -125,6 +144,21 @@ class ApplicationController < ActionController::Base
   def confetti!(emojis: nil)
     flash[:confetti] = true
     flash[:confetti_emojis] = emojis.join(",") if emojis
+  end
+
+  def attach_appsignal_tags
+    return unless defined?(Appsignal) && Appsignal.active?
+
+    error_reference = ErrorReference.from_request_id(request.uuid)
+    user_id = current_user(allow_unverified: true)&.id
+    session_id = Current.session&.id
+    ip_address = request.remote_ip
+    user_agent = request.user_agent
+    referrer = request.referrer
+    unverified_user = Current.session&.unverified?
+
+    Appsignal.add_tags(error_reference:, user_id:, session_id:, ip_address:, user_agent:, referrer:, unverified_user:)
+    Appsignal.tag_request(user_id:, session_id:, ip_address:, user_agent:, referrer:, unverified_user:)
   end
 
 end

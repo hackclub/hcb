@@ -19,7 +19,7 @@
 
   &.card--sunken {
     box-shadow: none;
-    background-color: rgba(map-get($palette, smoke), 0.75);
+    background-color: rgba(map-get($palette, smoke), 0.5);
   }
 
   &.b--warning {
@@ -77,14 +77,44 @@
   }
 }
 
-.hcb-code {
+.podium-block {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem 1rem var(--radius-lg) var(--radius-lg);
+  font-weight: 700;
+  color: white;
+  padding: 12px;
+  font-size: 1.25rem;
+
+  &--first {
+    height: 13.5rem;
+    background: #d79c32;
+    font-size: 1.5rem;
+  }
+  &--second {
+    height: 9.75rem;
+    background: #757575;
+  }
+  &--third {
+    height: 7.5rem;
+    background: #bb581c;
+  }
+}
+
+.hcb-code,
+.ledger-item {
   @extend .card;
   @apply pb-0 mb-1 mt-3 shadow-none;
   border: 1px solid rgba(200, 200, 200, 0.3);
   box-shadow: var(--shadow-sm);
+  padding-top: 0px;
 }
 
-.hcb-code--info {
+.hcb-code--info,
+.ledger-item--info {
   @extend .details;
   padding: 0.75rem 0;
   gap: 5px;
@@ -92,7 +122,8 @@
   flex-direction: column;
 }
 
-.hcb-code--details {
+.hcb-code--details,
+.ledger-item--details {
   @extend .details-horiz;
   border-top: 1px solid;
   border-bottom: 1px solid;
@@ -122,24 +153,23 @@
   }
 }
 
-.hcb-code--heading .badge {
+.hcb-code--heading .badge,
+.ledger-item--heading .badge {
   margin: 0px;
 }
 
-.hcb-code--footer {
-  border-top: 1px solid rgba(200, 200, 200, 0.3);
-  background: rgba(200, 200, 200, 0.2);
+.hcb-code--footer,
+.ledger-item--footer {
   padding: 0.75rem 1rem;
   font-style: italic;
   text-align: center;
   font-size: 0.875rem;
-  color: rgba(100, 100, 100, 0.85);
   margin-left: -16px !important;
   margin-right: -16px !important;
-
+  border-top: 1px solid rgba(200, 200, 200, 0.3);
+  background-color: rgba(245, 245, 245, 0.75);
   html[data-dark='true'] & {
-    color: rgba(150, 150, 150, 0.85);
-    border-top-color: rgba(80, 80, 85, 0.3);
+    background-color: rgba(50, 50, 55, 0.5);
   }
 }
 
@@ -255,13 +285,14 @@ a.card {
 }
 
 .card--sunset {
-  background-image: url('https://hc-cdn.hel1.your-objectstorage.com/s/v3/760076d21af80460_image.png');
+  background-image: url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/760076d21af80460_image.png');
 }
 
 #card-pin {
   width: 64px;
 }
-.hcb-code--details-admin-tool p {
+.hcb-code--details-admin-tool p,
+.ledger-item--details-admin-tool p {
   margin: 0;
   padding: 0;
   display: flex;

@@ -2,20 +2,25 @@
 
 module Referral
   class LinksController < ApplicationController
-    before_action :set_link, only: :show
     skip_before_action :signed_in_user, only: :show
 
     def show
-      if @link
-        unless signed_in?
-          skip_authorization
-          return redirect_to auth_users_path(referral: @link.slug)
-        end
+      @link = Referral::Link.find_by(slug: params[:id]).presence
 
-        authorize(@link)
+      if @link
+        authorize @link
+
+        # An anonymous visitor needs a session for the attribution to hang off
+        # of, so it can be bound to a user once they sign up. This is the only
+        # place that creates one; every other reader of an anonymous session
+        # only cares about a session a referral click already created.
+        #
+        # Created only once the link is known to be real, so bogus slugs don't
+        # mint throwaway sessions.
+        ensure_created_session
 
         Rails.error.handle do
-          Referral::Attribution.create!(user: current_user, program: @link.program, link: @link)
+          Referral::Attribution.create!(user: current_user, user_session: current_session, program: @link.program, link: @link)
         end
 
         # This is only configurable by admins
@@ -27,10 +32,19 @@ module Referral
       end
     end
 
-    private
+    def create
+      program = Referral::Program.find(params[:program_id])
+      @link = program.links.new(name: params[:name], slug: params[:slug].presence, creator: current_user)
 
-    def set_link
-      @link = Referral::Link.find_by(slug: params[:id]).presence
+      authorize(@link)
+
+      if @link.save
+        flash[:success] = "Referral link created successfully."
+      else
+        flash[:error] = @link.errors.full_messages.to_sentence
+      end
+
+      redirect_to referral_programs_admin_index_path
     end
 
   end

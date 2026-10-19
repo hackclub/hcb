@@ -74,22 +74,10 @@ module Api
       end
 
       expose :logo do |organization|
-        if organization.logo.attached? && organization.logo.variable?
-          Rails.application.routes.url_helpers.url_for(
-            organization.logo.variant(resize_to_limit: [200, 200], saver: { quality: 80 })
-          )
-        elsif organization.logo.attached?
-          url_for_attached organization.logo
-        end
+        url_for_attached organization.logo, resize_to_limit: [200, 200]
       end
       expose :background_image do |organization|
-        if organization.background_image.attached? && organization.background_image.variable?
-          Rails.application.routes.url_helpers.url_for(
-            organization.background_image.variant(resize_to_limit: [800, 800], saver: { quality: 80 })
-          )
-        else
-          url_for_attached organization.background_image
-        end
+        url_for_attached organization.background_image, resize_to_limit: [800, 800]
       end
       expose :donation_link do |organization|
         if organization.donation_page_available?

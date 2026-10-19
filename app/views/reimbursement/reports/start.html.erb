@@ -15,7 +15,7 @@
 <% if @event.public_reimbursement_page_message.present? %>
   <div class="container container--sm">
     <div class="card border b--info mt3 mb3 pb0 pt0 public-message">
-      <%= sanitize(MarkdownService.instance.renderer.render(@event.public_reimbursement_page_message), scrubber: MarkdownScrubber.new) %>
+      <%= MarkdownService.instance.render(@event.public_reimbursement_page_message) %>
     </div>
   </div>
 <% else %>
@@ -39,7 +39,7 @@
 
   <div class="field mb2">
     <%= form.label :email, "Your email" %>
-    <%= form.email_field :email, placeholder: "fionah@gmail.com", required: true %>
+    <%= form.email_field :email, placeholder: "fionah@gmail.com", required: true, value: organizer_signed_in? ? nil : current_user&.email %>
   </div>
 
   <%= invisible_captcha :subtitle %>

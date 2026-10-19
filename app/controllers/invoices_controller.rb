@@ -26,7 +26,7 @@ class InvoicesController < ApplicationController
     voided = relation.void_v2.sum(:item_amount)
 
     @stats = {
-      # The calcluations for `total` and `unpaid` do not include archived invoices
+      # The calculations for `total` and `unpaid` do not include archived invoices
       total: relation.sum(:item_amount) - archived_unpaid - voided,
       # "paid" status invoices include manually paid invoices and
       # Stripe invoices that are paid, but for which the funds are in transit
@@ -55,7 +55,11 @@ class InvoicesController < ApplicationController
 
     relation = relation.search_description(params[:q]) if params[:q].present?
 
-    @invoices = relation.order(created_at: :desc)
+    @invoices = helpers.sorted_relation(
+      relation,
+      INVOICE_COLUMNS,
+      sort: [params[:sort], params[:direction]]
+    ).includes(:sponsor).page(params[:page]).per(safe_per(25))
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)
@@ -63,6 +67,8 @@ class InvoicesController < ApplicationController
     @filter_options = filter_options
     helpers.validate_filter_options(@filter_options, params)
     @has_filter = helpers.check_filters?(@filter_options, params)
+
+    @table_columns = INVOICE_COLUMNS
   end
 
   def new
@@ -212,6 +218,14 @@ class InvoicesController < ApplicationController
   end
 
   private
+
+  INVOICE_COLUMNS = [
+    { key: "status" },
+    { key: "created_at", default: true, display: "Date" },
+    { key: "sponsor_name", display: "To", column: "sponsors.name", join: :sponsor },
+    { key: "amount_due", right: true, display: "Amount" },
+  ].freeze
+  private_constant :INVOICE_COLUMNS
 
   def filtered_params
     params.require(:invoice).permit(

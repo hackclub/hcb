@@ -32,7 +32,7 @@ RSpec.describe StripeCardsController do
   describe "#show" do
     it "renders a stripe card" do
       setup_context => { card:, user: }
-      sign_in(user)
+      create_session(user, verified: true)
 
       get(:show, params: { id: card.id })
 
@@ -59,7 +59,7 @@ RSpec.describe StripeCardsController do
       setup_context => { card:, user: }
       Flipper.enable(:sudo_mode_2015_07_21, user)
 
-      user_session = sign_in(user)
+      user_session = create_session(user, verified: true)
 
       travel(3.hours)
 

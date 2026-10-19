@@ -5,7 +5,7 @@
 # Table name: event_plans
 #
 #  id          :bigint           not null, primary key
-#  aasm_state  :string
+#  aasm_state  :string           not null
 #  inactive_at :datetime
 #  type        :string
 #  created_at  :datetime         not null
@@ -55,6 +55,16 @@ class Event
       type == Event::Plan::Standard.name
     end
 
+    def default_values
+      {}
+    end
+
+    # Organizations on plans that force transparency can't opt out of it while
+    # their parent organization is transparent.
+    def forces_transparency?
+      false
+    end
+
     def was_backfilled?
       created_at < Date.new(2024, 8, 24)
     end
@@ -63,9 +73,13 @@ class Event
       ActionController::Base.helpers.number_to_percentage(revenue_fee * 100, precision: 1)
     end
 
+    def assigned_reimbursement_reviewer_required?
+      false
+    end
+
     def self.available_features
       # this must contain every HCB feature that we want enable / disable with plans.
-      %w[cards invoices donations account_number check_deposits transfers promotions google_workspace documentation reimbursements card_grants unrestricted_disbursements front_disbursements]
+      %w[cards invoices donations account_number check_deposits transfers contractors promotions google_workspace documentation reimbursements card_grants unrestricted_disbursements front_disbursements]
     end
 
     self.available_features.each do |feature|

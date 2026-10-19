@@ -22,9 +22,10 @@ ReactRailsUJS.handleEvent('turbo:frame-render', ReactRailsUJS.handleUnmount)
 
 // Remove modals triggered by <turbo-frames> when the frame is unloaded.
 // Bad stuff happens if you don't do this. Trust me. ~ @cjdenio
-document.addEventListener('turbo:frame-render', () => {
+// Modals containing the rendered frame (e.g. a lazy-loaded form) are kept.
+document.addEventListener('turbo:frame-render', ({ target }) => {
   // prettier-ignore
-  $('.jquery-modal [data-behavior~=modal].turbo-frame-modal:not(.modal--popover)').remove()
+  $('.jquery-modal [data-behavior~=modal].turbo-frame-modal:not(.modal--popover)').not($(target).parents()).remove()
 })
 
 document.addEventListener('turbo:before-cache', () => {
@@ -39,6 +40,7 @@ document.addEventListener('turbo:before-cache', () => {
 })
 
 import './controllers'
+import './confirm'
 
 import { Turbo } from '@hotwired/turbo-rails'
 window.Turbo = Turbo
@@ -48,12 +50,14 @@ import Alpine from 'alpinejs'
 import ach_form from './datas/ach_form'
 import wire_form from './datas/wire_form'
 import check_form from './datas/check_form'
+import application_project_info_form from './datas/application_project_info_form'
 
 window.Alpine = Alpine
 Alpine.plugin(persist)
 Alpine.data('ach', ach_form)
 Alpine.data('wire', wire_form)
 Alpine.data('check', check_form)
+Alpine.data('application_project_info', application_project_info_form)
 
 Alpine.start()
 

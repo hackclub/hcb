@@ -23,7 +23,8 @@ module TransactionGroupingEngine
       CHECK_CODE = "400"
       INCREASE_CHECK_CODE = "401"
       CHECK_DEPOSIT_CODE = "402"
-      DISBURSEMENT_CODE = "500"
+      OUTGOING_DISBURSEMENT_CODE = "500"
+      INCOMING_DISBURSEMENT_CODE = "550"
       STRIPE_CARD_CODE = "600"
       STRIPE_FORCE_CAPTURE_CODE = "601"
       STRIPE_SERVICE_FEE_CODE = "610"
@@ -47,11 +48,14 @@ module TransactionGroupingEngine
         return short_code_hcb_code if has_short_code?
         return invoice_hcb_code if invoice
         return bank_fee_hcb_code if bank_fee
+        return stripe_service_fee_hcb_code if stripe_service_fee
+        return fee_revenue_hcb_code if fee_revenue
         return donation_hcb_code if donation
         return ach_transfer_hcb_code if ach_transfer
         return check_hcb_code if check
         return check_deposit_hcb_code if check_deposit
-        return disbursement_hcb_code if disbursement
+        return outgoing_disbursement_hcb_code if outgoing_disbursement
+        return incoming_disbursement_hcb_code if incoming_disbursement
         return stripe_card_hcb_code if raw_stripe_transaction
         return stripe_card_hcb_code_pending if raw_pending_stripe_transaction
         return reimbursement_expense_payout_hcb_code if reimbursement_expense_payout
@@ -93,6 +97,30 @@ module TransactionGroupingEngine
 
       def bank_fee
         @bank_fee ||= @ct_or_cp.bank_fee
+      end
+
+      def stripe_service_fee_hcb_code
+        [
+          HCB_CODE,
+          STRIPE_SERVICE_FEE_CODE,
+          stripe_service_fee.id
+        ].join(SEPARATOR)
+      end
+
+      def stripe_service_fee
+        @stripe_service_fee ||= @ct_or_cp.stripe_service_fee
+      end
+
+      def fee_revenue_hcb_code
+        [
+          HCB_CODE,
+          FEE_REVENUE_CODE,
+          fee_revenue.id
+        ].join(SEPARATOR)
+      end
+
+      def fee_revenue
+        @fee_revenue ||= @ct_or_cp.fee_revenue
       end
 
       def donation_hcb_code
@@ -191,16 +219,28 @@ module TransactionGroupingEngine
         @check_deposit ||= @ct_or_cp.check_deposit
       end
 
-      def disbursement_hcb_code
+      def outgoing_disbursement_hcb_code
         [
           HCB_CODE,
-          DISBURSEMENT_CODE,
-          disbursement.id
+          OUTGOING_DISBURSEMENT_CODE,
+          outgoing_disbursement.id
         ].join(SEPARATOR)
       end
 
-      def disbursement
-        @disbursement ||= @ct_or_cp.disbursement
+      def outgoing_disbursement
+        @outgoing_disbursement ||= @ct_or_cp.outgoing_disbursement
+      end
+
+      def incoming_disbursement_hcb_code
+        [
+          HCB_CODE,
+          INCOMING_DISBURSEMENT_CODE,
+          incoming_disbursement.id
+        ].join(SEPARATOR)
+      end
+
+      def incoming_disbursement
+        @incoming_disbursement ||= @ct_or_cp.incoming_disbursement
       end
 
       def reimbursement_expense_payout

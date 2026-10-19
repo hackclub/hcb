@@ -26,7 +26,22 @@ module DonationService
       end
 
       def row(d)
-        [d.aasm_state, d.created_at, Rails.application.routes.url_helpers.url_for(d.local_hcb_code), d.name, d.email, d.amount, d.message, d.referrer, d.utm_source, d.utm_medium, d.utm_campaign, d.utm_term, d.utm_content, d.recurring?]
+        [
+          d.aasm_state,
+          d.created_at,
+          Rails.application.routes.url_helpers.url_for(d.local_hcb_code),
+          d.name,
+          d.email,
+          d.amount,
+          d.message,
+          d.referrer,
+          d.utm_source,
+          d.utm_medium,
+          d.utm_campaign,
+          d.utm_term,
+          d.utm_content,
+          d.recurring?
+        ].map { |value| SafeCsv.sanitize(value) }
       end
 
     end

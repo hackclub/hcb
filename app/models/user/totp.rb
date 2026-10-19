@@ -5,7 +5,7 @@
 # Table name: user_totps
 #
 #  id                :bigint           not null, primary key
-#  aasm_state        :string
+#  aasm_state        :string           not null
 #  deleted_at        :datetime
 #  last_used_at      :datetime
 #  secret_ciphertext :text             not null
@@ -36,10 +36,16 @@ class User
             created_at > 15.minutes.ago
           end
         end
+        after do
+          User::SecurityMailer.security_configuration_changed(user:, change: "Time-based one-time passwords were enabled").deliver_later
+        end
       end
 
       event :mark_expired do
         transitions from: :verified, to: :expired
+        after do
+          User::SecurityMailer.security_configuration_changed(user:, change: "Time-based one-time passwords were disabled").deliver_later
+        end
       end
     end
 

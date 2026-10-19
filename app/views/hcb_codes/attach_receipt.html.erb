@@ -1,14 +1,16 @@
 <% title "Upload Receipt for #{@hcb_code.memo}" %>
 <% page_md %>
 <% no_transparency_header %>
+<% @hide_flash = true %>
 
-<div class="container container--sm">
+<div class="container max-w-lg">
   <h1 class="center border-none h1 mt0 mb0 pt3 pb1 link-reset primary">Attach a receipt</h1>
   <p class="center mb3 mt1">
     <strong><%= render_money @hcb_code.amount_cents.abs %></strong> transaction for
     <span class="truncate break-none">"<%= @hcb_code.memo %>"</span>
   </p>
 
+  <%= render "application/flash", klass: "mb-2" %>
   <%= render partial: "receipts/form_v3", locals: {
         receiptable: @hcb_code,
         upload_method: "attach_receipt_page",

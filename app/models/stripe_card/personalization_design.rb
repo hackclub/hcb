@@ -5,6 +5,7 @@
 # Table name: stripe_card_personalization_designs
 #
 #  id                        :bigint           not null, primary key
+#  color                     :string           not null
 #  common                    :boolean          default(FALSE), not null
 #  stale                     :boolean          default(FALSE), not null
 #  stripe_card_logo          :string
@@ -27,7 +28,13 @@
 #
 class StripeCard
   class PersonalizationDesign < ApplicationRecord
+    DEFAULT_STRIPE_ID = "311"
+
     has_paper_trail
+
+    def self.default
+      find_by(id: DEFAULT_STRIPE_ID)
+    end
 
     include HasStripeDashboardUrl
     has_stripe_dashboard_url "issuing/personalization-designs", :stripe_id
@@ -40,8 +47,7 @@ class StripeCard
     has_one_attached :logo
     validate :common_designs_must_not_belong_to_an_event
 
-    scope :black, -> { where(stripe_physical_bundle_id: StripeService.physical_bundle_ids[:black]) }
-    scope :white, -> { where(stripe_physical_bundle_id: StripeService.physical_bundle_ids[:white]) }
+    enum :color, { black: "black", white: "white" }
 
     scope :active, -> { where(stripe_status: "active") }
     scope :inactive, -> { where(stripe_status: "inactive") }
@@ -67,21 +73,10 @@ class StripeCard
       end
       self.stripe_carrier_text = stripe_obj[:carrier_text]
       self.stripe_physical_bundle_id = stripe_obj[:physical_bundle]
+      self[:color] ||= StripeService.physical_bundle_ids.invert[stripe_physical_bundle_id]&.to_s
       self.stripe_name = stripe_obj[:name]
       self.stripe_card_logo = stripe_obj[:card_logo]
       self.save
-    end
-
-    def color
-      StripeService.physical_bundle_ids.invert[stripe_physical_bundle_id]
-    end
-
-    def black?
-      color == :black
-    end
-
-    def white?
-      color == :white
     end
 
     def active?

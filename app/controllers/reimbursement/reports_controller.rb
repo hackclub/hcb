@@ -16,14 +16,27 @@ module Reimbursement
     def create
       @event = Event.find(report_params[:event_id])
       user = User.create_with(creation_method: :reimbursement_report).find_or_create_by!(email: report_params[:email])
-      @report = @event.reimbursement_reports.build(report_params.except(:email, :receipt_id, :value).merge(user:, inviter: organizer_signed_in? ? current_user : nil, currency: user.payout_method&.currency || "USD"))
+      @report = @event.reimbursement_reports.build(report_params.except(:email, :receipt_id, :value).merge(user:, inviter: organizer_signed_in? ? current_user : nil, currency: user.default_payout_method&.currency || "USD"))
 
       authorize @report
 
+      if @report.assigned_reviewer_required? && params[:reimbursement_report][:reviewer_id].present?
+        reviewer = User.find_by_public_id!(params[:reimbursement_report][:reviewer_id])
+        unless @report.eligible_reviewers.exists?(reviewer.id)
+          return redirect_back fallback_location: event_reimbursements_path(@event), flash: { error: "The selected reviewer is not eligible for this report." }
+        end
+
+        @report.reviewer = reviewer
+      end
+
       if @report.save
         if report_params[:receipt_id]
+          receipt = Receipt.find(report_params[:receipt_id])
+
+          authorize receipt, :link?
+
           @expense = @report.expenses.create!(value: report_params[:value], memo: report_params[:report_name])
-          Receipt.find(report_params[:receipt_id]).update!(receiptable: @expense)
+          receipt.update!(receiptable: @expense)
         end
         if current_user && user == current_user
           redirect_to @report
@@ -110,23 +123,34 @@ module Reimbursement
     def update_currency
       authorize @report
 
-      old_currency = @report.currency
-      new_currency = @report.user.payout_method.currency
+      new_currency = @report.payout_method.currency
 
-      ActiveRecord::Base.transaction do
-        @report.update!(currency: new_currency)
-
-        @report.expenses.each do |expense|
-          fractional = Money.from_amount(expense.value, old_currency).cents
-          full = Money.from_cents(fractional, new_currency).amount
-
-          expense.update!(value: full)
-        end
-      end
+      @report.convert_report_currency!(new_currency)
 
       flash[:success] = "Report successfully updated to #{new_currency}."
     rescue ActiveRecord::RecordInvalid => e
       flash[:error] = e.message
+    end
+
+    def update_payout_method
+      authorize @report
+
+      begin
+        new_method = @report.user.personal_legal_entity.payout_methods.unarchived.find(params[:legal_entity_payout_method_id])
+
+        ActiveRecord::Base.transaction do
+          @report.update!(legal_entity_payout_method: new_method)
+          @report.convert_report_currency!(new_method.currency) if @report.mismatched_currency?
+        end
+
+        flash[:success] = "Payout method saved."
+      rescue ActiveRecord::RecordNotFound
+        flash[:error] = "Payout method not found."
+      rescue ActiveRecord::RecordInvalid => e
+        flash[:error] = e.message
+      end
+
+      redirect_to @report
     end
 
     def convert_to_wise_transfer
@@ -148,7 +172,11 @@ module Reimbursement
     def update
       authorize @report
 
-      if @report.update(update_reimbursement_report_params)
+      @report.assign_attributes(update_reimbursement_report_params)
+
+      authorize @report, :change_event? if @report.event_id_changed?
+
+      if @report.save
         flash[:success] = "Report successfully updated."
         if @report.event_id_previously_changed?
           PaperTrail.request(whodunnit: nil) do
@@ -157,7 +185,7 @@ module Reimbursement
         end
         redirect_to @report
       else
-        render :edit, status: :unprocessable_entity
+        render :edit, status: :unprocessable_content
       end
     end
 
@@ -180,6 +208,15 @@ module Reimbursement
     def submit
       authorize @report
 
+      if @report.assigned_reviewer_required? && !OrganizerPosition.role_at_least?(current_user, @report.event, :manager) && !@report.reviewer.present?
+        reviewer = User.find_by_public_id!(params[:reviewer_id])
+        unless @report.eligible_reviewers.exists?(reviewer.id)
+          flash[:error] = "The selected reviewer is not eligible for this report."
+          redirect_to @report and return
+        end
+        @report.reviewer = reviewer
+      end
+
       begin
         @report.mark_submitted!
 
@@ -194,9 +231,7 @@ module Reimbursement
         end
 
         flash[:success] = {
-          text: "You report has been submitted for review. When it's approved, you'll be reimbursed via #{@report.user.payout_method.name}.",
-          link: settings_payouts_path,
-          link_text: "If needed, you can still edit your payout settings."
+          text: "Your report has been submitted for review and your payout method can no longer be changed for this report. When it's approved, you'll be reimbursed via #{@report.payout_method.display_name}.",
         }
       rescue => e
         flash[:error] = e.message
@@ -221,6 +256,8 @@ module Reimbursement
 
     def admin_approve
       authorize @report
+      return unless enforce_sudo_mode
+
       # For Wise, the amount stored on the report is not in USD. By using the passed in :wise_total_including_fees parameter,
       # we're able to track admin transfer amounts based on the amounts used in the reimbursement processing flow.
       wise_amount_cents = (params[:wise_total_including_fees] * 100).to_i if @report.currency != "USD" && params[:wise_total_including_fees].present?
@@ -252,7 +289,7 @@ module Reimbursement
               return redirect_to @report
             end
 
-            conversion_rate = (wise_total_without_fees_cents / @report.amount_to_reimburse_cents).round(4)
+            conversion_rate = (wise_total_without_fees_cents / @report.amount_to_reimburse_cents).round(10)
             @report.update(conversion_rate:)
             approved_amount_usd_cents = @report.expenses.approved.sum { |expense| (expense.amount_cents * expense.conversion_rate).floor }
             fee_expense_value = (wise_total_including_fees_cents - approved_amount_usd_cents.to_f) / 100
@@ -283,40 +320,45 @@ module Reimbursement
 
       clearinghouse = Event.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
       payout_holding = @report.payout_holding
-      payout_holding.expense_payouts.pending.each do |expense_payout|
-        Reimbursement::ExpensePayoutService::ProcessSingle.new(expense_payout_id: expense_payout.id).run
+      payout_holding.with_lock do
+        unless payout_holding.settled?
+          payout_holding.expense_payouts.pending.each do |expense_payout|
+            Reimbursement::ExpensePayoutService::ProcessSingle.new(expense_payout_id: expense_payout.id).run
+          end
+          Reimbursement::PayoutHoldingService::ProcessSingle.new(payout_holding_id: payout_holding.id).run
+          payout_holding.reload
+          payout_holding.mark_settled!
+        end
+        wise_payout_method = @report.payout_method&.details
+        wise_payout_method.update(wise_recipient_id: params[:wise_recipient_id])
+        wise_transfer = clearinghouse.wise_transfers.create!(
+          payment_for: "Reimbursement for #{@report.name}.",
+          address_line1: wise_payout_method.address_line1,
+          address_line2: wise_payout_method.address_line2,
+          address_city: wise_payout_method.address_city,
+          address_state: wise_payout_method.address_state,
+          address_postal_code: wise_payout_method.address_postal_code,
+          recipient_country: wise_payout_method.recipient_country,
+          recipient_email: @report.user.email,
+          recipient_name: @report.user.full_name,
+          bank_name: wise_payout_method.bank_name,
+          recipient_information: wise_payout_method.recipient_information,
+          currency: @report.currency,
+          user: User.system_user,
+          usd_amount_cents: payout_holding.amount_cents,
+          quoted_usd_amount_cents: payout_holding.amount_cents,
+          amount_cents: @report.amount_to_reimburse_cents,
+          wise_id: params[:wise_id],
+          wise_recipient_id: params[:wise_recipient_id],
+          sent_at: Time.now,
+          recipient_phone_number: @report.user.phone_number,
+        )
+        wise_transfer.mark_approved!
+        wise_transfer.mark_sent!
+        payout_holding.wise_transfer = wise_transfer
+        payout_holding.save!
+        payout_holding.mark_sent!
       end
-      Reimbursement::PayoutHoldingService::ProcessSingle.new(payout_holding_id: payout_holding.id).run
-      payout_holding.reload
-      payout_holding.mark_settled!
-      @report.user.payout_method.update(wise_recipient_id: params[:wise_recipient_id])
-      wise_transfer = clearinghouse.wise_transfers.create!(
-        payment_for: "Reimbursement for #{@report.name}.",
-        address_line1: @report.user.payout_method.address_line1,
-        address_line2: @report.user.payout_method.address_line2,
-        address_city: @report.user.payout_method.address_city,
-        address_state: @report.user.payout_method.address_state,
-        address_postal_code: @report.user.payout_method.address_postal_code,
-        recipient_country: @report.user.payout_method.recipient_country,
-        recipient_email: @report.user.email,
-        recipient_name: @report.user.full_name,
-        bank_name: @report.user.payout_method.bank_name,
-        recipient_information: @report.user.payout_method.recipient_information,
-        currency: @report.currency,
-        user: User.system_user,
-        usd_amount_cents: payout_holding.amount_cents,
-        quoted_usd_amount_cents: payout_holding.amount_cents,
-        amount_cents: @report.amount_to_reimburse_cents,
-        wise_id: params[:wise_id],
-        wise_recipient_id: params[:wise_recipient_id],
-        sent_at: Time.now,
-        recipient_phone_number: @report.user.phone_number,
-      )
-      wise_transfer.mark_approved!
-      wise_transfer.mark_sent!
-      payout_holding.wise_transfer = wise_transfer
-      payout_holding.save!
-      payout_holding.mark_sent!
 
       redirect_to @report
     rescue ActiveRecord::RecordInvalid => e
@@ -324,19 +366,20 @@ module Reimbursement
       redirect_to @report
     end
 
-    def approve_all_expenses
+    def approve
       authorize @report
 
       begin
-        @report.expenses.each do |expense|
-          expense.mark_approved!
+        @report.expenses.pending.each do |expense|
+          expense.mark_approved!(current_user)
         end
-        flash[:success] = "All expenses have been approved; the report creator will be notified."
+        @report.mark_reimbursement_requested!
+        flash[:success] = "All expenses have been approved and the reimbursement has been requested; the HCB team will review the request promptly."
+      rescue AASM::InvalidTransition
+        flash[:error] = @report.reload.reimbursement_requested? ? "This report was already sent for reimbursement." : "This report could not be sent for reimbursement."
       rescue => e
         flash[:error] = e.message
       end
-
-      # Reimbursement::NightlyJob.perform_later
 
       redirect_to @report
     end
@@ -435,8 +478,9 @@ module Reimbursement
 
     def update_reimbursement_report_params
       reimbursement_report_params = params.require(:reimbursement_report).permit(:report_name, :event_id, :maximum_amount, :reviewer_id).compact
-      reimbursement_report_params.delete(:maximum_amount) unless admin_signed_in? || @event&.users&.include?(current_user)
+      reimbursement_report_params.delete(:maximum_amount) unless admin_signed_in? || OrganizerPosition.role_at_least?(current_user, @event, :manager)
       reimbursement_report_params.delete(:maximum_amount) unless @report.draft? || @report.submitted?
+      reimbursement_report_params.delete(:reviewer_id) unless admin_signed_in? || OrganizerPosition.role_at_least?(current_user, @event, :manager)
       reimbursement_report_params
     end
 

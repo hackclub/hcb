@@ -50,7 +50,7 @@
               <span>Upload</span>
             </label>
           </span>
-          <%= link_to my_receipts_upload_path(current_user), class: "btn bg-primary m1", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
+          <%= link_to my_receipts_upload_path(current_user), class: "btn bg-primary m1 max-h-auto h-auto", data: { behavior: "modal_trigger", modal: "link_receipt_#{instance}" } do %>
             <%= inline_icon "payment-docs" %>
             <span>Select from Receipt Bin</span>
           <% end %>
@@ -66,7 +66,7 @@
                           multiple: true,
                           include_hidden: false,
                           required: true,
-                          class: "display-none",
+                          class: "sr-only",
                           accept: "image/*,image/heic,.pdf",
                           data: {
                             "file-drop-target" => "fileInput",

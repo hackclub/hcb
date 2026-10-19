@@ -4,10 +4,12 @@ require "csv"
 
 class DonationsController < ApplicationController
   include SetEvent
+  include DonationPageSetup
   include Rails::Pagination
+  include TurnstileProtection
 
-  skip_after_action :verify_authorized, only: [:export, :show, :qr_code, :finish_donation, :finished]
-  skip_before_action :signed_in_user
+  skip_after_action :verify_authorized, only: [:finish_donation, :finished, :qr_code]
+  skip_before_action :signed_in_user, only: [:start_donation, :make_donation, :finish_donation, :finished, :qr_code]
   before_action :set_donation, only: [:show, :update]
   before_action :set_event, only: [:start_donation, :make_donation, :qr_code, :export, :export_donors]
   before_action :check_dark_param
@@ -25,10 +27,7 @@ class DonationsController < ApplicationController
   # Rationale: the session doesn't work inside iframes (because of third-party cookies)
   skip_before_action :verify_authenticity_token, only: [:start_donation, :make_donation, :finish_donation]
 
-  # Allow embedding donation pages inside iframes
-  content_security_policy(only: [:start_donation, :make_donation, :finish_donation]) do |policy|
-    policy.frame_ancestors "*"
-  end
+  before_action :allow_iframe_embedding, only: [:start_donation, :make_donation, :finish_donation]
 
   permissions_policy do |p|
     # Allow stripe.js to wrap PaymentRequest in non-safari browsers.
@@ -39,6 +38,13 @@ class DonationsController < ApplicationController
 
   invisible_captcha only: [:make_donation], honeypot: :subtitle, on_timestamp_spam: :redirect_to_404
 
+  # Saving a Donation mints a Stripe PaymentIntent, which is what card testers
+  # are after: script this form and you get a fresh intent to burn stolen card
+  # numbers against. The honeypot above doesn't slow down a bot that fills the
+  # form out properly, so require a solved Turnstile challenge before we create
+  # anything on Stripe.
+  turnstile_protect only: [:make_donation], action: TurnstileService::DONATION_ACTION
+
   # GET /donations/1
   def show
     authorize @donation
@@ -47,55 +53,53 @@ class DonationsController < ApplicationController
   end
 
   def start_donation
-    unless @event.donation_page_available?
-      return not_found
+    return unless build_donation_page!(event: @event, params:, request:)
+
+    if @event.show_top_donors
+      donor_summary = Struct.new(:name, :amount)
+      donations = @event.donations
+                        .left_joins(:recurring_donation)
+                        .succeeded_and_not_refunded
+                        .tax_deductible
+                        .where("COALESCE(recurring_donations.email, donations.email) <> ''")
+
+      # Aggregate per donor in SQL: total amount + the id of each group's most
+      # recent donation. This returns at most 10 rows instead of loading every
+      # donation for the org into memory.
+      totals = donations
+               .where(anonymous: false)
+               .group(Arel.sql("COALESCE(recurring_donations.email, donations.email)"))
+               .order(Arel.sql("SUM(donations.amount) DESC"))
+               .limit(10)
+               .pluck(
+                 Arel.sql("SUM(donations.amount)"),
+                 Arel.sql("(ARRAY_AGG(donations.id ORDER BY COALESCE(donations.in_transit_at, donations.created_at) DESC))[1]")
+               )
+
+      # Load only the ~10 representative donations to resolve display names
+      # (which depend on the associated recurring donation).
+      representatives = Donation.includes(:recurring_donation)
+                                .where(id: totals.map(&:last))
+                                .index_by(&:id)
+
+      @top_donors = totals.map do |total, representative_id|
+        donor_summary.new(representatives[representative_id].name, total)
+      end
+
+      @top_donors = [] if @top_donors.size < 3
     end
 
-    tax_deductible = params[:goods].nil? || params[:goods] == "0"
-
-    @show_tiers = @event.donation_tiers_enabled? && @event.donation_tiers.any?
-    @tier = @event.donation_tiers.find_by(id: params[:tier_id]) if params[:tier_id]
-    if params[:tier_id] && @tier.nil?
-      redirect_to start_donation_donations_path(@event), flash: { error: "Donation tier could not be found." }
+    if @event.show_recent_donors
+      @recent_donors = @event.donations.includes(:recurring_donation).succeeded_and_not_refunded.tax_deductible.order(created_at: :desc).limit(8).to_a
+      if @recent_donors.size < 8
+        @recent_donors = []
+      end
     end
-
-
-    @donation = Donation.new(
-      name: params[:name] || (organizer_signed_in? ? nil : current_user&.name),
-      email: params[:email] || (organizer_signed_in? ? nil : current_user&.email),
-      amount: params[:amount],
-      message: params[:message],
-      fee_covered: params[:fee_covered],
-      event: @event,
-      ip_address: request.remote_ip,
-      user_agent: request.user_agent,
-      tax_deductible:,
-      referrer: request.referrer,
-      utm_source: params[:utm_source],
-      utm_medium: params[:utm_medium],
-      utm_campaign: params[:utm_campaign],
-      utm_term: params[:utm_term],
-      utm_content: params[:utm_content]
-    )
 
     authorize @donation
-
-    @monthly = params[:monthly].present? || params[:tier_id].present?
-
-    if @monthly
-      @recurring_donation = @event.recurring_donations.build(
-        name: params[:name],
-        email: params[:email],
-        amount: params[:amount],
-        message: params[:message],
-        fee_covered: params[:fee_covered],
-        tax_deductible:
-      )
-    end
-
-    @placeholder_amount = "%.2f" % (DonationService::SuggestedAmount.new(@event, monthly: @monthly).run / 100.0)
-
     @hide_flash = true
+
+    render "donations/start_donation"
   end
 
   def make_donation
@@ -124,12 +128,14 @@ class DonationsController < ApplicationController
     if @donation.save
       redirect_to finish_donation_donations_path(@event, @donation.url_hash, background: @background)
     else
-      render :start_donation, status: :unprocessable_entity
+      @top_donors = []
+      @recent_donors = []
+
+      render :start_donation, status: :unprocessable_content
     end
   end
 
   def finish_donation
-
     @donation = Donation.find_by!(url_hash: params["donation"])
 
     # We don't use set_event here to prevent a UI vulnerability where a user could create a donation on one org and make it look like another org by changing the slug
@@ -212,6 +218,39 @@ class DonationsController < ApplicationController
   end
 
   private
+
+  def allow_iframe_embedding
+    override_x_frame_options(SecureHeaders::OPT_OUT)
+    override_content_security_policy_directives(frame_ancestors: %w[*])
+  end
+
+  # The donation page hides flashes and the form sits in a Turbo frame, so put
+  # the error on the form the way a failed save does — and keep what they'd
+  # already typed, since re-rendering the frame otherwise empties it.
+  def turnstile_failed
+    return unless build_donation_page!(event: @event, params:, request:)
+
+    @donation.assign_attributes(resubmitted_donation_attributes)
+    @donation.errors.add(:base, TurnstileProtection::FAILURE_MESSAGE)
+    # The POST carries no tier, and the tier picker renders *instead of* the
+    # form — which would swallow the error. Show the form.
+    @show_tiers = false
+    @top_donors = []
+    @recent_donors = []
+    @hide_flash = true
+
+    render :start_donation, status: :unprocessable_content
+  end
+
+  # Deliberately not `donation_params`: that one requires the key, so a bot's
+  # bare POST would raise here. The amount also arrives as dollars.
+  def resubmitted_donation_attributes
+    submitted = params[:donation]
+    return {} unless submitted.is_a?(ActionController::Parameters)
+
+    attributes = submitted.permit(:name, :email, :message, :anonymous, :amount).to_h
+    attributes.merge("amount" => (Monetize.parse(attributes["amount"]).cents if attributes["amount"].present?))
+  end
 
   def stream_donations_csv
     set_file_headers_csv

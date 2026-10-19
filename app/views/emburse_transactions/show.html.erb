@@ -74,20 +74,6 @@
   <% end %>
 </article>
 
-<% if organizer_signed_in? %>
-  <% if @emburse_transaction.receipts.any? %>
-    <h2>Receipts</h2>
-    <section class="grid grid--split mt2 mb3">
-      <%= render @emburse_transaction.receipts %>
-      <%= render "receipts/upload", receiptable: @emburse_transaction %>
-    </section>
-  <% else %>
-    <%= render "receipts/upload", receiptable: @emburse_transaction %>
-  <% end %>
-<% end %>
-
-<%= render "comments/comments" %>
-
 <% admin_tool do %>
   <pre>
     <%= json @emburse_transaction %>

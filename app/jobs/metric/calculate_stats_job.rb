@@ -5,7 +5,7 @@ class Metric
     queue_as :metrics
 
     def perform
-      stats = Metric::Hcb::Stats.first_or_initialize
+      stats = Metric::Hcb::Stats.instance
 
       stats.populate!
     end

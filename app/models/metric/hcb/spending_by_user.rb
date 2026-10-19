@@ -5,18 +5,18 @@
 # Table name: metrics
 #
 #  id            :bigint           not null, primary key
-#  aasm_state    :string
+#  aasm_state    :string           not null
 #  canceled_at   :datetime
 #  completed_at  :datetime
 #  failed_at     :datetime
 #  metric        :jsonb
 #  processing_at :datetime
-#  subject_type  :string
 #  type          :string           not null
 #  year          :integer
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
 #  subject_id    :bigint
+#  subject_type  :string
 #
 # Indexes
 #
@@ -72,8 +72,8 @@ class Metric
         FROM "users"
         ORDER BY spent desc
         ').reject { |hash| hash["spent"].nil? }
-                          .map { |item| [item["user_id"], item["spent"].to_i] }
-                          .to_h
+          .map { |item| [item["user_id"], item["spent"].to_i] }
+          .to_h
       end
 
       def metric

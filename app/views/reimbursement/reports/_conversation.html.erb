@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <h2 class="flex items-center">
   <span style="flex-grow: 1">Timeline</span>
 </h2>
@@ -31,7 +33,7 @@
              "reimbursement_requested" => ["thumbsup", "success", "approved on behalf of #{Event.find_by_id(item.object&.[]("event_id") || @report.event_id)&.name}"],
              "reimbursement_approved"  => ["admin", "warning", "approved this report on behalf of the HCB team"],
              "draft"                   => ["docs", "muted", "converted this report to a draft"],
-             "draft_created"           => ["plus", "success", "created this draft report"],
+             "draft_created"           => ["plus", "success", @report.card_grant.present? ? "converted a card grant into this draft report" : "created this draft report"],
              "reimbursed"              => ["payment-transfer", "purple", reimbursed_change_text],
              "reversed"                => ["sad", "warning", "canceled this reimbursement"],
            } %>
@@ -56,12 +58,12 @@
           <% unless state_change == "reimbursement_requested" && whodunnit == @report.user && !@report.team_review_required? %>
             <li class="conversation_item mt2" style="margin-bottom: 24px;">
               <div class="flex flex-row items-center" style="gap: 16px">
-                <div class="flex items-center justify-center z-[2] pop no_hover bg-<%= color %>-important" style="color: white;">
+                <div class="flex items-center justify-center z-[2] pop no_hover bg-<%= color %>-important" style="color: white; cursor: default">
                   <%= inline_icon icon, width: 30 %>
                 </div>
                 <div class="conversation_item_text">
                   <span class="muted" style="margin-right: -0.25em;">
-                    <%= user_mention whodunnit, avatar: { style: "vertical-align: sub;" }, default_name: "HCB", default_image: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/010fba29b83bf91b_image.png" %>
+                    <%= user_mention whodunnit, default_name: "HCB", default_image: "https://cdn.hackclub.com/019c256a-a425-7ddc-aa02-9fe82bd89c6b/image.png" %>
                   </span>
                   <% if state_change == "reimbursement_requested" %>
                     <span class="align-middle tooltipped tooltipped--n" aria-label="Still pending approval from the HCB team">
@@ -80,7 +82,7 @@
             </li>
           <% end %>
         <% else %>
-          <% changes = item.changeset.excluding("updated_at", "conversion_rate").select { |field, changes| changes.any?(&:present?) } %>
+          <% changes = item.changeset.excluding("updated_at", "conversion_rate", "legal_entity_payout_method_id").select { |field, changes| changes.any?(&:present?) } %>
           <% unless item.event == "update" && changes.empty? %>
             <li class="conversation_item mt2" style="margin-bottom: 24px;">
               <div class="flex flex-row items-center" style="gap: 16px">
@@ -89,7 +91,7 @@
                 </div>
                 <div style="display: flex; align-items: center; gap: 4px">
                   <span class="muted; margin-right: -0.25em;">
-                    <%= user_mention User.find_by(id: item.whodunnit), hide_avatar: true, default_name: "HCB", default_image: "https://hc-cdn.hel1.your-objectstorage.com/s/v3/010fba29b83bf91b_image.png" %>
+                    <%= user_mention User.find_by(id: item.whodunnit), hide_avatar: true, default_name: "HCB", default_image: "https://cdn.hackclub.com/019c256a-a425-7ddc-aa02-9fe82bd89c6b/image.png" %>
                   </span>
                   <span class="align-middle">
                     <%= item.event %><%= item.event.ends_with?("e") ? "d" : "ed" %> this report

@@ -11,16 +11,22 @@
 #  friendly_memo           :text
 #  hcb_code                :text
 #  memo                    :text             not null
-#  transaction_source_type :string
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
+#  ledger_item_id          :bigint
 #  transaction_source_id   :bigint
+#  transaction_source_type :string
 #
 # Indexes
 #
 #  index_canonical_transactions_on_date                (date)
 #  index_canonical_transactions_on_hcb_code            (hcb_code)
+#  index_canonical_transactions_on_ledger_item_id      (ledger_item_id)
 #  index_canonical_transactions_on_transaction_source  (transaction_source_type,transaction_source_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (ledger_item_id => ledger_items.id)
 #
 class CanonicalTransaction < ApplicationRecord
   has_paper_trail
@@ -43,10 +49,11 @@ class CanonicalTransaction < ApplicationRecord
   scope :donation_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE}%'") }
   scope :ach_transfer_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::ACH_TRANSFER_CODE}%'") }
   scope :check_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::CHECK_CODE}%'") }
-  scope :disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::DISBURSEMENT_CODE}%'") }
+  scope :outgoing_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_DISBURSEMENT_CODE}%'") }
+  scope :incoming_disbursement_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INCOMING_DISBURSEMENT_CODE}%'") }
   scope :stripe_card_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_CARD_CODE}%'") }
-  scope :with_custom_memo, -> { where("custom_memo is not null") }
-  scope :without_custom_memo, -> { where("custom_memo is null") }
+  scope :with_custom_memo, -> { where.not(custom_memo: nil) }
+  scope :without_custom_memo, -> { where(custom_memo: nil) }
   scope :with_short_code, -> { where("memo ~ '.*HCB-\\w{5}.*'") }
 
   scope :revenue, -> { where("amount_cents > 0") }
@@ -115,6 +122,30 @@ class CanonicalTransaction < ApplicationRecord
 
   before_validation { self.custom_memo = custom_memo.presence&.strip }
 
+  belongs_to :ledger_item, optional: true, class_name: "Ledger::Item", touch: true
+
+  before_create do
+    self.ledger_item_id ||= if short_code.present? && (li = Ledger::Item.find_by(short_code:))
+                              li.id
+                            elsif linked_object.present?
+                              linked_object.try(:canonical_pending_transaction).try(:ledger_item_id)
+                            elsif raw_stripe_transaction&.stripe_authorization_id
+                              rpst = RawPendingStripeTransaction.find_by(stripe_transaction_id: raw_stripe_transaction.stripe_authorization_id)
+                              rpst&.canonical_pending_transaction&.ledger_item_id
+                            end
+  end
+
+  after_create_commit :assign_ledger_item, unless: -> { ledger_item.present? }
+
+  after_commit if: -> { ledger_item.present? } do
+    ledger_item.map!
+  end
+
+  after_commit if: -> { previous_changes.key?("ledger_item_id") } do
+    old_ledger_item_id = previous_changes["ledger_item_id"].first
+    Ledger::Item.find(old_ledger_item_id).refresh! if old_ledger_item_id.present?
+  end
+
   after_create :write_hcb_code
   after_create_commit :write_system_event
   after_create_commit do
@@ -122,6 +153,14 @@ class CanonicalTransaction < ApplicationRecord
       PendingEventMappingEngine::Settle::Single::Stripe.new(canonical_transaction: self).run
       EventMappingEngine::Map::Single::Stripe.new(canonical_transaction: self).run
     end
+  end
+
+  # The moment this transaction actually settled, which for Stripe and Column
+  # transactions is earlier than when we ingested it.
+  def datetime
+    raw_stripe_transaction&.stripe_transaction&.dig("created")&.then { |t| Time.at(t) } ||
+      raw_column_transaction&.column_transaction&.dig("effective_at")&.then { |t| Time.parse(t) } ||
+      created_at
   end
 
   def smart_memo
@@ -147,7 +186,13 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   def likely_card_transaction_refund?
-    likely_stripe_card_transaction? && amount_cents > 0
+    amount_cents > 0 && (likely_stripe_card_transaction? || likely_card_dispute_payout?)
+  end
+
+  # Won disputes are paid out from Stripe to Column with the card charge's
+  # short code, so they map back to the card charge as a RawColumnTransaction.
+  def likely_card_dispute_payout?
+    transaction_source_type == RawColumnTransaction.name && !!local_hcb_code&.card_charge?
   end
 
   def likely_stripe_card_transaction?
@@ -156,6 +201,14 @@ class CanonicalTransaction < ApplicationRecord
 
   def linked_object
     @linked_object ||= TransactionEngine::SyntaxSugarService::LinkedObject.new(canonical_transaction: self).run
+  end
+
+  def linked_object_v2
+    if column_id = column_transaction_id
+      AchTransfer.find_by(column_id:) || Wire.find_by(column_id:) || CheckDeposit.find_by(column_id:) || IncreaseCheck.find_by(column_id:)
+    else
+      transaction_source&.try(:card_charge)
+    end
   end
 
   def raw_plaid_transaction
@@ -224,6 +277,18 @@ class CanonicalTransaction < ApplicationRecord
     nil
   end
 
+  def remote_stripe_ipi_id
+    return nil unless raw_stripe_transaction
+
+    raw_stripe_transaction.stripe_transaction_id
+  end
+
+  def stripe_txn_dashboard_url
+    return nil unless remote_stripe_ipi_id
+
+    "https://dashboard.stripe.com/issuing/transactions/#{remote_stripe_ipi_id}"
+  end
+
   def remote_stripe_iauth_id
     return nil unless raw_stripe_transaction
 
@@ -281,6 +346,18 @@ class CanonicalTransaction < ApplicationRecord
 
   def bank_fee
     return linked_object if linked_object.is_a?(BankFee)
+
+    nil
+  end
+
+  def stripe_service_fee
+    return linked_object if linked_object.is_a?(StripeServiceFee)
+
+    nil
+  end
+
+  def fee_revenue
+    return linked_object if linked_object.is_a?(FeeRevenue)
 
     nil
   end
@@ -381,7 +458,18 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   def disbursement
-    return linked_object if linked_object.is_a?(Disbursement)
+    Rails.application.deprecators[:hcb].warn "CanonicalTransaction#disbursement accessed"
+    (outgoing_disbursement || incoming_disbursement)&.disbursement
+  end
+
+  def outgoing_disbursement
+    return linked_object if linked_object.is_a?(Disbursement::Outgoing)
+
+    nil
+  end
+
+  def incoming_disbursement
+    return linked_object if linked_object.is_a?(Disbursement::Incoming)
 
     nil
   end
@@ -409,6 +497,24 @@ class CanonicalTransaction < ApplicationRecord
   end
 
   private
+
+  def assign_ledger_item
+    safely do
+      reload_local_hcb_code
+      ActiveRecord::Base.transaction do
+        if calculated_ledger_item != local_hcb_code.ledger_item
+          Rails.error.unexpected("CanonicalTransaction #{id} has calculated a different ledger item from its local_hcb_code. (#{calculated_ledger_item&.id} vs. #{local_hcb_code.ledger_item&.id})")
+        end
+
+        li = calculated_ledger_item || create_ledger_item!(memo:, amount_cents: 0, datetime:, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+        update!(ledger_item: li)
+      end
+    end
+  end
+
+  def calculated_ledger_item
+    @calculated_ledger_item ||= Ledger::Item.find_by(short_code:) || linked_object_v2&.ledger_item
+  end
 
   def hashed_transaction
     @hashed_transaction ||= begin

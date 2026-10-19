@@ -2,6 +2,7 @@
 
 import { Controller } from '@hotwired/stimulus'
 import { loadStripe } from '@stripe/stripe-js'
+import swal from 'sweetalert'
 
 import themes from '../common/stripeThemes'
 
@@ -52,11 +53,11 @@ export default class extends Controller {
           ) {
             flash.textContent = `Something went wrong: your bank declined this transaction. Please contact them to approve it.`
           } else {
-            flash.textContent = `Something went wrong: ${result.error.message}`
+            flash.textContent = result.error.message
           }
           this.errorsTarget.appendChild(flash)
         } else {
-          alert(`Something went wrong: ${result.error.message}`)
+          swal('Payment error', result.error.message, 'error')
         }
       }
     }
