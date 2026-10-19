@@ -44,6 +44,84 @@ RSpec.describe MyController do
 
       expect(response).to have_http_status(:ok)
     end
+
+    context "for a verified user" do
+      let(:user) { create(:user) }
+      let(:cardholder) { create(:stripe_cardholder, user:) }
+      let(:zebra) { create(:event, name: "Zebra Club") }
+      let(:aardvark) { create(:event, name: "aardvark Society") }
+
+      before { sign_in_verified(user) }
+
+      def ivar(name) = controller.instance_variable_get(:"@#{name}")
+
+      def create_card(event: zebra, **attributes)
+        create(:stripe_card, :with_stripe_id, stripe_cardholder: cardholder, event:, **attributes)
+      end
+
+      def searched_cards
+        ivar(:cards_by_event).values.flatten
+      end
+
+      it "groups the user's cards by event, sorted by event name" do
+        zebra_card = create_card(name: "Zebra card")
+        aardvark_cards = [create_card(event: aardvark), create_card(event: aardvark, stripe_status: "canceled")]
+        create(:stripe_card, :with_stripe_id, event: zebra)
+
+        get :cards
+
+        expect(response).to have_http_status(:ok)
+        expect(ivar(:cards_by_event).keys).to eq([aardvark, zebra])
+        expect(ivar(:cards_by_event)[aardvark]).to contain_exactly(*aardvark_cards)
+        expect(ivar(:cards_by_event)[zebra]).to eq([zebra_card])
+        expect(response.body).to include("Zebra Club", "aardvark Society")
+      end
+
+      it "searches cards by name and last four digits" do
+        laptop = create_card(name: "Laptop fund", last4: "1234")
+        snacks = create_card(name: "Snacks", last4: "5678")
+
+        get :cards, params: { q: "laptop" }
+        expect(searched_cards).to eq([laptop])
+
+        get :cards, params: { q: "5678" }
+        expect(searched_cards).to eq([snacks])
+
+        get :cards, params: { q: "nothing matches this" }
+        expect(searched_cards).to be_empty
+        expect(response.body).to include("No cards found!")
+      end
+
+      it "searches cards by card grant purpose" do
+        event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+        card = create_card(event:, name: "Generic card")
+        create(:card_grant, event:, user:, email: user.email, stripe_card: card, purpose: "Hackathon pizza")
+        create_card(name: "Other card")
+
+        get :cards, params: { q: "pizza" }
+
+        expect(response).to have_http_status(:ok)
+        expect(searched_cards).to eq([card])
+      end
+
+      it "treats LIKE wildcards in the search as literal text" do
+        percent = create_card(name: "100% done")
+        create_card(name: "1000 club")
+
+        get :cards, params: { q: "100%" }
+
+        expect(searched_cards).to eq([percent])
+      end
+
+      it "keeps the status and type filters when searching" do
+        get :cards, params: { q: "laptop", status: "canceled", type: "virtual" }
+
+        expect(response).to have_http_status(:ok)
+        form = response.parsed_body.css("form").find { |f| f.at_css("input[name='q']") }
+        expect(form.at_css("input[type='hidden'][name='status']")["value"]).to eq("canceled")
+        expect(form.at_css("input[type='hidden'][name='type']")["value"]).to eq("virtual")
+      end
+    end
   end
 
   describe "GET #reimbursements" do
