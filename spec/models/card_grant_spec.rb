@@ -35,7 +35,7 @@ RSpec.describe CardGrant, type: :model do
     end
 
     it "accepts an expiration date within 2 years" do
-      card_grant = create(:card_grant, expiration_at: 1.years.from_now.to_date)
+      card_grant = create(:card_grant, expiration_at: 1.year.from_now.to_date)
       expect(card_grant).to be_valid
     end
 
