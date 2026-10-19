@@ -1,8 +1,11 @@
-<%# locals: (icon: "", title:, own: true) %>
+<%# locals: (icon: "", title:, own: true, badge: nil) %>
 
 <h2 class="grant-section">
   <% if own && !icon.empty? %>
     <span class="grant-section__icon" aria-hidden="true"><%= icon %></span>
   <% end %>
   <%= title %>
+  <% if badge %>
+    <span class="badge ml-0 bg-warning"><%= badge %></span>
+  <% end %>
 </h2>

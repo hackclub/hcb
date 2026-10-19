@@ -21,7 +21,7 @@
 
   <% if controls.any? %>
     <div class="card grant-controls">
-      <p class="grant-panel__heading">Controls</p>
+      <h3 class="grant-subheading">Controls</h3>
       <div class="grant-controls__grid">
         <% controls.each_with_index do |control, index| %>
           <div class="grant-controls__item <%= "grant-controls__item--wide" if controls.size.odd? && index == controls.size - 1 %>">

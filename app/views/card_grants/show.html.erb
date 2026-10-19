@@ -51,7 +51,7 @@
     <%= render partial: "card_grants/card_details", locals: { card_grant: @card_grant } %>
   <% end %>
 
-  <%= render "card_grants/section_heading", icon: steps ? "3" : "", title: own ? "Upload receipts for each purchase (required)" : "Transactions", own: own %>
+  <%= render "card_grants/section_heading", icon: steps ? "3" : "", title: own ? "Upload a receipt for every purchase" : "Transactions", own: own, badge: ("Required" if own) %>
   <%= render partial: "card_grants/transactions", locals: { hcb_codes: @hcb_codes, ledger: @ledger, items: @items, heading: false } %>
 <% end %>
 

@@ -8,10 +8,10 @@
   <%= button_to cancel_path,
                 method: :post,
                 form_class: "contents",
-                class: "grant-action",
+                class: "grant-action grant-tone--primary",
                 disabled: !policy(card_grant).cancel?,
                 data: cancel_data do %>
-    <%= render "card_grants/control", title: "Cancel grant", description: policy(card_grant).cancel? ? label.presence || cancel_tooltip : cancel_tooltip, cta: "Cancel" %>
+    <%= render "card_grants/control", title: "Cancel grant", description: policy(card_grant).cancel? ? label.presence || cancel_tooltip : cancel_tooltip, icon: "reply" %>
   <% end %>
 <% else %>
   <%= button_to cancel_path,

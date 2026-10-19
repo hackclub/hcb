@@ -9,11 +9,11 @@
     <%= button_to defrost_stripe_card_path(stripe_card),
                   method: :post,
                   form_class: "contents",
-                  class: "grant-action",
+                  class: "grant-action grant-tone--info",
                   disabled: !policy(stripe_card).defrost?,
                   data: { turbo: true, turbo_frame: "_top" } do %>
       <%# `label`/`subtitle` describe freezing, so the frozen state has its own copy. %>
-      <%= render "card_grants/control", title: "Card frozen", description: policy(stripe_card).defrost? ? "Defrost it to start spending again" : "You don't have permission to perform this action", cta: "Defrost" %>
+      <%= render "card_grants/control", title: "Card frozen", description: policy(stripe_card).defrost? ? "Defrost it to start spending again" : "You don't have permission to perform this action", icon: "freeze" %>
     <% end %>
   <% else %>
     <%= button_to defrost_stripe_card_path(stripe_card),
@@ -36,10 +36,10 @@
     <%= button_to freeze_stripe_card_path(stripe_card),
                   method: :post,
                   form_class: "contents",
-                  class: "grant-action",
+                  class: "grant-action grant-tone--info",
                   disabled: !policy(stripe_card).freeze?,
                   data: { turbo: true, turbo_frame: "_top" } do %>
-      <%= render "card_grants/control", title: label.presence || "Freeze", description: freeze_subtitle, cta: "Freeze" %>
+      <%= render "card_grants/control", title: label.presence || "Freeze", description: freeze_subtitle, icon: "freeze" %>
     <% end %>
   <% else %>
     <%= button_to freeze_stripe_card_path(stripe_card),
@@ -57,8 +57,8 @@
   <% end %>
 <% elsif !stripe_card&.canceled? %>
   <% if control %>
-    <button type="button" class="grant-action" disabled>
-      <%= render "card_grants/control", title: "Freeze", description: "This card cannot be frozen because it has not been activated", cta: "Freeze" %>
+    <button type="button" class="grant-action grant-tone--info" disabled>
+      <%= render "card_grants/control", title: "Freeze", description: "This card cannot be frozen because it has not been activated", icon: "freeze" %>
     </button>
   <% else %>
     <button type="button" class="btn btn--list-item" disabled>
