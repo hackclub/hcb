@@ -2,6 +2,7 @@
 
 class IncreaseChecksController < ApplicationController
   include SetEvent
+  include ResolvesPaymentRecipient
   include Admin::TransferApprovable
   include Admin::PaymentApprovable
 
@@ -80,7 +81,7 @@ class IncreaseChecksController < ApplicationController
   private
 
   def check_params
-    params.require(:increase_check).permit(
+    permitted = params.require(:increase_check).permit(
       :memo,
       :amount,
       :payment_for,
@@ -95,6 +96,7 @@ class IncreaseChecksController < ApplicationController
       :payment_recipient_id,
       file: []
     )
+    @check_params ||= scope_payment_recipient!(permitted)
   end
 
   def set_check

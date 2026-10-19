@@ -131,7 +131,7 @@ module Reimbursement
         transitions from: [:draft, :reimbursement_requested], to: :submitted do
           guard do
             payout_method.present? && !user.onboarding? && event && !exceeds_maximum_amount? && !below_minimum_amount? &&
-              expenses.any? && !missing_receipts? && !event.financially_frozen? && expenses.none? { |e| e.amount.zero? } &&
+              expenses.any? && !missing_receipts? && !missing_categories? && !event.financially_frozen? && expenses.none? { |e| e.amount.zero? } &&
               !mismatched_currency? && payout_method_allowed?
           end
         end
@@ -338,6 +338,14 @@ module Reimbursement
       user.admin? || !OrganizerPosition.role_at_least?(user, event, :manager) || (event.reimbursements_require_organizer_peer_review && event.users.size > 1)
     end
 
+    def assigned_reviewer_required?
+      event.plan.assigned_reimbursement_reviewer_required?
+    end
+
+    def eligible_reviewers
+      User.where(id: event.ancestor_organizer_positions.manager_access.select(:user_id))
+    end
+
     def reimbursement_confirmation_message
       return nil if expenses.pending.none?
 
@@ -346,6 +354,10 @@ module Reimbursement
 
     def missing_receipts?
       expenses.complete.with_receipt.count != expenses.count
+    end
+
+    def missing_categories?
+      expenses.where.not(type: Reimbursement::Expense::Fee.name).where(category: nil).exists?
     end
 
     def mismatched_currency?
