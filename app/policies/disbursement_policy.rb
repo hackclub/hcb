@@ -19,7 +19,7 @@ class DisbursementPolicy < ApplicationPolicy
     return true if record.destination_event.nil?
     # Anyone can send to a transparent organization, listed or not; private
     # organizations still require a role.
-    return true if record.destination_event.is_public? && !record.destination_event.hidden? && !record.destination_event.demo_mode?
+    return true if publicly_visible?(record.destination_event)
     return true if OrganizerPosition.role_at_least?(user, record.destination_event, role)
 
     false
@@ -72,6 +72,10 @@ class DisbursementPolicy < ApplicationPolicy
   end
 
   private
+
+  def publicly_visible?(event)
+    event.is_public? && !event.hidden? && !event.demo_mode?
+  end
 
   def auditor_or_user?
     user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
