@@ -1,7 +1,6 @@
 <%# locals: (form:, field_name:, label:, disabled:, sending: false) %>
 
-<% search_path = event_search_disbursements_path(sending: sending || nil) %>
-<% empty_message = "No results." unless sending %>
+<% search_path = event_search_disbursements_path(sending:) %>
 
 <% association_name = field_name.to_s.sub(/_id$/, "") %>
 <% selected_event = form.object.try(association_name) %>
@@ -15,7 +14,6 @@
   <%= form.label field_name, label %>
   <%= combobox_tag form.field_name(field_name), search_path,
                    selected: selected,
-                   empty_message: empty_message,
                    disabled: disabled,
                    class: "!max-w-full",
                    data: { swap_organizations_target: "combobox" } %>
