@@ -3,6 +3,7 @@
 class CardGrantsController < ApplicationController
   include SetEvent
   include SetLedgerFilters
+  include CardGrantFormParams
 
   skip_before_action :signed_in_user, only: [:index, :card_index, :transaction_index, :show, :spending]
   skip_after_action :verify_authorized, only: [:show, :spending]
@@ -59,14 +60,16 @@ class CardGrantsController < ApplicationController
 
     @event.create_card_grant_setting! unless @event.card_grant_setting.present?
 
+    @template = @event.card_grant_templates.find_by_hashid(params[:template_id]) if params[:template_id].present?
+    @template&.apply_to(@card_grant)
+
     @card_grant.amount_cents = params[:amount_cents] if params[:amount_cents]
     @card_grant.purpose = params[:purpose].to_s.first(CardGrant::MAXIMUM_PURPOSE_LENGTH) if params[:purpose]
     @card_grant.instructions = params[:instructions] if params[:instructions]
   end
 
   def create
-    params[:card_grant][:amount_cents] = Monetize.parse(params[:card_grant][:amount_cents]).cents
-    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:email, :amount_cents, :expiration_at, :purpose, :one_time_use, :pre_authorization_required, :invite_message, :instructions).merge(sent_by: current_user))
+    @card_grant = @event.card_grants.build(card_grant_form_params.merge(sent_by: current_user))
 
     authorize @card_grant
 
