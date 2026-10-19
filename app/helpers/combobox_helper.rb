@@ -5,7 +5,7 @@ module ComboboxHelper
                   "keydown->combobox#onKeydown blur->combobox#onBlur"
   private_constant :INPUT_ACTIONS
 
-  def combobox_tag(name, src, selected: nil, data: {}, **input_options)
+  def combobox_tag(name, src, selected: nil, empty_message: nil, data: {}, **input_options)
     wrapper_class = input_options.delete(:class)
     input_id = input_options.delete(:id) || name.to_s.gsub(/\W+/, "_").delete_suffix("_")
 
@@ -25,6 +25,7 @@ module ComboboxHelper
       combobox_url_value: src,
       combobox_selected_value: value,
       combobox_label_value: label,
+      combobox_empty_message_value: empty_message,
       **data.except(:controller)
     }
 

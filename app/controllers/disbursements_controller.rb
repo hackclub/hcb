@@ -60,13 +60,23 @@ class DisbursementsController < ApplicationController
 
     user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id)
 
+    own_events = current_user.manageable_events.not_hidden.filter_demo_mode(false)
+
     base = if admin_signed_in?
              Event.select(:name, :id, :demo_mode, :slug).reorder(Event::CUSTOM_SORT).includes(:plan)
-           elsif !sending
-             allowed_destination_event_ids = current_user.manageable_events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
-             Event.where(id: allowed_destination_event_ids).select(:name, :id, :demo_mode, :slug).includes(:plan)
+           elsif sending || q.blank?
+             # Until the user starts searching for a destination, only suggest
+             # their own organizations.
+             own_events
            else
-             current_user.manageable_events.not_hidden.filter_demo_mode(false)
+             # Once they search, also offer organizations in HCB's public
+             # directory, plus an unlisted transparent organization when its
+             # exact slug is typed. Anyone can already view these, so listing
+             # them doesn't reveal anything. Private organizations stay hidden.
+             own_events
+               .or(Event.indexable.not_hidden)
+               .or(Event.transparent.not_hidden.filter_demo_mode(false).where(slug: q.downcase))
+               .select(:name, :id, :demo_mode, :slug).includes(:plan)
            end
 
     # Apply fuzzy search if query present
@@ -76,23 +86,27 @@ class DisbursementsController < ApplicationController
       base = base.where(sql, name: "%#{q}%", slug: "%#{q}%", id: "%#{q}%")
     end
 
-    # Rank by relevance first (exact, then prefix, then substring), then user's
-    # event preference, keeping the relation's existing order as a tiebreaker.
+    # Rank exact matches first, then the user's own events (in their preferred
+    # order), then prefix and substring matches, keeping the relation's
+    # existing order as a tiebreaker.
     order_clauses = []
     if q.present?
       order_clauses << Arel.sql(
         ActiveRecord::Base.sanitize_sql_array(
-          [
-            "CASE WHEN LOWER(name) = LOWER(:exact) OR LOWER(slug) = LOWER(:exact) THEN 0 " \
-            "WHEN name ILIKE :prefix OR slug ILIKE :prefix THEN 1 ELSE 2 END",
-            { exact: q, prefix: "#{q}%" }
-          ]
+          ["CASE WHEN LOWER(name) = LOWER(:exact) OR LOWER(slug) = LOWER(:exact) THEN 0 ELSE 1 END", { exact: q }]
         )
       )
     end
     if user_event_ids.any?
       ids = user_event_ids.map(&:to_i).join(", ")
       order_clauses << Arel.sql("array_position(ARRAY[#{ids}]::bigint[], events.id) NULLS LAST")
+    end
+    if q.present?
+      order_clauses << Arel.sql(
+        ActiveRecord::Base.sanitize_sql_array(
+          ["CASE WHEN name ILIKE :prefix OR slug ILIKE :prefix THEN 0 ELSE 1 END", { prefix: "#{q}%" }]
+        )
+      )
     end
     order_clauses.concat(base.order_values)
     order_clauses << Arel.sql("events.id ASC")

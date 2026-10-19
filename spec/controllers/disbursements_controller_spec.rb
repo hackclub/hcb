@@ -52,6 +52,17 @@ RSpec.describe DisbursementsController do
       end.to change(Disbursement, :count).by(1)
     end
 
+    it "allows sending to an unlisted transparent organization the user doesn't manage" do
+      sender = create(:user)
+      source_event = create(:event, :with_positive_balance, organizers: [sender])
+      destination_event = create(:event, is_public: true, is_indexable: false)
+      create_session(sender, verified: true)
+
+      expect do
+        post(:create, params: { disbursement: { name: "Claude", source_event_id: source_event.public_id, event_id: destination_event.slug, amount: "40" } })
+      end.to change(Disbursement, :count).by(1)
+    end
+
     it "rejects sending to a private organization the user doesn't manage" do
       sender = create(:user)
       source_event = create(:event, :with_positive_balance, organizers: [sender])
@@ -189,6 +200,17 @@ RSpec.describe DisbursementsController do
   end
 
   describe "#new" do
+    it "opens a prefilled link to a public organization the user doesn't manage" do
+      sender = create(:user)
+      create(:event, organizers: [sender])
+      destination_event = create(:event, name: "Claude Clearinghouse")
+      create_session(sender, verified: true)
+
+      get(:new, params: { event_id: destination_event.slug, amount: "40", message: "Claude — October 2026" })
+
+      expect(response).to have_http_status(:ok)
+    end
+
     it "rejects a prefilled private destination the user doesn't manage" do
       sender = create(:user)
       source_event = create(:event, organizers: [sender])
@@ -217,6 +239,42 @@ RSpec.describe DisbursementsController do
 
       get(:event_search, params: { q: "Claude", sending: true }, format: :json)
       expect(JSON.parse(response.body)).to be_empty
+    end
+
+    it "only lists the user's own organizations before they search" do
+      user = create(:user)
+      own_event = create(:event, organizers: [user])
+      create(:event, name: "Claude Clearinghouse")
+      create_session(user, verified: true)
+
+      get(:event_search, format: :json)
+      expect(JSON.parse(response.body).map { |o| o["value"] }).to eq([own_event.public_id])
+    end
+
+    it "finds an unlisted transparent organization by its exact slug, but not a private one" do
+      user = create(:user)
+      create_session(user, verified: true)
+      unlisted_event = create(:event, name: "Claude Unlisted", is_indexable: false)
+      private_event = create(:event, name: "Claude Private", is_public: false)
+
+      get(:event_search, params: { q: unlisted_event.slug }, format: :json)
+      expect(JSON.parse(response.body).map { |o| o["value"] }).to eq([unlisted_event.public_id])
+
+      get(:event_search, params: { q: unlisted_event.slug.first(8) }, format: :json)
+      expect(JSON.parse(response.body)).to be_empty
+
+      get(:event_search, params: { q: private_event.slug }, format: :json)
+      expect(JSON.parse(response.body)).to be_empty
+    end
+
+    it "ranks the user's own organizations above other prefix matches" do
+      user = create(:user)
+      own_event = create(:event, name: "My Claude Budget", organizers: [user])
+      public_event = create(:event, name: "Claude Clearinghouse")
+      create_session(user, verified: true)
+
+      get(:event_search, params: { q: "Claude" }, format: :json)
+      expect(JSON.parse(response.body).map { |o| o["value"] }).to eq([own_event.public_id, public_event.public_id])
     end
 
     it "ranks the exact match first even when substring matches would trim it" do

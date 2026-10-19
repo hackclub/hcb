@@ -8,7 +8,8 @@
   a page with fewer than PAGE_SIZE rows is the last one. The user filters by
   typing, and the chosen option's `value` is mirrored into a hidden form field
   so the surrounding form submits it. Only options returned by the endpoint can
-  be selected — free text is reverted on blur.
+  be selected — free text is reverted on blur. `emptyMessageValue` replaces the
+  "No results" text, e.g. to hint at how to find something the search hides.
 
   The dropdown renders inline at every width. This deliberately drops the
   full-screen `<dialog>` picker the `hotwire_combobox` gem switched to below
@@ -27,6 +28,7 @@ export default class extends Controller {
     url: String,
     selected: String,
     label: String,
+    emptyMessage: { type: String, default: 'No results' },
   }
 
   initialize() {
@@ -357,7 +359,8 @@ export default class extends Controller {
   }
 
   render() {
-    if (this.options.length === 0) return this.renderStatus('No results')
+    if (this.options.length === 0)
+      return this.renderStatus(this.emptyMessageValue)
 
     this.listboxTarget.innerHTML = this.options
       .map((o, i) => this.optionHtml(o, i))

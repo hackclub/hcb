@@ -17,7 +17,9 @@ class DisbursementPolicy < ApplicationPolicy
     return true if user&.admin?
     return true if record.source_event&.plan&.unrestricted_disbursements_enabled?
     return true if record.destination_event.nil?
-    return true if Event.indexable.exists?(record.destination_event.id)
+    # Anyone can send to a transparent organization, listed or not; private
+    # organizations still require a role.
+    return true if record.destination_event.is_public? && !record.destination_event.hidden? && !record.destination_event.demo_mode?
     return true if OrganizerPosition.role_at_least?(user, record.destination_event, role)
 
     false
