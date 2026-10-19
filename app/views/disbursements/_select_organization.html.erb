@@ -1,8 +1,7 @@
 <%# locals: (form:, field_name:, label:, disabled:, sending: false) %>
 
 <% search_path = event_search_disbursements_path(sending: sending || nil) %>
-<%# Unlisted organizations only come up when their exact slug is typed, so tell people how to find them. %>
-<% empty_message = "No results. To send to an unlisted organization, type its exact slug (hcb.hackclub.com/slug)." unless sending %>
+<% empty_message = "No results." unless sending %>
 
 <% association_name = field_name.to_s.sub(/_id$/, "") %>
 <% selected_event = form.object.try(association_name) %>
