@@ -257,6 +257,15 @@ RSpec.describe LoginsController do
           expect(response.body).to include("Invalid login code")
         end
 
+        it "counts a wrong code towards the per-IP ban" do
+          login = create(:login, user: create(:user))
+          key = Rack::Attack.login_complete_fail2ban_key(request.remote_ip)
+
+          expect(Rack::Attack::Fail2Ban).to receive(:filter).with(key, Rack::Attack::LOGIN_COMPLETE_FAIL2BAN)
+
+          post(:complete, params: { id: login.hashid, method: "email", login_code: "123-456" })
+        end
+
         it "signs the user in and redirects" do
           user = create( :user, phone_number: "+18556254225" )
           login = create(:login, user:)

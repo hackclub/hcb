@@ -1,7 +1,7 @@
 <%# locals: (application:, steps:, heading: nil, subheading: nil) %>
 
 <div class="flex flex-col gap-3 w-full items-start md:items-center justify-start mt-6">
-  <%= render partial: "progress_bar", locals: { steps: } %>
+  <%= render partial: "event/applications/progress_bar", locals: { steps: } %>
   <h2 class="text-3xl md:text-4xl m-0">
     <% if heading.present? %>
       <%= heading %>

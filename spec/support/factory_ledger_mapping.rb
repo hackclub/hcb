@@ -43,8 +43,7 @@ module FactoryLedgerMapping
     Ledger::Mapping.map_primary!(ledger:, ledger_item:, mapped_by: Ledger::Mapper::SYSTEM)
 
     # Recompute cached columns (amount_cents, ct_count/cpt_count, status, …) now
-    # that the item knows its primary ledger — the fronted-balance portion of
-    # calculate_amount_cents depends on `primary_ledger.can_front_balance?`.
+    # that the item knows its primary ledger.
     ledger_item.refresh!
   end
 end

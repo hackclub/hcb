@@ -66,6 +66,15 @@ RSpec.describe OrganizerPositionInvite, type: :model do
       expect(OrganizerPosition).not_to receive(:new)
       expect(invite.accept).to eq(false)
     end
+
+    it "only creates one organizer position when accepted twice from stale copies" do
+      invite = create(:organizer_position_invite)
+      stale_copy = OrganizerPositionInvite.find(invite.id)
+
+      expect(invite.accept).to eq(true)
+      expect(stale_copy.accept).to eq(false)
+      expect(OrganizerPosition.where(event: invite.event, user: invite.user).count).to eq(1)
+    end
   end
 
   describe "#reject" do
