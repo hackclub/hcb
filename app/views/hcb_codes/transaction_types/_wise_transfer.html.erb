@@ -65,6 +65,8 @@
         <%= @hcb_code.wise_transfer.payment_for %>
       </p>
 
+      <%= render partial: "hcb_codes/associated_payment", locals: { payout: @hcb_code.wise_transfer } %>
+
       <% if @hcb_code.wise_transfer.return_reason.present? %>
         <p>
           <strong>Return reason</strong>

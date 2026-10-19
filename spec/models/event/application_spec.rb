@@ -63,4 +63,18 @@ RSpec.describe Event::Application, type: :model do
       expect(application.reload.event.description).to eq("Run the best hackathon")
     end
   end
+
+
+  describe "#mark_rejected!" do
+    let!(:application) { create(:event_application, aasm_state: "submitted") }
+
+    it "sets the Airtable status based on the rejection reason" do
+      allow(application).to receive(:set_airtable_status)
+
+      application.mark_rejected!("Some rejection message", "legal")
+
+      expect(application).to have_received(:set_airtable_status).with("Rejected - Legal/political reason")
+    end
+  end
+
 end
