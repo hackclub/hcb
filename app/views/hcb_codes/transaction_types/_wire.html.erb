@@ -59,6 +59,8 @@
         <%= @hcb_code.wire.payment_for %>
       </p>
 
+      <%= render partial: "hcb_codes/associated_payment", locals: { payout: @hcb_code.wire } %>
+
       <% if @hcb_code.wire.return_reason.present? %>
         <p>
           <strong>Return reason</strong>
