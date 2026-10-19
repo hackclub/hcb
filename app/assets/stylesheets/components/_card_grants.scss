@@ -395,7 +395,7 @@ $grant-hairline: rgba(200, 200, 200, 0.35);
   --tone-soft: #{rgba(map-get($palette, muted), 0.14)};
 
   @each $tone in (primary, warning, success, info, purple, accent) {
-    &.grant-tone--#{$tone} {
+    &.grant-tone--#{'' + $tone} {
       --tone: #{map-get($palette, $tone)};
       --tone-wash: #{rgba(map-get($palette, $tone), 0.08)};
       --tone-soft: #{rgba(map-get($palette, $tone), 0.14)};
