@@ -1,5 +1,7 @@
 <% disabled = !policy(card_grant).create? %>
 
+<% max_expiration_date = 2.years.from_now.to_date %>
+
 <%= form_with model: [@event, card_grant], data: { turbo_frame: "_top" } do |form| %>
   <div class="flex flex-col md:flex-row md:gap-5">
     <div class="w-full flex-grow">
@@ -18,7 +20,7 @@
 
       <div class="field">
         <%= form.label :expiration_at, "Expires on" %>
-        <%= form.date_field :expiration_at, value: card_grant.default_expiration_at, disabled:, max: 3.years.from_now.to_date %>
+        <%= form.date_field :expiration_at, value: card_grant.default_expiration_at, disabled:, max: max_expiration_date %>
       </div>
 
       <div class="field">
