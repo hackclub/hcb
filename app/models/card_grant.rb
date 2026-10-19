@@ -106,6 +106,7 @@ class CardGrant < ApplicationRecord
 
   MAXIMUM_PURPOSE_LENGTH = 30
   validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
+  validates :keyword_lock, regexp: true, if: -> { self[:keyword_lock].present? && keyword_lock_changed? }
 
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }

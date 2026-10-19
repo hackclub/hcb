@@ -1,4 +1,43 @@
 <% disabled = !policy(card_grant).create? %>
+<% template = @template %>
+<% template_policy = policy(CardGrantTemplate.new(event: @event)) %>
+<% templates = template_policy.show? ? @event.card_grant_templates.alphabetical.to_a : [] %>
+<% can_manage_templates = template_policy.create? %>
+
+<% if templates.any? || can_manage_templates %>
+  <div class="flex items-center mb2" data-controller="menu" data-menu-placement-value="bottom-start">
+    <button type="button" class="btn btn-small bg-muted flex items-center gap-1" data-menu-target="toggle" data-action="click->menu#toggle click@document->menu#close keydown@document->menu#keydown" aria-haspopup="menu" aria-expanded="false">
+      <%= inline_icon "docs", size: 20 %>
+      <%= template&.name || "Templates" %>
+      <%= inline_icon "down-caret", size: 20 %>
+    </button>
+    <div data-menu-target="content" class="menu__content menu__content--2 menu__content--compact">
+      <% if templates.empty? %>
+        <p class="h5 muted m-0 px-2 py-1">No templates yet. Fill out the form and choose “Save as template” to create one.</p>
+      <% end %>
+      <% templates.each do |t| %>
+        <% active = t == template %>
+        <%= link_to new_event_card_grant_path(@event, template_id: t.hashid), class: "flex items-center justify-between gap-2", data: { turbo_frame: "_top" }, aria: { current: active } do %>
+          <span><%= t.name %></span>
+          <%= inline_icon "checkmark" if active %>
+        <% end %>
+      <% end %>
+      <% if template %>
+        <div class="menu__divider"></div>
+        <%= link_to new_event_card_grant_path(@event), class: "flex items-center gap-1", data: { turbo_frame: "_top" } do %>
+          <%= inline_icon "view-close" %>
+          Clear template
+        <% end %>
+        <% if can_manage_templates %>
+          <%= link_to event_card_grant_template_path(@event, template), class: "flex items-center gap-1 error", data: { turbo_method: :delete, turbo_confirm: "Delete the “#{template.name}” template? Grants already sent won't be affected.", turbo_confirm_danger: true, turbo_frame: "_top" } do %>
+            <%= inline_icon "delete" %>
+            Delete “<%= template.name %>”
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+<% end %>
 
 <%= form_with model: [@event, card_grant], data: { turbo_frame: "_top" } do |form| %>
   <div class="flex flex-col md:flex-row md:gap-5">
@@ -18,7 +57,7 @@
 
       <div class="field">
         <%= form.label :expiration_at, "Expires on" %>
-        <%= form.date_field :expiration_at, value: card_grant.default_expiration_at, disabled: %>
+        <%= form.date_field :expiration_at, value: card_grant.expiration_at || card_grant.default_expiration_at, disabled: %>
       </div>
 
       <div class="field">
@@ -56,7 +95,7 @@
           This message is included in the card grant invitation email sent to the recipient.
         </p>
 
-        <%= form.text_area :invite_message, placeholder: "It's pizza time!", value: @event&.card_grant_setting&.invite_message, disabled:, class: "min-h-[70px]" %>
+        <%= form.text_area :invite_message, placeholder: "It's pizza time!", value: card_grant.invite_message || @event&.card_grant_setting&.invite_message, disabled:, class: "min-h-[70px]" %>
         <p class="h5 muted mt0 mb1">
           <%= link_to "https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#table-of-contents", target: "_blank", class: "flex items-center" do %>
             <%= inline_icon "markdown", size: 32 %> Styling with Markdown is supported
@@ -78,6 +117,56 @@
     </div>
   </div>
 
+  <% restrictions = { merchant_lock: Array(card_grant.merchant_lock), category_lock: Array(card_grant.category_lock), banned_merchants: Array(card_grant.banned_merchants), banned_categories: Array(card_grant.banned_categories) } %>
+  <% keyword_lock = card_grant.read_attribute(:keyword_lock) %>
+  <details class="group mb2" <%= "open" if restrictions.values.any?(&:present?) || keyword_lock.present? %>>
+    <summary class="flex items-center gap-1 cursor-pointer list-none select-none bold [&::-webkit-details-marker]:hidden">
+      <%= inline_icon "down-caret", size: 20, class: "pr-0 transition-transform -rotate-90 group-open:rotate-0" %>
+      Usage restrictions (optional)
+    </summary>
+
+    <p class="h5 muted mt1">
+      These apply to this grant in addition to any restrictions in your organization's card grant settings.
+      If you set multiple locks, transactions matching any of them will be allowed.
+    </p>
+
+    <div class="flex flex-col md:flex-row md:gap-5">
+      <div class="w-full flex-grow">
+        <div class="field">
+          <%= form.label :merchant_lock, "Allowed merchants" %>
+          <%= form.text_field :merchant_lock, value: restrictions[:merchant_lock].join(", "), placeholder: "123456789, 987654321", disabled: %>
+          <p class="h5 muted mt0 mb1">Comma-separated list of merchant network IDs.</p>
+        </div>
+
+        <div class="field">
+          <%= form.label :category_lock, "Allowed categories" %>
+          <%= form.text_field :category_lock, value: restrictions[:category_lock].join(", "), placeholder: "fast_food_restaurants", disabled: %>
+          <p class="h5 muted mt0 mb1">Comma-separated list of <a href="https://stripe.com/docs/issuing/categories" target="_blank">merchant categories</a>.</p>
+        </div>
+
+        <div class="field">
+          <%= form.label :keyword_lock, "Merchant name lock" %>
+          <%= form.text_field :keyword_lock, value: keyword_lock, placeholder: "\\AApple[a-zA-Z]{0,2}\\z", disabled: %>
+          <p class="h5 muted mt0 mb1">A <a href="https://rubular.com" target="_blank">Ruby regular expression</a> to match the merchant name against.</p>
+        </div>
+      </div>
+
+      <div class="w-full flex-grow">
+        <div class="field">
+          <%= form.label :banned_merchants, "Blocked merchants" %>
+          <%= form.text_field :banned_merchants, value: restrictions[:banned_merchants].join(", "), placeholder: "123456789", disabled: %>
+          <p class="h5 muted mt0 mb1">Comma-separated list of merchant network IDs.</p>
+        </div>
+
+        <div class="field">
+          <%= form.label :banned_categories, "Blocked categories" %>
+          <%= form.text_field :banned_categories, value: restrictions[:banned_categories].join(", "), placeholder: "betting_casino_gambling", disabled: %>
+          <p class="h5 muted mt0 mb1">Comma-separated list of <a href="https://stripe.com/docs/issuing/categories" target="_blank">merchant categories</a>.</p>
+        </div>
+      </div>
+    </div>
+  </details>
+
   <%= render "card_grants/policy_callout" %>
 
   <footer class="modal__action-row pt1 flex items-center justify-between sticky bottom-0 <% if defined?(@popover) && @popover %>mt2" style="border-top: none;<% end %>">
@@ -87,6 +176,36 @@
       <% end %>
     <% end %>
     <span></span>
-    <%= form.submit "Send grant", disabled: %>
+    <div class="flex items-center gap-2">
+      <%# "Send grant" must come first in the DOM so it stays the form's default (Enter key) submit button. %>
+      <%= form.submit "Send grant", disabled:, class: "order-2" %>
+      <% if can_manage_templates %>
+        <details class="group relative order-1 w-auto shrink-0" data-controller="card-grant-template">
+          <summary class="btn bg-muted flex items-center gap-1 list-none select-none [&::-webkit-details-marker]:hidden">
+            <%= inline_icon "plus", size: 20 %>
+            Save as template
+            <%= inline_icon "down-caret", size: 20, class: "pr-0 transition-transform rotate-180 group-open:rotate-0" %>
+          </summary>
+          <div class="card absolute right-0 bottom-full mb2 z-10 flex flex-col gap-2" style="width: 20rem;">
+            <p class="h5 muted m-0">Saves everything on this form except the recipient's email.</p>
+            <div class="field m-0">
+              <%= label_tag :template_name, "Template name" %>
+              <%= text_field_tag :template_name, params[:template_name], placeholder: "Pizza grant", maxlength: CardGrantTemplate::MAXIMUM_NAME_LENGTH, data: { action: "keydown.enter->card-grant-template#save" } %>
+              <%= hidden_field_tag :template_id, template&.hashid, id: nil %>
+            </div>
+            <%= button_tag type: "submit", formaction: event_card_grant_templates_path(@event), formnovalidate: true, name: nil, class: "btn bg-success flex items-center justify-center gap-1", data: { card_grant_template_target: "saveButton" } do %>
+              <%= inline_icon "plus", size: 20 %>
+              Save new template
+            <% end %>
+            <% if template %>
+              <%= button_tag type: "submit", formaction: event_card_grant_template_path(@event, template), formnovalidate: true, name: "_method", value: "patch", class: "btn bg-muted flex items-center justify-center gap-1" do %>
+                <%= inline_icon "edit", size: 20 %>
+                Update “<%= template.name %>”
+              <% end %>
+            <% end %>
+          </div>
+        </details>
+      <% end %>
+    </div>
   </footer>
 <% end %>

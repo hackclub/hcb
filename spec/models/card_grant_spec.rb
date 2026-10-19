@@ -28,4 +28,31 @@ RSpec.describe CardGrant, type: :model do
       expect(card_grant.ledger).to be_a(Ledger)
     end
   end
+
+  describe "keyword lock validation" do
+    it "rejects an invalid regular expression" do
+      card_grant = build(:card_grant, event: create(:event), keyword_lock: "[unclosed")
+
+      expect(card_grant).not_to be_valid
+      expect(card_grant.errors[:keyword_lock]).to include("is not a valid regular expression")
+    end
+
+    it "allows a valid regular expression" do
+      card_grant = build(:card_grant, event: create(:event), keyword_lock: "\\AApple")
+      card_grant.validate
+
+      expect(card_grant.errors[:keyword_lock]).to be_empty
+    end
+
+    it "doesn't validate the event's fallback setting" do
+      event = create(:event)
+      create(:card_grant_setting, event:, keyword_lock: "[unclosed")
+      card_grant = build(:card_grant, event:)
+      card_grant.validate
+
+      expect(card_grant.keyword_lock).to eq("[unclosed")
+
+      expect(card_grant.errors[:keyword_lock]).to be_empty
+    end
+  end
 end

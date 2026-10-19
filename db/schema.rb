@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_14_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_18_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -507,6 +507,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_120000) do
     t.string "support_url"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_card_grant_settings_on_event_id", unique: true
+  end
+
+  create_table "card_grant_templates", force: :cascade do |t|
+    t.integer "amount_cents"
+    t.string "banned_categories"
+    t.string "banned_merchants"
+    t.string "category_lock"
+    t.datetime "created_at", null: false
+    t.bigint "created_by_id", null: false
+    t.bigint "event_id", null: false
+    t.integer "expiration_days"
+    t.text "instructions"
+    t.string "invite_message"
+    t.string "keyword_lock"
+    t.string "merchant_lock"
+    t.string "name", null: false
+    t.boolean "one_time_use", default: false, null: false
+    t.boolean "pre_authorization_required", default: false, null: false
+    t.string "purpose"
+    t.datetime "updated_at", null: false
+    t.index "event_id, lower((name)::text)", name: "index_card_grant_templates_on_event_id_and_lower_name", unique: true
+    t.index ["created_by_id"], name: "index_card_grant_templates_on_created_by_id"
   end
 
   create_table "card_grants", force: :cascade do |t|
@@ -3095,6 +3117,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_120000) do
   add_foreign_key "card_charges", "stripe_cards"
   add_foreign_key "card_grant_pre_authorizations", "card_grants"
   add_foreign_key "card_grant_settings", "events"
+  add_foreign_key "card_grant_templates", "events"
+  add_foreign_key "card_grant_templates", "users", column: "created_by_id"
   add_foreign_key "card_grants", "events"
   add_foreign_key "card_grants", "stripe_cards"
   add_foreign_key "card_grants", "subledgers"

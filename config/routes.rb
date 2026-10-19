@@ -1148,6 +1148,8 @@ Rails.application.routes.draw do
       end
     end
 
+    resources :card_grant_templates, only: [:create, :update, :destroy], path: "card-grant-templates"
+
     resource :column_account_number, controller: "column/account_number", only: [:create, :update], path: "account-number"
 
     resources :organizer_positions, path: "team", only: [] do

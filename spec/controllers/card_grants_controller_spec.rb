@@ -76,6 +76,91 @@ RSpec.describe CardGrantsController do
       instructions = response.parsed_body.css("[name='card_grant[instructions]']").sole
       expect(instructions.text.strip).to eq("Please only buy an iPad.")
     end
+
+    it "pre-fills the form from a template" do
+      user = create(:user)
+      event = create(:event, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+      template = create(
+        :card_grant_template,
+        event:,
+        name: "Pizza",
+        amount_cents: 42_50,
+        purpose: "Pizza night",
+        invite_message: "Enjoy!",
+        one_time_use: true,
+        merchant_lock: ["123", "456"],
+        category_lock: ["fast_food_restaurants"],
+        keyword_lock: "\\APizza",
+        banned_merchants: ["789"],
+        banned_categories: ["betting_casino_gambling"],
+        expiration_days: 14
+      )
+
+      freeze_time do
+        get(:new, params: { event_id: event.friendly_id, template_id: template.hashid })
+
+        expect(response).to have_http_status(:ok)
+        body = response.parsed_body
+        expect(body.at_css("[name='card_grant[email]']")["value"]).to be_nil
+        expect(body.at_css("[name='card_grant[amount_cents]']")["value"]).to eq("42.50")
+        expect(body.at_css("[name='card_grant[purpose]']")["value"]).to eq("Pizza night")
+        expect(body.at_css("[name='card_grant[invite_message]']").text.strip).to eq("Enjoy!")
+        expect(body.at_css("[type=checkbox][name='card_grant[one_time_use]']")["checked"]).to eq("checked")
+        expect(body.at_css("[name='card_grant[merchant_lock]']")["value"]).to eq("123, 456")
+        expect(body.at_css("[name='card_grant[category_lock]']")["value"]).to eq("fast_food_restaurants")
+        expect(body.at_css("[name='card_grant[keyword_lock]']")["value"]).to eq("\\APizza")
+        expect(body.at_css("[name='card_grant[banned_merchants]']")["value"]).to eq("789")
+        expect(body.at_css("[name='card_grant[banned_categories]']")["value"]).to eq("betting_casino_gambling")
+        expect(body.at_css("[name='card_grant[expiration_at]']")["value"]).to eq(14.days.from_now.to_date.iso8601)
+        expect(body.at_css("[name='template_id']")["value"]).to eq(template.hashid)
+      end
+    end
+
+    it "keeps Send grant as the form's default submit button" do
+      user = create(:user)
+      event = create(:event, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+
+      get(:new, params: { event_id: event.friendly_id })
+
+      form = response.parsed_body.at_css("form[action='#{event_card_grants_path(event)}']")
+      expect(form.at_css("[name='template_name']")).to be_present
+      expect(form.at_css("[type=submit]")["value"]).to eq("Send grant")
+    end
+
+    it "shows readers templates but not the controls for managing them" do
+      user = create(:user)
+      event = create(:event, plan_type: Event::Plan::HackClubAffiliate)
+      create(:organizer_position, user:, event:, role: :reader)
+      create_session(user, verified: true)
+      template = create(:card_grant_template, event:, name: "Pizza")
+
+      get(:new, params: { event_id: event.friendly_id, template_id: template.hashid })
+
+      expect(response).to have_http_status(:ok)
+      body = response.parsed_body
+      expect(body.at_css("a[href='#{new_event_card_grant_path(event, template_id: template.hashid)}']").text.strip).to eq("Pizza")
+      expect(body.at_css("[name='template_name']")).to be_nil
+      expect(body.text).not_to include("Save as template")
+      expect(body.at_css("a[href='#{event_card_grant_template_path(event, template)}']")).to be_nil
+    end
+
+    it "ignores templates from other events" do
+      user = create(:user)
+      event = create(:event)
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+      other_template = create(:card_grant_template, purpose: "Secret purpose")
+
+      get(:new, params: { event_id: event.friendly_id, template_id: other_template.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.at_css("[name='card_grant[purpose]']")["value"]).to be_nil
+      expect(response.body).not_to include(other_template.name)
+    end
   end
 
   describe "#card_index" do
@@ -151,6 +236,36 @@ RSpec.describe CardGrantsController do
       expect(card_grant.instructions).to eq("Here's a card grant for your raffle prize")
     end
 
+    it "creates a card grant with usage restrictions" do
+      user = create(:user)
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:card_grant_setting, event:)
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+
+      post(
+        :create,
+        params: {
+          event_id: event.friendly_id,
+          card_grant: {
+            **card_grant_params,
+            merchant_lock: "123, 456",
+            category_lock: "",
+            keyword_lock: " \\AApple ",
+            banned_merchants: "789",
+            banned_categories: "betting_casino_gambling",
+          },
+        }
+      )
+
+      card_grant = event.card_grants.sole
+      expect(card_grant.merchant_lock).to eq(["123", "456"])
+      expect(card_grant.category_lock).to eq([])
+      expect(card_grant.keyword_lock).to eq("\\AApple")
+      expect(card_grant.banned_merchants).to eq(["789"])
+      expect(card_grant.banned_categories).to eq(["betting_casino_gambling"])
+    end
+
     it "handles validation errors" do
       user = create(:user)
       event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
@@ -172,6 +287,20 @@ RSpec.describe CardGrantsController do
       expect(event.card_grants).to be_empty
       expect(response).to have_http_status(:unprocessable_content)
       expect(flash[:error]).to eq("Purpose is too long (maximum is 30 characters)")
+    end
+
+    it "rejects an invalid merchant name lock" do
+      user = create(:user)
+      event = create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate)
+      create(:card_grant_setting, event:)
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+
+      post(:create, params: { event_id: event.friendly_id, card_grant: { **card_grant_params, keyword_lock: "[unclosed" } })
+
+      expect(event.card_grants).to be_empty
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(flash[:error]).to eq("Keyword lock is not a valid regular expression")
     end
 
     it "handles downstream errors" do
