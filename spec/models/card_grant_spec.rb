@@ -34,17 +34,17 @@ RSpec.describe CardGrant, type: :model do
       allow_any_instance_of(CardGrant).to receive(:transfer_money)
     end
 
-    it "accepts an expiration date within 3 years" do
-      card_grant = create(:card_grant, expiration_at: 2.years.from_now.to_date)
+    it "accepts an expiration date within 2 years" do
+      card_grant = create(:card_grant, expiration_at: 1.years.from_now.to_date)
       expect(card_grant).to be_valid
     end
 
     it "accepts an expiration date exactly at the boundary" do
-      card_grant = create(:card_grant, expiration_at: 3.years.from_now.to_date)
+      card_grant = create(:card_grant, expiration_at: 2.years.from_now.to_date)
       expect(card_grant).to be_valid
     end
 
-    it "rejects an expiration date more than 3 years in the future" do
+    it "rejects an expiration date more than 2 years in the future" do
       card_grant = create(:card_grant, expiration_at: Date.current)
       card_grant.expiration_at = 4.years.from_now.to_date
       expect(card_grant).not_to be_valid

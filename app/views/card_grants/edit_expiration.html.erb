@@ -1,4 +1,5 @@
 <turbo-frame id="edit_<%= @card_grant.id %>" autoscroll data-autoscroll-behavior="smooth">
+  <% max_expiration_date = 2.years.from_now.to_date %>
   <%= render "card_grants/edit_nav", active: "expiration" %>
 
   <div class="flex gap-3">
@@ -8,7 +9,7 @@
           <%= form.label :expiration_at, "Expires on" %>
 
           <div class="flex gap-3 items-stretch">
-            <%= form.date_field :expiration_at, value: @card_grant.expiration_at, disabled: !policy(@card_grant).update?, max: 3.years.from_now.to_date %>
+            <%= form.date_field :expiration_at, value: @card_grant.expiration_at, disabled: !policy(@card_grant).update?, max: max_expiration_date %>
           </div>
         </div>
 
