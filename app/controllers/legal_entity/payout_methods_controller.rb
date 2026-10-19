@@ -21,7 +21,16 @@ class LegalEntity
         flash[:success] = "Payout method added."
         redirect_back_or_to settings_payouts_path
       else
-        render_error_payout_settings(service.payout_method)
+        respond_to do |format|
+          format.turbo_stream do
+            assign_payout_settings_error(service.payout_method)
+            render template: "legal_entity/payout_methods/create", status: :unprocessable_content
+          end
+
+          format.html do
+            render_error_payout_settings(service.payout_method)
+          end
+        end
       end
     end
 
@@ -96,13 +105,17 @@ class LegalEntity
     end
 
     def render_error_payout_settings(payout_method)
+      assign_payout_settings_error(payout_method)
+      flash.now[:error] = payout_method.error_messages.to_sentence
+
+      render template: "users/edit_payout", status: :unprocessable_content
+    end
+
+    def assign_payout_settings_error(payout_method)
       @legal_entity = payout_method.legal_entity || legal_entity
       @user = legal_entity&.users&.find_by(id: params[:user_id]) || current_user
       @payout_method = payout_method
       @legal_entities = @user.legal_entities
-      flash.now[:error] = payout_method.error_messages.to_sentence
-
-      render template: "users/edit_payout", status: :unprocessable_content
     end
 
     def legal_entity
