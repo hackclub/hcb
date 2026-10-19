@@ -91,6 +91,8 @@ class CardGrant < ApplicationRecord
   validates :disbursement, uniqueness: true, allow_nil: true
   validates :stripe_card, uniqueness: true, allow_nil: true
   validates :subledger, uniqueness: true, allow_nil: true
+
+  MAX_EXPIRATION_DATE = 2.years
   validates :expiration_at, comparison: { less_than_or_equal_to: -> { 2.years.from_now.to_date } }, if: :expiration_at_changed?
 
   validates_email_format_of :email, if: :email_changed?
