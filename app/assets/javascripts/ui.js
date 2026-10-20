@@ -51,16 +51,14 @@ const populateSharedPopover = trigger => {
       frame.innerHTML = `<div class="flex items-center justify-center" style="height:calc(100vh - 150px)"><img src="/icons/loading.svg" class="dark:invert" /></div>`
       frame.id = frameId
       frame.src = src
+      frame.dataset.popoverSrc = src
       frame.setAttribute('target', '_top')
       body.appendChild(frame)
     }
   }
 }
 
-// If the current URL points at an open popover (?popover=<state url of the
-// trigger to reopen>), find that trigger and reopen it. Returns whether a
-// matching trigger was found, since the trigger may still be loading inside
-// a lazy-loaded turbo-frame (e.g. a paginated transactions list).
+// Reopens the popover in ?popover=; false if its trigger is still in an unloaded lazy frame
 const openPopoverFromUrl = () => {
   const link = new URL(location.href).searchParams.get('popover')
   if (!link) return true
@@ -85,13 +83,20 @@ const openPopoverWhenFrameLoads = () => {
 }
 
 document.addEventListener('turbo:load', () => {
+  // A popover left open across a Turbo visit never closes, so its saved title is stale
+  delete document.documentElement.dataset.returnToStateTitle
+
   if (!openPopoverFromUrl()) {
     document.addEventListener('turbo:frame-load', openPopoverWhenFrameLoads)
   }
 })
 
 document.addEventListener('turbo:before-fetch-response', async event => {
-  const frame = event.target.closest?.('turbo-frame')
+  // Turbo submits data-turbo-method links from a form appended to <body>
+  const { target } = event
+  const frame =
+    target.closest?.('turbo-frame') ??
+    document.getElementById(target.dataset?.turboFrame ?? '')
   if (!frame) return
 
   const response = event.detail.fetchResponse.response
@@ -111,13 +116,19 @@ document.addEventListener('turbo:before-fetch-response', async event => {
   if (container) container.innerHTML = flash
 })
 
-// Redirects out of the popover land on a page without its frame; reload the
-// popover in place rather than letting Turbo navigate away from it.
+// Redirects out of a popover lose its frame, so reload it in place once (so errors can't loop)
 document.addEventListener('turbo:frame-missing', event => {
-  if (!event.target.closest('#shared_popover')) return
+  const frame = event.target
+  if (!frame.dataset.popoverSrc || frame.dataset.retried) return
 
   event.preventDefault()
-  event.target.reload()
+  frame.dataset.retried = 'true'
+  frame.src = frame.dataset.popoverSrc
+  frame.reload()
+})
+
+document.addEventListener('turbo:frame-load', event => {
+  delete event.target.dataset.retried
 })
 
 const loadModals = element => {
@@ -876,9 +887,12 @@ $(document).on($.modal.BEFORE_OPEN, function (event, modal) {
 
 $(document).on($.modal.BEFORE_CLOSE, function (event, modal) {
   if (modal?.elm[0]?.dataset?.stateUrl) {
+    // Closing via the back button has already removed the param
     const url = new URL(location.href)
-    url.searchParams.delete('popover')
-    window.history.pushState(null, '', url)
+    if (url.searchParams.has('popover')) {
+      url.searchParams.delete('popover')
+      window.history.pushState(null, '', url)
+    }
 
     if (document.documentElement.dataset.returnToStateTitle) {
       document.title = document.documentElement.dataset.returnToStateTitle
@@ -903,7 +917,7 @@ $(document).on($.modal.AFTER_CLOSE, function (event, modal) {
 
 window.addEventListener('popstate', e => {
   if (e.state?.modal) {
-    $(`#${e.state.modal}`).modal()
+    openPopoverFromUrl()
   } else {
     $.modal.close()
   }
