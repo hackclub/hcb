@@ -473,6 +473,32 @@ RSpec.describe Ledger::Item, type: :model do
       expect(item.intended_at).to be_nil
     end
 
+    it "reflects a linked object rejected before any transaction mapped in" do
+      # A transfer rejected while still scheduled: its incoming side never gets
+      # a pending transaction, so nothing else would ever refresh the item.
+      disbursement = create(:disbursement, :rejected)
+
+      item = Ledger::Item.new(amount_cents: 0, memo: "Initial", datetime: Time.current, linked_object: disbursement.incoming_disbursement)
+      item.save(validate: false)
+
+      item.refresh!
+      item.reload
+
+      expect(item.status).to eq("rejected")
+    end
+
+    it "reflects a linked object errored before any transaction mapped in" do
+      disbursement = create(:disbursement, :errored)
+
+      item = Ledger::Item.new(amount_cents: 0, memo: "Initial", datetime: Time.current, linked_object: disbursement.incoming_disbursement)
+      item.save(validate: false)
+
+      item.refresh!
+      item.reload
+
+      expect(item.status).to eq("failed")
+    end
+
     it "is not intended when there is no linked object" do
       item = Ledger::Item.new(amount_cents: 0, memo: "Initial", datetime: Time.current)
       item.save(validate: false)

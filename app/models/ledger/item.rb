@@ -427,8 +427,13 @@ class Ledger
     def calculate_status
       # An item that has a linked object but no transactions yet (e.g. an invoice
       # that has been created but not paid). The linked object keeps it from being
-      # pruned once orphaned-item pruning exists.
-      return :intended if linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
+      # pruned once orphaned-item pruning exists. If the linked object has already
+      # reached a terminal state on its own (a voided unpaid invoice, a transfer
+      # rejected while scheduled), reflect that instead of leaving the item
+      # "intended" forever: no transaction will ever map in to update it.
+      if linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
+        return linked_object_status || :intended
+      end
 
       unless canonical_pending_transactions.declined.any?
         return :settled if linked_object_type == "BankFee"
@@ -440,19 +445,12 @@ class Ledger
 
       return :pending if canonical_pending_transactions.unsettled.exists?
 
-      case linked_object_type
-      when "CardCharge"
+      if linked_object_type == "CardCharge"
         return :released if canonical_transactions.none? && canonical_pending_transactions.any? { |cpt| cpt.raw_pending_stripe_transaction&.stripe_transaction&.dig("approved") }
-      when "IncreaseCheck" # Increase checks use the same state for users canceling and ops rejecting
-        return :canceled if linked_object.rejected? || linked_object.increase_stopped? || linked_object.column_stopped?
-      when "Disbursement::Outgoing", "Disbursement::Incoming"
-        return :canceled if linked_object.rejected? && linked_object.transferred_at.present?
       end
 
-      return :rejected if linked_object.try(:rejected?)
-      return :failed if linked_object.try(:failed?) || linked_object.try(:errored?)
-      return :canceled if linked_object.try(:canceled?) || linked_object.try(:voided?) || linked_object.try(:void_v2?)
-      return :reversed if linked_object.try(:reversed?)
+      status = linked_object_status
+      return status if status
 
       # A declined CPT — determine why it never settled (may have CTs)
       if CanonicalPendingDeclinedMapping.where(canonical_pending_transaction: canonical_pending_transactions).exists?
@@ -465,6 +463,25 @@ class Ledger
 
       # Nothing has mapped to this item yet
       :pending
+    end
+
+    # The status implied by the linked object's own state, independent of any
+    # transactions: rejected by ops, failed or errored, canceled or voided by the
+    # user, or reversed. nil when there is no linked object or it is still live.
+    def linked_object_status
+      case linked_object_type
+      when "IncreaseCheck" # Increase checks use the same state for users canceling and ops rejecting
+        return :canceled if linked_object.rejected? || linked_object.increase_stopped? || linked_object.column_stopped?
+      when "Disbursement::Outgoing", "Disbursement::Incoming"
+        return :canceled if linked_object.rejected? && linked_object.transferred_at.present?
+      end
+
+      return :rejected if linked_object.try(:rejected?)
+      return :failed if linked_object.try(:failed?) || linked_object.try(:errored?)
+      return :canceled if linked_object.try(:canceled?) || linked_object.try(:voided?) || linked_object.try(:void_v2?)
+      return :reversed if linked_object.try(:reversed?)
+
+      nil
     end
 
     def calculate_special_appearance

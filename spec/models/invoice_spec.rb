@@ -28,6 +28,17 @@ RSpec.describe Invoice, type: :model do
       expect(item.primary_ledger).to eq(invoice.event.ledger)
     end
 
+    it "marks the intended ledger item canceled when the invoice is voided before payment" do
+      invoice = create(:invoice)
+      item = invoice.ledger_item
+      expect(item.status).to eq("intended")
+
+      invoice.mark_void!
+      item.refresh!
+
+      expect(item.reload.status).to eq("canceled")
+    end
+
     it "reuses the eager ledger item when the invoice's pending transaction is created" do
       invoice = create(:invoice)
       eager_item = invoice.ledger_item
