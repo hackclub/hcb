@@ -40,7 +40,7 @@ class Event
     private
 
     def events
-      standard = Event.not_demo_mode.joins(:plan).where(event_plans: { type: Event::Plan::Standard.name })
+      standard = Event.not_demo_mode.joins(:plan).where(event_plans: { type: [Event::Plan::Standard.name, Event::Plan::KairosPathfinder.name] })
       robotics_teams = Event.joins(:event_tags).where(event_tags: { name: EventTag::Tags::ROBOTICS_TEAM }).select(:id)
 
       standard.where(point_of_contact: User.where_public_id(POINTS_OF_CONTACT.values.compact))
