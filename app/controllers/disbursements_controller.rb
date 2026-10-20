@@ -140,7 +140,7 @@ class DisbursementsController < ApplicationController
     @disbursement = Disbursement.new(
       destination_event: @destination_event,
       source_event: @source_event,
-      amount: Monetize.parse(disbursement_params[:amount]).cents,
+      amount: Monetize.parse(disbursement_params[:amount])&.cents,
       name: disbursement_params[:name]
     )
 

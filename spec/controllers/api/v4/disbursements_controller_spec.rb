@@ -6,7 +6,7 @@ RSpec.describe Api::V4::DisbursementsController do
   render_views
 
   describe "#create" do
-    it "only fronts transfers into organizations the user is part of" do
+    it "only fronts transfers into organizations the user manages" do
       user = create(:user)
       source_event = create(:event, :with_positive_balance, organizers: [user], plan_type: Event::Plan::HackClubAffiliate)
       own_event = create(:event, organizers: [user])

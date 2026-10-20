@@ -67,15 +67,20 @@ RSpec.describe DisbursementsController do
       expect(Disbursement.last.aasm_state).to eq("reviewing")
     end
 
-    it "only fronts transfers into organizations the user is part of" do
+    it "only fronts transfers into organizations the user manages" do
       sender = create(:user)
       source_event = create(:event, :with_positive_balance, organizers: [sender], plan_type: Event::Plan::HackClubAffiliate)
       own_event = create(:event, organizers: [sender])
+      readable_event = create(:event)
+      create(:organizer_position, user: sender, event: readable_event, role: :reader)
       public_event = create(:event)
       create_session(sender, verified: true)
 
       post(:create, params: { disbursement: { name: "Own", source_event_id: source_event.public_id, event_id: own_event.public_id, amount: "40" } })
       expect(Disbursement.last.canonical_pending_transactions.map(&:fronted)).to eq([true, true])
+
+      post(:create, params: { disbursement: { name: "Readable", source_event_id: source_event.public_id, event_id: readable_event.public_id, amount: "40" } })
+      expect(Disbursement.last.canonical_pending_transactions.map(&:fronted)).to eq([false, false])
 
       post(:create, params: { disbursement: { name: "Public", source_event_id: source_event.public_id, event_id: public_event.public_id, amount: "40" } })
       expect(Disbursement.last.canonical_pending_transactions.map(&:fronted)).to eq([false, false])
