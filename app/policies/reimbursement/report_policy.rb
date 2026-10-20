@@ -48,12 +48,9 @@ module Reimbursement
     # behavior is to allow members to change the event provided approvals
     # the destination event's managers wouldn't have granted are cleared.
     #
-    # Exception: the creator of a report that has no event yet (emailed,
-    # texted or Discord-ed in) may place it on one, under the same rules as
-    # creating a report on that event (`create?`). With no destination
-    # assigned yet (the views asking whether to offer the edit controls) the
-    # answer is yes. `persisted?` keeps the ExpensesController#update path,
-    # which builds a fresh unsaved report on the destination, manager-only.
+    # Exception: the creator of a still-eventless report (email, SMS, Discord)
+    # may place it on any event they could `create?` a report on. `persisted?`
+    # keeps the unsaved-report path in ExpensesController#update manager-only.
     def change_event?
       return false if record.card_grant_id.present?
       return true if admin || manager
