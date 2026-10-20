@@ -64,6 +64,9 @@ module Reimbursement
     end
 
     validate :cannot_change_event_when_card_grant_present, on: :update
+    validate :reviewer_must_be_eligible, if: -> { reviewer_id_changed? && reviewer.present? }
+
+    before_validation :clear_ineligible_reviewer, if: -> { event_id_changed? && !reviewer_id_changed? && reviewer.present? }
 
     validates :name, no_urls: true, if: ->(report){ report.from_public_reimbursement_form? }
     normalizes :name, with: ->(name) { name&.strip }
@@ -471,6 +474,16 @@ module Reimbursement
       if event_id_changed? && (card_grant_id_was.present? || card_grant_id.present?)
         errors.add(:base, "You cannot change the organization of a card grant reimbursement.")
       end
+    end
+
+    def reviewer_must_be_eligible
+      unless event.present? && eligible_reviewers.exists?(reviewer.id)
+        errors.add(:reviewer, "must be a manager of this organization")
+      end
+    end
+
+    def clear_ineligible_reviewer
+      self.reviewer = nil unless event.present? && eligible_reviewers.exists?(reviewer.id)
     end
 
     def set_payout_method
