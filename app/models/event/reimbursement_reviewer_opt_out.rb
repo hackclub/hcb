@@ -2,7 +2,7 @@
 
 # == Schema Information
 #
-# Table name: event_reimbursement_reviewers
+# Table name: event_reimbursement_reviewer_opt_outs
 #
 #  id         :bigint           not null, primary key
 #  created_at :datetime         not null
@@ -12,8 +12,8 @@
 #
 # Indexes
 #
-#  index_event_reimbursement_reviewers_on_event_id_and_user_id  (event_id,user_id) UNIQUE
-#  index_event_reimbursement_reviewers_on_user_id               (user_id)
+#  idx_on_event_id_user_id_5edc6f2c15                      (event_id,user_id) UNIQUE
+#  index_event_reimbursement_reviewer_opt_outs_on_user_id  (user_id)
 #
 # Foreign Keys
 #
@@ -21,7 +21,8 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class Event
-  class ReimbursementReviewer < ApplicationRecord
+  # A manager who doesn't review reimbursement reports without an assigned reviewer
+  class ReimbursementReviewerOptOut < ApplicationRecord
     has_paper_trail
 
     belongs_to :event

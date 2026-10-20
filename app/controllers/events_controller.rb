@@ -379,8 +379,6 @@ class EventsController < ApplicationController
 
     process_hidden_param!(fixed_event_params)
     process_hidden_param!(fixed_user_event_params)
-    filter_reimbursement_reviewer_ids!(fixed_event_params)
-    filter_reimbursement_reviewer_ids!(fixed_user_event_params)
 
     plan_param = admin_signed_in? ? fixed_event_params[:plan] : nil
     fixed_event_params.delete(:plan)
@@ -1387,16 +1385,6 @@ class EventsController < ApplicationController
       params_hash[:hidden_at] = nil
     end
     params_hash.delete(:hidden)
-  end
-
-  def filter_reimbursement_reviewer_ids!(params_hash)
-    return unless params_hash.key?(:reimbursement_reviewer_ids)
-
-    eligible_ids = @event.eligible_reimbursement_reviewers.ids
-    reviewer_ids = eligible_ids & params_hash[:reimbursement_reviewer_ids].compact_blank.map(&:to_i)
-
-    # Selecting every manager is stored as no list, so managers added later are included too
-    params_hash[:reimbursement_reviewer_ids] = reviewer_ids.sort == eligible_ids.sort ? [] : reviewer_ids
   end
 
   def tree_guides

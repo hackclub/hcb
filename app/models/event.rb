@@ -422,8 +422,7 @@ class Event < ApplicationRecord
   has_many :event_follows, class_name: "Event::Follow", dependent: :destroy
   has_many :followers, through: :event_follows, source: :user
 
-  has_many :event_reimbursement_reviewers, class_name: "Event::ReimbursementReviewer", dependent: :destroy
-  has_many :reimbursement_reviewers, through: :event_reimbursement_reviewers, source: :user, dependent: :destroy
+  has_many :reimbursement_reviewer_opt_outs, class_name: "Event::ReimbursementReviewerOptOut", dependent: :destroy
 
   has_many :fee_relationships
   has_many :transactions, through: :fee_relationships, source: :t_transaction
@@ -967,15 +966,24 @@ class Event < ApplicationRecord
     User.where(id: ancestor_organizer_positions.manager_access.select(:user_id))
   end
 
-  # Reviewers on the reimbursement reviewer list who are still managers
-  def active_reimbursement_reviewers
-    eligible_reimbursement_reviewers.where(id: event_reimbursement_reviewers.select(:user_id))
+  # Managers who review reports without an assigned reviewer. Opt-outs are
+  # stored instead of opt-ins, so new managers join automatically.
+  def reimbursement_reviewers
+    eligible_reimbursement_reviewers.where.not(id: reimbursement_reviewer_opt_outs.select(:user_id))
   end
 
-  # Who can be picked to review a report. Falls back to every eligible
-  # manager when no reviewer list is configured.
-  def reimbursement_review_pool
-    active_reimbursement_reviewers.exists? ? active_reimbursement_reviewers : eligible_reimbursement_reviewers
+  def reimbursement_reviewer_ids
+    reimbursement_reviewers.ids
+  end
+
+  def reimbursement_reviewer_ids=(ids)
+    ids = ids.compact_blank.map(&:to_i)
+    opted_out_ids = eligible_reimbursement_reviewers.where.not(id: ids).ids
+
+    reimbursement_reviewer_opt_outs.where.not(user_id: opted_out_ids).destroy_all
+    (opted_out_ids - reimbursement_reviewer_opt_outs.pluck(:user_id)).each do |user_id|
+      reimbursement_reviewer_opt_outs.create!(user_id:)
+    end
   end
 
   def short_name(length: MAX_SHORT_NAME_LENGTH)

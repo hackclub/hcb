@@ -4,19 +4,19 @@ require "rails_helper"
 
 RSpec.describe ReimbursementMailer do
   describe "#review_requested" do
-    it "notifies only the reviewer list when one is configured" do
+    it "doesn't notify managers who opted out of reviewing" do
       event = create(:event)
-      listed = create(:user, email: "listed@example.com")
-      unlisted = create(:user, email: "unlisted@example.com")
-      create(:organizer_position, user: listed, event:, role: :manager)
-      create(:organizer_position, user: unlisted, event:, role: :manager)
+      reviewer = create(:user, email: "reviewer@example.com")
+      opted_out = create(:user, email: "opted-out@example.com")
+      create(:organizer_position, user: reviewer, event:, role: :manager)
+      create(:organizer_position, user: opted_out, event:, role: :manager)
       report = create(:reimbursement_report, event:)
 
-      expect(described_class.with(report:).review_requested.to).to include("unlisted@example.com", "listed@example.com")
+      expect(described_class.with(report:).review_requested.to).to include("opted-out@example.com", "reviewer@example.com")
 
-      event.event_reimbursement_reviewers.create!(user: listed)
+      event.reimbursement_reviewer_opt_outs.create!(user: opted_out)
 
-      expect(described_class.with(report:).review_requested.to).to eq(["listed@example.com"])
+      expect(described_class.with(report:).review_requested.to).to eq(["reviewer@example.com"])
     end
   end
 

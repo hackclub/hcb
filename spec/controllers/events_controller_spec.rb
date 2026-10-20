@@ -245,7 +245,7 @@ RSpec.describe EventsController do
       expect(page.css("#tags_settings a[disabled]")).to be_empty
     end
 
-    it "shows every manager as a reimbursement reviewer until a list is set" do
+    it "shows every manager as a reimbursement reviewer unless they opted out" do
       manager = create(:user, full_name: "Morgan Manager")
       other_manager = create(:user, full_name: "Avery Lee")
       event = create(:event)
@@ -260,7 +260,7 @@ RSpec.describe EventsController do
 
       expect(checked_reviewers.call).to contain_exactly(manager.id, other_manager.id)
 
-      event.event_reimbursement_reviewers.create!(user: other_manager)
+      event.reimbursement_reviewer_opt_outs.create!(user: manager)
 
       expect(checked_reviewers.call).to contain_exactly(other_manager.id)
     end
@@ -280,7 +280,7 @@ RSpec.describe EventsController do
       expect(event.config.reload.subevent_name_prefix).to eq("Athena Award — ")
     end
 
-    it "only lets managers be added to the reimbursement reviewer list, and stores everyone as no list" do
+    it "stores managers switched off as reimbursement reviewer opt-outs, so new managers are included" do
       manager = create(:user)
       other_manager = create(:user)
       member = create(:user)
@@ -300,9 +300,14 @@ RSpec.describe EventsController do
       expect(controller.instance_variable_get(:@event).errors.full_messages).to eq(["Select at least one reviewer"])
       expect(event.reload.reimbursement_reviewers).to contain_exactly(other_manager)
 
-      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_ids: ["", manager.id, other_manager.id] } })
+      new_manager = create(:user)
+      create(:organizer_position, user: new_manager, event:, role: :manager)
 
-      expect(event.reload.reimbursement_reviewers).to be_empty
+      expect(event.reimbursement_reviewers).to contain_exactly(other_manager, new_manager)
+
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_ids: ["", manager.id, other_manager.id, new_manager.id] } })
+
+      expect(event.reimbursement_reviewer_opt_outs).to be_empty
     end
   end
 

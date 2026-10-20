@@ -79,19 +79,16 @@ RSpec.describe MyController do
       expect(sections.values.flatten).not_to include(assigned_to_someone_else)
     end
 
-    it "only shows unassigned reports to managers on the organization's reviewer list" do
+    it "hides unassigned reports from organizations the manager opted out of reviewing for" do
       user = sign_in_verified
-      listed_event = create(:event)
-      unlisted_event = create(:event)
-      create(:organizer_position, user:, event: listed_event, role: :manager)
-      create(:organizer_position, user:, event: unlisted_event, role: :manager)
-      listed_event.event_reimbursement_reviewers.create!(user:)
-      other_reviewer = create(:user)
-      create(:organizer_position, user: other_reviewer, event: unlisted_event, role: :manager)
-      unlisted_event.event_reimbursement_reviewers.create!(user: other_reviewer)
+      reviewing_event = create(:event)
+      opted_out_event = create(:event)
+      create(:organizer_position, user:, event: reviewing_event, role: :manager)
+      create(:organizer_position, user:, event: opted_out_event, role: :manager)
+      opted_out_event.reimbursement_reviewer_opt_outs.create!(user:)
 
-      visible = create(:reimbursement_report, event: listed_event, aasm_state: :submitted)
-      create(:reimbursement_report, event: unlisted_event, aasm_state: :submitted)
+      visible = create(:reimbursement_report, event: reviewing_event, aasm_state: :submitted)
+      create(:reimbursement_report, event: opted_out_event, aasm_state: :submitted)
 
       get :reimbursements
 

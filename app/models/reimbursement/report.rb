@@ -347,7 +347,7 @@ module Reimbursement
     end
 
     def eligible_reviewers
-      event.reimbursement_review_pool
+      event.eligible_reimbursement_reviewers
     end
 
     def reimbursement_confirmation_message

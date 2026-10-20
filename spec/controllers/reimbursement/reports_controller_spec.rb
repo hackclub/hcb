@@ -437,23 +437,27 @@ RSpec.describe Reimbursement::ReportsController do
   end
 
   describe "#submit" do
-    it "only accepts reviewers from the organization's reviewer list when a reviewer is required" do
+    it "lets submitters pick any manager, including ones who opted out of reviewing" do
       event = create(:event, reimbursement_reviewer_selection: :required)
       member = create(:user)
-      listed = create(:user)
-      unlisted = create(:user)
+      other_member = create(:user)
+      opted_out = create(:user)
       create(:organizer_position, user: member, event:, role: :member)
-      create(:organizer_position, user: listed, event:, role: :manager)
-      create(:organizer_position, user: unlisted, event:, role: :manager)
-      event.event_reimbursement_reviewers.create!(user: listed)
+      create(:organizer_position, user: other_member, event:, role: :member)
+      create(:organizer_position, user: opted_out, event:, role: :manager)
+      event.reimbursement_reviewer_opt_outs.create!(user: opted_out)
       report = create(:reimbursement_report, user: member, event:)
 
       create_session(member, verified: true)
 
-      post(:submit, params: { report_id: report.id, reviewer_id: unlisted.public_id })
+      post(:submit, params: { report_id: report.id, reviewer_id: other_member.public_id })
 
       expect(flash[:error]).to eq("The selected reviewer is not eligible for this report.")
       expect(report.reload.reviewer).to be_nil
+
+      post(:submit, params: { report_id: report.id, reviewer_id: opted_out.public_id })
+
+      expect(flash[:error]).not_to eq("The selected reviewer is not eligible for this report.")
     end
 
     it "lets submitters skip picking a reviewer when it's optional" do

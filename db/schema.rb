@@ -1108,13 +1108,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_120100) do
     t.index ["event_id"], name: "index_event_plans_on_event_id"
   end
 
-  create_table "event_reimbursement_reviewers", force: :cascade do |t|
+  create_table "event_reimbursement_reviewer_opt_outs", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "event_id", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.index ["event_id", "user_id"], name: "index_event_reimbursement_reviewers_on_event_id_and_user_id", unique: true
-    t.index ["user_id"], name: "index_event_reimbursement_reviewers_on_user_id"
+    t.index ["event_id", "user_id"], name: "idx_on_event_id_user_id_5edc6f2c15", unique: true
+    t.index ["user_id"], name: "index_event_reimbursement_reviewer_opt_outs_on_user_id"
   end
 
   create_table "event_scoped_tags", force: :cascade do |t|
@@ -3157,8 +3157,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_120100) do
   add_foreign_key "event_group_memberships", "events"
   add_foreign_key "event_groups", "users"
   add_foreign_key "event_plans", "events"
-  add_foreign_key "event_reimbursement_reviewers", "events"
-  add_foreign_key "event_reimbursement_reviewers", "users"
+  add_foreign_key "event_reimbursement_reviewer_opt_outs", "events"
+  add_foreign_key "event_reimbursement_reviewer_opt_outs", "users"
   add_foreign_key "event_scoped_tags", "events", column: "parent_event_id"
   add_foreign_key "event_scoped_tags_events", "event_scoped_tags"
   add_foreign_key "event_scoped_tags_events", "events"
