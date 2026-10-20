@@ -44,16 +44,22 @@
             <%= link_to "Impersonate", impersonate_user_path(@user.id), data: { turbo_confirm: "Are you sure?", turbo_method: :post } unless current_session&.impersonated? %>
           </p>
 
-          <div class="field field--checkbox">
-            <%= form.label :locked, "Lock user from signing into HCB" %>
-            <%= form.check_box :locked, checked: @user.locked?, disabled: !admin_signed_in?,
-                                        onchange: ("document.getElementById('freeze_cards_field').hidden = !this.checked;" unless @user.locked?) %>
-          </div>
+          <% if @user.locked? %>
+            <div class="field field--checkbox">
+              <%= form.label :locked, "Lock user from signing into HCB" %>
+              <%= form.check_box :locked, checked: true, disabled: !admin_signed_in? %>
+            </div>
+          <% else %>
+            <div x-data="{ locking: false }">
+              <div class="field field--checkbox">
+                <%= form.label :locked, "Lock user from signing into HCB" %>
+                <%= form.check_box :locked, checked: false, disabled: !admin_signed_in?, "x-model": "locking" %>
+              </div>
 
-          <% unless @user.locked? %>
-            <div class="pl-5 field field--checkbox" id="freeze_cards_field" hidden>
-              <%= form.label :freeze_cards, "Also freeze all active cards" %>
-              <%= form.check_box :freeze_cards, checked: false %>
+              <div class="pl-5 field field--checkbox" x-show="locking" x-cloak>
+                <%= form.label :freeze_cards, "Also freeze all active cards" %>
+                <%= form.check_box :freeze_cards, checked: false %>
+              </div>
             </div>
           <% end %>
 
