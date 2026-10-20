@@ -4,11 +4,11 @@
   <% own = card_grant.user == current_user %>
   <% stripe_card = card_grant.stripe_card %>
 
-  <%# Rendered up front so we know how many there are (several hide themselves), and an odd one out can take the full width instead of sitting alone in a column. %>
+  <%# Rendered up front since several hide themselves, and an empty card shouldn't show. %>
   <% controls = [] %>
   <% if organizer_signed_in?(as: :member) || own %>
     <% controls << render("stripe_cards/actions/freeze", stripe_card:, variant: "control", label: "Pause spending instantly", subtitle: "You can unfreeze it yourself at any time") if stripe_card.present? %>
-    <% controls << render("card_grants/actions/convert_to_reimbursement_report", card_grant:, variant: "control", label: own ? "I already paid out of pocket" : "Create reimbursement report", subtitle: "Swap the balance for a reimbursement") %>
+    <% controls << render("card_grants/actions/convert_to_reimbursement_report", card_grant:, variant: "control", label: own ? "I paid out of pocket" : "Create reimbursement report", subtitle: "Swap the balance for a reimbursement") %>
     <% if own %>
       <% controls << render("card_grants/actions/return", card_grant:, label: "I don’t need this money", subtitle: "Send the remaining balance back to #{card_grant.event.name}") %>
     <% else %>
@@ -21,13 +21,9 @@
 
   <% if controls.any? %>
     <div class="card grant-controls">
-      <p class="grant-panel__heading">Controls</p>
+      <h3 class="grant-subheading">Controls</h3>
       <div class="grant-controls__grid">
-        <% controls.each_with_index do |control, index| %>
-          <div class="grant-controls__item <%= "grant-controls__item--wide" if controls.size.odd? && index == controls.size - 1 %>">
-            <%= control %>
-          </div>
-        <% end %>
+        <%= safe_join controls %>
       </div>
     </div>
   <% end %>

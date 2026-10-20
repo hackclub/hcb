@@ -1,8 +1,8 @@
 <%# locals: (card_grant:, label: "", subtitle: "") %>
 
 <% return_tooltip = subtitle.presence || "Cancel this grant and return funds to the organization" %>
-<%= link_to "#", data: { behavior: "modal_trigger", modal: "return-grant" }, class: "grant-action" do %>
-  <%= render "card_grants/control", title: label.presence || "Return grant", description: return_tooltip, cta: "Return" %>
+<%= link_to "#", data: { behavior: "modal_trigger", modal: "return-grant" }, class: "grant-action grant-tone--primary" do %>
+  <%= render "card_grants/control", title: label.presence || "Return grant", description: return_tooltip, icon: "reply" %>
 <% end %>
 
 <div class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="return-grant">
