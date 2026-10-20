@@ -413,15 +413,6 @@ class EventsController < ApplicationController
     end
   end
 
-  # DELETE /events/1
-  def destroy
-    authorize @event
-
-    @event.destroy
-    flash[:success] = "Organization successfully deleted."
-    redirect_to root_path
-  end
-
   def toggle_fee_waiver_eligible
     authorize @event
 
@@ -885,7 +876,7 @@ class EventsController < ApplicationController
 
     @active_teenagers_count = @event.users.active_teenager.count
 
-    @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && !@event.demo_mode? && @event.plan.promotions_enabled?
+    @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && @event.plan.promotions_enabled?
 
     # I'm so sorry, this is awful & temporary
     @is_argosy = @event.plan.is_a?(Event::Plan::Argosy2025) || @event.plan.is_a?(Event::Plan::Argosy2026)
@@ -1207,30 +1198,6 @@ class EventsController < ApplicationController
     end
   end
 
-  def activation_flow
-    authorize @event
-  end
-
-  def activate
-    authorize @event
-
-    params[:event][:files]&.each do |file|
-      Document.create(user: current_user, event_id: @event.id, name: file.original_filename, file:)
-    end
-
-    if event_params[:plan] && event_params[:plan] != @event.plan.type
-      @event.plan.mark_inactive!(event_params[:plan]) # deactivate old plan and replace it
-    end
-
-    if @event.update(event_params.except(:files, :plan).merge({ demo_mode: false }))
-      flash[:success] = "Organization successfully activated."
-      redirect_to event_path(@event)
-      @event.set_airtable_status("Onboarded")
-    else
-      render :activation_flow, status: :unprocessable_content
-    end
-  end
-
   def claim_point_of_contact
     authorize @event
 
@@ -1466,7 +1433,6 @@ class EventsController < ApplicationController
       :start,
       :end,
       :address,
-      :demo_mode,
       :emburse_department_id,
       :country,
       :postal_code,
@@ -1723,7 +1689,6 @@ class EventsController < ApplicationController
       name: event.name,
       slug: event.slug,
       logo: event.logo.attached? ? Rails.application.routes.url_helpers.url_for(event.logo) : "none",
-      demo_mode: event.demo_mode,
       member:,
       features: {
         subevents: event.subevents_enabled?,

@@ -62,12 +62,12 @@ class DisbursementsController < ApplicationController
     @source_event = Event.friendly.find_by_public_id(params[:source_event_id]) if params[:source_event_id]
 
     base = if admin_signed_in?
-             Event.select(:name, :id, :demo_mode, :slug).reorder(Event::CUSTOM_SORT).includes(:plan)
+             Event.select(:name, :id, :slug).reorder(Event::CUSTOM_SORT).includes(:plan)
            elsif !sending && @source_event&.plan&.unrestricted_disbursements_enabled?
-             allowed_destination_event_ids = current_user.manageable_events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
-             Event.where(id: allowed_destination_event_ids).select(:name, :id, :demo_mode, :slug).includes(:plan)
+             allowed_destination_event_ids = current_user.manageable_events.not_hidden.select(:id) + Event.indexable.select(:id)
+             Event.where(id: allowed_destination_event_ids).select(:name, :id, :slug).includes(:plan)
            else
-             current_user.manageable_events.not_hidden.filter_demo_mode(false)
+             current_user.manageable_events.not_hidden
            end
 
     # Apply fuzzy search if query present

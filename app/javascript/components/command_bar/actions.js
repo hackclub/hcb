@@ -16,8 +16,6 @@ preload(
   '/icons/column.svg'
 )
 
-const restrictedFilter = e => !e.demo_mode
-
 export const generateEventActions = data => {
   return [
     ...data.map(event => ({
@@ -44,14 +42,14 @@ export const generateEventActions = data => {
       icon: <Icon glyph="home" size={16} />,
       parent: event.slug,
     })),
-    ...data.filter(restrictedFilter).map(event => ({
+    ...data.map(event => ({
       id: `${event.slug}-announcements`,
       name: 'Announcements',
       perform: navigate(`/${event.slug}/announcements`),
       icon: <Icon glyph="announcement" size={16} />,
       parent: event.slug,
     })),
-    ...data.filter(restrictedFilter).map(event => ({
+    ...data.map(event => ({
       id: `${event.slug}-transactions`,
       name: 'Transactions',
       perform: navigate(`/${event.slug}/transactions`),
@@ -59,28 +57,28 @@ export const generateEventActions = data => {
       parent: event.slug,
       keywords: 'ledger payments',
     })),
-    ...data.filter(restrictedFilter).map(event => ({
+    ...data.map(event => ({
       id: `${event.slug}-account-number`,
       name: 'Account numbers',
       perform: navigate(`/${event.slug}/account-number`),
       icon: <SvgIcon src="/icons/hashtag.svg" size={16} />,
       parent: event.slug,
     })),
-    ...data.filter(restrictedFilter).map(event => ({
+    ...data.map(event => ({
       id: `${event.slug}-donations`,
       name: 'Donations',
       perform: navigate(`/${event.slug}/donations`),
       icon: <Icon glyph="support" size={16} />,
       parent: event.slug,
     })),
-    ...data.filter(restrictedFilter).map(event => ({
+    ...data.map(event => ({
       id: `${event.slug}-invoices`,
       name: 'Invoices',
       perform: navigate(`/${event.slug}/invoices`),
       icon: <Icon glyph="payment-docs" size={16} />,
       parent: event.slug,
     })),
-    ...data.filter(restrictedFilter).map(event => ({
+    ...data.map(event => ({
       id: `${event.slug}-check-deposit`,
       name: 'Check deposits',
       perform: navigate(`/${event.slug}/check-deposits`),
@@ -94,7 +92,7 @@ export const generateEventActions = data => {
       icon: <Icon glyph="card" size={16} />,
       parent: event.slug,
     })),
-    ...data.filter(restrictedFilter).map(event => ({
+    ...data.map(event => ({
       id: `${event.slug}-transfers`,
       name: 'Transfers',
       perform: navigate(`/${event.slug}/transfers`),
@@ -102,7 +100,7 @@ export const generateEventActions = data => {
       parent: event.slug,
       keywords: 'ach check',
     })),
-    ...data.filter(restrictedFilter).map(event => ({
+    ...data.map(event => ({
       id: `${event.slug}-reimbursements`,
       name: 'Reimbursements',
       perform: navigate(`/${event.slug}/reimbursements`),
@@ -125,21 +123,21 @@ export const generateEventActions = data => {
         icon: <Icon glyph="bag" size={16} />,
         parent: event.slug,
       })),
-    ...data.filter(restrictedFilter).map(event => ({
+    ...data.map(event => ({
       id: `${event.slug}-perks`,
       name: 'Perks',
       perform: navigate(`/${event.slug}/promotions`),
       icon: <SvgIcon src="/icons/perks.svg" size={16} />,
       parent: event.slug,
     })),
-    ...data.filter(restrictedFilter).map(event => ({
+    ...data.map(event => ({
       id: `${event.slug}-google-workspace`,
       name: 'Google Workspace',
       perform: navigate(`/${event.slug}/google_workspace`),
       icon: <Icon glyph="google" size={16} />,
       parent: event.slug,
     })),
-    ...data.filter(restrictedFilter).map(event => ({
+    ...data.map(event => ({
       id: `${event.slug}-documents`,
       name: 'Documents',
       perform: navigate(`/${event.slug}/documents`),
@@ -155,7 +153,7 @@ export const generateEventActions = data => {
         icon: <Icon glyph="channels" size={16} />,
         parent: event.slug,
       })),
-    ...data.filter(restrictedFilter).map(event => ({
+    ...data.map(event => ({
       id: `${event.slug}-settings`,
       name: 'Settings',
       perform: navigate(`/${event.slug}/settings`),

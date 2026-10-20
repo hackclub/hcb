@@ -3,12 +3,6 @@
 require "rails_helper"
 
 RSpec.describe Column::AccountNumber, type: :model do
-  it "fails validation when event is in playground mode" do
-    event = create(:event, :demo_mode)
-
-    expect(event.build_column_account_number).to_not be_valid
-  end
-
   it "creates an account number remotely on Column" do
     event = create(:event)
 
