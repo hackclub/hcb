@@ -20,8 +20,10 @@ class Event
 
     def perform
       records = OrganizationRevenueTable.all.index_by { |record| record["HCB ID"] }
+      seen = Set.new
 
       events.find_each(batch_size: 100) do |event|
+        seen << event.public_id
         record = records[event.public_id] || OrganizationRevenueTable.new("HCB ID" => event.public_id)
 
         record["Organization"] = event.name
@@ -34,6 +36,16 @@ class Event
         record.save
       rescue Airrecord::Error => e
         Rails.error.report(e, context: { event_id: event.public_id })
+      end
+
+      # Delete rows for organizations no longer in scope (e.g. plan changed off
+      # standard 7%, POC reassigned, or robotics tag removed).
+      records.each do |hcb_id, record|
+        next if seen.include?(hcb_id)
+
+        record.destroy
+      rescue Airrecord::Error => e
+        Rails.error.report(e, context: { event_id: hcb_id })
       end
     end
 
