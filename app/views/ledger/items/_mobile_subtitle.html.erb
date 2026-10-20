@@ -1,0 +1,7 @@
+<%# locals: (date:) %>
+<%# Date + status line shown under the memo on mobile, where the Date column is hidden. Status badge is passed as the block. %>
+
+<div class="flex items-center gap-[1ch] min-w-0 text-sm muted sm:hidden">
+  <span class="truncate"><%= date %></span>
+  <%= yield %>
+</div>

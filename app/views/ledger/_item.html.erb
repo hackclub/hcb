@@ -1,6 +1,6 @@
 <%# locals: (item:, show_author: true) %>
 
-<% date = item.datetime.strftime("%b %e, %Y") %>
+<% date = time_tag(item.datetime, item.datetime.strftime("%b %e, %Y")) %>
 
 <tr class="transaction transaction--<%= item.sign %> <%= item.special_appearance&.css_class %>">
   <td class="transaction__icon">
@@ -19,10 +19,9 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-[1ch] min-w-0 text-sm muted sm:hidden">
-          <time class="truncate"><%= date %></time>
+        <%= render layout: "ledger/items/mobile_subtitle", locals: { date: } do %>
           <%= render "ledger/items/status", ledger_item: item %>
-        </div>
+        <% end %>
 
         <%= render "ledger/items/tags", item: %>
       </div>
