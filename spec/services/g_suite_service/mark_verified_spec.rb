@@ -36,13 +36,14 @@ RSpec.describe GSuiteService::MarkVerified, type: :model do
         g_suite.save!
       end
 
-      it "sends an email" do
+      it "sends an email to each manager" do
         service.run
 
-        mail = ActionMailer::Base.deliveries.last
+        mails = ActionMailer::Base.deliveries
+        managers = g_suite.event.organizer_positions.where(role: :manager).includes(:user).map(&:user).map(&:email)
 
-        expect(mail.to).to eql(g_suite.event.organizer_positions.where(role: :manager).includes(:user).map(&:user).map(&:email))
-        expect(mail.subject).to include(g_suite.domain)
+        expect(mails.map(&:to)).to contain_exactly(*managers.map { |email| [email] })
+        expect(mails.map(&:subject).uniq.sole).to include(g_suite.domain)
       end
     end
   end
