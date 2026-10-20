@@ -20,20 +20,32 @@ class Event
 
     def perform
       records = OrganizationRevenueTable.all.index_by { |record| record["HCB ID"] }
+      seen = Set.new
 
       events.find_each(batch_size: 100) do |event|
+        seen << event.public_id
         record = records[event.public_id] || OrganizationRevenueTable.new("HCB ID" => event.public_id)
 
         record["Organization"] = event.name
         record["Raised YTD"] = event.raised_ytd_cents / 100.0
-        record["Revenue YTD"] = fees_cents(event, since: Date.current.beginning_of_year) / 100.0
-        record["Revenue All Time"] = fees_cents(event) / 100.0
+        record["Revenue YTD"] = event.revenue_fees_v2_cents(start_date: Date.current.beginning_of_year) / 100.0
+        record["Revenue All Time"] = event.revenue_fees_v2_cents / 100.0
         record["POC (HCB)"] = event.point_of_contact&.name
         record["POC"] = airtable_point_of_contact(event)
 
         record.save
       rescue Airrecord::Error => e
         Rails.error.report(e, context: { event_id: event.public_id })
+      end
+
+      # Delete rows for organizations no longer in scope (e.g. plan changed off
+      # standard 7%, POC reassigned, or robotics tag removed).
+      records.each do |hcb_id, record|
+        next if seen.include?(hcb_id)
+
+        record.destroy
+      rescue Airrecord::Error => e
+        Rails.error.report(e, context: { event_id: hcb_id })
       end
     end
 
@@ -46,15 +58,6 @@ class Event
       standard.where(point_of_contact: User.where_public_id(POINTS_OF_CONTACT.values.compact))
               .or(standard.where(id: robotics_teams))
               .includes(:point_of_contact)
-    end
-
-    def fees_cents(event, since: nil)
-      # Fiscal sponsorship fees charged by the fee engine, at whatever rate the
-      # organization was on at the time. Manual fees (e.g. wire fees) are excluded.
-      fees = event.fees.revenue
-      fees = fees.joins(canonical_event_mapping: :canonical_transaction).where(canonical_transactions: { date: since.. }) if since
-
-      fees.sum(:amount_cents_as_decimal).ceil
     end
 
     def airtable_point_of_contact(event)
