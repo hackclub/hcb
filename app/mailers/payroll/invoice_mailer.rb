@@ -2,15 +2,17 @@
 
 module Payroll
   class InvoiceMailer < ApplicationMailer
+    include IndividualDelivery
+
     def submitted
       @invoice = params[:invoice]
       @position = @invoice.payroll_position
       @event = @position.event
 
-      email_recipients = @position.manager&.email_address_with_name || @event.organizer_contact_emails(only_managers: true)
+      recipients = Array(@position.manager&.email_address_with_name || @event.organizer_contact_emails(only_managers: true))
 
-      mail(
-        to: email_recipients,
+      mail_individually(
+        recipients,
         subject: "#{@position.payee.display_name} submitted an invoice for #{@invoice.amount.format}",
         from: hcb_email_with_name_of(@event)
       )

@@ -6,7 +6,7 @@ class EventMailerPreview < ActionMailer::Preview
   end
 
   def donation_goal_reached
-    EventMailer.with(event: Donation::Goal.last.event).donation_goal_reached
+    EventMailer.with(event: Donation::Goal.last.event, announcement: Announcement.last).donation_goal_reached
   end
 
   def monthly_follower_summary

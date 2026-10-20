@@ -2,29 +2,25 @@
 
 class GSuite
   class RevocationMailer < ApplicationMailer
+    include IndividualDelivery
+
     before_action :set_g_suite_and_revocation, :set_reason, only: %i[notify_of_revocation revocation_warning revocation_one_week_warning]
     before_action :set_g_suite, only: %i[revocation_canceled]
 
-    default to: -> {
-      emails = organization_managers
-      emails << @g_suite.event.config.contact_email if @g_suite.event.config.contact_email.present?
-      emails
-    }
-
     def revocation_warning
-      mail subject: "[Action Required] Issue detected with your Google Workspace for #{@g_suite.domain}"
+      mail_individually recipients, subject: "[Action Required] Issue detected with your Google Workspace for #{@g_suite.domain}"
     end
 
     def revocation_one_week_warning
-      mail subject: "[Immediate Action Required] Your Google Workspace access for #{@g_suite.domain} will be revoked on #{@g_suite_revocation.scheduled_at.strftime("%B %d, %Y")}"
+      mail_individually recipients, subject: "[Immediate Action Required] Your Google Workspace access for #{@g_suite.domain} will be revoked on #{@g_suite_revocation.scheduled_at.strftime("%B %d, %Y")}"
     end
 
     def notify_of_revocation
-      mail subject: "Your Google Workspace access for #{@g_suite.domain} has been revoked"
+      mail_individually recipients, subject: "Your Google Workspace access for #{@g_suite.domain} has been revoked"
     end
 
     def revocation_canceled
-      mail subject: "We've canceled the revocation of your Google Workspace for #{@g_suite.domain}"
+      mail_individually recipients, subject: "We've canceled the revocation of your Google Workspace for #{@g_suite.domain}"
     end
 
     def set_g_suite_and_revocation
@@ -49,8 +45,10 @@ class GSuite
       end
     end
 
-    def organization_managers
-      @g_suite.event.organizer_positions.where(role: :manager).includes(:user).map(&:user).map(&:email_address_with_name)
+    def recipients
+      emails = @g_suite.event.organizer_positions.where(role: :manager).includes(:user).map(&:user).map(&:email_address_with_name)
+      emails << @g_suite.event.config.contact_email if @g_suite.event.config.contact_email.present?
+      emails
     end
 
   end

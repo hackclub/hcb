@@ -2,6 +2,8 @@
 
 class Employee
   class PaymentMailer < ApplicationMailer
+    include IndividualDelivery
+
     def approved
       @payment = params[:payment]
       @employee = @payment.employee
@@ -20,8 +22,8 @@ class Employee
       @payment = params[:payment]
       @employee = @payment.employee
 
-      mail to: @employee.event.users.excluding(@employee.user).map(&:email_address_with_name),
-           subject: "[Payroll / #{@employee.event.name}] Review Requested: #{@payment.title}"
+      mail_individually @employee.event.users.excluding(@employee.user).map(&:email_address_with_name),
+                        subject: "[Payroll / #{@employee.event.name}] Review Requested: #{@payment.title}"
     end
 
     def failed

@@ -162,7 +162,8 @@ class OrganizerPositionInvite < ApplicationRecord
 
     # Don't send mailer if this is the first organizer
     if self.event.users.size > 1
-      OrganizerPositionInvitesMailer.with(invite: self).accepted.deliver_later
+      announcement = Announcement::Templates::NewTeamMember.new(invite: self, author: User.system_user).create
+      OrganizerPositionInvitesMailer.with(invite: self, announcement:).accepted.deliver_later
     end
 
     true

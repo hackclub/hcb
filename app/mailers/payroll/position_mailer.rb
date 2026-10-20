@@ -2,6 +2,8 @@
 
 module Payroll
   class PositionMailer < ApplicationMailer
+    include IndividualDelivery
+
     def onboarding
       @position = params[:position]
       @party = params[:party]
@@ -27,8 +29,8 @@ module Payroll
     def onboarded
       @position = params[:position]
 
-      mail to: @position.event.organizer_contact_emails(only_managers: true),
-           subject: "#{@position.payee.display_name} has been onboarded as a contractor for #{@position.event.name}"
+      mail_individually @position.event.organizer_contact_emails(only_managers: true),
+                        subject: "#{@position.payee.display_name} has been onboarded as a contractor for #{@position.event.name}"
     end
 
     def terminated
