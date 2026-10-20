@@ -54,13 +54,14 @@ class DisbursementsController < ApplicationController
 
   def event_search
     authorize Disbursement.new
-    q = params[:q].presence
+    q = params[:q].to_s.presence
     # Indicates whether we're searching for source or destination organizations
     sending = params[:sending] == "true"
 
     user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id)
 
-    own_events = current_user.manageable_events.not_hidden.filter_demo_mode(false)
+    own_events = current_user.disbursement_source_events
+    own_event_ids = own_events.ids.to_set
 
     base = if admin_signed_in?
              Event.select(:name, :id, :demo_mode, :slug).reorder(Event::CUSTOM_SORT).includes(:plan)
@@ -73,9 +74,10 @@ class DisbursementsController < ApplicationController
              # directory, plus an unlisted transparent organization when its
              # exact slug is typed. Anyone can already view these, so listing
              # them doesn't reveal anything. Private organizations stay hidden.
+             public_events = Event.accepting_public_transfers
              own_events
-               .or(Event.indexable.not_hidden)
-               .or(Event.transparent.not_hidden.filter_demo_mode(false).where(slug: q.downcase))
+               .or(public_events.where(is_indexable: true))
+               .or(public_events.where(slug: q.downcase))
                .select(:name, :id, :demo_mode, :slug).includes(:plan)
            end
 
@@ -117,11 +119,13 @@ class DisbursementsController < ApplicationController
       disabled_message = nil
       disabled_message = "Insufficient balance" if sending && !admin_signed_in? && e.balance_available <= 0
       disabled_message = "HCB transfers disabled" if sending && !policy(e).create_transfer?
+      # Balances are expensive to compute, so only show the user's own.
+      balance = helpers.render_money_short(e.balance_available) if admin_signed_in? || own_event_ids.include?(e.id)
 
       {
         value: e.public_id,
         label: helpers.combobox_display(e),
-        sublabel: disabled_message || helpers.render_money_short(e.balance_available),
+        sublabel: disabled_message || balance,
         disabled: disabled_message.present?
       }
     end
@@ -132,7 +136,13 @@ class DisbursementsController < ApplicationController
   def create
     @source_event = Event.find_by_public_id(disbursement_params[:source_event_id])
     @destination_event = Event.find_by_public_id(disbursement_params[:event_id]) || Event.friendly.find(disbursement_params[:event_id])
-    @disbursement = Disbursement.new(destination_event: @destination_event, source_event: @source_event)
+    @event = @source_event # this is to render the navigation bar for the correct event.
+    @disbursement = Disbursement.new(
+      destination_event: @destination_event,
+      source_event: @source_event,
+      amount: Monetize.parse(disbursement_params[:amount]).cents,
+      name: disbursement_params[:name]
+    )
 
     authorize @disbursement
 
@@ -160,7 +170,7 @@ class DisbursementsController < ApplicationController
       scheduled_on:,
       requested_by_id: current_user.id,
       should_charge_fee: disbursement_params[:should_charge_fee] == "1",
-      fronted: @source_event.plan.front_disbursements_enabled?,
+      fronted: Disbursement.frontable?(source_event: @source_event, destination_event: @destination_event, requested_by: current_user),
       source_transaction_category_slug:,
       destination_transaction_category_slug:,
       category_assignment_strategy:
@@ -184,8 +194,8 @@ class DisbursementsController < ApplicationController
     end
 
   rescue ArgumentError, ActiveRecord::RecordInvalid => e
-    flash[:error] = e.message
-    redirect_to new_disbursement_path(source_event_id: @source_event)
+    flash.now[:error] = e.message
+    render :new, layout: "transfer", status: :unprocessable_content
   rescue ActiveRecord::RecordNotFound => e
     skip_authorization
     flash[:error] = "Organization not found: #{e.id}"
