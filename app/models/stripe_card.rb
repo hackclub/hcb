@@ -307,15 +307,10 @@ class StripeCard < ApplicationRecord
     self.last4 = stripe_obj[:last4]
     self.stripe_status = stripe_obj[:status]
     self.card_type = stripe_obj[:type]
-    # On ~2024-03-26, Stripe introduced personalization designs for physical cards
-    # This resulted in older cards not having a personalization design ID.
-    # This fix checks if it's an old card without a personalization design ID and sets it to the default black design.
-    if physical?
-      if self.created_at < Time.utc(2024, 3, 27) && stripe_obj[:personalization_design].nil?
-        self.stripe_card_personalization_design_id = StripeCard::PersonalizationDesign.default&.id
-      else
-        self.stripe_card_personalization_design_id = StripeCard::PersonalizationDesign.find_by(stripe_id: stripe_obj[:personalization_design])&.id
-      end
+    # Physical cards issued before ~2024-03-26 have no personalization design on
+    # Stripe; their design was backfilled locally, so don't overwrite it with nil.
+    if physical? && stripe_obj[:personalization_design].present?
+      self.stripe_card_personalization_design_id = StripeCard::PersonalizationDesign.find_by(stripe_id: stripe_obj[:personalization_design])&.id
     end
 
     if stripe_obj[:status] == "active"
