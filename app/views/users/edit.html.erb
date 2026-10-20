@@ -1,5 +1,5 @@
 <% if @onboarding %>
-  <% title "Setup your account" %>
+  <% title "Set up your account" %>
   <% page_full %>
   <% no_app_shell %>
   <style>
@@ -126,7 +126,7 @@
   <%= render "users/nav", selected: :settings_home %>
   <% disabled = !policy(@user).update? %>
   <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-    <%= render "settings_header", active: "general" unless @onboarding %>
+    <%= render "users/settings_header", active: "general" unless @onboarding %>
     <section>
       <%= form_with(model: @user, local: true, data: { turbo_frame: "_top" }) do |form| %>
         <%= form_errors @user, "profile", "We couldn't update your" %>

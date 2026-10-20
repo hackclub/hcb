@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <div class="banner-container">
   <% if current_user&.needs_to_enable_2fa? && !Rails.env.development? %>
     <div class="w-100 px4 !bg-red transparency-banner px-4">

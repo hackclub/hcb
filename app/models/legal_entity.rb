@@ -25,6 +25,8 @@ class LegalEntity < ApplicationRecord
   include PublicIdentifiable
   set_public_id_prefix :len
 
+  has_paper_trail
+
   # Some legal entities will be managed by events,
   # if a payment was sent by manually inputting details
   belongs_to :managing_event, class_name: "Event", optional: true

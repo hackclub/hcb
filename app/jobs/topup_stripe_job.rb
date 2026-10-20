@@ -73,11 +73,6 @@ class TopupStripeJob < ApplicationJob
     topup_amount = buffer - pending - available - enroute_sum + expected_tx_sum
     # 200k - (current + pending + en route balance) + (expected_tx_sum)
 
-    StatsD.gauge("stripe_issuing_expected_tx_sum", expected_tx_sum, sample_rate: 1.0)
-    StatsD.gauge("stripe_issuing_enroute_issuing_topups_sum", enroute_sum, sample_rate: 1.0)
-    StatsD.gauge("stripe_issuing_available_issuing_balance", available, sample_rate: 1.0)
-    StatsD.gauge("stripe_issuing_pending_issuing_balance", pending, sample_rate: 1.0)
-
     Rails.logger.info "topup amount == #{topup_amount}"
     return unless topup_amount >= 5_000 * 100
 
@@ -93,8 +88,6 @@ class TopupStripeJob < ApplicationJob
     )
 
     Rails.logger.info "Just created a topup for #{limited_topup_amount}"
-
-    StatsD.increment("stripe_issuing_topup", limited_topup_amount)
   end
 
 end

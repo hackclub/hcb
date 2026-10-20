@@ -4,6 +4,7 @@ module ApplicationHelper
   include ActionView::Helpers
   include LocalTimeHelper
 
+  include ComboboxHelper
   include DonationsHelper
   include EmburseCardsHelper
   include EventsHelper

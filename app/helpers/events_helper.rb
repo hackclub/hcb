@@ -154,6 +154,7 @@ module EventsHelper
     {
       name: "Contractors",
       path_proc: ->(event_id) { event_contractors_path(event_id:) },
+      async_badge_proc: ->(event) { event_contractors_pending_review_icon_path(event) },
       tooltip: "Manage payroll",
       icon: "person-badge",
       symbol: :contractors,
@@ -185,7 +186,7 @@ module EventsHelper
       name: "Perks",
       path_proc: ->(event_id) { event_promotions_path(event_id:) },
       tooltip: "Receive promos & discounts",
-      dynamic_tooltip: ->(event) { !policy(event).promotions? ? "Your account isn't eligble for receive promos & discounts" : "Receive promos & discounts" },
+      dynamic_tooltip: ->(event) { !policy(event).promotions? ? "Your account isn't eligible to receive promos & discounts" : "Receive promos & discounts" },
       icon: "perks",
       data: { tour_step: "perks" },
       symbol: :promotions,

@@ -346,12 +346,14 @@ class UsersController < ApplicationController
     authorize @user
 
     if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
-      # TODO: Swap this out for Ledger::Query once users have their own non-primary ledgers
-      @stripe_transactions = @user.ledger_items
-                                  .includes(:canonical_transactions, :canonical_pending_transactions, :linked_object)
-                                  .where(linked_object_type: "CardCharge")
-                                  .order(datetime: :desc, created_at: :desc, id: :desc)
-                                  .page(params[:page] || 1).per(safe_per(10))
+      # A cardholder's charges span every organization they hold a card for, so
+      # this is one of the few queries that legitimately crosses ledgers. The
+      # page is auditor-gated (see UserPolicy#admin_details?), and the author
+      # filter — which for a CardCharge resolves to the cardholder — bounds the
+      # result to this user either way.
+      @stripe_transactions = Ledger::Query.new({ author: @user.slug, linked_object_type: "CardCharge" })
+                                          .execute(all_ledgers: true)
+                                          .page(params[:page] || 1).per(safe_per(10))
     else
       @stripe_transactions = HcbCode.where(id: @user.stripe_cards.flat_map { |sc| sc.local_hcb_codes.pluck(:id) })
                                     .order(created_at: :desc)
@@ -465,7 +467,7 @@ class UsersController < ApplicationController
         if @payout_method&.saved_changes? && @user == current_user
           flash[:success] = "Your payout details have been updated. We'll use this information for all payouts going forward."
         elsif email_update&.requested?
-          flash[:success] = "We've sent a verification link to your new email (#{params[:user][:email]}) and a authorization link to your old email (#{@user.email}), please click them both to confirm this change."
+          flash[:success] = "We've sent a verification link to your new email (#{params[:user][:email]}) and an authorization link to your old email (#{@user.email}), please click them both to confirm this change."
         else
           flash[:success] = @user == current_user ? "Updated your profile!" : "Updated #{@user.first_name}'s profile!"
         end
