@@ -11,7 +11,7 @@ class StripeController < ActionController::Base
       event = StripeService.construct_webhook_event(payload, sig_header)
       method = "handle_#{event["type"].tr(".", "_")}"
 
-      StatsD.measure("StripeController.#{method}") { self.send method, event }
+      self.send method, event
     rescue JSON::ParserError => e
       head :bad_request
       Rails.error.report(e)
@@ -30,9 +30,6 @@ class StripeController < ActionController::Base
   private
 
   def handle_issuing_authorization_request(event)
-    # fire-and-forget update to grafana dashboard
-    StatsD.increment("stripe_webhook_authorization", 1)
-
     service = ::StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRequest.new(stripe_event: event)
     approved = service.run
 
@@ -58,11 +55,6 @@ class StripeController < ActionController::Base
   end
 
   def handle_issuing_authorization_updated(event)
-    is_closed = event[:data][:object][:status] == "closed"
-    has_timeout = event[:data][:object][:request_history].pluck(:reason).include?("webhook_timeout")
-
-    StatsD.increment("stripe_webhook_timeout", 1) if is_closed && has_timeout
-
     rpst = PendingTransactionEngine::RawPendingStripeTransactionService::Stripe::ImportSingle.new(remote_stripe_transaction: event[:data][:object]).run
 
     # this has been commented out due to a suspected race condition

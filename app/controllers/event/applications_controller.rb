@@ -83,7 +83,10 @@ class Event
     def admin_reject
       authorize @application
 
-      @application.mark_rejected!(params[:rejection_message])
+      @application.mark_rejected!(
+        params[:rejection_message],
+        params[:rejection_reason]
+      )
 
       flash[:success] = "Application rejected."
       redirect_back_or_to application_path(@application)
