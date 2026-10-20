@@ -62,7 +62,7 @@
         <% end %>
 
         <% if @contract.is_a?(Contract::FiscalSponsorship) %>
-          <%= render partial: "fs_contract_faq" %>
+          <%= render partial: "contract/parties/fs_contract_faq" %>
         <% end %>
       </div>
     <% end %>
