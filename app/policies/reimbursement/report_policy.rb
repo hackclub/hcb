@@ -48,12 +48,18 @@ module Reimbursement
     # behavior is to allow members to change the event provided approvals
     # the destination event's managers wouldn't have granted are cleared.
     #
-    # Exception: the creator of a report that has no event yet may place it
-    # on one, see `placing_eventless_report?`.
+    # Exception: the creator of a report that has no event yet (emailed,
+    # texted or Discord-ed in) may place it on one, under the same rules as
+    # creating a report on that event (`create?`). With no destination
+    # assigned yet (the views asking whether to offer the edit controls) the
+    # answer is yes. `persisted?` keeps the ExpensesController#update path,
+    # which builds a fresh unsaved report on the destination, manager-only.
     def change_event?
       return false if record.card_grant_id.present?
+      return true if admin || manager
 
-      admin || manager || (creator && placing_eventless_report?)
+      creator && record.persisted? && record.event_id_in_database.nil? &&
+        (record.event ? create? : record.event_id.nil?)
     end
 
     def submit?
@@ -128,19 +134,6 @@ module Reimbursement
 
     def creator
       record.user == user
-    end
-
-    # A report created with no event (emailed, texted or Discord-ed in) can be
-    # placed on an event by its creator, under the same rules as creating a
-    # report on that event (`create?`). With no destination assigned yet (the
-    # edit form asking whether the select should be enabled) the answer is
-    # yes. `persisted?` keeps the ExpensesController#update path, which builds
-    # a fresh unsaved report on the destination event, manager-only.
-    def placing_eventless_report?
-      return false unless record.persisted? && record.event_id_in_database.nil?
-      return true if record.event_id.nil?
-
-      record.event.present? && create?
     end
 
     def open
