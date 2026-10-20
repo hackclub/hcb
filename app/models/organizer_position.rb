@@ -63,7 +63,10 @@ class OrganizerPosition < ApplicationRecord
   after_update :remove_payroll_managers, if: -> { role_previously_changed?(from: :manager) }
   after_destroy :remove_payroll_managers
 
-  before_save -> { stripe_cards.active.find_each(&:freeze!) }, if: -> { will_save_change_to_role?(to: :reader) }
+  before_save if: -> { will_save_change_to_role?(to: :reader) } do
+    stripe_cards.active.find_each(&:freeze!)
+    stripe_cards.frozen.where(last_frozen_by: user).update_all(last_frozen_by_id: User.system_user.id)
+  end
 
   def tourable_options
     {
