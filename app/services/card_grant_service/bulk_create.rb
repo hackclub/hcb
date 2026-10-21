@@ -10,21 +10,13 @@ module CardGrantService
     #   (e.g., insufficient funds).
     # - Propagates any other unexpected errors.
 
-    class ValidationError < StandardError
-      attr_reader :errors
-
-      def initialize(errors)
-        @errors = errors
-        super("CSV validation failed")
-      end
-
-    end
+    ValidationError = Shared::CsvUpload::ValidationError
 
     REQUIRED_HEADERS = %w[email amount_cents].freeze
     OPTIONAL_HEADERS = %w[purpose instructions one_time_use pre_authorization_required invite_message merchant_lock category_lock keyword_lock banned_merchants banned_categories].freeze
     ALL_HEADERS = REQUIRED_HEADERS + OPTIONAL_HEADERS
     MAX_ERRORS_TO_DISPLAY = 10
-    MAX_FILE_SIZE_BYTES = 1.megabyte
+    MAX_FILE_SIZE_BYTES = Shared::CsvUpload::MAX_FILE_SIZE_BYTES
 
     Result = Struct.new(:success?, :card_grants, :errors, keyword_init: true)
 
@@ -35,59 +27,16 @@ module CardGrantService
     end
 
     def run
-      rows, header_mapping = parse_csv
+      rows, header_mapping = Shared::CsvUpload.new(csv_file: @csv_file).run
       validate_rows!(rows, header_mapping)
       card_grants = create_grants_atomically(rows, header_mapping)
 
       Result.new(success?: true, card_grants:, errors: [])
     rescue ValidationError => e
       Result.new(success?: false, card_grants: [], errors: e.errors)
-    rescue CSV::MalformedCSVError => e
-      Result.new(success?: false, card_grants: [], errors: ["Invalid CSV format: #{e.message}"])
-    rescue Encoding::UndefinedConversionError, Encoding::InvalidByteSequenceError
-      Result.new(success?: false, card_grants: [], errors: ["Invalid file: please upload a valid UTF-8 encoded CSV file"])
-    rescue ArgumentError => e
-      if e.message.include?("invalid byte sequence")
-        Result.new(success?: false, card_grants: [], errors: ["Invalid file: please upload a valid UTF-8 encoded CSV file"])
-      else
-        raise
-      end
     end
 
     private
-
-    def parse_csv
-      validate_file_size!
-
-      content = @csv_file.read.force_encoding("UTF-8")
-      # Strip BOM (Byte Order Mark) that Excel may add
-      content = content.sub(/\A\xEF\xBB\xBF/, "").sub(/\A\uFEFF/, "")
-
-      rows = CSV.parse(content, headers: true, skip_blanks: true)
-
-      if rows.headers.empty? || rows.headers.all?(&:nil?)
-        raise ValidationError.new(["CSV file is empty or has no headers"])
-      end
-
-      # Build a mapping from normalized (lowercase) header names to original header names
-      header_mapping = {}
-      rows.headers.each do |original|
-        next if original.nil?
-
-        normalized = original.to_s.strip.downcase
-        header_mapping[normalized] = original
-      end
-
-      [rows, header_mapping]
-    end
-
-    def validate_file_size!
-      return unless @csv_file.respond_to?(:size)
-
-      if @csv_file.size > MAX_FILE_SIZE_BYTES
-        raise ValidationError.new(["File is too large. Maximum size is 1 MB."])
-      end
-    end
 
     def validate_rows!(rows, header_mapping)
       errors = []

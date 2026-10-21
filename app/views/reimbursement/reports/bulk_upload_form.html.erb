@@ -1,0 +1,83 @@
+<% page_sm %>
+<%= render "events/nav", selected: :reimbursements %>
+
+<% title "Bulk send reimbursement invitations" %>
+<h1>Bulk send reimbursement invitations</h1>
+
+<p class="muted">
+  Upload a CSV file to send multiple reimbursement invitations at once. If there is an issue with any row, we will let you know and will not send any invitations until everything looks good.
+</p>
+
+<div class="card p3 mb3">
+  <h3 class="mt0">CSV template</h3>
+  <p class="muted">
+    Download the template to get started. The CSV must include the following columns:
+  </p>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-[600px] mb2 [&_td]:whitespace-normal">
+      <thead>
+        <tr>
+          <th>Column</th>
+          <th>Required</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>email</code></td>
+          <td><span class="badge bg-error ml0">Required</span></td>
+          <td>Recipient's email address</td>
+        </tr>
+        <tr>
+          <td><code>report_name</code></td>
+          <td><span class="badge bg-error ml0">Required</span></td>
+          <td>Report name (e.g., Chicago Trip Expenses)</td>
+        </tr>
+        <tr>
+          <td><code>maximum_amount_cents</code></td>
+          <td><span class="badge bg-muted ml0">Optional</span></td>
+          <td>Maximum reimbursable value in cents (e.g., 50000 for $500.00). Only applies to USD reports.</td>
+        </tr>
+        <tr>
+          <td><code>invite_message</code></td>
+          <td><span class="badge bg-muted ml0">Optional</span></td>
+          <td>Custom message included in the invitation email</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <%= link_to event_reimbursement_reports_bulk_upload_template_path(@event), class: "btn btn--primary" do %>
+    <%= inline_icon "download" %>
+    Download CSV template
+  <% end %>
+</div>
+
+<div class="card p3">
+  <h3 class="mt0">Upload CSV</h3>
+
+  <%= form_with url: event_reimbursement_reports_bulk_upload_path(@event), method: :post, local: true, multipart: true do |form| %>
+    <% report = Reimbursement::Report.new(event: @event) %>
+    <% if report.assigned_reviewer_required? %>
+      <% eligible_reviewers = report.eligible_reviewers %>
+      <div class="field">
+        <%= form.label :reviewer_id, "Reviewer", class: "bold" %>
+        <%= form.collection_select :reviewer_id, eligible_reviewers, :public_id, :name,
+            { prompt: "Select a reviewer...", selected: params[:reviewer_id].presence || (current_user.public_id if eligible_reviewers.include?(current_user)) },
+            { required: true, aria: { describedby: "reviewer_hint" } } %>
+        <p id="reviewer_hint" class="muted mt1 mb0">This reviewer will be assigned to all reports in this upload.</p>
+      </div>
+    <% end %>
+
+    <div class="field--fileupload">
+      <%= form.label :csv_file, "Select CSV file", class: "field--fileupload__label" %>
+      <%= form.file_field :csv_file, accept: ".csv", required: true, class: "w-full field--fileupload__field" %>
+    </div>
+
+    <div class="flex flex-wrap gap-2 items-center justify-between mt3">
+      <%= link_to "Cancel", event_reimbursements_path(@event), class: "btn" %>
+      <%= form.submit "Upload and send invitations", class: "btn bg-success" %>
+    </div>
+  <% end %>
+</div>

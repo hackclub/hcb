@@ -1032,6 +1032,10 @@ Rails.application.routes.draw do
     post "card_grants/bulk_upload", to: "card_grants#bulk_upload"
     get "card_grants/bulk_upload_template", to: "card_grants#bulk_upload_template", as: :card_grants_bulk_upload_template
 
+    get "reimbursements/bulk_upload", to: "reimbursement/reports#bulk_upload_form", as: :reimbursement_reports_bulk_upload
+    post "reimbursements/bulk_upload", to: "reimbursement/reports#bulk_upload"
+    get "reimbursements/bulk_upload_template", to: "reimbursement/reports#bulk_upload_template", as: :reimbursement_reports_bulk_upload_template
+
     resources :follows, only: [:create], controller: "event/follows"
 
     get "transfers/new", to: "events#new_transfer"

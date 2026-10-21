@@ -5,7 +5,7 @@
 <% if @reports.any? || !organizer_signed_in? || params[:q].present? || @has_filter %>
   <h1 class="heading gap-2 flex-col sm:flex-row mb-0 border-0">
     <span class="flex-grow">Reimbursements</span>
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap justify-center items-center gap-2">
       <%= pop_icon_to "download",
                     reimbursements_exports_path(@event, format: :csv),
                     class: "tooltipped tooltipped--s", "aria-label": "Download CSV export" %>
@@ -117,7 +117,7 @@
           description: "Organize and store expense receipts to track each expense easily."
         }
       ] do %>
-    <div class="flex items-center gap-2 flex-row-reverse">
+    <div class="flex flex-wrap items-center gap-2 flex-row-reverse">
       <%= render partial: "reimbursement/reports/create_form" %>
       <%= render partial: "events/reimbursement_buttons" %>
     </div>

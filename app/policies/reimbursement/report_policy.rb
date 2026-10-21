@@ -10,6 +10,10 @@ module Reimbursement
       !record.event.demo_mode && (record.event.public_reimbursement_page_available? || admin || OrganizerPosition.role_at_least?(user, record.event, :member))
     end
 
+    def bulk_create?
+      !record.event.demo_mode && (admin || OrganizerPosition.role_at_least?(user, record.event, :member))
+    end
+
     def show?
       admin || reader || creator || auditor
     end
