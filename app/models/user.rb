@@ -133,9 +133,6 @@ class User < ApplicationRecord
 
   has_many :event_groups, class_name: "Event::Group"
 
-  has_many :g_suite_accounts, inverse_of: :fulfilled_by
-  has_many :g_suite_accounts, inverse_of: :creator
-
   has_many :emburse_transfers
   has_many :emburse_card_requests
   has_many :emburse_cards
@@ -301,7 +298,7 @@ class User < ApplicationRecord
   scope :active_teenager, -> { last_seen_within(30.days.ago).where(teenager: true) }
   def active? = last_seen_at && (last_seen_at >= 30.days.ago)
 
-  # a auditor is an admin who can only view things.
+  # an auditor is an admin who can only view things.
   # auditor? takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
   def auditor?(override_pretend: false)
@@ -436,6 +433,13 @@ class User < ApplicationRecord
   # unverified.
   def phone_number_verified_or_bypassed?
     phone_number_verified? || phone_number_verification_bypassed?
+  end
+
+  def phone_number_for_stripe
+    return nil unless phone_number_verified?
+    return nil unless StripeCardholder.phone_number_supported?(phone_number)
+
+    phone_number
   end
 
   def locked?
@@ -693,8 +697,12 @@ class User < ApplicationRecord
     show_first_dashboard? && card_grants.none? && events.none? && organizer_position_invites.none?
   end
 
-  def to_combobox_display
-    "#{full_name} (Email: #{email}, ID: #{id})"
+  # `admin` is required rather than defaulted, so a caller cannot silently
+  # render a different label than the search endpoint returns.
+  def to_combobox_display(admin:)
+    return "#{full_name} (Email: #{email}, ID: #{id})" if admin
+
+    full_name.presence || email
   end
 
   def unverified?
@@ -747,7 +755,7 @@ class User < ApplicationRecord
 
     cardholder.update!(
       stripe_email: email,
-      stripe_phone_number: phone_number_verified? ? phone_number : nil,
+      stripe_phone_number: phone_number_for_stripe,
     )
   end
 
