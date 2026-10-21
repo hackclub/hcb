@@ -75,19 +75,23 @@
           <% end %>
         </div>
         <%= turbo_frame_tag dom_id(event, :my_cards), src: my_event_cards_path(event_id: event.id, **request.query_parameters.slice("q", "status", "type").symbolize_keys), loading: :lazy, target: "_top" do %>
-          <% if @view == "list" %>
-            <article class="flex flex-col gap-2 mt-2" aria-busy="true">
-              <% @card_counts[event.id].times do %>
-                <div class="h-10 rounded-lg bg-smoke dark:bg-darkless animate-pulse"></div>
-              <% end %>
-            </article>
-          <% else %>
-            <article class="mixed-grid grid--spacious" aria-busy="true">
-              <% @card_counts[event.id].times do %>
-                <div class="mt1 rounded-xl bg-smoke dark:bg-darkless animate-pulse aspect-[364/224]"></div>
-              <% end %>
-            </article>
-          <% end %>
+          <div class="card card--breakdown p-0 relative <%= "mt-2" if @view == "list" %>" aria-busy="true">
+            <%# Invisible placeholders size the card to match the loaded cards %>
+            <% if @view == "list" %>
+              <div class="flex flex-col gap-2 invisible" aria-hidden="true">
+                <% @card_counts[event.id].times do %>
+                  <div class="h-10"></div>
+                <% end %>
+              </div>
+            <% else %>
+              <div class="mixed-grid grid--spacious invisible" aria-hidden="true">
+                <% @card_counts[event.id].times do %>
+                  <div class="mt1 aspect-[364/224]"></div>
+                <% end %>
+              </div>
+            <% end %>
+            <%= render partial: "application/loading_container", locals: { klass: "absolute inset-0" } %>
+          </div>
         <% end %>
       </section>
     <% end %>
