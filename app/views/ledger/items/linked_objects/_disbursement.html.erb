@@ -134,10 +134,8 @@
   </section>
 
   <section class="ledger-item--footer">
-    <% if disbursement.may_mark_rejected? %>
-      <% admin_tool "w-fit" do %>
-        <%= button_to "Process", disbursement_process_admin_path(disbursement), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
-      <% end %>
+    <% admin_tool "w-fit" do %>
+      <%= button_to "Process", disbursement_process_admin_path(disbursement), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
     <% end %>
 
     <% if disbursement.scheduled? %>

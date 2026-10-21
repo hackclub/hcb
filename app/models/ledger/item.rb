@@ -11,6 +11,7 @@
 #  ct_count                     :integer          default(0), not null
 #  custom_memo                  :text
 #  datetime                     :datetime         not null
+#  intended_at                  :datetime
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
 #  not_admin_only_comment_count :integer          default(0), not null
@@ -78,6 +79,7 @@ class Ledger
     has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
 
     enum :status, {
+      intended: "intended", # no CTs or CPTs, but has a linked object (e.g. an unpaid invoice); the linked object protects it from pruning
       pending: "pending", # any CPTs contributing to balance
       settled: "settled", # no CPTs contributing to balance or fronted incoming CPT with no CTs
       reversed: "reversed", # sum of CTs is zero
@@ -116,6 +118,8 @@ class Ledger
         "bg-transparent border border-dashed border-muted m0 mr1"
       when :settled
         nil
+      when :intended
+        "bg-transparent border border-dashed border-muted m0 mr1"
       when :reversed
         "bg-info m0 mr1"
       when :released
@@ -186,9 +190,10 @@ class Ledger
       self.receipt_count = calculate_receipt_count
 
       # Timestamps
+      self.intended_at = calculate_intended_at
       self.pending_at = calculate_pending_at
       self.settled_at = calculate_settled_at
-      self.datetime = settled_at || pending_at || created_at
+      self.datetime = settled_at || pending_at || intended_at || created_at
 
       self.amount_cents = calculate_amount_cents
       self.author = calculate_author
@@ -352,6 +357,17 @@ class Ledger
       update!(linked_object:) if linked_object.present?
     end
 
+    # When the item became "intended" — a linked object with no transactions yet
+    # (e.g. an unpaid invoice). Unlike pending_at/settled_at there's no
+    # transaction to derive this from, so the value assigned at creation (the
+    # linked object's creation time) is preserved while the item stays intended
+    # and cleared once a transaction maps in.
+    def calculate_intended_at
+      return nil unless linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
+
+      intended_at || created_at
+    end
+
     def calculate_pending_at
       canonical_pending_transactions.order(:date, :id).first&.datetime
     end
@@ -409,6 +425,11 @@ class Ledger
     end
 
     def calculate_status
+      # An item that has a linked object but no transactions yet (e.g. an invoice
+      # that has been created but not paid). The linked object keeps it from being
+      # pruned once orphaned-item pruning exists.
+      return :intended if linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
+
       unless canonical_pending_transactions.declined.any?
         return :settled if linked_object_type == "BankFee"
         return :settled if linked_object_type == "Reimbursement::ExpensePayout" && canonical_pending_transactions.exists? && canonical_transactions.none?
