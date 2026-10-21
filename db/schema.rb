@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_14_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_14_130300) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -1440,6 +1440,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_120000) do
     t.datetime "receipt_resolved_at"
     t.text "short_code"
     t.bigint "subledger_id"
+    t.bigint "subscription_id"
     t.datetime "updated_at", null: false
     t.index ["card_charge_settled_at"], name: "index_hcb_codes_on_card_charge_settled_at"
     t.index ["event_id"], name: "index_hcb_codes_on_event_id"
@@ -1447,6 +1448,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_120000) do
     t.index ["ledger_item_id"], name: "index_hcb_codes_on_ledger_item_id"
     t.index ["receipt_due_at"], name: "index_hcb_codes_on_open_receipt_due_at", where: "((receipt_due_at IS NOT NULL) AND (receipt_resolved_at IS NULL))"
     t.index ["short_code"], name: "index_hcb_codes_on_short_code", unique: true
+    t.index ["subscription_id"], name: "index_hcb_codes_on_subscription_id"
     t.check_constraint "short_code = upper(short_code)", name: "constraint_hcb_codes_on_short_code_to_uppercase"
   end
 
@@ -2627,6 +2629,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_120000) do
     t.index ["event_id"], name: "index_subledgers_on_event_id"
   end
 
+  create_table "subscriptions", force: :cascade do |t|
+    t.integer "amount_cents", null: false
+    t.string "cadence", null: false
+    t.integer "cadence_days", null: false
+    t.datetime "created_at", null: false
+    t.bigint "event_id", null: false
+    t.datetime "last_charged_at"
+    t.string "merchant_name", null: false
+    t.string "merchant_network_id"
+    t.datetime "next_expected_at"
+    t.bigint "stripe_card_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_subscriptions_on_event_id"
+    t.index ["stripe_card_id", "merchant_network_id"], name: "index_subscriptions_on_stripe_card_id_and_merchant_network_id"
+    t.index ["stripe_card_id"], name: "index_subscriptions_on_stripe_card_id"
+  end
+
   create_table "suggested_pairings", force: :cascade do |t|
     t.string "aasm_state", null: false
     t.datetime "accepted_at"
@@ -3175,6 +3194,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_120000) do
   add_foreign_key "hcb_code_tag_suggestions", "hcb_codes"
   add_foreign_key "hcb_code_tag_suggestions", "tags"
   add_foreign_key "hcb_codes", "ledger_items", on_delete: :nullify
+  add_foreign_key "hcb_codes", "subscriptions", on_delete: :nullify
   add_foreign_key "increase_account_numbers", "events"
   add_foreign_key "increase_checks", "events"
   add_foreign_key "increase_checks", "users"
@@ -3257,6 +3277,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_14_120000) do
   add_foreign_key "stripe_cards", "stripe_cardholders"
   add_foreign_key "stripe_cards", "users", column: "last_frozen_by_id"
   add_foreign_key "subledgers", "events"
+  add_foreign_key "subscriptions", "events"
+  add_foreign_key "subscriptions", "stripe_cards"
   add_foreign_key "transaction_category_mappings", "transaction_categories"
   add_foreign_key "transactions", "ach_transfers"
   add_foreign_key "transactions", "bank_accounts"

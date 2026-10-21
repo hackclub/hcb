@@ -52,6 +52,7 @@ class CanonicalEventMapping < ApplicationRecord
   end
 
   after_create_commit { CardLocking::Settlement.on_canonical_transaction(canonical_transaction) }
+  after_create_commit { Subscription::LinkChargeJob.perform_later(canonical_transaction) }
 
   scope :missing_fee, -> { includes(:fee).where(fee: { canonical_event_mapping_id: nil }) }
   scope :mapped_by_human, -> { where("user_id is not null") }

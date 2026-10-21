@@ -1,0 +1,25 @@
+<%# locals: (subscription:) %>
+
+<% admin_tool("mt2 p-3") do %>
+  <h3 class="mt0 mb1">Detected as a subscription</h3>
+  <p class="mt0 mb2 muted">
+    <%= humanized_merchant_name subscription.merchant %>,
+    <%= render_money subscription.amount_cents %> <%= subscription.cadence_label %>.
+    Detected <%= local_time_ago subscription.created_at %>.
+    <% if subscription.next_expected_at %>
+      Next charge expected around <%= local_time subscription.next_expected_at, format: "%B %e, %Y" %>.
+    <% end %>
+  </p>
+  <ul class="list-reset m0">
+    <% subscription.hcb_codes.sort_by { |hcb_code| hcb_code.datetime || hcb_code.created_at }.reverse_each do |hcb_code| %>
+      <li>
+        <% if hcb_code == @hcb_code %>
+          <strong><%= hcb_code.date&.to_fs(:long) %> (this charge)</strong>
+        <% else %>
+          <%= link_to hcb_code.date&.to_fs(:long) || hcb_code.hashid, hcb_code_path(hcb_code), data: { turbo_frame: "_top" } %>
+        <% end %>
+        &middot; <%= render_money hcb_code.amount_cents.abs %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
