@@ -1,3 +1,5 @@
+<%# locals: (stripe_card:) %>
+
 <% style = card_shipping_map_url(stripe_card) ?
             "background: linear-gradient(to bottom, rgba(20, 20, 20, 0.75), rgba(0, 0, 9, 0.5)), url(#{card_shipping_map_url(stripe_card)}); height: 250px"
             : nil %>

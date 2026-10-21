@@ -74,7 +74,7 @@ class EventsController < ApplicationController
     @maximum_negative_change = heatmap_engine_response[:maximum_negative_change]
     @past_year_transactions_count = heatmap_engine_response[:transactions_count]
 
-    render partial: "events/home/heatmap", locals: { heatmap: @heatmap, event: @event }
+    render partial: "events/home/heatmap"
   end
 
   def merchants_chart
@@ -82,7 +82,7 @@ class EventsController < ApplicationController
 
     @merchants = BreakdownEngine::Merchants.new(@event, start_date: @timeframe&.ago).run
 
-    render partial: "events/home/merchants_chart", locals: { timeframe: params[:timeframe] }
+    render partial: "events/home/merchants_chart"
   end
 
   def categories_chart
@@ -90,7 +90,7 @@ class EventsController < ApplicationController
 
     @categories = BreakdownEngine::Categories.new(@event, start_date: @timeframe&.ago).run
 
-    render partial: "events/home/categories_chart", locals: { timeframe: params[:timeframe] }
+    render partial: "events/home/categories_chart"
   end
 
   def balance_transactions
@@ -102,7 +102,7 @@ class EventsController < ApplicationController
 
     @recent_transactions = all_transactions.first(6)
 
-    render partial: "events/home/balance_transactions", locals: { heatmap: @heatmap, event: @event }
+    render partial: "events/home/balance_transactions"
   end
 
   def money_movement
@@ -115,7 +115,7 @@ class EventsController < ApplicationController
     @money_in = all_transactions.reject { |t| t.amount_cents <= 0 }.first(3)
     @money_out = all_transactions.reject { |t| t.amount_cents >= 0 }.first(3)
 
-    render partial: "events/home/money_movement", locals: { heatmap: @heatmap, event: @event }
+    render partial: "events/home/money_movement"
   end
 
   def team_stats
@@ -123,7 +123,7 @@ class EventsController < ApplicationController
 
     @organizers = @event.organizer_positions.joins(:user).order(Arel.sql("CONCAT(preferred_name, full_name) ASC"))
 
-    render partial: "events/home/team_stats", locals: { merchants: @merchants, categories: @categories, event: @event }
+    render partial: "events/home/team_stats"
   end
 
   def recent_activity
@@ -131,7 +131,7 @@ class EventsController < ApplicationController
 
     @activities = PublicActivity::Activity.for_event(@event).order(created_at: :desc).first(7)
 
-    render partial: "events/home/recent_activity", locals: { merchants: @merchants, categories: @categories, event: @event }
+    render partial: "events/home/recent_activity"
   end
 
   def tags_chart
@@ -139,7 +139,7 @@ class EventsController < ApplicationController
 
     @tags = BreakdownEngine::Tags.new(@event, start_date: @timeframe&.ago).run
 
-    render partial: "events/home/tags_chart", locals: { tags: @tags, timeframe: params[:timeframe], event: @event }
+    render partial: "events/home/tags_chart", locals: { tags: @tags }
   end
 
   def users_chart
@@ -147,7 +147,7 @@ class EventsController < ApplicationController
 
     @users = BreakdownEngine::Users.new(@event, start_date: @timeframe&.ago).run
 
-    render partial: "events/home/users_chart", locals: { users: @users, timeframe: params[:timeframe], event: @event }
+    render partial: "events/home/users_chart", locals: { users: @users, event: @event }
   end
 
   def stats

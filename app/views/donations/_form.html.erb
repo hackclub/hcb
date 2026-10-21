@@ -1,3 +1,5 @@
+<%# locals: (donation:) %>
+
 <%= form_with(model: donation, local: true) do |form| %>
   <% if donation.errors.any? %>
     <div id="error_explanation">

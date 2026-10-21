@@ -1,3 +1,5 @@
+<%# locals: (item:) %>
+
 <% item_user = item.is_a?(OrganizerPosition::Spending::Control::Allowance) ? item.authorized_by : item.stripe_cardholder.user %> <!-- Item is either an allowance or an HCB code. -->
 
 <tr class="<%= item.is_a?(OrganizerPosition::Spending::Control::Allowance) && item.amount_cents.positive? ? "transaction--positive" : "transaction--negative" %>">

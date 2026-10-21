@@ -121,7 +121,7 @@ module ReceiptService
           target: nil,
           targets: "div[data-extracted-data-for='#{@receipt.id}']",
           partial: "receipts/extracted",
-          locals: { receipt: @receipt, current_user: @receipt.user }
+          locals: { receipt: @receipt }
         )
       end
 

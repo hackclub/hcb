@@ -1,3 +1,5 @@
+<%# locals: (payment:) %>
+
 <% file_path = Rails.application.routes.url_helpers.rails_blob_path(payment.invoice.file, only_path: true) %>
 
 <% actions = capture do %>

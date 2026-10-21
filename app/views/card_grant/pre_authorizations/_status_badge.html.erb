@@ -1,3 +1,5 @@
+<%# locals: (organizer:, pre_authorization:) %>
+
 <span id="status_badge">
     <%= status_badge pre_authorization.status_badge_type(organizer:) %> <%= pre_authorization.status_text(organizer:) %>
 </span>
