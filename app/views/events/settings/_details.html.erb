@@ -117,11 +117,16 @@
       <span style="font-weight: 700">Make <%= possessive(event.name) %> finances transparent</span>
       <div class="field--checkbox--switch ml-auto">
         <%= form.label :is_public do %>
-          <%= form.check_box :is_public, data: { action: "change->accordion#toggle", accordion_target: "checkbox" }, disabled:, switch: true %>
+          <%= form.check_box :is_public, data: { action: "change->accordion#toggle", accordion_target: "checkbox" }, disabled: disabled || !event.eligible_for_disabling_transparency?, switch: true %>
           <span class="slider"></span>
         <% end %>
       </div>
     </div>
+    <% unless event.eligible_for_disabling_transparency? %>
+      <%= render "callout", type: "info", title: "Transparency is turned on because #{event.parent&.name || "this organization's parent"} is transparent." do %>
+        Transparent parent organizations require their suborganizations to also be transparent, so this setting can't be turned off here.
+      <% end %>
+    <% end %>
     <ul class="mt0 pl4 mb2">
       <li>Unauthenticated users will be able to access a <strong>read-only</strong> version of your account.</li>
       <li>None of HCB’s pages will change for signed in team members.</li>
