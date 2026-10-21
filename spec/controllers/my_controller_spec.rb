@@ -132,15 +132,15 @@ RSpec.describe MyController do
         expect(ivar(:view)).to eq("list")
       end
 
-      it "searches cards by name and last four digits" do
+      it "searches cards by name but not last four digits" do
         laptop = create_card(name: "Laptop fund", last4: "1234")
-        snacks = create_card(name: "Snacks", last4: "5678")
+        create_card(name: "Snacks", last4: "5678")
 
         get :cards, params: { q: "laptop" }
         expect(searched_cards).to eq([laptop])
 
         get :cards, params: { q: "5678" }
-        expect(searched_cards).to eq([snacks])
+        expect(searched_cards).to be_empty
 
         get :cards, params: { q: "nothing matches this" }
         expect(searched_cards).to be_empty
