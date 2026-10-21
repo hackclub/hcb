@@ -93,7 +93,10 @@ class Ledger
       nil
     end
 
-    # Stripe top-ups should always be mapped to NOEVENT
+    # Stripe Issuing balance top-ups (TopupStripeJob) should always be mapped to
+    # NOEVENT. HCB's own top-ups — fee reimbursements and Stripe service fees —
+    # carry their HCB code's short code and are resolved to Hack Club Bank
+    # before this, via CanonicalTransaction#linked_object_v2.
     def event_from_stripe_top_up
       return unless @ledger_item.canonical_transactions.stripe_top_up.exists?
 

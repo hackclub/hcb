@@ -107,6 +107,23 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       expect(response.body).to include(%(action="#{ach_start_approval_admin_path(ach_transfer)}"))
       expect(response.body).not_to include("Cancel transfer")
     end
+
+    it "renders a fee reimbursement group with the reimbursements topped up that week" do
+      create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
+      allow_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)
+      group = create(:fee_reimbursement_group, week: "2026_42")
+      invoice = create(:invoice)
+      create(:fee_reimbursement, invoice:, fee_reimbursement_group: group, amount: 1_23)
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get :show, params: { id: group.ledger_item.hashid }
+
+      expect(response).to be_successful
+      expect(response.body).to include(group.memo)
+      expect(response.body).to include("Stripe fee reimbursements")
+      expect(response.body).to include(invoice.event.name)
+      expect(response.body).to include("$1.23")
+    end
   end
 
   context "as a reader (not a member)" do
