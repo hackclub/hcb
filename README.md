@@ -1,7 +1,7 @@
 <div align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/7ef837ac0539217c_image.png">
-    <img src="https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/af6d676a11c64b6c_image.png" width="126" alt="HCB logo">
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hackclub.com/019c256a-b800-7bb0-9320-9af7cf377a4c/image.png">
+    <img src="https://cdn.hackclub.com/019c256a-bb00-7d83-87da-3acd53e0824a/image.png" width="126" alt="HCB logo">
   </picture>
   <h1>HCB by Hack Club</h1>
 
