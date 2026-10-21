@@ -520,6 +520,47 @@ RSpec.describe Ledger::Item, type: :model do
     end
   end
 
+  describe "#absorb" do
+    let(:item) { create(:ledger_item) }
+    let(:other) { create(:ledger_item, :with_primary_ledger) }
+
+    it "moves the other item's transactions onto this item and destroys the other item" do
+      own_ct = create(:canonical_transaction, amount_cents: -100, ledger_item_id: item.id)
+      ct = create(:canonical_transaction, amount_cents: -500, ledger_item_id: other.id)
+      cpt = create(:canonical_pending_transaction, amount_cents: -300, ledger_item_id: other.id)
+
+      item.absorb(other)
+
+      item.reload
+      expect(item.canonical_transactions).to contain_exactly(own_ct, ct)
+      expect(item.canonical_pending_transactions).to contain_exactly(cpt)
+      expect(item.ct_count).to eq(2)
+      expect(item.cpt_count).to eq(1)
+      expect(item.amount_cents).to eq(-900)
+
+      expect(Ledger::Item.exists?(other.id)).to be(false)
+      expect(Ledger::Mapping.where(ledger_item_id: other.id)).not_to exist
+    end
+
+    it "refuses to absorb an item with a linked object and leaves it untouched" do
+      stub_donation_payment_intent_creation
+      other = create(:ledger_item, linked_object: create(:donation))
+      ct = create(:canonical_transaction, amount_cents: -500, ledger_item_id: other.id)
+
+      expect { item.absorb(other) }.to raise_error(ArgumentError, /linked object/)
+
+      expect(Ledger::Item.exists?(other.id)).to be(true)
+      expect(ct.reload.ledger_item).to eq(other)
+      expect(item.reload.canonical_transactions).to be_empty
+    end
+
+    it "refuses to absorb itself" do
+      expect { item.absorb(item) }.to raise_error(ArgumentError, /itself/)
+
+      expect(Ledger::Item.exists?(item.id)).to be(true)
+    end
+  end
+
   describe "#author" do
     it "is nobody for an in-person donation, which the donor paid rather than the organizer who collected it" do
       stub_donation_payment_intent_creation

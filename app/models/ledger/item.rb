@@ -224,6 +224,43 @@ class Ledger
       refresh!
     end
 
+    # Merges another ledger item into this one: its canonical transactions and
+    # canonical pending transactions are moved here, and the now-empty item is
+    # destroyed. This is the "merger of ledger items" described in
+    # `assign_linked_object!`, e.g. a CT that arrived on its own item before
+    # being matched to the CPT that already had one.
+    #
+    # The absorbed item must not have a linked object: a linked object is
+    # assigned once and never changed, so there is nothing sensible to do with
+    # it (and this item may already have its own).
+    def absorb(other)
+      raise ArgumentError, "a ledger item cannot absorb itself" if other == self
+
+      if other.linked_object_type.present?
+        raise ArgumentError, "cannot absorb ledger item #{other.id}: it has a linked object (#{other.linked_object_type}##{other.linked_object_id})"
+      end
+
+      ActiveRecord::Base.transaction do
+        # update_all skips the CT/CPT after_commit hooks, which would otherwise
+        # try to refresh! the absorbed item after it has been destroyed. This
+        # item is mapped and refreshed explicitly below instead.
+        other.canonical_transactions.update_all(ledger_item_id: id)
+        other.canonical_pending_transactions.update_all(ledger_item_id: id)
+
+        # Mappings reference the item with a plain foreign key, so they have to
+        # go first. delete_all rather than destroy_all: Ledger::Mapping's
+        # after_commit calls ledger_item.refresh!, which cannot save a destroyed
+        # record. Anything else still referencing the item (e.g. audit tasks)
+        # makes destroy! raise and rolls the whole merge back.
+        Ledger::Mapping.where(ledger_item: other).delete_all
+        other.destroy!
+
+        map!
+      end
+
+      self
+    end
+
     def humanized_type
       return "Card grant" if special_appearance&.key == "card_grant"
 
