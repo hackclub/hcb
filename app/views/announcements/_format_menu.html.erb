@@ -1,6 +1,6 @@
 <%# locals: (event:) %>
 
-<div class="flex items-center gap-2">
+<div class="flex items-center">
   <div id="format-menus"></div>
 
   <%= render "announcements/modals/hcb_code" %>
@@ -14,7 +14,7 @@
     <button
       data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
       data-menu-target="toggle"
-      class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md font-bold flex gap-1"
+      class="format-button font-bold flex gap-1"
       type="button">
       H <%= inline_icon "down-caret", size: 18 %>
     </button>
@@ -26,18 +26,18 @@
     </div>
   </div>
 
-  <button data-action="tiptap#bold" type="button" class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md font-bold">B</button>
-  <button data-action="tiptap#italic" type="button" class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md italic">I</button>
-  <button data-action="tiptap#underline" type="button" class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md underline">U</button>
-  <button data-action="tiptap#strike" type="button" class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md line-through">S</button>
+  <button data-action="tiptap#bold" type="button" class="format-button font-bold">B</button>
+  <button data-action="tiptap#italic" type="button" class="format-button italic">I</button>
+  <button data-action="tiptap#underline" type="button" class="format-button underline">U</button>
+  <button data-action="tiptap#strike" type="button" class="format-button line-through">S</button>
 
-  <button data-action="tiptap#link" type="button" class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md"><%= inline_icon "link", size: 18 %></button>
+  <button data-action="tiptap#link" type="button" class="format-button"><%= inline_icon "link", size: 18 %></button>
 
   <div data-controller="menu" data-menu-append-to-value="#format-menus">
     <button
       data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
       data-menu-target="toggle"
-      class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md font-mono flex gap-1"
+      class="format-button font-mono flex gap-1"
       type="button">
       Code <%= inline_icon "down-caret", size: 18 %>
     </button>
@@ -52,7 +52,7 @@
     <button
       data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
       data-menu-target="toggle"
-      class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md flex gap-1"
+      class="format-button flex gap-1"
       type="button">
       List <%= inline_icon "down-caret", size: 18 %>
     </button>
@@ -63,14 +63,14 @@
     </div>
   </div>
 
-  <button data-action="tiptap#blockQuote" type="button" class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md"><%= inline_icon "quote", size: 18 %></button>
-  <button data-action="tiptap#image" type="button" class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md"><%= inline_icon "photo", size: 18 %></button>
+  <button data-action="tiptap#blockQuote" type="button" class="format-button"><%= inline_icon "quote", size: 18 %></button>
+  <button data-action="tiptap#image" type="button" class="format-button"><%= inline_icon "photo", size: 18 %></button>
 
   <div data-controller="menu" data-menu-append-to-value="#format-menus">
     <button
       data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
       data-menu-target="toggle"
-      class="border-0 bg-transparent hover:!bg-smoke dark:hover:!bg-dark px-2 py-1 rounded-md flex gap-1"
+      class="format-button flex gap-1"
       type="button">
       HCB <%= inline_icon "down-caret", size: 18 %>
     </button>

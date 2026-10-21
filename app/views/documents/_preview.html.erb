@@ -1,6 +1,6 @@
 <% if document.preview_url %>
   <%= image_tag(document.preview_url, width: 330, style: "max-width: 100%;") %>
 <% else %>
-  <span class="bold h0 absolute" style="opacity: 0.8; color: #8492a6;"><%= document.file.filename.extension %></span>
+  <span class="bold h1 absolute" style="opacity: 0.8; color: #8492a6;"><%= document.file.filename.extension %></span>
   <%= image_tag("placeholder-document.svg", width: 300, style: "max-width: 100%; opacity: 0.5;") %>
 <% end %>

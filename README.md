@@ -1,7 +1,7 @@
 <div align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://cloud-djxhgxve6-hack-club-bot.vercel.app/0hcb-icon-icon-dark_1_.png">
-    <img src="https://cloud-5yru8jas0-hack-club-bot.vercel.app/0logo-512.png" width="126" alt="HCB logo">
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.hackclub.com/019c256a-b800-7bb0-9320-9af7cf377a4c/image.png">
+    <img src="https://cdn.hackclub.com/019c256a-bb00-7d83-87da-3acd53e0824a/image.png" width="126" alt="HCB logo">
   </picture>
   <h1>HCB by Hack Club</h1>
 
@@ -16,13 +16,13 @@ Welcome to the [HCB](https://hackclub.com/fiscal-sponsorship/) codebase!
 
 HCB is an [open source](https://hackclub.com/fiscal-sponsorship/open-source/),
 safe, and easy-to-use fiscal sponsorship platform for hackathons, Hack Clubs,
-robotic teams and more. We use it to run
-our [fiscal sponsorship program](https://hackclub.com/fiscal-sponsorship/), we
+robotics teams and more. We use it to run
+our [fiscal sponsorship program](https://hackclub.com/fiscal-sponsorship/); we
 provide high schoolers with a 501(c)(3) status-backed restricted fund for their
 organization. Behind the scenes, HCB is a Ruby on Rails application (learn more
 by reading [our documentation](/dev-docs)).
 
-<img width="1377" alt="Screenshot of Hack Club HQ's finances on HCB" src="https://github.com/hackclub/hcb/assets/39828164/b19a83b2-ba81-46b0-9f6f-2772f4249071">
+<img width="1377" alt="Screenshot of Hack Club HQ's finances on HCB" src="https://github.com/user-attachments/assets/2d3e23b7-265a-4ba2-9d0d-f8bef2435557">
 
 ## Table of Contents
 
@@ -36,9 +36,7 @@ by reading [our documentation](/dev-docs)).
 ## I found a security vulnerability! What should I do?
 
 Please email [hcb-security@hackclub.com](mailto:hcb-security@hackclub.com) to
-report the vulnerability. We currently don't have a bug bounty program but, as a
-token of appreciation, we'd love to mail you a t-shirt and give you a shoutout
-on our GitHub.
+report the vulnerability. To learn more about security bounties, visit https://security.hackclub.com
 
 ## Quick start
 
@@ -48,7 +46,7 @@ Codespaces, Docker, and a native setup.
 
 ## Contributing
 
-We are so excited for you to join the codebase! We have a getting started
+We are so excited for you to join the codebase! We have getting-started
 documentation in the [`dev-docs` folder](/dev-docs/development.md).
 
 All contributors are expected to follow the Hack

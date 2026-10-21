@@ -10,8 +10,8 @@
           id="sponsor"
           data-tabs-target="btn"
           data-action="click->tabs#select"
-          class="invoice-tab">
-          <div class="invoice-tab__number">1</div>
+          class="step-tab">
+          <div class="step-tab__number">1</div>
           <span>Sponsor details</span>
         </div>
         <button
@@ -22,8 +22,8 @@
           data-tabs-target="btn"
           data-action="click->tabs#select"
           data-invoice-form-target="secondTab"
-          class="invoice-tab disabled:pointer-events-none">
-          <div class="invoice-tab__number">2</div>
+          class="step-tab disabled:pointer-events-none">
+          <div class="step-tab__number">2</div>
           <span>Invoice details</span>
         </button>
       </div>
@@ -57,7 +57,7 @@
           </summary>
           <%= form.fields_for :sponsor_attributes do |form| %>
             <div data-invoice-form-target="sponsorForm">
-              <p id="sponsor-warning" class="flex items-center info line-height-3" hidden>
+              <p id="sponsor-warning" class="flex items-center info leading-[1.25]" hidden>
                 <%= inline_icon "important", size: 32, class: "mr1" %>
                 You're currently updating a previous sponsor. This will also update all past invoices to them.
               </p>
@@ -118,13 +118,13 @@
       <div data-tabs-target="tab" id="invoice">
         <%= form.label :item_amount, "Amount" %>
         <div class="field">
-          <div class="flex items-center border border-gray-200 dark:bg-darkless dark:border-0 rounded-lg px-3">
+          <div class="flex input !max-w-full !py-0 items-center border border-gray-200 dark:bg-darkless dark:border-0 rounded-lg px-3">
             <span class="bold muted" style="width: 1rem;">$</span>
             <%= form.number_field :item_amount,
                                   value: (invoice.item_amount.nil? ? nil : (invoice.item_amount.to_f / 100)), placeholder: "500.00",
                                   step: 0.01,
                                   style: "max-width:100%!important",
-                                  class: "!border-none bg-transparent",
+                                  class: "!border-none bg-transparent !shadow-none",
                                   min: 1.00, required: true, disabled: @event.demo_mode?,
                                   data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" },
                                   "x-model.fill.number" => "amount" %>

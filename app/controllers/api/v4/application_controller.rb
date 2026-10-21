@@ -6,6 +6,9 @@ module Api
       include ActionController::HttpAuthentication::Token::ControllerMethods
       include Pundit::Authorization
       include PublicActivity::StoreController
+      include ErrorHandling
+      include AdminScopeCheckable
+      include Pagination
 
       attr_reader :current_user
 
@@ -14,18 +17,6 @@ module Api
       before_action :authenticate!
       before_action :set_expand
       before_action :set_paper_trail_whodunnit
-
-      rescue_from Pundit::NotAuthorizedError do |e|
-        render json: { error: "not_authorized" }, status: :forbidden
-      end
-
-      rescue_from ActiveRecord::RecordNotFound do |e|
-        render json: { error: "resource_not_found", message: ("Couldn't locate that #{e.model.constantize.model_name.human}." if e.model) }.compact_blank, status: :not_found
-      end
-
-      rescue_from ActiveRecord::RecordInvalid do |e|
-        render json: { error: "invalid_operation", messages: e.record.errors.full_messages }, status: :bad_request
-      end
 
       def not_found
         skip_authorization
@@ -42,6 +33,10 @@ module Api
 
       private
 
+      def pundit_user
+        current_user && ApiAdminContext.new(current_user, current_token)
+      end
+
       def authenticate!
         @current_token = authenticate_with_http_token { |t, _options| ApiToken.find_by(token: t) }
         unless @current_token&.accessible?
@@ -51,9 +46,10 @@ module Api
         @current_user = current_token&.user
       end
 
-      def require_admin!
-        unless current_user&.admin?
-          render json: { error: "invalid_auth" }, status: :unauthorized
+      def require_admin_scope!(level)
+        unless can_admin?(level)
+          skip_authorization
+          render json: { error: "not_authorized" }, status: :forbidden
         end
       end
 

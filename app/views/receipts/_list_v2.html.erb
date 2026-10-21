@@ -1,5 +1,5 @@
 <%# locals: (hcb_code:, frame: false, transaction_show_receipt_button: false, transaction_show_author_img: false, ledger_instance: "") %>
 
-<ul class="grid grid--medium-narrow left-align w-100 mt0 receipts_list" id="<%= @ledger_instance %>_receipts_list">
+<ul class="grid grid--medium-narrow text-left w-100 mt0 receipts_list" id="<%= @ledger_instance %>_receipts_list">
   <%= render partial: "receipts/receipt", collection: hcb_code.receipts.with_attached_file.includes(:user).order(created_at: :asc), as: :receipt, locals: { show_delete_button: true, link_to_file: true, popover: frame ? "HcbCode:#{hcb_code.hashid}" : nil, show_receipt_button: transaction_show_receipt_button, show_author_img: transaction_show_author_img } %>
 </ul>

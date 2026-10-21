@@ -38,7 +38,6 @@ class Fee < ApplicationRecord
 
   scope :greater_than_0, -> { where("amount_cents_as_decimal > 0") }
   scope :exclude_free_events, -> { where("event_sponsorship_fee > 0") }
-  scope :exclude_outflows, -> { where("canonical_transactions.amount_cents > 0") }
   scope :exclude_outflows, -> { includes(canonical_event_mapping: :canonical_transaction).where("canonical_transactions.amount_cents > 0").references(canonical_event_mapping: :canonical_transaction) }
 
   delegate :date, :smart_memo, :amount, :amount_cents, to: :canonical_transaction

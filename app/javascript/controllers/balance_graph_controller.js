@@ -7,6 +7,7 @@ export default class extends Controller {
     available: Number,
     slug: String,
   }
+
   renderBalance(amount) {
     return (
       '$' +
@@ -18,7 +19,10 @@ export default class extends Controller {
         .replace('$', '')
     )
   }
+
   connect() {
+    this.handleResize = this.handleResize.bind(this)
+
     const getDates = (start, end) => {
       const arr = []
       for (
@@ -76,21 +80,41 @@ export default class extends Controller {
           if (balanceByDate[date] > maxBalance) maxBalance = value
         }
 
-        this.sizingTarget.textContent = this.renderBalance(maxBalance)
-        this.graphTarget.setAttribute(
-          'width',
-          this.graphTarget.getBoundingClientRect().width + 'px'
-        )
-        this.statTarget.style.minWidth =
-          this.graphTarget.getBoundingClientRect().width + 'px'
-        this.graphTarget.classList.add(`sparkline--${balanceTrend}`)
-        sparkline(this.graphTarget, balances.slice(0, 365).reverse(), {
-          interactive: true,
-          onmousemove: this.update.bind(this),
-          onmouseout: this.clear.bind(this),
-        })
+        this.balanceTrend = balanceTrend
+        this.maxBalance = maxBalance
+        this.balances = balances.slice(0, 365).reverse()
+
+        this.drawGraph()
+        window.addEventListener('resize', this.handleResize)
       })
   }
+
+  disconnect() {
+    window.removeEventListener('resize', this.handleResize)
+  }
+
+  handleResize() {
+    if (!this.balances) return
+    this.drawGraph()
+  }
+
+  drawGraph() {
+    const width = this.graphTarget.getBoundingClientRect().width
+    this.graphTarget.setAttribute('width', width + 'px')
+    this.statTarget.style.minWidth = width + 'px'
+
+    this.sizingTarget.textContent = this.renderBalance(this.maxBalance)
+
+    this.graphTarget.innerHTML = ''
+    this.graphTarget.classList.add(`sparkline--${this.balanceTrend}`)
+
+    sparkline(this.graphTarget, this.balances, {
+      interactive: true,
+      onmousemove: this.update.bind(this),
+      onmouseout: this.clear.bind(this),
+    })
+  }
+
   update(_, { date, value }) {
     this.balanceTarget.textContent = this.renderBalance(value)
     this.labelTarget.textContent = `Account balance on ${new Date(
@@ -101,6 +125,7 @@ export default class extends Controller {
       year: 'numeric',
     })}`
   }
+
   clear() {
     this.labelTarget.textContent = 'Account balance'
     this.balanceTarget.textContent = this.initial.balance

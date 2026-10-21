@@ -23,7 +23,7 @@ class TopupStripeJob < ApplicationJob
     # money on Stripe Issuing is at least two weeks.
     # Ex. The money from a top-up today will be spent in no earlier than two
     #     weeks from now (FIFO order).
-    buffer = 200_000 * 100
+    buffer = 250_000 * 100
 
     # amount of money currently in stripe
     balances = StripeService::Balance.retrieve
@@ -73,12 +73,7 @@ class TopupStripeJob < ApplicationJob
     topup_amount = buffer - pending - available - enroute_sum + expected_tx_sum
     # 200k - (current + pending + en route balance) + (expected_tx_sum)
 
-    StatsD.gauge("stripe_issuing_expected_tx_sum", expected_tx_sum, sample_rate: 1.0)
-    StatsD.gauge("stripe_issuing_enroute_issuing_topups_sum", enroute_sum, sample_rate: 1.0)
-    StatsD.gauge("stripe_issuing_available_issuing_balance", available, sample_rate: 1.0)
-    StatsD.gauge("stripe_issuing_pending_issuing_balance", pending, sample_rate: 1.0)
-
-    puts "topup amount == #{topup_amount}"
+    Rails.logger.info "topup amount == #{topup_amount}"
     return unless topup_amount >= 5_000 * 100
 
     # The maximum amount for a single top-up is $300k
@@ -92,9 +87,7 @@ class TopupStripeJob < ApplicationJob
       statement_descriptor: "Stripe Top-up"
     )
 
-    puts "Just created a topup for #{limited_topup_amount}"
-
-    StatsD.increment("stripe_issuing_topup", limited_topup_amount)
+    Rails.logger.info "Just created a topup for #{limited_topup_amount}"
   end
 
 end

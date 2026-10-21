@@ -44,32 +44,54 @@ class OrganizerPositionInvite
     end
 
     def create
-      expires_in = ActiveSupport::Duration.build(params[:expires_on].to_time - Time.now).seconds.to_i if params[:expires_on].present?
+      expires_in = Time.zone.parse(params[:expires_on])&.then { |t| (t - Time.current).to_i } if params[:expires_on].present?
       @link = @event.organizer_position_invite_links.build({ creator: current_user, expires_in: }.compact)
 
       authorize @link
 
       if @link.save
-        redirect_to event_team_path(event_id: @event.id), flash: { success: "Invite link successfully created." }
+        @invite_links = @event.organizer_position_invite_links.active
+
+        respond_to do |format|
+          format.html { redirect_to event_team_path(event: @event), flash: { success: "Invite link successfully created." } }
+          format.turbo_stream {
+            render turbo_stream: turbo_stream.replace("invite_links_section", partial: "events/invite_links_section", locals: { event: @event, invite_links: @invite_links })
+          }
+        end
       else
-        render :new, status: :unprocessable_entity
+        render :new, status: :unprocessable_content
       end
     end
 
     def deactivate
       authorize @link
 
+      @event = @link.event
+      @invite_links = @event.organizer_position_invite_links.active
       if @link.deactivate(user: current_user)
-        redirect_to event_team_path(event_id: @link.event.id), flash: { success: "Invite link successfully deactivated." }
+
+        respond_to do |format|
+          format.html { redirect_to event_team_path(event: @event), flash: { success: "Invite link successfully deactivated." } }
+          format.turbo_stream {
+            render turbo_stream: turbo_stream.replace("invite_links_section", partial: "events/invite_links_section", locals: { event: @event, invite_links: @invite_links })
+          }
+        end
       else
-        redirect_to event_team_path(event_id: @link.event.id), flash: { error: "Failed to deactivate invite link." }
+
+        respond_to do |format|
+          format.html { redirect_to event_team_path(event: @event), flash: { error: "Failed to deactivate invite link." } }
+          format.turbo_stream {
+            flash.now[:error] = "Failed to deactivate invite link."
+            render turbo_stream: turbo_stream.replace("invite_links_section", partial: "events/invite_links_section", locals: { event: @event, invite_links: @invite_links }), status: :unprocessable_content
+          }
+        end
       end
     end
 
     private
 
     def set_link
-      @link = OrganizerPositionInvite::Link.find_by_hashid(params[:id])
+      @link = OrganizerPositionInvite::Link.find_by_hashid!(params[:id])
     end
 
   end

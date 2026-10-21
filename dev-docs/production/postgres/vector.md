@@ -67,7 +67,7 @@
    ```
 
 6. Verify that data is flowing.
-   I recommend running the following commands. Although, you'll need
+   I recommend running the following commands. Note that you'll need
    `api.enabled = true` to be set in the config.
    ```bash
    vector top
@@ -77,7 +77,7 @@
 7. Wait for AppSignal to pick up custom metrics from Vector. It should
    automagically create a Postgres dashboard.
 
-   ![AppSignal sidebar](https://hc-cdn.hel1.your-objectstorage.com/s/v3/f8d29276865f37c091d9f8d7e46d3586877b2970_image.png)
-   ![AppSignal automatically PostgreSQL dashbaord](https://hc-cdn.hel1.your-objectstorage.com/s/v3/43730e54bc305ea2bce6b7e6d82c200889bc3b90_image.png)
+   ![AppSignal sidebar](https://cdn.hackclub.com/019c258a-0c7f-76ae-b8db-2d81036964c6/f8d29276865f37c091d9f8d7e46d3586877b2970_image.png)
+   ![AppSignal automatically created PostgreSQL dashboard](https://cdn.hackclub.com/019c258a-0cfd-7b8d-beec-c2a65fb54a49/43730e54bc305ea2bce6b7e6d82c200889bc3b90_image.png)
 
 \- [@garyhtou](https://garytou.com) & [@albertchae](https://github.com/albertchae)

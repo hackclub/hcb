@@ -1,3 +1,3 @@
 A charge of <%= render_money @cpt.amount_cents %> at '<%= @cpt.memo %>' occurred on your card for <%= @cpt.stripe_card.event.name %> ending in <%= @cpt.stripe_card.last4 %>.
 
-<%= render partial: "attach_receipt", locals: { hcb_code: @cpt.local_hcb_code, upload_url: @upload_url } %>
+<%= render partial: "canonical_pending_transaction_mailer/attach_receipt", locals: { hcb_code: @cpt.local_hcb_code, upload_url: @upload_url } %>

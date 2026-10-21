@@ -10,13 +10,13 @@ RSpec.describe FeaturesController do
     it "requires sudo mode to disable sudo mode" do
       user = create(:user)
       Flipper.enable(:sudo_mode_2015_07_21, user)
-      sign_in(user)
+      create_session(user, verified: true)
 
       travel(3.hours)
 
       post(:disable_feature, params: { feature: "sudo_mode_2015_07_21" })
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unauthorized)
       expect(Flipper.enabled?(:sudo_mode_2015_07_21, user)).to eq(true)
 
       post(

@@ -32,8 +32,6 @@ module TransactionEngine
 
           return likely_donation if donation?
 
-          return likely_disbursement if disbursement?
-
           return likely_bank_fee if outgoing_bank_fee?
 
           return reimbursement_expense_payout if reimbursement_expense_payout
@@ -43,6 +41,8 @@ module TransactionEngine
           return paypal_transfer if paypal_transfer
 
           return wire if wire
+
+          return card_charge if card_charge
 
           nil
         end
@@ -161,12 +161,6 @@ module TransactionEngine
         potential_donation_payouts.first.donation
       end
 
-      def likely_disbursement
-        return nil unless event
-
-        Disbursement.where(id: likely_disbursement_id).first
-      end
-
       def reimbursement_expense_payout
         return nil unless @canonical_transaction.transaction_source_type == "Reimbursement::ExpensePayout"
 
@@ -185,6 +179,12 @@ module TransactionEngine
 
       def wire
         @canonical_transaction.transaction_source if @canonical_transaction.transaction_source_type == Wire.name
+      end
+
+      def card_charge
+        return nil unless @canonical_transaction.transaction_source_type == "RawStripeTransaction"
+
+        @canonical_transaction.transaction_source.card_charge
       end
 
       def event

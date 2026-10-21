@@ -2,7 +2,12 @@
 
 class AdminMailer < ApplicationMailer
   include Rails.application.routes.url_helpers
-  default to: -> { Credentials.fetch(:SLACK_NOTIFICATIONS_EMAIL) }
+  default to: -> do
+    [
+      Credentials.fetch(:SLACK_NOTIFICATIONS_EMAIL),
+      User.find_by_public_id("usr_MVtap3")&.email_address_with_name # Lucy
+    ].compact
+  end
 
   def cash_withdrawal_notification
     @hcb_code = params[:hcb_code]
@@ -59,7 +64,7 @@ class AdminMailer < ApplicationMailer
 
     Disbursement.reviewing.find_each do |disbursement|
       if disbursement.created_at < 24.hours.ago
-        next if disbursement.comments.any? { |c| c.user.admin? } || disbursement.local_hcb_code.comments.any? { |c| c.user.admin? }
+        next if disbursement.local_hcb_code.comments.any? { |c| c.user.admin? }
 
         @tasks << {
           url: disbursement_process_admin_url(disbursement),
@@ -80,15 +85,6 @@ class AdminMailer < ApplicationMailer
     mail subject: "24 Hour Reminders for the Operations Team"
   end
 
-  def weekly_ysws_event_summary
-    @events = params[:events]
-    mail(
-      to: ["zach@hackclub.com", "max@hackclub.com"],
-      cc: "hcb@hackclub.com",
-      subject: "#{@events.length} new YSWS #{"organization".pluralize(@events.length)} created this past week"
-    )
-  end
-
   def blocked_authorization
     @stripe_card = params.fetch(:stripe_card)
     @event = @stripe_card.event
@@ -98,6 +94,23 @@ class AdminMailer < ApplicationMailer
       to: OPERATIONS_EMAIL,
       subject: "#{@event.name}: Stripe card authorization blocked"
     )
+  end
+
+  def failed_assertion_job(job:, job_id:, anomalies:)
+    @anomalies = anomalies
+    @job = job
+    @job_id = job_id
+
+    mail(
+      to: engineers,
+      subject: "Ledger assertion job #{job} failed with #{anomalies.length} anomalies"
+    )
+  end
+
+  private
+
+  def engineers
+    User.where(email: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"]).pluck(:email)
   end
 
 end

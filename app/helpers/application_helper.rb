@@ -2,10 +2,50 @@
 
 module ApplicationHelper
   include ActionView::Helpers
+  include LocalTimeHelper
+
+  include ComboboxHelper
+  include DonationsHelper
+  include EmburseCardsHelper
+  include EventsHelper
+  include GSuitesHelper
+  include HcbCodeHelper
+  include InvoicesHelper
+  include LoginsHelper
+  include LogoHelper
+  include OrganizerPosition::Spending::AllowancesHelper
+  include PayeesHelper
+  include PopoverHelper
+  include ReceiptsHelper
+  include SeasonalHelper
+  include SessionsHelper
+  include StaticPagesHelper
+  include StripeAuthorizationsHelper
+  include StripeCardsHelper
+  include TagsHelper
+  include ToursHelper
+  include TurboStreamActionsHelper
+  include UsersHelper
 
   def upsert_query_params(**new_params)
     params = request.query_parameters || {}
     params.merge(new_params)
+  end
+
+  def sorted_relation(relation, columns, sort:, default_direction: :desc)
+    default_column = columns.find { |c| c[:default] } || columns.first
+
+    sort_key, sort_direction = organizer_signed_in? && sort&.first ? sort : [default_column[:key], default_direction]
+
+    sort_direction = sort_direction.to_s.in?(%w[asc desc]) ? sort_direction : default_direction.to_s
+    column_def = columns.find { |c| c[:key] == sort_key.to_s } || default_column
+    relation = relation.left_joins(column_def[:join]) if column_def[:join]
+
+    if column_def[:order]
+      column_def[:order].call(relation, sort_direction.to_sym)
+    else
+      relation.order(column_def.fetch(:column, column_def[:key]) => sort_direction)
+    end
   end
 
   def render_money(amount, opts = {})
@@ -38,8 +78,8 @@ module ApplicationHelper
   end
 
   def render_transaction_amount(amount)
-    if amount > 0
-      content_tag(:span, "+#{render_money amount}", class: "success-dark medium")
+    if Flipper.enabled?(:transactions_background_2024_06_05, current_user)
+      content_tag :div, render_money(amount), class: "badge bg-#{amount.positive? ? 'success' : 'error'}"
     else
       render_money amount
     end
@@ -55,12 +95,12 @@ module ApplicationHelper
     content << [obj.address_line1, tag.br].join("")
     content << [obj.address_line2 + tag.br].join("") if obj.address_line2.present?
     content << [obj.address_city, obj.address_state, obj.address_postal_code].join(", ")
-    content_tag(:span, content.join.html_safe)
+    content_tag(:span, sanitize(content.join))
   end
 
   def blankslate(text, **options)
     other_options = options.except(:class)
-    content_tag(:p, text, class: "center mt0 mb0 pt4 pb4 slate bold h3 mx-auto rounded-lg border #{options[:class]}", **other_options)
+    content_tag(:p, text, class: "center mt0 mb0 pt4 pb4 muted font-medium h3 w-full rounded-lg border border-gray-200 dark:border-gray-700 #{options[:class]}", **other_options)
   end
 
   def list_badge_for(count, item, glyph, optional: false, required: false, **options)
@@ -82,12 +122,8 @@ module ApplicationHelper
     content_tag :span, "", class: "status bg-#{type}"
   end
 
-  def status_if(type, condition)
-    status_badge(type) if condition
-  end
-
   def pop_icon_to(icon, url, icon_size: 28, **options)
-    link_to url, options.merge(class: "pop #{options[:class] || "info"}") do
+    link_to url, options.merge(class: "pop #{options[:class] || ""}") do
       inline_icon icon, size: icon_size
     end
   end
@@ -122,14 +158,14 @@ module ApplicationHelper
   end
 
   def modal_external_link(external_link)
-    pop_icon_to "external", external_link, target: "_blank", size: 14, class: "modal__external muted", onload: "window.navigator.standalone ? this.setAttribute('target', '_top') : null"
+    pop_icon_to "external", sanitize(external_link), target: "_blank", size: 14, class: "modal__external muted", data: { controller: "standalone-link" }
   end
 
   def modal_header(text, external_link: nil)
-    content_tag :header, class: "pb2" do
+    content_tag :header, class: "pb2 rounded-t-lg" do
       modal_close +
         (external_link ? modal_external_link(external_link) : "") +
-        content_tag(:h2, text.html_safe, class: "h1 mt0 mb0 pb0 border-none")
+        content_tag(:h2, sanitize(text), class: "h1 mt0 mb0 pb0 border-none")
     end
   end
 
@@ -155,14 +191,6 @@ module ApplicationHelper
     content_tag :span, "#{options[:prefix]}#{time_ago_in_words time} ago#{options[:suffix]}", options.merge(title: time)
   end
 
-  def auto_link_new_tab(text)
-    auto_link(text, html: { target: "_blank" })
-  end
-
-  def debug_obj(item)
-    content_tag :pre, pp(item.attributes.to_yaml)
-  end
-
   def inline_icon(filename, **options)
     # cache parsed SVG files to reduce file I/O operations
     @icon_svg_cache ||= {}
@@ -178,6 +206,9 @@ module ApplicationHelper
       options[:width] ||= options[:size]
       options[:height] ||= options[:size]
       options.delete :size
+    end
+    unless options["aria-label"]
+      options["aria-hidden"] = true
     end
     options.each { |key, value| svg[key.to_s] = value }
     doc.to_html.html_safe
@@ -206,14 +237,8 @@ module ApplicationHelper
     doc.to_html.html_safe
   end
 
-  def anchor_link(id)
-    link_to "##{id}", class: "absolute top-0 -left-8 transition-opacity opacity-0 group-hover/summary:opacity-100 group-target/item:opacity-100 anchor-link tooltipped tooltipped--s", 'aria-label': "Copy link", data: { turbo: false, controller: "clipboard", clipboard_text_value: url_for(only_path: false, anchor: id), action: "clipboard#copy" } do
-      inline_icon "link", size: 28
-    end
-  end
-
   def help_message
-    content_tag :span, "Contact the HCB team at #{help_email} or #{help_phone}.".html_safe
+    content_tag :span, "Contact the HCB team at #{help_email} or call #{help_phone} for urgent requests.".html_safe
   end
 
   def help_email
@@ -239,6 +264,12 @@ module ApplicationHelper
 
   def home_action_size
     @home_size.to_i > 48 ? 36 : 28
+  end
+
+  def parent_layout(name)
+    @view_flow.set(:layout, output_buffer)
+    output = render(template: "layouts/#{name}")
+    self.output_buffer = ActionView::OutputBuffer.new(output)
   end
 
   def page_xl
@@ -269,13 +300,20 @@ module ApplicationHelper
     content_for :title, text
   end
 
+  # Used for transfer layout, which has a subtitle in the navbar
+  def subtitle(text)
+    content_for :subtitle, text
+  end
+
   def admin_inspectable_attributes(record)
     stripe_obj = begin
       record.stripe_obj
     rescue Stripe::InvalidRequestError
-      puts "Can't access stripe object, skipping"
+      Rails.logger.warn "Can't access stripe object, skipping"
+      nil
     rescue NoMethodError
-      puts "Not a stripe object, skipping"
+      Rails.logger.warn "Not a stripe object, skipping"
+      nil
     end
 
     if stripe_obj.nil?
@@ -311,18 +349,6 @@ module ApplicationHelper
     JSON.pretty_generate(obj.as_json)
   end
 
-  def airtable_form(id, params = {}, hide = [])
-    query = {}
-    params.each do |key, value|
-      query["prefill_#{key}"] = value
-    end
-    hide.each do |field|
-      query["hide_#{field}"] = "true"
-    end
-
-    "https://airtable.com/#{id}?#{URI.encode_www_form(query)}"
-  end
-
   def fillout_form(id, params = {}, prefix: "")
     query = params.transform_keys { |k| prefix + k }
     "https://forms.hackclub.com/t/#{id}?#{URI.encode_www_form(query)}"
@@ -356,7 +382,7 @@ module ApplicationHelper
   end
 
   def error_boundary(fallback: nil, fallback_text: nil, ignored_errors: [], &block)
-    block.call
+    capture(&block)
   rescue => e
     Rails.error.report(e) unless e.in?(ignored_errors)
 
@@ -392,25 +418,48 @@ module ApplicationHelper
   def dropdown_button(button_class: "bg-success", template: ->(value) { value }, **options)
     return content_tag :div, class: "relative w-fit #{options[:class]}", data: { controller: "dropdown-button", "dropdown-button-target": "container" } do
       (content_tag :div, class: "dropdown-button__container", **options[:button_container_options] do
-        (content_tag :button, class: "btn !transform-none rounded-l-xl rounded-r-none #{button_class}", **options[:button_options] do
+        (content_tag :button, class: "btn !transform-none rounded-l-md rounded-r-none #{button_class}", **options[:button_options] do
           (inline_icon options[:button_icon]) +
-          (content_tag :span, template.call(options[:options][0][1]), data: { "dropdown-button-target": "text", "template": template })
+          (content_tag :span, template.call(options[:options][0][1]), class: "truncate", data: { "dropdown-button-target": "text", "template": template })
         end) +
-        (content_tag :button, type: "button", class: "btn !transform-none rounded-r-xl rounded-l-none !w-12 ml-[2px] #{button_class}", data: { action: "click->dropdown-button#toggle" } do
+        (content_tag :button, type: "button", class: "btn !transform-none rounded-r-md rounded-l-none !w-12 ml-[2px] #{button_class}", data: { action: "click->dropdown-button#toggle" } do
           inline_icon "down-caret", class: "!mr-0"
         end)
       end) +
       (content_tag :div, class: "dropdown-button__menu fade-card-hide #{options[:menu_class]}", data: { "dropdown-button-target": "menu" } do
         content_tag :div do
           options[:options].map.with_index do |option, index|
-            (options[:form].radio_button options[:name], option[1], { checked: index == 0, data: { action: "change->dropdown-button#change", "dropdown-button-target": "select", "label": template.call(option[1]) } }) +
-            (options[:form].label options[:name], value: option[1] do
-              (tag.strong option[0]) + (tag.p option[2])
+            (options[:form].radio_button sanitize(options[:name]), option[1], { checked: index == 0, data: { action: "change->dropdown-button#change", "dropdown-button-target": "select", "label": sanitize(template.call(option[1])) } }) +
+            (options[:form].label sanitize(options[:name]), value: option[1] do
+              (tag.strong sanitize(option[0])) + (tag.p sanitize(option[2]))
             end)
           end.join.html_safe
         end
       end)
     end
+  end
+
+  # Functions as a link_to that shows text on larger screens and just the icon on smaller screens
+  def responsive_link_to(href, text:, icon:, **options)
+    text_class = "#{options[:class]} hidden md:flex"
+    icon_class = "#{options[:class]} flex md:hidden"
+    safe_join([
+                link_to(text, href, options.merge(class: text_class)),
+                link_to(href, options.merge(class: icon_class)) do
+                  inline_icon icon, class: "!m-0"
+                end
+              ])
+  end
+
+  def mobile_button_to(href, text:, icon:, **options)
+    text_form_class = "#{options[:form_class]} hidden md:flex"
+    icon_form_class = "#{options[:form_class]} flex md:hidden"
+    safe_join([
+                button_to(text, href, options.merge(form_class: text_form_class)),
+                button_to(href, options.merge(form_class: icon_form_class)) do
+                  inline_icon icon, class: "!m-0"
+                end
+              ])
   end
 
 end

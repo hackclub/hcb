@@ -1,0 +1,18 @@
+<% title "New Teenagers Leaderboard" %>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th># of new teenagers</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @link_creators.sort_by { |u| -u.new_teenagers_from_referrals_count }.each do |user| %>
+      <tr>
+        <td><%= user_mention user %></td>
+        <td><%= user.referral_links.sum { |link| link.new_teenagers.length } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

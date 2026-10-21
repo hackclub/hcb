@@ -1,5 +1,3 @@
-import Intl from 'intl'
-import 'intl/locale-data/jsonp/en-US'
 import { useEffect, useState } from 'react'
 
 export const generateColor = (index, length, isDark) => {

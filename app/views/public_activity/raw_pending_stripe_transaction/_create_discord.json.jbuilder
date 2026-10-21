@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-current_user ||= local_assigns[:p][:current_user]
+# locals: (activity:, p:)
+
 hcb_code = activity.trackable&.canonical_pending_transaction&.local_hcb_code
 user = activity.user&.name
 
@@ -21,4 +22,7 @@ json.embed do
 
 end
 
-json.components Discord.button_to("Attach receipt", "attach_receipt", style: 3, emoji: Discord.emoji_icon(:payment_docs))
+json.components [
+  Discord.button_to("View transaction", hcb_code_url("#{TransactionGroupingEngine::Calculate::HcbCode::HCB_CODE}-#{TransactionGroupingEngine::Calculate::HcbCode::STRIPE_CARD_CODE}-#{activity.trackable.stripe_transaction_id}")),
+  Discord.button_to("Attach receipt", "attach_receipt", style: 3, emoji: Discord.emoji_icon(:payment_docs))
+]

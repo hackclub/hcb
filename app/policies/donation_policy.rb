@@ -2,11 +2,15 @@
 
 class DonationPolicy < ApplicationPolicy
   def show?
-    record.event.users.include?(user) || user&.auditor?
+    OrganizerPosition.role_at_least?(user, record.event, :reader) || user&.auditor?
   end
 
   def create?
-    record.event.users.include?(user) || user&.admin?
+    OrganizerPosition.role_at_least?(user, record.event, :reader) || user&.admin?
+  end
+
+  def payment_intent?
+    create?
   end
 
   def start_donation?
@@ -22,15 +26,15 @@ class DonationPolicy < ApplicationPolicy
   end
 
   def export?
-    record.event.users.include?(user) || user&.auditor?
+    OrganizerPosition.role_at_least?(user, record.event, :reader) || user&.auditor?
   end
 
   def export_donors?
-    record.event.users.include?(user) || user&.auditor?
+    OrganizerPosition.role_at_least?(user, record.event, :reader) || user&.auditor?
   end
 
   def update?
-    OrganizerPosition.find_by(user:, event: record.event)&.manager? || user&.admin?
+    OrganizerPosition.role_at_least?(user, record.event, :manager) || user&.admin?
   end
 
   def refund?

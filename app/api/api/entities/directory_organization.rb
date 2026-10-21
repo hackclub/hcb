@@ -74,10 +74,10 @@ module Api
       end
 
       expose :logo do |organization|
-        url_for_attached organization.logo
+        url_for_attached organization.logo, resize_to_limit: [200, 200]
       end
       expose :background_image do |organization|
-        url_for_attached organization.background_image
+        url_for_attached organization.background_image, resize_to_limit: [800, 800]
       end
       expose :donation_link do |organization|
         if organization.donation_page_available?

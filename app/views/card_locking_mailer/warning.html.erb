@@ -1,3 +1,12 @@
-Your HCB cards are at risk of getting locked if you don't upload your <%= @missing_receipts %> outstanding missing receipts. Once you hit 10 missing receipts, your cards will be locked until you upload them.
-<br><br>
-You can manage your receipts on HCB <%= link_to "receipts page", my_inbox_url %>.
+<p>
+  You have <%= @count %> <%= "outstanding receipt".pluralize(@count) %>.
+  <% if @due_in %>
+    Your <%= "next " unless @count == 1 %>receipt is due in <strong><%= @due_in %></strong>. Miss that deadline, and your cards lock until you upload that missing receipt.
+  <% end %>
+
+  Charges that go more than 7 days without a receipt will lock your cards. Upload these to stay ahead.
+</p>
+<p>
+  Every charge needs a receipt within 7 days. Manage your receipts on the HCB <%= link_to "receipts page", my_inbox_url %>.
+</p>
+<%= render "card_locking_mailer/transactions_table", hcb_codes: @hcb_codes, show_org: @show_org %>

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# locals: (json:, hcb_code:)
+
 stripe_transaction = hcb_code.ct&.raw_stripe_transaction&.stripe_transaction
 stripe_authorization = hcb_code.pt&.raw_pending_stripe_transaction&.stripe_transaction
 
@@ -11,6 +13,8 @@ json.merchant do
   json.country merchant_data["country"]
   json.network_id merchant_data["network_id"]
 end
+
+json.decline_reason hcb_code.pt&.decline_reason if hcb_code.pt&.declined?
 
 json.charge_method stripe_authorization&.dig("authorization_method")
 json.spent_at Time.at((stripe_authorization || stripe_transaction)["created"], in: "UTC")

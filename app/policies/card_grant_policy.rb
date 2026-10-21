@@ -10,55 +10,39 @@ class CardGrantPolicy < ApplicationPolicy
   end
 
   def show?
-    user&.auditor? || record.user == user || user_in_event?
+    user&.auditor? || cardholder? || user_in_event?
+  end
+
+  def transactions?
+    user&.auditor? || cardholder? || user_in_event?
   end
 
   def spending?
     record.event.is_public? || user&.auditor? || user_in_event?
   end
 
-  def edit_actions?
-    admin_or_manager?
-  end
-
-  def edit_usage_restrictions?
-    admin_or_manager?
-  end
-
   def edit_overview?
-    admin_or_manager?
+    auditor_or_member? && record.active?
   end
 
-  def edit_balance?
-    admin_or_manager?
-  end
-
-  def edit_purpose?
-    admin_or_manager?
-  end
-
-  def edit_topup?
-    admin_or_manager?
-  end
-
-  def edit_withdraw?
-    admin_or_manager?
-  end
+  alias_method :edit_actions?, :edit_overview?
+  alias_method :edit_usage_restrictions?, :edit_overview?
+  alias_method :edit_expiration?, :edit_overview?
+  alias_method :edit_purpose?, :edit_overview?
+  alias_method :edit_balance?, :edit_overview?
+  alias_method :edit_topup?, :edit_overview?
+  alias_method :edit_withdraw?, :edit_overview?
 
   def activate?
-    user&.admin? || (record.user == user && authorized_to_activate?)
+    (user&.admin? || (cardholder? && authorized_to_activate?)) && record.active?
   end
 
   def cancel?
-    (admin_or_manager? || record.user == user) && record.active?
+    (admin_or_manager? || cardholder?) && record.active?
   end
 
   def convert_to_reimbursement_report?
-    (admin_or_manager? || record.user == user) && record.active? && record.card_grant_setting.reimbursement_conversions_enabled?
-  end
-
-  def edit?
-    admin_or_manager? && record.active?
+    (admin_or_manager? || cardholder?) && record.active? && record.card_grant_setting.reimbursement_conversions_enabled?
   end
 
   def toggle_one_time_use?
@@ -77,32 +61,44 @@ class CardGrantPolicy < ApplicationPolicy
     admin_or_manager? && record.active?
   end
 
+  def permit_merchant?
+    admin_or_manager? && record.active?
+  end
+
   def update?
     admin_or_manager? && record.active?
   end
 
+  private
+
   def admin_or_user?
-    user&.admin? || record.event.users.include?(user)
+    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def admin_or_manager?
-    user&.admin? || OrganizerPosition.find_by(user:, event: record.event)&.manager?
+    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
+  end
+
+  def auditor_or_member?
+    user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :member)
   end
 
   def sender_admin_or_manager?
     return true if record.sent_by.nil? # May be nil if used to authorize after build on #new page.
 
-    record.sent_by.admin? || OrganizerPosition.find_by(user: record.sent_by, event: record.event)&.manager?
+    record.sent_by.admin? || OrganizerPosition.role_at_least?(record.sent_by, record.event, :manager)
   end
 
-  private
-
   def user_in_event?
-    record.event.users.include?(user)
+    OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def authorized_to_activate?
     record.pre_authorization.nil? || record.pre_authorization.approved? || record.pre_authorization.fraudulent?
+  end
+
+  def cardholder?
+    record.user == user
   end
 
 end

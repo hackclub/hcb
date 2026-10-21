@@ -1,5 +1,4 @@
 @import 'variables';
-@import 'guidelines';
 
 $font-family:
   system-ui,
@@ -19,14 +18,26 @@ $mono:
   @each $name, $value in $palette {
     --#{"" + $name}: #{$value};
   }
+  --bg-color: var(--snow);
 }
 
 * {
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   box-sizing: border-box;
   font-family: inherit;
   font-weight: inherit;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  /* Set background color for selected text */
+  background: map-get($palette, info);
+  color: white;
+}
+
+img {
+  user-select: none;
 }
 
 html,
@@ -46,36 +57,7 @@ body {
   -webkit-font-smoothing: antialiased;
   color: $black;
   margin: 0;
-  padding-bottom: 2rem;
   min-height: 100vh;
-}
-
-.activity {
-  display: none;
-}
-
-@media screen and (min-width: 56em) and (min-height: 640px) {
-  body:has(.activity) {
-    padding-bottom: 0rem;
-  }
-
-  .activity {
-    display: block;
-  }
-
-  .container:has(.activity) > .app__sidebar {
-    position: sticky;
-    position: -webkit-sticky;
-    top: 0;
-  }
-
-  .container:has(.activity) > .app__content {
-    padding-bottom: 2rem;
-  }
-}
-
-a {
-  color: currentColor;
 }
 
 strong {
@@ -118,25 +100,26 @@ fieldset legend.h2 {
 }
 
 h1 {
-  font-size: 3rem;
+  font-size: 2rem;
+  font-weight: 700;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid map-get($palette, smoke);
+  border-bottom: 1px solid rgba(200, 200, 200, 0.3);
   border-bottom-width: 0.5px;
+  margin-top: 1.25rem;
   margin-bottom: 1rem;
 }
 
 h2 {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   margin-bottom: 0.5rem;
 }
 
 h3 {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
 }
 
 h4 {
-  letter-spacing: 0;
-  font-size: 1.25rem;
+  font-size: 1.125rem;
 }
 
 p + p {
@@ -148,13 +131,116 @@ table {
   width: 100%;
 }
 
-tr {
+tr,
+.visual-table-row {
   border-bottom: 1px solid rgba(0, 0, 0, 0.0625);
   border-bottom-width: 0.5px;
 
   a {
     color: map-get($palette, slate);
   }
+
+  thead & {
+    border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+    background-color: rgba(0, 0, 0, 0.01);
+  }
+}
+
+tr.clickable {
+  user-select: none;
+  width: 100%;
+  flex-shrink: 1;
+  flex: 1;
+  display: table-row;
+  align-items: center;
+  transform: rotate(0);
+  position: relative;
+  overflow: visible; // for tooltips
+
+  &:hover {
+    transition-duration: 0s;
+  }
+
+  & td {
+    pointer-events: none;
+
+    & .tooltipped,
+    & .mention {
+      pointer-events: auto;
+    }
+  }
+
+  a.stretched-link {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: -1;
+    pointer-events: auto;
+    content: '';
+    margin-bottom: 1px;
+    background-color: transparent;
+  }
+
+  border-radius: var(--radius-lg);
+  line-height: 1.75;
+  transition:
+    color 0.125s ease-in-out,
+    background-color 0.125s ease-in-out;
+  color: $black;
+  line-height: 1.25;
+  padding: 0.25rem;
+  border: 1px solid rgba(200, 200, 200, 0.3);
+  border-left-width: 0px;
+  border-right-width: 0px;
+
+  &:hover a.stretched-link {
+    background-color: map-get($palette, white);
+    box-shadow: var(--shadow-sm);
+
+    [data-dark='true'] & {
+      background-color: $darker;
+    }
+  }
+
+  &[aria-current='page'] {
+    background-color: map-get($palette, white);
+    box-shadow: var(--shadow-border-sm);
+
+    svg {
+      fill: map-get($palette, primary);
+    }
+  }
+
+  &.disabled {
+    color: map-get($palette, muted);
+    cursor: not-allowed;
+  }
+
+  [data-dark='true'] & {
+    color: inherit;
+
+    svg {
+      fill: currentColor;
+    }
+  }
+}
+
+.contractor-review-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background-color: map-get($palette, primary);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
 thead {
@@ -174,24 +260,23 @@ td {
 }
 
 th {
-  font-weight: 600;
+  color: map-get($palette, muted);
+  font-size: 0.875rem;
+  font-weight: 500;
   text-align: left;
-  padding-bottom: 0.125rem;
+  padding-block: 0.25rem;
 }
 
 hr {
   margin: 2rem 0;
   border: 0;
-  border-bottom: 1px solid map-get($palette, smoke);
+  border-bottom: 1px solid map-get($palette, divider);
+  border-bottom-width: 0.5px;
 }
 
 svg {
   fill: currentColor;
   flex-shrink: 0;
-}
-
-.cursor-pointer {
-  cursor: pointer;
 }
 
 action {
@@ -202,13 +287,36 @@ action {
   }
 }
 
+details {
+  inline-size: 100%;
+
+  @media (prefers-reduced-motion: no-preference) {
+    interpolate-size: allow-keywords;
+  }
+
+  &::details-content {
+    opacity: 0;
+    block-size: 0;
+    overflow-y: clip;
+    transition:
+      content-visibility 0.5s allow-discrete,
+      opacity 0.5s,
+      block-size 0.5s;
+  }
+
+  &[open]::details-content {
+    opacity: 1;
+    block-size: auto;
+  }
+}
 summary {
   cursor: pointer;
 }
 
 @import 'components/avatars';
+@import 'components/combobox';
 @import 'components/badges';
-@import 'components/banners'; //TODO: Rename
+@import 'components/banners';
 @import 'components/buttons';
 @import 'components/cards';
 @import 'components/checks';
@@ -224,13 +332,17 @@ summary {
 @import 'components/headings';
 @import 'components/layouts';
 @import 'components/lists';
+@import 'components/marketing';
 @import 'components/menus';
+@import 'components/payout_methods';
 @import 'components/modals';
 @import 'components/physical_cards';
 @import 'components/public_message';
 @import 'components/stats';
+@import 'components/sub_organizations';
 @import 'components/pinned_transactions';
 @import 'components/steps';
+@import 'components/contractor_onboarding_flow';
 @import 'components/tooltips';
 @import 'components/transactions';
 @import 'components/promos';
@@ -238,7 +350,6 @@ summary {
 @import 'components/features';
 @import 'components/loading';
 @import 'components/file_dropzone';
-@import 'components/support_button';
 @import 'components/welcome';
 @import 'components/tabs';
 @import 'components/team';
@@ -258,11 +369,12 @@ summary {
 @import 'components/filter_menu';
 @import 'components/home_page';
 @import 'components/send_invoice_modal';
+@import 'components/sweetalert';
 @import 'components/dual_range_slider';
 @import 'components/integrations';
 
 .turbo-progress-bar {
-  height: 0.125rem;
+  height: 0.25rem;
   background-color: map-get($palette, primary);
 }
 
@@ -272,8 +384,8 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
 
 #HW_badge_cont {
   position: absolute;
-  top: -10px;
-  right: -10px;
+  top: -5px;
+  right: -5px;
 
   width: auto;
   height: auto;
@@ -284,32 +396,62 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
 }
 
 #HW_frame_cont {
-  transform: translateY(35px) translateX(0.75rem);
+  transform: translateX(0.75rem);
 }
 
+@media (max-width: 768px) {
+  #HW_frame_cont {
+    transform: translateY(35px) translateX(0.75rem);
+  }
+}
 .admin-tools {
-  padding: 0.5rem;
-  border-radius: 0.5rem;
-  border: 1px dashed map-get($palette, warning);
-  background: rgba(map-get($palette, pending), 0.125);
-  overflow: auto;
+  position: relative;
+  overflow: visible !important;
+
+  &.badge {
+    background: transparent;
+  }
+  &.badge::before {
+    border-radius: 99px;
+  }
+
+  &::before {
+    content: '';
+    border-radius: 0.5rem;
+    border: 2px dotted rgba(map-get($palette, warning), 0.3);
+    inset: 0px;
+    background: rgba(map-get($palette, pending), 0.08);
+    position: absolute;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  &:not(td)::before {
+    top: -2.5px;
+    right: -2.5px;
+    bottom: -2.5px;
+    left: -2.5px;
+  }
 }
 
-.details .admin-tools {
-  padding: 0.25rem 1rem;
-  margin: 0 -1rem;
-  border-radius: 0;
-  border: 0;
-}
+// When multiple admin-tools rows are stacked back-to-back inside a .details
+// list (e.g. several admin_tool blocks in a row), merge their dotted outlines
+// into a single continuous box instead of each row drawing its own rounded
+// border and overlapping its neighbor.
+.details > .admin-tools {
+  &:has(+ .admin-tools)::before {
+    bottom: 0;
+    border-bottom: none;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
 
-.details-horiz .admin-tools {
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
-  padding-right: 1rem;
-  margin-top: -0.75rem;
-  margin-bottom: -0.75rem;
-  border-radius: 0;
-  border: 0;
+  & + .admin-tools::before {
+    top: 0;
+    border-top: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
 }
 
 .dev-tools {
@@ -367,59 +509,8 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   }
 }
 
-// sourced from yours truly, W3Schools: https://www.w3schools.com/howto/howto_css_shake_image.asp
-
-@keyframes shake {
-  0% {
-    transform: translate(1px, 1px) rotate(0deg);
-  }
-  10% {
-    transform: translate(-1px, -2px) rotate(-1deg);
-  }
-  20% {
-    transform: translate(-3px, 0px) rotate(1deg);
-  }
-  30% {
-    transform: translate(3px, 2px) rotate(0deg);
-  }
-  40% {
-    transform: translate(1px, -1px) rotate(1deg);
-  }
-  50% {
-    transform: translate(-1px, 2px) rotate(-1deg);
-  }
-  60% {
-    transform: translate(-3px, 1px) rotate(0deg);
-  }
-  70% {
-    transform: translate(3px, 1px) rotate(-1deg);
-  }
-  80% {
-    transform: translate(-1px, -1px) rotate(1deg);
-  }
-  90% {
-    transform: translate(1px, 2px) rotate(0deg);
-  }
-  100% {
-    transform: translate(1px, -2px) rotate(-1deg);
-  }
-}
-
 // Make mobile views nice. Full-bleed separator lines
 @media screen and (max-width: 32em) {
-  table:not(.table-container > table),
-  .table-container,
-  .list,
-  .heading,
-  .details,
-  h1,
-  h2,
-  h3 {
-    width: calc(100% + 2rem);
-    margin-left: -1rem;
-    margin-right: -1rem;
-  }
-
   td,
   th {
     &:first-child {
@@ -429,18 +520,6 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
     &:last-child {
       padding-right: 1rem;
     }
-  }
-
-  .list > a > li,
-  .list > li,
-  .heading,
-  .details > p,
-  .details > div,
-  h1,
-  h2,
-  h3 {
-    padding-left: 1rem;
-    padding-right: 1rem;
   }
 }
 
@@ -495,6 +574,14 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer components {
+  .user-home-section {
+    @extend .heading;
+    @extend .h2;
+    @apply leading-[1.5] my-2 mr-auto py-2 px-4 border-none ml-0 pl-0 pb-0 mb-0 text-left;
+  }
+}
 
 @layer base {
   pre,
@@ -574,5 +661,243 @@ html[data-ai-loading='true'] > .turbo-progress-bar {
   to {
     opacity: 0;
     display: none;
+  }
+}
+.command-bar-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  color: inherit;
+  transition: background-color 0.125s ease-in-out;
+  cursor: pointer;
+  &:hover {
+    transition-duration: 0s;
+  }
+  &:active {
+    transition-duration: 0.125s;
+  }
+}
+
+// Tiptap menu bar formatting styles
+.format-button {
+  @extend .pop;
+  width: auto;
+  min-width: 36px;
+  @apply text-black dark:text-white text-lg;
+  background: transparent !important;
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(200, 200, 200, 0.25) !important;
+    transition-duration: 0s;
+  }
+
+  &.is-active {
+    @apply bg-primary text-white;
+  }
+}
+
+.scroll-fade {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black var(--top-mask-size, 0),
+    black calc(100% - var(--bottom-mask-size, 0)),
+    transparent 100%
+  );
+  --top-mask-size: 0px;
+  --bottom-mask-size: 0px;
+}
+
+.scroll-fade.is-top-overflowing {
+  --top-mask-size: 48px !important;
+}
+
+.scroll-fade.is-bottom-overflowing {
+  --bottom-mask-size: 48px !important;
+}
+
+.suborg-graph-toggle {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: linear-gradient(
+    transparent,
+    rgba($snow, 0.7) 40%,
+    $snow 60%
+  ) !important;
+  font-size: 14px;
+  height: 64px;
+  z-index: 1;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  cursor: pointer;
+  color: $muted;
+  transition: background 0.15s;
+
+  [data-dark='true'] & {
+    background: linear-gradient(
+      transparent,
+      rgba($darkless, 0.7) 40%,
+      $darkless 60%
+    ) !important;
+  }
+}
+
+.hcb-suborg-graph {
+  .node-rect {
+    fill: #fff;
+    stroke: #ddd;
+    transition:
+      fill 0.15s,
+      stroke 0.15s;
+  }
+  .root-rect {
+    fill: #ec3750;
+    stroke: #c0392b;
+    transition: fill 0.15s;
+  }
+  .node-text {
+    fill: #000;
+    font-size: 13px;
+    font-weight: 600;
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+  }
+  .root-text {
+    fill: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+  }
+  .node-meta {
+    fill: #555;
+    font-size: 11px;
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+  }
+  .edge {
+    stroke: #aaa;
+  }
+  .arrow-head {
+    fill: #aaa;
+  }
+  a {
+    outline: none;
+    &:hover .node-rect {
+      fill: #f0f0f0;
+      stroke: #bbb;
+    }
+    &:hover .root-rect {
+      fill: #d42f47;
+    }
+    &:focus .node-rect {
+      fill: #f0f0f0;
+      stroke: #ec3750;
+    }
+    &:focus .root-rect {
+      stroke: #ff8896;
+    }
+    &:active .node-rect {
+      fill: #e0e0e0;
+      stroke: #ec3750;
+    }
+    &:active .root-rect {
+      fill: #b02030;
+    }
+  }
+
+  .more-rect {
+    fill: transparent;
+    stroke: #ccc;
+    stroke-dasharray: 5 3;
+    transition:
+      fill 0.15s,
+      stroke 0.15s;
+  }
+  .more-text {
+    fill: #999;
+    font-size: 15px;
+    font-family:
+      system-ui,
+      -apple-system,
+      sans-serif;
+  }
+  .more-node:hover .more-rect {
+    fill: #f5f5f5;
+    stroke: #aaa;
+  }
+  .more-node:hover .more-text {
+    fill: #555;
+  }
+
+  [data-dark='true'] & {
+    .node-rect {
+      fill: #2a2a2f;
+      stroke: #444;
+    }
+    .node-text {
+      fill: #fff;
+    }
+    .node-meta {
+      fill: #999;
+    }
+    .edge {
+      stroke: #555;
+    }
+    .arrow-head {
+      fill: #555;
+    }
+    .more-rect {
+      stroke: #555;
+    }
+    .more-text {
+      fill: #777;
+    }
+    .more-node:hover .more-rect {
+      fill: #333;
+      stroke: #777;
+    }
+    .more-node:hover .more-text {
+      fill: #bbb;
+    }
+    a {
+      &:hover .node-rect {
+        fill: #3a3a40;
+        stroke: #666;
+      }
+      &:hover .root-rect {
+        fill: #d42f47;
+      }
+      &:focus .node-rect {
+        fill: #3a3a40;
+        stroke: #ec3750;
+      }
+      &:focus .root-rect {
+        stroke: #ff8896;
+      }
+      &:active .node-rect {
+        fill: #1a1a1f;
+        stroke: #ec3750;
+      }
+      &:active .root-rect {
+        fill: #b02030;
+      }
+    }
   }
 }

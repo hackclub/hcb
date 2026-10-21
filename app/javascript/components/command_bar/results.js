@@ -67,7 +67,6 @@ const ResultItem = React.forwardRef(
       <div
         ref={ref}
         style={{
-          padding: '12px 16px',
           background: active
             ? action.section == 'Admin Tools'
               ? 'var(--kbar-admin-overlay)'
@@ -75,18 +74,8 @@ const ResultItem = React.forwardRef(
             : action.section == 'Admin Tools'
               ? 'var(--kbar-admin-overlay)'
               : 'transparent',
-          borderLeft: `2px solid ${
-            active && action.name != 'error' && action.name != 'new search'
-              ? action.section == 'Admin Tools'
-                ? '#ff8c37'
-                : '#ec3750'
-              : 'transparent'
-          }`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          cursor: 'pointer',
         }}
+        className="command-bar-item"
       >
         <div
           style={{

@@ -1,23 +1,116 @@
 # frozen_string_literal: true
 
-require "digest/md5"
-require "cgi"
-
 module UsersHelper
+  def users_nav(selected: nil)
+    items = [
+      {
+        name: "Home",
+        path: root_path,
+        icon: "home",
+        tooltip: current_user&.events&.any? ? "See all your organizations" : "See your dashboard",
+        selected: selected == :home
+      }
+    ]
+
+    if current_user(allow_unverified: true)&.show_first_dashboard? && !current_user(allow_unverified: true)&.redirect_to_first_dashboard?
+      items << {
+        name: "FIRST",
+        path: first_index_path,
+        tooltip: "Explore HCB for FIRST teams",
+        icon: "resources",
+        selected: selected == :first
+      }
+    end
+
+    if current_user&.followed_events&.any?
+      items << {
+        name: "Feed",
+        path: my_feed_path,
+        tooltip: "See announcements for organizations you're following",
+        icon: "announcement",
+        selected: selected == :feed
+      }
+    end
+
+    items << {
+      name: "Cards",
+      path: my_cards_path,
+      icon: "card",
+      tooltip: "See all your cards",
+      selected: selected == :cards,
+    }
+
+
+    if current_user&.events&.any? || current_user&.stripe_cards&.any? || current_user&.reimbursement_reports&.any?
+      items << {
+        name: "Receipts",
+        path: my_inbox_path,
+        icon: "receipt",
+        tooltip: "See transactions awaiting receipts",
+        selected: selected == :receipts,
+        async_badge: my_missing_receipts_icon_path,
+      }
+    end
+
+    items << {
+      name: "Reimbursements",
+      path: my_reimbursements_path,
+      icon: "reimbursement",
+      tooltip: "See expense reimbursements",
+      async_badge: (my_reimbursements_icon_path if signed_in?),
+      selected: selected == :reimbursements
+    }
+
+    if current_user&.payments_received&.any? || current_user&.payroll_positions&.any?
+      items << {
+        name: "Pay",
+        path: my_pay_path,
+        icon: "payment",
+        tooltip: "See payments made to you",
+        selected: selected == :pay
+      }
+    end
+
+    if current_user&.jobs&.any? # Deprecated
+      items << {
+        name: "Pay",
+        path: my_payroll_path,
+        icon: "person-badge",
+        tooltip: "Submit invoices & get paid",
+        selected: selected == :payroll
+      }
+    end
+
+    unless signed_in?
+      items << {
+        name: "Verify your email",
+        path: verify_email_first_index_path,
+        icon: "email-exclamation",
+        tooltip: "Verify your email address",
+        selected: false,
+        method: :post
+      }
+    end
+
+    items.compact
+  end
+
   def gravatar_url(email, name, id, size)
+    email ||= "bank@hackclub.com"
+
     name ||= begin
       temp = email.split("@").first.split(/[^a-z\d]/i).compact_blank
       temp.length == 1 ? temp.first.first(2) : temp.first(2).map(&:first).join
     end
-    hex = Digest::MD5.hexdigest(email.downcase.strip)
+    hex = Digest::SHA256.hexdigest(email.downcase.strip)
     "https://gravatar.com/avatar/#{hex}?s=#{size}&d=https%3A%2F%2Fui-avatars.com%2Fapi%2F/#{CGI.escape(name)}/#{size}/#{get_user_color(id)}/fff"
   end
 
   def profile_picture_for(user, size = 24, default_image: nil)
-    default_image ||= "https://cloud-80pd8aqua-hack-club-bot.vercel.app/0image-23.png"
+    default_image ||= "https://cdn.hackclub.com/019c256a-a9f8-7cfe-8def-b35f44a55f15/image.png"
 
     # profile_picture_for works with OpenStructs (used on the front end when a user isn't registered),
-    # so this method shows Gravatars/intials for non-registered and allows showing of uploaded profile pictures for registered users.
+    # so this method shows Gravatars/initials for non-registered and allows showing of uploaded profile pictures for registered users.
     if user.nil?
       default_image
     elsif Rails.env.production? && user.is_a?(User) && user.profile_picture&.persisted?
@@ -69,19 +162,31 @@ module UsersHelper
     klasses << options[:class] if options[:class]
     klass = klasses.join(" ")
 
-    alt = current_user_flavor_text.sample if user == current_user
+    alt = options[:alt]
+    alt ||= current_user_flavor_text.sample if user == current_user
     alt ||= user&.initials
-    alt ||= "Brown dog grinning and gazing off into the distance"
+    alt ||= ""
 
     options[:data] = (options[:data] || {}).merge(behavior: "mention", mention_value: "@#{user.email}") if click_to_mention && user
 
     image_tag(src, options.merge(loading: "lazy", alt:, width: size, height: size, class: klass))
   end
 
+  def avatar_for_email(email, **options)
+    user = User.find_by(email:)
+    if user
+      avatar_for(user, **options)
+    else
+      size = options[:size] || 24
+      src = gravatar_url(email, nil, nil, size * 2)
+      image_tag(src, options.merge(loading: "lazy", alt: "", class: ["rounded-full", "shrink-none", options[:class]].compact.join(" ")))
+    end
+  end
+
   def user_mention(user, default_name: "No User", click_to_mention: false, comment_mention: false, default_image: nil, **options)
     name = content_tag :span, (user&.initial_name || default_name)
     viewer = defined?(current_user) ? current_user : nil
-    avi = avatar_for(user, click_to_mention:, default_image:, **options[:avatar])
+    avi = avatar_for(user, click_to_mention:, default_image:, **(options[:avatar] || {}))
 
     klasses = ["mention"]
     klasses << %w[mention--admin tooltipped tooltipped--n] if user&.auditor? && !options[:disable_tooltip]
@@ -111,11 +216,62 @@ module UsersHelper
                 avi + name
               end
 
-    unless user.nil?
-      link = content_tag :span, (inline_icon "link", size: 16), onclick: "window.open(`#{admin_user_url(user)}`, '_blank').focus()", class: "mention__link"
-      email = content_tag :span, (inline_icon "email", size: 16), onclick: "window.open(`mailto:#{user.email}`, '_blank').focus()", class: "mention__link"
+    if user && viewer&.auditor? && !options[:disable_admin_menu]
+      button = content_tag(
+        :span,
+        content,
+        class: "*:align-middle menu__toggle menu__toggle--arrowless overflow-visible mention__menu-btn",
+        data: {
+          "menu-target": "toggle",
+          action: "contextmenu->menu#toggle click->menu#toggle click@document->menu#close keydown@document->menu#keydown"
+        },
+      )
 
-      content = content + email + link if viewer&.auditor?
+      aria_label = [aria_label, "Click for admin tools"].compact.join(" | ")
+
+      # Menu content items
+      menu_items = safe_join([
+                               content_tag(
+                                 :span,
+                                 safe_join([inline_icon("email", size: 16), content_tag(:span, "Email", class: "ml1")]),
+                                 class: "menu__item menu__item--icon menu__action", rel: "noopener",
+                                 data: { action: "click->mention#sendEmail" }
+                               ),
+                               #  copy to clipboard
+                               content_tag(
+                                 :span,
+                                 safe_join([inline_icon("copy", size: 16), content_tag(:span, "Copy email", class: "ml1")]),
+                                 class: "menu__item menu__item--icon menu__action", rel: "noopener",
+                                 data: { action: "click->mention#copyEmail" }
+                               ),
+                               content_tag(
+                                 :span,
+                                 nil,
+                                 class: "menu__divider"
+                               ),
+                               content_tag(
+                                 :span,
+                                 safe_join([inline_icon("settings", size: 16), content_tag(:span, "Settings", class: "ml1")]),
+                                 data: { controller: "new-window", action: "click->new-window#open", new_window_url_value: admin_user_url(user) },
+                                 class: "menu__item menu__item--icon menu__action", rel: "noopener"
+                               )
+                             ])
+
+      menu_content = content_tag(
+        :span,
+        menu_items,
+        class: "menu__content menu__content--2 menu__content--compact h5",
+        data: { "menu-target": "content", "controller": "mention", "mention-email-value": user.email }
+      )
+
+      menu_wrapper = content_tag(
+        :span,
+        button + menu_content,
+        data: { controller: "menu", "menu-placement-value": "bottom-start" },
+        class: "mention__menu"
+      )
+
+      content = menu_wrapper
     end
 
     content_tag :span, content, class: klass, 'aria-label': aria_label
@@ -156,48 +312,67 @@ module UsersHelper
   def onboarding_gallery
     [
       {
-        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/0image.png",
+        image: "https://cdn.hackclub.com/019c256a-97ad-793a-b693-d6f96a08a1f5/image.png",
         url: "https://hcb.hackclub.com/zephyr",
         overlay_color: "#802434",
       },
       {
-        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/1image.png",
+        image: "https://cdn.hackclub.com/019c256a-9d96-7c2f-a22c-f02c10edafd4/image.png",
         url: "https://hcb.hackclub.com/the-charlotte-bridge",
         overlay_color: "#805b24",
       },
       {
-        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/2image.png",
+        image: "https://cdn.hackclub.com/019c2570-ee44-7e7a-973c-d2f41ca05fdf/image.png",
         url: "https://hcb.hackclub.com/windyhacks",
         overlay_color: "#807f0a",
       },
       {
-        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/3image.png",
+        image: "https://cdn.hackclub.com/019c2570-efbc-719f-8d62-d1d42e83ca8c/image.png",
         url: "https://hcb.hackclub.com/the-innovation-circuit",
         overlay_color: "#22806c",
         object_position: "center"
       },
       {
-        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/4image.png",
+        image: "https://cdn.hackclub.com/019c2570-e0d4-7bd8-9e83-4bd8843410f2/image.png",
         url: "https://hcb.hackclub.com/zephyr",
         overlay_color: "#3c7d80",
         object_position: "center"
       },
       {
-        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/5image.png",
+        image: "https://cdn.hackclub.com/019c256a-9bd8-7712-9211-0cad87140bb0/image.png",
         url: "https://hcb.hackclub.com/hackpenn",
         overlay_color: "#225c80",
       },
       {
-        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/6image.png",
+        image: "https://cdn.hackclub.com/019c256b-bbf2-7c93-96f7-072136636b4e/image.png",
         url: "https://hcb.hackclub.com/wild-wild-west",
         overlay_color: "#6c2280",
       },
       {
-        image: "https://cloud-e3evhlxgo-hack-club-bot.vercel.app/7image.png",
-        url: "https://hcb.hackclub.com/hq",
+        image: "https://cdn.hackclub.com/019c256a-aabc-7a58-8893-9ba27d59a656/image.png",
+        url: "https://hcb.hackclub.com/assemble",
         overlay_color: "#802434",
       }
     ]
+  end
+
+  # Renders a social-proof sentence about a list of teammates.
+  # Example: "Maya, Eli, and 3 others are on this team"
+  # When team_label is given, inserts "from <team_label>" before the verb.
+  def team_community_sentence(users:, total:, singular_suffix:, plural_suffix:, team_label: nil)
+    names = users.map(&:first_name)
+    leftover = total - users.size
+    list = case names.size
+           when 1
+             leftover.zero? ? names[0] : "#{names[0]} and #{pluralize(leftover, 'other')}"
+           when 2
+             leftover.zero? ? "#{names[0]} and #{names[1]}" : "#{names[0]}, #{names[1]}, and #{pluralize(leftover, 'other')}"
+           else
+             extras = leftover + (names.size - 2)
+             "#{names[0]}, #{names[1]}, and #{pluralize(extras, 'other')}"
+           end
+    prefix = team_label ? "#{list} from #{team_label}" : list
+    "#{prefix} #{total > 1 ? plural_suffix : singular_suffix}"
   end
 
   private

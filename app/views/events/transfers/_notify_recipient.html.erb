@@ -1,0 +1,12 @@
+<div class="field--checkbox w-full">
+  <div>
+    <label>Notify recipient?</label>
+    <span class="muted">We'll send an email to the recipient with the transfer details.</span>
+  </div>
+  <div class="field--checkbox--switch ml-auto" style="flex-shrink: 0">
+    <%= form.label :send_email_notification do %>
+      <%= form.check_box :send_email_notification, disabled:, switch: true %>
+      <span class="slider"></span>
+    <% end %>
+  </div>
+</div>

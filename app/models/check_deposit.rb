@@ -31,6 +31,12 @@ class CheckDeposit < ApplicationRecord
   include Freezable
   has_paper_trail
 
+  include Hashid::Rails
+  hashid_config salt: ""
+
+  include PublicIdentifiable
+  set_public_id_prefix :cdp
+
   REJECTION_DESCRIPTIONS = {
     "incomplete_image"                => "This check was rejected because the photo was incomplete.",
     "duplicate"                       => "This check was rejected as a duplicate.",
@@ -42,6 +48,7 @@ class CheckDeposit < ApplicationRecord
 
   monetize :amount_cents
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
   belongs_to :created_by, class_name: "User"
   has_one :canonical_pending_transaction
@@ -71,10 +78,10 @@ class CheckDeposit < ApplicationRecord
 
   has_one_attached :front
   has_one_attached :back
-  validates :front, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["front"].present? }
-  validates :back, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["back"].present? }
+  validates :front, size: { less_than_or_equal_to: 20.megabytes }, if: -> { attachment_changes["front"].present? }
+  validates :back, size: { less_than_or_equal_to: 20.megabytes }, if: -> { attachment_changes["back"].present? }
 
-  validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, presence: true
+  validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, presence: true, integer_column: true
   validates :front, attached: true, content_type: [:png, :jpeg], on: :create
   validates :back, attached: true, content_type: [:png, :jpeg], on: :create
   validates_uniqueness_of :column_id, allow_nil: true
@@ -111,23 +118,17 @@ class CheckDeposit < ApplicationRecord
     create_canonical_pending_transaction!(event:, amount_cents:, memo: "CHECK DEPOSIT", date: created_at)
   end
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::CHECK_DEPOSIT_CODE}-#{id}"
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::CHECK_DEPOSIT_CODE
 
   def state
+    return :error if rejected? || returned?
     return :muted if column_id.nil? && increase_id.nil?
     return :success if local_hcb_code.ct.present?
 
     if pending? || manual_submission_required?
       :info
-    elsif rejected? || returned?
-      :error
-    elsif deposited? || local_hcb_code.ct.present?
+    elsif deposited?
       :success
     elsif submitted?
       :info
@@ -170,8 +171,6 @@ class CheckDeposit < ApplicationRecord
 
     estimated = submitted_to_column_at&.+(1.week)&.to_date
     return nil if estimated.nil?
-    # Continue to show the estimate up until we're 2 days past due
-    return nil if estimated.before?(2.days.ago)
 
     estimated
   end

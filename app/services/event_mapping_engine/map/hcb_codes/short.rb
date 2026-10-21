@@ -41,6 +41,11 @@ module EventMappingEngine
                 event_id: guess_event_id(hcb_code, ct),
                 subledger_id: guess_subledger_id(hcb_code, ct)
               }
+
+              if hcb_code.outgoing_disbursement? && ct.amount_cents.positive?
+                ct.update_column(:hcb_code, hcb_code.outgoing_disbursement.disbursement.incoming_hcb_code)
+              end
+
               ::CanonicalEventMapping.create!(attrs)
             end
           end
@@ -53,39 +58,52 @@ module EventMappingEngine
         end
 
         def guess_event_id(hcb_code, ct)
-          if hcb_code.disbursement?
+          if hcb_code.outgoing_disbursement?
             if ct.amount_cents.positive?
-              return hcb_code.disbursement.event_id
+              return hcb_code.outgoing_disbursement.disbursement.event_id # this actually inbound just it is an old HCB code.
             else
-              return hcb_code.disbursement.source_event_id
+              return hcb_code.outgoing_disbursement.disbursement.source_event_id
             end
           end
-
+          # return hcb_code.incoming_disbursement.event.id if hcb_code.incoming_disbursement?
+          return hcb_code.incoming_disbursement.event.id if hcb_code.incoming_disbursement?
           return hcb_code.event.try(:id) if hcb_code.events.length == 1
 
           raise ArgumentError, "attempted to map a transaction with HCB short codes to a multi-event HCB code"
         end
 
         def guess_subledger_id(hcb_code, ct)
-          if hcb_code.disbursement?
+          if hcb_code.outgoing_disbursement?
             if ct.amount_cents.positive?
-              return hcb_code.disbursement.destination_subledger_id
+              return hcb_code.outgoing_disbursement.disbursement.destination_subledger_id # this should actually be incoming.
             else
-              return hcb_code.disbursement.source_subledger_id
+              return hcb_code.outgoing_disbursement.disbursement.source_subledger_id
             end
           end
-
+          # return hcb_code.outgoing_disbursement.subledger&.id if hcb_code.outgoing_disbursement?
+          return hcb_code.incoming_disbursement.subledger&.id if hcb_code.incoming_disbursement?
           return hcb_code.ct&.canonical_event_mapping&.subledger_id if hcb_code.events.length == 1
         end
 
         def assign_transaction_category!(hcb_code:, canonical_transaction:)
           category_slug = self.class.category_slug_for_hcb_code(hcb_code)
 
-          return unless category_slug
+          if category_slug
+            TransactionCategoryService
+              .new(model: canonical_transaction)
+              .set!(slug: category_slug, assignment_strategy: "automatic")
+          elsif hcb_code.reimbursement_expense_payout? || hcb_code.reimbursement_payout_holding?
+            # A reversed payout comes back as a second transaction on the same
+            # HCB code with no pending transaction of its own to settle against,
+            # so copy the category from the original pending transaction, as
+            # CanonicalPendingTransactionService::Settle does when it settles.
+            pending_mapping = hcb_code.pt&.category_mapping
+            return unless pending_mapping
 
-          TransactionCategoryService
-            .new(model: canonical_transaction)
-            .set!(slug: category_slug, assignment_strategy: "automatic")
+            TransactionCategoryService
+              .new(model: canonical_transaction)
+              .set!(slug: pending_mapping.category.slug, assignment_strategy: pending_mapping.assignment_strategy)
+          end
         end
 
       end

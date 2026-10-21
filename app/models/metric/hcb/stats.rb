@@ -4,18 +4,24 @@
 #
 # Table name: metrics
 #
-#  id           :bigint           not null, primary key
-#  metric       :jsonb
-#  subject_type :string
-#  type         :string           not null
-#  created_at   :datetime         not null
-#  updated_at   :datetime         not null
-#  subject_id   :bigint
+#  id            :bigint           not null, primary key
+#  aasm_state    :string           not null
+#  canceled_at   :datetime
+#  completed_at  :datetime
+#  failed_at     :datetime
+#  metric        :jsonb
+#  processing_at :datetime
+#  type          :string           not null
+#  year          :integer
+#  created_at    :datetime         not null
+#  updated_at    :datetime         not null
+#  subject_id    :bigint
+#  subject_type  :string
 #
 # Indexes
 #
-#  index_metrics_on_subject                               (subject_type,subject_id)
-#  index_metrics_on_subject_type_and_subject_id_and_type  (subject_type,subject_id,type) UNIQUE
+#  index_metrics_on_subject                                        (subject_type,subject_id)
+#  index_metrics_on_subject_type_and_subject_id_and_type_and_year  (subject_type,subject_id,type,year) UNIQUE
 #
 class Metric
   module Hcb
@@ -56,7 +62,7 @@ class Metric
                                .approved
                                .where("events.created_at <= ?", now)
                                .count,
-          last_transaction_date: tx_all.order(:date).last.date.to_time.to_i,
+          last_transaction_date: tx_all.order(:date).last.date.beginning_of_day.to_i,
 
           # entire time period. this remains to prevent breaking changes to existing systems that use this endpoint
           raised: tx_all.revenue.sum(:amount_cents) + pending_tx_all.incoming.sum(:amount_cents),
@@ -76,7 +82,8 @@ class Metric
 
           # users
 
-          currently_online: ::User.currently_online.count
+          currently_online: ::User.currently_online.count,
+          mobile_installs: ::ApiToken.joins("INNER JOIN oauth_applications ON api_tokens.application_id = oauth_applications.id").where(oauth_applications: { name: "HCB Mobile" }).distinct.count(:user_id)
         }
       end
 

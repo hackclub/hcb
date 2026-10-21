@@ -7,7 +7,7 @@
 <%= render "events/nav" if @event %>
 
 <% if @emburse_card %>
-  <%= render @emburse_card %>
+  <%= render "emburse_cards/emburse_card", emburse_card: @emburse_card %>
 <% end %>
 
 <% admin_tool("mt3 mb0") do %>
@@ -17,7 +17,7 @@
   <% end %>
 <% end %>
 
-<article class="card max-width-2 mx-auto mt3">
+<article class="card max-w-lg mx-auto mt3">
   <section class="mb2">
     <h2 class="mt0 mb0 heading">
       <% if @emburse_card %>
@@ -25,7 +25,7 @@
       <% else %>
         <span class="flex-auto mb1">Transfer of <%= render_money @emburse_transaction.amount %></span>
       <% end %>
-      <span class="badge h4 md-right ml0 mb1 bg-<%= @emburse_transaction.status_badge_type %>">
+      <span class="badge h4 ml0 mb1 bg-<%= @emburse_transaction.status_badge_type %>">
         <%= @emburse_transaction.status_text %>
       </span>
     </h2>
@@ -73,20 +73,6 @@
     <% end %>
   <% end %>
 </article>
-
-<% if organizer_signed_in? %>
-  <% if @emburse_transaction.receipts.any? %>
-    <h2>Receipts</h2>
-    <section class="grid grid--split mt2 mb3">
-      <%= render @emburse_transaction.receipts %>
-      <%= render "receipts/upload", receiptable: @emburse_transaction %>
-    </section>
-  <% else %>
-    <%= render "receipts/upload", receiptable: @emburse_transaction %>
-  <% end %>
-<% end %>
-
-<%= render "comments/comments" %>
 
 <% admin_tool do %>
   <pre>

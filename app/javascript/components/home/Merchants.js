@@ -19,11 +19,16 @@ export default function Merchants({ data }) {
     <ResponsiveContainer width="100%" height={420} style={{ marginLeft: -20 }}>
       <BarChart data={data}>
         <YAxis
-          tickFormatter={n => USDollarNoCents.format(n)}
-          width={
-            USDollarNoCents.format(Math.max(data.map(d => d['value']))).length *
-            18
-          }
+          tickFormatter={n => {
+            if (n >= 1000000) {
+              return `$${(n / 1000000).toFixed(0)}M`
+            }
+            if (n >= 1000) {
+              return `$${(n / 1000).toFixed(0)}K`
+            }
+            return USDollarNoCents.format(n)
+          }}
+          width={65}
           tickMargin={0}
         />
         {data.length > 8 ? (
@@ -45,7 +50,7 @@ export default function Merchants({ data }) {
                   <text
                     key={index}
                     x={0}
-                    y={index * 10} // Adjust spacing between lines
+                    y={index * 10}
                     dy={16}
                     textAnchor="middle"
                     fill="#666"
@@ -61,7 +66,11 @@ export default function Merchants({ data }) {
         <Tooltip content={CustomTooltip} cursor={{ fill: 'transparent' }} />
         <Bar dataKey="value" radius={[5, 5, 0, 0]}>
           {data.map((c, i) => (
-            <Cell key={c.name} fill={generateColor(i, data.length, isDark)} />
+            <Cell
+              key={c.name}
+              style={{ outline: 'none' }}
+              fill={generateColor(i, data.length, isDark)}
+            />
           ))}
         </Bar>
       </BarChart>

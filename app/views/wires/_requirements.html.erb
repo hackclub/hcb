@@ -8,9 +8,9 @@
 <% end %>
 <% callout_footer += " (admins can bypass this)" if admin_signed_in? %>
 
-<%= render "callout",
+<%= render "application/callout",
     type: "info",
-    title: "Important information about wire transfers",
+    title: "Heads up!",
     class:,
     footer: callout_footer do %>
   Unfortunately, wires are expensive to send. Our partner bank charges us $25 per wire; therefore, to keep HCB sustainable without passing this fee onto you,

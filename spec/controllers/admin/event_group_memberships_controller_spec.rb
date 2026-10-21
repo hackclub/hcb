@@ -9,7 +9,7 @@ RSpec.describe Admin::EventGroupMembershipsController do
   describe "#destroy" do
     it "removes the event from the given group" do
       user = create(:user, :make_admin)
-      sign_in(user)
+      create_session(user, verified: true)
 
       event = create(:event)
       group = create(:event_group, user:)

@@ -23,8 +23,19 @@ export default class extends Controller {
     this.isOpen = false
   }
 
+  connect() {
+    this._closeMenusHandler = () => this.close()
+    document.addEventListener('hcb:close-menus', this._closeMenusHandler)
+  }
+
   disconnect() {
     this.cleanup && this.cleanup()
+    // remove cloned popup so it doesn't outlive turbo frame updates.
+    this.content && this.content.remove()
+    this.content = undefined
+    this.cleanup = undefined
+    this.isOpen = false
+    document.removeEventListener('hcb:close-menus', this._closeMenusHandler)
   }
 
   toggle(e) {
@@ -89,10 +100,17 @@ export default class extends Controller {
         $(e.target).closest('.menu__content').length
       )
         return
+    }
 
-      this.content && this.content.remove()
-    } else {
-      this.content && this.content.remove()
+    if (this.content) {
+      const content = this.content
+      if (e?.type == 'click') {
+        // let turbo resolve the target frame before removing the link
+        content.style.display = 'none'
+        setTimeout(() => content.remove(), 0)
+      } else {
+        content.remove()
+      }
     }
 
     this.toggleTarget.setAttribute('aria-expanded', false)
@@ -112,8 +130,8 @@ export default class extends Controller {
     computePosition(this.toggleTarget, this.content, {
       placement: this.placementValue,
       middleware: [
-        offset(5),
-        flip({ padding: 5 }),
+        offset(this.placementValue.includes('top') ? 0 : 10),
+        flip({ padding: 4 }),
         size({
           padding: 5,
           apply({ availableHeight, availableWidth, elements }) {
@@ -132,9 +150,9 @@ export default class extends Controller {
       if (firstTime) {
         // Animate!
         gsap.from(this.content, {
-          y: placement.includes('top') ? -15 : 15,
-          opacity: 0,
-          duration: 0.25,
+          y: placement.includes('top') ? -12 : 12,
+          opacity: 0.75,
+          duration: 0.15,
         })
       }
 

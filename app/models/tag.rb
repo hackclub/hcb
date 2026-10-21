@@ -6,7 +6,7 @@
 #
 #  id         :bigint           not null, primary key
 #  color      :text
-#  emoji      :string
+#  emoji      :string           not null
 #  label      :text
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
@@ -18,6 +18,9 @@
 #
 class Tag < ApplicationRecord
   include ActionView::Helpers::TextHelper # for `pluralize`
+
+  include Hashid::Rails
+  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :tag
@@ -39,8 +42,8 @@ class Tag < ApplicationRecord
   def removal_confirmation_message
     message = "Are you sure you'd like to delete this tag?"
 
-    if hcb_codes.length > 0
-      message + " It will be removed from #{pluralize(hcb_codes.length, 'transaction')}."
+    if hcb_codes.any?
+      message + " It will be removed from #{pluralize(hcb_codes.size, 'transaction')}."
     else
       message
     end

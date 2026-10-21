@@ -5,8 +5,14 @@
   <p>We're going to debug what went wrong.</p>
   <img
     src="/dino_debugging.svg"
-    class="dino-svg mt3 mx-auto w-100 block max-width-1"
+    class="dino-svg mt3 mx-auto w-100 block max-w-96"
     title="wanna help us fix this bug? <%= Rails.configuration.constants.github_url %>">
+  <% if @error_reference.present? %>
+    <p class="mt3">
+      <strong>Share this reference code with us to help us fix this:</strong>
+      <code><%= @error_reference %></code>.
+    </p>
+  <% end %>
 </div>
 
 <script>

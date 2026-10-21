@@ -6,7 +6,6 @@
 #
 #  id                          :bigint           not null, primary key
 #  action_name                 :string           not null
-#  authentication_session_type :string           not null
 #  controller_name             :string           not null
 #  http_method                 :string           not null
 #  ip_address                  :inet             not null
@@ -16,6 +15,7 @@
 #  created_at                  :datetime         not null
 #  updated_at                  :datetime         not null
 #  authentication_session_id   :bigint           not null
+#  authentication_session_type :string           not null
 #  impersonator_id             :bigint
 #  request_id                  :string           not null
 #  user_id                     :bigint           not null
@@ -68,9 +68,9 @@ module Governance
 
     def authentication_session_is_user_session
       # authentication_session was made polymorphic to potentially support
-      # tracking API requests in the future, but for now we only want UserSession.
-      unless authentication_session.is_a?(UserSession)
-        errors.add(:authentication_session, "must be a UserSession")
+      # tracking API requests in the future, but for now we only want User::Session.
+      unless authentication_session.is_a?(User::Session)
+        errors.add(:authentication_session, "must be a User::Session")
       end
     end
 

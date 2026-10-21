@@ -1,0 +1,15 @@
+<p>Hi there! 👋</p>
+
+<p>
+  You haven't yet signed your part of the agreement for <%= @contract.party(:signee).user.possessive_name %> organization on HCB, <%= @contract.event_name %>.
+  It only takes a couple minutes to sign the agreement and get your child's project started on HCB!
+</p>
+
+<%= link_to "Sign the agreement →", contract_party_url(@party), style: "border: 0; border-radius: 6px; box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.125); cursor: pointer; display: inline-flex; font-size: 1rem; font-weight: 600; justify-content: center; align-items: center; height: 36px; letter-spacing: 0; overflow: hidden; padding: 0 1rem; position: relative; text-align: center; text-decoration: none; user-select: none; min-height: 36px; background-color: #74B3E7; color: #121519 !important; margin: 12px 0px;" %>
+
+<p>You can learn more about HCB <%= link_to "on our website", "https://hackclub.com/fiscal-sponsorship?utm_source=cosigner_learn_more&utm_medium=email&utm_campaign=cosigner_email" %>, and our team is around if you have any questions. Just reply to this email.</p>
+
+<p>
+  Warmly,<br>
+  The <%= link_to "HCB", "https://hackclub.com/hcb?utm_source=hcb&utm_medium=email" %> team
+</p>

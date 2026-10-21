@@ -2,8 +2,8 @@
 
 module Referral
   class ProgramPolicy < ApplicationPolicy
-    def show
-      user.present?
+    def create?
+      user.auditor?
     end
 
   end

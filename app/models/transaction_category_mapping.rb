@@ -6,10 +6,10 @@
 #
 #  id                      :bigint           not null, primary key
 #  assignment_strategy     :text             not null
-#  categorizable_type      :text             not null
 #  created_at              :datetime         not null
 #  updated_at              :datetime         not null
 #  categorizable_id        :bigint           not null
+#  categorizable_type      :text             not null
 #  transaction_category_id :bigint           not null
 #
 # Indexes

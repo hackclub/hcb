@@ -12,6 +12,9 @@ StrongMigrations.statement_timeout = 1.hour
 # Outdated statistics can sometimes hurt performance
 StrongMigrations.auto_analyze = true
 
+# This can be removed once upgraded to Rails 8.1
+StrongMigrations.alphabetize_schema = true
+
 # Set the version of the production database
 # so the right checks are run in development
 # StrongMigrations.target_version = 10
