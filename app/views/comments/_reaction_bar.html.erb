@@ -10,7 +10,6 @@
       %>
         <%= form_with(url: reaction_path(id: comment.id), method: :patch, class: "inline-flex", data: { turbo: true, controller: "form" }) do |form| %>
           <%= form.hidden_field :emoji, value: emoji %>
-          <%# type="button": the form controller submits on click, and a default (submit) button would submit the form a second time. %>
           <button type="button" class="reactions-btn--button <%= "reactions-btn--reacted" if has_reacted %>" data-action="form#submit menu#close">
             <%= emoji %>
           </button>

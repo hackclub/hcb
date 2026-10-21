@@ -8,10 +8,6 @@ class Comment
       authorize @comment
       emoji = params[:emoji]
 
-      # Hold the comment's row lock for the whole toggle so two overlapping
-      # requests for the same emoji can't both find nothing and each insert a
-      # reaction (hackclub/hcb#15016). The second one waits, then sees the
-      # first's reaction and removes it, as a toggle should.
       @comment.with_lock do
         existing_reaction = @comment.reactions.find_by(reactor: current_user, emoji:)
 
