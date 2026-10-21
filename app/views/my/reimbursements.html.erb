@@ -77,67 +77,29 @@
     </section>
   <% end %>
 
-  <h3 class="mb0">Reports</h3>
-
-  <div class="flex items-center gap-2 flex-col-reverse sm:flex-row mb2 mt1">
-    <%= form_with(model: false, local: true, method: :get, class: "flex-1 w-full sm:w-auto") do |form| %>
+  <div class="mt3">
+    <%= form_with(model: false, local: true, method: :get) do |form| %>
       <%= render "events/filters/search", form: %>
     <% end %>
-    <div class="filterbar" role="tablist" aria-label="Reimbursement report filters">
-      <%= link_to "All", "?filter=all", class: "filterbar__item", "aria-selected": !["mine", "review"].include?(params[:filter]), role: "tab" %>
-      <%= link_to "Mine", "?filter=mine", class: "filterbar__item", "aria-selected": params[:filter] == "mine", role: "tab" %>
-      <%= link_to "To review", "?filter=review", class: "filterbar__item", "aria-selected": params[:filter] == "review", role: "tab" %>
-    </div>
   </div>
 
-  <% if @reports.blank? %>
-    <%= blankslate "No reports found!" %>
-  <% else %>
-    <article class="table-container">
-      <table>
-        <thead>
-        <tr>
-          <th></th>
-          <th>Status</th>
-          <th>Report</th>
-          <th>Organization</th>
-          <th>Amount</th>
-          <th>Created</th>
-        </tr>
-        </thead>
-        <tbody>
-          <% @reports.order(created_at: :desc).each do |report| %>
-            <tr class="clickable">
-              <td class="flex items-center justify-center" style="margin-top: 1px;">
-                <%= avatar_for report.user, size: 24 %>
-              </td>
-              <td>
-                <% if report.status_description %>
-                  <span class="ml0 badge bg-<%= report.status_color %> tooltipped tooltipped--e tooltipped--xl" aria-label="<%= report.status_description %>">
-                    <%= report.status_text %>
-                  </span>
-                <% else %>
-                  <span class="ml0 badge bg-<%= report.status_color %>"><%= report.status_text %></span>
-                <% end %>
-              </td>
-              <td style="max-width: 350px; overflow: hidden; text-overflow: ellipsis;">
-                <%= link_to "", report, class: "stretched-link" %>
-                <span><%= report.name %></span>
-              </td>
-              <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
-                <%= report.event&.name || "None" %>
-              </td>
-              <td>
-                <%= report.amount.format %>
-              </td>
-              <td>
-                <%= format_date report.created_at %>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </article>
+  <% if @sections[:assigned].exists? %>
+    <h3 class="mt3 mb1">Assigned to you for review</h3>
+    <%= turbo_frame_tag :my_reimbursements_assigned, src: my_reimbursements_section_path(:assigned, q: params[:q].presence) do %>
+      <p class="muted">Loading reports…</p>
+    <% end %>
+  <% end %>
+
+  <% if @sections[:unassigned].exists? %>
+    <h3 class="mt3 mb1">Awaiting review by any manager</h3>
+    <%= turbo_frame_tag :my_reimbursements_unassigned, src: my_reimbursements_section_path(:unassigned, q: params[:q].presence) do %>
+      <p class="muted">Loading reports…</p>
+    <% end %>
+  <% end %>
+
+  <h3 class="mt3 mb1">Your reports</h3>
+  <%= turbo_frame_tag :my_reimbursements_mine, src: my_reimbursements_section_path(:mine, q: params[:q].presence) do %>
+    <p class="muted">Loading reports…</p>
   <% end %>
 <% else %>
  <%= render "events/one_pager",
