@@ -210,7 +210,7 @@ class DonationsController < ApplicationController
     authorize @donation
     @hcb_code = HcbCode.find_or_create_by(hcb_code: @donation.hcb_code)
 
-    if @donation.update(params.require(:donation).permit(:anonymous, :name))
+    if @donation.update_donor_details(params.require(:donation).permit(:anonymous, :name))
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "Edited the donor's details." }
     else
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { error: @donation.errors.full_messages.to_sentence }
