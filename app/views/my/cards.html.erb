@@ -9,6 +9,11 @@
       <%= badge_for @stripe_cards.active.count + @emburse_cards.count, class: "bg-muted" %>
     </span>
     <div class="flex ml-auto gap-3 items-center -mt-3">
+      <%= pop_icon_to @view == "list" ? "grid" : "list",
+                      upsert_query_params("view" => @view == "list" ? "grid" : "list"),
+                      class: "mb-1 tooltipped tooltipped--s",
+                      aria: { label: @view == "list" ? "Grid view" : "List view" },
+                      data: { turbo_prefetch: "false" } %>
       <button class="btn bg-success mb-1" data-behavior="modal_trigger" data-modal="order_card" <%= "disabled" if current_user.events.not_demo_mode.where.not(id: current_user.reader_events).none? %>>
         <%= inline_icon "card-add" %>
         Order a card
@@ -70,11 +75,19 @@
           <% end %>
         </div>
         <%= turbo_frame_tag dom_id(event, :my_cards), src: my_event_cards_path(event_id: event.id, **request.query_parameters.slice("q", "status", "type").symbolize_keys), loading: :lazy, target: "_top" do %>
-          <article class="mixed-grid grid--spacious" aria-busy="true">
-            <% @card_counts[event.id].times do %>
-              <div class="mt1 rounded-xl bg-smoke dark:bg-darkless animate-pulse aspect-[364/224]"></div>
-            <% end %>
-          </article>
+          <% if @view == "list" %>
+            <article class="flex flex-col gap-2 mt-2" aria-busy="true">
+              <% @card_counts[event.id].times do %>
+                <div class="h-10 rounded-lg bg-smoke dark:bg-darkless animate-pulse"></div>
+              <% end %>
+            </article>
+          <% else %>
+            <article class="mixed-grid grid--spacious" aria-busy="true">
+              <% @card_counts[event.id].times do %>
+                <div class="mt1 rounded-xl bg-smoke dark:bg-darkless animate-pulse aspect-[364/224]"></div>
+              <% end %>
+            </article>
+          <% end %>
         <% end %>
       </section>
     <% end %>

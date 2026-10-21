@@ -111,6 +111,25 @@ RSpec.describe MyController do
 
           expect(searched_cards).to eq([laptop])
         end
+
+        it "renders a table when list view is selected" do
+          create_card(name: "Laptop fund")
+          cookies[:my_cards_view] = "list"
+
+          get :event_cards, params: { event_id: zebra.id }
+
+          expect(response.parsed_body.at_css("table")).to be_present
+          expect(response.body).to include("Laptop fund")
+        end
+      end
+
+      it "remembers the selected view" do
+        get :cards, params: { view: "list" }
+        expect(ivar(:view)).to eq("list")
+        expect(cookies[:my_cards_view]).to eq("list")
+
+        get :cards, params: { view: "bogus" }
+        expect(ivar(:view)).to eq("list")
       end
 
       it "searches cards by name and last four digits" do

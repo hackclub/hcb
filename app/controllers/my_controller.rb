@@ -28,6 +28,8 @@ class MyController < ApplicationController
 
     @emburse_cards = current_user.emburse_cards.includes(:event)
     @stripe_cards = filtered_stripe_cards
+    cookies[:my_cards_view] = params[:view] if params[:view].in?(%w[grid list])
+    @view = cookies[:my_cards_view] || "grid"
 
     # Each organization's cards are lazy-loaded by `event_cards`, so only load the groups and their counts here
     @card_counts = @stripe_cards.unscope(:order).group("stripe_cards.event_id").count
@@ -39,6 +41,7 @@ class MyController < ApplicationController
   def event_cards
     event = Event.find(params[:event_id])
     @stripe_cards = filtered_stripe_cards.includes(:card_grant, :event).where(event:)
+    @view = cookies[:my_cards_view] || "grid"
 
     render partial: "my/event_cards", locals: { event:, stripe_cards: @stripe_cards }
   end
