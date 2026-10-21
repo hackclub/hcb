@@ -463,7 +463,7 @@ class User < ApplicationRecord
     # Invalidate all sessions
     user_sessions.update_all(signed_out_at: Time.now, expiration_at: Time.now)
     # Invalidate all API tokens
-    api_tokens.accessible.update_all(revoked_at: Time.current)
+    api_tokens.not_revoked.update_all(revoked_at: Time.current)
   end
 
   def unlock!
