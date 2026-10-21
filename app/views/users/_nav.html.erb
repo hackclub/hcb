@@ -1,6 +1,6 @@
 <% content_for(:header) do %>
   <div class="flex items-center gap-3 mb-2 pt-4">
-    <%= render partial: "logo" %>
+    <%= render partial: "application/logo" %>
     <h3 class="my-0">HCB</h3>
   </div>
 <% end %>
@@ -48,7 +48,7 @@
   </nav>
 
   <% if signed_in? && (current_user.events.not_demo_mode.funded.exists? || current_user.card_grants.any? || current_user.reimbursement_reports.any?) && Flipper.enabled?(:bank_wrapped, current_user) %>
-    <% wrapped_style = "background-color: #ec3750; background-image: url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/bbb7dea5a991c5fa_frame_1__16_.svg'); background-size: 300px; background-position: 0px -10px; background-repeat: repeat; color: white;" %>
+    <% wrapped_style = "background-color: #ec3750; background-image: url('https://cdn.hackclub.com/019c256a-a202-774e-940a-b9ed1debc2bc/frame_1__16_.svg'); background-size: 300px; background-position: 0px -10px; background-repeat: repeat; color: white;" %>
     <%= render layout: "application/dismissible_callout",
                locals: { key: "hide_hcb_wrapped_2025", id: "bank-wrapped-dialog", article_style: wrapped_style } do %>
       Check out your <%= link_to "/wrapped", target: "_blank", class: "primary nowrap", style: "color: white;", id: "bank-wrapped-link", data: { dismissible_target: "link" } do %><strong>HCB Wrapped</strong><% end %> for <%= Metric.year %>!

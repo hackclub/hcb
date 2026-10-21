@@ -133,9 +133,6 @@ class User < ApplicationRecord
 
   has_many :event_groups, class_name: "Event::Group"
 
-  has_many :g_suite_accounts, inverse_of: :fulfilled_by
-  has_many :g_suite_accounts, inverse_of: :creator
-
   has_many :emburse_transfers
   has_many :emburse_card_requests
   has_many :emburse_cards
