@@ -374,7 +374,7 @@ class EventsController < ApplicationController
     process_hidden_param!(fixed_event_params)
     process_hidden_param!(fixed_user_event_params)
 
-    plan_param = fixed_event_params[:plan]
+    plan_param = admin_signed_in? ? fixed_event_params[:plan] : nil
     fixed_event_params.delete(:plan)
 
     begin
@@ -570,12 +570,12 @@ class EventsController < ApplicationController
     ledger_balances = sub_organization_ledger_balances(events.map(&:id) + subtrees.values.flatten)
 
     balances = events.to_h do |event|
-      amounts = { balance: helpers.render_money_amount(ledger_balances[event.id]) }
+      amounts = { balance: helpers.render_money(ledger_balances[event.id]) }
 
       # Only the descendants this user can see, so a private branch's money
       # isn't revealed through its parent's row. A row with none keeps its dash.
       if subtrees[event.id].any?
-        amounts[:sub_organization_balance] = helpers.render_money_amount(ledger_balances.values_at(*subtrees[event.id]).compact.sum)
+        amounts[:sub_organization_balance] = helpers.render_money(ledger_balances.values_at(*subtrees[event.id]).compact.sum)
       end
 
       [event.public_id, amounts]
@@ -592,10 +592,14 @@ class EventsController < ApplicationController
       )
       if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
         @ledger = @event.ledger
-        @ledger_items = @ledger.items
-                               .where(id: column_transactions.select(:ledger_item_id), linked_object_type: nil)
-                               .order(created_at: :desc)
-                               .page((params[:page] || 1).to_i).per(safe_per(25))
+        # The column-transaction narrowing has no expression in Ledger::Query, so
+        # it chains onto the executed relation. Everything the query does own —
+        # pending first, the rest newest first — still comes from the query, which
+        # is the whole point of going through it for the parts that do fit.
+        @ledger_items = Ledger::Query.new({ linked_object_type: nil })
+                                     .execute(ledgers: [@ledger])
+                                     .where(id: column_transactions.select(:ledger_item_id))
+                                     .page((params[:page] || 1).to_i).per(safe_per(25))
       else
         @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
                                            .order(created_at: :desc)
@@ -922,6 +926,14 @@ class EventsController < ApplicationController
     render :reimbursements_pending_review_icon, layout: false
   end
 
+  def contractors_pending_review_icon
+    authorize @event
+    # Only reviewers see a count; the badge is hidden (count 0) for everyone else.
+    @contractors_pending_review_count = Payroll::PositionPolicy.new(current_user, @event).review? ? @event.payroll_invoices.submitted.count : 0
+
+    render :contractors_pending_review_icon, layout: false
+  end
+
   def employees
     authorize @event
     @employees = @event.employees.order(
@@ -938,6 +950,9 @@ class EventsController < ApplicationController
     authorize @event
 
     @contractors = @event.payroll_positions.includes(:event, payee: :payments).order(created_at: :desc)
+
+    can_review = Payroll::PositionPolicy.new(current_user, @event).review?
+    @pending_invoice_counts = can_review ? @event.payroll_invoices.submitted.group(:payroll_position_id).count : {}
 
     counts_by_status = @contractors.to_a.group_by(&:status).transform_values(&:count)
     @stats = {
@@ -956,6 +971,7 @@ class EventsController < ApplicationController
       format.html do
         cookies[:sub_organizations_view] = params[:view] if params[:view]
         @view = cookies[:sub_organizations_view] || "list"
+        @sub_organization_count = visible_subevent_ids.size
 
         if @view == "list"
           @search = params[:q].presence
@@ -1075,12 +1091,12 @@ class EventsController < ApplicationController
     else
       @event.update(hidden_at: Time.now)
       file_redirects = [
-        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/a7ce1ae34b9e9422_barking_dog_turned_into_wood_meme.mp4",
-        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/2d373908baa69206_dog_transforms_after_seeing_chair.mp4",
-        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/292b3ec8e3ad9fb1_dog_turns_into_bread__but_it_s_in_hd.mp4",
-        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/b7b400f98e3f264a_run_now_meme.mp4",
-        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/2cda55c3a53f23b6_bonk_sound_effect.mp4",
-        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/9a837b44dd082d95_disappearing_doge_meme.mp4"
+        "https://cdn.hackclub.com/019c2570-f1b0-7b5e-957e-8b05a76344fd/barking_dog_turned_into_wood_meme.mp4",
+        "https://cdn.hackclub.com/019c2570-f243-7802-a276-f4f6c35b67a8/dog_transforms_after_seeing_chair.mp4",
+        "https://cdn.hackclub.com/019c2570-f3c5-7fff-9824-12d7eb6089fc/dog_turns_into_bread__but_it_s_in_hd.mp4",
+        "https://cdn.hackclub.com/019c2570-f36c-7ea4-a7e1-4a251c8d39e9/run_now_meme.mp4",
+        "https://cdn.hackclub.com/019c2570-da59-7be2-9275-100f44b60ac9/bonk_sound_effect.mp4",
+        "https://cdn.hackclub.com/019c2570-e103-73f6-8f6d-c97881b8904e/disappearing_doge_meme.mp4"
       ].sample
 
       redirect_to file_redirects, allow_other_host: true
@@ -1338,7 +1354,6 @@ class EventsController < ApplicationController
 
     @items = ledger_query.execute(ledgers: @ledgers)
                          .page(params[:page]).per(@per)
-                         .preload(:tags, hcb_code: { event: :tags })
   rescue Pundit::NotAuthorizedError
     return head :not_found
   end

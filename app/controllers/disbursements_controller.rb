@@ -2,9 +2,7 @@
 
 class DisbursementsController < ApplicationController
   include TurboStreamFlash
-
-  # must equal the value of `PAGE_SIZE` in app/javascript/controllers/combobox_controller.js
-  PAGE_SIZE = 25
+  include ComboboxSearchable
 
   before_action :set_disbursement, only: [:show, :edit, :update, :transfer_confirmation_letter]
 
@@ -100,18 +98,16 @@ class DisbursementsController < ApplicationController
     order_clauses.concat(base.order_values)
     order_clauses << Arel.sql("events.id ASC")
 
-    page = [params[:page].to_i, 1].max
-    events = base.reorder(*order_clauses).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE).to_a
+    events = combobox_page(base.reorder(*order_clauses)).to_a
 
     options = events.map do |e|
       disabled_message = nil
       disabled_message = "Insufficient balance" if sending && !admin_signed_in? && e.balance_available <= 0
       disabled_message = "HCB transfers disabled" if sending && !policy(e).create_transfer?
 
-      name_label = admin_signed_in? ? "#{e.name} (#{e.id})" : e.name
       {
         value: e.public_id,
-        label: name_label,
+        label: helpers.combobox_display(e),
         sublabel: disabled_message || helpers.render_money_short(e.balance_available),
         disabled: disabled_message.present?
       }

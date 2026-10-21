@@ -133,9 +133,6 @@ class User < ApplicationRecord
 
   has_many :event_groups, class_name: "Event::Group"
 
-  has_many :g_suite_accounts, inverse_of: :fulfilled_by
-  has_many :g_suite_accounts, inverse_of: :creator
-
   has_many :emburse_transfers
   has_many :emburse_card_requests
   has_many :emburse_cards
@@ -700,8 +697,12 @@ class User < ApplicationRecord
     show_first_dashboard? && card_grants.none? && events.none? && organizer_position_invites.none?
   end
 
-  def to_combobox_display
-    "#{full_name} (Email: #{email}, ID: #{id})"
+  # `admin` is required rather than defaulted, so a caller cannot silently
+  # render a different label than the search endpoint returns.
+  def to_combobox_display(admin:)
+    return "#{full_name} (Email: #{email}, ID: #{id})" if admin
+
+    full_name.presence || email
   end
 
   def unverified?

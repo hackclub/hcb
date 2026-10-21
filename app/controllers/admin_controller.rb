@@ -3,6 +3,7 @@
 class AdminController < Admin::BaseController
   include Admin::PaymentApprovable
   include Admin::TransferApprovable
+  include ComboboxSearchable
 
   def nav
     @nav = Admin::Nav.new(page_title: params[:title])
@@ -44,7 +45,7 @@ class AdminController < Admin::BaseController
     @canonical_pending_transactions = CanonicalPendingTransaction.unmapped.where(amount_cents: @canonical_transaction.amount_cents)
     @ahoy_events = Ahoy::Event.where("name in (?) and (properties->'canonical_transaction'->>'id')::int = ?", [::SystemEventService::Write::SettledTransactionMapped::NAME, ::SystemEventService::Write::SettledTransactionCreated::NAME], @canonical_transaction.id).order("time desc")
 
-    if @canonical_transaction.memo.include?("WISE INC") || @canonical_transaction.memo.include?("WISE LTD")
+    if @canonical_transaction.memo.include?("WISE INC") || @canonical_transaction.memo.include?("WISE LTD") || @canonical_transaction.memo.include?("WISE US")
       potential_wise_transfers = WiseTransfer.sent.where(usd_amount_cents: -@canonical_transaction.amount_cents)
 
       if potential_wise_transfers.one?
@@ -147,7 +148,19 @@ class AdminController < Admin::BaseController
   end
 
   def event_raised
-    @raised = cache_event_metric(:raised) { @event.total_raised.to_i }
+    @frame_id = :raised
+
+    @raised = case params[:period]
+              when "ytd"
+                @frame_id = :raised_ytd
+                cache_event_metric(:raised_ytd) { @event.raised_ytd_cents }
+              when "last_year"
+                @frame_id = :raised_last_year
+                cache_event_metric(:raised_last_year) { @event.raised_last_year_cents }
+              else
+                cache_event_metric(:raised) { @event.total_raised.to_i }
+              end
+
     render :event_raised, layout: false
   end
 
@@ -416,22 +429,24 @@ class AdminController < Admin::BaseController
 
   def event_search
     @q = params[:q].presence
-    @events = if @q.present?
-                Event.search_name(@q).order(Event::CUSTOM_SORT).limit(20).select(:id, :name)
-              else
-                Event.order(Event::CUSTOM_SORT).limit(20).select(:id, :name)
-              end
-    render turbo_stream: helpers.async_combobox_options(@events)
+    events = @q.present? ? Event.search_name(@q) : Event.all
+    events = combobox_page(events.order(Event::CUSTOM_SORT).select(:id, :name, :slug))
+
+    render json: events.map { |event|
+      { value: event.id.to_s, label: helpers.combobox_display(event), sublabel: event.slug }
+    }
   end
 
   def user_search
     @q = params[:q].presence
-    @users = if @q.present?
-               User.search_name(@q).limit(20).select(:id, :full_name, :email)
-             else
-               User.order(:full_name).limit(20).select(:id, :full_name, :email)
-             end
-    render turbo_stream: helpers.async_combobox_options(@users)
+    users = @q.present? ? User.search_name(@q) : User.order(:full_name, :id)
+    users = combobox_page(users.select(:id, :full_name, :email))
+
+    # The admin display already spells out the email and ID, hence the sublabel
+    # only being worth rendering for everyone else.
+    render json: users.map { |user|
+      { value: user.id.to_s, label: helpers.combobox_display(user), sublabel: (user.email unless admin_signed_in?) }
+    }
   end
 
   def pending_ledger
