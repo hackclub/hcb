@@ -21,29 +21,7 @@
         </thead>
         <tbody>
           <% @paginated_card_grants.each do |card_grant| %>
-            <tr>
-              <td>
-                <span class="ml0 badge bg-<%= card_grant.state %>"><%= card_grant.state_text %></span>
-              </td>
-              <td>
-                <%= format_date card_grant.created_at %>
-              </td>
-              <td>
-                <%= user_mention card_grant.user %>
-              </td>
-              <td>
-                <%= link_to card_grant.purpose.presence || card_grant.disbursement.local_hcb_code.memo, spending_card_grant_path(card_grant), data: { turbo_frame: "_top" } %>
-              </td>
-              <td>
-                <%= render_money card_grant.amount_cents %>
-              </td>
-              <td class="text-right">
-                <%= render_money card_grant.balance %>
-              </td>
-              <td>
-                <%= render "events/card_grant_actions", card_grant: %>
-              </td>
-            </tr>
+            <%= render "card_grants/card_index_row", card_grant: %>
           <% end %>
         </tbody>
       </table>
