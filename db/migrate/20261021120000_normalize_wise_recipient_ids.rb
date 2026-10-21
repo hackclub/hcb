@@ -16,8 +16,8 @@ class NormalizeWiseRecipientIds < ActiveRecord::Migration[8.1]
     end
   end
 
+  # Keep corrected IDs on rollback; restoring URL prefixes would reintroduce bad data.
   def down
-    raise ActiveRecord::IrreversibleMigration, "The original Wise recipient URLs cannot be recovered"
   end
 
 end
