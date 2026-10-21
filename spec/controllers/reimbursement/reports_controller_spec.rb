@@ -54,7 +54,7 @@ RSpec.describe Reimbursement::ReportsController do
       end
 
       context "when a reviewer is required" do
-        let(:event) { create(:event, plan_type: Event::Plan::HackClubHQ) }
+        let(:event) { create(:event, reimbursement_reviewer_selection: :required) }
 
         it "renders eligible reviewers and preserves the selection after a failed upload" do
           reviewer = create(:user)
@@ -73,6 +73,29 @@ RSpec.describe Reimbursement::ReportsController do
           expect(document.at_css("##{select["aria-describedby"]}").text).to include("all reports")
           expect(select.at_css("option[selected]")["value"]).to eq(reviewer.public_id)
           expect(select.css("option").map { |option| option["value"] }).not_to include(user.public_id)
+        end
+      end
+
+      context "when reviewer selection is optional" do
+        let(:event) { create(:event, reimbursement_reviewer_selection: :optional) }
+
+        it "renders an optional reviewer with no preference and preserves an explicitly blank selection" do
+          event.organizer_positions.find_by!(user:).update!(role: :manager)
+
+          post :bulk_upload, params: {
+            event_id: event.slug,
+            reviewer_id: "",
+            csv_file: csv_upload("email,report_name\ninvalid,Travel\n")
+          }
+
+          expect(response).to have_http_status(:unprocessable_content)
+          document = Nokogiri::HTML5(response.body)
+          select = document.at_css('select[name="reviewer_id"]')
+          expect(document.at_css('label[for="reviewer_id"]').text).to eq("Reviewer (optional)")
+          expect(select["required"]).to be_nil
+          expect(select.at_css('option[value=""]').text).to eq("No preference")
+          expect(select.css("option[selected]").map { |option| option["value"] }).not_to include(user.public_id)
+          expect(select.at_css("option[value='#{user.public_id}']")).to be_present
         end
       end
     end

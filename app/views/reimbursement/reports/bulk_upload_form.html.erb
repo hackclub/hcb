@@ -59,13 +59,13 @@
 
   <%= form_with url: event_reimbursement_reports_bulk_upload_path(@event), method: :post, local: true, multipart: true do |form| %>
     <% report = Reimbursement::Report.new(event: @event) %>
-    <% if report.assigned_reviewer_required? %>
+    <% if report.reviewer_selectable? %>
       <% eligible_reviewers = report.eligible_reviewers %>
       <div class="field">
-        <%= form.label :reviewer_id, "Reviewer", class: "bold" %>
+        <%= form.label :reviewer_id, report.assigned_reviewer_required? ? "Reviewer" : "Reviewer (optional)", class: "bold" %>
         <%= form.collection_select :reviewer_id, eligible_reviewers, :public_id, :name,
-            { prompt: "Select a reviewer...", selected: params[:reviewer_id].presence || (current_user.public_id if eligible_reviewers.include?(current_user)) },
-            { required: true, aria: { describedby: "reviewer_hint" } } %>
+            { selected: params.key?(:reviewer_id) ? params[:reviewer_id] : (current_user.public_id if eligible_reviewers.include?(current_user)), **(report.assigned_reviewer_required? ? { prompt: "Select a reviewer..." } : { include_blank: "No preference" }) },
+            { required: report.assigned_reviewer_required?, aria: { describedby: "reviewer_hint" } } %>
         <p id="reviewer_hint" class="muted mt1 mb0">This reviewer will be assigned to all reports in this upload.</p>
       </div>
     <% end %>

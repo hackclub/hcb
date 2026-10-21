@@ -94,8 +94,47 @@ RSpec.describe Reimbursement::ReportService::BulkCreate do
     end
   end
 
-  context "when the plan requires an assigned reviewer" do
-    let(:event) { create(:event, plan_type: Event::Plan::HackClubHQ) }
+  it "ignores reviewer input when reviewer selection is disabled" do
+    reviewer = create(:user)
+    create(:organizer_position, :manager, event:, user: reviewer)
+
+    result = upload("email,report_name\nalice@example.com,Travel\n", reviewer_id: reviewer.public_id)
+
+    expect(result.success?).to be true
+    expect(result.reports.sole.reviewer).to be_nil
+  end
+
+  context "when reviewer selection is optional" do
+    let(:event) { create(:event, reimbursement_reviewer_selection: :optional) }
+
+    it "accepts no preference or an eligible reviewer, including managers opted out of unassigned reviews" do
+      reviewer = create(:user)
+      create(:organizer_position, :manager, event:, user: reviewer)
+      event.reimbursement_reviewer_opt_outs.create!(user: reviewer)
+
+      [nil, "", reviewer.public_id].each do |reviewer_id|
+        result = upload("email,report_name\nalice@example.com,Travel\n", reviewer_id:)
+
+        expect(result.success?).to be true
+        expect(result.reports.sole.reviewer).to eq(reviewer_id.present? ? reviewer : nil)
+      end
+    end
+
+    it "rejects an ineligible selected reviewer without creating records" do
+      outsider = create(:user)
+      result = nil
+
+      expect {
+        result = upload("email,report_name\nalice@example.com,Travel\n", reviewer_id: outsider.public_id)
+      }.not_to(change { [User.count, Reimbursement::Report.count, enqueued_jobs.size] })
+
+      expect(result.success?).to be false
+      expect(result.errors).to include("Please select an eligible reviewer for these reports")
+    end
+  end
+
+  context "when reviewer selection is required" do
+    let(:event) { create(:event, reimbursement_reviewer_selection: :required) }
 
     it "assigns an eligible reviewer to every report" do
       reviewer = create(:user)

@@ -42,7 +42,7 @@ module Reimbursement
         errors << "CSV file has no data rows" if attributes.empty?
 
         report = Report.new(event: @event)
-        if report.assigned_reviewer_required?
+        if report.reviewer_selectable? && (report.assigned_reviewer_required? || @reviewer_id.present?)
           @reviewer = report.eligible_reviewers.find_by_public_id(@reviewer_id)
           errors << "Please select an eligible reviewer for these reports" unless @reviewer
         end
