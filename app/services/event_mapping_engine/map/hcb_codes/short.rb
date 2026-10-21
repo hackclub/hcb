@@ -82,17 +82,43 @@ module EventMappingEngine
           end
           # return hcb_code.outgoing_disbursement.subledger&.id if hcb_code.outgoing_disbursement?
           return hcb_code.incoming_disbursement.subledger&.id if hcb_code.incoming_disbursement?
-          return hcb_code.ct&.canonical_event_mapping&.subledger_id if hcb_code.events.length == 1
+          return existing_mapping(hcb_code, ct)&.subledger_id if hcb_code.events.length == 1
+        end
+
+        # The oldest transaction on this HCB code is the original charge, which is
+        # the one whose subledger a later credit belongs on. `HcbCode#ct` can't be
+        # used: it returns the newest, and `ct` was assigned this HCB code just
+        # above, so it would return `ct` itself — which has no mapping yet,
+        # silently placing the transaction on the main ledger. That's how a
+        # dispute reimbursement for a card grant charge ended up crediting the
+        # organization instead of the grant it was charged to.
+        def existing_mapping(hcb_code, ct)
+          hcb_code.canonical_transactions
+                  .where.not(id: ct.id)
+                  .reorder(date: :asc, id: :asc)
+                  .first
+                  &.canonical_event_mapping
         end
 
         def assign_transaction_category!(hcb_code:, canonical_transaction:)
           category_slug = self.class.category_slug_for_hcb_code(hcb_code)
 
-          return unless category_slug
+          if category_slug
+            TransactionCategoryService
+              .new(model: canonical_transaction)
+              .set!(slug: category_slug, assignment_strategy: "automatic")
+          elsif hcb_code.reimbursement_expense_payout? || hcb_code.reimbursement_payout_holding?
+            # A reversed payout comes back as a second transaction on the same
+            # HCB code with no pending transaction of its own to settle against,
+            # so copy the category from the original pending transaction, as
+            # CanonicalPendingTransactionService::Settle does when it settles.
+            pending_mapping = hcb_code.pt&.category_mapping
+            return unless pending_mapping
 
-          TransactionCategoryService
-            .new(model: canonical_transaction)
-            .set!(slug: category_slug, assignment_strategy: "automatic")
+            TransactionCategoryService
+              .new(model: canonical_transaction)
+              .set!(slug: pending_mapping.category.slug, assignment_strategy: pending_mapping.assignment_strategy)
+          end
         end
 
       end

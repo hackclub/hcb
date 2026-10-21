@@ -9,7 +9,7 @@ class PayeesController < ApplicationController
   class InvalidManualPayeeEntityType < StandardError; end
 
   def index
-    authorize @event
+    authorize @event, policy_class: PayeePolicy
     all = @event.payees.not_archived.includes(:legal_entity, :payments)
     payees = params[:q].present? ? all.search(params[:q]) : all
     @payees = payees.order(created_at: :desc).page(params[:page]).per(15)
@@ -53,10 +53,23 @@ class PayeesController < ApplicationController
 
     if payee.update(payee_params)
       flash[:success] = "Recipient updated."
-      redirect_to helpers.new_recipient_transfer_path(params[:destination], @event, payee_id: payee.hashid)
+
+      if (position = payee.organizer_resign_position)
+        flash[:info] = "The contract was reissued with the new email. Please sign it."
+        redirect_to contract_event_payroll_position_path(event_id: @event.slug, id: position.id)
+      elsif params[:payee][:redirect_to_destination_id].present?
+        redirect_to helpers.updated_recipient_transfer_path(params[:payee][:destination], params[:payee][:redirect_to_destination_id])
+      else
+        redirect_to helpers.new_recipient_transfer_path(params[:payee][:destination], @event, payee_id: payee.hashid)
+      end
     else
       flash[:error] = payee.errors.full_messages.to_sentence
-      redirect_to helpers.new_recipient_transfer_path(params[:destination], @event, payee_id: payee.hashid, edit_payee: true)
+
+      if params[:payee][:redirect_to_destination_id].present?
+        redirect_to helpers.updated_recipient_transfer_path(params[:payee][:destination], params[:payee][:redirect_to_destination_id])
+      else
+        redirect_to helpers.new_recipient_transfer_path(params[:payee][:destination], @event, payee_id: payee.hashid, edit_payee: true)
+      end
     end
   end
 
@@ -98,13 +111,16 @@ class PayeesController < ApplicationController
       return
     end
 
-    @legal_entities = current_user.legal_entities
+    user = User.find_by(email: @payee.email)
+    @legal_entities = user&.legal_entities || []
   end
 
   def set_legal_entity
     authorize @payee
 
-    le = current_user.legal_entities.find(params[:legal_entity_id])
+    le = LegalEntity.find(params[:legal_entity_id])
+    authorize le
+
     if le.tin_banned?
       flash[:error] = "This legal entity is banned."
       redirect_back_or_to choose_legal_entity_payee_path(@payee)
