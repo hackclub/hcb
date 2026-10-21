@@ -14,7 +14,7 @@ module Maintenance
 
     def process(wire)
       uetr = wire.column_wire_details["uetr"]
-      wire.update!(uetr:) if uetr.present?
+      wire.update_column(:uetr, uetr) if uetr.present?
       self.class.rate_limit_retries = 0
     rescue Faraday::Error => e
       raise unless e.response_status == 429

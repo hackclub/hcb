@@ -63,6 +63,52 @@ RSpec.describe Ledger::ItemsController, type: :controller do
     end
   end
 
+  describe "GET #show" do
+    context "when the item has no HCB code" do
+      it "renders for an auditor" do
+        create_session(create(:user, :make_auditor), verified: true)
+
+        get :show, params: { id: item.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include(item.memo)
+      end
+
+      it "responds with not found for a non-auditor" do
+        create_session(create(:user), verified: true)
+
+        expect { get :show, params: { id: item.hashid } }.to raise_error(ActionController::RoutingError)
+      end
+    end
+
+    it "links each CPT to its own page for an auditor" do
+      cpt = create(:canonical_pending_transaction)
+      cpt_item = cpt.reload.ledger_item
+      cpt_item.ledger_mappings.delete_all
+      create(:ledger_mapping, :on_primary, ledger:, ledger_item: cpt_item)
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get :show, params: { id: cpt_item.hashid }
+
+      expect(response).to be_successful
+      expect(response.body).to include(%(href="#{canonical_pending_transaction_path(cpt)}">CPT #{cpt.id}</a>))
+    end
+
+    it "shows the Process button after the transfer can no longer be canceled" do
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+      ach_transfer = create(:ach_transfer, event:)
+      ach_transfer.update_column(:aasm_state, "deposited")
+      ach_item = ach_transfer.reload.ledger_item
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get :show, params: { id: ach_item.hashid }
+
+      expect(response).to be_successful
+      expect(response.body).to include(%(action="#{ach_start_approval_admin_path(ach_transfer)}"))
+      expect(response.body).not_to include("Cancel transfer")
+    end
+  end
+
   context "as a reader (not a member)" do
     let(:reader_user) { create(:user) }
 
