@@ -138,6 +138,10 @@ class RecurringDonation < ApplicationRecord
     anonymous? && !show_anonymous ? "Anonymous" : super()
   end
 
+  def sync_stripe_customer!
+    StripeService::Customer.update(stripe_customer_id, name:)
+  end
+
   private
 
   def create_stripe_subscription

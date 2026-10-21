@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 expand((:organization if params[:event_id].blank?)) do
-  json.partial! "transaction", tx: @hcb_code
+  json.partial! "api/v4/transactions/transaction", tx: @hcb_code
 end
