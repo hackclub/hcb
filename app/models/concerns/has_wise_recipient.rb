@@ -3,9 +3,13 @@
 module HasWiseRecipient
   extend ActiveSupport::Concern
 
+  WISE_RECIPIENT_ID_FORMAT = /\A\h{8}-\h{4}-\h{4}-\h{4}-\h{12}\z/
+
   included do
     include CountryEnumable
     has_country_enum(field: :recipient_country)
+
+    validates :wise_recipient_id, format: { with: WISE_RECIPIENT_ID_FORMAT, message: "is not a valid Wise recipient ID" }, allow_blank: true
 
     validate do
       if POSTAL_CODE_FORMATS[recipient_country&.to_sym] && !address_postal_code.match(POSTAL_CODE_FORMATS[recipient_country.to_sym])

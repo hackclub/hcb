@@ -86,9 +86,7 @@ class WiseTransfer < ApplicationRecord
   validates(:wise_id, format: { with: WISE_ID_FORMAT, message: "is not a valid Wise ID" }, allow_nil: true)
   validates(:wise_id, presence: true, if: :processed?)
 
-  WISE_RECIPIENT_ID_FORMAT = /\A[\h-]{36}\z/
   before_validation(:normalize_wise_recipient_id)
-  validates(:wise_recipient_id, format: { with: WISE_RECIPIENT_ID_FORMAT, message: "is not a valid Wise recipient ID" }, allow_nil: true)
   validates(:wise_recipient_id, presence: true, if: :processed?)
 
   after_create do
