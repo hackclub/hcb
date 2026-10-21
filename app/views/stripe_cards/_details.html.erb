@@ -168,7 +168,7 @@
   <% admin_tool "details" do %>
     <div>
       <strong>Ordered at</strong>
-      <%= format_datetime Time.at(stripe_card.stripe_obj[:created]) %>
+      <%= format_datetime stripe_card.created_at %>
     </div>
   <% end %>
 
