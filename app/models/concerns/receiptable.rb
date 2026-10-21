@@ -16,7 +16,7 @@ module Receiptable
 
     def receipt_required?
       # This method should be overwritten in specific classes
-      raise NotImplementedError, "The #{self.class.name} model includes Receiptable, but hasn't implemented it's own version of receipt_required?."
+      raise NotImplementedError, "The #{self.class.name} model includes Receiptable, but hasn't implemented its own version of receipt_required?."
     end
 
     def missing_receipt?
