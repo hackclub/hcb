@@ -67,7 +67,7 @@ disbursement_nightly_job:
   class: "Disbursement::NightlyJob"
 
 disbursement_daily_job:
-  cron: "0 13 * * *" # run every 1 day at 13:00 UTC (9am EDT / 8am EST)
+  cron: "0 13 * * *" # run every 1 day at 13:00 UTC
   class: "Disbursement::DailyJob"
   queue: "default"
 
@@ -80,7 +80,7 @@ ach_transfer_nightly_job:
   class: "AchTransfer::NightlyJob"
 
 ach_transfer_daily_job:
-  cron: "0 13 * * *" # run every 1 day at 13:00 UTC (9am EDT / 8am EST)
+  cron: "0 13 * * *" # run every 1 day at 13:00 UTC
   class: "AchTransfer::DailyJob"
 
 invoice_opens_to_paids_job:
@@ -169,7 +169,7 @@ send_admin_reminders_job:
   class: "SendAdminRemindersJob"
 
 user_subordinate_summary_job:
-  cron: "0 12 * * mon" # noon UTC every Monday (8am EDT / 7am EST)
+  cron: "0 12 * * mon" # run at 12:00 UTC every Monday
   class: "User::SubordinateSummaryJob"
 
 user_sync_to_loops_job:
@@ -252,11 +252,11 @@ announcement_monthly_job:
   class: "Announcement::MonthlyJob"
 
 announcement_seven_day_warning_job:
-  cron: "0 12 -7 * *" # run at 12:00 UTC (8am EDT / 7am EST) on the 7th-to-last day of the month
+  cron: "0 12 -7 * *" # run at 12:00 UTC on the 7th-to-last day of the month
   class: "Announcement::SevenDayWarningJob"
 
 announcement_two_day_warning_job:
-  cron: "0 12 -2 * *" # run at 12:00 UTC (8am EDT / 7am EST) on the 2nd-to-last day of the month
+  cron: "0 12 -2 * *" # run at 12:00 UTC on the 2nd-to-last day of the month
   class: "Announcement::TwoDayWarningJob"
 
 announcement_delete_unsaved_job:
@@ -264,11 +264,11 @@ announcement_delete_unsaved_job:
   class: "Announcement::DeleteUnsavedJob"
 
 notify_events_with_negative_balance_job:
-  cron: "0 13 * * 1" # run at 13:00 UTC every Monday (9am EDT / 8am EST)
+  cron: "0 13 * * 1" # run at 13:00 UTC every Monday
   class: "NotifyEventsWithNegativeBalanceJob"
 
 refresh_disposable_domains:
-  cron: "0 11 * * *" # run at 11:00 UTC every day (7am EDT / 6am EST)
+  cron: "0 11 * * *" # run at 11:00 UTC every day
   class: "DisposableEmailDomainListUpdateJob"
 
 hide_onboarding_messages:
