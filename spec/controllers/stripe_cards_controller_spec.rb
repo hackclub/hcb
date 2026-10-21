@@ -55,6 +55,46 @@ RSpec.describe StripeCardsController do
       )
     end
 
+    it "hides the address and phone number from other organizers" do
+      setup_context => { card:, event: }
+      other_organizer = create(:user)
+      create(:organizer_position, user: other_organizer, event:)
+      create_session(other_organizer, verified: true)
+
+      get(:show, params: { id: card.id })
+
+      expect(response).to have_http_status(:ok)
+
+      expect(details_snapshot(response)).to eq(
+        [
+          "Activation status Active",
+          "Card number •••• •••• •••• 9876",
+          "Expiration date 02/2030",
+          "CVC •••",
+          "Type Virtual",
+          "Network Visa"
+        ]
+      )
+    end
+
+    it "shows the address and phone number to auditors" do
+      setup_context => { card: }
+      auditor = create(:user, :make_auditor)
+      create_session(auditor, verified: true)
+
+      get(:show, params: { id: card.id })
+
+      expect(response).to have_http_status(:ok)
+
+      expect(details_snapshot(response)).to include(
+        "Address 8605 Santa Monica Blvd #86294",
+        "City West Hollywood",
+        "State CA",
+        "ZIP/Postal code 90069",
+        "Phone number (855) 625-4225"
+      )
+    end
+
     it "requires sudo mode to view the details" do
       setup_context => { card:, user: }
       Flipper.enable(:sudo_mode_2015_07_21, user)
