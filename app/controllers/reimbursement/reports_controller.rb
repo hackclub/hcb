@@ -312,7 +312,7 @@ module Reimbursement
           payout_holding.mark_settled!
         end
         wise_payout_method = @report.payout_method&.details
-        wise_payout_method.update(wise_recipient_id: params[:wise_recipient_id])
+        wise_payout_method.update!(wise_recipient_id: params[:wise_recipient_id])
         wise_transfer = clearinghouse.wise_transfers.create!(
           payment_for: "Reimbursement for #{@report.name}.",
           address_line1: wise_payout_method.address_line1,
