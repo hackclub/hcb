@@ -67,6 +67,14 @@
           <td>Payment Purpose:</td>
           <td><%= @wire.payment_for %></td>
         </tr>
+        <% if @wire.payment.present? %>
+          <tr>
+            <td>Payment:</td>
+            <td>
+              <%= render partial: "admin/payment_link", locals: { payout: @wire } %>
+            </td>
+          </tr>
+        <% end %>
         <tr>
           <td>Currency:</td>
           <td><%= @wire.currency %></td>
