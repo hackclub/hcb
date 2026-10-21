@@ -14,7 +14,14 @@
         </div>
         <div>
           <%= form.label :email, "Email" %>
-          <%= form.email_field :email, value: payee.email, class: "!max-w-full", required: true %>
+          <%= form.email_field :email, value: payee.email, class: "!max-w-full", required: true, disabled: payee.legal_entity.present? %>
+
+          <% if payee.legal_entity.present? %>
+            <p class="text-sm text-muted mb-0 mt-1">
+              Create a new recipient if you need to use a different email.
+              You can also archive this recipient if you'd like.
+            </p>
+          <% end %>
         </div>
       </div>
 

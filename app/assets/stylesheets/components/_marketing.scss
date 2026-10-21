@@ -3528,6 +3528,27 @@ $mk-term-green: #62d196;
     color: $green-dark;
   }
 
+  // Hero "fast track" card: sits under the primary CTA, left-aligned to the copy column
+  // rather than centered, with a warm tint so it reads as an aside and not a second hero.
+  &--fasttrack {
+    margin: 22px 0 0;
+    max-width: 520px;
+    padding: 16px 20px;
+    background: rgba($orange, 0.06);
+    box-shadow: inset 0 0 0 1px rgba($orange, 0.25);
+
+    .mk-notice__icon {
+      color: $orange;
+    }
+
+    a {
+      color: $mk-ink;
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+  }
+
   // The error alert is a compact red-tinted card (vs. the neutral white success card).
   &--error {
     margin-bottom: 20px;
