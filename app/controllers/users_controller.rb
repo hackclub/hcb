@@ -406,7 +406,7 @@ class UsersController < ApplicationController
           flash[:error] = "To lock this user, demote them to a regular admin first."
           return redirect_to admin_user_path(@user)
         elsif locked
-          @user.lock!(freeze_cards: params[:user][:freeze_cards] == "1", frozen_by: current_user)
+          @user.lock!(freeze_cards: params[:user][:freeze_cards] == "1")
         else
           @user.unlock!
         end
