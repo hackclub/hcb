@@ -55,11 +55,18 @@ class InvoicesController < ApplicationController
 
     relation = relation.search_description(params[:q]) if params[:q].present?
 
-    @invoices = helpers.sorted_relation(
+    relation = helpers.sorted_relation(
       relation,
       INVOICE_COLUMNS,
       sort: [params[:sort], params[:direction]]
-    ).includes(:sponsor).page(params[:page]).per(safe_per(25))
+    )
+
+    if request.format.csv?
+      authorize @event, :export_invoices?
+      return stream_invoices_csv(relation)
+    end
+
+    @invoices = relation.includes(:sponsor).page(params[:page]).per(safe_per(25))
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)
@@ -235,6 +242,19 @@ class InvoicesController < ApplicationController
       :sponsor_id,
       sponsor_attributes: policy(Sponsor).permitted_attributes
     )
+  end
+
+  def stream_invoices_csv(invoices)
+    by_sponsor = params[:report] == "sponsor_totals"
+    name = by_sponsor ? "invoices_sponsors" : "invoices"
+
+    headers["Content-Type"] = "text/csv"
+    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_#{name}_#{Time.now.strftime("%Y%m%d")}.csv"
+    set_streaming_headers
+
+    response.status = 200
+
+    self.response_body = ::InvoiceService::Export::Csv.new(invoices:, by_sponsor:).run
   end
 
   def filter_options
