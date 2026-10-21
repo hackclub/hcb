@@ -542,6 +542,16 @@ RSpec.describe Ledger::Item, type: :model do
       expect(Ledger::Mapping.where(ledger_item_id: other.id)).not_to exist
     end
 
+    it "moves the transactions through their callbacks, so the move is versioned", versioning: true do
+      ct = create(:canonical_transaction, amount_cents: -500, ledger_item_id: other.id)
+      cpt = create(:canonical_pending_transaction, amount_cents: -300, ledger_item_id: other.id)
+
+      item.absorb(other)
+
+      expect(ct.reload.versions.last.changeset).to include("ledger_item_id" => [other.id, item.id])
+      expect(cpt.reload.versions.last.changeset).to include("ledger_item_id" => [other.id, item.id])
+    end
+
     it "refuses to absorb an item with a linked object and leaves it untouched" do
       stub_donation_payment_intent_creation
       other = create(:ledger_item, linked_object: create(:donation))
