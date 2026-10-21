@@ -15,7 +15,7 @@ FactoryBot.define do
     keyword_lock { nil }
 
     after(:create) do |card_grant|
-      card_grant.stripe_card.update(subledger: card_grant.subledger)
+      card_grant.stripe_card&.update(subledger: card_grant.subledger)
     end
   end
 end
