@@ -131,27 +131,24 @@ class ExportsController < ApplicationController
 
   private
 
-  # Sets `@start` and `@end`, or redirects back to the statements page with an
-  # error when the requested range is invalid. Callers must `return if performed?`.
+  # Sets `@start` and `@end`, or renders a 400 when the requested range is
+  # invalid. Callers must `return if performed?`.
   def set_date_range
     start_date = params[:start_date].present? ? parse_date(params[:start_date]) : Date.today.prev_month.to_datetime
     end_date = params[:end_date].present? ? parse_date(params[:end_date]) : start_date
 
     if start_date.nil? || end_date.nil?
-      flash[:error] = "Invalid date."
-      redirect_back fallback_location: event_statements_path(@event) and return
+      return render plain: "Invalid date.", status: :bad_request
     end
 
     @start = start_date.beginning_of_month
     if @start >= Date.today.beginning_of_month
-      flash[:error] = "Can not create a financial statement for #{@start.strftime("%B %Y")}"
-      redirect_back fallback_location: event_statements_path(@event) and return
+      return render plain: "Can not create a financial statement for #{@start.strftime("%B %Y")}.", status: :bad_request
     end
 
     @end = end_date.end_of_month
     if @end < @start
-      flash[:error] = "End date cannot be before the start date."
-      redirect_back fallback_location: event_statements_path(@event) and return
+      render plain: "End date cannot be before the start date.", status: :bad_request
     end
   end
 

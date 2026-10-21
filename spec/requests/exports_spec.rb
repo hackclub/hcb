@@ -14,32 +14,32 @@ RSpec.describe "Transaction exports", type: :request do
       expect(response.media_type).to eq("application/pdf")
     end
 
-    it "redirects with an error instead of raising on an unparseable start_date" do
+    it "returns a 400 instead of raising on an unparseable start_date" do
       get "/exports/#{event.slug}.pdf", params: { start_date: "not-a-date" }
 
-      expect(response).to redirect_to(event_statements_path(event))
-      expect(flash[:error]).to eq("Invalid date.")
+      expect(response).to have_http_status(:bad_request)
+      expect(response.body).to eq("Invalid date.")
     end
 
-    it "redirects with an error instead of raising on an unparseable end_date" do
+    it "returns a 400 instead of raising on an unparseable end_date" do
       get "/exports/#{event.slug}.pdf", params: { start_date: last_month, end_date: "not-a-date" }
 
-      expect(response).to redirect_to(event_statements_path(event))
-      expect(flash[:error]).to eq("Invalid date.")
+      expect(response).to have_http_status(:bad_request)
+      expect(response.body).to eq("Invalid date.")
     end
 
-    it "redirects with an error for a month that has not ended yet" do
+    it "returns a 400 for a month that has not ended yet" do
       get "/exports/#{event.slug}.pdf", params: { start_date: Date.today.beginning_of_month.to_s }
 
-      expect(response).to redirect_to(event_statements_path(event))
-      expect(flash[:error]).to start_with("Can not create a financial statement for")
+      expect(response).to have_http_status(:bad_request)
+      expect(response.body).to eq("Can not create a financial statement for #{Date.today.strftime("%B %Y")}.")
     end
 
-    it "redirects with an error when the end date is before the start date" do
+    it "returns a 400 when the end date is before the start date" do
       get "/exports/#{event.slug}.pdf", params: { start_date: last_month, end_date: Date.today.prev_month(3).to_s }
 
-      expect(response).to redirect_to(event_statements_path(event))
-      expect(flash[:error]).to eq("End date cannot be before the start date.")
+      expect(response).to have_http_status(:bad_request)
+      expect(response.body).to eq("End date cannot be before the start date.")
     end
   end
 
@@ -51,11 +51,11 @@ RSpec.describe "Transaction exports", type: :request do
       expect(response.media_type).to eq("text/csv")
     end
 
-    it "redirects with an error instead of raising on an unparseable start_date" do
+    it "returns a 400 instead of raising on an unparseable start_date" do
       get "/exports/#{event.slug}.csv", params: { start_date: "not-a-date" }
 
-      expect(response).to redirect_to(event_statements_path(event))
-      expect(flash[:error]).to eq("Invalid date.")
+      expect(response).to have_http_status(:bad_request)
+      expect(response.body).to eq("Invalid date.")
     end
   end
 end
