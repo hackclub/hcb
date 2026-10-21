@@ -252,6 +252,55 @@ RSpec.describe Payment, type: :model do
     end
   end
 
+  describe "#all_comments" do
+    let(:event) { create(:event, :with_positive_balance) }
+    let(:payee) { create(:payee, event:) }
+    let(:user) { create(:user) }
+    let(:payment) do
+      p = build(:payment, payee:)
+      stub_legal_entity(p, payable: false, payout_method: nil)
+      p.save!
+      p
+    end
+
+    def attempt_with_wire
+      stub_request(:get, /api\.column\.com\/institutions/).to_return_json(status: 200, body: { country_code: "DE" })
+      wire = create(:wire, account_number: "DE89370400440532013000", event:)
+      create(:payment_attempt, :wire, payment:, payout: wire, aasm_state: "rejected", payout_method: create(:legal_entity_payout_method_wire, details: build(:wire_payout_method_details, account_number: "DE89370400440532013000", bic_code: "DEUTDEDB", recipient_country: :DE, address_city: "Berlin", address_postal_code: "10115", address_state: "Berlin")))
+      wire.local_hcb_code
+    end
+
+    it "includes comments on an attempt's payout hcb_code" do
+      rejection = create(:comment, commentable: attempt_with_wire, user:, content: "wire rejected", action: :rejected_transfer)
+
+      expect(payment.all_comments).to include(rejection)
+    end
+
+    it "includes comments from every attempt" do
+      first_attempt_code = attempt_with_wire
+      first_comment = create(:comment, commentable: first_attempt_code, user:)
+      second_attempt_code = attempt_with_wire
+      second_comment = create(:comment, commentable: second_attempt_code, user:)
+      payment_comment = create(:comment, commentable: payment, user:)
+
+      expect(payment.all_comments).to contain_exactly(first_comment, second_comment, payment_comment)
+    end
+
+    it "excludes comments on unrelated hcb_codes" do
+      attempt_with_wire
+      unrelated = create(:comment, commentable: create(:hcb_code), user:)
+
+      expect(payment.all_comments).not_to include(unrelated)
+    end
+
+    it "orders comments by created_at" do
+      newer = create(:comment, commentable: payment, user:, created_at: 1.minute.ago)
+      older = create(:comment, commentable: attempt_with_wire, user:, created_at: 1.hour.ago)
+
+      expect(payment.all_comments.to_a).to eq([older, newer])
+    end
+  end
+
   describe "#retry!" do
     let(:payout_method) { create(:legal_entity_payout_method) }
     let(:payment) do
