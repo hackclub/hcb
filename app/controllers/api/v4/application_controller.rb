@@ -39,7 +39,6 @@ module Api
 
       def authenticate!
         @current_token = authenticate_with_http_token { |t, _options| ApiToken.find_by(token: t) }
-        unless @current_token&.accessible? && !@current_token.user.locked?
           return render json: { error: "invalid_auth" }, status: :unauthorized
         end
 
