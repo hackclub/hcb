@@ -9,12 +9,17 @@
 <% event = @event || hcb_code&.event %>
 <% if hcb_code.present? && !event&.demo_mode? && event.present? && policy(hcb_code).toggle_tag? %>
   <div class="overflow-visible relative" style="margin-left: 0.5rem;" data-controller="menu">
-    <button class="list-badge add-tag-badge !mx-0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
+    <button class="list-badge add-tag-badge ml0 menu__toggle menu__toggle--arrowless" data-menu-target="toggle" data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">+ Add tag</button>
     <div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm" data-menu-target="content">
       <% event.tags.each do |tag| %>
         <div class="flex items-center" data-tag="<%= tag.id %>">
           <%= button_to toggle_tag_hcb_code_path(id: hcb_code.hashid, tag_id: tag.id), class: "menu__action #{tag_dom_id(hcb_code, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
-            <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
+            <div class="relative w-7 mr-2">
+              <div class="tag__preview tag-<%= tag.color || "muted" %>"></div>
+              <% if tag.emoji.present? %>
+                <p class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 m-0"><%= tag.emoji %></p>
+              <% end %>
+            </div>
             <%= tag.label %>
             <%= "✓" if item.tags.include?(tag) %>
           <% end %>
@@ -26,7 +31,10 @@
       <% if event.tags.any? %>
         <div class="menu__divider tags__divider"></div>
       <% end %>
-      <%= render partial: "hcb_codes/create_tag", locals: { button: hcb_code.hashid } %>
+      <%= link_to "#", class: "menu__input #{ "btn mt-3" if defined?(large)}", data: { behavior: "modal_trigger", action: "menu#close", modal: "create_tag" }, onclick: "document.getElementById('create_tag_hcb_code_id').value = #{hcb_code.hashid.to_json}" do %>
+        <%= inline_icon "plus", size: 15 %>
+          Create tag
+      <% end %>
     </div>
   </div>
 <% end %>
