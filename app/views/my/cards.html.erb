@@ -55,8 +55,8 @@
     <%= render "stripe_cards/form", stripe_card: StripeCard.new %>
   </section>
   <%= turbo_frame_tag :my_cards_shipping, src: my_cards_shipping_path, target: "_top" %>
-  <% if @cards_by_event.any? %>
-    <% @cards_by_event.each do |event, cards| %>
+  <% if @events.any? %>
+    <% @events.each do |event| %>
       <section class="mt-3">
         <div class="flex items-center gap-2">
           <% can_view_event = policy(event).card_overview? %>
@@ -65,13 +65,17 @@
               <%= image_tag event.logo, height: 24, width: 24, class: "rounded flex-shrink-0" %>
             <% end %>
             <span class="eyebrow truncate"><%= event.name %></span>
-            <%= badge_for cards.count, class: "bg-muted flex-shrink-0 mx-0" %>
+            <%= badge_for @card_counts[event.id], class: "bg-muted flex-shrink-0 mx-0" %>
             <div class="menu__divider flex-1 ml-2"></div>
           <% end %>
         </div>
-        <article class="mixed-grid grid--spacious">
-          <%= render cards, headless: true, show_purpose: true %>
-        </article>
+        <%= turbo_frame_tag dom_id(event, :my_cards), src: my_event_cards_path(event_id: event.id, **request.query_parameters.slice("q", "status", "type").symbolize_keys), loading: :lazy, target: "_top" do %>
+          <article class="mixed-grid grid--spacious" aria-busy="true">
+            <% @card_counts[event.id].times do %>
+              <div class="mt1 rounded-xl bg-smoke dark:bg-darkless animate-pulse aspect-[364/224]"></div>
+            <% end %>
+          </article>
+        <% end %>
       </section>
     <% end %>
   <% else %>

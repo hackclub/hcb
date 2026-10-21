@@ -1,0 +1,6 @@
+<% @show_card_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? %>
+<%= turbo_frame_tag dom_id(event, :my_cards), target: "_top" do %>
+  <article class="mixed-grid grid--spacious">
+    <%= render stripe_cards, headless: true, show_purpose: true %>
+  </article>
+<% end %>

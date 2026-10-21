@@ -60,21 +60,57 @@ RSpec.describe MyController do
       end
 
       def searched_cards
-        ivar(:cards_by_event).values.flatten
+        ivar(:stripe_cards).to_a
       end
 
-      it "groups the user's cards by event, sorted by event name" do
-        zebra_card = create_card(name: "Zebra card")
-        aardvark_cards = [create_card(event: aardvark), create_card(event: aardvark, stripe_status: "canceled")]
+      it "lists the user's organizations, sorted by name, with lazy-loaded cards" do
+        create_card(name: "Zebra card")
+        create_card(event: aardvark)
+        create_card(event: aardvark, stripe_status: "canceled")
         create(:stripe_card, :with_stripe_id, event: zebra)
 
         get :cards
 
         expect(response).to have_http_status(:ok)
-        expect(ivar(:cards_by_event).keys).to eq([aardvark, zebra])
-        expect(ivar(:cards_by_event)[aardvark]).to contain_exactly(*aardvark_cards)
-        expect(ivar(:cards_by_event)[zebra]).to eq([zebra_card])
+        expect(ivar(:events)).to eq([aardvark, zebra])
+        expect(ivar(:card_counts)).to eq(aardvark.id => 2, zebra.id => 1)
         expect(response.body).to include("Zebra Club", "aardvark Society")
+
+        frame = response.parsed_body.at_css("turbo-frame#my_cards_event_#{aardvark.id}")
+        expect(frame["src"]).to eq(my_event_cards_path(event_id: aardvark.id))
+        expect(frame["loading"]).to eq("lazy")
+      end
+
+      it "passes the search and filters to each organization's frame" do
+        create_card(name: "Laptop fund", stripe_status: "canceled", card_type: "virtual")
+
+        get :cards, params: { q: "laptop", status: "canceled", type: "virtual" }
+
+        frame = response.parsed_body.at_css("turbo-frame#my_cards_event_#{zebra.id}")
+        expect(frame["src"]).to eq(my_event_cards_path(event_id: zebra.id, q: "laptop", status: "canceled", type: "virtual"))
+      end
+
+      describe "GET #event_cards" do
+        it "renders only the user's cards in that organization" do
+          card = create_card(name: "Zebra card")
+          create_card(event: aardvark)
+          create(:stripe_card, :with_stripe_id, event: zebra)
+
+          get :event_cards, params: { event_id: zebra.id }
+
+          expect(response).to have_http_status(:ok)
+          expect(searched_cards).to eq([card])
+          expect(response.parsed_body.at_css("turbo-frame#my_cards_event_#{zebra.id}")).to be_present
+        end
+
+        it "applies the search" do
+          laptop = create_card(name: "Laptop fund")
+          create_card(name: "Snacks")
+
+          get :event_cards, params: { event_id: zebra.id, q: "laptop" }
+
+          expect(searched_cards).to eq([laptop])
+        end
       end
 
       it "searches cards by name and last four digits" do
