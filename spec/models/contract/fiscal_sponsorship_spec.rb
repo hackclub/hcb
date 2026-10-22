@@ -26,4 +26,29 @@ RSpec.describe Contract::FiscalSponsorship, type: :model do
       expect(agreement_name_for(nil)).to eq "fiscal sponsorship agreement"
     end
   end
+
+  describe "#standard?" do
+    def standard_for(external_template_id)
+      described_class.new(external_template_id:).standard?
+    end
+
+    it "is true for the standard plan's template" do
+      expect(standard_for(Event::Plan::Standard.new.contract_docuseal_template_id)).to be true
+    end
+
+    it "is true for a plan that inherits the standard template" do
+      template = Event::Plan::FeeWaived.new.contract_docuseal_template_id
+
+      expect(template).to eq Event::Plan::Standard.new.contract_docuseal_template_id
+      expect(standard_for(template)).to be true
+    end
+
+    it "is false for a plan with its own agreement" do
+      expect(standard_for(Event::Plan::HackClubAffiliate.new.contract_docuseal_template_id)).to be false
+    end
+
+    it "is false for a contract with no recorded template" do
+      expect(standard_for(nil)).to be false
+    end
+  end
 end
