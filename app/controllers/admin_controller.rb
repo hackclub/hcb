@@ -802,12 +802,9 @@ class AdminController < Admin::BaseController
   def increase_check_process
     @check = IncreaseCheck.find(params[:id])
     if !@check.pending?
-      approval_attempt = Governance::Admin::Transfer::ApprovalAttempt.where(
-        transfer_id: @check.id,
-        transfer_type: "IncreaseCheck",
-        result: Governance::Admin::Transfer::ApprovalAttempt::SUCCESSFUL_RESULTS
-      ).order(created_at: :desc).first
-      @approver = approval_attempt&.user
+      # check papertrail for user who took action to move from pending to new state by searching the jsonb object
+      approval_attempt = @check.versions.where("object_changes->'aasm_state'->>0 = 'pending'").where("object_changes->'aasm_state'->>1 = 'approved'").order(created_at: :desc).first
+      @approver = User.find_by(id: approval_attempt.whodunnit) if approval_attempt
     end
   end
 
@@ -917,12 +914,9 @@ class AdminController < Admin::BaseController
   def wire_process
     @wire = Wire.find(params[:id])
     if !@wire.pending?
-      approval_attempt = Governance::Admin::Transfer::ApprovalAttempt.where(
-        transfer_id: @wire.id,
-        transfer_type: "Wire",
-        result: Governance::Admin::Transfer::ApprovalAttempt::SUCCESSFUL_RESULTS
-      ).order(created_at: :desc).first
-      @approver = approval_attempt&.user
+      # check papertrail for user who took action to move from pending to new state by searching the jsonb object
+      approval_attempt = @wire.versions.where("object_changes->'aasm_state'->>0 = 'pending'").where("object_changes->'aasm_state'->>1 = 'approved'").order(created_at: :desc).first
+      @approver = User.find_by(id: approval_attempt.whodunnit) if approval_attempt
     end
   end
 
