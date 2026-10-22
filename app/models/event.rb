@@ -327,6 +327,9 @@ class Event < ApplicationRecord
   scope :not_demo_mode, -> { where(demo_mode: false) }
   scope :filter_demo_mode, ->(demo_mode) { demo_mode.nil? ? all : where(demo_mode:) }
   scope :financially_frozen, -> { where(financially_frozen: true) }
+  # Organizations anyone can send an HCB transfer to, listed in the public
+  # directory or not. Keep in sync with `#accepts_public_transfers?`.
+  scope :accepting_public_transfers, -> { transparent.not_hidden.not_demo_mode.where(financially_frozen: false) }
 
   before_validation :enforce_transparency_eligibility
 
@@ -820,6 +823,11 @@ class Event < ApplicationRecord
 
   def hidden?
     hidden_at.present?
+  end
+
+  # Keep in sync with the `accepting_public_transfers` scope.
+  def accepts_public_transfers?
+    is_public? && !hidden? && !demo_mode? && !financially_frozen?
   end
 
   def filter_data
