@@ -1,1 +1,1 @@
-json.partial! "api/v4/invitations/invitation", invitation: @invitation, as: :invitation
+json.partial! "api/v4/organizer_position_invites/organizer_position_invite", invitation: @invitation

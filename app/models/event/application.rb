@@ -106,6 +106,7 @@ class Event
       project_info: "project_info",
       personal_info: "personal_info",
       review: "review",
+      sign_agreement: "sign_agreement",
       agreement: "agreement",
       submission: "submission"
     }
@@ -154,13 +155,18 @@ class Event
       end
 
       event :mark_rejected do
-        transitions from: [:submitted, :under_review], to: :rejected
-        after do |rejection_message|
+        transitions from: [:submitted, :under_review, :approved], to: :rejected, if: -> { event.nil? }
+        after do |rejection_message, rejection_reason|
           contract.mark_voided! if contract.present?
 
           if rejection_message.present?
             Event::ApplicationMailer.with(application: self, rejection_message: rejection_message).rejected.deliver_later
           end
+
+          if rejection_reason.present?
+            set_airtable_status(REJECTION_AIRTABLE_STATUSES.fetch(rejection_reason.to_sym, "Rejected"))
+          end
+
         end
       end
 
@@ -172,6 +178,17 @@ class Event
     scope :in_progress, -> { where.not(aasm_state: ["approved", "rejected"]) }
 
     DISALLOWED_COUNTRIES = %w[IN NG RU CU IR KP SY BY VE SD SS MM AF YE SO PK CF CG ZW LY CM LB IQ].freeze
+
+    REJECTION_AIRTABLE_STATUSES = {
+      generic: "Rejected",
+      country: "Rejected - Country",
+      mission: "Rejected Teen - No charitable mission/values alignment",
+      adult: "Rejected - Adult",
+      legal: "Rejected - Legal/political reason",
+      operational: "Rejected - Operational limitation",
+      hq_satellite: "Rejected - HQ Satellite Event"
+
+    }.freeze
 
     def rejection_messages
       generic = <<~MSG.strip
@@ -224,11 +241,49 @@ class Event
         The HCB team
       MSG
 
+      legal = <<~MSG.strip
+        Hi #{user.first_name},
+
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). After careful consideration, we're unable to move forward with your application at this time. Your project's mission doesn't align with HCB's guidelines, and as a result, we cannot approve your application.
+
+        We're sorry for not being able to support you on your journey and wish you all the best. If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
+
+        Best,
+        The HCB team
+      MSG
+
+
+
+      operational = <<~MSG.strip
+        Hi #{user.first_name},
+
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). After careful consideration, we're unable to move forward with your application in our current operational capacity.
+
+        We're sorry for not being able to support you on your journey and wish you all the best. If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
+
+        Best,
+        The HCB team
+      MSG
+
+      hq_satellite = <<~MSG.strip
+        Hi #{user.first_name},
+
+        Hack Club HQ affiliated events don't go through the standard application process. Please reach out to your HQ POC, who can help you set up your HCB organization.
+
+        If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
+
+        Best,
+        The HCB team
+      MSG
+
       {
         generic:,
         adult:,
         mission:,
-        country:
+        country:,
+        legal:,
+        operational:,
+        hq_satellite:
       }
     end
 
@@ -262,11 +317,19 @@ class Event
       Rails.application.routes.url_helpers.application_path(self)
     end
 
-    def contract_notify_hcb?
-      !teen_led?
+    def contractable_link_label
+      "application"
     end
 
-    def send_contract(reissue_signee_message: nil, reissue_cosigner_message: nil, **options)
+    def contractable_link_path
+      Rails.application.routes.url_helpers.application_path(self)
+    end
+
+    def contract_notify_hcb?
+      !teen_led? || contract.reissue?
+    end
+
+    def send_contract(reissue_messages: {}, reissue_of: nil, extra_prefills: {}, **options)
       if name.nil? || description.nil?
         raise StandardError.new("Cannot create a contract for application #{hashid}: missing name and/or description")
       end
@@ -277,19 +340,27 @@ class Event
 
       fs_contract = nil
       ActiveRecord::Base.transaction do
-        fs_contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos: false, external_template_id: Event::Plan::Standard.new.contract_docuseal_template_id, prefills: { "public_id" => public_id, "name" => name, "description" => description })
+        fs_contract = Contract::FiscalSponsorship.create!(
+          contractable: self,
+          include_videos: false,
+          external_template_id: Event::Plan::Standard.new.contract_docuseal_template_id,
+          prefills: extra_prefills.merge({ "public_id" => public_id, "name" => name, "description" => description }),
+          reissue_of:
+        )
         fs_contract.parties.create!(user:, role: :signee)
         fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
       end
 
-      fs_contract.send!(reissue_signee_message:, reissue_cosigner_message:)
-      fs_contract.party(:cosigner)&.notify unless reissue_signee_message.present? || reissue_cosigner_message.present?
+      fs_contract.send!(reissue_messages:)
+      fs_contract.party(:cosigner)&.notify unless reissue_of.present?
+
+      set_airtable_status("Documents sent") if reissue_of.present?
 
       fs_contract
     end
 
-    def response_time
-      teen_led? ? "2 business days" : "2 weeks"
+    def response_business_days
+      teen_led? ? 2 : 10
     end
 
     def status_color
@@ -335,6 +406,7 @@ class Event
         poc_user = point_of_contact.presence || contract.party(:hcb).user
         Event.create!(
           name:,
+          description:,
           country: address_country,
           point_of_contact_id: poc_user.id,
           application: self,
@@ -355,6 +427,8 @@ class Event
           affiliation_copy.save!
         end
       end
+
+      set_airtable_status("Onboarded")
 
       schedule_airtable_sync
 
@@ -434,7 +508,7 @@ class Event
         self[field].nil? || self[field] == ""
       end
 
-      !missing_fields && !address_country.in?(DISALLOWED_COUNTRIES)
+      !missing_fields && !address_country.in?(DISALLOWED_COUNTRIES) && !(cosigner_email.present? && cosigner_email == user.email)
     end
 
     def user_ready_to_submit?
@@ -445,6 +519,17 @@ class Event
       end
 
       !missing_fields
+    end
+
+    def set_airtable_status(status)
+      airrecord = airtable_record
+
+      if airrecord.present?
+        airrecord["Status"] = status
+        airrecord.save
+      end
+    rescue => e
+      Rails.error.report(e)
     end
 
   end

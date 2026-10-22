@@ -38,10 +38,10 @@
         </div>
       </fieldset>
       <div id="currency_wrapper">
-        <% if current_user.payout_method_type == User::PayoutMethod::WiseTransfer.name %>
+        <% if current_user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
           <div class="field">
             <%= form.label :currency, "Currency", class: "mt-4 bold" %>
-            <%= form.select :currency, [current_user.payout_method.currency], {}, class: "tooltipped tooltipped--n", "aria-label": "To change the currency, please update your payout settings", disabled: "disabled" %>
+            <%= form.select :currency, [current_user.default_payout_method.currency], {}, class: "tooltipped tooltipped--n", "aria-label": "To change the currency, please update your payout settings", disabled: "disabled" %>
           </div>
         <% end %>
       </div>
@@ -68,6 +68,17 @@
           <%= form.label :invite_message, "Invitation message", class: "bold" %>
           <%= form.text_area :invite_message, placeholder: "We’re excited to see your expenses…" %>
         </div>
+        <% if @event.plan.assigned_reimbursement_reviewer_required? %>
+          <% eligible_reviewers = Reimbursement::Report.new(event: @event).eligible_reviewers %>
+          <div id="reimbursement_report_reviewer_wrapper" class="field">
+            <%= form.label :reviewer_id, "Reviewer", class: "bold" %>
+            <%= form.collection_select :reviewer_id,
+              eligible_reviewers,
+              :public_id, :name,
+              { prompt: "Select a reviewer...", selected: (current_user.public_id if eligible_reviewers.include?(current_user)) },
+              { required: true, disabled: true } %>
+          </div>
+        <% end %>
       </div>
     <% else %>
       <%= form.hidden_field :user_id, value: current_user.id %>
@@ -76,17 +87,17 @@
       <%= form.label :event_id, "Organization", class: "mt1 bold" %>
       <%= form.select(:event_id, current_user.reimbursement_event_options) %>
 
-      <% if current_user.payout_method_type == User::PayoutMethod::WiseTransfer.name %>
+      <% if current_user.default_payout_method&.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
         <%= form.label :currency, "Currency", class: "mt-4 bold" %>
-        <%= form.select :currency, [current_user.payout_method.currency], {}, class: "tooltipped tooltipped--n", "aria-label": "To change the currency, please update your payout settings", disabled: "disabled" %>
+        <%= form.select :currency, [current_user.default_payout_method.currency], {}, class: "tooltipped tooltipped--n", "aria-label": "To change the currency, please update your payout settings", disabled: "disabled" %>
       <% end %>
 
       <% if defined?(receipt) %>
-        <% payout_currency = current_user.payout_method&.currency || "USD" %>
+        <% payout_currency = current_user.default_payout_method&.currency || "USD" %>
 
         <%= form.label :value, "Amount", class: "mt1 bold" %>
         <div class="flex items-center">
-          <span class="bold muted flex self-end items-center justify-center" style="width: 1rem; height: 48px;"><%= Money::Currency.new(current_user.payout_method&.currency || "USD").symbol %></span>
+          <span class="bold muted flex self-end items-center justify-center" style="width: 1rem; height: 48px;"><%= Money::Currency.new(current_user.default_payout_method&.currency || "USD").symbol %></span>
           <div class="ml1">
             <% value = Money.from_cents(receipt.extracted_total_amount_cents, payout_currency).amount if (receipt.extracted_currency || "USD") == payout_currency && receipt.extracted_total_amount_cents.present? %>
 

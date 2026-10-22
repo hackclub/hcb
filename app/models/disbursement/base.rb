@@ -1,27 +1,59 @@
 # frozen_string_literal: true
 
+# == Schema Information
+#
+# Table name: disbursements
+#
+#  id                                  :bigint           not null, primary key
+#  aasm_state                          :string           not null
+#  amount                              :integer
+#  deposited_at                        :datetime
+#  errored_at                          :datetime
+#  in_transit_at                       :datetime
+#  name                                :string
+#  pending_at                          :datetime
+#  rejected_at                         :datetime
+#  scheduled_on                        :date
+#  should_charge_fee                   :boolean          default(FALSE)
+#  created_at                          :datetime         not null
+#  updated_at                          :datetime         not null
+#  destination_subledger_id            :bigint
+#  destination_transaction_category_id :bigint
+#  event_id                            :bigint
+#  fulfilled_by_id                     :bigint
+#  requested_by_id                     :bigint
+#  source_event_id                     :bigint
+#  source_subledger_id                 :bigint
+#  source_transaction_category_id      :bigint
+#
+# Indexes
+#
+#  index_disbursements_on_destination_subledger_id             (destination_subledger_id)
+#  index_disbursements_on_destination_transaction_category_id  (destination_transaction_category_id)
+#  index_disbursements_on_event_id                             (event_id)
+#  index_disbursements_on_fulfilled_by_id                      (fulfilled_by_id)
+#  index_disbursements_on_requested_by_id                      (requested_by_id)
+#  index_disbursements_on_source_event_id                      (source_event_id)
+#  index_disbursements_on_source_subledger_id                  (source_subledger_id)
+#  index_disbursements_on_source_transaction_category_id       (source_transaction_category_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (destination_transaction_category_id => transaction_categories.id)
+#  fk_rails_...  (event_id => events.id)
+#  fk_rails_...  (fulfilled_by_id => users.id)
+#  fk_rails_...  (requested_by_id => users.id)
+#  fk_rails_...  (source_event_id => events.id)
+#  fk_rails_...  (source_transaction_category_id => transaction_categories.id)
+#
 class Disbursement
-  module Base
-    extend ActiveSupport::Concern
+  class Base < ApplicationRecord
+    self.table_name = "disbursements"
 
-    included do
-      attr_reader :disbursement
-
-      delegate :id, :name, :source_event, :destination_event, :public_id,
-               :destination_subledger, :source_subledger, :to_model,
-               :fulfilled?, :reviewing?, :state,
-               :requested_by, :card_grant, :inter_event_transfer?,
-               :processed?, :pending?, :rejected?, :scheduled?, :may_mark_rejected?,
-               :state_text, :state_icon,
-               :special_appearance, :special_appearance_name, :special_appearance?,
-               :transferred_at, :created_at, :scheduled_on, :errored?, :rejected?,
-               :fulfilled_by, :fee_waived?, :to_param, :special_appearance_memo, to: :disbursement
-    end
-
-    def initialize(disbursement)
-      raise ArgumentError, "Expected Disbursement" unless disbursement.is_a?(Disbursement)
-
-      @disbursement = disbursement
+    # The underlying Disbursement is the same row, so reinterpret it with `becomes`
+    # rather than re-SELECTing by id. See Disbursement::Shared.
+    def disbursement
+      @disbursement ||= becomes(::Disbursement)
     end
 
     def canonical_transactions
@@ -60,6 +92,7 @@ class Disbursement
       card_grant = subledger&.card_grant
       card_grant ? "Grant recipient #{card_grant.user.name}" : event.name
     end
+
   end
 
 end

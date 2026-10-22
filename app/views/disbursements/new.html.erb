@@ -1,9 +1,9 @@
-<% title "Send a HCB transfer" %>
+<% title "Send an HCB transfer" %>
 <% @back_url = @source_event ? event_transfers_path(@source_event) : nil %>
 
 <% content_for :sidebar_footer do %>
-  <% if @allowed_destination_events.empty? %>
-    <p class="h5 muted">It looks like you don't have any organizations to transfer to. You can transfer funds between any organizations you're a part of.</p>
+  <% if !admin_signed_in? && current_user.disbursement_source_events.none? %>
+    <p class="h5 muted">It looks like you don't have any organizations to transfer from. You need to be a manager of an organization to send a transfer.</p>
   <% end %>
 
   <% if @source_event && @destination_event %>
@@ -29,4 +29,4 @@
   <% end %>
 <% end %>
 
-<%= render "disbursements/form", disbursement: @disbursement, event: @event, source_event: @source_event, destination_event: @destination_event, allowed_source_events: @allowed_source_events, allowed_destination_events: @allowed_destination_events %>
+<%= render "disbursements/form", disbursement: @disbursement, event: @event, source_event: @source_event %>

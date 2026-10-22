@@ -1,0 +1,27 @@
+<h1>Thanks for reaching out</h1>
+
+<p>Hi<%= " #{@name.split.first}" if @name %>,</p>
+
+<p>
+  Thanks for your interest in HCB. We've got your note, and someone from our
+  team will reach out personally — usually within a day — to learn what you're
+  looking to fund and how we can help you deploy it.
+</p>
+
+<% if @message %>
+  <p style="color: #8492a6; margin-bottom: 4px;">What you shared:</p>
+  <blockquote style="margin: 0; padding: 12px 16px; border-left: 3px solid #ec3750; background: #f9fafc;">
+    <%= simple_format @message %>
+  </blockquote>
+<% end %>
+
+<p>
+  In the meantime, just reply to this email if there's anything you'd like us to
+  know.
+</p>
+
+<p>
+  Talk soon,
+  <br>
+  The HCB team
+</p>
