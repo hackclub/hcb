@@ -31,6 +31,14 @@ module Payroll
            subject: "#{@position.payee.display_name} has been onboarded as a contractor for #{@position.event.name}"
     end
 
+    def expiring_soon
+      @position = params[:position]
+      @event = @position.event
+
+      mail to: @position.manager&.email_address_with_name || @event.organizer_contact_emails(only_managers: true),
+           subject: "#{@position.payee.display_name}'s contract for #{@event.name} expires on #{@position.end_date.to_fs(:long)}"
+    end
+
     def terminated
       @position = params[:position]
       @payee = @position.payee
