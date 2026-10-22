@@ -2,6 +2,7 @@
 
 class CardGrantsController < ApplicationController
   include SetEvent
+  include SetLedgerFilters
 
   skip_before_action :signed_in_user, only: [:index, :card_index, :transaction_index, :show, :spending]
   skip_after_action :verify_authorized, only: [:show, :spending]
@@ -16,19 +17,33 @@ class CardGrantsController < ApplicationController
   def card_index
     authorize @event, :card_grant_overview?
 
+    unless turbo_frame_request?
+      redirect_to event_card_grant_overview_path(@event, request.query_parameters)
+      return
+    end
+
     # The search query name was historically `search`. It has since been renamed
     # to `q`. This following line retains backwards compatibility.
     params[:q] ||= params[:search]
 
     card_grants_page = (params[:page] || 1).to_i
-    card_grants_per_page = (params[:per] || 20).to_i
+    card_grants_per_page = safe_per(20)
 
-    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger).order(
-      Arel.sql("card_grant_pre_authorizations.aasm_state='fraudulent' DESC"),
-      "card_grants.created_at DESC"
-    )
-    # we allow searching by purpose but sometimes the purpose shown in the table is actually the memo
-    @card_grants = @card_grants.search_for(params[:q]) if params[:q].present?
+    status_options = CardGrant::FILTERABLE_STATES.map { |state, label| [label, state] }
+    @filter_options = [
+      { key: "status", label: "Status", type: "select", options: status_options }
+    ]
+    @has_filter = CardGrant::FILTERABLE_STATES.key?(params[:status])
+
+    @card_grants = @event.card_grants.includes(:disbursement, :user, :stripe_card, :pre_authorization, :subledger, :reimbursement_report).order(created_at: :desc)
+    if params[:q].present?
+      @card_grants = if organizer_signed_in?
+                       @card_grants.search(params[:q])
+                     else
+                       @card_grants.public_search(params[:q])
+                     end
+    end
+    @card_grants = @card_grants.filter_by_state(params[:status])
     @paginated_card_grants = @card_grants.page(card_grants_page).per(card_grants_per_page)
   end
 
@@ -36,6 +51,17 @@ class CardGrantsController < ApplicationController
     authorize @event, :card_grant_overview?
 
     @subledger = true
+
+    @use_card_grant_ledgers = true
+    set_ledger_filters
+    return if performed?
+
+    @per = safe_per(25)
+    @table_only = true
+    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
+      @ledger = @event.ledger
+      @items = ledger_query.execute(ledgers: @ledgers).page(params[:page]).per(@per)
+    end
   end
 
   def new
@@ -46,11 +72,13 @@ class CardGrantsController < ApplicationController
     @event.create_card_grant_setting! unless @event.card_grant_setting.present?
 
     @card_grant.amount_cents = params[:amount_cents] if params[:amount_cents]
+    @card_grant.purpose = params[:purpose].to_s.first(CardGrant::MAXIMUM_PURPOSE_LENGTH) if params[:purpose]
+    @card_grant.instructions = params[:instructions] if params[:instructions]
   end
 
   def create
     params[:card_grant][:amount_cents] = Monetize.parse(params[:card_grant][:amount_cents]).cents
-    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:amount_cents, :email, :invite_message, :keyword_lock, :purpose, :one_time_use, :pre_authorization_required, :instructions).merge(sent_by: current_user))
+    @card_grant = @event.card_grants.build(params.require(:card_grant).permit(:email, :amount_cents, :expiration_at, :purpose, :one_time_use, :pre_authorization_required, :invite_message, :instructions).merge(sent_by: current_user))
 
     authorize @card_grant
 
@@ -73,7 +101,7 @@ class CardGrantsController < ApplicationController
         raise e
       end
 
-      render(:new, status: :unprocessable_entity)
+      render(:new, status: :unprocessable_content)
       return
     end
 
@@ -90,7 +118,7 @@ class CardGrantsController < ApplicationController
 
     unless params[:csv_file].present?
       flash[:error] = "Please select a CSV file to upload"
-      render :bulk_upload_form, status: :unprocessable_entity
+      render :bulk_upload_form, status: :unprocessable_content
       return
     end
 
@@ -105,19 +133,19 @@ class CardGrantsController < ApplicationController
       redirect_to event_card_grant_overview_path(@event)
     else
       flash.now[:error] = result.errors.join(". ")
-      render :bulk_upload_form, status: :unprocessable_entity
+      render :bulk_upload_form, status: :unprocessable_content
     end
   rescue DisbursementService::Create::UserError => e
     flash.now[:error] = e.message
-    render :bulk_upload_form, status: :unprocessable_entity
+    render :bulk_upload_form, status: :unprocessable_content
   end
 
   def bulk_upload_template
     authorize @event, :bulk_upload_card_grants?
 
     csv_content = CSV.generate do |csv|
-      csv << %w[email amount_cents purpose one_time_use invite_message merchant_lock category_lock keyword_lock banned_merchants banned_categories]
-      csv << ["recipient@example.com", "1000", "Pizza for club meeting", "false", "Thanks for your help!", "", "", "", "", ""]
+      csv << %w[email amount_cents purpose instructions one_time_use pre_authorization_required invite_message merchant_lock category_lock keyword_lock banned_merchants banned_categories]
+      csv << ["recipient@example.com", "1000", "Pizza for club meeting", "Please only purchase pizza for the meeting.", "false", "false", "Thanks for your help!", "", "", "", "", ""]
     end
 
     send_data csv_content,
@@ -143,6 +171,10 @@ class CardGrantsController < ApplicationController
   end
 
   def edit_usage_restrictions
+    authorize @card_grant
+  end
+
+  def edit_expiration
     authorize @card_grant
   end
 
@@ -174,7 +206,7 @@ class CardGrantsController < ApplicationController
   def update
     authorize @card_grant
 
-    if @card_grant.update(params.require(:card_grant).permit(:purpose, :merchant_lock, :category_lock, :keyword_lock, :instructions))
+    if @card_grant.update(params.require(:card_grant).permit(:purpose, :instructions, :merchant_lock, :category_lock, :keyword_lock, :expiration_at))
       flash[:success] = "Card grant has been successfully updated!"
     else
       flash[:error] = @card_grant.errors.full_messages.to_sentence
@@ -207,6 +239,13 @@ class CardGrantsController < ApplicationController
     @card = @card_grant.stripe_card
     @hcb_codes = @card_grant.visible_hcb_codes
 
+    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
+      @per = safe_per(25)
+      @table_only = true
+      @ledger = @card_grant.ledger
+      @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).page(params[:page]).per(@per)
+    end
+
     @show_card_details = params[:show_details] == "true"
 
     @frame = params[:frame].present?
@@ -225,6 +264,11 @@ class CardGrantsController < ApplicationController
     @card = @card_grant.stripe_card
     @hcb_codes = @card&.local_hcb_codes
 
+    @per = safe_per(25)
+    @table_only = true
+    @ledger = @card_grant.ledger
+    @items = Ledger::Query.new({}).execute(ledgers: [@card_grant.ledger]).page(params[:page]).per(@per)
+
     @frame = params[:frame].present?
     @force_no_popover = @frame
 
@@ -239,6 +283,11 @@ class CardGrantsController < ApplicationController
   def activate
     authorize @card_grant
 
+    unless @card_grant.user.phone_number_verified_or_bypassed?
+      settings_path = current_user == @card_grant.user ? my_settings_path : edit_user_path(@card_grant.user)
+      return redirect_to @card_grant, flash: { error: { "text" => "Please verify your phone number before activating your grant card.", "link_text" => "Go to settings", "link" => settings_path } }
+    end
+
     @card_grant.create_stripe_card(request.remote_ip)
 
     redirect_to @card_grant
@@ -251,7 +300,7 @@ class CardGrantsController < ApplicationController
   def cancel
     authorize @card_grant
 
-    disbursement = @card_grant.cancel!(current_user)
+    @card_grant.cancel!(current_user)
 
     redirect_back_or_to event_transfers_path(@card_grant.event), flash: { success: "Successfully canceled grant." }
   end
@@ -302,10 +351,6 @@ class CardGrantsController < ApplicationController
     @card_grant.update(pre_authorization_required: false)
 
     redirect_to @card_grant, flash: { success: "Successfully disabled pre-authorization for this card grant." }
-  end
-
-  def edit
-    authorize @card_grant
   end
 
   private

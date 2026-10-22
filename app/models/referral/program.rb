@@ -26,6 +26,7 @@
 module Referral
   class Program < ApplicationRecord
     include Hashid::Rails
+    hashid_config salt: ""
 
     validates :name, presence: true
     validates :redirect_to, format: URI::DEFAULT_PARSER.make_regexp(%w[http https]), if: -> { redirect_to.present? }

@@ -5,7 +5,7 @@ module Api
     class CheckDepositsController < ApplicationController
       include SetEvent
 
-      before_action :set_api_event
+      before_action :set_api_event, only: [:index, :create]
 
       def index
         authorize @event, :index_in_v4?

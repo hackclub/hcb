@@ -2,10 +2,12 @@
 
 class IncreaseChecksController < ApplicationController
   include SetEvent
+  include ResolvesPaymentRecipient
   include Admin::TransferApprovable
+  include Admin::PaymentApprovable
 
   before_action :set_event, only: %i[new create]
-  before_action :set_check, only: %i[approve reject]
+  before_action :set_check, only: %i[approve reject stop]
 
   def new
     @check = @event.increase_checks.build
@@ -37,7 +39,7 @@ class IncreaseChecksController < ApplicationController
       end
       redirect_to url_for(@check.local_hcb_code), flash: { success: "Your check has been sent!" }
     else
-      render "new", status: :unprocessable_entity
+      render "new", layout: "transfer", status: :unprocessable_content
     end
   end
 
@@ -46,12 +48,14 @@ class IncreaseChecksController < ApplicationController
     return unless enforce_sudo_mode
 
     ensure_admin_may_approve!(@check, amount_cents: @check.amount)
+    ensure_legal_entity_payable!(@check, classification: params[:classification])
+
     @check.send_check!
 
     redirect_to increase_check_process_admin_path(@check), flash: { success: "Check has been sent!" }
 
   rescue Faraday::Error => e
-    redirect_to increase_check_process_admin_path(@check), flash: { error: "Something went wrong: #{e.response_body["message"]}" }
+    redirect_to increase_check_process_admin_path(@check), flash: { error: "Something went wrong: #{ColumnService.error_to_admin_message(e)}" }
   rescue => e
     redirect_to increase_check_process_admin_path(@check), flash: { error: e }
   end
@@ -66,10 +70,18 @@ class IncreaseChecksController < ApplicationController
     redirect_back_or_to increase_check_process_admin_path(@check), flash: { success: "Check has been canceled." }
   end
 
+  def stop
+    authorize @check
+
+    @check.stop!
+
+    redirect_back_or_to url_for(@check.local_hcb_code), flash: { success: "Check has been stopped." }
+  end
+
   private
 
   def check_params
-    params.require(:increase_check).permit(
+    permitted = params.require(:increase_check).permit(
       :memo,
       :amount,
       :payment_for,
@@ -84,6 +96,7 @@ class IncreaseChecksController < ApplicationController
       :payment_recipient_id,
       file: []
     )
+    @check_params ||= scope_payment_recipient!(permitted)
   end
 
   def set_check

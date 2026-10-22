@@ -7,8 +7,9 @@ module Reimbursement
     def create
       @report = Reimbursement::Report.find(params[:report_id])
 
-      type = params[:type] == "mileage" ? "Reimbursement::Expense::Mileage" : "Reimbursement::Expense"
-      @expense = @report.expenses.build(amount_cents: 0, type:)
+      mileage = params[:type] == "mileage"
+      type = mileage ? "Reimbursement::Expense::Mileage" : "Reimbursement::Expense"
+      @expense = @report.expenses.build(amount_cents: 0, type:, category: ("Mileage" if mileage))
 
       authorize @expense
 
@@ -49,7 +50,7 @@ module Reimbursement
       if expense_params[:event_id].presence
         event = Event.find(expense_params[:event_id])
         report = event.reimbursement_reports.build({ user: @expense.report.user })
-        authorize report
+        authorize report, :change_event?
         ActiveRecord::Base.transaction do
           report.save!
           @expense.update!(reimbursement_report_id: report.id, expense_number: nil, aasm_state: :pending, approved_by_id: nil)
@@ -72,7 +73,7 @@ module Reimbursement
       @expense.mark_approved!(current_user) if @expense.may_mark_approved?
 
       respond_to do |format|
-        format.turbo_stream { render turbo_stream: on_update_streams }
+        format.turbo_stream { render turbo_stream: on_update_streams + approval_prompt_streams }
         format.html { redirect_to @expense.report }
       end
     end
@@ -145,6 +146,17 @@ module Reimbursement
 
     def on_update_streams
       [total_turbo_stream, actions_turbo_stream, replace_expense_turbo_stream]
+    end
+
+    def approval_prompt_streams
+      report = @expense.report
+      return [] unless report.submitted?
+      return [] unless report.expenses.pending.none?
+      return [] unless report.may_mark_reimbursement_requested?
+      return [] unless policy(report).request_reimbursement?
+      return [] if report.currency != "USD" && report.wise_transfer_may_exceed_balance?
+
+      [turbo_stream.open_modal("all_expenses_approved_modal")]
     end
 
     def on_delete_streams

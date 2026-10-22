@@ -1,5 +1,5 @@
 <%# locals: (expense:, new: false) -%>
-<% read_only = !OrganizerPosition.find_by(user: current_user, event: expense.report.event)&.manager? && current_user != expense.report.user && !admin_signed_in? %>
+<% read_only = !OrganizerPosition.role_at_least?(current_user, expense.report.event, :manager) && current_user != expense.report.user && !admin_signed_in? %>
 <%= turbo_frame_tag expense do %>
   <div
     data-controller="expense-form"
@@ -74,7 +74,7 @@
           <% end %>
         <% end %>
         <% unless expense.type == "Reimbursement::Expense::Mileage" %>
-          <%= link_to reimbursement_expense_path(expense.id, reimbursement_expense: { type: "Reimbursement::Expense::Mileage", value: 0 }), data: { turbo: true, "turbo-method": :patch, "action": "menu#close" } do %>
+          <%= link_to reimbursement_expense_path(expense.id, reimbursement_expense: { type: "Reimbursement::Expense::Mileage", value: 0, category: "Mileage" }), data: { turbo: true, "turbo-method": :patch, "action": "menu#close" } do %>
             <%= inline_icon "car", size: 24 %>
             Mileage expense
           <% end %>

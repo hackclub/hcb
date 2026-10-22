@@ -30,10 +30,6 @@ module HcbCodeHelper
     can_dispute
   end
 
-  def name_contains_emoji?(name)
-    /^\p{Emoji}/ !~ name
-  end
-
   def country_to_emoji(country_code)
     # Hack to turn country code into the country's flag
     # https://stackoverflow.com/a/50859942

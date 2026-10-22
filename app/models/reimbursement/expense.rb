@@ -5,7 +5,7 @@
 # Table name: reimbursement_expenses
 #
 #  id                      :bigint           not null, primary key
-#  aasm_state              :string
+#  aasm_state              :string           not null
 #  amount_cents            :integer          default(0), not null
 #  approved_at             :datetime
 #  category                :integer
@@ -35,15 +35,24 @@ module Reimbursement
     include ApplicationHelper
     belongs_to :report, inverse_of: :expenses, foreign_key: "reimbursement_report_id", touch: true
     monetize :amount_cents, as: "amount", with_model_currency: :currency
-    validates :amount_cents, numericality: { greater_than_or_equal_to: 0 }
+    validates :amount_cents, numericality: { greater_than_or_equal_to: 0 }, integer_column: true
     attribute :expense_number, :integer
-    has_one :expense_payout
+    has_one :expense_payout, foreign_key: "reimbursement_expenses_id", inverse_of: :expense
     has_one :event, through: :report
     has_one :user, through: :report
     belongs_to :approved_by, class_name: "User", optional: true
     include AASM
     include Receiptable
+
     include Hashid::Rails
+    hashid_config salt: ""
+    def self.inherited(subclass)
+      # Force STI subclasses to use the same hashid configuration to ensure no
+      # salt is used.
+      super
+      subclass.instance_variable_set(:@hashid_configuration, hashid_configuration)
+    end
+
     has_paper_trail
     acts_as_paranoid
 
@@ -87,6 +96,14 @@ module Reimbursement
     end
 
     include TouchHistory
+
+    # A reimbursement's receipts hang off the expense, not off the HCB code its
+    # payout creates, so the payout's ledger item can only learn about them from
+    # this side. `Receipt` touches its receiptable on create, update and destroy,
+    # which is what gets us here.
+    after_touch do
+      expense_payout&.ledger_item&.refresh!
+    end
 
     broadcasts_refreshes_to ->(expense) { expense.was_touched? ? :_noop : expense.report }
 

@@ -1,0 +1,28 @@
+<%# locals: (ledger_item:) %>
+
+<% card_charge = ledger_item.linked_object if ledger_item.linked_object_type == "CardCharge" %>
+
+<% unless card_charge&.stripe_refund? %>
+  <% if ledger_item.receipt_count > 0 %>
+    <p class="card__banner bg-success white bold flex items-center mt0 mb0" id="<%= ledger_item.hashid %>_stripe_card_receipts">
+      <%= inline_icon "checkmark", size: 24, class: "mr2" %>
+      <%= pluralize ledger_item.receipt_count, "receipt" %>
+      added
+    </p>
+  <% elsif ledger_item.no_or_lost_receipt? %>
+    <p class="card__banner bg-warning white bold flex items-center mt0 mb0" id="<%= ledger_item.hashid %>_stripe_card_receipts">
+      <%= inline_icon "view-close", size: 24, class: "mr2" %>
+      Marked no/lost receipt
+    </p>
+  <% elsif ledger_item.canonical_pending_transactions.first&.declined? %>
+    <p class="card__banner bg-warning white bold flex items-center mt0 mb0" id="<%= ledger_item.hashid %>_stripe_card_receipts">
+      <%= inline_icon "important", size: 24, class: "mr2" %>
+      This transaction has no receipt
+    </p>
+  <% elsif ledger_item.receipt_required? %>
+    <p class="card__banner bg-pending slate bold flex items-center mt0 mb0" id="<%= ledger_item.hashid %>_stripe_card_receipts">
+      <%= inline_icon "important", size: 24, class: "mr2" %>
+      This transaction is missing a receipt
+    </p>
+  <% end %>
+<% end %>

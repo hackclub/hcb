@@ -29,7 +29,7 @@ class Employee
     end
 
     def manager
-      OrganizerPosition.find_by(user:, event: record.employee.event)&.manager?
+      OrganizerPosition.role_at_least?(user, record.employee.event, :manager)
     end
 
     def employee

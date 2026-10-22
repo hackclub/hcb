@@ -5,15 +5,15 @@
 # Table name: comments
 #
 #  id                 :bigint           not null, primary key
-#  action             :integer          default("commented"), not null
+#  action             :integer          default(0), not null
 #  admin_only         :boolean          default(FALSE), not null
-#  commentable_type   :string
 #  content_ciphertext :text
 #  deleted_at         :datetime
 #  has_untracked_edit :boolean          default(FALSE), not null
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
 #  commentable_id     :bigint
+#  commentable_type   :string
 #  user_id            :bigint
 #
 # Indexes
@@ -24,15 +24,17 @@
 #
 class Comment < ApplicationRecord
   include Hashid::Rails
+  hashid_config salt: ""
+
   include PublicIdentifiable
 
   set_public_id_prefix :cmt
 
-  belongs_to :commentable, polymorphic: true
+  belongs_to :commentable, polymorphic: true, touch: true
   belongs_to :user
 
   has_one_attached :file
-  validates :file, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["file"].present? }
+  validates :file, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["file"].present? }
 
   has_paper_trail skip: [:content] # ciphertext columns will still be tracked
   has_encrypted :content
@@ -47,6 +49,7 @@ class Comment < ApplicationRecord
 
   scope :admin_only, -> { where(admin_only: true) }
   scope :not_admin_only, -> { where(admin_only: false) }
+  scope :by_admin, -> { joins(:user).merge(User.admin.where(pretend_is_not_admin: false)) }
   scope :edited, -> { joins(:versions).where("has_untracked_edit IS TRUE OR versions.event = 'update' OR versions.event = 'destroy'") }
   scope :has_attached_file, -> { joins(:file_attachment) }
 
@@ -92,6 +95,11 @@ class Comment < ApplicationRecord
     return "rejected this transfer and commented" if rejected_transfer?
 
     return "commented"
+  end
+
+  def shared?
+    # currently the only situation where we share comments at the moment. If we expand this, do something smarter
+    commentable_type == "Disbursement"
   end
 
   # This regex was stolen from URI::MailTo::EMAIL_REGEXP

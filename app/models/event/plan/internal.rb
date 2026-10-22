@@ -5,7 +5,7 @@
 # Table name: event_plans
 #
 #  id          :bigint           not null, primary key
-#  aasm_state  :string
+#  aasm_state  :string           not null
 #  inactive_at :datetime
 #  type        :string
 #  created_at  :datetime         not null
@@ -33,10 +33,6 @@ class Event
 
       def features
         Event::Plan.available_features
-      end
-
-      def requires_reimbursement_expense_categorization?
-        true
       end
 
       def omit_stats

@@ -5,7 +5,7 @@
 # Table name: contract_parties
 #
 #  id             :bigint           not null, primary key
-#  aasm_state     :string
+#  aasm_state     :string           not null
 #  deleted_at     :datetime
 #  external_email :string
 #  role           :string           not null
@@ -25,7 +25,6 @@ class Contract
   class Party < ApplicationRecord
     include AASM
     include Hashid::Rails
-    hashid_config salt: Credentials.fetch(:HASHID_SALT)
 
     acts_as_paranoid
     has_paper_trail
@@ -33,11 +32,12 @@ class Contract
     belongs_to :user, optional: true
     belongs_to :contract, optional: false
 
-    enum :role, { signee: "signee", cosigner: "cosigner", hcb: "hcb" }
+    enum :role, { signee: "signee", cosigner: "cosigner", hcb: "hcb", organizer: "organizer", contractor: "contractor" }
 
     attr_accessor :skip_pending_validation
 
     validates :role, uniqueness: { scope: :contract }
+    validate :role_permitted_for_contract_type
     validate :signee_is_user
     validate :contract_is_pending, on: :create, unless: :skip_pending_validation
     validate :email_cannot_change_after_sign
@@ -58,12 +58,31 @@ class Contract
       end
     end
 
+    # The party a user is allowed to open on one of an organization's sent
+    # contracts: their own, or HCB's if they're an admin.
+    #
+    # This mirrors Contract::PartyPolicy#show? so that we only ever surface a
+    # link the user can actually follow. It is not itself an authorization
+    # check; Contract::PartiesController#show still authorizes the party.
+    def self.for(event:, user:)
+      return if event.nil? || user.nil?
+
+      # find_by does not order on its own, and a user can hold a party on more
+      parties = where(contract: event.contracts.sent).order(:id)
+
+      parties.not_hcb.find_by(user:) || (parties.hcb.first if user.admin?)
+    end
+
     def email
       user&.email || external_email
     end
 
     def notify
-      Contract::PartyMailer.with(party: self).notify.deliver_later
+      contract.contractable.notify_mailer_for(self)
+    end
+
+    def notify_reissued(message: nil)
+      Contract::PartyMailer.with(party: self, message:).reissued.deliver_later
     end
 
     def docuseal_signature_url
@@ -78,6 +97,10 @@ class Contract
         "Cosigner"
       when "hcb"
         "HCB"
+      when "organizer"
+        "Organizer"
+      when "contractor"
+        "Contractor"
       else
         raise "Unexpected role"
       end
@@ -85,26 +108,53 @@ class Contract
 
     def notify_email_subject
       if hcb?
-        "Sign the #{contract.event_name}'s agreement as HCB Operations"
+        "Sign #{contract.event_name}'s agreement as HCB Operations"
       elsif cosigner?
-        "#{contract.party(:signee).user.name} invited you to sign a fiscal sponsorship agreement for #{contract.event_name} on HCB 📝"
+        "#{contract.party(:signee).user.name} invited you to sign a #{contract.agreement_name} for #{contract.event_name} on HCB 📝"
       else
         "You've been invited to sign an agreement for #{contract.event_name} on HCB 📝"
       end
     end
 
+    def reissue_email_subject
+      "There was an issue in the agreement you signed for #{contract.event_name} on HCB 📝"
+    end
+
+    def reminder_email_subject
+      "[Action Needed] Sign the #{contract.agreement_name} for #{contract.event_name} on HCB 📝"
+    end
+
     # We may miss a webhook or load a page before we've received the webhook,
     # so we can manually sync the party with this method!
     def sync_with_docuseal
-      if pending? && docuseal_submission&.[]("status") == "completed"
-        mark_signed!
+      self.with_lock do
+        if pending? && docuseal_submission&.[]("status") == "completed"
+          mark_signed!
+        end
       end
+    end
+
+    def schedule_reminders
+      Contract::Party::ReminderJob.set(wait: 3.days).perform_later(self)
+      Contract::Party::ReminderJob.set(wait: 7.days).perform_later(self)
+      Contract::Party::ReminderJob.set(wait: 14.days).perform_later(self)
+      Contract::Party::ReminderJob.set(wait: 30.days).perform_later(self)
+      Contract::Party::ReminderJob.set(wait: 45.days).perform_later(self)
+      Contract::Party::ReminderJob.set(wait: 60.days).perform_later(self)
     end
 
     private
 
     def docuseal_submission
       contract.docuseal_document["submitters"].select { |s| s["role"] == docuseal_role }[0]
+    end
+
+    def role_permitted_for_contract_type
+      return if contract.nil? || role.nil?
+
+      unless contract.permitted_roles.include?(role)
+        errors.add(:role, "#{role} is not a valid party for a #{contract.model_name.human.downcase}")
+      end
     end
 
     def signee_is_user

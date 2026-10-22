@@ -13,7 +13,7 @@
         </div>
       </button>
     <% else %>
-      <%= link_to card_grant.setting.support_url, target: "_blank", class: "btn bg-info btn--list-item" do %>
+      <%= link_to card_grant.setting.support_url, target: "_blank", class: "btn btn--list-item" do %>
         <% if card_grant.setting.slack_support? %>
           <%= inline_icon "slack" %>
         <% elsif card_grant.setting.email_support? %>
@@ -40,7 +40,7 @@
   <% if card_grant.setting.support_message.present? %>
     <section id="support_card_grant_<%= card_grant.id %>" class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog">
       <%= modal_header "Get support for your card grant" %>
-      <%= sanitize(MarkdownService.instance.renderer.render(card_grant.setting.support_message), scrubber: MarkdownScrubber.new) %>
+      <%= MarkdownService.instance.render(card_grant.setting.support_message) %>
 
       <% if card_grant.setting.support_url.present? %>
         <footer class="modal__action-row pt1 flex justify-end sticky bottom-0 mt2" style="border-top: none;">
@@ -64,7 +64,6 @@
           </div>
         </footer>
       <% end %>
-
     </section>
   <% end %>
 <% end %>

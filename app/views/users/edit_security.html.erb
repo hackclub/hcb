@@ -5,7 +5,7 @@
 <%= render "users/nav", selected: :settings_security %>
 
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "settings_header", active: "security" %>
+  <%= render "users/settings_header", active: "security" %>
   <fieldset>
     <% unless @user.phone_number.blank? %>
       <%= turbo_frame_tag :sms_auth_card do %>
@@ -14,7 +14,7 @@
         </legend>
         <div class="card border b--info mt0 mb3">
           <% if @user.phone_number_verified %>
-            <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
+            <%= form_with(model: @user, local: true, data: { turbo_frame: "_top" }) do |form| %>
               <div class="field field--checkbox mt1">
                 <span style="font-weight: 700">Prefer login codes via SMS</span>
                 <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
@@ -58,32 +58,45 @@
         <% end %>
       </div>
     <% end %>
-    <div>
-      <legend class="flex flex-row justify-start items-center mt3 pb2">
-        <span class="h2 bold">Time-based one time passwords</span>
-      </legend>
+
       <%= turbo_frame_tag :totp_auth_card do %>
+        <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2" id="totp">
+          <legend class="flex flex-row justify-start items-center">
+            <span class="h2 bold">Time-based one time passwords</span>
+          </legend>
+          <div class="flex flex-row gap-x-2">
+            <% if @user.totp.present? %>
+              <%= link_to user_disable_totp_path(@user), class: "btn px2 h4 bg-error", data: { turbo_method: :post }, disabled: do %>
+                <%= inline_icon "minus", size: home_action_size %>
+                Disable TOTP
+              <% end %>
+            <% end %>
+            <%= link_to user_generate_totp_path(@user), class: "btn px2 h4 #{"tooltipped" if @user.totp.present?}", 'aria-label': "A new TOTP secret will invalidate your current TOTP secret.", data: { turbo_method: :post }, onclick: "this.style.display='none'", disabled: do %>
+              <%= inline_icon "plus", size: home_action_size %>
+              <%= @user.totp.present? ? "Reset secret" : "Set up" %>
+            <% end %>
+          </div>
+        </div>
         <div class="card border b--info mt0 mb3">
           <% if @user.totp.present? %>
             <p>
               <% if disabled %>
                 <%= @user.name %> set up time-based one time passwords on <%= format_date @user.totp.created_at %>
               <% else %>
-                You set up time-based one time passwords on <%= format_date @user.totp.created_at %>; if you'd like to reset your TOTP secret, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :post } %>. A new TOTP secret will invalidate your current TOTP secret. <%= link_to "Click here to disable TOTP.", user_disable_totp_path(@user), data: { turbo_method: :post }, method: :post %>
+                You set up time-based one time passwords on <%= format_date @user.totp.created_at %>.
               <% end %>
             </p>
           <% else %>
             <p>
               <% if disabled %>
-                <%= @user.name %> currently doesn't have time-based one time passwords set up.
+                <%= @user.name %> doesn't currently have time-based one time passwords set up.
               <% else %>
-                  You currently don't have time-based one time passwords set up, <%= link_to "click here", user_generate_totp_path(@user), data: { turbo_method: :post } %> to setup your TOTP.
+                You don't have time-based one time passwords set up currently.
               <% end %>
             </p>
           <% end %>
         </div>
       <% end %>
-    </div>
     <div class="flex items-center justify-between flex-wrap gap-x-5 gap-y-2 mt3 pb2" id="security-keys">
       <legend class="flex flex-row justify-start items-center">
         <span class="h2 bold">Security keys</span>
@@ -95,7 +108,7 @@
       </button>
       <%= render "webauthn_credentials/modal" %>
     </div>
-    <% if @user.webauthn_credentials.length > 0 %>
+    <% if @user.webauthn_credentials.any? %>
       <div class="grid grid--split mb3">
         <%= render @user.webauthn_credentials.order(created_at: :desc) %>
       </div>
@@ -111,7 +124,7 @@
       </legend>
       <div class="flex flex-row gap-x-2">
         <% if @user.backup_codes_enabled? %>
-          <%= link_to user_disable_backup_codes_path(@user), class: "btn px2 h4 bg-error", method: :post, data: { turbo: false, confirm: "Are you sure? This will invalidate your current codes immediately." }, disabled: do %>
+          <%= link_to user_disable_backup_codes_path(@user), class: "btn px2 h4 bg-error", data: { turbo_method: :post, turbo_confirm: "Are you sure? This will invalidate your current codes immediately.", turbo_confirm_danger: true }, disabled: do %>
             <%= inline_icon "minus", size: home_action_size %>
             Disable backup codes
           <% end %>
@@ -140,14 +153,23 @@
         <span class="h2 bold">Sessions</span>
         <%= badge_for @all_sessions.count, class: "bg-muted" %>
       </legend>
-      <%= link_to logout_all_user_path(@user), method: :delete,
-              class: "btn bg-error py1 px2 h4", disabled: @sessions.count <= (current_user == @user ? 1 : 0) || disabled do %>
+      <%= link_to logout_all_user_path(@user), data: { turbo_method: :delete },
+              class: "btn bg-error py1 px2 h4", disabled: @sessions.size <= (current_user == @user ? 1 : 0) || disabled do %>
         <%= inline_icon "door-leave", size: home_action_size %>
         Sign out everywhere else
       <% end %>
     </div>
 
     <%= form_with(model: @user, local: true, class: "pb2", data: { turbo_frame: "_top" }) do |form| %>
+      <% if current_user == @user %>
+        <div class="card border b--warning mb2" data-controller="incognito" hidden>
+          <div class="flex items-center warning">
+            <%= inline_icon "important", size: 20, class: "mr1 flex-shrink-0" %>
+            <span>You appear to be browsing privately (incognito). This window forgets your session as soon as you close it, so you'll be signed out sooner than the preference below.</span>
+          </div>
+        </div>
+      <% end %>
+
       <div class="field">
         <%= form.label :session_validity_preference, "Sign me out after" %>
         <%= form.select :session_validity_preference, SessionsHelper::SESSION_DURATION_OPTIONS.to_a, {}, selected: @user.session_validity_preference, disabled: %>
@@ -171,7 +193,7 @@
     <% if @expired_sessions.any? %>
       <h3 class="inline-flex items-center">
         Recently logged out
-        <%= badge_for @expired_sessions.count, class: "bg-muted" %>
+        <%= badge_for @expired_sessions.size, class: "bg-muted" %>
       </h3>
       <div class="grid grid--split">
         <% @expired_sessions.each do |session| %>
@@ -190,7 +212,8 @@
       <%= modal_header "Verify phone number" %>
       <%= react_component "settings/SmsVerification",
               phone_number: @user.phone_number,
-              enroll_sms_auth: true %>
+              enroll_sms_auth: true,
+              turnstile_sitekey: (TurnstileService.site_key if TurnstileService.enabled?) %>
     </section>
   <% end %>
 </turbo-frame>

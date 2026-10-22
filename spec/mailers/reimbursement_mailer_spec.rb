@@ -5,16 +5,14 @@ require "rails_helper"
 RSpec.describe ReimbursementMailer do
   describe "#expenses_approved" do
     it "renders the list of expenses in their original currency" do
-      # This is temporarily required while we work to re-enable Wise transfers
-      # (which are the only payout method that supports multiple currencies)
-      stub_const("User::PayoutMethod::SUPPORTED_METHODS", [User::PayoutMethod::WiseTransfer])
-      stub_const("User::PayoutMethod::UNSUPPORTED_METHODS", {})
-
       user = create(
         :user,
         full_name: "Test User",
         email: "user@example.com",
-        payout_method: User::PayoutMethod::WiseTransfer.new(
+      )
+      user.personal_legal_entity.payout_methods.create!(
+        default: true,
+        details: LegalEntity::PayoutMethod::WiseTransfer.new(
           address_line1: "123 Rue Main",
           address_city: "Shawinigan",
           address_state: "QC",
@@ -32,7 +30,7 @@ RSpec.describe ReimbursementMailer do
         currency: "CAD",
       )
 
-      drinks = report.expenses.create!(value: 12.34, memo: "Drinks")
+      drinks = report.expenses.create!(value: 12.34, memo: "Drinks", category: "Food & Entertainment")
       ReceiptService::Create.new(
         receiptable: drinks,
         uploader: user,
@@ -40,7 +38,7 @@ RSpec.describe ReimbursementMailer do
         upload_method: :receipts_page
       ).run!
 
-      food = report.expenses.create!(value: 34.56, memo: "Food")
+      food = report.expenses.create!(value: 34.56, memo: "Food", category: "Food & Entertainment")
       ReceiptService::Create.new(
         receiptable: food,
         uploader: user,

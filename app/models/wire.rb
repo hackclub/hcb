@@ -26,6 +26,7 @@
 #  recipient_name            :string           not null
 #  return_reason             :text
 #  send_email_notification   :boolean          default(FALSE)
+#  uetr                      :string
 #  created_at                :datetime         not null
 #  updated_at                :datetime         not null
 #  column_id                 :text
@@ -47,19 +48,26 @@
 #
 class Wire < ApplicationRecord
   has_paper_trail
+  include HasPaperTrailHelpers
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :recipient_email]
   has_encrypted :account_number, :bic_code
   blind_index :account_number, :bic_code
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :wire, required: false
+  has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
+  has_one :payment, through: :payment_attempt
 
   validates_length_of :payment_for, maximum: 140
 
   include AASM
   include Freezable
-  include Payment
+  include HasPaymentRecipient
+
+  include Hashid::Rails
+  hashid_config salt: ""
 
   include PublicIdentifiable
   set_public_id_prefix :wir
@@ -79,7 +87,7 @@ class Wire < ApplicationRecord
 
 
   include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  tracked owner: proc { |controller, record| record.user || controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
   after_create do
     create_canonical_pending_transaction!(
@@ -91,7 +99,7 @@ class Wire < ApplicationRecord
   end
 
   validates_presence_of :memo, :payment_for, :recipient_name, :recipient_email
-  validates :recipient_email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }
+  validates_email_format_of :recipient_email, if: :recipient_email_changed?
   normalizes :recipient_email, with: ->(recipient_email) { recipient_email.strip.downcase }
 
   validate on: :create do
@@ -108,8 +116,9 @@ class Wire < ApplicationRecord
     state :failed
 
     event :mark_approved do
-      after_commit do
-        WireMailer.with(wire: self).notify_recipient.deliver_later if send_email_notification
+      after do
+        WireMailer.with(wire: self).notify_recipient.deliver_later if self.send_email_notification
+        payment_attempt.mark_sent! if payment_attempt.present?
       end
       transitions from: :pending, to: :approved
     end
@@ -117,6 +126,7 @@ class Wire < ApplicationRecord
     event :mark_rejected do
       after do
         canonical_pending_transaction.decline!
+        payment_attempt.mark_rejected! if payment_attempt&.may_mark_rejected?
         create_activity(key: "wire.rejected")
       end
       transitions from: [:pending, :approved], to: :rejected
@@ -124,6 +134,9 @@ class Wire < ApplicationRecord
 
     event :mark_deposited do
       transitions from: :approved, to: :deposited
+      after do
+        payment_attempt&.mark_successful!
+      end
     end
 
     event :mark_failed do
@@ -132,6 +145,8 @@ class Wire < ApplicationRecord
         if reimbursement_payout_holding.present?
           ReimbursementMailer.with(reimbursement_payout_holding:, reason:).wire_failed.deliver_later
           reimbursement_payout_holding.mark_failed!
+        elsif payment_attempt.present?
+          payment_attempt.mark_failed!(reason:)
         else
           WireMailer.with(wire: self, reason:).notify_failed.deliver_later
         end
@@ -167,36 +182,17 @@ class Wire < ApplicationRecord
 
   alias_attribute :name, :recipient_name
 
-  def hcb_code
-    "HCB-#{TransactionGroupingEngine::Calculate::HcbCode::WIRE_CODE}-#{id}"
-  end
+  include HasHcbCode
+  has_hcb_code TransactionGroupingEngine::Calculate::HcbCode::WIRE_CODE, persisted_only: true
 
   def admin_dropdown_description
     "#{Money.from_cents(amount_cents, currency).format} to #{recipient_name} (#{recipient_email}) from #{event.name}"
   end
 
-  def local_hcb_code
-    return nil unless persisted? # don't access local_hcb_code before saving.
-
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
-
   def usd_amount_cents
     return -1 * local_hcb_code.amount_cents unless local_hcb_code.nil? || local_hcb_code.no_transactions?
 
-    if currency.in?(EuCentralBank::CURRENCIES)
-      eu_bank = EuCentralBank.new
-      if Rails.env.test?
-        eu_bank.update_rates(Rails.root.join("spec/fixtures/files/eurofxref-daily.xml"))
-      else
-        eu_bank.update_rates
-      end
-      return eu_bank.exchange(amount_cents, currency, "USD").cents
-    else
-      # we fallback to Wise for currency conversion when we can't get it from the EU Central Bank
-      money = Money.from_cents(amount_cents, currency)
-      return WiseTransfer.generate_detailed_quote(money)[:without_fees_usd_amount].cents
-    end
+    MoneyService.convert_to_usd(amount_cents, currency)
   end
 
   def send_wire!
@@ -209,6 +205,7 @@ class Wire < ApplicationRecord
       routing_number_type: "bic",
       routing_number: bic_code,
       account_number:,
+      account_type: recipient_information["account_type"],
       wire: {
         beneficiary_name: recipient_name,
         beneficiary_email: recipient_email,
@@ -223,8 +220,7 @@ class Wire < ApplicationRecord
         beneficiary_legal_id: recipient_information["legal_id"],
         beneficiary_type: recipient_information["legal_type"],
         local_bank_code: recipient_information["local_bank_code"],
-        local_account_number: recipient_information["local_account_number"],
-        account_type: recipient_information["account_type"]
+        local_account_number: recipient_information["local_account_number"]
       }.compact_blank
     }.compact_blank)
 
@@ -243,14 +239,17 @@ class Wire < ApplicationRecord
     }.compact_blank)
 
     self.column_id = column_wire_transfer["id"]
+    self.uetr = column_wire_transfer["uetr"]
     mark_approved
     save!
   end
 
-  def last_user_change_to(...)
-    user_id = versions.where_object_changes_to(...).last&.whodunnit
+  def can_cancel?
+    pending?
+  end
 
-    user_id && User.find(user_id)
+  def cancel!
+    mark_rejected!
   end
 
   def column_wire_details

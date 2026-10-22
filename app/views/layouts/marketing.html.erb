@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<%# Marketing pages are intentionally light-only; opt out of the app's dark mode. %>
+<html lang="en" data-dark="false">
+  <head>
+    <%= render "layouts/head", force_light: true %>
+  </head>
+  <body class="marketing">
+    <%= render "marketing/nav" %>
+    <main class="marketing__main">
+      <%= yield %>
+    </main>
+    <%= render "marketing/footer" %>
+  </body>
+</html>

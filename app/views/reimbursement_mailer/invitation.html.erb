@@ -26,7 +26,7 @@
   </p>
 
   <blockquote>
-    <%== MarkdownService.instance.renderer.render @report.invite_message %>
+    <%= MarkdownService.instance.render @report.invite_message %>
   </blockquote>
 <% end %>
 

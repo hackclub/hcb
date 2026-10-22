@@ -105,9 +105,7 @@ module PendingTransactionEngine
               cpts = cpts.where("raw_pending_stripe_transactions.stripe_transaction->'merchant_data'->>'network_id' = ?", @merchant)
             end
 
-            if event.can_front_balance?
-              cpts = cpts.not_fronted
-            end
+            cpts = cpts.not_fronted
 
             cpts = cpts.search_memo(@search) if @search.present?
             cpts

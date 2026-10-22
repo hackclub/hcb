@@ -2,47 +2,85 @@
 
 class Ledger
   class Mapper
+    SYSTEM = :__system__
+
     def initialize(ledger_item:)
       @ledger_item = ledger_item
+      @ledger_item.reload
     end
 
     def run
-      if card_grant = calculate_card_grant
-        ledger = Ledger.find_or_create_by!(primary: true, card_grant:)
-      elsif event = calculate_event
-        ledger = Ledger.find_or_create_by!(primary: true, event:)
-      else
-        return nil
-      end
+      return if @ledger_item.primary_mapping&.mapped_by_human?
 
-      Ledger::Mapping.find_or_create_by!(ledger:, ledger_item: @ledger_item) do |mapping|
-        mapping.on_primary_ledger = true
-      end
+      preload_transaction_sources!
+      return if (ledger = calculate_ledger).nil?
+
+      Ledger::Mapping.map_primary!(ledger:, ledger_item: @ledger_item, mapped_by: SYSTEM)
     end
 
     private
+
+    # calculate_card_grant and calculate_event both iterate every canonical_(pending_)transaction
+    # and read its raw/(poly)morphic transaction (raw_column_transaction, raw_stripe_transaction,
+    # etc.). Without this, each ct/cpt beyond the first triggers its own SELECT to load that
+    # association; batch-loading them here turns that into one query per type.
+    def preload_transaction_sources!
+      ActiveRecord::Associations::Preloader.new(
+        records: @ledger_item.canonical_transactions,
+        associations: :transaction_source
+      ).call
+
+      ActiveRecord::Associations::Preloader.new(
+        records: @ledger_item.canonical_pending_transactions,
+        associations: [:raw_pending_stripe_transaction, :raw_pending_column_transaction]
+      ).call
+    end
 
     def calculate_event
       event_from_canonical_transactions ||
         event_from_stripe_top_up ||
         event_from_interest ||
         event_from_svb_sweep ||
-        event_from_canonical_pending_transactions
+        event_from_canonical_pending_transactions ||
+        event_from_linked_object
+    end
+
+    # An item with a linked object but no transactions yet (e.g. an invoice
+    # that's been created but not paid) can still be placed on its event's
+    # ledger. This is deliberately only consulted when there are no CTs or CPTs:
+    # once transactions exist, they — not the linked object — determine the
+    # ledger.
+    def event_from_linked_object
+      return unless @ledger_item.canonical_transactions.none? && @ledger_item.canonical_pending_transactions.none?
+
+      @ledger_item.linked_object.try(:event)
+    end
+
+    def calculate_ledger
+      if card_grant = calculate_card_grant
+        Ledger.find_or_create_by!(primary: true, card_grant:)
+      elsif event = calculate_event
+        Ledger.find_or_create_by!(primary: true, event:)
+      end
     end
 
     # Transactions sent to an organisation's unique Column account number.
     # Also covers ACH transfers, wires, etc. which are sent using this number.
     def event_from_canonical_transactions
       @ledger_item.canonical_transactions.each do |ct|
-        next unless ct.raw_column_transaction
-
-        column_account_number = Column::AccountNumber.find_by(
-          column_id: ct.raw_column_transaction.column_transaction["account_number_id"]
-        )
-        return column_account_number.event if column_account_number
+        if ct.raw_column_transaction.present?
+          column_account_number = Column::AccountNumber.find_by(
+            column_id: ct.raw_column_transaction.column_transaction["account_number_id"]
+          )
+          return column_account_number.event if column_account_number
+        end
 
         # Map transactions on Stripe cards.
         if ct.raw_stripe_transaction.present? && (event = ct.raw_stripe_transaction.likely_event)
+          return event
+        end
+
+        if (event = ct.linked_object_v2.try(:event))
           return event
         end
 
@@ -75,6 +113,7 @@ class Ledger
     def event_from_svb_sweep
       return unless @ledger_item.canonical_transactions.to_svb_sweep_account.exists? ||
                     @ledger_item.canonical_transactions.from_svb_sweep_account.exists? ||
+                    @ledger_item.canonical_transactions.hcb_sweep.exists? ||
                     @ledger_item.canonical_transactions.svb_sweep_account.exists?
 
       Event.find(EventMappingEngine::EventIds::SVB_SWEEPS)
@@ -110,7 +149,7 @@ class Ledger
 
     # CardGrant calculation is significantly simpler.
     # At the moment, only disbursements & Stripe card transactions
-    # can exitst on CardGrant's ledger.
+    # can exist on CardGrant's ledger.
     def calculate_card_grant
       @ledger_item.canonical_transactions.each do |ct|
         if ct.raw_stripe_transaction.present? && (card_grant = ct.raw_stripe_transaction.likely_card_grant)

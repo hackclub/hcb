@@ -23,7 +23,8 @@ module DisbursementService
       skip_auto_approve: false,
       fronted: false,
       source_transaction_category_slug: nil,
-      destination_transaction_category_slug: nil
+      destination_transaction_category_slug: nil,
+      category_assignment_strategy: "manual"
     )
       @source_event_id = source_event_id
       @source_event = Event.find(@source_event_id)
@@ -41,6 +42,7 @@ module DisbursementService
       @fronted = fronted
       @source_transaction_category_slug = source_transaction_category_slug
       @destination_transaction_category_slug = destination_transaction_category_slug
+      @category_assignment_strategy = category_assignment_strategy
     end
 
     def run
@@ -60,7 +62,7 @@ module DisbursementService
           # 1. Create the raw pending transactions
           rpodt = ::PendingTransactionEngine::RawPendingOutgoingDisbursementTransactionService::Disbursement::ImportSingle.new(disbursement:).run
           # 2. Canonize the newly added raw pending transactions
-          o_cpt = ::PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::OutgoingDisbursement.new(raw_pending_outgoing_disbursement_transaction: rpodt).run
+          o_cpt = ::PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::OutgoingDisbursement.new(raw_pending_outgoing_disbursement_transaction: rpodt, category_assignment_strategy: @category_assignment_strategy).run
           # 3. Map to event
           ::PendingEventMappingEngine::Map::Single::OutgoingDisbursement.new(canonical_pending_transaction: o_cpt).run
           # 4. Front if required
@@ -72,7 +74,7 @@ module DisbursementService
             # 1. Create the raw pending transactions
             rpidt = ::PendingTransactionEngine::RawPendingIncomingDisbursementTransactionService::Disbursement::ImportSingle.new(disbursement:).run
             # 2. Canonize the newly added raw pending transactions
-            i_cpt = ::PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::IncomingDisbursement.new(raw_pending_incoming_disbursement_transaction: rpidt).run
+            i_cpt = ::PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::IncomingDisbursement.new(raw_pending_incoming_disbursement_transaction: rpidt, category_assignment_strategy: @category_assignment_strategy).run
             # 3. Map to event
             ::PendingEventMappingEngine::Map::Single::IncomingDisbursement.new(canonical_pending_transaction: i_cpt).run
             # 4. Front if required

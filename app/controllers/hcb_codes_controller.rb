@@ -3,8 +3,8 @@
 class HcbCodesController < ApplicationController
   include TagsHelper
 
-  skip_before_action :signed_in_user, only: [:receipt, :attach_receipt, :receipt_status, :show]
-  skip_after_action :verify_authorized, only: [:receipt, :receipt_status]
+  skip_before_action :signed_in_user, only: [:attach_receipt, :receipt_status, :show]
+  skip_after_action :verify_authorized, only: [:receipt_status]
 
   def show
     @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
@@ -90,37 +90,11 @@ class HcbCodesController < ApplicationController
     authorize @hcb_code
 
     if params[:inline].present?
-      return render partial: "hcb_codes/memo", locals: { hcb_code: @hcb_code, form: true, prepended_to_memo: params[:prepended_to_memo], location: params[:location], ledger_instance: params[:ledger_instance] }
+      return render partial: "hcb_codes/memo/memo", locals: { hcb_code: @hcb_code, form: true, prepended_to_memo: params[:prepended_to_memo], location: params[:location], ledger_instance: params[:ledger_instance] }
     end
 
     @frame = turbo_frame_request?
     @suggested_memos = ::HcbCodeService::SuggestedMemos.new(hcb_code: @hcb_code, event: @event).run.first(4)
-  end
-
-  def pin
-    @hcb_code = HcbCode.find(params[:id])
-    param_event = Event.friendly.find_by_friendly_id(params[:event])
-    @event = param_event ? @hcb_code.events.find_by(id: param_event.id) : @hcb_code.event
-
-    authorize @hcb_code
-    authorize @event
-
-    # Handle unpinning
-    if (@pin = HcbCode::Pin.find_by(event: @event, hcb_code: @hcb_code))
-      @pin.destroy
-      flash[:success] = "Unpinned transaction from #{@event.name}"
-      redirect_back fallback_location: @event and return
-    end
-
-    # Handle pinning
-    @pin = HcbCode::Pin.new(event: @event, hcb_code: @hcb_code)
-    if @pin.save
-      flash[:success] = "Transaction pinned!"
-    else
-      flash[:error] = @pin.errors.full_messages.to_sentence
-    end
-
-    redirect_back fallback_location: @event
   end
 
   def update
@@ -130,11 +104,10 @@ class HcbCodesController < ApplicationController
     hcb_code_params = params.require(:hcb_code).permit(:memo, :prepended_to_memo, :location, :ledger_instance)
     hcb_code_params[:memo] = hcb_code_params[:memo].presence
 
-    @hcb_code.canonical_transactions.each { |ct| ct.update!(custom_memo: hcb_code_params[:memo]) }
-    @hcb_code.canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: hcb_code_params[:memo]) }
+    @hcb_code.update_custom_memo!(hcb_code_params[:memo])
 
     if params[:hcb_code][:inline].present?
-      return render partial: "hcb_codes/memo", locals: { hcb_code: @hcb_code, form: false, prepended_to_memo: params[:hcb_code][:prepended_to_memo], location: params[:hcb_code][:location], ledger_instance: params[:hcb_code][:ledger_instance], renamed: true }
+      return render partial: "hcb_codes/memo/memo", locals: { hcb_code: @hcb_code, form: false, prepended_to_memo: params[:hcb_code][:prepended_to_memo], location: params[:hcb_code][:location], ledger_instance: params[:hcb_code][:ledger_instance], renamed: true }
     end
 
     if @hcb_code.card_grant?
@@ -144,24 +117,6 @@ class HcbCodesController < ApplicationController
     else
       redirect_to @hcb_code
     end
-  end
-
-  def comment
-    @hcb_code = HcbCode.find(params[:id])
-
-    authorize @hcb_code
-
-    ::HcbCodeService::Comment::Create.new(
-      hcb_code_id: @hcb_code.id,
-      content: params[:content],
-      file: params[:file],
-      admin_only: params[:admin_only],
-      current_user:
-    ).run
-
-    redirect_to params[:redirect_url]
-  rescue => e
-    redirect_to params[:redirect_url], flash: { error: e.message }
   end
 
   include HcbCodeHelper # for disputed_transactions_airtable_form_url and attach_receipt_url
@@ -250,29 +205,6 @@ class HcbCodesController < ApplicationController
       end
       format.any { redirect_back fallback_location: @event }
     end
-  end
-
-  def invoice_as_personal_transaction
-    hcb_code = HcbCode.find(params[:id])
-    event = hcb_code.event
-
-    authorize hcb_code
-
-    if hcb_code.amount_cents > -100
-      flash[:error] = "Invoices can only be generated for charges of $1.00 or more."
-      return redirect_to hcb_code
-    end
-
-    if hcb_code.personal_transaction
-      flash[:error] = "A repayment invoice already exists for this transaction."
-      return redirect_to hcb_code.personal_transaction.invoice
-    end
-
-    personal_tx = HcbCode::PersonalTransaction.create(hcb_code:, reporter: current_user)
-
-    flash[:success] = "We've sent an invoice for repayment to #{personal_tx.invoice.sponsor.contact_email}."
-
-    redirect_to personal_tx.invoice
   end
 
 end

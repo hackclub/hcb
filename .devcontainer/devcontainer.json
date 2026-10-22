@@ -45,7 +45,8 @@
         "Shopify.ruby-lsp",
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
-        "bradlc.vscode-tailwindcss"
+        "bradlc.vscode-tailwindcss",
+        "misogi.ruby-rubocop"
       ]
     }
   }

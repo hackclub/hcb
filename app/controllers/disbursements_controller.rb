@@ -2,6 +2,7 @@
 
 class DisbursementsController < ApplicationController
   include TurboStreamFlash
+  include ComboboxSearchable
 
   before_action :set_disbursement, only: [:show, :edit, :update, :transfer_confirmation_letter]
 
@@ -9,7 +10,7 @@ class DisbursementsController < ApplicationController
     authorize @disbursement
 
     # Comments
-    @hcb_code = HcbCode.find_or_create_by(hcb_code: @disbursement.hcb_code)
+    @hcb_code = HcbCode.find_or_create_by(hcb_code: @disbursement.outgoing_hcb_code)
   end
 
   def transfer_confirmation_letter
@@ -47,31 +48,101 @@ class DisbursementsController < ApplicationController
       name: params[:message]
     )
 
-    user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id)
-    user_accesible_events = Event.where(id: current_user.events.pluck(:id) + current_user.events.collect(&:descendant_ids).flatten)
-
-    @allowed_source_events = if admin_signed_in?
-                               Event.select(:name, :id, :demo_mode, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
-                             else
-                               user_accesible_events.not_hidden.filter_demo_mode(false)
-                             end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
-    @allowed_destination_events = if admin_signed_in?
-                                    Event.select(:name, :id, :demo_mode, :can_front_balance, :slug).all.reorder(Event::CUSTOM_SORT).includes(:plan)
-                                  elsif @source_event&.plan&.unrestricted_disbursements_enabled?
-                                    allowed_destination_event_ids = user_accesible_events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
-                                    Event.where(id: allowed_destination_event_ids).select(:name, :id, :demo_mode, :can_front_balance, :slug).includes(:plan)
-                                  else
-                                    user_accesible_events.not_hidden.filter_demo_mode(false)
-                                  end.to_enum.with_index.sort_by { |e, i| [user_event_ids.index(e.id) || Float::INFINITY, i] }.map(&:first)
-
     authorize @disbursement
     render layout: "transfer"
+  end
+
+  def event_search
+    authorize Disbursement.new
+    q = params[:q].to_s.presence
+    # Indicates whether we're searching for source or destination organizations
+    sending = params[:sending] == "true"
+
+    user_event_ids = current_user.organizer_positions.reorder(sort_index: :asc).pluck(:event_id)
+
+    own_events = current_user.disbursement_source_events
+    own_event_ids = own_events.ids.to_set
+
+    base = if admin_signed_in?
+             Event.select(:name, :id, :demo_mode, :slug).reorder(Event::CUSTOM_SORT).includes(:plan)
+           elsif sending || q.blank?
+             # Until the user starts searching for a destination, only suggest
+             # their own organizations.
+             own_events
+           else
+             # Once they search, also offer organizations in HCB's public
+             # directory, plus an unlisted transparent organization when its
+             # exact slug is typed. Anyone can already view these, so listing
+             # them doesn't reveal anything. Private organizations stay hidden.
+             public_events = Event.accepting_public_transfers
+             own_events
+               .or(public_events.where(is_indexable: true))
+               .or(public_events.where(slug: q.downcase))
+               .select(:name, :id, :demo_mode, :slug).includes(:plan)
+           end
+
+    # Apply fuzzy search if query present
+    if q.present?
+      sql = "name ILIKE :name OR slug ILIKE :slug"
+      sql += " OR CAST(id AS TEXT) ILIKE :id" if admin_signed_in?
+      base = base.where(sql, name: "%#{q}%", slug: "%#{q}%", id: "%#{q}%")
+    end
+
+    # Rank exact matches first, then the user's own events (in their preferred
+    # order), then prefix and substring matches, keeping the relation's
+    # existing order as a tiebreaker.
+    order_clauses = []
+    if q.present?
+      order_clauses << Arel.sql(
+        ActiveRecord::Base.sanitize_sql_array(
+          ["CASE WHEN LOWER(name) = LOWER(:exact) OR LOWER(slug) = LOWER(:exact) THEN 0 ELSE 1 END", { exact: q }]
+        )
+      )
+    end
+    if user_event_ids.any?
+      ids = user_event_ids.map(&:to_i).join(", ")
+      order_clauses << Arel.sql("array_position(ARRAY[#{ids}]::bigint[], events.id) NULLS LAST")
+    end
+    if q.present?
+      order_clauses << Arel.sql(
+        ActiveRecord::Base.sanitize_sql_array(
+          ["CASE WHEN name ILIKE :prefix OR slug ILIKE :prefix THEN 0 ELSE 1 END", { prefix: "#{q}%" }]
+        )
+      )
+    end
+    order_clauses.concat(base.order_values)
+    order_clauses << Arel.sql("events.id ASC")
+
+    events = combobox_page(base.reorder(*order_clauses)).to_a
+
+    options = events.map do |e|
+      disabled_message = nil
+      disabled_message = "Insufficient balance" if sending && !admin_signed_in? && e.balance_available <= 0
+      disabled_message = "HCB transfers disabled" if sending && !policy(e).create_transfer?
+      # Balances are expensive to compute, so only show the user's own.
+      balance = helpers.render_money_short(e.balance_available) if admin_signed_in? || own_event_ids.include?(e.id)
+
+      {
+        value: e.public_id,
+        label: helpers.combobox_display(e),
+        sublabel: disabled_message || balance,
+        disabled: disabled_message.present?
+      }
+    end
+
+    render json: options
   end
 
   def create
     @source_event = Event.find_by_public_id(disbursement_params[:source_event_id])
     @destination_event = Event.find_by_public_id(disbursement_params[:event_id]) || Event.friendly.find(disbursement_params[:event_id])
-    @disbursement = Disbursement.new(destination_event: @destination_event, source_event: @source_event)
+    @event = @source_event # this is to render the navigation bar for the correct event.
+    @disbursement = Disbursement.new(
+      destination_event: @destination_event,
+      source_event: @source_event,
+      amount: Monetize.parse(disbursement_params[:amount])&.cents,
+      name: disbursement_params[:name]
+    )
 
     authorize @disbursement
 
@@ -79,6 +150,16 @@ class DisbursementsController < ApplicationController
       scheduled_on = Date.new(disbursement_params["scheduled_on(1i)"].to_i,
                               disbursement_params["scheduled_on(2i)"].to_i,
                               disbursement_params["scheduled_on(3i)"].to_i)
+    end
+
+    if disbursement_params[:source_transaction_category_slug].present? || disbursement_params[:destination_transaction_category_slug].present?
+      source_transaction_category_slug = disbursement_params[:source_transaction_category_slug].presence
+      destination_transaction_category_slug = disbursement_params[:destination_transaction_category_slug].presence
+      category_assignment_strategy = "manual"
+    else
+      source_transaction_category_slug = "internal-transfer"
+      destination_transaction_category_slug = "internal-transfer"
+      category_assignment_strategy = "automatic"
     end
 
     disbursement = DisbursementService::Create.new(
@@ -89,9 +170,10 @@ class DisbursementsController < ApplicationController
       scheduled_on:,
       requested_by_id: current_user.id,
       should_charge_fee: disbursement_params[:should_charge_fee] == "1",
-      fronted: @source_event.plan.front_disbursements_enabled?,
-      source_transaction_category_slug: disbursement_params[:source_transaction_category_slug].presence,
-      destination_transaction_category_slug: disbursement_params[:destination_transaction_category_slug].presence,
+      fronted: Disbursement.frontable?(source_event: @source_event, destination_event: @destination_event, requested_by: current_user),
+      source_transaction_category_slug:,
+      destination_transaction_category_slug:,
+      category_assignment_strategy:
     ).run
 
     if disbursement_params[:file]
@@ -112,8 +194,8 @@ class DisbursementsController < ApplicationController
     end
 
   rescue ArgumentError, ActiveRecord::RecordInvalid => e
-    flash[:error] = e.message
-    redirect_to new_disbursement_path(source_event_id: @source_event)
+    flash.now[:error] = e.message
+    render :new, layout: "transfer", status: :unprocessable_content
   rescue ActiveRecord::RecordNotFound => e
     skip_authorization
     flash[:error] = "Organization not found: #{e.id}"
@@ -185,7 +267,7 @@ class DisbursementsController < ApplicationController
     if @disbursement.mark_in_transit!
       flash[:success] = "Disbursement marked as fulfilled"
       if Disbursement.pending.any?
-        redirect_to pending_disbursements_path
+        redirect_to disbursements_admin_index_path(pending: 1)
       else
         redirect_to disbursements_admin_index_path
       end

@@ -11,7 +11,7 @@ RSpec.describe LoginsController do
   describe "#new" do
     it "shows the current user when logged in" do
       user = create(:user)
-      sign_in(user)
+      create_session(user, verified: true)
 
       get(:new)
       expect(response).to have_http_status(:ok)
@@ -32,24 +32,82 @@ RSpec.describe LoginsController do
       email = "test@example.com"
       expect(User.find_by(email:)).to be_nil
 
-      expect { post(:create, params: { email: "test@example.com" }) }
+      expect { post(:create, params: { email: "test@example.com", login: { purpose: "" } }) }
         .to( change { Login.count }.by(1).and(change { User.count }.by(1)) )
 
       login = Login.last
       expect(login.user.email).to eq(email)
       expect(login).not_to be_reauthentication
-      expect(response).to redirect_to(login_code_login_path(login))
+      expect(response).to redirect_to(email_login_path(login))
     end
 
     it "uses the existing user if the email matches" do
       user = create(:user, email: "test@example.com")
 
-      expect { post(:create, params: { email: user.email }) }
+      expect { post(:create, params: { email: user.email, login: { purpose: "" } }) }
         .to(change { Login.count }.by(1).and(change { User.count }.by(0)))
 
       login = Login.last
       expect(login.user).to eq(user)
-      expect(response).to redirect_to(login_code_login_path(login))
+      expect(response).to redirect_to(email_login_path(login))
+    end
+    it "blocks creating more than 10 logins per user in the window" do
+      original_cache = Rails.cache
+      Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+      user = create(:user)
+
+      10.times do
+        post(:create, params: { email: user.email, login: { purpose: "" } })
+      end
+
+      post(:create, params: { email: user.email, login: { purpose: "" } })
+      expect(response).to redirect_to(auth_users_path)
+      expect(flash[:error]).to eq("You're creating too many logins. Please try again later.")
+    ensure
+      Rails.cache = original_cache
+    end
+    it "allows logins again after the rate limit window expires" do
+      original_cache = Rails.cache
+      Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+      user = create(:user)
+
+      10.times do
+        post(:create, params: { email: user.email, login: { purpose: "" } })
+      end
+
+      post(:create, params: { email: user.email, login: { purpose: "" } })
+      expect(response).to redirect_to(auth_users_path)
+
+      travel(1.hour)
+      Rails.cache.clear
+
+      post(:create, params: { email: user.email, login: { purpose: "" } })
+      expect(response).to redirect_to(email_login_path(Login.last))
+    ensure
+      Rails.cache = original_cache
+    end
+  end
+
+  describe "set_login rate limit (session[:auth_email])" do
+    it "blocks creating more than 10 logins per user via session auth_email" do
+      original_cache = Rails.cache
+      Rails.cache = ActiveSupport::Cache::MemoryStore.new
+
+      user = create(:user)
+
+      10.times do
+        session[:auth_email] = user.email
+        get(:choose_login_preference)
+      end
+
+      session[:auth_email] = user.email
+      get(:choose_login_preference)
+      expect(response).to redirect_to(auth_users_path)
+      expect(flash[:error]).to eq("You're creating too many logins. Please try again later.")
+    ensure
+      Rails.cache = original_cache
     end
   end
 
@@ -59,12 +117,29 @@ RSpec.describe LoginsController do
       login = create(:login, user:)
 
       expect {
-        get(:login_code, params: { id: login.hashid })
+        get(:email, params: { id: login.hashid })
       }.to send_email(to: user.email)
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("Email code")
       expect(response.body).to include("We just sent a login code")
+    end
+
+    it "resends the login code when the user requests it" do
+      user = create(:user, email: "text@example.com")
+      login = create(:login, user:)
+
+      expect {
+        post(:email, params: { id: login.hashid })
+      }.to send_email(to: user.email)
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Resend code")
+      expect(response.body).to include(email_login_path(login))
+
+      expect {
+        post(:email, params: { id: login.hashid })
+      }.to send_email(to: user.email)
     end
 
     it "sends an SMS code if the user has opted-in and verified their phone number" do
@@ -79,18 +154,51 @@ RSpec.describe LoginsController do
       expect(verification_service).to receive(:send_verification_request).with(user.phone_number)
       expect(TwilioVerificationService).to receive(:new).and_return(verification_service)
 
-      get(:login_code, params: { id: login.hashid })
+      get(:sms, params: { id: login.hashid })
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("SMS code")
       expect(response.body).to include("We just sent a login code")
+    end
+
+    it "resends the SMS code when the user requests it" do
+      user = create(:user, phone_number: "+18556254225")
+      user.update!(use_sms_auth: true, phone_number_verified: true)
+      login = create(:login, user:)
+
+      verification_service = instance_double(TwilioVerificationService)
+      expect(verification_service).to receive(:send_verification_request).with(user.phone_number).twice
+      expect(TwilioVerificationService).to receive(:new).twice.and_return(verification_service)
+
+      post(:sms, params: { id: login.hashid })
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Resend code")
+
+      post(:sms, params: { id: login.hashid })
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Resend code")
+    end
+
+    # The UI never offers SMS for an unverified number, so this request only
+    # comes from a script POSTing at the endpoint directly to spend Twilio
+    # messages on made-up numbers.
+    it "sends no SMS if the phone number isn't verified" do
+      user = create(:user, phone_number: "+18556254225")
+      login = create(:login, user:)
+
+      expect(TwilioVerificationService).not_to receive(:new)
+
+      get(:sms, params: { id: login.hashid })
+
+      expect(flash[:error]).to eq("SMS login isn't available for this account.")
+      expect(response).to redirect_to(auth_users_path)
     end
 
     it "returns an error if the login is a reauthentication" do
       user = create(:user, email: "text@example.com")
       login = create(:login, user:, is_reauthentication: true)
 
-      get(:login_code, params: { id: login.hashid })
+      get(:email, params: { id: login.hashid })
 
       expect(flash[:error]).to eq("Please start again.")
       expect(response).to redirect_to(auth_users_path)
@@ -130,6 +238,41 @@ RSpec.describe LoginsController do
       end
     end
 
+    context "when return_to points at a route guarded by a constraint that reads cookies" do
+      it "signs the user in and redirects to root instead of raising" do
+        user = create(:user, phone_number: "+18556254225")
+        # No route other than the AuditorConstraint-guarded `/schema` mount
+        # matches this path, so route recognition can't silently fall through
+        # to some unrelated wildcard route (unlike e.g. "/console", which also
+        # matches the catch-all `events#show` route).
+        login = create(:login, user:, state: { return_to: "/schema/foo/bar" })
+        create_webauthn_credential(user:)
+
+        webauthn_challenge = generate_webauthn_challenge(user:)
+        session[:webauthn_challenge] = webauthn_challenge
+
+        credential = get_webauthn_credential(challenge: webauthn_challenge)
+
+        post(
+          :complete,
+          params: {
+            id: login.hashid,
+            method: "webauthn",
+            credential: JSON.dump(credential)
+          }
+        )
+
+        # Regression test: `return_to` is user-controlled and reaches
+        # `Rails.application.routes.recognize_path`, which evaluates route
+        # constraints (AuditorConstraint/AdminConstraint) against a synthetic
+        # request that bypasses the cookies middleware. That used to raise
+        # `NoMethodError: undefined method 'generate_key' for nil` instead of
+        # completing the login.
+        expect(response).to redirect_to(root_path)
+        expect(login.reload).to be_complete
+      end
+    end
+
     context "login_code" do
       context "email" do
         it "rejects invalid login codes" do
@@ -140,13 +283,22 @@ RSpec.describe LoginsController do
             :complete,
             params: {
               id: login.hashid,
-              method: "login_code",
+              method: "email",
               login_code: "123-456"
             }
           )
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           expect(response.body).to include("Invalid login code")
+        end
+
+        it "counts a wrong code towards the per-IP ban" do
+          login = create(:login, user: create(:user))
+          key = Rack::Attack.login_complete_fail2ban_key(request.remote_ip)
+
+          expect(Rack::Attack::Fail2Ban).to receive(:filter).with(key, Rack::Attack::LOGIN_COMPLETE_FAIL2BAN)
+
+          post(:complete, params: { id: login.hashid, method: "email", login_code: "123-456" })
         end
 
         it "signs the user in and redirects" do
@@ -158,7 +310,7 @@ RSpec.describe LoginsController do
             :complete,
             params: {
               id: login.hashid,
-              method: "login_code",
+              method: "email",
               login_code: login_code.code
             }
           )
@@ -194,13 +346,12 @@ RSpec.describe LoginsController do
             :complete,
             params: {
               id: login.hashid,
-              method: "login_code",
+              method: "sms",
               login_code: "123-456",
-              sms: "1",
             }
           )
 
-          expect(response).to have_http_status(:unprocessable_entity)
+          expect(response).to have_http_status(:unprocessable_content)
           expect(response.body).to include("Invalid login code")
         end
 
@@ -221,9 +372,8 @@ RSpec.describe LoginsController do
             :complete,
             params: {
               id: login.hashid,
-              method: "login_code",
+              method: "sms",
               login_code: "123-456",
-              sms: "1",
             }
           )
 
@@ -379,12 +529,12 @@ RSpec.describe LoginsController do
           :complete,
           params: {
             id: login.hashid,
-            method: "login_code",
+            method: "email",
             login_code: login_code.code
           }
         )
 
-        expect(response).to redirect_to(totp_login_path(login))
+        expect(response).to redirect_to(choose_login_preference_login_path(login))
 
         login.reload
         expect(login).not_to be_complete
@@ -420,7 +570,7 @@ RSpec.describe LoginsController do
         :complete,
         params: {
           id: login.hashid,
-          method: "login_code",
+          method: "email",
           login_code: login_code.code
         }
       )
@@ -438,7 +588,7 @@ RSpec.describe LoginsController do
         :complete,
         params: {
           id: login.hashid,
-          method: "login_code",
+          method: "email",
           login_code: login_code.code
         }
       )
@@ -452,7 +602,7 @@ RSpec.describe LoginsController do
     it "checks for sudo mode and redirects" do
       user = create(:user)
       Flipper.enable(:sudo_mode_2015_07_21, user)
-      sign_in(user)
+      create_session(user, verified: true)
 
       travel(3.hours)
 

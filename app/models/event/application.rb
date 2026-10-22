@@ -14,8 +14,10 @@
 #  address_postal_code          :string
 #  address_state                :string
 #  airtable_status              :string
+#  airtable_synced_at           :datetime
 #  annual_budget_cents          :integer
 #  approved_at                  :datetime
+#  archived_at                  :datetime
 #  committed_amount_cents       :integer
 #  cosigner_email               :string
 #  currently_fiscally_sponsored :boolean
@@ -26,6 +28,7 @@
 #  name                         :string
 #  planning_duration            :string
 #  political_description        :text
+#  previously_applied           :boolean
 #  project_category             :string
 #  referral_code                :string
 #  referrer                     :string
@@ -34,6 +37,7 @@
 #  team_size                    :integer
 #  teen_led                     :boolean
 #  under_review_at              :datetime
+#  videos_watched               :boolean          default(FALSE)
 #  website_url                  :string
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
@@ -56,28 +60,34 @@ class Event
     has_paper_trail
 
     include PgSearch::Model
-    pg_search_scope :search_name, against: :name
+    pg_search_scope :search_name_or_email, against: :name, associated_against: {
+      user: :email
+    }
 
     include AASM
     include Contractable
 
+    include Hashid::Rails
+
     include PublicIdentifiable
     set_public_id_prefix :apl
-    hashid_config salt: Credentials.fetch(:HASHID_SALT)
 
     belongs_to :user
     belongs_to :event, optional: true
+    belongs_to :contract_event, foreign_key: :event_id, class_name: "Event", inverse_of: :application, optional: true
 
     has_many :affiliations, as: :affiliable
-    has_one :contract, ->{ where.not(aasm_state: :voided) }, inverse_of: :contractable
+    has_one :contract, ->{ where.not(aasm_state: :voided) }, inverse_of: :contractable, as: :contractable
 
     validate :cosigner_cannot_change_after_sign
 
     after_save :check_cosigner_update
-    after_commit :sync_to_airtable
+    after_commit :schedule_airtable_sync, unless: :saved_change_to_airtable_synced_at?
 
     monetize :annual_budget_cents, allow_nil: true
     monetize :committed_amount_cents, allow_nil: true
+
+    include Rails.application.routes.url_helpers
 
     after_create_commit do
       Event::ApplicationReminderJob.set(wait: 1.day).perform_later(self, 1)
@@ -86,11 +96,17 @@ class Event
       Event::ApplicationReminderJob.set(wait: 14.days).perform_later(self, 4)
     end
 
+    scope :not_archived, -> { where(archived_at: nil) }
+    scope :archived, -> { where.not(archived_at: nil) }
+
+    scope :active, -> { where(archived_at: nil, event_id: nil) }
+
     enum :last_page_viewed, {
       show: "show",
       project_info: "project_info",
       personal_info: "personal_info",
       review: "review",
+      sign_agreement: "sign_agreement",
       agreement: "agreement",
       submission: "submission"
     }
@@ -105,10 +121,13 @@ class Event
       state :rejected
 
       event :mark_submitted do
-        transitions from: :draft, to: :submitted
+        transitions from: :draft, to: :submitted, if: :ready_to_submit?
+
         after do
-          if user.teenager?
-            create_contract
+          update!(archived_at: nil)
+
+          if teen_led?
+            send_contract
             Event::ApplicationMailer.with(application: self).confirmation.deliver_later
           else
             mark_under_review!
@@ -124,27 +143,58 @@ class Event
       end
 
       event :mark_approved do
-        transitions from: [:submitted, :under_review], to: :approved
+        transitions from: :under_review, to: :approved
         after do
-          unless user.teenager?
-            create_contract unless contract.present?
+          if teen_led?
+            contract.party(:hcb).schedule_reminders
+          else
+            send_contract unless contract.present?
             Event::ApplicationMailer.with(application: self).approved.deliver_later
           end
         end
       end
 
       event :mark_rejected do
-        transitions from: [:submitted, :under_review], to: :rejected
+        transitions from: [:submitted, :under_review, :approved], to: :rejected, if: -> { event.nil? }
+        after do |rejection_message, rejection_reason|
+          contract.mark_voided! if contract.present?
+
+          if rejection_message.present?
+            Event::ApplicationMailer.with(application: self, rejection_message: rejection_message).rejected.deliver_later
+          end
+
+          if rejection_reason.present?
+            set_airtable_status(REJECTION_AIRTABLE_STATUSES.fetch(rejection_reason.to_sym, "Rejected"))
+          end
+
+        end
+      end
+
+      event :mark_draft do
+        transitions from: [:submitted, :under_review], to: :draft
       end
     end
 
     scope :in_progress, -> { where.not(aasm_state: ["approved", "rejected"]) }
 
+    DISALLOWED_COUNTRIES = %w[IN NG RU CU IR KP SY BY VE SD SS MM AF YE SO PK CF CG ZW LY CM LB IQ].freeze
+
+    REJECTION_AIRTABLE_STATUSES = {
+      generic: "Rejected",
+      country: "Rejected - Country",
+      mission: "Rejected Teen - No charitable mission/values alignment",
+      adult: "Rejected - Adult",
+      legal: "Rejected - Legal/political reason",
+      operational: "Rejected - Operational limitation",
+      hq_satellite: "Rejected - HQ Satellite Event"
+
+    }.freeze
+
     def rejection_messages
       generic = <<~MSG.strip
         Hi #{user.first_name},
 
-        Thank you for expressing interest in using HCB for your project, #{name}. After careful consideration, we're unable to move forward with your application at this time.
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). After careful consideration, we're unable to move forward with your application at this time.
 
         If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
 
@@ -155,9 +205,15 @@ class Event
       adult = <<~MSG.strip
         Hi #{user.first_name},
 
-        Thank you for expressing interest in using HCB for your project, #{name}. After careful consideration, we're unable to move forward with your application at this time. HCB is primarily focused on supporting projects run by teenagers.
+        Thank you so much for considering us to be your fiscal sponsor for [#{name}](#{Rails.application.routes.url_helpers.application_url(self)})!
 
-        If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
+        Although your nonprofit's mission sounds incredible, we are refocusing our fiscal sponsorship platform to solely work with teen-led (high school specifically) initiatives within our Hack Club community. Our parent nonprofit, Hack Club, was founded to create a technical community for high schoolers, and HCB is migrating toward a similar mission in order to realign with our parent organization.
+
+        While we tried to be a lifeline for groups outside of our normal mission, doing so caused us to drift away from our core focus of supporting teen-run orgs and to take on additional risk in areas we were less familiar with (teen-led STEM orgs are very different in nature from many others). Because of this, we've pulled back the reins and are working to refocus.
+
+        Unfortunately, this means that unless a group is run by teens and is part of our Hack Club community, we don't have the capacity to take them on. If it would be helpful for us to send over some other fiscal sponsors, we'd be more than happy to do so, but at this time we are unable to sponsor your organization.
+
+        Sorry again for the bad news, and please let us know if there is anything else we can do to help. You can reach us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or simply reply to this email.
 
         Best,
         The HCB Team
@@ -166,7 +222,7 @@ class Event
       mission = <<~MSG.strip
         Hi #{user.first_name},
 
-        Thank you for expressing interest in using HCB for your project, #{name}. After careful consideration, we're unable to move forward with your application at this time. Your project's mission doesn't align with HCB's guidelines, and as a result, we cannot approve your application.
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). After careful consideration, we're unable to move forward with your application at this time. Your project's mission doesn't align with HCB's guidelines, and as a result, we cannot approve your application.
 
         If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
 
@@ -174,10 +230,60 @@ class Event
         The HCB Team
       MSG
 
+      country = <<~MSG.strip
+        Hi #{user.first_name},
+
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). We really want to support projects from all around the world. However, due to regulatory restrictions and incompatible financial systems, we are unable to partner with organizations that operate in certain countries.
+
+        We're sorry for not being able to support you on your journey and wish you all the best. If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
+
+        Best,
+        The HCB team
+      MSG
+
+      legal = <<~MSG.strip
+        Hi #{user.first_name},
+
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). After careful consideration, we're unable to move forward with your application at this time. Your project's mission doesn't align with HCB's guidelines, and as a result, we cannot approve your application.
+
+        We're sorry for not being able to support you on your journey and wish you all the best. If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
+
+        Best,
+        The HCB team
+      MSG
+
+
+
+      operational = <<~MSG.strip
+        Hi #{user.first_name},
+
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). After careful consideration, we're unable to move forward with your application in our current operational capacity.
+
+        We're sorry for not being able to support you on your journey and wish you all the best. If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
+
+        Best,
+        The HCB team
+      MSG
+
+      hq_satellite = <<~MSG.strip
+        Hi #{user.first_name},
+
+        Hack Club HQ affiliated events don't go through the standard application process. Please reach out to your HQ POC, who can help you set up your HCB organization.
+
+        If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
+
+        Best,
+        The HCB team
+      MSG
+
       {
         generic:,
         adult:,
-        mission:
+        mission:,
+        country:,
+        legal:,
+        operational:,
+        hq_satellite:
       }
     end
 
@@ -185,8 +291,8 @@ class Event
       return "Tell us about your project" if name.blank? || description.blank?
       return "Add your information" if address_line1.blank? || address_city.blank? || address_country.blank? || address_postal_code.blank?
       return "Review and submit" if draft?
-      return "Sign the fiscal sponsorship agreement" if submitted?
-      return "Start spending!" if approved?
+      return "Sign the fiscal sponsorship agreement" if (submitted? && teen_led?) || (approved? && !teen_led?)
+      return "Start spending!" if event.present?
       return "" if rejected?
     end
 
@@ -194,7 +300,7 @@ class Event
       return 25 if next_step == "Tell us about your project"
       return 50 if next_step == "Add your information"
       return 75 if next_step == "Review and submit"
-      return 100 if submitted? || under_review?
+      return 100 if submitted? || under_review? || approved?
 
       0
     end
@@ -211,40 +317,50 @@ class Event
       Rails.application.routes.url_helpers.application_path(self)
     end
 
-    def create_contract
+    def contractable_link_label
+      "application"
+    end
+
+    def contractable_link_path
+      Rails.application.routes.url_helpers.application_path(self)
+    end
+
+    def contract_notify_hcb?
+      !teen_led? || contract.reissue?
+    end
+
+    def send_contract(reissue_messages: {}, reissue_of: nil, extra_prefills: {}, **options)
       if name.nil? || description.nil?
         raise StandardError.new("Cannot create a contract for application #{hashid}: missing name and/or description")
       end
 
+      if cosigner_email.present? && !user.is_minor?
+        update!(cosigner_email: nil)
+      end
+
       fs_contract = nil
       ActiveRecord::Base.transaction do
-        fs_contract = Contract::FiscalSponsorship.create!(contractable: self, include_videos: false, external_template_id: Event::Plan::Standard.new.contract_docuseal_template_id, prefills: { "public_id" => public_id, "name" => name, "description" => description })
+        fs_contract = Contract::FiscalSponsorship.create!(
+          contractable: self,
+          include_videos: false,
+          external_template_id: Event::Plan::Standard.new.contract_docuseal_template_id,
+          prefills: extra_prefills.merge({ "public_id" => public_id, "name" => name, "description" => description }),
+          reissue_of:
+        )
         fs_contract.parties.create!(user:, role: :signee)
         fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
       end
 
-      fs_contract.send!
-      fs_contract.party(:cosigner)&.notify
+      fs_contract.send!(reissue_messages:)
+      fs_contract.party(:cosigner)&.notify unless reissue_of.present?
+
+      set_airtable_status("Documents sent") if reissue_of.present?
 
       fs_contract
     end
 
-    def ready_to_submit?
-      required_fields = ["name", "description", "address_line1", "address_city", "address_state", "address_postal_code", "address_country", "referrer"]
-
-      if user.age < 18
-        required_fields.push("cosigner_email")
-      end
-
-      missing_fields = required_fields.any? do |field|
-        self[field].nil?
-      end
-
-      !missing_fields && !user.onboarding?
-    end
-
-    def response_time
-      user.teenager? ? "48 hours" : "2 weeks"
+    def response_business_days
+      teen_led? ? 2 : 10
     end
 
     def status_color
@@ -262,39 +378,11 @@ class Event
       end
     end
 
-    def sync_to_airtable
-      return if draft?
-
-      app = ApplicationsTable.all(filter: "{recordID} = \"#{airtable_record_id}\"").first if airtable_record_id.present?
-      app ||= ApplicationsTable.all(filter: "{HCB Application ID} = \"#{hashid}\"").first
-      app ||= ApplicationsTable.new("HCB Application ID" => hashid)
-
-      app["First Name"] = user.first_name
-      app["Last Name"] = user.last_name
-      app["Email Address"] = user.email
-      app["Phone Number"] = user.phone_number
-      app["Date of Birth"] = user.birthday
-      app["Event Name"] = name
-      app["Event Website"] = website_url
-      app["Zip Code"] = address_postal_code
-      app["Tell us about your event"] = description
-      app["Have you used HCB for any previous events?"] = user.events.any? ? "Yes, I have used HCB before" : "No, first time!"
-      app["Teenager Led?"] = user.teenager?
-      app["Address Line 1"] = address_line1
-      app["City"] = address_city
-      app["State"] = address_state
-      app["Address Country"] = address_country
-      app["Event Location"] = address_country
-      app["How did you hear about HCB?"] = referrer
-      app["Accommodations"] = notes
-      app["(Adults) Political Activity"] = political_description
-      app["Referral Code"] = referral_code
-      app["HCB Status"] = aasm_state.humanize unless draft?
-      app["Synced from HCB at"] = Time.current
-
-      app.save
-
-      update_columns(airtable_record_id: app.id, airtable_status: app["Status"])
+    def check_cosigner_update
+      if contract.present? && cosigner_email_previously_changed?
+        contract.mark_voided!
+        send_contract
+      end
     end
 
     def airtable_url
@@ -307,48 +395,141 @@ class Event
       update!(last_viewed_at: Time.current, last_page_viewed:)
     end
 
-    def check_cosigner_update
-      if contract.present? && cosigner_email_previously_changed?
-        contract.mark_voided!
-        create_contract
-      end
-    end
-
-    def activate_event!
+    def activate_event!(risk_level:, tags: [], point_of_contact: nil)
+      contract.party(:hcb).sync_with_docuseal
+      contract.reload
       raise "Contract must be signed before activation" unless contract.signed?
 
-      poc = contract.party(:hcb).user
+      self.with_lock do
+        raise ArgumentError.new("Event was already created") if event.present?
 
-      Event.create!(
-        name:,
-        country: address_country,
-        point_of_contact_id: poc.id,
-        application: self
-      )
+        poc_user = point_of_contact.presence || contract.party(:hcb).user
+        Event.create!(
+          name:,
+          description:,
+          country: address_country,
+          point_of_contact_id: poc_user.id,
+          application: self,
+          event_tags: tags.filter { |tag| EventTag::Tags::ALL.include?(tag) }.map { |tag| EventTag.find_or_create_by!(name: tag) },
+          risk_level:
+        )
+        contract.create_document!
 
-      service = OrganizerPositionInviteService::Create.new(event:, sender: poc, user_email: user.email, is_signee: true, role: :manager, initial: true)
-      invite = service.model
-      service.run!
+        service = OrganizerPositionInviteService::Create.new(event:, sender: poc_user, user_email: user.email, is_signee: true, role: :manager, initial: true)
+        invite = service.model
+        service.run!
 
-      invite.accept(application_contract: contract)
+        invite.accept(application_contract: contract)
 
-      affiliations.each do |affiliation|
-        affiliation_copy = affiliation.dup
-        affiliation_copy.affiliable = event
-        affiliation_copy.save!
+        affiliations.each do |affiliation|
+          affiliation_copy = affiliation.dup
+          affiliation_copy.affiliable = event
+          affiliation_copy.save!
+        end
       end
+
+      set_airtable_status("Onboarded")
+
+      schedule_airtable_sync
 
       Event::ApplicationMailer.with(application: self).activated.deliver_later
 
       self
     end
 
+    def archive!
+      contract&.mark_voided! if contract&.may_mark_voided?
+      mark_draft! if may_mark_draft?
+
+      update!(archived_at: Time.current)
+    end
+
+    def unarchive!
+      send_contract if contract.nil? && approved?
+
+      update!(archived_at: nil)
+    end
+
+    def archived?
+      archived_at.present?
+    end
+
+    def respondent_url
+      url_for(controller: "event/applications", action: last_page_viewed || "show", id: hashid)
+    end
+
+    def default_tags
+      tags = []
+
+      tags << EventTag::Tags::ORGANIZED_BY_TEENAGERS if teen_led?
+      tags << EventTag::Tags::ROBOTICS_TEAM if affiliations.any? { |affiliation| affiliation.is_first? || affiliation.is_vex? }
+      tags << EventTag::Tags::HACK_CLUB if affiliations.any? { |affiliation| affiliation.is_hack_club? }
+
+      tags
+    end
+
+    def airtable_record
+      app = ApplicationsTable.all(filter: "{recordID} = \"#{airtable_record_id}\"").first if airtable_record_id.present?
+      app ||= ApplicationsTable.all(filter: "{HCB Application ID} = \"#{hashid}\"").first
+    end
+
     private
+
+    def schedule_airtable_sync
+      Event::ApplicationSyncToAirtableJob.perform_later(self)
+    end
 
     def cosigner_cannot_change_after_sign
       if cosigner_email_changed? && contract&.party(:cosigner)&.signed?
         errors.add(:cosigner_email, "cannot change after the cosigner has signed")
       end
+    end
+
+    def ready_to_submit?
+      application_ready_to_submit? && user_ready_to_submit?
+    end
+
+    def application_ready_to_submit?
+      required_fields = ["name", "description", "address_line1", "address_city", "address_state", "address_postal_code", "address_country", "referrer", "previously_applied"]
+
+      if user.is_minor?
+        required_fields.push("cosigner_email")
+      end
+
+      unless teen_led?
+        required_fields += ["planning_duration", "team_size", "annual_budget_cents", "committed_amount_cents"]
+
+        if committed_amount&.positive?
+          required_fields.push("funding_source")
+        end
+      end
+
+      missing_fields = required_fields.any? do |field|
+        self[field].nil? || self[field] == ""
+      end
+
+      !missing_fields && !address_country.in?(DISALLOWED_COUNTRIES) && !(cosigner_email.present? && cosigner_email == user.email)
+    end
+
+    def user_ready_to_submit?
+      required_fields = ["full_name", "phone_number", "birthday"]
+
+      missing_fields = required_fields.any? do |field|
+        !user[field].present?
+      end
+
+      !missing_fields
+    end
+
+    def set_airtable_status(status)
+      airrecord = airtable_record
+
+      if airrecord.present?
+        airrecord["Status"] = status
+        airrecord.save
+      end
+    rescue => e
+      Rails.error.report(e)
     end
 
   end
