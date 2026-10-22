@@ -35,7 +35,13 @@
     </div>
   </div>
 
-  <div data-scroll-seek-target="section" data-controller="swap-organizations">
+  <%= tag.div data: {
+        scroll_seek_target: "section",
+        controller: "swap-organizations",
+        action: "combobox:change->swap-organizations#refresh",
+        swap_organizations_disabled_value: disabled,
+        swap_organizations_sources_value: (current_user.disbursement_source_events.map(&:public_id) unless admin_signed_in?)
+      } do %>
     <h3 class="mb-2">Organizations</h3>
     <div class="card mb-4 relative overflow-visible">
       <div class="flex gap-2">
@@ -45,13 +51,14 @@
                 title="Swap organizations"
                 aria-label="Swap organizations"
                 <%= "disabled" if disabled %>
+                data-swap-organizations-target="button"
                 data-action="swap-organizations#swap">
           <%= inline_icon "transfers-horizontal", size: 20 %>
         </button>
-        <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, label: "To", source_event: source_event } %>
+        <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, label: "To" } %>
       </div>
     </div>
-  </div>
+  <% end %>
 
   <%# Each type asks its own questions. Only the chosen panel is enabled, so
       only its fields are submitted. %>
