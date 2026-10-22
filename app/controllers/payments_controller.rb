@@ -4,7 +4,7 @@ class PaymentsController < ApplicationController
   include SetEvent
 
   before_action :set_event, only: [:new, :create]
-  before_action :set_payment, only: [:show, :cancel]
+  before_action :set_payment, only: [:show, :cancel, :retry]
 
   def show
     authorize @payment
@@ -14,7 +14,8 @@ class PaymentsController < ApplicationController
 
   def new
     authorize @event, policy_class: PaymentPolicy
-    @payment = Payment.new
+    @payment = Payment.new(purpose: params[:purpose])
+    @payment.amount_cents = params[:amount_cents] if params[:amount_cents]
     @payee = @event.payees.not_archived.find_by_hashid(params[:payee_id]) if params[:payee_id].present?
     @recent_payments = @payee.payments.order(created_at: :desc).limit(5) if @payee
     render layout: "transfer"
@@ -73,6 +74,18 @@ class PaymentsController < ApplicationController
     redirect_back_or_to payment_path(@payment)
   end
 
+  def retry
+    authorize @payment
+
+    begin
+      @payment.retry!
+    rescue ArgumentError => e
+      flash[:error] = e.message
+    end
+
+    redirect_to @payment
+  end
+
   private
 
   def build_payout_method
@@ -93,7 +106,7 @@ class PaymentsController < ApplicationController
   end
 
   def payment_params
-    params.require(:payment).permit(:amount, :purpose, :payee_id, file: [])
+    params.require(:payment).permit(:amount, :purpose, :payee_id, :classification, file: [])
   end
 
   def set_payment

@@ -7,6 +7,14 @@
   only touches this partial.
 
   The container renders even when empty so tag toggles can stream chips into it.
+
+  The demo_mode guard reaches through the HCB code for an event the page usually
+  already holds in @event — the line below uses it, and _tag_menu prefers it.
+  That reach is why Ledger::Query preloads `hcb_code: :event`; see the comment
+  there. #15023 moves tags onto Ledger::Item and takes the other use of the HCB
+  code here with it, leaving this guard as the last one, so it can go the same
+  way. Preferring @event here would settle it for every page that has one; the
+  admin cardholder page has none, so it needs the event per item either way.
 %>
 <% hcb_code = item.hcb_code %>
 <% if hcb_code.present? && !hcb_code.event&.demo_mode? %>

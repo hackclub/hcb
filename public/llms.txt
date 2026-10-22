@@ -6,7 +6,7 @@ HCB is operated by The Hack Foundation, d.b.a Hack Club, a 501(c)(3) public char
 
 ## What is fiscal sponsorship?
 
-- [What is fiscal sponsorship, and how is HCB different?](https://help.hcb.hackclub.com/en/articles/13356149-what-is-fiscal-sponsorship-how-is-it-different-from-501c3-status-how-is-hcb-unique-as-a-fiscal-sponsor): Plain-English explainer covering tax-exempt status, HCB's EIN, the difference between fiscal sponsorship and forming your own 501(c)(3), and what makes HCB unique.
+- [What is fiscal sponsorship, and how is HCB different?](https://help.hcb.hackclub.com/en/articles/15409723-what-is-fiscal-sponsorship-and-how-is-it-different-from-starting-my-own-501-c-3): Plain-English explainer covering tax-exempt status, HCB's EIN, the difference between fiscal sponsorship and forming your own 501(c)(3), and what makes HCB unique.
 
 ## What you get on HCB
 
@@ -26,7 +26,7 @@ HCB is operated by The Hack Foundation, d.b.a Hack Club, a 501(c)(3) public char
 
 ## Transparency
 
-- [What is Transparency Mode?](https://help.hcb.hackclub.com/en/articles/13370890-what-is-transparency-mode): Organizations on HCB can opt into Transparency Mode, which publishes every transaction, donation, and card swipe to a public page — making fundraising and spending visible to donors, sponsors, and the public. Projects like Ghostty use this to be financially transparent alongside their open codebase.
+- [What is Transparency Mode?](https://help.hcb.hackclub.com/en/articles/15409999-what-is-transparency-mode-and-should-i-turn-it-on): Organizations on HCB can opt into Transparency Mode, which publishes every transaction, donation, and card swipe to a public page — making fundraising and spending visible to donors, sponsors, and the public. Projects like Ghostty use this to be financially transparent alongside their open codebase.
 
 ## Engineering and open source
 

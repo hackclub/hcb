@@ -2,19 +2,34 @@
 
 class Ledger
   class ItemsController < ApplicationController
-    before_action :set_item, only: [:pin, :unpin, :rename]
+    before_action :set_item, except: [:show]
 
     def show
       @item = Ledger::Item.find_by_hashid!(params[:id])
 
-      # Non-engineers see the user-facing HCB code page rather than the raw
+      # Non-auditors see the user-facing HCB code page rather than the raw
       # ledger item. hcb_codes#show performs its own authorization.
-      unless FlipperGroups.hcb_engineer?(current_user) || Rails.env.development?
+      unless auditor_signed_in?
         skip_authorization
+        return not_found if @item.hcb_code.nil?
+
         return redirect_to hcb_code_path(@item.hcb_code)
       end
 
+      if params[:show_details] == "true" && @item.linked_object_type == "AchTransfer"
+        # ahoy.track "ACH details shown", hcb_code_id: @hcb_code.id
+        @show_ach_details = true
+      end
+
       authorize @item
+
+      if params[:frame]
+        @frame = true
+        render :show, layout: false
+      else
+        @frame = false
+        render :show
+      end
     rescue ActiveRecord::RecordNotFound
       # Maintain backward compatibility for old v1 transaction engine URLs. They
       # used to also live at `/transactions/*`
@@ -27,8 +42,6 @@ class Ledger
     end
 
     def hcb
-      @item = Ledger::Item.find_by_hashid!(params[:item_id])
-
       authorize @item
 
       redirect_to hcb_code_path(@item.hcb_code)
@@ -72,6 +85,25 @@ class Ledger
       @item.update_custom_memo!(memo)
 
       render partial: "ledger/items/memo/stream", locals: { item: @item }, formats: :turbo_stream
+    end
+
+    def invoice_as_personal_transaction
+      authorize @item
+
+      personal_tx = PersonalTransaction.new(ledger_item: @item, reporter: current_user)
+
+      if personal_tx.save
+        flash[:success] = "We've sent an invoice for repayment to #{personal_tx.invoice.sponsor.contact_email}."
+        return redirect_to personal_tx.invoice
+      end
+
+      if (existing = @item.reload_personal_transaction)
+        flash[:error] = "A repayment invoice already exists for this transaction."
+        redirect_to existing.invoice
+      else
+        flash[:error] = personal_tx.errors.full_messages.to_sentence
+        redirect_to @item.hcb_code
+      end
     end
 
     private

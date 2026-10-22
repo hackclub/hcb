@@ -150,7 +150,7 @@ class Invoice < ApplicationRecord
   belongs_to :archived_by, class_name: "User", optional: true
   belongs_to :voided_by, class_name: "User", optional: true
 
-  has_one :personal_transaction, class_name: "HcbCode::PersonalTransaction", required: false
+  has_one :personal_transaction, required: false
   has_one_attached :manually_marked_as_paid_attachment
   validates :manually_marked_as_paid_attachment, size: { less_than_or_equal_to: 20.megabytes }, if: -> { attachment_changes["manually_marked_as_paid_attachment"].present? }
 
@@ -202,6 +202,19 @@ class Invoice < ApplicationRecord
     end
   }
 
+  # An invoice doesn't create a canonical (pending) transaction until it's paid,
+  # so eagerly create its ledger item on creation. It starts "intended" (no CTs or
+  # CPTs) and is filled in when the invoice is paid and its CPT maps back to it.
+  after_create_commit unless: -> { ledger_item.present? } do
+    safely do
+      # amount_cents stays 0 — it's the balance-impacting amount, which is only
+      # realized once the invoice is paid and a CPT maps back to this item.
+      # memo/status are recomputed by Ledger::Item#refresh! on create; intended_at
+      # preserves the creation time through refresh! (see #calculate_intended_at).
+      create_ledger_item!(amount_cents: 0, datetime: created_at, intended_at: created_at, memo: smart_memo, short_code: local_hcb_code.short_code, hcb_code: local_hcb_code)
+    end
+  end
+
   # Stripe syncing…
   before_destroy :close_stripe_invoice
 
@@ -234,10 +247,8 @@ class Invoice < ApplicationRecord
   end
 
   def state
-    return :success if paid_v2? && deposited?
-    return :success if paid_v2? && event.can_front_balance?
+    return :success if paid_v2?
     return :success if manually_marked_as_paid?
-    return :info if paid_v2?
     return :error if void_v2?
     return :info if refunded_v2?
     return :muted if archived?
@@ -248,8 +259,7 @@ class Invoice < ApplicationRecord
   end
 
   def state_text
-    return "Deposited" if paid_v2? && (event.can_front_balance? || deposited?)
-    return "In Transit" if paid_v2?
+    return "Deposited" if paid_v2?
     return "Paid" if manually_marked_as_paid?
     return "Voided" if void_v2?
     return "Refunded" if refunded_v2?
@@ -261,7 +271,7 @@ class Invoice < ApplicationRecord
   end
 
   def state_icon
-    return "checkmark" if deposited? || (paid_v2? && event.can_front_balance?)
+    return "checkmark" if deposited? || paid_v2?
   end
 
   def filter_data

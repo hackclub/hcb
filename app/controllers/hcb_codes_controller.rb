@@ -207,27 +207,4 @@ class HcbCodesController < ApplicationController
     end
   end
 
-  def invoice_as_personal_transaction
-    hcb_code = HcbCode.find(params[:id])
-    event = hcb_code.event
-
-    authorize hcb_code
-
-    if hcb_code.amount_cents > -100
-      flash[:error] = "Invoices can only be generated for charges of $1.00 or more."
-      return redirect_to hcb_code
-    end
-
-    if hcb_code.personal_transaction
-      flash[:error] = "A repayment invoice already exists for this transaction."
-      return redirect_to hcb_code.personal_transaction.invoice
-    end
-
-    personal_tx = HcbCode::PersonalTransaction.create(hcb_code:, reporter: current_user)
-
-    flash[:success] = "We've sent an invoice for repayment to #{personal_tx.invoice.sponsor.contact_email}."
-
-    redirect_to personal_tx.invoice
-  end
-
 end

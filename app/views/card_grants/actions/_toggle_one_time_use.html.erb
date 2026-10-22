@@ -11,11 +11,12 @@
                   else
                     "You don't have permission to perform this action"
                   end %>
-<%= link_to toggle_one_time_use_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
-            data: { turbo_method: :post },
-
-            class: "btn btn--list-item",
-            disabled: !policy(card_grant).toggle_one_time_use? do %>
+<%= button_to toggle_one_time_use_event_card_grant_path(id: card_grant.hashid, event_id: @event.slug),
+              method: :post,
+              form_class: "contents",
+              class: "btn btn--list-item",
+              disabled: !policy(card_grant).toggle_one_time_use?,
+              data: { turbo: true, turbo_frame: "_top" } do %>
   <%= inline_icon "private", size: 20 %>
   <div>
     <p><%= card_grant.one_time_use ? "Disable" : "Enable" %> one time use</p>
