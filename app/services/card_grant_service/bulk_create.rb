@@ -40,6 +40,8 @@ module CardGrantService
       card_grants = create_grants_atomically(rows, header_mapping)
 
       Result.new(success?: true, card_grants:, errors: [])
+    rescue ActiveRecord::RecordInvalid => e
+      Result.new(success?: false, card_grants: [], errors: e.record.errors.full_messages)
     rescue ValidationError => e
       Result.new(success?: false, card_grants: [], errors: e.errors)
     rescue CSV::MalformedCSVError => e
