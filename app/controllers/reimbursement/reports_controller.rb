@@ -218,6 +218,7 @@ module Reimbursement
       end
 
       begin
+        @report.verify_wise_fee_cap!
         @report.mark_submitted!
 
         comment_params = params[:comment]&.permit(:content, :admin_only, :action)
