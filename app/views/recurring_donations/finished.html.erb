@@ -9,6 +9,9 @@
   <p class="center secondary">
     We've just sent a receipt to <strong><%= @recurring_donation.email %></strong>. Questions? Reach out to <%= mail_to "hcb@hackclub.com" %>
   </p>
+  <p class="center secondary">
+    Each month's charge will show up on your statement as <strong><%= @recurring_donation.event.statement_descriptor %></strong>.
+  </p>
 </div>
 
 <%= render "events/landing/footer" %>

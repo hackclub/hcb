@@ -244,6 +244,16 @@ RSpec.describe EventsController do
       expect(page.css("#tags_settings input[name='label'][disabled]")).to be_empty
       expect(page.css("#tags_settings a[disabled]")).to be_empty
     end
+
+    it "shows how donations will appear on donors' statements" do
+      event = create(:event, name: "Hack Club Assemble 2026 Hackathon", short_name: "Assemble")
+      sign_in_organizer_of(event)
+
+      get(:edit, params: { id: event.slug, tab: "donations" })
+      page = Nokogiri::HTML5(response.body)
+
+      expect(page.css("#donations_settings strong").map(&:text)).to include("HCB* Assemble")
+    end
   end
 
   describe "#update" do
