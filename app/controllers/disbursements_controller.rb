@@ -63,19 +63,26 @@ class DisbursementsController < ApplicationController
     own_events = current_user.disbursement_source_events
     own_event_ids = own_events.ids.to_set
 
+    # As a destination, also suggest transparent organizations the user belongs
+    # to in any role (e.g. as a member), since anyone can transfer into those.
+    # Unlisted ones would otherwise only be reachable by typing the exact slug.
+    own_destination_events = own_events.or(current_user.readable_events.accepting_public_transfers)
+
     base = if admin_signed_in?
              Event.select(:name, :id, :demo_mode, :slug).reorder(Event::CUSTOM_SORT).includes(:plan)
-           elsif sending || q.blank?
+           elsif sending
+             own_events
+           elsif q.blank?
              # Until the user starts searching for a destination, only suggest
              # their own organizations.
-             own_events
+             own_destination_events
            else
              # Once they search, also offer organizations in HCB's public
              # directory, plus an unlisted transparent organization when its
              # exact slug is typed. Anyone can already view these, so listing
              # them doesn't reveal anything. Private organizations stay hidden.
              public_events = Event.accepting_public_transfers
-             own_events
+             own_destination_events
                .or(public_events.where(is_indexable: true))
                .or(public_events.where(slug: q.downcase))
                .select(:name, :id, :demo_mode, :slug).includes(:plan)

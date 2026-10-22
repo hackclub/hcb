@@ -289,6 +289,27 @@ RSpec.describe DisbursementsController do
   end
 
   describe "#event_search" do
+    it "suggests an unlisted transparent organization the user is a member of, without a query" do
+      member = create(:user)
+      source_event = create(:event, organizers: [member])
+      destination_event = create(:event, name: "Claude Unlisted", is_indexable: false)
+      create(:organizer_position, user: member, event: destination_event, role: :member)
+      create(:event, name: "Claude Private Member", is_public: false).tap do |e|
+        create(:organizer_position, user: member, event: e, role: :member)
+      end
+      create_session(member, verified: true)
+
+      get(:event_search, format: :json)
+      expect(JSON.parse(response.body).map { |o| o["value"] }).to contain_exactly(source_event.public_id, destination_event.public_id)
+
+      get(:event_search, params: { q: "Claude" }, format: :json)
+      expect(JSON.parse(response.body).map { |o| o["value"] }).to eq([destination_event.public_id])
+
+      # Sources are still limited to organizations the user manages.
+      get(:event_search, params: { sending: true }, format: :json)
+      expect(JSON.parse(response.body).map { |o| o["value"] }).to eq([source_event.public_id])
+    end
+
     it "lists public organizations as destinations but hides private, unlisted and demo ones" do
       user = create(:user)
       create(:event, organizers: [user])
