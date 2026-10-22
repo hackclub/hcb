@@ -6,7 +6,7 @@
 #
 #  id                          :bigint           not null, primary key
 #  accepted_at                 :datetime
-#  address                     :text
+#  address                     :text             not null
 #  backup_email                :text
 #  first_name                  :string
 #  initial_password_ciphertext :text
@@ -31,7 +31,7 @@ class GSuiteAccount < ApplicationRecord
   has_paper_trail skip: [:initial_password] # ciphertext columns will still be tracked
   has_encrypted :initial_password
 
-  include Rejectable
+  attr_accessor :skip_gsuite_sync
 
   after_update :attempt_notify_user_of_password_change
 
@@ -46,7 +46,6 @@ class GSuiteAccount < ApplicationRecord
   normalizes :backup_email, with: ->(backup_email) { backup_email.strip.downcase }
   validates :backup_email, nondisposable: true, on: :create
 
-  validate :status_accepted_or_rejected
   validate :within_quota, on: :create
   validates :address, uniqueness: { scope: :g_suite }
 
@@ -65,6 +64,10 @@ class GSuiteAccount < ApplicationRecord
 
   def suspended?
     suspended_at.present?
+  end
+
+  def accepted?
+    accepted_at.present?
   end
 
   def under_review?
@@ -105,6 +108,34 @@ class GSuiteAccount < ApplicationRecord
     self.save
   end
 
+  # Removes this account from HCB management, leaving the Google Workspace user
+  # (and its aliases) intact. Intended for when a user's account is being
+  # transferred to the unmanaged hackclub.com domain from an HCB managed domain
+  # (e.g., events.hackclub.com).
+  def unmanage!(confirm:)
+    raise ArgumentError, "confirm must match address" unless confirm == address
+
+    # Materialize once so the in-memory `skip_gsuite_sync` we set below
+    # survives — a later reload would drop the flag and re-trigger the
+    # Google Workspace alias deletion callback.
+    aliases = g_suite_aliases.reload.to_a
+
+    Rails.logger.info(
+      "[GSuiteAccount#unmanage!] unmanaging " \
+      "id=#{id} address=#{address} g_suite_id=#{g_suite_id} " \
+      "aliases=#{aliases.size}"
+    )
+
+    transaction do
+      aliases.each do |gsa|
+        gsa.skip_gsuite_sync = true
+        gsa.destroy!
+      end
+      self.skip_gsuite_sync = true
+      destroy!
+    end
+  end
+
   private
 
   def notify_user_of_password_change(first_password = false)
@@ -130,6 +161,8 @@ class GSuiteAccount < ApplicationRecord
   end
 
   def sync_delete_to_gsuite
+    return if skip_gsuite_sync
+
     unless Rails.env.production?
       puts "☣️ In production, we would currently be syncing the GSuite account deletion ☣️"
       return

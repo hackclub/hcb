@@ -9,6 +9,10 @@ class DonationPolicy < ApplicationPolicy
     OrganizerPosition.role_at_least?(user, record.event, :reader) || user&.admin?
   end
 
+  def payment_intent?
+    create?
+  end
+
   def start_donation?
     record.event.donation_page_available?
   end

@@ -5,5 +5,6 @@ FactoryBot.define do
     association :user
     expiration_at { 7.days.from_now }
     session_token { SecureRandom.urlsafe_base64 }
+    verified { !!user&.verified? }
   end
 end

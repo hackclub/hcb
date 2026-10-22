@@ -1,0 +1,154 @@
+# frozen_string_literal: true
+
+class PayeesController < ApplicationController
+  include SetEvent
+
+  before_action :set_event, only: [:index, :create, :update, :archive, :check_email]
+  before_action :set_payee, only: [:choose_legal_entity, :set_legal_entity]
+
+  class InvalidManualPayeeEntityType < StandardError; end
+
+  def index
+    authorize @event, policy_class: PayeePolicy
+    all = @event.payees.not_archived.includes(:legal_entity, :payments)
+    payees = params[:q].present? ? all.search(params[:q]) : all
+    @payees = payees.order(created_at: :desc).page(params[:page]).per(15)
+
+    @selected = all.find_by_hashid(params[:payee_id]) if params[:payee_id].present?
+
+    render layout: false
+  end
+
+  def create
+    manual = params[:manual] == "true"
+    if manual && !Flipper.enabled?(:manual_payees_2026_08_05, @event)
+      flash[:error] = "Please try again."
+      redirect_to helpers.new_recipient_transfer_path(params[:destination], @event)
+    end
+
+    payee = @event.payees.build(display_name: params[:name], email: params[:email])
+    authorize payee
+
+    ActiveRecord::Base.transaction do
+      if manual
+        payee.legal_entity = LegalEntity.create!(
+          managing_event: @event,
+          entity_type: manual_payee_entity_type,
+          name: params[:name]
+        )
+      end
+
+      payee.save!
+
+      redirect_to helpers.new_recipient_transfer_path(params[:destination], @event, payee_id: payee.hashid)
+    end
+  rescue ActiveRecord::RecordInvalid, InvalidManualPayeeEntityType => e
+    flash[:error] = e.message
+    redirect_to helpers.new_recipient_transfer_path(params[:destination], @event)
+  end
+
+  def update
+    payee = @event.payees.not_archived.find_by_hashid!(params[:id])
+    authorize payee
+
+    if payee.update(payee_params)
+      flash[:success] = "Recipient updated."
+
+      if (position = payee.organizer_resign_position)
+        flash[:info] = "The contract was reissued with the new email. Please sign it."
+        redirect_to contract_event_payroll_position_path(event_id: @event.slug, id: position.id)
+      elsif params[:payee][:redirect_to_destination_id].present?
+        redirect_to helpers.updated_recipient_transfer_path(params[:payee][:destination], params[:payee][:redirect_to_destination_id])
+      else
+        redirect_to helpers.new_recipient_transfer_path(params[:payee][:destination], @event, payee_id: payee.hashid)
+      end
+    else
+      flash[:error] = payee.errors.full_messages.to_sentence
+
+      if params[:payee][:redirect_to_destination_id].present?
+        redirect_to helpers.updated_recipient_transfer_path(params[:payee][:destination], params[:payee][:redirect_to_destination_id])
+      else
+        redirect_to helpers.new_recipient_transfer_path(params[:payee][:destination], @event, payee_id: payee.hashid, edit_payee: true)
+      end
+    end
+  end
+
+  def archive
+    payee = @event.payees.not_archived.find_by_hashid!(params[:id])
+    authorize payee
+
+    payee.archive!
+
+    flash[:success] = "Recipient archived."
+    redirect_to helpers.new_recipient_transfer_path(params[:destination], @event)
+  end
+
+  def check_email
+    authorize @event, :create_payment?
+
+    email = Payee.normalize_value_for(:email, params[:email])
+    destination = params[:destination].presence || "payments"
+
+    matches = email.present? ? @event.payees.not_archived.includes(:legal_entity).where(email:).order(created_at: :desc).limit(5).to_a : []
+
+    render json: {
+      duplicate: matches.any?,
+      payees: matches.map do |payee|
+        {
+          name: payee.display_name,
+          managed: payee.managed?,
+          select_url: helpers.new_recipient_transfer_path(destination, @event, payee_id: payee.hashid)
+        }
+      end
+    }
+  end
+
+  def choose_legal_entity
+    authorize @payee
+
+    if @payee.legal_entity.present?
+      redirect_to legal_entity_path(@payee.legal_entity)
+      return
+    end
+
+    user = User.find_by(email: @payee.email)
+    @legal_entities = user&.legal_entities || []
+  end
+
+  def set_legal_entity
+    authorize @payee
+
+    le = LegalEntity.find(params[:legal_entity_id])
+    authorize le
+
+    if le.tin_banned?
+      flash[:error] = "This legal entity is banned."
+      redirect_back_or_to choose_legal_entity_payee_path(@payee)
+      return
+    end
+
+    @payee.update!(legal_entity: le)
+
+    flash[:success] = "Legal entity successfully assigned"
+
+    redirect_to legal_entity_path(le)
+  end
+
+  private
+
+  def payee_params
+    params.require(:payee).permit(:display_name, :email)
+  end
+
+  def set_payee
+    @payee = Payee.find_by_hashid!(params[:id])
+  end
+
+  def manual_payee_entity_type
+    entity_type = params[:payee_entity_type].presence
+    return entity_type if LegalEntity.entity_types.key?(entity_type)
+
+    raise InvalidManualPayeeEntityType, "Select whether the recipient is an individual or a business."
+  end
+
+end

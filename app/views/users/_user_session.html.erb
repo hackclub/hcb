@@ -29,20 +29,24 @@
       No location available
     </div>
   <% end %>
-  <span class="flex items-center">
+  <span class="flex items-center flex-wrap gap-x-1 min-w-0" data-controller="wrapped-separator">
     <% if current_session.id == session.id %>
       <span class="badge bg-success medium ml-0 mr1">Current&nbsp;session</span>
     <% end %>
     <% if session.ip.present? %>
-      <%= inline_icon "web", size: 20 %>&nbsp;<code class="mr1 tooltipped tooltipped--n" aria-label="<%= session.timezone %>"><%= session.ip %></code>
-    <% end %>
-    <% if session.ip.present? &&  session.device_info.present? %>
-      <span class="mr1">
-        •
+      <span class="flex items-center gap-x-1 min-w-0">
+        <%= inline_icon "web", size: 20, class: "flex-shrink-0" %>
+        <code class="tooltipped tooltipped--n break-all" aria-label="<%= session.timezone %>"><%= session.ip %></code>
+        <% if session.device_info.present? %>
+          <span data-wrapped-separator-target="separator" aria-hidden="true">•</span>
+        <% end %>
       </span>
     <% end %>
     <% if session.device_info.present? %>
-      <%= inline_icon "compass", size: 20 %>&nbsp;<%= session.device_info %>
+      <span class="flex items-center gap-x-1 min-w-0" data-wrapped-separator-target="tail">
+        <%= inline_icon "compass", size: 20, class: "flex-shrink-0" %>
+        <span class="break-words"><%= session.device_info %></span>
+      </span>
     <% end %>
   </span>
 

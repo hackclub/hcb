@@ -30,6 +30,35 @@ module Reimbursement
       admin || manager || (creator && open)
     end
 
+    # Authorization for placing a report on `record.event` — either changing
+    # the event of an existing report (ReportsController#update) or building
+    # a fresh report on a destination event as part of moving an expense
+    # (ExpensesController#update). Callers must ensure `record.event` has
+    # been set to the destination event before authorizing (ActiveRecord
+    # FK-cache reset on `event_id=` takes care of this for the reports
+    # path).
+    #
+    # Card-grant-backed reports are locked to the grant's event: the grant's
+    # funds are sourced from that event, and moving the report elsewhere
+    # would decouple the funds from the grant. Admins cannot bypass this.
+    #
+    # TODO: currently requires manager because changing the event carries
+    # cascade side-effects (expenses reset to pending, stale approved_by_id
+    # on each expense, stale reviewer_id, etc.). The intended long-term
+    # behavior is to allow members to change the event provided approvals
+    # the destination event's managers wouldn't have granted are cleared.
+    #
+    # Exception: the creator of a still-eventless report (email, SMS, Discord)
+    # may place it on any event they could `create?` a report on. `persisted?`
+    # keeps the unsaved-report path in ExpensesController#update manager-only.
+    def change_event?
+      return false if record.card_grant_id.present?
+      return true if admin || manager
+
+      creator && record.persisted? && record.event_id_in_database.nil? &&
+        (record.event ? create? : record.event_id.nil?)
+    end
+
     def submit?
       unlocked && (admin || manager || creator)
     end
@@ -50,7 +79,7 @@ module Reimbursement
       (admin || manager) && open
     end
 
-    def approve_all_expenses?
+    def approve?
       (admin || (manager && !creator)) && open
     end
 
@@ -60,6 +89,10 @@ module Reimbursement
 
     def update_currency?
       (admin || manager || creator) && open && record.mismatched_currency?
+    end
+
+    def update_payout_method?
+      (admin || creator) && record.can_change_payout_method?
     end
 
     def admin_approve?

@@ -21,7 +21,7 @@ class LoginsController < ApplicationController
     referral_link_id = Referral::Link.find_by(slug: params[:referral])&.slug if params[:referral].present?
     @login = Login.new(state: { return_to: url_from(params[:return_to]), purpose: params[:purpose] }, referral_link_id:)
 
-    @prefill_email = params[:email] if params[:email].present?
+    @prefill_email = params[:email].presence || current_user(allow_unverified: true)&.email.presence
     @signup = params[:signup] == "true"
   end
 
@@ -32,12 +32,27 @@ class LoginsController < ApplicationController
 
     @user = User.create_with(creation_method: @login.for_application? ? :application_form : :login).find_or_create_by!(email: params[:email])
 
+    if Rails.cache.increment("login:#{@user.id}", 1, expires_in: 1.hour).to_i > 10
+      flash[:error] = "You're creating too many logins. Please try again later."
+      return redirect_to auth_users_path
+    end
+
+    # An anonymous visitor only has a session if they arrived via a referral
+    # link (see Referral::LinksController#show). No session means no clicks to
+    # attribute, so there is nothing to transfer.
+    current_session&.referral_attributions&.each do |attribution|
+      attribution.update!(user: @user)
+    end
+
     @login.user = @user
     @login.save!
 
     cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
 
     continue_login(preference: login_preference || :email)
+  rescue ActiveRecord::RecordInvalid => e
+    flash[:error] = e.record.errors.full_messages.to_sentence
+    return redirect_to auth_users_path
   rescue => e
     flash[:error] = e.message
     return redirect_to auth_users_path
@@ -70,11 +85,20 @@ class LoginsController < ApplicationController
       return redirect_to auth_users_path
     end
 
-    render status: :unprocessable_entity
+    render status: :unprocessable_content
   end
 
   # post to request sms login code
   def sms
+    # The UI only offers SMS for verified numbers; `continue_login` never
+    # routes here otherwise. A request for an unverified number is a script
+    # POSTing directly, spending a Twilio message on a number nobody has
+    # proven they hold.
+    unless @login.sms_available?
+      flash[:error] = "SMS login isn't available for this account."
+      return redirect_to auth_users_path
+    end
+
     resp = LoginCodeService::Request.new(email: @email, sms: true, ip_address: request.remote_ip, user_agent: request.user_agent).run
 
     if resp[:error].present?
@@ -82,19 +106,19 @@ class LoginsController < ApplicationController
       return redirect_to auth_users_path
     end
 
-    render status: :unprocessable_entity
+    render status: :unprocessable_content
   end
 
   # get to see totp page
   def totp
-    render status: :unprocessable_entity
+    render status: :unprocessable_content
   end
 
   def complete
     # Clear the flash - this prevents the error message showing up after an unsuccessful -> successful login
     flash.clear
 
-    service = ProcessLoginService.new(login: @login)
+    service = ProcessLoginService.new(login: @login, ip_address: request.remote_ip, user_agent: request.user_agent)
 
     case params[:method]
     when "webauthn"
@@ -104,6 +128,7 @@ class LoginsController < ApplicationController
       )
 
       unless ok
+        record_failed_completion
         redirect_to(auth_users_path, flash: { error: service.errors.full_messages.to_sentence })
         return
       end
@@ -114,8 +139,9 @@ class LoginsController < ApplicationController
       )
 
       unless ok
+        record_failed_completion
         flash.now[:error] = service.errors.full_messages.to_sentence
-        render(:sms, status: :unprocessable_entity)
+        render(:sms, status: :unprocessable_content)
         return
       end
     when "email"
@@ -125,14 +151,16 @@ class LoginsController < ApplicationController
       )
 
       unless ok
+        record_failed_completion
         flash.now[:error] = service.errors.full_messages.to_sentence
-        render(:email, status: :unprocessable_entity)
+        render(:email, status: :unprocessable_content)
         return
       end
     when "totp"
       ok = service.process_totp(code: params[:code])
 
       unless ok
+        record_failed_completion
         redirect_to(totp_login_path(@login), flash: { error: "Invalid TOTP code, please try again." })
         return
       end
@@ -140,6 +168,7 @@ class LoginsController < ApplicationController
       ok = service.process_backup_code(code: params[:backup_code])
 
       unless ok
+        record_failed_completion
         redirect_to(backup_code_login_path(@login), flash: { error: service.errors.full_messages.to_sentence })
         return
       end
@@ -150,12 +179,20 @@ class LoginsController < ApplicationController
     # has not created a user session before
     @login.with_lock do
       if @login.complete? && @login.user_session.nil?
-        @login.update(user_session: sign_in(user: @login.user, fingerprint_info:))
+        @login.user.update(verified: true) unless @login.user.verified?
+        sign_out
+        @login.update(user_session: create_session(user: @login.user, verified: true, fingerprint_info:))
       end
     end
 
     if @login.complete? && @login.user_session.present?
-      if @referral_link.present?
+      if @login.for_first?
+        raffle = @login.state["raffle"]
+        affiliations_attributes = @login.state.dig("user_params", "affiliations_attributes")
+        Raffle.find_or_create_by!(user: @login.user, program: raffle) if raffle.present?
+        @login.user.update!(affiliations_attributes:) if affiliations_attributes.present?
+        redirect_to first_index_path
+      elsif @referral_link.present?
         redirect_to referral_link_path(@referral_link)
       elsif (@user.full_name.blank? || @user.phone_number.blank?) && !@login.for_application?
         redirect_to edit_user_path(@user.slug, return_to: @login.return_to)
@@ -167,7 +204,11 @@ class LoginsController < ApplicationController
           begin
             route = Rails.application.routes.recognize_path(return_path)
             return_path = root_path if route[:controller] == "logins"
-          rescue ActionController::RoutingError
+          rescue ActionController::RoutingError, NoMethodError
+            # `recognize_path` builds a synthetic request that bypasses the
+            # normal middleware stack, so routes guarded by constraints that
+            # depend on middleware-populated request state (e.g. cookie
+            # decryption keys) can raise here. Fall back to root_path.
             return_path = root_path
           end
         end
@@ -231,7 +272,13 @@ class LoginsController < ApplicationController
           redirect_to auth_users_path
         end
       elsif session[:auth_email]
-        @login = User.find_by_email(session[:auth_email]).logins.create
+        @login_user = User.find_by_email(session[:auth_email])
+        if @login_user && Rails.cache.increment("login:#{@login_user.id}", 1, expires_in: 1.hour).to_i > 10
+          flash[:error] = "You're creating too many logins. Please try again later."
+          return redirect_to auth_users_path
+        end
+
+        @login = @login_user.logins.create
         cookies.signed["browser_token_#{@login.hashid}"] = { value: @login.browser_token, expires: Login::EXPIRATION.from_now }
       else
         flash[:error] = "Please try again."
@@ -256,6 +303,11 @@ class LoginsController < ApplicationController
       timezone: params[:timezone],
       ip: request.remote_ip
     }
+  end
+
+  # Counts towards the per-IP ban in config/initializers/rack_attack.rb.
+  def record_failed_completion
+    Rack::Attack::Fail2Ban.filter(Rack::Attack.login_complete_fail2ban_key(request.remote_ip), Rack::Attack::LOGIN_COMPLETE_FAIL2BAN) { true }
   end
 
   def valid_browser_token?

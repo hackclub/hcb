@@ -7,6 +7,8 @@ class SuborganizationsController < ApplicationController
 
   def new
     authorize @event, :create_sub_organization?
+
+    @argosy_grant_amount = params[:argosy_grant_amount] if @event.config.subevent_plan == "Event::Plan::Argosy2026"
   end
 
 end
