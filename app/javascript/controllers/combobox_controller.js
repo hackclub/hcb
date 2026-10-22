@@ -63,6 +63,11 @@ export default class extends Controller {
     this.searchToken++ // abandon any search still in flight
   }
 
+  // Lets surrounding controllers react to the selection, as `combobox:change`.
+  selectedValueChanged(value) {
+    this.dispatch('change', { detail: { value } })
+  }
+
   onFocus() {
     if (this.inputTarget.disabled) return
     // With an untouched selection, just show that one option (selected). The
