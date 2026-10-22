@@ -31,6 +31,11 @@ class DisbursementPolicy < ApplicationPolicy
 
   alias event_search? new?
 
+  # Picking a transaction to repay means browsing the destination's ledger.
+  def repay?
+    OrganizerPosition.role_at_least?(user, record.destination_event, :reader)
+  end
+
   def create?
     # `can_send?` allows a missing source so `new?` can render a blank form,
     # but a transfer can't be created without one.
