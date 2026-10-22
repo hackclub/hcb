@@ -32,6 +32,7 @@ class Ledger < ApplicationRecord
   self.table_name = "ledgers"
 
   include Hashid::Rails
+  prepend MemoWise
   has_paper_trail
 
   # Possible owners for a primary ledger
@@ -51,14 +52,16 @@ class Ledger < ApplicationRecord
     query_items(start_date:, end_date:).sum(:amount_cents)
   end
 
-  # Repayments pay an expense back, so they're left out here and taken off
-  # expenses instead.
+  # Repayments pay an expense back, so they come off expenses rather than
+  # counting as revenue, the same way Event::StatementOfActivity does it.
   monetize def revenue_cents(start_date: nil, end_date: nil)
-    query_items(start_date:, end_date:, amount: { "$gt": 0 }, also: { "$nor": [{ category: { "$eq": Repayment::CATEGORY_SLUG } }] }).sum(:amount_cents)
+    query_items(start_date:, end_date:, amount: { "$gt": 0 }).sum(:amount_cents) - repayments_received_cents(start_date:, end_date:)
   end
 
-  monetize def repayments_received_cents
-    query_items(amount: { "$gt": 0 }, also: { category: { "$eq": Repayment::CATEGORY_SLUG } }).sum(:amount_cents)
+  # Money in under the repayment category. Memoized per date range, since both
+  # revenue_cents and expenses_cents take it off their totals.
+  monetize memo_wise def repayments_received_cents(start_date: nil, end_date: nil)
+    query_items(start_date:, end_date:, amount: { "$gt": 0 }, also: { category: { "$eq": Repayment::CATEGORY_SLUG } }).sum(:amount_cents)
   end
 
   # The fiscal sponsorship fee accrues as revenue arrives but only lands on the
