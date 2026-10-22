@@ -282,6 +282,79 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#donation_overview" do
+    render_views
+    include DonationSupport
+
+    def donation_rows(body)
+      Nokogiri::HTML5(body).css("article.table-container tbody tr")
+    end
+
+    before { stub_donation_payment_intent_creation }
+
+    let(:event) { create(:event, is_public: true) }
+    let!(:anonymous_donation) { create(:donation, event:, name: "Jane Appleseed", email: "jane.appleseed@example.com", anonymous: true, aasm_state: "deposited") }
+    let!(:public_donation) { create(:donation, event:, name: "Jane Jones", email: "jane.jones@example.com", anonymous: false, aasm_state: "deposited") }
+
+    context "as a signed out visitor" do
+      it "lists anonymous donors when there is no search" do
+        get(:donation_overview, params: { event_id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        rows = donation_rows(response.body)
+        expect(rows.size).to eq(2)
+        expect(rows.map(&:text)).to include(a_string_including("Anonymous"), a_string_including("Jane Jones"))
+        expect(response.body).not_to include("Jane Appleseed")
+      end
+
+      it "does not match anonymous donors by name" do
+        get(:donation_overview, params: { event_id: event.slug, q: "Appleseed" })
+
+        expect(response).to have_http_status(:ok)
+        expect(donation_rows(response.body)).to be_empty
+      end
+
+      it "does not match anonymous donors by email" do
+        get(:donation_overview, params: { event_id: event.slug, q: "jane.appleseed@example.com" })
+
+        expect(response).to have_http_status(:ok)
+        expect(donation_rows(response.body)).to be_empty
+      end
+
+      it "still matches donors who are not anonymous" do
+        get(:donation_overview, params: { event_id: event.slug, q: "Jane" })
+
+        expect(response).to have_http_status(:ok)
+        rows = donation_rows(response.body)
+        expect(rows.size).to eq(1)
+        expect(rows.first.text).to include("Jane Jones")
+        expect(rows.first.text).not_to include("Anonymous")
+      end
+    end
+
+    context "as an organizer" do
+      before { sign_in_organizer_of(event) }
+
+      it "matches anonymous donors by name" do
+        get(:donation_overview, params: { event_id: event.slug, q: "Appleseed" })
+
+        expect(response).to have_http_status(:ok)
+        rows = donation_rows(response.body)
+        expect(rows.size).to eq(1)
+        expect(rows.first.text).to include("Jane Appleseed")
+      end
+
+      it "matches anonymous donors by email" do
+        get(:donation_overview, params: { event_id: event.slug, q: "jane.appleseed@example.com" })
+
+        expect(response).to have_http_status(:ok)
+        rows = donation_rows(response.body)
+        expect(rows.size).to eq(1)
+        expect(rows.first.text).to include("Jane Appleseed")
+      end
+    end
+  end
+
   describe "#sub_organizations" do
     render_views
 
