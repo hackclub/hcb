@@ -943,4 +943,39 @@ RSpec.describe EventsController do
       expect(response.body).not_to include(fee_row)
     end
   end
+
+  describe "#g_suite_overview" do
+    render_views
+
+    let(:event) { create(:event) }
+    let(:g_suite) { create(:g_suite, event:, aasm_state: :verified) }
+
+    before do
+      # The verify service does live DNS lookups; the panel only needs a result hash.
+      allow_any_instance_of(GSuiteService::Verify).to receive(:results).and_return({})
+      # Skips the Airtable waitlist lookup.
+      Flipper.enable(:google_workspace, event)
+      sign_in_organizer_of(event)
+    end
+
+    it "renders the account actions for an accepted account" do
+      account = create(:g_suite_account, g_suite:, accepted_at: Time.current)
+
+      get(:g_suite_overview, params: { event_id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(account.address)
+      expect(response.body).to include("Reset password")
+    end
+
+    it "hides the account actions for an account still under review" do
+      account = create(:g_suite_account, g_suite:, accepted_at: nil)
+
+      get(:g_suite_overview, params: { event_id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(account.address)
+      expect(response.body).not_to include("Reset password")
+    end
+  end
 end
