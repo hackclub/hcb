@@ -5,6 +5,8 @@
 # Table name: card_grant_settings
 #
 #  id                                :bigint           not null, primary key
+#  allow_reimbursement_report        :boolean          default(FALSE), not null
+#  allow_stripe_card                 :boolean          default(TRUE), not null
 #  banned_categories                 :string
 #  banned_merchants                  :string
 #  block_suspected_fraud             :boolean          default(TRUE), not null
@@ -33,7 +35,12 @@ class CardGrantSetting < ApplicationRecord
   has_paper_trail
 
   belongs_to :event
+
+  attribute :allow_reimbursement_report, :boolean, default: nil
+  before_validation :apply_reimbursement_report_default, on: :create
+
   validates :event, uniqueness: true
+  validate :at_least_one_acceptance_method
   serialize :merchant_lock, coder: CommaSeparatedCoder # convert comma-separated merchant list to an array
   serialize :category_lock, coder: CommaSeparatedCoder
   serialize :banned_merchants, coder: CommaSeparatedCoder
@@ -60,6 +67,20 @@ class CardGrantSetting < ApplicationRecord
 
   def email_support?
     support_url&.start_with?("mailto:")
+  end
+
+  private
+
+  def apply_reimbursement_report_default
+    return unless allow_reimbursement_report.nil?
+
+    self.allow_reimbursement_report = reimbursement_conversions_enabled
+  end
+
+  def at_least_one_acceptance_method
+    unless allow_stripe_card? || allow_reimbursement_report?
+      errors.add(:base, "At least one acceptance method (virtual card or reimbursement report) must be enabled")
+    end
   end
 
 end

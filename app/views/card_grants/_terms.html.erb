@@ -1,0 +1,34 @@
+<%# locals: (card_grant:, form:, include_card_terms: false) %>
+
+<div class="field field--checkbox mb2" style="display: grid; grid-template-columns: min-content 1fr;">
+  <%= form.check_box :purpose, required: true %>
+  <%= form.label :purpose do %>
+    I will only use this grant for its intended purpose
+    <% if card_grant.purpose.present? %>
+      (<strong><%= card_grant.purpose %></strong>)
+    <% end %>
+    and adhere to the instructions provided by <%= card_grant.event.name + (card_grant.instructions.present? ? ":" : "") %>
+  <% end %>
+  <% if card_grant.instructions.present? %>
+    <div></div> <%# this empty <div> exists for layout purposes to handle checkbox alignment %>
+    <div class="card card--sunken py-0">
+      <%= MarkdownService.instance.render(card_grant.instructions) %>
+    </div>
+  <% end %>
+</div>
+
+<div class="field field--checkbox mb2">
+  <%= form.check_box :policy, required: true %>
+  <%= form.label :policy do %>
+    I will abide by the <%= link_to "Code of Conduct", "https://hackclub.com/conduct", target: :_blank %> and understand that fraudulent activity will result in a ban
+  <% end %>
+</div>
+
+<% if include_card_terms %>
+  <div class="field field--checkbox mb2">
+    <%= form.check_box :terms, required: true %>
+    <%= form.label :terms do %>
+      I agree to the <%= link_to "Card Issuing Terms", "https://stripe.com/legal/issuing/celtic-authorized-user-terms", target: :_blank %>
+    <% end %>
+  </div>
+<% end %>
