@@ -5,7 +5,7 @@
 <%= render "users/nav", selected: :settings_security %>
 
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "settings_header", active: "security" %>
+  <%= render "users/settings_header", active: "security" %>
   <fieldset>
     <% unless @user.phone_number.blank? %>
       <%= turbo_frame_tag :sms_auth_card do %>
@@ -14,7 +14,7 @@
         </legend>
         <div class="card border b--info mt0 mb3">
           <% if @user.phone_number_verified %>
-            <%= form_with(model: @user, local: true, html: { onsubmit: "onSubmit()" }, data: { turbo_frame: "_top" }) do |form| %>
+            <%= form_with(model: @user, local: true, data: { turbo_frame: "_top" }) do |form| %>
               <div class="field field--checkbox mt1">
                 <span style="font-weight: 700">Prefer login codes via SMS</span>
                 <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
@@ -108,7 +108,7 @@
       </button>
       <%= render "webauthn_credentials/modal" %>
     </div>
-    <% if @user.webauthn_credentials.length > 0 %>
+    <% if @user.webauthn_credentials.any? %>
       <div class="grid grid--split mb3">
         <%= render @user.webauthn_credentials.order(created_at: :desc) %>
       </div>
@@ -154,7 +154,7 @@
         <%= badge_for @all_sessions.count, class: "bg-muted" %>
       </legend>
       <%= link_to logout_all_user_path(@user), data: { turbo_method: :delete },
-              class: "btn bg-error py1 px2 h4", disabled: @sessions.count <= (current_user == @user ? 1 : 0) || disabled do %>
+              class: "btn bg-error py1 px2 h4", disabled: @sessions.size <= (current_user == @user ? 1 : 0) || disabled do %>
         <%= inline_icon "door-leave", size: home_action_size %>
         Sign out everywhere else
       <% end %>
@@ -193,7 +193,7 @@
     <% if @expired_sessions.any? %>
       <h3 class="inline-flex items-center">
         Recently logged out
-        <%= badge_for @expired_sessions.count, class: "bg-muted" %>
+        <%= badge_for @expired_sessions.size, class: "bg-muted" %>
       </h3>
       <div class="grid grid--split">
         <% @expired_sessions.each do |session| %>

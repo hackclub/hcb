@@ -193,11 +193,11 @@ class HcbCode < ApplicationRecord
   def smart_amount_cents
     sum = canonical_transactions.sum(:amount_cents)
     sum += canonical_pending_transactions.outgoing.unsettled.sum(:amount_cents)
-    if event&.can_front_balance?
-      fronted_pt_sum = canonical_pending_transactions.incoming.fronted.not_declined.sum(:amount_cents)
-      settled_ct_sum = [canonical_transactions.sum(:amount_cents), 0].max
-      sum += [fronted_pt_sum - settled_ct_sum, 0].max
-    end
+
+    fronted_pt_sum = canonical_pending_transactions.incoming.fronted.not_declined.sum(:amount_cents)
+    settled_ct_sum = [canonical_transactions.sum(:amount_cents), 0].max
+    sum += [fronted_pt_sum - settled_ct_sum, 0].max
+
     sum
   end
 
@@ -780,7 +780,6 @@ class HcbCode < ApplicationRecord
     return stripe_cardholder&.user if stripe_card?
     return reimbursement_expense_payout&.expense&.report&.user if reimbursement_expense_payout?
     return paypal_transfer&.user if paypal_transfer?
-    return donation&.collected_by if donation? && donation&.in_person?
     return wise_transfer&.user if wise_transfer?
   end
 
