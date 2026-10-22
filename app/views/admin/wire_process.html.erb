@@ -182,7 +182,7 @@
         <% end %>
       </fieldset>
     <% else %>
-      <p>This wire <%= @wire.failed? ? "" : "is " %><b><%= @wire.aasm.current_state.to_s.humanize(capitalize: false) %></b><%= @wire.failed? ? @wire.return_reason.present? ? " with the following failure reason: #{@wire.return_reason}" : " for an unknown reason" : "" %>. This wire was processed by <%= @approver.present? ? user_mention @approver : "an unknown user" %>.</p>
+      <p>This wire <%= @wire.failed? ? "" : "is " %><b><%= @wire.aasm.current_state.to_s.humanize(capitalize: false) %></b><%= @wire.failed? ? @wire.return_reason.present? ? " with the following failure reason: #{@wire.return_reason}" : " for an unknown reason" : "" %>. This wire was processed by <%= @approver.present? ? user_mention(@approver) : "an unknown user" %>.</p>
       <% unless @wire.failed? %>
         <%= button_to "Reject as failed", reject_wire_path(@wire) %>
       <% end %>
