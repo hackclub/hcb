@@ -4,9 +4,8 @@
 
 <h2><%= @party.hcb? ? "Sign #{@contract.event_name}'s agreement as HCB Operations" : "Sign your HCB agreement" %></h2>
 
-<% show_faq = @contract.is_a?(Contract::FiscalSponsorship) && @contract.standard? %>
-<%# Only take a column for the sidebar when it has something to show; otherwise the contract gets the full width. %>
-<% show_sidebar = @party.hcb? || @party.signee? || show_faq %>
+<%# Only give the sidebar a column when it has something to show (the FAQ renders nothing for non-standard agreements); otherwise the contract gets the full width. %>
+<% show_sidebar = @party.hcb? || @party.signee? || @contract.standard_fiscal_sponsorship? %>
 
 <div class="grid md:grid-cols-5 gap-5" data-controller="contract" data-contract-advance-path-value="<%= completed_contract_party_path(@party) unless @contract.contractable.is_a?(Event::Application) && @party.hcb? %>">
   <%= render partial: "contract/parties/docuseal_embed", locals: { party: @party, klass: show_sidebar ? "md:col-span-3" : "md:col-span-5" } %>
@@ -66,9 +65,7 @@
             <% end %>
           <% end %>
 
-          <% if show_faq %>
-            <%= render partial: "contract/parties/fs_contract_faq" %>
-          <% end %>
+          <%= render partial: "contract/parties/fs_contract_faq", locals: { contract: @contract } %>
         </div>
       <% end %>
     </div>

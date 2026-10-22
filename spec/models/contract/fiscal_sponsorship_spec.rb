@@ -27,9 +27,9 @@ RSpec.describe Contract::FiscalSponsorship, type: :model do
     end
   end
 
-  describe "#standard?" do
+  describe "#standard_fiscal_sponsorship?" do
     def standard_for(external_template_id)
-      described_class.new(external_template_id:).standard?
+      described_class.new(external_template_id:).standard_fiscal_sponsorship?
     end
 
     it "is true for the standard plan's template" do

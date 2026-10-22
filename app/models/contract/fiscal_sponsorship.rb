@@ -148,7 +148,7 @@ class Contract
     # (Hack Club HQ, Argosy, donor-advised funds, ...). Like #agreement_name,
     # this goes by the DocuSeal template the contract was issued against, so a
     # contract with no recorded template isn't considered standard.
-    def standard?
+    def standard_fiscal_sponsorship?
       uses_template_of?(Event::Plan::Standard)
     end
 
