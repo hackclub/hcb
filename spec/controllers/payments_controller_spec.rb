@@ -20,21 +20,20 @@ RSpec.describe PaymentsController do
       legal_entity = create(:legal_entity, :business, managing_event: event)
       payee = create(:payee, event:, legal_entity:, display_name: "Managed Co")
 
-      get :new, params: { event_id: event.slug, payee_id: payee.public_id }
+      get :new, params: { event_id: event.slug, payee_id: payee.hashid }
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Payout method")
-      expect(response.body).to include("Tax information")
-      expect(response.body).not_to include("has submitted their tax information")
+      expect(response.body).not_to include("has submitted their payout information")
     end
 
     it "shows recipient-submitted messaging for a contractor payee" do
       payee = create(:payee, event:, display_name: "Contractor Co")
 
-      get :new, params: { event_id: event.slug, payee_id: payee.public_id }
+      get :new, params: { event_id: event.slug, payee_id: payee.hashid }
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("has submitted their tax information")
+      expect(response.body).to include("has submitted their payout information")
     end
   end
 end

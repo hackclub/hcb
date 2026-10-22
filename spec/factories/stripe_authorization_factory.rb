@@ -5,6 +5,7 @@ FactoryBot.define do
     skip_create
     initialize_with { Stripe::Issuing::Authorization.construct_from(attributes) }
 
+    sequence(:id) { |n| "iauth_#{n}" }
     amount { 0 }
     approved { true }
     merchant_data do
@@ -54,6 +55,17 @@ FactoryBot.define do
           category_code: "7361",
           network_id: "8203300025",
           name: "HEPTA PAY LTD"
+        }
+      end
+    end
+
+    trait :forbidden_name_prefix do
+      merchant_data do
+        {
+          category: "employment_temp_agencies",
+          category_code: "7361",
+          network_id: "9999999999",
+          name: "FAWRY*A1B2C3"
         }
       end
     end

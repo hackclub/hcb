@@ -37,18 +37,15 @@
 #  index_increase_checks_on_column_id             (column_id) UNIQUE
 #  index_increase_checks_on_event_id              (event_id)
 #  index_increase_checks_on_payment_recipient_id  (payment_recipient_id)
-#  index_increase_checks_on_reissued_for_id       (reissued_for_id)
 #  index_increase_checks_on_transaction_id        ((((increase_object -> 'deposit'::text) ->> 'transaction_id'::text)))
 #  index_increase_checks_on_user_id               (user_id)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (event_id => events.id)
-#  fk_rails_...  (reissued_for_id => increase_checks.id)
 #  fk_rails_...  (user_id => users.id)
 #
 class IncreaseCheck < ApplicationRecord
-  self.ignored_columns += ["reissued_for_id"]
   # [@garyhtou] `IncreaseCheck` superseded `Check` starting March 2023.
   # On January 2024, we switched check printing & mailing services from
   # Increase to Column. This model, although still named `IncreaseCheck`, now
@@ -59,13 +56,12 @@ class IncreaseCheck < ApplicationRecord
   include Payoutable
   include Freezable
   include HasPaymentRecipient
-  include HasLedgerItem
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :memo], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "increase_checks.created_at"
 
   include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  tracked owner: proc { |controller, record| record.user || controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
   include Hashid::Rails
   hashid_config salt: ""
@@ -128,6 +124,7 @@ class IncreaseCheck < ApplicationRecord
     "Wyoming"          => "WY"
   }.freeze
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
   belongs_to :user, optional: true
 
@@ -139,6 +136,7 @@ class IncreaseCheck < ApplicationRecord
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :increase_check, required: false
   has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
+  has_one :payment, through: :payment_attempt
 
   after_create do
     create_canonical_pending_transaction!(event:, amount_cents: -amount, memo: "OUTGOING CHECK", date: created_at)
@@ -193,7 +191,7 @@ class IncreaseCheck < ApplicationRecord
         canonical_pending_transaction.decline!
         create_activity(key: "increase_check.rejected")
         employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
-        payment_attempt&.mark_rejected!
+        payment_attempt.mark_rejected! if payment_attempt&.may_mark_rejected?
       end
       transitions from: :pending, to: :rejected
     end
@@ -218,7 +216,7 @@ class IncreaseCheck < ApplicationRecord
   end
 
   validate do
-    if (address_line1.length + address_line2.length) > 50
+    if (address_line1.to_s.length + address_line2.to_s.length) > 50
       errors.add(:base, "Address line one and line two's combined length can not exceed 50 characters.")
     end
   end
@@ -336,6 +334,18 @@ class IncreaseCheck < ApplicationRecord
     send_column!
 
     mark_approved!
+  end
+
+  def can_cancel?
+    pending? || (approved? && can_stop?)
+  end
+
+  def cancel!
+    if pending?
+      mark_rejected!
+    elsif approved?
+      stop!
+    end
   end
 
   # https://column.com/docs/api/#check-transfer/stop

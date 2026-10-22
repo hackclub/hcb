@@ -1,20 +1,18 @@
-<% title "Sign the HCB agreement" %>
+<% title @application.contract.reissue? ? "Resign the HCB agreement" : "Sign the HCB agreement" %>
 
 <script src="https://cdn.docuseal.com/js/form.js"></script>
 
 <% content_for :info_pane do %>
   <div class="flex flex-col">
     <h2 class="text-4xl">
-      Sign the HCB agreement
+      <%= @application.contract.reissue? ? "Resign the HCB agreement" : "Sign the HCB agreement" %>
     </h2>
 
     <p class="mt-0 text-lg muted">
       This agreement formalizes the relationship between your project and HCB<% if @application.teen_led? %>, but it is not finalized until we review and approve your application<% end %>
     </p>
 
-    <div class="h-[40vh] flex">
-      <%= render partial: "contract/parties/contract_faq", locals: { no_questions: true } %>
-    </div>
+    <%= render partial: "contract/parties/fs_contract_faq", locals: { contract: @application.contract, no_questions: true, klass: "h-[40vh]" } %>
   </div>
 <% end %>
 

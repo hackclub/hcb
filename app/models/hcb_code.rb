@@ -5,8 +5,11 @@
 # Table name: hcb_codes
 #
 #  id                           :bigint           not null, primary key
+#  card_charge_settled_at       :datetime
 #  hcb_code                     :text             not null
 #  marked_no_or_lost_receipt_at :datetime
+#  receipt_due_at               :datetime
+#  receipt_resolved_at          :datetime
 #  short_code                   :text
 #  created_at                   :datetime         not null
 #  updated_at                   :datetime         not null
@@ -16,14 +19,20 @@
 #
 # Indexes
 #
-#  index_hcb_codes_on_event_id        (event_id)
-#  index_hcb_codes_on_hcb_code        (hcb_code) UNIQUE
-#  index_hcb_codes_on_ledger_item_id  (ledger_item_id)
-#  index_hcb_codes_on_short_code      (short_code) UNIQUE
+#  index_hcb_codes_on_card_charge_settled_at  (card_charge_settled_at)
+#  index_hcb_codes_on_event_id                (event_id)
+#  index_hcb_codes_on_hcb_code                (hcb_code) UNIQUE
+#  index_hcb_codes_on_ledger_item_id          (ledger_item_id)
+#  index_hcb_codes_on_open_receipt_due_at     (receipt_due_at) WHERE ((receipt_due_at IS NOT NULL) AND (receipt_resolved_at IS NULL))
+#  index_hcb_codes_on_short_code              (short_code) UNIQUE
 #
 # Foreign Keys
 #
 #  fk_rails_...  (ledger_item_id => ledger_items.id) ON DELETE => nullify
+#
+# Check Constraints
+#
+#  constraint_hcb_codes_on_short_code_to_uppercase  (short_code = upper(short_code))
 #
 class HcbCode < ApplicationRecord
   has_paper_trail
@@ -52,13 +61,15 @@ class HcbCode < ApplicationRecord
   has_many :suggested_pairings
   has_many :suggested_receipts, source: :receipt, through: :suggested_pairings
 
-  has_one :personal_transaction, required: false
   has_one :pin, required: false
 
   belongs_to :event, optional: true
   belongs_to :subledger, optional: true
 
-  belongs_to :ledger_item, class_name: "Ledger::Item", optional: true
+  belongs_to :ledger_item, class_name: "Ledger::Item", optional: true, touch: true
+
+  # Card-locking scopes, columns, and the materializer. See the concern.
+  include CardLocking::ChargeBehavior
 
   scope :on_main_ledger, -> { where(subledger_id: nil) }
   scope :mapped, -> { where.not(event_id: nil).or(where.not(subledger_id: nil)) }
@@ -165,25 +176,28 @@ class HcbCode < ApplicationRecord
   end
 
   def amount_cents
-    @amount_cents ||= begin
-      return canonical_transactions.sum(:amount_cents) if canonical_transactions.any?
-
-      # ACH transfers that haven't been sent don't have any CPTs
-      return -ach_transfer.amount if ach_transfer?
-
-      canonical_pending_transactions.sum(:amount_cents)
-    end
+    @amount_cents ||=
+      if canonical_transactions.any?
+        # Sum in memory when the association is already loaded. Card locking reads
+        # this for every one of a user's card charges at once, and a `SUM` per HCB
+        # code adds up.
+        canonical_transactions.loaded? ? canonical_transactions.sum(&:amount_cents) : canonical_transactions.sum(:amount_cents)
+      elsif ach_transfer? # ACH transfers that haven't been sent don't have any CPTs
+        -ach_transfer.amount
+      else
+        canonical_pending_transactions.sum(:amount_cents)
+      end
   end
 
   # this replicates our balance calculation
   def smart_amount_cents
     sum = canonical_transactions.sum(:amount_cents)
     sum += canonical_pending_transactions.outgoing.unsettled.sum(:amount_cents)
-    if event&.can_front_balance?
-      fronted_pt_sum = canonical_pending_transactions.incoming.fronted.not_declined.sum(:amount_cents)
-      settled_ct_sum = [canonical_transactions.sum(:amount_cents), 0].max
-      sum += [fronted_pt_sum - settled_ct_sum, 0].max
-    end
+
+    fronted_pt_sum = canonical_pending_transactions.incoming.fronted.not_declined.sum(:amount_cents)
+    settled_ct_sum = [canonical_transactions.sum(:amount_cents), 0].max
+    sum += [fronted_pt_sum - settled_ct_sum, 0].max
+
     sum
   end
 
@@ -304,6 +318,21 @@ class HcbCode < ApplicationRecord
     pt&.raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_currency") || raw_stripe_transaction.stripe_transaction["merchant_currency"]
   end
 
+  # What the merchant charged, in their own currency. Prefers the settled
+  # transaction, since that's where `amount_cents` comes from too.
+  def stripe_merchant_amount
+    txn = (raw_stripe_transaction || pt&.raw_pending_stripe_transaction)&.stripe_transaction
+    amount, currency = txn&.values_at("merchant_amount", "merchant_currency")
+    return nil if amount.nil? || currency.blank? || Money::Currency.find(currency).nil?
+
+    Money.from_cents(amount.abs, currency.upcase)
+  end
+
+  def stripe_foreign_currency?
+    amount = stripe_merchant_amount
+    amount.present? && amount.currency != Money.default_currency
+  end
+
   def stripe_refund?
     ct&.stripe_refund? && (stripe_force_capture? || (stripe_card? && amount_cents > 0))
   end
@@ -416,6 +445,10 @@ class HcbCode < ApplicationRecord
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_FORCE_CAPTURE_CODE
   end
 
+  def card_charge?
+    stripe_card? || stripe_force_capture?
+  end
+
   def stripe_service_fee?
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_SERVICE_FEE_CODE
   end
@@ -511,6 +544,12 @@ class HcbCode < ApplicationRecord
     @stripe_service_fee ||= StripeServiceFee.find_by(id: hcb_i2) if stripe_service_fee?
   end
 
+  def card_charge
+    return nil unless card_charge?
+
+    @card_charge ||= raw_stripe_transaction&.card_charge || pt&.raw_pending_stripe_transaction&.card_charge
+  end
+
   def check_deposit?
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::CHECK_DEPOSIT_CODE
   end
@@ -603,7 +642,8 @@ class HcbCode < ApplicationRecord
       check_deposit || outgoing_disbursement ||
       incoming_disbursement || bank_fee ||
       fee_revenue || reimbursement_expense_payout ||
-      reimbursement_payout_holding
+      reimbursement_payout_holding || stripe_service_fee ||
+      card_charge
   end
 
   # The `:receipt_required` scope determines the type of
@@ -740,7 +780,6 @@ class HcbCode < ApplicationRecord
     return stripe_cardholder&.user if stripe_card?
     return reimbursement_expense_payout&.expense&.report&.user if reimbursement_expense_payout?
     return paypal_transfer&.user if paypal_transfer?
-    return donation&.collected_by if donation? && donation&.in_person?
     return wise_transfer&.user if wise_transfer?
   end
 
@@ -768,8 +807,8 @@ class HcbCode < ApplicationRecord
       ledger_item.update_custom_memo!(memo)
       return
     end
-    canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
-    canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
+    canonical_transactions.update_all(custom_memo: memo)
+    canonical_pending_transactions.update_all(custom_memo: memo)
   end
 
 end

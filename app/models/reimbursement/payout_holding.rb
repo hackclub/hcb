@@ -30,7 +30,6 @@ module Reimbursement
   class PayoutHolding < ApplicationRecord
     include AASM
     include HasBookTransfer
-    include HasLedgerItem
 
     include Hashid::Rails
     hashid_config salt: ""
@@ -40,6 +39,7 @@ module Reimbursement
 
     has_paper_trail
 
+    has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
     has_many :expense_payouts, class_name: "Reimbursement::ExpensePayout", foreign_key: "reimbursement_payout_holdings_id", inverse_of: :payout_holding
     belongs_to :report, foreign_key: "reimbursement_reports_id", inverse_of: :payout_holding
     belongs_to :ach_transfer, optional: true, inverse_of: :reimbursement_payout_holding
@@ -56,7 +56,7 @@ module Reimbursement
     after_create do
       CanonicalPendingTransaction.create!(
         reimbursement_payout_holding: self,
-        event: Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING),
+        event:,
         amount_cents:,
         memo: hcb_code,
         date: created_at,
@@ -99,6 +99,10 @@ module Reimbursement
       end
     end
 
+    def event
+      @event ||= Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
+    end
+
     def payout_transfer
       ach_transfer || increase_check || paypal_transfer || wire || wise_transfer
     end
@@ -109,6 +113,8 @@ module Reimbursement
       raise ArgumentError, "ACH must have been rejected / failed" unless ach_transfer.nil? || ach_transfer.failed? || ach_transfer.rejected?
       raise ArgumentError, "PayPal transfer must have been rejected" unless paypal_transfer.nil? || paypal_transfer.rejected?
       raise ArgumentError, "a check must have been rejected / stopped" unless increase_check.nil? || increase_check.column_rejected? || increase_check.column_stopped?
+      raise ArgumentError, "a wire must have been rejected / failed" unless wire.nil? || wire.rejected? || wire.failed?
+      raise ArgumentError, "a Wise transfer must have been rejected / failed" unless wise_transfer.nil? || wise_transfer.rejected? || wise_transfer.failed?
       raise ArgumentError, "must have settled expense payouts" unless expense_payouts.all? { |ep| ep.settled? }
 
       ActiveRecord::Base.transaction do

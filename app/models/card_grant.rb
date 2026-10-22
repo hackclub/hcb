@@ -18,7 +18,7 @@
 #  one_time_use               :boolean
 #  pre_authorization_required :boolean          default(FALSE), not null
 #  purpose                    :string
-#  status                     :integer          default("active"), not null
+#  status                     :integer          default(0), not null
 #  created_at                 :datetime         not null
 #  updated_at                 :datetime         not null
 #  disbursement_id            :bigint
@@ -77,19 +77,23 @@ class CardGrant < ApplicationRecord
   after_create :create_pre_authorization!, if: :pre_authorization_required?
 
   before_validation :create_card_grant_setting, on: :create
+
+  before_validation do
+    self.expiration_at ||= default_expiration_at
+  end
+
   before_create :create_user
   before_create :create_subledger
   before_create :set_defaults
   after_create :transfer_money
   after_create_commit :send_email
 
-  before_create do
-    self.expiration_at ||= default_expiration_at
-  end
-
   validates :disbursement, uniqueness: true, allow_nil: true
   validates :stripe_card, uniqueness: true, allow_nil: true
   validates :subledger, uniqueness: true, allow_nil: true
+
+  MAX_EXPIRATION_DATE = 2.years
+  validates :expiration_at, comparison: { less_than_or_equal_to: -> { MAX_EXPIRATION_DATE.from_now.to_date } }, if: :expiration_at_changed?
 
   validates_email_format_of :email, if: :email_changed?
   normalizes :email, with: ->(email) { email.presence&.strip&.downcase }
@@ -109,7 +113,31 @@ class CardGrant < ApplicationRecord
 
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
-  scope :search_for, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
+
+  scope :accepted, -> { active.joins(:stripe_card).merge(StripeCard.active) }
+  scope :frozen, -> { active.joins(:stripe_card).merge(StripeCard.where(stripe_status: "inactive")) }
+  scope :returned, -> { canceled.where.missing(:reimbursement_report) }
+  scope :converted_to_reimbursement, -> { canceled.joins(:reimbursement_report) }
+
+  # statuses shown in the status filter that each map to their scope
+  FILTERABLE_STATES = {
+    "not_activated"              => "Invited",
+    "accepted"                   => "Active",
+    "frozen"                     => "Frozen",
+    "expired"                    => "Expired",
+    "returned"                   => "Returned",
+    "converted_to_reimbursement" => "Converted to reimbursement"
+  }.freeze
+
+  scope :filter_by_state, ->(state) {
+    if FILTERABLE_STATES.key?(state)
+      public_send(state)
+    else
+      all
+    end
+  }
+  scope :search, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
+  scope :public_search, ->(q) { joins(:user).where("users.preferred_name ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
   scope :expired_before, ->(date) { where("card_grants.expiration_at < ?", date) }
   scope :expires_on, ->(date) { where("card_grants.expiration_at = DATE(?)", date) }
 
@@ -134,12 +162,14 @@ class CardGrant < ApplicationRecord
   def state_text
     if suspected_fraud?
       "Fraudulent"
+    elsif converted_to_reimbursement_report?
+      "Converted to reimbursement"
     elsif canceled?
-      "Canceled"
+      "Returned"
     elsif expired?
       "Expired"
     elsif pending_invite?
-      "Invitation sent"
+      "Invited"
     elsif stripe_card.frozen? || stripe_card.inactive?
       "Frozen"
     else
@@ -156,12 +186,16 @@ class CardGrant < ApplicationRecord
     :muted
   end
 
+  def converted_to_reimbursement_report?
+    canceled? && reimbursement_report.present?
+  end
+
   def suspected_fraud?
     pre_authorization.present? && card_grant_setting.block_suspected_fraud? && pre_authorization.fraudulent?
   end
 
   def pending_invite?
-    stripe_card.nil?
+    active? && stripe_card.nil?
   end
 
   def topup!(amount_cents:, topped_up_by: sent_by)

@@ -1,6 +1,13 @@
 # frozen_string_literal: true
 
 class UsersController < ApplicationController
+  include TurnstileProtection
+
+  # Sends a Twilio Verify message to whatever phone number the user typed in —
+  # the surface spam signups abused to run up our Twilio bill. The token comes
+  # from the widget in the "Verify phone number" modal.
+  turnstile_protect only: [:start_sms_auth_verification], action: TurnstileService::SMS_VERIFICATION_ACTION
+
   # `unimpersonate` is gated by its own `current_session&.impersonated?` guard,
   # and must remain reachable from impersonated sessions whose `verified` flag
   # mirrors an unverified target — otherwise the admin is locked out.
@@ -32,7 +39,8 @@ class UsersController < ApplicationController
     :edit_admin, :admin_details, :admin_details_ach_transfers, :admin_details_check_deposits,
     :admin_details_disbursements, :admin_details_emburse_cards, :admin_details_increase_checks,
     :admin_details_invoices, :admin_details_lob_checks, :admin_details_missing_receipts,
-    :admin_details_reimbursement_reports, :admin_details_stripe_cards, :admin_details_stripe_transactions
+    :admin_details_reimbursement_reports, :admin_details_stripe_cards, :admin_details_stripe_transactions,
+    :suppress_card_locking, :reset_billing_address
   ]
   wrap_parameters format: :url_encoded_form
 
@@ -65,7 +73,7 @@ class UsersController < ApplicationController
   def toggle_pretend_is_not_admin
     authorize current_user
     current_user.update(pretend_is_not_admin: !current_user.pretend_is_not_admin)
-    head :ok
+    redirect_to params[:return_to] || root_path, flash: { info: "You're an admin again. Behave." }
   end
 
   def webauthn_options
@@ -148,6 +156,19 @@ class UsersController < ApplicationController
     authorize @user
   end
 
+  def reset_billing_address
+    authorize @user
+
+    begin
+      @user.stripe_cardholder&.reset_billing_address_to_default!
+      flash[:success] = "Reset your billing address to HCB's default address."
+    rescue ActiveRecord::RecordInvalid => e
+      flash[:error] = e.record&.errors&.first&.full_message || "Couldn't reset your billing address."
+    end
+
+    redirect_back_or_to address_user_path(@user)
+  end
+
   def edit_payout
     authorize @user
 
@@ -186,6 +207,7 @@ class UsersController < ApplicationController
                         .recently_expired_within(1.week.ago)
                         .not_impersonated
                         .order(created_at: :desc)
+                        .load
 
     authorize @user
   end
@@ -243,6 +265,8 @@ class UsersController < ApplicationController
 
   def edit_admin
     authorize @user
+
+    @limit = Governance::Admin::Transfer::Limit.find_by(user_id: @user.id)
   end
 
   def admin_details
@@ -255,74 +279,98 @@ class UsersController < ApplicationController
   def admin_details_ach_transfers
     authorize @user
 
-    @ach_transfers = @user.ach_transfers.page(params[:page] || 1).per(params[:per] || 10)
+    @ach_transfers = @user.ach_transfers.order(created_at: :desc).page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_check_deposits
     authorize @user
 
-    @check_deposits = @user.check_deposits.page(params[:page] || 1).per(params[:per] || 10)
+    @check_deposits = @user.check_deposits.order(created_at: :desc).page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_disbursements
     authorize @user
 
-    @disbursements = @user.disbursements.includes([:destination_event]).page(params[:page] || 1).per(params[:per] || 10)
+    @disbursements = @user.disbursements.order(created_at: :desc).includes([:destination_event]).page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_emburse_cards
     authorize @user
 
-    @emburse_cards = @user.emburse_cards.page(params[:page] || 1).per(params[:per] || 10)
+    @emburse_cards = @user.emburse_cards.order(created_at: :desc).page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_increase_checks
     authorize @user
 
-    @increase_checks = @user.increase_checks.page(params[:page] || 1).per(params[:per] || 10)
+    @increase_checks = @user.increase_checks.order(created_at: :desc).page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_invoices
     authorize @user
 
-    @invoices = @user.invoices.page(params[:page] || 1).per(params[:per] || 10)
+    @invoices = @user.invoices.order(created_at: :desc).page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_lob_checks
     authorize @user
 
-    @lob_checks = @user.checks.page(params[:page] || 1).per(params[:per] || 10)
+    @lob_checks = @user.checks.order(created_at: :desc).page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_missing_receipts
     authorize @user
 
+    # TODO: add change here in receipt bin PR
     @hcb_codes_missing_receipts = @user.transactions_missing_receipt
+                                       .order(created_at: :desc)
                                        .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
-                                       .page(params[:page] || 1).per(params[:per] || 10)
+                                       .page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_reimbursement_reports
     authorize @user
 
     @reimbursement_reports = @user.reimbursement_reports
+                                  .order(created_at: :desc)
                                   .includes([:event, :payout_holding])
-                                  .page(params[:page] || 1).per(params[:per] || 10)
+                                  .page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_stripe_cards
     authorize @user
 
-    @stripe_cards = @user.stripe_cards.page(params[:page] || 1).per(params[:per] || 10)
+    @stripe_cards = @user.stripe_cards.order(created_at: :desc).page(params[:page] || 1).per(safe_per(10))
   end
 
   def admin_details_stripe_transactions
     authorize @user
 
-    @stripe_transactions = HcbCode.where(id: @user.stripe_cards.flat_map { |sc| sc.local_hcb_codes.pluck(:id) })
-                                  .order(created_at: :desc)
-                                  .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
-                                  .page(params[:page] || 1).per(params[:per] || 10)
+    if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
+      # A cardholder's charges span every organization they hold a card for, so
+      # this is one of the few queries that legitimately crosses ledgers. The
+      # page is auditor-gated (see UserPolicy#admin_details?), and the author
+      # filter — which for a CardCharge resolves to the cardholder — bounds the
+      # result to this user either way.
+      @stripe_transactions = Ledger::Query.new({ author: @user.slug, linked_object_type: "CardCharge" })
+                                          .execute(all_ledgers: true)
+                                          .page(params[:page] || 1).per(safe_per(10))
+    else
+      @stripe_transactions = HcbCode.where(id: @user.stripe_cards.flat_map { |sc| sc.local_hcb_codes.pluck(:id) })
+                                    .order(created_at: :desc)
+                                    .includes([:canonical_transactions, :event, :receipts, :subledger, :tags])
+                                    .page(params[:page] || 1).per(safe_per(10))
+    end
+  end
+
+  def suppress_card_locking
+    authorize @user
+
+    hours = params.fetch(:hours, 24).to_i.clamp(1, 720)
+    @user.update!(card_locking_suppressed_until: hours.hours.from_now)
+    User::UpdateCardLockingJob.perform_later(user: @user)
+
+    redirect_back_or_to admin_user_path(@user), flash: { success: "Card locking suppressed for #{hours}h." }
   end
 
   def update
@@ -398,7 +446,6 @@ class UsersController < ApplicationController
       payout_ok = true
       if payout_method_type.present?
         payout_update = LegalEntity::PayoutMethodService::Update.new(
-          user: @user,
           legal_entity: @legal_entity,
           details_type: payout_method_type,
           details_attrs: payout_method_details_params
@@ -421,7 +468,7 @@ class UsersController < ApplicationController
         if @payout_method&.saved_changes? && @user == current_user
           flash[:success] = "Your payout details have been updated. We'll use this information for all payouts going forward."
         elsif email_update&.requested?
-          flash[:success] = "We've sent a verification link to your new email (#{params[:user][:email]}) and a authorization link to your old email (#{@user.email}), please click them both to confirm this change."
+          flash[:success] = "We've sent a verification link to your new email (#{params[:user][:email]}) and an authorization link to your old email (#{@user.email}), please click them both to confirm this change."
         else
           flash[:success] = @user == current_user ? "Updated your profile!" : "Updated #{@user.first_name}'s profile!"
         end
@@ -435,7 +482,7 @@ class UsersController < ApplicationController
 
       if @user.stripe_cardholder&.errors&.any?
         flash.now[:error] = @user.stripe_cardholder.errors.first.full_message
-        render :edit_address, status: :unprocessable_entity
+        render :edit_address, status: :unprocessable_content
         return
       end
 
@@ -443,11 +490,11 @@ class UsersController < ApplicationController
         flash.now[:error] = payout_update.error_messages.to_sentence
         @legal_entity ||= @user.personal_legal_entity
         @legal_entities = @user.legal_entities
-        render :edit_payout, status: :unprocessable_entity
+        render :edit_payout, status: :unprocessable_content
         return
       end
 
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   rescue Errors::StripeInvalidNameError => e
     redirect_back_or_to edit_user_path(@user), flash: { error: e.message }
@@ -471,7 +518,7 @@ class UsersController < ApplicationController
     # redirect_to edit_user_path(current_user)
     render json: { message: "started verification successfully" }, status: :ok
   rescue UserService::EnrollSmsAuth::SMSEnrollmentError => e
-    render json: { error: e.message }, status: :unprocessable_entity
+    render json: { error: e.message }, status: :unprocessable_content
   end
 
   def complete_sms_auth_verification
@@ -488,7 +535,7 @@ class UsersController < ApplicationController
     # redirect_to edit_user_path(current_user)
     render json: { error: "invalid login code" }, status: :forbidden
   rescue UserService::EnrollSmsAuth::SMSEnrollmentError => e
-    render json: { error: e.message }, status: :unprocessable_entity
+    render json: { error: e.message }, status: :unprocessable_content
   end
 
   def toggle_sms_auth
@@ -529,8 +576,6 @@ class UsersController < ApplicationController
       :birthday,
       :profile_picture,
       :seasonal_themes_enabled,
-      # admin
-      :pretend_is_not_admin,
       # security
       :sessions_reported,
       :session_validity_preference,
@@ -554,6 +599,14 @@ class UsersController < ApplicationController
           :stripe_billing_address_country
         ]
       }
+    end
+
+    if @user == current_user && current_user.admin_override_pretend?
+      attributes << :pretend_is_not_admin
+    end
+
+    if admin_signed_in?
+      attributes << :phone_number_verification_bypassed
     end
 
     if superadmin_signed_in?

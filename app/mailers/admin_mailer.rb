@@ -20,7 +20,7 @@ class AdminMailer < ApplicationMailer
 
     OrganizerPositionDeletionRequest.under_review.find_each do |opdr|
       if opdr.created_at < 24.hours.ago
-        next if opdr.comments.any? { |c| c.user.admin? }
+        next if opdr.comments.by_admin.exists?
 
         @tasks << {
           url: organizer_position_deletion_requests_url(opdr),
@@ -31,7 +31,7 @@ class AdminMailer < ApplicationMailer
 
     AchTransfer.pending.find_each do |ach|
       if ach.created_at < 24.hours.ago
-        next if ach.comments.any? { |c| c.user.admin? } || ach.local_hcb_code.comments.any? { |c| c.user.admin? }
+        next if ach.comments.by_admin.exists? || ach.local_hcb_code.comments.by_admin.exists?
 
         @tasks << {
           url: ach_start_approval_admin_url(ach),
@@ -42,7 +42,7 @@ class AdminMailer < ApplicationMailer
 
     IncreaseCheck.pending.find_each do |check|
       if check.created_at < 24.hours.ago
-        next if check.local_hcb_code.comments.any? { |c| c.user.admin? }
+        next if check.local_hcb_code.comments.by_admin.exists?
 
         @tasks << {
           url: increase_check_process_admin_url(check),
@@ -53,7 +53,7 @@ class AdminMailer < ApplicationMailer
 
     Reimbursement::Report.reimbursement_requested.find_each do |report|
       if report.reimbursement_requested_at < 24.hours.ago
-        next if report.comments.any? { |c| c.user.admin? }
+        next if report.comments.by_admin.exists?
 
         @tasks << {
           url: reimbursement_report_url(report),
@@ -64,7 +64,7 @@ class AdminMailer < ApplicationMailer
 
     Disbursement.reviewing.find_each do |disbursement|
       if disbursement.created_at < 24.hours.ago
-        next if disbursement.local_hcb_code.comments.any? { |c| c.user.admin? }
+        next if disbursement.local_hcb_code.comments.by_admin.exists?
 
         @tasks << {
           url: disbursement_process_admin_url(disbursement),
@@ -96,24 +96,21 @@ class AdminMailer < ApplicationMailer
     )
   end
 
-  def balance_anomalies(anomalous_events:)
-    @anomalous_events = anomalous_events
+  def failed_assertion_job(job:, job_id:, anomalies:)
+    @anomalies = anomalies
+    @job = job
+    @job_id = job_id
 
     mail(
-      to: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"],
-      subject: "#{anomalous_events.length} events have balance anomalies"
+      to: engineers,
+      subject: "Ledger assertion job #{job} failed with #{anomalies.length} anomalies"
     )
   end
 
-  def logical_transaction_anomalies(event:, hcb_codes:, ledger_items:)
-    @event = event
-    @hcb_codes = hcb_codes
-    @ledger_items = ledger_items
+  private
 
-    mail(
-      to: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"],
-      subject: "#{hcb_codes.length} logical transactions have anomalies for #{@event.name}"
-    )
+  def engineers
+    User.where(email: ["gary@hackclub.com", "luke@hackclub.com", "ian@hackclub.com"]).pluck(:email)
   end
 
 end

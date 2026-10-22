@@ -72,7 +72,7 @@ class Disbursement < ApplicationRecord
     event :mark_approved do
       after do |fulfilled_by|
         update(fulfilled_by:)
-        canonical_pending_transactions.update_all(fronted: true)
+        canonical_pending_transactions.find_each { |cpt| cpt.update(fronted: true) }
       end
       transitions from: [:reviewing, :scheduled], to: :pending
     end
@@ -176,6 +176,13 @@ class Disbursement < ApplicationRecord
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, recipient: proc { |controller, record| record.destination_event }, event_id: proc { |controller, record| record.source_event.id }, only: [:create]
+
+  # Fronting lets the destination spend a transfer before it settles. Only
+  # front transfers into an organization the requester manages, so an
+  # unsolicited transfer can't raise its balance before an admin reviews it.
+  def self.frontable?(source_event:, destination_event:, requested_by:)
+    source_event.plan.front_disbursements_enabled? && OrganizerPosition.role_at_least?(requested_by, destination_event, :manager)
+  end
 
   def approve_by_admin(user)
     # Don't check admin transfer limits for card grants. This method is also

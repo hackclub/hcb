@@ -36,7 +36,7 @@ module StripeCardService
         @file.rewind
         pd = nil
         ActiveRecord::Base.transaction do
-          pd = StripeCard::PersonalizationDesign.create!(event: @event, common: @common)
+          pd = StripeCard::PersonalizationDesign.create!(event: @event, common: @common, color: @color.to_s)
           pd.logo.attach(io: @file, filename: "#{Time.now.to_i}.png")
           pd.stripe_id = Stripe::Issuing::PersonalizationDesign.create({
                                                                          name: "#{@event&.name || @name || "Shared"} #{@color.to_s.titleize} Card (#{pd.id})",

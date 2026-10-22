@@ -125,6 +125,10 @@ class UserPolicy < ApplicationPolicy
     user.admin? || record == user
   end
 
+  def reset_billing_address?
+    user.admin? || record == user
+  end
+
   def toggle_sms_auth?
     user.admin? || record == user
   end
@@ -159,6 +163,10 @@ class UserPolicy < ApplicationPolicy
 
   def toggle_pretend_is_not_admin?
     user.auditor? || (record == user && user.admin_override_pretend?)
+  end
+
+  def suppress_card_locking?
+    user.admin?
   end
 
 end

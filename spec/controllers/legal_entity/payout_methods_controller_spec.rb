@@ -27,6 +27,38 @@ RSpec.describe LegalEntity::PayoutMethodsController do
              })
       end.to change { legal_entity.reload.payout_methods.count }.by(1)
     end
+
+    it "stores the user-provided nickname" do
+      post(:create, params: {
+             user: {
+               payout_method_type: "LegalEntity::PayoutMethod::AchTransfer",
+               payout_method_name: "My Chase Bank Account",
+               payout_method_ach_transfer: { account_number: "12345678", routing_number: "021000021" }
+             }
+           })
+
+      expect(legal_entity.reload.payout_methods.last.name).to eq("My Chase Bank Account")
+    end
+
+    context "when an admin adds a payout method for another user" do
+      let(:admin) { create(:user, :make_admin) }
+
+      before { create_session(admin, verified: true) }
+
+      it "adds the method to the target user's entity, not the admin's" do
+        expect do
+          post(:create, params: {
+                 legal_entity_id: legal_entity.id,
+                 user: {
+                   payout_method_type: "LegalEntity::PayoutMethod::AchTransfer",
+                   payout_method_ach_transfer: { account_number: "12345678", routing_number: "021000021" }
+                 }
+               })
+        end.to change { legal_entity.reload.payout_methods.count }.by(1)
+
+        expect(admin.personal_legal_entity.reload.payout_methods.count).to eq(0)
+      end
+    end
   end
 
   describe "#update" do
@@ -45,6 +77,23 @@ RSpec.describe LegalEntity::PayoutMethodsController do
       new_pm = legal_entity.reload.default_payout_method
       expect(new_pm).not_to eq(pm)
       expect(new_pm.details.account_number).to eq("99999999")
+    end
+
+    it "updates only the nickname when ACH numbers come back masked, keeping the real values" do
+      pm = legal_entity.payout_methods.create!(default: true, details: ach(account: "12345678"), name: "Old name")
+
+      patch(:update, params: {
+              id: pm.id,
+              user: {
+                payout_method_name: "My Chase Bank Account",
+                payout_method_ach_transfer: { account_number: "••••5678", routing_number: "•••••0021" }
+              }
+            })
+
+      new_pm = legal_entity.reload.default_payout_method
+      expect(new_pm.name).to eq("My Chase Bank Account")
+      expect(new_pm.details.account_number).to eq("12345678")
+      expect(new_pm.details.routing_number).to eq("021000021")
     end
 
     it "blocks editing a method while a report using it is in-flight" do
@@ -73,14 +122,34 @@ RSpec.describe LegalEntity::PayoutMethodsController do
       expect(LegalEntity::PayoutMethod.exists?(pm.id)).to be(true)
     end
 
-    it "does not allow removing the default method" do
+    it "does not allow removing the default method while other methods remain" do
       default_pm = legal_entity.payout_methods.create!(default: true, details: ach)
+      legal_entity.payout_methods.create!(default: false, details: ach(account: "99999999"))
 
       delete(:archive, params: { id: default_pm.id })
 
       expect(flash[:error]).to match(/default/i)
       expect(default_pm.reload.archived).to be(false)
       expect(default_pm).to be_default
+    end
+
+    it "removes the default method when it is the only unarchived method" do
+      default_pm = legal_entity.payout_methods.create!(default: true, details: ach)
+
+      delete(:archive, params: { id: default_pm.id })
+
+      expect(flash[:success]).to match(/removed/i)
+      expect(default_pm.reload.archived).to be(true)
+      expect(default_pm).not_to be_default
+    end
+
+    it "unpins a draft report from the sole removed method" do
+      default_pm = legal_entity.payout_methods.create!(default: true, details: ach)
+      report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft, legal_entity_payout_method: default_pm)
+
+      delete(:archive, params: { id: default_pm.id })
+
+      expect(report.reload.legal_entity_payout_method).to be_nil
     end
 
     it "archives a removed method instead of destroying it" do

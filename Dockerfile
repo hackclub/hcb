@@ -10,9 +10,9 @@ RUN apt-get -y update -qq
 RUN apt-get -y install postgresql-client vim poppler-utils
 ENV EDITOR=vim
 
-# Install node22 & yarn
+# Install node24 & yarn
 
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh && \
+RUN curl -fsSL https://deb.nodesource.com/setup_24.x -o nodesource_setup.sh && \
   bash nodesource_setup.sh && \
   apt-get install -y nodejs
 

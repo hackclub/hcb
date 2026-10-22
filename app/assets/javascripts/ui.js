@@ -664,6 +664,9 @@ const initPayoutMethodToggles = function () {
             wirePayoutMethodInputs.slideUp()
       }
     )
+    $(document).on('change', '[name="user[payout_method_type]"]', e => {
+      if (e.target.checked) BK.s('payout_method_name_input').slideDown()
+    })
   }
 }
 
@@ -756,6 +759,8 @@ document.addEventListener('turbo:before-stream-render', event => {
       })
     } else if (streamElement.action == 'close_modal') {
       $.modal.close().remove()
+    } else if (streamElement.action == 'open_modal') {
+      BK.s('modal', '#' + streamElement.target).modal({ closeExisting: false })
     } else {
       fallbackToDefaultActions(streamElement)
     }

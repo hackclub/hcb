@@ -14,6 +14,7 @@
   <% form_opts.merge!(url: payout_method_path(editing), method: :patch) if editing %>
   <% form_opts.merge!(url: payout_methods_path, method: :post) if creating %>
   <%= form_with(**form_opts) do |form| %>
+    <%= hidden_field_tag :user_id, user.id %>
     <% if creating && legal_entity %>
       <%= hidden_field_tag :legal_entity_id, legal_entity.id %>
     <% end %>

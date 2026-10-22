@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <% @donation = @hcb_code.donation %>
 
 <% instance = @hcb_code.hashid %>
@@ -41,9 +43,12 @@
       <%= form.text_field :name, value: @donation.name(show_anonymous: true), placeholder: "John Smith", required: true, autofocus: true, autocomplete: "off" %>
     </div>
     <div class="field field--checkbox mb2">
-      <%= form.check_box :anonymous, style: "margin-left: 0;" %>
+      <%= form.check_box :anonymous, checked: @donation.anonymous? || @donation.recurring_donation&.anonymous?, style: "margin-left: 0;" %>
       <%= form.label :anonymous, "Make this donation anonymous.", style: "display: inline; flex-grow: 1;" %>
     </div>
+    <% if @donation.recurring? %>
+      <p class="muted">This donation is part of a recurring donation. Updating the donor's name or anonymity will update it for all past and future donations.</p>
+    <% end %>
     <%= form.submit "Edit donor" %>
   <% end %>
 </section>
@@ -130,12 +135,12 @@
     <% end %>
     <p>
       <strong><%= donation_fee_type(@donation) %></strong>
-      -<%= donation_payment_processor_fee(true, @donation) %>
+      -<%= donation_payment_processor_fee(@donation) %>
     </p>
     <p>
       <strong>Processing fee refund</strong>
       <span>
-        +<%= donation_payment_processor_fee(true, @donation) %>
+        +<%= donation_payment_processor_fee(@donation) %>
         <span class="muted">
           <% "Pending " unless @donation&.fee_reimbursement&.t_transaction %>
           (<%= link_to "learn more", "https://blog.hcb.hackclub.com/posts/were-making-payment-processing-fees-disappear-101088" %>)

@@ -70,7 +70,6 @@ class AchTransfer < ApplicationRecord
   include Payoutable
   include HasPaymentRecipient
   include Freezable
-  include HasLedgerItem
 
   def payment_recipient_attributes
     %i[bank_name account_number routing_number]
@@ -80,8 +79,9 @@ class AchTransfer < ApplicationRecord
   pg_search_scope :search_recipient, against: [:recipient_name], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "ach_transfers.created_at"
 
   include PublicActivity::Model
-  tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
+  tracked owner: proc { |controller, record| record.creator || controller&.current_user }, event_id: proc { |controller, record| record.event.id }, only: [:create]
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :creator, class_name: "User", optional: true
   belongs_to :processor, class_name: "User", optional: true
   belongs_to :event
@@ -124,6 +124,7 @@ class AchTransfer < ApplicationRecord
   has_one :employee_payment, class_name: "Employee::Payment", as: :payout
   has_one :reimbursement_payout_holding, class_name: "Reimbursement::PayoutHolding", inverse_of: :ach_transfer, required: false
   has_one :payment_attempt, as: :payout, class_name: "Payment::Attempt"
+  has_one :payment, through: :payment_attempt
 
   has_one :raw_pending_outgoing_ach_transaction, foreign_key: :ach_transaction_id
   has_one :canonical_pending_transaction, through: :raw_pending_outgoing_ach_transaction
@@ -159,7 +160,7 @@ class AchTransfer < ApplicationRecord
         update!(processor: processed_by) if processed_by.present?
         create_activity(key: "ach_transfer.rejected", owner: processed_by)
         employee_payment&.mark_rejected!(send_email: false) # Operations will manually reach out
-        payment_attempt&.mark_rejected!
+        payment_attempt.mark_rejected! if payment_attempt&.may_mark_rejected?
       end
       transitions from: [:pending, :scheduled], to: :rejected
     end
@@ -269,6 +270,14 @@ class AchTransfer < ApplicationRecord
 
   def realtime?
     column_id&.starts_with?("rttr")
+  end
+
+  def can_cancel?
+    pending? || scheduled?
+  end
+
+  def cancel!
+    mark_rejected!
   end
 
   # reason must be listed on https://column.com/docs/api/#ach-transfer/reverse
