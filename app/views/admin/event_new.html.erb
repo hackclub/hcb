@@ -39,7 +39,7 @@
 
     <div class="field">
       <%= form.label :point_of_contact_id, "Point of contact" %>
-      <%= form.collection_select :point_of_contact_id, User.admin.all, :id, :email, selected: @current_user.id %>
+      <%= form.collection_select :point_of_contact_id, User.admin.all, :id, :email, selected: Current.user.id %>
     </div>
 
     <p>
