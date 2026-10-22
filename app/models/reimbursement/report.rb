@@ -95,7 +95,8 @@ module Reimbursement
     # view https://github.com/hackclub/hcb/issues/8486 for context behind this scope
 
     # The 195 widely recognized countries: the 193 UN member states plus the
-    # 2 UN observer states (the Holy See and the State of Palestine).
+    # 2 UN observer states (the Holy See and the State of Palestine). This is
+    # hardcoded, so revisit it if a new state is admitted to the UN.
     WIDELY_RECOGNIZED_COUNTRY_CODES = %w[
       AF AL DZ AD AO AG AR AM AU AT AZ BS BH BD BB BY BE BZ BJ BT BO BA BW BR
       BN BG BF BI CV KH CM CA CF TD CL CN CO KM CG CD CR CI HR CU CY CZ DK DJ
@@ -108,23 +109,40 @@ module Reimbursement
       ZW VA PS
     ].freeze
 
-    # Reports are matched to a country if either the reimbursed user's phone
-    # number's calling code, or the report's currency, belongs to that
-    # country. Since several countries can share a currency (e.g. Germany
-    # and Spain both use EUR), matches based on currency alone can be
-    # imprecise when a country's currency isn't unique to it; the phone
-    # number's calling code is what disambiguates those cases (e.g. +49 vs
-    # +34).
+    # Reports are matched to a country by the reimbursed user's phone number's
+    # calling code and/or by the report's currency, but only using whichever
+    # of those is unique to the country, since a signal that several countries
+    # share can't tell them apart:
+    #
+    # - A calling code is only used if no other country has it. NANP countries
+    #   (US, Canada, Jamaica, ...) all share +1, so matching on it would pull
+    #   every US user's reports in when filtering for Jamaica.
+    # - A currency is only used if no other country has it, or if the country's
+    #   calling code can't be used either. Germany and Spain both use EUR, but
+    #   have distinct calling codes (+49 vs +34), so Germany matches on phone
+    #   alone. The US shares both USD and +1, so it falls back to currency,
+    #   which means USD reports from e.g. Ecuador are included too.
+    #
+    # `users.phone_number` is stored sanitized (digits only, no leading "+").
     scope :in_country, ->(alpha2) {
       country = ISO3166::Country[alpha2]
       next none unless country
 
-      where(
-        "reimbursement_reports.currency = :currency OR reimbursement_reports.user_id IN (SELECT id FROM users WHERE phone_number LIKE :calling_code)",
-        currency: country.currency_code,
-        calling_code: "#{country.country_code}%"
-      )
+      by_phone = country.country_code.present? && country_attribute_unique?(country, :country_code)
+      by_currency = country.currency_code.present? && (!by_phone || country_attribute_unique?(country, :currency_code))
+
+      matches = []
+      matches << where(currency: country.currency_code) if by_currency
+      matches << where(user_id: User.where("phone_number LIKE ?", "#{country.country_code}%").select(:id)) if by_phone
+      next none if matches.empty?
+
+      matches.reduce(:or)
     }
+
+    # Whether `country` is the only country with its value for `attribute`.
+    def self.country_attribute_unique?(country, attribute)
+      ISO3166::Country.all.none? { |other| other.alpha2 != country.alpha2 && other.public_send(attribute) == country.public_send(attribute) }
+    end
 
     def self.countries_for_filter
       WIDELY_RECOGNIZED_COUNTRY_CODES.map { |alpha2| [ISO3166::Country[alpha2].common_name, alpha2] }

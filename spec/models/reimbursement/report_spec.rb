@@ -80,6 +80,49 @@ RSpec.describe Reimbursement::Report, type: :model do
     end
   end
 
+  describe ".in_country" do
+    # Phone numbers are stored sanitized (digits only), and the factory's
+    # validation would reject made-up numbers, so write them straight to the DB.
+    def report_for(phone_number:, currency:)
+      user = create(:user)
+      user.update_columns(phone_number:)
+      create(:reimbursement_report, user:, currency:)
+    end
+
+    let!(:us_report) { report_for(phone_number: "14155550123", currency: "USD") }
+    let!(:jamaica_report) { report_for(phone_number: "18765550123", currency: "JMD") }
+    let!(:germany_report) { report_for(phone_number: "4915123456789", currency: "EUR") }
+    let!(:spain_report) { report_for(phone_number: "34612345678", currency: "EUR") }
+    let!(:german_user_usd_report) { report_for(phone_number: "4915198765432", currency: "USD") }
+
+    it "doesn't match on a calling code shared with other countries" do
+      expect(described_class.in_country("JM")).to contain_exactly(jamaica_report)
+    end
+
+    it "matches on the calling code alone when the currency is shared but the calling code isn't" do
+      expect(described_class.in_country("DE")).to contain_exactly(germany_report, german_user_usd_report)
+      expect(described_class.in_country("ES")).to contain_exactly(spain_report)
+    end
+
+    it "falls back to the currency when neither the calling code nor the currency is unique" do
+      expect(described_class.in_country("US")).to contain_exactly(us_report, german_user_usd_report)
+    end
+
+    it "returns nothing for an unknown country" do
+      expect(described_class.in_country("ZZ")).to be_empty
+    end
+  end
+
+  describe ".countries_for_filter" do
+    it "lists every widely recognized country as a [name, alpha2] pair" do
+      countries = described_class.countries_for_filter
+
+      expect(countries.size).to eq(described_class::WIDELY_RECOGNIZED_COUNTRY_CODES.size)
+      expect(countries.map(&:last)).to match_array(described_class::WIDELY_RECOGNIZED_COUNTRY_CODES)
+      expect(countries.map(&:first)).to eq(countries.map(&:first).sort_by { |name| I18n.transliterate(name) })
+    end
+  end
+
   describe "payout method association" do
     let(:user) { create(:user) }
 
