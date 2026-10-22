@@ -95,6 +95,70 @@ RSpec.describe "Stripe Webhook", type: :request do
       end
     end
 
+    context "with a recurring donation's invoice.paid event" do
+      let(:event) { create(:event) }
+      let!(:recurring_donation) do
+        RecurringDonation.create!(event:, name: "Donor", email: "donor@example.com", amount: 10_00, stripe_subscription_id: "sub_test")
+      end
+
+      def invoice_paid(event_id, payment_intent: "pi_test")
+        {
+          id: event_id,
+          object: "event",
+          type: "invoice.paid",
+          data: {
+            object: {
+              id: "in_#{payment_intent}", object: "invoice", subscription: "sub_test", charge: "ch_#{payment_intent}",
+              payment_intent:, amount_due: 10_00, amount_paid: 10_00
+            }
+          }
+        }.to_json
+      end
+
+      def post_webhook(body)
+        post "/stripe/webhook",
+             params: body,
+             headers: { "Stripe-Signature" => stripe_signature(body), "Content-Type" => "application/json" }
+      end
+
+      def fronted_cents
+        rpdt_ids = RawPendingDonationTransaction.where(donation_transaction_id: recurring_donation.donations.ids.map(&:to_s)).ids
+        CanonicalPendingTransaction.where(raw_pending_donation_transaction_id: rpdt_ids, fronted: true).sum(:amount_cents)
+      end
+
+      before do
+        allow(StripeService::Charge).to receive(:update)
+        allow(StripeService::PaymentIntent).to receive(:retrieve) do |args|
+          Stripe::PaymentIntent.construct_from(
+            id: args[:id], object: "payment_intent", status: "succeeded", amount: 10_00, amount_received: 10_00,
+            client_secret: "#{args[:id]}_secret",
+            charges: { data: [{ id: "ch_test", refunded: false }] },
+            latest_charge: {
+              id: "ch_test", object: "charge",
+              balance_transaction: { id: "txn_test", object: "balance_transaction", available_on: 2.days.from_now.to_i, net: 9_41, fee: 59 }
+            }
+          )
+        end
+      end
+
+      it "creates one donation when the same invoice is delivered twice" do
+        post_webhook(invoice_paid("evt_1"))
+        post_webhook(invoice_paid("evt_2"))
+
+        expect(response).to have_http_status(:no_content)
+        expect(recurring_donation.donations.count).to eq(1)
+        expect(fronted_cents).to eq(10_00)
+      end
+
+      it "creates a donation for each invoice" do
+        post_webhook(invoice_paid("evt_1"))
+        post_webhook(invoice_paid("evt_2", payment_intent: "pi_test_2"))
+
+        expect(recurring_donation.donations.count).to eq(2)
+        expect(fronted_cents).to eq(20_00)
+      end
+    end
+
     context "with no Stripe signature" do
       it "returns 400 and does not process the webhook" do
         expect(StripeController.private_method_defined?(:handle_charge_updated)).to be(true)
