@@ -59,5 +59,18 @@ RSpec.describe CardChargeMailer, type: :mailer do
 
       expect { mail.deliver_now }.not_to(change { ActionMailer::Base.deliveries.count })
     end
+
+    it "only lists the reason that actually failed, not the others" do
+      user = create(:user)
+      ledger_item = build_ledger_item(user:, verification_data: { "address_postal_code_check" => "mismatch" })
+
+      mail = described_class.with(ledger_item:).reversed
+
+      expect(mail.body.encoded).to include("didn't match the billing zip code")
+      expect(mail.body.encoded).not_to include("CVC")
+      expect(mail.body.encoded).not_to include("billing address")
+      expect(mail.body.encoded).not_to include("spending limit")
+      expect(mail.body.encoded).not_to include("enough balance")
+    end
   end
 end

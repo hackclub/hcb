@@ -17,25 +17,17 @@
     <% reasons << (capture do %>
       We noticed that the zip code used at <%= @merchant_name %> didn't match the billing zip code on your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %> (<%= @card_charge.stripe_cardholder.address_postal_code %>). Please try again using that zip code.
     <% end) %>
-  <% else %>
-    <% reasons << "Your zip code doesn't match the billing zip code on file" %>
   <% end %>
   <% if @failed_verification_checks.include?("address_line1_check") %>
     <% reasons << (capture do %>
       We noticed that the billing address used at <%= @merchant_name %> didn't match the billing address on your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please try again using your HCB billing address.
     <% end) %>
-  <% else %>
-    <% reasons << "Your billing address doesn't match the one on file" %>
   <% end %>
   <% if @failed_verification_checks.include?("cvc_check") %>
     <% reasons << (capture do %>
       We noticed that the CVC used at <%= @merchant_name %> didn't match your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please try again with the correct CVC.
     <% end) %>
-  <% else %>
-    <% reasons << "Your CVC doesn't match the one on file" %>
   <% end %>
-  <% reasons << "Your organization doesn't have enough balance to cover the purchase" %>
-  <% reasons << "You've hit a spending limit set by your organization manager" %>
 
   <ul class="my-0">
     <% reasons.each do |reason| %>
