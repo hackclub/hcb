@@ -42,9 +42,9 @@ module PendingTransactionEngine
           begin
             included_local_hcb_code_associations = [:receipts, :comments, :canonical_transactions, { canonical_pending_transactions: [:canonical_pending_declined_mapping] }]
             included_local_hcb_code_associations << :tags
-            cpts = CanonicalPendingTransaction.includes([:raw_pending_stripe_transaction,
-                                                         order_by_mapped_at ? :canonical_pending_event_mapping : nil,
-                                                         { local_hcb_code: included_local_hcb_code_associations }])
+            cpts = CanonicalPendingTransaction.preload([:raw_pending_stripe_transaction,
+                                                        order_by_mapped_at ? :canonical_pending_event_mapping : nil,
+                                                        { local_hcb_code: included_local_hcb_code_associations }])
                                               .unsettled
                                               .where(id: canonical_pending_event_mappings.pluck(:canonical_pending_transaction_id))
                                               .order("#{order_by_mapped_at ? "canonical_pending_event_mappings.created_at" : "canonical_pending_transactions.date"} desc, canonical_pending_transactions.id desc")
