@@ -64,7 +64,9 @@ class DisbursementsController < ApplicationController
     base = if admin_signed_in?
              Event.select(:name, :id, :demo_mode, :slug).reorder(Event::CUSTOM_SORT).includes(:plan)
            elsif !sending && @source_event&.plan&.unrestricted_disbursements_enabled?
-             allowed_destination_event_ids = current_user.manageable_events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
+             # Permission to receive is granted by the source plan here, so list every
+             # org the user belongs to (any role), not just the ones they manage.
+             allowed_destination_event_ids = current_user.readable_events.not_hidden.filter_demo_mode(false).select(:id) + Event.indexable.select(:id)
              Event.where(id: allowed_destination_event_ids).select(:name, :id, :demo_mode, :slug).includes(:plan)
            else
              current_user.manageable_events.not_hidden.filter_demo_mode(false)

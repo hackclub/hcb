@@ -165,6 +165,23 @@ RSpec.describe DisbursementsController do
   end
 
   describe "#event_search" do
+    it "lists unlisted destination orgs the user is a member of under an unrestricted-transfer plan" do
+      member = create(:user)
+      source_event = create(:event, plan_type: Event::Plan::SalaryAccount)
+      create(:organizer_position, user: member, event: source_event, role: :manager)
+
+      destination_event = create(:event, name: "Unlisted Club", is_public: false, is_indexable: false)
+      create(:organizer_position, user: member, event: destination_event, role: :member)
+
+      create_session(member, verified: true)
+
+      get(:event_search, params: { source_event_id: source_event.public_id }, format: :json)
+
+      expect(response).to have_http_status(:ok)
+      values = JSON.parse(response.body).map { |o| o["value"] }
+      expect(values).to include(destination_event.public_id)
+    end
+
     it "ranks the exact match first even when substring matches would trim it" do
       admin = create(:user, :make_admin)
       create_session(admin, verified: true)
