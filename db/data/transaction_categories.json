@@ -339,6 +339,9 @@
   "rent": {
     "label": "Rent"
   },
+  "repayment": {
+    "label": "Repayment"
+  },
   "server-hosting": {
     "label": "Server / hosting",
     "stripe_merchant_categories": [
