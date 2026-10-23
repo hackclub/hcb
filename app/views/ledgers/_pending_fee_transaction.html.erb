@@ -2,22 +2,34 @@
 
 <% if params[:page].to_i <= 1 && @direction != "revenue" && ledger.event_id.present? && ledger.fronted_fee_balance_cents > 0 %>
   <%# @direction != revenue is in case the user has a revenue-only filter applied %>
+  <% date = format_date(Time.now) %>
+  <% badge_class = "bg-transparent border border-dashed border-muted m0 mr1" %>
   <tr class="transaction transaction--negative muted">
     <td class="transaction__icon">
       <div class="tooltipped tooltipped--e" aria-label="Fiscal sponsorship fee">
         <%= inline_icon "bank-icon", size: 32 %>
       </div>
     </td>
-    <td><%= format_date Time.now %></td>
+    <td class="hidden sm:table-cell"><%= date %></td>
     <td class="transaction__memo transaction__memo--fluid">
-      <%= badge_for "Pending", class: "bg-transparent border border-dashed border-muted m0 mr1" %>
-      Fiscal sponsorship
+      <div>
+        <div class="flex-auto min-w-0">
+          <div class="flex items-center gap-[1ch] min-w-0">
+            <%= badge_for "Pending", class: "#{badge_class} hidden sm:inline-flex" %>
+            Fiscal sponsorship
+          </div>
+
+          <%= render layout: "ledger/items/mobile_subtitle", locals: { date: } do %>
+            <%= badge_for "Pending", class: badge_class %>
+          <% end %>
+        </div>
+      </div>
     </td>
     <td class="nowrap">
       <span class="flex items-center justify-end">
         <%= render_money(-1 * ledger.fronted_fee_balance_cents) %>
       </span>
     </td>
-    <td></td>
+    <td class="hidden sm:table-cell"></td>
   </tr>
 <% end %>
