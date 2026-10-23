@@ -3,6 +3,7 @@
 module Api
   module V4
     class EventsController < ApplicationController
+      before_action -> { require_admin_scope!(:write) }, only: [:freeze]
       before_action :set_event, except: [:index, :create_sub_organization]
       skip_after_action :verify_authorized, only: [:index]
 
@@ -52,6 +53,15 @@ module Api
       end
 
       require_oauth2_scope "organizations:read", :show
+
+      def freeze
+        authorize @event
+        @event.update!(financially_frozen: true)
+
+        render :show
+      end
+
+      require_oauth2_scope "admin:write", :freeze
 
       def followers
         authorize @event, :show_in_v4?
