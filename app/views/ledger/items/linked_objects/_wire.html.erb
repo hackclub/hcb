@@ -81,6 +81,7 @@
         <% end %>
         <%= render_money ledger_item.amount_cents.abs %>
       </p>
+      <%= render "ledger/items/repayments", ledger_item: %>
     </section>
   </turbo-frame>
 
