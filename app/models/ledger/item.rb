@@ -48,7 +48,7 @@ class Ledger
     self.table_name = "ledger_items"
 
     include PgSearch::Model
-    pg_search_scope :search_memo, against: [:memo], ranked_by: "ledger_items.datetime"
+    pg_search_scope :search_memo, against: [:memo], using: { tsearch: { prefix: true } }, ranked_by: "ledger_items.datetime"
 
     include Hashid::Rails
     include PublicIdentifiable

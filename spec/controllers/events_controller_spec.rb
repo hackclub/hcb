@@ -1032,6 +1032,18 @@ RSpec.describe EventsController do
       expect(response.body).to include("-$5.00")
     end
 
+    [:q, :search].each do |search_param|
+      it "omits the pending fee when searching with #{search_param}" do
+        event.fees.create!(memo: "Manually charged fee", amount_cents_as_decimal: 500, event_sponsorship_fee: 0, reason: :manual)
+
+        get(:ledger, params: { event_id: event.slug, search_param => "A transaction" })
+
+        expect(response).to have_http_status(:ok)
+        expect(Nokogiri::HTML5(response.body).css("td.transaction__memo").map(&:text).join).to include("A transaction")
+        expect(response.body).not_to include(fee_row)
+      end
+    end
+
     it "shows nothing when there's no fee outstanding" do
       get(:ledger, params: { event_id: event.slug })
 
