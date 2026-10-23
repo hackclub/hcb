@@ -947,6 +947,17 @@ RSpec.describe EventsController do
       expect(images).to eq(["https://hcb-og.hackclub.com/api/embeds/#{event.slug}"])
     end
 
+    it "gives Slack's link expander the square Open Graph image" do
+      event = create(:event, is_public: true)
+      request.headers["User-Agent"] = "Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)"
+
+      get(:show, params: { id: event.slug })
+
+      page = Nokogiri::HTML5(response.body)
+      expect(page.at_css("meta[property='og:image']")["content"]).to eq("https://hcb-og.hackclub.com/api/square-embed/#{event.slug}")
+      expect(page.at_css("meta[name='twitter:image']")["content"]).to eq("https://hcb-og.hackclub.com/api/square-embed/#{event.slug}")
+    end
+
     context "when the viewer is an auditor" do
       it "renders the mission statement when the event has a description" do
         admin = create(:user, :make_admin)
