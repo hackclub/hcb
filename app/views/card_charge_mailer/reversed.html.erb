@@ -28,6 +28,9 @@
       We noticed that the CVC used at <%= @merchant_name %> didn't match your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please try again with the correct CVC.
     <% end) %>
   <% end %>
+  <% if @insufficient_balance %>
+    <% reasons << "Your organization doesn't have enough balance to cover the purchase" %>
+  <% end %>
 
   <ul class="my-0">
     <% reasons.each do |reason| %>
