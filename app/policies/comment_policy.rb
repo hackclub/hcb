@@ -61,6 +61,12 @@ class CommentPolicy < ApplicationPolicy
       user_list = record.commentable.event.users
     end
 
+    if record.commentable.is_a?(Payment)
+      user_list += record.commentable.legal_entity&.users || []
+    elsif record.commentable.is_a?(HcbCode) && record.commentable.payment.present?
+      user_list += record.commentable.payment.legal_entity&.users || []
+    end
+
     if record.commentable.respond_to?(:author) && record.commentable.author.present?
       user_list += [record.commentable.author]
     end
