@@ -1,9 +1,10 @@
+<% invalid_submission = sponsor.errors.any? || invoice.errors.any? %>
 <% if @event.demo_mode? %>
   <div class="muted mt-6">
     Once your organization is activated, you'll be able to create and send invoices
   </div>
 <% else %>
-  <%= form_with(model: invoice, url: event_invoices_path(@event), local: true, data: { controller: "invoice-form" }, html: { "x-data" => "{ amount: null }" }) do |form| %>
+  <%= form_with(model: invoice, url: event_invoices_path(@event), local: true, data: { controller: "invoice-form", invoice_form_invalid_value: invalid_submission }, html: { "x-data" => "{ amount: null }" }) do |form| %>
     <div data-controller="tabs" data-tabs-default-tab-value="sponsor">
       <div class="flex mb-4 gap-5">
         <div
@@ -38,15 +39,16 @@
             id="invoice_sponsor_id"
             class="max-w-full"
             <%= "disabled hidden" if @event.sponsors.empty? %>>
-            <option value="default" selected disabled>Select…</option>
-            <option value="">+⠀New sponsor…</option>
-            <% @event.sponsors.select(:id, :name, :contact_email, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country).each do |sponsor| %>
-              <option value="<%= sponsor.id %>" data-json="<%= sponsor.to_json %>"><%= sponsor.name %></option>
+            <option value="default" <%= "selected" unless invalid_submission %> disabled>Select…</option>
+            <option value="" <%= "selected" if invalid_submission && sponsor.id.blank? %>>+⠀New sponsor…</option>
+            <% @event.sponsors.select(:id, :name, :contact_email, :address_line1, :address_line2, :address_city, :address_state, :address_postal_code, :address_country).each do |option_sponsor| %>
+              <option value="<%= option_sponsor.id %>" data-json="<%= option_sponsor.to_json %>" <%= "selected" if invalid_submission && sponsor.id == option_sponsor.id %>><%= option_sponsor.name %></option>
             <% end %>
           </select>
         </div>
         <details
           id="sponsor-collapsible"
+          <%= "open" if invalid_submission %>
           data-invoice-form-target="sponsorCollapsible">
           <summary class="list-none select-none flex !hidden items-center bg-gray-100 hover:bg-gray-200 active:bg-gray-300 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:active:bg-neutral-600 transition-colors px-7 p-4" data-invoice-form-target="sponsorPreview">
             <div class="flex flex-col">
@@ -55,7 +57,7 @@
             </div>
             <span class="muted ml-auto">Edit</span>
           </summary>
-          <%= form.fields_for :sponsor_attributes do |form| %>
+          <%= form.fields_for :sponsor_attributes, sponsor do |form| %>
             <div data-invoice-form-target="sponsorForm">
               <p id="sponsor-warning" class="flex items-center info leading-[1.25]" hidden>
                 <%= inline_icon "important", size: 32, class: "mr1" %>
@@ -70,7 +72,9 @@
               <div class="field">
                 <%= form.label :contact_email, "Contact email" %>
                 <span class="muted mb-2 block text-sm">Email you'll send this invoice to</span>
-                <%= form.email_field :contact_email, placeholder: "peter.gregory@ravigacapital.com", required: true, disabled: @event.demo_mode? %>
+                <%= form.email_field :contact_email, placeholder: "peter.gregory@ravigacapital.com", required: true, disabled: @event.demo_mode?,
+                                      pattern: "[^@\\s]+@[^@\\s]+\\.[A-Za-z][A-Za-z0-9-]*",
+                                      title: "Include the full domain, e.g. peter.gregory@ravigacapital.com" %>
               </div>
               <%= form.label :address_line1, "Street address" %>
               <div class="flex gap-2">
@@ -144,7 +148,7 @@
         </div>
         <div class="field">
           <%= form.label :due_date %>
-          <%= form.date_field :due_date, min: 3.days.from_now, value: 30.days.from_now, class: "!max-w-full", disabled: @event.demo_mode? %>
+          <%= form.date_field :due_date, min: 3.days.from_now, value: invoice.due_date || 30.days.from_now, class: "!max-w-full", disabled: @event.demo_mode? %>
         </div>
         <div class="actions tooltipped tooltipped--n inline-block" aria-label="Your invoice will immediately be emailed to the sponsor">
           <%= form.submit "Send invoice now", disabled: !organizer_signed_in? || @event.demo_mode? %>

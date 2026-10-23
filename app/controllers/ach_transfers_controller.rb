@@ -2,6 +2,7 @@
 
 class AchTransfersController < ApplicationController
   include SetEvent
+  include ResolvesPaymentRecipient
 
   before_action :set_ach_transfer, except: [:new, :create, :validate_routing_number]
   before_action :set_event, only: [:new, :create]
@@ -142,7 +143,7 @@ class AchTransfersController < ApplicationController
       permitted_params << :scheduled_on
     end
 
-    params.require(:ach_transfer).permit(*permitted_params)
+    @ach_transfer_params ||= scope_payment_recipient!(params.require(:ach_transfer).permit(*permitted_params))
   end
 
   def ach_transfer_update_params
