@@ -1,4 +1,4 @@
-<%# locals: (form:, user:, payout_method:, editing: nil, embedded: false, title: "How would you like to be reimbursed?") %>
+<%# locals: (form:, user:, payout_method:, editing: nil, embedded: false, title: "How would you like to be reimbursed?", attempted: nil) %>
 <% selected_type = payout_method&.class&.name %>
 <% pm_is = ->(klass) { payout_method.instance_of?(klass) } %>
 <% detail_for = ->(klass) { pm_is.call(klass) ? payout_method : klass.new } %>
@@ -21,7 +21,7 @@
 
 <div class="field <%= "hidden" unless editing || selected_type.present? %>" data-behavior="payout_method_name_input">
   <%= form.label :payout_method_name, "Nickname (optional)" %>
-  <%= form.text_field :payout_method_name, value: editing&.name, placeholder: "e.g. My Chase Bank Account", maxlength: 100 %>
+  <%= form.text_field :payout_method_name, value: (editing || attempted)&.name, placeholder: "e.g. My Chase Bank Account", maxlength: 100 %>
   <span class="muted">Give this method a name to tell it apart from your others.</span>
 </div>
 
