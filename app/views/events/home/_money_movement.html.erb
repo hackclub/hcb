@@ -34,7 +34,7 @@
         <% end %>
 
         <% if organizer_signed_in? %>
-          <% popover_enabled = popovers_enabled? && (@event || transaction.local_hcb_code.event).present? %>
+          <% popover_enabled = (@event || transaction.local_hcb_code.event).present? %>
           <% data_attributes = popover_enabled ? hcb_code_popover_data(transaction.local_hcb_code, event: @event) : {} %>
           <%= link_to url_for(transaction.local_hcb_code),
                 class: "homepage-transaction #{"clickable" if popover_enabled}",
@@ -82,7 +82,7 @@
         <% end %>
 
         <% if organizer_signed_in? %>
-          <% popover_enabled = popovers_enabled? && (@event || transaction.local_hcb_code.event).present? %>
+          <% popover_enabled = (@event || transaction.local_hcb_code.event).present? %>
           <% link_options = { class: "homepage-transaction #{"clickable" if popover_enabled}" } %>
           <% link_options[:data] = hcb_code_popover_data(transaction.local_hcb_code, event: @event) if popover_enabled %>
           <%= link_to url_for(transaction.local_hcb_code), link_options do %>
