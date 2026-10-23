@@ -39,7 +39,7 @@ module SessionsHelper
         user.session_validity_preference
       end
     expiration_at = session_duration.seconds.from_now
-    cookies.encrypted[:session_token] = { value: session_token, expires: User::Session::MAX_SESSION_DURATION.from_now, httponly: true }
+    cookies.encrypted[:session_token] = { value: session_token, expires: (User::Session::MAX_SESSION_DURATION + User::Session::MAX_SESSION_EXTENSION).from_now, httponly: true }
     cookies.encrypted[:signed_user] = user.signed_id(expires_in: 2.months, purpose: :signin_avatar)
     user_session = user.user_sessions.build(
       session_token:,
@@ -74,7 +74,7 @@ module SessionsHelper
         (user || User.new).session_validity_preference
       end
     expiration_at = session_duration.seconds.from_now
-    cookies.encrypted[:session_token] = { value: session_token, expires: User::Session::MAX_SESSION_DURATION.from_now, httponly: true }
+    cookies.encrypted[:session_token] = { value: session_token, expires: (User::Session::MAX_SESSION_DURATION + User::Session::MAX_SESSION_EXTENSION).from_now, httponly: true }
     cookies.encrypted[:signed_user] = user.signed_id(expires_in: 2.months, purpose: :signin_avatar) if user.present?
     user_session = User::Session.build(
       session_token:,
