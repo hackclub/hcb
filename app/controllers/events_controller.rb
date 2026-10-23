@@ -677,7 +677,14 @@ class EventsController < ApplicationController
       relation = relation.succeeded_and_not_refunded
     end
 
-    relation = relation.search_name(params[:q]) if params[:q].present?
+    if params[:q].present?
+      relation = relation.search_name(params[:q])
+      # An anonymous donor's name and email are still stored, so a search that
+      # matched them would reveal who they are to anyone who can see this page.
+      # Only viewers who can already see anonymous donors' names (the view
+      # gates them on `organizer_signed_in?` too) get those matches.
+      relation = relation.where(anonymous: false) unless organizer_signed_in?
+    end
 
     page = (params[:page] || 1).to_i
     per_page = safe_per(DONATIONS_PER_PAGE)
