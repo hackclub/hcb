@@ -8,7 +8,7 @@ class OrganizerPositionInvitesMailerPreview < ActionMailer::Preview
 
   def accepted
     @invite = OrganizerPositionInvite.last
-    OrganizerPositionInvitesMailer.with(invite: @invite).accepted
+    OrganizerPositionInvitesMailer.with(invite: @invite, announcement: Announcement.last).accepted
   end
 
 end

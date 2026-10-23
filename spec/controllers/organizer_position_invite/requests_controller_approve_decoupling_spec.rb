@@ -14,6 +14,11 @@ RSpec.describe OrganizerPositionInvite::RequestsController, type: :controller do
 
   describe "POST #approve" do
     let(:event) { create(:event) }
+
+    before do
+      # Accepting an invite creates a system-authored "new team member" announcement.
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+    end
     let(:manager) do
       m = create(:user, verified: true)
       create(:organizer_position, user: m, event:, role: :manager)

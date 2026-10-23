@@ -391,7 +391,8 @@ class Donation < ApplicationRecord
     end
 
     if reached_donation_goal?
-      EventMailer.with(event:).donation_goal_reached.deliver_later
+      announcement = Announcement::Templates::DonationGoalReached.new(event:, author: User.system_user).create
+      EventMailer.with(event:, announcement:).donation_goal_reached.deliver_later
     end
   end
 
