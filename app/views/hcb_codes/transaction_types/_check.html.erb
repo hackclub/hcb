@@ -71,6 +71,7 @@
       <%= render_money @hcb_code.check.amount %>
     </p>
 
+    <%= render "ledger/items/repayments", ledger_item: @hcb_code.ledger_item if @hcb_code.ledger_item %>
     <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
 </article>
