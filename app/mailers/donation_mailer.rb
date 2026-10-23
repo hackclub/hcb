@@ -7,6 +7,9 @@ class DonationMailer < ApplicationMailer
   def donor_receipt
     @initial_recurring_donation = @donation.initial_recurring_donation? && !@donation.recurring_donation&.migrated_from_legacy_stripe_account?
 
+    receipt_kind = @donation.tax_deductible ? "Donation" : "Payment"
+    attachments["Hack Club #{receipt_kind} Receipt (#{@donation.event.name}).pdf"] = { mime_type: "application/pdf", content: receipt_pdf }
+
     mail to: @donation.email, reply_to: @donation.event.donation_reply_to_email.presence, subject: if @donation.recurring?
                                                                                                      "Receipt for your #{@donation.tax_deductible ? "donation" : "payment"} to #{@donation.event.name} — #{@donation.created_at.strftime("%B %Y")}"
                                                                                                    else
@@ -34,6 +37,11 @@ class DonationMailer < ApplicationMailer
 
   def set_emails
     @emails = @donation.event.organizer_contact_emails
+  end
+
+  def receipt_pdf
+    ApplicationController.new.tap { |c| c.instance_variable_set(:@donation, @donation) }
+                         .render_to_string(pdf: "receipt", template: "donations/receipt", encoding: "UTF-8", formats: :pdf, page_height: "11in", page_width: "8.5in")
   end
 
 end
