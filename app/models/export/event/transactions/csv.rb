@@ -78,7 +78,7 @@ class Export
               ct.local_hcb_code.memo,
               amount_cents,
               format("%.2f", amount_cents / 100.0),
-              ct.local_hcb_code.tags.filter { |tag| tag.event_id == event_id }.pluck(:label).join(", "),
+              (ct.local_hcb_code.ledger_item&.tags || []).filter { |tag| tag.event_id == event_id }.pluck(:label).join(", "),
               public_only ? "" : ct.local_hcb_code.comments.not_admin_only.pluck(:content).join("\n\n"),
               ct.local_hcb_code.author&.public_id || "",
               ct.local_hcb_code.author&.name || "",
