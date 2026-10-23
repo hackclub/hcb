@@ -189,7 +189,7 @@ group :development do
   gem "bullet"
 end
 
-gem "jbuilder", "~> 2.13"
+gem "jbuilder", "~> 2.15"
 
 gem "ledgerjournal"
 gem "doorkeeper", "~> 5.8"
