@@ -298,6 +298,12 @@ class User < ApplicationRecord
   scope :active_teenager, -> { last_seen_within(30.days.ago).where(teenager: true) }
   def active? = last_seen_at && (last_seen_at >= 30.days.ago)
 
+  # true if this user has any admin-only comments left on their profile.
+  # relies on `comments` being preloaded to avoid N+1s when checked in a loop.
+  def admin_comments?
+    comments.to_a.any?(&:admin_only?)
+  end
+
   # an auditor is an admin who can only view things.
   # auditor? takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
@@ -683,6 +689,11 @@ class User < ApplicationRecord
 
   def manageable_events
     @manageable_events ||= accessible_events(roles: ["manager"])
+  end
+
+  # Organizations this user can send an HCB transfer from.
+  def disbursement_source_events
+    manageable_events.not_hidden.not_demo_mode
   end
 
   def reimbursement_event_options
