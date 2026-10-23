@@ -519,7 +519,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :ach_transfers, only: [:show] do
+  resources :ach_transfers, only: [:show, :edit, :update] do
     member do
       post "cancel"
       post "toggle_speed"
