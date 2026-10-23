@@ -176,6 +176,12 @@ class Ledger
     # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
     # refresh! should not update any non-caching columns
     def refresh!
+      # Nothing to refresh on an item that isn't in the database, and save!
+      # would raise. Callbacks can still reach one: destroying a Ledger::Mapping
+      # alongside its item (see #absorb) runs the mapping's after_commit against
+      # the already-destroyed item.
+      return unless persisted?
+
       # `after_create :refresh!` runs before any ledger mappings exist, which
       # memoizes `primary_ledger` as nil on this instance. Reset the association
       # caches so refresh! always recomputes from current database state (e.g.
@@ -224,6 +230,49 @@ class Ledger
       end
 
       refresh!
+    end
+
+    # Merges another ledger item into this one: its canonical transactions and
+    # canonical pending transactions are moved here, and the now-empty item is
+    # destroyed. This is the "merger of ledger items" described in
+    # `assign_linked_object!`, e.g. a CT that arrived on its own item before
+    # being matched to the CPT that already had one.
+    #
+    # The absorbed item must not have a linked object: a linked object is
+    # assigned once and never changed, so there is nothing sensible to do with
+    # it (and this item may already have its own).
+    def absorb(other)
+      raise ArgumentError, "a ledger item cannot absorb itself" if other == self
+
+      # Work from the database, not from whatever this instance has cached:
+      # creating an item loads its (then empty) transaction associations, so a
+      # stale instance would look like it has nothing to move.
+      other.reload
+
+      if other.linked_object_type.present?
+        raise ArgumentError, "cannot absorb ledger item #{other.id}: it has a linked object (#{other.linked_object_type}##{other.linked_object_id})"
+      end
+
+      ActiveRecord::Base.transaction do
+        # Each move goes through the usual CT/CPT callbacks: both items are
+        # touched (and so mapped and refreshed) as the transaction changes
+        # hands, and PaperTrail records the change.
+        other.canonical_transactions.each { |ct| ct.update!(ledger_item: self) }
+        other.canonical_pending_transactions.each { |cpt| cpt.update!(ledger_item: self) }
+
+        # Those touches refreshed the absorbed item's row, which is now empty.
+        # Reload so the callbacks on its mappings' destruction see that rather
+        # than the pre-move state cached on this instance.
+        other.reload
+
+        # Mappings reference the item with a plain foreign key, so they have to
+        # go first. Anything else still referencing the item (e.g. an audit
+        # task) makes destroy! raise and rolls the whole merge back.
+        other.ledger_mappings.destroy_all
+        other.destroy!
+      end
+
+      self
     end
 
     def humanized_type
