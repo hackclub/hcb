@@ -68,15 +68,15 @@
           <%= form.label :invite_message, "Invitation message", class: "bold" %>
           <%= form.text_area :invite_message, placeholder: "We’re excited to see your expenses…" %>
         </div>
-        <% if @event.plan.assigned_reimbursement_reviewer_required? %>
+        <% unless @event.reviewer_selection_disabled? %>
           <% eligible_reviewers = Reimbursement::Report.new(event: @event).eligible_reviewers %>
           <div id="reimbursement_report_reviewer_wrapper" class="field">
-            <%= form.label :reviewer_id, "Reviewer", class: "bold" %>
+            <%= form.label :reviewer_id, @event.reviewer_selection_required? ? "Reviewer" : "Reviewer (optional)", class: "bold" %>
             <%= form.collection_select :reviewer_id,
               eligible_reviewers,
               :public_id, :name,
-              { prompt: "Select a reviewer...", selected: (current_user.public_id if eligible_reviewers.include?(current_user)) },
-              { required: true, disabled: true } %>
+              { selected: (current_user.public_id if eligible_reviewers.include?(current_user)), **(@event.reviewer_selection_required? ? { prompt: "Select a reviewer..." } : { include_blank: "No preference" }) },
+              { required: @event.reviewer_selection_required?, disabled: true } %>
           </div>
         <% end %>
       </div>

@@ -66,6 +66,32 @@ RSpec.describe Reimbursement::ReportsController do
       expect(header_badges(response.body)).to eq(["Review requested from Fiona H"])
     end
 
+    it "asks submitters for a reviewer based on the organization's setting" do
+      event = create(:event)
+      member = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      report = create(:reimbursement_report, user: member, event:)
+      create_session(member, verified: true)
+
+      reviewer_selects = lambda do
+        get(:show, params: { id: report.id })
+        Nokogiri::HTML5(response.body).css('select[name="reviewer_id"]')
+      end
+
+      expect(reviewer_selects.call).to be_empty
+
+      event.update!(reimbursement_reviewer_selection: :optional)
+      selects = reviewer_selects.call
+      expect(selects).not_to be_empty
+      expect(selects.map { |select| select["required"] }).to all(be_nil)
+      expect(selects.map { |select| select.at_css("option").text }).to all(eq("No preference"))
+
+      event.update!(reimbursement_reviewer_selection: :required)
+      selects = reviewer_selects.call
+      expect(selects).not_to be_empty
+      expect(selects.map { |select| select["required"] }).to all(eq("required"))
+    end
+
     it "shows the status badge when no reviewer is assigned" do
       creator = create(:user)
       event = create(:event)
@@ -513,6 +539,44 @@ RSpec.describe Reimbursement::ReportsController do
 
       expect(flash[:error]).to match(/not authorized/i)
       expect(report.reload.legal_entity_payout_method).to eq(default_pm)
+    end
+  end
+
+  describe "#submit" do
+    it "lets submitters pick any manager, including ones who opted out of reviewing" do
+      event = create(:event, reimbursement_reviewer_selection: :required)
+      member = create(:user)
+      other_member = create(:user)
+      opted_out = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      create(:organizer_position, user: other_member, event:, role: :member)
+      create(:organizer_position, user: opted_out, event:, role: :manager)
+      event.reimbursement_reviewer_opt_outs.create!(user: opted_out)
+      report = create(:reimbursement_report, user: member, event:)
+
+      create_session(member, verified: true)
+
+      post(:submit, params: { report_id: report.id, reviewer_id: other_member.public_id })
+
+      expect(flash[:error]).to eq("The selected reviewer is not eligible for this report.")
+      expect(report.reload.reviewer).to be_nil
+
+      post(:submit, params: { report_id: report.id, reviewer_id: opted_out.public_id })
+
+      expect(flash[:error]).not_to eq("The selected reviewer is not eligible for this report.")
+    end
+
+    it "lets submitters skip picking a reviewer when it's optional" do
+      event = create(:event, reimbursement_reviewer_selection: :optional)
+      member = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      report = create(:reimbursement_report, user: member, event:)
+
+      create_session(member, verified: true)
+
+      post(:submit, params: { report_id: report.id, reviewer_id: "" })
+
+      expect(response).to redirect_to(reimbursement_report_path(report))
     end
   end
 

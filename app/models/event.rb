@@ -30,6 +30,7 @@
 #  public_message                               :text
 #  public_reimbursement_page_enabled            :boolean          default(FALSE), not null
 #  public_reimbursement_page_message            :text
+#  reimbursement_reviewer_selection             :integer          default(0), not null
 #  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
 #  risk_level                                   :integer
 #  short_name                                   :string
@@ -424,6 +425,8 @@ class Event < ApplicationRecord
   has_many :event_follows, class_name: "Event::Follow", dependent: :destroy
   has_many :followers, through: :event_follows, source: :user
 
+  has_many :reimbursement_reviewer_opt_outs, class_name: "Event::ReimbursementReviewerOptOut", dependent: :destroy
+
   has_many :fee_relationships
   has_many :transactions, through: :fee_relationships, source: :t_transaction
 
@@ -641,6 +644,12 @@ class Event < ApplicationRecord
     moderate: 2,
     high: 3,
   }, suffix: :risk_level
+
+  enum :reimbursement_reviewer_selection, {
+    disabled: 0,
+    optional: 1,
+    required: 2,
+  }, prefix: :reviewer_selection
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, event_id: proc { |controller, record| record.id }, only: [:create]
@@ -968,6 +977,30 @@ class Event < ApplicationRecord
 
   def public_reimbursement_page_available?
     public_reimbursement_page_enabled && plan.reimbursements_enabled? && !financially_frozen?
+  end
+
+  def eligible_reimbursement_reviewers
+    User.where(id: ancestor_organizer_positions.manager_access.select(:user_id))
+  end
+
+  # Managers who review reports without an assigned reviewer. Opt-outs are
+  # stored instead of opt-ins, so new managers join automatically.
+  def reimbursement_reviewers
+    eligible_reimbursement_reviewers.where.not(id: reimbursement_reviewer_opt_outs.select(:user_id))
+  end
+
+  def reimbursement_reviewer_ids
+    reimbursement_reviewers.ids
+  end
+
+  def reimbursement_reviewer_ids=(ids)
+    ids = ids.compact_blank.map(&:to_i)
+    opted_out_ids = eligible_reimbursement_reviewers.where.not(id: ids).ids
+
+    reimbursement_reviewer_opt_outs.where.not(user_id: opted_out_ids).destroy_all
+    (opted_out_ids - reimbursement_reviewer_opt_outs.pluck(:user_id)).each do |user_id|
+      reimbursement_reviewer_opt_outs.create!(user_id:)
+    end
   end
 
   def short_name(length: MAX_SHORT_NAME_LENGTH)

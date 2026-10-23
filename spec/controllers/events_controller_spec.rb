@@ -257,6 +257,26 @@ RSpec.describe EventsController do
       expect(page.css("#tags_settings input[name='label'][disabled]")).to be_empty
       expect(page.css("#tags_settings a[disabled]")).to be_empty
     end
+
+    it "shows every manager as a reimbursement reviewer unless they opted out" do
+      manager = create(:user, full_name: "Morgan Manager")
+      other_manager = create(:user, full_name: "Avery Lee")
+      event = create(:event)
+      create(:organizer_position, user: manager, event:, role: :manager)
+      create(:organizer_position, user: other_manager, event:, role: :manager)
+      create_session(manager, verified: true)
+
+      checked_reviewers = lambda do
+        get(:edit, params: { id: event.slug, tab: "reimbursements" })
+        Nokogiri::HTML5(response.body).css("#reimbursement_reviewer_options input[type=checkbox][checked]").map { |box| box["value"].to_i }
+      end
+
+      expect(checked_reviewers.call).to contain_exactly(manager.id, other_manager.id)
+
+      event.reimbursement_reviewer_opt_outs.create!(user: manager)
+
+      expect(checked_reviewers.call).to contain_exactly(other_manager.id)
+    end
   end
 
   describe "#update" do
@@ -271,6 +291,56 @@ RSpec.describe EventsController do
             })
 
       expect(event.config.reload.subevent_name_prefix).to eq("Athena Award — ")
+    end
+
+    it "stores managers switched off as reimbursement reviewer opt-outs, so new managers are included" do
+      manager = create(:user)
+      other_manager = create(:user)
+      member = create(:user)
+      event = create(:event)
+      create(:organizer_position, user: manager, event:, role: :manager)
+      create(:organizer_position, user: other_manager, event:, role: :manager)
+      create(:organizer_position, user: member, event:, role: :member)
+      create_session(manager, verified: true)
+
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_ids: ["", other_manager.id, member.id] } })
+
+      expect(event.reload.reimbursement_reviewers).to contain_exactly(other_manager)
+
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_ids: [""] } })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(controller.instance_variable_get(:@event).errors.full_messages).to eq(["Select at least one reviewer"])
+      expect(event.reload.reimbursement_reviewers).to contain_exactly(other_manager)
+
+      new_manager = create(:user)
+      create(:organizer_position, user: new_manager, event:, role: :manager)
+
+      expect(event.reimbursement_reviewers).to contain_exactly(other_manager, new_manager)
+
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_ids: ["", manager.id, other_manager.id, new_manager.id] } })
+
+      expect(event.reimbursement_reviewer_opt_outs).to be_empty
+    end
+  end
+
+  describe "#reimbursements" do
+    render_views
+
+    it "only asks for a reviewer when inviting someone if the organization lets submitters pick one" do
+      manager = create(:user)
+      event = create(:event)
+      create(:organizer_position, user: manager, event:, role: :manager)
+      create_session(manager, verified: true)
+
+      get(:reimbursements, params: { event_id: event.slug })
+
+      expect(response.body).not_to include("reimbursement_report_reviewer_wrapper")
+
+      event.update!(reimbursement_reviewer_selection: :optional)
+      get(:reimbursements, params: { event_id: event.slug })
+
+      expect(response.body).to include("reimbursement_report_reviewer_wrapper")
     end
   end
 
