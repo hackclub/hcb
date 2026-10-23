@@ -144,7 +144,7 @@
                 <%= inline_icon "info", size: 18 %>
               </div>
             </div>
-            <div class="flex gap-2 onboarding" x-on:change="minor = new Date() - new Date([...$el.children].map(c => c.selectedOptions[0].label).join(' ')) < 568_025_136_000">
+            <div class="flex gap-2 onboarding" x-on:change="minor = $isMinor($el)">
               <%= form.date_select :birthday,
                                     { start_year: Date.today.year,
                                       end_year: Date.today.year - 100,
