@@ -108,6 +108,10 @@ class LegalEntity
         )
       end
 
+      def fee_reason
+        "Wire transfers under $500 incur a $25 fee"
+      end
+
     end
 
   end
