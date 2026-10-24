@@ -43,7 +43,10 @@ csp = {
   form_action: ["'self'"],
   frame_ancestors: ["'self'"], # donation pages relax this per-action
 
-  script_src: ["'self'"] + %w[
+  # `'wasm-unsafe-eval'` permits WebAssembly compilation and nothing else; it does
+  # not bring back `eval` or `new Function`. HCB Wrapped reaches `long` through
+  # `fast-shuffle`, which compiles a small module when it is imported.
+  script_src: ["'self'", "'wasm-unsafe-eval'"] + %w[
     https://js.stripe.com https://*.js.stripe.com https://m.stripe.network
     https://cdn.plaid.com
     https://docuseal.com https://cdn.docuseal.com
