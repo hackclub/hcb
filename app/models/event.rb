@@ -30,7 +30,7 @@
 #  public_message                               :text
 #  public_reimbursement_page_enabled            :boolean          default(FALSE), not null
 #  public_reimbursement_page_message            :text
-#  reimbursement_reviewer_selection             :integer          default(0), not null
+#  reimbursement_reviewer_selection             :string           default("disabled"), not null
 #  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
 #  risk_level                                   :integer
 #  short_name                                   :string
@@ -643,9 +643,9 @@ class Event < ApplicationRecord
   }, suffix: :risk_level
 
   enum :reimbursement_reviewer_selection, {
-    disabled: 0,
-    optional: 1,
-    required: 2,
+    disabled: "disabled",
+    optional: "optional",
+    required: "required",
   }, prefix: :reviewer_selection
 
   include PublicActivity::Model
