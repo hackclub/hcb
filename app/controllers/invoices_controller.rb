@@ -66,6 +66,11 @@ class InvoicesController < ApplicationController
       return stream_invoices_csv(relation)
     end
 
+    if request.format.json?
+      authorize @event, :export_invoices?
+      return stream_invoices_json(relation)
+    end
+
     @invoices = relation.includes(:sponsor).page(params[:page]).per(safe_per(25))
 
     @sponsor = Sponsor.new(event: @event)
@@ -255,6 +260,16 @@ class InvoicesController < ApplicationController
     response.status = 200
 
     self.response_body = ::InvoiceService::Export::Csv.new(invoices:, by_sponsor:).run
+  end
+
+  def stream_invoices_json(invoices)
+    headers["Content-Type"] = "application/json"
+    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_invoices_#{Time.now.strftime("%Y%m%d")}.json"
+    set_streaming_headers
+
+    response.status = 200
+
+    self.response_body = ::InvoiceService::Export::Json.new(invoices:).run
   end
 
   def filter_options

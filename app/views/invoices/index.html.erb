@@ -10,20 +10,20 @@
     </span>
 
     <% if policy(@event).export_invoices? %>
-      <% export_params = request.query_parameters.except("page", "report").merge(format: :csv) %>
+      <% export_params = request.query_parameters.except("page", "report") %>
       <div class="!ml-0 sm:!ml-auto" data-controller="menu" data-menu-placement-value="bottom-end">
-        <button type="button"
-                class="pop menu__toggle tooltipped tooltipped--s"
-                aria-label="Download CSV export"
-                data-menu-target="toggle"
-                data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
-          <%= inline_icon "download", size: 28 %>
+        <button
+          type="button"
+          class="btn menu__toggle overflow-visible"
+          data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown"
+          data-menu-target="toggle">
+            <%= inline_icon "download", size: 16 %>
+            Export
         </button>
         <div class="menu__content menu__content--2 h5" data-menu-target="content">
-          <span class="muted text-sm px-2">CSV</span>
-          <div class="menu__divider"></div>
-          <%= link_to "Invoices", event_invoices_path(@event, export_params), data: { turbo: false } %>
-          <%= link_to "Totals by sponsor", event_invoices_path(@event, export_params.merge(report: "sponsor_totals")), data: { turbo: false } %>
+          <%= link_to "Export invoices (CSV)", event_invoices_path(@event, export_params.merge(format: :csv)), data: { turbo: false } %>
+          <%= link_to "Export invoices (JSON)", event_invoices_path(@event, export_params.merge(format: :json)), data: { turbo: false } %>
+          <%= link_to "Export sponsors (CSV)", event_invoices_path(@event, export_params.merge(format: :csv, report: "sponsor_totals")), data: { turbo: false } %>
         </div>
       </div>
     <% end %>
