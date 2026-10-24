@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_16_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_21_183000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -613,6 +613,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_16_120100) do
     t.string "emoji", null: false
     t.bigint "reactor_id", null: false
     t.datetime "updated_at", null: false
+    t.index ["comment_id", "reactor_id", "emoji"], name: "index_comment_reactions_unique_live_reaction", unique: true, where: "(deleted_at IS NULL)"
     t.index ["comment_id"], name: "index_comment_reactions_on_comment_id"
     t.index ["deleted_at"], name: "index_comment_reactions_on_deleted_at"
     t.index ["emoji"], name: "index_comment_reactions_on_emoji"

@@ -20,7 +20,7 @@ module Api
           name: params[:name],
           amount: Money.from_cents(params[:amount_cents]),
           requested_by_id: current_user.id,
-          fronted: @source_event.plan.front_disbursements_enabled?
+          fronted: Disbursement.frontable?(source_event: @source_event, destination_event: @destination_event, requested_by: current_user)
         ).run
 
         render :show, status: :created, location: api_v4_transaction_path(@disbursement)
