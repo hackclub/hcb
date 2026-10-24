@@ -11,7 +11,7 @@ module Api
         end
       end
 
-      expose_associated Transaction, hide: [API_LINKED_OBJECT_TYPE, Organization] do |obj, options|
+      expose_associated Transaction, hide: [API_LINKED_OBJECT_TYPE, Organization], documentation: { type: NestedTransaction } do |obj, options|
         # Don't show the Organizations for these association Transactions since
         # they will belong to the same Organization as the one associated below
         # (in this Linked Object)
