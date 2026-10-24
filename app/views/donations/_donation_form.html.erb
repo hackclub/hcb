@@ -19,7 +19,6 @@
                 class: "card mx-auto max-w-96 mb3", data: form_data, html: { autocomplete: "off" }) do |form| %>
     <% donation = @recurring_donation if @monthly %>
 
-    <%= form.invisible_captcha :subtitle %>
     <%= form_errors(donation, nil, "We couldn't start this") %>
 
     <div class="field mb2">

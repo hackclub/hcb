@@ -77,19 +77,23 @@ class CardGrant < ApplicationRecord
   after_create :create_pre_authorization!, if: :pre_authorization_required?
 
   before_validation :create_card_grant_setting, on: :create
+
+  before_validation do
+    self.expiration_at ||= default_expiration_at
+  end
+
   before_create :create_user
   before_create :create_subledger
   before_create :set_defaults
   after_create :transfer_money
   after_create_commit :send_email
 
-  before_create do
-    self.expiration_at ||= default_expiration_at
-  end
-
   validates :disbursement, uniqueness: true, allow_nil: true
   validates :stripe_card, uniqueness: true, allow_nil: true
   validates :subledger, uniqueness: true, allow_nil: true
+
+  MAX_EXPIRATION_DATE = 2.years
+  validates :expiration_at, comparison: { less_than_or_equal_to: -> { MAX_EXPIRATION_DATE.from_now.to_date } }, if: :expiration_at_changed?
 
   validates_email_format_of :email, if: :email_changed?
   normalizes :email, with: ->(email) { email.presence&.strip&.downcase }
@@ -208,6 +212,7 @@ class CardGrant < ApplicationRecord
         amount: amount_cents / 100.0,
         destination_subledger_id: subledger_id,
         requested_by_id: topped_up_by.id,
+        transfer_type: "transfer",
         source_transaction_category_slug: "grants",
         destination_transaction_category_slug: "grants",
         category_assignment_strategy: "automatic"
@@ -233,6 +238,7 @@ class CardGrant < ApplicationRecord
         amount: amount_cents / 100.0,
         source_subledger_id: subledger_id,
         requested_by_id: withdrawn_by.id,
+        transfer_type: "transfer",
         source_transaction_category_slug: "grants",
         destination_transaction_category_slug: "grants",
         category_assignment_strategy: "automatic"
@@ -273,6 +279,7 @@ class CardGrant < ApplicationRecord
       amount: balance.amount,
       source_subledger_id: subledger_id,
       requested_by_id: requested_by.id,
+      transfer_type: "transfer",
       source_transaction_category_slug: "grants",
       destination_transaction_category_slug: "grants",
       category_assignment_strategy: "automatic"
@@ -387,6 +394,7 @@ class CardGrant < ApplicationRecord
       amount: amount.amount,
       requested_by_id: sent_by_id,
       destination_subledger_id: subledger_id,
+      transfer_type: "transfer",
       source_transaction_category_slug: "grants",
       destination_transaction_category_slug: "grants",
       category_assignment_strategy: "automatic"
