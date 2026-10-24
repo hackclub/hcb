@@ -334,6 +334,18 @@ class Donation < ApplicationRecord
     recurring_donation&.email || super
   end
 
+  def update_donor_details(attrs)
+    attrs = attrs.to_h.symbolize_keys
+    return false unless update(attrs.slice(:name, :anonymous))
+
+    if recurring_donation
+      recurring_donation.update(attrs.slice(:name, :anonymous))
+      recurring_donation.sync_stripe_customer!
+    end
+
+    true
+  end
+
   def referrer_domain
     Addressable::URI.parse(referrer.presence)&.host
   end
