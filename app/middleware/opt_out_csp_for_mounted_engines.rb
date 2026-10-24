@@ -10,7 +10,6 @@
 # Rather than let the policy break the admin tools, opt their paths out of it.
 # Every one of them is already behind AdminConstraint or AuditorConstraint.
 class OptOutCspForMountedEngines
-
   MOUNTED_PATHS = %w[
     /sidekiq
     /maintenance_tasks
