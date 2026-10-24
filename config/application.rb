@@ -17,11 +17,7 @@ Dotenv.load if Rails.env.development?
 module Bank
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 8.0
-
-    # Remove when loading 8.1 defaults. Set here because the initializer runs too late:
-    # https://github.com/rails/rails/issues/59146
-    config.active_support.escape_js_separators_in_json = false
+    config.load_defaults 8.1
 
     Credentials.load if ENV["DOPPLER_TOKEN"]
 
