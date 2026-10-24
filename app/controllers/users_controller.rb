@@ -207,6 +207,7 @@ class UsersController < ApplicationController
                         .recently_expired_within(1.week.ago)
                         .not_impersonated
                         .order(created_at: :desc)
+                        .load
 
     authorize @user
   end
