@@ -324,7 +324,7 @@ class AdminController < Admin::BaseController
       transactions.each do |tx|
         date_posted, memo, amount_cents = tx.values_at(:date_posted, :memo, :amount_cents)
 
-        unless RawIntrafiTransaction.where(date_posted:, memo:, amount_cents:).count > 0
+        unless RawIntrafiTransaction.where(date_posted:, memo:, amount_cents:).exists?
           raw_intrafi_transactions << RawIntrafiTransaction.create!(date_posted:, memo:, amount_cents:)
         end
       end
@@ -564,9 +564,9 @@ class AdminController < Admin::BaseController
     if @event_id
       @event = Event.find(@event_id)
 
-      relation = @event.reimbursement_reports.includes(:event).visible
+      relation = @event.reimbursement_reports.includes(:event, user: :comments).visible
     else
-      relation = Reimbursement::Report.includes(:event).visible
+      relation = Reimbursement::Report.includes(:event, user: :comments).visible
     end
 
     relation = relation.search(@q) if @q
@@ -801,7 +801,11 @@ class AdminController < Admin::BaseController
 
   def increase_check_process
     @check = IncreaseCheck.find(params[:id])
-
+    if !@check.pending?
+      # check papertrail for user who took action to move from pending to new state by searching the jsonb object
+      approval_attempt = @check.versions.where("object_changes->'aasm_state'->>0 = 'pending'").where("object_changes->'aasm_state'->>1 = 'approved'").order(created_at: :desc).first
+      @approver = User.find_by(id: approval_attempt.whodunnit) if approval_attempt
+    end
   end
 
   def paypal_transfers
@@ -909,6 +913,11 @@ class AdminController < Admin::BaseController
 
   def wire_process
     @wire = Wire.find(params[:id])
+    if !@wire.pending?
+      # check papertrail for user who took action to move from pending to new state by searching the jsonb object
+      approval_attempt = @wire.versions.where("object_changes->'aasm_state'->>0 = 'pending'").where("object_changes->'aasm_state'->>1 = 'approved'").order(created_at: :desc).first
+      @approver = User.find_by(id: approval_attempt.whodunnit) if approval_attempt
+    end
   end
 
   def wise_transfer_process
