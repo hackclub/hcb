@@ -6,6 +6,7 @@
 
 <% if @event&.is_public %>
   <% auto_discover_feed(@event) %>
+  <% @skip_layout_og_tags = true # replaced by the organization-specific meta below %>
   <% content_for :head do %>
     <% img = "https://hcb-og.hackclub.com/api/embeds/#{@event.slug}" %>
     <meta property="og:type" content="website">
