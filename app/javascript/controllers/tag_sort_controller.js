@@ -9,9 +9,9 @@ export default class extends Controller {
   async sort({ detail: { oldIndex, newIndex, dragEvent } }) {
     if (oldIndex == newIndex) return
 
-    const { tagId } = dragEvent.originalSource.dataset
+    const { tag } = dragEvent.originalSource.dataset
 
-    await fetch(`/${this.eventValue}/tags/${tagId}/set_index`, {
+    await fetch(`/${this.eventValue}/tags/${tag}/set_index`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -19,5 +19,17 @@ export default class extends Controller {
       },
       body: JSON.stringify({ index: newIndex }),
     })
+
+    // Every other tag list on the page is static markup, so mirror the new order into them
+    const order = [...this.element.querySelectorAll('[data-tag]')].map(
+      row => row.dataset.tag
+    )
+    document
+      .querySelectorAll('[data-controller~="tag-sort"]')
+      .forEach(list =>
+        list.prepend(
+          ...order.map(id => list.querySelector(`[data-tag="${id}"]`))
+        )
+      )
   }
 }

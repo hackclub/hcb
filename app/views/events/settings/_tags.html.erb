@@ -52,7 +52,7 @@
        data-tag-sort-event-value="<%= event.slug %>"
        data-action="sortable:stop->tag-sort#sort">
     <% event.tags.each do |tag| %>
-      <div class="draggable card mb2 flex justify-between items-center transition-none" data-tag-id="<%= tag.id %>">
+      <div class="draggable card mb2 flex justify-between items-center transition-none" data-tag="<%= tag.id %>">
         <div class="flex items-center">
           <% unless disabled %>
             <span class="pop draggable-handle cursor-move mr2 tooltipped tooltipped--e" aria-label="Drag to reorder"><%= inline_icon "drag-indicator", size: 24 %></span>
