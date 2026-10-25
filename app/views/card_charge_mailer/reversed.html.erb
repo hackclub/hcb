@@ -4,7 +4,7 @@
 
 <h3 class="mb-2">Wasn't expecting this reversal?</h3>
 <p class="my-0">
-  Charges are often reversed by <strong><%= @merchant_namme %></strong> when an order is canceled or a refund is requested. Another common cause is fraud detection flagging, frequently because the billing information you provide doesn't mamtch your card details.
+  Charges are often reversed by <strong><%= @merchant_name %></strong> when an order is canceled or a refund is requested. Another common cause is fraud detection flagging, frequently because the billing information you provide doesn't match your card details.
   <br><br>
   Reversals can also happen for other reasons at the merchant's sole discretion. To find out why this charge was reversed, we recommend reaching out to <%= @merchant_name %> directly.
 </p>
@@ -26,6 +26,11 @@
   <% if @failed_verification_checks.include?("cvc_check") %>
     <% reasons << (capture do %>
       We noticed that the CVC used at <%= @merchant_name %> didn't match your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please try again with the correct CVC.
+    <% end) %>
+  <% end %>
+  <% if @failed_verification_checks.include?("expiry_check") %>
+    <% reasons << (capture do %>
+      We noticed that the expiration date used at <%= @merchant_name %> didn't match your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please try again with the correct expiration date.
     <% end) %>
   <% end %>
   <% if @insufficient_balance %>
