@@ -15,6 +15,13 @@ export default class extends Controller {
     // If any field is empty, reset UI
     if (!year || !month || !day) {
       this.clearMessage()
+      this.enableSubmit()
+      return
+    }
+
+    if (!this.isValidDate(year, month, day)) {
+      this.showMessage('Please enter a valid date.', true)
+      this.disableSubmit()
       return
     }
 
@@ -23,6 +30,12 @@ export default class extends Controller {
     if (age < 13) {
       this.showMessage(
         'Sorry, you must be at least 13 years old to sign up.',
+        true
+      )
+      this.disableSubmit()
+    } else if (age > 125) {
+      this.showMessage(
+        'Sorry, you must be at most 125 years old to sign up.',
         true
       )
       this.disableSubmit()
@@ -47,6 +60,16 @@ export default class extends Controller {
     }
 
     return age
+  }
+
+  isValidDate(year, month, day) {
+    const date = new Date(year, month - 1, day)
+
+    return (
+      date.getFullYear() === Number(year) &&
+      date.getMonth() === Number(month) - 1 &&
+      date.getDate() === Number(day)
+    )
   }
 
   showMessage(text, isWarning = false) {

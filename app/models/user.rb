@@ -244,7 +244,7 @@ class User < ApplicationRecord
     message: "must only contain characters in the latin alphabet.", allow_blank: true,
   }, if: :preferred_name_changed?
 
-  validate :age_in_range?, if: -> { new_record? || will_save_change_to_birthday? }
+  validate :validate_age_in_range, if: -> { new_record? || will_save_change_to_birthday? }
 
   validates(:session_validity_preference, presence: true, inclusion: { in: SessionsHelper::SESSION_DURATION_OPTIONS.values })
 
@@ -538,16 +538,6 @@ class User < ApplicationRecord
     age_on(Date.current)
   end
 
-  def age_in_range?
-    return unless birthday.present?
-
-    if age < 13
-      errors.add(:birthday, "must be at least 13 years old")
-    elsif age > 125
-      errors.add(:birthday, "must be less than 125 years old")
-    end
-  end
-
   def is_teenager?
     return age <= 18 if birthday.present?
 
@@ -752,6 +742,16 @@ class User < ApplicationRecord
   end
 
   private
+
+  def validate_age_in_range
+    return unless birthday.present?
+
+    if age < 13
+      errors.add(:birthday, "must be at least 13 years old")
+    elsif age > 125
+      errors.add(:birthday, "must be at most 125 years old")
+    end
+  end
 
   def create_legal_entity
     legal_entities.create!(entity_type: :person, name: full_name)
