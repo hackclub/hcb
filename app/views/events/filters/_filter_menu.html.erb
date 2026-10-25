@@ -1,7 +1,7 @@
 <%# locals: () %>
 
 <% ledger_turbo_frame_id = "#{dom_id(@event)}_ledger" %>
-<% tags = @event.tags.order(label: :asc) %>
+<% tags = @event.tags %>
 
 <div data-controller="menu" data-menu-append-to-value="turbo-frame#<%= ledger_turbo_frame_id %>" data-menu-placement-value="bottom-start" class="-mb-1">
   <button
