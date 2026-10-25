@@ -1,4 +1,4 @@
-<%# locals: (user:, payout_method:, open: false, locking_reports: []) %>
+<%# locals: (user:, payout_method:, open: false, locking_reports: [], sole_method: false) %>
 <% details = payout_method.details %>
 <% locked = locking_reports.any? %>
 <% locked_modal_id = "locked_reports_#{payout_method.id}" %>
@@ -49,7 +49,7 @@
             <% end %>
           <% end %>
           <% unless locked %>
-            <% if payout_method.default? %>
+            <% if payout_method.default? && !sole_method %>
               <span class="flex items-center muted tooltipped tooltipped--w" aria-label="Set another payout method as default before removing this one.">
                 <%= inline_icon "delete", size: 24 %>
                 Remove

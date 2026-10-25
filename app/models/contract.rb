@@ -185,6 +185,11 @@ class Contract < ApplicationRecord
     "agreement"
   end
 
+  def standard_fiscal_sponsorship?
+    # Overridden in Contract::FiscalSponsorship
+    false
+  end
+
   def redirect_path
     contractable.contract_redirect_path
   end

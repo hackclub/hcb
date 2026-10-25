@@ -224,6 +224,19 @@ RSpec.describe EventsController do
         expect(response).to have_http_status(:ok)
       end
     end
+
+    context "when the organization is public" do
+      render_views
+
+      it "emits only the organization's Open Graph image" do
+        public_event = create(:event, is_public: true)
+
+        get(:transactions, params: { event_id: public_event.slug })
+
+        images = Nokogiri::HTML5(response.body).css("meta[property='og:image']").map { |tag| tag["content"] }
+        expect(images).to eq(["https://hcb-og.hackclub.com/api/embeds/#{public_event.slug}"])
+      end
+    end
   end
 
   describe "#edit" do
@@ -279,6 +292,79 @@ RSpec.describe EventsController do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Receiving Organization")
+    end
+  end
+
+  describe "#donation_overview" do
+    render_views
+    include DonationSupport
+
+    def donation_rows(body)
+      Nokogiri::HTML5(body).css("article.table-container tbody tr")
+    end
+
+    before { stub_donation_payment_intent_creation }
+
+    let(:event) { create(:event, is_public: true) }
+    let!(:anonymous_donation) { create(:donation, event:, name: "Jane Appleseed", email: "jane.appleseed@example.com", anonymous: true, aasm_state: "deposited") }
+    let!(:public_donation) { create(:donation, event:, name: "Jane Jones", email: "jane.jones@example.com", anonymous: false, aasm_state: "deposited") }
+
+    context "as a signed out visitor" do
+      it "lists anonymous donors when there is no search" do
+        get(:donation_overview, params: { event_id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        rows = donation_rows(response.body)
+        expect(rows.size).to eq(2)
+        expect(rows.map(&:text)).to include(a_string_including("Anonymous"), a_string_including("Jane Jones"))
+        expect(response.body).not_to include("Jane Appleseed")
+      end
+
+      it "does not match anonymous donors by name" do
+        get(:donation_overview, params: { event_id: event.slug, q: "Appleseed" })
+
+        expect(response).to have_http_status(:ok)
+        expect(donation_rows(response.body)).to be_empty
+      end
+
+      it "does not match anonymous donors by email" do
+        get(:donation_overview, params: { event_id: event.slug, q: "jane.appleseed@example.com" })
+
+        expect(response).to have_http_status(:ok)
+        expect(donation_rows(response.body)).to be_empty
+      end
+
+      it "still matches donors who are not anonymous" do
+        get(:donation_overview, params: { event_id: event.slug, q: "Jane" })
+
+        expect(response).to have_http_status(:ok)
+        rows = donation_rows(response.body)
+        expect(rows.size).to eq(1)
+        expect(rows.first.text).to include("Jane Jones")
+        expect(rows.first.text).not_to include("Anonymous")
+      end
+    end
+
+    context "as an organizer" do
+      before { sign_in_organizer_of(event) }
+
+      it "matches anonymous donors by name" do
+        get(:donation_overview, params: { event_id: event.slug, q: "Appleseed" })
+
+        expect(response).to have_http_status(:ok)
+        rows = donation_rows(response.body)
+        expect(rows.size).to eq(1)
+        expect(rows.first.text).to include("Jane Appleseed")
+      end
+
+      it "matches anonymous donors by email" do
+        get(:donation_overview, params: { event_id: event.slug, q: "jane.appleseed@example.com" })
+
+        expect(response).to have_http_status(:ok)
+        rows = donation_rows(response.body)
+        expect(rows.size).to eq(1)
+        expect(rows.first.text).to include("Jane Appleseed")
+      end
     end
   end
 
@@ -852,6 +938,15 @@ RSpec.describe EventsController do
   describe "#show" do
     render_views
 
+    it "emits only the organization's Open Graph image for a public organization" do
+      event = create(:event, is_public: true)
+
+      get(:show, params: { id: event.slug })
+
+      images = Nokogiri::HTML5(response.body).css("meta[property='og:image']").map { |tag| tag["content"] }
+      expect(images).to eq(["https://hcb-og.hackclub.com/api/embeds/#{event.slug}"])
+    end
+
     context "when the viewer is an auditor" do
       it "renders the mission statement when the event has a description" do
         admin = create(:user, :make_admin)
@@ -941,6 +1036,41 @@ RSpec.describe EventsController do
       get(:ledger, params: { event_id: event.slug })
 
       expect(response.body).not_to include(fee_row)
+    end
+  end
+
+  describe "#g_suite_overview" do
+    render_views
+
+    let(:event) { create(:event) }
+    let(:g_suite) { create(:g_suite, event:, aasm_state: :verified) }
+
+    before do
+      # The verify service does live DNS lookups; the panel only needs a result hash.
+      allow_any_instance_of(GSuiteService::Verify).to receive(:results).and_return({})
+      # Skips the Airtable waitlist lookup.
+      Flipper.enable(:google_workspace, event)
+      sign_in_organizer_of(event)
+    end
+
+    it "renders the account actions for an accepted account" do
+      account = create(:g_suite_account, g_suite:, accepted_at: Time.current)
+
+      get(:g_suite_overview, params: { event_id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(account.address)
+      expect(response.body).to include("Reset password")
+    end
+
+    it "hides the account actions for an account still under review" do
+      account = create(:g_suite_account, g_suite:, accepted_at: nil)
+
+      get(:g_suite_overview, params: { event_id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(account.address)
+      expect(response.body).not_to include("Reset password")
     end
   end
 end

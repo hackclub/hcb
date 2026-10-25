@@ -156,12 +156,17 @@ class Event
 
       event :mark_rejected do
         transitions from: [:submitted, :under_review, :approved], to: :rejected, if: -> { event.nil? }
-        after do |rejection_message|
+        after do |rejection_message, rejection_reason|
           contract.mark_voided! if contract.present?
 
           if rejection_message.present?
             Event::ApplicationMailer.with(application: self, rejection_message: rejection_message).rejected.deliver_later
           end
+
+          if rejection_reason.present?
+            set_airtable_status(REJECTION_AIRTABLE_STATUSES.fetch(rejection_reason.to_sym, "Rejected"))
+          end
+
         end
       end
 
@@ -173,6 +178,17 @@ class Event
     scope :in_progress, -> { where.not(aasm_state: ["approved", "rejected"]) }
 
     DISALLOWED_COUNTRIES = %w[IN NG RU CU IR KP SY BY VE SD SS MM AF YE SO PK CF CG ZW LY CM LB IQ].freeze
+
+    REJECTION_AIRTABLE_STATUSES = {
+      generic: "Rejected",
+      country: "Rejected - Country",
+      mission: "Rejected Teen - No charitable mission/values alignment",
+      adult: "Rejected - Adult",
+      legal: "Rejected - Legal/political reason",
+      operational: "Rejected - Operational limitation",
+      hq_satellite: "Rejected - HQ Satellite Event"
+
+    }.freeze
 
     def rejection_messages
       generic = <<~MSG.strip
@@ -225,11 +241,49 @@ class Event
         The HCB team
       MSG
 
+      legal = <<~MSG.strip
+        Hi #{user.first_name},
+
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). After careful consideration, we're unable to move forward with your application at this time. Your project's mission doesn't align with HCB's guidelines, and as a result, we cannot approve your application.
+
+        We're sorry for not being able to support you on your journey and wish you all the best. If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
+
+        Best,
+        The HCB team
+      MSG
+
+
+
+      operational = <<~MSG.strip
+        Hi #{user.first_name},
+
+        Thank you for expressing interest in using HCB for your project, [#{name}](#{Rails.application.routes.url_helpers.application_url(self)}). After careful consideration, we're unable to move forward with your application in our current operational capacity.
+
+        We're sorry for not being able to support you on your journey and wish you all the best. If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
+
+        Best,
+        The HCB team
+      MSG
+
+      hq_satellite = <<~MSG.strip
+        Hi #{user.first_name},
+
+        Hack Club HQ affiliated events don't go through the standard application process. Please reach out to your HQ POC, who can help you set up your HCB organization.
+
+        If you have any questions, feel free to reach out to us at [hcb@hackclub.com](mailto:hcb@hackclub.com) or reply to this email.
+
+        Best,
+        The HCB team
+      MSG
+
       {
         generic:,
         adult:,
         mission:,
-        country:
+        country:,
+        legal:,
+        operational:,
+        hq_satellite:
       }
     end
 

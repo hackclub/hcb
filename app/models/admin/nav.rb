@@ -21,48 +21,29 @@ module Admin
       memo_wise(:active?)
 
       def task_sum
-        items.sum { |item| item.task_count? ? item.count : 0 }
+        items.sum { |item| item.count || 0 }
       end
 
       memo_wise(:task_sum)
-
-      def counter_sum
-        items.sum { |item| item.record_count? ? item.count : 0 }
-      end
-
-      memo_wise(:counter_sum)
 
     end
 
     class Item
       attr_reader(:name, :path)
 
-      def initialize(name:, path:, count:, count_type: :tasks, active: false)
+      def initialize(name:, path:, count: nil, active: false)
         @name = name
         @path = path
         @count_lambda = count
-        @count_type = count_type
         @active = active
-
-        unless [:tasks, :records].include?(count_type)
-          raise ArgumentError, "invalid count_type: #{count_type.inspect}"
-        end
       end
 
       def count
-        @count ||= @count_lambda.call
+        @count ||= @count_lambda&.call
       end
 
       def active?
         @active
-      end
-
-      def record_count?
-        @count_type == :records
-      end
-
-      def task_count?
-        @count_type == :tasks
       end
 
     end
@@ -128,44 +109,37 @@ module Admin
           make_item(
             name: "ACH Transfers",
             path: ach_admin_index_path,
-            count: ->{ AchTransfer.pending.count },
-            count_type: :tasks
+            count: ->{ AchTransfer.pending.count }
           ),
           make_item(
             name: "Checks",
             path: increase_checks_admin_index_path,
-            count: ->{ IncreaseCheck.pending.count },
-            count_type: :tasks
+            count: ->{ IncreaseCheck.pending.count }
           ),
           make_item(
             name: "Disbursements",
             path: disbursements_admin_index_path,
-            count: ->{ Disbursement.reviewing.count },
-            count_type: :tasks
+            count: ->{ Disbursement.reviewing.count }
           ),
           make_item(
             name: "Wires",
             path: wires_admin_index_path,
-            count: ->{ Wire.pending.count },
-            count_type: :tasks
+            count: ->{ Wire.pending.count }
           ),
           make_item(
             name: "Wise Transfers",
             path: wise_transfers_admin_index_path,
-            count: ->{ WiseTransfer.pending.count },
-            count_type: :tasks
+            count: ->{ WiseTransfer.pending.count }
           ),
           make_item(
             name: "Reimbursements",
             path: reimbursements_admin_index_path,
-            count: ->{ Reimbursement::Report.reimbursement_requested.count },
-            count_type: :tasks
+            count: ->{ Reimbursement::Report.reimbursement_requested.count }
           ),
           make_item(
             name: "Payments",
             path: admin_payments_path,
-            count: ->{ Payment.under_review.count },
-            count_type: :tasks
+            count: ->{ Payment.under_review.count }
           )
         ]
       )
@@ -178,44 +152,32 @@ module Admin
           make_item(
             name: "Ledger",
             path: ledger_admin_index_path,
-            count: ->{ CanonicalTransaction.not_stripe_top_up.unmapped.count },
-            count_type: :tasks
+            count: ->{ CanonicalTransaction.not_stripe_top_up.unmapped.count }
           ),
           make_item(
             name: "Pending Ledger",
-            path: pending_ledger_admin_index_path,
-            count: ->{ CanonicalPendingTransaction.unsettled.count },
-            count_type: :records
+            path: pending_ledger_admin_index_path
           ),
           make_item(
             name: "Raw Transactions",
-            path: raw_transactions_admin_index_path,
-            count: ->{ RawCsvTransaction.unhashed.count },
-            count_type: :records
+            path: raw_transactions_admin_index_path
           ),
           make_item(
             name: "Intrafi Transactions",
-            path: raw_intrafi_transactions_admin_index_path,
-            count: ->{ RawIntrafiTransaction.count },
-            count_type: :records
+            path: raw_intrafi_transactions_admin_index_path
           ),
           make_item(
             name: "HCB Codes",
-            path: hcb_codes_admin_index_path,
-            count: ->{ HcbCode.count },
-            count_type: :records
+            path: hcb_codes_admin_index_path
           ),
           make_item(
             name: "Unknown Merchants",
-            path: unknown_merchants_admin_index_path,
-            count: ->{ Rails.cache.fetch("admin_unknown_merchants")&.length || 0 },
-            count_type: :records
+            path: unknown_merchants_admin_index_path
           ),
           make_item(
             name: "Audits",
             path: admin_ledger_audits_path,
-            count: ->{ Admin::LedgerAudit.pending.count },
-            count_type: :tasks
+            count: ->{ Admin::LedgerAudit.pending.count }
           ),
         ]
       )
@@ -227,33 +189,24 @@ module Admin
         items: [
           make_item(
             name: "Donations",
-            path: donations_admin_index_path,
-            count: ->{ Donation.count },
-            count_type: :records
+            path: donations_admin_index_path
           ),
           make_item(
             name: "Recurring Donations",
-            path: recurring_donations_admin_index_path,
-            count: ->{ RecurringDonation.count },
-            count_type: :records
+            path: recurring_donations_admin_index_path
           ),
           make_item(
             name: "Invoices",
-            path: invoices_admin_index_path,
-            count: ->{ Invoice.count },
-            count_type: :records
+            path: invoices_admin_index_path
           ),
           make_item(
             name: "Sponsors",
-            path: sponsors_admin_index_path,
-            count: ->{ Sponsor.count },
-            count_type: :records
+            path: sponsors_admin_index_path
           ),
           make_item(
             name: "Check Deposits",
             path: admin_check_deposits_path,
-            count: ->{ CheckDeposit.unprocessed.count },
-            count_type: :tasks
+            count: ->{ CheckDeposit.unprocessed.count }
           )
         ]
       )
@@ -266,38 +219,28 @@ module Admin
           make_item(
             name: "Applications (HCB)",
             path: applications_admin_index_path,
-            count: ->{ Event::Application.under_review.count },
-            count_type: :tasks
+            count: ->{ Event::Application.under_review.count }
           ),
           make_item(
             name: "Organizations",
-            path: events_admin_index_path,
-            count: ->{ Event.approved.count },
-            count_type: :records
+            path: events_admin_index_path
           ),
           make_item(
             name: "Organization Balances",
-            path: balances_admin_index_path,
-            count: ->{ Event.approved.count },
-            count_type: :records
+            path: balances_admin_index_path
           ),
           make_item(
             name: "OPDRs",
-            path: organizer_position_deletion_requests_path,
-            count: ->{ OrganizerPositionDeletionRequest.under_review.count },
-            count_type: :records
+            path: organizer_position_deletion_requests_path
           ),
           make_item(
             name: "Google Workspaces",
             path: google_workspaces_admin_index_path,
-            count: ->{ GSuite.needs_ops_review.count },
-            count_type: :tasks
+            count: ->{ GSuite.needs_ops_review.count }
           ),
           make_item(
             name: "Account Numbers",
-            path: account_numbers_admin_index_path,
-            count: ->{ Column::AccountNumber.count },
-            count_type: :records
+            path: account_numbers_admin_index_path
           )
         ]
       )
@@ -310,20 +253,15 @@ module Admin
           make_item(
             name: "Contractors",
             path: admin_payroll_positions_path,
-            count: ->{ Payroll::Position.under_review.count },
-            count_type: :tasks
+            count: ->{ Payroll::Position.under_review.count }
           ),
           make_item(
             name: "Legal Entities",
-            path: admin_legal_entities_path,
-            count: ->{ LegalEntity.count },
-            count_type: :records
+            path: admin_legal_entities_path
           ),
           make_item(
             name: "Tax Forms",
-            path: admin_tax_forms_path,
-            count: ->{ Tax::Form.count },
-            count_type: :records
+            path: admin_tax_forms_path
           )
         ]
       )
@@ -335,99 +273,67 @@ module Admin
         items: [
           make_item(
             name: "Blazer",
-            path: blazer_path,
-            count: ->{ Blazer::Query.count },
-            count_type: :records
+            path: blazer_path
           ),
           make_item(
             name: "Flipper",
-            path: flipper_path,
-            count: ->{ Flipper.features.count },
-            count_type: :records
+            path: flipper_path
           ),
           make_item(
             name: "Common Documents",
-            path: common_documents_path,
-            count: ->{ Document.common.count },
-            count_type: :records
+            path: common_documents_path
           ),
           make_item(
             name: "Bank Accounts",
-            path: bank_accounts_admin_index_path,
-            count: ->{ BankAccount.failing.count },
-            count_type: :records
+            path: bank_accounts_admin_index_path
           ),
           make_item(
             name: "HCB Fees",
-            path: bank_fees_admin_index_path,
-            count: ->{ BankFee.in_transit_or_pending.count },
-            count_type: :records
+            path: bank_fees_admin_index_path
           ),
           make_item(
             name: "Fee Revenues",
-            path: fee_revenues_admin_index_path,
-            count: ->{ FeeRevenue.count },
-            count_type: :records
+            path: fee_revenues_admin_index_path
           ),
           make_item(
             name: "Column Statements",
-            path: admin_column_statements_path,
-            count: ->{ Column::Statement.count },
-            count_type: :records
+            path: admin_column_statements_path
           ),
           make_item(
             name: "Users",
-            path: users_admin_index_path,
-            count: ->{ User.count },
-            count_type: :records
+            path: users_admin_index_path
           ),
           make_item(
             name: "Stripe Cards",
-            path: stripe_cards_admin_index_path,
-            count: ->{ StripeCard.count },
-            count_type: :records
+            path: stripe_cards_admin_index_path
           ),
           make_item(
             name: "Card Designs",
-            path: stripe_card_personalization_designs_admin_index_path,
-            count: ->{ StripeCard::PersonalizationDesign.count },
-            count_type: :records
+            path: stripe_card_personalization_designs_admin_index_path
           ),
           make_item(
             name: "Emails",
-            path: emails_admin_index_path,
-            count: ->{ Ahoy::Message.count },
-            count_type: :records
+            path: emails_admin_index_path
           ),
           make_item(
             name: "Referral Programs",
-            path: referral_programs_admin_index_path,
-            count: ->{ Referral::Program.count },
-            count_type: :records
+            path: referral_programs_admin_index_path
           ),
           make_item(
             name: "Event Groups",
-            path: admin_event_groups_path,
-            count: ->{ Event::Group.count },
-            count_type: :records,
+            path: admin_event_groups_path
           ),
           make_item(
             name: "Contracts",
-            path: contracts_admin_index_path,
-            count: ->{ Contract.count },
-            count_type: :records
+            path: contracts_admin_index_path
           ),
           make_item(
             name: "Active Teenagers Leaderboard",
-            path: active_teenagers_leaderboard_admin_index_path,
-            count: ->{ User.active_teenager.count },
-            count_type: :records,
+            path: active_teenagers_leaderboard_admin_index_path
           ),
           make_item(
             name: "New Teenagers Leaderboard",
-            path: new_teenagers_leaderboard_admin_index_path,
-            count: ->{ 0 }, # I think this would be expensive to calculate
-            count_type: :records,
+            path: new_teenagers_leaderboard_admin_index_path
           )
         ]
       )

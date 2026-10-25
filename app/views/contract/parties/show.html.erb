@@ -4,69 +4,72 @@
 
 <h2><%= @party.hcb? ? "Sign #{@contract.event_name}'s agreement as HCB Operations" : "Sign your HCB agreement" %></h2>
 
+<%# Only give the sidebar a column when it has something to show (the FAQ renders nothing for non-standard agreements); otherwise the contract gets the full width. %>
+<% show_sidebar = @party.hcb? || @party.signee? || @contract.standard_fiscal_sponsorship? %>
+
 <div class="grid md:grid-cols-5 gap-5" data-controller="contract" data-contract-advance-path-value="<%= completed_contract_party_path(@party) unless @contract.contractable.is_a?(Event::Application) && @party.hcb? %>">
-  <%= render partial: "contract/parties/docuseal_embed", locals: { party: @party, klass: @contract.is_a?(Contract::FiscalSponsorship) || @party.hcb? ? "md:col-span-3" : "md:col-span-5" } %>
-  <div class="md:col-span-2 max-h-[75vh]">
-    <% if @party.hcb? %>
-      <div class="card">
-        <div class="flex flex-wrap gap-3 mb-2 justify-center">
+  <%= render partial: "contract/parties/docuseal_embed", locals: { party: @party, klass: show_sidebar ? "md:col-span-3" : "md:col-span-5" } %>
+  <% if show_sidebar %>
+    <div class="md:col-span-2 max-h-[75vh]">
+      <% if @party.hcb? %>
+        <div class="card">
+          <div class="flex flex-wrap gap-3 mb-2 justify-center">
+            <% if @contract.contractable.is_a?(Event::Application) %>
+              <%= link_to "Go to associated application (#{@contract.contractable.id})", application_path(@contract.contractable), class: "btn w-full" %>
+            <% elsif @contract.contractable.is_a?(Payroll::Position) %>
+              <%= link_to "Go to associated contractor position (#{@contract.contractable.id})", event_payroll_position_path(@contract.contractable.event, @contract.contractable), class: "btn w-full" %>
+            <% elsif @contract.contractable.is_a?(OrganizerPositionInvite) %>
+              <%= link_to "Go to associated invite (#{@contract.contractable.id})", organizer_position_invite_path(@contract.contractable), class: "btn w-full" %>
+            <% end %>
+
+            <% if @contract.may_mark_voided? %>
+              <%= button_to "Void", void_contract_path(@contract), method: :post, class: "btn bg-error", data: { "turbo-confirm": "Are you sure you want to void this contract?", "turbo-confirm-danger": true } %>
+              <button class="btn bg-light-warning" data-behavior="modal_trigger" data-modal="reissue_modal">Reissue</button>
+            <% end %>
+          </div>
+
           <% if @contract.contractable.is_a?(Event::Application) %>
-            <%= link_to "Go to associated application (#{@contract.contractable.id})", application_path(@contract.contractable), class: "btn w-full" %>
-          <% elsif @contract.contractable.is_a?(Payroll::Position) %>
-            <%= link_to "Go to associated contractor position (#{@contract.contractable.id})", event_payroll_position_path(@contract.contractable.event, @contract.contractable), class: "btn w-full" %>
-          <% elsif @contract.contractable.is_a?(OrganizerPositionInvite) %>
-            <%= link_to "Go to associated invite (#{@contract.contractable.id})", organizer_position_invite_path(@contract.contractable), class: "btn w-full" %>
-          <% end %>
+            <% if @contract.contractable.event.present? %>
+              <p>This application has already been activated.</p>
+              <%= link_to "Go to organization", @contract.contractable.event, class: "btn w-full" %>
+            <% else %>
+              <%= form_with url: admin_activate_application_path(@contract.contractable), method: :post do |form| %>
+                <div class="field">
+                  <%= form.label "Tags" %>
+                  <%= form.select :tags, options_for_select(EventTag::Tags::ALL, selected: @contract.contractable.default_tags), multiple: true, size: EventTag::Tags::ALL.size %>
+                </div>
 
-          <% if @contract.may_mark_voided? %>
-            <%= button_to "Void", void_contract_path(@contract), method: :post, class: "btn bg-error", data: { "turbo-confirm": "Are you sure you want to void this contract?", "turbo-confirm-danger": true } %>
-            <button class="btn bg-light-warning" data-behavior="modal_trigger" data-modal="reissue_modal">Reissue</button>
-          <% end %>
-        </div>
+                <div class="field">
+                  <%= form.label :risk_level %>
+                  <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" }, { required: true } %>
+                </div>
 
-        <% if @contract.contractable.is_a?(Event::Application) %>
-          <% if @contract.contractable.event.present? %>
-            <p>This application has already been activated.</p>
-            <%= link_to "Go to organization", @contract.contractable.event, class: "btn w-full" %>
-          <% else %>
-            <%= form_with url: admin_activate_application_path(@contract.contractable), method: :post do |form| %>
-              <div class="field">
-                <%= form.label "Tags" %>
-                <%= form.select :tags, options_for_select(EventTag::Tags::ALL, selected: @contract.contractable.default_tags), multiple: true, size: EventTag::Tags::ALL.size %>
-              </div>
+                <% if @party.pending? %>
+                  <p>Sign the contract before activating the organization</p>
+                <% end %>
 
-              <div class="field">
-                <%= form.label :risk_level %>
-                <%= form.collection_select :risk_level, Event.risk_levels.map { |k, _v| [k.humanize.capitalize, k] }, :last, :first, { include_blank: "Select a risk level" }, { required: true } %>
-              </div>
-
-              <% if @party.pending? %>
-                <p>Sign the contract before activating the organization</p>
+                <%= form.submit "Activate", class: "btn bg-success w-full", disabled: @party.pending?, data: { "contract-target": "button" } %>
               <% end %>
-
-              <%= form.submit "Activate", class: "btn bg-success w-full", disabled: @party.pending?, data: { "contract-target": "button" } %>
             <% end %>
           <% end %>
-        <% end %>
-      </div>
-    <% else %>
-      <div class="flex flex-col max-h-full gap-4">
-        <% if @party.signee? %>
-          <%= render "application/callout", title: "Watch the onboarding videos", type: "warning", class: "my-0 flex-shrink-0" do %>
-            <p class="my-0">
-              If you haven't had an onboarding meeting, please watch:
-              <a href="https://www.youtube.com/watch?v=Ucz-QT2GPOk" target="_blank">HCB Onboarding (#1): Introduction</a> and
-              <a href="https://www.youtube.com/watch?v=LMh9FCm8iIE" target="_blank">HCB Onboarding (#2): Rules & Regulations</a>.
-            </p>
+        </div>
+      <% else %>
+        <div class="flex flex-col max-h-full gap-4">
+          <% if @party.signee? %>
+            <%= render "application/callout", title: "Watch the onboarding videos", type: "warning", class: "my-0 flex-shrink-0" do %>
+              <p class="my-0">
+                If you haven't had an onboarding meeting, please watch:
+                <a href="https://www.youtube.com/watch?v=Ucz-QT2GPOk" target="_blank">HCB Onboarding (#1): Introduction</a> and
+                <a href="https://www.youtube.com/watch?v=LMh9FCm8iIE" target="_blank">HCB Onboarding (#2): Rules & Regulations</a>.
+              </p>
+            <% end %>
           <% end %>
-        <% end %>
 
-        <% if @contract.is_a?(Contract::FiscalSponsorship) %>
-          <%= render partial: "contract/parties/fs_contract_faq" %>
-        <% end %>
-      </div>
-    <% end %>
-  </div>
+          <%= render partial: "contract/parties/fs_contract_faq", locals: { contract: @contract } %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 </div>
 
 <% if @party.hcb? %>

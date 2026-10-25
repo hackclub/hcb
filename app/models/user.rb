@@ -133,9 +133,6 @@ class User < ApplicationRecord
 
   has_many :event_groups, class_name: "Event::Group"
 
-  has_many :g_suite_accounts, inverse_of: :fulfilled_by
-  has_many :g_suite_accounts, inverse_of: :creator
-
   has_many :emburse_transfers
   has_many :emburse_card_requests
   has_many :emburse_cards
@@ -300,6 +297,12 @@ class User < ApplicationRecord
   scope :active, -> { last_seen_within(30.days.ago) }
   scope :active_teenager, -> { last_seen_within(30.days.ago).where(teenager: true) }
   def active? = last_seen_at && (last_seen_at >= 30.days.ago)
+
+  # true if this user has any admin-only comments left on their profile.
+  # relies on `comments` being preloaded to avoid N+1s when checked in a loop.
+  def admin_comments?
+    comments.to_a.any?(&:admin_only?)
+  end
 
   # an auditor is an admin who can only view things.
   # auditor? takes into account an admin user's preference
@@ -686,6 +689,11 @@ class User < ApplicationRecord
 
   def manageable_events
     @manageable_events ||= accessible_events(roles: ["manager"])
+  end
+
+  # Organizations this user can send an HCB transfer from.
+  def disbursement_source_events
+    manageable_events.not_hidden.not_demo_mode
   end
 
   def reimbursement_event_options

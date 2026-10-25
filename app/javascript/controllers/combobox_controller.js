@@ -279,6 +279,7 @@ export default class extends Controller {
     this.hiddenTarget.value = option.value
     this.inputTarget.value = option.label
     this.hide()
+    this.dispatch('change', { detail: { option } })
   }
 
   // Resolve the field to a valid state when focus leaves:
@@ -305,6 +306,7 @@ export default class extends Controller {
     this.selectedOption = null
     this.inputTarget.value = ''
     this.hiddenTarget.value = ''
+    this.dispatch('change', { detail: { option: null } })
   }
 
   // Loading/empty/error messages are not choices. Dropping `options` keeps

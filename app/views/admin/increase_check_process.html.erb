@@ -126,7 +126,7 @@
         <% end %>
       </fieldset>
     <% else %>
-      <p>This check has been <b><%= @check.aasm.current_state.to_s.humanize(capitalize: false) %></b>.</p>
+      <p>This check has been <b><%= @check.aasm.current_state.to_s.humanize(capitalize: false) %></b>. This check was processed by <%= @approver.present? ? user_mention(@approver) : "an unknown user" %>.</p>
     <% end %>
   </div>
 </div>
