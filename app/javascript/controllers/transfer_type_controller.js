@@ -1,7 +1,5 @@
 import { Controller } from '@hotwired/stimulus'
 
-const NOTHING_REPAID = "Choose at least one transaction you're repaying."
-
 const usd = new Intl.NumberFormat('en-US', {
   style: 'currency',
   currency: 'USD',
@@ -28,8 +26,8 @@ export default class extends Controller {
     'repaidEmpty',
     'chooseLabel',
     'changeLabel',
-    'repaidField',
-    'repaidCheck',
+    'repaidCard',
+    'repaidError',
   ]
   static outlets = ['repayment-picker']
 
@@ -42,9 +40,6 @@ export default class extends Controller {
       this.repaymentNameTarget.value === this.repaymentName(transactions)
     )
       this.autofilledName = this.repaymentNameTarget.value
-    this.repaidCheckTarget.setCustomValidity(
-      transactions.length ? '' : NOTHING_REPAID
-    )
     this.select()
   }
 
@@ -84,12 +79,6 @@ export default class extends Controller {
     this.setRepaid(transactions)
   }
 
-  removeRepaid({ currentTarget }) {
-    const { id } = currentTarget.closest('li').dataset
-    this.setRepaid(this.repaidTransactions.filter(t => t.id !== id))
-    this.pickButtonTarget.focus()
-  }
-
   setRepaid(transactions = []) {
     const any = transactions.length > 0
 
@@ -111,32 +100,21 @@ export default class extends Controller {
     this.repaidTotalTarget.hidden = !any
     this.chooseLabelTarget.hidden = any
     this.changeLabelTarget.hidden = !any
-
-    // The picks live in hidden fields, which the browser won't validate, so a
-    // stand-in field carries the error for them.
-    this.repaidCheckTarget.setCustomValidity(any ? '' : NOTHING_REPAID)
-    if (any) this.repaidFieldTarget.classList.remove('repaid-picker--invalid')
+    if (any) this.repaidErrorTarget.hidden = true
 
     this.fillName(transactions)
-  }
-
-  // The browser shows its message by the stand-in; mark the field around it
-  // the way a server-side error would.
-  repaidInvalid() {
-    this.repaidFieldTarget.classList.add('repaid-picker--invalid')
   }
 
   repaidRow({ id, memo, date, amount, amountLabel }) {
     const row =
       this.repaidTemplateTarget.content.firstElementChild.cloneNode(true)
     Object.assign(row.dataset, { id, memo, date, amount, amountLabel })
-    const input = row.querySelector('input[type="hidden"]')
+    const input = row.querySelector('input')
     input.name = 'disbursement[repaid_ledger_item_ids][]'
     input.value = id
     row.querySelector('[data-field="memo"]').textContent = memo
     row.querySelector('[data-field="date"]').textContent = date
     row.querySelector('[data-field="amountLabel"]').textContent = amountLabel
-    row.querySelector('button').setAttribute('aria-label', `Remove ${memo}`)
     return row
   }
 
@@ -190,6 +168,18 @@ export default class extends Controller {
       event.preventDefault()
       this.typesTarget.scrollIntoView({ behavior: 'smooth', block: 'start' })
       return
+    }
+
+    // The picks live in hidden fields, which the browser won't validate.
+    const missing =
+      this.type === 'repayment' && !this.repaidListTarget.children.length
+    this.repaidErrorTarget.hidden = !missing
+    if (missing) {
+      event.preventDefault()
+      this.repaidCardTarget.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      })
     }
   }
 }

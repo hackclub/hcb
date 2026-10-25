@@ -1,0 +1,12 @@
+<%# locals: (item: nil) %>
+<%# One chosen transaction on the transfer form, carrying its id. Rendered
+    without an item as the template the transfer-type controller clones; its
+    input is only named once it has an id. %>
+<li class="flex items-center gap-3 py-2" data-id="<%= item&.hashid %>" data-memo="<%= item&.memo %>" data-date="<%= item&.datetime&.strftime("%b %e, %Y") %>" data-amount="<%= format("%.2f", -item.amount_cents / 100.0) if item %>" data-amount-label="<%= item&.amount&.abs&.format %>">
+  <%= tag.input(type: "hidden", name: ("disbursement[repaid_ledger_item_ids][]" if item), value: item&.hashid) %>
+  <div class="flex-1 min-w-0">
+    <strong class="block truncate" data-field="memo"><%= item&.memo %></strong>
+    <span class="muted text-sm" data-field="date"><%= item&.datetime&.strftime("%b %e, %Y") %></span>
+  </div>
+  <strong class="shrink-0" data-field="amountLabel"><%= item&.amount&.abs&.format %></strong>
+</li>

@@ -35,21 +35,9 @@
     <%= render "application/loading_container", klass: "py-8" %>
   <% end %>
 
-  <%# The selection is kept by the controller rather than in the rows, so it
-      survives paging and filtering through the frame; it renders this list
-      from the template below. %>
-  <footer class="flex flex-col gap-2">
-    <ul class="list-none p-0 m-0 max-h-[8.75rem] overflow-y-auto divide-y divide-smoke dark:divide-dark" aria-label="Selected transactions" data-repayment-picker-target="selectedList" hidden></ul>
-    <template data-repayment-picker-target="selectedTemplate">
-      <li class="flex items-center gap-3 py-0.5">
-        <span class="flex-1 min-w-0 truncate" data-field="memo"></span>
-        <strong class="shrink-0" data-field="amountLabel"></strong>
-        <button type="button" class="pop shrink-0" title="Remove" data-action="repayment-picker#remove"><%= inline_icon "view-close", size: 20 %></button>
-      </li>
-    </template>
-    <div class="flex items-center justify-between gap-3">
-      <span class="muted" aria-live="polite" data-repayment-picker-target="summary">None selected</span>
-      <button type="button" class="btn" data-action="repayment-picker#done" data-repayment-picker-target="doneButton">Done</button>
-    </div>
-  </footer>
+  <%# The selection lives in the controller, so it survives paging and filtering through the frame. %>
+  <div class="flex items-center justify-between gap-3">
+    <span class="muted" aria-live="polite" data-repayment-picker-target="summary">None selected</span>
+    <button type="button" class="btn" data-action="repayment-picker#done">Done</button>
+  </div>
 </section>

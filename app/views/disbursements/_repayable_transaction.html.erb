@@ -3,24 +3,27 @@
 <% date = item.datetime.strftime("%b %e, %Y") %>
 <% amount = item.amount.abs.format %>
 
-<%# Clicking anywhere on the row toggles it; the Select button is what's
-    focusable, so Enter or Space toggles it from the keyboard. Its click bubbles
-    up to the row's action. Every row is an expense, so they skip the red
-    negative-amount shading and only selected rows are tinted. %>
-<tr class="transaction cursor-pointer hover:bg-blue/5 has-[[aria-pressed=true]]:bg-green/10 dark:has-[[aria-pressed=true]]:bg-green/15"
+<%# Selected rows get `selected__transaction`, which swaps the icon for the
+    checkmark like the ledger's bulk selection. %>
+<tr class="transaction transaction--<%= item.sign %> cursor-pointer hover:bg-blue/5 focus-visible:bg-blue/5 focus-visible:outline-none"
+    tabindex="0"
+    aria-label="Repay <%= item.memo %>, <%= amount %> on <%= date %>"
     data-repayment-picker-target="row"
-    data-action="click->repayment-picker#toggle"
+    data-action="click->repayment-picker#toggle keydown.enter->repayment-picker#toggle"
     data-repayment-picker-id-param="<%= item.hashid %>"
     data-repayment-picker-memo-param="<%= item.memo %>"
     data-repayment-picker-date-param="<%= date %>"
     data-repayment-picker-amount-param="<%= format("%.2f", -item.amount_cents / 100.0) %>"
     data-repayment-picker-amount-label-param="<%= amount %>">
-  <td class="transaction__icon hidden sm:table-cell">
+  <td class="transaction__icon transaction__icon--selected">
+    <%= inline_icon "checkmark" %>
+  </td>
+  <td class="transaction__icon">
     <div class="tooltipped tooltipped--e" aria-label="<%= item.humanized_type %>">
       <%= render "ledger/items/icon", ledger_item: item %>
     </div>
   </td>
-  <td class="nowrap hidden sm:table-cell"><%= date %></td>
+  <td><%= date %></td>
   <td class="transaction__memo transaction__memo--fluid">
     <div>
       <div class="flex-auto min-w-0 overflow-hidden text-ellipsis" title="<%= item.memo %>">
@@ -29,10 +32,4 @@
     </div>
   </td>
   <td class="nowrap text-right"><%= item.amount.format %></td>
-  <td class="w-0 text-right">
-    <button type="button" class="btn btn-small group sm:min-w-[6.5rem]" aria-pressed="false" aria-label="Select <%= item.memo %>, <%= amount %> on <%= date %>">
-      <span class="group-aria-pressed:hidden">Select</span>
-      <span class="hidden group-aria-pressed:inline-flex items-center gap-1"><%= inline_icon "checkmark", size: 20, class: "!m-0" %><span class="hidden sm:inline">Selected</span></span>
-    </button>
-  </td>
 </tr>

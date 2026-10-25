@@ -75,40 +75,16 @@
     <fieldset class="card mb-4" data-transfer-type-target="panel" data-type="repayment" hidden>
       <% repaying = repaid_ledger_items.any? %>
       <% repaid_total_cents = -repaid_ledger_items.sum(&:amount_cents) %>
-      <%# One row per chosen transaction, carrying its id. The template is the
-          same row for the transfer-type controller to fill in as more are picked;
-          its input is only named once it has an id. %>
-      <% repaid_row = ->(id: nil, memo: nil, date: nil, amount: nil, amount_label: nil) {
-           tag.li(class: "flex items-center gap-3 py-2", data: { id:, memo:, date:, amount:, amount_label: }) do
-             safe_join([
-                         tag.input(type: "hidden", name: ("disbursement[repaid_ledger_item_ids][]" if id), value: id),
-                         tag.div(class: "flex-1 min-w-0") do
-                           tag.strong(memo, class: "block truncate", data: { field: "memo" }) +
-                             tag.span(date, class: "muted text-sm", data: { field: "date" })
-                         end,
-                         tag.strong(amount_label, class: "shrink-0", data: { field: "amountLabel" }),
-                         tag.button(inline_icon("view-close", size: 20), type: "button", class: "pop shrink-0", title: "Remove", aria: { label: ("Remove #{memo}" if memo) }, data: { action: "transfer-type#removeRepaid" })
-                       ])
-           end
-         } %>
-      <div class="field m-0" data-transfer-type-target="repaidField">
-        <label for="repayment_picker_trigger" id="repayment_picker_label">Which of their transactions are you repaying?</label>
+      <div class="field m-0">
+        <label for="repayment_picker_trigger">Which of their transactions are you repaying?</label>
         <%# Set from the picked transactions: a repayment covers each in full. %>
         <%= form.hidden_field :name, id: "disbursement_repayment_name", value: (disbursement.name if repaying), data: { transfer_type_target: "repaymentName" } %>
         <%= form.hidden_field :amount, id: "disbursement_repayment_amount", value: (format("%.2f", repaid_total_cents / 100.0) if repaying), data: { transfer_type_target: "repaymentAmount" } %>
-        <div class="repaid-picker__card rounded-lg">
+        <div data-transfer-type-target="repaidCard">
           <ul class="list-none p-0 m-0 mb-2 divide-y divide-smoke dark:divide-darkless" data-transfer-type-target="repaidList" <%= "hidden" unless repaying %>>
-            <% repaid_ledger_items.each do |item| %>
-              <%= repaid_row.call(
-                    id: item.hashid,
-                    memo: item.memo,
-                    date: item.datetime.strftime("%b %e, %Y"),
-                    amount: format("%.2f", -item.amount_cents / 100.0),
-                    amount_label: item.amount.abs.format
-                  ) %>
-            <% end %>
+            <%= render partial: "disbursements/repaid_ledger_item", collection: repaid_ledger_items, as: :item %>
           </ul>
-          <template data-transfer-type-target="repaidTemplate"><%= repaid_row.call %></template>
+          <template data-transfer-type-target="repaidTemplate"><%= render "disbursements/repaid_ledger_item" %></template>
           <div class="flex items-center gap-3">
             <div class="flex-1 min-w-0">
               <p class="muted m-0" data-transfer-type-target="pickHint" <%= "hidden" if disbursement.destination_event %>>Choose who you're sending to first.</p>
@@ -118,19 +94,13 @@
                 <strong data-transfer-type-target="repaidTotalAmount"><%= Money.from_cents(repaid_total_cents).format if repaying %></strong>
               </p>
             </div>
-            <div class="relative shrink-0">
-              <%# The picks live in hidden fields, which the browser won't validate, and
-                  a type="button" can't be invalid. This unnamed stand-in carries the
-                  "pick at least one" error so the browser shows its usual message
-                  under the button; the disabled panel keeps it out of the way. %>
-              <input class="repaid-picker__check" tabindex="-1" autocomplete="off" aria-labelledby="repayment_picker_label" data-transfer-type-target="repaidCheck" data-action="invalid->transfer-type#repaidInvalid">
-              <button type="button" id="repayment_picker_trigger" class="btn btn-small" data-behavior="modal_trigger" data-modal="repayment_picker" data-action="transfer-type#openPicker" data-transfer-type-target="pickButton" <%= "disabled" unless disbursement.destination_event %>>
-                <span data-transfer-type-target="chooseLabel" <%= "hidden" if repaying %>>Choose</span>
-                <span data-transfer-type-target="changeLabel" <%= "hidden" unless repaying %>>Add or change</span>
-              </button>
-            </div>
+            <button type="button" id="repayment_picker_trigger" class="btn btn-small shrink-0" data-behavior="modal_trigger" data-modal="repayment_picker" data-action="transfer-type#openPicker" data-transfer-type-target="pickButton" <%= "disabled" unless disbursement.destination_event %>>
+              <span data-transfer-type-target="chooseLabel" <%= "hidden" if repaying %>>Choose</span>
+              <span data-transfer-type-target="changeLabel" <%= "hidden" unless repaying %>>Change</span>
+            </button>
           </div>
         </div>
+        <p class="text-sm text-red mt-1 mb-0" role="alert" data-transfer-type-target="repaidError" hidden>Choose at least one transaction you're repaying.</p>
       </div>
     </fieldset>
 

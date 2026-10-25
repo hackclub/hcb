@@ -225,11 +225,6 @@ html[data-dark='true'] {
     color: map-get($palette, smoke);
   }
 
-  // Dark labels are set above, and the light error red is too dark here.
-  .repaid-picker--invalid label {
-    color: $red;
-  }
-
   .dock__item.disabled {
     color: map-get($palette, muted);
   }

@@ -122,37 +122,6 @@ select {
       box-shadow: inset 0 0 0 1.5px $red;
     }
   }
-
-  // The repayment picker's stand-in for its hidden picks: invisible, but
-  // still focusable so the browser can anchor its validation message to it.
-  .repaid-picker__check {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    width: 1px;
-    height: 1px;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  // The repayment picker's version of `.field_with_errors`, matching the
-  // invalid file upload above.
-  .repaid-picker--invalid {
-    label {
-      font-weight: 500;
-      color: map-get($palette, error);
-    }
-
-    .repaid-picker__card {
-      margin: -0.5rem;
-      padding: 0.5rem;
-      background-color: rgba($red, 0.1);
-      box-shadow: inset 0 0 0 1.5px $red;
-    }
-  }
 }
 
 input[type='file'] {
