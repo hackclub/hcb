@@ -153,6 +153,8 @@ export default class extends Controller {
           y: placement.includes('top') ? -12 : 12,
           opacity: 0.75,
           duration: 0.15,
+          // A leftover transform would turn the menu into the containing block for fixed children (e.g. drag mirrors)
+          clearProps: 'transform',
         })
       }
 

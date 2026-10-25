@@ -24,12 +24,9 @@ export default class extends Controller {
     const order = [...this.element.querySelectorAll('[data-tag]')].map(
       row => row.dataset.tag
     )
-    document
-      .querySelectorAll('[data-controller~="tag-sort"]')
-      .forEach(list =>
-        list.prepend(
-          ...order.map(id => list.querySelector(`[data-tag="${id}"]`))
-        )
-      )
+    document.querySelectorAll('[data-controller~="tag-sort"]').forEach(list => {
+      if (list === this.element) return
+      list.prepend(...order.map(id => list.querySelector(`[data-tag="${id}"]`)))
+    })
   }
 }
