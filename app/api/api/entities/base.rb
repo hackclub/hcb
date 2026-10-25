@@ -3,7 +3,6 @@
 module Api
   module Entities
     class Base < Grape::Entity
-      include GrapeRouteHelpers::NamedRouteMatcher
       include Helpers::ExpandHelper
 
       expose :public_id, as: :id
@@ -12,8 +11,7 @@ module Api
       end
       expose :href do |obj, options|
         root = Rails.application.routes.url_helpers.root_url[0..-2] # remove trailing slash
-        params = Hash["#{self.class.object_type}_id", obj.public_id]
-        root + public_send(self.class.api_self_path_method_name, params)
+        "#{root}/api/v3/#{self.class.object_type.pluralize}/#{obj.public_id}"
       end
 
       format_with(:iso_timestamp) { |dt| dt&.iso8601 }
@@ -30,10 +28,6 @@ module Api
 
       def self.object_type
         self.entity_name.gsub(" ", "_").underscore
-      end
-
-      def self.api_self_path_method_name
-        "api_v3_#{self.object_type.pluralize}_path"
       end
 
       private

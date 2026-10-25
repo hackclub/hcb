@@ -417,10 +417,6 @@ GEM
     grape-kaminari (0.4.5)
       grape (>= 1.6.1)
       kaminari-grape
-    grape-route-helpers (2.1.0)
-      activesupport
-      grape (>= 0.16.0)
-      rake
     grape-swagger (2.1.3)
       grape (>= 1.7, < 4.0)
     grape-swagger-entity (0.7.1)
@@ -1004,7 +1000,6 @@ DEPENDENCIES
   grape
   grape-entity
   grape-kaminari
-  grape-route-helpers
   grape-swagger
   grape-swagger-entity (~> 0.7)
   hashid-rails (~> 1.0)
