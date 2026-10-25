@@ -47,10 +47,16 @@ module Reimbursement
     # on each expense, stale reviewer_id, etc.). The intended long-term
     # behavior is to allow members to change the event provided approvals
     # the destination event's managers wouldn't have granted are cleared.
+    #
+    # Exception: the creator of a still-eventless report (email, SMS, Discord)
+    # may place it on any event they could `create?` a report on. `persisted?`
+    # keeps the unsaved-report path in ExpensesController#update manager-only.
     def change_event?
       return false if record.card_grant_id.present?
+      return true if admin || manager
 
-      admin || manager
+      creator && record.persisted? && record.event_id_in_database.nil? &&
+        (record.event ? create? : record.event_id.nil?)
     end
 
     def submit?

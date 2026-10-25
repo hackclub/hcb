@@ -135,7 +135,7 @@ GEM
       activerecord (>= 6.0.0)
       activesupport (>= 6.0.0)
     api-pagination (6.0.0)
-    appsignal (4.9.1)
+    appsignal (5.0.6)
       logger
       rack (>= 2.0.0)
     argon2-kdf (0.3.1)
@@ -192,8 +192,8 @@ GEM
     blind_index (2.7.0)
       activesupport (>= 7.1)
       argon2-kdf (>= 0.2)
-    bootsnap (1.18.6)
-      msgpack (~> 1.2)
+    bootsnap (1.26.0)
+      msgpack (~> 1.5)
     brakeman (6.2.2)
       racc
     browser (6.2.0)
@@ -554,7 +554,7 @@ GEM
       monetize (~> 2.0)
       money (~> 7.0)
       railties (>= 7.0)
-    msgpack (1.8.2)
+    msgpack (1.8.5)
     multi_json (1.21.1)
     multipart-post (2.4.1)
     mustermann (4.0.0)
@@ -1094,7 +1094,7 @@ DEPENDENCIES
   yellow_pages!
 
 RUBY VERSION
-   ruby 3.4.9p82
+   ruby 3.4.12p148
 
 BUNDLED WITH
    2.5.22
