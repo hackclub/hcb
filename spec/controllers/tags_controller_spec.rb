@@ -69,4 +69,59 @@ RSpec.describe TagsController do
       expect(hcb_code.reload.tags).to include(concurrent_tag)
     end
   end
+
+  describe "#set_index" do
+    let(:user) { create(:user) }
+    let(:event) { create(:event) }
+    let!(:tags) { %w[Food Travel Supplies].map { |label| Tag.create!(event:, label:, emoji: "🍕", color: "muted") } }
+
+    before { create_session(user, verified: true) }
+
+    def set_index(tag, index)
+      post(:set_index, params: { event_id: event.slug, id: tag.id, index: }, as: :json)
+    end
+
+    context "as a member" do
+      before { create(:organizer_position, user:, event:) }
+
+      it "moves the tag and persists a dense ordering" do
+        set_index(tags.last, 0)
+
+        expect(response).to have_http_status(:ok)
+        expect(event.tags.pluck(:label, :sort_index)).to eq([["Supplies", 0], ["Food", 1], ["Travel", 2]])
+      end
+
+      it "sorts tags created after a reorder last" do
+        set_index(tags.last, 0)
+        Tag.create!(event:, label: "Flights", emoji: "🛬", color: "blue")
+
+        expect(event.tags.pluck(:label)).to eq(%w[Supplies Food Travel Flights])
+      end
+
+      it "rejects an out-of-range or non-integer index without changing the order" do
+        set_index(tags.first, tags.size)
+        expect(response).to have_http_status(:bad_request)
+
+        set_index(tags.first, "1")
+        expect(response).to have_http_status(:bad_request)
+
+        expect(event.tags.pluck(:label)).to eq(%w[Food Travel Supplies])
+      end
+
+      it "does not find a tag belonging to another organization" do
+        other_tag = Tag.create!(event: create(:event), label: "Other", emoji: "🎉", color: "red")
+
+        expect { set_index(other_tag, 0) }.to raise_error(ActiveRecord::RecordNotFound)
+      end
+    end
+
+    it "is not allowed for readers" do
+      create(:organizer_position, user:, event:, role: :reader)
+
+      set_index(tags.last, 0)
+
+      expect(response).to have_http_status(:redirect)
+      expect(event.tags.pluck(:label)).to eq(%w[Food Travel Supplies])
+    end
+  end
 end

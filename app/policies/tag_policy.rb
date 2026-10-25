@@ -17,6 +17,10 @@ class TagPolicy < ApplicationPolicy
     member?
   end
 
+  def set_index?
+    member?
+  end
+
   def toggle_tag?
     member?
   end

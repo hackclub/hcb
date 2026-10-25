@@ -46,54 +46,63 @@
   <% if event.tags.any? %>
     <h3 class="mb2" id="cards_heading"><%= possessive(event.name) %> tags</h3>
   <% end %>
-  <% event.tags.each do |tag| %>
-    <div class="card mb2 flex justify-between items-center">
-      <div class="flex items-center">
-        <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
-        <p class="bold mb0 mt0"><%= tag.label %></p>
-      </div>
-      <div class="flex items-center justify-center">
-        <div class="flex items-center justify-center">
-          <%= pop_icon_to "edit",
-            "#",
-            class: "tooltipped tooltipped--w mr2 h-8 w-8", "aria-label": "Edit this tag",
-            data: { behavior: "modal_trigger", modal: "edit_tag_#{tag.id}" },
-            disabled: %>
-          <section class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" id="edit_tag_<%= tag.id %>">
-            <%= modal_header("Edit tag") %>
-            <%= form_with url: event_tag_path(event, tag.id), method: :patch, id: "edit_tag_form" do |form| %>
-              <div class="flex flex-col gap-3 mb-2">
-                <div class="flex gap-3">
-                  <div data-controller="emoji-picker" class="relative" data-emoji-picker-target="container">
-                    <%= form.text_field :emoji, placeholder: "🏦", value: tag.emoji, class: "!w-10 placeholder:opacity-50", autocomplete: "off", data: { "emoji-picker-target": "input", "action": "focus->emoji-picker#togglePicker input->emoji-picker#validateInput" }, required: true %>
-                    <emoji-picker data-emoji-picker-target="picker" data-action="emoji-click->emoji-picker#addEmoji" class="fixed mt-3 z-[300]" style="display: none;"></emoji-picker>
-                  </div>
-
-                  <%= form.text_field :label, autofocus: true, placeholder: "Tag name", value: tag.label, style: "max-width: 100%", autocomplete: "off", required: true %>
-                </div>
-                <div class="flex gap-3">
-                  <% Tag::COLORS.each do |color| %>
-                    <label class="tags__radio">
-                      <%= form.radio_button :color, color, checked: color == tag.color %>
-                      <div class="radio__control tag-darker tag-<%= color %>"></div>
-                    </label>
-                  <% end %>
-                </div>
-              </div>
-              <%= form.submit "Update", class: "btn bg-info mt-2 float-left" %>
-            <% end %>
-          </section>
+  <div data-controller="sortable tag-sort"
+       data-sortable-append-to-value="body"
+       data-sortable-handle-value=".draggable-handle"
+       data-tag-sort-event-value="<%= event.slug %>"
+       data-action="sortable:stop->tag-sort#sort">
+    <% event.tags.each do |tag| %>
+      <div class="draggable card mb2 flex justify-between items-center transition-none" data-tag="<%= tag.id %>">
+        <div class="flex items-center">
+          <% unless disabled %>
+            <span class="pop draggable-handle cursor-move mr2 tooltipped tooltipped--e" aria-label="Drag to reorder"><%= inline_icon "drag-indicator", size: 24 %></span>
+          <% end %>
+          <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
+          <p class="bold mb0 mt0"><%= tag.label %></p>
         </div>
-        <%= pop_icon_to "delete",
-          event_tag_path(event, tag.id),
-          data: { turbo_method: :delete },
+        <div class="flex items-center justify-center">
+          <div class="flex items-center justify-center">
+            <%= pop_icon_to "edit",
+              "#",
+              class: "tooltipped tooltipped--w mr2 h-8 w-8", "aria-label": "Edit this tag",
+              data: { behavior: "modal_trigger", modal: "edit_tag_#{tag.id}" },
+              disabled: %>
+            <section class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" id="edit_tag_<%= tag.id %>">
+              <%= modal_header("Edit tag") %>
+              <%= form_with url: event_tag_path(event, tag.id), method: :patch, id: "edit_tag_form" do |form| %>
+                <div class="flex flex-col gap-3 mb-2">
+                  <div class="flex gap-3">
+                    <div data-controller="emoji-picker" class="relative" data-emoji-picker-target="container">
+                      <%= form.text_field :emoji, placeholder: "🏦", value: tag.emoji, class: "!w-10 placeholder:opacity-50", autocomplete: "off", data: { "emoji-picker-target": "input", "action": "focus->emoji-picker#togglePicker input->emoji-picker#validateInput" }, required: true %>
+                      <emoji-picker data-emoji-picker-target="picker" data-action="emoji-click->emoji-picker#addEmoji" class="fixed mt-3 z-[300]" style="display: none;"></emoji-picker>
+                    </div>
 
-          icon_size: 26,
-          class: "tooltipped tooltipped--w h-8 w-8",
-          style: "background: #ec375020; color: #ec3750",
-          'aria-label': "Delete this tag",
-          disabled: %>
+                    <%= form.text_field :label, autofocus: true, placeholder: "Tag name", value: tag.label, style: "max-width: 100%", autocomplete: "off", required: true %>
+                  </div>
+                  <div class="flex gap-3">
+                    <% Tag::COLORS.each do |color| %>
+                      <label class="tags__radio">
+                        <%= form.radio_button :color, color, checked: color == tag.color %>
+                        <div class="radio__control tag-darker tag-<%= color %>"></div>
+                      </label>
+                    <% end %>
+                  </div>
+                </div>
+                <%= form.submit "Update", class: "btn bg-info mt-2 float-left" %>
+              <% end %>
+            </section>
+          </div>
+          <%= pop_icon_to "delete",
+            event_tag_path(event, tag.id),
+            data: { turbo_method: :delete },
+
+            icon_size: 26,
+            class: "tooltipped tooltipped--w h-8 w-8",
+            style: "background: #ec375020; color: #ec3750",
+            'aria-label': "Delete this tag",
+            disabled: %>
+        </div>
       </div>
-    </div>
-  <% end %>
+    <% end %>
+  </div>
 <% end %>

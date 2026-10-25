@@ -1,0 +1,30 @@
+<%# locals: (event:, hcb_code:, tagged:) %>
+
+<div class="menu__content menu__content--2 menu__content--compact menu__content--left text-sm"
+     data-menu-target="content"
+     data-controller="sortable tag-sort"
+     data-sortable-handle-value=".draggable-handle"
+     data-tag-sort-event-value="<%= event.slug %>"
+     data-action="sortable:stop->tag-sort#sort">
+  <% event.tags.each do |tag| %>
+    <div class="draggable flex items-center" data-tag="<%= tag.id %>">
+      <%= button_to toggle_tag_hcb_code_path(id: hcb_code.hashid, tag_id: tag.id), class: "menu__action #{tag_dom_id(hcb_code, tag, "_toggle")}", form_class: "flex-auto", form: { "data-turbo" => "true" } do %>
+        <%= render partial: "canonical_transactions/tag_icon", locals: { tag: } %>
+        <%= tag.label %>
+        <%= "✓" if tagged.include?(tag) %>
+      <% end %>
+      <span class="menu__action draggable-handle cursor-move" title="Drag to reorder">
+        <%= inline_icon "drag-indicator", size: 18, style: "margin: 0" %>
+      </span>
+    </div>
+  <% end %>
+  <% if event.tags.any? %>
+    <div class="menu__divider tags__divider"></div>
+  <% end %>
+  <div class="flex items-center">
+    <%= render partial: "hcb_codes/create_tag", locals: { button: hcb_code.hashid } %>
+    <%= link_to edit_event_path(event, tab: "tags"), class: "menu__action", title: "Manage tags", data: { turbo_frame: "_top" } do %>
+      <%= inline_icon "settings", size: 18, style: "margin: 0" %>
+    <% end %>
+  </div>
+</div>
