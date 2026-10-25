@@ -3,7 +3,10 @@
 <% disabled = source_event.present? && !policy(source_event).create_transfer? %>
 <% repayable = disbursement.destination_event.nil? || policy(disbursement).repay? %>
 
-<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}" }, data: { controller: "transfer-type", transfer_type_repayment_picker_outlet: "#repayment_picker", action: "combobox:change->transfer-type#comboboxChanged repayment-picker:select@document->transfer-type#repaymentPicked submit->transfer-type#submit" }) do |form| %>
+<%# `data-turbo="true"` keeps jquery-ujs off this form: its blank-required-field check
+    only skips inputs that are themselves disabled, so it would silently abort the
+    submit over the required fields inside the disabled, inactive panel. %>
+<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}" }, data: { turbo: true, controller: "transfer-type", transfer_type_repayment_picker_outlet: "#repayment_picker", action: "combobox:change->transfer-type#comboboxChanged repayment-picker:select@document->transfer-type#repaymentPicked submit->transfer-type#submit" }) do |form| %>
   <%= form_errors(disbursement, "Disbursements") %>
 
   <div data-scroll-seek-target="section" data-transfer-type-target="types">
