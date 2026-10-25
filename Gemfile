@@ -98,10 +98,10 @@ gem "flipper-ui"
 gem "pundit" # implements authorization policies
 
 # API V3
-gem "grape"
+gem "grape", "~> 4.0"
 gem "grape-entity" # For Grape::Entity ( https://github.com/ruby-grape/grape-entity )
 gem "grape-kaminari"
-gem "grape-swagger"
+gem "grape-swagger", "~> 2.2"
 gem "grape-swagger-entity", "~> 0.7"
 
 gem "redcarpet" # markdown parsing
