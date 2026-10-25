@@ -212,6 +212,7 @@ class CardGrant < ApplicationRecord
         amount: amount_cents / 100.0,
         destination_subledger_id: subledger_id,
         requested_by_id: topped_up_by.id,
+        transfer_type: "transfer",
         source_transaction_category_slug: "grants",
         destination_transaction_category_slug: "grants",
         category_assignment_strategy: "automatic"
@@ -237,6 +238,7 @@ class CardGrant < ApplicationRecord
         amount: amount_cents / 100.0,
         source_subledger_id: subledger_id,
         requested_by_id: withdrawn_by.id,
+        transfer_type: "transfer",
         source_transaction_category_slug: "grants",
         destination_transaction_category_slug: "grants",
         category_assignment_strategy: "automatic"
@@ -277,6 +279,7 @@ class CardGrant < ApplicationRecord
       amount: balance.amount,
       source_subledger_id: subledger_id,
       requested_by_id: requested_by.id,
+      transfer_type: "transfer",
       source_transaction_category_slug: "grants",
       destination_transaction_category_slug: "grants",
       category_assignment_strategy: "automatic"
@@ -391,6 +394,7 @@ class CardGrant < ApplicationRecord
       amount: amount.amount,
       requested_by_id: sent_by_id,
       destination_subledger_id: subledger_id,
+      transfer_type: "transfer",
       source_transaction_category_slug: "grants",
       destination_transaction_category_slug: "grants",
       category_assignment_strategy: "automatic"

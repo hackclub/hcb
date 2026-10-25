@@ -166,6 +166,22 @@ RSpec.describe Event::StatementOfActivity do
   end
 
   describe "#category_totals, #net_asset_change, #total_revenue, #total_expense" do
+    specify "repayments lower expenses instead of counting as revenue" do
+      event = create(:event)
+
+      [[100_00, "donations"], [-40_00, "repayment"], [-10_00, "rent"], [40_00, "repayment"]].each do |amount_cents, category_slug|
+        transaction = create(:canonical_transaction, amount_cents:, category_slug:)
+        create(:canonical_event_mapping, event:, canonical_transaction: transaction)
+      end
+
+      instance = described_class.new(event, start_date_param: "1970-01-01")
+
+      expect(instance.total_revenue).to eq(100_00)
+      expect(instance.total_expense).to eq(-10_00)
+      expect(instance.net_asset_change).to eq(90_00)
+      expect(instance.category_totals["repayment"]).to eq(0)
+    end
+
     specify "single event" do
       event = create(:event)
 

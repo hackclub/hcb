@@ -224,6 +224,19 @@ RSpec.describe EventsController do
         expect(response).to have_http_status(:ok)
       end
     end
+
+    context "when the organization is public" do
+      render_views
+
+      it "emits only the organization's Open Graph image" do
+        public_event = create(:event, is_public: true)
+
+        get(:transactions, params: { event_id: public_event.slug })
+
+        images = Nokogiri::HTML5(response.body).css("meta[property='og:image']").map { |tag| tag["content"] }
+        expect(images).to eq(["https://hcb-og.hackclub.com/api/embeds/#{public_event.slug}"])
+      end
+    end
   end
 
   describe "#edit" do
@@ -924,6 +937,15 @@ RSpec.describe EventsController do
 
   describe "#show" do
     render_views
+
+    it "emits only the organization's Open Graph image for a public organization" do
+      event = create(:event, is_public: true)
+
+      get(:show, params: { id: event.slug })
+
+      images = Nokogiri::HTML5(response.body).css("meta[property='og:image']").map { |tag| tag["content"] }
+      expect(images).to eq(["https://hcb-og.hackclub.com/api/embeds/#{event.slug}"])
+    end
 
     context "when the viewer is an auditor" do
       it "renders the mission statement when the event has a description" do
