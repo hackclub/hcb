@@ -4,8 +4,8 @@ require "rails_helper"
 
 RSpec.describe StripeEmailValidator do
   def email_errors(email)
-    donation = Donation.new(email:)
-    donation.valid?(:create)
+    donation = build(:donation, email:)
+    donation.valid?
     donation.errors[:email]
   end
 
@@ -15,13 +15,13 @@ RSpec.describe StripeEmailValidator do
     end
 
     {
-      "quoted local part" => '"john smith"@example.com',
-      "commented local part" => "john(note)@example.com",
-      "IP address domain" => "john@127.0.0.1",
-      "single-label domain" => "john@localhost",
+      "quoted local part"        => '"john smith"@example.com',
+      "commented local part"     => "john(note)@example.com",
+      "IP address domain"        => "john@127.0.0.1",
+      "single-label domain"      => "john@localhost",
       "internationalized domain" => "john@exämple.com",
-      "non-ASCII local part" => "jöhn@example.com",
-      "overlong local part" => "#{"j" * 65}@example.com"
+      "non-ASCII local part"     => "jöhn@example.com",
+      "overlong local part"      => "#{"j" * 65}@example.com"
     }.each do |description, email|
       it "rejects a #{description}" do
         expect(email_errors(email)).to include("does not appear to be a valid email address")
