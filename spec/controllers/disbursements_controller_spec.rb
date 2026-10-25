@@ -461,7 +461,7 @@ RSpec.describe DisbursementsController do
   describe "repayments" do
     let(:sender) { create(:user) }
     let(:source_event) { create(:event, :with_positive_balance) }
-    let(:destination_event) { create(:event) }
+    let(:destination_event) { create(:event, is_public: false) }
     let!(:expense) { create(:canonical_transaction, event: destination_event, amount_cents: -100_00, memo: "Pizza", category_slug: "food-fun") }
 
     before do
@@ -573,7 +573,7 @@ RSpec.describe DisbursementsController do
       get(:event_search, params: { sending: "false", q: "Claude" }, format: :json)
 
       repayable = response.parsed_body.to_h { |option| [option["value"], option["repayable"]] }
-      expect(repayable).to include(destination_event.public_id => true, stranger.public_id => false)
+      expect(repayable).to include(destination_event.public_id => true, stranger.public_id => true)
     end
 
     it "doesn't flag source organizations as repayable" do
@@ -590,6 +590,16 @@ RSpec.describe DisbursementsController do
 
       expect(listed_hashids).to be_empty
       expect(response.body).not_to include("Pizza")
+    end
+
+    it "lists a transparent organization's expenses to non-members, except verification micro-deposits" do
+      destination_event.update_columns(is_public: true)
+      sender.organizer_positions.find_by(event: destination_event).destroy!
+      create(:canonical_transaction, event: destination_event, amount_cents: -32, memo: "ACCTVERIFY STRIPE")
+
+      get(:repayable_transactions, params: { destination_event_id: destination_event.public_id })
+
+      expect(listed_hashids).to eq([expense.ledger_item.hashid])
     end
 
     describe "#new" do

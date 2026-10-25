@@ -70,7 +70,7 @@ class DisbursementsController < ApplicationController
     own_destination_events = own_events.or(current_user.readable_events.accepting_public_transfers)
 
     base = if admin_signed_in?
-             Event.select(:name, :id, :demo_mode, :slug).reorder(Event::CUSTOM_SORT).includes(:plan)
+             Event.select(:name, :id, :demo_mode, :slug, :is_public).reorder(Event::CUSTOM_SORT).includes(:plan)
            elsif sending
              own_events
            elsif q.blank?
@@ -86,7 +86,7 @@ class DisbursementsController < ApplicationController
              own_destination_events
                .or(public_events.where(is_indexable: true))
                .or(public_events.where(slug: q.downcase))
-               .select(:name, :id, :demo_mode, :slug).includes(:plan)
+               .select(:name, :id, :demo_mode, :slug, :is_public).includes(:plan)
            end
 
     # Apply fuzzy search if query present

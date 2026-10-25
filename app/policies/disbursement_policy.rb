@@ -31,9 +31,10 @@ class DisbursementPolicy < ApplicationPolicy
 
   alias event_search? new?
 
-  # Picking a transaction to repay means browsing the destination's ledger.
+  # Picking a transaction to repay means browsing the destination's ledger,
+  # which is public for transparent organizations (see EventPolicy#ledger?).
   def repay?
-    OrganizerPosition.role_at_least?(user, record.destination_event, :reader)
+    record.destination_event&.is_public? || OrganizerPosition.role_at_least?(user, record.destination_event, :reader)
   end
 
   def create?
