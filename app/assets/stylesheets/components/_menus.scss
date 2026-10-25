@@ -267,6 +267,11 @@
 .menu__content .draggable-mirror {
   background-color: inherit;
   border-radius: 6px;
+  box-shadow: var(--shadow-menu);
+}
+
+.menu__content .draggable-source--is-dragging {
+  opacity: 0.5;
 }
 
 .menu__divider {
