@@ -49,7 +49,7 @@ class DisbursementsController < ApplicationController
     )
 
     authorize @disbursement
-    prefill_repayment
+    prefill_repayments
     render layout: "transfer"
   end
 
@@ -173,8 +173,10 @@ class DisbursementsController < ApplicationController
       destination_event: @destination_event,
       source_event: @source_event,
       amount: Monetize.parse(disbursement_params[:amount])&.cents,
-      name: disbursement_params[:name]
+      name: disbursement_params[:name],
+      transfer_type: disbursement_params[:transfer_type].presence
     )
+    @repaid_ledger_items = []
 
     authorize @disbursement
 
@@ -188,7 +190,8 @@ class DisbursementsController < ApplicationController
 
     if transfer_type == "repayment"
       authorize @disbursement, :repay?
-      repaid_ledger_item = Ledger::Item.find_by_hashid(disbursement_params[:repaid_ledger_item_id])
+      hashids = Array(disbursement_params[:repaid_ledger_item_ids]).compact_blank.uniq
+      @repaid_ledger_items = hashids.filter_map { |hashid| Ledger::Item.find_by_hashid(hashid) }.uniq
     end
 
     source_transaction_category_slug = disbursement_params[:source_transaction_category_slug].presence
@@ -210,7 +213,7 @@ class DisbursementsController < ApplicationController
       destination_transaction_category_slug:,
       category_assignment_strategy:,
       transfer_type:,
-      repaid_ledger_item_id: repaid_ledger_item&.id
+      repaid_ledger_item_ids: @repaid_ledger_items.map(&:id)
     ).run
 
     if disbursement_params[:file]
@@ -232,6 +235,12 @@ class DisbursementsController < ApplicationController
 
   rescue ArgumentError, ActiveRecord::RecordInvalid => e
     flash.now[:error] = e.message
+    # Keep the picked transactions chosen, minus any that can't be repaid
+    # (e.g. one that was repaid in the meantime) or that the user can't see.
+    if @destination_event && @repaid_ledger_items.present?
+      repaid_ids = @repaid_ledger_items.map(&:id)
+      @repaid_ledger_items = Repayment.unrepaid_ledger_items(@destination_event).where(id: repaid_ids).sort_by { |item| repaid_ids.index(item.id) }
+    end
     render :new, layout: "transfer", status: :unprocessable_content
   rescue ActiveRecord::RecordNotFound => e
     skip_authorization
@@ -327,19 +336,31 @@ class DisbursementsController < ApplicationController
 
   private
 
-  # "Repay this" on a transaction links here with the transaction picked. Links
-  # can go stale (the transaction gets repaid, or the user loses access), so an
+  # "Repay this" on a transaction links here with the transaction picked
+  # (`repaid_ledger_item_id`); `repaid_ledger_item_ids[]` picks several. Links
+  # can go stale (a transaction gets repaid, or the user loses access), so an
   # item that can't be repaid is dropped rather than raised on.
-  def prefill_repayment
-    return unless @destination_event && params[:repaid_ledger_item_id].present?
+  def prefill_repayments
+    @repaid_ledger_items = []
+    hashids = [params[:repaid_ledger_item_id], *Array.wrap(params[:repaid_ledger_item_ids])].select { |hashid| hashid.is_a?(String) }.compact_blank.uniq
+    return unless @destination_event && hashids.any?
     return unless policy(Disbursement.new(destination_event: @destination_event)).repay?
 
-    @repaid_ledger_item = Repayment.unrepaid_ledger_items(@destination_event).find_by_hashid(params[:repaid_ledger_item_id])
-    return unless @repaid_ledger_item
+    unrepaid = Repayment.unrepaid_ledger_items(@destination_event)
+    @repaid_ledger_items = hashids.filter_map { |hashid| unrepaid.find_by_hashid(hashid) }.uniq
+    return if @repaid_ledger_items.empty?
 
     @disbursement.transfer_type = :repayment
-    @disbursement.amount = -@repaid_ledger_item.amount_cents
-    @disbursement.name = "Repaying #{@repaid_ledger_item.memo}".truncate(60) if @disbursement.name.blank?
+    @disbursement.amount = -@repaid_ledger_items.sum(&:amount_cents)
+    @disbursement.name = repayment_name(@repaid_ledger_items) if @disbursement.name.blank?
+  end
+
+  def repayment_name(items)
+    if items.one?
+      "Repaying #{items.first.memo}".truncate(60)
+    else
+      "Repaying #{items.size} transactions"
+    end
   end
 
   def repayable_transactions_query
@@ -377,7 +398,7 @@ class DisbursementsController < ApplicationController
       :name,
       :scheduled_on,
       :transfer_type,
-      :repaid_ledger_item_id,
+      { repaid_ledger_item_ids: [] },
       { file: [] }
     ]
 

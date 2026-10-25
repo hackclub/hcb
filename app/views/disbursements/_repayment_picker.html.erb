@@ -2,8 +2,8 @@
 
 <%# Rendered outside the transfer form: the modal has a form of its own, and opening it moves it to the end of the page anyway. %>
 <section class="modal modal--scroll modal--wide bg-snow" data-behavior="modal" role="dialog" id="repayment_picker" data-controller="repayment-picker">
-  <%= modal_header "Which transaction are you repaying?" %>
-  <p class="muted mt-0">Pick the expense you're paying back. You can only repay a settled expense once.</p>
+  <%= modal_header "Which transactions are you repaying?" %>
+  <p class="muted mt-0">Select each expense you're paying back. You can only repay a settled expense once.</p>
 
   <%= form_with url: repayable_transactions_disbursements_path, method: :get, class: "flex flex-col gap-2 mb-4", data: { turbo_frame: "repayable_transactions", controller: "form", repayment_picker_target: "form" } do |form| %>
     <%= form.hidden_field :destination_event_id, value: destination_event&.public_id, data: { repayment_picker_target: "destination" } %>
@@ -34,4 +34,22 @@
   <%= turbo_frame_tag "repayable_transactions", src: (repayable_transactions_disbursements_path(destination_event_id: destination_event.public_id) if destination_event), loading: :lazy, data: { repayment_picker_target: "frame" } do %>
     <%= render "application/loading_container", klass: "py-8" %>
   <% end %>
+
+  <%# The selection is kept by the controller rather than in the rows, so it
+      survives paging and filtering through the frame; it renders this list
+      from the template below. %>
+  <footer class="flex flex-col gap-2">
+    <ul class="list-none p-0 m-0 max-h-[8.75rem] overflow-y-auto divide-y divide-smoke dark:divide-dark" aria-label="Selected transactions" data-repayment-picker-target="selectedList" hidden></ul>
+    <template data-repayment-picker-target="selectedTemplate">
+      <li class="flex items-center gap-3 py-0.5">
+        <span class="flex-1 min-w-0 truncate" data-field="memo"></span>
+        <strong class="shrink-0" data-field="amountLabel"></strong>
+        <button type="button" class="pop shrink-0" title="Remove" data-action="repayment-picker#remove"><%= inline_icon "view-close", size: 20 %></button>
+      </li>
+    </template>
+    <div class="flex items-center justify-between gap-3">
+      <span class="muted" aria-live="polite" data-repayment-picker-target="summary">None selected</span>
+      <button type="button" class="btn" data-action="repayment-picker#done" data-repayment-picker-target="doneButton">Done</button>
+    </div>
+  </footer>
 </section>

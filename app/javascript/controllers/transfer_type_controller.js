@@ -1,8 +1,15 @@
 import { Controller } from '@hotwired/stimulus'
 
+const NOTHING_REPAID = "Choose at least one transaction you're repaying."
+
+const usd = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+})
+
 // Drives the transfer form, which asks what kind of transfer it is first and
-// then shows that type's questions: a repayment picks one of the recipient's
-// transactions and takes its name and amount from it, while a transfer asks
+// then shows that type's questions: a repayment picks some of the recipient's
+// transactions and takes its name and amount from them, while a transfer asks
 // for them directly.
 export default class extends Controller {
   static targets = [
@@ -12,27 +19,32 @@ export default class extends Controller {
     'repaymentHint',
     'repaymentName',
     'repaymentAmount',
-    'repaidInput',
-    'repaidCard',
+    'repaidList',
+    'repaidTemplate',
+    'repaidTotal',
+    'repaidTotalAmount',
     'pickHint',
     'pickButton',
     'repaidEmpty',
-    'repaidSummary',
-    'repaidMemo',
-    'repaidDate',
-    'repaidAmount',
     'chooseLabel',
     'changeLabel',
-    'repaidError',
+    'repaidField',
+    'repaidCheck',
   ]
   static outlets = ['repayment-picker']
 
   connect() {
-    // A name the server filled in from the picked transaction still follows
+    // A name the server filled in from the picked transactions still follows
     // the pick; one passed in from elsewhere is kept.
-    const memo = this.repaidMemoTarget.textContent.trim()
-    if (memo && this.repaymentNameTarget.value === this.repaymentName(memo))
+    const transactions = this.repaidTransactions
+    if (
+      transactions.length &&
+      this.repaymentNameTarget.value === this.repaymentName(transactions)
+    )
       this.autofilledName = this.repaymentNameTarget.value
+    this.repaidCheckTarget.setCustomValidity(
+      transactions.length ? '' : NOTHING_REPAID
+    )
     this.select()
   }
 
@@ -40,6 +52,17 @@ export default class extends Controller {
     return this.element.querySelector(
       'input[name="disbursement[transfer_type]"]:checked'
     )?.value
+  }
+
+  // The chosen transactions, read back from their rows.
+  get repaidTransactions() {
+    return [...this.repaidListTarget.children].map(row => ({
+      id: row.dataset.id,
+      memo: row.dataset.memo,
+      date: row.dataset.date,
+      amount: row.dataset.amount,
+      amountLabel: row.dataset.amountLabel,
+    }))
   }
 
   select() {
@@ -52,42 +75,88 @@ export default class extends Controller {
     }
   }
 
-  repaymentPicked({ detail }) {
-    this.setRepaid(detail)
+  openPicker() {
+    if (this.hasRepaymentPickerOutlet)
+      this.repaymentPickerOutlet.seed(this.repaidTransactions)
   }
 
-  setRepaid(transaction) {
-    this.repaidInputTarget.value = transaction?.id || ''
-    this.repaymentAmountTarget.value = transaction?.amount ?? ''
+  repaymentPicked({ detail: { transactions } }) {
+    this.setRepaid(transactions)
+  }
 
-    this.repaidEmptyTarget.hidden =
-      !!transaction || this.pickButtonTarget.disabled
-    this.repaidSummaryTarget.hidden = !transaction
-    this.repaidAmountTarget.hidden = !transaction
-    this.chooseLabelTarget.hidden = !!transaction
-    this.changeLabelTarget.hidden = !transaction
-    this.repaidMemoTarget.textContent = transaction?.memo || ''
-    this.repaidDateTarget.textContent = transaction?.date || ''
-    this.repaidAmountTarget.textContent = transaction?.amountLabel || ''
-    if (transaction) this.repaidErrorTarget.hidden = true
+  removeRepaid({ currentTarget }) {
+    const { id } = currentTarget.closest('li').dataset
+    this.setRepaid(this.repaidTransactions.filter(t => t.id !== id))
+    this.pickButtonTarget.focus()
+  }
 
-    this.fillName(transaction)
+  setRepaid(transactions = []) {
+    const any = transactions.length > 0
+
+    this.repaidListTarget.replaceChildren(
+      ...transactions.map(transaction => this.repaidRow(transaction))
+    )
+
+    const cents = transactions.reduce(
+      (sum, t) => sum + Math.round(Number(t.amount) * 100),
+      0
+    )
+    this.repaymentAmountTarget.value = any ? (cents / 100).toFixed(2) : ''
+    this.repaidTotalAmountTarget.textContent = any
+      ? usd.format(cents / 100)
+      : ''
+
+    this.repaidEmptyTarget.hidden = any || this.pickButtonTarget.disabled
+    this.repaidListTarget.hidden = !any
+    this.repaidTotalTarget.hidden = !any
+    this.chooseLabelTarget.hidden = any
+    this.changeLabelTarget.hidden = !any
+
+    // The picks live in hidden fields, which the browser won't validate, so a
+    // stand-in field carries the error for them.
+    this.repaidCheckTarget.setCustomValidity(any ? '' : NOTHING_REPAID)
+    if (any) this.repaidFieldTarget.classList.remove('repaid-picker--invalid')
+
+    this.fillName(transactions)
+  }
+
+  // The browser shows its message by the stand-in; mark the field around it
+  // the way a server-side error would.
+  repaidInvalid() {
+    this.repaidFieldTarget.classList.add('repaid-picker--invalid')
+  }
+
+  repaidRow({ id, memo, date, amount, amountLabel }) {
+    const row =
+      this.repaidTemplateTarget.content.firstElementChild.cloneNode(true)
+    Object.assign(row.dataset, { id, memo, date, amount, amountLabel })
+    const input = row.querySelector('input[type="hidden"]')
+    input.name = 'disbursement[repaid_ledger_item_ids][]'
+    input.value = id
+    row.querySelector('[data-field="memo"]').textContent = memo
+    row.querySelector('[data-field="date"]').textContent = date
+    row.querySelector('[data-field="amountLabel"]').textContent = amountLabel
+    row.querySelector('button').setAttribute('aria-label', `Remove ${memo}`)
+    return row
   }
 
   // Names the transfer after what it repays, unless a name was passed in.
-  fillName(transaction) {
+  fillName(transactions) {
     const name = this.repaymentNameTarget.value
     if (name && name !== this.autofilledName) return
 
-    this.autofilledName = transaction
-      ? this.repaymentName(transaction.memo)
+    this.autofilledName = transactions.length
+      ? this.repaymentName(transactions)
       : ''
     this.repaymentNameTarget.value = this.autofilledName
   }
 
   // Matches the server's default, which is cut to the field's 60 characters.
-  repaymentName(memo) {
-    const name = `Repaying ${memo}`
+  repaymentName(transactions) {
+    if (transactions.length > 1)
+      return `Repaying ${transactions.length} transactions`
+
+    const name = `Repaying ${transactions[0].memo}`
     return name.length > 60 ? `${name.slice(0, 57)}...` : name
   }
 
@@ -98,7 +167,7 @@ export default class extends Controller {
     // there's nothing to pick from until one is chosen.
     this.pickButtonTarget.disabled = !option
     this.pickHintTarget.hidden = !!option
-    this.setRepaid(null)
+    this.setRepaid([])
     if (this.hasRepaymentPickerOutlet)
       this.repaymentPickerOutlet.setDestination(option?.value)
     this.setRepayable(option?.repayable !== false)
@@ -121,17 +190,6 @@ export default class extends Controller {
       event.preventDefault()
       this.typesTarget.scrollIntoView({ behavior: 'smooth', block: 'start' })
       return
-    }
-
-    // The pick lives in a hidden field, which the browser won't validate.
-    const missing = this.type === 'repayment' && !this.repaidInputTarget.value
-    this.repaidErrorTarget.hidden = !missing
-    if (missing) {
-      event.preventDefault()
-      this.repaidCardTarget.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      })
     }
   }
 }

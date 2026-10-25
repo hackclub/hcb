@@ -26,7 +26,7 @@ module DisbursementService
       destination_transaction_category_slug: nil,
       category_assignment_strategy: "manual",
       transfer_type: nil,
-      repaid_ledger_item_id: nil
+      repaid_ledger_item_ids: []
     )
       @source_event_id = source_event_id
       @source_event = Event.find(@source_event_id)
@@ -46,7 +46,9 @@ module DisbursementService
       @destination_transaction_category_slug = destination_transaction_category_slug
       @category_assignment_strategy = category_assignment_strategy
       @transfer_type = transfer_type
-      @repaid_ledger_item = Ledger::Item.find(repaid_ledger_item_id) if repaid_ledger_item_id.present?
+      @repaid_ledger_item_ids = Array(repaid_ledger_item_ids).compact_blank.map(&:to_i).uniq
+      # Locked in id order (see #run) so two transfers sharing items can't deadlock.
+      @repaid_ledger_items = Ledger::Item.where(id: @repaid_ledger_item_ids).order(:id).to_a
     end
 
     def run
@@ -65,11 +67,16 @@ module DisbursementService
         ActiveRecord::Base.transaction do
           disbursement = Disbursement.create!(attrs)
 
-          if @repaid_ledger_item
+          if @transfer_type == "repayment"
             # Two transfers repaying the same transaction at once would both
             # pass the "already repaid" check without this.
-            @repaid_ledger_item.lock!
-            disbursement.repayments.create!(repaid_ledger_item: @repaid_ledger_item, amount_cents:).apply_categories!
+            @repaid_ledger_items.each(&:lock!)
+            repayments = @repaid_ledger_items.map do |item|
+              disbursement.repayments.create!(repaid_ledger_item: item, amount_cents: -item.amount_cents)
+            end
+            # The repayments must add up to the transfer's amount.
+            disbursement.validate!
+            repayments.each(&:apply_categories!)
           end
 
           # 1. Create the raw pending transactions
@@ -153,7 +160,10 @@ module DisbursementService
     def validate_transfer_type!
       raise UserError, "Choose what kind of transfer this is." unless Disbursement.transfer_types.key?(@transfer_type)
 
-      raise UserError, "Choose the transaction you're repaying." if @transfer_type == "repayment" && @repaid_ledger_item.nil?
+      return unless @transfer_type == "repayment"
+
+      raise UserError, "Choose at least one transaction you're repaying." if @repaid_ledger_item_ids.empty?
+      raise UserError, "One of the transactions you're repaying couldn't be found." if @repaid_ledger_items.size != @repaid_ledger_item_ids.size
     end
 
     # An explicit slug (from admins, or HCB-created transfers like card grants)
@@ -163,8 +173,11 @@ module DisbursementService
 
       case @transfer_type
       when "transfer" then "internal-transfer"
-      # The source takes on the expense, so it gets the expense's category.
-      when "repayment" then Repayment.new(repaid_ledger_item: @repaid_ledger_item).repaid_category&.slug
+      # The source takes on the expenses, so it gets their category when they
+      # share one and stays uncategorized when they don't.
+      when "repayment"
+        slugs = @repaid_ledger_items.map { |item| Repayment.new(repaid_ledger_item: item).repaid_category&.slug }.uniq
+        slugs.first if slugs.one?
       end
     end
 

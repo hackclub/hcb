@@ -141,6 +141,7 @@ class Disbursement < ApplicationRecord
   validate :events_are_different
   validate :events_are_not_demos, on: :create
   validate :scheduled_on_must_be_in_the_future, on: :create
+  validate :repayments_cover_amount, if: :transfer_type_repayment?
 
   scope :processing, -> { in_transit }
   scope :scheduled_for_today, -> { scheduled.where(scheduled_on: ..Date.today) }
@@ -298,6 +299,16 @@ class Disbursement < ApplicationRecord
   def scheduled_on_must_be_in_the_future
     if scheduled_on.present? && scheduled_on.before?(Time.now.end_of_day)
       self.errors.add(:scheduled_on, "must be in the future")
+    end
+  end
+
+  # Repayments are created after the disbursement, so this only bites once
+  # they exist (DisbursementService::Create validates again after adding them).
+  def repayments_cover_amount
+    return if repayments.empty?
+
+    unless repayments.sum(&:amount_cents) == amount
+      errors.add(:amount, "must equal the total of the repaid transactions")
     end
   end
 
