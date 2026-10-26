@@ -14,7 +14,6 @@ module EventService
                    approved: false,
                    plan: Event::Plan::Standard,
                    tags: [],
-                   can_front_balance: true,
                    demo_mode: false,
                    risk_level: 0,
                    parent_event: nil,
@@ -31,7 +30,6 @@ module EventService
       @approved = approved || false
       @plan = plan
       @tags = tags
-      @can_front_balance = can_front_balance
       @demo_mode = demo_mode
       @risk_level = risk_level
       @parent_event = parent_event
@@ -97,7 +95,6 @@ module EventService
         country: @country,
         is_public: @is_public,
         is_indexable: @is_indexable,
-        can_front_balance: @can_front_balance,
         point_of_contact_id: @point_of_contact_id,
         demo_mode: @demo_mode,
         financially_frozen: true,

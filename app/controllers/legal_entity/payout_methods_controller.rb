@@ -56,25 +56,22 @@ class LegalEntity
     def archive
       authorize @payout_method
 
-      # The default can't be removed directly — the user must promote another
-      # method to default first (which leaves this one removable).
-      if @payout_method.default?
+      # A default method can only be removed when it's the user's last active
+      # method; otherwise they must promote another method to default first.
+      if @payout_method.default? && legal_entity.payout_methods.unarchived.excluding(@payout_method).exists?
         flash[:error] = "Set another payout method as your default before removing this one."
         return redirect_back_or_to settings_payouts_path
       end
 
-      # Capture the draft reports pinned to this method before archiving so we can
-      # fall them back to the new default (a non-default method is being removed,
-      # so a default still exists).
       draft_report = @payout_method.reimbursement_reports.where(aasm_state: :draft)
 
       @payout_method.archive!
 
       default = legal_entity.default_payout_method
-      if default && draft_report.any?
+      if draft_report.any?
         draft_report.find_each do |report|
           report.update!(legal_entity_payout_method: default)
-          report.convert_report_currency!(default.currency) if report.mismatched_currency?
+          report.convert_report_currency!(default.currency) if default && report.mismatched_currency?
         end
       end
 
@@ -102,9 +99,6 @@ class LegalEntity
       @legal_entities = @user.legal_entities
       flash.now[:error] = payout_method.error_messages.to_sentence
 
-      # `edit_payout` lives under `users/`, but this controller isn't namespaced
-      # under Users, so Rails won't find the template without the extra prefix.
-      lookup_context.prefixes.unshift("users")
       render template: "users/edit_payout", status: :unprocessable_content
     end
 
