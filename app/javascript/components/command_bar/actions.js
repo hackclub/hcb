@@ -94,14 +94,26 @@ export const generateEventActions = data => {
       icon: <Icon glyph="card" size={16} />,
       parent: event.slug,
     })),
-    ...data.filter(restrictedFilter).map(event => ({
-      id: `${event.slug}-transfers`,
-      name: 'Transfers',
-      perform: navigate(`/${event.slug}/transfers`),
-      icon: <Icon glyph="payment-transfer" size={16} />,
-      parent: event.slug,
-      keywords: 'ach check',
-    })),
+    ...data
+      .filter(e => e.features.payments)
+      .map(event => ({
+        id: `${event.slug}-payments`,
+        name: 'Payments',
+        perform: navigate(`/${event.slug}/payments`),
+        icon: <Icon glyph="payment-transfer" size={16} />,
+        parent: event.slug,
+        keywords: 'transfers ach check wire',
+      })),
+    ...data
+      .filter(e => e.features.contractors)
+      .map(event => ({
+        id: `${event.slug}-contractors`,
+        name: 'Contractors',
+        perform: navigate(`/${event.slug}/contractors`),
+        icon: <Icon glyph="person-badge" size={16} />,
+        parent: event.slug,
+        keywords: 'payroll contractors invoices',
+      })),
     ...data.filter(restrictedFilter).map(event => ({
       id: `${event.slug}-reimbursements`,
       name: 'Reimbursements',
