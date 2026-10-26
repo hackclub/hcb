@@ -167,17 +167,19 @@ module Payroll
       end
     end
 
-    # Renders the contract window like "Jan–Jun 2026", collapsing to a single
-    # month ("Apr 2026") or spanning years ("Dec 2025–Feb 2026") when needed.
+    # Renders the contract window like "Jan 1 – Jun 30, 2026", collapsing within
+    # a single month ("Apr 1–28, 2026") or spanning years
+    # ("Dec 1, 2025 – Feb 28, 2026") when needed.
     def period_label
       return if start_date.nil?
+      return start_date.strftime("%b %-d, %Y") if end_date.nil? || start_date == end_date
 
-      return start_date.strftime("%b %Y") if end_date.nil? || (start_date.month == end_date.month && start_date.year == end_date.year)
-
-      if start_date.year == end_date.year
-        "#{start_date.strftime("%b")}–#{end_date.strftime("%b %Y")}"
+      if start_date.year != end_date.year
+        "#{start_date.strftime("%b %-d, %Y")} – #{end_date.strftime("%b %-d, %Y")}"
+      elsif start_date.month != end_date.month
+        "#{start_date.strftime("%b %-d")} – #{end_date.strftime("%b %-d, %Y")}"
       else
-        "#{start_date.strftime("%b %Y")}–#{end_date.strftime("%b %Y")}"
+        "#{start_date.strftime("%b %-d")}–#{end_date.strftime("%-d, %Y")}"
       end
     end
 

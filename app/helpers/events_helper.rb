@@ -154,6 +154,7 @@ module EventsHelper
     {
       name: "Contractors",
       path_proc: ->(event_id) { event_contractors_path(event_id:) },
+      async_badge_proc: ->(event) { event_contractors_pending_review_icon_path(event) },
       tooltip: "Manage payroll",
       icon: "person-badge",
       symbol: :contractors,
@@ -349,7 +350,7 @@ module EventsHelper
       return ""
     end
 
-    link_to children, (disabled ? "javascript:" : url), options.merge(
+    link_to children, (disabled ? nil : url), options.merge(
       class: "dock__item #{"tooltipped tooltipped--e" if tooltip} #{"disabled" if disabled} #{"admin-tools" if admin}",
       'aria-label': tooltip,
       'aria-current': selected ? "page" : "false",
@@ -425,6 +426,17 @@ module EventsHelper
         params[key].present?
       end
     end
+  end
+
+  # Resolves an applied filter value to the label shown for it in the filter
+  # dropdown. Both the dropdown and the chips use this so they can't disagree
+  # about how a value is spelled.
+  def filter_option_label(filter_option, value)
+    labels = Array(filter_option[:options]).to_h do |option|
+      option.is_a?(Array) ? [option.last.to_s, option.first] : [option.to_s, option.humanize]
+    end
+
+    labels[value.to_s] || value.to_s.humanize
   end
 
   def validate_filter_options(filter_options, params)
