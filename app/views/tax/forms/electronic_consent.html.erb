@@ -70,7 +70,7 @@
   <h2>Keeping your information up to date</h2>
   <p>
     <% if @legal_entity.managed? %>
-      Your email address is managed by <%= @legal_entity.managing_event.name %>; contact them to update it.
+      Your email address was configured by <%= @legal_entity.managing_event.name %>; contact them to update it.
     <% else %>
       You can update your email address in your <%= link_to "account settings", my_settings_path %>.
     <% end %>
