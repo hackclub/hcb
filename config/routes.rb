@@ -98,6 +98,7 @@ Rails.application.routes.draw do
     post "toggle_admin_activities", to: "my#toggle_admin_activities", as: :toggle_admin_activities
     get "tasks", to: "my#tasks", as: :my_tasks
     get "reimbursements", to: "my#reimbursements", as: :my_reimbursements
+    get "reimbursements/:section", to: "my#reimbursements_section", as: :my_reimbursements_section, constraints: { section: /assigned|unassigned|mine/ }
     get "reimbursements_icon", to: "my#reimbursements_icon", as: :my_reimbursements_icon
 
     get "receipts", to: redirect("/my/inbox")
@@ -532,6 +533,7 @@ Rails.application.routes.draw do
   resources :disbursements, only: [:new, :create, :show, :edit, :update], concerns: :commentable do
     collection do
       get :event_search
+      get :repayable_transactions
     end
     post "mark_fulfilled"
     post "reject"
@@ -1066,6 +1068,7 @@ Rails.application.routes.draw do
     get "async_sub_organization_balances"
     get "async_sub_organization_rows"
     get "reimbursements_pending_review_icon"
+    get "contractors_pending_review_icon"
 
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)
     get "transfers"

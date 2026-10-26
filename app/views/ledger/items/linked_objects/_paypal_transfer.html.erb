@@ -46,6 +46,7 @@
         <strong>Amount</strong>
         <%= render_money paypal_transfer.amount %>
       </p>
+      <%= render "ledger/items/repayments", ledger_item: %>
     </section>
   </turbo-frame>
 
