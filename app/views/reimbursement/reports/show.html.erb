@@ -55,7 +55,7 @@
                       style: "height: 32px; width: 32px; background: #338eda20; color: #338eda",
                       'aria-label': "View the associated card grant." %>
     <% end %>
-    <% unless @report.closed? || !organizer_signed_in?(as: :member) %>
+    <% unless @report.closed? || !(organizer_signed_in?(as: :member) || policy(@report).change_event?) %>
       <%= pop_icon_to "settings",
                       "#",
                       data: { behavior: "modal_trigger", modal: "edit" },
@@ -70,6 +70,16 @@
     <span><%= @report.name %></span>
   </h2>
 </div>
+
+<% admin_only_user_comments = @report.user.comments.admin_only %>
+<% if admin_only_user_comments.any? %>
+  <% admin_tool("mt2 p-3") do %>
+    <h3 class="mt0 mb2 flex items-center" style="gap: 6px;">
+      📌 <%= pluralize(admin_only_user_comments.size, "admin note") %> about <%= @report.user.first_name %>
+    </h3>
+    <%= render "comments/list", comments: admin_only_user_comments %>
+  <% end %>
+<% end %>
 
 <section data-behavior="modal" role="dialog" id="edit" class="modal modal--scroll bg-snow lg:max-w-[450px]">
   <%= modal_header "Edit report" %>
@@ -214,7 +224,7 @@
 
         <div class="field">
           <%= form.label :wise_id, "Wise ID / URL", class: "bold mb1" %>
-          <%= form.text_field :wise_id, class: "mt-0 !max-w-full", style: "width: 400px;", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", onpaste: "var urlPrefix = 'https://wise.com/transactions/activities/by-resource/TRANSFER/'; var clipboardData = event.clipboardData.getData('Text'); clipboardData.startsWith(urlPrefix) ? (event.preventDefault(), event.target.value = clipboardData.substring(urlPrefix.length)) : null" %>
+          <%= form.text_field :wise_id, class: "mt-0 !max-w-full", style: "width: 400px;", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", data: { controller: "strip-prefix", action: "paste->strip-prefix#paste", strip_prefix_prefix_value: "https://wise.com/transactions/activities/by-resource/TRANSFER/" } %>
         </div>
         <div class="field">
           <%= form.label(:wise_recipient_id, "Wise recipient ID", class: "bold mb1") %>
