@@ -12,37 +12,24 @@
 <% if @failed_verification_checks.present? || @insufficient_balance || @spending_limit_exceeded %>
   <h3 class="mb-2">What went wrong</h3>
 
-  <% reasons = [] %>
-  <% if @failed_verification_checks.include?("address_postal_code_check") %>
-    <% reasons << (capture do %>
-      We noticed that the zip code used at <%= @merchant_name %> didn't match your <%= link_to "billing address", settings_address_url %>. Please double-check it and try again.
-    <% end) %>
-  <% end %>
-  <% if @failed_verification_checks.include?("address_line1_check") %>
-    <% reasons << (capture do %>
-      We noticed that the billing address used at <%= @merchant_name %> didn't match your <%= link_to "billing address", settings_address_url %>. Please double-check it and try again.
-    <% end) %>
-  <% end %>
-  <% if @failed_verification_checks.include?("cvc_check") %>
-    <% reasons << (capture do %>
-      We noticed that the CVC used at <%= @merchant_name %> didn't match your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please double-check it and try again.
-    <% end) %>
-  <% end %>
-  <% if @failed_verification_checks.include?("expiry_check") %>
-    <% reasons << (capture do %>
-      We noticed that the expiration date used at <%= @merchant_name %> didn't match your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please double-check it and try again.
-    <% end) %>
-  <% end %>
-  <% if @insufficient_balance %>
-    <% reasons << "Your organization doesn't have enough balance to cover the purchase." %>
-  <% end %>
-  <% if @spending_limit_exceeded %>
-    <% reasons << "You've hit a spending limit set on your card" %>
-  <% end %>
-
   <ul class="my-0">
-    <% reasons.each do |reason| %>
-      <li><%= reason %></li>
+    <% if @failed_verification_checks.include?("address_postal_code_check") %>
+      <li>We noticed that the zip code used at <%= @merchant_name %> didn't match your <%= link_to "billing address", settings_address_url %>. Please double-check it and try again.</li>
+    <% end %>
+    <% if @failed_verification_checks.include?("address_line1_check") %>
+      <li>We noticed that the billing address used at <%= @merchant_name %> didn't match your <%= link_to "billing address", settings_address_url %>. Please double-check it and try again.</li>
+    <% end %>
+    <% if @failed_verification_checks.include?("cvc_check") %>
+      <li>We noticed that the CVC used at <%= @merchant_name %> didn't match your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please double-check it and try again.</li>
+    <% end %>
+    <% if @failed_verification_checks.include?("expiry_check") %>
+      <li>We noticed that the expiration date used at <%= @merchant_name %> didn't match your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please double-check it and try again.</li>
+    <% end %>
+    <% if @insufficient_balance %>
+      <li>Your organization doesn't have enough balance to cover the purchase.</li>
+    <% end %>
+    <% if @spending_limit_exceeded %>
+      <li>You've hit a spending limit set on your card</li>
     <% end %>
   </ul>
   <p class="mt-2 mb-0">
