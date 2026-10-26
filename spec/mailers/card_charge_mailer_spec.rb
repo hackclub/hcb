@@ -42,14 +42,15 @@ RSpec.describe CardChargeMailer, type: :mailer do
       expect(mail.body.encoded).not_to include("What went wrong")
     end
 
-    it "suggests the correct zip code when Stripe reports an address mismatch" do
+    it "shows what went wrong when Stripe reports a zip code mismatch" do
       user = create(:user)
       ledger_item = build_ledger_item(user:, verification_data: { "address_postal_code_check" => "mismatch" })
 
       mail = described_class.with(ledger_item:).reversed
 
       expect(mail.body.encoded).to include("What went wrong")
-      expect(mail.body.encoded).to include("90069")
+      expect(mail.body.encoded).to include("the zip code used at")
+      expect(mail.body.encoded).to include("/my/settings/address")
     end
 
     it "does not send when the cardholder disabled charge notifications" do
@@ -67,11 +68,12 @@ RSpec.describe CardChargeMailer, type: :mailer do
 
       mail = described_class.with(ledger_item:).reversed
 
-      expect(mail.body.encoded).to include("didn't match the billing zip code")
+      expect(mail.body.encoded).to include("the zip code used at")
       expect(mail.body.encoded).not_to include("CVC")
-      expect(mail.body.encoded).not_to include("billing address")
+      expect(mail.body.encoded).not_to include("expiration date")
       expect(mail.body.encoded).not_to include("spending limit")
       expect(mail.body.encoded).not_to include("enough balance")
+      expect(mail.body.encoded.scan("didn't match your").size).to eq(1)
     end
 
     it "mentions insufficient balance when the event's balance can't cover the charge, even with no verification mismatch" do
