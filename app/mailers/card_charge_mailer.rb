@@ -41,8 +41,16 @@ class CardChargeMailer < ApplicationMailer
     end
   end
 
+  INTERVAL_TO_UNIT = {
+    "daily" => "day",
+    "weekly" => "week",
+    "monthly" => "month",
+    "yearly" => "year",
+  }.freeze
+
   def spent_in_current_interval(stripe_card)
-    interval_start = @ledger_item.datetime.public_send("beginning_of_#{stripe_card.spending_limit_interval}")
+    unit = INTERVAL_TO_UNIT.fetch(stripe_card.spending_limit_interval)
+    interval_start = @ledger_item.datetime.public_send("beginning_of_#{unit}")
     spent_cents(stripe_card, since: interval_start)
   end
 
