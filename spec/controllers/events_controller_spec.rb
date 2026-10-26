@@ -150,6 +150,35 @@ RSpec.describe EventsController do
       # branch renders the destination event.
       expect(response.body).to include("Receiving Organization")
     end
+
+    context "when the organization hides transfer recipient names" do
+      let(:event) { create(:event) }
+
+      before do
+        event.config.update!(hide_transfer_recipient_names: true)
+        create(:ach_transfer, event:, recipient_name: "Jane Secret")
+        create(:ach_transfer, event:, recipient_name: "John Other")
+      end
+
+      it "hides recipient names from the public and ignores recipient search" do
+        get(:transfers, params: { event_id: event.slug, q: "Secret" })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("Jane Secret")
+        expect(response.body).not_to include("John Other")
+        # Both rows render, so the search can't be used to confirm a name.
+        expect(response.body.scan(">Hidden<").size).to eq(2)
+      end
+
+      it "still shows recipient names to organizers" do
+        sign_in_organizer_of(event)
+
+        get(:transfers, params: { event_id: event.slug })
+
+        expect(response.body).to include("Jane Secret")
+        expect(response.body).not_to include(">Hidden<")
+      end
+    end
   end
 
   describe "#ledger" do
@@ -272,6 +301,29 @@ RSpec.describe EventsController do
 
       expect(event.config.reload.subevent_name_prefix).to eq("Athena Award — ")
     end
+
+    it "only lets admins toggle hiding transfer recipient names" do
+      event = create(:event)
+      manager = create(:user)
+      create(:organizer_position, user: manager, event:, role: :manager)
+      create_session(manager, verified: true)
+
+      patch(:update, params: {
+              id: event.slug,
+              event: { config_attributes: { id: event.config.id, hide_transfer_recipient_names: true } }
+            })
+
+      expect(event.config.reload.hide_transfer_recipient_names).to be(false)
+
+      create_session(create(:user, :make_admin), verified: true)
+
+      patch(:update, params: {
+              id: event.slug,
+              event: { config_attributes: { id: event.config.id, hide_transfer_recipient_names: true } }
+            })
+
+      expect(event.config.reload.hide_transfer_recipient_names).to be(true)
+    end
   end
 
   describe "#payments" do
@@ -292,6 +344,19 @@ RSpec.describe EventsController do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Receiving Organization")
+    end
+
+    it "hides recipient names from the public when the organization hides them" do
+      event = create(:event)
+      event.config.update!(hide_transfer_recipient_names: true)
+      Flipper.enable(:payments_contractors_refresh_2026_06_26, event)
+      create(:ach_transfer, event:, recipient_name: "Jane Secret")
+
+      get(:payments, params: { event_id: event.slug, q: "Secret" })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("Jane Secret")
+      expect(response.body).to include(">Hidden<")
     end
   end
 
