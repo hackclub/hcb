@@ -156,6 +156,7 @@ RSpec.describe EventsController do
 
       before do
         event.config.update!(hide_transfer_recipient_names: true)
+        fund(event, 100_00)
         create(:ach_transfer, event:, recipient_name: "Jane Secret")
         create(:ach_transfer, event:, recipient_name: "John Other")
       end
@@ -302,7 +303,19 @@ RSpec.describe EventsController do
       expect(event.config.reload.subevent_name_prefix).to eq("Athena Award — ")
     end
 
-    it "only lets admins toggle hiding transfer recipient names" do
+    it "lets an admin hide transfer recipient names" do
+      event = create(:event)
+      create_session(create(:user, :make_admin), verified: true)
+
+      patch(:update, params: {
+              id: event.slug,
+              event: { config_attributes: { id: event.config.id, hide_transfer_recipient_names: true } }
+            })
+
+      expect(event.config.reload.hide_transfer_recipient_names).to be(true)
+    end
+
+    it "does not let a manager hide transfer recipient names" do
       event = create(:event)
       manager = create(:user)
       create(:organizer_position, user: manager, event:, role: :manager)
@@ -314,15 +327,6 @@ RSpec.describe EventsController do
             })
 
       expect(event.config.reload.hide_transfer_recipient_names).to be(false)
-
-      create_session(create(:user, :make_admin), verified: true)
-
-      patch(:update, params: {
-              id: event.slug,
-              event: { config_attributes: { id: event.config.id, hide_transfer_recipient_names: true } }
-            })
-
-      expect(event.config.reload.hide_transfer_recipient_names).to be(true)
     end
   end
 
@@ -350,6 +354,7 @@ RSpec.describe EventsController do
       event = create(:event)
       event.config.update!(hide_transfer_recipient_names: true)
       Flipper.enable(:payments_contractors_refresh_2026_06_26, event)
+      fund(event, 100_00)
       create(:ach_transfer, event:, recipient_name: "Jane Secret")
 
       get(:payments, params: { event_id: event.slug, q: "Secret" })

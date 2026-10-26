@@ -4,4 +4,5 @@ class AddHideTransferRecipientNamesToEventConfigurations < ActiveRecord::Migrati
   def change
     add_column :event_configurations, :hide_transfer_recipient_names, :boolean, null: false, default: false
   end
+
 end
