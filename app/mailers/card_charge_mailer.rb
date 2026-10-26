@@ -42,10 +42,10 @@ class CardChargeMailer < ApplicationMailer
   end
 
   INTERVAL_TO_UNIT = {
-    "daily" => "day",
-    "weekly" => "week",
+    "daily"   => "day",
+    "weekly"  => "week",
     "monthly" => "month",
-    "yearly" => "year",
+    "yearly"  => "year",
   }.freeze
 
   def spent_in_current_interval(stripe_card)
