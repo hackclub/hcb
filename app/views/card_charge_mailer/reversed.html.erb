@@ -14,24 +14,25 @@
 
   <ul class="my-0">
     <% if @failed_verification_checks.include?("address_postal_code_check") %>
-      <li>We noticed that the zip code used at <%= @merchant_name %> didn't match your <%= link_to "billing address", settings_address_url %>. Please double-check it and try again.</li>
+      <li class="pt1 pb1">We noticed that the zip code used at <%= @merchant_name %> didn't match your <%= link_to "billing address", settings_address_url %>. Please double-check it and try again.</li>
     <% end %>
     <% if @failed_verification_checks.include?("address_line1_check") %>
-      <li>We noticed that the billing address used at <%= @merchant_name %> didn't match your <%= link_to "billing address", settings_address_url %>. Please double-check it and try again.</li>
+      <li class="pt1 pb1">We noticed that the billing address used at <%= @merchant_name %> didn't match your <%= link_to "billing address", settings_address_url %>. Please double-check it and try again.</li>
     <% end %>
     <% if @failed_verification_checks.include?("cvc_check") %>
-      <li>We noticed that the CVC used at <%= @merchant_name %> didn't match your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please double-check it and try again.</li>
+      <li class="pt1 pb1">We noticed that the CVC used at <%= @merchant_name %> didn't match your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please double-check it and try again.</li>
     <% end %>
     <% if @failed_verification_checks.include?("expiry_check") %>
-      <li>We noticed that the expiration date used at <%= @merchant_name %> didn't match your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please double-check it and try again.</li>
+      <li class="pt1 pb1">We noticed that the expiration date used at <%= @merchant_name %> didn't match your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please double-check it and try again.</li>
     <% end %>
     <% if @insufficient_balance %>
-      <li>Your organization doesn't have enough balance to cover the purchase.</li>
+      <li class="pt1 pb1">Your organization doesn't have enough balance to cover the purchase.</li>
     <% end %>
     <% if @spending_limit_exceeded %>
-      <li>You've hit a spending limit set on your card.</li>
+      <li class="pt1 pb1">You've hit a spending limit set on your card.</li>
     <% end %>
   </ul>
+  <br>
   <p class="mt-2 mb-0">
     If you're still running into problems, you can find more info in <%= link_to "our help center", "https://help.hcb.hackclub.com/en/articles/15409721-my-card-was-declined-what-should-i-do" %>.
   </p>
