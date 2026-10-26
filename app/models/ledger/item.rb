@@ -77,6 +77,8 @@ class Ledger
     has_many :canonical_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :canonical_pending_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
+    has_many :repayments, foreign_key: :ledger_item_id, inverse_of: :repaid_ledger_item
+    has_many :repayment_disbursements, through: :repayments, source: :disbursement
 
     enum :status, {
       intended: "intended", # no CTs or CPTs, but has a linked object (e.g. an unpaid invoice); the linked object protects it from pruning
@@ -105,6 +107,10 @@ class Ledger
     # map! calls refresh!
     after_create :map!
     after_touch :map!
+
+    after_update if: -> { linked_object_type == "CardCharge" && saved_change_to_status? && status.in?(%w[reversed released]) } do
+      CardChargeMailer.with(ledger_item: self).reversed.deliver_later
+    end
 
     scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
 

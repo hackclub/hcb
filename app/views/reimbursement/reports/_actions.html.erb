@@ -35,7 +35,7 @@
         <% elsif current_user == report.user && !admin_signed_in? %>
           <div class="btn bg-success disabled" class="tooltipped tooltipped--n" aria-label="Expenses can't be added to locked reports">
             <%= inline_icon "plus" %>
-            Add <%= report.expenses.count > 0 ? "another" : "an" %> expense
+            Add <%= report.expenses.any? ? "another" : "an" %> expense
           </div>
         <% elsif !report.closed? %>
           <%= link_to reimbursement_report_reject_path(report_id: report.id), class: "btn bg-error", data: { turbo: true, turbo_method: :post } do %>
@@ -155,8 +155,8 @@
             <% button_hint = capture do %>
               <% if report.expenses.none? %>
                 Get started by adding an expense to this report.
-              <% elsif report.missing_receipts? || report.expenses.any? { |e| e.amount.zero? } %>
-                <span class="bold">Your next step:</span> make sure you have a receipt, memo, and amount for each expense to continue.
+              <% elsif report.missing_receipts? || report.missing_categories? || report.expenses.any? { |e| e.amount.zero? } %>
+                <span class="bold">Your next step:</span> make sure you have a receipt, memo, amount, and category for each expense to continue.
               <% elsif report.exceeds_maximum_amount? %>
                <span class="bold warning">Warning</span>: your report is above <%= report.event.name %>'s limit. To continue, lower the amount requested.
               <% elsif report.event&.financially_frozen? %>
@@ -289,10 +289,10 @@
               <% button_hint = capture do %>
                 <%= button_hint %>
                 <% admin_tool("p-2 mt-2") do %>
-                  <span class="bold warning">⚠️ Warning</span>: this wire is below the $500 minimum. Make sure to charge a custom $25 fee to <%= report.event.name %>.
+                  <span class="bold warning">⚠️ Warning</span>: this wire is below the $500 minimum. Make sure to send a $25 disbursement from <%= report.event.name %> to HCB Operations and leave a comment on it linking to this report.
                 <% end %>
               <% end %>
-              <% turbo_confirm = ["⚠️ WARNING: This wire is below the $500 minimum. Make sure to charge a custom $25 fee to #{report.event.name} after approving this reimbursement.", turbo_confirm].compact.join("\n\n") %>
+              <% turbo_confirm = ["⚠️ WARNING: This wire is below the $500 minimum. After approving this reimbursement, make sure to send a $25 disbursement from #{report.event.name} to HCB Operations and leave a comment on it linking to this report.", turbo_confirm].compact.join("\n\n") %>
             <% end %>
             <% if payout_method.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
               <button class="btn bg-info whitespace-nowrap" data-behavior="modal_trigger" data-modal="convert_to_wise_transfer" id="submit_button">

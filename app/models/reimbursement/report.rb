@@ -131,7 +131,7 @@ module Reimbursement
         transitions from: [:draft, :reimbursement_requested], to: :submitted do
           guard do
             payout_method.present? && !user.onboarding? && event && !exceeds_maximum_amount? && !below_minimum_amount? &&
-              expenses.any? && !missing_receipts? && !event.financially_frozen? && expenses.none? { |e| e.amount.zero? } &&
+              expenses.any? && !missing_receipts? && !missing_categories? && !event.financially_frozen? && expenses.none? { |e| e.amount.zero? } &&
               !mismatched_currency? && payout_method_allowed?
           end
         end
@@ -151,7 +151,7 @@ module Reimbursement
       event :mark_reimbursement_requested do
         transitions from: :submitted, to: :reimbursement_requested do
           guard do
-            expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || currency != "USD" || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && event && (currency != "USD" || Shared::AmpleBalance.ample_balance?(amount_to_reimburse_cents, event)) && !event.financially_frozen?
+            expenses.approved.exists? && amount_to_reimburse > 0 && (!maximum_amount_cents || currency != "USD" || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && event && (currency != "USD" || Shared::AmpleBalance.ample_balance?(amount_to_reimburse_cents, event)) && !event.financially_frozen?
           end
         end
         after do
@@ -162,7 +162,7 @@ module Reimbursement
       event :mark_reimbursement_approved do
         transitions from: :reimbursement_requested, to: :reimbursement_approved do
           guard do
-            expenses.approved.count > 0 && amount_to_reimburse > 0 && (!maximum_amount_cents || currency != "USD" || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && (currency != "USD" || Shared::AmpleBalance.ample_balance?(expenses.approved.sum(:amount_cents), event)) && !event.financially_frozen?
+            expenses.approved.exists? && amount_to_reimburse > 0 && (!maximum_amount_cents || currency != "USD" || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && (currency != "USD" || Shared::AmpleBalance.ample_balance?(expenses.approved.sum(:amount_cents), event)) && !event.financially_frozen?
           end
         end
         after do
@@ -354,6 +354,10 @@ module Reimbursement
 
     def missing_receipts?
       expenses.complete.with_receipt.count != expenses.count
+    end
+
+    def missing_categories?
+      expenses.where.not(type: Reimbursement::Expense::Fee.name).where(category: nil).exists?
     end
 
     def mismatched_currency?

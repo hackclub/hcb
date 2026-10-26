@@ -26,14 +26,15 @@
         </td>
         <td><%= user.email %></td>
         <td style="width: 50rem;">
-          <% if user.transactions_missing_receipt.count > 0 %>
+          <% missing_receipts = user.transactions_missing_receipt.load %>
+          <% if missing_receipts.any? %>
             <details class="mb0" style="background: #ff8c3830;">
               <summary>
-                <%= user.transactions_missing_receipt.count %>
-                <%= "Transaction".pluralize(user.transactions_missing_receipt.count) %> missing receipts
+                <%= missing_receipts.size %>
+                <%= "Transaction".pluralize(missing_receipts.size) %> missing receipts
               </summary>
               <ul>
-                <% user.transactions_missing_receipt.each do | txn | %>
+                <% missing_receipts.each do | txn | %>
                   <li>
                     <%= link_to txn.memo, txn %>
                     (<%= link_to "x#{txn.stripe_card.last4}", txn.stripe_card %>)
