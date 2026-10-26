@@ -214,11 +214,11 @@ class StripeCard < ApplicationRecord
     save!
   end
 
-  def defrost!
+  def defrost!(keep_one_time_use: false)
     StripeService::Issuing::Card.update(self.stripe_id, status: :active)
     sync_from_stripe!
     save!
-    card_grant.update(one_time_use: false) if card_grant&.one_time_use
+    card_grant.update(one_time_use: false) if card_grant&.one_time_use && !keep_one_time_use
   end
 
   def cancel!
