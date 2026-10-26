@@ -116,7 +116,14 @@ RSpec.describe Payment::Attempt, type: :model do
         attempt.mark_sent!
       end
 
-      context "when the payout cost more than the payment amount" do
+      it "does not send the fee email for a non-Wise payout that cost more than the payment amount" do
+        allow(payout.ledger_item).to receive(:amount_cents).and_return(-(attempt.payment.amount_cents + 5_00))
+        expect(Payment::AttemptMailer).not_to receive(:with)
+        attempt.mark_sent!
+      end
+
+      context "when a Wise transfer cost more than the payment amount" do
+        let(:payout) { WiseTransfer.new }
         let(:ledger_amount_cents) { -(attempt.payment.amount_cents + 5_00) }
 
         it "sends the fee email with the difference" do
