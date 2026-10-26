@@ -69,11 +69,11 @@ class Payment
         after do
           payment.mark_sent!
 
-          fee = payout.ledger_item.amount_cents.abs - payment.amount_cents
-
-          if payout.is_a?(Wire) && payment.amount_cents < payment.event.minimum_wire_amount_cents
-            fee += 25_00
-          end
+          fee = if payout.is_a?(WiseTransfer)
+                  payout.ledger_item.amount_cents.abs - payment.amount_cents
+                elsif payout.is_a?(Wire) && payment.amount_cents < payment.event.minimum_wire_amount_cents
+                  25_00
+                end
 
           if fee.positive?
             Payment::AttemptMailer.with(attempt: self, fee:).sent_with_fee.deliver_later
