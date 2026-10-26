@@ -143,6 +143,18 @@ module HasWiseRecipient
     HasWiseRecipient.unsupported_account_type_reason(account_type)
   end
 
+  # Saved recipients whose currency has since been removed from Wise (e.g. CNY).
+  def unsupported_currency?
+    currency.present? && !currency.in?(AVAILABLE_CURRENCIES)
+  end
+
+  def unsupported_reason
+    return unsupported_account_type_reason if unsupported_account_type?
+    return unless unsupported_currency?
+
+    "Wise transfers in #{currency} are no longer supported. Please use an international wire instead."
+  end
+
   # Postal code formats sourced from https://column.com/docs/international-wires/country-specific-details
 
   POSTAL_CODE_FORMATS = {

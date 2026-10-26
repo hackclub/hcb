@@ -153,6 +153,16 @@ RSpec.describe Reimbursement::Report, type: :model do
       expect(report.may_mark_submitted?).to be(true)
     end
 
+    it "can not be submitted when the payout method's currency was removed from Wise" do
+      add_expense(category: "Project Supplies")
+      details = build(:wise_transfer_payout_method_details, currency: "CNY").tap { |d| d.save!(validate: false) }
+      report.update!(legal_entity_payout_method: user.personal_legal_entity.payout_methods.create!(details:), currency: "CNY")
+
+      expect(report.mismatched_currency?).to be(false)
+      expect(report.payout_method).to be_unsupported
+      expect(report.may_mark_submitted?).to be(false)
+    end
+
     it "does not require a category on fees" do
       add_expense(category: "Project Supplies")
       report.expenses.create!(value: 1, memo: "Wise fee", type: Reimbursement::Expense::Fee.name)

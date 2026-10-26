@@ -228,6 +228,24 @@ RSpec.describe LegalEntity::PayoutMethod, type: :model do
         expect(payout_method.errors[:base].join).to include("Checks are paused.")
       end
     end
+
+    context "when a saved Wise recipient uses a currency Wise no longer supports" do
+      let(:details) do
+        build(:wise_transfer_payout_method_details, currency: "CNY").tap { |d| d.save!(validate: false) }
+      end
+
+      it "reports the recipient as unsupported and points to wires" do
+        payout_method = legal_entity.payout_methods.create!(details:)
+        expect(payout_method).to be_unsupported
+        expect(payout_method.unsupported_details).to eq(status_badge: "Unavailable", reason: "Wise transfers in CNY are no longer supported. Please use an international wire instead.")
+      end
+
+      it "stays supported for currencies Wise still accepts" do
+        payout_method = legal_entity.payout_methods.create!(details: build(:wise_transfer_payout_method_details, currency: "GBP"))
+        expect(payout_method).not_to be_unsupported
+        expect(payout_method.unsupported_details).to be_nil
+      end
+    end
   end
 
   describe "#locked_by_processing_reimbursement_report?" do

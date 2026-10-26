@@ -99,7 +99,7 @@
   <% end %>
 </section>
 
-<% wise_transfer_x_data = { currency: payout_method.try(:currency), amount: nil, account_type: payout_method.try(:account_type), use_same_email_for_interac: (payout_method.try(:use_same_email_for_interac) ? payout_method.use_same_email_for_interac.to_s : false), email: nil } %>
+<% wise_transfer_x_data = { currency: (payout_method.try(:currency) unless payout_method.try(:unsupported_currency?)), amount: nil, account_type: payout_method.try(:account_type), use_same_email_for_interac: (payout_method.try(:use_same_email_for_interac) ? payout_method.use_same_email_for_interac.to_s : false), email: nil } %>
 <section data-behavior="wise_transfer_payout_method_inputs" class="<%= "hidden" unless pm_is.call(LegalEntity::PayoutMethod::WiseTransfer) %>" x-data="<%= wise_transfer_x_data.to_json %>">
   <%= form.fields_for :payout_method_wise_transfer, detail_for.call(LegalEntity::PayoutMethod::WiseTransfer) do |form| %>
     <p class="muted mt-2 mb-5">
@@ -112,6 +112,9 @@
     <div class="field">
       <%= form.label :currency, "Currency" %>
       <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { disabled: true }, { "@change" => "currency = $event.target.value;" } %>
+      <% if payout_method.try(:unsupported_currency?) %>
+        <span class="warning"><%= payout_method.unsupported_reason %></span>
+      <% end %>
     </div>
 
     <%= form.hidden_field :wise_recipient_id, value: "" %>
