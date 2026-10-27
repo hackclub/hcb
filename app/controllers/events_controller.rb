@@ -21,6 +21,7 @@ class EventsController < ApplicationController
 
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
   before_action :set_timeframe, only: [:merchants_chart, :categories_chart, :tags_chart, :users_chart]
+  helper_method :transfer_recipients_hidden?
 
   # GET /events
   def index
@@ -702,6 +703,7 @@ class EventsController < ApplicationController
   def payments
     authorize @event
     params[:q] ||= params[:search]
+    params[:q] = nil if transfer_recipients_hidden?
 
     # The search query name was historically `search`. It has since been renamed
     # to `q`. This following line retains backwards compatibility.
@@ -802,6 +804,7 @@ class EventsController < ApplicationController
     end
 
     params[:q] ||= params[:search]
+    params[:q] = nil if transfer_recipients_hidden?
 
     @ach_transfers = @event.ach_transfers
     @paypal_transfers = @event.paypal_transfers
@@ -1379,6 +1382,10 @@ class EventsController < ApplicationController
 
   private
 
+  def transfer_recipients_hidden?
+    @event.config.hide_transfer_recipient_names? && !organizer_signed_in?
+  end
+
   def process_hidden_param!(params_hash)
     if params_hash[:hidden] == "1" && !@event.hidden_at.present?
       params_hash[:hidden_at] = Time.current
@@ -1525,7 +1532,8 @@ class EventsController < ApplicationController
           :contact_email,
           :generate_monthly_announcement,
           :subevent_plan,
-          :subevent_name_prefix
+          :subevent_name_prefix,
+          :hide_transfer_recipient_names
         ]
       }
     ]

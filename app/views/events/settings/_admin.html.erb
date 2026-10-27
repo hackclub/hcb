@@ -112,6 +112,13 @@
         <%= form.check_box :financially_frozen, switch: true, disabled: %>
       </div>
 
+      <%= form.fields_for :config do |config| %>
+        <div class="field field--checkbox">
+          <%= config.label :hide_transfer_recipient_names, "Hide transfer recipient names in Transparency Mode?" %>
+          <%= config.check_box :hide_transfer_recipient_names, switch: true, disabled: %>
+        </div>
+      <% end %>
+
       <div class="action">
         <%= form.submit "Update", disabled:, data: { turbo: false } %>
       </div>
