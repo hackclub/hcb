@@ -11,7 +11,7 @@ module Reimbursement
     end
 
     def bulk_create?
-      !record.event.demo_mode && (admin || OrganizerPosition.role_at_least?(user, record.event, :member))
+      !record.event.demo_mode && (admin || manager)
     end
 
     def show?

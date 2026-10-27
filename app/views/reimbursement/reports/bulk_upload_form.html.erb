@@ -5,7 +5,7 @@
 <h1>Bulk send reimbursement invitations</h1>
 
 <p class="muted">
-  Upload a CSV file to send multiple reimbursement invitations at once. If there is an issue with any row, we will let you know and will not send any invitations until everything looks good.
+  Upload a CSV file to send up to <%= Reimbursement::ReportService::BulkCreate::MAX_ROWS %> reimbursement invitations at once. If there is an issue with any row, we will let you know and will not send any invitations until everything looks good.
 </p>
 
 <div class="card p3 mb3">

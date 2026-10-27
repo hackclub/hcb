@@ -7,6 +7,7 @@ module Reimbursement
       OPTIONAL_HEADERS = %w[maximum_amount_cents invite_message].freeze
       ALL_HEADERS = REQUIRED_HEADERS + OPTIONAL_HEADERS
       MAX_ERRORS_TO_DISPLAY = 10
+      MAX_ROWS = 500
 
       Result = Struct.new(:success?, :reports, :errors, keyword_init: true)
 
@@ -19,6 +20,10 @@ module Reimbursement
 
       def run
         rows, header_mapping = Shared::CsvUpload.new(csv_file: @csv_file).run
+        if rows.size > MAX_ROWS
+          raise Shared::CsvUpload::ValidationError.new(["CSV file has too many rows. Maximum is #{MAX_ROWS} reports per upload."])
+        end
+
         attributes = rows.map do |row|
           ALL_HEADERS.to_h do |header|
             original_header = header_mapping[header]

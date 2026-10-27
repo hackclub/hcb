@@ -15,9 +15,9 @@ RSpec.describe Reimbursement::ReportsController do
       Rack::Test::UploadedFile.new(StringIO.new(content), "text/csv", original_filename: "reports.csv")
     end
 
-    context "as a member" do
+    context "as a manager" do
       before do
-        create(:organizer_position, event:, user:, role: :member)
+        create(:organizer_position, event:, user:, role: :manager)
         create_session(user, verified: true)
       end
 
@@ -72,7 +72,7 @@ RSpec.describe Reimbursement::ReportsController do
           expect(document.at_css('label[for="reviewer_id"]').text).to eq("Reviewer")
           expect(document.at_css("##{select["aria-describedby"]}").text).to include("all reports")
           expect(select.at_css("option[selected]")["value"]).to eq(reviewer.public_id)
-          expect(select.css("option").map { |option| option["value"] }).not_to include(user.public_id)
+          expect(select.css("option").map { |option| option["value"] }).to include(user.public_id)
         end
       end
 
@@ -80,8 +80,6 @@ RSpec.describe Reimbursement::ReportsController do
         let(:event) { create(:event, reimbursement_reviewer_selection: :optional) }
 
         it "renders an optional reviewer with no preference and preserves an explicitly blank selection" do
-          event.organizer_positions.find_by!(user:).update!(role: :manager)
-
           post :bulk_upload, params: {
             event_id: event.slug,
             reviewer_id: "",
@@ -100,7 +98,7 @@ RSpec.describe Reimbursement::ReportsController do
       end
     end
 
-    [:reader, :outsider].each do |role|
+    [:member, :reader, :outsider].each do |role|
       it "blocks #{role}s from all bulk endpoints even with a public reimbursement page" do
         create(:organizer_position, event:, user:, role:) unless role == :outsider
         create_session(user, verified: true)
