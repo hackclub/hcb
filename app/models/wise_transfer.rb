@@ -149,7 +149,10 @@ class WiseTransfer < ApplicationRecord
     event :mark_failed do
       transitions from: [:pending, :approved, :sent, :approved], to: :failed
       after do |reason = nil|
-        if payment_attempt.present?
+        if reimbursement_payout_holding.present?
+          ReimbursementMailer.with(reimbursement_payout_holding:, reason:).wise_transfer_failed.deliver_later
+          reimbursement_payout_holding.mark_failed!
+        elsif payment_attempt.present?
           payment_attempt.mark_failed!(reason:)
         else
           WiseTransferMailer.with(wise_transfer: self, reason:).notify_failed.deliver_later
