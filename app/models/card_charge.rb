@@ -51,8 +51,11 @@ class CardCharge < ApplicationRecord
     (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("merchant_currency")
   end
 
+  # Only Stripe authorizations carry verification data; settled transactions
+  # don't, so a charge that settled before it was reversed must still read it
+  # from the authorization.
   def verification_data
-    (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("verification_data") || {}
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("verification_data") || {}
   end
 
   # The checks Stripe reported as mismatched when the charge was authorized,

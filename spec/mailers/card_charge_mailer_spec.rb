@@ -3,15 +3,26 @@
 require "rails_helper"
 
 RSpec.describe CardChargeMailer, type: :mailer do
+  # A charge that settled and was then refunded in full.
   def build_ledger_item(user:, merchant_name: "Merchant", verification_data: {}, amount_cents: -12_34)
     stripe_cardholder = create(:stripe_cardholder, user:, stripe_billing_address_postal_code: "90069")
     stripe_card = create(:stripe_card, :with_stripe_id, stripe_cardholder:)
-    raw_stripe_transaction = create(:raw_stripe_transaction, stripe_card:, amount_cents:, stripe_transaction: {
-                                      "card"              => stripe_card.stripe_id,
-                                      "type"              => "capture",
-                                      "merchant_data"     => { "name" => merchant_name },
-                                      "verification_data" => verification_data
-                                    })
+    raw_pending_stripe_transaction = create(:raw_pending_stripe_transaction, amount_cents:, date_posted: Date.current, stripe_transaction: {
+                                              "card"                 => { "id" => stripe_card.stripe_id },
+                                              "approved"             => true,
+                                              "status"               => "closed",
+                                              "authorization_method" => "online",
+                                              "merchant_data"        => { "name" => merchant_name },
+                                              "verification_data"    => verification_data,
+                                              "request_history"      => [{ "amount" => -amount_cents, "approved" => true, "reason" => "card_active" }]
+                                            })
+    raw_stripe_transaction = create(:raw_stripe_transaction, stripe_card:, amount_cents:,
+                                                             stripe_authorization_id: raw_pending_stripe_transaction.stripe_transaction_id,
+                                                             stripe_transaction: {
+                                                               "card"          => stripe_card.stripe_id,
+                                                               "type"          => "capture",
+                                                               "merchant_data" => { "name" => merchant_name }
+                                                             })
     card_charge = raw_stripe_transaction.card_charge
 
     # A reversed charge's refund cancels out its capture, so the item nets to zero.
