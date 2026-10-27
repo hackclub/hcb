@@ -1,6 +1,10 @@
 # frozen_string_literal: true
 
 class CardChargeMailer < ApplicationMailer
+  # Reversals of smaller charges, such as the $0 authorizations merchants use
+  # to verify a card, aren't worth an email.
+  MINIMUM_AMOUNT_CENTS = 1_00
+
   def reversed
     @ledger_item = params[:ledger_item]
     @card_charge = @ledger_item.linked_object
@@ -8,6 +12,7 @@ class CardChargeMailer < ApplicationMailer
     @user = @ledger_item.author
 
     return unless @user.email_charge_notifications_enabled?
+    return if amount_cents < MINIMUM_AMOUNT_CENTS
 
     @merchant_name = @card_charge.merchant_data&.dig("name") || "the merchant"
     @failed_verification_checks = verification_data.select { |k, v| k.end_with?("check") && v == "mismatch" }.keys

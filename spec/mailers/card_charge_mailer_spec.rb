@@ -96,6 +96,25 @@ RSpec.describe CardChargeMailer, type: :mailer do
       expect { mail.deliver_now }.not_to(change { ActionMailer::Base.deliveries.count })
     end
 
+    it "does not send when the charge was under $1" do
+      user = create(:user)
+      ledger_item = build_ledger_item(user:, amount_cents: -99)
+
+      mail = described_class.with(ledger_item:).reversed
+
+      expect { mail.deliver_now }.not_to(change { ActionMailer::Base.deliveries.count })
+    end
+
+    it "sends when the charge was exactly $1" do
+      user = create(:user)
+      ledger_item = build_ledger_item(user:, amount_cents: -1_00)
+
+      mail = described_class.with(ledger_item:).reversed
+
+      expect { mail.deliver_now }.to change { ActionMailer::Base.deliveries.count }.by(1)
+      expect(mail.body.encoded).to include("$1.00")
+    end
+
     it "only lists the reason that actually failed, not the others" do
       user = create(:user)
       ledger_item = build_ledger_item(user:, verification_data: { "address_postal_code_check" => "mismatch" })
