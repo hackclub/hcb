@@ -342,6 +342,20 @@ RSpec.describe EventsController do
       expect(manager_position.reimbursement_reviewer_opt_ins.reload).to be_empty
     end
 
+    it "rolls back reimbursement reviewer toggles when the rest of the form doesn't save" do
+      manager = create(:user)
+      other_manager = create(:user)
+      event = create(:event)
+      manager_position = create(:organizer_position, user: manager, event:, role: :manager)
+      create(:organizer_position, user: other_manager, event:, role: :manager)
+      create_session(manager, verified: true)
+
+      patch(:update, params: { id: event.slug, event: { slug: "12345", reimbursement_reviewer_position_ids: ["", manager_position.id] } })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(event.reload.reimbursement_reviewers).to contain_exactly(manager, other_manager)
+    end
+
     it "lets a parent organization manager opt in to reviewing a sub-organization's reimbursements" do
       parent = create(:event)
       event = create(:event, parent:)
