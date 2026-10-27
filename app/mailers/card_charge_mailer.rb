@@ -4,7 +4,7 @@ class CardChargeMailer < ApplicationMailer
   def reversed
     @ledger_item = params[:ledger_item]
     @card_charge = @ledger_item.linked_object
-    amount_cents = @ledger_item.amount_cents.abs
+    amount_cents = @card_charge.amount_cents
     @user = @ledger_item.author
 
     return unless @user.email_charge_notifications_enabled?
@@ -12,7 +12,7 @@ class CardChargeMailer < ApplicationMailer
     @merchant_name = @card_charge.merchant_data&.dig("name") || "the merchant"
     @failed_verification_checks = verification_data.select { |k, v| k.end_with?("check") && v == "mismatch" }.keys
 
-    @insufficient_balance = balance_before_charge_cents < amount_cents
+    @insufficient_balance = balance_before_charge_cents(amount_cents) < amount_cents
     @spending_limit_exceeded = spending_limit_exceeded?(@card_charge.stripe_card, amount_cents)
 
     mail to: @user.email_address_with_name, subject: "Your charge at #{@merchant_name} was reversed"
@@ -24,8 +24,8 @@ class CardChargeMailer < ApplicationMailer
     (@card_charge.raw_stripe_transactions.last || @card_charge.raw_pending_stripe_transaction)&.stripe_transaction&.dig("verification_data") || {}
   end
 
-  def balance_before_charge_cents
-    @card_charge.stripe_card.event.balance_v2_cents(end_date: @ledger_item.datetime) - @ledger_item.amount_cents
+  def balance_before_charge_cents(amount_cents)
+    @card_charge.stripe_card.event.balance_v2_cents(end_date: @ledger_item.datetime) + amount_cents
   end
 
   def spending_limit_exceeded?(stripe_card, amount_cents)

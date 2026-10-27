@@ -51,6 +51,19 @@ class CardCharge < ApplicationRecord
     (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("merchant_currency")
   end
 
+  # What the cardholder was charged, before any refund: the captured amount once
+  # the charge has settled, otherwise the amount that was authorized. The ledger
+  # item's own amount nets to zero once a charge is reversed or released, and
+  # Stripe zeroes a released authorization's amount, so neither can describe
+  # the charge. The canonical pending transaction keeps the amount as
+  # authorized.
+  def amount_cents
+    captured_cents = raw_stripe_transactions.reject(&:refund?).sum(&:amount_cents).abs
+    return captured_cents if captured_cents.positive?
+
+    raw_pending_stripe_transaction&.canonical_pending_transaction&.amount_cents&.abs || 0
+  end
+
   def icon
     merchant = YellowPages::Merchant.lookup(network_id: merchant_network_id || "")
     categorised_category = BreakdownEngine::Categorizer.new(merchant_category).run

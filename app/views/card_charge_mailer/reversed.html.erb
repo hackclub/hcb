@@ -1,5 +1,5 @@
 <p>
-  Your <%= link_to "#{render_money @ledger_item.amount_cents.abs} charge", ledger_item_url(@ledger_item) %> on <%= @ledger_item.datetime.strftime("%B #{@ledger_item.datetime.day.ordinalize}") %> was reversed by <strong><%= @merchant_name %></strong>. Your balance has been updated to reflect this reversal.
+  Your <%= link_to "#{render_money @card_charge.amount_cents} charge", ledger_item_url(@ledger_item) %> on <%= @ledger_item.datetime.strftime("%B #{@ledger_item.datetime.day.ordinalize}") %> was reversed by <strong><%= @merchant_name %></strong>. Your balance has been updated to reflect this reversal.
 </p>
 
 <h3 class="mb-2">Wasn't expecting this reversal?</h3>

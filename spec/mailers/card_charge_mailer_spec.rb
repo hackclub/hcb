@@ -7,16 +7,39 @@ RSpec.describe CardChargeMailer, type: :mailer do
                         spending_limit_amount: nil, spending_limit_interval: nil)
     stripe_cardholder = create(:stripe_cardholder, user:, stripe_billing_address_postal_code: "90069")
     stripe_card = create(:stripe_card, :with_stripe_id, stripe_cardholder:, spending_limit_amount:, spending_limit_interval:)
-    raw_stripe_transaction = create(:raw_stripe_transaction, stripe_card:, stripe_transaction: {
+    raw_stripe_transaction = create(:raw_stripe_transaction, stripe_card:, amount_cents:, stripe_transaction: {
                                       "card"              => stripe_card.stripe_id,
+                                      "type"              => "capture",
                                       "merchant_data"     => { "name" => merchant_name },
                                       "verification_data" => verification_data
                                     })
     card_charge = raw_stripe_transaction.card_charge
 
-    item = Ledger::Item.new(amount_cents:, memo: "Test", datetime: Time.current, linked_object: card_charge)
+    # A reversed charge's refund cancels out its capture, so the item nets to zero.
+    item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current, linked_object: card_charge)
     item.save(validate: false)
-    item.update_columns(amount_cents:)
+    item.update_columns(amount_cents: 0, status: "reversed")
+    item
+  end
+
+  # An authorization that Stripe released before the merchant captured it.
+  def build_released_ledger_item(user:, amount_cents: -45_00)
+    stripe_cardholder = create(:stripe_cardholder, user:)
+    stripe_card = create(:stripe_card, :with_stripe_id, stripe_cardholder:)
+    raw_pending_stripe_transaction = create(:raw_pending_stripe_transaction, amount_cents:, date_posted: Date.current, stripe_transaction: {
+                                              "card"                 => { "id" => stripe_card.stripe_id },
+                                              "approved"             => true,
+                                              "status"               => "reversed",
+                                              "authorization_method" => "online",
+                                              "merchant_data"        => { "name" => "goBILDA" }
+                                            })
+    canonical_pending_transaction = create(:canonical_pending_transaction, raw_pending_stripe_transaction:, amount_cents:)
+    item = canonical_pending_transaction.reload.ledger_item
+
+    # Stripe zeroes a released authorization's amount, and the declined pending
+    # transaction no longer counts towards the item.
+    raw_pending_stripe_transaction.update_columns(amount_cents: 0)
+    item.update_columns(amount_cents: 0, status: "released")
     item
   end
 
@@ -31,6 +54,17 @@ RSpec.describe CardChargeMailer, type: :mailer do
       expect(mail.subject).to eq("Your charge at goBILDA was reversed")
       expect(mail.body.encoded).to include("$45.00")
       expect(mail.body.encoded).to include(ledger_item_url(ledger_item))
+    end
+
+    it "says what was authorized when the authorization was released before it was captured" do
+      user = create(:user)
+      ledger_item = build_released_ledger_item(user:, amount_cents: -45_00)
+
+      mail = described_class.with(ledger_item:).reversed
+
+      expect(mail.subject).to eq("Your charge at goBILDA was reversed")
+      expect(mail.body.encoded).to include("$45.00")
+      expect(mail.body.encoded).not_to include("$0.00")
     end
 
     it "does not mention troubleshooting tips when there is no verification mismatch" do
