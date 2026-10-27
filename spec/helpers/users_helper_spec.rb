@@ -37,7 +37,11 @@ RSpec.describe UsersHelper, type: :helper do
       end
 
       it "is shown to an admin viewing another user" do
-        expect(helper.user_mention(mentioned_user)).to include("Impersonate")
+        html = helper.user_mention(mentioned_user)
+
+        expect(html).to include("Impersonate")
+        # `impersonate` looks users up by numeric ID, not the friendly_id slug
+        expect(html).to include(helper.impersonate_user_path(mentioned_user.id))
       end
 
       it "is hidden from auditors, who can't impersonate" do
