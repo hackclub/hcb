@@ -276,13 +276,16 @@ RSpec.describe EventsController do
     end
 
     it "lets a parent organization manager toggle only themselves as a reimbursement reviewer" do
-      parent = create(:event)
-      event = create(:event, parent:)
+      parent = create(:event, name: "Parent Org")
+      event = create(:event, parent:, name: "Sub Org")
       manager_position = create(:organizer_position, event:, role: :manager)
       parent_position = create(:organizer_position, event: parent, role: :manager)
       create_session(parent_position.user, verified: true)
 
       get(:edit, params: { id: event.slug, tab: "reimbursements" })
+
+      headings = Nokogiri::HTML5(response.body).css("#reimbursement_reviewer_options h4").map(&:text)
+      expect(headings).to eq(["Managers of Sub Org", "Managers of Parent Org"])
 
       boxes = Nokogiri::HTML5(response.body).css("#reimbursement_reviewer_options input[type=checkbox]").to_h do |box|
         [box["value"].to_i, { checked: box.has_attribute?("checked"), disabled: box.has_attribute?("disabled") }]

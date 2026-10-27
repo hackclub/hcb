@@ -53,7 +53,10 @@
           <% end %>
         </p>
       </div>
+      <% ancestor_ids = event.ancestor_ids %>
+      <% candidates = event.reimbursement_reviewer_candidates.includes(:user, :event).sort_by { |position| [ancestor_ids.index(position.event_id) || ancestor_ids.size, position.user.name.to_s.downcase] } %>
       <% toggleable_position_ids = event.reimbursement_reviewer_candidates_toggleable_by(current_user).ids %>
+      <% grouped_by_organization = candidates.map(&:event_id).uniq.many? %>
       <div class="mb-4" data-controller="text-filter">
         <%= text_field_tag :reimbursement_reviewer_search, nil,
                            name: nil,
@@ -64,14 +67,14 @@
                            class: "!max-w-full w-full mb1",
                            data: { action: "input->text-filter#query keydown.enter->text-filter#query:prevent" } %>
         <div id="reimbursement_reviewer_options" role="listbox" class="max-h-72 overflow-y-auto border border-solid border-smoke dark:border-slate rounded-lg px-3">
-          <%= form.collection_check_boxes :reimbursement_reviewer_position_ids, event.reimbursement_reviewer_candidates.includes(:user, :event).order("users.full_name"), :id, ->(position) { position.user.name } do |b| %>
+          <% heading_event_id = nil %>
+          <%= form.collection_check_boxes :reimbursement_reviewer_position_ids, candidates, :id, ->(position) { position.user.name } do |b| %>
+            <% if grouped_by_organization && b.object.event_id != heading_event_id %>
+              <% heading_event_id = b.object.event_id %>
+              <h4 class="h5 muted mt-3 mb-0">Managers of <%= b.object.event.name %></h4>
+            <% end %>
             <div class="field field--checkbox my-2" data-name="<%= b.text %>">
-              <span class="flex-1 flex items-center gap-2">
-                <%= avatar_for b.object.user %><%= b.text %>
-                <% if b.object.event_id != event.id %>
-                  <span class="h5 muted">manager of <%= b.object.event.name %></span>
-                <% end %>
-              </span>
+              <span class="flex-1 flex items-center gap-2"><%= avatar_for b.object.user %><%= b.text %></span>
               <div class="field--checkbox--switch ml-auto shrink-0">
                 <%= b.label do %>
                   <%= b.check_box(disabled: disabled || !toggleable_position_ids.include?(b.object.id)) %>
