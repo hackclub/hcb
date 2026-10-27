@@ -234,7 +234,7 @@ module UsersHelper
           :span,
           safe_join([inline_icon("spy", size: 16), content_tag(:span, "Impersonate", class: "ml1")]),
           class: "menu__item menu__item--icon menu__action",
-          data: { action: "click->mention#impersonate", mention_url_param: impersonate_user_path(user.id, return_to: request.url) }
+          data: { action: "click->mention#impersonate", mention_url_param: impersonate_user_path(user.id) }
         )
       end
 
