@@ -20,7 +20,7 @@ class EventsController < ApplicationController
   before_action :set_event_follow, only: [:show, :transactions, :announcement_overview]
 
   before_action :redirect_to_onboarding, unless: -> { @event&.is_public? }
-  before_action :set_timeframe, only: [:merchants_chart, :categories_chart, :tags_chart, :users_chart]
+  before_action :set_timeframe, only: [:merchants_chart, :categories_chart, :tags_chart, :users_chart, :money_flow_chart]
 
   # GET /events
   def index
@@ -80,7 +80,7 @@ class EventsController < ApplicationController
   def merchants_chart
     authorize @event
 
-    @merchants = BreakdownEngine::Merchants.new(@event, start_date: @timeframe&.ago).run
+    @merchants = BreakdownEngine::Merchants.new(@event, start_date: @start_date, end_date: @end_date).run
 
     render partial: "events/home/merchants_chart", locals: { timeframe: params[:timeframe] }
   end
@@ -88,9 +88,15 @@ class EventsController < ApplicationController
   def categories_chart
     authorize @event
 
-    @categories = BreakdownEngine::Categories.new(@event, start_date: @timeframe&.ago).run
+    @categories = BreakdownEngine::Categories.new(@event, start_date: @start_date, end_date: @end_date).run
 
     render partial: "events/home/categories_chart", locals: { timeframe: params[:timeframe] }
+  end
+
+  def balance_chart
+    authorize @event
+
+    render partial: "events/home/balance_chart", locals: { event: @event }
   end
 
   def balance_transactions
@@ -137,7 +143,7 @@ class EventsController < ApplicationController
   def tags_chart
     authorize @event
 
-    @tags = BreakdownEngine::Tags.new(@event, start_date: @timeframe&.ago).run
+    @tags = BreakdownEngine::Tags.new(@event, start_date: @start_date, end_date: @end_date).run
 
     render partial: "events/home/tags_chart", locals: { tags: @tags, timeframe: params[:timeframe], event: @event }
   end
@@ -145,9 +151,17 @@ class EventsController < ApplicationController
   def users_chart
     authorize @event
 
-    @users = BreakdownEngine::Users.new(@event, start_date: @timeframe&.ago).run
+    @users = BreakdownEngine::Users.new(@event, start_date: @start_date, end_date: @end_date).run
 
     render partial: "events/home/users_chart", locals: { users: @users, timeframe: params[:timeframe], event: @event }
+  end
+
+  def money_flow_chart
+    authorize @event
+
+    @money_flow = BreakdownEngine::MoneyFlow.new(@event, start_date: @start_date, end_date: @end_date).run
+
+    render partial: "events/home/money_flow_chart", locals: { money_flow: @money_flow, event: @event, start_date: @start_date&.to_date, end_date: (@end_date.to_date if @start_date) }
   end
 
   def stats
@@ -1694,7 +1708,7 @@ class EventsController < ApplicationController
   end
 
   def set_timeframe
-    @timeframe = BreakdownEngine::TIMEFRAMES[params[:timeframe]]
+    @start_date, @end_date = BreakdownEngine.date_range(params[:timeframe])
   end
 
   def set_event_follow
