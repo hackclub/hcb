@@ -40,7 +40,6 @@ RSpec.describe UsersHelper, type: :helper do
         html = helper.user_mention(mentioned_user)
 
         expect(html).to include("Impersonate")
-        # `impersonate` looks users up by numeric ID, not the friendly_id slug
         expect(html).to include(helper.impersonate_user_path(mentioned_user.id))
       end
 
