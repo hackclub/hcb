@@ -64,8 +64,10 @@ class ApplicationMailer < ActionMailer::Base
     end
   end
 
+  # Mailer actions interpolate this into @delivery_reason, where view helpers
+  # aren't available, so it delegates to the one copy in ApplicationHelper.
   def stripe_issuing_disclosure
-    "HCB Visa® Commercial cards are powered by Stripe and issued by Celtic Bank."
+    ApplicationController.helpers.stripe_issuing_disclosure
   end
 
   protected

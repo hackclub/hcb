@@ -17,7 +17,7 @@ class OrganizerPositionInvitesMailer < ApplicationMailer
   end
 
   def accepted
-    @delivery_reason = "you are a member of this organization on HCB."
+    @delivery_reason = "you are a member of #{@invite.event.name} on HCB."
     @emails = (@invite.event.users.excluding(@invite.user).map(&:email_address_with_name) + [@invite.event.config.contact_email]).compact
 
     @announcement = Announcement::Templates::NewTeamMember.new(
