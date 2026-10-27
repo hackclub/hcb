@@ -63,16 +63,15 @@
         <div class="flex-1">
           <p class="my-0 text-sm muted">From <%= grant.event.name %></p>
           <p class="my-0 text-md"><span class="text-2xl font-[700]"><%= render_money grant.amount %></span><% if grant.purpose.present? %> for <strong><%= grant.purpose %></strong><% end %></p>
-          <% if grant.expiration_at.past? %>
-            <span class="badge m-0 mt-2 <%= expiry_color %>"><%= inline_icon "clock", size: 14 %> Expired <%= grant.expiration_at.strftime("%b %-d, %Y") %></span>
-          <% else %>
-            <span class="badge m-0 mt-2 <%= expiry_color %>">
-              <%= inline_icon "clock", size: 14 %>
-              <span><%= distance_of_time_in_words(Time.current, grant.expiration_at.end_of_day) %> left to activate • <span class="whitespace-nowrap">Expires <%= grant.expiration_at.strftime("%b %-d, %Y") %></span></span>
-            </span>
-          <% end %>
+          <span class="badge m-0 mt-2 <%= expiry_color %>">
+            <%= inline_icon "clock", size: 14 %>
+            <%= grant.expiration_at.past? ? "Expired" : "#{distance_of_time_in_words(Time.current, grant.expiration_at.end_of_day)} left to activate" %>
+          </span>
         </div>
-        <%= link_to "Activate my grant", grant, class: "btn" %>
+        <div class="flex flex-col items-center gap-1">
+          <%= link_to "Activate my grant", grant, class: "btn" %>
+          <p class="my-0 text-sm italic text-muted"><%= grant.expiration_at.past? ? "Expired" : "Expires" %> <%= grant.expiration_at.strftime("%b %-d, %Y") %></p>
+        </div>
         <div class="absolute bottom-0 left-0 h-1 <%= expiry_color == "bg-warning" ? "bg-orange" : "bg-primary" %>" style="width: <%= time_left %>%;" role="progressbar" aria-label="Time left to spend this grant" aria-valuenow="<%= time_left.round %>" aria-valuemin="0" aria-valuemax="100"></div>
       </div>
     <% end %>
