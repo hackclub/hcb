@@ -1675,6 +1675,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_120000) do
     t.datetime "archived_at"
     t.string "banned_reason"
     t.datetime "created_at", null: false
+    t.boolean "electronic_consent"
+    t.datetime "electronic_consent_at"
     t.string "entity_type"
     t.bigint "managing_event_id"
     t.string "name"
