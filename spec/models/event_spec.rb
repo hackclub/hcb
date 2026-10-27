@@ -469,6 +469,32 @@ RSpec.describe Event, type: :model do
       expect(event.errors[:description]).to be_present
     end
   end
+  describe "#statement_descriptor" do
+    it "uses the name when it's short enough" do
+      event = build(:event, name: "Hack Club")
+
+      expect(event.statement_descriptor).to eq("HCB* Hack Club")
+    end
+
+    it "uses the nickname for a long name" do
+      event = build(:event, name: "Hack Club Assemble 2026 Hackathon", short_name: "Assemble")
+
+      expect(event.statement_descriptor).to eq("HCB* Assemble")
+    end
+
+    it "truncates a long name without a nickname" do
+      event = build(:event, name: "Hack Club Assemble 2026 Hackathon")
+
+      expect(event.statement_descriptor).to eq("HCB* Hack Club Assemb")
+    end
+
+    it "drops characters Stripe doesn't allow" do
+      event = build(:event, name: "Café's Club!")
+
+      expect(event.statement_descriptor).to eq("HCB* Cafes Club")
+    end
+  end
+
   describe "#wire_fee_waived?" do
     let(:plan_type) { Event::Plan::Standard }
     let(:event) { create(:event, plan_type:) }
