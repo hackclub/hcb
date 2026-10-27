@@ -24,8 +24,8 @@ export default class extends Controller {
 
   impersonate({ params: { url } }) {
     swal({
-      title: "Are you sure?",
-      buttons: true
+      title: 'Are you sure?',
+      buttons: true,
     }).then(() => submitForm(url, {}))
   }
 }
