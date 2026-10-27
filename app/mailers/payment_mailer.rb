@@ -2,6 +2,7 @@
 
 class PaymentMailer < ApplicationMailer
   before_action :set_payment
+  before_action { @delivery_reason = "you are being paid for \"#{@payment.purpose}\" by #{@payment.event.name}." }
 
   def missing_payout_method
     mail to: @recipients, subject: initial_subject

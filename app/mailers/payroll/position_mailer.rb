@@ -7,6 +7,7 @@ module Payroll
       @party = params[:party]
       @payee = @position.payee
       @event = @position.event
+      @delivery_reason = "you were invited to get paid as a contractor for #{@event.name}."
 
       mail to: recipients,
            subject: "[Action Required] Complete your onboarding to get paid as a contractor for #{@event.name}",
@@ -18,6 +19,7 @@ module Payroll
       @payee = @position.payee
       @event = @position.event
       @next_step = @position.next_onboarding_step
+      @delivery_reason = "you were invited to get paid as a contractor for #{@event.name}."
 
       mail to: recipients,
            subject: "[Action Required] Finish your onboarding to get paid by #{@event.name}",
@@ -26,6 +28,7 @@ module Payroll
 
     def onboarded
       @position = params[:position]
+      @delivery_reason = "you are a manager of #{@position.event.name} on HCB."
 
       mail to: @position.event.organizer_contact_emails(only_managers: true),
            subject: "#{@position.payee.display_name} has been onboarded as a contractor for #{@position.event.name}"
@@ -34,6 +37,7 @@ module Payroll
     def terminated
       @position = params[:position]
       @payee = @position.payee
+      @delivery_reason = "you were a contractor for #{@position.event.name}."
 
       mail to: recipients, subject: "Your contracting position for #{@position.event.name} has been terminated"
     end

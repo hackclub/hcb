@@ -2,6 +2,7 @@
 
 class GSuiteMailer < ApplicationMailer
   before_action :set_g_suite
+  before_action :set_delivery_reason, except: [:notify_operations_of_entering_created_state]
 
   default to: -> {
     emails = organization_managers
@@ -42,6 +43,10 @@ class GSuiteMailer < ApplicationMailer
 
   def organization_managers
     @g_suite.event.organizer_positions.where(role: :manager).includes(:user).map(&:user).map(&:email_address_with_name)
+  end
+
+  def set_delivery_reason
+    @delivery_reason = "you are a manager of #{@g_suite.event.name}, which uses Google Workspace through HCB."
   end
 
 end

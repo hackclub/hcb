@@ -3,6 +3,7 @@
 class User
   class BackupCodeMailer < ApplicationMailer
     before_action :set_user
+    before_action { @delivery_reason = "of security activity on your HCB account." }
 
     default to: -> { @user.email_address_with_name }
 
