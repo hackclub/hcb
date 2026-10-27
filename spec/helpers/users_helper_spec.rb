@@ -26,5 +26,40 @@ RSpec.describe UsersHelper, type: :helper do
       expect(html).not_to include('data-controller="menu"')
       expect(html).not_to include("Copy email")
     end
+
+    describe "impersonate menu item" do
+      let(:admin) { create(:user, :make_admin) }
+      let(:session) { nil }
+
+      before do
+        allow(helper).to receive(:current_user).and_return(admin)
+        allow(helper).to receive(:current_session).and_return(session)
+      end
+
+      it "is shown to an admin viewing another user" do
+        html = helper.user_mention(mentioned_user)
+
+        expect(html).to include("Impersonate")
+        expect(html).to include(helper.impersonate_user_path(mentioned_user.id))
+      end
+
+      it "is hidden from auditors, who can't impersonate" do
+        allow(helper).to receive(:current_user).and_return(create(:user, :make_auditor))
+
+        expect(helper.user_mention(mentioned_user)).not_to include("Impersonate")
+      end
+
+      it "is hidden on the admin's own mention" do
+        expect(helper.user_mention(admin)).not_to include("Impersonate")
+      end
+
+      context "when already impersonating" do
+        let(:session) { build_stubbed(:user_session, user: admin, impersonated_by: create(:user, :make_admin)) }
+
+        it "is hidden to prevent nested impersonation" do
+          expect(helper.user_mention(mentioned_user)).not_to include("Impersonate")
+        end
+      end
+    end
   end
 end
