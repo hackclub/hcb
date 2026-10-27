@@ -30,14 +30,17 @@ RSpec.describe CardChargeMailer, type: :mailer do
                                               "approved"             => true,
                                               "status"               => "reversed",
                                               "authorization_method" => "online",
-                                              "merchant_data"        => { "name" => "goBILDA" }
+                                              "merchant_data"        => { "name" => "goBILDA" },
+                                              "request_history"      => [{ "amount" => -amount_cents, "approved" => true, "reason" => "card_active" }]
                                             })
     canonical_pending_transaction = create(:canonical_pending_transaction, raw_pending_stripe_transaction:, amount_cents:)
     item = canonical_pending_transaction.reload.ledger_item
 
-    # Stripe zeroes a released authorization's amount, and the declined pending
-    # transaction no longer counts towards the item.
+    # Stripe zeroes a released authorization's amount, the pending transaction
+    # import copies that onto the canonical pending transaction, and the
+    # declined pending transaction no longer counts towards the item.
     raw_pending_stripe_transaction.update_columns(amount_cents: 0)
+    canonical_pending_transaction.update_columns(amount_cents: 0)
     item.update_columns(amount_cents: 0, status: "released")
     item
   end

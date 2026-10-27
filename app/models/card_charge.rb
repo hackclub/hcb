@@ -62,16 +62,18 @@ class CardCharge < ApplicationRecord
   end
 
   # What the cardholder was charged, before any refund: the captured amount once
-  # the charge has settled, otherwise the amount that was authorized. The ledger
-  # item's own amount nets to zero once a charge is reversed or released, and
-  # Stripe zeroes a released authorization's amount, so neither can describe
-  # the charge. The canonical pending transaction keeps the amount as
-  # authorized.
+  # the charge has settled, otherwise the amount that was authorized. Nothing
+  # else can say: the ledger item's amount nets to zero once a charge is
+  # reversed or released, Stripe zeroes a released authorization's amount, and
+  # the pending transaction import copies that zero onto the canonical pending
+  # transaction. The authorization's request history keeps the amount of every
+  # request Stripe approved.
   def amount_cents
-    captured_cents = raw_stripe_transactions.reject(&:refund?).sum(&:amount_cents).abs
+    captured_cents = raw_stripe_transactions.reject(&:refund?).sum { |transaction| transaction.amount_cents.to_i }.abs
     return captured_cents if captured_cents.positive?
 
-    raw_pending_stripe_transaction&.canonical_pending_transaction&.amount_cents&.abs || 0
+    requests = raw_pending_stripe_transaction&.stripe_transaction&.dig("request_history") || []
+    requests.select { |request| request["approved"] }.sum { |request| request["amount"].to_i }.abs
   end
 
   def icon
