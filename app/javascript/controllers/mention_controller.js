@@ -1,5 +1,6 @@
 import { Controller } from '@hotwired/stimulus'
 import submitForm from '../common/submitForm'
+import swal from 'sweetalert'
 
 export default class extends Controller {
   static values = { email: String }
@@ -22,6 +23,9 @@ export default class extends Controller {
   }
 
   impersonate({ params: { url } }) {
-    if (confirm('Are you sure?')) submitForm(url, {})
+    swal({
+      title: "Are you sure?",
+      buttons: true
+    }).then(() => submitForm(url, {}))
   }
 }
