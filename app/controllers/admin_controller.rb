@@ -925,10 +925,10 @@ class AdminController < Admin::BaseController
     return if @uetr.blank?
 
     @wire = Wire.find_by(uetr: @uetr)
-    @tracking = ColumnService::Uetr::Tracking.new(ColumnService::Uetr.lookup(@uetr))
+    @tracking = Wire::UETR::Tracking.new(Wire::UETR.lookup(@uetr))
 
     begin
-      @transfer = ColumnService::Uetr::Transfer.fetch(@tracking.id || @wire&.column_id)
+      @transfer = Wire::UETR::Transfer.fetch(@tracking.id || @wire&.column_id)
     rescue Faraday::Error => e
       Rails.error.report(e)
     end

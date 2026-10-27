@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-class ColumnService
-  module Uetr
+class Wire
+  module UETR
     # Presents a SWIFT GPI tracking payload for display.
     # https://docs.column.com/api/international-wire/get-international-wire-tracking
     class Tracking

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-class ColumnService
-  module Uetr
+class Wire
+  module UETR
     # Presents Column's international wire transfer object.
     class Transfer
       STATUSES = {
