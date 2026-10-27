@@ -51,6 +51,16 @@ class CardCharge < ApplicationRecord
     (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("merchant_currency")
   end
 
+  def verification_data
+    (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("verification_data") || {}
+  end
+
+  # The checks Stripe reported as mismatched when the charge was authorized,
+  # e.g. "address_postal_code_check" or "cvc_check".
+  def failed_verification_checks
+    verification_data.select { |check, result| check.end_with?("check") && result == "mismatch" }.keys
+  end
+
   # What the cardholder was charged, before any refund: the captured amount once
   # the charge has settled, otherwise the amount that was authorized. The ledger
   # item's own amount nets to zero once a charge is reversed or released, and

@@ -14,15 +14,9 @@ class CardChargeMailer < ApplicationMailer
     return if @card_charge.amount_cents < MINIMUM_AMOUNT_CENTS
 
     @merchant_name = @card_charge.merchant_data&.dig("name") || "the merchant"
-    @failed_verification_checks = verification_data.select { |k, v| k.end_with?("check") && v == "mismatch" }.keys
+    @failed_verification_checks = @card_charge.failed_verification_checks
 
     mail to: @user.email_address_with_name, subject: "Your charge at #{@merchant_name} was reversed"
-  end
-
-  private
-
-  def verification_data
-    (@card_charge.raw_stripe_transactions.last || @card_charge.raw_pending_stripe_transaction)&.stripe_transaction&.dig("verification_data") || {}
   end
 
 end
