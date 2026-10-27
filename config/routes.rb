@@ -766,6 +766,7 @@ Rails.application.routes.draw do
           member do
             get "sub_organizations"
             post "sub_organizations", to: "events#create_sub_organization"
+            post "freeze"
 
             get "transactions", to: "transactions#index"
             get :followers
