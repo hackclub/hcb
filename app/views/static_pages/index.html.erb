@@ -50,7 +50,7 @@
   <ul class="grid grid-cols-1 text-left w-full mt-2">
     <% current_user.card_grants.not_activated.each do |grant| %>
       <%
-        expiry_color = if !grant.expiration_at.future?
+        expiry_color = if grant.expiration_at.past?
                          "bg-error"
                        elsif grant.expiration_at <= 30.days.from_now.to_date
                          "bg-warning"
@@ -62,15 +62,13 @@
       <div class="card relative overflow-hidden mx-auto text-center sm:text-left flex items-center flex-col sm:flex-row gap-4 w-full">
         <div class="flex-1">
           <p class="my-0 text-sm muted">From <%= grant.event.name %></p>
-          <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-3 gap-y-1">
-            <span class="text-2xl font-[700]"><%= render_money grant.amount %></span>
-            <span class="badge m-0 tooltipped tooltipped--n <%= expiry_color %>" aria-label="Expires <%= grant.expiration_at.strftime("%b %-d, %Y") %>">
-              <%= inline_icon "clock", size: 14 %>
-              <%= grant.expiration_at.future? ? "#{distance_of_time_in_words(Time.current, grant.expiration_at)} left" : "Expired" %>
+          <p class="my-0 text-md"><span class="text-2xl font-[700]"><%= render_money grant.amount %></span><% if grant.purpose.present? %> for <strong><%= grant.purpose %></strong><% end %></p>
+          <% if grant.expiration_at.past? %>
+            <span class="badge m-0 mt-2 <%= expiry_color %>"><%= inline_icon "clock", size: 14 %> Expired <%= grant.expiration_at.strftime("%b %-d, %Y") %></span>
+          <% else %>
+            <span class="badge m-0 mt-2 tooltipped tooltipped--n <%= expiry_color %>" aria-label="<%= distance_of_time_in_words(Time.current, grant.expiration_at.end_of_day) %> left">
+              <%= inline_icon "clock", size: 14 %> Activate &amp; spend by <%= grant.expiration_at.strftime("%b %-d, %Y") %>
             </span>
-          </div>
-          <% if grant.purpose.present? %>
-            <p class="my-0 text-md">for <strong><%= grant.purpose %></strong></p>
           <% end %>
         </div>
         <%= link_to "Activate my grant", grant, class: "btn" %>
