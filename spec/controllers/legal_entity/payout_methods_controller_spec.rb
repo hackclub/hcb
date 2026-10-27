@@ -17,6 +17,8 @@ RSpec.describe LegalEntity::PayoutMethodsController do
   end
 
   describe "#create" do
+    render_views
+
     it "adds a payout method" do
       expect do
         post(:create, params: {
@@ -40,6 +42,56 @@ RSpec.describe LegalEntity::PayoutMethodsController do
       expect(legal_entity.reload.payout_methods.last.name).to eq("My Chase Bank Account")
     end
 
+    it "re-renders the add-method modal form in place on turbo stream submissions when details are invalid" do
+      expect do
+        post(:create, params: {
+               user: {
+                 payout_method_type: "LegalEntity::PayoutMethod::AchTransfer",
+                 payout_method_ach_transfer: { account_number: "", routing_number: "" }
+               }
+             }, format: :turbo_stream)
+      end.not_to(change { legal_entity.reload.payout_methods.count })
+
+      expect(response).to have_http_status(422)
+      expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+      expect(response.body).to include("<turbo-stream")
+      expect(response.body).to include('action="replace"')
+      expect(response.body).to include('target="add_payout_method_form"')
+      expect(response.body).to include('id="add_payout_method_form"')
+      expect(response.body).to include('action="/my/settings/payouts/methods"')
+      expect(response.body).to include("Routing number must be 9 digits")
+      expect(response.body).to include("Account number must be only numbers")
+    end
+
+    it "responds with a turbo stream when the browser sends the Turbo form-submit Accept header" do
+      @request.headers["Accept"] = "text/vnd.turbo-stream.html, text/html, application/xhtml+xml"
+
+      post(:create, params: {
+             user: {
+               payout_method_type: "LegalEntity::PayoutMethod::AchTransfer",
+               payout_method_ach_transfer: { account_number: "", routing_number: "" }
+             }
+           })
+
+      expect(response).to have_http_status(422)
+      expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+      expect(response.body).to include('target="add_payout_method_form"')
+    end
+
+    it "renders the full settings page for non-Turbo html submissions when details are invalid" do
+      post(:create, params: {
+             user: {
+               payout_method_type: "LegalEntity::PayoutMethod::AchTransfer",
+               payout_method_ach_transfer: { account_number: "", routing_number: "" }
+             }
+           }, format: :html)
+
+      expect(response).to have_http_status(422)
+      expect(response.media_type).to eq("text/html")
+      expect(response.body).to include("Routing number must be 9 digits and Account number must be only numbers")
+      expect(response.body).to include('id="add_payout_method_modal"')
+    end
+
     context "when an admin adds a payout method for another user" do
       let(:admin) { create(:user, :make_admin) }
 
@@ -57,6 +109,21 @@ RSpec.describe LegalEntity::PayoutMethodsController do
         end.to change { legal_entity.reload.payout_methods.count }.by(1)
 
         expect(admin.personal_legal_entity.reload.payout_methods.count).to eq(0)
+      end
+
+      it "re-renders the target user's form on invalid turbo stream submissions" do
+        post(:create, params: {
+               legal_entity_id: legal_entity.id,
+               user_id: user.id,
+               user: {
+                 payout_method_type: "LegalEntity::PayoutMethod::AchTransfer",
+                 payout_method_ach_transfer: { account_number: "", routing_number: "" }
+               }
+             }, format: :turbo_stream)
+
+        expect(response).to have_http_status(422)
+        expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+        expect(response.body).to match(/name="user_id"[^>]*value="#{user.id}"/)
       end
     end
   end

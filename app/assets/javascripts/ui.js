@@ -612,23 +612,15 @@ const initPayoutMethodToggles = function () {
     BK.thereIs('wire_payout_method_inputs') &&
     BK.thereIs('wise_transfer_payout_method_inputs')
   ) {
-    const checkPayoutMethodInputs = BK.s('check_payout_method_inputs')
-    const achTransferPayoutMethodInputs = BK.s(
-      'ach_transfer_payout_method_inputs'
-    )
-    const wirePayoutMethodInputs = BK.s('wire_payout_method_inputs')
-    const wiseTransferPayoutMethodInputs = BK.s(
-      'wise_transfer_payout_method_inputs'
-    )
     $(document).on(
       'change',
       '#user_payout_method_type_legalentitypayoutmethodcheck',
       e => {
         if (e.target.checked)
-          checkPayoutMethodInputs.slideDown() &&
-            achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp() &&
-            wiseTransferPayoutMethodInputs.slideUp()
+          BK.s('check_payout_method_inputs').slideDown() &&
+            BK.s('ach_transfer_payout_method_inputs').slideUp() &&
+            BK.s('wire_payout_method_inputs').slideUp() &&
+            BK.s('wise_transfer_payout_method_inputs').slideUp()
       }
     )
     $(document).on(
@@ -636,10 +628,10 @@ const initPayoutMethodToggles = function () {
       '#user_payout_method_type_legalentitypayoutmethodachtransfer',
       e => {
         if (e.target.checked)
-          achTransferPayoutMethodInputs.slideDown() &&
-            checkPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp() &&
-            wiseTransferPayoutMethodInputs.slideUp()
+          BK.s('ach_transfer_payout_method_inputs').slideDown() &&
+            BK.s('check_payout_method_inputs').slideUp() &&
+            BK.s('wire_payout_method_inputs').slideUp() &&
+            BK.s('wise_transfer_payout_method_inputs').slideUp()
       }
     )
     $(document).on(
@@ -647,10 +639,10 @@ const initPayoutMethodToggles = function () {
       '#user_payout_method_type_legalentitypayoutmethodwire',
       e => {
         if (e.target.checked)
-          checkPayoutMethodInputs.slideUp() &&
-            achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideDown() &&
-            wiseTransferPayoutMethodInputs.slideUp()
+          BK.s('check_payout_method_inputs').slideUp() &&
+            BK.s('ach_transfer_payout_method_inputs').slideUp() &&
+            BK.s('wire_payout_method_inputs').slideDown() &&
+            BK.s('wise_transfer_payout_method_inputs').slideUp()
       }
     )
     $(document).on(
@@ -658,10 +650,10 @@ const initPayoutMethodToggles = function () {
       '#user_payout_method_type_legalentitypayoutmethodwisetransfer',
       e => {
         if (e.target.checked)
-          wiseTransferPayoutMethodInputs.slideDown() &&
-            checkPayoutMethodInputs.slideUp() &&
-            achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp()
+          BK.s('wise_transfer_payout_method_inputs').slideDown() &&
+            BK.s('check_payout_method_inputs').slideUp() &&
+            BK.s('ach_transfer_payout_method_inputs').slideUp() &&
+            BK.s('wire_payout_method_inputs').slideUp()
       }
     )
     $(document).on('change', '[name="user[payout_method_type]"]', e => {

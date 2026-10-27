@@ -1,0 +1,15 @@
+<%# locals: (messages: []) %>
+<% if messages.present? %>
+  <article
+    role="alert"
+    tabindex="-1"
+    autofocus
+    class="flash error flex items-center"
+    data-behavior="flash"
+    data-turbo-temporary>
+    <div class="min-w-0 overflow-hidden break-words hyphens-auto">
+      <%= messages.to_sentence %>
+    </div>
+    <%= inline_icon "view-close", size: 32, class: "pointer shrink-0 ml-auto" %>
+  </article>
+<% end %>
