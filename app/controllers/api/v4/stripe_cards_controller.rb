@@ -135,6 +135,10 @@ module Api
           return render json: { error: "Card is canceled." }, status: :unprocessable_content
         end
 
+        if @stripe_card.frozen?
+          return render json: { error: "Card is already frozen." }, status: :unprocessable_content
+        end
+
         @stripe_card.freeze!(frozen_by: current_user)
         return render json: { success: "Card frozen!" }
       end

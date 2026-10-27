@@ -208,6 +208,9 @@ class StripeCard < ApplicationRecord
   end
 
   def freeze!(frozen_by: User.system_user)
+    # Re-freezing must not change who froze the card
+    return if frozen?
+
     StripeService::Issuing::Card.update(self.stripe_id, status: :inactive)
     sync_from_stripe!
     self.last_frozen_by = frozen_by
