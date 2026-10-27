@@ -50,10 +50,10 @@ class Event
     end
 
     # Opts each of `positions` in or out according to whether its id is in
-    # `opted_in_ids`. Adds an error and changes nothing if that would leave
-    # nobody to review.
+    # `opted_in_ids`. Ids outside `positions` are ignored. Adds an error and
+    # changes nothing if that would leave nobody to review.
     def update_reimbursement_reviewers(positions, opted_in_ids)
-      opted_in_ids = opted_in_ids.compact_blank.map(&:to_i)
+      opted_in_ids = positions.where(id: opted_in_ids.compact_blank).ids
 
       if opted_in_ids.empty? && positions.exists? && !reimbursement_reviewer_opt_ins.where.not(organizer_position: positions).exists?
         errors.add(:base, "Select at least one reviewer")
