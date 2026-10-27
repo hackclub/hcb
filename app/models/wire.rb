@@ -26,6 +26,7 @@
 #  recipient_name            :string           not null
 #  return_reason             :text
 #  send_email_notification   :boolean          default(FALSE)
+#  uetr                      :string
 #  created_at                :datetime         not null
 #  updated_at                :datetime         not null
 #  column_id                 :text
@@ -51,6 +52,9 @@ class Wire < ApplicationRecord
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :recipient_email]
+  # For viewers who can't see the recipient's email (see
+  # `EventsController#transfers`).
+  pg_search_scope :public_search_recipient, against: [:recipient_name]
   has_encrypted :account_number, :bic_code
   blind_index :account_number, :bic_code
 
@@ -204,6 +208,7 @@ class Wire < ApplicationRecord
       routing_number_type: "bic",
       routing_number: bic_code,
       account_number:,
+      account_type: recipient_information["account_type"],
       wire: {
         beneficiary_name: recipient_name,
         beneficiary_email: recipient_email,
@@ -218,8 +223,7 @@ class Wire < ApplicationRecord
         beneficiary_legal_id: recipient_information["legal_id"],
         beneficiary_type: recipient_information["legal_type"],
         local_bank_code: recipient_information["local_bank_code"],
-        local_account_number: recipient_information["local_account_number"],
-        account_type: recipient_information["account_type"]
+        local_account_number: recipient_information["local_account_number"]
       }.compact_blank
     }.compact_blank)
 
@@ -238,6 +242,7 @@ class Wire < ApplicationRecord
     }.compact_blank)
 
     self.column_id = column_wire_transfer["id"]
+    self.uetr = column_wire_transfer["uetr"]
     mark_approved
     save!
   end

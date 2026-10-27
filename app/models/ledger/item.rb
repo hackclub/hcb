@@ -11,6 +11,7 @@
 #  ct_count                     :integer          default(0), not null
 #  custom_memo                  :text
 #  datetime                     :datetime         not null
+#  intended_at                  :datetime
 #  marked_no_or_lost_receipt_at :datetime
 #  memo                         :text             not null
 #  not_admin_only_comment_count :integer          default(0), not null
@@ -76,8 +77,11 @@ class Ledger
     has_many :canonical_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :canonical_pending_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
+    has_many :repayments, foreign_key: :ledger_item_id, inverse_of: :repaid_ledger_item
+    has_many :repayment_disbursements, through: :repayments, source: :disbursement
 
     enum :status, {
+      intended: "intended", # no CTs or CPTs, but has a linked object (e.g. an unpaid invoice); the linked object protects it from pruning
       pending: "pending", # any CPTs contributing to balance
       settled: "settled", # no CPTs contributing to balance or fronted incoming CPT with no CTs
       reversed: "reversed", # sum of CTs is zero
@@ -104,6 +108,10 @@ class Ledger
     after_create :map!
     after_touch :map!
 
+    after_update if: -> { linked_object_type == "CardCharge" && saved_change_to_status? && status.in?(%w[reversed released]) } do
+      CardChargeMailer.with(ledger_item: self).reversed.deliver_later
+    end
+
     scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
 
     def status_text
@@ -116,6 +124,8 @@ class Ledger
         "bg-transparent border border-dashed border-muted m0 mr1"
       when :settled
         nil
+      when :intended
+        "bg-transparent border border-dashed border-muted m0 mr1"
       when :reversed
         "bg-info m0 mr1"
       when :released
@@ -170,12 +180,15 @@ class Ledger
     # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
     # refresh! should not update any non-caching columns
     def refresh!
-      # `after_create :refresh!` runs before any ledger mappings exist, which
-      # memoizes `primary_ledger` as nil on this instance. Reset the association
-      # caches so refresh! always recomputes from current database state (e.g.
-      # after a mapping is created).
-      association(:primary_mapping).reset
-      association(:primary_ledger).reset
+      # Recompute from the database, not from what this copy last loaded. One
+      # map! refreshes several in-memory copies of the same item (the
+      # Ledger::Mapping commit hook refreshes its own copy before the copy map!
+      # was called on gets its turn), and a copy loaded before another copy
+      # saved would otherwise see phantom changes: the reversed/released card
+      # charge email went out once per copy. Reloading also drops association
+      # caches that `after_create :map!` memoized before any mapping existed
+      # (e.g. `primary_ledger` as nil).
+      reload
 
       # Counter caches
       self.ct_count = canonical_transactions.size
@@ -183,12 +196,13 @@ class Ledger
       shown_comments = hcb_code&.all_comments || Comment.none
       self.comment_count = shown_comments.size
       self.not_admin_only_comment_count = shown_comments.not_admin_only.size
-      self.receipt_count = receipts.size
+      self.receipt_count = calculate_receipt_count
 
       # Timestamps
+      self.intended_at = calculate_intended_at
       self.pending_at = calculate_pending_at
       self.settled_at = calculate_settled_at
-      self.datetime = settled_at || pending_at || created_at
+      self.datetime = settled_at || pending_at || intended_at || created_at
 
       self.amount_cents = calculate_amount_cents
       self.author = calculate_author
@@ -270,6 +284,10 @@ class Ledger
       type_label = linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) ? "HCB transfer" : humanized_type
 
       "#{type_label} #{amount_preposition} #{ApplicationController.helpers.render_money(amount_cents.abs)}"
+    end
+
+    def popover_path
+      "/transactions/#{hashid}?frame=true"
     end
 
     def icon
@@ -362,6 +380,17 @@ class Ledger
       update!(linked_object:) if linked_object.present?
     end
 
+    # When the item became "intended" — a linked object with no transactions yet
+    # (e.g. an unpaid invoice). Unlike pending_at/settled_at there's no
+    # transaction to derive this from, so the value assigned at creation (the
+    # linked object's creation time) is preserved while the item stays intended
+    # and cleared once a transaction maps in.
+    def calculate_intended_at
+      return nil unless linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
+
+      intended_at || created_at
+    end
+
     def calculate_pending_at
       canonical_pending_transactions.order(:date, :id).first&.datetime
     end
@@ -373,11 +402,10 @@ class Ledger
     def calculate_amount_cents
       amount_cents = canonical_transactions.sum(:amount_cents)
       amount_cents += canonical_pending_transactions.outgoing.unsettled.sum(:amount_cents)
-      if primary_ledger&.can_front_balance?
-        fronted_pt_sum = canonical_pending_transactions.incoming.fronted.not_declined.sum(:amount_cents)
-        settled_ct_sum = [canonical_transactions.sum(:amount_cents), 0].max
-        amount_cents += [fronted_pt_sum - settled_ct_sum, 0].max
-      end
+
+      fronted_pt_sum = canonical_pending_transactions.incoming.fronted.not_declined.sum(:amount_cents)
+      settled_ct_sum = [canonical_transactions.sum(:amount_cents), 0].max
+      amount_cents += [fronted_pt_sum - settled_ct_sum, 0].max
 
       amount_cents
     end
@@ -409,17 +437,28 @@ class Ledger
       end
     end
 
+    def calculate_receipt_count
+      return linked_object&.expense&.receipts&.size || 0 if linked_object_type == "Reimbursement::ExpensePayout"
+
+      receipts.size
+    end
+
     def calculate_receipt_required
       amount_cents < 0 && primary_ledger&.receipt_required? && !linked_object_type.in?(["Disbursement::Outgoing", "Reimbursement::ExpensePayout", "StripeServiceFee", "BankFee"])
     end
 
     def calculate_status
+      # An item that has a linked object but no transactions yet (e.g. an invoice
+      # that has been created but not paid). The linked object keeps it from being
+      # pruned once orphaned-item pruning exists.
+      return :intended if linked_object.present? && canonical_transactions.none? && canonical_pending_transactions.none?
+
       unless canonical_pending_transactions.declined.any?
         return :settled if linked_object_type == "BankFee"
         return :settled if linked_object_type == "Reimbursement::ExpensePayout" && canonical_pending_transactions.exists? && canonical_transactions.none?
         return :settled if linked_object_type == "Disbursement::Outgoing" && linked_object.counterparty.canonical_pending_transactions.fronted.any?
         return :settled if linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) && linked_object.transferred_at.present? && !linked_object.rejected? && !linked_object.errored?
-        return :settled if canonical_pending_transactions.fronted.revenue.any? && primary_ledger&.can_front_balance?
+        return :settled if canonical_pending_transactions.fronted.revenue.any?
       end
 
       return :pending if canonical_pending_transactions.unsettled.exists?

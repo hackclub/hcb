@@ -41,6 +41,14 @@
           <td style="text-align: right;">Payment Purpose:</td>
           <td><%= @check.payment_for %></td>
         </tr>
+        <% if @check.payment.present? %>
+          <tr>
+            <td class="text-right">Payment:</td>
+            <td>
+              <%= render partial: "admin/payment_link", locals: { payout: @check } %>
+            </td>
+          </tr>
+        <% end %>
         <tr>
           <td style="text-align: right;">Amount:</td>
           <td><%= render_money @check.amount %></td>
@@ -118,7 +126,7 @@
         <% end %>
       </fieldset>
     <% else %>
-      <p>This check has been <b><%= @check.aasm.current_state.to_s.humanize(capitalize: false) %></b>.</p>
+      <p>This check has been <b><%= @check.aasm.current_state.to_s.humanize(capitalize: false) %></b>. This check was processed by <%= @approver.present? ? user_mention(@approver) : "an unknown user" %>.</p>
     <% end %>
   </div>
 </div>
