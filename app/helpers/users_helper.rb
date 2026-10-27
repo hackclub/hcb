@@ -229,6 +229,15 @@ module UsersHelper
 
       aria_label = [aria_label, "Click for admin tools"].compact.join(" | ")
 
+      if viewer.admin? && user != viewer && !current_session&.impersonated?
+        impersonate_item = content_tag(
+          :span,
+          safe_join([inline_icon("spy", size: 16), content_tag(:span, "Impersonate", class: "ml1")]),
+          class: "menu__item menu__item--icon menu__action",
+          data: { action: "click->mention#impersonate", mention_url_param: impersonate_user_path(user.id) }
+        )
+      end
+
       # Menu content items
       menu_items = safe_join([
                                content_tag(
@@ -244,6 +253,7 @@ module UsersHelper
                                  class: "menu__item menu__item--icon menu__action", rel: "noopener",
                                  data: { action: "click->mention#copyEmail" }
                                ),
+                               impersonate_item,
                                content_tag(
                                  :span,
                                  nil,

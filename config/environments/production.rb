@@ -98,8 +98,8 @@ Rails.application.configure do
   # Prevent health checks from clogging up the logs.
   config.silence_healthcheck_path = "/up"
 
-  # Don't log any deprecations.
-  config.active_support.report_deprecations = false
+  # Temporarily report deprecations to AppSignal while adopting Rails 8.1 defaults.
+  config.active_support.report_deprecations = true
 
   # Replace the default in-process memory cache store with a durable alternative.
   config.cache_store = :redis_cache_store, { url: ENV["REDIS_CACHE_URL"], ssl_params: { verify_mode: OpenSSL::SSL::VERIFY_NONE } }
