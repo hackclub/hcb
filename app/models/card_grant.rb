@@ -93,7 +93,7 @@ class CardGrant < ApplicationRecord
   validates :subledger, uniqueness: true, allow_nil: true
 
   MAX_EXPIRATION_DATE = 2.years
-  validates :expiration_at, comparison: { less_than_or_equal_to: -> { MAX_EXPIRATION_DATE.from_now.to_date } }, if: :expiration_at_changed?
+  validates :expiration_at, comparison: { less_than_or_equal_to: :max_expiration_at }, if: :expiration_at_changed?
 
   validates_email_format_of :email, if: :email_changed?
   normalizes :email, with: ->(email) { email.presence&.strip&.downcase }
@@ -349,6 +349,12 @@ class CardGrant < ApplicationRecord
 
   def default_expiration_at
     (created_at || Time.current) + CardGrantSetting.expiration_preferences[card_grant_setting&.expiration_preference || "1 year"].days
+  end
+
+  # The latest expiration a grant may have, measured from when it was created
+  # so that extending a grant can't keep it alive indefinitely.
+  def max_expiration_at
+    (created_at || Time.current).to_date + MAX_EXPIRATION_DATE
   end
 
   def last_time_change_to(...)
