@@ -327,6 +327,9 @@ class Event < ApplicationRecord
   scope :not_demo_mode, -> { where(demo_mode: false) }
   scope :filter_demo_mode, ->(demo_mode) { demo_mode.nil? ? all : where(demo_mode:) }
   scope :financially_frozen, -> { where(financially_frozen: true) }
+  # Organizations anyone can send an HCB transfer to, listed in the public
+  # directory or not. Keep in sync with `#accepts_public_transfers?`.
+  scope :accepting_public_transfers, -> { transparent.not_hidden.not_demo_mode.where(financially_frozen: false) }
 
   before_validation :enforce_transparency_eligibility
 
@@ -685,8 +688,10 @@ class Event < ApplicationRecord
     completed_t + pending_t
   end
 
+  # Repayments pay an expense back, so they come off both totals instead of
+  # counting as revenue, matching Ledger#revenue_cents and #expenses_cents.
   def total_raised
-    settled_incoming_balance_cents + fronted_incoming_balance_v2_cents
+    settled_incoming_balance_cents + fronted_incoming_balance_v2_cents - ledger.repayments_received_cents
   end
 
   def raised_ytd_cents
@@ -699,7 +704,7 @@ class Event < ApplicationRecord
   end
 
   def total_spent_cents
-    (settled_outgoing_balance_cents + pending_outgoing_balance_v2_cents) * -1
+    (settled_outgoing_balance_cents + pending_outgoing_balance_v2_cents) * -1 - ledger.repayments_received_cents
   end
 
   def balance_v2_cents(start_date: nil, end_date: nil, legacy: false)
@@ -820,6 +825,11 @@ class Event < ApplicationRecord
 
   def hidden?
     hidden_at.present?
+  end
+
+  # Keep in sync with the `accepting_public_transfers` scope.
+  def accepts_public_transfers?
+    is_public? && !hidden? && !demo_mode? && !financially_frozen?
   end
 
   def filter_data

@@ -7,7 +7,14 @@ Doorkeeper.configure do
 
   # This block will be called to check whether the resource owner is authenticated or not.
   resource_owner_authenticator do
-    try(:current_user)
+    # Admins impersonating a user must not be able to grant OAuth apps (or
+    # devices) long-lived access to that user's account.
+    if try(:current_session)&.impersonated?
+      redirect_to root_path, flash: { error: "You can't authorize applications while impersonating a user." }
+      nil
+    else
+      try(:current_user)
+    end
   end
 
   access_token_class "::ApiToken"
