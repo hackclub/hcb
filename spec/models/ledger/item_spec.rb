@@ -439,6 +439,51 @@ RSpec.describe Ledger::Item, type: :model do
     end
   end
 
+  describe "intended status" do
+    it "is intended when the item has a linked object but no transactions" do
+      stub_donation_payment_intent_creation
+      donation = create(:donation)
+
+      item = Ledger::Item.new(amount_cents: 0, memo: "Initial", datetime: Time.current, linked_object: donation)
+      item.save(validate: false)
+
+      item.refresh!
+      item.reload
+
+      expect(item.status).to eq("intended")
+      expect(item.amount_cents).to eq(0)
+      # intended_at is set and drives datetime while the item is intended.
+      expect(item.intended_at).to be_present
+      expect(item.datetime).to be_within(1.second).of(item.intended_at)
+    end
+
+    it "is no longer intended once a canonical pending transaction maps in" do
+      stub_donation_payment_intent_creation
+      donation = create(:donation)
+
+      item = Ledger::Item.new(amount_cents: 0, memo: "Initial", datetime: Time.current, linked_object: donation)
+      item.save(validate: false)
+      create(:canonical_pending_transaction, ledger_item_id: item.id)
+
+      item.refresh!
+      item.reload
+
+      expect(item.status).not_to eq("intended")
+      # intended_at is cleared once a transaction maps in (like pending_at/settled_at).
+      expect(item.intended_at).to be_nil
+    end
+
+    it "is not intended when there is no linked object" do
+      item = Ledger::Item.new(amount_cents: 0, memo: "Initial", datetime: Time.current)
+      item.save(validate: false)
+
+      item.refresh!
+      item.reload
+
+      expect(item.status).to eq("pending")
+    end
+  end
+
   describe "account verification detection" do
     # Pins memo/amount/linked_object_type past the refresh! callbacks (which
     # recompute them from canonical transactions these items don't have),
@@ -472,6 +517,52 @@ RSpec.describe Ledger::Item, type: :model do
       it "is false when the memo does not name a verification" do
         expect(acctverify_item(memo: "Coffee", amount_cents: 12)).not_to be_likely_account_verification_related
       end
+    end
+  end
+
+  describe "CardCharge reversed/released mailer" do
+    # Pins linked_object past the refresh! callbacks (which would otherwise
+    # recompute status from this item's nonexistent canonical transactions),
+    # mirroring the account-verification specs above.
+    def card_charge_item
+      item = create(:ledger_item)
+      item.update_columns(linked_object_type: "CardCharge", linked_object_id: create(:raw_stripe_transaction).card_charge.id)
+      item.reload
+    end
+
+    it "emails the cardholder when a card charge is reversed" do
+      item = card_charge_item
+
+      expect {
+        item.update!(status: "reversed")
+      }.to have_enqueued_mail(CardChargeMailer, :reversed)
+    end
+
+    it "emails the cardholder when a card charge authorization is released" do
+      item = card_charge_item
+
+      expect {
+        item.update!(status: "released")
+      }.to have_enqueued_mail(CardChargeMailer, :reversed)
+    end
+
+    it "does not email for other linked object types that reverse" do
+      item = create(:ledger_item)
+      item.update_columns(linked_object_type: "AchTransfer")
+      item.reload
+
+      expect {
+        item.update!(status: "reversed")
+      }.not_to have_enqueued_mail(CardChargeMailer, :reversed)
+    end
+
+    it "does not re-email when the item is saved again without a status change" do
+      item = card_charge_item
+      item.update!(status: "reversed")
+
+      expect {
+        item.update!(custom_memo: "Refunded")
+      }.not_to have_enqueued_mail(CardChargeMailer, :reversed)
     end
   end
 

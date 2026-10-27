@@ -4,23 +4,24 @@
 #
 # Table name: payroll_positions
 #
-#  id            :bigint           not null, primary key
-#  aasm_state    :string           not null
-#  currency      :string           default("USD"), not null
-#  description   :text             not null
-#  end_date      :date             not null
-#  onboarded_at  :datetime
-#  onboarding_at :datetime
-#  rate_cents    :integer          default(0), not null
-#  rate_unit     :string           default("hour"), not null
-#  rejected_at   :datetime
-#  start_date    :date             not null
-#  terminated_at :datetime
-#  title         :text             not null
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
-#  manager_id    :bigint
-#  payee_id      :bigint           not null
+#  id                          :bigint           not null, primary key
+#  aasm_state                  :string           not null
+#  combine_contract_attachment :boolean          default(TRUE), not null
+#  currency                    :string           default("USD"), not null
+#  description                 :text             not null
+#  end_date                    :date             not null
+#  onboarded_at                :datetime
+#  onboarding_at               :datetime
+#  rate_cents                  :integer          default(0), not null
+#  rate_unit                   :string           default("hour"), not null
+#  rejected_at                 :datetime
+#  start_date                  :date             not null
+#  terminated_at               :datetime
+#  title                       :text             not null
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#  manager_id                  :bigint
+#  payee_id                    :bigint           not null
 #
 # Indexes
 #
@@ -110,6 +111,10 @@ module Payroll
         transitions from: :under_review, to: :onboarding
       end
 
+      event :mark_under_review do
+        transitions from: :onboarding, to: :under_review
+      end
+
       event :mark_rejected do
         transitions from: [:under_review, :onboarding], to: :rejected
       end
@@ -161,17 +166,19 @@ module Payroll
       end
     end
 
-    # Renders the contract window like "Jan–Jun 2026", collapsing to a single
-    # month ("Apr 2026") or spanning years ("Dec 2025–Feb 2026") when needed.
+    # Renders the contract window like "Jan 1 – Jun 30, 2026", collapsing within
+    # a single month ("Apr 1–28, 2026") or spanning years
+    # ("Dec 1, 2025 – Feb 28, 2026") when needed.
     def period_label
       return if start_date.nil?
+      return start_date.strftime("%b %-d, %Y") if end_date.nil? || start_date == end_date
 
-      return start_date.strftime("%b %Y") if end_date.nil? || (start_date.month == end_date.month && start_date.year == end_date.year)
-
-      if start_date.year == end_date.year
-        "#{start_date.strftime("%b")}–#{end_date.strftime("%b %Y")}"
+      if start_date.year != end_date.year
+        "#{start_date.strftime("%b %-d, %Y")} – #{end_date.strftime("%b %-d, %Y")}"
+      elsif start_date.month != end_date.month
+        "#{start_date.strftime("%b %-d")} – #{end_date.strftime("%b %-d, %Y")}"
       else
-        "#{start_date.strftime("%b %Y")}–#{end_date.strftime("%b %Y")}"
+        "#{start_date.strftime("%b %-d")}–#{end_date.strftime("%-d, %Y")}"
       end
     end
 
@@ -271,6 +278,7 @@ module Payroll
         return if contractor.nil? || contractor.signed?
 
         notify_contractor_of_onboarding(contractor)
+        schedule_onboarding_reminders
       end
     end
 
@@ -285,13 +293,14 @@ module Payroll
           include_videos: false,
           external_template_id: Contract::PayrollPosition::DOCUSEAL_TEMPLATE_ID,
           prefills: {
-            "payee_name"  => payee.display_name,
-            "title"       => title,
-            "description" => description,
-            "rate"        => rate_label,
-            "start_date"  => start_date.to_fs(:long),
-            "end_date"    => end_date.to_fs(:long),
-            "documents"   => (file.attached? ? [{ "name" => file.blob.filename.to_s, "file" => Rails.application.routes.url_helpers.rails_blob_url(file) }] : nil)
+            "payee_name"        => payee.display_name,
+            "title"             => title,
+            "description"       => description,
+            "rate"              => rate_label,
+            "start_date"        => start_date.to_fs(:long),
+            "end_date"          => end_date.to_fs(:long),
+            "documents"         => (file.attached? ? [{ "name" => file.blob.filename.to_s, "file" => Rails.application.routes.url_helpers.rails_blob_url(file) }] : nil),
+            "combine_documents" => combine_contract_attachment
           }.compact,
           reissue_of:
         )
@@ -335,6 +344,11 @@ module Payroll
       false
     end
 
+    # Contractor reminders are scheduled once HCB signs instead
+    def contract_remind_when_reissued
+      false
+    end
+
     def contract_notify_hcb?
       false
     end
@@ -345,14 +359,13 @@ module Payroll
       Payroll::PositionMailer.with(position: self, party:).onboarding.deliver_later
     end
 
-    private
-
     def notify_contractor_of_onboarding(contractor)
       contractor.notify
-      schedule_onboarding_reminders
     rescue => e
       Rails.error.report(e, context: { payroll_position_id: id })
     end
+
+    private
 
     def schedule_onboarding_reminders
       onboarding_reminder_days.each do |days|
