@@ -49,10 +49,11 @@
         <p class="h5 muted mt0 mb1">
           Reports without an assigned reviewer will be sent to these managers for review. New managers are added automatically.
           <% if event.parent %>
-            Managers of parent organizations also review them unless they opt out in their own organization's settings.
+            Managers of parent organizations can opt themselves in.
           <% end %>
         </p>
       </div>
+      <% toggleable_position_ids = event.reimbursement_reviewer_candidates_toggleable_by(current_user).ids %>
       <div class="mb-4" data-controller="text-filter">
         <%= text_field_tag :reimbursement_reviewer_search, nil,
                            name: nil,
@@ -63,12 +64,17 @@
                            class: "!max-w-full w-full mb1",
                            data: { action: "input->text-filter#query keydown.enter->text-filter#query:prevent" } %>
         <div id="reimbursement_reviewer_options" role="listbox" class="max-h-72 overflow-y-auto border border-solid border-smoke dark:border-slate rounded-lg px-3">
-          <%= form.collection_check_boxes :reimbursement_reviewer_position_ids, event.organizer_positions.manager_access.includes(:user).order("users.full_name"), :id, ->(position) { position.user.name } do |b| %>
+          <%= form.collection_check_boxes :reimbursement_reviewer_position_ids, event.reimbursement_reviewer_candidates.includes(:user, :event).order("users.full_name"), :id, ->(position) { position.user.name } do |b| %>
             <div class="field field--checkbox my-2" data-name="<%= b.text %>">
-              <span class="flex-1 flex items-center gap-2"><%= avatar_for b.object.user %><%= b.text %></span>
+              <span class="flex-1 flex items-center gap-2">
+                <%= avatar_for b.object.user %><%= b.text %>
+                <% if b.object.event_id != event.id %>
+                  <span class="h5 muted">manager of <%= b.object.event.name %></span>
+                <% end %>
+              </span>
               <div class="field--checkbox--switch ml-auto shrink-0">
                 <%= b.label do %>
-                  <%= b.check_box(disabled:) %>
+                  <%= b.check_box(disabled: disabled || !toggleable_position_ids.include?(b.object.id)) %>
                   <span class="slider"></span>
                 <% end %>
               </div>

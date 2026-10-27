@@ -367,11 +367,12 @@ class EventsController < ApplicationController
   def update
     authorize @event
 
-    reviewer_position_ids = params.dig(:event, :reimbursement_reviewer_position_ids)
-    if reviewer_position_ids&.compact_blank&.empty? && @event.organizer_positions.manager_access.exists? && !@event.inherited_reimbursement_reviewers.exists?
-      @event.errors.add(:base, "Select at least one reviewer")
-      @settings_tab = "reimbursements"
-      return render :edit, status: :unprocessable_content
+    if (reviewer_position_ids = params.dig(:event, :reimbursement_reviewer_position_ids))
+      positions = @event.reimbursement_reviewer_candidates_toggleable_by(current_user)
+      unless @event.update_reimbursement_reviewers(positions, reviewer_position_ids)
+        @settings_tab = "reimbursements"
+        return render :edit, status: :unprocessable_content
+      end
     end
 
     # have to use `fixed_event_params` because `event_params` seems to be a constant
@@ -1534,8 +1535,7 @@ class EventsController < ApplicationController
           :generate_monthly_announcement,
           :subevent_plan,
           :subevent_name_prefix
-        ],
-        reimbursement_reviewer_position_ids: []
+        ]
       }
     ]
 
@@ -1580,7 +1580,6 @@ class EventsController < ApplicationController
       :website,
       :background_image,
       :stripe_card_logo,
-      reimbursement_reviewer_position_ids: [],
       card_grant_setting_attributes: [
         :merchant_lock,
         :category_lock,

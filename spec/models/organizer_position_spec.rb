@@ -29,15 +29,29 @@ RSpec.describe OrganizerPosition, type: :model do
     end
   end
 
-  describe "#destroy" do
-    it "removes the reimbursement reviewer opt-out along with the position" do
+  describe "reimbursement reviewer opt-ins" do
+    it "follow the manager role" do
+      position = create(:organizer_position, role: :member)
+
+      expect(position.reimbursement_reviewer_opt_ins).to be_empty
+
+      position.update!(role: :manager)
+
+      expect(position.reimbursement_reviewer_opt_ins.reload.map(&:event)).to eq([position.event])
+
+      position.update!(role: :member)
+
+      expect(position.reimbursement_reviewer_opt_ins.reload).to be_empty
+    end
+
+    it "are removed along with the position" do
       position = create(:organizer_position, role: :manager)
-      opt_out = position.create_reimbursement_reviewer_opt_out!
+      opt_in = position.reimbursement_reviewer_opt_ins.sole
 
       position.destroy!
 
       expect(position.reload).to be_deleted
-      expect(Event::ReimbursementReviewerOptOut.exists?(opt_out.id)).to be(false)
+      expect(Event::ReimbursementReviewer::OptIn.exists?(opt_in.id)).to be(false)
     end
   end
 end

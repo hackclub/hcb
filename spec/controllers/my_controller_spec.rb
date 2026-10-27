@@ -79,19 +79,21 @@ RSpec.describe MyController do
       expect(sections.values.flatten).not_to include(assigned_to_someone_else)
     end
 
-    it "hides unassigned reports from organizations the manager opted out of reviewing for" do
+    it "shows unassigned reports from the organizations the manager reviews for" do
       user = sign_in_verified
       reviewing_event = create(:event)
       opted_out_event = create(:event)
-      create(:organizer_position, user:, event: reviewing_event, role: :manager)
-      create(:organizer_position, user:, event: opted_out_event, role: :manager).create_reimbursement_reviewer_opt_out!
+      sub_event = create(:event, parent: reviewing_event)
+      create(:organizer_position, user:, event: reviewing_event, role: :manager).reimbursement_reviewer_opt_ins.create!(event: sub_event)
+      create(:organizer_position, user:, event: opted_out_event, role: :manager).reimbursement_reviewer_opt_ins.destroy_all
 
       visible = create(:reimbursement_report, event: reviewing_event, aasm_state: :submitted)
+      opted_in = create(:reimbursement_report, event: sub_event, aasm_state: :submitted)
       create(:reimbursement_report, event: opted_out_event, aasm_state: :submitted)
 
       get :reimbursements
 
-      expect(controller.instance_variable_get(:@sections)[:unassigned]).to contain_exactly(visible)
+      expect(controller.instance_variable_get(:@sections)[:unassigned]).to contain_exactly(visible, opted_in)
     end
   end
 

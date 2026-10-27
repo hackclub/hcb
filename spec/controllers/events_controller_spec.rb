@@ -245,24 +245,52 @@ RSpec.describe EventsController do
       expect(page.css("#tags_settings a[disabled]")).to be_empty
     end
 
-    it "shows every manager as a reimbursement reviewer unless they opted out" do
+    it "lists managers as reimbursement reviewers, letting parent organization managers opt themselves in" do
       manager = create(:user, full_name: "Morgan Manager")
       other_manager = create(:user, full_name: "Avery Lee")
-      event = create(:event)
+      parent_manager = create(:user, full_name: "Parker Parent")
+      parent = create(:event)
+      event = create(:event, parent:)
       manager_position = create(:organizer_position, user: manager, event:, role: :manager)
       other_manager_position = create(:organizer_position, user: other_manager, event:, role: :manager)
-      create_session(manager, verified: true)
+      parent_position = create(:organizer_position, user: parent_manager, event: parent, role: :manager)
 
-      checked_reviewers = lambda do
+      reviewer_boxes = lambda do
         get(:edit, params: { id: event.slug, tab: "reimbursements" })
-        Nokogiri::HTML5(response.body).css("#reimbursement_reviewer_options input[type=checkbox][checked]").map { |box| box["value"].to_i }
+        Nokogiri::HTML5(response.body).css("#reimbursement_reviewer_options input[type=checkbox]").to_h do |box|
+          [box["value"].to_i, { checked: box.has_attribute?("checked"), disabled: box.has_attribute?("disabled") }]
+        end
       end
 
-      expect(checked_reviewers.call).to contain_exactly(manager_position.id, other_manager_position.id)
+      create_session(manager, verified: true)
 
-      manager_position.create_reimbursement_reviewer_opt_out!
+      expect(reviewer_boxes.call).to eq(
+        manager_position.id       => { checked: true, disabled: false },
+        other_manager_position.id => { checked: true, disabled: false },
+        parent_position.id        => { checked: false, disabled: true }
+      )
 
-      expect(checked_reviewers.call).to contain_exactly(other_manager_position.id)
+      manager_position.reimbursement_reviewer_opt_ins.destroy_all
+
+      expect(reviewer_boxes.call[manager_position.id]).to eq(checked: false, disabled: false)
+    end
+
+    it "lets a parent organization manager toggle only themselves as a reimbursement reviewer" do
+      parent = create(:event)
+      event = create(:event, parent:)
+      manager_position = create(:organizer_position, event:, role: :manager)
+      parent_position = create(:organizer_position, event: parent, role: :manager)
+      create_session(parent_position.user, verified: true)
+
+      get(:edit, params: { id: event.slug, tab: "reimbursements" })
+
+      boxes = Nokogiri::HTML5(response.body).css("#reimbursement_reviewer_options input[type=checkbox]").to_h do |box|
+        [box["value"].to_i, { checked: box.has_attribute?("checked"), disabled: box.has_attribute?("disabled") }]
+      end
+      expect(boxes).to eq(
+        manager_position.id => { checked: true, disabled: false },
+        parent_position.id  => { checked: false, disabled: false }
+      )
     end
   end
 
@@ -280,17 +308,21 @@ RSpec.describe EventsController do
       expect(event.config.reload.subevent_name_prefix).to eq("Athena Award — ")
     end
 
-    it "stores managers switched off as reimbursement reviewer opt-outs, so new managers are included" do
+    it "opts managers out of reimbursement reviews when switched off and keeps new managers opted in" do
       manager = create(:user)
       other_manager = create(:user)
       member = create(:user)
-      event = create(:event)
+      parent_manager = create(:user)
+      parent = create(:event)
+      event = create(:event, parent:)
       manager_position = create(:organizer_position, user: manager, event:, role: :manager)
       other_manager_position = create(:organizer_position, user: other_manager, event:, role: :manager)
       member_position = create(:organizer_position, user: member, event:, role: :member)
+      parent_position = create(:organizer_position, user: parent_manager, event: parent, role: :manager)
       create_session(manager, verified: true)
 
-      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_position_ids: ["", other_manager_position.id, member_position.id] } })
+      # Members never review, and only a parent manager can opt themselves in
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_position_ids: ["", other_manager_position.id, member_position.id, parent_position.id] } })
 
       expect(event.reload.reimbursement_reviewers).to contain_exactly(other_manager)
 
@@ -301,13 +333,28 @@ RSpec.describe EventsController do
       expect(event.reload.reimbursement_reviewers).to contain_exactly(other_manager)
 
       new_manager = create(:user)
-      new_manager_position = create(:organizer_position, user: new_manager, event:, role: :manager)
+      create(:organizer_position, user: new_manager, event:, role: :manager)
 
       expect(event.reimbursement_reviewers).to contain_exactly(other_manager, new_manager)
+      expect(manager_position.reimbursement_reviewer_opt_ins.reload).to be_empty
+    end
 
-      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_position_ids: ["", manager_position.id, other_manager_position.id, new_manager_position.id] } })
+    it "lets a parent organization manager opt in to reviewing a sub-organization's reimbursements" do
+      parent = create(:event)
+      event = create(:event, parent:)
+      manager_position = create(:organizer_position, event:, role: :manager)
+      parent_position = create(:organizer_position, event: parent, role: :manager)
+      create_session(parent_position.user, verified: true)
 
-      expect(event.reimbursement_reviewer_opt_outs).to be_empty
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_position_ids: ["", manager_position.id, parent_position.id] } })
+
+      expect(event.reload.reimbursement_reviewers).to contain_exactly(manager_position.user, parent_position.user)
+      expect(parent.reimbursement_reviewers).to contain_exactly(parent_position.user)
+
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_position_ids: ["", manager_position.id] } })
+
+      expect(event.reload.reimbursement_reviewers).to contain_exactly(manager_position.user)
+      expect(parent.reimbursement_reviewers).to contain_exactly(parent_position.user)
     end
   end
 

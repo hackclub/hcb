@@ -14,7 +14,7 @@ RSpec.describe ReimbursementMailer do
 
       expect(described_class.with(report:).review_requested.to).to include("opted-out@example.com", "reviewer@example.com")
 
-      opted_out_position.create_reimbursement_reviewer_opt_out!
+      opted_out_position.reimbursement_reviewer_opt_ins.destroy_all
 
       expect(described_class.with(report:).review_requested.to).to eq(["reviewer@example.com"])
     end
