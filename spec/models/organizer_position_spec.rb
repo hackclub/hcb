@@ -29,22 +29,15 @@ RSpec.describe OrganizerPosition, type: :model do
     end
   end
 
-  describe "losing manager access" do
-    it "clears reimbursement reviewer opt-outs on organizations they no longer manage" do
-      parent = create(:event)
-      child = create(:event, parent:)
-      parent_manager = create(:user)
-      dual_manager = create(:user)
-      parent_position = create(:organizer_position, user: parent_manager, event: parent, role: :manager)
-      dual_parent_position = create(:organizer_position, user: dual_manager, event: parent, role: :manager)
-      create(:organizer_position, user: dual_manager, event: child, role: :manager)
-      child.reimbursement_reviewer_opt_outs.create!(user: parent_manager)
-      child.reimbursement_reviewer_opt_outs.create!(user: dual_manager)
+  describe "#destroy" do
+    it "removes the reimbursement reviewer opt-out along with the position" do
+      position = create(:organizer_position, role: :manager)
+      opt_out = position.create_reimbursement_reviewer_opt_out!
 
-      parent_position.update!(role: :member)
-      dual_parent_position.destroy!
+      position.destroy!
 
-      expect(child.reimbursement_reviewer_opt_outs.map(&:user)).to contain_exactly(dual_manager)
+      expect(position.reload).to be_deleted
+      expect(Event::ReimbursementReviewerOptOut.exists?(opt_out.id)).to be(false)
     end
   end
 end

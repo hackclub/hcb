@@ -249,8 +249,8 @@ RSpec.describe EventsController do
       manager = create(:user, full_name: "Morgan Manager")
       other_manager = create(:user, full_name: "Avery Lee")
       event = create(:event)
-      create(:organizer_position, user: manager, event:, role: :manager)
-      create(:organizer_position, user: other_manager, event:, role: :manager)
+      manager_position = create(:organizer_position, user: manager, event:, role: :manager)
+      other_manager_position = create(:organizer_position, user: other_manager, event:, role: :manager)
       create_session(manager, verified: true)
 
       checked_reviewers = lambda do
@@ -258,11 +258,11 @@ RSpec.describe EventsController do
         Nokogiri::HTML5(response.body).css("#reimbursement_reviewer_options input[type=checkbox][checked]").map { |box| box["value"].to_i }
       end
 
-      expect(checked_reviewers.call).to contain_exactly(manager.id, other_manager.id)
+      expect(checked_reviewers.call).to contain_exactly(manager_position.id, other_manager_position.id)
 
-      event.reimbursement_reviewer_opt_outs.create!(user: manager)
+      manager_position.create_reimbursement_reviewer_opt_out!
 
-      expect(checked_reviewers.call).to contain_exactly(other_manager.id)
+      expect(checked_reviewers.call).to contain_exactly(other_manager_position.id)
     end
   end
 
@@ -285,27 +285,27 @@ RSpec.describe EventsController do
       other_manager = create(:user)
       member = create(:user)
       event = create(:event)
-      create(:organizer_position, user: manager, event:, role: :manager)
-      create(:organizer_position, user: other_manager, event:, role: :manager)
-      create(:organizer_position, user: member, event:, role: :member)
+      manager_position = create(:organizer_position, user: manager, event:, role: :manager)
+      other_manager_position = create(:organizer_position, user: other_manager, event:, role: :manager)
+      member_position = create(:organizer_position, user: member, event:, role: :member)
       create_session(manager, verified: true)
 
-      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_ids: ["", other_manager.id, member.id] } })
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_position_ids: ["", other_manager_position.id, member_position.id] } })
 
       expect(event.reload.reimbursement_reviewers).to contain_exactly(other_manager)
 
-      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_ids: [""] } })
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_position_ids: [""] } })
 
       expect(response).to have_http_status(:unprocessable_content)
       expect(controller.instance_variable_get(:@event).errors.full_messages).to eq(["Select at least one reviewer"])
       expect(event.reload.reimbursement_reviewers).to contain_exactly(other_manager)
 
       new_manager = create(:user)
-      create(:organizer_position, user: new_manager, event:, role: :manager)
+      new_manager_position = create(:organizer_position, user: new_manager, event:, role: :manager)
 
       expect(event.reimbursement_reviewers).to contain_exactly(other_manager, new_manager)
 
-      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_ids: ["", manager.id, other_manager.id, new_manager.id] } })
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_position_ids: ["", manager_position.id, other_manager_position.id, new_manager_position.id] } })
 
       expect(event.reimbursement_reviewer_opt_outs).to be_empty
     end

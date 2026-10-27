@@ -425,7 +425,7 @@ class Event < ApplicationRecord
   has_many :event_follows, class_name: "Event::Follow", dependent: :destroy
   has_many :followers, through: :event_follows, source: :user
 
-  has_many :reimbursement_reviewer_opt_outs, class_name: "Event::ReimbursementReviewerOptOut", dependent: :destroy
+  has_many :reimbursement_reviewer_opt_outs, through: :organizer_positions, source: :reimbursement_reviewer_opt_out
 
   has_many :fee_relationships
   has_many :transactions, through: :fee_relationships, source: :t_transaction
@@ -983,24 +983,30 @@ class Event < ApplicationRecord
     User.where(id: ancestor_organizer_positions.manager_access.select(:user_id))
   end
 
-  # Managers who review reports without an assigned reviewer. Opt-outs are
-  # stored instead of opt-ins, so new managers join automatically.
+  # Managers who review reports without an assigned reviewer, including
+  # managers of parent organizations. Opt-outs are stored instead of opt-ins,
+  # so new managers join automatically.
   def reimbursement_reviewers
-    eligible_reimbursement_reviewers.where.not(id: reimbursement_reviewer_opt_outs.select(:user_id))
+    User.where(id: ancestor_organizer_positions.manager_access.where.missing(:reimbursement_reviewer_opt_out).select(:user_id))
   end
 
-  def reimbursement_reviewer_ids
-    reimbursement_reviewers.ids
+  # Managers of parent organizations opt out from their own organization's
+  # settings, so they can't be toggled here.
+  def inherited_reimbursement_reviewers
+    User.where(id: ancestor_organizer_positions.where.not(event_id: id).manager_access.where.missing(:reimbursement_reviewer_opt_out).select(:user_id))
   end
 
-  def reimbursement_reviewer_ids=(ids)
+  # This organization's own managers who review, for the settings form
+  def reimbursement_reviewer_position_ids
+    organizer_positions.manager_access.where.missing(:reimbursement_reviewer_opt_out).ids
+  end
+
+  def reimbursement_reviewer_position_ids=(ids)
     ids = ids.compact_blank.map(&:to_i)
-    opted_out_ids = eligible_reimbursement_reviewers.where.not(id: ids).ids
+    managers = organizer_positions.manager_access
 
-    reimbursement_reviewer_opt_outs.where.not(user_id: opted_out_ids).destroy_all
-    (opted_out_ids - reimbursement_reviewer_opt_outs.pluck(:user_id)).each do |user_id|
-      reimbursement_reviewer_opt_outs.create!(user_id:)
-    end
+    Event::ReimbursementReviewerOptOut.where(organizer_position: managers.where(id: ids)).destroy_all
+    managers.where.not(id: ids).where.missing(:reimbursement_reviewer_opt_out).find_each(&:create_reimbursement_reviewer_opt_out!)
   end
 
   def short_name(length: MAX_SHORT_NAME_LENGTH)

@@ -84,8 +84,7 @@ RSpec.describe MyController do
       reviewing_event = create(:event)
       opted_out_event = create(:event)
       create(:organizer_position, user:, event: reviewing_event, role: :manager)
-      create(:organizer_position, user:, event: opted_out_event, role: :manager)
-      opted_out_event.reimbursement_reviewer_opt_outs.create!(user:)
+      create(:organizer_position, user:, event: opted_out_event, role: :manager).create_reimbursement_reviewer_opt_out!
 
       visible = create(:reimbursement_report, event: reviewing_event, aasm_state: :submitted)
       create(:reimbursement_report, event: opted_out_event, aasm_state: :submitted)

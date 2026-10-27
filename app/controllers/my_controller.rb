@@ -257,7 +257,7 @@ class MyController < ApplicationController
                                  .where(organizer_positions: { user_id: current_user.id, role: :manager })
     # Managers can't approve their own reports, so those only appear under @my_reports
     @reports_assigned_to_me = current_user.assigned_reimbursement_reports.submitted.where.not(user: current_user)
-    opted_out_events = Event::ReimbursementReviewerOptOut.where(user: current_user).select(:event_id)
+    opted_out_events = current_user.organizer_positions.joins(:reimbursement_reviewer_opt_out).select(:event_id)
     @unassigned_reports_to_review = Reimbursement::Report.submitted.where(event: manager_events, reviewer_id: nil).where.not(user: current_user).where.not(event_id: opted_out_events)
     @reports_to_review = @reports_assigned_to_me.or(@unassigned_reports_to_review)
   end

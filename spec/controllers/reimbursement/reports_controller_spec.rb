@@ -550,8 +550,7 @@ RSpec.describe Reimbursement::ReportsController do
       opted_out = create(:user)
       create(:organizer_position, user: member, event:, role: :member)
       create(:organizer_position, user: other_member, event:, role: :member)
-      create(:organizer_position, user: opted_out, event:, role: :manager)
-      event.reimbursement_reviewer_opt_outs.create!(user: opted_out)
+      create(:organizer_position, user: opted_out, event:, role: :manager).create_reimbursement_reviewer_opt_out!
       report = create(:reimbursement_report, user: member, event:)
 
       create_session(member, verified: true)

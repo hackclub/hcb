@@ -367,7 +367,8 @@ class EventsController < ApplicationController
   def update
     authorize @event
 
-    if params.dig(:event, :reimbursement_reviewer_ids)&.compact_blank&.empty? && @event.eligible_reimbursement_reviewers.exists?
+    reviewer_position_ids = params.dig(:event, :reimbursement_reviewer_position_ids)
+    if reviewer_position_ids&.compact_blank&.empty? && @event.organizer_positions.manager_access.exists? && !@event.inherited_reimbursement_reviewers.exists?
       @event.errors.add(:base, "Select at least one reviewer")
       @settings_tab = "reimbursements"
       return render :edit, status: :unprocessable_content
@@ -1534,7 +1535,7 @@ class EventsController < ApplicationController
           :subevent_plan,
           :subevent_name_prefix
         ],
-        reimbursement_reviewer_ids: []
+        reimbursement_reviewer_position_ids: []
       }
     ]
 
@@ -1579,7 +1580,7 @@ class EventsController < ApplicationController
       :website,
       :background_image,
       :stripe_card_logo,
-      reimbursement_reviewer_ids: [],
+      reimbursement_reviewer_position_ids: [],
       card_grant_setting_attributes: [
         :merchant_lock,
         :category_lock,
