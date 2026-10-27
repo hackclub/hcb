@@ -49,21 +49,22 @@
   <h2 class="user-home-section mb-2">Pending grant invitations</h2>
   <ul class="grid grid-cols-1 text-left w-full mt-2">
     <% current_user.card_grants.not_activated.each do |grant| %>
-      <div class="card mx-auto text-center sm:text-left flex items-center flex-col sm:flex-row w-full">
-        <div class="flex-1">
+      <% lifetime_elapsed = ((Date.current - grant.created_at.to_date) / [grant.expiration_at - grant.created_at.to_date, 1].max * 100).clamp(0, 100).to_f %>
+      <div class="card mx-auto text-center sm:text-left flex items-center flex-col sm:flex-row gap-4 w-full">
+        <div class="flex-1 w-full">
           <p class="my-0 text-lg font-[700]">You have a grant invitation from <%= grant.event.name %></p>
           <p class="my-0 text-md"><%= render_money grant.amount %><% if grant.purpose.present? %> for <strong><%= grant.purpose %></strong><% end %></p>
+          <div class="mt-3">
+            <div class="flex flex-wrap justify-between gap-x-2 text-sm muted">
+              <span class="whitespace-nowrap">Sent <%= format_date grant.created_at %></span>
+              <span class="whitespace-nowrap"><%= grant.expiration_at.future? ? "Expires in #{distance_of_time_in_words(Time.current, grant.expiration_at)}" : "Expired" %> · <%= format_date grant.expiration_at %></span>
+            </div>
+            <div class="h-2 bg-gray-200 dark:bg-neutral-700 rounded mt-1 overflow-hidden" role="progressbar" aria-label="Time until grant expires" aria-valuenow="<%= lifetime_elapsed.round %>" aria-valuemin="0" aria-valuemax="100">
+              <div class="h-full rounded <%= grant.expiration_at.future? ? "bg-primary" : "bg-error" %>" style="width: <%= lifetime_elapsed %>%;"></div>
+            </div>
+          </div>
         </div>
-        <div class="flex flex-col items-center gap-1">
-          <%= link_to "Activate my grant", grant, class: "btn" %>
-          <p class="my-0 text-sm italic text-muted">
-            <% if grant.expiration_at.future? %>
-              Spend within <%= distance_of_time_in_words(Time.current, grant.expiration_at) %>
-            <% else %>
-              Expired <%= time_ago_in_words(grant.expiration_at) %> ago
-            <% end %>
-          </p>
-        </div>
+        <%= link_to "Activate my grant", grant, class: "btn" %>
       </div>
     <% end %>
   </ul>
