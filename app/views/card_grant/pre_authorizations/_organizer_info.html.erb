@@ -55,10 +55,28 @@
                         <%= inline_icon "checkmark" %> Approve
                     <% end %>
 
+                    <%= link_to "#", class: "btn bg-muted", data: { behavior: "modal_trigger", modal: "resubmit_modal" } do %>
+                        <%= inline_icon "refresh" %> Request Resubmit
+                    <% end %>
+
                     <%= button_to organizer_reject_card_grant_pre_authorizations_path(pre_authorization.card_grant), method: :post, class: "btn bg-warning", data: { turbo_confirm: "Are you sure you want to reject this pre-authorization?" } do %>
                         <%= inline_icon "view-close-small" %> Reject
                     <% end %>
                 </div>
+
+                <%# Modal for requesting resubmission %>
+                <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="resubmit_modal">
+                    <%= modal_header "Request Resubmission" %>
+                    <%= form_with url: organizer_request_resubmit_card_grant_pre_authorizations_path(pre_authorization.card_grant), method: :post, data: { turbo: false } do |form| %>
+                        <div class="field">
+                            <%= label_tag :feedback, "Feedback for submitter (optional)" %>
+                            <%= text_area_tag :feedback, nil, placeholder: "Explain what needs to be changed...", rows: 4 %>
+                        </div>
+                        <div class="actions">
+                            <%= form.submit "Send back for resubmission", class: "btn bg-muted" %>
+                        </div>
+                    <% end %>
+                </section>
             <% end %>
         <% end %>
 
