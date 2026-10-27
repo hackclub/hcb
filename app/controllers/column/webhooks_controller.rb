@@ -21,10 +21,8 @@ module Column
         handle_ach_outgoing_transfer_returned
       elsif type == "ach.outgoing_transfer.canceled"
         handle_ach_outgoing_transfer_canceled
-      elsif type == "check.outgoing_debit.settled"
-        handle_check_deposit_settled
-      elsif type == "check.outgoing_debit.returned"
-        handle_check_deposit_returned
+      elsif type.start_with?("check.outgoing_debit.")
+        handle_check_deposit_update(type.delete_prefix("check.outgoing_debit."))
       elsif type == "swift.outgoing_transfer.returned"
         handle_swift_outgoing_transfer_returned
       elsif type.start_with?("check.incoming_debit")
@@ -98,19 +96,9 @@ module Column
       )
     end
 
-    # Column uses the "settled" state to represent when the
-    # check is deposited in our bank account.
-    # - @sampoder
-    def handle_check_deposit_settled
-      check_deposit = CheckDeposit.find_by(column_id: @object[:id])
-
-      check_deposit&.update!(status: :deposited)
-    end
-
-    def handle_check_deposit_returned
-      check_deposit = CheckDeposit.find_by(column_id: @object[:id])
-
-      check_deposit&.update!(status: :returned)
+    # Check deposit events are named after the status they move the check to.
+    def handle_check_deposit_update(column_status)
+      CheckDeposit.find_by(column_id: @object[:id])&.update_from_column_status!(column_status)
     end
 
     def verify_signature
