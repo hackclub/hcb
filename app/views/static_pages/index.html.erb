@@ -66,8 +66,9 @@
           <% if grant.expiration_at.past? %>
             <span class="badge m-0 mt-2 <%= expiry_color %>"><%= inline_icon "clock", size: 14 %> Expired <%= grant.expiration_at.strftime("%b %-d, %Y") %></span>
           <% else %>
-            <span class="badge m-0 mt-2 tooltipped tooltipped--n <%= expiry_color %>" aria-label="<%= distance_of_time_in_words(Time.current, grant.expiration_at.end_of_day) %> left">
-              <%= inline_icon "clock", size: 14 %> Activate &amp; spend by <%= grant.expiration_at.strftime("%b %-d, %Y") %>
+            <span class="badge m-0 mt-2 <%= expiry_color %>">
+              <%= inline_icon "clock", size: 14 %>
+              <span><%= distance_of_time_in_words(Time.current, grant.expiration_at.end_of_day) %> left to activate • <span class="whitespace-nowrap">Expires <%= grant.expiration_at.strftime("%b %-d, %Y") %></span></span>
             </span>
           <% end %>
         </div>
