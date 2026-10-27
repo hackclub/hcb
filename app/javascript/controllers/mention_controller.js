@@ -22,6 +22,7 @@ export default class extends Controller {
   }
 
   impersonate({ params: { url } }) {
-    if (confirm('Are you sure?')) submitForm(url, {})
+    if (confirm('Are you sure?'))
+      submitForm(url, { return_to: window.location.href })
   }
 }
