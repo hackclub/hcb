@@ -96,6 +96,7 @@
         <tbody>
           <% @transfers.each do |d| %>
             <% transfer_popover_title = d.is_a?(Payment) ? "Payment of #{render_money(d.amount)}" : "Transfer of #{render_money(d.local_hcb_code.amount_cents_by_event(@event).abs)}" %>
+            <% hide_recipient = transfer_recipients_hidden? && !d.is_a?(Disbursement::Outgoing) %>
             <tr class="<%= "clickable" if organizer_signed_in? %>">
               <td class="transaction__icon">
                 <% if d.is_a?(Check) || d.is_a?(IncreaseCheck) %>
@@ -134,7 +135,7 @@
               <td>
                 <%= format_date d.created_at %>
               </td>
-              <td style="max-width: 15ch" class="overflow-hidden truncate" title="<%= d.try(:name) || d.try(:purpose) %>">
+              <td style="max-width: 15ch" class="overflow-hidden truncate" title="<%= d.try(:name) || d.try(:purpose) unless hide_recipient %>">
                 <% if d.is_a?(Disbursement::Outgoing) %>
                   <strong>
                     <% if d.destination_event.is_public? || organizer_signed_in?(d.destination_event) %>
@@ -143,6 +144,8 @@
                       <%= d.destination_event.name %>
                     <% end %>
                   </strong>
+                <% elsif hide_recipient %>
+                  <span class="muted">Hidden</span>
                 <% else %>
                   <%= d.try(:name) || d.payee.display_name %>
                 <% end %>
