@@ -3,20 +3,56 @@
 require "rails_helper"
 
 RSpec.describe CardChargeMailer, type: :mailer do
-  def build_ledger_item(user:, merchant_name: "Merchant", verification_data: {}, amount_cents: -12_34,
-                        spending_limit_amount: nil, spending_limit_interval: nil)
+  # A charge that settled and was then refunded in full.
+  def build_ledger_item(user:, merchant_name: "Merchant", verification_data: {}, amount_cents: -12_34)
     stripe_cardholder = create(:stripe_cardholder, user:, stripe_billing_address_postal_code: "90069")
-    stripe_card = create(:stripe_card, :with_stripe_id, stripe_cardholder:, spending_limit_amount:, spending_limit_interval:)
-    raw_stripe_transaction = create(:raw_stripe_transaction, stripe_card:, stripe_transaction: {
-                                      "card"              => stripe_card.stripe_id,
-                                      "merchant_data"     => { "name" => merchant_name },
-                                      "verification_data" => verification_data
-                                    })
+    stripe_card = create(:stripe_card, :with_stripe_id, stripe_cardholder:)
+    raw_pending_stripe_transaction = create(:raw_pending_stripe_transaction, amount_cents:, date_posted: Date.current, stripe_transaction: {
+                                              "card"                 => { "id" => stripe_card.stripe_id },
+                                              "approved"             => true,
+                                              "status"               => "closed",
+                                              "authorization_method" => "online",
+                                              "merchant_data"        => { "name" => merchant_name },
+                                              "verification_data"    => verification_data,
+                                              "request_history"      => [{ "amount" => -amount_cents, "approved" => true, "reason" => "card_active" }]
+                                            })
+    raw_stripe_transaction = create(:raw_stripe_transaction, stripe_card:, amount_cents:,
+                                                             stripe_authorization_id: raw_pending_stripe_transaction.stripe_transaction_id,
+                                                             stripe_transaction: {
+                                                               "card"          => stripe_card.stripe_id,
+                                                               "type"          => "capture",
+                                                               "merchant_data" => { "name" => merchant_name }
+                                                             })
     card_charge = raw_stripe_transaction.card_charge
 
-    item = Ledger::Item.new(amount_cents:, memo: "Test", datetime: Time.current, linked_object: card_charge)
+    # A reversed charge's refund cancels out its capture, so the item nets to zero.
+    item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current, linked_object: card_charge)
     item.save(validate: false)
-    item.update_columns(amount_cents:)
+    item.update_columns(amount_cents: 0, status: "reversed")
+    item
+  end
+
+  # An authorization that Stripe released before the merchant captured it.
+  def build_released_ledger_item(user:, amount_cents: -45_00)
+    stripe_cardholder = create(:stripe_cardholder, user:)
+    stripe_card = create(:stripe_card, :with_stripe_id, stripe_cardholder:)
+    raw_pending_stripe_transaction = create(:raw_pending_stripe_transaction, amount_cents:, date_posted: Date.current, stripe_transaction: {
+                                              "card"                 => { "id" => stripe_card.stripe_id },
+                                              "approved"             => true,
+                                              "status"               => "reversed",
+                                              "authorization_method" => "online",
+                                              "merchant_data"        => { "name" => "goBILDA" },
+                                              "request_history"      => [{ "amount" => -amount_cents, "approved" => true, "reason" => "card_active" }]
+                                            })
+    canonical_pending_transaction = create(:canonical_pending_transaction, raw_pending_stripe_transaction:, amount_cents:)
+    item = canonical_pending_transaction.reload.ledger_item
+
+    # Stripe zeroes a released authorization's amount, the pending transaction
+    # import copies that onto the canonical pending transaction, and the
+    # declined pending transaction no longer counts towards the item.
+    raw_pending_stripe_transaction.update_columns(amount_cents: 0)
+    canonical_pending_transaction.update_columns(amount_cents: 0)
+    item.update_columns(amount_cents: 0, status: "released")
     item
   end
 
@@ -31,6 +67,17 @@ RSpec.describe CardChargeMailer, type: :mailer do
       expect(mail.subject).to eq("Your charge at goBILDA was reversed")
       expect(mail.body.encoded).to include("$45.00")
       expect(mail.body.encoded).to include(ledger_item_url(ledger_item))
+    end
+
+    it "says what was authorized when the authorization was released before it was captured" do
+      user = create(:user)
+      ledger_item = build_released_ledger_item(user:, amount_cents: -45_00)
+
+      mail = described_class.with(ledger_item:).reversed
+
+      expect(mail.subject).to eq("Your charge at goBILDA was reversed")
+      expect(mail.body.encoded).to include("$45.00")
+      expect(mail.body.encoded).not_to include("$0.00")
     end
 
     it "does not mention troubleshooting tips when there is no verification mismatch" do
@@ -62,6 +109,37 @@ RSpec.describe CardChargeMailer, type: :mailer do
       expect { mail.deliver_now }.not_to(change { ActionMailer::Base.deliveries.count })
     end
 
+    it "does not send when the charge has no cardholder to write to" do
+      # A charge on a card HCB doesn't know has no author.
+      card_charge = create(:raw_pending_stripe_transaction).card_charge
+      ledger_item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current, linked_object: card_charge)
+      ledger_item.save(validate: false)
+      expect(ledger_item.author).to be_nil
+
+      mail = described_class.with(ledger_item:).reversed
+
+      expect { mail.deliver_now }.not_to(change { ActionMailer::Base.deliveries.count })
+    end
+
+    it "does not send when the charge was under $1" do
+      user = create(:user)
+      ledger_item = build_ledger_item(user:, amount_cents: -99)
+
+      mail = described_class.with(ledger_item:).reversed
+
+      expect { mail.deliver_now }.not_to(change { ActionMailer::Base.deliveries.count })
+    end
+
+    it "sends when the charge was exactly $1" do
+      user = create(:user)
+      ledger_item = build_ledger_item(user:, amount_cents: -1_00)
+
+      mail = described_class.with(ledger_item:).reversed
+
+      expect { mail.deliver_now }.to change { ActionMailer::Base.deliveries.count }.by(1)
+      expect(mail.body.encoded).to include("$1.00")
+    end
+
     it "only lists the reason that actually failed, not the others" do
       user = create(:user)
       ledger_item = build_ledger_item(user:, verification_data: { "address_postal_code_check" => "mismatch" })
@@ -71,31 +149,7 @@ RSpec.describe CardChargeMailer, type: :mailer do
       expect(mail.body.encoded).to include("the zip code used at")
       expect(mail.body.encoded).not_to include("CVC")
       expect(mail.body.encoded).not_to include("expiration date")
-      expect(mail.body.encoded).not_to include("spending limit")
-      expect(mail.body.encoded).not_to include("enough balance")
       expect(mail.body.encoded.scan("didn't match your").size).to eq(1)
-    end
-
-    it "mentions insufficient balance when the event's balance can't cover the charge, even with no verification mismatch" do
-      user = create(:user)
-      ledger_item = build_ledger_item(user:, amount_cents: -50_00)
-      allow_any_instance_of(Event).to receive(:balance_v2_cents).and_return(-10_00)
-
-      mail = described_class.with(ledger_item:).reversed
-
-      expect(mail.body.encoded).to include("What went wrong")
-      expect(mail.body.encoded).to include("enough balance")
-    end
-
-    it "mentions the spending limit when a per-authorization limit is exceeded, even with no verification mismatch" do
-      user = create(:user)
-      ledger_item = build_ledger_item(user:, amount_cents: -50_00, spending_limit_amount: 10_00,
-                                      spending_limit_interval: :per_authorization)
-
-      mail = described_class.with(ledger_item:).reversed
-
-      expect(mail.body.encoded).to include("What went wrong")
-      expect(mail.body.encoded).to include("spending limit")
     end
   end
 end
