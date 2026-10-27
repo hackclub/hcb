@@ -1,5 +1,6 @@
 import { Controller } from '@hotwired/stimulus'
 import submitForm from '../common/submitForm'
+import showConfirm from '../confirm'
 
 export default class extends Controller {
   static values = { email: String }
@@ -21,8 +22,7 @@ export default class extends Controller {
     }, 1500)
   }
 
-  impersonate({ params: { url } }) {
-    if (confirm('Are you sure?'))
-      submitForm(url, { return_to: window.location.href })
+  async impersonate({ params: { url } }) {
+    if (await showConfirm()) submitForm(url, {})
   }
 }
