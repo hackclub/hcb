@@ -9,7 +9,7 @@
   Reversals can also happen for other reasons at the merchant's sole discretion. To find out why this charge was reversed, we recommend reaching out to <%= @merchant_name %> directly.
 </p>
 
-<% if @failed_verification_checks.present? || @insufficient_balance || @spending_limit_exceeded %>
+<% if @failed_verification_checks.present? %>
   <h3 class="mb-2">What went wrong</h3>
 
   <ul class="my-0">
@@ -24,12 +24,6 @@
     <% end %>
     <% if @failed_verification_checks.include?("expiry_check") %>
       <li class="pt1 pb1">We noticed that the expiration date used at <%= @merchant_name %> didn't match your <%= link_to "HCB card", stripe_card_url(@card_charge.stripe_card) %>. Please double-check it and try again.</li>
-    <% end %>
-    <% if @insufficient_balance %>
-      <li class="pt1 pb1">Your organization doesn't have enough balance to cover the purchase.</li>
-    <% end %>
-    <% if @spending_limit_exceeded %>
-      <li class="pt1 pb1">You've hit a spending limit set on your card.</li>
     <% end %>
   </ul>
   <br>
