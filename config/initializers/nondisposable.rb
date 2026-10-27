@@ -9,6 +9,7 @@ Nondisposable.configure do |config|
   config.error_message = "provider is unsupported. Please try with another email address."
 
   # Sourced from https://hcb.hackclub.com/blazer/queries/1116-user-group-domain-by-usage
+  # and https://hcb.hackclub.com/blazer/queries/1268-user-spam-email-domains-that-need-to-be-banned
   #
   # NOTE: aol.com, and msn.com are semi-common email providers, but
   # have very few legitimate users. I'm choosing to block them because the pros
@@ -89,6 +90,117 @@ Nondisposable.configure do |config|
     codoteam.com
     rightbliss.beauty
     silesia.life
+    gwshare.com
+    jobraux.com
+    bejum.com
+    bora4d.com
+    siponly.com
+    myfmcast.com
+    tainela.com
+    svndemo.com
+    mfeva.com
+    gocoiny.com
+    wqeather.com
+    kierko.com
+    mfoos.com
+    webkugel.com
+    kingcq.com
+    cxmail.cfd
+    apdtax.com
+    jomeil.com
+    muskarm.com
+    googxs.com
+    workpolo.com
+    hotkev.com
+    nixaur.com
+    redtion.com
+    tempimail.org
+    gettempmail.net
+    hidepost.net
+    alerous.com
+    toolzim.com
+    kedaiqq.com
+    f5.si
+    dnsink.com
+    careney.com
+    aghism.com
+    amupx.com
+    priyomail.site
+    upstary.com
+    rpaintel.com
+    primetor.com
+    vitreu.com
+    tarscon.com
+    vemzite.com
+    murkstar.com
+    sureido.com
+    chackaut.com
+    emalupe.com
+    netiren.com
+    missfuli.com
+    mrworlds.com
+    aganseo.com
+    seolaner.com
+    sagesole.com
+    shortapk.com
+    iapapi.com
+    sskaid.com
+    tixpad.com
+    westecom.com
+    donumart.com
+    videocel.com
+    vektoru.com
+    lanvos.com
+    dyleris.com
+    disiok.com
+    woraco.com
+    copawoke.com
+    brixozu.com
+    theaumos.com
+    buloan.com
+    trepolan.com
+    tikwel.com
+    tongtode.com
+    taoxe.com
+    savdz.com
+    widenely.com
+    fanchatu.com
+    uswaid.com
+    topkute.com
+    web5h.com
+    lovadio.com
+    soliset.com
+    candaba.com
+    5nek.com
+    skyprofy.com
+    velpai.com
+    toooby.com
+    text0.com
+    usmary.com
+    webonews.com
+    tabeebee.com
+    sepmaf.com
+    novelv.com
+    playboot.com
+    hutdot.com
+    joystill.com
+    beiwoh.com
+    ittiv.com
+    neplis.com
+    luhupo.com
+    gouziben.com
+    ecorpmail.cfd
+    goncolos.cfd
+    lottery-sambad.site
+    instaddr.org
+    adadad.uk
+    nanana.uk
+    oemails.com
+    oletters.com
+    yanemail.com
+    ghostmail.live
+    tempkit.io
+    vexomail.xyz
   ].freeze
 
   # https://www.okta.com/blog/threat-intelligence/opportunistic-sms-pumping-attacks-target-customer-sign-up-pages/

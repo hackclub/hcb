@@ -110,5 +110,13 @@ module CardLocking
     def card_locking_outstanding_count
       card_locking_outstanding_charges.count
     end
+
+    # The soonest deadline in the outstanding pile, or nil when nothing is
+    # outstanding (or this cardholder isn't enrolled, so their charges carry no
+    # receipt_due_at and MIN ignores the NULLs). This is what every "your next
+    # receipt is due in X" countdown counts down to.
+    def card_locking_next_due_at
+      card_locking_outstanding_charges.minimum(:receipt_due_at)
+    end
   end
 end

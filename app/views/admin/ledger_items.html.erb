@@ -40,8 +40,8 @@
         <td><%= link_to ledger_item.memo, ledger_item_path(ledger_item) %></td>
         <td><%= ledger_item.humanized_type %></td>
         <td class="nowrap"><%= ledger_item.amount.format %></td>
-        <td><%= ledger_item.canonical_transactions.size %></td>
-        <td><%= ledger_item.canonical_pending_transactions.size %></td>
+        <td><%= ledger_item.ct_count %></td>
+        <td><%= ledger_item.cpt_count %></td>
         <td>
           <%= link_to "View", ledger_item_path(ledger_item) %>
           <% if ledger_item.hcb_code.present? %>

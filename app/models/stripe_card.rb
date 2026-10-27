@@ -92,6 +92,7 @@ class StripeCard < ApplicationRecord
   alias_method :cardholder, :stripe_cardholder
   has_one :user, through: :stripe_cardholder
   has_many :stripe_authorizations
+  has_many :card_charges
   alias_method :authorizations, :stripe_authorizations
   alias_method :transactions, :stripe_authorizations
   alias_attribute :platinum, :is_platinum_april_fools_2023
@@ -207,6 +208,9 @@ class StripeCard < ApplicationRecord
   end
 
   def freeze!(frozen_by: User.system_user)
+    # Re-freezing must not change who froze the card
+    return if frozen?
+
     StripeService::Issuing::Card.update(self.stripe_id, status: :inactive)
     sync_from_stripe!
     self.last_frozen_by = frozen_by
@@ -306,15 +310,10 @@ class StripeCard < ApplicationRecord
     self.last4 = stripe_obj[:last4]
     self.stripe_status = stripe_obj[:status]
     self.card_type = stripe_obj[:type]
-    # On ~2024-03-26, Stripe introduced personalization designs for physical cards
-    # This resulted in older cards not having a personalization design ID.
-    # This fix checks if its an old card without a personalization design ID and sets it to the default black design.
-    if physical?
-      if self.created_at < Time.utc(2024, 3, 27) && stripe_obj[:personalization_design].nil?
-        self.stripe_card_personalization_design_id = StripeCard::PersonalizationDesign.default&.id
-      else
-        self.stripe_card_personalization_design_id = StripeCard::PersonalizationDesign.find_by(stripe_id: stripe_obj[:personalization_design])&.id
-      end
+    # Physical cards issued before ~2024-03-26 have no personalization design on
+    # Stripe; their design was backfilled locally, so don't overwrite it with nil.
+    if physical? && stripe_obj[:personalization_design].present?
+      self.stripe_card_personalization_design_id = StripeCard::PersonalizationDesign.find_by(stripe_id: stripe_obj[:personalization_design])&.id
     end
 
     if stripe_obj[:status] == "active"

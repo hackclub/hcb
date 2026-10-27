@@ -2,7 +2,12 @@
 
 class CommentMailer < ApplicationMailer
   def notification
-    @comment = params[:comment]
+    # re-fetch (rather than trust params[:comment] directly) since the comment
+    # may have been soft-deleted (acts_as_paranoid) between this job being
+    # enqueued and running - there's nothing worth notifying about then.
+    @comment = Comment.find_by(id: params[:comment]&.id)
+    return if @comment.nil?
+
     @commentable = @comment.commentable
     @delivery_reason = "you are part of a comment thread on HCB."
 

@@ -15,6 +15,7 @@
 #  rejected_at                         :datetime
 #  scheduled_on                        :date
 #  should_charge_fee                   :boolean          default(FALSE)
+#  transfer_type                       :string
 #  created_at                          :datetime         not null
 #  updated_at                          :datetime         not null
 #  destination_subledger_id            :bigint
@@ -72,7 +73,7 @@ class Disbursement < ApplicationRecord
     event :mark_approved do
       after do |fulfilled_by|
         update(fulfilled_by:)
-        canonical_pending_transactions.update_all(fronted: true)
+        canonical_pending_transactions.find_each { |cpt| cpt.update(fronted: true) }
       end
       transitions from: [:reviewing, :scheduled], to: :pending
     end
@@ -88,6 +89,7 @@ class Disbursement < ApplicationRecord
     event :mark_errored do
       after do
         canonical_pending_transactions.each { |cpt| cpt.decline! }
+        repayments.each(&:revert_categories!)
       end
       transitions from: [:pending, :in_transit], to: :errored
     end
@@ -96,6 +98,7 @@ class Disbursement < ApplicationRecord
       after do |fulfilled_by|
         update(fulfilled_by:)
         canonical_pending_transactions.each { |cpt| cpt.decline! }
+        repayments.each(&:revert_categories!)
         create_activity(key: "disbursement.rejected", owner: fulfilled_by)
       end
       transitions from: [:scheduled, :reviewing, :pending], to: :rejected
@@ -121,6 +124,13 @@ class Disbursement < ApplicationRecord
   def outgoing_disbursement = @outgoing_disbursement ||= becomes(Disbursement::Outgoing)
 
   has_many :t_transactions, class_name: "Transaction", inverse_of: :disbursement
+  has_many :repayments, dependent: :destroy
+  has_many :repaid_ledger_items, through: :repayments
+
+  # What the transfer is for. Decides how each side is categorized. Nil only
+  # on transfers made before types existed.
+  enum :transfer_type, { transfer: "transfer", repayment: "repayment" }, prefix: true, validate: { allow_nil: true }
+  validates :transfer_type, presence: true, on: :create
 
   validates_presence_of :source_event_id,
                         :event_id,
@@ -176,6 +186,13 @@ class Disbursement < ApplicationRecord
 
   include PublicActivity::Model
   tracked owner: proc{ |controller, record| controller&.current_user }, recipient: proc { |controller, record| record.destination_event }, event_id: proc { |controller, record| record.source_event.id }, only: [:create]
+
+  # Fronting lets the destination spend a transfer before it settles. Only
+  # front transfers into an organization the requester manages, so an
+  # unsolicited transfer can't raise its balance before an admin reviews it.
+  def self.frontable?(source_event:, destination_event:, requested_by:)
+    source_event.plan.front_disbursements_enabled? && OrganizerPosition.role_at_least?(requested_by, destination_event, :manager)
+  end
 
   def approve_by_admin(user)
     # Don't check admin transfer limits for card grants. This method is also

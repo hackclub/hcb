@@ -16,6 +16,14 @@ object_shape(json, event, object_name: "organization") do
   json.fee_percentage event.revenue_fee.to_f
   json.background_image event.background_image.attached? ? Rails.application.routes.url_helpers.url_for(event.background_image) : nil
 
+  if expand?(:plan)
+    json.plan do
+      json.name event.plan.label
+      json.fee_percentage event.revenue_fee.to_f
+      json.features event.plan.features
+    end
+  end
+
   if expand?(:balance_cents)
     json.balance_cents event.balance_available
     json.fee_balance_cents event.fronted_fee_balance_v2_cents

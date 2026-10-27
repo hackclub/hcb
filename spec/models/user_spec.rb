@@ -29,6 +29,43 @@ RSpec.describe User, type: :model do
       expect(user).to_not be_valid
       expect(user.errors[:email]).to eq(["provider is unsupported. Please try with another email address."])
     end
+
+    it "suggests gmail.com for googlemail.com, which aliases the same mailbox" do
+      user = build(:user, email: "someone@googlemail.com")
+
+      expect(user).to_not be_valid
+      expect(user.errors[:email]).to eq(["looks like a typo. Did you mean someone@gmail.com?"])
+    end
+
+    it "only blocks disposable domains on create, leaving existing accounts usable" do
+      user = create(:user, email: "someone@gmail.com")
+      user.update_column(:email, "someone@googlemail.com")
+
+      expect(user.reload).to be_valid
+    end
+
+    it "allows major providers and school domains" do
+      %w[gmail.com hackclub.com outlook.com icloud.com student.hbuhsd.edu].each do |domain|
+        user = build(:user, email: "someone@#{domain}")
+
+        expect(user).to be_valid, "expected #{domain} to be allowed"
+      end
+    end
+
+    it "allows a provider's regional domains" do
+      %w[outlook.de outlook.fr yahoo.fr yahoo.ca hotmail.co.uk].each do |domain|
+        user = build(:user, email: "someone@#{domain}")
+
+        expect(user).to be_valid, "expected #{domain} to be allowed"
+      end
+    end
+
+    it "suggests icloud.com for icloud.co" do
+      user = build(:user, email: "someone@icloud.co")
+
+      expect(user).to_not be_valid
+      expect(user.errors[:email]).to eq(["looks like a typo. Did you mean someone@icloud.com?"])
+    end
   end
 
   context "birthday validations" do
@@ -295,6 +332,34 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "#pretend_is_not_admin" do
+    it "is cleared on save for users without an admin role" do
+      user = create(:user)
+      user.pretend_is_not_admin = true
+
+      user.save!
+
+      expect(user.pretend_is_not_admin).to eq(false)
+      expect(user.reload.pretend_is_not_admin).to eq(false)
+    end
+
+    it "is kept for auditors and admins" do
+      auditor = create(:user, access_level: :auditor, pretend_is_not_admin: true)
+      admin = create(:user, :make_admin, pretend_is_not_admin: true)
+
+      expect(auditor.reload.pretend_is_not_admin).to eq(true)
+      expect(admin.reload.pretend_is_not_admin).to eq(true)
+    end
+
+    it "is cleared when an admin is demoted" do
+      admin = create(:user, :make_admin, pretend_is_not_admin: true)
+
+      admin.update!(access_level: :user)
+
+      expect(admin.reload.pretend_is_not_admin).to eq(false)
+    end
+  end
+
   describe "#use_two_factor_authentication" do
     it "cannot be disabled by admins" do
       user = create(:user, :make_admin, use_two_factor_authentication: true, phone_number: "+18556254225", phone_number_verified: true, use_sms_auth: true)
@@ -389,6 +454,59 @@ RSpec.describe User, type: :model do
       cardholder.reload
 
       expect(cardholder.stripe_phone_number).to eq("18556254225")
+    end
+
+    it "does not send a phone number outside +1/+44 to stripe even when verified" do
+      user = create(:user, phone_number: "+919876543210", phone_number_verified: false, email: "test@example.com")
+      cardholder = create(:stripe_cardholder, user:, stripe_email: "test@example.com")
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update).with(cardholder.stripe_id, hash_not_including(:phone_number))
+
+      user.update!(phone_number_verified: true)
+      cardholder.reload
+
+      expect(cardholder.stripe_phone_number).to be_nil
+    end
+
+    it "clears a synced US number once the verified number is no longer on +1/+44" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: false, email: "test@example.com")
+      cardholder = create(:stripe_cardholder, user:, stripe_phone_number: "18556254225", stripe_email: "test@example.com")
+      user.update_column(:phone_number, "+919876543210")
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update).with(cardholder.stripe_id, hash_including(phone_number: ""))
+
+      user.update!(phone_number_verified: true)
+      cardholder.reload
+
+      expect(cardholder.stripe_phone_number).to be_nil
+    end
+  end
+
+  describe "#phone_number_for_stripe" do
+    it "returns the phone number when it is verified and on a supported country code" do
+      user = create(:user, phone_number: "+18556254225")
+      user.update_column(:phone_number_verified, true)
+
+      expect(user.phone_number_for_stripe).to eq("18556254225")
+    end
+
+    it "returns nil when the phone number is not verified" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: false)
+
+      expect(user.phone_number_for_stripe).to be_nil
+    end
+
+    it "returns nil when the phone number is outside +1/+44" do
+      user = create(:user, phone_number: "+919876543210")
+      user.update_column(:phone_number_verified, true)
+
+      expect(user.phone_number_for_stripe).to be_nil
+    end
+
+    it "returns nil when there is no phone number" do
+      user = create(:user, phone_number: nil, phone_number_verified: true)
+
+      expect(user.phone_number_for_stripe).to be_nil
     end
   end
 

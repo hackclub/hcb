@@ -11,14 +11,14 @@ module CardLocking
     # job sees the resolution, then recompute the lock. notify_progress lets a
     # still-locked cardholder hear that this upload landed but more remain.
     def on_receipt_upsert(receipt)
-      charge = receipt.receiptable
+      charge = hcb_code_or_self(receipt.receiptable)
       charge.materialize_card_locking! if charge.is_a?(HcbCode) && charge.card_locking_chargeable?
       enqueue_unlock(cardholder_for(charge), notify_progress: true)
     end
 
     # A receipt was destroyed.
     def on_receipt_destroy(receipt)
-      charge = receipt.receiptable
+      charge = hcb_code_or_self(receipt.receiptable)
       # receipt_resolved_at is only ever cleared here, never revised. Once a charge
       # is resolved the timestamp is frozen, so destroying an earlier receipt while
       # a later one remains (card_locking_resolved? still true) leaves the original
@@ -32,8 +32,23 @@ module CardLocking
 
     # A charge was marked as having no/lost receipt (also a resolution).
     def on_no_or_lost_receipt(charge)
+      charge = hcb_code_or_self(charge)
       charge.materialize_card_locking! if charge.is_a?(HcbCode) && charge.card_locking_chargeable?
       enqueue_unlock(cardholder_for(charge))
+    end
+
+    # Card-locking state (materialize_card_locking!, card_locking_chargeable?,
+    # stripe_card, ...) is only ever defined on HcbCode (CardLocking::ChargeBehavior).
+    # Receiptable#no_or_lost_receipt! and receipt attach/destroy can each be
+    # triggered from either an HcbCode or its Ledger::Item (ReceiptablesController
+    # and ReceiptsController both accept Ledger::Item as a receiptable_type), so a
+    # Ledger::Item resolves to its hcb_code here - or, if it has none yet, falls
+    # back to itself, letting the is_a?(HcbCode) checks below no-op the same way
+    # they already do for any other non-HcbCode receiptable.
+    def hcb_code_or_self(record)
+      return record.hcb_code || record if record.is_a?(::Ledger::Item)
+
+      record
     end
 
     # The cardholder whose cards lock is always the person on the charge, never

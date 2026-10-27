@@ -5,6 +5,8 @@ class ApplicationMailer < ActionMailer::Base
 
   OPERATIONS_EMAIL = "hcb@hackclub.com"
 
+  ENGINEERING_EMAIL = "hcb-engr@hackclub.com"
+
   DOMAIN = Rails.env.production? ? "hackclub.com" : "staging.hcb.hackclub.com"
   default from: "HCB <hcb@#{DOMAIN}>"
   layout "mailer/default"

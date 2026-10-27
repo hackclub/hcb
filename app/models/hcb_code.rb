@@ -61,7 +61,6 @@ class HcbCode < ApplicationRecord
   has_many :suggested_pairings
   has_many :suggested_receipts, source: :receipt, through: :suggested_pairings
 
-  has_one :personal_transaction, required: false
   has_one :pin, required: false
 
   belongs_to :event, optional: true
@@ -194,11 +193,11 @@ class HcbCode < ApplicationRecord
   def smart_amount_cents
     sum = canonical_transactions.sum(:amount_cents)
     sum += canonical_pending_transactions.outgoing.unsettled.sum(:amount_cents)
-    if event&.can_front_balance?
-      fronted_pt_sum = canonical_pending_transactions.incoming.fronted.not_declined.sum(:amount_cents)
-      settled_ct_sum = [canonical_transactions.sum(:amount_cents), 0].max
-      sum += [fronted_pt_sum - settled_ct_sum, 0].max
-    end
+
+    fronted_pt_sum = canonical_pending_transactions.incoming.fronted.not_declined.sum(:amount_cents)
+    settled_ct_sum = [canonical_transactions.sum(:amount_cents), 0].max
+    sum += [fronted_pt_sum - settled_ct_sum, 0].max
+
     sum
   end
 
@@ -319,6 +318,21 @@ class HcbCode < ApplicationRecord
     pt&.raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_currency") || raw_stripe_transaction.stripe_transaction["merchant_currency"]
   end
 
+  # What the merchant charged, in their own currency. Prefers the settled
+  # transaction, since that's where `amount_cents` comes from too.
+  def stripe_merchant_amount
+    txn = (raw_stripe_transaction || pt&.raw_pending_stripe_transaction)&.stripe_transaction
+    amount, currency = txn&.values_at("merchant_amount", "merchant_currency")
+    return nil if amount.nil? || currency.blank? || Money::Currency.find(currency).nil?
+
+    Money.from_cents(amount.abs, currency.upcase)
+  end
+
+  def stripe_foreign_currency?
+    amount = stripe_merchant_amount
+    amount.present? && amount.currency != Money.default_currency
+  end
+
   def stripe_refund?
     ct&.stripe_refund? && (stripe_force_capture? || (stripe_card? && amount_cents > 0))
   end
@@ -431,6 +445,10 @@ class HcbCode < ApplicationRecord
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_FORCE_CAPTURE_CODE
   end
 
+  def card_charge?
+    stripe_card? || stripe_force_capture?
+  end
+
   def stripe_service_fee?
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::STRIPE_SERVICE_FEE_CODE
   end
@@ -526,6 +544,12 @@ class HcbCode < ApplicationRecord
     @stripe_service_fee ||= StripeServiceFee.find_by(id: hcb_i2) if stripe_service_fee?
   end
 
+  def card_charge
+    return nil unless card_charge?
+
+    @card_charge ||= raw_stripe_transaction&.card_charge || pt&.raw_pending_stripe_transaction&.card_charge
+  end
+
   def check_deposit?
     hcb_i1 == ::TransactionGroupingEngine::Calculate::HcbCode::CHECK_DEPOSIT_CODE
   end
@@ -618,7 +642,8 @@ class HcbCode < ApplicationRecord
       check_deposit || outgoing_disbursement ||
       incoming_disbursement || bank_fee ||
       fee_revenue || reimbursement_expense_payout ||
-      reimbursement_payout_holding
+      reimbursement_payout_holding || stripe_service_fee ||
+      card_charge
   end
 
   # The `:receipt_required` scope determines the type of
@@ -755,7 +780,6 @@ class HcbCode < ApplicationRecord
     return stripe_cardholder&.user if stripe_card?
     return reimbursement_expense_payout&.expense&.report&.user if reimbursement_expense_payout?
     return paypal_transfer&.user if paypal_transfer?
-    return donation&.collected_by if donation? && donation&.in_person?
     return wise_transfer&.user if wise_transfer?
   end
 
@@ -783,8 +807,8 @@ class HcbCode < ApplicationRecord
       ledger_item.update_custom_memo!(memo)
       return
     end
-    canonical_transactions.each { |ct| ct.update!(custom_memo: memo) }
-    canonical_pending_transactions.each { |cpt| cpt.update!(custom_memo: memo) }
+    canonical_transactions.update_all(custom_memo: memo)
+    canonical_pending_transactions.update_all(custom_memo: memo)
   end
 
 end

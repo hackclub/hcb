@@ -14,12 +14,7 @@ class InvoiceMailer < ApplicationMailer
     @emails = @emails.length > 10 ? [@invoice.creator.email_address_with_name] : @emails
     @delivery_reason = "you sent an invoice to #{@invoice.sponsor.name} for #{render_money(@invoice.amount_due)}."
 
-    if @invoice.sponsor.event.can_front_balance?
-      mail to: @emails, subject: "Payment from #{@invoice.sponsor.name} has arrived 💵"
-    else
-      mail to: @emails, subject: "Payment from #{@invoice.sponsor.name} is on the way 💵"
-    end
-
+    mail to: @emails, subject: "Payment from #{@invoice.sponsor.name} has arrived 💵"
   end
 
   def refunded

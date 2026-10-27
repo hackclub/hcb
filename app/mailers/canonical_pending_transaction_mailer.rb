@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class CanonicalPendingTransactionMailer < ApplicationMailer
+  include HcbCodeHelper # for attach_receipt_url
+
   before_action { @delivery_reason = "you spent funds with an HCB Visa® Commercial card and are required to upload receipts for all funds spent. #{stripe_issuing_disclosure}" }
 
   def notify_approved
@@ -9,10 +11,7 @@ class CanonicalPendingTransactionMailer < ApplicationMailer
 
     return unless @user.email_charge_notifications_enabled?
 
-    @upload_url = Rails.application.routes.url_helpers.attach_receipt_hcb_code_url(
-      id: @cpt.local_hcb_code.hashid,
-      s: @cpt.local_hcb_code.signed_id(expires_in: 2.weeks, purpose: :receipt_upload)
-    )
+    @upload_url = attach_receipt_url(@cpt.local_hcb_code)
 
     to = @cpt.stripe_card.user.email_address_with_name
     subject = "#{@cpt.local_hcb_code.receipt_required? ? "Upload a receipt for your transaction" : "New transaction"} at #{@cpt.smart_memo}"
@@ -28,10 +27,7 @@ class CanonicalPendingTransactionMailer < ApplicationMailer
 
     return unless @user.email_charge_notifications_enabled?
 
-    @upload_url = Rails.application.routes.url_helpers.attach_receipt_hcb_code_url(
-      id: @cpt.local_hcb_code.hashid,
-      s: @cpt.local_hcb_code.signed_id(expires_in: 2.weeks, purpose: :receipt_upload)
-    )
+    @upload_url = attach_receipt_url(@cpt.local_hcb_code)
 
     to = @cpt.stripe_card.user.email_address_with_name
     subject = "#{@cpt.smart_memo} settled at #{ApplicationController.helpers.render_money(@ct.amount)}."

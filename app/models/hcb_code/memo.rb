@@ -94,7 +94,7 @@ class HcbCode
       end
 
       def outgoing_fee_reimbursement_memo
-        "🗂️ Stripe fee reimbursements for week of #{ct.date.beginning_of_week.strftime("%-m/%-d")}"
+        "🗂️ Stripe fee reimbursements for week of #{(ct || pt).date.beginning_of_week.strftime("%-m/%-d")}"
       end
 
       def reimbursement_payout_holding_memo

@@ -28,6 +28,25 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe "#total_raised and #total_spent_cents" do
+    def add_item(amount_cents, category_slug: nil)
+      ct = create(:canonical_transaction, amount_cents:, date: Date.current, memo: "Transaction of #{amount_cents}", category_slug:)
+      create(:canonical_event_mapping, canonical_transaction: ct, event:)
+      item = create(:ledger_item, amount_cents:, datetime: Time.current, canonical_transactions: [ct])
+      Ledger::Mapping.create!(ledger: event.ledger, ledger_item: item, on_primary_ledger: true)
+    end
+
+    it "takes repayments off both totals instead of counting them as revenue" do
+      add_item(2500)
+      add_item(-500, category_slug: Repayment::CATEGORY_SLUG) # the expense that was repaid
+      add_item(-300)
+      add_item(500, category_slug: Repayment::CATEGORY_SLUG) # the money paying it back
+
+      expect(event.total_raised).to eq(2500)
+      expect(event.total_spent_cents).to eq(300)
+    end
+  end
+
   describe "private" do
     before do
       create(:fee_relationship, fee_applies: true, event:, fee_amount: 10010)
@@ -278,6 +297,64 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  # A row that opens must be one #visible_subevents would fill.
+  describe "#expandable_subevent_ids" do
+    let(:root) { create(:event, is_public: true) }
+    let!(:child) { create(:event, parent: root, is_public: true) }
+
+    it "is empty when no sub-organization has sub-organizations of its own" do
+      expect(root.expandable_subevent_ids(nil)).to be_empty
+    end
+
+    it "includes a sub-organization with a transparent sub-organization" do
+      create(:event, parent: child, is_public: true)
+
+      expect(root.expandable_subevent_ids(nil)).to eq(Set[child.id])
+    end
+
+    it "omits a sub-organization whose sub-organizations are all private" do
+      create(:event, parent: child, is_public: false)
+
+      expect(root.expandable_subevent_ids(nil)).to be_empty
+    end
+
+    it "omits a sub-organization whose sub-organizations are all hidden" do
+      create(:event, parent: child, is_public: true, hidden_at: Time.current)
+
+      expect(root.expandable_subevent_ids(nil)).to be_empty
+    end
+
+    it "includes private sub-organizations for an admin" do
+      create(:event, parent: child, is_public: false)
+
+      expect(root.expandable_subevent_ids(create(:user, :make_admin))).to eq(Set[child.id])
+    end
+
+    it "includes private sub-organizations for a reader on the root" do
+      user = create(:user)
+      create(:organizer_position, event: root, user:, role: :reader)
+      create(:event, parent: child, is_public: false)
+
+      expect(root.expandable_subevent_ids(user)).to eq(Set[child.id])
+    end
+
+    it "includes a private sub-organization the viewer organizes, along with its subtree" do
+      user = create(:user)
+      private_child = create(:event, parent: root, is_public: false)
+      create(:organizer_position, event: private_child, user:, role: :reader)
+      create(:event, parent: private_child, is_public: false)
+
+      expect(root.expandable_subevent_ids(user)).to eq(Set[private_child.id])
+    end
+
+    it "ignores sub-organizations the viewer cannot see at all" do
+      private_child = create(:event, parent: root, is_public: false)
+      create(:event, parent: private_child, is_public: true)
+
+      expect(root.expandable_subevent_ids(nil)).to be_empty
+    end
+  end
+
   describe "#plan" do
     it "uses the parent event's subevent plan by default" do
       parent = create(:event)
@@ -316,6 +393,115 @@ RSpec.describe Event, type: :model do
 
       expect(event).to respond_to(:ledger)
       expect(event.ledger).to be_a(Ledger)
+    end
+  end
+
+  describe "#contract_pending_signature" do
+    let(:event) { create(:event) }
+
+    before do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+    end
+
+    def build_contract
+      invite = create(:organizer_position_invite, event:, user: create(:user))
+
+      Contract::FiscalSponsorship.create!(contractable: invite, include_videos: false)
+    end
+
+    it "returns a contract that still needs signing" do
+      contract = build_contract
+
+      expect(event.contract_pending_signature).to eq contract
+    end
+
+    it "returns nothing once the contract is signed" do
+      build_contract.update_column(:aasm_state, "signed")
+
+      expect(event.contract_pending_signature).to be_nil
+    end
+
+    # The inactive organization banner keys off this, so a voided contract must
+    # not leave an organization being told to sign something that no longer exists.
+    it "returns nothing once the contract is voided" do
+      build_contract.update_column(:aasm_state, "voided")
+
+      expect(event.contract_pending_signature).to be_nil
+    end
+
+    it "returns the oldest of several open contracts" do
+      first = build_contract
+      build_contract
+
+      expect(event.contract_pending_signature).to eq first
+    end
+  end
+
+  describe "description validation" do
+    it "requires a description when an app-backed event is created" do
+      event = build(:event, description: nil)
+      event.application = build(:event_application, description: "Run the best hackathon")
+
+      expect(event).not_to be_valid
+      expect(event.errors[:description]).to be_present
+    end
+
+    it "allows a blank description without an application" do
+      expect(create(:event, description: nil)).to be_valid
+    end
+
+    it "allows an app-backed event with a legacy blank description to save unrelated fields" do
+      event = create(:event, description: nil)
+      create(:event_application, event:, description: "Run the best hackathon")
+
+      event.name = "Renamed"
+
+      expect(event).to be_valid
+    end
+
+    it "blocks clearing an existing description on an app-backed event" do
+      event = create(:event, description: "Run the best hackathon")
+      create(:event_application, event:, description: "Run the best hackathon")
+
+      event.description = ""
+
+      expect(event).not_to be_valid
+      expect(event.errors[:description]).to be_present
+    end
+  end
+  describe "#wire_fee_waived?" do
+    let(:plan_type) { Event::Plan::Standard }
+    let(:event) { create(:event, plan_type:) }
+
+    def raise_money(cents)
+      tx = create(:canonical_transaction, amount_cents: cents)
+      create(:canonical_event_mapping, canonical_transaction: tx, event:)
+    end
+
+    it "is false when the organization has raised under $50,000 in the past year" do
+      raise_money(49_999_00)
+
+      expect(event.wire_fee_waived?).to be false
+    end
+
+    it "is true when the organization has raised over $50,000 in the past year" do
+      raise_money(50_001_00)
+
+      expect(event.wire_fee_waived?).to be true
+    end
+
+    context "with a Hack Club project" do
+      let(:plan_type) { Event::Plan::HackClubHQ }
+
+      it "is false however much the organization has raised" do
+        raise_money(50_001_00)
+
+        expect(event.wire_fee_waived?).to be false
+      end
+
+      it "still exempts the organization from the wire minimum" do
+        expect(event.minimum_wire_amount_cents).to eq 100
+      end
     end
   end
 end

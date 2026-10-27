@@ -1,4 +1,4 @@
-<% unless current_user.phone_number_verified? %>
+<% unless current_user.phone_number_verified_or_bypassed? %>
   <%= render "application/callout", type: "warning", title: "A verified phone number is required to issue a card." do %>
     Please <%= link_to "verify your phone number", my_settings_path, class: "info" %> before continuing.
   <% end %>
