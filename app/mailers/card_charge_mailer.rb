@@ -10,7 +10,7 @@ class CardChargeMailer < ApplicationMailer
     @card_charge = @ledger_item.linked_object
     @user = @ledger_item.author
 
-    return unless @user&.email_charge_notifications_enabled?
+    return unless @user.email_charge_notifications_enabled?
     return if @card_charge.amount_cents < MINIMUM_AMOUNT_CENTS
 
     @merchant_name = @card_charge.merchant_data&.dig("name") || "the merchant"
