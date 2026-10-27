@@ -1,0 +1,5 @@
+We're writing to let you know your Wise payout for "<%= link_to @report.name, @report %>" was rejected and failed to send.<% if @reason.present? %> Here's the explanation given by Wise / the receiving bank:
+
+<pre><%= @reason %></pre><% end %>
+
+Please update your payout details <%= link_to "here", settings_payouts_url %>; afterwards, we'll reattempt the transfer.
