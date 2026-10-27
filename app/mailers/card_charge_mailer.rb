@@ -62,8 +62,8 @@ class CardChargeMailer < ApplicationMailer
     stripe_card.card_charges
                .joins(:ledger_item)
                .where(ledger_item: { datetime: since..@ledger_item.datetime })
-               .where("ledger_items.amount_cents < 0")
-               .sum("ledger_items.amount_cents").abs
+               .where("ledger_item.amount_cents < 0")
+               .sum("ledger_item.amount_cents").abs
   end
 
 end
