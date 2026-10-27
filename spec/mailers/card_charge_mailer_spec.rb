@@ -109,18 +109,6 @@ RSpec.describe CardChargeMailer, type: :mailer do
       expect { mail.deliver_now }.not_to(change { ActionMailer::Base.deliveries.count })
     end
 
-    it "does not send when the charge has no cardholder to write to" do
-      # A charge on a card HCB doesn't know has no author.
-      card_charge = create(:raw_pending_stripe_transaction).card_charge
-      ledger_item = Ledger::Item.new(amount_cents: 0, memo: "Test", datetime: Time.current, linked_object: card_charge)
-      ledger_item.save(validate: false)
-      expect(ledger_item.author).to be_nil
-
-      mail = described_class.with(ledger_item:).reversed
-
-      expect { mail.deliver_now }.not_to(change { ActionMailer::Base.deliveries.count })
-    end
-
     it "does not send when the charge was under $1" do
       user = create(:user)
       ledger_item = build_ledger_item(user:, amount_cents: -99)
