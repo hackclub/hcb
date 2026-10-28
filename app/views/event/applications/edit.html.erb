@@ -4,7 +4,13 @@
   <div class="md:max-w-[600px] w-full my-3 space-y-8 pb-5">
     <%= form_with model: @application, url: application_path(@application, return_to: submission_application_path(@application), confirm: true), method: :patch, id: "edit_application_#{@application.id}", class: "space-y-8" do |form| %>
 
-      <div class="card card--outline" x-data="{ has_website: '<%= @application.website_url.present? ? "true" : "false" %>', has_political: '<%= @application.political_description.present? ? "true" : "false" %>', committed: '<%= @application.committed_amount %>', teenager: '<%= @application.teen_led? ? "true" : "false" %>' }">
+      <% project_info = {
+           has_website: @application.website_url.present? ? "true" : "false",
+           has_political: @application.political_description.present? ? "true" : "false",
+           committed: @application.committed_amount.to_s,
+           teenager: @application.teen_led? ? "true" : "false"
+         } %>
+      <div class="card card--outline" x-data="application_edit_project_info(<%= project_info.to_json %>)">
         <h3 class="text-2xl my-0 mb-6">Project Information</h3>
 
         <div class="field">
@@ -31,7 +37,7 @@
           <%= form.label :has_website do %>
             Do you have a website? <span class="text-primary">*</span>
           <% end %>
-          <%= form.select :has_website, options_for_select([["No", "false"], ["Yes", "true"]], @application.website_url.present? ? "true" : "false"), {}, { "@change": "has_website = $event.target.value; document.getElementById('website_url_field').required = (has_website === 'true'); if (has_website === 'false') document.getElementById('website_url_field').value = ''", class: "w-full max-w-full", required: true } %>
+          <%= form.select :has_website, options_for_select([["No", "false"], ["Yes", "true"]], @application.website_url.present? ? "true" : "false"), {}, { "@change": "set_has_website($event.target.value)", class: "w-full max-w-full", required: true } %>
         </div>
 
         <div class="field" x-show="has_website === 'true'">
@@ -46,7 +52,7 @@
             Is your project involved with political activity? <span class="text-primary">*</span>
           <% end %>
           <p class="text-sm muted mt-1 mb-2">This includes but is not limited to protests, public demonstrations, political education, and lobbying.</p>
-          <%= form.select :has_political, options_for_select([["No", "false"], ["Yes", "true"]], @application.political_description.present? ? "true" : "false"), {}, { "@change": "has_political = $event.target.value; document.getElementById('political_description_field').required = (has_political === 'true')", class: "w-full max-w-full", required: true } %>
+          <%= form.select :has_political, options_for_select([["No", "false"], ["Yes", "true"]], @application.political_description.present? ? "true" : "false"), {}, { "@change": "set_has_political($event.target.value)", class: "w-full max-w-full", required: true } %>
         </div>
 
         <div class="field" x-show="has_political === 'true'">

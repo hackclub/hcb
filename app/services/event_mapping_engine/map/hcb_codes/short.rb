@@ -67,7 +67,7 @@ module EventMappingEngine
           end
           # return hcb_code.incoming_disbursement.event.id if hcb_code.incoming_disbursement?
           return hcb_code.incoming_disbursement.event.id if hcb_code.incoming_disbursement?
-          return hcb_code.event.try(:id) if hcb_code.events.length == 1
+          return hcb_code.event.try(:id) if hcb_code.events.one?
 
           raise ArgumentError, "attempted to map a transaction with HCB short codes to a multi-event HCB code"
         end
