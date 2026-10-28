@@ -21,8 +21,12 @@ class WiseTransferPolicy < ApplicationPolicy
     user&.admin?
   end
 
+  def edit?
+    user&.admin? && (record.pending? || record.approved?)
+  end
+
   def update?
-    user&.admin?
+    user&.admin? && (record.pending? || record.approved?)
   end
 
   def mark_sent?
