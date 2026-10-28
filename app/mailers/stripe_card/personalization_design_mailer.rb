@@ -2,13 +2,15 @@
 
 class StripeCard
   class PersonalizationDesignMailer < ApplicationMailer
+    include IndividualDelivery
+
     def design_rejected
       @event = params[:event]
       @reason = humanize_design_rejected_reason(params[:reason])
 
       return unless @event
 
-      mail to: @event.organizer_contact_emails, subject: "Your card logo was rejected by our card issuer"
+      mail_individually @event.organizer_contact_emails, subject: "Your card logo was rejected by our card issuer"
     end
 
     private

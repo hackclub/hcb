@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class EventMailer < ApplicationMailer
+  include IndividualDelivery
+
   before_action { @event = params[:event] }
   before_action :set_emails, except: [:monthly_donation_summary, :monthly_follower_summary, :subevent_created]
   before_action :set_whodunnit, only: [:transparency_mode_enabled, :transparency_mode_disabled, :monthly_announcements_enabled, :monthly_announcements_disabled]
@@ -17,7 +19,7 @@ class EventMailer < ApplicationMailer
     @goal = @event.donation_goal
     @percentage = (@goal.progress_amount_cents.to_f / @goal.amount_cents) if @goal.present?
 
-    mail to: @emails, subject: "#{@event.name} received #{@donations.length} #{"donation".pluralize(@donations.length)} this past month"
+    mail_individually @emails, subject: "#{@event.name} received #{@donations.length} #{"donation".pluralize(@donations.length)} this past month"
   end
 
   def monthly_follower_summary
@@ -29,25 +31,22 @@ class EventMailer < ApplicationMailer
 
     @total = @follows.length
 
-    mail to: @emails, subject: "#{@event.name} got #{@total} #{"follower".pluralize(@total)} this past month"
+    mail_individually @emails, subject: "#{@event.name} got #{@total} #{"follower".pluralize(@total)} this past month"
   end
 
   def donation_goal_reached
     @goal = @event.donation_goal
     @donations = @event.donations.succeeded.where(created_at: @goal.tracking_since..)
 
-    @announcement = Announcement::Templates::DonationGoalReached.new(
-      event: @event,
-      author: User.system_user
-    ).create
+    @announcement = params[:announcement]
 
-    mail to: @emails, subject: "#{@event.name} has reached its donation goal!"
+    mail_individually @emails, subject: "#{@event.name} has reached its donation goal!"
   end
 
   def negative_balance
     @balance = params.fetch(:balance)
 
-    mail(to: @emails, subject: "#{@event.name} has a negative balance")
+    mail_individually @emails, subject: "#{@event.name} has a negative balance"
   end
 
   def user_call_requested
@@ -66,7 +65,7 @@ class EventMailer < ApplicationMailer
 
   def transparency_mode_enabled
     @can_disable_transparency = !@event.forced_transparency?
-    mail to: @emails, subject: "#{@event.name} has enabled transparency mode"
+    mail_individually @emails, subject: "#{@event.name} has enabled transparency mode"
   end
 
   def transparency_mode_disabled
@@ -76,7 +75,7 @@ class EventMailer < ApplicationMailer
     @visible_pages << { name: "public reimbursements page", link: reimbursement_start_reimbursement_report_url(@event) } if @event.public_reimbursement_page_enabled?
     @visible_pages << { name: "announcements page", link: event_announcement_overview_url(@event) } if @event.announcements.published.any?
 
-    mail to: @emails, subject: "#{@event.name} has disabled transparency mode"
+    mail_individually @emails, subject: "#{@event.name} has disabled transparency mode"
   end
 
   def monthly_announcements_enabled
@@ -89,11 +88,11 @@ class EventMailer < ApplicationMailer
     @scheduled_for = Date.today.next_month.beginning_of_month
     @warning_date = @scheduled_for - 7.days
 
-    mail to: @emails, subject: "#{@event.name} has enabled monthly announcements"
+    mail_individually @emails, subject: "#{@event.name} has enabled monthly announcements"
   end
 
   def monthly_announcements_disabled
-    mail to: @emails, subject: "#{@event.name} has disabled monthly announcements"
+    mail_individually @emails, subject: "#{@event.name} has disabled monthly announcements"
   end
 
   def subevent_created
@@ -102,7 +101,7 @@ class EventMailer < ApplicationMailer
     @emails = @event.organizer_contact_emails(only_managers: true)
     return if @emails.none?
 
-    mail to: @emails, subject: "[#{@event.name}] #{@creator.name} created #{@subevent.name}, a new sub-organization under #{@event.name}"
+    mail_individually @emails, subject: "[#{@event.name}] #{@creator.name} created #{@subevent.name}, a new sub-organization under #{@event.name}"
   end
 
   private

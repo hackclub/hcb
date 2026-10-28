@@ -63,15 +63,17 @@ RSpec.describe GSuiteService::Update, type: :model do
         g_suite.save!
       end
 
-      it "does send 1 mailer" do
+      it "sends a mailer to each manager" do
+        managers = g_suite.event.organizer_positions.where(role: :manager).includes(:user).map(&:user).map(&:email)
+
         expect do
           service.run
-        end.to change(ActionMailer::Base.deliveries, :count).by(1)
+        end.to change(ActionMailer::Base.deliveries, :count).by(managers.size)
 
-        mail = ActionMailer::Base.deliveries.last
+        mails = ActionMailer::Base.deliveries.last(managers.size)
 
-        expect(mail.to).to eql(g_suite.event.organizer_positions.where(role: :manager).includes(:user).map(&:user).map(&:email))
-        expect(mail.subject).to include(g_suite.domain)
+        expect(mails.map(&:to)).to contain_exactly(*managers.map { |email| [email] })
+        expect(mails.map(&:subject).uniq.sole).to include(g_suite.domain)
       end
     end
   end

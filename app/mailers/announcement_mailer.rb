@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class AnnouncementMailer < ApplicationMailer
+  include IndividualDelivery
+
   before_action :set_warning_variables, only: [:seven_day_warning, :two_day_warning, :skipped]
 
   def announcement_published
@@ -11,15 +13,15 @@ class AnnouncementMailer < ApplicationMailer
   end
 
   def seven_day_warning
-    mail to: @emails, subject: "[#{@event.name}] Your scheduled monthly announcement will be delivered on #{@scheduled_for.strftime("%B #{@scheduled_for.day.ordinalize}")}"
+    mail_individually @emails, subject: "[#{@event.name}] Your scheduled monthly announcement will be delivered on #{@scheduled_for.strftime("%B #{@scheduled_for.day.ordinalize}")}"
   end
 
   def two_day_warning
-    mail to: @emails, subject: "[#{@event.name}] Your scheduled monthly announcement will be delivered on #{@scheduled_for.strftime("%B #{@scheduled_for.day.ordinalize}")}"
+    mail_individually @emails, subject: "[#{@event.name}] Your scheduled monthly announcement will be delivered on #{@scheduled_for.strftime("%B #{@scheduled_for.day.ordinalize}")}"
   end
 
   def skipped
-    mail to: @emails, subject: "[#{@event.name}] Your scheduled monthly announcement has been skipped"
+    mail_individually @emails, subject: "[#{@event.name}] Your scheduled monthly announcement has been skipped"
   end
 
   def notice
@@ -30,7 +32,7 @@ class AnnouncementMailer < ApplicationMailer
     @scheduled_for = Date.today.next_month.beginning_of_month
     @warning_date = @scheduled_for - 7.days
 
-    mail to: @emails, subject: "[#{@event.name}] Monthly announcements have been enabled for your organization"
+    mail_individually @emails, subject: "[#{@event.name}] Monthly announcements have been enabled for your organization"
   end
 
   def set_warning_variables
