@@ -7,12 +7,12 @@
   <td>
     <input type="checkbox"
            aria-label="Repay <%= item.memo %>, <%= amount %> on <%= date %>"
-           data-repayment-picker-target="checkbox"
-           data-action="change->repayment-picker#pick"
-           data-repayment-picker-id-param="<%= item.hashid %>"
-           data-repayment-picker-memo-param="<%= item.memo %>"
-           data-repayment-picker-date-param="<%= date %>"
-           data-repayment-picker-amount-param="<%= format("%.2f", -item.amount_cents / 100.0) %>">
+           data-transaction-selection-target="checkbox"
+           data-action="change->transaction-selection#toggle"
+           data-transaction-selection-id-param="<%= item.hashid %>"
+           data-transaction-selection-memo-param="<%= item.memo %>"
+           data-transaction-selection-date-param="<%= date %>"
+           data-transaction-selection-amount-param="<%= format("%.2f", -item.amount_cents / 100.0) %>">
   </td>
   <td class="transaction__icon">
     <div class="tooltipped tooltipped--e" aria-label="<%= item.humanized_type %>">

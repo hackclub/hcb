@@ -529,7 +529,7 @@ RSpec.describe DisbursementsController do
     end
 
     def listed_hashids
-      Nokogiri::HTML(response.body).css("[data-repayment-picker-id-param]").map { |row| row["data-repayment-picker-id-param"] }
+      Nokogiri::HTML(response.body).css("[data-transaction-selection-id-param]").map { |row| row["data-transaction-selection-id-param"] }
     end
 
     it "lists the destination's unrepaid expenses" do
@@ -541,7 +541,7 @@ RSpec.describe DisbursementsController do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(%(<turbo-frame id="repayable_transactions">))
       expect(listed_hashids).to eq([expense.ledger_item.hashid])
-      expect(response.body).to include(%(data-repayment-picker-amount-param="100.00"))
+      expect(response.body).to include(%(data-transaction-selection-amount-param="100.00"))
     end
 
     it "leaves out transactions that have already been repaid" do
