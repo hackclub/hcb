@@ -22,6 +22,11 @@ class StripeCardsController < ApplicationController
     @card = StripeCard.find(params[:id])
     authorize @card
 
+    if @card.frozen?
+      flash[:error] = "Card is already frozen"
+      return redirect_back_or_to stripe_card_path(@card)
+    end
+
     begin
       @card.freeze!(frozen_by: current_user)
       flash[:success] = "Card frozen"

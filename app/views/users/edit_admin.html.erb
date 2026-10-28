@@ -45,7 +45,7 @@
           </p>
 
           <div class="field field--checkbox">
-            <%= form.label :locked, "Lock user from signing into HCB" %>
+            <%= form.label :locked, "Lock user from signing into HCB (also freezes all of their active cards)" %>
             <%= form.check_box :locked, checked: @user.locked?, disabled: !admin_signed_in? %>
           </div>
 
