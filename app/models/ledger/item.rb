@@ -77,6 +77,8 @@ class Ledger
     has_many :canonical_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :canonical_pending_transactions, foreign_key: "ledger_item_id", inverse_of: :ledger_item
     has_many :all_ledgers, through: :ledger_mappings, source: :ledger, class_name: "::Ledger"
+    has_many :repayments, foreign_key: :ledger_item_id, inverse_of: :repaid_ledger_item
+    has_many :repayment_disbursements, through: :repayments, source: :disbursement
 
     enum :status, {
       intended: "intended", # no CTs or CPTs, but has a linked object (e.g. an unpaid invoice); the linked object protects it from pruning
@@ -105,6 +107,10 @@ class Ledger
     # map! calls refresh!
     after_create :map!
     after_touch :map!
+
+    after_update if: -> { linked_object_type == "CardCharge" && saved_change_to_status? && status.in?(%w[reversed released]) } do
+      CardChargeMailer.with(ledger_item: self).reversed.deliver_later
+    end
 
     scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
 
@@ -174,12 +180,15 @@ class Ledger
     # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
     # refresh! should not update any non-caching columns
     def refresh!
-      # `after_create :refresh!` runs before any ledger mappings exist, which
-      # memoizes `primary_ledger` as nil on this instance. Reset the association
-      # caches so refresh! always recomputes from current database state (e.g.
-      # after a mapping is created).
-      association(:primary_mapping).reset
-      association(:primary_ledger).reset
+      # Recompute from the database, not from what this copy last loaded. One
+      # map! refreshes several in-memory copies of the same item (the
+      # Ledger::Mapping commit hook refreshes its own copy before the copy map!
+      # was called on gets its turn), and a copy loaded before another copy
+      # saved would otherwise see phantom changes: the reversed/released card
+      # charge email went out once per copy. Reloading also drops association
+      # caches that `after_create :map!` memoized before any mapping existed
+      # (e.g. `primary_ledger` as nil).
+      reload
 
       # Counter caches
       self.ct_count = canonical_transactions.size

@@ -82,6 +82,14 @@
           <td>Payment Purpose:</td>
           <td><%= @wise_transfer.payment_for %></td>
         </tr>
+        <% if @wise_transfer.payment.present? %>
+          <tr>
+            <td>Payment:</td>
+            <td>
+              <%= render partial: "admin/payment_link", locals: { payout: @wise_transfer } %>
+            </td>
+          </tr>
+        <% end %>
         <% if @wise_transfer.wise_id.present? %>
           <tr>
             <td>Wise Transfer ID:</td>

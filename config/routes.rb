@@ -533,6 +533,7 @@ Rails.application.routes.draw do
   resources :disbursements, only: [:new, :create, :show, :edit, :update], concerns: :commentable do
     collection do
       get :event_search
+      get :repayable_transactions
     end
     post "mark_fulfilled"
     post "reject"
@@ -948,6 +949,8 @@ Rails.application.routes.draw do
 
   resources :tax_forms, only: [:show, :create], controller: "tax/forms" do
     member do
+      get "electronic_consent"
+      post "electronic_consent", action: :update_electronic_consent
       get "completed"
       post "discard"
     end
@@ -1065,6 +1068,7 @@ Rails.application.routes.draw do
     get "async_sub_organization_balances"
     get "async_sub_organization_rows"
     get "reimbursements_pending_review_icon"
+    get "contractors_pending_review_icon"
 
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)
     get "transfers"

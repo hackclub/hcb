@@ -1,0 +1,26 @@
+<%= turbo_frame_tag "repayable_transactions" do %>
+  <% if @items.any? %>
+    <p class="muted text-sm mt-0 mb-2"><%= page_entries_info @items, entry_name: "transaction" %></p>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th><%# icon %></th>
+            <th>Date</th>
+            <th>Memo</th>
+            <th class="text-right">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <%= render partial: "disbursements/repayable_transaction", collection: @items, as: :item %>
+        </tbody>
+      </table>
+    </div>
+
+    <%= paginate @items, per_page_menu: false %>
+  <% elsif @destination_event.nil? %>
+    <%= blankslate "Choose who you're sending to first." %>
+  <% else %>
+    <%= blankslate "No transactions to repay" %>
+  <% end %>
+<% end %>

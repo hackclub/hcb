@@ -39,10 +39,6 @@ class Event
         true
       end
 
-      def requires_reimbursement_expense_categorization?
-        true
-      end
-
       def omit_stats
         true
       end

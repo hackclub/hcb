@@ -1,4 +1,4 @@
-import Alpine from '@alpinejs/csp'
+import Alpine from '../alpine'
 
 // Admin tool cards can be pinned to a grid at the top of the page. Pinning
 // moves the card's DOM node into that grid and remembers where it came from, so
