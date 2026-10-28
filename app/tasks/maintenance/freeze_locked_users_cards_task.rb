@@ -14,7 +14,7 @@ module Maintenance
       # The user may have been unlocked since the collection was loaded.
       return unless user.locked?
 
-      user.freeze_active_stripe_cards!
+      user.stripe_cards.active.find_each(&:freeze!)
     end
 
   end
