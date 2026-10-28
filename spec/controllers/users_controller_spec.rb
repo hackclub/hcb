@@ -417,4 +417,32 @@ RSpec.describe UsersController do
       end
     end
   end
+
+  describe "#update locking" do
+    it "requires a reason to lock a user" do
+      admin_user = create(:user, :make_admin)
+      user = create(:user)
+      create_session(admin_user, verified: true)
+
+      patch(:update, params: { id: user.id, user: { locked: "1", lock_reason: "" } })
+
+      expect(response).to redirect_to(admin_user_path(user))
+      expect(flash[:error]).to eq("Please provide a reason for locking this user.")
+      expect(user.reload).not_to be_locked
+    end
+
+    it "records the reason as an admin-only comment" do
+      admin_user = create(:user, :make_admin)
+      user = create(:user)
+      create_session(admin_user, verified: true)
+
+      patch(:update, params: { id: user.id, user: { locked: "1", lock_reason: "Fraudulent activity" } })
+
+      expect(user.reload).to be_locked
+      comment = user.comments.last
+      expect(comment.content).to eq("Locked user: Fraudulent activity")
+      expect(comment.user).to eq(admin_user)
+      expect(comment).to be_admin_only
+    end
+  end
 end

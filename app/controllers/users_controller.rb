@@ -406,8 +406,14 @@ class UsersController < ApplicationController
         elsif locked && @user.superadmin?
           flash[:error] = "To lock this user, demote them to a regular admin first."
           return redirect_to admin_user_path(@user)
+        elsif locked && params[:user][:lock_reason].blank?
+          flash[:error] = "Please provide a reason for locking this user."
+          return redirect_to admin_user_path(@user)
         elsif locked
-          @user.lock!(freeze_cards: params[:user][:freeze_cards] == "1")
+          ActiveRecord::Base.transaction do
+            @user.lock!(freeze_cards: params[:user][:freeze_cards] == "1")
+            @user.comments.create!(content: "Locked user: #{params[:user][:lock_reason].strip}", user: current_user, admin_only: true)
+          end
         else
           @user.unlock!
         end

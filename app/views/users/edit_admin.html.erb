@@ -60,6 +60,11 @@
                 <%= form.label :freeze_cards, "Also freeze all active cards" %>
                 <%= form.check_box :freeze_cards, checked: false %>
               </div>
+
+              <div class="pl-5 field" x-show="locking" x-cloak>
+                <%= form.label :lock_reason, "Reason for locking (saved as an admin-only note)" %>
+                <%= form.text_area :lock_reason, rows: 3, "x-bind:required": "locking" %>
+              </div>
             </div>
           <% end %>
 
