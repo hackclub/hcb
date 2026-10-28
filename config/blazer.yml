@@ -44,21 +44,181 @@ data_sources:
 
 
     linked_columns:
+      # Events
       event_id: "/{value}"
+      source_event_id: "/{value}"
+      parent_event_id: "/{value}"
+      managing_event_id: "/{value}"
+
+      # Users
+      user_id: "/users/{value}/admin"
+      creator_id: "/users/{value}/admin"
+      created_by_id: "/users/{value}/admin"
+      requested_by_id: "/users/{value}/admin"
+      fulfilled_by_id: "/users/{value}/admin"
+      approved_by_id: "/users/{value}/admin"
+      archived_by_id: "/users/{value}/admin"
+      author_id: "/users/{value}/admin"
+      authorized_by_id: "/users/{value}/admin"
+      closed_by_id: "/users/{value}/admin"
+      collected_by_id: "/users/{value}/admin"
+      deactivator_id: "/users/{value}/admin"
+      impersonated_by_id: "/users/{value}/admin"
+      impersonator_id: "/users/{value}/admin"
+      invited_by_id: "/users/{value}/admin"
+      last_frozen_by_id: "/users/{value}/admin"
+      manager_id: "/users/{value}/admin"
+      manually_marked_as_paid_user_id: "/users/{value}/admin"
+      mapped_by_id: "/users/{value}/admin"
+      point_of_contact_id: "/users/{value}/admin"
+      reactor_id: "/users/{value}/admin"
+      reporter_id: "/users/{value}/admin"
+      requester_id: "/users/{value}/admin"
+      resource_owner_id: "/users/{value}/admin"
+      reviewed_by_id: "/users/{value}/admin"
+      reviewer_id: "/users/{value}/admin"
+      sender_id: "/users/{value}/admin"
+      sent_by_id: "/users/{value}/admin"
+      submitted_by_id: "/users/{value}/admin"
+      updated_by_id: "/users/{value}/admin"
+      uploaded_by_id: "/users/{value}/admin"
+      voided_by_id: "/users/{value}/admin"
+
+      # Transactions
       hcb_code: "/hcb/{value}"
+      hcb_code_id: "/hcb/{value}"
       canonical_transaction_id: "/canonical_transactions/{value}"
       canonical_pending_transaction_id: "/canonical_pending_transactions/{value}"
+
+      # Transfers
+      ach_transfer_id: "/ach_transfers/{value}"
+      check_id: "/checks/{value}"
+      increase_check_id: "/admin/{value}/increase_check_process"
+      check_deposit_id: "/admin/check_deposits/{value}"
+      disbursement_id: "/disbursements/{value}"
+      wire_id: "/wires/{value}"
+      wise_transfer_id: "/wise_transfers/{value}"
+      paypal_transfer_id: "/admin/{value}/paypal_transfer_process"
+      payment_id: "/payments/{value}"
+      reimbursement_report_id: "/reimbursement/reports/{value}"
+
+      # Cards
+      stripe_card_id: "/stripe_cards/{value}"
+      emburse_card_id: "/emburse_cards/{value}"
+
+      # Incoming money
+      donation_id: "/donations/{value}"
+      invoice_id: "/invoices/{value}"
+      sponsor_id: "/sponsors/{value}"
+
+      # Organizations
+      organizer_position_invite_id: "/invites/{value}"
+      announcement_id: "/announcements/{value}"
+      document_id: "/documents/{value}"
+      g_suite_id: "/g_suites/{value}"
+      employee_id: "/employees/{value}"
+      admin_ledger_audit_id: "/admin/ledger_audits/{value}"
+
+      # Blazer
+      query_id: "/blazer/queries/{value}"
+      dashboard_id: "/blazer/dashboards/{value}"
+
+      # Stripe
+      stripe_payment_intent_id: "https://dashboard.stripe.com/acct_1CWoeyFSaumjmb9r/payments/{value}"
+      stripe_charge_id: "https://dashboard.stripe.com/acct_1CWoeyFSaumjmb9r/payments/{value}"
+      stripe_customer_id: "https://dashboard.stripe.com/acct_1CWoeyFSaumjmb9r/customers/{value}"
+      stripe_invoice_id: "https://dashboard.stripe.com/acct_1CWoeyFSaumjmb9r/invoices/{value}"
+      stripe_subscription_id: "https://dashboard.stripe.com/acct_1CWoeyFSaumjmb9r/subscriptions/{value}"
+      stripe_payout_id: "https://dashboard.stripe.com/acct_1CWoeyFSaumjmb9r/payouts/{value}"
+      stripe_authorization_id: "https://dashboard.stripe.com/acct_1CWoeyFSaumjmb9r/issuing/authorizations/{value}"
+      
+      # These hold different kinds of object depending on the table
+      stripe_id: "https://dashboard.stripe.com/acct_1CWoeyFSaumjmb9r/search?query={value}"
+      stripe_transaction_id: "https://dashboard.stripe.com/acct_1CWoeyFSaumjmb9r/search?query={value}"
+      stripe_balance_transaction_id: "https://dashboard.stripe.com/acct_1CWoeyFSaumjmb9r/search?query={value}"
+
+      # Wise
+      wise_id: "https://wise.com/transactions/activities/by-resource/TRANSFER/{value}"
+      wise_recipient_id: "https://wise.com/recipients/{value}"
+
       ip_address: "https://www.iplocation.net/ip-lookup?query={value}"
       ip: "https://www.iplocation.net/ip-lookup?query={value}"
 
     smart_columns:
-      user_id: "SELECT id, CONCAT(full_name, ' (', email, ')') FROM users WHERE id IN {value}"
-      creator_id: "SELECT id, CONCAT(full_name, ' (', email, ')') FROM users WHERE id IN {value}"
-      requested_by_id: "SELECT id, CONCAT(full_name, ' (', email, ')') FROM users WHERE id IN {value}"
-      fulfilled_by_id: "SELECT id, CONCAT(full_name, ' (', email, ')') FROM users WHERE id IN {value}"
-      event_id: "SELECT id, name FROM events WHERE id IN {value}"
+      # Events
+      event_id: &event_name "SELECT id, name FROM events WHERE id IN {value}"
+      source_event_id: *event_name
+      parent_event_id: *event_name
+      managing_event_id: *event_name
+
+      # Users
+      user_id: &user_name "SELECT id, CONCAT(full_name, ' (', email, ')') FROM users WHERE id IN {value}"
+      creator_id: *user_name
+      created_by_id: *user_name
+      requested_by_id: *user_name
+      fulfilled_by_id: *user_name
+      approved_by_id: *user_name
+      archived_by_id: *user_name
+      author_id: *user_name
+      authorized_by_id: *user_name
+      closed_by_id: *user_name
+      collected_by_id: *user_name
+      deactivator_id: *user_name
+      impersonated_by_id: *user_name
+      impersonator_id: *user_name
+      invited_by_id: *user_name
+      last_frozen_by_id: *user_name
+      manager_id: *user_name
+      manually_marked_as_paid_user_id: *user_name
+      mapped_by_id: *user_name
+      point_of_contact_id: *user_name
+      reactor_id: *user_name
+      reporter_id: *user_name
+      requester_id: *user_name
+      resource_owner_id: *user_name
+      reviewed_by_id: *user_name
+      reviewer_id: *user_name
+      sender_id: *user_name
+      sent_by_id: *user_name
+      submitted_by_id: *user_name
+      updated_by_id: *user_name
+      uploaded_by_id: *user_name
+      voided_by_id: *user_name
+
+      # Transactions
       canonical_transaction_id: "SELECT id, CONCAT('Amount Cents: ', amount_cents, '. Memo: ', memo) FROM canonical_transactions WHERE id IN {value}"
       canonical_pending_transaction_id: "SELECT id, CONCAT('Amount Cents: ', amount_cents, '. Memo: ', memo) FROM canonical_pending_transactions WHERE id IN {value}"
+
+      # Transfers
+      ach_transfer_id: "SELECT id, CONCAT(recipient_name, ' (', TO_CHAR(amount / 100.0, 'FM$999,999,990.00'), ')') FROM ach_transfers WHERE id IN {value}"
+      check_id: "SELECT id, CONCAT(memo, ' (', TO_CHAR(amount / 100.0, 'FM$999,999,990.00'), ')') FROM checks WHERE id IN {value}"
+      increase_check_id: "SELECT id, CONCAT(recipient_name, ' (', TO_CHAR(amount / 100.0, 'FM$999,999,990.00'), ')') FROM increase_checks WHERE id IN {value}"
+      check_deposit_id: "SELECT check_deposits.id, CONCAT(events.name, ' (', TO_CHAR(check_deposits.amount_cents / 100.0, 'FM$999,999,990.00'), ')') FROM check_deposits JOIN events ON events.id = check_deposits.event_id WHERE check_deposits.id IN {value}"
+      disbursement_id: "SELECT id, CONCAT(name, ' (', TO_CHAR(amount / 100.0, 'FM$999,999,990.00'), ')') FROM disbursements WHERE id IN {value}"
+      wire_id: "SELECT id, CONCAT(recipient_name, ' (', TO_CHAR(amount_cents / 100.0, 'FM999,999,990.00'), ' ', currency, ')') FROM wires WHERE id IN {value}"
+      wise_transfer_id: "SELECT id, CONCAT(recipient_name, ' (', TO_CHAR(amount_cents / 100.0, 'FM999,999,990.00'), ' ', currency, ')') FROM wise_transfers WHERE id IN {value}"
+      paypal_transfer_id: "SELECT id, CONCAT(recipient_name, ' (', TO_CHAR(amount_cents / 100.0, 'FM$999,999,990.00'), ')') FROM paypal_transfers WHERE id IN {value}"
+      payment_id: "SELECT id, CONCAT(purpose, ' (', TO_CHAR(amount_cents / 100.0, 'FM999,999,990.00'), ' ', currency, ')') FROM payments WHERE id IN {value}"
+      reimbursement_report_id: "SELECT id, name FROM reimbursement_reports WHERE id IN {value}"
+
+      # Cards
+      stripe_card_id: "SELECT stripe_cards.id, CONCAT(users.full_name, ' ••••', stripe_cards.last4) FROM stripe_cards JOIN stripe_cardholders ON stripe_cardholders.id = stripe_cards.stripe_cardholder_id JOIN users ON users.id = stripe_cardholders.user_id WHERE stripe_cards.id IN {value}"
+      emburse_card_id: "SELECT id, CONCAT(full_name, ' ••••', last_four) FROM emburse_cards WHERE id IN {value}"
+
+      # Incoming money
+      donation_id: "SELECT id, CONCAT(name, ' (', TO_CHAR(amount / 100.0, 'FM$999,999,990.00'), ')') FROM donations WHERE id IN {value}"
+      invoice_id: "SELECT invoices.id, CONCAT(sponsors.name, ' (', TO_CHAR(invoices.amount_due / 100.0, 'FM$999,999,990.00'), ')') FROM invoices JOIN sponsors ON sponsors.id = invoices.sponsor_id WHERE invoices.id IN {value}"
+      sponsor_id: "SELECT id, name FROM sponsors WHERE id IN {value}"
+
+      # Organizations
+      organizer_position_invite_id: "SELECT organizer_position_invites.id, CONCAT(users.full_name, ' → ', events.name) FROM organizer_position_invites JOIN users ON users.id = organizer_position_invites.user_id JOIN events ON events.id = organizer_position_invites.event_id WHERE organizer_position_invites.id IN {value}"
+      announcement_id: "SELECT id, title FROM announcements WHERE id IN {value}"
+      document_id: "SELECT id, name FROM documents WHERE id IN {value}"
+      g_suite_id: "SELECT id, domain FROM g_suites WHERE id IN {value}"
+
+      # Blazer
+      query_id: "SELECT id, name FROM blazer_queries WHERE id IN {value}"
+      dashboard_id: "SELECT id, name FROM blazer_dashboards WHERE id IN {value}"
 
 # create audits
 audit: true
