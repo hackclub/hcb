@@ -391,9 +391,9 @@ class Event < ApplicationRecord
 
   # we keep a papertrail of historic plans
   has_many :plans, class_name: "Event::Plan", inverse_of: :event
-  has_one :plan, -> { where(aasm_state: :active) }, class_name: "Event::Plan", inverse_of: :event, required: true
+  has_one :plan, -> { where(aasm_state: :active) }, class_name: "Event::Plan", inverse_of: :event, required: true, strict_loading: true
 
-  has_one :config, class_name: "Event::Configuration"
+  has_one :config, class_name: "Event::Configuration", strict_loading: true
   accepts_nested_attributes_for :config
 
   # Used for tracking slug history
@@ -533,7 +533,7 @@ class Event < ApplicationRecord
   validates :background_image, content_type: [:png, :jpeg, :gif]
   validates :background_image, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["background_image"].present? }
 
-  has_one_attached :logo
+  has_one_attached :logo, strict_loading: true
   validates :logo, content_type: [:png, :jpeg]
   validates :logo, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["logo"].present? }
 

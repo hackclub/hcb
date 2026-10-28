@@ -164,7 +164,7 @@ class User < ApplicationRecord
   has_many :check_deposits, inverse_of: :created_by
   has_many :invoices, inverse_of: :creator
 
-  has_one_attached :profile_picture
+  has_one_attached :profile_picture, strict_loading: true
   validates :profile_picture, size: { less_than_or_equal_to: 10.megabytes }, if: -> { attachment_changes["profile_picture"].present? }
 
   has_many :w9s, class_name: "W9", as: :entity
