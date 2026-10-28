@@ -848,8 +848,10 @@ class Event < ApplicationRecord
     last_fee_processed_at.nil? || last_fee_processed_at <= MIN_WAITING_TIME_BETWEEN_FEES.ago
   end
 
-  def total_fees_v2_cents
-    @total_fees_v2_cents ||= fees.sum(:amount_cents_as_decimal).ceil
+  def total_fees_v2_cents(start_date: nil, end_date: nil)
+    return @total_fees_v2_cents ||= fees.sum(:amount_cents_as_decimal).ceil unless start_date || end_date
+
+    fees.where(created_at: start_date..end_date).sum(:amount_cents_as_decimal).ceil
   end
 
   # Fiscal sponsorship fees charged by the fee engine, at whatever rate the

@@ -43,6 +43,13 @@ RSpec.describe UsersHelper, type: :helper do
         expect(html).to include(helper.impersonate_user_path(mentioned_user.id))
       end
 
+      # Markdown comments render mentions outside a request
+      it "renders without a request" do
+        allow(helper).to receive(:request).and_return(nil)
+
+        expect(helper.user_mention(mentioned_user)).to include("Impersonate")
+      end
+
       it "is hidden from auditors, who can't impersonate" do
         allow(helper).to receive(:current_user).and_return(create(:user, :make_auditor))
 

@@ -67,6 +67,8 @@ class OrganizerPosition < ApplicationRecord
   after_update :opt_in_to_reimbursement_reviews, if: -> { role_previously_changed?(to: :manager) }
   after_update :opt_out_of_reimbursement_reviews, if: -> { role_previously_changed?(from: :manager) }
 
+  before_save -> { stripe_cards.active.find_each(&:freeze!) }, if: -> { will_save_change_to_role?(to: :reader) }
+
   def tourable_options
     {
       demo: event.demo_mode?,

@@ -55,6 +55,14 @@ class ReimbursementMailer < ApplicationMailer
     mail subject: "[Reimbursements] Wire transfer for #{@report.name} failed to send", to: @report.user.email_address_with_name
   end
 
+  def wise_transfer_failed
+    @payout_holding = params[:reimbursement_payout_holding]
+    @report = @payout_holding.report
+    @reason = params[:reason]
+
+    mail subject: "[Reimbursements] Wise transfer for #{@report.name} failed to send", to: @report.user.email_address_with_name
+  end
+
   def paypal_transfer_failed
     @payout_holding = params[:reimbursement_payout_holding]
     @report = @payout_holding.report

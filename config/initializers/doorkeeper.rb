@@ -404,6 +404,21 @@ Doorkeeper.configure do
   #   Rails.logger.info(context.issued_token)
   # end
 
+  # `authorize_resource_owner_for_client` above only runs for new
+  # authorizations, and Doorkeeper's refresh grant only checks that the refresh
+  # token itself isn't revoked, so a refresh token that outlived `User#lock!`
+  # could keep minting access tokens for a locked user. Refuse those outright.
+  before_successful_authorization do |controller, _context|
+    next unless controller.params[:grant_type] == "refresh_token"
+
+    refresh_token = controller.params[:refresh_token]
+    next if refresh_token.blank?
+
+    if ApiToken.by_refresh_token(refresh_token)&.user&.locked?
+      raise Doorkeeper::Errors::InvalidGrant, Doorkeeper::OAuth::ErrorResponse.new(name: :invalid_grant)
+    end
+  end
+
   # Under some circumstances you might want to have applications auto-approved,
   # so that the user skips the authorization step.
   # For example if dealing with a trusted application.

@@ -62,9 +62,12 @@ RSpec.describe MyController do
       event = create(:event)
       create(:organizer_position, user:, event:, role: :manager)
 
+      other_manager = create(:user)
+      create(:organizer_position, user: other_manager, event:, role: :manager)
+
       assigned = create(:reimbursement_report, event:, reviewer: user, aasm_state: :submitted)
       unassigned = create(:reimbursement_report, event:, aasm_state: :submitted)
-      assigned_to_someone_else = create(:reimbursement_report, event:, reviewer: create(:user), aasm_state: :submitted)
+      assigned_to_someone_else = create(:reimbursement_report, event:, reviewer: other_manager, aasm_state: :submitted)
       own_submitted = create(:reimbursement_report, user:, event:, aasm_state: :submitted)
       own_draft = create(:reimbursement_report, user:, event:)
 
