@@ -870,6 +870,7 @@ Rails.application.routes.draw do
   resources :recurring_donations, only: [:show, :edit, :update], path: "recurring" do
     member do
       post "cancel"
+      post "restart"
     end
   end
 
