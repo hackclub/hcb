@@ -288,6 +288,30 @@ RSpec.describe DisbursementsController do
       expect(response).to redirect_to(root_path)
       expect(flash[:error]).to eq("You are not authorized to perform this action.")
     end
+
+    it "preselects the kind of transfer the link asks for" do
+      sender = create(:user)
+      create(:event, organizers: [sender])
+      create_session(sender, verified: true)
+
+      get(:new, params: { transfer_type: "transfer" })
+
+      expect(response).to have_http_status(:ok)
+      page = Nokogiri::HTML(response.body)
+      expect(page.at_css("#disbursement_transfer_type_transfer")["checked"]).to eq("checked")
+      expect(page.at_css("#disbursement_transfer_type_repayment")["checked"]).to be_nil
+    end
+
+    it "leaves the kind of transfer open when the link asks for one it doesn't know" do
+      sender = create(:user)
+      create(:event, organizers: [sender])
+      create_session(sender, verified: true)
+
+      get(:new, params: { transfer_type: "wire" })
+
+      expect(response).to have_http_status(:ok)
+      expect(Nokogiri::HTML(response.body).css("input[name='disbursement[transfer_type]'][checked]")).to be_empty
+    end
   end
 
   describe "#event_search" do
@@ -610,14 +634,32 @@ RSpec.describe DisbursementsController do
         expect(Nokogiri::HTML(response.body).at_css("#disbursement_repayment_name")["value"]).to eq("Pizza night")
       end
 
-      it "ignores a transaction that can't be repaid" do
+      it "preselects a repayment without picking a transaction" do
+        get(:new, params: { event_id: destination_event.slug, transfer_type: "repayment" })
+
+        expect(response).to have_http_status(:ok)
+        page = Nokogiri::HTML(response.body)
+        expect(page.at_css("#disbursement_transfer_type_repayment")["checked"]).to eq("checked")
+        expect(page.at_css("#disbursement_repaid_ledger_item_id")["value"]).to be_nil
+      end
+
+      it "stays a repayment when the link also asks for a transfer" do
+        get(:new, params: { event_id: destination_event.slug, repaid_ledger_item_id: expense.ledger_item.hashid, transfer_type: "transfer" })
+
+        page = Nokogiri::HTML(response.body)
+        expect(page.at_css("#disbursement_transfer_type_repayment")["checked"]).to eq("checked")
+        expect(page.at_css("#disbursement_transfer_type_transfer")["checked"]).to be_nil
+        expect(page.at_css("#disbursement_repaid_ledger_item_id")["value"]).to eq(expense.ledger_item.hashid)
+      end
+
+      it "ignores a transaction that can't be repaid, but still starts a repayment" do
         income = create(:canonical_transaction, event: destination_event, amount_cents: 50_00)
 
         get(:new, params: { event_id: destination_event.slug, repaid_ledger_item_id: income.ledger_item.hashid })
 
         expect(response).to have_http_status(:ok)
         page = Nokogiri::HTML(response.body)
-        expect(page.at_css("#disbursement_transfer_type_repayment")["checked"]).to be_nil
+        expect(page.at_css("#disbursement_transfer_type_repayment")["checked"]).to eq("checked")
         expect(page.at_css("#disbursement_repaid_ledger_item_id")["value"]).to be_nil
       end
 
@@ -636,8 +678,20 @@ RSpec.describe DisbursementsController do
         get(:new, params: { event_id: destination_event.slug, repaid_ledger_item_id: expense.ledger_item.hashid })
 
         expect(response).to have_http_status(:ok)
-        expect(Nokogiri::HTML(response.body).at_css("#disbursement_repaid_ledger_item_id")["value"]).to be_nil
+        page = Nokogiri::HTML(response.body)
+        expect(page.at_css("#disbursement_transfer_type_repayment")["checked"]).to be_nil
+        expect(page.at_css("#disbursement_repaid_ledger_item_id")["value"]).to be_nil
         expect(response.body).not_to include("Repaying")
+      end
+
+      it "doesn't preselect a repayment the user can't make" do
+        sender.update!(access_level: :auditor)
+        sender.organizer_positions.find_by(event: destination_event).destroy!
+
+        get(:new, params: { event_id: destination_event.slug, transfer_type: "repayment" })
+
+        expect(response).to have_http_status(:ok)
+        expect(Nokogiri::HTML(response.body).css("input[name='disbursement[transfer_type]'][checked]")).to be_empty
       end
     end
   end

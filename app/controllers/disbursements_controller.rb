@@ -49,6 +49,7 @@ class DisbursementsController < ApplicationController
     )
 
     authorize @disbursement
+    prefill_transfer_type
     prefill_repayment
     render layout: "transfer"
   end
@@ -327,17 +328,26 @@ class DisbursementsController < ApplicationController
 
   private
 
+  # Links can choose the kind of transfer up front. "Repay this" on a
+  # transaction passes the transaction, so it's a repayment whatever else the
+  # link says. Neither picks a kind the form wouldn't let the user choose.
+  def prefill_transfer_type
+    transfer_type = params[:repaid_ledger_item_id].present? ? "repayment" : params[:transfer_type]
+    return unless Disbursement.transfer_types.key?(transfer_type)
+    return if transfer_type == "repayment" && @destination_event && !policy(@disbursement).repay?
+
+    @disbursement.transfer_type = transfer_type
+  end
+
   # "Repay this" on a transaction links here with the transaction picked. Links
   # can go stale (the transaction gets repaid, or the user loses access), so an
   # item that can't be repaid is dropped rather than raised on.
   def prefill_repayment
-    return unless @destination_event && params[:repaid_ledger_item_id].present?
-    return unless policy(Disbursement.new(destination_event: @destination_event)).repay?
+    return unless @disbursement.transfer_type_repayment? && @destination_event && params[:repaid_ledger_item_id].present?
 
     @repaid_ledger_item = Repayment.unrepaid_ledger_items(@destination_event).find_by_hashid(params[:repaid_ledger_item_id])
     return unless @repaid_ledger_item
 
-    @disbursement.transfer_type = :repayment
     @disbursement.amount = -@repaid_ledger_item.amount_cents
     @disbursement.name = "Repaying #{@repaid_ledger_item.memo}".truncate(60) if @disbursement.name.blank?
   end
