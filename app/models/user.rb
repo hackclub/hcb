@@ -458,19 +458,31 @@ class User < ApplicationRecord
     User.find_by(id: self.versions.where_object_changes_from(locked_at: nil).last&.whodunnit)
   end
 
-  def lock!(freeze_cards: false)
+  def lock!
     update!(locked_at: Time.now)
 
-    stripe_cards.active.each { |card| card.freeze! } if freeze_cards
+    stripe_cards.active.find_each(&:freeze!)
 
     # Invalidate all sessions
     user_sessions.update_all(signed_out_at: Time.now, expiration_at: Time.now)
-    # Invalidate all API tokens
-    api_tokens.accessible.update_all(revoked_at: Time.current)
+    revoke_api_access!
   end
 
   def unlock!
+    # Tokens revoked by `lock!` stay revoked; OAuth apps have to be re-authorized.
     update!(locked_at: nil)
+  end
+
+  # Revokes every API token, not only the accessible ones: an expired OAuth
+  # access token keeps its refresh token on the same row, and Doorkeeper's
+  # refresh grant only checks that row's revocation, so skipping expired tokens
+  # would let OAuth clients keep minting new access tokens after a lock.
+  # Authorization codes and approved device codes can still be exchanged for a
+  # token too, so those go as well.
+  def revoke_api_access!
+    api_tokens.not_revoked.update_all(revoked_at: Time.current)
+    Doorkeeper::AccessGrant.where(resource_owner_id: id, revoked_at: nil).update_all(revoked_at: Time.current)
+    Doorkeeper::DeviceAuthorizationGrant::DeviceGrant.where(resource_owner_id: id).delete_all
   end
 
   def onboarding?
