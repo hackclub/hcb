@@ -34,7 +34,7 @@ class DisbursementPolicy < ApplicationPolicy
   # Picking a transaction to repay means browsing the destination's ledger,
   # which is public for transparent organizations (see EventPolicy#ledger?).
   def repay?
-    record.destination_event&.is_public? || OrganizerPosition.role_at_least?(user, record.destination_event, :reader)
+    record.destination_event&.accepts_public_transfers? || OrganizerPosition.role_at_least?(user, record.destination_event, :reader)
   end
 
   def create?
