@@ -277,10 +277,34 @@ RSpec.describe User, type: :model do
   end
 
   describe "#lock!" do
+    let(:application) { Doorkeeper::Application.create!(name: "Test App", redirect_uri: "https://example.com/callback") }
+
     it "locks" do
       user = create(:user, locked_at: nil)
       user.lock!
       expect(user).to be_locked
+    end
+
+    it "revokes every API token, including expired ones that still hold a refresh token" do
+      user = create(:user)
+      live = create(:api_token, user:, application:, use_refresh_token: true)
+      expired = create(:api_token, user:, application:, use_refresh_token: true, expires_in: 1, created_at: 3.hours.ago)
+      personal = create(:api_token, user:, expires_in: nil)
+
+      user.lock!
+
+      expect([live, expired, personal].each(&:reload)).to all(be_revoked)
+    end
+
+    it "revokes outstanding authorization codes and device codes" do
+      user = create(:user)
+      grant = Doorkeeper::AccessGrant.create!(application:, resource_owner_id: user.id, expires_in: 600, redirect_uri: application.redirect_uri, scopes: "read")
+      device_grant = Doorkeeper::DeviceAuthorizationGrant::DeviceGrant.create!(application:, resource_owner_id: user.id, expires_in: 300, scopes: "read")
+
+      user.lock!
+
+      expect(grant.reload).to be_revoked
+      expect(Doorkeeper::DeviceAuthorizationGrant::DeviceGrant.exists?(device_grant.id)).to be(false)
     end
   end
 
