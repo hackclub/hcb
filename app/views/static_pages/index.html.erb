@@ -49,15 +49,13 @@
   <h2 class="user-home-section mb-2">Pending grant invitations</h2>
   <ul class="grid grid-cols-1 text-left w-full mt-2">
     <% current_user.card_grants.not_activated.each do |grant| %>
-      <%
-        expiry_color = if grant.expiration_at.past?
-                         "bg-error"
-                       elsif grant.expiration_at <= 30.days.from_now.to_date
-                         "bg-warning"
-                       else
-                         "bg-muted"
-                       end
-      %>
+      <% expiry_color = if grant.expiration_at.past?
+                          "bg-error"
+                        elsif grant.expiration_at <= 30.days.from_now.to_date
+                          "bg-warning"
+                        else
+                          "bg-muted"
+                        end %>
       <% time_left = ((grant.expiration_at - Date.current) / [grant.expiration_at - grant.created_at.to_date, 1].max * 100).clamp(0, 100).to_f %>
       <div class="card relative overflow-hidden mx-auto text-center sm:text-left flex items-center flex-col sm:flex-row gap-4 w-full">
         <div class="flex-1">
