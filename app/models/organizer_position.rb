@@ -60,6 +60,11 @@ class OrganizerPosition < ApplicationRecord
 
   after_create_commit :autofollow_event
 
+  after_update :remove_payroll_managers, if: -> { role_previously_changed?(from: :manager) }
+  after_destroy :remove_payroll_managers
+
+  before_save -> { stripe_cards.active.find_each(&:freeze!) }, if: -> { will_save_change_to_role?(to: :reader) }
+
   def tourable_options
     {
       demo: event.demo_mode?,
@@ -104,11 +109,15 @@ class OrganizerPosition < ApplicationRecord
     # Do nothing. The user already follows this event.
   end
 
-  private
-
   def user_must_be_verified
     if user&.unverified?
       errors.add(:user, "must verify their email before becoming an organizer")
+    end
+  end
+
+  def remove_payroll_managers
+    user.managing_payroll_positions.joins(:payee).where(payee: { event: }).find_each do |position|
+      position.update!(manager: nil)
     end
   end
 

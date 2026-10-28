@@ -30,7 +30,7 @@ RSpec.describe ReimbursementMailer do
         currency: "CAD",
       )
 
-      drinks = report.expenses.create!(value: 12.34, memo: "Drinks")
+      drinks = report.expenses.create!(value: 12.34, memo: "Drinks", category: "Food & Entertainment")
       ReceiptService::Create.new(
         receiptable: drinks,
         uploader: user,
@@ -38,7 +38,7 @@ RSpec.describe ReimbursementMailer do
         upload_method: :receipts_page
       ).run!
 
-      food = report.expenses.create!(value: 34.56, memo: "Food")
+      food = report.expenses.create!(value: 34.56, memo: "Food", category: "Food & Entertainment")
       ReceiptService::Create.new(
         receiptable: food,
         uploader: user,
@@ -61,6 +61,26 @@ RSpec.describe ReimbursementMailer do
       expect(body.css("ul li").map { |el| el.text.squish }).to eq(
         ["Drinks for $12.34 CAD", "Food for $34.56 CAD"]
       )
+    end
+  end
+
+  describe "#wise_transfer_failed" do
+    it "tells the reimbursee why their Wise payout failed and where to fix their details" do
+      create(:event, id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
+      user = create(:user, email: "user@example.com")
+      report = create(:reimbursement_report, user:, name: "Food & drinks for event")
+      payout_holding = Reimbursement::PayoutHolding.create!(report:, amount_cents: 130_00, aasm_state: :failed)
+
+      mail = described_class.with(reimbursement_payout_holding: payout_holding, reason: "Account number is invalid").wise_transfer_failed
+
+      expect { mail.deliver_now }.to send_email(
+        to: "user@example.com",
+        subject: "[Reimbursements] Wise transfer for Food & drinks for event failed to send"
+      )
+
+      body = Nokogiri::HTML5.parse(mail.html_part.body.to_s)
+      expect(body.css("pre").map(&:text)).to eq(["Account number is invalid"])
+      expect(body.css("a").map { |a| a["href"] }).to include(Rails.application.routes.url_helpers.settings_payouts_url)
     end
   end
 end

@@ -4,10 +4,10 @@ module ApplicationHelper
   include ActionView::Helpers
   include LocalTimeHelper
 
+  include ComboboxHelper
   include DonationsHelper
   include EmburseCardsHelper
   include EventsHelper
-  include GSuiteAccountsHelper
   include GSuitesHelper
   include HcbCodeHelper
   include InvoicesHelper
@@ -122,10 +122,6 @@ module ApplicationHelper
     content_tag :span, "", class: "status bg-#{type}"
   end
 
-  def status_if(type, condition)
-    status_badge(type) if condition
-  end
-
   def pop_icon_to(icon, url, icon_size: 28, **options)
     link_to url, options.merge(class: "pop #{options[:class] || ""}") do
       inline_icon icon, size: icon_size
@@ -162,7 +158,7 @@ module ApplicationHelper
   end
 
   def modal_external_link(external_link)
-    pop_icon_to "external", sanitize(external_link), target: "_blank", size: 14, class: "modal__external muted", onload: "window.navigator.standalone ? this.setAttribute('target', '_top') : null"
+    pop_icon_to "external", sanitize(external_link), target: "_blank", size: 14, class: "modal__external muted", data: { controller: "standalone-link" }
   end
 
   def modal_header(text, external_link: nil)
@@ -193,14 +189,6 @@ module ApplicationHelper
 
   def relative_timestamp(time, **options)
     content_tag :span, "#{options[:prefix]}#{time_ago_in_words time} ago#{options[:suffix]}", options.merge(title: time)
-  end
-
-  def auto_link_new_tab(text)
-    auto_link(text, html: { target: "_blank" })
-  end
-
-  def debug_obj(item)
-    content_tag :pre, pp(item.attributes.to_yaml)
   end
 
   def inline_icon(filename, **options)
@@ -247,12 +235,6 @@ module ApplicationHelper
     end
     options.each { |key, value| svg[key.to_s] = value }
     doc.to_html.html_safe
-  end
-
-  def anchor_link(id)
-    link_to "##{id}", class: "absolute top-0 -left-8 transition-opacity opacity-0 group-hover/summary:opacity-100 group-target/item:opacity-100 anchor-link tooltipped tooltipped--s", 'aria-label': "Copy link", data: { turbo: false, controller: "clipboard", clipboard_text_value: url_for(only_path: false, anchor: id), action: "clipboard#copy" } do
-      inline_icon "link", size: 28
-    end
   end
 
   def help_message
@@ -365,18 +347,6 @@ module ApplicationHelper
 
   def json(obj)
     JSON.pretty_generate(obj.as_json)
-  end
-
-  def airtable_form(id, params = {}, hide = [])
-    query = {}
-    params.each do |key, value|
-      query["prefill_#{key}"] = value
-    end
-    hide.each do |field|
-      query["hide_#{field}"] = "true"
-    end
-
-    "https://airtable.com/#{id}?#{URI.encode_www_form(query)}"
   end
 
   def fillout_form(id, params = {}, prefix: "")

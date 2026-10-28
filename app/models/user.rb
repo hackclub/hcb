@@ -133,9 +133,6 @@ class User < ApplicationRecord
 
   has_many :event_groups, class_name: "Event::Group"
 
-  has_many :g_suite_accounts, inverse_of: :fulfilled_by
-  has_many :g_suite_accounts, inverse_of: :creator
-
   has_many :emburse_transfers
   has_many :emburse_card_requests
   has_many :emburse_cards
@@ -190,6 +187,8 @@ class User < ApplicationRecord
 
   has_many :payments_received, through: :legal_entities, source: :payments
   has_many :payroll_positions, through: :legal_entities
+
+  has_many :managing_payroll_positions, class_name: "Payroll::Position", inverse_of: :manager
 
   has_encrypted :birthday, type: :date
 
@@ -299,7 +298,13 @@ class User < ApplicationRecord
   scope :active_teenager, -> { last_seen_within(30.days.ago).where(teenager: true) }
   def active? = last_seen_at && (last_seen_at >= 30.days.ago)
 
-  # a auditor is an admin who can only view things.
+  # true if this user has any admin-only comments left on their profile.
+  # relies on `comments` being preloaded to avoid N+1s when checked in a loop.
+  def admin_comments?
+    comments.to_a.any?(&:admin_only?)
+  end
+
+  # an auditor is an admin who can only view things.
   # auditor? takes into account an admin user's preference
   # to pretend to be a non-admin, normal user
   def auditor?(override_pretend: false)
@@ -436,6 +441,13 @@ class User < ApplicationRecord
     phone_number_verified? || phone_number_verification_bypassed?
   end
 
+  def phone_number_for_stripe
+    return nil unless phone_number_verified?
+    return nil unless StripeCardholder.phone_number_supported?(phone_number)
+
+    phone_number
+  end
+
   def locked?
     locked_at.present?
   end
@@ -449,14 +461,28 @@ class User < ApplicationRecord
   def lock!
     update!(locked_at: Time.now)
 
+    stripe_cards.active.find_each(&:freeze!)
+
     # Invalidate all sessions
     user_sessions.update_all(signed_out_at: Time.now, expiration_at: Time.now)
-    # Invalidate all API tokens
-    api_tokens.accessible.update_all(revoked_at: Time.current)
+    revoke_api_access!
   end
 
   def unlock!
+    # Tokens revoked by `lock!` stay revoked; OAuth apps have to be re-authorized.
     update!(locked_at: nil)
+  end
+
+  # Revokes every API token, not only the accessible ones: an expired OAuth
+  # access token keeps its refresh token on the same row, and Doorkeeper's
+  # refresh grant only checks that row's revocation, so skipping expired tokens
+  # would let OAuth clients keep minting new access tokens after a lock.
+  # Authorization codes and approved device codes can still be exchanged for a
+  # token too, so those go as well.
+  def revoke_api_access!
+    api_tokens.not_revoked.update_all(revoked_at: Time.current)
+    Doorkeeper::AccessGrant.where(resource_owner_id: id, revoked_at: nil).update_all(revoked_at: Time.current)
+    Doorkeeper::DeviceAuthorizationGrant::DeviceGrant.where(resource_owner_id: id).delete_all
   end
 
   def onboarding?
@@ -679,6 +705,11 @@ class User < ApplicationRecord
     @manageable_events ||= accessible_events(roles: ["manager"])
   end
 
+  # Organizations this user can send an HCB transfer from.
+  def disbursement_source_events
+    manageable_events.not_hidden.not_demo_mode
+  end
+
   def reimbursement_event_options
     events.not_demo_mode.or(Event.where(id: reimbursement_events.where(public_reimbursement_page_enabled: true).select(:id))).uniq.pluck(:name, :id)
   end
@@ -691,8 +722,12 @@ class User < ApplicationRecord
     show_first_dashboard? && card_grants.none? && events.none? && organizer_position_invites.none?
   end
 
-  def to_combobox_display
-    "#{full_name} (Email: #{email}, ID: #{id})"
+  # `admin` is required rather than defaulted, so a caller cannot silently
+  # render a different label than the search endpoint returns.
+  def to_combobox_display(admin:)
+    return "#{full_name} (Email: #{email}, ID: #{id})" if admin
+
+    full_name.presence || email
   end
 
   def unverified?
@@ -711,7 +746,7 @@ class User < ApplicationRecord
     Payroll::Position.where(aasm_state: :onboarding)
                      .left_joins(payee: { legal_entity: :legal_entity_users })
                      .where(
-                       "legal_entity_users.user_id = :uid OR (payees.legal_entity_id IS NULL AND payees.email = :email)",
+                       "legal_entity_users.user_id = :uid OR ((payees.legal_entity_id IS NULL OR legal_entities.managing_event_id IS NOT NULL) AND payees.email = :email)",
                        uid: id, email:
                      )
                      .includes(payee: :event)
@@ -745,7 +780,7 @@ class User < ApplicationRecord
 
     cardholder.update!(
       stripe_email: email,
-      stripe_phone_number: phone_number_verified? ? phone_number : nil,
+      stripe_phone_number: phone_number_for_stripe,
     )
   end
 

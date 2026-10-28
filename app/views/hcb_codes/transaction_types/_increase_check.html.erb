@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <% @check = @hcb_code.increase_check %>
 <% @account_details = @check.increase? ? @event.increase_account_number : @event.column_account_number %>
 
@@ -93,6 +95,8 @@
       <%= @hcb_code.increase_check.payment_for %>
     </p>
 
+    <%= render partial: "hcb_codes/associated_payment", locals: { payout: @hcb_code.increase_check } %>
+
     <% if @hcb_code.increase_check.check_number.present? %>
       <p>
         <strong>Check number</strong>
@@ -107,10 +111,11 @@
       <% end %>
     <% end %>
 
+    <%= render "ledger/items/repayments", ledger_item: @hcb_code.ledger_item if @hcb_code.ledger_item %>
     <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
 
-  <% if @hcb_code.increase_check.may_mark_rejected? || @hcb_code.increase_check.column_id.present? %>
+  <% if @hcb_code.increase_check.may_mark_rejected? || @hcb_code.increase_check.column_id.present? || auditor_signed_in? %>
     <div class="card__banner card__darker border-top overflow-hidden flex items-center g2">
       <% if @hcb_code.increase_check.may_mark_rejected? %>
         <% cancel_button = button_to "Cancel check", reject_increase_check_path(@hcb_code.increase_check), class: "btn bg-error", data: { turbo_confirm: "Are you sure you want to cancel this check?", turbo_confirm_danger: true }, disabled: !policy(@hcb_code.increase_check).reject? %>
@@ -121,10 +126,10 @@
             <%= cancel_button %>
           </div>
         <% end %>
+      <% end %>
 
-        <% admin_tool do %>
-          <%= button_to "Process", increase_check_process_admin_path(@hcb_code.increase_check), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
-        <% end %>
+      <% admin_tool do %>
+        <%= button_to "Process", increase_check_process_admin_path(@hcb_code.increase_check), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
       <% end %>
 
       <% if @hcb_code.increase_check.column_id.present? %>

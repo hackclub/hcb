@@ -14,6 +14,8 @@
 #
 # Indexes
 #
+#  index_card_charges_on_merchant_category                  (merchant_category)
+#  index_card_charges_on_merchant_network_id                (merchant_network_id)
 #  index_card_charges_on_raw_pending_stripe_transaction_id  (raw_pending_stripe_transaction_id) UNIQUE
 #  index_card_charges_on_stripe_card_id                     (stripe_card_id)
 #
@@ -49,6 +51,34 @@ class CardCharge < ApplicationRecord
     (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("merchant_currency")
   end
 
+  # Only Stripe authorizations carry verification data; settled transactions
+  # don't, so a charge that settled before it was reversed must still read it
+  # from the authorization.
+  def verification_data
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("verification_data") || {}
+  end
+
+  # The checks Stripe reported as mismatched when the charge was authorized,
+  # e.g. "address_postal_code_check" or "cvc_check".
+  def failed_verification_checks
+    verification_data.select { |check, result| check.end_with?("check") && result == "mismatch" }.keys
+  end
+
+  # What the cardholder was charged, before any refund: the captured amount once
+  # the charge has settled, otherwise the amount that was authorized. Nothing
+  # else can say: the ledger item's amount nets to zero once a charge is
+  # reversed or released, Stripe zeroes a released authorization's amount, and
+  # the pending transaction import copies that zero onto the canonical pending
+  # transaction. The authorization's request history keeps the amount of every
+  # request Stripe approved.
+  def amount_cents
+    captured_cents = raw_stripe_transactions.reject(&:refund?).sum { |transaction| transaction.amount_cents.to_i }.abs
+    return captured_cents if captured_cents.positive?
+
+    requests = raw_pending_stripe_transaction&.stripe_transaction&.dig("request_history") || []
+    requests.select { |request| request["approved"] }.sum { |request| request["amount"].to_i }.abs
+  end
+
   def icon
     merchant = YellowPages::Merchant.lookup(network_id: merchant_network_id || "")
     categorised_category = BreakdownEngine::Categorizer.new(merchant_category).run
@@ -64,6 +94,46 @@ class CardCharge < ApplicationRecord
     else
       "card"
     end
+  end
+
+  def stripe_merchant_data
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_data") || raw_stripe_transactions.first&.stripe_transaction&.[]("merchant_data")
+  end
+
+  def stripe_refund?
+    raw_stripe_transactions.first&.refund? && raw_pending_stripe_transaction.nil? || (raw_stripe_transactions.size > 0 && ledger_item.amount_cents > 0)
+  end
+
+  def stripe_cash_withdrawal?
+    stripe_merchant_data&.[]("category_code") == "6011"
+  end
+
+  def stripe_atm_fee
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("amount_details")&.dig("atm_fee") || raw_stripe_transactions.first&.stripe_transaction&.dig("amount_details")&.dig("atm_fee")
+  end
+
+  def remote_stripe_ipi_id
+    return nil unless raw_stripe_transactions.first
+
+    raw_stripe_transactions.first.stripe_transaction_id
+  end
+
+  def stripe_txn_dashboard_url
+    return nil unless remote_stripe_ipi_id
+
+    "https://dashboard.stripe.com/issuing/transactions/#{remote_stripe_ipi_id}"
+  end
+
+  def remote_stripe_iauth_id
+    return nil unless raw_pending_stripe_transaction
+
+    raw_pending_stripe_transaction.stripe_transaction_id
+  end
+
+  def stripe_auth_dashboard_url
+    return nil unless remote_stripe_iauth_id
+
+    "https://dashboard.stripe.com/issuing/authorizations/#{remote_stripe_iauth_id}"
   end
 
   # Finds the charge for a Stripe authorization ID (iauth_...), whether it was

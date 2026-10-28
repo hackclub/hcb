@@ -152,10 +152,6 @@ class EventsController < ApplicationController
 
   def stats
     authorize @event
-  end
-
-  def ledger_stats
-    authorize @event
     @ledger = @event.ledger
   end
 
@@ -234,7 +230,7 @@ class EventsController < ApplicationController
       initial_subtotal = if @all_transactions.count > offset
                            TransactionGroupingEngine::Transaction::RunningBalanceAssociationPreloader.new(transactions: @all_transactions, event: @event).run!
                            # sum up transactions on pages after this one to get the initial subtotal
-                           @all_transactions.slice(offset...).map(&:amount).sum
+                           @all_transactions.slice(offset...).sum(&:amount)
                          else
                            # this is the last page, so start from 0
                            0
@@ -378,7 +374,7 @@ class EventsController < ApplicationController
     process_hidden_param!(fixed_event_params)
     process_hidden_param!(fixed_user_event_params)
 
-    plan_param = fixed_event_params[:plan]
+    plan_param = admin_signed_in? ? fixed_event_params[:plan] : nil
     fixed_event_params.delete(:plan)
 
     begin
@@ -479,7 +475,7 @@ class EventsController < ApplicationController
 
     @has_filter = @status.present? || @type.present? || @user.present?
 
-    all_stripe_cards = @event.stripe_cards.where.missing(:card_grant).joins(:stripe_cardholder, :user)
+    all_stripe_cards = @event.stripe_cards.where.missing(:card_grant).joins(:stripe_cardholder, :user).includes(:card_grant)
                              .order("stripe_status asc, created_at desc")
 
     all_stripe_cards = all_stripe_cards.where(user: { id: @user.id }) if @user
@@ -548,7 +544,17 @@ class EventsController < ApplicationController
   def async_sub_organization_balance
     authorize @event
 
-    @sub_organizations = filtered_sub_organizations
+    sub_organizations = filtered_sub_organizations
+
+    # A filter narrows the stat to the matching sub-organizations. Otherwise it
+    # rolls up the whole visible tree, so money nested several levels down is
+    # counted without having to expand every branch to find it.
+    @balance_cents =
+      if @has_filter || (params[:q] || params[:search]).present?
+        sub_organizations.to_a.sum(&:balance_available_v2_cents)
+      else
+        sub_organization_ledger_balances(visible_descendant_ids).values.sum
+      end
 
     render :async_sub_organization_balance, layout: false
   end
@@ -556,10 +562,23 @@ class EventsController < ApplicationController
   def async_sub_organization_balances
     authorize @event
 
-    events = Event.where_public_id(params[:ids]).where(id: visible_descendant_ids).includes(:ledger)
+    events = Event.where_public_id(params[:ids]).where(id: visible_descendant_ids).to_a
+
+    children = Event.where(id: visible_descendant_ids).pluck(:id, :parent_id)
+                    .group_by(&:last).transform_values { |pairs| pairs.map(&:first) }
+    subtrees = events.to_h { |event| [event.id, subtree_ids(event.id, children)] }
+    ledger_balances = sub_organization_ledger_balances(events.map(&:id) + subtrees.values.flatten)
 
     balances = events.to_h do |event|
-      [event.public_id, helpers.render_money_amount(event.ledger.available_balance_cents)]
+      amounts = { balance: helpers.render_money(ledger_balances[event.id]) }
+
+      # Only the descendants this user can see, so a private branch's money
+      # isn't revealed through its parent's row. A row with none keeps its dash.
+      if subtrees[event.id].any?
+        amounts[:sub_organization_balance] = helpers.render_money(ledger_balances.values_at(*subtrees[event.id]).compact.sum)
+      end
+
+      [event.public_id, amounts]
     end
 
     render json: balances
@@ -573,10 +592,14 @@ class EventsController < ApplicationController
       )
       if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
         @ledger = @event.ledger
-        @ledger_items = @ledger.items
-                               .where(id: column_transactions.select(:ledger_item_id), linked_object_type: nil)
-                               .order(created_at: :desc)
-                               .page((params[:page] || 1).to_i).per(safe_per(25))
+        # The column-transaction narrowing has no expression in Ledger::Query, so
+        # it chains onto the executed relation. Everything the query does own —
+        # pending first, the rest newest first — still comes from the query, which
+        # is the whole point of going through it for the parts that do fit.
+        @ledger_items = Ledger::Query.new({ linked_object_type: nil })
+                                     .execute(ledgers: [@ledger])
+                                     .where(id: column_transactions.select(:ledger_item_id))
+                                     .page((params[:page] || 1).to_i).per(safe_per(25))
       else
         @transactions = column_transactions.where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::UNKNOWN_CODE}%'")
                                            .order(created_at: :desc)
@@ -654,7 +677,18 @@ class EventsController < ApplicationController
       relation = relation.succeeded_and_not_refunded
     end
 
-    relation = relation.search_name(params[:q]) if params[:q].present?
+    if params[:q].present?
+      # A donor's email is never shown to non-organizers, and an anonymous
+      # donor's name and email are still stored, so a search that matched
+      # either would reveal them to anyone who can see this page. Only viewers
+      # who can already see those details (the view gates them on
+      # `organizer_signed_in?` too) get those matches.
+      relation = if organizer_signed_in?
+                   relation.search_name(params[:q])
+                 else
+                   relation.public_search_name(params[:q]).where(anonymous: false)
+                 end
+    end
 
     page = (params[:page] || 1).to_i
     per_page = safe_per(DONATIONS_PER_PAGE)
@@ -719,22 +753,22 @@ class EventsController < ApplicationController
     @paypal_transfers = @paypal_transfers.approved.or(@paypal_transfers.pending) if params[:status] == "in_transit"
     @paypal_transfers = @paypal_transfers.deposited if params[:status] == "deposited"
     @paypal_transfers = @paypal_transfers.rejected if params[:status] == "canceled"
-    @paypal_transfers = @paypal_transfers.search_recipient(params[:q]) if params[:q].present?
+    @paypal_transfers = search_recipients(@paypal_transfers) if params[:q].present?
 
     @wires = @wires.approved.or(@wires.pending) if params[:status] == "in_transit"
     @wires = @wires.deposited if params[:status] == "deposited"
     @wires = @wires.rejected if params[:status] == "canceled"
-    @wires = @wires.search_recipient(params[:q]) if params[:q].present?
+    @wires = search_recipients(@wires) if params[:q].present?
 
     @wise_transfers = @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent) if params[:status] == "in_transit"
     @wise_transfers = @wise_transfers.deposited if params[:status] == "deposited"
     @wise_transfers = @wise_transfers.rejected.or(@wise_transfers.failed) if params[:status] == "canceled"
-    @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
+    @wise_transfers = search_recipients(@wise_transfers) if params[:q].present?
 
     @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
     @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
     @payments = @payments.where(aasm_state: "rejected") if params[:status] == "canceled"
-    @payments = @payments.search_recipient(params[:q]) if params[:q].present?
+    @payments = search_recipients(@payments) if params[:q].present?
 
     # Apply transfer type filter
     all_transfers = [@increase_checks, @checks, @ach_transfers, @disbursements, @paypal_transfers, @wires, @wise_transfers, @payments]
@@ -816,17 +850,17 @@ class EventsController < ApplicationController
     @paypal_transfers = @paypal_transfers.approved.or(@paypal_transfers.pending) if params[:status] == "in_transit"
     @paypal_transfers = @paypal_transfers.deposited if params[:status] == "deposited"
     @paypal_transfers = @paypal_transfers.rejected if params[:status] == "canceled"
-    @paypal_transfers = @paypal_transfers.search_recipient(params[:q]) if params[:q].present?
+    @paypal_transfers = search_recipients(@paypal_transfers) if params[:q].present?
 
     @wires = @wires.approved.or(@wires.pending) if params[:status] == "in_transit"
     @wires = @wires.deposited if params[:status] == "deposited"
     @wires = @wires.rejected if params[:status] == "canceled"
-    @wires = @wires.search_recipient(params[:q]) if params[:q].present?
+    @wires = search_recipients(@wires) if params[:q].present?
 
     @wise_transfers = @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent) if params[:status] == "in_transit"
     @wise_transfers = @wise_transfers.deposited if params[:status] == "deposited"
     @wise_transfers = @wise_transfers.rejected.or(@wise_transfers.failed) if params[:status] == "canceled"
-    @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
+    @wise_transfers = search_recipients(@wise_transfers) if params[:q].present?
 
     # Apply transfer type filter
     all_transfers = [@increase_checks, @checks, @ach_transfers, @disbursements, @paypal_transfers, @wires, @wise_transfers]
@@ -903,6 +937,14 @@ class EventsController < ApplicationController
     render :reimbursements_pending_review_icon, layout: false
   end
 
+  def contractors_pending_review_icon
+    authorize @event
+    # Only reviewers see a count; the badge is hidden (count 0) for everyone else.
+    @contractors_pending_review_count = Payroll::PositionPolicy.new(current_user, @event).review? ? @event.payroll_invoices.submitted.count : 0
+
+    render :contractors_pending_review_icon, layout: false
+  end
+
   def employees
     authorize @event
     @employees = @event.employees.order(
@@ -920,6 +962,9 @@ class EventsController < ApplicationController
 
     @contractors = @event.payroll_positions.includes(:event, payee: :payments).order(created_at: :desc)
 
+    can_review = Payroll::PositionPolicy.new(current_user, @event).review?
+    @pending_invoice_counts = can_review ? @event.payroll_invoices.submitted.group(:payroll_position_id).count : {}
+
     counts_by_status = @contractors.to_a.group_by(&:status).transform_values(&:count)
     @stats = {
       active: counts_by_status[:active] || 0,
@@ -927,7 +972,15 @@ class EventsController < ApplicationController
       completed: counts_by_status[:completed] || 0,
     }
 
-    @contractors = @contractors.search_recipient(params[:q]) if params[:q].present?
+    if params[:q].present?
+      # Contractors' emails are only rendered behind `contractor_details?`, so
+      # only those viewers may match on them.
+      @contractors = if policy(@event).contractor_details?
+                       @contractors.search_recipient(params[:q])
+                     else
+                       @contractors.public_search_recipient(params[:q])
+                     end
+    end
   end
 
   def sub_organizations
@@ -937,6 +990,7 @@ class EventsController < ApplicationController
       format.html do
         cookies[:sub_organizations_view] = params[:view] if params[:view]
         @view = cookies[:sub_organizations_view] || "list"
+        @sub_organization_count = visible_subevent_ids.size
 
         if @view == "list"
           @search = params[:q].presence
@@ -1016,7 +1070,10 @@ class EventsController < ApplicationController
       plan: @event.config.subevent_plan.presence,
       risk_level: @event.risk_level,
       parent_event: @event,
-      scoped_tags: params[:scoped_tags]
+      scoped_tags: params[:scoped_tags],
+      contract_extra_prefills: {
+        "grant_amount_cents": @event.config.subevent_plan == "Event::Plan::Argosy2026" ? params[:argosy_grant_amount].to_i : nil
+      }.compact
     ).run
 
     redirect_to subevent
@@ -1053,12 +1110,12 @@ class EventsController < ApplicationController
     else
       @event.update(hidden_at: Time.now)
       file_redirects = [
-        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/a7ce1ae34b9e9422_barking_dog_turned_into_wood_meme.mp4",
-        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/2d373908baa69206_dog_transforms_after_seeing_chair.mp4",
-        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/292b3ec8e3ad9fb1_dog_turns_into_bread__but_it_s_in_hd.mp4",
-        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/b7b400f98e3f264a_run_now_meme.mp4",
-        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/2cda55c3a53f23b6_bonk_sound_effect.mp4",
-        "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/9a837b44dd082d95_disappearing_doge_meme.mp4"
+        "https://cdn.hackclub.com/019c2570-f1b0-7b5e-957e-8b05a76344fd/barking_dog_turned_into_wood_meme.mp4",
+        "https://cdn.hackclub.com/019c2570-f243-7802-a276-f4f6c35b67a8/dog_transforms_after_seeing_chair.mp4",
+        "https://cdn.hackclub.com/019c2570-f3c5-7fff-9824-12d7eb6089fc/dog_turns_into_bread__but_it_s_in_hd.mp4",
+        "https://cdn.hackclub.com/019c2570-f36c-7ea4-a7e1-4a251c8d39e9/run_now_meme.mp4",
+        "https://cdn.hackclub.com/019c2570-da59-7be2-9275-100f44b60ac9/bonk_sound_effect.mp4",
+        "https://cdn.hackclub.com/019c2570-e103-73f6-8f6d-c97881b8904e/disappearing_doge_meme.mp4"
       ].sample
 
       redirect_to file_redirects, allow_other_host: true
@@ -1315,23 +1372,7 @@ class EventsController < ApplicationController
     @per = safe_per(100)
 
     @items = ledger_query.execute(ledgers: @ledgers)
-
-    # TODO: move these to Ledger::Query
-    if @tag.present?
-      @items = @items.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: @tag.id).select(:hcb_code_id)).select(:ledger_item_id))
-    end
-
-    if @category.present?
-      categorized_cts = @category.canonical_transactions.where(ledger_item: @items).select(:ledger_item_id)
-      categorized_cpts = @category.canonical_pending_transactions.where(ledger_item: @items).select(:ledger_item_id)
-      @items = @items.where(id: categorized_cts).or(@items.where(id: categorized_cpts))
-    end
-
-    if @merchant.present?
-      @items = @items.where(linked_object_type: "CardCharge", linked_object_id: CardCharge.where(merchant_network_id: @merchant).select(:id))
-    end
-
-    @items = @items.page(params[:page]).per(@per).preload(:tags, hcb_code: { event: :tags })
+                         .page(params[:page]).per(@per)
   rescue Pundit::NotAuthorizedError
     return head :not_found
   end
@@ -1379,6 +1420,17 @@ class EventsController < ApplicationController
 
     organized_ids = @event.reader_event_ids(current_user)
     children.filter_map { |id, is_public, hidden_at| id if (is_public && hidden_at.nil?) || organized_ids.include?(id) }
+  end
+
+  # Each event's available balance on its primary ledger, keyed by event id.
+  # Reading the ids back through Event drops soft-deleted ones.
+  def sub_organization_ledger_balances(event_ids)
+    Event.where(id: event_ids.uniq).includes(:ledger, :plan).to_h { |event| [event.id, event.ledger.available_balance_cents] }
+  end
+
+  # Every id beneath `id` in `children` (a parent id => child ids map).
+  def subtree_ids(id, children)
+    children.fetch(id, []).flat_map { |child_id| [child_id, *subtree_ids(child_id, children)] }
   end
 
   def sub_organization_table_rows(search: nil)
@@ -1434,7 +1486,6 @@ class EventsController < ApplicationController
       :end,
       :address,
       :demo_mode,
-      :can_front_balance,
       :emburse_department_id,
       :country,
       :postal_code,
@@ -1485,7 +1536,8 @@ class EventsController < ApplicationController
           :cover_donation_fees,
           :contact_email,
           :generate_monthly_announcement,
-          :subevent_plan
+          :subevent_plan,
+          :subevent_name_prefix
         ]
       }
     ]
@@ -1659,6 +1711,18 @@ class EventsController < ApplicationController
 
   def set_event_follow
     @event_follow = Event::Follow.where({ user_id: current_user.id, event_id: @event.id }).first if current_user
+  end
+
+  # Recipients' email addresses on the transfers and payments pages are only
+  # ever shown to organizers, so a search that matched on them would confirm,
+  # to anyone who can view a public organization, that a given address was
+  # paid. Everyone else only searches the recipient's name.
+  def search_recipients(relation)
+    if organizer_signed_in?
+      relation.search_recipient(params[:q])
+    else
+      relation.public_search_recipient(params[:q])
+    end
   end
 
   def transfer_filter_options

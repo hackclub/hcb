@@ -28,6 +28,25 @@ RSpec.describe Event, type: :model do
     end
   end
 
+  describe "#total_raised and #total_spent_cents" do
+    def add_item(amount_cents, category_slug: nil)
+      ct = create(:canonical_transaction, amount_cents:, date: Date.current, memo: "Transaction of #{amount_cents}", category_slug:)
+      create(:canonical_event_mapping, canonical_transaction: ct, event:)
+      item = create(:ledger_item, amount_cents:, datetime: Time.current, canonical_transactions: [ct])
+      Ledger::Mapping.create!(ledger: event.ledger, ledger_item: item, on_primary_ledger: true)
+    end
+
+    it "takes repayments off both totals instead of counting them as revenue" do
+      add_item(2500)
+      add_item(-500, category_slug: Repayment::CATEGORY_SLUG) # the expense that was repaid
+      add_item(-300)
+      add_item(500, category_slug: Repayment::CATEGORY_SLUG) # the money paying it back
+
+      expect(event.total_raised).to eq(2500)
+      expect(event.total_spent_cents).to eq(300)
+    end
+  end
+
   describe "private" do
     before do
       create(:fee_relationship, fee_applies: true, event:, fee_amount: 10010)
@@ -418,15 +437,71 @@ RSpec.describe Event, type: :model do
     end
   end
 
-  describe "#can_front_balance" do
-    it "enqueues a job to refresh the event's ledgers when changed" do
-      expect { event.update!(can_front_balance: !event.can_front_balance) }
-        .to have_enqueued_job(Event::RefreshLedgersJob).with(event_id: event.id)
+  describe "description validation" do
+    it "requires a description when an app-backed event is created" do
+      event = build(:event, description: nil)
+      event.application = build(:event_application, description: "Run the best hackathon")
+
+      expect(event).not_to be_valid
+      expect(event.errors[:description]).to be_present
     end
 
-    it "does not enqueue a job when unchanged" do
-      expect { event.update!(name: "Renamed") }
-        .not_to have_enqueued_job(Event::RefreshLedgersJob)
+    it "allows a blank description without an application" do
+      expect(create(:event, description: nil)).to be_valid
+    end
+
+    it "allows an app-backed event with a legacy blank description to save unrelated fields" do
+      event = create(:event, description: nil)
+      create(:event_application, event:, description: "Run the best hackathon")
+
+      event.name = "Renamed"
+
+      expect(event).to be_valid
+    end
+
+    it "blocks clearing an existing description on an app-backed event" do
+      event = create(:event, description: "Run the best hackathon")
+      create(:event_application, event:, description: "Run the best hackathon")
+
+      event.description = ""
+
+      expect(event).not_to be_valid
+      expect(event.errors[:description]).to be_present
+    end
+  end
+  describe "#wire_fee_waived?" do
+    let(:plan_type) { Event::Plan::Standard }
+    let(:event) { create(:event, plan_type:) }
+
+    def raise_money(cents)
+      tx = create(:canonical_transaction, amount_cents: cents)
+      create(:canonical_event_mapping, canonical_transaction: tx, event:)
+    end
+
+    it "is false when the organization has raised under $50,000 in the past year" do
+      raise_money(49_999_00)
+
+      expect(event.wire_fee_waived?).to be false
+    end
+
+    it "is true when the organization has raised over $50,000 in the past year" do
+      raise_money(50_001_00)
+
+      expect(event.wire_fee_waived?).to be true
+    end
+
+    context "with a Hack Club project" do
+      let(:plan_type) { Event::Plan::HackClubHQ }
+
+      it "is false however much the organization has raised" do
+        raise_money(50_001_00)
+
+        expect(event.wire_fee_waived?).to be false
+      end
+
+      it "still exempts the organization from the wire minimum" do
+        expect(event.minimum_wire_amount_cents).to eq 100
+      end
     end
   end
 end

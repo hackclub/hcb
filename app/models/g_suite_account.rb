@@ -31,8 +31,6 @@ class GSuiteAccount < ApplicationRecord
   has_paper_trail skip: [:initial_password] # ciphertext columns will still be tracked
   has_encrypted :initial_password
 
-  include Rejectable
-
   attr_accessor :skip_gsuite_sync
 
   after_update :attempt_notify_user_of_password_change
@@ -48,7 +46,6 @@ class GSuiteAccount < ApplicationRecord
   normalizes :backup_email, with: ->(backup_email) { backup_email.strip.downcase }
   validates :backup_email, nondisposable: true, on: :create
 
-  validate :status_accepted_or_rejected
   validate :within_quota, on: :create
   validates :address, uniqueness: { scope: :g_suite }
 
@@ -67,6 +64,10 @@ class GSuiteAccount < ApplicationRecord
 
   def suspended?
     suspended_at.present?
+  end
+
+  def accepted?
+    accepted_at.present?
   end
 
   def under_review?
@@ -107,9 +108,8 @@ class GSuiteAccount < ApplicationRecord
     self.save
   end
 
-  # Engineer-only via Rails console. Removes this account from HCB
-  # management, leaving the Google Workspace user (and its aliases) intact.
-  # Intended for use in the Rails console when a user's account is being
+  # Removes this account from HCB management, leaving the Google Workspace user
+  # (and its aliases) intact. Intended for when a user's account is being
   # transferred to the unmanaged hackclub.com domain from an HCB managed domain
   # (e.g., events.hackclub.com).
   def unmanage!(confirm:)
