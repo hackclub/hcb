@@ -41,6 +41,8 @@ module Reimbursement
 
     has_paper_trail
 
+    REMINDER_DAYS = [3, 7, 14].freeze
+
     has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
     has_many :expense_payouts, class_name: "Reimbursement::ExpensePayout", foreign_key: "reimbursement_payout_holdings_id", inverse_of: :payout_holding
     belongs_to :report, foreign_key: "reimbursement_reports_id", inverse_of: :payout_holding
@@ -87,6 +89,11 @@ module Reimbursement
       end
 
       event :mark_failed do
+        before do
+          self.failed_at = Time.current
+          self.failed_reminders_sent = 0
+        end
+
         transitions from: [:sent, :settled], to: :failed
       end
 
