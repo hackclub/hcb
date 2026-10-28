@@ -19,8 +19,11 @@
            ["transfer", "transfers-horizontal", "Internal transfer", "Sharing funds, like sending leftover money to another organization or funding a sub-organization."]
          ].each do |value, icon, title, description| %>
         <div>
+          <% unavailable = disabled || (value == "repayment" && !repayable) %>
+          <%# A link can preselect a kind (see DisbursementsController#new), but never one the user can't pick. %>
           <%= form.radio_button :transfer_type, value,
-                                disabled: disabled || (value == "repayment" && !repayable),
+                                disabled: unavailable,
+                                checked: !unavailable && disbursement.transfer_type == value,
                                 class: "peer sr-only",
                                 data: { action: "transfer-type#select", transfer_type_target: ("repaymentRadio" if value == "repayment") } %>
           <%# The inset ring keeps the selected card the same size as the others. %>
