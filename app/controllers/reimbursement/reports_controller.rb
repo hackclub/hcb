@@ -185,6 +185,7 @@ module Reimbursement
         end
         redirect_to @report
       else
+        flash.now[:error] = @report.errors.full_messages.to_sentence
         render :edit, status: :unprocessable_content
       end
     end
