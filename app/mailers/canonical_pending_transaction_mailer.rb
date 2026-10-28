@@ -4,7 +4,7 @@ class CanonicalPendingTransactionMailer < ApplicationMailer
   include HcbCodeHelper # for attach_receipt_url
 
   before_action do
-    @delivery_reason = "you spent funds with an HCB Visa® Commercial card and are required to upload receipts for all funds spent. #{stripe_issuing_disclosure}"
+    @delivery_reason = "you have charge notifications enabled for your HCB Visa® Commercial card. #{stripe_issuing_disclosure}"
     @unsubscribe_link = settings_notifications_url
   end
 

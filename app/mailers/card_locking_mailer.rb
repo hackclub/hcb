@@ -63,7 +63,7 @@ class CardLockingMailer < ApplicationMailer
   end
 
   def set_delivery_reason
-    @delivery_reason = "you spent funds with an HCB Visa® Commercial card and are required to upload receipts for all funds spent. #{stripe_issuing_disclosure}"
+    @delivery_reason = receipts_delivery_reason
   end
 
 end

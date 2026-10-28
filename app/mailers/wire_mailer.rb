@@ -13,6 +13,7 @@ class WireMailer < ApplicationMailer
   def notify_failed
     @wire = params[:wire]
     @reason = params[:reason]
+    @delivery_reason = "you initiated a wire transfer from #{@wire.event.name}."
 
     mail subject: "[HCB] Wire to #{@wire.recipient_name} failed to send", to: @wire.user.email
   end

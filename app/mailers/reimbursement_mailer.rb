@@ -2,8 +2,7 @@
 
 class ReimbursementMailer < ApplicationMailer
   before_action { @report = params[:report] || params[:reimbursement_payout_holding]&.report }
-  before_action(only: [:invitation, :reminder]) { @delivery_reason = "you were invited to submit a reimbursement report for #{@report.event.name}." }
-  before_action(except: [:invitation, :reminder, :review_requested]) { @delivery_reason = "you submitted a reimbursement report for #{@report.event.name}." }
+  before_action :set_delivery_reason
 
   def invitation
     mail to: @report.user.email_address_with_name, subject: "Get reimbursed by #{@report.event.name} for #{@report.name}", from: hcb_email_with_name_of(@report.event), reply_to: @report.user == @report.inviter ? nil : @report.inviter&.email_address_with_name
@@ -22,8 +21,6 @@ class ReimbursementMailer < ApplicationMailer
   end
 
   def review_requested
-    @delivery_reason = "you are a manager on #{@report.event.name}."
-
     if @report.reviewer.present?
       mail to: @report.reviewer.email_address_with_name, subject: "[Reimbursements / #{@report.event.name}] Your Review Was Requested: #{@report.name}"
     else
@@ -46,8 +43,6 @@ class ReimbursementMailer < ApplicationMailer
   end
 
   def wise_transfer_failed
-    @payout_holding = params[:reimbursement_payout_holding]
-    @report = @payout_holding.report
     @reason = params[:reason]
 
     mail subject: "[Reimbursements] Wise transfer for #{@report.name} failed to send", to: @report.user.email_address_with_name
@@ -67,6 +62,19 @@ class ReimbursementMailer < ApplicationMailer
     @expenses = params[:expenses]
 
     mail subject: "[Reimbursements] Expenses approved for #{@report.name}", to: @report.user.email_address_with_name
+  end
+
+  private
+
+  def set_delivery_reason
+    @delivery_reason = case action_name
+                       when "invitation", "reminder"
+                         "you were invited to submit a reimbursement report for #{@report.event.name}."
+                       when "review_requested"
+                         "you are a manager on #{@report.event.name}."
+                       else
+                         "you submitted a reimbursement report for #{@report.event.name}."
+                       end
   end
 
 end

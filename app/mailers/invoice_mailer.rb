@@ -14,7 +14,7 @@ class InvoiceMailer < ApplicationMailer
     @invoice = params[:invoice]
     @emails = @invoice.sponsor.event.organizer_contact_emails
     @emails = @emails.length > 10 ? [@invoice.creator.email_address_with_name] : @emails
-    @delivery_reason = "you sent an invoice to #{@invoice.sponsor.name} for #{render_money(@invoice.amount_due)}."
+    @delivery_reason = "you are on the team of #{@invoice.sponsor.event.name} on HCB."
 
     mail to: @emails, subject: "Payment from #{@invoice.sponsor.name} has arrived 💵"
   end
