@@ -1,0 +1,25 @@
+name: Slack emoji PR updates
+
+on:
+  pull_request_review:
+    types: [submitted]
+  pull_request:
+    types: [closed]
+
+jobs:
+  run_slapr:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: DataDog/slapr@master
+      with:
+        github-token: "${{ secrets.GITHUB_TOKEN }}"
+        slack-api-token: "${{ secrets.SLACK_BOT_USER_OAUTH_ACCESS_TOKEN }}"
+        slack-channel-id: C047Y01MHJQ
+        bot-user-id: U0CC8JR5JMD
+        number-of-approvals-required: 2
+        emoji-started: pr-draft-2
+        emoji-approved: white_check_mark
+        emoji-needs-changes: bangbang
+        emoji-commented: speech_balloon
+        emoji-merged: pr-merged
+        emoji-closed: pr-closed
