@@ -7,6 +7,8 @@
 #  id                       :bigint           not null, primary key
 #  aasm_state               :string           not null
 #  amount_cents             :integer          not null
+#  failed_at                :datetime
+#  failed_reminders_sent    :integer          default(0), not null
 #  hcb_code                 :string
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
