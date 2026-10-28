@@ -458,14 +458,20 @@ class User < ApplicationRecord
     User.find_by(id: self.versions.where_object_changes_from(locked_at: nil).last&.whodunnit)
   end
 
-  def lock!(freeze_cards: false)
+  def lock!
     update!(locked_at: Time.now)
-
-    stripe_cards.active.each { |card| card.freeze! } if freeze_cards
 
     # Invalidate all sessions
     user_sessions.update_all(signed_out_at: Time.now, expiration_at: Time.now)
     revoke_api_access!
+    freeze_active_stripe_cards!
+  end
+
+  # A locked user must not be able to spend, so `lock!` freezes every card they
+  # still hold. Maintenance::FreezeLockedUsersCardsTask backfills users locked
+  # before this happened on every lock.
+  def freeze_active_stripe_cards!
+    stripe_cards.active.find_each(&:freeze!)
   end
 
   def unlock!
