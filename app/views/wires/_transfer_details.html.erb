@@ -1,0 +1,104 @@
+<%# locals: (transfer:) %>
+
+<section class="card wire-tracking wire-transfer">
+  <header class="wire-tracking__header">
+    <div class="wire-tracking__headline">
+      <h3 class="wire-tracking__status">
+        Column transfer
+        <span class="badge bg-<%= transfer.style %>"><%= transfer.label %></span>
+      </h3>
+      <p class="wire-tracking__summary">
+        Column's record of this wire.
+        <%= "Settled here means Column paid its correspondent, not that the recipient was credited." if transfer.status == "completed" %>
+      </p>
+    </div>
+
+    <% if transfer.amount.present? %>
+      <div class="wire-tracking__amount">
+        <span class="wire-tracking__amount-value"><%= transfer.amount.format %></span>
+        <span class="wire-tracking__amount-label">debited</span>
+      </div>
+    <% end %>
+  </header>
+
+  <% if transfer.return_reason.present? %>
+    <div class="wire-tracking__callout wire-tracking__callout--error">
+      <%= inline_icon "important-fill", size: 18 %>
+      <div>
+        <strong>Returned<%= " — #{transfer.returned_amount.format}" if transfer.returned_amount.present? %></strong>
+        <span><%= transfer.return_reason %></span>
+      </div>
+    </div>
+  <% end %>
+
+  <dl class="wire-tracking__facts wire-transfer__facts">
+    <% if transfer.instructed_amount.present? %>
+      <div>
+        <dt>Instructed</dt>
+        <dd><%= transfer.instructed_amount.format %></dd>
+      </div>
+    <% end %>
+    <% if transfer.settled_amount.present? %>
+      <div>
+        <dt>Settled</dt>
+        <dd><%= transfer.settled_amount.format %></dd>
+      </div>
+    <% end %>
+    <% if transfer.fx_rate.present? %>
+      <div>
+        <dt>FX rate</dt>
+        <dd><%= transfer.fx_rate %></dd>
+      </div>
+    <% end %>
+    <% transfer.fees.each do |name, fee| %>
+      <div>
+        <dt><%= name %></dt>
+        <dd><%= fee.format %></dd>
+      </div>
+    <% end %>
+    <% if transfer.charge_bearer.present? %>
+      <div>
+        <dt>Fee split</dt>
+        <dd><%= transfer.charge_bearer %></dd>
+      </div>
+    <% end %>
+    <% if transfer.beneficiary_bank.present? %>
+      <div>
+        <dt>Beneficiary bank</dt>
+        <dd title="<%= transfer.beneficiary_bank.country_name %>">
+          <%= transfer.beneficiary_bank.flag %> <code><%= transfer.beneficiary_bank.name %></code>
+        </dd>
+      </div>
+    <% end %>
+    <% if transfer.intermediary_banks.any? %>
+      <div>
+        <dt>Intermediary</dt>
+        <dd>
+          <% transfer.intermediary_banks.each do |bank| %>
+            <span title="<%= bank.country_name %>"><%= bank.flag %> <code><%= bank.name %></code></span>
+          <% end %>
+        </dd>
+      </div>
+    <% end %>
+    <% if transfer.id.present? %>
+      <div>
+        <dt>Transfer ID</dt>
+        <dd><%= copy_to_clipboard transfer.id, class: "wire-tracking__uetr" do %>
+          <code><%= transfer.id %></code>
+          <%= inline_icon "copy-check", size: 14 %>
+        <% end %></dd>
+      </div>
+    <% end %>
+  </dl>
+
+  <% if transfer.milestones.any? %>
+    <ol class="wire-transfer__milestones">
+      <% transfer.milestones.each do |name, at| %>
+        <li>
+          <span class="wire-transfer__milestone-name"><%= name %></span>
+          <span class="wire-transfer__milestone-at"><%= format_datetime at %></span>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+</section>
