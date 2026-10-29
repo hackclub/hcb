@@ -62,6 +62,8 @@ class OrganizerPosition < ApplicationRecord
 
   after_update :remove_payroll_managers, if: -> { role_previously_changed?(from: :manager) }
   after_destroy :remove_payroll_managers
+  after_update :remove_reimbursement_reviewer_opt_outs, if: -> { role_previously_changed?(from: :manager) }
+  after_destroy :remove_reimbursement_reviewer_opt_outs
 
   before_save -> { stripe_cards.active.find_each(&:freeze!) }, if: -> { will_save_change_to_role?(to: :reader) }
 
@@ -112,6 +114,13 @@ class OrganizerPosition < ApplicationRecord
   def user_must_be_verified
     if user&.unverified?
       errors.add(:user, "must verify their email before becoming an organizer")
+    end
+  end
+
+  # Managers of a parent organization can also opt out on its sub-organizations
+  def remove_reimbursement_reviewer_opt_outs
+    Event::ReimbursementReviewerOptOut.where(user:, event_id: [event.id] + event.descendant_ids).find_each do |opt_out|
+      opt_out.destroy! unless opt_out.event.eligible_reimbursement_reviewers.exists?(user.id)
     end
   end
 

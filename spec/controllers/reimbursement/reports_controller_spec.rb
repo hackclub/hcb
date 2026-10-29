@@ -5,6 +5,142 @@ require "rails_helper"
 RSpec.describe Reimbursement::ReportsController do
   include SessionSupport
 
+  describe "bulk CSV invitations" do
+    render_views
+
+    let(:event) { create(:event, public_reimbursement_page_enabled: true) }
+    let(:user) { create(:user) }
+
+    def csv_upload(content = "email,report_name\ncontributor@example.com,Travel\n")
+      Rack::Test::UploadedFile.new(StringIO.new(content), "text/csv", original_filename: "reports.csv")
+    end
+
+    context "as a manager" do
+      before do
+        create(:organizer_position, event:, user:, role: :manager)
+        create_session(user, verified: true)
+      end
+
+      it "renders the upload form and an uploadable CSV template" do
+        get :bulk_upload_form, params: { event_id: event.slug }
+
+        expect(response).to have_http_status(:ok)
+        document = Nokogiri::HTML5(response.body)
+        expect(document.at_css('form[enctype="multipart/form-data"] input[type="file"][name="csv_file"][required]')).to be_present
+        expect(document.at_css('select[name="reviewer_id"]')).to be_nil
+
+        get :bulk_upload_template, params: { event_id: event.slug }
+
+        expect(response.media_type).to eq("text/csv")
+        expect(response.headers["Content-Disposition"]).to include("reimbursement_reports_template.csv")
+        post :bulk_upload, params: { event_id: event.slug, csv_file: csv_upload(response.body) }
+
+        expect(response).to redirect_to(event_reimbursements_path(event))
+        expect(flash[:success]).to eq("Successfully created 1 reimbursement report!")
+        expect(event.reimbursement_reports.sole).to have_attributes(name: "Conference expenses", inviter: user, maximum_amount_cents: 50000)
+      end
+
+      it "shows row errors and missing-file errors without creating reports" do
+        post :bulk_upload, params: { event_id: event.slug, csv_file: csv_upload("email,report_name\ninvalid,Travel\n") }
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.body).to include("Row 2:", "not a valid email address")
+        expect(event.reimbursement_reports.count).to eq(0)
+
+        post :bulk_upload, params: { event_id: event.slug }
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.body).to include("Please select a CSV file to upload")
+      end
+
+      context "when a reviewer is required" do
+        let(:event) { create(:event, reimbursement_reviewer_selection: :required) }
+
+        it "renders eligible reviewers and preserves the selection after a failed upload" do
+          reviewer = create(:user)
+          create(:organizer_position, :manager, event:, user: reviewer)
+
+          post :bulk_upload, params: {
+            event_id: event.slug,
+            reviewer_id: reviewer.public_id,
+            csv_file: csv_upload("email,report_name\ninvalid,Travel\n")
+          }
+
+          expect(response).to have_http_status(:unprocessable_content)
+          document = Nokogiri::HTML5(response.body)
+          select = document.at_css('select[name="reviewer_id"][required]')
+          expect(document.at_css('label[for="reviewer_id"]').text).to eq("Reviewer")
+          expect(document.at_css("##{select["aria-describedby"]}").text).to include("all reports")
+          expect(select.at_css("option[selected]")["value"]).to eq(reviewer.public_id)
+          expect(select.css("option").map { |option| option["value"] }).to include(user.public_id)
+        end
+      end
+
+      context "when reviewer selection is optional" do
+        let(:event) { create(:event, reimbursement_reviewer_selection: :optional) }
+
+        it "renders an optional reviewer with no preference and preserves an explicitly blank selection" do
+          post :bulk_upload, params: {
+            event_id: event.slug,
+            reviewer_id: "",
+            csv_file: csv_upload("email,report_name\ninvalid,Travel\n")
+          }
+
+          expect(response).to have_http_status(:unprocessable_content)
+          document = Nokogiri::HTML5(response.body)
+          select = document.at_css('select[name="reviewer_id"]')
+          expect(document.at_css('label[for="reviewer_id"]').text).to eq("Reviewer (optional)")
+          expect(select["required"]).to be_nil
+          expect(select.at_css('option[value=""]').text).to eq("No preference")
+          expect(select.css("option[selected]").map { |option| option["value"] }).not_to include(user.public_id)
+          expect(select.at_css("option[value='#{user.public_id}']")).to be_present
+        end
+      end
+    end
+
+    [:member, :reader, :outsider].each do |role|
+      it "blocks #{role}s from all bulk endpoints even with a public reimbursement page" do
+        create(:organizer_position, event:, user:, role:) unless role == :outsider
+        create_session(user, verified: true)
+
+        expect {
+          get :bulk_upload_form, params: { event_id: event.slug }
+          expect(response).to redirect_to(root_path)
+          get :bulk_upload_template, params: { event_id: event.slug }
+          expect(response).to redirect_to(root_path)
+          post :bulk_upload, params: { event_id: event.slug, csv_file: csv_upload }
+          expect(response).to redirect_to(root_path)
+        }.not_to change(Reimbursement::Report, :count)
+        expect(flash[:error]).to eq("You are not authorized to perform this action.")
+      end
+    end
+
+    it "requires sign-in for the form, template, and upload" do
+      get :bulk_upload_form, params: { event_id: event.slug }
+      expect(response).to have_http_status(:redirect)
+      expect(response.location).to include(auth_users_path)
+      get :bulk_upload_template, params: { event_id: event.slug }
+      expect(response.location).to include(auth_users_path)
+
+      expect {
+        post :bulk_upload, params: { event_id: event.slug, csv_file: csv_upload }
+      }.not_to change(Reimbursement::Report, :count)
+      expect(response.location).to include(auth_users_path)
+    end
+
+    it "blocks demo organizations even for admins" do
+      event.update!(demo_mode: true)
+      admin = create(:user, :make_admin)
+      create_session(admin, verified: true)
+
+      expect {
+        post :bulk_upload, params: { event_id: event.slug, csv_file: csv_upload }
+      }.not_to change(Reimbursement::Report, :count)
+      expect(response).to redirect_to(root_path)
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+    end
+  end
+
   describe "#start" do
     render_views
 
@@ -64,6 +200,32 @@ RSpec.describe Reimbursement::ReportsController do
 
       expect(response).to have_http_status(:ok)
       expect(header_badges(response.body)).to eq(["Review requested from Fiona H"])
+    end
+
+    it "asks submitters for a reviewer based on the organization's setting" do
+      event = create(:event)
+      member = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      report = create(:reimbursement_report, user: member, event:)
+      create_session(member, verified: true)
+
+      reviewer_selects = lambda do
+        get(:show, params: { id: report.id })
+        Nokogiri::HTML5(response.body).css('select[name="reviewer_id"]')
+      end
+
+      expect(reviewer_selects.call).to be_empty
+
+      event.update!(reimbursement_reviewer_selection: :optional)
+      selects = reviewer_selects.call
+      expect(selects).not_to be_empty
+      expect(selects.map { |select| select["required"] }).to all(be_nil)
+      expect(selects.map { |select| select.at_css("option").text }).to all(eq("No preference"))
+
+      event.update!(reimbursement_reviewer_selection: :required)
+      selects = reviewer_selects.call
+      expect(selects).not_to be_empty
+      expect(selects.map { |select| select["required"] }).to all(eq("required"))
     end
 
     it "shows the status badge when no reviewer is assigned" do
@@ -513,6 +675,44 @@ RSpec.describe Reimbursement::ReportsController do
 
       expect(flash[:error]).to match(/not authorized/i)
       expect(report.reload.legal_entity_payout_method).to eq(default_pm)
+    end
+  end
+
+  describe "#submit" do
+    it "lets submitters pick any manager, including ones who opted out of reviewing" do
+      event = create(:event, reimbursement_reviewer_selection: :required)
+      member = create(:user)
+      other_member = create(:user)
+      opted_out = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      create(:organizer_position, user: other_member, event:, role: :member)
+      create(:organizer_position, user: opted_out, event:, role: :manager)
+      event.reimbursement_reviewer_opt_outs.create!(user: opted_out)
+      report = create(:reimbursement_report, user: member, event:)
+
+      create_session(member, verified: true)
+
+      post(:submit, params: { report_id: report.id, reviewer_id: other_member.public_id })
+
+      expect(flash[:error]).to eq("The selected reviewer is not eligible for this report.")
+      expect(report.reload.reviewer).to be_nil
+
+      post(:submit, params: { report_id: report.id, reviewer_id: opted_out.public_id })
+
+      expect(flash[:error]).not_to eq("The selected reviewer is not eligible for this report.")
+    end
+
+    it "lets submitters skip picking a reviewer when it's optional" do
+      event = create(:event, reimbursement_reviewer_selection: :optional)
+      member = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      report = create(:reimbursement_report, user: member, event:)
+
+      create_session(member, verified: true)
+
+      post(:submit, params: { report_id: report.id, reviewer_id: "" })
+
+      expect(response).to redirect_to(reimbursement_report_path(report))
     end
   end
 

@@ -73,13 +73,29 @@ RSpec.describe MyController do
 
       get :reimbursements
 
-      expect(response.body).to include("Assigned to you for review", "Awaiting review by any manager", "Your reports")
+      expect(response.body).to include("Assigned to you for review", "Awaiting review", "Your reports")
 
       sections = controller.instance_variable_get(:@sections)
       expect(sections[:assigned]).to contain_exactly(assigned)
       expect(sections[:unassigned]).to contain_exactly(unassigned)
       expect(sections[:mine]).to contain_exactly(own_submitted, own_draft)
       expect(sections.values.flatten).not_to include(assigned_to_someone_else)
+    end
+
+    it "hides unassigned reports from organizations the manager opted out of reviewing for" do
+      user = sign_in_verified
+      reviewing_event = create(:event)
+      opted_out_event = create(:event)
+      create(:organizer_position, user:, event: reviewing_event, role: :manager)
+      create(:organizer_position, user:, event: opted_out_event, role: :manager)
+      opted_out_event.reimbursement_reviewer_opt_outs.create!(user:)
+
+      visible = create(:reimbursement_report, event: reviewing_event, aasm_state: :submitted)
+      create(:reimbursement_report, event: opted_out_event, aasm_state: :submitted)
+
+      get :reimbursements
+
+      expect(controller.instance_variable_get(:@sections)[:unassigned]).to contain_exactly(visible)
     end
   end
 

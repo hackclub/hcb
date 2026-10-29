@@ -5,8 +5,8 @@ module Reimbursement
     include SetEvent
     include Admin::TransferApprovable
 
-    before_action :set_report_user_and_event, except: [:create, :quick_expense, :start, :finished]
-    before_action :set_event, only: [:start, :finished]
+    before_action :set_report_user_and_event, except: [:create, :quick_expense, :start, :finished, :bulk_upload_form, :bulk_upload, :bulk_upload_template]
+    before_action :set_event, only: [:start, :finished, :bulk_upload_form, :bulk_upload, :bulk_upload_template]
     skip_before_action :signed_in_user, only: [:show, :start, :create, :finished]
     skip_after_action :verify_authorized, only: [:start, :finished]
 
@@ -20,7 +20,7 @@ module Reimbursement
 
       authorize @report
 
-      if @report.assigned_reviewer_required? && params[:reimbursement_report][:reviewer_id].present?
+      if @report.reviewer_selectable? && params[:reimbursement_report][:reviewer_id].present?
         reviewer = User.find_by_public_id!(params[:reimbursement_report][:reviewer_id])
         unless @report.eligible_reviewers.exists?(reviewer.id)
           return redirect_back fallback_location: event_reimbursements_path(@event), flash: { error: "The selected reviewer is not eligible for this report." }
@@ -49,6 +49,48 @@ module Reimbursement
       else
         redirect_back fallback_location: event_reimbursements_path(@event), flash: { error: @report.errors.full_messages.to_sentence }
       end
+    end
+
+    def bulk_upload_form
+      authorize @event.reimbursement_reports.build, :bulk_create?
+    end
+
+    def bulk_upload
+      authorize @event.reimbursement_reports.build, :bulk_create?
+
+      unless params[:csv_file].present?
+        flash.now[:error] = "Please select a CSV file to upload"
+        render :bulk_upload_form, status: :unprocessable_content
+        return
+      end
+
+      result = Reimbursement::ReportService::BulkCreate.new(
+        event: @event,
+        csv_file: params[:csv_file],
+        sent_by: current_user,
+        reviewer_id: params[:reviewer_id]
+      ).run
+
+      if result.success?
+        redirect_to event_reimbursements_path(@event), flash: { success: "Successfully created #{result.reports.count} reimbursement #{"report".pluralize(result.reports.count)}!" }
+      else
+        flash.now[:error] = result.errors.join(". ")
+        render :bulk_upload_form, status: :unprocessable_content
+      end
+    end
+
+    def bulk_upload_template
+      authorize @event.reimbursement_reports.build, :bulk_create?
+
+      csv_content = CSV.generate do |csv|
+        csv << Reimbursement::ReportService::BulkCreate::ALL_HEADERS
+        csv << ["contributor@example.com", "Conference expenses", "50000", "Thanks for your help!"]
+      end
+
+      send_data csv_content,
+                filename: "reimbursement_reports_template.csv",
+                type: "text/csv",
+                disposition: "attachment"
     end
 
     def quick_expense
@@ -209,7 +251,7 @@ module Reimbursement
     def submit
       authorize @report
 
-      if @report.assigned_reviewer_required? && !OrganizerPosition.role_at_least?(current_user, @report.event, :manager) && !@report.reviewer.present?
+      if @report.reviewer_selectable? && !OrganizerPosition.role_at_least?(current_user, @report.event, :manager) && !@report.reviewer.present? && (@report.assigned_reviewer_required? || params[:reviewer_id].present?)
         reviewer = User.find_by_public_id!(params[:reviewer_id])
         unless @report.eligible_reviewers.exists?(reviewer.id)
           flash[:error] = "The selected reviewer is not eligible for this report."

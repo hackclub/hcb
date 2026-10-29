@@ -367,6 +367,12 @@ class EventsController < ApplicationController
   def update
     authorize @event
 
+    if params.dig(:event, :reimbursement_reviewer_ids)&.compact_blank&.empty? && @event.eligible_reimbursement_reviewers.exists?
+      @event.errors.add(:base, "Select at least one reviewer")
+      @settings_tab = "reimbursements"
+      return render :edit, status: :unprocessable_content
+    end
+
     # have to use `fixed_event_params` because `event_params` seems to be a constant
     fixed_event_params = event_params
     fixed_user_event_params = user_event_params
@@ -1499,6 +1505,7 @@ class EventsController < ApplicationController
       :donation_page_message,
       :donation_tiers_enabled,
       :reimbursements_require_organizer_peer_review,
+      :reimbursement_reviewer_selection,
       :public_reimbursement_page_enabled,
       :public_reimbursement_page_message,
       :donation_thank_you_message,
@@ -1538,7 +1545,8 @@ class EventsController < ApplicationController
           :generate_monthly_announcement,
           :subevent_plan,
           :subevent_name_prefix
-        ]
+        ],
+        reimbursement_reviewer_ids: []
       }
     ]
 
@@ -1569,6 +1577,7 @@ class EventsController < ApplicationController
       :donation_page_message,
       :donation_tiers_enabled,
       :reimbursements_require_organizer_peer_review,
+      :reimbursement_reviewer_selection,
       :public_reimbursement_page_enabled,
       :public_reimbursement_page_message,
       :donation_thank_you_message,
@@ -1582,6 +1591,7 @@ class EventsController < ApplicationController
       :website,
       :background_image,
       :stripe_card_logo,
+      reimbursement_reviewer_ids: [],
       card_grant_setting_attributes: [
         :merchant_lock,
         :category_lock,
