@@ -27,6 +27,5 @@
   <%= render "events/settings/admin", event: @event %>
 <% else %>
   <%= render "events/settings/account_info", event: @event %>
-  <%= render "ledger/balance/observers/settings", ledger: @event.ledger %>
   <%= render "events/settings/details", event: @event %>
 <% end %>
