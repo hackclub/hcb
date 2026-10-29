@@ -567,6 +567,7 @@ $(document).on('turbo:load', function () {
     const emailInput = $('#reimbursement_report_email')
     const emailInputLabel = $('label[for="reimbursement_report_email"]')
     const maxInput = $('#reimbursement_report_maximum_amount_wrapper')
+    const reviewerInput = $('#reimbursement_report_reviewer_id')
     const inviteInput = $('#reimbursement_report_invite_message_wrapper')
 
     const forMyselfInput = $('#reimbursement_report_for_myself')
@@ -589,6 +590,18 @@ $(document).on('turbo:load', function () {
 
     externalInputWrapper.slideUp()
 
+    // Invitations default to the inviter as reviewer, but you shouldn't review your own report
+    const setReviewerDefault = forSomeoneElse => {
+      const inviteDefault = reviewerInput.data('invite-default')
+      if (!inviteDefault) return
+
+      if (forSomeoneElse && !reviewerInput.val()) {
+        reviewerInput.val(inviteDefault)
+      } else if (!forSomeoneElse && reviewerInput.val() === inviteDefault) {
+        reviewerInput.val('')
+      }
+    }
+
     $(forMyselfInput).on('change', e => {
       if (e.target.checked) {
         externalInputWrapper.slideUp({
@@ -596,12 +609,14 @@ $(document).on('turbo:load', function () {
         })
         currencyWrapper.slideDown()
         emailInput.val(emailInput[0].attributes['value'].value)
+        setReviewerDefault(false)
       }
     })
 
     $(forOrganizerInput).on('change', e => {
       if (e.target.checked) {
         emailInput.val(dropdownInput.val())
+        setReviewerDefault(true)
         externalInputWrapper.slideUp({
           complete: () => {
             dropdownInputLabel.show()
@@ -619,6 +634,7 @@ $(document).on('turbo:load', function () {
 
     $(forExternalInput).on('change', e => {
       if (e.target.checked) {
+        setReviewerDefault(true)
         externalInputWrapper.slideUp({
           complete: () => {
             emailInput.val('')

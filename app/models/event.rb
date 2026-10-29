@@ -30,6 +30,7 @@
 #  public_message                               :text
 #  public_reimbursement_page_enabled            :boolean          default(FALSE), not null
 #  public_reimbursement_page_message            :text
+#  reimbursement_reviewer_selection             :string           default("disabled"), not null
 #  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
 #  risk_level                                   :integer
 #  short_name                                   :string
@@ -544,6 +545,8 @@ class Event < ApplicationRecord
   include HasMetrics
 
   include HasTasks
+
+  include Event::HasReimbursementReviewers
 
   validate :point_of_contact_is_admin
 
