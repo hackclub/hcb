@@ -528,6 +528,16 @@ class HcbCode < ApplicationRecord
     (outgoing_disbursement || incoming_disbursement)&.disbursement
   end
 
+  def all_comments
+    return super if payment.nil?
+
+    Comment.where(commentable: [self, payment]).order(:created_at)
+  end
+
+  def payment
+    @payment ||= wire&.payment || ach_transfer&.payment || wise_transfer&.payment || increase_check&.payment
+  end
+
   def card_grant
     @card_grant ||= CardGrant.find_by(disbursement_id: hcb_i2) if card_grant?
   end
