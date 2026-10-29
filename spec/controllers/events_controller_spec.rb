@@ -484,7 +484,7 @@ RSpec.describe EventsController do
   describe "#reimbursements" do
     render_views
 
-    it "only asks for a reviewer when inviting someone if the organization lets submitters pick one" do
+    it "only asks for a reviewer if the organization lets submitters pick one" do
       manager = create(:user)
       event = create(:event)
       create(:organizer_position, user: manager, event:, role: :manager)
@@ -497,7 +497,11 @@ RSpec.describe EventsController do
       event.update!(reimbursement_reviewer_selection: :optional)
       get(:reimbursements, params: { event_id: event.slug })
 
-      expect(response.body).to include("reimbursement_report_reviewer_wrapper")
+      select = Nokogiri::HTML5(response.body).at_css("#reimbursement_report_reviewer_wrapper select")
+      expect(select).to be_present
+      expect(select["disabled"]).to be_nil
+      expect(select.at_css("option[selected]")).to be_nil
+      expect(select["data-invite-default"]).to eq(manager.public_id)
     end
   end
 
