@@ -21,14 +21,16 @@ module BreakdownEngine
   def self.timeframes_for(event)
     rolling = TIMEFRAMES.select { |_, duration| event.created_at < duration.ago }.keys
 
-    years = event.canonical_transactions
-                 .group(Arel.sql("EXTRACT(YEAR FROM canonical_transactions.date)"))
-                 .having("COUNT(*) >= ?", 10)
-                 .count
-                 .keys
-                 .map { |year| year.to_i.to_s }
-                 .sort
-                 .reverse
+    years = Rails.cache.fetch("breakdown_timeframe_years_#{event.id}", expires_in: 1.hour) do
+      event.canonical_transactions
+           .group(Arel.sql("EXTRACT(YEAR FROM canonical_transactions.date)"))
+           .having("COUNT(*) >= ?", 10)
+           .count
+           .keys
+           .map { |year| year.to_i.to_s }
+           .sort
+           .reverse
+    end
 
     ["All time", *rolling, *years]
   end
