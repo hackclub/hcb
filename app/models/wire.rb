@@ -212,6 +212,7 @@ class Wire < ApplicationRecord
       wire: {
         beneficiary_name: recipient_name,
         beneficiary_email: recipient_email,
+        beneficiary_phone:,
         beneficiary_address: {
           line_1: address_line1,
           line_2: address_line2,
@@ -259,6 +260,15 @@ class Wire < ApplicationRecord
     return nil unless column_id.present?
 
     @column_wire_details ||= ColumnService.international_wire(column_id)
+  end
+
+  private
+
+  def beneficiary_phone
+    phone = recipient_information["phone"]
+    return nil if phone.blank?
+
+    Phonelib.parse(phone, recipient_country).e164.presence || phone
   end
 
 end
