@@ -1,0 +1,22 @@
+<p>Hello,</p>
+
+<p>
+  <%= @position.payee.display_name %>'s contracting position "<%= @position.title %>" for
+  <%= @event.name %> ends on <strong><%= @position.end_date.to_fs(:long) %></strong>.
+</p>
+
+<p>
+  After that date, <%= @position.payee.display_name %> will no longer be able to submit
+  invoices for this position. If you'd like to continue working with them, please create a
+  new contractor position before then.
+</p>
+
+<p>
+  <%= link_to "View this contractor on HCB", event_payroll_position_url(@event, @position) %>
+</p>
+
+<p>
+  Sincerely,
+  <br><br>
+  The HCB Team
+</p>

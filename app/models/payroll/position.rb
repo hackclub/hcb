@@ -89,6 +89,8 @@ module Payroll
     ONBOARDING_REMINDER_DAYS = [1, 2, 7, 14].freeze
     ONBOARDING_REMINDER_INTERVAL_DAYS = 14
 
+    EXPIRING_SOON_NOTICE = 7.days
+
     after_create_commit do
       Payroll::Position::ExpireJob.set(wait_until: end_date.end_of_day).perform_later(self)
     end
