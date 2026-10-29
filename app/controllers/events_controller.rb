@@ -380,12 +380,9 @@ class EventsController < ApplicationController
     begin
       # One transaction, so reviewer toggles are rolled back if the rest of the form doesn't save
       updated = Event.transaction do
-        if (reviewer_position_ids = params.dig(:event, :reimbursement_reviewer_position_ids))
-          positions = @event.reimbursement_reviewer_candidates_toggleable_by(current_user)
-          unless @event.update_reimbursement_reviewers(positions, reviewer_position_ids)
-            @settings_tab = "reimbursements"
-            raise ActiveRecord::Rollback
-          end
+        if (reviewer_position_ids = params.dig(:event, :reimbursement_reviewer_position_ids)) && !@event.update_reimbursement_reviewers(reviewer_position_ids)
+          @settings_tab = "reimbursements"
+          raise ActiveRecord::Rollback
         end
 
         @event.update(admin_signed_in? ? fixed_event_params : fixed_user_event_params) || raise(ActiveRecord::Rollback)

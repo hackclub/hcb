@@ -3,8 +3,8 @@
 class Event
   # Managers review reimbursement reports that have no assigned reviewer.
   # Managers are opted in to their own organization automatically (see
-  # OrganizerPosition); managers of a parent organization opt in to each
-  # sub-organization themselves.
+  # OrganizerPosition); managers of a parent organization are opted in to each
+  # sub-organization from its settings.
   module HasReimbursementReviewers
     extend ActiveSupport::Concern
 
@@ -42,17 +42,11 @@ class Event
       positions.where(event_id: id).or(positions.where.not(user_id: organizer_positions.manager_access.select(:user_id)))
     end
 
-    # Anyone who can edit the settings toggles this organization's own
-    # managers, but managers of a parent organization only toggle themselves.
-    def reimbursement_reviewer_candidates_toggleable_by(user)
-      candidates = reimbursement_reviewer_candidates
-      candidates.where(event_id: id).or(candidates.where(user:))
-    end
-
-    # Opts each of `positions` in or out according to whether its id is in
-    # `opted_in_ids`. Ids outside `positions` are ignored. Adds an error and
-    # changes nothing if that would leave nobody to review.
-    def update_reimbursement_reviewers(positions, opted_in_ids)
+    # Opts each candidate in or out according to whether its id is in
+    # `opted_in_ids`. Other ids are ignored. Adds an error and changes nothing
+    # if that would leave nobody to review.
+    def update_reimbursement_reviewers(opted_in_ids)
+      positions = reimbursement_reviewer_candidates
       opted_in_ids = positions.where(id: opted_in_ids.compact_blank).ids
 
       if opted_in_ids.empty? && positions.exists? && !reimbursement_reviewer_opt_ins.where.not(organizer_position: positions).exists?

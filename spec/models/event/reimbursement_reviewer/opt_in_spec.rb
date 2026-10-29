@@ -32,24 +32,12 @@ RSpec.describe Event::ReimbursementReviewer::OptIn, type: :model do
     expect(sibling.reimbursement_reviewers).to be_empty
   end
 
-  it "is only toggled by the parent organization manager themselves" do
-    parent = create(:event)
-    child = create(:event, parent:)
-    parent_position = create(:organizer_position, event: parent, role: :manager)
+  it "doesn't leave nobody reviewing when the only submitted ids aren't candidates" do
+    child = create(:event)
     child_position = create(:organizer_position, event: child, role: :manager)
+    unrelated_position = create(:organizer_position, role: :manager)
 
-    expect(child.reimbursement_reviewer_candidates_toggleable_by(child_position.user)).to contain_exactly(child_position)
-    expect(child.reimbursement_reviewer_candidates_toggleable_by(parent_position.user)).to contain_exactly(child_position, parent_position)
-  end
-
-  it "doesn't leave nobody reviewing when the only submitted ids can't be toggled" do
-    parent = create(:event)
-    child = create(:event, parent:)
-    parent_position = create(:organizer_position, event: parent, role: :manager)
-    child_position = create(:organizer_position, event: child, role: :manager)
-    toggleable = child.reimbursement_reviewer_candidates_toggleable_by(child_position.user)
-
-    expect(child.update_reimbursement_reviewers(toggleable, ["", parent_position.id.to_s])).to be(false)
+    expect(child.update_reimbursement_reviewers(["", unrelated_position.id.to_s])).to be(false)
     expect(child.errors.full_messages).to eq(["Select at least one reviewer"])
     expect(child.reimbursement_reviewers).to contain_exactly(child_position.user)
   end
