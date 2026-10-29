@@ -32,9 +32,17 @@ module ApplicationHelper
     flash.to_h.except("confetti", "confetti_emojis", "popover")
   end
 
+  # ?popover= only reopens a popover client-side, so links built from the query string drop it
+  def link_query_parameters
+    request.query_parameters.except("popover")
+  end
+
   def upsert_query_params(**new_params)
-    params = request.query_parameters || {}
-    params.merge(new_params)
+    link_query_parameters.merge(new_params)
+  end
+
+  def paginate(scope, params: {}, **options)
+    super(scope, params: { popover: nil, **params }, **options)
   end
 
   def sorted_relation(relation, columns, sort:, default_direction: :desc)

@@ -99,8 +99,9 @@ document.addEventListener('turbo:before-fetch-response', async event => {
     document.getElementById(target.dataset?.turboFrame ?? '')
   if (!frame) return
 
+  // Set by the flash partial, so frame responses without one skip the parse
   const response = event.detail.fetchResponse.response
-  if (!response.headers.get('content-type')?.includes('text/html')) return
+  if (!response.headers.get('X-Flash')) return
 
   const flash = new DOMParser()
     .parseFromString(await response.clone().text(), 'text/html')

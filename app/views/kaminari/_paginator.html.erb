@@ -25,7 +25,7 @@
           data-menu-target="content">
           <% per_options.each do |n| %>
             <%= link_to "#{n} per page",
-                        url_for((request.query_parameters || {}).merge("per" => n, "page" => 1, only_path: true)),
+                        url_for(link_query_parameters.merge("per" => n, "page" => 1, only_path: true)),
                         class: "menu__action #{'menu__action--active' if n == per_page}",
                         aria: { current: n == per_page ? "true" : nil },
                         data: { turbo_frame: request.headers["Turbo-Frame"].presence, action: "menu#close" } %>

@@ -113,7 +113,7 @@
       <%= settings_tab active: @grouping == grouping do %>
         <%# Switching the grouping invalidates the page number, so drop it. %>
         <%= link_to label,
-                    my_inbox_path(request.query_parameters.except("page", "group").merge("group" => grouping)),
+                    my_inbox_path(link_query_parameters.except("page", "group").merge("group" => grouping)),
                     data: { turbo: true, turbo_action: "advance" } %>
       <% end %>
     <% end %>

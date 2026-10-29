@@ -253,6 +253,17 @@ RSpec.describe MyController do
       describe "rendering" do
         render_views
 
+        # ?popover= only reopens a popover client-side; echoing it into links
+        # would reopen it on every pagination and grouping click.
+        it "keeps ?popover= out of the pagination and grouping links" do
+          2.times { create_inbox_charge(receipt_due_at: nil) }
+
+          get :inbox, params: { per: 1, popover: "/hcb/abc" }
+
+          expect(response.body).to include("per=1")
+          expect(response.body).not_to include("popover=")
+        end
+
         it "renders a section per due date group, with the org on each row" do
           create_inbox_charge(receipt_due_at: 1.day.ago)
           create_inbox_charge(receipt_due_at: 1.day.from_now)

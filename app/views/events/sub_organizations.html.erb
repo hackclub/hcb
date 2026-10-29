@@ -13,7 +13,7 @@
   </span>
   <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
     <% list_view = @view == "list" %>
-    <% switch_to = list_view ? request.query_parameters.merge(view: "grid") : { view: "list", q: params[:q].presence }.compact %>
+    <% switch_to = list_view ? link_query_parameters.merge(view: "grid") : { view: "list", q: params[:q].presence }.compact %>
     <%= pop_icon_to list_view ? "grid" : "list", url_for(switch_to),
                     class: "tooltipped tooltipped--w",
                     "aria-label": list_view ? "Switch to cards" : "Switch to a table" %>
@@ -42,7 +42,7 @@
   <div class="stat statset__wide" data-tour-step="balance">
     <span class="stat__label"><%= @has_filter ? "Filtered s" : "S" %>ub-organization balance</span>
     <span class="stat__value">
-      <%= turbo_frame_tag "sub_event_balance_#{@event.public_id}", src: event_async_sub_organization_balance_path(@event, @view == "list" ? { q: @search }.compact : request.query_parameters), loading: :lazy do %>
+      <%= turbo_frame_tag "sub_event_balance_#{@event.public_id}", src: event_async_sub_organization_balance_path(@event, @view == "list" ? { q: @search }.compact : link_query_parameters), loading: :lazy do %>
         <strong>-</strong>
       <% end %>
     </span>
