@@ -1,0 +1,37 @@
+<%# locals: (ledger:) %>
+
+<% observer = ledger.balance_observers.find_or_initialize_by(user: current_user) %>
+<% if policy(observer).create? %>
+  <button class="btn bg-muted flex items-center gap-1.5" data-behavior="modal_trigger" data-modal="balance_alert">
+    <%= inline_icon observer.persisted? ? "notification-fill" : "warning" %>
+    <%= observer.persisted? ? "Alert below #{render_money observer.amount_cents}" : "Balance alert" %>
+  </button>
+
+  <section class="modal modal--scroll max-w-md bg-snow" data-behavior="modal" role="dialog" id="balance_alert">
+    <%= modal_header "Low balance alert" %>
+    <p class="mt-0">Get an email when this organization's balance drops below an amount you choose. Only you will be notified, and only once each time it drops.</p>
+
+    <%= form_with url: ledger_balance_observer_path(ledger), data: { turbo_frame: "_top" } do |form| %>
+      <div class="field">
+        <%= form.label :amount, "Email me when the balance drops below" %>
+        <div class="flex items-center gap-2">
+          <div class="bg-snow dark:bg-dark flex items-center border rounded-lg muted flex-1 dark:!border-dark">
+            <span class="px-3">$</span>
+            <%= form.number_field :amount, class: "w-100 fit !border-none !bg-transparent !text-black dark:!text-white !pl-0",
+                                           placeholder: "500.00",
+                                           required: true,
+                                           step: 0.01,
+                                           min: 0.01,
+                                           value: ("%.2f" % observer.amount if observer.persisted?),
+                                           data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
+          </div>
+          <%= form.submit observer.persisted? ? "Update" : "Create alert", class: "bg-success" %>
+        </div>
+      </div>
+    <% end %>
+
+    <% if observer.persisted? %>
+      <%= button_to "Remove alert", ledger_balance_observer_path(ledger), method: :delete, class: "btn bg-muted w-full", form: { data: { turbo_frame: "_top" } } %>
+    <% end %>
+  </section>
+<% end %>

@@ -1,0 +1,13 @@
+<p>Hey <%= @observer.user.name %>!</p>
+
+<p>
+  <%= link_to @event.name, event_url(@event) %>'s balance is now <strong><%= render_money @balance_cents %></strong>, below the <%= render_money @observer.amount_cents %> you asked to be alerted at.
+</p>
+
+<p>
+  <%= link_to "View transactions", event_transactions_url(@event) %>
+</p>
+
+<p class="muted">
+  Only you receive this alert. You can change or remove it from <%= link_to "#{@event.name}'s home page", event_url(@event) %>.
+</p>

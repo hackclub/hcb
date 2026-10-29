@@ -26,6 +26,7 @@
       <% end %>
     <% end %>
 
+    <%= render "ledger/balance/observers/button", ledger: event.ledger if signed_in? && event.ledger %>
     <%= render "events/follow_button", event:, event_follow: %>
     <%= render "events/donations/button", event: %>
   </div>
