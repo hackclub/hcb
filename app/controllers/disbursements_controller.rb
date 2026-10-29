@@ -135,6 +135,7 @@ class DisbursementsController < ApplicationController
         value: e.public_id,
         label: helpers.combobox_display(e),
         sublabel: disabled_message || balance,
+        badge: helpers.combobox_badge(e),
         disabled: disabled_message.present?
       }
       # Lets the form hide the repayment option for recipients whose
