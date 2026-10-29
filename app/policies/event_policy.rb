@@ -258,6 +258,10 @@ class EventPolicy < ApplicationPolicy
     show? && record.approved? && (record.plan.invoices_enabled? || record.invoices.any?)
   end
 
+  def export_invoices?
+    invoices? && auditor_or_reader?
+  end
+
   def account_number?
     (auditor? || member?) && record.plan.account_number_enabled?
   end

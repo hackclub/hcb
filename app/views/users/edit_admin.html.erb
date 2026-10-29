@@ -44,10 +44,24 @@
             <%= link_to "Impersonate", impersonate_user_path(@user.id), data: { turbo_confirm: "Are you sure?", turbo_method: :post } unless current_session&.impersonated? %>
           </p>
 
-          <div class="field field--checkbox">
-            <%= form.label :locked, "Lock user from signing into HCB" %>
-            <%= form.check_box :locked, checked: @user.locked?, disabled: !admin_signed_in? %>
-          </div>
+          <% if @user.locked? %>
+            <div class="field field--checkbox">
+              <%= form.label :locked, "Lock user from signing into HCB" %>
+              <%= form.check_box :locked, checked: true, disabled: !admin_signed_in? %>
+            </div>
+          <% else %>
+            <div x-data="{ locking: false }">
+              <div class="field field--checkbox">
+                <%= form.label :locked, "Lock user from signing into HCB" %>
+                <%= form.check_box :locked, checked: false, disabled: !admin_signed_in?, "x-model": "locking" %>
+              </div>
+
+              <div class="pl-5 field field--checkbox" x-show="locking" x-cloak>
+                <%= form.label :freeze_cards, "Also freeze all active cards" %>
+                <%= form.check_box :freeze_cards, checked: false %>
+              </div>
+            </div>
+          <% end %>
 
           <div class="field field--checkbox">
             <%= form.label :running_balance_enabled, "Show running balance?" %>
@@ -118,8 +132,14 @@
             <%= form.number_field :limit_amount, step: 0.01, min: 0, value: @limit ? "%.2f" % (@limit.amount_cents / 100.0) : nil %>
           </div>
           <div class="actions flex">
-            <%# turbo_confirm can't reference a dynamic ERB variable, so we are rewriting it using on click with the limit amount value in the input field  %>
-            <%= form.submit "Set admin transfer limit", data: { turbo_confirm: "Set the admin transfer limit for this user to $0.00?" }, onclick: "this.dataset.turboConfirm = 'Set the admin transfer limit for this user to $' +  this.form.limit_amount.value + '?'" %>
+            <%# The confirmation names the amount in the field, which only the browser knows. %>
+            <%= form.submit "Set admin transfer limit", data: {
+                  turbo_confirm: "Set the admin transfer limit for this user to $0.00?",
+                  controller: "confirm-amount",
+                  action: "click->confirm-amount#update",
+                  confirm_amount_field_value: "limit_amount",
+                  confirm_amount_template_value: "Set the admin transfer limit for this user to $%{amount}?"
+                } %>
           </div>
         <% end %>
       <% end %>
