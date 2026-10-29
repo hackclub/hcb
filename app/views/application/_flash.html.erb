@@ -1,7 +1,10 @@
 <%# locals: (klass: "") -%>
 
 <% messages = renderable_flash -%>
-<% messages.each_key { |key| flash.discard(key) } if turbo_frame_request? -%>
+<% if turbo_frame_request? && messages.any? -%>
+  <% messages.each_key { |key| flash.discard(key) } -%>
+  <% response.headers["X-Flash"] = "true" -%>
+<% end -%>
 
 <div id="flash-container">
   <% messages.each_with_index do |(key, value), index| %>

@@ -27,13 +27,21 @@ RSpec.describe HcbCodesController do
     get(:edit, params: { id: hcb_code.hashid }, flash: { success: "Marked no/lost receipt on that transaction." })
 
     expect(response.body).to include("Marked no/lost receipt on that transaction.")
+    expect(response.headers["X-Flash"]).to eq("true")
     expect(flash_carried_over).to be_blank
+  end
+
+  it "doesn't flag a frame response that has nothing to flash" do
+    get(:edit, params: { id: hcb_code.hashid })
+
+    expect(response.headers["X-Flash"]).to be_nil
   end
 
   it "keeps the flash on a frame response that never renders it" do
     get(:edit, params: { id: hcb_code.hashid, inline: "true" }, flash: { success: "Marked no/lost receipt on that transaction." })
 
     expect(response.body).not_to include("Marked no/lost receipt on that transaction.")
+    expect(response.headers["X-Flash"]).to be_nil
     expect(flash_carried_over).to include("success" => "Marked no/lost receipt on that transaction.")
   end
 end

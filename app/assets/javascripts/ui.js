@@ -1,4 +1,4 @@
-/* global BK, $ */
+/* global BK, $, Turbo */
 
 // eslint-disable-next-line no-unused-vars
 const whenViewed = (element, callback) =>
@@ -91,6 +91,16 @@ document.addEventListener('turbo:load', () => {
   }
 })
 
+// Pages loaded with ?popover= echo it into links built from the query string
+document.addEventListener('turbo:before-visit', event => {
+  const url = new URL(event.detail.url)
+  if ($.modal.isActive() || !url.searchParams.has('popover')) return
+
+  event.preventDefault()
+  url.searchParams.delete('popover')
+  Turbo.visit(url.href)
+})
+
 document.addEventListener('turbo:before-fetch-response', async event => {
   // Turbo submits data-turbo-method links from a form appended to <body>
   const { target } = event
@@ -99,8 +109,9 @@ document.addEventListener('turbo:before-fetch-response', async event => {
     document.getElementById(target.dataset?.turboFrame ?? '')
   if (!frame) return
 
+  // Set by the flash partial, so frame responses without one skip the parse
   const response = event.detail.fetchResponse.response
-  if (!response.headers.get('content-type')?.includes('text/html')) return
+  if (!response.headers.get('X-Flash')) return
 
   const flash = new DOMParser()
     .parseFromString(await response.clone().text(), 'text/html')
