@@ -11,6 +11,20 @@ RSpec.describe "Ledger::Balance::ObserversController", type: :request do
     allow_any_instance_of(SessionsHelper).to receive(:find_current_session).and_return(create(:user_session, user:))
   end
 
+  describe "GET /:event_id/settings" do
+    it "shows the signed-in member their own alert" do
+      create(:organizer_position, user:, event:, role: :member)
+      create(:ledger_balance_observer, ledger:, user:, amount_cents: 75_00)
+      create(:ledger_balance_observer, ledger:, user: create(:user), amount_cents: 99_00)
+      sign_in_as(user)
+
+      get edit_event_path(event, tab: "details")
+
+      expect(response.body).to include("Low balance alert").and include('value="75.00"')
+      expect(response.body).not_to include("99.00")
+    end
+  end
+
   describe "POST /ledgers/:ledger_id/balance_observer" do
     it "requires access to the ledger" do
       sign_in_as(user)
