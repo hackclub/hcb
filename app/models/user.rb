@@ -458,10 +458,10 @@ class User < ApplicationRecord
     User.find_by(id: self.versions.where_object_changes_from(locked_at: nil).last&.whodunnit)
   end
 
-  def lock!(freeze_cards: false)
+  def lock!
     update!(locked_at: Time.now)
 
-    stripe_cards.active.each { |card| card.freeze! } if freeze_cards
+    stripe_cards.active.find_each(&:freeze!)
 
     # Invalidate all sessions
     user_sessions.update_all(signed_out_at: Time.now, expiration_at: Time.now)

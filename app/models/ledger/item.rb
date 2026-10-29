@@ -146,6 +146,12 @@ class Ledger
     # use other variants. Mirrors CanonicalTransaction#likely_account_verification_related?.
     ACCOUNT_VERIFICATION_MEMO_MATCHES = %w[acctverify verify validation sdv-vrfy amts:].freeze
 
+    # SQL counterpart of #likely_account_verification_related?
+    scope :not_likely_account_verification_related, -> {
+      where.not("ABS(ledger_items.amount_cents) < 100 AND ledger_items.linked_object_type IS NULL AND ledger_items.memo ILIKE ANY (ARRAY[?])",
+                ACCOUNT_VERIFICATION_MEMO_MATCHES.map { |s| "%#{sanitize_sql_like(s)}%" })
+    }
+
     # Account-verification micro-deposit amounts prove ownership of a linked
     # external account, so they're redacted from non-organizer (transparency)
     # viewers, matching the legacy transactions page. These arrive as raw bank
