@@ -42,7 +42,7 @@ module FeeReimbursementService
     # the statement descriptor, which is how each bank debit finds the group's
     # ledger item when it comes in.
     def fee_reimbursement_group
-      @fee_reimbursement_group ||= FeeReimbursementGroup.find_or_create_by!(week: Time.now.strftime(FeeReimbursementGroup::WEEK_FORMAT))
+      @fee_reimbursement_group ||= FeeReimbursementGroup.find_or_create_by!(slug: Time.now.strftime(FeeReimbursementGroup::WEEK_FORMAT))
     end
 
   end

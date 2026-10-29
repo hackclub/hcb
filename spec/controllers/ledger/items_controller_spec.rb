@@ -136,7 +136,7 @@ RSpec.describe Ledger::ItemsController, type: :controller do
     it "renders a fee reimbursement group with the reimbursements topped up that week" do
       create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
       allow_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)
-      group = create(:fee_reimbursement_group, week: "2026_42")
+      group = create(:fee_reimbursement_group, slug: "2026_42")
       invoice = create(:invoice)
       create(:fee_reimbursement, invoice:, fee_reimbursement_group: group, amount: 1_23)
       create_session(create(:user, :make_auditor), verified: true)

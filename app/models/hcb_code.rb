@@ -545,7 +545,7 @@ class HcbCode < ApplicationRecord
   end
 
   def fee_reimbursement_group
-    @fee_reimbursement_group ||= FeeReimbursementGroup.find_by(week: hcb_i2) if outgoing_fee_reimbursement?
+    @fee_reimbursement_group ||= FeeReimbursementGroup.find_by(slug: hcb_i2) if outgoing_fee_reimbursement?
   end
 
   def card_charge

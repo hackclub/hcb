@@ -5,13 +5,13 @@
 # Table name: fee_reimbursement_groups
 #
 #  id         :bigint           not null, primary key
-#  week       :string           not null
+#  slug       :string           not null
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
 #
 # Indexes
 #
-#  index_fee_reimbursement_groups_on_week  (week) UNIQUE
+#  index_fee_reimbursement_groups_on_slug  (slug) UNIQUE
 #
 
 # Every Stripe fee reimbursement topped up in the same ISO week shares one
@@ -31,7 +31,7 @@ class FeeReimbursementGroup < ApplicationRecord
   has_many :fee_reimbursements
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
 
-  validates :week, presence: true, uniqueness: true, format: { with: WEEK_REGEX }
+  validates :slug, presence: true, uniqueness: true, format: { with: WEEK_REGEX }
 
   after_create_commit :assign_ledger_item!
 
@@ -39,7 +39,7 @@ class FeeReimbursementGroup < ApplicationRecord
     [
       ::TransactionGroupingEngine::Calculate::HcbCode::HCB_CODE,
       ::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_FEE_REIMBURSEMENT_CODE,
-      week
+      slug
     ].join(::TransactionGroupingEngine::Calculate::HcbCode::SEPARATOR)
   end
 
@@ -53,7 +53,7 @@ class FeeReimbursementGroup < ApplicationRecord
 
   # Monday of the group's week
   def start_date
-    year, week_number = week.split("_").map(&:to_i)
+    year, week_number = slug.split("_").map(&:to_i)
     Date.commercial(year, week_number, 1)
   end
 

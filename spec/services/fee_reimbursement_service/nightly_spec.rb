@@ -20,7 +20,7 @@ RSpec.describe FeeReimbursementService::Nightly do
 
     expect { described_class.new.run }.to change(FeeReimbursementGroup, :count).by(1).and change(StripeTopup, :count).by(2)
 
-    group = FeeReimbursementGroup.find_by!(week: this_week)
+    group = FeeReimbursementGroup.find_by!(slug: this_week)
     expect(group.fee_reimbursements).to contain_exactly(first, second)
     expect(group.ledger_item.status).to eq("intended")
 
@@ -35,7 +35,7 @@ RSpec.describe FeeReimbursementService::Nightly do
   end
 
   it "reuses this week's existing group" do
-    group = create(:fee_reimbursement_group, week: this_week)
+    group = create(:fee_reimbursement_group, slug: this_week)
     fee_reimbursement = create(:fee_reimbursement)
 
     expect { described_class.new.run }.not_to change(FeeReimbursementGroup, :count)

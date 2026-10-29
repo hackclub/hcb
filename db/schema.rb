@@ -1214,9 +1214,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_183000) do
 
   create_table "fee_reimbursement_groups", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.string "slug", null: false
     t.datetime "updated_at", null: false
-    t.string "week", null: false
-    t.index ["week"], name: "index_fee_reimbursement_groups_on_week", unique: true
+    t.index ["slug"], name: "index_fee_reimbursement_groups_on_slug", unique: true
   end
 
   create_table "fee_reimbursements", force: :cascade do |t|
