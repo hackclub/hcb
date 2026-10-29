@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_02_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_21_183000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -613,6 +613,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_02_120100) do
     t.string "emoji", null: false
     t.bigint "reactor_id", null: false
     t.datetime "updated_at", null: false
+    t.index ["comment_id", "reactor_id", "emoji"], name: "index_comment_reactions_unique_live_reaction", unique: true, where: "(deleted_at IS NULL)"
     t.index ["comment_id"], name: "index_comment_reactions_on_comment_id"
     t.index ["deleted_at"], name: "index_comment_reactions_on_deleted_at"
     t.index ["emoji"], name: "index_comment_reactions_on_emoji"
@@ -727,6 +728,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_02_120100) do
     t.bigint "source_event_id"
     t.bigint "source_subledger_id"
     t.bigint "source_transaction_category_id"
+    t.string "transfer_type"
     t.datetime "updated_at", precision: nil, null: false
     t.index ["destination_subledger_id"], name: "index_disbursements_on_destination_subledger_id"
     t.index ["destination_transaction_category_id"], name: "index_disbursements_on_destination_transaction_category_id"
@@ -1615,6 +1617,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_02_120100) do
     t.integer "ct_count", default: 0, null: false
     t.text "custom_memo"
     t.datetime "datetime", null: false
+    t.datetime "intended_at"
     t.bigint "linked_object_id"
     t.string "linked_object_type"
     t.datetime "marked_no_or_lost_receipt_at"
@@ -1672,6 +1675,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_02_120100) do
     t.datetime "archived_at"
     t.string "banned_reason"
     t.datetime "created_at", null: false
+    t.boolean "electronic_consent"
+    t.datetime "electronic_consent_at"
     t.string "entity_type"
     t.bigint "managing_event_id"
     t.string "name"
@@ -2490,6 +2495,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_02_120100) do
     t.index ["user_id"], name: "index_reimbursement_reports_on_user_id"
   end
 
+  create_table "repayments", force: :cascade do |t|
+    t.integer "amount_cents", null: false
+    t.datetime "created_at", null: false
+    t.bigint "disbursement_id", null: false
+    t.bigint "ledger_item_id", null: false
+    t.jsonb "previous_categories", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["disbursement_id", "ledger_item_id"], name: "index_repayments_on_disbursement_id_and_ledger_item_id", unique: true
+    t.index ["disbursement_id"], name: "index_repayments_on_disbursement_id"
+    t.index ["ledger_item_id"], name: "index_repayments_on_ledger_item_id"
+  end
+
   create_table "sponsors", force: :cascade do |t|
     t.text "address_city"
     t.text "address_country", default: "US"
@@ -2966,6 +2983,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_02_120100) do
   create_table "versions", force: :cascade do |t|
     t.datetime "created_at", precision: nil
     t.string "event", null: false
+    t.bigint "impersonated_by_id"
     t.bigint "item_id", null: false
     t.string "item_type", null: false
     t.jsonb "object"
@@ -3248,6 +3266,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_02_120100) do
   add_foreign_key "reimbursement_reports", "legal_entity_payout_methods", on_delete: :nullify
   add_foreign_key "reimbursement_reports", "users"
   add_foreign_key "reimbursement_reports", "users", column: "invited_by_id"
+  add_foreign_key "repayments", "disbursements"
+  add_foreign_key "repayments", "ledger_items"
   add_foreign_key "sponsors", "events"
   add_foreign_key "stripe_authorizations", "stripe_cards"
   add_foreign_key "stripe_card_personalization_designs", "events"

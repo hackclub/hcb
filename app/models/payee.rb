@@ -40,7 +40,7 @@ class Payee < ApplicationRecord
   validates_uniqueness_of :legal_entity_id, scope: [:event_id], allow_nil: true
 
   validate :managed_legal_entity_constraints
-  validate :email_frozen, if: -> { legal_entity.present? }
+  validate :email_frozen, if: -> { email_frozen? }
 
   normalizes :email, with: ->(email) { email.strip.downcase }
 
@@ -97,6 +97,10 @@ class Payee < ApplicationRecord
   # Whether this payee was imported from the old transfer system.
   def imported?
     imported_at.present?
+  end
+
+  def email_frozen?
+    legal_entity.present? && !legal_entity.managed?
   end
 
   private

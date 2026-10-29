@@ -44,7 +44,10 @@
       </tr>
       <tr>
         <td class="text-right">Requested by:</td>
-        <td><%= user_mention @disbursement.requested_by %></td>
+        <td>
+          <%= user_mention @disbursement.requested_by %>
+          <%= "(⚠️ NOT A MEMBER OF #{@disbursement.destination_event.name.upcase})" if @disbursement.requested_by && !OrganizerPosition.role_at_least?(@disbursement.requested_by, @disbursement.destination_event, :reader) %>
+        </td>
       </tr>
       <tr>
         <td class="text-right">
