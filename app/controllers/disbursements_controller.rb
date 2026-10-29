@@ -45,7 +45,8 @@ class DisbursementsController < ApplicationController
       destination_event: @destination_event,
       source_event: @source_event,
       amount: params[:amount],
-      name: params[:message]
+      name: params[:message],
+      transfer_type: params[:transfer_type]
     )
 
     authorize @disbursement
