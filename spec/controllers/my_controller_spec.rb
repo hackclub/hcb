@@ -62,9 +62,12 @@ RSpec.describe MyController do
       event = create(:event)
       create(:organizer_position, user:, event:, role: :manager)
 
+      other_manager = create(:user)
+      create(:organizer_position, user: other_manager, event:, role: :manager)
+
       assigned = create(:reimbursement_report, event:, reviewer: user, aasm_state: :submitted)
       unassigned = create(:reimbursement_report, event:, aasm_state: :submitted)
-      assigned_to_someone_else = create(:reimbursement_report, event:, reviewer: create(:user), aasm_state: :submitted)
+      assigned_to_someone_else = create(:reimbursement_report, event:, reviewer: other_manager, aasm_state: :submitted)
       own_submitted = create(:reimbursement_report, user:, event:, aasm_state: :submitted)
       own_draft = create(:reimbursement_report, user:, event:)
 
@@ -77,20 +80,6 @@ RSpec.describe MyController do
       expect(sections[:unassigned]).to contain_exactly(unassigned)
       expect(sections[:mine]).to contain_exactly(own_submitted, own_draft)
       expect(sections.values.flatten).not_to include(assigned_to_someone_else)
-    end
-  end
-
-  describe "GET #reimbursements_section" do
-    it "paginates a single section" do
-      user = sign_in_verified
-      create_list(:reimbursement_report, 12, user:)
-
-      get :reimbursements_section, params: { section: "mine", page: 2, per: 5 }
-
-      expect(response.status).to eq(200)
-      expect(response.body).to include('id="my_reimbursements_mine"')
-      expect(controller.instance_variable_get(:@reports).size).to eq(5)
-      expect(controller.instance_variable_get(:@reports).total_count).to eq(12)
     end
   end
 

@@ -12,3 +12,7 @@ Ahoy.api = true
 Ahoy.geocode = false
 
 Ahoy.exclude_method = ->(controller, request) { true }
+
+# Nothing in the browser needs to read these (the analytics Stimulus
+# controller only posts events), so keep them out of reach of scripts.
+Ahoy.cookie_options = { httponly: true }

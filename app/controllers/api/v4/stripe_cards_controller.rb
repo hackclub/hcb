@@ -31,7 +31,7 @@ module Api
 
       def create
         event = Event.find_by_public_id(params[:card][:organization_id]) || Event.friendly.find(params[:card][:organization_id])
-        authorize event, :create_stripe_card?, policy_class: EventPolicy
+        authorize event, :create_stripe_card?, policy_class: ::EventPolicy
 
         card = params.require(:card).permit(
           :organization_id,
@@ -117,7 +117,7 @@ module Api
       def card_designs
         if params[:event_id].present?
           set_api_event
-          authorize @event, :create_stripe_card?, policy_class: EventPolicy
+          authorize @event, :create_stripe_card?, policy_class: ::EventPolicy
 
           @designs = [@event.stripe_card_personalization_designs&.available, StripeCard::PersonalizationDesign.common.available].flatten.compact
         else
@@ -133,6 +133,10 @@ module Api
 
         if @stripe_card.canceled?
           return render json: { error: "Card is canceled." }, status: :unprocessable_content
+        end
+
+        if @stripe_card.frozen?
+          return render json: { error: "Card is already frozen." }, status: :unprocessable_content
         end
 
         @stripe_card.freeze!(frozen_by: current_user)
