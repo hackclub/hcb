@@ -259,12 +259,39 @@ class Receipt < ApplicationRecord
 
   def tesseract_ocr_text
     file.blob.open do |tempfile|
-      words = ::RTesseract.new(ImageProcessing::MiniMagick.source(tempfile.path).convert!("png").path).to_box
+      png = ImageProcessing::MiniMagick.source(tempfile.path).convert!("png")
+
+      # People often photograph receipts sideways or upside down. Tesseract
+      # reads rotated text fine, but the image is then shown sideways to
+      # everyone reviewing it. Since we already have the image open here, fix
+      # the stored file and OCR the corrected version.
+      if (rotation = ::ReceiptService::DetectRotation.new(path: png.path).run)
+        rotate_file!(tempfile.path, rotation)
+        png = ImageProcessing::MiniMagick.source(png.path).rotate(rotation).call
+      end
+
+      words = ::RTesseract.new(png.path).to_box
       words = words.select { |w| w[:confidence] > 85 }
       words = words.map { |w| w[:word] }
       text = words.join(" ")
       text.length > 50 ? text : nil
     end
+  end
+
+  # Replaces the attached file with a copy rotated clockwise by `degrees`.
+  # PNGs and JPEGs keep their format; anything else (HEIC, WebP, TIFF, ...)
+  # is written out as a JPEG since ImageMagick can't reliably encode them all.
+  def rotate_file!(source_path, degrees)
+    keep_format = file.content_type.in?(%w[image/png image/jpeg])
+
+    pipeline = ImageProcessing::MiniMagick.source(source_path).rotate(degrees)
+    pipeline = pipeline.convert("jpg") unless keep_format
+
+    file.attach(
+      io: pipeline.call,
+      filename: keep_format ? file.filename.to_s : "#{file.filename.base}.jpg",
+      content_type: keep_format ? file.content_type : "image/jpeg"
+    )
   end
 
   def has_owner
