@@ -845,8 +845,10 @@ class Event < ApplicationRecord
     last_fee_processed_at.nil? || last_fee_processed_at <= MIN_WAITING_TIME_BETWEEN_FEES.ago
   end
 
-  def total_fees_v2_cents
-    @total_fees_v2_cents ||= fees.sum(:amount_cents_as_decimal).ceil
+  def total_fees_v2_cents(start_date: nil, end_date: nil)
+    return @total_fees_v2_cents ||= fees.sum(:amount_cents_as_decimal).ceil unless start_date || end_date
+
+    fees.where(created_at: start_date..end_date).sum(:amount_cents_as_decimal).ceil
   end
 
   # Fiscal sponsorship fees charged by the fee engine, at whatever rate the
@@ -1095,11 +1097,7 @@ class Event < ApplicationRecord
     scoped_tags.where(parent_event_id: parent_id)
   end
 
-  # `admin` is required rather than defaulted, so a caller cannot silently
-  # render a different label than the search endpoint returns.
-  def to_combobox_display(admin:)
-    return "#{name} (ID: #{id})" if admin
-
+  def to_combobox_display
     name
   end
 

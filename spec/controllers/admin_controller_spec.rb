@@ -89,27 +89,26 @@ RSpec.describe AdminController do
       expect(option).to include("value" => event.id.to_s, "sublabel" => event.slug)
     end
 
-    # The dropdown labels have to match what `combobox_tag` renders for the
-    # preselected value, or re-picking the same org silently changes the text.
-    it "labels options with the admin display for an admin" do
+    it "badges options with the ID for an admin, leaving the label plain" do
       admin = create(:user, :make_admin)
       create_session(admin, verified: true)
       event = create(:event, name: "Hack Club HQ")
 
       get(:event_search, params: { q: "Hack Club HQ" }, format: :json)
 
-      labels = JSON.parse(response.body).map { |o| o["label"] }
-      expect(labels).to include("Hack Club HQ (ID: #{event.id})")
+      option = JSON.parse(response.body).find { |o| o["value"] == event.id.to_s }
+      expect(option).to include("label" => "Hack Club HQ", "badge" => "ID: #{event.id}")
     end
 
-    it "labels options with the plain name for a non-admin auditor" do
+    it "never shows a non-admin auditor the ID" do
       auditor = create(:user, :make_auditor)
       create_session(auditor, verified: true)
-      create(:event, name: "Hack Club HQ")
+      event = create(:event, name: "Hack Club HQ")
 
       get(:event_search, params: { q: "Hack Club HQ" }, format: :json)
 
-      expect(JSON.parse(response.body).map { |o| o["label"] }).to include("Hack Club HQ")
+      option = JSON.parse(response.body).find { |o| o["value"] == event.id.to_s }
+      expect(option).to include("label" => "Hack Club HQ", "badge" => nil)
     end
 
     it "paginates results without overlap across pages" do
@@ -143,9 +142,7 @@ RSpec.describe AdminController do
   end
 
   describe "#user_search" do
-    # The admin label spells out the email and ID, so repeating them in the
-    # sublabel wrapped every row to several lines.
-    it "gives an admin the detailed label and no redundant sublabel" do
+    it "gives an admin the name, the email beneath it and the ID as a badge" do
       admin = create(:user, :make_admin)
       create_session(admin, verified: true)
       user = create(:user, full_name: "Jane Doe")
@@ -154,11 +151,10 @@ RSpec.describe AdminController do
 
       expect(response).to have_http_status(:ok)
       option = JSON.parse(response.body).find { |o| o["value"] == user.id.to_s }
-      expect(option["label"]).to eq("Jane Doe (Email: #{user.email}, ID: #{user.id})")
-      expect(option["sublabel"]).to be_nil
+      expect(option).to include("label" => "Jane Doe", "sublabel" => user.email, "badge" => "ID: #{user.id}")
     end
 
-    it "gives a non-admin auditor the plain name with the email as a sublabel" do
+    it "never shows a non-admin auditor the ID" do
       auditor = create(:user, :make_auditor)
       create_session(auditor, verified: true)
       user = create(:user, full_name: "Jane Doe")
@@ -166,8 +162,22 @@ RSpec.describe AdminController do
       get(:user_search, params: { q: "Jane Doe" }, format: :json)
 
       option = JSON.parse(response.body).find { |o| o["value"] == user.id.to_s }
-      expect(option["label"]).to eq("Jane Doe")
-      expect(option["sublabel"]).to eq(user.email)
+      expect(option).to include("label" => "Jane Doe", "sublabel" => user.email, "badge" => nil)
+    end
+
+    # A label with leading or trailing space never equals the trimmed input, so
+    # picking that user was undone the moment the field lost focus.
+    it "labels nameless and space-padded users with trimmed text" do
+      admin = create(:user, :make_admin)
+      create_session(admin, verified: true)
+      nameless = create(:user, full_name: nil)
+      padded = create(:user, full_name: "Jane Doe ")
+
+      get(:user_search, format: :json)
+
+      options = JSON.parse(response.body).index_by { |o| o["value"] }
+      expect(options[nameless.id.to_s]).to include("label" => nameless.email, "sublabel" => nil)
+      expect(options[padded.id.to_s]).to include("label" => "Jane Doe", "sublabel" => padded.email)
     end
 
     it "paginates results without overlap across pages" do

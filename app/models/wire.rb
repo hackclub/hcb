@@ -52,6 +52,9 @@ class Wire < ApplicationRecord
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :recipient_email]
+  # For viewers who can't see the recipient's email (see
+  # `EventsController#transfers`).
+  pg_search_scope :public_search_recipient, against: [:recipient_name]
   has_encrypted :account_number, :bic_code
   blind_index :account_number, :bic_code
 
@@ -209,6 +212,7 @@ class Wire < ApplicationRecord
       wire: {
         beneficiary_name: recipient_name,
         beneficiary_email: recipient_email,
+        beneficiary_phone:,
         beneficiary_address: {
           line_1: address_line1,
           line_2: address_line2,
@@ -256,6 +260,15 @@ class Wire < ApplicationRecord
     return nil unless column_id.present?
 
     @column_wire_details ||= ColumnService.international_wire(column_id)
+  end
+
+  private
+
+  def beneficiary_phone
+    phone = recipient_information["phone"]
+    return nil if phone.blank?
+
+    Phonelib.parse(phone, recipient_country).e164.presence || phone
   end
 
 end

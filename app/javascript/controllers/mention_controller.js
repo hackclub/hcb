@@ -1,4 +1,6 @@
 import { Controller } from '@hotwired/stimulus'
+import submitForm from '../common/submitForm'
+import showConfirm from '../confirm'
 
 export default class extends Controller {
   static values = { email: String }
@@ -18,5 +20,9 @@ export default class extends Controller {
     setTimeout(() => {
       label.innerText = 'Copy email'
     }, 1500)
+  }
+
+  async impersonate({ params: { url } }) {
+    if (await showConfirm()) submitForm(url, {})
   }
 }

@@ -26,6 +26,82 @@ RSpec.describe EventsController do
     "event_balance_#{event.public_id}"
   end
 
+  def table_container_rows(body)
+    Nokogiri::HTML5(body).css("article.table-container tbody tr")
+  end
+
+  # Building a wire looks its BIC up at Column.
+  def stub_column_institution_lookup
+    stub_request(:get, /api\.column\.com\/institutions\//).to_return_json(status: 200, body: { country_code: "DE" })
+  end
+
+  # PayPal transfers currently fail validation on create (see the model), so
+  # one has to be written without it.
+  def create_paypal_transfer(event, recipient_name, recipient_email)
+    PaypalTransfer.new(event:, user: create(:user), amount_cents: 10_00, memo: "PayPal transfer", payment_for: "Stickers", recipient_name:, recipient_email:).tap do |transfer|
+      transfer.save!(validate: false)
+    end
+  end
+
+  def create_wise_transfer(event, recipient_name, recipient_email)
+    WiseTransfer.create!(
+      event:,
+      user: create(:user),
+      amount_cents: 100_00,
+      currency: "GBP",
+      recipient_country: "GB",
+      recipient_name:,
+      recipient_email:,
+      payment_for: "Speaker fee",
+      # Set so the after_create hook skips generate_quote!, which would
+      # otherwise reach for a live exchange rate.
+      quoted_usd_amount_cents: 130_00,
+      usd_amount_cents: 130_00
+    )
+  end
+
+  # Recipient emails are never rendered on the transfers and payments pages,
+  # so a search that matched on them would confirm to any visitor of a public
+  # organization that a given address was paid. `recipients` maps a label to
+  # the `[name, email]` of a record the including context has created.
+  shared_examples "a recipient search that only matches emails for organizers" do |action, recipients|
+    context "as a signed out visitor" do
+      recipients.each do |label, (name, email)|
+        it "matches a #{label} by recipient name" do
+          get(action, params: { event_id: event.slug, q: name })
+
+          expect(response).to have_http_status(:ok)
+          rows = table_container_rows(response.body)
+          expect(rows.size).to eq(1)
+          expect(rows.first.text).to include(name)
+          expect(response.body).not_to include(email)
+        end
+
+        it "does not match a #{label} by recipient email" do
+          get(action, params: { event_id: event.slug, q: email })
+
+          expect(response).to have_http_status(:ok)
+          expect(table_container_rows(response.body)).to be_empty
+        end
+      end
+    end
+
+    context "as an organizer" do
+      before { sign_in_organizer_of(event) }
+
+      recipients.each do |label, (name, email)|
+        it "matches a #{label} by recipient email" do
+          get(action, params: { event_id: event.slug, q: email })
+
+          expect(response).to have_http_status(:ok)
+          rows = table_container_rows(response.body)
+          expect(rows.size).to eq(1)
+          expect(rows.first.text).to include(name)
+        end
+      end
+    end
+  end
+
   def sign_in_organizer_of(event)
     organizer = create(:user)
     create(:organizer_position, user: organizer, event:)
@@ -149,6 +225,23 @@ RSpec.describe EventsController do
       # branch, so its presence proves @disbursements are Outgoing lenses and the
       # branch renders the destination event.
       expect(response.body).to include("Receiving Organization")
+    end
+
+    context "when searching recipients" do
+      let(:event) { create(:event, :with_positive_balance, plan_type: Event::Plan::Standard, is_public: true) }
+
+      before do
+        stub_column_institution_lookup
+        create(:wire, event:, recipient_name: "Wanda Wire", recipient_email: "wanda.wire@example.com")
+        create_paypal_transfer(event, "Paula Paypal", "paula.paypal@example.com")
+        create_wise_transfer(event, "Wilma Wise", "wilma.wise@example.com")
+      end
+
+      include_examples "a recipient search that only matches emails for organizers", :transfers, {
+        "wire"            => ["Wanda Wire", "wanda.wire@example.com"],
+        "PayPal transfer" => ["Paula Paypal", "paula.paypal@example.com"],
+        "Wise transfer"   => ["Wilma Wise", "wilma.wise@example.com"],
+      }
     end
   end
 
@@ -293,6 +386,26 @@ RSpec.describe EventsController do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Receiving Organization")
     end
+
+    context "when searching recipients" do
+      let(:event) { create(:event, :with_positive_balance, plan_type: Event::Plan::Standard, is_public: true) }
+
+      before do
+        Flipper.enable(:payments_contractors_refresh_2026_06_26, event)
+        stub_column_institution_lookup
+        create(:wire, event:, recipient_name: "Wanda Wire", recipient_email: "wanda.wire@example.com")
+        create_paypal_transfer(event, "Paula Paypal", "paula.paypal@example.com")
+        create_wise_transfer(event, "Wilma Wise", "wilma.wise@example.com")
+        create(:payment, payee: create(:payee, event:, display_name: "Penny Payment", email: "penny.payment@example.com"))
+      end
+
+      include_examples "a recipient search that only matches emails for organizers", :payments, {
+        "wire"            => ["Wanda Wire", "wanda.wire@example.com"],
+        "PayPal transfer" => ["Paula Paypal", "paula.paypal@example.com"],
+        "Wise transfer"   => ["Wilma Wise", "wilma.wise@example.com"],
+        "payment"         => ["Penny Payment", "penny.payment@example.com"],
+      }
+    end
   end
 
   describe "#donation_overview" do
@@ -343,6 +456,20 @@ RSpec.describe EventsController do
         expect(rows.first.text).to include("Jane Jones")
         expect(rows.first.text).not_to include("Anonymous")
       end
+
+      it "does not match donors who are not anonymous by email" do
+        get(:donation_overview, params: { event_id: event.slug, q: "jane.jones@example.com" })
+
+        expect(response).to have_http_status(:ok)
+        expect(donation_rows(response.body)).to be_empty
+      end
+
+      it "does not match donors who are not anonymous by an email prefix" do
+        get(:donation_overview, params: { event_id: event.slug, q: "jane.jo" })
+
+        expect(response).to have_http_status(:ok)
+        expect(donation_rows(response.body)).to be_empty
+      end
     end
 
     context "as an organizer" do
@@ -364,6 +491,67 @@ RSpec.describe EventsController do
         rows = donation_rows(response.body)
         expect(rows.size).to eq(1)
         expect(rows.first.text).to include("Jane Appleseed")
+      end
+
+      it "matches donors who are not anonymous by email" do
+        get(:donation_overview, params: { event_id: event.slug, q: "jane.jones@example.com" })
+
+        expect(response).to have_http_status(:ok)
+        rows = donation_rows(response.body)
+        expect(rows.size).to eq(1)
+        expect(rows.first.text).to include("Jane Jones")
+      end
+    end
+  end
+
+  describe "#contractors" do
+    render_views
+
+    let(:event) { create(:event, plan_type: Event::Plan::Standard, is_public: true) }
+
+    before do
+      Flipper.enable(:payments_contractors_refresh_2026_06_26, event)
+      create(:payroll_position, payee: create(:payee, event:, display_name: "Casey Contractor", email: "casey.contractor@example.com"))
+    end
+
+    context "as a signed out visitor" do
+      it "matches contractors by name" do
+        get(:contractors, params: { event_id: event.slug, q: "Casey" })
+
+        expect(response).to have_http_status(:ok)
+        rows = table_container_rows(response.body)
+        expect(rows.size).to eq(1)
+        expect(rows.first.text).to include("Casey Contractor")
+        expect(response.body).not_to include("casey.contractor@example.com")
+      end
+
+      it "does not match contractors by email" do
+        get(:contractors, params: { event_id: event.slug, q: "casey.contractor@example.com" })
+
+        expect(response).to have_http_status(:ok)
+        expect(table_container_rows(response.body)).to be_empty
+      end
+
+      # The scope matches prefixes, so without this the email could be
+      # enumerated a few characters at a time.
+      it "does not match contractors by an email prefix" do
+        get(:contractors, params: { event_id: event.slug, q: "casey.con" })
+
+        expect(response).to have_http_status(:ok)
+        expect(table_container_rows(response.body)).to be_empty
+      end
+    end
+
+    context "as an organizer" do
+      before { sign_in_organizer_of(event) }
+
+      it "matches contractors by email" do
+        get(:contractors, params: { event_id: event.slug, q: "casey.contractor@example.com" })
+
+        expect(response).to have_http_status(:ok)
+        rows = table_container_rows(response.body)
+        expect(rows.size).to eq(1)
+        expect(rows.first.text).to include("Casey Contractor")
       end
     end
   end
@@ -945,6 +1133,17 @@ RSpec.describe EventsController do
 
       images = Nokogiri::HTML5(response.body).css("meta[property='og:image']").map { |tag| tag["content"] }
       expect(images).to eq(["https://hcb-og.hackclub.com/api/embeds/#{event.slug}"])
+    end
+
+    it "gives Slack's link expander the square Open Graph image" do
+      event = create(:event, is_public: true)
+      request.headers["User-Agent"] = "Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)"
+
+      get(:show, params: { id: event.slug })
+
+      page = Nokogiri::HTML5(response.body)
+      expect(page.at_css("meta[property='og:image']")["content"]).to eq("https://hcb-og.hackclub.com/api/square-embed/#{event.slug}")
+      expect(page.at_css("meta[name='twitter:image']")["content"]).to eq("https://hcb-og.hackclub.com/api/square-embed/#{event.slug}")
     end
 
     context "when the viewer is an auditor" do
