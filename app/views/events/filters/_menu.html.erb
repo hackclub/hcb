@@ -53,7 +53,7 @@
                 data-date-range-picker-initial-end-value="<%= params["#{filter[:key_base]}_before"] %>"
                 data-date-range-picker-name-start-value="<%= filter[:key_base] %>_after"
                 data-date-range-picker-name-end-value="<%= filter[:key_base] %>_before"></div>
-              <% link_query_parameters.except("#{filter[:key_base]}_before", "#{filter[:key_base]}_after").each do |k, v| %>
+              <% request.query_parameters.except("#{filter[:key_base]}_before", "#{filter[:key_base]}_after").each do |k, v| %>
                 <%= hidden_field_tag k, v %>
               <% end %>
             <% end %>
@@ -70,7 +70,7 @@
                 <div data-range-slider-target="root" class="w-full select-none"></div>
               </div>
 
-              <% link_query_parameters.except("#{filter[:key_base]}_less_than", "#{filter[:key_base]}_greater_than").each do |k, v| %>
+              <% request.query_parameters.except("#{filter[:key_base]}_less_than", "#{filter[:key_base]}_greater_than").each do |k, v| %>
                 <%= hidden_field_tag k, v %>
               <% end %>
 
