@@ -7,6 +7,7 @@ class User
       @subordinates = subordinates
 
       @subordinate_stats = subordinates.map { |subordinate| user_stats(subordinate) }
+      @delivery_reason = "you manage direct reports who spend with HCB cards."
 
       mail to: manager.email, subject: "Your weekly direct report transaction summary"
     end
