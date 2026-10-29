@@ -213,6 +213,7 @@ class Wire < ApplicationRecord
         beneficiary_name: recipient_name,
         beneficiary_email: recipient_email,
         beneficiary_phone:,
+        beneficiary_phone:,
         beneficiary_address: {
           line_1: address_line1,
           line_2: address_line2,
