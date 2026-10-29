@@ -264,11 +264,16 @@ class Wire < ApplicationRecord
 
   private
 
+  # Column wants a leading `+` with dashes after the country code, e.g.
+  # `+55-21-99999-9999`
   def beneficiary_phone
     phone = recipient_information["phone"]
     return nil if phone.blank?
 
-    Phonelib.parse(phone, recipient_country).e164.presence || phone
+    parsed = Phonelib.parse(phone, recipient_country)
+    return phone unless parsed.valid?
+
+    parsed.international.tr(" ", "-")
   end
 
 end
