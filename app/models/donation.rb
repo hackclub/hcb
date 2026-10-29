@@ -80,6 +80,8 @@ class Donation < ApplicationRecord
 
   include PgSearch::Model
   pg_search_scope :search_name, against: [:name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "donations.created_at"
+  # For viewers who can't see the donor's email (see `EventsController#donation_overview`).
+  pg_search_scope :public_search_name, against: [:name], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "donations.created_at"
 
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
@@ -332,6 +334,18 @@ class Donation < ApplicationRecord
 
   def email
     recurring_donation&.email || super
+  end
+
+  def update_donor_details(attrs)
+    attrs = attrs.to_h.symbolize_keys
+    return false unless update(attrs.slice(:name, :anonymous))
+
+    if recurring_donation
+      recurring_donation.update(attrs.slice(:name, :anonymous))
+      recurring_donation.sync_stripe_customer!
+    end
+
+    true
   end
 
   def referrer_domain
