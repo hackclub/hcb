@@ -1,4 +1,4 @@
-/* global BK, $ */
+/* global BK, $, Turbo */
 
 // eslint-disable-next-line no-unused-vars
 const whenViewed = (element, callback) =>
@@ -89,6 +89,16 @@ document.addEventListener('turbo:load', () => {
   if (!openPopoverFromUrl()) {
     document.addEventListener('turbo:frame-load', openPopoverWhenFrameLoads)
   }
+})
+
+// Pages loaded with ?popover= echo it into links built from the query string
+document.addEventListener('turbo:before-visit', event => {
+  const url = new URL(event.detail.url)
+  if ($.modal.isActive() || !url.searchParams.has('popover')) return
+
+  event.preventDefault()
+  url.searchParams.delete('popover')
+  Turbo.visit(url.href)
 })
 
 document.addEventListener('turbo:before-fetch-response', async event => {
