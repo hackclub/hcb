@@ -10,5 +10,10 @@ And, Rails has a hard time with the email HTML when passed through ERB, so we
 respond with the email HTML directly in the controller action.
 %>
 <%= turbo_frame_tag dom_id(@message) do %>
+  <% if @message.sensitive? %>
+    <p class="muted mb-2">
+      This email contains sensitive information. Only superadmins can view it.
+    </p>
+  <% end %>
   <iframe sandbox="" loading="lazy" src="<%= url_for(controller: "admin", action: "email_html", message_id: @message.id) %>" class="w-full h-full absolute border-none -mt-8 -ml-8 pb-24">iframes are not supported</iframe>
 <% end %>
