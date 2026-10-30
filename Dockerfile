@@ -11,11 +11,13 @@ RUN apt-get -y update -qq
 RUN apt-get -y install postgresql-client vim poppler-utils
 ENV EDITOR=vim
 
-# Install node24 & yarn
+# Install Node from .node-version & yarn
+COPY .node-version /usr/src/app/.node-version
 
-RUN curl -fsSL https://deb.nodesource.com/setup_24.x -o nodesource_setup.sh && \
+RUN NODE_VERSION=$(cat .node-version) && \
+  curl -fsSL "https://deb.nodesource.com/setup_${NODE_VERSION%%.*}.x" -o nodesource_setup.sh && \
   bash nodesource_setup.sh && \
-  apt-get install -y nodejs
+  apt-get install -y "nodejs=${NODE_VERSION}-1nodesource1"
 
 RUN corepack enable
 
