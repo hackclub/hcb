@@ -43,10 +43,18 @@
 
 <% if @donation.recurring? %>
   <p>
-    To cancel your <%= payment_term %> or update your payment details, click
-    <%= link_to "this link", recurring_donation_url(@donation.recurring_donation.url_hash) %>
-    .
+    <strong>Managing your monthly <%= payment_term %></strong><br>
+    You can cancel, change the amount, or update your payment details at any time:
   </p>
+  <ul>
+    <li>
+      Visit <%= link_to "your donation page", recurring_donation_url(@donation.recurring_donation.url_hash) %>, or
+    </li>
+    <li>
+      <%= link_to "Sign in to HCB", auth_users_url(email: @donation.email, return_to: my_recurring_donations_url) %>
+      with <strong><%= @donation.email %></strong> to see and manage all of your recurring <%= payment_term.pluralize %>.
+    </li>
+  </ul>
 <% end %>
 
 <p>If you have any questions or concerns, please reply directly to this email
