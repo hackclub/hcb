@@ -1011,7 +1011,7 @@ class AdminController < Admin::BaseController
     # Pending fees that haven't been converted to FeeRevenue yet
     # Pre-calculate fee balances to avoid calling fee_balance_v2_cents multiple times per event
     events_with_balances = Event.pending_fees_v2.map do |event|
-      { event: event, balance: event.fee_balance_v2_cents }
+      { event: event, balance: event.fronted_fee_balance_cents }
     end
 
     @uncharged_fees_events = events_with_balances.sort_by { |item| -item[:balance] }
