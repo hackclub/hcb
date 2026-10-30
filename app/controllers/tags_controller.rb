@@ -47,6 +47,25 @@ class TagsController < ApplicationController
     redirect_back fallback_location: @event
   end
 
+  def set_index
+    tag = @event.tags.find(params[:id])
+
+    authorize tag
+
+    index = params[:index]
+    tags = @event.tags.unscope(:includes).to_a
+    return head :bad_request unless index.is_a?(Integer) && index.between?(0, tags.size - 1)
+
+    tags.delete tag
+    tags.insert index, tag
+
+    ActiveRecord::Base.transaction do
+      tags.each_with_index { |t, idx| t.update_column(:sort_index, idx) }
+    end
+
+    head :ok
+  end
+
   def destroy
     tag = Tag.find(params[:id])
 

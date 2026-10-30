@@ -495,7 +495,8 @@ class Event < ApplicationRecord
   has_many :fees
   has_many :bank_fees
 
-  has_many :tags, -> { includes(:hcb_codes) }
+  # Unsorted (NULL) tags sort last, so newly created tags land at the end
+  has_many :tags, -> { includes(:hcb_codes).order(sort_index: :asc, id: :asc) }
   has_and_belongs_to_many :event_tags
 
   has_many :event_scoped_tags_events, class_name: "Event::ScopedTagsEvent", dependent: :destroy

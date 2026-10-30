@@ -1099,7 +1099,9 @@ Rails.application.routes.draw do
     get "fiscal_sponsorship_letter", to: "documents#fiscal_sponsorship_letter"
     get "verification_letter", to: "documents#verification_letter"
     resources :invoices, only: [:new, :create, :index]
-    resources :tags, only: [:create, :update, :destroy]
+    resources :tags, only: [:create, :update, :destroy] do
+      post :set_index, on: :member
+    end
     resources :event_tags, only: [:create, :destroy]
     resources :organizer_position_invites,
               only: [:new, :create],

@@ -46,12 +46,13 @@
   }
 }
 
+// `none` (unlike `translateY(0)`) leaves no containing block, so fixed children like drag mirrors stay put
 @keyframes blog-menu {
   from {
     transform: translateY(-10px);
   }
   to {
-    transform: translateY(0);
+    transform: none;
   }
 }
 @keyframes blog-menu-mobile {
@@ -59,7 +60,7 @@
     transform: translateY(10px);
   }
   to {
-    transform: translateY(0);
+    transform: none;
   }
 }
 
@@ -261,6 +262,16 @@
 .menu__content--switcher > a,
 .menu__content--switcher .menu__action {
   padding: 0.5rem !important;
+}
+
+.menu__content .draggable-mirror {
+  background-color: inherit;
+  border-radius: 6px;
+  box-shadow: var(--shadow-menu);
+}
+
+.menu__content .draggable-source--is-dragging {
+  opacity: 0.5;
 }
 
 .menu__divider {

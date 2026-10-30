@@ -153,6 +153,7 @@ export default class extends Controller {
           y: placement.includes('top') ? -12 : 12,
           opacity: 0.75,
           duration: 0.15,
+          clearProps: 'transform',
         })
       }
 
