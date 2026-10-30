@@ -36,7 +36,7 @@ RSpec.describe FeeReimbursementService::Nightly do
     created_at = 1.week.ago
     fee_reimbursement = travel_to(created_at) { create(:fee_reimbursement) }
     group = fee_reimbursement.reload.fee_reimbursement_group
-    expect(group.slug).to eq(created_at.strftime(FeeReimbursementGroup::WEEK_FORMAT))
+    expect(group.slug).to eq(created_at.strftime(FeeReimbursementGroup::SLUG_FORMAT))
 
     expect { described_class.new.run }.not_to change(FeeReimbursementGroup, :count)
 

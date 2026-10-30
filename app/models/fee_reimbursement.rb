@@ -122,7 +122,7 @@ class FeeReimbursement < ApplicationRecord
   def assign_fee_reimbursement_group!
     return if fee_reimbursement_group.present? || !unprocessed? || amount.to_i.zero?
 
-    update!(fee_reimbursement_group: FeeReimbursementGroup.find_or_create_by!(slug: created_at.strftime(FeeReimbursementGroup::WEEK_FORMAT)))
+    update!(fee_reimbursement_group: FeeReimbursementGroup.find_or_create_by!(slug: created_at.strftime(FeeReimbursementGroup::SLUG_FORMAT)))
   end
 
   # The group is the HCB code the top-up is made under, so once set it can't be

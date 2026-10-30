@@ -14,7 +14,7 @@ RSpec.describe FeeReimbursement, type: :model do
     end
 
     it "reuses the week's existing group" do
-      group = create(:fee_reimbursement_group, slug: Time.now.utc.strftime(FeeReimbursementGroup::WEEK_FORMAT))
+      group = create(:fee_reimbursement_group, slug: Time.now.utc.strftime(FeeReimbursementGroup::SLUG_FORMAT))
 
       fee_reimbursement = nil
       expect { fee_reimbursement = create(:fee_reimbursement) }.not_to change(FeeReimbursementGroup, :count)

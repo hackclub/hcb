@@ -14,7 +14,7 @@ module Maintenance
 
     def process(hcb_code)
       week = hcb_code.hcb_i2
-      return unless week.match?(FeeReimbursementGroup::WEEK_REGEX)
+      return unless week.match?(FeeReimbursementGroup::SLUG_REGEX)
 
       group = FeeReimbursementGroup.find_or_create_by!(slug: week)
       group.assign_ledger_item!

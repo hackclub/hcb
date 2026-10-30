@@ -22,15 +22,15 @@
 class FeeReimbursementGroup < ApplicationRecord
   # ISO week-numbering year and week, e.g. "2026_42" — the key the weekly
   # HCB-900 code has always been built from.
-  WEEK_FORMAT = "%G_%V"
-  WEEK_REGEX = /\A\d{4}_\d{2}\z/
+  SLUG_FORMAT = "%G_%V"
+  SLUG_REGEX = /\A\d{4}_\d{2}\z/
 
   has_paper_trail
 
   has_many :fee_reimbursements
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
 
-  validates :slug, presence: true, uniqueness: true, format: { with: WEEK_REGEX }
+  validates :slug, presence: true, uniqueness: true, format: { with: SLUG_REGEX }
   # The HCB code every top-up in the group was made under is built from the
   # slug, so it can't change.
   attr_readonly :slug
