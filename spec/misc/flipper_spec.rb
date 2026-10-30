@@ -21,7 +21,7 @@ RSpec.describe("Flipper configuration") do
     end
 
     it "handles users without names" do
-      user = create(:user, full_name: nil, email: "orpheus@hackclub.com")
+      user = create(:user, first_name: nil, last_name: nil, email: "orpheus@hackclub.com")
 
       actor_names = Flipper::UI.configuration.actor_names_source.call([user.flipper_id])
 
@@ -30,7 +30,7 @@ RSpec.describe("Flipper configuration") do
 
     it "ignores unknown or no longer existent keys" do
       event = create(:event, name: "Hack the Planet")
-      user = create(:user, full_name: nil, email: "orpheus@hackclub.com")
+      user = create(:user, first_name: nil, last_name: nil, email: "orpheus@hackclub.com")
 
       deleted_event = create(:event)
       deleted_event_flipper_id = deleted_event.flipper_id
