@@ -1,7 +1,7 @@
 <p>
   You have <strong><%= pluralize(@count, "missing receipt") %></strong>.
   <% if @due_in %>
-    <%= @count == 1 ? "It's" : "The first is" %> due in <strong><%= @due_in %></strong>.
+    <%= @count == 1 ? "It is" : "The first is" %> due in <strong><%= @due_in %></strong>.
   <% end %>
 
   Charges without a receipt after 7 days lock your cards until you upload one.
