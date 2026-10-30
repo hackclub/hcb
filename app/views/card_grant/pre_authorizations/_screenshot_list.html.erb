@@ -1,9 +1,13 @@
-<div id="screenshot_list" class="flex flex-row gap-4 h-[200px] w-full overflow-x-auto min-w-0">
-    <% screenshots.each do |screenshot| %>
-        <%= image_tag screenshot, class: "h-100 !w-min-content card min-w-0 !flex-shrink-0" %>
-    <% end %>
+<%# locals: (screenshots:) %>
 
-    <% if screenshots.empty? %>
-        <%= blankslate "No screenshots uploaded", class: "w-full flex items-center justify-center" %>
+<div id="screenshot_list" class="grant-upload__list">
+    <% if screenshots.any? %>
+        <% screenshots.each do |screenshot| %>
+            <%= link_to url_for(screenshot), target: :_blank, rel: "noopener", class: "grant-upload__thumb" do %>
+                <%= image_tag screenshot, alt: screenshot.filename.to_s %>
+            <% end %>
+        <% end %>
+    <% else %>
+        <p class="grant-upload__empty muted m-0">No screenshots uploaded yet</p>
     <% end %>
 </div>
