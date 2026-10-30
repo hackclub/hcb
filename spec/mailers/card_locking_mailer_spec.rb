@@ -92,6 +92,8 @@ RSpec.describe CardLockingMailer, type: :mailer do
 
       expect(mail.subject).to eq("You have 1 receipt to upload in the next 5 days")
       expect(mail.subject).not_to match(/urgent/i)
+      expect(html_body(mail)).to include("<strong>1 missing receipt</strong>")
+      expect(CGI.unescapeHTML(html_body(mail))).to include("It's due in <strong>5 days</strong>")
       expect(mail.body.encoded).not_to include("violation")
       expect(mail.body.encoded).not_to include("72 hours")
     end
@@ -115,8 +117,8 @@ RSpec.describe CardLockingMailer, type: :mailer do
 
       mail = described_class.warning(user:)
 
-      expect(html_body(mail)).to include("Your next receipt is due in")
-      expect(html_body(mail)).to include("11 hours")
+      expect(html_body(mail)).to include("<strong>2 missing receipts</strong>")
+      expect(html_body(mail)).to include("The first is due in <strong>11 hours</strong>")
       expect(mail.subject).to eq("You have 2 receipts to upload, the next due in 11 hours")
     end
 
@@ -126,8 +128,8 @@ RSpec.describe CardLockingMailer, type: :mailer do
 
       mail = described_class.warning(user:)
 
-      expect(html_body(mail)).not_to include("is due in")
-      expect(html_body(mail)).to include("more than 7 days without a receipt")
+      expect(html_body(mail)).not_to include("due in")
+      expect(html_body(mail)).to include("Charges without a receipt after 7 days lock your cards until you upload one.")
       expect(mail.subject).to eq("You have 1 receipt to upload")
     end
   end
