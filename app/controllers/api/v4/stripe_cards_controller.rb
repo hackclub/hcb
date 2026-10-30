@@ -31,7 +31,7 @@ module Api
 
       def create
         event = Event.find_by_public_id(params[:card][:organization_id]) || Event.friendly.find(params[:card][:organization_id])
-        authorize event, :create_stripe_card?, policy_class: EventPolicy
+        authorize event, :create_stripe_card?, policy_class: ::EventPolicy
 
         card = params.require(:card).permit(
           :organization_id,
@@ -46,8 +46,9 @@ module Api
           :card_personalization_design_id
         )
 
-        return render json: { error: "Birthday must be set before creating a card." }, status: :bad_request if current_user.birthday.nil?
-        return render json: { error: "Cards can only be shipped to the US." }, status: :bad_request if card[:card_type] == "physical" && card[:shipping_address_country] != "US"
+        return render json: { error: "invalid_operation", messages: ["Birthday must be set before creating a card."] }, status: :bad_request if current_user.birthday.nil?
+        return render json: { error: "invalid_operation", messages: ["Cards can only be shipped to the US."] }, status: :bad_request if card[:card_type] == "physical" && card[:shipping_address_country] != "US"
+        return render json: { error: "invalid_operation", messages: ["A verified phone number is required to issue a card."] }, status: :bad_request unless current_user.phone_number_verified_or_bypassed?
 
         @stripe_card = ::StripeCardService::Create.new(
           current_user:,
@@ -81,7 +82,7 @@ module Api
           end
         else
           skip_authorization
-          render json: { error: "Invalid status" }, status: :unprocessable_entity
+          render json: { error: "Invalid status" }, status: :unprocessable_content
         end
       end
 
@@ -89,7 +90,7 @@ module Api
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
         if @stripe_card.canceled?
-          return render json: { error: "Card is already cancelled" }, status: :unprocessable_entity
+          return render json: { error: "Card is already cancelled" }, status: :unprocessable_content
         end
 
         begin
@@ -113,25 +114,15 @@ module Api
         render json: { ephemeralKeyId: @ephemeral_key.id, ephemeralKeySecret: @ephemeral_key.secret, ephemeralKeyCreated: @ephemeral_key.created, ephemeralKeyExpires: @ephemeral_key.expires, stripe_id: @stripe_card.stripe_id }
       end
 
-      def card_designs
-        if params[:event_id].present?
-          set_api_event
-          authorize @event, :create_stripe_card?, policy_class: EventPolicy
-
-          @designs = [@event.stripe_card_personalization_designs&.available, StripeCard::PersonalizationDesign.common.available].flatten.compact
-        else
-          skip_authorization
-          @designs = StripeCard::PersonalizationDesign.common.available
-        end
-
-        @designs += StripeCard::PersonalizationDesign.unlisted.available if current_user.auditor?
-      end
-
       def freeze
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
         if @stripe_card.canceled?
-          return render json: { error: "Card is canceled." }, status: :unprocessable_entity
+          return render json: { error: "Card is canceled." }, status: :unprocessable_content
+        end
+
+        if @stripe_card.frozen?
+          return render json: { error: "Card is already frozen." }, status: :unprocessable_content
         end
 
         @stripe_card.freeze!(frozen_by: current_user)
@@ -142,7 +133,7 @@ module Api
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
         if @stripe_card.stripe_status == "active"
-          return render json: { error: "Card is already active." }, status: :unprocessable_entity
+          return render json: { error: "Card is already active." }, status: :unprocessable_content
         end
 
         @stripe_card.defrost!
@@ -153,17 +144,17 @@ module Api
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
         if params[:last4].blank?
-          return render json: { error: "Last four digits are required." }, status: :unprocessable_entity
+          return render json: { error: "Last four digits are required." }, status: :unprocessable_content
         end
 
-        # Find the correct card based on it's last4
+        # Find the correct card based on its last4
         card = current_user.stripe_cardholder&.stripe_cards&.find_by(last4: params[:last4])
         if card.nil? || card.id != @stripe_card.id
-          return render json: { error: "Last four digits are incorrect." }, status: :unprocessable_entity
+          return render json: { error: "Last four digits are incorrect." }, status: :unprocessable_content
         end
 
         if @stripe_card.canceled?
-          return render json: { error: "Card is canceled." }, status: :unprocessable_entity
+          return render json: { error: "Card is canceled." }, status: :unprocessable_content
         end
 
         # If this replaces another card, attempt to cancel the old card.

@@ -11,12 +11,12 @@
 #  failed_at     :datetime
 #  metric        :jsonb
 #  processing_at :datetime
-#  subject_type  :string
 #  type          :string           not null
 #  year          :integer
 #  created_at    :datetime         not null
 #  updated_at    :datetime         not null
 #  subject_id    :bigint
+#  subject_type  :string
 #
 # Indexes
 #

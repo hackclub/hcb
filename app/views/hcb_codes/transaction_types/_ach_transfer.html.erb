@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <% if @hcb_code.ach_transfer.column_id.present? %>
   <% admin_tool("mt3") do %>
     <%= link_to "View transfer on Column", "https://dashboard.column.com/app/transfers/edit/ach/#{@hcb_code.ach_transfer.column_id}", class: "btn bg-accent", target: "_blank" %>
@@ -58,6 +60,8 @@
         <%= @hcb_code.ach_transfer.payment_for %>
       </p>
 
+      <%= render partial: "hcb_codes/associated_payment", locals: { payout: @hcb_code.ach_transfer } %>
+
       <p>
         <strong>Bank name</strong>
         <%= organizer_signed_in? ? @hcb_code.ach_transfer.bank_name : "Sign in to view" %>
@@ -107,19 +111,22 @@
         </span>
       </p>
 
+      <%= render "ledger/items/repayments", ledger_item: @hcb_code.ledger_item if @hcb_code.ledger_item %>
       <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
     </section>
   </turbo-frame>
 
-  <% if @hcb_code.ach_transfer.may_mark_rejected? %>
+  <% if @hcb_code.ach_transfer.may_mark_rejected? || auditor_signed_in? %>
     <div class="card__banner card__darker border-top overflow-hidden flex items-center g2">
-      <% cancel_button = button_to "Cancel transfer", cancel_ach_transfer_path(@hcb_code.ach_transfer), class: "btn bg-error #{"disabled" unless policy(@hcb_code.ach_transfer).cancel?}" %>
-      <% if policy(@hcb_code.ach_transfer).cancel? %>
-        <%= cancel_button %>
-      <% else %>
-        <div class="tooltipped tooltipped--e w-fit" aria-label="Only managers can cancel ACHs!">
+      <% if @hcb_code.ach_transfer.may_mark_rejected? %>
+        <% cancel_button = button_to "Cancel transfer", cancel_ach_transfer_path(@hcb_code.ach_transfer), class: "btn bg-error #{"disabled" unless policy(@hcb_code.ach_transfer).cancel?}" %>
+        <% if policy(@hcb_code.ach_transfer).cancel? %>
           <%= cancel_button %>
-        </div>
+        <% else %>
+          <div class="tooltipped tooltipped--e w-fit" aria-label="Only managers can cancel ACHs!">
+            <%= cancel_button %>
+          </div>
+        <% end %>
       <% end %>
 
       <% admin_tool do %>

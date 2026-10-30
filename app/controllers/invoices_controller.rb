@@ -26,7 +26,7 @@ class InvoicesController < ApplicationController
     voided = relation.void_v2.sum(:item_amount)
 
     @stats = {
-      # The calcluations for `total` and `unpaid` do not include archived invoices
+      # The calculations for `total` and `unpaid` do not include archived invoices
       total: relation.sum(:item_amount) - archived_unpaid - voided,
       # "paid" status invoices include manually paid invoices and
       # Stripe invoices that are paid, but for which the funds are in transit
@@ -55,11 +55,23 @@ class InvoicesController < ApplicationController
 
     relation = relation.search_description(params[:q]) if params[:q].present?
 
-    @invoices = helpers.sorted_relation(
+    relation = helpers.sorted_relation(
       relation,
       INVOICE_COLUMNS,
       sort: [params[:sort], params[:direction]]
-    ).includes(:sponsor).page(params[:page]).per(params[:per] || 25)
+    )
+
+    if request.format.csv?
+      authorize @event, :export_invoices?
+      return stream_invoices_csv(relation)
+    end
+
+    if request.format.json?
+      authorize @event, :export_invoices?
+      return stream_invoices_json(relation)
+    end
+
+    @invoices = relation.includes(:sponsor).page(params[:page]).per(safe_per(25))
 
     @sponsor = Sponsor.new(event: @event)
     @invoice = Invoice.new(sponsor: @sponsor, event: @event)
@@ -83,11 +95,9 @@ class InvoicesController < ApplicationController
 
     sponsor_attrs = filtered_params[:sponsor_attributes]
 
-    due_date = Date.parse(filtered_params["due_date"])
-
     @invoice = ::InvoiceService::Create.new(
       event_id: @event.id,
-      due_date:,
+      due_date: parsed_due_date,
       item_description: filtered_params[:item_description],
       item_amount: filtered_params[:item_amount],
       current_user:,
@@ -108,6 +118,15 @@ class InvoicesController < ApplicationController
     redirect_to @invoice
   rescue Pundit::NotAuthorizedError
     raise
+  rescue ActiveRecord::RecordInvalid => e
+    # Bad sponsor or invoice details are a mistake in what was typed, not a bug,
+    # so re-render the form with the validation errors instead of reporting the
+    # exception and sending the organizer back to an empty form.
+    @sponsor = e.record.is_a?(Sponsor) ? e.record : sponsor_from_params
+    @invoice = e.record.is_a?(Invoice) ? e.record : invoice_from_params
+    @invoice.sponsor ||= @sponsor
+
+    render :new, status: :unprocessable_content
   rescue => e
     Rails.error.report(e)
 
@@ -227,6 +246,29 @@ class InvoicesController < ApplicationController
   ].freeze
   private_constant :INVOICE_COLUMNS
 
+  # A blank or malformed date would otherwise raise out of `Date.parse`; leaving
+  # it nil lets Invoice's presence validation report it on the form instead.
+  def parsed_due_date
+    Date.parse(filtered_params[:due_date].to_s)
+  rescue Date::Error
+    nil
+  end
+
+  # Rebuilds the submitted sponsor/invoice so a failed create can re-render the
+  # form with everything the organizer already filled in.
+  def sponsor_from_params
+    @event.sponsors.new(filtered_params[:sponsor_attributes])
+  end
+
+  def invoice_from_params
+    Invoice.new(
+      event: @event,
+      item_description: filtered_params[:item_description],
+      item_amount: Monetize.parse(filtered_params[:item_amount])&.cents,
+      due_date: parsed_due_date
+    )
+  end
+
   def filtered_params
     params.require(:invoice).permit(
       :due_date,
@@ -235,6 +277,29 @@ class InvoicesController < ApplicationController
       :sponsor_id,
       sponsor_attributes: policy(Sponsor).permitted_attributes
     )
+  end
+
+  def stream_invoices_csv(invoices)
+    by_sponsor = params[:report] == "sponsor_totals"
+    name = by_sponsor ? "invoices_sponsors" : "invoices"
+
+    headers["Content-Type"] = "text/csv"
+    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_#{name}_#{Time.now.strftime("%Y%m%d")}.csv"
+    set_streaming_headers
+
+    response.status = 200
+
+    self.response_body = ::InvoiceService::Export::Csv.new(invoices:, by_sponsor:).run
+  end
+
+  def stream_invoices_json(invoices)
+    headers["Content-Type"] = "application/json"
+    headers["Content-disposition"] = "attachment; filename=#{@event.slug}_invoices_#{Time.now.strftime("%Y%m%d")}.json"
+    set_streaming_headers
+
+    response.status = 200
+
+    self.response_body = ::InvoiceService::Export::Json.new(invoices:).run
   end
 
   def filter_options

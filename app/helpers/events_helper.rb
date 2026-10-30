@@ -71,7 +71,7 @@ module EventsHelper
     },
     {
       name: "Transactions",
-      path_proc: ->(event_id) { event_transactions_path(event_id:) },
+      path_proc: ->(event_id) { Flipper.enabled?(:new_ledger_2026_07_17, current_user) ? event_ledger_path(event_id:) : event_transactions_path(event_id:) },
       tooltip: "View detailed ledger",
       icon: "bank-account",
       symbol: :transactions,
@@ -141,7 +141,25 @@ module EventsHelper
       tooltip: "Send & transfer money",
       icon: "payment-transfer",
       symbol: :transfers,
-      available_proc: ->(event) { policy(event).transfers? }
+      available_proc: ->(event) { policy(event).transfers? && !Flipper.enabled?(:payments_contractors_refresh_2026_06_26, event) }
+    },
+    {
+      name: "Payments",
+      path_proc: ->(event_id) { event_payments_path(event_id:) },
+      tooltip: "Send & transfer money",
+      icon: "payment-transfer",
+      symbol: :payments,
+      available_proc: ->(event) { policy(event).payments? }
+    },
+    {
+      name: "Contractors",
+      path_proc: ->(event_id) { event_contractors_path(event_id:) },
+      async_badge_proc: ->(event) { event_contractors_pending_review_icon_path(event) },
+      tooltip: "Manage payroll",
+      icon: "person-badge",
+      symbol: :contractors,
+      beta: true,
+      available_proc: ->(event) { policy(event).contractors? }
     },
     {
       name: "Reimbursements",
@@ -151,14 +169,6 @@ module EventsHelper
       icon: "reimbursement",
       symbol: :reimbursements,
       available_proc: ->(event) { policy(event).reimbursements? }
-    },
-    {
-      name: "Contractors",
-      path_proc: ->(event_id) { event_employees_path(event_id:) },
-      tooltip: "Manage payroll",
-      icon: "person-badge",
-      symbol: :payroll,
-      available_proc: ->(event) { policy(event).employees? }
     },
     {
       section: "",
@@ -176,7 +186,7 @@ module EventsHelper
       name: "Perks",
       path_proc: ->(event_id) { event_promotions_path(event_id:) },
       tooltip: "Receive promos & discounts",
-      dynamic_tooltip: ->(event) { !policy(event).promotions? ? "Your account isn't eligble for receive promos & discounts" : "Receive promos & discounts" },
+      dynamic_tooltip: ->(event) { !policy(event).promotions? ? "Your account isn't eligible to receive promos & discounts" : "Receive promos & discounts" },
       icon: "perks",
       data: { tour_step: "perks" },
       symbol: :promotions,
@@ -212,7 +222,7 @@ module EventsHelper
     {
       name: "Sub-organizations",
       path_proc: ->(event_id) { event_sub_organizations_path(event_id:) },
-      tooltip: "Create & manage subsidiary organizations",
+      tooltip: "Create & manage sub-organizations",
       icon: "channels",
       symbol: :sub_organizations,
       available_proc: ->(event) { policy(event).sub_organizations? }
@@ -319,7 +329,7 @@ module EventsHelper
     end
   end
 
-  def dock_item(name, url = nil, icon: nil, tooltip: nil, async_badge: nil, disabled: false, selected: false, admin: false, **options)
+  def dock_item(name, url = nil, icon: nil, tooltip: nil, async_badge: nil, disabled: false, selected: false, admin: false, beta: false, **options)
     icon_tag = icon.present? ? inline_icon(icon, size: 32) : nil
     badge_tag = async_badge.present? ? turbo_frame_tag(async_badge, src: async_badge, data: { controller: "cached-frame", action: "turbo:frame-render->cached-frame#cache" }) : nil
 
@@ -333,13 +343,14 @@ module EventsHelper
     children = []
     children << icon_wrapper if icon_wrapper
     children << tag.span(name, class: "dock__item-label")
+    children << tag.span("BETA", class: "badge bg-info text-xs ml-3") if beta
     children = safe_join(children)
 
     if admin && !auditor_signed_in?
       return ""
     end
 
-    link_to children, (disabled ? "javascript:" : url), options.merge(
+    link_to children, (disabled ? nil : url), options.merge(
       class: "dock__item #{"tooltipped tooltipped--e" if tooltip} #{"disabled" if disabled} #{"admin-tools" if admin}",
       'aria-label': tooltip,
       'aria-current': selected ? "page" : "false",
@@ -347,27 +358,9 @@ module EventsHelper
     )
   end
 
-  def show_mock_data?(event = @event)
-    false
-  end
-
-  def paypal_transfers_airtable_form_url(embed: false, event: nil, user: nil)
-    # The airtable form is located within the Bank Promotions base
-    form_id = "4j6xJB5hoRus"
-    embed_url = "https://forms.hackclub.com/t/#{form_id}"
-    url = "https://forms.hackclub.com/t/#{form_id}"
-
-    prefill = []
-    prefill << "prefill_Event/Project+Name=#{CGI.escape(event.name)}" if event
-    prefill << "prefill_Submitter+Name=#{CGI.escape(user.full_name)}" if user
-    prefill << "prefill_Submitter+Email=#{CGI.escape(user.email)}" if user
-
-    "#{embed ? embed_url : url}?#{prefill.join("&")}"
-  end
-
   def transaction_memo(tx)
     # needed to handle mock data in playground mode
-    if tx.local_hcb_code.method(:memo).parameters.size == 0
+    if tx.local_hcb_code.method(:memo).parameters.empty?
       tx.local_hcb_code.memo
     else
       tx.local_hcb_code.memo(event: @event)
@@ -433,6 +426,17 @@ module EventsHelper
         params[key].present?
       end
     end
+  end
+
+  # Resolves an applied filter value to the label shown for it in the filter
+  # dropdown. Both the dropdown and the chips use this so they can't disagree
+  # about how a value is spelled.
+  def filter_option_label(filter_option, value)
+    labels = Array(filter_option[:options]).to_h do |option|
+      option.is_a?(Array) ? [option.last.to_s, option.first] : [option.to_s, option.humanize]
+    end
+
+    labels[value.to_s] || value.to_s.humanize
   end
 
   def validate_filter_options(filter_options, params)

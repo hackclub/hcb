@@ -21,4 +21,8 @@
       </p>
     <% end %>
   <% end %>
+
+  <% if @contractable_link_path %>
+    <%= link_to "Continue to #{@contractable_link_label}", @contractable_link_path, class: "btn" %>
+  <% end %>
 </div>

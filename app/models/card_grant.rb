@@ -18,7 +18,7 @@
 #  one_time_use               :boolean
 #  pre_authorization_required :boolean          default(FALSE), not null
 #  purpose                    :string
-#  status                     :integer          default("active"), not null
+#  status                     :integer          default(0), not null
 #  created_at                 :datetime         not null
 #  updated_at                 :datetime         not null
 #  disbursement_id            :bigint
@@ -77,19 +77,23 @@ class CardGrant < ApplicationRecord
   after_create :create_pre_authorization!, if: :pre_authorization_required?
 
   before_validation :create_card_grant_setting, on: :create
+
+  before_validation do
+    self.expiration_at ||= default_expiration_at
+  end
+
   before_create :create_user
   before_create :create_subledger
   before_create :set_defaults
   after_create :transfer_money
   after_create_commit :send_email
 
-  before_create do
-    self.expiration_at ||= default_expiration_at
-  end
-
   validates :disbursement, uniqueness: true, allow_nil: true
   validates :stripe_card, uniqueness: true, allow_nil: true
   validates :subledger, uniqueness: true, allow_nil: true
+
+  MAX_EXPIRATION_DATE = 2.years
+  validates :expiration_at, comparison: { less_than_or_equal_to: :max_expiration_at }, if: :expiration_at_changed?
 
   validates_email_format_of :email, if: :email_changed?
   normalizes :email, with: ->(email) { email.presence&.strip&.downcase }
@@ -102,14 +106,38 @@ class CardGrant < ApplicationRecord
   serialize :banned_categories, coder: CommaSeparatedCoder
 
   validates_presence_of :amount_cents, :email
-  validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, on: :create
+  validates :amount_cents, numericality: { greater_than: 0, message: "can't be zero!" }, on: :create, integer_column: true
 
   MAXIMUM_PURPOSE_LENGTH = 30
   validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
 
   scope :not_activated, -> { active.where(stripe_card_id: nil) }
   scope :activated, -> { active.where.not(stripe_card_id: nil) }
-  scope :search_for, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
+
+  scope :accepted, -> { active.joins(:stripe_card).merge(StripeCard.active) }
+  scope :frozen, -> { active.joins(:stripe_card).merge(StripeCard.where(stripe_status: "inactive")) }
+  scope :returned, -> { canceled.where.missing(:reimbursement_report) }
+  scope :converted_to_reimbursement, -> { canceled.joins(:reimbursement_report) }
+
+  # statuses shown in the status filter that each map to their scope
+  FILTERABLE_STATES = {
+    "not_activated"              => "Invited",
+    "accepted"                   => "Active",
+    "frozen"                     => "Frozen",
+    "expired"                    => "Expired",
+    "returned"                   => "Returned",
+    "converted_to_reimbursement" => "Converted to reimbursement"
+  }.freeze
+
+  scope :filter_by_state, ->(state) {
+    if FILTERABLE_STATES.key?(state)
+      public_send(state)
+    else
+      all
+    end
+  }
+  scope :search, ->(q) { joins(:user).where("users.full_name ILIKE :query OR card_grants.email ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
+  scope :public_search, ->(q) { joins(:user).where("users.preferred_name ILIKE :query OR card_grants.purpose ILIKE :query", query: "%#{User.sanitize_sql_like(q)}%") }
   scope :expired_before, ->(date) { where("card_grants.expiration_at < ?", date) }
   scope :expires_on, ->(date) { where("card_grants.expiration_at = DATE(?)", date) }
 
@@ -134,12 +162,14 @@ class CardGrant < ApplicationRecord
   def state_text
     if suspected_fraud?
       "Fraudulent"
+    elsif converted_to_reimbursement_report?
+      "Converted to reimbursement"
     elsif canceled?
-      "Canceled"
+      "Returned"
     elsif expired?
       "Expired"
     elsif pending_invite?
-      "Invitation sent"
+      "Invited"
     elsif stripe_card.frozen? || stripe_card.inactive?
       "Frozen"
     else
@@ -156,12 +186,16 @@ class CardGrant < ApplicationRecord
     :muted
   end
 
+  def converted_to_reimbursement_report?
+    canceled? && reimbursement_report.present?
+  end
+
   def suspected_fraud?
     pre_authorization.present? && card_grant_setting.block_suspected_fraud? && pre_authorization.fraudulent?
   end
 
   def pending_invite?
-    stripe_card.nil?
+    active? && stripe_card.nil?
   end
 
   def topup!(amount_cents:, topped_up_by: sent_by)
@@ -178,12 +212,14 @@ class CardGrant < ApplicationRecord
         amount: amount_cents / 100.0,
         destination_subledger_id: subledger_id,
         requested_by_id: topped_up_by.id,
-        source_transaction_category_slug: "grants-stipends",
-        destination_transaction_category_slug: "grants-stipends",
+        transfer_type: "transfer",
+        source_transaction_category_slug: "grants",
+        destination_transaction_category_slug: "grants",
         category_assignment_strategy: "automatic"
       ).run
 
-      disbursement.local_hcb_code.update_custom_memo!(custom_memo)
+      disbursement.incoming_disbursement.local_hcb_code.update_custom_memo!(custom_memo)
+      disbursement.outgoing_disbursement.local_hcb_code.update_custom_memo!(custom_memo)
     end
   end
 
@@ -202,12 +238,14 @@ class CardGrant < ApplicationRecord
         amount: amount_cents / 100.0,
         source_subledger_id: subledger_id,
         requested_by_id: withdrawn_by.id,
-        source_transaction_category_slug: "grants-stipends",
-        destination_transaction_category_slug: "grants-stipends",
+        transfer_type: "transfer",
+        source_transaction_category_slug: "grants",
+        destination_transaction_category_slug: "grants",
         category_assignment_strategy: "automatic"
       ).run
 
-      disbursement.local_hcb_code.update_custom_memo!(custom_memo)
+      disbursement.incoming_disbursement.local_hcb_code.update_custom_memo!(custom_memo)
+      disbursement.outgoing_disbursement.local_hcb_code.update_custom_memo!(custom_memo)
     end
   end
 
@@ -241,11 +279,13 @@ class CardGrant < ApplicationRecord
       amount: balance.amount,
       source_subledger_id: subledger_id,
       requested_by_id: requested_by.id,
-      source_transaction_category_slug: "grants-stipends",
-      destination_transaction_category_slug: "grants-stipends",
+      transfer_type: "transfer",
+      source_transaction_category_slug: "grants",
+      destination_transaction_category_slug: "grants",
       category_assignment_strategy: "automatic"
     ).run
-    disbursement.local_hcb_code.update_custom_memo!(custom_memo)
+    disbursement.incoming_disbursement.local_hcb_code.update_custom_memo!(custom_memo)
+    disbursement.outgoing_disbursement.local_hcb_code.update_custom_memo!(custom_memo)
   end
 
   def cancel!(canceled_by = User.system_user, expired: false)
@@ -311,6 +351,12 @@ class CardGrant < ApplicationRecord
     (created_at || Time.current) + CardGrantSetting.expiration_preferences[card_grant_setting&.expiration_preference || "1 year"].days
   end
 
+  # The latest expiration a grant may have, measured from when it was created
+  # so that extending a grant can't keep it alive indefinitely.
+  def max_expiration_at
+    (created_at || Time.current).to_date + MAX_EXPIRATION_DATE
+  end
+
   def last_time_change_to(...)
     versions.where_object_changes_to(...).last&.created_at
   end
@@ -354,8 +400,9 @@ class CardGrant < ApplicationRecord
       amount: amount.amount,
       requested_by_id: sent_by_id,
       destination_subledger_id: subledger_id,
-      source_transaction_category_slug: "grants-stipends",
-      destination_transaction_category_slug: "grants-stipends",
+      transfer_type: "transfer",
+      source_transaction_category_slug: "grants",
+      destination_transaction_category_slug: "grants",
       category_assignment_strategy: "automatic"
     ).run
     save!
