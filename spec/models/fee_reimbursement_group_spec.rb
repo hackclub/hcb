@@ -28,6 +28,12 @@ RSpec.describe FeeReimbursementGroup, type: :model do
     expect(build(:fee_reimbursement_group, slug: nil)).not_to be_valid
   end
 
+  it "can't have its slug changed" do
+    group = create(:fee_reimbursement_group, slug: "2026_42")
+
+    expect { group.slug = "2026_43" }.to raise_error(ActiveRecord::ReadonlyAttributeError)
+  end
+
   describe "ledger item" do
     it "eagerly creates an intended ledger item on create" do
       group = create(:fee_reimbursement_group, slug: "2026_42")

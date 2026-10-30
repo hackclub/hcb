@@ -12,15 +12,13 @@ RSpec.describe FeeReimbursementService::Nightly do
       .to_return { { status: 200, body: { id: "tu_#{SecureRandom.hex(4)}" }.to_json, headers: {} } }
   end
 
-  let(:this_week) { Time.now.strftime(FeeReimbursementGroup::WEEK_FORMAT) }
-
-  it "tops up each fee reimbursement under this week's group" do
+  it "tops up each fee reimbursement under its group" do
     first = create(:fee_reimbursement, amount: 1_23)
     second = create(:fee_reimbursement, amount: 4_56)
+    group = first.reload.fee_reimbursement_group
 
-    expect { described_class.new.run }.to change(FeeReimbursementGroup, :count).by(1).and change(StripeTopup, :count).by(2)
+    expect { described_class.new.run }.to change(StripeTopup, :count).by(2)
 
-    group = FeeReimbursementGroup.find_by!(slug: this_week)
     expect(group.fee_reimbursements).to contain_exactly(first, second)
     expect(group.ledger_item.status).to eq("intended")
 
@@ -34,13 +32,26 @@ RSpec.describe FeeReimbursementService::Nightly do
     expect(StripeTopup.distinct.pluck(:statement_descriptor)).to eq(["HCB-#{group.local_hcb_code.short_code}"])
   end
 
-  it "reuses this week's existing group" do
-    group = create(:fee_reimbursement_group, slug: this_week)
-    fee_reimbursement = create(:fee_reimbursement)
+  it "tops up under the week the fee reimbursement was created in, not the week it's processed in" do
+    created_at = 1.week.ago
+    fee_reimbursement = travel_to(created_at) { create(:fee_reimbursement) }
+    group = fee_reimbursement.reload.fee_reimbursement_group
+    expect(group.slug).to eq(created_at.strftime(FeeReimbursementGroup::WEEK_FORMAT))
 
     expect { described_class.new.run }.not_to change(FeeReimbursementGroup, :count)
 
-    expect(fee_reimbursement.reload.fee_reimbursement_group).to eq(group)
+    expect(fee_reimbursement.reload.stripe_topup.statement_descriptor).to eq("HCB-#{group.local_hcb_code.short_code}")
+  end
+
+  it "groups a fee reimbursement that wasn't grouped on create before topping it up" do
+    fee_reimbursement = create(:fee_reimbursement)
+    group = fee_reimbursement.reload.fee_reimbursement_group
+    fee_reimbursement.update_column(:fee_reimbursement_group_id, nil)
+
+    described_class.new.run
+
+    fee_reimbursement.reload
+    expect(fee_reimbursement.fee_reimbursement_group).to eq(group)
     expect(fee_reimbursement.stripe_topup.statement_descriptor).to eq("HCB-#{group.local_hcb_code.short_code}")
   end
 

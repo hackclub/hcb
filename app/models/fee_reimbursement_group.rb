@@ -14,12 +14,11 @@
 #  index_fee_reimbursement_groups_on_slug  (slug) UNIQUE
 #
 
-# Every Stripe fee reimbursement topped up in the same ISO week shares one
-# statement descriptor, and so one HCB code (HCB-900-<week>) and one ledger
-# item. The group is that week: FeeReimbursementService::Nightly finds or
-# creates it before topping up, its ledger item is created "intended" right
-# away, and each top-up's bank debit is matched to that item by the short code
-# in its memo.
+# Every Stripe fee reimbursement created in the same ISO week is topped up
+# under one statement descriptor, and so one HCB code (HCB-900-<week>) and one
+# ledger item. The group is that week: each FeeReimbursement finds or creates
+# it on create, its ledger item is created "intended" right away, and each
+# top-up's bank debit is matched to that item by the short code in its memo.
 class FeeReimbursementGroup < ApplicationRecord
   # ISO week-numbering year and week, e.g. "2026_42" — the key the weekly
   # HCB-900 code has always been built from.
@@ -32,6 +31,9 @@ class FeeReimbursementGroup < ApplicationRecord
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
 
   validates :slug, presence: true, uniqueness: true, format: { with: WEEK_REGEX }
+  # The HCB code every top-up in the group was made under is built from the
+  # slug, so it can't change.
+  attr_readonly :slug
 
   after_create_commit :assign_ledger_item!
 
@@ -70,6 +72,7 @@ class FeeReimbursementGroup < ApplicationRecord
     return if ledger_item.present?
 
     safely do
+      # TODO: remove HCB code lookup and only search for Ledger::Item
       existing = local_hcb_code.ledger_item || Ledger::Item.find_by(short_code: local_hcb_code.short_code)
 
       if existing.nil?
