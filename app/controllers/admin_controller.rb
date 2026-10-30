@@ -1009,9 +1009,9 @@ class AdminController < Admin::BaseController
     @per = safe_per(20)
 
     # Pending fees that haven't been converted to FeeRevenue yet
-    # Pre-calculate fee balances to avoid calling fee_balance_v2_cents multiple times per event
-    events_with_balances = Event.pending_fees_v2.map do |event|
-      { event: event, balance: event.fronted_fee_balance_cents }
+    # Compute each ledger's fronted fee balance once so it can be both sorted and summed
+    events_with_balances = Event.includes(:ledger, :plan).pending_fees_v2.map do |event|
+      { event: event, balance: event.ledger.fronted_fee_balance_cents }
     end
 
     @uncharged_fees_events = events_with_balances.sort_by { |item| -item[:balance] }
