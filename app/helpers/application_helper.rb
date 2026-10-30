@@ -4,6 +4,7 @@ module ApplicationHelper
   include ActionView::Helpers
   include LocalTimeHelper
 
+  include ComboboxHelper
   include DonationsHelper
   include EmburseCardsHelper
   include EventsHelper
@@ -25,6 +26,11 @@ module ApplicationHelper
   include ToursHelper
   include TurboStreamActionsHelper
   include UsersHelper
+
+  # Flash keys that aren't messages, and so are never rendered as one.
+  def renderable_flash
+    flash.to_h.except("confetti", "confetti_emojis", "popover")
+  end
 
   def upsert_query_params(**new_params)
     params = request.query_parameters || {}
@@ -157,7 +163,7 @@ module ApplicationHelper
   end
 
   def modal_external_link(external_link)
-    pop_icon_to "external", sanitize(external_link), target: "_blank", size: 14, class: "modal__external muted", onload: "window.navigator.standalone ? this.setAttribute('target', '_top') : null"
+    pop_icon_to "external", sanitize(external_link), target: "_blank", size: 14, class: "modal__external muted", data: { controller: "standalone-link" }
   end
 
   def modal_header(text, external_link: nil)

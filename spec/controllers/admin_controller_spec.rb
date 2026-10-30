@@ -24,6 +24,41 @@ RSpec.describe AdminController do
     end
   end
 
+  describe "#set_wise_transfer" do
+    it "maps the canonical transaction's ledger item onto the transfer's event ledger" do
+      admin = create(:user, :make_admin)
+      event = create(:event)
+      wise_transfer = WiseTransfer.create!(
+        event:,
+        user: admin,
+        aasm_state: "sent",
+        amount_cents: 100_00,
+        currency: "GBP",
+        recipient_country: "GB",
+        recipient_name: "Fiona Hackworth",
+        recipient_email: "fiona@example.com",
+        payment_for: "Speaker fee",
+        # Both are required once the transfer has been sent.
+        wise_id: "1234567",
+        wise_recipient_id: "0199a1f0-7c3a-4a0b-9b2e-6d1f8a3c5e47",
+        # Set so the after_create hook skips generate_quote!, which would
+        # otherwise reach for a live exchange rate.
+        quoted_usd_amount_cents: 130_00,
+        usd_amount_cents: 130_00
+      )
+      canonical_transaction = create(:canonical_transaction, amount_cents: -130_00)
+
+      create_session(admin, verified: true)
+
+      post :set_wise_transfer, params: { id: canonical_transaction.id, wise_transfer_id: wise_transfer.id }
+
+      expect(wise_transfer.reload).to be_deposited
+      expect(canonical_transaction.reload.event).to eq(event)
+      expect(canonical_transaction.ledger_item.primary_ledger).to eq(event.ledger)
+      expect(canonical_transaction.ledger_item.primary_mapping.mapped_by).to eq(admin)
+    end
+  end
+
   describe "#ach_start_approval" do
     render_views
 
@@ -38,6 +73,129 @@ RSpec.describe AdminController do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Money wiring mission statement")
+    end
+  end
+
+  describe "#event_search" do
+    it "returns JSON options the combobox can render" do
+      admin = create(:user, :make_admin)
+      create_session(admin, verified: true)
+      event = create(:event, name: "Hack Club HQ")
+
+      get(:event_search, params: { q: "Hack Club HQ" }, format: :json)
+
+      expect(response).to have_http_status(:ok)
+      option = JSON.parse(response.body).find { |o| o["value"] == event.id.to_s }
+      expect(option).to include("value" => event.id.to_s, "sublabel" => event.slug)
+    end
+
+    it "badges options with the ID for an admin, leaving the label plain" do
+      admin = create(:user, :make_admin)
+      create_session(admin, verified: true)
+      event = create(:event, name: "Hack Club HQ")
+
+      get(:event_search, params: { q: "Hack Club HQ" }, format: :json)
+
+      option = JSON.parse(response.body).find { |o| o["value"] == event.id.to_s }
+      expect(option).to include("label" => "Hack Club HQ", "badge" => "ID: #{event.id}")
+    end
+
+    it "never shows a non-admin auditor the ID" do
+      auditor = create(:user, :make_auditor)
+      create_session(auditor, verified: true)
+      event = create(:event, name: "Hack Club HQ")
+
+      get(:event_search, params: { q: "Hack Club HQ" }, format: :json)
+
+      option = JSON.parse(response.body).find { |o| o["value"] == event.id.to_s }
+      expect(option).to include("label" => "Hack Club HQ", "badge" => nil)
+    end
+
+    it "paginates results without overlap across pages" do
+      stub_const("ComboboxSearchable::PAGE_SIZE", 2)
+      admin = create(:user, :make_admin)
+      create_session(admin, verified: true)
+
+      3.times { |i| create(:event, name: "ysws #{i}") }
+
+      get(:event_search, params: { q: "ysws", page: 1 }, format: :json)
+      page1 = JSON.parse(response.body).map { |o| o["value"] }
+      get(:event_search, params: { q: "ysws", page: 2 }, format: :json)
+      page2 = JSON.parse(response.body).map { |o| o["value"] }
+
+      expect(page1.size).to eq(2)
+      expect(page2.size).to eq(1)
+      expect(page1 & page2).to be_empty
+    end
+
+    it "clamps non-positive page numbers to the first page" do
+      stub_const("ComboboxSearchable::PAGE_SIZE", 2)
+      admin = create(:user, :make_admin)
+      create_session(admin, verified: true)
+
+      3.times { |i| create(:event, name: "ysws #{i}") }
+
+      get(:event_search, params: { q: "ysws", page: 0 }, format: :json)
+
+      expect(JSON.parse(response.body).size).to eq(2)
+    end
+  end
+
+  describe "#user_search" do
+    it "gives an admin the name, the email beneath it and the ID as a badge" do
+      admin = create(:user, :make_admin)
+      create_session(admin, verified: true)
+      user = create(:user, full_name: "Jane Doe")
+
+      get(:user_search, params: { q: "Jane Doe" }, format: :json)
+
+      expect(response).to have_http_status(:ok)
+      option = JSON.parse(response.body).find { |o| o["value"] == user.id.to_s }
+      expect(option).to include("label" => "Jane Doe", "sublabel" => user.email, "badge" => "ID: #{user.id}")
+    end
+
+    it "never shows a non-admin auditor the ID" do
+      auditor = create(:user, :make_auditor)
+      create_session(auditor, verified: true)
+      user = create(:user, full_name: "Jane Doe")
+
+      get(:user_search, params: { q: "Jane Doe" }, format: :json)
+
+      option = JSON.parse(response.body).find { |o| o["value"] == user.id.to_s }
+      expect(option).to include("label" => "Jane Doe", "sublabel" => user.email, "badge" => nil)
+    end
+
+    # A label with leading or trailing space never equals the trimmed input, so
+    # picking that user was undone the moment the field lost focus.
+    it "labels nameless and space-padded users with trimmed text" do
+      admin = create(:user, :make_admin)
+      create_session(admin, verified: true)
+      nameless = create(:user, full_name: nil)
+      padded = create(:user, full_name: "Jane Doe ")
+
+      get(:user_search, format: :json)
+
+      options = JSON.parse(response.body).index_by { |o| o["value"] }
+      expect(options[nameless.id.to_s]).to include("label" => nameless.email, "sublabel" => nil)
+      expect(options[padded.id.to_s]).to include("label" => "Jane Doe", "sublabel" => padded.email)
+    end
+
+    it "paginates results without overlap across pages" do
+      stub_const("ComboboxSearchable::PAGE_SIZE", 2)
+      admin = create(:user, :make_admin)
+      create_session(admin, verified: true)
+
+      ["Searchable Personone", "Searchable Persontwo", "Searchable Personthree"].each do |name|
+        create(:user, full_name: name)
+      end
+
+      get(:user_search, params: { q: "Searchable", page: 1 }, format: :json)
+      page1 = JSON.parse(response.body).map { |o| o["value"] }
+      get(:user_search, params: { q: "Searchable", page: 2 }, format: :json)
+      page2 = JSON.parse(response.body).map { |o| o["value"] }
+
+      expect(page1.size).to eq(2)
+      expect(page1 & page2).to be_empty
     end
   end
 end

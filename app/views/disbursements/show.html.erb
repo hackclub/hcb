@@ -12,12 +12,18 @@
       <strong>Outgoing HCB Code:</strong>
       <span>
         <%= link_to(@disbursement.outgoing_hcb_code, hcb_code_path(@disbursement.outgoing_disbursement.local_hcb_code)) %>
+        <% if @disbursement.outgoing_disbursement.local_hcb_code.ledger_item.present? %>
+          (<%= link_to "Ledger::Item #{@disbursement.outgoing_disbursement.local_hcb_code.ledger_item.hashid}", ledger_item_path(@disbursement.outgoing_disbursement.local_hcb_code.ledger_item) %>)
+          <% end %>
       </span>
     </p>
     <p>
       <strong>Incoming HCB Code:</strong>
       <span>
         <%= link_to(@disbursement.incoming_hcb_code, hcb_code_path(@disbursement.incoming_disbursement.local_hcb_code)) %>
+        <% if @disbursement.incoming_disbursement.local_hcb_code.ledger_item.present? %>
+          (<%= link_to "Ledger::Item #{@disbursement.incoming_disbursement.local_hcb_code.ledger_item.hashid}", ledger_item_path(@disbursement.incoming_disbursement.local_hcb_code.ledger_item) %>)
+        <% end %>
       </span>
     </p>
   <% end %>
@@ -32,12 +38,18 @@
         <% @disbursement.canonical_pending_transactions.each do |ct| %>
           <li>
             <%= ct.hcb_code %>: <%= link_to ct.amount, "/canonical_pending_transactions/#{ct.id}" %>
+            <% if ct.ledger_item.present? %>
+              (<%= link_to "Ledger::Item", ledger_item_path(ct.ledger_item) %>)
+            <% end %>
           </li>
         <% end %>
 
         <% @disbursement.canonical_transactions.each do |ct| %>
           <li>
             <%= ct.hcb_code %>: <%= link_to ct.amount, "/transactions/#{ct.id}" %>
+            <% if ct.ledger_item.present? %>
+              (<%= link_to "Ledger::Item", ledger_item_path(ct.ledger_item) %>)
+            <% end %>
           </li>
         <% end %>
       </ul>

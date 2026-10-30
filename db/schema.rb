@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_21_183000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -613,6 +613,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
     t.string "emoji", null: false
     t.bigint "reactor_id", null: false
     t.datetime "updated_at", null: false
+    t.index ["comment_id", "reactor_id", "emoji"], name: "index_comment_reactions_unique_live_reaction", unique: true, where: "(deleted_at IS NULL)"
     t.index ["comment_id"], name: "index_comment_reactions_on_comment_id"
     t.index ["deleted_at"], name: "index_comment_reactions_on_deleted_at"
     t.index ["emoji"], name: "index_comment_reactions_on_emoji"
@@ -727,6 +728,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
     t.bigint "source_event_id"
     t.bigint "source_subledger_id"
     t.bigint "source_transaction_category_id"
+    t.string "transfer_type"
     t.datetime "updated_at", precision: nil, null: false
     t.index ["destination_subledger_id"], name: "index_disbursements_on_destination_subledger_id"
     t.index ["destination_transaction_category_id"], name: "index_disbursements_on_destination_transaction_category_id"
@@ -1065,6 +1067,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
     t.bigint "event_id", null: false
     t.boolean "generate_monthly_announcement", default: false, null: false
     t.boolean "hide_onboarding_message", default: false, null: false
+    t.string "subevent_name_prefix"
     t.string "subevent_plan"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_event_configurations_on_event_id", unique: true
@@ -1105,6 +1108,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
     t.string "type"
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_event_plans_on_event_id"
+  end
+
+  create_table "event_reimbursement_reviewer_opt_ins", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "event_id", null: false
+    t.bigint "organizer_position_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_event_reimbursement_reviewer_opt_ins_on_event_id"
+    t.index ["organizer_position_id", "event_id"], name: "idx_on_organizer_position_id_event_id_8a61c152af", unique: true
   end
 
   create_table "event_scoped_tags", force: :cascade do |t|
@@ -1175,6 +1187,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
     t.text "public_message"
     t.boolean "public_reimbursement_page_enabled", default: false, null: false
     t.text "public_reimbursement_page_message"
+    t.string "reimbursement_reviewer_selection", default: "disabled", null: false
     t.boolean "reimbursements_require_organizer_peer_review", default: false, null: false
     t.integer "risk_level"
     t.string "short_name"
@@ -1614,6 +1627,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
     t.integer "ct_count", default: 0, null: false
     t.text "custom_memo"
     t.datetime "datetime", null: false
+    t.datetime "intended_at"
     t.bigint "linked_object_id"
     t.string "linked_object_type"
     t.datetime "marked_no_or_lost_receipt_at"
@@ -1671,6 +1685,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
     t.datetime "archived_at"
     t.string "banned_reason"
     t.datetime "created_at", null: false
+    t.boolean "electronic_consent"
+    t.datetime "electronic_consent_at"
     t.string "entity_type"
     t.bigint "managing_event_id"
     t.string "name"
@@ -1719,6 +1735,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
     t.index ["event_id"], name: "index_lob_addresses_on_event_id"
   end
 
+  create_table "login_attempts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "factor", null: false
+    t.inet "ip_address"
+    t.bigint "login_id", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "updated_at", null: false
+    t.text "user_agent"
+    t.index ["created_at"], name: "index_login_attempts_on_created_at"
+    t.index ["login_id"], name: "index_login_attempts_on_login_id"
+  end
+
   create_table "login_codes", force: :cascade do |t|
     t.text "code"
     t.datetime "created_at", null: false
@@ -1743,6 +1771,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
     t.bigint "user_id", null: false
     t.bigint "user_session_id"
     t.index ["referral_link_id"], name: "index_logins_on_referral_link_id"
+    t.index ["user_id", "created_at"], name: "index_logins_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_logins_on_user_id"
     t.index ["user_session_id"], name: "index_logins_on_user_session_id"
   end
@@ -2058,6 +2087,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
 
   create_table "payroll_positions", force: :cascade do |t|
     t.string "aasm_state", null: false
+    t.boolean "combine_contract_attachment", default: true, null: false
     t.datetime "created_at", null: false
     t.string "currency", default: "USD", null: false
     t.text "description", null: false
@@ -2472,6 +2502,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
     t.index ["legal_entity_payout_method_id"], name: "index_reimbursement_reports_on_legal_entity_payout_method_id"
     t.index ["reviewer_id"], name: "index_reimbursement_reports_on_reviewer_id"
     t.index ["user_id"], name: "index_reimbursement_reports_on_user_id"
+  end
+
+  create_table "repayments", force: :cascade do |t|
+    t.integer "amount_cents", null: false
+    t.datetime "created_at", null: false
+    t.bigint "disbursement_id", null: false
+    t.bigint "ledger_item_id", null: false
+    t.jsonb "previous_categories", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["disbursement_id", "ledger_item_id"], name: "index_repayments_on_disbursement_id_and_ledger_item_id", unique: true
+    t.index ["disbursement_id"], name: "index_repayments_on_disbursement_id"
+    t.index ["ledger_item_id"], name: "index_repayments_on_ledger_item_id"
   end
 
   create_table "sponsors", force: :cascade do |t|
@@ -2950,6 +2992,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
   create_table "versions", force: :cascade do |t|
     t.datetime "created_at", precision: nil
     t.string "event", null: false
+    t.bigint "impersonated_by_id"
     t.bigint "item_id", null: false
     t.string "item_type", null: false
     t.jsonb "object"
@@ -3130,6 +3173,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
   add_foreign_key "event_group_memberships", "events"
   add_foreign_key "event_groups", "users"
   add_foreign_key "event_plans", "events"
+  add_foreign_key "event_reimbursement_reviewer_opt_ins", "events"
+  add_foreign_key "event_reimbursement_reviewer_opt_ins", "organizer_positions"
   add_foreign_key "event_scoped_tags", "events", column: "parent_event_id"
   add_foreign_key "event_scoped_tags_events", "event_scoped_tags"
   add_foreign_key "event_scoped_tags_events", "events"
@@ -3176,6 +3221,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
   add_foreign_key "ledgers", "card_grants"
   add_foreign_key "ledgers", "events"
   add_foreign_key "lob_addresses", "events"
+  add_foreign_key "login_attempts", "logins"
   add_foreign_key "login_codes", "users"
   add_foreign_key "mailbox_addresses", "users"
   add_foreign_key "oauth_device_grants", "oauth_applications", column: "application_id"
@@ -3231,6 +3277,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_120000) do
   add_foreign_key "reimbursement_reports", "legal_entity_payout_methods", on_delete: :nullify
   add_foreign_key "reimbursement_reports", "users"
   add_foreign_key "reimbursement_reports", "users", column: "invited_by_id"
+  add_foreign_key "repayments", "disbursements"
+  add_foreign_key "repayments", "ledger_items"
   add_foreign_key "sponsors", "events"
   add_foreign_key "stripe_authorizations", "stripe_cards"
   add_foreign_key "stripe_card_personalization_designs", "events"

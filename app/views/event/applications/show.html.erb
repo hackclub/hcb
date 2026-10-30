@@ -20,7 +20,7 @@
   </div>
 <% elsif @application.draft? %>
   <% title "Apply" %>
-  <%= render partial: "begin", locals: { application: @application } %>
+  <%= render partial: "event/applications/begin", locals: { application: @application } %>
 <% elsif @application.rejected? %>
   <% title "Application status" %>
 
@@ -40,7 +40,7 @@
 <% else %>
   <% title "Application status" %>
 
-  <%= render partial: "status_header", locals: { application: @application, steps: @steps } %>
+  <%= render partial: "event/applications/status_header", locals: { application: @application, steps: @steps } %>
 
   <div class="flex flex-col mt-9 items-center justify-start">
     <div class="flex flex-col gap-3 w-full max-w-xl items-start md:items-center">
@@ -57,5 +57,5 @@
     </div>
   </div>
 
-  <%= render partial: "status_footer", locals: { application: @application } %>
+  <%= render partial: "event/applications/status_footer", locals: { application: @application } %>
 <% end %>

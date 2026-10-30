@@ -35,7 +35,7 @@
         <% elsif current_user == report.user && !admin_signed_in? %>
           <div class="btn bg-success disabled" class="tooltipped tooltipped--n" aria-label="Expenses can't be added to locked reports">
             <%= inline_icon "plus" %>
-            Add <%= report.expenses.count > 0 ? "another" : "an" %> expense
+            Add <%= report.expenses.any? ? "another" : "an" %> expense
           </div>
         <% elsif !report.closed? %>
           <%= link_to reimbursement_report_reject_path(report_id: report.id), class: "btn bg-error", data: { turbo: true, turbo_method: :post } do %>
@@ -155,8 +155,8 @@
             <% button_hint = capture do %>
               <% if report.expenses.none? %>
                 Get started by adding an expense to this report.
-              <% elsif report.missing_receipts? || report.expenses.any? { |e| e.amount.zero? } %>
-                <span class="bold">Your next step:</span> make sure you have a receipt, memo, and amount for each expense to continue.
+              <% elsif report.missing_receipts? || report.missing_categories? || report.expenses.any? { |e| e.amount.zero? } %>
+                <span class="bold">Your next step:</span> make sure you have a receipt, memo, amount, and category for each expense to continue.
               <% elsif report.exceeds_maximum_amount? %>
                <span class="bold warning">Warning</span>: your report is above <%= report.event.name %>'s limit. To continue, lower the amount requested.
               <% elsif report.event&.financially_frozen? %>
@@ -185,7 +185,7 @@
             <% end %>
           <% end %>
         <% elsif report.initial_draft? %>
-          <%= link_to reimbursement_report_submit_path(report_id: report.id), class: "btn bg-info whitespace-nowrap", data: { turbo_method: :post } do %>
+          <% button = capture do %>
             <%= inline_icon "send" %>
             Submit & request review
             <% button_hint = capture do %>
@@ -195,6 +195,47 @@
               <% end %>
             <% end %>
           <% end %>
+          <% if report.reviewer_selectable? && !OrganizerPosition.role_at_least?(current_user, report.event, :manager) && !report.reviewer.present? %>
+            <%= link_to "#", class: "btn bg-info whitespace-nowrap", data: { behavior: "modal_trigger", modal: "submit_report" } do %>
+              <%= button %>
+            <% end %>
+          <% else %>
+            <%= link_to reimbursement_report_submit_path(report_id: report.id), class: "btn bg-info whitespace-nowrap", data: { turbo_method: :post } do %>
+              <%= button %>
+            <% end %>
+          <% end %>
+          <section data-behavior="modal" role="dialog" id="submit_report" class="modal modal--scroll modal--wide bg-snow">
+            <%= modal_header report.assigned_reviewer_required? ? "Select a reviewer" : "Submit report" %>
+
+            <% if report.assigned_reviewer_required? %>
+              <p><%= report.event.name %> would like you to select a reviewer for your reimbursement report.</p>
+            <% end %>
+
+            <%= form_with url: reimbursement_report_submit_path(report_id: report.id), method: :post, data: { turbo: true } do |form| %>
+              <div class="field">
+                <%= form.label :reviewer_id, report.assigned_reviewer_required? ? "Reviewer" : "Reviewer (optional)" %>
+                <% if report.assigned_reviewer_required? %>
+                  <%= form.collection_select :reviewer_id,
+                    report.eligible_reviewers,
+                    :public_id, :name, { prompt: "Select a reviewer...", selected: report.reviewer&.public_id }, { required: true } %>
+                <% else %>
+                  <%= form.collection_select :reviewer_id,
+                    report.eligible_reviewers,
+                    :public_id, :name, { include_blank: "No preference", selected: report.reviewer&.public_id } %>
+                <% end %>
+              </div>
+              <button type="submit" class="btn bg-info whitespace-nowrap">
+                <%= inline_icon "send" %>
+                Submit & request review
+              </button>
+              <% button_hint = capture do %>
+                <span class="bold">Your next step:</span> after adding all of your expenses, submit the report to request a review.
+                <% if payout_method.present? && user == current_user %>
+                  <br>You will be reimbursed via <strong><%= payout_method.payout_summary %></strong>.
+                <% end %>
+              <% end %>
+            <% end %>
+          </section>
         <% elsif report.draft? %>
           <button class="btn bg-info whitespace-nowrap" id="submit_button" data-behavior="modal_trigger" data-modal="submit">
             <%= inline_icon "send" %>
@@ -251,6 +292,15 @@
               <% button_hint = capture do %>
                 <span class="bold warning">⚠️ Warning</span>: this organization is currently financially frozen.
               <% end %>
+            <% end %>
+            <% if payout_method.is_a?(LegalEntity::PayoutMethod::Wire) && report.amount_to_reimburse_cents < 500_00 && !report.event.wire_fee_waived? %>
+              <% button_hint = capture do %>
+                <%= button_hint %>
+                <% admin_tool("p-2 mt-2") do %>
+                  <span class="bold warning">⚠️ Warning</span>: this wire is below the $500 minimum. Make sure to send a $25 disbursement from <%= report.event.name %> to HCB Operations and leave a comment on it linking to this report.
+                <% end %>
+              <% end %>
+              <% turbo_confirm = ["⚠️ WARNING: This wire is below the $500 minimum. After approving this reimbursement, make sure to send a $25 disbursement from #{report.event.name} to HCB Operations and leave a comment on it linking to this report.", turbo_confirm].compact.join("\n\n") %>
             <% end %>
             <% if payout_method.is_a?(LegalEntity::PayoutMethod::WiseTransfer) %>
               <button class="btn bg-info whitespace-nowrap" data-behavior="modal_trigger" data-modal="convert_to_wise_transfer" id="submit_button">

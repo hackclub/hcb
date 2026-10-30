@@ -18,14 +18,98 @@ RSpec.describe EventsController do
     ApplicationController.helpers.render_money_amount(cents)
   end
 
+  def dollars(cents)
+    ApplicationController.helpers.render_money(cents)
+  end
+
   def dom_id_for_balance(event)
     "event_balance_#{event.public_id}"
+  end
+
+  def table_container_rows(body)
+    Nokogiri::HTML5(body).css("article.table-container tbody tr")
+  end
+
+  # Building a wire looks its BIC up at Column.
+  def stub_column_institution_lookup
+    stub_request(:get, /api\.column\.com\/institutions\//).to_return_json(status: 200, body: { country_code: "DE" })
+  end
+
+  # PayPal transfers currently fail validation on create (see the model), so
+  # one has to be written without it.
+  def create_paypal_transfer(event, recipient_name, recipient_email)
+    PaypalTransfer.new(event:, user: create(:user), amount_cents: 10_00, memo: "PayPal transfer", payment_for: "Stickers", recipient_name:, recipient_email:).tap do |transfer|
+      transfer.save!(validate: false)
+    end
+  end
+
+  def create_wise_transfer(event, recipient_name, recipient_email)
+    WiseTransfer.create!(
+      event:,
+      user: create(:user),
+      amount_cents: 100_00,
+      currency: "GBP",
+      recipient_country: "GB",
+      recipient_name:,
+      recipient_email:,
+      payment_for: "Speaker fee",
+      # Set so the after_create hook skips generate_quote!, which would
+      # otherwise reach for a live exchange rate.
+      quoted_usd_amount_cents: 130_00,
+      usd_amount_cents: 130_00
+    )
+  end
+
+  # Recipient emails are never rendered on the transfers and payments pages,
+  # so a search that matched on them would confirm to any visitor of a public
+  # organization that a given address was paid. `recipients` maps a label to
+  # the `[name, email]` of a record the including context has created.
+  shared_examples "a recipient search that only matches emails for organizers" do |action, recipients|
+    context "as a signed out visitor" do
+      recipients.each do |label, (name, email)|
+        it "matches a #{label} by recipient name" do
+          get(action, params: { event_id: event.slug, q: name })
+
+          expect(response).to have_http_status(:ok)
+          rows = table_container_rows(response.body)
+          expect(rows.size).to eq(1)
+          expect(rows.first.text).to include(name)
+          expect(response.body).not_to include(email)
+        end
+
+        it "does not match a #{label} by recipient email" do
+          get(action, params: { event_id: event.slug, q: email })
+
+          expect(response).to have_http_status(:ok)
+          expect(table_container_rows(response.body)).to be_empty
+        end
+      end
+    end
+
+    context "as an organizer" do
+      before { sign_in_organizer_of(event) }
+
+      recipients.each do |label, (name, email)|
+        it "matches a #{label} by recipient email" do
+          get(action, params: { event_id: event.slug, q: email })
+
+          expect(response).to have_http_status(:ok)
+          rows = table_container_rows(response.body)
+          expect(rows.size).to eq(1)
+          expect(rows.first.text).to include(name)
+        end
+      end
+    end
   end
 
   def sign_in_organizer_of(event)
     organizer = create(:user)
     create(:organizer_position, user: organizer, event:)
     create_session(organizer, verified: true)
+  end
+
+  def fund(event, cents)
+    create(:canonical_event_mapping, canonical_transaction: create(:canonical_transaction, amount_cents: cents), event:)
   end
 
   # XLSX files are zip archives; cell text lives in the shared strings table.
@@ -142,6 +226,23 @@ RSpec.describe EventsController do
       # branch renders the destination event.
       expect(response.body).to include("Receiving Organization")
     end
+
+    context "when searching recipients" do
+      let(:event) { create(:event, :with_positive_balance, plan_type: Event::Plan::Standard, is_public: true) }
+
+      before do
+        stub_column_institution_lookup
+        create(:wire, event:, recipient_name: "Wanda Wire", recipient_email: "wanda.wire@example.com")
+        create_paypal_transfer(event, "Paula Paypal", "paula.paypal@example.com")
+        create_wise_transfer(event, "Wilma Wise", "wilma.wise@example.com")
+      end
+
+      include_examples "a recipient search that only matches emails for organizers", :transfers, {
+        "wire"            => ["Wanda Wire", "wanda.wire@example.com"],
+        "PayPal transfer" => ["Paula Paypal", "paula.paypal@example.com"],
+        "Wise transfer"   => ["Wilma Wise", "wilma.wise@example.com"],
+      }
+    end
   end
 
   describe "#ledger" do
@@ -216,6 +317,19 @@ RSpec.describe EventsController do
         expect(response).to have_http_status(:ok)
       end
     end
+
+    context "when the organization is public" do
+      render_views
+
+      it "emits only the organization's Open Graph image" do
+        public_event = create(:event, is_public: true)
+
+        get(:transactions, params: { event_id: public_event.slug })
+
+        images = Nokogiri::HTML5(response.body).css("meta[property='og:image']").map { |tag| tag["content"] }
+        expect(images).to eq(["https://hcb-og.hackclub.com/api/embeds/#{public_event.slug}"])
+      end
+    end
   end
 
   describe "#edit" do
@@ -235,6 +349,163 @@ RSpec.describe EventsController do
 
       expect(page.css("#tags_settings input[name='label'][disabled]")).to be_empty
       expect(page.css("#tags_settings a[disabled]")).to be_empty
+    end
+
+    it "lists managers as reimbursement reviewers, letting parent organization managers be opted in" do
+      manager = create(:user, full_name: "Morgan Manager")
+      other_manager = create(:user, full_name: "Avery Lee")
+      parent_manager = create(:user, full_name: "Parker Parent")
+      parent = create(:event)
+      event = create(:event, parent:)
+      manager_position = create(:organizer_position, user: manager, event:, role: :manager)
+      other_manager_position = create(:organizer_position, user: other_manager, event:, role: :manager)
+      parent_position = create(:organizer_position, user: parent_manager, event: parent, role: :manager)
+
+      reviewer_boxes = lambda do
+        get(:edit, params: { id: event.slug, tab: "reimbursements" })
+        Nokogiri::HTML5(response.body).css("#reimbursement_reviewer_options input[type=checkbox]").to_h do |box|
+          [box["value"].to_i, { checked: box.has_attribute?("checked"), disabled: box.has_attribute?("disabled") }]
+        end
+      end
+
+      create_session(manager, verified: true)
+
+      expect(reviewer_boxes.call).to eq(
+        manager_position.id       => { checked: true, disabled: false },
+        other_manager_position.id => { checked: true, disabled: false },
+        parent_position.id        => { checked: false, disabled: false }
+      )
+
+      manager_position.reimbursement_reviewer_opt_ins.destroy_all
+
+      expect(reviewer_boxes.call[manager_position.id]).to eq(checked: false, disabled: false)
+    end
+
+    it "groups reimbursement reviewers by organization" do
+      parent = create(:event, name: "Parent Org")
+      event = create(:event, parent:, name: "Sub Org")
+      manager_position = create(:organizer_position, event:, role: :manager)
+      parent_position = create(:organizer_position, event: parent, role: :manager)
+      create_session(parent_position.user, verified: true)
+
+      get(:edit, params: { id: event.slug, tab: "reimbursements" })
+
+      headings = Nokogiri::HTML5(response.body).css("#reimbursement_reviewer_options h4").map(&:text)
+      expect(headings).to eq(["Managers of Sub Org", "Managers of Parent Org"])
+
+      boxes = Nokogiri::HTML5(response.body).css("#reimbursement_reviewer_options input[type=checkbox]").to_h do |box|
+        [box["value"].to_i, { checked: box.has_attribute?("checked"), disabled: box.has_attribute?("disabled") }]
+      end
+      expect(boxes).to eq(
+        manager_position.id => { checked: true, disabled: false },
+        parent_position.id  => { checked: false, disabled: false }
+      )
+    end
+  end
+
+  describe "#update" do
+    it "lets an admin set the sub-organization name prefix" do
+      admin = create(:user, :make_admin)
+      event = create(:event)
+      create_session(admin, verified: true)
+
+      patch(:update, params: {
+              id: event.slug,
+              event: { config_attributes: { id: event.config.id, subevent_name_prefix: "Athena Award — " } }
+            })
+
+      expect(event.config.reload.subevent_name_prefix).to eq("Athena Award — ")
+    end
+
+    it "opts managers out of reimbursement reviews when switched off and keeps new managers opted in" do
+      manager = create(:user)
+      other_manager = create(:user)
+      member = create(:user)
+      parent_manager = create(:user)
+      parent = create(:event)
+      event = create(:event, parent:)
+      manager_position = create(:organizer_position, user: manager, event:, role: :manager)
+      other_manager_position = create(:organizer_position, user: other_manager, event:, role: :manager)
+      member_position = create(:organizer_position, user: member, event:, role: :member)
+      parent_position = create(:organizer_position, user: parent_manager, event: parent, role: :manager)
+      create_session(manager, verified: true)
+
+      # Members never review
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_position_ids: ["", other_manager_position.id, member_position.id, parent_position.id] } })
+
+      expect(event.reload.reimbursement_reviewers).to contain_exactly(other_manager, parent_manager)
+
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_position_ids: ["", other_manager_position.id] } })
+
+      expect(event.reload.reimbursement_reviewers).to contain_exactly(other_manager)
+
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_position_ids: [""] } })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(controller.instance_variable_get(:@event).errors.full_messages).to eq(["Select at least one reviewer"])
+      expect(event.reload.reimbursement_reviewers).to contain_exactly(other_manager)
+
+      new_manager = create(:user)
+      create(:organizer_position, user: new_manager, event:, role: :manager)
+
+      expect(event.reimbursement_reviewers).to contain_exactly(other_manager, new_manager)
+      expect(manager_position.reimbursement_reviewer_opt_ins.reload).to be_empty
+    end
+
+    it "rolls back reimbursement reviewer toggles when the rest of the form doesn't save" do
+      manager = create(:user)
+      other_manager = create(:user)
+      event = create(:event)
+      manager_position = create(:organizer_position, user: manager, event:, role: :manager)
+      create(:organizer_position, user: other_manager, event:, role: :manager)
+      create_session(manager, verified: true)
+
+      patch(:update, params: { id: event.slug, event: { slug: "12345", reimbursement_reviewer_position_ids: ["", manager_position.id] } })
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(event.reload.reimbursement_reviewers).to contain_exactly(manager, other_manager)
+    end
+
+    it "lets a parent organization manager opt in to reviewing a sub-organization's reimbursements" do
+      parent = create(:event)
+      event = create(:event, parent:)
+      manager_position = create(:organizer_position, event:, role: :manager)
+      parent_position = create(:organizer_position, event: parent, role: :manager)
+      create_session(parent_position.user, verified: true)
+
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_position_ids: ["", manager_position.id, parent_position.id] } })
+
+      expect(event.reload.reimbursement_reviewers).to contain_exactly(manager_position.user, parent_position.user)
+      expect(parent.reimbursement_reviewers).to contain_exactly(parent_position.user)
+
+      patch(:update, params: { id: event.slug, event: { reimbursement_reviewer_position_ids: ["", manager_position.id] } })
+
+      expect(event.reload.reimbursement_reviewers).to contain_exactly(manager_position.user)
+      expect(parent.reimbursement_reviewers).to contain_exactly(parent_position.user)
+    end
+  end
+
+  describe "#reimbursements" do
+    render_views
+
+    it "only asks for a reviewer if the organization lets submitters pick one" do
+      manager = create(:user)
+      event = create(:event)
+      create(:organizer_position, user: manager, event:, role: :manager)
+      create_session(manager, verified: true)
+
+      get(:reimbursements, params: { event_id: event.slug })
+
+      expect(response.body).not_to include("reimbursement_report_reviewer_wrapper")
+
+      event.update!(reimbursement_reviewer_selection: :optional)
+      get(:reimbursements, params: { event_id: event.slug })
+
+      select = Nokogiri::HTML5(response.body).at_css("#reimbursement_report_reviewer_wrapper select")
+      expect(select).to be_present
+      expect(select["disabled"]).to be_nil
+      expect(select.at_css("option[selected]")).to be_nil
+      expect(select["data-invite-default"]).to eq(manager.public_id)
     end
   end
 
@@ -256,6 +527,174 @@ RSpec.describe EventsController do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Receiving Organization")
+    end
+
+    context "when searching recipients" do
+      let(:event) { create(:event, :with_positive_balance, plan_type: Event::Plan::Standard, is_public: true) }
+
+      before do
+        Flipper.enable(:payments_contractors_refresh_2026_06_26, event)
+        stub_column_institution_lookup
+        create(:wire, event:, recipient_name: "Wanda Wire", recipient_email: "wanda.wire@example.com")
+        create_paypal_transfer(event, "Paula Paypal", "paula.paypal@example.com")
+        create_wise_transfer(event, "Wilma Wise", "wilma.wise@example.com")
+        create(:payment, payee: create(:payee, event:, display_name: "Penny Payment", email: "penny.payment@example.com"))
+      end
+
+      include_examples "a recipient search that only matches emails for organizers", :payments, {
+        "wire"            => ["Wanda Wire", "wanda.wire@example.com"],
+        "PayPal transfer" => ["Paula Paypal", "paula.paypal@example.com"],
+        "Wise transfer"   => ["Wilma Wise", "wilma.wise@example.com"],
+        "payment"         => ["Penny Payment", "penny.payment@example.com"],
+      }
+    end
+  end
+
+  describe "#donation_overview" do
+    render_views
+    include DonationSupport
+
+    def donation_rows(body)
+      Nokogiri::HTML5(body).css("article.table-container tbody tr")
+    end
+
+    before { stub_donation_payment_intent_creation }
+
+    let(:event) { create(:event, is_public: true) }
+    let!(:anonymous_donation) { create(:donation, event:, name: "Jane Appleseed", email: "jane.appleseed@example.com", anonymous: true, aasm_state: "deposited") }
+    let!(:public_donation) { create(:donation, event:, name: "Jane Jones", email: "jane.jones@example.com", anonymous: false, aasm_state: "deposited") }
+
+    context "as a signed out visitor" do
+      it "lists anonymous donors when there is no search" do
+        get(:donation_overview, params: { event_id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        rows = donation_rows(response.body)
+        expect(rows.size).to eq(2)
+        expect(rows.map(&:text)).to include(a_string_including("Anonymous"), a_string_including("Jane Jones"))
+        expect(response.body).not_to include("Jane Appleseed")
+      end
+
+      it "does not match anonymous donors by name" do
+        get(:donation_overview, params: { event_id: event.slug, q: "Appleseed" })
+
+        expect(response).to have_http_status(:ok)
+        expect(donation_rows(response.body)).to be_empty
+      end
+
+      it "does not match anonymous donors by email" do
+        get(:donation_overview, params: { event_id: event.slug, q: "jane.appleseed@example.com" })
+
+        expect(response).to have_http_status(:ok)
+        expect(donation_rows(response.body)).to be_empty
+      end
+
+      it "still matches donors who are not anonymous" do
+        get(:donation_overview, params: { event_id: event.slug, q: "Jane" })
+
+        expect(response).to have_http_status(:ok)
+        rows = donation_rows(response.body)
+        expect(rows.size).to eq(1)
+        expect(rows.first.text).to include("Jane Jones")
+        expect(rows.first.text).not_to include("Anonymous")
+      end
+
+      it "does not match donors who are not anonymous by email" do
+        get(:donation_overview, params: { event_id: event.slug, q: "jane.jones@example.com" })
+
+        expect(response).to have_http_status(:ok)
+        expect(donation_rows(response.body)).to be_empty
+      end
+
+      it "does not match donors who are not anonymous by an email prefix" do
+        get(:donation_overview, params: { event_id: event.slug, q: "jane.jo" })
+
+        expect(response).to have_http_status(:ok)
+        expect(donation_rows(response.body)).to be_empty
+      end
+    end
+
+    context "as an organizer" do
+      before { sign_in_organizer_of(event) }
+
+      it "matches anonymous donors by name" do
+        get(:donation_overview, params: { event_id: event.slug, q: "Appleseed" })
+
+        expect(response).to have_http_status(:ok)
+        rows = donation_rows(response.body)
+        expect(rows.size).to eq(1)
+        expect(rows.first.text).to include("Jane Appleseed")
+      end
+
+      it "matches anonymous donors by email" do
+        get(:donation_overview, params: { event_id: event.slug, q: "jane.appleseed@example.com" })
+
+        expect(response).to have_http_status(:ok)
+        rows = donation_rows(response.body)
+        expect(rows.size).to eq(1)
+        expect(rows.first.text).to include("Jane Appleseed")
+      end
+
+      it "matches donors who are not anonymous by email" do
+        get(:donation_overview, params: { event_id: event.slug, q: "jane.jones@example.com" })
+
+        expect(response).to have_http_status(:ok)
+        rows = donation_rows(response.body)
+        expect(rows.size).to eq(1)
+        expect(rows.first.text).to include("Jane Jones")
+      end
+    end
+  end
+
+  describe "#contractors" do
+    render_views
+
+    let(:event) { create(:event, plan_type: Event::Plan::Standard, is_public: true) }
+
+    before do
+      Flipper.enable(:payments_contractors_refresh_2026_06_26, event)
+      create(:payroll_position, payee: create(:payee, event:, display_name: "Casey Contractor", email: "casey.contractor@example.com"))
+    end
+
+    context "as a signed out visitor" do
+      it "matches contractors by name" do
+        get(:contractors, params: { event_id: event.slug, q: "Casey" })
+
+        expect(response).to have_http_status(:ok)
+        rows = table_container_rows(response.body)
+        expect(rows.size).to eq(1)
+        expect(rows.first.text).to include("Casey Contractor")
+        expect(response.body).not_to include("casey.contractor@example.com")
+      end
+
+      it "does not match contractors by email" do
+        get(:contractors, params: { event_id: event.slug, q: "casey.contractor@example.com" })
+
+        expect(response).to have_http_status(:ok)
+        expect(table_container_rows(response.body)).to be_empty
+      end
+
+      # The scope matches prefixes, so without this the email could be
+      # enumerated a few characters at a time.
+      it "does not match contractors by an email prefix" do
+        get(:contractors, params: { event_id: event.slug, q: "casey.con" })
+
+        expect(response).to have_http_status(:ok)
+        expect(table_container_rows(response.body)).to be_empty
+      end
+    end
+
+    context "as an organizer" do
+      before { sign_in_organizer_of(event) }
+
+      it "matches contractors by email" do
+        get(:contractors, params: { event_id: event.slug, q: "casey.contractor@example.com" })
+
+        expect(response).to have_http_status(:ok)
+        rows = table_container_rows(response.body)
+        expect(rows.size).to eq(1)
+        expect(rows.first.text).to include("Casey Contractor")
+      end
     end
   end
 
@@ -378,6 +817,30 @@ RSpec.describe EventsController do
         # Excel hides the grouping gutter entirely when this attribute is set,
         # even though Google Sheets ignores it. See SubOrganizationsExport.
         expect(sheet).not_to include("showOutlineSymbols")
+      end
+    end
+
+    describe "the count in the heading" do
+      def heading_count(body)
+        Nokogiri::HTML5(body).at_css("h1.heading .badge").text.strip
+      end
+
+      before { create(:event, parent: transparent_sub, is_public: true, name: "Transparent Grandchild") }
+
+      it "counts only the immediate sub-organizations a signed out visitor can see" do
+        get(:sub_organizations, params: { event_id: parent.slug })
+
+        expect(heading_count(response.body)).to eq("1")
+      end
+
+      it "counts every immediate sub-organization for an organizer, in either view", :aggregate_failures do
+        sign_in_organizer_of(parent)
+
+        get(:sub_organizations, params: { event_id: parent.slug, view: "list" })
+        expect(heading_count(response.body)).to eq("2")
+
+        get(:sub_organizations, params: { event_id: parent.slug, view: "grid" })
+        expect(heading_count(response.body)).to eq("2")
       end
     end
   end
@@ -668,6 +1131,35 @@ RSpec.describe EventsController do
         money(transparent_sub.balance_available_v2_cents + private_sub.balance_available_v2_cents)
       )
     end
+
+    it "rolls up every visible descendant, not only the direct sub-organizations" do
+      fund(create(:event, parent: create(:event, parent: private_sub, is_public: false), is_public: false), 250)
+      sign_in_organizer_of(parent)
+
+      get(:async_sub_organization_balance, params: { event_id: parent.slug })
+
+      expect(response.body).to include(
+        money(transparent_sub.balance_available_v2_cents + private_sub.balance_available_v2_cents + 250)
+      )
+    end
+
+    it "leaves out a transparent descendant nested under a private one for a signed out visitor" do
+      fund(create(:event, parent: transparent_sub, is_public: true), 250)
+      fund(create(:event, parent: private_sub, is_public: true), 500)
+
+      get(:async_sub_organization_balance, params: { event_id: parent.slug })
+
+      expect(response.body).to include(money(transparent_sub.balance_available_v2_cents + 250))
+    end
+
+    it "sums only the matching sub-organizations when searching", :aggregate_failures do
+      fund(create(:event, parent: transparent_sub, is_public: true), 250)
+
+      get(:async_sub_organization_balance, params: { event_id: parent.slug, q: transparent_sub.name })
+
+      expect(response.body).to include(money(transparent_sub.balance_available_v2_cents))
+      expect(response.body).not_to include(money(transparent_sub.balance_available_v2_cents + 250))
+    end
   end
 
   describe "#async_sub_organization_balances" do
@@ -683,9 +1175,40 @@ RSpec.describe EventsController do
           format: :json)
 
       expect(response.parsed_body).to eq(
-        transparent_sub.public_id => money(transparent_sub.ledger.available_balance_cents),
-        grandchild.public_id      => money(grandchild.ledger.available_balance_cents)
+        transparent_sub.public_id => {
+          "balance"                  => dollars(transparent_sub.ledger.available_balance_cents),
+          "sub_organization_balance" => dollars(grandchild.ledger.available_balance_cents)
+        },
+        grandchild.public_id      => { "balance" => dollars(grandchild.ledger.available_balance_cents) }
       )
+    end
+
+    it "rolls each sub-organization balance up through every level beneath it" do
+      child = create(:event, parent: transparent_sub, is_public: true)
+      grandchild = create(:event, parent: child, is_public: true)
+      fund(child, 200)
+      fund(grandchild, 400)
+
+      get(:async_sub_organization_balances,
+          params: { event_id: parent.slug, ids: [transparent_sub.public_id, child.public_id, grandchild.public_id] },
+          format: :json)
+
+      expect(response.parsed_body.transform_values { |amounts| amounts["sub_organization_balance"] }).to eq(
+        transparent_sub.public_id => dollars(600),
+        child.public_id           => dollars(400),
+        grandchild.public_id      => nil
+      )
+    end
+
+    it "leaves a private descendant out of the roll-up for a signed out visitor" do
+      fund(create(:event, parent: transparent_sub, is_public: true), 200)
+      fund(create(:event, parent: transparent_sub, is_public: false), 400)
+
+      get(:async_sub_organization_balances,
+          params: { event_id: parent.slug, ids: [transparent_sub.public_id] },
+          format: :json)
+
+      expect(response.parsed_body.dig(transparent_sub.public_id, "sub_organization_balance")).to eq(dollars(200))
     end
 
     it "skips a private descendant for a signed out visitor" do
@@ -745,6 +1268,26 @@ RSpec.describe EventsController do
   describe "#show" do
     render_views
 
+    it "emits only the organization's Open Graph image for a public organization" do
+      event = create(:event, is_public: true)
+
+      get(:show, params: { id: event.slug })
+
+      images = Nokogiri::HTML5(response.body).css("meta[property='og:image']").map { |tag| tag["content"] }
+      expect(images).to eq(["https://hcb-og.hackclub.com/api/embeds/#{event.slug}"])
+    end
+
+    it "gives Slack's link expander the square Open Graph image" do
+      event = create(:event, is_public: true)
+      request.headers["User-Agent"] = "Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)"
+
+      get(:show, params: { id: event.slug })
+
+      page = Nokogiri::HTML5(response.body)
+      expect(page.at_css("meta[property='og:image']")["content"]).to eq("https://hcb-og.hackclub.com/api/square-embed/#{event.slug}")
+      expect(page.at_css("meta[name='twitter:image']")["content"]).to eq("https://hcb-og.hackclub.com/api/square-embed/#{event.slug}")
+    end
+
     context "when the viewer is an auditor" do
       it "renders the mission statement when the event has a description" do
         admin = create(:user, :make_admin)
@@ -779,6 +1322,19 @@ RSpec.describe EventsController do
       expect(response).to have_http_status(:ok)
       expect(response.body).not_to include("Mission statement")
       expect(response.body).not_to include("Run neat events for students")
+    end
+
+    it "does not offer to create an account number for a Playground Mode organization" do
+      user = create(:user)
+      event = create(:event, :demo_mode)
+      create(:organizer_position, user:, event:, role: :manager)
+      create_session(user, verified: true)
+
+      get(:show, params: { id: event.slug })
+
+      modal = Nokogiri::HTML5(response.body).at_css("#account_number")
+      expect(modal.text).to include("Unavailable in Playground Mode")
+      expect(modal.at_css("form[action='#{event_column_account_number_path(event)}']")).to be_nil
     end
   end
 
@@ -821,6 +1377,41 @@ RSpec.describe EventsController do
       get(:ledger, params: { event_id: event.slug })
 
       expect(response.body).not_to include(fee_row)
+    end
+  end
+
+  describe "#g_suite_overview" do
+    render_views
+
+    let(:event) { create(:event) }
+    let(:g_suite) { create(:g_suite, event:, aasm_state: :verified) }
+
+    before do
+      # The verify service does live DNS lookups; the panel only needs a result hash.
+      allow_any_instance_of(GSuiteService::Verify).to receive(:results).and_return({})
+      # Skips the Airtable waitlist lookup.
+      Flipper.enable(:google_workspace, event)
+      sign_in_organizer_of(event)
+    end
+
+    it "renders the account actions for an accepted account" do
+      account = create(:g_suite_account, g_suite:, accepted_at: Time.current)
+
+      get(:g_suite_overview, params: { event_id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(account.address)
+      expect(response.body).to include("Reset password")
+    end
+
+    it "hides the account actions for an account still under review" do
+      account = create(:g_suite_account, g_suite:, accepted_at: nil)
+
+      get(:g_suite_overview, params: { event_id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(account.address)
+      expect(response.body).not_to include("Reset password")
     end
   end
 end
