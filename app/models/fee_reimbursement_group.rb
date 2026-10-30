@@ -80,7 +80,7 @@ class FeeReimbursementGroup < ApplicationRecord
       elsif existing.linked_object.nil?
         existing.update!(linked_object: self)
         # Remap as well as refresh: the group now tells the mapper this belongs
-        # to Hack Club Bank (see CanonicalTransaction#linked_object_v2).
+        # to Hack Club Bank (see Ledger::Mapper#event_from_linked_object).
         existing.map!
       end
     end
