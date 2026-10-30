@@ -22,7 +22,7 @@ module PendingEventMappingEngine
           end
 
           # 3. identify reversed
-          if status == "reversed"
+          if rpst.reversed?
             cpt.decline!
           end
 

@@ -227,7 +227,9 @@ class Donation < ApplicationRecord
   end
 
   def payment_method
-    stripe_obj[:payment_method] || stripe_obj.dig(:invoice, :subscription, :default_payment_method)
+    stripe_obj[:payment_method] || recurring_donation&.stripe_subscription&.default_payment_method&.to_hash
+  rescue
+    nil
   end
 
   def payment_method_type
@@ -272,7 +274,7 @@ class Donation < ApplicationRecord
 
   def stripe_obj
     @stripe_donation_obj ||=
-      StripeService::PaymentIntent.retrieve(id: stripe_payment_intent_id, expand: ["payment_method", "invoice.subscription.default_payment_method"]).to_hash
+      StripeService::PaymentIntent.retrieve(id: stripe_payment_intent_id, expand: ["payment_method"]).to_hash
   rescue => e
     {}
   end
@@ -421,7 +423,7 @@ class Donation < ApplicationRecord
     }
 
     if in_person?
-      attrs[:payment_method_types] = ["card_present"]
+      attrs[:allowed_payment_method_types] = ["card_present"]
       attrs[:capture_method] = "automatic"
     end
 
