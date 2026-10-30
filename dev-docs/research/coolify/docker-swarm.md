@@ -1,6 +1,9 @@
 I gave up on this since Coolify has many bugs. Docker swarm on Coolify is not
 production ready... See `production.md` instead.
 
+> Historical research only: production Docker support has been removed from
+> this repository. The `production.Dockerfile` referenced below no longer exists.
+
 # Coolify w/ Docker Swarm
 
 Hetzner running Coolify
@@ -180,4 +183,3 @@ Docker swarm behind a Hetzner Load Balance
 14. Set up Hetzner load balancer
     - private network
     - TLS passthrough
-
