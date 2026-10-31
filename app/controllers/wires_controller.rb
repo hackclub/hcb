@@ -76,13 +76,13 @@ class WiresController < ApplicationController
         name: "Low-value wire transfer fee",
         destination_event_id: EventMappingEngine::EventIds::HACK_CLUB_BANK,
         source_event_id: @wire.event.id,
-        amount: 25,
+        amount: Wire::SMALL_WIRE_FEE_AMOUNT_CENTS / 100.0,
         requested_by_id: current_user.id,
         fronted: @wire.event.plan.front_disbursements_enabled?,
         transfer_type: "transfer"
       ).run
 
-      disbursement.comments.create!(content: "This $25 fee covers the cost of sending a wire under $500: #{hcb_code_url(@wire.local_hcb_code)}", user: current_user)
+      disbursement.comments.create!(content: "This #{number_to_currency(Wire::SMALL_WIRE_FEE_AMOUNT_CENTS / 100.0)} fee covers the cost of sending a wire under $500: #{hcb_code_url(@wire.local_hcb_code)}", user: current_user)
     end
 
     redirect_to wire_process_admin_path(@wire), flash: { success: "Thanks for approving that wire." }

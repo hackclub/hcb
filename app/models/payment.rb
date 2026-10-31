@@ -118,7 +118,7 @@ class Payment < ApplicationRecord
     case payout_method.details
     when LegalEntity::PayoutMethod::Wire
       if MoneyService.convert_to_usd(amount.cents, amount.currency.to_s) < event.minimum_wire_amount_cents
-        25_00
+        Wire::SMALL_WIRE_FEE_AMOUNT_CENTS
       else
         0
       end

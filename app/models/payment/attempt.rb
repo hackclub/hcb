@@ -72,7 +72,7 @@ class Payment
           fee = if payout.is_a?(WiseTransfer)
                   payout.ledger_item.amount_cents.abs - payment.amount_cents
                 elsif payout.is_a?(Wire) && payment.amount_cents < payment.event.minimum_wire_amount_cents
-                  25_00
+                  Wire::SMALL_WIRE_FEE_AMOUNT_CENTS
                 else
                   0
                 end

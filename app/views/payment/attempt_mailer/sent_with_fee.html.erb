@@ -8,7 +8,7 @@
 <% if @attempt.payout.is_a?(Wire) %>
   <p>
     Since the payment was under $500 and sent as a wire transfer,
-    a fee of $25 was also charged to <%= @payment.event.name %>.
+    a fee of <%= render_money Wire::SMALL_WIRE_FEE_AMOUNT_CENTS %> was also charged to <%= @payment.event.name %>.
   </p>
 <% elsif @attempt.payout.is_a?(WiseTransfer) %>
   <p>
