@@ -92,12 +92,16 @@ class Ledger
       # all_ledgers with no @event, over items spanning every org the cardholder
       # holds a card for, so there the event really is per item.
       #
+      # primary_ledger is for Ledger::ItemPolicy#toggle_tag?, which _tag_menu
+      # checks per row and which resolves the owning event through the primary
+      # ledger (or its card grant).
+      #
       # preload, not includes: linked_object is polymorphic, so it can never be
       # JOINed — and includes makes pluck/count attempt exactly that join
       # (EagerLoadPolymorphicError). It also costs one query per distinct
       # linked_object_type in the result, not one per row.
       results.order(pending_first.asc, datetime: :desc, created_at: :desc, id: :desc)
-             .preload(:author, :linked_object, :tags, primary_ledger: :event, hcb_code: :event)
+             .preload(:author, :linked_object, :tags, hcb_code: :event, primary_ledger: [:event, { card_grant: :event }])
     end
 
     def self.sanitize_query(query_hash)
@@ -310,8 +314,7 @@ class Ledger
 
       case key.to_s
       when "tag"
-        # Tags hang off the HCB code, which points back at the ledger item.
-        relation.where(id: HcbCode.where(id: HcbCodeTag.where(tag_id: operand).select(:hcb_code_id)).select(:ledger_item_id))
+        relation.where(id: Ledger::Item::Tag.where(tag_id: operand).select(:ledger_item_id))
       when "category"
         # Categories are assigned to the underlying canonical transactions, and
         # an item matches if either kind carries the category. Resolving the slug
