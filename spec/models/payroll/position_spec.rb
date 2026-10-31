@@ -267,9 +267,9 @@ RSpec.describe Payroll::Position, type: :model do
     end
 
     it "keeps an organizer signature without reviving a position that already left draft" do
-      contract = position.send_contract(organizer_user: organizer)
+      position.send_contract(organizer_user: organizer)
       position.update_columns(aasm_state: "terminated")
-      organizer_party = contract.party(:organizer)
+      organizer_party = position.reload.contract.party(:organizer)
 
       expect { organizer_party.mark_signed! }.not_to raise_error
       expect(organizer_party.reload).to be_signed
