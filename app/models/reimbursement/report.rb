@@ -321,9 +321,9 @@ module Reimbursement
 
     def comment_mentionable(current_user: nil)
       users = []
-      users += self.comments.includes(:user).map(&:user)
+      users += self.comments.includes(user: { profile_picture_attachment: :blob }).map(&:user)
       users += self.comments.flat_map(&:mentioned_users)
-      users += self.event.users if self.event
+      users += self.event.users.includes(profile_picture_attachment: :blob) if self.event
       users << self.user
 
       users.uniq
@@ -407,9 +407,11 @@ module Reimbursement
     end
 
     def cached_wise_transfer_quote_amount
-      Rails.cache.fetch("cached_wise_transfer_quote_amount_#{id}", expires_in: 3.days) do
-        wise_transfer_quote_amount
-      end
+      Rails.cache.fetch("cached_wise_transfer_quote_amount_#{id}", expires_in: 12.hours, skip_nil: true) do
+        WiseTransfer.generate_quote(amount)
+      rescue
+        nil
+      end || Money.from_cents(0)
     end
 
     def wise_transfer_quote_without_fees_amount
@@ -419,7 +421,7 @@ module Reimbursement
     end
 
     def wise_transfer_may_exceed_balance?
-      !::Shared::AmpleBalance.ample_balance?(wise_transfer_quote_amount.cents, event)
+      !::Shared::AmpleBalance.ample_balance?(cached_wise_transfer_quote_amount.cents, event)
     end
 
     def convert_to_wise_transfer!(as: User.system_user)
