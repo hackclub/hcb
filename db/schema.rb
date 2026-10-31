@@ -1110,6 +1110,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_120000) do
     t.index ["event_id"], name: "index_event_plans_on_event_id"
   end
 
+  create_table "event_reimbursement_reviewer_opt_ins", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "event_id", null: false
+    t.bigint "organizer_position_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_event_reimbursement_reviewer_opt_ins_on_event_id"
+    t.index ["organizer_position_id", "event_id"], name: "idx_on_organizer_position_id_event_id_8a61c152af", unique: true
+  end
+
   create_table "event_scoped_tags", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
@@ -1178,6 +1187,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_120000) do
     t.text "public_message"
     t.boolean "public_reimbursement_page_enabled", default: false, null: false
     t.text "public_reimbursement_page_message"
+    t.string "reimbursement_reviewer_selection", default: "disabled", null: false
     t.boolean "reimbursements_require_organizer_peer_review", default: false, null: false
     t.integer "risk_level"
     t.string "short_name"
@@ -3174,6 +3184,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_120000) do
   add_foreign_key "event_group_memberships", "events"
   add_foreign_key "event_groups", "users"
   add_foreign_key "event_plans", "events"
+  add_foreign_key "event_reimbursement_reviewer_opt_ins", "events"
+  add_foreign_key "event_reimbursement_reviewer_opt_ins", "organizer_positions"
   add_foreign_key "event_scoped_tags", "events", column: "parent_event_id"
   add_foreign_key "event_scoped_tags_events", "event_scoped_tags"
   add_foreign_key "event_scoped_tags_events", "events"

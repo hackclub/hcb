@@ -746,6 +746,7 @@ Rails.application.routes.draw do
 
         resources :events, path: "organizations", only: [:show] do
           resources :stripe_cards, path: "cards", only: [:index]
+          get "cards/designs", to: "stripe_cards/personalization_designs#index"
           resources :card_grants, only: [:index, :create]
           resources :organizer_position_invites, path: "invitations", only: [:index, :create, :destroy]
           resources :transactions, only: [:show, :update] do
@@ -793,9 +794,11 @@ Rails.application.routes.draw do
 
         resources :receipts, only: [:create, :index, :destroy]
 
+        get "cards/designs", to: "stripe_cards/personalization_designs#index"
+
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
           collection do
-            get "card_designs"
+            get "card_designs", to: "stripe_cards/personalization_designs#index" # deprecated: use cards/designs
             post "freeze"
             post "defrost"
             post "activate"
