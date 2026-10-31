@@ -1,0 +1,38 @@
+<%# locals: (version:, expense:) %>
+
+<% changes = version.changeset.slice("memo", "amount_cents", "category", "description").select { |field, values| values.any?(&:present?) } %>
+<% unless version.event == "update" && changes.empty? %>
+  <li class="conversation_item mt2" style="margin-bottom: 24px;">
+    <div class="flex flex-row items-center" style="gap: 16px">
+      <div class="pop bg-smoke-important no_hover relative z-[2]">
+        <%= inline_icon "payment-docs", width: 30 %>
+      </div>
+      <div style="display: flex; align-items: center; gap: 4px">
+        <span class="muted" style="margin-right: -0.25em;">
+          <%= user_mention User.find_by(id: version.whodunnit), hide_avatar: true, default_name: "HCB", default_image: "https://cdn.hackclub.com/019c256a-a425-7ddc-aa02-9fe82bd89c6b/image.png" %>
+        </span>
+        <span class="align-middle">
+          <%= { "create" => "added", "update" => "updated", "destroy" => "removed" }[version.event] %> expense #<%= expense.expense_number %><%= " (#{expense.memo})" if expense.memo.present? %>
+        </span>
+        <span class="tooltipped tooltipped--n align-middle timestamp" aria-label="<%= version.created_at.strftime("%b %e, %Y") %>">
+          <%= time_ago_in_words version.created_at %> ago</span>
+      </div>
+    </div>
+    <% if version.event == "update" %>
+      <ul class="list-reset" style="margin-left: 52px;">
+        <% changes.each do |field, (before, after)| %>
+          <li>
+            <strong class="muted"><%= render_audit_log_field(field) %>:</strong>
+            <% if field == "amount_cents" %>
+              <span class="primary"><%= Money.from_cents(before, expense.currency).format %></span> →
+              <span class="success"><%= Money.from_cents(after, expense.currency).format %></span>
+            <% else %>
+              <%= render_audit_log_value(field, before, color: "primary") %> →
+              <%= render_audit_log_value(field, after, color: "success") %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </li>
+<% end %>
