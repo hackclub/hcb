@@ -99,6 +99,10 @@ reimbursement_nightly_job:
   cron: "*/5 * * * *" # run every 5 minutes
   class: "Reimbursement::NightlyJob"
 
+reimbursement_failed_payout_reminder_job:
+  cron: "0 16 * * *" # run every day at 16:00 UTC
+  class: "Reimbursement::FailedPayoutReminderJob"
+
 reimbursement_expense_approved_notification_job:
   cron: "*/20 * * * *" # run every 20 minutes
   class: "Reimbursement::Expense::ApprovedNotificationJob"

@@ -7,6 +7,8 @@
 #  id                       :bigint           not null, primary key
 #  aasm_state               :string           not null
 #  amount_cents             :integer          not null
+#  failed_at                :datetime
+#  failed_reminders_sent    :integer          default(0), not null
 #  hcb_code                 :string
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
@@ -38,6 +40,8 @@ module Reimbursement
     set_public_id_prefix :rph
 
     has_paper_trail
+
+    REMINDER_DAYS = [3, 7, 14].freeze
 
     has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
     has_many :expense_payouts, class_name: "Reimbursement::ExpensePayout", foreign_key: "reimbursement_payout_holdings_id", inverse_of: :payout_holding
@@ -85,6 +89,11 @@ module Reimbursement
       end
 
       event :mark_failed do
+        before do
+          self.failed_at = Time.current
+          self.failed_reminders_sent = 0
+        end
+
         transitions from: [:sent, :settled], to: :failed
       end
 

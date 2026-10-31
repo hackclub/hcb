@@ -100,4 +100,24 @@ RSpec.describe ReimbursementMailer do
       expect(body.css("a").map { |a| a["href"] }).to include(Rails.application.routes.url_helpers.settings_payouts_url)
     end
   end
+
+  describe "#failed_payout_reminder" do
+    it "reminds the reimbursee their payout failed and where to fix their details" do
+      create(:event, id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
+      user = create(:user, email: "user@example.com")
+      report = create(:reimbursement_report, user:, name: "Food & drinks for event")
+      payout_holding = Reimbursement::PayoutHolding.create!(report:, amount_cents: 130_00, aasm_state: :failed, failed_at: 7.days.ago)
+
+      mail = described_class.with(reimbursement_payout_holding: payout_holding).failed_payout_reminder
+
+      expect { mail.deliver_now }.to send_email(
+        to: "user@example.com",
+        subject: "[Reimbursements] Reminder: your payout for Food & drinks for event still needs attention"
+      )
+
+      body = Nokogiri::HTML5.parse(mail.html_part.body.to_s)
+      expect(body.text.squish).to include("failed to send 7 days ago")
+      expect(body.css("a").map { |a| a["href"] }).to include(Rails.application.routes.url_helpers.settings_payouts_url)
+    end
+  end
 end
