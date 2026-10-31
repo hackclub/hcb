@@ -64,12 +64,12 @@ module Reimbursement
                   payout_holding.increase_check = check
                   payout_holding.save!
                   payout_holding.mark_sent!
-                rescue
+                rescue => e
                   check.mark_rejected!
                   payout_holding.increase_check = check
                   payout_holding.save!
                   payout_holding.mark_failed!
-                  message = e.response_body&.dig("message") || e.message
+                  message = (e.response_body["message"] if e.respond_to?(:response_body) && e.response_body.is_a?(Hash)) || e.message
                   ReimbursementMailer.with(
                     reimbursement_payout_holding: payout_holding,
                     reason: message
