@@ -1,33 +1,6 @@
 <%= turbo_frame_tag(:admin_tools, target: "_top", class: "w-full") do %>
   <% admin_tool("w-100 center mt3") do %>
-    <div x-data="{
-      pinned_cards: $persist([]),
-      pin(id, old_grid_id) {
-        this.pinned_cards.find(card => card.id === id) ?
-        this.remove_and_respawn_card(id) :
-        this.push_and_teleport_card(id, old_grid_id)
-      },
-      push_and_teleport_card(id, old_grid_id) {
-        this.pinned_cards.push({id, old_grid_id})
-        const card = document.getElementById(id)
-        $refs.pinnedGrid.appendChild(card)
-      },
-      remove_and_respawn_card(id) {
-        old_grid_id = this.pinned_cards.find(card => card.id === id).old_grid_id
-        this.pinned_cards = this.pinned_cards.filter(e => e.id !== id)
-        const card = document.getElementById(id)
-        document.getElementById(old_grid_id).appendChild(card)
-      },
-      teleport_mass_cards() {
-        this.pinned_cards.forEach(({id,_}) => {
-          const card = document.getElementById(id)
-          $refs.pinnedGrid.appendChild(card)
-        })
-      },
-      isPinned(id) {
-        return this.pinned_cards.find(card => card.id === id)
-      }
-      }">
+    <div x-data="admin_tools_pinned_cards">
       <p>
         <%= content_tag :strong, render_money(@transaction_volume) %>
         in transactions & counting…
