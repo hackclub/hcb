@@ -111,7 +111,7 @@ module Payroll
       state :terminated
 
       event :mark_under_review do
-        transitions from: :draft, to: :under_review
+        transitions from: :draft, to: :under_review, if: -> { contract_signed_by?(:organizer) }
       end
 
       event :mark_onboarding do
@@ -377,16 +377,16 @@ module Payroll
       Rails.error.report(e, context: { payroll_position_id: id })
     end
 
+    def contract_signed_by?(role)
+      contracts.not_voided.any? { |contract| contract.party(role)&.signed? }
+    end
+
     private
 
     def schedule_onboarding_reminders
       onboarding_reminder_days.each do |days|
         Payroll::Position::OnboardingReminderJob.set(wait: days.days).perform_later(self)
       end
-    end
-
-    def contract_signed_by?(role)
-      contracts.not_voided.any? { |contract| contract.party(role)&.signed? }
     end
 
     def contractor_user
