@@ -102,12 +102,17 @@ module Payroll
     validate :manager_is_event_manager
 
     aasm timestamps: true do
-      state :under_review, initial: true
+      state :draft, initial: true
+      state :under_review
       state :onboarding
       state :onboarded
       state :expired
       state :rejected
       state :terminated
+
+      event :mark_under_review do
+        transitions from: :draft, to: :under_review
+      end
 
       event :mark_onboarding do
         transitions from: :under_review, to: :onboarding
@@ -133,7 +138,7 @@ module Payroll
       end
 
       event :mark_terminated do
-        transitions from: [:under_review, :onboarding, :onboarded], to: :terminated
+        transitions from: [:draft, :under_review, :onboarding, :onboarded], to: :terminated
 
         after do
           # If it's still under review, we haven't sent any emails to the contractor yet,
@@ -270,6 +275,11 @@ module Payroll
 
     def on_contract_party_signed(party)
       refresh_onboarding_state!
+
+      # HCB reviews only after organizer signs
+      if party.organizer?
+        mark_under_review!
+      end
 
       # The contractor is only invited to sign once HCB has signed
       if party.hcb?
