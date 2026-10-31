@@ -207,7 +207,7 @@ module Payroll
           owner: :hcb,
           label: "HCB team review",
           hint: "The contractor is emailed once HCB signs",
-          complete: !under_review? && !rejected?
+          complete: contract_signed_by?(:hcb)
         },
         {
           key: :tax_form,

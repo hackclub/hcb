@@ -109,7 +109,7 @@
     <% end %>
   <% end %>
 
-  <% if @position.status == :onboarding %>
+  <% if @position.draft? || @position.status == :onboarding %>
     <h3 class="mt-4 mb-2">Onboarding</h3>
     <%= render "payroll/positions/onboarding_flow", position: @position, perspective: :organizer %>
   <% end %>
