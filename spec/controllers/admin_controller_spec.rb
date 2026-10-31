@@ -24,6 +24,27 @@ RSpec.describe AdminController do
     end
   end
 
+  describe "#fee_revenues" do
+    render_views
+
+    it "lists every organization with an uncharged fee balance and totals them" do
+      admin = create(:user, :make_admin)
+      fronted_org = create(:event, name: "Fronted Org", plan_type: Event::Plan::Standard)
+      donation = create(:canonical_pending_transaction, amount_cents: 100_00, fronted: true)
+      create(:canonical_pending_event_mapping, canonical_pending_transaction: donation, event: fronted_org)
+      settled_org = create(:event, name: "Settled Org")
+      create(:fee, canonical_event_mapping: nil, memo: "Revenue fee", event: settled_org, reason: :revenue, amount_cents_as_decimal: 5_00)
+
+      create_session(admin, verified: true)
+
+      get :fee_revenues
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Uncharged Fee Balance: $12.00")
+      expect(response.body).to include("Fronted Org", "Settled Org")
+    end
+  end
+
   describe "#set_wise_transfer" do
     it "maps the canonical transaction's ledger item onto the transfer's event ledger" do
       admin = create(:user, :make_admin)
