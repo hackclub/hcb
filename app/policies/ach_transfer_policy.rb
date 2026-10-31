@@ -45,6 +45,14 @@ class AchTransferPolicy < ApplicationPolicy
     user&.admin?
   end
 
+  def edit?
+    user&.admin? && record.pending?
+  end
+
+  def update?
+    user&.admin? && record.pending?
+  end
+
   private
 
   def user_who_can_transfer?
