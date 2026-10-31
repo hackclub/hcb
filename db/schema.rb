@@ -1212,13 +1212,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_183000) do
     t.index ["requested_by_id"], name: "index_exports_on_requested_by_id"
   end
 
+  create_table "fee_reimbursement_groups", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "slug", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_fee_reimbursement_groups_on_slug", unique: true
+  end
+
   create_table "fee_reimbursements", force: :cascade do |t|
     t.bigint "amount"
     t.datetime "created_at", precision: nil, null: false
+    t.bigint "fee_reimbursement_group_id"
     t.datetime "processed_at", precision: nil
     t.bigint "stripe_topup_id"
     t.string "transaction_memo"
     t.datetime "updated_at", precision: nil, null: false
+    t.index ["fee_reimbursement_group_id"], name: "index_fee_reimbursements_on_fee_reimbursement_group_id"
     t.index ["stripe_topup_id"], name: "index_fee_reimbursements_on_stripe_topup_id"
     t.index ["transaction_memo"], name: "index_fee_reimbursements_on_transaction_memo", unique: true
   end
@@ -3180,6 +3189,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_183000) do
   add_foreign_key "event_scoped_tags_events", "events"
   add_foreign_key "events", "users", column: "point_of_contact_id"
   add_foreign_key "exports", "users", column: "requested_by_id"
+  add_foreign_key "fee_reimbursements", "fee_reimbursement_groups"
   add_foreign_key "fee_relationships", "events"
   add_foreign_key "fees", "canonical_event_mappings"
   add_foreign_key "g_suite_accounts", "g_suites"
