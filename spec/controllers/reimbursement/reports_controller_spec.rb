@@ -740,5 +740,63 @@ RSpec.describe Reimbursement::ReportsController do
       end
     end
 
+    context "when expenses change after the report is submitted", versioning: true do
+      def timeline(body)
+        Nokogiri::HTML5(body).css(".conversation_item").map { |item| item.text.squish }
+      end
+
+      let(:user) { create(:user) }
+      let(:event) { create(:event) }
+      let(:report) { create(:reimbursement_report, user:, event:, currency: "EUR") }
+      let!(:expense) { create(:reimbursement_expense, report:, memo: "Train ticket") }
+
+      before do
+        create(:organizer_position, user:, event:)
+        expense.update!(value: 20)
+        report.update!(aasm_state: :submitted)
+        report.update!(aasm_state: :draft)
+        create_session(user, verified: true)
+      end
+
+      it "shows amount changes in the expense's currency but hides edits from before the first submission" do
+        expense.update!(value: 15)
+
+        get(:show, params: { id: report.id })
+
+        expect(timeline(response.body)).to include(a_string_including("updated expense #1 (Train ticket)", "Amount: €20.00 → €15.00"))
+        expect(response.body).not_to include("added expense")
+        expect(response.body).not_to include("€10.00")
+      end
+
+      it "shows expenses removed after submission" do
+        expense.destroy!
+
+        get(:show, params: { id: report.id })
+
+        expect(timeline(response.body)).to include(a_string_including("removed expense #1 (Train ticket)"))
+      end
+
+      it "does not show an empty entry when only the approval state changes" do
+        report.update!(aasm_state: :submitted)
+        expense.mark_approved!
+
+        get(:show, params: { id: report.id })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("updated expense")
+      end
+
+      it "does not show changes to expenses on other reports" do
+        other_report = create(:reimbursement_report, user:, event:)
+        other_expense = create(:reimbursement_expense, report: other_report, memo: "Other report expense")
+        other_expense.update!(value: 99)
+
+        get(:show, params: { id: report.id })
+
+        expect(response.body).not_to include("Other report expense")
+        expect(response.body).not_to include("99.00")
+      end
+    end
+
   end
 end
