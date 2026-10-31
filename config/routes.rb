@@ -956,6 +956,7 @@ Rails.application.routes.draw do
       post "electronic_consent", action: :update_electronic_consent
       get "completed"
       post "discard"
+      get "download"
     end
   end
 
