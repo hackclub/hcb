@@ -1,0 +1,43 @@
+<%= turbo_frame_tag "money_flow" do %>
+  <% unless event.id == EventMappingEngine::EventIds::HACK_CLUB_HQ && !OrganizerPosition.role_at_least?(current_user, event, :reader) %>
+    <div id="money-flow-chart" style="height: 100%">
+      <% if money_flow[:links].empty? %>
+        <div class="flex flex-1 flex-col items-center justify-center" style="height: 100%">
+          <div class="text-center">
+            <h3 class="text-2xl font-bold mb-0">
+              It's quiet here...
+            </h3>
+            <p class="text-gray-500 my-1 max-w-sm">
+              Money flow will appear here<br>as
+              <%= organizer_signed_in? ? "you" : "they" %>
+              raise and spend money
+            </p>
+          </div>
+        </div>
+      <% else %>
+        <h3 class="mt-0 px-0 sm:mt-2 mb-2">Flow</h3>
+        <% net_cents = money_flow[:money_in_cents] - money_flow[:money_out_cents] %>
+        <div class="flex flex-wrap items-end gap-x-10 gap-y-3 mb-4">
+          <div class="flex flex-col">
+            <span class="muted text-sm font-bold">Net cashflow</span>
+            <span class="text-3xl sm:text-4xl font-bold"><%= number_to_currency(net_cents / 100.0, precision: 0) %></span>
+          </div>
+          <% [["Money in", money_flow[:money_in_cents], "revenue", ""], ["Money out", money_flow[:money_out_cents], "expenses", "−"]].each do |label, cents, direction, sign| %>
+            <div class="flex flex-col">
+              <% if organizer_signed_in? %>
+                <%= link_to label, event_transactions_path(event, direction:, start: start_date&.iso8601, end: end_date&.iso8601), class: "muted text-sm font-bold underline decoration-dotted underline-offset-4" %>
+              <% else %>
+                <span class="muted text-sm font-bold"><%= label %></span>
+              <% end %>
+              <span class="text-xl sm:text-2xl font-bold"><%= sign %><%= render_money cents, trunc: true %></span>
+            </div>
+          <% end %>
+        </div>
+        <%# One source flowing to one destination (e.g. Donations → org → Balance) says nothing the totals don't %>
+        <% if money_flow[:nodes].size > 3 %>
+          <%= react_component "home/MoneyFlow", { data: money_flow.slice(:nodes, :links) }, { camelize_props: false } %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
