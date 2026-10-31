@@ -144,6 +144,8 @@ gem "appsignal" # error tracking + performance monitoring
 gem "lograge" # Log formatting
 
 group :test do
+  gem "capybara" # Browser-driven system tests
+  gem "cuprite" # Headless Chrome driver for Capybara
   gem "factory_bot_rails" # Test data
   gem "simplecov", require: false # Code coverage
   gem "webmock"

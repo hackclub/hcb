@@ -378,7 +378,17 @@ class EventsController < ApplicationController
     fixed_event_params.delete(:plan)
 
     begin
-      if @event.update(admin_signed_in? ? fixed_event_params : fixed_user_event_params)
+      # One transaction, so reviewer toggles are rolled back if the rest of the form doesn't save
+      updated = Event.transaction do
+        if (reviewer_position_ids = params.dig(:event, :reimbursement_reviewer_position_ids)) && !@event.update_reimbursement_reviewers(reviewer_position_ids)
+          @settings_tab = "reimbursements"
+          raise ActiveRecord::Rollback
+        end
+
+        @event.update(admin_signed_in? ? fixed_event_params : fixed_user_event_params) || raise(ActiveRecord::Rollback)
+      end
+
+      if updated
         if plan_param && plan_param != @event.plan&.type
           @event.plan.mark_inactive!(plan_param) # deactivate old plan and replace it
         end
@@ -678,12 +688,16 @@ class EventsController < ApplicationController
     end
 
     if params[:q].present?
-      relation = relation.search_name(params[:q])
-      # An anonymous donor's name and email are still stored, so a search that
-      # matched them would reveal who they are to anyone who can see this page.
-      # Only viewers who can already see anonymous donors' names (the view
-      # gates them on `organizer_signed_in?` too) get those matches.
-      relation = relation.where(anonymous: false) unless organizer_signed_in?
+      # A donor's email is never shown to non-organizers, and an anonymous
+      # donor's name and email are still stored, so a search that matched
+      # either would reveal them to anyone who can see this page. Only viewers
+      # who can already see those details (the view gates them on
+      # `organizer_signed_in?` too) get those matches.
+      relation = if organizer_signed_in?
+                   relation.search_name(params[:q])
+                 else
+                   relation.public_search_name(params[:q]).where(anonymous: false)
+                 end
     end
 
     page = (params[:page] || 1).to_i
@@ -749,22 +763,22 @@ class EventsController < ApplicationController
     @paypal_transfers = @paypal_transfers.approved.or(@paypal_transfers.pending) if params[:status] == "in_transit"
     @paypal_transfers = @paypal_transfers.deposited if params[:status] == "deposited"
     @paypal_transfers = @paypal_transfers.rejected if params[:status] == "canceled"
-    @paypal_transfers = @paypal_transfers.search_recipient(params[:q]) if params[:q].present?
+    @paypal_transfers = search_recipients(@paypal_transfers) if params[:q].present?
 
     @wires = @wires.approved.or(@wires.pending) if params[:status] == "in_transit"
     @wires = @wires.deposited if params[:status] == "deposited"
     @wires = @wires.rejected if params[:status] == "canceled"
-    @wires = @wires.search_recipient(params[:q]) if params[:q].present?
+    @wires = search_recipients(@wires) if params[:q].present?
 
     @wise_transfers = @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent) if params[:status] == "in_transit"
     @wise_transfers = @wise_transfers.deposited if params[:status] == "deposited"
     @wise_transfers = @wise_transfers.rejected.or(@wise_transfers.failed) if params[:status] == "canceled"
-    @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
+    @wise_transfers = search_recipients(@wise_transfers) if params[:q].present?
 
     @payments = @payments.where(aasm_state: %w[pending_legal_entity under_review sent]) if params[:status] == "in_transit"
     @payments = @payments.where(aasm_state: "successful") if params[:status] == "deposited"
     @payments = @payments.where(aasm_state: "rejected") if params[:status] == "canceled"
-    @payments = @payments.search_recipient(params[:q]) if params[:q].present?
+    @payments = search_recipients(@payments) if params[:q].present?
 
     # Apply transfer type filter
     all_transfers = [@increase_checks, @checks, @ach_transfers, @disbursements, @paypal_transfers, @wires, @wise_transfers, @payments]
@@ -846,17 +860,17 @@ class EventsController < ApplicationController
     @paypal_transfers = @paypal_transfers.approved.or(@paypal_transfers.pending) if params[:status] == "in_transit"
     @paypal_transfers = @paypal_transfers.deposited if params[:status] == "deposited"
     @paypal_transfers = @paypal_transfers.rejected if params[:status] == "canceled"
-    @paypal_transfers = @paypal_transfers.search_recipient(params[:q]) if params[:q].present?
+    @paypal_transfers = search_recipients(@paypal_transfers) if params[:q].present?
 
     @wires = @wires.approved.or(@wires.pending) if params[:status] == "in_transit"
     @wires = @wires.deposited if params[:status] == "deposited"
     @wires = @wires.rejected if params[:status] == "canceled"
-    @wires = @wires.search_recipient(params[:q]) if params[:q].present?
+    @wires = search_recipients(@wires) if params[:q].present?
 
     @wise_transfers = @wise_transfers.approved.or(@wise_transfers.pending).or(@wise_transfers.sent) if params[:status] == "in_transit"
     @wise_transfers = @wise_transfers.deposited if params[:status] == "deposited"
     @wise_transfers = @wise_transfers.rejected.or(@wise_transfers.failed) if params[:status] == "canceled"
-    @wise_transfers = @wise_transfers.search_recipient(params[:q]) if params[:q].present?
+    @wise_transfers = search_recipients(@wise_transfers) if params[:q].present?
 
     # Apply transfer type filter
     all_transfers = [@increase_checks, @checks, @ach_transfers, @disbursements, @paypal_transfers, @wires, @wise_transfers]
@@ -968,7 +982,15 @@ class EventsController < ApplicationController
       completed: counts_by_status[:completed] || 0,
     }
 
-    @contractors = @contractors.search_recipient(params[:q]) if params[:q].present?
+    if params[:q].present?
+      # Contractors' emails are only rendered behind `contractor_details?`, so
+      # only those viewers may match on them.
+      @contractors = if policy(@event).contractor_details?
+                       @contractors.search_recipient(params[:q])
+                     else
+                       @contractors.public_search_recipient(params[:q])
+                     end
+    end
   end
 
   def sub_organizations
@@ -1487,6 +1509,7 @@ class EventsController < ApplicationController
       :donation_page_message,
       :donation_tiers_enabled,
       :reimbursements_require_organizer_peer_review,
+      :reimbursement_reviewer_selection,
       :public_reimbursement_page_enabled,
       :public_reimbursement_page_message,
       :donation_thank_you_message,
@@ -1557,6 +1580,7 @@ class EventsController < ApplicationController
       :donation_page_message,
       :donation_tiers_enabled,
       :reimbursements_require_organizer_peer_review,
+      :reimbursement_reviewer_selection,
       :public_reimbursement_page_enabled,
       :public_reimbursement_page_message,
       :donation_thank_you_message,
@@ -1699,6 +1723,18 @@ class EventsController < ApplicationController
 
   def set_event_follow
     @event_follow = Event::Follow.where({ user_id: current_user.id, event_id: @event.id }).first if current_user
+  end
+
+  # Recipients' email addresses on the transfers and payments pages are only
+  # ever shown to organizers, so a search that matched on them would confirm,
+  # to anyone who can view a public organization, that a given address was
+  # paid. Everyone else only searches the recipient's name.
+  def search_recipients(relation)
+    if organizer_signed_in?
+      relation.search_recipient(params[:q])
+    else
+      relation.public_search_recipient(params[:q])
+    end
   end
 
   def transfer_filter_options
