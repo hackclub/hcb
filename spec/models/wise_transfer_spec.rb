@@ -56,6 +56,15 @@ RSpec.describe WiseTransfer do
     end
   end
 
+  describe "#currency" do
+    it "rejects CNY so Chinese payouts go through wire instead" do
+      instance = build_instance(currency: "CNY")
+      instance.validate
+      expect(instance.errors[:currency]).to eq(["is not supported for Wise transfers"])
+      expect(Wire::AVAILABLE_CURRENCIES).to include("CNY")
+    end
+  end
+
   describe "#wise_recipient_id" do
     it "is optional" do
       instance = build_instance(wise_recipient_id: nil)
