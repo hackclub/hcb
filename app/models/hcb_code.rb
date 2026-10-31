@@ -263,23 +263,26 @@ class HcbCode < ApplicationRecord
                 .compact
                 .uniq
 
-        return Event.where(id: ids) unless ids.empty?
+        # Only fall back to the linked objects when the mappings gave us nothing.
+        # This can't `return` early: that would exit the method before `@events`
+        # is assigned, so every call would re-run the two plucks above.
+        if ids.empty?
+          ids.concat([
+            invoice.try(:event).try(:id),
+            donation.try(:event).try(:id),
+            ach_transfer.try(:event).try(:id),
+            check.try(:event).try(:id),
+            increase_check.try(:event).try(:id),
+            outgoing_disbursement.try(:event).try(:id),
+            incoming_disbursement.try(:event).try(:id),
+            check_deposit.try(:event).try(:id),
+            bank_fee.try(:event).try(:id),
+          ].compact.uniq)
 
-        ids.concat([
-          invoice.try(:event).try(:id),
-          donation.try(:event).try(:id),
-          ach_transfer.try(:event).try(:id),
-          check.try(:event).try(:id),
-          increase_check.try(:event).try(:id),
-          outgoing_disbursement.try(:event).try(:id),
-          incoming_disbursement.try(:event).try(:id),
-          check_deposit.try(:event).try(:id),
-          bank_fee.try(:event).try(:id),
-        ].compact.uniq)
-
-        ids << EventMappingEngine::EventIds::INCOMING_FEES if incoming_bank_fee?
-        ids << EventMappingEngine::EventIds::HACK_CLUB_BANK if fee_revenue? || stripe_service_fee? || outgoing_fee_reimbursement?
-        ids << EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING if reimbursement_payout_holding?
+          ids << EventMappingEngine::EventIds::INCOMING_FEES if incoming_bank_fee?
+          ids << EventMappingEngine::EventIds::HACK_CLUB_BANK if fee_revenue? || stripe_service_fee? || outgoing_fee_reimbursement?
+          ids << EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING if reimbursement_payout_holding?
+        end
 
         Event.where(id: ids)
       end
