@@ -1,4 +1,4 @@
-<%# locals: (form:, disabled:, excluded_fields: [], model: WiseTransfer) %>
+<%# locals: (form:, disabled:, excluded_fields: [], model: WiseTransfer, preselect: false) %>
 
 <% (WiseTransfer::AVAILABLE_CURRENCIES + [nil]).each do |currency| %>
   <template x-if="currency == '<%= currency.nil? ? "null" : currency %>'">
@@ -8,7 +8,7 @@
         <div class="field <%= "flex flex-row-reverse items-center justify-end gap-2" if field[:type] == :check_box %>" x-on:change="<%= field[:key] %> = <%= field[:type] == :check_box ? "$event.target.checked" : "$event.target.value" %>" <% if field[:conditional] %> x-show="<%= field[:conditional] %>" <% end %>>
           <%= form.label field[:key], field[:label], (field[:label_options] || {}) %>
           <% if field[:type] == :select %>
-            <%= form.select field[:key], options_for_select(field[:options].to_a), disabled:, prompt: "Select one...", "x-bind:required": "#{field[:conditional] || "true"} && #{field[:required].nil? || field[:required]}" %>
+            <%= form.select field[:key], options_for_select(field[:options].to_a, (form.object.try(field[:key]) if preselect)), disabled:, prompt: "Select one...", "x-bind:required": "#{field[:conditional] || "true"} && #{field[:required].nil? || field[:required]}" %>
           <% else %>
             <%= form.send(field[:type], field[:key], placeholder: field[:placeholder], disabled:, "x-bind:required": "#{field[:conditional] || "true"} && #{field[:required].nil? || field[:required]}") %>
           <% end %>

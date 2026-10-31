@@ -1,0 +1,51 @@
+<% title "Edit a Wise transfer" %>
+<%= render "events/nav", selected: :transfers %>
+<% page_sm %>
+
+<h2 class="mt5">Edit Wise transfer to <%= @wise_transfer.recipient_name %> (#<%= @wise_transfer.id %>)</h2>
+
+<hr class="mt1 mb1">
+
+<%= form_with(
+      model: @wise_transfer,
+      local: true,
+      html: {
+        "x-data": "wise_form(#{{ currency: @wise_transfer.currency, account_type: @wise_transfer.account_type }.to_json})"
+      }
+    ) do |form| %>
+
+  <%= form_errors(@wise_transfer, "wise transfer", "We couldn't update this") %>
+
+  <h2 class="mb2 mt3">Recipient details</h2>
+
+  <div class="field mt2">
+    <%= form.label :recipient_name, "Legal name (use company name if applicable)" %>
+    <%= form.text_field :recipient_name, placeholder: "Raviga Capital", required: true, maxlength: 250 %>
+  </div>
+
+  <div class="field">
+    <%= form.label :recipient_email, "Email" %>
+    <%= form.email_field :recipient_email, placeholder: "fionah@gmail.com", required: true %>
+  </div>
+
+  <%= render partial: "transfers/recipient_details", locals: { form:, disabled: false } %>
+
+  <h2 class="mb2 mt3">Payment information</h2>
+
+  <div class="field">
+    <label>Amount</label>
+    <p class="mt0 mb0"><%= Money.from_cents(@wise_transfer.amount_cents, @wise_transfer.currency).format %> <%= @wise_transfer.currency %></p>
+    <span class="muted">The amount and currency can't be changed. Update the USD amount from the process page.</span>
+  </div>
+
+  <div class="field">
+    <%= form.label :payment_for, "What are you paying for with this transfer?" %>
+    <%= form.text_field :payment_for, placeholder: "Event venue", required: true %>
+  </div>
+
+  <%= render partial: "wise_transfers/currency_specific_details", locals: { form:, disabled: false, preselect: true } %>
+
+  <div class="actions inline-block mt1">
+    <%= form.submit "Update Wise transfer" %>
+  </div>
+<% end %>
