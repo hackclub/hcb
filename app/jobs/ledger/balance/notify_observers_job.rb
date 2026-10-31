@@ -12,7 +12,10 @@ class Ledger
         return unless ledger
 
         balance_cents = ledger.available_balance_cents
-        ledger.balance_observers.find_each { |observer| observer.check!(balance_cents:) }
+        ledger.balance_observers.includes(:user).find_each do |observer|
+          # Skip users who've lost access since creating the alert.
+          observer.check!(balance_cents:) if LedgerPolicy.new(observer.user, ledger).show?
+        end
       end
 
     end

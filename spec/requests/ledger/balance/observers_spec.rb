@@ -23,6 +23,18 @@ RSpec.describe "Ledger::Balance::ObserversController", type: :request do
       expect(response.body).to include("Low balance alert").and include('value="75.00"')
       expect(response.body).not_to include("99.00")
     end
+
+    it "keeps the alert form out of the organization form so neither breaks the other" do
+      create(:organizer_position, user:, event:, role: :manager)
+      sign_in_as(user)
+
+      get edit_event_path(event, tab: "details")
+
+      # HTML5 parsing drops nested forms the same way browsers do.
+      page = Nokogiri::HTML5(response.body)
+      expect(page.at_css("form[action='#{ledger_balance_observer_path(ledger)}'] input[name='amount']")).to be_present
+      expect(page.at_css("form[action='#{event_path(event)}'] input[name='event[slug]']")).to be_present
+    end
   end
 
   describe "POST /ledgers/:ledger_id/balance_observer" do
@@ -60,6 +72,21 @@ RSpec.describe "Ledger::Balance::ObserversController", type: :request do
         expect(Ledger::Balance::Observer.count).to eq(0)
         expect(flash[:error]).to eq("Amount cents must be greater than 0")
       end
+
+      it "rejects an amount too large for the column instead of erroring" do
+        post ledger_balance_observer_path(ledger), params: { amount: "100000000000" }
+
+        expect(Ledger::Balance::Observer.count).to eq(0)
+        expect(flash[:error]).to eq("Amount cents must be less than $10,000,000")
+      end
+    end
+
+    it "does not let an auditor watch a non-primary ledger" do
+      sign_in_as(create(:user, :make_auditor))
+      non_primary = create(:ledger)
+
+      expect { post ledger_balance_observer_path(non_primary), params: { amount: "50.00" } }.not_to change(Ledger::Balance::Observer, :count)
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
     end
   end
 

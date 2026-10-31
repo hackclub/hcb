@@ -26,6 +26,13 @@ RSpec.describe Ledger::Balance::ObserverPolicy, type: :policy do
 
       is_expected.to eq(false)
     end
+
+    it "is denied on a non-primary ledger, even for an auditor" do
+      user.update!(access_level: :auditor)
+      observer.ledger = create(:ledger)
+
+      is_expected.to eq(false)
+    end
   end
 
   describe "#destroy?" do

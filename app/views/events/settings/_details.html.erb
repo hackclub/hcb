@@ -218,8 +218,6 @@
     <%= form.submit "Update", disabled: %>
   </div>
 
-  <%= render "ledger/balance/observers/settings", ledger: @event.ledger %>
-
   <h3 class="mb1">Danger zone</h3>
   <div class="card border b--warning mb3"
     data-controller="external-validation"
@@ -257,3 +255,5 @@
     </div>
   </div>
 <% end %>
+
+<%= render "ledger/balance/observers/settings", ledger: event.ledger %>
