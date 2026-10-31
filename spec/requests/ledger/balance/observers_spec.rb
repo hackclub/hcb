@@ -32,7 +32,8 @@ RSpec.describe "Ledger::Balance::ObserversController", type: :request do
 
       # HTML5 parsing drops nested forms the same way browsers do.
       page = Nokogiri::HTML5(response.body)
-      expect(page.at_css("form[action='#{ledger_balance_observer_path(ledger)}'] input[name='amount']")).to be_present
+      alert_form = page.at_css("form[id='#{page.at_css("input[name='amount']")["form"]}']")
+      expect(alert_form&.[]("action")).to eq(ledger_balance_observer_path(ledger))
       expect(page.at_css("form[action='#{event_path(event)}'] input[name='event[slug]']")).to be_present
     end
   end
