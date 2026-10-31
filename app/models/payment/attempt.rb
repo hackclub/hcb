@@ -79,6 +79,8 @@ class Payment
 
           if fee.positive?
             Payment::AttemptMailer.with(attempt: self, fee:).sent_with_fee.deliver_later
+          elsif fee.negative?
+            Rails.error.unexpected "Negative fee (#{fee}) calculated for payment #{id}"
           end
         end
       end
