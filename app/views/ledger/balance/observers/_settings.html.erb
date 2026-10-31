@@ -2,31 +2,31 @@
 
 <% observer = ledger.balance_observers.find_or_initialize_by(user: current_user) %>
 <% if policy(observer).create? %>
+  <% form_id = dom_id(ledger, :balance_observer_form) %>
   <h3 class="mb1" id="low_balance_alert_heading">Low balance alert</h3>
   <div class="card mb3">
-    <%= form_with url: ledger_balance_observer_path(ledger) do |form| %>
-      <div class="field">
-        <%= form.label :amount, "Email me when the balance drops below" %>
-        <p class="h5 muted mt0 mb1">
-          Only you will be notified, and only once each time the balance drops below this amount.
-        </p>
-        <div class="flex items-center gap-2">
-          <div class="bg-snow dark:bg-dark flex items-center border rounded-lg muted flex-1 dark:!border-dark">
-            <span class="px-3">$</span>
-            <%= form.number_field :amount, class: "w-100 fit !border-none !bg-transparent !text-black dark:!text-white !pl-0",
-                                           placeholder: "500.00",
-                                           required: true,
-                                           step: 0.01,
-                                           min: 0.01,
-                                           value: ("%.2f" % observer.amount.to_f if observer.persisted?),
-                                           data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
-          </div>
-          <%= form.submit observer.persisted? ? "Update" : "Create alert" %>
-          <% if observer.persisted? %>
-            <%= link_to "Remove", ledger_balance_observer_path(ledger), class: "btn bg-muted", data: { turbo_method: :delete, turbo_confirm: "Remove your low balance alert?" } %>
-          <% end %>
+    <div class="field">
+      <%= label_tag :amount, "Email me when the balance drops below" %>
+      <p class="h5 muted mt0 mb1">
+        Only you will be notified, and only once each time the balance drops below this amount.
+      </p>
+      <div class="flex items-center gap-2">
+        <div class="bg-snow dark:bg-dark flex items-center border rounded-lg muted flex-1 dark:!border-dark">
+          <span class="px-3">$</span>
+          <%= number_field_tag :amount, ("%.2f" % observer.amount.to_f if observer.persisted?),
+                               form: form_id,
+                               class: "w-100 fit !border-none !bg-transparent !text-black dark:!text-white !pl-0",
+                               placeholder: "500.00",
+                               required: true,
+                               step: 0.01,
+                               min: 0.01,
+                               data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
         </div>
+        <%= submit_tag observer.persisted? ? "Update" : "Create alert", form: form_id %>
+        <% if observer.persisted? %>
+          <%= link_to "Remove", ledger_balance_observer_path(ledger), class: "btn bg-muted", data: { turbo_method: :delete, turbo_confirm: "Remove your low balance alert?" } %>
+        <% end %>
       </div>
-    <% end %>
+    </div>
   </div>
 <% end %>

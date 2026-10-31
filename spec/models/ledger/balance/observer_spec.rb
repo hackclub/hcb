@@ -16,6 +16,13 @@ RSpec.describe Ledger::Balance::Observer, type: :model do
       expect(build(:ledger_balance_observer, ledger:, user:, amount_cents: 1)).to be_valid
     end
 
+    it "rejects a threshold too large for the column instead of overflowing" do
+      observer = build(:ledger_balance_observer, ledger:, user:, amount_cents: 10_000_000_00)
+
+      expect(observer).not_to be_valid
+      expect(observer.errors[:amount_cents]).to include("must be less than $10,000,000")
+    end
+
     it "allows one observer per user per ledger" do
       create(:ledger_balance_observer, ledger:, user:)
 
@@ -48,6 +55,12 @@ RSpec.describe Ledger::Balance::Observer, type: :model do
 
       observer.update!(amount_cents: 20_00)
       expect(observer.notified_at).to be_nil
+    end
+
+    it "checks the balance as soon as the threshold is set or changed, but not on other saves" do
+      expect { observer }.to have_enqueued_job(Ledger::Balance::NotifyObserversJob).with(ledger_id: ledger.id)
+      expect { observer.update!(amount_cents: 20_00) }.to have_enqueued_job(Ledger::Balance::NotifyObserversJob).with(ledger_id: ledger.id)
+      expect { observer.update!(amount_cents: 20_00, notified_at: Time.current) }.not_to have_enqueued_job(Ledger::Balance::NotifyObserversJob)
     end
   end
 

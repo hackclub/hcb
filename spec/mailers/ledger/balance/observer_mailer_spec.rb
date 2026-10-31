@@ -13,7 +13,7 @@ RSpec.describe Ledger::Balance::ObserverMailer, type: :mailer do
 
       expect(mail.to).to eq(["orpheus@example.com"])
       expect(mail.subject).to eq("Daydream's balance has dropped below $50.00")
-      expect(mail.body.encoded).to include("$12.34").and include("$50.00").and include(event_url(event))
+      expect(mail.body.encoded).to include("$12.34").and include("$50.00").and include(edit_event_url(event, tab: "details"))
     end
   end
 end

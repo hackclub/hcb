@@ -34,11 +34,13 @@ class Ledger
 
       validates :user_id, uniqueness: { scope: :ledger_id }
       validates :amount_cents, numericality: { only_integer: true, greater_than: 0 }
+      validates :amount_cents, numericality: { less_than: 10_000_000_00, message: "must be less than $10,000,000" }
 
       monetize :amount_cents
 
       # A new threshold is a new alert, so it may fire again.
       before_save -> { self.notified_at = nil }, if: :will_save_change_to_amount_cents?
+      after_save_commit -> { NotifyObserversJob.perform_later(ledger_id:) }, if: :saved_change_to_amount_cents?
 
       def self.notify_later(ledgers)
         where(ledger: ledgers).distinct.pluck(:ledger_id).each do |ledger_id|

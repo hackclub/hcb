@@ -4,7 +4,7 @@ class Ledger
   module Balance
     class ObserverPolicy < ApplicationPolicy
       def create?
-        user == record.user && LedgerPolicy.new(user, record.ledger).show?
+        user == record.user && record.ledger.primary? && LedgerPolicy.new(user, record.ledger).show?
       end
 
       def destroy?
