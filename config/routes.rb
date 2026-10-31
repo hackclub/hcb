@@ -639,7 +639,9 @@ Rails.application.routes.draw do
   end
   resources :reimbursement_reports, only: [], path: "reimbursements/reports", concerns: :commentable
 
-  resources :ledgers, only: [:show]
+  resources :ledgers, only: [:show] do
+    resource :balance_observer, only: [:create, :destroy], controller: "ledger/balance/observers"
+  end
   scope module: :ledger, as: :ledger do
     resources :items, path: "transactions", only: [:show] do
       get "hcb"
