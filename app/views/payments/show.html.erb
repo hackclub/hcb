@@ -63,6 +63,12 @@
         <strong>Organization</strong>
         <%= link_to @payment.event.name, event_path(@payment.event), data: { turbo_frame: "_top" } %>
       </p>
+      <% if @payment.payroll_position.present? %>
+        <p>
+          <strong>Contractor</strong>
+          <%= link_to @payment.payee.display_name, event_payroll_position_path(@payment.event, @payment.payroll_position) %>
+        </p>
+      <% end %>
       <p>
         <strong>Status</strong>
         <%= @payment.state_text %>
@@ -104,7 +110,13 @@
     <div class="flex flex-col gap-1">
       <% @payment.attempts.reorder(created_at: :asc).each_with_index do |attempt, index| %>
         <div class="card flex items-center w-full">
-          <p class="my-0"><%= link_to "Attempt ##{index + 1}", attempt.payout.local_hcb_code %></p>
+          <p class="my-0">
+            <% if attempt.payout.present? %>
+              <%= link_to "Attempt ##{index + 1}", attempt.payout.local_hcb_code %>
+            <% else %>
+              Attempt #<%= index + 1 %>
+            <% end %>
+          </p>
           <p class="my-0"><span class="badge h4 bg-<%= attempt.state_color %> nowrap order-1"><%= attempt.state_text %></span></p>
 
           <div class="flex-grow"></div>
@@ -114,7 +126,7 @@
     </div>
   <% end %>
 
-  <% unless @payment.attempts.any?(&:active?) %>
+  <% if @payment.attempts.any? && !@payment.attempts.any?(&:active?) %>
     <%= button_to "Retry payment", retry_payment_path(@payment), class: "btn mt-2" %>
   <% end %>
 

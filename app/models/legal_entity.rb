@@ -4,15 +4,17 @@
 #
 # Table name: legal_entities
 #
-#  id                :bigint           not null, primary key
-#  archived_at       :datetime
-#  banned_reason     :string
-#  entity_type       :string
-#  name              :string
-#  tin_hash          :string
-#  created_at        :datetime         not null
-#  updated_at        :datetime         not null
-#  managing_event_id :bigint
+#  id                    :bigint           not null, primary key
+#  archived_at           :datetime
+#  banned_reason         :string
+#  electronic_consent    :boolean
+#  electronic_consent_at :datetime
+#  entity_type           :string
+#  name                  :string
+#  tin_hash              :string
+#  created_at            :datetime         not null
+#  updated_at            :datetime         not null
+#  managing_event_id     :bigint
 #
 # Indexes
 #
@@ -108,7 +110,7 @@ class LegalEntity < ApplicationRecord
   end
 
   def tax_form_required?
-    payments.pending_legal_entity.any?(&:requires_tax_form) || payroll_positions.onboarding.exists?
+    payments.where(aasm_state: [:pending_legal_entity, :under_review]).any?(&:requires_tax_form) || payroll_positions.onboarding.exists?
   end
 
   # Whether tax info has ever been completed. Distinct from latest_tax_form, which
@@ -157,6 +159,19 @@ class LegalEntity < ApplicationRecord
                                                   .where.not(entity_type: [nil, entity_type])
                                                   .order(completed_at: :desc, created_at: :desc)
                                                   .first
+  end
+
+  # Forms 1099 are furnished as pages on HCB, so consenting on HCB itself
+  # demonstrates the recipient can access them, as IRS Publication 1179 requires.
+  # We record the time along with when they consented/refused so we know
+  # who hasn't seen the page yet. If electronic_consent is null, they haven't
+  # said yes or no yet.
+  def record_electronic_consent!(consented)
+    update!(electronic_consent: consented, electronic_consent_at: Time.current)
+  end
+
+  def electronic_consent?
+    electronic_consent == true
   end
 
   def archive!

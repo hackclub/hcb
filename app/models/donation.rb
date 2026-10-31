@@ -80,6 +80,8 @@ class Donation < ApplicationRecord
 
   include PgSearch::Model
   pg_search_scope :search_name, against: [:name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "donations.created_at"
+  # For viewers who can't see the donor's email (see `EventsController#donation_overview`).
+  pg_search_scope :public_search_name, against: [:name], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "donations.created_at"
 
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
@@ -94,6 +96,8 @@ class Donation < ApplicationRecord
   before_create :assign_unique_hash, unless: -> { recurring? }
 
   after_commit :send_notification
+
+  after_update_commit :refresh_ledger_item, if: -> { saved_change_to_name? || saved_change_to_anonymous? }
 
   validates :name, :email, presence: true, unless: -> { recurring? || in_person? } # recurring donations have a name/email in their `RecurringDonation` object
   validates_email_format_of :email, on: :create, unless: -> { recurring? || in_person? } # recurring donations have an email in their `RecurringDonation` object
@@ -332,6 +336,18 @@ class Donation < ApplicationRecord
     recurring_donation&.email || super
   end
 
+  def update_donor_details(attrs)
+    attrs = attrs.to_h.symbolize_keys
+    return false unless update(attrs.slice(:name, :anonymous))
+
+    if recurring_donation
+      recurring_donation.update(attrs.slice(:name, :anonymous))
+      recurring_donation.sync_stripe_customer!
+    end
+
+    true
+  end
+
   def referrer_domain
     Addressable::URI.parse(referrer.presence)&.host
   end
@@ -354,6 +370,14 @@ class Donation < ApplicationRecord
 
   def raw_pending_donation_transactions
     @raw_pending_donation_transactions ||= ::RawPendingDonationTransaction.where(donation_transaction_id: id)
+  end
+
+  def refresh_ledger_item
+    return if ledger_item.nil?
+
+    # The item may hold a stale copy of this donation; make refresh! reread it.
+    ledger_item.association(:linked_object).reset
+    ledger_item.refresh!
   end
 
   def send_notification
