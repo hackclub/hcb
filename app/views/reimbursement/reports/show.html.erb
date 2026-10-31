@@ -13,16 +13,17 @@
       <%= "was reimbursed " if @report.reimbursed? && @report.payout_holding.sent? %>
       <%= "requested " if @report.rejected? || @report.reversed? %>
       <%= "is requesting " unless @report.closed? %>
-      <%= render "total", report: @report %>
+      <%= render "reimbursement/reports/total", report: @report %>
       <% if @report.maximum_amount_cents %>
         (<%= render_money @report.maximum_amount_cents %> <%= "USD" unless @report.currency == "USD" %> cap)
       <% end %>
       <%= "from #{@event.name}" if @event && @use_user_nav %> for
     </span>
     <% if @report.reviewer.present? && @report.submitted? %>
-      <span class="mr1 badge bg-muted">Review requested from <%= @report.reviewer.initial_name %></span>
+      <span class="ml0 badge bg-<%= @report.status_color %>">Review requested from <%= @report.reviewer.initial_name %></span>
+    <% else %>
+      <span class="ml0 badge bg-<%= @report.status_color %>"><%= @report.status_text %></span>
     <% end %>
-    <span class="ml0 badge bg-<%= @report.status_color %>"><%= @report.status_text %></span>
     <% admin_tool "w-fit p0", style: "border-radius: 999px; height: 32px; width: 32px; flex-shrink: 0;padding:0" do %>
       <%= link_to reimbursements_admin_index_path, class: "flex items-center justify-center", style: "transform: translateY(1px);" do %>
         <%= inline_icon "list", size: 28, color: "#ff8c37" %>
@@ -54,7 +55,7 @@
                       style: "height: 32px; width: 32px; background: #338eda20; color: #338eda",
                       'aria-label': "View the associated card grant." %>
     <% end %>
-    <% unless @report.closed? || !organizer_signed_in?(as: :member) %>
+    <% unless @report.closed? || !(organizer_signed_in?(as: :member) || policy(@report).change_event?) %>
       <%= pop_icon_to "settings",
                       "#",
                       data: { behavior: "modal_trigger", modal: "edit" },
@@ -69,6 +70,16 @@
     <span><%= @report.name %></span>
   </h2>
 </div>
+
+<% admin_only_user_comments = @report.user.comments.admin_only %>
+<% if admin_only_user_comments.any? %>
+  <% admin_tool("mt2 p-3") do %>
+    <h3 class="mt0 mb2 flex items-center" style="gap: 6px;">
+      📌 <%= pluralize(admin_only_user_comments.size, "admin note") %> about <%= @report.user.first_name %>
+    </h3>
+    <%= render "comments/list", comments: admin_only_user_comments %>
+  <% end %>
+<% end %>
 
 <section data-behavior="modal" role="dialog" id="edit" class="modal modal--scroll bg-snow lg:max-w-[450px]">
   <%= modal_header "Edit report" %>
@@ -100,14 +111,15 @@
     <%= form.hidden_field :commentable_type, value: @commentable.class %>
     <%= form.hidden_field :commentable_id, value: @report.id %>
     <%= form.text_area :content, class: "card mb2 overflow-visible", placeholder: "(Optional) Describe your changes…", "data-behavior": "ctrl_enter_submit", style: "min-height: 100px" %>
-    <% if @report.event.present? && @report.assigned_reviewer_required? && !OrganizerPosition.role_at_least?(current_user, @report.event, :manager) && !@report.reviewer.present? %>
-      <p><%= @report.event.name %> would like you to select a reviewer for your reimbursement report.</p>
+    <% if @report.event.present? && @report.reviewer_selectable? && !OrganizerPosition.role_at_least?(current_user, @report.event, :manager) && !@report.reviewer.present? %>
+      <% if @report.assigned_reviewer_required? %>
+        <p><%= @report.event.name %> would like you to select a reviewer for your reimbursement report.</p>
+      <% end %>
       <div class="field">
-        <%= label_tag :reviewer_id, "Reviewer" %>
+        <%= label_tag :reviewer_id, @report.assigned_reviewer_required? ? "Reviewer" : "Reviewer (optional)" %>
         <%= select_tag :reviewer_id,
         options_from_collection_for_select(@report.eligible_reviewers, :public_id, :name, @report.reviewer&.public_id),
-        prompt: "Select a reviewer...",
-        required: true %>
+        **(@report.assigned_reviewer_required? ? { prompt: "Select a reviewer...", required: true } : { include_blank: "No preference" }) %>
       </div>
     <% end %>
     <%= form.submit "Submit" %>
@@ -212,7 +224,7 @@
 
         <div class="field">
           <%= form.label :wise_id, "Wise ID / URL", class: "bold mb1" %>
-          <%= form.text_field :wise_id, class: "mt-0 !max-w-full", style: "width: 400px;", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", onpaste: "var urlPrefix = 'https://wise.com/transactions/activities/by-resource/TRANSFER/'; var clipboardData = event.clipboardData.getData('Text'); clipboardData.startsWith(urlPrefix) ? (event.preventDefault(), event.target.value = clipboardData.substring(urlPrefix.length)) : null" %>
+          <%= form.text_field :wise_id, class: "mt-0 !max-w-full", style: "width: 400px;", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", data: { controller: "strip-prefix", action: "paste->strip-prefix#paste", strip_prefix_prefix_value: "https://wise.com/transactions/activities/by-resource/TRANSFER/" } %>
         </div>
         <div class="field">
           <%= form.label(:wise_recipient_id, "Wise recipient ID", class: "bold mb1") %>
