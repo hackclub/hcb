@@ -52,6 +52,9 @@ class Wire < ApplicationRecord
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :recipient_email]
+  # For viewers who can't see the recipient's email (see
+  # `EventsController#transfers`).
+  pg_search_scope :public_search_recipient, against: [:recipient_name]
   has_encrypted :account_number, :bic_code
   blind_index :account_number, :bic_code
 
@@ -205,9 +208,11 @@ class Wire < ApplicationRecord
       routing_number_type: "bic",
       routing_number: bic_code,
       account_number:,
+      account_type: recipient_information["account_type"],
       wire: {
         beneficiary_name: recipient_name,
         beneficiary_email: recipient_email,
+        beneficiary_phone:,
         beneficiary_address: {
           line_1: address_line1,
           line_2: address_line2,
@@ -219,8 +224,7 @@ class Wire < ApplicationRecord
         beneficiary_legal_id: recipient_information["legal_id"],
         beneficiary_type: recipient_information["legal_type"],
         local_bank_code: recipient_information["local_bank_code"],
-        local_account_number: recipient_information["local_account_number"],
-        account_type: recipient_information["account_type"]
+        local_account_number: recipient_information["local_account_number"]
       }.compact_blank
     }.compact_blank)
 
@@ -256,6 +260,20 @@ class Wire < ApplicationRecord
     return nil unless column_id.present?
 
     @column_wire_details ||= ColumnService.international_wire(column_id)
+  end
+
+  private
+
+  # Column wants a leading `+` with dashes after the country code, e.g.
+  # `+55-21-99999-9999`
+  def beneficiary_phone
+    phone = recipient_information["phone"]
+    return nil if phone.blank?
+
+    parsed = Phonelib.parse(phone, recipient_country)
+    return phone unless parsed.valid?
+
+    parsed.international.tr(" ", "-")
   end
 
 end
