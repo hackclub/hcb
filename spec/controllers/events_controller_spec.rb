@@ -147,21 +147,64 @@ RSpec.describe EventsController do
       expect(response.parsed_body).to eq(
         [
           {
-            "name"      => "Event 2",
-            "slug"      => "event-2",
-            "logo"      => Rails.application.routes.url_helpers.url_for(event2.logo),
-            "demo_mode" => true,
-            "member"    => true,
-            "features"  => { "card_grants" => false, "subevents" => true },
+            "name"        => "Event 2",
+            "slug"        => "event-2",
+            "logo"        => Rails.application.routes.url_helpers.url_for(event2.logo),
+            "demo_mode"   => true,
+            "member"      => true,
+            "parent_slug" => nil,
+            "features"    => { "card_grants" => false, "subevents" => true },
           },
           {
-            "name"      => "Event 1",
-            "slug"      => "event-1",
-            "logo"      => "none",
-            "demo_mode" => false,
-            "member"    => true,
-            "features"  => { "card_grants" => false, "subevents" => false },
+            "name"        => "Event 1",
+            "slug"        => "event-1",
+            "logo"        => "none",
+            "demo_mode"   => false,
+            "member"      => true,
+            "parent_slug" => nil,
+            "features"    => { "card_grants" => false, "subevents" => false },
           }
+        ]
+      )
+    end
+
+    it "includes sub-organizations the user can read, but not other events' sub-organizations" do
+      user = create(:user)
+
+      parent = create(:event, name: "Parent")
+      create(:organizer_position, user:, event: parent)
+      sub_org = create(:event, name: "Sub", parent:)
+      other_sub_org = create(:event, name: "Other Sub", parent: create(:event))
+
+      create_session(user, verified: true)
+
+      get(:index, format: :json)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.map { |e| e.slice("slug", "member", "parent_slug") }).to eq(
+        [
+          { "slug" => parent.slug, "member" => true, "parent_slug" => nil },
+          { "slug" => sub_org.slug, "member" => true, "parent_slug" => parent.slug },
+        ]
+      )
+      expect(response.parsed_body.pluck("slug")).not_to include(other_sub_org.slug)
+    end
+
+    it "lists each sub-organization once for an admin organizing its parent" do
+      user = create(:user, :make_admin)
+
+      parent = create(:event, name: "Parent")
+      create(:organizer_position, user:, event: parent)
+      sub_org = create(:event, name: "Sub", parent:)
+
+      create_session(user, verified: true)
+
+      get(:index, format: :json)
+
+      expect(response.parsed_body.map { |e| e.slice("slug", "member", "parent_slug") }).to eq(
+        [
+          { "slug" => parent.slug, "member" => true, "parent_slug" => nil },
+          { "slug" => sub_org.slug, "member" => true, "parent_slug" => parent.slug },
         ]
       )
     end
@@ -185,20 +228,22 @@ RSpec.describe EventsController do
       expect(response.parsed_body).to eq(
         [
           {
-            "name"      => "Event 1",
-            "slug"      => "event-1",
-            "logo"      => "none",
-            "demo_mode" => false,
-            "member"    => true,
-            "features"  => { "card_grants" => false, "subevents" => false },
+            "name"        => "Event 1",
+            "slug"        => "event-1",
+            "logo"        => "none",
+            "demo_mode"   => false,
+            "member"      => true,
+            "parent_slug" => nil,
+            "features"    => { "card_grants" => false, "subevents" => false },
           },
           {
-            "name"      => "Event 2",
-            "slug"      => "event-2",
-            "logo"      => Rails.application.routes.url_helpers.url_for(event2.logo),
-            "demo_mode" => true,
-            "member"    => false,
-            "features"  => { "card_grants" => false, "subevents" => true },
+            "name"        => "Event 2",
+            "slug"        => "event-2",
+            "logo"        => Rails.application.routes.url_helpers.url_for(event2.logo),
+            "demo_mode"   => true,
+            "member"      => false,
+            "parent_slug" => nil,
+            "features"    => { "card_grants" => false, "subevents" => true },
           },
         ]
       )
