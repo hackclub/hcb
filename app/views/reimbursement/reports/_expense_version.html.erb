@@ -1,6 +1,6 @@
 <%# locals: (version:, expense:) %>
 
-<% changes = version.changeset.slice("memo", "amount_cents", "category", "description").select { |field, changes| changes.any?(&:present?) } %>
+<% changes = version.changeset.slice("memo", "amount_cents", "category", "description").select { |field, values| values.any?(&:present?) } %>
 <% unless version.event == "update" && changes.empty? %>
   <li class="conversation_item mt2" style="margin-bottom: 24px;">
     <div class="flex flex-row items-center" style="gap: 16px">

@@ -759,13 +759,23 @@ RSpec.describe Reimbursement::ReportsController do
       end
 
       it "shows amount changes in the expense's currency but hides edits from before the first submission" do
-        expense.update!(value: 15)
+        expense.update!(value: 15, category: "Travel")
 
         get(:show, params: { id: report.id })
 
-        expect(timeline(response.body)).to include(a_string_including("updated expense #1 (Train ticket)", "Amount: €20.00 → €15.00"))
+        expect(timeline(response.body)).to include(a_string_including("updated expense #1 (Train ticket)", "Amount: €20.00 → €15.00", "Category: unset → Travel"))
         expect(response.body).not_to include("added expense")
         expect(response.body).not_to include("€10.00")
+      end
+
+      it "shows fee amounts in USD on a non-USD report" do
+        fee = Reimbursement::Expense::Fee.create!(report:, value: 3, memo: "Wise fee")
+        fee.update!(value: 5)
+
+        get(:show, params: { id: report.id })
+
+        expect(timeline(response.body)).to include(a_string_including("added expense #2 (Wise fee)"))
+        expect(timeline(response.body)).to include(a_string_including("updated expense #2 (Wise fee)", "Amount: $3.00 → $5.00"))
       end
 
       it "shows expenses removed after submission" do
