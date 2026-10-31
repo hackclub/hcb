@@ -17,6 +17,17 @@ module RecurringDonationService
         )
       end
 
+      donation = recurring_donation.donations.find_by(stripe_payment_intent_id: @stripe_invoice.payment_intent) || create_donation!(recurring_donation)
+
+      # Import the donation onto the ledger
+      rpdt = ::PendingTransactionEngine::RawPendingDonationTransactionService::Donation::ImportSingle.new(donation:).run
+      cpt = ::PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Donation.new(raw_pending_donation_transaction: rpdt).run
+      ::PendingEventMappingEngine::Map::Single::Donation.new(canonical_pending_transaction: cpt).run
+    end
+
+    private
+
+    def create_donation!(recurring_donation)
       first_donation = recurring_donation.donations.none?
 
       donation = recurring_donation.donations.build(
@@ -39,10 +50,7 @@ module RecurringDonationService
 
       donation.send_receipt!
 
-      # Import the donation onto the ledger
-      rpdt = ::PendingTransactionEngine::RawPendingDonationTransactionService::Donation::ImportSingle.new(donation:).run
-      cpt = ::PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Donation.new(raw_pending_donation_transaction: rpdt).run
-      ::PendingEventMappingEngine::Map::Single::Donation.new(canonical_pending_transaction: cpt).run
+      donation
     end
 
   end

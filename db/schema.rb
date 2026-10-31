@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_21_183000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_23_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -871,6 +871,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_21_183000) do
     t.index ["fee_reimbursement_id"], name: "index_donations_on_fee_reimbursement_id"
     t.index ["payout_id"], name: "index_donations_on_payout_id"
     t.index ["recurring_donation_id"], name: "index_donations_on_recurring_donation_id"
+    t.index ["stripe_payment_intent_id"], name: "index_donations_on_recurring_stripe_payment_intent_id", unique: true, where: "((recurring_donation_id IS NOT NULL) AND (stripe_payment_intent_id IS NOT NULL))"
   end
 
   create_table "emburse_card_requests", force: :cascade do |t|
