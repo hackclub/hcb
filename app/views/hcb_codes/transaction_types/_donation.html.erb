@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <% @donation = @hcb_code.donation %>
 
 <% instance = @hcb_code.hashid %>
@@ -41,9 +43,12 @@
       <%= form.text_field :name, value: @donation.name(show_anonymous: true), placeholder: "John Smith", required: true, autofocus: true, autocomplete: "off" %>
     </div>
     <div class="field field--checkbox mb2">
-      <%= form.check_box :anonymous, style: "margin-left: 0;" %>
+      <%= form.check_box :anonymous, checked: @donation.anonymous? || @donation.recurring_donation&.anonymous?, style: "margin-left: 0;" %>
       <%= form.label :anonymous, "Make this donation anonymous.", style: "display: inline; flex-grow: 1;" %>
     </div>
+    <% if @donation.recurring? %>
+      <p class="muted">This donation is part of a recurring donation. Updating the donor's name or anonymity will update it for all past and future donations.</p>
+    <% end %>
     <%= form.submit "Edit donor" %>
   <% end %>
 </section>
@@ -158,6 +163,7 @@
         </action>
       </p>
     <% end %>
+    <%= render "ledger/items/repayments", ledger_item: @hcb_code.ledger_item if @hcb_code.ledger_item %>
     <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
 

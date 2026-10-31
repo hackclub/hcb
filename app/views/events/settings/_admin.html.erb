@@ -124,7 +124,7 @@
         <h3 id="parent_organization" class="mb2 mt1">Parent Organization</h3>
 
         <div class="field">
-          <%= combobox_tag form.field_name(:parent_id), event_search_admin_index_path, value: event.parent&.to_combobox_display, placeholder: "None" %>
+          <%= combobox_tag form.field_name(:parent_id), event_search_admin_index_path, selected: event.parent, placeholder: "None" %>
         </div>
 
         <div class="action">
@@ -178,7 +178,7 @@
 
   <% admin_tool "p-3" do %>
     <h3 id="admin_fees" class="mb2 mt1">Custom fees</h3>
-    <%= form_with(model: [event, Fee], local: true, class: "mb3", data: { turbo_frame: "_top" }) do |form| %>
+    <%= form_with(model: [event, Fee], local: true, class: "mb3", data: { turbo_frame: "_top", turbo_confirm: "Are you sure you want to charge a fee to #{event.name}?", turbo_confirm_danger: true }) do |form| %>
       <div class="field">
         <%= form.label :memo %>
         <%= form.text_field :memo, placeholder: "Fee for inbound wire.", required: true, disabled: %>

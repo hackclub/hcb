@@ -30,8 +30,13 @@ class LegalEntitiesController < ApplicationController
         name: @legal_entity.name,
         tin_hash: new_tax_form.tin_hash,
         entity_type: new_tax_form.entity_type,
-        users: @legal_entity.users
+        users: @legal_entity.users,
+        managing_event: @legal_entity.managing_event
       )
+
+      @legal_entity.payout_methods.each do |method|
+        method.update!(legal_entity: new_le)
+      end
 
       new_tax_form.update!(legal_entity: new_le)
 
@@ -39,7 +44,19 @@ class LegalEntitiesController < ApplicationController
       # over so they don't have to re-enter and re-verify them.
       @legal_entity.payout_methods.each { |payout_method| payout_method.update!(legal_entity: new_le) }
 
-      migrate_pending_payments(from_le: @legal_entity, to_le: new_le, archive_remaining_payees: true)
+      migrate_pending_payee_assocs(from_le: @legal_entity, to_le: new_le, archive_remaining_payees: true, include_payroll_positions: true)
+
+      # If there were pending payments on the old managed LE, a new payee will already be created
+      # If not, we need to create a new one anyways and archive the old one
+      if new_le.managed? && new_le.payees.none?
+        old_payee = @legal_entity.payees.first
+        new_le.payees.create!(
+          event: old_payee.event,
+          display_name: old_payee.display_name,
+          email: old_payee.email,
+        )
+        old_payee.archive!
+      end
     end
 
     redirect_to legal_entity_path(new_le)
@@ -68,10 +85,34 @@ class LegalEntitiesController < ApplicationController
 
       # The old entity stays active here (the payee owns both), so only payments
       # that haven't gone out yet move across.
-      migrate_pending_payments(from_le: old_le, to_le: new_le) if old_le.present?
+      migrate_pending_payee_assocs(from_le: old_le, to_le: new_le) if old_le.present?
     end
 
     redirect_to legal_entity_path(new_le)
+  end
+
+  def create
+    le = LegalEntity.new(
+      name: params[:name],
+      entity_type: params[:entity_type],
+      users: [current_user]
+    )
+
+    authorize le
+
+    le.save!
+
+    if params[:payee_id].present?
+      payee = Payee.find(params[:payee_id])
+
+      authorize payee, :set_legal_entity?
+
+      payee.update!(legal_entity: le)
+    end
+
+    flash[:success] = "Legal entity successfully created"
+
+    redirect_to legal_entity_path(le)
   end
 
   private
@@ -98,11 +139,19 @@ class LegalEntitiesController < ApplicationController
   # stuck in pending_legal_entity (archiving a payee doesn't cancel its payments),
   # and that payment has to move off an entity we're about to archive or it can
   # never be sent.
-  def migrate_pending_payments(from_le:, to_le:, archive_remaining_payees: false)
+  #
+  # Payroll positions can be safely moved, since the actual record of
+  # what payee a payment is for is stored on individual payments
+  def migrate_pending_payee_assocs(from_le:, to_le:, archive_remaining_payees: false, include_payroll_positions: false)
     from_le.payees.find_each do |payee|
-      pending = payee.payments.pending_legal_entity.to_a
+      pending = payee.payments.where(aasm_state: [:pending_legal_entity, :under_review]).to_a
+      active_positions = if include_payroll_positions
+                           payee.payroll_positions.where(aasm_state: [:under_review, :onboarding, :onboarded, :expired])
+                         else
+                           []
+                         end
 
-      if pending.any?
+      if pending.any? || active_positions.any?
         new_payee = payee.event.payees.find_by(legal_entity: to_le) ||
                     payee.event.payees.create!(
                       display_name: payee.display_name,
@@ -118,6 +167,11 @@ class LegalEntitiesController < ApplicationController
         pending.each do |payment|
           payment.update!(payee: new_payee)
           payment.refresh_legal_entity_state!
+        end
+
+        active_positions.each do |position|
+          position.update!(payee: new_payee)
+          position.refresh_onboarding_state!
         end
       end
 
