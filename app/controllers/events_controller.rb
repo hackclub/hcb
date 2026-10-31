@@ -378,7 +378,17 @@ class EventsController < ApplicationController
     fixed_event_params.delete(:plan)
 
     begin
-      if @event.update(admin_signed_in? ? fixed_event_params : fixed_user_event_params)
+      # One transaction, so reviewer toggles are rolled back if the rest of the form doesn't save
+      updated = Event.transaction do
+        if (reviewer_position_ids = params.dig(:event, :reimbursement_reviewer_position_ids)) && !@event.update_reimbursement_reviewers(reviewer_position_ids)
+          @settings_tab = "reimbursements"
+          raise ActiveRecord::Rollback
+        end
+
+        @event.update(admin_signed_in? ? fixed_event_params : fixed_user_event_params) || raise(ActiveRecord::Rollback)
+      end
+
+      if updated
         if plan_param && plan_param != @event.plan&.type
           @event.plan.mark_inactive!(plan_param) # deactivate old plan and replace it
         end
@@ -1499,6 +1509,7 @@ class EventsController < ApplicationController
       :donation_page_message,
       :donation_tiers_enabled,
       :reimbursements_require_organizer_peer_review,
+      :reimbursement_reviewer_selection,
       :public_reimbursement_page_enabled,
       :public_reimbursement_page_message,
       :donation_thank_you_message,
@@ -1569,6 +1580,7 @@ class EventsController < ApplicationController
       :donation_page_message,
       :donation_tiers_enabled,
       :reimbursements_require_organizer_peer_review,
+      :reimbursement_reviewer_selection,
       :public_reimbursement_page_enabled,
       :public_reimbursement_page_message,
       :donation_thank_you_message,
