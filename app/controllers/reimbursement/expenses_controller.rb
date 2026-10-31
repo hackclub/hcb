@@ -92,7 +92,7 @@ module Reimbursement
     def destroy
       authorize @expense
 
-      if @expense.delete
+      if @expense.destroy
         respond_to do |format|
           format.turbo_stream { render turbo_stream: on_delete_streams }
           format.html { redirect_to @expense.report, flash: { success: "Expense successfully deleted." } }

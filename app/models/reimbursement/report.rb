@@ -304,6 +304,13 @@ module Reimbursement
       last_user_change_to(aasm_state: "rejected")
     end
 
+    def expense_versions
+      first_submitted_at = versions.where_object_changes_to(aasm_state: "submitted").first&.created_at
+      return PaperTrail::Version.none if first_submitted_at.nil?
+
+      PaperTrail::Version.where(item_type: Reimbursement::Expense.name, item_id: expenses.with_deleted.select(:id), created_at: first_submitted_at..)
+    end
+
     def comment_recipients_for(comment)
       users = []
       users += self.comments.map(&:user)
