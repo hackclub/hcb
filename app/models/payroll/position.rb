@@ -112,14 +112,11 @@ module Payroll
 
       event :mark_under_review do
         transitions from: :draft, to: :under_review, if: -> { contract_signed_by?(:organizer) }
+        transitions from: :onboarding, to: :under_review
       end
 
       event :mark_onboarding do
         transitions from: :under_review, to: :onboarding
-      end
-
-      event :mark_under_review do
-        transitions from: :onboarding, to: :under_review
       end
 
       event :mark_rejected do
@@ -378,7 +375,7 @@ module Payroll
     end
 
     def contract_signed_by?(role)
-      contracts.not_voided.any? { |contract| contract.party(role)&.signed? }
+      contract&.party(role)&.signed?
     end
 
     private
