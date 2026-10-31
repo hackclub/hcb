@@ -1,25 +1,51 @@
-<%# locals: (disbursement:, event: nil, source_event: nil) %>
+<%# locals: (disbursement:, event: nil, source_event: nil, repaid_ledger_item: nil) %>
 
 <% disabled = source_event.present? && !policy(source_event).create_transfer? %>
+<% repayable = disbursement.destination_event.nil? || policy(disbursement).repay? %>
 
-<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}" }) do |form| %>
+<%# `data-turbo="true"` keeps jquery-ujs off this form: its blank-required-field check
+    only skips inputs that are themselves disabled, so it would silently abort the
+    submit over the required fields inside the disabled, inactive panel. %>
+<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}" }, data: { turbo: true, controller: "transfer-type", transfer_type_repayment_picker_outlet: "#repayment_picker", action: "combobox:change->transfer-type#comboboxChanged repayment-picker:select@document->transfer-type#repaymentPicked submit->transfer-type#submit" }) do |form| %>
   <%= form_errors(disbursement, "Disbursements") %>
 
-  <div data-scroll-seek-target="section">
-    <h3 class="mb-2">Transfer details</h3>
-    <div class="card mb-4 relative">
-      <div class="field">
-        <%= form.label :name, "What is the transfer for?" %>
-        <span class="muted block mb-1">This is to help HCB keep record of our transactions.</span>
-        <%= form.text_field :name, placeholder: "Donating extra funds to another organization", maxlength: 60, required: true, class: "!max-w-full", disabled: %>
-      </div>
+  <div data-scroll-seek-target="section" data-transfer-type-target="types">
+    <h3 class="mb-2">What kind of transfer is this?</h3>
+    <p class="muted mt-0 mb-2" data-transfer-type-target="repaymentHint" <%= "hidden" if repayable %>>Only members of the organization you're sending to can repay its transactions, unless it's a transparent organization.</p>
 
-      <%= render "events/transfers/attach_receipt", form:, disabled: %>
+    <div class="flex flex-col gap-2 mb-4">
+      <% [
+           ["repayment", "payment", "Repayment", "Paying the other organization back for an expense they covered for you, like supplies bought on their card."],
+           ["transfer", "transfers-horizontal", "Internal transfer", "Sharing funds, like sending leftover money to another organization or funding a sub-organization."]
+         ].each do |value, icon, title, description| %>
+        <div>
+          <%= form.radio_button :transfer_type, value,
+                                disabled: disabled || (value == "repayment" && !repayable),
+                                class: "peer sr-only",
+                                data: { action: "transfer-type#select", transfer_type_target: ("repaymentRadio" if value == "repayment") } %>
+          <%# The inset ring keeps the selected card the same size as the others. %>
+          <%= form.label :transfer_type, value:, class: "card flex items-start gap-4 m-0 cursor-pointer transition-colors hover:bg-blue/5 peer-checked:ring-2 peer-checked:ring-inset peer-checked:ring-blue peer-checked:bg-blue/5 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue peer-disabled:cursor-not-allowed peer-disabled:opacity-50" do %>
+            <span class="flex items-center justify-center shrink-0 w-10 h-10 rounded-full bg-blue/10 text-blue">
+              <%= inline_icon icon, size: 24, class: "m-0" %>
+            </span>
+            <span class="flex flex-col gap-1 text-left">
+              <strong class="text-base leading-tight"><%= title %></strong>
+              <span class="muted text-sm"><%= description %></span>
+            </span>
+          <% end %>
+        </div>
+      <% end %>
     </div>
   </div>
 
-  <div data-scroll-seek-target="section" data-controller="swap-organizations">
-    <h3 class="mb-2">Payment details</h3>
+  <%= tag.div data: {
+        scroll_seek_target: "section",
+        controller: "swap-organizations",
+        action: "combobox:change->swap-organizations#refresh",
+        swap_organizations_disabled_value: disabled,
+        swap_organizations_sources_value: (current_user.disbursement_source_events.map(&:public_id) unless admin_signed_in?)
+      } do %>
+    <h3 class="mb-2">Organizations</h3>
     <div class="card mb-4 relative overflow-visible">
       <div class="flex gap-2">
         <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "source_event_id", disabled: disabled, label: "From", sending: true } %>
@@ -28,20 +54,67 @@
                 title="Swap organizations"
                 aria-label="Swap organizations"
                 <%= "disabled" if disabled %>
+                data-swap-organizations-target="button"
                 data-action="swap-organizations#swap">
           <%= inline_icon "transfers-horizontal", size: 20 %>
         </button>
-        <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, label: "To", source_event: source_event } %>
-      </div>
-
-      <div class="flex items-center justify-between">
-        <%= form.label :amount, "Amount" %>
-        <div class="flex items-center input py-0 max-w-[150px]">
-          <span class="bold muted">$</span>
-          <%= form.number_field :amount, class: "!border-0 !shadow-none !max-w-full !min-w-full", value: (disbursement&.amount.nil? ? nil : (disbursement&.amount.to_f / 100)), placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
-        </div>
+        <%= render partial: "disbursements/select_organization", locals: { form: form, field_name: "event_id", disabled: disabled, label: "To" } %>
       </div>
     </div>
+  <% end %>
+
+  <%# Each type asks its own questions. Only the chosen panel is enabled, so
+      only its fields are submitted. %>
+  <div data-scroll-seek-target="section">
+    <h3 class="mb-2">Details</h3>
+
+    <fieldset class="card mb-4" data-transfer-type-target="panel" data-type="">
+      <p class="muted m-0">Choose what kind of transfer this is first.</p>
+    </fieldset>
+
+    <fieldset class="card mb-4" data-transfer-type-target="panel" data-type="repayment" hidden>
+      <div class="field m-0">
+        <label for="repayment_picker_trigger">Which of their transactions are you repaying?</label>
+        <%= form.hidden_field :repaid_ledger_item_id, value: repaid_ledger_item&.hashid, data: { transfer_type_target: "repaidInput" } %>
+        <%# Set from the picked transaction: a repayment covers it in full. %>
+        <%= form.hidden_field :name, id: "disbursement_repayment_name", value: (disbursement.name if repaid_ledger_item), data: { transfer_type_target: "repaymentName" } %>
+        <%= form.hidden_field :amount, id: "disbursement_repayment_amount", value: (format("%.2f", -repaid_ledger_item.amount_cents / 100.0) if repaid_ledger_item), data: { transfer_type_target: "repaymentAmount" } %>
+        <div class="flex items-center gap-3" data-transfer-type-target="repaidCard">
+          <div class="flex-1 min-w-0">
+            <p class="muted m-0" data-transfer-type-target="pickHint" <%= "hidden" if disbursement.destination_event %>>Choose who you're sending to first.</p>
+            <p class="muted m-0" data-transfer-type-target="repaidEmpty" <%= "hidden" if repaid_ledger_item || disbursement.destination_event.nil? %>>No transaction chosen yet.</p>
+            <div data-transfer-type-target="repaidSummary" <%= "hidden" unless repaid_ledger_item %>>
+              <strong class="block truncate" data-transfer-type-target="repaidMemo"><%= repaid_ledger_item&.memo %></strong>
+              <span class="muted text-sm" data-transfer-type-target="repaidDate"><%= repaid_ledger_item&.datetime&.strftime("%b %e, %Y") %></span>
+            </div>
+          </div>
+          <strong class="shrink-0" data-transfer-type-target="repaidAmount" <%= "hidden" unless repaid_ledger_item %>><%= repaid_ledger_item&.amount&.abs&.format %></strong>
+          <button type="button" id="repayment_picker_trigger" class="btn btn-small shrink-0" data-behavior="modal_trigger" data-modal="repayment_picker" data-transfer-type-target="pickButton" <%= "disabled" unless disbursement.destination_event %>>
+            <span data-transfer-type-target="chooseLabel" <%= "hidden" if repaid_ledger_item %>>Choose</span>
+            <span data-transfer-type-target="changeLabel" <%= "hidden" unless repaid_ledger_item %>>Change</span>
+          </button>
+        </div>
+        <p class="text-sm text-red mt-1 mb-0" role="alert" data-transfer-type-target="repaidError" hidden>Choose the transaction you're repaying.</p>
+      </div>
+    </fieldset>
+
+    <fieldset class="card mb-4" data-transfer-type-target="panel" data-type="transfer" hidden>
+      <div class="field">
+        <%= form.label :name, "What is the transfer for?" %>
+        <span class="muted block mb-1">This is to help HCB keep record of our transactions.</span>
+        <%= form.text_field :name, value: (disbursement.name unless repaid_ledger_item), placeholder: "Donating extra funds to another organization", maxlength: 60, required: true, class: "!max-w-full", disabled: %>
+      </div>
+
+      <div class="field flex items-center justify-between">
+        <%= form.label :amount, "Amount", class: "m-0" %>
+        <div class="flex items-center input py-0 max-w-[150px]">
+          <span class="bold muted">$</span>
+          <%= form.number_field :amount, class: "!border-0 !shadow-none !max-w-full !min-w-full", value: (disbursement.amount.to_f / 100 unless disbursement.amount.nil? || repaid_ledger_item), placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
+        </div>
+      </div>
+
+      <%= render "events/transfers/attach_receipt", form:, disabled: %>
+    </fieldset>
   </div>
 
   <div data-scroll-seek-target="section">
@@ -60,10 +133,9 @@
              form.select(
                field,
                options_for_select(
-                 TransactionCategory::Definition::ALL.map { |_, d| [d.label, d.slug] },
-                 "internal-transfer"
+                 TransactionCategory::Definition::ALL.map { |_, d| [d.label, d.slug] }
                ),
-               include_blank: "None"
+               include_blank: "Based on transfer type"
              )
            } %>
 
@@ -91,3 +163,5 @@
     </button>
   </div>
 <% end %>
+
+<%= render "disbursements/repayment_picker", destination_event: disbursement.destination_event %>
