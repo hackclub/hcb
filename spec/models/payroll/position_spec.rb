@@ -143,7 +143,7 @@ RSpec.describe Payroll::Position, type: :model do
       end
 
       it "does not advance a position that is still under review" do
-        under_review = create(:payroll_position)
+        under_review = create(:payroll_position, aasm_state: :under_review)
         allow(under_review).to receive(:onboarding_complete?).and_return(true)
         under_review.refresh_onboarding_state!
         expect(under_review).to be_under_review
@@ -256,6 +256,48 @@ RSpec.describe Payroll::Position, type: :model do
 
       expect { hcb_party.mark_signed! }.not_to raise_error
       expect(hcb_party.reload).to be_signed
+    end
+
+    it "keeps the position a draft until the organizer signs" do
+      contract = position.send_contract(organizer_user: organizer)
+      expect(position.reload).to be_draft
+
+      contract.party(:organizer).mark_signed!
+      expect(position.reload).to be_under_review
+    end
+
+    it "keeps an organizer signature without reviving a position that already left draft" do
+      contract = position.send_contract(organizer_user: organizer)
+      position.update_columns(aasm_state: "terminated")
+      organizer_party = contract.party(:organizer)
+
+      expect { organizer_party.mark_signed! }.not_to raise_error
+      expect(organizer_party.reload).to be_signed
+      expect(position.reload).to be_terminated
+    end
+  end
+
+  describe "#mark_terminated" do
+    let(:position) { create(:payroll_position) }
+
+    before do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+      allow_any_instance_of(Contract).to receive(:send_using_docuseal!)
+      allow_any_instance_of(Contract).to receive(:archive_on_docuseal!)
+      position.send_contract(organizer_user: create(:user))
+    end
+
+    it "voids a discarded draft's contract without emailing the contractor" do
+      contract = position.contract
+
+      expect { position.mark_terminated! }.not_to have_enqueued_mail(Payroll::PositionMailer, :terminated)
+      expect(contract.reload).to be_voided
+    end
+
+    it "still notifies a contractor who was already onboarding" do
+      position.update_columns(aasm_state: "onboarding")
+
+      expect { position.mark_terminated! }.to have_enqueued_mail(Payroll::PositionMailer, :terminated)
     end
   end
 end

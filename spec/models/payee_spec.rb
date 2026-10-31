@@ -71,7 +71,7 @@ RSpec.describe Payee, type: :model do
       position.update_columns(aasm_state: "onboarding")
     end
 
-    it "reissues the contract, emails the organizer, and returns the position to review" do
+    it "reissues the contract, emails the organizer, and returns the position to draft" do
       old_contract = position.contract
 
       perform_enqueued_jobs do
@@ -84,7 +84,7 @@ RSpec.describe Payee, type: :model do
       expect(old_contract.reload).to be_voided
       new_contract = position.reload.contract
       expect(new_contract.party(:contractor).email).to eq("new@example.com")
-      expect(position).to be_under_review
+      expect(position).to be_draft
       expect(payee.organizer_resign_position).to eq(position)
 
       mail = Contract::PartyMailer.with(party: new_contract.party(:organizer), message: +"hi").reissued

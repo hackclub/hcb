@@ -110,9 +110,12 @@ module Payroll
       state :rejected
       state :terminated
 
+      event :mark_draft do
+        transitions from: [:under_review, :onboarding], to: :draft
+      end
+
       event :mark_under_review do
         transitions from: :draft, to: :under_review, if: -> { contract_signed_by?(:organizer) }
-        transitions from: :onboarding, to: :under_review
       end
 
       event :mark_onboarding do
@@ -138,9 +141,10 @@ module Payroll
         transitions from: [:draft, :under_review, :onboarding, :onboarded], to: :terminated
 
         after do
-          # If it's still under review, we haven't sent any emails to the contractor yet,
+          # If it's a draft or still under review, we haven't sent any emails to the contractor yet,
           # so we won't tell them that they've been "terminated"
-          Payroll::PositionMailer.with(position: self).terminated.deliver_later unless aasm.from_state == :under_review
+          Payroll::PositionMailer.with(position: self).terminated.deliver_later unless aasm.from_state.in?(%i[draft under_review])
+          contract.mark_voided! if contract&.may_mark_voided?
         end
       end
     end
@@ -274,9 +278,7 @@ module Payroll
       refresh_onboarding_state!
 
       # HCB reviews only after organizer signs
-      if party.organizer?
-        mark_under_review!
-      end
+      mark_under_review! if party.organizer? && may_mark_under_review?
 
       # The contractor is only invited to sign once HCB has signed
       if party.hcb?

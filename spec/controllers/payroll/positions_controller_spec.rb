@@ -143,6 +143,21 @@ RSpec.describe Payroll::PositionsController do
       expect(position.reload.rate_cents).to eq(5_000)
     end
 
+    it "returns a position under review to draft when its contract is reissued" do
+      position.update_columns(aasm_state: "under_review")
+      stub_request(:delete, "https://api.docuseal.co/submissions/STUBBED").to_return(status: 200, body: "")
+      stub_docuseal_create(submission_id: "REISSUED")
+      stub_docuseal_fetch(submission_id: "REISSUED")
+
+      patch :update, params: {
+        event_id: event.slug,
+        id: position.id,
+        contractor: { title: position.title, rate: "50.00", starts_on: position.start_date, ends_on: position.end_date, purpose: position.description }
+      }
+
+      expect(position.reload).to be_draft
+    end
+
     it "keeps a reissue_of link through a failed-attempt retry, instead of dropping it" do
       original_contract = position.contracts.sole
       stub_request(:delete, "https://api.docuseal.co/submissions/STUBBED").to_return(status: 200, body: "")

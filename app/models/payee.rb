@@ -61,7 +61,7 @@ class Payee < ApplicationRecord
     if email_previously_changed?
       payments.where(aasm_state: :pending_legal_entity).find_each(&:send_initial_email)
 
-      payroll_positions.where(aasm_state: [:under_review, :onboarding]).find_each do |position|
+      payroll_positions.where(aasm_state: [:draft, :under_review, :onboarding]).find_each do |position|
         reissue_contract_for_new_email(position)
       end
     end
@@ -109,8 +109,8 @@ class Payee < ApplicationRecord
       reissue_of: contract,
       reissue_messages: { organizer: "The contractor's email address was updated, so the agreement was reissued with the new email." }
     )
-    # The reissued contract needs HCB's signature again
-    position.mark_under_review! if position.may_mark_under_review?
+    # The reissued contract needs the organizer's signature again
+    position.mark_draft! if position.may_mark_draft?
     @organizer_resign_position = position
   rescue Faraday::Error => e
     Rails.error.report(e, context: { payroll_position_id: position.id })

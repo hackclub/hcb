@@ -8,7 +8,7 @@ module Maintenance
 
     def process(position)
       unless position.contract_signed_by?(:organizer)
-        position.update!(aasm_state: :draft)
+        position.update_attribute(:aasm_state, "draft")
       end
     end
 

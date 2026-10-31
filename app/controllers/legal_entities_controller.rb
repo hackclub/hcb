@@ -146,7 +146,7 @@ class LegalEntitiesController < ApplicationController
     from_le.payees.find_each do |payee|
       pending = payee.payments.where(aasm_state: [:pending_legal_entity, :under_review]).to_a
       active_positions = if include_payroll_positions
-                           payee.payroll_positions.where(aasm_state: [:under_review, :onboarding, :onboarded, :expired])
+                           payee.payroll_positions.where(aasm_state: [:draft, :under_review, :onboarding, :onboarded, :expired])
                          else
                            []
                          end

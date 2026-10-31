@@ -118,7 +118,10 @@ module Payroll
       authorize @position, :void_pending_contract? if will_void_contract
 
       if @position.save
-        void_pending_contract! if will_void_contract
+        if will_void_contract
+          void_pending_contract!
+          @position.mark_draft! if @position.may_mark_draft?
+        end
 
         if send_contract_for_position!
           redirect_to contract_event_payroll_position_path(event_id: @event.slug, id: @position.id)
