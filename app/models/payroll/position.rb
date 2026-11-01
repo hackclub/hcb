@@ -283,16 +283,19 @@ module Payroll
     # waiting to start doesn't outlive it, though the contractor only needs to
     # hear about it once.
     def terminate!
-      positions = renewal_chain.drop_while { |position| position != self }.select(&:may_mark_terminated?)
       notified = false
 
       transaction do
-        positions.each do |position|
+        positions_to_terminate.each do |position|
           notify = !notified && !position.under_review?
           position.mark_terminated!(notify:)
           notified ||= notify
         end
       end
+    end
+
+    def terminatable?
+      positions_to_terminate.any?
     end
 
     # The steps a contractor must complete before payments can be sent, each as
@@ -479,6 +482,11 @@ module Payroll
     end
 
     private
+
+    # This position and any renewals of it that can still be terminated.
+    def positions_to_terminate
+      renewal_chain.drop_while { |position| position != self }.select(&:may_mark_terminated?)
+    end
 
     def schedule_onboarding_reminders
       onboarding_reminder_days.each do |days|

@@ -17,7 +17,7 @@
 
       <% can_update = (@position.under_review? || @position.onboarding?) && policy(@position).edit? %>
       <% can_renew = policy(@position).renew? %>
-      <% can_terminate = @position.unsigned_renewal? ? @position.may_mark_terminated? : @renewal_chain.any?(&:may_mark_terminated?) %>
+      <% can_terminate = @position.terminatable? %>
       <% if can_update || can_renew || can_terminate %>
         <div data-controller="menu" data-menu-placement-value="bottom-end">
           <%= pop_icon_to "more",

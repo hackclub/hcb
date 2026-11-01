@@ -430,5 +430,19 @@ RSpec.describe Payroll::Position, type: :model do
         expect(renewal.reload).to be_terminated
       end
     end
+
+    describe "#terminatable?" do
+      it "is terminatable while it or a renewal of it can still be terminated" do
+        renewal = create_renewal
+        renewal.update!(aasm_state: "onboarded", onboarded_at: Time.current)
+        position.update!(aasm_state: "expired")
+
+        expect(position).to be_terminatable
+        expect(renewal).to be_terminatable
+
+        renewal.update!(aasm_state: "terminated")
+        expect(position).not_to be_terminatable
+      end
+    end
   end
 end
