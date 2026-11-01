@@ -138,9 +138,9 @@ module Payroll
         transitions from: [:draft, :under_review, :onboarding, :onboarded], to: :terminated
 
         after do
-          # If it's still under review, we haven't sent any emails to the contractor yet,
+          # If it's still under review or draft, we haven't sent any emails to the contractor yet,
           # so we won't tell them that they've been "terminated"
-          Payroll::PositionMailer.with(position: self).terminated.deliver_later unless aasm.from_state == :under_review
+          Payroll::PositionMailer.with(position: self).terminated.deliver_later unless [:under_review, :draft].include?(aasm.from_state)
         end
       end
     end
