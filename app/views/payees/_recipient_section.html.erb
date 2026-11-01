@@ -3,7 +3,7 @@
 <div data-scroll-seek-target="section">
   <h3 class="mb-2">Recipient</h3>
   <% if payee || params[:manual] %>
-    <details class="card mb-4 p-0 overflow-hidden [&_.card]:shadow-none [&_.card]:rounded-none [&_.card]:mt-0 [&_.card]:pt-0" data-payee-picker-target="details">
+    <details class="card card--nested-flush mb-4 p-0 overflow-hidden" data-payee-picker-target="details">
       <summary class="flex items-center px-5 py-4 cursor-pointer list-none select-none" data-payee-picker-target="summary">
         <div class="flex-1 min-w-0">
           <% if payee %>
@@ -24,7 +24,7 @@
         </div>
         <span class="muted ml-auto shrink-0 text-sm">Edit</span>
       </summary>
-      <div class="menu__divider my-0"></div>
+      <div class="menu__divider my-0" data-payee-picker-target="divider"></div>
       <%= render "payments/payee_picker", event:, destination: %>
     </details>
   <% else %>
