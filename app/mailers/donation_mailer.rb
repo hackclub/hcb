@@ -6,6 +6,7 @@ class DonationMailer < ApplicationMailer
 
   def donor_receipt
     @initial_recurring_donation = @donation.initial_recurring_donation? && !@donation.recurring_donation&.migrated_from_legacy_stripe_account?
+    @delivery_reason = "you made a donation to #{@donation.event.name}."
 
     mail to: @donation.email, reply_to: @donation.event.donation_reply_to_email.presence, subject: if @donation.recurring?
                                                                                                      "Receipt for your #{@donation.tax_deductible ? "donation" : "payment"} to #{@donation.event.name} — #{@donation.created_at.strftime("%B %Y")}"
@@ -23,6 +24,7 @@ class DonationMailer < ApplicationMailer
   end
 
   def refunded
+    @delivery_reason = "you requested a refund for a donation to #{@donation.event.name}."
     mail to: params[:requested_by].email, subject: "Your request to refund a donation from #{@donation.name} to #{@donation.event.name} was processed."
   end
 
@@ -34,6 +36,7 @@ class DonationMailer < ApplicationMailer
 
   def set_emails
     @emails = @donation.event.organizer_contact_emails
+    @delivery_reason = "you are on the team of #{@donation.event.name} on HCB."
   end
 
 end

@@ -8,6 +8,8 @@ class StripeCard
 
       return unless @event
 
+      @delivery_reason = "you submitted a card logo for HCB Visa® Commercial cards for #{@event.name} for review. #{stripe_issuing_disclosure}"
+
       mail to: @event.organizer_contact_emails, subject: "Your card logo was rejected by our card issuer"
     end
 

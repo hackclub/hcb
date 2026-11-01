@@ -15,6 +15,15 @@ class ApplicationMailer < ActionMailer::Base
   helper :application
   helper :logo
 
+  # Every email says why the recipient is getting it: actions set
+  # @delivery_reason and layouts/mailer/_footer renders it. Mailers that only
+  # reach HCB staff opt out with `internal!`.
+  class_attribute :internal_mailer, instance_accessor: false, default: false
+
+  def self.internal!
+    self.internal_mailer = true
+  end
+
   def self.deliver_mail(mail)
     # Our SMTP service will throw an error if we attempt
     # to deliver an email without recipients. Occasionally
@@ -49,6 +58,10 @@ class ApplicationMailer < ActionMailer::Base
   end
 
   def mail(...)
+    if @delivery_reason.blank? && !self.class.internal_mailer
+      Rails.error.unexpected("#{self.class.name}##{action_name} is sending without a @delivery_reason")
+    end
+
     super(...).tap do |msg|
       new_to = (msg.to || []) - self.class.earmuffed_recipients
       new_cc = (msg.cc || []) - self.class.earmuffed_recipients
@@ -79,6 +92,18 @@ class ApplicationMailer < ActionMailer::Base
 
   def no_recipients?
     mail.recipients.compact.empty?
+  end
+
+  private
+
+  # Mailer actions interpolate this into @delivery_reason, where view helpers
+  # aren't available, so it delegates to the one copy in ApplicationHelper.
+  def stripe_issuing_disclosure
+    ApplicationController.helpers.stripe_issuing_disclosure
+  end
+
+  def receipts_delivery_reason
+    "you spent funds with an HCB Visa® Commercial card and are required to upload receipts for all funds spent. #{stripe_issuing_disclosure}"
   end
 
 end

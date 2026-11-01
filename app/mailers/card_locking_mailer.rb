@@ -3,6 +3,8 @@
 class CardLockingMailer < ApplicationMailer
   helper :hcb_code # for attach_receipt_url, so recipients can upload receipts without signing in
 
+  before_action :set_delivery_reason
+
   def cards_locked(user:)
     @user = user
     @hcb_codes = user.card_locking_overdue_charges.to_a
@@ -58,6 +60,10 @@ class CardLockingMailer < ApplicationMailer
     return "#{subject} in the next #{@due_in}" if @count == 1
 
     "#{subject}, the next due in #{@due_in}"
+  end
+
+  def set_delivery_reason
+    @delivery_reason = receipts_delivery_reason
   end
 
 end
