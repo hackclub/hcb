@@ -27,6 +27,14 @@ class TaxbanditsService
     response.body
   end
 
+  def self.create_from_data(payload)
+    response = taxbandits_client.post("WhCertificate/Create") do |req|
+      req.body = payload.to_json
+    end
+
+    response.body
+  end
+
   # Returns the full, unmasked TIN. Only Tax::Form#import_taxbandits_data may call
   # this, and only to fingerprint the TIN; nothing else in HCB may touch it.
   def self.get_submission(payee_ref)
