@@ -138,6 +138,8 @@ module Payroll
         transitions from: [:draft, :under_review, :onboarding, :onboarded], to: :terminated
 
         after do
+          contract.mark_voided! if contract&.may_mark_voided?
+
           # If it's still under review or draft, we haven't sent any emails to the contractor yet,
           # so we won't tell them that they've been "terminated"
           Payroll::PositionMailer.with(position: self).terminated.deliver_later unless [:under_review, :draft].include?(aasm.from_state)
