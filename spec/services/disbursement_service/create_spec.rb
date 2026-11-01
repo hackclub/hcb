@@ -544,7 +544,7 @@ RSpec.describe DisbursementService::Create, "transfer types" do
 
       expect {
         create_disbursement(amount: "100.00", transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id, second.ledger_item.id])
-      }.to raise_error(DisbursementService::Create::UserError, /full amount/)
+      }.to raise_error(ActiveRecord::RecordInvalid, /total of the repayment rows/)
       expect(expense.ledger_item.repayments).to be_empty
       expect(second.ledger_item.repayments).to be_empty
       expect(expense.reload.category.slug).to eq("food-fun")
@@ -576,7 +576,7 @@ RSpec.describe DisbursementService::Create, "transfer types" do
     it "must repay the full amount" do
       expect {
         create_disbursement(amount: "50.00", transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id])
-      }.to raise_error(DisbursementService::Create::UserError, /full amount/)
+      }.to raise_error(ActiveRecord::RecordInvalid, /total of the repayment rows/)
       expect(expense.reload.category.slug).to eq("food-fun")
     end
 
@@ -665,7 +665,7 @@ RSpec.describe DisbursementService::Create, "transfer types" do
       # The expense already counts as repaid, so the other $20 can't be.
       expect {
         create_disbursement(amount: "20.00", transfer_type: "repayment", repaid_ledger_item_ids: [expense_item.id])
-      }.to raise_error(DisbursementService::Create::UserError, /full amount/)
+      }.to raise_error(ActiveRecord::RecordInvalid, /total of the repayment rows/)
 
       disbursement.mark_rejected!(create(:user, :make_admin))
       expect(expense.reload.category.slug).to eq("food-fun")

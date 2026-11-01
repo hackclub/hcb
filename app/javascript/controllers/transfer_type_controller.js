@@ -31,10 +31,11 @@ export default class extends Controller {
   connect() {
     // A name the server filled in from the picked transaction still follows
     // the pick; one passed in from elsewhere is kept.
-    const memo = this.transactionsValue
-      .map(transaction => transaction.memo)
-      .join(', ')
-    if (memo && this.repaymentNameTarget.value === this.repaymentName(memo))
+    if (
+      this.transactionsValue.length &&
+      this.repaymentNameTarget.value ===
+        this.repaymentName(this.transactionsValue)
+    )
       this.autofilledName = this.repaymentNameTarget.value
     this.setRepaid(this.transactionsValue)
     this.select()
@@ -95,24 +96,23 @@ export default class extends Controller {
     }).format(cents / 100)
     if (selected) this.repaidErrorTarget.hidden = true
 
-    this.fillName(selected ? { memo } : null)
+    this.fillName(transactions)
   }
 
   // Names the transfer after what it repays, unless a name was passed in.
-  fillName(transaction) {
+  fillName(transactions) {
     const name = this.repaymentNameTarget.value
     if (name && name !== this.autofilledName) return
 
-    this.autofilledName = transaction
-      ? this.repaymentName(transaction.memo)
+    this.autofilledName = transactions.length
+      ? this.repaymentName(transactions)
       : ''
     this.repaymentNameTarget.value = this.autofilledName
   }
 
-  // Matches the server's default, which is cut to the field's 60 characters.
-  repaymentName(memo) {
-    const name = `Repaying ${memo}`
-    return name.length > 60 ? `${name.slice(0, 57)}...` : name
+  // Matches the server's count-based default.
+  repaymentName(transactions) {
+    return `Repaying ${transactions.length} transaction${transactions.length === 1 ? '' : 's'}`
   }
 
   comboboxChanged({ target, detail: { option } }) {

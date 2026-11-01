@@ -15,6 +15,14 @@ export default class extends Controller {
     )
   }
 
+  toggleRow({ target, currentTarget }) {
+    if (target.closest('a, button, input, label, select, textarea')) return
+
+    currentTarget
+      .querySelector('[data-transaction-selection-target="checkbox"]')
+      .click()
+  }
+
   toggle({ target, params: { id, memo, date, amount } }) {
     const transactions = this.transactionsValue.filter(
       transaction => transaction.id !== String(id)

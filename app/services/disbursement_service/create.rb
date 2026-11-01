@@ -66,15 +66,13 @@ module DisbursementService
           # Two transfers repaying the same transaction at once would both
           # pass the "already repaid" check without this.
           @repaid_ledger_items.each(&:lock!)
-          if @transfer_type == "repayment" && amount_cents != @repaid_ledger_items.sum { |item| -item.amount_cents }
-            raise UserError, "Amount must match the full amount of the repaid transactions."
-          end
 
-          disbursement = Disbursement.create!(attrs)
-
+          disbursement = Disbursement.new(attrs)
           @repaid_ledger_items.each do |item|
-            disbursement.repayments.create!(repaid_ledger_item: item, amount_cents: -item.amount_cents).apply_categories!
+            disbursement.repayments.build(repaid_ledger_item: item, amount_cents: -item.amount_cents)
           end
+          disbursement.save!
+          disbursement.repayments.each(&:apply_categories!)
 
           # 1. Create the raw pending transactions
           rpodt = ::PendingTransactionEngine::RawPendingOutgoingDisbursementTransactionService::Disbursement::ImportSingle.new(disbursement:).run

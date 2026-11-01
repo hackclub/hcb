@@ -345,7 +345,7 @@ class DisbursementsController < ApplicationController
     @repaid_ledger_items = [@repaid_ledger_item]
     @disbursement.transfer_type = :repayment
     @disbursement.amount = -@repaid_ledger_item.amount_cents
-    @disbursement.name = "Repaying #{@repaid_ledger_item.memo}".truncate(60) if @disbursement.name.blank?
+    @disbursement.name = "Repaying 1 transaction" if @disbursement.name.blank?
   end
 
   def repayable_transactions_query

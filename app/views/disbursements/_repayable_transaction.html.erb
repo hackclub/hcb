@@ -3,7 +3,7 @@
 <% date = item.datetime.strftime("%b %e, %Y") %>
 <% amount = item.amount.abs.format %>
 
-<tr class="transaction transaction--<%= item.sign %> hover:bg-blue/5">
+<tr class="transaction transaction--<%= item.sign %> cursor-pointer hover:bg-blue/5" data-action="click->transaction-selection#toggleRow">
   <td>
     <input type="checkbox"
            aria-label="Repay <%= item.memo %>, <%= amount %> on <%= date %>"

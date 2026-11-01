@@ -31,7 +31,7 @@
     </div>
   <% end %>
 
-  <%= render "ledger/items/selection" %>
+  <%= render "disbursements/selection" %>
 
   <%= turbo_frame_tag "repayable_transactions", src: (repayable_transactions_disbursements_path(destination_event_id: destination_event.public_id) if destination_event), loading: :lazy, data: { repayment_picker_target: "frame" } do %>
     <%= render "application/loading_container", klass: "py-8" %>

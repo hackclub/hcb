@@ -641,7 +641,7 @@ RSpec.describe DisbursementsController do
         expect(page.at_css("#disbursement_transfer_type_repayment")["checked"]).to eq("checked")
         expect(page.at_css("input[name='disbursement[repaid_ledger_item_ids][]']")["value"]).to eq(expense.ledger_item.hashid)
         expect(page.at_css("#disbursement_repayment_amount")["value"]).to eq("100.00")
-        expect(page.at_css("#disbursement_repayment_name")["value"]).to eq("Repaying #{expense.ledger_item.memo}")
+        expect(page.at_css("#disbursement_repayment_name")["value"]).to eq("Repaying 1 transaction")
       end
 
       it "keeps a name that was passed in" do
