@@ -907,7 +907,11 @@ $(document).on($.modal.BEFORE_OPEN, function (event, modal) {
     const url = new URL(location.href)
     if (url.searchParams.get('popover') !== modal.elm[0].dataset.stateUrl) {
       url.searchParams.set('popover', modal.elm[0].dataset.stateUrl)
-      window.history.pushState({ modal: modal.elm[0].id }, '', url)
+      window.history.pushState(
+        { ...history.state, modal: modal.elm[0].id },
+        '',
+        url
+      )
     }
   }
 })
@@ -918,7 +922,7 @@ $(document).on($.modal.BEFORE_CLOSE, function (event, modal) {
     const url = new URL(location.href)
     if (url.searchParams.has('popover')) {
       url.searchParams.delete('popover')
-      window.history.pushState(null, '', url)
+      window.history.pushState({ turbo: history.state?.turbo }, '', url)
     }
 
     if (document.documentElement.dataset.returnToStateTitle) {
@@ -942,8 +946,15 @@ $(document).on($.modal.AFTER_CLOSE, function (event, modal) {
   }
 })
 
+// Popover entries share their page's Turbo state, so Turbo only restores other pages
 window.addEventListener('popstate', e => {
-  if (e.state?.modal) {
+  const samePage =
+    e.state?.turbo?.restorationIdentifier ===
+    Turbo.session.restorationIdentifier
+  if (!samePage || !(e.state.modal || $.modal.isActive())) return
+
+  e.stopImmediatePropagation()
+  if (e.state.modal) {
     openPopoverFromUrl()
   } else {
     $.modal.close()
