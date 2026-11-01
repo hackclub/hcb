@@ -93,6 +93,35 @@ class Payee < ApplicationRecord
     archived_at.present?
   end
 
+  # If another active payee on this event with the same email already has the
+  # legal entity, this payee is a duplicate: its payments and payroll positions
+  # move onto the existing payee and this one is archived. Returns the payee
+  # that ends up holding the legal entity.
+  def assign_legal_entity!(le)
+    existing = event.payees.not_archived.where.not(id:).find_by(legal_entity: le, email:)
+
+    if existing.nil?
+      update!(legal_entity: le)
+      return self
+    end
+
+    transaction do
+      payments.find_each do |payment|
+        payment.update!(payee: existing)
+        payment.refresh_legal_entity_state!
+      end
+
+      payroll_positions.find_each do |position|
+        position.update!(payee: existing)
+        position.refresh_onboarding_state!
+      end
+
+      archive!
+    end
+
+    existing
+  end
+
   def email_frozen?
     legal_entity.present? && !legal_entity.managed?
   end
