@@ -718,17 +718,25 @@ RSpec.describe EventsController do
         Nokogiri::HTML5(response.body).css("tbody tr a.stretched-link").map { |link| link["href"] }
       end
 
+      renewal_period = lambda do
+        Nokogiri::HTML5(response.body).css("tbody td").find { |cell| cell.text.include?("Renewed for") }&.text&.squish
+      end
+
       expect(listed_position_paths.call).to eq([event_payroll_position_path(event_id: event.slug, id: position)])
+      # An unsigned renewal hasn't renewed the contract yet
+      expect(renewal_period.call).to be_nil
 
       renewal.update!(aasm_state: "onboarded", onboarded_at: Time.current)
 
       # The current contract is still listed until the renewal takes over from it
       expect(listed_position_paths.call).to eq([event_payroll_position_path(event_id: event.slug, id: position)])
+      expect(renewal_period.call).to include("Renewed for #{renewal.period_label}")
 
       position.update_columns(aasm_state: "expired", end_date: Date.yesterday)
       renewal.update_columns(start_date: Date.current)
 
       expect(listed_position_paths.call).to eq([event_payroll_position_path(event_id: event.slug, id: renewal)])
+      expect(renewal_period.call).to be_nil
       expect(Nokogiri::HTML5(response.body).at_css("tbody .contractor-review-badge")&.text).to eq("1")
     end
   end

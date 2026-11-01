@@ -975,6 +975,12 @@ class EventsController < ApplicationController
     can_review = Payroll::PositionPolicy.new(current_user, @event).review?
     @pending_invoice_counts = can_review ? pending_invoice_counts_by_listed_position : {}
 
+    # Signed renewals of listed contracts that are still in effect, keyed by
+    # the contract they renew.
+    @upcoming_renewals = Payroll::Position.upcoming_renewals.onboarded
+                                          .where(renewal_of_id: @contractors.map(&:id))
+                                          .index_by(&:renewal_of_id)
+
     counts_by_status = @contractors.to_a.group_by(&:status).transform_values(&:count)
     @stats = {
       active: counts_by_status[:active] || 0,
