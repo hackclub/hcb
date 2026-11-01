@@ -4,26 +4,28 @@
 <% manual = false %>
 <% has_payees = event.payees.any? %>
 
+<% hcb_transfer_link = capture do %>
+  <%= link_to new_disbursement_path(source_event_id: event.slug), class: "btn btn--list-item w-full #{"border-t rounded-none" if has_payees}", data: { turbo_frame: "_top" } do %>
+    <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
+      <%= inline_icon "bank-account", size: 18 %>
+    </div>
+    <div class="text-left">
+      <p class="font-medium">HCB transfer</p>
+      <p class="text-sm muted">Send money to another HCB organization</p>
+    </div>
+    <%= inline_icon "view-forward", class: "ml-auto muted" %>
+  <% end %>
+<% end if destination == "payments" %>
+
 <div>
-  <div data-payee-picker-target="defaultPanel" class="py-2" <%= "hidden" unless has_payees || destination == "payments" %>>
+  <div data-payee-picker-target="defaultPanel" class="py-2" <%= "hidden" unless has_payees %>>
     <% if has_payees %>
       <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id], destination:) do %>
         <%= render "application/loading_container", klass: "py-8" %>
       <% end %>
     <% end %>
 
-    <% if destination == "payments" %>
-      <%= link_to new_disbursement_path(source_event_id: event.slug), class: "btn btn--list-item border-t rounded-none w-full", data: { turbo_frame: "_top" } do %>
-        <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
-          <%= inline_icon "bank-account", size: 18 %>
-        </div>
-        <div class="text-left">
-          <p class="font-medium">HCB transfer</p>
-          <p class="text-sm muted">Send money to another HCB organization</p>
-        </div>
-        <%= inline_icon "view-forward", class: "ml-auto muted" %>
-      <% end %>
-    <% end %>
+    <%= hcb_transfer_link if has_payees %>
   </div>
 
   <div data-payee-picker-target="addingPanel" <%= "hidden" if has_payees %>
@@ -107,4 +109,10 @@
         </div>
       </div>
     </div>
+
+    <% if hcb_transfer_link && !has_payees %>
+      <div class="card !p-0 mt-3 overflow-hidden">
+        <%= hcb_transfer_link %>
+      </div>
+    <% end %>
   </div>
