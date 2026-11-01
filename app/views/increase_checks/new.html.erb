@@ -54,12 +54,13 @@
 <% end %>
 
 <%= form_with(model: [@event, @check], local: true,
-  data: { controller: "extraction", extraction_target: "form" },
+  data: { controller: "extraction payment-recipient", extraction_target: "form" },
   html: {
     "x-data" => "check(#{({
       payment_recipient: (@check.payment_recipient.to_safe_hash if @check.payment_recipient&.event&.== @check.event),
       editing: @check.address_line1.present?,
-    }.to_json)})"
+    }.to_json)})",
+    "@payment-recipient:change" => "payment_recipient = $event.detail",
   }) do |form| %>
   <%= form_errors(@check, "check", "We couldn't send this") %>
 
@@ -91,13 +92,13 @@
               click@document->menu#close
               keydown@document->menu#keydown
               input->text-filter#query
+              input->payment-recipient#clear
             ",
             menu_target: "toggle",
           },
           maxlength: 250,
           class: "!max-w-full",
-          "x-ref" => "name_input",
-          "@input" => "payment_recipient = null" %>
+          "x-ref" => "name_input" %>
 
         <% if organizer_signed_in? && @event.payment_recipients.where(payment_model: "IncreaseCheck").any? %>
           <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
@@ -106,9 +107,8 @@
                 <button
                   type="button"
                   class="menu__action flex justify-between flex-auto mr1"
-                  data-action="input#focus menu#close"
-                  data-recipient="<%= payment_recipient.to_safe_json %>"
-                  @click="select_recipient($el.dataset.recipient)">
+                  data-action="input#focus menu#close payment-recipient#select"
+                  data-payment-recipient-recipient-param="<%= payment_recipient.to_safe_json %>">
                   <span class="truncate"><%= payment_recipient.name %></span>
                   <span class="muted ml1"><%= payment_recipient.address_city %>, <%= payment_recipient.address_state %></span>
                 </button>

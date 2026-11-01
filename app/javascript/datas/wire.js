@@ -1,7 +1,4 @@
-import payment_recipient_members from './shared/payment_recipient'
-
 export default ({ payment_recipient, editing, country }) => ({
-  ...payment_recipient_members,
   payment_recipient,
   country,
   editing: editing || false,

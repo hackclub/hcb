@@ -16,12 +16,13 @@
   <%= render partial: "wires/requirements", locals: { class: "my-4", event: @event } %>
 <% end %>
 
-<%= form_with(model: [@event, @wire], local: true, html: {
+<%= form_with(model: [@event, @wire], local: true, data: { controller: "payment-recipient" }, html: {
       "x-data" => "wire(#{({
         payment_recipient: (@wire.payment_recipient.to_safe_hash if @wire.payment_recipient&.event&.== @wire.event),
         editing: @wire.address_line1.present?,
         country: @wire.recipient_country ? "'#{@wire.recipient_country}'" : "null"
-      }.to_json)})"
+      }.to_json)})",
+      "@payment-recipient:change" => "payment_recipient = $event.detail",
 }) do |form| %>
   <%= form_errors(@wire, "wire", "We couldn't send this") %>
 
@@ -47,13 +48,13 @@
                                 click@document->menu#close
                                 keydown@document->menu#keydown
                                 input->text-filter#query
+                                input->payment-recipient#clear
                               ",
                               menu_target: "toggle",
                             },
                             maxlength: 250,
                             class: "!max-w-full",
-                            "x-ref" => "name_input",
-                            "@input" => "payment_recipient = null" %>
+                            "x-ref" => "name_input" %>
         <% if organizer_signed_in? && @event.payment_recipients.where(payment_model: "Wire").any? %>
           <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
             <% @event.payment_recipients.where(payment_model: "Wire").each do |payment_recipient| %>
@@ -61,9 +62,8 @@
                 <button
                   type="button"
                   class="menu__action flex justify-between flex-auto mr1"
-                  data-action="input#focus menu#close"
-                  data-recipient="<%= payment_recipient.to_safe_json %>"
-                  @click="select_recipient($el.dataset.recipient)">
+                  data-action="input#focus menu#close payment-recipient#select"
+                  data-payment-recipient-recipient-param="<%= payment_recipient.to_safe_json %>">
                   <span class="truncate"><%= payment_recipient.name %></span>
                   <span class="muted ml1">••••<%= payment_recipient.account_number.slice(-4, 4) %></span>
                 </button>
