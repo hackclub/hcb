@@ -29,11 +29,10 @@
                 Edit and sign
               <% end %>
             <% end %>
-            
             <% if @position.may_mark_terminated? %>
               <%= link_to terminate_event_payroll_position_path(event: @event, payroll_position: @position), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you want to terminate this contractor immediately?#{" We will notify the contractor." unless @position.under_review? }" } do %>
                 <%= inline_icon "profile-forbidden", size: 24 %>
-                <%= (@position.draft? || @position.under_review?) ? "Discard" : "Terminate" %>
+                <%= @position.draft? || @position.under_review? ? "Discard" : "Terminate" %>
               <% end %>
             <% end %>
           </div>
