@@ -177,7 +177,7 @@
 
                 <% if organizer_signed_in? %>
                   <%# the link below can be changed back to `d.local_hcb_code.hashid` after hcb_codes are converted into proper associations and are preloaded in the controller %>
-                  <%= link_to "", hcb_code_url(d.hcb_code), class: "stretched-link", data: popovers_enabled? && transfer_popover_title ? popover_data(title: transfer_popover_title, src: d.local_hcb_code.popover_path, frame_id: d.local_hcb_code.public_id, state_url: hcb_code_url(d.hcb_code), external_link: hcb_code_url(d.hcb_code)) : nil %>
+                  <%= link_to "", hcb_code_url(d.hcb_code), class: "stretched-link", data: transfer_popover_title ? popover_data(title: transfer_popover_title, src: d.local_hcb_code.popover_path, frame_id: d.local_hcb_code.public_id, state_url: hcb_code_url(d.hcb_code), external_link: hcb_code_url(d.hcb_code)) : nil %>
                 <% end %>
               </td>
             </tr>
