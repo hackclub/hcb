@@ -224,18 +224,22 @@ class MyController < ApplicationController
     ]
     @has_filter = params[:status].present?
 
-    @contractor_positions = Payroll::Position.joins(payee: { legal_entity: :legal_entity_users })
-                                             .where(legal_entity_users: { user_id: current_user.id })
-                                             .where(payees: { legal_entity_id: @legal_entity.id })
-                                             .where.not(id: Payroll::Position.upcoming_renewals.select(:id))
-                                             .includes(payee: :event)
-                                             .order(created_at: :desc)
-                                             .load
+    positions = Payroll::Position.joins(payee: { legal_entity: :legal_entity_users })
+                                 .where(legal_entity_users: { user_id: current_user.id })
+                                 .where(payees: { legal_entity_id: @legal_entity.id })
+    # A signed renewal is hidden until it starts, and a contract it has taken
+    # over from is hidden once it has.
+    @contractor_positions = positions.where.not(id: Payroll::Position.upcoming_renewals.select(:id))
+                                     .where.not(id: Payroll::Position.started_renewals.select(:renewal_of_id))
+                                     .includes(payee: :event)
+                                     .order(created_at: :desc)
+                                     .load
     @tax_form_required = @contractor_positions.any? && !@legal_entity.completed_tax_form?
     # Approved invoices are represented by their payment in the history table
     # below, so only surface invoices still awaiting review here to avoid
-    # duplicating information.
-    @invoices = Payroll::Invoice.where(payroll_position: @contractor_positions)
+    # duplicating information. Invoices under a renewed contract are still
+    # shown while they're awaiting review.
+    @invoices = Payroll::Invoice.where(payroll_position: positions)
                                 .where(aasm_state: "submitted")
                                 .includes(payroll_position: { payee: :event })
                                 .order(created_at: :desc)
