@@ -1,5 +1,3 @@
-import website_political_fields from './shared/website_political_fields'
-
 export default ({
   has_website,
   has_political,
@@ -7,7 +5,6 @@ export default ({
   committed,
   description,
 }) => ({
-  ...website_political_fields,
   has_website,
   has_political,
   teenager,
