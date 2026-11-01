@@ -104,7 +104,7 @@ RSpec.describe Payee, type: :model do
     end
 
     context "when another payee on the event already has the legal entity" do
-      let!(:existing) { create(:payee, event:, legal_entity:) }
+      let!(:existing) { create(:payee, event:, legal_entity:, email: payee.email) }
 
       it "moves payments and payroll positions to the existing payee and archives the duplicate" do
         payment = create(:payment, payee:)
@@ -117,6 +117,13 @@ RSpec.describe Payee, type: :model do
         expect(payee.reload).to be_archived
         expect(payee.legal_entity).to be_nil
       end
+    end
+
+    it "does not merge into a payee with a different email" do
+      create(:payee, event:, legal_entity:, email: "other@example.com")
+
+      expect { payee.assign_legal_entity!(legal_entity) }.to raise_error(ActiveRecord::RecordInvalid, /has already been taken/)
+      expect(payee.reload).not_to be_archived
     end
 
     it "ignores archived payees with the legal entity" do
