@@ -2,7 +2,7 @@
 import { Controller } from '@hotwired/stimulus'
 
 // The modal on the transfer form listing the recipient's transactions that can
-// be repaid. Picking one is announced as `repayment-picker:select`, which the
+// be repaid. The selection is announced as `repayment-picker:select`, which the
 // transfer-type controller listens for on the document: opening the modal moves
 // it out of the form.
 export default class extends Controller {
@@ -13,6 +13,7 @@ export default class extends Controller {
   setDestination(destinationEventId) {
     this.formTarget.reset()
     this.destinationTarget.value = destinationEventId || ''
+    this.dispatch('reset')
 
     if (destinationEventId) {
       const url = new URL(this.formTarget.action, window.location.origin)
@@ -23,16 +24,11 @@ export default class extends Controller {
     }
   }
 
-  pick({ params: { id, memo, date, amount, amountLabel } }) {
-    this.dispatch('select', {
-      detail: {
-        id: String(id),
-        memo: String(memo),
-        date: String(date),
-        amount: Number(amount).toFixed(2),
-        amountLabel: String(amountLabel),
-      },
-    })
+  selectionChanged({ detail }) {
+    this.dispatch('select', { detail })
+  }
+
+  done() {
     $.modal.close()
   }
 }

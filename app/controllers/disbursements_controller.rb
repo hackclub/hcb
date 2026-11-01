@@ -175,7 +175,8 @@ class DisbursementsController < ApplicationController
       destination_event: @destination_event,
       source_event: @source_event,
       amount: Monetize.parse(disbursement_params[:amount])&.cents,
-      name: disbursement_params[:name]
+      name: disbursement_params[:name],
+      transfer_type: disbursement_params[:transfer_type].presence
     )
 
     authorize @disbursement
@@ -190,7 +191,11 @@ class DisbursementsController < ApplicationController
 
     if transfer_type == "repayment"
       authorize @disbursement, :repay?
-      repaid_ledger_item = Ledger::Item.find_by_hashid(disbursement_params[:repaid_ledger_item_id])
+      hashids = Array(disbursement_params[:repaid_ledger_item_ids]).reject(&:blank?).uniq
+      @repaid_ledger_items = hashids.filter_map { |hashid| Repayment.unrepaid_ledger_items(@destination_event).find_by_hashid(hashid) }
+      if @repaid_ledger_items.size != hashids.size
+        raise DisbursementService::Create::UserError, "One or more selected transactions can no longer be repaid."
+      end
     end
 
     source_transaction_category_slug = disbursement_params[:source_transaction_category_slug].presence
@@ -212,7 +217,7 @@ class DisbursementsController < ApplicationController
       destination_transaction_category_slug:,
       category_assignment_strategy:,
       transfer_type:,
-      repaid_ledger_item_id: repaid_ledger_item&.id
+      repaid_ledger_item_ids: @repaid_ledger_items.to_a.map(&:id)
     ).run
 
     if disbursement_params[:file]
@@ -339,9 +344,10 @@ class DisbursementsController < ApplicationController
     @repaid_ledger_item = Repayment.unrepaid_ledger_items(@destination_event).find_by_hashid(params[:repaid_ledger_item_id])
     return unless @repaid_ledger_item
 
+    @repaid_ledger_items = [@repaid_ledger_item]
     @disbursement.transfer_type = :repayment
     @disbursement.amount = -@repaid_ledger_item.amount_cents
-    @disbursement.name = "Repaying #{@repaid_ledger_item.memo}".truncate(60) if @disbursement.name.blank?
+    @disbursement.name = "Repaying 1 transaction" if @disbursement.name.blank?
   end
 
   def repayable_transactions_query
@@ -379,7 +385,7 @@ class DisbursementsController < ApplicationController
       :name,
       :scheduled_on,
       :transfer_type,
-      :repaid_ledger_item_id,
+      { repaid_ledger_item_ids: [] },
       { file: [] }
     ]
 

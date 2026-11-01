@@ -105,7 +105,7 @@ RSpec.describe Ledger::ItemsController, type: :controller do
         destination_event_id: event.id,
         scheduled_on: Date.tomorrow,
         transfer_type: "repayment",
-        repaid_ledger_item_id: expense.ledger_item.id
+        repaid_ledger_item_ids: [expense.ledger_item.id]
       ).run
       # Scheduled transfers only reach the recipient once they're sent.
       expect(disbursement.incoming_disbursement.ledger_item).to be_nil

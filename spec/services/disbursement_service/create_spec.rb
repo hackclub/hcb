@@ -510,8 +510,62 @@ RSpec.describe DisbursementService::Create, "transfer types" do
   describe "repayments" do
     let!(:expense) { create(:canonical_transaction, event: destination_event, amount_cents: -100_00, category_slug: "food-fun") }
 
+    it "repays several expenses in full and restores all categories on rejection" do
+      supplies = create(:canonical_transaction, event: destination_event, amount_cents: -23_45, category_slug: "venue")
+      disbursement = create_disbursement(amount: "123.45", transfer_type: "repayment", repaid_ledger_item_ids: [supplies.ledger_item.id, expense.ledger_item.id, expense.ledger_item.id])
+
+      expect(disbursement.amount).to eq(123_45)
+      expect(disbursement.repayments.pluck(:ledger_item_id, :amount_cents)).to contain_exactly([expense.ledger_item.id, 100_00], [supplies.ledger_item.id, 23_45])
+      expect(categories(disbursement)).to eq([nil, "repayment"])
+      expect([expense.reload.category.slug, supplies.reload.category.slug]).to eq(["repayment", "repayment"])
+
+      disbursement.mark_rejected!(create(:user, :make_admin))
+
+      expect([expense.reload.category.slug, supplies.reload.category.slug]).to eq(["food-fun", "venue"])
+      expect(Repayment.unrepaid_ledger_items(destination_event)).to include(expense.ledger_item, supplies.ledger_item)
+    end
+
+    it "inherits a category only when every selected expense shares it" do
+      second = create(:canonical_transaction, event: destination_event, amount_cents: -23_45, category_slug: "food-fun")
+      disbursement = create_disbursement(amount: "123.45", transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id, second.ledger_item.id])
+
+      expect(categories(disbursement)).to eq(["food-fun", "repayment"])
+    end
+
+    it "does not inherit a category when one selected expense is uncategorized" do
+      second = create(:canonical_transaction, event: destination_event, amount_cents: -23_45)
+      disbursement = create_disbursement(amount: "123.45", transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id, second.ledger_item.id])
+
+      expect(categories(disbursement)).to eq([nil, "repayment"])
+    end
+
+    it "rejects a total that does not cover every selected expense" do
+      second = create(:canonical_transaction, event: destination_event, amount_cents: -23_45)
+
+      expect {
+        create_disbursement(amount: "100.00", transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id, second.ledger_item.id])
+      }.to raise_error(ActiveRecord::RecordInvalid, /total of the repayment rows/)
+      expect(expense.ledger_item.repayments).to be_empty
+      expect(second.ledger_item.repayments).to be_empty
+      expect(expense.reload.category.slug).to eq("food-fun")
+    end
+
+    it "rolls back the whole batch if a later expense has already been repaid" do
+      second = create(:canonical_transaction, event: destination_event, amount_cents: -23_45)
+      create_disbursement(amount: "23.45", transfer_type: "repayment", repaid_ledger_item_ids: [second.ledger_item.id])
+      count = Disbursement.count
+
+      expect {
+        create_disbursement(amount: "123.45", transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id, second.ledger_item.id])
+      }.to raise_error(ActiveRecord::RecordInvalid, /already been repaid/)
+
+      expect(Disbursement.count).to eq(count)
+      expect(expense.ledger_item.repayments).to be_empty
+      expect(expense.reload.category.slug).to eq("food-fun")
+    end
+
     it "gives the sender the expense's category and marks both of the recipient's sides as a repayment" do
-      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id])
 
       expect(categories(disbursement)).to eq(["food-fun", "repayment"])
       expect(expense.reload.category.slug).to eq("repayment")
@@ -521,16 +575,16 @@ RSpec.describe DisbursementService::Create, "transfer types" do
 
     it "must repay the full amount" do
       expect {
-        create_disbursement(amount: "50.00", transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
-      }.to raise_error(ActiveRecord::RecordInvalid, /full amount/)
+        create_disbursement(amount: "50.00", transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id])
+      }.to raise_error(ActiveRecord::RecordInvalid, /total of the repayment rows/)
       expect(expense.reload.category.slug).to eq("food-fun")
     end
 
     it "can't repay a transaction twice" do
-      create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
+      create_disbursement(transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id])
 
       expect {
-        create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
+        create_disbursement(transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id])
       }.to raise_error(ActiveRecord::RecordInvalid, /already been repaid/)
     end
 
@@ -538,7 +592,7 @@ RSpec.describe DisbursementService::Create, "transfer types" do
       other_expense = create(:canonical_transaction, event: create(:event), amount_cents: -100_00)
 
       expect {
-        create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: other_expense.ledger_item.id)
+        create_disbursement(transfer_type: "repayment", repaid_ledger_item_ids: [other_expense.ledger_item.id])
       }.to raise_error(ActiveRecord::RecordInvalid, /must be a settled expense/)
     end
 
@@ -547,12 +601,12 @@ RSpec.describe DisbursementService::Create, "transfer types" do
 
       expect(pending_expense.ledger_item.reload).to be_pending
       expect {
-        create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: pending_expense.ledger_item.id)
+        create_disbursement(transfer_type: "repayment", repaid_ledger_item_ids: [pending_expense.ledger_item.id])
       }.to raise_error(ActiveRecord::RecordInvalid, /must be a settled expense/)
     end
 
     it "restores the expense's category when the repayment is rejected" do
-      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id])
 
       disbursement.mark_rejected!(create(:user, :make_admin))
 
@@ -561,7 +615,7 @@ RSpec.describe DisbursementService::Create, "transfer types" do
     end
 
     it "restores the expense's category when the repayment errors" do
-      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id])
       disbursement.mark_approved!(create(:user, :make_admin))
 
       disbursement.mark_errored!
@@ -570,7 +624,7 @@ RSpec.describe DisbursementService::Create, "transfer types" do
     end
 
     it "restores the expense's own category even if an admin overrode the sender's" do
-      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id, source_transaction_category_slug: "venue")
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id], source_transaction_category_slug: "venue")
 
       disbursement.mark_rejected!(create(:user, :make_admin))
 
@@ -578,7 +632,7 @@ RSpec.describe DisbursementService::Create, "transfer types" do
     end
 
     it "keeps a category someone set on the expense after it was repaid" do
-      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id])
       TransactionCategoryService.new(model: expense.reload).set!(slug: "venue", assignment_strategy: "manual")
 
       disbursement.mark_rejected!(create(:user, :make_admin))
@@ -587,16 +641,16 @@ RSpec.describe DisbursementService::Create, "transfer types" do
     end
 
     it "can repay an expense again after the first repayment is rejected" do
-      create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id).mark_rejected!(create(:user, :make_admin))
+      create_disbursement(transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id]).mark_rejected!(create(:user, :make_admin))
 
-      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id])
 
       expect(disbursement.repaid_ledger_items).to eq([expense.ledger_item])
       expect(expense.reload.category.slug).to eq("repayment")
     end
 
     it "keeps the repayment when the expense grows afterward, leaving the difference unrepaid" do
-      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id])
       repayment = disbursement.repayments.sole
 
       # e.g. a tip settling on top of a card charge
@@ -610,8 +664,8 @@ RSpec.describe DisbursementService::Create, "transfer types" do
 
       # The expense already counts as repaid, so the other $20 can't be.
       expect {
-        create_disbursement(amount: "20.00", transfer_type: "repayment", repaid_ledger_item_id: expense_item.id)
-      }.to raise_error(ActiveRecord::RecordInvalid, /already been repaid/)
+        create_disbursement(amount: "20.00", transfer_type: "repayment", repaid_ledger_item_ids: [expense_item.id])
+      }.to raise_error(ActiveRecord::RecordInvalid, /total of the repayment rows/)
 
       disbursement.mark_rejected!(create(:user, :make_admin))
       expect(expense.reload.category.slug).to eq("food-fun")
@@ -619,7 +673,7 @@ RSpec.describe DisbursementService::Create, "transfer types" do
 
     it "restores an automatic category as automatic" do
       expect(expense.category_mapping).to be_automatic
-      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id])
       expect(expense.reload.category_mapping).to be_manual
 
       disbursement.mark_rejected!(create(:user, :make_admin))
@@ -630,7 +684,7 @@ RSpec.describe DisbursementService::Create, "transfer types" do
 
     it "restores a manual category as manual" do
       TransactionCategoryService.new(model: expense).set!(slug: "venue", assignment_strategy: "manual")
-      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id])
 
       disbursement.mark_rejected!(create(:user, :make_admin))
 
@@ -645,7 +699,7 @@ RSpec.describe DisbursementService::Create, "transfer types" do
       expense.ledger_item.refresh!
       expect(expense.ledger_item).to be_settled
 
-      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: expense.ledger_item.id)
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_ids: [expense.ledger_item.id])
       expect([expense.reload.category.slug, pending.reload.category.slug]).to eq(["repayment", "repayment"])
 
       disbursement.mark_rejected!(create(:user, :make_admin))
@@ -656,7 +710,7 @@ RSpec.describe DisbursementService::Create, "transfer types" do
 
     it "leaves an expense uncategorized if it had no category" do
       uncategorized = create(:canonical_transaction, event: destination_event, amount_cents: -100_00)
-      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_id: uncategorized.ledger_item.id)
+      disbursement = create_disbursement(transfer_type: "repayment", repaid_ledger_item_ids: [uncategorized.ledger_item.id])
 
       disbursement.mark_rejected!(create(:user, :make_admin))
 
