@@ -69,10 +69,6 @@ module HasWiseRecipient
         fields << ACCOUNT_NUMBER_FIELD
         fields << { type: :text_field, key: "rut_number", placeholder: "12345678-9", label: "RUT number" }
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Checking": "checking", "Savings": "savings", "Demand": "demand" } }
-      elsif currency == "CNY"
-        fields << { type: :select, key: "account_type", label: "Account type", options: { "AliPay": "alipay", "UnionPay": "unionpay" } }
-        fields << { type: :text_field, key: "account_number", label: "UnionPay card", conditional: "account_type == 'unionpay'" }
-        fields << { type: :text_field, key: "alipay_id", label: "AliPay ID (email or phone number)", conditional: "account_type == 'alipay'" }
       elsif currency == "COP"
         fields << ACCOUNT_NUMBER_FIELD
         fields << { type: :select, key: "account_type", label: "Account type", options: { "Checking": "checking", "Savings": "savings" } }
@@ -175,6 +171,6 @@ module HasWiseRecipient
 
   ACCOUNT_NUMBER_FIELD = { type: :text_field, key: "account_number", placeholder: "123456789", label: "Account number" }.freeze
 
-  AVAILABLE_CURRENCIES = %w[AED ARS AUD BGN BRL CAD CHF CLP CNY COP CZK DKK EGP EUR GBP GEL HKD HUF IDR ILS JPY KES KRW LKR MAD MXN MYR NGN NOK NPR NZD PHP PKR PLN RON SEK SGD THB TND TRY UAH UYU VND ZAR].freeze
+  AVAILABLE_CURRENCIES = %w[AED ARS AUD BGN BRL CAD CHF CLP COP CZK DKK EGP EUR GBP GEL HKD HUF IDR ILS JPY KES KRW LKR MAD MXN MYR NGN NOK NPR NZD PHP PKR PLN RON SEK SGD THB TND TRY UAH UYU VND ZAR].freeze
 
 end
