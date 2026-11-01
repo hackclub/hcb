@@ -298,6 +298,14 @@ RSpec.describe Payroll::Position, type: :model do
         expect(position).to be_renewable
       end
 
+      it "is not renewable once it lapsed too long ago" do
+        position.update!(aasm_state: "expired", start_date: 6.months.ago.to_date, end_date: 3.months.ago.to_date)
+        expect(position).to be_renewable
+
+        position.update_columns(end_date: (3.months.ago - 1.day).to_date)
+        expect(position).not_to be_renewable
+      end
+
       it "is not renewable once its payee is archived" do
         payee.update!(archived_at: Time.current)
         expect(position).not_to be_renewable

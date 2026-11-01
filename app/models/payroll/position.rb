@@ -104,6 +104,7 @@ module Payroll
 
     MAX_DURATION = 1.year
     MAX_START_LEAD_TIME = 6.months
+    MAX_RENEWAL_LAPSE = 3.months
 
     CONTRACTOR_ONBOARDING_STEPS = %i[tax_form contractor_signature payout_method].freeze
 
@@ -229,10 +230,13 @@ module Payroll
 
     # Positions still being onboarded are changed by editing them instead. A
     # renewal has to start within the usual lead time, so a contract can't be
-    # renewed until it's that close to ending. An archived payee can't be
-    # contracted again, just like when inviting a contractor.
+    # renewed until it's that close to ending, and one that lapsed long ago
+    # needs a fresh invite with current terms instead. An archived payee can't
+    # be contracted again, just like when inviting a contractor.
     def renewable?
-      (onboarded? || expired?) && !payee.archived? && renewal.nil? && renewal_start_date <= MAX_START_LEAD_TIME.from_now.to_date
+      (onboarded? || expired?) && !payee.archived? && renewal.nil? &&
+        renewal_start_date <= MAX_START_LEAD_TIME.from_now.to_date &&
+        end_date >= MAX_RENEWAL_LAPSE.ago.to_date
     end
 
     # A renewal picks up the day after this contract ends, or today if it has
