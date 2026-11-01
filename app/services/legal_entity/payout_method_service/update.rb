@@ -31,7 +31,10 @@ class LegalEntity
         # method together, atomically, even inside the controller's transaction.
         saved = @payout_method.save
         if saved
-          repoint_failed_and_draft_reports if @replacing || @make_default
+          if @replacing || @make_default
+            repoint_failed_and_draft_reports
+            retry_failed_payments
+          end
           @replacing.archive! if @replacing && @replacing != @payout_method
         end
         saved
@@ -94,6 +97,12 @@ class LegalEntity
             end
           end
         end
+      end
+
+      def retry_failed_payments
+        failed_payments = @legal_entity.payments.where(aasm_state: :sent).select { |payment| payment.attempts.last.failed? }
+
+        failed_payments.each(&:retry!)
       end
 
     end
