@@ -204,5 +204,32 @@ RSpec.describe Ledger::Mapper do
         end
       end
     end
+
+    context "when the item has a Stripe top-up transaction" do
+      let!(:hack_club_bank) { create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK) }
+      let!(:noevent) { create(:event, id: EventMappingEngine::EventIds::NOEVENT) }
+
+      # A fee reimbursement group's item stays on Hack Club Bank's ledger once
+      # its top-ups' bank debits are on it; other Stripe top-ups go to NOEVENT.
+      it "maps a fee reimbursement top-up to Hack Club Bank" do
+        group = create(:fee_reimbursement_group)
+        group_item = group.ledger_item
+        create(:canonical_transaction, memo: "STRIPE Stripe Top HCB-#{group.local_hcb_code.short_code}", ledger_item: group_item)
+
+        described_class.new(ledger_item: group_item).run
+        group_item.reload
+
+        expect(group_item.primary_ledger.event).to eq(hack_club_bank)
+      end
+
+      it "maps an Issuing balance top-up to NOEVENT" do
+        create(:canonical_transaction, memo: "STRIPE Stripe Top-up", ledger_item: item)
+
+        mapper.run
+        item.reload
+
+        expect(item.primary_ledger.event).to eq(noevent)
+      end
+    end
   end
 end
