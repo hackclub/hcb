@@ -93,7 +93,8 @@ module Reimbursement
 
       event :mark_failed do
         after { update!(failure_reason: nil, retry_at: nil) }
-        transitions from: [:sent, :settled], to: :failed
+        # A bank return can arrive while outage recovery has already failed.
+        transitions from: [:sent, :settled, :failed], to: :failed
       end
 
       event :mark_reversed do
@@ -109,6 +110,10 @@ module Reimbursement
 
     def event
       @event ||= Event.find(EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
+    end
+
+    def unresolved_payout?
+      failure_reason.in?(["column_unavailable", "retry_window_expired", "reconciliation_required"])
     end
 
     def payout_transfer
