@@ -59,6 +59,8 @@ class Ledger
     # Plain after_commit (create/update/destroy), matching this file's other hooks.
     after_commit { CardLocking::Settlement.on_ledger_item(ledger_item, on_primary: on_primary_ledger) }
 
+    after_commit { Ledger::Balance::Observer.notify_later(ledger) }
+
     def self.map_primary!(ledger:, ledger_item:, mapped_by:)
       # Mapping to a new primary ledger will _remove_ any existing primary mapping.
       # It always attempts to reuse the existing primary mapping to preserve a paper trail.
