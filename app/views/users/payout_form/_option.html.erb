@@ -1,7 +1,7 @@
-<%# locals: (form:, model:, title:, description:, icon:, checked: false) %>
+<%# locals: (form:, model:, title:, description:, icon:, checked: false, required: false) %>
 
 <% unsupported = LegalEntity::PayoutMethod.unsupported?(model) %>
-<%= form.radio_button :payout_method_type, model.name, checked:, disabled: unsupported %>
+<%= form.radio_button :payout_method_type, model.name, checked:, disabled: unsupported, required: %>
 <%= form.label :payout_method_type, value: model.name do %>
   <%= inline_icon icon, size: 28 %>
   <strong><%= title %></strong>
