@@ -30,6 +30,14 @@ module Payroll
       edit?
     end
 
+    # Renewing reissues the contract for a new term, so it requires the same
+    # permission as creating a contractor.
+    def renew?
+      create? && record.renewable?
+    end
+
+    alias_method :create_renewal?, :renew?
+
     def terminate?
       event_policy.contractors? && event_policy.create_transfer?
     end

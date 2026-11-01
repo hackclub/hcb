@@ -45,4 +45,27 @@ RSpec.describe Payroll::PositionPolicy, type: :policy do
       expect(subject.contract?).to eq(true)
     end
   end
+
+  describe "#renew?" do
+    it "is allowed for an active or expired position" do
+      position.update!(aasm_state: "onboarded")
+      expect(subject.renew?).to eq(true)
+
+      position.update!(aasm_state: "expired")
+      expect(subject.renew?).to eq(true)
+    end
+
+    it "is denied for a terminated position" do
+      position.update!(aasm_state: "terminated")
+      expect(subject.renew?).to eq(false)
+    end
+
+    it "is denied for a reader" do
+      position.update!(aasm_state: "onboarded")
+      reader = create(:user)
+      create(:organizer_position, user: reader, event:, role: :reader)
+
+      expect(described_class.new(reader, position).renew?).to eq(false)
+    end
+  end
 end

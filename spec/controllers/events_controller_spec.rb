@@ -698,6 +698,49 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "#contractors" do
+    render_views
+
+    it "lists a contractor's renewals as one row, with their pending invoices rolled up" do
+      organizer = create(:user)
+      event = create(:event, organizers: [organizer])
+      Flipper.enable(:payments_contractors_refresh_2026_06_26, event)
+      payee = create(:payee, event:)
+      position = create(:payroll_position, payee:, aasm_state: "onboarded", onboarded_at: 1.month.ago,
+                                           start_date: 1.month.ago.to_date, end_date: 2.months.from_now.to_date)
+      position.invoices.create!(name: "September work", amount_cents: 50_00, currency: position.currency)
+      renewal = position.build_renewal.tap(&:save!)
+
+      create_session(organizer, verified: true)
+
+      listed_position_paths = lambda do
+        get(:contractors, params: { event_id: event.slug })
+        Nokogiri::HTML5(response.body).css("tbody tr a.stretched-link").map { |link| link["href"] }
+      end
+
+      renewal_period = lambda do
+        Nokogiri::HTML5(response.body).css("tbody td").find { |cell| cell.text.include?("Renewed for") }&.text&.squish
+      end
+
+      expect(listed_position_paths.call).to eq([event_payroll_position_path(event_id: event.slug, id: position)])
+      # An unsigned renewal hasn't renewed the contract yet
+      expect(renewal_period.call).to be_nil
+
+      renewal.update!(aasm_state: "onboarded", onboarded_at: Time.current)
+
+      # The current contract is still listed until the renewal takes over from it
+      expect(listed_position_paths.call).to eq([event_payroll_position_path(event_id: event.slug, id: position)])
+      expect(renewal_period.call).to include("Renewed for #{renewal.period_label}")
+
+      position.update_columns(aasm_state: "expired", end_date: Date.yesterday)
+      renewal.update_columns(start_date: Date.current)
+
+      expect(listed_position_paths.call).to eq([event_payroll_position_path(event_id: event.slug, id: renewal)])
+      expect(renewal_period.call).to be_nil
+      expect(Nokogiri::HTML5(response.body).at_css("tbody .contractor-review-badge")&.text).to eq("1")
+    end
+  end
+
   describe "#sub_organizations" do
     render_views
 

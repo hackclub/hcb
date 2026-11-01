@@ -102,7 +102,12 @@
                   <span class="muted block"><%= contractor.payee.email %></span>
                 <% end %>
               </td>
-              <td><%= contractor.period_label %></td>
+              <td>
+                <%= contractor.period_label %>
+                <% if (renewal = @upcoming_renewals[contractor.id]) %>
+                  <span class="muted block">Renewed for <%= renewal.period_label %></span>
+                <% end %>
+              </td>
               <% if show_details %>
                 <td><%= "#{render_money_short(contractor.rate_cents)}#{contractor.rate_suffix}" %></td>
               <% end %>
