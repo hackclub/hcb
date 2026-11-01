@@ -359,4 +359,25 @@ RSpec.describe Payroll::PositionsController do
       expect(response.body).to include(invoice.name)
     end
   end
+
+  describe "POST #terminate" do
+    it "terminates the position" do
+      position = create(:payroll_position, payee:, aasm_state: "onboarded", onboarded_at: 1.month.ago)
+
+      post :terminate, params: { event_id: event.slug, id: position.id }
+
+      expect(position.reload).to be_terminated
+      expect(flash[:success]).to eq("Contractor position successfully terminated")
+    end
+
+    it "doesn't claim success when there's nothing left to terminate" do
+      position = create(:payroll_position, payee:, aasm_state: "expired", onboarded_at: 1.month.ago)
+
+      post :terminate, params: { event_id: event.slug, id: position.id }
+
+      expect(position.reload).to be_expired
+      expect(flash[:error]).to eq("This contractor position can't be terminated")
+      expect(response).to redirect_to(event_payroll_position_path(event:, payroll_position: position))
+    end
+  end
 end

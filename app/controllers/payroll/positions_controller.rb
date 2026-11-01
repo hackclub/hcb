@@ -177,10 +177,14 @@ module Payroll
     def terminate
       authorize @position
 
-      canceling_renewal = @position.unsigned_renewal?
-      @position.terminate!
+      if @position.terminatable?
+        canceling_renewal = @position.unsigned_renewal?
+        @position.terminate!
 
-      flash[:success] = canceling_renewal ? "Contract renewal canceled" : "Contractor position successfully terminated"
+        flash[:success] = canceling_renewal ? "Contract renewal canceled" : "Contractor position successfully terminated"
+      else
+        flash[:error] = "This contractor position can't be terminated"
+      end
 
       redirect_to event_payroll_position_path(event: @event, payroll_position: @position)
     end
