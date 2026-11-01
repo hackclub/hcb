@@ -114,20 +114,6 @@ module Api
         render json: { ephemeralKeyId: @ephemeral_key.id, ephemeralKeySecret: @ephemeral_key.secret, ephemeralKeyCreated: @ephemeral_key.created, ephemeralKeyExpires: @ephemeral_key.expires, stripe_id: @stripe_card.stripe_id }
       end
 
-      def card_designs
-        if params[:event_id].present?
-          set_api_event
-          authorize @event, :create_stripe_card?, policy_class: ::EventPolicy
-
-          @designs = [@event.stripe_card_personalization_designs&.available, StripeCard::PersonalizationDesign.common.available].flatten.compact
-        else
-          skip_authorization
-          @designs = StripeCard::PersonalizationDesign.common.available
-        end
-
-        @designs += StripeCard::PersonalizationDesign.unlisted.available if can_admin?(:read)
-      end
-
       def freeze
         @stripe_card = authorize StripeCard.find_by_public_id!(params[:id])
 
