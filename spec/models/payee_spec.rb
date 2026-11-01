@@ -36,6 +36,23 @@ RSpec.describe Payee, type: :model do
 
         expect(payee).to be_valid
       end
+
+      it "ignores archived payees" do
+        create(:payee, event:, legal_entity:).archive!
+        payee = create(:payee, event:, legal_entity:)
+
+        expect(payee).to be_persisted
+      end
+
+      it "is invalid when unarchiving a payee whose legal entity is already linked to the event" do
+        archived = create(:payee, event:, legal_entity:)
+        archived.archive!
+        create(:payee, event:, legal_entity:)
+
+        archived.archived_at = nil
+        expect(archived).not_to be_valid
+        expect(archived.errors[:legal_entity_id]).to include("has already been taken")
+      end
     end
   end
 
