@@ -5,7 +5,7 @@
 <% has_payees = event.payees.any? %>
 
 <div>
-  <div data-payee-picker-target="defaultPanel" class="py-2" <%= "hidden" unless has_payees %>>
+  <div data-payee-picker-target="defaultPanel" class="py-2" <%= "hidden" unless has_payees || destination == "payments" %>>
     <% if has_payees %>
       <%= turbo_frame_tag :payee_results, src: event_payees_path(event_id: event.slug, payee_id: params[:payee_id], destination:) do %>
         <%= render "application/loading_container", klass: "py-8" %>
