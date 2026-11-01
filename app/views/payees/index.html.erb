@@ -1,7 +1,7 @@
 <% destination = params[:destination].presence || "payments" %>
 
 <%= turbo_frame_tag :payee_results do %>
-  <div class="card px-0 py-2">
+  <div class="card px-0 pt-2 pb-0">
   <%= form_with(url: event_payees_path(event_id: @event.slug), method: :get, class: "px-4 pb-2 pt-1", data: { turbo_frame: "payee_results_list", controller: "form" }) do |form| %>
     <%= hidden_field_tag :destination, destination %>
     <%= form.hidden_field :payee_id, value: params[:payee_id] %>
@@ -74,10 +74,8 @@
       </div>
     <% end %>
   <% end %>
-  </div>
 
-  <div class="card px-0 mt-2 py-0">
-    <a class="btn btn--list-item rounded-none w-full" data-action="payee-picker#showAdding">
+    <a class="btn btn--list-item border-t rounded-none w-full" data-action="payee-picker#showAdding">
       <div class="w-10 h-10 shrink-0 rounded-full border-2 border-current flex items-center justify-center muted">
         <%= inline_icon "plus", size: 18 %>
       </div>
