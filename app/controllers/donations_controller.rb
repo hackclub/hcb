@@ -107,7 +107,7 @@ class DonationsController < ApplicationController
       d_params[:amount] = (d_params[:amount] / (1 - @event.revenue_fee)).ceil
     end
 
-    if d_params[:name] == "Test User" || d_params[:email].ends_with?("@yopmail.com")
+    if d_params[:name] == "Test User" || d_params[:email].to_s.strip.downcase.ends_with?("@yopmail.com")
       skip_authorization
       redirect_to root_url and return
     end
