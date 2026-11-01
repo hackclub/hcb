@@ -19,8 +19,8 @@
       <%= form.label :event_id, "Organization", class: "mt2" %>
       <%= form.select(:event_id,
           admin_signed_in? ?
-            Event.not_demo_mode.reorder(Event::CUSTOM_SORT).map { |event| [event.name, event.id] } :
-            ((@report.event ? [@report.event] : []) + current_user.events.not_hidden.filter_demo_mode(false)).uniq.map { |event| [event.name, event.id] },
+            Event.not_demo_mode.reorder(Event::CUSTOM_SORT).pluck(:name, :id) :
+            ((@report.event ? [[@report.event.name, @report.event.id]] : []) + current_user.events.not_hidden.filter_demo_mode(false).pluck(:name, :id)).uniq,
           { prompt: "Select an event…", required: true },
           { disabled: !policy(@report).change_event? }) %>
       <% if @report.card_grant.present? %>
