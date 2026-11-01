@@ -29,7 +29,7 @@
     <div class="field mb2">
       <%= form.label :email, "Your email" %>
       <span class="muted block h5"><%= @event.name %> will send <%= @monthly ? "receipts" : "a receipt" %> here for your tax records, and may use it to communicate with you.</span>
-      <%= form.email_field :email, placeholder: "jsmith@gmail.com", required: true, autocomplete: "off", pattern: "[^\\s@]+@[^\\s@]+\\.[a-zA-Z]{2,}", title: "Enter a full email address, like jsmith@gmail.com" %>
+      <%= form.email_field :email, placeholder: "jsmith@gmail.com", required: true, autocomplete: "off", pattern: "[^\\s@]+@[^\\s@]+\\.([a-zA-Z]{2,}|xn--[a-zA-Z0-9\\-]+)", title: "Enter a full email address, like jsmith@gmail.com" %>
       <% donation.errors.messages_for(:email).each do |message| %>
         <div class="primary"><%= message %></div>
       <% end %>

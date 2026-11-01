@@ -14,14 +14,22 @@ RSpec.describe StripeEmailValidator do
       expect(email_errors("John.Smith+tag@sub.example.co.uk\n")).to be_empty
     end
 
+    it "accepts a punycode TLD" do
+      expect(email_errors("john@example.xn--p1ai")).to be_empty
+    end
+
     {
-      "quoted local part"        => '"john smith"@example.com',
-      "commented local part"     => "john(note)@example.com",
-      "IP address domain"        => "john@127.0.0.1",
-      "single-label domain"      => "john@localhost",
-      "internationalized domain" => "john@exämple.com",
-      "non-ASCII local part"     => "jöhn@example.com",
-      "overlong local part"      => "#{"j" * 65}@example.com"
+      "quoted local part"         => '"john smith"@example.com',
+      "commented local part"      => "john(note)@example.com",
+      "IP address domain"         => "john@127.0.0.1",
+      "single-label domain"       => "john@localhost",
+      "internationalized domain"  => "john@exämple.com",
+      "non-ASCII local part"      => "jöhn@example.com",
+      "overlong local part"       => "#{"j" * 65}@example.com",
+      "leading dot in local part" => ".john@example.com",
+      "consecutive dots"          => "john..smith@example.com",
+      "trailing dot in domain"    => "john@example.com.",
+      "numeric TLD"               => "john@example.123"
     }.each do |description, email|
       it "rejects a #{description}" do
         expect(email_errors(email)).to include("does not appear to be a valid email address")
