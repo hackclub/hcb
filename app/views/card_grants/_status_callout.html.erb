@@ -68,10 +68,35 @@
       Nothing can be charged to it until it's defrosted.
       <% if policy(stripe_card).defrost? %>
         You can defrost it from the controls below.
-      <% elsif own %>
-        Reach out to <%= event_name %> if you didn't expect this.
+      <% elsif card_grant.event.financially_frozen? || card_grant.user.locked? %>
+        Only the HCB team can defrost it. <%= help_message %>
+      <% elsif frozen_by && frozen_by != current_user %>
+        To use it again, ask <%= frozen_by.name %> or a manager of <%= event_name %> to defrost it.
+      <% else %>
+        To use it again, ask a manager of <%= event_name %> to defrost it.
       <% end %>
     </p>
+    <%# Grantees can't defrost a card someone else froze, so point them straight at whoever can.
+        The support modal lives in the controls, which only render for these viewers. %>
+    <% if (own || organizer_signed_in?(as: :member)) && !policy(stripe_card).defrost? && !card_grant.event.financially_frozen? && !card_grant.user.locked? %>
+      <% if card_grant.setting.support_message.present? %>
+        <button type="button" class="btn mt-3" data-behavior="modal_trigger" data-modal="support_card_grant_<%= card_grant.id %>">
+          <%= inline_icon "support" %>
+          Contact <%= event_name %>
+        </button>
+      <% elsif card_grant.setting.support_url.present? %>
+        <%= link_to card_grant.setting.support_url, target: "_blank", rel: "noopener", class: "btn mt-3" do %>
+          <%= inline_icon card_grant.setting.slack_support? ? "slack" : (card_grant.setting.email_support? ? "email" : "support") %>
+          <% if card_grant.setting.slack_support? %>
+            Contact <%= event_name %> on Slack
+          <% elsif card_grant.setting.email_support? %>
+            Email <%= event_name %>
+          <% else %>
+            Contact <%= event_name %>
+          <% end %>
+        <% end %>
+      <% end %>
+    <% end %>
   <% end %>
 
 <% elsif stripe_card&.inactive? && card_grant.pre_authorization.nil? %>

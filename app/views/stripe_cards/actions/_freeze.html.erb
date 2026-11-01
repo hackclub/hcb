@@ -13,7 +13,15 @@
                   disabled: !policy(stripe_card).defrost?,
                   data: { turbo: true, turbo_frame: "_top" } do %>
       <%# `label`/`subtitle` describe freezing, so the frozen state has its own copy. %>
-      <%= render "card_grants/control", title: "Card frozen", description: policy(stripe_card).defrost? ? "Defrost it to start spending again" : "You don't have permission to perform this action", icon: "freeze" %>
+      <%# Say who can defrost it rather than a bare permission error; the status callout has the contact details. %>
+      <% defrost_description = if policy(stripe_card).defrost?
+                                 "Defrost it to start spending again"
+                               elsif stripe_card.event.financially_frozen? || stripe_card.user.locked?
+                                 "Only the HCB team can defrost this card"
+                               else
+                                 "Ask a manager of #{stripe_card.event.name} to defrost it"
+                               end %>
+      <%= render "card_grants/control", title: "Card frozen", description: defrost_description, icon: "freeze" %>
     <% end %>
   <% else %>
     <%= button_to defrost_stripe_card_path(stripe_card),

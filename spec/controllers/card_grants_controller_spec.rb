@@ -80,6 +80,24 @@ RSpec.describe CardGrantsController do
       expect(response.body).to include("status bg-warning")
     end
 
+    it "tells the grantee who to contact when someone else froze their card" do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+      organizer = create(:user)
+      create(:organizer_position, user: organizer, event:)
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(user_id: card_grant.stripe_card.user.id)
+      card_grant.setting.update!(support_url: "mailto:help@example.com")
+      card_grant.stripe_card.update_columns(event_id: event.id, stripe_status: "inactive", initially_activated: true, last_frozen_by_id: organizer.id)
+      create_session(card_grant.user.reload, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response.body).to include(ERB::Util.h("ask #{organizer.name} or a manager of #{event.name} to defrost it"))
+      expect(response.body).to include(ERB::Util.h("Ask a manager of #{event.name} to defrost it"))
+      expect(response.body).to include(ERB::Util.h("Email #{event.name}"))
+      expect(response.body).not_to include("You don&#39;t have permission")
+    end
+
     it "explains a canceled grant to the grantee without the spending rules" do
       card_grant = create(:card_grant, event:)
       card_grant.update_columns(user_id: card_grant.stripe_card.user.id, status: :canceled)
