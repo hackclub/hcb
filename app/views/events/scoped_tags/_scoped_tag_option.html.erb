@@ -4,12 +4,11 @@
   <button
     type="button"
     class="menu__action flex justify-between flex-auto mr1"
-    data-action="input#focus menu#close"
-    data-tag="<%= { id: scoped_tag.id, name: scoped_tag.name }.to_json %>"
-    @click="add($el.dataset.tag)">
+    data-action="input#focus menu#close scoped-tag-picker#add"
+    data-scoped-tag-picker-tag-param="<%= { id: scoped_tag.id, name: scoped_tag.name }.to_json %>">
     <span class="truncate"><%= scoped_tag.name %></span>
   </button>
-  <%= link_to event_scoped_tag_path(scoped_tag.parent_event, scoped_tag), data: { turbo_method: :delete, turbo_confirm: scoped_tag.removal_confirmation_message, turbo_confirm_danger: true }, "@click" => "remove(#{scoped_tag.id})" do %>
+  <%= link_to event_scoped_tag_path(scoped_tag.parent_event, scoped_tag), data: { turbo_method: :delete, turbo_confirm: scoped_tag.removal_confirmation_message, turbo_confirm_danger: true, action: "scoped-tag-picker#remove", scoped_tag_picker_id_param: scoped_tag.id } do %>
     <%= inline_icon "view-close", size: 24, class: "align-middle" %>
   <% end %>
 </div>
