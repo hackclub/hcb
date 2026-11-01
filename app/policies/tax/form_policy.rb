@@ -15,7 +15,7 @@ module Tax
     end
 
     def electronic_consent?
-      user.auditor? || user_in_legal_entity?(record.legal_entity)
+      user_in_legal_entity?(record.legal_entity)
     end
 
     def update_electronic_consent?
