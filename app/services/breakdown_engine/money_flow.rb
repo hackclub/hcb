@@ -30,6 +30,8 @@ module BreakdownEngine
     }.freeze
     CARD_GROUP = "Card spending"
     BALANCE = "Balance"
+    MAX_NODES = 8
+    MIN_SHARE = 0.03
 
     def initialize(event, start_date: nil, end_date: Time.now)
       @event = event
@@ -67,13 +69,11 @@ module BreakdownEngine
 
       expenses = expense_tree(spending_by_group)
 
-      money_in_cents = income.values.sum
-      money_out_cents = expenses.sum { |_, cents, _| cents }
-      totals = { money_in_cents:, money_out_cents: }
+      totals = gross_totals
 
       return { nodes: [], links: [], **totals } if income.empty? && expenses.empty?
 
-      difference = money_in_cents - money_out_cents
+      difference = income.values.sum - expenses.sum { |_, cents, _| cents }
       income[BALANCE] = -difference if difference.negative?
       expenses << [BALANCE, difference, {}] if difference.positive?
 
@@ -94,6 +94,11 @@ module BreakdownEngine
         .where("canonical_transactions.transaction_source_type IS DISTINCT FROM 'RawStripeTransaction'")
         .group(Arel.sql("split_part(canonical_transactions.hcb_code, '-', 2)"))
         .sum("canonical_transactions.amount_cents")
+    end
+
+    def gross_totals
+      amounts = transactions.group("canonical_transactions.hcb_code").sum("canonical_transactions.amount_cents").values
+      { money_in_cents: amounts.select(&:positive?).sum, money_out_cents: -amounts.select(&:negative?).sum }
     end
 
     def card_totals
@@ -149,7 +154,7 @@ module BreakdownEngine
       sorted = cents_by_label.sort_by { |label, cents| [label == "Other" ? 1 : 0, -cents] }
 
       kept, folded = sorted.partition.with_index do |(label, cents), i|
-        label != "Other" && i < 8 - 1 && cents >= total * 0.03 # if its less than 3% it's just folding it into an other category for consolidation purposes
+        label != "Other" && i < MAX_NODES - 1 && cents >= total * MIN_SHARE
       end
 
       result = kept.to_h
