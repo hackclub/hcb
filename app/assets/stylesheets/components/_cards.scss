@@ -77,6 +77,22 @@
   }
 }
 
+// Flattens the payee picker's own cards when it's nested inside another card,
+// leaving other cards (e.g. callouts) alone. Transparent so the parent's inset
+// border isn't covered.
+.card--nested-flush {
+  :is(turbo-frame, [data-payee-picker-target]) > .card {
+    box-shadow: none;
+    border-radius: 0;
+    margin-top: 0;
+    background-color: transparent;
+  }
+
+  turbo-frame > .card {
+    padding-top: 0;
+  }
+}
+
 .podium-block {
   width: 100%;
   display: flex;
