@@ -298,6 +298,11 @@ RSpec.describe Payroll::Position, type: :model do
         expect(position).to be_renewable
       end
 
+      it "is not renewable once its payee is archived" do
+        payee.update!(archived_at: Time.current)
+        expect(position).not_to be_renewable
+      end
+
       it "is renewable again once a renewal is rejected" do
         create_renewal.update!(aasm_state: "rejected")
         expect(position).to be_renewable

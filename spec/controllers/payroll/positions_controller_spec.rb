@@ -303,6 +303,15 @@ RSpec.describe Payroll::PositionsController do
       expect(position.renewals).to be_empty
     end
 
+    it "refuses to renew a position whose payee has been archived" do
+      payee.update!(archived_at: Time.current)
+
+      post :create_renewal, params: renewal_params
+
+      expect(flash[:error]).to eq("You are not authorized to perform this action.")
+      expect(position.renewals).to be_empty
+    end
+
     it "keeps a renewal's start date when its details are updated" do
       post :create_renewal, params: renewal_params
       renewal = position.reload.renewal

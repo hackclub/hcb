@@ -229,9 +229,10 @@ module Payroll
 
     # Positions still being onboarded are changed by editing them instead. A
     # renewal has to start within the usual lead time, so a contract can't be
-    # renewed until it's that close to ending.
+    # renewed until it's that close to ending. An archived payee can't be
+    # contracted again, just like when inviting a contractor.
     def renewable?
-      (onboarded? || expired?) && renewal.nil? && renewal_start_date <= MAX_START_LEAD_TIME.from_now.to_date
+      (onboarded? || expired?) && !payee.archived? && renewal.nil? && renewal_start_date <= MAX_START_LEAD_TIME.from_now.to_date
     end
 
     # A renewal picks up the day after this contract ends, or today if it has
