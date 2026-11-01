@@ -39,7 +39,8 @@ RSpec.describe "Spending allowance form", type: :system do
 
   def type_amount(value)
     field = find_field("organizer_position_spending_control_allowance[amount]")
-    field.send_keys([:command, "a"], :backspace) # clear with real keystrokes so `input` fires
+    # clear with real keystrokes so `input` fires (select-all shortcuts differ by OS)
+    field.send_keys(:end, *Array.new(field.value.length, :backspace))
     field.send_keys(value) unless value.empty?
   end
 
