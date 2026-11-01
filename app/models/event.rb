@@ -30,6 +30,7 @@
 #  public_message                               :text
 #  public_reimbursement_page_enabled            :boolean          default(FALSE), not null
 #  public_reimbursement_page_message            :text
+#  reimbursement_reviewer_selection             :string           default("disabled"), not null
 #  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
 #  risk_level                                   :integer
 #  short_name                                   :string
@@ -544,6 +545,8 @@ class Event < ApplicationRecord
   include HasMetrics
 
   include HasTasks
+
+  include Event::HasReimbursementReviewers
 
   validate :point_of_contact_is_admin
 
@@ -1097,11 +1100,7 @@ class Event < ApplicationRecord
     scoped_tags.where(parent_event_id: parent_id)
   end
 
-  # `admin` is required rather than defaulted, so a caller cannot silently
-  # render a different label than the search endpoint returns.
-  def to_combobox_display(admin:)
-    return "#{name} (ID: #{id})" if admin
-
+  def to_combobox_display
     name
   end
 

@@ -83,6 +83,27 @@ RSpec.describe ReceiptablesController do
       expect(response).to redirect_to(hcb_code_path(hcb_code))
     end
 
+    it "returns to the frame it was marked from, so the popover stays open" do
+      user = create(:user)
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+
+      post(:mark_no_or_lost, params: base_params.merge(return_to: hcb_code.popover_path))
+
+      expect(hcb_code.reload).to be_no_or_lost_receipt
+      expect(response).to redirect_to(hcb_code.popover_path)
+    end
+
+    it "ignores an external return_to" do
+      user = create(:user)
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+
+      post(:mark_no_or_lost, params: base_params.merge(return_to: "https://evil.example.com"))
+
+      expect(response).to redirect_to(hcb_code_path(hcb_code))
+    end
+
     it "refuses a signed in user who isn't on the organization" do
       create_session(create(:user), verified: true)
 
