@@ -1,17 +1,19 @@
 <%# locals: (ach_transfer:) %>
 
 <% disabled = !policy(ach_transfer.event).create_transfer? %>
+<% selected_recipient = ach_transfer.payment_recipient.to_safe_hash if ach_transfer.payment_recipient&.event&.== ach_transfer.event %>
 
 <%= form_with(
   model: ach_transfer,
   local: true,
   url: event_ach_transfers_path(ach_transfer.event),
-  data: { controller: "input extraction", extraction_target: "form" },
+  data: { controller: "input extraction payment-recipient", extraction_target: "form" },
   html: {
     "x-data" => "ach(#{{
-      payment_recipient: (ach_transfer.payment_recipient.to_safe_hash if ach_transfer.payment_recipient&.event&.== ach_transfer.event),
+      payment_recipient: selected_recipient,
       editing: ach_transfer.account_number.present?,
-      }.to_json})"
+      }.to_json})",
+    "@payment-recipient:change" => "payment_recipient = $event.detail",
   }) do |form| %>
 
   <%= form_errors(ach_transfer, "ACH transfer", "We couldn't send this") %>
@@ -19,7 +21,7 @@
   <%= form.hidden_field :payment_recipient_id, ":value" => "payment_recipient ? payment_recipient.id : ''" %>
 
   <% if Rails.env.development? %>
-    <pre x-text="recipient_debug_info(payment_recipient)" class="fixed left-2 bottom-2 min-w-60 hidden lg:block"></pre>
+    <pre data-payment-recipient-target="debug" class="fixed left-2 bottom-2 min-w-60 hidden lg:block"><%= "Debug info:\n\n#{JSON.pretty_generate(selected_recipient || {})}" %></pre>
   <% end %>
 
   <div data-scroll-seek-target="section">
@@ -44,17 +46,17 @@
                               click@document->menu#close
                               keydown@document->menu#keydown
                               input->text-filter#query
+                              input->payment-recipient#clear
                             ",
                             menu_target: "toggle",
                           },
-                          "x-ref" => "name_input",
-                          "@input" => "payment_recipient = null" %>
+                          "x-ref" => "name_input" %>
 
       <% if organizer_signed_in? && ach_transfer.event.payment_recipients.where(payment_model: "AchTransfer").any? %>
         <div class="menu__content menu__content--2" data-menu-target="content" role="listbox" style="width: 24rem">
           <% ach_transfer.event.payment_recipients.where(payment_model: "AchTransfer").each do |payment_recipient| %>
             <div data-name="<%= payment_recipient.name %>" class="flex items-center" data-payment-recipient="<%= payment_recipient.hashid %>">
-              <button type="button" class="menu__action flex justify-between flex-auto mr1" data-action="input#focus menu#close" data-recipient="<%= payment_recipient.to_safe_json %>" @click="select_recipient($el.dataset.recipient)">
+              <button type="button" class="menu__action flex justify-between flex-auto mr1" data-action="input#focus menu#close payment-recipient#select" data-payment-recipient-recipient-param="<%= payment_recipient.to_safe_json %>">
                 <span class="truncate"><%= payment_recipient.name %></span>
                 <span class="muted ml1">••••<%= payment_recipient.account_number.slice(-4, 4) %></span>
               </button>
