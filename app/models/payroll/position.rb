@@ -68,6 +68,8 @@ module Payroll
     }
 
     pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }, using: { tsearch: { prefix: true, dictionary: "english" } }
+    # For viewers who can't see the payee's email (see `EventsController#contractors`).
+    pg_search_scope :public_search_recipient, associated_against: { payee: [:display_name] }, using: { tsearch: { prefix: true, dictionary: "english" } }
 
     has_many :invoices, class_name: "Payroll::Invoice", foreign_key: "payroll_position_id", inverse_of: :payroll_position, dependent: :destroy
     has_many :payments, through: :invoices
