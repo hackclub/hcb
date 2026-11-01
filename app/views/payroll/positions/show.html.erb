@@ -15,7 +15,7 @@
         <span class="badge h4 bg-<%= @position.status_color %> nowrap order-1"><%= @position.status_text %></span>
       </span>
 
-      <% if @position.may_mark_terminated? %>
+      <% if @position.draft? || @position.may_mark_terminated? %>
         <div data-controller="menu" data-menu-placement-value="bottom-end">
           <%= pop_icon_to "more",
               "#",
@@ -23,9 +23,17 @@
               data: { turbo: true, "menu-target": "toggle", action: "menu#toggle click@document->menu#close keydown@document->menu#keydown" } %>
 
           <div class="menu__content menu__content--2 h5 menu__content--compact" data-menu-target="content">
-            <%= link_to terminate_event_payroll_position_path(event: @event, payroll_position: @position), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you want to terminate this contractor immediately?#{" We will notify the contractor." unless @position.under_review? }" } do %>
-              <%= inline_icon "profile-forbidden", size: 24 %>
-              Terminate
+            <% if @position.draft? %>
+              <%= link_to edit_event_payroll_position_path(event: @event, payroll_position: @position), class: "flex items-center" do %>
+                <%= inline_icon "edit", size: 24 %>
+                Edit and sign
+              <% end %>
+            <% end %>
+            <% if @position.may_mark_terminated? %>
+              <%= link_to terminate_event_payroll_position_path(event: @event, payroll_position: @position), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you want to terminate this contractor immediately?#{" We will notify the contractor." unless @position.under_review? }" } do %>
+                <%= inline_icon "profile-forbidden", size: 24 %>
+                <%= @position.draft? || @position.under_review? ? "Discard" : "Terminate" %>
+              <% end %>
             <% end %>
           </div>
         </div>
@@ -100,7 +108,7 @@
     <% end %>
   <% end %>
 
-  <% if @position.status == :onboarding %>
+  <% if @position.draft? || @position.status == :onboarding %>
     <h3 class="mt-4 mb-2">Onboarding</h3>
     <%= render "payroll/positions/onboarding_flow", position: @position, perspective: :organizer %>
   <% end %>

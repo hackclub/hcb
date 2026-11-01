@@ -102,19 +102,21 @@ module Payroll
     validate :manager_is_event_manager
 
     aasm timestamps: true do
-      state :under_review, initial: true
+      state :draft, initial: true
+      state :under_review
       state :onboarding
       state :onboarded
       state :expired
       state :rejected
       state :terminated
 
-      event :mark_onboarding do
-        transitions from: :under_review, to: :onboarding
+      event :mark_under_review do
+        transitions from: :draft, to: :under_review, if: -> { contract_signed_by?(:organizer) }
+        transitions from: :onboarding, to: :under_review
       end
 
-      event :mark_under_review do
-        transitions from: :onboarding, to: :under_review
+      event :mark_onboarding do
+        transitions from: :under_review, to: :onboarding
       end
 
       event :mark_rejected do
@@ -133,12 +135,14 @@ module Payroll
       end
 
       event :mark_terminated do
-        transitions from: [:under_review, :onboarding, :onboarded], to: :terminated
+        transitions from: [:draft, :under_review, :onboarding, :onboarded], to: :terminated
 
         after do
-          # If it's still under review, we haven't sent any emails to the contractor yet,
+          contract.mark_voided! if contract&.may_mark_voided?
+
+          # If it's still under review or draft, we haven't sent any emails to the contractor yet,
           # so we won't tell them that they've been "terminated"
-          Payroll::PositionMailer.with(position: self).terminated.deliver_later unless aasm.from_state == :under_review
+          Payroll::PositionMailer.with(position: self).terminated.deliver_later unless [:under_review, :draft].include?(aasm.from_state)
         end
       end
     end
@@ -202,7 +206,7 @@ module Payroll
           owner: :hcb,
           label: "HCB team review",
           hint: "The contractor is emailed once HCB signs",
-          complete: !under_review? && !rejected?
+          complete: contract_signed_by?(:hcb)
         },
         {
           key: :tax_form,
@@ -270,6 +274,11 @@ module Payroll
 
     def on_contract_party_signed(party)
       refresh_onboarding_state!
+
+      # HCB reviews only after organizer signs
+      if party.organizer?
+        mark_under_review!
+      end
 
       # The contractor is only invited to sign once HCB has signed
       if party.hcb?
@@ -367,16 +376,16 @@ module Payroll
       Rails.error.report(e, context: { payroll_position_id: id })
     end
 
+    def contract_signed_by?(role)
+      contract&.party(role)&.signed?
+    end
+
     private
 
     def schedule_onboarding_reminders
       onboarding_reminder_days.each do |days|
         Payroll::Position::OnboardingReminderJob.set(wait: days.days).perform_later(self)
       end
-    end
-
-    def contract_signed_by?(role)
-      contracts.not_voided.any? { |contract| contract.party(role)&.signed? }
     end
 
     def contractor_user
