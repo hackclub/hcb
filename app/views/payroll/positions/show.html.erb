@@ -44,8 +44,13 @@
                   <%= inline_icon "view-close", size: 24 %>
                   Cancel renewal
                 <% end %>
+              <% elsif @position.upcoming_renewal? %>
+                <%= link_to terminate_event_payroll_position_path(event: @event, payroll_position: @position), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Terminate this renewal before it starts? The current contract won't be affected. We will notify the contractor." } do %>
+                  <%= inline_icon "profile-forbidden", size: 24 %>
+                  Terminate renewal
+                <% end %>
               <% else %>
-                <%= link_to terminate_event_payroll_position_path(event: @event, payroll_position: @position), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you want to terminate this contractor immediately?#{" Any renewal of this contract will also be terminated." if @renewal_chain.many? }#{" We will notify the contractor." unless @position.under_review? }" } do %>
+                <%= link_to terminate_event_payroll_position_path(event: @event, payroll_position: @position), class: "flex items-center", data: { turbo_method: :post, turbo_confirm: "Are you sure you want to terminate this contractor immediately?#{" Their renewal will also be terminated." if @renewal.present? }#{" We will notify the contractor." unless @position.under_review? }" } do %>
                   <%= inline_icon "profile-forbidden", size: 24 %>
                   Terminate
                 <% end %>

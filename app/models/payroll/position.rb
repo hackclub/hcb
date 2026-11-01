@@ -278,12 +278,12 @@ module Payroll
       Payroll::Invoice.where(payroll_position: renewal_chain)
     end
 
-    # Canceling a renewal before it's signed leaves the contract it renews in
-    # place. Otherwise, the contractor's whole chain ends, so a contract that's
-    # still running or a renewal waiting to start doesn't outlive it, though
-    # the contractor only needs to hear about it once.
+    # Terminating a renewal, signed or not, leaves the contract it renews in
+    # place. Terminating a contract also ends any renewal of it, so a renewal
+    # waiting to start doesn't outlive it, though the contractor only needs to
+    # hear about it once.
     def terminate!
-      positions = unsigned_renewal? ? [self] : renewal_chain.select(&:may_mark_terminated?)
+      positions = renewal_chain.drop_while { |position| position != self }.select(&:may_mark_terminated?)
       notified = false
 
       transaction do

@@ -401,14 +401,24 @@ RSpec.describe Payroll::Position, type: :model do
         expect(position.reload).to be_onboarded
       end
 
-      it "ends the contract still running when a signed renewal is terminated, emailing once" do
+      it "leaves the current contract running when a signed renewal is terminated before it starts" do
         renewal = create_renewal
         renewal.update!(aasm_state: "onboarded", onboarded_at: Time.current)
 
         expect { renewal.terminate! }.to have_enqueued_mail(Payroll::PositionMailer, :terminated).once
 
         expect(renewal.reload).to be_terminated
+        expect(position.reload).to be_onboarded
+      end
+
+      it "ends a signed renewal along with the contract it renews, emailing once" do
+        renewal = create_renewal
+        renewal.update!(aasm_state: "onboarded", onboarded_at: Time.current)
+
+        expect { position.terminate! }.to have_enqueued_mail(Payroll::PositionMailer, :terminated).once
+
         expect(position.reload).to be_terminated
+        expect(renewal.reload).to be_terminated
       end
 
       it "ends a pending renewal along with the contract it renews" do
