@@ -711,6 +711,7 @@ Rails.application.routes.draw do
 
   use_doorkeeper scope: "api/v4/oauth" do
     skip_controllers :authorized_applications
+    controllers applications: "oauth_applications"
   end
   use_doorkeeper_device_authorization_grant scope: "api/v4/oauth"
 

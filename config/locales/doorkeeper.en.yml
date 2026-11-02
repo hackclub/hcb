@@ -4,6 +4,7 @@ en:
       doorkeeper/application:
         name: 'Name'
         redirect_uri: 'Redirect URI'
+        owner: 'Point of contact'
     errors:
       models:
         doorkeeper/application:
