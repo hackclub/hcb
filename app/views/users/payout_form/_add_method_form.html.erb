@@ -1,0 +1,5 @@
+<%# locals: (user:, legal_entity:, attempted: nil) %>
+<div id="add_payout_method_form" style="padding: 0 20px 20px;">
+  <%= render "users/payout_form/errors", messages: attempted&.error_messages %>
+  <%= render "users/payout_form/form", user:, legal_entity:, creating: true, attempted: %>
+</div>
