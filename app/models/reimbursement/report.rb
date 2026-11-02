@@ -471,10 +471,6 @@ module Reimbursement
       end
     end
 
-    def payout_method_allowed?
-      payout_method.present? && !payout_method.unsupported?
-    end
-
     def retryable?
       return false unless payout_holding&.failed?
       return false if payout_method.blank? || payout_method.unsupported?
@@ -519,6 +515,10 @@ module Reimbursement
 
         mark_reimbursed!
       end
+    end
+
+    def payout_method_allowed?
+      payout_method.present? && !payout_method.unsupported?
     end
 
     def invalidate_cached_data
