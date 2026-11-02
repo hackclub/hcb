@@ -1,6 +1,9 @@
 // `Intl` is a global, and the CSP build refuses to resolve globals from a
-// directive expression, so the formatter is imported here rather than used in `x-data`.
-import { USDollar as formatter } from '../common/money'
+// directive expression, so the formatter lives here rather than in `x-data`.
+const formatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+})
 
 export default ({ balance_cents }) => ({
   amount: null,

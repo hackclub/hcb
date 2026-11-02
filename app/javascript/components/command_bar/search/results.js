@@ -3,7 +3,11 @@
 import React from 'react'
 import Icon from '@hackclub/icons'
 import { Priority } from 'kbar'
-import { USDollar } from '../../../common/money'
+
+export const USDollar = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+})
 
 export function generateResultActions(results, searchedFor) {
   return results.map(result => {

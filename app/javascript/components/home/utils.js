@@ -10,6 +10,18 @@ export const generateColor = (index, length, isDark) => {
   return `hsl(352, 83%, ${lightness}%)`
 }
 
+export const USDollar = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+})
+
+export const USDollarNoCents = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+})
+
 export const useDarkMode = () => {
   const [isDarkMode, setIsDarkMode] = useState(false)
 
