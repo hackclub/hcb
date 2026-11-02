@@ -129,7 +129,7 @@ class StaticPagesController < ApplicationController
           "Edit or archive a recipient": :manager,
           _preface: "For paying people & vendors"
         },
-        _preface: "As a general rule, only managers can create/modify financial transfers"
+        _preface: "As a general rule, only owners and managers can create/modify financial transfers"
       },
       Contractors: {
         "View the list of contractors": :reader,

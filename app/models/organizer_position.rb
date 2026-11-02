@@ -53,19 +53,19 @@ class OrganizerPosition < ApplicationRecord
   validates :user, uniqueness: { scope: :event, conditions: -> { where(deleted_at: nil) } }
   validate :user_must_be_verified, on: :create
   validate :fs_contract_is_proper_type, if: -> { fiscal_sponsorship_contract_changed? }
+  validate :at_least_one_manager, on: :update
+  validate :owner_has_signed_contract
 
   delegate :initial?, to: :organizer_position_invite, allow_nil: true
   has_many :stripe_cards, ->(organizer_position) { where event_id: organizer_position.event.id }, through: :user
 
-  alias_attribute :signee, :is_signee
-
   after_create_commit :autofollow_event
 
-  after_update :remove_payroll_managers, if: -> { role_previously_changed?(from: :manager) }
+  after_update :remove_payroll_managers, if: :lost_manager_access?
   after_destroy :remove_payroll_managers
-  after_create :opt_in_to_reimbursement_reviews, if: :manager?
-  after_update :opt_in_to_reimbursement_reviews, if: -> { role_previously_changed?(to: :manager) }
-  after_update :opt_out_of_reimbursement_reviews, if: -> { role_previously_changed?(from: :manager) }
+  after_create :opt_in_to_reimbursement_reviews, if: :manager_access?
+  after_update :opt_in_to_reimbursement_reviews, if: :gained_manager_access?
+  after_update :opt_out_of_reimbursement_reviews, if: :lost_manager_access?
 
   before_save -> { stripe_cards.active.find_each(&:freeze!) }, if: -> { will_save_change_to_role?(to: :reader) }
 
@@ -93,6 +93,12 @@ class OrganizerPosition < ApplicationRecord
       return event.ancestor_organizer_positions.manager_access.where(user:).exists?
     end
 
+    if role.to_s == "owner"
+      # Ownership comes from signing this organization's fiscal sponsorship
+      # contract, so it is never inherited from an ancestor
+      return event.organizer_positions.owner_access.where(user:).exists?
+    end
+
     false
   end
 
@@ -117,6 +123,39 @@ class OrganizerPosition < ApplicationRecord
     if user&.unverified?
       errors.add(:user, "must verify their email before becoming an organizer")
     end
+  end
+
+  # Prevent the last manager (or owner) from being demoted, which would leave
+  # the organization without anyone who can manage it
+  def at_least_one_manager
+    return unless will_save_change_to_role?
+
+    previous_role = role_in_database
+    return if previous_role.nil? || self.class.roles[previous_role] < self.class.roles[:manager]
+    return if manager_access?
+    return if event.organizer_positions.where.not(id:).manager_access.exists?
+
+    errors.add(:event, "must have at least one manager")
+  end
+
+  def owner_has_signed_contract
+    if owner? && !fiscal_sponsorship_contract&.signed?
+      errors.add(:base, "owners must have an associated signed contract")
+    end
+  end
+
+  def gained_manager_access?
+    from, to = role_previous_change
+    return false if from.nil? || to.nil?
+
+    self.class.roles[from] < self.class.roles[:manager] && self.class.roles[to] >= self.class.roles[:manager]
+  end
+
+  def lost_manager_access?
+    from, to = role_previous_change
+    return false if from.nil? || to.nil?
+
+    self.class.roles[from] >= self.class.roles[:manager] && self.class.roles[to] < self.class.roles[:manager]
   end
 
   # Managers review their own organization's reimbursement reports unless

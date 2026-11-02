@@ -14,6 +14,12 @@ module ChangePositionRole
       was = position.role
       to = params[:to]
 
+      if to == "owner"
+        # Ownership is granted by signing the fiscal sponsorship contract
+        flash[:error] = "To make someone an owner, send them a contract."
+        return
+      end
+
       if was != to
         position.update!(role: to)
 

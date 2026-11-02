@@ -12,7 +12,7 @@ class OrganizerPosition
       def create?
         user.admin? || (
           current_user_manager? &&
-          !record.organizer_position.manager?
+          !record.organizer_position.manager_access?
           # Don't have to make sure you're not setting the control on yourself as
           # if you're here it means you're a manager, but you can't set controls
           # against managers; so it's okay.

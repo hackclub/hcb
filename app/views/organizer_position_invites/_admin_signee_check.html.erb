@@ -1,22 +1,9 @@
 <%# locals: (form:, default_selected: "") %>
 
-<div class="field field--select w-100" x-data="{ signee: '<%= default_selected %>' }">
-  <div class="flex items-center justify-between">
-    <strong>Contract</strong>
-    <%= form.select :is_signee,
-        [
-          ["📃 Contract Signee", "true"],
-          ["❌ Won't sign the contract", "false"],
-        ],
-        { include_blank: "Select a contract signee status",
-          selected: default_selected
-        },
-        { required: true, style: "width: 100%", "x-model": "signee" } %>
-    </div>
-
-  <div class="flex items-center justify-between mt-2" x-show="signee === 'true'" x-cloak>
-    <strong class="d-block">Cosigner Email</strong>
-    <%= form.email_field :cosigner_email, placeholder: "Required if under 18", class: "w-100" %>
+<div class="field field--select w-100">
+  <h3 class="mb2 mt1">Contracts</h3>
+  <div>
+    <%= form.email_field :cosigner_email, placeholder: "Cosignee email (required if under 18)", class: "w-100 mt1" %>
   </div>
   <div class="field field--checkbox mt-2">
     <%= form.check_box :include_videos %>

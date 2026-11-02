@@ -8,7 +8,7 @@
     <% unless event.unapproved? %>
       <% if event.users.size > 1 %>
         <div class="field field--checkbox">
-          <span class="flex-1" style="font-weight: 700">Require a peer review for reports submitted by managers.</span>
+          <span class="flex-1" style="font-weight: 700">Require a peer review for reports submitted by managers or owners.</span>
           <div class="field--checkbox--switch ml-auto shrink-0">
             <%= form.label :reimbursements_require_organizer_peer_review do %>
               <%= form.check_box :reimbursements_require_organizer_peer_review, disabled:, switch: true %>

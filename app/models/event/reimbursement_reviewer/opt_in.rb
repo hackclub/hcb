@@ -42,7 +42,7 @@ class Event
         return if organizer_position.nil? || event.nil?
 
         manages_event = organizer_position.event_id == event_id || event.ancestor_ids.include?(organizer_position.event_id)
-        return if organizer_position.manager? && manages_event
+        return if organizer_position.manager_access? && manages_event
 
         errors.add(:organizer_position, "must be a manager of this organization")
       end

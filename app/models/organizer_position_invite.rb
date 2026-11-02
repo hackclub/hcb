@@ -103,12 +103,16 @@ class OrganizerPositionInvite < ApplicationRecord
     end
   end
 
+  after_update_commit do
+    contract.mark_voided! if role_previously_changed?(from: :owner) && contract&.may_mark_voided?
+  end
+
   def contract
     contracts.not_voided.last
   end
 
   def pending_signature?
-    is_signee && contracts.where(aasm_state: :signed).none?
+    role == "owner" && contracts.where(aasm_state: :signed).none?
   end
 
   def deliver
@@ -142,7 +146,6 @@ class OrganizerPositionInvite < ApplicationRecord
         event:,
         user:,
         role:,
-        is_signee:,
         first_time: show_onboarding,
         fiscal_sponsorship_contract: contract || application_contract
       )
@@ -223,10 +226,6 @@ class OrganizerPositionInvite < ApplicationRecord
     [slug, "#{slug} #{sequence}"]
   end
 
-  def signee?
-    is_signee
-  end
-
   def send_contract(cosigner_email: nil, include_videos: false, reissue_messages: {}, extra_prefills: {}, reissue_of: nil)
     fs_contract = nil
 
@@ -245,8 +244,8 @@ class OrganizerPositionInvite < ApplicationRecord
       fs_contract.parties.create!(user:, role: :signee)
       fs_contract.parties.create!(external_email: cosigner_email, role: :cosigner) if cosigner_email.present?
 
-      update!(is_signee: true) unless accepted?
-      organizer_position&.update(is_signee: true, fiscal_sponsorship_contract: fs_contract)
+      update!(role: :owner) unless accepted?
+      organizer_position&.update(fiscal_sponsorship_contract: fs_contract)
     end
 
     fs_contract.send!(reissue_messages:)
@@ -258,19 +257,21 @@ class OrganizerPositionInvite < ApplicationRecord
     if contract.is_a?(Contract::FiscalSponsorship)
       deliver if organizer_position.nil?
 
-      # Unfreeze the event if this is the first signed contract
-      if event.contracts.signed.count == 1
-        event.update!(financially_frozen: false)
-      end
+      ActiveRecord::Base.transaction do
+        # Unfreeze the event if this is the first signed contract
+        if event.contracts.signed.count == 1
+          event.update!(financially_frozen: false)
+        end
 
-      organizer_position&.update!(fiscal_sponsorship_contract: contract)
+        organizer_position&.update!(role: :owner, fiscal_sponsorship_contract: contract)
+        update!(role: :owner) unless accepted?
+      end
     end
   end
 
   def on_contract_voided(contract)
     if contract.is_a?(Contract::FiscalSponsorship)
-      update(is_signee: false)
-      organizer_position&.update(is_signee: false, fiscal_sponsorship_contract: nil)
+      organizer_position&.update(fiscal_sponsorship_contract: nil)
     end
   end
 
@@ -301,8 +302,8 @@ class OrganizerPositionInvite < ApplicationRecord
   end
 
   def initial_control_allowance_amount_cents_nil_for_non_members
-    if role == "manager" && initial_control_allowance_amount_cents.present?
-      self.errors.add(:user, "can not set an initial control allowance for a manager")
+    if manager_access? && initial_control_allowance_amount_cents.present?
+      self.errors.add(:user, "can not set an initial control allowance for a #{role}")
     end
   end
 

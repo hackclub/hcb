@@ -76,11 +76,10 @@ RSpec.describe OrganizerPositionInvitesController do
           event_id: event.friendly_id,
           organizer_position_invite: {
             email: "orpheus@hackclub.com",
-            role: "manager",
+            role: "owner",
             enable_controls: "false",
             cosigner_email: "cosigner@hackclub.com",
             include_videos: "true",
-            is_signee: "true",
           }
         }
       )
@@ -92,7 +91,7 @@ RSpec.describe OrganizerPositionInvitesController do
       expect(flash[:success]).to eq("Invite successfully sent to orpheus@hackclub.com")
 
       invite = event.organizer_position_invites.last
-      expect(invite.is_signee).to eq(true)
+      expect(invite.role).to eq("owner")
 
       contract = invite.contracts.sole
 
@@ -101,6 +100,62 @@ RSpec.describe OrganizerPositionInvitesController do
       expect(contract.external_service).to eq("docuseal")
       expect(contract.external_id).to eq("STUBBED")
       expect(contract.party(:signee)&.external_id).to eq("STUBBED")
+    end
+
+    it "does not let non-admins invite owners" do
+      user = create(:user)
+      event = create(:event, organizers: [user])
+
+      create_session(user, verified: true)
+
+      expect {
+        post(
+          :create,
+          params: {
+            event_id: event.friendly_id,
+            organizer_position_invite: {
+              email: "orpheus@hackclub.com",
+              role: "owner",
+            }
+          }
+        )
+      }.not_to change(OrganizerPositionInvite, :count)
+
+      expect(Contract.count).to eq(0)
+    end
+  end
+
+  describe "#change_position_role" do
+    let(:manager) { create(:user) }
+    let(:event) { create(:event, organizers: [manager]) }
+
+    before do
+      create_session(manager, verified: true)
+    end
+
+    it "lets managers change the role of a pending invite" do
+      invite = create(:organizer_position_invite, event:, sender: manager, role: :member)
+
+      post(:change_position_role, params: { id: invite.id, to: "reader" })
+
+      expect(invite.reload.role).to eq("reader")
+    end
+
+    it "does not make anyone an owner without a contract" do
+      invite = create(:organizer_position_invite, event:, sender: manager, role: :member)
+
+      post(:change_position_role, params: { id: invite.id, to: "owner" })
+
+      expect(invite.reload.role).to eq("member")
+      expect(flash[:error]).to eq("To make someone an owner, send them a contract.")
+    end
+
+    it "does not let managers change the role of an owner invite" do
+      invite = create(:organizer_position_invite, event:, sender: create(:user, :make_admin), role: :owner)
+
+      post(:change_position_role, params: { id: invite.id, to: "reader" })
+
+      expect(invite.reload.role).to eq("owner")
     end
   end
 end

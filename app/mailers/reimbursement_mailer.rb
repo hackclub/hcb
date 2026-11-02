@@ -32,7 +32,7 @@ class ReimbursementMailer < ApplicationMailer
       mail to: @report.reviewer.email_address_with_name, subject: "[Reimbursements / #{@report.event.name}] Your Review Was Requested: #{@report.name}"
     else
       reviewers = @report.event.reimbursement_reviewers.where.not(id: @report.user)
-      reviewers = User.where(id: @report.event.organizer_positions.manager.select(:user_id)).where.not(id: @report.user) unless reviewers.exists?
+      reviewers = User.where(id: @report.event.organizer_positions.manager_access.select(:user_id)).where.not(id: @report.user) unless reviewers.exists?
       to = reviewers.map(&:email_address_with_name)
       to << @report.event.config.contact_email if @report.event.config.contact_email.present?
       mail to:, subject: "[Reimbursements / #{@report.event.name}] Review Requested: #{@report.name}"

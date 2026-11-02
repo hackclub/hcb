@@ -47,6 +47,29 @@
     {
       "warning_type": "SQL Injection",
       "warning_code": 0,
+      "fingerprint": "1abc9eae5938440c63031ae73e5e15261875ed19752df7a0a9478eb003ab7c5e",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/organizer_position.rb",
+      "line": 109,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "event.organizer_positions.where(\"role >= #{self.class.roles[:manager]}\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "OrganizerPosition",
+        "method": "at_least_one_manager"
+      },
+      "user_input": "self.class.roles[:manager]",
+      "confidence": "Weak",
+      "cwe_id": [
+        89
+      ],
+      "note": "Interpolated value is a constant integer defined in has_role.rb"
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
       "fingerprint": "1d3b6e20ef6fa701ececbdaf3aad261500d76fbce2d86e84a1a8f27d84db04e9",
       "check_name": "SQL",
       "message": "Possible SQL injection",

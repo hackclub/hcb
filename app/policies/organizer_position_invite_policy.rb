@@ -10,7 +10,11 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
   end
 
   def create?
-    admin_or_manager?
+    if record.owner?
+      user&.admin?
+    else
+      admin_or_manager?
+    end
   end
 
   def show?
@@ -38,7 +42,11 @@ class OrganizerPositionInvitePolicy < ApplicationPolicy
   end
 
   def change_position_role?
-    admin_or_manager? && !record.signee?
+    # Owner invites are tied to a fiscal sponsorship contract, so only admins
+    # can change them (which voids the contract)
+    return user&.admin? if record.owner?
+
+    admin_or_manager?
   end
 
   def send_contract?

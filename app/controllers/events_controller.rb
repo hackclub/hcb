@@ -279,6 +279,8 @@ class EventsController < ApplicationController
       @filter = "member"
     when "managers"
       @filter = "manager"
+    when "owners"
+      @filter = "owner"
     when "readers"
       @filter = "reader"
     when "active_teenagers"
@@ -313,7 +315,7 @@ class EventsController < ApplicationController
         # Inheriting from an ancestor is all-or-nothing (see
         # OrganizerPosition.role_at_least?): managers inherit their full role,
         # everyone else only inherits read access.
-        inherited_role = user_ops.any?(&:manager?) ? "manager" : "reader"
+        inherited_role = user_ops.any?(&:manager_access?) ? "manager" : "reader"
 
         # Someone with their own position here is already in the team list
         # below, so only mention them when what they inherit outranks it.
@@ -1072,7 +1074,7 @@ class EventsController < ApplicationController
       name: params[:name],
       emails: [params[:email]],
       cosigner_email: params[:cosigner_email],
-      is_signee: true,
+      is_owner: true,
       country: params[:country],
       point_of_contact_id: poc_id,
       invited_by: current_user,

@@ -1,4 +1,4 @@
-<%# locals: (form:) %>
+<%# locals: (form:, invite_link: false) %>
 
 <div class="field px-4 gap-2 flex items-center mb-2">
   <%= form.label :role, "Role" %>
@@ -10,6 +10,15 @@
       <%= inline_icon "question-mark", size: 18 %>
     </button>
     <div class="menu__content menu__content--2 menu__content--compact px-4 py-3" data-menu-target="content">
+      <p class="muted mb1 mt-0">
+        <span class="bold info">Owners</span> sign the fiscal sponsorship contract
+        and can do everything in the organization.
+        <% if current_user.admin? && invite_link %>
+          To invite an owner, send them a direct invitation.
+        <% elsif !current_user.admin? %>
+          To invite an owner, email <%= mail_to "hcb@hackclub.com" %>.
+        <% end %>
+      </p>
       <p class="muted mb1 mt-0"><span class="bold info">Managers</span> can do everything
         in the organization.</p>
       <div class="muted mb1">
@@ -25,14 +34,15 @@
       <p class="muted mb-0"><span class="bold info">Readers</span> have read-only access to the organization.</p>
     </div>
   </div>
+  <% roles = OrganizerPositionInvite.roles.keys.select { |role| admin_signed_in? || role != "owner" } %>
   <%= form.select :role,
-                  OrganizerPositionInvite.roles.keys.map { |role| [role.titleize, role] },
-                  {},
+                  roles.map { |role| [role.titleize, role] },
+                  { disabled: invite_link ? "owner" : nil },
                   style: "max-width:120px !important",
                   "x-model": "role" %>
 </div>
 
-<div data-controller="accordion" class="border-t px-4 pb-2 -mb-2" x-show="role !== 'reader' && role !== 'manager'">
+<div data-controller="accordion" class="border-t px-4 pb-2 -mb-2" x-show="role === 'member'">
   <div class="flex items-center gap-4 field field--checkbox">
     <label class="flex flex-col">
       <span>Spending controls</span>

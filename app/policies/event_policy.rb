@@ -301,7 +301,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def request_call?
-    signee?
+    owner?
   end
 
   def ledger?
@@ -350,8 +350,8 @@ class EventPolicy < ApplicationPolicy
     OrganizerPosition.role_at_least?(user, record, :manager)
   end
 
-  def signee?
-    OrganizerPosition.find_by(event: record, user:)&.is_signee?
+  def owner?
+    OrganizerPosition.role_at_least?(user, record, :owner)
   end
 
   def admin_or_manager?
