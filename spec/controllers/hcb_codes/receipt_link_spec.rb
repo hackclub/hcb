@@ -11,6 +11,13 @@ RSpec.describe HcbCodesController, type: :controller do
       get :receipt_link, params: { id:, token: }
     end
 
+    def signed_id_expires_at
+      signed_id = Rack::Utils.parse_query(URI.parse(response.location).query).fetch("s")
+      payload = JSON.parse(Base64.urlsafe_decode64(signed_id.split("--").first))
+
+      Time.zone.parse(payload.dig("_rails", "exp"))
+    end
+
     it "routes the token exactly as generated, dot included" do
       route = Rails.application.routes.recognize_path(
         Rails.application.routes.url_helpers.short_receipt_link_path(
@@ -36,6 +43,21 @@ RSpec.describe HcbCodesController, type: :controller do
       get :attach_receipt, params: { id: hcb_code.hashid, s: Rack::Utils.parse_query(location.query)["s"] }
 
       expect(response).to be_successful
+    end
+
+    it "mints a fresh secret that outlives the short link by at most two weeks" do
+      get_with_token(HcbCodeHelper.receipt_link_token(hcb_code))
+
+      expect(signed_id_expires_at).to be_within(1.minute).of(2.weeks.from_now)
+    end
+
+    it "caps the minted secret at the short link's own expiry" do
+      get_with_token(HcbCodeHelper.receipt_link_token(hcb_code, expires_at: 1.day.from_now))
+
+      expect(signed_id_expires_at).to be_within(1.minute).of(1.day.from_now)
+      expect(signed_id_expires_at).to be <= HcbCodeHelper.receipt_link_expires_at(
+        hcb_code, HcbCodeHelper.receipt_link_token(hcb_code, expires_at: 1.day.from_now)
+      )
     end
 
     it "rejects a tampered token" do

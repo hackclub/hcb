@@ -134,12 +134,15 @@ class HcbCodesController < ApplicationController
 
   def receipt_link
     hcb_code = HcbCode.find(params[:id])
+    expiry = HcbCodeHelper.receipt_link_expires_at(hcb_code, params[:token])
 
-    raise ActionController::RoutingError.new("Not Found") if HcbCodeHelper.receipt_link_expires_at(hcb_code, params[:token]).nil?
+    raise ActionController::RoutingError.new("Not Found") if expiry.nil?
+
+    signed_id_ttl = [expiry - Time.current, 2.weeks].min.clamp(1.second, 2.weeks)
 
     redirect_to attach_receipt_hcb_code_path(
       id: hcb_code.hashid,
-      s: hcb_code.signed_id(expires_in: 2.weeks, purpose: :receipt_upload)
+      s: hcb_code.signed_id(expires_in: signed_id_ttl, purpose: :receipt_upload)
     )
   rescue ActiveRecord::RecordNotFound
     raise ActionController::RoutingError.new("Not Found")
