@@ -3,7 +3,7 @@
 <% if params[:page].to_i <= 1 && @direction != "revenue" && ledger.event_id.present? && ledger.fronted_fee_balance_cents > 0 %>
   <%# @direction != revenue is in case the user has a revenue-only filter applied %>
   <% date = format_date(Time.now) %>
-  <% badge_class = "bg-transparent border border-dashed border-muted m0 mr1" %>
+  <% badge_class = "bg-transparent border border-dashed border-muted m0" %>
   <tr class="transaction transaction--negative muted">
     <td class="transaction__icon">
       <div class="tooltipped tooltipped--e" aria-label="Fiscal sponsorship fee">
