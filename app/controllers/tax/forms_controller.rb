@@ -55,7 +55,7 @@ module Tax
 
       @legal_entity.record_electronic_consent!(params[:electronic_consent] == "true")
 
-      redirect_to completed_tax_form_path(@form)
+      redirect_to_next_step
     end
 
     def completed
@@ -64,10 +64,10 @@ module Tax
       @form.sync_with_taxbandits
 
       if @form.completed?
-        if pending_payroll_position.present? && @form.legal_entity.payable?
-          redirect_to onboarding_payroll_position_path(pending_payroll_position)
+        if @legal_entity.electronic_consent.nil?
+          redirect_to electronic_consent_tax_form_path(@form)
         else
-          redirect_to legal_entity_path(@form.legal_entity)
+          redirect_to_next_step
         end
       end
     end
@@ -81,6 +81,14 @@ module Tax
     end
 
     private
+
+    def redirect_to_next_step
+      if pending_payroll_position.present? && @form.legal_entity.payable?
+        redirect_to onboarding_payroll_position_path(pending_payroll_position)
+      else
+        redirect_to legal_entity_path(@form.legal_entity)
+      end
+    end
 
     def set_form
       @form = Tax::Form.find_by_hashid!(params[:id])
