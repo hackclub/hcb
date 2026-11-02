@@ -9,6 +9,9 @@ module Admin
   # once. The signed W-9 PDF that goes with it is held in memory for TaxBandits
   # to fetch once and is never persisted — see Tax::W9PdfStore.
   class Tax1099ImportsController < Admin::BaseController
+    # The legal entity picker's value for "create a new business legal entity".
+    NEW_LEGAL_ENTITY = "new"
+
     def new
       @federal_tax_classifications = Tax1099ImportService::FEDERAL_TAX_CLASSIFICATIONS
       @tin_types = Tax1099ImportService::TIN_TYPES
@@ -37,14 +40,14 @@ module Admin
         data: import_params.to_h,
         pdf: params[:pdf],
         legal_entity: selected_legal_entity,
+        new_legal_entity: params[:legal_entity_id] == NEW_LEGAL_ENTITY,
         pdf_url_builder: ->(token) { taxbandits_w9_pdf_url(token:, format: :pdf) }
       ).run
 
       render json: {
         status: "imported",
         form_id: result.form.public_id,
-        legal_entity: result.legal_entity && { id: result.legal_entity.id, name: result.legal_entity.name },
-        needs_manual_review: result.needs_manual_review?
+        legal_entity: { id: result.legal_entity.id, name: result.legal_entity.name }
       }
     rescue Tax1099ImportService::DuplicateError => e
       render json: { status: "duplicate", message: e.message, form_id: e.existing_form.public_id }, status: :conflict
@@ -60,11 +63,11 @@ module Admin
       params.permit(*Tax1099ImportService::FIELDS.map { _1[:key] })
     end
 
-    # Blank means "leave this form for manual assignment", which is a real
-    # answer rather than a missing one. An id that doesn't resolve is not: it
-    # would silently become manual review, so say so instead.
+    # Blank (no pick) and NEW_LEGAL_ENTITY are left for the service to judge.
+    # An id that doesn't resolve is an error in its own right: it must not be
+    # quietly treated as no pick.
     def selected_legal_entity
-      return nil if params[:legal_entity_id].blank?
+      return nil if params[:legal_entity_id].blank? || params[:legal_entity_id] == NEW_LEGAL_ENTITY
 
       LegalEntity.find_by(id: params[:legal_entity_id]) ||
         raise(Tax1099ImportService::ValidationError, "the selected legal entity no longer exists")

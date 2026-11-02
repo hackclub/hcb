@@ -76,7 +76,6 @@ RSpec.describe "Admin::Tax1099Imports", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(json["status"]).to eq("imported")
-      expect(json["needs_manual_review"]).to be(false)
       expect(Tax::Form.find_by_public_id(json["form_id"])).to be_completed
     end
 
@@ -134,6 +133,37 @@ RSpec.describe "Admin::Tax1099Imports", type: :request do
 
       expect(response).to have_http_status(:bad_gateway)
       expect(json["message"]).not_to include("123-45-6789")
+    end
+
+    context "when a business payee already has business legal entities" do
+      let(:user) { create(:user, email: "ada@example.com") }
+      let!(:existing) { create(:legal_entity, name: "Engines Co", entity_type: :business, users: [user]) }
+      let(:business_row) do
+        row.merge(first_name: "Analytical Engines LLC", last_name: "", tin: "12-3456789",
+                  tin_type: "EIN", federal_tax_classification: "Partnership")
+      end
+
+      it "refuses the row until a legal entity is picked" do
+        post "/admin/tax1099_imports", params: business_row.merge(pdf:)
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json["status"]).to eq("invalid")
+        expect(TaxbanditsService).not_to have_received(:create_from_data)
+      end
+
+      it "attaches the form to the picked entity" do
+        post "/admin/tax1099_imports", params: business_row.merge(pdf:, legal_entity_id: existing.id)
+
+        expect(json["legal_entity"]).to eq({ "id" => existing.id, "name" => "Engines Co" })
+      end
+
+      it "creates a new entity when asked to" do
+        expect {
+          post "/admin/tax1099_imports", params: business_row.merge(pdf:, legal_entity_id: "new")
+        }.to change(LegalEntity, :count).by(1)
+
+        expect(json["legal_entity"]["name"]).to eq("Analytical Engines LLC")
+      end
     end
 
     it "is closed to non-admins" do

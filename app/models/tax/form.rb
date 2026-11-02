@@ -95,11 +95,6 @@ module Tax
     end
 
     after_update if: -> { tin_hash_previously_changed?(from: nil) } do
-      # A tax1099-sourced form can be completed before anyone has picked a
-      # legal entity for it (it's left for manual review instead), so there
-      # may be nothing here yet to adopt the TIN.
-      next if legal_entity.nil?
-
       # Locked: a legal entity's TIN can never change once set, and two forms
       # completing concurrently would otherwise both see a nil hash and race.
       #

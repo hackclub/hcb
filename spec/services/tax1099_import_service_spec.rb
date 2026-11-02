@@ -36,9 +36,9 @@ RSpec.describe Tax1099ImportService do
     )
   end
 
-  def run(data: person_data, legal_entity: nil, file: :default)
+  def run(data: person_data, legal_entity: nil, new_legal_entity: false, file: :default)
     file = pdf if file == :default
-    described_class.new(data:, pdf: file, legal_entity:, pdf_url_builder:).run
+    described_class.new(data:, pdf: file, legal_entity:, new_legal_entity:, pdf_url_builder:).run
   end
 
   before do
@@ -59,7 +59,6 @@ RSpec.describe Tax1099ImportService do
       )
       expect(result.form.completed_at).to be_present
       expect(result.form.legal_entity).to eq(User.find_by(email: "ada@example.com").personal_legal_entity)
-      expect(result).not_to be_needs_manual_review
     end
 
     it "stores the reviewed address on the form" do
@@ -123,26 +122,40 @@ RSpec.describe Tax1099ImportService do
       let(:user) { create(:user, email: "ada@example.com") }
       let!(:existing) { create(:legal_entity, name: "Engines Co", entity_type: :business, users: [user]) }
 
-      it "leaves the form for manual review when no entity was chosen" do
-        result = run(data: business_data)
+      it "refuses the row when no entity was chosen" do
+        expect { run(data: business_data) }
+          .to raise_error(described_class::ValidationError, /pick one/)
+      end
 
-        expect(result).to be_needs_manual_review
-        expect(result.form.legal_entity).to be_nil
-        expect(result.form).to be_completed
+      it "neither creates a form nor contacts TaxBandits when no entity was chosen" do
+        expect { run(data: business_data) rescue nil }.not_to change(Tax::Form, :count)
+        expect(TaxbanditsService).not_to have_received(:create_from_data)
       end
 
       it "uses the entity the admin chose" do
         result = run(data: business_data, legal_entity: existing)
 
-        expect(result).not_to be_needs_manual_review
         expect(result.form.legal_entity).to eq(existing)
+      end
+
+      it "creates a new entity when the admin chose to" do
+        result = run(data: business_data, new_legal_entity: true)
+
+        expect(result.legal_entity).not_to eq(existing)
+        expect(result.legal_entity).to have_attributes(name: "Analytical Engines LLC", entity_type: "business")
+        expect(result.form.legal_entity).to eq(result.legal_entity)
       end
 
       it "refuses an entity belonging to somebody else" do
         stranger = create(:legal_entity, entity_type: :business, users: [create(:user)])
 
         expect { run(data: business_data, legal_entity: stranger) }
-          .to raise_error(described_class::ValidationError, /does not belong/)
+          .to raise_error(described_class::ValidationError, /not one of/)
+      end
+
+      it "refuses the payee's personal entity for a business form" do
+        expect { run(data: business_data, legal_entity: user.personal_legal_entity) }
+          .to raise_error(described_class::ValidationError, /not one of/)
       end
     end
   end

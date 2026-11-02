@@ -24,11 +24,13 @@ const COLUMN = {
 // Tax1099 writes this in the suffix column for rows that have no suffix.
 const EMPTY_SUFFIX = 'SEL'
 
+// Mirrors Admin::Tax1099ImportsController::NEW_LEGAL_ENTITY.
+const NEW_LEGAL_ENTITY = 'new'
+
 const STATUS = {
   pending: { label: 'Not imported', className: 'bg-muted' },
   importing: { label: 'Importing…', className: 'bg-muted' },
   imported: { label: 'Imported', className: 'bg-success' },
-  review: { label: 'Imported — needs legal entity', className: 'bg-warning' },
   duplicate: { label: 'Duplicate', className: 'bg-muted' },
   skipped: { label: 'Skipped', className: 'bg-muted' },
   failed: { label: 'Failed', className: 'bg-error' },
@@ -95,7 +97,6 @@ export default class extends Controller {
     'summaryTotal',
     'summaryImported',
     'summarySkipped',
-    'summaryReview',
   ]
 
   static values = {
@@ -196,6 +197,14 @@ export default class extends Controller {
     body.append('pdf', pdf)
 
     const legalEntityId = this.selectedLegalEntityId(row)
+    if (legalEntityId === '') {
+      this.setMessage(
+        row,
+        'Pick which legal entity this form belongs to before importing.',
+        true
+      )
+      return
+    }
     if (legalEntityId) body.append('legal_entity_id', legalEntityId)
 
     this.setStatus(row, 'importing')
@@ -223,12 +232,10 @@ export default class extends Controller {
     }
 
     if (response.ok && payload.status === 'imported') {
-      this.setStatus(row, payload.needs_manual_review ? 'review' : 'imported')
+      this.setStatus(row, 'imported')
       this.setMessage(
         row,
-        payload.needs_manual_review
-          ? `Imported as ${payload.form_id}. No legal entity was chosen, so assign one by hand.`
-          : `Imported as ${payload.form_id} on ${payload.legal_entity.name}.`
+        `Imported as ${payload.form_id} on ${payload.legal_entity.name}.`
       )
       this.disableRow(row)
       row.querySelector('[data-body]').hidden = true
@@ -360,23 +367,25 @@ export default class extends Controller {
     }
 
     const previous = select.value
-    const options = [new Option('— leave for manual assignment —', '')]
+    const options = [new Option('— pick one —', '')]
     payload.legal_entities.forEach(entity => {
       options.push(
         new Option(`${entity.name} (${entity.entity_type})`, entity.id)
       )
     })
+    options.push(new Option('Create a new legal entity', NEW_LEGAL_ENTITY))
 
     select.replaceChildren(...options)
     select.value = previous
     picker.hidden = false
   }
 
+  // null when there's nothing to pick; '' when there is and nothing was picked.
   selectedLegalEntityId(row) {
     const picker = row.querySelector('[data-legal-entity-picker]')
     if (picker.hidden) return null
 
-    return row.querySelector('[data-legal-entity-select]').value || null
+    return row.querySelector('[data-legal-entity-select]').value
   }
 
   /* Presentation */
@@ -423,8 +432,7 @@ export default class extends Controller {
       Array.from(rows).filter(row => row.dataset.state === state).length
 
     this.summaryTotalTarget.textContent = `${rows.length} rows`
-    this.summaryImportedTarget.textContent = `${count('imported') + count('review')} imported`
+    this.summaryImportedTarget.textContent = `${count('imported')} imported`
     this.summarySkippedTarget.textContent = `${count('skipped') + count('duplicate')} skipped`
-    this.summaryReviewTarget.textContent = `${count('review')} need a legal entity`
   }
 }

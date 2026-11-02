@@ -53,23 +53,24 @@ class Tax1099ImportService
     { key: :email, label: "Email Address", required: true },
   ].freeze
 
-  Result = Struct.new(:form, :legal_entity, :needs_manual_review, keyword_init: true) do
-    def needs_manual_review? = !!needs_manual_review
-  end
+  Result = Struct.new(:form, :legal_entity, keyword_init: true)
 
   # data                  — the reviewed row, keyed by FIELDS' :key values.
   # pdf                   — the uploaded W-9 PDF (anything responding to #read).
   # legal_entity          — the LegalEntity an admin picked when the payee
-  #                         already had more than one business entity to choose
-  #                         from; nil leaves the form for manual assignment.
+  #                         already had business entities to choose from.
+  # new_legal_entity      — true when the admin chose to create a new business
+  #                         entity instead. One of the two is required whenever
+  #                         .legal_entity_candidates isn't empty.
   # pdf_url_builder       — called with the store token, returns the URL to hand
   #                         to TaxBandits. Injected because URL generation needs
   #                         the request's host.
-  def initialize(data:, pdf:, pdf_url_builder:, legal_entity: nil)
+  def initialize(data:, pdf:, pdf_url_builder:, legal_entity: nil, new_legal_entity: false)
     @data = data.symbolize_keys
     @pdf = pdf
     @pdf_url_builder = pdf_url_builder
     @legal_entity = legal_entity
+    @new_legal_entity = new_legal_entity
   end
 
   def run
@@ -78,6 +79,10 @@ class Tax1099ImportService
     if (duplicate = duplicate_tax1099_form)
       raise DuplicateError, duplicate
     end
+
+    # Checked up front because once TaxBandits has accepted the submission
+    # there is no taking it back, so the form must be certain to land somewhere.
+    validate_legal_entity_choice!
 
     # Staged before the form exists so that a rejected upload (too large, not a
     # PDF) doesn't leave an orphaned Tax::Form behind.
@@ -97,7 +102,7 @@ class Tax1099ImportService
 
     form.update!(external_id: response["SubmissionId"])
 
-    assigned_legal_entity = assign_legal_entity!(form)
+    legal_entity = assign_legal_entity!(form)
 
     # The recipient never visits TaxBandits themselves (create_from_data already
     # submitted the completed form data on their behalf), so nothing will ever
@@ -105,9 +110,9 @@ class Tax1099ImportService
     # have derived directly, and mark the form complete now rather than leaving
     # it stuck pending forever.
     complete_form!(form)
-    form.legal_entity&.refresh_pending_contractors_payments!
+    legal_entity.refresh_pending_contractors_payments!
 
-    Result.new(form:, legal_entity: assigned_legal_entity, needs_manual_review: assigned_legal_entity.nil?)
+    Result.new(form:, legal_entity:)
   end
 
   # The business legal entities an admin has to choose between before a row can
@@ -149,6 +154,25 @@ class Tax1099ImportService
     end
 
     raise ValidationError, "a W-9 PDF is required" if @pdf.blank?
+  end
+
+  # A personal form always goes on the personal entity, and a payee with no
+  # business entity yet gets a new one. Anything else is ambiguous, and the
+  # admin has to settle it before the row is submitted.
+  def validate_legal_entity_choice!
+    return if entity_type == :person
+
+    candidates = self.class.legal_entity_candidates(email: @data[:email], entity_type:)
+
+    if @legal_entity
+      # Guard against a stale or hand-edited id pointing at somebody else's
+      # entity: the form would otherwise attach a payee's TIN to a stranger.
+      unless candidates.include?(@legal_entity)
+        raise ValidationError, "the selected legal entity is not one of #{@data[:email]}'s business legal entities"
+      end
+    elsif candidates.any? && !@new_legal_entity
+      raise ValidationError, "#{@data[:email]} already has business legal entities; pick one, or choose to create a new one"
+    end
   end
 
   def entity_type
@@ -216,29 +240,20 @@ class Tax1099ImportService
   end
 
   # Associates the form with a legal entity by email, same as the console script
-  # this replaces: SSNs go on the user's personal legal entity, EINs create (or
-  # reuse) a business/corporation legal entity. Returns nil when the payee
-  # already had several business legal entities and the admin declined to pick
-  # one, leaving the form for manual assignment.
+  # this replaces: SSNs go on the user's personal legal entity, EINs go on the
+  # business entity the admin picked or, failing that, a new one. The choice was
+  # already validated by #validate_legal_entity_choice!.
   def assign_legal_entity!(form)
     user = User.find_or_create_by!(email: @data[:email])
 
     legal_entity =
       if entity_type == :person
         user.personal_legal_entity
-      elsif @legal_entity
-        # Guard against a stale or hand-edited id pointing at somebody else's
-        # entity: the form would otherwise attach a payee's TIN to a stranger.
-        unless user.legal_entities.exists?(id: @legal_entity.id)
-          raise ValidationError, "the selected legal entity does not belong to #{user.email}"
-        end
-
-        @legal_entity
-      elsif user.legal_entities.where.not(entity_type: :person).none?
-        LegalEntity.create!(name: @data[:first_name], entity_type:, users: [user])
+      else
+        @legal_entity || LegalEntity.create!(name: @data[:first_name], entity_type:, users: [user])
       end
 
-    form.update!(legal_entity:) if legal_entity
+    form.update!(legal_entity:)
 
     legal_entity
   end
