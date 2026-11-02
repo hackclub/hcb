@@ -148,12 +148,6 @@
               <% end %>
             <% end %>
           <% end %>
-          <% if report.payout_holding&.failed? && policy(report).retry? %>
-            <%= link_to reimbursement_report_retry_path(report), class: "btn bg-success whitespace-nowrap", data: { turbo_method: :post, turbo_confirm: "This will retry the failed payout!" } do %>
-              <%= inline_icon "send" %>
-              Retry payout
-            <% end %>
-          <% end %>
         <% elsif !report.may_mark_submitted? && report.draft? %>
           <div class="btn bg-info disabled whitespace-nowrap">
             <%= inline_icon "send" %>
