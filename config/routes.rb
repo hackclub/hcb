@@ -506,7 +506,7 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :wise_transfers, only: [:show, :update] do
+  resources :wise_transfers, only: [:show, :edit, :update] do
     member do
       post "approve"
       post "reject"
