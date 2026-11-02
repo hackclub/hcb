@@ -85,6 +85,21 @@ RSpec.describe User::PermissionsOverview do
       check_against_original_code(user, instance.event_graph)
     end
 
+    it "treats sub-organizations of a deleted organization as roots" do
+      user = create(:user)
+      create_nested_events(user:, roles: [nil, "member", nil])
+      Event.find_by!(name: "Level 1").destroy!
+
+      instance = described_class.new(user: user)
+
+      expect(snapshot(instance.event_graph).string).to eq(<<~SNAPSHOT)
+        > name="Level 2", role="member"
+          > name="Level 3", role="reader"
+      SNAPSHOT
+
+      check_against_original_code(user, instance.event_graph)
+    end
+
     def create_nested_events(user:, roles:, name_prefix: "Level")
       parent = nil
 
