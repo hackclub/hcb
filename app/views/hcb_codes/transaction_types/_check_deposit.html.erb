@@ -9,6 +9,12 @@
   <% end %>
 <% end %>
 
+<% if @hcb_code.check_deposit.manual_submission_required? %>
+  <% admin_tool("mt3") do %>
+    <%= button_to "Process", admin_check_deposit_path(@hcb_code.check_deposit), class: "btn", method: :get, data: { turbo_frame: "_top" } %>
+  <% end %>
+<% end %>
+
 <% if @hcb_code.check_deposit.rejected? %>
   <div class="banner error-card mt3">
     <p class="bold block mt0 mb0"><%= @hcb_code.check_deposit.rejection_description %></p>
@@ -70,7 +76,7 @@
         <% end %>
       <% else %>
         <div class="tooltipped tooltipped--n" aria-label="You don't have permission to view this image">
-          <%= image_tag @hcb_code.check_deposit.front.representation(resize_to_limit: [25, 25], blur: "0x2"), class: "rounded", width: 200 %>
+          <%= image_tag blurred_image_event_check_deposit_path(@event, @hcb_code.check_deposit, side: "front"), class: "rounded", width: 200 %>
         </div>
       <% end %>
     </div>
@@ -81,7 +87,7 @@
         <% end %>
       <% else %>
         <div class="tooltipped tooltipped--n" aria-label="You don't have permission to view this image">
-          <%= image_tag @hcb_code.check_deposit.back.representation(resize_to_limit: [25, 25], blur: "0x2"), class: "rounded", width: 200 %>
+          <%= image_tag blurred_image_event_check_deposit_path(@event, @hcb_code.check_deposit, side: "back"), class: "rounded", width: 200 %>
         </div>
       <% end %>
     </div>

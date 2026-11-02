@@ -1,15 +1,16 @@
+<%# locals: (filters:, append_to: "turbo-frame#ledger", toggle_label: "Add filters") %>
 <% active_filter_count = filters.sum { |filter| active_filter_params(filter, params).size } %>
 
 <div
   data-controller="menu"
   class="inline-flex items-center"
-  data-menu-append-to-value="turbo-frame#ledger"
+  data-menu-append-to-value="<%= append_to %>"
   data-menu-placement-value="bottom-start">
 
   <button
     type="button"
     class="pop my-2 cursor-pointer tooltipped tooltipped--s relative overflow-visible"
-    aria-label="<%= active_filter_count > 0 ? "#{pluralize(active_filter_count, "filter")} applied" : "Add filters..." %>"
+    aria-label="<%= active_filter_count > 0 ? "#{pluralize(active_filter_count, "filter")} applied" : toggle_label %>"
     data-menu-target="toggle"
     data-action="menu#toggle click@document->menu#close keydown@document->menu#keydown">
     <%= inline_icon "filter", size: 28 %>
@@ -48,8 +49,8 @@
               <p class="p-1 text-center">No <%= filter[:label].pluralize %> found</p>
             <% end %>
             <% filter[:options].each do |option| %>
-              <% label, value = option.is_a?(Array) ? option : [option.humanize, option] %>
-              <%= link_to label,
+              <% value = option.is_a?(Array) ? option.last : option %>
+              <%= link_to filter_option_label(filter, value),
                           upsert_query_params(filter[:key] => value, page: 1),
                           class: "menu__action !border-none #{'menu__action--active' if params[filter[:key]] == value.to_s}" %>
             <% end %>
