@@ -228,7 +228,8 @@ RSpec.describe Reimbursement::PayoutHoldingService::Nightly, type: :request do
       expect(transfer.reload).to be_pending
     end
 
-    [Faraday::ServerError, Faraday::TimeoutError, Faraday::ConnectionFailed].each do |error_class|
+    [Faraday::ServerError, Faraday::TimeoutError, Faraday::ConnectionFailed,
+     Faraday::SSLError, Faraday::ParsingError, Faraday::ClientError].each do |error_class|
       it "records #{error_class} and retries the same transfer after exactly 24 hours without emailing the recipient" do
         freeze_time
         allow(ColumnService).to receive(:post).with(endpoint, anything).and_raise(error_class.new("Unavailable"))
@@ -292,9 +293,9 @@ RSpec.describe Reimbursement::PayoutHoldingService::Nightly, type: :request do
       expect(payout_holding.payout_transfer).to eq(transfer)
     end
 
-    it "requires reconciliation rather than retrying an ambiguous transfer after 29 days" do
+    it "requires reconciliation rather than retrying an ambiguous transfer after a parsing error and 29 days" do
       freeze_time
-      allow(ColumnService).to receive(:post).with(endpoint, anything).and_raise(Faraday::TimeoutError.new("Response lost"))
+      allow(ColumnService).to receive(:post).with(endpoint, anything).and_raise(Faraday::ParsingError.new("Unreadable response"))
       described_class.new.run
       transfer = payout_holding.reload.payout_transfer
 
@@ -339,6 +340,67 @@ RSpec.describe Reimbursement::PayoutHoldingService::Nightly, type: :request do
       expect(payout_holding.reload).to be_sent
       expect(payout_holding.payout_transfer).not_to eq(rejected_transfer)
       expect(payout_holding.payout_transfer.column_id).to eq("corrected_transfer")
+    end
+
+    it "recovers the replacement payout after changing type following a confirmed rejection" do
+      freeze_time
+      allow(ColumnService).to receive(:post).with(endpoint, anything).and_raise(Faraday::BadRequestError.new("Invalid details"))
+      described_class.new.run
+      rejected_transfer = payout_holding.reload.payout_transfer
+      expect(rejected_transfer).to be_rejected
+
+      # The old attempt must not determine the replacement's retry deadline.
+      travel 29.days
+      service = LegalEntity::PayoutMethodService::Update.new(legal_entity: user.personal_legal_entity, **replacement)
+      service.run!
+      replacement_endpoint = replacement[:details_type].end_with?("Check") ? "/transfers/checks/issue" : "/transfers/ach"
+      replacement_status = replacement[:details_type].end_with?("Check") ? "issued" : "SUBMITTED"
+      allow(ColumnService).to receive(:post).with(replacement_endpoint, anything).and_raise(Faraday::TimeoutError.new("Accepted but response lost"))
+      described_class.new.run
+      expect(payout_holding.reload.failure_reason).to eq("column_unavailable")
+
+      travel 24.hours
+      allow(ColumnService).to receive(:post).with(replacement_endpoint, anything).and_return({ "id" => "replacement_transfer", "status" => "issued" })
+      allow(ColumnService).to receive(:get).with("#{replacement_endpoint.delete_suffix('/issue')}/replacement_transfer").and_return({ "id" => "replacement_transfer", "status" => replacement_status })
+      expect { described_class.new.run }.not_to(change { [AchTransfer.count, Wire.count, IncreaseCheck.count] })
+
+      expect(payout_holding.reload).to be_sent
+      expect(payout_holding.failure_reason).to be_nil
+      expect(payout_holding.retry_at).to be_nil
+      expect(payout_holding.payout_transfer).not_to eq(rejected_transfer)
+      expect(payout_holding.payout_transfer.column_id).to eq("replacement_transfer")
+      expect(rejected_transfer.reload).to be_rejected
+    end
+
+    it "recovers the current payout instead of superseded PayPal and Wise transfers" do
+      freeze_time
+      paypal_transfer = PaypalTransfer.new(
+        event: clearinghouse, user:, amount_cents: 1234, memo: "Previous payout", payment_for: "Reimbursement",
+        recipient_name: user.full_name, recipient_email: user.email, aasm_state: "failed"
+      )
+      # Historical PayPal transfers predate the current creation-only ban.
+      paypal_transfer.save!(validate: false)
+      wise_transfer = WiseTransfer.create!(
+        event: clearinghouse, user:, amount_cents: 1234, quoted_usd_amount_cents: 1234, currency: "CAD",
+        payment_for: "Reimbursement", recipient_name: user.full_name, recipient_email: user.email,
+        recipient_country: :CA, aasm_state: "failed"
+      )
+      payout_holding.update!(paypal_transfer:, wise_transfer:)
+
+      allow(ColumnService).to receive(:post).with(endpoint, anything).and_raise(Faraday::TimeoutError.new("Response lost"))
+      described_class.new.run
+      expect(payout_holding.reload.failure_reason).to eq("column_unavailable")
+
+      travel 24.hours
+      allow(ColumnService).to receive(:post).with(endpoint, anything).and_return({ "id" => "column_transfer", "status" => "issued" })
+      expect { described_class.new.run }.not_to(change { [AchTransfer.count, Wire.count, IncreaseCheck.count] })
+
+      expect(payout_holding.reload).to be_sent
+      expect(payout_holding.payout_transfer.column_id).to eq("column_transfer")
+      expect(payout_holding.paypal_transfer).to be_nil
+      expect(payout_holding.wise_transfer).to be_nil
+      expect(paypal_transfer.reload).to be_failed
+      expect(wise_transfer.reload).to be_failed
     end
 
     it "marks a successful payout as sent without sending a failure email" do

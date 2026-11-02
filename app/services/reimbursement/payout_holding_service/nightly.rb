@@ -48,7 +48,7 @@ module Reimbursement
                 )
                 begin
                   wire.save!
-                  payout_holding.update!(wire:)
+                  payout_holding.update!(wire:, ach_transfer: nil, increase_check: nil, paypal_transfer: nil, wise_transfer: nil)
                   wire.send_wire!
                 rescue Faraday::BadRequestError
                   raise if recovering_transfer
@@ -78,7 +78,7 @@ module Reimbursement
                   user: User.system_user
                 )
                 check.save!
-                payout_holding.update!(increase_check: check)
+                payout_holding.update!(increase_check: check, ach_transfer: nil, wire: nil, paypal_transfer: nil, wise_transfer: nil)
                 begin
                   check.send_check!
                   complete_payout!(payout_holding, recovering: recovering_transfer.present?)
@@ -108,7 +108,7 @@ module Reimbursement
                   company_entry_description: "REIMBURSE"
                 )
                 ach_transfer.save!
-                payout_holding.update!(ach_transfer:)
+                payout_holding.update!(ach_transfer:, increase_check: nil, wire: nil, paypal_transfer: nil, wise_transfer: nil)
                 begin
                   ach_transfer.approve!(User.system_user)
                 rescue Faraday::BadRequestError
@@ -134,7 +134,7 @@ module Reimbursement
               raise unless recovering_transfer
 
               require_reconciliation!(payout_holding)
-            rescue Faraday::ServerError, Faraday::ConnectionFailed, Faraday::TimeoutError
+            rescue Faraday::Error
               payout_holding.mark_failed!
               payout_holding.update!(failure_reason: "column_unavailable", retry_at: 24.hours.from_now)
               raise
