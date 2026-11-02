@@ -74,7 +74,7 @@
         <td>
           <div class="flex items-center gap-2">
             <%= link_to "View", reimbursement_report_path(report) %>
-            <% if report.payout_holding&.failed? && policy(report).retry? %>
+            <% if report.retryable? && policy(report).retry? %>
               <%= link_to "Retry payout", reimbursement_report_retry_path(report), class: "btn bg-success whitespace-nowrap", data: { turbo_method: :post, turbo_confirm: "This will retry the failed payout using the stored payout method." } %>
             <% end %>
           </div>

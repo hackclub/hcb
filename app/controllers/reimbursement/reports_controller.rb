@@ -403,7 +403,7 @@ module Reimbursement
       authorize @report
       return unless enforce_sudo_mode
 
-      if @report.payout_holding&.failed?
+      if @report.retryable?
         @report.payout_holding.mark_settled!
         flash[:success] = "Retried the payout; it will be sent again on the next payout run."
       else

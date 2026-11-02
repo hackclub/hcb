@@ -689,7 +689,9 @@ RSpec.describe Reimbursement::ReportsController do
     end
 
     it "settles a failed payout so the nightly job re-creates it" do
-      report = create(:reimbursement_report, aasm_state: :reimbursement_requested)
+      report = create(:reimbursement_report, aasm_state: :reimbursement_requested, currency: "USD")
+      check = report.user.personal_legal_entity.payout_methods.create!(default: false, details: build(:check_payout_method_details))
+      report.update_column(:legal_entity_payout_method_id, check.id)
       payout_holding = failed_payout_holding_for(report)
       admin = create(:user, :make_admin)
 
@@ -724,6 +726,67 @@ RSpec.describe Reimbursement::ReportsController do
 
       expect(payout_holding.reload).to be_settled
       expect(flash[:error]).to match(/failed payouts/i)
+    end
+
+    it "refuses to retry a payout whose report has no payout method" do
+      admin = create(:user, :make_admin)
+      report = create(:reimbursement_report, aasm_state: :reimbursement_requested, user: admin, event: create(:event))
+      allow(report).to receive(:payout_method).and_return(nil)
+      allow(Reimbursement::Report).to receive(:find).and_return(report)
+      payout_holding = failed_payout_holding_for(report)
+
+      create_session(admin, verified: true)
+
+      post(:retry, params: { report_id: report.id })
+
+      expect(payout_holding.reload).to be_failed
+      expect(flash[:error]).to match(/failed payouts/i)
+    end
+
+    it "refuses to retry a payout whose payout method is unsupported" do
+      admin = create(:user, :make_admin)
+      report = create(:reimbursement_report, aasm_state: :reimbursement_requested, user: admin, event: create(:event))
+      payout_method = report.payout_method
+      allow(report).to receive(:payout_method).and_return(payout_method)
+      allow(payout_method).to receive(:unsupported?).and_return(true)
+      payout_holding = failed_payout_holding_for(report)
+
+      create_session(admin, verified: true)
+
+      post(:retry, params: { report_id: report.id })
+
+      expect(payout_holding.reload).to be_failed
+      expect(flash[:error]).to match(/failed payouts/i)
+    end
+
+    it "refuses to retry a wise payout" do
+      report = create(:reimbursement_report, aasm_state: :reimbursement_requested, currency: "GBP")
+      wise = report.user.personal_legal_entity.payout_methods.create!(default: false, details: build(:wise_transfer_payout_method_details))
+      report.update_column(:legal_entity_payout_method_id, wise.id)
+      payout_holding = failed_payout_holding_for(report)
+      admin = create(:user, :make_admin)
+
+      create_session(admin, verified: true)
+
+      post(:retry, params: { report_id: report.id })
+
+      expect(payout_holding.reload).to be_failed
+      expect(flash[:error]).to match(/failed payouts/i)
+    end
+
+    it "settles a failed payout whose payout method is supported" do
+      report = create(:reimbursement_report, aasm_state: :reimbursement_requested, currency: "USD")
+      check = report.user.personal_legal_entity.payout_methods.create!(default: false, details: build(:check_payout_method_details))
+      report.update_column(:legal_entity_payout_method_id, check.id)
+      payout_holding = failed_payout_holding_for(report)
+      admin = create(:user, :make_admin)
+
+      create_session(admin, verified: true)
+
+      post(:retry, params: { report_id: report.id })
+
+      expect(payout_holding.reload).to be_settled
+      expect(response).to redirect_to(report)
     end
   end
 
