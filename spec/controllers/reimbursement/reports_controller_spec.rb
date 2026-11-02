@@ -66,6 +66,32 @@ RSpec.describe Reimbursement::ReportsController do
       expect(header_badges(response.body)).to eq(["Review requested from Fiona H"])
     end
 
+    it "asks submitters for a reviewer based on the organization's setting" do
+      event = create(:event)
+      member = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      report = create(:reimbursement_report, user: member, event:)
+      create_session(member, verified: true)
+
+      reviewer_selects = lambda do
+        get(:show, params: { id: report.id })
+        Nokogiri::HTML5(response.body).css('select[name="reviewer_id"]')
+      end
+
+      expect(reviewer_selects.call).to be_empty
+
+      event.update!(reimbursement_reviewer_selection: :optional)
+      selects = reviewer_selects.call
+      expect(selects).not_to be_empty
+      expect(selects.map { |select| select["required"] }).to all(be_nil)
+      expect(selects.map { |select| select.at_css("option").text }).to all(eq("No preference"))
+
+      event.update!(reimbursement_reviewer_selection: :required)
+      selects = reviewer_selects.call
+      expect(selects).not_to be_empty
+      expect(selects.map { |select| select["required"] }).to all(eq("required"))
+    end
+
     it "shows the status badge when no reviewer is assigned" do
       creator = create(:user)
       event = create(:event)
@@ -249,6 +275,112 @@ RSpec.describe Reimbursement::ReportsController do
       end
     end
 
+    context "when the report has no event yet" do
+      # Reports created by email, SMS or Discord start without an event.
+      # ReportPolicy#change_event? lets the creator place such a report on
+      # an event, under the same rules as ReportPolicy#create?.
+
+      it "lets the creator place it on an event they are a member of" do
+        creator = create(:user)
+        own_event = create(:event)
+        create(:organizer_position, user: creator, event: own_event, role: :member)
+        report = create(:reimbursement_report, user: creator, event: nil)
+
+        create_session(creator, verified: true)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { event_id: own_event.id }
+              })
+
+        expect(flash[:success]).to be_present
+        expect(report.reload.event).to eq(own_event)
+      end
+
+      it "lets the creator place it on an event whose public reimbursement page is enabled" do
+        creator = create(:user)
+        open_event = create(:event, public_reimbursement_page_enabled: true)
+        report = create(:reimbursement_report, user: creator, event: nil)
+
+        create_session(creator, verified: true)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { event_id: open_event.id }
+              })
+
+        expect(flash[:success]).to be_present
+        expect(report.reload.event).to eq(open_event)
+      end
+
+      it "blocks placing it on an event the creator is not part of" do
+        creator = create(:user)
+        victim_event = create(:event, public_reimbursement_page_enabled: false)
+        report = create(:reimbursement_report, user: creator, event: nil)
+
+        create_session(creator, verified: true)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { event_id: victim_event.id }
+              })
+
+        expect(flash[:error]).to match(/not authorized/i)
+        expect(report.reload.event).to be_nil
+      end
+
+      it "blocks placing it on a demo-mode event" do
+        creator = create(:user)
+        demo_event = create(:event, :demo_mode)
+        report = create(:reimbursement_report, user: creator, event: nil)
+
+        create_session(creator, verified: true)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { event_id: demo_event.id }
+              })
+
+        expect(flash[:error]).to match(/not authorized/i)
+        expect(report.reload.event).to be_nil
+      end
+
+      it "blocks a nonexistent event id without raising" do
+        creator = create(:user)
+        report = create(:reimbursement_report, user: creator, event: nil)
+
+        create_session(creator, verified: true)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { event_id: 999_999_999 }
+              })
+
+        expect(flash[:error]).to match(/not authorized/i)
+        expect(report.reload.event).to be_nil
+      end
+
+      it "keeps a second event change manager-only" do
+        creator = create(:user)
+        own_event = create(:event)
+        create(:organizer_position, user: creator, event: own_event, role: :member)
+        other_event = create(:event)
+        create(:organizer_position, user: creator, event: other_event, role: :member)
+        report = create(:reimbursement_report, user: creator, event: nil)
+        report.update!(event: own_event)
+
+        create_session(creator, verified: true)
+
+        patch(:update, params: {
+                id: report.id,
+                reimbursement_report: { event_id: other_event.id }
+              })
+
+        expect(flash[:error]).to match(/not authorized/i)
+        expect(report.reload.event).to eq(own_event)
+      end
+    end
+
     context "reviewer_id assignment" do
       it "does not assign the reviewer when set by a non-manager creator" do
         creator = create(:user)
@@ -410,6 +542,43 @@ RSpec.describe Reimbursement::ReportsController do
     end
   end
 
+  describe "#submit" do
+    it "lets submitters pick any manager, including ones who opted out of reviewing" do
+      event = create(:event, reimbursement_reviewer_selection: :required)
+      member = create(:user)
+      other_member = create(:user)
+      opted_out = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      create(:organizer_position, user: other_member, event:, role: :member)
+      create(:organizer_position, user: opted_out, event:, role: :manager).reimbursement_reviewer_opt_ins.destroy_all
+      report = create(:reimbursement_report, user: member, event:)
+
+      create_session(member, verified: true)
+
+      post(:submit, params: { report_id: report.id, reviewer_id: other_member.public_id })
+
+      expect(flash[:error]).to eq("The selected reviewer is not eligible for this report.")
+      expect(report.reload.reviewer).to be_nil
+
+      post(:submit, params: { report_id: report.id, reviewer_id: opted_out.public_id })
+
+      expect(flash[:error]).not_to eq("The selected reviewer is not eligible for this report.")
+    end
+
+    it "lets submitters skip picking a reviewer when it's optional" do
+      event = create(:event, reimbursement_reviewer_selection: :optional)
+      member = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      report = create(:reimbursement_report, user: member, event:)
+
+      create_session(member, verified: true)
+
+      post(:submit, params: { report_id: report.id, reviewer_id: "" })
+
+      expect(response).to redirect_to(reimbursement_report_path(report))
+    end
+  end
+
   describe "#approve" do
     it "approves all pending expenses and requests reimbursement" do
       creator = create(:user)
@@ -553,5 +722,23 @@ RSpec.describe Reimbursement::ReportsController do
         expect(response.body).not_to include("Non-auditor mission statement")
       end
     end
+
+    context "when the viewer is the creator of a report with no event" do
+      it "renders the edit icon and leaves the organization select enabled" do
+        creator = create(:user)
+        report = create(:reimbursement_report, user: creator, event: nil)
+
+        create_session(creator, verified: true)
+
+        get(:show, params: { id: report.id })
+        select_tag = response.body[/<select[^>]*name="reimbursement_report\[event_id\]"[^>]*>/]
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Edit this report&#39;s properties.")
+        expect(select_tag).to be_present
+        expect(select_tag).not_to include("disabled")
+      end
+    end
+
   end
 end

@@ -6,12 +6,16 @@ class Comment
 
     def react
       authorize @comment
-      existing_reaction = Comment::Reaction.find_by(reactor: current_user, comment: @comment, emoji: params[:emoji])
+      emoji = params[:emoji]
 
-      if existing_reaction
-        existing_reaction.destroy!
-      else
-        Comment::Reaction.create!(emoji: params[:emoji], reactor: current_user, comment: @comment)
+      @comment.with_lock do
+        existing_reaction = @comment.reactions.find_by(reactor: current_user, emoji:)
+
+        if existing_reaction
+          existing_reaction.destroy!
+        else
+          @comment.reactions.create!(emoji:, reactor: current_user)
+        end
       end
 
       respond_to do |format|

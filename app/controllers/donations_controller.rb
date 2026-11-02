@@ -36,12 +36,9 @@ class DonationsController < ApplicationController
     p.fullscreen :self
   end
 
-  invisible_captcha only: [:make_donation], honeypot: :subtitle, on_timestamp_spam: :redirect_to_404
-
   # Saving a Donation mints a Stripe PaymentIntent, which is what card testers
   # are after: script this form and you get a fresh intent to burn stolen card
-  # numbers against. The honeypot above doesn't slow down a bot that fills the
-  # form out properly, so require a solved Turnstile challenge before we create
+  # numbers against. Require a solved Turnstile challenge before we create
   # anything on Stripe.
   turnstile_protect only: [:make_donation], action: TurnstileService::DONATION_ACTION
 
@@ -210,7 +207,7 @@ class DonationsController < ApplicationController
     authorize @donation
     @hcb_code = HcbCode.find_or_create_by(hcb_code: @donation.hcb_code)
 
-    if @donation.update(params.require(:donation).permit(:anonymous, :name))
+    if @donation.update_donor_details(params.require(:donation).permit(:anonymous, :name))
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { success: "Edited the donor's details." }
     else
       redirect_to hcb_code_path(@hcb_code.hashid), flash: { error: @donation.errors.full_messages.to_sentence }
@@ -325,10 +322,6 @@ class DonationsController < ApplicationController
 
   def donation_params
     params.require(:donation).permit(:email, :name, :amount, :message, :anonymous, :goods, :fee_covered, :referrer, :utm_source, :utm_medium, :utm_campaign, :utm_term, :utm_content)
-  end
-
-  def redirect_to_404
-    raise ActionController::RoutingError.new("Not Found")
   end
 
 end

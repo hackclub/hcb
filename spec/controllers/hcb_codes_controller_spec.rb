@@ -75,5 +75,44 @@ RSpec.describe HcbCodesController, type: :controller do
         expect(response.body).not_to include("might change")
       end
     end
+
+    describe "\"Repay this\"" do
+      let(:event) { create(:event) }
+      let(:user) { create(:user) }
+      let(:expense) { create(:canonical_transaction, event:, amount_cents: -100_00, memo: "Pizza") }
+      let(:repay_link) { new_disbursement_path(event_id: event.slug, repaid_ledger_item_id: expense.ledger_item.hashid) }
+
+      before do
+        create(:organizer_position, event:, user:)
+        create_session(user, verified: true)
+      end
+
+      it "links to a repayment of an unrepaid expense" do
+        get :show, params: { id: expense.local_hcb_code.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include("Repay this")
+        expect(response.body).to include(%(href="#{ERB::Util.html_escape(repay_link)}"))
+      end
+
+      it "is hidden once the expense has been repaid" do
+        disbursement = create(:disbursement, event:)
+        Repayment.new(disbursement:, repaid_ledger_item: expense.ledger_item, amount_cents: 100_00).save!(validate: false)
+
+        get :show, params: { id: expense.local_hcb_code.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).not_to include("Repay this")
+      end
+
+      it "is hidden for income" do
+        income = create(:canonical_transaction, event:, amount_cents: 100_00)
+
+        get :show, params: { id: income.local_hcb_code.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).not_to include("Repay this")
+      end
+    end
   end
 end
