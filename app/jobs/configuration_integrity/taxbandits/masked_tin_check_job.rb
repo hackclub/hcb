@@ -14,7 +14,7 @@ module ConfigurationIntegrity
       def perform
         payee_ref = Credentials.fetch(:TAXBANDITS_DUMMY_FORM_ID)
         dummy_tin = Credentials.fetch(:TAXBANDITS_DUMMY_TIN)
-        return if payee_ref.blank? || dummy_tin.blank?
+        return couldnt_run("Missing dummy W-9 environment variables") if payee_ref.blank? || dummy_tin.blank?
 
         submission = TaxbanditsService.get_submission(payee_ref)
         pdf = Tax::Form.taxbandits_pdf(submission) if submission.present?
