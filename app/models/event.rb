@@ -121,7 +121,6 @@ class Event < ApplicationRecord
   scope :ysws, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::YSWS }) }
   scope :hackathon, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::HACKATHON }) }
   scope :organized_by_hack_clubbers, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }) }
-  scope :not_organized_by_hack_clubbers, -> { includes(:event_tags).where.not(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }).or(includes(:event_tags).where(event_tags: { name: nil })) }
   scope :organized_by_teenagers, -> { includes(:event_tags).where(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }) }
   scope :not_organized_by_teenagers, -> { includes(:event_tags).where.not(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }).or(includes(:event_tags).where(event_tags: { name: nil })) }
   scope :robotics_team, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ROBOTICS_TEAM }) }
@@ -148,11 +147,6 @@ class Event < ApplicationRecord
       # unrecognized category, return nothing, though this should never make it this far since values: constraint
       none
     end
-  }
-
-  scope :flag_enabled, ->(flag) {
-    joins("INNER JOIN flipper_gates ON CONCAT('Event;', events.id) = flipper_gates.value")
-      .where("flipper_gates.feature_key = ? AND flipper_gates.key = ?", flag, "actors")
   }
 
   # Following the convention of Module#ancestors https://apidock.com/ruby/Module/ancestors
@@ -663,10 +657,6 @@ class Event < ApplicationRecord
     # desc
   end
 
-  def disbursement_dropdown_description
-    "#{name} (#{ApplicationController.helpers.render_money balance_available})"
-  end
-
   # displayed on /negative_events
   def self.negatives
     select { |event| event.balance_v2_cents < 0 }
@@ -756,10 +746,6 @@ class Event < ApplicationRecord
     pts = pts.where("date <= ?", end_date) if end_date
 
     sum_fronted_amount(pts)
-  end
-
-  def pending_balance_v2_cents(start_date: nil, end_date: nil)
-    pending_incoming_balance_v2_cents(start_date:, end_date:) + pending_outgoing_balance_v2_cents(start_date:, end_date:)
   end
 
   def pending_incoming_balance_v2_cents(start_date: nil, end_date: nil)
@@ -852,15 +838,6 @@ class Event < ApplicationRecord
     return @total_fees_v2_cents ||= fees.sum(:amount_cents_as_decimal).ceil unless start_date || end_date
 
     fees.where(created_at: start_date..end_date).sum(:amount_cents_as_decimal).ceil
-  end
-
-  # Fiscal sponsorship fees charged by the fee engine, at whatever rate the
-  # organization was on at the time. Manual fees (e.g. wire fees) are excluded.
-  def revenue_fees_v2_cents(start_date: nil, end_date: nil)
-    revenue_fees = fees.revenue
-    revenue_fees = revenue_fees.where(created_at: start_date..end_date) if start_date || end_date
-
-    revenue_fees.sum(:amount_cents_as_decimal).ceil
   end
 
   def increase_account_number_id
