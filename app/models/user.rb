@@ -458,10 +458,10 @@ class User < ApplicationRecord
     User.find_by(id: self.versions.where_object_changes_from(locked_at: nil).last&.whodunnit)
   end
 
-  def lock!(freeze_cards: false)
+  def lock!
     update!(locked_at: Time.now)
 
-    stripe_cards.active.each { |card| card.freeze! } if freeze_cards
+    stripe_cards.active.find_each(&:freeze!)
 
     # Invalidate all sessions
     user_sessions.update_all(signed_out_at: Time.now, expiration_at: Time.now)
@@ -722,12 +722,8 @@ class User < ApplicationRecord
     show_first_dashboard? && card_grants.none? && events.none? && organizer_position_invites.none?
   end
 
-  # `admin` is required rather than defaulted, so a caller cannot silently
-  # render a different label than the search endpoint returns.
-  def to_combobox_display(admin:)
-    return "#{full_name} (Email: #{email}, ID: #{id})" if admin
-
-    full_name.presence || email
+  def to_combobox_display
+    full_name.presence&.strip || email
   end
 
   def unverified?
@@ -739,7 +735,10 @@ class User < ApplicationRecord
   end
 
   def unassociated_payments_received
-    Payment.pending_legal_entity.joins(:payee).where(payee: { email:, legal_entity: nil })
+    Payment.pending_legal_entity.joins(payee: [:legal_entity]).where(
+      "(payees.legal_entity_id IS NULL OR legal_entities.managing_event_id IS NOT NULL) AND payees.email = :email",
+      email:
+    ).distinct
   end
 
   def onboarding_contractor_positions

@@ -306,6 +306,29 @@ RSpec.describe User, type: :model do
       expect(grant.reload).to be_revoked
       expect(Doorkeeper::DeviceAuthorizationGrant::DeviceGrant.exists?(device_grant.id)).to be(false)
     end
+
+    it "freezes every active card and leaves frozen and canceled ones alone" do
+      user = create(:user)
+      cardholder = create(:stripe_cardholder, user:)
+      active_cards = create_list(:stripe_card, 2, :with_stripe_id, stripe_cardholder: cardholder, initially_activated: true)
+      frozen_card = create(:stripe_card, :with_stripe_id, stripe_cardholder: cardholder, stripe_status: "inactive", initially_activated: true)
+      canceled_card = create(:stripe_card, :with_stripe_id, stripe_cardholder: cardholder, stripe_status: "canceled")
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+
+      active_cards.each do |card|
+        expect(StripeService::Issuing::Card).to receive(:update).with(card.stripe_id, status: :inactive)
+        allow(Stripe::Issuing::Card).to receive(:retrieve).with(id: card.stripe_id).and_return(
+          Stripe::Issuing::Card.construct_from(id: card.stripe_id, status: "inactive", brand: "Visa", exp_month: 2, exp_year: 2030, last4: card.last4, type: "virtual", shipping: nil, spending_controls: { spending_limits: [] })
+        )
+      end
+
+      user.lock!
+
+      expect(active_cards.each(&:reload)).to all(be_frozen)
+      expect(active_cards.map(&:last_frozen_by)).to all(eq(User.system_user))
+      expect(frozen_card.reload.last_frozen_by).to be_nil
+      expect(canceled_card.reload).to be_canceled
+    end
   end
 
   describe "#unlock!" do
