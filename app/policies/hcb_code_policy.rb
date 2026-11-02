@@ -37,10 +37,6 @@ class HcbCodePolicy < ApplicationPolicy
     gte_member_in_events?
   end
 
-  def link_receipt_modal?
-    gte_member_in_events?
-  end
-
   # `user` is nil for signed out requests, and a charge whose cardholder can't
   # be resolved has a nil owner, so without the first clause the two compare
   # equal and an anonymous request is treated as the purchaser.
