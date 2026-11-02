@@ -1,0 +1,7 @@
+<%# locals: (payout:) %>
+
+<%= link_to payout.payment.purpose, payout.payment %>
+
+<% if payout.payment.payroll_position.present? %>
+  (<%= link_to "contractor", event_payroll_position_path(payout.event, payout.payment.payroll_position) %>)
+<% end %>
