@@ -216,7 +216,6 @@ Rails.application.routes.draw do
         post "verify_email", to: "first#verify_email"
         post "request_org_invite", to: "first#request_org_invite"
         delete "sign_out", to: "first#sign_out"
-        get "macbook_qr_code"
       end
     end
 
@@ -385,7 +384,6 @@ Rails.application.routes.draw do
 
   post "set_event", to: "admin#set_event_multiple_transactions", as: :set_event_multiple_transactions
   post "set_event/:id", to: "admin#set_event", as: :set_event
-  post "set_paypal_transfer/:id", to: "admin#set_paypal_transfer", as: :set_paypal_transfer
   post "set_wire/:id", to: "admin#set_wire", as: :set_wire
   post "set_wise_transfer/:id", to: "admin#set_wise_transfer", as: :set_wise_transfer
 
@@ -453,7 +451,6 @@ Rails.application.routes.draw do
     post "unarchive"
     post "void"
     get "hosted"
-    get "pdf"
     member do
       post "refund"
     end
@@ -559,7 +556,6 @@ Rails.application.routes.draw do
   resources :hcb_codes, path: "/hcb", only: [:show, :edit, :update], concerns: :commentable do
     member do
       get "attach_receipt"
-      get "memo_frame"
       get "dispute"
       post "toggle_tag/:tag_id", to: "hcb_codes#toggle_tag", as: :toggle_tag
       post "send_receipt_sms", to: "hcb_codes#send_receipt_sms", as: :send_sms_receipt
@@ -593,7 +589,6 @@ Rails.application.routes.draw do
     member do
       post "waive_fee"
       post "unwaive_fee"
-      post "mark_bank_fee"
       post "set_category"
     end
   end
@@ -997,7 +992,6 @@ Rails.application.routes.draw do
     get :team_stats
     get :recent_activity
     get :balance_transactions
-    get :money_movement
     get :merchants_chart
     get :categories_chart
     get :tags_chart
