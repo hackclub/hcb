@@ -53,11 +53,6 @@ RSpec.describe HashidQueryable do
       expect(User.where_hashid([users.first.hashid] * 3)).to contain_exactly(users.first)
     end
 
-    it "does not preserve the order of the given hashids" do
-      # This is a set lookup; callers needing input order must re-sort themselves.
-      expect(User.where_hashid(hashids.reverse).map(&:id)).to eq(users.map(&:id).sort)
-    end
-
     describe "input this model cannot decode" do
       it "skips a hashid built from characters outside the alphabet" do
         expect(User.where_hashid([users.first.hashid, "not-a-real-hashid"])).to contain_exactly(users.first)

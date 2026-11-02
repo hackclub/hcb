@@ -62,7 +62,7 @@ module StripeCardholderService
     end
 
     def phone_number
-      @current_user.phone_number if @current_user.phone_number_verified?
+      @current_user.phone_number_for_stripe
     end
 
     def name

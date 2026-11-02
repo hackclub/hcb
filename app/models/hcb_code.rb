@@ -193,11 +193,11 @@ class HcbCode < ApplicationRecord
   def smart_amount_cents
     sum = canonical_transactions.sum(:amount_cents)
     sum += canonical_pending_transactions.outgoing.unsettled.sum(:amount_cents)
-    if event&.can_front_balance?
-      fronted_pt_sum = canonical_pending_transactions.incoming.fronted.not_declined.sum(:amount_cents)
-      settled_ct_sum = [canonical_transactions.sum(:amount_cents), 0].max
-      sum += [fronted_pt_sum - settled_ct_sum, 0].max
-    end
+
+    fronted_pt_sum = canonical_pending_transactions.incoming.fronted.not_declined.sum(:amount_cents)
+    settled_ct_sum = [canonical_transactions.sum(:amount_cents), 0].max
+    sum += [fronted_pt_sum - settled_ct_sum, 0].max
+
     sum
   end
 
@@ -316,6 +316,21 @@ class HcbCode < ApplicationRecord
 
   def stripe_merchant_currency
     pt&.raw_pending_stripe_transaction&.stripe_transaction&.dig("merchant_currency") || raw_stripe_transaction.stripe_transaction["merchant_currency"]
+  end
+
+  # What the merchant charged, in their own currency. Prefers the settled
+  # transaction, since that's where `amount_cents` comes from too.
+  def stripe_merchant_amount
+    txn = (raw_stripe_transaction || pt&.raw_pending_stripe_transaction)&.stripe_transaction
+    amount, currency = txn&.values_at("merchant_amount", "merchant_currency")
+    return nil if amount.nil? || currency.blank? || Money::Currency.find(currency).nil?
+
+    Money.from_cents(amount.abs, currency.upcase)
+  end
+
+  def stripe_foreign_currency?
+    amount = stripe_merchant_amount
+    amount.present? && amount.currency != Money.default_currency
   end
 
   def stripe_refund?

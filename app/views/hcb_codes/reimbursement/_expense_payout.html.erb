@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <% expense = @hcb_code.reimbursement_expense_payout.expense %>
 
 <article class="hcb-code">
@@ -28,6 +30,7 @@
         <%= expense.description %>
       </p>
     <% end %>
+    <%= render "ledger/items/repayments", ledger_item: @hcb_code.ledger_item if @hcb_code.ledger_item %>
     <%= render "hcb_codes/tags", hcb_code: @hcb_code, event: @event || @hcb_code.event %>
   </section>
 

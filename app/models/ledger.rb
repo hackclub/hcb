@@ -32,6 +32,7 @@ class Ledger < ApplicationRecord
   self.table_name = "ledgers"
 
   include Hashid::Rails
+  prepend MemoWise
   has_paper_trail
 
   # Possible owners for a primary ledger
@@ -47,12 +48,34 @@ class Ledger < ApplicationRecord
   has_many :canonical_transactions, through: :items
   has_many :canonical_pending_transactions, through: :items
 
-  monetize def balance_cents = items.sum(:amount_cents)
-  monetize def available_balance_cents = items.sum(:amount_cents) - fronted_fee_balance_cents
-
-  def can_front_balance?
-    event&.can_front_balance? || card_grant&.event&.can_front_balance? || false
+  monetize def balance_cents(start_date: nil, end_date: nil)
+    query_items(start_date:, end_date:).sum(:amount_cents)
   end
+
+  # Repayments pay an expense back, so they come off expenses rather than
+  # counting as revenue, the same way Event::StatementOfActivity does it.
+  monetize def revenue_cents(start_date: nil, end_date: nil)
+    query_items(start_date:, end_date:, amount: { "$gt": 0 }).sum(:amount_cents) - repayments_received_cents(start_date:, end_date:)
+  end
+
+  # Money in under the repayment category. Memoized per date range, since both
+  # revenue_cents and expenses_cents take it off their totals.
+  monetize memo_wise def repayments_received_cents(start_date: nil, end_date: nil)
+    query_items(start_date:, end_date:, amount: { "$gt": 0 }, also: { category: { "$eq": Repayment::CATEGORY_SLUG } }).sum(:amount_cents)
+  end
+
+  # The fiscal sponsorship fee accrues as revenue arrives but only lands on the
+  # ledger once it's charged, so the fee that's still pending is an expense
+  # that hasn't happened yet — the same amount the ledger renders as a pending
+  # "Fiscal sponsorship" row, and the same amount available_balance_cents holds
+  # back, which keeps revenue - expenses == available balance. A negative fee
+  # balance is a fee credit, not an expense, hence the floor at zero.
+  # Repayments received come off expenses, mirroring revenue_cents.
+  monetize def expenses_cents = query_items(amount: { "$lt": 0 }).sum(:amount_cents).abs - repayments_received_cents + [fronted_fee_balance_cents, 0].max
+
+  # A negative fee balance is a fee credit. Credits are not spendable, so
+  # they never add to the available balance.
+  monetize def available_balance_cents = balance_cents - [fronted_fee_balance_cents, 0].max
 
   def receipt_required?
     event&.plan&.receipt_required? || card_grant&.event&.plan&.receipt_required?
@@ -67,15 +90,18 @@ class Ledger < ApplicationRecord
   def fronted_fee_balance_cents
     return 0 if event.nil?
 
-    feed_fronted_pts = canonical_pending_transactions
-                       .incoming
-                       .fronted
-                       .not_waived
-                       .not_declined
+    @fronted_fee_balance_cents ||=
+      begin
+        feed_fronted_pts = canonical_pending_transactions
+                           .incoming
+                           .fronted
+                           .not_waived
+                           .not_declined
 
-    feed_fronted_balance = sum_fronted_amount(feed_fronted_pts)
+        feed_fronted_balance = sum_fronted_amount(feed_fronted_pts)
 
-    (event.fees.sum(:amount_cents_as_decimal) - total_fee_payments_cents + (feed_fronted_balance * BigDecimal(event.revenue_fee))).ceil
+        (event.fees.sum(:amount_cents_as_decimal) - total_fee_payments_cents + (feed_fronted_balance * BigDecimal(event.revenue_fee))).ceil
+      end
   end
 
   def fee_balance_cents
@@ -97,11 +123,11 @@ class Ledger < ApplicationRecord
   end
 
   def sum_fronted_amount(pts)
-    pt_sum_by_ledger_item = pts.group(:ledger_item).sum(:amount_cents)
+    pt_sum_by_ledger_item = pts.group(:ledger_item_id).sum(:amount_cents)
     ledger_items = pt_sum_by_ledger_item.keys
 
-    ct_sum_by_ledger_item = canonical_transactions.where(ledger_item: ledger_items)
-                                                  .group(:ledger_item)
+    ct_sum_by_ledger_item = canonical_transactions.where(ledger_item_id: ledger_items)
+                                                  .group(:ledger_item_id)
                                                   .sum(:amount_cents)
 
     pt_sum_by_ledger_item.reduce 0 do |sum, (ledger_item, pt_sum)|
@@ -110,6 +136,19 @@ class Ledger < ApplicationRecord
   end
 
   private
+
+  # Every total goes through Ledger::Query so they all count the same set of
+  # items as the balance does.
+  def query_items(start_date: nil, end_date: nil, amount: nil, also: nil)
+    Ledger::Query.new({
+                        "$and": [
+                          ({ datetime: { "$gte": start_date } } if start_date),
+                          ({ datetime: { "$lte": end_date } } if end_date),
+                          ({ amount_cents: amount } if amount),
+                          also
+                        ].compact
+                      }).execute(ledgers: [self])
+  end
 
   def validate_owner_based_on_primary
     if primary?

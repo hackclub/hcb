@@ -7,11 +7,11 @@ describe LoginCodeService::Request do
 
   let(:ip_address) { "127.0.0.1" }
   let(:user_agent) { "fake firefox" }
-  let(:original_cache) { Rails.cache }
 
   # The test cache is a null_store which silently never increments a counter,
   # so swap in a MemoryStore to exercise the rate-limit guards.
   around do |example|
+    original_cache = Rails.cache
     Rails.cache = ActiveSupport::Cache::MemoryStore.new
     example.run
   ensure
@@ -73,6 +73,18 @@ describe LoginCodeService::Request do
                                login_code:
                              })
     end
+  end
+
+  it "invalidates codes sent earlier, so only the newest one works" do
+    user = create(:user)
+    allow(LoginCodeMailer).to receive(:send_code).and_return(double(deliver_now: true))
+
+    first = described_class.new(email: user.email, ip_address:, user_agent:).run[:login_code]
+    second = described_class.new(email: user.email, ip_address:, user_agent:).run[:login_code]
+
+    expect(first.reload).not_to be_active
+    expect(second.reload).to be_active
+    expect(user.login_codes.active).to contain_exactly(second)
   end
 
   context "errors" do

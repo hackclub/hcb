@@ -19,6 +19,25 @@ RSpec.describe StripeAuthorizationService::Webhook::HandleIssuingAuthorizationRe
     expect(service.declined_reason).to eq("inadequate_balance")
   end
 
+  describe "#metadata" do
+    it "includes the available balance and the reason when declining" do
+      expect(service.run).to be(false)
+
+      expect(service.metadata).to eq(
+        current_balance_available: "0",
+        declined_reason: "inadequate_balance"
+      )
+    end
+
+    it "includes the available balance when approving" do
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+
+      expect(service.run).to be(true)
+
+      expect(service.metadata).to eq(current_balance_available: "1000")
+    end
+  end
+
   it "declines when insufficient funds" do
     create(:canonical_pending_transaction, amount_cents: 999, event:, fronted: true)
     expect(service.run).to be(false)

@@ -36,6 +36,60 @@ RSpec.describe Payee, type: :model do
 
         expect(payee).to be_valid
       end
+
+      it "ignores archived payees" do
+        create(:payee, event:, legal_entity:).archive!
+        payee = create(:payee, event:, legal_entity:)
+
+        expect(payee).to be_persisted
+      end
+
+      it "is invalid when unarchiving a payee whose legal entity is already linked to the event" do
+        archived = create(:payee, event:, legal_entity:)
+        archived.archive!
+        create(:payee, event:, legal_entity:)
+
+        archived.archived_at = nil
+        expect(archived).not_to be_valid
+        expect(archived.errors[:legal_entity_id]).to include("has already been taken")
+      end
+    end
+  end
+
+  describe "changing the email of a payee with an onboarding contract" do
+    include ActiveJob::TestHelper
+
+    let(:payee) { create(:payee, legal_entity: nil) }
+    let(:position) { create(:payroll_position, payee:) }
+    let(:organizer) { create(:user) }
+
+    before do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+      allow_any_instance_of(Contract).to receive(:send_using_docuseal!)
+      allow_any_instance_of(Contract).to receive(:archive_on_docuseal!)
+      position.send_contract(organizer_user: organizer)
+      position.update_columns(aasm_state: "onboarding")
+    end
+
+    it "reissues the contract, emails the organizer, and returns the position to review" do
+      old_contract = position.contract
+
+      perform_enqueued_jobs do
+        payee.update!(email: "new@example.com")
+      end
+
+      delivered = ActionMailer::Base.deliveries.select { |m| m.subject.include?("issue in the agreement") }
+      expect(delivered.map(&:to)).to eq([[organizer.email]])
+
+      expect(old_contract.reload).to be_voided
+      new_contract = position.reload.contract
+      expect(new_contract.party(:contractor).email).to eq("new@example.com")
+      expect(position).to be_under_review
+      expect(payee.organizer_resign_position).to eq(position)
+
+      mail = Contract::PartyMailer.with(party: new_contract.party(:organizer), message: +"hi").reissued
+      expect(mail.to).to eq([organizer.email])
+      expect(mail.body.encoded).to include("sign a new agreement")
     end
   end
 end

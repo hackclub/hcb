@@ -7,7 +7,14 @@ Doorkeeper.configure do
 
   # This block will be called to check whether the resource owner is authenticated or not.
   resource_owner_authenticator do
-    try(:current_user)
+    # Admins impersonating a user must not be able to grant OAuth apps (or
+    # devices) long-lived access to that user's account.
+    if try(:current_session)&.impersonated?
+      redirect_to root_path, flash: { error: "You can't authorize applications while impersonating a user." }
+      nil
+    else
+      try(:current_user)
+    end
   end
 
   access_token_class "::ApiToken"
@@ -34,7 +41,7 @@ Doorkeeper.configure do
   # migrations).
   #
   # If this option enabled, Doorkeeper will store not only Resource Owner primary key
-  # value, but also it's type (class name). See "Polymorphic Associations" section of
+  # value, but also its type (class name). See "Polymorphic Associations" section of
   # Rails guides: https://guides.rubyonrails.org/association_basics.html#polymorphic-associations
   #
   # [NOTE] If you apply this option on already existing project don't forget to manually
@@ -396,6 +403,21 @@ Doorkeeper.configure do
   #   Rails.logger.info(context.auth.inspect)
   #   Rails.logger.info(context.issued_token)
   # end
+
+  # `authorize_resource_owner_for_client` above only runs for new
+  # authorizations, and Doorkeeper's refresh grant only checks that the refresh
+  # token itself isn't revoked, so a refresh token that outlived `User#lock!`
+  # could keep minting access tokens for a locked user. Refuse those outright.
+  before_successful_authorization do |controller, _context|
+    next unless controller.params[:grant_type] == "refresh_token"
+
+    refresh_token = controller.params[:refresh_token]
+    next if refresh_token.blank?
+
+    if ApiToken.by_refresh_token(refresh_token)&.user&.locked?
+      raise Doorkeeper::Errors::InvalidGrant, Doorkeeper::OAuth::ErrorResponse.new(name: :invalid_grant)
+    end
+  end
 
   # Under some circumstances you might want to have applications auto-approved,
   # so that the user skips the authorization step.

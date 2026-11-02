@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module DonationsHelper
-  def donation_payment_processor_fee(humanized = true, donation = @donation)
+  def donation_payment_processor_fee(donation = @donation, humanized: true)
     fee = donation.payout_creation_balance_stripe_fee
 
     return fee unless humanized
@@ -15,7 +15,7 @@ module DonationsHelper
     title = nil
     if donation.deposited?
       title = "Funds available since "
-      date = @hcb_code.canonical_transactions.pluck(:date).max
+      date = donation.canonical_transactions.pluck(:date).max
     elsif donation.payout.nil?
       title = "Transfer scheduled for "
       date = donation.payout_creation_queued_for
@@ -48,13 +48,6 @@ module DonationsHelper
         "visa"       => "card-visa",
         "discover"   => "card-discover"
       }[brand] || "card-other"
-      tooltip = {
-        "amex"       => "American Express",
-        "mastercard" => "Mastercard",
-        "visa"       => "Visa",
-        "discover"   => "Discover"
-      }[brand] || "Card"
-      tooltip += " ending in #{last4}" if last4 && organizer_signed_in?
       description_text = organizer_signed_in? ? "••••#{last4}" : "••••"
       icon = inline_icon icon_name, width: 32, height: 20, class: "slate"
     else

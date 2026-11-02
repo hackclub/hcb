@@ -37,8 +37,10 @@
         Manage receipts
       <% end %>
       <%= form.submit "Add to transaction", class: "btn bg-success", style: "transition: 0.2s all;", data: {
-            "receipt-select-target" => "confirm"
-          }, onclick: "$.modal.close()", disabled: true %>
+            "receipt-select-target": "confirm",
+            controller: "turbo-frame-modal",
+            action: "turbo-frame-modal#close"
+          }, disabled: true %>
 
     </footer>
 

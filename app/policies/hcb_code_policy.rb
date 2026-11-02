@@ -58,7 +58,7 @@ class HcbCodePolicy < ApplicationPolicy
 
   # if users have permissions greater than or equal to member in events
   def gte_member_in_events?
-    return false if user.nil? # dont run checks if the user isnt signed in
+    return false if user.nil? # don't run checks if the user isn't signed in
     return true if user&.admin?
 
     record.events.any? do |e|

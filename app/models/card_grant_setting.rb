@@ -54,7 +54,7 @@ class CardGrantSetting < ApplicationRecord
     return false unless support_url.present?
 
     URI.parse(support_url)&.host&.end_with?(".slack.com") || false
-  rescue URI::InvalidURIError, ArgumentError
+  rescue URI::Error, ArgumentError
     false
   end
 
