@@ -76,7 +76,7 @@
   </section>
 
   <section class="ledger-item--info details--wide details--tall">
-    <% if ledger_item.declined? && card_charge.raw_pending_stripe_transaction&.stripe_transaction&.dig("status") != "reversed" %>
+    <% if ledger_item.declined? && !card_charge.raw_pending_stripe_transaction&.reversed? %>
       <p>
         <strong>Declined</strong>
         <action data-behavior="modal_trigger" data-modal="declined_information_<%= instance %>" class="pointer" tabindex="0">
