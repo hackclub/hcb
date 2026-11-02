@@ -8,7 +8,7 @@ class OrganizerPosition
       has_one :active_spending_control, -> { where(active: true) }, class_name: "OrganizerPosition::Spending::Control", inverse_of: :organizer_position
 
       after_save do
-        active_spending_control&.deactivate if manager?
+        active_spending_control&.deactivate if manager_access?
       end
     end
 

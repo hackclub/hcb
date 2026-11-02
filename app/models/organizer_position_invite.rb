@@ -104,7 +104,7 @@ class OrganizerPositionInvite < ApplicationRecord
   end
 
   after_update_commit do
-    contract.mark_voided! if role_previously_changed?(from: :owner) && contract.present?
+    contract.mark_voided! if role_previously_changed?(from: :owner) && contract&.may_mark_voided?
   end
 
   def contract
@@ -302,8 +302,8 @@ class OrganizerPositionInvite < ApplicationRecord
   end
 
   def initial_control_allowance_amount_cents_nil_for_non_members
-    if role == "manager" && initial_control_allowance_amount_cents.present?
-      self.errors.add(:user, "can not set an initial control allowance for a manager")
+    if manager_access? && initial_control_allowance_amount_cents.present?
+      self.errors.add(:user, "can not set an initial control allowance for a #{role}")
     end
   end
 

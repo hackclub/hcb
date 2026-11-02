@@ -124,7 +124,7 @@
                 <%= form.label :manager_id, "Manager" %>
                 <span class="muted block">Responsible for approving invoices</span>
               </div>
-              <%= form.collection_select :manager_id, event.users.where(organizer_positions: { role: %i[manager owner] }), :id, :name,
+              <%= form.collection_select :manager_id, event.owners_or_managers, :id, :name,
       { selected: position&.manager_id || current_user.id, include_blank: "No manager" } %>
             </div>
 

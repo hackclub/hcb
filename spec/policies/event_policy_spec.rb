@@ -3,6 +3,27 @@
 require "rails_helper"
 
 RSpec.describe EventPolicy, type: :policy do
+  describe "#request_call?" do
+    let(:event) { create(:event) }
+    let(:position) { create(:organizer_position, event:, role: :manager) }
+
+    subject { described_class.new(position.user, event).request_call? }
+
+    context "as a manager" do
+      it { is_expected.to eq(false) }
+    end
+
+    context "as an owner" do
+      before do
+        contract = Contract::FiscalSponsorship.create!(contractable: position.organizer_position_invite, include_videos: false)
+        contract.update_column(:aasm_state, "signed")
+        position.update!(role: :owner, fiscal_sponsorship_contract: contract)
+      end
+
+      it { is_expected.to eq(true) }
+    end
+  end
+
   describe "#sub_organizations?" do
     let(:event) { create(:event, is_public: true) }
 

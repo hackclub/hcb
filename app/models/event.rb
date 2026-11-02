@@ -418,6 +418,7 @@ class Event < ApplicationRecord
   has_many :users, through: :organizer_positions
   has_many :owners, -> { where(organizer_positions: { role: :owner }) }, through: :organizer_positions, source: :user
   has_many :managers, -> { where(organizer_positions: { role: :manager }) }, through: :organizer_positions, source: :user
+  has_many :owners_or_managers, -> { where(organizer_positions: { role: [:owner, :manager] }) }, through: :organizer_positions, source: :user
   has_many :readers, -> { where(organizer_positions: { role: :reader }) }, through: :organizer_positions, source: :user
   has_many :g_suites
   has_many :g_suite_accounts, through: :g_suites
@@ -1238,10 +1239,6 @@ class Event < ApplicationRecord
     end
 
     Event::Plan::Standard
-  end
-
-  def owners_or_managers
-    [*owners, *managers]
   end
 
 end

@@ -26,7 +26,7 @@ class OrganizerPositionInvite
         return
       end
 
-      enable_spending_controls = (params[:enable_controls] == "true") && (role != "manager")
+      enable_spending_controls = (params[:enable_controls] == "true") && %w[manager owner].exclude?(role)
       initial_control_allowance_amount = params[:initial_control_allowance_amount]
 
       service = OrganizerPositionInviteService::Create.new(event: link.event, sender: current_user, user_email: @request.requester.email, role:, enable_spending_controls:, initial_control_allowance_amount:, invite_request: @request)

@@ -279,6 +279,8 @@ class EventsController < ApplicationController
       @filter = "member"
     when "managers"
       @filter = "manager"
+    when "owners"
+      @filter = "owner"
     when "readers"
       @filter = "reader"
     when "active_teenagers"
