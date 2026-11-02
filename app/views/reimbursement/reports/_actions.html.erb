@@ -84,7 +84,7 @@
         </div>
       <% end %>
 
-      <div style="flex-grow: 1;" class="flex sm:justify-end" id="action-right">
+      <div style="flex-grow: 1;" class="flex sm:justify-end gap-2" id="action-right">
         <% if !report.payout_method.present? || user.onboarding? || report.payout_holding&.failed? || (report.payout_method.present? && report.payout_method.unsupported?) || report.mismatched_currency? %>
           <% if user == current_user %>
             <%= link_to settings_payouts_path, class: "btn bg-warning h-9 min-h-9", data: { behavior: "modal_trigger", modal: "edit_payout" } do %>
@@ -146,6 +146,12 @@
               <% button_hint = capture do %>
                 <span class="bold">Warning:</span> <%= user.first_name %>'s <%= report.payout_method&.human_kind || "payout" %> information was flagged as invalid, please ask them to edit their payout settings and HCB will retry the payment.
               <% end %>
+            <% end %>
+          <% end %>
+          <% if report.payout_holding&.failed? && policy(report).retry? %>
+            <%= link_to reimbursement_report_retry_path(report), class: "btn bg-success whitespace-nowrap", data: { turbo_method: :post, turbo_confirm: "This will retry the failed payout!" } do %>
+              <%= inline_icon "send" %>
+              Retry payout
             <% end %>
           <% end %>
         <% elsif !report.may_mark_submitted? && report.draft? %>

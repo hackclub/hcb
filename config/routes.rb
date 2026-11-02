@@ -614,6 +614,7 @@ Rails.application.routes.draw do
       post "convert_to_wise_transfer"
       post "admin_approve"
       post "admin_send_wise_transfer"
+      post "retry"
       post "reverse"
       post "approve"
       post "request_changes"

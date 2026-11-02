@@ -676,6 +676,57 @@ RSpec.describe Reimbursement::ReportsController do
     end
   end
 
+  describe "#retry" do
+    before do
+      create(:event, :with_positive_balance, id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
+    end
+
+    def failed_payout_holding_for(report)
+      Reimbursement::PayoutHolding.create!(report:, amount_cents: 10_00, aasm_state: :settled).tap do |payout_holding|
+        payout_holding.mark_sent!
+        payout_holding.mark_failed!
+      end
+    end
+
+    it "settles a failed payout so the nightly job re-creates it" do
+      report = create(:reimbursement_report, aasm_state: :reimbursement_requested)
+      payout_holding = failed_payout_holding_for(report)
+      admin = create(:user, :make_admin)
+
+      create_session(admin, verified: true)
+
+      post(:retry, params: { report_id: report.id })
+
+      expect(payout_holding.reload).to be_settled
+      expect(response).to redirect_to(report)
+    end
+
+    it "does not let a non-admin retry a failed payout" do
+      report = create(:reimbursement_report, aasm_state: :reimbursement_requested)
+      payout_holding = failed_payout_holding_for(report)
+
+      create_session(report.user, verified: true)
+
+      post(:retry, params: { report_id: report.id })
+
+      expect(payout_holding.reload).to be_failed
+      expect(flash[:error]).to match(/not authorized/i)
+    end
+
+    it "refuses to retry a payout that has not failed" do
+      report = create(:reimbursement_report, aasm_state: :reimbursement_requested)
+      payout_holding = Reimbursement::PayoutHolding.create!(report:, amount_cents: 10_00, aasm_state: :settled)
+      admin = create(:user, :make_admin)
+
+      create_session(admin, verified: true)
+
+      post(:retry, params: { report_id: report.id })
+
+      expect(payout_holding.reload).to be_settled
+      expect(flash[:error]).to match(/failed payouts/i)
+    end
+  end
+
   describe "#show" do
     render_views
 

@@ -399,6 +399,20 @@ module Reimbursement
       redirect_to @report
     end
 
+    def retry
+      authorize @report
+      return unless enforce_sudo_mode
+
+      if @report.payout_holding&.failed?
+        @report.payout_holding.mark_settled!
+        flash[:success] = "Retried the payout; it will be sent again on the next payout run."
+      else
+        flash[:error] = "Retry is only available for failed payouts."
+      end
+
+      redirect_to @report
+    end
+
     def reverse
 
       authorize @report
