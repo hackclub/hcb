@@ -6,6 +6,216 @@ RSpec.describe CardGrantsController do
   include SessionSupport
   render_views
 
+  describe "#show" do
+    let(:event) { create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate) }
+
+    it "renders the card, rules and transactions for the grantee" do
+      card_grant = create(:card_grant, event:, merchant_lock: ["abc123"])
+      card_grant.update_columns(user_id: card_grant.stripe_card.user.id)
+      create_session(card_grant.user.reload, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Billing address")
+      expect(response.body).to include("Show details")
+      expect(response.body).to include("What you can spend it on")
+      expect(response.body).to include("Upload a receipt for every purchase")
+      expect(response.body).not_to include("Merchant IDs")
+    end
+
+    it "renders the activation prompt before the card exists" do
+      card_grant = create(:card_grant, event:)
+      card_grant.update!(stripe_card: nil)
+      create_session(card_grant.user, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Activate your grant card")
+      expect(response.body).not_to include("Billing address")
+    end
+
+    it "shows an organizer the masked card but not the grantee's billing address or PIN" do
+      organizer = create(:user)
+      card_grant = create(:card_grant, event:, merchant_lock: ["abc123"])
+      card_grant.stripe_card.update_columns(cash_withdrawal_enabled: true)
+      create(:organizer_position, user: organizer, event:)
+      create_session(organizer, verified: true)
+
+      get(:show, params: { id: card_grant.hashid, show_details: "true" })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Virtual card")
+      expect(response.body).to include("Spending controls")
+      expect(response.body).to include("Merchant IDs: abc123")
+      expect(response.body).to include("Name on card")
+      expect(response.body).to include(card_grant.stripe_card.hidden_card_number_with_last_four)
+      expect(response.body).not_to include("Billing address")
+      expect(response.body).not_to include("Show details")
+      expect(response.body).not_to include("card-pin")
+    end
+
+    it "shows defrost copy, not the freeze copy, once the grantee's card is frozen" do
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(user_id: card_grant.stripe_card.user.id)
+      card_grant.stripe_card.update_columns(stripe_status: "inactive")
+      create_session(card_grant.user.reload, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response.body).to include("Card frozen")
+      expect(response.body).not_to include("Pause spending instantly")
+    end
+
+    it "shows a frozen notice above the card when the grantee's card is frozen" do
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(user_id: card_grant.stripe_card.user.id)
+      card_grant.stripe_card.update_columns(stripe_status: "inactive", initially_activated: true)
+      create_session(card_grant.user.reload, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response.body).to include("This card is frozen")
+      expect(response.body).to include("status bg-warning")
+    end
+
+    it "tells the grantee who to contact when someone else froze their card" do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+      organizer = create(:user)
+      create(:organizer_position, user: organizer, event:)
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(user_id: card_grant.stripe_card.user.id)
+      card_grant.setting.update!(support_url: "mailto:help@example.com")
+      card_grant.stripe_card.update_columns(event_id: event.id, stripe_status: "inactive", initially_activated: true, last_frozen_by_id: organizer.id)
+      create_session(card_grant.user.reload, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response.body).to include(ERB::Util.h("ask #{organizer.name} or a manager of #{event.name} to defrost it"))
+      expect(response.body).to include(ERB::Util.h("Ask a manager of #{event.name} to defrost it"))
+      expect(response.body).to include(ERB::Util.h("Email #{event.name}"))
+      expect(response.body).not_to include("You don&#39;t have permission")
+    end
+
+    it "explains a canceled grant to the grantee without the spending rules" do
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(user_id: card_grant.stripe_card.user.id, status: :canceled)
+      card_grant.stripe_card.update_columns(stripe_status: "canceled")
+      create_session(card_grant.user.reload, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("This grant has been canceled")
+      expect(response.body).to include("Canceled on")
+      expect(response.body).to include("Your card")
+      expect(response.body).to include("Upload a receipt for every purchase")
+      expect(response.body).not_to include("What you can spend it on")
+      expect(response.body).not_to include("Pause spending instantly")
+      expect(response.body).not_to include("grant-section__icon")
+    end
+
+    it "explains a grant canceled before the card was activated" do
+      card_grant = create(:card_grant, event:)
+      card_grant.update!(stripe_card: nil)
+      card_grant.update_columns(status: :canceled)
+      create_session(card_grant.user, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("canceled before the card was activated")
+      expect(response.body).not_to include("Activate your grant card")
+      expect(response.body).not_to include("Name on card")
+    end
+
+    it "explains an expired grant to an organizer" do
+      organizer = create(:user)
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(status: :expired)
+      card_grant.stripe_card.update_columns(stripe_status: "canceled")
+      create(:organizer_position, user: organizer, event:)
+      create_session(organizer, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("This grant expired on")
+      expect(response.body).to include("Expired on")
+      expect(response.body).to include("Spending controls")
+      expect(response.body).to include("status bg-muted")
+    end
+
+    it "links the grantee to the reimbursement report once converted" do
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(user_id: card_grant.stripe_card.user.id, status: :canceled)
+      card_grant.stripe_card.update_columns(stripe_status: "canceled")
+      create(:reimbursement_report, event:, user: card_grant.user.reload, card_grant:)
+      create_session(card_grant.user, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("converted into a reimbursement report")
+      expect(response.body).to include("View reimbursement report")
+      expect(response.body).not_to include("Name on card")
+      expect(response.body).not_to include("This grant has been canceled")
+    end
+
+    it "tells an organizer the grantee hasn't activated the grant yet" do
+      organizer = create(:user)
+      card_grant = create(:card_grant, event:)
+      card_grant.update!(stripe_card: nil)
+      create(:organizer_position, user: organizer, event:)
+      create_session(organizer, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("to activate this grant")
+      expect(response.body).to include("status bg-info")
+      expect(response.body).not_to include("Virtual card")
+    end
+
+    it "explains why cancel is disabled for a member who can't cancel" do
+      create(:organizer_position, event:, role: :manager)
+      member = create(:user)
+      create(:organizer_position, user: member, event:, role: :member)
+      card_grant = create(:card_grant, event:)
+      create_session(member, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response.body).to include("You don&#39;t have permission to perform this action")
+      expect(response.body).not_to include("Return the balance to")
+    end
+
+    it "shows the grantee help articles" do
+      card_grant = create(:card_grant, event:)
+      card_grant.update_columns(user_id: card_grant.stripe_card.user.id)
+      create_session(card_grant.user.reload, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response.body).to include("All articles")
+      expect(response.body).to include("My card was declined")
+      expect(response.body).to include("I&#39;m out of funds")
+      expect(response.body).to include("I have multiple grants")
+    end
+
+    it "keeps the grantee help articles off the organizer's view" do
+      organizer = create(:user)
+      card_grant = create(:card_grant, event:)
+      create(:organizer_position, user: organizer, event:)
+      create_session(organizer, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(response.body).not_to include("All articles")
+    end
+  end
+
   describe "read-only grant settings" do
     it "allows members to view, but not edit, grant settings" do
       member = create(:user)

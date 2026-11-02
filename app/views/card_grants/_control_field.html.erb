@@ -1,0 +1,16 @@
+<%# locals: (id:, label:, items:, empty:, inline_limit: 2) %>
+
+<div class="grant-strip__cell">
+  <span class="grant-strip__label"><%= label %></span>
+
+  <% if items.blank? %>
+    <p class="grant-strip__value"><%= empty %></p>
+  <% elsif items.size <= inline_limit %>
+    <p class="grant-strip__value"><%= items.to_sentence %></p>
+  <% else %>
+    <label class="grant-strip__value grant-disclosure" for="<%= id %>">
+      <%= pluralize(items.size, label.downcase.singularize) %>
+      <%= inline_icon "down-caret", size: 20, class: "grant-disclosure__caret" %>
+    </label>
+  <% end %>
+</div>

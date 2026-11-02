@@ -1,0 +1,106 @@
+<%# locals: (card_grant:) %>
+
+<%# One callout per grant state, so the hero badge, this notice and the sections
+    underneath always agree. Only states that need explaining get one: an
+    active, spendable grant shows nothing here. Suspected fraud is left to the
+    pre-authorization callout, which already carries the organizer's actions. %>
+
+<% own = card_grant.user == current_user %>
+<% stripe_card = card_grant.stripe_card %>
+<% event_name = card_grant.event.name %>
+
+<% canceled_by = card_grant.last_user_change_to(status: :canceled) if card_grant.canceled? %>
+<% canceled_at = card_grant.last_time_change_to(status: :canceled) if card_grant.canceled? %>
+<% canceled_when_by = capture do %>
+  <% if canceled_by %>by <%= user_mention canceled_by, disable_tooltip: true %><% end %>
+  <% if canceled_at %><span class="tooltipped tooltipped--n" aria-label="<%= canceled_at.to_formatted_s(:long) %>"><%= time_ago_in_words canceled_at %> ago</span><% end %>
+<% end %>
+
+<% if card_grant.converted_to_reimbursement_report? %>
+  <%= render "application/callout", type: "info", icon: "attachment", title: "This grant was converted into a reimbursement report" do %>
+    <p class="m-0">
+      Converted <%= canceled_when_by %>. The card no longer works; the money is paid out through the report instead.
+    </p>
+    <% if policy(card_grant.reimbursement_report).show? %>
+      <%= link_to "View reimbursement report", card_grant.reimbursement_report, class: "btn mt-3" %>
+    <% end %>
+  <% end %>
+
+<% elsif card_grant.canceled? %>
+  <%= render "application/callout", type: "info", color: "muted", icon: "forbidden", title: "This grant has been canceled" do %>
+    <p class="m-0">
+      Canceled <%= canceled_when_by %>.
+      <% if stripe_card.nil? %>
+        It was canceled before the card was activated, so nothing was ever charged to it.
+      <% else %>
+        The card no longer works, and the unspent balance went back to <%= event_name %>.
+        <% if own %>Any purchases you already made still need receipts, which you can upload below.<% end %>
+      <% end %>
+    </p>
+  <% end %>
+
+<% elsif card_grant.expired? %>
+  <%= render "application/callout", type: "info", color: "muted", icon: "clock", title: "This grant expired on #{format_date card_grant.expiration_at}" do %>
+    <p class="m-0">
+      <% if stripe_card.nil? %>
+        It expired before the card was activated, so nothing was ever charged to it.
+      <% else %>
+        The card no longer works, and the unspent balance went back to <%= event_name %>.
+        <% if own %>Any purchases you already made still need receipts, which you can upload below.<% end %>
+      <% end %>
+    </p>
+  <% end %>
+
+<% elsif card_grant.pending_invite? && !own %>
+  <%= render "application/callout", type: "info", icon: "email", title: "Waiting for #{card_grant.user.name} to activate this grant" do %>
+    <p class="m-0">
+      We emailed an invitation to <%= card_grant.email %>. The virtual card is issued as soon as they accept it, and nothing can be spent until then.
+    </p>
+  <% end %>
+
+<% elsif stripe_card&.frozen? %>
+  <% frozen_by = stripe_card.last_frozen_by if stripe_card.last_frozen_by && stripe_card.last_frozen_by != User.system_user %>
+  <%= render "application/callout", type: "warning", icon: "freeze", title: "This card is frozen" do %>
+    <p class="m-0">
+      <% if frozen_by %>
+        Frozen by <%= user_mention frozen_by, disable_tooltip: true %>.
+      <% end %>
+      Nothing can be charged to it until it's defrosted.
+      <% if policy(stripe_card).defrost? %>
+        You can defrost it from the controls below.
+      <% elsif card_grant.event.financially_frozen? || card_grant.user.locked? %>
+        Only the HCB team can defrost it. <%= help_message %>
+      <% elsif frozen_by && frozen_by != current_user %>
+        To use it again, ask <%= frozen_by.name %> or a manager of <%= event_name %> to defrost it.
+      <% else %>
+        To use it again, ask a manager of <%= event_name %> to defrost it.
+      <% end %>
+    </p>
+    <%# Grantees can't defrost a card someone else froze, so point them straight at whoever can.
+        The support modal lives in the controls, which only render for these viewers. %>
+    <% if (own || organizer_signed_in?(as: :member)) && !policy(stripe_card).defrost? && !card_grant.event.financially_frozen? && !card_grant.user.locked? %>
+      <% if card_grant.setting.support_message.present? %>
+        <button type="button" class="btn mt-3" data-behavior="modal_trigger" data-modal="support_card_grant_<%= card_grant.id %>">
+          <%= inline_icon "support" %>
+          Contact <%= event_name %>
+        </button>
+      <% elsif card_grant.setting.support_url.present? %>
+        <%= link_to card_grant.setting.support_url, target: "_blank", rel: "noopener", class: "btn mt-3" do %>
+          <%= inline_icon card_grant.setting.slack_support? ? "slack" : (card_grant.setting.email_support? ? "email" : "support") %>
+          <% if card_grant.setting.slack_support? %>
+            Contact <%= event_name %> on Slack
+          <% elsif card_grant.setting.email_support? %>
+            Email <%= event_name %>
+          <% else %>
+            Contact <%= event_name %>
+          <% end %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+<% elsif stripe_card&.inactive? && card_grant.pre_authorization.nil? %>
+  <%= render "application/callout", type: "warning", icon: "important", title: "This card isn't active yet" do %>
+    <p class="m-0">Nothing can be charged to it until it's activated.</p>
+  <% end %>
+<% end %>
