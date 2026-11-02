@@ -33,9 +33,20 @@
         <td><%= msg.id %></td>
         <td><%= msg.sent_at.strftime("%Y-%m-%d") %></td>
         <td>
-          <%= link_to "#",
-            data: { behavior: "modal_trigger", modal: "message_#{msg.id}" } do %>
-            <%= msg.subject %>
+          <% if restricted_email?(msg) %>
+            <%# The subject can be the secret itself; login codes are in it. The
+                mailer and action stand in as a hint at what the email was. %>
+            <%= link_to "#",
+              class: "muted flex items-center gap-1",
+              data: { behavior: "modal_trigger", modal: "message_#{msg.id}" } do %>
+              <%= inline_icon "private", size: 20 %>
+              <code><%= msg.mailer %></code>
+            <% end %>
+          <% else %>
+            <%= link_to "#",
+              data: { behavior: "modal_trigger", modal: "message_#{msg.id}" } do %>
+              <%= msg.subject %>
+            <% end %>
           <% end %>
         </td>
         <td>
@@ -55,8 +66,16 @@
 <% @messages.each do |msg| %>
   <section class="modal bg-snow" style="height: 60vh;" data-behavior="modal" role="dialog" id="message_<%= msg.id %>">
     <%= modal_header "Email to #{msg.user&.name || "unknown user"}" %>
-    <%= turbo_frame_tag dom_id(msg), src: url_for(controller: "admin", action: "email", message_id: msg.id), loading: "lazy" do %>
-      Loading...
+    <% if restricted_email?(msg) %>
+      <p class="muted">
+        This email contains sensitive information, such as a login code or password.
+        Only superadmins can view its contents. If you need access, ask a superadmin
+        or an engineer.
+      </p>
+    <% else %>
+      <%= turbo_frame_tag dom_id(msg), src: url_for(controller: "admin", action: "email", message_id: msg.id), loading: "lazy" do %>
+        Loading...
+      <% end %>
     <% end %>
   </section>
 <% end %>
