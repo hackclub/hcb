@@ -17,7 +17,3 @@ class GSuite
   end
 
 end
-
-module GSuiteJob
-  TransitionExpiredRevocations = GSuite::TransitionExpiredRevocationsJob
-end

@@ -159,6 +159,10 @@ module Admin
             path: pending_ledger_admin_index_path
           ),
           make_item(
+            name: "Ledger Items",
+            path: ledger_items_admin_index_path
+          ),
+          make_item(
             name: "Raw Transactions",
             path: raw_transactions_admin_index_path
           ),
