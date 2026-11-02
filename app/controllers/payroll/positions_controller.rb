@@ -7,7 +7,7 @@ module Payroll
     CONTRACT_RELEVANT_ATTRIBUTES = %w[title rate_cents rate_unit start_date end_date description combine_contract_attachment].freeze
 
     before_action :set_event, except: [:onboarding]
-    before_action :set_position, only: [:edit, :update, :contract, :terminate]
+    before_action :set_position, only: [:edit, :update, :contract, :renew, :create_renewal, :terminate]
 
     def show
       @position = @event.payroll_positions.find(params[:id])
@@ -16,7 +16,9 @@ module Payroll
       invoice_policy = policy(@position.invoices.build)
       @can_review = invoice_policy.approve?
       @can_upload_invoice = invoice_policy.on_behalf?
-      @invoices = @position.invoices.includes(:reviewed_by).order(created_at: :desc)
+      @renewal_chain = @position.renewal_chain
+      @renewal = @position.renewal
+      @invoices = @position.chain_invoices.includes(:reviewed_by, :payroll_position).order(created_at: :desc)
       @payments = @position.payee.payments.order(created_at: :desc)
 
       @position.contract&.party(:organizer)&.sync_with_docuseal
@@ -105,7 +107,8 @@ module Payroll
         title: position_params[:title],
         rate_cents: Monetize.parse(position_params[:rate]).cents,
         rate_unit: position_params[:rate_unit].presence,
-        start_date: position_params[:starts_on],
+        # A renewal always starts right after the contract it renews
+        start_date: (position_params[:starts_on] unless @position.renewal_of),
         end_date: position_params[:ends_on],
         description: position_params[:purpose],
         combine_contract_attachment: position_params[:combine_contract_attachment],
@@ -132,12 +135,56 @@ module Payroll
       end
     end
 
+    def renew
+      authorize @position
+      @renewal = @position.build_renewal
+      render layout: "transfer"
+    end
+
+    def create_renewal
+      authorize @position
+
+      @renewal = @position.build_renewal
+      @renewal.assign_attributes({
+        title: position_params[:title],
+        rate_cents: Monetize.parse(position_params[:rate]).cents,
+        rate_unit: position_params[:rate_unit].presence,
+        end_date: position_params[:ends_on],
+        description: position_params[:purpose],
+        combine_contract_attachment: position_params[:combine_contract_attachment],
+        manager_id: position_params[:manager_id]
+      }.compact)
+      attachment = Array(position_params[:file]).compact_blank.first
+      @renewal.file.attach(attachment) if attachment
+
+      # Locking the renewed position keeps two concurrent submissions from
+      # both passing the one-renewal-at-a-time check.
+      saved = @position.with_lock { @renewal.save }
+
+      if saved
+        @position = @renewal
+        if send_contract_for_position!
+          redirect_to contract_event_payroll_position_path(event_id: @event.slug, id: @position.id)
+        else
+          redirect_to edit_event_payroll_position_path(event_id: @event.slug, id: @position.id)
+        end
+      else
+        flash.now[:error] = @renewal.errors.full_messages.to_sentence
+        render :renew, layout: "transfer", status: :unprocessable_content
+      end
+    end
+
     def terminate
       authorize @position
 
-      @position.mark_terminated!
+      if @position.terminatable?
+        canceling_renewal = @position.unsigned_renewal?
+        @position.terminate!
 
-      flash[:success] = "Contractor position successfully terminated"
+        flash[:success] = canceling_renewal ? "Contract renewal canceled" : "Contractor position successfully terminated"
+      else
+        flash[:error] = "This contractor position can't be terminated"
+      end
 
       redirect_to event_payroll_position_path(event: @event, payroll_position: @position)
     end

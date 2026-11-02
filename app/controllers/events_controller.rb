@@ -970,10 +970,16 @@ class EventsController < ApplicationController
   def contractors
     authorize @event
 
-    @contractors = @event.payroll_positions.includes(:event, payee: :payments).order(created_at: :desc)
+    @contractors = @event.payroll_positions.current.includes(:event, payee: :payments).order(created_at: :desc)
 
     can_review = Payroll::PositionPolicy.new(current_user, @event).review?
-    @pending_invoice_counts = can_review ? @event.payroll_invoices.submitted.group(:payroll_position_id).count : {}
+    @pending_invoice_counts = can_review ? pending_invoice_counts_by_listed_position : {}
+
+    # Signed renewals of listed contracts that are still in effect, keyed by
+    # the contract they renew.
+    @upcoming_renewals = Payroll::Position.upcoming_renewals.onboarded
+                                          .where(renewal_of_id: @contractors.map(&:id))
+                                          .index_by(&:renewal_of_id)
 
     counts_by_status = @contractors.to_a.group_by(&:status).transform_values(&:count)
     @stats = {
@@ -1400,6 +1406,23 @@ class EventsController < ApplicationController
   end
 
   private
+
+  # A contractor's renewals are listed as one row, so their pending invoices
+  # are counted against whichever position in the chain is listed.
+  def pending_invoice_counts_by_listed_position
+    renewal_of_ids = @event.payroll_positions.pluck(:id, :renewal_of_id).to_h
+    root_ids = renewal_of_ids.keys.index_with do |id|
+      id = renewal_of_ids[id] while renewal_of_ids[id]
+      id
+    end
+
+    counts_by_root = Hash.new(0)
+    @event.payroll_invoices.submitted.group(:payroll_position_id).count.each do |position_id, count|
+      counts_by_root[root_ids[position_id]] += count
+    end
+
+    root_ids.transform_values { |root_id| counts_by_root[root_id] }
+  end
 
   def process_hidden_param!(params_hash)
     if params_hash[:hidden] == "1" && !@event.hidden_at.present?

@@ -4,11 +4,16 @@
   <%= render "payees/edit_section", event:, payee:, destination: "contractors", selected: params[:selected] %>
 <% else %>
   <% editing = position&.persisted? %>
+  <% renewal_of = position&.renewal_of %>
+  <% renewing = renewal_of.present? && !editing %>
   <% disabled = !policy(event).create_transfer? %>
   <% @can_transfer = !disabled %>
 
   <% if disabled %>
-    <%= render partial: "events/unauthorized_callout", locals: { action: editing ? "edit this contractor" : "invite a contractor" } %>
+    <% action = "invite a contractor" %>
+    <% action = "renew this contract" if renewing %>
+    <% action = "edit this contractor" if editing %>
+    <%= render partial: "events/unauthorized_callout", locals: { action: } %>
   <% else %>
     <%= content_for :sidebar_footer do %>
       <%= render "application/callout", type: "info", title: "About contractor payments", class: "mt-2" do %>
@@ -22,7 +27,7 @@
 
   <% unless disabled && payee.nil? %>
     <div data-controller="payee-picker manual-payee">
-      <% if editing %>
+      <% if editing || renewing %>
         <div data-scroll-seek-target="section">
           <h3 class="mb-2">Recipient</h3>
           <div class="card mb-4 flex gap-3 items-center">
@@ -38,9 +43,11 @@
               manual_title: "Manual", manual_subtitle: "Tax forms and payment details entered directly" %>
       <% end %>
 
-      <% form_url = editing ? event_payroll_position_path(event_id: event.slug, id: position.id) : event_payroll_positions_path(event_id: event.slug) %>
+      <% form_url = event_payroll_positions_path(event_id: event.slug) %>
+      <% form_url = renew_event_payroll_position_path(event_id: event.slug, id: renewal_of.id) if renewing %>
+      <% form_url = event_payroll_position_path(event_id: event.slug, id: position.id) if editing %>
       <%= form_with(url: form_url, method: editing ? :patch : :post, scope: :contractor, local: true, class: ("hidden" unless payee),
-            html: { "x-data": "{ hasAttachment: #{editing && position.file.attached? ? "true" : "false"} }" }) do |form| %>
+            html: { "x-data": "{ hasAttachment: #{(editing || renewing) && position.file.attached? ? "true" : "false"} }" }) do |form| %>
         <%= form.hidden_field :payee_id, value: payee&.hashid %>
         <%= hidden_field_tag "manual", (payee&.managed? || false).to_s, data: { "manual-payee-target": "manualField" } %>
 
@@ -97,13 +104,23 @@
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
               <div class="pr-5">
                 <%= form.label :starts_on, "Duration" %>
-                <span class="muted block">Up to <%= Payroll::Position::MAX_DURATION.inspect %>, starting within <%= Payroll::Position::MAX_START_LEAD_TIME.inspect %></span>
+                <% if renewal_of %>
+                  <span class="muted block">Up to <%= Payroll::Position::MAX_DURATION.inspect %>, following the current contract</span>
+                <% else %>
+                  <span class="muted block">Up to <%= Payroll::Position::MAX_DURATION.inspect %>, starting within <%= Payroll::Position::MAX_START_LEAD_TIME.inspect %></span>
+                <% end %>
               </div>
               <div class="flex items-center gap-2">
-                <%= form.date_field :starts_on, value: position&.start_date, required: true, disabled:,
-                      max: (Date.current + Payroll::Position::MAX_START_LEAD_TIME).iso8601 %>
+                <%# A renewal's start date follows the contract it renews, so it can't be changed %>
+                <% if renewal_of %>
+                  <%= form.date_field :starts_on, value: position.start_date, disabled: true %>
+                <% else %>
+                  <%= form.date_field :starts_on, value: position&.start_date, required: true, disabled:,
+                        max: (Date.current + Payroll::Position::MAX_START_LEAD_TIME).iso8601 %>
+                <% end %>
                 <span class="muted">to</span>
-                <%= form.date_field :ends_on, value: position&.end_date, required: true, disabled: %>
+                <%= form.date_field :ends_on, value: position&.end_date, required: true, disabled:,
+                      min: (position.start_date + 1.day if renewal_of), max: (position.start_date + Payroll::Position::MAX_DURATION if renewal_of) %>
               </div>
             </div>
 
@@ -130,10 +147,10 @@
 
             <div class="menu__divider my-0"></div>
 
-            <% if editing && position.file.attached? %>
+            <% if (editing || renewing) && position.file.attached? %>
               <p class="muted text-sm m-0">
                 Current attachment:
-                <%= link_to position.file.blob.filename, url_for(position.file), target: "_blank", class: "font-medium" %>. Uploading a new file replaces it.
+                <%= link_to position.file.blob.filename, rails_blob_path(position.file.blob), target: "_blank", class: "font-medium" %>. Uploading a new file replaces it.
               </p>
             <% end %>
 
@@ -144,7 +161,7 @@
 
             <div x-show="hasAttachment" x-transition x-cloak>
               <%= form.label :combine_contract_attachment do %>
-                <%= form.check_box :combine_contract_attachment, checked: editing ? position.combine_contract_attachment : true %>
+                <%= form.check_box :combine_contract_attachment, checked: editing || renewing ? position.combine_contract_attachment : true %>
                 Combine attachment with
                 <%= link_to "HCB's standard contracting agreement", "https://cdn.hackclub.com/01a0983f-2439-7df6-93fb-5b24bc12cc88/hcb_contractor_agreement.pdf", target: "_blank" %>
               <% end %>

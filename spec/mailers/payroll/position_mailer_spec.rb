@@ -52,4 +52,34 @@ RSpec.describe Payroll::PositionMailer, type: :mailer do
       end
     end
   end
+
+  describe "renewals" do
+    let(:event) { create(:event) }
+    let(:payee) { create(:payee, event:) }
+    let(:position) do
+      create(:payroll_position, payee:, aasm_state: "onboarded", onboarded_at: 1.month.ago,
+                                start_date: 1.month.ago.to_date, end_date: 2.months.from_now.to_date)
+    end
+    let(:renewal) { position.build_renewal.tap(&:save!) }
+
+    it "asks the contractor to sign the renewal, noting they can keep invoicing until the current contract ends" do
+      mail = described_class.with(position: renewal).onboarding
+
+      expect(mail.subject).to eq("[Action Required] Sign your renewed contract with #{event.name}")
+      expect(mail.body.encoded).to include(position.end_date.to_fs(:long))
+    end
+
+    it "tells organizers the contract was renewed once it's signed" do
+      mail = described_class.with(position: renewal).onboarded
+
+      expect(mail.subject).to eq("#{payee.display_name}'s contract with #{event.name} has been renewed")
+    end
+
+    it "tells the contractor a canceled renewal leaves their current contract in place" do
+      mail = described_class.with(position: renewal).terminated
+
+      expect(mail.subject).to eq("The renewal of your contract with #{event.name} has been canceled")
+      expect(mail.body.encoded).to include("Your current contract is unaffected")
+    end
+  end
 end

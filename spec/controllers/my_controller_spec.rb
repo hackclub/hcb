@@ -343,5 +343,45 @@ RSpec.describe MyController do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(settings_payouts_path(legal_entity_id: legal_entity.id))
     end
+
+    it "hides a signed renewal until it starts, but shows one that still needs signing" do
+      user = sign_in_verified
+      legal_entity = create(:legal_entity, :business)
+      create(:legal_entity_user, user:, legal_entity:)
+      payee = create(:payee, legal_entity:)
+      position = create(:payroll_position, payee:, aasm_state: "onboarded", onboarded_at: 1.month.ago,
+                                           start_date: 1.month.ago.to_date, end_date: 2.months.from_now.to_date)
+      renewal = position.build_renewal.tap(&:save!)
+      renewal.update!(aasm_state: "onboarding")
+
+      get :pay, params: { legal_entity_id: legal_entity.id }
+      get :pay
+      expect(controller.instance_variable_get(:@contractor_positions)).to contain_exactly(position, renewal)
+
+      renewal.update!(aasm_state: "onboarded", onboarded_at: Time.current)
+
+      get :pay
+      expect(controller.instance_variable_get(:@contractor_positions)).to contain_exactly(position)
+    end
+
+    it "hides a contract once its renewal has started, but keeps its pending invoices" do
+      user = sign_in_verified
+      legal_entity = create(:legal_entity, :business)
+      create(:legal_entity_user, user:, legal_entity:)
+      payee = create(:payee, legal_entity:)
+      position = create(:payroll_position, payee:, aasm_state: "onboarded", onboarded_at: 1.month.ago,
+                                           start_date: 1.month.ago.to_date, end_date: 2.months.from_now.to_date)
+      invoice = position.invoices.create!(name: "September work", amount_cents: 50_00, currency: position.currency)
+      renewal = position.build_renewal.tap(&:save!)
+      renewal.update!(aasm_state: "onboarded", onboarded_at: Time.current)
+
+      position.update_columns(aasm_state: "expired", end_date: Date.yesterday)
+      renewal.update_columns(start_date: Date.current)
+
+      get :pay, params: { legal_entity_id: legal_entity.id }
+      get :pay
+      expect(controller.instance_variable_get(:@contractor_positions)).to contain_exactly(renewal)
+      expect(controller.instance_variable_get(:@invoices)).to contain_exactly(invoice)
+    end
   end
 end

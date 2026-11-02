@@ -8,8 +8,14 @@ module Payroll
       @payee = @position.payee
       @event = @position.event
 
+      subject = if @position.renewal_of
+                  "[Action Required] Sign your renewed contract with #{@event.name}"
+                else
+                  "[Action Required] Complete your onboarding to get paid as a contractor for #{@event.name}"
+                end
+
       mail to: recipients,
-           subject: "[Action Required] Complete your onboarding to get paid as a contractor for #{@event.name}",
+           subject:,
            reply_to: reply_to_addresses
     end
 
@@ -27,15 +33,26 @@ module Payroll
     def onboarded
       @position = params[:position]
 
-      mail to: @position.event.organizer_contact_emails(only_managers: true),
-           subject: "#{@position.payee.display_name} has been onboarded as a contractor for #{@position.event.name}"
+      subject = if @position.renewal_of
+                  "#{@position.payee.display_name}'s contract with #{@position.event.name} has been renewed"
+                else
+                  "#{@position.payee.display_name} has been onboarded as a contractor for #{@position.event.name}"
+                end
+
+      mail to: @position.event.organizer_contact_emails(only_managers: true), subject:
     end
 
     def terminated
       @position = params[:position]
       @payee = @position.payee
 
-      mail to: recipients, subject: "Your contracting position for #{@position.event.name} has been terminated"
+      subject = if @position.unsigned_renewal?
+                  "The renewal of your contract with #{@position.event.name} has been canceled"
+                else
+                  "Your contracting position for #{@position.event.name} has been terminated"
+                end
+
+      mail to: recipients, subject:
     end
 
     private

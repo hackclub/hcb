@@ -1,5 +1,14 @@
 <p>Hello,</p>
 
+<% if @position.unsigned_renewal? %>
+<p>
+  The renewal of your contracting position "<%= @position.title %>" for <%= @position.event.name %> has been canceled,
+  so you no longer need to sign it.
+  <% if @position.renewal_of.onboarded? %>
+    Your current contract is unaffected and runs through <%= @position.renewal_of.end_date.to_fs(:long) %>.
+  <% end %>
+</p>
+<% else %>
 <p>
   Your contracting position "<%= @position.title %>" for <%= @position.event.name %> has been terminated early,
   and you will no longer be able to submit invoices for this position.
@@ -8,6 +17,7 @@
     Any pending invoices or payments for this position may still be reviewed or processed, unless otherwise noted.
   <% end %>
 </p>
+<% end %>
 
 <p>
   If you have any questions, please contact <%= @position.event.name %>.

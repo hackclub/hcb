@@ -3,9 +3,14 @@
 <% @back_url = event_contractors_path(event_id: @event.slug) %>
 
 <% content_for :table_of_contents do %>
-  <%= render "events/transfers/step_item", number: 1, label: "Recipient", seek: false, current: false %>
-  <%= render "events/transfers/step_item", number: 2, label: "Contract details", seek: false, current: false %>
-  <%= render "events/transfers/step_item", number: 3, label: "Sign & invite", seek: false, current: true %>
+  <% if @position.renewal_of %>
+    <%= render "events/transfers/step_item", number: 1, label: "Contract details", seek: false, current: false %>
+    <%= render "events/transfers/step_item", number: 2, label: "Sign & renew", seek: false, current: true %>
+  <% else %>
+    <%= render "events/transfers/step_item", number: 1, label: "Recipient", seek: false, current: false %>
+    <%= render "events/transfers/step_item", number: 2, label: "Contract details", seek: false, current: false %>
+    <%= render "events/transfers/step_item", number: 3, label: "Sign & invite", seek: false, current: true %>
+  <% end %>
 <% end %>
 
 <% if @organizer_party.pending? %>
@@ -16,11 +21,11 @@
       <%= render partial: "contract/parties/docuseal_embed", locals: { party: @organizer_party } %>
 
       <p class="muted text-sm mb-6 -mt-4">
-        Once HCB signs, we'll invite <%= @position.payee_display_name %> to sign and complete onboarding.
+        Once HCB signs, we'll invite <%= @position.payee_display_name %> to <%= @position.renewal_of ? "sign the renewed contract" : "sign and complete onboarding" %>.
       </p>
 
       <%= form_with url: event_payroll_position_path(event_id: @event.slug, id: @position.id), method: :get do |form| %>
-        <%= form.submit "Invite contractor", class: "gap-2 btn w-full bg-blue", disabled: true, data: { "contract-target": "button" } %>
+        <%= form.submit @position.renewal_of ? "Continue" : "Invite contractor", class: "gap-2 btn w-full bg-blue", disabled: true, data: { "contract-target": "button" } %>
       <% end %>
     </div>
   <% else %>
@@ -38,8 +43,8 @@
 
 <% else %>
   <%= render "application/callout", type: "success", title: "You've signed this contract" do %>
-    <p class="my-0">HCB will sign, then we'll invite <%= @position.payee_display_name %> to sign and complete onboarding.</p>
+    <p class="my-0">HCB will sign, then we'll invite <%= @position.payee_display_name %> to <%= @position.renewal_of ? "sign the renewed contract" : "sign and complete onboarding" %>.</p>
   <% end %>
 
-  <%= link_to "Invite contractor", event_contractors_path(event_id: @event.slug), class: "gap-2 btn w-full bg-blue mt-2" %>
+  <%= link_to @position.renewal_of ? "Continue" : "Invite contractor", event_contractors_path(event_id: @event.slug), class: "gap-2 btn w-full bg-blue mt-2" %>
 <% end %>

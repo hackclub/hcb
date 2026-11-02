@@ -258,4 +258,204 @@ RSpec.describe Payroll::Position, type: :model do
       expect(hcb_party.reload).to be_signed
     end
   end
+
+  describe "renewals" do
+    let(:payee) { create(:payee) }
+    let(:position) do
+      create(:payroll_position, payee:, aasm_state: "onboarded", onboarded_at: 1.month.ago,
+                                start_date: 1.month.ago.to_date, end_date: 2.months.from_now.to_date)
+    end
+
+    def create_renewal(of: position, **attrs)
+      of.build_renewal.tap { |renewal| renewal.assign_attributes(attrs) }.tap(&:save!)
+    end
+
+    describe "#renewable?" do
+      it "is renewable while active or once expired" do
+        expect(position).to be_renewable
+
+        position.update!(aasm_state: "expired")
+        expect(position).to be_renewable
+      end
+
+      %w[under_review onboarding terminated rejected].each do |aasm_state|
+        it "is not renewable when #{aasm_state}" do
+          position.update!(aasm_state:)
+          expect(position).not_to be_renewable
+        end
+      end
+
+      it "is not renewable again while a renewal is in progress" do
+        create_renewal
+        expect(position).not_to be_renewable
+      end
+
+      it "is not renewable while the renewal would start beyond the usual lead time" do
+        position.update_columns(end_date: 7.months.from_now.to_date)
+        expect(position).not_to be_renewable
+
+        position.update_columns(end_date: 5.months.from_now.to_date)
+        expect(position).to be_renewable
+      end
+
+      it "is not renewable once it lapsed too long ago" do
+        position.update!(aasm_state: "expired", start_date: 6.months.ago.to_date, end_date: 3.months.ago.to_date)
+        expect(position).to be_renewable
+
+        position.update_columns(end_date: (3.months.ago - 1.day).to_date)
+        expect(position).not_to be_renewable
+      end
+
+      it "is not renewable once its payee is archived" do
+        payee.update!(archived_at: Time.current)
+        expect(position).not_to be_renewable
+      end
+
+      it "is renewable again once a renewal is rejected" do
+        create_renewal.update!(aasm_state: "rejected")
+        expect(position).to be_renewable
+      end
+    end
+
+    describe "#build_renewal" do
+      it "starts the day after the current contract ends and carries its terms over" do
+        renewal = position.build_renewal
+
+        expect(renewal.start_date).to eq(position.end_date + 1.day)
+        expect(renewal.end_date - renewal.start_date).to eq(position.end_date - position.start_date)
+        expect(renewal).to have_attributes(payee:, title: position.title, rate_cents: position.rate_cents, description: position.description)
+      end
+
+      it "starts today when the contract has already expired" do
+        position.update!(aasm_state: "expired", start_date: 6.months.ago.to_date, end_date: 3.months.ago.to_date)
+
+        expect(position.build_renewal.start_date).to eq(Date.current)
+      end
+
+
+      it "still limits the renewed term to the max duration" do
+        renewal = position.build_renewal
+        renewal.end_date = renewal.start_date + 1.year + 1.day
+
+        expect(renewal).to be_invalid
+        expect(renewal.errors[:end_date]).to include("cannot be more than 1 year after the start date")
+      end
+
+      it "can't overlap the contract it renews" do
+        renewal = position.build_renewal
+        renewal.start_date = position.end_date
+
+        expect(renewal).to be_invalid
+        expect(renewal.errors[:start_date]).to include("must be after the previous contract ends")
+      end
+    end
+
+    describe ".current" do
+      it "lists the renewed contract until its renewal has been signed and started" do
+        renewal = create_renewal
+
+        expect(described_class.current).to contain_exactly(position)
+
+        renewal.update!(aasm_state: "onboarded", onboarded_at: Time.current)
+        expect(described_class.current).to contain_exactly(position)
+
+        travel_to(renewal.start_date) do
+          expect(described_class.current).to contain_exactly(renewal)
+        end
+      end
+    end
+
+    describe "#status" do
+      it "shows a signed renewal as upcoming until it starts" do
+        renewal = create_renewal
+        renewal.update!(aasm_state: "onboarded", onboarded_at: Time.current)
+
+        expect(renewal.status_text).to eq("Upcoming")
+
+        travel_to(renewal.start_date) do
+          expect(renewal.status_text).to eq("Active")
+        end
+      end
+    end
+
+    describe "#accepting_invoices?" do
+      it "doesn't take invoices on a signed renewal until it starts" do
+        renewal = create_renewal
+        renewal.update!(aasm_state: "onboarded", onboarded_at: Time.current)
+
+        expect(position).to be_accepting_invoices
+        expect(renewal).not_to be_accepting_invoices
+
+        travel_to(renewal.start_date) do
+          expect(renewal).to be_accepting_invoices
+        end
+      end
+    end
+
+    describe "#renewal_chain" do
+      it "includes every renewal, but not ones that never took effect" do
+        create_renewal.update!(aasm_state: "rejected")
+        renewal = create_renewal
+        renewal.update!(aasm_state: "onboarded", onboarded_at: Time.current)
+        second_renewal = create_renewal(of: renewal)
+
+        expect(position.renewal_chain).to eq([position, renewal, second_renewal])
+        expect(second_renewal.renewal_chain).to eq([position, renewal, second_renewal])
+      end
+    end
+
+    describe "#terminate!" do
+      it "cancels only an unsigned renewal, leaving the current contract running" do
+        renewal = create_renewal(aasm_state: "onboarding")
+
+        expect { renewal.terminate! }.to have_enqueued_mail(Payroll::PositionMailer, :terminated).once
+
+        expect(renewal.reload).to be_terminated
+        expect(position.reload).to be_onboarded
+      end
+
+      it "leaves the current contract running when a signed renewal is terminated before it starts" do
+        renewal = create_renewal
+        renewal.update!(aasm_state: "onboarded", onboarded_at: Time.current)
+
+        expect { renewal.terminate! }.to have_enqueued_mail(Payroll::PositionMailer, :terminated).once
+
+        expect(renewal.reload).to be_terminated
+        expect(position.reload).to be_onboarded
+      end
+
+      it "ends a signed renewal along with the contract it renews, emailing once" do
+        renewal = create_renewal
+        renewal.update!(aasm_state: "onboarded", onboarded_at: Time.current)
+
+        expect { position.terminate! }.to have_enqueued_mail(Payroll::PositionMailer, :terminated).once
+
+        expect(position.reload).to be_terminated
+        expect(renewal.reload).to be_terminated
+      end
+
+      it "ends a pending renewal along with the contract it renews" do
+        renewal = create_renewal
+
+        position.terminate!
+
+        expect(position.reload).to be_terminated
+        expect(renewal.reload).to be_terminated
+      end
+    end
+
+    describe "#terminatable?" do
+      it "is terminatable while it or a renewal of it can still be terminated" do
+        renewal = create_renewal
+        renewal.update!(aasm_state: "onboarded", onboarded_at: Time.current)
+        position.update!(aasm_state: "expired")
+
+        expect(position).to be_terminatable
+        expect(renewal).to be_terminatable
+
+        renewal.update!(aasm_state: "terminated")
+        expect(position).not_to be_terminatable
+      end
+    end
+  end
 end
