@@ -69,11 +69,37 @@ module InvoicesHelper
   def invoice_card_country_mention(invoice = @invoice)
     country_code = invoice&.payment_method_card_country
 
-    country_to_emoji(country_code) if country_code
+    return nil unless country_code
+
+    # Hack to turn country code into the country's flag
+    # https://stackoverflow.com/a/50859942
+    emoji = country_code.tr("A-Z", "\u{1F1E6}-\u{1F1FF}")
+
+    content_tag :span, emoji, class: "tooltipped tooltipped--w pr1", 'aria-label': country_code
   end
 
   def invoice_card_check_badge(check, invoice = @invoice)
-    card_check_badge invoice.send("payment_method_card_checks_#{check}_check")
+    case invoice.send("payment_method_card_checks_#{check}_check")
+    when "pass"
+      background = "success"
+      icon_name = "checkmark"
+      text = "Passed"
+    when "failed"
+      background = "warning"
+      icon_name = "view-close"
+      text = "Failed"
+    when "unchecked"
+      background = "info"
+      icon_name = "checkbox"
+      text = "Unchecked"
+    else
+      background = "smoke"
+      icon_name = "checkbox"
+      text = "Unavailable"
+    end
+
+    tag = inline_icon icon_name, size: 24
+    content_tag(:span, class: "pr1 #{background} line-height-0 tooltipped tooltipped--w", 'aria-label': text) { tag }
   end
 
   # this information is visible to admins only because payouts should feel instant to the user
