@@ -183,6 +183,16 @@ class Ledger
       linked_object_type != "Reimbursement::ExpensePayout"
     end
 
+    # Tags are event-scoped. When this item is remapped to a different event, any
+    # tag belonging to an event it no longer touches is orphaned (hidden on the
+    # new org's event-filtered views and impossible to remove via `toggle_tag`),
+    # so drop those rows. Called from Ledger::Mapping.map_primary! on a remap.
+    def prune_tags_outside_event!(event:)
+      return if event.nil?
+
+      ledger_item_tags.where.not(tag_id: event.tags.select(:id)).delete_all
+    end
+
     # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
     # refresh! will update all cached aspects of a ledger item after this non-caching change occurs.
     # refresh! should not update any non-caching columns

@@ -70,9 +70,15 @@ class Ledger
       end
 
       Ledger::Mapping.find_or_initialize_by(ledger_item:, on_primary_ledger: true).tap do |mapping|
+        # A remap moves an already-mapped item to a different primary ledger. The
+        # initial mapping (new record) and a re-map to the same ledger aren't.
+        remapped = mapping.persisted? && mapping.ledger_id != ledger&.id
+
         mapping.ledger = ledger
         mapping.mapped_by = mapped_by
         mapping.save!
+
+        ledger_item.prune_tags_outside_event!(event: ledger&.event || ledger&.card_grant&.event) if remapped
       end
     end
 
