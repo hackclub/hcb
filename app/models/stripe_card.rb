@@ -14,6 +14,7 @@
 #  lost_in_shipping                      :boolean          default(FALSE)
 #  name                                  :string
 #  purchased_at                          :datetime
+#  replacement_reason                    :string
 #  spending_limit_amount                 :integer
 #  spending_limit_interval               :integer
 #  stripe_brand                          :text
@@ -103,6 +104,8 @@ class StripeCard < ApplicationRecord
 
   enum :card_type, { virtual: 0, physical: 1 }
   enum :spending_limit_interval, { daily: 0, weekly: 1, monthly: 2, yearly: 3, per_authorization: 4, all_time: 5 }
+  # https://docs.stripe.com/issuing/cards/replacements
+  enum :replacement_reason, { expired: "expired", damaged: "damaged", lost: "lost", stolen: "stolen" }, prefix: :replaced_for, validate: { allow_nil: true }
 
   delegate :stripe_name, to: :stripe_cardholder
 
@@ -125,6 +128,7 @@ class StripeCard < ApplicationRecord
                         :stripe_status,
                         if: -> { self.stripe_id.present? }
 
+  validates :replacement_reason, presence: true, if: :replacement_for_id?, on: :create
   validate :only_physical_cards_can_be_lost_in_shipping
   validate :only_physical_cards_can_have_personalization_design
   validate :personalization_design_must_be_of_the_same_event
@@ -352,6 +356,7 @@ class StripeCard < ApplicationRecord
 
     if stripe_obj[:replacement_for]
       self.replacement_for = StripeCard.find_by(stripe_id: stripe_obj[:replacement_for])
+      self.replacement_reason = stripe_obj[:replacement_reason]
     end
 
     self

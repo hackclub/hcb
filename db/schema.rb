@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_30_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_01_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -2598,6 +2598,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_120000) do
     t.string "name"
     t.datetime "purchased_at", precision: nil
     t.bigint "replacement_for_id"
+    t.string "replacement_reason"
     t.integer "spending_limit_amount"
     t.integer "spending_limit_interval"
     t.text "stripe_brand"
