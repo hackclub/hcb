@@ -855,8 +855,6 @@ Rails.application.routes.draw do
   post "discord/unlink_user", to: "discord#unlink_user_action"
   post "discord/create_server_link", to: "discord#create_server_link"
 
-  post "extract/invoice", to: "extraction#invoice"
-
   get "negative_events", to: "admin#negative_events"
 
   get "admin_task_size", to: "admin#task_size"
