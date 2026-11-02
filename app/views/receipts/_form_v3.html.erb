@@ -114,12 +114,30 @@
     <% if defined?(receiptable) && (receiptable&.missing_receipt? || (admin_signed_in? && !receiptable&.no_or_lost_receipt?)) %>
       <div class="flex muted justify-end items-center mt1">
         <%= inline_icon "forbidden", size: 20 %>
-        <%= link_to receiptable_mark_no_or_lost_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, s: local_assigns[:secret]), data: { turbo_method: :post } do %>
+        <% lost_receipt_path = receiptable_lost_receipt_path(receiptable_type: receiptable.class, receiptable_id: receiptable.id, s: local_assigns[:secret]) %>
+        <%= link_to lost_receipt_path, data: { behavior: "modal_trigger", modal: "lost_receipt_#{instance}" } do %>
           <small class="mt0 mb0">
             No/lost receipt?
           </small>
         <% end %>
       </div>
+      <section
+        class="modal modal--scroll bg-snow"
+        data-behavior="modal"
+        role="dialog"
+        aria-label="Lost receipt statement"
+        id="lost_receipt_<%= instance %>"
+        x-data
+        x-on:dragenter.stop
+        x-on:dragover.prevent.stop
+        x-on:dragleave.stop
+        x-on:drop.prevent.stop
+        x-on:paste.stop>
+        <%= modal_header "Lost receipt statement" %>
+        <%= turbo_frame_tag "lost_receipt_#{receiptable.class.name.underscore.tr('/', '_')}_#{receiptable.id}", src: lost_receipt_path, loading: :lazy, target: "_top" do %>
+          <p>Loading...</p>
+        <% end %>
+      </section>
     <% end %>
   </div>
 

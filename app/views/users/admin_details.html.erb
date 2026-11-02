@@ -1,5 +1,10 @@
 <%= turbo_frame_tag :admin_details do %>
   <div class="flex flex-col gap-4">
+    <% admin_tool "p-3" do %>
+      <h3 class="mb2 mt1">Lost receipt statements</h3>
+      <p><%= pluralize @user.receipts.lost_receipt_statement.count, "lost receipt statement" %> on file.</p>
+    <% end %>
+
     <%= turbo_frame_tag :admin_details_missing_receipts, src: admin_details_missing_receipts_user_path(@user), loading: :lazy do %>
       <% admin_tool "p-3" do %>
         <p>Loading user's missing receipts</p>

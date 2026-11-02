@@ -2,32 +2,52 @@
 
 class ReceiptablesController < ApplicationController
   # Emailed receipt requests link to a signed upload page that doesn't require
-  # signing in. Marking no/lost receipt from that page shouldn't either.
-  skip_before_action :signed_in_user, only: :mark_no_or_lost
+  # signing in. Submitting a lost receipt statement shouldn't either.
+  skip_before_action :signed_in_user, only: [:lost_receipt, :mark_no_or_lost]
   before_action :set_receiptable
+  before_action :authorize_receiptable
+
+  def lost_receipt
+    @statement = LostReceipt::Statement.new(
+      date: @receiptable.try(:date) || @receiptable.try(:datetime)&.to_date,
+      merchant: @receiptable.try(:memo),
+      signer_name: current_user&.full_name,
+      submitter: current_user
+    )
+    @statement.items.build(quantity: 1)
+  end
 
   def mark_no_or_lost
-    # Always run the policy, even for the signed link, so that Pundit's
-    # `verify_authorized` can stay on: an action that forgets to authorize now
-    # fails loudly rather than silently allowing the request through.
-    begin
-      authorize @receiptable, policy_class: ReceiptablePolicy
-    rescue Pundit::NotAuthorizedError
-      raise unless from_signed_link?
-    end
+    receiptable = @receiptable.is_a?(Ledger::Item) ? (@receiptable.hcb_code || raise(ActiveRecord::RecordNotFound)) : @receiptable
+    @statement = LostReceipt::Statement.new(statement_params)
+    @statement.submitter = current_user
 
-    if @receiptable.no_or_lost_receipt!
-      flash[:success] = "Marked no/lost receipt on that transaction."
-      # Signed link visitors can't view the transaction itself, so send them
-      # back where they came from, reusing the secret they arrived with.
+    if @statement.submit(receiptable:)
+      flash[:success] = "Lost receipt statement added."
+      # Signed link visitors can't view the transaction itself.
       redirect_to from_signed_link? ? attach_receipt_hcb_code_path(@receiptable, s: params[:s]) : @receiptable
     else
-      flash[:error] = "Failed to mark that transaction as no/lost receipt."
-      redirect_back(fallback_location: @receiptable)
+      render :lost_receipt, status: :unprocessable_entity
     end
   end
 
   private
+
+  def statement_params
+    params.fetch(:lost_receipt_statement, {}).permit(:date, :merchant, :purpose, :signer_name, :confirmed,
+                                                     items_attributes: [:description, :quantity, :unit_amount, :unit_amount_cents])
+  end
+
+  def authorize_receiptable
+    # Always run the policy, even for the signed link, so that Pundit's
+    # `verify_authorized` can stay on: an action that forgets to authorize now
+    # fails loudly rather than silently allowing the request through.
+    begin
+      authorize @receiptable, :mark_no_or_lost?, policy_class: ReceiptablePolicy
+    rescue Pundit::NotAuthorizedError
+      raise unless from_signed_link?
+    end
+  end
 
   RECEIPTABLE_TYPE_MAP = [HcbCode, CanonicalTransaction, Transaction, StripeAuthorization,
                           EmburseTransaction, Reimbursement::Expense, Reimbursement::Expense::Mileage, Reimbursement::Expense::Fee,

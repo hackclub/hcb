@@ -126,6 +126,7 @@ Rails.application.routes.draw do
     end
   end
 
+  get "receiptable/:receiptable_type/:receiptable_id/lost_receipt", to: "receiptables#lost_receipt", as: :receiptable_lost_receipt
   post "receiptable/:receiptable_type/:receiptable_id/mark_no_or_lost", to: "receiptables#mark_no_or_lost", as: :receiptable_mark_no_or_lost
 
   # Feature-flags

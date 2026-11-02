@@ -13,6 +13,22 @@ RSpec.describe Receipt, type: :model do
     end
   end
 
+  it "rejects an ordinary PDF upload claiming to be a lost receipt statement" do
+    charge = create(:canonical_pending_transaction).local_hcb_code
+    charge.no_or_lost_receipt!
+    pdf = WickedPdf.new.pdf_from_string("<p>An ordinary uploaded PDF</p>")
+    file = Rack::Test::UploadedFile.new(StringIO.new(pdf), "application/pdf", original_filename: "receipt.pdf")
+
+    expect {
+      ReceiptService::Create.new(receiptable: charge, uploader: create(:user), attachments: [file], upload_method: "lost_receipt_statement").run!
+    }.to raise_error(ActiveRecord::RecordInvalid, /Lost receipt statement/)
+
+    expect(charge.receipts).to be_empty
+    expect(charge.reload).to be_no_or_lost_receipt
+    expect(charge.ledger_item.reload).to be_no_or_lost_receipt
+    expect(LostReceipt::Statement.count).to eq(0)
+  end
+
   describe "card locking" do
     include_context "card locking charges"
 
