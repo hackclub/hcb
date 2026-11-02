@@ -1,3 +1,7 @@
+# All cron expressions here are evaluated in UTC. sidekiq-cron passes them to
+# Fugit, which uses ENV["TZ"], then Rails' Time.zone, then the OS zone; none of
+# those are set to anything other than UTC for HCB.
+
 g_suite_mark_verifieds_job:
   cron: "*/5 * * * *" # run every 5 minutes
   class: "GSuite::MarkVerifiedsJob"
@@ -42,6 +46,10 @@ transaction_grouping_engine_nightly_job:
   cron: "*/5 * * * *" # run every 5 minutes
   class: "TransactionGroupingEngine::NightlyJob"
 
+money_printer_stats_job:
+  cron: "*/15 * * * *" # run every 15 minutes
+  class: "MoneyPrinterStatsJob"
+
 sync_payouts_job:
   cron: "0,30 * * * *" # run every 30 minutes
   class: "SyncPayoutsJob"
@@ -59,7 +67,7 @@ disbursement_nightly_job:
   class: "Disbursement::NightlyJob"
 
 disbursement_daily_job:
-  cron: "0 13 * * *" # runs at 9am ET
+  cron: "0 13 * * *" # run every 1 day at 13:00 UTC
   class: "Disbursement::DailyJob"
   queue: "default"
 
@@ -72,7 +80,7 @@ ach_transfer_nightly_job:
   class: "AchTransfer::NightlyJob"
 
 ach_transfer_daily_job:
-  cron: "0 13 * * *" # run daily at 9am ET
+  cron: "0 13 * * *" # run every 1 day at 13:00 UTC
   class: "AchTransfer::DailyJob"
 
 invoice_opens_to_paids_job:
@@ -99,8 +107,12 @@ payroll_nightly_job:
   cron: "*/5 * * * *" # run every 5 minutes
   class: "Payroll::NightlyJob"
 
+payroll_position_expire_nightly_job:
+  cron: "0 0 * * *" # run every 1 day
+  class: "Payroll::Position::ExpireNightlyJob"
+
 bank_fee_nightly_job:
-  cron: "*/30 2-23 * * *" # run every 30 minutes
+  cron: "*/30 2-23 * * *" # run every 30 minutes from 02:00 to 23:30 UTC (skips the 00:00 and 01:00 hours)
   class: "BankFee::NightlyJob"
 
 fee_engine_hourly_job:
@@ -134,15 +146,19 @@ refresh_hcb_acronym_expansions_job:
 
 calculate_app_wide_metrics:
   cron: "0 */12 * * *" # run twice a day
-  class: "Metric::CalculateAppWideJob"
+  class: "Metric::CreateAppWideJob"
 
 calculate_stats_metric:
   cron: "0 * * * *" # run every hour
   class: "Metric::CalculateStatsJob"
 
+sync_revenue_to_airtable_job:
+  cron: "15 * * * *" # run every hour
+  class: "Event::SyncRevenueToAirtableJob"
+
 calculate_subjects_metrics:
   cron: "0 */12 * * *" # run twice a day
-  class: "Metric::CalculateSubjectsJob"
+  class: "Metric::CreateSubjectsJob"
 
 ledger_audit_weekly_job:
   cron: "0 0 * * MON" # run first day of each week
@@ -152,12 +168,8 @@ send_admin_reminders_job:
   cron: "0 7 * * *" # run at 7am UTC each morning
   class: "SendAdminRemindersJob"
 
-gauge_online_user_count_job:
-  cron: "*/5 * * * *" # Every 5 minutes
-  class: "User::StatsdGaugeOnlineUserCountJob"
-
 user_subordinate_summary_job:
-  cron: "0 12 * * mon" # noon UTC every Monday (7am eastern)
+  cron: "0 12 * * mon" # run at 12:00 UTC every Monday
   class: "User::SubordinateSummaryJob"
 
 user_sync_to_loops_job:
@@ -171,6 +183,16 @@ update_teenager_column_job:
 clear_old_user_sessions:
   cron: "0 3 * * *" # every day at 3:00 AM
   class: "User::Session::ClearOldUserSessionsJob"
+  queue: low
+
+clear_old_login_attempts:
+  cron: "10 3 * * *" # every day at 3:10 AM
+  class: "Login::Attempt::ClearOldAttemptsJob"
+  queue: low
+
+delete_anonymous_user_sessions:
+  cron: "20 * * * *" # run every 1 hour
+  class: "User::Session::DeleteAnonymousSessionsJob"
   queue: low
 
 card_grant_expiration_job:
@@ -205,6 +227,10 @@ stripe_missed_webhooks_job:
   cron: "0/5 * * * *" # run every 5 minutes
   class: "StripeMissedWebhooksJob"
 
+topup_stripe_job:
+  cron: "15 */12 * * *" # run twice a day
+  class: "TopupStripeJob"
+
 events_sync_to_airtable_job:
   cron: "0 0 * * *" # run every 1 day
   class: "Event::SyncToAirtableJob"
@@ -226,11 +252,11 @@ announcement_monthly_job:
   class: "Announcement::MonthlyJob"
 
 announcement_seven_day_warning_job:
-  cron: "0 12 -7 * *" # run at 8am ET; 7 days before the end of the month
+  cron: "0 12 -7 * *" # run at 12:00 UTC on the 7th-to-last day of the month
   class: "Announcement::SevenDayWarningJob"
 
 announcement_two_day_warning_job:
-  cron: "0 12 -2 * *" # run at 8am ET; 2 days before the end of the month
+  cron: "0 12 -2 * *" # run at 12:00 UTC on the 2nd-to-last day of the month
   class: "Announcement::TwoDayWarningJob"
 
 announcement_delete_unsaved_job:
@@ -238,13 +264,17 @@ announcement_delete_unsaved_job:
   class: "Announcement::DeleteUnsavedJob"
 
 notify_events_with_negative_balance_job:
-  cron: "0 13 * * 1" # run at 9am est on monday
+  cron: "0 13 * * 1" # run at 13:00 UTC every Monday
   class: "NotifyEventsWithNegativeBalanceJob"
 
 refresh_disposable_domains:
-  cron: "0 11 * * *" # run at 6am est every day
+  cron: "0 11 * * *" # run at 11:00 UTC every day
   class: "DisposableEmailDomainListUpdateJob"
 
 hide_onboarding_messages:
   cron: "0 0 * * *" # run every 1 day
   class: "Event::HideOnboardingMessagesJob"
+
+ledger_assert_requirements_job:
+  cron: "0 2 * * *" # run every 1 day
+  class: "Ledger::AssertAllRequirementsJob"

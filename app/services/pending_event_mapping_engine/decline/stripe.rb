@@ -12,7 +12,7 @@ module PendingEventMappingEngine
           approved = st["approved"]
 
           # 1. identify declined (closed & not approved) transactions
-          if status == "closed" && approved == false
+          if status == "closed" && !approved
             cpt.decline!
           end
 

@@ -4,7 +4,7 @@ FactoryBot.define do
   factory :ledger_item, class: "Ledger::Item" do
     amount_cents { 1000 }
     memo { "Test ledger item" }
-    date { Time.current }
+    datetime { Time.current }
     short_code { ::HcbCodeService::Generate::ShortCode.new.run }
     marked_no_or_lost_receipt_at { nil }
 

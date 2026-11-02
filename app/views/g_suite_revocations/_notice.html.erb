@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <% if @g_suite.revocation.pending? %>
   <%= render "application/callout", type: "error", title: "Your Google Workspace access will be revoked on #{@g_suite.revocation.scheduled_at.strftime("%B %d, %Y")}." do %>
     <% if @g_suite.revocation.because_of_accounts_inactive? %>

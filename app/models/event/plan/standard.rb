@@ -43,15 +43,11 @@ class Event
         Event::Plan.available_features - %w[card_grants unrestricted_disbursements front_disbursements]
       end
 
-      def receipts_required?
+      def receipt_required?
         true
       end
 
       def exempt_from_wire_minimum?
-        false
-      end
-
-      def requires_reimbursement_expense_categorization?
         false
       end
 

@@ -29,7 +29,7 @@ class OrganizerPosition
           flash[:success] = "Spending control successfully created!"
           redirect_to event_organizer_position_spending_controls_path(@organizer_position)
         else
-          render :new, status: :unprocessable_entity
+          render :new, status: :unprocessable_content
         end
       end
 

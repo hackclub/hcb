@@ -5,12 +5,12 @@
 # Table name: w9s
 #
 #  id             :bigint           not null, primary key
-#  entity_type    :string           not null
 #  signed_at      :datetime         not null
 #  url            :string           not null
 #  created_at     :datetime         not null
 #  updated_at     :datetime         not null
 #  entity_id      :bigint           not null
+#  entity_type    :string           not null
 #  uploaded_by_id :bigint
 #
 # Indexes

@@ -280,7 +280,7 @@ RSpec.describe SudoModeHandler do
       expect(ProcessLoginService).to(
         receive(:new)
           .and_invoke(
-            ->(login:) {
+            ->(login:, ip_address:, user_agent:) {
               instance_double(ProcessLoginService).tap do |instance|
                 yield(instance, login)
               end

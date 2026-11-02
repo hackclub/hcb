@@ -23,6 +23,10 @@
 class Event
   class Plan
     class SpendOnly < Standard
+      def revenue_fee
+        0.00
+      end
+
       def label
         "spend-only"
       end
@@ -32,7 +36,7 @@ class Event
       end
 
       def features
-        %w[cards transfers promotions google_workspace documentation reimbursements]
+        %w[cards transfers contractors promotions google_workspace documentation reimbursements]
       end
 
     end

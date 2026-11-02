@@ -51,7 +51,7 @@ class OrganizerPositionInvite
     private
 
     def set_request
-      @request = OrganizerPositionInvite::Request.find_by_hashid(params[:id])
+      @request = OrganizerPositionInvite::Request.find_by_hashid!(params[:id])
     end
 
   end

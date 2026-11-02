@@ -35,7 +35,7 @@ class CanonicalTransactionGrouped
     @amount ||=
       begin
         # If this CanonicalTransactionGrouped is a CT, get it's pending
-        # transactions and sum their their fronted amount. This allows the total
+        # transactions and sum their fronted amount. This allows the total
         # amount of an invoice/donation to show when only the payout has arrived.
 
         # Having no pt means it is a ct (the sql query below makes it mutually exclusive)

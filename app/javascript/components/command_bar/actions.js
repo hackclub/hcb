@@ -377,14 +377,6 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/disbursements'),
     },
     {
-      id: 'admin-paypal',
-      section: 'Admin Tools',
-      priority: Priority.HIGH,
-      name: 'PayPal transfers',
-      icon: <Icon glyph="paypal" size={16} />,
-      perform: navigate('/admin/paypal_transfers'),
-    },
-    {
       id: 'admin-wires',
       section: 'Admin Tools',
       priority: Priority.HIGH,
@@ -424,6 +416,14 @@ export const adminActions = (adminUrls, isPretending) => {
       name: 'Pending ledger',
       icon: <Icon glyph="list" size={16} />,
       perform: navigate('/admin/pending_ledger'),
+    },
+    {
+      id: 'admin-ledger-items',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Ledger items',
+      icon: <Icon glyph="list" size={16} />,
+      perform: navigate('/admin/ledger_items'),
     },
     {
       id: 'admin-raw-transactions',

@@ -1,0 +1,6 @@
+<%# locals: (payment:) %>
+
+<p>
+  <%= @payment.event.name %> has initiated a <%= @payment.amount.format(with_currency: true) %> payment
+  to you for <i>"<%= @payment.purpose %>"</i> through HCB.
+</p>

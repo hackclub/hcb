@@ -44,7 +44,7 @@ module ReceiptService
       end
 
       response = conn.post("/v1/chat/completions", {
-                             model: "gpt-4o",
+                             model: "gpt-5.6-luna",
                              messages: [
                                {
                                  role: "system",
@@ -69,6 +69,13 @@ module ReceiptService
       end
 
       return if extracted.nil?
+
+      # the OpenAI request above can take a while; the receipt (or its file)
+      # may have been deleted in the meantime, e.g. the user removed it from
+      # the receipt bin. re-check freshness before persisting to avoid a
+      # RecordInvalid on the "file can't be blank" validation.
+      @receipt = Receipt.find_by(id: @receipt.id)
+      return if @receipt.nil? || !@receipt.file.attached?
 
       extracted[:textual_content] = @receipt.textual_content
 
@@ -101,6 +108,18 @@ module ReceiptService
           partial: "hcb_codes/memo/ai",
           locals: { hcb_code: }
         )
+
+        # The ledger item's heading shows the same icon under its own target, so
+        # whichever page is open picks the suggestion up.
+        if (ledger_item = hcb_code.ledger_item).present?
+          hcb_code.broadcast_action_later_to(
+            [hcb_code, "ai_memo"],
+            action: :replace,
+            target: ActionView::RecordIdentifier.dom_id(ledger_item, :ai_memo),
+            partial: "ledger/items/memo/ai",
+            locals: { item: ledger_item }
+          )
+        end
       end
 
       unless @receipt.receiptable
