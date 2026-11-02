@@ -191,7 +191,7 @@ RSpec.describe AdminController do
     it "labels nameless and space-padded users with trimmed text" do
       admin = create(:user, :make_admin)
       create_session(admin, verified: true)
-      nameless = create(:user, full_name: nil)
+      nameless = create(:user, first_name: nil, last_name: nil)
       padded = create(:user, full_name: "Jane Doe ")
 
       get(:user_search, format: :json)

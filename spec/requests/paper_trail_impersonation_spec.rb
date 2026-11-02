@@ -15,7 +15,7 @@ RSpec.describe "PaperTrail impersonation tracking", type: :request, versioning: 
   it "records the impersonator on versions created while impersonating" do
     sign_in_with(create(:user_session, user:, impersonated_by: admin, expiration_at: 1.hour.from_now))
 
-    patch "/users/#{user.id}", params: { user: { full_name: "Changed Name" } }
+    patch "/users/#{user.id}", params: { user: { first_name: "Changed", last_name: "Name" } }
 
     version = user.versions.last
     expect(version.whodunnit).to eq(user.id.to_s)
@@ -25,7 +25,7 @@ RSpec.describe "PaperTrail impersonation tracking", type: :request, versioning: 
   it "leaves the impersonator blank on versions created without impersonation" do
     sign_in_with(create(:user_session, user:, expiration_at: 1.hour.from_now))
 
-    patch "/users/#{user.id}", params: { user: { full_name: "Changed Name" } }
+    patch "/users/#{user.id}", params: { user: { first_name: "Changed", last_name: "Name" } }
 
     version = user.versions.last
     expect(version.whodunnit).to eq(user.id.to_s)
