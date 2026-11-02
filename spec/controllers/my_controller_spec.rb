@@ -103,6 +103,12 @@ RSpec.describe MyController do
           expect(response.parsed_body.at_css("turbo-frame#my_cards_event_#{zebra.id}")).to be_present
         end
 
+        it "does not render an organization the user has no cards in" do
+          create(:stripe_card, :with_stripe_id, event: aardvark)
+
+          expect { get :event_cards, params: { event_id: aardvark.id } }.to raise_error(ActiveRecord::RecordNotFound)
+        end
+
         it "applies the search" do
           laptop = create_card(name: "Laptop fund")
           create_card(name: "Snacks")

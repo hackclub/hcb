@@ -39,7 +39,7 @@ class MyController < ApplicationController
   end
 
   def event_cards
-    event = Event.find(params[:event_id])
+    event = Event.where(id: current_user.stripe_cards.select(:event_id)).find(params[:event_id])
     @stripe_cards = filtered_stripe_cards.includes(:card_grant, :event).where(event:)
     @view = cookies[:my_cards_view] || "grid"
 
