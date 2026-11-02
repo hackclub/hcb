@@ -62,7 +62,7 @@ RSpec.describe TagsController do
       end
 
       expect {
-        post(:create, params: { event_id: event.slug, label: "Snacks", color: "muted", emoji: "🍕", hcb_code_id: hcb_code.hashid })
+        post(:create, params: { event_id: event.slug, label: "Snacks", color: "muted", emoji: "🍕", ledger_item_id: hcb_code.reload.ledger_item.hashid })
       }.not_to raise_error
 
       expect(event.tags.sole).to eq(concurrent_tag)
