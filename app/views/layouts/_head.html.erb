@@ -1,12 +1,13 @@
-<%# locals: (title_suffix: "HCB", admin: false, bare: false) %>
+<%# locals: (title_suffix: "HCB", admin: false, bare: false, force_light: false) %>
 
 <title><%= yield(:title).concat(" – ") if content_for?(:title) %><%= title_suffix %></title>
 <%= csrf_meta_tags %>
 <%= csp_meta_tag %>
-<meta name="theme-color" content="<%= @is_dark ? "#17171d" : "#f9fafc" %>">
+<meta name="theme-color" content="<%= @is_dark && !force_light ? "#17171d" : "#f9fafc" %>">
 <meta name="apple-itunes-app" content="app-id=6465424810">
 
-<%= javascript_include_tag "dark", 'data-turbo-track': "reload" %>
+<%# Marketing pages force light, so skip the system-theme script that would flip them to dark. %>
+<%= javascript_include_tag "dark", 'data-turbo-track': "reload" unless force_light %>
 <%= javascript_include_tag "application", 'data-turbo-track': "reload", defer: true unless bare %>
 <%= javascript_include_tag "bundle", 'data-turbo-track': "reload", defer: true %>
 

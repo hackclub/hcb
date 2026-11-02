@@ -293,7 +293,7 @@ class Transaction < ApplicationRecord
     elsif potential_disbursement?
       # try_pair_disbursement
     end
-    # NOTE: we cannot curently auto-pair Expensify txs
+    # NOTE: we cannot currently auto-pair Expensify txs
   rescue => e
     Rails.error.report(e)
   end

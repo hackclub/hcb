@@ -20,8 +20,12 @@ class CommentsController < ApplicationController
       # Use return_to param if provided, otherwise fall back to the commentable
       # url_from validates the URL is internal to prevent open redirect vulnerabilities
       redirect_back_or_to url_from(params[:comment][:return_to]) || @commentable
+    elsif turbo_frame_request?
+      # The new page has no matching frame, so surface the errors in the frame's flash instead
+      flash[:error] = @comment.errors.full_messages.to_sentence
+      redirect_back_or_to url_from(params[:comment][:return_to]) || @commentable
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -44,7 +48,7 @@ class CommentsController < ApplicationController
       redirect_to @comment.commentable.is_a?(Event) ? edit_event_path(@comment.commentable, tab: :admin) : @comment.commentable
     else
       @commentable = @comment.commentable
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
@@ -78,7 +82,7 @@ class CommentsController < ApplicationController
   COMMENTABLE_TYPE_MAP = [AchTransfer, Disbursement, EmburseCardRequest, EmburseTransaction,
                           EmburseTransfer, Event, GSuite, HcbCode, Api::Models::CardCharge,
                           OrganizerPositionDeletionRequest, User, Reimbursement::Report, CardGrant,
-                          Ledger::Item].index_by(&:to_s).freeze
+                          Ledger::Item, Payment].index_by(&:to_s).freeze
 
   # Given a route "/transactions/25/comments", this method sets @commentable to
   # Transaction with ID 25

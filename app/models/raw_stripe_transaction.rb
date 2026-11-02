@@ -16,11 +16,17 @@
 #
 # Indexes
 #
-#  index_raw_stripe_transactions_on_card_id_text  ((((stripe_transaction -> 'card'::text) ->> 'id'::text))) USING hash
+#  index_raw_stripe_transactions_on_card                     (((stripe_transaction ->> 'card'::text)))
+#  index_raw_stripe_transactions_on_card_id_text             ((((stripe_transaction -> 'card'::text) ->> 'id'::text))) USING hash
+#  index_raw_stripe_transactions_on_stripe_authorization_id  (stripe_authorization_id)
 #
 class RawStripeTransaction < ApplicationRecord
   has_many :hashed_transactions
   has_one :canonical_transaction, as: :transaction_source
+  has_one :card_charge_raw_stripe_transaction
+  has_one :card_charge, through: :card_charge_raw_stripe_transaction
+
+  after_create :link_card_charge!
 
   def memo
     @memo ||= stripe_transaction.dig("merchant_data", "name")
@@ -44,6 +50,14 @@ class RawStripeTransaction < ApplicationRecord
 
   def refund?
     stripe_transaction["type"] == "refund"
+  end
+
+  def link_card_charge!
+    CardCharge.link_raw_stripe_transaction!(self)
+  end
+
+  def stripe_card
+    ::StripeCard.find_by!(stripe_id: stripe_card_id)
   end
 
   private

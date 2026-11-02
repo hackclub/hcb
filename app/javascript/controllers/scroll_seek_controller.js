@@ -26,6 +26,7 @@ export default class extends Controller {
     })
 
     window.addEventListener('scroll', () => this.handleScroll())
+    window.addEventListener('load', () => this.handleScroll())
   }
 
   disconnect() {

@@ -22,7 +22,7 @@
 #
 class Event
   class Plan
-    class ScGoogleGrant < Standard
+    class ScGoogleGrant < SpendOnly
       def label
         "South Carolina Google Grant"
       end

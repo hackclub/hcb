@@ -57,7 +57,7 @@
     <%= form.hidden_field :email, value: @email, data: { "webauthn-auth-target" => "loginEmailInput" } %>
 
     <div class="flex flex-row justify-between items-center my-4">
-      <%= link_to "Cancel", logout_users_path, method: :delete, class: "no-underline block" %>
+      <%= link_to "Cancel", logout_users_path, data: { turbo_method: :delete }, class: "no-underline block" %>
       <%= form.submit "Continue", data: { "webauthn-auth-target" => "continueButton", "form-disable-target" => "submitButton" } %>
     </div>
 

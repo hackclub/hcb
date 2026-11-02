@@ -29,7 +29,7 @@ class PaypalTransfersController < ApplicationController
       end
       redirect_to url_for(@paypal_transfer.local_hcb_code), flash: { success: "Your PayPal transfer has been sent!" }
     else
-      render "new", status: :unprocessable_entity
+      render "new", status: :unprocessable_content
     end
   end
 

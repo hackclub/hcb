@@ -13,8 +13,8 @@ module UserService
       return if @user.onboarding?
 
       if @user.teenager
-        # The additional `select` is a safety against Airtable query injection
-        user = EmailsTable.all(filter: "{Email} = \"#{@user.email}\"").select { |record| record["Email"] == @user.email }.first
+        # The additional `find` is a safety against Airtable query injection
+        user = EmailsTable.all(filter: "{Email} = \"#{@user.email}\"").find { |record| record["Email"] == @user.email }
         user ||= EmailsTable.new("Email" => @user.email)
 
         user["Full Name"] = "Preferred name: \"#{@user.preferred_name}\", Legal name: \"#{@user.full_name}\""
@@ -27,6 +27,8 @@ module UserService
         user["HCB Has Card Grant?"] = @user.card_grants.any?
 
         user.save
+
+        @user.update(subscribed_to_loops_at: Time.now) if @user.subscribed_to_loops_at.nil?
       else
         body = {
           email: @user.email,
@@ -37,13 +39,16 @@ module UserService
           hcbLastSeenAt: format_unix(@user.last_seen_at),
           hcbLastLoginAt: format_unix(@user.last_login_at),
           hcbHasActiveOrg: @user.events.active.any?,
-          hcbHasCardGrant: @user.card_grants.any?,
-          mailingLists: {
+          hcbHasCardGrant: @user.card_grants.any?
+        }.compact_blank
+
+        if @user.subscribed_to_loops_at.nil?
+          body[:mailingLists] = {
             # https://loops.so/docs/contacts/mailing-lists#api
             Credentials.fetch(:LOOPS, :MAILING_LIST) => true
           }
-        }.compact_blank
-
+          @user.update(subscribed_to_loops_at: Time.now)
+        end
         body[:userGroup] = "HCB Adult"
         body[:subscribed] = true if @contact_details.nil?
         body[:source] = "HCB" if @contact_details.nil?

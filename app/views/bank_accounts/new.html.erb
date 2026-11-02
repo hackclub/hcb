@@ -32,7 +32,7 @@ var linkHandler = Plaid.create({
   },
   onExit: function(err, metadata) {
     if (err != null) {
-      alert('Ran into an error while authenticating! Please try again.')
+      swal('Authentication error', 'Ran into an error while authenticating! Please try again.', 'error')
     }
   },
 });

@@ -7,10 +7,23 @@ export default class extends Controller {
 
   connect() {
     document.addEventListener('click', this.handleDocumentClick.bind(this))
+    this.applyTheme()
+    this.themeObserver = new MutationObserver(() => this.applyTheme())
+    this.themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-dark'],
+    })
   }
 
   disconnect() {
     document.removeEventListener('click', this.handleDocumentClick.bind(this))
+    this.themeObserver?.disconnect()
+  }
+
+  applyTheme() {
+    const isDark = document.documentElement.getAttribute('data-dark') === 'true'
+    this.pickerTarget.classList.toggle('dark', isDark)
+    this.pickerTarget.classList.toggle('light', !isDark)
   }
 
   validateInput(event) {

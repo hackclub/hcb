@@ -20,4 +20,8 @@
 class CanonicalPendingDeclinedMapping < ApplicationRecord
   belongs_to :canonical_pending_transaction
 
+  after_commit if: -> { canonical_pending_transaction.ledger_item.present? } do
+    canonical_pending_transaction.ledger_item.map!
+  end
+
 end

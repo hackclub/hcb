@@ -6,7 +6,7 @@ class User
       queue_as :low
 
       def perform
-        User::Session.expired.where("created_at < ?", 1.year.ago).find_each(&:clear_metadata!)
+        User::Session.expired.where("created_at < ?", 18.months.ago).find_each(&:clear_ip_metadata!)
       end
 
     end
