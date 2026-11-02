@@ -38,7 +38,7 @@
         <%= link_to t("doorkeeper.applications.buttons.edit"), edit_oauth_application_path(application), class: "btn btn-link" %>
       </td>
       <td class="align-middle">
-        <%= render "delete_form", application: application %>
+        <%= render "doorkeeper/applications/delete_form", application: application %>
       </td>
     </tr>
   <% end %>
