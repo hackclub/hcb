@@ -1,0 +1,29 @@
+<%# locals: (item:) %>
+
+<% date = item.datetime.strftime("%b %e, %Y") %>
+<% amount = item.amount.abs.format %>
+
+<tr class="transaction transaction--<%= item.sign %> cursor-pointer hover:bg-blue/5 focus-visible:bg-blue/5 focus-visible:outline-none"
+    tabindex="0"
+    aria-label="Repay <%= item.memo %>, <%= amount %> on <%= date %>"
+    data-action="click->repayment-picker#pick keydown.enter->repayment-picker#pick"
+    data-repayment-picker-id-param="<%= item.hashid %>"
+    data-repayment-picker-memo-param="<%= item.memo %>"
+    data-repayment-picker-date-param="<%= date %>"
+    data-repayment-picker-amount-param="<%= format("%.2f", -item.amount_cents / 100.0) %>"
+    data-repayment-picker-amount-label-param="<%= amount %>">
+  <td class="transaction__icon">
+    <div class="tooltipped tooltipped--e" aria-label="<%= item.humanized_type %>">
+      <%= render "ledger/items/icon", ledger_item: item %>
+    </div>
+  </td>
+  <td><%= date %></td>
+  <td class="transaction__memo transaction__memo--fluid">
+    <div>
+      <div class="flex-auto min-w-0 overflow-hidden text-ellipsis" title="<%= item.memo %>">
+        <%= render "ledger/items/memo/memo_text", item: %>
+      </div>
+    </div>
+  </td>
+  <td class="nowrap text-right"><%= item.amount.format %></td>
+</tr>

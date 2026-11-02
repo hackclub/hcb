@@ -77,6 +77,22 @@
   }
 }
 
+// Flattens the payee picker's own cards when it's nested inside another card,
+// leaving other cards (e.g. callouts) alone. Transparent so the parent's inset
+// border isn't covered.
+.card--nested-flush {
+  :is(turbo-frame, [data-payee-picker-target]) > .card {
+    box-shadow: none;
+    border-radius: 0;
+    margin-top: 0;
+    background-color: transparent;
+  }
+
+  turbo-frame > .card {
+    padding-top: 0;
+  }
+}
+
 .podium-block {
   width: 100%;
   display: flex;
@@ -285,7 +301,7 @@ a.card {
 }
 
 .card--sunset {
-  background-image: url('https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/760076d21af80460_image.png');
+  background-image: url('https://cdn.hackclub.com/019c2570-fc3b-7b34-835b-918b11af02ef/image.png');
 }
 
 #card-pin {

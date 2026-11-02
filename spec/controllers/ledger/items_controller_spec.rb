@@ -93,6 +93,45 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       expect(response).to be_successful
       expect(response.body).to include(%(href="#{canonical_pending_transaction_path(cpt)}">CPT #{cpt.id}</a>))
     end
+
+    it "shows a scheduled repayment before it has been sent" do
+      source_event = create(:event, :with_positive_balance)
+      expense = create(:canonical_transaction, event:, amount_cents: -100_00, category_slug: "food-fun")
+      disbursement = DisbursementService::Create.new(
+        name: "Paying back pizza",
+        amount: "100.00",
+        requested_by_id: create(:user, :make_admin).id,
+        source_event_id: source_event.id,
+        destination_event_id: event.id,
+        scheduled_on: Date.tomorrow,
+        transfer_type: "repayment",
+        repaid_ledger_item_id: expense.ledger_item.id
+      ).run
+      # Scheduled transfers only reach the recipient once they're sent.
+      expect(disbursement.incoming_disbursement.ledger_item).to be_nil
+      outgoing_item = disbursement.outgoing_disbursement.ledger_item
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get :show, params: { id: expense.ledger_item.hashid }
+
+      expect(response).to be_successful
+      expect(response.body).to include("Repaid by")
+      expect(response.body).to include(ledger_item_path(outgoing_item))
+    end
+
+    it "shows the Process button after the transfer can no longer be canceled" do
+      create(:canonical_pending_transaction, amount_cents: 1000, event:, fronted: true)
+      ach_transfer = create(:ach_transfer, event:)
+      ach_transfer.update_column(:aasm_state, "deposited")
+      ach_item = ach_transfer.reload.ledger_item
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get :show, params: { id: ach_item.hashid }
+
+      expect(response).to be_successful
+      expect(response.body).to include(%(action="#{ach_start_approval_admin_path(ach_transfer)}"))
+      expect(response.body).not_to include("Cancel transfer")
+    end
   end
 
   context "as a reader (not a member)" do

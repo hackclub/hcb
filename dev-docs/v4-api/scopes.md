@@ -123,7 +123,7 @@ Multiple `require_oauth2_scope` calls for the same action **accumulate** — the
 
 | Pattern | When to use | Examples |
 |---------|-------------|----------|
-| `<resource>:read` | Read-only access to a resource | `ledgers:read`, `organizations:read` |
+| `<resource>:read` | Read-only access to a resource | `ledgers:read`, `organizations:read` | `card_grants:read`
 | `<resource>:write` | Mutating a resource (create/update/destroy) | `receipts:write`, `card_grants:write` |
 | `<capability>` | A narrow, single-purpose capability that doesn't map cleanly to read/write of one resource | `user_lookup`, `event_followers` |
 | `admin:read` / `admin:write` | Admin-level data or actions (see [Admin Scopes](#admin-scopes)) | `admin:read`, `admin:write` |

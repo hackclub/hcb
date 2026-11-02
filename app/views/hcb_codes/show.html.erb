@@ -49,7 +49,7 @@
   <% if @hcb_code.shared_commentable? %>
     <% viewing_disbursement = @hcb_code.outgoing_disbursement || @hcb_code.incoming_disbursement %>
     <% counterparty_hcb_code = viewing_disbursement.counterparty.local_hcb_code %>
-    <% if policy(counterparty_hcb_code).show? && counterparty_hcb_code.comments.count > 0 %>
+    <% if policy(counterparty_hcb_code).show? && counterparty_hcb_code.comments.any? %>
       <p class="muted">
         <%= link_to counterparty_hcb_code do %>
           View <%= pluralize(counterparty_hcb_code.comments.count, "other comment") %> from <%= viewing_disbursement.counterparty_label %>
@@ -73,7 +73,7 @@
       <%= link_to "CT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
     <% end %>
     <% @hcb_code.canonical_pending_transactions.each do |tx| %>
-      <%= link_to "CPT #{tx.id}", canonical_transaction_path(tx.id), class: "btn btn--secondary" %>
+      <%= link_to "CPT #{tx.id}", canonical_pending_transaction_path(tx.id), class: "btn btn--secondary" %>
     <% end %>
   <% end %>
 <% end %>

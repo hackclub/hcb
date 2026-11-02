@@ -18,6 +18,14 @@ module HasPaymentRecipient
     end
 
     def set_fields_from_payment_recipient
+      # Never copy details from a recipient that belongs to another org. The
+      # validation above rejects the transfer, but the copy must be skipped
+      # *before* it happens — otherwise a foreign recipient's decrypted bank
+      # details are loaded onto this record and re-rendered on the failed save,
+      # leaking them cross-org. (Controllers additionally scope the lookup to
+      # the event's own recipients; this is the model-level backstop.)
+      return unless payment_recipient && payment_recipient.event_id == event_id
+
       self.payment_recipient_attributes.each do |attribute|
         self[attribute] ||= payment_recipient&.send(attribute)
       end

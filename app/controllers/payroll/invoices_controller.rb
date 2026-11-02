@@ -51,7 +51,10 @@ module Payroll
         redirect_to contractor_page
       else
         flash[:success] = "Invoice submitted for review."
-        redirect_to my_pay_path
+        respond_to do |format|
+          format.turbo_stream { render turbo_stream: turbo_stream.refresh(request_id: nil) }
+          format.html { redirect_to my_pay_path }
+        end
       end
     rescue ActiveRecord::RecordInvalid => e
       flash.now[:error] = e.record.errors.full_messages.to_sentence

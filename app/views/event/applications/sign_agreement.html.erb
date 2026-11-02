@@ -1,6 +1,6 @@
 <% title @application.contract&.reissue? ? "Resign the fiscal sponsorship agreement" : "Sign the fiscal sponsorship agreement" %>
 
-<%= render partial: "status_header", locals: {
+<%= render partial: "event/applications/status_header", locals: {
       application: @application,
       steps: @steps,
       heading: @application.contract&.reissue? ? "Resign the fiscal sponsorship agreement" : "Sign the fiscal sponsorship agreement",
@@ -25,7 +25,7 @@
   </div>
 </div>
 
-<%= render partial: "status_footer", locals: { application: @application } %>
+<%= render partial: "event/applications/status_footer", locals: { application: @application } %>
 
 <% if @application.contract&.party(:cosigner)&.present? %>
   <section data-behavior="modal" role="dialog" id="parent_agreement" class="modal modal--scroll">
