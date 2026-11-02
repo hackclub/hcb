@@ -48,10 +48,12 @@ window.Turbo = Turbo
 import persist from '@alpinejs/persist'
 import Alpine from './alpine'
 import registerData from './datas'
+import is_minor from './magics/is_minor'
 
 window.Alpine = Alpine
 Alpine.plugin(persist)
 registerData(Alpine)
+Alpine.magic('isMinor', is_minor)
 
 Alpine.start()
 
