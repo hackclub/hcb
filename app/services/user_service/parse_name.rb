@@ -3,54 +3,55 @@
 require "namae"
 
 module UserService
-  # Parses a full name into first and last name components using the Namae gem.
-  # Handles complex names with particles (von, de, etc.) and suffixes (Jr., Sr., III, etc.)
+  # Splits a single-field full name into the first and last name stored on
+  # `users.first_name` / `users.last_name`.
+  #
+  # Only used where a full name still arrives as one string: the backfill of
+  # rows that predate the split columns, and legacy writers that assign
+  # `User#full_name` directly. Everything else should set the two columns.
+  #
+  # Namae handles comma forms ("Doe, John"), particles ("Wernher von Braun")
+  # and suffixes ("King Jr."). It also keeps a list of honorifics, and a
+  # surname that collides with one ("Jane Elder", "Mary Lord") makes it either
+  # give up entirely or treat the surname as a title. In those cases we fall
+  # back to a positional split so a real surname is never lost.
   class ParseName
-    attr_reader :given_name, :particle, :family_name, :suffix
+    Result = Struct.new(:first_name, :last_name, keyword_init: true)
 
     def initialize(full_name:)
-      @full_name = full_name
-      @given_name = nil
-      @particle = nil
-      @family_name = nil
-      @suffix = nil
+      @full_name = full_name.to_s.squish
     end
 
-    # Parse the full name and extract components
     def run
-      return self if @full_name.blank?
+      return Result.new(first_name: nil, last_name: nil) if @full_name.blank?
 
       parsed = Namae.parse(@full_name).first
-      return self if parsed.nil?
+      return positional_split if parsed.nil? || trailing_word_taken_as_title?(parsed)
 
-      @given_name = parsed.given
-      @particle = parsed.particle
-      @family_name = parsed.family
-      @suffix = parsed.suffix
+      first = [parsed.given, parsed.particle].compact_blank.join(" ").presence
+      last = [parsed.family, parsed.suffix].compact_blank.join(" ").presence
 
-      self
+      # "Madonna" parses as given-only; "Mr. Smith" parses as family-only.
+      # Either way the one word we have belongs in first_name.
+      first, last = last, nil if first.nil?
+
+      Result.new(first_name: first, last_name: last)
     end
 
-    # Returns the formatted first name (given name + particle if present).
-    # Stores what should go in the database first_name column.
-    # Example: "Wernher von" for "Wernher von Braun"
-    def first_name
-      return nil if @given_name.nil? && @family_name.nil?
+    private
 
-      parts = [@given_name, @particle].compact_blank
-      return @family_name if parts.empty?
-
-      parts.join(" ").presence
+    # Namae parsed "Jane W Elder" as given "Jane", family "W", title "Elder".
+    # An honorific at the very end of a name is a surname, not a title.
+    def trailing_word_taken_as_title?(parsed)
+      parsed.title.present? && @full_name.downcase.end_with?(parsed.title.downcase)
     end
 
-    # Returns the formatted last name (family name + suffix if present).
-    # Stores what should go in the database last_name column.
-    # Example: "King Jr." for "Martin Luther King Jr."
-    def last_name
-      parts = [@family_name, @suffix].compact_blank
-      parts.empty? ? nil : parts.join(" ").presence
-    end
+    def positional_split
+      words = @full_name.split(" ")
+      return Result.new(first_name: words.first, last_name: nil) if words.one?
 
+      Result.new(first_name: words[0..-2].join(" "), last_name: words.last)
+    end
 
   end
 end

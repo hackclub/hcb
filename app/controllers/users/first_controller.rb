@@ -189,7 +189,7 @@ module Users
     private
 
     def user_params
-      params.require(:user).permit(:email, :full_name, affiliations_attributes: [:league, :team_number, :name, :team_name, :role])
+      params.require(:user).permit(:email, :first_name, :last_name, affiliations_attributes: [:league, :team_number, :name, :team_name, :role])
     end
 
     def user_ref_params

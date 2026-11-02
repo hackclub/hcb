@@ -3,17 +3,11 @@
 FactoryBot.define do
   factory :user do
     sequence(:email) { |n| "user#{n}@example.com" }
-    first_name { Faker::Name.first_name }
-    last_name { Faker::Name.last_name }
-
-    after(:build) do |user|
-      if user.full_name.present? && (user.first_name.blank? || user.last_name.blank?)
-        parsed = UserService::ParseName.new(full_name: user.full_name).run
-        user.first_name = parsed.first_name if user.first_name.blank?
-        user.last_name = parsed.last_name if user.last_name.blank?
-      end
-    end
-
+    # Passing `full_name:` is still supported: the model splits it into
+    # `first_name` / `last_name` on validation, so the defaults step aside.
+    full_name { nil }
+    first_name { full_name.present? ? nil : Faker::Name.first_name }
+    last_name { full_name.present? ? nil : Faker::Name.last_name }
     session_validity_preference { SessionsHelper::SESSION_DURATION_OPTIONS.fetch("3 days") }
     verified { true }
 

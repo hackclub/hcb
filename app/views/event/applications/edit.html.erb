@@ -116,15 +116,20 @@
 
         <div class="md:flex gap-2">
           <div class="field flex-1">
-            <%= form.label :full_name do %>
-              Full name <span class="text-primary">*</span>
+            <%= form.label :first_name do %>
+              Legal first name <span class="text-primary">*</span>
             <% end %>
-            <%= form.text_field :full_name, value: @application.user.full_name.presence, required: true, placeholder: "Fiona Hackworth III", style: "max-width:100%", pattern: '^\S+.+' %>
+            <%= form.text_field :first_name, value: @application.user.first_name(legal: true).presence, required: true, placeholder: "Fiona", style: "max-width:100%", autocomplete: "given-name" %>
           </div>
           <div class="field flex-1">
-            <%= form.label :preferred_name, "Preferred name (optional)" %>
-            <%= form.text_field :preferred_name, value: @application.user.preferred_name.presence, style: "max-width:100%", placeholder: "FiFi Hacks", maxlength: 30 %>
+            <%= form.label :last_name, "Legal last name (optional)" %>
+            <%= form.text_field :last_name, value: @application.user.last_name(legal: true).presence, placeholder: "Hackworth", style: "max-width:100%", autocomplete: "family-name" %>
           </div>
+        </div>
+
+        <div class="field">
+          <%= form.label :preferred_name, "Preferred name (optional)" %>
+          <%= form.text_field :preferred_name, value: @application.user.preferred_name.presence, style: "max-width:100%", placeholder: "FiFi Hacks", maxlength: 30, autocomplete: "nickname" %>
         </div>
 
         <div class="md:flex items-center gap-2">

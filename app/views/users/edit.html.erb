@@ -35,25 +35,24 @@
           <div class="md:flex gap-2">
             <div class="field flex-1">
               <%= form.label :first_name %>
-              <%= form.text_field :first_name, required: true, placeholder: "Fiona", style: "max-width:100%" %>
+              <%= form.text_field :first_name, value: @user.first_name(legal: true), required: true, placeholder: "Fiona", style: "max-width:100%", autocomplete: "given-name" %>
               <% @user.errors.full_messages_for(:first_name).each do |message| %>
                 <div class="primary"><%= message %></div>
               <% end %>
             </div>
             <div class="field flex-1">
-              <%= form.label :last_name, "Last name (optional)" %>
-              <%= form.text_field :last_name, style: "max-width:100%", placeholder: "Hackworth" %>
+              <%= form.label :last_name, "Legal last name (optional)" %>
+              <%= form.text_field :last_name, value: @user.last_name(legal: true), placeholder: "Hackworth", style: "max-width:100%", autocomplete: "family-name" %>
               <% @user.errors.full_messages_for(:last_name).each do |message| %>
                 <div class="primary"><%= message %></div>
               <% end %>
             </div>
           </div>
+          <p class="h5 muted mt0 mb2">Your legal name is used for cards and payouts. Leave the last name blank if you only have one name.</p>
 
-          <div class="md:flex gap-2">
-            <div class="field flex-1">
-              <%= form.label :preferred_name, "Preferred name (optional)" %>
-              <%= form.text_field :preferred_name, style: "max-width:100%", placeholder: "FiFi Hacks", maxlength: 30 %>
-            </div>
+          <div class="field">
+            <%= form.label :preferred_name, "Preferred name (optional)" %>
+            <%= form.text_field :preferred_name, style: "max-width:100%", placeholder: "FiFi Hacks", maxlength: 30, autocomplete: "nickname" %>
           </div>
 
           <div class="md:flex items-center gap-2">
@@ -147,25 +146,28 @@
           </div>
         <% end %>
 
-        <div class="field">
-          <%= form.label :first_name %>
-          <%= form.text_field :first_name, required: true, placeholder: "Fiona", disabled: %>
-          <% @user.errors.full_messages_for(:first_name).each do |message| %>
-            <div class="primary"><%= message %></div>
-          <% end %>
-        </div>
-        <div class="field">
-          <%= form.label :last_name %>
-          <p class="h5 muted mt0 mb1">Optional - you can have just a first name if you prefer.</p>
-          <%= form.text_field :last_name, placeholder: "Hackworth", disabled: %>
-          <% @user.errors.full_messages_for(:last_name).each do |message| %>
-            <div class="primary"><%= message %></div>
-          <% end %>
+        <div class="md:flex gap-2">
+          <div class="field flex-1">
+            <%= form.label :first_name %>
+            <p class="h5 muted mt0 mb1">As it appears on your ID. Used for cards and payouts.</p>
+            <%= form.text_field :first_name, value: @user.first_name(legal: true), required: true, placeholder: "Fiona", style: "max-width:100%", autocomplete: "given-name", disabled: %>
+            <% @user.errors.full_messages_for(:first_name).each do |message| %>
+              <div class="primary"><%= message %></div>
+            <% end %>
+          </div>
+          <div class="field flex-1">
+            <%= form.label :last_name %>
+            <p class="h5 muted mt0 mb1">Optional if you only have one name.</p>
+            <%= form.text_field :last_name, value: @user.last_name(legal: true), placeholder: "Hackworth", style: "max-width:100%", autocomplete: "family-name", disabled: %>
+            <% @user.errors.full_messages_for(:last_name).each do |message| %>
+              <div class="primary"><%= message %></div>
+            <% end %>
+          </div>
         </div>
         <div class="field">
           <%= form.label :preferred_name %>
           <p class="h5 muted mt0 mb1">If you go by a different name.</p>
-          <%= form.text_field :preferred_name, placeholder: "FiFi Hacks", maxlength: 30, disabled: %>
+          <%= form.text_field :preferred_name, placeholder: "FiFi Hacks", maxlength: 30, autocomplete: "nickname", disabled: %>
         </div>
 
         <div class="field">
