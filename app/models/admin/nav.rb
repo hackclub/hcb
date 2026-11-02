@@ -274,7 +274,6 @@ module Admin
             path: new_admin_tax1099_import_path,
             count: ->{ Tax::Form.tax1099.count },
             count_type: :records
-            path: admin_tax_forms_path
           )
         ]
       )
