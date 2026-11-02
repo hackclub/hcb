@@ -209,6 +209,41 @@ RSpec.describe EventsController do
       )
     end
 
+    it "does not include the parent or siblings of a sub-organization the user organizes" do
+      user = create(:user)
+
+      parent = create(:event, name: "Parent")
+      create(:event, name: "Sibling", parent:)
+      sub_org = create(:event, name: "Sub", parent:)
+      create(:organizer_position, user:, event: sub_org)
+
+      create_session(user, verified: true)
+
+      get(:index, format: :json)
+
+      expect(response.parsed_body.map { |e| e.slice("slug", "parent_slug") }).to eq(
+        [{ "slug" => sub_org.slug, "parent_slug" => parent.slug }]
+      )
+    end
+
+    it "lists a sub-organization whose parent was deleted as an organization" do
+      user = create(:user)
+
+      parent = create(:event, name: "Parent")
+      sub_org = create(:event, name: "Sub", parent:)
+      create(:organizer_position, user:, event: sub_org)
+      parent.destroy!
+
+      create_session(user, verified: true)
+
+      get(:index, format: :json)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.map { |e| e.slice("slug", "parent_slug") }).to eq(
+        [{ "slug" => sub_org.slug, "parent_slug" => nil }]
+      )
+    end
+
     it "includes all events if the user is an admin" do
       user = create(:user, :make_admin)
 
