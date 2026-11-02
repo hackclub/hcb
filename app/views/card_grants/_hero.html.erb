@@ -21,7 +21,7 @@
       <%= status_badge state %>
       <strong><%= card_grant.state_text %></strong>
       <% if card_grant.purpose.present? %>
-        <span class="grant-hero__soft">• <%= card_grant.purpose %></span>
+        <span class="grant-hero__soft">&nbsp;&nbsp;• <%= card_grant.purpose %></span>
       <% end %>
     </p>
     <% if show_actions && organizer_signed_in?(as: :member) %>
