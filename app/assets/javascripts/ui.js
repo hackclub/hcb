@@ -1,10 +1,16 @@
-/* global BK, $ */
+/* global BK, $, Turbo */
 
 // eslint-disable-next-line no-unused-vars
 const whenViewed = (element, callback) =>
   new IntersectionObserver(([entry]) => entry.isIntersecting && callback(), {
     threshold: 1,
   }).observe(element)
+
+const clearElement = id => {
+  const element = document.getElementById(id)
+  if (element) element.innerHTML = ''
+}
+
 const populateSharedPopover = trigger => {
   const popover = document.getElementById('shared_popover')
   if (!popover) return
@@ -35,6 +41,8 @@ const populateSharedPopover = trigger => {
 
   popover.classList.toggle('modal--popover--sm', size === 'sm')
 
+  clearElement('shared_popover_flash')
+
   const body = document.getElementById('shared_popover_body')
   if (body) {
     body.innerHTML = ''
@@ -43,11 +51,96 @@ const populateSharedPopover = trigger => {
       frame.innerHTML = `<div class="flex items-center justify-center" style="height:calc(100vh - 150px)"><img src="/icons/loading.svg" class="dark:invert" /></div>`
       frame.id = frameId
       frame.src = src
+      frame.dataset.popoverSrc = src
       frame.setAttribute('target', '_top')
       body.appendChild(frame)
     }
   }
 }
+
+// Reopens the popover in ?popover=; false if its trigger is still in an unloaded lazy frame
+const openPopoverFromUrl = () => {
+  const link = new URL(location.href).searchParams.get('popover')
+  if (!link) return true
+
+  const trigger = document.querySelector(
+    `[data-popover-state-url="${CSS.escape(link)}"]`
+  )
+  if (!trigger) return false
+
+  populateSharedPopover(trigger)
+  BK.s('modal', '#shared_popover').modal({
+    fadeDuration: 200,
+    fadeDelay: 0.75,
+  })
+  return true
+}
+
+const openPopoverWhenFrameLoads = () => {
+  if (openPopoverFromUrl()) {
+    document.removeEventListener('turbo:frame-load', openPopoverWhenFrameLoads)
+  }
+}
+
+document.addEventListener('turbo:load', () => {
+  // A popover left open across a Turbo visit never closes, so its saved title is stale
+  delete document.documentElement.dataset.returnToStateTitle
+
+  if (!openPopoverFromUrl()) {
+    document.addEventListener('turbo:frame-load', openPopoverWhenFrameLoads)
+  }
+})
+
+// Pages loaded with ?popover= echo it into links built from the query string
+document.addEventListener('turbo:before-visit', event => {
+  const url = new URL(event.detail.url)
+  if ($.modal.isActive() || !url.searchParams.has('popover')) return
+
+  event.preventDefault()
+  url.searchParams.delete('popover')
+  Turbo.visit(url.href)
+})
+
+document.addEventListener('turbo:before-fetch-response', async event => {
+  // Turbo submits data-turbo-method links from a form appended to <body>
+  const { target } = event
+  const frame =
+    target.closest?.('turbo-frame') ??
+    document.getElementById(target.dataset?.turboFrame ?? '')
+  if (!frame) return
+
+  // Set by the flash partial, so frame responses without one skip the parse
+  const response = event.detail.fetchResponse.response
+  if (!response.headers.get('X-Flash')) return
+
+  const flash = new DOMParser()
+    .parseFromString(await response.clone().text(), 'text/html')
+    .querySelector('#flash-container')
+    ?.innerHTML.trim()
+  if (!flash) return
+
+  const container = document.getElementById(
+    frame.closest('#shared_popover')
+      ? 'shared_popover_flash'
+      : 'flash-container'
+  )
+  if (container) container.innerHTML = flash
+})
+
+// Redirects out of a popover lose its frame, so reload it in place once (so errors can't loop)
+document.addEventListener('turbo:frame-missing', event => {
+  const frame = event.target
+  if (!frame.dataset.popoverSrc || frame.dataset.retried) return
+
+  event.preventDefault()
+  frame.dataset.retried = 'true'
+  frame.src = frame.dataset.popoverSrc
+  frame.reload()
+})
+
+document.addEventListener('turbo:frame-load', event => {
+  delete event.target.dataset.retried
+})
 
 const loadModals = element => {
   $(element).on('click', '[data-behavior~=modal_trigger]', function (e) {
@@ -474,6 +567,7 @@ $(document).on('turbo:load', function () {
     const emailInput = $('#reimbursement_report_email')
     const emailInputLabel = $('label[for="reimbursement_report_email"]')
     const maxInput = $('#reimbursement_report_maximum_amount_wrapper')
+    const reviewerInput = $('#reimbursement_report_reviewer_id')
     const inviteInput = $('#reimbursement_report_invite_message_wrapper')
 
     const forMyselfInput = $('#reimbursement_report_for_myself')
@@ -496,6 +590,18 @@ $(document).on('turbo:load', function () {
 
     externalInputWrapper.slideUp()
 
+    // Invitations default to the inviter as reviewer, but you shouldn't review your own report
+    const setReviewerDefault = forSomeoneElse => {
+      const inviteDefault = reviewerInput.data('invite-default')
+      if (!inviteDefault) return
+
+      if (forSomeoneElse && !reviewerInput.val()) {
+        reviewerInput.val(inviteDefault)
+      } else if (!forSomeoneElse && reviewerInput.val() === inviteDefault) {
+        reviewerInput.val('')
+      }
+    }
+
     $(forMyselfInput).on('change', e => {
       if (e.target.checked) {
         externalInputWrapper.slideUp({
@@ -503,12 +609,14 @@ $(document).on('turbo:load', function () {
         })
         currencyWrapper.slideDown()
         emailInput.val(emailInput[0].attributes['value'].value)
+        setReviewerDefault(false)
       }
     })
 
     $(forOrganizerInput).on('change', e => {
       if (e.target.checked) {
         emailInput.val(dropdownInput.val())
+        setReviewerDefault(true)
         externalInputWrapper.slideUp({
           complete: () => {
             dropdownInputLabel.show()
@@ -526,6 +634,7 @@ $(document).on('turbo:load', function () {
 
     $(forExternalInput).on('change', e => {
       if (e.target.checked) {
+        setReviewerDefault(true)
         externalInputWrapper.slideUp({
           complete: () => {
             emailInput.val('')
@@ -609,7 +718,6 @@ const initPayoutMethodToggles = function () {
   if (
     BK.thereIs('check_payout_method_inputs') &&
     BK.thereIs('ach_transfer_payout_method_inputs') &&
-    BK.thereIs('paypal_transfer_payout_method_inputs') &&
     BK.thereIs('wire_payout_method_inputs') &&
     BK.thereIs('wise_transfer_payout_method_inputs')
   ) {
@@ -617,56 +725,38 @@ const initPayoutMethodToggles = function () {
     const achTransferPayoutMethodInputs = BK.s(
       'ach_transfer_payout_method_inputs'
     )
-    const paypalTransferPayoutMethodInputs = BK.s(
-      'paypal_transfer_payout_method_inputs'
-    )
     const wirePayoutMethodInputs = BK.s('wire_payout_method_inputs')
     const wiseTransferPayoutMethodInputs = BK.s(
       'wise_transfer_payout_method_inputs'
     )
     $(document).on(
       'change',
-      '#user_payout_method_type_userpayoutmethodcheck',
+      '#user_payout_method_type_legalentitypayoutmethodcheck',
       e => {
         if (e.target.checked)
           checkPayoutMethodInputs.slideDown() &&
             achTransferPayoutMethodInputs.slideUp() &&
-            paypalTransferPayoutMethodInputs.slideUp() &&
             wirePayoutMethodInputs.slideUp() &&
             wiseTransferPayoutMethodInputs.slideUp()
       }
     )
     $(document).on(
       'change',
-      '#user_payout_method_type_userpayoutmethodachtransfer',
+      '#user_payout_method_type_legalentitypayoutmethodachtransfer',
       e => {
         if (e.target.checked)
           achTransferPayoutMethodInputs.slideDown() &&
             checkPayoutMethodInputs.slideUp() &&
-            paypalTransferPayoutMethodInputs.slideUp() &&
             wirePayoutMethodInputs.slideUp() &&
             wiseTransferPayoutMethodInputs.slideUp()
       }
     )
     $(document).on(
       'change',
-      '#user_payout_method_type_userpayoutmethodpaypaltransfer',
+      '#user_payout_method_type_legalentitypayoutmethodwire',
       e => {
         if (e.target.checked)
-          paypalTransferPayoutMethodInputs.slideDown() &&
-            checkPayoutMethodInputs.slideUp() &&
-            achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp() &&
-            wiseTransferPayoutMethodInputs.slideUp()
-      }
-    )
-    $(document).on(
-      'change',
-      '#user_payout_method_type_userpayoutmethodwire',
-      e => {
-        if (e.target.checked)
-          paypalTransferPayoutMethodInputs.slideUp() &&
-            checkPayoutMethodInputs.slideUp() &&
+          checkPayoutMethodInputs.slideUp() &&
             achTransferPayoutMethodInputs.slideUp() &&
             wirePayoutMethodInputs.slideDown() &&
             wiseTransferPayoutMethodInputs.slideUp()
@@ -674,16 +764,18 @@ const initPayoutMethodToggles = function () {
     )
     $(document).on(
       'change',
-      '#user_payout_method_type_userpayoutmethodwisetransfer',
+      '#user_payout_method_type_legalentitypayoutmethodwisetransfer',
       e => {
         if (e.target.checked)
           wiseTransferPayoutMethodInputs.slideDown() &&
             checkPayoutMethodInputs.slideUp() &&
             achTransferPayoutMethodInputs.slideUp() &&
-            wirePayoutMethodInputs.slideUp() &&
-            paypalTransferPayoutMethodInputs.slideUp()
+            wirePayoutMethodInputs.slideUp()
       }
     )
+    $(document).on('change', '[name="user[payout_method_type]"]', e => {
+      if (e.target.checked) BK.s('payout_method_name_input').slideDown()
+    })
   }
 }
 
@@ -776,6 +868,8 @@ document.addEventListener('turbo:before-stream-render', event => {
       })
     } else if (streamElement.action == 'close_modal') {
       $.modal.close().remove()
+    } else if (streamElement.action == 'open_modal') {
+      BK.s('modal', '#' + streamElement.target).modal({ closeExisting: false })
     } else {
       fallbackToDefaultActions(streamElement)
     }
@@ -805,34 +899,40 @@ $(document).on('wheel', 'input[type=number]', e => {
 
 $(document).on($.modal.BEFORE_OPEN, function (event, modal) {
   if (modal?.elm[0]?.dataset?.stateUrl) {
-    if (!document.documentElement.dataset.returnToStateUrl) {
-      document.documentElement.dataset.returnToStateUrl = window.location.href
+    if (!document.documentElement.dataset.returnToStateTitle) {
       document.documentElement.dataset.returnToStateTitle = document.title
     }
     document.title = modal.elm[0].dataset.stateTitle
-    window.history.pushState(
-      { modal: modal.elm[0].id },
-      '',
-      modal.elm[0].dataset.stateUrl
-    )
+
+    const url = new URL(location.href)
+    if (url.searchParams.get('popover') !== modal.elm[0].dataset.stateUrl) {
+      url.searchParams.set('popover', modal.elm[0].dataset.stateUrl)
+      window.history.pushState({ modal: modal.elm[0].id }, '', url)
+    }
   }
 })
 
 $(document).on($.modal.BEFORE_CLOSE, function (event, modal) {
-  if (document.documentElement.dataset.returnToStateUrl) {
-    window.history.pushState(
-      null,
-      '',
-      document.documentElement.dataset.returnToStateUrl
-    )
-    document.title = document.documentElement.dataset.returnToStateTitle
+  if (modal?.elm[0]?.dataset?.stateUrl) {
+    // Closing via the back button has already removed the param
+    const url = new URL(location.href)
+    if (url.searchParams.has('popover')) {
+      url.searchParams.delete('popover')
+      window.history.pushState(null, '', url)
+    }
+
+    if (document.documentElement.dataset.returnToStateTitle) {
+      document.title = document.documentElement.dataset.returnToStateTitle
+    }
   }
 })
 
 $(document).on($.modal.AFTER_CLOSE, function (event, modal) {
   if (modal?.elm?.[0]?.id === 'shared_popover') {
-    const body = document.getElementById('shared_popover_body')
-    if (body) body.innerHTML = ''
+    delete document.documentElement.dataset.returnToStateTitle
+
+    clearElement('shared_popover_body')
+    clearElement('shared_popover_flash')
 
     const popoverEl = modal.elm[0]
     if (popoverEl && popoverEl.classList) {
@@ -844,7 +944,7 @@ $(document).on($.modal.AFTER_CLOSE, function (event, modal) {
 
 window.addEventListener('popstate', e => {
   if (e.state?.modal) {
-    $(`#${e.state.modal}`).modal()
+    openPopoverFromUrl()
   } else {
     $.modal.close()
   }

@@ -39,6 +39,10 @@ class Event
         { is_public: true }
       end
 
+      def forces_transparency?
+        true
+      end
+
       def contract_skip_prefills
         {
           "Contract Signee" => ["The Project"]

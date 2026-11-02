@@ -7,6 +7,14 @@ class ApplicationController < ActionController::Base
     Current.session = find_current_session
   end
 
+  # Rails falls back to every registered template format when the requested
+  # extension is unknown, so `/feed.atom~` (or `/anything.html~`) renders the
+  # real page with a 200 and scanners report it as a leftover backup file.
+  # Treat an unrecognised extension as a missing page. Limited to GET/HEAD:
+  # a few non-GET routes (e.g. donation tier deletes) abuse the format slot
+  # for an ID.
+  before_action :reject_unknown_format, if: -> { request.get? || request.head? }
+
   include Pundit::Authorization
   include SessionsHelper
   include ToursHelper
@@ -20,10 +28,11 @@ class ApplicationController < ActionController::Base
   # that you want to be unauthenticated with skip_before_action.
   before_action :signed_in_user
 
-  before_action :ensure_created_session
-
   # Track papertrail edits to specific users
   before_action :set_paper_trail_whodunnit
+  # PaperTrail registers this callback before `Current.session` is set above;
+  # re-registering moves it here so `info_for_paper_trail` can read the session.
+  before_action :set_paper_trail_controller_info
 
   # Redirect users to the onboarding page if they haven't completed it yet
   before_action :redirect_to_onboarding
@@ -64,7 +73,13 @@ class ApplicationController < ActionController::Base
 
   rescue_from ActionView::MissingTemplate, with: :not_found
 
-  rescue_from Rack::Timeout::RequestTimeoutException do
+  rescue_from Rack::Timeout::RequestTimeoutException do |exception|
+    # Rack::Timeout raises wherever the request happens to be, which can be
+    # after a response has already been rendered or after another `respond_to`
+    # has negotiated a format. Calling `respond_to` again in that case raises
+    # `ActionController::RespondToMismatchError`, masking the actual timeout.
+    raise exception if performed? || response.media_type.present?
+
     respond_to do |format|
       format.html { render "errors/timeout" }
       format.all { render plain: "This request timed out, sorry." }
@@ -104,6 +119,11 @@ class ApplicationController < ActionController::Base
     current_user if auditor_signed_in?
   end
 
+  def safe_per(default, max: 200)
+    (params[:per] || default).to_i.clamp(1, max)
+  end
+  helper_method :safe_per
+
   private
 
   def redirect_to_onboarding
@@ -121,8 +141,16 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  def info_for_paper_trail
+    { impersonated_by_id: current_session&.impersonated_by_id }
+  end
+
   def not_found
     raise ActionController::RoutingError.new("Not Found")
+  end
+
+  def reject_unknown_format
+    not_found if params[:format].present? && Mime[params[:format]].nil?
   end
 
   def set_streaming_headers

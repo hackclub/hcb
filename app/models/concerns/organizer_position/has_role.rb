@@ -19,6 +19,11 @@ class OrganizerPosition
       end
     end
 
+    # True for managers and anyone above them (i.e. owners)
+    def manager_access?
+      role.present? && self.class.roles[role] >= self.class.roles[:manager]
+    end
+
   end
 
 end

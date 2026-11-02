@@ -17,7 +17,6 @@ class OrganizerPositionPolicy < ApplicationPolicy
     return false unless user
     return false if record.owner?
     return true if admin?
-    return false if record.user == user
 
     manager?
   end

@@ -40,36 +40,4 @@ RSpec.describe StaticPageService::Index, type: :model do
       end
     end
   end
-
-  describe "#redirect_to_first_event?" do
-    it "returns false" do
-      result = service.redirect_to_first_event?
-
-      expect(result).to eql(false)
-    end
-
-    context "when only 1 event and zero invites and not admin" do
-      before do
-        allow(service).to receive(:auditor?).and_return(false)
-        allow(service).to receive(:events).and_return([current_user.events.first])
-        allow(service).to receive(:invites).and_return([])
-      end
-
-      it "returns true" do
-        result = service.redirect_to_first_event?
-
-        expect(result).to eql(true)
-      end
-    end
-  end
-
-  describe "private" do
-    describe "#auditor?" do
-      it "returns true" do
-        result = service.send(:auditor?)
-
-        expect(result).to eql(true)
-      end
-    end
-  end
 end

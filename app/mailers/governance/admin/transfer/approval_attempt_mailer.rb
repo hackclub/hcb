@@ -18,6 +18,7 @@ module Governance
                                   end
 
           mail to: report_recipients,
+               cc: @approval_attempt.user.email_address_with_name,
                subject: "[HCB] Admin Transfer Denied: #{impersonation_snippet}#{@approval_attempt.user.name} for #{@approval_attempt.attempted_amount.format}"
         end
 

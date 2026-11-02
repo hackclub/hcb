@@ -1,8 +1,8 @@
 <%= turbo_frame_tag "suggested_pairings" do %>
   <% if local_assigns[:pairings].any? %>
-    <div class="card carousel__wrapper mt2" style="overflow: unset; border: 1px solid var(--ai);">
+    <div class="card carousel__wrapper mt2" style="overflow: unset; border: 1px solid var(--ai);" data-controller="element">
       <div style="margin: -16px; padding: 16px; margin-bottom: 0px; border-radius: 0.5rem 0.5rem 0rem 0rem;" class="bg-snow dark:bg-dark">
-        <span tabindex="0" onclick="this.parentElement.parentElement.remove();" class="pointer">
+        <span tabindex="0" data-action="click->element#remove" class="pointer">
           <%= inline_icon "view-close", size: 28, class: "pop modal__close muted  m0" %>
         </span>
         <div style="display: flex; padding-right: 32px;">
@@ -45,11 +45,11 @@
                   <tbody data-behavior="transactions">
                     <% if pairing.hcb_code.canonical_transactions.any? %>
                       <% pairing.hcb_code.canonical_transactions.each do |ct| %>
-                        <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct:, force_display_details: true, show_event_name: true } %>
+                        <%= render partial: "canonical_transactions/canonical_transaction", locals: { ct:, force_display_details: true } %>
                       <% end %>
                     <% else %>
                       <% pairing.hcb_code.canonical_pending_transactions.each do |pt| %>
-                        <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", locals: { pt:, force_display_details: true, show_event_name: true } %>
+                        <%= render partial: "canonical_pending_transactions/canonical_pending_transaction", locals: { pt:, force_display_details: true } %>
                       <% end %>
                     <% end %>
                   </tbody>
@@ -69,7 +69,7 @@
         <div class="lg-hide m2"></div>
 
         <div class="flex flex-row justify-end xs-hide sm-hide" style="margin-top: 16px;">
-          <%= link_to ignore_suggested_pairing_path(pairing), method: :post, class: "btn bg-muted tooltipped tooltipped--n", "aria-label": "Ignore suggestion" do %>
+          <%= link_to ignore_suggested_pairing_path(pairing), data: { turbo_method: :post }, class: "btn bg-muted tooltipped tooltipped--n", "aria-label": "Ignore suggestion" do %>
             <%= inline_icon "view-close", size: 32 %>
             <span>Ignore</span>
           <% end %>

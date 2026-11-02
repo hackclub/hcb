@@ -21,7 +21,7 @@ module CardGrantService
     end
 
     REQUIRED_HEADERS = %w[email amount_cents].freeze
-    OPTIONAL_HEADERS = %w[purpose one_time_use invite_message merchant_lock category_lock keyword_lock banned_merchants banned_categories].freeze
+    OPTIONAL_HEADERS = %w[purpose instructions one_time_use pre_authorization_required invite_message merchant_lock category_lock keyword_lock banned_merchants banned_categories].freeze
     ALL_HEADERS = REQUIRED_HEADERS + OPTIONAL_HEADERS
     MAX_ERRORS_TO_DISPLAY = 10
     MAX_FILE_SIZE_BYTES = 1.megabyte
@@ -183,7 +183,9 @@ module CardGrantService
         email: get_field(row, header_mapping, "email")&.strip,
         amount_cents: parse_amount(get_field(row, header_mapping, "amount_cents")),
         purpose: get_field(row, header_mapping, "purpose")&.strip.presence,
+        instructions: get_field(row, header_mapping, "instructions")&.strip.presence,
         one_time_use: parse_boolean(get_field(row, header_mapping, "one_time_use")),
+        pre_authorization_required: parse_boolean(get_field(row, header_mapping, "pre_authorization_required")),
         invite_message: get_field(row, header_mapping, "invite_message")&.strip.presence,
         merchant_lock: parse_comma_separated(get_field(row, header_mapping, "merchant_lock")),
         category_lock: parse_comma_separated(get_field(row, header_mapping, "category_lock")),

@@ -12,28 +12,6 @@ class CanonicalTransactionsController < ApplicationController
     redirect_to transaction_url(params[:id])
   end
 
-  def edit
-    @canonical_transaction = CanonicalTransaction.find(params[:id])
-
-    authorize @canonical_transaction
-
-    @event = @canonical_transaction.event
-    @suggested_memos = ::HcbCodeService::SuggestedMemos.new(hcb_code: @canonical_transaction.local_hcb_code, event: @event).run.first(4)
-  end
-
-  def set_custom_memo
-    @canonical_transaction = CanonicalTransaction.find(params[:id])
-
-    authorize @canonical_transaction
-
-    @canonical_transaction.update!(params.require(:canonical_transaction).permit(:custom_memo))
-
-    unless params[:no_flash]
-      flash[:success] = "Renamed transaction"
-    end
-    redirect_to url_from(params[:redirect_to]) || @canonical_transaction.local_hcb_code
-  end
-
   def set_category
     @canonical_transaction = CanonicalTransaction.find(params[:id])
 

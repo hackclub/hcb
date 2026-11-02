@@ -61,7 +61,17 @@ module UsersHelper
       selected: selected == :reimbursements
     }
 
-    if current_user&.jobs&.any?
+    if current_user&.payments_received&.any? || current_user&.payroll_positions&.any?
+      items << {
+        name: "Pay",
+        path: my_pay_path,
+        icon: "payment",
+        tooltip: "See payments made to you",
+        selected: selected == :pay
+      }
+    end
+
+    if current_user&.jobs&.any? # Deprecated
       items << {
         name: "Pay",
         path: my_payroll_path,
@@ -97,10 +107,10 @@ module UsersHelper
   end
 
   def profile_picture_for(user, size = 24, default_image: nil)
-    default_image ||= "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/1e41035b85ccb92f_image.png"
+    default_image ||= "https://cdn.hackclub.com/019c256a-a9f8-7cfe-8def-b35f44a55f15/image.png"
 
     # profile_picture_for works with OpenStructs (used on the front end when a user isn't registered),
-    # so this method shows Gravatars/intials for non-registered and allows showing of uploaded profile pictures for registered users.
+    # so this method shows Gravatars/initials for non-registered and allows showing of uploaded profile pictures for registered users.
     if user.nil?
       default_image
     elsif Rails.env.production? && user.is_a?(User) && user.profile_picture&.persisted?
@@ -162,6 +172,17 @@ module UsersHelper
     image_tag(src, options.merge(loading: "lazy", alt:, width: size, height: size, class: klass))
   end
 
+  def avatar_for_email(email, **options)
+    user = User.find_by(email:)
+    if user
+      avatar_for(user, **options)
+    else
+      size = options[:size] || 24
+      src = gravatar_url(email, nil, nil, size * 2)
+      image_tag(src, options.merge(loading: "lazy", alt: "", class: ["rounded-full", "shrink-none", options[:class]].compact.join(" ")))
+    end
+  end
+
   def user_mention(user, default_name: "No User", click_to_mention: false, comment_mention: false, default_image: nil, **options)
     name = content_tag :span, (user&.initial_name || default_name)
     viewer = defined?(current_user) ? current_user : nil
@@ -195,7 +216,7 @@ module UsersHelper
                 avi + name
               end
 
-    if user && viewer&.auditor?
+    if user && viewer&.auditor? && !options[:disable_admin_menu]
       button = content_tag(
         :span,
         content,
@@ -208,21 +229,31 @@ module UsersHelper
 
       aria_label = [aria_label, "Click for admin tools"].compact.join(" | ")
 
+      if viewer.admin? && user != viewer && !current_session&.impersonated?
+        impersonate_item = content_tag(
+          :span,
+          safe_join([inline_icon("spy", size: 16), content_tag(:span, "Impersonate", class: "ml1")]),
+          class: "menu__item menu__item--icon menu__action",
+          data: { action: "click->mention#impersonate", mention_url_param: impersonate_user_path(user.id) }
+        )
+      end
+
       # Menu content items
       menu_items = safe_join([
                                content_tag(
                                  :span,
                                  safe_join([inline_icon("email", size: 16), content_tag(:span, "Email", class: "ml1")]),
-                                 onclick: "window.open('mailto:#{user.email}'); return false;",
-                                 class: "menu__item menu__item--icon menu__action", rel: "noopener"
+                                 class: "menu__item menu__item--icon menu__action", rel: "noopener",
+                                 data: { action: "click->mention#sendEmail" }
                                ),
                                #  copy to clipboard
                                content_tag(
                                  :span,
                                  safe_join([inline_icon("copy", size: 16), content_tag(:span, "Copy email", class: "ml1")]),
-                                 onclick: "navigator.clipboard.writeText('#{user.email}');alert('Copied!'); return false;",
-                                 class: "menu__item menu__item--icon menu__action", rel: "noopener"
+                                 class: "menu__item menu__item--icon menu__action", rel: "noopener",
+                                 data: { action: "click->mention#copyEmail" }
                                ),
+                               impersonate_item,
                                content_tag(
                                  :span,
                                  nil,
@@ -231,7 +262,7 @@ module UsersHelper
                                content_tag(
                                  :span,
                                  safe_join([inline_icon("settings", size: 16), content_tag(:span, "Settings", class: "ml1")]),
-                                 onclick: "window.open('#{admin_user_url(user)}', '_blank'); return false;",
+                                 data: { controller: "new-window", action: "click->new-window#open", new_window_url_value: admin_user_url(user) },
                                  class: "menu__item menu__item--icon menu__action", rel: "noopener"
                                )
                              ])
@@ -240,7 +271,7 @@ module UsersHelper
         :span,
         menu_items,
         class: "menu__content menu__content--2 menu__content--compact h5",
-        data: { "menu-target": "content" }
+        data: { "menu-target": "content", "controller": "mention", "mention-email-value": user.email }
       )
 
       menu_wrapper = content_tag(
@@ -291,44 +322,44 @@ module UsersHelper
   def onboarding_gallery
     [
       {
-        image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/f00f504836b546b6_image.png",
+        image: "https://cdn.hackclub.com/019c256a-97ad-793a-b693-d6f96a08a1f5/image.png",
         url: "https://hcb.hackclub.com/zephyr",
         overlay_color: "#802434",
       },
       {
-        image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/8e36b998e8f8a014_image.png",
+        image: "https://cdn.hackclub.com/019c256a-9d96-7c2f-a22c-f02c10edafd4/image.png",
         url: "https://hcb.hackclub.com/the-charlotte-bridge",
         overlay_color: "#805b24",
       },
       {
-        image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/c2b21fc2bac8fe37_image.png",
+        image: "https://cdn.hackclub.com/019c2570-ee44-7e7a-973c-d2f41ca05fdf/image.png",
         url: "https://hcb.hackclub.com/windyhacks",
         overlay_color: "#807f0a",
       },
       {
-        image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/3693a52722bd453d_image.png",
+        image: "https://cdn.hackclub.com/019c2570-efbc-719f-8d62-d1d42e83ca8c/image.png",
         url: "https://hcb.hackclub.com/the-innovation-circuit",
         overlay_color: "#22806c",
         object_position: "center"
       },
       {
-        image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/0dd4665e1f416fe0_image.png",
+        image: "https://cdn.hackclub.com/019c2570-e0d4-7bd8-9e83-4bd8843410f2/image.png",
         url: "https://hcb.hackclub.com/zephyr",
         overlay_color: "#3c7d80",
         object_position: "center"
       },
       {
-        image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/014152a92bec1ca3_image.png",
+        image: "https://cdn.hackclub.com/019c256a-9bd8-7712-9211-0cad87140bb0/image.png",
         url: "https://hcb.hackclub.com/hackpenn",
         overlay_color: "#225c80",
       },
       {
-        image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/17c73dbb7921ea42_image.png",
+        image: "https://cdn.hackclub.com/019c256b-bbf2-7c93-96f7-072136636b4e/image.png",
         url: "https://hcb.hackclub.com/wild-wild-west",
         overlay_color: "#6c2280",
       },
       {
-        image: "https://cdn.hackclub.com/rescue?url=https://hc-cdn.hel1.your-objectstorage.com/s/v3/395d07060854ce95_image.png",
+        image: "https://cdn.hackclub.com/019c256a-aabc-7a58-8893-9ba27d59a656/image.png",
         url: "https://hcb.hackclub.com/assemble",
         overlay_color: "#802434",
       }

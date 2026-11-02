@@ -4,12 +4,12 @@ A core part of HCB's onboarding process is the fiscal sponsorship contract. The 
 
 `Contract` implements single-table inheritance to support other types of contracts, such as termination contracts. Currently, only `Contract::FiscalSponsorship` is implemented and overrides `payload` (what HCB sends to DocuSeal to create the contract) and `required_roles` (the party roles that must exist on the contract before sending).
 
-`Contract` also has a couple important associations:
+`Contract` also has a couple of important associations:
 
 - `contractable` - polymorphic association to the source of the contract, which is expected to implement the `Contractable` concern. `OrganizerPositionInvite` and `Event::Application` implement this.
 - `parties` - each signing party has a `Contract::Party` method linked to its `Contract`. Each party stores its own signing state and a role, which can be `signee`, `cosigner`, or `hcb`.
 
-Callbacks on `Contract::Party` and `Contract` ensure that data is always kept in sync and allows the `Contractable` to perform additional tasks when its contract's status changes. Additionally, `Contract::Party#sync_with_docuseal` allows us to safely update the party with the up to date data from DocuSeal in cases where we might be reading right after signing.
+Callbacks on `Contract::Party` and `Contract` ensure that data is always kept in sync and allow the `Contractable` to perform additional tasks when its contract's status changes. Additionally, `Contract::Party#sync_with_docuseal` allows us to safely update the party with the up-to-date data from DocuSeal in cases where we might be reading right after signing.
 
 ## Creating contracts
 
@@ -64,7 +64,7 @@ contract = Contract::FiscalSponsorship.create!(contractable: invite, include_vid
 
 contract.parties.create!(user: invite.user, role: :signee)
 
-# If the contract had a cosigner, uncomment and add their email here here
+# If the contract had a cosigner, uncomment and add their email here
 # contract.parties.create!(external_email: "", role: :cosigner)
 
 contract.mark_signed!
