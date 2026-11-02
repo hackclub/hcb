@@ -418,6 +418,14 @@ export const adminActions = (adminUrls, isPretending) => {
       perform: navigate('/admin/pending_ledger'),
     },
     {
+      id: 'admin-ledger-items',
+      section: 'Admin Tools',
+      priority: Priority.HIGH,
+      name: 'Ledger items',
+      icon: <Icon glyph="list" size={16} />,
+      perform: navigate('/admin/ledger_items'),
+    },
+    {
       id: 'admin-raw-transactions',
       section: 'Admin Tools',
       priority: Priority.HIGH,

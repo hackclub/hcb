@@ -15,10 +15,10 @@
 #
 # Indexes
 #
-#  index_payees_on_archived_at                   (archived_at)
-#  index_payees_on_event_id                      (event_id)
-#  index_payees_on_legal_entity_id               (legal_entity_id)
-#  index_payees_on_legal_entity_id_and_event_id  (legal_entity_id,event_id) UNIQUE
+#  index_payees_on_archived_at                                (archived_at)
+#  index_payees_on_event_id                                   (event_id)
+#  index_payees_on_legal_entity_id                            (legal_entity_id)
+#  index_payees_on_legal_entity_id_and_event_id_not_archived  (legal_entity_id,event_id) UNIQUE WHERE (archived_at IS NULL)
 #
 class Payee < ApplicationRecord
   include PgSearch::Model
@@ -36,10 +36,10 @@ class Payee < ApplicationRecord
   has_many :payments
   has_many :payroll_positions, class_name: "Payroll::Position"
 
-  validates_uniqueness_of :legal_entity_id, scope: [:event_id], allow_nil: true
+  validates_uniqueness_of :legal_entity_id, scope: [:event_id], allow_nil: true, conditions: -> { not_archived }, unless: :archived?
 
   validate :managed_legal_entity_constraints
-  validate :email_frozen, if: -> { legal_entity.present? }
+  validate :email_frozen, if: -> { email_frozen? }
 
   normalizes :email, with: ->(email) { email.strip.downcase }
 
@@ -91,6 +91,10 @@ class Payee < ApplicationRecord
 
   def archived?
     archived_at.present?
+  end
+
+  def email_frozen?
+    legal_entity.present? && !legal_entity.managed?
   end
 
   private
