@@ -30,6 +30,7 @@
       <th>ID</th>
       <th>Date</th>
       <th>Recipient</th>
+      <th>Payment</th>
       <th>Amount</th>
       <th>Status</th>
       <th>Confirmation No.</th>
@@ -44,6 +45,13 @@
         <td>
           <%= link_to ach_transfer_path(ach) do %>
             <%= ach.event.name.upcase %>: <%= ach.recipient_name.upcase %>
+          <% end %>
+        </td>
+        <td>
+          <% if ach.payment.present? %>
+            <%= render partial: "admin/payment_link", locals: { payout: ach } %>
+          <% else %>
+            None
           <% end %>
         </td>
         <td><%= render_money_amount(ach.amount) %></td>
