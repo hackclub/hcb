@@ -213,6 +213,10 @@ class EventPolicy < ApplicationPolicy
     show?
   end
 
+  def contractors_pending_review_icon?
+    show?
+  end
+
   def reimbursements?
     auditor_or_reader? && record.plan.reimbursements_enabled?
   end
@@ -250,6 +254,10 @@ class EventPolicy < ApplicationPolicy
 
   def invoices?
     show? && record.approved? && (record.plan.invoices_enabled? || record.invoices.any?)
+  end
+
+  def export_invoices?
+    invoices? && auditor_or_reader?
   end
 
   def account_number?

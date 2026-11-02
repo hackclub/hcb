@@ -20,7 +20,7 @@ class GSuiteAliasesController < ApplicationController
   end
 
   def destroy
-    @g_suite_alias = GSuiteAlias.find(params[:g_suite_alias_id])
+    @g_suite_alias = GSuiteAlias.find(params.require(:id))
 
     authorize @g_suite_alias
     event = @g_suite_alias.g_suite.event
