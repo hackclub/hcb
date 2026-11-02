@@ -380,6 +380,11 @@ class UsersController < ApplicationController
     authorize @user
 
     @user.assign_attributes(user_params)
+    if params[:user][:full_name].present? && params[:user][:first_name].blank? && params[:user][:last_name].blank?
+      parsed = UserService::ParseName.new(full_name: params[:user][:full_name]).run
+      @user.first_name = parsed.first_name
+      @user.last_name = parsed.last_name
+    end
 
     payout_method_type = params.dig(:user, :payout_method_type)
 
@@ -461,7 +466,7 @@ class UsersController < ApplicationController
     if saved
       confetti! if !@user.seasonal_themes_enabled_before_last_save && @user.seasonal_themes_enabled? # confetti if the user enables seasonal themes
 
-      if @user.full_name_before_last_save.blank?
+      if @user.first_name_before_last_save.blank? && @user.full_name_before_last_save.blank?
         flash[:success] = "Profile created!"
         redirect_to(return_to || root_path)
       else
@@ -570,6 +575,8 @@ class UsersController < ApplicationController
   def user_params
     attributes = [
       # account
+      :first_name,
+      :last_name,
       :full_name,
       :preferred_name,
       :phone_number,

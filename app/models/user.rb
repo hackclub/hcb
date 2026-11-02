@@ -13,8 +13,10 @@
 #  comment_notifications              :integer          default(0), not null
 #  creation_method                    :integer
 #  email                              :text             not null
+#  first_name                         :string
 #  full_name                          :string
 #  joined_as_teenager                 :boolean
+#  last_name                          :string
 #  locked_at                          :datetime
 #  monthly_donation_summary           :boolean          default(TRUE)
 #  monthly_follower_summary           :boolean          default(TRUE)
@@ -48,6 +50,12 @@
 #  index_users_on_slug        (slug) UNIQUE
 #
 class User < ApplicationRecord
+  # Character regex for name validation (supports international characters)
+  NAME_CHARACTERS_REGEX = /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,' -]+\z/
+
+  # Full name format regex (must have first and last name - at least two words)
+  FULL_NAME_FORMAT_REGEX = /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,'-]+ [a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,' -]+\z/
+
   has_paper_trail skip: [:birthday] # ciphertext columns will still be tracked
 
   include Hashid::Rails
@@ -71,7 +79,7 @@ class User < ApplicationRecord
   tracked owner: proc{ |controller, record| record }, recipient: proc { |controller, record| record }, only: [:create, :update]
 
   include PgSearch::Model
-  pg_search_scope :search_name, against: [:id, :full_name, :email, :phone_number], associated_against: { email_updates: :original }, using: { tsearch: { prefix: true, dictionary: "english" } }
+  pg_search_scope :search_name, against: [:id, :first_name, :last_name, :full_name, :email, :phone_number], associated_against: { email_updates: :original }, using: { tsearch: { prefix: true, dictionary: "english" } }
 
   friendly_id :slug_candidates, use: :slugged
   scope :admin, -> { where(access_level: [:admin, :superadmin]) }
@@ -201,6 +209,7 @@ class User < ApplicationRecord
   before_save :clear_pretend_is_not_admin, if: -> { pretend_is_not_admin? && !admin_override_pretend? }
 
   before_create :format_number
+  before_save :sync_full_name_from_split_names, if: -> { first_name_changed? || last_name_changed? }
   before_save :on_phone_number_update
   validate :second_factor_present_for_2fa
 
@@ -223,9 +232,23 @@ class User < ApplicationRecord
   validates_presence_of :birthday, if: -> { birthday_ciphertext_in_database.present? }
 
   validates :full_name, format: {
-    with: /\A[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,'-]+ [a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð.,' -]+\z/,
-    message: "must contain your first and last name, and only contain characters in the latin alphabet.", allow_blank: true,
+    with: FULL_NAME_FORMAT_REGEX,
+    message: "must contain your first and last name and may only include letters, spaces, hyphens, apostrophes, periods, and commas.", allow_blank: true,
+  }, unless: -> { first_name.present? || last_name.present? }
+
+  validates :first_name, presence: true, if: -> { first_name_in_database.present? || last_name_in_database.present? }
+  validates :first_name, format: {
+    with: NAME_CHARACTERS_REGEX,
+    message: "may only include letters, spaces, hyphens, apostrophes, periods, and commas.", allow_blank: true,
   }
+
+  validates :last_name, format: {
+    with: NAME_CHARACTERS_REGEX,
+    message: "may only include letters, spaces, hyphens, apostrophes, periods, and commas.", allow_blank: true,
+  }
+
+  normalizes :first_name, with: ->(name) { name.strip.presence }
+  normalizes :last_name, with: ->(name) { name.strip.presence }
 
   validates :email, uniqueness: true, presence: true
   validates_email_format_of :email
@@ -338,31 +361,56 @@ class User < ApplicationRecord
   end
 
   def first_name(legal: false)
-    @first_name ||= (namae(legal:)&.given || namae(legal:)&.particle)&.split(" ")&.first
+    # Return the stored first_name as-is. The database stores the complete first name
+    # (which may include particles like "von" from Namae parsing).
+    # For legal names, fall back to parsing full_name if first_name is not set.
+    return read_attribute(:first_name) if read_attribute(:first_name)
+    return nil unless legal
+
+    parsed_name = namae(legal:)
+    parts = [parsed_name&.given, parsed_name&.particle].compact_blank
+    parts.empty? ? nil : parts.join(" ")
   end
 
   def last_name(legal: false)
-    @last_name ||= namae(legal:)&.family&.split(" ")&.last
+    # Return the stored last_name as-is. The database stores the complete last name
+    # (which may include suffixes like "Jr." from Namae parsing).
+    # For legal names, fall back to parsing full_name if last_name is not set.
+    read_attribute(:last_name) || (legal ? namae(legal:)&.family : nil)
+  end
+
+  def reconstructed_full_name
+    parts = [self[:first_name], self[:last_name]].compact_blank
+    parts.empty? ? nil : parts.join(" ")
   end
 
   def initial_name
     @initial_name ||= if name.strip.split(" ").count == 1
                         name
                       else
-                        "#{(first_name || last_name)[0..20]} #{(last_name || first_name)[0, 1]}"
+                        first = (self[:first_name]&.split(" ")&.first || self[:last_name]&.split(" ")&.first || name)[0..20]
+                        last_source = self[:last_name] || self[:first_name] || ""
+                        last = (last_source.split(" ").first || "")[0, 1]
+                        last.blank? ? first : "#{first} #{last}"
                       end
   end
 
   def safe_name
-    # stripe requires names to be 24 chars or less, and must include a last name
+    # stripe requires cardholder names to be 24 chars or less
     return name unless name.length > 24
-    return full_name unless full_name.length > 24
+
+    reconstructed = reconstructed_full_name
+    return reconstructed if reconstructed && reconstructed.length <= 24
+
+    # fall back to the legacy full_name which may contain a suffix that was
+    # stripped during migration but is still shorter than the preferred name
+    return full_name if full_name && full_name.length <= 24
 
     initial_name
   end
 
   def name
-    preferred_name.presence || full_name.presence || email_handle
+    preferred_name.presence || reconstructed_full_name || full_name.presence || email_handle
   end
 
   def possessive_name
@@ -487,11 +535,11 @@ class User < ApplicationRecord
 
   def onboarding?
     # in_database to prevent a blank name update attempt from triggering onboarding.
-    full_name_in_database.blank?
+    first_name_in_database.blank? && full_name_in_database.blank?
   end
 
   def was_onboarding?
-    full_name_before_last_save.blank? && full_name_previously_changed?
+    first_name_before_last_save.blank? && full_name_before_last_save.blank? && (first_name_previously_changed? || full_name_previously_changed?)
   end
 
   def active_mailbox_address
@@ -753,6 +801,10 @@ class User < ApplicationRecord
   end
 
   private
+
+  def sync_full_name_from_split_names
+    self.full_name = reconstructed_full_name if reconstructed_full_name.present?
+  end
 
   def create_legal_entity
     legal_entities.create!(entity_type: :person, name: full_name)
