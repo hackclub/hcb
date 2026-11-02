@@ -1,0 +1,36 @@
+<% @show_card_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? %>
+<%= turbo_frame_tag dom_id(event, :my_cards), target: "_top" do %>
+  <% if @view == "list" %>
+    <article class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Number</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Issued on</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% stripe_cards.each do |c| %>
+            <tr class="clickable">
+              <td><%= c.card_grant.present? ? c.card_grant.purpose : c.name %></td>
+              <td class="fs-mask"><%= c.hidden_card_number_with_last_four %></td>
+              <td><%= c.virtual? ? "Virtual" : "Physical" %></td>
+              <td><span class="ml0 badge bg-<%= c.state %>"><%= c.state_text %></span></td>
+              <td>
+                <%= format_date c.created_at %>
+                <%= link_to "", stripe_card_path(c), class: "stretched-link", data: @show_card_popovers ? stripe_card_popover_data(c) : {} %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </article>
+  <% else %>
+    <article class="mixed-grid grid--spacious">
+      <%= render stripe_cards, headless: true, show_purpose: true %>
+    </article>
+  <% end %>
+<% end %>
