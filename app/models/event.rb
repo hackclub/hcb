@@ -30,6 +30,7 @@
 #  public_message                               :text
 #  public_reimbursement_page_enabled            :boolean          default(FALSE), not null
 #  public_reimbursement_page_message            :text
+#  reimbursement_reviewer_selection             :string           default("disabled"), not null
 #  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
 #  risk_level                                   :integer
 #  short_name                                   :string
@@ -545,6 +546,8 @@ class Event < ApplicationRecord
 
   include HasTasks
 
+  include Event::HasReimbursementReviewers
+
   validate :point_of_contact_is_admin
 
   include ::UserService::CanOpenDemoMode
@@ -688,8 +691,10 @@ class Event < ApplicationRecord
     completed_t + pending_t
   end
 
+  # Repayments pay an expense back, so they come off both totals instead of
+  # counting as revenue, matching Ledger#revenue_cents and #expenses_cents.
   def total_raised
-    settled_incoming_balance_cents + fronted_incoming_balance_v2_cents
+    settled_incoming_balance_cents + fronted_incoming_balance_v2_cents - ledger.repayments_received_cents
   end
 
   def raised_ytd_cents
@@ -702,7 +707,7 @@ class Event < ApplicationRecord
   end
 
   def total_spent_cents
-    (settled_outgoing_balance_cents + pending_outgoing_balance_v2_cents) * -1
+    (settled_outgoing_balance_cents + pending_outgoing_balance_v2_cents) * -1 - ledger.repayments_received_cents
   end
 
   def balance_v2_cents(start_date: nil, end_date: nil, legacy: false)
@@ -843,8 +848,10 @@ class Event < ApplicationRecord
     last_fee_processed_at.nil? || last_fee_processed_at <= MIN_WAITING_TIME_BETWEEN_FEES.ago
   end
 
-  def total_fees_v2_cents
-    @total_fees_v2_cents ||= fees.sum(:amount_cents_as_decimal).ceil
+  def total_fees_v2_cents(start_date: nil, end_date: nil)
+    return @total_fees_v2_cents ||= fees.sum(:amount_cents_as_decimal).ceil unless start_date || end_date
+
+    fees.where(created_at: start_date..end_date).sum(:amount_cents_as_decimal).ceil
   end
 
   # Fiscal sponsorship fees charged by the fee engine, at whatever rate the
@@ -1093,11 +1100,7 @@ class Event < ApplicationRecord
     scoped_tags.where(parent_event_id: parent_id)
   end
 
-  # `admin` is required rather than defaulted, so a caller cannot silently
-  # render a different label than the search endpoint returns.
-  def to_combobox_display(admin:)
-    return "#{name} (ID: #{id})" if admin
-
+  def to_combobox_display
     name
   end
 

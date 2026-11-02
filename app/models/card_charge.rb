@@ -51,6 +51,34 @@ class CardCharge < ApplicationRecord
     (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("merchant_currency")
   end
 
+  # Only Stripe authorizations carry verification data; settled transactions
+  # don't, so a charge that settled before it was reversed must still read it
+  # from the authorization.
+  def verification_data
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("verification_data") || {}
+  end
+
+  # The checks Stripe reported as mismatched when the charge was authorized,
+  # e.g. "address_postal_code_check" or "cvc_check".
+  def failed_verification_checks
+    verification_data.select { |check, result| check.end_with?("check") && result == "mismatch" }.keys
+  end
+
+  # What the cardholder was charged, before any refund: the captured amount once
+  # the charge has settled, otherwise the amount that was authorized. Nothing
+  # else can say: the ledger item's amount nets to zero once a charge is
+  # reversed or released, Stripe zeroes a released authorization's amount, and
+  # the pending transaction import copies that zero onto the canonical pending
+  # transaction. The authorization's request history keeps the amount of every
+  # request Stripe approved.
+  def amount_cents
+    captured_cents = raw_stripe_transactions.reject(&:refund?).sum { |transaction| transaction.amount_cents.to_i }.abs
+    return captured_cents if captured_cents.positive?
+
+    requests = raw_pending_stripe_transaction&.stripe_transaction&.dig("request_history") || []
+    requests.select { |request| request["approved"] }.sum { |request| request["amount"].to_i }.abs
+  end
+
   def icon
     merchant = YellowPages::Merchant.lookup(network_id: merchant_network_id || "")
     categorised_category = BreakdownEngine::Categorizer.new(merchant_category).run

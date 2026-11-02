@@ -8,7 +8,8 @@
   <% auto_discover_feed(@event) %>
   <% @skip_layout_og_tags = true # replaced by the organization-specific meta below %>
   <% content_for :head do %>
-    <% img = "https://hcb-og.hackclub.com/api/embeds/#{@event.slug}" %>
+    <%# Slack's link expander crops previews into a square thumbnail, so give it the square image %>
+    <% img = "https://hcb-og.hackclub.com/api/#{request.user_agent.to_s.include?("Slackbot-LinkExpanding") ? "square-embed" : "embeds"}/#{@event.slug}" %>
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
     <meta property="og:image" content="<%= img %>">
