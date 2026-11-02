@@ -2,7 +2,7 @@
 
 module Tax
   class FormsController < ApplicationController
-    before_action :set_form, only: [:show, :completed, :discard]
+    before_action :set_form, only: [:show, :electronic_consent, :update_electronic_consent, :completed, :discard]
 
     def show
       authorize @form
@@ -44,6 +44,18 @@ module Tax
       tax_form.send!
 
       redirect_to tax_form_path(tax_form)
+    end
+
+    def electronic_consent
+      authorize @form
+    end
+
+    def update_electronic_consent
+      authorize @form
+
+      @legal_entity.record_electronic_consent!(params[:electronic_consent] == "true")
+
+      redirect_to completed_tax_form_path(@form)
     end
 
     def completed
