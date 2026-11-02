@@ -86,12 +86,18 @@
 
         <tbody>
           <% @contractors.each do |contractor| %>
+            <% pending = @pending_invoice_counts[contractor.id] || 0 %>
             <tr class="<%= "clickable" if show_details %>">
               <td>
                 <span class="badge ml-0 bg-<%= contractor.status_color %>"><%= contractor.status_text %></span>
               </td>
               <td>
-                <strong><%= contractor.payee.display_name %></strong>
+                <span class="flex items-center gap-1">
+                  <strong><%= contractor.payee.display_name %></strong>
+                  <% if pending.positive? %>
+                    <span class="contractor-review-badge"><%= pending %></span>
+                  <% end %>
+                </span>
                 <% if show_details %>
                   <span class="muted block"><%= contractor.payee.email %></span>
                 <% end %>

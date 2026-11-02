@@ -143,6 +143,7 @@
       <strong>Memo</strong>
       <span><%= invoice.memo %></span>
     </p>
+    <%= render "ledger/items/repayments", ledger_item: %>
   </section>
   <% width_css_class = invoice.deposited? ? invoice.canonical_transactions.sum { |ct| ct.fee.amount_cents_as_decimal } != 0 : invoice.event.revenue_fee != 0 ? "w-64" : "w-8" %>
   <section class="card__banner card__darker details details--wide border-top p-0 -mx-[16px]">

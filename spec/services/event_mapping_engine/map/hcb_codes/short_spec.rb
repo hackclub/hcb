@@ -20,6 +20,34 @@ RSpec.describe EventMappingEngine::Map::HcbCodes::Short do
     expect(ct.category).to be_nil
   end
 
+  it "inherits the subledger from the transaction the HCB code is already mapped to" do
+    event = create(:event)
+    subledger = create(:subledger, event:)
+
+    cpt = create(:canonical_pending_transaction, amount_cents: -42_34)
+    cpt.create_canonical_pending_event_mapping!(event:, subledger:)
+    hcb_code = cpt.local_hcb_code
+
+    charge = create(:canonical_transaction, amount_cents: -42_34, date: 3.months.ago)
+    create(:canonical_event_mapping, canonical_transaction: charge, event:, subledger:)
+    # Mapping a transaction rewrites its HCB code, so group it onto the pending
+    # transaction's code afterwards.
+    charge.update_column(:hcb_code, hcb_code.hcb_code)
+
+    # A dispute reimbursement arrives months after the charge it reverses,
+    # carrying the short code in its memo.
+    credit = create(
+      :canonical_transaction,
+      amount_cents: 42_34,
+      date: Date.current,
+      memo: "HCKCLB HCB-#{hcb_code.short_code}"
+    )
+
+    described_class.new.run
+
+    expect(credit.reload.canonical_event_mapping.subledger).to eq(subledger)
+  end
+
   it "adds a category to bank fee transactions" do
     event = create(:event)
     bank_fee = create(:bank_fee, event:, amount_cents: -12_34)
@@ -106,6 +134,44 @@ RSpec.describe EventMappingEngine::Map::HcbCodes::Short do
     expect(ct.event).to eq(event)
     expect(ct.category.slug).to eq("hcb-revenue")
     expect(ct.category_mapping.assignment_strategy).to eq("automatic")
+  end
+
+  it "copies the pending transaction's category to a reversed expense payout" do
+    event = create(:event)
+    report = create(:reimbursement_report, event:)
+    expense = create(:reimbursement_expense, report:, memo: "Wire fee", type: "Reimbursement::Expense::Fee")
+    expense.update_column(:aasm_state, "approved")
+    report.update_column(:aasm_state, "reimbursement_approved")
+    payout = Reimbursement::ExpensePayout.create!(amount_cents: -expense.amount_cents, event:, expense:)
+    expect(payout.canonical_pending_transaction.category.slug).to eq("bank-fees")
+
+    # Reversing a payout sends the money back as a second transaction on the
+    # same HCB code
+    ct = create(:canonical_transaction, amount_cents: expense.amount_cents, memo: "HCB-#{payout.local_hcb_code.short_code}")
+
+    described_class.new.run
+
+    ct.reload
+    expect(ct.event).to eq(event)
+    expect(ct.category.slug).to eq("bank-fees")
+    expect(ct.category_mapping.assignment_strategy).to eq("automatic")
+  end
+
+  it "copies the pending transaction's category to a reversed payout holding" do
+    create(:event, id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
+    payout_holding = Reimbursement::PayoutHolding.create!(report: create(:reimbursement_report), amount_cents: 10_00)
+    TransactionCategoryService
+      .new(model: payout_holding.canonical_pending_transaction)
+      .set!(slug: "travel", assignment_strategy: "manual")
+
+    ct = create(:canonical_transaction, amount_cents: 10_00, memo: "HCB-#{payout_holding.local_hcb_code.short_code}")
+
+    described_class.new.run
+
+    ct.reload
+    expect(ct.event).to eq(payout_holding.event)
+    expect(ct.category.slug).to eq("travel")
+    expect(ct.category_mapping.assignment_strategy).to eq("manual")
   end
 
 end

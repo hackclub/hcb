@@ -533,6 +533,7 @@ Rails.application.routes.draw do
   resources :disbursements, only: [:new, :create, :show, :edit, :update], concerns: :commentable do
     collection do
       get :event_search
+      get :repayable_transactions
     end
     post "mark_fulfilled"
     post "reject"
@@ -743,6 +744,7 @@ Rails.application.routes.draw do
 
         resources :events, path: "organizations", only: [:show] do
           resources :stripe_cards, path: "cards", only: [:index]
+          get "cards/designs", to: "stripe_cards/personalization_designs#index"
           resources :card_grants, only: [:index, :create]
           resources :organizer_position_invites, path: "invitations", only: [:index, :create, :destroy]
           resources :transactions, only: [:show, :update] do
@@ -790,9 +792,11 @@ Rails.application.routes.draw do
 
         resources :receipts, only: [:create, :index, :destroy]
 
+        get "cards/designs", to: "stripe_cards/personalization_designs#index"
+
         resources :stripe_cards, path: "cards", only: [:show, :update, :create] do
           collection do
-            get "card_designs"
+            get "card_designs", to: "stripe_cards/personalization_designs#index" # deprecated: use cards/designs
             post "freeze"
             post "defrost"
             post "activate"
@@ -948,6 +952,8 @@ Rails.application.routes.draw do
 
   resources :tax_forms, only: [:show, :create], controller: "tax/forms" do
     member do
+      get "electronic_consent"
+      post "electronic_consent", action: :update_electronic_consent
       get "completed"
       post "discard"
     end
@@ -1065,6 +1071,7 @@ Rails.application.routes.draw do
     get "async_sub_organization_balances"
     get "async_sub_organization_rows"
     get "reimbursements_pending_review_icon"
+    get "contractors_pending_review_icon"
 
     get "documentation", to: redirect("/%{event_id}/documents", status: 302)
     get "transfers"

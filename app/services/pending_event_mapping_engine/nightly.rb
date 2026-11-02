@@ -92,16 +92,16 @@ module PendingEventMappingEngine
 
     def settle_canonical_pending_increase_check!
       CanonicalPendingTransaction.unsettled.increase_check.find_each(batch_size: 100) do |cpt|
-        if cpt.local_hcb_code.ct
-          CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: cpt.local_hcb_code.ct)
+        if (ct = cpt.local_hcb_code.ct)
+          CanonicalPendingTransactionService::Settle.new(canonical_transaction: ct, canonical_pending_transaction: cpt).run!
         end
       end
     end
 
     def settle_canonical_pending_wire!
       CanonicalPendingTransaction.unsettled.wire.find_each(batch_size: 100) do |cpt|
-        if cpt.local_hcb_code.ct
-          CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: cpt.local_hcb_code.ct)
+        if (ct = cpt.local_hcb_code.ct)
+          CanonicalPendingTransactionService::Settle.new(canonical_transaction: ct, canonical_pending_transaction: cpt).run!
           cpt.wire.mark_deposited!
         end
       end
@@ -109,8 +109,8 @@ module PendingEventMappingEngine
 
     def settle_canonical_pending_check_deposit!
       CanonicalPendingTransaction.unsettled.check_deposit.find_each(batch_size: 100) do |cpt|
-        if cpt.local_hcb_code.ct
-          CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: cpt.local_hcb_code.ct)
+        if (ct = cpt.local_hcb_code.ct)
+          CanonicalPendingTransactionService::Settle.new(canonical_transaction: ct, canonical_pending_transaction: cpt).run!
         end
       end
     end
@@ -190,7 +190,7 @@ module PendingEventMappingEngine
     def settle_canonical_pending_expense_payout!
       CanonicalPendingTransaction.unsettled.reimbursement_expense_payout.find_each(batch_size: 100) do |cpt|
         if (ct = cpt.local_hcb_code.ct)
-          CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: ct)
+          CanonicalPendingTransactionService::Settle.new(canonical_transaction: ct, canonical_pending_transaction: cpt).run!
         end
       end
     end
@@ -198,7 +198,7 @@ module PendingEventMappingEngine
     def settle_canonical_pending_payout_holding!
       CanonicalPendingTransaction.unsettled.reimbursement_payout_holding.find_each(batch_size: 100) do |cpt|
         if (ct = cpt.local_hcb_code.ct)
-          CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: ct)
+          CanonicalPendingTransactionService::Settle.new(canonical_transaction: ct, canonical_pending_transaction: cpt).run!
         end
       end
     end
@@ -206,7 +206,7 @@ module PendingEventMappingEngine
     def settle_canonical_pending_stripe_service_fee!
       CanonicalPendingTransaction.unsettled.stripe_service_fee.find_each(batch_size: 100) do |cpt|
         if (ct = cpt.local_hcb_code.ct)
-          CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: ct)
+          CanonicalPendingTransactionService::Settle.new(canonical_transaction: ct, canonical_pending_transaction: cpt).run!
         end
       end
     end
@@ -214,7 +214,7 @@ module PendingEventMappingEngine
     def settle_canonical_pending_fee_revenue!
       CanonicalPendingTransaction.unsettled.fee_revenue.find_each(batch_size: 100) do |cpt|
         if (ct = cpt.local_hcb_code.ct)
-          CanonicalPendingSettledMapping.create!(canonical_pending_transaction: cpt, canonical_transaction: ct)
+          CanonicalPendingTransactionService::Settle.new(canonical_transaction: ct, canonical_pending_transaction: cpt).run!
         end
       end
     end

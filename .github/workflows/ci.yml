@@ -52,6 +52,14 @@ jobs:
       - uses: ./.github/actions/setup-node
       - name: Run ESLint
         run: yarn lint
+  herb:
+    name: Herb
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-node
+      - name: Run Herb
+        run: yarn lint:herb
   prettier:
     name: Prettier
     runs-on: ubuntu-latest
