@@ -51,11 +51,11 @@ class IncreaseChecksController < ApplicationController
   def update
     authorize @check
     @event = @check.event
-    params[:increase_check][:amount] = Monetize.parse(params[:increase_check][:amount]).cents
+    params.require(:increase_check)[:amount] = Monetize.parse(params[:increase_check][:amount]).cents
     if @check.update(check_params.except(:file))
       redirect_to increase_check_process_admin_path(@check), flash: { success: "Check has been updated." }
     else
-      redirect_to edit_increase_check_path(@check), flash: { error: @check.errors.full_messages.to_sentence }
+      render :edit, status: :unprocessable_content
     end
   end
 

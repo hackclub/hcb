@@ -9,12 +9,8 @@ class IncreaseCheckPolicy < ApplicationPolicy
     user_who_can_transfer?
   end
 
-  def edit?
-    user&.admin? && record.pending?
-  end
-
   def update?
-    user&.admin? && record.pending?
+    user&.admin? && record.pending? && record.payment_attempt.nil? && record.employee_payment.nil?
   end
 
   def approve?

@@ -202,7 +202,7 @@ class IncreaseCheck < ApplicationRecord
   end
 
   validates :amount, numericality: { greater_than: 0, message: "can't be zero!" }
-  validates :memo, length: { in: 1..40 }
+  validates :memo, length: { in: 1..40 }, if: :memo_changed?
   validates :recipient_name, length: { in: 1..250 }
   validates_presence_of :memo, :payment_for, :recipient_name, :address_line1, :address_city, :address_zip
   validates_presence_of :address_state, message: "Please select a state!"
@@ -216,6 +216,12 @@ class IncreaseCheck < ApplicationRecord
   validate on: :create do
     if amount > event.balance_available_v2_cents
       errors.add(:amount, "You don't have enough money to send this transfer! Your balance is #{ApplicationController.helpers.render_money(event.balance_available_v2_cents)}.")
+    end
+  end
+
+  validate on: :update, if: :amount_changed? do
+    if amount - amount_was > event.balance_available_v2_cents
+      errors.add(:amount, "can't be increased by more than the available balance of #{ApplicationController.helpers.render_money(event.balance_available_v2_cents)}.")
     end
   end
 
