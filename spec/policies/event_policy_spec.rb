@@ -15,6 +15,8 @@ RSpec.describe EventPolicy, type: :policy do
 
     context "as an owner" do
       before do
+        # Contracts add HCB as a party via the system user
+        allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
         contract = Contract::FiscalSponsorship.create!(contractable: position.organizer_position_invite, include_videos: false)
         contract.update_column(:aasm_state, "signed")
         position.update!(role: :owner, fiscal_sponsorship_contract: contract)
