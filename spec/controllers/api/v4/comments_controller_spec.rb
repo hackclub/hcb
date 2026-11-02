@@ -3,8 +3,8 @@
 require "rails_helper"
 
 RSpec.describe Api::V4::CommentsController do
-  # Comments are the one resource with limited admin scopes: `admin:comments:read`
-  # grants auditor-level access to comments (and nothing else in the API).
+  # Comments are the one resource with limited admin scopes: `admin:comments:read` /
+  # `admin:comments:write` grant admin access to comments (and nothing else in the API).
   describe "#index" do
     render_views
 
@@ -31,7 +31,7 @@ RSpec.describe Api::V4::CommentsController do
       expect(response).to have_http_status(:forbidden)
     end
 
-    it "returns 403 when the token only carries the write half of the scope" do
+    it "returns 403 when the token only carries admin:comments:write" do
       get_index(viewer: create(:user, access_level: :admin), scopes: "admin:comments:write")
 
       expect(response).to have_http_status(:forbidden)
@@ -47,6 +47,36 @@ RSpec.describe Api::V4::CommentsController do
       get_index(viewer: create(:user, access_level: :admin), scopes: "admin:read")
 
       expect(response).to have_http_status(:ok)
+    end
+  end
+
+  describe "#create" do
+    let(:hcb_code) { create(:hcb_code) }
+
+    def post_admin_comment(viewer:, scopes:)
+      token = create(:api_token, user: viewer, scopes:)
+      request.headers["Authorization"] = "Bearer #{token.token}"
+      post(:create, params: { transaction_id: hcb_code.public_id, content: "hi", admin_only: true }, as: :json)
+    end
+
+    it "creates an admin-only comment when the token carries admin:comments:read and admin:comments:write" do
+      post_admin_comment(viewer: create(:user, access_level: :admin), scopes: "admin:comments:read admin:comments:write")
+
+      expect(response).to have_http_status(:created)
+      expect(hcb_code.comments.last).to be_admin_only
+    end
+
+    it "returns 403 when the token only carries admin:comments:read" do
+      post_admin_comment(viewer: create(:user, access_level: :admin), scopes: "admin:comments:read")
+
+      expect(response).to have_http_status(:forbidden)
+      expect(hcb_code.comments).to be_empty
+    end
+
+    it "still works with the blanket admin:read and admin:write scopes" do
+      post_admin_comment(viewer: create(:user, access_level: :admin), scopes: "admin:read admin:write")
+
+      expect(response).to have_http_status(:created)
     end
   end
 end

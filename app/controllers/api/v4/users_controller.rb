@@ -4,6 +4,7 @@ module Api
   module V4
     class UsersController < ApplicationController
       skip_after_action :verify_authorized, only: [:available_icons, :revoke]
+      before_action -> { require_admin_scope!(:read) }, only: [:show, :by_email]
 
       def me
         @user = authorize current_user, :show?
@@ -27,7 +28,6 @@ module Api
       end
 
       require_oauth2_scope "users:read", :show
-      require_admin_scope "admin:read", :show
 
       def by_email
         @user = User.find_by!(email: params[:email])
@@ -36,7 +36,6 @@ module Api
       end
 
       require_oauth2_scope "user_lookup", :show, :by_email
-      require_admin_scope "admin:read", :by_email
 
       def available_icons
         icons = {

@@ -11,26 +11,24 @@ module Api
       # to be an admin" handling stays identical between controller-level gates
       # and Pundit policies.
       #
-      # `scope` is an exact admin scope, e.g. "admin:read" or the
-      # resource-scoped "admin:users:read". The blanket "admin:read" /
-      # "admin:write" scopes always satisfy any resource-scoped requirement
-      # of the same level (see ApiAdminContext#admin_scope?).
-      #
-      #   *:read  → token has the scope AND user is an auditor (auditors, admins, superadmins)
-      #   *:write → token has the scope AND user is an admin (admins, superadmins)
-      def can_admin?(scope)
+      #   :read  → token has "admin:read"  scope AND user is an auditor (auditors, admins, superadmins)
+      #   :write → token has "admin:write" scope AND user is an admin (admins, superadmins)
+      def can_admin?(level)
         return false unless current_user
 
-        *resource, level = scope.to_s.split(":")
-        resource = resource.drop(1).join(":").presence # drop the leading "admin" segment
+        context = ApiAdminContext.new(current_user, current_token, resource: admin_scope_resource)
 
-        context = ApiAdminContext.new(current_user, current_token, resource: resource)
-
-        case level
-        when "read"  then context.auditor?
-        when "write" then context.admin?
+        case level.to_sym
+        when :read  then context.auditor?
+        when :write then context.admin?
         else false
         end
+      end
+
+      # Controllers override this so `admin:<resource>:read` / `admin:<resource>:write`
+      # scopes also count within them (see ApiAdminContext#admin_scope?).
+      def admin_scope_resource
+        nil
       end
     end
   end

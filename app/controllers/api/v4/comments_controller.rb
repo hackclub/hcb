@@ -23,6 +23,7 @@ module Api
         )
 
         authorize @comment
+        raise Pundit::NotAuthorizedError if @comment.admin_only && !can_admin?(:write)
 
         @comment.save!
 
@@ -33,10 +34,8 @@ module Api
 
       private
 
-      # `admin:comments:read` and `admin:comments:write` scopes unlock
-      # admin-only comments without granting admin access elsewhere in the API.
-      def pundit_user
-        current_user && ApiAdminContext.new(current_user, current_token, resource: :comments)
+      def admin_scope_resource
+        :comments
       end
 
     end
