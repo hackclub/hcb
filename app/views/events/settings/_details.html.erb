@@ -147,13 +147,19 @@
         <%= form.text_area :public_message, class: "w-100 fit", disabled: %>
       </div>
       <div class="field field--checkbox">
-        <%= form.check_box :is_indexable, disabled:, switch: true %>
         <%= form.label :is_indexable, "List #{event.name} in HCB’s public directory" %>
+        <label class="field--checkbox--switch ml-auto">
+          <%= form.check_box :is_indexable, disabled:, switch: true %>
+          <span class="slider"></span>
+        </label>
       </div>
       <% unless !winter?(override_preference: true) %>
         <div class="field field--checkbox">
-          <%= form.check_box :holiday_features, disabled:, switch: true %>
           <%= form.label :holiday_features, "Enable Holiday Features ⛄ for Transparency Mode" %>
+          <label class="field--checkbox--switch ml-auto">
+            <%= form.check_box :holiday_features, disabled:, switch: true %>
+            <span class="slider"></span>
+          </label>
         </div>
       <% end %>
     </div>

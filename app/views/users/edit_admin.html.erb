@@ -35,7 +35,7 @@
         <% if @user == current_user %>
           <div class="field field--checkbox">
             <%= form.label :pretend_is_not_admin, "Pretend not to be an admin on HCB" %>
-            <label class="field--checkbox--switch ml-auto" style="flex-shrink: 0">
+            <label class="field--checkbox--switch ml-auto">
               <%= form.check_box :pretend_is_not_admin %>
               <span class="slider"></span>
             </label>
@@ -54,7 +54,7 @@
 
           <div class="field field--checkbox">
             <%= form.label :running_balance_enabled, "Show running balance?" %>
-            <label class="field--checkbox--switch ml-auto" style="flex-shrink: 0">
+            <label class="field--checkbox--switch ml-auto">
               <%= form.check_box :running_balance_enabled, checked: @user.running_balance_enabled? %>
               <span class="slider"></span>
             </label>
@@ -62,7 +62,10 @@
 
           <div class="field field--checkbox">
             <%= form.label :phone_number_verification_bypassed, "Bypass phone number verification for stripe cards / card grants" %>
-            <%= form.check_box :phone_number_verification_bypassed, checked: @user.phone_number_verification_bypassed? %>
+            <label class="field--checkbox--switch ml-auto">
+              <%= form.check_box :phone_number_verification_bypassed, checked: @user.phone_number_verification_bypassed? %>
+              <span class="slider"></span>
+            </label>
           </div>
 
         <% end %>

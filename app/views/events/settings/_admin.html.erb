@@ -104,12 +104,18 @@
 
       <div class="field field--checkbox">
         <%= form.label :demo_mode, "Is in Playground Mode?" %>
-        <%= form.check_box :demo_mode, switch: true, disabled: %>
+        <label class="field--checkbox--switch ml-auto">
+          <%= form.check_box :demo_mode, switch: true, disabled: %>
+          <span class="slider"></span>
+        </label>
       </div>
 
       <div class="field field--checkbox">
         <%= form.label :financially_frozen, "Is financially frozen? ⚠️ 🚨#{" (⚠️ has active recurring donations - please handle before freezing)" if event.recurring_donations.active.exists?}" %>
-        <%= form.check_box :financially_frozen, switch: true, disabled: %>
+        <label class="field--checkbox--switch ml-auto">
+          <%= form.check_box :financially_frozen, switch: true, disabled: %>
+          <span class="slider"></span>
+        </label>
       </div>
 
       <div class="action">
