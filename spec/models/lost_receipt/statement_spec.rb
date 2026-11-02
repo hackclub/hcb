@@ -18,6 +18,9 @@ RSpec.describe LostReceipt::Statement do
     expect(statement.reload.total_amount_cents).to eq(879)
     expect(statement.items.map(&:total_amount_cents)).to eq([381, 498])
     expect(statement.receipt.file.download).to start_with("%PDF")
+    pdf = Poppler::Document.new(data: statement.receipt.file.download)
+    expect(pdf.first.text).to include("View transaction")
+    expect(pdf.first.link_mapping.map { |link| link.action.uri }).to include(Rails.application.routes.url_helpers.hcb_code_url(hcb_code))
     expect(statement.confirmed_at).to be_present
   end
 

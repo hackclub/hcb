@@ -17,7 +17,12 @@
   <body>
     <p>HCB · The Hack Foundation</p>
     <h1>Lost receipt statement</h1>
-    <p><strong>Transaction:</strong> <%= @statement.receipt.receiptable.to_global_id %><br>
+    <p><strong>Transaction:</strong>
+      <% if @statement.receipt.receiptable.is_a?(HcbCode) %>
+        <%= link_to "View transaction", hcb_code_url(@statement.receipt.receiptable) %>
+      <% else %>
+        <%= @statement.receipt.receiptable.to_global_id %>
+      <% end %><br>
       <strong>Purchase date:</strong> <%= @statement.date.strftime("%B %-d, %Y") %><br>
       <strong>Merchant:</strong> <%= @statement.merchant %></p>
     <p><strong>Business purpose</strong></p>
