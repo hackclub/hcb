@@ -73,7 +73,7 @@ RSpec.describe User, type: :model do
       user = create(:user, full_name: "Caleb Denio")
       expect(user).to be_valid
 
-      user.update(birthday: 13.years.ago)
+      user.update(birthday: Date.current - 13.years)
       expect(user).to be_valid
 
       user.update(birthday: nil)
@@ -82,7 +82,7 @@ RSpec.describe User, type: :model do
 
     it "can change it from nil when it's valid" do
       user = create(:user)
-      dob = 13.years.ago
+      dob = Date.current - 13.years
 
       user.update(birthday: dob)
       expect(user).to be_valid
@@ -92,6 +92,34 @@ RSpec.describe User, type: :model do
       user = create(:user, full_name: "Turing, Alan")
 
       user.update(full_name: "Turing Alan")
+      expect(user).to be_valid
+    end
+
+    it "rejects users under 13" do
+      user = build(:user, birthday: Date.current - 12.years)
+      expect(user).not_to be_valid
+      expect(user.errors[:birthday]).to include("must be at least 13 years old")
+    end
+
+    it "allows users exactly 13" do
+      user = build(:user, birthday: Date.current - 13.years)
+      expect(user).to be_valid
+    end
+
+    it "rejects users one day before their 13th birthday" do
+      user = build(:user, birthday: Date.current - 13.years + 1.day)
+      expect(user).not_to be_valid
+      expect(user.errors[:birthday]).to include("must be at least 13 years old")
+    end
+
+    it "rejects users over 125" do
+      user = build(:user, birthday: Date.current - 126.years)
+      expect(user).not_to be_valid
+      expect(user.errors[:birthday]).to include("must be at most 125 years old")
+    end
+
+    it "allows users exactly 125" do
+      user = build(:user, birthday: Date.current - 125.years)
       expect(user).to be_valid
     end
   end
