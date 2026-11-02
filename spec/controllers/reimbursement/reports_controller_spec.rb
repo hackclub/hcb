@@ -806,6 +806,45 @@ RSpec.describe Reimbursement::ReportsController do
         expect(response.body).not_to include("Other report expense")
         expect(response.body).not_to include("99.00")
       end
+
+      it "does not show expense history on a report that was never submitted" do
+        draft = create(:reimbursement_report, user:, event:)
+        create(:reimbursement_expense, report: draft).update!(value: 42)
+
+        get(:show, params: { id: draft.id })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("added expense", "updated expense")
+      end
+
+      it "credits the admin who adjusted an amount" do
+        admin = create(:user, :make_admin)
+        PaperTrail.request(whodunnit: admin.id.to_s) { expense.update!(value: 12) }
+
+        get(:show, params: { id: report.id })
+
+        expect(timeline(response.body)).to include(a_string_including("#{admin.initial_name} updated expense #1", "Amount: €20.00 → €12.00"))
+      end
+
+      it "escapes HTML in expense memos" do
+        expense.update!(memo: "<script>alert(1)</script>")
+
+        get(:show, params: { id: report.id })
+
+        expect(response.body).not_to include("<script>alert(1)</script>")
+        expect(timeline(response.body)).to include(a_string_including("updated expense #1 (<script>alert(1)</script>)"))
+      end
+
+      it "loads changed expenses without querying each one" do
+        create(:reimbursement_expense, report:).update!(value: 5)
+        expense.update!(value: 15)
+        lookups = []
+        callback = ->(*, payload) { lookups << payload[:sql] if payload[:sql].match?(/"reimbursement_expenses"\."id" = \$\d+ LIMIT/) }
+
+        ActiveSupport::Notifications.subscribed(callback, "sql.active_record") { get(:show, params: { id: report.id }) }
+
+        expect(lookups).to be_empty
+      end
     end
 
   end

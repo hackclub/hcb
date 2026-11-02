@@ -308,7 +308,7 @@ module Reimbursement
       first_submitted_at = versions.where_object_changes_to(aasm_state: "submitted").first&.created_at
       return PaperTrail::Version.none if first_submitted_at.nil?
 
-      PaperTrail::Version.where(item_type: Reimbursement::Expense.name, item_id: expenses.with_deleted.select(:id), created_at: first_submitted_at..)
+      PaperTrail::Version.where(item_type: Reimbursement::Expense.name, item_id: expenses.with_deleted.select(:id), created_at: first_submitted_at..).includes(:item)
     end
 
     def comment_recipients_for(comment)
