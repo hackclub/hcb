@@ -32,6 +32,7 @@ class Ledger < ApplicationRecord
   self.table_name = "ledgers"
 
   include Hashid::Rails
+  prepend MemoWise
   has_paper_trail
 
   # Possible owners for a primary ledger
@@ -51,8 +52,16 @@ class Ledger < ApplicationRecord
     query_items(start_date:, end_date:).sum(:amount_cents)
   end
 
+  # Repayments pay an expense back, so they come off expenses rather than
+  # counting as revenue, the same way Event::StatementOfActivity does it.
   monetize def revenue_cents(start_date: nil, end_date: nil)
-    query_items(start_date:, end_date:, amount: { "$gt": 0 }).sum(:amount_cents)
+    query_items(start_date:, end_date:, amount: { "$gt": 0 }).sum(:amount_cents) - repayments_received_cents(start_date:, end_date:)
+  end
+
+  # Money in under the repayment category. Memoized per date range, since both
+  # revenue_cents and expenses_cents take it off their totals.
+  monetize memo_wise def repayments_received_cents(start_date: nil, end_date: nil)
+    query_items(start_date:, end_date:, amount: { "$gt": 0 }, also: { category: { "$eq": Repayment::CATEGORY_SLUG } }).sum(:amount_cents)
   end
 
   # The fiscal sponsorship fee accrues as revenue arrives but only lands on the
@@ -61,7 +70,8 @@ class Ledger < ApplicationRecord
   # "Fiscal sponsorship" row, and the same amount available_balance_cents holds
   # back, which keeps revenue - expenses == available balance. A negative fee
   # balance is a fee credit, not an expense, hence the floor at zero.
-  monetize def expenses_cents = query_items(amount: { "$lt": 0 }).sum(:amount_cents).abs + [fronted_fee_balance_cents, 0].max
+  # Repayments received come off expenses, mirroring revenue_cents.
+  monetize def expenses_cents = query_items(amount: { "$lt": 0 }).sum(:amount_cents).abs - repayments_received_cents + [fronted_fee_balance_cents, 0].max
 
   # A negative fee balance is a fee credit. Credits are not spendable, so
   # they never add to the available balance.
@@ -129,12 +139,13 @@ class Ledger < ApplicationRecord
 
   # Every total goes through Ledger::Query so they all count the same set of
   # items as the balance does.
-  def query_items(start_date: nil, end_date: nil, amount: nil)
+  def query_items(start_date: nil, end_date: nil, amount: nil, also: nil)
     Ledger::Query.new({
                         "$and": [
                           ({ datetime: { "$gte": start_date } } if start_date),
                           ({ datetime: { "$lte": end_date } } if end_date),
-                          ({ amount_cents: amount } if amount)
+                          ({ amount_cents: amount } if amount),
+                          also
                         ].compact
                       }).execute(ledgers: [self])
   end

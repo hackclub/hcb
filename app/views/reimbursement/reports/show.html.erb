@@ -71,6 +71,16 @@
   </h2>
 </div>
 
+<% admin_only_user_comments = @report.user.comments.admin_only %>
+<% if admin_only_user_comments.any? %>
+  <% admin_tool("mt2 p-3") do %>
+    <h3 class="mt0 mb2 flex items-center" style="gap: 6px;">
+      📌 <%= pluralize(admin_only_user_comments.size, "admin note") %> about <%= @report.user.first_name %>
+    </h3>
+    <%= render "comments/list", comments: admin_only_user_comments %>
+  <% end %>
+<% end %>
+
 <section data-behavior="modal" role="dialog" id="edit" class="modal modal--scroll bg-snow lg:max-w-[450px]">
   <%= modal_header "Edit report" %>
   <%= render "reimbursement/reports/edit_form" %>
@@ -101,14 +111,15 @@
     <%= form.hidden_field :commentable_type, value: @commentable.class %>
     <%= form.hidden_field :commentable_id, value: @report.id %>
     <%= form.text_area :content, class: "card mb2 overflow-visible", placeholder: "(Optional) Describe your changes…", "data-behavior": "ctrl_enter_submit", style: "min-height: 100px" %>
-    <% if @report.event.present? && @report.assigned_reviewer_required? && !OrganizerPosition.role_at_least?(current_user, @report.event, :manager) && !@report.reviewer.present? %>
-      <p><%= @report.event.name %> would like you to select a reviewer for your reimbursement report.</p>
+    <% if @report.event.present? && @report.reviewer_selectable? && !OrganizerPosition.role_at_least?(current_user, @report.event, :manager) && !@report.reviewer.present? %>
+      <% if @report.assigned_reviewer_required? %>
+        <p><%= @report.event.name %> would like you to select a reviewer for your reimbursement report.</p>
+      <% end %>
       <div class="field">
-        <%= label_tag :reviewer_id, "Reviewer" %>
+        <%= label_tag :reviewer_id, @report.assigned_reviewer_required? ? "Reviewer" : "Reviewer (optional)" %>
         <%= select_tag :reviewer_id,
         options_from_collection_for_select(@report.eligible_reviewers, :public_id, :name, @report.reviewer&.public_id),
-        prompt: "Select a reviewer...",
-        required: true %>
+        **(@report.assigned_reviewer_required? ? { prompt: "Select a reviewer...", required: true } : { include_blank: "No preference" }) %>
       </div>
     <% end %>
     <%= form.submit "Submit" %>
@@ -213,7 +224,7 @@
 
         <div class="field">
           <%= form.label :wise_id, "Wise ID / URL", class: "bold mb1" %>
-          <%= form.text_field :wise_id, class: "mt-0 !max-w-full", style: "width: 400px;", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", onpaste: "var urlPrefix = 'https://wise.com/transactions/activities/by-resource/TRANSFER/'; var clipboardData = event.clipboardData.getData('Text'); clipboardData.startsWith(urlPrefix) ? (event.preventDefault(), event.target.value = clipboardData.substring(urlPrefix.length)) : null" %>
+          <%= form.text_field :wise_id, class: "mt-0 !max-w-full", style: "width: 400px;", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", data: { controller: "strip-prefix", action: "paste->strip-prefix#paste", strip_prefix_prefix_value: "https://wise.com/transactions/activities/by-resource/TRANSFER/" } %>
         </div>
         <div class="field">
           <%= form.label(:wise_recipient_id, "Wise recipient ID", class: "bold mb1") %>

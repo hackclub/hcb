@@ -87,6 +87,7 @@
         <% end %>
         <%= render_money ledger_item.amount_cents.abs %>
       </p>
+      <%= render "ledger/items/repayments", ledger_item: %>
     </section>
 
     <% unless ledger_item.canonical_pending_transactions.first.settled? %>

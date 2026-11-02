@@ -350,7 +350,7 @@ module EventsHelper
       return ""
     end
 
-    link_to children, (disabled ? "javascript:" : url), options.merge(
+    link_to children, (disabled ? nil : url), options.merge(
       class: "dock__item #{"tooltipped tooltipped--e" if tooltip} #{"disabled" if disabled} #{"admin-tools" if admin}",
       'aria-label': tooltip,
       'aria-current': selected ? "page" : "false",
