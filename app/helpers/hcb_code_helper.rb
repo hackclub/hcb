@@ -46,11 +46,11 @@ module HcbCodeHelper
   # code, etc.). Accepts both Stripe Payments statuses (pass / failed /
   # unchecked) and Stripe Issuing statuses (match / mismatch / not_provided).
   CARD_CHECK_BADGES = {
-    "pass"         => { background: "success", icon_name: "checkmark", text: "Passed" },
-    "match"        => { background: "success", icon_name: "checkmark", text: "Passed" },
-    "failed"       => { background: "warning", icon_name: "view-close", text: "Failed" },
-    "mismatch"     => { background: "warning", icon_name: "view-close", text: "Failed" },
-    "unchecked"    => { background: "info", icon_name: "checkbox", text: "Unchecked" },
+    "pass" => { background: "success", icon_name: "checkmark", text: "Passed" },
+    "match" => { background: "success", icon_name: "checkmark", text: "Passed" },
+    "failed" => { background: "warning", icon_name: "view-close", text: "Failed" },
+    "mismatch" => { background: "warning", icon_name: "view-close", text: "Failed" },
+    "unchecked" => { background: "info", icon_name: "checkbox", text: "Unchecked" },
     "not_provided" => { background: "info", icon_name: "checkbox", text: "Not checked" },
   }.freeze
   CARD_CHECK_BADGE_UNAVAILABLE = { background: "smoke", icon_name: "checkbox", text: "Unavailable" }.freeze
