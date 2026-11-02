@@ -961,10 +961,6 @@ class Event < ApplicationRecord
     ApplicationsTable.all(filter: "{HCB ID} = '#{id}'").first
   end
 
-  def default_stripe_card_personalization_design
-    stripe_card_personalization_designs.where("stripe_name like ?", "#{name} Black Card%").order(created_at: :desc).first
-  end
-
   def config
     super || create_config
   end
