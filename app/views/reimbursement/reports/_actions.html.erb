@@ -168,7 +168,7 @@
               <% end %>
             <% end %>
           </div>
-        <% elsif report.draft? && report.currency == "USD" && !::Shared::AmpleBalance.ample_balance?(report.amount_cents, report.event) && !report.team_review_required? %>
+        <% elsif report.draft? && report.exceeds_event_balance? && !report.team_review_required? %>
           <div class="btn bg-info disabled whitespace-nowrap">
             <%= inline_icon "send" %>
             Submit & request review

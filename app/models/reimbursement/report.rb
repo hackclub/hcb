@@ -423,6 +423,10 @@ module Reimbursement
       Money.from_cents(0)
     end
 
+    def exceeds_event_balance?
+      currency == "USD" && event.present? && !::Shared::AmpleBalance.ample_balance?(amount_cents, event)
+    end
+
     def wise_transfer_may_exceed_balance?
       !::Shared::AmpleBalance.ample_balance?(wise_transfer_quote_amount.cents, event)
     end
