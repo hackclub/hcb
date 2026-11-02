@@ -71,10 +71,6 @@ class DisbursementPolicy < ApplicationPolicy
     user&.admin?
   end
 
-  def pending_disbursements?
-    user&.admin?
-  end
-
   def set_transaction_categories?
     user&.admin?
   end
