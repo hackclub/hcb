@@ -301,6 +301,18 @@ RSpec.describe EventsController do
         expect(response.body).to include("Declined but moved money")
         expect(response.body).not_to include("Declined with no amount")
       end
+
+      # Receipt and comment changes stream fresh counts into this element
+      it "wraps each row's badges in an element that streams can target" do
+        hcb_code = create(:canonical_pending_transaction, event:, amount_cents: -1000).local_hcb_code
+        create(:comment, commentable: hcb_code)
+
+        get(:ledger, params: { event_id: event.slug })
+
+        badges = Nokogiri::HTML5(response.body).at_css("tr.transaction ##{ActionView::RecordIdentifier.dom_id(hcb_code.ledger_item, :badges)}")
+        expect(badges).to be_present
+        expect(badges.at_css(".list-badge[aria-label='1 comment']")).to be_present
+      end
     end
   end
 

@@ -22,6 +22,23 @@ RSpec.describe ReceiptsController do
       expect(response.body).to include("No/lost receipt?")
       expect(response.body).not_to include("return_to")
     end
+
+    it "streams the new receipt count into the item's ledger row" do
+      create_session(create(:user, :make_admin), verified: true)
+      hcb_code = create(:canonical_pending_transaction).local_hcb_code
+      ledger_item = hcb_code.ledger_item
+
+      post(:create, params: {
+             receiptable_type: "HcbCode",
+             receiptable_id: hcb_code.id,
+             upload_method: "transaction_popover",
+             file: [fixture_file_upload("receipt.png", "image/png")]
+           }, format: :turbo_stream)
+
+      stream = Nokogiri::HTML5.fragment(response.body).at_css("turbo-stream[target='badges_ledger_item_#{ledger_item.id}']")
+      expect(stream["action"]).to eq("replace")
+      expect(stream.inner_html).to include('aria-label="1 receipt"')
+    end
   end
 
   context "models including Receiptable" do

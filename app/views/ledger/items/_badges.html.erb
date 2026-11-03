@@ -1,0 +1,19 @@
+<%# locals: (item:) %>
+
+<%#
+  A ledger row's comment and receipt counts. They share one wrapper so a stream
+  can swap in fresh counts, including when a badge is hidden at zero; `contents`
+  keeps the badges direct flex items of the memo cell.
+
+  Replaced with `turbo_stream.replace [item, :badges]` by:
+  - ReceiptsController, whenever a receipt on the item changes
+  - CommentsController#destroy, when a comment is deleted from a popover
+  - the transaction popovers, which reload after a comment is posted
+
+  The counts are cached columns, but they're current by then: a receipt or
+  comment touches its HCB code, which touches the item, which refreshes them.
+%>
+<div id="<%= dom_id(item, :badges) %>" class="contents">
+  <%= list_badge_for auditor_signed_in? ? item.comment_count : item.not_admin_only_comment_count, "comment", "post", optional: true %>
+  <%= list_badge_for item.receipt_count, "receipt", "payment-docs", optional: item.receipt_optional?, required: item.missing_receipt? %>
+</div>

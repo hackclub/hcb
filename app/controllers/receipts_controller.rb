@@ -350,6 +350,11 @@ class ReceiptsController < ApplicationController
       )
     end
 
+    # Update the receipt count on the item's ledger row, if it's on the page
+    if ledger_item.present?
+      streams.append(turbo_stream.replace([ledger_item, :badges], partial: "ledger/items/badges", locals: { item: ledger_item }))
+    end
+
     if @receipt && on_hcb_code_page?
       streams.append(turbo_stream.append(
                        :receipts_list,
