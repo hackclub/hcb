@@ -7,8 +7,6 @@
 #  id                       :bigint           not null, primary key
 #  aasm_state               :string           not null
 #  amount_cents             :integer          not null
-#  failed_at                :datetime
-#  failed_reminders_sent    :integer          default(0), not null
 #  hcb_code                 :string
 #  created_at               :datetime         not null
 #  updated_at               :datetime         not null
@@ -89,9 +87,10 @@ module Reimbursement
       end
 
       event :mark_failed do
-        before do
-          self.failed_at = Time.current
-          self.failed_reminders_sent = 0
+        after do
+          REMINDER_DAYS.each do |days|
+            Reimbursement::FailedPayoutReminderJob.set(wait: days.days).perform_later(self, days)
+          end
         end
 
         transitions from: [:sent, :settled], to: :failed

@@ -28,8 +28,7 @@ class ReimbursementMailerPreview < ActionMailer::Preview
 
   def failed_payout_reminder
     @payout_holding = Reimbursement::PayoutHolding.last
-    @payout_holding.failed_at ||= 3.days.ago
-    ReimbursementMailer.with(reimbursement_payout_holding: @payout_holding).failed_payout_reminder
+    ReimbursementMailer.with(reimbursement_payout_holding: @payout_holding, days: 3).failed_payout_reminder
   end
 
   def expenses_approved

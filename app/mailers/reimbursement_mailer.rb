@@ -81,7 +81,7 @@ class ReimbursementMailer < ApplicationMailer
   def failed_payout_reminder
     @payout_holding = params[:reimbursement_payout_holding]
     @report = @payout_holding.report
-    @days_since_failure = (Time.current.to_date - @payout_holding.failed_at.to_date).to_i
+    @days = params[:days]
 
     mail subject: "[Reimbursements] Reminder: your payout for #{@report.name} still needs attention", to: @report.user.email_address_with_name, from: hcb_email_with_name_of(@report.event)
   end

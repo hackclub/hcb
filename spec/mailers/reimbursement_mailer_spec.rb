@@ -106,9 +106,9 @@ RSpec.describe ReimbursementMailer do
       create(:event, id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
       user = create(:user, email: "user@example.com")
       report = create(:reimbursement_report, user:, name: "Food & drinks for event")
-      payout_holding = Reimbursement::PayoutHolding.create!(report:, amount_cents: 130_00, aasm_state: :failed, failed_at: 7.days.ago)
+      payout_holding = Reimbursement::PayoutHolding.create!(report:, amount_cents: 130_00, aasm_state: :failed)
 
-      mail = described_class.with(reimbursement_payout_holding: payout_holding).failed_payout_reminder
+      mail = described_class.with(reimbursement_payout_holding: payout_holding, days: 7).failed_payout_reminder
 
       expect { mail.deliver_now }.to send_email(
         to: "user@example.com",
