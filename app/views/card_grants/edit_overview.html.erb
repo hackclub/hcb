@@ -21,7 +21,7 @@
       <strong>Allowed merchants</strong>
       <% if @card_grant.allowed_merchants.any? %>
         <span class="font-mono h5">
-          <%= @card_grant.allowed_merchant_names.join(", ") %><br>
+          <%= @card_grant.allowed_merchant_names.to_sentence %><br>
           (IDs: <%= @card_grant.allowed_merchants.join(", ") %>)
         </span>
       <% else %>

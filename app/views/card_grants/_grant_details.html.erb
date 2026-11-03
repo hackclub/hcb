@@ -39,7 +39,7 @@
         <p>
           <strong>Allowed merchants</strong>
           <% if card_grant.allowed_merchants.any? %>
-            <span><%= card_grant.allowed_merchant_names.join(", ") %><br>
+            <span><%= card_grant.allowed_merchant_names.to_sentence %><br>
               (IDs: <%= card_grant.allowed_merchants.join(", ") %>)</span>
           <% else %>
             <span>All merchants allowed</span>
