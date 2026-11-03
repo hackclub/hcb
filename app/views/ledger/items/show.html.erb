@@ -136,7 +136,7 @@
     <%= render "comments/form", commentable: @item.hcb_code %>
   <% end %>
 
-  <%# Posting a comment reloads the popover, so update the counts on the ledger row behind it (see ledger/items/_badges for what they include) %>
+  <%# Posting a comment reloads the popover, so update the counts on the ledger row behind it (see ledger/items/_badges) %>
   <% if @frame %>
     <%= turbo_stream.replace [@item, :badges], partial: "ledger/items/badges", locals: { item: @item } %>
   <% end %>

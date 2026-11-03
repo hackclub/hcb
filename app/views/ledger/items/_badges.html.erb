@@ -5,20 +5,15 @@
   ones, even when a badge is hidden at zero. `contents` keeps the badges direct
   flex items of the memo cell.
 
-  These are the item's cached counts from Ledger::Item#refresh!, which cover
-  more than the comments and receipts on its HCB code. Comments also include
-  ones shared on a transfer's Disbursement, and admin-only ones for auditors.
-  A reimbursement payout counts its expense's receipts.
-
   Replaced with `turbo_stream.replace [item, :badges]` by:
-  - ReceiptsController, when a receipt on the item's HCB code changes
-  - CommentsController#destroy, when a comment on the item's HCB code is deleted
+  - ReceiptsController, when one of the item's receipts changes
+  - CommentsController#destroy, when one of the item's comments is deleted
   - the transaction popovers, which reload after a comment is posted
 
-  Those changes touch the HCB code, which touches the item and refreshes its
-  counts before the stream renders. A comment shared on the Disbursement only
-  touches the Disbursement, so the count misses it until something else
-  refreshes the item.
+  The counts are cached on the item (see Ledger::Item#refresh!), and each of
+  those changes refreshes them before the stream renders. The exception is
+  comments shared with the other side of a transfer, which don't refresh the
+  item's count yet.
 %>
 <div id="<%= dom_id(item, :badges) %>" class="contents">
   <%= list_badge_for auditor_signed_in? ? item.comment_count : item.not_admin_only_comment_count, "comment", "post", optional: true %>
