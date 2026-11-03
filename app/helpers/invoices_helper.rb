@@ -5,14 +5,6 @@ module InvoicesHelper
     format_datetime invoice.created_at
   end
 
-  def invoice_payment_method(invoice = @invoice)
-    if invoice.manually_marked_as_paid?
-      return "–"
-    elsif invoice&.payout
-      return invoice.payout.source_type.humanize
-    end
-  end
-
   def invoice_payment_processor_fee(invoice = @invoice, humanized: true)
     fee = if invoice.manually_marked_as_paid?
             0
