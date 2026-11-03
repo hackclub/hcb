@@ -14,7 +14,6 @@
                                end %>"
   id="<%= pt.local_hcb_code.hashid %>"
   <% if defined?(selectable) && selectable %>
-    data-transactions-target="transaction"
     data-ledger-item-id="<%= ledger_item&.hashid %>"
   <% end %>
   <% if local_assigns[:receipt_upload_button] %>

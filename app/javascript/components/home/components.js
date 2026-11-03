@@ -1,6 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import { USDollar } from './utils'
+import { USDollar } from '../../common/money'
 
 export const renderLegend = ({ payload }) => {
   return (

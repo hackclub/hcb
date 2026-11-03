@@ -77,11 +77,6 @@ class HcbCodesController < ApplicationController
     end
   end
 
-  def memo_frame
-    @hcb_code = HcbCode.find(params[:id])
-    authorize @hcb_code
-  end
-
   def edit
     @hcb_code = HcbCode.find_by(hcb_code: params[:id]) || HcbCode.find(params[:id])
     @event = @hcb_code.event
