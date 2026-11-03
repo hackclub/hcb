@@ -122,9 +122,11 @@
       <thead>
         <tr>
           <th>Status</th>
-          <th>Date</th>
-          <th>From</th>
-          <th class="text-right">Amount</th>
+          <% @table_columns.each do |column| %>
+            <%= tag.th class: ("text-right" if column[:right]) do %>
+              <%= render "events/sort_table_header", sort: column[:key], display: column[:display], right: column[:right], default: column[:default] %>
+            <% end %>
+          <% end %>
         </tr>
       </thead>
 

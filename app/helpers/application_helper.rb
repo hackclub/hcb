@@ -44,6 +44,9 @@ module ApplicationHelper
 
     sort_direction = sort_direction.to_s.in?(%w[asc desc]) ? sort_direction : default_direction.to_s
     column_def = columns.find { |c| c[:key] == sort_key.to_s } || default_column
+    # Drop any existing ordering (e.g. the rank order a pg_search scope adds),
+    # which would otherwise take precedence over the requested sort.
+    relation = relation.unscope(:order)
     relation = relation.left_joins(column_def[:join]) if column_def[:join]
 
     if column_def[:order]

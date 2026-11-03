@@ -644,6 +644,73 @@ RSpec.describe EventsController do
         expect(rows.first.text).to include("Jane Jones")
       end
     end
+
+    describe "sorting" do
+      # A recurring donation's payments leave `donations.name` blank and show
+      # the recurring donation's name instead.
+      let!(:recurring_donation_payment) do
+        recurring_donation = RecurringDonation.create!(event:, name: "Jane Brown", email: "jane.brown@example.com", amount: 100_00, stripe_subscription_id: "sub_#{SecureRandom.alphanumeric(10)}")
+        create(:donation, event:, recurring_donation:, name: nil, email: nil, aasm_state: "deposited")
+      end
+
+      before do
+        anonymous_donation.update_columns(amount: 50_00, created_at: 3.days.ago)
+        recurring_donation_payment.update_columns(amount: 100_00, created_at: 2.days.ago)
+        public_donation.update_columns(amount: 10_00, created_at: 1.day.ago)
+      end
+
+      def donor_order(params = {})
+        get(:donation_overview, params: { event_id: event.slug, **params })
+
+        expect(response).to have_http_status(:ok)
+        donation_rows(response.body).map do |row|
+          ["Jane Appleseed", "Jane Brown", "Jane Jones", "Anonymous"].find { |name| row.text.include?(name) }
+        end
+      end
+
+      context "as an organizer" do
+        before { sign_in_organizer_of(event) }
+
+        it "sorts by date, newest first, by default" do
+          expect(donor_order).to eq(["Jane Jones", "Jane Brown", "Jane Appleseed"])
+        end
+
+        it "sorts by date" do
+          expect(donor_order(sort: "created_at", direction: "asc")).to eq(["Jane Appleseed", "Jane Brown", "Jane Jones"])
+        end
+
+        it "sorts by amount" do
+          expect(donor_order(sort: "amount", direction: "desc")).to eq(["Jane Brown", "Jane Appleseed", "Jane Jones"])
+          expect(donor_order(sort: "amount", direction: "asc")).to eq(["Jane Jones", "Jane Appleseed", "Jane Brown"])
+        end
+
+        it "sorts by donor name, including names from recurring donations" do
+          expect(donor_order(sort: "name", direction: "asc")).to eq(["Jane Appleseed", "Jane Brown", "Jane Jones"])
+          expect(donor_order(sort: "name", direction: "desc")).to eq(["Jane Jones", "Jane Brown", "Jane Appleseed"])
+        end
+
+        it "sorts search results" do
+          expect(donor_order(q: "Jane", sort: "amount", direction: "desc")).to eq(["Jane Appleseed", "Jane Jones"])
+          expect(donor_order(q: "Jane", sort: "amount", direction: "asc")).to eq(["Jane Jones", "Jane Appleseed"])
+        end
+
+        it "falls back to sorting by date for an unknown column" do
+          expect(donor_order(sort: "email", direction: "asc")).to eq(["Jane Appleseed", "Jane Brown", "Jane Jones"])
+        end
+
+        it "renders sortable column headers" do
+          get(:donation_overview, params: { event_id: event.slug })
+
+          expect(Nokogiri::HTML5(response.body).css("article.table-container thead a.sort-button").map { |a| a.text.squish }).to eq(["Date", "From", "Amount"])
+        end
+      end
+
+      context "as a signed out visitor" do
+        it "ignores the requested sort" do
+          expect(donor_order(sort: "amount", direction: "asc")).to eq(["Jane Jones", "Jane Brown", "Anonymous"])
+        end
+      end
+    end
   end
 
   describe "#contractors" do

@@ -684,7 +684,12 @@ class EventsController < ApplicationController
     page = (params[:page] || 1).to_i
     per_page = safe_per(DONATIONS_PER_PAGE)
 
-    @all_donations = relation.order(created_at: :desc)
+    @all_donations = helpers.sorted_relation(
+      relation,
+      DONATION_COLUMNS,
+      sort: [params[:sort], params[:direction]]
+    )
+    @table_columns = DONATION_COLUMNS
 
     @recurring_donations = @event.recurring_donations.includes(:donations).active.order(created_at: :desc)
 
@@ -1381,6 +1386,27 @@ class EventsController < ApplicationController
   end
 
   private
+
+  DONATION_COLUMNS = [
+    { key: "created_at", default: true, display: "Date" },
+    {
+      key: "name",
+      display: "From",
+      join: :recurring_donation,
+      # Donations from a recurring donation leave their own `name` blank and
+      # show the recurring donation's name instead (see `Donation#name`).
+      order: ->(relation, direction) {
+        relation.order(
+          Arel::Nodes::NamedFunction.new(
+            "COALESCE",
+            [RecurringDonation.arel_table[:name], Donation.arel_table[:name]]
+          ).public_send(direction)
+        )
+      }
+    },
+    { key: "amount", right: true, display: "Amount" },
+  ].freeze
+  private_constant :DONATION_COLUMNS
 
   def process_hidden_param!(params_hash)
     if params_hash[:hidden] == "1" && !@event.hidden_at.present?
