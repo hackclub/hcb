@@ -350,6 +350,20 @@ class ReceiptsController < ApplicationController
       )
     end
 
+    # Ledger rows show the item's receipt count, and receipts can be dropped
+    # straight onto a row, so keep the badge in sync wherever the row is on the
+    # page. The receipt touching its receiptable has already refreshed the
+    # item's cached count by now.
+    if ledger_item.present?
+      streams.append(
+        turbo_stream.replace(
+          "#{ledger_item.hashid}_receipt_badge",
+          partial: "ledger/items/receipt_badge",
+          locals: { item: ledger_item }
+        )
+      )
+    end
+
     if @receipt && on_hcb_code_page?
       streams.append(turbo_stream.append(
                        :receipts_list,

@@ -1,0 +1,10 @@
+<%# locals: (item:) %>
+
+<%#
+  Wrapped so ReceiptsController can stream in a fresh count after a receipt is
+  added or removed, including when the badge is hidden at zero. `contents` keeps
+  the badge a direct flex item of the memo cell.
+%>
+<div id="<%= item.hashid %>_receipt_badge" class="contents">
+  <%= list_badge_for item.receipt_count, "receipt", "payment-docs", optional: item.receipt_optional?, required: item.missing_receipt? %>
+</div>
