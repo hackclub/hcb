@@ -263,11 +263,11 @@ OrganizerPositionInvite.create_or_find_by!(
   sender: user,
 )
 
-# Raw CSV transactions and hand-made pending transactions carry nothing (a
-# linked object, a Column account number, a Stripe card) that Ledger::Mapper
-# can use to work out their event, so their ledger items would never land on a
-# ledger and every balance would read zero. Map them the way an admin maps a
-# transaction by hand (see AdminController#set_event).
+# Raw CSV transactions carry nothing (a linked object, a Column account number,
+# a Stripe card) that Ledger::Mapper can use to work out their event, so their
+# ledger items would never land on a ledger and every balance would read zero.
+# Map them the way an admin maps a transaction by hand (see
+# AdminController#set_event).
 map_to_ledger = lambda do |ledger_item, event|
   ledger = Ledger.find_or_create_by!(primary: true, event:)
   Ledger::Mapping.map_primary!(ledger:, ledger_item:, mapped_by: user)
@@ -346,29 +346,39 @@ CanonicalEventMapping.create!({
 map_to_ledger.call(CanonicalTransaction.last.ledger_item, transparent_event)
 
 # create pending transactions for each org
+#
+# These are checks still awaiting admin approval, which keeps them pending.
+# A pending transaction needs a real source like this: a bare
+# CanonicalPendingTransaction gets an HCB-000-<id> code, the same code as the
+# CSV transaction above with that id, so the two would be grouped together and
+# the pending amount would hide inside an unrelated settled transaction.
 
-nte_non_pending_transaction = CanonicalPendingTransaction.create!(
-  date: 4.days.ago,
+non_transparent_event.increase_checks.create!(
+  user:,
+  amount: 19861400,
   memo: "🍷 Wine, lots of wine.",
-  amount: -198614
+  payment_for: "🍷 Wine, lots of wine.",
+  recipient_name: "Bacchus Fine Wines",
+  recipient_email: "orders@example.com",
+  address_line1: "1 Vineyard Way",
+  address_city: "Napa",
+  address_state: "CA",
+  address_zip: "94558",
+  created_at: 4.days.ago
 )
 
-CanonicalPendingEventMapping.create!({
-                                       canonical_pending_transaction_id: nte_non_pending_transaction.id,
-                                       event_id: non_transparent_event.id
-                                     })
-map_to_ledger.call(nte_non_pending_transaction.ledger_item, non_transparent_event)
-
-te_non_pending_transaction = CanonicalPendingTransaction.create!(
-  date: 1.days.ago,
+transparent_event.increase_checks.create!(
+  user:,
+  amount: 140381,
   memo: "📋 Overpriced Insurance Policy",
-  amount_cents: 140381,
+  payment_for: "📋 Overpriced Insurance Policy",
+  recipient_name: "Overpriced Insurance Co.",
+  recipient_email: "billing@example.com",
+  address_line1: "100 Premium Street",
+  address_city: "Hartford",
+  address_state: "CT",
+  address_zip: "06103",
+  created_at: 1.day.ago
 )
-
-CanonicalPendingEventMapping.create!({
-                                       canonical_pending_transaction_id: te_non_pending_transaction.id,
-                                       event_id: transparent_event.id
-                                     })
-map_to_ledger.call(te_non_pending_transaction.ledger_item, transparent_event)
 
 puts "Done!"
