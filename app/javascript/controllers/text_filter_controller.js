@@ -9,7 +9,7 @@ import { Controller } from '@hotwired/stimulus'
 // [role="listbox"] element.
 //
 // <input type="text" aria-controls="listbox_element"
-//    data-controller="filter" data-filter-attribute-value="data-name" data-action="input->filter#query">
+//    data-controller="text-filter" data-text-filter-attribute-value="data-name" data-action="input->text-filter#query">
 // <div id="listbox_element" role="listbox">
 //   <span role="option" data-name="Alice">Alice</span>
 //   <span role="option" data-name="Bob">Bob</span>

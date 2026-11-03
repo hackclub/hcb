@@ -765,7 +765,6 @@ GEM
     rinku (2.0.6)
     rotp (6.3.0)
     rouge (4.3.0)
-    rounding (1.0.1)
     rqrcode (2.2.0)
       chunky_png (~> 1.0)
       rqrcode_core (~> 1.0)
@@ -1079,7 +1078,6 @@ DEPENDENCIES
   reverse_markdown
   rinku
   rotp
-  rounding
   rqrcode
   rspec-rails (~> 7.1.1)
   rtesseract

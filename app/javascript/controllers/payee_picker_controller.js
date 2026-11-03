@@ -5,6 +5,7 @@ export default class extends Controller {
     'addingPanel',
     'defaultPanel',
     'summary',
+    'divider',
     'nameInput',
     'emailInput',
   ]
@@ -13,6 +14,7 @@ export default class extends Controller {
     this.addingPanelTarget.hidden = false
     this.defaultPanelTarget.hidden = true
     if (this.hasSummaryTarget) this.summaryTarget.hidden = true
+    if (this.hasDividerTarget) this.dividerTarget.classList.add('hidden')
   }
 
   async showAddingFromSearch(event) {
@@ -33,5 +35,6 @@ export default class extends Controller {
     this.addingPanelTarget.hidden = true
     this.defaultPanelTarget.hidden = false
     if (this.hasSummaryTarget) this.summaryTarget.hidden = false
+    if (this.hasDividerTarget) this.dividerTarget.classList.remove('hidden')
   }
 }
