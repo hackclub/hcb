@@ -189,18 +189,6 @@ class HcbCode < ApplicationRecord
       end
   end
 
-  # this replicates our balance calculation
-  def smart_amount_cents
-    sum = canonical_transactions.sum(:amount_cents)
-    sum += canonical_pending_transactions.outgoing.unsettled.sum(:amount_cents)
-
-    fronted_pt_sum = canonical_pending_transactions.incoming.fronted.not_declined.sum(:amount_cents)
-    settled_ct_sum = [canonical_transactions.sum(:amount_cents), 0].max
-    sum += [fronted_pt_sum - settled_ct_sum, 0].max
-
-    sum
-  end
-
   def amount_cents_by_event(event)
     return amount_cents unless event
     return stripe_atm_fee ? amount_cents.abs - stripe_atm_fee : amount_cents.abs if stripe_card?
