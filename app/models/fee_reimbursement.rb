@@ -99,10 +99,6 @@ class FeeReimbursement < ApplicationRecord
     processed_at = DateTime.now
   end
 
-  def transfer_amount
-    [self.amount, 100].max
-  end
-
   def default_values
     if invoice
       self.transaction_memo ||= "HCB-#{invoice.local_hcb_code.short_code}"
