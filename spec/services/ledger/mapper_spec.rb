@@ -54,7 +54,7 @@ RSpec.describe Ledger::Mapper do
 
       it "maps to the linked object's event" do
         invoice = create(:invoice)
-        item.update!(linked_object: invoice)
+        item.update!(linked_object: invoice, status: :intended)
 
         mapper.run
         item.reload
