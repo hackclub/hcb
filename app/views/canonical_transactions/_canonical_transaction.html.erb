@@ -19,9 +19,6 @@
                            ct.amount.negative? ? "transaction--negative" : ct.amount.positive? ? "transaction--positive" : "transaction--zero"
                          end %> <%= special_appearance["css_class"] if special_appearance.present? %>"
   id="<%= ct.local_hcb_code.hashid %>"
-  <% if defined?(selectable) && selectable %>
-    data-transactions-target="transaction"
-  <% end %>
   <% if local_assigns[:receipt_upload_button] %>
     data-controller="file-drop"
     data-file-drop-target="dropzone"

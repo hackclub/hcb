@@ -63,20 +63,6 @@ class Event
       [display_name, league&.upcase, team_number, size&.positive? ? pluralize(size, "people") : nil].compact.join(" – ")
     end
 
-    def tba_team_info
-      return nil unless is_first? && team_number.present?
-
-      self.class.tba_lookup(league, team_number)
-    end
-
-    def tba_team_name
-      tba_team_info&.dig(:team_name)
-    end
-
-    def tba_avatar
-      tba_team_info&.dig(:avatar)
-    end
-
     # Returns the Event whose FIRST affiliation matches the user's FIRST
     # affiliation by league + team_number, or nil. Users only have at most one
     # FIRST affiliation today (the /first/welcome form allows only one), so a
