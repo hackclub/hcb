@@ -226,10 +226,6 @@ class CanonicalPendingTransaction < ApplicationRecord
     hcb_decline_reason || stripe_decline_reason
   end
 
-  def declined_by
-    hcb_decline_reason ? "HCB" : "Stripe"
-  end
-
   def unsettled?
     @unsettled ||= !settled? && !declined?
   end
