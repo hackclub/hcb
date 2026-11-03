@@ -25,6 +25,15 @@ class StripeCardPolicy < ApplicationPolicy
     admin_or_manager? || member_and_cardholder?
   end
 
+  def replace?
+    return false if record.canceled?
+    return false if record.card_grant.present?
+    return false if record.event&.financially_frozen?
+    return false if record.replacement.present? && !record.replacement.canceled?
+
+    user&.admin? || member_and_cardholder?
+  end
+
   def activate?
     (user&.admin? || member_and_cardholder?) && !record.canceled? && !record.event&.financially_frozen?
   end

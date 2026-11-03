@@ -1,0 +1,64 @@
+<%= turbo_frame_tag @flow.frame_id do %>
+  <% step_number = @flow.step_number(@step) %>
+  <% previous_step = @flow.previous_step(@step) %>
+  <% last_step = @flow.last_step?(@step) %>
+  <% confirmation = @flow.requires_confirmation?(@step) %>
+  <% submit_data = confirmation ? { form_disable_target: "submitButton" } : {} %>
+  <%# The reason step renders its own reason inputs when the cardholder picks one %>
+  <% picks_reason = @flow.chooses_reason? && @step == "reason" %>
+
+  <%# Ordering from a dispute redirects on to the dispute form on another site,
+      which Turbo can't follow, so that submits as a regular form %>
+  <% form_data = if last_step
+                   @flow.dispute ? { turbo: "false" } : { turbo_frame: "_top" }
+                 else
+                   {}
+                 end %>
+
+  <%= form_with url: last_step ? stripe_card_replacement_path(@stripe_card) : new_stripe_card_replacement_path(@stripe_card),
+                method: last_step ? :post : :get,
+                data: { **form_data, controller: ("form-disable" if confirmation) }.compact do %>
+    <%= hidden_field_tag :dispute, @flow.dispute.hashid, id: nil if @flow.dispute %>
+    <% if last_step %>
+      <%= hidden_field_tag :reason, @flow.reason, id: nil %>
+    <% else %>
+      <%= hidden_field_tag :flow, @flow.key, id: nil %>
+      <%= hidden_field_tag :step, @flow.next_step(@step), id: nil %>
+      <%= hidden_field_tag :reason, @flow.reason, id: nil unless picks_reason %>
+    <% end %>
+
+    <div class="flex items-center gap-3 mb-4">
+      <div class="flex gap-1 flex-1" aria-hidden="true">
+        <% @flow.steps.each_with_index do |_, index| %>
+          <div class="h-1 flex-1 rounded-full <%= index < step_number ? "bg-primary" : "bg-gray-200 dark:bg-gray-700" %>"></div>
+        <% end %>
+      </div>
+      <p class="text-sm muted m-0 whitespace-nowrap">Step <%= step_number %> of <%= @flow.steps.size %></p>
+    </div>
+
+    <%= render "stripe_cards/replacements/steps/#{@step}", flow: @flow, stripe_card: @stripe_card %>
+
+    <div class="flex items-center justify-between gap-2 mt-6">
+      <% if previous_step %>
+        <%= link_to new_stripe_card_replacement_path(@stripe_card, **@flow.params(step: previous_step)), class: "btn bg-muted" do %>
+          <%= inline_icon "view-back" %>
+          Back
+        <% end %>
+      <% else %>
+        <span></span>
+      <% end %>
+
+      <% if last_step %>
+        <%= button_tag type: :submit, name: nil, class: "btn bg-primary", data: submit_data do %>
+          <%= inline_icon "card-add" %>
+          Order replacement card
+        <% end %>
+      <% else %>
+        <%= button_tag type: :submit, name: nil, class: "btn bg-primary", data: submit_data do %>
+          Continue
+          <%= inline_icon "view-forward" %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

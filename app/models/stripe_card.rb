@@ -228,8 +228,8 @@ class StripeCard < ApplicationRecord
     card_grant.update(one_time_use: false) if card_grant&.one_time_use
   end
 
-  def cancel!
-    StripeService::Issuing::Card.update(self.stripe_id, status: :canceled)
+  def cancel!(cancellation_reason: nil)
+    StripeService::Issuing::Card.update(self.stripe_id, { status: :canceled, cancellation_reason: }.compact)
     sync_from_stripe!
     save!
     card_grant.cancel! if card_grant&.active?
@@ -404,6 +404,14 @@ class StripeCard < ApplicationRecord
 
   def expired?
     Time.now.utc > Time.new(stripe_exp_year, stripe_exp_month).end_of_month
+  end
+
+  def replacement_shipping_address_source
+    if !stripe_cardholder.default_billing_address?
+      stripe_cardholder
+    elsif address_line1.present? && address_country == "US"
+      self
+    end
   end
 
   def ephemeral_key(nonce:, stripe_version: "2020-03-02")

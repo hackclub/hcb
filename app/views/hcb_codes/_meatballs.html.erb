@@ -3,6 +3,9 @@
 <% flaggable = (hcb_code.stripe_card? || hcb_code.stripe_force_capture?) && hcb_code.stripe_card.present? && hcb_code.ledger_item.present? && !hcb_code.ledger_item.personal_transaction.present? %>
 <% open_invoice = hcb_code.invoice? && hcb_code.invoice.open_v2? %>
 <% disputable = can_dispute?(hcb_code:) %>
+<%# Disputing a charge on a card that can be replaced first offers to replace it, since its details may be compromised %>
+<% dispute_card = hcb_code.stripe_card if disputable && hcb_code.stripe_card? %>
+<% dispute_flow = StripeCard::ReplacementFlow.new(stripe_card: dispute_card, flow: "losten", reason: "stolen", dispute: hcb_code) if dispute_card && policy(dispute_card).replace? %>
 <% reversible_disbursement = hcb_code.incoming_disbursement? && hcb_code.incoming_disbursement.present? && policy(hcb_code.incoming_disbursement.destination_event).create_transfer? %>
 <% repayable = hcb_code.ledger_item.present? && hcb_code.event.present? && policy(Disbursement.new(destination_event: hcb_code.event)).repay? && Repayment.unrepaid_ledger_items(hcb_code.event).exists?(id: hcb_code.ledger_item.id) %>
 
@@ -58,7 +61,12 @@
           Edit donor
         <% end %>
       <% end %>
-      <% if disputable %>
+      <% if dispute_flow %>
+        <%= link_to new_stripe_card_replacement_path(dispute_card, **dispute_flow.params), data: { behavior: "modal_trigger", modal: dispute_flow.dom_id(:modal) } do %>
+          <%= inline_icon "flag-fill", size: 24 %>
+          Dispute this transaction
+        <% end %>
+      <% elsif disputable %>
         <%= link_to dispute_hcb_code_path(hcb_code), target: "_blank" do %>
           <%= inline_icon "flag-fill", size: 24 %>
           Dispute this transaction
@@ -78,6 +86,15 @@
       <% end %>
     </div>
   </div>
+<% end %>
+
+<% if dispute_flow && organizer_signed_in?(as: :member) %>
+  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="<%= dispute_flow.dom_id(:modal) %>">
+    <%= modal_header dispute_flow.title %>
+    <%= turbo_frame_tag dispute_flow.frame_id, src: new_stripe_card_replacement_path(dispute_card, **dispute_flow.params), loading: :lazy do %>
+      <%= render "application/loading_container", klass: "py-8" %>
+    <% end %>
+  </section>
 <% end %>
 
 <% if open_invoice %>

@@ -1,0 +1,34 @@
+<%# locals: (flow:, stripe_card:) %>
+
+<h3 class="mt-0 mb-2">Ready to replace your card?</h3>
+
+<ol class="mt-0">
+  <% unless flow.damaged? || flow.damaged? %>
+    <li>Your card ending in <%= stripe_card.last4 %> will be canceled immediately.</li>
+  <% end %>
+  <% if stripe_card.physical? %>
+    <li>We'll order a new physical card<%= " with a new card number" unless flow.keeps_card_number? %> and ship it to you.</li>
+    <% if flow.damaged?? %>
+      <li>You can keep using your card ending in <%= stripe_card.last4 %> while you wait.</li>
+      <li>Once it arrives, activate your new card. This cancels your previous card.</li>
+    <% end %>
+  <% else %>
+    <li>We'll create a new virtual card<%= " with a new card number" unless flow.keeps_card_number? %> that you can use right away.</li>
+    <% if flow.damaged? %>
+      <li>Your card ending in <%= stripe_card.last4 %> will be canceled as soon as the new card is ready.</li>
+    <% end %>
+  <% end %>
+</ol>
+
+<% cancels_now = stripe_card.virtual? || !flow.damaged? %>
+
+<div class="field field--checkbox mt-4 mb-0">
+  <input type="checkbox" id="<%= flow.dom_id(:confirmation) %>" data-action="form-disable#run" data-form-disable-target="radioButton">
+  <label for="<%= flow.dom_id(:confirmation) %>">
+    <% if cancels_now %>
+      I understand that my card ending in <%= stripe_card.last4 %> will be canceled immediately, and this can't be undone.
+    <% else %>
+      I understand that my card ending in <%= stripe_card.last4 %> will be canceled when I activate my new card, and this can't be undone.
+    <% end %>
+  </label>
+</div>

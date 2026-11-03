@@ -1,0 +1,77 @@
+<%# locals: (flow:, stripe_card:) %>
+
+<h3 class="mt-0 mb-2">About your new card</h3>
+<p class="mt-0">Here's what to expect from your replacement card:</p>
+
+<ul class="list-none p-0 m-0 flex flex-col gap-4">
+  <li class="flex gap-3 items-start">
+    <%= inline_icon "card", size: 28, class: "muted shrink-0" %>
+    <div>
+      <% if flow.keeps_card_number? %>
+        <strong>Same card number</strong>
+        <p class="m-0 muted">We will keep your card number ending in <%= stripe_card.last4 %>.</p>
+      <% else %>
+        <strong>New card number</strong>
+        <p class="m-0 muted">Your card number will change from the card ending in <%= stripe_card.last4 %>.</p>
+      <% end %>
+    </div>
+  </li>
+
+  <li class="flex gap-3 items-start">
+    <%= inline_icon "private", size: 28, class: "muted shrink-0" %>
+    <div>
+      <strong>New CVC and expiry date</strong>
+    </div>
+  </li>
+
+  <% if stripe_card.physical? %>
+    <li class="flex gap-3 items-start">
+      <%= inline_icon "post", size: 28, class: "muted shrink-0" %>
+      <div>
+        <strong>Shipped to you</strong>
+      </div>
+    </li>
+  <% end %>
+
+  <% if flow.keeps_card_number? %>
+    <li class="flex gap-3 items-start">
+      <%= inline_icon "rep", size: 28, class: "muted shrink-0" %>
+      <div>
+        <strong>We'll try to update your saved card at select businesses</strong>
+        <p class="m-0 muted">
+          Some businesses subscriptions that have your card on file will automatically receive your new card information, if possible.
+          We try our best but this is not guaranteed, so make sure to change your card details.
+        </p>
+      </div>
+    </li>
+  <% else %>
+    <li class="flex gap-3 items-start">
+      <%= inline_icon "rep", size: 28, class: "muted shrink-0" %>
+      <div>
+        <strong>Update your saved card details</strong>
+        <p class="m-0 muted">
+          Businesses that have your current card saved won't get your new card details automatically,
+          so you'll need to update any subscriptions or saved payment methods yourself.
+        </p>
+      </div>
+    </li>
+  <% end %>
+
+  <%# A stolen card isn't around to destroy %>
+  <% if stripe_card.physical? && !flow.stolen? %>
+    <li class="flex gap-3 items-start">
+      <%= inline_icon "delete", size: 28, class: "muted shrink-0" %>
+      <div>
+        <strong>Destroy your old card</strong>
+        <p class="m-0 muted">
+          <% if flow.damaged? %>
+            Your current card ending in <%= stripe_card.last4 %> will stay working until you activate the new one. After that,
+            destroy the old card properly.
+          <% else %>
+            Your card ending in <%= stripe_card.last4 %> won't work anymore. If you find it, destroy it properly.
+          <% end %>
+        </p>
+      </div>
+    </li>
+  <% end %>
+</ul>
