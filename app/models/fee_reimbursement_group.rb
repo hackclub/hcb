@@ -27,6 +27,9 @@ class FeeReimbursementGroup < ApplicationRecord
 
   has_paper_trail
 
+  include HasHcbCode
+  has_hcb_code ::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_FEE_REIMBURSEMENT_CODE, identifier: :slug
+
   has_many :fee_reimbursements
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
 
@@ -36,18 +39,6 @@ class FeeReimbursementGroup < ApplicationRecord
   attr_readonly :slug
 
   after_create_commit :assign_ledger_item!
-
-  def hcb_code
-    [
-      ::TransactionGroupingEngine::Calculate::HcbCode::HCB_CODE,
-      ::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_FEE_REIMBURSEMENT_CODE,
-      slug
-    ].join(::TransactionGroupingEngine::Calculate::HcbCode::SEPARATOR)
-  end
-
-  def local_hcb_code
-    @local_hcb_code ||= HcbCode.find_or_create_by(hcb_code:)
-  end
 
   def event
     Event.find(::EventMappingEngine::EventIds::HACK_CLUB_BANK)
