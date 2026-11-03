@@ -6,12 +6,6 @@ class OrganizerPosition
       class AllowancesController < ApplicationController
         before_action :set_active_control
 
-        def new
-          @provisional_allowance = @active_control.allowances.build
-
-          authorize @provisional_allowance
-        end
-
         def create
           attributes = filtered_params
           attributes[:authorized_by_id] = current_user.id
