@@ -68,6 +68,10 @@ class EventPolicy < ApplicationPolicy
     admin_or_manager?
   end
 
+  def freeze?
+    user&.admin?
+  end
+
   alias remove_header_image? update?
 
   alias remove_background_image? update?
