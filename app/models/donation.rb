@@ -111,7 +111,6 @@ class Donation < ApplicationRecord
   scope :missing_payout, -> { where(payout_id: nil) }
   scope :missing_fee_reimbursement, -> { where(fee_reimbursement_id: nil) }
   scope :not_pending, -> { where.not(aasm_state: "pending") }
-  scope :incoming_deposits, -> { where("aasm_state in (?)", ["in_transit"]) }
   scope :succeeded_and_not_refunded, -> { where(aasm_state: ["in_transit", "deposited"] ) }
   scope :tax_deductible, -> { where(tax_deductible: true) }
 
@@ -302,14 +301,6 @@ class Donation < ApplicationRecord
 
   def remote_donation
     @remote_donation ||= ::StripeService::PaymentIntent.retrieve(id: stripe_payment_intent_id, expand: ["charges.data.balance_transaction", "latest_charge.balance_transaction"])
-  end
-
-  def remote_refunded?
-    remote_donation[:charges][:data][0][:refunded]
-  end
-
-  def amount_settled
-    canonical_transactions.sum(:amount_cents)
   end
 
   def fee_reimbursed?
