@@ -78,7 +78,10 @@ class AdminMailer < ApplicationMailer
     return if @tasks.none?
 
     mail(
-      to: operations_team + ["daamin@hackclub.com"],
+      to: [
+        *operations_team,
+        User.find_by_public_id("usr_gvt01n")&.email_address_with_name # Daamin
+      ].compact,
       subject: "24 Hour Reminders for the Operations Team"
     )
   end
