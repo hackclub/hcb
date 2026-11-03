@@ -389,7 +389,7 @@ class StripeCard < ApplicationRecord
 
   def balance_available
     if subledger.present?
-      subledger.balance_cents
+      subledger.card_grant.balance_cents
     elsif active_spending_control
       [active_spending_control.balance_cents, event.balance_available_v2_cents].min
     else

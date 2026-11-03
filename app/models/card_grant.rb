@@ -98,7 +98,13 @@ class CardGrant < ApplicationRecord
   validates_email_format_of :email, if: :email_changed?
   normalizes :email, with: ->(email) { email.presence&.strip&.downcase }
 
-  delegate :balance, to: :subledger
+  # A grant's balance is its ledger's balance. The legacy figure
+  # (Subledger#legacy_balance_cents) is only kept so
+  # Ledger::AssertCorrectLedgerBalancesJob can compare the two.
+  delegate :balance_cents, to: :ledger
+  # Validation would query the balance on every save, and on create it runs
+  # before the ledger exists.
+  monetize :balance_cents, disable_validation: true
 
   serialize :merchant_lock, coder: CommaSeparatedCoder # convert comma-separated merchant list to an array
   serialize :category_lock, coder: CommaSeparatedCoder
