@@ -70,7 +70,10 @@ class CommentsController < ApplicationController
           )
         ]
 
-        # Update the comment count on the item's ledger row, if it's behind the popover
+        # Update the comment count on the item's ledger row, if it's behind the
+        # popover. That count also includes comments shared on a transfer's
+        # Disbursement, but deleting one of those touches the Disbursement, not
+        # the HCB code, so the item's cached count isn't refreshed to stream.
         ledger_item = commentable.ledger_item if commentable.is_a?(HcbCode)
         if ledger_item.present?
           streams << turbo_stream.replace([ledger_item, :badges], partial: "ledger/items/badges", locals: { item: ledger_item })

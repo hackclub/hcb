@@ -1,17 +1,24 @@
 <%# locals: (item:) %>
 
 <%#
-  A ledger row's comment and receipt counts. They share one wrapper so a stream
-  can swap in fresh counts, including when a badge is hidden at zero; `contents`
-  keeps the badges direct flex items of the memo cell.
+  The row's comment and receipt counts, wrapped so a stream can swap in fresh
+  ones, even when a badge is hidden at zero. `contents` keeps the badges direct
+  flex items of the memo cell.
+
+  These are the item's cached counts from Ledger::Item#refresh!, which cover
+  more than the comments and receipts on its HCB code. Comments also include
+  ones shared on a transfer's Disbursement, and admin-only ones for auditors.
+  A reimbursement payout counts its expense's receipts.
 
   Replaced with `turbo_stream.replace [item, :badges]` by:
-  - ReceiptsController, whenever a receipt on the item changes
-  - CommentsController#destroy, when a comment is deleted from a popover
+  - ReceiptsController, when a receipt on the item's HCB code changes
+  - CommentsController#destroy, when a comment on the item's HCB code is deleted
   - the transaction popovers, which reload after a comment is posted
 
-  The counts are cached columns, but they're current by then: a receipt or
-  comment touches its HCB code, which touches the item, which refreshes them.
+  Those changes touch the HCB code, which touches the item and refreshes its
+  counts before the stream renders. A comment shared on the Disbursement only
+  touches the Disbursement, so the count misses it until something else
+  refreshes the item.
 %>
 <div id="<%= dom_id(item, :badges) %>" class="contents">
   <%= list_badge_for auditor_signed_in? ? item.comment_count : item.not_admin_only_comment_count, "comment", "post", optional: true %>
