@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/hackclub/yellow_pages.git
-  revision: d7e4a324bf12be558679b5a242d9596651bdb9a1
+  revision: 95298fe105677a8b01e59e913206325348517d67
   specs:
     yellow_pages (0.4.0)
 
@@ -765,7 +765,6 @@ GEM
     rinku (2.0.6)
     rotp (6.3.0)
     rouge (4.3.0)
-    rounding (1.0.1)
     rqrcode (2.2.0)
       chunky_png (~> 1.0)
       rqrcode_core (~> 1.0)
@@ -1079,7 +1078,6 @@ DEPENDENCIES
   reverse_markdown
   rinku
   rotp
-  rounding
   rqrcode
   rspec-rails (~> 7.1.1)
   rtesseract

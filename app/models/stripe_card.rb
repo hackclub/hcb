@@ -293,15 +293,6 @@ class StripeCard < ApplicationRecord
     Time.at(stripe_eta) + 2.days
   end
 
-  def self.new_from_stripe_id(params)
-    raise ArgumentError.new("Only numbers are allowed") unless params[:stripe_id].is_a?(String)
-
-    card = self.new(params)
-    card.sync_from_stripe!
-
-    card
-  end
-
   def sync_from_stripe!
     if stripe_obj[:deleted]
       self.stripe_status = "deleted"
@@ -394,7 +385,7 @@ class StripeCard < ApplicationRecord
 
   def balance_available
     if subledger.present?
-      subledger.balance_cents
+      subledger.card_grant.balance_cents
     elsif active_spending_control
       [active_spending_control.balance_cents, event.balance_available_v2_cents].min
     else
@@ -434,17 +425,6 @@ class StripeCard < ApplicationRecord
     elsif physical?
       StripeCardMailer.with(card_id: self.id).physical_card_ordered.deliver_later
     end
-  end
-
-  def authorizations_from_stripe
-    @auths ||= begin
-      result = []
-      auths = StripeService::Issuing::Authorization.list(card: stripe_id)
-      auths.auto_paging_each { |auth| result << auth }
-      result
-    end
-
-    @auths
   end
 
   def only_physical_cards_can_be_lost_in_shipping
