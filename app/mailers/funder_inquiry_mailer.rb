@@ -17,6 +17,7 @@ class FunderInquiryMailer < ApplicationMailer
     @name = params[:name].presence
     @email = params[:email]
     @message = params[:message].presence
+    @delivery_reason = "you submitted an inquiry through HCB's page for funders."
 
     team_cc = CC_USER_IDS.filter_map do |id|
       User.find_by_public_id(id)&.email_address_with_name(full_name: true)

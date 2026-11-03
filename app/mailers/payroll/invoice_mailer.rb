@@ -8,6 +8,7 @@ module Payroll
       @event = @position.event
 
       email_recipients = @position.manager&.email_address_with_name || @event.organizer_contact_emails(only_managers: true)
+      @delivery_reason = "you are a manager of #{@event.name} on HCB."
 
       mail(
         to: email_recipients,

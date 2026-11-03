@@ -3,6 +3,11 @@
 class CanonicalPendingTransactionMailer < ApplicationMailer
   include HcbCodeHelper # for attach_receipt_url
 
+  before_action do
+    @delivery_reason = "you have charge notifications enabled for your HCB Visa® Commercial card. #{stripe_issuing_disclosure}"
+    @unsubscribe_link = settings_notifications_url
+  end
+
   def notify_approved
     @cpt = CanonicalPendingTransaction.find(params[:canonical_pending_transaction_id])
     @user = @cpt.stripe_card.user

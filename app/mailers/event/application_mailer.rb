@@ -3,6 +3,7 @@
 class Event
   class ApplicationMailer < ::ApplicationMailer
     before_action { @application = params[:application] }
+    before_action :set_delivery_reason
 
     def confirmation
       mail to: @application.user.email_address_with_name, subject: "Thank you for applying to HCB!"
@@ -34,6 +35,12 @@ class Event
 
     def approved
       mail to: @application.user.email_address_with_name, subject: "[Action Needed] #{@application.name} has been approved"
+    end
+
+    private
+
+    def set_delivery_reason
+      @delivery_reason = "you made an application to HCB's fiscal sponsorship program."
     end
 
   end

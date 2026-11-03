@@ -2,6 +2,8 @@
 
 class User
   class EmailUpdateMailer < ApplicationMailer
+    before_action { @delivery_reason = "you requested to change your email address for HCB." }
+
     def authorization(request)
       @request = request
 

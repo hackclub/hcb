@@ -2,6 +2,7 @@
 
 class AccountNumberMailer < ApplicationMailer
   before_action :set_event_memo_and_amount_cents
+  before_action { @delivery_reason = "you are on the team of #{@event.name}, which uses direct debits on HCB." }
   default to: -> { @event.organizer_contact_emails }
 
   def insufficient_balance

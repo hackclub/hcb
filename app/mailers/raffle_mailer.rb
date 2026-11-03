@@ -4,6 +4,7 @@ class RaffleMailer < ApplicationMailer
   def extra_ticket_earned
     @raffle = params[:raffle]
     @user = @raffle.user
+    @delivery_reason = "you entered an HCB raffle."
 
     mail to: @user.email_address_with_name, subject: "You've earned an extra raffle ticket!"
   end

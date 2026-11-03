@@ -5,6 +5,7 @@ class OrganizerPositionMailer < ApplicationMailer
     @position = params[:organizer_position]
     @previous_role = params[:previous_role]
     @changer = params[:changer]
+    @delivery_reason = "you are a member of #{@position.event.name} on HCB."
 
     mail to: @position.user.email_address_with_name, subject: "Your role in #{@position.event.name} has been updated"
   end

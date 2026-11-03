@@ -5,6 +5,7 @@ class User
     def security_configuration_changed(user:, change:)
       @user = user
       @change = change
+      @delivery_reason = "a security setting on your HCB account was changed."
 
       mail to: @user.email, subject: "Security settings changed on your HCB account"
     end

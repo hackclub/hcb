@@ -15,6 +15,8 @@ class CardChargeMailer < ApplicationMailer
 
     @merchant_name = @card_charge.merchant_data&.dig("name") || "the merchant"
     @failed_verification_checks = @card_charge.failed_verification_checks
+    @delivery_reason = "you have charge notifications enabled for your HCB Visa® Commercial card. #{stripe_issuing_disclosure}"
+    @unsubscribe_link = settings_notifications_url
 
     mail to: @user.email_address_with_name, subject: "Your charge at #{@merchant_name} was reversed"
   end

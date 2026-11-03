@@ -8,6 +8,8 @@ RSpec.describe ApplicationMailer, type: :mailer do
     let(:test_mailer_class) do
       Class.new(ApplicationMailer) do
         def test_email(recipients:)
+          @delivery_reason = "this is a test."
+
           mail(to: recipients, subject: "Test Subject") do |format|
             format.text { render plain: "Test body" }
             format.html { render html: "<p>Test body</p>".html_safe }
