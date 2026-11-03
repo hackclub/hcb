@@ -1,20 +1,6 @@
-/*
-  A lightweight, self-contained autocomplete combobox. Rendered by
-  `ComboboxHelper#combobox_tag`.
-
-  It loads its options asynchronously from `urlValue` — an endpoint called as
-  `?q=<query>&page=<n>` and returning JSON `[{ value, label, sublabel, badge,
-  disabled }]`, ordered by relevance, where `value` and `label` are required and
-  a page with fewer than PAGE_SIZE rows is the last one. The user filters by
-  typing, and the chosen option's `value` is mirrored into a hidden form field
-  so the surrounding form submits it. Only options returned by the endpoint can
-  be selected — free text is reverted on blur.
-
-  The dropdown renders inline at every width. This deliberately drops the
-  full-screen `<dialog>` picker the `hotwire_combobox` gem switched to below
-  640px: the inline list is usable on a phone and one code path is worth more
-  here than the extra mode.
-*/
+// Autocomplete combobox rendered by `ComboboxHelper#combobox_tag`. Searches
+// `urlValue` (`?q=&page=`, returning `[{ value, label, sublabel, badge, disabled }]`
+// in relevance order) and mirrors the chosen value into a hidden field.
 
 import { Controller } from '@hotwired/stimulus'
 
@@ -43,7 +29,6 @@ export default class extends Controller {
     this.loading = false
     this.currentQuery = ''
 
-    // Restore any preselected value (e.g. when editing or prefilled).
     if (this.selectedValue) {
       this.selectedLabel = this.labelValue
       this.selectedOption = {
@@ -59,16 +44,11 @@ export default class extends Controller {
     }
     this.renderBadge()
 
-    // Settle the field before its form serializes. A click on Submit lands
-    // before the blur handler runs, and would otherwise send whatever the
-    // hidden field last held. Capture phase, so it runs before the form's own
-    // submit handlers (and Turbo's).
+    // Capture phase so it runs before Turbo serializes the form.
     this.form = this.element.closest('form')
     this.onFormSubmit = () => this.finalize()
     this.form?.addEventListener('submit', this.onFormSubmit, true)
 
-    // Don't let Turbo snapshot the list open: restored from cache, its rows
-    // would be dead.
     this.onBeforeCache = () => this.hide()
     document.addEventListener('turbo:before-cache', this.onBeforeCache)
   }
@@ -81,30 +61,27 @@ export default class extends Controller {
     this.debounce = null
     this.pending = false
     this.afterSearch = null
-    this.searchToken++ // abandon any search still in flight
+    this.searchToken++
   }
 
   onFocus() {
     if (this.inputTarget.disabled) return
-    // Back before a blur's deferred settle ran: they're not leaving after all.
     clearTimeout(this.blurTimeout)
     this.afterSearch = null
     this.open()
   }
 
-  // Clicking the field when it already has focus (e.g. right after picking
-  // an option) fires no `focus`, so reopen the list here.
+  // Already-focused fields don't get `focus` again.
   onClick() {
     if (!this.inputTarget.disabled && !this.isOpen) this.open()
   }
 
-  // The chevron and the field's padding sit outside the <input>, so a press
-  // there would otherwise do nothing. Treat it as a toggle on the input.
+  // The chevron and padding sit outside the <input>.
   onFieldMousedown(e) {
     if (e.target === this.inputTarget || this.inputTarget.disabled) return
     e.preventDefault()
     if (document.activeElement !== this.inputTarget) {
-      this.inputTarget.focus() // opens via onFocus
+      this.inputTarget.focus()
     } else if (this.isOpen) {
       this.hide()
     } else {
@@ -112,17 +89,12 @@ export default class extends Controller {
     }
   }
 
-  // Pressing anywhere in the list (an option, its padding, or the scrollbar)
-  // would otherwise move focus off the input, which closes the list mid-drag
-  // and breaks keyboard flow after a click.
+  // Keep focus in the input when pressing rows or the scrollbar.
   onListboxMousedown(e) {
     e.preventDefault()
   }
 
   onInput(e) {
-    // Don't fill in text the user is deleting, or text an IME is still
-    // composing (which includes every word on many Android keyboards):
-    // rewriting the value mid-composition garbles it.
     this.noFill =
       e.isComposing ||
       e.inputType === 'insertCompositionText' ||
@@ -130,7 +102,6 @@ export default class extends Controller {
     this.renderBadge()
     this.dismissed = false
     this.pending = true
-    // The submitted value only stands while the text still reads as it.
     this.hiddenTarget.value =
       this.query === this.selectedLabel ? this.selectedValue : ''
     this.filterShown()
@@ -142,8 +113,6 @@ export default class extends Controller {
   }
 
   onKeydown(e) {
-    // Enter/arrows during IME composition belong to the IME (e.g. confirming
-    // a kana conversion), not to the list.
     if (e.isComposing || e.keyCode === 229) return
     switch (e.key) {
       case 'ArrowDown':
@@ -156,8 +125,6 @@ export default class extends Controller {
         if (this.isOpen) this.move(-1)
         break
       case 'Enter':
-        // Results for what's typed haven't arrived yet: the rows on screen are
-        // for an older query. Pick from the fresh ones once they land.
         if (this.pending) {
           e.preventDefault()
           this.afterSearch = 'enter'
@@ -165,8 +132,6 @@ export default class extends Controller {
           e.preventDefault()
           this.resolve('enter')
         } else {
-          // Closed: make the submitted value match the visible text, then let
-          // the form submit.
           this.finalize()
         }
         break
@@ -184,17 +149,12 @@ export default class extends Controller {
   }
 
   onBlur() {
-    // Delay so focus moving within the widget (e.g. to the chevron) settles
-    // before we tear down.
     clearTimeout(this.blurTimeout)
     this.blurTimeout = setTimeout(() => {
       if (this.element.contains(document.activeElement)) return
-      // Let the in-flight search resolve the text, rather than judging it
-      // against stale results.
       if (this.pending) {
         this.afterSearch ||= 'blur'
-        // Out of the way now, without dropping the cursor the deferred
-        // Tab/Enter will pick from.
+        // Not `hide()`: that drops the row a deferred Tab will pick.
         this.listboxTarget.setAttribute('hidden', '')
         this.inputTarget.setAttribute('aria-expanded', 'false')
         return
@@ -209,12 +169,7 @@ export default class extends Controller {
     if (index >= 0) this.commit(this.options[index])
   }
 
-  // Keep the keyboard cursor under the pointer, so clicking always commits the
-  // row the user sees highlighted.
-  //
-  // Only for real pointer movement: when the list scrolls (arrowing down) or
-  // re-renders under a resting pointer, browsers fire `mouseover` for whatever
-  // row slid underneath, which would yank the cursor back from the keyboard.
+  // Ignore the `mouseover` browsers fire when rows scroll under a still pointer.
   onOptionHover(e) {
     const moved = e.clientX !== this.pointerX || e.clientY !== this.pointerY
     this.pointerX = e.clientX
@@ -226,13 +181,10 @@ export default class extends Controller {
     this.highlight({ scroll: false })
   }
 
-  // Fetch more results and append when the user scrolls near the bottom.
   onScroll() {
     const el = this.listboxTarget
     if (el.scrollTop + el.clientHeight >= el.scrollHeight - 40) this.loadMore()
   }
-
-  // --- internals ---
 
   get query() {
     return this.inputTarget.value.trim()
@@ -242,7 +194,6 @@ export default class extends Controller {
     return !this.listboxTarget.hasAttribute('hidden')
   }
 
-  // Index of the selectable option an event landed on, or -1.
   optionIndexFrom(e) {
     const li = e.target.closest('[role="option"]')
     if (!li || li.getAttribute('aria-disabled') === 'true') return -1
@@ -251,8 +202,6 @@ export default class extends Controller {
 
   open() {
     this.dismissed = false
-    // With an untouched selection, just show that one option (selected). The
-    // full list loads once the user starts typing.
     if (this.query === this.selectedLabel && this.selectedOption) {
       this.inputTarget.select()
       this.options = [this.selectedOption]
@@ -269,10 +218,7 @@ export default class extends Controller {
     const token = ++this.searchToken
     this.currentQuery = query
     this.page = 1
-    this.hasMore = false // the rows on screen aren't this query's to page
-    // Swapping the rows for "Loading…" on every keystroke makes the list
-    // flash and jump. Keep what's on screen until the new rows replace it, and
-    // only show the placeholder when there's nothing to show yet.
+    this.hasMore = false
     if (this.isOpen && this.listboxTarget.childElementCount > 0) {
       this.listboxTarget.setAttribute('aria-busy', 'true')
     } else {
@@ -281,9 +227,8 @@ export default class extends Controller {
     }
 
     const result = await this.fetchPage(query, 1, token)
-    if (!result) return // a newer search superseded us
+    if (!result) return
     this.listboxTarget.removeAttribute('aria-busy')
-    // Typing since this search started means another is on its way.
     if (!this.debounce) this.pending = false
 
     if (result.error) {
@@ -293,12 +238,10 @@ export default class extends Controller {
       this.hasMore = result.options.length >= PAGE_SIZE
       this.activeIndex = -1
       this.render()
-      // An emptied field shouldn't quietly re-pick the old selection on Enter.
       if (!query) {
         this.activeIndex = -1
         this.highlight()
       }
-      // Closed with Escape or a click while loading: don't touch their text.
       if (!this.dismissed) this.autocomplete(query, result.options)
     }
     if (document.activeElement === this.inputTarget && !this.dismissed)
@@ -306,7 +249,6 @@ export default class extends Controller {
     if (!this.pending) this.runAfterSearch()
   }
 
-  // Finish an Enter/Tab/blur that arrived while results were still loading.
   runAfterSearch() {
     const how = this.afterSearch
     this.afterSearch = null
@@ -315,12 +257,7 @@ export default class extends Controller {
     if (document.activeElement !== this.inputTarget) this.hide()
   }
 
-  // Settle the field for the way the user is leaving it:
-  //  - enter: pick the highlighted row; with none, leave the text be,
-  //  - tab:   pick the highlighted row if they typed something, else finalize,
-  //  - blur:  finalize (a click elsewhere isn't a choice of the highlighted row).
   resolve(how) {
-    // `hide()` drops the cursor, so a closed list has no active row.
     const active = this.options[this.activeIndex]
     const pickable = active && !active.disabled
     if (how === 'enter') {
@@ -339,8 +276,6 @@ export default class extends Controller {
       this.page + 1,
       this.searchToken
     )
-    // On failure keep the rows already on screen rather than replacing them
-    // with an error; scrolling again retries.
     if (!result || result.error) return
 
     this.page += 1
@@ -352,9 +287,7 @@ export default class extends Controller {
     this.appendOptions(start)
   }
 
-  // Resolves to `{ options }` on success, `{ error }` on failure, or `null` if
-  // a newer search superseded this one. Distinguishing the first two matters:
-  // an empty list and a failed request must not look alike to the user.
+  // `null` means a newer search superseded this one.
   async fetchPage(query, page, token) {
     this.loading = true
     try {
@@ -377,36 +310,23 @@ export default class extends Controller {
     return `${this.urlValue}${sep}q=${encodeURIComponent(query || '')}&page=${page}`
   }
 
-  // Put the keyboard cursor on the top result, so Enter picks it. Unless the
-  // user is deleting, also fill in the rest of its label after the caret
-  // (selected, so continued typing replaces it) when it starts with what was
-  // typed.
-  //
-  // Only the *top* result is considered: results arrive in relevance order, so
-  // completing to a lower prefix match (e.g. "hq" → "HQ Gas Fund" when
-  // "Hack Club HQ" ranks first) would make the text disagree with the
-  // highlighted row. `results` is the server's list, without the previous
-  // selection `withSelected` may have prepended.
+  // Only ever completes to the top result, so the text matches the highlighted
+  // row (e.g. "hq" mustn't complete to "HQ Gas Fund" when "Hack Club HQ" ranks first).
   autocomplete(query, results) {
     if (!query) return
-    if (this.query.toLowerCase() !== query.toLowerCase()) return // typed on
+    if (this.query.toLowerCase() !== query.toLowerCase()) return
     const top = results.find(o => !o.disabled)
     if (!top) return
 
     this.activeIndex = this.options.findIndex(o => o.value === top.value)
     this.highlight()
 
-    // Only extend text typed at the end. With the caret mid-text the user is
-    // editing, and replacing the value would move the caret out from under them.
     const { value, selectionStart, selectionEnd } = this.inputTarget
     if (this.noFill) return
     if (selectionStart !== value.length || selectionEnd !== value.length) return
-    // Against the raw text, so a just-typed trailing space ("hack ") counts.
     const label = top.label
     if (!label.toLowerCase().startsWith(value.toLowerCase())) return
     if (label.length === value.length) return
-    // Use the label's own casing, so "hq g" reads "HQ Gas Fund" rather than
-    // "hq gas Fund".
     this.inputTarget.value = label
     this.inputTarget.setSelectionRange(value.length, label.length)
   }
@@ -430,8 +350,6 @@ export default class extends Controller {
     this.highlight()
   }
 
-  // Keep the committed selection in the option list so it's shown (and marked)
-  // when the list re-opens, even if the current results don't include it.
   withSelected(options) {
     if (!this.selectedValue || !this.selectedOption) return options
     if (options.some(o => o.value === this.selectedValue)) return options
@@ -451,10 +369,6 @@ export default class extends Controller {
     this.dispatch('change', { detail: { option } })
   }
 
-  // Resolve the field to a valid state when focus leaves:
-  //  - an untouched committed selection is left as-is, even if its label isn't unique,
-  //  - an exact match is committed, if it's the only one,
-  //  - anything else (e.g. edited/backspaced text) is cleared.
   finalize() {
     const current = this.query
     if (current === '') return this.clear()
@@ -464,7 +378,7 @@ export default class extends Controller {
       return
     }
 
-    // Names aren't unique: only an unambiguous match is a choice.
+    // Org names aren't unique, so only commit an unambiguous match.
     const matches = (this.options || []).filter(
       o => !o.disabled && o.label.toLowerCase() === current.toLowerCase()
     )
@@ -483,11 +397,6 @@ export default class extends Controller {
     this.dispatch('change', { detail: { option: null } })
   }
 
-  // Loading/empty/error messages are not choices. Dropping `options` keeps
-  // arrow keys from walking (and Enter from committing) the previous search's
-  // results while one of these is on screen, and `role="presentation"` keeps
-  // screen readers from announcing them as a one-item list — the text goes to
-  // the live region instead.
   renderStatus(message) {
     this.options = []
     this.activeIndex = -1
@@ -529,7 +438,6 @@ export default class extends Controller {
       </li>`
   }
 
-  // Append a page of results without rebuilding the list, preserving scroll.
   appendOptions(start) {
     const html = this.options
       .slice(start)
@@ -545,7 +453,6 @@ export default class extends Controller {
       .map((o, i) => this.optionHtml(o, i))
       .join('')
 
-    // Put the keyboard cursor on the current selection so it's visible.
     const selIdx = this.options.findIndex(
       o => o.value === this.selectedValue && !o.disabled
     )
@@ -603,7 +510,6 @@ export default class extends Controller {
     if (this.hasStatusTarget) this.statusTarget.textContent = message
   }
 
-  // Only show the badge while the field still reads as the selection it belongs to.
   renderBadge() {
     const intact = this.inputTarget.value === this.selectedLabel
     this.badgeTarget.textContent = (intact && this.selectedOption?.badge) || ''
@@ -617,7 +523,7 @@ export default class extends Controller {
 
   place() {
     const list = this.listboxTarget
-    const gap = 8 // keep clear of the viewport edge
+    const gap = 8
     const maxHeight =
       parseFloat(
         getComputedStyle(this.element).getPropertyValue(
@@ -636,7 +542,6 @@ export default class extends Controller {
     const up = below < maxHeight && above > below
     list.classList.toggle('combobox__listbox--up', up)
     const room = Math.floor(up ? above : below)
-    // Never squeeze it below a couple of rows; past that the page can scroll.
     list.style.maxHeight = `${Math.max(Math.min(maxHeight, room), 96)}px`
   }
 
