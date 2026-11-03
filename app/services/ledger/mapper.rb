@@ -53,8 +53,7 @@ class Ledger
     # top-ups' bank debits points back to the group; this runs first so the
     # exception wins over the transaction rules.
     def event_from_linked_object
-      return unless @ledger_item.linked_object_type == "FeeReimbursementGroup" ||
-                    (@ledger_item.canonical_transactions.none? && @ledger_item.canonical_pending_transactions.none?)
+      return unless @ledger_item.intended?
 
       @ledger_item.linked_object.try(:event)
     end
