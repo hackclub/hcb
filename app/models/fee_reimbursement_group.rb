@@ -5,13 +5,13 @@
 # Table name: fee_reimbursement_groups
 #
 #  id         :bigint           not null, primary key
-#  slug       :string           not null
+#  key        :string           not null
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
 #
 # Indexes
 #
-#  index_fee_reimbursement_groups_on_slug  (slug) UNIQUE
+#  index_fee_reimbursement_groups_on_key  (key) UNIQUE
 #
 
 # Every Stripe fee reimbursement created in the same ISO week is topped up
@@ -22,21 +22,21 @@
 class FeeReimbursementGroup < ApplicationRecord
   # ISO week-numbering year and week, e.g. "2026_42" — the key the weekly
   # HCB-900 code has always been built from.
-  SLUG_FORMAT = "%G_%V"
-  SLUG_REGEX = /\A\d{4}_\d{2}\z/
+  KEY_FORMAT = "%G_%V"
+  KEY_REGEX = /\A\d{4}_\d{2}\z/
 
   has_paper_trail
 
   include HasHcbCode
-  has_hcb_code ::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_FEE_REIMBURSEMENT_CODE, identifier: :slug
+  has_hcb_code ::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_FEE_REIMBURSEMENT_CODE, identifier: :key
 
   has_many :fee_reimbursements
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
 
-  validates :slug, presence: true, uniqueness: true, format: { with: SLUG_REGEX }
+  validates :key, presence: true, uniqueness: true, format: { with: KEY_REGEX }
   # The HCB code every top-up in the group was made under is built from the
-  # slug, so it can't change.
-  attr_readonly :slug
+  # key, so it can't change.
+  attr_readonly :key
 
   after_create_commit :assign_ledger_item!
 
@@ -46,7 +46,7 @@ class FeeReimbursementGroup < ApplicationRecord
 
   # Monday of the group's week
   def start_date
-    year, week_number = slug.split("_").map(&:to_i)
+    year, week_number = key.split("_").map(&:to_i)
     Date.commercial(year, week_number, 1)
   end
 

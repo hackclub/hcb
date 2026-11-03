@@ -11,7 +11,7 @@ RSpec.describe FeeReimbursementGroup, type: :model do
   let!(:noevent) { create(:event, id: EventMappingEngine::EventIds::NOEVENT) }
 
   it "is keyed on the ISO week" do
-    group = create(:fee_reimbursement_group, slug: "2026_42")
+    group = create(:fee_reimbursement_group, key: "2026_42")
 
     expect(group.hcb_code).to eq("HCB-900-2026_42")
     expect(group.local_hcb_code.hcb_code).to eq("HCB-900-2026_42")
@@ -21,22 +21,22 @@ RSpec.describe FeeReimbursementGroup, type: :model do
   end
 
   it "requires a unique, well-formed week" do
-    create(:fee_reimbursement_group, slug: "2026_42")
+    create(:fee_reimbursement_group, key: "2026_42")
 
-    expect(build(:fee_reimbursement_group, slug: "2026_42")).not_to be_valid
-    expect(build(:fee_reimbursement_group, slug: "2026-42")).not_to be_valid
-    expect(build(:fee_reimbursement_group, slug: nil)).not_to be_valid
+    expect(build(:fee_reimbursement_group, key: "2026_42")).not_to be_valid
+    expect(build(:fee_reimbursement_group, key: "2026-42")).not_to be_valid
+    expect(build(:fee_reimbursement_group, key: nil)).not_to be_valid
   end
 
-  it "can't have its slug changed" do
-    group = create(:fee_reimbursement_group, slug: "2026_42")
+  it "can't have its key changed" do
+    group = create(:fee_reimbursement_group, key: "2026_42")
 
-    expect { group.slug = "2026_43" }.to raise_error(ActiveRecord::ReadonlyAttributeError)
+    expect { group.key = "2026_43" }.to raise_error(ActiveRecord::ReadonlyAttributeError)
   end
 
   describe "ledger item" do
     it "eagerly creates an intended ledger item on create" do
-      group = create(:fee_reimbursement_group, slug: "2026_42")
+      group = create(:fee_reimbursement_group, key: "2026_42")
 
       item = group.ledger_item
       expect(item).to be_present
@@ -54,7 +54,7 @@ RSpec.describe FeeReimbursementGroup, type: :model do
     end
 
     it "settles onto the intended item when a top-up's bank debit with its short code comes in" do
-      group = create(:fee_reimbursement_group, slug: "2026_42")
+      group = create(:fee_reimbursement_group, key: "2026_42")
       item = group.ledger_item
 
       first = create(:canonical_transaction, memo: "STRIPE Stripe Top HCB-#{group.local_hcb_code.short_code}", amount_cents: -1_23)
@@ -81,7 +81,7 @@ RSpec.describe FeeReimbursementGroup, type: :model do
       expect(existing.linked_object).to be_nil
       expect(existing.primary_ledger).to eq(noevent.ledger)
 
-      group = create(:fee_reimbursement_group, slug: "2026_42")
+      group = create(:fee_reimbursement_group, key: "2026_42")
 
       expect(group.ledger_item).to eq(existing)
       expect(Ledger::Item.where(short_code: hcb_code.short_code).count).to eq(1)
@@ -99,7 +99,7 @@ RSpec.describe FeeReimbursementGroup, type: :model do
       fee_revenue = create(:fee_revenue)
       other = create(:ledger_item, short_code: hcb_code.short_code, linked_object: fee_revenue)
 
-      group = create(:fee_reimbursement_group, slug: "2026_42")
+      group = create(:fee_reimbursement_group, key: "2026_42")
 
       expect(group.ledger_item).to be_nil
       expect(other.reload.linked_object).to eq(fee_revenue)

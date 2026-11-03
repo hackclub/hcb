@@ -10,11 +10,11 @@ RSpec.describe FeeReimbursement, type: :model do
     it "joins the group for the ISO week it was created in" do
       fee_reimbursement = travel_to(Time.utc(2026, 10, 14)) { create(:fee_reimbursement) }
 
-      expect(fee_reimbursement.reload.fee_reimbursement_group.slug).to eq("2026_42")
+      expect(fee_reimbursement.reload.fee_reimbursement_group.key).to eq("2026_42")
     end
 
     it "reuses the week's existing group" do
-      group = create(:fee_reimbursement_group, slug: Time.now.utc.strftime(FeeReimbursementGroup::SLUG_FORMAT))
+      group = create(:fee_reimbursement_group, key: Time.now.utc.strftime(FeeReimbursementGroup::KEY_FORMAT))
 
       fee_reimbursement = nil
       expect { fee_reimbursement = create(:fee_reimbursement) }.not_to change(FeeReimbursementGroup, :count)
@@ -23,7 +23,7 @@ RSpec.describe FeeReimbursement, type: :model do
     end
 
     it "keeps a group it was given" do
-      group = create(:fee_reimbursement_group, slug: "2026_42")
+      group = create(:fee_reimbursement_group, key: "2026_42")
 
       fee_reimbursement = create(:fee_reimbursement, fee_reimbursement_group: group)
 
@@ -41,7 +41,7 @@ RSpec.describe FeeReimbursement, type: :model do
   describe "once grouped or processed" do
     it "can't have its group changed" do
       fee_reimbursement = create(:fee_reimbursement).reload
-      other_group = create(:fee_reimbursement_group, slug: "2020_01")
+      other_group = create(:fee_reimbursement_group, key: "2020_01")
 
       expect(fee_reimbursement.update(fee_reimbursement_group: other_group)).to be(false)
       expect(fee_reimbursement.errors[:fee_reimbursement_group]).to include("can't be changed once set")

@@ -14,9 +14,9 @@ module Maintenance
 
     def process(hcb_code)
       week = hcb_code.hcb_i2
-      return unless week.match?(FeeReimbursementGroup::SLUG_REGEX)
+      return unless week.match?(FeeReimbursementGroup::KEY_REGEX)
 
-      group = FeeReimbursementGroup.find_or_create_by!(slug: week)
+      group = FeeReimbursementGroup.find_or_create_by!(key: week)
       group.assign_ledger_item!
 
       # Matched on the top-up's statement descriptor, which is the code's short
