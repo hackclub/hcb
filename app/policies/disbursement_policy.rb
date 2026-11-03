@@ -47,14 +47,6 @@ class DisbursementPolicy < ApplicationPolicy
     auditor_or_user?
   end
 
-  def edit?
-    user&.admin?
-  end
-
-  def update?
-    user&.admin?
-  end
-
   def cancel?
     user&.admin?
   end

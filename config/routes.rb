@@ -530,7 +530,7 @@ Rails.application.routes.draw do
     get "confirmation", to: "ach_transfers#transfer_confirmation_letter"
   end
 
-  resources :disbursements, only: [:new, :create, :show, :edit, :update], concerns: :commentable do
+  resources :disbursements, only: [:new, :create, :show], concerns: :commentable do
     collection do
       get :event_search
       get :repayable_transactions
@@ -1030,7 +1030,6 @@ Rails.application.routes.draw do
     get "announcements", to: "events#announcement_overview", as: :announcement_overview
     get "announcements/new", to: "announcements#new"
     get "feed", to: "events#feed", as: :feed
-    get "stripe_cards/shipping", to: "stripe_cards#shipping", as: :stripe_cards_shipping
     get "card_grants", to: "card_grants#index", as: :card_grant_overview
     get "card_grants/card_overview", to: "card_grants#card_index", as: :card_grant_card_overview
     get "card_grants/transaction_overview", to: "card_grants#transaction_index", as: :card_grant_transaction_overview
@@ -1162,7 +1161,7 @@ Rails.application.routes.draw do
       scope module: "organizer_position" do
         namespace :spending do
           resources :controls, only: [:index, :create, :destroy] do
-            resources :allowances, only: [:new, :create], controller: "control/allowances"
+            resources :allowances, only: [:create], controller: "control/allowances"
           end
         end
       end
