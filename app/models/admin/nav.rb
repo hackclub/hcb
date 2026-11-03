@@ -63,17 +63,6 @@ module Admin
       ]
     end
 
-    def section_names
-      [
-        "Spending",
-        "Ledger",
-        "Incoming Money",
-        "Organizations",
-        "Payroll",
-        "Misc"
-      ]
-    end
-
     memo_wise(:sections)
 
     def active_section

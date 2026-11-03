@@ -10,7 +10,8 @@ import {
   YAxis,
 } from 'recharts'
 import { CustomTooltip } from './components'
-import { generateColor, USDollarNoCents, useDarkMode } from './utils'
+import { USDollarNoCents } from '../../common/money'
+import { generateColor, useDarkMode } from './utils'
 
 export default function Users({ data }) {
   const isDark = useDarkMode()

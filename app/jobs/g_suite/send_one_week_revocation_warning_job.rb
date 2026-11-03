@@ -18,7 +18,3 @@ class GSuite
   end
 
 end
-
-module GSuiteJob
-  SendOneWeekRevocationWarning = GSuite::SendOneWeekRevocationWarningJob
-end
