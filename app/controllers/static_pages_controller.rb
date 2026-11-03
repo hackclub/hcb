@@ -45,9 +45,6 @@ class StaticPagesController < ApplicationController
     @hcb_expansion = Rails.cache.read("hcb_acronym_expansions")&.sample || "Hack Club Buckaroos"
   end
 
-  def first
-  end
-
   def admin_tools
     unless auditor_signed_in?
       redirect_to(root_path, flash: { error: "You are not authorized to visit this page." })

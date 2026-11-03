@@ -14,10 +14,6 @@ class AnnouncementMailerPreview < ActionMailer::Preview
     AnnouncementMailer.with(announcement: Announcement.monthly.last).two_day_warning
   end
 
-  def notice
-    AnnouncementMailer.with(event: Announcement.monthly.last.event, monthly_announcement: Announcement.monthly.last).notice
-  end
-
   def skipped
     AnnouncementMailer.with(announcement: Announcement.monthly.last).skipped
   end
