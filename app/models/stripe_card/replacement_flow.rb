@@ -23,7 +23,7 @@ class StripeCard
     def self.supported?(key)
       FLOWS.key?(key.to_s)
     end
-s
+
     def initialize(stripe_card:, flow:, reason: nil, dispute: nil)
       raise ArgumentError, "#{flow.inspect} is not a supported replacement flow" unless self.class.supported?(flow)
       raise ArgumentError, "can only dispute this card's transactions" if dispute && dispute.stripe_card != stripe_card
