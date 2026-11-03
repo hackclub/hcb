@@ -1331,39 +1331,6 @@ class AdminController < Admin::BaseController
     redirect_back fallback_location: ledger_admin_index_path
   end
 
-  def set_paypal_transfer
-    ActiveRecord::Base.transaction do
-      paypal_transfer = PaypalTransfer.find(params[:paypal_transfer_id])
-
-      canonical_transaction = CanonicalTransactionService::SetEvent.new(
-        canonical_transaction_id: params[:id],
-        event_id: paypal_transfer.event.id,
-        user: current_user
-      ).run
-
-      safely do
-        ledger = Ledger.find_or_create_by!(primary: true, event_id: paypal_transfer.event.id)
-
-        Ledger::Mapping.map_primary!(ledger:, ledger_item: canonical_transaction.ledger_item, mapped_by: current_user)
-      end
-
-      CanonicalPendingTransactionService::Unsettle.new(canonical_pending_transaction: paypal_transfer.canonical_pending_transaction).run
-
-      CanonicalPendingTransactionService::Settle.new(
-        canonical_transaction:,
-        canonical_pending_transaction: paypal_transfer.canonical_pending_transaction
-      ).run!
-
-      canonical_transaction.update!(hcb_code: paypal_transfer.hcb_code, transaction_source_type: "PaypalTransfer", transaction_source_id: paypal_transfer.id)
-
-      paypal_transfer.mark_deposited!
-
-      redirect_to transaction_admin_path(canonical_transaction)
-    end
-  rescue => e
-    redirect_to transaction_admin_path(params[:id]), flash: { error: e.message }
-  end
-
   def set_wire
     ActiveRecord::Base.transaction do
       wire = Wire.find(params[:wire_id])

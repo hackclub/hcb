@@ -17,10 +17,6 @@ class CanonicalTransactionPolicy < ApplicationPolicy
     user&.admin?
   end
 
-  def mark_bank_fee?
-    user&.admin?
-  end
-
   private
 
   def auditor_or_teammember

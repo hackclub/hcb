@@ -21,7 +21,6 @@ class EventPolicy < ApplicationPolicy
   # Turbo frames for the event homepage (show)
   alias_method :team_stats?, :show?
   alias_method :recent_activity?, :show?
-  alias_method :money_movement?, :show?
   alias_method :balance_transactions?, :show?
   alias_method :merchants_chart?, :show?
   alias_method :categories_chart?, :show?
