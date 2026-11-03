@@ -21,20 +21,6 @@ export default class extends Controller {
     this.#render()
   }
 
-  setRange({ start, end }) {
-    this.start = start ? this.#clampDay(new Date(start)) : null
-    this.end = end ? this.#clampDay(new Date(end)) : null
-    this.typedStart = this.#formatDate(this.start)
-    this.typedEnd = this.#formatDate(this.end)
-    this.view = this.start || this.view || new Date()
-    this.#render()
-    this.#emitChange()
-  }
-
-  getRange() {
-    return { start: this.start, end: this.end }
-  }
-
   #startOfMonth(date) {
     const result = new Date(date)
     result.setDate(1)

@@ -32,10 +32,6 @@ module Partners
           end
         end
 
-        def plaid_public_key
-          Credentials.fetch(:PLAID, :PUBLIC_KEY)
-        end
-
         def plaid_env
           "production"
         end

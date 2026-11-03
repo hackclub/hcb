@@ -12,6 +12,22 @@
 
   <%= render partial: "ledgers/filters/filter_menu" unless filter_applied || @ledger_filters_disabled %>
 
+  <% unless @subledger %>
+    <% admin_tool "line-height-0" do %>
+      <% if @event.canonical_transactions.any? %>
+        <%= link_to transactions_exports_path(event: @event, format: :csv), target: :_blank, class: "pop tooltipped tooltipped--s", aria: { label: "Export CSV (old transaction engine)" }, data: { turbo_prefetch: "false" } do %>
+          <%= inline_icon "download", size: 28 %>
+        <% end %>
+      <% else %>
+        <span class="tooltipped tooltipped--s" aria-label="No transactions">
+          <button type="button" class="pop" disabled aria-label="No transactions">
+            <%= inline_icon "download", size: 28 %>
+          </button>
+        </span>
+      <% end %>
+    <% end %>
+  <% end %>
+
   <% admin_tool "overflow-hidden" do %>
     <div data-controller="menu" data-menu-placement-value="bottom-end" data-menu-append-to-value="turbo-frame#<%= dom_id(@event) %>_ledger" class="-mb-1">
       <button

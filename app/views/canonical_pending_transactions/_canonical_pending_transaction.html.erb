@@ -8,9 +8,6 @@
                                  pt.amount.negative? ? "transaction--negative" : pt.amount.positive? ? "transaction--positive" : "transaction--zero"
                                end %>"
   id="<%= pt.local_hcb_code.hashid %>"
-  <% if defined?(selectable) && selectable %>
-    data-transactions-target="transaction"
-  <% end %>
   <% if local_assigns[:receipt_upload_button] %>
     data-controller="file-drop"
     data-file-drop-target="dropzone"
@@ -45,6 +42,9 @@
           <% if pt.declined? %>
             <% if pt.local_hcb_code.stripe_reversed_by_merchant? %>
               <%= badge_for "Reversed", class: "bg-info m0 mr1" %>
+            <% elsif pt.raw_pending_stripe_transaction_id.nil? %>
+              <%# Only card charges have a decline reason to explain. %>
+              <%= badge_for "Declined", class: "bg-error m0 mr1" %>
             <% else %>
               <action data-behavior="modal_trigger" data-modal="declined_information_pt_<%= instance %>" class="pointer" tabindex="0">
                 <span class="badge m-0 pr-[6px] mr-2 bg-error">

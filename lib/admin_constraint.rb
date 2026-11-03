@@ -15,6 +15,13 @@ class AdminConstraint
     end
 
     false
+  rescue NoMethodError
+    # `request.cookie_jar` can be backed by a request that never went through
+    # the ActionDispatch::Cookies middleware (e.g. a synthetic request built by
+    # `ActionDispatch::Routing::RouteSet#recognize_path`), in which case
+    # `request.key_generator` is nil and cookie decryption blows up. Fail
+    # closed (deny access) rather than raising a 500.
+    false
   end
 
 end
