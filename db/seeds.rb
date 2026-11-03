@@ -263,6 +263,16 @@ OrganizerPositionInvite.create_or_find_by!(
   sender: user,
 )
 
+# Raw CSV transactions and hand-made pending transactions carry nothing (a
+# linked object, a Column account number, a Stripe card) that Ledger::Mapper
+# can use to work out their event, so their ledger items would never land on a
+# ledger and every balance would read zero. Map them the way an admin maps a
+# transaction by hand (see AdminController#set_event).
+map_to_ledger = lambda do |ledger_item, event|
+  ledger = Ledger.find_or_create_by!(primary: true, event:)
+  Ledger::Mapping.map_primary!(ledger:, ledger_item:, mapped_by: user)
+end
+
 # create incoming transactions for each org
 
 nte_non_pending_transaction = ::RawCsvTransactionService::Create.new(
@@ -280,6 +290,7 @@ CanonicalEventMapping.create!({
                                 event_id: non_transparent_event.id,
                                 user_id: user.id
                               })
+map_to_ledger.call(CanonicalTransaction.last.ledger_item, non_transparent_event)
 
 te_non_pending_transaction = ::RawCsvTransactionService::Create.new(
   unique_bank_identifier: "FSMAIN",
@@ -296,6 +307,7 @@ CanonicalEventMapping.create!({
                                 event_id: transparent_event.id,
                                 user_id: user.id
                               })
+map_to_ledger.call(CanonicalTransaction.last.ledger_item, transparent_event)
 
 # create non-pending transactions for each org
 
@@ -314,6 +326,7 @@ CanonicalEventMapping.create!({
                                 event_id: non_transparent_event.id,
                                 user_id: user.id
                               })
+map_to_ledger.call(CanonicalTransaction.last.ledger_item, non_transparent_event)
 
 te_non_pending_transaction = ::RawCsvTransactionService::Create.new(
   unique_bank_identifier: "FSMAIN",
@@ -330,6 +343,7 @@ CanonicalEventMapping.create!({
                                 event_id: transparent_event.id,
                                 user_id: user.id
                               })
+map_to_ledger.call(CanonicalTransaction.last.ledger_item, transparent_event)
 
 # create pending transactions for each org
 
@@ -343,6 +357,7 @@ CanonicalPendingEventMapping.create!({
                                        canonical_pending_transaction_id: nte_non_pending_transaction.id,
                                        event_id: non_transparent_event.id
                                      })
+map_to_ledger.call(nte_non_pending_transaction.ledger_item, non_transparent_event)
 
 te_non_pending_transaction = CanonicalPendingTransaction.create!(
   date: 1.days.ago,
@@ -354,5 +369,6 @@ CanonicalPendingEventMapping.create!({
                                        canonical_pending_transaction_id: te_non_pending_transaction.id,
                                        event_id: transparent_event.id
                                      })
+map_to_ledger.call(te_non_pending_transaction.ledger_item, transparent_event)
 
 puts "Done!"
