@@ -607,6 +607,22 @@ class EventsController < ApplicationController
     authorize @event
   end
 
+  # The account number page doesn't send the account number until someone clicks
+  # "Show". That loads this action into the clicked turbo frame.
+  def reveal_account_number
+    authorize @event, :account_number?
+
+    unless turbo_frame_request? && @event.column_account_number.present?
+      return redirect_to account_number_event_path(@event)
+    end
+
+    render partial: "events/account_number_reveal", locals: {
+      frame_id: turbo_frame_request_id,
+      revealed: true,
+      tooltip_direction: params[:tooltip_direction] == "s" ? :s : :n
+    }
+  end
+
   def g_suite_overview
     authorize @event
 

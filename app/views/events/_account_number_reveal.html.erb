@@ -1,0 +1,16 @@
+<%# locals: (frame_id:, revealed: false, animated: false, tooltip_direction: :n) %>
+
+<%# The account number isn't sent with the page. Clicking "Show" loads it into this frame. %>
+<%= turbo_frame_tag frame_id, class: "inline-flex flex-wrap items-center gap-3" do %>
+  <% if revealed %>
+    <%= copy_to_clipboard @event.account_number, tooltip_direction:, class: "font-mono fs-mask" do %>
+      <%= tag.span @event.account_number, data: { controller: ("reveal-animation" if animated) } %>
+    <% end %>
+  <% else %>
+    <span class="font-mono muted"><%= "•" * @event.account_number.length %></span>
+    <%= link_to reveal_account_number_event_path(@event, tooltip_direction:), class: "btn btn-small bg-muted", data: { turbo_prefetch: false } do %>
+      <%= inline_icon "view", size: 20 %>
+      Show
+    <% end %>
+  <% end %>
+<% end %>

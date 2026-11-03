@@ -1338,6 +1338,71 @@ RSpec.describe EventsController do
     end
   end
 
+  describe "account numbers" do
+    render_views
+
+    let(:event) { create(:event) }
+
+    before do
+      allow(ColumnService).to receive(:post).and_return(
+        "id"             => "acno_test",
+        "account_number" => "987654321012",
+        "routing_number" => "121145349",
+        "bic"            => "CLNOUS66"
+      )
+      event.create_column_account_number!
+    end
+
+    describe "#account_number" do
+      it "leaves the account number out of the page until someone clicks Show", :aggregate_failures do
+        sign_in_organizer_of(event)
+
+        get(:account_number, params: { id: event.slug })
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).not_to include("987654321012")
+
+        page = Nokogiri::HTML5(response.body)
+        expect(page.at_css("turbo-frame#account_number_reveal a[href='#{reveal_account_number_event_path(event, tooltip_direction: :n)}']")).to be_present
+        expect(page.at_css("turbo-frame#account_number_modal_reveal a[href='#{reveal_account_number_event_path(event, tooltip_direction: :s)}']")).to be_present
+      end
+    end
+
+    describe "#reveal_account_number" do
+      it "renders the account number into the frame that asked for it", :aggregate_failures do
+        sign_in_organizer_of(event)
+        request.headers["Turbo-Frame"] = "account_number_modal_reveal"
+
+        get(:reveal_account_number, params: { id: event.slug, tooltip_direction: "s" })
+
+        expect(response).to have_http_status(:ok)
+        frame = Nokogiri::HTML5.fragment(response.body).at_css("turbo-frame#account_number_modal_reveal")
+        copy = frame.at_css("[data-controller='clipboard']")
+        expect(copy["data-clipboard-text-value"]).to eq("987654321012")
+        expect(copy["class"]).to include("tooltipped--s")
+        expect(frame.text).to include("987654321012")
+      end
+
+      it "sends a request from outside a turbo frame back to the account number page" do
+        sign_in_organizer_of(event)
+
+        get(:reveal_account_number, params: { id: event.slug })
+
+        expect(response).to redirect_to(account_number_event_path(event))
+      end
+
+      it "doesn't reveal the account number to someone outside the organization", :aggregate_failures do
+        create_session(create(:user), verified: true)
+        request.headers["Turbo-Frame"] = "account_number_reveal"
+
+        get(:reveal_account_number, params: { id: event.slug })
+
+        expect(flash[:error]).to eq("You are not authorized to perform this action.")
+        expect(response.body).not_to include("987654321012")
+      end
+    end
+  end
+
   # A zero-percent revenue fee doesn't mean an organization owes nothing: it can
   # still be charged a fee by hand (Fee's `manual` reason), and that balance is
   # real money it owes. The ledger short-circuited on `revenue_fee > 0` before
