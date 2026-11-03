@@ -268,10 +268,6 @@ class EventPolicy < ApplicationPolicy
     user.admin?
   end
 
-  def receive_grant?
-    OrganizerPosition.role_at_least?(user, record, :reader)
-  end
-
   def audit_log?
     user.auditor?
   end
@@ -356,10 +352,6 @@ class EventPolicy < ApplicationPolicy
 
   def admin_or_manager?
     admin? || manager?
-  end
-
-  def admin_or_reader?
-    admin? || reader?
   end
 
   def is_not_demo_mode?
