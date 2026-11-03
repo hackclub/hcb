@@ -88,8 +88,11 @@ module Reimbursement
 
       event :mark_failed do
         after do
+          failure_id = current_failure_id
+          next if failure_id.nil?
+
           REMINDER_DAYS.each do |days|
-            Reimbursement::FailedPayoutReminderJob.set(wait: days.days).perform_later(self, days)
+            Reimbursement::FailedPayoutReminderJob.set(wait: days.days).perform_later(self, days, failure_id)
           end
         end
 
@@ -113,6 +116,11 @@ module Reimbursement
 
     def payout_transfer
       ach_transfer || increase_check || paypal_transfer || wire || wise_transfer
+    end
+
+    # Version id of the latest transition into `failed`, used to tie reminder jobs to a single failure.
+    def current_failure_id
+      versions.where_object_changes_to(aasm_state: "failed").last&.id
     end
 
     def reverse!

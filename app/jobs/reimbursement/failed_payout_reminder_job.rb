@@ -5,8 +5,9 @@ module Reimbursement
     queue_as :low
     discard_on ActiveJob::DeserializationError
 
-    def perform(payout_holding, days)
+    def perform(payout_holding, days, failure_id)
       return unless payout_holding.failed?
+      return unless payout_holding.current_failure_id == failure_id
 
       report = payout_holding.report
       return if report.reversed? || report.deleted?
