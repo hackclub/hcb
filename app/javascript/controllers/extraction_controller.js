@@ -21,10 +21,14 @@ export default class extends Controller {
       method: 'POST',
       body: formData,
       headers: { 'X-CSRF-Token': csrf() },
-    }).then(res => res.json())
+    })
+      .then(res => (res.ok ? res.json() : null))
+      .catch(() => null)
 
     Turbo.navigator.delegate.adapter.progressBar.hide()
     document.querySelector('html').setAttribute('data-ai-loading', false)
+
+    if (!response) return
 
     let empty = true
 

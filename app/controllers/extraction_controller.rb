@@ -9,7 +9,7 @@ class ExtractionController < ApplicationController
                              elsif params[:file].content_type.starts_with?("image")
                                :tesseract_ocr_text
                              else
-                               return nil
+                               return head :unprocessable_content
                              end
 
     @file = params[:file].tempfile
@@ -61,7 +61,7 @@ class ExtractionController < ApplicationController
 
     extracted = JSON.parse(ai_response)
 
-    total = ApplicationController.helpers.render_money_amount(Monetize.parse(extracted["invoice_items"].sum { |i| Monetize.parse(i["amount"]).amount }))
+    total = Monetize.parse(extracted["invoice_items"].sum { |i| Monetize.parse(i["amount"]).amount }).to_s
 
     json = {
       total:
