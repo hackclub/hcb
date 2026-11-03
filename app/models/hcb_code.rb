@@ -59,7 +59,6 @@ class HcbCode < ApplicationRecord
   has_many :suggested_hcb_code_tag_suggestions, -> { where(aasm_state: "suggested") }, class_name: "HcbCode::Tag::Suggestion", inverse_of: :hcb_code
 
   has_many :suggested_pairings
-  has_many :suggested_receipts, source: :receipt, through: :suggested_pairings
 
   has_one :pin, required: false
 
@@ -108,16 +107,6 @@ class HcbCode < ApplicationRecord
     else
       "receipts+hcb-#{hashid}@hcb.hackclub.com"
     end
-  end
-
-  def best_suggested_receipts(limit: nil, threshold: nil, only_unreviewed: false)
-    pairings = only_unreviewed ? suggested_pairings.unreviewed : suggested_pairings
-
-    if threshold
-      pairings = pairings.where("distance <= ?", threshold)
-    end
-
-    pairings.includes(:receipt).order(distance: :asc).limit(limit).map(&:receipt).compact
   end
 
   def date
