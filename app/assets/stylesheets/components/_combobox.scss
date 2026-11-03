@@ -107,6 +107,12 @@
     display: none;
   }
 
+  // Set by `combobox#place` when there's more room above the field.
+  &.combobox__listbox--up {
+    top: auto;
+    bottom: calc(100% + 0.2rem);
+  }
+
   & li {
     margin: 0 !important;
   }
@@ -137,9 +143,14 @@
 // Hover is handled by `mouseover->combobox#onOptionHover`, which moves the
 // keyboard cursor under the pointer, so the two never disagree about which
 // row a click will commit.
-.combobox__option--navigated,
-.combobox__option--selected {
+.combobox__option--navigated {
   @apply bg-gray-200 dark:bg-neutral-700;
+}
+
+// Distinct from the cursor's background, so the current value and the row
+// Enter will pick never read as two highlighted rows.
+.combobox__option--selected {
+  font-weight: 600;
 }
 
 .combobox__option--status {
