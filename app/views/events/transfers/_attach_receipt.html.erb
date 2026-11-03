@@ -25,7 +25,8 @@
         accept: accept,
         data: {
           "file-drop-target"   => "fileInput",
-          "file-upload-target" => "input"
+          "file-upload-target" => "input",
+          "action"             => "change->extraction#upload"
         },
         disabled:,
         **input_html %>

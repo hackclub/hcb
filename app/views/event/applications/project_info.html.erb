@@ -104,7 +104,7 @@
         <div class="flex items-center">
           <div class="input flex gap-2 items-center py-0">
             <span class="bold muted">$</span>
-            <%= form.number_field :annual_budget, id: "annual_budget_field", "x-bind:disabled": "teenager == null", placeholder: "500.00", step: 0.01, min: 0.01, "x-required": "teenager == 'false' || teenager == false", data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+            <%= form.number_field :annual_budget, id: "annual_budget_field", "x-bind:disabled": "teenager == null", placeholder: "500.00", step: 0.01, min: 0.01, "x-required": "teenager == 'false' || teenager == false", data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
           </div>
         </div>
       </div>
@@ -116,7 +116,7 @@
         <div class="flex items-center">
           <div class="input flex gap-2 items-center py-0">
             <span class="bold muted">$</span>
-            <%= form.number_field :committed_amount, id: "committed_amount_field", "x-bind:disabled": "teenager == null", "x-model": "committed", placeholder: "500.00", step: 0.01, min: 0.00, "x-required": "teenager == 'false' || teenager == false", data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+            <%= form.number_field :committed_amount, id: "committed_amount_field", "x-bind:disabled": "teenager == null", "x-model": "committed", placeholder: "500.00", step: 0.01, min: 0.00, "x-required": "teenager == 'false' || teenager == false", data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
           </div>
         </div>
       </div>
