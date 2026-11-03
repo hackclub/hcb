@@ -25,7 +25,7 @@ export default class extends Controller {
 
     this.previewTarget.hidden = !(this.amount !== '' && amount >= 0)
     this.projectedBalanceTarget.textContent = formatter.format(
-      this.balanceCentsValue / 100 + (operation == 'add' ? amount : -amount)
+      this.balanceCentsValue / 100 + (operation === 'add' ? amount : -amount)
     )
   }
 }
