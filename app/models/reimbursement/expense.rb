@@ -181,10 +181,6 @@ module Reimbursement
       type == "Reimbursement::Expense::Fee"
     end
 
-    def is_mileage?
-      type == "Reimbursement::Expense::Mileage"
-    end
-
     delegate :currency, to: :report
 
     def card_label

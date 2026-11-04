@@ -433,7 +433,7 @@ class AdminController < Admin::BaseController
     events = combobox_page(events.order(Event::CUSTOM_SORT).select(:id, :name, :slug))
 
     render json: events.map { |event|
-      { value: event.id.to_s, label: helpers.combobox_display(event), sublabel: event.slug }
+      { value: event.id.to_s, label: helpers.combobox_display(event), sublabel: event.slug, badge: helpers.combobox_badge(event) }
     }
   end
 
@@ -442,10 +442,9 @@ class AdminController < Admin::BaseController
     users = @q.present? ? User.search_name(@q) : User.order(:full_name, :id)
     users = combobox_page(users.select(:id, :full_name, :email))
 
-    # The admin display already spells out the email and ID, hence the sublabel
-    # only being worth rendering for everyone else.
+    # A nameless user is already labelled by their email.
     render json: users.map { |user|
-      { value: user.id.to_s, label: helpers.combobox_display(user), sublabel: (user.email unless admin_signed_in?) }
+      { value: user.id.to_s, label: helpers.combobox_display(user), sublabel: (user.email if user.full_name.present?), badge: helpers.combobox_badge(user) }
     }
   end
 
@@ -1009,13 +1008,7 @@ class AdminController < Admin::BaseController
     @page = params[:page] || 1
     @per = safe_per(20)
 
-    # Pending fees that haven't been converted to FeeRevenue yet
-    # Pre-calculate fee balances to avoid calling fee_balance_v2_cents multiple times per event
-    events_with_balances = Event.pending_fees_v2.map do |event|
-      { event: event, balance: event.fee_balance_v2_cents }
-    end
-
-    @uncharged_fees_events = events_with_balances.sort_by { |item| -item[:balance] }
+    @uncharged_fees_events = FeeRevenueService::UnchargedFeeBalances.new.run
     @total_pending_fees = @uncharged_fees_events.sum { |item| item[:balance] }
 
     relation = FeeRevenue.all
@@ -1336,39 +1329,6 @@ class AdminController < Admin::BaseController
       end
     end
     redirect_back fallback_location: ledger_admin_index_path
-  end
-
-  def set_paypal_transfer
-    ActiveRecord::Base.transaction do
-      paypal_transfer = PaypalTransfer.find(params[:paypal_transfer_id])
-
-      canonical_transaction = CanonicalTransactionService::SetEvent.new(
-        canonical_transaction_id: params[:id],
-        event_id: paypal_transfer.event.id,
-        user: current_user
-      ).run
-
-      safely do
-        ledger = Ledger.find_or_create_by!(primary: true, event_id: paypal_transfer.event.id)
-
-        Ledger::Mapping.map_primary!(ledger:, ledger_item: canonical_transaction.ledger_item, mapped_by: current_user)
-      end
-
-      CanonicalPendingTransactionService::Unsettle.new(canonical_pending_transaction: paypal_transfer.canonical_pending_transaction).run
-
-      CanonicalPendingTransactionService::Settle.new(
-        canonical_transaction:,
-        canonical_pending_transaction: paypal_transfer.canonical_pending_transaction
-      ).run!
-
-      canonical_transaction.update!(hcb_code: paypal_transfer.hcb_code, transaction_source_type: "PaypalTransfer", transaction_source_id: paypal_transfer.id)
-
-      paypal_transfer.mark_deposited!
-
-      redirect_to transaction_admin_path(canonical_transaction)
-    end
-  rescue => e
-    redirect_to transaction_admin_path(params[:id]), flash: { error: e.message }
   end
 
   def set_wire
