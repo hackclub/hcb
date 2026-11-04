@@ -6,9 +6,9 @@
   </p>
   <p>
     <% if @invite.accepted? %>
-      <%= link_to "Click here", @invite.event %> to head to <%= @invite.event.name %> on HCB.
+      <%= link_to "Head to #{@invite.event.name}", @invite.event %> on HCB.
     <% else %>
-      <%= link_to "Click here", @invite %> to verify your email, log in, and accept the invite.
+      <%= link_to "Accept the invite", @invite %> to verify your email and log in.
     <% end %>
   </p>
 <% elsif @invite.event.demo_mode? == false || @invite.initial? == false %>
@@ -20,7 +20,7 @@
   </p>
 
   <p>
-    <%= link_to "Click here", @invite %> to accept the invite, log in, and see what's up!
+    <%= link_to "Accept the invite", @invite %> to log in and see what's up!
   </p>
 <% else %>
   <p>
