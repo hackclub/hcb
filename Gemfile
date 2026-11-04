@@ -68,7 +68,6 @@ gem "phonelib" # phone number validations
 
 gem "money-rails", "~> 3.0.0"
 gem "monetize", "~> 2.0.0"
-gem "rounding"
 
 gem "business_time"
 

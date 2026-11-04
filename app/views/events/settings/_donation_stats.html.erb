@@ -11,7 +11,7 @@
     </p>
   </div>
   <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
-    <%= form_with(model: event, local: true, data: { controller: "form" }) do |form| %>
+    <%= form_with(model: event, local: true, data: { controller: "form", turbo_frame: "_top" }) do |form| %>
       <%= form.hidden_field :tab, value: "donations" %>
       <%= form.label :show_top_donors do %>
         <%= form.check_box :show_top_donors,
@@ -33,7 +33,7 @@
     </p>
   </div>
   <div class="field--checkbox--switch ml-auto" style="flex-shrink:0">
-    <%= form_with(model: event, local: true, data: { controller: "form" }) do |form| %>
+    <%= form_with(model: event, local: true, data: { controller: "form", turbo_frame: "_top" }) do |form| %>
       <%= form.hidden_field :tab, value: "donations" %>
       <%= form.label :show_recent_donors do %>
         <%= form.check_box :show_recent_donors,

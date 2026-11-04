@@ -76,6 +76,43 @@ RSpec.describe CardGrant, type: :model do
     end
   end
 
+  describe "#balance" do
+    let(:event) { create(:event, :card_grant_event, :with_positive_balance) }
+    let(:sender) { create(:user) }
+
+    before do
+      create(:organizer_position, event:, user: sender)
+      allow_any_instance_of(CardGrant).to receive(:send_email)
+    end
+
+    it "is the grant's ledger balance" do
+      card_grant = create(:card_grant, event:, amount_cents: 1_000, sent_by: sender, stripe_card: nil)
+
+      expect(card_grant.balance).to eq(Money.new(1_000))
+      expect(card_grant.balance_cents).to eq(card_grant.ledger.balance_cents)
+    end
+
+    # The settled transactions for a grant's funding are imported and mapped by
+    # TransactionEngine::NightlyJob, but the pending transactions they settle
+    # aren't marked settled until the next PendingEventMappingEngine::NightlyJob.
+    # The legacy subledger balance counted the funding twice in between.
+    it "doesn't double count funding that has settled before its pending transaction is marked settled" do
+      card_grant = create(:card_grant, event:, amount_cents: 1_000, sent_by: sender, stripe_card: nil)
+      disbursement = card_grant.disbursement
+
+      create(:canonical_transaction, memo: disbursement.outgoing_disbursement.transaction_memo, amount_cents: -1_000)
+      create(:canonical_transaction, memo: disbursement.incoming_disbursement.transaction_memo, amount_cents: 1_000)
+      EventMappingEngine::Map::HcbCodes::Short.new.run
+
+      expect(card_grant.subledger.legacy_balance_cents).to eq(2_000)
+      expect(card_grant.balance_cents).to eq(1_000)
+
+      PendingEventMappingEngine::Settle::IncomingDisbursementHcbCode.new.run
+
+      expect(card_grant.balance_cents).to eq(1_000)
+    end
+  end
+
   describe "expiration_at validation" do
     before do
       allow_any_instance_of(CardGrant).to receive(:transfer_money)
