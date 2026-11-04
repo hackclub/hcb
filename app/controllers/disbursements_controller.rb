@@ -4,7 +4,7 @@ class DisbursementsController < ApplicationController
   include TurboStreamFlash
   include ComboboxSearchable
 
-  before_action :set_disbursement, only: [:show, :edit, :update, :transfer_confirmation_letter]
+  before_action :set_disbursement, only: [:show, :transfer_confirmation_letter]
 
   def show
     authorize @disbursement
@@ -239,14 +239,6 @@ class DisbursementsController < ApplicationController
     skip_authorization
     flash[:error] = "Organization not found: #{e.id}"
     redirect_to new_disbursement_path(source_event_id: @source_event)
-  end
-
-  def edit
-    authorize @disbursement
-  end
-
-  def update
-    authorize @disbursement
   end
 
   def cancel

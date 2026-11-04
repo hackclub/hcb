@@ -38,6 +38,11 @@ class PaymentsController < ApplicationController
       return render :new, layout: "transfer", status: :unprocessable_content
     end
 
+    if @legal_entity&.managed? && @legal_entity.default_payout_method.nil? && LegalEntity::PayoutMethod.details_class_for(params.dig(:user, :payout_method_type).presence).nil?
+      flash.now[:error] = "Please choose a payout method for this payment."
+      return render :new, layout: "transfer", status: :unprocessable_content
+    end
+
     if @payment.amount_cents > @event.balance_available_v2_cents
       flash.now[:error] = "Your organization doesn't have enough money to send this payment! Your balance is #{helpers.render_money(@event.balance_available_v2_cents)}."
       return render :new, layout: "transfer", status: :unprocessable_content
