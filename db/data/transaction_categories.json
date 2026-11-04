@@ -128,6 +128,9 @@
       "digital_goods_applications",
       "digital_goods_media",
       "direct_marketing_catalog_merchant",
+      "direct_marketing_inbound_telemarketing",
+      "direct_marketing_other",
+      "direct_marketing_outbound_telemarketing",
       "miscellaneous_publishing_and_printing"
     ]
   },
