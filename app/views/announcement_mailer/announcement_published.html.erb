@@ -4,4 +4,4 @@
 <i><%= link_to "View this announcement in your browser", @announcement %></i>
 <br>
 <br>
-<i>This email was sent because you are following <%= @event.name %>. <%= link_to "Unfollow #{@event.name}", event_url(@event) %> to stop receiving these announcements.</i>
+<i>This email was sent because you are following <%= @event.name %>. <%= link_to "Unsubscribe from #{@event.name}", event_url(@event) %> to stop receiving these announcements.</i>
