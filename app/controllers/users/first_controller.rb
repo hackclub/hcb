@@ -73,6 +73,7 @@ module Users
 
     def sign_out
       helpers.sign_out
+      helpers.forget_remembered_organizations!
 
       redirect_to auth_users_path
     end
