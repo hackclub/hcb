@@ -29,6 +29,10 @@
 # RawStripeTransaction's `stripe_authorization_id` both hold the Stripe
 # authorization ID (iauth_...).
 class CardCharge < ApplicationRecord
+  include HasStripeDashboardUrl
+  has_stripe_dashboard_url "issuing/transactions", :remote_stripe_ipi_id, as: :stripe_txn_dashboard_url
+  has_stripe_dashboard_url "issuing/authorizations", :remote_stripe_iauth_id, as: :stripe_auth_dashboard_url
+
   belongs_to :raw_pending_stripe_transaction, optional: true
   belongs_to :stripe_card, optional: true
   has_many :card_charge_raw_stripe_transactions, dependent: :destroy
@@ -49,6 +53,34 @@ class CardCharge < ApplicationRecord
 
   def merchant_currency
     (raw_stripe_transactions.last || raw_pending_stripe_transaction)&.stripe_transaction&.dig("merchant_currency")
+  end
+
+  # Only Stripe authorizations carry verification data; settled transactions
+  # don't, so a charge that settled before it was reversed must still read it
+  # from the authorization.
+  def verification_data
+    raw_pending_stripe_transaction&.stripe_transaction&.dig("verification_data") || {}
+  end
+
+  # The checks Stripe reported as mismatched when the charge was authorized,
+  # e.g. "address_postal_code_check" or "cvc_check".
+  def failed_verification_checks
+    verification_data.select { |check, result| check.end_with?("check") && result == "mismatch" }.keys
+  end
+
+  # What the cardholder was charged, before any refund: the captured amount once
+  # the charge has settled, otherwise the amount that was authorized. Nothing
+  # else can say: the ledger item's amount nets to zero once a charge is
+  # reversed or released, Stripe zeroes a released authorization's amount, and
+  # the pending transaction import copies that zero onto the canonical pending
+  # transaction. The authorization's request history keeps the amount of every
+  # request Stripe approved.
+  def amount_cents
+    captured_cents = raw_stripe_transactions.reject(&:refund?).sum { |transaction| transaction.amount_cents.to_i }.abs
+    return captured_cents if captured_cents.positive?
+
+    requests = raw_pending_stripe_transaction&.stripe_transaction&.dig("request_history") || []
+    requests.select { |request| request["approved"] }.sum { |request| request["amount"].to_i }.abs
   end
 
   def icon
@@ -90,22 +122,10 @@ class CardCharge < ApplicationRecord
     raw_stripe_transactions.first.stripe_transaction_id
   end
 
-  def stripe_txn_dashboard_url
-    return nil unless remote_stripe_ipi_id
-
-    "https://dashboard.stripe.com/issuing/transactions/#{remote_stripe_ipi_id}"
-  end
-
   def remote_stripe_iauth_id
     return nil unless raw_pending_stripe_transaction
 
     raw_pending_stripe_transaction.stripe_transaction_id
-  end
-
-  def stripe_auth_dashboard_url
-    return nil unless remote_stripe_iauth_id
-
-    "https://dashboard.stripe.com/issuing/authorizations/#{remote_stripe_iauth_id}"
   end
 
   # Finds the charge for a Stripe authorization ID (iauth_...), whether it was

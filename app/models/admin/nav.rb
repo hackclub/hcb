@@ -63,17 +63,6 @@ module Admin
       ]
     end
 
-    def section_names
-      [
-        "Spending",
-        "Ledger",
-        "Incoming Money",
-        "Organizations",
-        "Payroll",
-        "Misc"
-      ]
-    end
-
     memo_wise(:sections)
 
     def active_section
@@ -157,6 +146,10 @@ module Admin
           make_item(
             name: "Pending Ledger",
             path: pending_ledger_admin_index_path
+          ),
+          make_item(
+            name: "Ledger Items",
+            path: ledger_items_admin_index_path
           ),
           make_item(
             name: "Raw Transactions",

@@ -34,7 +34,55 @@
         <%= form.text_area :public_reimbursement_page_message, placeholder: "#{event.name} uses HCB to reimburse its volunteers…", class: "w-100 fit mt1", disabled: %>
         <%= inline_icon "markdown", size: 32, class: "muted right" %>
       </div>
-      <%= form.submit "Update", disabled:, data: { turbo_frame: frame ? "_top" : "" } %>
+
+      <hr class="my-4 clear-both">
+
+      <div class="field">
+        <%= form.label :reimbursement_reviewer_selection, "Let submitters pick a reviewer" %>
+        <%= form.select :reimbursement_reviewer_selection, [["Disabled", "disabled"], ["Enabled, optional", "optional"], ["Enabled, required", "required"]], {}, { disabled: } %>
+      </div>
+
+      <hr class="my-4">
+
+      <div class="field">
+        <span style="font-weight: 700">Reviewers</span>
+        <p class="h5 muted mt0 mb1">
+          Reports without an assigned reviewer will be sent to these managers for review. New managers are added automatically.
+        </p>
+      </div>
+      <% ancestor_ids = event.ancestor_ids %>
+      <% candidates = event.reimbursement_reviewer_candidates.includes(:user, :event).sort_by { |position| [ancestor_ids.index(position.event_id) || ancestor_ids.size, position.user.name.to_s.downcase] } %>
+      <% grouped_by_organization = candidates.map(&:event_id).uniq.many? %>
+      <div class="mb-4" data-controller="text-filter">
+        <%= text_field_tag :reimbursement_reviewer_search, nil,
+                           name: nil,
+                           placeholder: "Search managers…",
+                           autocomplete: "off",
+                           role: "combobox",
+                           "aria-controls": "#reimbursement_reviewer_options",
+                           class: "!max-w-full w-full mb1",
+                           data: { action: "input->text-filter#query keydown.enter->text-filter#query:prevent" } %>
+        <div id="reimbursement_reviewer_options" role="listbox" class="max-h-72 overflow-y-auto border border-solid border-smoke dark:border-slate rounded-lg px-3">
+          <% heading_event_id = nil %>
+          <%= form.collection_check_boxes :reimbursement_reviewer_position_ids, candidates, :id, ->(position) { position.user.name } do |b| %>
+            <% if grouped_by_organization && b.object.event_id != heading_event_id %>
+              <% heading_event_id = b.object.event_id %>
+              <h4 class="h5 muted mt-3 mb-0">Managers of <%= b.object.event.name %></h4>
+            <% end %>
+            <div class="field field--checkbox my-2" data-name="<%= b.text %>">
+              <span class="flex-1 flex items-center gap-2"><%= avatar_for b.object.user %><%= b.text %></span>
+              <div class="field--checkbox--switch ml-auto shrink-0">
+                <%= b.label do %>
+                  <%= b.check_box(disabled:) %>
+                  <span class="slider"></span>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <%= form.submit "Update", disabled:, data: { turbo_frame: "_top" } %>
     <% end %>
   <% end %>
 <% end %>
