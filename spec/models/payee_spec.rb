@@ -117,6 +117,24 @@ RSpec.describe Payee, type: :model do
         expect(payee.reload).to be_archived
         expect(payee.legal_entity).to be_nil
       end
+
+      it "does not duplicate or delete any payments or payroll positions" do
+        payments = create_list(:payment, 2, payee:) + [create(:payment, payee: existing)]
+        positions = create_list(:payroll_position, 2, payee:) + [create(:payroll_position, payee: existing)]
+
+        payment_count = Payment.count
+        position_count = Payroll::Position.count
+
+        payee.assign_legal_entity!(legal_entity)
+
+        expect(Payment.count).to eq(payment_count)
+        expect(Payroll::Position.count).to eq(position_count)
+
+        expect(existing.payments.reload).to match_array(payments)
+        expect(existing.payroll_positions.reload).to match_array(positions)
+        expect(payee.payments.reload).to be_empty
+        expect(payee.payroll_positions.reload).to be_empty
+      end
     end
 
     it "does not merge into a payee with a different email" do
