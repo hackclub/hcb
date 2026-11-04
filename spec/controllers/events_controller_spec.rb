@@ -554,11 +554,33 @@ RSpec.describe EventsController do
     render_views
     include DonationSupport
 
+    before { stub_donation_payment_intent_creation }
+
+    let(:event) { create(:event, is_public: true) }
+    let!(:donation) { create(:donation, event:, name: "Jane Jones", aasm_state: "deposited") }
+
+    it "loads past and recurring donations into separate frames" do
+      get(:donation_overview, params: { event_id: event.slug, q: "Jane", page: 2 })
+
+      expect(response).to have_http_status(:ok)
+      page = Nokogiri::HTML5(response.body)
+      expect(page.at_css("turbo-frame#donations_donations_overview")["src"]).to eq(event_donations_path(event, q: "Jane", page: 2))
+      expect(page.at_css("turbo-frame#donations_recurring_donations_overview")["src"]).to eq(event_recurring_donations_path(event))
+    end
+  end
+
+  describe "#donations" do
+    render_views
+    include DonationSupport
+
     def donation_rows(body)
       Nokogiri::HTML5(body).css("article.table-container tbody tr")
     end
 
-    before { stub_donation_payment_intent_creation }
+    before do
+      stub_donation_payment_intent_creation
+      request.headers["Turbo-Frame"] = "donations_donations_overview"
+    end
 
     let(:event) { create(:event, is_public: true) }
     let!(:anonymous_donation) { create(:donation, event:, name: "Jane Appleseed", email: "jane.appleseed@example.com", anonymous: true, aasm_state: "deposited") }
@@ -566,7 +588,7 @@ RSpec.describe EventsController do
 
     context "as a signed out visitor" do
       it "lists anonymous donors when there is no search" do
-        get(:donation_overview, params: { event_id: event.slug })
+        get(:donations, params: { event_id: event.slug })
 
         expect(response).to have_http_status(:ok)
         rows = donation_rows(response.body)
@@ -576,21 +598,21 @@ RSpec.describe EventsController do
       end
 
       it "does not match anonymous donors by name" do
-        get(:donation_overview, params: { event_id: event.slug, q: "Appleseed" })
+        get(:donations, params: { event_id: event.slug, q: "Appleseed" })
 
         expect(response).to have_http_status(:ok)
         expect(donation_rows(response.body)).to be_empty
       end
 
       it "does not match anonymous donors by email" do
-        get(:donation_overview, params: { event_id: event.slug, q: "jane.appleseed@example.com" })
+        get(:donations, params: { event_id: event.slug, q: "jane.appleseed@example.com" })
 
         expect(response).to have_http_status(:ok)
         expect(donation_rows(response.body)).to be_empty
       end
 
       it "still matches donors who are not anonymous" do
-        get(:donation_overview, params: { event_id: event.slug, q: "Jane" })
+        get(:donations, params: { event_id: event.slug, q: "Jane" })
 
         expect(response).to have_http_status(:ok)
         rows = donation_rows(response.body)
@@ -600,14 +622,14 @@ RSpec.describe EventsController do
       end
 
       it "does not match donors who are not anonymous by email" do
-        get(:donation_overview, params: { event_id: event.slug, q: "jane.jones@example.com" })
+        get(:donations, params: { event_id: event.slug, q: "jane.jones@example.com" })
 
         expect(response).to have_http_status(:ok)
         expect(donation_rows(response.body)).to be_empty
       end
 
       it "does not match donors who are not anonymous by an email prefix" do
-        get(:donation_overview, params: { event_id: event.slug, q: "jane.jo" })
+        get(:donations, params: { event_id: event.slug, q: "jane.jo" })
 
         expect(response).to have_http_status(:ok)
         expect(donation_rows(response.body)).to be_empty
@@ -618,7 +640,7 @@ RSpec.describe EventsController do
       before { sign_in_organizer_of(event) }
 
       it "matches anonymous donors by name" do
-        get(:donation_overview, params: { event_id: event.slug, q: "Appleseed" })
+        get(:donations, params: { event_id: event.slug, q: "Appleseed" })
 
         expect(response).to have_http_status(:ok)
         rows = donation_rows(response.body)
@@ -627,7 +649,7 @@ RSpec.describe EventsController do
       end
 
       it "matches anonymous donors by email" do
-        get(:donation_overview, params: { event_id: event.slug, q: "jane.appleseed@example.com" })
+        get(:donations, params: { event_id: event.slug, q: "jane.appleseed@example.com" })
 
         expect(response).to have_http_status(:ok)
         rows = donation_rows(response.body)
@@ -636,13 +658,71 @@ RSpec.describe EventsController do
       end
 
       it "matches donors who are not anonymous by email" do
-        get(:donation_overview, params: { event_id: event.slug, q: "jane.jones@example.com" })
+        get(:donations, params: { event_id: event.slug, q: "jane.jones@example.com" })
 
         expect(response).to have_http_status(:ok)
         rows = donation_rows(response.body)
         expect(rows.size).to eq(1)
         expect(rows.first.text).to include("Jane Jones")
       end
+    end
+
+    it "redirects direct visits to the donation overview, keeping the search" do
+      request.headers["Turbo-Frame"] = nil
+
+      get(:donations, params: { event_id: event.slug, q: "Jane", page: 2 })
+
+      expect(response).to redirect_to(event_donation_overview_path(event, q: "Jane", page: 2))
+    end
+  end
+
+  describe "#recurring_donations" do
+    render_views
+
+    let(:event) { create(:event, is_public: true) }
+
+    def recurring_donation_rows(body)
+      Nokogiri::HTML5(body).css(".table-container tbody tr")
+    end
+
+    before do
+      stub_const("EventsController::DONATIONS_PER_PAGE", 2)
+      request.headers["Turbo-Frame"] = "donations_recurring_donations_overview"
+
+      3.times do |i|
+        RecurringDonation.create!(
+          event:,
+          name: "Monthly Donor #{i}",
+          email: "monthly.donor.#{i}@example.com",
+          amount: 10_00,
+          stripe_subscription_id: "sub_#{i}",
+          stripe_status: "active",
+          created_at: i.days.ago
+        )
+      end
+    end
+
+    it "paginates recurring donations on their own" do
+      get(:recurring_donations, params: { event_id: event.slug })
+
+      expect(response).to have_http_status(:ok)
+      expect(recurring_donation_rows(response.body).map(&:text)).to contain_exactly(
+        a_string_including("Monthly Donor 0"),
+        a_string_including("Monthly Donor 1")
+      )
+
+      get(:recurring_donations, params: { event_id: event.slug, page: 2 })
+
+      expect(response).to have_http_status(:ok)
+      expect(recurring_donation_rows(response.body).map(&:text)).to contain_exactly(a_string_including("Monthly Donor 2"))
+    end
+
+    it "redirects direct visits to the donation overview" do
+      request.headers["Turbo-Frame"] = nil
+
+      get(:recurring_donations, params: { event_id: event.slug })
+
+      expect(response).to redirect_to(event_donation_overview_path(event))
     end
   end
 
