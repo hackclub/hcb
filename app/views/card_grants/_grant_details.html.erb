@@ -39,7 +39,7 @@
     <%= render "card_grants/control_drawer", id: "grant-#{label.parameterize}", label:, items: %>
   <% end %>
 
-  <% if !own && card_grant.allowed_merchants.any? %>
+  <% if !own && card_grant.allowed_merchants.any? && organizer_signed_in? %>
     <p class="text-sm muted font-mono mt-3 mb-0">Merchant IDs: <%= card_grant.allowed_merchants.join(", ") %></p>
   <% end %>
 
