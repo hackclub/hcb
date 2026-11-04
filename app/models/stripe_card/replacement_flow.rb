@@ -8,11 +8,13 @@ class StripeCard
         title: "Replace damaged card",
         reasons: %w[damaged],
         steps: %w[reason new_card confirm shipping],
+        policy: :replace?,
       },
       "losten"  => {
         title: "Replace lost or stolen card",
         reasons: %w[lost stolen],
         steps: %w[reason new_card confirm shipping],
+        policy: :replace_lost_or_stolen?,
       },
       "expired" => {
         title: "Replace expiring card",
@@ -26,8 +28,14 @@ class StripeCard
 
     attr_reader :stripe_card, :key, :reason, :dispute
 
+    PHYSICAL_ONLY_REASONS = %w[lost damaged].freeze
+
     def self.supported?(key)
       FLOWS.key?(key.to_s)
+    end
+
+    def self.policy_query_for(reason)
+      FLOWS.values.find { |flow| flow[:reasons].include?(reason.to_s) }&.fetch(:policy)
     end
 
     def initialize(stripe_card:, flow:, reason: nil, dispute: nil)
@@ -48,7 +56,11 @@ class StripeCard
     end
 
     def policy_query
-      FLOWS.fetch(key)[:policy] || :replace?
+      FLOWS.fetch(key)[:policy]
+    end
+
+    def available?
+      reasons.any?
     end
 
     def frame_id
@@ -61,8 +73,7 @@ class StripeCard
 
     def reasons
       reasons = FLOWS.fetch(key)[:reasons]
-      # virutal cards cant be lost!
-      reasons -= %w[lost] if stripe_card.virtual?
+      reasons -= PHYSICAL_ONLY_REASONS if stripe_card.virtual?
       reasons
     end
 

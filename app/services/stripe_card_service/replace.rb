@@ -23,11 +23,14 @@ module StripeCardService
     def run
       raise ArgumentError, "#{@reason.inspect} is not a supported replacement reason" unless REASONS.include?(@reason)
       raise ArgumentError, "a canceled card can't be replaced" if @stripe_card.canceled? && @reason != "expired"
+      raise ArgumentError, "only physical cards can be replaced as #{@reason}" if @stripe_card.virtual? && StripeCard::ReplacementFlow::PHYSICAL_ONLY_REASONS.include?(@reason)
+      raise ArgumentError, "a lost or stolen card needs a new card number" if @reason == "expired" && canceled_as_lost_or_stolen?
 
       validate_shipping_address! if @stripe_card.physical?
 
       return order_replacement! unless CANCEL_FIRST_REASONS.include?(@reason)
 
+      @stripe_card.replacement.cancel!(cancellation_reason: @reason) if @stripe_card.live_replacement?
       @stripe_card.cancel!(cancellation_reason: @reason)
 
       begin
@@ -71,6 +74,12 @@ module StripeCardService
         @stripe_card.sync_from_stripe!
         @stripe_card.save!
       end
+    end
+
+    def canceled_as_lost_or_stolen?
+      return false unless @stripe_card.canceled?
+
+      CANCEL_FIRST_REASONS.include?(::Stripe::Issuing::Card.retrieve(id: @stripe_card.stripe_id).cancellation_reason)
     end
 
     def validate_shipping_address!

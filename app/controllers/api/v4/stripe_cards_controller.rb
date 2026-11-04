@@ -146,7 +146,7 @@ module Api
         if params[:last4].blank?
           return render json: { error: "Last four digits are required." }, status: :unprocessable_content
         end
-        
+
         # so replacement cards share the same last4 with the replaced card, this handles that
         unless current_user.stripe_cardholder&.stripe_cards&.where(last4: params[:last4])&.exists?(id: @stripe_card.id)
           return render json: { error: "Last four digits are incorrect." }, status: :unprocessable_content

@@ -25,20 +25,24 @@ class StripeCardPolicy < ApplicationPolicy
     admin_or_manager? || member_and_cardholder?
   end
 
+  # For damaged cards.
   def replace?
     return false if record.canceled?
-    return false if record.card_grant.present?
-    return false if record.event&.financially_frozen?
-    return false if record.replacement.present? && !record.replacement.canceled?
+    return false if record.live_replacement?
 
-    user&.admin? || member_and_cardholder?
+    can_replace?
+  end
+
+  def replace_lost_or_stolen?
+    return false if record.canceled?
+
+    can_replace?
   end
 
   def replace_expired?
     return false unless record.replaceable_for_expiration?
-    return false if record.event&.financially_frozen?
 
-    user&.admin? || member_and_cardholder?
+    can_replace?
   end
 
   def activate?
@@ -72,6 +76,15 @@ class StripeCardPolicy < ApplicationPolicy
   end
 
   private
+
+  def can_replace?
+    return false if record.card_grant.present?
+    return false if record.event&.financially_frozen?
+    return false if record.user&.locked?
+    return false if record.frozen? && !defrost?
+
+    user&.admin? || member_and_cardholder?
+  end
 
   def member_and_cardholder?
     member? && cardholder?

@@ -9,6 +9,7 @@ module StripeCards
 
     def new
       authorize @stripe_card, @flow.policy_query
+      raise ActionController::BadRequest, "This card can't be replaced this way" unless @flow.available?
 
       @step = @flow.find_step(params[:step])
 
@@ -16,7 +17,10 @@ module StripeCards
     end
 
     def create
-      authorize @stripe_card, @reason == "expired" ? :replace_expired? : :replace?
+      authorize @stripe_card, StripeCard::ReplacementFlow.policy_query_for(@reason)
+
+      was_canceled = @stripe_card.canceled?
+      replacement_ids = @stripe_card.replacements.ids
 
       replacement = ::StripeCardService::Replace.new(
         stripe_card: @stripe_card,
@@ -36,7 +40,12 @@ module StripeCards
       raise
     rescue => e
       Rails.error.report(e)
-      redirect_to @stripe_card, flash: { error: "We couldn't replace your card. Your current card hasn't been changed." }
+      @stripe_card.reload
+      if @stripe_card.canceled? != was_canceled || @stripe_card.replacements.ids != replacement_ids
+        redirect_to @stripe_card, flash: { error: "Something went wrong partway through replacing your card. Please contact hcb@hackclub.com and we'll sort it out." }
+      else
+        redirect_to @stripe_card, flash: { error: "We couldn't replace your card. Your current card hasn't been changed." }
+      end
     end
 
     private

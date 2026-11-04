@@ -89,7 +89,8 @@ class StripeCard < ApplicationRecord
   belongs_to :replacement_for, class_name: "StripeCard", optional: true
   belongs_to :personalization_design, foreign_key: "stripe_card_personalization_design_id", class_name: "StripeCard::PersonalizationDesign", optional: true
   validates_presence_of :stripe_card_personalization_design_id, unless: -> { self.virtual? }, on: :create
-  has_one :replacement, class_name: "StripeCard", foreign_key: :replacement_for_id
+  has_many :replacements, class_name: "StripeCard", foreign_key: :replacement_for_id, inverse_of: :replacement_for
+  has_one :replacement, -> { order(created_at: :desc) }, class_name: "StripeCard", foreign_key: :replacement_for_id
   alias_method :cardholder, :stripe_cardholder
   has_one :user, through: :stripe_cardholder
   has_many :stripe_authorizations
@@ -404,7 +405,12 @@ class StripeCard < ApplicationRecord
   end
 
   def canceled_for_expiration?
-    canceled? && expires_on.present? && canceled_at.present? && canceled_at.to_date > expires_on
+    canceled? && expires_on.present? && canceled_at.present? && canceled_at.to_date > expires_on &&
+      !replacements.where(replacement_reason: %w[lost stolen]).exists?
+  end
+
+  def live_replacement?
+    replacement.present? && !replacement.canceled?
   end
 
   def expiration_replacement_window
@@ -418,7 +424,7 @@ class StripeCard < ApplicationRecord
     return false unless initially_activated?
     return false if card_grant.present?
     return false if canceled? && !canceled_for_expiration?
-    return false if replacement.present? && !replacement.canceled?
+    return false if live_replacement?
 
     true
   end
