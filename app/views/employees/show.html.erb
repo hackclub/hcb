@@ -2,7 +2,7 @@
 <% page_md %>
 <%= render "events/nav", selected: :payroll %>
 
-<%= turbo_frame_tag "employee_#{@employee.hashid}" do %>
+<%= turbo_frame_tag "employee_#{@employee.hashid}", target: "_top" do %>
   <h1 class="heading flex <%= "border-none" if @frame %>">
     <span class="flex-grow <%= "hidden" if @frame %>"><%= @employee.user.name %>'s payroll</span>
     <% if @employee.onboarded? %>
