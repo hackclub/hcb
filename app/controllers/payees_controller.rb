@@ -127,7 +127,7 @@ class PayeesController < ApplicationController
       return
     end
 
-    @payee.update!(legal_entity: le)
+    @payee.assign_legal_entity!(le)
 
     flash[:success] = "Legal entity successfully assigned"
 
