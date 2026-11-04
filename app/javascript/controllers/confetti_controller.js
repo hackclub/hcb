@@ -1,7 +1,13 @@
 import { Controller } from '@hotwired/stimulus'
 import JSConfetti from 'js-confetti'
 
-const jsConfetti = new JSConfetti()
+let jsConfetti
+
+function confetti() {
+  jsConfetti ??= new JSConfetti()
+  if (!jsConfetti.canvas.isConnected) document.body.append(jsConfetti.canvas)
+  return jsConfetti
+}
 
 export default class extends Controller {
   static values = {
@@ -20,9 +26,9 @@ export default class extends Controller {
 
   party() {
     if (this.emojisValue) {
-      jsConfetti.addConfetti({ emojis: this.emojisValue.split(',') })
+      confetti().addConfetti({ emojis: this.emojisValue.split(',') })
     } else {
-      jsConfetti.addConfetti()
+      confetti().addConfetti()
     }
   }
 }
