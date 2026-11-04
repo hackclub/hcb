@@ -1,0 +1,5 @@
+<%# locals: (item:) -%>
+
+<%= turbo_stream.update_all "span[data-memo-for='#{dom_id(item)}']" do %>
+  <%= render "ledger/items/memo/memo_text", item: %>
+<% end %>

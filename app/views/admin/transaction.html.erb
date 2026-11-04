@@ -65,7 +65,7 @@
 
     <%= form_with model: false, local: true, url: set_wise_transfer_path(@canonical_transaction), class: "mb-0", method: :post do |form| %>
       <%= form.hidden_field :wise_transfer_id, value: @suggested_wise_mapping.id %>
-      <%= form.submit "Map to Wise transfer ##{@suggested_wise_mapping.id}", data: { "turbo-confirm": "Are you sure you want to map this transaction to Wise transfer ##{@suggested_wise_mapping.id}?" }, class: "!mb-0 mt-3" %>
+      <%= form.submit "Map to Wise transfer ##{@suggested_wise_mapping.id}", data: { disable_with: false, "turbo-confirm": "Are you sure you want to map this transaction to Wise transfer ##{@suggested_wise_mapping.id}?" }, class: "!mb-0 mt-3" %>
       <%= link_to "View Wise transfer ##{@suggested_wise_mapping.id}", wise_transfer_process_admin_path(@suggested_wise_mapping), class: "ml-2", target: "_blank" %>
     <% end %>
   </div>
@@ -84,7 +84,8 @@
       <td>
         <div class="flex flex-row gap-2">
           <%= form_with model: false, local: true, url: set_event_path(@canonical_transaction), method: :post do |form| %>
-            <%= combobox_tag :event_id, event_search_admin_index_path, placeholder: "Select event", class: "!max-w-full !min-w-72", value: @canonical_transaction.event&.to_combobox_display %>
+            <%# `id` is set because the "Map to NoEvent" form below also has an `event_id` field. %>
+            <%= combobox_tag :event_id, event_search_admin_index_path, id: "set_event_id", placeholder: "Select event", class: "!max-w-full !min-w-72", selected: @canonical_transaction.event %>
             <%= form.submit "Set", data: { "turbo-confirm": @mapping_confirm_msg } %>
           <% end %>
         </div>

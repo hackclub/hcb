@@ -27,7 +27,7 @@ class StaticPagesController < ApplicationController
       Event.find_by_public_id(id)
     end.select do |event|
       event&.is_public? && event.is_indexable?
-    end.sample(6)
+    end.sample(3)
 
     @organizer_positions = @service.organizer_positions.not_hidden
     @invites = @service.invites
@@ -43,9 +43,6 @@ class StaticPagesController < ApplicationController
     @show_event_reorder_tip = current_user.organizer_positions.where.not(sort_index: nil).none?
 
     @hcb_expansion = Rails.cache.read("hcb_acronym_expansions")&.sample || "Hack Club Buckaroos"
-  end
-
-  def first
   end
 
   def admin_tools
@@ -120,7 +117,22 @@ class StaticPagesController < ApplicationController
           "Cancel an HCB Transfer": :manager,
           "View an HCB Transfer": :reader
         },
+        Payments: {
+          "Send a payment": :manager,
+          "Cancel a payment": :manager,
+          "View a payment": :reader,
+          "View the organization's recipients": :manager,
+          "Add a recipient": :manager,
+          "Edit or archive a recipient": :manager,
+          _preface: "For paying people & vendors"
+        },
         _preface: "As a general rule, only managers can create/modify financial transfers"
+      },
+      Contractors: {
+        "View the list of contractors": :reader,
+        "View a contractor's details, rate, and invoices": :reader,
+        "Invite a contractor": :manager,
+        "Approve or reject a contractor's invoice": :manager,
       },
       Cards: {
         "Order a card": :member,

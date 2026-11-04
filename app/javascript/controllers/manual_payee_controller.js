@@ -45,13 +45,18 @@ export default class extends Controller {
   }
 
   renderMode() {
+    if (!this.hasDefaultBannerTarget) return
     if (this.hasPayeeFormManualFieldTarget) {
       this.payeeFormManualFieldTarget.value = this.manual ? 'true' : 'false'
     }
     this.defaultBannerTarget.hidden = this.manual
     this.manualBannerTarget.hidden = !this.manual
-    this.enableButtonTarget.hidden = this.manual
-    this.undoButtonTarget.hidden = !this.manual
+    if (this.hasEnableButtonTarget) {
+      this.enableButtonTarget.hidden = this.manual
+    }
+    if (this.hasUndoButtonTarget) {
+      this.undoButtonTarget.hidden = !this.manual
+    }
     this.manualOnlyTargets.forEach(target => {
       target.hidden = !this.manual
     })

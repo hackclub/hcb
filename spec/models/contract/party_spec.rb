@@ -55,4 +55,110 @@ RSpec.describe Contract::Party, type: :model do
       end
     end
   end
+
+  describe ".for" do
+    let(:event) { create(:event) }
+    let(:signee) { create(:user) }
+
+    before do
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+    end
+
+    # Parties can only be added while a contract is pending, so build the
+    # contract, add the signee, and only then move it to sent.
+    def send_contract_for(user, on: event)
+      invite = create(:organizer_position_invite, event: on, user:)
+      contract = Contract::FiscalSponsorship.create!(contractable: invite, include_videos: false)
+      party = contract.parties.create!(user:, role: :signee)
+      contract.update_column(:aasm_state, "sent")
+
+      party
+    end
+
+    it "returns the user's own party" do
+      party = send_contract_for(signee)
+
+      expect(described_class.for(event:, user: signee)).to eq party
+    end
+
+    it "returns nothing for a user who is not a party" do
+      send_contract_for(signee)
+
+      expect(described_class.for(event:, user: create(:user))).to be_nil
+    end
+
+    it "does not return a party on another organization's contract" do
+      send_contract_for(signee)
+      other_event = create(:event)
+      send_contract_for(create(:user), on: other_event)
+
+      expect(described_class.for(event: other_event, user: signee)).to be_nil
+    end
+
+    it "returns each signee their own party when several contracts are open" do
+      first_party = send_contract_for(signee)
+      other_signee = create(:user)
+      second_party = send_contract_for(other_signee)
+
+      expect(described_class.for(event:, user: signee)).to eq first_party
+      expect(described_class.for(event:, user: other_signee)).to eq second_party
+    end
+
+    it "returns HCB's party on this organization's contract to an admin who is not a party" do
+      party = send_contract_for(signee)
+      send_contract_for(create(:user), on: create(:event))
+
+      expect(described_class.for(event:, user: create(:user, :make_admin)))
+        .to eq party.contract.party(:hcb)
+    end
+
+    it "returns an admin their own party rather than HCB's" do
+      party = send_contract_for(signee)
+      signee.update!(access_level: :admin)
+
+      expect(described_class.for(event:, user: signee)).to eq party
+    end
+
+    it "does not return HCB's party to an auditor" do
+      send_contract_for(signee)
+
+      expect(described_class.for(event:, user: create(:user, :make_auditor))).to be_nil
+    end
+
+    # Whatever this offers, Contract::PartyPolicy#show? has to allow, or the
+    # banner links somewhere the viewer bounces off. The reverse is deliberately
+    # untrue: the policy also allows anyone to open a party that has no user, so
+    # this must stay the narrower of the two.
+    it "only returns parties the policy would let that user open" do
+      send_contract_for(signee)
+
+      [signee, create(:user, :make_admin)].each do |user|
+        party = described_class.for(event:, user:)
+
+        expect(party).to be_present
+        expect(Contract::PartyPolicy.new(user, party).show?).to be true
+      end
+    end
+
+    # The banner that calls this renders for signed out visitors too, and
+    # Contract::PartyPolicy#show? lets anyone open a party that has no user, so
+    # this guard is the only thing keeping a cosigner's signing link private.
+    it "returns nothing to a signed out visitor, even when a party has no HCB account" do
+      invite = create(:organizer_position_invite, event:, user: signee)
+      contract = Contract::FiscalSponsorship.create!(contractable: invite, include_videos: false)
+      contract.parties.create!(user: signee, role: :signee)
+      contract.parties.create!(role: :cosigner, external_email: "parent@example.com")
+      contract.update_column(:aasm_state, "sent")
+
+      expect(described_class.for(event:, user: nil)).to be_nil
+    end
+
+    it "ignores contracts that have not been sent" do
+      invite = create(:organizer_position_invite, event:, user: signee)
+      contract = Contract::FiscalSponsorship.create!(contractable: invite, include_videos: false)
+      contract.parties.create!(user: signee, role: :signee)
+
+      expect(described_class.for(event:, user: signee)).to be_nil
+    end
+  end
 end

@@ -2,7 +2,7 @@
 
 FactoryBot.define do
   factory :fee_reimbursement do
-    sequence(:transaction_memo) { |n| "HCB-FEEREIMB#{n}" }
-    amount { 12_34 }
+    amount { 1_23 }
+    sequence(:transaction_memo) { |n| "HCB-FEE#{n}" }
   end
 end

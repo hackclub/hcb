@@ -3,8 +3,12 @@
 module OneTimeJobs
   class NukeLedger < ApplicationJob
     def perform
+      return unless Rails.env.development?
+
       delete_ledger_mappings
+      delete_personal_transactions
       clear_canonical_transaction_references
+      clear_admin_ledger_audit_task_references
       delete_ledger_items
       delete_ledgers
       clear_papertrail_versions
@@ -17,6 +21,13 @@ module OneTimeJobs
       puts "Deleted all Ledger::Mapping records"
     end
 
+    def delete_personal_transactions
+      count = PersonalTransaction.count
+      puts "Deleting #{count} PersonalTransaction records"
+      PersonalTransaction.delete_all
+      puts "Deleted all PersonalTransaction records"
+    end
+
     def clear_canonical_transaction_references
       pending_count = CanonicalPendingTransaction.where.not(ledger_item_id: nil).count
       transaction_count = CanonicalTransaction.where.not(ledger_item_id: nil).count
@@ -24,6 +35,12 @@ module OneTimeJobs
       CanonicalPendingTransaction.update_all(ledger_item_id: nil)
       puts "Clearing ledger_item_id on #{transaction_count} CanonicalTransactions"
       CanonicalTransaction.update_all(ledger_item_id: nil)
+    end
+
+    def clear_admin_ledger_audit_task_references
+      count = Admin::LedgerAudit::Task.where.not(ledger_item_id: nil).count
+      puts "Clearing ledger_item_id on #{count} Admin::LedgerAudit::Tasks"
+      Admin::LedgerAudit::Task.update_all(ledger_item_id: nil)
     end
 
     def delete_ledger_items

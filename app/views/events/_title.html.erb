@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <% parent_events ||= @event.ancestors.reject { |e| e.id == @event.id }.reverse %>
 <% if parent_events.present? %>
   <div data-controller="menu" class="-mb-2">

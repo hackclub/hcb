@@ -58,7 +58,6 @@ class Receipt < ApplicationRecord
   alias_method :transaction, :receiptable
 
   has_many :suggested_pairings, dependent: :destroy
-  has_many :suggested_transactions, source: :hcb_code, through: :suggested_pairings
 
   # add a size to this array for it to be preprocessed
   # Receipt#preview first checks to see if a preprocessed
@@ -124,7 +123,8 @@ class Receipt < ApplicationRecord
     duplicate: 21,
     discord_bot_modal: 22,
     payment_page: 23,
-    contractor_invoice: 24
+    contractor_invoice: 24,
+    payment_page_drag_and_drop: 25
   }
 
   enum :textual_content_source, {

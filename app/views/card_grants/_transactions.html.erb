@@ -2,7 +2,7 @@
 
 <h2 class="heading h2 leading-[1.5] mt2 ml0 pt1 pb1 pr2">Transactions on this card</h2>
 <% if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user) %>
-  <%= render "ledgers/ledger", ledger: @ledger, items: @items %>
+  <%= render "ledgers/ledger", ledger: @ledger, items: @items, show_author: false %>
 <% else %>
   <% if hcb_codes&.any? %>
     <%= render "application/merchant_not_allowed_callout", hcb_codes: %>

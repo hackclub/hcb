@@ -120,7 +120,7 @@ class ColumnService
   def self.balance_over_time(from_date: 1.month.ago, to_date: Date.today, bank_account: Accounts::FS_MAIN)
     if report = bank_account_summary_report(from_date:, to_date:)
       url = get("/documents/#{report["json_document_id"]}")["url"]
-      account = JSON.parse(Faraday.get(url).body).select { |t| t["bank_account_id"] == bank_account }.first
+      account = JSON.parse(Faraday.get(url).body).find { |t| t["bank_account_id"] == bank_account }
       return { starting: account["available_balance_open"], closing: account["available_balance_close"] }
     else
       return { starting: nil, closing: nil }

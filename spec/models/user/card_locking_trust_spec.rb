@@ -9,9 +9,13 @@ RSpec.describe User, type: :model do
 
   before { travel_to(now) }
 
+  # Each charge is materialized as of when it settled, which is what production
+  # does: the settle hook fires a MaterializeChargeJob at settle time. Passing the
+  # current `now` would instead model a charge first materialized days late, which
+  # CardLocking::Deadline deliberately floors so it cannot land already overdue.
   def materialize_all
     HcbCode.where(hcb_code: user.stripe_cards.flat_map { |c| c.local_hcb_codes.pluck(:hcb_code) })
-           .find_each { |hc| hc.materialize_card_locking!(now:) }
+           .find_each { |hc| hc.materialize_card_locking!(now: hc.card_locking_settled_at || now) }
   end
 
   describe "#receipt_trusted?" do

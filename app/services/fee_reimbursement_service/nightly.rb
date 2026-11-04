@@ -22,9 +22,13 @@ module FeeReimbursementService
         if amount_cents.zero?
           fee_reimbursement.update!(processed_at: Time.now)
         else
+          # Normally grouped on create; this covers one that wasn't (e.g. created
+          # before grouping on create was in place).
+          fee_reimbursement.assign_fee_reimbursement_group!
+
           topup = StripeTopup.create(
             amount_cents:,
-            statement_descriptor: "HCB-#{local_hcb_code.short_code}",
+            statement_descriptor: "HCB-#{fee_reimbursement.fee_reimbursement_group.local_hcb_code.short_code}",
             description: "Fee reimbursement ##{fee_reimbursement.id}",
             metadata: {
               fee_reimbursement_id: fee_reimbursement.id,
@@ -33,33 +37,7 @@ module FeeReimbursementService
 
           fee_reimbursement.update!(stripe_topup_id: topup.id, processed_at: Time.now)
         end
-
-        create_canonical_pending_transaction(fee_reimbursement)
       end
-
-      # Backstop: catch any already-processed reimbursements that still lack a
-      # pending transaction (idempotent — no-ops for ones that already have one).
-      FeeReimbursement.pending.find_each(batch_size: 100) do |fee_reimbursement|
-        create_canonical_pending_transaction(fee_reimbursement)
-      end
-    end
-
-    def create_canonical_pending_transaction(fee_reimbursement)
-      ::FeeReimbursementService::CreateCanonicalPendingTransaction.new(fee_reimbursement_id: fee_reimbursement.id).run
-    rescue => e
-      Rails.error.report(e)
-    end
-
-    def hcb_code
-      [
-        ::TransactionGroupingEngine::Calculate::HcbCode::HCB_CODE,
-        ::TransactionGroupingEngine::Calculate::HcbCode::OUTGOING_FEE_REIMBURSEMENT_CODE,
-        Time.now.strftime("%G_%V")
-      ].join(::TransactionGroupingEngine::Calculate::HcbCode::SEPARATOR)
-    end
-
-    def local_hcb_code
-      HcbCode.find_or_create_by(hcb_code:)
     end
 
   end

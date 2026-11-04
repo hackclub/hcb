@@ -22,7 +22,6 @@ system_user.make_admin! unless system_user.admin?
 demo_event = Event.create_with(
   name: "DevHacks (Demo Event)",
   slug: "devhacks",
-  can_front_balance: true,
   point_of_contact: user,
   demo_mode: true,
   created_at: 7.days.ago
@@ -38,7 +37,6 @@ OrganizerPositionInvite.create_or_find_by!(
 non_transparent_event = Event.create_with(
   name: "ExpensiCon 2023 (Non-Transparent Event)",
   slug: "expensicon23",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 10.days.ago,
   is_public: false
@@ -54,7 +52,6 @@ OrganizerPositionInvite.create_or_find_by!(
 transparent_event = Event.create_with(
   name: "Hack The Seas (Transparent Event)",
   slug: "hack_the_seas",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -70,7 +67,6 @@ OrganizerPositionInvite.create_or_find_by!(
 incoming_fees_event = Event.create_with(
   name: "Incoming Fees",
   slug: "incoming-fees",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: false
@@ -88,7 +84,6 @@ OrganizerPositionInvite.create_or_find_by!(
 hack_club_bank_event = Event.create_with(
   name: "HCB Operations",
   slug: "bank",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -106,7 +101,6 @@ OrganizerPositionInvite.create_or_find_by!(
 noevent_event = Event.create_with(
   name: "Hack Club NoEvent",
   slug: "noevent",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: false
@@ -124,7 +118,6 @@ OrganizerPositionInvite.create_or_find_by!(
 hackathon_grant_fund_event = Event.create_with(
   name: "Hackathon Grant Fund",
   slug: "hackathon-grant-fund",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -142,7 +135,6 @@ OrganizerPositionInvite.create_or_find_by!(
 winter_hardware_wonderland_grant_fund_event = Event.create_with(
   name: "Winter Hardware Wonderland",
   slug: "winter-hardware-wonderland",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -160,7 +152,6 @@ OrganizerPositionInvite.create_or_find_by!(
 gene_haas_grant_fund_event = Event.create_with(
   name: "Gene Haas",
   slug: "gene-haas",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -176,7 +167,6 @@ OrganizerPositionInvite.create_or_find_by!(
 argosy_grant_fund_event = Event.create_with(
   name: "Argosy Foundation Grant Fund",
   slug: "argosy-foundation-grant",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -192,7 +182,6 @@ OrganizerPositionInvite.create_or_find_by!(
 argosy_grant_fund_2025_event = Event.create_with(
   name: "Argosy Foundation Grant Fund",
   slug: "argosy-hardship-rookie-grant-2025-26-season",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -210,7 +199,6 @@ OrganizerPositionInvite.create_or_find_by!(
 first_transparency_grant_fund_event = Event.create_with(
   name: "Transparency Grant Fund",
   slug: "transparency-grant-fund",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -228,7 +216,6 @@ OrganizerPositionInvite.create_or_find_by!(
 hack_foundation_interest_event = Event.create_with(
   name: "Hack Foundation Interest Earnings",
   slug: "hack-foundation-interest-earnings",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -246,7 +233,6 @@ OrganizerPositionInvite.create_or_find_by!(
 reimbursement_clearing_event = Event.create_with(
   name: "HCB Reimbursement Clearinghouse",
   slug: "reimbursement-clearinghouse",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -264,7 +250,6 @@ OrganizerPositionInvite.create_or_find_by!(
 svb_sweeps_event = Event.create_with(
   name: "HCB Sweeps",
   slug: "hcb-sweeps",
-  can_front_balance: true,
   point_of_contact: user,
   created_at: 14.days.ago,
   is_public: true
@@ -277,6 +262,16 @@ OrganizerPositionInvite.create_or_find_by!(
   user:,
   sender: user,
 )
+
+# Raw CSV transactions carry nothing (a linked object, a Column account number,
+# a Stripe card) that Ledger::Mapper can use to work out their event, so their
+# ledger items would never land on a ledger and every balance would read zero.
+# Map them the way an admin maps a transaction by hand (see
+# AdminController#set_event).
+map_to_ledger = lambda do |ledger_item, event|
+  ledger = Ledger.find_or_create_by!(primary: true, event:)
+  Ledger::Mapping.map_primary!(ledger:, ledger_item:, mapped_by: user)
+end
 
 # create incoming transactions for each org
 
@@ -295,6 +290,7 @@ CanonicalEventMapping.create!({
                                 event_id: non_transparent_event.id,
                                 user_id: user.id
                               })
+map_to_ledger.call(CanonicalTransaction.last.ledger_item, non_transparent_event)
 
 te_non_pending_transaction = ::RawCsvTransactionService::Create.new(
   unique_bank_identifier: "FSMAIN",
@@ -311,6 +307,7 @@ CanonicalEventMapping.create!({
                                 event_id: transparent_event.id,
                                 user_id: user.id
                               })
+map_to_ledger.call(CanonicalTransaction.last.ledger_item, transparent_event)
 
 # create non-pending transactions for each org
 
@@ -329,6 +326,7 @@ CanonicalEventMapping.create!({
                                 event_id: non_transparent_event.id,
                                 user_id: user.id
                               })
+map_to_ledger.call(CanonicalTransaction.last.ledger_item, non_transparent_event)
 
 te_non_pending_transaction = ::RawCsvTransactionService::Create.new(
   unique_bank_identifier: "FSMAIN",
@@ -345,29 +343,42 @@ CanonicalEventMapping.create!({
                                 event_id: transparent_event.id,
                                 user_id: user.id
                               })
+map_to_ledger.call(CanonicalTransaction.last.ledger_item, transparent_event)
 
 # create pending transactions for each org
+#
+# These are checks still awaiting admin approval, which keeps them pending.
+# A pending transaction needs a real source like this: a bare
+# CanonicalPendingTransaction gets an HCB-000-<id> code, the same code as the
+# CSV transaction above with that id, so the two would be grouped together and
+# the pending amount would hide inside an unrelated settled transaction.
 
-nte_non_pending_transaction = CanonicalPendingTransaction.create!(
-  date: 4.days.ago,
+non_transparent_event.increase_checks.create!(
+  user:,
+  amount: 19861400,
   memo: "🍷 Wine, lots of wine.",
-  amount: -198614
+  payment_for: "🍷 Wine, lots of wine.",
+  recipient_name: "Bacchus Fine Wines",
+  recipient_email: "orders@example.com",
+  address_line1: "1 Vineyard Way",
+  address_city: "Napa",
+  address_state: "CA",
+  address_zip: "94558",
+  created_at: 4.days.ago
 )
 
-CanonicalPendingEventMapping.create!({
-                                       canonical_pending_transaction_id: nte_non_pending_transaction.id,
-                                       event_id: non_transparent_event.id
-                                     })
-
-te_non_pending_transaction = CanonicalPendingTransaction.create!(
-  date: 1.days.ago,
+transparent_event.increase_checks.create!(
+  user:,
+  amount: 140381,
   memo: "📋 Overpriced Insurance Policy",
-  amount_cents: 140381,
+  payment_for: "📋 Overpriced Insurance Policy",
+  recipient_name: "Overpriced Insurance Co.",
+  recipient_email: "billing@example.com",
+  address_line1: "100 Premium Street",
+  address_city: "Hartford",
+  address_state: "CT",
+  address_zip: "06103",
+  created_at: 1.day.ago
 )
-
-CanonicalPendingEventMapping.create!({
-                                       canonical_pending_transaction_id: te_non_pending_transaction.id,
-                                       event_id: transparent_event.id
-                                     })
 
 puts "Done!"

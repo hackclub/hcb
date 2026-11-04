@@ -12,10 +12,6 @@ but was denied for the following reason:
   <%= @approval_attempt.denial_message %>
 </blockquote>
 
-<% if @approval_attempt.denied_for_insufficient_limit? %>
-  Consider increasing their limit.
-<% end %>
-
 <pre>
   <%== ap @approval_attempt %>
 </pre>

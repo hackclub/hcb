@@ -60,7 +60,7 @@
             "/": "/money-printer",
             "comment": "Money Printer",
             "exclude": true
-          },
+          }
         ]
       }
     ]

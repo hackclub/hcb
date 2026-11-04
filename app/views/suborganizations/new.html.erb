@@ -1,4 +1,4 @@
-<% title "Subsidiaries of #{@event.name}" %>
+<% title "Sub-organizations of #{@event.name}" %>
 <% page_sm %>
 <%= render "events/nav", selected: :sub_organizations %>
 
@@ -10,4 +10,8 @@
   <span class="flex-grow">Create a sub-organization</span>
 </h1>
 
-<%= render "suborganizations/form", event: @event %>
+<% if @argosy_grant_amount.present? %>
+  <p>The contract for this Argosy suborganization will include a grant amount of <%= render_money @argosy_grant_amount %></p>
+<% end %>
+
+<%= render "suborganizations/form", event: @event, argosy_grant_amount: @argosy_grant_amount %>

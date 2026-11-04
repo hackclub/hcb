@@ -19,10 +19,81 @@ RSpec.describe Rack::Attack, type: :request do
     end
   end
 
-  def discriminator(throttle, path, session_token: nil)
-    env = Rack::MockRequest.env_for(path, "REMOTE_ADDR" => "203.0.113.7")
+  def request_for(path, method: "GET", session_token: nil, content_length: nil)
+    env = Rack::MockRequest.env_for(path, method:, "REMOTE_ADDR" => "203.0.113.7")
     env["HTTP_COOKIE"] = "session_token=#{session_token}" if session_token
-    Rack::Attack.throttles.fetch(throttle).block.call(Rack::Attack::Request.new(env))
+    env["CONTENT_LENGTH"] = content_length.to_s if content_length
+    Rack::Attack::Request.new(env)
+  end
+
+  def discriminator(throttle, path, **)
+    Rack::Attack.throttles.fetch(throttle).block.call(request_for(path, **))
+  end
+
+  def blocklisted?(blocklist, path, **)
+    !!Rack::Attack.blocklists.fetch(blocklist).block.call(request_for(path, **))
+  end
+
+  describe "Request#ip" do
+    it "ignores a client-sent Forwarded header" do
+      request = request_for("/logins")
+      request.env["REMOTE_ADDR"] = "127.0.0.1"
+      request.env["HTTP_FORWARDED"] = "for=198.51.100.1"
+
+      expect(request.ip).to eq("127.0.0.1")
+      expect(::Rack::Request.new(request.env).ip).to eq("127.0.0.1")
+      expect(ActionDispatch::Request.new(request.env).remote_ip).to eq("127.0.0.1")
+    end
+
+    it "uses the address ActionDispatch::RemoteIp worked out" do
+      request = request_for("/logins")
+      request.env["action_dispatch.remote_ip"] = "198.51.100.2"
+
+      expect(request.ip).to eq("198.51.100.2")
+    end
+
+    it "still reads X-Forwarded-For from our proxies" do
+      env = Rack::MockRequest.env_for("/logins", "REMOTE_ADDR" => "10.0.0.5", "HTTP_X_FORWARDED_FOR" => "198.51.100.4")
+
+      expect(ActionDispatch::Request.new(env).remote_ip).to eq("198.51.100.4")
+    end
+
+    it "can't be spoofed into a safelist through a real request" do
+      office_ip = "198.51.100.3"
+      Rack::Attack.safelist("spec office") { |req| req.ip == office_ip }
+
+      post "/logins/abc123/complete", headers: { "Forwarded" => "for=#{office_ip}" }
+
+      expect(request.env["rack.attack.matched"]).not_to eq("spec office")
+    ensure
+      Rack::Attack.safelists.delete("spec office")
+    end
+  end
+
+  describe "logins/complete" do
+    it "throttles completions by IP and by Login" do
+      expect(discriminator("logins/complete/ip", "/logins/abc123/complete", method: "POST")).to eq("203.0.113.7")
+      expect(discriminator("logins/complete/login", "/logins/abc123/complete", method: "POST")).to eq("abc123")
+    end
+
+    it "ignores other login paths" do
+      ["/logins", "/logins/abc123/email", "/logins/abc123/complete/extra"].each do |path|
+        expect(discriminator("logins/complete/ip", path, method: "POST")).to be_nil, "expected #{path} not to be throttled"
+        expect(discriminator("logins/complete/login", path, method: "POST")).to be_nil, "expected #{path} not to be throttled"
+      end
+    end
+
+    it "blocks an IP once it has failed too many completions" do
+      key = Rack::Attack.login_complete_fail2ban_key("203.0.113.7")
+      options = Rack::Attack::LOGIN_COMPLETE_FAIL2BAN
+
+      (options[:maxretry] - 1).times { Rack::Attack::Fail2Ban.filter(key, options) { true } }
+      expect(blocklisted?("fail2ban failed login completions", "/logins/abc123/complete", method: "POST")).to be false
+
+      Rack::Attack::Fail2Ban.filter(key, options) { true }
+      expect(blocklisted?("fail2ban failed login completions", "/logins/abc123/complete", method: "POST")).to be true
+      expect(blocklisted?("fail2ban failed login completions", "/logins", method: "POST")).to be false
+    end
   end
 
   describe "transparency/ledger/ip" do
@@ -92,6 +163,61 @@ RSpec.describe Rack::Attack, type: :request do
         get "/an-organization/transactions_list", headers: forged
         expect(response).to have_http_status(:too_many_requests)
       end
+    end
+  end
+
+  describe "csp-reports/ip" do
+    let(:path) { Rails.configuration.constants[:csp_violation_report_path] }
+
+    it "gives reports their own budget instead of the shared one" do
+      expect(discriminator("req/ip", path, method: "POST")).to be_nil
+      expect(discriminator("csp-reports/ip", path, method: "POST")).to eq("203.0.113.7")
+    end
+
+    it "covers the path variants that also route to the controller" do
+      ["#{path}/", "#{path}.json"].each do |variant|
+        expect(discriminator("csp-reports/ip", variant, method: "POST")).to eq("203.0.113.7"), "expected #{variant} to be throttled"
+      end
+    end
+
+    # Rails routes a doubled slash to the same action. MockRequest.env_for reads
+    # "//x" as protocol-relative, so set the path Rack would actually see.
+    it "covers a doubled leading slash" do
+      request = request_for(path, method: "POST")
+      request.env["PATH_INFO"] = "/#{path}"
+
+      expect(Rack::Attack.throttles.fetch("csp-reports/ip").block.call(request)).to eq("203.0.113.7")
+    end
+
+    # GET on this path falls through to events#show, so it has to stay on the
+    # shared budget or it would be the one unthrottled path in the app.
+    it "leaves non-POST requests to the path on the shared budget" do
+      expect(discriminator("req/ip", path)).to eq("203.0.113.7")
+      expect(discriminator("csp-reports/ip", path)).to be_nil
+    end
+  end
+
+  describe "oversized csp reports" do
+    let(:path) { Rails.configuration.constants[:csp_violation_report_path] }
+    let(:cap) { Rails.configuration.constants[:csp_violation_report_max_bytes] }
+
+    it "rejects a body over the cap before Rails buffers it" do
+      expect(blocklisted?("oversized csp reports", path, method: "POST", content_length: cap + 1)).to be true
+    end
+
+    it "lets a normal report through" do
+      expect(blocklisted?("oversized csp reports", path, method: "POST", content_length: cap)).to be false
+    end
+
+    it "ignores other paths" do
+      expect(blocklisted?("oversized csp reports", "/branding", method: "POST", content_length: cap + 1)).to be false
+    end
+
+    it "is not bypassed by a doubled slash" do
+      request = request_for(path, method: "POST", content_length: cap + 1)
+      request.env["PATH_INFO"] = "/#{path}"
+
+      expect(Rack::Attack.blocklists.fetch("oversized csp reports").block.call(request)).to be_truthy
     end
   end
 end

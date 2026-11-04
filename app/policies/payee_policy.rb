@@ -10,11 +10,11 @@ class PayeePolicy < ApplicationPolicy
   end
 
   def update?
-    member?
+    manager?
   end
 
   def archive?
-    member?
+    manager?
   end
 
   def choose_legal_entity?
@@ -27,8 +27,8 @@ class PayeePolicy < ApplicationPolicy
 
   private
 
-  def member?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :member)
+  def manager?
+    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :manager)
   end
 
 end

@@ -90,11 +90,6 @@ class Raffle < ApplicationRecord
     tickets
   end
 
-  def referrals_needed_for_next_ticket
-    tix = extra_tickets
-    tix > REFERRAL_TICKET_TIERS.length - 1 ? REFERRAL_TICKET_FINAL_TIER : REFERRAL_TICKET_TIERS[tix]
-  end
-
   def tier_progress
     referrals = referred_raffle_entries.count
     tickets = 0
