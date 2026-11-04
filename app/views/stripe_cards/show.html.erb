@@ -4,6 +4,7 @@
 <%= turbo_frame_tag "stripe_card_#{@card.public_id}" do %>
   <%= render partial: "stripe_cards/canceled_warning", locals: { stripe_card: @card } %>
   <%= render partial: "stripe_cards/replacement_pending", locals: { stripe_card: @card } %>
+  <%= render "stripe_cards/expiration_callout", stripe_cards: [@card] %>
 
   <turbo-frame id="details">
     <article class="check--form <%= @frame ? "flex-col" : "sm:flex" %> items-start justify-center mt-2 mb3 gap-4">

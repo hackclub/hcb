@@ -4,15 +4,21 @@ class StripeCard
   # This is basically describing the flows. The reason I am doing it like this is so I can extend it and don't have to remake the turbo for damaged/lost/stolen/expired cards.
   class ReplacementFlow
     FLOWS = {
-      "damaged"        => {
+      "damaged" => {
         title: "Replace damaged card",
         reasons: %w[damaged],
         steps: %w[reason new_card confirm shipping],
       },
-      "losten" => {
+      "losten"  => {
         title: "Replace lost or stolen card",
         reasons: %w[lost stolen],
         steps: %w[reason new_card confirm shipping],
+      },
+      "expired" => {
+        title: "Replace expiring card",
+        reasons: %w[expired],
+        steps: %w[new_card confirm shipping],
+        policy: :replace_expired?,
       },
     }.freeze
 
@@ -35,7 +41,14 @@ class StripeCard
     end
 
     def title
-      dispute ? "Dispute this transaction" : FLOWS.fetch(key)[:title]
+      return "Dispute this transaction" if dispute
+      return "Replace expired card" if expired? && stripe_card.expired?
+
+      FLOWS.fetch(key)[:title]
+    end
+
+    def policy_query
+      FLOWS.fetch(key)[:policy] || :replace?
     end
 
     def frame_id
@@ -67,7 +80,9 @@ class StripeCard
     def find_step(step)
       step = step.to_s
       return steps.first unless steps.include?(step)
-      return "reason" if reason.nil? && steps.index(step) > steps.index("reason")
+
+      reason_index = steps.index("reason")
+      return "reason" if reason.nil? && reason_index && steps.index(step) > reason_index
 
       step
     end
@@ -90,6 +105,9 @@ class StripeCard
     end
 
     def requires_confirmation?(step)
+      # Nothing to confirm about canceling a card that's already canceled
+      return false if step == "confirm" && stripe_card.canceled?
+
       CONFIRMATION_STEPS.include?(step)
     end
 
@@ -107,6 +125,10 @@ class StripeCard
 
     def stolen?
       reason == "stolen"
+    end
+
+    def expired?
+      reason == "expired"
     end
 
     def keeps_card_number?

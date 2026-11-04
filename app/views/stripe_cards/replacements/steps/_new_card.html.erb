@@ -1,7 +1,14 @@
 <%# locals: (flow:, stripe_card:) %>
 
 <h3 class="mt-0 mb-2">About your new card</h3>
-<p class="mt-0">Here's what to expect from your replacement card:</p>
+<% if flow.expired? %>
+  <p class="mt-0">
+    Your card ending in <%= stripe_card.last4 %> <%= stripe_card.expired? ? "expired" : "expires" %> on <%= stripe_card.expires_on.to_fs(:long) %>.
+    Here's what to expect from your replacement card:
+  </p>
+<% else %>
+  <p class="mt-0">Here's what to expect from your replacement card:</p>
+<% end %>
 
 <ul class="list-none p-0 m-0 flex flex-col gap-4">
   <li class="flex gap-3 items-start">
@@ -64,7 +71,12 @@
       <div>
         <strong>Destroy your old card</strong>
         <p class="m-0 muted">
-          <% if flow.damaged? %>
+          <% if flow.expired? && stripe_card.canceled? %>
+            Your card ending in <%= stripe_card.last4 %> has been canceled, so destroy it properly.
+          <% elsif flow.expired? %>
+            Your current card ending in <%= stripe_card.last4 %> will keep working until it expires or you activate the new one.
+            After that, destroy the old card properly.
+          <% elsif flow.damaged? %>
             Your current card ending in <%= stripe_card.last4 %> will stay working until you activate the new one. After that,
             destroy the old card properly.
           <% else %>

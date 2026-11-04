@@ -8,7 +8,7 @@ module StripeCards
     before_action :set_reason, only: :create
 
     def new
-      authorize @stripe_card, :replace?
+      authorize @stripe_card, @flow.policy_query
 
       @step = @flow.find_step(params[:step])
 
@@ -16,7 +16,7 @@ module StripeCards
     end
 
     def create
-      authorize @stripe_card, :replace?
+      authorize @stripe_card, @reason == "expired" ? :replace_expired? : :replace?
 
       replacement = ::StripeCardService::Replace.new(
         stripe_card: @stripe_card,
@@ -50,6 +50,10 @@ module StripeCards
         end
       elsif replacement.virtual?
         "Your replacement card is ready to use, and your old card has been canceled."
+      elsif @stripe_card.canceled?
+        "Your replacement card is on its way. Activate it once it arrives."
+      elsif @reason == "expired"
+        "Your replacement card is on its way! Your current card will keep working until it expires or you activate the new one."
       else
         "Your replacement card is on its way! Your current card will keep working until you activate the new one."
       end

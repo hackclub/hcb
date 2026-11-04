@@ -3,7 +3,7 @@
 module StripeCardService
   # https://docs.stripe.com/issuing/cards/replacements
   class Replace
-    REASONS = %w[damaged lost stolen].freeze
+    REASONS = %w[expired damaged lost stolen].freeze
 
     CANCEL_FIRST_REASONS = %w[lost stolen].freeze
 
@@ -22,7 +22,7 @@ module StripeCardService
 
     def run
       raise ArgumentError, "#{@reason.inspect} is not a supported replacement reason" unless REASONS.include?(@reason)
-      raise ArgumentError, "a canceled card can't be replaced" if @stripe_card.canceled?
+      raise ArgumentError, "a canceled card can't be replaced" if @stripe_card.canceled? && @reason != "expired"
 
       validate_shipping_address! if @stripe_card.physical?
 

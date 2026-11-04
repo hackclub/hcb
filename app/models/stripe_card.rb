@@ -393,8 +393,34 @@ class StripeCard < ApplicationRecord
     end
   end
 
+  def expires_on
+    return if stripe_exp_year.blank? || stripe_exp_month.blank?
+
+    Date.new(stripe_exp_year, stripe_exp_month, 1).end_of_month
+  end
+
   def expired?
-    Time.now.utc > Time.new(stripe_exp_year, stripe_exp_month).end_of_month
+    expires_on.present? && Date.current > expires_on
+  end
+
+  def canceled_for_expiration?
+    canceled? && expires_on.present? && canceled_at.present? && canceled_at.to_date > expires_on
+  end
+
+  def expiration_replacement_window
+    return if expires_on.nil?
+
+    (expires_on - 3.months)..(expires_on + 6.months)
+  end
+
+  def replaceable_for_expiration?
+    return false unless expiration_replacement_window&.cover?(Date.current)
+    return false unless initially_activated?
+    return false if card_grant.present?
+    return false if canceled? && !canceled_for_expiration?
+    return false if replacement.present? && !replacement.canceled?
+
+    true
   end
 
   def replacement_shipping_address_source

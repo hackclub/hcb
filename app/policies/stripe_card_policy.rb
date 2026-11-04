@@ -34,6 +34,13 @@ class StripeCardPolicy < ApplicationPolicy
     user&.admin? || member_and_cardholder?
   end
 
+  def replace_expired?
+    return false unless record.replaceable_for_expiration?
+    return false if record.event&.financially_frozen?
+
+    user&.admin? || member_and_cardholder?
+  end
+
   def activate?
     (user&.admin? || member_and_cardholder?) && !record.canceled? && !record.event&.financially_frozen?
   end

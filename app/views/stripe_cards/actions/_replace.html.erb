@@ -1,10 +1,8 @@
 <%# locals: (stripe_card:, flow:, label:, icon:) %>
 
-<% if policy(stripe_card).replace? %>
-  <% flow = StripeCard::ReplacementFlow.new(stripe_card:, flow:) %>
-  <% src = new_stripe_card_replacement_path(stripe_card, **flow.params) %>
-
-  <%= link_to src,
+<% flow = StripeCard::ReplacementFlow.new(stripe_card:, flow:) %>
+<% if policy(stripe_card).public_send(flow.policy_query) %>
+  <%= link_to new_stripe_card_replacement_path(stripe_card, **flow.params),
               class: "btn btn--list-item",
               data: { behavior: "modal_trigger", modal: flow.dom_id(:modal) } do %>
     <%= inline_icon icon %>
@@ -13,10 +11,5 @@
     </div>
   <% end %>
 
-  <section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="<%= flow.dom_id(:modal) %>">
-    <%= modal_header flow.title %>
-    <%= turbo_frame_tag flow.frame_id, src:, loading: :lazy do %>
-      <%= render "application/loading_container", klass: "py-8" %>
-    <% end %>
-  </section>
+  <%= render "stripe_cards/actions/replacement_modal", flow: %>
 <% end %>
