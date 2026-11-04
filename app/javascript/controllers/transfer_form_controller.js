@@ -8,8 +8,6 @@ export default class extends Controller {
     'answer',
     // Wizard slide question targets
     'question',
-    'yes',
-    'no',
     // Wizard slide answer targets
     'answerText',
     'answerCTA',

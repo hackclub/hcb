@@ -41,11 +41,11 @@
 
         <% if admin_signed_in? %>
           <p>
-            <%= link_to "Impersonate", impersonate_user_path(@user.id), data: { turbo_confirm: "Are you sure?", turbo_method: :post } unless current_session&.impersonated? %>
+            <%= link_to "Impersonate", impersonate_user_path(@user.id), data: { turbo_confirm: "Are you sure?", turbo_method: :post, turbo_frame: "_top" } unless current_session&.impersonated? %>
           </p>
 
           <div class="field field--checkbox">
-            <%= form.label :locked, "Lock user from signing into HCB" %>
+            <%= form.label :locked, "Lock user from signing into HCB (also freezes all of their active cards)" %>
             <%= form.check_box :locked, checked: @user.locked?, disabled: !admin_signed_in? %>
           </div>
 

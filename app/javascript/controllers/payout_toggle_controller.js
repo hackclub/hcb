@@ -7,10 +7,6 @@ export default class extends Controller {
     this.update()
   }
 
-  toggle() {
-    this.update()
-  }
-
   update() {
     const manual = this.manualSelected
 

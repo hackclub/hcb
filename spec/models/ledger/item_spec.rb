@@ -520,6 +520,85 @@ RSpec.describe Ledger::Item, type: :model do
     end
   end
 
+  describe "CardCharge reversed/released mailer" do
+    # Pins linked_object past the refresh! callbacks (which would otherwise
+    # recompute status from this item's nonexistent canonical transactions),
+    # mirroring the account-verification specs above.
+    def card_charge_item
+      item = create(:ledger_item)
+      item.update_columns(linked_object_type: "CardCharge", linked_object_id: create(:raw_stripe_transaction).card_charge.id)
+      item.reload
+    end
+
+    it "emails the cardholder when a card charge is reversed" do
+      item = card_charge_item
+
+      expect {
+        item.update!(status: "reversed")
+      }.to have_enqueued_mail(CardChargeMailer, :reversed)
+    end
+
+    it "emails the cardholder when a card charge authorization is released" do
+      item = card_charge_item
+
+      expect {
+        item.update!(status: "released")
+      }.to have_enqueued_mail(CardChargeMailer, :reversed)
+    end
+
+    it "does not email for other linked object types that reverse" do
+      item = create(:ledger_item)
+      item.update_columns(linked_object_type: "AchTransfer")
+      item.reload
+
+      expect {
+        item.update!(status: "reversed")
+      }.not_to have_enqueued_mail(CardChargeMailer, :reversed)
+    end
+
+    it "does not re-email when the item is saved again without a status change" do
+      item = card_charge_item
+      item.update!(status: "reversed")
+
+      expect {
+        item.update!(custom_memo: "Refunded")
+      }.not_to have_enqueued_mail(CardChargeMailer, :reversed)
+    end
+
+    # An approved Stripe authorization as the webhook imports it: the raw
+    # pending transaction, its canonical pending transaction mapped to the
+    # card's event, and the ledger item that links them to a CardCharge.
+    def approved_stripe_authorization
+      stripe_card = create(:stripe_card, :with_stripe_id)
+      raw_pending_stripe_transaction = create(
+        :raw_pending_stripe_transaction, amount_cents: -45_00, date_posted: Date.current,
+        stripe_transaction: {
+          "card"                 => { "id" => stripe_card.stripe_id },
+          "approved"             => true,
+          "status"               => "closed",
+          "authorization_method" => "online",
+          "merchant_data"        => { "name" => "goBILDA", "category" => "bakeries" }
+        }
+      )
+      cpt = PendingTransactionEngine::CanonicalPendingTransactionService::ImportSingle::Stripe.new(raw_pending_stripe_transaction:).run
+      PendingEventMappingEngine::Map::Single::Stripe.new(canonical_pending_transaction: cpt).run
+      cpt
+    end
+
+    it "emails the cardholder once when an authorization is released, although the item is refreshed from more than one copy" do
+      # Declining the authorization refreshes the item twice: the Ledger::Mapping
+      # commit hook refreshes its own copy of the item before the copy map! was
+      # called on gets its turn. Only the first may see the status change.
+      cpt = approved_stripe_authorization
+
+      expect {
+        cpt.decline!
+      }.to have_enqueued_mail(CardChargeMailer, :reversed).once
+
+      expect(cpt.ledger_item.reload).to be_released
+    end
+  end
+
   describe "#author" do
     it "is nobody for an in-person donation, which the donor paid rather than the organizer who collected it" do
       stub_donation_payment_intent_creation

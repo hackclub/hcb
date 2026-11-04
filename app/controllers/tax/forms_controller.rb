@@ -2,7 +2,7 @@
 
 module Tax
   class FormsController < ApplicationController
-    before_action :set_form, only: [:show, :completed, :discard]
+    before_action :set_form, only: [:show, :electronic_consent, :update_electronic_consent, :completed, :discard]
 
     def show
       authorize @form
@@ -46,16 +46,28 @@ module Tax
       redirect_to tax_form_path(tax_form)
     end
 
+    def electronic_consent
+      authorize @form
+    end
+
+    def update_electronic_consent
+      authorize @form
+
+      @legal_entity.record_electronic_consent!(params[:electronic_consent] == "true")
+
+      redirect_to_next_step
+    end
+
     def completed
       authorize @form
 
       @form.sync_with_taxbandits
 
       if @form.completed?
-        if pending_payroll_position.present? && @form.legal_entity.payable?
-          redirect_to onboarding_payroll_position_path(pending_payroll_position)
+        if @legal_entity.electronic_consent.nil?
+          redirect_to electronic_consent_tax_form_path(@form)
         else
-          redirect_to legal_entity_path(@form.legal_entity)
+          redirect_to_next_step
         end
       end
     end
@@ -69,6 +81,14 @@ module Tax
     end
 
     private
+
+    def redirect_to_next_step
+      if pending_payroll_position.present? && @form.legal_entity.payable?
+        redirect_to onboarding_payroll_position_path(pending_payroll_position)
+      else
+        redirect_to legal_entity_path(@form.legal_entity)
+      end
+    end
 
     def set_form
       @form = Tax::Form.find_by_hashid!(params[:id])

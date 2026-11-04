@@ -67,7 +67,13 @@ RSpec.describe HcbCodesController, type: :controller do
       end
 
       it "drops the warning once a canonical transaction has settled the transfer" do
-        create(:canonical_transaction, amount_cents: -130_00).update_column(:hcb_code, hcb_code.hcb_code)
+        # Settle through the short code in the memo, the way the bank memo does
+        # in production. Without it the factory CT gets the catch-all code
+        # HCB-000-<ct.id>, which collides with the `event` let's factory CPT
+        # (HCB-000-<cpt.id>) whenever the two ids happen to match. The CT then
+        # joins that CPT's HCB code and ledger item, and assign_ledger_item
+        # raises.
+        create(:canonical_transaction, amount_cents: -130_00, memo: "HCB-#{hcb_code.short_code}")
 
         get :show, params: { id: hcb_code.hashid }
 

@@ -211,4 +211,19 @@ RSpec.describe StripeCardsController do
       )
     end
   end
+
+  describe "#freeze" do
+    it "does not let a cardholder take over a system freeze" do
+      setup_context => { card:, user: }
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+      card.update!(stripe_status: "inactive", last_frozen_by: User.system_user)
+      create_session(user, verified: true)
+      expect(StripeService::Issuing::Card).not_to receive(:update)
+
+      post(:freeze, params: { id: card.id })
+
+      expect(flash[:error]).to eq("Card is already frozen")
+      expect(card.reload.last_frozen_by).to eq(User.system_user)
+    end
+  end
 end

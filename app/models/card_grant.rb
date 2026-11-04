@@ -93,12 +93,18 @@ class CardGrant < ApplicationRecord
   validates :subledger, uniqueness: true, allow_nil: true
 
   MAX_EXPIRATION_DATE = 2.years
-  validates :expiration_at, comparison: { less_than_or_equal_to: -> { MAX_EXPIRATION_DATE.from_now.to_date } }, if: :expiration_at_changed?
+  validates :expiration_at, comparison: { less_than_or_equal_to: :max_expiration_at }, if: :expiration_at_changed?
 
   validates_email_format_of :email, if: :email_changed?
   normalizes :email, with: ->(email) { email.presence&.strip&.downcase }
 
-  delegate :balance, to: :subledger
+  # A grant's balance is its ledger's balance. The legacy figure
+  # (Subledger#legacy_balance_cents) is only kept so
+  # Ledger::AssertCorrectLedgerBalancesJob can compare the two.
+  delegate :balance_cents, to: :ledger
+  # Validation would query the balance on every save, and on create it runs
+  # before the ledger exists.
+  monetize :balance_cents, disable_validation: true
 
   serialize :merchant_lock, coder: CommaSeparatedCoder # convert comma-separated merchant list to an array
   serialize :category_lock, coder: CommaSeparatedCoder
@@ -328,7 +334,12 @@ class CardGrant < ApplicationRecord
   end
 
   def allowed_merchant_names
-    allowed_merchants.map { |merchant_id| YellowPages::Merchant.lookup(network_id: merchant_id).name || "Unnamed Merchant (#{merchant_id})" }.uniq
+    names = allowed_merchants.map { |merchant_id| YellowPages::Merchant.lookup(network_id: merchant_id).name }
+    unnamed_count = names.count(&:nil?)
+
+    names.compact.uniq.tap do |named|
+      named << "#{unnamed_count} unnamed #{"merchant".pluralize(unnamed_count)}" if unnamed_count.positive?
+    end
   end
 
   def allowed_categories
@@ -349,6 +360,12 @@ class CardGrant < ApplicationRecord
 
   def default_expiration_at
     (created_at || Time.current) + CardGrantSetting.expiration_preferences[card_grant_setting&.expiration_preference || "1 year"].days
+  end
+
+  # The latest expiration a grant may have, measured from when it was created
+  # so that extending a grant can't keep it alive indefinitely.
+  def max_expiration_at
+    (created_at || Time.current).to_date + MAX_EXPIRATION_DATE
   end
 
   def last_time_change_to(...)

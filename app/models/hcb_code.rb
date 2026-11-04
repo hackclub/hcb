@@ -59,7 +59,6 @@ class HcbCode < ApplicationRecord
   has_many :suggested_hcb_code_tag_suggestions, -> { where(aasm_state: "suggested") }, class_name: "HcbCode::Tag::Suggestion", inverse_of: :hcb_code
 
   has_many :suggested_pairings
-  has_many :suggested_receipts, source: :receipt, through: :suggested_pairings
 
   has_one :pin, required: false
 
@@ -108,16 +107,6 @@ class HcbCode < ApplicationRecord
     else
       "receipts+hcb-#{hashid}@hcb.hackclub.com"
     end
-  end
-
-  def best_suggested_receipts(limit: nil, threshold: nil, only_unreviewed: false)
-    pairings = only_unreviewed ? suggested_pairings.unreviewed : suggested_pairings
-
-    if threshold
-      pairings = pairings.where("distance <= ?", threshold)
-    end
-
-    pairings.includes(:receipt).order(distance: :asc).limit(limit).map(&:receipt).compact
   end
 
   def date
@@ -187,18 +176,6 @@ class HcbCode < ApplicationRecord
       else
         canonical_pending_transactions.sum(:amount_cents)
       end
-  end
-
-  # this replicates our balance calculation
-  def smart_amount_cents
-    sum = canonical_transactions.sum(:amount_cents)
-    sum += canonical_pending_transactions.outgoing.unsettled.sum(:amount_cents)
-
-    fronted_pt_sum = canonical_pending_transactions.incoming.fronted.not_declined.sum(:amount_cents)
-    settled_ct_sum = [canonical_transactions.sum(:amount_cents), 0].max
-    sum += [fronted_pt_sum - settled_ct_sum, 0].max
-
-    sum
   end
 
   def amount_cents_by_event(event)
@@ -542,6 +519,10 @@ class HcbCode < ApplicationRecord
 
   def stripe_service_fee
     @stripe_service_fee ||= StripeServiceFee.find_by(id: hcb_i2) if stripe_service_fee?
+  end
+
+  def fee_reimbursement_group
+    @fee_reimbursement_group ||= FeeReimbursementGroup.find_by(key: hcb_i2) if outgoing_fee_reimbursement?
   end
 
   def card_charge

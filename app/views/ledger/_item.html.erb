@@ -36,7 +36,7 @@
     </span>
   </td>
   <% if show_author %>
-    <td>
+    <td class="pr-4">
       <% if item.author.present? %>
         <div class="flex items-center justify-center tooltipped tooltipped--w" aria-label="<%= item.author.name %>">
           <%= avatar_for item.author, class: "align-middle author", cached: true %>

@@ -64,6 +64,9 @@ module Reimbursement
     end
 
     validate :cannot_change_event_when_card_grant_present, on: :update
+    validate :reviewer_must_be_eligible, if: -> { reviewer_id_changed? && reviewer.present? }
+
+    before_validation(if: -> { event_id_changed? && !reviewer_id_changed? && reviewer.present? }) { self.reviewer = nil }
 
     validates :name, no_urls: true, if: ->(report){ report.from_public_reimbursement_form? }
     normalizes :name, with: ->(name) { name&.strip }
@@ -265,10 +268,6 @@ module Reimbursement
       draft?
     end
 
-    def unlockable?
-      submitted? || reimbursement_requested?
-    end
-
     def closed?
       reimbursement_approved? || reimbursed? || rejected? || reversed?
     end
@@ -287,18 +286,6 @@ module Reimbursement
 
     def fees_charged_cents
       expenses.approved.where(type: Reimbursement::Expense::Fee.name).sum(:amount_cents)
-    end
-
-    def last_reimbursement_requested_by
-      last_user_change_to(aasm_state: "reimbursement_requested")
-    end
-
-    def last_reimbursement_approved_by
-      last_user_change_to(aasm_state: "reimbursement_approved")
-    end
-
-    def last_rejected_by
-      last_user_change_to(aasm_state: "rejected")
     end
 
     def comment_recipients_for(comment)
@@ -338,12 +325,16 @@ module Reimbursement
       user.admin? || !OrganizerPosition.role_at_least?(user, event, :manager) || (event.reimbursements_require_organizer_peer_review && event.users.size > 1)
     end
 
+    def reviewer_selectable?
+      !event.reviewer_selection_disabled?
+    end
+
     def assigned_reviewer_required?
-      event.plan.assigned_reimbursement_reviewer_required?
+      event.reviewer_selection_required?
     end
 
     def eligible_reviewers
-      User.where(id: event.ancestor_organizer_positions.manager_access.select(:user_id))
+      event.eligible_reimbursement_reviewers
     end
 
     def reimbursement_confirmation_message
@@ -470,6 +461,12 @@ module Reimbursement
       # `_was` catches a same-request card_grant_id nil-out paired with an event_id change.
       if event_id_changed? && (card_grant_id_was.present? || card_grant_id.present?)
         errors.add(:base, "You cannot change the organization of a card grant reimbursement.")
+      end
+    end
+
+    def reviewer_must_be_eligible
+      unless event.present? && eligible_reviewers.exists?(reviewer.id)
+        errors.add(:reviewer, "must be a manager of this organization")
       end
     end
 

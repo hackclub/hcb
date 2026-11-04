@@ -467,6 +467,17 @@ To gain admin permissions via the API, the token must explicitly carry an admin 
 
 `admin:write` does **not** imply `admin:read` — both scopes must be granted independently if both are needed. 
 
+### Limited Admin Scopes
+
+An app that only needs admin powers over a single resource can request a limited scope instead of the blanket one:
+
+| Scope                  | Description                                                                                 |
+|------------------------|---------------------------------------------------------------------------------------------|
+| `admin:comments:read`  | Auditor-level access within the comment endpoints (e.g. reading admin-only comments), and nothing else. |
+| `admin:comments:write` | Admin-level access within the comment endpoints (e.g. posting admin-only comments), and nothing else. |
+
+These behave exactly like `admin:read` / `admin:write`, but only within the comment endpoints — they grant nothing elsewhere in the API. As with the blanket scopes, `admin:comments:write` does not imply `admin:comments:read`, so posting an admin-only comment needs both. They are checked independently of the `restricted` scope, so a restricted token still needs `comments:read` / `comments:write` for the endpoint itself. The blanket `admin:read` / `admin:write` scopes continue to work on those endpoints too.
+
 ### Implementation Notes
 
 - Always check for the admin scope explicitly. Do not fall back to checking if the authenticated user is an admin.

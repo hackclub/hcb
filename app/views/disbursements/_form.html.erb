@@ -11,7 +11,7 @@
 
   <div data-scroll-seek-target="section" data-transfer-type-target="types">
     <h3 class="mb-2">What kind of transfer is this?</h3>
-    <p class="muted mt-0 mb-2" data-transfer-type-target="repaymentHint" <%= "hidden" if repayable %>>Only members of the organization you're sending to can repay its transactions.</p>
+    <p class="muted mt-0 mb-2" data-transfer-type-target="repaymentHint" <%= "hidden" if repayable %>>Only members of the organization you're sending to can repay its transactions, unless it's a transparent organization.</p>
 
     <div class="flex flex-col gap-2 mb-4">
       <% [

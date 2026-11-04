@@ -33,6 +33,9 @@ class CanonicalTransaction < ApplicationRecord
 
   include Receiptable
   include Categorizable
+  include HasStripeDashboardUrl
+  has_stripe_dashboard_url "issuing/transactions", :remote_stripe_ipi_id, as: :stripe_txn_dashboard_url
+  has_stripe_dashboard_url "issuing/authorizations", :remote_stripe_iauth_id, as: :stripe_auth_dashboard_url
 
   include PgSearch::Model
   pg_search_scope :search_memo, against: [:memo, :friendly_memo, :custom_memo, :hcb_code], using: { tsearch: { any_word: true, prefix: true, dictionary: "english" } }, ranked_by: "canonical_transactions.date"
@@ -41,7 +44,6 @@ class CanonicalTransaction < ApplicationRecord
   scope :unmapped, -> { includes(:canonical_event_mapping).where(canonical_event_mappings: { canonical_transaction_id: nil }) }
   scope :mapped, -> { includes(:canonical_event_mapping).where.not(canonical_event_mappings: { canonical_transaction_id: nil }) }
   scope :missing_pending, -> { includes(:canonical_pending_settled_mapping).where(canonical_pending_settled_mappings: { canonical_transaction_id: nil }) }
-  scope :has_pending, -> { includes(:canonical_pending_settled_mapping).where.not(canonical_pending_settled_mappings: { canonical_transaction_id: nil }) }
   scope :missing_hcb_code, -> { where(hcb_code: nil) }
   scope :missing_or_unknown_hcb_code, -> { where("hcb_code is null or hcb_code ilike 'HCB-000%'") }
   scope :invoice_hcb_code, -> { where("hcb_code ilike 'HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE}%'") }
@@ -65,14 +67,7 @@ class CanonicalTransaction < ApplicationRecord
   scope :column_transaction,   -> { joins("INNER JOIN raw_column_transactions   ON transaction_source_type = 'RawColumnTransaction'   AND raw_column_transactions.id  =  transaction_source_id") }
 
   scope :likely_hack_club_bank_issued_cards, -> { where("memo ilike 'Hack Club Bank Issued car%' or memo ilike 'HCKCLB Issued car%' or memo ilike 'STRIPE Issued car%'") }
-  scope :likely_clearing_checks, -> { where("memo ilike '%Withdrawal - Inclearing Check #%' or memo ilike '%Withdrawal - On-Us Deposited Ite #%'") }
   scope :likely_checks, -> { where("memo ilike '%Check TO ACCOUNT REDACTED'") }
-  scope :likely_increase_checks, -> { increase_transaction.where("raw_increase_transactions.increase_transaction->'source'->>'category' = 'check_transfer_intention'") }
-  scope :likely_disbursements, -> { where("memo ilike 'HCB DISBURSE%'") }
-  scope :likely_achs, -> { where("memo ilike '%BUSBILLPAY%'") }
-  scope :likely_increase_achs, -> { increase_transaction.where("raw_increase_transactions.increase_transaction->'source'->>'category' = 'ach_transfer_intention'") }
-  scope :likely_increase_account_number, -> { increase_transaction.joins("INNER JOIN increase_account_numbers ON increase_account_number_id = increase_route_id") }
-  scope :likely_increase_check_deposit, -> { increase_transaction.where("raw_increase_transactions.increase_transaction->'source'->>'category' = 'check_deposit_acceptance'") }
   scope :increase_interest, -> { increase_transaction.where("raw_increase_transactions.increase_transaction->'source'->>'category' = 'interest_payment'") }
   scope :likely_column_interest, -> {
     column_transaction.where("raw_column_transactions.column_transaction->>'transaction_type' = 'interest.payout.completed'")
@@ -80,7 +75,6 @@ class CanonicalTransaction < ApplicationRecord
   }
   scope :likely_column_account_number, -> { column_transaction.joins("INNER JOIN column_account_numbers ON column_transaction->>'account_number_id' = column_account_numbers.column_id") }
   scope :likely_hack_club_fee, -> { where("memo ilike '%Hack Club Bank Fee TO ACCOUNT%'") }
-  scope :old_likely_hack_club_fee, -> { where("memo ilike '% Fee TO ACCOUNT REDACTED%'") }
   scope :stripe_top_up, -> { where("memo ilike '%Hack Club Bank Stripe Top%' or memo ilike '%HACKC Stripe Top%' or memo ilike '%HCKCLB Stripe Top%' or memo ilike '%STRIPE Stripe Top%'") }
   scope :not_stripe_top_up, -> { where("(memo not ilike '%Hack Club Bank Stripe Top%' and memo not ilike '%HACKC Stripe Top%' and memo not ilike '%HCKCLB Stripe Top%' and memo not ilike '%STRIPE Stripe Top%') or memo is null") }
   scope :hcb_sweep, -> { where("memo ilike '%COLUMN*THE HACK HCB-SWEEP%'") }
@@ -283,22 +277,10 @@ class CanonicalTransaction < ApplicationRecord
     raw_stripe_transaction.stripe_transaction_id
   end
 
-  def stripe_txn_dashboard_url
-    return nil unless remote_stripe_ipi_id
-
-    "https://dashboard.stripe.com/issuing/transactions/#{remote_stripe_ipi_id}"
-  end
-
   def remote_stripe_iauth_id
     return nil unless raw_stripe_transaction
 
     raw_stripe_transaction.stripe_transaction["authorization"]
-  end
-
-  def stripe_auth_dashboard_url
-    return nil unless remote_stripe_iauth_id
-
-    "https://dashboard.stripe.com/issuing/authorizations/#{remote_stripe_iauth_id}"
   end
 
   def likely_waveable_for_fee?
@@ -476,14 +458,6 @@ class CanonicalTransaction < ApplicationRecord
 
   def unique_bank_identifier
     @unique_bank_identifier ||= transaction_source.try(:unique_bank_identifier)
-  end
-
-  def memo_hcb_code_likely_donation?
-    memo.include?("HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::DONATION_CODE}")
-  end
-
-  def memo_hcb_code_likely_invoice?
-    memo.include?("HCB-#{::TransactionGroupingEngine::Calculate::HcbCode::INVOICE_CODE}")
   end
 
   def write_hcb_code

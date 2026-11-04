@@ -34,7 +34,7 @@
     <% end %>
 
     <div class="<%= "hidden" unless payee %>">
-      <%= form_with(model: payment, url: event_payments_path(event_id: event.slug), local: true) do |form| %>
+      <%= form_with(model: payment, url: event_payments_path(event_id: event.slug), local: true, data: { controller: "payout-required", action: "change->payout-required#update click->payout-required#update" }) do |form| %>
         <%= form_errors(payment, "Payment", "We couldn't submit this payment") %>
 
         <%= form.hidden_field :payee_id, value: payee&.hashid %>
@@ -90,7 +90,7 @@
             </details>
           <% else %>
             <div class="card mb-4 flex flex-col gap-3">
-              <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method, title: "Select a payout method" %>
+              <%= render "users/payout_form/form", user: current_user, creating: true, embedded: true, attempted: existing_payout_method, title: "Select a payout method", required: manual %>
             </div>
           <% end %>
         </div>

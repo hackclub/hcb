@@ -57,7 +57,7 @@ module DisbursementService
 
       @source_event.with_lock do
         if @source_subledger_id.present?
-          raise UserError, "You don't have enough money to make this disbursement." unless Subledger.find(@source_subledger_id).balance_cents >= amount_cents || requested_by_admin?
+          raise UserError, "You don't have enough money to make this disbursement." unless Subledger.find(@source_subledger_id).card_grant.balance_cents >= amount_cents || requested_by_admin?
         else
           raise UserError, "You don't have enough money to make this disbursement." unless ample_balance?(amount_cents, @source_event) || requested_by_admin?
         end

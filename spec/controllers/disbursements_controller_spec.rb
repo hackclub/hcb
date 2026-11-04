@@ -409,8 +409,20 @@ RSpec.describe DisbursementsController do
       get(:event_search, params: { q: "ysws" }, format: :json)
 
       expect(response).to have_http_status(:ok)
-      labels = JSON.parse(response.body).map { |o| o["label"] }
-      expect(labels.first).to eq("ysws (ID: #{exact.id})")
+      expect(JSON.parse(response.body).first["value"]).to eq(exact.public_id)
+    end
+
+    # Organizers use this picker too, and event IDs are for admins only.
+    it "never shows a non-admin the ID" do
+      user = create(:user)
+      event = create(:event, name: "ysws")
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+
+      get(:event_search, params: { q: "ysws" }, format: :json)
+
+      option = JSON.parse(response.body).find { |o| o["value"] == event.public_id }
+      expect(option).to include("label" => "ysws", "badge" => nil)
     end
 
     it "paginates results without overlap across pages" do
@@ -461,7 +473,7 @@ RSpec.describe DisbursementsController do
   describe "repayments" do
     let(:sender) { create(:user) }
     let(:source_event) { create(:event, :with_positive_balance) }
-    let(:destination_event) { create(:event) }
+    let(:destination_event) { create(:event, is_public: false) }
     let!(:expense) { create(:canonical_transaction, event: destination_event, amount_cents: -100_00, memo: "Pizza", category_slug: "food-fun") }
 
     before do
@@ -573,7 +585,7 @@ RSpec.describe DisbursementsController do
       get(:event_search, params: { sending: "false", q: "Claude" }, format: :json)
 
       repayable = response.parsed_body.to_h { |option| [option["value"], option["repayable"]] }
-      expect(repayable).to include(destination_event.public_id => true, stranger.public_id => false)
+      expect(repayable).to include(destination_event.public_id => true, stranger.public_id => true)
     end
 
     it "doesn't flag source organizations as repayable" do
@@ -590,6 +602,16 @@ RSpec.describe DisbursementsController do
 
       expect(listed_hashids).to be_empty
       expect(response.body).not_to include("Pizza")
+    end
+
+    it "lists a transparent organization's expenses to non-members, except verification micro-deposits" do
+      destination_event.update_columns(is_public: true)
+      sender.organizer_positions.find_by(event: destination_event).destroy!
+      create(:canonical_transaction, event: destination_event, amount_cents: -32, memo: "ACCTVERIFY STRIPE")
+
+      get(:repayable_transactions, params: { destination_event_id: destination_event.public_id })
+
+      expect(listed_hashids).to eq([expense.ledger_item.hashid])
     end
 
     describe "#new" do

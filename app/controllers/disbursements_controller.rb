@@ -4,7 +4,7 @@ class DisbursementsController < ApplicationController
   include TurboStreamFlash
   include ComboboxSearchable
 
-  before_action :set_disbursement, only: [:show, :edit, :update, :transfer_confirmation_letter]
+  before_action :set_disbursement, only: [:show, :transfer_confirmation_letter]
 
   def show
     authorize @disbursement
@@ -45,7 +45,8 @@ class DisbursementsController < ApplicationController
       destination_event: @destination_event,
       source_event: @source_event,
       amount: params[:amount],
-      name: params[:message]
+      name: params[:message],
+      transfer_type: params[:transfer_type]
     )
 
     authorize @disbursement
@@ -70,7 +71,7 @@ class DisbursementsController < ApplicationController
     own_destination_events = own_events.or(current_user.readable_events.accepting_public_transfers)
 
     base = if admin_signed_in?
-             Event.select(:name, :id, :demo_mode, :slug).reorder(Event::CUSTOM_SORT).includes(:plan)
+             Event.select(:name, :id, :demo_mode, :slug, :is_public, :hidden_at, :financially_frozen).reorder(Event::CUSTOM_SORT).includes(:plan)
            elsif sending
              own_events
            elsif q.blank?
@@ -86,7 +87,7 @@ class DisbursementsController < ApplicationController
              own_destination_events
                .or(public_events.where(is_indexable: true))
                .or(public_events.where(slug: q.downcase))
-               .select(:name, :id, :demo_mode, :slug).includes(:plan)
+               .select(:name, :id, :demo_mode, :slug, :is_public, :hidden_at, :financially_frozen).includes(:plan)
            end
 
     # Apply fuzzy search if query present
@@ -134,6 +135,7 @@ class DisbursementsController < ApplicationController
         value: e.public_id,
         label: helpers.combobox_display(e),
         sublabel: disabled_message || balance,
+        badge: helpers.combobox_badge(e),
         disabled: disabled_message.present?
       }
       # Lets the form hide the repayment option for recipients whose
@@ -237,14 +239,6 @@ class DisbursementsController < ApplicationController
     skip_authorization
     flash[:error] = "Organization not found: #{e.id}"
     redirect_to new_disbursement_path(source_event_id: @source_event)
-  end
-
-  def edit
-    authorize @disbursement
-  end
-
-  def update
-    authorize @disbursement
   end
 
   def cancel
