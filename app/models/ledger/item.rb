@@ -271,6 +271,8 @@ class Ledger
         "Fiscal sponsorship fee"
       when "FeeRevenue"
         "Fee revenue"
+      when "FeeReimbursementGroup"
+        "Stripe fee reimbursements"
       when "Reimbursement::PayoutHolding"
         "Reimbursement payout holding"
       when "Reimbursement::ExpensePayout"
@@ -283,7 +285,7 @@ class Ledger
     end
 
     def pretty_title
-      amount_preposition = ["Donation", "Disbursement::Outgoing", "Disbursement::Incoming", "CardCharge", "BankFee"].include?(linked_object_type) ? "of" : "for"
+      amount_preposition = ["Donation", "Disbursement::Outgoing", "Disbursement::Incoming", "CardCharge", "BankFee", "FeeReimbursementGroup"].include?(linked_object_type) ? "of" : "for"
 
       amount_preposition = "refunded" if linked_object_type == "CardCharge" && amount_cents.positive?
 
@@ -332,6 +334,8 @@ class Ledger
         "bank-icon"
       when "FeeRevenue"
         "bank-icon"
+      when "FeeReimbursementGroup"
+        "cash"
       when "Reimbursement::PayoutHolding"
         "reimbursement"
       when "Reimbursement::ExpensePayout"
@@ -436,7 +440,7 @@ class Ledger
     end
 
     def calculate_receipt_required
-      amount_cents < 0 && primary_ledger&.receipt_required? && !linked_object_type.in?(["Disbursement::Outgoing", "Reimbursement::ExpensePayout", "StripeServiceFee", "BankFee"])
+      amount_cents < 0 && primary_ledger&.receipt_required? && !linked_object_type.in?(["Disbursement::Outgoing", "Reimbursement::ExpensePayout", "StripeServiceFee", "BankFee", "FeeReimbursementGroup"])
     end
 
     def calculate_status
@@ -544,6 +548,8 @@ class Ledger
         end
       when "FeeRevenue"
         "Fee revenue for #{linked_object.start.strftime("%-m/%-d")} to #{linked_object.end.strftime("%-m/%-d")}"
+      when "FeeReimbursementGroup"
+        linked_object.memo
       when "Reimbursement::PayoutHolding"
         "Payout holding for reimbursement report #{linked_object.report.hashid}"
       when "Reimbursement::ExpensePayout"
