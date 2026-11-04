@@ -289,6 +289,70 @@ RSpec.describe CardGrantsController do
     end
   end
 
+  describe "receipt upload buttons on the new ledger" do
+    let(:event) { create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate) }
+    let(:card_grant) { create(:card_grant, event:) }
+    let!(:item) do
+      item = create(:canonical_pending_transaction, event:, amount_cents: -1000).local_hcb_code.ledger_item
+      Ledger::Mapping.map_primary!(ledger: card_grant.ledger, ledger_item: item, mapped_by: create(:user, :make_admin))
+      item.refresh!
+      item
+    end
+
+    before { Flipper.enable(:new_ledger_everywhere_2026_07_13) }
+
+    def page
+      Nokogiri::HTML5(response.body)
+    end
+
+    it "ends each ledger row in receipt upload buttons" do
+      user = create(:user)
+      create(:organizer_position, user:, event:, role: :member)
+      create_session(user, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      expect(item.reload).to be_missing_receipt
+      cell = page.at_css("tr.transaction > td##{ActionView::RecordIdentifier.dom_id(item, :receipt_action)}")
+      expect(cell).to be_present
+
+      form = cell.at_css("form[action='#{receipts_path}']")
+      expect(form.at_css("input[name='receiptable_type']")["value"]).to eq("HcbCode")
+      expect(form.at_css("input[name='receiptable_id']")["value"]).to eq(item.hcb_code.id.to_s)
+      expect(form.at_css("input[type='file'][name='file[]']")).to be_present
+      expect(cell.text).to include("Upload receipt")
+
+      frame = cell.at_css("turbo-frame#link_modal_#{item.hcb_code.id}")
+      expect(frame["src"]).to eq(link_modal_receipts_path(receiptable_type: "HcbCode", receiptable_id: item.hcb_code.id))
+      expect(frame["loading"]).to eq("lazy")
+    end
+
+    it "leaves the cell empty for users who can't upload receipts" do
+      reader = create(:user)
+      create(:organizer_position, user: reader, event:, role: :reader)
+      create_session(reader, verified: true)
+
+      get(:show, params: { id: card_grant.hashid })
+
+      rows = page.css("tbody tr.transaction")
+      expect(rows).to be_present
+      expect(rows.map { |row| row.css("> td").length }.uniq).to eq([page.css("thead th").length])
+      expect(page.at_css(".transaction__receipt-action")).to be_nil
+      expect(page.at_css("form[action='#{receipts_path}']")).to be_nil
+    end
+
+    it "doesn't add them to the public spending page" do
+      user = create(:user)
+      create(:organizer_position, user:, event:, role: :member)
+      create_session(user, verified: true)
+
+      get(:spending, params: { id: card_grant.hashid, frame: true })
+
+      expect(page.css("tbody tr.transaction")).to be_present
+      expect(page.at_css(".transaction__receipt-action")).to be_nil
+    end
+  end
+
   describe "topup" do
     it "tops up a card grant" do
       user = create(:user)

@@ -1,16 +1,18 @@
-<%# locals: (item:, show_author: true) %>
+<%# locals: (item:, show_author: true, receipt_upload_button: false) %>
 
 <%#
   Dropping a file onto the row uploads it as a receipt, and dropping a receipt
   dragged out of the receipt bin links it, like the canonical transaction row.
-  Receipts still live on the HCB code, so that's the receiptable, and the gate
-  is the same check ReceiptsController#create authorizes the upload with.
+  With `receipt_upload_button`, the row also ends in upload and select buttons
+  (see ledger/items/_receipt_action). Receipts still live on the HCB code, so
+  that's the receiptable, and the gate for both is the same check
+  ReceiptsController#create authorizes the upload with.
 %>
-<% receipt_drop = current_user.present? && item.accepts_receipts? && item.hcb_code.present? && ReceiptablePolicy.new(current_user, item.hcb_code).upload? %>
+<% can_upload_receipt = current_user.present? && item.accepts_receipts? && item.hcb_code.present? && ReceiptablePolicy.new(current_user, item.hcb_code).upload? %>
 
 <tr
   class="transaction transaction--<%= item.sign %> <%= item.special_appearance&.css_class %>"
-  <% if receipt_drop %>
+  <% if can_upload_receipt %>
     data-controller="file-drop"
     data-file-drop-target="dropzone"
     data-file-drop-linking-value="true"
@@ -43,7 +45,7 @@
       <%= list_badge_for item.receipt_count, "receipt", "payment-docs", optional: item.receipt_optional?, required: item.missing_receipt? %>
     </div>
 
-    <% if receipt_drop %>
+    <% if can_upload_receipt %>
       <%= form_with url: receipts_path, html: { hidden: true }, data: { "file-drop-target" => "form", turbo: true } do |form| %>
         <%= form.file_field :file, id: nil, multiple: true, include_hidden: false, data: { "file-drop-target" => "fileInput" } %>
         <%= form.hidden_field :receiptable_type, id: nil, value: "HcbCode" %>
@@ -69,5 +71,12 @@
         </div>
       <% end %>
     </td>
+  <% end %>
+  <% if receipt_upload_button %>
+    <% if can_upload_receipt %>
+      <%= render "ledger/items/receipt_action", item: %>
+    <% else %>
+      <td></td>
+    <% end %>
   <% end %>
 </tr>
