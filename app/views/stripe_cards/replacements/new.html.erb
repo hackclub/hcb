@@ -36,7 +36,7 @@
       <p class="text-sm muted m-0 whitespace-nowrap">Step <%= step_number %> of <%= @flow.steps.size %></p>
     </div>
 
-    <%= render "stripe_cards/replacements/steps/#{@step}", flow: @flow, stripe_card: @stripe_card %>
+    <%= render StripeCard::ReplacementFlow::STEP_PARTIALS.fetch(@step), flow: @flow, stripe_card: @stripe_card %>
 
     <div class="flex items-center justify-between gap-2 mt-6">
       <% if previous_step %>

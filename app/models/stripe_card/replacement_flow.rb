@@ -26,6 +26,14 @@ class StripeCard
 
     CONFIRMATION_STEPS = %w[reason confirm].freeze
 
+    STEP_PARTIALS = {
+      "compromised" => "stripe_cards/replacements/steps/compromised",
+      "reason"      => "stripe_cards/replacements/steps/reason",
+      "new_card"    => "stripe_cards/replacements/steps/new_card",
+      "confirm"     => "stripe_cards/replacements/steps/confirm",
+      "shipping"    => "stripe_cards/replacements/steps/shipping",
+    }.freeze
+
     attr_reader :stripe_card, :key, :reason, :dispute
 
     PHYSICAL_ONLY_REASONS = %w[lost damaged].freeze
