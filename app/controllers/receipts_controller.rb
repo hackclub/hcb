@@ -340,6 +340,11 @@ class ReceiptsController < ApplicationController
     # by the ledger item's hashid instead of by `@ledger_instance`.
     ledger_item = @receiptable.is_a?(Ledger::Item) ? @receiptable : @receiptable.try(:ledger_item)
 
+    # Re-render the item's ledger row (e.g. its receipt count), if it's on the page
+    if ledger_item.present?
+      streams.append(turbo_stream.replace(ledger_item, partial: "ledger/item", locals: { item: ledger_item, show_author: @show_author_img }))
+    end
+
     if ledger_item.present? && on_ledger_item_page?
       streams.append(
         turbo_stream.replace(
