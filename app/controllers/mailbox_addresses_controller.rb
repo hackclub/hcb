@@ -11,7 +11,7 @@ class MailboxAddressesController < ApplicationController
     if @mailbox_address.save
       redirect_to @mailbox_address
     else
-      render :new, status: :unprocessable_content
+      redirect_to my_inbox_path, flash: { error: @mailbox_address.errors.full_messages.to_sentence }
     end
   end
 
