@@ -543,7 +543,11 @@ RSpec.describe DisbursementService::Create, "transfer types" do
     end
 
     it "can't repay a pending transaction" do
-      pending_expense = create(:canonical_pending_transaction, event: destination_event, amount_cents: -100_00)
+      # Unmatched transactions get the code HCB-000-<id>, and canonical and
+      # pending transactions have separate id sequences. If this id matched a
+      # canonical transaction's, the two would share a ledger item, so pick an
+      # id no canonical transaction has.
+      pending_expense = create(:canonical_pending_transaction, id: CanonicalTransaction.maximum(:id).to_i + 1_000_000, event: destination_event, amount_cents: -100_00)
 
       expect(pending_expense.ledger_item.reload).to be_pending
       expect {

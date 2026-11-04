@@ -112,6 +112,8 @@ class Ledger
       CardChargeMailer.with(ledger_item: self).reversed.deliver_later
     end
 
+    after_update_commit -> { Ledger::Balance::Observer.notify_later(all_ledgers) }, if: :saved_change_to_amount_cents?
+
     scope :missing_receipt, -> { where(receipt_required: true, marked_no_or_lost_receipt_at: nil, receipt_count: 0) }
 
     def status_text

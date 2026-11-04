@@ -110,6 +110,8 @@
     </div>
   </div>
 
+  <%= render "ledger/balance/observers/settings", ledger: event.ledger %>
+
   <h3 class="mb1" id="transparency_mode_heading">Transparency Mode</h3>
 
   <div class="card mb3" data-controller="accordion">
@@ -255,3 +257,6 @@
     </div>
   </div>
 <% end %>
+
+<%# Forms can't nest, so the low balance alert's fields above submit this one via their form attribute. %>
+<%= form_with url: ledger_balance_observer_path(event.ledger), id: dom_id(event.ledger, :balance_observer_form) do %><% end %>
