@@ -17,8 +17,6 @@
   <div
     class="card card--outline mb-6"
     x-data="application_project_info(<%= {
-                                           has_website: @application.website_url.present? ? "true" : "false",
-                                           has_political: @application.political_description.present? ? "true" : "false",
                                            teenager: @application.teen_led? ? "true" : "false",
                                            committed: @application.committed_amount,
                                            description: @application.description
@@ -57,10 +55,10 @@
       <%= form.label :has_website do %>
         Do you have a website? <span class="text-primary">*</span>
       <% end %>
-      <%= form.select :has_website, options_for_select([["No", "false"], ["Yes", "true"]], @application.website_url.present? ? "true" : "false"), {}, { "@change": "has_website = $event.target.value", class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null", data: { action: "website-political-fields#toggleWebsite" } } %>
+      <%= form.select :has_website, options_for_select([["No", "false"], ["Yes", "true"]], @application.website_url.present? ? "true" : "false"), {}, { class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null", data: { action: "website-political-fields#toggleWebsite" } } %>
     </div>
 
-    <div class="field" x-show="has_website === 'true'">
+    <div class="field" data-website-political-fields-target="website" <%= "hidden" unless @application.website_url.present? %>>
       <%= form.label :website_url do %>
         Website URL <span class="text-primary">*</span>
       <% end %>
@@ -72,10 +70,10 @@
         Is your project involved with political activity? <span class="text-primary">*</span>
       <% end %>
       <p class="text-sm muted mt-1 mb-2">This includes but is not limited to protests, public demonstrations, political education, and lobbying.</p>
-      <%= form.select :has_political, options_for_select([["No", "false"], ["Yes", "true"]], @application.political_description.present? ? "true" : "false"), {}, { "@change": "has_political = $event.target.value", class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null", data: { action: "website-political-fields#togglePolitical" } } %>
+      <%= form.select :has_political, options_for_select([["No", "false"], ["Yes", "true"]], @application.political_description.present? ? "true" : "false"), {}, { class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null", data: { action: "website-political-fields#togglePolitical" } } %>
     </div>
 
-    <div class="field" x-show="has_political === 'true'">
+    <div class="field" data-website-political-fields-target="political" <%= "hidden" unless @application.political_description.present? %>>
       <%= form.label :political_description do %>
         Please describe the political activity your project is involved in <span class="text-primary">*</span>
       <% end %>

@@ -1,12 +1,4 @@
-export default ({
-  has_website,
-  has_political,
-  teenager,
-  committed,
-  description,
-}) => ({
-  has_website,
-  has_political,
+export default ({ teenager, committed, description }) => ({
   teenager,
   committed,
   description,
