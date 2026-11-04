@@ -651,8 +651,14 @@ class EventsController < ApplicationController
     authorize @event
 
     set_donations
-    set_recurring_donations
-    @recurring_donations_monthly_sum = @recurring_donations.sum(0) { |donation| donation[:amount] }
+    @stats = {
+      deposited: @event.donations.not_pending.succeeded_and_not_refunded.sum(:amount),
+    }
+
+    # The recurring donations table loads in its own frame; the header only
+    # needs to know whether there are any and their monthly total.
+    @recurring_donations = @event.recurring_donations.active
+    @recurring_donations_monthly_sum = @recurring_donations.sum(:amount)
   end
 
   # Loaded into a turbo frame on `donation_overview`, so it can paginate
@@ -674,12 +680,15 @@ class EventsController < ApplicationController
     authorize @event
 
     unless turbo_frame_request?
-      redirect_to event_donation_overview_path(@event, request.query_parameters)
+      # Not forwarding the query: on the overview, `page` and `per` belong to
+      # past donations, so this frame's page would land on the wrong table.
+      redirect_to event_donation_overview_path(@event)
       return
     end
 
-    set_recurring_donations
-    @recurring_donations = @recurring_donations.page(params[:page]).per(DONATIONS_PER_PAGE)
+    @recurring_donations = @event.recurring_donations.includes(:donations).active
+                                 .order(created_at: :desc, id: :desc)
+                                 .page(params[:page]).per(safe_per(DONATIONS_PER_PAGE))
   end
 
   def payments
@@ -1377,10 +1386,6 @@ class EventsController < ApplicationController
 
     relation = @event.donations.not_pending.includes(:recurring_donation)
 
-    @stats = {
-      deposited: relation.succeeded_and_not_refunded.sum(:amount),
-    }
-
     if params[:filter] == "refunded"
       relation = relation.refunded
     else
@@ -1406,10 +1411,6 @@ class EventsController < ApplicationController
     @all_donations = relation.order(created_at: :desc)
 
     @donations = Kaminari.paginate_array(@all_donations).page(page).per(per_page)
-  end
-
-  def set_recurring_donations
-    @recurring_donations = @event.recurring_donations.includes(:donations).active.order(created_at: :desc)
   end
 
   def process_hidden_param!(params_hash)

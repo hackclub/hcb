@@ -564,8 +564,8 @@ RSpec.describe EventsController do
 
       expect(response).to have_http_status(:ok)
       page = Nokogiri::HTML5(response.body)
-      expect(page.at_css("turbo-frame#donations_donations_overview")["src"]).to eq(event_donations_path(event, q: "Jane", page: 2))
-      expect(page.at_css("turbo-frame#donations_recurring_donations_overview")["src"]).to eq(event_recurring_donations_path(event))
+      expect(page.at_css("turbo-frame#donations_donations_overview")["src"]).to eq(event_donation_overview_donations_path(event, q: "Jane", page: 2))
+      expect(page.at_css("turbo-frame#donations_recurring_donations_overview")["src"]).to eq(event_donation_overview_recurring_donations_path(event))
     end
   end
 
@@ -717,10 +717,23 @@ RSpec.describe EventsController do
       expect(recurring_donation_rows(response.body).map(&:text)).to contain_exactly(a_string_including("Monthly Donor 2"))
     end
 
-    it "redirects direct visits to the donation overview" do
+    it "honors the paginator's per-page choice" do
+      get(:recurring_donations, params: { event_id: event.slug, per: 3 })
+
+      expect(recurring_donation_rows(response.body).size).to eq(3)
+    end
+
+    it "shows the monthly total on the overview" do
+      get(:donation_overview, params: { event_id: event.slug })
+
+      monthly = Nokogiri::HTML5(response.body).css(".stat").find { |stat| stat.text.include?("Per month") }
+      expect(monthly.at_css(".stat__value").text.strip).to eq(money(30_00))
+    end
+
+    it "redirects direct visits to the donation overview without carrying its page over to past donations" do
       request.headers["Turbo-Frame"] = nil
 
-      get(:recurring_donations, params: { event_id: event.slug })
+      get(:recurring_donations, params: { event_id: event.slug, page: 2 })
 
       expect(response).to redirect_to(event_donation_overview_path(event))
     end

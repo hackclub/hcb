@@ -1076,8 +1076,12 @@ Rails.application.routes.draw do
     get "sub_organizations"
     get "sub_organizations/new", to: "suborganizations#new", as: :new_sub_organization
     get "donations", to: "events#donation_overview", as: :donation_overview
-    get "donations/donation_overview", to: "events#donations", as: :donations
-    get "donations/recurring_donation_overview", to: "events#recurring_donations", as: :recurring_donations
+    # Frames on the donation overview. Don't give these resource-style names:
+    # naming one `recurring_donations` takes the name that
+    # `resources :recurring_donations` below needs, so the monthly donation
+    # form would post to this GET route instead.
+    get "donations/donation_overview", to: "events#donations", as: :donation_overview_donations
+    get "donations/recurring_donation_overview", to: "events#recurring_donations", as: :donation_overview_recurring_donations
     get "activation_flow", to: "events#activation_flow", as: :activation_flow
     post "activate", to: "events#activate", as: :activate
     resources :disbursements, only: [:new, :create]
