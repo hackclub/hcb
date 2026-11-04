@@ -244,7 +244,7 @@
         <%= form_with(model: @wise_transfer, local: true, url: mark_sent_wise_transfer_path(@wise_transfer), method: :post) do |form| %>
           <div class="mb-2">
             <%= form.label :wise_id, "Wise ID / URL", class: "bold mb1" %> <br>
-            <%= form.text_field :wise_id, class: "w-[400px]", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", disabled: @wise_transfer.usd_amount_cents.nil?, onpaste: "var urlPrefix = 'https://wise.com/transactions/activities/by-resource/TRANSFER/'; var clipboardData = event.clipboardData.getData('Text'); clipboardData.startsWith(urlPrefix) ? (event.preventDefault(), event.target.value = clipboardData.substring(urlPrefix.length)) : null" %>
+            <%= form.text_field :wise_id, class: "w-[400px]", placeholder: "https://wise.com/transactions/activities/by-resource/TRANSFER/XXXXXXXX", disabled: @wise_transfer.usd_amount_cents.nil?, data: { controller: "strip-prefix", action: "paste->strip-prefix#paste", strip_prefix_prefix_value: "https://wise.com/transactions/activities/by-resource/TRANSFER/" } %>
           </div>
           <%= form.submit "💸 Mark transfer as sent", disabled: @wise_transfer.usd_amount_cents.nil?, class: "mb-0" %>
         <% end %>
@@ -266,7 +266,7 @@
       </fieldset>
 
     <% else %>
-      <p>This Wise transfer <%= @wise_transfer.failed? ? "" : "is " %><b><%= @wise_transfer.aasm.current_state.to_s.humanize(capitalize: false) %></b><%= @wise_transfer.failed? ? @wise_transfer.return_reason.present? ? " with the following failure reason: #{@wise_transfer.return_reason}" : " for an unknown reason" : "" %>.</p>
+      <p>This Wise transfer <%= @wise_transfer.failed? ? "" : "is " %><b><%= @wise_transfer.aasm.current_state.to_s.humanize(capitalize: false) %></b><%= @wise_transfer.failed? ? @wise_transfer.return_reason.present? ? " with the following failure reason: #{@wise_transfer.return_reason}" : " for an unknown reason" : "" %></p>
 
       <em class="muted">No available actions</em>
     <% end %>

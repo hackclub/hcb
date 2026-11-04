@@ -2,7 +2,7 @@
   "name": "@hackclub/bank",
   "private": true,
   "engines": {
-    "node": "24"
+    "node": ">=24.22.1"
   },
   "dependencies": {
     "@alpinejs/csp": "^3.17.1",
@@ -12,7 +12,6 @@
     "@appsignal/plugin-path-decorator": "^1.0.18",
     "@appsignal/stimulus": "^1.0.20",
     "@babel/core": "^7.29.6",
-    "@babel/preset-env": "^7.28.3",
     "@babel/preset-react": "^7.28.5",
     "@csstools/postcss-sass": "^5.1.1",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
@@ -49,7 +48,6 @@
     "gsap": "^3.14.2",
     "html-to-image": "^1.11.13",
     "intl": "^1.2.5",
-    "js-confetti": "^0.13.1",
     "kbar": "^0.1.0-beta.48",
     "local-time": "^3.0.3",
     "lodash": "^4.18.1",

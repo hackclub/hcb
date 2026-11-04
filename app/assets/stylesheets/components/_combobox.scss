@@ -29,19 +29,44 @@
     padding: 0;
     margin: 0;
     width: 100%;
+    min-width: 0;
     max-width: none;
   }
 
   // Scoped, so it outranks the `.input` rule `@extend` splices this class into
   // further down the sheet. The wrapper alone decides how wide the control is.
   & .combobox__field {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
     max-width: none;
+  }
+
+  // Outranks kbar's `!important` font reset on everything inside a listbox.
+  & .combobox__badge {
+    font-family: theme('fontFamily.mono') !important;
   }
 }
 
 .combobox__field {
   @extend .input;
-  padding: 0 0.25rem !important;
+  padding: 0
+    calc(var(--combobox-handle-offset-right) + var(--combobox-handle-width)) 0
+    0.25rem !important;
+}
+
+.combobox__badge {
+  @apply text-xs rounded;
+  background-color: rgba($muted, 0.2);
+  border: 0;
+  color: $muted;
+  flex-shrink: 0;
+  padding: 0.0625rem 0.375rem;
+  white-space: nowrap;
+
+  &:empty {
+    display: none;
+  }
 }
 
 .combobox__handle {
@@ -91,7 +116,7 @@
   @apply bg-gray-100 dark:bg-neutral-800;
   padding: var(--combobox-option-padding);
   user-select: none;
-  overflow: hidden;
+  overflow-wrap: anywhere;
   margin-top: 0;
   cursor: pointer;
 

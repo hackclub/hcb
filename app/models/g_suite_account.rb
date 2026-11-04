@@ -66,6 +66,10 @@ class GSuiteAccount < ApplicationRecord
     suspended_at.present?
   end
 
+  def accepted?
+    accepted_at.present?
+  end
+
   def under_review?
     accepted_at.nil?
   end

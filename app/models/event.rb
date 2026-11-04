@@ -30,6 +30,7 @@
 #  public_message                               :text
 #  public_reimbursement_page_enabled            :boolean          default(FALSE), not null
 #  public_reimbursement_page_message            :text
+#  reimbursement_reviewer_selection             :string           default("disabled"), not null
 #  reimbursements_require_organizer_peer_review :boolean          default(FALSE), not null
 #  risk_level                                   :integer
 #  short_name                                   :string
@@ -120,7 +121,6 @@ class Event < ApplicationRecord
   scope :ysws, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::YSWS }) }
   scope :hackathon, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::HACKATHON }) }
   scope :organized_by_hack_clubbers, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }) }
-  scope :not_organized_by_hack_clubbers, -> { includes(:event_tags).where.not(event_tags: { name: EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS }).or(includes(:event_tags).where(event_tags: { name: nil })) }
   scope :organized_by_teenagers, -> { includes(:event_tags).where(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }) }
   scope :not_organized_by_teenagers, -> { includes(:event_tags).where.not(event_tags: { name: [EventTag::Tags::ORGANIZED_BY_TEENAGERS, EventTag::Tags::ORGANIZED_BY_HACK_CLUBBERS] }).or(includes(:event_tags).where(event_tags: { name: nil })) }
   scope :robotics_team, -> { includes(:event_tags).where(event_tags: { name: EventTag::Tags::ROBOTICS_TEAM }) }
@@ -147,11 +147,6 @@ class Event < ApplicationRecord
       # unrecognized category, return nothing, though this should never make it this far since values: constraint
       none
     end
-  }
-
-  scope :flag_enabled, ->(flag) {
-    joins("INNER JOIN flipper_gates ON CONCAT('Event;', events.id) = flipper_gates.value")
-      .where("flipper_gates.feature_key = ? AND flipper_gates.key = ?", flag, "actors")
   }
 
   # Following the convention of Module#ancestors https://apidock.com/ruby/Module/ancestors
@@ -327,6 +322,9 @@ class Event < ApplicationRecord
   scope :not_demo_mode, -> { where(demo_mode: false) }
   scope :filter_demo_mode, ->(demo_mode) { demo_mode.nil? ? all : where(demo_mode:) }
   scope :financially_frozen, -> { where(financially_frozen: true) }
+  # Organizations anyone can send an HCB transfer to, listed in the public
+  # directory or not. Keep in sync with `#accepts_public_transfers?`.
+  scope :accepting_public_transfers, -> { transparent.not_hidden.not_demo_mode.where(financially_frozen: false) }
 
   before_validation :enforce_transparency_eligibility
 
@@ -542,6 +540,8 @@ class Event < ApplicationRecord
 
   include HasTasks
 
+  include Event::HasReimbursementReviewers
+
   validate :point_of_contact_is_admin
 
   include ::UserService::CanOpenDemoMode
@@ -657,10 +657,6 @@ class Event < ApplicationRecord
     # desc
   end
 
-  def disbursement_dropdown_description
-    "#{name} (#{ApplicationController.helpers.render_money balance_available})"
-  end
-
   # displayed on /negative_events
   def self.negatives
     select { |event| event.balance_v2_cents < 0 }
@@ -685,8 +681,10 @@ class Event < ApplicationRecord
     completed_t + pending_t
   end
 
+  # Repayments pay an expense back, so they come off both totals instead of
+  # counting as revenue, matching Ledger#revenue_cents and #expenses_cents.
   def total_raised
-    settled_incoming_balance_cents + fronted_incoming_balance_v2_cents
+    settled_incoming_balance_cents + fronted_incoming_balance_v2_cents - ledger.repayments_received_cents
   end
 
   def raised_ytd_cents
@@ -699,7 +697,7 @@ class Event < ApplicationRecord
   end
 
   def total_spent_cents
-    (settled_outgoing_balance_cents + pending_outgoing_balance_v2_cents) * -1
+    (settled_outgoing_balance_cents + pending_outgoing_balance_v2_cents) * -1 - ledger.repayments_received_cents
   end
 
   def balance_v2_cents(start_date: nil, end_date: nil, legacy: false)
@@ -748,10 +746,6 @@ class Event < ApplicationRecord
     pts = pts.where("date <= ?", end_date) if end_date
 
     sum_fronted_amount(pts)
-  end
-
-  def pending_balance_v2_cents(start_date: nil, end_date: nil)
-    pending_incoming_balance_v2_cents(start_date:, end_date:) + pending_outgoing_balance_v2_cents(start_date:, end_date:)
   end
 
   def pending_incoming_balance_v2_cents(start_date: nil, end_date: nil)
@@ -822,6 +816,11 @@ class Event < ApplicationRecord
     hidden_at.present?
   end
 
+  # Keep in sync with the `accepting_public_transfers` scope.
+  def accepts_public_transfers?
+    is_public? && !hidden? && !demo_mode? && !financially_frozen?
+  end
+
   def filter_data
     {
       exists: true,
@@ -835,17 +834,10 @@ class Event < ApplicationRecord
     last_fee_processed_at.nil? || last_fee_processed_at <= MIN_WAITING_TIME_BETWEEN_FEES.ago
   end
 
-  def total_fees_v2_cents
-    @total_fees_v2_cents ||= fees.sum(:amount_cents_as_decimal).ceil
-  end
+  def total_fees_v2_cents(start_date: nil, end_date: nil)
+    return @total_fees_v2_cents ||= fees.sum(:amount_cents_as_decimal).ceil unless start_date || end_date
 
-  # Fiscal sponsorship fees charged by the fee engine, at whatever rate the
-  # organization was on at the time. Manual fees (e.g. wire fees) are excluded.
-  def revenue_fees_v2_cents(start_date: nil, end_date: nil)
-    revenue_fees = fees.revenue
-    revenue_fees = revenue_fees.where(created_at: start_date..end_date) if start_date || end_date
-
-    revenue_fees.sum(:amount_cents_as_decimal).ceil
+    fees.where(created_at: start_date..end_date).sum(:amount_cents_as_decimal).ceil
   end
 
   def increase_account_number_id
@@ -944,10 +936,6 @@ class Event < ApplicationRecord
 
   def airtable_record
     ApplicationsTable.all(filter: "{HCB ID} = '#{id}'").first
-  end
-
-  def default_stripe_card_personalization_design
-    stripe_card_personalization_designs.where("stripe_name like ?", "#{name} Black Card%").order(created_at: :desc).first
   end
 
   def config
@@ -1085,11 +1073,7 @@ class Event < ApplicationRecord
     scoped_tags.where(parent_event_id: parent_id)
   end
 
-  # `admin` is required rather than defaulted, so a caller cannot silently
-  # render a different label than the search endpoint returns.
-  def to_combobox_display(admin:)
-    return "#{name} (ID: #{id})" if admin
-
+  def to_combobox_display
     name
   end
 
