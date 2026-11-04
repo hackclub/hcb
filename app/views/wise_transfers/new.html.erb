@@ -28,9 +28,9 @@
 <%= form_with(
       model: [@event, @wise_transfer],
       local: true,
-      data: { controller: "wise-quote", wise_quote_currency_value: @wise_transfer.currency },
+      data: { controller: "wise-quote" },
       html: {
-        "x-data": { currency: @wise_transfer.currency, account_type: nil, use_same_email_for_interac: false, email: nil }.to_json
+        "x-data": "wise_form(#{{ currency: @wise_transfer.currency }.to_json})"
       }
     ) do |form| %>
 
@@ -64,7 +64,7 @@
       <div class="field">
         <div class="flex items-center g1">
           <div style="width: 72px">
-            <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { required: true, disabled: true }, { "@change" => "currency = $event.target.value", data: { action: "wise-quote#setCurrency" } } %>
+            <%= form.select :currency, WiseTransfer::AVAILABLE_CURRENCIES, { required: true, disabled: true }, { "@change" => "set_currency($event.target.value)", data: { wise_quote_target: "currency", action: "wise-quote#refresh" } } %>
           </div>
           <div class="flex flex-col flex-grow">
             <%= form.number_field :amount,
@@ -72,7 +72,7 @@
               disabled: disabled || @event.balance <= 0,
               step: 0.01,
               required: true,
-              data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad change->wise-quote#setAmount" } %>
+              data: { controller: "truncate-decimal", wise_quote_target: "amount", action: "truncate-decimal#truncate blur->truncate-decimal#pad change->wise-quote#refresh" } %>
           </div>
         </div>
         <% @wise_transfer.errors.messages_for(:amount).each do |message| %>
