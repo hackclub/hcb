@@ -51,7 +51,7 @@
           <% end %>
         </div>
       <% else %>
-        <%= link_to auth_users_path, class: "dock__item user-menu-trigger max-w-full", data: { remembered_organizations_target: "signIn" } do %>
+        <%= link_to auth_users_path(return_to: (request.original_url if @event && request.get?)), class: "dock__item user-menu-trigger max-w-full", data: { remembered_organizations_target: "signIn" } do %>
           <%= inline_icon "door-enter", size: 28 %>
           <div class="text-left flex-1 truncate block" style="flex:1;overflow: hidden;">
             <span class="truncate">Sign in</span>

@@ -63,5 +63,14 @@ RSpec.describe "remembered organizations", type: :request do
       expect(data_value("current-event")).to eq(event.public_id)
       expect(data_value("clear")).to be_nil
     end
+
+    it "returns to the organization after signing in" do
+      event = create(:event, is_public: true)
+
+      get event_path(event)
+
+      sign_in_link = Nokogiri::HTML(response.body).at_css("[data-remembered-organizations-target='signIn']")
+      expect(sign_in_link["href"]).to eq(auth_users_path(return_to: event_url(event)))
+    end
   end
 end
