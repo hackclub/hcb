@@ -96,7 +96,7 @@ RSpec.describe "Transaction exports", type: :request do
       it "sends a signed-out requester to the email form when no email is given" do
         get "/exports/#{event.slug}.csv"
 
-        expect(response).to redirect_to(collect_email_exports_path(file_extension: "csv", event_slug: event.slug))
+        expect(response).to redirect_to(collect_email_exports_path(file_extension: "csv", event_slug: event.slug, source: "transactions"))
         expect(Export.count).to eq(0)
       end
     end

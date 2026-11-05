@@ -2,7 +2,9 @@
 
 class ExportsController < ApplicationController
   include SetEvent
-  before_action :set_event, only: [:transactions, :reimbursements]
+  include SetLedgerFilters
+  before_action :set_event, only: [:transactions, :reimbursements, :ledger]
+  before_action :set_ledger_filters, only: [:ledger]
   skip_before_action :signed_in_user
   skip_after_action :verify_authorized, only: :collect_email
 
@@ -44,32 +46,7 @@ class ExportsController < ApplicationController
                     )
                   end
 
-        if @export.async?
-          # A signed-in user's export is always emailed to them. Only a
-          # signed-out requester (which `authorize` above limits to public
-          # orgs) may supply an address via `params[:email]`. Honoring the
-          # param for signed-in users would let a forged cross-site GET mail a
-          # private ledger to an attacker-chosen address.
-          @export.requested_by ||= User.find_or_create_by(email: params[:email]) if params[:email].present?
-
-          if @export.requested_by.nil?
-            redirect_to collect_email_exports_path(file_extension:, event_slug: params[:event]) and return
-          end
-
-          @export.save!
-
-          ExportJob.perform_later(export_id: @export.id)
-
-          flash[:success] = signed_in? ? "This export is too big, so we'll send you an email when it's ready." : "Your export will arrive in a few moments."
-
-          redirect_back fallback_location: @event and return
-        else
-          @export.save!
-          headers["Content-Type"] = @export.mime_type
-          headers["Content-disposition"] = "attachment; filename=#{@export.filename}"
-          response.status = 200
-          self.response_body = @export.content
-        end
+        deliver_export(@export, file_extension:)
       end
 
       format.pdf do
@@ -109,6 +86,29 @@ class ExportsController < ApplicationController
     end
   end
 
+  # Exports the new ledger. Unlike #transactions, which always exported the
+  # whole organization no matter what the page was showing, this exports exactly
+  # what the ledger page is showing: the query carrying the user's filters is
+  # what generates the file.
+  def ledger
+    authorize @event, :show?
+
+    respond_to do |format|
+      format.any(*::Ledger::Query::Export::FORMATS) do
+        @export = ledger_query.export(
+          as: params[:format],
+          ledgers: @ledgers,
+          event_id: @event.id,
+          requested_by: current_user,
+          public_only: !organizer_signed_in?,
+          filtered: ledger_filtered?
+        )
+
+        deliver_export(@export, file_extension: params[:format])
+      end
+    end
+  end
+
   def reimbursements
     authorize @event, :reimbursements?
 
@@ -132,9 +132,48 @@ class ExportsController < ApplicationController
     end
     @event_slug = params[:event_slug]
     @file_extension = params[:file_extension]
+    # No filters travel through here: only signed-out readers ever land on this
+    # page (a signed-in user always has an address to mail the export to), and
+    # signed-out readers can't filter a ledger in the first place.
+    @export_path = if params[:source] == "ledger"
+                     ledger_exports_path(event: @event_slug, format: @file_extension)
+                   else
+                     transactions_exports_path(event: @event_slug, format: @file_extension)
+                   end
   end
 
   private
+
+  # Serves an export inline, or — when it's too big to generate in a request —
+  # queues it up to be emailed, collecting an address first if we don't have one.
+  def deliver_export(export, file_extension:)
+    if export.async?
+      # A signed-in user's export is always emailed to them. Only a
+      # signed-out requester (which `authorize` in the caller limits to public
+      # orgs) may supply an address via `params[:email]`. Honoring the
+      # param for signed-in users would let a forged cross-site GET mail a
+      # private ledger to an attacker-chosen address.
+      export.requested_by ||= User.find_or_create_by(email: params[:email]) if params[:email].present?
+
+      if export.requested_by.nil?
+        redirect_to collect_email_exports_path(file_extension:, event_slug: params[:event], source: action_name) and return
+      end
+
+      export.save!
+
+      ExportJob.perform_later(export_id: export.id)
+
+      flash[:success] = signed_in? ? "This export is too big, so we'll send you an email when it's ready." : "Your export will arrive in a few moments."
+
+      redirect_back fallback_location: @event and return
+    end
+
+    export.save!
+    headers["Content-Type"] = export.mime_type
+    headers["Content-disposition"] = "attachment; filename=#{export.filename}"
+    response.status = 200
+    self.response_body = export.content
+  end
 
   # Sets `@start` and `@end`, or renders a 400 when the requested range is
   # invalid. Callers must `return if performed?`.

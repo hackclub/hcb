@@ -12,6 +12,8 @@ module SetLedgerFilters
   ].freeze
 
   included do
+    helper_method :ledger_filtered?, :ledger_filter_params
+
     private
 
     # Filtering is what makes a transparent organization expensive to read
@@ -144,6 +146,19 @@ module SetLedgerFilters
         ]
       }
       Ledger::Query.new({ "$and": query })
+    end
+
+    # Whether the ledger being looked at is narrowed at all. `q` counts: it
+    # narrows the ledger just as much as the filter menu does, even though it
+    # renders outside it.
+    def ledger_filtered?
+      params[:q].present? || FILTER_PARAMS.any? { |name| params[name].present? }
+    end
+
+    # The filters, as params, for handing to another request — an export link,
+    # most of all, which has to reproduce this exact ledger.
+    def ledger_filter_params
+      params.permit(:q, *FILTER_PARAMS).to_h.compact_blank.symbolize_keys
     end
 
   end
