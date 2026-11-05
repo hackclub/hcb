@@ -19,7 +19,13 @@
       payout method.
     </p>
   <% else %>
-    <% if @legal_entity.default_payout_method.present? %>
+    <% if @legal_entity.default_payout_method.present? && !@legal_entity.default_payout_method_ready? %>
+      <% attention = @legal_entity.default_payout_method.incomplete_details || @legal_entity.default_payout_method.unsupported_details %>
+      <p>
+        <span class="bold warning">Action needed:</span> <%= attention[:reason] %>
+        Payments will be held until your default payout method is updated below.
+      </p>
+    <% elsif @legal_entity.default_payout_method.present? %>
       <p>
         You're all set! <%= @legal_entity.person? ? "You" : (@legal_entity.name.presence || "Business") %>
         can now receive payments from any organization on HCB.
