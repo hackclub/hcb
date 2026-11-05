@@ -10,7 +10,7 @@ Rails.application.config.assets.version = "1.0"
 # Add Yarn node_modules folder to the asset load path.
 Rails.application.config.assets.paths << Rails.root.join("node_modules")
 
-# (msw) Load darkmode seperately so we can prevent flashing the user with a
+# (msw) Load darkmode separately so we can prevent flashing the user with a
 # bright screen onload
 Rails.application.config.assets.precompile += %w(dark.js admin.js)
 

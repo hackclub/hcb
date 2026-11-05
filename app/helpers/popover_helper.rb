@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 module PopoverHelper
-  def popovers_enabled?
-    current_user && Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)
-  end
-
   # Builds the data attributes hash for triggering the shared popover modal.
   #
   # Usage in views:
@@ -41,7 +37,7 @@ module PopoverHelper
     # item show page. Everyone else gets the HCB code popover instead — otherwise
     # the injected frame id (lit_…) wouldn't match the HCB page's frame (txn_…) and
     # the popover would render empty.
-    if policy(item).show?
+    if policy(item).show? && auditor_signed_in?
       popover_data(
         title: item.pretty_title,
         src: item.popover_path,
@@ -50,7 +46,12 @@ module PopoverHelper
         external_link: ledger_item_path(item)
       )
     else
-      hcb_code_popover_data(item.hcb_code)
+      hcb_code = item.hcb_code
+
+      # fall back to links for items that don't have an HCB code
+      return { turbo: false } unless hcb_code
+
+      hcb_code_popover_data(hcb_code)
     end
   end
 

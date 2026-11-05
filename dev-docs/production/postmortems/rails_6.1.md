@@ -13,7 +13,7 @@ What I did to test that everything worked before merge:
 	- Test signin (ie. sessions created on 6 should work after upgrade)
 
 Deployment:
-I watched the logs on deployment, and while the build succeeded, a couple things went wrong in production. Here’s the list of things I checked and fixed
+I watched the logs on deployment, and while the build succeeded, a couple of things went wrong in production. Here’s the list of things I checked and fixed
 - Migrations ran fine (hooray!)
 - Queued jobs & watched logs to ensure regular jobs were sending fine (some were, but emails were failing)
 - Logs showed Active Storage now expected the “image_processing” gem
@@ -43,14 +43,14 @@ Outcomes / downtimes:
 - During our concurrent deploys we maxed out our PG connections and failed to respond to a single Stripe Issuing webhook. Our authorization defaults to reject transactions if we don't respond to Stripe within 2 seconds, so a user's HCB card failed their charge. I'm reaching out to the affected user today.
 
 Takeaways:
-- Most of the issues from the upgrade were things that weren’t caught in development or testing. Previously that sort of thing would be caught in staging apps, but with [those turned off](https://status.heroku.com/incidents/2413) we need to make more of an effort of checking in prod before deployment.
+- Most of the issues from the upgrade were things that weren’t caught in development or testing. Previously that sort of thing would be caught in staging apps, but with [those turned off](https://status.heroku.com/incidents/2413) we need to make more of an effort to check in prod before deployment.
 - Dual booting rails might be good for this sort of thing– it’d make rolling back much easier b/c it’d just be an ENV variable switch.
-- Checking the rails upgrade guide isn't enough to catch everything– each gem has their own changes & potential breaking changes.
+- Checking the rails upgrade guide isn't enough to catch everything– each gem has its own changes & potential breaking changes.
 - More of a heads up to the team that I'm going to be rolling out a large deploy– most of these issues could have been fixed in parallel & it would have reduced our downtime.
 
 Leftover tasks:
 - I removed heroku-deflater in the moment while trying to restore production, but didn’t search for a replacement. It’d be nice to get something else for serving gz assets.
 - After a week or two (once we're sure 6.1 is running and stable), switch the non-reversible framework defaults [here](https://github.com/hackclub/hcb/blob/5312e0dc3886da0144a3024f72c4e18976c33b6f/config/initializers/new_framework_defaults_6_1.rb#L22-L32)
-- This PR bumped rubocop, which changed a lot of it's checks. Formatting debt was dumped in here: https://github.com/hackclub/hcb/blob/5312e0dc3886da0144a3024f72c4e18976c33b6f/.rubocop_todo.yml
+- This PR bumped rubocop, which changed a lot of its checks. Formatting debt was dumped in here: https://github.com/hackclub/hcb/blob/5312e0dc3886da0144a3024f72c4e18976c33b6f/.rubocop_todo.yml
 
 \- [@maxwofford](https://github.com/maxwofford)

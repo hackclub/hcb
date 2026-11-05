@@ -4,23 +4,24 @@
 #
 # Table name: payroll_positions
 #
-#  id            :bigint           not null, primary key
-#  aasm_state    :string           not null
-#  currency      :string           default("USD"), not null
-#  description   :text             not null
-#  end_date      :date             not null
-#  onboarded_at  :datetime
-#  onboarding_at :datetime
-#  rate_cents    :integer          default(0), not null
-#  rate_unit     :string           default("hour"), not null
-#  rejected_at   :datetime
-#  start_date    :date             not null
-#  terminated_at :datetime
-#  title         :text             not null
-#  created_at    :datetime         not null
-#  updated_at    :datetime         not null
-#  manager_id    :bigint
-#  payee_id      :bigint           not null
+#  id                          :bigint           not null, primary key
+#  aasm_state                  :string           not null
+#  combine_contract_attachment :boolean          default(TRUE), not null
+#  currency                    :string           default("USD"), not null
+#  description                 :text             not null
+#  end_date                    :date             not null
+#  onboarded_at                :datetime
+#  onboarding_at               :datetime
+#  rate_cents                  :integer          default(0), not null
+#  rate_unit                   :string           default("hour"), not null
+#  rejected_at                 :datetime
+#  start_date                  :date             not null
+#  terminated_at               :datetime
+#  title                       :text             not null
+#  created_at                  :datetime         not null
+#  updated_at                  :datetime         not null
+#  manager_id                  :bigint
+#  payee_id                    :bigint           not null
 #
 # Indexes
 #
@@ -46,6 +47,8 @@ module Payroll
     delegate :display_name, to: :payee, prefix: true
 
     pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }, using: { tsearch: { prefix: true, dictionary: "english" } }
+    # For viewers who can't see the payee's email (see `EventsController#contractors`).
+    pg_search_scope :public_search_recipient, associated_against: { payee: [:display_name] }, using: { tsearch: { prefix: true, dictionary: "english" } }
 
     has_many :invoices, class_name: "Payroll::Invoice", foreign_key: "payroll_position_id", inverse_of: :payroll_position, dependent: :destroy
     has_many :payments, through: :invoices
@@ -86,6 +89,8 @@ module Payroll
     ONBOARDING_REMINDER_DAYS = [1, 2, 7, 14].freeze
     ONBOARDING_REMINDER_INTERVAL_DAYS = 14
 
+    EXPIRING_SOON_NOTICE = 7.days
+
     after_create_commit do
       Payroll::Position::ExpireJob.set(wait_until: end_date.end_of_day).perform_later(self)
     end
@@ -99,12 +104,18 @@ module Payroll
     validate :manager_is_event_manager
 
     aasm timestamps: true do
-      state :under_review, initial: true
+      state :draft, initial: true
+      state :under_review
       state :onboarding
       state :onboarded
       state :expired
       state :rejected
       state :terminated
+
+      event :mark_under_review do
+        transitions from: :draft, to: :under_review, if: -> { contract_signed_by?(:organizer) }
+        transitions from: :onboarding, to: :under_review
+      end
 
       event :mark_onboarding do
         transitions from: :under_review, to: :onboarding
@@ -126,10 +137,14 @@ module Payroll
       end
 
       event :mark_terminated do
-        transitions from: :onboarded, to: :terminated
+        transitions from: [:draft, :under_review, :onboarding, :onboarded], to: :terminated
 
         after do
-          Payroll::PositionMailer.with(position: self).terminated.deliver_later
+          contract.mark_voided! if contract&.may_mark_voided?
+
+          # If it's still under review or draft, we haven't sent any emails to the contractor yet,
+          # so we won't tell them that they've been "terminated"
+          Payroll::PositionMailer.with(position: self).terminated.deliver_later unless [:under_review, :draft].include?(aasm.from_state)
         end
       end
     end
@@ -159,17 +174,19 @@ module Payroll
       end
     end
 
-    # Renders the contract window like "Jan–Jun 2026", collapsing to a single
-    # month ("Apr 2026") or spanning years ("Dec 2025–Feb 2026") when needed.
+    # Renders the contract window like "Jan 1 – Jun 30, 2026", collapsing within
+    # a single month ("Apr 1–28, 2026") or spanning years
+    # ("Dec 1, 2025 – Feb 28, 2026") when needed.
     def period_label
       return if start_date.nil?
+      return start_date.strftime("%b %-d, %Y") if end_date.nil? || start_date == end_date
 
-      return start_date.strftime("%b %Y") if end_date.nil? || (start_date.month == end_date.month && start_date.year == end_date.year)
-
-      if start_date.year == end_date.year
-        "#{start_date.strftime("%b")}–#{end_date.strftime("%b %Y")}"
+      if start_date.year != end_date.year
+        "#{start_date.strftime("%b %-d, %Y")} – #{end_date.strftime("%b %-d, %Y")}"
+      elsif start_date.month != end_date.month
+        "#{start_date.strftime("%b %-d")} – #{end_date.strftime("%b %-d, %Y")}"
       else
-        "#{start_date.strftime("%b %Y")}–#{end_date.strftime("%b %Y")}"
+        "#{start_date.strftime("%b %-d")}–#{end_date.strftime("%-d, %Y")}"
       end
     end
 
@@ -191,7 +208,7 @@ module Payroll
           owner: :hcb,
           label: "HCB team review",
           hint: "The contractor is emailed once HCB signs",
-          complete: !under_review? && !rejected?
+          complete: contract_signed_by?(:hcb)
         },
         {
           key: :tax_form,
@@ -260,6 +277,11 @@ module Payroll
     def on_contract_party_signed(party)
       refresh_onboarding_state!
 
+      # HCB reviews only after organizer signs
+      if party.organizer?
+        mark_under_review!
+      end
+
       # The contractor is only invited to sign once HCB has signed
       if party.hcb?
         # HCB signing is the "reviewed by HCB operations" step, so begin onboarding.
@@ -269,6 +291,7 @@ module Payroll
         return if contractor.nil? || contractor.signed?
 
         notify_contractor_of_onboarding(contractor)
+        schedule_onboarding_reminders
       end
     end
 
@@ -283,13 +306,14 @@ module Payroll
           include_videos: false,
           external_template_id: Contract::PayrollPosition::DOCUSEAL_TEMPLATE_ID,
           prefills: {
-            "payee_name"  => payee.display_name,
-            "title"       => title,
-            "description" => description,
-            "rate"        => rate_label,
-            "start_date"  => start_date.to_fs(:long),
-            "end_date"    => end_date.to_fs(:long),
-            "documents"   => (file.attached? ? [{ "name" => file.blob.filename.to_s, "file" => Rails.application.routes.url_helpers.rails_blob_url(file) }] : nil)
+            "payee_name"        => payee.display_name,
+            "title"             => title,
+            "description"       => description,
+            "rate"              => rate_label,
+            "start_date"        => start_date.to_fs(:long),
+            "end_date"          => end_date.to_fs(:long),
+            "documents"         => (file.attached? ? [{ "name" => file.blob.filename.to_s, "file" => Rails.application.routes.url_helpers.rails_blob_url(file) }] : nil),
+            "combine_documents" => combine_contract_attachment
           }.compact,
           reissue_of:
         )
@@ -333,6 +357,11 @@ module Payroll
       false
     end
 
+    # Contractor reminders are scheduled once HCB signs instead
+    def contract_remind_when_reissued
+      false
+    end
+
     def contract_notify_hcb?
       false
     end
@@ -343,23 +372,22 @@ module Payroll
       Payroll::PositionMailer.with(position: self, party:).onboarding.deliver_later
     end
 
-    private
-
     def notify_contractor_of_onboarding(contractor)
       contractor.notify
-      schedule_onboarding_reminders
     rescue => e
       Rails.error.report(e, context: { payroll_position_id: id })
     end
+
+    def contract_signed_by?(role)
+      contract&.party(role)&.signed?
+    end
+
+    private
 
     def schedule_onboarding_reminders
       onboarding_reminder_days.each do |days|
         Payroll::Position::OnboardingReminderJob.set(wait: days.days).perform_later(self)
       end
-    end
-
-    def contract_signed_by?(role)
-      contracts.not_voided.any? { |contract| contract.party(role)&.signed? }
     end
 
     def contractor_user

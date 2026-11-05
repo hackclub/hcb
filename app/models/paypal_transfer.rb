@@ -32,6 +32,9 @@ class PaypalTransfer < ApplicationRecord
 
   include PgSearch::Model
   pg_search_scope :search_recipient, against: [:recipient_name, :recipient_email]
+  # For viewers who can't see the recipient's email (see
+  # `EventsController#transfers`).
+  pg_search_scope :public_search_recipient, against: [:recipient_name]
 
   include AASM
   include Payoutable

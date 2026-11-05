@@ -58,7 +58,7 @@ class SudoModeHandler
       return false
     end
 
-    service = ProcessLoginService.new(login:)
+    service = ProcessLoginService.new(login:, ip_address: request.remote_ip, user_agent: request.user_agent)
 
     ok =
       case sudo_params.submit_method

@@ -277,10 +277,57 @@ RSpec.describe User, type: :model do
   end
 
   describe "#lock!" do
+    let(:application) { Doorkeeper::Application.create!(name: "Test App", redirect_uri: "https://example.com/callback") }
+
     it "locks" do
       user = create(:user, locked_at: nil)
       user.lock!
       expect(user).to be_locked
+    end
+
+    it "revokes every API token, including expired ones that still hold a refresh token" do
+      user = create(:user)
+      live = create(:api_token, user:, application:, use_refresh_token: true)
+      expired = create(:api_token, user:, application:, use_refresh_token: true, expires_in: 1, created_at: 3.hours.ago)
+      personal = create(:api_token, user:, expires_in: nil)
+
+      user.lock!
+
+      expect([live, expired, personal].each(&:reload)).to all(be_revoked)
+    end
+
+    it "revokes outstanding authorization codes and device codes" do
+      user = create(:user)
+      grant = Doorkeeper::AccessGrant.create!(application:, resource_owner_id: user.id, expires_in: 600, redirect_uri: application.redirect_uri, scopes: "read")
+      device_grant = Doorkeeper::DeviceAuthorizationGrant::DeviceGrant.create!(application:, resource_owner_id: user.id, expires_in: 300, scopes: "read")
+
+      user.lock!
+
+      expect(grant.reload).to be_revoked
+      expect(Doorkeeper::DeviceAuthorizationGrant::DeviceGrant.exists?(device_grant.id)).to be(false)
+    end
+
+    it "freezes every active card and leaves frozen and canceled ones alone" do
+      user = create(:user)
+      cardholder = create(:stripe_cardholder, user:)
+      active_cards = create_list(:stripe_card, 2, :with_stripe_id, stripe_cardholder: cardholder, initially_activated: true)
+      frozen_card = create(:stripe_card, :with_stripe_id, stripe_cardholder: cardholder, stripe_status: "inactive", initially_activated: true)
+      canceled_card = create(:stripe_card, :with_stripe_id, stripe_cardholder: cardholder, stripe_status: "canceled")
+      allow(User).to receive(:system_user).and_return(create(:user, email: User::SYSTEM_USER_EMAIL))
+
+      active_cards.each do |card|
+        expect(StripeService::Issuing::Card).to receive(:update).with(card.stripe_id, status: :inactive)
+        allow(Stripe::Issuing::Card).to receive(:retrieve).with(id: card.stripe_id).and_return(
+          Stripe::Issuing::Card.construct_from(id: card.stripe_id, status: "inactive", brand: "Visa", exp_month: 2, exp_year: 2030, last4: card.last4, type: "virtual", shipping: nil, spending_controls: { spending_limits: [] })
+        )
+      end
+
+      user.lock!
+
+      expect(active_cards.each(&:reload)).to all(be_frozen)
+      expect(active_cards.map(&:last_frozen_by)).to all(eq(User.system_user))
+      expect(frozen_card.reload.last_frozen_by).to be_nil
+      expect(canceled_card.reload).to be_canceled
     end
   end
 
@@ -454,6 +501,59 @@ RSpec.describe User, type: :model do
       cardholder.reload
 
       expect(cardholder.stripe_phone_number).to eq("18556254225")
+    end
+
+    it "does not send a phone number outside +1/+44 to stripe even when verified" do
+      user = create(:user, phone_number: "+919876543210", phone_number_verified: false, email: "test@example.com")
+      cardholder = create(:stripe_cardholder, user:, stripe_email: "test@example.com")
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update).with(cardholder.stripe_id, hash_not_including(:phone_number))
+
+      user.update!(phone_number_verified: true)
+      cardholder.reload
+
+      expect(cardholder.stripe_phone_number).to be_nil
+    end
+
+    it "clears a synced US number once the verified number is no longer on +1/+44" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: false, email: "test@example.com")
+      cardholder = create(:stripe_cardholder, user:, stripe_phone_number: "18556254225", stripe_email: "test@example.com")
+      user.update_column(:phone_number, "+919876543210")
+
+      expect(StripeService::Issuing::Cardholder).to receive(:update).with(cardholder.stripe_id, hash_including(phone_number: ""))
+
+      user.update!(phone_number_verified: true)
+      cardholder.reload
+
+      expect(cardholder.stripe_phone_number).to be_nil
+    end
+  end
+
+  describe "#phone_number_for_stripe" do
+    it "returns the phone number when it is verified and on a supported country code" do
+      user = create(:user, phone_number: "+18556254225")
+      user.update_column(:phone_number_verified, true)
+
+      expect(user.phone_number_for_stripe).to eq("18556254225")
+    end
+
+    it "returns nil when the phone number is not verified" do
+      user = create(:user, phone_number: "+18556254225", phone_number_verified: false)
+
+      expect(user.phone_number_for_stripe).to be_nil
+    end
+
+    it "returns nil when the phone number is outside +1/+44" do
+      user = create(:user, phone_number: "+919876543210")
+      user.update_column(:phone_number_verified, true)
+
+      expect(user.phone_number_for_stripe).to be_nil
+    end
+
+    it "returns nil when there is no phone number" do
+      user = create(:user, phone_number: nil, phone_number_verified: true)
+
+      expect(user.phone_number_for_stripe).to be_nil
     end
   end
 

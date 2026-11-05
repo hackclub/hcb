@@ -1,3 +1,5 @@
+<%# locals: () %>
+
 <%= form_with(model: @report, local: true) do |form| %>
   <%= form.label :report_name, "Report name" %>
   <%= form.text_field :report_name, placeholder: "Chicago Trip Expenses", required: true %>
