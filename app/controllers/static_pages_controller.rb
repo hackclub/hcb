@@ -110,7 +110,7 @@ class StaticPagesController < ApplicationController
           "View recipient's payment details": :manager,
         },
         "Account & routing numbers": {
-          "View the organization's account & routing numbers": :member
+          "View the organization's account & routing numbers": :manager
         },
         "HCB transfers": {
           "Create an HCB Transfer": :manager,
@@ -162,7 +162,7 @@ class StaticPagesController < ApplicationController
         "View documents": :reader
       },
       "Settings": {
-        "View settings": :member,
+        "View settings": :reader,
         "Edit settings": :manager,
       }
     }
