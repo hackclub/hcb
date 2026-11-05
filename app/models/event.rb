@@ -169,7 +169,7 @@ class Event < ApplicationRecord
   end
 
   def descendant_ids
-    Event.connection.execute(<<-SQL).map { |row| row["id"] }
+    Event.connection.select_values(<<-SQL)
       WITH RECURSIVE child_events AS (
         SELECT id, parent_id
         FROM events
@@ -205,7 +205,7 @@ class Event < ApplicationRecord
 
     roots = Event.sanitize_sql_array(["e.id = ANY(ARRAY[?]::bigint[])", root_ids])
 
-    Event.connection.execute(<<-SQL).map { |row| row["id"] }
+    Event.connection.select_values(<<-SQL)
       WITH RECURSIVE tree AS (
         SELECT e.id FROM events e WHERE #{roots}
         UNION
@@ -274,7 +274,7 @@ class Event < ApplicationRecord
       end
     transparent = "(e.is_public AND e.hidden_at IS NULL)"
 
-    Event.connection.execute(<<-SQL).map { |row| row["id"] }
+    Event.connection.select_values(<<-SQL)
       WITH RECURSIVE child_events AS (
         SELECT e.id, e.parent_id, #{organized} AS unlocked
         FROM events e

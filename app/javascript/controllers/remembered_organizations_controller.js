@@ -3,9 +3,22 @@ import { Controller } from '@hotwired/stimulus'
 const STORAGE_KEY = 'hcb:remembered-organizations'
 const DISMISSED_KEY = 'hcb:signed-out-notice-dismissed'
 
+// Web storage throws in some private browsing modes; this is best-effort.
+const safely = (fn, fallback) => {
+  try {
+    return fn()
+  } catch {
+    return fallback
+  }
+}
+
 // Remembers which transparent organizations the user manages so that, once
 // their session expires, we can nudge them to sign back in when they land on
 // one of those organizations in transparency mode.
+//
+// The list intentionally outlives the session. It only holds public
+// organizations, and is cleared on explicit sign out or replaced when someone
+// else signs in on this browser.
 export default class extends Controller {
   static targets = ['signIn', 'hint', 'publicNotice', 'signedOutNotice']
   static values = { eventIds: Array, clear: Boolean, currentEvent: String }
@@ -32,9 +45,7 @@ export default class extends Controller {
 
   // Hides the signed-out banner for the rest of this tab's session
   dismiss() {
-    try {
-      sessionStorage.setItem(DISMISSED_KEY, 'true')
-    } catch {} // eslint-disable-line no-empty
+    safely(() => sessionStorage.setItem(DISMISSED_KEY, 'true'))
     this.showSignedOutNotice(false)
   }
 
@@ -45,32 +56,19 @@ export default class extends Controller {
   }
 
   dismissed() {
-    try {
-      return sessionStorage.getItem(DISMISSED_KEY) === 'true'
-    } catch {
-      return false
-    }
+    return safely(() => sessionStorage.getItem(DISMISSED_KEY) === 'true', false)
   }
 
-  // localStorage throws in some private browsing modes; this is best-effort.
   read() {
-    try {
-      const ids = JSON.parse(localStorage.getItem(STORAGE_KEY))
-      return Array.isArray(ids) ? ids : []
-    } catch {
-      return []
-    }
+    const ids = safely(() => JSON.parse(localStorage.getItem(STORAGE_KEY)))
+    return Array.isArray(ids) ? ids : []
   }
 
   write(ids) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(ids))
-    } catch {} // eslint-disable-line no-empty
+    safely(() => localStorage.setItem(STORAGE_KEY, JSON.stringify(ids)))
   }
 
   remove() {
-    try {
-      localStorage.removeItem(STORAGE_KEY)
-    } catch {} // eslint-disable-line no-empty
+    safely(() => localStorage.removeItem(STORAGE_KEY))
   }
 }
