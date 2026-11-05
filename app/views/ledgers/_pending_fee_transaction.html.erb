@@ -1,6 +1,8 @@
 <%# locals: (ledger:) %>
 
-<% if params[:page].to_i <= 1 && @direction != "revenue" && ledger.event_id.present? && ledger.fronted_fee_balance_cents > 0 %>
+<% search_terms = params[:q].to_s.downcase.scan(/[[:alnum:]]+/) %>
+<% matches_search = params[:q].blank? || (search_terms.any? && search_terms.all? { |term| %w[fiscal sponsorship].any? { |word| word.start_with?(term) } }) %>
+<% if matches_search && params[:page].to_i <= 1 && @direction != "revenue" && ledger.event_id.present? && ledger.fronted_fee_balance_cents > 0 %>
   <%# @direction != revenue is in case the user has a revenue-only filter applied %>
   <tr class="transaction transaction--negative muted">
     <td class="transaction__icon">
