@@ -115,10 +115,6 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  def find_current_auditor
-    current_user if auditor_signed_in?
-  end
-
   def safe_per(default, max: 200)
     (params[:per] || default).to_i.clamp(1, max)
   end
