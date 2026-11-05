@@ -88,4 +88,29 @@ RSpec.configure do |config|
   config.before(:each) do
     Flipper.instance = Flipper.new(Flipper::Adapters::Memory.new)
   end
+
+  # A transaction without a recognised source gets the catch-all HCB code
+  # "HCB-000-<id>" (TransactionGroupingEngine::Calculate::HcbCode#unknown_hcb_code)
+  # whether it's a CanonicalTransaction or a CanonicalPendingTransaction — and
+  # the two tables have separate id sequences. Factory CTs and CPTs almost
+  # always take this code, so whenever a CPT happens to get the same id as an
+  # unrelated CT created in the same example, the two are grouped under one
+  # HcbCode and one Ledger::Item: FactoryLedgerMapping then moves that item to
+  # whichever event was mapped last (balances vanish) and
+  # CanonicalTransaction#assign_ledger_item raises its "calculated a different
+  # ledger item" error. Transactional fixtures roll rows back but not
+  # sequences, so which ids line up depends on every example that ran before
+  # — hence the random failures. Keep the CPT sequence far ahead of the CT
+  # sequence so their ids can never match within a run.
+  config.before(:suite) do
+    ActiveRecord::Base.connection.execute(<<~SQL)
+      SELECT setval(
+        'canonical_pending_transactions_id_seq',
+        GREATEST(
+          (SELECT last_value FROM canonical_pending_transactions_id_seq),
+          (SELECT last_value FROM canonical_transactions_id_seq) + 1000000
+        )
+      )
+    SQL
+  end
 end
