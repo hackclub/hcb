@@ -190,6 +190,24 @@ class Ledger
       ACCOUNT_VERIFICATION_MEMO_MATCHES.any? { |s| memo.downcase.include?(s) }
     end
 
+    # Transactions that paid this one back, by transfer or by money in on the
+    # same ledger. Filters in memory so preloaded repayments are used.
+    def repaid_by_items
+      # A scheduled transfer has no incoming side until it's sent, so fall back to the outgoing one.
+      repayments.reject(&:failed?).filter_map do |r|
+        r.repaying_ledger_item || r.disbursement.incoming_disbursement.ledger_item || r.disbursement.outgoing_disbursement.ledger_item
+      end
+    end
+
+    # Transactions this one paid back. A transfer marked as a repayment after
+    # the fact shows what it repays on both of its sides.
+    def repays_items
+      disbursement = linked_object.disbursement if linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"])
+      repaying_item = disbursement ? disbursement.incoming_disbursement.ledger_item : self
+
+      Array(disbursement&.repaid_ledger_items) + Array(repaying_item&.repaying_repayment&.repaid_ledger_items)
+    end
+
     # This is defined because the Receiptable concern overrides the receipt_required? method defined by ActiveRecord
     def receipt_required?
       self[:receipt_required]

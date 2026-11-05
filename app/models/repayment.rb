@@ -139,6 +139,11 @@ class Repayment < ApplicationRecord
     others.where(amount_cents: -ledger_item.amount_cents)
   end
 
+  # In-memory counterpart to `not_failed`, for preloaded repayments.
+  def failed?
+    disbursement.present? && (disbursement.rejected? || disbursement.errored?)
+  end
+
   # The organization whose expenses were repaid.
   def event
     disbursement&.destination_event || repaying_ledger_item&.primary_ledger&.event

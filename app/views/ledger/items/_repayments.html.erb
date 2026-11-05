@@ -1,12 +1,8 @@
 <%# locals: (ledger_item:) %>
 
 <%# Rows for a transaction's details list, linking a repayment and what it repays. %>
-<% disbursement = ledger_item.linked_object.disbursement if ledger_item.linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) %>
-<%# A scheduled transfer has no incoming side until it's sent, so fall back to the outgoing one. %>
-<% repaid_by = ledger_item.repayments.not_failed.filter_map { |r| r.repaying_ledger_item || r.disbursement.incoming_disbursement.ledger_item || r.disbursement.outgoing_disbursement.ledger_item } %>
-<%# A transfer marked as a repayment after the fact shows what it repays on both of its sides. %>
-<% repaying_item = disbursement ? disbursement.incoming_disbursement.ledger_item : ledger_item %>
-<% repays = Array(disbursement&.repaid_ledger_items) + Array(repaying_item&.repaying_repayment&.repaid_ledger_items) %>
+<% repaid_by = ledger_item.repaid_by_items %>
+<% repays = ledger_item.repays_items %>
 
 <% { "Repaid by" => repaid_by, "Repays" => repays }.each do |label, linked| %>
   <% next if linked.empty? %>
