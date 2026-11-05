@@ -16,6 +16,12 @@
   explainer page.
 </p>
 
+<% if @position.reader? && @position.stripe_cards.frozen.any? %>
+  <p>
+    Your cards for <%= @position.event.name %> have been frozen as readers cannot spend money.
+  </p>
+<% end %>
+
 <% if @position.event.demo_mode? %>
   <p>
     Remember, your organization is still in Playground mode; nobody has access

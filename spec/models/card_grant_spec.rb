@@ -81,21 +81,40 @@ RSpec.describe CardGrant, type: :model do
       allow_any_instance_of(CardGrant).to receive(:transfer_money)
     end
 
-    it "accepts an expiration date within 2 years" do
+    it "accepts an expiration date within 2 years of creation" do
       card_grant = create(:card_grant, expiration_at: 1.year.from_now.to_date)
       expect(card_grant).to be_valid
     end
 
-    it "accepts an expiration date exactly at the boundary" do
+    it "accepts an expiration date exactly 2 years after creation" do
       card_grant = create(:card_grant, expiration_at: 2.years.from_now.to_date)
       expect(card_grant).to be_valid
     end
 
-    it "rejects an expiration date more than 2 years in the future" do
+    it "rejects an expiration date more than 2 years after creation" do
       card_grant = create(:card_grant, expiration_at: Date.current)
       card_grant.expiration_at = 4.years.from_now.to_date
       expect(card_grant).not_to be_valid
       expect(card_grant.errors[:expiration_at]).to be_present
+    end
+
+    it "measures the limit from creation, not from the time of the edit" do
+      card_grant = create(:card_grant, created_at: 18.months.ago, expiration_at: Date.current)
+
+      card_grant.expiration_at = 5.months.from_now.to_date
+      expect(card_grant).to be_valid
+
+      card_grant.expiration_at = 7.months.from_now.to_date
+      expect(card_grant).not_to be_valid
+      expect(card_grant.errors[:expiration_at]).to be_present
+    end
+
+    it "does not re-validate an existing expiration when other attributes change" do
+      card_grant = create(:card_grant, created_at: 3.years.ago, expiration_at: 2.years.ago.to_date)
+      card_grant.update_column(:expiration_at, 1.year.from_now.to_date)
+
+      card_grant.reload.purpose = "Updated purpose"
+      expect(card_grant).to be_valid
     end
 
     it "uses a default expiration_at when not provided" do

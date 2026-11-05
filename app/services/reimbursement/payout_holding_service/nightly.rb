@@ -82,12 +82,12 @@ module Reimbursement
                 begin
                   check.send_check!
                   complete_payout!(payout_holding, recovering: recovering_transfer.present?)
-                rescue Faraday::BadRequestError => e
-                  raise if recovering_transfer
+                rescue => e
+                  raise if recovering_transfer || (e.is_a?(Faraday::Error) && !e.is_a?(Faraday::BadRequestError))
 
                   check.mark_rejected!
                   payout_holding.mark_failed!
-                  message = e.response_body&.dig("message") || e.message
+                  message = (e.response_body["message"] if e.respond_to?(:response_body) && e.response_body.is_a?(Hash)) || e.message
                   ReimbursementMailer.with(
                     reimbursement_payout_holding: payout_holding,
                     reason: message
