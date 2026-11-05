@@ -22,7 +22,7 @@
 
 <%= render partial: "card_grants/header_banner", locals: { card_grant: @card_grant, footer: } %>
 
-<% if @card_grant.instructions.present? %>
+<% if @card_grant.instructions.present? && !(@card_grant.user == current_user && @card_grant.pending_invite?) %>
   <%= render "application/callout", title: "Instructions from #{@card_grant.event.name}", type: "info", class: "mb-4" do %>
     <p class="m-0">
       <%= MarkdownService.instance.render(@card_grant.instructions) %>

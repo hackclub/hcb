@@ -57,6 +57,14 @@ module HasWireRecipient
       end
     end
 
+    # see https://docs.column.com/api/counterparty/create-a-counterparty/ for valid options, under "account_type"
+
+    validate on: :create do
+      if account_type.present? && !ACCOUNT_TYPE_FIELD[:options].values.include?(account_type)
+        errors.add(:account_type, "must be #{ACCOUNT_TYPE_FIELD[:options].keys.map(&:downcase).to_sentence(two_words_connector: ' or ')}.")
+      end
+    end
+
     # View https://github.com/hackclub/hcb/issues/9037 for context. Limited in India only, at the moment.
 
     validate on: :create do
@@ -86,11 +94,11 @@ module HasWireRecipient
         fields << { type: :text_field, key: "legal_id", label: "Legal ID of receiving entity", description: "7-11 digits Cédulas for individuals, or 10-digit NIT for corporations/NGO/organizations" }
         fields << { type: :text_area, key: "purpose_code", label: "Payment purpose", description: "A clearly identifiable purpose of payment (e.g., goods, services, capital, etc.)", reimbursement_default: "Reimbursement" }
       when "DO"
-        fields << { type: :text_field, key: "account_type", label: "Account type" }
+        fields << ACCOUNT_TYPE_FIELD
         fields << LEGAL_TYPE_FIELD
         fields << { type: :text_field, key: "legal_id", label: "Legal ID of receiving entity", description: "11-digit Cedula or passport number for individuals, or 7+ digits tax ID or 9+ digits Registro Mercantil for corporations/NGO/organizations" }
       when "HN"
-        fields << { type: :text_field, key: "account_type", label: "Account type" }
+        fields << ACCOUNT_TYPE_FIELD
         fields << LEGAL_TYPE_FIELD
         fields << { type: :text_field, key: "legal_id", label: "Legal ID of receiving entity", description: "13-digit Tarjeta de Identidad for individuals, or 14-digit Registro Tributario Nacional for corporations/NGO/organizations" }
         fields << { type: :text_area, key: "remittance_info", label: "Remittance information", description: "For payments from corporations/organizations to individuals, include a detailed purpose of payment (especially for salaries)" }
@@ -380,6 +388,16 @@ module HasWireRecipient
       "Nonprofit": "non_profit",
       "Individual": "individual",
       "Sole proprietor": "sole_proprietor"
+    }
+  }.freeze
+
+  ACCOUNT_TYPE_FIELD = {
+    type: :select,
+    key: "account_type",
+    label: "Account type",
+    options: {
+      "Checking": "checking",
+      "Savings": "savings"
     }
   }.freeze
 

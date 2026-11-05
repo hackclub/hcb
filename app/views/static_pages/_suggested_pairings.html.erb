@@ -1,8 +1,8 @@
 <%= turbo_frame_tag "suggested_pairings" do %>
   <% if local_assigns[:pairings].any? %>
-    <div class="card carousel__wrapper mt2" style="overflow: unset; border: 1px solid var(--ai);">
+    <div class="card carousel__wrapper mt2" style="overflow: unset; border: 1px solid var(--ai);" data-controller="element">
       <div style="margin: -16px; padding: 16px; margin-bottom: 0px; border-radius: 0.5rem 0.5rem 0rem 0rem;" class="bg-snow dark:bg-dark">
-        <span tabindex="0" onclick="this.parentElement.parentElement.remove();" class="pointer">
+        <span tabindex="0" data-action="click->element#remove" class="pointer">
           <%= inline_icon "view-close", size: 28, class: "pop modal__close muted  m0" %>
         </span>
         <div style="display: flex; padding-right: 32px;">
@@ -34,7 +34,7 @@
               <h2 class="heading dark:bg-dark leading-[1.5] p1 pl2 mt0 ml0 flex justify-between items-center">
                 <%= pairing.hcb_code.stripe_card.event.name %>
 
-                <%= link_to pairing.hcb_code.stripe_card, class: "regular h3 mention flex items-center" do %>
+                <%= link_to pairing.hcb_code.stripe_card, class: "regular h3 mention flex items-center", data: { turbo_frame: "_top" } do %>
                   <%= inline_icon "card", class: "mr1", size: 25 %>
                   <%= pairing.hcb_code.stripe_card.last_four %>
                 <% end %>
