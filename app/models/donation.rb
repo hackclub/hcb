@@ -100,7 +100,7 @@ class Donation < ApplicationRecord
   after_update_commit :refresh_ledger_item, if: -> { saved_change_to_name? || saved_change_to_anonymous? }
 
   validates :name, :email, presence: true, unless: -> { recurring? || in_person? } # recurring donations have a name/email in their `RecurringDonation` object
-  validates_email_format_of :email, on: :create, unless: -> { recurring? || in_person? } # recurring donations have an email in their `RecurringDonation` object
+  validates :email, stripe_email: true, on: :create, unless: -> { recurring? || in_person? } # recurring donations have an email in their `RecurringDonation` object
   validates :email, nondisposable: true, on: :create, unless: :subsequent_recurring_donation? # We have some historical recurring donations with disposable emails.
   validates_presence_of :amount
   validates :amount, numericality: { greater_than_or_equal_to: 100, less_than_or_equal_to: 999_999_99 }
