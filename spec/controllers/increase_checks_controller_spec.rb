@@ -165,4 +165,126 @@ RSpec.describe IncreaseChecksController do
       expect(check.amount).to eq(500_01)
     end
   end
+
+  describe "edit" do
+    it "renders the form for an admin on a pending check" do
+      check = create(:increase_check)
+
+      create_session(create(:user, :make_admin), verified: true)
+
+      get :edit, params: { id: check }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(check.memo)
+    end
+
+    it "denies an organizer of the check's event" do
+      user = create(:user)
+      check = create(:increase_check)
+      create(:organizer_position, user:, event: check.event)
+
+      create_session(user, verified: true)
+
+      get :edit, params: { id: check }
+
+      expect(response).to redirect_to(root_path)
+      expect(flash[:error]).to be_present
+    end
+  end
+
+  describe "update" do
+    def update_params(overrides = {})
+      {
+        memo: "Updated memo",
+        amount: "200.00",
+        payment_for: "New supplies",
+        recipient_name: "Jane Smith",
+        recipient_email: "jane@example.com",
+        address_line1: "2 New Street",
+        address_city: "Oakland",
+        address_state: "CA",
+        address_zip: "94601",
+      }.merge(overrides)
+    end
+
+    it "updates the check and syncs its pending transaction amount" do
+      check = create(:increase_check, amount: 100_00)
+
+      create_session(create(:user, :make_admin), verified: true)
+
+      patch :update, params: { id: check, increase_check: update_params }
+
+      expect(response).to redirect_to(increase_check_process_admin_path(check))
+      check.reload
+      expect(check.memo).to eq("Updated memo")
+      expect(check.amount).to eq(200_00)
+      expect(check.recipient_name).to eq("Jane Smith")
+      expect(check.address_line1).to eq("2 New Street")
+      expect(check.canonical_pending_transaction.reload.amount_cents).to eq(-200_00)
+    end
+
+    it "rejects an amount increase beyond the event's available balance" do
+      check = create(:increase_check, amount: 100_00)
+      balance = check.event.balance_available_v2_cents
+
+      create_session(create(:user, :make_admin), verified: true)
+
+      patch :update, params: { id: check, increase_check: update_params(amount: ((check.amount + balance + 1) / 100.0).to_s) }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(check.reload.amount).to eq(100_00)
+      expect(check.canonical_pending_transaction.reload.amount_cents).to eq(-100_00)
+    end
+
+    it "re-renders the form with the submitted values when invalid" do
+      check = create(:increase_check)
+
+      create_session(create(:user, :make_admin), verified: true)
+
+      patch :update, params: { id: check, increase_check: update_params(memo: "x" * 41, recipient_name: "Unsaved Name") }
+
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Unsaved Name")
+      expect(check.reload.memo).not_to eq("x" * 41)
+    end
+
+    it "denies an organizer of the check's event" do
+      user = create(:user)
+      check = create(:increase_check)
+      create(:organizer_position, user:, event: check.event)
+
+      create_session(user, verified: true)
+
+      expect {
+        patch :update, params: { id: check, increase_check: update_params }
+      }.not_to(change { check.reload.attributes })
+
+      expect(response).to redirect_to(root_path)
+    end
+
+    it "denies updating a check that has already been approved" do
+      check = create(:increase_check, :approved)
+
+      create_session(create(:user, :make_admin), verified: true)
+
+      expect {
+        patch :update, params: { id: check, increase_check: update_params }
+      }.not_to(change { check.reload.attributes })
+
+      expect(response).to redirect_to(root_path)
+    end
+
+    it "denies updating a check that pays out a payment" do
+      check = create(:increase_check)
+      create(:payment_attempt, :check, :under_review, payout: check)
+
+      create_session(create(:user, :make_admin), verified: true)
+
+      expect {
+        patch :update, params: { id: check, increase_check: update_params }
+      }.not_to(change { check.reload.attributes })
+
+      expect(response).to redirect_to(root_path)
+    end
+  end
 end
