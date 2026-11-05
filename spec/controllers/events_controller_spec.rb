@@ -301,6 +301,41 @@ RSpec.describe EventsController do
         expect(response.body).to include("Declined but moved money")
         expect(response.body).not_to include("Declined with no amount")
       end
+
+      context "receipt drag and drop" do
+        let!(:hcb_code) { create(:canonical_pending_transaction, event:, amount_cents: -1000).local_hcb_code }
+
+        def ledger_row
+          Nokogiri::HTML5(response.body).at_css("tr.transaction")
+        end
+
+        it "makes ledger rows a drop target for receipts on the item's HCB code" do
+          get(:ledger, params: { event_id: event.slug })
+
+          row = ledger_row
+          expect(row["data-controller"]).to eq("file-drop")
+          expect(row["data-file-drop-receiptable-value"]).to eq("HcbCode:#{hcb_code.id}")
+
+          form = row.at_css("form[data-file-drop-target='form']")
+          expect(form["action"]).to eq(receipts_path)
+          expect(form.at_css("input[name='receiptable_type']")["value"]).to eq("HcbCode")
+          expect(form.at_css("input[name='receiptable_id']")["value"]).to eq(hcb_code.id.to_s)
+        end
+
+        it "doesn't make ledger rows a drop target for users who can't upload receipts" do
+          reader = create(:user)
+          create(:organizer_position, event:, user: reader, role: :reader)
+          Flipper.enable_actor(:new_ledger_2026_07_17, reader)
+          create_session(reader, verified: true)
+
+          get(:ledger, params: { event_id: event.slug })
+
+          row = ledger_row
+          expect(row).to be_present
+          expect(row["data-controller"]).to be_nil
+          expect(row.at_css("form[data-file-drop-target='form']")).to be_nil
+        end
+      end
     end
   end
 
