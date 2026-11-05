@@ -16,9 +16,9 @@ module CardLocking
       enqueue_unlock(cardholder_for(charge), notify_progress: true)
     end
 
-    # A receipt was destroyed.
-    def on_receipt_destroy(receipt)
-      charge = hcb_code_or_self(receipt.receiptable)
+    # A receipt was destroyed or detached from its previous transaction.
+    def on_receipt_destroy(receipt, receiptable: receipt.receiptable)
+      charge = hcb_code_or_self(receiptable)
       # receipt_resolved_at is only ever cleared here, never revised. Once a charge
       # is resolved the timestamp is frozen, so destroying an earlier receipt while
       # a later one remains (card_locking_resolved? still true) leaves the original

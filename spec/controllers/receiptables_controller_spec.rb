@@ -28,7 +28,7 @@ RSpec.describe ReceiptablesController do
       expect(receipt.file.download).to start_with("%PDF")
       expect(Poppler::Document.new(data: receipt.file.download).first.text).to include("Alex Example", "Receipt request link (not signed in)")
       expect(receipt.user).to be_nil
-      expect(hcb_code.reload).not_to be_no_or_lost_receipt
+      expect(hcb_code.reload).to be_no_or_lost_receipt
       expect(flash[:success]).to eq("Lost receipt statement added.")
       expect(response).to redirect_to(attach_receipt_hcb_code_path(hcb_code, s: secret))
     end
@@ -110,14 +110,16 @@ RSpec.describe ReceiptablesController do
       expect(receipt.user).to eq(user)
       expect(user.receipts.lost_receipt_statement.sole).to eq(receipt)
       expect(hcb_code.reload).not_to be_missing_receipt
-      expect(hcb_code).not_to be_no_or_lost_receipt
-      expect(hcb_code.ledger_item.reload).not_to be_no_or_lost_receipt
+      expect(hcb_code).to be_no_or_lost_receipt
+      expect(hcb_code.ledger_item.reload).to be_no_or_lost_receipt
       expect(response).to redirect_to(hcb_code_path(hcb_code))
 
       receipt.destroy!
 
       expect(hcb_code.reload).to be_missing_receipt
       expect(hcb_code.ledger_item.reload).to be_missing_receipt
+      expect(hcb_code).not_to be_no_or_lost_receipt
+      expect(hcb_code.ledger_item).not_to be_no_or_lost_receipt
       expect(user.receipts.lost_receipt_statement).to be_empty
     end
 

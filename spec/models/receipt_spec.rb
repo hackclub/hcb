@@ -33,6 +33,37 @@ RSpec.describe Receipt, type: :model do
     expect(receipt.reload).to be_api
   end
 
+  it "retains the lost receipt marker until the last receipt is removed" do
+    transaction = create(:canonical_pending_transaction, amount_cents: -100, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction))
+    create(:canonical_pending_event_mapping, canonical_pending_transaction: transaction, event: create(:event))
+    charge = transaction.local_hcb_code
+    statement = LostReceipt::Statement.new(date: Date.current, merchant: "Stationery Shop", purpose: "Workshop supplies",
+                                           signer_name: "Alex Example", confirmed: true,
+                                           items_attributes: [{ description: "Notebooks", quantity: 1, unit_amount_cents: 100 }])
+    expect(statement.submit(receiptable: charge)).to eq(true)
+    receipt = build_receipt(receiptable: charge, user: create(:user))
+    receipt.save!
+    expect(charge.reload).to be_no_or_lost_receipt
+    expect(charge.ledger_item.reload).to be_no_or_lost_receipt
+
+    statement.receipt.destroy!
+    expect(charge.reload).not_to be_missing_receipt
+    expect(charge).to be_no_or_lost_receipt
+    expect(charge.receipts.count).to eq(1)
+
+    later_receipt = build_receipt(receiptable: charge, user: receipt.user)
+    later_receipt.save!
+    expect(charge.reload).to be_no_or_lost_receipt
+    receipt.destroy!
+    expect(charge.reload).to be_no_or_lost_receipt
+
+    later_receipt.update!(receiptable: nil)
+    expect(charge.reload).to be_missing_receipt
+    expect(charge).not_to be_no_or_lost_receipt
+    expect(charge.ledger_item.reload).to be_missing_receipt
+    expect(charge.ledger_item).not_to be_no_or_lost_receipt
+  end
+
   describe "card locking" do
     include_context "card locking charges"
 
@@ -61,6 +92,18 @@ RSpec.describe Receipt, type: :model do
 
       expect { receipt.destroy! }
         .to have_enqueued_job(User::UpdateCardLockingJob).with(user:, unlock_only: true, notify_progress: false)
+    end
+
+    it "clears receipt resolution when the last receipt moves to the receipt bin" do
+      charge.no_or_lost_receipt!
+      receipt = build_receipt(receiptable: charge, user: uploader)
+      receipt.save!
+      expect(charge.reload.receipt_resolved_at).to be_present
+
+      receipt.update!(receiptable: nil)
+
+      expect(charge.reload).to be_missing_receipt
+      expect(charge.receipt_resolved_at).to be_nil
     end
 
     it "does not enqueue anything for a receiptable that is not a card charge" do

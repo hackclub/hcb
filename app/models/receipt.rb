@@ -83,10 +83,19 @@ class Receipt < ApplicationRecord
     end
   end
 
-  before_create do
-    if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
-      receiptable&.update(marked_no_or_lost_receipt_at: nil)
-      receiptable.sync_no_or_lost_receipt! if lost_receipt_statement?
+  # Preserve statement history (and legacy marks) until the last receipt leaves.
+  before_save do
+    if lost_receipt_statement? && receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
+      receiptable.update!(marked_no_or_lost_receipt_at: receiptable.marked_no_or_lost_receipt_at || Time.current)
+      receiptable.sync_no_or_lost_receipt!
+    end
+  end
+
+  after_destroy { clear_lost_receipt_marker_if_empty(receiptable) }
+  after_update { clear_lost_receipt_marker_if_empty(previous_receiptable) }
+  after_update_commit do
+    if (previous = previous_receiptable)
+      CardLocking::ReceiptResolution.on_receipt_destroy(self, receiptable: previous)
     end
   end
 
@@ -256,6 +265,19 @@ class Receipt < ApplicationRecord
   end
 
   private
+
+  def previous_receiptable
+    return unless saved_change_to_receiptable_id? || saved_change_to_receiptable_type?
+
+    receiptable_type_before_last_save&.constantize&.find_by(id: receiptable_id_before_last_save)
+  end
+
+  def clear_lost_receipt_marker_if_empty(record)
+    return unless record&.has_attribute?(:marked_no_or_lost_receipt_at) && !record.receipts.exists?
+
+    record.update!(marked_no_or_lost_receipt_at: nil)
+    record.sync_no_or_lost_receipt!
+  end
 
   def pdf_text
     doc = if self.attachment_changes["file"]&.attachable
