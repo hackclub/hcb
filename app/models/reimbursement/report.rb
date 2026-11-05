@@ -165,7 +165,8 @@ module Reimbursement
       event :mark_reimbursement_approved do
         transitions from: :reimbursement_requested, to: :reimbursement_approved do
           guard do
-            expenses.approved.exists? && amount_to_reimburse > 0 && (!maximum_amount_cents || currency != "USD" || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && (currency != "USD" || Shared::AmpleBalance.ample_balance?(expenses.approved.sum(:amount_cents), event)) && !event.financially_frozen?
+            expenses.approved.exists? && amount_to_reimburse > 0 && (!maximum_amount_cents || currency != "USD" || expenses.approved.sum(:amount_cents) <= maximum_amount_cents) && (currency != "USD" || Shared::AmpleBalance.ample_balance?(expenses.approved.sum(:amount_cents), event)) && !event.financially_frozen? &&
+              !payout_method_incomplete?
           end
         end
         after do
@@ -258,6 +259,15 @@ module Reimbursement
       end
 
       return "transfer"
+    end
+
+    # In-flight reports are held only for incomplete methods: unlike unsupported ones, the user can fix them while locked.
+    def payout_method_incomplete?
+      payout_method.present? && payout_method.incomplete?
+    end
+
+    def incomplete_payout_method_message
+      "#{user.name} needs to add the #{payout_method.missing_required_field_labels.to_sentence} to their payout method before this report can be paid."
     end
 
     def locked?
@@ -408,6 +418,7 @@ module Reimbursement
 
     def convert_to_wise_transfer!(as: User.system_user)
       raise "Can only convert reports in 'Reimbursement Requested' state" unless reimbursement_requested?
+      raise incomplete_payout_method_message if payout_method_incomplete?
 
       payout_method = self.payout_method&.details
 
@@ -495,7 +506,7 @@ module Reimbursement
     end
 
     def payout_method_allowed?
-      payout_method.present? && !payout_method.unsupported?
+      payout_method.present? && payout_method.ready_for_payout?
     end
 
     def invalidate_cached_data

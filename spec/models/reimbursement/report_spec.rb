@@ -161,6 +161,39 @@ RSpec.describe Reimbursement::Report, type: :model do
     end
   end
 
+  describe "with an incomplete payout method" do
+    let(:user) { create(:user) }
+    let(:payout_method) do
+      user.personal_legal_entity.payout_methods.create!(default: true, details: create(:wise_transfer_payout_method_details)).tap do |pm|
+        pm.details.update!(recipient_birthday: nil)
+        pm.details.reload
+      end
+    end
+
+    it "is not allowed for submission" do
+      report = create(:reimbursement_report, user:, legal_entity_payout_method: payout_method)
+      expect(report.payout_method_incomplete?).to be(true)
+      expect(report.send(:payout_method_allowed?)).to be(false)
+    end
+
+    it "holds HCB approval of an in-flight report" do
+      report = create(:reimbursement_report, user:, legal_entity_payout_method: payout_method, aasm_state: :reimbursement_requested, currency: "GBP")
+      allow(report).to receive(:expenses).and_return(double(approved: double(exists?: true, sum: 100_00)))
+      allow(report).to receive(:amount_to_reimburse).and_return(Money.from_cents(100_00, "GBP"))
+
+      expect(report.may_mark_reimbursement_approved?).to be(false)
+
+      payout_method.complete_details!({ "recipient_birthday" => "01/15/1990" })
+      report.payout_method.details.reload
+      expect(report.may_mark_reimbursement_approved?).to be(true)
+    end
+
+    it "refuses to convert to a Wise transfer" do
+      report = create(:reimbursement_report, user:, legal_entity_payout_method: payout_method, aasm_state: :reimbursement_requested)
+      expect { report.convert_to_wise_transfer!(as: user) }.to raise_error(RuntimeError, /date of birth/)
+    end
+  end
+
   describe "the invitation email" do
     it "is sent when somebody else invited the user" do
       inviter = create(:user)

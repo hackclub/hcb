@@ -7,4 +7,10 @@ class UserMailerPreview < ActionMailer::Preview
     UserMailer.onboarded(user:)
   end
 
+  def incomplete_payout_method
+    payout_method = LegalEntity::PayoutMethod.where(details_type: LegalEntity::PayoutMethod::WiseTransfer.name).last
+
+    UserMailer.incomplete_payout_method(user: payout_method.legal_entity.users.first, payout_method:)
+  end
+
 end

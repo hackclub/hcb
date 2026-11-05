@@ -12,7 +12,8 @@ RSpec.describe LegalEntity::PayoutMethodService::Update do
   def valid_wise_attrs
     {
       address_line1: "1 Main St", address_city: "Toronto", address_state: "ON",
-      address_postal_code: "M5V2T6", recipient_country: "CA", currency: "CAD"
+      address_postal_code: "M5V2T6", recipient_country: "CA", currency: "CAD",
+      recipient_birthday: "01/15/1990"
     }
   end
 

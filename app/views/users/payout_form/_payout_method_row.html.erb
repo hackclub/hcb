@@ -2,6 +2,7 @@
 <% details = payout_method.details %>
 <% locked = locking_reports.any? %>
 <% locked_modal_id = "locked_reports_#{payout_method.id}" %>
+<% attention = payout_method.persisted? && (payout_method.incomplete_details || payout_method.unsupported_details) %>
 
 <div class="payout-methods__row" data-payout-methods-row>
   <div class="flex items-center" style="gap: 14px; padding: 16px 20px;">
@@ -16,10 +17,16 @@
         <% if payout_method.default? %>
           <span class="badge bg-success" style="font-size: 11px;">Default</span>
         <% end %>
+        <% if attention %>
+          <span class="badge bg-warning" style="font-size: 11px;"><%= attention[:status_badge] %></span>
+        <% end %>
       </div>
       <div class="muted" style="font-size: 13px; margin-top: 2px;">
         <%= payout_method.name.present? ? "#{payout_method.title_kind} · #{payout_method.detail_summary}" : payout_method.detail_summary %>
       </div>
+      <% if attention %>
+        <div class="warning" style="font-size: 13px; margin-top: 2px;"><%= attention[:reason] %></div>
+      <% end %>
     </div>
 
     <div class="flex items-center flex-shrink-0" style="gap: 8px;" data-pm-actions>
@@ -65,6 +72,12 @@
       </div>
     <% end %>
   </div>
+
+  <% if payout_method.persisted? && payout_method.incomplete? %>
+    <div style="padding: 0 20px 20px;">
+      <%= render "users/payout_form/complete_details", payout_method: %>
+    </div>
+  <% end %>
 
   <% if locked %>
     <section data-behavior="modal" role="dialog" id="<%= locked_modal_id %>" class="modal modal--scroll bg-snow">

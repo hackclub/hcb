@@ -3,7 +3,7 @@
 
 class LegalEntity
   class PayoutMethodsController < ApplicationController
-    before_action :set_payout_method, only: [:update, :set_default, :archive]
+    before_action :set_payout_method, only: [:update, :set_default, :archive, :complete_details]
     before_action :require_unlocked_method, only: [:update, :archive]
 
     def create
@@ -50,6 +50,20 @@ class LegalEntity
 
       @payout_method.update!(default: true)
       flash[:success] = "Default payout method updated."
+      redirect_back_or_to settings_payouts_path
+    end
+
+    # Fills in newly required fields in place. Allowed while locked, since it can't change existing details.
+    def complete_details
+      authorize @payout_method
+
+      attrs = params.fetch(:payout_method_details, {}).permit(*@payout_method.missing_required_fields)
+      @payout_method.complete_details!(attrs)
+
+      flash[:success] = "Payout method updated."
+      redirect_back_or_to settings_payouts_path
+    rescue ActiveRecord::RecordInvalid => e
+      flash[:error] = e.record.errors.full_messages.to_sentence
       redirect_back_or_to settings_payouts_path
     end
 

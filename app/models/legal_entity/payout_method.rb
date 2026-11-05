@@ -55,11 +55,7 @@ class LegalEntity
 
     validate :details_must_be_supported
 
-    after_create do
-      if default? && other_methods.none?
-        legal_entity.refresh_pending_contractors_payments!
-      end
-    end
+    after_save :refresh_pending_payments, if: -> { default? && saved_change_to_default? }
 
     # type-specific presentation lives on the detail record
     delegate :kind, :icon, :human_kind, :title_kind, :currency, :short_label, :detail_summary, to: :details
@@ -120,6 +116,37 @@ class LegalEntity
         (details.try(:unsupported_account_type?) ? { status_badge: "Unavailable", reason: details.unsupported_account_type_reason } : nil)
     end
 
+    # Missing details the processor now requires (e.g. a Wise recipient's date of birth).
+    def missing_required_fields
+      details.try(:missing_required_fields) || []
+    end
+
+    def incomplete?
+      missing_required_fields.any?
+    end
+
+    def missing_required_field_labels
+      return [] unless incomplete?
+
+      details.required_field_definitions(missing_required_fields).map { |field| field[:label].downcase_first }
+    end
+
+    def incomplete_details
+      return nil unless incomplete?
+
+      { status_badge: "Incomplete", reason: "Your payout method is missing the #{missing_required_field_labels.to_sentence}, which is now required to send payouts." }
+    end
+
+    def ready_for_payout?
+      !unsupported? && !incomplete?
+    end
+
+    def complete_details!(attrs)
+      details.assign_attributes(attrs.slice(*missing_required_fields))
+      details.save!(context: :complete_details)
+      refresh_pending_payments if default?
+    end
+
     def error_messages
       (errors.full_messages_for(:base) + (details&.errors&.full_messages || [])).uniq
     end
@@ -140,6 +167,10 @@ class LegalEntity
       if self.class.unsupported?(details.class)
         errors.add(:base, "#{self.class.unsupported_details(details.class)[:reason]} Please choose another method.")
       end
+    end
+
+    def refresh_pending_payments
+      legal_entity.refresh_pending_contractors_payments!
     end
 
     def other_methods

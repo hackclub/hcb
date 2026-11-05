@@ -229,7 +229,7 @@ module Payroll
           owner: :contractor,
           label: "Add a payout method",
           hint: "Can be done at any time",
-          complete: legal_entity&.default_payout_method.present?
+          complete: legal_entity&.default_payout_method_ready? || false
         },
       ]
     end
@@ -263,7 +263,7 @@ module Payroll
     end
 
     def payout_method_needed?
-      payee.legal_entity&.default_payout_method.blank?
+      !payee.legal_entity&.default_payout_method_ready?
     end
 
     def refresh_onboarding_state!

@@ -70,6 +70,10 @@ class LegalEntity < ApplicationRecord
     managing_event_id.present?
   end
 
+  def default_payout_method_ready?
+    default_payout_method&.ready_for_payout? || false
+  end
+
   # Re-check onboarding for any of this entity's contractor positions that are
   # mid-onboarding and payments that are pending. Called when a step that lives
   # on the legal entity (tax form, payout method) completes.

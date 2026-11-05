@@ -105,7 +105,7 @@ class Payment < ApplicationRecord
   after_create_commit do
     payable = legal_entity&.payable?(requires_tax_form:)
 
-    if payable && legal_entity.default_payout_method.present?
+    if payable && legal_entity.default_payout_method_ready?
       create_payment_attempt!
     else
       send_initial_email
@@ -147,7 +147,7 @@ class Payment < ApplicationRecord
   def refresh_legal_entity_state!
     return unless pending_legal_entity?
     return unless legal_entity&.payable?(requires_tax_form:)
-    return if legal_entity.default_payout_method.nil?
+    return unless legal_entity.default_payout_method_ready?
     return if attempts.any?(&:active?)
 
     create_payment_attempt!
@@ -185,7 +185,7 @@ class Payment < ApplicationRecord
     return false unless pending_legal_entity?
     return false if legal_entity&.managed?
 
-    !legal_entity&.payable? || legal_entity.default_payout_method.blank?
+    !legal_entity&.payable? || !legal_entity.default_payout_method_ready?
   end
 
   def update_requires_tax_form
@@ -217,7 +217,7 @@ class Payment < ApplicationRecord
       raise ArgumentError, "this payment was rejected" if rejected?
       raise ArgumentError, "this payment was canceled" if canceled?
       raise ArgumentError, "all attempts must be failed, rejected, or canceled" if attempts.any?(&:active?)
-      raise ArgumentError, "there is no default payout method" if legal_entity.default_payout_method.nil?
+      raise ArgumentError, "the default payout method is missing, unsupported, or incomplete" unless legal_entity.default_payout_method_ready?
 
       attempts.create!(payout_method: legal_entity.default_payout_method)
     end
