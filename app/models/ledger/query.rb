@@ -107,7 +107,7 @@ class Ledger
     # Builds an export over exactly the rows this query matches. See
     # Ledger::Query::Export, which does the work.
     def export(as:, **options)
-      Ledger::Query::Export.new(query: self, as:, **options)
+      Ledger::Query::Export.new(query: self, as:, **options).run
     end
 
     def self.sanitize_query(query_hash)
