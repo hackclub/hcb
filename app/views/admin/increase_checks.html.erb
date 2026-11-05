@@ -43,7 +43,7 @@
             None
           <% end %>
         </td>
-        <td><%= render_money(check.amount) %></td>
+        <td><%= render_money(check.amount_cents) %></td>
         <td><%= check.aasm.human_state %><%= " - #{check.increase_status&.humanize}" if check.approved? %></td>
         <td>
           <%= link_to "View", hcb_code_path(check.hcb_code) %>

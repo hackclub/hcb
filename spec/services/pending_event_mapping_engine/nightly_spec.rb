@@ -39,7 +39,7 @@ RSpec.describe PendingEventMappingEngine::Nightly do
     let!(:check) do
       IncreaseCheck.create!(
         event:,
-        amount: 10_00,
+        amount_cents: 10_00,
         memo: "Venue deposit",
         payment_for: "Venue deposit",
         recipient_name: "Recipient",
