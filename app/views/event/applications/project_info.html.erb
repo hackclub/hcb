@@ -56,7 +56,7 @@
       <%= form.label :has_website do %>
         Do you have a website? <span class="text-primary">*</span>
       <% end %>
-      <%= form.select :has_website, options_for_select([["No", "false"], ["Yes", "true"]], @application.website_url.present? ? "true" : "false"), {}, { "@change": "has_website = $event.target.value; document.getElementById('website_url_field').required = (has_website === 'true'); if (has_website === 'false') document.getElementById('website_url_field').value = ''", class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
+      <%= form.select :has_website, options_for_select([["No", "false"], ["Yes", "true"]], @application.website_url.present? ? "true" : "false"), {}, { "@change": "set_has_website($event.target.value)", class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
     </div>
 
     <div class="field" x-show="has_website === 'true'">
@@ -71,7 +71,7 @@
         Is your project involved with political activity? <span class="text-primary">*</span>
       <% end %>
       <p class="text-sm muted mt-1 mb-2">This includes but is not limited to protests, public demonstrations, political education, and lobbying.</p>
-      <%= form.select :has_political, options_for_select([["No", "false"], ["Yes", "true"]], @application.political_description.present? ? "true" : "false"), {}, { "@change": "has_political = $event.target.value; document.getElementById('political_description_field').required = (has_political === 'true')", class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
+      <%= form.select :has_political, options_for_select([["No", "false"], ["Yes", "true"]], @application.political_description.present? ? "true" : "false"), {}, { "@change": "set_has_political($event.target.value)", class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
     </div>
 
     <div class="field" x-show="has_political === 'true'">
@@ -104,7 +104,7 @@
         <div class="flex items-center">
           <div class="input flex gap-2 items-center py-0">
             <span class="bold muted">$</span>
-            <%= form.number_field :annual_budget, id: "annual_budget_field", "x-bind:disabled": "teenager == null", placeholder: "500.00", step: 0.01, min: 0.01, "x-required": "teenager == 'false' || teenager == false", data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+            <%= form.number_field :annual_budget, id: "annual_budget_field", "x-bind:disabled": "teenager == null", placeholder: "500.00", step: 0.01, min: 0.01, "x-required": "teenager == 'false' || teenager == false", data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
           </div>
         </div>
       </div>
@@ -116,7 +116,7 @@
         <div class="flex items-center">
           <div class="input flex gap-2 items-center py-0">
             <span class="bold muted">$</span>
-            <%= form.number_field :committed_amount, id: "committed_amount_field", "x-bind:disabled": "teenager == null", "x-model": "committed", placeholder: "500.00", step: 0.01, min: 0.00, "x-required": "teenager == 'false' || teenager == false", data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad", extraction_field: "total" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
+            <%= form.number_field :committed_amount, id: "committed_amount_field", "x-bind:disabled": "teenager == null", "x-model": "committed", placeholder: "500.00", step: 0.01, min: 0.00, "x-required": "teenager == 'false' || teenager == false", data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" }, class: "!p-0 !border-none !shadow-none min-h-auto" %>
           </div>
         </div>
       </div>

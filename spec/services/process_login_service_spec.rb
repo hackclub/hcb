@@ -195,6 +195,91 @@ RSpec.describe ProcessLoginService do
         expect(login.reload.authenticated_with_email).to eq(true)
         expect(service.errors).to be_empty
       end
+
+      context "attempt limits" do
+        def guess_wrong(login:, times:)
+          times.times do
+            expect(described_class.new(login:).process_login_code(code: "000-000", sms: false)).to be(false)
+          end
+        end
+
+        it "rejects even the right code once a login has had too many guesses" do
+          setup_context => { service:, user:, login: }
+          login_code = create(:login_code, user:)
+          guess_wrong(login:, times: ProcessLoginService::MAX_EMAIL_CODE_ATTEMPTS_PER_LOGIN)
+
+          ok = service.process_login_code(code: login_code.code, sms: false)
+
+          expect(ok).to be(false)
+          expect(service.errors.messages).to eq({ base: ["Too many incorrect login codes. Please start again and request a new code."] })
+          expect(login.reload.authenticated_with_email).to be_nil
+          expect(login_code.reload.used_at).to be_nil
+        end
+
+        it "caps guesses per user across logins" do
+          user = create(:user)
+          per_login = ProcessLoginService::MAX_EMAIL_CODE_ATTEMPTS_PER_LOGIN
+          per_user = ProcessLoginService::MAX_EMAIL_CODE_ATTEMPTS_PER_USER
+          (per_user / per_login).times { guess_wrong(login: create(:login, user:), times: per_login) }
+
+          login_code = create(:login_code, user:)
+          service = described_class.new(login: create(:login, user:))
+          ok = service.process_login_code(code: login_code.code, sms: false)
+
+          expect(ok).to be(false)
+          expect(service.errors.messages).to eq({ base: ["Too many incorrect login codes. Please try again later."] })
+        end
+
+        it "allows guesses again once the window has passed" do
+          user = create(:user)
+          guess_wrong(login: create(:login, user:), times: ProcessLoginService::MAX_EMAIL_CODE_ATTEMPTS_PER_LOGIN)
+          guess_wrong(login: create(:login, user:), times: ProcessLoginService::MAX_EMAIL_CODE_ATTEMPTS_PER_LOGIN)
+
+          travel(ProcessLoginService::EMAIL_CODE_ATTEMPTS_WINDOW + 1.minute)
+
+          login_code = create(:login_code, user:)
+          expect(described_class.new(login: create(:login, user:)).process_login_code(code: login_code.code, sms: false)).to be(true)
+        end
+
+        it "records each attempt with where it came from" do
+          user = create(:user)
+          login = create(:login, user:)
+          login_code = create(:login_code, user:)
+          service = described_class.new(login:, ip_address: "198.51.100.7", user_agent: "fake firefox")
+
+          service.process_login_code(code: "000-000", sms: false)
+          service.process_login_code(code: login_code.code, sms: false)
+
+          expect(login.attempts.order(:id).pluck(:status, :factor)).to eq([["failed", "email"], ["succeeded", "email"]])
+          expect(login.attempts.pluck(:ip_address).map(&:to_s).uniq).to eq(["198.51.100.7"])
+          expect(login.attempts.pluck(:user_agent).uniq).to eq(["fake firefox"])
+        end
+
+        it "doesn't let attempts past the cap extend the lockout" do
+          user = create(:user)
+          per_login = ProcessLoginService::MAX_EMAIL_CODE_ATTEMPTS_PER_LOGIN
+          (ProcessLoginService::MAX_EMAIL_CODE_ATTEMPTS_PER_USER / per_login).times { guess_wrong(login: create(:login, user:), times: per_login) }
+
+          travel(30.minutes)
+          guess_wrong(login: create(:login, user:), times: 20)
+          expect(Login::Attempt.joins(:login).where(logins: { user_id: user.id }).blocked.count).to eq(20)
+
+          travel(ProcessLoginService::EMAIL_CODE_ATTEMPTS_WINDOW - 29.minutes)
+          login_code = create(:login_code, user:)
+          expect(described_class.new(login: create(:login, user:)).process_login_code(code: login_code.code, sms: false)).to be(true)
+        end
+
+        it "doesn't count a successful sign-in against the user" do
+          user = create(:user)
+          ProcessLoginService::MAX_EMAIL_CODE_ATTEMPTS_PER_USER.times do
+            login_code = create(:login_code, user:)
+            expect(described_class.new(login: create(:login, user:)).process_login_code(code: login_code.code, sms: false)).to be(true)
+          end
+
+          login_code = create(:login_code, user:)
+          expect(described_class.new(login: create(:login, user:)).process_login_code(code: login_code.code, sms: false)).to be(true)
+        end
+      end
     end
   end
 

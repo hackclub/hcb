@@ -21,7 +21,6 @@ class EventPolicy < ApplicationPolicy
   # Turbo frames for the event homepage (show)
   alias_method :team_stats?, :show?
   alias_method :recent_activity?, :show?
-  alias_method :money_movement?, :show?
   alias_method :balance_transactions?, :show?
   alias_method :merchants_chart?, :show?
   alias_method :categories_chart?, :show?
@@ -177,7 +176,7 @@ class EventPolicy < ApplicationPolicy
     # The contractors list is visible in transparency mode (public events),
     # but only shows status/name/period/purpose to the public. Sensitive
     # details (email, rate, totals, invoices) are gated by contractor_details?.
-    Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && show? && record.plan.transfers_enabled?
+    Flipper.enabled?(:payments_contractors_refresh_2026_06_26, record) && show? && record.plan.transfers_enabled? && record.plan.contractors_enabled?
   end
 
   def contractor_details?
@@ -210,6 +209,10 @@ class EventPolicy < ApplicationPolicy
   end
 
   def reimbursements_pending_review_icon?
+    show?
+  end
+
+  def contractors_pending_review_icon?
     show?
   end
 
@@ -252,16 +255,16 @@ class EventPolicy < ApplicationPolicy
     show? && record.approved? && (record.plan.invoices_enabled? || record.invoices.any?)
   end
 
+  def export_invoices?
+    invoices? && auditor_or_reader?
+  end
+
   def account_number?
     (auditor? || member?) && record.plan.account_number_enabled?
   end
 
   def toggle_event_tag?
     user.admin?
-  end
-
-  def receive_grant?
-    OrganizerPosition.role_at_least?(user, record, :reader)
   end
 
   def audit_log?
@@ -348,10 +351,6 @@ class EventPolicy < ApplicationPolicy
 
   def admin_or_manager?
     admin? || manager?
-  end
-
-  def admin_or_reader?
-    admin? || reader?
   end
 
   def is_not_demo_mode?

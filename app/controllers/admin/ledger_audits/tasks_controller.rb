@@ -31,7 +31,8 @@ module Admin
       end
 
       def create
-        hcb_code = HcbCode.find(params[:hcb_code])
+        # TODO: rework this to use ledger items entirely
+        hcb_code = Ledger::Item.find(params[:ledger_item]).hcb_code
         if Admin::LedgerAudit::Task.where(hcb_code:, status: "flagged").none?
           @task = Admin::LedgerAudit::Task.create(hcb_code:, status: "flagged", reviewer: current_user)
           if @task.save

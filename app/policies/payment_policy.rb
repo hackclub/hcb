@@ -20,4 +20,8 @@ class PaymentPolicy < ApplicationPolicy
     EventPolicy.new(user, record.event).create_payment?
   end
 
+  def retry?
+    EventPolicy.new(user, record.event).create_payment?
+  end
+
 end

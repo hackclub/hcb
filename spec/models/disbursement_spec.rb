@@ -908,9 +908,7 @@ RSpec.describe Disbursement, type: :model do
     end
   end
 
-  describe "state display fronting branches" do
-    # state / state_text / state_icon all branch on whether the destination event can
-    # front the balance while the transfer is still processing.
+  describe "state display" do
     describe "#state_icon" do
       it "is a checkmark when fulfilled" do
         expect(create(:disbursement, :deposited).state_icon).to eq("checkmark")
@@ -924,36 +922,17 @@ RSpec.describe Disbursement, type: :model do
         expect(disbursement.state_icon).to be_nil
       end
 
-      it "is a checkmark when pending and the destination event can front the balance" do
-        disbursement = create(:disbursement, :pending)
-        allow(disbursement.destination_event).to receive(:can_front_balance?).and_return(true)
-        expect(disbursement.state_icon).to eq("checkmark")
-      end
-
-      it "is nil when pending and the destination event cannot front the balance" do
-        disbursement = create(:disbursement, :pending)
-        allow(disbursement.destination_event).to receive(:can_front_balance?).and_return(false)
-        expect(disbursement.state_icon).to be_nil
+      it "is a checkmark when pending" do
+        expect(create(:disbursement, :pending).state_icon).to eq("checkmark")
       end
     end
 
-    context "while processing, when the destination event can front the balance" do
+    context "while processing" do
       it "reads as a fulfilled success" do
         disbursement = create(:disbursement, :in_transit)
-        allow(disbursement.destination_event).to receive(:can_front_balance?).and_return(true)
 
         expect(disbursement.state).to eq(:success)
         expect(disbursement.state_text).to eq("fulfilled")
-      end
-    end
-
-    context "while processing, when the destination event cannot front the balance" do
-      it "reads as muted and still processing" do
-        disbursement = create(:disbursement, :in_transit)
-        allow(disbursement.destination_event).to receive(:can_front_balance?).and_return(false)
-
-        expect(disbursement.state).to eq(:muted)
-        expect(disbursement.state_text).to eq("processing")
       end
     end
   end

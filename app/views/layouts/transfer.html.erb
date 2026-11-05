@@ -26,7 +26,7 @@
   data-controller="scroll-seek <%= "check-preview" if @check.present? %>"
   <% if @check.present? %> data-action="scroll@window->check-preview#render"<% end %>>
   <% if sidebar %>
-    <div class="md:w-[375px]">
+    <div class="md:w-[375px] md:pt-8">
       <div class="md:sticky top-28" id="table-of-contents">
         <% if steps %>
           <div class="flex fixed z-10 w-full backdrop-blur-xl scrollbar-hidden left-0 top-20 md:static border-[rgba(200,200,200,.3)] md:rounded-xl p-2 border-solid border-[1px] border-x-0 md:border-x-[1px] overflow-x-auto">
@@ -53,7 +53,7 @@
         </p>
       <% else %>
         <p class="muted mt-3 text-center text-sm <%= "hidden" if controller_name == "payments" && @payee.nil? %>">
-          Your transfer will be reviewed on the next business day <% if @payee && !@payee.managed? %><br><strong>after <%= @payee.display_name %> has submitted their tax information</strong><% end %>
+          Your transfer will be reviewed on the next business day <% if @payee && !@payee.managed? %><br><strong>after <%= @payee.display_name %> has submitted their payout information</strong><% end %>
         </p>
       <% end %>
     <% end %>

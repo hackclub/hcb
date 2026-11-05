@@ -99,8 +99,16 @@ class Contract
                 name: "Signature",
                 default_value: ActionController::Base.helpers.asset_url("zach_signature.png", host: "https://hcb.hackclub.com"),
                 readonly: false
-              }
-            ]
+              },
+              if prefills["grant_amount_cents"].present?
+                {
+                  name: "Grant Amount",
+                  default_value: ActionController::Base.helpers.number_to_currency(prefills["grant_amount_cents"] / 100.0)
+                }
+              else
+                nil
+              end
+            ].compact
           }
         ].compact
       }
@@ -130,12 +138,18 @@ class Contract
     # Once contracts belong to a Contract::Template record, that template should
     # carry its own name and this whole comparison can go away.
     def agreement_name
-      hack_club_template = Event::Plan::HackClubAffiliate.new.contract_docuseal_template_id
-
-      # external_template_id is a string column, but plans return integers.
-      return "contract" if external_template_id.to_s == hack_club_template.to_s
+      return "contract" if uses_template_of?(Event::Plan::HackClubAffiliate)
 
       "fiscal sponsorship agreement"
+    end
+
+    # Whether this is the standard fiscal sponsorship agreement: the one every
+    # application signs and the one plans inherit unless they bring their own
+    # (Hack Club HQ, Argosy, donor-advised funds, ...). Like #agreement_name,
+    # this goes by the DocuSeal template the contract was issued against, so a
+    # contract with no recorded template isn't considered standard.
+    def standard_fiscal_sponsorship?
+      uses_template_of?(Event::Plan::Standard)
     end
 
     def required_roles
@@ -163,6 +177,11 @@ class Contract
     end
 
     private
+
+    def uses_template_of?(plan_class)
+      # external_template_id is a string column, but plans return integers.
+      external_template_id.to_s == plan_class.new.contract_docuseal_template_id.to_s
+    end
 
     def document_name
       "Fiscal sponsorship agreement with #{party(:signee).user.full_name}"

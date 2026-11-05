@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module DonationsHelper
-  def donation_payment_processor_fee(humanized = true, donation = @donation)
+  def donation_payment_processor_fee(donation = @donation, humanized: true)
     fee = donation.payout_creation_balance_stripe_fee
 
     return fee unless humanized
@@ -15,7 +15,7 @@ module DonationsHelper
     title = nil
     if donation.deposited?
       title = "Funds available since "
-      date = @hcb_code.canonical_transactions.pluck(:date).max
+      date = donation.canonical_transactions.pluck(:date).max
     elsif donation.payout.nil?
       title = "Transfer scheduled for "
       date = donation.payout_creation_queued_for
@@ -48,13 +48,6 @@ module DonationsHelper
         "visa"       => "card-visa",
         "discover"   => "card-discover"
       }[brand] || "card-other"
-      tooltip = {
-        "amex"       => "American Express",
-        "mastercard" => "Mastercard",
-        "visa"       => "Visa",
-        "discover"   => "Discover"
-      }[brand] || "Card"
-      tooltip += " ending in #{last4}" if last4 && organizer_signed_in?
       description_text = organizer_signed_in? ? "••••#{last4}" : "••••"
       icon = inline_icon icon_name, width: 32, height: 20, class: "slate"
     else
@@ -76,13 +69,7 @@ module DonationsHelper
   def donation_card_country_mention(donation = @donation)
     country_code = donation&.payment_method_card_country
 
-    return nil unless country_code
-
-    # Hack to turn country code into the country's flag
-    # https://stackoverflow.com/a/50859942
-    emoji = country_code.tr("A-Z", "\u{1F1E6}-\u{1F1FF}")
-
-    content_tag :span, emoji, class: "tooltipped tooltipped--w pr1", 'aria-label': country_code
+    country_to_emoji(country_code) if country_code
   end
 
   def donation_fee_type(donation = @donation)
@@ -99,26 +86,6 @@ module DonationsHelper
   end
 
   def donation_card_check_badge(check, donation = @donation)
-    case donation.send("payment_method_card_checks_#{check}_check")
-    when "pass"
-      background = "success"
-      icon_name = "checkmark"
-      text = "Passed"
-    when "failed"
-      background = "warning"
-      icon_name = "view-close"
-      text = "Failed"
-    when "unchecked"
-      background = "info"
-      icon_name = "checkbox"
-      text = "Unchecked"
-    else
-      background = "smoke"
-      icon_name = "checkbox"
-      text = "Unavailable"
-    end
-
-    tag = inline_icon icon_name, size: 24
-    content_tag(:span, class: "pr1 #{background} line-height-0 tooltipped tooltipped--w", 'aria-label': text) { tag }
+    card_check_badge donation.send("payment_method_card_checks_#{check}_check")
   end
 end

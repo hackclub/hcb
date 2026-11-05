@@ -110,6 +110,10 @@ module SetLedgerFilters
 
       query << { author: { "$eq": @user&.slug || params[:user] } } if params[:user].present?
 
+      query << { tag: { "$eq": @tag.id } } if @tag.present?
+      query << { category: { "$eq": @category.slug } } if @category.present?
+      query << { merchant: { "$eq": @merchant } } if @merchant.present?
+
       if @type.present?
         linked_object_type = {
           "ach_transfer"           => { "$eq": "AchTransfer" },

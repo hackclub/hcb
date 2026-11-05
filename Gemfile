@@ -68,7 +68,6 @@ gem "phonelib" # phone number validations
 
 gem "money-rails", "~> 3.0.0"
 gem "monetize", "~> 2.0.0"
-gem "rounding"
 
 gem "business_time"
 
@@ -142,9 +141,10 @@ gem "bootsnap", ">= 1.4.4", require: false # reduces boot times through caching;
 
 gem "appsignal" # error tracking + performance monitoring
 gem "lograge" # Log formatting
-gem "statsd-instrument", "~> 3.9" # For reporting to HC Grafana
 
 group :test do
+  gem "capybara" # Browser-driven system tests
+  gem "cuprite" # Headless Chrome driver for Capybara
   gem "factory_bot_rails" # Test data
   gem "simplecov", require: false # Code coverage
   gem "webmock"
@@ -234,8 +234,6 @@ gem "discordrb"
 
 gem "pghero", "~> 3.7"
 gem "pg_query", ">= 2"
-
-gem "hotwire_combobox"
 
 gem "maintenance_tasks", "~> 2.14"
 
