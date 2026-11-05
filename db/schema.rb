@@ -12,7 +12,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_30_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_05_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "pg_catalog.plpgsql"
@@ -2516,13 +2516,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_120000) do
   create_table "repayments", force: :cascade do |t|
     t.integer "amount_cents", null: false
     t.datetime "created_at", null: false
-    t.bigint "disbursement_id", null: false
+    t.bigint "created_by_id"
+    t.bigint "disbursement_id"
     t.bigint "ledger_item_id", null: false
     t.jsonb "previous_categories", default: {}, null: false
+    t.bigint "repaying_ledger_item_id"
     t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_repayments_on_created_by_id"
     t.index ["disbursement_id", "ledger_item_id"], name: "index_repayments_on_disbursement_id_and_ledger_item_id", unique: true
     t.index ["disbursement_id"], name: "index_repayments_on_disbursement_id"
     t.index ["ledger_item_id"], name: "index_repayments_on_ledger_item_id"
+    t.index ["repaying_ledger_item_id"], name: "index_repayments_on_repaying_ledger_item_id", unique: true
+    t.check_constraint "num_nonnulls(disbursement_id, repaying_ledger_item_id) = 1", name: "repayments_disbursement_or_repaying_ledger_item"
   end
 
   create_table "sponsors", force: :cascade do |t|
@@ -3289,6 +3294,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_30_120000) do
   add_foreign_key "reimbursement_reports", "users", column: "invited_by_id"
   add_foreign_key "repayments", "disbursements"
   add_foreign_key "repayments", "ledger_items"
+  add_foreign_key "repayments", "ledger_items", column: "repaying_ledger_item_id"
+  add_foreign_key "repayments", "users", column: "created_by_id"
   add_foreign_key "sponsors", "events"
   add_foreign_key "stripe_authorizations", "stripe_cards"
   add_foreign_key "stripe_card_personalization_designs", "events"

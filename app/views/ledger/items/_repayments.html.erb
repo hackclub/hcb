@@ -1,10 +1,10 @@
 <%# locals: (ledger_item:) %>
 
 <%# Rows for a transaction's details list, linking a repayment and what it repays. %>
-<% disbursement = ledger_item.linked_object.disbursement if ledger_item.linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"]) %>
-<%# A scheduled transfer has no incoming side until it's sent, so fall back to the outgoing one. %>
-<% repaid_by = ledger_item.repayments.not_failed.filter_map { |r| r.disbursement.incoming_disbursement.ledger_item || r.disbursement.outgoing_disbursement.ledger_item } %>
-<% repays = disbursement ? disbursement.repaid_ledger_items : [] %>
+<% repaid_by = ledger_item.repaid_by_items %>
+<% repays = ledger_item.repays_items %>
+<%# Repayments marked between two transactions on this ledger can be undone; transfers are undone by rejecting them. %>
+<% unmarkable = ledger_item.marked_repayment.present? && policy(ledger_item).unmark_repayment? %>
 
 <% { "Repaid by" => repaid_by, "Repays" => repays }.each do |label, linked| %>
   <% next if linked.empty? %>
@@ -19,6 +19,14 @@
                    end
             safe_join([name, tag.span("on #{item.datetime.strftime("%b %-d, %Y")}", class: "muted")], " ")
           }, ", ") %>
+      <% if unmarkable %>
+        <%= button_to "Unmark",
+                      ledger_item_repayment_path(ledger_item),
+                      method: :delete,
+                      class: "p0 bg-transparent border-none cursor-pointer link-reset muted underline",
+                      form_class: "inline",
+                      form: { data: { turbo_frame: "_top", turbo_confirm: "Unmark this repayment? Both transactions go back to the categories they had before." } } %>
+      <% end %>
     </span>
   </p>
 <% end %>

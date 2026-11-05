@@ -642,6 +642,9 @@ Rails.application.routes.draw do
       post "unpin"
       patch "rename"
       post "invoice_as_personal_transaction"
+      resource :repayment, only: [:create, :destroy] do
+        get :candidates
+      end
     end
   end
   resources :ledger_items, only: [], path: "transactions", concerns: :commentable
@@ -745,6 +748,9 @@ Rails.application.routes.draw do
           resources :transactions, only: [:show, :update] do
             resources :receipts, only: [:index]
             resources :comments, only: [:index, :create] # Deprecated (will be removed in the future): use shallow route
+            resource :repayment, only: [:create, :destroy] do
+              get :candidates
+            end
 
             member do
               get "memo_suggestions"

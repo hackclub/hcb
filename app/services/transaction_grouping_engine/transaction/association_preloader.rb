@@ -20,7 +20,8 @@ module TransactionGroupingEngine
           { suggested_hcb_code_tag_suggestions: [:tag] },
           { canonical_transactions: [:canonical_event_mapping, :transaction_source] },
           { canonical_pending_transactions: [:event, :subledger, :canonical_pending_declined_mapping, :raw_pending_stripe_transaction] },
-          { reimbursement_expense_payout: { expense: [:report] } }
+          { reimbursement_expense_payout: { expense: [:report] } },
+          { ledger_item: [{ repayments: [:disbursement, { repaying_ledger_item: :hcb_code }] }, { repaying_repayment: { repaid_ledger_item: :hcb_code } }] }
         ]
         included_models << :tags
         hcb_code_objects = HcbCode
