@@ -334,7 +334,12 @@ class CardGrant < ApplicationRecord
   end
 
   def allowed_merchant_names
-    allowed_merchants.map { |merchant_id| YellowPages::Merchant.lookup(network_id: merchant_id).name || "Unnamed Merchant (#{merchant_id})" }.uniq
+    names = allowed_merchants.map { |merchant_id| YellowPages::Merchant.lookup(network_id: merchant_id).name }
+    unnamed_count = names.count(&:nil?)
+
+    names.compact.uniq.tap do |named|
+      named << "#{unnamed_count} unnamed #{"merchant".pluralize(unnamed_count)}" if unnamed_count.positive?
+    end
   end
 
   def allowed_categories

@@ -44,7 +44,7 @@
           <tr>
             <td style="text-align: right;">Organization</td>
             <td colspan="2" style="width: 300px">
-              <%= link_to @ach_transfer.event.name, @ach_transfer.event %>
+              <%= link_to @ach_transfer.event.name, @ach_transfer.event, data: { turbo_frame: "_top" } %>
             </td>
           </tr>
           <tr>
