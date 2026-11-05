@@ -156,6 +156,11 @@ module Reimbursement
     def convert_to_wise_transfer
       authorize @report
 
+      if @report.payout_method_incomplete?
+        flash[:error] = @report.incomplete_payout_method_message
+        return redirect_to @report
+      end
+
       wise_transfer = @report.convert_to_wise_transfer!(as: current_user)
 
       flash[:success] = "Report successfully converted to Wise transfer."
@@ -264,6 +269,11 @@ module Reimbursement
       wise_amount_cents = (params[:wise_total_including_fees] * 100).to_i if @report.currency != "USD" && params[:wise_total_including_fees].present?
       ensure_admin_may_approve!(@report, amount_cents: wise_amount_cents || @report.amount_to_reimburse_cents)
 
+      if @report.payout_method_incomplete?
+        flash[:error] = @report.incomplete_payout_method_message
+        return redirect_to @report
+      end
+
       begin
         @report.with_lock do
           if params[:wise_total_without_fees] && params[:wise_total_including_fees]
@@ -318,6 +328,11 @@ module Reimbursement
 
     def admin_send_wise_transfer
       authorize @report
+
+      if @report.payout_method_incomplete?
+        flash[:error] = @report.incomplete_payout_method_message
+        return redirect_to @report
+      end
 
       clearinghouse = Event.find_by(id: EventMappingEngine::EventIds::REIMBURSEMENT_CLEARING)
       payout_holding = @report.payout_holding
