@@ -99,6 +99,18 @@ class CheckDeposit < ApplicationRecord
 
   alias_attribute :status, :increase_status
 
+  # Column statuses that move a deposit into one of ours. Column's own
+  # `deposited` only means the check was sent to the Fed; the money is in our
+  # account once it's `settled`. Every other status (initiated, manual_review,
+  # pending_deposit, deposited, pending_reclear, recleared) is still in flight,
+  # which `submitted` already covers.
+  # https://docs.column.com/checks/notifications-and-states
+  COLUMN_STATUSES = {
+    "settled"  => "deposited",
+    "returned" => "returned",
+    "rejected" => "rejected",
+  }.freeze
+
   enum :rejection_reason, {
     incomplete_image: "incomplete_image",
     duplicate: "duplicate",
@@ -116,6 +128,22 @@ class CheckDeposit < ApplicationRecord
     ProcessColumnCheckDepositJob.perform_later(check_deposit: self)
 
     create_canonical_pending_transaction!(event:, amount_cents:, memo: "CHECK DEPOSIT", date: created_at)
+  end
+
+  def sync_from_column!
+    raise ArgumentError, "Check deposit must have a column id" if column_id.blank?
+
+    update_from_column_status!(ColumnService.get("/transfers/checks/#{column_id}")["status"])
+  end
+
+  def update_from_column_status!(column_status)
+    status = COLUMN_STATUSES[column_status]
+    return if status.nil? || status == self.status
+
+    self.status = status
+    # Column doesn't tell us why it rejected a check.
+    self.rejection_reason = :unknown if rejected?
+    save!
   end
 
   include HasHcbCode
