@@ -17,7 +17,7 @@ module BreakdownEngine
           true
         end
 
-        amount_cents_sum = transactions.sum { |hcb_code| hcb_code.amount_cents.abs }
+        amount_cents_sum = transactions.sum(&:amount_cents).abs
         next if amount_cents_sum == 0
 
         array << {

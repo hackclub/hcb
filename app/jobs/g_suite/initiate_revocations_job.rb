@@ -20,7 +20,3 @@ class GSuite
   end
 
 end
-
-module GSuiteJob
-  InitiateRevocations = GSuite::InitiateRevocationsJob
-end

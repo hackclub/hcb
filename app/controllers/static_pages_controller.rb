@@ -45,9 +45,6 @@ class StaticPagesController < ApplicationController
     @hcb_expansion = Rails.cache.read("hcb_acronym_expansions")&.sample || "Hack Club Buckaroos"
   end
 
-  def first
-  end
-
   def admin_tools
     unless auditor_signed_in?
       redirect_to(root_path, flash: { error: "You are not authorized to visit this page." })
@@ -92,7 +89,7 @@ class StaticPagesController < ApplicationController
         "Invite a user": :manager,
         "Request removal of a user": :manager,
         "Cancel invite made by another user": :manager,
-        "Cancel invite made by yourself": :member,
+        "Cancel invite made by yourself": :manager,
         "Change another user's role": :manager,
       },
       Transfers: {
