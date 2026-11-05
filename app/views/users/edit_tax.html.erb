@@ -1,0 +1,18 @@
+<% title "Account settings" %>
+<% page_md %>
+<%= render "users/nav", selected: :settings_tax %>
+
+<% show_tin = policy(@legal_entity).show_masked_tin? %>
+
+<turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
+  <%= render "settings_header", active: "tax", legal_entities: @legal_entities, legal_entity: @legal_entity %>
+  <section>
+    <p>
+      You last submitted a tax form for this legal entity on <%= format_date @completed_tax_form.completed_at %>
+      with TIN <%= masked_tin_tag @completed_tax_form, viewable: show_tin %>.
+      If you need to update your tax information, start a new tax form.
+    </p>
+
+    <%= button_to "Start new tax form", tax_forms_path, params: { legal_entity_id: @legal_entity.hashid }, class: "btn" %>
+  </section>
+</turbo-frame>
