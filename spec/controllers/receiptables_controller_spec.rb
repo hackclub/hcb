@@ -26,8 +26,8 @@ RSpec.describe ReceiptablesController do
       receipt = hcb_code.receipts.sole
       expect(receipt).to be_lost_receipt_statement
       expect(receipt.file.download).to start_with("%PDF")
-      expect(receipt.lost_receipt_statement.signer_name).to eq("Alex Example")
-      expect(receipt.lost_receipt_statement.submitter).to be_nil
+      expect(Poppler::Document.new(data: receipt.file.download).first.text).to include("Alex Example", "Receipt request link (not signed in)")
+      expect(receipt.user).to be_nil
       expect(hcb_code.reload).not_to be_no_or_lost_receipt
       expect(flash[:success]).to eq("Lost receipt statement added.")
       expect(response).to redirect_to(attach_receipt_hcb_code_path(hcb_code, s: secret))
@@ -49,6 +49,17 @@ RSpec.describe ReceiptablesController do
       expect(hcb_code.reload).to be_missing_receipt
       expect(response.body).to include("Stationery Shop", "Workshop supplies", "Notebooks", "must be accepted")
       expect(Nokogiri::HTML.fragment(response.body).at_css('input[name="s"]')["value"]).to eq(secret)
+    end
+
+    it "renders validation errors for malformed prices" do
+      [{ unit_amount: true }, { unit_amount: false }, { unit_amount_cents: true }, { unit_amount_cents: false }].each do |price|
+        item = { description: "Pens", quantity: 1 }.merge(price)
+        post(:mark_no_or_lost, params: base_params.merge(s: secret, lost_receipt_statement: details.merge(items_attributes: [item])), as: :json, format: :html)
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.body).to include("Unit amount cents is not a number")
+        expect(hcb_code.receipts).to be_empty
+      end
     end
 
     it "refuses a secret issued for a different transaction" do
@@ -96,7 +107,7 @@ RSpec.describe ReceiptablesController do
       post(:mark_no_or_lost, params: base_params.merge(lost_receipt_statement: details.merge(submitter_id: create(:user).id)))
 
       receipt = hcb_code.receipts.sole
-      expect(receipt.lost_receipt_statement.submitter).to eq(user)
+      expect(receipt.user).to eq(user)
       expect(user.receipts.lost_receipt_statement.sole).to eq(receipt)
       expect(hcb_code.reload).not_to be_missing_receipt
       expect(hcb_code).not_to be_no_or_lost_receipt
@@ -107,8 +118,7 @@ RSpec.describe ReceiptablesController do
 
       expect(hcb_code.reload).to be_missing_receipt
       expect(hcb_code.ledger_item.reload).to be_missing_receipt
-      expect(LostReceipt::Statement.count).to eq(0)
-      expect(LostReceipt::Item.count).to eq(0)
+      expect(user.receipts.lost_receipt_statement).to be_empty
     end
 
     it "refuses a signed in user who isn't on the organization" do
@@ -139,6 +149,8 @@ RSpec.describe ReceiptablesController do
       document = Nokogiri::HTML.fragment(response.body)
       expect(document.at_css('input[name="lost_receipt_statement[date]"]')["value"]).to eq(hcb_code.date.iso8601)
       expect(document.at_css('input[name="lost_receipt_statement[merchant]"]')["value"]).to eq(hcb_code.memo)
+      expect(document.at_css('input[name="lost_receipt_statement[items_attributes][0][quantity]"]')["value"]).to eq("1")
+      expect(document.at_css('input[name="lost_receipt_statement[items_attributes][0][unit_amount]"]')).to be_present
       expect(document.at_css('input[name="lost_receipt_statement[confirmed]"][required]')).to be_present
       expect(document.at_css('input[type="file"]')).to be_nil
     end

@@ -14,7 +14,7 @@ class ReceiptablesController < ApplicationController
       signer_name: current_user&.full_name,
       submitter: current_user
     )
-    @statement.items.build(quantity: 1)
+    @statement.items << LostReceipt::Item.new(quantity: 1)
   end
 
   def mark_no_or_lost

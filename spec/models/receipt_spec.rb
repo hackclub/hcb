@@ -26,7 +26,11 @@ RSpec.describe Receipt, type: :model do
     expect(charge.receipts).to be_empty
     expect(charge.reload).to be_no_or_lost_receipt
     expect(charge.ledger_item.reload).to be_no_or_lost_receipt
-    expect(LostReceipt::Statement.count).to eq(0)
+
+    file.rewind
+    receipt = described_class.create!(receiptable: charge, user: create(:user), file:, upload_method: :api)
+    expect(receipt.update(upload_method: :lost_receipt_statement)).to eq(false)
+    expect(receipt.reload).to be_api
   end
 
   describe "card locking" do

@@ -57,7 +57,7 @@ class Receipt < ApplicationRecord
   alias_method :uploader, :user
   alias_method :transaction, :receiptable
 
-  has_one :lost_receipt_statement, class_name: "LostReceipt::Statement", dependent: :destroy, inverse_of: :receipt
+  attr_accessor :lost_receipt_statement
 
   has_many :suggested_pairings, dependent: :destroy
   has_many :suggested_transactions, source: :hcb_code, through: :suggested_pairings
@@ -77,8 +77,11 @@ class Receipt < ApplicationRecord
   validates :file, attached: true, content_type: /(\Aimage\/.*\z|application\/pdf|text\/csv)/
   validates :file, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["file"].present? }
   validates :file, content_type: "application/pdf", if: :lost_receipt_statement?
-  validates :lost_receipt_statement, presence: true, if: :lost_receipt_statement?
-  validates_associated :lost_receipt_statement, if: :lost_receipt_statement?
+  validate do
+    if lost_receipt_statement? && (new_record? || will_save_change_to_upload_method?) && !lost_receipt_statement&.valid?
+      errors.add(:lost_receipt_statement, "must be generated from valid statement details")
+    end
+  end
 
   before_create do
     if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)

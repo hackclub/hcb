@@ -1,27 +1,37 @@
 # frozen_string_literal: true
 
 module LostReceipt
-  class Statement < ApplicationRecord
+  class Statement
+    include ActiveModel::Model
+    include ActiveModel::Attributes
+
     CONFIRMATION = "I confirm that these purchase details are accurate to the best of my knowledge and that I cannot obtain the original receipt."
 
-    belongs_to :receipt, inverse_of: :lost_receipt_statement, optional: true
-    belongs_to :submitter, class_name: "User", optional: true
-    has_many :items, dependent: :destroy, inverse_of: :statement
-    accepts_nested_attributes_for :items, reject_if: :all_blank
+    attr_accessor :receipt, :submitter, :merchant, :purpose, :signer_name, :confirmed_at
 
+    attribute :date, :date
     attribute :confirmed, :boolean
+    attribute :items, default: -> { [] }
 
     validates :date, :merchant, :purpose, :signer_name, presence: true
     validates :merchant, :signer_name, length: { maximum: 255 }
-    validates :confirmed, acceptance: { accept: true, allow_nil: false }, if: :new_record?
-    validates :receipt, presence: true, unless: -> { validation_context == :statement_details }
+    validates :confirmed, acceptance: { accept: true, allow_nil: false }
     validates :items, length: { minimum: 1, maximum: 50 }
     validate :date_is_not_in_the_future
+    validate :items_are_valid
 
-    # Both the web form and API use this operation. Generate and store the PDF
-    # before attaching it so storage failures cannot resolve the missing receipt.
+    def items_attributes=(attributes)
+      attributes = attributes.values if attributes.is_a?(Hash)
+      # Keep the existing nested-form request limit before constructing items.
+      raise ActiveRecord::NestedAttributes::TooManyRecords if attributes.size > 50
+
+      self.items = attributes.reject { |item| item.values.all?(&:blank?) }.map { |item| Item.new(item) }
+    end
+
+    # Generate and store the PDF before attaching it so storage failures cannot
+    # resolve the missing receipt.
     def submit(receiptable:)
-      return false unless valid?(:statement_details)
+      return false unless valid?
 
       self.confirmed_at = Time.current
       self.receipt = Receipt.new(receiptable:, user: submitter, upload_method: :lost_receipt_statement, lost_receipt_statement: self)
@@ -32,10 +42,7 @@ module LostReceipt
       blob = ActiveStorage::Blob.create_after_unfurling!(io:, filename: "lost-receipt-statement.pdf", content_type: "application/pdf")
       blob.upload(io)
       receipt.file.attach(blob)
-      self.class.transaction do
-        receipt.save!
-        save!
-      end
+      receipt.save!
       true
     rescue ActiveRecord::RecordInvalid => error
       errors.add(:base, error.record.errors.full_messages.to_sentence)
@@ -45,7 +52,7 @@ module LostReceipt
       errors.add(:base, "The statement could not be created. Please try again.")
       false
     ensure
-      blob&.purge if blob && !persisted?
+      blob&.purge if blob && !receipt&.persisted?
     end
 
     def total_amount_cents
@@ -56,6 +63,14 @@ module LostReceipt
 
     def date_is_not_in_the_future
       errors.add(:date, "can't be in the future") if date && date > Date.current
+    end
+
+    def items_are_valid
+      items.each_with_index do |item, index|
+        next if item.valid?
+
+        item.errors.full_messages.each { |message| errors.add(:base, "Item #{index + 1}: #{message}") }
+      end
     end
 
   end
