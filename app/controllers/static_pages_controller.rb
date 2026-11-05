@@ -110,11 +110,10 @@ class StaticPagesController < ApplicationController
           "View recipient's payment details": :manager,
         },
         "Account & routing numbers": {
-          "View the organization's account & routing numbers": :manager
+          "View the organization's account & routing numbers": :member
         },
         "HCB transfers": {
           "Create an HCB Transfer": :manager,
-          "Cancel an HCB Transfer": :manager,
           "View an HCB Transfer": :reader
         },
         Payments: {
@@ -140,7 +139,6 @@ class StaticPagesController < ApplicationController
         "Freeze/defrost another user's card": :manager,
         "Rename your own card": :member,
         "Rename another user's card": :manager,
-        "View another user's card number": :manager,
         "View card expiration date": :reader,
         "View card billing address": :reader,
       },
@@ -165,7 +163,7 @@ class StaticPagesController < ApplicationController
         "View documents": :reader
       },
       "Settings": {
-        "View settings": :reader,
+        "View settings": :member,
         "Edit settings": :manager,
       }
     }
