@@ -20,6 +20,7 @@
 #  form_type                      :string
 #  sent_at                        :datetime
 #  signing_url                    :string
+#  source                         :string           default("taxbandits"), not null
 #  taxbandits_status              :string
 #  taxbandits_tin_matching_status :string
 #  tin_hash                       :string
@@ -27,7 +28,7 @@
 #  created_at                     :datetime         not null
 #  updated_at                     :datetime         not null
 #  external_id                    :string
-#  legal_entity_id                :bigint           not null
+#  legal_entity_id                :bigint
 #
 # Indexes
 #
@@ -46,11 +47,15 @@ module Tax
     acts_as_paranoid
     has_paper_trail
 
-    belongs_to :legal_entity
+    belongs_to :legal_entity, optional: true
 
     enum :form_type, { W8BEN: "W8BEN", W9: "W9", W8BENE: "W8BENE", W8ECI: "W8ECI", W8IMY: "W8IMY", W8EXP: "W8EXP" }
-    enum :external_service, { manual: "manual", taxbandits: "taxbandits" }, prefix: :sent_with
     enum :entity_type, { person: "person", business: "business", corporation: "corporation" }, prefix: :entity
+
+    # External service describes what service the form is currently linked to
+    # Source describes where the data initially came from
+    enum :external_service, { manual: "manual", taxbandits: "taxbandits" }, prefix: :sent_with
+    enum :source, { taxbandits: "taxbandits", tax1099: "tax1099", manual: "manual" }
 
     # https://developer.taxbandits.com/docs/whcertificate/status/
     enum :taxbandits_status, %w[

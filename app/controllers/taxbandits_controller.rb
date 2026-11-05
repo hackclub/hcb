@@ -8,6 +8,14 @@ class TaxbanditsController < ActionController::Base
   before_action :verify_ip
   before_action :verify_signature
 
+  # TaxBandits fetches PdfUrl from their own processing infrastructure, which is
+  # not the host their webhooks come from and whose egress addresses they do not
+  # publish, so neither of the checks above can apply here. What authorizes the
+  # read instead is the URL itself: a 256-bit single-use token that only ever
+  # existed inside the WhCertificate/Create call HCB just made. See
+  # Tax::W9PdfStore for the guarantees that rest on that.
+  skip_before_action :verify_ip, :verify_signature, only: :w9_pdf
+
   def webhook
     form_type = params["FormType"]
     return if form_type.nil?
@@ -23,6 +31,24 @@ class TaxbanditsController < ActionController::Base
     form&.sync_with_taxbandits
 
     head :ok
+  end
+
+  # Serves a staged W-9 PDF to TaxBandits exactly once. The token is passed in
+  # the query string rather than the path so that Rails' parameter filtering
+  # (:token is already in config.filter_parameters) redacts it from the request
+  # log — a path segment would be logged verbatim.
+  def w9_pdf
+    pdf = Tax::W9PdfStore.claim(params[:token])
+
+    # An expired token, an already-spent one, and one that never existed are
+    # deliberately indistinguishable.
+    return head :not_found if pdf.nil?
+
+    # Nothing may keep a copy: not the browser, not a proxy, not a CDN.
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+    response.headers["Pragma"] = "no-cache"
+
+    send_data pdf, type: Tax::W9PdfStore::CONTENT_TYPE, disposition: "inline", filename: "w9.pdf"
   end
 
   private
