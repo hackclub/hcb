@@ -9,7 +9,7 @@
     title="wanna help us fix this bug? <%= Rails.configuration.constants.github_url %>">
 </div>
 
-<script>
+<%= nonced_javascript_tag do %>
   const formUrl = <%= raw Rails.configuration.constants.github_url.to_json %>;
 
   console.log(
@@ -18,4 +18,4 @@
     'font-size: 1.2em; font-weight: bold;',
     'font-size: 1.2em; font-weight: bold; color: blue;'
   )
-</script>
+<% end %>
