@@ -146,7 +146,7 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       expect(response).to be_successful
       expect(response.body).to include(group.memo)
       expect(response.body).to include("Stripe fee reimbursements")
-      expect(response.body).to include(invoice.event.name)
+      expect(response.body).to include(ERB::Util.html_escape(invoice.event.name))
       expect(response.body).to include("$1.23")
     end
   end
