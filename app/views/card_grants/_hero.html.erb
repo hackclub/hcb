@@ -1,0 +1,93 @@
+<%# locals: (card_grant:, footer: nil, show_actions: true) %>
+
+<% own = card_grant.user == current_user %>
+<% total = card_grant.amount %>
+<% remaining = card_grant.balance %>
+<% remaining_fraction = total.positive? ? [[remaining.cents.to_f / total.cents, 0].max, 1].min : 0 %>
+<%# `state` is the one place that knows whether the grant can be spent right
+    now, so the badge, the meter and the date all key off it. %>
+<% state = card_grant.state %>
+<% spendable = state == "success" %>
+<% ended = card_grant.canceled? || card_grant.expired? %>
+<% if ended %>
+  <% ended_at = card_grant.last_time_change_to(status: card_grant.status.to_sym) || card_grant.expiration_at %>
+<% end %>
+<% days_left = ((ended ? ended_at.to_date : card_grant.expiration_at.to_date) - Date.current).to_i %>
+
+<section class="card card--background-image grant-hero mt-4"
+         style="<%= card_grant.event.background_image.attached? ? "--bg-image: url(#{url_for(card_grant.event.background_image).dump})" : "--bg-image: #{GeoPattern.generate(card_grant.stripe_card&.public_id || card_grant.public_id).to_data_uri}" %>">
+  <div class="grant-hero__top">
+    <p class="flex items-baseline flex-wrap g-1 m-0">
+      <%= status_badge state %>
+      <strong><%= card_grant.state_text %></strong>
+      <% if card_grant.purpose.present? %>
+        <span class="grant-hero__soft">&nbsp;&nbsp;• <%= card_grant.purpose %></span>
+      <% end %>
+    </p>
+    <% if show_actions && organizer_signed_in?(as: :member) %>
+      <div class="flex items-center flex-wrap gap-2">
+        <%= render "card_grants/actions/edit", card_grant: %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="grant-hero__grid">
+    <div>
+      <span class="grant-hero__amount"><%= render_money remaining %></span>
+      <p class="mt-1 mb-3 grant-hero__soft">
+        <%= remaining == total ? "to spend" : "left of #{render_money total}" %>
+      </p>
+
+      <div class="grant-meter">
+        <span class="grant-meter__fill <%= "grant-meter__fill--muted" unless spendable %>"
+              style="width: <%= number_to_percentage(remaining_fraction * 100, precision: 2) %>"></span>
+      </div>
+    </div>
+
+    <div class="grant-hero__aside">
+      <p class="grant-hero__soft m-0">
+        <% if card_grant.canceled? %>
+          Canceled on
+        <% elsif card_grant.expired? %>
+          Expired on
+        <% else %>
+          <%= own ? "Spend it by" : "Expires on" %>
+        <% end %>
+      </p>
+      <div class="flex items-baseline flex-wrap gap-x-2">
+        <p class="grant-hero__date"><%= format_date(ended ? ended_at : card_grant.expiration_at) %></p>
+        <span class="grant-hero__soft">
+          <% if days_left.positive? %>
+            <%= pluralize days_left, "day" %> left
+          <% elsif days_left.zero? %>
+            today
+          <% else %>
+            <%= pluralize days_left.abs, "day" %> ago
+          <% end %>
+        </span>
+      </div>
+
+      <div class="grant-meta mt-2">
+        <div>
+          <span class="grant-hero__soft grant-meta__label">Granted by</span>
+          <%= link_to card_grant.event.name, card_grant.event, class: "grant-meta__value" %>
+        </div>
+        <div>
+          <span class="grant-hero__soft grant-meta__label">Granted to</span>
+          <%= user_mention card_grant.user, class: "grant-meta__value" %>
+        </div>
+        <div>
+          <span class="grant-hero__soft grant-meta__label">Sent</span>
+          <span class="grant-meta__value tooltipped tooltipped--w" aria-label="<%= card_grant.created_at.to_formatted_s(:long) %>">
+            <%= time_ago_in_words card_grant.created_at %> ago
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<% if footer.present? %>
+  <div class="card mt-2">
+    <%= footer %>
+  </div>
+<% end %>
