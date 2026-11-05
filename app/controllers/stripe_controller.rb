@@ -83,7 +83,7 @@ class StripeController < ActionController::Base
   def handle_invoice_paid(event)
     stripe_invoice = event[:data][:object]
 
-    if stripe_invoice.subscription.present?
+    if StripeService.invoice_subscription_id(stripe_invoice).present?
       RecurringDonationService::HandleInvoicePaid.new(stripe_invoice).run
       return
     end
@@ -91,10 +91,10 @@ class StripeController < ActionController::Base
     invoice = Invoice.find_by(stripe_invoice_id: stripe_invoice[:id])
     return unless invoice
 
-    if stripe_invoice[:charge].present?
+    if invoice.remote_charge.present?
       safely do
         StripeService::Charge.update(
-          stripe_invoice[:charge],
+          invoice.remote_charge.id,
           { metadata: { event_id: invoice.event.id } },
         )
       end
@@ -116,8 +116,8 @@ class StripeController < ActionController::Base
   def handle_invoice_payment_failed(event)
     stripe_invoice = event[:data][:object]
 
-    if stripe_invoice.subscription.present?
-      recurring_donation = RecurringDonation.find_by!(stripe_subscription_id: stripe_invoice.subscription)
+    if (subscription_id = StripeService.invoice_subscription_id(stripe_invoice))
+      recurring_donation = RecurringDonation.find_by!(stripe_subscription_id: subscription_id)
       RecurringDonationMailer.with(recurring_donation:).payment_failed.deliver_later
     end
 
