@@ -81,6 +81,17 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       end
     end
 
+    it "updates the counts on the item's ledger row when shown in a popover" do
+      create_session(create(:user, :make_auditor), verified: true)
+      target = "turbo-stream[action='replace'][target='badges_ledger_item_#{item.id}']"
+
+      get :show, params: { id: item.hashid, frame: true }
+      expect(Nokogiri::HTML5(response.body).at_css(target)).to be_present
+
+      get :show, params: { id: item.hashid }
+      expect(Nokogiri::HTML5(response.body).at_css(target)).to be_nil
+    end
+
     it "links each CPT to its own page for an auditor" do
       cpt = create(:canonical_pending_transaction)
       cpt_item = cpt.reload.ledger_item
@@ -131,6 +142,23 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       expect(response).to be_successful
       expect(response.body).to include(%(action="#{ach_start_approval_admin_path(ach_transfer)}"))
       expect(response.body).not_to include("Cancel transfer")
+    end
+
+    it "renders a fee reimbursement group with the reimbursements topped up that week" do
+      create(:event, id: EventMappingEngine::EventIds::HACK_CLUB_BANK)
+      allow_any_instance_of(Sponsor).to receive(:create_stripe_customer).and_return(true)
+      group = create(:fee_reimbursement_group, key: "2026_42")
+      invoice = create(:invoice)
+      create(:fee_reimbursement, invoice:, fee_reimbursement_group: group, amount: 1_23)
+      create_session(create(:user, :make_auditor), verified: true)
+
+      get :show, params: { id: group.ledger_item.hashid }
+
+      expect(response).to be_successful
+      expect(response.body).to include(group.memo)
+      expect(response.body).to include("Stripe fee reimbursements")
+      expect(response.body).to include(invoice.event.name)
+      expect(response.body).to include("$1.23")
     end
   end
 
