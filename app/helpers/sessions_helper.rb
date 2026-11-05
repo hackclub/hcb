@@ -234,7 +234,7 @@ module SessionsHelper
   # Cached per session so it isn't recomputed on every page; each sign-in gets
   # a fresh list, and membership changes are picked up within the TTL.
   def remembered_organizer_event_ids
-    return unless signed_in? && !current_session.impersonated?
+    return if !signed_in? || current_session.impersonated?
 
     @remembered_organizer_event_ids ||= Rails.cache.fetch(["remembered-organizations", current_session.id], expires_in: 10.minutes) do
       Event.transparent.not_hidden
