@@ -1,15 +1,4 @@
-import website_political_fields from './shared/website_political_fields'
-
-export default ({
-  has_website,
-  has_political,
-  teenager,
-  committed,
-  description,
-}) => ({
-  ...website_political_fields,
-  has_website,
-  has_political,
+export default ({ teenager, committed, description }) => ({
   teenager,
   committed,
   description,

@@ -17,12 +17,11 @@
   <div
     class="card card--outline mb-6"
     x-data="application_project_info(<%= {
-                                           has_website: @application.website_url.present? ? "true" : "false",
-                                           has_political: @application.political_description.present? ? "true" : "false",
                                            teenager: @application.teen_led? ? "true" : "false",
                                            committed: @application.committed_amount,
                                            description: @application.description
-                                         }.to_json %>)">
+                                         }.to_json %>)"
+    data-controller="website-political-fields">
     <div class="field">
       <%= form.label :name do %>
         Project name <span class="text-primary">*</span>
@@ -56,14 +55,14 @@
       <%= form.label :has_website do %>
         Do you have a website? <span class="text-primary">*</span>
       <% end %>
-      <%= form.select :has_website, options_for_select([["No", "false"], ["Yes", "true"]], @application.website_url.present? ? "true" : "false"), {}, { "@change": "set_has_website($event.target.value)", class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
+      <%= form.select :has_website, options_for_select([["No", "false"], ["Yes", "true"]], @application.website_url.present? ? "true" : "false"), {}, { class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null", data: { action: "website-political-fields#toggleWebsite" } } %>
     </div>
 
-    <div class="field" x-show="has_website === 'true'">
+    <div class="field" data-website-political-fields-target="website" <%= "hidden" unless @application.website_url.present? %>>
       <%= form.label :website_url do %>
         Website URL <span class="text-primary">*</span>
       <% end %>
-      <%= form.url_field :website_url, placeholder: "https://hackclub.com", class: "w-full !max-w-full", id: "website_url_field", data: { controller: "url-validator", action: "blur->url-validator#handleBlur" }, "x-bind:disabled": "teenager == null" %>
+      <%= form.url_field :website_url, placeholder: "https://hackclub.com", class: "w-full !max-w-full", id: "website_url_field", data: { controller: "url-validator", action: "blur->url-validator#handleBlur", website_political_fields_target: "websiteField" }, "x-bind:disabled": "teenager == null" %>
     </div>
 
     <div class="field">
@@ -71,14 +70,14 @@
         Is your project involved with political activity? <span class="text-primary">*</span>
       <% end %>
       <p class="text-sm muted mt-1 mb-2">This includes but is not limited to protests, public demonstrations, political education, and lobbying.</p>
-      <%= form.select :has_political, options_for_select([["No", "false"], ["Yes", "true"]], @application.political_description.present? ? "true" : "false"), {}, { "@change": "set_has_political($event.target.value)", class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null" } %>
+      <%= form.select :has_political, options_for_select([["No", "false"], ["Yes", "true"]], @application.political_description.present? ? "true" : "false"), {}, { class: "w-full max-w-full", required: true, "x-bind:disabled": "teenager == null", data: { action: "website-political-fields#togglePolitical" } } %>
     </div>
 
-    <div class="field" x-show="has_political === 'true'">
+    <div class="field" data-website-political-fields-target="political" <%= "hidden" unless @application.political_description.present? %>>
       <%= form.label :political_description do %>
         Please describe the political activity your project is involved in <span class="text-primary">*</span>
       <% end %>
-      <%= form.text_area :political_description, class: "w-full max-w-full", id: "political_description_field", "x-bind:disabled": "teenager == null" %>
+      <%= form.text_area :political_description, class: "w-full max-w-full", id: "political_description_field", data: { website_political_fields_target: "politicalField" }, "x-bind:disabled": "teenager == null" %>
     </div>
 
     <div class="field" x-show="teenager == 'false' || teenager == false">
