@@ -105,19 +105,6 @@ class EventsController < ApplicationController
     render partial: "events/home/balance_transactions", locals: { heatmap: @heatmap, event: @event }
   end
 
-  def money_movement
-    authorize @event
-
-    pending_transactions = _show_pending_transactions
-    canonical_transactions = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
-    all_transactions = [*pending_transactions, *canonical_transactions]
-
-    @money_in = all_transactions.reject { |t| t.amount_cents <= 0 }.first(3)
-    @money_out = all_transactions.reject { |t| t.amount_cents >= 0 }.first(3)
-
-    render partial: "events/home/money_movement", locals: { heatmap: @heatmap, event: @event }
-  end
-
   def team_stats
     authorize @event
 
@@ -539,12 +526,6 @@ class EventsController < ApplicationController
     @all_unique_cardholders = @event.stripe_cards.on_main_ledger.map(&:stripe_cardholder).uniq
   end
 
-  def documentation
-    @event_name = @event.name
-
-    authorize @event
-  end
-
   def async_balance
     authorize @event
 
@@ -907,6 +888,7 @@ class EventsController < ApplicationController
     @active_teenagers_count = @event.users.active_teenager.count
 
     @perks_available = OrganizerPosition.role_at_least?(current_user, @event, :manager) && !@event.demo_mode? && @event.plan.promotions_enabled?
+    @member_perks_available = OrganizerPosition.role_at_least?(current_user, @event, :member) && !@event.demo_mode? && @event.plan.promotions_enabled?
 
     # I'm so sorry, this is awful & temporary
     @is_argosy = @event.plan.is_a?(Event::Plan::Argosy2025) || @event.plan.is_a?(Event::Plan::Argosy2026)

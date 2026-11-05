@@ -67,7 +67,7 @@
     <% end %>
   <% end %>
 
-  <%= turbo_frame_tag :post_editor do %>
+  <%= turbo_frame_tag :post_editor, target: "_top" do %>
     <% if editing %>
       <%= render partial: "announcements/announcement_form", locals: { announcement: @announcement } %>
     <% else %>

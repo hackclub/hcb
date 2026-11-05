@@ -29,10 +29,6 @@ class AchTransferPolicy < ApplicationPolicy
     user_who_can_transfer?
   end
 
-  def start_approval?
-    user&.admin?
-  end
-
   def approve?
     user&.admin?
   end
@@ -53,10 +49,6 @@ class AchTransferPolicy < ApplicationPolicy
 
   def auditor_or_user?
     user&.auditor? || OrganizerPosition.role_at_least?(user, record.event, :reader)
-  end
-
-  def admin_or_user?
-    user&.admin? || OrganizerPosition.role_at_least?(user, record.event, :reader)
   end
 
   def admin_or_manager?
