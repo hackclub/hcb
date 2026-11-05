@@ -39,6 +39,19 @@
           <%= inline_icon "view-close-small", size: 20 %>
         </button>
       </div>
+      <% unless signed_in?(allow_unverified: true) %>
+        <%# Swaps the banner before first paint, so a full page load doesn't flash the public one first %>
+        <script>
+          try {
+            const ids = JSON.parse(localStorage.getItem('hcb:remembered-organizations') || '[]')
+            if (Array.isArray(ids) && ids.includes(<%== @event.public_id.to_json %>) && sessionStorage.getItem('hcb:signed-out-notice-dismissed') !== 'true') {
+              const banner = document.currentScript.parentElement
+              banner.querySelector('[data-remembered-organizations-target="publicNotice"]').classList.add('hidden')
+              banner.querySelector('[data-remembered-organizations-target="signedOutNotice"]').classList.replace('hidden', 'flex')
+            }
+          } catch {}
+        </script>
+      <% end %>
     </div>
   <% end %>
 
