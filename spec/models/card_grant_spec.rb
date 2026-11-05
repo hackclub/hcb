@@ -3,6 +3,67 @@
 require "rails_helper"
 
 RSpec.describe CardGrant, type: :model do
+  describe "state scopes" do
+    before do
+      allow_any_instance_of(CardGrant).to receive(:transfer_money)
+    end
+
+    let(:event) { create(:event) }
+    let!(:not_activated) { create(:card_grant, event:, stripe_card: nil) }
+    let!(:accepted) { create(:card_grant, event:) }
+    let!(:frozen) { create(:card_grant, event:, stripe_card: create(:stripe_card, :with_stripe_id, event:, stripe_status: "inactive", initially_activated: true)) }
+    let!(:expired) { create(:card_grant, event:).tap { |grant| grant.update!(status: :expired) } }
+    let!(:returned) { create(:card_grant, event:).tap { |grant| grant.update!(status: :canceled) } }
+    let!(:converted) do
+      create(:card_grant, event:).tap do |grant|
+        grant.update!(status: :canceled)
+        create(:reimbursement_report, event:, user: grant.user, card_grant: grant)
+      end
+    end
+    let!(:fraudulent) do
+      create(:card_grant, event:, pre_authorization_required: true).tap do |grant|
+        grant.pre_authorization.update!(aasm_state: "fraudulent", product_url: "https://example.com")
+      end
+    end
+
+    it "sorts each grant status into one state" do
+      expect(event.card_grants.not_activated).to contain_exactly(not_activated)
+      expect(event.card_grants.accepted).to contain_exactly(accepted)
+      expect(event.card_grants.frozen).to contain_exactly(frozen)
+      expect(event.card_grants.suspected_fraud).to contain_exactly(fraudulent)
+      expect(event.card_grants.expired).to contain_exactly(expired)
+      expect(event.card_grants.returned).to contain_exactly(returned)
+      expect(event.card_grants.converted_to_reimbursement).to contain_exactly(converted)
+    end
+
+    it "treats a fraudulent pre-authorization as active when the event doesn't block suspected fraud" do
+      event.card_grant_setting.update!(block_suspected_fraud: false)
+
+      expect(event.card_grants.suspected_fraud).to be_empty
+      expect(event.card_grants.accepted).to contain_exactly(accepted, fraudulent)
+    end
+
+    it "treats a card that went inactive before its first activation as frozen" do
+      inactive_card = create(:stripe_card, :with_stripe_id, event:, stripe_status: "inactive", initially_activated: false)
+      frozen_before_activation = create(:card_grant, event:, stripe_card: inactive_card)
+
+      expect(event.card_grants.frozen).to contain_exactly(frozen, frozen_before_activation)
+      expect(event.card_grants.accepted).to contain_exactly(accepted)
+    end
+
+    describe ".filter_by_state" do
+      it "filters to the state" do
+        expect(event.card_grants.filter_by_state("not_activated")).to contain_exactly(not_activated)
+        expect(event.card_grants.filter_by_state("suspected_fraud")).to contain_exactly(fraudulent)
+      end
+
+      it "ignores unknown states" do
+        expect(event.card_grants.filter_by_state("nonsense")).to contain_exactly(not_activated, accepted, frozen, expired, returned, converted, fraudulent)
+        expect(event.card_grants.filter_by_state(nil)).to contain_exactly(not_activated, accepted, frozen, expired, returned, converted, fraudulent)
+      end
+    end
+  end
+
   describe "ledger association" do
     # CardGrant has an after_create :transfer_money callback that triggers
     # DisbursementService::Create, which requires the source event to have
@@ -61,6 +122,90 @@ RSpec.describe CardGrant, type: :model do
 
       card_grant.merchant_lock += ["merchant_b"]
       expect(card_grant).not_to be_valid
+    end
+  end
+
+  describe "#balance" do
+    let(:event) { create(:event, :card_grant_event, :with_positive_balance) }
+    let(:sender) { create(:user) }
+
+    before do
+      create(:organizer_position, event:, user: sender)
+      allow_any_instance_of(CardGrant).to receive(:send_email)
+    end
+
+    it "is the grant's ledger balance" do
+      card_grant = create(:card_grant, event:, amount_cents: 1_000, sent_by: sender, stripe_card: nil)
+
+      expect(card_grant.balance).to eq(Money.new(1_000))
+      expect(card_grant.balance_cents).to eq(card_grant.ledger.balance_cents)
+    end
+
+    # The settled transactions for a grant's funding are imported and mapped by
+    # TransactionEngine::NightlyJob, but the pending transactions they settle
+    # aren't marked settled until the next PendingEventMappingEngine::NightlyJob.
+    # The legacy subledger balance counted the funding twice in between.
+    it "doesn't double count funding that has settled before its pending transaction is marked settled" do
+      card_grant = create(:card_grant, event:, amount_cents: 1_000, sent_by: sender, stripe_card: nil)
+      disbursement = card_grant.disbursement
+
+      create(:canonical_transaction, memo: disbursement.outgoing_disbursement.transaction_memo, amount_cents: -1_000)
+      create(:canonical_transaction, memo: disbursement.incoming_disbursement.transaction_memo, amount_cents: 1_000)
+      EventMappingEngine::Map::HcbCodes::Short.new.run
+
+      expect(card_grant.subledger.legacy_balance_cents).to eq(2_000)
+      expect(card_grant.balance_cents).to eq(1_000)
+
+      PendingEventMappingEngine::Settle::IncomingDisbursementHcbCode.new.run
+
+      expect(card_grant.balance_cents).to eq(1_000)
+    end
+  end
+
+  describe "expiration_at validation" do
+    before do
+      allow_any_instance_of(CardGrant).to receive(:transfer_money)
+    end
+
+    it "accepts an expiration date within 2 years of creation" do
+      card_grant = create(:card_grant, expiration_at: 1.year.from_now.to_date)
+      expect(card_grant).to be_valid
+    end
+
+    it "accepts an expiration date exactly 2 years after creation" do
+      card_grant = create(:card_grant, expiration_at: 2.years.from_now.to_date)
+      expect(card_grant).to be_valid
+    end
+
+    it "rejects an expiration date more than 2 years after creation" do
+      card_grant = create(:card_grant, expiration_at: Date.current)
+      card_grant.expiration_at = 4.years.from_now.to_date
+      expect(card_grant).not_to be_valid
+      expect(card_grant.errors[:expiration_at]).to be_present
+    end
+
+    it "measures the limit from creation, not from the time of the edit" do
+      card_grant = create(:card_grant, created_at: 18.months.ago, expiration_at: Date.current)
+
+      card_grant.expiration_at = 5.months.from_now.to_date
+      expect(card_grant).to be_valid
+
+      card_grant.expiration_at = 7.months.from_now.to_date
+      expect(card_grant).not_to be_valid
+      expect(card_grant.errors[:expiration_at]).to be_present
+    end
+
+    it "does not re-validate an existing expiration when other attributes change" do
+      card_grant = create(:card_grant, created_at: 3.years.ago, expiration_at: 2.years.ago.to_date)
+      card_grant.update_column(:expiration_at, 1.year.from_now.to_date)
+
+      card_grant.reload.purpose = "Updated purpose"
+      expect(card_grant).to be_valid
+    end
+
+    it "uses a default expiration_at when not provided" do
+      card_grant = create(:card_grant)
+      expect(card_grant.expiration_at).to be_present
     end
   end
 end

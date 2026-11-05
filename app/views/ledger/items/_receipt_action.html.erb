@@ -1,0 +1,58 @@
+<%# locals: (item:, updated: false) %>
+
+<%#
+  The "Upload receipt" and "Select" buttons at the end of a ledger row, like the
+  canonical transaction row's (see canonical_transactions/_canonical_transaction).
+  Receipts still live on the HCB code, so that's the receiptable.
+
+  ReceiptsController replaces this cell with `updated: true` whenever one of
+  the item's receipts changes, which swaps the buttons for "Uploaded!" once the
+  item has a receipt.
+%>
+<td id="<%= dom_id(item, :receipt_action) %>" class="transaction__receipt-action">
+  <% if updated && item.receipt_count.positive? %>
+    <div class="btn bg-success disabled" style="font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem; width: 100%">
+      <%= inline_icon "receipt", size: 14 %>
+      <span>Uploaded!</span>
+    </div>
+  <% else %>
+    <% disabled = item.receipt_optional? %>
+    <% file_input_id = dom_id(item, :receipt_file) %>
+    <% link_modal_id = dom_id(item, :link_receipt) %>
+
+    <%= form_with url: receipts_path, data: { controller: "form", turbo: true } do |form| %>
+      <%= form.file_field :file, id: file_input_id, multiple: true, include_hidden: false, required: true, class: "sr-only", data: { action: "change->form#submit" } %>
+      <%= form.hidden_field :receiptable_type, id: nil, value: "HcbCode" %>
+      <%= form.hidden_field :receiptable_id, id: nil, value: item.hcb_code.id %>
+      <%= form.hidden_field :upload_method, id: nil, value: "receipts_page" %>
+
+      <div class="btn-group btn-group--no-wrap w-100">
+        <%= form.label :file, for: file_input_id, class: "btn #{"disabled" if disabled} flex-grow", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" do %>
+          <%= inline_icon "cloud-upload" %>
+          <%= item.receipt_count.positive? ? "Upload another receipt" : "Upload receipt" %>
+        <% end %>
+
+        <%= link_to my_receipts_upload_path, class: "btn #{"disabled" if disabled} bg-primary", style: "font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;", data: { behavior: "modal_trigger", modal: link_modal_id } do %>
+          <%= inline_icon "payment-docs" %>
+          <span>Select</span>
+        <% end %>
+
+        <% if Flipper.enabled?(:copy_receipt_email_2026_01_21) %>
+          <button type="button" class="btn <%= "disabled" if disabled %> bg-blue tooltipped tooltipped--n" style="font-size: 0.875rem; font-weight: 600; padding: 0.25rem 1rem;" data-clipboard-text-value="<%= item.hcb_code.receipt_upload_email %>" data-action="click->clipboard#copy" data-controller="clipboard" aria-label="Copy email address to clipboard to send receipts to this transaction">
+            <%= inline_icon "email", style: "margin: 0px" %>
+          </button>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% unless disabled %>
+      <section class="modal modal--huge modal--scroll bg-snow" data-behavior="modal" role="dialog" id="<%= link_modal_id %>">
+        <%= modal_header "Select receipt" %>
+        <%# Lazy, so the receipt bin only loads when the modal is opened, not once per row %>
+        <%= turbo_frame_tag "link_modal_#{item.hcb_code.id}", src: link_modal_receipts_path(receiptable_type: "HcbCode", receiptable_id: item.hcb_code.id), loading: :lazy, target: "_top" do %>
+          <strong>Loading...</strong>
+        <% end %>
+      </section>
+    <% end %>
+  <% end %>
+</td>

@@ -10,7 +10,7 @@ class PayeesController < ApplicationController
 
   def index
     authorize @event, policy_class: PayeePolicy
-    all = @event.payees.not_archived.includes(:legal_entity, :payments)
+    all = @event.payees.not_archived.includes(:payments, legal_entity: :managing_event)
     payees = params[:q].present? ? all.search(params[:q]) : all
     @payees = payees.order(created_at: :desc).page(params[:page]).per(15)
 
@@ -127,7 +127,7 @@ class PayeesController < ApplicationController
       return
     end
 
-    @payee.update!(legal_entity: le)
+    @payee.assign_legal_entity!(le)
 
     flash[:success] = "Legal entity successfully assigned"
 

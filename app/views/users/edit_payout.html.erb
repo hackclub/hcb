@@ -3,7 +3,7 @@
 <%= render "users/nav", selected: :settings_reimbursement_payouts %>
 
 <turbo-frame id="settings" autoscroll data-autoscroll-behavior="smooth">
-  <%= render "settings_header", active: "payouts", legal_entities: @legal_entities, legal_entity: @legal_entity %>
+  <%= render "users/settings_header", active: "payouts", legal_entities: @legal_entities, legal_entity: @legal_entity %>
     <section>
       <% unless @legal_entity != @user.personal_legal_entity %>
         <p class="muted mt0 mb2">
