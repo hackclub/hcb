@@ -18,6 +18,7 @@ export default class extends Controller {
 
   initialize() {
     this.searchToken = 0
+    this.requestId = 0
   }
 
   connect() {
@@ -289,6 +290,9 @@ export default class extends Controller {
 
   // `null` means a newer search superseded this one.
   async fetchPage(query, page, token) {
+    // Only the latest request may clear `loading`, so a superseded one finishing
+    // late can't unblock `loadMore` mid-flight and skip a page.
+    const request = ++this.requestId
     this.loading = true
     try {
       const res = await fetch(this.buildUrl(query, page), {
@@ -301,7 +305,7 @@ export default class extends Controller {
     } catch (error) {
       return token === this.searchToken ? { error } : null
     } finally {
-      this.loading = false
+      if (request === this.requestId) this.loading = false
     }
   }
 
@@ -327,8 +331,11 @@ export default class extends Controller {
     const label = top.label
     if (!label.toLowerCase().startsWith(value.toLowerCase())) return
     if (label.length === value.length) return
+    // Also runs before a deferred blur resolves, matching what a slower click
+    // away would see: the completed text, committed if it's an exact match.
     this.inputTarget.value = label
-    this.inputTarget.setSelectionRange(value.length, label.length)
+    if (document.activeElement === this.inputTarget)
+      this.inputTarget.setSelectionRange(value.length, label.length)
   }
 
   move(delta) {
