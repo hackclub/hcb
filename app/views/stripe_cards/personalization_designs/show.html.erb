@@ -23,8 +23,7 @@
         hidden_card_number_with_last_four: @design.name_without_id,
         to_partial_path: "stripe_cards/stripe_card",
         personalization_design: @design
-      ),
-      href: "javascript:;" %>
+      ) %>
   </section>
   <div style="text-align: center;">
     <% unless @design.event&.present? %>

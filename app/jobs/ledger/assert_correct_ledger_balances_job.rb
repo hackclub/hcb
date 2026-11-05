@@ -15,8 +15,9 @@ class Ledger
             end
           elsif ledger.card_grant.present?
             card_grant = ledger.card_grant
-            if ledger.balance_cents != card_grant.subledger.balance_cents
-              report_anomaly "CardGrant #{card_grant.hashid} ledger balance_cents #{ledger.balance_cents} does not match subledger balance_cents #{card_grant.subledger.balance_cents}"
+            legacy_balance_cents = card_grant.subledger.legacy_balance_cents
+            if ledger.balance_cents != legacy_balance_cents
+              report_anomaly "CardGrant #{card_grant.hashid} ledger balance_cents #{ledger.balance_cents} does not match subledger legacy_balance_cents #{legacy_balance_cents}"
             end
           end
         end
