@@ -47,6 +47,8 @@ module Payroll
     delegate :display_name, to: :payee, prefix: true
 
     pg_search_scope :search_recipient, associated_against: { payee: [:display_name, :email] }, using: { tsearch: { prefix: true, dictionary: "english" } }
+    # For viewers who can't see the payee's email (see `EventsController#contractors`).
+    pg_search_scope :public_search_recipient, associated_against: { payee: [:display_name] }, using: { tsearch: { prefix: true, dictionary: "english" } }
 
     has_many :invoices, class_name: "Payroll::Invoice", foreign_key: "payroll_position_id", inverse_of: :payroll_position, dependent: :destroy
     has_many :payments, through: :invoices
@@ -87,6 +89,8 @@ module Payroll
     ONBOARDING_REMINDER_DAYS = [1, 2, 7, 14].freeze
     ONBOARDING_REMINDER_INTERVAL_DAYS = 14
 
+    EXPIRING_SOON_NOTICE = 7.days
+
     after_create_commit do
       Payroll::Position::ExpireJob.set(wait_until: end_date.end_of_day).perform_later(self)
     end
@@ -100,19 +104,21 @@ module Payroll
     validate :manager_is_event_manager
 
     aasm timestamps: true do
-      state :under_review, initial: true
+      state :draft, initial: true
+      state :under_review
       state :onboarding
       state :onboarded
       state :expired
       state :rejected
       state :terminated
 
-      event :mark_onboarding do
-        transitions from: :under_review, to: :onboarding
+      event :mark_under_review do
+        transitions from: :draft, to: :under_review, if: -> { contract_signed_by?(:organizer) }
+        transitions from: :onboarding, to: :under_review
       end
 
-      event :mark_under_review do
-        transitions from: :onboarding, to: :under_review
+      event :mark_onboarding do
+        transitions from: :under_review, to: :onboarding
       end
 
       event :mark_rejected do
@@ -131,12 +137,14 @@ module Payroll
       end
 
       event :mark_terminated do
-        transitions from: [:under_review, :onboarding, :onboarded], to: :terminated
+        transitions from: [:draft, :under_review, :onboarding, :onboarded], to: :terminated
 
         after do
-          # If it's still under review, we haven't sent any emails to the contractor yet,
+          contract.mark_voided! if contract&.may_mark_voided?
+
+          # If it's still under review or draft, we haven't sent any emails to the contractor yet,
           # so we won't tell them that they've been "terminated"
-          Payroll::PositionMailer.with(position: self).terminated.deliver_later unless aasm.from_state == :under_review
+          Payroll::PositionMailer.with(position: self).terminated.deliver_later unless [:under_review, :draft].include?(aasm.from_state)
         end
       end
     end
@@ -166,17 +174,19 @@ module Payroll
       end
     end
 
-    # Renders the contract window like "Jan–Jun 2026", collapsing to a single
-    # month ("Apr 2026") or spanning years ("Dec 2025–Feb 2026") when needed.
+    # Renders the contract window like "Jan 1 – Jun 30, 2026", collapsing within
+    # a single month ("Apr 1–28, 2026") or spanning years
+    # ("Dec 1, 2025 – Feb 28, 2026") when needed.
     def period_label
       return if start_date.nil?
+      return start_date.strftime("%b %-d, %Y") if end_date.nil? || start_date == end_date
 
-      return start_date.strftime("%b %Y") if end_date.nil? || (start_date.month == end_date.month && start_date.year == end_date.year)
-
-      if start_date.year == end_date.year
-        "#{start_date.strftime("%b")}–#{end_date.strftime("%b %Y")}"
+      if start_date.year != end_date.year
+        "#{start_date.strftime("%b %-d, %Y")} – #{end_date.strftime("%b %-d, %Y")}"
+      elsif start_date.month != end_date.month
+        "#{start_date.strftime("%b %-d")} – #{end_date.strftime("%b %-d, %Y")}"
       else
-        "#{start_date.strftime("%b %Y")}–#{end_date.strftime("%b %Y")}"
+        "#{start_date.strftime("%b %-d")}–#{end_date.strftime("%-d, %Y")}"
       end
     end
 
@@ -198,7 +208,7 @@ module Payroll
           owner: :hcb,
           label: "HCB team review",
           hint: "The contractor is emailed once HCB signs",
-          complete: !under_review? && !rejected?
+          complete: contract_signed_by?(:hcb)
         },
         {
           key: :tax_form,
@@ -266,6 +276,11 @@ module Payroll
 
     def on_contract_party_signed(party)
       refresh_onboarding_state!
+
+      # HCB reviews only after organizer signs
+      if party.organizer?
+        mark_under_review!
+      end
 
       # The contractor is only invited to sign once HCB has signed
       if party.hcb?
@@ -363,16 +378,16 @@ module Payroll
       Rails.error.report(e, context: { payroll_position_id: id })
     end
 
+    def contract_signed_by?(role)
+      contract&.party(role)&.signed?
+    end
+
     private
 
     def schedule_onboarding_reminders
       onboarding_reminder_days.each do |days|
         Payroll::Position::OnboardingReminderJob.set(wait: days.days).perform_later(self)
       end
-    end
-
-    def contract_signed_by?(role)
-      contracts.not_voided.any? { |contract| contract.party(role)&.signed? }
     end
 
     def contractor_user

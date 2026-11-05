@@ -19,7 +19,7 @@
   <% if node.child_nodes.present? %>
     <ul>
       <% node.child_nodes.each do |child_node| %>
-        <%= render(partial: "event_permissions", locals: { node: child_node }) %>
+        <%= render(partial: "users/event_permissions", locals: { node: child_node }) %>
       <% end %>
     </ul>
   <% end %>

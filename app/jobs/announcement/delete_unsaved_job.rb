@@ -12,5 +12,3 @@ class Announcement
   end
 
 end
-
-DeleteOldTemplateDraftsJob = Announcement::DeleteUnsavedJob

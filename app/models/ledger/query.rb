@@ -57,7 +57,7 @@ class Ledger
     # another organization's items.
     def execute(ledgers: [], all_ledgers: false)
       results = apply_query(relation: Ledger::Item.all, query: @query_hash)
-      results = results.where.not(ct_count: 0, cpt_count: 0)
+      results = results.strict_loading.where.not(ct_count: 0, cpt_count: 0)
 
       # Strict boolean: only a literal true opts out of scoping, so a caller that
       # accidentally passes a truthy value (e.g. the string "false") fails closed.
@@ -97,7 +97,7 @@ class Ledger
       # (EagerLoadPolymorphicError). It also costs one query per distinct
       # linked_object_type in the result, not one per row.
       results.order(pending_first.asc, datetime: :desc, created_at: :desc, id: :desc)
-             .preload(:author, :linked_object, :tags, hcb_code: :event)
+             .preload(:author, :linked_object, :tags, primary_ledger: :event, hcb_code: :event)
     end
 
     def self.sanitize_query(query_hash)
