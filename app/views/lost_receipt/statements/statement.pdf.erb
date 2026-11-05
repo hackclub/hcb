@@ -43,9 +43,11 @@
     </table>
     <div class="confirmation">
       <p><%= LostReceipt::Statement::CONFIRMATION %></p>
-      <p><strong>Confirmed by:</strong> <%= @statement.signer_name %><br>
+      <p>
+        <strong>Confirmed by:</strong> <%= @statement.signer_name %><br>
         <strong>Submitted:</strong> <%= @statement.confirmed_at.utc.strftime("%B %-d, %Y at %H:%M UTC") %><br>
-        <strong>Submission method:</strong> <%= @statement.submitter ? "Signed in to HCB" : "Receipt request link (not signed in)" %></p>
+        <strong>Submission method:</strong> <%= @statement.submitter ? "Signed in to HCB" : "Receipt request link (not signed in)" %>
+      </p>
       <% if @statement.submitter %>
         <p><strong>HCB submitter:</strong> <%= @statement.submitter.full_name %> (user #<%= @statement.submitter.id %>)</p>
       <% end %>
