@@ -15,6 +15,35 @@ RSpec.describe Ledger::RepaymentsController, type: :controller do
   context "as a member" do
     before { create(:organizer_position, event:, user:, role: :member) }
 
+    describe "GET #candidates" do
+      render_views
+
+      it "lists unused income of the same amount for an expense" do
+        income
+        smaller = create(:canonical_transaction, event:, amount_cents: 50_00)
+
+        get :candidates, params: { item_id: expense.ledger_item.hashid }
+
+        expect(response).to be_successful
+        expect(response.body).to include(%(value="#{income.ledger_item.hashid}"))
+        expect(response.body).not_to include(%(value="#{smaller.ledger_item.hashid}"))
+      end
+
+      it "lists unrepaid expenses of the same amount for income" do
+        expense
+
+        get :candidates, params: { item_id: income.ledger_item.hashid }
+
+        expect(response.body).to include(%(value="#{expense.ledger_item.hashid}"))
+      end
+
+      it "shows an empty state when nothing matches" do
+        get :candidates, params: { item_id: expense.ledger_item.hashid }
+
+        expect(response.body).to include("No transactions of exactly $100.00 to match")
+      end
+    end
+
     describe "POST #create" do
       it "marks income as a repayment of the chosen expense" do
         post :create, params: { item_id: income.ledger_item.hashid, other_ledger_item_id: expense.ledger_item.hashid }

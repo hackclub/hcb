@@ -97,6 +97,23 @@ class Repayment < ApplicationRecord
     repaying_ledger_items(event).where.not(id: where.not(repaying_ledger_item_id: nil).select(:repaying_ledger_item_id))
   end
 
+  # What a ledger item could be marked as a repayment with: for an unrepaid
+  # expense, unused money in of the same amount; for unused money in,
+  # unrepaid expenses of the same amount.
+  def self.match_candidates(ledger_item)
+    event = ledger_item.primary_ledger&.event
+    return Ledger::Item.none if event.nil?
+
+    own, others = if ledger_item.amount_cents.negative?
+                    [unrepaid_ledger_items(event), unused_repaying_ledger_items(event)]
+                  else
+                    [unused_repaying_ledger_items(event), unrepaid_ledger_items(event)]
+                  end
+    return Ledger::Item.none unless own.exists?(ledger_item.id)
+
+    others.where(amount_cents: -ledger_item.amount_cents)
+  end
+
   validates :amount_cents, numericality: { greater_than: 0 }
   # Ledger item amounts can change later (e.g. a partial refund), so these are
   # only checked when the repayment is made.

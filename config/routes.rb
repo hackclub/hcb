@@ -642,7 +642,9 @@ Rails.application.routes.draw do
       post "unpin"
       patch "rename"
       post "invoice_as_personal_transaction"
-      resource :repayment, only: [:create, :destroy]
+      resource :repayment, only: [:create, :destroy] do
+        get :candidates
+      end
     end
   end
   resources :ledger_items, only: [], path: "transactions", concerns: :commentable

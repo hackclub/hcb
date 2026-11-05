@@ -133,5 +133,53 @@ RSpec.describe HcbCodesController, type: :controller do
         expect(response.body).not_to include("Repay this")
       end
     end
+
+    context "marking a repayment" do
+      render_views
+
+      let(:event) { create(:event) }
+      let(:user) { create(:user) }
+      let(:expense) { create(:canonical_transaction, event:, amount_cents: -100_00, memo: "Pizza") }
+      let(:income) { create(:canonical_transaction, event:, amount_cents: 100_00, memo: "Venmo from Sam") }
+
+      before do
+        create(:organizer_position, event:, user:)
+        create_session(user, verified: true)
+      end
+
+      it "offers income a match with an expense of the same amount" do
+        expense
+
+        get :show, params: { id: income.local_hcb_code.hashid }
+
+        expect(response.body).to include("This was a repayment")
+        expect(response.body).to include(candidates_ledger_item_repayment_path(income.ledger_item))
+      end
+
+      it "offers an expense a match with income of the same amount" do
+        income
+
+        get :show, params: { id: expense.local_hcb_code.hashid }
+
+        expect(response.body).to include("This was repaid")
+      end
+
+      it "is hidden when nothing has the same amount" do
+        create(:canonical_transaction, event:, amount_cents: 50_00)
+
+        get :show, params: { id: expense.local_hcb_code.hashid }
+
+        expect(response.body).not_to include("This was repaid")
+      end
+
+      it "is hidden once the expense has been repaid" do
+        RepaymentService::Mark.new(ledger_item: income.ledger_item.reload, other_ledger_item_hashid: expense.ledger_item.reload.hashid, created_by: user).run
+        create(:canonical_transaction, event:, amount_cents: 100_00)
+
+        get :show, params: { id: expense.local_hcb_code.hashid }
+
+        expect(response.body).not_to include("This was repaid")
+      end
+    end
   end
 end

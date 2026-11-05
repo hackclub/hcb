@@ -98,6 +98,31 @@ RSpec.describe Repayment, type: :model do
     end
   end
 
+  describe ".match_candidates" do
+    it "matches an expense with unused income of the same amount" do
+      income
+      create(:canonical_transaction, event:, amount_cents: 50_00)
+      used = create(:canonical_transaction, event:, amount_cents: 100_00)
+      repayment_by(used, create(:canonical_transaction, event:, amount_cents: -100_00)).save!
+
+      expect(Repayment.match_candidates(expense.ledger_item.reload)).to contain_exactly(income.ledger_item)
+    end
+
+    it "matches income with unrepaid expenses of the same amount" do
+      expense
+      create(:canonical_transaction, event:, amount_cents: -50_00)
+
+      expect(Repayment.match_candidates(income.ledger_item.reload)).to contain_exactly(expense.ledger_item)
+    end
+
+    it "matches nothing once the transaction is already part of a repayment" do
+      repayment_by(income).save!
+      create(:canonical_transaction, event:, amount_cents: -100_00)
+
+      expect(Repayment.match_candidates(income.ledger_item.reload)).to be_empty
+    end
+  end
+
   describe ".not_failed" do
     it "includes repayments by a ledger item and excludes failed transfers" do
       by_income = repayment_by(income).tap(&:save!)

@@ -1,0 +1,33 @@
+<%# locals: (candidate:, ledger_item:) %>
+
+<% date = candidate.datetime.strftime("%b %e, %Y") %>
+<% confirm = if ledger_item.amount_cents.negative?
+               "Mark \"#{ledger_item.memo}\" as repaid by \"#{candidate.memo}\"? Both will be categorized as a repayment."
+             else
+               "Mark this as repaying \"#{candidate.memo}\"? Both will be categorized as a repayment."
+             end %>
+
+<tr class="transaction transaction--<%= candidate.sign %>">
+  <td class="transaction__icon">
+    <div class="tooltipped tooltipped--e" aria-label="<%= candidate.humanized_type %>">
+      <%= render "ledger/items/icon", ledger_item: candidate %>
+    </div>
+  </td>
+  <td><%= date %></td>
+  <td class="transaction__memo transaction__memo--fluid">
+    <div>
+      <div class="flex-auto min-w-0 overflow-hidden text-ellipsis" title="<%= candidate.memo %>">
+        <%= render "ledger/items/memo/memo_text", item: candidate %>
+      </div>
+    </div>
+  </td>
+  <td class="nowrap text-right"><%= candidate.amount.format %></td>
+  <td class="text-right">
+    <%= button_to "Choose",
+                  ledger_item_repayment_path(ledger_item),
+                  params: { other_ledger_item_id: candidate.hashid },
+                  class: "btn btn-small",
+                  aria: { label: "Choose #{candidate.memo}, #{candidate.amount.abs.format} on #{date}" },
+                  form: { data: { turbo_frame: "_top", turbo_confirm: confirm } } %>
+  </td>
+</tr>

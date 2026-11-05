@@ -7,6 +7,17 @@ class Ledger
   class RepaymentsController < ApplicationController
     before_action :set_item
 
+    CANDIDATES_PER_PAGE = 25
+
+    # Rows for the picker: the transactions this one could be matched with.
+    def candidates
+      authorize @item, :mark_repayment?
+
+      @candidates = Repayment.match_candidates(@item).order(datetime: :desc).page(params[:page]).per(CANDIDATES_PER_PAGE)
+
+      render layout: false
+    end
+
     def create
       authorize @item, :mark_repayment?
 
