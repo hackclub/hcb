@@ -29,4 +29,8 @@ class RecurringDonationPolicy < ApplicationPolicy
     !record.canceled?
   end
 
+  def restart?
+    user&.admin? && record.canceled?
+  end
+
 end

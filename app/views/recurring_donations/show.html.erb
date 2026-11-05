@@ -36,8 +36,11 @@
 
 </section>
 
-<% admin_tool "mt1" do %>
+<% admin_tool "mt1 flex flex-wrap gap-2" do %>
   <%= link_to "View subscription on Stripe", @recurring_donation.stripe_dashboard_url, class: "btn bg-accent", target: "_blank" %>
+  <% if policy(@recurring_donation).restart? %>
+    <%= button_to "Restart donation", restart_recurring_donation_path(@recurring_donation.url_hash), class: "btn bg-success", data: { turbo_confirm: "Restart this donation? This starts a new subscription and charges #{@recurring_donation.name(show_anonymous: true)}’s saved card #{render_money @recurring_donation.amount} right away. They'll get a receipt with a new link for managing it." } %>
+  <% end %>
 <% end %>
 
 <div class="card mb3 center mt4">
