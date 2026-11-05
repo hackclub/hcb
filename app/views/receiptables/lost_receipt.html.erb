@@ -12,6 +12,7 @@
   <%= form_with model: @statement, scope: :lost_receipt_statement, namespace: "lost_receipt_#{@receiptable.class.name.underscore.tr('/', '_')}_#{@receiptable.id}", url: receiptable_mark_no_or_lost_path(receiptable_type: @receiptable.class, receiptable_id: @receiptable.id), data: { turbo: false, controller: "lost-receipt", action: "input->lost-receipt#update" } do |form| %>
     <%= form_errors @statement, "statement" %>
     <%= hidden_field_tag :s, params[:s], id: nil %>
+    <%= hidden_field_tag :return_to, params[:return_to], id: nil %>
 
     <div class="field">
       <%= form.label :date, "Purchase date" %>

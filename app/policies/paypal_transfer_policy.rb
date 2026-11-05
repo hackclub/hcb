@@ -1,14 +1,6 @@
 # frozen_string_literal: true
 
 class PaypalTransferPolicy < ApplicationPolicy
-  def new?
-    OrganizerPosition.role_at_least?(user, record.event, :member)
-  end
-
-  def create?
-    user_who_can_transfer?
-  end
-
   def approve?
     user&.admin?
   end

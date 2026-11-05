@@ -25,7 +25,8 @@ class ReceiptablesController < ApplicationController
     if @statement.submit(receiptable:)
       flash[:success] = "Lost receipt statement added."
       # Signed link visitors can't view the transaction itself.
-      redirect_to from_signed_link? ? attach_receipt_hcb_code_path(@receiptable, s: params[:s]) : @receiptable
+      fallback = from_signed_link? ? attach_receipt_hcb_code_path(@receiptable, s: params[:s]) : @receiptable
+      redirect_to url_from(params[:return_to]) || fallback
     else
       render :lost_receipt, status: :unprocessable_entity
     end

@@ -2,7 +2,7 @@ import { Controller } from '@hotwired/stimulus'
 import sparkline from '@fnando/sparkline'
 
 export default class extends Controller {
-  static targets = ['graph', 'stat', 'balance', 'label', 'sizing', 'size']
+  static targets = ['graph', 'stat', 'balance', 'label', 'sizing']
   static values = {
     available: Number,
     slug: String,

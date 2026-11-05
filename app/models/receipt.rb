@@ -60,7 +60,6 @@ class Receipt < ApplicationRecord
   attr_accessor :lost_receipt_statement
 
   has_many :suggested_pairings, dependent: :destroy
-  has_many :suggested_transactions, source: :hcb_code, through: :suggested_pairings
 
   # add a size to this array for it to be preprocessed
   # Receipt#preview first checks to see if a preprocessed

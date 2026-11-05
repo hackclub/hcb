@@ -141,6 +141,33 @@ RSpec.describe ReceiptablesController do
       expect(user.receipts.lost_receipt_statement).to be_empty
     end
 
+    it "preserves the originating popover through the statement form" do
+      user = create(:user)
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+
+      page_with_popover = event_transactions_path(event, popover: hcb_code_path(hcb_code))
+      get(:lost_receipt, params: base_params.merge(return_to: page_with_popover))
+      return_to = Nokogiri::HTML.fragment(response.body).at_css('input[name="return_to"]')["value"]
+      expect(return_to).to eq(page_with_popover)
+
+      post(:mark_no_or_lost, params: base_params.merge(return_to:, lost_receipt_statement: details))
+
+      expect(hcb_code.reload).to be_no_or_lost_receipt
+      expect(hcb_code.receipts.sole).to be_lost_receipt_statement
+      expect(response).to redirect_to(page_with_popover)
+    end
+
+    it "ignores an external return_to" do
+      user = create(:user)
+      create(:organizer_position, user:, event:)
+      create_session(user, verified: true)
+
+      post(:mark_no_or_lost, params: base_params.merge(return_to: "https://evil.example.com", lost_receipt_statement: details))
+
+      expect(response).to redirect_to(hcb_code_path(hcb_code))
+    end
+
     it "refuses a signed in user who isn't on the organization" do
       create_session(create(:user), verified: true)
       post(:mark_no_or_lost, params: base_params.merge(lost_receipt_statement: details))
