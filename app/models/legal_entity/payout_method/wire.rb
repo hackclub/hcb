@@ -108,6 +108,10 @@ class LegalEntity
         )
       end
 
+      def fee_reason
+        "Wire transfers under $500 incur a #{number_to_currency(Wire::SMALL_WIRE_FEE_AMOUNT_CENTS / 100.0)} fee"
+      end
+
     end
 
   end

@@ -160,7 +160,7 @@
         <%= form_with(model: false, local: true, url: send_wire_path(@wire), method: :post, class: "mb-0") do |form| %>
           <div class="field mb-2">
             <%= form.check_box :charge_fee %>
-            <%= form.label :charge_fee, "Charge #{@wire.event.name} $25 to cover transfer fee?", class: "bold ml-2" %>
+            <%= form.label :charge_fee, "Charge #{@wire.event.name} #{render_money Wire::SMALL_WIRE_FEE_AMOUNT_CENTS} to cover transfer fee?", class: "bold ml-2" %>
           </div>
           <% if @wire.payment.present? %>
             <%= render partial: "payments/classification_input", locals: { form:, classification: @wire.payment.classification } %>

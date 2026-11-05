@@ -98,6 +98,10 @@ class LegalEntity
         end
       end
 
+      def fee_reason
+        "Wise transfers incur a fee"
+      end
+
     end
 
   end
