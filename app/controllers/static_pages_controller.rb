@@ -140,7 +140,6 @@ class StaticPagesController < ApplicationController
         "Rename your own card": :member,
         "Rename another user's card": :manager,
         "View card expiration date": :reader,
-        "View card billing address": :reader,
       },
       Reimbursements: {
         "Get reimbursed through HCB": :member,
