@@ -165,7 +165,26 @@ class Ledger
       ACCOUNT_VERIFICATION_MEMO_MATCHES.any? { |s| memo.downcase.include?(s) }
     end
 
-    # The repayment marked between this and another transaction, as opposed to a repayment transfer.
+    # Transactions that paid this one back, by transfer or by money in on the
+    # same ledger. Filters in memory so preloaded repayments are used.
+    def repaid_by_items
+      # A scheduled transfer has no incoming side until it's sent, so fall back to the outgoing one.
+      repayments.reject(&:failed?).filter_map do |r|
+        r.repaying_ledger_item || r.disbursement.incoming_disbursement.ledger_item || r.disbursement.outgoing_disbursement.ledger_item
+      end
+    end
+
+    # Transactions this one paid back.
+    def repays_items
+      if linked_object_type.in?(["Disbursement::Outgoing", "Disbursement::Incoming"])
+        linked_object.disbursement.repaid_ledger_items.to_a
+      else
+        [repaying_repayment&.repaid_ledger_item].compact
+      end
+    end
+
+    # The repayment marked between this and another transaction on its
+    # ledger, if any. Transfers are undone by rejecting them instead.
     def marked_repayment
       repaying_repayment || repayments.find(&:repaying_ledger_item_id)
     end

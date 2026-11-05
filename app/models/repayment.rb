@@ -123,6 +123,11 @@ class Repayment < ApplicationRecord
   validate :repaid_transaction_not_already_repaid, on: :create
   validates :repaying_ledger_item, uniqueness: { message: "has already been marked as a repayment" }, allow_nil: true
 
+  # In-memory counterpart to `not_failed`, for preloaded repayments.
+  def failed?
+    disbursement.present? && (disbursement.rejected? || disbursement.errored?)
+  end
+
   # The organization whose expense was repaid.
   def event
     disbursement&.destination_event || repaying_ledger_item&.primary_ledger&.event

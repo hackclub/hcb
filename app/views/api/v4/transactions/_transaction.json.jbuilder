@@ -47,6 +47,12 @@ object_shape(json, hcb_code, object_name: "transaction", created_at: false) do
     json.check_deposit  { json.partial! "api/v4/transactions/check_deposit",  check_deposit:  hcb_code.check_deposit                      } if hcb_code.check_deposit?
     json.wise_transfer  { json.partial! "api/v4/transactions/wise_transfer",  wise_transfer:  hcb_code.wise_transfer                      } if hcb_code.wise_transfer?
     json.wire_transfer  { json.partial! "api/v4/transactions/wire_transfer",  wire_transfer:  hcb_code.wire                               } if hcb_code.wire?
+
+    if (ledger_item = hcb_code.ledger_item)
+      repaid_by = ledger_item.repaid_by_items
+      repays = ledger_item.repays_items
+      json.repayment { json.partial! "api/v4/transactions/repayment", ledger_item:, repaid_by:, repays: } if repaid_by.any? || repays.any?
+    end
   end
 
   expand_association(json, :organization, hcb_code.event, partial: "api/v4/events/event", as: :event)
