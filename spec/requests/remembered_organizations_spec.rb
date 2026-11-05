@@ -16,7 +16,9 @@ RSpec.describe "remembered organizations", type: :request do
   end
 
   context "when signed in" do
-    before { stub_current_session(create(:user_session, user:, expiration_at: 1.hour.from_now)) }
+    let(:user_session) { create(:user_session, user:, expiration_at: 1.hour.from_now) }
+
+    before { stub_current_session(user_session) }
 
     it "lists transparent organizations and their sub-organizations, excluding private ones" do
       parent = create(:event, organizers: [user], is_public: true)
@@ -28,6 +30,22 @@ RSpec.describe "remembered organizations", type: :request do
       ids = JSON.parse(data_value("event-ids"))
       expect(ids).to contain_exactly(parent.public_id, child.public_id)
       expect(ids).not_to include(private_event.public_id)
+    end
+
+    it "caches the list for the session" do
+      allow(Rails).to receive(:cache).and_return(ActiveSupport::Cache::MemoryStore.new)
+      event = create(:event, organizers: [user], is_public: true)
+
+      get event_path(event)
+      new_event = create(:event, organizers: [user], is_public: true)
+      get event_path(event)
+
+      expect(JSON.parse(data_value("event-ids"))).to eq([event.public_id])
+
+      stub_current_session(create(:user_session, user:, expiration_at: 1.hour.from_now))
+      get event_path(event)
+
+      expect(JSON.parse(data_value("event-ids"))).to contain_exactly(event.public_id, new_event.public_id)
     end
 
     it "flags the next page to clear them after an explicit sign out" do
