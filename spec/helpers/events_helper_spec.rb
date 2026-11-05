@@ -30,4 +30,34 @@ RSpec.describe EventsHelper, type: :helper do
       expect(helper.filter_option_label({ key_base: "created", type: "date_range" }, "canceled")).to eq("Canceled")
     end
   end
+
+  describe "#active_filter_params" do
+    let(:select_filter) { { key: "status", label: "Status", type: "select", options: %w[deposited canceled] } }
+    let(:date_filter) { { key_base: "date", label: "Date", type: "date_range" } }
+    let(:amount_filter) { { key_base: "amount", label: "Amount", type: "amount_range" } }
+
+    it "returns the key of a plain filter that has a value" do
+      expect(helper.active_filter_params(select_filter, { "status" => "deposited" })).to eq(["status"])
+      expect(helper.active_filter_params(select_filter, { "status" => "" })).to eq([])
+      expect(helper.active_filter_params(select_filter, {})).to eq([])
+    end
+
+    it "returns each bound of a date range that has a value" do
+      expect(helper.active_filter_params(date_filter, { "date_after" => "2026-01-01" })).to eq(["date_after"])
+      expect(helper.active_filter_params(date_filter, { "date_after" => "2026-01-01", "date_before" => "2026-02-01" }))
+        .to eq(%w[date_after date_before])
+      expect(helper.active_filter_params(date_filter, {})).to eq([])
+    end
+
+    it "returns each bound of an amount range that has a value" do
+      expect(helper.active_filter_params(amount_filter, { "amount_less_than" => "100" })).to eq(["amount_less_than"])
+      expect(helper.active_filter_params(amount_filter, { "amount_greater_than" => "5", "amount_less_than" => "100" }))
+        .to eq(%w[amount_greater_than amount_less_than])
+    end
+
+    it "keeps check_filters? in sync" do
+      expect(helper.check_filters?([select_filter, date_filter], { "date_before" => "2026-02-01" })).to be(true)
+      expect(helper.check_filters?([select_filter, date_filter], {})).to be(false)
+    end
+  end
 end
