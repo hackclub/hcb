@@ -565,7 +565,7 @@ RSpec.describe Ledger::Query, type: :model do
   end
 
   describe "virtual fields" do
-    # Wiring up a tag, a category or a merchant touches the ledger item, and a
+    # Wiring up a category or a merchant touches the ledger item, and a
     # touched item refreshes itself from its (nonexistent) canonical
     # transactions — undoing what create_mapped_item pinned. Pin it back, so the
     # item still looks like a real transaction to the query.
@@ -578,9 +578,7 @@ RSpec.describe Ledger::Query, type: :model do
       let(:tag) { Tag.create!(event: test_event, label: "Travel", emoji: "✈️", color: "red") }
 
       before do
-        hcb_code = create(:hcb_code, ledger_item: item_b)
-        HcbCodeTag.create!(hcb_code:, tag:)
-        repin(item_b)
+        Ledger::Item::Tag.create!(ledger_item: item_b, tag:)
       end
 
       it "matches only items tagged with it" do
@@ -642,7 +640,7 @@ RSpec.describe Ledger::Query, type: :model do
     it "narrows, rather than replaces, the rest of the query" do
       tag = Tag.create!(event: test_event, label: "Travel", emoji: "✈️", color: "red")
       { item_b => Date.new(2024, 1, 2), item_g => Date.new(2024, 3, 15) }.each do |item, datetime|
-        HcbCodeTag.create!(hcb_code: create(:hcb_code, ledger_item: item), tag:)
+        Ledger::Item::Tag.create!(ledger_item: item, tag:)
         repin(item, datetime:)
       end
 

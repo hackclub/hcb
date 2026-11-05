@@ -68,7 +68,8 @@ class Ledger
     # TODO: THIS IS SO TEMPORARY REMOVE ASAP
     has_many :comments, -> { order(:created_at) }, as: :commentable, inverse_of: :commentable, through: :hcb_code
     has_many :receipts, as: :receiptable, after_add: :update_task_completion, after_remove: :update_task_completion, through: :hcb_code
-    has_many :tags, through: :hcb_code
+    has_many :ledger_item_tags, class_name: "Ledger::Item::Tag", foreign_key: :ledger_item_id, inverse_of: :ledger_item, dependent: :destroy
+    has_many :tags, through: :ledger_item_tags, source: :tag
 
     has_many :ledger_mappings, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
     has_one :primary_mapping, -> { where(on_primary_ledger: true) }, class_name: "Ledger::Mapping", foreign_key: :ledger_item_id, inverse_of: :ledger_item
@@ -180,6 +181,16 @@ class Ledger
 
     def accepts_receipts?
       linked_object_type != "Reimbursement::ExpensePayout"
+    end
+
+    # Tags are event-scoped. When this item is remapped to a different event, any
+    # tag belonging to an event it no longer touches is orphaned (hidden on the
+    # new org's event-filtered views and impossible to remove via `toggle_tag`),
+    # so drop those rows. Called from Ledger::Mapping.map_primary! on a remap.
+    def prune_tags_outside_event!(event:)
+      return if event.nil?
+
+      ledger_item_tags.where.not(tag_id: event.tags.select(:id)).delete_all
     end
 
     # refresh! should always be called after any non-caching aspect of a ledger item changes (e.g. remapped or custom memo changes).
