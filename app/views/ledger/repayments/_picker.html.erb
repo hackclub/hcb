@@ -1,0 +1,18 @@
+<%# locals: (ledger_item:) %>
+
+<%# Rendered after the transaction menu, which opens it. %>
+<% repaid = ledger_item.amount_cents.negative? %>
+<section class="modal modal--scroll modal--wide bg-snow" data-behavior="modal" role="dialog" id="mark_repayment">
+  <%= modal_header repaid ? "Which transaction repaid this?" : "Which expense did this repay?" %>
+  <p class="muted mt-0">
+    <% if repaid %>
+      Pick the money that came in to pay this expense back. Only settled transactions of exactly <%= ledger_item.amount.abs.format %> are shown.
+    <% else %>
+      Pick the expense this money paid back. Only settled expenses of exactly <%= ledger_item.amount.abs.format %> that haven't been repaid are shown.
+    <% end %>
+  </p>
+
+  <%= turbo_frame_tag "repayment_candidates", src: candidates_ledger_item_repayment_path(ledger_item), loading: :lazy do %>
+    <%= render "application/loading_container", klass: "py-8" %>
+  <% end %>
+</section>

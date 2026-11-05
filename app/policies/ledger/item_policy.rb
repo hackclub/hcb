@@ -29,6 +29,14 @@ class Ledger
       admin_or_member?
     end
 
+    def mark_repayment?
+      admin_or_member?
+    end
+
+    def unmark_repayment?
+      admin_or_member?
+    end
+
     private
 
     def admin_or_member?
