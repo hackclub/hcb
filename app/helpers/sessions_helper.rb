@@ -231,7 +231,7 @@ module SessionsHelper
   # memberships don't leak via localStorage on shared devices, and impersonated
   # sessions return nil so an admin's list isn't replaced with someone else's.
   def remembered_organizer_event_ids
-    return unless signed_in? && !current_session.impersonated?
+    return if !signed_in? || current_session.impersonated?
 
     @remembered_organizer_event_ids ||= Event.transparent.not_hidden
                                              .where(id: Event.self_and_descendant_ids(current_user.events.pluck(:id)))
