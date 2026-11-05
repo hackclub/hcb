@@ -252,6 +252,11 @@ module SessionsHelper
     data
   end
 
+  # On organization pages, send the user back to where they were once they sign in.
+  def sign_in_path_returning_here
+    auth_users_path(return_to: (request.original_url if @event && request.get?))
+  end
+
   def sudo_mode?
     current_session&.sudo_mode?
   end

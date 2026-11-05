@@ -1,6 +1,6 @@
 <%# locals: () %>
 
-<%= tag.div class: "w-72 px-3 gap-2 flex flex-col p-1", data: remembered_organizations_data do %>
+<div class="w-72 px-3 gap-2 flex flex-col p-1">
   <div class="flex flex-row items-center gap-2">
     <div data-controller="menu" class="flex flex-1 min-w-1" data-menu-placement-value="bottom-end">
       <% if signed_in? %>
@@ -51,7 +51,7 @@
           <% end %>
         </div>
       <% else %>
-        <%= link_to auth_users_path(return_to: (request.original_url if @event && request.get?)), class: "dock__item user-menu-trigger max-w-full", data: { remembered_organizations_target: "signIn" } do %>
+        <%= link_to sign_in_path_returning_here, class: "dock__item user-menu-trigger max-w-full", data: { remembered_organizations_target: "signIn" } do %>
           <%= inline_icon "door-enter", size: 28 %>
           <div class="text-left flex-1 truncate block" style="flex:1;overflow: hidden;">
             <span class="truncate">Sign in</span>
@@ -68,6 +68,6 @@
       <% end %>
     </div>
   </div>
-<% end %>
+</div>
 
 <%= render "application/command_bar" %>
