@@ -36,7 +36,9 @@ class Export
         ASYNC_THRESHOLD = 300
 
         def async?
-          items.limit(ASYNC_THRESHOLD + 1).count > ASYNC_THRESHOLD
+          return @async if defined?(@async)
+
+          @async = items.limit(ASYNC_THRESHOLD + 1).count > ASYNC_THRESHOLD
         end
 
         def label
