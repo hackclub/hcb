@@ -675,13 +675,13 @@ RSpec.describe Ledger::Query, type: :model do
   end
 
   describe "#export" do
-    it "hands the query itself to a Ledger::Query::Export" do
+    it "builds an export carrying the query itself" do
       query = described_class.new({ amount_cents: { "$gt" => 100 } })
 
       export = query.export(as: :csv, ledgers: [test_ledger])
 
-      expect(export).to be_a(Ledger::Query::Export)
-      expect(export.run.query).to eq({ "amount_cents" => { "$gt" => 100 } })
+      expect(export).to be_a(Export::Ledger::Item::Csv)
+      expect(export.query).to eq({ "amount_cents" => { "$gt" => 100 } })
     end
   end
 

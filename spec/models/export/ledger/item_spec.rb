@@ -22,7 +22,7 @@ RSpec.describe Export::Ledger::Item do
   end
 
   def build_export(as:, query: {}, **attributes)
-    ::Ledger::Query.new(query).export(as:, ledgers: [ledger], event_id: event.id, requested_by: user, **attributes).run
+    ::Ledger::Query.new(query).export(as:, ledgers: [ledger], event_id: event.id, requested_by: user, **attributes)
   end
 
   describe Export::Ledger::Item::Csv do

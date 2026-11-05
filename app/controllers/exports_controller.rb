@@ -102,7 +102,7 @@ class ExportsController < ApplicationController
           requested_by: current_user,
           public_only: !organizer_signed_in?,
           filtered: ledger_filtered?
-        ).run
+        )
 
         deliver_export(@export, file_extension: params[:format])
       end
