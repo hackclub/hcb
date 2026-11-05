@@ -156,4 +156,21 @@ RSpec.describe Reimbursement::ExpensesController do
     end
 
   end
+
+  describe "#destroy", versioning: true do
+    it "soft deletes the expense and records who removed it" do
+      user = create(:user)
+      event = create(:event)
+      create(:organizer_position, user:, event:)
+      report = create(:reimbursement_report, user:, event:)
+      expense = create(:reimbursement_expense, report:)
+
+      create_session(user, verified: true)
+
+      delete(:destroy, params: { id: expense.id })
+
+      expect(Reimbursement::Expense.with_deleted.find(expense.id)).to be_deleted
+      expect(expense.versions.last).to have_attributes(event: "destroy", whodunnit: user.id.to_s)
+    end
+  end
 end
