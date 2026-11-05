@@ -650,48 +650,45 @@ class EventsController < ApplicationController
   def donation_overview
     authorize @event
 
-    # The search query name was historically `search`. It has since been renamed
-    # to `q`. This following line retains backwards compatibility.
-    params[:q] ||= params[:search]
-
-    relation = @event.donations.not_pending.includes(:recurring_donation)
-
+    set_donations
     @stats = {
-      deposited: relation.succeeded_and_not_refunded.sum(:amount),
+      deposited: @event.donations.not_pending.succeeded_and_not_refunded.sum(:amount),
     }
 
-    @all_donations = relation.succeeded_and_not_refunded
+    # The recurring donations table loads in its own frame; the header only
+    # needs to know whether there are any and their monthly total.
+    @recurring_donations = @event.recurring_donations.active
+    @recurring_donations_monthly_sum = @recurring_donations.sum(:amount)
+  end
 
-    if params[:filter] == "refunded"
-      relation = relation.refunded
-    else
-      relation = relation.succeeded_and_not_refunded
+  # Loaded into a turbo frame on `donation_overview`, so it can paginate
+  # independently of the recurring donations above it.
+  def donations
+    authorize @event
+
+    unless turbo_frame_request?
+      redirect_to event_donation_overview_path(@event, request.query_parameters)
+      return
     end
 
-    if params[:q].present?
-      # A donor's email is never shown to non-organizers, and an anonymous
-      # donor's name and email are still stored, so a search that matched
-      # either would reveal them to anyone who can see this page. Only viewers
-      # who can already see those details (the view gates them on
-      # `organizer_signed_in?` too) get those matches.
-      relation = if organizer_signed_in?
-                   relation.search_name(params[:q])
-                 else
-                   relation.public_search_name(params[:q]).where(anonymous: false)
-                 end
+    set_donations
+  end
+
+  # Loaded into a turbo frame on `donation_overview`, so it can paginate
+  # independently of the past donations below it.
+  def recurring_donations
+    authorize @event
+
+    unless turbo_frame_request?
+      # Not forwarding the query: on the overview, `page` and `per` belong to
+      # past donations, so this frame's page would land on the wrong table.
+      redirect_to event_donation_overview_path(@event)
+      return
     end
 
-    page = (params[:page] || 1).to_i
-    per_page = safe_per(DONATIONS_PER_PAGE)
-
-    @all_donations = relation.order(created_at: :desc)
-
-    @recurring_donations = @event.recurring_donations.includes(:donations).active.order(created_at: :desc)
-
-    @donations = Kaminari.paginate_array(@all_donations).page(page).per(per_page)
-
-    @recurring_donations_monthly_sum = @recurring_donations.sum(0) { |donation| donation[:amount] }
-
+    @recurring_donations = @event.recurring_donations.includes(:donations).active
+                                 .order(created_at: :desc, id: :desc)
+                                 .page(params[:page]).per(safe_per(DONATIONS_PER_PAGE))
   end
 
   def payments
@@ -1381,6 +1378,40 @@ class EventsController < ApplicationController
   end
 
   private
+
+  def set_donations
+    # The search query name was historically `search`. It has since been renamed
+    # to `q`. This following line retains backwards compatibility.
+    params[:q] ||= params[:search]
+
+    relation = @event.donations.not_pending.includes(:recurring_donation)
+
+    if params[:filter] == "refunded"
+      relation = relation.refunded
+    else
+      relation = relation.succeeded_and_not_refunded
+    end
+
+    if params[:q].present?
+      # A donor's email is never shown to non-organizers, and an anonymous
+      # donor's name and email are still stored, so a search that matched
+      # either would reveal them to anyone who can see this page. Only viewers
+      # who can already see those details (the view gates them on
+      # `organizer_signed_in?` too) get those matches.
+      relation = if organizer_signed_in?
+                   relation.search_name(params[:q])
+                 else
+                   relation.public_search_name(params[:q]).where(anonymous: false)
+                 end
+    end
+
+    page = (params[:page] || 1).to_i
+    per_page = safe_per(DONATIONS_PER_PAGE)
+
+    @all_donations = relation.order(created_at: :desc)
+
+    @donations = Kaminari.paginate_array(@all_donations).page(page).per(per_page)
+  end
 
   def process_hidden_param!(params_hash)
     if params_hash[:hidden] == "1" && !@event.hidden_at.present?

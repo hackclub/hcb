@@ -80,7 +80,7 @@ class Donation < ApplicationRecord
 
   include PgSearch::Model
   pg_search_scope :search_name, against: [:name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "donations.created_at"
-  # For viewers who can't see the donor's email (see `EventsController#donation_overview`).
+  # For viewers who can't see the donor's email (see `EventsController#set_donations`).
   pg_search_scope :public_search_name, against: [:name], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "donations.created_at"
 
   has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
