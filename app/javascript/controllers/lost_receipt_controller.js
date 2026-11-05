@@ -42,7 +42,8 @@ export default class extends Controller {
         item.querySelector('[data-amount="quantity"]').value
       )
       const price = Number(item.querySelector('[data-amount="price"]').value)
-      return total + quantity * Math.round(price * 100)
+      const itemCents = quantity * Math.round(price * 100)
+      return total + (Number.isFinite(itemCents) ? itemCents : 0)
     }, 0)
     this.totalTarget.value = new Intl.NumberFormat('en-US', {
       style: 'currency',

@@ -51,6 +51,24 @@ RSpec.describe ReceiptablesController do
       expect(Nokogiri::HTML.fragment(response.body).at_css('input[name="s"]')["value"]).to eq(secret)
     end
 
+    it "rejects oversized statements without attaching a receipt" do
+      post(:mark_no_or_lost, params: base_params.merge(s: secret, lost_receipt_statement: details.merge(items_attributes: Array.new(51) { details[:items_attributes].first })))
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(hcb_code.reload).to be_missing_receipt
+      expect(hcb_code.receipts).to be_empty
+    end
+
+    it "rejects malformed statement parameters" do
+      ["invalid", [details]].each do |malformed|
+        expect {
+          post(:mark_no_or_lost, params: base_params.merge(s: secret, lost_receipt_statement: malformed))
+        }.to raise_error(ActionController::ParameterMissing)
+      end
+      expect(hcb_code.reload).to be_missing_receipt
+      expect(hcb_code.receipts).to be_empty
+    end
+
     it "renders validation errors for malformed prices" do
       [{ unit_amount: true }, { unit_amount: false }, { unit_amount_cents: true }, { unit_amount_cents: false }].each do |price|
         item = { description: "Pens", quantity: 1 }.merge(price)

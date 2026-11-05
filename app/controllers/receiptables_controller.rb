@@ -29,13 +29,17 @@ class ReceiptablesController < ApplicationController
     else
       render :lost_receipt, status: :unprocessable_entity
     end
+  rescue ActiveRecord::NestedAttributes::TooManyRecords
+    render plain: "A lost receipt statement can contain at most 50 items.", status: :unprocessable_entity
   end
 
   private
 
   def statement_params
-    params.fetch(:lost_receipt_statement, {}).permit(:date, :merchant, :purpose, :signer_name, :confirmed,
-                                                     items_attributes: [:description, :quantity, :unit_amount, :unit_amount_cents])
+    return {} unless params.key?(:lost_receipt_statement)
+
+    params.expect(lost_receipt_statement: [:date, :merchant, :purpose, :signer_name, :confirmed,
+                                           { items_attributes: [[:description, :quantity, :unit_amount, :unit_amount_cents]] }])
   end
 
   def authorize_receiptable
@@ -62,6 +66,8 @@ class ReceiptablesController < ApplicationController
 
   # True when the request came from the signed link in a receipt request email,
   # which grants access without signing in (same secret the upload form uses).
+  # Possession of the link permits submission, but does not verify the typed
+  # signer's identity; the PDF explicitly distinguishes this from signing in.
   def from_signed_link?
     return @from_signed_link if defined?(@from_signed_link)
 
