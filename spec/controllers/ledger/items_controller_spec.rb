@@ -81,6 +81,17 @@ RSpec.describe Ledger::ItemsController, type: :controller do
       end
     end
 
+    it "updates the counts on the item's ledger row when shown in a popover" do
+      create_session(create(:user, :make_auditor), verified: true)
+      target = "turbo-stream[action='replace'][target='badges_ledger_item_#{item.id}']"
+
+      get :show, params: { id: item.hashid, frame: true }
+      expect(Nokogiri::HTML5(response.body).at_css(target)).to be_present
+
+      get :show, params: { id: item.hashid }
+      expect(Nokogiri::HTML5(response.body).at_css(target)).to be_nil
+    end
+
     it "links each CPT to its own page for an auditor" do
       cpt = create(:canonical_pending_transaction)
       cpt_item = cpt.reload.ledger_item

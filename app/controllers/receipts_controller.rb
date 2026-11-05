@@ -340,6 +340,19 @@ class ReceiptsController < ApplicationController
     # by the ledger item's hashid instead of by `@ledger_instance`.
     ledger_item = @receiptable.is_a?(Ledger::Item) ? @receiptable : @receiptable.try(:ledger_item)
 
+    # Swap the receipt buttons on the item's ledger row (see
+    # ledger/items/_receipt_action) for "Uploaded!" once it has a receipt. Rows
+    # without the buttons have no element with this id, so it's a no-op there.
+    if ledger_item&.hcb_code.present?
+      streams.append(
+        turbo_stream.replace(
+          [ledger_item, :receipt_action],
+          partial: "ledger/items/receipt_action",
+          locals: { item: ledger_item.reload, updated: true }
+        )
+      )
+    end
+
     if ledger_item.present? && on_ledger_item_page?
       streams.append(
         turbo_stream.replace(
@@ -348,6 +361,11 @@ class ReceiptsController < ApplicationController
           locals: { ledger_item: }
         )
       )
+    end
+
+    # Update the receipt count on the item's ledger row, if it's on the page
+    if ledger_item.present?
+      streams.append(turbo_stream.replace([ledger_item, :badges], partial: "ledger/items/badges", locals: { item: ledger_item }))
     end
 
     if @receipt && on_hcb_code_page?
