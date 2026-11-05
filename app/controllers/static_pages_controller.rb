@@ -89,7 +89,7 @@ class StaticPagesController < ApplicationController
         "Invite a user": :manager,
         "Request removal of a user": :manager,
         "Cancel invite made by another user": :manager,
-        "Cancel invite made by yourself": :member,
+        "Cancel invite made by yourself": :manager,
         "Change another user's role": :manager,
       },
       Transfers: {
