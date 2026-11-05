@@ -15,7 +15,7 @@ class User
     def event_graph
       events_by_id
         .values
-        .select { |event| event.parent_id.nil? }
+        .reject { |event| events_by_id.key?(event.parent_id) }
         .map { |event| event_node(event) }
     end
 
@@ -95,7 +95,8 @@ class User
       Enumerator.new do |yielder|
         current_event_id = event_id
 
-        until current_event_id.nil?
+        # Stops at deleted ancestors, which aren't loaded
+        while events_by_id.key?(current_event_id)
           yielder << current_event_id
 
           current_event = events_by_id.fetch(current_event_id)
