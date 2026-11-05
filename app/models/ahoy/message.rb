@@ -10,8 +10,8 @@
 #  sent_at   :datetime
 #  subject   :text
 #  to        :string
-#  user_type :string
 #  user_id   :bigint
+#  user_type :string
 #
 # Indexes
 #
@@ -31,10 +31,6 @@ module Ahoy
 
     def as_mail
       @as_mail ||= Mail.new(content)
-    end
-
-    def text_content
-      as_mail.parts[0].body.decoded
     end
 
     def html_content

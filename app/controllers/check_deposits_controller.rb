@@ -35,7 +35,32 @@ class CheckDepositsController < ApplicationController
 
     check_deposit.canonical_pending_transaction.update(fronted: !check_deposit.canonical_pending_transaction.fronted)
 
-    redirect_to url_for(check_deposit.local_hcb_code), flash: { success: "This check deposit is fronted!" }
+    redirect_to url_for(check_deposit.local_hcb_code), flash: { success: check_deposit.canonical_pending_transaction.fronted ? "This check deposit is fronted!" : "This check deposit is de-fronted!" }
+  end
+
+  # Renders a small, blurred placeholder for users who can see that a check
+  # deposit exists but aren't authorized to view its actual image. This is
+  # deliberately *not* a redirect to the blob's native ActiveStorage URL:
+  # that URL's signed blob ID isn't scoped to this transformation, so
+  # exposing it here would let an unauthorized viewer swap in any other
+  # variation (including the full-resolution original) of the same blob.
+  def blurred_image
+    check_deposit = CheckDeposit.find(params[:id])
+
+    authorize check_deposit, :show?
+
+    attachment = nil
+    if params[:side] == "front"
+      attachment = check_deposit.front
+    else
+      attachment = check_deposit.back
+    end
+
+    raise ActiveRecord::RecordNotFound unless attachment.attached?
+
+    variant = attachment.variant(resize_to_limit: [25, 25], blur: "0x2").processed
+
+    send_data variant.download, type: variant.content_type, disposition: "inline"
   end
 
   private

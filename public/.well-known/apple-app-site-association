@@ -55,6 +55,11 @@
             "/": "/first/*",
             "comment": "FIRST",
             "exclude": true
+          },
+          {
+            "/": "/money-printer",
+            "comment": "Money Printer",
+            "exclude": true
           }
         ]
       }

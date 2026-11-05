@@ -66,6 +66,9 @@ class Donation < ApplicationRecord
   set_public_id_prefix :don
 
   include AASM
+  include VisibleStatable
+  set_visible_state_mapping(in_transit: :deposited)
+
   include Freezable
   include UsersHelper
 
@@ -77,7 +80,10 @@ class Donation < ApplicationRecord
 
   include PgSearch::Model
   pg_search_scope :search_name, against: [:name, :email], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "donations.created_at"
+  # For viewers who can't see the donor's email (see `EventsController#donation_overview`).
+  pg_search_scope :public_search_name, against: [:name], using: { tsearch: { prefix: true, dictionary: "english" } }, ranked_by: "donations.created_at"
 
+  has_one :ledger_item, class_name: "Ledger::Item", as: :linked_object
   belongs_to :event
   belongs_to :fee_reimbursement, optional: true
   belongs_to :payout, class_name: "DonationPayout", optional: true
@@ -91,6 +97,8 @@ class Donation < ApplicationRecord
 
   after_commit :send_notification
 
+  after_update_commit :refresh_ledger_item, if: -> { saved_change_to_name? || saved_change_to_anonymous? }
+
   validates :name, :email, presence: true, unless: -> { recurring? || in_person? } # recurring donations have a name/email in their `RecurringDonation` object
   validates_email_format_of :email, on: :create, unless: -> { recurring? || in_person? } # recurring donations have an email in their `RecurringDonation` object
   validates :email, nondisposable: true, on: :create, unless: :subsequent_recurring_donation? # We have some historical recurring donations with disposable emails.
@@ -103,8 +111,8 @@ class Donation < ApplicationRecord
   scope :missing_payout, -> { where(payout_id: nil) }
   scope :missing_fee_reimbursement, -> { where(fee_reimbursement_id: nil) }
   scope :not_pending, -> { where.not(aasm_state: "pending") }
-  scope :incoming_deposits, -> { where("aasm_state in (?)", ["in_transit"]) }
   scope :succeeded_and_not_refunded, -> { where(aasm_state: ["in_transit", "deposited"] ) }
+  scope :tax_deductible, -> { where(tax_deductible: true) }
 
   aasm timestamps: true do
     state :pending, initial: true
@@ -165,9 +173,7 @@ class Donation < ApplicationRecord
   end
 
   def state
-    return :success if deposited?
-    return :success if in_transit? && event.can_front_balance?
-    return :info if in_transit?
+    return :success if deposited? || in_transit?
     return :warning if refunded?
     return :error if failed?
 
@@ -175,9 +181,7 @@ class Donation < ApplicationRecord
   end
 
   def state_text
-    return "Deposited" if deposited?
-    return "Deposited" if in_transit? && event.can_front_balance?
-    return "In Transit" if in_transit?
+    return "Deposited" if deposited? || in_transit?
     return "Refunded" if refunded?
     return "Failed" if failed?
 
@@ -185,9 +189,7 @@ class Donation < ApplicationRecord
   end
 
   def state_icon
-    return "checkmark" if deposited? || (in_transit? && event.can_front_balance?)
-
-    "clock" if in_transit?
+    return "checkmark" if deposited? || in_transit?
   end
 
   def unpaid?
@@ -301,20 +303,12 @@ class Donation < ApplicationRecord
     @remote_donation ||= ::StripeService::PaymentIntent.retrieve(id: stripe_payment_intent_id, expand: ["charges.data.balance_transaction", "latest_charge.balance_transaction"])
   end
 
-  def remote_refunded?
-    remote_donation[:charges][:data][0][:refunded]
-  end
-
-  def amount_settled
-    canonical_transactions.sum(:amount_cents)
-  end
-
   def fee_reimbursed?
     fee_reimbursement.canonical_transaction.present?
   end
 
   def recurring?
-    recurring_donation.present?
+    recurring_donation_id.present?
   end
 
   def initial_recurring_donation?
@@ -331,6 +325,18 @@ class Donation < ApplicationRecord
 
   def email
     recurring_donation&.email || super
+  end
+
+  def update_donor_details(attrs)
+    attrs = attrs.to_h.symbolize_keys
+    return false unless update(attrs.slice(:name, :anonymous))
+
+    if recurring_donation
+      recurring_donation.update(attrs.slice(:name, :anonymous))
+      recurring_donation.sync_stripe_customer!
+    end
+
+    true
   end
 
   def referrer_domain
@@ -355,6 +361,14 @@ class Donation < ApplicationRecord
 
   def raw_pending_donation_transactions
     @raw_pending_donation_transactions ||= ::RawPendingDonationTransaction.where(donation_transaction_id: id)
+  end
+
+  def refresh_ledger_item
+    return if ledger_item.nil?
+
+    # The item may hold a stale copy of this donation; make refresh! reread it.
+    ledger_item.association(:linked_object).reset
+    ledger_item.refresh!
   end
 
   def send_notification

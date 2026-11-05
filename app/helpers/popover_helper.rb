@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 module PopoverHelper
-  def popovers_enabled?
-    current_user && Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)
-  end
-
   # Builds the data attributes hash for triggering the shared popover modal.
   #
   # Usage in views:
@@ -36,6 +32,29 @@ module PopoverHelper
     )
   end
 
+  def ledger_item_popover_data(item)
+    # Only serve the ledger item popover to users who can actually view the ledger
+    # item show page. Everyone else gets the HCB code popover instead — otherwise
+    # the injected frame id (lit_…) wouldn't match the HCB page's frame (txn_…) and
+    # the popover would render empty.
+    if policy(item).show? && auditor_signed_in?
+      popover_data(
+        title: item.pretty_title,
+        src: item.popover_path,
+        frame_id: item.public_id,
+        state_url: ledger_item_path(item),
+        external_link: ledger_item_path(item)
+      )
+    else
+      hcb_code = item.hcb_code
+
+      # fall back to links for items that don't have an HCB code
+      return { turbo: false } unless hcb_code
+
+      hcb_code_popover_data(hcb_code)
+    end
+  end
+
   def card_grant_popover_data(card_grant, hcb_code:, event: nil, state_title: nil)
     popover_data(
       title: hcb_code.pretty_title(show_event_name: false, show_amount: true, event: event),
@@ -58,6 +77,17 @@ module PopoverHelper
     )
   end
 
+  def contractor_popover_data(contractor)
+    path = event_payroll_position_path(event_id: contractor.event.slug, id: contractor)
+    popover_data(
+      title: "#{contractor.payee.display_name}'s contract",
+      src: event_payroll_position_path(event_id: contractor.event.slug, id: contractor, frame: true),
+      frame_id: "contractor_#{contractor.id}",
+      state_url: path,
+      external_link: path
+    )
+  end
+
   def employee_popover_data(employee)
     popover_data(
       title: "#{employee.user.name}'s payroll",
@@ -65,6 +95,16 @@ module PopoverHelper
       frame_id: "employee_#{employee.hashid}",
       state_url: employee_path(employee),
       external_link: employee_path(employee)
+    )
+  end
+
+  def payment_popover_data(payment)
+    popover_data(
+      title: "Payment to #{payment.payee.display_name}",
+      src: payment.popover_path,
+      frame_id: "payment_#{payment.id}",
+      state_url: payment_path(payment),
+      external_link: payment_path(payment)
     )
   end
 end

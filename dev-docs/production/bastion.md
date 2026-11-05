@@ -11,12 +11,12 @@ connections.
 All of HCB's servers are on the same private network. This means that each
 server within the private network is able to communicate with other servers
 using private IP addresses (generally in `10.0.0.0/16`). This is how the Rails
-application is able to connect to the Postgres server **_without_** need to use
+application is able to connect to the Postgres server **_without_** needing to use
 a Bastion host/SSH Tunneling.
 
 However, if you are attempting to connect to HCB's Postgres or any HCB server
 from outside the private network, you'll need to use the Bastion host. Some
-common use cases of this includes:
+common use cases of this include:
 
 - SSHing into HCB's servers from your laptop.
 - Accessing HCB's postgres from your laptop.
@@ -30,7 +30,7 @@ common use cases of this includes:
   access to HCB's resources. There is _at least_ one additional level of
   authentication. For example,
     - To access the Rails console, you must also have SSH access to the app
-      severs.
+      servers.
     - To access Postgres, you must have a valid user/password in Postgres.
 - **Least privilege principle**.
   Give the least permissions possible. If a user only needs Postgres access,
@@ -45,11 +45,11 @@ common use cases of this includes:
 - Must use SSH key authentication for Bastion host. Passwords are too weak. If
   there are situations where SSH key authentication is infeasible, please chat
   with [@garyhtou](https://garytou.com).
-- Ideally, the bastion host username should be the same the user configured
-  within the resource. For example, if the bastion host username is `orpehus`,
-  then the Postgres user should be `oprheus`.
+- Ideally, the bastion host username should be the same as the user configured
+  within the resource. For example, if the bastion host username is `orpheus`,
+  then the Postgres user should be `orpheus`.
 - Don't publicly share the IP addresses of the bastion host or any servers.
-  Security via obscurity can't be relied upon, however, there is no need to
+  Security via obscurity can't be relied upon; however, there is no need to
   share this information publicly. The only IP address that the public should be
   aware of is the IP of the load balancer.
 
@@ -59,8 +59,8 @@ In this example, we'll be creating an account for a user named `orpheus`.
 
 1. Obtain (or generate) SSH public key.
     - If this is an account for a human, ask them for their SSH public key
-    - If this is an account for a service, sometime they'll generate and provide
-      and SSH public key. For example, Hatchbox and Fivetran will generate that
+    - If this is an account for a service, sometimes they'll generate and provide
+      an SSH public key. For example, Hatchbox and Fivetran will generate that
       SSH public key for you. If the service does not automatically generate an
       SSH key pair for you, you can manually do that. I recommend [GitHub's
       instructions](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent).
@@ -69,7 +69,7 @@ In this example, we'll be creating an account for a user named `orpheus`.
    ```bash
    ssh root@IP_OF_BASTION
    ```
-3. Create the linux user
+3. Create the Linux user
    ```bash
    useradd -m orpheus
    ```
@@ -84,7 +84,7 @@ In this example, we'll be creating an account for a user named `orpheus`.
 5. (Optional) I'd recommend changing the default shell from `/bin/sh` to
    `/bin/bash`. To do this, as `root`, run:
    ```bash
-   usermod -s /bin/bash orpehus
+   usermod -s /bin/bash orpheus
    ```
 6. Provision resource-specific access.
    I'm not providing specific instructions here since the process is different
@@ -94,18 +94,18 @@ In this example, we'll be creating an account for a user named `orpheus`.
     - If you're providing Rails console access, you'll also need to add their
       SSH key to the app server(s). This can be done manually or via the
       Hatchbox console. Note that when adding an SSH key via Hatchbox, that will
-      provide root access to all Hatchbox managed servers (app, job, and redis
+      provide root access to all Hatchbox-managed servers (app, job, and redis
       servers). _Best practice TBD._
 7. Testing provisioned access
     1. SSH into the Bastion host.
        If you have access to the new user's private key:
        ```bash
-       ssh orpehus@IP_OF_BASTION -i /path/to/orpheus/ssh_private_key
+       ssh orpheus@IP_OF_BASTION -i /path/to/orpheus/ssh_private_key
        ```
        Otherwise, SSH in as root and switch user to new user.
        ```bash
        ssh root@IP_OF_BASTION
-       su - orpehus
+       su - orpheus
        ```
     2. Test resource-specific access.
         - If you're testing Postgres access:
@@ -119,7 +119,7 @@ In this example, we'll be creating an account for a user named `orpheus`.
         - If you're testing Rails console access:
           ```bash
           ssh PRIVATE_IP_OF_APP_SERVER
-          # Then following instruction prompt. Likely...
+          # Then follow the instruction prompt. Likely...
           cd ~/HCB/current && bundle exec rails c
           ```
           The process for accessing the Rails console process may change, so I'm

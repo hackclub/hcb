@@ -6,7 +6,6 @@
 #
 #  id                   :bigint           not null, primary key
 #  aasm_state           :string           not null
-#  contractable_type    :string
 #  cosigner_email       :string
 #  deleted_at           :datetime
 #  external_service     :integer
@@ -18,14 +17,17 @@
 #  created_at           :datetime         not null
 #  updated_at           :datetime         not null
 #  contractable_id      :bigint
+#  contractable_type    :string
 #  document_id          :bigint
 #  external_id          :string
 #  external_template_id :string
+#  reissue_of_id        :bigint
 #
 # Indexes
 #
-#  index_contracts_on_contractable  (contractable_type,contractable_id)
-#  index_contracts_on_document_id   (document_id)
+#  index_contracts_on_contractable   (contractable_type,contractable_id)
+#  index_contracts_on_document_id    (document_id)
+#  index_contracts_on_reissue_of_id  (reissue_of_id)
 #
 # Foreign Keys
 #
@@ -97,8 +99,16 @@ class Contract
                 name: "Signature",
                 default_value: ActionController::Base.helpers.asset_url("zach_signature.png", host: "https://hcb.hackclub.com"),
                 readonly: false
-              }
-            ]
+              },
+              if prefills["grant_amount_cents"].present?
+                {
+                  name: "Grant Amount",
+                  default_value: ActionController::Base.helpers.number_to_currency(prefills["grant_amount_cents"] / 100.0)
+                }
+              else
+                nil
+              end
+            ].compact
           }
         ].compact
       }
@@ -119,8 +129,35 @@ class Contract
       payload
     end
 
+    # Hack Club's own projects aren't fiscally sponsored by Hack Club, so they
+    # sign a plain contract rather than a fiscal sponsorship agreement. Both are
+    # Contract::FiscalSponsorship records, so the DocuSeal template is the only
+    # thing that tells them apart. It also stays accurate for contracts that were
+    # already issued when the organization's plan changes.
+    #
+    # Once contracts belong to a Contract::Template record, that template should
+    # carry its own name and this whole comparison can go away.
+    def agreement_name
+      return "contract" if uses_template_of?(Event::Plan::HackClubAffiliate)
+
+      "fiscal sponsorship agreement"
+    end
+
+    # Whether this is the standard fiscal sponsorship agreement: the one every
+    # application signs and the one plans inherit unless they bring their own
+    # (Hack Club HQ, Argosy, donor-advised funds, ...). Like #agreement_name,
+    # this goes by the DocuSeal template the contract was issued against, so a
+    # contract with no recorded template isn't considered standard.
+    def standard_fiscal_sponsorship?
+      uses_template_of?(Event::Plan::Standard)
+    end
+
     def required_roles
       ["hcb", "signee"]
+    end
+
+    def permitted_roles
+      ["hcb", "signee", "cosigner"]
     end
 
     def pending_signee_information
@@ -140,6 +177,11 @@ class Contract
     end
 
     private
+
+    def uses_template_of?(plan_class)
+      # external_template_id is a string column, but plans return integers.
+      external_template_id.to_s == plan_class.new.contract_docuseal_template_id.to_s
+    end
 
     def document_name
       "Fiscal sponsorship agreement with #{party(:signee).user.full_name}"

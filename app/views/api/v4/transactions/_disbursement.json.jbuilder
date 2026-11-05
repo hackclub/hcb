@@ -4,6 +4,7 @@
 
 object_shape(json, disbursement) do
   json.memo disbursement.local_hcb_code.memo
+  json.reason disbursement.name
   json.status disbursement.v4_api_state
 
   outgoing_hcb_code = disbursement.outgoing_disbursement.local_hcb_code

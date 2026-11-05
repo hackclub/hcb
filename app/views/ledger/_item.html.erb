@@ -1,10 +1,81 @@
-<tr>
-  <td><%= item.hashid %></td>
-  <td><%= item.date.strftime("%b %e, %Y") %></td>
-  <td><%= truncate(item.memo, length: 80) %></td>
-  <td class="nowrap"><%= item.amount.format %></td>
-  <td><%= item.short_code %></td>
-  <td>
-    <%= link_to "View", ledger_item_path(item) %>
+<%# locals: (item:, show_author: true, receipt_upload_button: false) %>
+
+<%#
+  Dropping a file onto the row uploads it as a receipt, and dropping a receipt
+  dragged out of the receipt bin links it, like the canonical transaction row.
+  With `receipt_upload_button`, the row also ends in upload and select buttons
+  (see ledger/items/_receipt_action). Receipts still live on the HCB code, so
+  that's the receiptable, and the gate for both is the same check
+  ReceiptsController#create authorizes the upload with.
+%>
+<% can_upload_receipt = current_user.present? && item.accepts_receipts? && item.hcb_code.present? && ReceiptablePolicy.new(current_user, item.hcb_code).upload? %>
+
+<tr
+  class="transaction transaction--<%= item.sign %> <%= item.special_appearance&.css_class %>"
+  <% if can_upload_receipt %>
+    data-controller="file-drop"
+    data-file-drop-target="dropzone"
+    data-file-drop-linking-value="true"
+    data-file-drop-modal-value="<%= link_receipts_path %>"
+    data-file-drop-receiptable-value="HcbCode:<%= item.hcb_code.id %>"
+    data-action="dragover->file-drop#dragover drop->file-drop#drop dragenter->file-drop#dragenter dragleave->file-drop#dragleave"
+  <% end %>>
+  <td class="transaction__icon">
+    <div class="tooltipped tooltipped--e" aria-label="<%= item.humanized_type %>">
+      <%= render "ledger/items/icon", ledger_item: item %>
+    </div>
   </td>
+  <td><%= item.datetime.strftime("%b %e, %Y") %></td>
+  <td class="transaction__memo transaction__memo--fluid<%= " transaction__memo--pending" if item.pending? %>">
+    <div>
+      <div class="flex-auto">
+        <div class="flex items-center gap-[1ch] min-w-0">
+          <%= render "ledger/items/status", ledger_item: item %>
+          <div class="min-w-0 overflow-hidden text-ellipsis">
+            <%= render "ledger/items/memo/memo", item: %>
+          </div>
+        </div>
+
+        <%= render "ledger/items/tags", item: %>
+      </div>
+
+      <%= render "ledger/items/tag_menu", item: %>
+
+      <%= render "ledger/items/badges", item: %>
+    </div>
+
+    <% if can_upload_receipt %>
+      <%= form_with url: receipts_path, html: { hidden: true }, data: { "file-drop-target" => "form", turbo: true } do |form| %>
+        <%= form.file_field :file, id: nil, multiple: true, include_hidden: false, data: { "file-drop-target" => "fileInput" } %>
+        <%= form.hidden_field :receiptable_type, id: nil, value: "HcbCode" %>
+        <%= form.hidden_field :receiptable_id, id: nil, value: item.hcb_code.id %>
+        <%= form.hidden_field :upload_method, id: nil, value: "receipts_page", data: { "file-drop-target" => "uploadMethod" } %>
+      <% end %>
+    <% end %>
+  </td>
+  <td class="nowrap">
+    <span class="flex items-center justify-end">
+      <% if !organizer_signed_in? && item.likely_account_verification_related? %>
+        <%= redacted_amount %>
+      <% else %>
+        <%= item.amount.format %>
+      <% end %>
+    </span>
+  </td>
+  <% if show_author %>
+    <td class="pr-4">
+      <% if item.author.present? %>
+        <div class="flex items-center justify-center tooltipped tooltipped--w" aria-label="<%= item.author.name %>">
+          <%= avatar_for item.author, class: "align-middle author", cached: true %>
+        </div>
+      <% end %>
+    </td>
+  <% end %>
+  <% if receipt_upload_button %>
+    <% if can_upload_receipt %>
+      <%= render "ledger/items/receipt_action", item: %>
+    <% else %>
+      <td></td>
+    <% end %>
+  <% end %>
 </tr>

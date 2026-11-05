@@ -69,8 +69,48 @@ class UserPolicy < ApplicationPolicy
     user.auditor?
   end
 
+  def admin_details_ach_transfers?
+    admin_details?
+  end
+
+  def admin_details_check_deposits?
+    admin_details?
+  end
+
+  def admin_details_disbursements?
+    admin_details?
+  end
+
+  def admin_details_emburse_cards?
+    admin_details?
+  end
+
+  def admin_details_increase_checks?
+    admin_details?
+  end
+
+  def admin_details_invoices?
+    admin_details?
+  end
+
+  def admin_details_lob_checks?
+    admin_details?
+  end
+
+  def admin_details_missing_receipts?
+    admin_details?
+  end
+
+  def admin_details_reimbursement_reports?
+    admin_details?
+  end
+
+  def admin_details_stripe_cards?
+    admin_details?
+  end
+
   def admin_details_stripe_transactions?
-    user.auditor?
+    admin_details?
   end
 
   def update?
@@ -78,6 +118,10 @@ class UserPolicy < ApplicationPolicy
   end
 
   def delete_profile_picture?
+    user.admin? || record == user
+  end
+
+  def reset_billing_address?
     user.admin? || record == user
   end
 
@@ -115,6 +159,10 @@ class UserPolicy < ApplicationPolicy
 
   def toggle_pretend_is_not_admin?
     user.auditor? || (record == user && user.admin_override_pretend?)
+  end
+
+  def suppress_card_locking?
+    user.admin?
   end
 
 end

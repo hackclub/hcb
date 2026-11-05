@@ -22,6 +22,8 @@ module UserService
       disallow_excessive_sms_verifications
 
       TwilioVerificationService.new.send_verification_request(@user.phone_number)
+    rescue TwilioVerificationService::DeliveryFailed => e
+      raise SMSEnrollmentError, "We couldn't send a verification code to your phone number: #{e.reason} (Twilio error #{e.code}). Please try a different phone number, or contact hcb@hackclub.com for further assistance."
     end
 
     # Completing the phone number verification by checking that exchanging code works
@@ -73,7 +75,7 @@ module UserService
     end
 
     def not_fresh_user?
-      @user.created_at >= 1.day.ago
+      @user.created_at < 1.day.ago
     end
 
   end

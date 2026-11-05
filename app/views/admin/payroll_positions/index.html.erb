@@ -1,0 +1,54 @@
+<% title "Contractors" %>
+
+<%= form_with local: true, class: "card", url: admin_payroll_positions_path, method: :get do |form| %>
+  <div class="flex flex-col sm:flex-row items-center gap-2">
+    <%= render "events/filters/search", form: %>
+    <%= form.select :state, Payroll::Position.aasm.states_for_select, { include_blank: "All states", selected: @state } %>
+  </div>
+  <div class="flex items-center mt-2">
+    <%= form.submit "Search", class: "ml-auto" %>
+  </div>
+<% end %>
+
+<div class="flex items-center mb2 flex-col sm:flex-row">
+  <div class="flex-grow">
+    <%= page_entries_info @positions, entry_name: "contractors" %>
+  </div>
+  <%= paginate @positions %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th class="w-32">Date</th>
+      <th>Organization</th>
+      <th>Contractor</th>
+      <th>Title</th>
+      <th class="w-32">Rate</th>
+      <th class="w-32">Period</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @positions.each do |position| %>
+      <tr class="<%= "admin-bg-pending" if position.under_review? %>">
+        <td><%= position.created_at.strftime("%Y-%m-%d") %></td>
+        <td><%= link_to position.event.name, position.event %></td>
+        <td>
+          <%= position.payee.display_name %>
+          <div class="muted h5"><%= position.payee.email %></div>
+        </td>
+        <td><%= position.title %></td>
+        <td><%= position.rate.format %></td>
+        <td><%= position.period_label %></td>
+        <td><span class="badge ml-0 bg-<%= position.under_review? ? "warning" : position.status_color %>"><%= position.under_review? ? "Under review" : position.status_text %></span></td>
+        <td>
+          <%= link_to position.under_review? ? "Review" : "View", event_payroll_position_path(event_id: position.event.slug, id: position), data: { turbo: false } %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= paginate @positions %>

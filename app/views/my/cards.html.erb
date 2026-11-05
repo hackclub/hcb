@@ -1,7 +1,7 @@
 <% title "My cards" %>
 <% page_md %>
 <%= render "users/nav", selected: :cards %>
-<% @show_card_popovers = Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user) && organizer_signed_in? %>
+<% @show_card_popovers = organizer_signed_in? %>
 <% if @stripe_cards.any? || current_user(allow_unverified: true).verified? %>
   <h1 class="heading flex items-center flex-col sm:flex-row border-0 mb-0">
     <span class="flex items-center">
@@ -68,7 +68,7 @@
 <% else %>
  <%= render "events/one_pager",
     title: "Cards",
-    support_article: "https://help.hcb.hackclub.com/en/articles/13356182-how-do-i-spend-my-money-on-hcb-and-use-hcb-cards",
+    support_article: "https://help.hcb.hackclub.com/en/articles/15410085-hcb-cards-how-to-order-activate-and-use-them",
     screenshots: {
       light: "https://user-cdn.hackclub-assets.com/019c3c72-e7a5-7cf8-b207-f03b9071a748/hcb.hackclub.com_hq_cards%20(1).png",
       dark: "https://cdn.hackclub.com/019c3c73-25d9-79b3-b1ae-08bc8e7cb88b/hcb.hackclub.com_hq_cards.png"

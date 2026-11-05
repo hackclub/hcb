@@ -20,20 +20,6 @@ export default class extends Controller {
     this.#render()
   }
 
-  setRange({ start, end }) {
-    this.start = start ? this.#clampDay(new Date(start)) : null
-    this.end = end ? this.#clampDay(new Date(end)) : null
-    this.typedStart = this.#formatDate(this.start)
-    this.typedEnd = this.#formatDate(this.end)
-    this.view = this.start || this.view || new Date()
-    this.#render()
-    this.#emitChange()
-  }
-
-  getRange() {
-    return { start: this.start, end: this.end }
-  }
-
   #startOfMonth(date) {
     const result = new Date(date)
     result.setDate(1)
@@ -396,6 +382,26 @@ export default class extends Controller {
     this.#emitChange()
   }
 
+  submitFilter() {
+    const params = new URLSearchParams()
+
+    if (this.start)
+      params.set(this.nameStartValue, this.#formatDate(this.start))
+    if (this.end) params.set(this.nameEndValue, this.#formatDate(this.end))
+
+    // Collect other hidden params from the cloned menu content
+    const container = this.element.parentElement
+    if (container) {
+      container.querySelectorAll('input[type="hidden"]').forEach(input => {
+        params.set(input.name, input.value)
+      })
+    }
+
+    const url = new URL(window.location.href)
+    url.search = params.toString()
+    window.location.href = url.toString()
+  }
+
   #emitChange() {
     this.element.dispatchEvent(
       new CustomEvent('daterange:change', {
@@ -430,7 +436,7 @@ export default class extends Controller {
           </div>
 
           <div data-role="weeks" class="grid grid-cols-7 gap-0 py-2"></div>
-          <button type="submit" class="btn w-full">Filter</button>
+          <button type="button" data-action="click->date-range-picker#submitFilter" class="btn w-full">Filter</button>
         </div>
       </div>
     `

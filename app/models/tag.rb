@@ -6,7 +6,7 @@
 #
 #  id         :bigint           not null, primary key
 #  color      :text
-#  emoji      :string
+#  emoji      :string           not null
 #  label      :text
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
@@ -42,7 +42,7 @@ class Tag < ApplicationRecord
   def removal_confirmation_message
     message = "Are you sure you'd like to delete this tag?"
 
-    if hcb_codes.size > 0
+    if hcb_codes.any?
       message + " It will be removed from #{pluralize(hcb_codes.size, 'transaction')}."
     else
       message

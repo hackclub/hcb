@@ -4,7 +4,6 @@ module Api
   module V4
     class CardGrantsController < ApplicationController
       include SetEvent
-      include ApplicationHelper
 
       before_action :set_api_event, only: [:create]
       before_action :set_card_grant, except: [:index, :create]
@@ -20,10 +19,12 @@ module Api
         end
       end
 
+      require_oauth2_scope "card_grants:read", :index
+
       def create
         sent_by = current_user
 
-        if current_user.admin? && params.key?(:sent_by_email)
+        if can_admin?(:write) && params.key?(:sent_by_email)
           found_user = User.find_by(email: params[:sent_by_email])
 
           if found_user.nil?
@@ -63,7 +64,7 @@ module Api
 
           render(
             json: { error: "invalid_operation", messages: },
-            status: :unprocessable_entity
+            status: :unprocessable_content
           )
           return
         end
@@ -77,11 +78,15 @@ module Api
         authorize @card_grant
       end
 
+      require_oauth2_scope "card_grants:read", :show
+
       def topup
         authorize @card_grant
 
         @card_grant.topup!(amount_cents: params["amount_cents"], topped_up_by: current_user)
       end
+
+      require_oauth2_scope "card_grants:write", :topup
 
       def withdraw
         authorize @card_grant
@@ -89,15 +94,20 @@ module Api
         @card_grant.withdraw!(amount_cents: params["amount_cents"], withdrawn_by: current_user)
       end
 
+      require_oauth2_scope "card_grants:write", :withdraw
+
       def update
         authorize @card_grant
 
-        expiration_at = params["expiration_at"]&.to_date
+        attrs = params.permit(:merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :instructions)
+        attrs[:expiration_at] = params["expiration_at"]&.to_date if params["expiration_at"].present?
 
-        @card_grant.update!(params.permit(:merchant_lock, :category_lock, :keyword_lock, :purpose, :one_time_use, :instructions).merge(expiration_at:))
+        @card_grant.update!(attrs)
 
         render :show
       end
+
+      require_oauth2_scope "card_grants:write", :update
 
       def cancel
         authorize @card_grant
@@ -106,12 +116,16 @@ module Api
         render :show
       end
 
+      require_oauth2_scope "card_grants:write", :cancel
+
       def activate
         authorize @card_grant
 
         @card_grant.create_stripe_card(request.remote_ip)
         render :show
       end
+
+      require_oauth2_scope "card_grants:write", :activate
 
       def transactions
         authorize @card_grant
@@ -120,6 +134,8 @@ module Api
 
         @hcb_codes = paginate_cursor(@hcb_codes, &:public_id)
       end
+
+      require_oauth2_scope "card_grants:read", :transactions
 
       private
 

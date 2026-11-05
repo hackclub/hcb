@@ -85,12 +85,17 @@ module GSuiteService
 
     def verification_key_valid?(skip_g_verify: false)
       unless skip_g_verify
-        res = Faraday.get do |req|
-          req.url G_VERIFY_DOMAIN + domain
-          req.options.timeout = 60 # it may take heroku up to 30 seconds to cold start
-          req.headers["Authorization"] = Credentials.fetch(:GVERIFY)
+        # G-Verify is self-hosted and can be down; on any transport failure,
+        # report it and fall through to the direct DNS check below rather than
+        # raising.
+        res = Rails.error.handle(context: { external_service: :g_verify }) do
+          Faraday.get do |req|
+            req.url G_VERIFY_DOMAIN + domain
+            req.options.timeout = 60 # it may take heroku up to 30 seconds to cold start
+            req.headers["Authorization"] = Credentials.fetch(:GVERIFY)
+          end
         end
-        return true if res.success?
+        return true if res&.success?
       end
 
       # Some old G Suite domains did not have their verification key generated

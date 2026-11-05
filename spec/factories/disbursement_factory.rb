@@ -6,6 +6,7 @@ FactoryBot.define do
     association :source_event, factory: :event
     amount { Faker::Number.positive.to_i }
     name { Faker::Name.unique.name }
+    transfer_type { "transfer" }
 
     trait :pending do
       aasm_state { "pending" }
@@ -54,8 +55,8 @@ FactoryBot.define do
 
     trait :with_canonical_transactions do
       after(:create) do |disbursement|
-        create(:canonical_transaction, hcb_code: disbursement.hcb_code, amount_cents: -disbursement.amount)
-        create(:canonical_transaction, hcb_code: disbursement.hcb_code, amount_cents: disbursement.amount)
+        create(:canonical_transaction, hcb_code: disbursement.outgoing_hcb_code, amount_cents: -disbursement.amount)
+        create(:canonical_transaction, hcb_code: disbursement.outgoing_hcb_code, amount_cents: disbursement.amount)
       end
     end
   end

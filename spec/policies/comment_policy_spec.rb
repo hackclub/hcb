@@ -43,17 +43,27 @@ RSpec.describe CommentPolicy, type: :policy do
     end
 
     context "when commentable is a Disbursement" do
-      it "includes users from both source and destination events" do
+      it "includes users from both source and destination events, plus their ancestors" do
+        source_parent = create(:event)
+        source_ancestor_user = create(:user)
+        create(:organizer_position, event: source_parent, user: source_ancestor_user)
+        source_event = create(:event, parent: source_parent)
         source_user = create(:user)
+        create(:organizer_position, event: source_event, user: source_user)
+
+        destination_parent = create(:event)
+        destination_ancestor_user = create(:user)
+        create(:organizer_position, event: destination_parent, user: destination_ancestor_user)
+        destination_event = create(:event, parent: destination_parent)
         destination_user = create(:user)
-        disbursement = create(:disbursement)
-        create(:organizer_position, event: disbursement.source_event, user: source_user)
-        create(:organizer_position, event: disbursement.destination_event, user: destination_user)
+        create(:organizer_position, event: destination_event, user: destination_user)
+
+        disbursement = create(:disbursement, source_event: source_event, event: destination_event)
 
         comment = create(:comment, commentable: disbursement)
         policy = described_class.new(source_user, comment)
 
-        expect(policy.send(:users)).to include(source_user, destination_user)
+        expect(policy.send(:users)).to include(source_user, destination_user, source_ancestor_user, destination_ancestor_user)
       end
     end
 

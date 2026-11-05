@@ -5,7 +5,11 @@
     <div class="flex items-center info">
       <%= inline_icon "info", size: 32, class: "mr1" %>
       <p class="bold mt0 mb0">
-        This grant has been canceled
+        <% if card_grant.converted_to_reimbursement_report? %>
+          This grant has been canceled and converted into a reimbursement report
+        <% else %>
+          This grant has been canceled
+        <% end %>
         <% if canceled_by = card_grant.last_user_change_to(status: :canceled) %>
           by <%= user_mention canceled_by, disable_tooltip: true %>
         <% end %>
@@ -13,6 +17,9 @@
           <span class="tooltipped" aria-label="<%= canceled_at.to_formatted_s(:long) %>">
             <%= time_ago_in_words canceled_at %> ago
           </span>
+        <% end %>
+        <% if card_grant.converted_to_reimbursement_report? && policy(card_grant.reimbursement_report).show? %>
+          • <%= link_to "View reimbursement report", card_grant.reimbursement_report %>
         <% end %>
       </p>
     </div>

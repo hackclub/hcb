@@ -13,10 +13,6 @@ module Users
 
       load_team_community
 
-      @macbook_raffle = Raffle.find_by(user: current_user(allow_unverified: true), program: "first-worlds-2026-macbook")
-      @printer_raffle = Raffle.find_by(user: current_user(allow_unverified: true), program: "first-worlds-2026-printer")
-      @airpods_raffle = Raffle.find_by(user: current_user(allow_unverified: true), program: "first-worlds-2026-airpods")
-
       @advisor_email_body = <<~EMAIL
         At Championships this year, I met a couple of engineers from a nonprofit, Hack Club. They run a service called HCB and they pitch it as "the ultimate booster club for FRC, FTC, and FLL teams."
 
@@ -122,7 +118,10 @@ module Users
         @user.creation_method = :first_robotics_form
         @user.save!
 
-        current_session.referral_attributions.where(user_id: nil).find_each do |attribution|
+        # An anonymous visitor only has a session if they arrived via a
+        # referral link (see Referral::LinksController#show). No session means
+        # no clicks to attribute, so there is nothing to transfer.
+        current_session&.referral_attributions&.where(user_id: nil)&.find_each do |attribution|
           attribution.update!(user: @user)
         end
 
@@ -138,7 +137,13 @@ module Users
 
       @user = User.find_by!(email: user_params[:email])
 
-      current_session.referral_attributions.where(user_id: nil).find_each do |attribution|
+      if Rails.cache.increment("login:#{@user.id}", 1, expires_in: 1.hour).to_i > 10
+        flash.now[:error] = "You're creating too many logins. Please try again later."
+        render :new, status: :unprocessable_content
+        return
+      end
+
+      current_session&.referral_attributions&.where(user_id: nil)&.find_each do |attribution|
         attribution.update!(user: @user)
       end
 
@@ -148,33 +153,9 @@ module Users
 
       redirect_to choose_login_preference_login_path(@login)
     rescue ActiveRecord::RecordInvalid => e
-      flash[:error] = e.message
+      flash.now[:error] = e.record.errors.full_messages.to_sentence
 
-      render :new, status: :unprocessable_entity
-    end
-
-    def macbook_qr_code
-      raffle_link = current_user(allow_unverified: true).raffles.find_by(program: "first-worlds-2026-macbook")&.referral_link
-
-      if raffle_link.nil?
-        head :not_found
-        return
-      end
-
-      qrcode = RQRCode::QRCode.new(raffle_link)
-
-      png = qrcode.as_png(
-        bit_depth: 1,
-        border_modules: 2,
-        color_mode: ChunkyPNG::COLOR_GRAYSCALE,
-        color: "black",
-        fill: "white",
-        module_px_size: 6,
-        size: 300
-      )
-
-      send_data png, filename: "MacBook Raffle Referral.png",
-        type: "image/png", disposition: "inline"
+      render :new, status: :unprocessable_content
     end
 
     private

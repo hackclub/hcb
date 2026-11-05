@@ -7,5 +7,7 @@
     <%= render "card_grants/actions/convert_to_reimbursement_report", card_grant: @card_grant, label: @card_grant.user == current_user ? "Get reimbursed" : "Create reimbursement report", subtitle: "Converting to a reimbursement report allows the recipient to upload receipts and be reimbursed for purchases that have already happened. This will cancel the grant card." %>
     <%= render "card_grants/actions/cancel", card_grant: @card_grant, label: "Canceling the card will immediately return funds back to #{@card_grant.event.name}." %>
     <%= render "card_grants/actions/disable_pre_authorization", card_grant: @card_grant, label: "If you've decided you no longer need to require pre-authorization for this grant, you can turn it off." %>
+  <% else %>
+    <%= blankslate @card_grant.converted_to_reimbursement_report? ? "This grant has been converted into a reimbursement report, so there are no further actions available." : "This grant has been canceled, so there are no further actions available." %>
   <% end %>
 </turbo-frame>
