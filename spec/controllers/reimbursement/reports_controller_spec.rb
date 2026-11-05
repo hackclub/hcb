@@ -484,7 +484,8 @@ RSpec.describe Reimbursement::ReportsController do
         default: false,
         details: LegalEntity::PayoutMethod::WiseTransfer.new(
           address_line1: "1 Main St", address_city: "London", address_state: "England",
-          address_postal_code: "SW1A 1AA", recipient_country: 1, currency: "GBP"
+          address_postal_code: "SW1A 1AA", recipient_country: 1, currency: "GBP",
+          recipient_birthday: "01/15/1990"
         )
       )
       report = create(:reimbursement_report, user:, event: create(:event), aasm_state: :draft)
