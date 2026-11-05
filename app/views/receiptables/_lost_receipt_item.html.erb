@@ -2,16 +2,16 @@
   <legend class="bold">Purchase item</legend>
   <div class="field">
     <%= form.label :description %>
-    <%= form.text_field :description, required: true %>
+    <%= form.text_field :description, required: true, class: "!max-w-full" %>
   </div>
   <div class="flex flex-wrap gap-3">
     <div class="field flex-1 min-w-0">
       <%= form.label :quantity %>
-      <%= form.number_field :quantity, required: true, min: 1, max: 10_000, step: 1, data: { amount: "quantity" } %>
+      <%= form.number_field :quantity, required: true, min: 1, max: 10_000, step: 1, class: "fit", data: { amount: "quantity" } %>
     </div>
     <div class="field flex-1 min-w-0">
       <%= form.label :unit_amount, "Unit price (USD)" %>
-      <%= form.number_field :unit_amount, value: form.object.unit_amount_cents.nil? ? nil : form.object.unit_amount.to_s, required: true, min: 0, max: 1_000_000, step: "0.01", data: { amount: "price" } %>
+      <%= form.number_field :unit_amount, value: form.object.unit_amount_cents.nil? ? nil : form.object.unit_amount.to_s, required: true, min: 0, max: 1_000_000, step: "0.01", class: "fit", data: { amount: "price" } %>
     </div>
   </div>
   <button type="button" class="btn bg-muted" data-action="lost-receipt#remove" data-lost-receipt-target="removeButton">Remove item</button>

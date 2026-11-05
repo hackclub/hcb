@@ -4,7 +4,7 @@
 <h1>Lost receipt statement</h1>
 
 <%= turbo_frame_tag "lost_receipt_#{@receiptable.class.name.underscore.tr('/', '_')}_#{@receiptable.id}", target: "_top" do %>
-  <p>Try asking the merchant for a replacement receipt first. If you can't get one, complete this statement. We'll attach a PDF to the transaction.</p>
+  <p class="muted mt-0">Ask the merchant for a replacement receipt before completing this statement.</p>
   <% if current_user %>
     <p class="muted">You have <%= pluralize current_user.receipts.lost_receipt_statement.count, "lost receipt statement" %> on file.</p>
   <% end %>
@@ -15,19 +15,19 @@
 
     <div class="field">
       <%= form.label :date, "Purchase date" %>
-      <%= form.date_field :date, required: true, max: Date.current.iso8601 %>
+      <%= form.date_field :date, required: true, max: Date.current.iso8601, class: "!max-w-full" %>
     </div>
     <div class="field">
       <%= form.label :merchant %>
-      <%= form.text_field :merchant, required: true %>
+      <%= form.text_field :merchant, required: true, class: "!max-w-full" %>
     </div>
     <div class="field">
       <%= form.label :purpose, "Business purpose" %>
-      <%= form.text_area :purpose, required: true, rows: 2 %>
+      <%= form.text_area :purpose, required: true, rows: 2, class: "!max-w-full" %>
     </div>
 
-    <h3>Items purchased</h3>
-    <p class="muted">Include tax, tips, and fees as separate items. Enter amounts in USD.</p>
+    <h3 class="mb-2">Items purchased</h3>
+    <p class="muted mt-0">Include tax, tips, and fees as separate items. Enter amounts in USD.</p>
     <div data-lost-receipt-target="items">
       <%= form.fields_for :items do |item_form| %>
         <%= render "receiptables/lost_receipt_item", form: item_form %>
@@ -43,13 +43,12 @@
 
     <div class="field">
       <%= form.label :signer_name, "Your full name" %>
-      <%= form.text_field :signer_name, required: true, autocomplete: "name" %>
+      <%= form.text_field :signer_name, required: true, autocomplete: "name", class: "!max-w-full" %>
     </div>
     <div class="field field--checkbox">
       <%= form.check_box :confirmed, required: true %>
       <%= form.label :confirmed, LostReceipt::Statement::CONFIRMATION %>
     </div>
-    <p class="muted">Your name and confirmation will appear on the PDF. Deleting it makes the receipt missing again unless another receipt is attached.</p>
-    <%= form.submit "Create statement", class: "btn bg-success", data: { disable_with: "Creating statement..." } %>
+    <%= form.submit "Create statement", class: "btn w-full bg-blue mt-2", data: { disable_with: "Creating statement..." } %>
   <% end %>
 <% end %>
