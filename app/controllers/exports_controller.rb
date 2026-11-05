@@ -18,7 +18,10 @@ class ExportsController < ApplicationController
         file_extension = params[:format]
 
         # CSV exports **can** support date ranges
-        set_date_range if file_extension == "csv" && params[:start_date].present?
+        if file_extension == "csv" && params[:start_date].present?
+          set_date_range
+          return if performed?
+        end
 
         @export = case file_extension
                   when "csv"
@@ -48,6 +51,7 @@ class ExportsController < ApplicationController
 
       format.pdf do
         set_date_range # PDF monthly statements require a date range
+        return if performed?
 
         all = TransactionGroupingEngine::Transaction::All.new(event_id: @event.id).run
         TransactionGroupingEngine::Transaction::AssociationPreloader.new(transactions: all, event: @event).run!
@@ -144,7 +148,12 @@ class ExportsController < ApplicationController
   # queues it up to be emailed, collecting an address first if we don't have one.
   def deliver_export(export, file_extension:)
     if export.async?
-      export.requested_by = User.find_or_create_by(email: params[:email]) if params[:email]
+      # A signed-in user's export is always emailed to them. Only a
+      # signed-out requester (which `authorize` in the caller limits to public
+      # orgs) may supply an address via `params[:email]`. Honoring the
+      # param for signed-in users would let a forged cross-site GET mail a
+      # private ledger to an attacker-chosen address.
+      export.requested_by ||= User.find_or_create_by(email: params[:email]) if params[:email].present?
 
       if export.requested_by.nil?
         redirect_to collect_email_exports_path(file_extension:, event_slug: params[:event], source: action_name) and return
@@ -154,7 +163,7 @@ class ExportsController < ApplicationController
 
       ExportJob.perform_later(export_id: export.id)
 
-      flash[:success] = params[:email] ? "Your export will arrive in a few moments." : "This export is too big, so we'll send you an email when it's ready."
+      flash[:success] = signed_in? ? "This export is too big, so we'll send you an email when it's ready." : "Your export will arrive in a few moments."
 
       redirect_back fallback_location: @event and return
     end
@@ -166,17 +175,33 @@ class ExportsController < ApplicationController
     self.response_body = export.content
   end
 
+  # Sets `@start` and `@end`, or renders a 400 when the requested range is
+  # invalid. Callers must `return if performed?`.
   def set_date_range
-    @start = (params[:start_date] || Date.today.prev_month).to_datetime.beginning_of_month
+    start_date = params[:start_date].present? ? parse_date(params[:start_date]) : Date.today.prev_month.to_datetime
+    end_date = params[:end_date].present? ? parse_date(params[:end_date]) : start_date
+
+    if start_date.nil? || end_date.nil?
+      return render plain: "Invalid date.", status: :bad_request
+    end
+
+    @start = start_date.beginning_of_month
     if @start >= Date.today.beginning_of_month
-      flash[:error] = "Can not create a financial statement for #{@start.strftime("%B %Y")}"
-      redirect_back fallback_location: event_statements_path(@event) and return
+      return render plain: "Can not create a financial statement for #{@start.strftime("%B %Y")}.", status: :bad_request
     end
-    @end = (params[:end_date] || @start).to_datetime.end_of_month
+
+    @end = end_date.end_of_month
     if @end < @start
-      flash[:error] = "End date cannot be before the start date."
-      redirect_back fallback_location: event_statements_path(@event) and return
+      render plain: "End date cannot be before the start date.", status: :bad_request
     end
+  end
+
+  # Returns nil for anything that isn't a date (e.g. `?start_date=foo` from a
+  # crawler) instead of raising `Date::Error`.
+  def parse_date(value)
+    value.to_s.to_datetime
+  rescue ArgumentError # Date::Error is a subclass of ArgumentError
+    nil
   end
 
 end
