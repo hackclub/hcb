@@ -293,7 +293,11 @@ RSpec.describe CardGrantsController do
     let(:event) { create(:event, :with_positive_balance, plan_type: Event::Plan::HackClubAffiliate) }
     let(:card_grant) { create(:card_grant, event:) }
     let!(:item) do
-      item = create(:canonical_pending_transaction, event:, amount_cents: -1000).local_hcb_code.ledger_item
+      # A bare factory CPT gets an "HCB-000-<id>" code, which collides with the
+      # event's positive balance CT whenever the two happen to share an id and
+      # merges them into one ledger item. A Stripe transaction keys the code on
+      # its iauth id instead.
+      item = create(:canonical_pending_transaction, event:, amount_cents: -1000, raw_pending_stripe_transaction: create(:raw_pending_stripe_transaction)).local_hcb_code.ledger_item
       Ledger::Mapping.map_primary!(ledger: card_grant.ledger, ledger_item: item, mapped_by: create(:user, :make_admin))
       item.refresh!
       item
