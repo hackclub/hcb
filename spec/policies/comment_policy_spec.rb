@@ -120,6 +120,51 @@ RSpec.describe CommentPolicy, type: :policy do
 
       expect(policy.show?).to eq(true)
     end
+
+    context "when a payment was rejected" do
+      let(:event) { create(:event, :with_positive_balance) }
+      let(:legal_entity) { create(:legal_entity, :business) }
+      let(:payee) { create(:payee, event:, legal_entity:) }
+      let(:payee_user) { create(:user) }
+      let(:unrelated_user) { create(:user) }
+      let(:payment) { create(:payment, :rejected, payee:) }
+      let(:wire) { create(:wire, account_number: "DE89370400440532013000", event:) }
+
+      before do
+        stub_request(:get, /api\.column\.com\/institutions/).to_return_json(status: 200, body: { country_code: "DE" })
+        create(:legal_entity_user, legal_entity:, user: payee_user)
+        create(:payment_attempt, :wire, payment:, payout: wire, aasm_state: "rejected", payout_method: create(:legal_entity_payout_method_wire, details: build(:wire_payout_method_details, account_number: "DE89370400440532013000", bic_code: "DEUTDEDB", recipient_country: :DE, address_city: "Berlin", address_postal_code: "10115", address_state: "Berlin")))
+      end
+
+      it "allows the payee to view comments on the payment" do
+        comment = create(:comment, commentable: payment, admin_only: false)
+        policy = described_class.new(payee_user, comment)
+
+        expect(policy.show?).to eq(true)
+      end
+
+      it "allows the payee to view comments on the payout hcb_code" do
+        comment = create(:comment, commentable: wire.local_hcb_code, admin_only: false)
+        policy = described_class.new(payee_user, comment)
+
+        expect(policy.show?).to eq(true)
+      end
+
+      it "hides admin_only comments from the payee" do
+        comment = create(:comment, commentable: wire.local_hcb_code, admin_only: true)
+        policy = described_class.new(payee_user, comment)
+
+        expect(policy.show?).to eq(false)
+        expect(described_class::Scope.new(payee_user, Comment.all).resolve).not_to include(comment)
+      end
+
+      it "does not allow unrelated users to view comments" do
+        comment = create(:comment, commentable: wire.local_hcb_code, admin_only: false)
+        policy = described_class.new(unrelated_user, comment)
+
+        expect(policy.show?).to eq(false)
+      end
+    end
   end
 
   describe "#create?" do

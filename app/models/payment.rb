@@ -132,6 +132,12 @@ class Payment < ApplicationRecord
     attempts.last&.payout
   end
 
+  def all_comments
+    hcb_codes = attempts.includes(:payout).filter_map { |attempt| attempt.payout&.local_hcb_code }
+
+    Comment.where(commentable: [self, *hcb_codes]).order(:created_at)
+  end
+
   def popover_path
     Rails.application.routes.url_helpers.payment_path(id: hashid, frame: true)
   end
