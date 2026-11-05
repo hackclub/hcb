@@ -99,6 +99,7 @@ class UsersController < ApplicationController
 
   def logout
     sign_out
+    forget_remembered_organizations!
     redirect_to root_path
   end
 

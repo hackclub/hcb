@@ -219,6 +219,49 @@ module SessionsHelper
       &.update_all(signed_out_at: Time.now, expiration_at: Time.now)
   end
 
+  # Called from explicit sign-out actions (not #sign_out itself, which also runs
+  # during login and impersonation) so the next page clears the remembered
+  # organizations. An expired session never sets this, so they're kept.
+  def forget_remembered_organizations!
+    session[:forget_remembered_organizations] = true
+  end
+
+  # Public ids of the transparent organizations (including sub-organizations)
+  # the current user can manage. Private organizations are excluded so
+  # memberships don't leak via localStorage on shared devices, and impersonated
+  # sessions return nil so an admin's list isn't replaced with someone else's.
+  #
+  # Cached per session so it isn't recomputed on every page; each sign-in gets
+  # a fresh list, and membership changes are picked up within the TTL.
+  def remembered_organizer_event_ids
+    return if !signed_in? || current_session.impersonated?
+
+    @remembered_organizer_event_ids ||= Rails.cache.fetch(["remembered-organizations", current_session.id], expires_in: 10.minutes) do
+      Event.transparent.not_hidden
+           .where(id: Event.self_and_descendant_ids(current_user.events.pluck(:id)))
+           .select(:id)
+           .map(&:public_id)
+    end
+  end
+
+  def remembered_organizations_data
+    data = { controller: "remembered-organizations" }
+    data[:remembered_organizations_clear_value] = true if session.delete(:forget_remembered_organizations)
+
+    if (event_ids = remembered_organizer_event_ids)
+      data[:remembered_organizations_event_ids_value] = event_ids.to_json
+    elsif !signed_in?(allow_unverified: true) && @event&.is_public
+      data[:remembered_organizations_current_event_value] = @event.public_id
+    end
+
+    data
+  end
+
+  # On organization pages, send the user back to where they were once they sign in.
+  def sign_in_path_returning_here
+    auth_users_path(return_to: (request.original_url if @event && request.get?))
+  end
+
   def sudo_mode?
     current_session&.sudo_mode?
   end
