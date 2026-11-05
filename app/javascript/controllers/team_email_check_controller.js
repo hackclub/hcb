@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus'
 
 const TEAM_EMAIL =
-  /(team|webmaster|marketing|admin|info|about|support|sales|hello)/
+  /(team|webmaster|marketing|admin|info|about|support|sales|hello)/i
 
 // Discourages inviting a shared team inbox. The address only counts once it has
 // been typed in, so a value the browser restores into the field doesn't warn on
