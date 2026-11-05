@@ -26,13 +26,18 @@
 
     <div>
       <% if statement_of_activity.supports_descendants? %>
-        <%= form.check_box(
-              :include_descendants,
-              checked: statement_of_activity.include_descendants,
-              data: { action: "change->form#submit" },
-              class: "mb-0"
-            ) %>
-        <%= form.label(:include_descendants, "Include descendants", class: "inline") %>
+        <div class="flex items-center gap-2">
+          <%= form.label(:include_descendants, "Include descendants", class: "inline text-nowrap") %>
+          <label class="field--checkbox--switch">
+            <%= form.check_box(
+                  :include_descendants,
+                  checked: statement_of_activity.include_descendants,
+                  data: { action: "change->form#submit" },
+                  class: "mb-0"
+                ) %>
+            <span class="slider"></span>
+          </label>
+        </div>
       <% end %>
     </div>
   <% end %>

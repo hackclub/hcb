@@ -26,24 +26,30 @@
         <%= form.text_field :purpose, placeholder: "Pizza for a club meeting", disabled:, maxlength: CardGrant::MAXIMUM_PURPOSE_LENGTH %>
       </div>
 
-      <div class="field">
+      <div class="field field--checkbox">
         <%= form.label :one_time_use, class: "flex gap-2 items-center" do %>
-          <%= form.check_box :one_time_use, disabled: %>
           One time use?
           <span class="info tooltipped tooltipped--e h-5" aria-label="Card will freeze after the first charge">
             <%= inline_icon "info", size: 20 %>
           </span>
         <% end %>
+        <label class="field--checkbox--switch ml-auto">
+          <%= form.check_box :one_time_use, disabled: %>
+          <span class="slider"></span>
+        </label>
       </div>
 
-      <div class="field">
+      <div class="field field--checkbox">
         <%= form.label :pre_authorization_required, class: "flex gap-2 items-center" do %>
-          <%= form.check_box :pre_authorization_required, disabled: %>
           Require pre-authorization?
           <span class="info tooltipped tooltipped--e h-5" aria-label="Recipient will submit documentation of their purchase before activation, which will be compared with the grant's purpose and flagged if it is potentially fraudulent">
             <%= inline_icon "info", size: 20 %>
           </span>
         <% end %>
+        <label class="field--checkbox--switch ml-auto">
+          <%= form.check_box :pre_authorization_required, disabled: %>
+          <span class="slider"></span>
+        </label>
       </div>
     </div>
 
