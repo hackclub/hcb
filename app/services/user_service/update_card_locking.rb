@@ -73,13 +73,22 @@ module UserService
       send_sms(locked_message(now:))
     end
 
-    # An unlock has two very different causes. Clearing your receipts earns the
-    # plain "your cards work again". An admin suppression does not: the receipts
-    # are still overdue and the cards lock again when it expires, so telling that
-    # cardholder their cards work again full stop would be a promise HCB breaks on
-    # a date they were never told.
+    # Clearing your receipts earns the plain "your cards work again". A suppression
+    # does not: the receipts are still overdue and the cards lock again when it
+    # expires, so the plain copy would be a promise broken on a date the
+    # cardholder was never told.
     def notify_unlocked(now:)
       suppressed_until = @user.card_locking_suppressed_until if @user.card_locking_suppressed?(now:)
+
+      # Start the reminder clock here: the reminder fires when its key is absent,
+      # so without this claim the sweep would send one moments from now saying the
+      # same thing as this notice.
+      if suppressed_until
+        Rails.cache.write(
+          CardLocking.suppression_notice_key(:reminder, @user.id),
+          true, expires_in: CardLocking::SUPPRESSION_REMINDER_INTERVAL
+        )
+      end
 
       CardLockingMailer.cards_unlocked(user: @user, suppressed_until:).deliver_later
       send_sms(unlocked_message(suppressed_until, now:))
