@@ -136,6 +136,11 @@
     <%= render "comments/form", commentable: @item.hcb_code %>
   <% end %>
 
+  <%# Posting a comment reloads the popover, so update the counts on the ledger row behind it (see ledger/items/_badges) %>
+  <% if @frame %>
+    <%= turbo_stream.replace [@item, :badges], partial: "ledger/items/badges", locals: { item: @item } %>
+  <% end %>
+
   <% admin_tool("p-2 my-3") do %>
     <h3 class="my-2">Quickly go to</h3>
     <% if @item.hcb_code.present? %>

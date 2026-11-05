@@ -35,6 +35,19 @@ RSpec.describe HcbCodesController, type: :controller do
       expect(response.body).to include(%(href="#{canonical_pending_transaction_path(cpt)}">CPT #{cpt.id}</a>))
     end
 
+    # Posting a comment in the popover reloads it, which is when the ledger row
+    # behind it picks up the new comment count.
+    it "updates the counts on the item's ledger row when shown in a popover" do
+      item_hcb_code = create(:canonical_pending_transaction, event:, amount_cents: -1000).local_hcb_code
+      target = "turbo-stream[action='replace'][target='badges_ledger_item_#{item_hcb_code.ledger_item.id}']"
+
+      get :show, params: { id: item_hcb_code.hashid, frame: true }
+      expect(Nokogiri::HTML5(response.body).at_css(target)).to be_present
+
+      get :show, params: { id: item_hcb_code.hashid }
+      expect(Nokogiri::HTML5(response.body).at_css(target)).to be_nil
+    end
+
     context "for a Wise transfer whose pending transaction is not grouped under its HCB code" do
       let(:wise_transfer) do
         WiseTransfer.create!(
