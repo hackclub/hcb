@@ -9,7 +9,6 @@
 <% receipt_drop = current_user.present? && item.accepts_receipts? && item.hcb_code.present? && ReceiptablePolicy.new(current_user, item.hcb_code).upload? %>
 
 <tr
-  id="<%= dom_id(item) %>"
   class="transaction transaction--<%= item.sign %> <%= item.special_appearance&.css_class %>"
   <% if receipt_drop %>
     data-controller="file-drop"
@@ -50,7 +49,6 @@
         <%= form.hidden_field :receiptable_type, id: nil, value: "HcbCode" %>
         <%= form.hidden_field :receiptable_id, id: nil, value: item.hcb_code.id %>
         <%= form.hidden_field :upload_method, id: nil, value: "receipts_page", data: { "file-drop-target" => "uploadMethod" } %>
-        <%= form.hidden_field :show_author_img, id: nil, value: show_author %>
       <% end %>
     <% end %>
   </td>
