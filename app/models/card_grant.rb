@@ -117,6 +117,8 @@ class CardGrant < ApplicationRecord
   MAXIMUM_PURPOSE_LENGTH = 30
   validates :purpose, length: { maximum: MAXIMUM_PURPOSE_LENGTH }
 
+  include HasGrantRestrictions
+
   # mirrors `#suspected_fraud?`
   scope :suspected_fraud, -> {
     joins(:pre_authorization, :card_grant_setting)
