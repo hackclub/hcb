@@ -108,16 +108,8 @@ module Api
         @hcb_code = HcbCode.find_by_public_id!(params[:id])
         authorize @hcb_code, :mark_no_or_lost?, policy_class: ReceiptablePolicy
 
-        statement = LostReceipt::Statement.new(params.fetch(:lost_receipt_statement, {}).permit(
-                                                 :date, :merchant, :purpose, :signer_name, :confirmed,
-                                                 items_attributes: [:description, :quantity, :unit_amount_cents]
-                                               ))
-        statement.submitter = current_user
-        if statement.submit(receiptable: @hcb_code)
-          render json: { message: "Lost receipt statement added" }, status: :ok
-        else
-          render json: { error: statement.errors.full_messages.to_sentence }, status: :unprocessable_entity
-        end
+        @hcb_code.no_or_lost_receipt!
+        render json: { message: "Transaction marked as no/lost receipt" }, status: :ok
       end
 
       require_oauth2_scope "receipts:write", :mark_no_receipt

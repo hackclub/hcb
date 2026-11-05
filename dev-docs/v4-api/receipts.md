@@ -126,9 +126,7 @@ POST /api/v4/transactions/:id/mark_no_receipt    # :id is a txn_… ID
 
 **Required scope:** `receipts:write`
 
-Requires `lost_receipt_statement` with `date` (ISO date, not in the future), `merchant`, `purpose`, `signer_name`, `confirmed: true`, and `items_attributes` (1–50 items, each with `description`, positive integer `quantity` up to 10,000, and integer `unit_amount_cents` from 0 to 100,000,000, in USD). The authenticated user is recorded as the submitter; clients cannot set the submitter or confirmation timestamp.
-
-Generates a PDF and attaches it as a receipt rather than marking the transaction exempt from receipts. Deleting the statement returns the transaction to missing-receipt status unless another receipt is attached. Requires `ReceiptablePolicy#mark_no_or_lost?` (member+). Returns `{ "message": "Lost receipt statement added" }`. Invalid statement details return `422` without resolving the missing receipt. A file upload alone is not accepted.
+Removes the transaction from the missing-receipt list when no receipt exists. Requires `ReceiptablePolicy#mark_no_or_lost?` (member+). Returns `{ "message": "Transaction marked as no/lost receipt" }`.
 
 > An automated agent must never call this without explicit, per-transaction human authorization. See the playbook's [Guardrails](../for-agents/receipt-upload.md#guardrails).
 
