@@ -4,7 +4,7 @@
 
 <blockquote><%= MarkdownService.instance.render(@comment.content, record: @comment, location: :email) %></blockquote>
 
-<%= link_to "Click here to view and reply to the comment on HCB.", reimbursement_report_url(report, hash: "comment-#{@comment.hashid}"), class: "info" %>  Alternatively, send a reply to this email.
+<%= link_to "View and reply to this comment", reimbursement_report_url(report, hash: "comment-#{@comment.hashid}"), class: "info" %> on HCB, or send a reply to this email.
 
 <p>
   <small>
