@@ -10,10 +10,6 @@ module ReceiptService
     end
 
     def run!
-      if @receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
-        @receiptable&.update(marked_no_or_lost_receipt_at: nil)
-      end
-
       @attachments&.map do |attachment|
         receipt = Receipt.create!(attrs(attachment))
         if Receipt::SYNCHRONOUS_SUGGESTION_UPLOAD_METHODS.include?(@upload_method.to_s)

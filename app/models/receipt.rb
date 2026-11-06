@@ -57,6 +57,8 @@ class Receipt < ApplicationRecord
   alias_method :uploader, :user
   alias_method :transaction, :receiptable
 
+  attr_accessor :lost_receipt_statement
+
   has_many :suggested_pairings, dependent: :destroy
 
   # add a size to this array for it to be preprocessed
@@ -73,10 +75,26 @@ class Receipt < ApplicationRecord
 
   validates :file, attached: true, content_type: /(\Aimage\/.*\z|application\/pdf|text\/csv)/
   validates :file, size: { less_than_or_equal_to: 50.megabytes }, if: -> { attachment_changes["file"].present? }
+  validates :file, content_type: "application/pdf", if: :lost_receipt_statement?
+  validate do
+    if lost_receipt_statement? && (new_record? || will_save_change_to_upload_method?) && !lost_receipt_statement&.valid?
+      errors.add(:lost_receipt_statement, "must be generated from valid statement details")
+    end
+  end
 
-  before_create do
-    if receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
-      receiptable&.update(marked_no_or_lost_receipt_at: nil)
+  # Preserve statement history (and legacy marks) until the last receipt leaves.
+  before_save do
+    if lost_receipt_statement? && receiptable&.has_attribute?(:marked_no_or_lost_receipt_at)
+      receiptable.update!(marked_no_or_lost_receipt_at: receiptable.marked_no_or_lost_receipt_at || Time.current)
+      receiptable.sync_no_or_lost_receipt!
+    end
+  end
+
+  after_destroy { clear_lost_receipt_marker_if_empty(receiptable) }
+  after_update { clear_lost_receipt_marker_if_empty(previous_receiptable) }
+  after_update_commit do
+    if (previous = previous_receiptable)
+      CardLocking::ReceiptResolution.on_receipt_destroy(self, receiptable: previous)
     end
   end
 
@@ -124,7 +142,8 @@ class Receipt < ApplicationRecord
     discord_bot_modal: 22,
     payment_page: 23,
     contractor_invoice: 24,
-    payment_page_drag_and_drop: 25
+    payment_page_drag_and_drop: 25,
+    lost_receipt_statement: 26
   }
 
   enum :textual_content_source, {
@@ -245,6 +264,19 @@ class Receipt < ApplicationRecord
   end
 
   private
+
+  def previous_receiptable
+    return unless saved_change_to_receiptable_id? || saved_change_to_receiptable_type?
+
+    receiptable_type_before_last_save&.constantize&.find_by(id: receiptable_id_before_last_save)
+  end
+
+  def clear_lost_receipt_marker_if_empty(record)
+    return unless record&.has_attribute?(:marked_no_or_lost_receipt_at) && !record.receipts.exists?
+
+    record.update!(marked_no_or_lost_receipt_at: nil)
+    record.sync_no_or_lost_receipt!
+  end
 
   def pdf_text
     doc = if self.attachment_changes["file"]&.attachable
