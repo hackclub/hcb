@@ -114,7 +114,6 @@ class StaticPagesController < ApplicationController
         },
         "HCB transfers": {
           "Create an HCB Transfer": :manager,
-          "Cancel an HCB Transfer": :manager,
           "View an HCB Transfer": :reader
         },
         Payments: {
@@ -140,9 +139,7 @@ class StaticPagesController < ApplicationController
         "Freeze/defrost another user's card": :manager,
         "Rename your own card": :member,
         "Rename another user's card": :manager,
-        "View another user's card number": :manager,
         "View card expiration date": :reader,
-        "View card billing address": :reader,
       },
       Reimbursements: {
         "Get reimbursed through HCB": :member,

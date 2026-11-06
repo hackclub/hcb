@@ -50,8 +50,10 @@ class EventPolicy < ApplicationPolicy
     is_public || auditor_or_reader?
   end
 
+  # Readers may view settings; every settings form is disabled unless
+  # `update?` passes, and mutations are gated on `update?` server-side.
   def edit?
-    auditor_or_member?
+    auditor_or_reader?
   end
 
   # pinning a transaction to an event
@@ -260,7 +262,7 @@ class EventPolicy < ApplicationPolicy
   end
 
   def account_number?
-    (auditor? || member?) && record.plan.account_number_enabled?
+    (auditor? || manager?) && record.plan.account_number_enabled?
   end
 
   def toggle_event_tag?
@@ -319,10 +321,6 @@ class EventPolicy < ApplicationPolicy
 
   def auditor_or_reader?
     auditor? || reader?
-  end
-
-  def auditor_or_member?
-    auditor? || member?
   end
 
   def admin?

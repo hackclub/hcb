@@ -145,6 +145,12 @@
     <% end %>
   <% end %>
 
+  <%= turbo_frame_tag :admin_details_emails, src: admin_details_emails_user_path(@user), loading: :lazy do %>
+    <% admin_tool "p-3" do %>
+      <p>Loading emails sent to user</p>
+    <% end %>
+  <% end %>
+
   <% admin_tool "p-3" do %>
     <h3 class="mb2 mt1">Comments</h3>
     <%= render "comments/list", comments: @user.comments, show_blankslate: true %>
