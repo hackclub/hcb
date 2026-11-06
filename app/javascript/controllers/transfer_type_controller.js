@@ -1,8 +1,8 @@
 import { Controller } from '@hotwired/stimulus'
 
 // Drives the transfer form, which asks what kind of transfer it is first and
-// then shows that type's questions: a repayment picks one of the recipient's
-// transactions and takes its name and amount from it, while a transfer asks
+// then shows that type's questions: a repayment picks the recipient's
+// transactions and takes its name and total from them, while a transfer asks
 // for them directly.
 export default class extends Controller {
   static targets = [
@@ -12,7 +12,7 @@ export default class extends Controller {
     'repaymentHint',
     'repaymentName',
     'repaymentAmount',
-    'repaidInput',
+    'repaidInputs',
     'repaidCard',
     'pickHint',
     'pickButton',
@@ -25,14 +25,19 @@ export default class extends Controller {
     'changeLabel',
     'repaidError',
   ]
+  static values = { transactions: Array }
   static outlets = ['repayment-picker']
 
   connect() {
     // A name the server filled in from the picked transaction still follows
     // the pick; one passed in from elsewhere is kept.
-    const memo = this.repaidMemoTarget.textContent.trim()
-    if (memo && this.repaymentNameTarget.value === this.repaymentName(memo))
+    if (
+      this.transactionsValue.length &&
+      this.repaymentNameTarget.value ===
+        this.repaymentName(this.transactionsValue)
+    )
       this.autofilledName = this.repaymentNameTarget.value
+    this.setRepaid(this.transactionsValue)
     this.select()
   }
 
@@ -56,39 +61,58 @@ export default class extends Controller {
     this.setRepaid(detail)
   }
 
-  setRepaid(transaction) {
-    this.repaidInputTarget.value = transaction?.id || ''
-    this.repaymentAmountTarget.value = transaction?.amount ?? ''
+  setRepaid(transactions) {
+    this.transactionsValue = transactions
+    this.repaidInputsTarget.replaceChildren(
+      ...transactions.map(transaction => {
+        const input = document.createElement('input')
+        input.type = 'hidden'
+        input.name = 'disbursement[repaid_ledger_item_ids][]'
+        input.value = transaction.id
+        return input
+      })
+    )
+    const selected = transactions.length > 0
+    const cents = transactions.reduce(
+      (sum, transaction) => sum + Math.round(Number(transaction.amount) * 100),
+      0
+    )
+    this.repaymentAmountTarget.value = selected ? (cents / 100).toFixed(2) : ''
 
-    this.repaidEmptyTarget.hidden =
-      !!transaction || this.pickButtonTarget.disabled
-    this.repaidSummaryTarget.hidden = !transaction
-    this.repaidAmountTarget.hidden = !transaction
-    this.chooseLabelTarget.hidden = !!transaction
-    this.changeLabelTarget.hidden = !transaction
-    this.repaidMemoTarget.textContent = transaction?.memo || ''
-    this.repaidDateTarget.textContent = transaction?.date || ''
-    this.repaidAmountTarget.textContent = transaction?.amountLabel || ''
-    if (transaction) this.repaidErrorTarget.hidden = true
+    this.repaidEmptyTarget.hidden = selected || this.pickButtonTarget.disabled
+    this.repaidSummaryTarget.hidden = !selected
+    this.repaidAmountTarget.hidden = !selected
+    this.chooseLabelTarget.hidden = selected
+    this.changeLabelTarget.hidden = !selected
+    const memo = transactions.map(transaction => transaction.memo).join(', ')
+    this.repaidMemoTarget.textContent = memo
+    this.repaidDateTarget.textContent =
+      transactions.length === 1
+        ? transactions[0].date
+        : `${transactions.length} transactions`
+    this.repaidAmountTarget.textContent = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(cents / 100)
+    if (selected) this.repaidErrorTarget.hidden = true
 
-    this.fillName(transaction)
+    this.fillName(transactions)
   }
 
   // Names the transfer after what it repays, unless a name was passed in.
-  fillName(transaction) {
+  fillName(transactions) {
     const name = this.repaymentNameTarget.value
     if (name && name !== this.autofilledName) return
 
-    this.autofilledName = transaction
-      ? this.repaymentName(transaction.memo)
+    this.autofilledName = transactions.length
+      ? this.repaymentName(transactions)
       : ''
     this.repaymentNameTarget.value = this.autofilledName
   }
 
-  // Matches the server's default, which is cut to the field's 60 characters.
-  repaymentName(memo) {
-    const name = `Repaying ${memo}`
-    return name.length > 60 ? `${name.slice(0, 57)}...` : name
+  // Matches the server's count-based default.
+  repaymentName(transactions) {
+    return `Repaying ${transactions.length} transaction${transactions.length === 1 ? '' : 's'}`
   }
 
   comboboxChanged({ target, detail: { option } }) {
@@ -98,7 +122,7 @@ export default class extends Controller {
     // there's nothing to pick from until one is chosen.
     this.pickButtonTarget.disabled = !option
     this.pickHintTarget.hidden = !!option
-    this.setRepaid(null)
+    this.setRepaid([])
     if (this.hasRepaymentPickerOutlet)
       this.repaymentPickerOutlet.setDestination(option?.value)
     this.setRepayable(option?.repayable !== false)
@@ -124,7 +148,7 @@ export default class extends Controller {
     }
 
     // The pick lives in a hidden field, which the browser won't validate.
-    const missing = this.type === 'repayment' && !this.repaidInputTarget.value
+    const missing = this.type === 'repayment' && !this.transactionsValue.length
     this.repaidErrorTarget.hidden = !missing
     if (missing) {
       event.preventDefault()

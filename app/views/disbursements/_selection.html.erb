@@ -1,0 +1,21 @@
+<div class="card mb-4 p-3">
+  <div class="flex flex-wrap items-center gap-2">
+    <strong class="flex-1" tabindex="-1" aria-live="polite" data-transaction-selection-target="summary"></strong>
+    <button type="button" class="btn btn-small" data-action="transaction-selection#clear">Clear selection</button>
+  </div>
+  <div data-transaction-selection-target="review" hidden>
+    <h3 class="text-base mt-3 mb-2">Selected transactions</h3>
+    <ul class="list-none p-0 m-0 max-h-48 overflow-y-auto" aria-label="Selected transactions" data-transaction-selection-target="list"></ul>
+  </div>
+</div>
+
+<template data-transaction-selection-target="template">
+  <li class="flex items-center gap-2 py-2 border-t border-slate/10">
+    <div class="flex-1 min-w-0">
+      <strong class="block break-words" data-memo></strong>
+      <span class="muted text-sm" data-date></span>
+    </div>
+    <span class="shrink-0" data-amount></span>
+    <button type="button" class="btn btn-small shrink-0" data-action="transaction-selection#remove">Remove</button>
+  </li>
+</template>

@@ -26,9 +26,8 @@
 # Links a disbursement to a transaction it repays. The destination
 # organization had the expense; the source organization is paying it back.
 #
-# Modeled as a join so a transaction can be repaid by several disbursements
-# and a disbursement can repay several transactions, but for now each
-# repayment covers exactly one transaction in full.
+# A disbursement can repay several transactions; each join covers one expense
+# in full, and an expense can only have one non-failed repayment.
 class Repayment < ApplicationRecord
   # Both sides of a repayment on the repaid organization's ledger carry this
   # category: the expense and the money paying it back. Money in under it
@@ -129,7 +128,7 @@ class Repayment < ApplicationRecord
   def repays_in_full
     return if repaid_ledger_item.nil? || disbursement.nil?
 
-    unless amount_cents == disbursement.amount && amount_cents == -repaid_ledger_item.amount_cents
+    unless amount_cents == -repaid_ledger_item.amount_cents
       errors.add(:amount_cents, "must match the full amount of the repaid transaction")
     end
   end

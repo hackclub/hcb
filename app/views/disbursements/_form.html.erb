@@ -1,12 +1,13 @@
-<%# locals: (disbursement:, event: nil, source_event: nil, repaid_ledger_item: nil) %>
+<%# locals: (disbursement:, event: nil, source_event: nil, repaid_ledger_items: []) %>
 
 <% disabled = source_event.present? && !policy(source_event).create_transfer? %>
 <% repayable = disbursement.destination_event.nil? || policy(disbursement).repay? %>
+<% selected_transactions = repaid_ledger_items.map { |item| { id: item.hashid, memo: item.memo, date: item.datetime.strftime("%b %e, %Y"), amount: format("%.2f", -item.amount_cents / 100.0) } } %>
 
 <%# `data-turbo="true"` keeps jquery-ujs off this form: its blank-required-field check
     only skips inputs that are themselves disabled, so it would silently abort the
     submit over the required fields inside the disabled, inactive panel. %>
-<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}" }, data: { turbo: true, controller: "transfer-type", transfer_type_repayment_picker_outlet: "#repayment_picker", action: "combobox:change->transfer-type#comboboxChanged repayment-picker:select@document->transfer-type#repaymentPicked submit->transfer-type#submit" }) do |form| %>
+<%= form_with(model: disbursement, local: true, url: disbursements_path, html: { "x-data" => "{fee: null, event_id: null}" }, data: { turbo: true, controller: "transfer-type", transfer_type_transactions_value: selected_transactions, transfer_type_repayment_picker_outlet: "#repayment_picker", action: "combobox:change->transfer-type#comboboxChanged repayment-picker:select@document->transfer-type#repaymentPicked submit->transfer-type#submit" }) do |form| %>
   <%= form_errors(disbursement, "Disbursements") %>
 
   <div data-scroll-seek-target="section" data-transfer-type-target="types">
@@ -75,26 +76,30 @@
     <fieldset class="card mb-4" data-transfer-type-target="panel" data-type="repayment" hidden>
       <div class="field m-0">
         <label for="repayment_picker_trigger">Which of their transactions are you repaying?</label>
-        <%= form.hidden_field :repaid_ledger_item_id, value: repaid_ledger_item&.hashid, data: { transfer_type_target: "repaidInput" } %>
-        <%# Set from the picked transaction: a repayment covers it in full. %>
-        <%= form.hidden_field :name, id: "disbursement_repayment_name", value: (disbursement.name if repaid_ledger_item), data: { transfer_type_target: "repaymentName" } %>
-        <%= form.hidden_field :amount, id: "disbursement_repayment_amount", value: (format("%.2f", -repaid_ledger_item.amount_cents / 100.0) if repaid_ledger_item), data: { transfer_type_target: "repaymentAmount" } %>
+        <div data-transfer-type-target="repaidInputs">
+          <% repaid_ledger_items.each do |item| %>
+            <%= hidden_field_tag "disbursement[repaid_ledger_item_ids][]", item.hashid, id: nil %>
+          <% end %>
+        </div>
+        <%# Set from the picked transactions: a repayment covers each in full. %>
+        <%= form.hidden_field :name, id: "disbursement_repayment_name", value: (disbursement.name if disbursement.transfer_type_repayment?), data: { transfer_type_target: "repaymentName" } %>
+        <%= form.hidden_field :amount, id: "disbursement_repayment_amount", value: (format("%.2f", repaid_ledger_items.sum { |item| -item.amount_cents } / 100.0) if repaid_ledger_items.any?), data: { transfer_type_target: "repaymentAmount" } %>
         <div class="flex items-center gap-3" data-transfer-type-target="repaidCard">
           <div class="flex-1 min-w-0">
             <p class="muted m-0" data-transfer-type-target="pickHint" <%= "hidden" if disbursement.destination_event %>>Choose who you're sending to first.</p>
-            <p class="muted m-0" data-transfer-type-target="repaidEmpty" <%= "hidden" if repaid_ledger_item || disbursement.destination_event.nil? %>>No transaction chosen yet.</p>
-            <div data-transfer-type-target="repaidSummary" <%= "hidden" unless repaid_ledger_item %>>
-              <strong class="block truncate" data-transfer-type-target="repaidMemo"><%= repaid_ledger_item&.memo %></strong>
-              <span class="muted text-sm" data-transfer-type-target="repaidDate"><%= repaid_ledger_item&.datetime&.strftime("%b %e, %Y") %></span>
+            <p class="muted m-0" data-transfer-type-target="repaidEmpty" <%= "hidden" if repaid_ledger_items.any? || disbursement.destination_event.nil? %>>No transactions chosen yet.</p>
+            <div data-transfer-type-target="repaidSummary" <%= "hidden" if repaid_ledger_items.empty? %>>
+              <strong class="block" data-transfer-type-target="repaidMemo"><%= repaid_ledger_items.map(&:memo).join(", ") %></strong>
+              <span class="muted text-sm" data-transfer-type-target="repaidDate"><%= pluralize(repaid_ledger_items.size, "transaction") %></span>
             </div>
           </div>
-          <strong class="shrink-0" data-transfer-type-target="repaidAmount" <%= "hidden" unless repaid_ledger_item %>><%= repaid_ledger_item&.amount&.abs&.format %></strong>
+          <strong class="shrink-0" data-transfer-type-target="repaidAmount" <%= "hidden" if repaid_ledger_items.empty? %>><%= render_money(repaid_ledger_items.sum { |item| -item.amount_cents }) %></strong>
           <button type="button" id="repayment_picker_trigger" class="btn btn-small shrink-0" data-behavior="modal_trigger" data-modal="repayment_picker" data-transfer-type-target="pickButton" <%= "disabled" unless disbursement.destination_event %>>
-            <span data-transfer-type-target="chooseLabel" <%= "hidden" if repaid_ledger_item %>>Choose</span>
-            <span data-transfer-type-target="changeLabel" <%= "hidden" unless repaid_ledger_item %>>Change</span>
+            <span data-transfer-type-target="chooseLabel" <%= "hidden" if repaid_ledger_items.any? %>>Choose</span>
+            <span data-transfer-type-target="changeLabel" <%= "hidden" if repaid_ledger_items.empty? %>>Change</span>
           </button>
         </div>
-        <p class="text-sm text-red mt-1 mb-0" role="alert" data-transfer-type-target="repaidError" hidden>Choose the transaction you're repaying.</p>
+        <p class="text-sm text-red mt-1 mb-0" role="alert" data-transfer-type-target="repaidError" hidden>Choose the transactions you're repaying.</p>
       </div>
     </fieldset>
 
@@ -102,14 +107,14 @@
       <div class="field">
         <%= form.label :name, "What is the transfer for?" %>
         <span class="muted block mb-1">This is to help HCB keep record of our transactions.</span>
-        <%= form.text_field :name, value: (disbursement.name unless repaid_ledger_item), placeholder: "Donating extra funds to another organization", maxlength: 60, required: true, class: "!max-w-full", disabled: %>
+        <%= form.text_field :name, value: (disbursement.name unless disbursement.transfer_type_repayment?), placeholder: "Donating extra funds to another organization", maxlength: 60, required: true, class: "!max-w-full", disabled: %>
       </div>
 
       <div class="field flex items-center justify-between">
         <%= form.label :amount, "Amount", class: "m-0" %>
         <div class="flex items-center input py-0 max-w-[150px]">
           <span class="bold muted">$</span>
-          <%= form.number_field :amount, class: "!border-0 !shadow-none !max-w-full !min-w-full", value: (disbursement.amount.to_f / 100 unless disbursement.amount.nil? || repaid_ledger_item), placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
+          <%= form.number_field :amount, class: "!border-0 !shadow-none !max-w-full !min-w-full", value: (disbursement.amount.to_f / 100 unless disbursement.amount.nil? || disbursement.transfer_type_repayment?), placeholder: "500.00", step: 0.01, min: 0.01, required: true, disabled:, data: { controller: "truncate-decimal", action: "truncate-decimal#truncate blur->truncate-decimal#pad" } %>
         </div>
       </div>
 
@@ -164,4 +169,4 @@
   </div>
 <% end %>
 
-<%= render "disbursements/repayment_picker", destination_event: disbursement.destination_event %>
+<%= render "disbursements/repayment_picker", destination_event: disbursement.destination_event, selected_transactions: %>

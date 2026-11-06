@@ -256,6 +256,38 @@ RSpec.describe Disbursement, type: :model do
       expect(disbursement.errors[:amount]).to include("must be greater than 0")
     end
 
+    it "requires a repayment's amount to equal the sum of its repayment rows on creation and update" do
+      disbursement = build(:disbursement, event: create(:event), source_event: create(:event), transfer_type: "repayment", amount: 123_45)
+      [100_00, 23_45].each do |amount|
+        expense = create(:canonical_transaction, event: disbursement.event, amount_cents: -amount)
+        disbursement.repayments.build(repaid_ledger_item: expense.ledger_item, amount_cents: amount)
+      end
+
+      [123_44, 123_46].each do |amount|
+        disbursement.amount = amount
+        expect(disbursement).not_to be_valid
+        expect(disbursement.errors[:amount]).to include("must match the total of the repayment rows")
+      end
+
+      disbursement.amount = 123_45
+      disbursement.save!
+      expect(disbursement.reload.repayments.sum(:amount_cents)).to eq(123_45)
+      expect(disbursement.update(amount: 123_46)).to be(false)
+      expect(disbursement.reload.amount).to eq(123_45)
+
+      disbursement.repayments.detect { |repayment| repayment.amount_cents == 23_45 }.mark_for_destruction
+      expect(disbursement).not_to be_valid
+      disbursement.update!(amount: 100_00)
+      expect(disbursement.reload.repayments.sum(:amount_cents)).to eq(100_00)
+    end
+
+    it "rejects a repayment without repayment rows" do
+      disbursement = build(:disbursement, transfer_type: "repayment", amount: 123_45)
+
+      expect(disbursement).not_to be_valid
+      expect(disbursement.errors[:amount]).to include("must match the total of the repayment rows")
+    end
+
     describe "events_are_different" do
       it "does not allow same source and destination event" do
         event = create(:event)

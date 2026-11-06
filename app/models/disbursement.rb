@@ -124,7 +124,7 @@ class Disbursement < ApplicationRecord
   def outgoing_disbursement = @outgoing_disbursement ||= becomes(Disbursement::Outgoing)
 
   has_many :t_transactions, class_name: "Transaction", inverse_of: :disbursement
-  has_many :repayments, dependent: :destroy
+  has_many :repayments, dependent: :destroy, autosave: true
   has_many :repaid_ledger_items, through: :repayments
 
   # What the transfer is for. Decides how each side is categorized. Nil only
@@ -138,6 +138,7 @@ class Disbursement < ApplicationRecord
                         :name
 
   validates :amount, numericality: { greater_than: 0 }
+  validate :repayment_rows_match_amount, if: :transfer_type_repayment?
   validate :events_are_different
   validate :events_are_not_demos, on: :create
   validate :scheduled_on_must_be_in_the_future, on: :create
@@ -285,6 +286,12 @@ class Disbursement < ApplicationRecord
   end
 
   private
+
+  def repayment_rows_match_amount
+    unless repayments.reject(&:marked_for_destruction?).sum { |repayment| repayment.amount_cents.to_i } == amount
+      errors.add(:amount, "must match the total of the repayment rows")
+    end
+  end
 
   def events_are_different
     self.errors.add(:event, "must be different than source event") if event_id == source_event_id && destination_subledger_id == source_subledger_id
