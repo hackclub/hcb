@@ -455,6 +455,13 @@ module Reimbursement
       end
     end
 
+    def retryable?
+      return false unless payout_holding&.failed?
+      return false if payout_method.blank? || payout_method.unsupported?
+
+      !payout_method.details.is_a?(LegalEntity::PayoutMethod::WiseTransfer)
+    end
+
     private
 
     def cannot_change_event_when_card_grant_present
