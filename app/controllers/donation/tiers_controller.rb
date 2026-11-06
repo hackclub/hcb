@@ -75,7 +75,7 @@ class Donation
 
     def update
       tiers = @event.donation_tiers.where(id: params[:tiers]&.keys).to_a
-      tiers.each { |tier|
+      tiers.each do |tier|
         authorize tier, :update?
 
         data = tier_params(tier.id)
@@ -86,7 +86,7 @@ class Donation
           amount_cents: (data[:amount_cents].to_f * 100).to_i,
           published: ActiveRecord::Type::Boolean.new.cast(data[:published])
         )
-      }
+      end
 
       render json: { success: true, message: "Donation tiers updated successfully." }
     rescue ActiveRecord::RecordInvalid => e

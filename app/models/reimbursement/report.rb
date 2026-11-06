@@ -289,9 +289,11 @@ module Reimbursement
     end
 
     def comment_recipients_for(comment)
+      comments = self.comments.includes(:user).to_a
+
       users = []
-      users += self.comments.includes(:user).map(&:user)
-      users += self.comments.flat_map(&:mentioned_users)
+      users += comments.map(&:user)
+      users += User.where(email: comments.flat_map(&:mentioned_emails))
       users << self.user
       users += User.where(id: self.versions.pluck(:whodunnit))
 

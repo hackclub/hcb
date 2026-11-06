@@ -105,9 +105,12 @@ class Comment < ApplicationRecord
   # This regex was stolen from URI::MailTo::EMAIL_REGEXP
   USER_MENTION_REGEX = /@([a-zA-Z0-9.!\#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*)/
 
+  def mentioned_emails
+    content.scan(USER_MENTION_REGEX).flatten
+  end
+
   def mentioned_users
-    emails = content.scan(USER_MENTION_REGEX).flatten
-    User.where(email: emails)
+    User.where(email: mentioned_emails)
   end
 
   private
