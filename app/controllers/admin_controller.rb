@@ -919,6 +919,23 @@ class AdminController < Admin::BaseController
     end
   end
 
+  def wire_lookup
+    @uetr = params[:uetr].presence
+    return if @uetr.blank?
+
+    @wire = Wire.find_by(uetr: @uetr)
+    @tracking = Wire::UETR::Tracking.new(Wire::UETR.lookup(@uetr))
+
+    begin
+      @transfer = Wire::UETR::Transfer.fetch(@tracking.id || @wire&.column_id)
+    rescue Faraday::Error => e
+      Rails.error.report(e)
+    end
+  rescue Faraday::Error => e
+    Rails.error.report(e)
+    flash.now[:error] = "Something went wrong: #{ColumnService.error_to_admin_message(e)}"
+  end
+
   def wise_transfer_process
     @wise_transfer = WiseTransfer.find(params[:id])
   end
@@ -1329,39 +1346,6 @@ class AdminController < Admin::BaseController
       end
     end
     redirect_back fallback_location: ledger_admin_index_path
-  end
-
-  def set_paypal_transfer
-    ActiveRecord::Base.transaction do
-      paypal_transfer = PaypalTransfer.find(params[:paypal_transfer_id])
-
-      canonical_transaction = CanonicalTransactionService::SetEvent.new(
-        canonical_transaction_id: params[:id],
-        event_id: paypal_transfer.event.id,
-        user: current_user
-      ).run
-
-      safely do
-        ledger = Ledger.find_or_create_by!(primary: true, event_id: paypal_transfer.event.id)
-
-        Ledger::Mapping.map_primary!(ledger:, ledger_item: canonical_transaction.ledger_item, mapped_by: current_user)
-      end
-
-      CanonicalPendingTransactionService::Unsettle.new(canonical_pending_transaction: paypal_transfer.canonical_pending_transaction).run
-
-      CanonicalPendingTransactionService::Settle.new(
-        canonical_transaction:,
-        canonical_pending_transaction: paypal_transfer.canonical_pending_transaction
-      ).run!
-
-      canonical_transaction.update!(hcb_code: paypal_transfer.hcb_code, transaction_source_type: "PaypalTransfer", transaction_source_id: paypal_transfer.id)
-
-      paypal_transfer.mark_deposited!
-
-      redirect_to transaction_admin_path(canonical_transaction)
-    end
-  rescue => e
-    redirect_to transaction_admin_path(params[:id]), flash: { error: e.message }
   end
 
   def set_wire

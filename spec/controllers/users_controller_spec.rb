@@ -133,6 +133,49 @@ RSpec.describe UsersController do
     end
   end
 
+  describe "#admin_details_emails" do
+    render_views
+
+    it "lists the emails sent to the user, newest first, for an auditor" do
+      auditor = create(:user, :make_auditor)
+      user = create(:user)
+      # Insertion order deliberately differs from `sent_at desc`.
+      older = Ahoy::Message.create!(user:, to: user.email, subject: "Older email", mailer: "ReceiptMailer#reminder", sent_at: 2.days.ago)
+      newer = Ahoy::Message.create!(user:, to: user.email, subject: "Newer email", mailer: "ReceiptMailer#reminder", sent_at: 1.hour.ago)
+      Ahoy::Message.create!(user: create(:user), subject: "Someone else's email", sent_at: 1.minute.ago)
+      create_session(auditor, verified: true)
+
+      get(:admin_details_emails, params: { id: user.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Newer email", "Older email")
+      expect(response.body).not_to include("Someone else's email")
+      expect(response.body.scan(/data-modal="message_(\d+)"/).flatten.map(&:to_i)).to eq([newer.id, older.id])
+      expect(response.body).to include(emails_admin_index_path(user_id: user.id))
+    end
+
+    it "shows a blank slate when no emails have been sent" do
+      auditor = create(:user, :make_auditor)
+      user = create(:user)
+      create_session(auditor, verified: true)
+
+      get(:admin_details_emails, params: { id: user.id })
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("No emails sent")
+    end
+
+    it "is not available to regular users" do
+      user = create(:user)
+      other = create(:user)
+      create_session(user, verified: true)
+
+      get(:admin_details_emails, params: { id: other.id })
+
+      expect(response).not_to have_http_status(:ok)
+    end
+  end
+
   describe "#edit_address reset to default address button" do
     render_views
 

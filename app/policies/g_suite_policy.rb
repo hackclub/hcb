@@ -25,8 +25,4 @@ class GSuitePolicy < ApplicationPolicy
     user.admin?
   end
 
-  def status?
-    user.auditor? || (OrganizerPosition.role_at_least?(user, record.event, :reader) && !record.revocation.present?)
-  end
-
 end

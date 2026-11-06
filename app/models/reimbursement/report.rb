@@ -268,10 +268,6 @@ module Reimbursement
       draft?
     end
 
-    def unlockable?
-      submitted? || reimbursement_requested?
-    end
-
     def closed?
       reimbursement_approved? || reimbursed? || rejected? || reversed?
     end
@@ -290,18 +286,6 @@ module Reimbursement
 
     def fees_charged_cents
       expenses.approved.where(type: Reimbursement::Expense::Fee.name).sum(:amount_cents)
-    end
-
-    def last_reimbursement_requested_by
-      last_user_change_to(aasm_state: "reimbursement_requested")
-    end
-
-    def last_reimbursement_approved_by
-      last_user_change_to(aasm_state: "reimbursement_approved")
-    end
-
-    def last_rejected_by
-      last_user_change_to(aasm_state: "rejected")
     end
 
     def comment_recipients_for(comment)
