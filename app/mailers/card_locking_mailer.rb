@@ -41,7 +41,23 @@ class CardLockingMailer < ApplicationMailer
     # loaded rows rather than a second query, so mail and text agree exactly.
     @due_in = CardLocking.time_remaining_in_words(@user.card_locking_next_due_at)
     @show_org = user.events.size > 1
-    mail to: user.email, subject: "You have #{@count} receipt#{'s' unless @count == 1} to upload"
+    mail to: user.email, subject: warning_subject
+  end
+
+  private
+
+  # The countdown is repeated in the subject so the deadline is visible in an
+  # inbox list, without opening the mail. Falls back to the bare count when the
+  # pile carries no deadline, matching the body, which drops the countdown too.
+  #
+  # Only the soonest deadline in the pile is counted down, so the plural says so
+  # rather than implying every receipt is due then.
+  def warning_subject
+    subject = "You have #{@count} receipt#{'s' unless @count == 1} to upload"
+    return subject if @due_in.nil?
+    return "#{subject} in the next #{@due_in}" if @count == 1
+
+    "#{subject}, the next due in #{@due_in}"
   end
 
 end

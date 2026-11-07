@@ -1,10 +1,6 @@
 # frozen_string_literal: true
 
 module PopoverHelper
-  def popovers_enabled?
-    current_user && Flipper.enabled?(:hcb_code_popovers_2023_06_16, current_user)
-  end
-
   # Builds the data attributes hash for triggering the shared popover modal.
   #
   # Usage in views:
@@ -37,13 +33,26 @@ module PopoverHelper
   end
 
   def ledger_item_popover_data(item)
-    popover_data(
-      title: item.pretty_title,
-      src: item.hcb_code.popover_path,
-      frame_id: item.hcb_code.public_id,
-      state_url: ledger_item_path(item),
-      external_link: ledger_item_path(item)
-    )
+    # Only serve the ledger item popover to users who can actually view the ledger
+    # item show page. Everyone else gets the HCB code popover instead — otherwise
+    # the injected frame id (lit_…) wouldn't match the HCB page's frame (txn_…) and
+    # the popover would render empty.
+    if policy(item).show? && auditor_signed_in?
+      popover_data(
+        title: item.pretty_title,
+        src: item.popover_path,
+        frame_id: item.public_id,
+        state_url: ledger_item_path(item),
+        external_link: ledger_item_path(item)
+      )
+    else
+      hcb_code = item.hcb_code
+
+      # fall back to links for items that don't have an HCB code
+      return { turbo: false } unless hcb_code
+
+      hcb_code_popover_data(hcb_code)
+    end
   end
 
   def card_grant_popover_data(card_grant, hcb_code:, event: nil, state_title: nil)

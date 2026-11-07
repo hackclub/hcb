@@ -6,6 +6,16 @@ RSpec.describe GSuiteAccount, type: :model do
   let(:g_suite) { create(:g_suite, domain: "example.com") }
   let(:g_suite_account) { create(:g_suite_account, g_suite:) }
 
+  describe "#accepted?" do
+    it "is true once the account has been accepted" do
+      expect(build(:g_suite_account, g_suite:, accepted_at: Time.current)).to be_accepted
+    end
+
+    it "is false while the account is still under review" do
+      expect(build(:g_suite_account, g_suite:, accepted_at: nil)).not_to be_accepted
+    end
+  end
+
   describe "#unmanage!" do
     let(:gsuite_service) { instance_double(GsuiteService, delete_gsuite_user: true) }
 

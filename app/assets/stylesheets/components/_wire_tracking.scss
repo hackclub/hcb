@@ -1,0 +1,550 @@
+.wire-tracking {
+  --wire-tracking-rail: #{map-get($palette, divider)};
+  --wire-tracking-done: #{map-get($palette, success)};
+  --wire-tracking-active: #{map-get($palette, pending)};
+  --wire-tracking-failed: #{map-get($palette, error)};
+
+  ol,
+  ul {
+    padding-left: 0;
+  }
+
+  li {
+    margin-top: 0;
+  }
+
+  dd::before {
+    content: none;
+  }
+
+  dt {
+    font-weight: 500;
+  }
+
+  h3 {
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  header {
+    background: none;
+    border-bottom: 0;
+    padding: 0;
+    margin: 0;
+  }
+
+  code {
+    background: none;
+    border: 0;
+    padding: 0;
+    font-size: 0.8125rem;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+  }
+
+  &__status-icon {
+    height: 44px;
+    width: 44px;
+    flex-shrink: 0;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  &__headline {
+    min-width: 0;
+    flex: 1;
+  }
+
+  &__status {
+    margin: 0;
+    font-size: 1.25rem;
+    line-height: 1.2;
+  }
+
+  &__summary {
+    margin: 0.125rem 0 0;
+    color: map-get($palette, muted);
+    font-size: 0.875rem;
+  }
+
+  &__amount {
+    margin-left: auto;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  &__amount-value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+  }
+
+  &__amount-label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: map-get($palette, muted);
+  }
+
+  &__callout {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    margin-top: 1rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    background-color: rgba(map-get($palette, warning), 0.12);
+
+    svg {
+      flex-shrink: 0;
+      margin-top: 0.125rem;
+    }
+
+    strong {
+      display: block;
+    }
+
+    span {
+      color: map-get($palette, slate);
+    }
+
+    &--info {
+      background-color: rgba(map-get($palette, info), 0.12);
+    }
+
+    &--error {
+      background-color: rgba(map-get($palette, error), 0.12);
+    }
+  }
+
+  // Progress stepper
+  &__steps {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    list-style: none;
+    margin: 1.5rem 0 0;
+    padding: 0;
+  }
+
+  &__step {
+    min-width: 0;
+    padding-right: 0.5rem;
+  }
+
+  &__step-marker {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin-bottom: 0.5rem;
+  }
+
+  &__step-dot {
+    height: 20px;
+    width: 20px;
+    border-radius: 999px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--wire-tracking-rail);
+    color: map-get($palette, white);
+
+    svg {
+      width: 12px;
+      height: 12px;
+    }
+  }
+
+  &__step-bar {
+    flex: 1;
+    height: 3px;
+    border-radius: 999px;
+    background-color: var(--wire-tracking-rail);
+  }
+
+  &__step:last-child &__step-bar {
+    display: none;
+  }
+
+  &__step-name {
+    margin: 0;
+    font-weight: 600;
+    font-size: 0.9375rem;
+  }
+
+  &__step-detail {
+    margin: 0.0625rem 0 0;
+    font-size: 0.8125rem;
+    color: map-get($palette, muted);
+  }
+
+  &__step--complete &__step-dot,
+  &__step--complete &__step-bar {
+    background-color: var(--wire-tracking-done);
+  }
+
+  &__step--active &__step-dot {
+    background-color: var(--wire-tracking-active);
+    box-shadow: 0 0 0 4px rgba(map-get($palette, pending), 0.2);
+  }
+
+  &__step--active &__step-bar {
+    background: repeating-linear-gradient(
+      to right,
+      var(--wire-tracking-active) 0 6px,
+      transparent 6px 12px
+    );
+  }
+
+  &__step--failed &__step-dot {
+    background-color: var(--wire-tracking-failed);
+  }
+
+  &__step--upcoming &__step-name {
+    color: map-get($palette, muted);
+  }
+
+  // Sent -> fees -> delivered
+  &__money {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+    padding: 0.75rem 0.875rem;
+    border-radius: var(--radius-md);
+    background-color: map-get($palette, snow);
+  }
+
+  &__money-arrow {
+    color: map-get($palette, muted);
+    line-height: 0;
+  }
+
+  &__money-label {
+    display: block;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: map-get($palette, muted);
+  }
+
+  &__money-value {
+    display: block;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__money-leg--fee &__money-value {
+    color: map-get($palette, error);
+  }
+
+  &__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    margin: 1.25rem 0 0;
+    padding: 0.875rem 0 0;
+    border-top: 1px solid map-get($palette, divider);
+
+    dt {
+      font-size: 0.6875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: map-get($palette, muted);
+      margin: 0;
+
+      abbr {
+        text-decoration: none;
+        border-bottom: 1px dotted map-get($palette, divider);
+        cursor: help;
+      }
+    }
+
+    dd {
+      margin: 0.0625rem 0 0;
+      font-variant-numeric: tabular-nums;
+      font-size: 0.875rem;
+    }
+  }
+
+  &__uetr {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+
+    svg {
+      color: map-get($palette, muted);
+    }
+  }
+
+  // Event timeline
+  &__timeline {
+    list-style: none;
+    margin: 1.25rem 0 0;
+    padding: 0.875rem 0 0;
+    border-top: 1px solid map-get($palette, divider);
+  }
+
+  &__event {
+    display: flex;
+    gap: 0.875rem;
+
+    &:not(:last-child) {
+      padding-bottom: 1.25rem;
+    }
+
+    &--cover {
+      opacity: 0.75;
+    }
+  }
+
+  &__event-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+
+    .pop {
+      height: 30px;
+      width: 30px;
+    }
+  }
+
+  &__event-line {
+    flex: 1;
+    width: 2px;
+    background-color: map-get($palette, divider);
+    margin: 0.3125rem 0;
+    min-height: 0.5rem;
+  }
+
+  &__event:last-child &__event-line {
+    display: none;
+  }
+
+  &__event-body {
+    flex: 1;
+    min-width: 0;
+    padding-top: 0.25rem;
+  }
+
+  &__event-heading {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  &__event-title {
+    margin: 0;
+    font-weight: 600;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__bank {
+    font-weight: 400;
+    white-space: nowrap;
+    cursor: help;
+
+    code {
+      font-size: 0.8125rem;
+    }
+  }
+
+  &__bank-arrow {
+    color: map-get($palette, muted);
+    margin-right: 0.0625rem;
+  }
+
+  &__event-time {
+    font-size: 0.8125rem;
+    color: map-get($palette, muted);
+    white-space: nowrap;
+    margin-left: auto;
+  }
+
+  &__event-reason {
+    margin: 0.1875rem 0 0;
+    font-size: 0.875rem;
+    color: map-get($palette, slate);
+  }
+
+  &__event-charge {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin: 0.3125rem 0 0;
+    font-size: 0.875rem;
+    color: map-get($palette, error);
+
+    code {
+      font-size: 0.8125rem;
+      color: inherit;
+    }
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
+  &__event-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.75rem;
+    margin-top: 0.375rem;
+    font-size: 0.8125rem;
+    color: map-get($palette, muted);
+
+    code {
+      font-size: 0.75rem;
+    }
+  }
+
+  &__tag {
+    padding: 0.0625rem 0.375rem;
+    border-radius: var(--radius-sm);
+    background-color: rgba(map-get($palette, muted), 0.15);
+    font-size: 0.75rem;
+    cursor: help;
+  }
+
+  &__ref {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__empty {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    margin: 1.25rem 0 0;
+    padding: 0.875rem 0 0;
+    border-top: 1px solid map-get($palette, divider);
+    color: map-get($palette, muted);
+    font-size: 0.875rem;
+  }
+
+  @media (max-width: 40em) {
+    &__header {
+      flex-wrap: wrap;
+    }
+
+    &__amount {
+      margin-left: 0;
+      text-align: left;
+      width: 100%;
+    }
+
+    &__steps {
+      grid-auto-flow: row;
+      gap: 0.75rem;
+    }
+
+    &__step {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      column-gap: 0.625rem;
+      padding-right: 0;
+    }
+
+    &__step-marker {
+      grid-row: 1 / span 2;
+      margin-bottom: 0;
+      align-self: start;
+      padding-top: 0.125rem;
+    }
+
+    &__step-bar {
+      display: none;
+    }
+
+    &__event-time {
+      margin-left: 0;
+    }
+  }
+}
+
+.wire-transfer {
+  &__facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    border-top: 0;
+    padding-top: 0;
+    margin-top: 1.25rem;
+    gap: 0.875rem 1.5rem;
+  }
+
+  &__milestones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    list-style: none;
+    margin: 1.25rem 0 0;
+    padding: 0.875rem 0 0;
+    border-top: 1px solid map-get($palette, divider);
+    font-size: 0.8125rem;
+  }
+
+  &__milestone-name {
+    font-weight: 600;
+    margin-right: 0.375rem;
+  }
+
+  &__milestone-at {
+    color: map-get($palette, muted);
+    white-space: nowrap;
+  }
+}
+
+html[data-dark='true'] .wire-transfer__milestones {
+  border-top-color: rgba(map-get($palette, muted), 0.25);
+}
+
+html[data-dark='true'] .wire-tracking {
+  --wire-tracking-rail: #{rgba(map-get($palette, muted), 0.35)};
+
+  &__callout span,
+  &__event-reason {
+    color: map-get($palette, smoke);
+  }
+
+  &__money {
+    background-color: rgba(map-get($palette, muted), 0.12);
+  }
+
+  &__facts,
+  &__timeline,
+  &__empty {
+    border-top-color: rgba(map-get($palette, muted), 0.25);
+  }
+
+  &__event-line {
+    background-color: rgba(map-get($palette, muted), 0.3);
+  }
+
+  &__step-dot {
+    color: map-get($palette, dark);
+  }
+
+  &__event-charge,
+  &__money-leg--fee &__money-value {
+    color: map-get($palette, 'error-light');
+  }
+}

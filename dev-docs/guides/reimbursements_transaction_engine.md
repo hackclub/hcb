@@ -1,10 +1,10 @@
 # How does the flow of money work for reimbursements on HCB?
 
-Reimbursements are one of the more complicated parts of HCB! This isn’t a comprehensive guide to how they work, instead, this describes how money flows through the system. 
+Reimbursements are one of the more complicated parts of HCB! This isn’t a comprehensive guide to how they work; instead, this describes how money flows through the system. 
 
 To send the person being reimbursed money, we use standard HCB transfers such as an [`AchTransfer`](https://github.com/hackclub/hcb/blob/main/app/models/ach_transfer.rb). However, we send these transfers from the “HCB Reimbursements Clearinghouse” organisation. On the organisation that is sending the reimbursement we have one transaction on the ledger per reimbursed expense (these are called [`Reimbursement::ExpensePayout`](https://github.com/hackclub/hcb/blob/main/app/models/reimbursement/expense_payout.rb)s). We took this approach to increase transparency and make it easier to understand what a reimbursement is for.
 
-A [`Reimbursement::Report`](https://github.com/hackclub/hcb/blob/main/app/models/reimbursement/report.rb) is a collection of [`Reimbursement::Expense`](https://github.com/hackclub/hcb/blob/main/app/models/reimbursement/expense.rb)s. No money moves until a report is approved by an admin and if needed, an organiser. 
+A [`Reimbursement::Report`](https://github.com/hackclub/hcb/blob/main/app/models/reimbursement/report.rb) is a collection of [`Reimbursement::Expense`](https://github.com/hackclub/hcb/blob/main/app/models/reimbursement/expense.rb)s. No money moves until a report is approved by an admin and, if needed, an organiser. 
 
 When a [`Reimbursement::Report`](https://github.com/hackclub/hcb/blob/main/app/models/reimbursement/report.rb) is marked as `reimbursement_approved` by an admin, we run `Reimbursement::Report#reimburse!` which creates one [`Reimbursement::ExpensePayout`](https://github.com/hackclub/hcb/blob/main/app/models/reimbursement/expense_payout.rb) per approved expense and one [`Reimbursement::PayoutHolding`](https://github.com/hackclub/hcb/blob/main/app/models/reimbursement/payout_holding.rb) for the report.
 
@@ -18,7 +18,7 @@ These are both created in `Reimbursement::Report#reimburse!`
 
 After they are both created, they have `after_create` callbacks that create a [`CanonicalPendingTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_pending_transaction.rb). That means there will immediately be a transaction on the ledgers of both the reimbursing organisation and HCB Reimbursements Clearinghouse.
 
-[`Reimbursement::ExpensePayoutService::Nightly`](https://github.com/hackclub/hcb/blob/main/app/services/reimbursement/expense_payout_service/nightly.rb) is ran every five minutes and creates Column book transfers for each of these. 
+[`Reimbursement::ExpensePayoutService::Nightly`](https://github.com/hackclub/hcb/blob/main/app/services/reimbursement/expense_payout_service/nightly.rb) is run every five minutes and creates Column book transfers for each of these. 
 
 It also marks any [`Reimbursement::ExpensePayout`](https://github.com/hackclub/hcb/blob/main/app/models/reimbursement/expense_payout.rb) with a [`CanonicalTransaction`](https://github.com/hackclub/hcb/blob/main/app/models/canonical_transaction.rb) as settled.
 
@@ -53,7 +53,7 @@ raise ArgumentError, "ACH must have been rejected / failed" unless ach_transfer.
 
 raise ArgumentError, "PayPal transfer must have been rejected" unless paypal_transfer.nil? || paypal_transfer.rejected?
 
-raise ArgumentError, "a check must have been rejected / stopped" unless increase_check.nil || increase_check.column_rejected? || increase_check.column_stopped?
+raise ArgumentError, "a check must have been rejected / stopped" unless increase_check.nil? || increase_check.column_rejected? || increase_check.column_stopped?
 
 raise ArgumentError, "must have settled expense payouts" unless expense_payouts.all? { |ep| ep.settled? }
 ```

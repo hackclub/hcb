@@ -40,7 +40,7 @@ class EmburseTransfer < ApplicationRecord
   paginates_per 50
 
   # NOTE(@msw) emburse_transfers used to be on a per-emburse_card basis & we're keeping the
-  # association for compatability with migrations
+  # association for compatibility with migrations
   belongs_to :emburse_card, optional: true
 
   belongs_to :event
@@ -75,15 +75,6 @@ class EmburseTransfer < ApplicationRecord
   scope :canceled, -> { where.not(canceled_at: nil) }
   scope :rejected, -> { where.not(rejected_at: nil) }
 
-  # Return average processing time in days over last_n completed requests rounding up
-  def self.processing_time(last_n: 5)
-    reqs = EmburseTransfer.transferred.first(last_n)
-    processing_times = reqs.map { |r| (r.t_transaction.date.beginning_of_day - r.created_at) / 24.hours }
-
-    # round up
-    processing_times.present? ? Util.average(processing_times).ceil : "?"
-  end
-
   def status
     return "transfer in progress" if EmburseTransfer.pending.include?(self)
     return "completed" if EmburseTransfer.completed.include?(self)
@@ -109,10 +100,6 @@ class EmburseTransfer < ApplicationRecord
 
   def pending?
     t_transaction.nil? && emburse_transaction_id.nil? && !accepted_at.nil?
-  end
-
-  def unfulfilled?
-    fulfilled_by.nil?
   end
 
   include ApplicationHelper

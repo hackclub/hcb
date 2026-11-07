@@ -54,7 +54,7 @@
         </td>
         <td><%= legal_entity.tin_hash.present? ? "On file" : "—" %></td>
         <td>
-          <% if legal_entity.payable? %>
+          <% if legal_entity.payable?(requires_tax_form: legal_entity.tax_form_required?) %>
             <span class="badge ml-0 bg-success">Yes</span>
           <% else %>
             <span class="badge ml-0 bg-warning">No</span>

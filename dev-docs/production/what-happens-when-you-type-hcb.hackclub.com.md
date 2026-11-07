@@ -17,21 +17,21 @@ environment is configured.
 4. The Hetzner load balancer receives your request.
     - The load balancer has been configured to terminate SSL. If the request is
       HTTP, it will be automatically redirected to HTTPS by the LB.
-    - The LB forwards (reverse proxy) your request to one the app servers as
+    - The LB forwards (reverse proxy) your request to one of the app servers as
       HTTP. Everything behind the LB is HTTP. App servers are not directly
-      accessible the public internet, so this is fine. LB uses least-connection
+      accessible from the public internet, so this is fine. LB uses least-connection
       algorithm, but can also be configured to be round-robin. The LB is able to
       access the app servers because they are on the same private Hetzner
       network.
 5. The Caddy on the app server receives the forwarded request.
     - Caddy honestly isn't necessary here, but is provided as default
       configuration by Hatchbox.
-    - Caddy forwards the request to Puma (the web server the Rails uses).
+    - Caddy forwards the request to Puma (the web server that Rails uses).
 6. From here, it's pretty standard Rails stuff. Puma receives the requests and
    builds an `Env` obj. That Env object is passed through the Rack middlewares
    and is processed by Rails.
 
-If you'd like more details, [deployment.md](deployment.md) provide more of a
-runbook style guide for how our production deployment is setup.
+If you'd like more details, [deployment.md](deployment.md) provides more of a
+runbook-style guide for how our production deployment is set up.
 
 \- [@garyhtou](https://garytou.com)

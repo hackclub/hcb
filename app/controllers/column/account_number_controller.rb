@@ -10,6 +10,11 @@ module Column
         column_account_number = authorize @event.build_column_account_number
         column_account_number.save!
 
+        if Flipper.enabled?(:new_ledger_everywhere_2026_07_13, current_user)
+          @ledger = @event.ledger
+          @ledger_items = @ledger.items.none.page(1)
+        end
+
         @animated = true
         render "events/account_number", status: :unprocessable_content
       else

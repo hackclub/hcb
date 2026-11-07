@@ -1,6 +1,6 @@
 <% if @event && OrganizerPosition.role_at_least?(current_user, @event, :member) %>
   <% if button %>
-    <%= link_to "#", class: "menu__input #{ "btn mt-3" if defined?(large)}", data: { behavior: "modal_trigger", action: "menu#close", modal: "create_tag" }, onclick: "document.getElementById('create_tag_hcb_code_id').value = #{button.to_json}" do %>
+    <%= link_to "#", class: "menu__input #{ "btn mt-3" if defined?(large)}", data: { behavior: "modal_trigger", modal: "create_tag", controller: "set-field", action: "set-field#set menu#close", set_field_input_value: "create_tag_hcb_code_id", set_field_content_value: button } do %>
       <%= inline_icon "plus", size: 15 %>
         Create tag
     <% end %>

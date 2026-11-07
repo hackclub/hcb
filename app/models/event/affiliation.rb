@@ -63,20 +63,6 @@ class Event
       [display_name, league&.upcase, team_number, size&.positive? ? pluralize(size, "people") : nil].compact.join(" – ")
     end
 
-    def tba_team_info
-      return nil unless is_first? && team_number.present?
-
-      self.class.tba_lookup(league, team_number)
-    end
-
-    def tba_team_name
-      tba_team_info&.dig(:team_name)
-    end
-
-    def tba_avatar
-      tba_team_info&.dig(:avatar)
-    end
-
     # Returns the Event whose FIRST affiliation matches the user's FIRST
     # affiliation by league + team_number, or nil. Users only have at most one
     # FIRST affiliation today (the /first/welcome form allows only one), so a
@@ -120,8 +106,8 @@ class Event
     TBA_BASE_URL = "https://www.thebluealliance.com/api/v3"
 
     def self.tba_lookup(league, team_number)
-      league = league.to_s.downcase
-      team_number = team_number.to_s
+      league = league.to_s.strip.downcase
+      team_number = team_number.to_s.strip
 
       # The Blue Alliance is a community-run service; if it's unreachable, report
       # it and degrade to no team info rather than failing the request.

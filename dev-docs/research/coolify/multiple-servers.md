@@ -46,7 +46,7 @@ TLDR:
 7. Create GitHub app (`hcb-github-app`); named `HCB Coolify` on GitHub
 8. In `gary@hcb` app:
     - Hook up project to `hcb` repo
-    - Use Dockefile as Build Pack
+    - Use Dockerfile as Build Pack
     - In General tab,
         - Set Docker image name to `ghcr.io/hackclub/hcb`. This name is largely
           dictated by ghcr.io (GitHub
@@ -69,7 +69,7 @@ TLDR:
       You must pick a path that does NOT redirect you.
       For example, the Rails app will redirect `/` to `/users/auth` when you're
       not signed in. This redirect goes to `https` (not `http`) and will result
-      in a error.
+      in an error.
     - I personally recommend `curl`'ing the `/up` health check path. For
       example,
       ```

@@ -9,7 +9,7 @@ In the current HCB setup, a Postgres major version upgrade requires downtime. So
 ## How?
 
 1. Read through https://devcenter.heroku.com/articles/upgrading-heroku-postgres-databases and https://devcenter.heroku.com/articles/testing-postgresql-version-upgrades
-2. Read the release notes between the latest release of the major version you are upgrading to and the version you are upgrading from on https://www.postgresql.org/docs/release/. You can aso use a page like https://why-upgrade.depesz.com/show?from=12.17&to=13.14 to collate all the changes. Typically Postgres maintains good backwards compatibility, but keep an eye out for any changes that may cause us problems.
+2. Read the release notes between the latest release of the major version you are upgrading to and the version you are upgrading from on https://www.postgresql.org/docs/release/. You can also use a page like https://why-upgrade.depesz.com/show?from=12.17&to=13.14 to collate all the changes. Typically Postgres maintains good backwards compatibility, but keep an eye out for any changes that may cause us problems.
 3. Do the upgrade locally. Depending on your set up this may be as simple as changing the version in a `Dockerfile` and rebuilding. Run test suite and fix any issues that are broken due to the new Postgres version. The confidence this gives us depends on the current test coverage (currently low until https://github.com/hackclub/hcb/issues/4488 is completed).
 4. Pick a date and time to run the upgrade. We aim for times with low traffic. Historically, Pacific Time evenings are a good option (especially Tuesday and Wednesday evenings). Also, we should do our best to avoid scheduled sidekiq jobs that won't run again for a while. There are a couple of ways to determine low-traffic periods:
 
@@ -75,7 +75,7 @@ This is based heavily on https://github.com/hackclub/hcb/issues/3302#issuecommen
 
 5. **Staging only** Deploy using the UI. Under the Deploy tab, in the "Manual deploy" section, deploy the `main` branch.
 
-6. Verify you can access the website and login. Do some action that saves new data (e.g creating a disbursement).
+6. Verify you can access the website and log in. Do some action that saves new data (e.g creating a disbursement).
 
 7. Create a follower for `PROD_DB_FORK`
 

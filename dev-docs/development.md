@@ -12,7 +12,7 @@ We recommend using GitHub Codespaces to get an instance running. It should work 
 
 ## Running HCB locally
 
-Once HCB is running locally, log in into your local instance using the email `admin@bank.engineering`. Use [Letter Opener](https://github.com/ryanb/letter_opener) to access the development email outbox and retrieve the login code. Letter Opener can be accessed at [`localhost:3000/letter_opener`](localhost:3000/letter_opener).
+Once HCB is running locally, log in to your local instance using the email `admin@bank.engineering`. Use [Letter Opener](https://github.com/ryanb/letter_opener) to access the development email outbox and retrieve the login code. Letter Opener can be accessed at [`localhost:3000/letter_opener`](localhost:3000/letter_opener).
 
 ## Code style
 Thank you for contributing! Please make sure to follow the code style guide [here](/dev-docs/code_style.md).
@@ -23,13 +23,13 @@ Thank you for contributing! Please make sure to follow the code style guide [her
 
 [GitHub Codespaces](https://docs.github.com/en/codespaces) allows you to run a development environment without installing anything on your computer, allows for multiple instances, creates an overall streamlined and reproducible environment, and enables anyone with VS Code to contribute.
 
-To get started, [whip up a codespace](https://docs.github.com/en/codespaces/getting-started/quickstart), open the command palette(<kbd>CTRL</kbd>+<kbd>SHIFT</kbd>+<kbd>P</kbd>), and search `Codespaces: Open in VS Code Desktop`. HCB does not work on the web version of Codespaces.
+To get started, [whip up a codespace](https://docs.github.com/en/codespaces/getting-started/quickstart), open the command palette (<kbd>CTRL</kbd>+<kbd>SHIFT</kbd>+<kbd>P</kbd>), and search `Codespaces: Open in VS Code Desktop`. HCB does not work on the web version of Codespaces.
 
 You can then run `bin/dev` to launch HCB. If you can't open the link that is printed in the terminal, navigate to the `PORTS` tab in your terminal and set port `3000` to public and then back to private.
 
 ### Automated setup with Docker
 
-If you are running macOS or Ubuntu, you can clone the repository and run the [docker_setup.sh](https://github.com/hackclub/hcb/docker_setup.sh) script to automatically setup a development environment with Docker. Append `--with-solargraph` to the command to also setup [Solargraph](https://solargraph.org), a language server for Ruby. You may also need to install the [Solargraph extension](https://github.com/castwide/solargraph#using-solargraph) for your editor.
+If you are running macOS or Ubuntu, you can clone the repository and run the [docker_setup.sh](https://github.com/hackclub/hcb/docker_setup.sh) script to automatically set up a development environment with Docker. Append `--with-solargraph` to the command to also set up [Solargraph](https://solargraph.org), a language server for Ruby. You may also need to install the [Solargraph extension](https://github.com/castwide/solargraph#using-solargraph) for your editor.
 
 ```bash
 ./docker_dev_setup.sh
@@ -85,8 +85,8 @@ or [asdf](https://asdf-vm.com/) for both.
 
 #### [Step 2] Prerequisite: Install and run PostgreSQL
 
-We recommend you use version `15.12` as that's what running in production. If
-you're on MacOS, I recommend using Homebrew to get Postgres up and running. If
+We recommend you use version `15.12` as that's what's running in production. If
+you're on macOS, I recommend using Homebrew to get Postgres up and running. If
 you are on another OS or dislike Homebrew, please refer to one of the many
 guides out there on how to get a simple Postgres database running for local
 development.
@@ -115,7 +115,7 @@ HCB-specific setup instructions.
 
    Since you're running HCB outside of Docker, you will need to update the
    `DATABASE_URL` environment variable located in [`.env.development`](/.env.development). The
-   default caters towards Docker and GitHub Codespaces users. Please update it to
+   default caters to Docker and GitHub Codespaces users. Please update it to
    ```
    postgres://postgres@127.0.0.1:5432
    ```
@@ -170,9 +170,9 @@ bundle exec rspec
 
 ## Credentials
 
-External contributors should provide credentials via a [`.env.development`](/.env.development) file [(view example)](/.env.development.example). Developers using the `devcontainer` setup (eg. in GitHub Codespaces), will need to rebuild the container after modifying the [`.env.development`](/.env.development) file to pull in the new variables.
+External contributors should provide credentials via a [`.env.development`](/.env.development) file [(view example)](/.env.development.example). Developers using the `devcontainer` setup (eg. in GitHub Codespaces) will need to rebuild the container after modifying the [`.env.development`](/.env.development) file to pull in the new variables.
 
-HCB relies on two services for the majority of its financial features: Stripe and Column. Follow [the Stripe testing guide](./stripe_testing.md) to setup Stripe. You can register for a Column account [here](https://dashboard.column.com/register); after their onboarding questions, select "Skip to Sandbox".
+HCB relies on two services for the majority of its financial features: Stripe and Column. Follow [the Stripe testing guide](./stripe_testing.md) to set up Stripe. You can register for a Column account [here](https://dashboard.column.com/register); after their onboarding questions, select "Skip to Sandbox".
 
 We also include OpenAI and Twilio keys in our [`.env.development`](/.env.development) file. Information about obtaining these keys is available in these articles on [help.openai.com](https://help.openai.com/en/articles/4936850-where-do-i-find-my-openai-api-key) and [twilio.com](https://www.twilio.com/docs/iam/api-keys/keys-in-console).
 
@@ -182,7 +182,7 @@ Internally, we use [Doppler](https://www.doppler.com/) to manage our credentials
 
 We've transitioned to using development keys and seed data in development, but historically we have used production keys and data on development machines. We do not recommend rolling back to using production data & keys in development, but if absolutely necessary an HCB engineer can take the following steps:
 
-- Use a `DOPPLER_TOKEN` with development access, this can be generated [here](https://dashboard.doppler.com/workplace/2818669764d639172564/projects/hcb/configs/development/access).
+- Use a `DOPPLER_TOKEN` with development access; this can be generated [here](https://dashboard.doppler.com/workplace/2818669764d639172564/projects/hcb/configs/development/access).
 
 - Override the `LOCKBOX`, `ACTIVE_RECORD__ENCRYPTION__DETERMINISTIC_KEY`, `ACTIVE_RECORD__ENCRYPTION__KEY_DERIVATION_SALT`, and `ACTIVE_RECORD__ENCRYPTION__PRIMARY_KEY` secrets by defining them in `.env.development`. Use the values from the [`production` environment in Doppler](https://dashboard.doppler.com/workplace/2818669764d639172564/projects/hcb/configs/production).
 

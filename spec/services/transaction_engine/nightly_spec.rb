@@ -20,7 +20,6 @@ RSpec.describe TransactionEngine::Nightly do
 
       expect(service).to receive(:import_raw_plaid_transactions!).and_return(true)
       expect(service).to receive(:import_raw_stripe_transactions!).and_return(true)
-      expect(service).to receive(:import_raw_csv_transactions!).and_return(true)
 
       expect(service).to receive(:hash_raw_plaid_transactions!).and_return(true)
       expect(service).to receive(:hash_raw_stripe_transactions!).and_return(true)
