@@ -323,7 +323,7 @@ class Event
     end
 
     def user_params
-      params.require(:event_application).permit(:full_name, :preferred_name, :phone_number, :birthday)
+      params.require(:event_application).permit(:first_name, :last_name, :preferred_name, :phone_number, :birthday)
     end
 
     def record_pageview

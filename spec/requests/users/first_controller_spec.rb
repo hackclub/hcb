@@ -7,7 +7,8 @@ RSpec.describe "Users::FirstController", type: :request do
     {
       user: {
         email: "fresh-#{SecureRandom.hex(4)}@example.invalid",
-        full_name: "Probe Probe",
+        first_name: "Probe",
+        last_name: "Probe",
         affiliations_attributes: {
           "0" => {
             name: "first",
@@ -19,6 +20,17 @@ RSpec.describe "Users::FirstController", type: :request do
         }
       }
     }
+  end
+
+  describe "GET /first/new" do
+    it "asks for a first and last name" do
+      get "/first/welcome"
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('name="user[first_name]"')
+      expect(response.body).to include('name="user[last_name]"')
+      expect(response.body).not_to include('name="user[full_name]"')
+    end
   end
 
   describe "POST /first" do
@@ -63,7 +75,8 @@ RSpec.describe "Users::FirstController", type: :request do
         {
           user: {
             email: user.email,
-            full_name: user.full_name,
+            first_name: user.first_name,
+            last_name: user.last_name,
             affiliations_attributes: {
               "0" => {
                 name: "first",

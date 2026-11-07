@@ -576,7 +576,8 @@ class UsersController < ApplicationController
   def user_params
     attributes = [
       # account
-      :full_name,
+      :first_name,
+      :last_name,
       :preferred_name,
       :phone_number,
       :birthday,

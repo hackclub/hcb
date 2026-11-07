@@ -128,15 +128,22 @@ class StripeCardholder < ApplicationRecord
   end
 
   def self.first_name(user)
-    clean_name(user.first_name(legal: true))
+    clean_name(user.first_name(legal: true), field: "first name")
   end
 
   def self.last_name(user)
-    clean_name(user.last_name(legal: true))
+    clean_name(user.last_name(legal: true), field: "last name")
   end
 
-  def self.clean_name(name)
-    name = ActiveSupport::Inflector.transliterate(name || "")
+  def self.clean_name(name, field: "name")
+    # Stripe Issuing needs both names, but HCB lets people go by a first name
+    # alone. Say so plainly instead of letting the character check below
+    # blame "special characters" for a name that was never entered.
+    if name.blank?
+      raise Errors::StripeInvalidNameError, "A legal #{field} is required to issue cards. Please add it in your account settings."
+    end
+
+    name = ActiveSupport::Inflector.transliterate(name)
 
     # Remove invalid characters
     requirements = <<~REQ.squish
