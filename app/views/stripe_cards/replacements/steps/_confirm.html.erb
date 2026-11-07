@@ -1,0 +1,45 @@
+<%# locals: (flow:, stripe_card:) %>
+
+<% already_canceled = stripe_card.canceled? %>
+<%# Lost and stolen cards are canceled before ordering; virtual replacements are
+    activated right away, which cancels the original %>
+<% cancels_now = !already_canceled && (stripe_card.virtual? || !flow.keeps_card_number?) %>
+
+<h3 class="mt-0 mb-2">Ready to replace your card?</h3>
+
+<ol class="mt-0">
+  <% if already_canceled %>
+    <li>Your card ending in <%= stripe_card.last4 %> has already been canceled.</li>
+  <% elsif !flow.keeps_card_number? %>
+    <li>Your card ending in <%= stripe_card.last4 %> will be canceled immediately.</li>
+  <% end %>
+  <% if stripe_card.physical? %>
+    <li>We'll order a new physical card<%= " with a new card number" unless flow.keeps_card_number? %> and ship it to you.</li>
+    <% if already_canceled || cancels_now %>
+      <li>Once it arrives, activate your new card.</li>
+    <% else %>
+      <li>
+        You can keep using your card ending in <%= stripe_card.last4 %> while you wait<%= " until it expires on #{stripe_card.expires_on.to_fs(:long)}" if flow.expired? %>.
+      </li>
+      <li>Once it arrives, activate your new card. This cancels your previous card.</li>
+    <% end %>
+  <% else %>
+    <li>We'll create a new virtual card<%= " with a new card number" unless flow.keeps_card_number? %> that you can use right away.</li>
+    <% if !already_canceled && flow.keeps_card_number? %>
+      <li>Your card ending in <%= stripe_card.last4 %> will be canceled as soon as the new card is ready.</li>
+    <% end %>
+  <% end %>
+</ol>
+
+<% if flow.requires_confirmation?("confirm") %>
+  <div class="field field--checkbox mt-4 mb-0">
+    <input type="checkbox" id="<%= flow.dom_id(:confirmation) %>" data-action="form-disable#run" data-form-disable-target="radioButton">
+    <label for="<%= flow.dom_id(:confirmation) %>">
+      <% if cancels_now %>
+        I understand that my card ending in <%= stripe_card.last4 %> will be canceled immediately, and this can't be undone.
+      <% else %>
+        I understand that my card ending in <%= stripe_card.last4 %> will be canceled when I activate my new card, and this can't be undone.
+      <% end %>
+    </label>
+  </div>
+<% end %>

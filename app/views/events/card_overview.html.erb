@@ -47,6 +47,10 @@
       <% end %>
     <% end %>
 
+    <% if (cardholder = current_user&.stripe_cardholder) %>
+      <%= render "stripe_cards/expiration_callout", stripe_cards: @event.stripe_cards.where(stripe_cardholder: cardholder).order(:created_at) %>
+    <% end %>
+
     <% if @view == "list" %>
       <%= render "events/event_cards_table", stripe_cards: @paginated_stripe_cards, status: @status %>
     <% else %>

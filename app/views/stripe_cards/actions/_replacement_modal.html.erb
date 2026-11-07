@@ -1,0 +1,8 @@
+<%# locals: (flow:) %>
+
+<section class="modal modal--scroll bg-snow" data-behavior="modal" role="dialog" id="<%= flow.dom_id(:modal) %>">
+  <%= modal_header flow.title %>
+  <%= turbo_frame_tag flow.frame_id, src: new_stripe_card_replacement_path(flow.stripe_card, **flow.params), loading: :lazy do %>
+    <%= render "application/loading_container", klass: "py-8" %>
+  <% end %>
+</section>

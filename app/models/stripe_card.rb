@@ -14,6 +14,7 @@
 #  lost_in_shipping                      :boolean          default(FALSE)
 #  name                                  :string
 #  purchased_at                          :datetime
+#  replacement_reason                    :string
 #  spending_limit_amount                 :integer
 #  spending_limit_interval               :integer
 #  stripe_brand                          :text
@@ -88,7 +89,8 @@ class StripeCard < ApplicationRecord
   belongs_to :replacement_for, class_name: "StripeCard", optional: true
   belongs_to :personalization_design, foreign_key: "stripe_card_personalization_design_id", class_name: "StripeCard::PersonalizationDesign", optional: true
   validates_presence_of :stripe_card_personalization_design_id, unless: -> { self.virtual? }, on: :create
-  has_one :replacement, class_name: "StripeCard", foreign_key: :replacement_for_id
+  has_many :replacements, class_name: "StripeCard", foreign_key: :replacement_for_id, inverse_of: :replacement_for
+  has_one :replacement, -> { order(created_at: :desc) }, class_name: "StripeCard", foreign_key: :replacement_for_id
   alias_method :cardholder, :stripe_cardholder
   has_one :user, through: :stripe_cardholder
   has_many :stripe_authorizations
@@ -103,6 +105,8 @@ class StripeCard < ApplicationRecord
 
   enum :card_type, { virtual: 0, physical: 1 }
   enum :spending_limit_interval, { daily: 0, weekly: 1, monthly: 2, yearly: 3, per_authorization: 4, all_time: 5 }
+  # https://docs.stripe.com/issuing/cards/replacements
+  enum :replacement_reason, { expired: "expired", damaged: "damaged", lost: "lost", stolen: "stolen" }, prefix: :replaced_for, validate: { allow_nil: true }
 
   delegate :stripe_name, to: :stripe_cardholder
 
@@ -125,6 +129,7 @@ class StripeCard < ApplicationRecord
                         :stripe_status,
                         if: -> { self.stripe_id.present? }
 
+  validates :replacement_reason, presence: true, if: :replacement_for_id?, on: :create
   validate :only_physical_cards_can_be_lost_in_shipping
   validate :only_physical_cards_can_have_personalization_design
   validate :personalization_design_must_be_of_the_same_event
@@ -224,8 +229,8 @@ class StripeCard < ApplicationRecord
     card_grant.update(one_time_use: false) if card_grant&.one_time_use
   end
 
-  def cancel!
-    StripeService::Issuing::Card.update(self.stripe_id, status: :canceled)
+  def cancel!(cancellation_reason: nil)
+    StripeService::Issuing::Card.update(self.stripe_id, { status: :canceled, cancellation_reason: }.compact)
     sync_from_stripe!
     save!
     card_grant.cancel! if card_grant&.active?
@@ -343,6 +348,7 @@ class StripeCard < ApplicationRecord
 
     if stripe_obj[:replacement_for]
       self.replacement_for = StripeCard.find_by(stripe_id: stripe_obj[:replacement_for])
+      self.replacement_reason = stripe_obj[:replacement_reason]
     end
 
     self
@@ -388,8 +394,47 @@ class StripeCard < ApplicationRecord
     end
   end
 
+  def expires_on
+    return if stripe_exp_year.blank? || stripe_exp_month.blank?
+
+    Date.new(stripe_exp_year, stripe_exp_month, 1).end_of_month
+  end
+
   def expired?
-    Time.now.utc > Time.new(stripe_exp_year, stripe_exp_month).end_of_month
+    expires_on.present? && Date.current > expires_on
+  end
+
+  def canceled_for_expiration?
+    canceled? && expires_on.present? && canceled_at.present? && canceled_at.to_date > expires_on &&
+      !replacements.where(replacement_reason: %w[lost stolen]).exists?
+  end
+
+  def live_replacement?
+    replacement.present? && !replacement.canceled?
+  end
+
+  def expiration_replacement_window
+    return if expires_on.nil?
+
+    (expires_on - 3.months)..(expires_on + 6.months)
+  end
+
+  def replaceable_for_expiration?
+    return false unless expiration_replacement_window&.cover?(Date.current)
+    return false unless initially_activated?
+    return false if card_grant.present?
+    return false if canceled? && !canceled_for_expiration?
+    return false if live_replacement?
+
+    true
+  end
+
+  def replacement_shipping_address_source
+    if !stripe_cardholder.default_billing_address?
+      stripe_cardholder
+    elsif address_line1.present? && address_country == "US"
+      self
+    end
   end
 
   def ephemeral_key(nonce:, stripe_version: "2020-03-02")

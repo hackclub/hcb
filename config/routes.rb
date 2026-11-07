@@ -476,6 +476,8 @@ Rails.application.routes.draw do
       post "enable_cash_withdrawal"
       get "ephemeral_keys"
     end
+
+    resource :replacement, only: %i[new create], controller: "stripe_cards/replacements"
   end
 
   resources :emburse_cards, only: %i[index show]
