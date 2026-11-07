@@ -11,7 +11,7 @@ module Api
       end
       expose :href do |obj, options|
         root = Rails.application.routes.url_helpers.root_url[0..-2] # remove trailing slash
-        "#{root}/api/v3/#{self.class.object_type.pluralize}/#{obj.public_id}"
+        "#{root}/api/v3/#{self.class.object_type.pluralize}/#{obj.public_id}.json"
       end
 
       format_with(:iso_timestamp) { |dt| dt&.iso8601 }
