@@ -919,6 +919,23 @@ class AdminController < Admin::BaseController
     end
   end
 
+  def wire_lookup
+    @uetr = params[:uetr].presence
+    return if @uetr.blank?
+
+    @wire = Wire.find_by(uetr: @uetr)
+    @tracking = Wire::UETR::Tracking.new(Wire::UETR.lookup(@uetr))
+
+    begin
+      @transfer = Wire::UETR::Transfer.fetch(@tracking.id || @wire&.column_id)
+    rescue Faraday::Error => e
+      Rails.error.report(e)
+    end
+  rescue Faraday::Error => e
+    Rails.error.report(e)
+    flash.now[:error] = "Something went wrong: #{ColumnService.error_to_admin_message(e)}"
+  end
+
   def wise_transfer_process
     @wise_transfer = WiseTransfer.find(params[:id])
   end

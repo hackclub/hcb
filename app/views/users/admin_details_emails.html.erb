@@ -1,0 +1,40 @@
+<%= turbo_frame_tag :admin_details_emails do %>
+  <% admin_tool "p-3" do %>
+    <div class="flex items-center mb2 mt1">
+      <h3 class="m0 flex-grow">Emails</h3>
+      <%= link_to "View all", emails_admin_index_path(user_id: @user.id), class: "btn btn-small", data: { turbo_frame: "_top" } %>
+    </div>
+    <% if @messages.present? %>
+      <table>
+        <tr>
+          <th>Sent at</th>
+          <th>Subject</th>
+          <th>Mailer</th>
+          <th>To</th>
+        </tr>
+        <% @messages.each do |msg| %>
+          <tr>
+            <td><%= msg.sent_at ? format_datetime(msg.sent_at) : "—" %></td>
+            <td>
+              <%= link_to msg.subject.presence || "(no subject)", "#", data: { behavior: "modal_trigger", modal: "message_#{msg.id}" } %>
+            </td>
+            <td class="muted"><%= msg.mailer %></td>
+            <td><%= msg.to %></td>
+          </tr>
+        <% end %>
+      </table>
+      <%= paginate @messages %>
+
+      <% @messages.each do |msg| %>
+        <section class="modal bg-snow" style="height: 60vh;" data-behavior="modal" role="dialog" id="message_<%= msg.id %>">
+          <%= modal_header "Email to #{@user.name}" %>
+          <%= turbo_frame_tag dom_id(msg), src: url_for(controller: "admin", action: "email", message_id: msg.id), loading: "lazy" do %>
+            Loading...
+          <% end %>
+        </section>
+      <% end %>
+    <% else %>
+      <%= blankslate "No emails sent" %>
+    <% end %>
+  <% end %>
+<% end %>
