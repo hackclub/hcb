@@ -57,7 +57,12 @@ module Credentials
       req = Net::HTTP::Get.new(DOPPLER_URL)
       req.basic_auth DOPPLER_TOKEN, ""
 
-      res = Net::HTTP.start(DOPPLER_URL.hostname, DOPPLER_URL.port, use_ssl: true) do |http|
+      # Resolve the proxy from the https URI. Left to its default (:ENV),
+      # Net::HTTP.start looks up the proxy for an http:// URI, so it only reads
+      # `http_proxy` and ignores `https_proxy`. It also honors `no_proxy`.
+      proxy = DOPPLER_URL.find_proxy
+
+      res = Net::HTTP.start(DOPPLER_URL.hostname, DOPPLER_URL.port, proxy&.hostname, proxy&.port, proxy&.user, proxy&.password, use_ssl: true) do |http|
         http.request(req)
       end
 
